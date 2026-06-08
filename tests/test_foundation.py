@@ -67,6 +67,8 @@ from nba_gm_data.save import (
     canonical_with_save,
     merge_health_results,
     press_impact,
+    queue_aggregated_press_event,
+    team_rotation_projection,
 )
 from nba_gm_data.play import (
     box_score_influence,
@@ -689,6 +691,15 @@ class DataFoundationTests(unittest.TestCase):
     def test_trade_finder_preserves_untouchables_and_bounded_multi_asset_packages(self):
         self.assertEqual(find_trade(self.plain, "Stephen Curry", "GSW", limit=4, seed=2)["candidate_count"], 0)
         self.assertEqual(find_trade(self.plain, "Victor Wembanyama", "SAS", limit=4, seed=2)["candidate_count"], 0)
+        movable = find_trade(self.plain, "Gui Santos", "PHX", limit=8, seed=9)
+        self.assertGreater(movable["candidate_count"], 0)
+        self.assertTrue(
+            any(
+                asset.get("kind") == "pick" and "R2" in str(asset.get("label"))
+                for candidate in movable["candidates"]
+                for asset in candidate["proposal"]["from_assets"]
+            )
+        )
         barnes = find_trade(self.plain, "Scottie Barnes", "TOR", limit=8, seed=2)
         self.assertTrue(barnes["candidates"])
         incoming_packages = [candidate["proposal"]["to_assets"] for candidate in barnes["candidates"]]
@@ -909,6 +920,13 @@ class DataFoundationTests(unittest.TestCase):
             initialized = initialize_free_agency_market(self.plain, save_path, "GSW", seed=17)
             state = initialized["free_agency_state"]
             self.assertEqual(state["day"], 1)
+            self.assertEqual(state["re_signing_status"], "active")
+            self.assertEqual(state["ai_days_processed"], [])
+            state["re_signing_status"] = "completed"
+            initialized["free_agency_state"] = state
+            write_save(save_path, initialized)
+            initialized = initialize_free_agency_market(self.plain, save_path, "GSW", seed=17)
+            state = initialized["free_agency_state"]
             self.assertIn(f"{state['season']}:1", state["ai_days_processed"])
             self.assertGreater(len(initialized.get("free_agent_offers", [])), 0)
             self.assertTrue(all(offer["source"] == "ai" for offer in initialized["free_agent_offers"]))
@@ -947,6 +965,33 @@ class DataFoundationTests(unittest.TestCase):
             self.assertGreaterEqual(adjusted["minutes_projection"], 24.0)
             self.assertLessEqual(adjusted["minutes_projection"], 27.0)
             self.assertAlmostEqual(sum(float(player.get("minutes_projection") or 0) for player in roster), 240.0, delta=0.3)
+
+    def test_save_rotation_projection_sums_to_240_and_zeros_injured_players(self):
+        curry = next(player for player in self.plain["players"] if player["name"] == "Stephen Curry")
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "league_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=7)
+            projected = team_rotation_projection(self.plain, save, "team_gsw", integer=True)
+            self.assertEqual(sum(projected.values()), 240)
+            self.assertTrue(all(float(value).is_integer() for value in projected.values()))
+            for state in save["health_states"]:
+                if state["player_id"] == curry["id"]:
+                    state.update({"availability_status": "out", "current_injury_id": "test_injury", "return_date": "2025-11-15"})
+            injured = team_rotation_projection(self.plain, save, "team_gsw", integer=True)
+            self.assertEqual(injured[curry["id"]], 0)
+            self.assertEqual(sum(injured.values()), 240)
+
+    def test_mandatory_press_events_aggregate_by_day_and_topic(self):
+        save = {"state": {"user_team_id": "team_gsw"}, "pending_press_events": []}
+        first = queue_aggregated_press_event(save, "trade", "GSW trades Player A for Player B.", ["team_gsw"], "2026-01-10")
+        second = queue_aggregated_press_event(save, "trade", "GSW adds a second-round pick in a follow-up move.", ["team_gsw"], "2026-01-10")
+        third = queue_aggregated_press_event(save, "staff_hire", "GSW hires a new scouting lead.", ["team_gsw"], "2026-01-10")
+        self.assertEqual(first["id"], second["id"])
+        self.assertNotEqual(first["id"], third["id"])
+        self.assertEqual(len(save["pending_press_events"]), 2)
+        trade_event = next(item for item in save["pending_press_events"] if item["kind"] == "trades")
+        self.assertEqual(len(trade_event["headlines"]), 2)
+        self.assertIn("question", trade_event)
 
     def test_injury_social_only_posts_substantial_events_once(self):
         with tempfile.TemporaryDirectory() as tmp:

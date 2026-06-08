@@ -106,6 +106,8 @@ def create_league_save(
         "team_morale": initial_team_morale(canonical),
         "player_morale": initial_player_morale(canonical),
         "rotation_recommendations": {},
+        "rotation_baselines": initial_rotation_baselines(canonical),
+        "rotation_snapshots": {},
         "fan_confidence": initial_team_metric(canonical, 55.0),
         "owner_confidence": initial_team_metric(canonical, 56.0),
         "team_game_logs": [],
@@ -228,6 +230,14 @@ def roster_cutdown_target(save: dict[str, Any], team_id: str | None) -> int:
     return max(ROSTER_SEASON_MAXIMUM, baseline)
 
 
+def initial_rotation_baselines(canonical: dict[str, Any]) -> dict[str, float]:
+    return {
+        player["id"]: display_minutes_projection(player)
+        for player in canonical.get("players", [])
+        if player.get("id")
+    }
+
+
 def active_players_for_roster_checks(canonical: dict[str, Any], save: dict[str, Any]) -> list[dict[str, Any]]:
     players = deepcopy(canonical.get("players", []))
     retired = set(save.get("retired_player_ids", []))
@@ -303,6 +313,8 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
     save.setdefault("team_morale", initial_team_morale(canonical or {"teams": []}))
     save.setdefault("player_morale", initial_player_morale(canonical or {"players": []}))
     save.setdefault("rotation_recommendations", {})
+    save.setdefault("rotation_baselines", initial_rotation_baselines(canonical or {"players": []}))
+    save.setdefault("rotation_snapshots", {})
     save.setdefault("fan_confidence", initial_team_metric(canonical or {"teams": []}, 55.0))
     save.setdefault("owner_confidence", initial_team_metric(canonical or {"teams": []}, 56.0))
     save.setdefault("playoff_state", {})
@@ -428,7 +440,7 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
     if save.get("development_events"):
         canonical["development_events"] = deepcopy(save["development_events"])
         apply_development_events_to_traits(canonical, save["development_events"])
-    apply_rotation_recommendations(canonical, save)
+    apply_save_rotation_projection(canonical, save)
     for key in [
         "team_strategic_states",
         "player_asset_valuations",
@@ -1416,9 +1428,10 @@ def team_dashboard(root: str | Path, canonical: dict[str, Any] | Any, save_path:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     team = resolve_team(canonical, team_query)
     active = canonical_with_save(canonical, save)
+    rotation_projection = team_rotation_projection(active, save, team["id"], integer=True)
     roster = sorted(
         [player for player in active.get("players", []) if player["team_id"] == team["id"]],
-        key=display_minutes_projection,
+        key=lambda player: (float(rotation_projection.get(player["id"], 0.0)), display_minutes_projection(player), player.get("name", "")),
         reverse=True,
     )
     record = save.get("team_records", {}).get(team["id"], empty_team_record(team))
@@ -1444,7 +1457,7 @@ def team_dashboard(root: str | Path, canonical: dict[str, Any] | Any, save_path:
                 "age": player.get("age"),
                 "height": player.get("height"),
                 "height_inches": player.get("height_inches"),
-                "minutes_projection": display_minutes_projection(player),
+                "minutes_projection": float(rotation_projection.get(player["id"], display_minutes_projection(player))),
                 "rotation_priority": player.get("rotation_priority"),
                 "games": season_stats.get(player["id"], {}).get("games", 0),
                 "team_games": team_games,
@@ -1483,15 +1496,14 @@ def team_identity_report(canonical: dict[str, Any], save: dict[str, Any]) -> dic
     for player in canonical.get("players", []):
         if player.get("team_id") in players_by_team:
             players_by_team[player["team_id"]].append(player)
-    health_by_player = {state.get("player_id"): state for state in save.get("health_states", [])}
     raw: dict[str, dict[str, float]] = {}
     for team_id, roster in players_by_team.items():
+        projection = team_rotation_projection(canonical, save, team_id, integer=False)
         rows: list[tuple[dict[str, Any], dict[str, float], float]] = []
         for player in roster:
-            minutes = display_minutes_projection(player)
+            minutes = float(projection.get(player["id"], display_minutes_projection(player)))
             if minutes <= 0:
                 continue
-            minutes *= health_availability_weight(health_by_player.get(player["id"]))
             rows.append((player, player_attribute_summary(canonical, player["id"]), minutes))
         rows.sort(key=lambda item: item[2], reverse=True)
         total_minutes = sum(weight for _, _, weight in rows) or 1.0
@@ -2348,26 +2360,242 @@ def apply_development_events_to_traits(canonical: dict[str, Any], events: list[d
             trait["notes"] = f"{trait.get('notes', '')} Save-state development deltas applied.".strip()
 
 
-def apply_rotation_recommendations(canonical: dict[str, Any], save: dict[str, Any]) -> None:
-    recommendations = save.get("rotation_recommendations") or {}
-    if not recommendations:
-        return
-    players_by_id = {player["id"]: player for player in canonical.get("players", [])}
-    for player_id, record in recommendations.items():
-        player = players_by_id.get(player_id)
-        if not player:
+def apply_save_rotation_projection(canonical: dict[str, Any], save: dict[str, Any]) -> None:
+    teams = {team["id"] for team in canonical.get("teams", [])}
+    snapshots = save.setdefault("rotation_snapshots", {})
+    for team_id in sorted(teams):
+        projection = team_rotation_projection(canonical, save, team_id, integer=False)
+        if not projection:
             continue
-        current = display_minutes_projection(player)
-        requested = float(record.get("target_minutes") or current)
-        coach_commitment = float(record.get("coach_commitment") or 0.68)
-        coach_adjustment = clamp((current - requested) * (1.0 - coach_commitment), -3.0, 3.0)
-        adjusted = requested + coach_adjustment
-        player["minutes_projection"] = round(clamp(adjusted, 0.0, 42.0), 2)
-        player["rotation_note"] = f"GM {requested:.1f} MPG; coach rotation {adjusted:.1f} MPG."
-    normalize_team_minutes_after_recommendations(canonical, recommendations)
+        snapshots[team_id] = {
+            player_id: round(float(minutes), 2)
+            for player_id, minutes in projection.items()
+        }
+        for player in canonical.get("players", []):
+            if player.get("team_id") != team_id:
+                continue
+            minutes = float(projection.get(player["id"], 0.0))
+            player["minutes_projection"] = round(minutes, 2)
+            rec = (save.get("rotation_recommendations") or {}).get(player["id"])
+            if rec:
+                player["rotation_note"] = (
+                    f"GM {float(rec.get('target_minutes') or 0):.0f} MPG; "
+                    f"coach rotation {minutes:.0f} MPG."
+                )
+
+
+def team_rotation_projection(canonical: dict[str, Any], save: dict[str, Any], team_id: str | None, integer: bool = False) -> dict[str, float]:
+    if not team_id:
+        return {}
+    roster = [player for player in canonical.get("players", []) if player.get("team_id") == team_id]
+    if not roster:
+        return {}
+    health_by_player = {state.get("player_id"): state for state in save.get("health_states", [])}
+    recommendations = save.get("rotation_recommendations") or {}
+    baselines = save.get("rotation_baselines") or {}
+    rows: list[dict[str, Any]] = []
+    for player in roster:
+        baseline = float(baselines.get(player["id"], display_minutes_projection(player)) or 0.0)
+        baseline = clamp(baseline, 0.0, 42.0)
+        attrs = player_attribute_summary(canonical, player["id"])
+        overall = float(attrs.get("overall") or 50.0)
+        unavailable = player_unavailable_for_rotation(health_by_player.get(player["id"]))
+        rec = recommendations.get(player["id"])
+        raw_score = baseline * 1.35 + overall * 0.46 + max(0.0, float(player.get("age") or 27.0) - 32.0) * -0.7
+        rows.append(
+            {
+                "player": player,
+                "baseline": baseline,
+                "overall": overall,
+                "unavailable": unavailable,
+                "recommendation": rec,
+                "score": raw_score,
+            }
+        )
+    available = [row for row in rows if not row["unavailable"]]
+    if not available:
+        return {row["player"]["id"]: 0.0 for row in rows}
+    available.sort(key=lambda row: (row["score"], row["baseline"], row["overall"], row["player"].get("name", "")), reverse=True)
+    desired_count = min(len(available), max(9, min(11, sum(1 for row in available if row["baseline"] >= 8.0))))
+    selected_ids = {row["player"]["id"] for row in available[:desired_count]}
+    for row in available:
+        rec = row.get("recommendation") or {}
+        if float(rec.get("target_minutes") or 0.0) > 0:
+            selected_ids.add(row["player"]["id"])
+    if len(selected_ids) < min(8, len(available)):
+        selected_ids.update(row["player"]["id"] for row in available[: min(8, len(available))])
+    allocation_rows: list[dict[str, Any]] = []
+    for rank, row in enumerate(available, start=1):
+        player = row["player"]
+        if player["id"] not in selected_ids:
+            allocation_rows.append({"player_id": player["id"], "desired": 0.0, "minimum": 0.0, "maximum": 0.0})
+            continue
+        desired = row["baseline"] ** 1.08 * (0.74 + row["overall"] / 155.0)
+        rec = row.get("recommendation") or {}
+        if rec:
+            requested = clamp(float(rec.get("target_minutes") or row["baseline"]), 0.0, 42.0)
+            commitment = clamp(float(rec.get("coach_commitment") or 0.68), 0.0, 1.0)
+            coach_adjustment = clamp((row["baseline"] - requested) * (1.0 - commitment), -3.0, 3.0)
+            desired = requested + coach_adjustment
+        maximum = rotation_rank_cap(rank, row["overall"], bool(rec))
+        minimum = rotation_rank_floor(rank, row["baseline"], row["overall"])
+        if rec:
+            minimum = max(0.0, min(minimum, desired - 4.0))
+            maximum = max(maximum, desired + 4.0)
+        allocation_rows.append(
+            {
+                "player_id": player["id"],
+                "desired": clamp(desired, 0.0, maximum),
+                "minimum": clamp(minimum, 0.0, maximum),
+                "maximum": maximum,
+            }
+        )
+    allocation = bounded_minutes_allocation(allocation_rows, 240.0)
+    row_limits = {row["player_id"]: row for row in allocation_rows}
+    recommended_ids = {row["player"]["id"] for row in rows if row.get("recommendation")}
+    for row in rows:
+        rec = row.get("recommendation") or {}
+        if not rec or row["unavailable"]:
+            continue
+        player_id = row["player"]["id"]
+        requested = clamp(float(rec.get("target_minutes") or 0.0), 0.0, 42.0)
+        if requested <= 0:
+            continue
+        floor = min(requested, float(row_limits.get(player_id, {}).get("maximum") or requested))
+        deficit = floor - float(allocation.get(player_id) or 0.0)
+        if deficit <= 0:
+            continue
+        donors = sorted(
+            [
+                (
+                    donor_id,
+                    max(0.0, float(value) - float(row_limits.get(donor_id, {}).get("minimum") or 0.0)),
+                )
+                for donor_id, value in allocation.items()
+                if donor_id != player_id and donor_id not in recommended_ids
+            ],
+            key=lambda item: item[1],
+            reverse=True,
+        )
+        for donor_id, available_minutes in donors:
+            if deficit <= 0:
+                break
+            take = min(deficit, available_minutes)
+            allocation[donor_id] = float(allocation.get(donor_id) or 0.0) - take
+            allocation[player_id] = float(allocation.get(player_id) or 0.0) + take
+            deficit -= take
+    for row in rows:
+        if row["unavailable"]:
+            allocation[row["player"]["id"]] = 0.0
+        else:
+            allocation.setdefault(row["player"]["id"], 0.0)
+    return round_minutes_to_total(allocation, 240) if integer else allocation
+
+
+def player_unavailable_for_rotation(state: dict[str, Any] | None) -> bool:
+    if not state:
+        return False
+    status = str(state.get("availability_status") or "active").lower()
+    if status in {"", "active", "healthy"} and not state.get("current_injury_id"):
+        return False
+    days_left = float(state.get("days_left") or state.get("expected_days_remaining") or 0.0)
+    return bool(state.get("current_injury_id") or days_left > 0 or status in {"out", "injured", "unavailable"})
+
+
+def rotation_rank_cap(rank: int, overall: float, recommended: bool = False) -> float:
+    if recommended:
+        return 42.0
+    if rank <= 1:
+        return 40.0 if overall >= 75 else 38.0
+    if rank <= 2:
+        return 38.0
+    if rank <= 3:
+        return 36.0
+    if rank <= 5:
+        return 34.0
+    if rank <= 7:
+        return 28.0
+    if rank <= 9:
+        return 20.0
+    if rank <= 11:
+        return 12.0
+    return 6.0
+
+
+def rotation_rank_floor(rank: int, baseline: float, overall: float) -> float:
+    if rank <= 2 and (baseline >= 24 or overall >= 68):
+        return min(31.0, max(26.0, baseline * 0.78))
+    if rank <= 5 and (baseline >= 18 or overall >= 61):
+        return min(24.0, max(16.0, baseline * 0.65))
+    if rank <= 8 and baseline >= 12:
+        return min(14.0, baseline * 0.55)
+    return 0.0
+
+
+def bounded_minutes_allocation(rows: list[dict[str, Any]], total: float) -> dict[str, float]:
+    active = [row for row in rows if float(row.get("maximum") or 0.0) > 0.0]
+    allocation = {row["player_id"]: 0.0 for row in rows}
+    if not active:
+        return allocation
+    fixed: set[str] = set()
+    for _ in range(12):
+        remaining_total = total - sum(allocation[player_id] for player_id in fixed)
+        flexible = [row for row in active if row["player_id"] not in fixed]
+        if not flexible:
+            break
+        desired_total = sum(max(0.01, float(row.get("desired") or 0.0)) for row in flexible)
+        scale = remaining_total / desired_total if desired_total else 0.0
+        changed = False
+        for row in flexible:
+            value = float(row.get("desired") or 0.0) * scale
+            clamped = clamp(value, float(row.get("minimum") or 0.0), float(row.get("maximum") or 0.0))
+            allocation[row["player_id"]] = clamped
+            if abs(clamped - value) > 0.001:
+                fixed.add(row["player_id"])
+                changed = True
+        if not changed:
+            break
+    current = sum(allocation.values())
+    if current > 0:
+        diff = total - current
+        flexible = [
+            row for row in active
+            if allocation[row["player_id"]] < float(row.get("maximum") or 0.0) - 0.01
+        ]
+        if flexible:
+            weight_total = sum(max(1.0, allocation[row["player_id"]]) for row in flexible)
+            for row in flexible:
+                allocation[row["player_id"]] += diff * (max(1.0, allocation[row["player_id"]]) / weight_total)
+    return {player_id: round(clamp(minutes, 0.0, 42.0), 2) for player_id, minutes in allocation.items()}
+
+
+def round_minutes_to_total(minutes_by_player: dict[str, float], total: int = 240) -> dict[str, float]:
+    rounded = {player_id: int(round(minutes)) for player_id, minutes in minutes_by_player.items()}
+    diff = int(total - sum(rounded.values()))
+    if diff == 0:
+        return {player_id: float(value) for player_id, value in rounded.items()}
+    ordered = sorted(
+        minutes_by_player,
+        key=lambda player_id: (minutes_by_player[player_id] - int(minutes_by_player[player_id]), minutes_by_player[player_id], player_id),
+        reverse=diff > 0,
+    )
+    idx = 0
+    while diff and ordered:
+        player_id = ordered[idx % len(ordered)]
+        if diff > 0 and rounded[player_id] < 42:
+            rounded[player_id] += 1
+            diff -= 1
+        elif diff < 0 and rounded[player_id] > 0:
+            rounded[player_id] -= 1
+            diff += 1
+        idx += 1
+        if idx > len(ordered) * 50:
+            break
+    return {player_id: float(value) for player_id, value in rounded.items()}
 
 
 def normalize_team_minutes_after_recommendations(canonical: dict[str, Any], recommendations: dict[str, Any]) -> None:
+    # Backward-compatible shim for older callers; the save-aware allocator now handles all teams.
     affected_teams = {
         player.get("team_id")
         for player in canonical.get("players", [])
@@ -2375,26 +2603,11 @@ def normalize_team_minutes_after_recommendations(canonical: dict[str, Any], reco
     }
     for team_id in affected_teams:
         roster = [player for player in canonical.get("players", []) if player.get("team_id") == team_id]
-        if not roster:
+        total = sum(display_minutes_projection(player) for player in roster)
+        if total <= 0:
             continue
-        anchored = [player for player in roster if player.get("id") in recommendations]
-        flexible = [player for player in roster if player.get("id") not in recommendations]
-        anchored_total = sum(display_minutes_projection(player) for player in anchored)
-        flexible_total = sum(display_minutes_projection(player) for player in flexible)
-        if anchored_total >= 240.0 or flexible_total <= 0:
-            total = anchored_total + flexible_total
-            if total <= 0:
-                continue
-            scale = 240.0 / total
-            for player in roster:
-                player["minutes_projection"] = round(clamp(display_minutes_projection(player) * scale, 0.0, 42.0), 2)
-            continue
-        scale = max(0.0, 240.0 - anchored_total) / flexible_total
-        for player in flexible:
-            minutes = display_minutes_projection(player)
-            if minutes <= 0:
-                continue
-            player["minutes_projection"] = round(clamp(minutes * scale, 0.0, 42.0), 2)
+        for player in roster:
+            player["minutes_projection"] = round(clamp(display_minutes_projection(player) * 240.0 / total, 0.0, 42.0), 2)
 
 
 def development_months_between(current: str, target: str) -> list[str]:
@@ -2719,6 +2932,86 @@ def add_news(save: dict[str, Any], kind: str, headline: str, date_value: str | N
     return item
 
 
+def queue_aggregated_press_event(
+    save: dict[str, Any],
+    kind: str,
+    headline: str,
+    team_ids: list[str | None],
+    date_value: str | None = None,
+) -> dict[str, Any] | None:
+    user_team_id = save.get("meta", {}).get("user_team_id") or save.get("state", {}).get("user_team_id")
+    if not user_team_id or user_team_id not in set(team_ids):
+        return
+    date_value = date_value or save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+    group = press_event_group(kind)
+    event_id = stable_id("press_event", group, date_value, user_team_id)
+    events = save.setdefault("pending_press_events", [])
+    existing = next((item for item in events if item.get("id") == event_id), None)
+    if existing:
+        headlines = existing.setdefault("headlines", [])
+        if headline not in headlines:
+            headlines.append(headline)
+        existing["headline"] = press_event_headline(group, headlines)
+        existing["question"] = press_event_question(group, headlines)
+        return existing
+    headlines = [headline]
+    event = {
+        "id": event_id,
+        "date": date_value,
+        "kind": group,
+        "headline": press_event_headline(group, headlines),
+        "headlines": headlines,
+        "question": press_event_question(group, headlines),
+        "status": "pending",
+    }
+    events.append(event)
+    return event
+
+
+def press_event_group(kind: str) -> str:
+    if kind in {"trade", "trade_offer"}:
+        return "trades"
+    if kind in {"free_agency", "free_agent_signing", "free_agency_signing"}:
+        return "free_agency"
+    if kind in {"extension", "contract"}:
+        return "extensions"
+    if kind in {"staff_hire", "staff_fire", "staff_change"}:
+        return "staff_moves"
+    if kind in {"rare_drama", "drama"}:
+        return "rare_drama"
+    return kind
+
+
+def press_event_headline(group: str, headlines: list[str]) -> str:
+    if len(headlines) == 1:
+        return headlines[0]
+    return f"{len(headlines)} {clean_press_group_label(group)} require GM availability."
+
+
+def press_event_question(group: str, headlines: list[str]) -> str:
+    if group == "trades":
+        return f"You made {len(headlines)} trade move(s). What is the basketball idea tying the outgoing and incoming assets together?"
+    if group == "free_agency":
+        return f"Free agency brought {len(headlines)} signing decision(s). What did this market tell you about the roster?"
+    if group == "extensions":
+        return f"You handled {len(headlines)} extension decision(s). How are you balancing loyalty, price, and future flexibility?"
+    if group == "staff_moves":
+        return f"You changed the staff room {len(headlines)} time(s). What should look different because of those voices?"
+    if group == "rare_drama":
+        return "The organization is dealing with a rare off-court distraction. What standard are you setting publicly?"
+    return headlines[-1] if headlines else "What is the message to the locker room and fans?"
+
+
+def clean_press_group_label(group: str) -> str:
+    return {
+        "trades": "trade moves",
+        "free_agency": "free-agent moves",
+        "extensions": "extension decisions",
+        "staff_moves": "staff moves",
+        "rare_drama": "drama items",
+    }.get(group, group.replace("_", " "))
+
+
 def sync_social_from_news(save: dict[str, Any]) -> None:
     social_keys = {(item.get("kind"), item.get("subject")) for item in save.get("social_feed", [])}
     for news in save.get("news_items", [])[-60:]:
@@ -2750,6 +3043,13 @@ def add_social(save: dict[str, Any], kind: str, text: str, team_ids: list[str] |
         "importance": importance,
     }
     feed = save.setdefault("social_feed", [])
+    if kind in {"staff_hire", "staff_fire"} and any(
+        existing.get("kind") == kind
+        and existing.get("date") == date_value
+        and existing.get("subject") == item["subject"]
+        for existing in feed
+    ):
+        return item
     if item["id"] not in {existing.get("id") for existing in feed}:
         feed.append(item)
     return item

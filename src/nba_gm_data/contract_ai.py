@@ -599,6 +599,7 @@ def apply_contract_to_save(save_path: str | Path, negotiation_id: str, date: str
             save.setdefault("contract_overrides", {})[player_id] = accepted_offer
             if team_id and negotiation_payload.get("negotiation_type") in {"free_agency", "free_agent_signing"}:
                 save.setdefault("roster_overrides", {})[player_id] = team_id
+                save.setdefault("rotation_snapshots", {}).pop(team_id, None)
                 if player_id in set(save.get("free_agent_player_ids", [])):
                     save["free_agent_player_ids"] = [item for item in save.get("free_agent_player_ids", []) if item != player_id]
                 if save.get("re_signing_rights"):
@@ -636,20 +637,9 @@ def apply_contract_to_save(save_path: str | Path, negotiation_id: str, date: str
 
 
 def queue_press_event_if_user_involved(save: dict[str, Any], kind: str, headline: str, team_ids: list[str | None], date: str) -> None:
-    user_team_id = save.get("meta", {}).get("user_team_id")
-    if not user_team_id or user_team_id not in set(team_ids):
-        return
-    event = {
-        "id": stable_id("press_event", kind, headline, date),
-        "date": date,
-        "kind": kind,
-        "headline": headline,
-        "question": f"{headline} Why was this the right contract decision for the team?",
-        "status": "pending",
-    }
-    save.setdefault("pending_press_events", [])
-    if event["id"] not in {item.get("id") for item in save["pending_press_events"]}:
-        save["pending_press_events"].append(event)
+    from .save import queue_aggregated_press_event
+
+    queue_aggregated_press_event(save, kind, headline, team_ids, date)
 
 
 def extension_start_season_from_date(date_value: str) -> str:

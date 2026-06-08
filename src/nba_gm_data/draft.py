@@ -671,7 +671,7 @@ def simulate_draft(canonical: dict[str, Any] | Any, year: str = "2026", seed: in
         entries = [entry for entry in canonical["draft_board_entries"] if entry["team_id"] == team["id"] and entry["prospect_id"] in available]
         if not entries:
             continue
-        best = choose_entry_with_draft_chaos(entries, pick_overall(pick), team["id"], seed)
+        best = choose_entry_with_draft_chaos(canonical, entries, pick_overall(pick), team["id"], seed, prospects)
         prospect = prospects[best["prospect_id"]]
         decision = draft_pick_decision(canonical, team, pick, prospect, seed=seed, config=config)
         selection = DraftSelection(
@@ -844,25 +844,88 @@ def simulate_generated_draft(canonical: dict[str, Any], year: str, seed: int, co
     }
 
 
-def choose_entry_with_draft_chaos(entries: list[dict[str, Any]], overall_pick: int, team_id: str, seed: int) -> dict[str, Any]:
+def choose_entry_with_draft_chaos(
+    canonical: dict[str, Any],
+    entries: list[dict[str, Any]],
+    overall_pick: int,
+    team_id: str,
+    seed: int,
+    prospects: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     ranked = sorted(entries, key=lambda item: item["board_rank"])
-    top_grade = float(ranked[0].get("risk_adjusted_grade") or ranked[0].get("bpa_grade") or 0.0)
-    tier_gap = 4.0 if overall_pick <= 5 else 5.5 if overall_pick <= 20 else 7.0
-    window = 4 if overall_pick <= 5 else 7 if overall_pick <= 20 else 11
+    prospects = prospects or {}
+    staff = scouting_staff_score(canonical, team_id)
+    confidence = float(staff.get("confidence") or 0.55)
+    top_grade = draft_selection_score(canonical, ranked[0], prospects.get(ranked[0]["prospect_id"], {}), team_id, overall_pick, seed, confidence) if ranked else 0.0
+    tier_gap = (3.0 + (1.0 - confidence) * 4.2) if overall_pick <= 5 else (4.6 + (1.0 - confidence) * 5.0) if overall_pick <= 20 else 8.0
+    window = 5 if overall_pick <= 5 else 8 if overall_pick <= 20 else 13
     pool = [
         item for item in ranked[: min(window, len(ranked))]
-        if top_grade - float(item.get("risk_adjusted_grade") or item.get("bpa_grade") or 0.0) <= tier_gap
+        if top_grade - draft_selection_score(canonical, item, prospects.get(item["prospect_id"], {}), team_id, overall_pick, seed, confidence) <= tier_gap
     ] or ranked[: min(3, len(ranked))]
+    elite_pool = [
+        item for item in pool
+        if prospect_priority_tier(prospects.get(item["prospect_id"], {})) == 1
+    ]
+    if overall_pick <= 3 and elite_pool:
+        pool = elite_pool
+    elif overall_pick <= 5 and elite_pool and not any(prospect_priority_tier(prospects.get(item["prospect_id"], {})) > 1 for item in pool[:2]):
+        pool = elite_pool + [item for item in pool if item not in elite_pool][:2]
     rng = random.Random(f"{seed}:{team_id}:{overall_pick}:draft_chaos")
-    second_gap = top_grade - float(pool[1].get("risk_adjusted_grade") or pool[1].get("bpa_grade") or 0.0) if len(pool) > 1 else 99.0
+    scored = [
+        (draft_selection_score(canonical, item, prospects.get(item["prospect_id"], {}), team_id, overall_pick, seed, confidence), item)
+        for item in pool
+    ]
+    scored.sort(key=lambda item: item[0], reverse=True)
+    pool = [item for _, item in scored]
+    top_grade = scored[0][0] if scored else top_grade
+    second_gap = top_grade - scored[1][0] if len(scored) > 1 else 99.0
     if overall_pick <= 3 and second_gap >= 3.0 and rng.random() < 0.82:
         return pool[0]
     weights = [
-        max(0.12, 1.0 - max(0.0, top_grade - float(item.get("risk_adjusted_grade") or item.get("bpa_grade") or 0.0)) / max(tier_gap + 1.0, 1.0))
-        / max(1.0, idx + 1) ** 0.45
+        max(0.1, 1.0 - max(0.0, top_grade - draft_selection_score(canonical, item, prospects.get(item["prospect_id"], {}), team_id, overall_pick, seed, confidence)) / max(tier_gap + 1.0, 1.0))
+        / max(1.0, idx + 1) ** (0.36 + confidence * 0.18)
         for idx, item in enumerate(pool)
     ]
     return weighted_choice(pool, weights, rng)
+
+
+def draft_selection_score(
+    canonical: dict[str, Any],
+    entry: dict[str, Any],
+    prospect: dict[str, Any],
+    team_id: str,
+    overall_pick: int,
+    seed: int,
+    confidence: float,
+) -> float:
+    state = next((item for item in canonical.get("team_strategic_states", []) if item.get("team_id") == team_id), {})
+    phase = state.get("phase", "balanced")
+    base = float(entry.get("risk_adjusted_grade") or entry.get("bpa_grade") or 0.0)
+    current = float(prospect.get("current_ability") or 50.0)
+    ceiling = float(prospect.get("ceiling") or prospect.get("potential") or 60.0)
+    potential = float(prospect.get("potential") or ceiling)
+    fit = float(entry.get("fit_grade") or 50.0)
+    timeline = 0.0
+    if phase in {"rebuilding", "developing"}:
+        timeline += (ceiling - current) * 0.13 + max(0.0, potential - 72.0) * 0.08
+    elif phase in {"contending", "contending_with_future_upside"}:
+        timeline += max(0.0, current - 54.0) * 0.18 + max(0.0, fit - 56.0) * 0.06
+    bad_fit = max(0.0, 44.0 - fit) * (0.28 if overall_pick <= 14 else 0.18)
+    public_tier_bonus = {1: 4.0, 2: 1.6}.get(prospect_priority_tier(prospect), 0.0)
+    rng = random.Random(f"{seed}:{team_id}:{overall_pick}:{entry.get('prospect_id')}:scout_pick")
+    uncertainty = rng.uniform(-1.0, 1.0) * (1.0 - confidence) * (3.5 if overall_pick <= 10 else 5.0)
+    return base + timeline + public_tier_bonus + uncertainty - bad_fit
+
+
+def prospect_priority_tier(prospect: dict[str, Any]) -> int:
+    name = normalize_name(prospect.get("name") or "")
+    if name in {"aj dybantsa", "darryn peterson", "cameron boozer"}:
+        return 1
+    if name in {"caleb wilson", "nate acuff", "jj mccain"}:
+        return 2
+    rank = int(prospect.get("rank") or 99)
+    return 2 if rank <= 6 else 3
 
 
 def choose_generated_with_draft_chaos(ranked: list[dict[str, Any]], overall_pick: int, team_id: str, seed: int) -> dict[str, Any]:
@@ -1491,6 +1554,17 @@ def prospect_team_fit(canonical: dict[str, Any], team_id: str, prospect: DraftPr
         fit += max(0.0, float(prospect["current_ability"]) - 56) * 0.45
     if prospect["archetype"] in {"two_way_wing", "movement_shooter", "rim_protecting_big"}:
         fit += 3
+    if prospect.get("position") == "C":
+        values = {item.get("player_id"): item for item in canonical.get("player_asset_valuations", [])}
+        young_franchise_center = any(
+            player.get("team_id") == team_id
+            and player.get("position") == "C"
+            and float(player.get("age") or 30.0) <= 27.0
+            and float((values.get(player.get("id")) or {}).get("player_value") or 0.0) >= 68.0
+            for player in canonical.get("players", [])
+        )
+        if young_franchise_center and prospect.get("archetype") in {"rim_protecting_big", "traditional_center", "interior_big"}:
+            fit -= 12.0
     return clamp(fit, 1, 99)
 
 

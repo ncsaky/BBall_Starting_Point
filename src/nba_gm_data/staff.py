@@ -467,21 +467,10 @@ def fire_staff_from_save(save: dict[str, Any], team_id: str, slot: str) -> dict[
 
 
 def queue_press_event_if_user_involved(save: dict[str, Any], kind: str, headline: str, team_ids: list[str | None]) -> None:
-    user_team_id = save.get("meta", {}).get("user_team_id")
-    if not user_team_id or user_team_id not in set(team_ids):
-        return
+    from .save import queue_aggregated_press_event
+
     date = save.get("state", {}).get("current_date") or "unknown"
-    event = {
-        "id": stable_id("press_event", kind, headline, date),
-        "date": date,
-        "kind": kind,
-        "headline": headline,
-        "question": f"{headline} What should players and fans take from the staff decision?",
-        "status": "pending",
-    }
-    save.setdefault("pending_press_events", [])
-    if event["id"] not in {item.get("id") for item in save["pending_press_events"]}:
-        save["pending_press_events"].append(event)
+    queue_aggregated_press_event(save, kind, headline, team_ids, date)
 
 
 def interim_staff(

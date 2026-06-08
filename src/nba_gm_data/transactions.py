@@ -383,7 +383,16 @@ def trade_block_report(canonical: dict[str, Any] | Any, team_query: str | None =
     }
 
 
-def find_trade(canonical: dict[str, Any] | Any, player_name: str, for_team: str, limit: int = 10, seed: int = 1, config: dict[str, Any] | None = None) -> dict[str, Any]:
+def find_trade(
+    canonical: dict[str, Any] | Any,
+    player_name: str,
+    for_team: str,
+    limit: int = 10,
+    seed: int = 1,
+    config: dict[str, Any] | None = None,
+    package_result_limit: int = 18,
+    package_player_options: int = 9,
+) -> dict[str, Any]:
     canonical = with_transaction_context(canonical, config)
     user_team = resolve_team(canonical, for_team)
     target = resolve_player(canonical, player_name)
@@ -391,9 +400,9 @@ def find_trade(canonical: dict[str, Any] | Any, player_name: str, for_team: str,
     if effectively_untouchable(canonical, target):
         candidates = []
     elif target["team_id"] == user_team["id"]:
-        candidates = find_selling_candidates(canonical, user_team, target, seed)
+        candidates = find_selling_candidates(canonical, user_team, target, seed, package_result_limit, package_player_options)
     else:
-        candidates = find_buying_candidates(canonical, user_team, target, seed)
+        candidates = find_buying_candidates(canonical, user_team, target, seed, package_result_limit, package_player_options)
     candidates = [candidate for candidate in candidates if user_facing_trade_candidate_ok(canonical, candidate, user_team["id"])]
     candidates = sorted(candidates, key=lambda item: candidate_sort_score(item, user_team["id"]), reverse=True)[:limit]
     return {
@@ -466,8 +475,9 @@ def find_trade_for_assets(
 def effectively_untouchable(canonical: dict[str, Any], player: dict[str, Any]) -> bool:
     valuation = next((value for value in canonical.get("player_asset_valuations", []) if value.get("player_id") == player.get("id")), fallback_asset_valuation(player))
     block = next((entry for entry in canonical.get("trade_block_entries", []) if entry.get("player_id") == player.get("id")), {})
+    market_value = market_trade_target_value(player, valuation)
     return (
-        float(valuation.get("player_value") or 0.0) >= 70.0
+        market_value >= 70.0
         and float(valuation.get("health_risk") or 0.0) <= 10.0
         and float(block.get("block_score") or 0.0) < 55.0
     )
@@ -522,22 +532,39 @@ def evaluate_trade(
 def simulate_ai_trades(canonical: dict[str, Any] | Any, from_date: str, through_date: str, seed: int = 1, limit: int = 10, config: dict[str, Any] | None = None) -> dict[str, Any]:
     canonical = with_transaction_context(canonical, config)
     rng = random.Random(f"{seed}:{from_date}:{through_date}:ai_trades")
-    entries = sorted(canonical["trade_block_entries"], key=lambda item: item["block_score"], reverse=True)[:80]
+    entries = sorted(canonical["trade_block_entries"], key=lambda item: item["block_score"], reverse=True)[:45]
     proposals = []
     for entry in entries:
         player = player_by_id(canonical, entry["player_id"])
         if not player:
             continue
+        seller = team_by_id(canonical, player.get("team_id"))
+        if not seller:
+            continue
         possible_buyers = buyer_teams_for_player(canonical, player)
         rng.shuffle(possible_buyers)
-        for buyer in possible_buyers[:4]:
-            report = find_trade(canonical, player["name"], buyer["abbrev"], limit=1, seed=seed, config=config)
-            if not report["candidates"]:
+        accepted_for_player = False
+        for buyer in possible_buyers[:2]:
+            if buyer["id"] == seller["id"]:
                 continue
-            candidate = report["candidates"][0]
-            if ai_trade_candidate_accepted(canonical, candidate):
-                candidate = mark_ai_trade_accepted(candidate)
-                proposals.append(candidate)
+            packages = buyer_offer_packages(canonical, buyer, seller, player, seed, max_results=4, max_player_options=4)
+            for buyer_assets in packages[:2]:
+                report = evaluate_trade(
+                    canonical,
+                    seller["abbrev"],
+                    buyer["abbrev"],
+                    [{"kind": "player", "value": player["name"]}],
+                    buyer_assets,
+                    seed=seed,
+                    config=config,
+                )
+                candidate = candidate_from_evaluation(canonical, report)
+                if ai_trade_candidate_accepted(canonical, candidate):
+                    candidate = mark_ai_trade_accepted(candidate)
+                    proposals.append(candidate)
+                    accepted_for_player = True
+                    break
+            if len(proposals) >= limit or accepted_for_player:
                 break
         if len(proposals) >= limit:
             break
@@ -650,6 +677,9 @@ def apply_trade_to_save(save_path: str | Path, proposal_id: str, date: str = CAN
                 save.setdefault("roster_overrides", {})[asset["id"]] = from_team_id
             if asset.get("kind") == "pick":
                 save.setdefault("draft_pick_overrides", {})[asset["id"]] = from_team_id
+        for team_id in [from_team_id, to_team_id]:
+            if team_id:
+                save.setdefault("rotation_snapshots", {}).pop(team_id, None)
         from .save import add_news
 
         add_news(save, "trade", trade_headline_from_payload(proposal_payload), date_value=date)
@@ -667,20 +697,9 @@ def apply_trade_to_save(save_path: str | Path, proposal_id: str, date: str = CAN
 
 
 def queue_press_event_if_user_involved(save: dict[str, Any], kind: str, headline: str, team_ids: list[str | None], date: str) -> None:
-    user_team_id = save.get("meta", {}).get("user_team_id")
-    if not user_team_id or user_team_id not in set(team_ids):
-        return
-    event = {
-        "id": stable_id("press_event", kind, headline, date),
-        "date": date,
-        "kind": kind,
-        "headline": headline,
-        "question": f"You just made this move: {headline}. Was this about fit, money, timeline, or pressure?",
-        "status": "pending",
-    }
-    save.setdefault("pending_press_events", [])
-    if event["id"] not in {item.get("id") for item in save["pending_press_events"]}:
-        save["pending_press_events"].append(event)
+    from .save import queue_aggregated_press_event
+
+    queue_aggregated_press_event(save, kind, headline, team_ids, date)
 
 
 def trade_headline_from_payload(proposal: dict[str, Any]) -> str:
@@ -765,21 +784,35 @@ def fallback_asset_valuation(player: dict[str, Any] | None) -> dict[str, float]:
     }
 
 
-def find_selling_candidates(canonical: dict[str, Any], user_team: dict[str, Any], target: dict[str, Any], seed: int) -> list[dict[str, Any]]:
+def find_selling_candidates(
+    canonical: dict[str, Any],
+    user_team: dict[str, Any],
+    target: dict[str, Any],
+    seed: int,
+    package_result_limit: int = 18,
+    package_player_options: int = 9,
+) -> list[dict[str, Any]]:
     candidates = []
     for buyer in buyer_teams_for_player(canonical, target):
         if buyer["id"] == user_team["id"]:
             continue
-        for buyer_assets in buyer_offer_packages(canonical, buyer, user_team, target, seed)[:4]:
+        for buyer_assets in buyer_offer_packages(canonical, buyer, user_team, target, seed, max_results=package_result_limit, max_player_options=package_player_options)[:4]:
             report = evaluate_trade(canonical, user_team["abbrev"], buyer["abbrev"], [{"kind": "player", "value": target["name"]}], buyer_assets, seed=seed)
             candidates.append(candidate_from_evaluation(canonical, report))
     return candidates
 
 
-def find_buying_candidates(canonical: dict[str, Any], user_team: dict[str, Any], target: dict[str, Any], seed: int) -> list[dict[str, Any]]:
+def find_buying_candidates(
+    canonical: dict[str, Any],
+    user_team: dict[str, Any],
+    target: dict[str, Any],
+    seed: int,
+    package_result_limit: int = 18,
+    package_player_options: int = 9,
+) -> list[dict[str, Any]]:
     target_team = team_by_id(canonical, target["team_id"])
     candidates = []
-    for package in buyer_offer_packages(canonical, user_team, target_team, target, seed):
+    for package in buyer_offer_packages(canonical, user_team, target_team, target, seed, max_results=package_result_limit, max_player_options=package_player_options):
         report = evaluate_trade(canonical, user_team["abbrev"], target_team["abbrev"], package, [{"kind": "player", "value": target["name"]}], seed=seed)
         candidates.append(candidate_from_evaluation(canonical, report))
     return candidates
@@ -790,11 +823,43 @@ def buyer_offer_assets(canonical: dict[str, Any], buyer: dict[str, Any], seller:
     return packages[0] if packages else []
 
 
-def buyer_offer_packages(canonical: dict[str, Any], buyer: dict[str, Any], seller: dict[str, Any], target: dict[str, Any], seed: int) -> list[list[dict[str, Any]]]:
+def buyer_offer_packages(
+    canonical: dict[str, Any],
+    buyer: dict[str, Any],
+    seller: dict[str, Any],
+    target: dict[str, Any],
+    seed: int,
+    max_results: int = 18,
+    max_player_options: int = 9,
+) -> list[list[dict[str, Any]]]:
     valuations = {value["player_id"]: value for value in canonical["player_asset_valuations"]}
-    target_value = valuations.get(target["id"], fallback_asset_valuation(target))["player_value"]
+    target_valuation = valuations.get(target["id"], fallback_asset_valuation(target))
+    target_value = market_trade_target_value(target, target_valuation)
     target_salary = current_salary(contract_for_player(canonical, target["id"]))
-    return buyer_offer_packages_for_value(canonical, buyer, seller, target_value, target_salary, seed, {target["id"]})
+    return buyer_offer_packages_for_value(
+        canonical,
+        buyer,
+        seller,
+        target_value,
+        target_salary,
+        seed,
+        {target["id"]},
+        max_results=max_results,
+        max_player_options=max_player_options,
+    )
+
+
+def market_trade_target_value(player: dict[str, Any], valuation: dict[str, Any]) -> float:
+    raw = float(valuation.get("player_value") or 0.0)
+    minutes = display_minutes_projection(player)
+    if raw < 62 or minutes >= 28:
+        return raw
+    role_scale = clamp((max(4.0, minutes) / 30.0) ** 1.22, 0.36, 1.0)
+    overall_proxy = float(player.get("current_ability") or player.get("overall") or 38.0 + minutes * 1.15)
+    compressed = raw * role_scale
+    if minutes < 24:
+        compressed = min(compressed, 32.0 + max(0.0, overall_proxy - 55.0) * 0.68 + minutes * 0.43)
+    return round(clamp(compressed, 1.0, raw), 2)
 
 
 def buyer_offer_packages_for_value(
@@ -805,6 +870,8 @@ def buyer_offer_packages_for_value(
     target_salary: float | None,
     seed: int,
     excluded_player_ids: set[str] | None = None,
+    max_results: int = 18,
+    max_player_options: int = 9,
 ) -> list[list[dict[str, Any]]]:
     excluded_player_ids = excluded_player_ids or set()
     valuations = {value["player_id"]: value for value in canonical["player_asset_valuations"]}
@@ -831,18 +898,31 @@ def buyer_offer_packages_for_value(
         if value > target_value * (1.08 if target_value >= 70 else 1.24):
             continue
         tradable_players.append(player)
-    tradable_players = tradable_players[:8]
+    tradable_players = tradable_players[:max(3, int(max_player_options))]
+    buyer_state = next((item for item in canonical.get("team_strategic_states", []) if item.get("team_id") == buyer["id"]), {})
     picks = sorted(
         [pick for pick in canonical.get("draft_picks", []) if pick.get("current_owner_team_id") == buyer["id"]],
-        key=lambda pick: (pick_asset_value(pick, "neutral"), -int(pick.get("round") or 2), str(pick.get("season") or "")),
+        key=lambda pick: pick_offer_preference_score(pick, buyer_state.get("phase", "balanced"), target_value),
         reverse=True,
-    )[:5]
+    )[:9]
+    firsts = [pick for pick in picks if int(pick.get("round") or 2) == 1]
+    seconds = [pick for pick in picks if int(pick.get("round") or 2) == 2]
     pick_variants = [()]
-    pick_variants.extend((pick,) for pick in picks[:3])
-    if len(picks) >= 2:
-        pick_variants.append((picks[0], picks[1]))
+    pick_variants.extend((pick,) for pick in seconds[:4])
+    if len(seconds) >= 2:
+        pick_variants.extend(combinations(seconds[:4], 2))
+    if len(seconds) >= 3:
+        pick_variants.append(tuple(seconds[:3]))
+    if target_value >= 38:
+        pick_variants.extend((pick,) for pick in firsts[:3])
+        for first in firsts[:2]:
+            for second in seconds[:3]:
+                pick_variants.append((first, second))
+    elif not seconds and firsts:
+        pick_variants.append((firsts[0],))
     packages: list[tuple[float, list[dict[str, Any]]]] = []
-    for player_count in range(1, min(3, len(tradable_players)) + 1):
+    max_player_count = 3 if target_value >= 60 and int(max_player_options) > 5 else 2
+    for player_count in range(1, min(max_player_count, len(tradable_players)) + 1):
         for player_group in combinations(tradable_players, player_count):
             player_assets = [{"kind": "player", "value": player["name"]} for player in player_group]
             player_salary = sum(current_salary(contract_for_player(canonical, player["id"])) or 0.0 for player in player_group)
@@ -851,12 +931,16 @@ def buyer_offer_packages_for_value(
                     continue
                 assets = [*player_assets, *[{"kind": "pick", "value": pick["id"]} for pick in pick_group]]
                 rough_value = sum(offer_player_rough_value(canonical, player, target_value, target_salary, valuations) for player in player_group)
-                rough_value += sum(pick_asset_value(pick, "neutral") for pick in pick_group)
-                if rough_value < target_value * (0.42 if target_value >= 56 else 0.48) or rough_value > target_value * 1.34 + 10:
+                rough_value += sum(pick_asset_value(pick, buyer_state.get("phase", "neutral")) for pick in pick_group)
+                if rough_value < target_value * (0.34 if target_value >= 56 else 0.38) or rough_value > target_value * 1.48 + 14:
                     continue
                 salary_gap = abs(player_salary - (target_salary or player_salary)) / 1_000_000
-                complexity_cost = max(0, len(assets) - 2) * (0.15 if target_value >= 56 else 0.55)
-                packages.append((abs(rough_value - target_value) + salary_gap * 0.22 + complexity_cost, assets))
+                complexity_cost = max(0, len(assets) - 2) * (0.1 if target_value >= 56 else 0.32)
+                distant_risk = sum(far_future_pick_risk(pick) for pick in pick_group)
+                packages.append((abs(rough_value - target_value) + salary_gap * 0.22 + complexity_cost + distant_risk, assets))
+    if not packages:
+        fallback = fallback_trade_packages(canonical, buyer, seller, tradable_players, seconds, firsts, target_value, target_salary, valuations)
+        packages.extend(fallback)
     unique: list[list[dict[str, Any]]] = []
     seen: set[str] = set()
     for _, assets in sorted(packages, key=lambda item: (item[0], json.dumps(item[1], sort_keys=True))):
@@ -865,7 +949,7 @@ def buyer_offer_packages_for_value(
             continue
         seen.add(key)
         unique.append(assets)
-        if len(unique) >= 10:
+        if len(unique) >= max(4, int(max_results)):
             break
     return unique
 
@@ -877,7 +961,8 @@ def offer_player_rough_value(
     target_salary: float | None,
     valuations: dict[str, dict[str, Any]],
 ) -> float:
-    value = float(valuations.get(player["id"], fallback_asset_valuation(player))["player_value"])
+    valuation = valuations.get(player["id"], fallback_asset_valuation(player))
+    value = market_trade_target_value(player, valuation)
     salary = current_salary(contract_for_player(canonical, player["id"])) or 0.0
     filler = target_salary is not None and target_salary >= 8_000_000 and salary >= 5_000_000 and value < target_value * 0.55
     if filler:
@@ -887,13 +972,49 @@ def offer_player_rough_value(
     return value
 
 
+def fallback_trade_packages(
+    canonical: dict[str, Any],
+    buyer: dict[str, Any],
+    seller: dict[str, Any],
+    tradable_players: list[dict[str, Any]],
+    seconds: list[dict[str, Any]],
+    firsts: list[dict[str, Any]],
+    target_value: float,
+    target_salary: float | None,
+    valuations: dict[str, dict[str, Any]],
+) -> list[tuple[float, list[dict[str, Any]]]]:
+    if target_value >= 70:
+        return []
+    packages: list[tuple[float, list[dict[str, Any]]]] = []
+    salary_sorted = sorted(
+        tradable_players,
+        key=lambda player: (
+            abs((current_salary(contract_for_player(canonical, player["id"])) or 0.0) - (target_salary or 0.0)),
+            offer_player_rough_value(canonical, player, target_value, target_salary, valuations),
+        ),
+    )
+    for player in salary_sorted[:8]:
+        player_value = offer_player_rough_value(canonical, player, target_value, target_salary, valuations)
+        pick_pool = seconds[:3]
+        if target_value >= 44 and firsts:
+            pick_pool = [*seconds[:2], firsts[0]]
+        for pick_count in range(0, min(3, len(pick_pool)) + 1):
+            pick_group = tuple(pick_pool[:pick_count])
+            assets = [{"kind": "player", "value": player["name"]}, *[{"kind": "pick", "value": pick["id"]} for pick in pick_group]]
+            rough = player_value + sum(pick_asset_value(pick, "neutral") for pick in pick_group)
+            if rough < max(10.0, target_value * 0.28):
+                continue
+            packages.append((abs(rough - target_value) + len(assets) * 0.45 + sum(far_future_pick_risk(pick) for pick in pick_group), assets))
+    return packages
+
+
 def asset_package_value(canonical: dict[str, Any], assets: list[dict[str, Any]], phase: str = "neutral") -> float:
     values = {value["player_id"]: value for value in canonical.get("player_asset_valuations", [])}
     total = 0.0
     for asset in assets:
         if asset.get("kind") == "player":
             player = player_by_id(canonical, asset.get("id"))
-            total += float(values.get(asset.get("id"), fallback_asset_valuation(player)).get("player_value") or 0.0)
+            total += market_trade_target_value(player, values.get(asset.get("id"), fallback_asset_valuation(player)))
         elif asset.get("kind") == "pick":
             total += pick_asset_value(pick_by_id(canonical, asset.get("id")), phase)
     return round(total, 2)
@@ -1025,7 +1146,7 @@ def user_facing_trade_candidate_ok(canonical: dict[str, Any], candidate: dict[st
     proposal = candidate.get("proposal") or {}
     evaluations = candidate.get("evaluations") or []
     non_user_evals = [item for item in evaluations if item.get("perspective_team_id") != user_team_id]
-    if non_user_evals and not any(item.get("accepted") or float(item.get("net_value") or 0) >= -1.0 for item in non_user_evals):
+    if non_user_evals and not any(item.get("accepted") or float(item.get("net_value") or 0) >= -3.0 for item in non_user_evals):
         return False
     user_eval = next((item for item in evaluations if item.get("perspective_team_id") == user_team_id), {})
     if float(user_eval.get("net_value") or 0) > 28:
@@ -1057,7 +1178,7 @@ def simple_asset_total(canonical: dict[str, Any], assets: list[dict[str, Any]]) 
     for asset in assets:
         if asset.get("kind") == "player":
             player = player_by_id(canonical, asset.get("id"))
-            total += float(values.get(asset.get("id"), fallback_asset_valuation(player)).get("player_value") or 0.0)
+            total += market_trade_target_value(player, values.get(asset.get("id"), fallback_asset_valuation(player)))
         elif asset.get("kind") == "pick":
             total += pick_asset_value(pick_by_id(canonical, asset.get("id")), state.get("phase", "balanced"))
     return total
@@ -1104,7 +1225,7 @@ def package_value_breakdown(canonical: dict[str, Any], assets: list[dict[str, An
         if asset.get("kind") == "player":
             player = player_by_id(canonical, asset.get("id"))
             valuation = values.get(asset.get("id"), fallback_asset_valuation(player))
-            player_value = float(valuation.get("player_value") or 0.0)
+            player_value = market_trade_target_value(player, valuation)
             fit = team_fit_for_player(player, valuation, state) if player and state else 0.0
             multiplier = multipliers.get(asset.get("id"), 1.0)
             pieces["player_quality"] += player_value
@@ -1586,7 +1707,8 @@ def package_value_for_team(
             player = player_by_id(canonical, asset["id"])
             value = values.get(asset["id"], fallback_asset_valuation(player))
             multiplier = multipliers.get(asset["id"], 1.0)
-            adjusted = (value["player_value"] + team_fit_for_player(player, value, state)) * multiplier
+            player_value = market_trade_target_value(player, value)
+            adjusted = (player_value + team_fit_for_player(player, value, state)) * multiplier
             player_adjusted_values.append(adjusted)
             total += adjusted
         elif asset["kind"] == "pick":
@@ -1856,6 +1978,37 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     if phase in {"contending", "contending_with_future_upside"}:
         value *= 0.88
     return round(clamp(value, 1, 80), 2)
+
+
+def pick_offer_preference_score(pick: dict[str, Any], phase: str, target_value: float) -> float:
+    value = pick_asset_value(pick, phase)
+    year = pick_season_start(pick)
+    round_no = int(pick.get("round") or 2)
+    distance = max(0, year - 2026) if year else 3
+    near_bonus = max(0.0, 5.0 - distance) * 2.2
+    second_bonus = 8.0 if round_no == 2 and target_value < 55 else 0.0
+    guarded_first_penalty = 10.0 if round_no == 1 and target_value < 38 else 0.0
+    distant_penalty = far_future_pick_risk(pick) * 2.8
+    return value + near_bonus + second_bonus - guarded_first_penalty - distant_penalty
+
+
+def far_future_pick_risk(pick: dict[str, Any]) -> float:
+    year = pick_season_start(pick)
+    if not year:
+        return 1.0
+    distance = max(0, year - 2026)
+    round_no = int(pick.get("round") or 2)
+    base = max(0.0, distance - 2) * (2.4 if round_no == 1 else 0.75)
+    if pick.get("protections"):
+        base *= 0.75
+    return round(base, 2)
+
+
+def pick_season_start(pick: dict[str, Any]) -> int | None:
+    try:
+        return int(str(pick.get("season") or "").split("-")[0])
+    except (TypeError, ValueError):
+        return None
 
 
 def best_tradeable_pick(canonical: dict[str, Any], team_id: str) -> dict[str, Any] | None:
