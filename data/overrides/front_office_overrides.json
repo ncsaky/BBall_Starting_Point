@@ -1,0 +1,89 @@
+{
+  "notes": "Light manual flavor for front-office AI personalities. Values are 1-99 gameplay ratings, not real personnel claims.",
+  "teams": {
+    "OKC": {
+      "archetype": "elite portfolio strategist",
+      "competence": 92,
+      "patience": 86,
+      "risk_tolerance": 58,
+      "aggressiveness": 58,
+      "asset_discipline": 94,
+      "timeline_honesty": 92,
+      "owner_pressure": 54,
+      "star_chasing": 48,
+      "financial_discipline": 84,
+      "confidence": 0.72,
+      "notes": "Protects flexibility and values consolidation only when the fit is clearly title-level."
+    },
+    "GSW": {
+      "archetype": "urgent dynasty steward",
+      "competence": 78,
+      "patience": 42,
+      "risk_tolerance": 72,
+      "aggressiveness": 76,
+      "asset_discipline": 61,
+      "timeline_honesty": 76,
+      "owner_pressure": 82,
+      "star_chasing": 70,
+      "financial_discipline": 52,
+      "confidence": 0.66,
+      "notes": "Older star window creates pressure to prioritize playoff rotation fit and health."
+    },
+    "PHX": {
+      "archetype": "aggressive star chaser",
+      "competence": 58,
+      "patience": 32,
+      "risk_tolerance": 83,
+      "aggressiveness": 88,
+      "asset_discipline": 42,
+      "timeline_honesty": 52,
+      "owner_pressure": 88,
+      "star_chasing": 90,
+      "financial_discipline": 34,
+      "confidence": 0.58,
+      "notes": "More likely to chase names or short-window upgrades under owner pressure."
+    },
+    "WAS": {
+      "archetype": "patient asset accumulator",
+      "competence": 62,
+      "patience": 82,
+      "risk_tolerance": 45,
+      "aggressiveness": 38,
+      "asset_discipline": 76,
+      "timeline_honesty": 78,
+      "owner_pressure": 38,
+      "star_chasing": 35,
+      "financial_discipline": 76,
+      "confidence": 0.55,
+      "notes": "Rebuild-leaning profile that prioritizes picks, youth, and flexibility."
+    },
+    "LAL": {
+      "archetype": "brand-pressure star hunter",
+      "competence": 62,
+      "patience": 35,
+      "risk_tolerance": 82,
+      "aggressiveness": 84,
+      "asset_discipline": 48,
+      "timeline_honesty": 58,
+      "owner_pressure": 90,
+      "star_chasing": 92,
+      "financial_discipline": 44,
+      "confidence": 0.55,
+      "notes": "Market and star-window pressure can produce aggressive win-now behavior."
+    },
+    "SAS": {
+      "archetype": "patient franchise architect",
+      "competence": 84,
+      "patience": 86,
+      "risk_tolerance": 55,
+      "aggressiveness": 48,
+      "asset_discipline": 86,
+      "timeline_honesty": 88,
+      "owner_pressure": 42,
+      "star_chasing": 50,
+      "financial_discipline": 82,
+      "confidence": 0.62,
+      "notes": "Wembanyama-era planner that should protect long-window upside."
+    }
+  }
+}

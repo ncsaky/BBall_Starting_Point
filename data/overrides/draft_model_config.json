@@ -1,0 +1,49 @@
+{
+  "version": "draft_model_v1",
+  "generated_class_size": 60,
+  "bpa_gap_threshold": 6.5,
+  "need_override_threshold": 10.0,
+  "scouting": {
+    "base_noise": 7.5,
+    "excellent_staff_noise": 3.0,
+    "poor_staff_noise": 11.0,
+    "minimum_confidence": 0.38,
+    "maximum_confidence": 0.88
+  },
+  "class_strength": {
+    "mean": 58.0,
+    "season_variance": 9.0,
+    "top_end_variance": 11.0,
+    "depth_variance": 8.0
+  },
+  "archetype_weights": {
+    "lead_creator": 0.11,
+    "scoring_wing": 0.12,
+    "two_way_wing": 0.13,
+    "connector_guard": 0.09,
+    "movement_shooter": 0.08,
+    "rim_pressure_guard": 0.08,
+    "versatile_forward": 0.13,
+    "stretch_big": 0.08,
+    "rim_protecting_big": 0.1,
+    "energy_big": 0.08
+  },
+  "lottery": {
+    "draw_count": 4,
+    "team_count": 14,
+    "odds_weights": [140, 140, 140, 125, 105, 90, 75, 60, 45, 30, 20, 15, 10, 5],
+    "standings_noise": 1.75
+  },
+  "rookie_scale": {
+    "first_round_years": 4,
+    "second_round_years": 2,
+    "first_pick_year1_salary": 12700000,
+    "first_round_decay": 0.925,
+    "first_round_floor": 2650000,
+    "second_round_year1_salary": 1350000,
+    "second_round_pick_bonus": 18000,
+    "annual_raise": 0.08,
+    "cap_hold_multiplier": 1.2
+  },
+  "notes": "Draft generation, scouting fog, board, and AI pick logic config. Values are gameplay tuning constants, not draft research claims."
+}

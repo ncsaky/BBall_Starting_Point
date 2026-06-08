@@ -1,0 +1,74 @@
+{
+  "archetypes": {
+    "defensive_coordinator": [
+      "switching tactician",
+      "paint protection organizer",
+      "pressure defense architect",
+      "detail-first scout planner"
+    ],
+    "development_lead": [
+      "patient skill builder",
+      "mechanics specialist",
+      "confidence-first mentor",
+      "two-way prospect shaper"
+    ],
+    "head_coach": [
+      "player-empowerment leader",
+      "system disciplinarian",
+      "adaptive strategist",
+      "development-minded culture setter"
+    ],
+    "offensive_coordinator": [
+      "spacing modernist",
+      "movement offense designer",
+      "advantage creation mapper",
+      "pace-and-read optimizer"
+    ],
+    "performance_lead": [
+      "load management planner",
+      "conditioning optimizer",
+      "recovery systems lead",
+      "availability-first performance coach"
+    ],
+    "scouting_lead": [
+      "upside evaluator",
+      "risk-balanced drafter",
+      "international connector",
+      "role-player value hunter"
+    ]
+  },
+  "name_pool": [
+    "Adrian Vale",
+    "Marcus Ellery",
+    "Theo Ramsey",
+    "Damon Price",
+    "Elias Monroe",
+    "Caleb Rowan",
+    "Julian Hart",
+    "Nolan Pierce",
+    "Miles Calder",
+    "Simon Avery",
+    "Grant Keller",
+    "Isaac Bennett",
+    "Rafael Stone",
+    "Owen Mercer",
+    "Landon Brooks",
+    "Victor Hale",
+    "Evan Sloane",
+    "Malik Foster",
+    "Jonah Reeves",
+    "Quentin Ross",
+    "Andre Lawson",
+    "Cole Whitaker",
+    "Reid Donovan",
+    "Tariq Mason",
+    "Bennett Hayes",
+    "Dominic Shaw",
+    "Preston Cole",
+    "Gavin Archer",
+    "Matteo Cross",
+    "Cameron West"
+  ],
+  "notes": "Seed pools for deterministic fictional gameplay staff. These names and archetypes are game scaffolding only, not real NBA staff claims.",
+  "teams": {}
+}

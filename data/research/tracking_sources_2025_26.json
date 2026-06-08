@@ -1,0 +1,21 @@
+{
+  "categories": [
+    "touches",
+    "drives",
+    "speed_distance",
+    "passing",
+    "defensive_impact",
+    "shot_dashboard",
+    "hustle",
+    "catch_and_shoot",
+    "pull_up_shooting",
+    "rebounding"
+  ],
+  "notes": "Registry for tracking/stat dashboards that should feed future feature extraction where accessible. Current v0 feature vectors use local canonical traits plus available public/raw stat proxies.",
+  "source": {
+    "fetched_at": "2026-05-22T06:51:12+00:00",
+    "id": "src_tracking_sources_2025_26",
+    "title": "NBA tracking source registry 2025-26",
+    "url": "https://www-ng.nba.com/stats/quicklinks"
+  }
+}

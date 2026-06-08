@@ -1,0 +1,33 @@
+{
+  "version": "contract_market_ai_v1",
+  "salary": {
+    "minimum_salary": 1200000,
+    "soft_cap": 154000000,
+    "tax_line": 188000000,
+    "midlevel_exception": 14200000
+  },
+  "role_tier_caps": {
+    "franchise_anchor": 62000000,
+    "all_star_core": 52000000,
+    "legacy_star": 50000000,
+    "elite_specialist": 32000000,
+    "high_end_starter": 38000000,
+    "starter": 27000000,
+    "rotation": 16000000,
+    "depth": 6000000
+  },
+  "years": {
+    "extension_max_years": 5,
+    "external_max_years": 4,
+    "older_player_age": 34,
+    "major_health_risk": 10
+  },
+  "negotiation": {
+    "player_acceptance_threshold": 68,
+    "team_acceptance_threshold": 54,
+    "counter_step": 0.32,
+    "initial_offer_floor": 0.72,
+    "max_bad_gm_overpay_multiplier": 1.11
+  },
+  "notes": "Practical v1 contract market config. Salaries are dollars; the model is comp-informed and confidence-aware, but full CBA exception/apron mechanics are deferred."
+}

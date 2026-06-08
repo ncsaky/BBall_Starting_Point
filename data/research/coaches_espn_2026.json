@@ -1,0 +1,281 @@
+{
+  "coach_count": 30,
+  "coaches": [
+    {
+      "coach": "Quin Snyder",
+      "experience": "10",
+      "record": "46-36",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "ATL",
+      "team_name": "Atlanta Hawks"
+    },
+    {
+      "coach": "Joe Mazzulla",
+      "experience": "2",
+      "record": "56-26",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "BOS",
+      "team_name": "Boston Celtics"
+    },
+    {
+      "coach": "Jordi Fernandez",
+      "experience": "0",
+      "record": "20-62",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "BKN",
+      "team_name": "Brooklyn Nets"
+    },
+    {
+      "coach": "Charles Lee",
+      "experience": "0",
+      "record": "44-38",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "CHA",
+      "team_name": "Charlotte Hornets"
+    },
+    {
+      "coach": null,
+      "experience": "--",
+      "record": "--",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "vacant",
+      "team_abbrev": "CHI",
+      "team_name": "Chicago Bulls"
+    },
+    {
+      "coach": "Kenny Atkinson",
+      "experience": "4",
+      "record": "52-30",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "CLE",
+      "team_name": "Cleveland Cavaliers"
+    },
+    {
+      "coach": null,
+      "experience": "--",
+      "record": "--",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "vacant",
+      "team_abbrev": "DAL",
+      "team_name": "Dallas Mavericks"
+    },
+    {
+      "coach": "David Adelman",
+      "experience": "0",
+      "record": "54-28",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "DEN",
+      "team_name": "Denver Nuggets"
+    },
+    {
+      "coach": "J.B. Bickerstaff",
+      "experience": "8",
+      "record": "60-22",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "DET",
+      "team_name": "Detroit Pistons"
+    },
+    {
+      "coach": "Steve Kerr",
+      "experience": "10",
+      "record": "37-45",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "GSW",
+      "team_name": "Golden State Warriors"
+    },
+    {
+      "coach": "Ime Udoka",
+      "experience": "2",
+      "record": "52-30",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "HOU",
+      "team_name": "Houston Rockets"
+    },
+    {
+      "coach": "Rick Carlisle",
+      "experience": "22",
+      "record": "19-63",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "IND",
+      "team_name": "Indiana Pacers"
+    },
+    {
+      "coach": "Tyronn Lue",
+      "experience": "8",
+      "record": "42-40",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "LAC",
+      "team_name": "LA Clippers"
+    },
+    {
+      "coach": "JJ Redick",
+      "experience": "1",
+      "record": "53-29",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "LAL",
+      "team_name": "Los Angeles Lakers"
+    },
+    {
+      "coach": "Tuomas Iisalo",
+      "experience": "0",
+      "record": "25-57",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "MEM",
+      "team_name": "Memphis Grizzlies"
+    },
+    {
+      "coach": "Erik Spoelstra",
+      "experience": "16",
+      "record": "43-39",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "MIA",
+      "team_name": "Miami Heat"
+    },
+    {
+      "coach": null,
+      "experience": "--",
+      "record": "--",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "vacant",
+      "team_abbrev": "MIL",
+      "team_name": "Milwaukee Bucks"
+    },
+    {
+      "coach": "Chris Finch",
+      "experience": "4",
+      "record": "49-33",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "MIN",
+      "team_name": "Minnesota Timberwolves"
+    },
+    {
+      "coach": "Jamahl Mosley",
+      "experience": "3",
+      "record": "--",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "NOP",
+      "team_name": "New Orleans Pelicans"
+    },
+    {
+      "coach": "Mike Brown",
+      "experience": "0",
+      "record": "53-29",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "NYK",
+      "team_name": "New York Knicks"
+    },
+    {
+      "coach": "Mark Daigneault",
+      "experience": "4",
+      "record": "64-18",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "OKC",
+      "team_name": "Oklahoma City Thunder"
+    },
+    {
+      "coach": null,
+      "experience": "--",
+      "record": "--",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "vacant",
+      "team_abbrev": "ORL",
+      "team_name": "Orlando Magic"
+    },
+    {
+      "coach": "Nick Nurse",
+      "experience": "6",
+      "record": "45-37",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "PHI",
+      "team_name": "Philadelphia 76ers"
+    },
+    {
+      "coach": "Jordan Ott",
+      "experience": "0",
+      "record": "45-37",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "PHX",
+      "team_name": "Phoenix Suns"
+    },
+    {
+      "coach": "Chauncey Billups",
+      "experience": "3",
+      "record": "38-39",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "POR",
+      "team_name": "Portland Trail Blazers"
+    },
+    {
+      "coach": "Doug Christie",
+      "experience": "0",
+      "record": "22-60",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "SAC",
+      "team_name": "Sacramento Kings"
+    },
+    {
+      "coach": "Mitch Johnson",
+      "experience": "1",
+      "record": "62-20",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "SAS",
+      "team_name": "San Antonio Spurs"
+    },
+    {
+      "coach": "Darko Rajakovic",
+      "experience": "0",
+      "record": "46-36",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "TOR",
+      "team_name": "Toronto Raptors"
+    },
+    {
+      "coach": "Will Hardy",
+      "experience": "2",
+      "record": "22-60",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "UTA",
+      "team_name": "Utah Jazz"
+    },
+    {
+      "coach": "Brian Keefe",
+      "experience": "0",
+      "record": "17-65",
+      "source_url": "https://www.espn.com/nba/coaches",
+      "status": "verified_public_coaches_page",
+      "team_abbrev": "WAS",
+      "team_name": "Washington Wizards"
+    }
+  ],
+  "source": {
+    "fetched_at": "2026-05-21T23:54:04+00:00",
+    "id": "src_espn_coaches_2026",
+    "title": "ESPN NBA Coaches - 2026",
+    "url": "https://www.espn.com/nba/coaches"
+  }
+}

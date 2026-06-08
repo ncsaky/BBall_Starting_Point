@@ -1,0 +1,243 @@
+{
+  "general_manager_count": 29,
+  "general_managers": [
+    {
+      "college": "Stanford University",
+      "date_of_hire": "2022",
+      "general_manager": "Onsi Saleh",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "ATL",
+      "team_name": "Atlanta Hawks"
+    },
+    {
+      "college": "DePauw University",
+      "date_of_hire": "2021",
+      "general_manager": "Brad Stevens",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "BOS",
+      "team_name": "Boston Celtics"
+    },
+    {
+      "college": "California",
+      "date_of_hire": "2016",
+      "general_manager": "Sean Marks",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "BKN",
+      "team_name": "Brooklyn Nets"
+    },
+    {
+      "college": "Iowa",
+      "date_of_hire": "2024",
+      "general_manager": "Jeff Peterson",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "CHA",
+      "team_name": "Charlotte Hornets"
+    },
+    {
+      "college": "University of Florida",
+      "date_of_hire": "2026",
+      "general_manager": "Stephen Mervis",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "CHI",
+      "team_name": "Chicago Bulls"
+    },
+    {
+      "college": "West Virginia",
+      "date_of_hire": "2022",
+      "general_manager": "Mike Gansey",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "CLE",
+      "team_name": "Cleveland Cavaliers"
+    },
+    {
+      "college": "University of Arizona",
+      "date_of_hire": "2026",
+      "general_manager": "Mike Schmitz",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "DAL",
+      "team_name": "Dallas Mavericks"
+    },
+    {
+      "college": "University of Colorado",
+      "date_of_hire": "2025",
+      "general_manager": "Ben Tenzer",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "DEN",
+      "team_name": "Denver Nuggets"
+    },
+    {
+      "college": "Duke University",
+      "date_of_hire": "2024",
+      "general_manager": "Trajan Langdon",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "DET",
+      "team_name": "Detroit Pistons"
+    },
+    {
+      "college": "Duke University",
+      "date_of_hire": "2023",
+      "general_manager": "Mike Dunleavy Jr.",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "GSW",
+      "team_name": "Golden State Warriors"
+    },
+    {
+      "college": "Williams College, Stanford (J.D.)",
+      "date_of_hire": "2020",
+      "general_manager": "Rafael Stone",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "HOU",
+      "team_name": "Houston Rockets"
+    },
+    {
+      "college": "Simpson College",
+      "date_of_hire": "2017",
+      "general_manager": "Chad Buchanan",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "IND",
+      "team_name": "Indiana Pacers"
+    },
+    {
+      "college": "Michigan",
+      "date_of_hire": "2017",
+      "general_manager": "Rob Pelinka",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "LAL",
+      "team_name": "Los Angeles Lakers"
+    },
+    {
+      "college": "USC, Duke (J.D.)",
+      "date_of_hire": "2019",
+      "general_manager": "Zach Kleiman",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "MEM",
+      "team_name": "Memphis Grizzlies"
+    },
+    {
+      "college": "St. Thomas University",
+      "date_of_hire": "2013",
+      "general_manager": "Andy Elisburg",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "MIA",
+      "team_name": "Miami Heat"
+    },
+    {
+      "college": "Rochester (Mich.)",
+      "date_of_hire": "2017",
+      "general_manager": "Jon Horst",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "MIL",
+      "team_name": "Milwaukee Bucks"
+    },
+    {
+      "college": "",
+      "date_of_hire": "2024",
+      "general_manager": "Matt Lloyd",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "MIN",
+      "team_name": "Minnesota Timberwolves"
+    },
+    {
+      "college": "Prince George's Community College",
+      "date_of_hire": "2025",
+      "general_manager": "Troy Weaver",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "NOP",
+      "team_name": "New Orleans Pelicans"
+    },
+    {
+      "college": "Houston University",
+      "date_of_hire": "2023",
+      "general_manager": "Gersson Rosas",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "NYK",
+      "team_name": "New York Knicks"
+    },
+    {
+      "college": "Virginia Wesleyan, Emerson",
+      "date_of_hire": "2007",
+      "general_manager": "Sam Presti",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "OKC",
+      "team_name": "Oklahoma City Thunder"
+    },
+    {
+      "college": "Bradley",
+      "date_of_hire": "2023",
+      "general_manager": "Anthony Parker",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "ORL",
+      "team_name": "Orlando Magic"
+    },
+    {
+      "college": "Duke University",
+      "date_of_hire": "2018",
+      "general_manager": "Elton Brand",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "PHI",
+      "team_name": "Philadelphia 76ers"
+    },
+    {
+      "college": "Michigan State University",
+      "date_of_hire": "2025",
+      "general_manager": "Brian Gregory",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "PHX",
+      "team_name": "Phoenix Suns"
+    },
+    {
+      "college": "Le Moyne",
+      "date_of_hire": "2021",
+      "general_manager": "Joe Cronin",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "POR",
+      "team_name": "Portland Trail Blazers"
+    },
+    {
+      "college": "Wayne State University",
+      "date_of_hire": "2025",
+      "general_manager": "Scott Perry",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "SAC",
+      "team_name": "Sacramento Kings"
+    },
+    {
+      "college": "Central Florida",
+      "date_of_hire": "2019",
+      "general_manager": "Brian Wright",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "SAS",
+      "team_name": "San Antonio Spurs"
+    },
+    {
+      "college": "California",
+      "date_of_hire": "2017",
+      "general_manager": "Bobby Webster",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "TOR",
+      "team_name": "Toronto Raptors"
+    },
+    {
+      "college": "Northwestern University",
+      "date_of_hire": "2019",
+      "general_manager": "Justin Zanik",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "UTA",
+      "team_name": "Utah Jazz"
+    },
+    {
+      "college": "Emerson College",
+      "date_of_hire": "2023",
+      "general_manager": "Will Dawkins",
+      "source_url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers",
+      "team_abbrev": "WAS",
+      "team_name": "Washington Wizards"
+    }
+  ],
+  "source": {
+    "fetched_at": "2026-05-21T23:54:04+00:00",
+    "id": "src_wikipedia_general_managers",
+    "title": "Wikipedia list of NBA general managers",
+    "url": "https://en.wikipedia.org/wiki/List_of_NBA_general_managers"
+  }
+}

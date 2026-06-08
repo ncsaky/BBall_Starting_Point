@@ -1,0 +1,35 @@
+{
+  "notes": "Manual player/team assignment corrections for the intended 2025-26 universe snapshot.",
+  "players": [
+    {
+      "confidence": 0.75,
+      "notes": "User confirmed Mike Conley's intended season context is Minnesota, aside from a deadline trade path followed by buyout and re-signing in Minnesota.",
+      "player_name": "Mike Conley",
+      "team_abbrev": "MIN"
+    },
+    {
+      "confidence": 0.82,
+      "notes": "Preseason snapshot correction: Porzingis opened the 2025-26 season with Atlanta after the Boston/Atlanta/Brooklyn trade. Later GSW minutes are handled by game-night real-minutes validation, not by moving the canonical preseason roster.",
+      "player_name": "Kristaps Porzingis",
+      "team_abbrev": "ATL"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 77,
+      "notes": "User playtest data correction: Trey Alexander listed height should be 6'5\".",
+      "player_name": "Trey Alexander"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 82,
+      "notes": "User playtest data correction: Karlo Matkovic listed height should be 6'10\".",
+      "player_name": "Karlo Matkovic"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 85,
+      "notes": "User playtest data correction: Hunter Dickinson listed height should be 7'1\".",
+      "player_name": "Hunter Dickinson"
+    }
+  ]
+}

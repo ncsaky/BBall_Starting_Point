@@ -1,0 +1,3828 @@
+from __future__ import annotations
+
+import hashlib
+import json
+import random
+from copy import deepcopy
+from datetime import date, timedelta
+from pathlib import Path
+from typing import Any
+
+from .health import advance_development, simulate_health
+from .schema import CANONICAL_SEASON, CANONICAL_START_DATE, CoachRating, to_plain
+from .sim import build_sim_indices, espn_team_id_map, load_sim_context, sim_game_with_context
+from .staff import ROLE_LABELS, STAFF_SLOTS, apply_head_coach_reputation, hire_staff_from_save, initialize_save_staff_slots, negotiate_staff_hire, simulate_ai_staff_changes, staff_grade
+from .utils import clamp, stable_id
+
+
+SAVE_VERSION = "league_save_v1"
+SCHEDULE_FILE = Path("NBA Schedule/schedule_v2025_2026.json")
+REGULAR_START = "2025-10-21"
+REGULAR_END = "2026-04-12"
+
+STAT_FIELDS = [
+    "minutes",
+    "points",
+    "rebounds",
+    "assists",
+    "turnovers",
+    "steals",
+    "blocks",
+    "fgm",
+    "fga",
+    "fg3m",
+    "fg3a",
+    "ftm",
+    "fta",
+    "rim_attempts",
+]
+TAX_LINE = 187_895_000
+SECOND_APRON = 207_824_000
+ROSTER_MINIMUM = 14
+ROSTER_SEASON_MAXIMUM = 15
+ROSTER_TEMPORARY_HARD_MAXIMUM = 21
+AI_DIFFICULTIES = {"easy", "normal", "hard"}
+SOCIAL_INJURY_GAMES_THRESHOLD = 10
+
+
+def create_league_save(
+    root: str | Path,
+    canonical: dict[str, Any] | Any,
+    team_query: str,
+    save_path: str | Path,
+    seed: int = 1,
+    ai_difficulty: str = "normal",
+) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    team = resolve_team(canonical, team_query)
+    save = {
+        "version": SAVE_VERSION,
+        "meta": {
+            "id": stable_id("save", CANONICAL_SEASON, team["abbrev"], seed),
+            "season": CANONICAL_SEASON,
+            "canonical_universe_id": canonical.get("meta", {}).get("id"),
+            "canonical_hash": canonical_hash(canonical),
+            "user_team_id": team["id"],
+            "user_team_abbrev": team["abbrev"],
+            "seed": seed,
+            "ai_difficulty": normalize_ai_difficulty(ai_difficulty),
+            "created_at": CANONICAL_START_DATE,
+        },
+        "state": {
+            "current_date": CANONICAL_START_DATE,
+            "phase": phase_for_date(CANONICAL_START_DATE),
+            "legal_actions": legal_actions_for_date(CANONICAL_START_DATE),
+        },
+        "schedule_state": {"simulated_game_ids": []},
+        "season_schedules": {},
+        "season_history": [],
+        "year_reviews": [],
+        "retirement_reports": [],
+        "roster_overrides": {},
+        "contract_overrides": {},
+        "draft_pick_overrides": {},
+        "draft_rights": [],
+        "rookie_contracts": [],
+        "incoming_rookies": [],
+        "generated_players": [],
+        "generated_traits": [],
+        "free_agent_player_ids": [],
+        "retired_player_ids": [],
+        "roster_cutdown_baselines": initial_roster_cutdown_baselines(canonical),
+        "staff_slots": initialize_save_staff_slots(canonical, seed),
+        "former_staff": [],
+        "pending_staff_negotiations": [],
+        "staff_market": [],
+        "pending_trade_proposals": [],
+        "pending_contract_negotiations": [],
+        "pending_draft_selections": [],
+        "pending_ai_actions": [],
+        "pending_roster_cutdowns": [],
+        "processed_hidden_ai_actions": [],
+        "pending_press_events": [],
+        "transaction_logs": [],
+        "game_results": [],
+        "team_records": initial_team_records(canonical),
+        "team_morale": initial_team_morale(canonical),
+        "player_morale": initial_player_morale(canonical),
+        "rotation_recommendations": {},
+        "fan_confidence": initial_team_metric(canonical, 55.0),
+        "owner_confidence": initial_team_metric(canonical, 56.0),
+        "team_game_logs": [],
+        "player_game_logs": [],
+        "player_season_stats": {},
+        "playoff_state": {},
+        "draft_state": {},
+        "draft_orders": {},
+        "health_states": sorted(deepcopy(canonical.get("player_health_states", [])), key=lambda item: item["player_id"]),
+        "injury_events": sorted(deepcopy(canonical.get("injury_events", [])), key=lambda item: item["id"]),
+        "development_events": [],
+        "applied_development_months": [],
+        "news_items": [],
+        "social_feed": [],
+        "press_conferences": [],
+        "inbox_items": [
+            {
+                "id": stable_id("inbox", "welcome", team["id"]),
+                "date": CANONICAL_START_DATE,
+                "kind": "save_created",
+                "headline": f"{team['abbrev']} GM mode save created.",
+                "status": "unread",
+            }
+        ],
+    }
+    align_real_head_coach_names(canonical, save)
+    write_save(save_path, save)
+    return save
+
+
+def load_save(path: str | Path) -> dict[str, Any]:
+    with Path(path).open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def write_save(path: str | Path, save: dict[str, Any]) -> None:
+    dedupe_save_event_lists(save)
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with target.open("w", encoding="utf-8") as handle:
+        json.dump(save, handle, ensure_ascii=False, indent=2, sort_keys=True)
+        handle.write("\n")
+
+
+def dedupe_save_event_lists(save: dict[str, Any]) -> None:
+    for key, fields in {
+        "news_items": ("kind", "date", "headline"),
+        "social_feed": ("kind", "date", "text", "handle"),
+        "pending_press_events": ("kind", "date", "headline"),
+    }.items():
+        seen: set[tuple[Any, ...]] = set()
+        output = []
+        for item in save.get(key, []):
+            marker = tuple(item.get(field) for field in fields)
+            if marker in seen:
+                continue
+            seen.add(marker)
+            output.append(item)
+        save[key] = output
+
+
+def refresh_roster_cutdowns(canonical: dict[str, Any] | None, save: dict[str, Any]) -> None:
+    if canonical is None or not is_league_save(save):
+        save.setdefault("pending_roster_cutdowns", [])
+        return
+    active = active_players_for_roster_checks(canonical, save)
+    user_team_id = save.get("meta", {}).get("user_team_id")
+    date_value = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+    pending: list[dict[str, Any]] = []
+    for team in canonical.get("teams", []):
+        players = sorted(
+            [player for player in active if player.get("team_id") == team.get("id")],
+            key=lambda player: roster_cut_score(canonical, player),
+        )
+        target_count = roster_cutdown_target(save, team.get("id"))
+        if len(players) <= target_count:
+            continue
+        overflow = len(players) - target_count
+        if team.get("id") != user_team_id:
+            for player in players[:overflow]:
+                save.setdefault("roster_overrides", {})[player["id"]] = None
+                add_news(
+                    save,
+                    "roster_cut",
+                    f"{team.get('abbrev')} waived {player.get('name')} to reach the roster limit.",
+                    date_value=date_value,
+                )
+            continue
+        pending.append(
+            {
+                "id": stable_id("roster_cutdown", team.get("id"), save.get("meta", {}).get("season"), date_value),
+                "team_id": team.get("id"),
+                "team_abbrev": team.get("abbrev"),
+                "current_count": len(players),
+                "target_count": target_count,
+                "cut_required": overflow,
+                "status": "mandatory_before_regular_season",
+                "date": date_value,
+                "notes": "Roster overflow is allowed during transactions, but the user must cut to the regular-season limit before advancing into games.",
+            }
+        )
+    save["pending_roster_cutdowns"] = pending
+
+
+def initial_roster_cutdown_baselines(canonical: dict[str, Any]) -> dict[str, int]:
+    counts: dict[str, int] = {
+        team.get("id"): 0
+        for team in canonical.get("teams", [])
+        if team.get("id")
+    }
+    for player in canonical.get("players", []):
+        team_id = player.get("team_id")
+        if team_id in counts:
+            counts[team_id] += 1
+    return {team_id: max(ROSTER_SEASON_MAXIMUM, count) for team_id, count in counts.items()}
+
+
+def roster_cutdown_target(save: dict[str, Any], team_id: str | None) -> int:
+    baseline = int((save.get("roster_cutdown_baselines") or {}).get(team_id, ROSTER_SEASON_MAXIMUM))
+    return max(ROSTER_SEASON_MAXIMUM, baseline)
+
+
+def active_players_for_roster_checks(canonical: dict[str, Any], save: dict[str, Any]) -> list[dict[str, Any]]:
+    players = deepcopy(canonical.get("players", []))
+    retired = set(save.get("retired_player_ids", []))
+    existing = {player.get("id") for player in players}
+    for player in save.get("generated_players", []):
+        if player.get("id") not in existing:
+            players.append(deepcopy(player))
+            existing.add(player.get("id"))
+    teams_by_id = {team.get("id"): team for team in canonical.get("teams", [])}
+    overrides = save.get("roster_overrides") or {}
+    for player in players:
+        if player.get("id") in overrides:
+            team_id = overrides.get(player.get("id"))
+            player["team_id"] = team_id
+            team = teams_by_id.get(team_id)
+            player["team_abbrev"] = team.get("abbrev") if team else "FA"
+    return [player for player in players if player.get("team_id") and player.get("id") not in retired]
+
+
+def roster_cut_score(canonical: dict[str, Any], player: dict[str, Any]) -> float:
+    attrs = player_attribute_summary(canonical, player.get("id"))
+    minutes = display_minutes_projection(player)
+    age = float(player.get("display_age", player.get("age")) or 27.0)
+    salary = 0.0
+    try:
+        table = player_salary_table(canonical, player.get("id"))
+        salary = float(next((value for _, value in sorted(table.items()) if value is not None), 0.0) or 0.0)
+    except (TypeError, ValueError):
+        salary = 0.0
+    value = float(attrs.get("overall") or 50.0) * 0.72 + minutes * 1.35
+    value -= max(0.0, age - 31.0) * 1.1
+    value -= max(0.0, salary - 8.0) * 0.12
+    if str(player.get("rotation_priority") or "") in {"core_rotation", "starter"}:
+        value += 18.0
+    return value
+
+
+def is_league_save(save: dict[str, Any]) -> bool:
+    return save.get("version") == SAVE_VERSION
+
+
+def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] | None = None) -> dict[str, Any]:
+    if not is_league_save(save):
+        return save
+    save.setdefault("meta", {}).setdefault("ai_difficulty", "normal")
+    save["meta"]["ai_difficulty"] = normalize_ai_difficulty(save["meta"].get("ai_difficulty"))
+    save.setdefault("schedule_state", {}).setdefault("simulated_game_ids", [])
+    save.setdefault("season_schedules", {})
+    save.setdefault("season_history", [])
+    save.setdefault("year_reviews", [])
+    save.setdefault("retirement_reports", [])
+    save.setdefault("roster_overrides", {})
+    save.setdefault("contract_overrides", {})
+    save.setdefault("draft_pick_overrides", {})
+    save.setdefault("draft_rights", [])
+    save.setdefault("rookie_contracts", [])
+    save.setdefault("incoming_rookies", [])
+    save.setdefault("generated_players", [])
+    save.setdefault("generated_traits", [])
+    save.setdefault("free_agent_player_ids", [])
+    save.setdefault("retired_player_ids", [])
+    save.setdefault("roster_cutdown_baselines", initial_roster_cutdown_baselines(canonical or {"players": [], "teams": []}))
+    save.setdefault("pending_trade_proposals", [])
+    save.setdefault("pending_contract_negotiations", [])
+    save.setdefault("pending_draft_selections", [])
+    save.setdefault("pending_staff_negotiations", [])
+    save.setdefault("pending_ai_actions", [])
+    save.setdefault("pending_roster_cutdowns", [])
+    save.setdefault("processed_hidden_ai_actions", [])
+    save.setdefault("pending_press_events", [])
+    save.setdefault("transaction_logs", [])
+    save.setdefault("game_results", [])
+    save.setdefault("team_morale", initial_team_morale(canonical or {"teams": []}))
+    save.setdefault("player_morale", initial_player_morale(canonical or {"players": []}))
+    save.setdefault("rotation_recommendations", {})
+    save.setdefault("fan_confidence", initial_team_metric(canonical or {"teams": []}, 55.0))
+    save.setdefault("owner_confidence", initial_team_metric(canonical or {"teams": []}, 56.0))
+    save.setdefault("playoff_state", {})
+    save.setdefault("draft_state", {})
+    save.setdefault("draft_orders", {})
+    save.setdefault("team_game_logs", [])
+    save.setdefault("player_game_logs", [])
+    save.setdefault("player_season_stats", {})
+    save.setdefault("news_items", [])
+    save.setdefault("social_feed", [])
+    save.setdefault("press_conferences", [])
+    save.setdefault("inbox_items", [])
+    save.setdefault("free_agency_prepared_seasons", [])
+    current_date = save.get("state", {}).get("current_date")
+    if current_date:
+        save.setdefault("state", {})["phase"] = phase_for_date(current_date)
+        save["state"]["legal_actions"] = legal_actions_for_date(current_date)
+    if canonical is not None:
+        save.setdefault("team_records", initial_team_records(canonical))
+        save.setdefault("health_states", sorted(deepcopy(canonical.get("player_health_states", [])), key=lambda item: item["player_id"]))
+        save.setdefault("injury_events", sorted(deepcopy(canonical.get("injury_events", [])), key=lambda item: item["id"]))
+        save.setdefault("development_events", [])
+        save.setdefault("applied_development_months", [])
+        if not save.get("staff_slots"):
+            save["staff_slots"] = initialize_save_staff_slots(canonical, int(save.get("meta", {}).get("seed") or 1))
+        align_real_head_coach_names(canonical, save)
+        seed_morale_if_flat(canonical, save)
+        refresh_roster_cutdowns(canonical, save)
+    dedupe_save_event_lists(save)
+    sync_social_from_news(save)
+    dedupe_save_event_lists(save)
+    return save
+
+
+def set_save_date_phase(save: dict[str, Any], date_value: str) -> None:
+    save["state"] = {
+        "current_date": date_value,
+        "phase": phase_for_date(date_value),
+        "legal_actions": legal_actions_for_date(date_value),
+    }
+
+
+def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -> dict[str, Any]:
+    canonical = deepcopy(to_plain(canonical))
+    if not is_league_save(save):
+        return canonical
+    active_season = str(save.get("meta", {}).get("season") or CANONICAL_SEASON)
+    canonical.setdefault("meta", {})["active_season"] = active_season
+    for contract in canonical.get("contracts", []):
+        contract["_active_season"] = active_season
+    teams_by_id = {team["id"]: team for team in canonical.get("teams", [])}
+    if save.get("generated_players"):
+        existing = {player["id"] for player in canonical.get("players", [])}
+        for player in save.get("generated_players", []):
+            if player.get("id") not in existing:
+                canonical.setdefault("players", []).append(deepcopy(player))
+                existing.add(player.get("id"))
+    if save.get("generated_traits"):
+        existing_traits = {
+            (trait.get("player_id"), trait.get("trait_key"))
+            for trait in canonical.get("traits", [])
+        }
+        for trait in save.get("generated_traits", []):
+            key = (trait.get("player_id"), trait.get("trait_key"))
+            if key not in existing_traits:
+                canonical.setdefault("traits", []).append(deepcopy(trait))
+                existing_traits.add(key)
+    apply_effective_player_ages(canonical, save)
+    roster_overrides = save.get("roster_overrides", {})
+    if roster_overrides:
+        for player in canonical.get("players", []):
+            if player["id"] not in roster_overrides:
+                continue
+            team_id = roster_overrides.get(player["id"])
+            team = teams_by_id.get(team_id) if team_id else None
+            if team is not None:
+                player["team_id"] = team["id"]
+                player["team_abbrev"] = team["abbrev"]
+            else:
+                player["team_id"] = None
+                player["team_abbrev"] = "FA"
+        for slot in canonical.get("roster_slots", []):
+            if slot["player_id"] in roster_overrides:
+                slot["team_id"] = roster_overrides[slot["player_id"]]
+    pick_overrides = save.get("draft_pick_overrides", {})
+    for pick in canonical.get("draft_picks", []):
+        if pick["id"] in pick_overrides:
+            override = pick_overrides[pick["id"]]
+            pick["current_owner_team_id"] = None if override == "used_draft_pick" else override
+            if override == "used_draft_pick":
+                pick["status"] = "used_draft_pick"
+    contract_overrides = save.get("contract_overrides", {})
+    if contract_overrides:
+        contracts_by_player = {contract.get("player_id"): contract for contract in canonical.get("contracts", [])}
+        for player_id, override in contract_overrides.items():
+            if not override:
+                continue
+            seasons = override.get("seasons") or offer_to_contract_seasons(override)
+            record = {
+                "id": stable_id("save_contract", player_id),
+                "player_id": player_id,
+                "team_id": override.get("team_id") or override.get("accepted_team_id"),
+                "seasons": seasons,
+                "status": "save_state_contract_override",
+                "confidence": 0.45,
+                "source_ids": ["src_contract_market_config_v1"],
+                "notes": "Mutable save-state contract override.",
+                "original_contract_years": int(override.get("original_contract_years") or override.get("years") or override.get("term_years") or len(seasons)),
+                "signed_season": override.get("signed_season") or override.get("start_season"),
+                "extension_eligibility": dict(override.get("extension_eligibility") or {}),
+                "_active_season": active_season,
+            }
+            if player_id in contracts_by_player:
+                contracts_by_player[player_id].update(record)
+            else:
+                canonical.setdefault("contracts", []).append(record)
+    if save.get("staff_slots"):
+        canonical["gameplay_staff_slots"] = deepcopy(save["staff_slots"])
+    if save.get("health_states"):
+        canonical["player_health_states"] = deepcopy(save["health_states"])
+    if save.get("injury_events"):
+        canonical["injury_events"] = deepcopy(save["injury_events"])
+    if save.get("development_events"):
+        canonical["development_events"] = deepcopy(save["development_events"])
+        apply_development_events_to_traits(canonical, save["development_events"])
+    apply_rotation_recommendations(canonical, save)
+    for key in [
+        "team_strategic_states",
+        "player_asset_valuations",
+        "trade_block_entries",
+        "player_contract_market_profiles",
+        "player_contract_preferences",
+        "extension_candidates",
+        "free_agent_candidates",
+    ]:
+        canonical.pop(key, None)
+    return canonical
+
+
+def advance_save(root: str | Path, canonical: dict[str, Any] | Any, save_path: str | Path, to_date: str | None = None, next_event: bool = False, seed: int | None = None) -> dict[str, Any]:
+    root = Path(root)
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    current = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+    effective_seed = int(seed if seed is not None else save.get("meta", {}).get("seed") or 1)
+    if next_event:
+        target = next_event_date(root, canonical, save)
+    elif to_date:
+        target = to_date
+    else:
+        raise ValueError("advance_save requires to_date or next_event=True")
+    if target is None:
+        if next_event and current[5:] >= "09-01":
+            rollover = complete_offseason_and_rollover(root, canonical, save_path, seed=effective_seed)
+            return {
+                "status": "rolled_over",
+                "save": str(save_path),
+                "from_date": current,
+                "through_date": rollover["current_date"],
+                "phase": "preseason",
+                "games_simulated": 0,
+                "total_simulated_games": 0,
+                "rollover": rollover,
+                "notes": "Season schedule was exhausted, so next-event advancement rolled the save into the next preseason.",
+            }
+        raise ValueError("No future calendar event is available for this save.")
+    if target < current:
+        raise ValueError(f"Cannot advance save backward from {current} to {target}")
+    guard_required_phase_actions(save, current, target)
+    simulated_before = len(save.get("schedule_state", {}).get("simulated_game_ids", []))
+    if target > current:
+        health_canonical = canonical_with_save(canonical, save)
+        health = simulate_health(root, health_canonical, current, target, seed=effective_seed)
+        merge_health_results(save, health, health_canonical)
+        sim_canonical = canonical_with_save(canonical, save)
+        context = load_sim_context(root, sim_canonical)
+        context["schedule"] = schedule_for_save(root, save)
+        context["indices"] = build_sim_indices(context)
+        context["indices"]["coach_by_team"] = save_coach_ratings(sim_canonical, save)
+        for game in scheduled_games_between(root, save, current, target):
+            game_id = str(game.get("externalGameId"))
+            if game_id in set(save.get("schedule_state", {}).get("simulated_game_ids", [])):
+                continue
+            result = to_plain(sim_game_with_context(context, game_id, mode="sandbox-sim", seed=effective_seed))
+            record_game_result(save, canonical, game, result)
+        development_canonical = canonical_with_save(canonical, save)
+        for month in development_months_between(current, target):
+            if month in save.get("applied_development_months", []):
+                continue
+            development = advance_development(development_canonical, month, seed=effective_seed)
+            save.setdefault("development_events", []).extend(development.get("events", []))
+            save.setdefault("applied_development_months", []).append(month)
+            save.setdefault("news_items", []).append(
+                {
+                    "id": stable_id("news", "development", month),
+                    "date": f"{month}-01",
+                    "kind": "development",
+                    "headline": f"Monthly player development processed for {month}.",
+                    "status": "unread",
+                }
+            )
+            add_notable_development_social(save, development_canonical, development.get("events", []), month)
+    set_save_date_phase(save, target)
+    if save["state"]["phase"] == "free_agency":
+        prepare_free_agency_pool(canonical, save)
+    queue_ai_recommendations(canonical_with_save(canonical, save), save, current, target, effective_seed)
+    add_monthly_social_digest(canonical_with_save(canonical, save), save, current, target)
+    maybe_queue_rare_drama(save, canonical, current, target, effective_seed)
+    write_save(save_path, save)
+    simulated_after = len(save.get("schedule_state", {}).get("simulated_game_ids", []))
+    return {
+        "status": "advanced",
+        "save": str(save_path),
+        "from_date": current,
+        "through_date": target,
+        "phase": save["state"]["phase"],
+        "games_simulated": simulated_after - simulated_before,
+        "total_simulated_games": simulated_after,
+        "development_months_processed": sorted(save.get("applied_development_months", [])),
+        "notes": "Sandbox save advancement. Real-minutes replay remains validation-only.",
+    }
+
+
+def save_status(root: str | Path, canonical: dict[str, Any] | Any, save_path: str | Path) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    user_team = team_by_id(canonical, save.get("meta", {}).get("user_team_id"))
+    record = save.get("team_records", {}).get(user_team["id"], empty_team_record(user_team))
+    season = save.get("meta", {}).get("season")
+    visible_floor = f"{season_start_year(season or CANONICAL_SEASON)}-07-01"
+    visible_news = [item for item in save.get("news_items", []) if str(item.get("date") or "") >= visible_floor]
+    visible_social = [item for item in save.get("social_feed", []) if str(item.get("date") or "") >= visible_floor]
+    high_social = sorted(
+        [item for item in visible_social if item.get("kind") != "social_digest_marker"],
+        key=lambda item: (float(item.get("importance") or 0), item.get("date", ""), item.get("id", "")),
+        reverse=True,
+    )[:4]
+    return {
+        "version": save.get("version"),
+        "save_id": save.get("meta", {}).get("id"),
+        "season": season,
+        "ai_difficulty": save.get("meta", {}).get("ai_difficulty", "normal"),
+        "user_team": user_team,
+        "current_date": save.get("state", {}).get("current_date"),
+        "phase": save.get("state", {}).get("phase"),
+        "legal_actions": save.get("state", {}).get("legal_actions", []),
+        "next_event_date": next_event_date(root, canonical, save),
+        "user_team_record": record,
+        "pending_counts": pending_counts(save),
+        "recent_transactions": save.get("transaction_logs", [])[-5:],
+        "recent_news": visible_news[-5:],
+        "recent_social": visible_social[-5:],
+        "high_importance_social": high_social,
+    }
+
+
+def pending_actions_view(canonical: dict[str, Any] | Any, save_path: str | Path) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    return {
+        "current_date": save.get("state", {}).get("current_date"),
+        "phase": save.get("state", {}).get("phase"),
+        "legal_actions": save.get("state", {}).get("legal_actions", []),
+        "pending_counts": pending_counts(save),
+        "pending_trade_proposals": save.get("pending_trade_proposals", []),
+        "pending_contract_negotiations": save.get("pending_contract_negotiations", []),
+        "pending_draft_selections": save.get("pending_draft_selections", []),
+        "pending_staff_negotiations": save.get("pending_staff_negotiations", []),
+        "pending_ai_actions": save.get("pending_ai_actions", []),
+    }
+
+
+def propose_trade_to_save(
+    canonical: dict[str, Any] | Any,
+    save_path: str | Path,
+    from_team: str,
+    to_team: str,
+    asset_specs: list[str],
+    seed: int = 1,
+    store: bool = True,
+) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    phase = save.get("state", {}).get("phase")
+    if "trades" not in legal_actions_for_date(save.get("state", {}).get("current_date") or CANONICAL_START_DATE):
+        raise ValueError(f"Trades are not legal during phase {phase!r}.")
+    active = canonical_with_save(canonical, save)
+    from .transactions import evaluate_trade, parse_cli_assets
+
+    from_assets, to_assets = parse_cli_assets(active, from_team, to_team, asset_specs)
+    evaluation = evaluate_trade(active, from_team, to_team, from_assets, to_assets, seed=seed)
+    proposal = {
+        **evaluation,
+        "offer_context": {
+            "offered_by_team_id": resolve_team(active, from_team)["id"],
+            "user_team_id": save.get("meta", {}).get("user_team_id"),
+            "created_date": save.get("state", {}).get("current_date"),
+            "status": "accepted_pending_apply" if evaluation.get("accepted_by_all") else "response_recorded",
+        },
+    }
+    if store:
+        save.setdefault("pending_trade_proposals", [])
+        proposal_id = evaluation.get("proposal", {}).get("id")
+        save["pending_trade_proposals"] = [
+            item for item in save["pending_trade_proposals"] if (item.get("proposal", {}).get("id") or item.get("id")) != proposal_id
+        ]
+        save["pending_trade_proposals"].append(proposal)
+        add_news(save, "trade_offer", "Trade offer logged in pending actions.")
+        write_save(save_path, save)
+    return {
+        "status": "stored" if store else "evaluated",
+        "save": str(save_path),
+        "pending_status": proposal["offer_context"]["status"],
+        **evaluation,
+    }
+
+
+def process_ai_actions(canonical: dict[str, Any] | Any, save_path: str | Path, seed: int = 1, execute: bool = False, limit: int = 5) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    processed: list[dict[str, Any]] = []
+    applied: list[dict[str, Any]] = []
+    for action in list(save.get("pending_ai_actions", []))[: max(0, limit)]:
+        if action.get("status") == "processed":
+            continue
+        outcome = {"id": action.get("id"), "action_type": action.get("action_type"), "status": "reviewed"}
+        payload = action.get("payload") or {}
+        if action.get("action_type") == "trade_recommendations":
+            accepted = [
+                proposal for proposal in payload.get("proposals", [])
+                if proposal.get("accepted_by_all") and proposal.get("legality", {}).get("status") == "legal"
+            ]
+            outcome["accepted_candidate_count"] = len(accepted)
+            if execute and accepted:
+                from .transactions import apply_trade_to_save
+                applied_in_bundle = 0
+                used_assets: set[str] = set()
+                for proposal in accepted:
+                    asset_keys = trade_asset_identity_keys(proposal)
+                    if not asset_keys or used_assets.intersection(asset_keys):
+                        applied.append(
+                            {
+                                "status": "not_applied",
+                                "proposal_id": (proposal.get("proposal") or {}).get("id"),
+                                "notes": "Skipped because another applied trade in this bundle already used one of these assets.",
+                            }
+                        )
+                        continue
+                    save.setdefault("pending_trade_proposals", []).append(proposal)
+                    write_save(save_path, save)
+                    applied_result = apply_trade_to_save(save_path, proposal["proposal"]["id"], date=save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
+                    save = ensure_league_save_defaults(load_save(save_path), canonical)
+                    if applied_result.get("status") == "applied":
+                        applied_in_bundle += 1
+                        used_assets.update(asset_keys)
+                    applied.append(applied_result)
+                    active = canonical_with_save(canonical, save)
+                outcome["applied_candidate_count"] = applied_in_bundle
+                outcome["status"] = "executed" if applied_in_bundle else "reviewed"
+        elif action.get("action_type") == "free_agency_recommendations":
+            accepted = [
+                item for item in payload.get("negotiations", [])
+                if item.get("accepted") and negotiation_player_is_free(active, save, item) and negotiation_has_positive_accepted_offer(item)
+            ]
+            outcome["accepted_candidate_count"] = len(accepted)
+            if execute and accepted:
+                save.setdefault("pending_contract_negotiations", []).append(accepted[0])
+                write_save(save_path, save)
+                from .contract_ai import apply_contract_to_save
+
+                applied_result = apply_contract_to_save(save_path, accepted[0]["negotiation"]["id"], date=save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
+                save = ensure_league_save_defaults(load_save(save_path), canonical)
+                applied.append(applied_result)
+                outcome["status"] = "executed"
+        elif action.get("action_type") == "staff_change_recommendations":
+            recommendations = payload.get("recommendations", [])
+            outcome["accepted_candidate_count"] = len(recommendations)
+            if execute and recommendations:
+                staff_result = apply_ai_staff_recommendations(canonical, save, payload, seed)
+                applied.extend(staff_result.get("applied", []))
+                active = canonical_with_save(canonical, save)
+                outcome["applied_candidate_count"] = staff_result.get("applied_count", 0)
+                outcome["status"] = "executed" if staff_result.get("applied_count", 0) else "reviewed"
+        elif action.get("action_type") == "draft_window_open":
+            outcome["status"] = "draft_attention_required"
+        new_status = "processed" if outcome["status"] == "reviewed" else outcome["status"]
+        action["status"] = new_status
+        for saved_action in save.get("pending_ai_actions", []):
+            if saved_action.get("id") == action.get("id"):
+                saved_action["status"] = new_status
+                break
+        processed.append(outcome)
+        active = canonical_with_save(canonical, save)
+    write_save(save_path, save)
+    return {
+        "processed_count": len(processed),
+        "applied_count": len(applied),
+        "execute": execute,
+        "processed": processed,
+        "applied": applied,
+        "notes": "AI action processing is conservative: only legal accepted recommendations execute, and only when --execute is set.",
+    }
+
+
+def trade_asset_identity_keys(proposal: dict[str, Any]) -> set[str]:
+    payload = proposal.get("proposal") or proposal
+    keys: set[str] = set()
+    for asset in list(payload.get("from_assets") or []) + list(payload.get("to_assets") or []):
+        kind = str(asset.get("kind") or "").lower()
+        identifier = asset.get("id") or asset.get("player_id") or asset.get("pick_id") or asset.get("value")
+        if kind and identifier:
+            keys.add(f"{kind}:{identifier}")
+    return keys
+
+
+def apply_ai_staff_recommendations(canonical: dict[str, Any], save: dict[str, Any], payload: dict[str, Any], seed: int) -> dict[str, Any]:
+    active = canonical_with_save(canonical, save)
+    user_team_id = save.get("meta", {}).get("user_team_id")
+    signed_staff_candidate_ids: set[str] = set()
+    applied: list[dict[str, Any]] = []
+    teams_by_id = {team["id"]: team for team in canonical.get("teams", [])}
+    date_value = payload.get("through_date") or save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+    for recommendation in payload.get("recommendations", []):
+        if recommendation.get("team_id") == user_team_id:
+            continue
+        if recommendation.get("candidate_id") in signed_staff_candidate_ids:
+            applied.append({"status": "not_applied", "recommendation_id": recommendation.get("id"), "notes": "Candidate already accepted another staff job in this bundle."})
+            continue
+        offer = recommendation.get("recommended_offer") or {}
+        try:
+            negotiation = negotiate_staff_hire(
+                active,
+                save,
+                recommendation["candidate_id"],
+                recommendation.get("team_abbrev") or recommendation["team_id"],
+                recommendation["slot"],
+                seed=seed,
+                offer_salary_millions=float(offer.get("annual_salary_millions") or 0),
+                offer_years=int(offer.get("years") or 2),
+            )
+        except ValueError as exc:
+            applied.append({"status": "not_applied", "recommendation_id": recommendation.get("id"), "notes": str(exc)})
+            continue
+        if not negotiation.get("accepted"):
+            applied.append({"status": "rejected", "negotiation": negotiation})
+            continue
+        applied_result = hire_staff_from_save(save, negotiation["id"])
+        if applied_result.get("status") == "applied":
+            signed_staff_candidate_ids.add(recommendation.get("candidate_id"))
+        applied.append(applied_result)
+        active = canonical_with_save(canonical, save)
+    return {"applied_count": len([item for item in applied if item.get("status") == "applied"]), "applied": applied}
+
+
+def negotiation_player_is_free(active: dict[str, Any], save: dict[str, Any], item: dict[str, Any]) -> bool:
+    player_id = (item.get("negotiation") or {}).get("player_id") or (item.get("decision") or {}).get("player_id")
+    player = next((row for row in active.get("players", []) if row.get("id") == player_id), {})
+    return not player.get("team_id") or player_id in set(save.get("free_agent_player_ids", []))
+
+
+def negotiation_has_positive_accepted_offer(item: dict[str, Any]) -> bool:
+    if not item.get("accepted"):
+        return False
+    offer = (item.get("decision") or {}).get("accepted_offer") or {}
+    if not offer:
+        return False
+    return float(offer.get("annual_salary") or offer.get("aav") or 0) > 0
+
+
+def calendar_view(root: str | Path, canonical: dict[str, Any] | Any, save_path: str | Path, from_date: str | None = None, through_date: str | None = None) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    current = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+    start = from_date or current
+    end = through_date or next_date_str(start, 14)
+    team_by_espn = espn_team_id_map(canonical)
+    simulated = set(save.get("schedule_state", {}).get("simulated_game_ids", []))
+    results = {str(result.get("game_id")): result for result in save.get("game_results", [])}
+    user_team_id = save.get("meta", {}).get("user_team_id")
+    games = []
+    for game in schedule_for_save(root, save):
+        game_date = game.get("gameDate")
+        if start <= game_date <= end:
+            home = team_by_espn.get(str(game.get("homeTeamId")), {})
+            away = team_by_espn.get(str(game.get("awayTeamId")), {})
+            game_id = str(game.get("externalGameId"))
+            result = results.get(game_id)
+            user_result = calendar_user_result(user_team_id, away.get("id"), home.get("id"), result)
+            games.append(
+                {
+                    "game_id": game_id,
+                    "date": game_date,
+                    "phase": game.get("phase"),
+                    "away_team": away.get("abbrev"),
+                    "home_team": home.get("abbrev"),
+                    "status": "simulated" if game_id in simulated else "scheduled",
+                    "away_score": result.get("away_score") if result else None,
+                    "home_score": result.get("home_score") if result else None,
+                    "user_result": user_result,
+                    "overtime_periods": max([int(line.get("overtime_periods") or 0) for line in result.get("team_lines", [])], default=0) if result else 0,
+                }
+            )
+    teams = {team["id"]: team for team in canonical.get("teams", [])}
+    for game in (save.get("playoff_state") or {}).get("games", []):
+        game_date = game.get("gameDate")
+        if not game_date or not (start <= game_date <= end):
+            continue
+        game_id = str(game.get("externalGameId"))
+        result = results.get(game_id)
+        user_result = calendar_user_result(user_team_id, game.get("away_team_id"), game.get("home_team_id"), result)
+        games.append(
+            {
+                "game_id": game_id,
+                "date": game_date,
+                "phase": "playoffs",
+                "away_team": teams.get(game.get("away_team_id"), {}).get("abbrev"),
+                "home_team": teams.get(game.get("home_team_id"), {}).get("abbrev"),
+                "status": "simulated" if result else "scheduled",
+                "away_score": result.get("away_score") if result else None,
+                "home_score": result.get("home_score") if result else None,
+                "user_result": user_result,
+                "overtime_periods": max([int(line.get("overtime_periods") or 0) for line in result.get("team_lines", [])], default=0) if result else 0,
+            }
+        )
+    games.sort(key=lambda item: (item["date"], item.get("game_id") or ""))
+    return {"from_date": start, "through_date": end, "game_count": len(games), "games": games}
+
+
+def calendar_user_result(user_team_id: str | None, away_team_id: str | None, home_team_id: str | None, result: dict[str, Any] | None) -> str:
+    if not user_team_id or not result or user_team_id not in {away_team_id, home_team_id}:
+        return ""
+    user_score = result.get("away_score") if user_team_id == away_team_id else result.get("home_score")
+    opp_score = result.get("home_score") if user_team_id == away_team_id else result.get("away_score")
+    if user_score is None or opp_score is None:
+        return ""
+    return "W" if int(user_score) > int(opp_score) else "L"
+
+
+def box_score_view(canonical: dict[str, Any] | Any, save_path: str | Path, game_id: str) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    result = next((item for item in save.get("game_results", []) if str(item.get("game_id")) == str(game_id)), None)
+    if not result:
+        raise ValueError(f"No simulated game result found for {game_id!r}.")
+    teams = {team["id"]: team for team in canonical.get("teams", [])}
+    player_lines = sorted(
+        result.get("player_lines", []),
+        key=lambda item: (item.get("team_abbrev", ""), -float(item.get("minutes") or 0), item.get("player_name", "")),
+    )
+    return {
+        "game_id": result.get("game_id"),
+        "mode": result.get("mode"),
+        "seed": result.get("seed"),
+        "away_team": teams.get(result.get("away_team_id"), {"abbrev": result.get("away_team_id")}),
+        "home_team": teams.get(result.get("home_team_id"), {"abbrev": result.get("home_team_id")}),
+        "away_score": result.get("away_score"),
+        "home_score": result.get("home_score"),
+        "possessions": result.get("possessions"),
+        "overtime_periods": max([int(line.get("overtime_periods") or 0) for line in result.get("team_lines", [])], default=0),
+        "team_lines": result.get("team_lines", []),
+        "player_lines": player_lines,
+        "notes": result.get("notes"),
+    }
+
+
+def league_standings(canonical: dict[str, Any] | Any, save_path: str | Path) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    teams = {team["id"]: team for team in canonical.get("teams", [])}
+    rows = []
+    for team_id, record in save.get("team_records", {}).items():
+        team = teams.get(team_id)
+        if not team:
+            continue
+        games = int(record.get("wins", 0)) + int(record.get("losses", 0))
+        rows.append(
+            {
+                **record,
+                "team": team,
+                "games": games,
+                "win_pct": round(record.get("wins", 0) / games, 3) if games else 0.0,
+                "point_diff": round(float(record.get("points_for", 0)) - float(record.get("points_against", 0)), 2),
+            }
+        )
+    rows.sort(key=lambda item: (item["team"].get("conference") or "", -item["win_pct"], -item["point_diff"], item["team"]["abbrev"]))
+    return {"standings": rows, "team_count": len(rows), "as_of_date": save.get("state", {}).get("current_date")}
+
+
+def league_leaders(canonical: dict[str, Any] | Any, save_path: str | Path, stat: str = "points", limit: int = 10) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    stat_key = {"pts": "points", "reb": "rebounds", "ast": "assists", "stl": "steals", "blk": "blocks"}.get(stat, stat)
+    if stat_key in {"overall", "shooting", "creation", "defense", "athleticism", "iq"}:
+        teams = {team["id"]: team for team in active.get("teams", [])}
+        rows = []
+        for player in active.get("players", []):
+            if not player.get("team_id"):
+                continue
+            attributes = player_attribute_summary(active, player["id"])
+            rows.append(
+                {
+                    "player": player,
+                    "team_id": player.get("team_id"),
+                    "team_abbrev": teams.get(player.get("team_id"), {}).get("abbrev"),
+                    "games": save.get("player_season_stats", {}).get(player["id"], {}).get("games", 0),
+                    stat_key: attributes.get(stat_key, 0),
+                    f"{stat_key}_per_game": attributes.get(stat_key, 0),
+                    "attributes": attributes,
+                }
+            )
+        rows.sort(key=lambda item: (-float(item.get(stat_key, 0)), item["player"].get("name") or ""))
+        return {"stat": stat_key, "leaders": rows[:limit], "as_of_date": save.get("state", {}).get("current_date"), "mode": "attributes"}
+    players = {player["id"]: player for player in canonical.get("players", [])}
+    rows = []
+    team_games = {
+        team_id: int(record.get("wins", 0)) + int(record.get("losses", 0))
+        for team_id, record in save.get("team_records", {}).items()
+    }
+    for player_id, totals in save.get("player_season_stats", {}).items():
+        player = players.get(player_id, {"id": player_id, "name": totals.get("player_name"), "position": None})
+        games = max(1, int(totals.get("games", 0)))
+        required_games = max(1, min(10, int(round(team_games.get(totals.get("team_id"), games) * 0.22))))
+        if int(totals.get("games", 0)) < required_games:
+            continue
+        rows.append(
+            {
+                "player": player,
+                "team_id": totals.get("team_id"),
+                "team_abbrev": totals.get("team_abbrev"),
+                "games": totals.get("games", 0),
+                stat_key: round(float(totals.get(stat_key, 0)), 2),
+                f"{stat_key}_per_game": round(float(totals.get(stat_key, 0)) / games, 2),
+            }
+        )
+    rows.sort(key=lambda item: (-float(item.get(f"{stat_key}_per_game", 0)), -float(item.get(stat_key, 0)), item["player"].get("name") or ""))
+    return {"stat": stat_key, "leaders": rows[:limit], "as_of_date": save.get("state", {}).get("current_date")}
+
+
+def playoff_picture(canonical: dict[str, Any] | Any, save_path: str | Path) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    rows = league_standings(canonical, save_path)["standings"]
+    by_conference: dict[str, list[dict[str, Any]]] = {"East": [], "West": []}
+    for row in rows:
+        conference = row["team"].get("conference")
+        if conference in by_conference:
+            by_conference[conference].append(row)
+    picture = {}
+    for conference, teams in by_conference.items():
+        ranked = sorted(teams, key=lambda item: (-item["win_pct"], -item["point_diff"], item["team"]["abbrev"]))
+        picture[conference] = [
+            {**row, "seed": idx}
+            for idx, row in enumerate(ranked[:10], start=1)
+        ]
+    return {"as_of_date": save.get("state", {}).get("current_date"), "picture": picture, "playoff_state": save.get("playoff_state", {})}
+
+
+def start_playoffs(canonical: dict[str, Any] | Any, save_path: str | Path, seed: int = 1, include_play_in: bool = False) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    picture = playoff_picture(canonical, save_path)["picture"]
+    if not include_play_in:
+        series = legacy_first_round_series(canonical, picture)
+        save["playoff_state"] = {
+            "year": str(season_end_year(save.get("meta", {}).get("season") or CANONICAL_SEASON)),
+            "seed": seed,
+            "round": "first_round",
+            "status": "in_progress",
+            "play_in": {},
+            "series": series,
+            "games": [],
+            "champion_team_id": None,
+        }
+        add_news(save, "playoffs", "Playoff bracket generated from save standings.")
+        write_save(save_path, save)
+        return save["playoff_state"]
+    play_in: dict[str, Any] = {}
+    locked_seeds: dict[str, Any] = {}
+    for conference, seeded in picture.items():
+        by_seed = {row["seed"]: row for row in seeded}
+        locked_seeds[conference] = {str(seed_no): by_seed[seed_no]["team_id"] for seed_no in range(1, 7) if seed_no in by_seed}
+        play_in[conference] = {
+            "status": "scheduled",
+            "teams": {str(seed_no): by_seed[seed_no]["team_id"] for seed_no in range(7, 11) if seed_no in by_seed},
+            "games": [],
+            "seed_7_team_id": None,
+            "seed_8_team_id": None,
+        }
+    save["playoff_state"] = {
+        "year": str(season_end_year(save.get("meta", {}).get("season") or CANONICAL_SEASON)),
+        "seed": seed,
+        "round": "play_in",
+        "status": "in_progress",
+        "play_in": play_in,
+        "locked_seeds": locked_seeds,
+        "series": [],
+        "games": [],
+        "champion_team_id": None,
+    }
+    add_news(save, "playoffs", "Play-in tournament generated from save standings.")
+    write_save(save_path, save)
+    return save["playoff_state"]
+
+
+def legacy_first_round_series(canonical: dict[str, Any], picture: dict[str, Any]) -> list[dict[str, Any]]:
+    del canonical
+    series: list[dict[str, Any]] = []
+    matchups = [(1, 8), (4, 5), (3, 6), (2, 7)]
+    for conference, seeded in picture.items():
+        by_seed = {row["seed"]: row for row in seeded}
+        for high_seed, low_seed in matchups:
+            if high_seed not in by_seed or low_seed not in by_seed:
+                continue
+            series.append(playoff_series_record(conference, "first_round", by_seed[high_seed]["team_id"], by_seed[low_seed]["team_id"]))
+    return series
+
+
+def simulate_playoff_round(canonical: dict[str, Any] | Any, save_path: str | Path, seed: int = 1, root: str | Path | None = None) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    state = save.get("playoff_state") or start_playoffs(canonical, save_path, seed=seed)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    state = save.get("playoff_state", state)
+    current_round = state.get("round")
+    if current_round == "play_in":
+        completed_play_in = simulate_play_in(canonical, save, seed, root)
+        first_round = first_round_series_from_play_in(canonical, state)
+        state["series"].extend(first_round)
+        state["round"] = "first_round"
+        for conference in completed_play_in:
+            add_news(save, "playoffs", f"{conference} play-in tournament completed.")
+        save["playoff_state"] = state
+        update_save_date_to_latest_playoff_game(save)
+        write_save(save_path, save)
+        return {"completed_play_in": completed_play_in, "playoff_state": state}
+    open_series = [series for series in state.get("series", []) if series.get("round") == current_round and series.get("status") != "completed"]
+    completed: list[dict[str, Any]] = []
+    for series in open_series:
+        simulate_series_games(canonical, save, state, series, seed, root)
+        winner = max((series.get("wins") or {}).items(), key=lambda item: item[1])[0]
+        loser = next(team_id for team_id in series["team_ids"] if team_id != winner)
+        series["winner_team_id"] = winner
+        series["status"] = "completed"
+        completed.append(series)
+        add_news(save, "playoffs", f"{team_by_id(canonical, winner)['abbrev']} wins {series['round']} series.")
+    winners = [series["winner_team_id"] for series in state.get("series", []) if series.get("round") == current_round and series.get("winner_team_id")]
+    if len(winners) == 1:
+        state["champion_team_id"] = winners[0]
+        state["status"] = "completed"
+        state["round"] = "champion"
+        add_news(save, "champion", f"{team_by_id(canonical, winners[0])['abbrev']} wins the NBA title.")
+        user_team_id = save.get("meta", {}).get("user_team_id")
+        if user_team_id:
+            headline = f"Season complete: {team_by_id(canonical, winners[0])['abbrev']} wins the NBA title."
+            save.setdefault("pending_press_events", []).append(
+                {
+                    "id": stable_id("press_event", "season_end", headline, state.get("year")),
+                    "date": f"{int(state.get('year') or season_end_year(save.get('meta', {}).get('season') or CANONICAL_SEASON))}-06-22",
+                    "kind": "season_end",
+                    "headline": headline,
+                    "question": "The season is over. What is your honest read on where this organization stands now?",
+                    "status": "pending",
+                }
+            )
+        set_save_date_phase(save, f"{int(state.get('year') or season_end_year(save.get('meta', {}).get('season') or CANONICAL_SEASON))}-06-22")
+    elif open_series and all(series.get("status") == "completed" for series in open_series):
+        next_round = next_playoff_round(current_round)
+        state["round"] = next_round
+        state["series"].extend(next_round_series(canonical, state, winners, next_round))
+    save["playoff_state"] = state
+    update_save_date_to_latest_playoff_game(save)
+    write_save(save_path, save)
+    return {"completed_series": completed, "playoff_state": state}
+
+
+def run_draft_lottery(canonical: dict[str, Any] | Any, save_path: str | Path, year: str = "2026", seed: int = 1) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    from .draft import generate_draft_order
+
+    standings = save_standings_for_draft(canonical, save)
+    order = generate_draft_order(canonical_with_save(canonical, save), year, seed=seed, standings=standings)
+    save.setdefault("draft_orders", {})[str(year)] = order
+    add_news(save, "draft_lottery", f"{year} draft order generated.")
+    current_phase = save.get("state", {}).get("phase")
+    if current_phase == "draft_lottery":
+        set_save_date_phase(save, f"{year}-06-25")
+    write_save(save_path, save)
+    return order
+
+
+def simulate_play_in(canonical: dict[str, Any], save: dict[str, Any], seed: int, root: str | Path | None) -> list[str]:
+    state = save.setdefault("playoff_state", {})
+    year = int(state.get("year") or season_end_year(save.get("meta", {}).get("season") or CANONICAL_SEASON))
+    completed: list[str] = []
+    for conference, payload in (state.get("play_in") or {}).items():
+        if payload.get("status") == "completed":
+            completed.append(conference)
+            continue
+        teams = payload.get("teams") or {}
+        if not all(str(seed_no) in teams for seed_no in [7, 8, 9, 10]):
+            payload["status"] = "incomplete"
+            continue
+        game1 = simulate_playoff_game(canonical, save, root, teams["8"], teams["7"], f"{year}-04-13", seed, f"{conference}:7v8")
+        game2 = simulate_playoff_game(canonical, save, root, teams["10"], teams["9"], f"{year}-04-14", seed, f"{conference}:9v10")
+        seed7 = game_winner_team_id(game1)
+        loser78 = game_loser_team_id(game1)
+        winner910 = game_winner_team_id(game2)
+        game3 = simulate_playoff_game(canonical, save, root, winner910, loser78, f"{year}-04-16", seed, f"{conference}:8seed")
+        seed8 = game_winner_team_id(game3)
+        payload["seed_7_team_id"] = seed7
+        payload["seed_8_team_id"] = seed8
+        payload["games"] = [game1.get("game_id"), game2.get("game_id"), game3.get("game_id")]
+        payload["status"] = "completed"
+        completed.append(conference)
+    return completed
+
+
+def first_round_series_from_play_in(canonical: dict[str, Any], state: dict[str, Any]) -> list[dict[str, Any]]:
+    series: list[dict[str, Any]] = []
+    matchups = [("1", "8"), ("4", "5"), ("3", "6"), ("2", "7")]
+    for conference, locked in (state.get("locked_seeds") or {}).items():
+        play_in = (state.get("play_in") or {}).get(conference, {})
+        seeds = dict(locked)
+        if play_in.get("seed_7_team_id"):
+            seeds["7"] = play_in["seed_7_team_id"]
+        if play_in.get("seed_8_team_id"):
+            seeds["8"] = play_in["seed_8_team_id"]
+        for high_seed, low_seed in matchups:
+            if high_seed not in seeds or low_seed not in seeds:
+                continue
+            series.append(playoff_series_record(conference, "first_round", seeds[high_seed], seeds[low_seed]))
+    return series
+
+
+def simulate_series_games(
+    canonical: dict[str, Any],
+    save: dict[str, Any],
+    state: dict[str, Any],
+    series: dict[str, Any],
+    seed: int,
+    root: str | Path | None,
+) -> None:
+    team_a, team_b = series["team_ids"]
+    wins = {team_a: 0, team_b: 0}
+    year = int(state.get("year") or season_end_year(save.get("meta", {}).get("season") or CANONICAL_SEASON))
+    base = playoff_round_start_date(year, series.get("round"))
+    for game_no in range(1, 8):
+        if max(wins.values()) >= 4:
+            break
+        home = team_a if game_no in {1, 2, 5, 7} else team_b
+        away = team_b if home == team_a else team_a
+        game_date = (base + timedelta(days=(game_no - 1) * 2)).isoformat()
+        result = simulate_playoff_game(canonical, save, root, away, home, game_date, seed, f"{series['id']}:g{game_no}")
+        winner = game_winner_team_id(result)
+        wins[winner] += 1
+        series.setdefault("game_ids", []).append(result.get("game_id"))
+    series["wins"] = wins
+
+
+def playoff_round_start_date(year: int, round_name: str | None) -> date:
+    starts = {
+        "first_round": date(year, 4, 18),
+        "conference_semifinals": date(year, 5, 3),
+        "conference_finals": date(year, 5, 18),
+        "finals": date(year, 6, 4),
+    }
+    return starts.get(str(round_name), date(year, 4, 18))
+
+
+def simulate_playoff_game(
+    canonical: dict[str, Any],
+    save: dict[str, Any],
+    root: str | Path | None,
+    away_team_id: str,
+    home_team_id: str,
+    game_date: str,
+    seed: int,
+    key: str,
+) -> dict[str, Any]:
+    game_id = stable_id("playoff_game", key, away_team_id, home_team_id)
+    existing = next((result for result in save.get("game_results", []) if str(result.get("game_id")) == game_id), None)
+    if existing:
+        return existing
+    if root is None:
+        return deterministic_playoff_game_result(canonical, save, away_team_id, home_team_id, game_id, game_date, seed)
+    active = canonical_with_save(canonical, save)
+    context = load_sim_context(root, active)
+    espn_by_team = {team["id"]: espn_id for espn_id, team in espn_team_id_map(active).items()}
+    game = {
+        "externalGameId": game_id,
+        "gameDate": game_date,
+        "phase": "playoffs",
+        "awayTeamId": espn_by_team.get(away_team_id, away_team_id),
+        "homeTeamId": espn_by_team.get(home_team_id, home_team_id),
+    }
+    context["schedule"] = list(context.get("schedule") or []) + [game]
+    context["indices"] = build_sim_indices(context)
+    context["indices"]["coach_by_team"] = save_coach_ratings(active, save)
+    result = to_plain(sim_game_with_context(context, game_id, mode="sandbox-sim", seed=seed))
+    record_playoff_game_result(save, game, result)
+    return result
+
+
+def deterministic_playoff_game_result(
+    canonical: dict[str, Any],
+    save: dict[str, Any],
+    away_team_id: str,
+    home_team_id: str,
+    game_id: str,
+    game_date: str,
+    seed: int,
+) -> dict[str, Any]:
+    away_score = int(round(104 + playoff_team_score(save.get("team_records", {}).get(away_team_id, {}), away_team_id, seed) * 0.11))
+    home_score = int(round(107 + playoff_team_score(save.get("team_records", {}).get(home_team_id, {}), home_team_id, seed) * 0.11))
+    if away_score == home_score:
+        home_score += 1
+    teams = {team["id"]: team for team in canonical.get("teams", [])}
+    result = {
+        "game_id": game_id,
+        "mode": "playoff-deterministic",
+        "seed": seed,
+        "away_team_id": away_team_id,
+        "home_team_id": home_team_id,
+        "away_score": away_score,
+        "home_score": home_score,
+        "team_lines": [
+            {"team_id": away_team_id, "team_abbrev": teams.get(away_team_id, {}).get("abbrev"), "points": away_score, "overtime_periods": 0},
+            {"team_id": home_team_id, "team_abbrev": teams.get(home_team_id, {}).get("abbrev"), "points": home_score, "overtime_periods": 0},
+        ],
+        "player_lines": [],
+    }
+    record_playoff_game_result(save, {"externalGameId": game_id, "gameDate": game_date}, result)
+    return result
+
+
+def record_playoff_game_result(save: dict[str, Any], game: dict[str, Any], result: dict[str, Any]) -> None:
+    game_id = str(result["game_id"])
+    if any(str(existing.get("game_id")) == game_id for existing in save.get("game_results", [])):
+        return
+    save.setdefault("game_results", []).append(result)
+    save.setdefault("schedule_state", {}).setdefault("simulated_game_ids", []).append(game_id)
+    save["schedule_state"]["simulated_game_ids"] = sorted(set(save["schedule_state"]["simulated_game_ids"]))
+    playoff_game = {
+        "externalGameId": game_id,
+        "gameDate": game.get("gameDate"),
+        "phase": "playoffs",
+        "away_team_id": result.get("away_team_id"),
+        "home_team_id": result.get("home_team_id"),
+    }
+    save.setdefault("playoff_state", {}).setdefault("games", []).append(playoff_game)
+    save["playoff_state"]["games"] = sorted(
+        {item["externalGameId"]: item for item in save["playoff_state"].get("games", [])}.values(),
+        key=lambda item: (item.get("gameDate", ""), item.get("externalGameId", "")),
+    )
+
+
+def game_winner_team_id(result: dict[str, Any]) -> str:
+    return result["home_team_id"] if int(result.get("home_score") or 0) > int(result.get("away_score") or 0) else result["away_team_id"]
+
+
+def game_loser_team_id(result: dict[str, Any]) -> str:
+    return result["away_team_id"] if game_winner_team_id(result) == result["home_team_id"] else result["home_team_id"]
+
+
+def update_save_date_to_latest_playoff_game(save: dict[str, Any]) -> None:
+    if (save.get("playoff_state") or {}).get("status") == "completed":
+        return
+    dates = [game.get("gameDate") for game in (save.get("playoff_state") or {}).get("games", []) if game.get("gameDate")]
+    if not dates:
+        return
+    latest = max(dates)
+    current = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+    if latest > current:
+        save.setdefault("state", {})["current_date"] = latest
+        save["state"]["phase"] = phase_for_date(latest)
+        save["state"]["legal_actions"] = legal_actions_for_date(latest)
+
+
+def offseason_status(canonical: dict[str, Any] | Any, save_path: str | Path) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    return {
+        "current_date": save.get("state", {}).get("current_date"),
+        "phase": save.get("state", {}).get("phase"),
+        "legal_actions": save.get("state", {}).get("legal_actions", []),
+        "playoff_state": save.get("playoff_state", {}),
+        "draft_orders": save.get("draft_orders", {}),
+        "free_agent_pending_count": len(save.get("pending_contract_negotiations", [])),
+        "staff_pending_count": len(save.get("pending_staff_negotiations", [])),
+        "notes": "Offseason V1 status: lottery/order, draft, free agency, staff changes, and training camp are scaffolded through save-state commands.",
+    }
+
+
+def complete_offseason_and_rollover(root: str | Path, canonical: dict[str, Any] | Any, save_path: str | Path, seed: int = 1) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    current_season = save.get("meta", {}).get("season") or CANONICAL_SEASON
+    draft_result = ensure_draft_processed(canonical, save, str(season_end_year(current_season)), seed)
+    history_entry = {
+        "season": current_season,
+        "completed_on": save.get("state", {}).get("current_date"),
+        "team_records": deepcopy(save.get("team_records", {})),
+        "player_season_stats": deepcopy(save.get("player_season_stats", {})),
+        "playoff_state": deepcopy(save.get("playoff_state", {})),
+        "draft_order": deepcopy((save.get("draft_orders") or {}).get(str(season_end_year(current_season)), {})),
+        "draft_result": deepcopy(draft_result),
+        "transaction_count": len(save.get("transaction_logs", [])),
+    }
+    save.setdefault("season_history", []).append(history_entry)
+    review = build_year_in_review(canonical, save, save.get("meta", {}).get("user_team_id"), current_season)
+    if review:
+        upsert_by_id(save, "year_reviews", review)
+    next_start = season_start_year(current_season) + 1
+    next_label = season_label_from_start(next_start)
+    offseason_changes = apply_offseason_roster_transitions(canonical, save, current_season, next_label, seed)
+    generated = generate_future_schedule(root, next_label, next_start)
+    save.setdefault("season_schedules", {})[next_label] = generated
+    save["meta"]["season"] = next_label
+    save["meta"]["season_index"] = int(save["meta"].get("season_index") or len(save.get("season_history", []))) + 1
+    save["meta"]["season_start_year"] = next_start
+    save["state"] = {
+        "current_date": f"{next_start}-10-01",
+        "phase": "preseason",
+        "legal_actions": legal_actions_for_date(f"{next_start}-10-01"),
+    }
+    save["schedule_state"] = {"simulated_game_ids": []}
+    save["team_records"] = initial_team_records(canonical)
+    save["team_game_logs"] = []
+    save["player_game_logs"] = []
+    save["player_season_stats"] = {}
+    save["game_results"] = []
+    save["playoff_state"] = {}
+    save["pending_ai_actions"] = []
+    save["pending_trade_proposals"] = []
+    save["pending_contract_negotiations"] = []
+    save["pending_draft_selections"] = []
+    save["applied_development_months"] = []
+    refresh_health_for_new_season(save, f"{next_start}-10-01")
+    age_staff_contracts(save)
+    save["pending_offseason_review"] = {
+        "season": current_season,
+        "generated_date": f"{next_start}-10-01",
+        "review_id": review.get("id") if review else None,
+        "retirement_report_id": (save.get("retirement_reports") or [{}])[-1].get("id"),
+    }
+    add_news(save, "season_rollover", f"{next_label} season is ready for training camp.", date_value=f"{next_start}-10-01")
+    write_save(save_path, save)
+    return {
+        "status": "rolled_over",
+        "from_season": current_season,
+        "to_season": next_label,
+        "current_date": save["state"]["current_date"],
+        "generated_game_count": len(generated["games"]),
+        "offseason_changes": offseason_changes,
+        "save": str(save_path),
+    }
+
+
+def advance_through_current_season(root: str | Path, canonical: dict[str, Any] | Any, save_path: str | Path, seed: int = 1, process_ai: bool = True) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    season = save.get("meta", {}).get("season") or CANONICAL_SEASON
+    start = season_start_year(season)
+    dates = [f"{start}-10-21", trade_deadline_date(start), f"{start + 1}-02-06", f"{start + 1}-04-12"]
+    steps = []
+    for target in dates:
+        if target > (load_save(save_path).get("state", {}).get("current_date") or ""):
+            steps.append(advance_save(root, canonical, save_path, to_date=target, seed=seed))
+            if process_ai:
+                steps.append(process_ai_actions(canonical, save_path, seed=seed, execute=True, limit=5))
+    return {"status": "advanced_regular_season", "season": season, "steps": steps, "save": str(save_path)}
+
+
+def quick_sim_current_season(root: str | Path, canonical: dict[str, Any] | Any, save_path: str | Path, seed: int = 1, rollover: bool = False) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    regular = advance_through_current_season(root, canonical, save_path, seed=seed, process_ai=True)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    season = save.get("meta", {}).get("season") or CANONICAL_SEASON
+    end_year = season_end_year(season)
+    playoff_setup = start_playoffs(canonical, save_path, seed=seed)
+    playoff_rounds = []
+    for _ in range(4):
+        result = simulate_playoff_round(canonical, save_path, seed=seed)
+        playoff_rounds.append(result)
+        state = result.get("playoff_state", {})
+        if state.get("status") == "completed":
+            break
+    lottery = run_draft_lottery(canonical, save_path, year=str(end_year), seed=seed)
+    offseason_steps = []
+    offseason_steps.append(advance_save(root, canonical, save_path, to_date=f"{end_year}-07-01", seed=seed))
+    offseason_steps.append(process_ai_actions(canonical, save_path, seed=seed, execute=True, limit=5))
+    rollover_result = complete_offseason_and_rollover(root, canonical, save_path, seed=seed) if rollover else None
+    return {
+        "status": "quick_sim_complete",
+        "season": season,
+        "regular_season": regular,
+        "playoff_setup": playoff_setup,
+        "playoff_rounds": playoff_rounds,
+        "draft_lottery": lottery,
+        "offseason_steps": offseason_steps,
+        "rollover": rollover_result,
+        "save": str(save_path),
+    }
+
+
+def team_dashboard(root: str | Path, canonical: dict[str, Any] | Any, save_path: str | Path, team_query: str) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    team = resolve_team(canonical, team_query)
+    active = canonical_with_save(canonical, save)
+    roster = sorted(
+        [player for player in active.get("players", []) if player["team_id"] == team["id"]],
+        key=display_minutes_projection,
+        reverse=True,
+    )
+    record = save.get("team_records", {}).get(team["id"], empty_team_record(team))
+    logs = [log for log in save.get("team_game_logs", []) if log.get("team_id") == team["id"]]
+    health = [
+        state for state in save.get("health_states", []) if next((player for player in active.get("players", []) if player["id"] == state["player_id"] and player["team_id"] == team["id"]), None)
+    ]
+    season_stats = save.get("player_season_stats", {})
+    health_by_player = {state.get("player_id"): state for state in save.get("health_states", [])}
+    team_games = int(record.get("wins", 0)) + int(record.get("losses", 0))
+    recommendations = save.get("rotation_recommendations") or {}
+    identity_metrics = team_identity_report(active, save)
+    return {
+        "team": team,
+        "current_date": save.get("state", {}).get("current_date"),
+        "phase": save.get("state", {}).get("phase"),
+        "record": record,
+        "rotation": [
+            {
+                "id": player["id"],
+                "name": player["name"],
+                "position": player.get("position"),
+                "age": player.get("age"),
+                "height": player.get("height"),
+                "height_inches": player.get("height_inches"),
+                "minutes_projection": display_minutes_projection(player),
+                "rotation_priority": player.get("rotation_priority"),
+                "games": season_stats.get(player["id"], {}).get("games", 0),
+                "team_games": team_games,
+                "gp_display": f"{season_stats.get(player['id'], {}).get('games', 0)}/{team_games}",
+                "points_per_game": per_game_stat(season_stats.get(player["id"], {}), "points"),
+                "rebounds_per_game": per_game_stat(season_stats.get(player["id"], {}), "rebounds"),
+                "assists_per_game": per_game_stat(season_stats.get(player["id"], {}), "assists"),
+                "steals_per_game": per_game_stat(season_stats.get(player["id"], {}), "steals"),
+                "blocks_per_game": per_game_stat(season_stats.get(player["id"], {}), "blocks"),
+                "fg_pct": percentage_stat(season_stats.get(player["id"], {}), "fgm", "fga"),
+                "fg3_pct": percentage_stat(season_stats.get(player["id"], {}), "fg3m", "fg3a"),
+                "fg3a_per_game": per_game_stat(season_stats.get(player["id"], {}), "fg3a"),
+                "fta_per_game": per_game_stat(season_stats.get(player["id"], {}), "fta"),
+                "ft_pct": percentage_stat(season_stats.get(player["id"], {}), "ftm", "fta"),
+                "health": player_health_label(health_by_player.get(player["id"]), save.get("state", {}).get("current_date")),
+                "attributes": player_attribute_summary(active, player["id"]),
+                "salary_by_year": player_salary_table(active, player["id"]),
+                "minutes_recommendation": recommendations.get(player["id"]),
+            }
+            for player in roster
+        ],
+        "last_games": sorted(logs, key=lambda item: item["date"], reverse=True)[:5],
+        "next_games": next_team_games(root, canonical, save, team["id"], limit=5),
+        "health_summary": health_summary(health),
+        "staff_slots": sorted([slot for slot in save.get("staff_slots", []) if slot.get("team_id") == team["id"]], key=lambda item: item["slot"]),
+        "cap_posture": next((state.get("salary_posture") for state in canonical.get("team_strategic_states", []) if state["team_id"] == team["id"]), "unknown"),
+        "cap_summary": team_cap_summary(active, save, team["id"]),
+        "team_identity": identity_metrics.get(team["id"], {}),
+        "pending_counts": pending_counts(save),
+    }
+
+
+def team_identity_report(canonical: dict[str, Any], save: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    teams = {team["id"]: team for team in canonical.get("teams", [])}
+    players_by_team: dict[str, list[dict[str, Any]]] = {team_id: [] for team_id in teams}
+    for player in canonical.get("players", []):
+        if player.get("team_id") in players_by_team:
+            players_by_team[player["team_id"]].append(player)
+    health_by_player = {state.get("player_id"): state for state in save.get("health_states", [])}
+    raw: dict[str, dict[str, float]] = {}
+    for team_id, roster in players_by_team.items():
+        rows: list[tuple[dict[str, Any], dict[str, float], float]] = []
+        for player in roster:
+            minutes = display_minutes_projection(player)
+            if minutes <= 0:
+                continue
+            minutes *= health_availability_weight(health_by_player.get(player["id"]))
+            rows.append((player, player_attribute_summary(canonical, player["id"]), minutes))
+        rows.sort(key=lambda item: item[2], reverse=True)
+        total_minutes = sum(weight for _, _, weight in rows) or 1.0
+
+        def weighted(key: str, default: float = 50.0, subset: list[tuple[dict[str, Any], dict[str, float], float]] | None = None) -> float:
+            pool = subset if subset is not None else rows
+            denominator = sum(weight for _, _, weight in pool) or 1.0
+            return sum(float(attrs.get(key, default) or default) * weight for _, attrs, weight in pool) / denominator
+
+        top_weight = rows[:8]
+        depth_pool = rows[5:12] or rows[5:] or rows
+        weighted_age = sum(float(player.get("age") or 26.0) * weight for player, _, weight in rows) / total_minutes
+        old_minutes_share = sum(weight for player, _, weight in rows if float(player.get("age") or 0.0) >= 34.0) / total_minutes
+        very_old_minutes_share = sum(weight for player, _, weight in rows if float(player.get("age") or 0.0) >= 37.0) / total_minutes
+        age_drag = old_minutes_share * 7.0 + very_old_minutes_share * 8.0 + max(0.0, weighted_age - 29.0) * 1.05
+        top_rotation = rows[:9] or rows
+        bottom_defense = sorted(float(attrs.get("defense", 50.0) or 50.0) for _, attrs, _ in top_rotation)[:3]
+        bottom_athleticism = sorted(float(attrs.get("athleticism", 50.0) or 50.0) for _, attrs, _ in top_rotation)[:3]
+        weak_link_drag = max(0.0, 57.0 - (sum(bottom_defense) / max(1, len(bottom_defense)))) * 0.16
+        athletic_weak_link_drag = max(0.0, 58.0 - (sum(bottom_athleticism) / max(1, len(bottom_athleticism)))) * 0.14
+        offense = weighted("shooting") * 0.28 + weighted("creation") * 0.30 + weighted("passing") * 0.18 + weighted("rim_pressure") * 0.14 + weighted("iq") * 0.10
+        defense = weighted("defense") * 0.46 + weighted("def_effort") * 0.18 + weighted("screen_nav") * 0.12 + weighted("rim_deterrence") * 0.16 + weighted("portability") * 0.08
+        creation = weighted("creation") * 0.48 + weighted("handle") * 0.22 + weighted("passing") * 0.20 + weighted("versatility") * 0.10
+        spacing = weighted("shooting") * 0.40 + weighted("range") * 0.36 + weighted("release") * 0.12 + weighted("versatility") * 0.12
+        depth = weighted("overall", subset=depth_pool) * 0.82 + min(14.0, len([row for row in rows if row[2] >= 8.0])) * 1.2
+        timeline = clamp(82.0 - max(0.0, weighted_age - 25.5) * 6.5 + max(0.0, 24.0 - weighted_age) * 1.8, 1, 99)
+        offense = offense - age_drag * 0.65
+        defense = defense - age_drag * 1.15 - weak_link_drag
+        creation = creation - age_drag * 0.22
+        spacing = spacing - old_minutes_share * 1.2 - age_drag * 0.52
+        athleticism = weighted("athleticism") - age_drag * 1.55 - athletic_weak_link_drag
+        disruption = weighted("def_effort") * 0.38 + weighted("screen_nav") * 0.24 + weighted("defense") * 0.24 + weighted("portability") * 0.14 - age_drag * 1.45 - weak_link_drag * 0.5
+        rim_pressure = weighted("rim_pressure") - age_drag * 0.16
+        overall = weighted("overall", subset=top_weight) * 0.72 + depth * 0.28 - age_drag * 0.78 - weak_link_drag * 0.35
+        raw[team_id] = {
+            "overall": round(clamp(overall, 1, 99), 1),
+            "offense": round(clamp(offense, 1, 99), 1),
+            "defense": round(clamp(defense, 1, 99), 1),
+            "spacing": round(clamp(spacing, 1, 99), 1),
+            "creation": round(clamp(creation, 1, 99), 1),
+            "rim_pressure": round(clamp(rim_pressure, 1, 99), 1),
+            "rebounding": round(clamp(weighted("oreb") * 0.58 + weighted("rim_deterrence") * 0.16 + athleticism * 0.26, 1, 99), 1),
+            "athleticism": round(clamp(athleticism, 1, 99), 1),
+            "defensive_disruption": round(clamp(disruption, 1, 99), 1),
+            "rim_protection": round(clamp(weighted("rim_deterrence"), 1, 99), 1),
+            "depth": round(clamp(depth, 1, 99), 1),
+            "age_timeline": round(timeline, 1),
+            "average_age": round(weighted_age, 1),
+        }
+    ranks: dict[str, dict[str, int]] = {team_id: {} for team_id in teams}
+    metric_keys = [key for key in next(iter(raw.values()), {}).keys() if key != "average_age"]
+    for key in metric_keys:
+        ordered = sorted(raw, key=lambda team_id: (raw[team_id].get(key, 0.0), teams.get(team_id, {}).get("abbrev", "")), reverse=True)
+        for rank, team_id in enumerate(ordered, start=1):
+            ranks[team_id][key] = rank
+    return {
+        team_id: {
+            "metrics": raw.get(team_id, {}),
+            "ranks": ranks.get(team_id, {}),
+            "league_team_count": len(teams),
+        }
+        for team_id in teams
+    }
+
+
+def health_availability_weight(state: dict[str, Any] | None) -> float:
+    if not state:
+        return 1.0
+    status = str(state.get("availability_status") or "active").lower()
+    if status in {"active", "healthy"}:
+        return 1.0
+    days_left = float(state.get("days_left") or state.get("expected_days_remaining") or 0.0)
+    if days_left >= 45:
+        return 0.18
+    if days_left >= 14:
+        return 0.35
+    return 0.72
+
+
+def phase_for_date(value: str) -> str:
+    try:
+        month_day = value[5:]
+    except IndexError:
+        return "offseason"
+    if "10-01" <= month_day < "10-21":
+        return "preseason"
+    if month_day >= "10-21" or month_day <= "02-05":
+        return "regular_season"
+    if "02-06" <= month_day <= "04-12":
+        return "regular_season"
+    if "04-13" <= month_day <= "04-17":
+        return "play_in"
+    if "04-18" <= month_day <= "06-21":
+        return "playoffs"
+    if "06-22" <= month_day <= "06-24":
+        return "draft_lottery"
+    if "06-25" <= month_day <= "06-26":
+        return "draft"
+    if "06-27" <= month_day <= "07-15":
+        return "free_agency"
+    if month_day >= "09-01":
+        return "training_camp"
+    return "offseason"
+
+
+def legal_actions_for_phase(phase: str) -> list[str]:
+    actions = {
+        "preseason": ["trades", "extensions", "staff_changes", "press_conferences", "social_media", "advance"],
+        "regular_season": ["trades", "staff_changes", "press_conferences", "social_media", "advance"],
+        "play_in": ["staff_changes", "press_conferences", "social_media", "advance"],
+        "playoffs": ["staff_changes", "press_conferences", "social_media", "advance"],
+        "draft_lottery": ["draft_lottery", "extensions", "staff_changes", "press_conferences", "social_media", "advance"],
+        "draft": ["draft_picks", "draft_trades", "trades", "extensions", "staff_changes", "press_conferences", "social_media", "advance"],
+        "free_agency": ["free_agent_signings", "trades", "staff_changes", "press_conferences", "social_media", "advance"],
+        "training_camp": ["staff_changes", "press_conferences", "social_media", "advance"],
+        "offseason": ["extensions", "staff_changes", "press_conferences", "social_media", "advance"],
+    }
+    return actions.get(phase, ["advance"])
+
+
+def legal_actions_for_date(value: str) -> list[str]:
+    phase = phase_for_date(value)
+    actions = list(legal_actions_for_phase(phase))
+    start_year = season_start_year_from_date(value)
+    if phase in {"preseason", "regular_season"}:
+        if value <= extension_deadline_date(start_year) and "extensions" not in actions:
+            actions.insert(1 if "trades" in actions else 0, "extensions")
+        if value > extension_deadline_date(start_year) and "extensions" in actions:
+            actions.remove("extensions")
+    if phase in {"preseason", "regular_season"} and "trades" in actions and value > trade_deadline_date(start_year):
+        actions.remove("trades")
+    return actions
+
+
+def normalize_ai_difficulty(value: Any) -> str:
+    value = str(value or "normal").strip().lower()
+    return value if value in AI_DIFFICULTIES else "normal"
+
+
+def season_start_year_from_date(value: str) -> int:
+    parsed = parse_date(value)
+    return parsed.year if parsed.month >= 7 else parsed.year - 1
+
+
+def extension_deadline_date(start_year: int) -> str:
+    return f"{start_year + 1}-01-15"
+
+
+def trade_deadline_date(start_year: int) -> str:
+    return f"{start_year + 1}-02-05"
+
+
+def load_schedule(root: str | Path) -> list[dict[str, Any]]:
+    with (Path(root) / SCHEDULE_FILE).open("r", encoding="utf-8") as handle:
+        return json.load(handle).get("games", [])
+
+
+def schedule_for_save(root: str | Path, save: dict[str, Any]) -> list[dict[str, Any]]:
+    season = save.get("meta", {}).get("season") or CANONICAL_SEASON
+    generated = (save.get("season_schedules") or {}).get(season, {}).get("games")
+    return list(generated or load_schedule(root))
+
+
+def scheduled_games_between(root: str | Path, save: dict[str, Any], current: str, target: str) -> list[dict[str, Any]]:
+    games = [
+        game
+        for game in schedule_for_save(root, save)
+        if current < game.get("gameDate", "") <= target and game.get("phase") == "regular" and game.get("externalGameId")
+    ]
+    return sorted(games, key=lambda item: (item["gameDate"], str(item["externalGameId"])))
+
+
+def next_event_date(root: str | Path, canonical: dict[str, Any], save: dict[str, Any]) -> str | None:
+    current = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+    for game in schedule_for_save(root, save):
+        if game.get("gameDate", "") > current and str(game.get("externalGameId")) not in set(save.get("schedule_state", {}).get("simulated_game_ids", [])):
+            return game.get("gameDate")
+    end_year = season_end_year(save.get("meta", {}).get("season") or CANONICAL_SEASON)
+    for date_value in [f"{end_year}-04-13", f"{end_year}-06-22", f"{end_year}-06-25", f"{end_year}-07-01", f"{end_year}-09-01"]:
+        if date_value > current:
+            return date_value
+    return None
+
+
+def guard_required_phase_actions(save: dict[str, Any], current: str, target: str) -> None:
+    end_year = season_end_year(save.get("meta", {}).get("season") or CANONICAL_SEASON)
+    start_year = season_start_year(save.get("meta", {}).get("season") or CANONICAL_SEASON)
+    regular_start_gate = f"{start_year}-10-21"
+    playoff_gate = f"{end_year}-06-22"
+    draft_gate = f"{end_year}-06-27"
+    phase = save.get("state", {}).get("phase")
+    if current < regular_start_gate <= target and save.get("pending_roster_cutdowns"):
+        team = save.get("pending_roster_cutdowns", [{}])[0]
+        raise ValueError(
+            f"{team.get('team_abbrev') or 'Your team'} has {team.get('current_count')} players. "
+            f"Cut to {team.get('target_count') or ROSTER_SEASON_MAXIMUM} before opening night."
+        )
+    if current < playoff_gate <= target:
+        state = save.get("playoff_state") or {}
+        if phase in {"play_in", "playoffs"} and state.get("status") != "completed":
+            raise ValueError("The playoffs are active. Open the playoff bracket and sim rounds before advancing to the draft lottery.")
+    if current < draft_gate <= target:
+        draft_state = save.get("draft_state") or {}
+        pending = save.get("pending_draft_selections") or []
+        if phase == "draft" and (draft_state.get("status") not in {"completed", "skipped"} or pending):
+            raise ValueError("The draft is active. Finish or sim the draft before advancing to free agency.")
+
+
+def record_game_result(save: dict[str, Any], canonical: dict[str, Any], game: dict[str, Any], result: dict[str, Any]) -> None:
+    game_id = result["game_id"]
+    simulated = save.setdefault("schedule_state", {}).setdefault("simulated_game_ids", [])
+    if game_id in simulated:
+        return
+    save.setdefault("game_results", []).append(result)
+    simulated.append(game_id)
+    simulated.sort()
+    team_lines = {line["team_id"]: line for line in result.get("team_lines", [])}
+    home_id = result["home_team_id"]
+    away_id = result["away_team_id"]
+    home_points = int(result["home_score"])
+    away_points = int(result["away_score"])
+    update_team_record(save, canonical, game, home_id, away_id, home_points, away_points, is_home=True)
+    update_team_record(save, canonical, game, away_id, home_id, away_points, home_points, is_home=False)
+    for line in result.get("player_lines", []):
+        update_player_stats(save, line, game)
+        team_points = home_points if line.get("team_id") == home_id else away_points
+        opp_points = away_points if line.get("team_id") == home_id else home_points
+        update_player_game_morale(save, line, team_points > opp_points, abs(team_points - opp_points))
+    for team_id, line in team_lines.items():
+        opponent_id = away_id if team_id == home_id else home_id
+        points = home_points if team_id == home_id else away_points
+        opp_points = away_points if team_id == home_id else home_points
+        save.setdefault("team_game_logs", []).append(
+            {
+                "id": stable_id("team_game_log", game_id, team_id),
+                "game_id": game_id,
+                "date": game.get("gameDate"),
+                "team_id": team_id,
+                "team_abbrev": line.get("team_abbrev"),
+                "opponent_team_id": opponent_id,
+                "is_home": team_id == home_id,
+                "points": points,
+                "opponent_points": opp_points,
+                "result": "W" if points > opp_points else "L",
+            }
+        )
+    save.setdefault("news_items", []).append(
+        {
+            "id": stable_id("news", "game", game_id),
+            "date": game.get("gameDate"),
+            "kind": "game_result",
+            "headline": f"{team_lines.get(away_id, {}).get('team_abbrev', 'AWAY')} {away_points}, {team_lines.get(home_id, {}).get('team_abbrev', 'HOME')} {home_points}",
+            "status": "unread",
+        }
+    )
+    update_game_morale(save, home_id, away_id, home_points, away_points)
+    add_game_high_social(save, result)
+
+
+def add_game_high_social(save: dict[str, Any], result: dict[str, Any]) -> None:
+    lines = result.get("player_lines") or []
+    if not lines:
+        return
+    checks = [
+        ("points", 40, "points"),
+        ("assists", 15, "assists"),
+        ("rebounds", 20, "rebounds"),
+        ("fg3m", 8, "threes"),
+        ("steals", 6, "steals"),
+        ("blocks", 6, "blocks"),
+    ]
+    for stat, threshold, label in checks:
+        leader = max(lines, key=lambda item: float(item.get(stat) or 0), default={})
+        value = float(leader.get(stat) or 0)
+        if value >= threshold:
+            add_social(
+                save,
+                "player_high",
+                f"{leader.get('player_name')} posted a season-high watch line: {int(value)} {label} for {leader.get('team_abbrev')}.",
+                team_ids=[leader.get("team_id")] if leader.get("team_id") else [],
+            )
+            return
+
+
+def update_team_record(save: dict[str, Any], canonical: dict[str, Any], game: dict[str, Any], team_id: str, opponent_id: str, points: int, opp_points: int, is_home: bool) -> None:
+    team = team_by_id(canonical, team_id)
+    record = save.setdefault("team_records", {}).setdefault(team_id, empty_team_record(team))
+    if points > opp_points:
+        record["wins"] += 1
+        record["home_wins" if is_home else "away_wins"] += 1
+    else:
+        record["losses"] += 1
+        record["home_losses" if is_home else "away_losses"] += 1
+    record["points_for"] = round(float(record.get("points_for", 0)) + points, 2)
+    record["points_against"] = round(float(record.get("points_against", 0)) + opp_points, 2)
+    record["last_game_id"] = str(game.get("externalGameId"))
+
+
+def update_player_stats(save: dict[str, Any], line: dict[str, Any], game: dict[str, Any]) -> None:
+    player_id = line.get("player_id")
+    if not player_id:
+        return
+    game_id = str(game.get("externalGameId"))
+    log_id = stable_id("player_game_log", game_id, player_id)
+    logs = save.setdefault("player_game_logs", [])
+    if log_id not in {item.get("id") for item in logs}:
+        logs.append(
+            {
+                "id": log_id,
+                "game_id": game_id,
+                "date": game.get("gameDate"),
+                **{key: line.get(key) for key in ["player_id", "player_name", "team_id", "team_abbrev", *STAT_FIELDS] if key in line},
+            }
+        )
+    totals = save.setdefault("player_season_stats", {}).setdefault(
+        player_id,
+        {
+            "player_id": player_id,
+            "player_name": line.get("player_name"),
+            "team_id": line.get("team_id"),
+            "team_abbrev": line.get("team_abbrev"),
+            "games": 0,
+            "game_ids": [],
+            **{field: 0.0 for field in STAT_FIELDS},
+        },
+    )
+    played_ids = set(totals.setdefault("game_ids", []))
+    if game_id in played_ids:
+        totals["team_id"] = line.get("team_id")
+        totals["team_abbrev"] = line.get("team_abbrev")
+        return
+    totals["game_ids"].append(game_id)
+    totals["game_ids"] = sorted(set(totals["game_ids"]))
+    totals["games"] += 1
+    totals["team_id"] = line.get("team_id")
+    totals["team_abbrev"] = line.get("team_abbrev")
+    for field in STAT_FIELDS:
+        totals[field] = round(float(totals.get(field, 0.0)) + float(line.get(field) or 0.0), 2)
+
+
+def morale_report(canonical: dict[str, Any] | Any, save_path: str | Path, team_query: str | None = None) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    if team_query:
+        team = resolve_team(canonical, team_query)
+        player_ids = {player["id"] for player in canonical_with_save(canonical, save).get("players", []) if player["team_id"] == team["id"]}
+        return {
+            "team": team,
+            "team_morale": save.get("team_morale", {}).get(team["id"]),
+            "fan_confidence": save.get("fan_confidence", {}).get(team["id"]),
+            "owner_confidence": save.get("owner_confidence", {}).get(team["id"]),
+            "players": sorted(
+                [
+                    {
+                        "player": next((player for player in canonical.get("players", []) if player["id"] == player_id), {"id": player_id}),
+                        "morale": morale,
+                    }
+                    for player_id, morale in save.get("player_morale", {}).items()
+                    if player_id in player_ids
+                ],
+                key=lambda item: (float(item["morale"].get("overall", 50)), item["player"].get("name", "")),
+            ),
+        }
+    return {
+        "teams": sorted(
+            [
+                {
+                    "team": team,
+                    "team_morale": save.get("team_morale", {}).get(team["id"]),
+                    "fan_confidence": save.get("fan_confidence", {}).get(team["id"]),
+                    "owner_confidence": save.get("owner_confidence", {}).get(team["id"]),
+                }
+                for team in canonical.get("teams", [])
+            ],
+            key=lambda item: item["team"]["abbrev"],
+        )
+    }
+
+
+def social_feed_view(canonical: dict[str, Any] | Any, save_path: str | Path, team_query: str | None = None, limit: int = 20) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    team_id = resolve_team(canonical, team_query)["id"] if team_query else None
+    feed = [
+        item for item in save.get("social_feed", [])
+        if team_id is None or team_id in item.get("team_ids", []) or not item.get("team_ids")
+    ]
+    feed = sorted(feed, key=lambda item: (item.get("date", ""), item.get("id", "")), reverse=True)[:limit]
+    return {"team_id": team_id, "item_count": len(feed), "items": feed}
+
+
+def hold_press_conference(canonical: dict[str, Any] | Any, save_path: str | Path, team_query: str, topic: str, tone: str, seed: int = 1) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    team = resolve_team(canonical, team_query)
+    if tone not in {"accountable", "optimistic", "deflect", "challenge"}:
+        raise ValueError("Press tone must be accountable, optimistic, deflect, or challenge.")
+    before = {
+        "team_morale": float(save.get("team_morale", {}).get(team["id"], {}).get("overall", 55.0)),
+        "fan_confidence": float(save.get("fan_confidence", {}).get(team["id"], 55.0)),
+        "owner_confidence": float(save.get("owner_confidence", {}).get(team["id"], 56.0)),
+    }
+    impact = press_impact(topic, tone, seed)
+    question = press_question(team["abbrev"], topic, tone, seed)
+    answer = press_answer(team["abbrev"], topic, tone)
+    apply_team_morale_delta(save, team["id"], impact["team_morale"])
+    save.setdefault("fan_confidence", {})[team["id"]] = round(clamp(float(save.get("fan_confidence", {}).get(team["id"], 55.0)) + impact["fan_confidence"], 0, 100), 2)
+    save.setdefault("owner_confidence", {})[team["id"]] = round(clamp(float(save.get("owner_confidence", {}).get(team["id"], 56.0)) + impact["owner_confidence"], 0, 100), 2)
+    after = {
+        "team_morale": float(save.get("team_morale", {}).get(team["id"], {}).get("overall", 55.0)),
+        "fan_confidence": float(save.get("fan_confidence", {}).get(team["id"], 55.0)),
+        "owner_confidence": float(save.get("owner_confidence", {}).get(team["id"], 56.0)),
+    }
+    record = {
+        "id": stable_id("press", save.get("state", {}).get("current_date"), team["id"], topic, tone, seed),
+        "date": save.get("state", {}).get("current_date"),
+        "team_id": team["id"],
+        "topic": topic,
+        "tone": tone,
+        "question": question,
+        "answer": answer,
+        "impact": impact,
+        "confidence_metrics": {"before": before, "after": after},
+        "notes": "Press conference V1. Tone changes team morale, fan confidence, owner confidence, and social framing in bounded ways.",
+    }
+    save.setdefault("press_conferences", []).append(record)
+    add_news(save, "press_conference", f"{team['abbrev']} GM press conference: {topic} ({tone}).")
+    add_social(save, "press_conference", social_reaction_text(team["abbrev"], topic, tone), team_ids=[team["id"]])
+    write_save(save_path, save)
+    return record
+
+
+def merge_health_results(save: dict[str, Any], health: dict[str, Any], canonical: dict[str, Any] | None = None) -> None:
+    players = {player["id"]: player for player in (canonical or {}).get("players", [])}
+    previous_states = {state.get("player_id"): state for state in save.get("health_states", [])}
+    save["health_states"] = health.get("final_states", save.get("health_states", []))
+    current_states = {state.get("player_id"): state for state in save.get("health_states", [])}
+    seen = {event.get("id") for event in save.get("injury_events", [])}
+    socialized = set(save.setdefault("socialized_injury_event_ids", []))
+    for event in health.get("events", []):
+        if event.get("id") not in seen:
+            save.setdefault("injury_events", []).append(event)
+            seen.add(event.get("id"))
+        if event.get("id") not in socialized and int(event.get("expected_games_missed") or 0) >= SOCIAL_INJURY_GAMES_THRESHOLD:
+            player = players.get(event.get("player_id"), {})
+            if display_minutes_projection(player) < 20.0:
+                socialized.add(event.get("id"))
+                continue
+            player_name = player.get("name") or event.get("player_id") or "A player"
+            games = event.get("expected_games_missed") or event.get("expected_days_missed") or "some"
+            add_news(
+                save,
+                "injury",
+                f"{player_name} is expected to miss about {games} games with a {event.get('body_area')} issue.",
+                date_value=event.get("start_date"),
+            )
+            socialized.add(event.get("id"))
+    save["socialized_injury_event_ids"] = sorted(item for item in socialized if item)
+    add_return_from_injury_social(save, canonical or {}, previous_states, current_states)
+    save["injury_events"] = sorted(save.get("injury_events", []), key=lambda item: item.get("id", ""))
+
+
+def add_return_from_injury_social(
+    save: dict[str, Any],
+    canonical: dict[str, Any],
+    previous_states: dict[str, dict[str, Any]],
+    current_states: dict[str, dict[str, Any]],
+) -> None:
+    events = {event.get("id"): event for event in save.get("injury_events", [])}
+    posted = set(save.setdefault("socialized_injury_return_ids", []))
+    players = {player["id"]: player for player in canonical.get("players", [])}
+    season_stats = save.get("player_season_stats", {})
+    for player_id, before in previous_states.items():
+        injury_id = before.get("current_injury_id")
+        after = current_states.get(player_id, {})
+        event = events.get(injury_id, {})
+        if not injury_id or injury_id in posted or after.get("availability_status") != "active":
+            continue
+        if int(event.get("expected_games_missed") or 0) < SOCIAL_INJURY_GAMES_THRESHOLD:
+            continue
+        player = players.get(player_id, {})
+        if display_minutes_projection(player) < 20.0:
+            posted.add(injury_id)
+            continue
+        team_id = player.get("team_id")
+        replacement = max(
+            (
+                teammate for teammate in players.values()
+                if teammate.get("team_id") == team_id
+                and teammate.get("id") != player_id
+                and per_game_stat(season_stats.get(teammate.get("id"), {}), "minutes") >= 18
+            ),
+            key=lambda teammate: per_game_stat(season_stats.get(teammate.get("id"), {}), "minutes"),
+            default=None,
+        )
+        if not replacement:
+            continue
+        add_social(
+            save,
+            "injury_return",
+            f"{player.get('name', player_id)} is returning, but {replacement.get('name')} earned a real rotation role during the absence.",
+            team_ids=[team_id] if team_id else [],
+        )
+        posted.add(injury_id)
+    save["socialized_injury_return_ids"] = sorted(posted)
+
+
+def add_notable_development_social(save: dict[str, Any], canonical: dict[str, Any], events: list[dict[str, Any]], month: str) -> None:
+    if not events:
+        return
+    players = {player["id"]: player for player in canonical.get("players", [])}
+    best = max(
+        events,
+        key=lambda event: sum(max(0.0, float(value)) for value in (event.get("trait_deltas") or {}).values()),
+        default=None,
+    )
+
+
+def maybe_queue_rare_drama(save: dict[str, Any], canonical: dict[str, Any], current: str, target: str, seed: int) -> None:
+    user_team_id = save.get("meta", {}).get("user_team_id")
+    if not user_team_id or save.get("rare_drama_triggered"):
+        return
+    if phase_for_date(target) not in {"regular_season", "playoffs"}:
+        return
+    rng = random.Random(f"{seed}:{save.get('meta', {}).get('id')}:{current}:{target}:rare_drama")
+    days = max(1, (parse_date(target) - parse_date(current)).days)
+    if rng.random() > min(0.015, days * 0.00065):
+        return
+    players = [player for player in canonical_with_save(canonical, save).get("players", []) if player.get("team_id") == user_team_id]
+    if not players:
+        return
+    player = sorted(players, key=lambda item: display_minutes_projection(item), reverse=True)[min(len(players) - 1, int(rng.random() * min(8, len(players))))]
+    headline = f"{player.get('name')} is trending after a heated online clip from team travel."
+    event = {
+        "id": stable_id("press_event", "rare_drama", headline, target),
+        "date": target,
+        "kind": "rare_drama",
+        "headline": headline,
+        "question": f"{headline} Are you backing the player publicly or making an example internally?",
+        "status": "pending",
+    }
+    save.setdefault("pending_press_events", []).append(event)
+    save["rare_drama_triggered"] = True
+    add_social(save, "press_conference", headline, team_ids=[user_team_id], date_value=target)
+    if not best:
+        return
+    gain = sum(max(0.0, float(value)) for value in (best.get("trait_deltas") or {}).values())
+    if gain < 1.25:
+        return
+    player = players.get(best.get("player_id"), {"name": best.get("player_id")})
+    add_social(
+        save,
+        "player_stretch",
+        f"{player.get('name')} has real development buzz after a noticeable {month} skill jump.",
+        team_ids=[best.get("team_id")] if best.get("team_id") else [],
+        date_value=f"{month}-01",
+    )
+
+
+def queue_ai_recommendations(canonical: dict[str, Any], save: dict[str, Any], from_date: str, through_date: str, seed: int) -> None:
+    phase = save.get("state", {}).get("phase")
+    queued_keys = {item.get("id") for item in save.get("pending_ai_actions", [])} | {item.get("id") for item in save.get("processed_hidden_ai_actions", [])}
+    trade_start = f"{season_start_year_from_date(through_date) + 1}-01-16"
+    trade_deadline = trade_deadline_date(season_start_year_from_date(through_date))
+    if "trades" in legal_actions_for_date(through_date) and trade_start <= through_date <= trade_deadline:
+        action_id = stable_id("ai_action", "trades", through_date, seed)
+        if action_id not in queued_keys:
+            from .transactions import simulate_ai_trades
+
+            payload = simulate_ai_trades(canonical, from_date, through_date, seed=seed, limit=10)
+            payload["proposals"] = [
+                proposal for proposal in payload.get("proposals", [])
+                if proposal.get("accepted_by_all") and proposal.get("legality", {}).get("status") == "legal"
+            ]
+            payload["proposal_count"] = len(payload["proposals"])
+            if not payload["proposals"]:
+                return
+            save.setdefault("pending_ai_actions", []).append(
+                {
+                    "id": action_id,
+                    "date": through_date,
+                    "action_type": "trade_recommendations",
+                    "status": "recommendation_pending_review",
+                    "payload": payload,
+                    "notes": "Conservative AI trade recommendations only; no automatic execution in save-loop V1.",
+                }
+            )
+    if phase == "free_agency":
+        action_id = stable_id("ai_action", "free_agency", through_date, seed)
+        if action_id not in queued_keys:
+            from .contract_ai import simulate_free_agency
+
+            payload = simulate_free_agency(canonical, from_date, through_date, seed=seed, limit=10)
+            payload = filter_free_agency_payload_to_available(canonical, save, payload)
+            if not payload.get("negotiations"):
+                return
+            save.setdefault("pending_ai_actions", []).append(
+                {
+                    "id": action_id,
+                    "date": through_date,
+                    "action_type": "free_agency_recommendations",
+                    "status": "recommendation_pending_review",
+                    "payload": payload,
+                    "notes": "Conservative AI free-agency recommendations only; accepted contracts still require explicit application.",
+                }
+            )
+    if phase == "draft":
+        action_id = stable_id("ai_action", "draft", through_date, seed)
+        if action_id not in queued_keys:
+            save.setdefault("pending_ai_actions", []).append(
+                {
+                    "id": action_id,
+                    "date": through_date,
+                    "action_type": "draft_window_open",
+                    "status": "user_or_ai_draft_decisions_pending",
+                    "payload": {"draft_year": "2026"},
+                    "notes": "Draft window marker. Use simulate-draft or pick-recommendations for explicit draft-night decisions.",
+                }
+            )
+    staff_review_due = (
+        from_date[:7] != through_date[:7]
+        or phase in {"training_camp", "offseason", "draft_lottery", "draft", "free_agency"}
+        or through_date.endswith("-02-05")
+    )
+    if staff_review_due:
+        action_id = stable_id("ai_action", "staff", through_date[:7], phase, seed)
+        if action_id not in queued_keys:
+            payload = simulate_ai_staff_changes(canonical, save, from_date, through_date, seed=seed, limit=3)
+            if payload.get("recommendations"):
+                result = apply_ai_staff_recommendations(canonical, save, payload, seed)
+                save.setdefault("processed_hidden_ai_actions", []).append(
+                    {
+                        "id": action_id,
+                        "date": through_date,
+                        "action_type": "staff_change_recommendations",
+                        "status": "executed" if result.get("applied_count") else "reviewed",
+                        "applied_count": result.get("applied_count", 0),
+                        "notes": "Leaguewide AI staff changes process quietly; user-team staff moves remain manual.",
+                    }
+                )
+
+
+def add_monthly_social_digest(canonical: dict[str, Any], save: dict[str, Any], from_date: str, through_date: str) -> None:
+    if from_date[:7] == through_date[:7]:
+        return
+    digest_key = f"{through_date[:7]}:{save.get('meta', {}).get('season')}:social_digest"
+    existing = {item.get("id") for item in save.get("social_feed", [])}
+    if stable_id("social_digest", digest_key) in existing:
+        return
+    teams = {team["id"]: team for team in canonical.get("teams", [])}
+    recent_logs = [log for log in save.get("team_game_logs", []) if from_date < log.get("date", "") <= through_date]
+    by_team: dict[str, list[dict[str, Any]]] = {}
+    for log in recent_logs:
+        by_team.setdefault(log.get("team_id"), []).append(log)
+    streaks = []
+    for team_id, logs in by_team.items():
+        if len(logs) < 5:
+            continue
+        wins = sum(1 for log in logs if log.get("result") == "W")
+        losses = len(logs) - wins
+        streaks.append((wins - losses, wins, losses, team_id))
+    if streaks:
+        score, wins, losses, team_id = sorted(streaks, reverse=True)[0]
+        team = teams.get(team_id, {"abbrev": str(team_id)})
+        add_social(save, "team_stretch", f"{team.get('abbrev')} went {wins}-{losses} over the latest stretch.", team_ids=[team_id])
+    stats = save.get("player_season_stats", {})
+    if stats:
+        leader = max(stats.values(), key=lambda item: float(item.get("points") or 0) / max(1, int(item.get("games") or 1)))
+        ppg = float(leader.get("points") or 0) / max(1, int(leader.get("games") or 1))
+        role = public_player_role(canonical, leader.get("player_id"), ppg)
+        add_social(save, "player_stretch", f"{leader.get('player_name')} is up to {ppg:.1f} PPG on the season for {leader.get('team_abbrev')} as a {role}.", team_ids=[leader.get("team_id")] if leader.get("team_id") else [])
+    standings = sorted(
+        save.get("team_records", {}).values(),
+        key=lambda record: (-(int(record.get("wins") or 0) / max(1, int(record.get("wins") or 0) + int(record.get("losses") or 0))), record.get("team_abbrev")),
+    )
+    if standings:
+        top = standings[0]
+        add_social(save, "power_ranking", f"Monthly power check: {top.get('team_abbrev')} sits on top at {top.get('wins')}-{top.get('losses')}.", team_ids=[top.get("team_id")] if top.get("team_id") else [])
+    save.setdefault("social_feed", []).append(
+        {
+            "id": stable_id("social_digest", digest_key),
+            "date": through_date,
+            "kind": "social_digest_marker",
+            "text": "Monthly social digest marker.",
+            "author": "System",
+            "handle": "@system",
+            "persona": "marker",
+            "subject": "digest",
+            "team_ids": [],
+            "sentiment": 0,
+            "importance": 0,
+        }
+    )
+
+
+def filter_free_agency_payload_to_available(canonical: dict[str, Any], save: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    filtered = [
+        item for item in payload.get("negotiations", [])
+        if negotiation_player_is_free(canonical, save, item) and negotiation_has_positive_accepted_offer(item)
+    ]
+    return {**payload, "negotiations": filtered, "negotiation_count": len(filtered)}
+
+
+def save_coach_ratings(canonical: dict[str, Any], save: dict[str, Any]) -> dict[str, CoachRating]:
+    ratings: dict[str, CoachRating] = {}
+    for team in canonical.get("teams", []):
+        slots = {slot["slot"]: slot for slot in save.get("staff_slots", []) if slot.get("team_id") == team["id"]}
+        if not slots:
+            continue
+        head = slots.get("head_coach", {})
+        off = slots.get("offensive_coordinator", {})
+        defense = slots.get("defensive_coordinator", {})
+        development = slots.get("development_lead", {})
+        scouting = slots.get("scouting_lead", {})
+        values = {
+            "rotation_trust": star_rating([trait_value(head, "rotation_management"), personality_value(head, "communication")]),
+            "development": star_rating([trait_value(development, "skill_development"), trait_value(development, "prospect_patience"), trait_value(head, "locker_room")]),
+            "offensive_structure": star_rating([trait_value(off, "shot_quality"), trait_value(off, "spacing_design"), trait_value(head, "scheme_balance")]),
+            "defensive_structure": star_rating([trait_value(defense, "coverage_design"), trait_value(defense, "discipline"), trait_value(head, "scheme_balance")]),
+            "matchup_adjustments": star_rating([trait_value(defense, "matchup_adjustment"), personality_value(head, "adaptability"), trait_value(off, "player_usage")]),
+            "player_buy_in": star_rating([trait_value(head, "locker_room"), personality_value(head, "communication"), trait_value(development, "feedback_clarity")]),
+            "playoff_preparation": star_rating([trait_value(head, "scheme_balance"), trait_value(defense, "matchup_adjustment"), trait_value(off, "shot_quality")]),
+            "experimentation": star_rating([personality_value(head, "adaptability"), trait_value(off, "player_usage"), trait_value(scouting, "risk_modeling")]),
+            "hands_on_control": star_rating([trait_value(head, "rotation_management"), personality_value(head, "ambition")]),
+        }
+        ratings[team["id"]] = CoachRating(
+            id=stable_id("save_coach_rating", team["id"], head.get("name")),
+            team_id=team["id"],
+            coach_name=head.get("name") or "Save Staff Head Coach",
+            ratings={key: round(value, 2) for key, value in values.items()},
+            confidence=0.5,
+            source_ids=["src_gameplay_staff_seed_v1"],
+            notes="Save-state coach rating from mutable gameplay staff slots.",
+        )
+    return ratings
+
+
+def align_real_head_coach_names(canonical: dict[str, Any], save: dict[str, Any]) -> None:
+    real_heads = {
+        staff["team_id"]: staff["name"]
+        for staff in canonical.get("staff_profiles", [])
+        if staff.get("role") == "head_coach" and staff.get("name")
+    }
+    for slot in save.get("staff_slots", []):
+        if slot.get("slot") != "head_coach":
+            continue
+        if not should_align_head_coach_slot(slot):
+            continue
+        real_name = real_heads.get(slot.get("team_id"))
+        if real_name and slot.get("name") != real_name:
+            previous = slot.get("name")
+            slot["name"] = real_name
+            slot["status"] = "real_head_coach_name_gameplay_profile"
+            slot["notes"] = (
+                f"{slot.get('notes', '')} Display name aligned to real head coach {real_name}; "
+                f"gameplay ratings/archetype remain deterministic ({previous})."
+            ).strip()
+        if real_name:
+            apply_head_coach_reputation(slot, real_name)
+
+
+def should_align_head_coach_slot(slot: dict[str, Any]) -> bool:
+    if slot.get("market_status") != "employed":
+        return False
+    if slot.get("team_id") != slot.get("original_team_id"):
+        return False
+    return str(slot.get("status") or "") in {
+        "fictional_gameplay_scaffold",
+        "real_head_coach_name_gameplay_profile",
+    }
+
+
+def apply_effective_player_ages(canonical: dict[str, Any], save: dict[str, Any]) -> None:
+    active_season = str(save.get("meta", {}).get("season") or CANONICAL_SEASON)
+    try:
+        year_delta = max(0, season_start_year(active_season) - season_start_year(CANONICAL_SEASON))
+    except (TypeError, ValueError):
+        year_delta = int(save.get("meta", {}).get("season_index") or 0)
+    if year_delta <= 0:
+        for player in canonical.get("players", []):
+            try:
+                player["display_age"] = None if float(player.get("age") or 0) <= 0 else player.get("age")
+            except (TypeError, ValueError):
+                player["display_age"] = None
+        return
+    for player in canonical.get("players", []):
+        if player.get("age") is None:
+            player["display_age"] = None
+            continue
+        try:
+            if float(player["age"]) <= 0:
+                player["display_age"] = None
+                continue
+            player["age"] = round(float(player["age"]) + year_delta, 1)
+            player["display_age"] = player["age"]
+        except (TypeError, ValueError):
+            player["display_age"] = None
+
+
+def seed_morale_if_flat(canonical: dict[str, Any], save: dict[str, Any]) -> None:
+    team_values = [tuple(sorted((morale or {}).items())) for morale in save.get("team_morale", {}).values()]
+    player_values = [tuple(sorted((morale or {}).items())) for morale in save.get("player_morale", {}).values()]
+    if len(set(team_values)) <= 2:
+        save["team_morale"] = initial_team_morale(canonical)
+    if len(set(player_values)) <= 4:
+        save["player_morale"] = initial_player_morale(canonical)
+
+
+def trait_value(staff: dict[str, Any], key: str) -> float:
+    return float((staff.get("skill_traits") or {}).get(key) or staff_grade(staff) or 60.0)
+
+
+def personality_value(staff: dict[str, Any], key: str) -> float:
+    return float((staff.get("personality_traits") or {}).get(key) or 60.0)
+
+
+def star_rating(values: list[float]) -> float:
+    clean = [value for value in values if value is not None]
+    return clamp(sum(clean) / max(1, len(clean)) / 20.0, 0.0, 5.0)
+
+
+def initial_team_records(canonical: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    return {team["id"]: empty_team_record(team) for team in canonical.get("teams", [])}
+
+
+def empty_team_record(team: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "team_id": team["id"],
+        "team_abbrev": team["abbrev"],
+        "wins": 0,
+        "losses": 0,
+        "home_wins": 0,
+        "home_losses": 0,
+        "away_wins": 0,
+        "away_losses": 0,
+        "points_for": 0.0,
+        "points_against": 0.0,
+        "last_game_id": None,
+    }
+
+
+def apply_development_events_to_traits(canonical: dict[str, Any], events: list[dict[str, Any]]) -> None:
+    deltas: dict[tuple[str, str], float] = {}
+    for event in events:
+        for trait_key, delta in (event.get("trait_deltas") or {}).items():
+            key = (event.get("player_id"), trait_key)
+            deltas[key] = deltas.get(key, 0.0) + float(delta)
+    if not deltas:
+        return
+    for trait in canonical.get("traits", []):
+        key = (trait.get("player_id"), trait.get("trait_key"))
+        if key in deltas:
+            trait["value"] = round(clamp(float(trait.get("value") or 50.0) + deltas[key], 0, 100), 3)
+            trait["notes"] = f"{trait.get('notes', '')} Save-state development deltas applied.".strip()
+
+
+def apply_rotation_recommendations(canonical: dict[str, Any], save: dict[str, Any]) -> None:
+    recommendations = save.get("rotation_recommendations") or {}
+    if not recommendations:
+        return
+    players_by_id = {player["id"]: player for player in canonical.get("players", [])}
+    for player_id, record in recommendations.items():
+        player = players_by_id.get(player_id)
+        if not player:
+            continue
+        current = display_minutes_projection(player)
+        requested = float(record.get("target_minutes") or current)
+        coach_commitment = float(record.get("coach_commitment") or 0.68)
+        coach_adjustment = clamp((current - requested) * (1.0 - coach_commitment), -3.0, 3.0)
+        adjusted = requested + coach_adjustment
+        player["minutes_projection"] = round(clamp(adjusted, 0.0, 42.0), 2)
+        player["rotation_note"] = f"GM {requested:.1f} MPG; coach rotation {adjusted:.1f} MPG."
+    normalize_team_minutes_after_recommendations(canonical, recommendations)
+
+
+def normalize_team_minutes_after_recommendations(canonical: dict[str, Any], recommendations: dict[str, Any]) -> None:
+    affected_teams = {
+        player.get("team_id")
+        for player in canonical.get("players", [])
+        if player.get("id") in recommendations and player.get("team_id")
+    }
+    for team_id in affected_teams:
+        roster = [player for player in canonical.get("players", []) if player.get("team_id") == team_id]
+        if not roster:
+            continue
+        anchored = [player for player in roster if player.get("id") in recommendations]
+        flexible = [player for player in roster if player.get("id") not in recommendations]
+        anchored_total = sum(display_minutes_projection(player) for player in anchored)
+        flexible_total = sum(display_minutes_projection(player) for player in flexible)
+        if anchored_total >= 240.0 or flexible_total <= 0:
+            total = anchored_total + flexible_total
+            if total <= 0:
+                continue
+            scale = 240.0 / total
+            for player in roster:
+                player["minutes_projection"] = round(clamp(display_minutes_projection(player) * scale, 0.0, 42.0), 2)
+            continue
+        scale = max(0.0, 240.0 - anchored_total) / flexible_total
+        for player in flexible:
+            minutes = display_minutes_projection(player)
+            if minutes <= 0:
+                continue
+            player["minutes_projection"] = round(clamp(minutes * scale, 0.0, 42.0), 2)
+
+
+def development_months_between(current: str, target: str) -> list[str]:
+    months: list[str] = []
+    cursor = parse_date(current).replace(day=1)
+    target_day = parse_date(target)
+    cursor = add_month(cursor)
+    while cursor <= target_day:
+        months.append(cursor.strftime("%Y-%m"))
+        cursor = add_month(cursor)
+    return months
+
+
+def add_month(value: date) -> date:
+    if value.month == 12:
+        return date(value.year + 1, 1, 1)
+    return date(value.year, value.month + 1, 1)
+
+
+def pending_counts(save: dict[str, Any]) -> dict[str, int]:
+    return {
+        "trades": len(save.get("pending_trade_proposals", [])),
+        "contracts": len(save.get("pending_contract_negotiations", [])),
+        "draft": len(save.get("pending_draft_selections", [])),
+        "staff": 0,
+        "cutdowns": len(save.get("pending_roster_cutdowns", [])),
+        "ai_actions": len([item for item in save.get("pending_ai_actions", []) if ai_action_is_visible(item)]),
+    }
+
+
+def ai_action_is_visible(action: dict[str, Any]) -> bool:
+    if action.get("status") in {"processed", "executed", "rejected"}:
+        return False
+    payload = action.get("payload") or {}
+    if action.get("action_type") == "trade_recommendations":
+        return any(
+            proposal.get("accepted_by_all") and (proposal.get("legality") or {}).get("status") == "legal"
+            for proposal in payload.get("proposals", [])
+        )
+    if action.get("action_type") == "free_agency_recommendations":
+        return any(negotiation_has_positive_accepted_offer(item) for item in payload.get("negotiations", []))
+    if action.get("action_type") == "staff_change_recommendations":
+        return False
+    return True
+
+
+def next_team_games(root: str | Path, canonical: dict[str, Any], save: dict[str, Any], team_id: str, limit: int = 5) -> list[dict[str, Any]]:
+    current = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+    team_by_espn = espn_team_id_map(canonical)
+    espn_by_team = {team["id"]: espn_id for espn_id, team in team_by_espn.items()}
+    team_espn = espn_by_team.get(team_id)
+    games = []
+    for game in schedule_for_save(root, save):
+        if game.get("gameDate", "") <= current:
+            continue
+        if str(game.get("homeTeamId")) != team_espn and str(game.get("awayTeamId")) != team_espn:
+            continue
+        home = team_by_espn.get(str(game.get("homeTeamId")), {})
+        away = team_by_espn.get(str(game.get("awayTeamId")), {})
+        games.append({"game_id": str(game.get("externalGameId")), "date": game.get("gameDate"), "away_team": away.get("abbrev"), "home_team": home.get("abbrev")})
+        if len(games) >= limit:
+            break
+    return games
+
+
+def health_summary(states: list[dict[str, Any]]) -> dict[str, Any]:
+    out = [state for state in states if state.get("availability_status") != "active"]
+    fatigue_values = [float(state.get("fatigue") or 0.0) for state in states]
+    return {
+        "player_count": len(states),
+        "unavailable_count": len(out),
+        "average_fatigue": round(sum(fatigue_values) / max(1, len(fatigue_values)), 2),
+        "unavailable_player_ids": [state.get("player_id") for state in out],
+    }
+
+
+def display_minutes_projection(player: dict[str, Any]) -> float:
+    minutes = float(player.get("minutes_projection") or 0.0)
+    if minutes > 80:
+        minutes = minutes / 82.0
+    return round(clamp(minutes, 0.0, 42.0), 1)
+
+
+def per_game_stat(totals: dict[str, Any], stat: str) -> float:
+    games = max(1, int(totals.get("games") or 0))
+    return round(float(totals.get(stat) or 0.0) / games, 1) if totals else 0.0
+
+
+def percentage_stat(totals: dict[str, Any], made_key: str, attempt_key: str) -> float | None:
+    attempts = float((totals or {}).get(attempt_key) or 0.0)
+    if attempts <= 0:
+        return None
+    return round(float((totals or {}).get(made_key) or 0.0) / attempts * 100.0, 1)
+
+
+def player_attribute_summary(canonical: dict[str, Any], player_id: str) -> dict[str, float]:
+    traits = {trait.get("trait_key"): float(trait.get("value") or 50.0) for trait in canonical.get("traits", []) if trait.get("player_id") == player_id}
+    player = next((item for item in canonical.get("players", []) if item.get("id") == player_id), {})
+    minutes = display_minutes_projection(player)
+
+    def avg(keys: list[str], default: float = 50.0) -> float:
+        values = [traits.get(key, default) for key in keys]
+        return sum(values) / max(1, len(values))
+
+    shooting = avg(["shooting_range", "shot_versatility", "release_speed"])
+    creation = avg(["handle_pressure", "passing_reads", "rim_pressure", "shot_versatility"])
+    defense = avg(["defensive_effort", "scheme_iq", "screen_navigation", "rim_deterrence"])
+    athleticism = avg(["foot_speed_lateral_agility", "stamina_cardio", "rim_pressure"])
+    iq = avg(["scheme_iq", "passing_reads", "portability", "playoff_translation"])
+    rebounding = traits.get("offensive_rebounding", 50.0) * 0.66 + traits.get("rim_deterrence", 50.0) * 0.18 + traits.get("stamina_cardio", 50.0) * 0.16
+    overall = shooting * 0.22 + creation * 0.25 + defense * 0.22 + athleticism * 0.13 + iq * 0.12 + min(6.0, minutes / 7.0)
+    return {
+        "overall": round(clamp(overall, 1, 99), 1),
+        "shooting": round(clamp(shooting, 1, 99), 1),
+        "creation": round(clamp(creation, 1, 99), 1),
+        "defense": round(clamp(defense, 1, 99), 1),
+        "athleticism": round(clamp(athleticism, 1, 99), 1),
+        "iq": round(clamp(iq, 1, 99), 1),
+        "release": round(clamp(traits.get("release_speed", 50.0), 1, 99), 1),
+        "range": round(clamp(traits.get("shooting_range", 50.0), 1, 99), 1),
+        "versatility": round(clamp(traits.get("shot_versatility", 50.0), 1, 99), 1),
+        "handle": round(clamp(traits.get("handle_pressure", 50.0), 1, 99), 1),
+        "rim_pressure": round(clamp(traits.get("rim_pressure", 50.0), 1, 99), 1),
+        "passing": round(clamp(traits.get("passing_reads", 50.0), 1, 99), 1),
+        "stamina": round(clamp(traits.get("stamina_cardio", 50.0), 1, 99), 1),
+        "rebounding": round(clamp(rebounding, 1, 99), 1),
+        "def_effort": round(clamp(traits.get("defensive_effort", 50.0), 1, 99), 1),
+        "screen_nav": round(clamp(traits.get("screen_navigation", 50.0), 1, 99), 1),
+        "rim_deterrence": round(clamp(traits.get("rim_deterrence", 50.0), 1, 99), 1),
+        "oreb": round(clamp(traits.get("offensive_rebounding", 50.0), 1, 99), 1),
+        "portability": round(clamp(traits.get("portability", 50.0), 1, 99), 1),
+        "playoff": round(clamp(traits.get("playoff_translation", 50.0), 1, 99), 1),
+    }
+
+
+def player_salary_table(canonical: dict[str, Any], player_id: str) -> dict[str, float | None]:
+    contract = next((item for item in canonical.get("contracts", []) if item.get("player_id") == player_id), None)
+    if not contract:
+        return {}
+    output: dict[str, float | None] = {}
+    for entry in contract.get("seasons", []):
+        season = str(entry.get("season") or "")
+        if not season:
+            continue
+        salary = entry.get("salary")
+        output[season] = round(float(salary) / 1_000_000, 1) if salary is not None else None
+    return dict(sorted(output.items()))
+
+
+def player_health_label(state: dict[str, Any] | None, current_date: str | None) -> dict[str, Any]:
+    if not state:
+        return {"status": "ok", "label": "", "games_missed": 0}
+    status = state.get("availability_status") or "active"
+    if status == "active":
+        return {"status": "ok", "label": "", "games_missed": int(state.get("games_missed") or 0)}
+    return_date = state.get("return_date")
+    days_left = None
+    if return_date and current_date:
+        days_left = max(0, (parse_date(return_date) - parse_date(current_date)).days)
+    severity = state.get("injury_severity") or state.get("current_injury_severity") or "injured"
+    label = f"{severity}"
+    if days_left is not None:
+        label = f"{label} ~{max(1, round(days_left / 2.4))}g"
+    return {"status": status, "label": label, "days_left": days_left, "games_missed": int(state.get("games_missed") or 0)}
+
+
+def team_cap_summary(canonical: dict[str, Any], save: dict[str, Any], team_id: str) -> dict[str, Any]:
+    season = save.get("meta", {}).get("season") or CANONICAL_SEASON
+    total = 0.0
+    unresolved = 0
+    active_player_ids = {player["id"] for player in canonical.get("players", []) if player.get("team_id") == team_id}
+    for contract in canonical.get("contracts", []):
+        if contract.get("player_id") not in active_player_ids:
+            continue
+        salary = contract_salary_for_season(contract, season)
+        if salary is None:
+            unresolved += 1
+        else:
+            total += salary
+    tax_space = TAX_LINE - total
+    hard_cap_space = SECOND_APRON - total
+    return {
+        "season": season,
+        "salary_total": round(total, 2),
+        "salary_total_millions": round(total / 1_000_000, 2),
+        "tax_line_millions": round(TAX_LINE / 1_000_000, 2),
+        "hard_cap_millions": round(SECOND_APRON / 1_000_000, 2),
+        "tax_space_millions": round(tax_space / 1_000_000, 2),
+        "hard_cap_space_millions": round(hard_cap_space / 1_000_000, 2),
+        "tax_space_pct": round(tax_space / TAX_LINE * 100, 1),
+        "hard_cap_space_pct": round(hard_cap_space / SECOND_APRON * 100, 1),
+        "unresolved_contract_count": unresolved,
+    }
+
+
+def contract_salary_for_season(contract: dict[str, Any], season: str) -> float | None:
+    for entry in contract.get("seasons", []):
+        if entry.get("season") == season and entry.get("salary") is not None:
+            return float(entry.get("salary"))
+    return None
+
+
+def offer_to_contract_seasons(offer: dict[str, Any]) -> list[dict[str, Any]]:
+    years = int(offer.get("years") or offer.get("term_years") or 1)
+    annual = float(offer.get("annual_salary") or offer.get("aav") or offer.get("annual_salary_millions", 0.0))
+    if annual and annual < 1_000_000:
+        annual *= 1_000_000
+    start = int(str(offer.get("start_season") or offer.get("season") or CANONICAL_SEASON).split("-")[0])
+    seasons = []
+    for offset in range(max(1, years)):
+        seasons.append(
+            {
+                "season": season_label_from_start(start + offset),
+                "salary": int(round(annual)),
+                "option_type": None,
+                "guarantee_status": "save_state_offer",
+            }
+        )
+    return seasons
+
+
+def initial_team_morale(canonical: dict[str, Any]) -> dict[str, dict[str, float]]:
+    states = {state["team_id"]: state for state in canonical.get("team_strategic_states", [])}
+    output = {}
+    for team in canonical.get("teams", []):
+        state = states.get(team["id"], {})
+        phase = str(state.get("phase") or "")
+        ceiling = float(state.get("contention_ceiling") or 55.0)
+        pressure = float(state.get("pressure") or 55.0)
+        base = 52.0 + (ceiling - 55.0) * 0.16 - max(0.0, pressure - 62.0) * 0.08 + deterministic_small(team["id"], "morale") * 3.5
+        if "contending" in phase:
+            base += 3.0
+        if "rebuilding" in phase:
+            base -= 2.2
+        output[team["id"]] = {
+            "overall": round(clamp(base, 38, 74), 2),
+            "chemistry": round(clamp(base + deterministic_small(team["id"], "chemistry") * 4.0, 36, 78), 2),
+            "confidence": round(clamp(base + (ceiling - 58.0) * 0.08, 35, 80), 2),
+        }
+    return output
+
+
+def initial_player_morale(canonical: dict[str, Any]) -> dict[str, dict[str, float]]:
+    team_morale = initial_team_morale(canonical)
+    output = {}
+    for player in canonical.get("players", []):
+        minutes = display_minutes_projection(player)
+        team_base = team_morale.get(player.get("team_id"), {}).get("overall", 54.0)
+        role = 60.0 if minutes >= 28 else 56.0 if minutes >= 18 else 51.0 if minutes >= 10 else 46.0
+        age = float(player.get("age") or 27.0)
+        contract = 55.0 + deterministic_small(player["id"], "contract") * 6.0
+        if age >= 34 and minutes < 16:
+            role -= 2.5
+        output[player["id"]] = {
+            "overall": round(clamp(team_base * 0.55 + role * 0.35 + 6.0 + deterministic_small(player["id"], "overall") * 3.0, 35, 78), 2),
+            "role_satisfaction": round(clamp(role + deterministic_small(player["id"], "role") * 5.5, 30, 82), 2),
+            "team_confidence": round(clamp(team_base + deterministic_small(player["id"], "team") * 4.0, 32, 82), 2),
+            "contract_satisfaction": round(clamp(contract, 30, 82), 2),
+        }
+    return output
+
+
+def initial_team_metric(canonical: dict[str, Any], value: float) -> dict[str, float]:
+    return {team["id"]: round(clamp(value + deterministic_small(team["id"], "metric") * 5.0, 35, 80), 2) for team in canonical.get("teams", [])}
+
+
+def deterministic_small(*parts: object) -> float:
+    digest = hashlib.sha256(":".join(str(part) for part in parts).encode("utf-8")).hexdigest()
+    return int(digest[:8], 16) / 0xFFFFFFFF - 0.5
+
+
+def update_game_morale(save: dict[str, Any], home_id: str, away_id: str, home_points: int, away_points: int) -> None:
+    winner = home_id if home_points > away_points else away_id
+    loser = away_id if winner == home_id else home_id
+    margin = abs(home_points - away_points)
+    win_delta = 1.0 + min(2.5, margin / 18.0)
+    loss_delta = -0.8 - min(2.2, margin / 22.0)
+    apply_team_morale_delta(save, winner, win_delta)
+    apply_team_morale_delta(save, loser, loss_delta)
+    save.setdefault("fan_confidence", {})[winner] = round(clamp(float(save.get("fan_confidence", {}).get(winner, 55.0)) + win_delta * 0.45, 0, 100), 2)
+    save.setdefault("fan_confidence", {})[loser] = round(clamp(float(save.get("fan_confidence", {}).get(loser, 55.0)) + loss_delta * 0.4, 0, 100), 2)
+
+
+def apply_team_morale_delta(save: dict[str, Any], team_id: str, delta: float) -> None:
+    morale = save.setdefault("team_morale", {}).setdefault(team_id, {"overall": 58.0, "chemistry": 58.0, "confidence": 56.0})
+    morale["overall"] = round(clamp(float(morale.get("overall", 58.0)) + delta, 0, 100), 2)
+    morale["chemistry"] = round(clamp(float(morale.get("chemistry", 58.0)) + delta * 0.35, 0, 100), 2)
+    morale["confidence"] = round(clamp(float(morale.get("confidence", 56.0)) + delta * 0.65, 0, 100), 2)
+
+
+def update_player_game_morale(save: dict[str, Any], line: dict[str, Any], won: bool, margin: int) -> None:
+    player_id = line.get("player_id")
+    if not player_id:
+        return
+    morale = save.setdefault("player_morale", {}).setdefault(
+        player_id,
+        {"overall": 56.0, "role_satisfaction": 55.0, "team_confidence": 55.0, "contract_satisfaction": 55.0},
+    )
+    minutes = float(line.get("minutes") or 0.0)
+    points = float(line.get("points") or 0.0)
+    delta = (0.28 if won else -0.22) + min(0.35, margin / 70.0) * (1 if won else -1)
+    role_delta = 0.08 if minutes >= 18 else -0.04 if minutes <= 8 else 0.0
+    scoring_delta = clamp((points - minutes * 0.34) / 120.0, -0.12, 0.18)
+    morale["overall"] = round(clamp(float(morale.get("overall", 56.0)) + delta + scoring_delta, 0, 100), 2)
+    morale["role_satisfaction"] = round(clamp(float(morale.get("role_satisfaction", 55.0)) + role_delta, 0, 100), 2)
+    morale["team_confidence"] = round(clamp(float(morale.get("team_confidence", 55.0)) + delta * 0.72, 0, 100), 2)
+
+
+def add_news(save: dict[str, Any], kind: str, headline: str, date_value: str | None = None) -> dict[str, Any]:
+    date_value = date_value or save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+    item = {
+        "id": stable_id("news", kind, date_value, headline),
+        "date": date_value,
+        "kind": kind,
+        "headline": headline,
+        "status": "unread",
+    }
+    existing = {news.get("id") for news in save.setdefault("news_items", [])}
+    if item["id"] not in existing:
+        save["news_items"].append(item)
+        add_social(save, kind, headline, team_ids=[])
+    return item
+
+
+def sync_social_from_news(save: dict[str, Any]) -> None:
+    social_keys = {(item.get("kind"), item.get("subject")) for item in save.get("social_feed", [])}
+    for news in save.get("news_items", [])[-60:]:
+        kind = news.get("kind")
+        headline = news.get("headline")
+        if kind in {"game_result", "development"}:
+            continue
+        if not kind or not headline or (kind, headline) in social_keys:
+            continue
+        add_social(save, kind, headline, team_ids=[], date_value=news.get("date"))
+        social_keys.add((kind, headline))
+
+
+def add_social(save: dict[str, Any], kind: str, text: str, team_ids: list[str] | None = None, date_value: str | None = None) -> dict[str, Any]:
+    date_value = date_value or save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+    post = social_post_for(kind, text, date_value)
+    importance = social_importance(kind, post["text"])
+    item = {
+        "id": stable_id("social", kind, date_value, post["text"], post["handle"]),
+        "date": date_value,
+        "kind": kind,
+        "text": post["text"],
+        "author": post["author"],
+        "handle": post["handle"],
+        "persona": post["persona"],
+        "subject": post.get("subject") or text,
+        "team_ids": team_ids or [],
+        "sentiment": social_sentiment(kind, post["text"]),
+        "importance": importance,
+    }
+    feed = save.setdefault("social_feed", [])
+    if item["id"] not in {existing.get("id") for existing in feed}:
+        feed.append(item)
+    return item
+
+
+def social_importance(kind: str, text: str) -> int:
+    low = text.lower()
+    base = {
+        "trade": 90,
+        "trade_offer": 72,
+        "free_agency": 82,
+        "contract": 76,
+        "free_agent_signing": 82,
+        "extension": 76,
+        "staff_hire": 68,
+        "staff_fire": 72,
+        "injury": 84,
+        "injury_return": 72,
+        "draft": 72,
+        "draft_selection": 70,
+        "draft_lottery": 78,
+        "offseason_rosters": 70,
+        "player_high": 86,
+        "team_stretch": 76,
+        "player_stretch": 74,
+        "power_ranking": 66,
+        "champion": 100,
+        "playoffs": 80,
+        "game_result": 42,
+    }.get(kind, 45)
+    if any(word in low for word in ["season high", "career", "trade", "fired", "signed", "wins the nba title"]):
+        base += 10
+    return int(clamp(base, 0, 100))
+
+
+def social_post_for(kind: str, text: str, date_value: str) -> dict[str, str]:
+    personas = [
+        ("Maya Chen", "@maya_hoops", "film analyst"),
+        ("Cap Sheet Carl", "@cap_sheet_carl", "salary obsessive"),
+        ("The Rotation Doctor", "@rotation_rx", "minutes watcher"),
+        ("Sideline Static", "@sideline_static", "fan chaos"),
+        ("Jules on Hoops", "@julesonhoops", "measured beat writer"),
+        ("League Pass Poet", "@lp_poet", "joke-heavy fan"),
+        ("Hoop Sicko", "@rimrunratio", "NBA twitter sicko"),
+        ("Zone Breaker", "@zone_breaker", "tactical agitator"),
+        ("Bench Mob Burner", "@benchburner", "chaos fan"),
+    ]
+    subject = social_subject(text)
+    templates = {
+        "game_result": [
+            "{subject} is the whole group chat right now. Rotation ripple watch starts now.",
+            "{subject}. Somebody is about to make this about substitutions, and honestly they might be right.",
+            "{subject}. The standings math just got a little louder.",
+            "{subject}. Box score scouts, report to the timeline.",
+            "{subject} and the timeline immediately became a crime scene.",
+            "{subject}. Nasty little result for everyone's agenda spreadsheet.",
+            "{subject}. This is either a statement win or a disgusting loss, depending on which avi is yelling.",
+            "{subject}. Generational agenda food. The takes are going to be completely shameless.",
+            "{subject}. Somebody's group chat is in hell right now.",
+            "{subject}. I do not want to hear the 'scheduled loss' cope, respectfully.",
+        ],
+        "trade_offer": [
+            "Trade machine smoke: {subject}",
+            "{subject}. Front offices are at least picking up the phone.",
+            "Not every call becomes a deal, but {lower_subject}",
+            "{subject}. Half the league is lying, the other half is leaking.",
+            "{subject}. If this is leverage, it is at least entertaining leverage.",
+            "{subject}. This is either negotiation or pure sicko theater.",
+            "{subject}. Fans have already decided one GM is a genius and the other is unemployed.",
+        ],
+        "free_agency": [
+            "{subject}. The market has entered its annually unreasonable phase.",
+            "{subject}. Years matter, role matters, money still talks.",
+            "{subject}. Somebody is about to talk themselves into a fourth year.",
+            "{subject}. Cap people are sweating; fans are already photoshopping jerseys.",
+            "{subject}. That's not a contract, that's a therapy bill for the fanbase.",
+            "{subject}. The mid-level exception discourse is about to become everyone's problem.",
+        ],
+        "free_agent_signing": [
+            "{subject}. The market has spoken, whether the timeline likes it or not.",
+            "{subject}. Fit, money, years: pick your argument and start yelling.",
+            "{subject}. One fanbase just discovered the phrase 'actually he could be sneaky good.'",
+        ],
+        "contract": [
+            "{subject}. Contract season remains the league's most expensive group project.",
+            "{subject}. The cap sheet is either fine or on fire, depending on your agenda.",
+            "{subject}. Security won the negotiation. Now the basketball has to justify it.",
+        ],
+        "extension": [
+            "{subject}. The extension table got serious.",
+            "{subject}. Locking in your own guys is easy until the AAV hits the screen.",
+            "{subject}. Future flexibility just had a very adult conversation.",
+        ],
+        "press_conference": [
+            "{subject}. The quote board gets one more push pin.",
+            "{subject}. Good answer or not, the room definitely noticed the tone.",
+            "{subject}. This is why media training is a front-office skill.",
+            "{subject}. That answer is getting aggregated before the mic is even cold.",
+            "{subject}. Respectfully, that was either leadership or premium waffle.",
+            "{subject}. Incredible amount of 'we'll keep that internal' energy.",
+            "{subject}. The man said words. Whether they mean anything is tomorrow's podcast.",
+        ],
+        "development": [
+            "{subject}. Player dev is never linear, but the month-to-month noise is where saves get fun.",
+            "{subject}. Somewhere a development coach is quietly updating the spreadsheet.",
+            "{subject}. The 'he added something this summer' crowd just got new material.",
+        ],
+        "trade": [
+            "{subject}. My first read: one side got cleaner fit, the other side better hope the pick math saves them.",
+            "{subject}. Somebody's value chart just got punched in the mouth and the cap sheet is pretending it is fine.",
+            "{subject}. This feels like a GM either reading the room perfectly or talking himself into a podcast apology.",
+            "{subject}. If the incoming role is what they think it is, this is sharp. If not, enjoy the discourse funeral.",
+        ],
+        "injury": [
+            "{subject}. This is where depth stops being a buzzword and starts being the whole season.",
+            "{subject}. Brutal timing. The rotation math gets ugly fast if the bench cannot cover real minutes.",
+            "{subject}. Fans will say next man up; coaches know the shot profile just changed.",
+            "{subject}. Not every injury is season-changing, but this one at least forces the front office to look in the mirror.",
+        ],
+        "injury_return": [
+            "{subject}. The return is good news, but somebody is about to lose touches and the rotation politics are real.",
+            "{subject}. Reintegration sounds easy until a replacement has earned minutes the hard way.",
+            "{subject}. Healthy roster, uncomfortable decisions. That is a better problem, but it is still a problem.",
+        ],
+        "staff_hire": [
+            "{subject}. Staff nerds, this is your moment.",
+            "{subject}. Not a jersey-selling move, but these are the margins that can swing a season.",
+            "{subject}. The clipboard economy is thriving.",
+        ],
+        "staff_fire": [
+            "{subject}. The vibes meeting apparently did not go well.",
+            "{subject}. Front office accountability, or just a human shield? Discuss.",
+            "{subject}. Somebody update the job security meter.",
+        ],
+        "draft": [
+            "{subject}. Draft night optimism remains undefeated.",
+            "{subject}. The rookie contract math is already doing laps around the timeline.",
+            "{subject}. Bookmarking this for the first summer league overreaction.",
+        ],
+        "draft_selection": [
+            "{subject}. Scout departments either high-fiving or quietly deleting notes.",
+            "{subject}. The fit discourse starts before the hat is even on.",
+            "{subject}. I will be overreacting responsibly.",
+        ],
+        "draft_lottery": [
+            "{subject}. Lottery night: where math becomes trauma.",
+            "{subject}. Half the league just changed its five-year plan in public.",
+            "{subject}. Ping-pong ball theology is undefeated.",
+        ],
+        "offseason_rosters": [
+            "{subject}. The bottom of the roster churn is where true save sickos live.",
+            "{subject}. Some of these moves will matter in February and everyone will pretend they knew.",
+            "{subject}. Depth chart spreadsheet season is open.",
+        ],
+        "player_high": [
+            "{subject}. Absurd box-score behavior. The stat watchers are eating.",
+            "{subject}. Somebody got cooked so badly the film session needs a waiver.",
+            "{subject}. League Pass sickos just found tomorrow's discourse.",
+            "{subject}. That's not a heater, that's an HR violation.",
+        ],
+        "team_stretch": [
+            "{subject}. Small sample? Sure. But small samples still pay rent on the timeline.",
+            "{subject}. This is the kind of stretch that makes GMs start lying to themselves.",
+            "{subject}. Power rankings people are already moving the goalposts.",
+        ],
+        "player_stretch": [
+            "{subject}. Role clarity discourse is officially open, and the box score is making the argument louder.",
+            "{subject}. This is the kind of production that changes how every opponent loads up the scouting report.",
+            "{subject}. Agenda stock is up and the replies are unbearable.",
+        ],
+        "power_ranking": [
+            "{subject}. Everyone below this is typing through it.",
+            "{subject}. The fake-neutral analysts have made their monthly decree.",
+            "{subject}. This ranking is either science or slander. Possibly both.",
+        ],
+        "playoffs": [
+            "{subject}. Playoff basketball remains deeply unserious for blood pressure.",
+            "{subject}. This is where reputations get cooked or canonized.",
+        ],
+        "champion": [
+            "{subject}. Banner math complete. Agenda math just beginning.",
+            "{subject}. Confetti is undefeated content.",
+        ],
+    }
+    digest = hashlib.sha256(f"{date_value}:{kind}:{text}".encode("utf-8")).hexdigest()
+    persona = personas[int(digest[:2], 16) % len(personas)]
+    choices = templates.get(kind, ["{text}", "{text} File it under: things to monitor."])
+    template = choices[int(digest[2:4], 16) % len(choices)]
+    rendered = template.format(
+        text=text,
+        subject=subject,
+        lower_text=text[:1].lower() + text[1:] if text else text,
+        lower_subject=subject[:1].lower() + subject[1:] if subject else subject,
+    )
+    return {"author": persona[0], "handle": persona[1], "persona": persona[2], "text": rendered, "subject": subject}
+
+
+def public_player_role(canonical: dict[str, Any], player_id: str | None, ppg: float = 0.0) -> str:
+    player = next((item for item in canonical.get("players", []) if item.get("id") == player_id), {})
+    if not player:
+        return "rotation story"
+    attrs = player_attribute_summary(canonical, player_id)
+    overall = float(attrs.get("overall") or 0.0)
+    minutes = display_minutes_projection(player)
+    if overall >= 82 or ppg >= 27 or minutes >= 32:
+        return "franchise-cornerstone level player"
+    if overall >= 74 or ppg >= 21 or minutes >= 28:
+        return "star-level option"
+    if overall >= 64 or minutes >= 20:
+        return "starter-level piece"
+    return "rotation piece"
+
+
+def social_subject(text: str) -> str:
+    if not text:
+        return "League chatter"
+    cleaned = text.strip().rstrip(".")
+    if len(cleaned) <= 86:
+        return cleaned
+    for separator in [". ", " | ", " - "]:
+        if separator in cleaned:
+            first = cleaned.split(separator)[0].strip()
+            if 8 <= len(first) <= 86:
+                return first
+    return cleaned[:83].rstrip() + "..."
+
+
+def social_sentiment(kind: str, text: str) -> float:
+    low = text.lower()
+    sentiment = 0.0
+    if kind in {"champion", "staff_hire"} or "wins" in low or "hired" in low:
+        sentiment += 0.35
+    if "fired" in low or "loss" in low:
+        sentiment -= 0.25
+    if "accountable" in low:
+        sentiment += 0.12
+    if "deflect" in low:
+        sentiment -= 0.12
+    return round(clamp(sentiment, -1.0, 1.0), 3)
+
+
+def press_impact(topic: str, tone: str, seed: int = 1) -> dict[str, float]:
+    base = {
+        "accountable": {"team_morale": 4.4, "fan_confidence": 3.3, "owner_confidence": 3.0},
+        "optimistic": {"team_morale": 3.2, "fan_confidence": 4.4, "owner_confidence": 1.7},
+        "deflect": {"team_morale": -1.8, "fan_confidence": -4.7, "owner_confidence": -2.8},
+        "challenge": {"team_morale": -2.5, "fan_confidence": 3.2, "owner_confidence": 5.1},
+    }[tone]
+    topic_low = topic.lower()
+    multiplier = 1.0
+    if any(word in topic_low for word in ["losing", "injury", "trade", "chemistry", "playoffs"]):
+        multiplier = 1.25
+    if any(word in topic_low for word in ["scandal", "fight", "drama"]) and tone == "accountable":
+        multiplier = 1.55
+    if any(word in topic_low for word in ["trade", "staff", "signing", "extension"]):
+        if tone == "optimistic":
+            base = {**base, "fan_confidence": base["fan_confidence"] + 1.25, "team_morale": base["team_morale"] + 0.75}
+        if tone == "deflect":
+            base = {**base, "team_morale": base["team_morale"] + 1.0, "owner_confidence": base["owner_confidence"] + 0.4}
+    if "rumor" in topic_low and tone == "deflect":
+        base = {**base, "team_morale": base["team_morale"] + 1.2, "fan_confidence": base["fan_confidence"] + 0.6}
+    if "injury" in topic_low and tone == "optimistic":
+        base = {**base, "team_morale": base["team_morale"] + 1.15, "owner_confidence": base["owner_confidence"] - 1.0}
+    if any(word in topic_low for word in ["losing", "under .500", "expectations"]) and tone == "challenge":
+        base = {**base, "fan_confidence": base["fan_confidence"] + 1.35, "team_morale": base["team_morale"] - 1.0}
+    rng = random.Random(f"{seed}:{topic}:{tone}:press_impact")
+    return {key: round(value * multiplier + rng.uniform(-1.8, 1.8), 3) for key, value in base.items()}
+
+
+def social_reaction_text(team_abbrev: str, topic: str, tone: str) -> str:
+    if tone == "accountable":
+        return f"{team_abbrev} front office puts its name on {topic}. Useful honesty, unless the results make it age terribly."
+    if tone == "optimistic":
+        return f"{team_abbrev} sells the upside on {topic}. Fans will believe it for exactly as long as the next box score allows."
+    if tone == "challenge":
+        return f"{team_abbrev} sends a sharper message about {topic}. Locker room quote-board potential is officially high."
+    return f"{team_abbrev} keeps the real answer private on {topic}. Smart politics or premium dodgeball, depending on your agenda."
+
+
+def press_question(team_abbrev: str, topic: str, tone: str, seed: int) -> str:
+    questions = [
+        f"What do you want fans to understand about {topic}?",
+        f"How much responsibility does the front office take for {topic}?",
+        f"Is {topic} something you expect to solve internally, or does the roster need help?",
+        f"What message are you trying to send the locker room about {topic}?",
+    ]
+    index = int(hashlib.sha256(f"{team_abbrev}:{topic}:{tone}:{seed}".encode("utf-8")).hexdigest()[:2], 16) % len(questions)
+    return questions[index]
+
+
+def press_answer(team_abbrev: str, topic: str, tone: str) -> str:
+    if tone == "accountable":
+        return f"We have to be honest about {topic}. Our job is to make the next decision clearer than the last one, and that starts with owning what is in front of us."
+    if tone == "optimistic":
+        return f"We still believe in the group. {topic.capitalize()} is real, but there is enough talent and buy-in here to keep pushing in the right direction."
+    if tone == "challenge":
+        return f"The standard does not move. {topic.capitalize()} is a test for everyone in the building, and we expect a sharper response."
+    return f"We are going to keep most of those conversations internal. {topic.capitalize()} matters, but public noise cannot drive the plan."
+
+
+def deterministic_series_winner(save: dict[str, Any], series: dict[str, Any], seed: int) -> str:
+    records = save.get("team_records", {})
+    a, b = series["team_ids"]
+    a_score = playoff_team_score(records.get(a, {}), a, seed)
+    b_score = playoff_team_score(records.get(b, {}), b, seed)
+    return a if a_score >= b_score else b
+
+
+def playoff_team_score(record: dict[str, Any], team_id: str, seed: int) -> float:
+    games = max(1, int(record.get("wins", 0)) + int(record.get("losses", 0)))
+    win_pct = float(record.get("wins", 0)) / games
+    point_diff = (float(record.get("points_for", 0)) - float(record.get("points_against", 0))) / games
+    noise = int(hashlib.sha256(f"{seed}:{team_id}:playoffs".encode("utf-8")).hexdigest()[:4], 16) / 65535.0 - 0.5
+    return win_pct * 100 + point_diff * 1.8 + noise * 5.0
+
+
+def deterministic_loser_wins(save: dict[str, Any], winner: str, loser: str, seed: int) -> int:
+    gap = playoff_team_score(save.get("team_records", {}).get(winner, {}), winner, seed) - playoff_team_score(save.get("team_records", {}).get(loser, {}), loser, seed)
+    if gap > 16:
+        return 0
+    if gap > 9:
+        return 1
+    if gap > 4:
+        return 2
+    return 3
+
+
+def next_playoff_round(current_round: str | None) -> str:
+    return {
+        "first_round": "conference_semifinals",
+        "conference_semifinals": "conference_finals",
+        "conference_finals": "finals",
+        "finals": "champion",
+    }.get(str(current_round), "conference_semifinals")
+
+
+def next_round_series(canonical: dict[str, Any], state: dict[str, Any], winners: list[str], next_round: str) -> list[dict[str, Any]]:
+    if next_round == "champion":
+        return []
+    teams_by_id = {team["id"]: team for team in canonical.get("teams", [])}
+    if next_round == "finals":
+        east = [team_id for team_id in winners if teams_by_id.get(team_id, {}).get("conference") == "East"]
+        west = [team_id for team_id in winners if teams_by_id.get(team_id, {}).get("conference") == "West"]
+        if not east or not west:
+            return []
+        return [playoff_series_record("Finals", next_round, east[0], west[0])]
+    new_series = []
+    for conference in ["East", "West"]:
+        conf_winners = [team_id for team_id in winners if teams_by_id.get(team_id, {}).get("conference") == conference]
+        conf_winners.sort()
+        for index in range(0, len(conf_winners), 2):
+            if index + 1 < len(conf_winners):
+                new_series.append(playoff_series_record(conference, next_round, conf_winners[index], conf_winners[index + 1]))
+    return new_series
+
+
+def playoff_series_record(conference: str, round_name: str, team_a: str, team_b: str) -> dict[str, Any]:
+    return {
+        "id": stable_id("playoff_series", "2026", conference, round_name, team_a, team_b),
+        "conference": conference,
+        "round": round_name,
+        "status": "scheduled",
+        "higher_seed_team_id": team_a,
+        "lower_seed_team_id": team_b,
+        "team_ids": [team_a, team_b],
+        "wins": {team_a: 0, team_b: 0},
+        "winner_team_id": None,
+        "notes": "Generated next-round playoff scaffold series.",
+    }
+
+
+def save_standings_for_draft(canonical: dict[str, Any], save: dict[str, Any]) -> list[dict[str, Any]]:
+    teams = {team["id"]: team for team in canonical.get("teams", [])}
+    rows = []
+    for team_id, record in save.get("team_records", {}).items():
+        team = teams.get(team_id)
+        if not team:
+            continue
+        rows.append({"team_id": team_id, "team_abbrev": team["abbrev"], "wins": record.get("wins", 0), "losses": record.get("losses", 0)})
+    return rows
+
+
+def apply_offseason_roster_transitions(canonical: dict[str, Any], save: dict[str, Any], current_season: str, next_season: str, seed: int) -> dict[str, Any]:
+    active = canonical_with_save(canonical, save)
+    players = {player["id"]: player for player in active.get("players", [])}
+    contracts = {contract.get("player_id"): contract for contract in active.get("contracts", [])}
+    free_agents: list[str] = list(save.get("free_agent_player_ids", []))
+    retired: list[str] = list(save.get("retired_player_ids", []))
+    retired_this_offseason: list[str] = []
+    expired: list[str] = []
+    for player in active.get("players", []):
+        player_id = player["id"]
+        if not player.get("team_id"):
+            continue
+        age = float(player.get("age") or 27.0) + 1.0
+        if should_retire(player, age, seed, next_season):
+            save.setdefault("roster_overrides", {})[player_id] = None
+            if player_id not in retired:
+                retired.append(player_id)
+                retired_this_offseason.append(player_id)
+            continue
+        contract = contracts.get(player_id)
+        if contract and contract_last_season(contract) and contract_last_season(contract) < next_season:
+            if should_ai_retain_expiring_player(save, player, current_season, seed):
+                retain_expiring_player(save, player, player.get("team_id"), current_season, next_season, seed)
+                continue
+            add_re_signing_right(save, current_season, player_id, player.get("team_id"))
+            save.setdefault("roster_overrides", {})[player_id] = None
+            if player_id not in free_agents:
+                free_agents.append(player_id)
+            expired.append(player_id)
+    save["retired_player_ids"] = sorted(set(retired))
+    strategic_signed = strategic_free_agent_signings(canonical, save, free_agents, next_season, seed)
+    signed = auto_fill_rosters(canonical, save, free_agents, next_season, seed)
+    signed.update(strategic_signed)
+    final_repairs = auto_fill_rosters(canonical, save, [], next_season, seed + 997)
+    signed.update(final_repairs)
+    save["free_agent_player_ids"] = sorted(pid for pid in set(free_agents) if pid not in signed and pid not in set(save.get("retired_player_ids", [])))
+    if retired_this_offseason:
+        retirements = [
+            {
+                "player_id": player_id,
+                "name": players.get(player_id, {}).get("name"),
+                "age": round(float(players.get(player_id, {}).get("age") or 0.0) + 1.0, 1),
+                "position": players.get(player_id, {}).get("position"),
+            }
+            for player_id in retired_this_offseason
+        ]
+        report = {
+            "id": stable_id("retirement_report", current_season, next_season),
+            "season": current_season,
+            "next_season": next_season,
+            "date": f"{season_start_year(next_season)}-07-01",
+            "retirements": sorted(retirements, key=lambda item: (-(float(item.get("age") or 0)), item.get("name") or "")),
+        }
+        upsert_by_id(save, "retirement_reports", report)
+        names = ", ".join(item["name"] for item in report["retirements"][:5] if item.get("name"))
+        add_news(save, "retirement", f"Retirement report: {names or len(retired_this_offseason)} player(s) retired.", date_value=report["date"])
+    if expired or retired_this_offseason or signed:
+        add_news(
+            save,
+            "offseason_rosters",
+            f"Offseason roster transitions: {len(expired)} free agents, {len(retired_this_offseason)} retirements, {len(strategic_signed)} AI signings, {len(signed) - len(strategic_signed)} depth repairs.",
+            date_value=f"{season_start_year(next_season)}-09-01",
+        )
+    return {
+        "expired_free_agents": len(expired),
+        "retirements": len(retired_this_offseason),
+        "strategic_ai_signings": len(strategic_signed),
+        "auto_depth_signings": len(signed) - len(strategic_signed),
+        "final_roster_repairs": len(final_repairs),
+        "free_agent_pool_count": len(save.get("free_agent_player_ids", [])),
+    }
+
+
+def build_year_in_review(canonical: dict[str, Any], save: dict[str, Any], team_id: str | None, season: str) -> dict[str, Any] | None:
+    if not team_id:
+        return None
+    active = canonical_with_save(canonical, save)
+    players = {player["id"]: player for player in active.get("players", [])}
+    season_start = season_start_year(season)
+    months = {f"{year}-{month:02d}" for year, month in [(season_start, 10), (season_start, 11), (season_start, 12), (season_start + 1, 1), (season_start + 1, 2), (season_start + 1, 3), (season_start + 1, 4), (season_start + 1, 5), (season_start + 1, 6), (season_start + 1, 7), (season_start + 1, 8)]}
+    events_by_player: dict[str, list[dict[str, Any]]] = {}
+    for event in save.get("development_events", []):
+        if event.get("team_id") == team_id and event.get("month") in months:
+            events_by_player.setdefault(event.get("player_id"), []).append(event)
+    rows: list[dict[str, Any]] = []
+    for player in sorted([row for row in players.values() if row.get("team_id") == team_id], key=display_minutes_projection, reverse=True):
+        deltas: dict[str, float] = {}
+        for event in events_by_player.get(player["id"], []):
+            for trait, delta in (event.get("trait_deltas") or {}).items():
+                deltas[trait] = deltas.get(trait, 0.0) + float(delta or 0.0)
+        if deltas:
+            best_trait, best_delta = max(deltas.items(), key=lambda item: item[1])
+            worst_trait, worst_delta = min(deltas.items(), key=lambda item: item[1])
+        else:
+            best_trait, best_delta, worst_trait, worst_delta = None, 0.0, None, 0.0
+        total = sum(deltas.values())
+        rows.append(
+            {
+                "player_id": player["id"],
+                "name": player.get("name"),
+                "age": next_season_age(player),
+                "position": player.get("position"),
+                "minutes_projection": display_minutes_projection(player),
+                "development_event_count": len(events_by_player.get(player["id"], [])),
+                "total_trait_delta": round(total, 3),
+                "trait_deltas": {key: round(value, 3) for key, value in sorted(deltas.items())},
+                "best_trait": best_trait,
+                "best_trait_delta": round(best_delta, 3),
+                "worst_trait": worst_trait,
+                "worst_trait_delta": round(worst_delta, 3),
+            }
+        )
+    rows.sort(key=lambda item: (abs(float(item["total_trait_delta"])), item["minutes_projection"]), reverse=True)
+    return {
+        "id": stable_id("year_review", season, team_id),
+        "season": season,
+        "team_id": team_id,
+        "generated_date": f"{season_start + 1}-09-01",
+        "players": rows,
+        "notes": "Development year-in-review summarizing saved monthly trait deltas before training camp.",
+    }
+
+
+def next_season_age(player: dict[str, Any]) -> float | None:
+    value = player.get("display_age", player.get("age"))
+    if value is None:
+        return None
+    try:
+        return round(float(value) + 1.0, 1)
+    except (TypeError, ValueError):
+        return None
+
+
+def prepare_free_agency_pool(canonical: dict[str, Any], save: dict[str, Any]) -> dict[str, Any]:
+    current_season = save.get("meta", {}).get("season") or CANONICAL_SEASON
+    if current_season in set(save.get("free_agency_prepared_seasons", [])):
+        return {"status": "already_prepared", "free_agent_pool_count": len(save.get("free_agent_player_ids", []))}
+    seed = int(save.get("meta", {}).get("seed") or 1)
+    next_season = season_label_from_start(season_start_year(current_season) + 1)
+    active = canonical_with_save(canonical, save)
+    contracts = {contract.get("player_id"): contract for contract in active.get("contracts", [])}
+    free_agents = set(save.get("free_agent_player_ids", []))
+    expired: list[str] = []
+    for player in active.get("players", []):
+        player_id = player.get("id")
+        if not player_id or not player.get("team_id"):
+            continue
+        contract = contracts.get(player_id)
+        last = contract_last_season(contract) if contract else None
+        if last and last <= current_season:
+            if should_ai_retain_expiring_player(save, player, current_season, seed):
+                retain_expiring_player(save, player, player.get("team_id"), current_season, next_season, seed)
+                continue
+            add_re_signing_right(save, current_season, player_id, player.get("team_id"))
+            save.setdefault("roster_overrides", {})[player_id] = None
+            free_agents.add(player_id)
+            expired.append(player_id)
+    save["free_agent_player_ids"] = sorted(pid for pid in free_agents if pid not in set(save.get("retired_player_ids", [])))
+    save.setdefault("free_agency_prepared_seasons", []).append(current_season)
+    if expired:
+        add_news(
+            save,
+            "free_agency",
+            f"Free agency opened with {len(expired)} expired contracts entering the market.",
+            date_value=save.get("state", {}).get("current_date"),
+        )
+    return {"status": "prepared", "expired_contracts": len(expired), "free_agent_pool_count": len(save.get("free_agent_player_ids", []))}
+
+
+def add_re_signing_right(save: dict[str, Any], season: str, player_id: str, team_id: str | None) -> None:
+    if not player_id or not team_id:
+        return
+    record = {
+        "id": stable_id("re_signing_right", season, team_id, player_id),
+        "season": season,
+        "player_id": player_id,
+        "team_id": team_id,
+        "status": "exclusive_review_window",
+    }
+    existing = [item for item in save.setdefault("re_signing_rights", []) if item.get("id") != record["id"]]
+    existing.append(record)
+    save["re_signing_rights"] = sorted(existing, key=lambda item: (item.get("season", ""), item.get("team_id", ""), item.get("player_id", "")))
+
+
+def should_ai_retain_expiring_player(save: dict[str, Any], player: dict[str, Any], season: str, seed: int) -> bool:
+    team_id = player.get("team_id")
+    if not team_id or team_id == save.get("meta", {}).get("user_team_id"):
+        return False
+    minutes = display_minutes_projection(player)
+    age = float(player.get("age") or 27.0)
+    record = save.get("team_records", {}).get(team_id, {})
+    games = max(1, int(record.get("wins", 0)) + int(record.get("losses", 0)))
+    win_pct = float(record.get("wins", 0)) / games
+    stats = save.get("player_season_stats", {}).get(player.get("id"), {})
+    ppg = per_game_stat(stats, "points")
+    threshold = 0.08 + min(0.34, minutes / 78.0) + min(0.12, ppg / 260.0)
+    threshold += max(0.0, win_pct - 0.5) * 0.22
+    threshold -= max(0.0, age - 32.0) * 0.025
+    if minutes >= 28:
+        threshold += 0.1
+    if minutes < 10:
+        threshold -= 0.08
+    roll = int(hashlib.sha256(f"{seed}:{season}:{player['id']}:ai_retain_expiring".encode("utf-8")).hexdigest()[:8], 16) / 0xFFFFFFFF
+    return roll < clamp(threshold, 0.02, 0.72)
+
+
+def retain_expiring_player(save: dict[str, Any], player: dict[str, Any], team_id: str | None, current_season: str, next_season: str, seed: int) -> None:
+    if not team_id:
+        return
+    minutes = display_minutes_projection(player)
+    age = float(player.get("age") or 27.0)
+    score = minutes * 0.72 + per_game_stat(save.get("player_season_stats", {}).get(player.get("id"), {}), "points") * 0.25
+    years = 3 if age <= 29 and minutes >= 24 else 2 if age <= 33 and minutes >= 16 else 1
+    salary = int(round(clamp(2_200_000 + minutes * 520_000 + max(0.0, score - 18.0) * 320_000, 2_000_000, 32_000_000)))
+    seasons = [
+        {
+            "season": season_label_from_start(season_start_year(next_season) + offset),
+            "salary": int(round(salary * (1.035 ** offset))),
+            "option_type": None,
+            "guarantee_status": "ai_re_signing",
+        }
+        for offset in range(years)
+    ]
+    save.setdefault("contract_overrides", {})[player["id"]] = {
+        "team_id": team_id,
+        "seasons": seasons,
+        "status": "ai_re_signing",
+        "original_contract_years": years,
+        "signed_season": next_season,
+    }
+    save.setdefault("transaction_logs", []).append(
+        {
+            "id": stable_id("transaction_log", "ai_re_signing", current_season, team_id, player["id"]),
+            "date": f"{season_start_year(next_season)}-07-01",
+            "transaction_type": "ai_re_signing",
+            "proposal_id": stable_id("ai_re_signing", next_season, team_id, player["id"]),
+            "status": "applied_to_save_ledger",
+            "teams": [team_id],
+            "assets": {"player_id": player["id"], "name": player["name"], "salary": salary, "years": years},
+            "evaluations": [{"minutes": minutes, "score": round(score, 2)}],
+            "source_ids": ["src_contract_market_config_v1"],
+            "notes": "AI retained an expiring own free agent before the open market based on role, performance, age, team record, and deterministic seed.",
+        }
+    )
+    team = {"id": team_id, "abbrev": str(team_id).replace("team_", "").upper()}
+    maybe_add_major_free_agent_news(save, team, player, salary, next_season)
+
+
+def ensure_draft_processed(canonical: dict[str, Any], save: dict[str, Any], draft_year: str, seed: int) -> dict[str, Any]:
+    if any(str(item.get("draft_year")) == str(draft_year) for item in save.get("incoming_rookies", [])):
+        signed = sign_unsigned_rookies(save, draft_year)
+        return {"status": "already_present", "rookies_signed": signed}
+    from .draft import rookie_player_record, rookie_trait_records, simulate_draft
+
+    draft = simulate_draft(canonical_with_save(canonical, save), str(draft_year), seed=seed)
+    save.setdefault("pending_draft_selections", []).extend(draft.get("pending_draft_selections", []))
+    for rights in draft.get("draft_rights", []):
+        upsert_by_id(save, "draft_rights", rights)
+    for contract in draft.get("rookie_contracts", []):
+        contract["status"] = "signed"
+        upsert_by_id(save, "rookie_contracts", contract)
+    teams = {team["id"]: team for team in canonical.get("teams", [])}
+    contracts = {contract.get("prospect_id"): contract for contract in draft.get("rookie_contracts", [])}
+    traits_by_prospect: dict[str, list[dict[str, Any]]] = {}
+    for trait in draft.get("draft_prospect_traits", []):
+        traits_by_prospect.setdefault(trait.get("prospect_id"), []).append(trait)
+    signed_count = 0
+    for rookie in draft.get("incoming_rookies", []):
+        team = teams.get(rookie.get("team_id"), {"id": rookie.get("team_id"), "abbrev": rookie.get("team_abbrev")})
+        prospect = {
+            "id": rookie.get("prospect_id"),
+            "name": rookie.get("name"),
+            "position": rookie.get("position"),
+            "age": rookie.get("age"),
+            "height_inches": rookie.get("height_inches"),
+            "weight_lbs": rookie.get("weight_lbs"),
+            "archetype": rookie.get("archetype"),
+            "potential": rookie.get("potential"),
+            "current_ability": rookie.get("current_ability"),
+        }
+        contract = contracts.get(rookie.get("prospect_id"))
+        if not contract:
+            continue
+        from .schema import RookieContractProjection
+
+        contract_obj = RookieContractProjection(**contract)
+        player = rookie_player_record(rookie, prospect, team, contract_obj)
+        rookie["player_id"] = player["id"]
+        rookie["roster_status"] = "signed_rookie"
+        rookie["rights_status"] = "signed_rookie_contract"
+        upsert_by_id(save, "incoming_rookies", rookie)
+        upsert_by_id(save, "generated_players", player)
+        for trait in rookie_trait_records(player, prospect, traits_by_prospect.get(rookie.get("prospect_id"), [])):
+            upsert_by_id(save, "generated_traits", trait)
+        save.setdefault("roster_overrides", {})[player["id"]] = team.get("id")
+        save.setdefault("contract_overrides", {})[player["id"]] = {
+            "team_id": team.get("id"),
+            "seasons": contract.get("seasons", []),
+            "status": "signed_rookie_contract",
+            "original_contract_years": len(contract.get("seasons", [])),
+            "signed_season": contract.get("seasons", [{}])[0].get("season"),
+        }
+        signed_count += 1
+    if signed_count:
+        add_news(save, "draft", f"{draft_year} AI draft processed and {signed_count} rookies signed.", date_value=f"{draft_year}-06-26")
+    return {"status": "processed_ai_draft", "selection_count": draft.get("selection_count", 0), "rookies_signed": signed_count}
+
+
+def sign_unsigned_rookies(save: dict[str, Any], draft_year: str) -> int:
+    signed = 0
+    for rookie in save.get("incoming_rookies", []):
+        if str(rookie.get("draft_year")) != str(draft_year) or rookie.get("roster_status") == "signed_rookie":
+            continue
+        player_id = rookie.get("player_id")
+        if not player_id:
+            continue
+        save.setdefault("roster_overrides", {})[player_id] = rookie.get("team_id")
+        rookie["roster_status"] = "signed_rookie"
+        rookie["rights_status"] = "signed_rookie_contract"
+        signed += 1
+    return signed
+
+
+def upsert_by_id(save: dict[str, Any], collection: str, record: dict[str, Any]) -> None:
+    records = [item for item in save.get(collection, []) if item.get("id") != record.get("id")]
+    records.append(record)
+    save[collection] = records
+
+
+def should_retire(player: dict[str, Any], age: float, seed: int, next_season: str) -> bool:
+    if age < 35:
+        return False
+    minutes = display_minutes_projection(player)
+    if age >= 41:
+        threshold = 0.95
+    elif age >= 40:
+        threshold = 0.74 + max(0.0, 10.0 - minutes) * 0.025
+    elif age >= 38:
+        threshold = 0.47 + max(0.0, 18.0 - minutes) * 0.026
+    elif age >= 36:
+        threshold = 0.16 + max(0.0, 14.0 - minutes) * 0.02
+    else:
+        threshold = 0.06 + max(0.0, 10.0 - minutes) * 0.012 if minutes < 18 else 0.0
+    roll = int(hashlib.sha256(f"{seed}:{next_season}:{player['id']}:retire".encode("utf-8")).hexdigest()[:8], 16) / 0xFFFFFFFF
+    return roll < threshold
+
+
+def contract_last_season(contract: dict[str, Any]) -> str | None:
+    seasons = [str(entry.get("season")) for entry in contract.get("seasons", []) if entry.get("salary") is not None and entry.get("season")]
+    return max(seasons) if seasons else None
+
+
+def strategic_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any], free_agents: list[str], next_season: str, seed: int) -> set[str]:
+    active = canonical_with_save(canonical, save)
+    teams = sorted(canonical.get("teams", []), key=lambda item: item["abbrev"])
+    candidates = [
+        player for player in active.get("players", [])
+        if player["id"] in set(free_agents) and player["id"] not in set(save.get("retired_player_ids", []))
+    ]
+    signed: set[str] = set()
+    for team in teams:
+        active = canonical_with_save(canonical, save)
+        roster = [player for player in active.get("players", []) if player.get("team_id") == team["id"]]
+        open_slots = max(0, 17 - len(roster))
+        if open_slots <= 0:
+            continue
+        needs = roster_position_needs(roster)
+        scored = [
+            (free_agent_team_score(player, team, needs, seed, next_season), player)
+            for player in candidates
+            if player["id"] not in signed
+        ]
+        for score, player in sorted(scored, key=lambda item: (-item[0], item[1]["name"]))[: min(open_slots, 4)]:
+            if score < 8.5:
+                continue
+            salary = strategic_signing_salary(player, score)
+            save.setdefault("roster_overrides", {})[player["id"]] = team["id"]
+            save.setdefault("contract_overrides", {})[player["id"]] = {
+                "team_id": team["id"],
+                "seasons": [
+                    {
+                        "season": next_season,
+                        "salary": salary,
+                        "option_type": None,
+                        "guarantee_status": "ai_offseason_signing",
+                    }
+                ],
+                "status": "ai_offseason_signing",
+                "original_contract_years": 1,
+                "signed_season": next_season,
+            }
+            signed.add(player["id"])
+            save.setdefault("transaction_logs", []).append(
+                {
+                    "id": stable_id("transaction_log", "ai_signing", next_season, team["id"], player["id"]),
+                    "date": f"{season_start_year(next_season)}-07-03",
+                    "transaction_type": "ai_free_agent_signing",
+                    "proposal_id": stable_id("ai_signing", next_season, team["id"], player["id"]),
+                    "status": "applied_to_save_ledger",
+                    "teams": [team["id"]],
+                    "assets": {"player_id": player["id"], "name": player["name"], "salary": salary},
+                    "evaluations": [{"score": round(score, 2), "needs": needs}],
+                    "source_ids": ["src_contract_market_config_v1"],
+                    "notes": "AI offseason signing from roster need, player role, salary scale, and deterministic fit noise.",
+                }
+            )
+            maybe_add_major_free_agent_news(save, team, player, salary, next_season)
+    return signed
+
+
+def maybe_add_major_free_agent_news(save: dict[str, Any], team: dict[str, Any], player: dict[str, Any], salary: int, next_season: str) -> None:
+    marker = f"{next_season}:{player['id']}:{team['id']}"
+    posted = set(save.setdefault("major_free_agent_news_ids", []))
+    if marker in posted:
+        return
+    if salary < 9_000_000 and display_minutes_projection(player) < 18:
+        return
+    season_posted = [item for item in posted if item.startswith(f"{next_season}:")]
+    if len(season_posted) >= 5:
+        return
+    headline = f"{player['name']} signs with {team['abbrev']} for ${salary / 1_000_000:.1f}M."
+    add_news(save, "free_agent_signing", headline, date_value=f"{season_start_year(next_season)}-07-03")
+    posted.add(marker)
+    save["major_free_agent_news_ids"] = sorted(posted)
+
+
+def roster_position_needs(roster: list[dict[str, Any]]) -> dict[str, int]:
+    counts = {"guard": 0, "wing": 0, "big": 0}
+    for player in roster:
+        pos = str(player.get("position") or "").upper()
+        if "PG" in pos or "SG" in pos:
+            counts["guard"] += 1
+        elif "C" in pos or "PF" in pos:
+            counts["big"] += 1
+        else:
+            counts["wing"] += 1
+    return {"guard": max(0, 5 - counts["guard"]), "wing": max(0, 5 - counts["wing"]), "big": max(0, 4 - counts["big"])}
+
+
+def free_agent_team_score(player: dict[str, Any], team: dict[str, Any], needs: dict[str, int], seed: int, season: str) -> float:
+    minutes = display_minutes_projection(player)
+    age = float(player.get("age") or 27.0)
+    pos = str(player.get("position") or "").upper()
+    bucket = "guard" if ("PG" in pos or "SG" in pos) else "big" if ("PF" in pos or "C" in pos) else "wing"
+    need_bonus = needs.get(bucket, 0) * 3.5
+    age_fit = 3.0 if 24 <= age <= 31 else 1.0 if age < 34 else -1.5
+    noise = deterministic_small(seed, season, team["id"], player["id"], "fa_fit") * 4.0
+    return minutes * 0.62 + need_bonus + age_fit + noise
+
+
+def strategic_signing_salary(player: dict[str, Any], score: float) -> int:
+    minutes = display_minutes_projection(player)
+    salary = 2_100_000 + minutes * 420_000 + max(0.0, score - 18.0) * 180_000
+    return int(round(clamp(salary, 1_900_000, 18_000_000)))
+
+
+def auto_fill_rosters(canonical: dict[str, Any], save: dict[str, Any], free_agents: list[str], next_season: str, seed: int) -> set[str]:
+    active = canonical_with_save(canonical, save)
+    teams = sorted(canonical.get("teams", []), key=lambda item: item["abbrev"])
+    available = [
+        player for player in active.get("players", [])
+        if player["id"] in set(free_agents) and player["id"] not in set(save.get("retired_player_ids", []))
+    ]
+    available.sort(key=lambda player: (-display_minutes_projection(player), player["name"]))
+    signed: set[str] = set()
+    for team in teams:
+        active = canonical_with_save(canonical, save)
+        roster = [player for player in active.get("players", []) if player.get("team_id") == team["id"]]
+        while len(roster) < ROSTER_MINIMUM:
+            candidate = next((player for player in available if player["id"] not in signed), None)
+            if candidate is None:
+                candidate = create_replacement_player(team, next_season, seed, len(save.get("generated_players", [])))
+                save.setdefault("generated_players", []).append(candidate)
+                for trait in generated_replacement_traits(candidate, seed):
+                    upsert_by_id(save, "generated_traits", trait)
+            save.setdefault("roster_overrides", {})[candidate["id"]] = team["id"]
+            save.setdefault("contract_overrides", {})[candidate["id"]] = {
+                "team_id": team["id"],
+                "seasons": [
+                    {
+                        "season": next_season,
+                        "salary": 2_250_000,
+                        "option_type": None,
+                        "guarantee_status": "minimum_depth_signing",
+                    }
+                ],
+                "status": "auto_depth_signing",
+                "original_contract_years": 1,
+                "signed_season": next_season,
+            }
+            signed.add(candidate["id"])
+            roster.append(candidate)
+            save.setdefault("transaction_logs", []).append(
+                {
+                    "id": stable_id("transaction_log", "auto_depth", next_season, team["id"], candidate["id"]),
+                    "date": f"{season_start_year(next_season)}-09-01",
+                    "transaction_type": "auto_depth_signing",
+                    "proposal_id": stable_id("auto_depth", next_season, team["id"], candidate["id"]),
+                    "status": "applied_to_save_ledger",
+                    "teams": [team["id"]],
+                    "assets": {"player_id": candidate["id"], "name": candidate["name"]},
+                    "evaluations": [],
+                    "source_ids": ["src_contract_market_config_v1"],
+                    "notes": "Automatic minimum roster repair so a season cannot start with fewer than 14 players.",
+                }
+            )
+    return signed
+
+
+def create_replacement_player(team: dict[str, Any], season: str, seed: int, index: int) -> dict[str, Any]:
+    rng = random.Random(f"{seed}:{season}:{team['id']}:{index}:replacement_player")
+    first = ["Jalen", "Marcus", "Dorian", "Eli", "Noah", "Cam", "Miles", "Tre", "Isaiah", "Malik"][int(rng.random() * 10) % 10]
+    last = ["Reed", "Hayes", "Porter", "Ellis", "Cole", "Bennett", "Wallace", "Foster", "Lang", "Sullivan"][int(rng.random() * 10) % 10]
+    position = ["PG", "SG", "SF", "PF", "C"][int(rng.random() * 5) % 5]
+    name = f"{first} {last}"
+    player_id = stable_id("generated_player", season, team["abbrev"], index, name)
+    return {
+        "id": player_id,
+        "name": name,
+        "normalized_name": name.lower(),
+        "slug": player_id.replace("generated_player_", ""),
+        "team_id": team["id"],
+        "team_abbrev": team["abbrev"],
+        "position": position,
+        "age": round(23 + rng.random() * 8, 1),
+        "height_inches": {"PG": 75, "SG": 77, "SF": 80, "PF": 82, "C": 83}[position] + rng.uniform(-1.5, 1.5),
+        "weight_lbs": 190 + rng.random() * 45,
+        "minutes_projection": round(5 + rng.random() * 8, 1),
+        "rotation_priority": "replacement_depth",
+        "source_ids": ["src_contract_market_config_v1"],
+        "missing_critical_fields": [],
+        "critical_field_fallbacks": {},
+    }
+
+
+def generated_replacement_traits(player: dict[str, Any], seed: int) -> list[dict[str, Any]]:
+    from .draft import NBA_TRAIT_LABELS
+
+    rng = random.Random(f"{seed}:{player['id']}:replacement_traits")
+    pos = str(player.get("position") or "").upper()
+    base = 43 + display_minutes_projection(player) * 0.35
+    values = {key: clamp(base + rng.gauss(0, 4.0), 28, 60) for key in NBA_TRAIT_LABELS}
+    if "PG" in pos or "SG" in pos:
+        values["handle_pressure"] += 4
+        values["passing_reads"] += 3
+        values["release_speed"] += 2
+    if "SF" in pos:
+        values["foot_speed_lateral_agility"] += 3
+        values["defensive_effort"] += 2
+    if "PF" in pos or "C" in pos:
+        values["offensive_rebounding"] += 5
+        values["rim_deterrence"] += 4
+        values["screen_navigation"] -= 3
+    return [
+        {
+            "id": stable_id("generated_trait", player["id"], trait_key),
+            "player_id": player["id"],
+            "trait_key": trait_key,
+            "label": NBA_TRAIT_LABELS[trait_key],
+            "value": round(clamp(value, 25, 62), 2),
+            "confidence": 0.34,
+            "source_kind": "generated_replacement_depth",
+            "source_ids": ["src_contract_market_config_v1"],
+            "last_verified": player.get("signed_season") or CANONICAL_START_DATE,
+            "notes": "Replacement-level generated depth trait for save-state roster repair.",
+            "components": {"position": pos, "minutes_projection": display_minutes_projection(player)},
+        }
+        for trait_key, value in sorted(values.items())
+    ]
+
+
+def season_start_year(season: str) -> int:
+    try:
+        return int(str(season).split("-")[0])
+    except (TypeError, ValueError):
+        return 2025
+
+
+def season_end_year(season: str) -> int:
+    return season_start_year(season) + 1
+
+
+def season_label_from_start(start_year: int) -> str:
+    return f"{start_year}-{str(start_year + 1)[-2:]}"
+
+
+def generate_future_schedule(root: str | Path, season: str, start_year: int) -> dict[str, Any]:
+    template_games = [game for game in load_schedule(root) if game.get("phase") == "regular"]
+    randomized = randomize_future_matchups(template_games, season)
+    games = []
+    for game in randomized:
+        if game.get("phase") != "regular":
+            continue
+        original = parse_date(game["gameDate"])
+        year = start_year if original.month >= 10 else start_year + 1
+        new_date = date(year, original.month, original.day).isoformat()
+        games.append(
+            {
+                **game,
+                "gameDate": new_date,
+                "externalGameId": stable_id("sim_game", season, game.get("externalGameId")),
+                "status": "scheduled_generated",
+                "season": season,
+            }
+        )
+    return {
+        "season": season,
+        "template": "NBA Schedule/schedule_v2025_2026.json",
+        "game_count": len(games),
+        "games": sorted(games, key=lambda item: (item["gameDate"], str(item["externalGameId"]))),
+        "notes": "Generated future schedule from the 2025-26 date/home-away template with deterministic randomized opponents.",
+    }
+
+
+def randomize_future_matchups(template_games: list[dict[str, Any]], season: str) -> list[dict[str, Any]]:
+    rng = random.Random(f"{season}:future_schedule")
+    away_pool = [game.get("awayTeamId") for game in template_games]
+    rng.shuffle(away_pool)
+    output: list[dict[str, Any]] = []
+    used_by_date: dict[str, set[str]] = {}
+    for game in sorted(template_games, key=lambda item: (item.get("gameDate", ""), str(item.get("externalGameId")))):
+        date_key = str(game.get("gameDate"))
+        home_id = str(game.get("homeTeamId"))
+        used = used_by_date.setdefault(date_key, {home_id})
+        selected_index = None
+        for idx, candidate in enumerate(away_pool):
+            candidate_id = str(candidate)
+            if candidate_id != home_id and candidate_id not in used:
+                selected_index = idx
+                break
+        if selected_index is None:
+            selected_index = next((idx for idx, candidate in enumerate(away_pool) if str(candidate) != home_id), 0)
+        away_id = away_pool.pop(selected_index)
+        used.add(str(away_id))
+        output.append({**game, "awayTeamId": away_id})
+    return output
+
+
+def refresh_health_for_new_season(save: dict[str, Any], start_date: str) -> None:
+    refreshed = []
+    for state in save.get("health_states", []):
+        refreshed.append(
+            {
+                **state,
+                "id": stable_id("health_state", state.get("player_id"), start_date),
+                "as_of_date": start_date,
+                "fatigue": 0.0,
+                "rust": max(0.0, round(float(state.get("rust") or 0.0) * 0.25, 2)),
+                "availability_status": "active" if not state.get("current_injury_id") else state.get("availability_status", "active"),
+                "games_missed": 0,
+                "notes": "Refreshed for new sandbox season rollover.",
+            }
+        )
+    save["health_states"] = sorted(refreshed, key=lambda item: item.get("player_id", ""))
+
+
+def age_staff_contracts(save: dict[str, Any]) -> None:
+    for staff in save.get("staff_slots", []):
+        contract = staff.setdefault("contract", {})
+        years = int(contract.get("years_remaining") or 1)
+        contract["years_remaining"] = max(0, years - 1)
+        if contract["years_remaining"] == 0:
+            staff["job_security"] = min(float(staff.get("job_security") or 50.0), 42.0)
+            staff["notes"] = f"{staff.get('notes', '')} Contract expired entering new season.".strip()
+
+
+def canonical_hash(canonical: dict[str, Any]) -> str:
+    payload = json.dumps(canonical, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()[:16]
+
+
+def resolve_team(canonical: dict[str, Any], query: str) -> dict[str, Any]:
+    low = query.strip().lower()
+    matches = [team for team in canonical.get("teams", []) if team["abbrev"].lower() == low or team["id"].lower() == low]
+    matches = matches or [team for team in canonical.get("teams", []) if low in team["name"].lower()]
+    if not matches:
+        raise ValueError(f"No team found matching {query!r}")
+    return matches[0]
+
+
+def team_by_id(canonical: dict[str, Any], team_id: str | None) -> dict[str, Any]:
+    team = next((team for team in canonical.get("teams", []) if team["id"] == team_id), None)
+    if not team:
+        raise ValueError(f"No team found with id {team_id!r}")
+    return team
+
+
+def parse_date(value: str) -> date:
+    year, month, day = (int(part) for part in value.split("-"))
+    return date(year, month, day)
+
+
+def next_date_str(value: str, days: int) -> str:
+    return (parse_date(value) + timedelta(days=days)).isoformat()

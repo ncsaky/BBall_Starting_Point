@@ -1,0 +1,284 @@
+{
+  "notes": "Star-only v1 health context for the 2025-26 preseason sandbox. Non-stars use generic risk from age, stamina, size, workload, position, and generated history.",
+  "players": [
+    {
+      "player_name": "Jayson Tatum",
+      "durability": 54,
+      "injury_prone": false,
+      "body_area_risk_tags": [
+        "ankle_foot",
+        "knee"
+      ],
+      "major_prior_injuries": [
+        {
+          "body_area": "ankle_foot",
+          "severity": "season_ending",
+          "notes": "Startup raw data marks OutForSeason; exact medical detail should be revisited if gameplay needs sharper injury history."
+        }
+      ],
+      "current_injury": {
+        "body_area": "ankle_foot",
+        "severity": "season_ending",
+        "return_date": "2026-07-01",
+        "expected_games_missed": 82,
+        "recurrence": true,
+        "notes": "Manual startup injury scaffold aligned with raw OutForSeason flag."
+      },
+      "confidence": 0.62,
+      "notes": "Star-specific startup injury context; broad lower-leg tag until deeper medical research is worth the time."
+    },
+    {
+      "player_name": "Tyrese Haliburton",
+      "durability": 55,
+      "injury_prone": false,
+      "body_area_risk_tags": [
+        "ankle_foot",
+        "hip_groin",
+        "knee"
+      ],
+      "major_prior_injuries": [
+        {
+          "body_area": "ankle_foot",
+          "severity": "season_ending",
+          "notes": "Startup raw data marks OutForSeason; exact medical detail should be revisited if gameplay needs sharper injury history."
+        }
+      ],
+      "current_injury": {
+        "body_area": "ankle_foot",
+        "severity": "season_ending",
+        "return_date": "2026-07-01",
+        "expected_games_missed": 82,
+        "recurrence": true,
+        "notes": "Manual startup injury scaffold aligned with raw OutForSeason flag."
+      },
+      "confidence": 0.62,
+      "notes": "Star-specific startup injury context with a conservative recurrence tag."
+    },
+    {
+      "player_name": "Damian Lillard",
+      "durability": 49,
+      "injury_prone": true,
+      "body_area_risk_tags": [
+        "ankle_foot",
+        "back_core"
+      ],
+      "major_prior_injuries": [
+        {
+          "body_area": "ankle_foot",
+          "severity": "season_ending",
+          "notes": "Startup raw data marks OutForSeason; exact medical detail should be revisited if gameplay needs sharper injury history."
+        }
+      ],
+      "current_injury": {
+        "body_area": "ankle_foot",
+        "severity": "season_ending",
+        "return_date": "2026-07-01",
+        "expected_games_missed": 82,
+        "recurrence": true,
+        "notes": "Manual startup injury scaffold aligned with raw OutForSeason flag."
+      },
+      "confidence": 0.64,
+      "notes": "Older star guard with current startup out-for-season flag."
+    },
+    {
+      "player_name": "Joel Embiid",
+      "durability": 40,
+      "injury_prone": true,
+      "body_area_risk_tags": [
+        "knee",
+        "back_core",
+        "ankle_foot"
+      ],
+      "major_prior_injuries": [
+        {
+          "body_area": "knee",
+          "severity": "long",
+          "notes": "Recurring public availability concern; kept broad for v1."
+        }
+      ],
+      "confidence": 0.68,
+      "notes": "High-usage star big with major durability concern; no startup injury forced unless raw data says so."
+    },
+    {
+      "player_name": "Kawhi Leonard",
+      "durability": 42,
+      "injury_prone": true,
+      "body_area_risk_tags": [
+        "knee",
+        "hip_groin",
+        "ankle_foot"
+      ],
+      "major_prior_injuries": [
+        {
+          "body_area": "knee",
+          "severity": "long",
+          "notes": "Long-running public load-management and knee-history context."
+        }
+      ],
+      "confidence": 0.67,
+      "notes": "Star-specific risk profile for sandbox injury odds and recovery/rust behavior."
+    },
+    {
+      "player_name": "Zion Williamson",
+      "durability": 43,
+      "injury_prone": true,
+      "body_area_risk_tags": [
+        "hip_groin",
+        "ankle_foot",
+        "knee"
+      ],
+      "major_prior_injuries": [
+        {
+          "body_area": "hip_groin",
+          "severity": "medium",
+          "notes": "Recurring lower-body availability concerns; kept broad for v1."
+        }
+      ],
+      "confidence": 0.65,
+      "notes": "Explosive high-load forward with elevated generic lower-body risk."
+    },
+    {
+      "player_name": "LaMelo Ball",
+      "durability": 47,
+      "injury_prone": true,
+      "body_area_risk_tags": [
+        "ankle_foot",
+        "knee"
+      ],
+      "major_prior_injuries": [
+        {
+          "body_area": "ankle_foot",
+          "severity": "medium",
+          "notes": "Recurring ankle/foot availability context."
+        }
+      ],
+      "confidence": 0.64,
+      "notes": "Star guard with elevated lower-body recurrence risk."
+    },
+    {
+      "player_name": "Anthony Davis",
+      "durability": 50,
+      "injury_prone": true,
+      "body_area_risk_tags": [
+        "ankle_foot",
+        "hip_groin",
+        "back_core",
+        "knee"
+      ],
+      "major_prior_injuries": [
+        {
+          "body_area": "ankle_foot",
+          "severity": "medium",
+          "notes": "Multi-area availability risk kept broad for v1."
+        }
+      ],
+      "confidence": 0.62,
+      "notes": "High-impact big with higher recurrence odds, but no forced startup injury."
+    },
+    {
+      "player_name": "Kristaps Porzingis",
+      "durability": 48,
+      "injury_prone": true,
+      "body_area_risk_tags": [
+        "knee",
+        "ankle_foot",
+        "back_core"
+      ],
+      "major_prior_injuries": [
+        {
+          "body_area": "knee",
+          "severity": "long",
+          "notes": "Star big injury history used only as risk context in v1."
+        }
+      ],
+      "confidence": 0.63,
+      "notes": "Tall stretch big with elevated lower-body durability risk."
+    },
+    {
+      "player_name": "Kyrie Irving",
+      "durability": 45,
+      "injury_prone": true,
+      "body_area_risk_tags": [
+        "knee",
+        "ankle_foot"
+      ],
+      "major_prior_injuries": [
+        {
+          "body_area": "knee",
+          "severity": "long",
+          "notes": "Major lower-body history retained as broad recurrence risk."
+        }
+      ],
+      "confidence": 0.62,
+      "notes": "Star guard health context; ignored automatically if the player is not in the canonical player file."
+    },
+    {
+      "player_name": "Paul George",
+      "durability": 46,
+      "injury_prone": true,
+      "body_area_risk_tags": [
+        "knee",
+        "shoulder_arm_hand",
+        "ankle_foot"
+      ],
+      "major_prior_injuries": [
+        {
+          "body_area": "knee",
+          "severity": "long",
+          "notes": "Major availability history retained as broad risk context."
+        }
+      ],
+      "confidence": 0.61,
+      "notes": "Older star wing with higher generated injury and rust sensitivity."
+    },
+    {
+      "player_name": "LeBron James",
+      "durability": 57,
+      "injury_prone": false,
+      "body_area_risk_tags": [
+        "ankle_foot",
+        "back_core"
+      ],
+      "major_prior_injuries": [],
+      "confidence": 0.58,
+      "notes": "Older superstar: age/workload drives risk more than an injury-prone flag."
+    },
+    {
+      "player_name": "Stephen Curry",
+      "durability": 56,
+      "injury_prone": false,
+      "body_area_risk_tags": [
+        "ankle_foot",
+        "knee"
+      ],
+      "major_prior_injuries": [
+        {
+          "body_area": "ankle_foot",
+          "severity": "medium",
+          "notes": "Older small-guard lower-body history used as modest recurrence context."
+        }
+      ],
+      "confidence": 0.58,
+      "notes": "Older elite guard with lower-body risk tags, but no forced startup injury."
+    },
+    {
+      "player_name": "Kevin Durant",
+      "durability": 55,
+      "injury_prone": false,
+      "body_area_risk_tags": [
+        "ankle_foot",
+        "knee",
+        "back_core"
+      ],
+      "major_prior_injuries": [
+        {
+          "body_area": "ankle_foot",
+          "severity": "long",
+          "notes": "Major historical injury context, lightly weighted in v1."
+        }
+      ],
+      "confidence": 0.59,
+      "notes": "Older star wing with history tags but no forced startup absence."
+    }
+  ]
+}

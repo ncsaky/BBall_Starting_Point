@@ -1,0 +1,102 @@
+{
+  "version": "injury_fatigue_development_v1",
+  "season_start": "2025-10-01",
+  "season_end": "2026-04-12",
+  "severity_bands": {
+    "day_to_day": {
+      "min_per_season": 360,
+      "max_per_season": 800,
+      "days": [
+        1,
+        4
+      ],
+      "weight": 0.68,
+      "rust_after_return": 3
+    },
+    "short": {
+      "min_per_season": 120,
+      "max_per_season": 210,
+      "days": [
+        3,
+        10
+      ],
+      "weight": 0.22,
+      "rust_after_return": 8
+    },
+    "medium": {
+      "min_per_season": 35,
+      "max_per_season": 75,
+      "days": [
+        15,
+        42
+      ],
+      "weight": 0.07,
+      "rust_after_return": 16
+    },
+    "long": {
+      "min_per_season": 12,
+      "max_per_season": 26,
+      "days": [
+        43,
+        90
+      ],
+      "weight": 0.025,
+      "rust_after_return": 28
+    },
+    "season_ending": {
+      "min_per_season": 0,
+      "max_per_season": 10,
+      "days": [
+        91,
+        240
+      ],
+      "weight": 0.005,
+      "rust_after_return": 45
+    }
+  },
+  "body_area_weights": {
+    "head_illness": 0.16,
+    "shoulder_arm_hand": 0.18,
+    "back_core": 0.12,
+    "hip_groin": 0.13,
+    "knee": 0.18,
+    "ankle_foot": 0.23
+  },
+  "body_area_quota_ranges": {
+    "head_illness": {
+      "min_per_season": 40,
+      "max_per_season": 95
+    },
+    "shoulder_arm_hand": {
+      "min_per_season": 45,
+      "max_per_season": 100
+    },
+    "back_core": {
+      "min_per_season": 28,
+      "max_per_season": 75
+    },
+    "hip_groin": {
+      "min_per_season": 32,
+      "max_per_season": 80
+    },
+    "knee": {
+      "min_per_season": 35,
+      "max_per_season": 90
+    },
+    "ankle_foot": {
+      "min_per_season": 60,
+      "max_per_season": 125
+    }
+  },
+  "tuning": {
+    "base_player_game_injury_rate": 0.021,
+    "base_game_fatigue_gain": 4.2,
+    "back_to_back_fatigue_gain": 2.8,
+    "fatigue_decay_per_rest_day": 6.5,
+    "rust_decay_per_game": 7.5,
+    "fatigue_performance_penalty_per_point": 0.065,
+    "rust_performance_penalty_per_point": 0.08,
+    "development_base_growth": 0.08
+  },
+  "notes": "Lightweight 2K-style sandbox health model. Quotas guide leaguewide injury frequency while player risk comes from age, workload, stamina, durability, history, and performance staff."
+}

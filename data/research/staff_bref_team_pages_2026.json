@@ -1,0 +1,221 @@
+{
+  "source": {
+    "fetched_at": "2026-05-21T23:30:27+00:00",
+    "id": "src_bref_team_pages_2026",
+    "title": "Basketball-Reference 2025-26 team pages",
+    "url_template": "https://www.basketball-reference.com/teams/{team}/2026.html"
+  },
+  "team_count": 30,
+  "teams": [
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/ATL/2026.html",
+      "team_abbrev": "ATL"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/BRK/2026.html",
+      "team_abbrev": "BKN"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/BOS/2026.html",
+      "team_abbrev": "BOS"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/CHO/2026.html",
+      "team_abbrev": "CHA"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/CHI/2026.html",
+      "team_abbrev": "CHI"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/CLE/2026.html",
+      "team_abbrev": "CLE"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/DAL/2026.html",
+      "team_abbrev": "DAL"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/DEN/2026.html",
+      "team_abbrev": "DEN"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/DET/2026.html",
+      "team_abbrev": "DET"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/GSW/2026.html",
+      "team_abbrev": "GSW"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/HOU/2026.html",
+      "team_abbrev": "HOU"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/IND/2026.html",
+      "team_abbrev": "IND"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/LAC/2026.html",
+      "team_abbrev": "LAC"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/LAL/2026.html",
+      "team_abbrev": "LAL"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/MEM/2026.html",
+      "team_abbrev": "MEM"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/MIA/2026.html",
+      "team_abbrev": "MIA"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/MIL/2026.html",
+      "team_abbrev": "MIL"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/MIN/2026.html",
+      "team_abbrev": "MIN"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/NOP/2026.html",
+      "team_abbrev": "NOP"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/NYK/2026.html",
+      "team_abbrev": "NYK"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/OKC/2026.html",
+      "team_abbrev": "OKC"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/ORL/2026.html",
+      "team_abbrev": "ORL"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/PHI/2026.html",
+      "team_abbrev": "PHI"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/PHO/2026.html",
+      "team_abbrev": "PHX"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/POR/2026.html",
+      "team_abbrev": "POR"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/SAC/2026.html",
+      "team_abbrev": "SAC"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/SAS/2026.html",
+      "team_abbrev": "SAS"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/TOR/2026.html",
+      "team_abbrev": "TOR"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/UTA/2026.html",
+      "team_abbrev": "UTA"
+    },
+    {
+      "coach": null,
+      "error": "HTTP 429: Too Many Requests",
+      "executive": null,
+      "source_url": "https://www.basketball-reference.com/teams/WAS/2026.html",
+      "team_abbrev": "WAS"
+    }
+  ]
+}

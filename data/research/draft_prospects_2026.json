@@ -1,0 +1,2776 @@
+{
+  "coverage_note": "V1 real 2026 prospect cache. Tankathon supplies mock order, physicals, class/team, and stat snippets; Rookie Scale consensus ranks are merged when matched by name. NBA.com draft board is registered for corroboration/manual review.",
+  "prospect_count": 60,
+  "prospects": [
+    {
+      "age": 19.4,
+      "class_year": "Freshman",
+      "consensus_rank": 1,
+      "height": "6'9.75\"",
+      "league": "NCAA",
+      "mock_rank": 1,
+      "normalized_name": "aj dybantsa",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 1.",
+      "player": "AJ Dybantsa",
+      "position": "SF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 11.7,
+          "dbpm": 2.2,
+          "obpm": 9.5,
+          "tspct": 0.6,
+          "usg": 33.9
+        },
+        "per_36": {
+          "ast": 3.8,
+          "blk": 0.4,
+          "pts": 26.4,
+          "reb": 7.1,
+          "stl": 1.1
+        },
+        "per_game": {
+          "ast": 3.7,
+          "blk": 0.3,
+          "pts": 25.5,
+          "reb": 6.8,
+          "stl": 1.1
+        }
+      },
+      "rank_range": {
+        "high": 1,
+        "low": 1
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "BYU",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 217
+    },
+    {
+      "age": 19.4,
+      "class_year": "Freshman",
+      "consensus_rank": 2,
+      "height": "6'5.75\"",
+      "league": "NCAA",
+      "mock_rank": 2,
+      "normalized_name": "darryn peterson",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 2.",
+      "player": "Darryn Peterson",
+      "position": "SG/PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 14.1,
+          "dbpm": 4.8,
+          "obpm": 9.3,
+          "tspct": 0.578,
+          "usg": 33.5
+        },
+        "per_36": {
+          "ast": 2.0,
+          "blk": 0.8,
+          "pts": 25.0,
+          "reb": 5.2,
+          "stl": 1.8
+        },
+        "per_game": {
+          "ast": 1.6,
+          "blk": 0.6,
+          "pts": 20.2,
+          "reb": 4.2,
+          "stl": 1.4
+        }
+      },
+      "rank_range": {
+        "high": 2,
+        "low": 2
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Kansas",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 199
+    },
+    {
+      "age": 18.9,
+      "class_year": "Freshman",
+      "consensus_rank": null,
+      "height": "6'9.5\"",
+      "league": "NCAA",
+      "mock_rank": 3,
+      "normalized_name": "cameron boozer",
+      "notes": "Parsed from Tankathon 2026 mock draft public page.",
+      "player": "Cameron Boozer",
+      "position": "PF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 18.7,
+          "dbpm": 6.0,
+          "obpm": 12.7,
+          "tspct": 0.653,
+          "usg": 29.9
+        },
+        "per_36": {
+          "ast": 4.4,
+          "blk": 0.7,
+          "pts": 24.2,
+          "reb": 11.0,
+          "stl": 1.5
+        },
+        "per_game": {
+          "ast": 4.1,
+          "blk": 0.6,
+          "pts": 22.5,
+          "reb": 10.2,
+          "stl": 1.4
+        }
+      },
+      "rank_range": {
+        "high": 3,
+        "low": 3
+      },
+      "source_ids": [
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Duke",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 253
+    },
+    {
+      "age": 19.9,
+      "class_year": "Freshman",
+      "consensus_rank": 4,
+      "height": "6'10.5\"",
+      "league": "NCAA",
+      "mock_rank": 4,
+      "normalized_name": "caleb wilson",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 4.",
+      "player": "Caleb Wilson",
+      "position": "SF/PF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 14.0,
+          "dbpm": 5.3,
+          "obpm": 8.7,
+          "tspct": 0.626,
+          "usg": 28.7
+        },
+        "per_36": {
+          "ast": 3.1,
+          "blk": 1.6,
+          "pts": 22.8,
+          "reb": 10.8,
+          "stl": 1.7
+        },
+        "per_game": {
+          "ast": 2.7,
+          "blk": 1.4,
+          "pts": 19.8,
+          "reb": 9.4,
+          "stl": 1.5
+        }
+      },
+      "rank_range": {
+        "high": 4,
+        "low": 4
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "North Carolina",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 211
+    },
+    {
+      "age": 19.4,
+      "class_year": "Freshman",
+      "consensus_rank": 5,
+      "height": "6'6.25\"",
+      "league": "NCAA",
+      "mock_rank": 5,
+      "normalized_name": "keaton wagler",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 5.",
+      "player": "Keaton Wagler",
+      "position": "SG/PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 12.3,
+          "dbpm": 3.5,
+          "obpm": 8.8,
+          "tspct": 0.596,
+          "usg": 25.2
+        },
+        "per_36": {
+          "ast": 4.5,
+          "blk": 0.4,
+          "pts": 19.0,
+          "reb": 5.4,
+          "stl": 1.0
+        },
+        "per_game": {
+          "ast": 4.2,
+          "blk": 0.4,
+          "pts": 17.9,
+          "reb": 5.1,
+          "stl": 0.9
+        }
+      },
+      "rank_range": {
+        "high": 5,
+        "low": 5
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Illinois",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 188
+    },
+    {
+      "age": 19.5,
+      "class_year": "Freshman",
+      "consensus_rank": 7,
+      "height": "6'3.75\"",
+      "league": "NCAA",
+      "mock_rank": 6,
+      "normalized_name": "kingston flemings",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 7.",
+      "player": "Kingston Flemings",
+      "position": "PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 12.6,
+          "dbpm": 6.0,
+          "obpm": 6.6,
+          "tspct": 0.563,
+          "usg": 26.0
+        },
+        "per_36": {
+          "ast": 5.9,
+          "blk": 0.4,
+          "pts": 18.2,
+          "reb": 4.6,
+          "stl": 1.7
+        },
+        "per_game": {
+          "ast": 5.2,
+          "blk": 0.3,
+          "pts": 16.1,
+          "reb": 4.1,
+          "stl": 1.5
+        }
+      },
+      "rank_range": {
+        "high": 7,
+        "low": 6
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Houston",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 183
+    },
+    {
+      "age": 19.6,
+      "class_year": "Freshman",
+      "consensus_rank": 6,
+      "height": "6'3.25\"",
+      "league": "NCAA",
+      "mock_rank": 7,
+      "normalized_name": "darius acuff jr",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 6.",
+      "player": "Darius Acuff Jr.",
+      "position": "PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 10.1,
+          "dbpm": 0.7,
+          "obpm": 9.4,
+          "tspct": 0.604,
+          "usg": 29.5
+        },
+        "per_36": {
+          "ast": 6.6,
+          "blk": 0.3,
+          "pts": 24.1,
+          "reb": 3.2,
+          "stl": 0.9
+        },
+        "per_game": {
+          "ast": 6.4,
+          "blk": 0.3,
+          "pts": 23.5,
+          "reb": 3.1,
+          "stl": 0.8
+        }
+      },
+      "rank_range": {
+        "high": 7,
+        "low": 6
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Arkansas",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 186
+    },
+    {
+      "age": 20.8,
+      "class_year": "Freshman",
+      "consensus_rank": 9,
+      "height": "6'5\"",
+      "league": "NCAA",
+      "mock_rank": 8,
+      "normalized_name": "brayden burries",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 9.",
+      "player": "Brayden Burries",
+      "position": "SG/PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 11.7,
+          "dbpm": 5.7,
+          "obpm": 6.0,
+          "tspct": 0.616,
+          "usg": 23.2
+        },
+        "per_36": {
+          "ast": 2.9,
+          "blk": 0.2,
+          "pts": 19.4,
+          "reb": 5.9,
+          "stl": 1.8
+        },
+        "per_game": {
+          "ast": 2.4,
+          "blk": 0.2,
+          "pts": 16.1,
+          "reb": 4.9,
+          "stl": 1.5
+        }
+      },
+      "rank_range": {
+        "high": 9,
+        "low": 8
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Arizona",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 215
+    },
+    {
+      "age": 20.2,
+      "class_year": "Freshman",
+      "consensus_rank": 8,
+      "height": "6'4.75\"",
+      "league": "NCAA",
+      "mock_rank": 9,
+      "normalized_name": "mikel brown jr",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 8.",
+      "player": "Mikel Brown Jr.",
+      "position": "PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 6.6,
+          "dbpm": 1.7,
+          "obpm": 4.9,
+          "tspct": 0.577,
+          "usg": 31.4
+        },
+        "per_36": {
+          "ast": 5.8,
+          "blk": 0.2,
+          "pts": 22.4,
+          "reb": 4.1,
+          "stl": 1.5
+        },
+        "per_game": {
+          "ast": 4.7,
+          "blk": 0.1,
+          "pts": 18.2,
+          "reb": 3.3,
+          "stl": 1.2
+        }
+      },
+      "rank_range": {
+        "high": 9,
+        "low": 8
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Louisville",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 190
+    },
+    {
+      "age": 19.5,
+      "class_year": "Freshman",
+      "consensus_rank": 10,
+      "height": "6'10.75\"",
+      "league": "NCAA",
+      "mock_rank": 10,
+      "normalized_name": "nate ament",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 10.",
+      "player": "Nate Ament",
+      "position": "SF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 8.4,
+          "dbpm": 3.3,
+          "obpm": 5.1,
+          "tspct": 0.534,
+          "usg": 29.0
+        },
+        "per_36": {
+          "ast": 2.8,
+          "blk": 0.8,
+          "pts": 20.2,
+          "reb": 7.7,
+          "stl": 1.2
+        },
+        "per_game": {
+          "ast": 2.3,
+          "blk": 0.6,
+          "pts": 16.7,
+          "reb": 6.3,
+          "stl": 1.0
+        }
+      },
+      "rank_range": {
+        "high": 10,
+        "low": 10
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Tennessee",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 211
+    },
+    {
+      "age": 23.7,
+      "class_year": "Senior",
+      "consensus_rank": 11,
+      "height": "6'10\"",
+      "league": "NCAA",
+      "mock_rank": 11,
+      "normalized_name": "yaxel lendeborg",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 11.",
+      "player": "Yaxel Lendeborg",
+      "position": "PF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 16.7,
+          "dbpm": 6.9,
+          "obpm": 9.8,
+          "tspct": 0.646,
+          "usg": 20.4
+        },
+        "per_36": {
+          "ast": 3.9,
+          "blk": 1.5,
+          "pts": 18.0,
+          "reb": 8.1,
+          "stl": 1.3
+        },
+        "per_game": {
+          "ast": 3.2,
+          "blk": 1.2,
+          "pts": 15.1,
+          "reb": 6.8,
+          "stl": 1.1
+        }
+      },
+      "rank_range": {
+        "high": 11,
+        "low": 11
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Michigan",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 241
+    },
+    {
+      "age": 19.2,
+      "class_year": "International",
+      "consensus_rank": 13,
+      "height": "6'9.5\"",
+      "league": "International",
+      "mock_rank": 12,
+      "normalized_name": "karim lopez",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 13.",
+      "player": "Karim López",
+      "position": "SF",
+      "public_stats": {
+        "advanced": {
+          "tspct": 0.58,
+          "usg": 19.5
+        },
+        "per_36": {
+          "ast": 2.7,
+          "blk": 1.5,
+          "pts": 16.8,
+          "reb": 8.5,
+          "stl": 1.6
+        },
+        "per_game": {
+          "ast": 1.9,
+          "blk": 1.0,
+          "pts": 11.9,
+          "reb": 6.1,
+          "stl": 1.2
+        }
+      },
+      "rank_range": {
+        "high": 13,
+        "low": 12
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "New Zealand",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 222
+    },
+    {
+      "age": 20.6,
+      "class_year": "Sophomore",
+      "consensus_rank": 14,
+      "height": "6'3.75\"",
+      "league": "NCAA",
+      "mock_rank": 13,
+      "normalized_name": "labaron philon jr",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 14.",
+      "player": "Labaron Philon Jr.",
+      "position": "PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 11.3,
+          "dbpm": 2.1,
+          "obpm": 9.2,
+          "tspct": 0.626,
+          "usg": 30.0
+        },
+        "per_36": {
+          "ast": 5.8,
+          "blk": 0.2,
+          "pts": 25.6,
+          "reb": 4.1,
+          "stl": 1.3
+        },
+        "per_game": {
+          "ast": 5.0,
+          "blk": 0.2,
+          "pts": 22.0,
+          "reb": 3.5,
+          "stl": 1.2
+        }
+      },
+      "rank_range": {
+        "high": 14,
+        "low": 13
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Alabama",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 176
+    },
+    {
+      "age": 21.2,
+      "class_year": "Junior",
+      "consensus_rank": 12,
+      "height": "7'4.25\"",
+      "league": "NCAA",
+      "mock_rank": 14,
+      "normalized_name": "aday mara",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 12.",
+      "player": "Aday Mara",
+      "position": "C",
+      "public_stats": {
+        "advanced": {
+          "bpm": 14.3,
+          "dbpm": 8.4,
+          "obpm": 5.8,
+          "tspct": 0.659,
+          "usg": 23.1
+        },
+        "per_36": {
+          "ast": 3.7,
+          "blk": 4.0,
+          "pts": 18.6,
+          "reb": 10.4,
+          "stl": 0.5
+        },
+        "per_game": {
+          "ast": 2.4,
+          "blk": 2.6,
+          "pts": 12.1,
+          "reb": 6.8,
+          "stl": 0.4
+        }
+      },
+      "rank_range": {
+        "high": 14,
+        "low": 12
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Michigan",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 260
+    },
+    {
+      "age": 21.6,
+      "class_year": "Sophomore",
+      "consensus_rank": 17,
+      "height": "6'5.75\"",
+      "league": "NCAA",
+      "mock_rank": 15,
+      "normalized_name": "cameron carr",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 17.",
+      "player": "Cameron Carr",
+      "position": "SG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 9.2,
+          "dbpm": 2.3,
+          "obpm": 6.9,
+          "tspct": 0.622,
+          "usg": 25.3
+        },
+        "per_36": {
+          "ast": 2.8,
+          "blk": 1.4,
+          "pts": 20.2,
+          "reb": 6.2,
+          "stl": 0.9
+        },
+        "per_game": {
+          "ast": 2.6,
+          "blk": 1.3,
+          "pts": 18.9,
+          "reb": 5.8,
+          "stl": 0.9
+        }
+      },
+      "rank_range": {
+        "high": 17,
+        "low": 15
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Baylor",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 184
+    },
+    {
+      "age": 19.4,
+      "class_year": "Freshman",
+      "consensus_rank": 19,
+      "height": "6'11.5\"",
+      "league": "NCAA",
+      "mock_rank": 16,
+      "normalized_name": "chris cenac jr",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 19.",
+      "player": "Chris Cenac Jr.",
+      "position": "PF/C",
+      "public_stats": {
+        "advanced": {
+          "bpm": 7.5,
+          "dbpm": 3.8,
+          "obpm": 3.7,
+          "tspct": 0.546,
+          "usg": 19.9
+        },
+        "per_36": {
+          "ast": 1.1,
+          "blk": 0.7,
+          "pts": 13.8,
+          "reb": 11.4,
+          "stl": 1.1
+        },
+        "per_game": {
+          "ast": 0.7,
+          "blk": 0.5,
+          "pts": 9.5,
+          "reb": 7.9,
+          "stl": 0.8
+        }
+      },
+      "rank_range": {
+        "high": 19,
+        "low": 16
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Houston",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 240
+    },
+    {
+      "age": 20.1,
+      "class_year": "Freshman",
+      "consensus_rank": 16,
+      "height": "6'11.5\"",
+      "league": "NCAA",
+      "mock_rank": 17,
+      "normalized_name": "hannes steinbach",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 16.",
+      "player": "Hannes Steinbach",
+      "position": "PF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 10.1,
+          "dbpm": 2.4,
+          "obpm": 7.7,
+          "tspct": 0.636,
+          "usg": 23.9
+        },
+        "per_36": {
+          "ast": 1.6,
+          "blk": 1.3,
+          "pts": 19.3,
+          "reb": 12.2,
+          "stl": 1.1
+        },
+        "per_game": {
+          "ast": 1.6,
+          "blk": 1.2,
+          "pts": 18.5,
+          "reb": 11.8,
+          "stl": 1.1
+        }
+      },
+      "rank_range": {
+        "high": 17,
+        "low": 16
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Washington",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 248
+    },
+    {
+      "age": 20.4,
+      "class_year": "Sophomore",
+      "consensus_rank": 20,
+      "height": "6'10.25\"",
+      "league": "NCAA",
+      "mock_rank": 18,
+      "normalized_name": "morez johnson jr",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 20.",
+      "player": "Morez Johnson Jr.",
+      "position": "PF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 11.8,
+          "dbpm": 5.4,
+          "obpm": 6.4,
+          "tspct": 0.677,
+          "usg": 21.3
+        },
+        "per_36": {
+          "ast": 1.7,
+          "blk": 1.6,
+          "pts": 18.8,
+          "reb": 10.5,
+          "stl": 1.0
+        },
+        "per_game": {
+          "ast": 1.2,
+          "blk": 1.1,
+          "pts": 13.1,
+          "reb": 7.3,
+          "stl": 0.7
+        }
+      },
+      "rank_range": {
+        "high": 20,
+        "low": 18
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Michigan",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 251
+    },
+    {
+      "age": 22.7,
+      "class_year": "Senior",
+      "consensus_rank": 18,
+      "height": "6'3.75\"",
+      "league": "NCAA",
+      "mock_rank": 19,
+      "normalized_name": "bennett stirtz",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 18.",
+      "player": "Bennett Stirtz",
+      "position": "PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 10.2,
+          "dbpm": 2.5,
+          "obpm": 7.7,
+          "tspct": 0.607,
+          "usg": 26.9
+        },
+        "per_36": {
+          "ast": 4.2,
+          "blk": 0.2,
+          "pts": 18.9,
+          "reb": 2.5,
+          "stl": 1.3
+        },
+        "per_game": {
+          "ast": 4.4,
+          "blk": 0.2,
+          "pts": 19.8,
+          "reb": 2.6,
+          "stl": 1.4
+        }
+      },
+      "rank_range": {
+        "high": 19,
+        "low": 18
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Iowa",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 186
+    },
+    {
+      "age": 18.9,
+      "class_year": "Sophomore",
+      "consensus_rank": 15,
+      "height": "6'10.25\"",
+      "league": "NCAA",
+      "mock_rank": 20,
+      "normalized_name": "jayden quaintance",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 15.",
+      "player": "Jayden Quaintance",
+      "position": "PF/C",
+      "public_stats": {
+        "advanced": {
+          "bpm": 1.9,
+          "dbpm": 1.8,
+          "obpm": 0.0,
+          "tspct": 0.496,
+          "usg": 19.2
+        },
+        "per_36": {
+          "ast": 1.1,
+          "blk": 1.6,
+          "pts": 10.7,
+          "reb": 10.7,
+          "stl": 1.1
+        },
+        "per_game": {
+          "ast": 0.5,
+          "blk": 0.8,
+          "pts": 5.0,
+          "reb": 5.0,
+          "stl": 0.5
+        }
+      },
+      "rank_range": {
+        "high": 20,
+        "low": 15
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Kentucky",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 253
+    },
+    {
+      "age": 19.4,
+      "class_year": "Freshman",
+      "consensus_rank": 24,
+      "height": "6'8.25\"",
+      "league": "NCAA",
+      "mock_rank": 21,
+      "normalized_name": "koa peat",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 24.",
+      "player": "Koa Peat",
+      "position": "PF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 8.8,
+          "dbpm": 3.9,
+          "obpm": 4.8,
+          "tspct": 0.557,
+          "usg": 24.5
+        },
+        "per_36": {
+          "ast": 3.3,
+          "blk": 0.9,
+          "pts": 18.3,
+          "reb": 7.3,
+          "stl": 0.8
+        },
+        "per_game": {
+          "ast": 2.6,
+          "blk": 0.7,
+          "pts": 14.1,
+          "reb": 5.6,
+          "stl": 0.6
+        }
+      },
+      "rank_range": {
+        "high": 24,
+        "low": 21
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Arizona",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 245
+    },
+    {
+      "age": 19.9,
+      "class_year": "Freshman",
+      "consensus_rank": 23,
+      "height": "6'9\"",
+      "league": "NCAA",
+      "mock_rank": 22,
+      "normalized_name": "allen graves",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 23.",
+      "player": "Allen Graves",
+      "position": "PF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 13.4,
+          "dbpm": 4.7,
+          "obpm": 8.7,
+          "tspct": 0.613,
+          "usg": 21.9
+        },
+        "per_36": {
+          "ast": 2.9,
+          "blk": 1.5,
+          "pts": 18.8,
+          "reb": 10.4,
+          "stl": 3.0
+        },
+        "per_game": {
+          "ast": 1.8,
+          "blk": 0.9,
+          "pts": 11.8,
+          "reb": 6.5,
+          "stl": 1.9
+        }
+      },
+      "rank_range": {
+        "high": 23,
+        "low": 22
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Santa Clara",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 226
+    },
+    {
+      "age": 20.2,
+      "class_year": "Sophomore",
+      "consensus_rank": null,
+      "height": "6'2.25\"",
+      "league": "NCAA",
+      "mock_rank": 23,
+      "normalized_name": "christian anderson",
+      "notes": "Parsed from Tankathon 2026 mock draft public page.",
+      "player": "Christian Anderson",
+      "position": "PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 9.4,
+          "dbpm": 2.3,
+          "obpm": 7.1,
+          "tspct": 0.626,
+          "usg": 23.8
+        },
+        "per_36": {
+          "ast": 6.9,
+          "blk": 0.2,
+          "pts": 17.4,
+          "reb": 3.4,
+          "stl": 1.4
+        },
+        "per_game": {
+          "ast": 7.4,
+          "blk": 0.2,
+          "pts": 18.5,
+          "reb": 3.6,
+          "stl": 1.5
+        }
+      },
+      "rank_range": {
+        "high": 23,
+        "low": 23
+      },
+      "source_ids": [
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Texas Tech",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 180
+    },
+    {
+      "age": 20.9,
+      "class_year": "Junior",
+      "consensus_rank": 22,
+      "height": "6'7.75\"",
+      "league": "NCAA",
+      "mock_rank": 24,
+      "normalized_name": "dailyn swain",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 22.",
+      "player": "Dailyn Swain",
+      "position": "SG/SF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 10.5,
+          "dbpm": 3.6,
+          "obpm": 6.9,
+          "tspct": 0.636,
+          "usg": 24.6
+        },
+        "per_36": {
+          "ast": 3.9,
+          "blk": 0.3,
+          "pts": 19.0,
+          "reb": 8.3,
+          "stl": 1.8
+        },
+        "per_game": {
+          "ast": 3.6,
+          "blk": 0.3,
+          "pts": 17.3,
+          "reb": 7.5,
+          "stl": 1.6
+        }
+      },
+      "rank_range": {
+        "high": 24,
+        "low": 22
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Texas",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 211
+    },
+    {
+      "age": 20.5,
+      "class_year": "Sophomore",
+      "consensus_rank": 25,
+      "height": "6'6.75\"",
+      "league": "NCAA",
+      "mock_rank": 25,
+      "normalized_name": "isaiah evans",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 25.",
+      "player": "Isaiah Evans",
+      "position": "SF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 9.8,
+          "dbpm": 3.3,
+          "obpm": 6.5,
+          "tspct": 0.59,
+          "usg": 24.9
+        },
+        "per_36": {
+          "ast": 1.6,
+          "blk": 0.8,
+          "pts": 19.2,
+          "reb": 4.1,
+          "stl": 0.9
+        },
+        "per_game": {
+          "ast": 1.3,
+          "blk": 0.7,
+          "pts": 15.0,
+          "reb": 3.2,
+          "stl": 0.7
+        }
+      },
+      "rank_range": {
+        "high": 25,
+        "low": 25
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Duke",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 186
+    },
+    {
+      "age": 19.2,
+      "class_year": "Freshman",
+      "consensus_rank": 26,
+      "height": "6'2.5\"",
+      "league": "NCAA",
+      "mock_rank": 26,
+      "normalized_name": "ebuka okorie",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 26.",
+      "player": "Ebuka Okorie",
+      "position": "PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 10.6,
+          "dbpm": 2.2,
+          "obpm": 8.4,
+          "tspct": 0.589,
+          "usg": 31.0
+        },
+        "per_36": {
+          "ast": 3.7,
+          "blk": 0.3,
+          "pts": 23.8,
+          "reb": 3.7,
+          "stl": 1.6
+        },
+        "per_game": {
+          "ast": 3.6,
+          "blk": 0.3,
+          "pts": 23.2,
+          "reb": 3.6,
+          "stl": 1.6
+        }
+      },
+      "rank_range": {
+        "high": 26,
+        "low": 26
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Stanford",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 186
+    },
+    {
+      "age": 22.6,
+      "class_year": "Senior",
+      "consensus_rank": 32,
+      "height": "6'9\"",
+      "league": "NCAA",
+      "mock_rank": 27,
+      "normalized_name": "joshua jefferson",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 32.",
+      "player": "Joshua Jefferson",
+      "position": "PF/SF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 13.0,
+          "dbpm": 6.1,
+          "obpm": 7.0,
+          "tspct": 0.56,
+          "usg": 27.6
+        },
+        "per_36": {
+          "ast": 5.6,
+          "blk": 1.0,
+          "pts": 19.1,
+          "reb": 8.6,
+          "stl": 1.9
+        },
+        "per_game": {
+          "ast": 4.8,
+          "blk": 0.8,
+          "pts": 16.4,
+          "reb": 7.4,
+          "stl": 1.6
+        }
+      },
+      "rank_range": {
+        "high": 32,
+        "low": 27
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Iowa State",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 246
+    },
+    {
+      "age": 20.1,
+      "class_year": "Freshman",
+      "consensus_rank": 33,
+      "height": "6'5.5\"",
+      "league": "NCAA",
+      "mock_rank": 28,
+      "normalized_name": "tounde yessoufou",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 33.",
+      "player": "Tounde Yessoufou",
+      "position": "SG/SF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 6.1,
+          "dbpm": 1.7,
+          "obpm": 4.4,
+          "tspct": 0.55,
+          "usg": 26.9
+        },
+        "per_36": {
+          "ast": 1.8,
+          "blk": 0.7,
+          "pts": 19.7,
+          "reb": 6.5,
+          "stl": 2.2
+        },
+        "per_game": {
+          "ast": 1.6,
+          "blk": 0.6,
+          "pts": 17.8,
+          "reb": 5.9,
+          "stl": 2.0
+        }
+      },
+      "rank_range": {
+        "high": 33,
+        "low": 28
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Baylor",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 220
+    },
+    {
+      "age": 20.4,
+      "class_year": "Freshman",
+      "consensus_rank": 27,
+      "height": "6'6.5\"",
+      "league": "NCAA",
+      "mock_rank": 29,
+      "normalized_name": "amari allen",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 27.",
+      "player": "Amari Allen",
+      "position": "SF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 7.8,
+          "dbpm": 3.6,
+          "obpm": 4.2,
+          "tspct": 0.57,
+          "usg": 18.6
+        },
+        "per_36": {
+          "ast": 4.0,
+          "blk": 0.9,
+          "pts": 14.6,
+          "reb": 8.9,
+          "stl": 1.3
+        },
+        "per_game": {
+          "ast": 3.1,
+          "blk": 0.7,
+          "pts": 11.4,
+          "reb": 6.9,
+          "stl": 1.0
+        }
+      },
+      "rank_range": {
+        "high": 29,
+        "low": 27
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Alabama",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 205
+    },
+    {
+      "age": 19.9,
+      "class_year": "Freshman",
+      "consensus_rank": 29,
+      "height": "6'4.25\"",
+      "league": "NCAA",
+      "mock_rank": 30,
+      "normalized_name": "meleek thomas",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 29.",
+      "player": "Meleek Thomas",
+      "position": "SG/PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 7.0,
+          "dbpm": 2.3,
+          "obpm": 4.8,
+          "tspct": 0.559,
+          "usg": 23.6
+        },
+        "per_36": {
+          "ast": 2.9,
+          "blk": 0.2,
+          "pts": 18.5,
+          "reb": 4.5,
+          "stl": 1.8
+        },
+        "per_game": {
+          "ast": 2.5,
+          "blk": 0.2,
+          "pts": 15.6,
+          "reb": 3.8,
+          "stl": 1.5
+        }
+      },
+      "rank_range": {
+        "high": 30,
+        "low": 29
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Arkansas",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 190
+    },
+    {
+      "age": 22.2,
+      "class_year": "Senior",
+      "consensus_rank": 34,
+      "height": "6'8.75\"",
+      "league": "NCAA",
+      "mock_rank": 31,
+      "normalized_name": "zuby ejiofor",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 34.",
+      "player": "Zuby Ejiofor",
+      "position": "PF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 14.5,
+          "dbpm": 6.0,
+          "obpm": 8.5,
+          "tspct": 0.609,
+          "usg": 24.8
+        },
+        "per_36": {
+          "ast": 4.3,
+          "blk": 2.6,
+          "pts": 19.6,
+          "reb": 8.8,
+          "stl": 1.4
+        },
+        "per_game": {
+          "ast": 3.5,
+          "blk": 2.1,
+          "pts": 16.3,
+          "reb": 7.3,
+          "stl": 1.2
+        }
+      },
+      "rank_range": {
+        "high": 34,
+        "low": 31
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "St. John's",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 245
+    },
+    {
+      "age": 20.4,
+      "class_year": "Sophomore",
+      "consensus_rank": 28,
+      "height": "6'0\"",
+      "league": "NCAA",
+      "mock_rank": 32,
+      "normalized_name": "tyler tanner",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 28.",
+      "player": "Tyler Tanner",
+      "position": "PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 12.3,
+          "dbpm": 4.6,
+          "obpm": 7.7,
+          "tspct": 0.612,
+          "usg": 26.3
+        },
+        "per_36": {
+          "ast": 5.5,
+          "blk": 0.4,
+          "pts": 21.0,
+          "reb": 3.9,
+          "stl": 2.6
+        },
+        "per_game": {
+          "ast": 5.1,
+          "blk": 0.3,
+          "pts": 19.5,
+          "reb": 3.6,
+          "stl": 2.4
+        }
+      },
+      "rank_range": {
+        "high": 32,
+        "low": 28
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Vanderbilt",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 167
+    },
+    {
+      "age": 22.2,
+      "class_year": "Junior",
+      "consensus_rank": 30,
+      "height": "7'0.5\"",
+      "league": "NCAA",
+      "mock_rank": 33,
+      "normalized_name": "henri veesaar",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 30.",
+      "player": "Henri Veesaar",
+      "position": "C",
+      "public_stats": {
+        "advanced": {
+          "bpm": 10.7,
+          "dbpm": 3.8,
+          "obpm": 7.0,
+          "tspct": 0.664,
+          "usg": 23.3
+        },
+        "per_36": {
+          "ast": 2.4,
+          "blk": 1.4,
+          "pts": 19.5,
+          "reb": 10.0,
+          "stl": 0.7
+        },
+        "per_game": {
+          "ast": 2.1,
+          "blk": 1.2,
+          "pts": 17.0,
+          "reb": 8.7,
+          "stl": 0.6
+        }
+      },
+      "rank_range": {
+        "high": 33,
+        "low": 30
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "North Carolina",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 227
+    },
+    {
+      "age": 22.9,
+      "class_year": "Senior",
+      "consensus_rank": 35,
+      "height": "6'11\"",
+      "league": "NCAA",
+      "mock_rank": 34,
+      "normalized_name": "tarris reed jr",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 35.",
+      "player": "Tarris Reed Jr.",
+      "position": "C",
+      "public_stats": {
+        "advanced": {
+          "bpm": 12.9,
+          "dbpm": 6.1,
+          "obpm": 6.7,
+          "tspct": 0.614,
+          "usg": 26.1
+        },
+        "per_36": {
+          "ast": 3.0,
+          "blk": 2.6,
+          "pts": 19.4,
+          "reb": 11.8,
+          "stl": 1.2
+        },
+        "per_game": {
+          "ast": 2.3,
+          "blk": 2.0,
+          "pts": 14.7,
+          "reb": 9.0,
+          "stl": 0.9
+        }
+      },
+      "rank_range": {
+        "high": 35,
+        "low": 34
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "UConn",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 264
+    },
+    {
+      "age": 23.6,
+      "class_year": "Senior",
+      "consensus_rank": 31,
+      "height": "6'8\"",
+      "league": "NCAA",
+      "mock_rank": 35,
+      "normalized_name": "alex karaban",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 31.",
+      "player": "Alex Karaban",
+      "position": "SF/PF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 9.0,
+          "dbpm": 3.6,
+          "obpm": 5.4,
+          "tspct": 0.59,
+          "usg": 18.4
+        },
+        "per_36": {
+          "ast": 2.5,
+          "blk": 0.9,
+          "pts": 13.8,
+          "reb": 5.5,
+          "stl": 0.9
+        },
+        "per_game": {
+          "ast": 2.4,
+          "blk": 0.8,
+          "pts": 13.2,
+          "reb": 5.3,
+          "stl": 0.8
+        }
+      },
+      "rank_range": {
+        "high": 35,
+        "low": 31
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "UConn",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 225
+    },
+    {
+      "age": 19.7,
+      "class_year": "Freshman",
+      "consensus_rank": 42,
+      "height": "7'0.5\"",
+      "league": "NCAA",
+      "mock_rank": 36,
+      "normalized_name": "malachi moreno",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 42.",
+      "player": "Malachi Moreno",
+      "position": "C",
+      "public_stats": {
+        "advanced": {
+          "bpm": 7.7,
+          "dbpm": 4.2,
+          "obpm": 3.5,
+          "tspct": 0.623,
+          "usg": 16.4
+        },
+        "per_36": {
+          "ast": 2.8,
+          "blk": 2.3,
+          "pts": 12.4,
+          "reb": 10.1,
+          "stl": 0.8
+        },
+        "per_game": {
+          "ast": 1.8,
+          "blk": 1.5,
+          "pts": 7.8,
+          "reb": 6.3,
+          "stl": 0.5
+        }
+      },
+      "rank_range": {
+        "high": 42,
+        "low": 36
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Kentucky",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 243
+    },
+    {
+      "age": 22.0,
+      "class_year": "Senior",
+      "consensus_rank": 40,
+      "height": "6'3.25\"",
+      "league": "NCAA",
+      "mock_rank": 37,
+      "normalized_name": "ryan conwell",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 40.",
+      "player": "Ryan Conwell",
+      "position": "SG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 7.3,
+          "dbpm": 2.2,
+          "obpm": 5.1,
+          "tspct": 0.566,
+          "usg": 29.5
+        },
+        "per_36": {
+          "ast": 3.1,
+          "blk": 0.2,
+          "pts": 21.9,
+          "reb": 5.6,
+          "stl": 1.3
+        },
+        "per_game": {
+          "ast": 2.7,
+          "blk": 0.2,
+          "pts": 18.8,
+          "reb": 4.8,
+          "stl": 1.1
+        }
+      },
+      "rank_range": {
+        "high": 40,
+        "low": 37
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Louisville",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 215
+    },
+    {
+      "age": 21.7,
+      "class_year": "Senior",
+      "consensus_rank": 51,
+      "height": "7'0.25\"",
+      "league": "NCAA",
+      "mock_rank": 38,
+      "normalized_name": "ugonna onyenso",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 51.",
+      "player": "Ugonna Onyenso",
+      "position": "C",
+      "public_stats": {
+        "advanced": {
+          "bpm": 12.2,
+          "dbpm": 7.6,
+          "obpm": 4.7,
+          "tspct": 0.616,
+          "usg": 15.5
+        },
+        "per_36": {
+          "ast": 1.1,
+          "blk": 5.7,
+          "pts": 12.6,
+          "reb": 9.5,
+          "stl": 1.2
+        },
+        "per_game": {
+          "ast": 0.6,
+          "blk": 2.9,
+          "pts": 6.5,
+          "reb": 4.9,
+          "stl": 0.6
+        }
+      },
+      "rank_range": {
+        "high": 51,
+        "low": 38
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Virginia",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 237
+    },
+    {
+      "age": 24.8,
+      "class_year": "Senior",
+      "consensus_rank": 46,
+      "height": "6'6.25\"",
+      "league": "NCAA",
+      "mock_rank": 39,
+      "normalized_name": "richie saunders",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 46.",
+      "player": "Richie Saunders",
+      "position": "SG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 10.7,
+          "dbpm": 2.9,
+          "obpm": 7.8,
+          "tspct": 0.632,
+          "usg": 24.5
+        },
+        "per_36": {
+          "ast": 2.4,
+          "blk": 0.3,
+          "pts": 20.7,
+          "reb": 6.6,
+          "stl": 2.0
+        },
+        "per_game": {
+          "ast": 2.1,
+          "blk": 0.3,
+          "pts": 18.0,
+          "reb": 5.8,
+          "stl": 1.7
+        }
+      },
+      "rank_range": {
+        "high": 46,
+        "low": 39
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "BYU",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 205
+    },
+    {
+      "age": 19.4,
+      "class_year": "International",
+      "consensus_rank": 41,
+      "height": "7'4\"",
+      "league": "International",
+      "mock_rank": 40,
+      "normalized_name": "luigi suigo",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 41.",
+      "player": "Luigi Suigo",
+      "position": "C",
+      "public_stats": {
+        "advanced": {
+          "tspct": 0.607,
+          "usg": 19.0
+        },
+        "per_36": {
+          "ast": 1.7,
+          "blk": 2.0,
+          "pts": 16.9,
+          "reb": 10.6,
+          "stl": 0.9
+        },
+        "per_game": {
+          "ast": 0.9,
+          "blk": 1.0,
+          "pts": 8.5,
+          "reb": 5.3,
+          "stl": 0.5
+        }
+      },
+      "rank_range": {
+        "high": 41,
+        "low": 40
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "KK Mega Basket",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 289
+    },
+    {
+      "age": 21.8,
+      "class_year": "Junior",
+      "consensus_rank": 63,
+      "height": "6'6.75\"",
+      "league": "NCAA",
+      "mock_rank": 41,
+      "normalized_name": "andrej stojakovic",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 63.",
+      "player": "Andrej Stojakovic",
+      "position": "SG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 6.4,
+          "dbpm": 2.3,
+          "obpm": 4.1,
+          "tspct": 0.578,
+          "usg": 25.0
+        },
+        "per_36": {
+          "ast": 1.4,
+          "blk": 0.6,
+          "pts": 18.5,
+          "reb": 6.2,
+          "stl": 0.5
+        },
+        "per_game": {
+          "ast": 1.0,
+          "blk": 0.4,
+          "pts": 13.5,
+          "reb": 4.5,
+          "stl": 0.4
+        }
+      },
+      "rank_range": {
+        "high": 63,
+        "low": 41
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Illinois",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 206
+    },
+    {
+      "age": 20.2,
+      "class_year": "Sophomore",
+      "consensus_rank": 57,
+      "height": "6'7\"",
+      "league": "NCAA",
+      "mock_rank": 42,
+      "normalized_name": "billy richmond iii",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 57.",
+      "player": "Billy Richmond III",
+      "position": "SG/SF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 6.7,
+          "dbpm": 2.9,
+          "obpm": 3.8,
+          "tspct": 0.612,
+          "usg": 18.0
+        },
+        "per_36": {
+          "ast": 2.6,
+          "blk": 1.1,
+          "pts": 14.6,
+          "reb": 5.6,
+          "stl": 1.4
+        },
+        "per_game": {
+          "ast": 2.0,
+          "blk": 0.8,
+          "pts": 11.2,
+          "reb": 4.3,
+          "stl": 1.1
+        }
+      },
+      "rank_range": {
+        "high": 57,
+        "low": 42
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Arkansas",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 195
+    },
+    {
+      "age": 20.5,
+      "class_year": "International",
+      "consensus_rank": 36,
+      "height": "6'6\"",
+      "league": "International",
+      "mock_rank": 43,
+      "normalized_name": "sergio de larrea",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 36.",
+      "player": "Sergio de Larrea",
+      "position": "PG/SG",
+      "public_stats": {
+        "advanced": {
+          "tspct": 0.604,
+          "usg": 22.3
+        },
+        "per_36": {
+          "ast": 7.3,
+          "blk": 0.5,
+          "pts": 17.8,
+          "reb": 5.1,
+          "stl": 1.2
+        },
+        "per_game": {
+          "ast": 2.9,
+          "blk": 0.2,
+          "pts": 7.0,
+          "reb": 2.0,
+          "stl": 0.5
+        }
+      },
+      "rank_range": {
+        "high": 43,
+        "low": 36
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Valencia",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 198
+    },
+    {
+      "age": 22.8,
+      "class_year": "Senior",
+      "consensus_rank": 44,
+      "height": "6'3.75\"",
+      "league": "NCAA",
+      "mock_rank": 44,
+      "normalized_name": "jaden bradley",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 44.",
+      "player": "Jaden Bradley",
+      "position": "PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 9.0,
+          "dbpm": 5.3,
+          "obpm": 3.7,
+          "tspct": 0.568,
+          "usg": 20.9
+        },
+        "per_36": {
+          "ast": 5.1,
+          "blk": 0.1,
+          "pts": 15.6,
+          "reb": 4.0,
+          "stl": 1.7
+        },
+        "per_game": {
+          "ast": 4.4,
+          "blk": 0.1,
+          "pts": 13.3,
+          "reb": 3.4,
+          "stl": 1.4
+        }
+      },
+      "rank_range": {
+        "high": 44,
+        "low": 44
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Arizona",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 205
+    },
+    {
+      "age": 21.7,
+      "class_year": "Junior",
+      "consensus_rank": 37,
+      "height": "6'9.25\"",
+      "league": "NCAA",
+      "mock_rank": 45,
+      "normalized_name": "milan momcilovic",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 37.",
+      "player": "Milan Momcilovic",
+      "position": "SF/PF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 11.4,
+          "dbpm": 2.9,
+          "obpm": 8.5,
+          "tspct": 0.693,
+          "usg": 21.2
+        },
+        "per_36": {
+          "ast": 1.2,
+          "blk": 0.3,
+          "pts": 19.9,
+          "reb": 3.7,
+          "stl": 1.0
+        },
+        "per_game": {
+          "ast": 1.0,
+          "blk": 0.2,
+          "pts": 16.9,
+          "reb": 3.1,
+          "stl": 0.8
+        }
+      },
+      "rank_range": {
+        "high": 45,
+        "low": 37
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Iowa State",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 218
+    },
+    {
+      "age": 21.1,
+      "class_year": "Sophomore",
+      "consensus_rank": 39,
+      "height": "6'9\"",
+      "league": "NCAA",
+      "mock_rank": 46,
+      "normalized_name": "flory bidunga",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 39.",
+      "player": "Flory Bidunga",
+      "position": "C",
+      "public_stats": {
+        "advanced": {
+          "bpm": 10.7,
+          "dbpm": 5.6,
+          "obpm": 5.1,
+          "tspct": 0.647,
+          "usg": 19.1
+        },
+        "per_36": {
+          "ast": 1.7,
+          "blk": 3.0,
+          "pts": 15.1,
+          "reb": 10.2,
+          "stl": 0.8
+        },
+        "per_game": {
+          "ast": 1.5,
+          "blk": 2.6,
+          "pts": 13.3,
+          "reb": 9.0,
+          "stl": 0.7
+        }
+      },
+      "rank_range": {
+        "high": 46,
+        "low": 39
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Kansas",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 229
+    },
+    {
+      "age": 23.4,
+      "class_year": "Senior",
+      "consensus_rank": 47,
+      "height": "6'10.75\"",
+      "league": "NCAA",
+      "mock_rank": 47,
+      "normalized_name": "trevon brazile",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 47.",
+      "player": "Trevon Brazile",
+      "position": "PF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 9.3,
+          "dbpm": 3.9,
+          "obpm": 5.4,
+          "tspct": 0.619,
+          "usg": 17.6
+        },
+        "per_36": {
+          "ast": 1.8,
+          "blk": 1.8,
+          "pts": 14.9,
+          "reb": 8.4,
+          "stl": 1.7
+        },
+        "per_game": {
+          "ast": 1.6,
+          "blk": 1.6,
+          "pts": 13.0,
+          "reb": 7.3,
+          "stl": 1.5
+        }
+      },
+      "rank_range": {
+        "high": 47,
+        "low": 47
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Arkansas",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 226
+    },
+    {
+      "age": 22.4,
+      "class_year": "Senior",
+      "consensus_rank": 45,
+      "height": "6'11.75\"",
+      "league": "NCAA",
+      "mock_rank": 48,
+      "normalized_name": "baba miller",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 45.",
+      "player": "Baba Miller",
+      "position": "SF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 9.4,
+          "dbpm": 5.8,
+          "obpm": 3.7,
+          "tspct": 0.576,
+          "usg": 21.1
+        },
+        "per_36": {
+          "ast": 4.2,
+          "blk": 1.3,
+          "pts": 14.7,
+          "reb": 11.7,
+          "stl": 0.8
+        },
+        "per_game": {
+          "ast": 3.7,
+          "blk": 1.2,
+          "pts": 13.0,
+          "reb": 10.3,
+          "stl": 0.7
+        }
+      },
+      "rank_range": {
+        "high": 48,
+        "low": 45
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Cincinnati",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 208
+    },
+    {
+      "age": 22.9,
+      "class_year": "Senior",
+      "consensus_rank": 52,
+      "height": "6'5.5\"",
+      "league": "NCAA",
+      "mock_rank": 49,
+      "normalized_name": "otega oweh",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 52.",
+      "player": "Otega Oweh",
+      "position": "SG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 7.4,
+          "dbpm": 3.4,
+          "obpm": 4.0,
+          "tspct": 0.554,
+          "usg": 28.4
+        },
+        "per_36": {
+          "ast": 2.9,
+          "blk": 0.3,
+          "pts": 20.5,
+          "reb": 5.3,
+          "stl": 2.0
+        },
+        "per_game": {
+          "ast": 2.7,
+          "blk": 0.3,
+          "pts": 18.6,
+          "reb": 4.8,
+          "stl": 1.8
+        }
+      },
+      "rank_range": {
+        "high": 52,
+        "low": 49
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Kentucky",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 216
+    },
+    {
+      "age": 22.3,
+      "class_year": "Senior",
+      "consensus_rank": 50,
+      "height": "6'4\"",
+      "league": "NCAA",
+      "mock_rank": 50,
+      "normalized_name": "emanuel sharp",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 50.",
+      "player": "Emanuel Sharp",
+      "position": "SG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 10.7,
+          "dbpm": 4.8,
+          "obpm": 5.9,
+          "tspct": 0.582,
+          "usg": 25.0
+        },
+        "per_36": {
+          "ast": 2.1,
+          "blk": 0.1,
+          "pts": 18.9,
+          "reb": 3.6,
+          "stl": 1.5
+        },
+        "per_game": {
+          "ast": 1.7,
+          "blk": 0.1,
+          "pts": 15.5,
+          "reb": 3.0,
+          "stl": 1.2
+        }
+      },
+      "rank_range": {
+        "high": 50,
+        "low": 50
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Houston",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 208
+    },
+    {
+      "age": 22.7,
+      "class_year": "Senior",
+      "consensus_rank": 61,
+      "height": "6'9.5\"",
+      "league": "NCAA",
+      "mock_rank": 51,
+      "normalized_name": "izaiyah nelson",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 61.",
+      "player": "Izaiyah Nelson",
+      "position": "PF/C",
+      "public_stats": {
+        "advanced": {
+          "bpm": 9.2,
+          "dbpm": 3.3,
+          "obpm": 5.9,
+          "tspct": 0.612,
+          "usg": 23.7
+        },
+        "per_36": {
+          "ast": 1.6,
+          "blk": 1.9,
+          "pts": 20.9,
+          "reb": 12.6,
+          "stl": 2.2
+        },
+        "per_game": {
+          "ast": 1.2,
+          "blk": 1.4,
+          "pts": 15.9,
+          "reb": 9.6,
+          "stl": 1.6
+        }
+      },
+      "rank_range": {
+        "high": 61,
+        "low": 51
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "South Florida",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 219
+    },
+    {
+      "age": 22.9,
+      "class_year": "Senior",
+      "consensus_rank": 38,
+      "height": "5'11.5\"",
+      "league": "NCAA",
+      "mock_rank": 52,
+      "normalized_name": "braden smith",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 38.",
+      "player": "Braden Smith",
+      "position": "PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 9.8,
+          "dbpm": 3.0,
+          "obpm": 6.8,
+          "tspct": 0.551,
+          "usg": 24.0
+        },
+        "per_36": {
+          "ast": 9.2,
+          "blk": 0.2,
+          "pts": 14.9,
+          "reb": 3.7,
+          "stl": 1.8
+        },
+        "per_game": {
+          "ast": 8.8,
+          "blk": 0.2,
+          "pts": 14.3,
+          "reb": 3.5,
+          "stl": 1.7
+        }
+      },
+      "rank_range": {
+        "high": 52,
+        "low": 38
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Purdue",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 167
+    },
+    {
+      "age": 22.8,
+      "class_year": "Senior",
+      "consensus_rank": 48,
+      "height": "6'1.25\"",
+      "league": "NCAA",
+      "mock_rank": 53,
+      "normalized_name": "bruce thornton",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 48.",
+      "player": "Bruce Thornton",
+      "position": "PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 12.7,
+          "dbpm": 3.2,
+          "obpm": 9.5,
+          "tspct": 0.665,
+          "usg": 23.6
+        },
+        "per_36": {
+          "ast": 3.9,
+          "blk": 0.2,
+          "pts": 19.6,
+          "reb": 5.0,
+          "stl": 1.1
+        },
+        "per_game": {
+          "ast": 3.9,
+          "blk": 0.2,
+          "pts": 19.9,
+          "reb": 5.1,
+          "stl": 1.1
+        }
+      },
+      "rank_range": {
+        "high": 53,
+        "low": 48
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Ohio State",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 223
+    },
+    {
+      "age": 23.5,
+      "class_year": "Senior",
+      "consensus_rank": 49,
+      "height": "6'4.25\"",
+      "league": "NCAA",
+      "mock_rank": 54,
+      "normalized_name": "milos uzan",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 49.",
+      "player": "Milos Uzan",
+      "position": "PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 6.4,
+          "dbpm": 3.8,
+          "obpm": 2.6,
+          "tspct": 0.493,
+          "usg": 19.6
+        },
+        "per_36": {
+          "ast": 4.4,
+          "blk": 0.1,
+          "pts": 12.1,
+          "reb": 2.9,
+          "stl": 1.1
+        },
+        "per_game": {
+          "ast": 4.0,
+          "blk": 0.1,
+          "pts": 11.1,
+          "reb": 2.7,
+          "stl": 1.0
+        }
+      },
+      "rank_range": {
+        "high": 54,
+        "low": 49
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Houston",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 185
+    },
+    {
+      "age": 22.3,
+      "class_year": "Senior",
+      "consensus_rank": 55,
+      "height": "6'1\"",
+      "league": "NCAA",
+      "mock_rank": 55,
+      "normalized_name": "ja'kobi gillespie",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 55.",
+      "player": "Ja'Kobi Gillespie",
+      "position": "PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 10.9,
+          "dbpm": 4.5,
+          "obpm": 6.4,
+          "tspct": 0.538,
+          "usg": 26.9
+        },
+        "per_36": {
+          "ast": 5.6,
+          "blk": 0.2,
+          "pts": 19.1,
+          "reb": 2.9,
+          "stl": 2.2
+        },
+        "per_game": {
+          "ast": 5.4,
+          "blk": 0.2,
+          "pts": 18.4,
+          "reb": 2.8,
+          "stl": 2.1
+        }
+      },
+      "rank_range": {
+        "high": 55,
+        "low": 55
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Tennessee",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 182
+    },
+    {
+      "age": 22.6,
+      "class_year": "Senior",
+      "consensus_rank": 64,
+      "height": "6'9.25\"",
+      "league": "NCAA",
+      "mock_rank": 56,
+      "normalized_name": "maliq brown",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 64.",
+      "player": "Maliq Brown",
+      "position": "PF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 11.6,
+          "dbpm": 8.9,
+          "obpm": 2.6,
+          "tspct": 0.634,
+          "usg": 12.7
+        },
+        "per_36": {
+          "ast": 2.9,
+          "blk": 1.1,
+          "pts": 8.8,
+          "reb": 9.2,
+          "stl": 3.2
+        },
+        "per_game": {
+          "ast": 1.6,
+          "blk": 0.6,
+          "pts": 4.9,
+          "reb": 5.2,
+          "stl": 1.8
+        }
+      },
+      "rank_range": {
+        "high": 64,
+        "low": 56
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Duke",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 217
+    },
+    {
+      "age": 22.2,
+      "class_year": "Senior",
+      "consensus_rank": null,
+      "height": "6'11.25\"",
+      "league": "NCAA",
+      "mock_rank": 57,
+      "normalized_name": "felix okpara",
+      "notes": "Parsed from Tankathon 2026 mock draft public page.",
+      "player": "Felix Okpara",
+      "position": "C",
+      "public_stats": {
+        "advanced": {
+          "bpm": 5.5,
+          "dbpm": 3.6,
+          "obpm": 1.8,
+          "tspct": 0.617,
+          "usg": 13.4
+        },
+        "per_36": {
+          "ast": 0.7,
+          "blk": 2.0,
+          "pts": 10.7,
+          "reb": 8.5,
+          "stl": 0.6
+        },
+        "per_game": {
+          "ast": 0.5,
+          "blk": 1.5,
+          "pts": 8.0,
+          "reb": 6.3,
+          "stl": 0.4
+        }
+      },
+      "rank_range": {
+        "high": 57,
+        "low": 57
+      },
+      "source_ids": [
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Tennessee",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 237
+    },
+    {
+      "age": 22.2,
+      "class_year": "Senior",
+      "consensus_rank": 59,
+      "height": "6'7.75\"",
+      "league": "NCAA",
+      "mock_rank": 58,
+      "normalized_name": "nick martinelli",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 59.",
+      "player": "Nick Martinelli",
+      "position": "SF",
+      "public_stats": {
+        "advanced": {
+          "bpm": 8.6,
+          "dbpm": 0.6,
+          "obpm": 8.0,
+          "tspct": 0.602,
+          "usg": 31.1
+        },
+        "per_36": {
+          "ast": 2.0,
+          "blk": 0.4,
+          "pts": 23.3,
+          "reb": 6.3,
+          "stl": 0.8
+        },
+        "per_game": {
+          "ast": 2.0,
+          "blk": 0.4,
+          "pts": 23.0,
+          "reb": 6.2,
+          "stl": 0.8
+        }
+      },
+      "rank_range": {
+        "high": 59,
+        "low": 58
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Northwestern",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 224
+    },
+    {
+      "age": 21.2,
+      "class_year": "Sophomore",
+      "consensus_rank": 69,
+      "height": "6'1.25\"",
+      "league": "NCAA",
+      "mock_rank": 59,
+      "normalized_name": "jeremy fears jr",
+      "notes": "Parsed from Tankathon 2026 mock draft public page. Consensus board rank 69.",
+      "player": "Jeremy Fears Jr.",
+      "position": "PG",
+      "public_stats": {
+        "advanced": {
+          "bpm": 11.6,
+          "dbpm": 4.3,
+          "obpm": 7.3,
+          "tspct": 0.576,
+          "usg": 24.3
+        },
+        "per_36": {
+          "ast": 10.4,
+          "blk": 0.0,
+          "pts": 16.9,
+          "reb": 2.7,
+          "stl": 1.4
+        },
+        "per_game": {
+          "ast": 9.4,
+          "blk": 0.0,
+          "pts": 15.2,
+          "reb": 2.4,
+          "stl": 1.3
+        }
+      },
+      "rank_range": {
+        "high": 69,
+        "low": 59
+      },
+      "source_ids": [
+        "src_rookie_scale_2026_consensus_board",
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "Michigan State",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 196
+    },
+    {
+      "age": 18.9,
+      "class_year": "International",
+      "consensus_rank": null,
+      "height": "6'11\"",
+      "league": "International",
+      "mock_rank": 60,
+      "normalized_name": "pavle backo",
+      "notes": "Parsed from Tankathon 2026 mock draft public page.",
+      "player": "Pavle Backo",
+      "position": "C",
+      "public_stats": {
+        "advanced": {
+          "tspct": 0.603,
+          "usg": 26.5
+        },
+        "per_36": {
+          "ast": 2.2,
+          "blk": 2.3,
+          "pts": 23.8,
+          "reb": 8.8,
+          "stl": 0.6
+        },
+        "per_game": {
+          "ast": 1.2,
+          "blk": 1.3,
+          "pts": 12.7,
+          "reb": 4.7,
+          "stl": 0.3
+        }
+      },
+      "rank_range": {
+        "high": 60,
+        "low": 60
+      },
+      "source_ids": [
+        "src_tankathon_2026_mock_draft"
+      ],
+      "source_team": "KK Mega Basket",
+      "source_url": "https://www.tankathon.com/mock_draft",
+      "weight_lbs": 262
+    }
+  ],
+  "source": {
+    "fetched_at": "2026-05-24T17:37:35+00:00",
+    "id": "src_tankathon_2026_mock_draft",
+    "title": "Tankathon 2026 NBA Mock Draft",
+    "url": "https://www.tankathon.com/mock_draft"
+  },
+  "sources": [
+    {
+      "id": "src_tankathon_2026_mock_draft",
+      "title": "Tankathon 2026 NBA Mock Draft",
+      "url": "https://www.tankathon.com/mock_draft"
+    },
+    {
+      "error": null,
+      "id": "src_rookie_scale_2026_consensus_board",
+      "row_count": 80,
+      "title": "Rookie Scale 2026 NBA Draft Consensus Big Board",
+      "url": "https://www.rookiescale.com/2026-consensus-board/"
+    },
+    {
+      "id": "src_nba_2026_draft_board",
+      "notes": "Registered as a free public draft-board source for manual/corroborating review. V1 automated rows come from Tankathon and Rookie Scale because their HTML is consistently parseable.",
+      "title": "NBA.com 2026 Draft Board",
+      "url": "https://www.nba.com/draft/2026/draft-board"
+    }
+  ]
+}

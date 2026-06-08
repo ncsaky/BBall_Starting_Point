@@ -1,0 +1,37 @@
+{
+  "attributes": [
+    "rotation_trust",
+    "development",
+    "offensive_structure",
+    "defensive_structure",
+    "matchup_adjustments",
+    "player_buy_in",
+    "playoff_preparation",
+    "experimentation",
+    "hands_on_control"
+  ],
+  "notes": "Soft reputation inputs for coach ratings. Ratings are intentionally modest and tunable; they should influence scheme, rotations, and development without overpowering player quality.",
+  "rating_scale": "0_to_5_stars",
+  "source": {
+    "fetched_at": "2026-05-22T06:51:12+00:00",
+    "id": "src_coach_reputation_sources_2025_26",
+    "title": "Coach reputation source bundle 2025-26"
+  },
+  "sources": [
+    {
+      "id": "src_si_coach_rankings_2025_26",
+      "title": "Sports Illustrated NBA 100 coach rankings",
+      "url": "https://www.si.com/nba/ranking-the-top-five-nba-coaches-for-2025-26"
+    },
+    {
+      "id": "src_cbs_coach_tiers_2025_26",
+      "title": "CBS Sports NBA coach tiers",
+      "url": "https://www.cbssports.com/nba/news/nba-coach-rankings-all-30-coaches-split-into-eight-tiers-as-2025-26-season-begins/amp/"
+    },
+    {
+      "id": "src_bref_coaches_2025_26",
+      "title": "Basketball-Reference 2025-26 NBA coaches",
+      "url": "https://www.basketball-reference.com/leagues/NBA_2026_coaches.html"
+    }
+  ]
+}

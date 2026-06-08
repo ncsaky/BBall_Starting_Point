@@ -1,0 +1,27 @@
+{
+  "notes": "Manual staff corrections for the intended 2025-26 preseason snapshot. Later real-world firings do not alter this universe start date.",
+  "teams": {
+    "CHI": {
+      "head_coach": {
+        "confidence": 0.9,
+        "name": "Billy Donovan",
+        "notes": "Manual preseason snapshot override. Chicago later changed coaching direction, but this universe starts before that end-of-season move.",
+        "status": "manual_snapshot_override",
+        "traits": {
+          "snapshot_date": "2025-10-01"
+        }
+      }
+    },
+    "ORL": {
+      "head_coach": {
+        "confidence": 0.9,
+        "name": "Jamahl Mosley",
+        "notes": "Manual preseason snapshot override. Orlando later changed coaching direction, but this universe starts before that end-of-season move.",
+        "status": "manual_snapshot_override",
+        "traits": {
+          "snapshot_date": "2025-10-01"
+        }
+      }
+    }
+  }
+}

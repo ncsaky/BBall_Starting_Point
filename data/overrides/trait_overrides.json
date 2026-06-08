@@ -1,0 +1,217 @@
+{
+  "notes": "Manual calibration for known hidden-trait outliers where raw box/tracking proxies misrepresent basketball impact. These are player-level scouting corrections, not team boosts.",
+  "players": [
+    {
+      "player_name": "Shai Gilgeous-Alexander",
+      "traits": {
+        "release_speed": {"value": 72, "confidence": 0.72, "notes": "Manual calibration: SGA's scoring profile was being treated like a low-volume non-spacer. His jumper is not Curry-like gravity, but the release and pull-up threat must support superstar volume."},
+        "shooting_range": {"value": 70, "confidence": 0.72, "notes": "Manual calibration for credible pull-up and late-clock shooting range; raw 3PA/role proxy was suppressing scoring too much."},
+        "shot_versatility": {"value": 88, "confidence": 0.82, "notes": "Elite self-created scoring versatility through pull-ups, counters, pace changes, and late-clock shotmaking."},
+        "rim_pressure": {"value": 88, "confidence": 0.82, "notes": "High-end downhill pressure and foul pressure should drive scoring load more than the raw proxy allowed."},
+        "stamina_cardio": {"value": 86, "confidence": 0.74, "notes": "Primary-option workload requires above-average stamina and should sustain high scoring usage across a season."},
+        "playoff_translation": {"value": 88, "confidence": 0.76, "notes": "Scoring craft and foul pressure should hold up in high-leverage matchups."}
+      }
+    },
+    {
+      "player_name": "Stephen Curry",
+      "traits": {
+        "release_speed": {"value": 98, "confidence": 0.84, "notes": "Elite quick-release movement shooting is the core of his off-ball gravity and is underweighted by raw 3PA/accuracy alone."},
+        "shooting_range": {"value": 99, "confidence": 0.88, "notes": "All-time range and off-dribble/off-movement threat should remain a maximum-level spacing input."},
+        "shot_versatility": {"value": 88, "confidence": 0.8, "notes": "Manual calibration from GSW preseason manifesto and career profile: off-movement, pull-up, relocation, and late-clock scoring should read as elite scoring creation, not only spacing."},
+        "handle_pressure": {"value": 84, "confidence": 0.76, "notes": "Still pressures defenses with handle, pull-up threat, and advantage creation even as the role uses more off-ball motion."},
+        "rim_pressure": {"value": 62, "confidence": 0.62, "notes": "Not a rim-dominant scorer at this age, but the floater/drive/cut layer should not collapse his scoring usage."},
+        "stamina_cardio": {"value": 92, "confidence": 0.78, "notes": "Movement-heavy offensive role and conditioning create persistent defensive strain even when box score usage is modest."},
+        "scheme_iq": {"value": 88, "confidence": 0.72, "notes": "Long-term system mastery and team-defense processing are important contextual skills."},
+        "playoff_translation": {"value": 90, "confidence": 0.78, "notes": "Skill package has repeatedly survived elite playoff game-planning."},
+        "portability": {"value": 90, "confidence": 0.78, "notes": "Off-ball gravity, shooting, and decision-making fit almost any roster context."}
+      }
+    },
+    {
+      "player_name": "Nikola Jokic",
+      "traits": {
+        "shot_versatility": {"value": 88, "confidence": 0.84, "notes": "Manual calibration: elite post, touch, midrange, mismatch, and late-clock scoring should support MVP-level point volume, not only passing value."},
+        "handle_pressure": {"value": 76, "confidence": 0.74, "notes": "Frontcourt hub handle and pressure against bigs/wings should drive usage without pretending he is a guard-style shaker."},
+        "shooting_range": {"value": 75, "confidence": 0.74, "notes": "Credible pick-and-pop and touch range keep defenses attached enough to support scoring and passing leverage."},
+        "rim_pressure": {"value": 72, "confidence": 0.76, "notes": "Size, seal position, touch, and foul pressure create steady interior scoring pressure even without vertical explosion."},
+        "stamina_cardio": {"value": 78, "confidence": 0.72, "notes": "High-minute offensive hub burden should sustain scoring and passing load across a season."},
+        "rim_deterrence": {"value": 64, "confidence": 0.72, "notes": "Elite overall impact and size should not be interpreted as Wembanyama-style rim deterrence."},
+        "defensive_effort": {"value": 67, "confidence": 0.66, "notes": "Smart positional defender, but not an event/vertical deterrence outlier."},
+        "foot_speed_lateral_agility": {"value": 55, "confidence": 0.66, "notes": "Functional but not switch-dominant mobility; broad impact metrics were overstating foot speed."},
+        "screen_navigation": {"value": 55, "confidence": 0.62, "notes": "Center mobility should not map to guard-style screen navigation."},
+        "scheme_iq": {"value": 96, "confidence": 0.84, "notes": "Elite processing and anticipation still belong as basketball IQ rather than rim deterrence."},
+        "passing_reads": {"value": 99, "confidence": 0.9, "notes": "Best-in-league passing read context for a hub big."},
+        "playoff_translation": {"value": 92, "confidence": 0.82, "notes": "Offensive hub skills and decision-making scale exceptionally well in playoff settings."}
+      }
+    },
+    {
+      "player_name": "Victor Wembanyama",
+      "traits": {
+        "shot_versatility": {"value": 82, "confidence": 0.74, "notes": "Manual calibration: perimeter/face-up scoring package should support star-level points, not just defensive impact."},
+        "rim_pressure": {"value": 86, "confidence": 0.78, "notes": "Size, lob gravity, and foul pressure create consistent interior scoring pressure."},
+        "offensive_rebounding": {"value": 88, "confidence": 0.8, "notes": "Generational size/length should produce elite rebounding chances when minutes are there."},
+        "rim_deterrence": {"value": 99, "confidence": 0.9, "notes": "Generational rim deterrence changes opponent shot selection, not just block totals."},
+        "defensive_effort": {"value": 82, "confidence": 0.76, "notes": "High-impact defensive activity with extraordinary physical tools."},
+        "foot_speed_lateral_agility": {"value": 70, "confidence": 0.68, "notes": "Unusual perimeter mobility for his size, but not guard-like screen navigation."},
+        "scheme_iq": {"value": 82, "confidence": 0.7, "notes": "Advanced defensive instincts for age with room to keep maturing."},
+        "playoff_translation": {"value": 84, "confidence": 0.68, "notes": "Rim deterrence and size should translate strongly, with creation load still developing."}
+      }
+    },
+    {
+      "player_name": "Giannis Antetokounmpo",
+      "traits": {
+        "shot_versatility": {"value": 70, "confidence": 0.76, "notes": "Raw proxy understated his self-created paint scoring and foul-pressure versatility because it overweighted jumper indicators."},
+        "handle_pressure": {"value": 82, "confidence": 0.76, "notes": "Primary downhill initiator pressure should be represented even without guard-style pull-up creation."},
+        "rim_pressure": {"value": 97, "confidence": 0.86, "notes": "Elite downhill rim pressure is a defining offensive trait and a major source of team shot quality."},
+        "passing_reads": {"value": 76, "confidence": 0.7, "notes": "Good frontcourt playmaker, but not Jokic-level passing despite raw proxy inflation."},
+        "defensive_effort": {"value": 82, "confidence": 0.76, "notes": "High-impact help and transition defense should not be treated as a low-effort profile."},
+        "rim_deterrence": {"value": 86, "confidence": 0.78, "notes": "Still a major help-side rim deterrent even when not playing as a full-time drop center."},
+        "foot_speed_lateral_agility": {"value": 74, "confidence": 0.7, "notes": "Forward mobility remains a plus; raw proxy was too punitive."},
+        "screen_navigation": {"value": 66, "confidence": 0.64, "notes": "Not a guard-style chaser, but can switch and survive actions better than the raw estimate."},
+        "scheme_iq": {"value": 82, "confidence": 0.72, "notes": "Long track record as a high-level playoff help defender and backline processor."},
+        "stamina_cardio": {"value": 82, "confidence": 0.72, "notes": "High-minute two-way burden and transition role require above-average stamina."},
+        "playoff_translation": {"value": 84, "confidence": 0.76, "notes": "Rim pressure, foul pressure, and defense remain high-leverage playoff skills despite spacing limitations."},
+        "portability": {"value": 76, "confidence": 0.68, "notes": "Non-shooting fit has costs, but defensive versatility and rim pressure are far more portable than the raw proxy suggested."}
+      }
+    },
+    {
+      "player_name": "Luka Doncic",
+      "traits": {
+        "foot_speed_lateral_agility": {"value": 32, "confidence": 0.78, "notes": "Known defensive foot-speed caveat; raw steal/versatility proxies overstated lateral movement."},
+        "defensive_effort": {"value": 42, "confidence": 0.72, "notes": "Defensive value is limited by effort consistency despite size and feel."},
+        "screen_navigation": {"value": 36, "confidence": 0.72, "notes": "Should be targetable through movement and repeated screening actions."},
+        "rim_deterrence": {"value": 42, "confidence": 0.68, "notes": "Size does not create meaningful rim deterrence in the way the prior proxy implied."},
+        "scheme_iq": {"value": 70, "confidence": 0.66, "notes": "Offensive genius does not fully transfer to defensive scheme execution in the current model."},
+        "passing_reads": {"value": 95, "confidence": 0.86, "notes": "Elite creator and passer remains the core positive trait."},
+        "playoff_translation": {"value": 84, "confidence": 0.78, "notes": "Creation and passing scale up, while defensive targeting remains visible."}
+      }
+    },
+    {
+      "player_name": "Draymond Green",
+      "traits": {
+        "scheme_iq": {"value": 96, "confidence": 0.86, "notes": "All-time defensive organizer and on-court quarterback."},
+        "defensive_effort": {"value": 88, "confidence": 0.8, "notes": "High-effort, high-communication defender whose impact exceeds basic event rates."},
+        "rim_deterrence": {"value": 76, "confidence": 0.72, "notes": "Undersized but elite help defender and short-roll defensive anchor."},
+        "screen_navigation": {"value": 86, "confidence": 0.72, "notes": "Reads and switches actions at an elite level despite age."},
+        "passing_reads": {"value": 86, "confidence": 0.78, "notes": "Connector passing remains a core offensive system skill."},
+        "portability": {"value": 88, "confidence": 0.76, "notes": "Defensive IQ and connective offense scale with high-end talent around him."}
+      }
+    },
+    {
+      "player_name": "Alex Caruso",
+      "traits": {
+        "defensive_effort": {"value": 95, "confidence": 0.84, "notes": "Elite disruption, effort, and possession-value defender."},
+        "foot_speed_lateral_agility": {"value": 92, "confidence": 0.8, "notes": "Point-of-attack and chase defense should remain elite."},
+        "screen_navigation": {"value": 94, "confidence": 0.82, "notes": "One of the league's best screen navigators and action disruptors."},
+        "scheme_iq": {"value": 88, "confidence": 0.78, "notes": "High processing speed and team-defense awareness."},
+        "portability": {"value": 90, "confidence": 0.78, "notes": "Low-usage championship role player who fits around stars."}
+      }
+    },
+    {
+      "player_name": "Steven Adams",
+      "traits": {
+        "offensive_rebounding": {"value": 96, "confidence": 0.86, "notes": "Premier offensive rebounder who creates extra possessions and high-value scramble chances."},
+        "rim_deterrence": {"value": 64, "confidence": 0.68, "notes": "Strong positional big, but not an elite vertical deterrence profile."},
+        "screen_navigation": {"value": 42, "confidence": 0.62, "notes": "Traditional big mobility should not be represented as perimeter screen navigation."}
+      }
+    },
+    {
+      "player_name": "Josh Giddey",
+      "traits": {
+        "shooting_range": {"value": 43, "confidence": 0.72, "notes": "Defenses can still sag and stress spacing despite improved surface percentages."},
+        "defensive_effort": {"value": 38, "confidence": 0.72, "notes": "Negative defensive fit in high-leverage contexts should remain visible."},
+        "foot_speed_lateral_agility": {"value": 42, "confidence": 0.7, "notes": "Size and rebounding do not solve lateral agility limitations."},
+        "screen_navigation": {"value": 38, "confidence": 0.7, "notes": "Targetable through guard actions and movement."},
+        "portability": {"value": 44, "confidence": 0.72, "notes": "Requires on-ball touches and spacing concessions, limiting championship portability."},
+        "passing_reads": {"value": 86, "confidence": 0.8, "notes": "The negative fit should not erase real passing vision."}
+      }
+    },
+    {
+      "player_name": "Trae Young",
+      "traits": {
+        "shooting_range": {"value": 80, "confidence": 0.74, "notes": "Deep pull-up threat remains a major offensive lever, but the streaky efficiency profile should not read as Curry-level portability."},
+        "shot_versatility": {"value": 84, "confidence": 0.76, "notes": "Elite on-ball scoring craft and pull-up creation remain central positives."},
+        "handle_pressure": {"value": 91, "confidence": 0.82, "notes": "High-end primary creator who bends defenses with the ball."},
+        "rim_pressure": {"value": 70, "confidence": 0.7, "notes": "Paint touches and foul pressure matter, but size limits true rim finishing pressure; floater creation should not be mistaken for dominant at-rim scoring."},
+        "passing_reads": {"value": 93, "confidence": 0.84, "notes": "Elite passing volume and advanced reads should preserve his offensive engine value."},
+        "foot_speed_lateral_agility": {"value": 36, "confidence": 0.76, "notes": "Limited size and lateral defensive tools create matchup pressure."},
+        "defensive_effort": {"value": 34, "confidence": 0.74, "notes": "Defensive limitations remain a meaningful two-way value penalty."},
+        "screen_navigation": {"value": 31, "confidence": 0.74, "notes": "Can be targeted repeatedly through guard screening actions."},
+        "rim_deterrence": {"value": 22, "confidence": 0.8, "notes": "Size prevents meaningful rim deterrence."},
+        "portability": {"value": 56, "confidence": 0.7, "notes": "Offensive creation is elite, but contract cost, defensive targeting, and on-ball dependence narrow ideal roster fits."},
+        "playoff_translation": {"value": 68, "confidence": 0.68, "notes": "Creation and passing translate, while defense and size can become more targetable in playoff matchups."}
+      }
+    },
+    {
+      "player_name": "Damian Lillard",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "release_speed": {"value": 90, "confidence": 0.76, "notes": "Manual scouting correction: even with age and Achilles context, Dame remains an elite quick-release pull-up shooter."},
+        "shooting_range": {"value": 92, "confidence": 0.8, "notes": "Deep range and off-dribble gravity should remain a defining offensive trait rather than collapsing with the injury-risk penalty."},
+        "shot_versatility": {"value": 84, "confidence": 0.74, "notes": "High-level pick-and-roll, pull-up, step-back, and late-clock shotmaking still support star scoring value."},
+        "handle_pressure": {"value": 82, "confidence": 0.72, "notes": "Still applies real on-ball pressure as a primary or secondary creator."},
+        "rim_pressure": {"value": 58, "confidence": 0.62, "notes": "Age and injury context lower downhill pressure, but do not erase foul pressure and paint-touch craft."},
+        "passing_reads": {"value": 78, "confidence": 0.68, "notes": "Reliable high-usage guard reads and pick-and-roll passing."},
+        "foot_speed_lateral_agility": {"value": 40, "confidence": 0.7, "notes": "Age and Achilles recovery meaningfully limit lateral defensive movement."},
+        "defensive_effort": {"value": 42, "confidence": 0.66, "notes": "Defensive value remains a caveat relative to offensive star value."},
+        "screen_navigation": {"value": 39, "confidence": 0.66, "notes": "Movement through repeated guard actions should remain a vulnerability."},
+        "stamina_cardio": {"value": 58, "confidence": 0.62, "notes": "Workload should be monitored after a major injury and late-career transition."},
+        "portability": {"value": 72, "confidence": 0.68, "notes": "Shooting gravity and secondary creation are portable, with defensive and health caveats."},
+        "playoff_translation": {"value": 76, "confidence": 0.66, "notes": "Range and shotmaking translate, while health and defense lower the ceiling from prime Dame levels."}
+      }
+    },
+    {
+      "player_name": "Ace Bailey",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "release_speed": {"value": 67, "confidence": 0.52, "notes": "Manual prospect correction: should not enter the league as generic 50-grade shooting/wing talent."},
+        "shooting_range": {"value": 73, "confidence": 0.58, "notes": "Public prospect profile supports real shooting upside and difficult-shot value."},
+        "shot_versatility": {"value": 76, "confidence": 0.58, "notes": "High-upside wing scoring package with pull-up and contested-shot flashes."},
+        "handle_pressure": {"value": 68, "confidence": 0.52, "notes": "Developing creator handle with enough upside to matter in valuation."},
+        "rim_pressure": {"value": 64, "confidence": 0.5, "notes": "Functional size and athletic scoring pressure, still short of elite downhill creation."},
+        "passing_reads": {"value": 50, "confidence": 0.46, "notes": "Passing/read development remains a question mark."},
+        "foot_speed_lateral_agility": {"value": 72, "confidence": 0.54, "notes": "Wing athletic tools should translate to defensive and transition upside."},
+        "defensive_effort": {"value": 58, "confidence": 0.48, "notes": "Defensive impact is more projection than bankable starter value."},
+        "scheme_iq": {"value": 53, "confidence": 0.46, "notes": "Processing is still developing, so the upside correction should not become a full star guarantee."},
+        "rim_deterrence": {"value": 52, "confidence": 0.44, "notes": "Size helps, but this is not a big-man rim deterrence profile."},
+        "stamina_cardio": {"value": 68, "confidence": 0.48, "notes": "Baseline NBA wing stamina projection."},
+        "portability": {"value": 66, "confidence": 0.52, "notes": "Big wing shooting/scoring upside gives him more trade value than generic replacement traits."},
+        "playoff_translation": {"value": 62, "confidence": 0.46, "notes": "Shotmaking upside can scale, but current decision-making uncertainty keeps confidence modest."}
+      }
+    },
+    {
+      "player_name": "Jaren Jackson Jr.",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "scheme_iq": {"value": 88, "confidence": 0.78, "notes": "User playtest correction: former Defensive Player of the Year should read as a high-level defensive star, not generic starter impact."},
+        "rim_deterrence": {"value": 96, "confidence": 0.86, "notes": "Elite shot-blocking and rim-protection profile should materially lift team defense and trade value."},
+        "defensive_effort": {"value": 92, "confidence": 0.82, "notes": "Aggressive defensive event creation, help activity, and backline pressure are core strengths."},
+        "screen_navigation": {"value": 80, "confidence": 0.7, "notes": "Mobile enough for varied defensive coverages compared with traditional bigs."},
+        "shooting_range": {"value": 78, "confidence": 0.72, "notes": "Stretch-big range creates real lineup value even with year-to-year percentage variance."},
+        "shot_versatility": {"value": 74, "confidence": 0.68, "notes": "More than a pure stationary finisher; can attack closeouts and punish mismatches within a role."},
+        "rim_pressure": {"value": 74, "confidence": 0.68, "notes": "Functional big-man scoring pressure without treating him as a heliocentric creator."},
+        "offensive_rebounding": {"value": 72, "confidence": 0.62, "notes": "Positive frontcourt possession value without overstating him as an Adams-style specialist."},
+        "foot_speed_lateral_agility": {"value": 78, "confidence": 0.72, "notes": "Defensive mobility supports portability across playoff matchup types."},
+        "portability": {"value": 86, "confidence": 0.78, "notes": "Two-way big with spacing and elite defense should fit many roster constructions and command real star-adjacent trade value."},
+        "playoff_translation": {"value": 86, "confidence": 0.74, "notes": "Rim protection, spacing, and defensive versatility should translate better than his prior generic rating implied."},
+        "stamina_cardio": {"value": 78, "confidence": 0.64, "notes": "Durable enough for impact starter minutes while preserving foul/role constraints through other systems."}
+      }
+    },
+    {
+      "player_name": "Zion Williamson",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "shooting_range": {"value": 42, "confidence": 0.72, "notes": "Spacing remains a real lineup constraint; Zion's value should come through rim pressure, not jumper gravity."},
+        "shot_versatility": {"value": 83, "confidence": 0.78, "notes": "Power finishing, touch, counters, and transition scoring should support high point volume."},
+        "handle_pressure": {"value": 78, "confidence": 0.72, "notes": "Forward handle and downhill advantage creation are central to his offensive profile."},
+        "rim_pressure": {"value": 96, "confidence": 0.86, "notes": "Elite paint pressure and foul pressure should drive scoring and team shot quality."},
+        "offensive_rebounding": {"value": 78, "confidence": 0.68, "notes": "Strength and second-jump power create extra possession value."},
+        "passing_reads": {"value": 72, "confidence": 0.68, "notes": "Functional short-roll and drive-kick passing should prevent the model from treating him as a pure finisher."},
+        "foot_speed_lateral_agility": {"value": 72, "confidence": 0.62, "notes": "Explosive movement should help offense while defensive consistency remains separate."},
+        "defensive_effort": {"value": 52, "confidence": 0.66, "notes": "Defensive buy-in and consistency remain caveats."},
+        "stamina_cardio": {"value": 66, "confidence": 0.58, "notes": "Availability and conditioning caveats should temper, not erase, star scoring output."},
+        "portability": {"value": 66, "confidence": 0.64, "notes": "Rim pressure is elite, but non-shooting fit and availability limit universal roster fit."},
+        "playoff_translation": {"value": 74, "confidence": 0.62, "notes": "Paint force translates when healthy, while spacing and defensive targeting keep the ceiling from becoming automatic."}
+      }
+    }
+  ]
+}

@@ -1,0 +1,951 @@
+{
+  "source": {
+    "fetched_at": "2026-05-21T23:54:04+00:00",
+    "id": "src_nba_official_team_pages_2026",
+    "title": "NBA.com team info pages",
+    "url_template": "https://www.nba.com/team/{team_id}/franchise-leaders"
+  },
+  "team_count": 30,
+  "teams": [
+    {
+      "background": {
+        "Arena": "State Farm Arena",
+        "City": "Atlanta",
+        "Founded": "1949",
+        "G-League": "College Park Skyhawks",
+        "General Manager": "Travis Schlenk",
+        "Governor(s)": "Tony Ressler",
+        "Head Coach": "Quin Snyder"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Ronald Nored",
+          "Antonio Lang",
+          "Jeff Watkinson",
+          "Igor Kokoskov",
+          "Ekpe Udoh",
+          "Bryan Bailey",
+          "Ryan Schmidt",
+          "Sanjay Lumpkin",
+          "Mike Brey"
+        ],
+        "Assistant Coach for Player Development": [
+          "Reggis Onwukamuche"
+        ],
+        "Assistant Trainer": [
+          "John Dusel"
+        ],
+        "Head Coach": [
+          "Quin Snyder"
+        ],
+        "Trainer": [
+          "Scottie Parker"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612737/franchise-leaders",
+      "team_abbrev": "ATL"
+    },
+    {
+      "background": {
+        "Arena": "Barclays Center",
+        "City": "Brooklyn",
+        "Founded": "1976",
+        "G-League": "Long Island Nets",
+        "General Manager": "Sean Marks",
+        "Governor(s)": "Joe Tsai",
+        "Head Coach": "Jordi Fernandez"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Steve Hetzel",
+          "Juwan Howard",
+          "Jay Hernandez",
+          "Dutch Gaitley",
+          "Deividas Dulkys",
+          "Ryan Forehan-Kelly",
+          "Connor Griffin",
+          "Corey Vinson",
+          "Travis Bader"
+        ],
+        "Head Coach": [
+          "Jordi Fernandez"
+        ],
+        "Trainer": [
+          "Geoffrey Staton"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612751/franchise-leaders",
+      "team_abbrev": "BKN"
+    },
+    {
+      "background": {
+        "Arena": "TD Garden",
+        "City": "Boston",
+        "Founded": "1946",
+        "G-League": "Maine Celtics",
+        "General Manager": "Brad Stevens",
+        "Governor(s)": "Bill Chisholm",
+        "Head Coach": "Joe Mazzulla"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Amile Jefferson",
+          "D.J. MacLeay",
+          "Matt Reynolds",
+          "Tony Dobbins",
+          "Sam Cassell"
+        ],
+        "Head Coach": [
+          "Joe Mazzulla"
+        ],
+        "Trainer": [
+          "Drew Moore"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612738/franchise-leaders",
+      "team_abbrev": "BOS"
+    },
+    {
+      "background": {
+        "Arena": "Spectrum Center",
+        "City": "Charlotte",
+        "Founded": "1988",
+        "G-League": "Greensboro Swarm",
+        "General Manager": "Jeff Peterson",
+        "Governor(s)": "Rick Schnall & Gabe Plotkin",
+        "Head Coach": "Charles Lee"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Lamar Skeeter",
+          "Joshua Longstaff",
+          "Blaine Mueller",
+          "Ryan Frazier",
+          "Matt Hill",
+          "Jermaine Bucknor",
+          "Kyle Neptune",
+          "Zach Peterson",
+          "Kemba Walker"
+        ],
+        "Head Coach": [
+          "Charles Lee"
+        ],
+        "Trainer": [
+          "Peter Elliott",
+          "Patrick Chasse"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612766/franchise-leaders",
+      "team_abbrev": "CHA"
+    },
+    {
+      "background": {
+        "Arena": "United Center",
+        "City": "Chicago",
+        "Founded": "1966",
+        "G-League": "Windy City Bulls",
+        "General Manager": "",
+        "Governor(s)": "Michael Reinsdorf",
+        "Head Coach": ""
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Wes Unseld",
+          "John Bryant",
+          "Dan Craig",
+          "Henry Domercant",
+          "Damian Cotter",
+          "Billy Schmidt"
+        ],
+        "Trainer": [
+          "Todd Campbell"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612741/franchise-leaders",
+      "team_abbrev": "CHI"
+    },
+    {
+      "background": {
+        "Arena": "Rocket Arena",
+        "City": "Cleveland",
+        "Founded": "1970",
+        "G-League": "Cleveland Charge",
+        "General Manager": "Koby Altman",
+        "Governor(s)": "Dan Gilbert",
+        "Head Coach": "Kenny Atkinson"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Mike Gerrity",
+          "Trevor Hendry",
+          "Jawad Williams",
+          "Omar Cook",
+          "Nate Reinking",
+          "Andrew Olson"
+        ],
+        "Associate Head Coach": [
+          "Johnnie Bryant"
+        ],
+        "Head Coach": [
+          "Kenny Atkinson"
+        ],
+        "Trainer": [
+          "Stephen Spiro"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612739/franchise-leaders",
+      "team_abbrev": "CLE"
+    },
+    {
+      "background": {
+        "Arena": "American Airlines Center",
+        "City": "Dallas",
+        "Founded": "1980",
+        "G-League": "Texas Legends",
+        "General Manager": "",
+        "Governor(s)": "Patrick Dumont",
+        "Head Coach": ""
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Frank Vogel",
+          "Jay Triano",
+          "Popeye Jones",
+          "Phil Handy",
+          "Mike Penberthy",
+          "Eric Hughes",
+          "Josh Broghamer",
+          "Dru Anthrop",
+          "Keith Veney",
+          "Jordan Sears"
+        ],
+        "Head Coach": [
+          "Jason Kidd"
+        ],
+        "Trainer": [
+          "Jana Austin"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612742/franchise-leaders",
+      "team_abbrev": "DAL"
+    },
+    {
+      "background": {
+        "Arena": "Ball Arena",
+        "City": "Denver",
+        "Founded": "1976",
+        "G-League": "Grand Rapids Gold",
+        "General Manager": "",
+        "Governor(s)": "Stan Kroenke",
+        "Head Coach": "David Adelman"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Jared Dudley",
+          "Chase Buford",
+          "John Beckett",
+          "Ognjen Stojakovic",
+          "Elvis Valcarcel"
+        ],
+        "Head Coach": [
+          "David Adelman"
+        ],
+        "Trainer": [
+          "Dan Shimensky"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612743/franchise-leaders",
+      "team_abbrev": "DEN"
+    },
+    {
+      "background": {
+        "Arena": "Little Caesars Arena",
+        "City": "Detroit",
+        "Founded": "1948",
+        "G-League": "Motor City Cruise",
+        "General Manager": "Trajan Langdon",
+        "Governor(s)": "Tom Gores",
+        "Head Coach": "J. B. Bickerstaff"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Jarrett Jack",
+          "Fred Vinson",
+          "Vitaly Potapenko",
+          "Steve Scalzi",
+          "Luke Walton",
+          "Jerome Allen",
+          "Kevin Burleson",
+          "Sidney Lowe",
+          "Greg Smith",
+          "Josh Estes"
+        ],
+        "Head Coach": [
+          "J.B. Bickerstaff"
+        ],
+        "Strength and Conditioning Coach": [
+          "Jordan Sabourin"
+        ],
+        "Trainer": [
+          "Alex Garland"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612765/franchise-leaders",
+      "team_abbrev": "DET"
+    },
+    {
+      "background": {
+        "Arena": "Chase Center",
+        "City": "Golden State",
+        "Founded": "1946",
+        "G-League": "Santa Cruz Warriors",
+        "General Manager": "Mike Dunleavy Jr.",
+        "Governor(s)": "Joe Lacob",
+        "Head Coach": "Steve Kerr"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Bruce Fraser",
+          "Seth Cooper",
+          "Jerry Stackhouse",
+          "Terry Stotts",
+          "Ron Adams",
+          "Anthony Vereen",
+          "Kris Weems",
+          "Dejan Milojevic",
+          "Jacob Rubin",
+          "Nick Kerr",
+          "Khalid Robinson"
+        ],
+        "Head Coach": [
+          "Steve Kerr"
+        ],
+        "Trainer": [
+          "Drew Yoder"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612744/franchise-leaders",
+      "team_abbrev": "GSW"
+    },
+    {
+      "background": {
+        "Arena": "Toyota Center",
+        "City": "Houston",
+        "Founded": "1967",
+        "G-League": "Rio Grande Valley Vipers",
+        "General Manager": "Rafael Stone",
+        "Governor(s)": "Tilman Fertitta",
+        "Head Coach": "Ime Udoka"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Ben Sullivan",
+          "Royal Ivey",
+          "Garrett Jackson",
+          "Cam Hodges",
+          "Mike Moser",
+          "Robbie Lemons",
+          "Josh Bostic"
+        ],
+        "Head Coach": [
+          "Ime Udoka"
+        ],
+        "Trainer": [
+          "Jason Biles"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612745/franchise-leaders",
+      "team_abbrev": "HOU"
+    },
+    {
+      "background": {
+        "Arena": "Gainbridge Fieldhouse",
+        "City": "Indiana",
+        "Founded": "1976",
+        "G-League": "Noblesville Boom",
+        "General Manager": "Kevin Pritchard",
+        "Governor(s)": "Herb Simon",
+        "Head Coach": "Rick Carlisle"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Jim Boylen",
+          "Johnny Carpenter",
+          "Jenny Boucek"
+        ],
+        "Assistant Coach for Player Development": [
+          "Jannero Pargo",
+          "Maurice Baker",
+          "Isaac Yacob"
+        ],
+        "Assistant Trainer": [
+          "Carl Eaton"
+        ],
+        "Head Coach": [
+          "Rick Carlisle"
+        ],
+        "Lead Assistant Coach": [
+          "Lloyd Pierce"
+        ],
+        "Trainer": [
+          "Josh Corbeil"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612754/franchise-leaders",
+      "team_abbrev": "IND"
+    },
+    {
+      "background": {
+        "Arena": "Intuit Dome",
+        "City": "Los Angeles",
+        "Founded": "1970",
+        "G-League": "Agua Caliente Clippers of Ontario",
+        "General Manager": "Michael Winger",
+        "Governor(s)": "Steve Ballmer",
+        "Head Coach": "Tyronn Lue"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Dahntay Jones",
+          "Brian Shaw",
+          "Jay Larranaga",
+          "Shaun Fein",
+          "Jeremy Castleberry",
+          "Chris Holguin",
+          "Tim Dather",
+          "Conor Dunleavy",
+          "Larry Drew"
+        ],
+        "Head Coach": [
+          "Tyronn Lue"
+        ],
+        "Lead Assistant Coach": [
+          "Jeff Van Gundy"
+        ],
+        "Trainer": [
+          "Jasen Powell"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612746/franchise-leaders",
+      "team_abbrev": "LAC"
+    },
+    {
+      "background": {
+        "Arena": "Crypto.com Arena",
+        "City": "Los Angeles",
+        "Founded": "1948",
+        "G-League": "South Bay Lakers",
+        "General Manager": "Rob Pelinka",
+        "Governor(s)": "Mark Walter & Jeanie Buss",
+        "Head Coach": "JJ Redick"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Nate McMillan",
+          "Scott Brooks",
+          "Bob Beyer",
+          "Greg St. Jean",
+          "Lindsey Harding",
+          "Beau Levesque"
+        ],
+        "Head Coach": [
+          "JJ Redick"
+        ],
+        "Trainer": [
+          "Vanessa Brooks"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612747/franchise-leaders",
+      "team_abbrev": "LAL"
+    },
+    {
+      "background": {
+        "Arena": "FedExForum",
+        "City": "Memphis",
+        "Founded": "1995",
+        "G-League": "Memphis Hustle",
+        "General Manager": "Zach Kleiman",
+        "Governor(s)": "Robert Pera",
+        "Head Coach": "Tuomas Iisalo"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Erik Schmidt",
+          "Darnell Lazare",
+          "Ryan Saunders",
+          "Jason March"
+        ],
+        "Assistant Coach for Player Development": [
+          "Brian Collins"
+        ],
+        "Head Coach": [
+          "Tuomas Iisalo"
+        ],
+        "Trainer": [
+          "Eric Oetter"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612763/franchise-leaders",
+      "team_abbrev": "MEM"
+    },
+    {
+      "background": {
+        "Arena": "Kaseya Center",
+        "City": "Miami",
+        "Founded": "1988",
+        "G-League": "Sioux Falls Skyforce",
+        "General Manager": "Pat Riley",
+        "Governor(s)": "Micky Arison",
+        "Head Coach": "Erik Spoelstra"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Caron Butler",
+          "Wayne Ellington",
+          "Chris Quinn",
+          "Malik Allen",
+          "Eric Glass"
+        ],
+        "Assistant Coach for Player Development": [
+          "Octavio De La Grana"
+        ],
+        "Head Coach": [
+          "Erik Spoelstra"
+        ],
+        "Trainer": [
+          "Wes Brown"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612748/franchise-leaders",
+      "team_abbrev": "MIA"
+    },
+    {
+      "background": {
+        "Arena": "Fiserv Forum",
+        "City": "Milwaukee",
+        "Founded": "1968",
+        "G-League": "Wisconsin Herd",
+        "General Manager": "Jon Horst",
+        "Governor(s)": "Wesley Edens",
+        "Head Coach": "Taylor Jenkins"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Greg Buckner",
+          "Jason Love",
+          "Pete Dominguez",
+          "Spencer Rivers",
+          "Jack Herum",
+          "Vin Baker",
+          "Rex Kalamian",
+          "David Joerger",
+          "Darvin Ham"
+        ],
+        "Head Coach": [
+          "Taylor Jenkins"
+        ],
+        "Trainer": [
+          "Scott Faust"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612749/franchise-leaders",
+      "team_abbrev": "MIL"
+    },
+    {
+      "background": {
+        "Arena": "Target Center",
+        "City": "Minnesota",
+        "Founded": "1989",
+        "G-League": "Iowa Wolves",
+        "General Manager": "Tim Connelly",
+        "Governor(s)": "Marc Lore & Alex Rodriguez",
+        "Head Coach": "Chris Finch"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Pablo Prigioni",
+          "Chris Hines",
+          "Kevin Hanson",
+          "Jeff Newton",
+          "Elston Turner",
+          "Micah Nori",
+          "Max Lefevre"
+        ],
+        "Head Coach": [
+          "Chris Finch"
+        ],
+        "Trainer": [
+          "Gregg Farnam",
+          "Erin Sierer"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612750/franchise-leaders",
+      "team_abbrev": "MIN"
+    },
+    {
+      "background": {
+        "Arena": "Smoothie King Center",
+        "City": "New Orleans",
+        "Founded": "2002",
+        "G-League": "Birmingham Squadron",
+        "General Manager": "Troy Weaver",
+        "Governor(s)": "Gayle Benson",
+        "Head Coach": "Jamahl Mosley"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Jodie Meeks"
+        ],
+        "Head Coach": [
+          "Jamahl Mosley"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612740/franchise-leaders",
+      "team_abbrev": "NOP"
+    },
+    {
+      "background": {
+        "Arena": "Madison Square Garden",
+        "City": "New York",
+        "Founded": "1946",
+        "G-League": "Westchester Knicks",
+        "General Manager": "Leon Rose",
+        "Governor(s)": "Jim Dolan",
+        "Head Coach": "Mike Brown"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Chris Jent",
+          "Brendan O'Connor",
+          "Mark Bryant",
+          "Rick Brunson",
+          "Darren Erman",
+          "TJ Saint",
+          "Riccardo Fois",
+          "Charles Allen",
+          "Maurice Cheeks"
+        ],
+        "Head Coach": [
+          "Mike Brown"
+        ],
+        "Trainer": [
+          "Roger Hinds",
+          "Anthony Goenaga"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612752/franchise-leaders",
+      "team_abbrev": "NYK"
+    },
+    {
+      "background": {
+        "Arena": "Paycom Center",
+        "City": "Oklahoma City",
+        "Founded": "1967",
+        "G-League": "Oklahoma City Blue",
+        "General Manager": "Sam Presti",
+        "Governor(s)": "Clay Bennett",
+        "Head Coach": "Mark Daigneault"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Grant Gibbs",
+          "Mike Wilks",
+          "Chip Engelland",
+          "Eric Maynor",
+          "David Akinyooye",
+          "Dave Bliss",
+          "Zoe Vernon"
+        ],
+        "Assistant Coach for Player Development": [
+          "Connor Johnson"
+        ],
+        "Head Coach": [
+          "Mark Daigneault"
+        ],
+        "Trainer": [
+          "Donnie Strack"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612760/franchise-leaders",
+      "team_abbrev": "OKC"
+    },
+    {
+      "background": {
+        "Arena": "Kia Center",
+        "City": "Orlando",
+        "Founded": "1989",
+        "G-League": "Osceola Magic",
+        "General Manager": "John Hammond",
+        "Governor(s)": "Dan DeVos",
+        "Head Coach": ""
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Joe Prunty",
+          "Dale Osbourne",
+          "Bret Brielmaier",
+          "God Shammgod",
+          "Randy Gregory",
+          "Lionel Chalmers"
+        ],
+        "Trainer": [
+          "Ernest Eugene"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612753/franchise-leaders",
+      "team_abbrev": "ORL"
+    },
+    {
+      "background": {
+        "Arena": "Xfinity Mobile Arena",
+        "City": "Philadelphia",
+        "Founded": "1949",
+        "G-League": "Delaware Blue Coats",
+        "General Manager": "Elton Brand",
+        "Governor(s)": "Joshua Harris & David Blitzer",
+        "Head Coach": "Nick Nurse"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Rico Hines",
+          "Coby Karl",
+          "MIke Longabardi",
+          "Bryan Gates",
+          "Matt Brase",
+          "Doug West"
+        ],
+        "Head Coach": [
+          "Nick Nurse"
+        ],
+        "Trainer": [
+          "Kevin Johnson"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612755/franchise-leaders",
+      "team_abbrev": "PHI"
+    },
+    {
+      "background": {
+        "Arena": "Mortgage Matchup Center",
+        "City": "Phoenix",
+        "Founded": "1968",
+        "G-League": "Valley Suns",
+        "General Manager": "Brian Gregory",
+        "Governor(s)": "Mat Ishbia",
+        "Head Coach": "Jordan Ott"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Brian Randle",
+          "Chaisson Allen",
+          "John Little",
+          "Sean Dwyer",
+          "DeMarre Carroll",
+          "Mike Muscala",
+          "Jesse Mermuys"
+        ],
+        "Head Coach": [
+          "Jordan Ott"
+        ],
+        "Trainer": [
+          "Roger Sancho"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612756/franchise-leaders",
+      "team_abbrev": "PHX"
+    },
+    {
+      "background": {
+        "Arena": "Moda Center",
+        "City": "Portland",
+        "Founded": "1970",
+        "G-League": "Rip City Remix",
+        "General Manager": "Joe Cronin",
+        "Governor(s)": "Tom Dundon",
+        "Head Coach": "Chauncey Billups"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Tiago Splitter",
+          "Nate Bjorkgren",
+          "James Posey",
+          "Pat St. Andrews",
+          "Quinton Crawford",
+          "Ronnie Burrell"
+        ],
+        "Head Coach": [
+          "Chauncey Billups"
+        ],
+        "Trainer": [
+          "Jessica Cohen",
+          "Courtney Watson",
+          "Geoff Clark"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612757/franchise-leaders",
+      "team_abbrev": "POR"
+    },
+    {
+      "background": {
+        "Arena": "Golden 1 Center",
+        "City": "Sacramento",
+        "Founded": "1948",
+        "G-League": "Stockton Kings",
+        "General Manager": "Monte McNair",
+        "Governor(s)": "Vivek Ranadive",
+        "Head Coach": "Doug Christie"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Leandro Barbosa",
+          "Bobby Jackson",
+          "Mike Miller",
+          "Chris Darnell",
+          "Dipesh Mistry"
+        ],
+        "Assistant Coach for Player Development": [
+          "Garrius Adams",
+          "Jimmy Alapag"
+        ],
+        "Associate Head Coach": [
+          "Mike Woodson"
+        ],
+        "Director of Athletic Development": [
+          "DJ Ham"
+        ],
+        "Head Coach": [
+          "Doug Christie"
+        ],
+        "Strength and Conditioning Coach": [
+          "Ernie DeLosAngeles"
+        ],
+        "Trainer": [
+          "Joel Noland"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612758/franchise-leaders",
+      "team_abbrev": "SAC"
+    },
+    {
+      "background": {
+        "Arena": "Frost Bank Center",
+        "City": "San Antonio",
+        "Founded": "1976",
+        "G-League": "Austin Spurs",
+        "General Manager": "Brian Wright",
+        "Governor(s)": "Peter Holt",
+        "Head Coach": "Mitch Johnson"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Corliss Williamson",
+          "Mike Noyes",
+          "Scott King",
+          "Matt Nielsen"
+        ],
+        "Associate Head Coach": [
+          "Sean Sweeney"
+        ],
+        "Head Coach": [
+          "Mitch Johnson"
+        ],
+        "Trainer": [
+          "Will Sevening"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612759/franchise-leaders",
+      "team_abbrev": "SAS"
+    },
+    {
+      "background": {
+        "Arena": "Scotiabank Arena",
+        "City": "Toronto",
+        "Founded": "1995",
+        "G-League": "Raptors 905",
+        "General Manager": "",
+        "Governor(s)": "Lawrence Tanenbaum",
+        "Head Coach": "Darko Rajakovic"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Pat Delany",
+          "Mike Batiste",
+          "Vin Bhavnani",
+          "Jim Sann",
+          "James Wade",
+          "Jama Mahlalela",
+          "Mery Andrade",
+          "Ivo Simovic"
+        ],
+        "Head Coach": [
+          "Darko Rajakovic"
+        ],
+        "Trainer": [
+          "Rayhan Malik"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612761/franchise-leaders",
+      "team_abbrev": "TOR"
+    },
+    {
+      "background": {
+        "Arena": "Delta Center",
+        "City": "Utah",
+        "Founded": "1974",
+        "G-League": "Salt Lake City Stars",
+        "General Manager": "Justin Zanik",
+        "Governor(s)": "Ryan Smith",
+        "Head Coach": "Will Hardy"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Chad Forcier",
+          "Scott Morrison",
+          "Sean Sheldon",
+          "Jason Terry",
+          "Chris Jones",
+          "Andrew Warren",
+          "Mike Williams",
+          "Steve Wojciechowski"
+        ],
+        "Head Coach": [
+          "Will Hardy"
+        ],
+        "Trainer": [
+          "Jamal Cort"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612762/franchise-leaders",
+      "team_abbrev": "UTA"
+    },
+    {
+      "background": {
+        "Arena": "Capital One Arena",
+        "City": "Washington",
+        "Founded": "1961",
+        "G-League": "Capital City Go-Go",
+        "General Manager": "Will Dawkins",
+        "Governor(s)": "Ted Leonsis",
+        "Head Coach": "Brian Keefe"
+      },
+      "coaching_groups": {
+        "Assistant Coach": [
+          "Alexis Ajinca",
+          "David Vanterpool",
+          "J.J. Outlaw",
+          "Adam Caporn",
+          "James Fraschilla",
+          "T.J. Sorrentine"
+        ],
+        "Head Coach": [
+          "Brian Keefe"
+        ],
+        "Trainer": [
+          "Michael Ashton"
+        ]
+      },
+      "source_url": "https://www.nba.com/team/1610612764/franchise-leaders",
+      "team_abbrev": "WAS"
+    }
+  ]
+}

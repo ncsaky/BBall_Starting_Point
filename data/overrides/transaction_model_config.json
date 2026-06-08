@@ -1,0 +1,33 @@
+{
+  "version": "transaction_ai_v1",
+  "salary_matching": {
+    "enabled": true,
+    "salary_floor": 7500000,
+    "incoming_multiplier": 1.25,
+    "incoming_plus": 7500000,
+    "minimum_roster": 12,
+    "maximum_roster": 18
+  },
+  "phase_thresholds": {
+    "contender_ceiling": 65,
+    "playoff_ceiling": 60,
+    "high_youth_pipeline": 45,
+    "old_core_age": 30.5
+  },
+  "valuation_weights": {
+    "contract_surplus": 0.42,
+    "age_curve": 0.9,
+    "development_upside": 0.75,
+    "health_risk": 0.55,
+    "role_scarcity": 0.55,
+    "playoff_value": 0.16
+  },
+  "decision": {
+    "base_acceptance_threshold": 1.5,
+    "contender_need_bonus": 5.5,
+    "rebuilder_pick_bonus": 7.0,
+    "manual_review_blocks_execution": true,
+    "max_bad_gm_overpay": 8.0
+  },
+  "notes": "Practical trade AI config. This is value/fit/legal enough for v1 and intentionally defers deep CBA mechanics."
+}

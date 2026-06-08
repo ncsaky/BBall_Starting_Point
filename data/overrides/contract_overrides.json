@@ -1,0 +1,61 @@
+{
+  "contracts": [
+    {
+      "confidence": 0.2,
+      "notes": "Manual ledger classification. User confirmed Mason Plumlee started the year on CHA. Exact 2025-26 salary, guarantee, and transaction context are not yet verified. Do not use for hard cap/trade legality.",
+      "player_name": "Mason Plumlee",
+      "seasons": [],
+      "status": "manual_research_pending",
+      "team_abbrev": "CHA"
+    },
+    {
+      "confidence": 0.25,
+      "notes": "Manual ledger classification. User confirmed Mike Conley was in MIN all year except for a deadline trade path that resulted in a buyout and re-signing in MIN. Exact 2025-26 salary, guarantee, and transaction context are intentionally unresolved until deeper contract research.",
+      "player_name": "Mike Conley",
+      "seasons": [],
+      "status": "manual_research_pending",
+      "team_abbrev": "MIN"
+    },
+    {
+      "confidence": 0.2,
+      "notes": "Manual ledger classification. User confirmed Svi Mykhailiuk on UTA. Exact 2025-26 salary, guarantee, and transaction context are not yet verified. Do not use for hard cap/trade legality.",
+      "player_name": "Svi Mykhailiuk",
+      "seasons": [],
+      "status": "manual_research_pending",
+      "team_abbrev": "UTA"
+    },
+    {
+      "confidence": 0.25,
+      "notes": "Manual ledger classification. User confirmed Bub Carrington on WAS. Exact snapshot contract terms and transaction timing are intentionally unresolved.",
+      "player_name": "Bub Carrington",
+      "seasons": [],
+      "status": "manual_research_pending",
+      "team_abbrev": "WAS"
+    },
+    {
+      "confidence": 0.25,
+      "notes": "Manual ledger classification. User confirmed Cam Whitmore on WAS. Exact snapshot contract terms and transaction timing are intentionally unresolved.",
+      "player_name": "Cam Whitmore",
+      "seasons": [],
+      "status": "manual_research_pending",
+      "team_abbrev": "WAS"
+    }
+  ],
+  "extension_eligibility": [
+    {
+      "player_name": "Stephen Curry",
+      "original_contract_years": 4,
+      "signed_season": "2022-23",
+      "confidence": 0.68,
+      "notes": "Manual startup eligibility metadata. Remaining salary rows alone understate the original multi-year veteran extension context."
+    },
+    {
+      "player_name": "Trae Young",
+      "original_contract_years": 5,
+      "signed_season": "2022-23",
+      "confidence": 0.68,
+      "notes": "Manual startup eligibility metadata for the final-two-seasons veteran extension window."
+    }
+  ],
+  "notes": "These overrides make intentional uncertainty explicit instead of leaving the players as accidental unmatched public-source failures."
+}
