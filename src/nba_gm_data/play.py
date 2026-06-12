@@ -258,7 +258,7 @@ def cut_player_from_roster(canonical: dict[str, Any], save_path: Path, team_abbr
         totals = stats.get(player["id"], {})
         health = next((state for state in save.get("health_states", []) if state.get("player_id") == player["id"]), {})
         print(
-            f"{idx:>2}. {player.get('name', ''):<24} {str(player.get('position') or '-'):<3} "
+            f"{idx:>2}. {player.get('name', ''):<24} {compact_position(player.get('position')):<3} "
             f"{age_text(player, 3)} {display_minutes_projection(player):>4.0f} "
             f"{per_game_from_totals(totals, 'points'):>4.1f} {per_game_from_totals(totals, 'rebounds'):>4.1f} "
             f"{per_game_from_totals(totals, 'assists'):>4.1f} {float(attrs.get('overall') or 0):>5.1f} "
@@ -436,7 +436,6 @@ def handle_choice(root: Path, canonical: dict[str, Any], save_path: Path, choice
     elif choice == "5":
         team = input(f"Team [{user_team}]: ").strip() or user_team
         print_dashboard(root, canonical, save_path, team, user_team=user_team, seed=seed)
-        wait()
     elif choice == "6":
         print_standings(canonical, save_path)
         wait()
@@ -507,10 +506,52 @@ def calendar_room(root: Path, canonical: dict[str, Any], save_path: Path) -> Non
 
 
 def minutes_room(canonical: dict[str, Any], save_path: Path, user_team: str) -> None:
-    save = ensure_league_save_defaults(load_save(save_path), canonical)
-    active = canonical_with_save(canonical, save)
-    team = user_team
-    player = choose_player_from_team(active, team, "Talk to your head coach: minutes recommendation", allow_back=True)
+    while True:
+        clear_screen()
+        save = ensure_league_save_defaults(load_save(save_path), canonical)
+        active = canonical_with_save(canonical, save)
+        team = resolve_team(active, user_team)
+        active_recs = [
+            rec for rec in (save.get("rotation_recommendations") or {}).values()
+            if rec.get("team_id") == team["id"] and rec.get("status") == "active"
+        ]
+        players = {player["id"]: player for player in active.get("players", [])}
+        print_title("Head Coach Conversation")
+        print("Active GM minute recommendations")
+        if active_recs:
+            for idx, rec in enumerate(sorted(active_recs, key=lambda item: players.get(item.get("player_id"), {}).get("name", "")), start=1):
+                player = players.get(rec.get("player_id"), {})
+                print(
+                    f"{idx:>2}. {str(player.get('name') or rec.get('player_id')):<24} "
+                    f"target {float(rec.get('target_minutes') or 0):>2.0f} MPG | "
+                    f"coach buy-in {float(rec.get('coach_commitment') or 0) * 100:>3.0f}%"
+                )
+        else:
+            print("  None. The coach is using the automatic rotation projection.")
+        print_rule()
+        print("1. Add or update a player recommendation")
+        print("2. Remove one recommendation")
+        print("3. Clear all recommendations")
+        print("0. Back")
+        choice = pick_number("Choice", 0, 3, default=0)
+        if choice == 0:
+            return
+        if choice == 1:
+            add_minutes_recommendation(active, save_path, save, user_team)
+        elif choice == 2:
+            remove_one_minutes_recommendation(save_path, save, active_recs, players)
+        elif choice == 3:
+            removed = 0
+            for rec in active_recs:
+                if rec.get("player_id") in save.get("rotation_recommendations", {}):
+                    del save["rotation_recommendations"][rec["player_id"]]
+                    removed += 1
+            write_save(save_path, save)
+            pause(f"Cleared {removed} recommendation(s). The coach will restore auto rotation projection.")
+
+
+def add_minutes_recommendation(active: dict[str, Any], save_path: Path, save: dict[str, Any], user_team: str) -> None:
+    player = choose_player_from_team(active, user_team, "Talk to your head coach: minutes recommendation", allow_back=True)
     if not player:
         return
     current = round(display_minutes_projection(player))
@@ -541,6 +582,25 @@ def minutes_room(canonical: dict[str, Any], save_path: Path, user_team: str) -> 
         f"Coach buy-in: {commitment * 100:.0f}% ({', '.join(buy_in['factors'][:3])}). "
         f"The rotation dashboard now shows your target and the coach-adjusted MPG."
     )
+
+
+def remove_one_minutes_recommendation(save_path: Path, save: dict[str, Any], active_recs: list[dict[str, Any]], players: dict[str, dict[str, Any]]) -> None:
+    if not active_recs:
+        pause("There are no active recommendations to remove.")
+        return
+    print_title("Remove Recommendation")
+    ordered = sorted(active_recs, key=lambda item: players.get(item.get("player_id"), {}).get("name", ""))
+    for idx, rec in enumerate(ordered, start=1):
+        player = players.get(rec.get("player_id"), {})
+        print(f"{idx:>2}. {str(player.get('name') or rec.get('player_id')):<24} {float(rec.get('target_minutes') or 0):>2.0f} MPG")
+    print(" 0. Back")
+    choice = pick_number("Recommendation", 0, len(ordered), default=0)
+    if choice == 0:
+        return
+    rec = ordered[choice - 1]
+    save.get("rotation_recommendations", {}).pop(rec.get("player_id"), None)
+    write_save(save_path, save)
+    pause("Recommendation removed. The coach will recalculate that player from the automatic projection.")
 
 
 def coach_minutes_buy_in(canonical: dict[str, Any], save: dict[str, Any], player: dict[str, Any], head: dict[str, Any], current: float, target: float) -> dict[str, Any]:
@@ -1059,9 +1119,14 @@ def choose_assets(canonical: dict[str, Any], save: dict[str, Any], team_abbrev: 
     players = sorted([p for p in canonical.get("players", []) if p.get("team_id") == team["id"]], key=display_minutes_projection, reverse=True)
     used_picks = used_draft_pick_ids(save)
     picks = sorted(
-        [p for p in canonical.get("draft_picks", []) if p.get("current_owner_team_id") == team["id"] and p.get("id") not in used_picks],
+        [
+            p for p in canonical.get("draft_picks", [])
+            if p.get("current_owner_team_id") == team["id"]
+            and p.get("id") not in used_picks
+            and p.get("status") not in {"used_draft_pick", "expired_draft_pick"}
+        ],
         key=lambda item: (str(item.get("season")), int(item.get("round") or 9), clean_pick_label_for_user(canonical, item, save)),
-    )[:36]
+    )[:80]
     assets: list[tuple[str, str, str]] = []
     season = save.get("meta", {}).get("season")
     team_games = int((save.get("team_records", {}).get(team["id"]) or {}).get("wins", 0)) + int((save.get("team_records", {}).get(team["id"]) or {}).get("losses", 0))
@@ -1073,7 +1138,7 @@ def choose_assets(canonical: dict[str, Any], save: dict[str, Any], team_abbrev: 
         salary = current_salary(contract_for_player(canonical, player["id"]))
         gp = int(totals.get("games") or 0)
         left = (
-            f"{player['name']:<24} {str(player.get('position') or '-'):<3} age {age_text(player, 2)} "
+            f"{player['name']:<24} {compact_position(player.get('position')):<3} age {age_text(player, 2)} "
             f"{height_text(player):<5} {display_minutes_projection(player):>2.0f}mpg "
             f"{per_game_from_totals(totals, 'points'):>4.1f}/{per_game_from_totals(totals, 'rebounds'):>3.1f}/{per_game_from_totals(totals, 'assists'):>3.1f} "
             f"OVR {float(attrs.get('overall') or 0):>4.1f} O {float(attrs.get('offense') or attrs.get('shooting') or 0):>4.1f} D {float(attrs.get('defense') or 0):>4.1f} "
@@ -1490,6 +1555,24 @@ def print_offseason_reports(canonical: dict[str, Any], save_path: Path, user_tea
             print(f"  {item.get('name'):<26} age {age_text(item, 4)}  {item.get('position') or '-'}")
     else:
         print("No retirement report has been generated yet.")
+    print_rule()
+    awards = sorted(
+        [item for item in save.get("league_awards", []) if item.get("season")],
+        key=lambda item: (item.get("season", ""), item.get("award", "")),
+        reverse=True,
+    )
+    if awards:
+        latest_season = awards[0].get("season")
+        print(style(f"League Awards | {latest_season}", "accent"))
+        for award in [item for item in awards if item.get("season") == latest_season]:
+            line = award.get("stat_line") or {}
+            print(
+                f"  {award.get('award'):<4} {str(award.get('player_name') or '-'):<24} "
+                f"{award.get('team_abbrev') or '-':<3}  "
+                f"{float(line.get('pts') or 0):>4.1f}p {float(line.get('reb') or 0):>4.1f}r {float(line.get('ast') or 0):>4.1f}a"
+            )
+    else:
+        print("No league awards have been generated yet.")
     print_rule()
     reviews = [
         item for item in save.get("year_reviews", [])
@@ -2143,6 +2226,11 @@ def user_pick_recommendations(canonical: dict[str, Any], save_path: Path, user_t
     try:
         recs = pick_recommendations(canonical, user_team, pick["id"], limit=6, seed=seed, unavailable_prospect_ids=unavailable)
     except ValueError as exc:
+        active = canonical_with_save(canonical, save)
+        if print_generated_pick_recommendations_from_state(active, save, team_id, unavailable, limit=6):
+            if pause_after:
+                wait()
+            return
         print(f"Recommendations unavailable for this generated pick yet: {exc}")
         if pause_after:
             wait()
@@ -2157,6 +2245,35 @@ def user_pick_recommendations(canonical: dict[str, Any], save_path: Path, user_t
         print(f"    Fit: {', '.join(clean_label(reason) for reason in decision['reasons'][:3])}")
     if pause_after:
         wait()
+
+
+def print_generated_pick_recommendations_from_state(canonical: dict[str, Any], save: dict[str, Any], team_id: str, unavailable: set[str], limit: int = 6) -> bool:
+    draft = (save.get("draft_state") or {}).get("draft") or {}
+    prospects = [
+        prospect for prospect in draft.get("draft_prospects", [])
+        if prospect.get("id") not in unavailable
+    ]
+    if not prospects:
+        return False
+    prospects.sort(
+        key=lambda item: (
+            float(item.get("current_ability") or 0) * 0.58
+            + float(item.get("potential") or 0) * 0.32
+            + float(item.get("rookie_contract_value") or 0) * 0.1,
+            -int(item.get("rank") or 999),
+        ),
+        reverse=True,
+    )
+    for idx, prospect in enumerate(prospects[:limit], start=1):
+        current = float(prospect.get("current_ability") or 0)
+        potential = float(prospect.get("potential") or 0)
+        print(
+            f"{idx:>2}. {prospect.get('name'):<24} {compact_position(prospect.get('position')):<3} "
+            f"age {prospect_age_text(prospect)} | {prospect_height(prospect)} | now {current:.0f} upside {potential:.0f} | "
+            f"{prospect_scouted_pct(canonical, prospect.get('id'), team_id, save):.0f}% scouted"
+        )
+        print(f"    Type: {clean_label(str(prospect.get('archetype') or 'prospect'))}")
+    return True
 
 
 def hydrate_prospect(canonical: dict[str, Any], prospect: dict[str, Any]) -> dict[str, Any]:
@@ -2276,10 +2393,16 @@ def initialize_free_agency_market(canonical: dict[str, Any], save_path: Path, us
             "accepted_offer_ids": [],
         }
         save["free_agency_state"] = state
-        save.setdefault("free_agent_offers", [])
+        save["free_agent_offers"] = []
     active = canonical_with_save(canonical, save)
-    report_by_id = {item.get("player_id") or item.get("id"): item for item in free_agents_report(active).get("candidates", [])}
-    for player_id in save.get("free_agent_player_ids", []):
+    missing_asks = [
+        player_id for player_id in save.get("free_agent_player_ids", [])
+        if player_id not in state.setdefault("player_asks_millions", {})
+    ]
+    report_by_id = {}
+    if missing_asks:
+        report_by_id = {item.get("player_id") or item.get("id"): item for item in free_agents_report(active).get("candidates", [])}
+    for player_id in missing_asks:
         if player_id in state.setdefault("player_asks_millions", {}):
             continue
         player = next((item for item in active.get("players", []) if item.get("id") == player_id), {})
@@ -2303,8 +2426,11 @@ def user_re_signing_window_active(canonical: dict[str, Any], save: dict[str, Any
     if state.get("re_signing_status") == "completed":
         return False
     team_id = resolve_team(canonical, user_team)["id"]
+    season = save.get("meta", {}).get("season")
     return any(
-        right.get("team_id") == team_id and right.get("status") == "exclusive_review_window"
+        right.get("team_id") == team_id
+        and right.get("status") == "exclusive_review_window"
+        and (not season or right.get("season") == season)
         for right in save.get("re_signing_rights", [])
     )
 
@@ -2317,7 +2443,9 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
         state = save.setdefault("free_agency_state", {})
         rights = [
             right for right in save.get("re_signing_rights", [])
-            if right.get("team_id") == team["id"] and right.get("status") == "exclusive_review_window"
+            if right.get("team_id") == team["id"]
+            and right.get("status") == "exclusive_review_window"
+            and right.get("season") == save.get("meta", {}).get("season")
         ]
         if not rights:
             state["re_signing_status"] = "completed"
@@ -2339,13 +2467,14 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
             stats = active_season_line(save, player["id"], player)
             ask = max(2.0, free_agency_initial_ask(player, {}))
             print(
-                f"{idx:>2}. {player.get('name', ''):<26} {player.get('position') or '-':<3} {age_text(player, 3)} "
+                f"{idx:>2}. {player.get('name', ''):<26} {compact_position(player.get('position')):<3} {age_text(player, 3)} "
                 f"{float(attrs.get('overall') or 0):>3.0f} {display_minutes_projection(player):>4.0f} {stats['ppg']:>5.1f} ${ask:>5.1f}M"
             )
         print_rule()
         print("1. Negotiate with a player")
         print("2. Advance exclusive day")
         print("3. Skip to open free agency")
+        print("5. Team dashboard")
         print("0. Save and quit" if forced else "0. Back")
         choice = input("> Pick a number: ").strip()
         if choice == "0":
@@ -2355,11 +2484,11 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
             player = candidates[selected - 1]
             market = next((item for item in free_agents_report(active, team_query=user_team).get("candidates", []) if (item.get("id") or item.get("player_id")) == player["id"]), {})
             ask = max(2.0, free_agency_initial_ask(player, market))
-            years = pick_number("Years", 1, 5, default=min(3, int(market.get("max_years") or 3)))
             try:
                 aav = float(input(f"Offer AAV in millions [{ask:.1f}]: ").strip() or ask)
             except ValueError:
                 aav = ask
+            years = pick_number("Years", 1, 5, default=min(3, int(market.get("max_years") or 3)))
             cap_check = signing_cap_check(active, save, user_team, aav, allow_tax_exceed=True)
             if not cap_check.get("ok"):
                 pause(cap_check.get("message") or "Offer blocked by hard-cap posture.")
@@ -2369,6 +2498,16 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
                 result = apply_contract_to_save(save_path, negotiation["negotiation"]["id"], date=save.get("state", {}).get("current_date"))
                 pause(f"Re-signing result: {result.get('status')}")
             else:
+                score = float((negotiation.get("decision") or {}).get("player_score") or 0.0) * 100.0
+                print_interest_read(
+                    score,
+                    {
+                        "ask": f"${float((negotiation.get('decision') or {}).get('ask_threshold_millions') or ask):.1f}M",
+                        "offer": f"${aav:.1f}M",
+                        "years": str(years),
+                        "rights": "exclusive window",
+                    },
+                )
                 pause("Player rejected the offer and may test open free agency.")
         elif choice == "2":
             if day >= day_count:
@@ -2381,6 +2520,9 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
             state["re_signing_status"] = "completed"
             write_save(save_path, save)
             return "done"
+        elif choice == "5":
+            root = save_path.parent.parent if save_path.parent.name == "saves" else Path.cwd()
+            print_dashboard(root, canonical, save_path, user_team, user_team=user_team, seed=seed)
 
 
 def print_free_agency_status(canonical: dict[str, Any], save: dict[str, Any], user_team: str) -> None:
@@ -2619,6 +2761,7 @@ def build_free_agency_offer_record(
     offer_id = stable_id("fa_offer", save.get("free_agency_state", {}).get("season"), day, source, team["id"], player["id"], years, round(aav_millions * 10))
     return {
         "id": offer_id,
+        "season": save.get("free_agency_state", {}).get("season"),
         "day": day,
         "source": source,
         "player_id": player["id"],
@@ -2656,7 +2799,7 @@ def free_agency_player_market(canonical: dict[str, Any], save_path: Path, user_t
                     f"${float(best.get('aav_millions') or 0):.1f}M {interest_bar(best.get('interest_score'), width=10)}"
                 )
             print(
-                f"{idx:>2}. {player.get('name', ''):<26} {player.get('position') or '-':<3} {age_text(player, 3)} "
+                f"{idx:>2}. {player.get('name', ''):<26} {compact_position(player.get('position')):<3} {age_text(player, 3)} "
                 f"{float(attrs.get('overall') or 0):>3.0f} {stats['ppg']:>5.1f} ${ask:>5.1f}M  {best_text}"
             )
         print(" 0. Back")
@@ -2675,7 +2818,13 @@ def free_agency_board_players(canonical: dict[str, Any], save: dict[str, Any]) -
 
 
 def active_offers_for_player(save: dict[str, Any], player_id: str) -> list[dict[str, Any]]:
-    return [offer for offer in save.get("free_agent_offers", []) if offer.get("player_id") == player_id and offer.get("status") == "active"]
+    season = (save.get("free_agency_state") or {}).get("season")
+    return [
+        offer for offer in save.get("free_agent_offers", [])
+        if offer.get("player_id") == player_id
+        and offer.get("status") == "active"
+        and (not season or not offer.get("season") or offer.get("season") == season)
+    ]
 
 
 def user_active_bid_commitment(save: dict[str, Any], team_id: str | None, exclude_player_id: str | None = None) -> float:
@@ -2714,12 +2863,13 @@ def inspect_free_agent_and_maybe_offer(canonical: dict[str, Any], save_path: Pat
     if pick_number("Action", 0, 1, default=0) == 0:
         return
     ask = float((state.get("player_asks_millions") or {}).get(player["id"]) or free_agency_initial_ask(player, market))
-    years = pick_number("Years", 1, 4, default=min(3, int(market.get("max_years") or 3)))
     suggested = round(max(1.8, ask), 1)
+    print(f"Type {league_minimum_aav_millions():.1f} for a league-minimum offer.")
     try:
         aav = float(input(f"Offer AAV in millions [{suggested:.1f}]: ").strip() or suggested)
     except ValueError:
         aav = suggested
+    years = pick_number("Years", 1, 4, default=min(3, int(market.get("max_years") or 3)))
     reserved = user_active_bid_commitment(save, team["id"], exclude_player_id=player["id"])
     cap_check = signing_cap_check(active, save, user_team, aav, reserved_millions=reserved)
     if not cap_check.get("ok"):
@@ -2895,7 +3045,8 @@ def apply_free_agency_offer(canonical: dict[str, Any], save_path: Path, offer_id
     teams = {team["id"]: team for team in active.get("teams", [])}
     player = players.get(offer.get("player_id"), {"id": offer.get("player_id"), "name": offer.get("player_id")})
     team = teams.get(offer.get("team_id"), {"id": offer.get("team_id"), "abbrev": team_id_to_abbrev(offer.get("team_id"))})
-    cap = signing_cap_check(active, save, team.get("abbrev"), float(offer.get("aav_millions") or 0))
+    reserved = user_active_bid_commitment(save, team.get("id"), exclude_player_id=offer.get("player_id")) if offer.get("source") == "user" else 0.0
+    cap = signing_cap_check(active, save, team.get("abbrev"), float(offer.get("aav_millions") or 0), reserved_millions=reserved)
     if not cap.get("ok"):
         offer["status"] = "withdrawn_cap_blocked"
         write_save(save_path, save)
@@ -2911,6 +3062,7 @@ def apply_free_agency_offer(canonical: dict[str, Any], save_path: Path, offer_id
 
 def negotiation_from_free_agency_offer(save: dict[str, Any], offer: dict[str, Any], player: dict[str, Any], team: dict[str, Any], seed: int) -> dict[str, Any]:
     annual = float(offer.get("aav_millions") or 0.0) * 1_000_000
+    start_season = contract_start_season_for_signing(save)
     negotiation_id = stable_id("contract_negotiation", "fa_day", offer.get("id"), seed)
     contract_offer = {
         "id": stable_id("contract_offer", negotiation_id, offer.get("id")),
@@ -2920,6 +3072,7 @@ def negotiation_from_free_agency_offer(save: dict[str, Any], offer: dict[str, An
         "offer_type": "free_agent_signing",
         "round": int(offer.get("day") or 1),
         "years": int(offer.get("years") or 1),
+        "start_season": start_season,
         "annual_salary": annual,
         "total_salary": annual * int(offer.get("years") or 1),
         "role_promise": "market_role",
@@ -3088,7 +3241,7 @@ def current_free_agents_room(canonical: dict[str, Any], save_path: Path, user_te
             stats = active_season_line(save, player["id"], player)
             ask = max(1.8, display_minutes_projection(player) * 0.45)
             print(
-                f"{idx:>2}. {player.get('name', ''):<26} {player.get('position') or '-':<3} {age_text(player, 3)} "
+                f"{idx:>2}. {player.get('name', ''):<26} {compact_position(player.get('position')):<3} {age_text(player, 3)} "
                 f"{float(attrs.get('overall') or 0):>3.0f} {display_minutes_projection(player):>4.0f} "
                 f"{stats['ppg']:>5.1f} {stats['rpg']:>4.1f} {stats['apg']:>4.1f} ${ask:>4.1f}M"
             )
@@ -3302,7 +3455,7 @@ def print_free_agent_investigation(active: dict[str, Any], save: dict[str, Any],
     injury_risk = float(health.get("durability_risk") or health.get("injury_prone_score") or health.get("risk_score") or 0.0)
     projected_aav = round(max(2.0, float(market.get("projected_aav_millions") or 0.0) or display_minutes_projection(player) * 0.45), 1)
     print_title(f"Free-Agent Investigation | {player.get('name')}")
-    print(f"{player.get('position') or '-'} | age {age_text(player, 2)} | {height_text(player)} | {display_minutes_projection(player):.0f} projected MPG")
+    print(f"{compact_position(player.get('position'))} | age {age_text(player, 2)} | {height_text(player)} | {display_minutes_projection(player):.0f} projected MPG")
     print(f"Recent line: {stats['ppg']:.1f} PPG, {stats['rpg']:.1f} RPG, {stats['apg']:.1f} APG")
     print(f"Ask range: around ${projected_aav:.1f}M AAV | Fit with {user_team}: {float(market.get('team_fit_score') or 0):.1f}/100")
     print(f"Injury/durability flag: {injury_risk_text(injury_risk)}")
@@ -3372,7 +3525,7 @@ def print_save_free_agents(
     for idx, (_, player, attrs, stats, ask, snapshot) in enumerate(rows[:50], start=1):
         players.append(player)
         print(
-            f"{idx:>2}. {player.get('name', ''):<26} {player.get('position') or '-':<4} "
+            f"{idx:>2}. {player.get('name', ''):<26} {compact_position(player.get('position')):<4} "
             f"{float(attrs.get('overall') or 0):>4.0f} "
             f"{stats['ppg']:>5.1f} {stats['rpg']:>4.1f} {stats['apg']:>4.1f} ${ask:>5.1f}M  {snapshot}"
         )
@@ -3397,9 +3550,18 @@ def print_free_agency_recap(canonical: dict[str, Any], save_path: Path) -> None:
     save = load_save(save_path)
     teams = {team["id"]: team for team in canonical.get("teams", [])}
     players = {player["id"]: player for player in canonical_with_save(canonical, save).get("players", [])}
+    season = str((save.get("free_agency_state") or {}).get("season") or save.get("meta", {}).get("season") or "2025-26")
+    start_year = int(season.split("-")[0]) + 1
+    offseason_start = f"{start_year}-06-01"
+    offseason_end = f"{start_year}-10-01"
+    target_start_season = f"{start_year}-{str(start_year + 1)[-2:]}"
     logs = [
         log for log in save.get("transaction_logs", [])
         if log.get("transaction_type") in {"free_agent_signing", "free_agency", "contract"}
+        and (
+            offseason_start <= str(log.get("date") or "") <= offseason_end
+            or ((log.get("assets") or {}).get("contract") or {}).get("start_season") == target_start_season
+        )
     ]
     print_title("Free Agency Recap")
     if not logs:
@@ -3418,6 +3580,7 @@ def print_free_agency_recap(canonical: dict[str, Any], save_path: Path) -> None:
 
 def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player: dict[str, Any], team_abbrev: str, years: int, aav_millions: float, seed: int) -> dict[str, Any]:
     team = resolve_team(canonical, team_abbrev)
+    save_for_start = load_save(save_path)
     annual = float(aav_millions) * 1_000_000
     ask_threshold = max(1.9, display_minutes_projection(player) * 0.45)
     accepted = aav_millions >= ask_threshold
@@ -3430,6 +3593,7 @@ def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player:
         "offer_type": "free_agent_signing",
         "round": 1,
         "years": years,
+        "start_season": contract_start_season_for_signing(save_for_start),
         "annual_salary": annual,
         "total_salary": annual * years,
         "role_promise": "rotation_compete",
@@ -3459,7 +3623,7 @@ def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player:
             "player_id": player["id"],
             "player_name": player.get("name"),
             "team_id": team["id"],
-            "date": load_save(save_path).get("state", {}).get("current_date"),
+            "date": save_for_start.get("state", {}).get("current_date"),
             "seed": seed,
             "rounds": 1,
             "player_ask": {"ask_threshold_millions": round(ask_threshold, 2)},
@@ -3491,12 +3655,18 @@ def signing_cap_check(
     cap = team_cap_summary(active, save, team["id"])
     hard_space = float(cap.get("hard_cap_space_millions") or 0.0) - float(reserved_millions or 0.0)
     tax_space = float(cap.get("tax_space_millions") or 0.0) - float(reserved_millions or 0.0)
+    minimum = league_minimum_aav_millions()
+    if aav_millions <= minimum + 0.05:
+        warning = ""
+        if tax_space < aav_millions:
+            warning = f" League-minimum exception used; tax room before offer is ${tax_space:.1f}M."
+        return {"ok": True, "message": warning}
     if aav_millions > hard_space and hard_space < 8.0:
         return {
             "ok": False,
             "message": (
                 f"Signing blocked: {team['abbrev']} has about ${hard_space:.1f}M under the hard cap "
-                f"after active bids and this offer is ${aav_millions:.1f}M AAV. Clear salary or offer a smaller deal."
+                f"after active bids and this offer is ${aav_millions:.1f}M AAV. Clear salary or type {minimum:.1f} for the league minimum."
             ),
         }
     if not allow_tax_exceed and aav_millions > tax_space:
@@ -3504,13 +3674,26 @@ def signing_cap_check(
             "ok": False,
             "message": (
                 f"Signing blocked: {team['abbrev']} has about ${tax_space:.1f}M below the tax after active bids, "
-                f"and outside free-agent offers cannot exceed that room in this v1 ruleset."
+                f"and outside free-agent offers cannot exceed that room in this v1 ruleset. Type {minimum:.1f} for the league minimum."
             ),
         }
     warning = ""
     if aav_millions > tax_space:
         warning = f" This would move the team deeper into tax territory ({tax_space:+.1f}M tax room before offer)."
     return {"ok": True, "message": warning}
+
+
+def league_minimum_aav_millions() -> float:
+    return 1.9
+
+
+def contract_start_season_for_signing(save: dict[str, Any]) -> str:
+    season = str(save.get("meta", {}).get("season") or "2025-26")
+    phase = str(save.get("state", {}).get("phase") or "")
+    start = int(season.split("-")[0])
+    if phase in {"draft_lottery", "draft", "free_agency"}:
+        start += 1
+    return f"{start}-{str(start + 1)[-2:]}"
 
 
 def press_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int, event: dict[str, Any] | None = None) -> None:
@@ -3771,7 +3954,10 @@ def contextual_press_answers(topic: str, abbrev: str, player_name: str, rng: ran
             {"tone": "deflect", "line": "The medical details stay with the medical group. Public timelines can do more harm than good."},
             {"tone": "deflect", "line": "I am not naming a replacement from the podium. Practice, film, and the games will tell us who deserves the trust."},
         ]
-    elif any(word in context for word in ["role", "minutes", "squeezed", "rotation", "bench", "starting"]):
+    elif (
+        any(word in context for word in ["role", "minutes", "squeezed", "rotation", "bench", "starting"])
+        and not any(word in context for word in ["cap", "staff", "trade", "signing", "extension", "asset", "flexibility"])
+    ):
         answers = [
             {"tone": "accountable", "line": "If a role changes, we owe that player honesty before we owe the timeline a quote. The minutes have to match what helps us win."},
             {"tone": "accountable", "line": f"{player_name} deserves clarity, not public guessing. We will tell him exactly what the standard is and why."},
@@ -3912,7 +4098,7 @@ def print_dashboard_overview(canonical: dict[str, Any], save_path: Path, payload
         rec = player.get("minutes_recommendation")
         coach = f" | GM {float(rec.get('target_minutes') or 0):.0f} -> coach {float(player.get('minutes_projection') or 0):.0f}" if rec else ""
         print(
-            f"{idx:>2}. {player['name']:<24} {str(player.get('position') or ''):<3} {age_text(player, 3)} {player.get('gp_display', '0/0'):>5} "
+            f"{idx:>2}. {player['name']:<24} {compact_position(player.get('position')):<3} {age_text(player, 3)} {player.get('gp_display', '0/0'):>5} "
             f"{float(player.get('minutes_projection') or 0):>4.0f} {float(player.get('points_per_game') or 0):>5.1f} "
             f"{float(player.get('rebounds_per_game') or 0):>5.1f} {float(player.get('assists_per_game') or 0):>5.1f}  {injury}{coach}"
         )
@@ -4145,7 +4331,7 @@ def print_development_delta_matrix(title: str, rows: list[dict[str, Any]], playe
 def delta_cell(value: float, width: int = 5) -> str:
     if abs(value) < 0.005:
         return style(".".rjust(width), "muted")
-    return style(f"{value:+{width}.1f}", "good" if value > 0 else "danger")
+    return style(f"{value:+{width}.2f}", "good" if value > 0 else "danger")
 
 
 def print_dashboard_staff(payload: dict[str, Any]) -> None:
@@ -4183,9 +4369,23 @@ def pct_text(value: Any) -> str:
 def salary_summary(table: dict[str, Any], season: str | None) -> str:
     if not table:
         return "--"
+    active_start = season_start_for_label(season)
+    future_keys = [
+        key for key in sorted(table)
+        if active_start is None or season_start_for_label(key) is None or season_start_for_label(key) >= active_start
+    ]
     keys = [season] if season and season in table else []
-    keys.extend([key for key in sorted(table) if key not in keys][:2])
+    keys.extend([key for key in future_keys if key not in keys][:2])
+    if not keys:
+        return "--"
     return " / ".join(f"{key[-5:]} ${float(table[key] or 0):.1f}M" for key in keys[:3])
+
+
+def season_start_for_label(season: str | None) -> int | None:
+    try:
+        return int(str(season).split("-")[0])
+    except (TypeError, ValueError):
+        return None
 
 
 def print_standings(canonical: dict[str, Any], save_path: Path) -> None:
@@ -4390,7 +4590,7 @@ def print_trade_offer_details(canonical: dict[str, Any], candidate: dict[str, An
             totals = season_stats.get(asset.get("id"), {})
             contract_years = salary_summary(player_salary_table(canonical, asset.get("id")), season)
             print(
-                f"  {player.get('name', asset.get('label')):<23} age {age_text(player, 2)} {str(player.get('position') or '-'):>3} "
+                f"  {player.get('name', asset.get('label')):<23} age {age_text(player, 2)} {compact_position(player.get('position')):>3} "
                 f"MPG {display_minutes_projection(player):>2.0f} | "
                 f"{per_game_from_totals(totals, 'points'):>4.1f} PPG {per_game_from_totals(totals, 'rebounds'):>4.1f} RPG {per_game_from_totals(totals, 'assists'):>4.1f} APG | "
                 f"OVR {float(attrs.get('overall') or 0):>4.0f} SH {float(attrs.get('shooting') or 0):>4.0f} CR {float(attrs.get('creation') or 0):>4.0f} "
@@ -4800,7 +5000,7 @@ def choose_player_from_team(canonical: dict[str, Any], team_abbrev: str, prompt:
     players = sorted([p for p in canonical.get("players", []) if p.get("team_id") == team["id"]], key=display_minutes_projection, reverse=True)
     print_title(prompt)
     for idx, player in enumerate(players[:18], start=1):
-        print(f"{idx:>2}. {player['name']:<26} {player.get('position') or '-':<3} {display_minutes_projection(player):>2.0f} mpg")
+        print(f"{idx:>2}. {player['name']:<26} {compact_position(player.get('position')):<3} {display_minutes_projection(player):>2.0f} mpg")
     if allow_back:
         print(" 0. Back")
     choice = pick_number("Player", 0 if allow_back else 1, min(18, len(players)), default=0 if allow_back else 1)
@@ -4825,7 +5025,7 @@ def choose_trade_player_from_team(canonical: dict[str, Any], save: dict[str, Any
         status = trade_health_text(health.get(player["id"], {}))
         attrs = player_attribute_summary(canonical, player["id"])
         print(
-            f"{idx:>2}. {player['name']:<24} {str(player.get('position') or '-'):<3} "
+            f"{idx:>2}. {player['name']:<24} {compact_position(player.get('position')):<3} "
             f"{age_text(player, 3)} {height_text(player):<5} {display_minutes_projection(player):>4.0f} "
             f"{per_game_from_totals(totals, 'points'):>4.1f} {per_game_from_totals(totals, 'rebounds'):>4.1f} "
             f"{per_game_from_totals(totals, 'assists'):>4.1f} {float(attrs.get('overall') or 0):>5.1f} "
@@ -4847,6 +5047,16 @@ def height_text(player: dict[str, Any]) -> str:
         value = int(round(float(inches)))
         return f"{value // 12}'{value % 12}\""
     return str(player.get("height") or "--")
+
+
+def compact_position(position: Any) -> str:
+    text = str(position or "-").upper().replace("POSITION_", "")
+    for separator in ["/", ",", "-", " "]:
+        if separator in text:
+            text = text.split(separator)[0]
+            break
+    text = text.strip()
+    return text if text in {"PG", "SG", "SF", "PF", "C"} else text[:3] or "-"
 
 
 def age_text(player: dict[str, Any], width: int = 3) -> str:

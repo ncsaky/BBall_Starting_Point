@@ -987,13 +987,26 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
                 **shooting_line(points, feat, item["minutes"], rng),
                 "rim_attempts": max(0, int(round(item["minutes"] * feat["rim_pressure"] / 1150 + rng.random()))),
                 "rebounds": max(0, int(round(item["minutes"] * (0.105 + feat["offensive_rebounding"] / 500 + feat["rim_deterrence"] / 1800 + max(0.0, feat["rim_deterrence"] - 92) * 0.0018) + rng.gauss(0.45, 1.35)))),
-                "assists": max(0, int(round(item["minutes"] * (0.046 + feat["passing"] / 660 + feat["usage"] / 2450 + max(0.0, feat["passing"] - 78) * 0.0021) + rng.gauss(0.35, 1.05)))),
+                "assists": max(0, int(round(item["minutes"] * assist_rate_from_features(feat) + rng.gauss(0.2, 1.12)))),
                 "turnovers": max(0, int(round(item["minutes"] * (0.015 + feat["usage"] / 2200) + rng.random() * 0.6))),
                 "steals": max(0, int(round(item["minutes"] * feat["defensive_events"] / 2100 + rng.random() * 0.55))),
                 "blocks": max(0, int(round(item["minutes"] * (feat["rim_deterrence"] / 2200 + max(0.0, feat["rim_deterrence"] - 88) * 0.0034) + rng.random() * 0.95))),
             }
         )
     return lines
+
+
+def assist_rate_from_features(feat: dict[str, float]) -> float:
+    passing = float(feat.get("passing") or 50.0)
+    usage = float(feat.get("usage") or feat.get("scoring_usage") or 50.0)
+    creation = float(feat.get("shot_creation") or usage)
+    rate = 0.026 + passing / 900.0 + usage / 3300.0
+    rate += max(0.0, passing - 74.0) * 0.0032
+    rate += max(0.0, passing - 88.0) * 0.0042
+    rate += max(0.0, creation - 80.0) * 0.0012
+    if passing < 58 and usage < 62:
+        rate -= 0.012
+    return clamp(rate, 0.035, 0.31)
 
 
 def shooting_line(points: int, feat: dict[str, float], minutes: float, rng: random.Random) -> dict[str, int]:

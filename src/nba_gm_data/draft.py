@@ -296,8 +296,13 @@ def generate_draft_class_records(year: str, seed: int = 1, config: dict[str, Any
         volatility = clamp(12 + rng.random() * 17 + max(0, 20 - age) * 1.3, 5, 36)
         name = generated_prospect_name(rng, rank)
         normalized_generated_name = normalize_name(name)
+        reroll_count = 0
+        while normalized_generated_name in seen_names and reroll_count < 24:
+            name = generated_prospect_name(random.Random(f"{year}:{seed}:{rank}:{reroll_count}:name_retry"), rank)
+            normalized_generated_name = normalize_name(name)
+            reroll_count += 1
         if normalized_generated_name in seen_names:
-            name = f"{name} {rank}"
+            name = generated_unique_fallback_name(rank, seen_names)
             normalized_generated_name = normalize_name(name)
         seen_names.add(normalized_generated_name)
         prospect = DraftProspect(
@@ -789,6 +794,11 @@ def simulate_generated_draft(canonical: dict[str, Any], year: str, seed: int, co
     order_payload = generate_draft_order(canonical, year, seed=seed, config=config)
     available = {prospect["id"] for prospect in prospects}
     prospects_by_id = {prospect["id"]: prospect for prospect in prospects}
+    team_board_cache = {
+        team["id"]: rank_generated_prospects_for_team(canonical, team["id"], prospects)
+        for team in canonical.get("teams", [])
+    }
+    bpa_order = sorted(prospects, key=generated_bpa_grade, reverse=True)
     selections: list[DraftSelection] = []
     decisions: list[DraftPickDecision] = []
     for pick in order_payload["draft_order"]:
@@ -796,9 +806,9 @@ def simulate_generated_draft(canonical: dict[str, Any], year: str, seed: int, co
         candidates = [prospects_by_id[prospect_id] for prospect_id in available]
         if not candidates:
             break
-        ranked = rank_generated_prospects_for_team(canonical, team["id"], candidates)
+        ranked = [prospect for prospect in team_board_cache.get(team["id"], bpa_order) if prospect["id"] in available]
         chosen = choose_generated_with_draft_chaos(ranked, int(pick["overall_pick"]), team["id"], seed)
-        bpa = max(candidates, key=generated_bpa_grade)
+        bpa = next((prospect for prospect in bpa_order if prospect["id"] in available), candidates[0])
         decision = DraftPickDecision(
             id=stable_id("draft_pick_decision", pick["id"], team["id"], chosen["id"], seed),
             pick_id=pick["id"],
@@ -930,19 +940,19 @@ def prospect_priority_tier(prospect: dict[str, Any]) -> int:
 
 def choose_generated_with_draft_chaos(ranked: list[dict[str, Any]], overall_pick: int, team_id: str, seed: int) -> dict[str, Any]:
     top_grade = generated_bpa_grade(ranked[0]) if ranked else 0.0
-    tier_gap = 4.0 if overall_pick <= 5 else 5.5 if overall_pick <= 20 else 7.0
-    window = 4 if overall_pick <= 5 else 7 if overall_pick <= 20 else 11
+    tier_gap = 4.8 if overall_pick <= 5 else 6.4 if overall_pick <= 20 else 8.2
+    window = 5 if overall_pick <= 5 else 9 if overall_pick <= 20 else 14
     pool = [
         prospect for prospect in ranked[: min(window, len(ranked))]
         if top_grade - generated_bpa_grade(prospect) <= tier_gap
     ] or ranked[: min(3, len(ranked))]
     rng = random.Random(f"{seed}:{team_id}:{overall_pick}:generated_draft_chaos")
     second_gap = top_grade - generated_bpa_grade(pool[1]) if len(pool) > 1 else 99.0
-    if overall_pick <= 3 and second_gap >= 3.0 and rng.random() < 0.80:
+    if overall_pick <= 3 and second_gap >= 3.8 and rng.random() < 0.72:
         return pool[0]
     weights = [
         max(0.12, 1.0 - max(0.0, top_grade - generated_bpa_grade(prospect)) / max(tier_gap + 1.0, 1.0))
-        / max(1.0, idx + 1) ** 0.42
+        / max(1.0, idx + 1) ** 0.31
         for idx, prospect in enumerate(pool)
     ]
     return weighted_choice(pool, weights, rng)
@@ -1094,20 +1104,34 @@ def rookie_player_record(onboarding: dict[str, Any], prospect: dict[str, Any], t
         "slug": stable_id("", onboarding.get("name")).strip("_"),
         "team_id": team.get("id"),
         "team_abbrev": team.get("abbrev"),
-        "position": prospect.get("position"),
+        "position": primary_position_label(prospect.get("position")),
+        "position_detail": prospect.get("position"),
         "age": prospect.get("age") or 20.0,
+        "age_base_season": f"{onboarding.get('draft_year')}-{str(int(onboarding.get('draft_year') or 2026) + 1)[-2:]}",
+        "age_base_start_year": int(onboarding.get("draft_year") or 2026),
         "height_inches": prospect.get("height_inches"),
         "weight_lbs": prospect.get("weight_lbs"),
         "minutes_projection": round(minutes, 1),
         "rotation_priority": priority,
         "primary_off_role": prospect.get("archetype"),
         "primary_def_role": "Rookie",
+        "source_kind": "generated_rookie",
         "source_ids": ["src_draft_model_config_v1"],
         "missing_critical_fields": [],
         "critical_field_fallbacks": {},
         "rookie_contract_id": contract.id,
         "draft_pick": overall,
     }
+
+
+def primary_position_label(position: Any) -> str:
+    text = str(position or "").upper().replace("POSITION_", "")
+    for separator in ["/", ",", "-", " "]:
+        if separator in text:
+            text = text.split(separator)[0]
+            break
+    text = text.strip()
+    return text if text in {"PG", "SG", "SF", "PF", "C"} else str(position or "G")[:2].upper()
 
 
 def draft_traits_for_prospect(save: dict[str, Any], prospect_id: str | None) -> list[dict[str, Any]]:
@@ -1455,9 +1479,35 @@ def position_for_archetype(archetype: str) -> str:
 
 
 def generated_prospect_name(rng: random.Random, rank: int) -> str:
-    first = ["Malik", "Jalen", "Cameron", "Darius", "Noah", "Elijah", "Isaiah", "Milan", "Andre", "Kobe", "Tariq", "Nolan", "Mateo", "Jonas", "Kellan"]
-    last = ["Reed", "Brooks", "Carter", "Holland", "Bennett", "Okafor", "Murray", "Silva", "Hayes", "Ndiaye", "Wallace", "Porter", "Daniels", "Ilic", "Freeman"]
-    return f"{rng.choice(first)} {rng.choice(last)} {rank}" if rank > 40 else f"{rng.choice(first)} {rng.choice(last)}"
+    first = [
+        "Malik", "Jalen", "Cameron", "Darius", "Noah", "Elijah", "Isaiah", "Milan", "Andre", "Kobe",
+        "Tariq", "Nolan", "Mateo", "Jonas", "Kellan", "Amari", "Dante", "Emil", "Tobias", "Micah",
+        "Quentin", "Luca", "Rafael", "Jabari", "Devin", "Kyrie", "Oscar", "Elias", "Myles", "Zaire",
+        "Brandon", "Simeon", "Julian", "Kai", "Terrell", "Xavier", "Omar", "Adrian", "Makai", "Tomas",
+    ]
+    last = [
+        "Reed", "Brooks", "Carter", "Holland", "Bennett", "Okafor", "Murray", "Silva", "Hayes", "Ndiaye",
+        "Wallace", "Porter", "Daniels", "Ilic", "Freeman", "Vargas", "Bishop", "Mathis", "Gaines", "Lawson",
+        "Cross", "Santos", "Balde", "Moreau", "Hawkins", "Whitaker", "Morrison", "Diallo", "Petrovic", "Sato",
+        "Ellis", "Kowalski", "Mensah", "Harrison", "Navarro", "Griffin", "Stone", "Camara", "Blackwell", "Rhodes",
+        "Mendez", "Laurent", "Robinson", "Foster", "Klein", "Turner", "Boateng", "Hart", "Walters", "Sullivan",
+        "Kimani", "Montgomery", "Hughes", "Bamba", "Carlson", "Rojas", "Ibrahim", "Vaughn", "Parker", "Bates",
+        "Grant", "Okoro", "Hendrix", "Adebayo", "Baker", "Lang", "Shepard", "Morales", "Washington", "Keita",
+    ]
+    return f"{rng.choice(first)} {rng.choice(last)}"
+
+
+def generated_unique_fallback_name(rank: int, seen_names: set[str]) -> str:
+    first = ["Ari", "Blaise", "Cade", "Dorian", "Ezra", "Finn", "Gabe", "Hugo", "Ivan", "Jude"]
+    last = [
+        "Ashford", "Beasley", "Caldwell", "Drake", "Easton", "Fleming", "Gibson", "Hampton", "Irving", "Jennings",
+        "King", "Larsen", "Mercer", "Nolan", "Osborne", "Preston", "Quinn", "Ramsey", "Sanders", "Tucker",
+    ]
+    for offset in range(len(first) * len(last)):
+        name = f"{first[(rank + offset) % len(first)]} {last[(rank * 3 + offset) % len(last)]}"
+        if normalize_name(name) not in seen_names:
+            return name
+    return f"{first[rank % len(first)]} {last[rank % len(last)]}"
 
 
 def generated_source_team(rng: random.Random) -> str:

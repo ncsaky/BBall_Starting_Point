@@ -25,16 +25,21 @@ PLAYER_HEALTH_OVERRIDES_FILE = Path("data/overrides/player_health_overrides.json
 INJURY_MODEL_CONFIG_FILE = Path("data/overrides/injury_model_config.json")
 PHYSICAL_TRAITS = {"foot_speed_lateral_agility", "stamina_cardio", "rim_pressure", "defensive_effort", "portability"}
 DEVELOPMENT_TRAITS = [
+    "release_speed",
     "shooting_range",
     "shot_versatility",
     "handle_pressure",
     "rim_pressure",
     "passing_reads",
+    "offensive_rebounding",
     "defensive_effort",
     "foot_speed_lateral_agility",
+    "screen_navigation",
+    "rim_deterrence",
     "stamina_cardio",
     "scheme_iq",
     "portability",
+    "playoff_translation",
 ]
 
 
@@ -349,9 +354,10 @@ def advance_development(canonical: dict[str, Any] | Any, month: str, seed: int =
         state = states.get(player["id"], {})
         health_drag = development_health_drag(state)
         deltas: dict[str, float] = {}
+        focus = development_trait_focus(player, staff, traits.get(player["id"], {}), seed, month)
         for trait_key in DEVELOPMENT_TRAITS:
             current = float(traits.get(player["id"], {}).get(trait_key, {}).get("value", 50.0))
-            delta = monthly_trait_delta(player, trait_key, current, age, minutes, staff, health_drag, seed, month)
+            delta = monthly_trait_delta(player, trait_key, current, age, minutes, staff, health_drag, seed, month, float(focus.get(trait_key, 0.32)))
             if abs(delta) >= 0.015:
                 deltas[trait_key] = round(delta, 3)
         if deltas:
@@ -642,6 +648,7 @@ def monthly_trait_delta(
     health_drag: float,
     seed: int,
     month: str,
+    focus_multiplier: float = 1.0,
 ) -> float:
     age = 27.0 if age is None else age
     rng = random.Random(f"{seed}:{month}:{player['id']}:{trait_key}:development")
@@ -652,14 +659,73 @@ def monthly_trait_delta(
     if player.get("rotation_priority") == "fringe":
         role_factor *= 0.72
     cap_room = clamp((92.0 - current) / 42.0, 0.08, 1.0)
-    growth = 0.08 * age_factor * role_factor * cap_room * float(staff.get("development_multiplier", 1.0)) * float(staff.get("patience_multiplier", 1.0))
+    focus_multiplier = clamp(focus_multiplier, 0.12, 1.45)
+    growth = 0.08 * age_factor * role_factor * cap_room * float(staff.get("development_multiplier", 1.0)) * float(staff.get("patience_multiplier", 1.0)) * focus_multiplier
     growth -= health_drag * (0.04 if trait_key in PHYSICAL_TRAITS else 0.022)
     if age >= 33 and trait_key in PHYSICAL_TRAITS:
         growth -= min(0.08, (age - 32.0) * 0.012)
     if age >= 35 and trait_key not in {"scheme_iq", "passing_reads"}:
         growth -= 0.012
-    noise = rng.gauss(0, 0.022)
+    noise = rng.gauss(0, 0.012 + 0.012 * focus_multiplier)
     return clamp(growth + noise, -0.12, 0.24)
+
+
+def development_trait_focus(player: dict[str, Any], staff: dict[str, Any], player_traits: dict[str, Any], seed: int, month: str) -> dict[str, float]:
+    position = str(player.get("position") or "").upper()
+    archetype = str(player.get("primary_off_role") or player.get("archetype") or "").lower()
+    age = maybe_float(player.get("age")) or 27.0
+    minutes = maybe_float(player.get("minutes_projection")) or 0.0
+    weights = {trait: 0.22 for trait in DEVELOPMENT_TRAITS}
+    if "PG" in position or "guard" in archetype or "creator" in archetype:
+        for trait in ["handle_pressure", "passing_reads", "release_speed", "shot_versatility"]:
+            weights[trait] += 0.42
+    if "SG" in position or "shooter" in archetype or "wing" in archetype:
+        for trait in ["release_speed", "shooting_range", "shot_versatility", "foot_speed_lateral_agility"]:
+            weights[trait] += 0.34
+    if "SF" in position or "PF" in position or "forward" in archetype:
+        for trait in ["defensive_effort", "foot_speed_lateral_agility", "portability", "rim_pressure"]:
+            weights[trait] += 0.3
+    if "C" in position or "big" in archetype:
+        for trait in ["rim_deterrence", "offensive_rebounding", "screen_navigation", "scheme_iq"]:
+            weights[trait] += 0.38
+    if age <= 23:
+        for trait in ["handle_pressure", "shot_versatility", "foot_speed_lateral_agility", "stamina_cardio", "scheme_iq"]:
+            weights[trait] += 0.22
+    elif age >= 31:
+        for trait in ["scheme_iq", "passing_reads", "portability", "playoff_translation"]:
+            weights[trait] += 0.26
+        for trait in PHYSICAL_TRAITS:
+            weights[trait] *= 0.72
+    if minutes >= 26:
+        for trait in ["stamina_cardio", "scheme_iq", "playoff_translation"]:
+            weights[trait] += 0.18
+    if float(staff.get("skill_development") or 60.0) >= 68:
+        for trait in ["shooting_range", "shot_versatility", "handle_pressure", "rim_pressure"]:
+            weights[trait] += 0.1
+    if float(staff.get("feedback_clarity") or 60.0) >= 68:
+        for trait in ["scheme_iq", "screen_navigation", "passing_reads", "portability"]:
+            weights[trait] += 0.12
+    rng = random.Random(f"{seed}:{month}:{player.get('id')}:development_focus")
+    chosen = set()
+    pool = list(DEVELOPMENT_TRAITS)
+    for _ in range(4 if age <= 25 else 3):
+        total = sum(weights[trait] for trait in pool)
+        draw = rng.random() * total
+        running = 0.0
+        for trait in pool:
+            running += weights[trait]
+            if draw <= running:
+                chosen.add(trait)
+                pool.remove(trait)
+                break
+    output = {}
+    for trait in DEVELOPMENT_TRAITS:
+        value = 1.0 if trait in chosen else 0.2 + rng.random() * 0.18
+        current = float((player_traits.get(trait) or {}).get("value", 50.0))
+        if current >= 84:
+            value *= 0.68
+        output[trait] = round(value, 3)
+    return output
 
 
 def development_age_factor(age: float) -> float:

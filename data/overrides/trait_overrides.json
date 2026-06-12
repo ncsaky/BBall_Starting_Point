@@ -197,6 +197,18 @@
       }
     },
     {
+      "player_name": "RJ Barrett",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "defensive_effort": {"value": 66, "confidence": 0.62, "notes": "Playtest scouting correction: should read as a positive, engaged wing defender rather than a generic negative."},
+        "foot_speed_lateral_agility": {"value": 64, "confidence": 0.58, "notes": "Functional wing mobility and strength should support credible matchup defense."},
+        "screen_navigation": {"value": 62, "confidence": 0.56, "notes": "Not a shutdown screen navigator, but better than the prior proxy implied."},
+        "scheme_iq": {"value": 64, "confidence": 0.58, "notes": "Team-defense processing and role discipline are modest positives."},
+        "portability": {"value": 66, "confidence": 0.58, "notes": "Two-way wing size, downhill pressure, and improved defense should be more portable than the raw profile suggested."},
+        "playoff_translation": {"value": 64, "confidence": 0.54, "notes": "Physicality and wing defense provide some postseason utility, with shooting consistency still a caveat."}
+      }
+    },
+    {
       "player_name": "Zion Williamson",
       "source_ids": ["src_manual_overrides_2025_26"],
       "traits": {

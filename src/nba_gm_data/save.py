@@ -38,6 +38,7 @@ STAT_FIELDS = [
 ]
 TAX_LINE = 187_895_000
 SECOND_APRON = 207_824_000
+ANNUAL_CAP_GROWTH_RATE = 0.035
 ROSTER_MINIMUM = 14
 ROSTER_SEASON_MAXIMUM = 15
 ROSTER_TEMPORARY_HARD_MAXIMUM = 21
@@ -78,6 +79,7 @@ def create_league_save(
         "season_history": [],
         "year_reviews": [],
         "retirement_reports": [],
+        "league_awards": [],
         "roster_overrides": {},
         "contract_overrides": {},
         "draft_pick_overrides": {},
@@ -289,6 +291,7 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
     save.setdefault("season_history", [])
     save.setdefault("year_reviews", [])
     save.setdefault("retirement_reports", [])
+    save.setdefault("league_awards", [])
     save.setdefault("roster_overrides", {})
     save.setdefault("contract_overrides", {})
     save.setdefault("draft_pick_overrides", {})
@@ -332,6 +335,7 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
     if current_date:
         save.setdefault("state", {})["phase"] = phase_for_date(current_date)
         save["state"]["legal_actions"] = legal_actions_for_date(current_date)
+    clean_free_agency_state(save, save.get("meta", {}).get("season"))
     if canonical is not None:
         save.setdefault("team_records", initial_team_records(canonical))
         save.setdefault("health_states", sorted(deepcopy(canonical.get("player_health_states", [])), key=lambda item: item["player_id"]))
@@ -363,8 +367,11 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
         return canonical
     active_season = str(save.get("meta", {}).get("season") or CANONICAL_SEASON)
     canonical.setdefault("meta", {})["active_season"] = active_season
+    canonical.setdefault("meta", {})["current_date"] = save.get("state", {}).get("current_date")
+    canonical["save_team_records"] = deepcopy(save.get("team_records", {}))
     for contract in canonical.get("contracts", []):
         contract["_active_season"] = active_season
+        backfill_contract_metadata(contract, active_season)
     teams_by_id = {team["id"]: team for team in canonical.get("teams", [])}
     if save.get("generated_players"):
         existing = {player["id"] for player in canonical.get("players", [])}
@@ -401,11 +408,13 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
                 slot["team_id"] = roster_overrides[slot["player_id"]]
     pick_overrides = save.get("draft_pick_overrides", {})
     for pick in canonical.get("draft_picks", []):
+        mark_expired_or_used_pick(pick, save, active_season)
         if pick["id"] in pick_overrides:
             override = pick_overrides[pick["id"]]
             pick["current_owner_team_id"] = None if override == "used_draft_pick" else override
             if override == "used_draft_pick":
                 pick["status"] = "used_draft_pick"
+        apply_saved_draft_order_to_pick(pick, save)
     contract_overrides = save.get("contract_overrides", {})
     if contract_overrides:
         contracts_by_player = {contract.get("player_id"): contract for contract in canonical.get("contracts", [])}
@@ -427,6 +436,7 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
                 "extension_eligibility": dict(override.get("extension_eligibility") or {}),
                 "_active_season": active_season,
             }
+            backfill_contract_metadata(record, active_season)
             if player_id in contracts_by_player:
                 contracts_by_player[player_id].update(record)
             else:
@@ -520,6 +530,8 @@ def advance_save(root: str | Path, canonical: dict[str, Any] | Any, save_path: s
     set_save_date_phase(save, target)
     if save["state"]["phase"] == "free_agency":
         prepare_free_agency_pool(canonical, save)
+    elif save["state"]["phase"] in {"preseason", "regular_season", "training_camp"}:
+        ensure_roster_minimums(canonical, save, effective_seed)
     queue_ai_recommendations(canonical_with_save(canonical, save), save, current, target, effective_seed)
     add_monthly_social_digest(canonical_with_save(canonical, save), save, current, target)
     maybe_queue_rare_drama(save, canonical, current, target, effective_seed)
@@ -1316,6 +1328,7 @@ def complete_offseason_and_rollover(root: str | Path, canonical: dict[str, Any] 
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     current_season = save.get("meta", {}).get("season") or CANONICAL_SEASON
     draft_result = ensure_draft_processed(canonical, save, str(season_end_year(current_season)), seed)
+    awards = generate_league_awards(canonical, save, current_season, seed)
     history_entry = {
         "season": current_season,
         "completed_on": save.get("state", {}).get("current_date"),
@@ -1324,6 +1337,7 @@ def complete_offseason_and_rollover(root: str | Path, canonical: dict[str, Any] 
         "playoff_state": deepcopy(save.get("playoff_state", {})),
         "draft_order": deepcopy((save.get("draft_orders") or {}).get(str(season_end_year(current_season)), {})),
         "draft_result": deepcopy(draft_result),
+        "awards": deepcopy(awards),
         "transaction_count": len(save.get("transaction_logs", [])),
     }
     save.setdefault("season_history", []).append(history_entry)
@@ -1355,6 +1369,8 @@ def complete_offseason_and_rollover(root: str | Path, canonical: dict[str, Any] 
     save["pending_contract_negotiations"] = []
     save["pending_draft_selections"] = []
     save["applied_development_months"] = []
+    save["free_agency_state"] = {}
+    clean_free_agency_state(save, next_label)
     refresh_health_for_new_season(save, f"{next_start}-10-01")
     age_staff_contracts(save)
     save["pending_offseason_review"] = {
@@ -2276,6 +2292,88 @@ def should_align_head_coach_slot(slot: dict[str, Any]) -> bool:
     }
 
 
+def backfill_contract_metadata(contract: dict[str, Any], active_season: str) -> None:
+    if not contract:
+        return
+    seasons = sorted(
+        str(entry.get("season"))
+        for entry in contract.get("seasons", [])
+        if entry.get("season")
+    )
+    if not seasons:
+        return
+    if contract.get("original_contract_years"):
+        try:
+            contract["original_contract_years"] = int(contract.get("original_contract_years") or 0)
+        except (TypeError, ValueError):
+            contract["original_contract_years"] = len(seasons)
+        return
+    active_start = season_start_year(active_season)
+    remaining = len([season for season in seasons if season_start_year(season) >= active_start])
+    status = str(contract.get("status") or contract.get("contract_type") or "").lower()
+    notes = str(contract.get("notes") or "")
+    salaries = [
+        float(entry.get("salary") or 0.0)
+        for entry in contract.get("seasons", [])
+        if entry.get("salary") is not None
+    ]
+    max_salary = max(salaries or [0.0])
+    one_year_markers = {"one_year", "minimum", "two_way", "training_camp", "10_day"}
+    if any(marker in status for marker in one_year_markers):
+        inferred = max(1, len(seasons))
+    elif len(seasons) >= 3:
+        inferred = len(seasons)
+    elif remaining == 2:
+        inferred = 3
+    elif remaining == 1 and (max_salary >= 8_000_000 or any((entry.get("option_type") for entry in contract.get("seasons", [])))):
+        inferred = 3
+    else:
+        inferred = max(1, len(seasons))
+    contract["original_contract_years"] = int(inferred)
+    contract.setdefault("extension_eligibility", {})
+    if "inferred original term" not in notes.lower():
+        contract["notes"] = (
+            f"{notes} Inferred original term as {inferred} year(s) for save-state extension eligibility; "
+            "low confidence when public signing metadata is unavailable."
+        ).strip()
+
+
+def mark_expired_or_used_pick(pick: dict[str, Any], save: dict[str, Any], active_season: str) -> None:
+    if not pick:
+        return
+    used_ids = {selection.get("pick_id") for selection in save.get("draft_state", {}).get("selections", []) if selection.get("pick_id")}
+    used_ids.update(selection.get("pick_id") for selection in save.get("pending_draft_selections", []) if selection.get("pick_id"))
+    if pick.get("id") in used_ids:
+        pick["status"] = "used_draft_pick"
+        pick["current_owner_team_id"] = None
+        return
+    pick_season = str(pick.get("season") or pick.get("draft_year") or "")
+    pick_start = season_start_year(pick_season) if pick_season else None
+    active_start = season_start_year(active_season)
+    current_date = str(save.get("state", {}).get("current_date") or "")
+    past_completed_draft = bool(pick_start and pick_start == active_start and current_date >= f"{pick_start}-07-01")
+    if pick_start and (pick_start < active_start or past_completed_draft):
+        pick["status"] = "expired_draft_pick"
+        pick["current_owner_team_id"] = None
+
+
+def apply_saved_draft_order_to_pick(pick: dict[str, Any], save: dict[str, Any]) -> None:
+    if not pick or pick.get("status") in {"used_draft_pick", "expired_draft_pick"}:
+        return
+    year = str(pick.get("draft_year") or season_end_year(str(pick.get("season") or save.get("meta", {}).get("season") or CANONICAL_SEASON)))
+    order = ((save.get("draft_orders") or {}).get(year) or {}).get("draft_order") or []
+    for item in order:
+        if item.get("pick_id") != pick.get("id"):
+            continue
+        pick["overall_pick"] = item.get("overall_pick")
+        pick["round"] = item.get("round") or pick.get("round")
+        pick["pick_in_round"] = item.get("pick_in_round") or pick.get("pick_in_round")
+        pick["lottery_order_team_id"] = item.get("team_id") or item.get("original_team_id")
+        if item.get("owner_team_id"):
+            pick["current_owner_team_id"] = item.get("owner_team_id")
+        return
+
+
 def apply_effective_player_ages(canonical: dict[str, Any], save: dict[str, Any]) -> None:
     active_season = str(save.get("meta", {}).get("season") or CANONICAL_SEASON)
     try:
@@ -2297,7 +2395,11 @@ def apply_effective_player_ages(canonical: dict[str, Any], save: dict[str, Any])
             if float(player["age"]) <= 0:
                 player["display_age"] = None
                 continue
-            player["age"] = round(float(player["age"]) + year_delta, 1)
+            base_start = int(player.get("age_base_start_year") or season_start_year(str(player.get("age_base_season") or CANONICAL_SEASON)))
+            if player.get("draft_year"):
+                base_start = max(base_start, int(player.get("draft_year") or base_start))
+            player_delta = max(0, season_start_year(active_season) - base_start)
+            player["age"] = round(float(player["age"]) + player_delta, 1)
             player["display_age"] = player["age"]
         except (TypeError, ValueError):
             player["display_age"] = None
@@ -2774,8 +2876,20 @@ def player_health_label(state: dict[str, Any] | None, current_date: str | None) 
     return {"status": status, "label": label, "days_left": days_left, "games_missed": int(state.get("games_missed") or 0)}
 
 
+def cap_lines_for_season(season: str | None) -> dict[str, float]:
+    active = str(season or CANONICAL_SEASON)
+    seasons_elapsed = max(0, season_start_year(active) - season_start_year(CANONICAL_SEASON))
+    factor = (1.0 + ANNUAL_CAP_GROWTH_RATE) ** seasons_elapsed
+    return {
+        "tax_line": round(TAX_LINE * factor / 100_000) * 100_000,
+        "hard_cap": round(SECOND_APRON * factor / 100_000) * 100_000,
+        "growth_factor": round(factor, 5),
+    }
+
+
 def team_cap_summary(canonical: dict[str, Any], save: dict[str, Any], team_id: str) -> dict[str, Any]:
     season = save.get("meta", {}).get("season") or CANONICAL_SEASON
+    lines = cap_lines_for_season(season)
     total = 0.0
     unresolved = 0
     active_player_ids = {player["id"] for player in canonical.get("players", []) if player.get("team_id") == team_id}
@@ -2787,18 +2901,21 @@ def team_cap_summary(canonical: dict[str, Any], save: dict[str, Any], team_id: s
             unresolved += 1
         else:
             total += salary
-    tax_space = TAX_LINE - total
-    hard_cap_space = SECOND_APRON - total
+    tax_line = float(lines["tax_line"])
+    hard_cap = float(lines["hard_cap"])
+    tax_space = tax_line - total
+    hard_cap_space = hard_cap - total
     return {
         "season": season,
         "salary_total": round(total, 2),
         "salary_total_millions": round(total / 1_000_000, 2),
-        "tax_line_millions": round(TAX_LINE / 1_000_000, 2),
-        "hard_cap_millions": round(SECOND_APRON / 1_000_000, 2),
+        "tax_line_millions": round(tax_line / 1_000_000, 2),
+        "hard_cap_millions": round(hard_cap / 1_000_000, 2),
         "tax_space_millions": round(tax_space / 1_000_000, 2),
         "hard_cap_space_millions": round(hard_cap_space / 1_000_000, 2),
-        "tax_space_pct": round(tax_space / TAX_LINE * 100, 1),
-        "hard_cap_space_pct": round(hard_cap_space / SECOND_APRON * 100, 1),
+        "tax_space_pct": round(tax_space / tax_line * 100, 1),
+        "hard_cap_space_pct": round(hard_cap_space / hard_cap * 100, 1),
+        "cap_growth_factor": lines["growth_factor"],
         "unresolved_contract_count": unresolved,
     }
 
@@ -3462,6 +3579,8 @@ def apply_offseason_roster_transitions(canonical: dict[str, Any], save: dict[str
                 free_agents.append(player_id)
             expired.append(player_id)
     save["retired_player_ids"] = sorted(set(retired))
+    clean_free_agency_state(save, current_season)
+    free_agents = [player_id for player_id in free_agents if player_id not in set(save.get("retired_player_ids", []))]
     strategic_signed = strategic_free_agent_signings(canonical, save, free_agents, next_season, seed)
     signed = auto_fill_rosters(canonical, save, free_agents, next_season, seed)
     signed.update(strategic_signed)
@@ -3510,11 +3629,12 @@ def build_year_in_review(canonical: dict[str, Any], save: dict[str, Any], team_i
         return None
     active = canonical_with_save(canonical, save)
     players = {player["id"]: player for player in active.get("players", [])}
+    roster_ids = {player_id for player_id, player in players.items() if player.get("team_id") == team_id}
     season_start = season_start_year(season)
     months = {f"{year}-{month:02d}" for year, month in [(season_start, 10), (season_start, 11), (season_start, 12), (season_start + 1, 1), (season_start + 1, 2), (season_start + 1, 3), (season_start + 1, 4), (season_start + 1, 5), (season_start + 1, 6), (season_start + 1, 7), (season_start + 1, 8)]}
     events_by_player: dict[str, list[dict[str, Any]]] = {}
     for event in save.get("development_events", []):
-        if event.get("team_id") == team_id and event.get("month") in months:
+        if event.get("player_id") in roster_ids and event.get("month") in months:
             events_by_player.setdefault(event.get("player_id"), []).append(event)
     rows: list[dict[str, Any]] = []
     for player in sorted([row for row in players.values() if row.get("team_id") == team_id], key=display_minutes_projection, reverse=True):
@@ -3555,18 +3675,131 @@ def build_year_in_review(canonical: dict[str, Any], save: dict[str, Any], team_i
     }
 
 
+def generate_league_awards(canonical: dict[str, Any], save: dict[str, Any], season: str, seed: int = 1) -> list[dict[str, Any]]:
+    existing = [award for award in save.get("league_awards", []) if award.get("season") == season]
+    if existing:
+        return sorted(existing, key=lambda item: item.get("award", ""))
+    active = canonical_with_save(canonical, save)
+    players = {player["id"]: player for player in active.get("players", [])}
+    teams = {team["id"]: team for team in active.get("teams", [])}
+    stats = save.get("player_season_stats", {})
+    candidates = []
+    for player_id, totals in stats.items():
+        player = players.get(player_id)
+        if not player:
+            continue
+        games = int(totals.get("games") or 0)
+        minutes_total = float(totals.get("minutes") or 0.0)
+        if games < 35 or minutes_total < 650:
+            continue
+        attrs = player_attribute_summary(active, player_id)
+        team_record = save.get("team_records", {}).get(player.get("team_id"), {})
+        team_games = max(1, int(team_record.get("wins", 0)) + int(team_record.get("losses", 0)))
+        win_pct = float(team_record.get("wins", 0)) / team_games
+        ppg = per_game_stat(totals, "points")
+        rpg = per_game_stat(totals, "rebounds")
+        apg = per_game_stat(totals, "assists")
+        spg = per_game_stat(totals, "steals")
+        bpg = per_game_stat(totals, "blocks")
+        mpg = minutes_total / max(1, games)
+        rookie = is_rookie_for_awards(player, season)
+        candidates.append(
+            {
+                "player_id": player_id,
+                "player_name": player.get("name"),
+                "team_id": player.get("team_id"),
+                "team_abbrev": teams.get(player.get("team_id"), {}).get("abbrev", player.get("team_abbrev")),
+                "games": games,
+                "minutes_per_game": round(mpg, 1),
+                "points_per_game": ppg,
+                "rebounds_per_game": rpg,
+                "assists_per_game": apg,
+                "steals_per_game": spg,
+                "blocks_per_game": bpg,
+                "overall": float(attrs.get("overall") or 50.0),
+                "defense": float(attrs.get("defense") or 50.0),
+                "rim_deterrence": float(attrs.get("rim_deterrence") or 50.0),
+                "def_effort": float(attrs.get("def_effort") or 50.0),
+                "screen_nav": float(attrs.get("screen_nav") or 50.0),
+                "win_pct": round(win_pct, 3),
+                "rookie": rookie,
+            }
+        )
+    if not candidates:
+        return []
+
+    def small_noise(player_id: str, award: str) -> float:
+        digest = hashlib.sha256(f"{seed}:{season}:{award}:{player_id}".encode("utf-8")).hexdigest()
+        return (int(digest[:8], 16) / 0xFFFFFFFF - 0.5) * 1.8
+
+    award_specs = {
+        "MVP": lambda row: row["points_per_game"] * 1.25 + row["assists_per_game"] * 1.08 + row["rebounds_per_game"] * 0.66 + row["overall"] * 0.42 + row["win_pct"] * 17.0 + min(5.0, row["games"] / 14.0) + small_noise(row["player_id"], "MVP"),
+        "ROTY": lambda row: (-999.0 if not row["rookie"] else row["points_per_game"] * 1.18 + row["assists_per_game"] * 0.92 + row["rebounds_per_game"] * 0.72 + row["overall"] * 0.48 + row["minutes_per_game"] * 0.18 + small_noise(row["player_id"], "ROTY")),
+        "DPOY": lambda row: row["defense"] * 0.48 + row["rim_deterrence"] * 0.34 + row["def_effort"] * 0.24 + row["screen_nav"] * 0.16 + row["blocks_per_game"] * 4.2 + row["steals_per_game"] * 3.0 + row["win_pct"] * 6.0 + small_noise(row["player_id"], "DPOY"),
+    }
+    awards: list[dict[str, Any]] = []
+    for award_name, score_fn in award_specs.items():
+        winner = max(candidates, key=score_fn)
+        if score_fn(winner) < -100:
+            continue
+        record = {
+            "id": stable_id("league_award", season, award_name),
+            "season": season,
+            "award": award_name,
+            "player_id": winner["player_id"],
+            "player_name": winner["player_name"],
+            "team_id": winner["team_id"],
+            "team_abbrev": winner["team_abbrev"],
+            "score": round(score_fn(winner), 3),
+            "stat_line": {
+                "pts": winner["points_per_game"],
+                "reb": winner["rebounds_per_game"],
+                "ast": winner["assists_per_game"],
+                "stl": winner["steals_per_game"],
+                "blk": winner["blocks_per_game"],
+                "gp": winner["games"],
+            },
+            "notes": "V1 award voting proxy using saved season stats, team success, minutes/games played, and trait-based impact indicators.",
+        }
+        awards.append(record)
+        headline = f"{winner['player_name']} wins {award_name} for {season} ({winner['team_abbrev']})."
+        add_news(save, "award", headline, date_value=f"{season_end_year(season)}-06-30")
+    save.setdefault("league_awards", []).extend(awards)
+    save["league_awards"] = sorted(
+        {award["id"]: award for award in save["league_awards"]}.values(),
+        key=lambda item: (item.get("season", ""), item.get("award", "")),
+    )
+    return awards
+
+
+def is_rookie_for_awards(player: dict[str, Any], season: str) -> bool:
+    draft_year = player.get("draft_year")
+    if draft_year is not None:
+        try:
+            return int(draft_year) == season_start_year(season)
+        except (TypeError, ValueError):
+            return False
+    if str(player.get("source_kind") or "").startswith("generated_rookie"):
+        return True
+    try:
+        return float(player.get("display_age", player.get("age")) or 99) <= 21 and float(player.get("minutes_projection") or 0.0) <= 30
+    except (TypeError, ValueError):
+        return False
+
+
 def next_season_age(player: dict[str, Any]) -> float | None:
     value = player.get("display_age", player.get("age"))
     if value is None:
         return None
     try:
-        return round(float(value) + 1.0, 1)
+        return round(float(value), 1)
     except (TypeError, ValueError):
         return None
 
 
 def prepare_free_agency_pool(canonical: dict[str, Any], save: dict[str, Any]) -> dict[str, Any]:
     current_season = save.get("meta", {}).get("season") or CANONICAL_SEASON
+    clean_free_agency_state(save, current_season)
     if current_season in set(save.get("free_agency_prepared_seasons", [])):
         return {"status": "already_prepared", "free_agent_pool_count": len(save.get("free_agent_player_ids", []))}
     seed = int(save.get("meta", {}).get("seed") or 1)
@@ -3590,6 +3823,7 @@ def prepare_free_agency_pool(canonical: dict[str, Any], save: dict[str, Any]) ->
             free_agents.add(player_id)
             expired.append(player_id)
     save["free_agent_player_ids"] = sorted(pid for pid in free_agents if pid not in set(save.get("retired_player_ids", [])))
+    clean_free_agency_state(save, current_season)
     save.setdefault("free_agency_prepared_seasons", []).append(current_season)
     if expired:
         add_news(
@@ -3611,9 +3845,42 @@ def add_re_signing_right(save: dict[str, Any], season: str, player_id: str, team
         "team_id": team_id,
         "status": "exclusive_review_window",
     }
-    existing = [item for item in save.setdefault("re_signing_rights", []) if item.get("id") != record["id"]]
+    existing = [
+        item for item in save.setdefault("re_signing_rights", [])
+        if item.get("id") != record["id"] and item.get("player_id") != player_id
+    ]
     existing.append(record)
     save["re_signing_rights"] = sorted(existing, key=lambda item: (item.get("season", ""), item.get("team_id", ""), item.get("player_id", "")))
+
+
+def clean_free_agency_state(save: dict[str, Any], current_season: str | None = None) -> None:
+    retired = set(save.get("retired_player_ids", []))
+    save["free_agent_player_ids"] = sorted(pid for pid in set(save.get("free_agent_player_ids", [])) if pid not in retired)
+    rights = []
+    for right in save.get("re_signing_rights", []):
+        if right.get("player_id") in retired:
+            continue
+        if current_season and right.get("status") == "exclusive_review_window" and right.get("season") != current_season:
+            continue
+        rights.append(right)
+    save["re_signing_rights"] = sorted(rights, key=lambda item: (item.get("season", ""), item.get("team_id", ""), item.get("player_id", "")))
+    fa_state = save.get("free_agency_state")
+    if isinstance(fa_state, dict):
+        season = str(fa_state.get("season") or current_season or "")
+        for key in ["active_offers", "accepted_deals", "rejected_offers", "withdrawn_offers"]:
+            filtered = []
+            for item in fa_state.get(key, []):
+                if item.get("player_id") in retired:
+                    continue
+                if season and item.get("season") and item.get("season") != season:
+                    continue
+                filtered.append(item)
+            fa_state[key] = filtered
+        if isinstance(fa_state.get("player_asks"), dict):
+            fa_state["player_asks"] = {
+                pid: ask for pid, ask in fa_state["player_asks"].items()
+                if pid not in retired
+            }
 
 
 def should_ai_retain_expiring_player(save: dict[str, Any], player: dict[str, Any], season: str, seed: int) -> bool:
@@ -3941,10 +4208,41 @@ def auto_fill_rosters(canonical: dict[str, Any], save: dict[str, Any], free_agen
     return signed
 
 
+def ensure_roster_minimums(canonical: dict[str, Any], save: dict[str, Any], seed: int) -> set[str]:
+    season = str(save.get("meta", {}).get("season") or CANONICAL_SEASON)
+    active = canonical_with_save(canonical, save)
+    needs_repair = False
+    for team in active.get("teams", []):
+        count = sum(1 for player in active.get("players", []) if player.get("team_id") == team.get("id"))
+        if count < ROSTER_MINIMUM:
+            needs_repair = True
+            break
+    if not needs_repair:
+        return set()
+    signed = auto_fill_rosters(canonical, save, list(save.get("free_agent_player_ids", [])), season, seed + 2219)
+    if signed:
+        add_news(
+            save,
+            "roster_repair",
+            f"League roster repair added {len(signed)} minimum-depth signing(s) before games resumed.",
+            date_value=save.get("state", {}).get("current_date"),
+        )
+    return signed
+
+
 def create_replacement_player(team: dict[str, Any], season: str, seed: int, index: int) -> dict[str, Any]:
     rng = random.Random(f"{seed}:{season}:{team['id']}:{index}:replacement_player")
-    first = ["Jalen", "Marcus", "Dorian", "Eli", "Noah", "Cam", "Miles", "Tre", "Isaiah", "Malik"][int(rng.random() * 10) % 10]
-    last = ["Reed", "Hayes", "Porter", "Ellis", "Cole", "Bennett", "Wallace", "Foster", "Lang", "Sullivan"][int(rng.random() * 10) % 10]
+    first_pool = ["Jalen", "Marcus", "Dorian", "Eli", "Noah", "Cam", "Miles", "Tre", "Isaiah", "Malik", "Amari", "Nolan", "Dante", "Kellan", "Makai", "Julian", "Tariq", "Andre", "Mateo", "Omar"]
+    last_pool = [
+        "Reed", "Hayes", "Porter", "Ellis", "Cole", "Bennett", "Wallace", "Foster", "Lang", "Sullivan",
+        "Vargas", "Bishop", "Mathis", "Gaines", "Lawson", "Cross", "Santos", "Balde", "Moreau", "Hawkins",
+        "Whitaker", "Morrison", "Diallo", "Petrovic", "Sato", "Kowalski", "Mensah", "Harrison", "Navarro", "Griffin",
+        "Stone", "Camara", "Blackwell", "Rhodes", "Mendez", "Laurent", "Robinson", "Klein", "Turner", "Boateng",
+        "Hart", "Walters", "Kimani", "Montgomery", "Hughes", "Bamba", "Carlson", "Rojas", "Ibrahim", "Vaughn",
+        "Parker", "Bates", "Grant", "Okoro", "Hendrix", "Adebayo", "Baker", "Shepard", "Morales", "Keita",
+    ]
+    first = rng.choice(first_pool)
+    last = rng.choice(last_pool)
     position = ["PG", "SG", "SF", "PF", "C"][int(rng.random() * 5) % 5]
     name = f"{first} {last}"
     player_id = stable_id("generated_player", season, team["abbrev"], index, name)
@@ -3957,6 +4255,8 @@ def create_replacement_player(team: dict[str, Any], season: str, seed: int, inde
         "team_abbrev": team["abbrev"],
         "position": position,
         "age": round(23 + rng.random() * 8, 1),
+        "age_base_season": season,
+        "age_base_start_year": season_start_year(season),
         "height_inches": {"PG": 75, "SG": 77, "SF": 80, "PF": 82, "C": 83}[position] + rng.uniform(-1.5, 1.5),
         "weight_lbs": 190 + rng.random() * 45,
         "minutes_projection": round(5 + rng.random() * 8, 1),

@@ -23,7 +23,9 @@ from .utils import clamp, maybe_float, normalize_name, stable_id
 FRONT_OFFICE_OVERRIDES_FILE = Path("data/overrides/front_office_overrides.json")
 TRANSACTION_MODEL_CONFIG_FILE = Path("data/overrides/transaction_model_config.json")
 TRADE_ASSET_KINDS = {"player", "pick"}
+TAX_LINE = 187_895_000
 SECOND_APRON = 207_824_000
+ANNUAL_CAP_GROWTH_RATE = 0.035
 
 
 def default_transaction_model_config() -> dict[str, Any]:
@@ -731,9 +733,12 @@ def parse_cli_assets(canonical: dict[str, Any], from_team: str, to_team: str, sp
 def with_transaction_context(canonical: dict[str, Any] | Any, config: dict[str, Any] | None = None) -> dict[str, Any]:
     canonical = to_plain(canonical)
     if transaction_context_is_complete(canonical):
+        annotate_pick_value_context(canonical)
         return canonical
     context = build_transaction_context(canonical, config)
-    return {**canonical, **context}
+    enriched = {**canonical, **context}
+    annotate_pick_value_context(enriched)
+    return enriched
 
 
 def transaction_context_is_complete(canonical: dict[str, Any]) -> bool:
@@ -747,6 +752,41 @@ def transaction_context_is_complete(canonical: dict[str, Any]) -> bool:
     valued = {value.get("player_id") for value in canonical.get("player_asset_valuations", [])}
     active_players = {player.get("id") for player in canonical.get("players", []) if player.get("team_id")}
     return active_players.issubset(valued)
+
+
+def annotate_pick_value_context(canonical: dict[str, Any]) -> None:
+    states = {state.get("team_id"): state for state in canonical.get("team_strategic_states", [])}
+    records = canonical.get("save_team_records") or {}
+    team_scores: list[tuple[str, float]] = []
+    for team in canonical.get("teams", []):
+        team_id = team.get("id")
+        state = states.get(team_id, {})
+        ceiling = maybe_float(state.get("contention_ceiling")) or 52.0
+        record = records.get(team_id, {})
+        wins = maybe_float(record.get("wins")) or 0.0
+        losses = maybe_float(record.get("losses")) or 0.0
+        games = wins + losses
+        win_pct = wins / games if games > 0 else 0.5
+        record_weight = clamp(games / 82.0, 0.0, 0.9)
+        badness = (100.0 - ceiling) * (1.0 - record_weight) + (1.0 - win_pct) * 100.0 * record_weight
+        team_scores.append((team_id, badness))
+    projected_slots = {
+        team_id: rank
+        for rank, (team_id, _) in enumerate(sorted(team_scores, key=lambda item: item[1], reverse=True), start=1)
+    }
+    active_season = str(canonical.get("meta", {}).get("active_season") or "2025-26")
+    current_start = season_start_from_label(active_season)
+    for pick in canonical.get("draft_picks", []):
+        original = pick.get("original_team_id")
+        if not original:
+            continue
+        if pick.get("overall_pick"):
+            pick["projected_pick_slot"] = int(pick.get("overall_pick") or 30)
+            continue
+        pick_start = pick_season_start(pick)
+        if pick_start is not None and pick_start < current_start:
+            continue
+        pick["projected_pick_slot"] = int(projected_slots.get(original, 18))
 
 
 def fallback_asset_valuation(player: dict[str, Any] | None) -> dict[str, float]:
@@ -857,6 +897,8 @@ def market_trade_target_value(player: dict[str, Any], valuation: dict[str, Any])
     role_scale = clamp((max(4.0, minutes) / 30.0) ** 1.22, 0.36, 1.0)
     overall_proxy = float(player.get("current_ability") or player.get("overall") or 38.0 + minutes * 1.15)
     compressed = raw * role_scale
+    if minutes < 20 and raw >= 70:
+        compressed = min(compressed, 24.0 + max(0.0, overall_proxy - 55.0) * 0.5 + minutes * 0.5)
     if minutes < 24:
         compressed = min(compressed, 32.0 + max(0.0, overall_proxy - 55.0) * 0.68 + minutes * 0.43)
     return round(clamp(compressed, 1.0, raw), 2)
@@ -901,7 +943,11 @@ def buyer_offer_packages_for_value(
     tradable_players = tradable_players[:max(3, int(max_player_options))]
     buyer_state = next((item for item in canonical.get("team_strategic_states", []) if item.get("team_id") == buyer["id"]), {})
     picks = sorted(
-        [pick for pick in canonical.get("draft_picks", []) if pick.get("current_owner_team_id") == buyer["id"]],
+        [
+            pick for pick in canonical.get("draft_picks", [])
+            if pick.get("current_owner_team_id") == buyer["id"]
+            and pick.get("status") not in {"used_draft_pick", "expired_draft_pick"}
+        ],
         key=lambda pick: pick_offer_preference_score(pick, buyer_state.get("phase", "balanced"), target_value),
         reverse=True,
     )[:9]
@@ -1332,7 +1378,11 @@ def trade_legality(canonical: dict[str, Any], proposal: TradeProposal, config: d
                 player = player_by_id(canonical, asset["id"])
                 if not player or player["team_id"] != team_id:
                     issues.append(f"{asset.get('label', asset.get('id'))} is not on {team_by_id(canonical, team_id)['abbrev']}.")
-                salary = current_salary(contract_for_player(canonical, asset["id"]))
+                contract = contract_for_player(canonical, asset["id"])
+                if contract_expired_without_rights(contract):
+                    issues.append(f"{asset.get('label', asset.get('id'))} has an expired contract and no retained rights, so he cannot be traded in this phase.")
+                    continue
+                salary = current_salary(contract)
                 if salary is None:
                     manual.append(f"{asset.get('label', asset.get('id'))} has unresolved salary.")
             elif asset["kind"] == "pick":
@@ -1491,6 +1541,17 @@ def projected_salary_fallback_allowed(contract: dict[str, Any] | None) -> bool:
     if "rookie_scale" in contract_type:
         return True
     return any(str(season.get("guarantee_status") or "") in {"ai_offseason_signing", "minimum_depth_signing"} for season in contract.get("seasons", []))
+
+
+def contract_expired_without_rights(contract: dict[str, Any] | None) -> bool:
+    if not contract:
+        return True
+    active = contract_active_season(contract)
+    seasons = [str(season.get("season")) for season in contract.get("seasons", []) if season.get("season")]
+    if any(season >= active for season in seasons):
+        return False
+    status = str(contract.get("status") or contract.get("rights_status") or contract.get("free_agency_type") or "").lower()
+    return not any(marker in status for marker in ["rfa", "restricted", "rights", "qualifying_offer"])
 
 
 def contention_ceiling(canonical: dict[str, Any], team: dict[str, Any], team_values: list[PlayerAssetValuation]) -> float:
@@ -1722,12 +1783,12 @@ def package_concentration_adjustment(player_values: list[float]) -> float:
         return 0.0
     values = sorted([max(0.0, value) for value in player_values], reverse=True)
     top = values[0]
-    low_role_count = sum(1 for value in values[1:] if value < 24.0)
-    redundancy_penalty = low_role_count * 3.2
+    low_role_count = sum(1 for value in values[1:] if value < 26.0)
+    redundancy_penalty = low_role_count * 4.8
     if top >= 58.0:
-        redundancy_penalty += max(0, len(values) - 2) * 1.6
+        redundancy_penalty += max(0, len(values) - 2) * 2.4
     if top < 42.0 and len(values) >= 3:
-        redundancy_penalty += 5.0
+        redundancy_penalty += 7.0
     concentration_bonus = 3.0 if top >= 70.0 else 1.5 if top >= 60.0 else 0.0
     return concentration_bonus - redundancy_penalty
 
@@ -1766,8 +1827,8 @@ def destination_role_multipliers(
         rank = 1 + sum(1 for other_id, other_value in all_values if other_id != player_id and other_value > value)
         role_minutes = expected_minutes_for_destination_rank(rank)
         expected_minutes = min(36.0, max(role_minutes, min(float(current_minutes or 0.0), role_minutes + 3.0)))
-        minute_weight = (max(2.0, expected_minutes) / 28.0) ** 1.55
-        output[player_id] = round(clamp(minute_weight, 0.18, 1.2), 3)
+        minute_weight = (max(2.0, expected_minutes) / 28.0) ** 1.8
+        output[player_id] = round(clamp(minute_weight, 0.12, 1.22), 3)
     return output
 
 
@@ -1781,11 +1842,11 @@ def expected_minutes_for_destination_rank(rank: int) -> float:
     if rank <= 5:
         return 25.0
     if rank <= 7:
-        return 19.0
+        return 17.0
     if rank <= 9:
-        return 11.0
+        return 8.0
     if rank <= 12:
-        return 6.0
+        return 3.5
     return 2.5
 
 
@@ -1870,9 +1931,17 @@ def salary_matching_issue(canonical: dict[str, Any], proposal: TradeProposal, co
     floor = float(salary_config.get("salary_floor", 7_500_000))
     multiplier = float(salary_config.get("incoming_multiplier", 1.25))
     plus = min(float(salary_config.get("incoming_plus", 7_500_000)), 5_000_000)
-    if to_out > floor and to_out > from_out * multiplier + plus:
+    active_season = str(canonical.get("meta", {}).get("active_season") or "2025-26")
+    tax_line = cap_lines_for_season(active_season)["tax_line"]
+    from_current = team_current_salary_total(canonical, proposal.from_team_id)
+    to_current = team_current_salary_total(canonical, proposal.to_team_id)
+    from_after = from_current - from_out + to_out
+    to_after = to_current - to_out + from_out
+    from_can_absorb = from_after <= tax_line
+    to_can_absorb = to_after <= tax_line
+    if to_out > floor and to_out > from_out * multiplier + plus and not from_can_absorb:
         return f"{team_by_id(canonical, proposal.from_team_id)['abbrev']} incoming salary exceeds practical matching tolerance."
-    if from_out > floor and from_out > to_out * multiplier + plus:
+    if from_out > floor and from_out > to_out * multiplier + plus and not to_can_absorb:
         return f"{team_by_id(canonical, proposal.to_team_id)['abbrev']} incoming salary exceeds practical matching tolerance."
     for team_id, outgoing, incoming in [
         (proposal.from_team_id, proposal.from_assets, proposal.to_assets),
@@ -1882,7 +1951,8 @@ def salary_matching_issue(canonical: dict[str, Any], proposal: TradeProposal, co
         outgoing_salary = package_salary(canonical, outgoing) or 0.0
         incoming_salary = package_salary(canonical, incoming) or 0.0
         after_total = current_total - outgoing_salary + incoming_salary
-        if after_total > SECOND_APRON and after_total > current_total + 250_000:
+        hard_cap = cap_lines_for_season(active_season)["hard_cap"]
+        if after_total > hard_cap and after_total > current_total + 250_000:
             return f"{team_by_id(canonical, team_id)['abbrev']} would move above the hard-cap/apron guardrail."
     return None
 
@@ -1959,9 +2029,18 @@ def duplicate_trade_assets(assets: list[dict[str, Any]]) -> set[str]:
 def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     if not pick:
         return 0.0
+    if pick.get("status") in {"used_draft_pick", "expired_draft_pick"} or not pick.get("current_owner_team_id"):
+        return 0.0
     round_no = int(pick.get("round") or 2)
+    slot = pick.get("overall_pick") or pick.get("projected_pick_slot")
+    try:
+        slot_value = int(slot) if slot is not None else None
+    except (TypeError, ValueError):
+        slot_value = None
     if round_no == 1:
-        if pick.get("status") == "verified_2026_draft_board" and pick.get("id", "").split("-"):
+        if slot_value:
+            value = clamp(75 - slot_value * 1.35, 24, 75)
+        elif pick.get("status") == "verified_2026_draft_board" and pick.get("id", "").split("-"):
             try:
                 pick_no = int(pick["id"].split("-")[2])
             except (ValueError, IndexError):
@@ -1970,7 +2049,11 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
         else:
             value = 38.0
     else:
-        value = 8.0
+        if slot_value:
+            second_slot = max(31, slot_value)
+            value = clamp(17.5 - (second_slot - 31) * 0.23, 5.0, 17.5)
+        else:
+            value = 9.5
     if pick.get("protections"):
         value -= 4.0
     if phase in {"rebuilding", "developing"}:
@@ -2011,10 +2094,35 @@ def pick_season_start(pick: dict[str, Any]) -> int | None:
         return None
 
 
+def season_start_from_label(season: str | None) -> int:
+    try:
+        return int(str(season or "2025-26").split("-")[0])
+    except (TypeError, ValueError):
+        return 2025
+
+
+def cap_lines_for_season(season: str | None) -> dict[str, float]:
+    elapsed = max(0, season_start_from_label(season) - 2025)
+    factor = (1.0 + ANNUAL_CAP_GROWTH_RATE) ** elapsed
+    return {
+        "tax_line": round(TAX_LINE * factor / 100_000) * 100_000,
+        "hard_cap": round(SECOND_APRON * factor / 100_000) * 100_000,
+    }
+
+
 def best_tradeable_pick(canonical: dict[str, Any], team_id: str) -> dict[str, Any] | None:
-    picks = [pick for pick in canonical.get("draft_picks", []) if pick.get("current_owner_team_id") == team_id and int(pick.get("round") or 0) == 1]
+    picks = [
+        pick for pick in canonical.get("draft_picks", [])
+        if pick.get("current_owner_team_id") == team_id
+        and pick.get("status") not in {"used_draft_pick", "expired_draft_pick"}
+        and int(pick.get("round") or 0) == 1
+    ]
     if not picks:
-        picks = [pick for pick in canonical.get("draft_picks", []) if pick.get("current_owner_team_id") == team_id]
+        picks = [
+            pick for pick in canonical.get("draft_picks", [])
+            if pick.get("current_owner_team_id") == team_id
+            and pick.get("status") not in {"used_draft_pick", "expired_draft_pick"}
+        ]
     if not picks:
         return None
     return sorted(picks, key=lambda pick: pick_asset_value(pick, "neutral"), reverse=True)[0]

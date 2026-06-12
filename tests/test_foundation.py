@@ -54,6 +54,7 @@ from nba_gm_data.save import (
     pending_actions_view,
     apply_ai_staff_recommendations,
     playoff_picture,
+    cap_lines_for_season,
     process_ai_actions,
     propose_trade_to_save,
     quick_sim_current_season,
@@ -68,6 +69,7 @@ from nba_gm_data.save import (
     merge_health_results,
     press_impact,
     queue_aggregated_press_event,
+    generate_league_awards,
     team_rotation_projection,
 )
 from nba_gm_data.play import (
@@ -211,6 +213,25 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(len(first["draft_prospect_traits"]), 60 * 12)
         self.assertLessEqual(max(float(prospect["current_ability"]) for prospect in first["draft_prospects"]), 69)
         self.assertTrue(all(prospect["source_ids"] == ["src_draft_model_config_v1"] for prospect in first["draft_prospects"]))
+        names = [prospect["name"] for prospect in first["draft_prospects"]]
+        self.assertEqual(len(names), len(set(names)))
+        self.assertFalse(any(any(char.isdigit() for char in name) for name in names))
+        self.assertGreaterEqual(len({name.split()[-1] for name in names}), 35)
+
+    def test_cap_growth_contract_metadata_and_old_pick_expiry(self):
+        self.assertGreater(cap_lines_for_season("2028-29")["tax_line"], cap_lines_for_season("2025-26")["tax_line"])
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "league_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=21)
+            active = canonical_with_save(self.plain, save)
+            self.assertTrue(all(contract.get("original_contract_years") for contract in active.get("contracts", []) if contract.get("seasons")))
+            save["meta"]["season"] = "2027-28"
+            save["state"] = {"current_date": "2028-02-01", "phase": "regular_season", "legal_actions": ["trades"]}
+            write_save(save_path, save)
+            future_active = canonical_with_save(self.plain, load_save(save_path))
+            expired_2027 = [pick for pick in future_active.get("draft_picks", []) if str(pick.get("season")) == "2027"]
+            self.assertTrue(expired_2027)
+            self.assertTrue(all(pick.get("current_owner_team_id") is None for pick in expired_2027))
 
     def test_future_draft_order_lottery_is_deterministic_and_pick_aware(self):
         first = generate_draft_order(self.plain, "2027", seed=4)
@@ -297,6 +318,40 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(len(future["draft_order"]), 60)
         self.assertEqual(len(future["pending_draft_selections"]), 60)
         self.assertEqual(len(future["incoming_rookies"]), 60)
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "rookie_age_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=4)
+            save["meta"]["season"] = "2026-27"
+            save["state"] = {"current_date": "2027-06-27", "phase": "draft", "legal_actions": ["trades", "draft_picks"]}
+            save["pending_draft_selections"] = future["pending_draft_selections"][:1]
+            write_save(save_path, save)
+            applied = apply_draft_selection_to_save(save_path, future["selections"][0]["id"], date="2027-06-27", sign_rookie=True)
+            self.assertEqual(applied["status"], "applied")
+            saved = load_save(save_path)
+            rookie = saved["generated_players"][0]
+            saved["meta"]["season"] = "2027-28"
+            saved["state"] = {"current_date": "2027-10-01", "phase": "preseason", "legal_actions": []}
+            active = canonical_with_save(self.plain, saved)
+            active_rookie = next(player for player in active["players"] if player["id"] == rookie["id"])
+            self.assertEqual(float(active_rookie["display_age"]), float(rookie["age"]))
+
+    def test_awards_generate_from_saved_stats(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "awards_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=31)
+            players = {player["normalized_name"]: player for player in self.plain["players"]}
+            curry = players["stephen curry"]
+            wemby = players["victor wembanyama"]
+            save["team_records"][curry["team_id"]]["wins"] = 58
+            save["team_records"][curry["team_id"]]["losses"] = 24
+            save["team_records"][wemby["team_id"]]["wins"] = 47
+            save["team_records"][wemby["team_id"]]["losses"] = 35
+            save["player_season_stats"][curry["id"]] = {"games": 74, "minutes": 2450, "points": 2300, "rebounds": 330, "assists": 610, "steals": 95, "blocks": 25}
+            save["player_season_stats"][wemby["id"]] = {"games": 72, "minutes": 2520, "points": 1900, "rebounds": 920, "assists": 310, "steals": 95, "blocks": 265}
+            awards = generate_league_awards(self.plain, save, "2025-26", seed=31)
+            self.assertTrue(any(award["award"] == "MVP" for award in awards))
+            self.assertTrue(any(award["award"] == "DPOY" for award in awards))
+            self.assertTrue(any(item.get("kind") == "award" for item in save.get("news_items", [])))
 
     def test_public_staff_sources_populate_key_roles(self):
         verified_staff = [staff for staff in self.universe.staff_profiles if staff.status != "research_pending"]
@@ -691,7 +746,7 @@ class DataFoundationTests(unittest.TestCase):
     def test_trade_finder_preserves_untouchables_and_bounded_multi_asset_packages(self):
         self.assertEqual(find_trade(self.plain, "Stephen Curry", "GSW", limit=4, seed=2)["candidate_count"], 0)
         self.assertEqual(find_trade(self.plain, "Victor Wembanyama", "SAS", limit=4, seed=2)["candidate_count"], 0)
-        movable = find_trade(self.plain, "Gui Santos", "PHX", limit=8, seed=9)
+        movable = find_trade(self.plain, "Tidjane Salaun", "PHX", limit=8, seed=9)
         self.assertGreater(movable["candidate_count"], 0)
         self.assertTrue(
             any(
@@ -737,9 +792,9 @@ class DataFoundationTests(unittest.TestCase):
         illegal = evaluate_trade(
             self.plain,
             "WAS",
-            "PHX",
+            "GSW",
             [{"kind": "player", "value": "Anthony Davis"}],
-            [{"kind": "player", "value": "Jalen Green"}],
+            [{"kind": "player", "value": "Seth Curry"}],
             seed=2,
         )
         self.assertEqual(illegal["legality"]["status"], "illegal")
