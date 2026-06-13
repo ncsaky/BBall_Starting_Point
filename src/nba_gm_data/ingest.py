@@ -1100,19 +1100,25 @@ def build_draft_picks(teams: list[Team], research_draft_picks: dict[str, Any] | 
             for round_number in [1, 2]:
                 if (team.abbrev, season, round_number) in covered_future_slots:
                     continue
+                second_round_scaffold = round_number == 2
                 picks.append(
                     DraftPick(
                         id=stable_id("pick", team.abbrev, season, round_number),
                         team_id=team.id,
                         season=season,
                         round=round_number,
-                        status="research_pending",
+                        status="inferred_future_second_round_scaffold" if second_round_scaffold else "research_pending",
                         original_team_id=team.id,
-                        current_owner_team_id=None,
+                        current_owner_team_id=team.id if second_round_scaffold else None,
                         protections=None,
-                        confidence=0.0,
+                        confidence=0.35 if second_round_scaffold else 0.0,
                         source_ids=["src_ledger_research_pending"],
-                        notes="Placeholder only. Ownership and protections must be researched before transaction logic uses this pick.",
+                        notes=(
+                            "Low-confidence future second-round scaffold: assigned to original team so v1 trades can use normal R2 currency. "
+                            "Correct if later public research finds a traded/protected second."
+                            if second_round_scaffold
+                            else "Placeholder only. Ownership and protections must be researched before transaction logic uses this pick."
+                        ),
                     )
                 )
     return picks

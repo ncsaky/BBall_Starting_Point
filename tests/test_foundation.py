@@ -53,6 +53,7 @@ from nba_gm_data.save import (
     offseason_status,
     pending_actions_view,
     apply_ai_staff_recommendations,
+    age_staff_contracts,
     playoff_picture,
     cap_lines_for_season,
     process_ai_actions,
@@ -71,13 +72,16 @@ from nba_gm_data.save import (
     queue_aggregated_press_event,
     generate_league_awards,
     team_rotation_projection,
+    team_cap_summary,
 )
 from nba_gm_data.play import (
     box_score_influence,
+    contract_start_season_for_signing,
     contextual_press_answers,
     free_agency_user_offer_limit,
     initialize_free_agency_market,
     offer_interest_score,
+    signing_cap_check,
 )
 from nba_gm_data.schema import TradeProposal, to_plain
 from nba_gm_data.sim import (
@@ -170,9 +174,14 @@ class DataFoundationTests(unittest.TestCase):
 
     def test_ledger_gaps_are_explicit(self):
         summary = self.universe.coverage_report.summary
+        future_second_scaffolds = [
+            pick
+            for pick in self.universe.draft_picks
+            if pick.status == "inferred_future_second_round_scaffold"
+        ]
         self.assertEqual(summary["research_pending"]["contracts"], 0)
         self.assertEqual(summary["contract_manual_review_count"], 5)
-        self.assertGreater(summary["research_pending"]["draft_picks"], 0)
+        self.assertGreaterEqual(summary["research_pending"]["draft_picks"] + len(future_second_scaffolds), 1)
         self.assertEqual(summary["research_pending"]["staff_profiles"], 0)
         self.assertEqual(summary["missing_gameplay_staff_slots"], 0)
         self.assertEqual(summary["rotation_missing_without_fallback"], 0)
@@ -985,6 +994,75 @@ class DataFoundationTests(unittest.TestCase):
             self.assertIn(f"{state['season']}:1", state["ai_days_processed"])
             self.assertGreater(len(initialized.get("free_agent_offers", [])), 0)
             self.assertTrue(all(offer["source"] == "ai" for offer in initialized["free_agent_offers"]))
+
+    def test_future_second_round_picks_are_tradeable_scaffold_assets(self):
+        future_seconds = [
+            pick for pick in self.plain["draft_picks"]
+            if str(pick.get("season")) > "2026"
+            and int(pick.get("round") or 0) == 2
+            and pick.get("current_owner_team_id")
+        ]
+        self.assertGreaterEqual(len(future_seconds), 30)
+        self.assertTrue(any(pick.get("status") == "inferred_future_second_round_scaffold" for pick in future_seconds))
+
+    def test_effective_age_is_idempotent_for_save_aware_canonical(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "league_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=18)
+            save["meta"]["season"] = "2027-28"
+            save["meta"]["season_start_year"] = 2027
+            active_once = canonical_with_save(self.plain, save)
+            curry_once = next(player for player in active_once["players"] if player["name"] == "Stephen Curry")
+            active_twice = canonical_with_save(active_once, save)
+            curry_twice = next(player for player in active_twice["players"] if player["name"] == "Stephen Curry")
+            self.assertEqual(curry_once["age"], curry_twice["age"])
+
+    def test_free_agency_cap_checks_use_upcoming_contract_season(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "league_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=20)
+            save["state"]["phase"] = "free_agency"
+            save["state"]["current_date"] = "2026-07-01"
+            save.setdefault("generated_players", []).append(
+                {
+                    "id": "generated_cap_anchor",
+                    "name": "Cap Anchor",
+                    "normalized_name": "cap anchor",
+                    "team_id": "team_gsw",
+                    "team_abbrev": "GSW",
+                    "position": "C",
+                    "age": 25,
+                    "minutes_projection": 1,
+                }
+            )
+            save.setdefault("roster_overrides", {})["generated_cap_anchor"] = "team_gsw"
+            save.setdefault("contract_overrides", {})["generated_cap_anchor"] = {
+                "team_id": "team_gsw",
+                "seasons": [{"season": "2026-27", "salary": 240_000_000}],
+                "status": "test_future_contract",
+                "original_contract_years": 1,
+                "signed_season": "2026-27",
+            }
+            active = canonical_with_save(self.plain, save)
+            self.assertEqual(contract_start_season_for_signing(save), "2026-27")
+            cap = team_cap_summary(active, save, "team_gsw", season="2026-27")
+            self.assertLess(cap["hard_cap_space_millions"], 0)
+            self.assertFalse(signing_cap_check(active, save, "GSW", 10.0)["ok"])
+            self.assertTrue(signing_cap_check(active, save, "GSW", 1.9)["ok"])
+
+    def test_staff_contract_expiry_creates_interim_and_market_candidate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "league_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=22)
+            head = next(slot for slot in save["staff_slots"] if slot["team_id"] == "team_gsw" and slot["slot"] == "head_coach")
+            old_name = head["name"]
+            head["contract"]["years_remaining"] = 1
+            save["state"]["current_date"] = "2026-10-01"
+            age_staff_contracts(save)
+            new_head = next(slot for slot in save["staff_slots"] if slot["team_id"] == "team_gsw" and slot["slot"] == "head_coach")
+            self.assertEqual(new_head["status"], "interim_staff_vacancy")
+            self.assertNotEqual(new_head["name"], old_name)
+            self.assertTrue(any(staff.get("name") == old_name and staff.get("market_status") == "expired_contract" for staff in save.get("former_staff", [])))
 
     def test_box_score_influence_sort_key_values_all_around_lines(self):
         scorer = {"points": 28, "rebounds": 2, "assists": 1, "steals": 0, "blocks": 0, "turnovers": 4}

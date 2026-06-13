@@ -11,7 +11,7 @@ from typing import Any
 from .health import advance_development, simulate_health
 from .schema import CANONICAL_SEASON, CANONICAL_START_DATE, CoachRating, to_plain
 from .sim import build_sim_indices, espn_team_id_map, load_sim_context, sim_game_with_context
-from .staff import ROLE_LABELS, STAFF_SLOTS, apply_head_coach_reputation, hire_staff_from_save, initialize_save_staff_slots, negotiate_staff_hire, simulate_ai_staff_changes, staff_grade
+from .staff import ROLE_LABELS, STAFF_SLOTS, apply_head_coach_reputation, hire_staff_from_save, initialize_save_staff_slots, interim_staff, is_interim_staff, negotiate_staff_hire, simulate_ai_staff_changes, staff_grade
 from .utils import clamp, stable_id
 
 
@@ -2383,23 +2383,39 @@ def apply_effective_player_ages(canonical: dict[str, Any], save: dict[str, Any])
     if year_delta <= 0:
         for player in canonical.get("players", []):
             try:
-                player["display_age"] = None if float(player.get("age") or 0) <= 0 else player.get("age")
+                base_age = player.get("age_base_value")
+                if base_age is None:
+                    base_age = player.get("_base_age")
+                if base_age is None:
+                    base_age = player.get("age")
+                if base_age is not None:
+                    player["age_base_value"] = base_age
+                    player["_base_age"] = base_age
+                player["age"] = base_age
+                player["display_age"] = None if float(base_age or 0) <= 0 else base_age
             except (TypeError, ValueError):
                 player["display_age"] = None
         return
     for player in canonical.get("players", []):
-        if player.get("age") is None:
+        base_age = player.get("age_base_value")
+        if base_age is None:
+            base_age = player.get("_base_age")
+        if base_age is None:
+            base_age = player.get("age")
+        if base_age is None:
             player["display_age"] = None
             continue
         try:
-            if float(player["age"]) <= 0:
+            if float(base_age) <= 0:
                 player["display_age"] = None
                 continue
+            player["age_base_value"] = base_age
+            player["_base_age"] = base_age
             base_start = int(player.get("age_base_start_year") or season_start_year(str(player.get("age_base_season") or CANONICAL_SEASON)))
             if player.get("draft_year"):
                 base_start = max(base_start, int(player.get("draft_year") or base_start))
             player_delta = max(0, season_start_year(active_season) - base_start)
-            player["age"] = round(float(player["age"]) + player_delta, 1)
+            player["age"] = round(float(base_age) + player_delta, 1)
             player["display_age"] = player["age"]
         except (TypeError, ValueError):
             player["display_age"] = None
@@ -2887,8 +2903,8 @@ def cap_lines_for_season(season: str | None) -> dict[str, float]:
     }
 
 
-def team_cap_summary(canonical: dict[str, Any], save: dict[str, Any], team_id: str) -> dict[str, Any]:
-    season = save.get("meta", {}).get("season") or CANONICAL_SEASON
+def team_cap_summary(canonical: dict[str, Any], save: dict[str, Any], team_id: str, season: str | None = None) -> dict[str, Any]:
+    season = season or save.get("meta", {}).get("season") or CANONICAL_SEASON
     lines = cap_lines_for_season(season)
     total = 0.0
     unresolved = 0
@@ -4075,6 +4091,19 @@ def strategic_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any
             if score < 8.5:
                 continue
             salary = strategic_signing_salary(player, score)
+            cap = team_cap_summary(canonical_with_save(canonical, save), save, team["id"], season=next_season)
+            tax_space = float(cap.get("tax_space_millions") or 0.0) * 1_000_000
+            hard_space = float(cap.get("hard_cap_space_millions") or 0.0) * 1_000_000
+            minimum_salary = 2_250_000
+            if salary > hard_space:
+                if len(roster) < ROSTER_MINIMUM:
+                    salary = minimum_salary
+                else:
+                    continue
+            if salary > tax_space and len(roster) >= ROSTER_MINIMUM:
+                continue
+            if salary > tax_space and len(roster) < ROSTER_MINIMUM:
+                salary = minimum_salary
             save.setdefault("roster_overrides", {})[player["id"]] = team["id"]
             save.setdefault("contract_overrides", {})[player["id"]] = {
                 "team_id": team["id"],
@@ -4389,13 +4418,39 @@ def refresh_health_for_new_season(save: dict[str, Any], start_date: str) -> None
 
 
 def age_staff_contracts(save: dict[str, Any]) -> None:
+    updated: list[dict[str, Any]] = []
+    expired_count = 0
+    date_value = save.get("state", {}).get("current_date") or "season_rollover"
     for staff in save.get("staff_slots", []):
+        staff = deepcopy(staff)
         contract = staff.setdefault("contract", {})
         years = int(contract.get("years_remaining") or 1)
         contract["years_remaining"] = max(0, years - 1)
         if contract["years_remaining"] == 0:
+            team_id = staff.get("team_id")
+            slot = staff.get("slot")
+            if team_id and slot:
+                if not is_interim_staff(staff):
+                    former = deepcopy(staff)
+                    former["market_status"] = "expired_contract"
+                    former["team_id"] = None
+                    save.setdefault("former_staff", []).append(former)
+                    team_abbrev = str(team_id).replace("team_", "").upper()
+                    add_news(
+                        save,
+                        "staff_contract",
+                        f"{team_abbrev} {ROLE_LABELS.get(slot, slot)} {staff.get('name')} reached contract expiration; an interim has been appointed.",
+                        date_value=date_value,
+                    )
+                replacement = interim_staff(team_id, slot, date_value, expired_count, staff.get("id"), staff.get("name"))
+                updated.append(replacement)
+                expired_count += 1
+                continue
             staff["job_security"] = min(float(staff.get("job_security") or 50.0), 42.0)
             staff["notes"] = f"{staff.get('notes', '')} Contract expired entering new season.".strip()
+        updated.append(staff)
+    if updated:
+        save["staff_slots"] = sorted(updated, key=lambda item: (item.get("team_id") or "", item.get("slot") or "", item.get("id") or ""))
 
 
 def canonical_hash(canonical: dict[str, Any]) -> str:
