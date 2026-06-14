@@ -68,6 +68,7 @@ from nba_gm_data.save import (
     write_save,
     canonical_with_save,
     merge_health_results,
+    maybe_queue_rare_drama,
     press_impact,
     queue_aggregated_press_event,
     generate_league_awards,
@@ -113,7 +114,7 @@ from nba_gm_data.sim import (
 )
 from nba_gm_data.storage import write_outputs
 from nba_gm_data.staff import fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, simulate_ai_staff_changes, staff_budget_for_team, staff_budget_snapshot, staff_grade, staff_market_report, staff_team_report
-from nba_gm_data.transactions import apply_trade_to_save, current_salary, evaluate_trade, find_trade, find_trade_for_assets, gm_report, package_value_for_team, simulate_ai_trades, stepien_guardrail_issues, trade_block_report, with_transaction_context
+from nba_gm_data.transactions import apply_trade_to_save, current_salary, evaluate_trade, find_trade, find_trade_for_assets, gm_report, package_value_for_team, pick_asset_value, simulate_ai_trades, stepien_guardrail_issues, trade_block_report, tradeable_picks_for_team, with_transaction_context
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -996,14 +997,50 @@ class DataFoundationTests(unittest.TestCase):
             self.assertTrue(all(offer["source"] == "ai" for offer in initialized["free_agent_offers"]))
 
     def test_future_second_round_picks_are_tradeable_scaffold_assets(self):
+        active = with_transaction_context(self.plain)
         future_seconds = [
-            pick for pick in self.plain["draft_picks"]
+            pick for team in active["teams"]
+            for pick in tradeable_picks_for_team(active, team["id"])
             if str(pick.get("season")) > "2026"
             and int(pick.get("round") or 0) == 2
-            and pick.get("current_owner_team_id")
         ]
         self.assertGreaterEqual(len(future_seconds), 30)
         self.assertTrue(any(pick.get("status") == "inferred_future_second_round_scaffold" for pick in future_seconds))
+
+    def test_future_pick_values_reflect_timeline_uncertainty_and_dedupe_display_assets(self):
+        active = with_transaction_context(self.plain)
+        sac = next(team for team in active["teams"] if team["abbrev"] == "SAC")
+        picks = tradeable_picks_for_team(active, sac["id"])
+        future_seconds = [pick for pick in picks if str(pick.get("season")) > "2026" and int(pick.get("round") or 0) == 2]
+        self.assertGreaterEqual(len(future_seconds), 6)
+        label_keys = [
+            (
+                pick.get("season"),
+                pick.get("round"),
+                pick.get("original_team_id"),
+                pick.get("current_owner_team_id"),
+                pick.get("protections") or pick.get("protection_summary") or "",
+            )
+            for pick in picks
+        ]
+        self.assertEqual(len(label_keys), len(set(label_keys)))
+        own_first_values = {
+            str(pick.get("season")): pick_asset_value(pick, "neutral")
+            for pick in picks
+            if int(pick.get("round") or 0) == 1
+            and pick.get("original_team_id") == sac["id"]
+            and str(pick.get("season")) >= "2027"
+        }
+        self.assertGreater(own_first_values["2027"], own_first_values["2032"])
+        self.assertGreater(len(set(own_first_values.values())), 3)
+
+    def test_rare_drama_deadline_window_does_not_crash(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "league_save.json"
+            save = create_league_save(ROOT, self.plain, "SAC", save_path, seed=1)
+            maybe_queue_rare_drama(save, self.plain, "2025-11-01", "2026-02-05", seed=1)
+            self.assertTrue(save.get("rare_drama_triggered"))
+            self.assertTrue(any(item.get("kind") == "rare_drama" for item in save.get("pending_press_events", [])))
 
     def test_effective_age_is_idempotent_for_save_aware_canonical(self):
         with tempfile.TemporaryDirectory() as tmp:

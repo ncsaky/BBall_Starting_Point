@@ -381,6 +381,23 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
     home_players = game_player_pool(context, game_id, home_team, mode, game_date=game_date)
     away_players = game_player_pool(context, game_id, away_team, mode, game_date=game_date)
     coach_by_team = context.get("indices", {}).get("coach_by_team") or {rating.team_id: rating for rating in coach_ratings(canonical)}
+    if mode == "sandbox-sim":
+        home_players = matchup_adjusted_player_pool(
+            canonical,
+            home_players,
+            away_players,
+            coach_by_team.get(home_team["id"]),
+            game_id,
+            seed,
+        )
+        away_players = matchup_adjusted_player_pool(
+            canonical,
+            away_players,
+            home_players,
+            coach_by_team.get(away_team["id"]),
+            game_id,
+            seed,
+        )
     home_features = game_team_features(context, canonical, home_team, home_players, mode)
     away_features = game_team_features(context, canonical, away_team, away_players, mode)
     home_game_context = game_context_for_team(context, game, home_team)
@@ -464,6 +481,65 @@ def game_player_pool(context: dict[str, Any], game_id: str, team: dict[str, Any]
         pool = sandbox_health_adjusted_pool(canonical, game_date, pool)
     cache[cache_key] = normalize_minutes(pool)
     return cache[cache_key]
+
+
+def matchup_adjusted_player_pool(
+    canonical: dict[str, Any],
+    pool: list[dict[str, Any]],
+    opponent_pool: list[dict[str, Any]],
+    coach: CoachRating | None,
+    game_id: str,
+    seed: int,
+) -> list[dict[str, Any]]:
+    """Small coach-driven game-plan minutes nudges around the shared rotation."""
+    if not pool or not opponent_pool or coach is None:
+        return pool
+    ratings = coach.ratings
+    adjustment_skill = (
+        (float(ratings.get("matchup_adjustments", 3.0)) - 3.0) * 0.55
+        + (float(ratings.get("hands_on_control", 3.0)) - 3.0) * 0.22
+    )
+    if abs(adjustment_skill) < 0.05:
+        return pool
+
+    def weighted_opp_feature(key: str) -> float:
+        total = sum(float(item.get("minutes") or 0.0) for item in opponent_pool) or 1.0
+        return sum(
+            player_feature_vector(canonical, item["player"]).features.get(key, 50.0) * float(item.get("minutes") or 0.0)
+            for item in opponent_pool
+        ) / total
+
+    opp_creation = weighted_opp_feature("shot_creation")
+    opp_spacing = weighted_opp_feature("spacing")
+    opp_rim = weighted_opp_feature("rim_deterrence")
+    opp_rebounding = weighted_opp_feature("offensive_rebounding")
+    rng = random.Random(f"{seed}:{game_id}:{coach.team_id}:matchup_rotation")
+    adjusted: list[dict[str, Any]] = []
+    deltas: dict[str, float] = {}
+    for item in pool:
+        player = item["player"]
+        features = player_feature_vector(canonical, player).features
+        minutes = float(item.get("minutes") or 0.0)
+        if minutes <= 0:
+            adjusted.append(item)
+            continue
+        defense_score = (
+            max(0.0, opp_creation - 58.0) * (features.get("defensive_events", 50.0) - 50.0) * 0.0024
+            + max(0.0, opp_spacing - 60.0) * (features.get("defensive_weak_link", 50.0) - 50.0) * -0.0018
+        )
+        offense_score = max(0.0, opp_rim - 60.0) * (features.get("spacing", 50.0) - 50.0) * 0.0018
+        glass_score = max(0.0, opp_rebounding - 58.0) * (
+            features.get("offensive_rebounding", 50.0) + features.get("rim_deterrence", 50.0) - 100.0
+        ) * 0.0012
+        raw_delta = (defense_score + offense_score + glass_score + rng.uniform(-0.12, 0.12)) * adjustment_skill
+        cap = 1.8 if minutes >= 18 else 1.2
+        deltas[player["id"]] = clamp(raw_delta, -cap, cap)
+        adjusted.append({**item})
+    for item in adjusted:
+        player_id = item["player"]["id"]
+        current = float(item.get("minutes") or 0.0)
+        item["minutes"] = clamp(current + deltas.get(player_id, 0.0), max(0.0, current - 2.0), min(42.0, current + 2.0))
+    return normalize_minutes(adjusted)
 
 
 def synthetic_actual_player(row: dict[str, Any], team: dict[str, Any]) -> dict[str, Any]:

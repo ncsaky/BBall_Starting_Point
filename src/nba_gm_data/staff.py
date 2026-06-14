@@ -746,16 +746,22 @@ def simulate_ai_staff_changes(
             if not current:
                 continue
             score, reasons = ai_staff_trigger_score(current, slot, state, team_pressure, underperforming, through_date)
+            market_sample = generate_staff_market(canonical, save, slot=slot)[:18]
+            if staff_grade(current) <= 68 and any(staff_grade(candidate) >= 82 for candidate in market_sample):
+                score += 10.0
+                reasons.append("rare_elite_staff_market_candidate")
             if score < conservative_staff_threshold(slot, seasonal_review):
                 continue
             max_offer = max_staff_offer_millions(canonical, save, team["id"], slot)
             candidates = []
-            for candidate in generate_staff_market(canonical, save, slot=slot)[:10]:
+            for candidate in market_sample:
                 if candidate.get("id") in reserved_candidate_ids:
                     continue
                 ask = float(candidate.get("asking_salary_millions") or role_salary_anchor(slot))
                 upgrade = staff_grade(candidate) - staff_grade(current)
                 minimum_upgrade = 7.0 if slot == "head_coach" and not is_interim_staff(current) else 5.0
+                if staff_grade(candidate) >= 82 and staff_grade(current) <= 68:
+                    minimum_upgrade = min(minimum_upgrade, 3.0)
                 if upgrade < minimum_upgrade:
                     continue
                 if max_offer and ask > max_offer * 1.08:

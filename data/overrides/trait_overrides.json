@@ -128,10 +128,10 @@
     {
       "player_name": "Trae Young",
       "traits": {
-        "shooting_range": {"value": 80, "confidence": 0.74, "notes": "Deep pull-up threat remains a major offensive lever, but the streaky efficiency profile should not read as Curry-level portability."},
-        "shot_versatility": {"value": 84, "confidence": 0.76, "notes": "Elite on-ball scoring craft and pull-up creation remain central positives."},
+        "shooting_range": {"value": 76, "confidence": 0.74, "notes": "Deep pull-up threat remains a major offensive lever, but the streaky efficiency profile should not read as Curry-level portability."},
+        "shot_versatility": {"value": 80, "confidence": 0.76, "notes": "Elite on-ball scoring craft and pull-up creation remain central positives, but sim scoring volume was running too hot."},
         "handle_pressure": {"value": 91, "confidence": 0.82, "notes": "High-end primary creator who bends defenses with the ball."},
-        "rim_pressure": {"value": 70, "confidence": 0.7, "notes": "Paint touches and foul pressure matter, but size limits true rim finishing pressure; floater creation should not be mistaken for dominant at-rim scoring."},
+        "rim_pressure": {"value": 62, "confidence": 0.7, "notes": "Paint touches and foul pressure matter, but size limits true rim finishing pressure; floater creation should not be mistaken for dominant at-rim scoring."},
         "passing_reads": {"value": 93, "confidence": 0.84, "notes": "Elite passing volume and advanced reads should preserve his offensive engine value."},
         "foot_speed_lateral_agility": {"value": 36, "confidence": 0.76, "notes": "Limited size and lateral defensive tools create matchup pressure."},
         "defensive_effort": {"value": 34, "confidence": 0.74, "notes": "Defensive limitations remain a meaningful two-way value penalty."},
@@ -139,6 +139,32 @@
         "rim_deterrence": {"value": 22, "confidence": 0.8, "notes": "Size prevents meaningful rim deterrence."},
         "portability": {"value": 56, "confidence": 0.7, "notes": "Offensive creation is elite, but contract cost, defensive targeting, and on-ball dependence narrow ideal roster fits."},
         "playoff_translation": {"value": 68, "confidence": 0.68, "notes": "Creation and passing translate, while defense and size can become more targetable in playoff matchups."}
+      }
+    },
+    {
+      "player_name": "Malik Monk",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "defensive_effort": {"value": 48, "confidence": 0.62, "notes": "Manual playtest correction: offensive spark should not translate into a plus defensive/rebounding profile."},
+        "foot_speed_lateral_agility": {"value": 54, "confidence": 0.58, "notes": "Adequate guard movement, not an impact stopper."},
+        "screen_navigation": {"value": 48, "confidence": 0.58, "notes": "Should not be credited as a high-end chase defender."},
+        "rim_deterrence": {"value": 28, "confidence": 0.64, "notes": "Guard size offers negligible rim deterrence."},
+        "offensive_rebounding": {"value": 34, "confidence": 0.62, "notes": "Rebounding value should be low for his role and size."},
+        "scheme_iq": {"value": 52, "confidence": 0.56, "notes": "Functional team-defense understanding without boosting him into a plus defender."}
+      }
+    },
+    {
+      "player_name": "Russell Westbrook",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "release_speed": {"value": 38, "confidence": 0.7, "notes": "Manual correction: jumper speed/gravity should be a clear limitation at this stage."},
+        "shooting_range": {"value": 28, "confidence": 0.76, "notes": "Known non-shooter; defenses should be comfortable helping off him."},
+        "shot_versatility": {"value": 44, "confidence": 0.68, "notes": "Can still create chaotic looks, but not efficient multi-level scoring value."},
+        "handle_pressure": {"value": 66, "confidence": 0.64, "notes": "Still applies downhill pressure, but no longer prime MVP-level creation pressure."},
+        "rim_pressure": {"value": 68, "confidence": 0.66, "notes": "Athletic rim pressure remains the positive offensive trait."},
+        "passing_reads": {"value": 70, "confidence": 0.66, "notes": "Still a capable passer, with turnover/spacing fit costs."},
+        "portability": {"value": 36, "confidence": 0.7, "notes": "Non-shooting guard fit significantly limits lineup portability."},
+        "playoff_translation": {"value": 42, "confidence": 0.66, "notes": "Spacing and decision costs become easier to target in playoff-style games."}
       }
     },
     {

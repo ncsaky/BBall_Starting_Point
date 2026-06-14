@@ -732,6 +732,7 @@ def parse_cli_assets(canonical: dict[str, Any], from_team: str, to_team: str, sp
 
 def with_transaction_context(canonical: dict[str, Any] | Any, config: dict[str, Any] | None = None) -> dict[str, Any]:
     canonical = to_plain(canonical)
+    ensure_future_second_round_scaffolds(canonical)
     if transaction_context_is_complete(canonical):
         annotate_pick_value_context(canonical)
         return canonical
@@ -739,6 +740,39 @@ def with_transaction_context(canonical: dict[str, Any] | Any, config: dict[str, 
     enriched = {**canonical, **context}
     annotate_pick_value_context(enriched)
     return enriched
+
+
+def ensure_future_second_round_scaffolds(canonical: dict[str, Any]) -> None:
+    """Add practical own-second scaffolds because current public ledger is first-heavy."""
+    teams = [team for team in canonical.get("teams", []) if team.get("id")]
+    picks = canonical.setdefault("draft_picks", [])
+    existing = {
+        (str(pick.get("season")), int(pick.get("round") or 0), pick.get("original_team_id"))
+        for pick in picks
+    }
+    active_start = season_start_from_label(str(canonical.get("meta", {}).get("active_season") or "2025-26"))
+    for team in teams:
+        team_id = team["id"]
+        abbrev = str(team.get("abbrev") or team_id.replace("team_", "")).lower()
+        for year in range(max(2027, active_start + 1), active_start + 8):
+            key = (str(year), 2, team_id)
+            if key in existing:
+                continue
+            pick_id = f"pick_future-{abbrev}-{year}-2-own"
+            picks.append(
+                {
+                    "id": pick_id,
+                    "season": str(year),
+                    "round": 2,
+                    "original_team_id": team_id,
+                    "current_owner_team_id": team_id,
+                    "status": "inferred_future_second_round_scaffold",
+                    "confidence": 0.36,
+                    "source_ids": ["src_manual_overrides_2025_26"],
+                    "notes": "Gameplay scaffold for future own second-round pick. Conditions/protections are deferred in v1.",
+                }
+            )
+            existing.add(key)
 
 
 def transaction_context_is_complete(canonical: dict[str, Any]) -> bool:
@@ -786,7 +820,57 @@ def annotate_pick_value_context(canonical: dict[str, Any]) -> None:
         pick_start = pick_season_start(pick)
         if pick_start is not None and pick_start < current_start:
             continue
-        pick["projected_pick_slot"] = int(projected_slots.get(original, 18))
+        base_slot = int(projected_slots.get(original, 18))
+        distance = max(0, (pick_start or current_start + 1) - current_start)
+        pick["projected_pick_slot"] = int(round(future_adjusted_pick_slot(canonical, original, base_slot, distance)))
+        pick["_future_distance_years"] = distance
+
+
+def future_adjusted_pick_slot(canonical: dict[str, Any], team_id: str, base_slot: int, distance: int) -> float:
+    if distance <= 0:
+        return clamp(float(base_slot), 1, 30)
+    state = next((item for item in canonical.get("team_strategic_states", []) if item.get("team_id") == team_id), {})
+    values = {value.get("player_id"): value for value in canonical.get("player_asset_valuations", [])}
+    roster = [player for player in canonical.get("players", []) if player.get("team_id") == team_id]
+    top_players = sorted(
+        roster,
+        key=lambda player: float((values.get(player.get("id")) or fallback_asset_valuation(player)).get("player_value") or 0.0),
+        reverse=True,
+    )[:5]
+    top_three = top_players[:3]
+    avg_top_age = (
+        sum(maybe_float(player.get("age")) or 27.0 for player in top_three) / len(top_three)
+        if top_three
+        else 27.0
+    )
+    youth_score = sum(
+        max(0.0, float((values.get(player.get("id")) or fallback_asset_valuation(player)).get("development_upside") or 0.0))
+        for player in roster
+        if (maybe_float(player.get("age")) or 99.0) <= 24.0
+    )
+    phase = str(state.get("phase") or "balanced")
+    mean_pull = min(0.58, distance * 0.10)
+    slot = float(base_slot) * (1.0 - mean_pull) + 15.5 * mean_pull
+    movement = 0.0
+    if base_slot <= 8:
+        movement += 0.65 + min(0.95, youth_score / 90.0)
+        if phase in {"rebuilding", "developing"}:
+            movement += 0.35
+        if avg_top_age >= 30.5 and youth_score < 28:
+            movement -= 0.35
+    elif base_slot >= 23:
+        if avg_top_age >= 31.0:
+            movement -= 1.15 + min(0.5, (avg_top_age - 31.0) * 0.18)
+        elif avg_top_age <= 27.0 or phase == "contending_with_future_upside":
+            movement += 0.28
+        else:
+            movement -= 0.25
+    else:
+        if avg_top_age <= 25.5 and youth_score >= 36:
+            movement += 0.45
+        elif avg_top_age >= 31.0:
+            movement -= 0.55
+    return clamp(slot + movement * distance, 1, 30)
 
 
 def fallback_asset_valuation(player: dict[str, Any] | None) -> dict[str, float]:
@@ -892,10 +976,30 @@ def buyer_offer_packages(
 def market_trade_target_value(player: dict[str, Any], valuation: dict[str, Any]) -> float:
     raw = float(valuation.get("player_value") or 0.0)
     minutes = display_minutes_projection(player)
+    ability = maybe_float(player.get("current_ability")) or maybe_float(player.get("overall")) or (38.0 + minutes * 1.15)
+    potential = maybe_float(player.get("potential")) or ability
+    upside = max(0.0, potential - ability)
+    saved_stats = player.get("_save_stats") or {}
+    logged_games = maybe_float(saved_stats.get("games")) or 0.0
+    logged_minutes = maybe_float(saved_stats.get("minutes")) or 0.0
+    logged_mpg = logged_minutes / logged_games if logged_games else minutes
+    ppg = (maybe_float(saved_stats.get("points")) or 0.0) / logged_games if logged_games else 0.0
+    elite_prospect_floor = 0.0
+    age = maybe_float(player.get("age")) or 99.0
+    if age <= 21 and ability >= 54 and potential >= 80:
+        elite_prospect_floor = 38.0 + max(0.0, ability - 54.0) * 1.25 + max(0.0, potential - 80.0) * 0.72
+    if minutes < 2 and raw < 74:
+        raw = min(raw, max(elite_prospect_floor, 13.0 + max(0.0, ability - 50.0) * 0.52 + upside * 0.42))
+    elif minutes < 8 and raw < 74:
+        raw = min(raw, max(elite_prospect_floor, 20.0 + max(0.0, ability - 50.0) * 0.56 + upside * 0.45 + minutes * 0.38))
+    elif minutes < 14 and raw < 72:
+        raw = min(raw, max(elite_prospect_floor, 28.0 + max(0.0, ability - 52.0) * 0.58 + upside * 0.38 + minutes * 0.32))
+    if logged_games >= 8 and logged_mpg < 6 and ppg < 4 and raw < 72:
+        raw = min(raw, 19.0 + max(0.0, ability - 52.0) * 0.5 + upside * 0.32)
     if raw < 62 or minutes >= 28:
-        return raw
+        return round(clamp(raw, 1.0, 99.0), 2)
     role_scale = clamp((max(4.0, minutes) / 30.0) ** 1.22, 0.36, 1.0)
-    overall_proxy = float(player.get("current_ability") or player.get("overall") or 38.0 + minutes * 1.15)
+    overall_proxy = float(ability)
     compressed = raw * role_scale
     if minutes < 20 and raw >= 70:
         compressed = min(compressed, 24.0 + max(0.0, overall_proxy - 55.0) * 0.5 + minutes * 0.5)
@@ -943,11 +1047,7 @@ def buyer_offer_packages_for_value(
     tradable_players = tradable_players[:max(3, int(max_player_options))]
     buyer_state = next((item for item in canonical.get("team_strategic_states", []) if item.get("team_id") == buyer["id"]), {})
     picks = sorted(
-        [
-            pick for pick in canonical.get("draft_picks", [])
-            if pick.get("current_owner_team_id") == buyer["id"]
-            and pick.get("status") not in {"used_draft_pick", "expired_draft_pick"}
-        ],
+        tradeable_picks_for_team(canonical, buyer["id"]),
         key=lambda pick: pick_offer_preference_score(pick, buyer_state.get("phase", "balanced"), target_value),
         reverse=True,
     )[:9]
@@ -1576,7 +1676,7 @@ def youth_pipeline_score(players: list[dict[str, Any]], team_values: list[Player
 
 
 def team_pick_inventory(canonical: dict[str, Any], team_id: str) -> dict[str, Any]:
-    picks = [pick for pick in canonical.get("draft_picks", []) if pick.get("current_owner_team_id") == team_id]
+    picks = tradeable_picks_for_team(canonical, team_id)
     firsts = [pick for pick in picks if int(pick.get("round") or 0) == 1]
     seconds = [pick for pick in picks if int(pick.get("round") or 0) == 2]
     return {
@@ -2037,6 +2137,9 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
         slot_value = int(slot) if slot is not None else None
     except (TypeError, ValueError):
         slot_value = None
+    active_start = season_start_from_label(str(pick.get("_active_season") or pick.get("active_season") or "2025-26"))
+    pick_start = pick_season_start(pick) or active_start + 1
+    distance = max(0, pick_start - active_start)
     if round_no == 1:
         if slot_value:
             value = clamp(75 - slot_value * 1.35, 24, 75)
@@ -2048,14 +2151,16 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
             value = clamp(72 - pick_no * 1.35, 26, 72)
         else:
             value = 38.0
+        value -= max(0, distance - 1) * 1.18
     else:
         if slot_value:
-            second_slot = max(31, slot_value)
+            second_slot = slot_value + 30 if slot_value <= 30 else max(31, slot_value)
             value = clamp(17.5 - (second_slot - 31) * 0.23, 5.0, 17.5)
         else:
             value = 9.5
-    if pick.get("protections"):
-        value -= 4.0
+        value -= max(0, distance - 1) * 0.42
+    if pick.get("status") == "inferred_future_second_round_scaffold":
+        value -= 0.75
     if phase in {"rebuilding", "developing"}:
         value *= 1.18
     if phase in {"contending", "contending_with_future_upside"}:
@@ -2094,6 +2199,49 @@ def pick_season_start(pick: dict[str, Any]) -> int | None:
         return None
 
 
+def tradeable_picks_for_team(canonical: dict[str, Any], team_id: str) -> list[dict[str, Any]]:
+    deduped: dict[tuple[Any, ...], dict[str, Any]] = {}
+    active_season = str(canonical.get("meta", {}).get("active_season") or "2025-26")
+    for pick in canonical.get("draft_picks", []):
+        if pick.get("current_owner_team_id") != team_id:
+            continue
+        if pick.get("status") in {"used_draft_pick", "expired_draft_pick"}:
+            continue
+        key = (
+            str(pick.get("season") or ""),
+            int(pick.get("round") or 0),
+            pick.get("original_team_id"),
+            pick.get("current_owner_team_id"),
+        )
+        pick["_active_season"] = active_season
+        previous = deduped.get(key)
+        if previous is None or pick_record_sort_key(pick) > pick_record_sort_key(previous):
+            deduped[key] = pick
+    return sorted(
+        deduped.values(),
+        key=lambda pick: (
+            str(pick.get("season") or ""),
+            int(pick.get("round") or 9),
+            pick.get("original_team_id") or "",
+            pick.get("id") or "",
+        ),
+    )
+
+
+def normalize_pick_protection_text(pick: dict[str, Any]) -> str:
+    return " ".join(str(pick.get("protections") or pick.get("protection_summary") or "").lower().split())
+
+
+def pick_record_sort_key(pick: dict[str, Any]) -> tuple[float, int, str]:
+    status_rank = {
+        "verified_2026_draft_board": 4,
+        "verified_future_pick_reference": 3,
+        "inferred_future_second_round_scaffold": 2,
+        "research_pending": 1,
+    }.get(str(pick.get("status") or ""), 0)
+    return (float(pick.get("confidence") or 0.0), status_rank, str(pick.get("id") or ""))
+
+
 def season_start_from_label(season: str | None) -> int:
     try:
         return int(str(season or "2025-26").split("-")[0])
@@ -2112,17 +2260,11 @@ def cap_lines_for_season(season: str | None) -> dict[str, float]:
 
 def best_tradeable_pick(canonical: dict[str, Any], team_id: str) -> dict[str, Any] | None:
     picks = [
-        pick for pick in canonical.get("draft_picks", [])
-        if pick.get("current_owner_team_id") == team_id
-        and pick.get("status") not in {"used_draft_pick", "expired_draft_pick"}
-        and int(pick.get("round") or 0) == 1
+        pick for pick in tradeable_picks_for_team(canonical, team_id)
+        if int(pick.get("round") or 0) == 1
     ]
     if not picks:
-        picks = [
-            pick for pick in canonical.get("draft_picks", [])
-            if pick.get("current_owner_team_id") == team_id
-            and pick.get("status") not in {"used_draft_pick", "expired_draft_pick"}
-        ]
+        picks = tradeable_picks_for_team(canonical, team_id)
     if not picks:
         return None
     return sorted(picks, key=lambda pick: pick_asset_value(pick, "neutral"), reverse=True)[0]
@@ -2206,7 +2348,20 @@ def compact_player(player: dict[str, Any]) -> dict[str, Any]:
 def pick_label(canonical: dict[str, Any], pick: dict[str, Any]) -> str:
     owner = team_by_id(canonical, pick["current_owner_team_id"])["abbrev"] if pick.get("current_owner_team_id") else "UNK"
     original = team_by_id(canonical, pick["original_team_id"])["abbrev"] if pick.get("original_team_id") else "UNK"
-    return f"{pick['season']} R{pick['round']} {original} pick owned by {owner}"
+    note = pick_label_note(pick)
+    return f"{pick['season']} R{pick['round']} {original} pick owned by {owner}{note}"
+
+
+def pick_label_note(pick: dict[str, Any]) -> str:
+    text = str(pick.get("protections") or pick.get("protection_summary") or "").strip()
+    if not text:
+        return ""
+    compact = " ".join(text.split())
+    if compact.upper() == compact and compact.isalpha() and 2 <= len(compact) <= 4:
+        return ""
+    if len(compact) > 54:
+        compact = compact[:51].rstrip() + "..."
+    return f" ({compact})"
 
 
 def proposal_summary(canonical: dict[str, Any], proposal: dict[str, Any]) -> str:
