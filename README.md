@@ -4,7 +4,106 @@ A local, CLI-first NBA front-office simulator built around the 2025-26 preseason
 
 Current status: **playable pre-alpha / internal alpha candidate**. It is ready for private testing by patient testers, not public beta.
 
-## Quick Start For Testers
+## Setup From Zero
+
+You run this game from a terminal. On macOS that app is called **Terminal**. On Windows, use **PowerShell** or **Windows Terminal**.
+
+Before cloning the repo, install:
+
+- **Git**: needed to download the game from GitHub.
+- **Python 3.11 or newer**: needed to run the game.
+- **ffmpeg**: optional, only needed if you want to build or rebuild the ASCII loading-screen animation cache from local video files.
+
+### macOS Setup
+
+Open **Terminal** and run:
+
+```bash
+git --version
+python3 --version
+```
+
+If `git` is missing, install Apple's command line tools:
+
+```bash
+xcode-select --install
+```
+
+If `python3 --version` is older than Python 3.11, install the latest Python 3 release from [python.org](https://www.python.org/downloads/), then close and reopen Terminal.
+
+Optional, for rebuilding loading animations:
+
+```bash
+brew install ffmpeg
+```
+
+If `brew` is missing, install Homebrew from [brew.sh](https://brew.sh/) first.
+
+Choose where the game should live, then clone it:
+
+```bash
+cd ~/Documents
+git clone https://github.com/ncsaky/BBall_Starting_Point.git
+cd BBall_Starting_Point
+```
+
+Create the local Python environment and install the game:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e .
+```
+
+Start the game:
+
+```bash
+nba-gm-data play --root .
+```
+
+### Windows Setup
+
+Install:
+
+- Git for Windows from [git-scm.com](https://git-scm.com/download/win)
+- Python 3.11+ from [python.org](https://www.python.org/downloads/windows/)
+
+During Python installation, check **Add python.exe to PATH**.
+
+Open **PowerShell** and check:
+
+```powershell
+git --version
+py --version
+```
+
+Choose where the game should live, then clone it:
+
+```powershell
+cd $HOME\Documents
+git clone https://github.com/ncsaky/BBall_Starting_Point.git
+cd BBall_Starting_Point
+```
+
+Create the local Python environment and install the game:
+
+```powershell
+py -3.11 -m venv .venv
+.venv\Scripts\activate
+python -m pip install --upgrade pip
+python -m pip install -e .
+```
+
+Start the game:
+
+```powershell
+nba-gm-data play --root .
+```
+
+If `nba-gm-data` is not found, make sure the virtual environment is active. You should see `(.venv)` at the start of the terminal prompt.
+
+## Quick Start For Returning Testers
 
 Open a terminal in this folder.
 
@@ -30,6 +129,30 @@ nba-gm-data play --root .
 ```
 
 If the `py -3.11` command is missing, install Python 3.11+ from [python.org](https://www.python.org/downloads/) and check “Add Python to PATH” during installation.
+
+## Optional Loading-Screen Videos
+
+Large video files are intentionally not stored in GitHub because GitHub blocks files over 100 MB. To use custom ASCII loading screens, create this folder after cloning:
+
+```bash
+mkdir -p "Animation Videos"
+```
+
+On Windows PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force "Animation Videos"
+```
+
+Put your local `.mp4` files inside `Animation Videos/`. The game automatically prefers the largest MP4 in that folder for loading-screen animation caches.
+
+To rebuild the loading animation cache from your local videos:
+
+```bash
+nba-gm-data animation-cache --root . --segments 8
+```
+
+That command requires `ffmpeg`. The generated cache lives in `.cache/` and is ignored by Git.
 
 ## Starting A Save
 

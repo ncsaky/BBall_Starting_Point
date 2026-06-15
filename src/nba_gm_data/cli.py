@@ -2,10 +2,23 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sys
 from pathlib import Path
 from typing import Any
 
+from .animation import (
+    DEFAULT_BACKGROUND,
+    DEFAULT_BG_SATURATION,
+    DEFAULT_CELL_ASPECT,
+    DEFAULT_FOREGROUND_A,
+    DEFAULT_FOREGROUND_B,
+    DEFAULT_FPS,
+    DEFAULT_PROFILE,
+    DEFAULT_RANDOMNESS,
+    DEFAULT_SEGMENT_SECONDS,
+    DEFAULT_TEXT_INPUT,
+)
 from .contract_ai import (
     apply_contract_to_save,
     contract_market_report,
@@ -443,11 +456,34 @@ def main(argv: list[str] | None = None) -> int:
 
     animation_parser = subparsers.add_parser("animation-cache", help="Pre-render ignored local MP4s into terminal ASCII loading frames.", parents=[common])
     animation_parser.add_argument("--video", default=None)
-    animation_parser.add_argument("--seconds", type=int, default=45)
-    animation_parser.add_argument("--fps", type=int, default=8)
-    animation_parser.add_argument("--width", type=int, default=88)
-    animation_parser.add_argument("--height", type=int, default=30)
+    animation_parser.add_argument("--seconds", type=int, default=DEFAULT_SEGMENT_SECONDS)
+    animation_parser.add_argument("--segments", type=int, default=1, help="Render several evenly spaced slices from the source video for random loading-screen starts.")
+    animation_parser.add_argument("--fps", type=int, default=DEFAULT_FPS)
+    animation_parser.add_argument("--width", type=int, default=None)
+    animation_parser.add_argument("--height", type=int, default=None)
     animation_parser.add_argument("--start", type=int, default=0)
+    animation_parser.add_argument("--profile", default=DEFAULT_PROFILE)
+    animation_parser.add_argument("--auto-size", action="store_true", help="Size the frame from the current terminal. This is also the default when width/height are omitted.")
+    animation_parser.add_argument("--target-cols", type=int, default=None)
+    animation_parser.add_argument("--target-rows", type=int, default=None)
+    animation_parser.add_argument("--cell-aspect", type=float, default=DEFAULT_CELL_ASPECT)
+    animation_parser.add_argument("--foreground-a", default=DEFAULT_FOREGROUND_A)
+    animation_parser.add_argument("--foreground-b", default=DEFAULT_FOREGROUND_B)
+    animation_parser.add_argument("--background", default=DEFAULT_BACKGROUND)
+    animation_parser.add_argument("--bg-gradient", action="store_true", default=True)
+    animation_parser.add_argument("--no-bg-gradient", action="store_false", dest="bg_gradient")
+    animation_parser.add_argument("--bg-saturation", type=float, default=DEFAULT_BG_SATURATION)
+    animation_parser.add_argument("--text-type", default="random-text")
+    animation_parser.add_argument("--text-input", default=DEFAULT_TEXT_INPUT)
+    animation_parser.add_argument("--threshold", type=int, default=0)
+    animation_parser.add_argument("--invert", action="store_true")
+    animation_parser.add_argument("--randomness", type=float, default=DEFAULT_RANDOMNESS)
+    animation_parser.add_argument("--clear-cache", action="store_true", help="Delete existing animation caches before rendering this one.")
+
+    animation_preview_parser = subparsers.add_parser("animation-preview", help="Preview the cached terminal loading animation.", parents=[common])
+    animation_preview_parser.add_argument("--label", default="Previewing loading animation...")
+    animation_preview_parser.add_argument("--seed", type=int, default=1)
+    animation_preview_parser.add_argument("--seconds", type=float, default=5.0)
 
     args = parser.parse_args(argv)
     root = Path(args.root)
@@ -512,9 +548,49 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "animation-cache":
-        from .animation import render_ascii_cache
+        from .animation import default_video_path, render_ascii_cache, segment_start_seconds
 
-        print_json(render_ascii_cache(root, args.video, seconds=args.seconds, fps=args.fps, width=args.width, height=args.height, start_seconds=args.start))
+        if args.clear_cache:
+            shutil.rmtree(root / ".cache" / "ascii_animation", ignore_errors=True)
+        video = Path(args.video) if args.video else default_video_path(root)
+        if video and not video.is_absolute():
+            video = root / video
+        starts = segment_start_seconds(video, segment_count=args.segments, seconds=args.seconds) if video else [args.start]
+        results = [
+            render_ascii_cache(
+                root,
+                args.video,
+                seconds=args.seconds,
+                fps=args.fps,
+                width=args.width,
+                height=args.height,
+                start_seconds=start,
+                profile=args.profile,
+                auto_size=args.auto_size or (args.width is None and args.height is None),
+                target_cols=args.target_cols,
+                target_rows=args.target_rows,
+                cell_aspect=args.cell_aspect,
+                foreground_a=args.foreground_a,
+                foreground_b=args.foreground_b,
+                background=args.background,
+                bg_gradient=args.bg_gradient,
+                bg_saturation=args.bg_saturation,
+                text_type=args.text_type,
+                text_input=args.text_input,
+                threshold=args.threshold,
+                invert=args.invert,
+                randomness=args.randomness,
+            )
+            for start in starts
+        ]
+        print_json(
+            results[0] if args.segments <= 1 else {"status": "rendered_segments", "segments": len(results), "starts": starts, "results": results}
+        )
+        return 0
+    if args.command == "animation-preview":
+        from .animation import preview_animation
+
+        preview_animation(root, args.label, seed=args.seed, seconds=args.seconds)
         return 0
 
     data = load_or_build(root, out)

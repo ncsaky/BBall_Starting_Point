@@ -1,4 +1,6 @@
+import base64
 import json
+import os
 import random
 import tempfile
 import unittest
@@ -7,6 +9,7 @@ from io import StringIO
 from pathlib import Path
 from collections import Counter
 
+from nba_gm_data.animation import auto_frame_size, colorize_frame, default_video_path, load_animation_frames
 from nba_gm_data.cli import main as cli_main
 from nba_gm_data.contract_ai import (
     apply_contract_to_save,
@@ -133,6 +136,59 @@ class DataFoundationTests(unittest.TestCase):
         self.assertGreaterEqual(len(self.universe.players), 500)
         self.assertEqual(len(self.universe.traits), len(self.universe.players) * 15)
         self.assertGreaterEqual(len(self.universe.sources), 8)
+
+    def test_animation_auto_size_color_and_cache_selection(self):
+        self.assertEqual(auto_frame_size(os.terminal_size((208, 60))), (192, 54))
+        self.assertEqual(auto_frame_size(os.terminal_size((120, 40))), (112, 32))
+        colored = colorize_frame(
+            base64.b64encode(bytes([0, 80, 160, 255])).decode("ascii"),
+            {
+                "profile": "neon_white",
+                "frame_format": "gray_b64",
+                "width": 2,
+                "height": 2,
+                "render_options": {
+                    "foreground_a": "#ff00c3",
+                    "foreground_b": "#00fff0",
+                    "background": "#ffffff",
+                    "bg_gradient": True,
+                    "bg_saturation": 30,
+                    "threshold": 0,
+                },
+            },
+            truecolor=True,
+        )
+        self.assertIn("\033[38;2;", colored)
+        self.assertIn("\033[48;2;", colored)
+        with tempfile.TemporaryDirectory() as tmp:
+            video_root = Path(tmp) / "Animation Videos"
+            video_root.mkdir()
+            short_video = video_root / "5minClip.mp4"
+            full_video = video_root / "Full Season Highlights.mp4"
+            short_video.write_bytes(b"short")
+            full_video.write_bytes(b"full-video-source")
+            self.assertEqual(default_video_path(tmp), full_video)
+            cache_root = Path(tmp) / ".cache" / "ascii_animation"
+            old_dir = cache_root / "old"
+            new_dir = cache_root / "new"
+            full_dir = cache_root / "full"
+            old_dir.mkdir(parents=True)
+            new_dir.mkdir(parents=True)
+            full_dir.mkdir(parents=True)
+            (old_dir / "frames.json").write_text(json.dumps({"width": 88, "height": 30, "fps": 8, "frames": ["old"]}), encoding="utf-8")
+            (new_dir / "frames.json").write_text(
+                json.dumps({"profile": "neon_white", "render_version": 5, "video": str(short_video), "width": 112, "height": 32, "fps": 8, "frames": ["new"]}),
+                encoding="utf-8",
+            )
+            (full_dir / "frames.json").write_text(
+                json.dumps({"profile": "neon_white", "render_version": 5, "video": str(full_video), "width": 112, "height": 32, "fps": 8, "frames": ["full"]}),
+                encoding="utf-8",
+            )
+            frames, fps, metadata = load_animation_frames(tmp, terminal_size=os.terminal_size((120, 40)))
+            self.assertEqual(frames, ["full"])
+            self.assertEqual(fps, 8)
+            self.assertEqual(metadata["profile"], "neon_white")
+            self.assertTrue(metadata["preferred_video"])
 
     def test_rotation_players_have_canonical_traits(self):
         rotation = [player for player in self.universe.players if player.rotation_priority in {"core_rotation", "rotation", "development_priority"}]

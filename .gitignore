@@ -1,0 +1,31 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+.AppleDouble
+.LSOverride
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+.venv/
+venv/
+env/
+.env
+.env.*
+saves/
+*.log
+*.tmp
+tmp/
+.cache/
+*.sqlite
+*.db
+data/canonical/*.sqlite
+data/canonical/*.db
+data/canonical/coverage_report.json
+Project Specification.txt
+Animation Videos/
+*.mp4
