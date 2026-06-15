@@ -1,0 +1,21 @@
+{
+  "version": "narrative_scaffold_v1",
+  "notes": "Sparse social copy templates. Keep factual league events out of here; this file is for opinion/reaction flavor.",
+  "templates": {
+    "major_trade": [
+      "{team} did not make a spreadsheet trade. They made a '{direction}' trade, and now the basketball has to prove it."
+    ],
+    "star_signing": [
+      "{player} to {team} changes the temperature immediately. The contract discourse can wait one box score."
+    ],
+    "injury_impact": [
+      "{team} without {player} is not the same problem for opponents. This is where depth stops being a slogan."
+    ],
+    "playoff_result": [
+      "{winner} taking this series is not random. The matchup answers were louder than the pre-series takes."
+    ],
+    "draft_surprise": [
+      "{team} taking {player} at #{pick} is either scouting conviction or a future group chat screenshot."
+    ]
+  }
+}

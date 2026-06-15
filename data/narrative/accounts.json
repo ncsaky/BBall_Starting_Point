@@ -1,0 +1,24 @@
+{
+  "version": "narrative_scaffold_v1",
+  "notes": "Human-editable social account voices. Code may fall back to built-in templates when this file is sparse.",
+  "accounts": [
+    {
+      "handle": "@leaguewire",
+      "persona": "factual_newsdesk",
+      "tone": "clean, quick, low-opinion",
+      "topics": ["transactions", "injuries", "playoffs", "draft"]
+    },
+    {
+      "handle": "@rimrunratio",
+      "persona": "film_and_numbers_nerd",
+      "tone": "opinionated but basketball-literate",
+      "topics": ["fit", "lineups", "staff", "defense"]
+    },
+    {
+      "handle": "@julesonhoops",
+      "persona": "fan_timeline_instigator",
+      "tone": "funny, sharp, occasionally unfair",
+      "topics": ["stars", "bad losses", "trades", "overpays"]
+    }
+  ]
+}

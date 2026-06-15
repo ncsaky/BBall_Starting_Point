@@ -1,0 +1,43 @@
+{
+  "version": "narrative_scaffold_v1",
+  "notes": "Reporter prompts and answer frames for mandatory press conferences. Keep entries event-aware and avoid raw IDs.",
+  "reporters": [
+    {
+      "name": "Nina Calder",
+      "lens": "long-term roster build"
+    },
+    {
+      "name": "Dana Price",
+      "lens": "locker-room accountability"
+    },
+    {
+      "name": "Miles Kwon",
+      "lens": "transactions and cap pressure"
+    },
+    {
+      "name": "Tessa Vaughn",
+      "lens": "fan temperature"
+    }
+  ],
+  "question_banks": {
+    "trades": [
+      "You changed the roster shape with {event_summary}. What is the basketball bet behind the move?",
+      "Was {event_summary} about this season, the next window, or admitting the old plan had run out of road?"
+    ],
+    "free_agency": [
+      "After {event_summary}, how do you balance role promises with the minutes already on the roster?"
+    ],
+    "staff_moves": [
+      "{event_summary} changes the voices in the room. What should players feel first?"
+    ],
+    "rare_drama": [
+      "This is not just basketball noise now. What standard are you setting for the organization?"
+    ]
+  },
+  "answer_frames": [
+    "Name the risk, explain the basketball logic, and keep the standard concrete.",
+    "Defend the long-term plan without pretending the short-term pressure is fake.",
+    "Back the locker room publicly while leaving accountability inside the building.",
+    "Challenge the group and accept that the quote may be replayed later."
+  ]
+}

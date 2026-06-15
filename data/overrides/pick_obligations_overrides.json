@@ -1,0 +1,5 @@
+{
+  "version": "pick_obligations_overrides_v1",
+  "notes": "Optional gameplay structured pick protections/swaps. Leave sparse unless a conditional obligation can be represented safely.",
+  "pick_obligations": []
+}

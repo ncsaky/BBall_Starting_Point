@@ -39,6 +39,7 @@ from .save import (
     create_league_save,
     ensure_league_save_defaults,
     hold_press_conference,
+    league_events_view,
     league_leaders,
     league_standings,
     load_save,
@@ -46,6 +47,7 @@ from .save import (
     offseason_status,
     pending_actions_view,
     playoff_picture,
+    playoff_leaders,
     process_ai_actions,
     propose_trade_to_save,
     quick_sim_current_season,
@@ -182,6 +184,11 @@ def main(argv: list[str] | None = None) -> int:
     simulate_playoff_parser.add_argument("--save", required=True)
     simulate_playoff_parser.add_argument("--seed", type=int, default=1)
 
+    playoff_leaders_parser = subparsers.add_parser("playoff-leaders", help="Inspect save-state playoff stat leaders and Finals MVP.", parents=[common])
+    playoff_leaders_parser.add_argument("--save", required=True)
+    playoff_leaders_parser.add_argument("--stat", default="points", choices=["points", "pts", "rebounds", "reb", "assists", "ast", "steals", "stl", "blocks", "blk", "fg3m", "3pm"])
+    playoff_leaders_parser.add_argument("--limit", type=int, default=10)
+
     draft_lottery_parser = subparsers.add_parser("run-draft-lottery", help="Generate and store a draft order from save state.", parents=[common])
     draft_lottery_parser.add_argument("--save", required=True)
     draft_lottery_parser.add_argument("--year", default="2026")
@@ -198,6 +205,11 @@ def main(argv: list[str] | None = None) -> int:
     social_parser.add_argument("--save", required=True)
     social_parser.add_argument("--team", default=None)
     social_parser.add_argument("--limit", type=int, default=20)
+
+    events_parser = subparsers.add_parser("league-events", help="Inspect factual save-state league events separate from social media.", parents=[common])
+    events_parser.add_argument("--save", required=True)
+    events_parser.add_argument("--kind", default=None)
+    events_parser.add_argument("--limit", type=int, default=40)
 
     press_parser = subparsers.add_parser("hold-press-conference", help="Answer a press question and apply morale/social effects.", parents=[common])
     press_parser.add_argument("--save", required=True)
@@ -429,6 +441,14 @@ def main(argv: list[str] | None = None) -> int:
     apply_draft_selection_parser.add_argument("--save", required=True)
     apply_draft_selection_parser.add_argument("--sign-rookie", action="store_true", help="Mark the projected rookie contract as signed in the save ledger.")
 
+    animation_parser = subparsers.add_parser("animation-cache", help="Pre-render ignored local MP4s into terminal ASCII loading frames.", parents=[common])
+    animation_parser.add_argument("--video", default=None)
+    animation_parser.add_argument("--seconds", type=int, default=45)
+    animation_parser.add_argument("--fps", type=int, default=8)
+    animation_parser.add_argument("--width", type=int, default=88)
+    animation_parser.add_argument("--height", type=int, default=30)
+    animation_parser.add_argument("--start", type=int, default=0)
+
     args = parser.parse_args(argv)
     root = Path(args.root)
     out = Path(args.out)
@@ -489,6 +509,12 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         for path in refresh_research(root, include_staff=not args.skip_staff):
             print(path)
+        return 0
+
+    if args.command == "animation-cache":
+        from .animation import render_ascii_cache
+
+        print_json(render_ascii_cache(root, args.video, seconds=args.seconds, fps=args.fps, width=args.width, height=args.height, start_seconds=args.start))
         return 0
 
     data = load_or_build(root, out)
@@ -571,6 +597,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "simulate-playoff-round":
         print_json(simulate_playoff_round(data, args.save, seed=args.seed, root=root))
         return 0
+    if args.command == "playoff-leaders":
+        print_json(playoff_leaders(data, args.save, stat=args.stat, limit=args.limit))
+        return 0
     if args.command == "run-draft-lottery":
         print_json(run_draft_lottery(data, args.save, year=args.year, seed=args.seed))
         return 0
@@ -582,6 +611,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "social-feed":
         print_json(social_feed_view(data, args.save, team_query=args.team, limit=args.limit))
+        return 0
+    if args.command == "league-events":
+        print_json(league_events_view(data, args.save, limit=args.limit, kind=args.kind))
         return 0
     if args.command == "hold-press-conference":
         try:

@@ -7,6 +7,7 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
+from .animation import loading_screen
 from .contract_ai import (
     apply_contract_to_save,
     evaluate_signing,
@@ -30,7 +31,9 @@ from .save import (
     prepare_free_agency_pool,
     hold_press_conference,
     league_leaders,
+    league_events_view,
     league_standings,
+    playoff_leaders,
     load_save,
     morale_report,
     pending_actions_view,
@@ -93,6 +96,7 @@ def choose_save_path(root: Path, canonical: dict[str, Any], save_path: str | Pat
         if not path.exists():
             chosen_team = team or choose_team(canonical)
             difficulty = choose_difficulty()
+            path = unique_save_path(path)
             create_league_save(root, canonical, chosen_team, path, seed=seed, ai_difficulty=difficulty)
             pause(f"Created new save: {path}")
         else:
@@ -129,10 +133,27 @@ def choose_save_path(root: Path, canonical: dict[str, Any], save_path: str | Pat
     difficulty = choose_difficulty()
     default_path = saves_dir / f"{chosen_team.lower()}_test.json"
     raw = input(f"Save path [{default_path}]: ").strip()
-    path = Path(raw) if raw else default_path
+    path = Path(raw) if raw else unique_save_path(default_path)
+    if raw and path.exists():
+        path = unique_save_path(path)
+        print(f"That save exists. Using {path} instead.")
     create_league_save(root, canonical, chosen_team, path, seed=seed, ai_difficulty=difficulty)
     pause(f"Created new save: {path}")
     return path
+
+
+def unique_save_path(path: Path) -> Path:
+    if not path.exists():
+        return path
+    stem = path.stem
+    suffix = path.suffix or ".json"
+    parent = path.parent
+    index = 1
+    while True:
+        candidate = parent / f"{stem}{index}{suffix}"
+        if not candidate.exists():
+            return candidate
+        index += 1
 
 
 def choose_team(canonical: dict[str, Any]) -> str:
@@ -197,6 +218,8 @@ def handle_forced_phase(root: Path, canonical: dict[str, Any], save_path: Path, 
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     phase = save.get("state", {}).get("phase")
     user_team = save.get("meta", {}).get("user_team_abbrev") or "GSW"
+    if user_staff_retention_window(save):
+        return staff_retention_room(canonical, save_path, user_team, seed, forced=True) or "handled"
     if phase in {"training_camp", "preseason", "regular_season"} and user_roster_cutdown(save):
         return roster_cutdown_room(root, canonical, save_path, user_team, seed, forced=True) or "handled"
     if save.get("pending_press_events"):
@@ -217,6 +240,121 @@ def handle_forced_phase(root: Path, canonical: dict[str, Any], save_path: Path, 
 def user_roster_cutdown(save: dict[str, Any]) -> dict[str, Any] | None:
     user_team_id = save.get("meta", {}).get("user_team_id")
     return next((item for item in save.get("pending_roster_cutdowns", []) if item.get("team_id") == user_team_id), None)
+
+
+def user_staff_retention_window(save: dict[str, Any]) -> dict[str, Any] | None:
+    user_team_id = save.get("meta", {}).get("user_team_id")
+    return next(
+        (
+            item for item in save.get("staff_retention_windows", [])
+            if item.get("team_id") == user_team_id and item.get("status") == "pending_user_decision"
+        ),
+        None,
+    )
+
+
+def staff_retention_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int, forced: bool = False) -> str:
+    while True:
+        clear_screen()
+        save = ensure_league_save_defaults(load_save(save_path), canonical)
+        window = user_staff_retention_window(save)
+        if not window:
+            clear_screen()
+            return "done"
+        active = canonical_with_save(canonical, save)
+        staff = next((item for item in save.get("staff_slots", []) if item.get("id") == window.get("staff_id")), {})
+        print_title("Staff Contract Expiration")
+        print(f"{window.get('team_abbrev')} {ROLE_LABELS.get(window.get('slot'), window.get('slot'))}: {window.get('staff_name')}")
+        print("You must resolve this role before advancing.")
+        print_staff_effects_for_member(staff)
+        print_rule()
+        print("1. Re-sign current staff member")
+        print("2. Replace from staff market")
+        print("3. Accept interim replacement")
+        print("0. Save and quit" if forced else "0. Back")
+        choice = input("> Pick a number: ").strip()
+        if choice == "0":
+            clear_screen()
+            return "quit" if forced else "back"
+        if choice == "1":
+            attempt_staff_retention_resign(canonical, save_path, window, seed)
+        elif choice == "2":
+            negotiate_staff_from_menu(canonical, save_path, user_team, seed, forced_slot=window.get("slot"))
+            mark_staff_retention_resolved_if_changed(save_path, window)
+        elif choice == "3":
+            save = ensure_league_save_defaults(load_save(save_path), canonical)
+            result = fire_staff_from_save(save, window["team_id"], window["slot"])
+            for item in save.get("staff_retention_windows", []):
+                if item.get("id") == window.get("id"):
+                    item["status"] = "resolved_interim_accepted"
+            write_save(save_path, save)
+            pause(f"Interim accepted: {(result.get('interim_staff') or {}).get('name')}")
+
+
+def print_staff_effects_for_member(staff: dict[str, Any]) -> None:
+    for row in (staff.get("effect_rows") or [])[:4]:
+        print_staff_effect_row(row)
+    if not staff.get("effect_rows"):
+        from .staff import staff_effect_rows
+
+        for row in staff_effect_rows(staff)[:4]:
+            print_staff_effect_row(row)
+
+
+def attempt_staff_retention_resign(canonical: dict[str, Any], save_path: Path, window: dict[str, Any], seed: int) -> None:
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    staff = next((item for item in save.get("staff_slots", []) if item.get("id") == window.get("staff_id")), None)
+    if not staff:
+        pause("That staff member is no longer active.")
+        return
+    current_salary = float((staff.get("contract") or {}).get("annual_salary_millions") or 2.0)
+    ask = round(max(0.75, current_salary * 1.08), 2)
+    budget = staff_budget_snapshot(canonical, save, window["team_id"], window["slot"], 0.0)
+    max_offer = float(budget.get("max_offer_millions") or 0.0)
+    default = min(ask, max_offer)
+    print_title("Staff Re-Signing")
+    print(f"Ask: ${ask:.2f}M/year | Max legal offer: ${max_offer:.2f}M/year")
+    if max_offer <= 0:
+        pause("No staff-budget room remains. Replace from market or accept an interim.")
+        return
+    raw = input(f"Offer annual salary [{default:.2f}]: ").strip()
+    try:
+        offer = float(raw) if raw else default
+    except ValueError:
+        offer = default
+    offer = round(max(0.1, min(offer, max_offer)), 2)
+    years = pick_number("Years", 1, 5, default=2)
+    interest = offer_interest_score(offer, ask, years, 2, 58.0 + min(20.0, staff_grade_like(staff) / 4.0))
+    print_interest_read(interest, {"money": f"${offer:.2f}M vs ${ask:.2f}M ask", "years": f"{years} offered", "budget room": f"${max_offer:.2f}M max"})
+    if interest < 58:
+        pause("They are not ready to re-sign at that number.")
+        return
+    staff.setdefault("contract", {})["annual_salary_millions"] = offer
+    staff["contract"]["years_remaining"] = years
+    staff["market_status"] = "employed"
+    staff["status"] = "active"
+    for item in save.get("staff_retention_windows", []):
+        if item.get("id") == window.get("id"):
+            item["status"] = "resolved_re_signed"
+    add_news(save, "staff_hire", f"{window.get('team_abbrev')} re-signs {staff.get('name')} as {ROLE_LABELS.get(window.get('slot'), window.get('slot'))}.")
+    write_save(save_path, save)
+    pause("Staff contract re-signed.")
+
+
+def staff_grade_like(staff: dict[str, Any]) -> float:
+    values = [float(value) for value in (staff.get("skill_traits") or {}).values()]
+    return sum(values) / len(values) if values else 55.0
+
+
+def mark_staff_retention_resolved_if_changed(save_path: Path, window: dict[str, Any]) -> None:
+    save = load_save(save_path)
+    current = next((item for item in save.get("staff_slots", []) if item.get("team_id") == window.get("team_id") and item.get("slot") == window.get("slot")), {})
+    if current.get("id") == window.get("staff_id"):
+        return
+    for item in save.get("staff_retention_windows", []):
+        if item.get("id") == window.get("id"):
+            item["status"] = "resolved_replaced"
+    write_save(save_path, save)
 
 
 def roster_cutdown_room(root: Path, canonical: dict[str, Any], save_path: Path, user_team: str, seed: int, forced: bool = False) -> str:
@@ -371,7 +509,8 @@ def print_home(root: Path, canonical: dict[str, Any], save_path: Path) -> None:
     print(
         "Pending: "
         f"trades {pending['trades']} | contracts {pending['contracts']} | draft {pending['draft']} | "
-        f"staff {pending['staff']} | cutdowns {pending.get('cutdowns', 0)} | AI {pending['ai_actions']}"
+        f"staff {pending['staff']} | user offers {pending.get('user_trade_offers', 0)} | "
+        f"cutdowns {pending.get('cutdowns', 0)} | AI {pending['ai_actions']}"
     )
     if status.get("recent_news"):
         print_rule()
@@ -403,6 +542,7 @@ def print_home(root: Path, canonical: dict[str, Any], save_path: Path) -> None:
     print("12. Staff room")
     print("13. Current free agents")
     print("14. Social feed / morale")
+    print("15. League events")
     print(" 0. Save and quit")
 
 
@@ -438,17 +578,20 @@ def handle_choice(root: Path, canonical: dict[str, Any], save_path: Path, choice
     elif choice == "3":
         target = add_days(current, 31)
         print(style("Simulating the month. This can take a moment...", "accent"))
-        result = advance_save(root, canonical, save_path, to_date=target, seed=seed)
+        with loading_screen(root, "Simulating one month...", seed=seed):
+            result = advance_save(root, canonical, save_path, to_date=target, seed=seed)
         print(summary_lines("Advanced one month", result, ["through_date", "phase"]))
     elif choice == "4":
         season = save.get("meta", {}).get("season") or "2025-26"
         deadline = trade_deadline_date(int(str(season).split("-")[0]))
         regular_end = f"{int(str(season).split('-')[0]) + 1}-04-12"
         if current < deadline:
-            result = advance_save(root, canonical, save_path, to_date=deadline, seed=seed)
+            with loading_screen(root, "Simulating to the trade deadline...", seed=seed):
+                result = advance_save(root, canonical, save_path, to_date=deadline, seed=seed)
             print(summary_lines("Stopped at trade deadline", result, ["through_date", "phase"]))
         elif current < regular_end:
-            result = advance_save(root, canonical, save_path, to_date=regular_end, seed=seed)
+            with loading_screen(root, "Simulating to the end of the regular season...", seed=seed):
+                result = advance_save(root, canonical, save_path, to_date=regular_end, seed=seed)
             print(summary_lines("Reached end of regular season", result, ["through_date", "phase"]))
         else:
             result = advance_save(root, canonical, save_path, next_event=True, seed=seed)
@@ -491,6 +634,8 @@ def handle_choice(root: Path, canonical: dict[str, Any], save_path: Path, choice
     elif choice == "14":
         team = input(f"Team [{user_team}]: ").strip() or user_team
         print_social_and_morale(canonical, save_path, team)
+    elif choice == "15":
+        league_events_room(canonical, save_path)
     else:
         pause("Unknown menu choice.")
 
@@ -523,6 +668,38 @@ def calendar_room(root: Path, canonical: dict[str, Any], save_path: Path) -> Non
         clear_screen()
         print_box_score(canonical, save_path, game["game_id"])
         wait()
+
+
+def league_events_room(canonical: dict[str, Any], save_path: Path) -> None:
+    while True:
+        clear_screen()
+        view = league_events_view(canonical, save_path, limit=60)
+        print_title("League Events")
+        events = view.get("events") or []
+        if not events:
+            print("No factual league events have been recorded yet.")
+            wait()
+            return
+        for event in events[:40]:
+            importance = float(event.get("importance") or 0.0)
+            color = "good" if importance >= 0.78 else "accent" if importance >= 0.55 else "muted"
+            print(f"{event.get('date', '')}  {style(clean_label(event.get('kind')), color):<24} {event.get('headline', '')}")
+        print_rule()
+        print("1. Show only major events")
+        print("2. Show all recent events")
+        print("0. Back")
+        choice = input("> Pick a number: ").strip()
+        if choice == "0":
+            clear_screen()
+            return
+        if choice == "1":
+            clear_screen()
+            print_title("Major League Events")
+            for event in [event for event in events if float(event.get("importance") or 0.0) >= 0.6][:40]:
+                print(f"{event.get('date', '')}  {clean_label(event.get('kind')):<20} {event.get('headline', '')}")
+            wait()
+        elif choice == "2":
+            continue
 
 
 def minutes_room(canonical: dict[str, Any], save_path: Path, user_team: str) -> None:
@@ -763,6 +940,7 @@ def playoff_room(root: Path, canonical: dict[str, Any], save_path: Path, seed: i
                 print("1. Sim next playoff round")
                 print("2. Sim entire playoffs")
             print("3. View playoff box score")
+            print("4. Playoff stat leaders / Finals MVP")
             if forced:
                 print("0. Save and quit")
             else:
@@ -776,17 +954,20 @@ def playoff_room(root: Path, canonical: dict[str, Any], save_path: Path, seed: i
                 wait()
             elif choice == "2" and state.get("status") != "completed":
                 result: dict[str, Any] = {"playoff_state": state}
-                for _ in range(8):
-                    result = simulate_playoff_round(canonical, save_path, seed=seed, root=root)
-                    state = result.get("playoff_state", {})
-                    if state.get("status") == "completed":
-                        break
+                with loading_screen(root, "Simulating the full postseason...", seed=seed):
+                    for _ in range(8):
+                        result = simulate_playoff_round(canonical, save_path, seed=seed, root=root)
+                        state = result.get("playoff_state", {})
+                        if state.get("status") == "completed":
+                            break
                 clear_screen()
                 print_title("Playoffs")
                 print_playoff_bracket(canonical, result.get("playoff_state", {}), save_path)
                 wait()
             elif choice == "3":
                 playoff_box_score_picker(canonical, save_path)
+            elif choice == "4":
+                playoff_leaders_room(canonical, save_path)
             else:
                 clear_screen()
                 return "quit" if forced else "back"
@@ -820,6 +1001,32 @@ def playoff_box_score_picker(canonical: dict[str, Any], save_path: Path) -> None
     choice = pick_number("Game", 0, len(games), default=0)
     if choice:
         print_box_score(canonical, save_path, games[choice - 1]["externalGameId"])
+        wait()
+
+
+def playoff_leaders_room(canonical: dict[str, Any], save_path: Path) -> None:
+    stat_options = [("points", "PPG"), ("rebounds", "RPG"), ("assists", "APG"), ("steals", "SPG"), ("blocks", "BPG"), ("fg3m", "3PM")]
+    while True:
+        clear_screen()
+        save = load_save(save_path)
+        print_title("Playoff Leaders")
+        if save.get("finals_mvp"):
+            mvp = save["finals_mvp"]
+            print(style(f"Finals MVP: {mvp.get('player_name')} ({mvp.get('team_abbrev')})", "good"))
+            print_rule()
+        for idx, (_, label) in enumerate(stat_options, start=1):
+            print(f"{idx}. {label}")
+        print("0. Back")
+        choice = pick_number("Stat", 0, len(stat_options), default=1)
+        if choice == 0:
+            return
+        stat, label = stat_options[choice - 1]
+        view = playoff_leaders(canonical, save_path, stat=stat, limit=12)
+        clear_screen()
+        print_title(f"Playoff Leaders | {label}")
+        key = view.get("stat")
+        for idx, row in enumerate(view.get("leaders", []), start=1):
+            print(f"{idx:>2}. {row['player'].get('name', ''):<28} {row.get('team_abbrev') or '':<3} {row.get(str(key) + '_per_game', 0):>5}/g  GP {row.get('games', 0):>2}")
         wait()
 
 
@@ -922,10 +1129,12 @@ def guided_trade_builder(canonical: dict[str, Any], save_path: Path, user_team: 
         if not yes_no("Reselect assets and re-offer?"):
             break
     if result and user_can_apply_trade(canonical, result, user_team) and yes_no("Apply legal trade now?"):
+        result = attach_pick_terms_to_trade(canonical, save_path, result)
         store_trade_offer(save_path, result)
         applied = apply_trade_to_save(save_path, result["proposal"]["id"], date=load_save(save_path).get("state", {}).get("current_date"))
         print(f"Trade apply result: {applied.get('status')}")
     elif result and yes_no("Save this offer/counter in pending actions?"):
+        result = attach_pick_terms_to_trade(canonical, save_path, result)
         store_trade_offer(save_path, result)
         print("Offer saved in pending actions.")
     wait()
@@ -964,6 +1173,92 @@ def store_trade_offer(save_path: Path, proposal: dict[str, Any]) -> None:
     }
     save["pending_trade_proposals"].append(stored)
     write_save(save_path, save)
+
+
+def attach_pick_terms_to_trade(canonical: dict[str, Any], save_path: Path, proposal: dict[str, Any]) -> dict[str, Any]:
+    proposal_payload = proposal.get("proposal") or {}
+    if proposal.get("pick_obligation_terms"):
+        return proposal
+    terms: list[dict[str, Any]] = []
+    for side, sender_id, receiver_id in [
+        ("from_assets", proposal_payload.get("from_team_id"), proposal_payload.get("to_team_id")),
+        ("to_assets", proposal_payload.get("to_team_id"), proposal_payload.get("from_team_id")),
+    ]:
+        for asset in proposal_payload.get(side, []):
+            if asset.get("kind") != "pick":
+                continue
+            term = prompt_pick_trade_terms(canonical, save_path, asset.get("id"), sender_id, receiver_id)
+            if term and term.get("type") != "unprotected":
+                terms.append(term)
+    if terms:
+        proposal = {**proposal, "pick_obligation_terms": terms}
+    return proposal
+
+
+def prompt_pick_trade_terms(canonical: dict[str, Any], save_path: Path, pick_id: str | None, sender_id: str | None, receiver_id: str | None) -> dict[str, Any] | None:
+    if not pick_id or not sender_id or not receiver_id:
+        return None
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    pick = next((item for item in active.get("draft_picks", []) if item.get("id") == pick_id), None)
+    if not pick or int(pick.get("round") or 2) != 1:
+        return {"type": "unprotected", "primary_pick_id": pick_id}
+    print_title("Pick Protection")
+    print(f"{clean_pick_label_for_user(active, pick, save)}")
+    print("1. Unprotected")
+    print("2. Top-N protected")
+    print("3. Protected range")
+    print("0. Cancel protection and treat as unprotected")
+    choice = pick_number("Protection", 0, 3, default=1)
+    if choice in {0, 1}:
+        return {"type": "unprotected", "primary_pick_id": pick_id}
+    if choice == 2:
+        top_n = pick_number("Top protected through pick", 1, 30, default=4)
+        protected_range = {"from": 1, "through": top_n}
+        label = f"top-{top_n} protected"
+    else:
+        start = pick_number("Protected from pick", 1, 30, default=1)
+        end = pick_number("Protected through pick", start, 30, default=max(start, 14))
+        protected_range = {"from": start, "through": end}
+        label = f"picks {start}-{end} protected"
+    fallback = choose_fallback_pick_for_protection(active, save, sender_id, pick_id)
+    if not fallback:
+        pause("Protected picks need a fallback asset in this v1 model. This pick will be treated as unprotected.")
+        return {"type": "unprotected", "primary_pick_id": pick_id}
+    return {
+        "type": "protected_pick",
+        "primary_pick_id": pick_id,
+        "sender_team_id": sender_id,
+        "receiver_team_id": receiver_id,
+        "season": pick.get("season"),
+        "protected_range": protected_range,
+        "protected_top_n": protected_range.get("through") if protected_range.get("from") == 1 else None,
+        "fallback_pick_ids": [fallback],
+        "label": label,
+        "notes": "Gameplay V1 protected-pick obligation. Fallback pick is locked until the obligation resolves.",
+    }
+
+
+def choose_fallback_pick_for_protection(canonical: dict[str, Any], save: dict[str, Any], team_id: str, primary_pick_id: str) -> str | None:
+    team = next((item for item in canonical.get("teams", []) if item.get("id") == team_id), None)
+    if not team:
+        return None
+    picks = [
+        pick for pick in tradeable_picks_for_team(canonical, team_id)
+        if pick.get("id") != primary_pick_id and not pick.get("_obligation_locked") and int(pick.get("round") or 2) in {1, 2}
+    ]
+    picks = sorted(picks, key=lambda pick: (str(pick.get("season") or ""), int(pick.get("round") or 9), clean_pick_label_for_user(canonical, pick, save)))
+    if not picks:
+        return None
+    print_rule()
+    print("Choose fallback asset if the protection does not convey:")
+    for idx, pick in enumerate(picks[:18], start=1):
+        print(f"{idx:>2}. {clean_pick_label_for_user(canonical, pick, save)}")
+    print(" 0. No fallback")
+    choice = pick_number("Fallback", 0, min(18, len(picks)), default=1)
+    if choice == 0:
+        return None
+    return picks[choice - 1].get("id")
 
 
 def trade_finder_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int) -> None:
@@ -1209,11 +1504,12 @@ def choose_assets(canonical: dict[str, Any], save: dict[str, Any], team_abbrev: 
         left = (
             f"Value {single_value_bar(trade_value, scale=100, width=10)} {trade_value:>5.1f}  "
             f"{player['name']:<24} {compact_position(player.get('position')):<3} age {age_text(player, 2)} "
-            f"{height_text(player):<5} -|- {display_minutes_projection(player):>2.0f}mpg "
-            f"{per_game_from_totals(totals, 'points'):>4.1f}/{per_game_from_totals(totals, 'rebounds'):>3.1f}/{per_game_from_totals(totals, 'assists'):>3.1f} "
-            f"-|- "
+            f"{height_text(player):<5} | {display_minutes_projection(player):>2.0f} mpg "
+            f"PTS {per_game_from_totals(totals, 'points'):>4.1f} "
+            f"REB {per_game_from_totals(totals, 'rebounds'):>4.1f} "
+            f"AST {per_game_from_totals(totals, 'assists'):>4.1f} | "
             f"OVR {float(attrs.get('overall') or 0):>4.1f} O {float(attrs.get('offense') or attrs.get('shooting') or 0):>4.1f} D {float(attrs.get('defense') or 0):>4.1f} "
-            f"-|- GP {gp:>2}/{team_games:<2} {trade_health_text(health.get(player['id'], {})):<13}"
+            f"| GP {gp:>2}/{team_games:<2} {trade_health_text(health.get(player['id'], {})):<13}"
         )
         assets.append(("player", player["name"], f"{left:<122} {contract_text}"))
     for pick in picks:
@@ -1261,8 +1557,8 @@ def staff_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed:
             wait()
 
 
-def negotiate_staff_from_menu(canonical: dict[str, Any], save_path: Path, team: str, seed: int) -> None:
-    slot = choose_staff_slot(allow_back=True)
+def negotiate_staff_from_menu(canonical: dict[str, Any], save_path: Path, team: str, seed: int, forced_slot: str | None = None) -> None:
+    slot = forced_slot or choose_staff_slot(allow_back=True)
     if slot is None:
         return
     save = ensure_league_save_defaults(load_save(save_path), canonical)
@@ -1388,6 +1684,7 @@ def actions_room(canonical: dict[str, Any], save_path: Path, seed: int) -> None:
     print("3. Reject/clear processed suggestions")
     if trades_legal:
         print("4. Review saved trade offers")
+        print("5. Review AI trade offers to you")
     print("0. Back")
     choice = input("> Pick a number: ").strip()
     if choice == "1":
@@ -1404,6 +1701,8 @@ def actions_room(canonical: dict[str, Any], save_path: Path, seed: int) -> None:
         print(f"Cleared {before - len(save['pending_ai_actions'])} old AI action(s).")
     elif choice == "4" and trades_legal:
         saved_trades_room(canonical, save_path)
+    elif choice == "5" and trades_legal:
+        user_trade_offers_room(canonical, save_path)
     wait()
 
 
@@ -1570,6 +1869,76 @@ def saved_trades_room(canonical: dict[str, Any], save_path: Path) -> None:
         print("Saved offer deleted.")
 
 
+def user_trade_offers_room(canonical: dict[str, Any], save_path: Path) -> None:
+    while True:
+        save = load_save(save_path)
+        offers = [
+            offer for offer in save.get("user_trade_offers", [])
+            if (offer.get("offer_context") or {}).get("status") == "pending_user_review"
+        ]
+        clear_screen()
+        print_title("AI Trade Offers To You")
+        if not offers:
+            print("No active AI offers to your team.")
+            wait()
+            return
+        for idx, offer in enumerate(offers, start=1):
+            print(f"{idx:>2}. {proposal_headline(offer)} | {clean_label((offer.get('legality') or {}).get('status'))}")
+        print(" 0. Back")
+        choice = pick_number("Offer", 0, len(offers), default=0)
+        if choice == 0:
+            return
+        offer = offers[choice - 1]
+        while True:
+            clear_screen()
+            print_title("AI Trade Offer")
+            print(proposal_headline(offer))
+            print_value_bars(offer)
+            print_rule()
+            print("1. Inspect details")
+            print("2. Accept and execute")
+            print("3. Save as counter scaffold")
+            print("4. Reject")
+            print("0. Back")
+            action = pick_number("Action", 0, 4, default=0)
+            if action == 0:
+                break
+            if action == 1:
+                print_trade_offer_details(canonical, offer, save_path)
+                wait()
+                continue
+            save = load_save(save_path)
+            proposal_id = (offer.get("proposal") or {}).get("id") or offer.get("id")
+            if action == 2:
+                offer = attach_pick_terms_to_trade(canonical_with_save(canonical, ensure_league_save_defaults(save, canonical)), save_path, offer)
+                save.setdefault("pending_trade_proposals", []).append(offer)
+                write_save(save_path, save)
+                result = apply_trade_to_save(save_path, offer["proposal"]["id"], date=save.get("state", {}).get("current_date"))
+                save = load_save(save_path)
+                mark_user_trade_offer_status(save, proposal_id, "accepted_executed")
+                write_save(save_path, save)
+                pause(f"Trade apply result: {result.get('status')}")
+                break
+            if action == 3:
+                scaffold = {**offer, "offer_context": {"status": "counter_scaffold", "created_date": save.get("state", {}).get("current_date")}}
+                save.setdefault("pending_trade_proposals", []).append(scaffold)
+                mark_user_trade_offer_status(save, proposal_id, "saved_as_counter")
+                write_save(save_path, save)
+                pause("Offer saved as a counter scaffold.")
+                break
+            if action == 4:
+                mark_user_trade_offer_status(save, proposal_id, "rejected_by_user")
+                write_save(save_path, save)
+                pause("Offer rejected.")
+                break
+
+
+def mark_user_trade_offer_status(save: dict[str, Any], proposal_id: str | None, status: str) -> None:
+    for offer in save.get("user_trade_offers", []):
+        if ((offer.get("proposal") or {}).get("id") or offer.get("id")) == proposal_id:
+            offer.setdefault("offer_context", {})["status"] = status
+
+
 def offseason_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int) -> None:
     while True:
         save = load_save(save_path)
@@ -1673,7 +2042,7 @@ def draft_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed:
         if current:
             print("1. Make/sim current pick")
             print("2. Sim to next user pick")
-            print("3. Draft board / recommendations")
+            print("3. Draft board")
             print("4. Full draft summary")
             print("5. Team dashboard")
             print("6. Sim entire draft")
@@ -1718,7 +2087,8 @@ def draft_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed:
             wait()
         elif choice == "2":
             print(style("Simulating to your next pick...", "accent"))
-            result = sim_to_next_user_pick(canonical, save_path, user_team)
+            with loading_screen(save_path.parent.parent if save_path.parent.name == "saves" else Path.cwd(), "Simulating to your next pick...", seed=seed):
+                result = sim_to_next_user_pick(canonical, save_path, user_team)
             print(f"Simulated {result['applied_count']} pick(s).")
             if result.get("current_selection"):
                 print("Stopped at your next pick.")
@@ -1737,7 +2107,8 @@ def draft_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed:
             trade_room(active, save_path, user_team, seed)
         elif choice == "6":
             print(style("Simulating the rest of the draft...", "accent"))
-            result = sim_entire_draft(save_path)
+            with loading_screen(save_path.parent.parent if save_path.parent.name == "saves" else Path.cwd(), "Simulating the full draft...", seed=seed):
+                result = sim_entire_draft(save_path)
             print(f"Draft complete. Applied {result['applied_count']} pick(s).")
             print_full_draft_recap(canonical, save_path, year)
             wait()
@@ -2020,14 +2391,14 @@ def print_prospect_inspection(canonical: dict[str, Any], save: dict[str, Any], p
     print(f"Archetype: {clean_label(str(prospect.get('archetype') or 'prospect'))}")
     print(f"Now/Potential: {now:.0f}/{pot:.0f}")
     traits = report.get("trait_estimates") or {}
-    print("Scout read: bars are the current best estimate; wider confidence bands mean less certainty.")
+    print("Scout read: bars show your staff's current best estimate.")
     interesting = ["current_ability", "potential", "floor", "ceiling", "shooting", "shot_creation", "passing", "defense", "rim_protection", "athleticism", "feel", "volatility"]
     printed = 0
     for key in interesting:
         value = traits.get(key)
         label = "downside floor" if key == "floor" else key
         if isinstance(value, dict) and value.get("mid") is not None:
-            print(f"  {clean_label(label):<16} {morale_bar(float(value['mid']), width=12)} {float(value['mid']):>5.1f}  confidence band {float(value.get('low', value['mid'])):.0f}-{float(value.get('high', value['mid'])):.0f}")
+            print(f"  {clean_label(label):<16} {morale_bar(float(value['mid']), width=12)} {float(value['mid']):>5.1f}")
             printed += 1
         elif prospect.get(key) is not None:
             print(f"  {clean_label(label):<16} {morale_bar(float(prospect[key]), width=12)} {float(prospect[key]):>5.1f}")
@@ -2139,15 +2510,11 @@ def print_live_draft_summary(canonical: dict[str, Any], save_path: Path, user_te
             clear_screen()
             print_prospect_inspection(canonical, save, {**prospect, **rookie}, resolve_team(canonical, user_team)["id"])
             print_rule()
-            print("1. Inspect player")
-            print("2. Trade for this player")
+            print("1. Trade for this player")
             print("0. Back")
-            action = pick_number("Action", 0, 2, default=0)
+            action = pick_number("Action", 0, 1, default=0)
             if action == 0:
                 break
-            if action == 1:
-                wait()
-                continue
             player_name = rookie.get("name") or prospect.get("name")
             if not player_name or not team_id:
                 pause("This drafted player is not available as a save-state trade asset yet.")
@@ -2600,7 +2967,8 @@ def free_agency_room(canonical: dict[str, Any], save_path: Path, user_team: str,
                 finish_free_agency_phase(canonical, save_path)
                 return "done"
         elif choice == "3":
-            result = simulate_free_agency_to_end(canonical, save_path, user_team, seed)
+            with loading_screen(save_path.parent.parent if save_path.parent.name == "saves" else Path.cwd(), "Simulating free agency...", seed=seed):
+                result = simulate_free_agency_to_end(canonical, save_path, user_team, seed)
             pause(f"Free agency completed: {result.get('accepted_count', 0)} signing(s), {result.get('auto_fill_count', 0)} roster repair signing(s).")
             finish_free_agency_phase(canonical, save_path)
             return "done" if forced else None
@@ -4846,6 +5214,12 @@ def print_actions(canonical: dict[str, Any], save_path: Path) -> None:
             )
     for trade in payload["pending_trade_proposals"][:6]:
         print(f"\nSaved trade: {proposal_headline(trade)} | {clean_label((trade.get('legality') or {}).get('status'))}")
+    user_offers = [
+        offer for offer in payload.get("user_trade_offers", [])
+        if (offer.get("offer_context") or {}).get("status") == "pending_user_review"
+    ]
+    for offer in user_offers[:6]:
+        print(f"\nAI offer: {proposal_headline(offer)} | {clean_label((offer.get('legality') or {}).get('status'))}")
 
 
 def print_actions_result(result: dict[str, Any]) -> None:
@@ -4944,12 +5318,14 @@ def trade_finder_followup(canonical: dict[str, Any], report: dict[str, Any], sav
         if candidate.get("legality", {}).get("status") != "legal":
             pause("Trade blocked: this offer is not legal anymore.")
             return
+        candidate = attach_pick_terms_to_trade(canonical, save_path, candidate)
         save.setdefault("pending_trade_proposals", []).append(candidate)
         write_save(save_path, save)
         result = apply_trade_to_save(save_path, candidate["proposal"]["id"], date=save.get("state", {}).get("current_date"))
         print(f"Trade apply result: {result.get('status')}")
     elif action == 3:
         save = load_save(save_path)
+        candidate = attach_pick_terms_to_trade(canonical, save_path, candidate)
         scaffold = {**candidate, "offer_context": {"status": "counter_scaffold", "created_date": save.get("state", {}).get("current_date")}}
         save.setdefault("pending_trade_proposals", []).append(scaffold)
         write_save(save_path, save)

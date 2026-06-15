@@ -1,0 +1,16 @@
+{
+  "version": "narrative_scaffold_v1",
+  "notes": "Rare event seeds for future authored drama. These are deliberately sparse.",
+  "rare_events": [
+    {
+      "kind": "online_clip",
+      "headline_template": "{player} is trending after a heated online clip from team travel.",
+      "minimum_cooldown_days": 240
+    },
+    {
+      "kind": "practice_incident",
+      "headline_template": "A tense {team} practice moment has reporters asking about the locker room.",
+      "minimum_cooldown_days": 365
+    }
+  ]
+}

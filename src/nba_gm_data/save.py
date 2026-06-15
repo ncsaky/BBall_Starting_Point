@@ -12,7 +12,7 @@ from .health import advance_development, simulate_health
 from .schema import CANONICAL_SEASON, CANONICAL_START_DATE, CoachRating, to_plain
 from .sim import build_sim_indices, espn_team_id_map, load_sim_context, sim_game_with_context
 from .staff import ROLE_LABELS, STAFF_SLOTS, apply_head_coach_reputation, hire_staff_from_save, initialize_save_staff_slots, interim_staff, is_interim_staff, negotiate_staff_hire, simulate_ai_staff_changes, staff_grade
-from .utils import clamp, stable_id
+from .utils import clamp, normalize_name, stable_id
 
 
 SAVE_VERSION = "league_save_v1"
@@ -83,12 +83,15 @@ def create_league_save(
         "roster_overrides": {},
         "contract_overrides": {},
         "draft_pick_overrides": {},
+        "pick_obligations": load_pick_obligation_overrides(root),
+        "locked_pick_assets": [],
         "draft_rights": [],
         "rookie_contracts": [],
         "incoming_rookies": [],
         "generated_players": [],
         "generated_traits": [],
         "free_agent_player_ids": [],
+        "startup_free_agents": [],
         "retired_player_ids": [],
         "roster_cutdown_baselines": initial_roster_cutdown_baselines(canonical),
         "staff_slots": initialize_save_staff_slots(canonical, seed),
@@ -99,10 +102,13 @@ def create_league_save(
         "pending_contract_negotiations": [],
         "pending_draft_selections": [],
         "pending_ai_actions": [],
+        "user_trade_offers": [],
         "pending_roster_cutdowns": [],
+        "staff_retention_windows": [],
         "processed_hidden_ai_actions": [],
         "pending_press_events": [],
         "transaction_logs": [],
+        "league_events": [],
         "game_results": [],
         "team_records": initial_team_records(canonical),
         "team_morale": initial_team_morale(canonical),
@@ -116,6 +122,8 @@ def create_league_save(
         "player_game_logs": [],
         "player_season_stats": {},
         "playoff_state": {},
+        "playoff_player_stats": {},
+        "finals_mvp": None,
         "draft_state": {},
         "draft_orders": {},
         "health_states": sorted(deepcopy(canonical.get("player_health_states", [])), key=lambda item: item["player_id"]),
@@ -135,6 +143,7 @@ def create_league_save(
             }
         ],
     }
+    seed_startup_free_agents(canonical, save, seed)
     align_real_head_coach_names(canonical, save)
     write_save(save_path, save)
     return save
@@ -159,6 +168,7 @@ def dedupe_save_event_lists(save: dict[str, Any]) -> None:
         "news_items": ("kind", "date", "headline"),
         "social_feed": ("kind", "date", "text", "handle"),
         "pending_press_events": ("kind", "date", "headline"),
+        "league_events": ("kind", "date", "headline"),
     }.items():
         seen: set[tuple[Any, ...]] = set()
         output = []
@@ -169,6 +179,83 @@ def dedupe_save_event_lists(save: dict[str, Any]) -> None:
             seen.add(marker)
             output.append(item)
         save[key] = output
+
+
+def load_pick_obligation_overrides(root: str | Path) -> list[dict[str, Any]]:
+    path = Path(root) / "data" / "overrides" / "pick_obligations_overrides.json"
+    if not path.exists():
+        return []
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except (OSError, ValueError):
+        return []
+    obligations = payload.get("pick_obligations") if isinstance(payload, dict) else payload
+    if not isinstance(obligations, list):
+        return []
+    output = []
+    for item in obligations:
+        if not isinstance(item, dict):
+            continue
+        obligation = deepcopy(item)
+        obligation.setdefault("id", stable_id("pick_obligation", obligation.get("type"), obligation.get("season"), obligation.get("primary_pick_id"), obligation.get("receiver_team_id")))
+        obligation.setdefault("status", "active")
+        obligation.setdefault("source", "data/overrides/pick_obligations_overrides.json")
+        output.append(obligation)
+    return sorted(output, key=lambda item: str(item.get("id") or ""))
+
+
+def seed_startup_free_agents(canonical: dict[str, Any], save: dict[str, Any], seed: int, target_count: int = 30) -> None:
+    retired = set(save.get("retired_player_ids", []))
+    existing_free = [
+        player for player in canonical.get("players", [])
+        if not player.get("team_id") and player.get("id") not in retired
+    ]
+    existing_free = sorted(existing_free, key=lambda player: (display_minutes_projection(player), player.get("name") or ""), reverse=True)
+    free_ids = [player["id"] for player in existing_free[:target_count] if player.get("id")]
+    save.setdefault("free_agent_player_ids", [])
+    for player_id in free_ids:
+        if player_id not in save["free_agent_player_ids"]:
+            save["free_agent_player_ids"].append(player_id)
+    needed = max(0, target_count - len(save["free_agent_player_ids"]))
+    if needed:
+        rng = random.Random(f"{seed}:{save.get('meta', {}).get('user_team_id')}:startup_free_agents")
+        positions = ["PG", "SG", "SF", "PF", "C"]
+        firsts = ["Arman", "Bennett", "Cole", "Darius", "Eli", "Frank", "Gabe", "Hayes", "Isaiah", "Jonah", "Kellan", "Luca", "Mason", "Noel", "Owen", "Quentin", "Riley", "Silas", "Trey", "Vince"]
+        lasts = ["Bishop", "Carter", "Daniels", "Ellis", "Foster", "Grant", "Hayes", "Irving", "James", "Knight", "Lawson", "Morris", "Nolan", "Price", "Reed", "Stone", "Turner", "Walker", "Young", "Zimmer"]
+        for index in range(needed):
+            position = rng.choice(positions)
+            name = f"{rng.choice(firsts)} {rng.choice(lasts)}"
+            player_id = stable_id("startup_fa", save.get("meta", {}).get("id"), index, name)
+            player = {
+                "id": player_id,
+                "name": name,
+                "normalized_name": normalize_name(name),
+                "slug": player_id.replace("startup_fa_", ""),
+                "team_id": None,
+                "team_abbrev": "FA",
+                "position": position,
+                "age": round(rng.uniform(22.0, 34.0), 1),
+                "age_base_season": save.get("meta", {}).get("season") or CANONICAL_SEASON,
+                "age_base_start_year": season_start_year(save.get("meta", {}).get("season") or CANONICAL_SEASON),
+                "height_inches": {"PG": 74, "SG": 77, "SF": 80, "PF": 82, "C": 83}[position] + rng.uniform(-1.5, 1.5),
+                "weight_lbs": round({"PG": 185, "SG": 200, "SF": 215, "PF": 230, "C": 245}[position] + rng.uniform(-18, 18), 1),
+                "minutes_projection": round(rng.uniform(0.0, 6.0), 1),
+                "rotation_priority": "startup_free_agent_replacement",
+                "market_status": "unsigned_startup_free_agent",
+                "asking_salary_millions": round(rng.uniform(1.1, 2.6), 2),
+                "asking_years": 1,
+                "trade_eligible": False,
+                "source_ids": ["src_startup_free_agent_scaffold_v1"],
+                "missing_critical_fields": [],
+                "critical_field_fallbacks": {},
+                "notes": "Generated low-end unsigned replacement player seeded at save creation.",
+            }
+            save.setdefault("generated_players", []).append(player)
+            save.setdefault("generated_traits", []).extend(generated_replacement_traits(player, seed))
+            save.setdefault("free_agent_player_ids", []).append(player_id)
+    save["free_agent_player_ids"] = sorted(dict.fromkeys(save.get("free_agent_player_ids", [])))
+    save["startup_free_agents"] = sorted(dict.fromkeys(save.get("free_agent_player_ids", [])[:target_count]))
 
 
 def refresh_roster_cutdowns(canonical: dict[str, Any] | None, save: dict[str, Any]) -> None:
@@ -295,12 +382,15 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
     save.setdefault("roster_overrides", {})
     save.setdefault("contract_overrides", {})
     save.setdefault("draft_pick_overrides", {})
+    save.setdefault("pick_obligations", [])
+    save.setdefault("locked_pick_assets", [])
     save.setdefault("draft_rights", [])
     save.setdefault("rookie_contracts", [])
     save.setdefault("incoming_rookies", [])
     save.setdefault("generated_players", [])
     save.setdefault("generated_traits", [])
     save.setdefault("free_agent_player_ids", [])
+    save.setdefault("startup_free_agents", [])
     save.setdefault("retired_player_ids", [])
     save.setdefault("roster_cutdown_baselines", initial_roster_cutdown_baselines(canonical or {"players": [], "teams": []}))
     save.setdefault("pending_trade_proposals", [])
@@ -308,10 +398,13 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
     save.setdefault("pending_draft_selections", [])
     save.setdefault("pending_staff_negotiations", [])
     save.setdefault("pending_ai_actions", [])
+    save.setdefault("user_trade_offers", [])
     save.setdefault("pending_roster_cutdowns", [])
+    save.setdefault("staff_retention_windows", [])
     save.setdefault("processed_hidden_ai_actions", [])
     save.setdefault("pending_press_events", [])
     save.setdefault("transaction_logs", [])
+    save.setdefault("league_events", [])
     save.setdefault("game_results", [])
     save.setdefault("team_morale", initial_team_morale(canonical or {"teams": []}))
     save.setdefault("player_morale", initial_player_morale(canonical or {"players": []}))
@@ -326,6 +419,8 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
     save.setdefault("team_game_logs", [])
     save.setdefault("player_game_logs", [])
     save.setdefault("player_season_stats", {})
+    save.setdefault("playoff_player_stats", {})
+    save.setdefault("finals_mvp", None)
     save.setdefault("news_items", [])
     save.setdefault("social_feed", [])
     save.setdefault("press_conferences", [])
@@ -344,6 +439,8 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
         save.setdefault("applied_development_months", [])
         if not save.get("staff_slots"):
             save["staff_slots"] = initialize_save_staff_slots(canonical, int(save.get("meta", {}).get("seed") or 1))
+        if not save.get("startup_free_agents") and not save.get("free_agent_player_ids"):
+            seed_startup_free_agents(canonical, save, int(save.get("meta", {}).get("seed") or 1))
         align_real_head_coach_names(canonical, save)
         seed_morale_if_flat(canonical, save)
         refresh_roster_cutdowns(canonical, save)
@@ -432,6 +529,8 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
             if override == "used_draft_pick":
                 pick["status"] = "used_draft_pick"
         apply_saved_draft_order_to_pick(pick, save)
+    canonical["pick_obligations"] = deepcopy(save.get("pick_obligations", []))
+    canonical["locked_pick_assets"] = sorted(set(save.get("locked_pick_assets", [])))
     contract_overrides = save.get("contract_overrides", {})
     if contract_overrides:
         contracts_by_player = {contract.get("player_id"): contract for contract in canonical.get("contracts", [])}
@@ -613,6 +712,7 @@ def pending_actions_view(canonical: dict[str, Any] | Any, save_path: str | Path)
         "pending_draft_selections": save.get("pending_draft_selections", []),
         "pending_staff_negotiations": save.get("pending_staff_negotiations", []),
         "pending_ai_actions": save.get("pending_ai_actions", []),
+        "user_trade_offers": save.get("user_trade_offers", []),
     }
 
 
@@ -985,6 +1085,43 @@ def league_leaders(canonical: dict[str, Any] | Any, save_path: str | Path, stat:
     return {"stat": stat_key, "leaders": rows[:limit], "as_of_date": save.get("state", {}).get("current_date")}
 
 
+def playoff_leaders(canonical: dict[str, Any] | Any, save_path: str | Path, stat: str = "points", limit: int = 10) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    stat_key = {"pts": "points", "reb": "rebounds", "ast": "assists", "stl": "steals", "blk": "blocks", "3pm": "fg3m"}.get(stat, stat)
+    players = {player["id"]: player for player in canonical.get("players", [])}
+    rows = []
+    for player_id, totals in save.get("playoff_player_stats", {}).items():
+        games = max(1, int(totals.get("games") or 1))
+        rows.append(
+            {
+                "player": players.get(player_id, {"id": player_id, "name": totals.get("player_name")}),
+                "team_id": totals.get("team_id"),
+                "team_abbrev": totals.get("team_abbrev"),
+                "games": totals.get("games", 0),
+                stat_key: round(float(totals.get(stat_key, 0)), 2),
+                f"{stat_key}_per_game": round(float(totals.get(stat_key, 0)) / games, 2),
+            }
+        )
+    rows.sort(key=lambda item: (-float(item.get(f"{stat_key}_per_game", 0)), -float(item.get(stat_key, 0)), item["player"].get("name") or ""))
+    return {
+        "stat": stat_key,
+        "leaders": rows[:limit],
+        "as_of_date": save.get("state", {}).get("current_date"),
+        "finals_mvp": save.get("finals_mvp"),
+    }
+
+
+def league_events_view(canonical: dict[str, Any] | Any, save_path: str | Path, limit: int = 40, kind: str | None = None) -> dict[str, Any]:
+    canonical = to_plain(canonical)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    events = save.get("league_events", [])
+    if kind:
+        events = [event for event in events if event.get("kind") == kind]
+    events = sorted(events, key=lambda item: (item.get("date") or "", item.get("importance") or 0.0, item.get("headline") or ""), reverse=True)
+    return {"as_of_date": save.get("state", {}).get("current_date"), "events": events[:limit], "event_count": len(events)}
+
+
 def playoff_picture(canonical: dict[str, Any] | Any, save_path: str | Path) -> dict[str, Any]:
     canonical = to_plain(canonical)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
@@ -1098,6 +1235,7 @@ def simulate_playoff_round(canonical: dict[str, Any] | Any, save_path: str | Pat
         state["status"] = "completed"
         state["round"] = "champion"
         add_news(save, "champion", f"{team_by_id(canonical, winners[0])['abbrev']} wins the NBA title.")
+        award_finals_mvp(save, canonical)
         user_team_id = save.get("meta", {}).get("user_team_id")
         if user_team_id:
             headline = f"Season complete: {team_by_id(canonical, winners[0])['abbrev']} wins the NBA title."
@@ -1129,6 +1267,7 @@ def run_draft_lottery(canonical: dict[str, Any] | Any, save_path: str | Path, ye
 
     standings = save_standings_for_draft(canonical, save)
     order = generate_draft_order(canonical_with_save(canonical, save), year, seed=seed, standings=standings)
+    resolve_pick_obligations_for_year(save, order, str(year))
     save.setdefault("draft_orders", {})[str(year)] = order
     add_news(save, "draft_lottery", f"{year} draft order generated.")
     current_phase = save.get("state", {}).get("phase")
@@ -1136,6 +1275,84 @@ def run_draft_lottery(canonical: dict[str, Any] | Any, save_path: str | Path, ye
         set_save_date_phase(save, f"{year}-06-25")
     write_save(save_path, save)
     return order
+
+
+def resolve_pick_obligations_for_year(save: dict[str, Any], order: dict[str, Any], year: str) -> None:
+    draft_order = order.get("draft_order") or []
+    by_pick = {item.get("id"): item for item in draft_order}
+    locked = set(save.setdefault("locked_pick_assets", []))
+    for obligation in save.get("pick_obligations", []):
+        if obligation.get("status") not in {"active", "pending_resolution"}:
+            continue
+        if str(obligation.get("season") or "") != str(year):
+            continue
+        if obligation.get("type") == "protected_pick":
+            pick_id = obligation.get("primary_pick_id")
+            row = by_pick.get(pick_id)
+            if not row:
+                continue
+            overall = int(row.get("overall_pick") or 999)
+            protected = obligation.get("protected_range") or {}
+            low = int(protected.get("from") or 1)
+            high = int(protected.get("through") or obligation.get("protected_top_n") or 0)
+            sender = obligation.get("sender_team_id")
+            receiver = obligation.get("receiver_team_id")
+            if low <= overall <= high and sender:
+                row["current_owner_team_id"] = sender
+                save.setdefault("draft_pick_overrides", {})[pick_id] = sender
+                fallback_id = next((pid for pid in obligation.get("fallback_pick_ids") or [] if pid), None)
+                if fallback_id and receiver:
+                    save.setdefault("draft_pick_overrides", {})[fallback_id] = receiver
+                    locked.discard(fallback_id)
+                    add_league_event(
+                        save,
+                        "pick_protection",
+                        f"Protected pick stayed with {team_id_to_abbrev(sender)}; fallback pick conveys to {team_id_to_abbrev(receiver)}.",
+                        date_value=save.get("state", {}).get("current_date"),
+                        team_ids=[sender, receiver],
+                        importance=0.64,
+                        details={"obligation_id": obligation.get("id"), "primary_pick_id": pick_id, "fallback_pick_id": fallback_id},
+                    )
+                obligation["status"] = "resolved_protected_fallback_conveyed"
+            else:
+                if receiver:
+                    row["current_owner_team_id"] = receiver
+                    save.setdefault("draft_pick_overrides", {})[pick_id] = receiver
+                for fallback_id in obligation.get("fallback_pick_ids") or []:
+                    locked.discard(fallback_id)
+                obligation["status"] = "resolved_primary_conveyed"
+                add_league_event(
+                    save,
+                    "pick_protection",
+                    f"Protected pick conveys to {team_id_to_abbrev(receiver)}.",
+                    date_value=save.get("state", {}).get("current_date"),
+                    team_ids=[sender, receiver],
+                    importance=0.56,
+                    details={"obligation_id": obligation.get("id"), "primary_pick_id": pick_id},
+                )
+        elif obligation.get("type") == "pick_swap":
+            a_id = obligation.get("team_a_pick_id")
+            b_id = obligation.get("team_b_pick_id")
+            a = by_pick.get(a_id)
+            b = by_pick.get(b_id)
+            if not a or not b:
+                continue
+            a_overall = int(a.get("overall_pick") or 999)
+            b_overall = int(b.get("overall_pick") or 999)
+            if a_overall < b_overall:
+                a_owner, b_owner = a.get("current_owner_team_id"), b.get("current_owner_team_id")
+                a["current_owner_team_id"], b["current_owner_team_id"] = b_owner, a_owner
+                save.setdefault("draft_pick_overrides", {})[a_id] = b_owner
+                save.setdefault("draft_pick_overrides", {})[b_id] = a_owner
+                obligation["status"] = "resolved_swap_exercised"
+                add_league_event(save, "pick_swap", f"Pick swap exercised between {team_id_to_abbrev(a_owner)} and {team_id_to_abbrev(b_owner)}.", team_ids=[a_owner, b_owner], importance=0.6)
+            else:
+                obligation["status"] = "resolved_swap_not_exercised"
+    save["locked_pick_assets"] = sorted(locked)
+
+
+def team_id_to_abbrev(team_id: str | None) -> str:
+    return str(team_id or "TEAM").replace("team_", "").upper()
 
 
 def simulate_play_in(canonical: dict[str, Any], save: dict[str, Any], seed: int, root: str | Path | None) -> list[str]:
@@ -1302,6 +1519,88 @@ def record_playoff_game_result(save: dict[str, Any], game: dict[str, Any], resul
         {item["externalGameId"]: item for item in save["playoff_state"].get("games", [])}.values(),
         key=lambda item: (item.get("gameDate", ""), item.get("externalGameId", "")),
     )
+    update_playoff_player_stats(save, result, game.get("gameDate"))
+    add_league_event(
+        save,
+        "playoff_result",
+        f"Playoff final: {result.get('away_score')} - {result.get('home_score')}.",
+        date_value=game.get("gameDate"),
+        team_ids=[result.get("away_team_id"), result.get("home_team_id")],
+        importance=0.75,
+        details={"game_id": game_id, "away_team_id": result.get("away_team_id"), "home_team_id": result.get("home_team_id")},
+    )
+
+
+def update_playoff_player_stats(save: dict[str, Any], result: dict[str, Any], game_date: str | None) -> None:
+    game_id = str(result.get("game_id") or "")
+    if not game_id:
+        return
+    for line in result.get("player_lines", []) or []:
+        player_id = line.get("player_id")
+        if not player_id:
+            continue
+        totals = save.setdefault("playoff_player_stats", {}).setdefault(
+            player_id,
+            {
+                "player_id": player_id,
+                "player_name": line.get("player_name"),
+                "team_id": line.get("team_id"),
+                "team_abbrev": line.get("team_abbrev"),
+                "games": 0,
+                "game_ids": [],
+                "finals_games": 0,
+                **{field: 0.0 for field in STAT_FIELDS},
+            },
+        )
+        if game_id in totals.setdefault("game_ids", []):
+            continue
+        totals["game_ids"].append(game_id)
+        totals["games"] = int(totals.get("games") or 0) + 1
+        totals["team_id"] = line.get("team_id")
+        totals["team_abbrev"] = line.get("team_abbrev")
+        if "finals" in game_id:
+            totals["finals_games"] = int(totals.get("finals_games") or 0) + 1
+        for field in STAT_FIELDS:
+            totals[field] = round(float(totals.get(field) or 0.0) + float(line.get(field) or 0.0), 3)
+
+
+def award_finals_mvp(save: dict[str, Any], canonical: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    state = save.get("playoff_state") or {}
+    champion = state.get("champion_team_id")
+    if not champion:
+        return None
+    candidates = [
+        totals for totals in save.get("playoff_player_stats", {}).values()
+        if totals.get("team_id") == champion and int(totals.get("finals_games") or 0) > 0
+    ]
+    if not candidates:
+        candidates = [totals for totals in save.get("playoff_player_stats", {}).values() if totals.get("team_id") == champion]
+    if not candidates:
+        return None
+    def score(row: dict[str, Any]) -> float:
+        games = max(1, int(row.get("games") or 1))
+        finals_boost = 1.25 if int(row.get("finals_games") or 0) else 1.0
+        return finals_boost * (
+            float(row.get("points") or 0) / games
+            + 1.15 * float(row.get("rebounds") or 0) / games
+            + 1.35 * float(row.get("assists") or 0) / games
+            + 2.6 * float(row.get("steals") or 0) / games
+            + 2.6 * float(row.get("blocks") or 0) / games
+            - 1.1 * float(row.get("turnovers") or 0) / games
+        )
+    winner = max(candidates, key=score)
+    award = {
+        "player_id": winner.get("player_id"),
+        "player_name": winner.get("player_name"),
+        "team_id": winner.get("team_id"),
+        "team_abbrev": winner.get("team_abbrev"),
+        "impact_score": round(score(winner), 3),
+        "source": "save_playoff_player_stats",
+    }
+    save["finals_mvp"] = award
+    date_value = save.get("state", {}).get("current_date") or None
+    add_news(save, "finals_mvp", f"{award['player_name']} wins Finals MVP for {award.get('team_abbrev')}.", date_value=date_value)
+    return award
 
 
 def game_winner_team_id(result: dict[str, Any]) -> str:
@@ -1827,6 +2126,15 @@ def record_game_result(save: dict[str, Any], canonical: dict[str, Any], game: di
             "status": "unread",
         }
     )
+    add_league_event(
+        save,
+        "game_result",
+        f"{team_lines.get(away_id, {}).get('team_abbrev', 'AWAY')} {away_points}, {team_lines.get(home_id, {}).get('team_abbrev', 'HOME')} {home_points}",
+        date_value=game.get("gameDate"),
+        team_ids=[away_id, home_id],
+        importance=0.2,
+        details={"game_id": game_id, "away_team_id": away_id, "home_team_id": home_id, "away_score": away_points, "home_score": home_points},
+    )
     update_game_morale(save, home_id, away_id, home_points, away_points)
     add_game_high_social(save, result)
 
@@ -1847,6 +2155,16 @@ def add_game_high_social(save: dict[str, Any], result: dict[str, Any]) -> None:
         leader = max(lines, key=lambda item: float(item.get(stat) or 0), default={})
         value = float(leader.get(stat) or 0)
         if value >= threshold:
+            add_league_event(
+                save,
+                "major_stat_line",
+                f"{leader.get('player_name')} recorded {int(value)} {label} for {leader.get('team_abbrev')}.",
+                date_value=save.get("state", {}).get("current_date"),
+                team_ids=[leader.get("team_id")] if leader.get("team_id") else [],
+                player_ids=[leader.get("player_id")] if leader.get("player_id") else [],
+                importance=0.72,
+                details={"stat": stat, "value": value, "game_id": result.get("game_id")},
+            )
             add_social(
                 save,
                 "player_high",
@@ -2134,18 +2452,35 @@ def maybe_queue_rare_drama(save: dict[str, Any], canonical: dict[str, Any], curr
 def queue_ai_recommendations(canonical: dict[str, Any], save: dict[str, Any], from_date: str, through_date: str, seed: int) -> None:
     phase = save.get("state", {}).get("phase")
     queued_keys = {item.get("id") for item in save.get("pending_ai_actions", [])} | {item.get("id") for item in save.get("processed_hidden_ai_actions", [])}
-    trade_start = f"{season_start_year_from_date(through_date) + 1}-01-16"
+    trade_start = f"{season_start_year_from_date(through_date)}-11-15"
     trade_deadline = trade_deadline_date(season_start_year_from_date(through_date))
     if "trades" in legal_actions_for_date(through_date) and trade_start <= through_date <= trade_deadline:
         action_id = stable_id("ai_action", "trades", through_date, seed)
         if action_id not in queued_keys:
             from .transactions import simulate_ai_trades
 
-            payload = simulate_ai_trades(canonical, from_date, through_date, seed=seed, limit=10)
-            payload["proposals"] = [
+            payload = simulate_ai_trades(canonical, from_date, through_date, seed=seed, limit=35)
+            user_team_id = save.get("meta", {}).get("user_team_id")
+            legal_accepted = [
                 proposal for proposal in payload.get("proposals", [])
                 if proposal.get("accepted_by_all") and proposal.get("legality", {}).get("status") == "legal"
             ]
+            user_offers = [
+                proposal for proposal in legal_accepted
+                if user_team_id in {
+                    (proposal.get("proposal") or {}).get("from_team_id"),
+                    (proposal.get("proposal") or {}).get("to_team_id"),
+                }
+            ][:4]
+            if user_offers:
+                queue_user_trade_offers(save, user_offers, through_date)
+            payload["proposals"] = [
+                proposal for proposal in legal_accepted
+                if user_team_id not in {
+                    (proposal.get("proposal") or {}).get("from_team_id"),
+                    (proposal.get("proposal") or {}).get("to_team_id"),
+                }
+            ][:28]
             payload["proposal_count"] = len(payload["proposals"])
             if not payload["proposals"]:
                 return
@@ -2212,6 +2547,33 @@ def queue_ai_recommendations(canonical: dict[str, Any], save: dict[str, Any], fr
                         "notes": "Leaguewide AI staff changes process quietly; user-team staff moves remain manual.",
                     }
                 )
+
+
+def queue_user_trade_offers(save: dict[str, Any], offers: list[dict[str, Any]], date_value: str) -> None:
+    existing = {
+        ((offer.get("proposal") or {}).get("id") or offer.get("id"))
+        for offer in save.setdefault("user_trade_offers", [])
+    }
+    queued = 0
+    for offer in offers:
+        proposal_id = (offer.get("proposal") or {}).get("id") or offer.get("id")
+        if not proposal_id or proposal_id in existing:
+            continue
+        save["user_trade_offers"].append(
+            {
+                **offer,
+                "offer_context": {
+                    **(offer.get("offer_context") or {}),
+                    "created_date": date_value,
+                    "status": "pending_user_review",
+                    "source": "ai_trade_offer_to_user",
+                },
+            }
+        )
+        existing.add(proposal_id)
+        queued += 1
+    if queued:
+        add_news(save, "trade_offer", f"{queued} AI trade offer(s) arrived for your review.", date_value=date_value)
 
 
 def add_monthly_social_digest(canonical: dict[str, Any], save: dict[str, Any], from_date: str, through_date: str) -> None:
@@ -2802,7 +3164,8 @@ def pending_counts(save: dict[str, Any]) -> dict[str, int]:
         "trades": len(save.get("pending_trade_proposals", [])),
         "contracts": len(save.get("pending_contract_negotiations", [])),
         "draft": len(save.get("pending_draft_selections", [])),
-        "staff": 0,
+        "staff": len([item for item in save.get("staff_retention_windows", []) if item.get("status") == "pending_user_decision"]),
+        "user_trade_offers": len([item for item in save.get("user_trade_offers", []) if (item.get("offer_context") or {}).get("status") == "pending_user_review"]),
         "cutdowns": len(save.get("pending_roster_cutdowns", [])),
         "ai_actions": len([item for item in save.get("pending_ai_actions", []) if ai_action_is_visible(item)]),
     }
@@ -3113,8 +3476,69 @@ def add_news(save: dict[str, Any], kind: str, headline: str, date_value: str | N
     existing = {news.get("id") for news in save.setdefault("news_items", [])}
     if item["id"] not in existing:
         save["news_items"].append(item)
-        add_social(save, kind, headline, team_ids=[])
+        add_league_event(save, kind, headline, date_value=date_value)
+        if should_create_social_for_news(kind, headline):
+            add_social(save, kind, headline, team_ids=[])
     return item
+
+
+def should_create_social_for_news(kind: str, headline: str) -> bool:
+    if kind in {"game_result", "game", "development", "roster_cut", "draft_lottery"}:
+        return False
+    if kind in {"trade", "free_agent_signing", "free_agency_signing", "extension", "finals_mvp", "champion"}:
+        return True
+    low = str(headline or "").lower()
+    if kind in {"injury", "staff_hire", "staff_fire"}:
+        return any(token in low for token in ["star", "major", "season-ending", "head coach", "elite"])
+    return False
+
+
+def add_league_event(
+    save: dict[str, Any],
+    kind: str,
+    headline: str,
+    date_value: str | None = None,
+    team_ids: list[str | None] | None = None,
+    player_ids: list[str | None] | None = None,
+    importance: float | None = None,
+    details: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    date_value = date_value or save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+    clean_headline = " ".join(str(headline or "").replace("_", " ").split())
+    event = {
+        "id": stable_id("league_event", kind, date_value, clean_headline),
+        "date": date_value,
+        "kind": kind,
+        "headline": clean_headline,
+        "team_ids": [team for team in (team_ids or []) if team],
+        "player_ids": [player for player in (player_ids or []) if player],
+        "importance": round(float(importance if importance is not None else event_importance(kind, clean_headline)), 3),
+        "details": details or {},
+    }
+    events = save.setdefault("league_events", [])
+    if event["id"] not in {item.get("id") for item in events}:
+        events.append(event)
+    return event
+
+
+def event_importance(kind: str, headline: str) -> float:
+    low = f"{kind} {headline}".lower()
+    base = {
+        "trade": 0.72,
+        "free_agent_signing": 0.62,
+        "free_agency_signing": 0.62,
+        "extension": 0.58,
+        "injury": 0.55,
+        "draft_lottery": 0.7,
+        "draft_pick": 0.48,
+        "playoff_result": 0.85,
+        "finals_mvp": 0.95,
+        "staff_hire": 0.38,
+        "staff_fire": 0.42,
+    }.get(kind, 0.35)
+    if any(token in low for token in ["40", "50", "finals", "champion", "mvp", "season-ending", "star"]):
+        base += 0.2
+    return clamp(base, 0.0, 1.0)
 
 
 def queue_aggregated_press_event(
@@ -3202,7 +3626,7 @@ def sync_social_from_news(save: dict[str, Any]) -> None:
     for news in save.get("news_items", [])[-60:]:
         kind = news.get("kind")
         headline = news.get("headline")
-        if kind in {"game_result", "development"}:
+        if not should_create_social_for_news(str(kind or ""), str(headline or "")):
             continue
         if not kind or not headline or (kind, headline) in social_keys:
             continue
@@ -4534,6 +4958,12 @@ def age_staff_contracts(save: dict[str, Any]) -> None:
             team_id = staff.get("team_id")
             slot = staff.get("slot")
             if team_id and slot:
+                if team_id == save.get("meta", {}).get("user_team_id") and not is_interim_staff(staff):
+                    add_staff_retention_window(save, staff, date_value)
+                    staff["market_status"] = "contract_expired_pending_user_decision"
+                    staff["job_security"] = min(float(staff.get("job_security") or 50.0), 45.0)
+                    updated.append(staff)
+                    continue
                 if not is_interim_staff(staff):
                     former = deepcopy(staff)
                     former["market_status"] = "expired_contract"
@@ -4555,6 +4985,36 @@ def age_staff_contracts(save: dict[str, Any]) -> None:
         updated.append(staff)
     if updated:
         save["staff_slots"] = sorted(updated, key=lambda item: (item.get("team_id") or "", item.get("slot") or "", item.get("id") or ""))
+
+
+def add_staff_retention_window(save: dict[str, Any], staff: dict[str, Any], date_value: str) -> dict[str, Any]:
+    slot = staff.get("slot")
+    team_id = staff.get("team_id")
+    window_id = stable_id("staff_retention", team_id, slot, staff.get("id"), date_value)
+    windows = save.setdefault("staff_retention_windows", [])
+    existing = next((item for item in windows if item.get("id") == window_id), None)
+    if existing:
+        return existing
+    window = {
+        "id": window_id,
+        "date": date_value,
+        "team_id": team_id,
+        "team_abbrev": str(team_id).replace("team_", "").upper() if team_id else None,
+        "slot": slot,
+        "staff_id": staff.get("id"),
+        "staff_name": staff.get("name"),
+        "status": "pending_user_decision",
+        "choices": ["re_sign", "replace_from_market", "accept_interim"],
+        "notes": "Forced user staff-retention checkpoint before this expired contract can be rolled into a new season.",
+    }
+    windows.append(window)
+    add_news(
+        save,
+        "staff_contract",
+        f"{window['team_abbrev']} must resolve {ROLE_LABELS.get(slot, slot)} {staff.get('name')} before advancing.",
+        date_value=date_value,
+    )
+    return window
 
 
 def canonical_hash(canonical: dict[str, Any]) -> str:

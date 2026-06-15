@@ -46,6 +46,7 @@ from nba_gm_data.save import (
     complete_offseason_and_rollover,
     create_league_save,
     hold_press_conference,
+    league_events_view,
     league_leaders,
     league_standings,
     load_save,
@@ -55,6 +56,7 @@ from nba_gm_data.save import (
     apply_ai_staff_recommendations,
     age_staff_contracts,
     playoff_picture,
+    playoff_leaders,
     cap_lines_for_season,
     process_ai_actions,
     propose_trade_to_save,
@@ -257,6 +259,74 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual([pick["overall_pick"] for pick in first_round], list(range(1, 31)))
         self.assertEqual([pick["overall_pick"] for pick in second_round], list(range(31, 61)))
 
+    def test_new_save_seeds_startup_free_agents_and_event_collections(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "startup_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=404)
+            self.assertGreaterEqual(len(save.get("free_agent_player_ids", [])), 30)
+            self.assertGreaterEqual(len(save.get("startup_free_agents", [])), 30)
+            self.assertIn("league_events", save)
+            self.assertIn("user_trade_offers", save)
+            self.assertIn("pick_obligations", save)
+            active = canonical_with_save(self.plain, save)
+            startup_players = [player for player in active["players"] if player["id"] in set(save["startup_free_agents"])]
+            self.assertGreaterEqual(len(startup_players), 30)
+            self.assertTrue(all(not player.get("team_id") for player in startup_players))
+
+    def test_locked_pick_obligations_block_trade_legality_and_value(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "pick_lock_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=405)
+            active = canonical_with_save(self.plain, save)
+            gsw = next(team for team in active["teams"] if team["abbrev"] == "GSW")
+            pick = next(pick for pick in tradeable_picks_for_team(with_transaction_context(active), gsw["id"]) if int(pick.get("round") or 0) == 2 and str(pick.get("season")) >= "2027")
+            save["locked_pick_assets"] = [pick["id"]]
+            write_save(save_path, save)
+            locked_active = with_transaction_context(canonical_with_save(self.plain, load_save(save_path)))
+            locked_pick = next(item for item in locked_active["draft_picks"] if item["id"] == pick["id"])
+            self.assertEqual(pick_asset_value(locked_pick, "balanced"), 0.0)
+            report = evaluate_trade(locked_active, "GSW", "BOS", [{"kind": "pick", "value": pick["id"]}], [], seed=1)
+            self.assertEqual(report["legality"]["status"], "illegal")
+            self.assertTrue(any("locked" in issue.lower() for issue in report["legality"]["issues"]))
+
+    def test_league_events_and_playoff_leaders_views_are_save_backed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "events_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=406)
+            curry = next(player for player in self.plain["players"] if player["normalized_name"] == "stephen curry")
+            save["league_events"].append(
+                {
+                    "id": "league_event_test",
+                    "date": "2026-06-20",
+                    "kind": "playoff_result",
+                    "headline": "GSW wins a test Finals game.",
+                    "team_ids": ["team_gsw"],
+                    "player_ids": [],
+                    "importance": 0.9,
+                    "details": {},
+                }
+            )
+            save["playoff_player_stats"][curry["id"]] = {
+                "player_id": curry["id"],
+                "player_name": curry["name"],
+                "team_id": curry["team_id"],
+                "team_abbrev": "GSW",
+                "games": 6,
+                "points": 192,
+                "rebounds": 30,
+                "assists": 48,
+                "steals": 9,
+                "blocks": 2,
+                "fg3m": 31,
+            }
+            save["finals_mvp"] = {"player_id": curry["id"], "player_name": curry["name"], "team_abbrev": "GSW"}
+            write_save(save_path, save)
+            events = league_events_view(self.plain, save_path, limit=5)
+            self.assertEqual(events["events"][0]["headline"], "GSW wins a test Finals game.")
+            leaders = playoff_leaders(self.plain, save_path, stat="points", limit=3)
+            self.assertEqual(leaders["leaders"][0]["player"]["name"], "Stephen Curry")
+            self.assertEqual(leaders["finals_mvp"]["player_name"], "Stephen Curry")
+
     def test_scouting_reports_and_boards_have_fog_and_staff_context(self):
         payload = draft_class_payload(self.plain, "2026", scouted_for="WAS")
         self.assertEqual(payload["prospect_count"], 60)
@@ -338,7 +408,8 @@ class DataFoundationTests(unittest.TestCase):
             applied = apply_draft_selection_to_save(save_path, future["selections"][0]["id"], date="2027-06-27", sign_rookie=True)
             self.assertEqual(applied["status"], "applied")
             saved = load_save(save_path)
-            rookie = saved["generated_players"][0]
+            rookie_id = applied["incoming_rookie"]["player_id"]
+            rookie = next(player for player in saved["generated_players"] if player["id"] == rookie_id)
             saved["meta"]["season"] = "2027-28"
             saved["state"] = {"current_date": "2027-10-01", "phase": "preseason", "legal_actions": []}
             active = canonical_with_save(self.plain, saved)
@@ -1087,7 +1158,7 @@ class DataFoundationTests(unittest.TestCase):
             self.assertFalse(signing_cap_check(active, save, "GSW", 10.0)["ok"])
             self.assertTrue(signing_cap_check(active, save, "GSW", 1.9)["ok"])
 
-    def test_staff_contract_expiry_creates_interim_and_market_candidate(self):
+    def test_staff_contract_expiry_creates_user_retention_window(self):
         with tempfile.TemporaryDirectory() as tmp:
             save_path = Path(tmp) / "league_save.json"
             save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=22)
@@ -1097,9 +1168,9 @@ class DataFoundationTests(unittest.TestCase):
             save["state"]["current_date"] = "2026-10-01"
             age_staff_contracts(save)
             new_head = next(slot for slot in save["staff_slots"] if slot["team_id"] == "team_gsw" and slot["slot"] == "head_coach")
-            self.assertEqual(new_head["status"], "interim_staff_vacancy")
-            self.assertNotEqual(new_head["name"], old_name)
-            self.assertTrue(any(staff.get("name") == old_name and staff.get("market_status") == "expired_contract" for staff in save.get("former_staff", [])))
+            self.assertEqual(new_head["name"], old_name)
+            self.assertEqual(new_head["market_status"], "contract_expired_pending_user_decision")
+            self.assertTrue(any(window.get("staff_name") == old_name and window.get("status") == "pending_user_decision" for window in save.get("staff_retention_windows", [])))
 
     def test_box_score_influence_sort_key_values_all_around_lines(self):
         scorer = {"points": 28, "rebounds": 2, "assists": 1, "steals": 0, "blocks": 0, "turnovers": 4}
