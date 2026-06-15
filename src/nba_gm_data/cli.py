@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from .assets import DEFAULT_LOADING_ASSET_URL, install_loading_assets, stderr_progress
 from .animation import (
     DEFAULT_BACKGROUND,
     DEFAULT_BG_SATURATION,
@@ -485,6 +486,11 @@ def main(argv: list[str] | None = None) -> int:
     animation_preview_parser.add_argument("--seed", type=int, default=1)
     animation_preview_parser.add_argument("--seconds", type=float, default=5.0)
 
+    install_assets_parser = subparsers.add_parser("install-assets", help="Install optional loading-screen assets from a GitHub Release zip.", parents=[common])
+    install_assets_parser.add_argument("--zip", dest="zip_path", default=None, help="Path to a downloaded loading-assets-v1.zip file.")
+    install_assets_parser.add_argument("--url", default=DEFAULT_LOADING_ASSET_URL, help="Direct URL for the loading asset zip.")
+    install_assets_parser.add_argument("--force", action="store_true", help="Overwrite existing cached loading assets.")
+
     args = parser.parse_args(argv)
     root = Path(args.root)
     out = Path(args.out)
@@ -591,6 +597,9 @@ def main(argv: list[str] | None = None) -> int:
         from .animation import preview_animation
 
         preview_animation(root, args.label, seed=args.seed, seconds=args.seconds)
+        return 0
+    if args.command == "install-assets":
+        print_json(install_loading_assets(root, zip_path=args.zip_path, url=args.url, force=args.force, progress=stderr_progress))
         return 0
 
     data = load_or_build(root, out)

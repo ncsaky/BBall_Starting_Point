@@ -4,11 +4,13 @@ import os
 import random
 import tempfile
 import unittest
+import zipfile
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 from collections import Counter
 
+from nba_gm_data.assets import install_loading_assets
 from nba_gm_data.animation import auto_frame_size, colorize_frame, default_video_path, load_animation_frames
 from nba_gm_data.cli import main as cli_main
 from nba_gm_data.contract_ai import (
@@ -189,6 +191,24 @@ class DataFoundationTests(unittest.TestCase):
             self.assertEqual(fps, 8)
             self.assertEqual(metadata["profile"], "neon_white")
             self.assertTrue(metadata["preferred_video"])
+
+    def test_install_loading_assets_from_zip(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "game"
+            root.mkdir()
+            good_zip = Path(tmp) / "loading-assets-v1.zip"
+            with zipfile.ZipFile(good_zip, "w") as archive:
+                archive.writestr(".cache/ascii_animation/demo/metadata.json", "{}")
+                archive.writestr(".cache/ascii_animation/demo/frames.json", '{"frames":["demo"]}')
+            result = install_loading_assets(root, zip_path=good_zip)
+            self.assertEqual(result["status"], "installed")
+            self.assertTrue((root / ".cache/ascii_animation/demo/frames.json").exists())
+
+            unsafe_zip = Path(tmp) / "unsafe.zip"
+            with zipfile.ZipFile(unsafe_zip, "w") as archive:
+                archive.writestr("../outside.txt", "bad")
+            unsafe_result = install_loading_assets(root, zip_path=unsafe_zip, force=True)
+            self.assertEqual(unsafe_result["status"], "unsafe_zip")
 
     def test_rotation_players_have_canonical_traits(self):
         rotation = [player for player in self.universe.players if player.rotation_priority in {"core_rotation", "rotation", "development_priority"}]

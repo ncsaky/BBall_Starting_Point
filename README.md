@@ -56,6 +56,18 @@ python -m pip install --upgrade pip
 python -m pip install -e .
 ```
 
+Install the prebuilt loading-screen assets:
+
+```bash
+nba-gm-data install-assets --root .
+```
+
+If that download fails because the repo is private, open the GitHub Releases page in your browser, download `loading-assets-v1.zip`, then run:
+
+```bash
+nba-gm-data install-assets --root . --zip ~/Downloads/loading-assets-v1.zip
+```
+
 Start the game:
 
 ```bash
@@ -95,6 +107,18 @@ python -m pip install --upgrade pip
 python -m pip install -e .
 ```
 
+Install the prebuilt loading-screen assets:
+
+```powershell
+nba-gm-data install-assets --root .
+```
+
+If that download fails because the repo is private, open the GitHub Releases page in your browser, download `loading-assets-v1.zip`, then run:
+
+```powershell
+nba-gm-data install-assets --root . --zip "$HOME\Downloads\loading-assets-v1.zip"
+```
+
 Start the game:
 
 ```powershell
@@ -130,9 +154,33 @@ nba-gm-data play --root .
 
 If the `py -3.11` command is missing, install Python 3.11+ from [python.org](https://www.python.org/downloads/) and check “Add Python to PATH” during installation.
 
-## Optional Loading-Screen Videos
+## Loading-Screen Assets
 
-Large video files are intentionally not stored in GitHub because GitHub blocks files over 100 MB. To use custom ASCII loading screens, create this folder after cloning:
+The game can run without loading-screen assets, but testers will get the intended full ASCII highlight loading screens after installing `loading-assets-v1.zip`.
+
+The easiest command is:
+
+```bash
+nba-gm-data install-assets --root .
+```
+
+If GitHub asks you to sign in, download `loading-assets-v1.zip` from the repo's Releases page in your browser and install it from your Downloads folder:
+
+```bash
+nba-gm-data install-assets --root . --zip ~/Downloads/loading-assets-v1.zip
+```
+
+On Windows PowerShell:
+
+```powershell
+nba-gm-data install-assets --root . --zip "$HOME\Downloads\loading-assets-v1.zip"
+```
+
+The asset zip installs pre-rendered loading-screen frames into `.cache/`, so testers do not need `ffmpeg` or the original video file.
+
+## Optional Custom Loading-Screen Videos
+
+Large video files are intentionally not stored in normal Git history because GitHub blocks large repository files. To use custom ASCII loading screens, create this folder after cloning:
 
 ```bash
 mkdir -p "Animation Videos"
@@ -153,6 +201,24 @@ nba-gm-data animation-cache --root . --segments 8
 ```
 
 That command requires `ffmpeg`. The generated cache lives in `.cache/` and is ignored by Git.
+
+## Maintainer: Publish Loading Assets
+
+After rebuilding local loading-screen caches, package them for GitHub Releases:
+
+```bash
+python scripts/package_loading_assets.py --root .
+```
+
+That writes `dist/loading-assets-v1.zip`. Upload that zip to the GitHub Release tagged `loading-assets-v1`.
+
+With GitHub CLI installed and authenticated, the release command is:
+
+```bash
+gh release create loading-assets-v1 dist/loading-assets-v1.zip --title "Loading assets v1" --notes "Pre-rendered ASCII loading-screen cache."
+```
+
+Without GitHub CLI, go to the repo on GitHub, open **Releases**, draft a release for tag `loading-assets-v1`, attach `dist/loading-assets-v1.zip`, and publish it.
 
 ## Starting A Save
 
