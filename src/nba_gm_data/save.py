@@ -44,6 +44,17 @@ ROSTER_SEASON_MAXIMUM = 15
 ROSTER_TEMPORARY_HARD_MAXIMUM = 21
 AI_DIFFICULTIES = {"easy", "normal", "hard"}
 SOCIAL_INJURY_GAMES_THRESHOLD = 10
+MAJOR_FREE_AGENT_AAV_THRESHOLD = 25_000_000
+MAJOR_PLAYER_MPG_THRESHOLD = 29.0
+MAJOR_INJURY_GAMES_THRESHOLD = 41
+MAJOR_STAFF_GRADE_THRESHOLD = 89.0
+MAJOR_STAT_LINE_THRESHOLDS = {
+    "points": 49,
+    "rebounds": 20,
+    "assists": 20,
+    "steals": 6,
+    "blocks": 6,
+}
 
 
 def create_league_save(
@@ -221,11 +232,35 @@ def seed_startup_free_agents(canonical: dict[str, Any], save: dict[str, Any], se
     if needed:
         rng = random.Random(f"{seed}:{save.get('meta', {}).get('user_team_id')}:startup_free_agents")
         positions = ["PG", "SG", "SF", "PF", "C"]
-        firsts = ["Arman", "Bennett", "Cole", "Darius", "Eli", "Frank", "Gabe", "Hayes", "Isaiah", "Jonah", "Kellan", "Luca", "Mason", "Noel", "Owen", "Quentin", "Riley", "Silas", "Trey", "Vince"]
-        lasts = ["Bishop", "Carter", "Daniels", "Ellis", "Foster", "Grant", "Hayes", "Irving", "James", "Knight", "Lawson", "Morris", "Nolan", "Price", "Reed", "Stone", "Turner", "Walker", "Young", "Zimmer"]
+        firsts = [
+            "Andre", "Arman", "Bennett", "Bryce", "Caleb", "Cameron", "Cole", "Darius", "Devin", "Eli",
+            "Emmett", "Frank", "Gabe", "Hayes", "Isaiah", "Jalen", "Jonah", "Julian", "Kellan", "Kendrick",
+            "Luca", "Malik", "Mason", "Miles", "Nico", "Noel", "Owen", "Quentin", "Reid", "Riley",
+            "Silas", "Theo", "Trey", "Vince", "Wesley", "Zion",
+        ]
+        lasts = [
+            "Adams", "Alexander", "Baldwin", "Banks", "Bishop", "Brooks", "Caldwell", "Carter", "Clayton", "Coleman",
+            "Daniels", "Dawson", "Ellis", "Foster", "Franklin", "Gaines", "Garrett", "Grant", "Hampton", "Hayes",
+            "Holland", "Irving", "Jefferson", "James", "Knight", "Lawson", "Lewis", "Maddox", "Marshall", "Mercer",
+            "Morris", "Nolan", "Parker", "Pierce", "Porter", "Price", "Reed", "Reynolds", "Rhodes", "Russell",
+            "Sanders", "Shelton", "Simmons", "Spencer", "Stone", "Sullivan", "Taylor", "Turner", "Walker", "Wallace",
+            "Warren", "Watkins", "Webster", "West", "Whitaker", "Williams", "Wilson", "Wright", "Young", "Zimmer",
+        ]
+        used_names = {normalize_name(player.get("name", "")) for player in save.get("generated_players", [])}
+        used_lasts: set[str] = set()
         for index in range(needed):
             position = rng.choice(positions)
-            name = f"{rng.choice(firsts)} {rng.choice(lasts)}"
+            last_choices = [last for last in lasts if last not in used_lasts] or lasts
+            for attempt in range(200):
+                last = rng.choice(last_choices)
+                first = rng.choice(firsts)
+                name = f"{first} {last}"
+                if normalize_name(name) not in used_names:
+                    break
+                if attempt == 100:
+                    last_choices = lasts
+            used_names.add(normalize_name(name))
+            used_lasts.add(name.split()[-1])
             player_id = stable_id("startup_fa", save.get("meta", {}).get("id"), index, name)
             player = {
                 "id": player_id,
@@ -475,6 +510,7 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
     canonical.setdefault("meta", {})["active_season"] = active_season
     canonical.setdefault("meta", {})["current_date"] = save.get("state", {}).get("current_date")
     canonical["save_team_records"] = deepcopy(save.get("team_records", {}))
+    canonical["transaction_logs"] = deepcopy(save.get("transaction_logs", []))
     from .transactions import ensure_future_second_round_scaffolds
 
     ensure_future_second_round_scaffolds(canonical)
@@ -724,6 +760,7 @@ def propose_trade_to_save(
     asset_specs: list[str],
     seed: int = 1,
     store: bool = True,
+    pick_obligation_terms: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     canonical = to_plain(canonical)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
@@ -731,11 +768,15 @@ def propose_trade_to_save(
     if "trades" not in legal_actions_for_date(save.get("state", {}).get("current_date") or CANONICAL_START_DATE):
         raise ValueError(f"Trades are not legal during phase {phase!r}.")
     active = canonical_with_save(canonical, save)
-    from .transactions import evaluate_trade, parse_cli_assets, with_transaction_context
+    from .transactions import canonical_with_pending_pick_terms, evaluate_trade, parse_cli_assets, trade_result_with_pick_terms, with_transaction_context
 
     active = with_transaction_context(active)
+    if pick_obligation_terms:
+        active = canonical_with_pending_pick_terms(active, pick_obligation_terms)
     from_assets, to_assets = parse_cli_assets(active, from_team, to_team, asset_specs)
-    evaluation = evaluate_trade(active, from_team, to_team, from_assets, to_assets, seed=seed)
+    evaluation = evaluate_trade(active, from_team, to_team, from_assets, to_assets, seed=seed, date=save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
+    if pick_obligation_terms:
+        evaluation = trade_result_with_pick_terms(evaluation, pick_obligation_terms)
     proposal = {
         **evaluation,
         "offer_context": {
@@ -1112,14 +1153,227 @@ def playoff_leaders(canonical: dict[str, Any] | Any, save_path: str | Path, stat
     }
 
 
-def league_events_view(canonical: dict[str, Any] | Any, save_path: str | Path, limit: int = 40, kind: str | None = None) -> dict[str, Any]:
+def league_events_view(
+    canonical: dict[str, Any] | Any,
+    save_path: str | Path,
+    limit: int = 40,
+    kind: str | None = None,
+    major_only: bool = False,
+    recent_days: int | None = None,
+) -> dict[str, Any]:
     canonical = to_plain(canonical)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
-    events = save.get("league_events", [])
+    events = [enriched_league_event(canonical, save, event) for event in save.get("league_events", [])]
     if kind:
         events = [event for event in events if event.get("kind") == kind]
+    if major_only:
+        events = [event for event in events if is_major_league_event(canonical, save, event)]
+    if recent_days is not None:
+        events = [event for event in events if event_is_recent(event, save.get("state", {}).get("current_date"), recent_days)]
     events = sorted(events, key=lambda item: (item.get("date") or "", item.get("importance") or 0.0, item.get("headline") or ""), reverse=True)
+    events = dedupe_trade_events_for_view(events)
     return {"as_of_date": save.get("state", {}).get("current_date"), "events": events[:limit], "event_count": len(events)}
+
+
+def dedupe_trade_events_for_view(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    output: list[dict[str, Any]] = []
+    seen_trades: set[tuple[Any, ...]] = set()
+    for event in events:
+        if event.get("kind") != "trade":
+            output.append(event)
+            continue
+        details = event.get("details") or {}
+        asset_key = (
+            tuple(sorted(event_asset_keys(details.get("from_assets") or []))),
+            tuple(sorted(event_asset_keys(details.get("to_assets") or []))),
+        )
+        key = asset_key if any(asset_key) else (event.get("headline"),)
+        if key in seen_trades:
+            continue
+        seen_trades.add(key)
+        output.append(event)
+    return output
+
+
+def event_asset_keys(assets: list[dict[str, Any]]) -> list[str]:
+    return [
+        f"{asset.get('kind')}:{asset.get('id') or asset.get('player_id') or asset.get('pick_id') or asset.get('label')}"
+        for asset in assets
+        if asset.get("kind")
+    ]
+
+
+def event_is_recent(event: dict[str, Any], as_of_date: str | None, days: int) -> bool:
+    if not as_of_date:
+        return True
+    try:
+        event_date = parse_date(str(event.get("date") or as_of_date))
+        current = parse_date(as_of_date)
+    except (TypeError, ValueError):
+        return False
+    return current - timedelta(days=max(0, int(days))) <= event_date <= current
+
+
+def enriched_league_event(canonical: dict[str, Any], save: dict[str, Any], event: dict[str, Any]) -> dict[str, Any]:
+    enriched = deepcopy(event)
+    details = dict(enriched.get("details") or {})
+    kind = str(enriched.get("kind") or "")
+    if kind == "trade":
+        details = enrich_trade_event_details(canonical, save, enriched, details)
+    elif kind in {"free_agent_signing", "free_agency_signing", "free_agency", "extension"}:
+        details = enrich_contract_event_details(save, enriched, details)
+    elif kind in {"staff_hire", "staff_fire"}:
+        details = enrich_staff_event_details(save, enriched, details)
+    elif kind == "injury":
+        details = enrich_injury_event_details(canonical, enriched, details)
+    elif kind == "major_stat_line":
+        details = normalize_stat_line_details(details)
+    enriched["details"] = details
+    return enriched
+
+
+def enrich_trade_event_details(canonical: dict[str, Any], save: dict[str, Any], event: dict[str, Any], details: dict[str, Any]) -> dict[str, Any]:
+    if not (details.get("from_assets") or details.get("to_assets")):
+        log = matching_transaction_log(save, event, {"trade"})
+        if log:
+            details = {**details, **dict(log.get("assets") or {})}
+    details["from_assets"] = [enrich_trade_asset_for_event(canonical, asset) for asset in details.get("from_assets", [])]
+    details["to_assets"] = [enrich_trade_asset_for_event(canonical, asset) for asset in details.get("to_assets", [])]
+    return details
+
+
+def enrich_trade_asset_for_event(canonical: dict[str, Any], asset: dict[str, Any]) -> dict[str, Any]:
+    enriched = dict(asset or {})
+    if enriched.get("kind") == "player":
+        player_id = enriched.get("id") or enriched.get("player_id")
+        player = next((item for item in canonical.get("players", []) if item.get("id") == player_id), {})
+        if player:
+            enriched.setdefault("id", player.get("id"))
+            enriched.setdefault("label", player.get("name"))
+            enriched.setdefault("minutes_projection", display_minutes_projection(player))
+    elif enriched.get("kind") == "pick":
+        pick_id = enriched.get("id") or enriched.get("pick_id")
+        pick = next((item for item in canonical.get("draft_picks", []) if item.get("id") == pick_id), {})
+        if pick:
+            enriched.setdefault("id", pick.get("id"))
+            enriched.setdefault("season", pick.get("season"))
+            enriched.setdefault("round", pick.get("round"))
+            enriched.setdefault("original_team_id", pick.get("original_team_id"))
+            enriched.setdefault("current_owner_team_id", pick.get("current_owner_team_id"))
+    return enriched
+
+
+def enrich_contract_event_details(save: dict[str, Any], event: dict[str, Any], details: dict[str, Any]) -> dict[str, Any]:
+    if not details.get("contract"):
+        log = matching_transaction_log(save, event, {"extension", "free_agent_signing", "free_agency"})
+        if log:
+            assets = log.get("assets") or {}
+            details.setdefault("player_id", assets.get("player_id"))
+            details.setdefault("contract", assets.get("contract"))
+    contract = details.get("contract") or {}
+    annual = details.get("annual_salary") or contract.get("annual_salary") or contract.get("salary") or details.get("aav")
+    if annual is not None:
+        details["annual_salary"] = float(annual)
+        details["aav_millions"] = round(float(annual) / 1_000_000, 2) if float(annual) > 1_000 else float(annual)
+    return details
+
+
+def enrich_staff_event_details(save: dict[str, Any], event: dict[str, Any], details: dict[str, Any]) -> dict[str, Any]:
+    if details.get("staff_grade") is not None:
+        return details
+    log = matching_transaction_log(save, event, {"staff_hire", "staff_fire"})
+    assets = (log or {}).get("assets") or {}
+    staff = assets.get("staff") or assets.get("fired_staff") or {}
+    if staff:
+        details.setdefault("staff_id", staff.get("id"))
+        details.setdefault("staff_name", staff.get("name"))
+        details.setdefault("staff_grade", round(staff_grade(staff), 2))
+    return details
+
+
+def enrich_injury_event_details(canonical: dict[str, Any], event: dict[str, Any], details: dict[str, Any]) -> dict[str, Any]:
+    if details.get("player_minutes_projection") is None:
+        player_id = details.get("player_id") or next(iter(event.get("player_ids") or []), None)
+        player = next((item for item in canonical.get("players", []) if item.get("id") == player_id), {})
+        if player:
+            details.setdefault("player_id", player.get("id"))
+            details.setdefault("player_minutes_projection", display_minutes_projection(player))
+    return details
+
+
+def normalize_stat_line_details(details: dict[str, Any]) -> dict[str, Any]:
+    stat = str(details.get("stat") or "").lower()
+    aliases = {"pts": "points", "reb": "rebounds", "ast": "assists", "stl": "steals", "blk": "blocks"}
+    if stat in aliases:
+        details["stat"] = aliases[stat]
+    return details
+
+
+def matching_transaction_log(save: dict[str, Any], event: dict[str, Any], kinds: set[str]) -> dict[str, Any] | None:
+    matches = [
+        log for log in save.get("transaction_logs", [])
+        if log.get("transaction_type") in kinds and str(log.get("date") or "") == str(event.get("date") or "")
+    ]
+    if len(matches) == 1:
+        return matches[0]
+    headline = str(event.get("headline") or "")
+    for log in matches:
+        assets = log.get("assets") or {}
+        labels = json.dumps(assets, sort_keys=True)
+        if headline and all(token in labels for token in headline.split()[:2]):
+            return log
+    return None
+
+
+def is_major_league_event(canonical: dict[str, Any], save: dict[str, Any], event: dict[str, Any]) -> bool:
+    kind = str(event.get("kind") or "")
+    details = event.get("details") or {}
+    if kind in {"game_result", "game"}:
+        return False
+    if kind == "trade":
+        return trade_event_is_major(details)
+    if kind in {"free_agent_signing", "free_agency_signing", "free_agency", "extension"}:
+        return contract_event_is_major(details)
+    if kind in {"staff_hire", "staff_fire"}:
+        return staff_event_is_major(details)
+    if kind == "injury":
+        return injury_event_is_major(details)
+    if kind == "major_stat_line":
+        return stat_line_event_is_major(details)
+    return False
+
+
+def trade_event_is_major(details: dict[str, Any]) -> bool:
+    for asset in [*(details.get("from_assets") or []), *(details.get("to_assets") or [])]:
+        if asset.get("kind") == "pick" and int(asset.get("round") or 0) == 1:
+            return True
+        if asset.get("kind") == "player" and float(asset.get("minutes_projection") or 0.0) > MAJOR_PLAYER_MPG_THRESHOLD:
+            return True
+    return False
+
+
+def contract_event_is_major(details: dict[str, Any]) -> bool:
+    annual = details.get("annual_salary")
+    if annual is None and details.get("aav_millions") is not None:
+        annual = float(details.get("aav_millions") or 0.0) * 1_000_000
+    return float(annual or 0.0) > MAJOR_FREE_AGENT_AAV_THRESHOLD
+
+
+def staff_event_is_major(details: dict[str, Any]) -> bool:
+    return float(details.get("staff_grade") or details.get("candidate_grade") or details.get("fired_staff_grade") or 0.0) > MAJOR_STAFF_GRADE_THRESHOLD
+
+
+def injury_event_is_major(details: dict[str, Any]) -> bool:
+    games = int(details.get("expected_games_missed") or details.get("games_missed") or 0)
+    mpg = float(details.get("player_minutes_projection") or details.get("minutes_projection") or 0.0)
+    return games > MAJOR_INJURY_GAMES_THRESHOLD and mpg > MAJOR_PLAYER_MPG_THRESHOLD
+
+
+def stat_line_event_is_major(details: dict[str, Any]) -> bool:
+    stat = str(details.get("stat") or "").lower()
+    value = float(details.get("value") or 0.0)
+    threshold = MAJOR_STAT_LINE_THRESHOLDS.get(stat)
+    return threshold is not None and value > threshold
 
 
 def playoff_picture(canonical: dict[str, Any] | Any, save_path: str | Path) -> dict[str, Any]:
@@ -1296,12 +1550,13 @@ def resolve_pick_obligations_for_year(save: dict[str, Any], order: dict[str, Any
             low = int(protected.get("from") or 1)
             high = int(protected.get("through") or obligation.get("protected_top_n") or 0)
             sender = obligation.get("sender_team_id")
-            receiver = obligation.get("receiver_team_id")
+            current_holder = save.get("draft_pick_overrides", {}).get(pick_id) or row.get("current_owner_team_id")
+            receiver = current_holder if current_holder and current_holder != sender else obligation.get("receiver_team_id")
             if low <= overall <= high and sender:
                 row["current_owner_team_id"] = sender
                 save.setdefault("draft_pick_overrides", {})[pick_id] = sender
                 fallback_id = next((pid for pid in obligation.get("fallback_pick_ids") or [] if pid), None)
-                if fallback_id and receiver:
+                if fallback_id and receiver and receiver != sender:
                     save.setdefault("draft_pick_overrides", {})[fallback_id] = receiver
                     locked.discard(fallback_id)
                     add_league_event(
@@ -2144,17 +2399,16 @@ def add_game_high_social(save: dict[str, Any], result: dict[str, Any]) -> None:
     if not lines:
         return
     checks = [
-        ("points", 40, "points"),
-        ("assists", 15, "assists"),
+        ("points", 49, "points"),
         ("rebounds", 20, "rebounds"),
-        ("fg3m", 8, "threes"),
+        ("assists", 20, "assists"),
         ("steals", 6, "steals"),
         ("blocks", 6, "blocks"),
     ]
     for stat, threshold, label in checks:
         leader = max(lines, key=lambda item: float(item.get(stat) or 0), default={})
         value = float(leader.get(stat) or 0)
-        if value >= threshold:
+        if value > threshold:
             add_league_event(
                 save,
                 "major_stat_line",
@@ -2163,7 +2417,7 @@ def add_game_high_social(save: dict[str, Any], result: dict[str, Any]) -> None:
                 team_ids=[leader.get("team_id")] if leader.get("team_id") else [],
                 player_ids=[leader.get("player_id")] if leader.get("player_id") else [],
                 importance=0.72,
-                details={"stat": stat, "value": value, "game_id": result.get("game_id")},
+                details={"stat": stat, "value": value, "game_id": result.get("game_id"), "threshold": threshold},
             )
             add_social(
                 save,
@@ -2333,13 +2587,32 @@ def merge_health_results(save: dict[str, Any], health: dict[str, Any], canonical
         if event.get("id") not in seen:
             save.setdefault("injury_events", []).append(event)
             seen.add(event.get("id"))
+        player = players.get(event.get("player_id"), {})
+        player_name = player.get("name") or event.get("player_id") or "A player"
+        games = event.get("expected_games_missed") or event.get("expected_days_missed") or "some"
+        expected_games = int(event.get("expected_games_missed") or 0)
+        player_mpg = display_minutes_projection(player) if player else 0.0
+        if expected_games > MAJOR_INJURY_GAMES_THRESHOLD and player_mpg > MAJOR_PLAYER_MPG_THRESHOLD:
+            add_league_event(
+                save,
+                "injury",
+                f"{player_name} is expected to miss about {games} games with a {event.get('body_area')} issue.",
+                date_value=event.get("start_date"),
+                team_ids=[player.get("team_id")] if player.get("team_id") else [],
+                player_ids=[event.get("player_id")] if event.get("player_id") else [],
+                importance=0.74,
+                details={
+                    "injury_id": event.get("id"),
+                    "player_id": event.get("player_id"),
+                    "expected_games_missed": expected_games,
+                    "player_minutes_projection": player_mpg,
+                    "body_area": event.get("body_area"),
+                },
+            )
         if event.get("id") not in socialized and int(event.get("expected_games_missed") or 0) >= SOCIAL_INJURY_GAMES_THRESHOLD:
-            player = players.get(event.get("player_id"), {})
             if display_minutes_projection(player) < 20.0:
                 socialized.add(event.get("id"))
                 continue
-            player_name = player.get("name") or event.get("player_id") or "A player"
-            games = event.get("expected_games_missed") or event.get("expected_days_missed") or "some"
             add_news(
                 save,
                 "injury",
@@ -3516,9 +3789,25 @@ def add_league_event(
         "details": details or {},
     }
     events = save.setdefault("league_events", [])
-    if event["id"] not in {item.get("id") for item in events}:
-        events.append(event)
+    existing = next((item for item in events if item.get("id") == event["id"]), None)
+    if existing is not None:
+        existing["team_ids"] = sorted({*existing.get("team_ids", []), *event.get("team_ids", [])})
+        existing["player_ids"] = sorted({*existing.get("player_ids", []), *event.get("player_ids", [])})
+        existing["importance"] = round(max(float(existing.get("importance") or 0.0), float(event.get("importance") or 0.0)), 3)
+        existing["details"] = merge_event_details(existing.get("details") or {}, event.get("details") or {})
+        return existing
+    events.append(event)
     return event
+
+
+def merge_event_details(existing: dict[str, Any], incoming: dict[str, Any]) -> dict[str, Any]:
+    merged = dict(existing or {})
+    for key, value in (incoming or {}).items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = merge_event_details(merged[key], value)
+        elif value not in (None, "", [], {}):
+            merged[key] = value
+    return merged
 
 
 def event_importance(kind: str, headline: str) -> float:
@@ -4678,6 +4967,21 @@ def maybe_add_major_free_agent_news(save: dict[str, Any], team: dict[str, Any], 
         return
     headline = f"{player['name']} signs with {team['abbrev']} for ${salary / 1_000_000:.1f}M."
     add_news(save, "free_agent_signing", headline, date_value=f"{season_start_year(next_season)}-07-03")
+    add_league_event(
+        save,
+        "free_agent_signing",
+        headline,
+        date_value=f"{season_start_year(next_season)}-07-03",
+        team_ids=[team.get("id")],
+        player_ids=[player.get("id")],
+        importance=0.72 if salary > MAJOR_FREE_AGENT_AAV_THRESHOLD else 0.5,
+        details={
+            "player_id": player.get("id"),
+            "team_id": team.get("id"),
+            "annual_salary": salary,
+            "aav_millions": round(salary / 1_000_000, 2),
+        },
+    )
     posted.add(marker)
     save["major_free_agent_news_ids"] = sorted(posted)
 

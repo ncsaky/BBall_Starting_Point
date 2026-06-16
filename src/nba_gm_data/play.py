@@ -57,7 +57,7 @@ from .save import (
     write_save,
 )
 from .staff import ROLE_LABELS, STAFF_SLOTS, fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, staff_budget_snapshot, staff_effect_summary, staff_market_report, staff_role_effect, staff_team_report
-from .transactions import apply_trade_to_save, contract_for_player, current_salary, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, tradeable_picks_for_team, with_transaction_context
+from .transactions import apply_trade_to_save, canonical_with_pending_pick_terms, clean_pick_protection_summary, contract_for_player, current_salary, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, pick_season_start, proposal_asset_identity_keys, prune_trade_offers_touching_assets, recently_traded_player_ids, trade_result_with_pick_terms, tradeable_picks_for_team, with_transaction_context
 from .utils import clamp, stable_id
 
 
@@ -439,6 +439,7 @@ def cut_player_from_roster(canonical: dict[str, Any], save_path: Path, team_abbr
         date_value=save.get("state", {}).get("current_date"),
     )
     save = ensure_league_save_defaults(save, canonical)
+    prune_trade_offers_touching_assets(save, {f"player:{player['id']}"})
     write_save(save_path, save)
 
 
@@ -568,12 +569,13 @@ def handle_choice(root: Path, canonical: dict[str, Any], save_path: Path, choice
     user_team = save.get("meta", {}).get("user_team_abbrev") or "GSW"
     current = save.get("state", {}).get("current_date") or "2025-10-01"
     if choice == "1":
-        result = advance_save(root, canonical, save_path, next_event=True, seed=seed)
+        with loading_screen(root, "Advancing to next event...", seed=seed):
+            result = advance_save(root, canonical, save_path, next_event=True, seed=seed)
         print(summary_lines("Advanced", result, ["through_date", "phase"]))
     elif choice == "2":
         target = add_days(current, 7)
-        print(style("Working through the week...", "accent"))
-        result = advance_save(root, canonical, save_path, to_date=target, seed=seed)
+        with loading_screen(root, "Working through the week...", seed=seed):
+            result = advance_save(root, canonical, save_path, to_date=target, seed=seed)
         print(summary_lines("Advanced one week", result, ["through_date", "phase"]))
     elif choice == "3":
         target = add_days(current, 31)
@@ -594,7 +596,8 @@ def handle_choice(root: Path, canonical: dict[str, Any], save_path: Path, choice
                 result = advance_save(root, canonical, save_path, to_date=regular_end, seed=seed)
             print(summary_lines("Reached end of regular season", result, ["through_date", "phase"]))
         else:
-            result = advance_save(root, canonical, save_path, next_event=True, seed=seed)
+            with loading_screen(root, "Advancing season...", seed=seed):
+                result = advance_save(root, canonical, save_path, next_event=True, seed=seed)
             print(summary_lines("Advanced", result, ["through_date", "phase"]))
     elif choice == "5":
         team = input(f"Team [{user_team}]: ").strip() or user_team
@@ -671,35 +674,27 @@ def calendar_room(root: Path, canonical: dict[str, Any], save_path: Path) -> Non
 
 
 def league_events_room(canonical: dict[str, Any], save_path: Path) -> None:
+    recent_only = False
     while True:
         clear_screen()
-        view = league_events_view(canonical, save_path, limit=60)
-        print_title("League Events")
+        view = league_events_view(canonical, save_path, limit=60, major_only=True, recent_days=30 if recent_only else None)
+        print_title("Recent Major League Events" if recent_only else "Major League Events")
         events = view.get("events") or []
         if not events:
-            print("No factual league events have been recorded yet.")
-            wait()
-            return
+            print("No major league events match this view yet.")
         for event in events[:40]:
             importance = float(event.get("importance") or 0.0)
             color = "good" if importance >= 0.78 else "accent" if importance >= 0.55 else "muted"
             print(f"{event.get('date', '')}  {style(clean_label(event.get('kind')), color):<24} {event.get('headline', '')}")
         print_rule()
-        print("1. Show only major events")
-        print("2. Show all recent events")
+        print("1. Show all major events" if recent_only else "1. Show recent major events")
         print("0. Back")
         choice = input("> Pick a number: ").strip()
         if choice == "0":
             clear_screen()
             return
         if choice == "1":
-            clear_screen()
-            print_title("Major League Events")
-            for event in [event for event in events if float(event.get("importance") or 0.0) >= 0.6][:40]:
-                print(f"{event.get('date', '')}  {clean_label(event.get('kind')):<20} {event.get('headline', '')}")
-            wait()
-        elif choice == "2":
-            continue
+            recent_only = not recent_only
 
 
 def minutes_room(canonical: dict[str, Any], save_path: Path, user_team: str) -> None:
@@ -1115,13 +1110,19 @@ def guided_trade_builder(canonical: dict[str, Any], save_path: Path, user_team: 
     while True:
         save = ensure_league_save_defaults(load_save(save_path), canonical)
         active = canonical_with_save(canonical, save)
-        from_assets = choose_assets(active, save, user_team, "Assets from " + user_team)
-        to_assets = choose_assets(active, save, partner, "Assets from " + partner)
+        user_team_id = resolve_team(active, user_team)["id"]
+        partner_id = resolve_team(active, partner)["id"]
+        to_assets = choose_assets(active, save, partner, "Assets you receive from " + partner, save_path=save_path, sender_team_id=partner_id, receiver_team_id=user_team_id, prompt_pick_terms=True)
+        if to_assets is None:
+            pause("Trade cancelled.")
+            return
+        from_assets = choose_assets(active, save, user_team, "Assets you send to " + partner, save_path=save_path, sender_team_id=user_team_id, receiver_team_id=partner_id, prompt_pick_terms=True)
         if from_assets is None or to_assets is None or (not from_assets and not to_assets):
             pause("Trade cancelled.")
             return
-        specs = [f"FROM:{kind}:{value}" for kind, value in from_assets] + [f"TO:{kind}:{value}" for kind, value in to_assets]
-        result = propose_trade_to_save(active, save_path, user_team, partner, specs, seed=seed, store=False)
+        specs = [f"FROM:{asset['kind']}:{asset['value']}" for asset in from_assets] + [f"TO:{asset['kind']}:{asset['value']}" for asset in to_assets]
+        terms = pick_terms_from_selected_assets([*from_assets, *to_assets])
+        result = propose_trade_to_save(active, save_path, user_team, partner, specs, seed=seed, store=False, pick_obligation_terms=terms)
         print_trade_result(result)
         if result.get("legality", {}).get("status") == "legal":
             break
@@ -1178,7 +1179,8 @@ def store_trade_offer(save_path: Path, proposal: dict[str, Any]) -> None:
 def attach_pick_terms_to_trade(canonical: dict[str, Any], save_path: Path, proposal: dict[str, Any]) -> dict[str, Any]:
     proposal_payload = proposal.get("proposal") or {}
     if proposal.get("pick_obligation_terms"):
-        return proposal
+        finalized = finalize_pick_terms_for_proposal(proposal.get("pick_obligation_terms") or [], proposal_payload)
+        return trade_result_with_pick_terms({**proposal, "pick_obligation_terms": finalized}, finalized)
     terms: list[dict[str, Any]] = []
     for side, sender_id, receiver_id in [
         ("from_assets", proposal_payload.get("from_team_id"), proposal_payload.get("to_team_id")),
@@ -1191,17 +1193,19 @@ def attach_pick_terms_to_trade(canonical: dict[str, Any], save_path: Path, propo
             if term and term.get("type") != "unprotected":
                 terms.append(term)
     if terms:
-        proposal = {**proposal, "pick_obligation_terms": terms}
+        proposal = trade_result_with_pick_terms(proposal, finalize_pick_terms_for_proposal(terms, proposal_payload))
     return proposal
 
 
-def prompt_pick_trade_terms(canonical: dict[str, Any], save_path: Path, pick_id: str | None, sender_id: str | None, receiver_id: str | None) -> dict[str, Any] | None:
-    if not pick_id or not sender_id or not receiver_id:
+def prompt_pick_trade_terms(canonical: dict[str, Any], save_path: Path, pick_id: str | None, sender_id: str | None, receiver_id: str | None, allow_open_receiver: bool = False) -> dict[str, Any] | None:
+    if not pick_id or not sender_id or (not receiver_id and not allow_open_receiver):
         return None
     save = ensure_league_save_defaults(load_save(save_path), canonical)
-    active = canonical_with_save(canonical, save)
+    active = with_transaction_context(canonical_with_save(canonical, save))
     pick = next((item for item in active.get("draft_picks", []) if item.get("id") == pick_id), None)
     if not pick or int(pick.get("round") or 2) != 1:
+        return {"type": "unprotected", "primary_pick_id": pick_id}
+    if active_primary_pick_obligation(pick):
         return {"type": "unprotected", "primary_pick_id": pick_id}
     print_title("Pick Protection")
     print(f"{clean_pick_label_for_user(active, pick, save)}")
@@ -1230,6 +1234,7 @@ def prompt_pick_trade_terms(canonical: dict[str, Any], save_path: Path, pick_id:
         "primary_pick_id": pick_id,
         "sender_team_id": sender_id,
         "receiver_team_id": receiver_id,
+        "receiver_pending": receiver_id is None,
         "season": pick.get("season"),
         "protected_range": protected_range,
         "protected_top_n": protected_range.get("through") if protected_range.get("from") == 1 else None,
@@ -1239,13 +1244,62 @@ def prompt_pick_trade_terms(canonical: dict[str, Any], save_path: Path, pick_id:
     }
 
 
+def active_primary_pick_obligation(pick: dict[str, Any]) -> dict[str, Any] | None:
+    return next(
+        (
+            obligation for obligation in pick.get("_obligations", [])
+            if obligation.get("type") == "protected_pick" and not obligation.get("_fallback_lock")
+        ),
+        None,
+    )
+
+
+def pick_terms_from_selected_assets(assets: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        asset["pick_obligation_term"]
+        for asset in assets
+        if asset.get("pick_obligation_term") and asset["pick_obligation_term"].get("type") != "unprotected"
+    ]
+
+
+def finalize_pick_terms_for_proposal(terms: list[dict[str, Any]], proposal: dict[str, Any]) -> list[dict[str, Any]]:
+    finalized: list[dict[str, Any]] = []
+    for term in terms:
+        if not term or term.get("type") == "unprotected":
+            continue
+        item = dict(term)
+        if not item.get("receiver_team_id") or item.get("receiver_pending"):
+            side = proposal_side_for_pick(proposal, item.get("primary_pick_id"))
+            if side == "from_assets":
+                item["sender_team_id"] = proposal.get("from_team_id")
+                item["receiver_team_id"] = proposal.get("to_team_id")
+            elif side == "to_assets":
+                item["sender_team_id"] = proposal.get("to_team_id")
+                item["receiver_team_id"] = proposal.get("from_team_id")
+            item.pop("receiver_pending", None)
+        finalized.append(item)
+    return finalized
+
+
+def proposal_side_for_pick(proposal: dict[str, Any], pick_id: str | None) -> str | None:
+    for side in ["from_assets", "to_assets"]:
+        if any(asset.get("kind") == "pick" and asset.get("id") == pick_id for asset in proposal.get(side, [])):
+            return side
+    return None
+
+
 def choose_fallback_pick_for_protection(canonical: dict[str, Any], save: dict[str, Any], team_id: str, primary_pick_id: str) -> str | None:
     team = next((item for item in canonical.get("teams", []) if item.get("id") == team_id), None)
     if not team:
         return None
+    primary_pick = next((pick for pick in canonical.get("draft_picks", []) if pick.get("id") == primary_pick_id), {})
+    primary_year = pick_season_start(primary_pick) or 0
     picks = [
         pick for pick in tradeable_picks_for_team(canonical, team_id)
-        if pick.get("id") != primary_pick_id and not pick.get("_obligation_locked") and int(pick.get("round") or 2) in {1, 2}
+        if pick.get("id") != primary_pick_id
+        and not pick.get("_obligation_locked")
+        and int(pick.get("round") or 2) in {1, 2}
+        and (pick_season_start(pick) or 0) >= primary_year
     ]
     picks = sorted(picks, key=lambda pick: (str(pick.get("season") or ""), int(pick.get("round") or 9), clean_pick_label_for_user(canonical, pick, save)))
     if not picks:
@@ -1275,7 +1329,19 @@ def trade_finder_room(canonical: dict[str, Any], save_path: Path, user_team: str
             clear_screen()
             return
         if choice == "1":
-            selected = choose_assets(active, save, user_team, f"Shop assets from {user_team}", max_select=2)
+            user_team_id = resolve_team(active, user_team)["id"]
+            selected = choose_assets(
+                active,
+                save,
+                user_team,
+                f"Shop assets from {user_team}",
+                max_select=2,
+                save_path=save_path,
+                sender_team_id=user_team_id,
+                receiver_team_id=None,
+                prompt_pick_terms=True,
+                allow_open_receiver=True,
+            )
             if selected is None:
                 continue
             if not selected:
@@ -1297,7 +1363,19 @@ def trade_finder_room(canonical: dict[str, Any], save_path: Path, user_team: str
             while True:
                 save = ensure_league_save_defaults(load_save(save_path), canonical)
                 active = canonical_with_save(canonical, save)
-                selected = choose_assets(active, save, target_team, f"Target assets from {target_team}", max_select=2)
+                target_team_id = resolve_team(active, target_team)["id"]
+                user_team_id = resolve_team(active, user_team)["id"]
+                selected = choose_assets(
+                    active,
+                    save,
+                    target_team,
+                    f"Target assets from {target_team}",
+                    max_select=2,
+                    save_path=save_path,
+                    sender_team_id=target_team_id,
+                    receiver_team_id=user_team_id,
+                    prompt_pick_terms=True,
+                )
                 if selected is None:
                     break
                 if not selected:
@@ -1318,19 +1396,28 @@ def trade_finder_report_for_selection(
     save: dict[str, Any],
     user_team: str,
     target_team: str,
-    selected: list[tuple[str, str]],
+    selected: list[dict[str, Any]],
     seed: int,
 ) -> dict[str, Any]:
-    specs = [{"kind": kind, "value": value} for kind, value in selected]
-    if len(specs) == 1 and specs[0]["kind"] == "player":
-        report = find_trade(canonical, specs[0]["value"], user_team, limit=8, seed=seed)
+    specs = [{"kind": asset["kind"], "value": asset["value"]} for asset in selected]
+    terms = pick_terms_from_selected_assets(selected)
+    search_canonical = canonical_with_pending_pick_terms(canonical, terms) if terms else canonical
+    if len(specs) == 1 and specs[0]["kind"] == "player" and not terms:
+        report = find_trade(search_canonical, specs[0]["value"], user_team, limit=8, seed=seed)
     else:
-        report = find_trade_for_assets(canonical, target_team, specs, user_team, limit=8, seed=seed)
+        report = find_trade_for_assets(search_canonical, target_team, specs, user_team, limit=8, seed=seed)
+    if terms:
+        candidates = []
+        for candidate in report.get("candidates", []):
+            finalized_terms = finalize_pick_terms_for_proposal(terms, candidate.get("proposal") or {})
+            candidates.append(trade_result_with_pick_terms(candidate, finalized_terms))
+        report["candidates"] = candidates
     report["candidates"] = difficulty_filter_trade_candidates(
         report.get("candidates", []),
         save.get("meta", {}).get("ai_difficulty", "normal"),
         save.get("meta", {}).get("user_team_id"),
     )
+    report["candidates"] = remove_inferior_superset_trade_candidates(report["candidates"], save.get("meta", {}).get("user_team_id"))
     report["candidate_count"] = len(report["candidates"])
     return report
 
@@ -1461,14 +1548,27 @@ def extensions_room(canonical: dict[str, Any], save_path: Path, user_team: str, 
     wait()
 
 
-def choose_assets(canonical: dict[str, Any], save: dict[str, Any], team_abbrev: str, title: str, max_select: int | None = None) -> list[tuple[str, str]] | None:
+def choose_assets(
+    canonical: dict[str, Any],
+    save: dict[str, Any],
+    team_abbrev: str,
+    title: str,
+    max_select: int | None = None,
+    save_path: Path | None = None,
+    sender_team_id: str | None = None,
+    receiver_team_id: str | None = None,
+    prompt_pick_terms: bool = False,
+    allow_open_receiver: bool = False,
+) -> list[dict[str, Any]] | None:
     clear_screen()
     canonical = with_transaction_context(canonical)
     team = resolve_team(canonical, team_abbrev)
     values = {value.get("player_id"): value for value in canonical.get("player_asset_valuations", [])}
     team_state = next((state for state in canonical.get("team_strategic_states", []) if state.get("team_id") == team["id"]), {})
+    current_date = save.get("state", {}).get("current_date") or "2025-10-01"
+    recent_players = recently_traded_player_ids(save, current_date)
     players = sorted(
-        [p for p in canonical.get("players", []) if p.get("team_id") == team["id"]],
+        [p for p in canonical.get("players", []) if p.get("team_id") == team["id"] and p.get("id") not in recent_players],
         key=lambda player: (
             market_trade_target_value(player, values.get(player.get("id"), fallback_asset_valuation(player))),
             display_minutes_projection(player),
@@ -1524,11 +1624,23 @@ def choose_assets(canonical: dict[str, Any], save: dict[str, Any], team_abbrev: 
     if raw in {"", "0"}:
         clear_screen()
         return None
-    selected: list[tuple[str, str]] = []
+    selected: list[dict[str, Any]] = []
     for token in [part.strip() for part in raw.split(",") if part.strip()]:
         if token.isdigit() and 1 <= int(token) <= len(assets):
             kind, value, _ = assets[int(token) - 1]
-            selected.append((kind, value))
+            asset = {"kind": kind, "value": value}
+            if kind == "pick" and prompt_pick_terms and save_path is not None:
+                term = prompt_pick_trade_terms(
+                    canonical,
+                    save_path,
+                    value,
+                    sender_team_id or team["id"],
+                    receiver_team_id,
+                    allow_open_receiver=allow_open_receiver,
+                )
+                if term and term.get("type") != "unprotected":
+                    asset["pick_obligation_term"] = term
+            selected.append(asset)
             if max_select and len(selected) >= max_select:
                 break
     return selected
@@ -1691,7 +1803,9 @@ def actions_room(canonical: dict[str, Any], save_path: Path, seed: int) -> None:
         review_ai_suggestions(canonical, save_path)
     elif choice == "2":
         execute = yes_no("Allow legal accepted AI actions to execute?")
-        result = process_ai_actions(canonical, save_path, seed=seed, execute=execute, limit=20)
+        root = save_path.parent.parent if save_path.parent.name == "saves" else Path.cwd()
+        with loading_screen(root, "Processing AI bundles...", seed=seed):
+            result = process_ai_actions(canonical, save_path, seed=seed, execute=execute, limit=20)
         print_actions_result(result)
     elif choice == "3":
         save = load_save(save_path)
@@ -1915,7 +2029,7 @@ def user_trade_offers_room(canonical: dict[str, Any], save_path: Path) -> None:
                 write_save(save_path, save)
                 result = apply_trade_to_save(save_path, offer["proposal"]["id"], date=save.get("state", {}).get("current_date"))
                 save = load_save(save_path)
-                mark_user_trade_offer_status(save, proposal_id, "accepted_executed")
+                mark_user_trade_offer_status(save, proposal_id, "accepted_executed" if result.get("status") == "applied" else "stale_asset_moved")
                 write_save(save_path, save)
                 pause(f"Trade apply result: {result.get('status')}")
                 break
@@ -2521,7 +2635,7 @@ def print_live_draft_summary(canonical: dict[str, Any], save_path: Path, user_te
                 continue
             active = canonical_with_save(canonical, ensure_league_save_defaults(load_save(save_path), canonical))
             target_team = team_id_to_abbrev(team_id)
-            report = trade_finder_report_for_selection(active, load_save(save_path), user_team, target_team, [("player", player_name)], seed)
+            report = trade_finder_report_for_selection(active, load_save(save_path), user_team, target_team, [{"kind": "player", "value": player_name}], seed)
             clear_screen()
             print_find_trade_report(report)
             if report.get("candidates"):
@@ -2719,31 +2833,26 @@ def clean_pick_label_for_user(canonical: dict[str, Any], pick: dict[str, Any], s
     if save:
         order_pick = saved_order_pick_for_pick(save, pick)
         if order_pick:
-            owner = teams.get(order_pick.get("current_owner_team_id"), team_id_to_abbrev(order_pick.get("current_owner_team_id")))
-            original = teams.get(order_pick.get("original_team_id"), team_id_to_abbrev(order_pick.get("original_team_id")))
+            owner = teams.get(order_pick.get("current_owner_team_id")) or "TBD"
+            original = teams.get(order_pick.get("original_team_id")) or "TBD"
             overall = f"#{order_pick.get('overall_pick')}"
             owned_by = f"owned by {owner}" if owner and owner != original else "own pick"
-            return f"{overall} {owner} | R{order_pick.get('round')} from {original} ({owned_by})"
-    owner = teams.get(pick.get("current_owner_team_id"), team_id_to_abbrev(pick.get("current_owner_team_id")))
-    original = teams.get(pick.get("original_team_id"), team_id_to_abbrev(pick.get("original_team_id")))
+            return f"{overall} {owner} | R{order_pick.get('round')} {original} ({owned_by}){pick_context_note(pick)}"
+    owner = teams.get(pick.get("current_owner_team_id")) or "TBD"
+    original = teams.get(pick.get("original_team_id")) or "TBD"
     season = pick.get("season") or "----"
     round_no = pick.get("round") or "?"
     ownership = f"owned by {owner}" if owner and owner != original else "own pick"
     parts = [str(season), f"R{round_no}", str(original)]
     if pick.get("overall_pick"):
         parts.append(f"#{pick.get('overall_pick')}")
-    return f"{' '.join(parts)} ({ownership})".strip()
+    return f"{' '.join(parts)} ({ownership}){pick_context_note(pick)}".strip()
 
 
 def pick_context_note(pick: dict[str, Any]) -> str:
-    text = str(pick.get("protections") or pick.get("protection_summary") or "").strip()
-    if not text:
+    compact = clean_pick_protection_summary(pick)
+    if not compact:
         return ""
-    compact = " ".join(text.replace("  ", " ").split())
-    if compact.upper() == compact and compact.isalpha() and 2 <= len(compact) <= 4:
-        return ""
-    if len(compact) > 54:
-        compact = compact[:51].rstrip() + "..."
     return f"; {compact}"
 
 
@@ -2958,7 +3067,9 @@ def free_agency_room(canonical: dict[str, Any], save_path: Path, user_team: str,
         if choice == "1":
             free_agency_player_market(canonical, save_path, user_team, seed)
         elif choice == "2":
-            result = advance_free_agency_day(canonical, save_path, user_team, seed)
+            root = save_path.parent.parent if save_path.parent.name == "saves" else Path.cwd()
+            with loading_screen(root, "Advancing free agency...", seed=seed):
+                result = advance_free_agency_day(canonical, save_path, user_team, seed)
             clear_screen()
             print_free_agency_day_recap(canonical, save_path, day, result)
             wait()
@@ -4216,6 +4327,9 @@ def print_free_agent_investigation(active: dict[str, Any], save: dict[str, Any],
     print(f"Recent line: {stats['ppg']:.1f} PPG, {stats['rpg']:.1f} RPG, {stats['apg']:.1f} APG")
     print(f"Ask range: around ${projected_aav:.1f}M AAV | Fit with {user_team}: {float(market.get('team_fit_score') or 0):.1f}/100")
     print(f"Injury/durability flag: {injury_risk_text(injury_risk)}")
+    team = resolve_team(active, user_team)
+    cap_season = contract_start_season_for_signing(save)
+    print_cap_summary(active, save, team["id"], team_cap_summary(active, save, team["id"], season=cap_season))
     print_rule()
     print(
         f"OVR {rating_cell(float(attrs.get('overall') or 0), (50, 70))} "
@@ -5335,12 +5449,14 @@ def trade_finder_followup(canonical: dict[str, Any], report: dict[str, Any], sav
 
 
 def print_trade_offer_details(canonical: dict[str, Any], candidate: dict[str, Any], save_path: Path | None = None) -> None:
+    save = load_save(save_path) if save_path else {}
+    if save:
+        canonical = canonical_with_save(canonical, ensure_league_save_defaults(save, canonical))
     canonical = with_transaction_context(canonical)
     proposal = candidate.get("proposal") or {}
     teams = {team["id"]: team for team in canonical.get("teams", [])}
     players = {player["id"]: player for player in canonical.get("players", [])}
     values = {item["player_id"]: item for item in canonical.get("player_asset_valuations", [])}
-    save = load_save(save_path) if save_path else {}
     season_stats = save.get("player_season_stats", {})
     season = contract_start_season_for_signing(save) if save else None
     print_title("Trade Inspection")
@@ -5411,6 +5527,46 @@ def difficulty_filter_trade_candidates(candidates: list[dict[str, Any]], difficu
         if float(user_eval.get("net_value") or 0.0) <= user_win_limit:
             filtered.append(candidate)
     return filtered
+
+
+def remove_inferior_superset_trade_candidates(candidates: list[dict[str, Any]], user_team_id: str | None) -> list[dict[str, Any]]:
+    if not user_team_id:
+        return candidates
+    kept: list[dict[str, Any] | None] = []
+    metadata: list[dict[str, Any] | None] = []
+    for candidate in candidates:
+        proposal = candidate.get("proposal") or {}
+        if proposal.get("from_team_id") == user_team_id:
+            incoming = proposal.get("to_assets") or []
+            outgoing = proposal.get("from_assets") or []
+            counterparty = proposal.get("to_team_id")
+        elif proposal.get("to_team_id") == user_team_id:
+            incoming = proposal.get("from_assets") or []
+            outgoing = proposal.get("to_assets") or []
+            counterparty = proposal.get("from_team_id")
+        else:
+            kept.append(candidate)
+            metadata.append(None)
+            continue
+        incoming_keys = frozenset(proposal_asset_identity_keys({"from_assets": incoming}))
+        outgoing_keys = frozenset(proposal_asset_identity_keys({"from_assets": outgoing}))
+        signature = (counterparty, incoming_keys)
+        skip = False
+        for idx, item in enumerate(metadata):
+            if not item or item["signature"] != signature:
+                continue
+            existing_outgoing = item["outgoing"]
+            if existing_outgoing <= outgoing_keys:
+                skip = True
+                break
+            if outgoing_keys < existing_outgoing:
+                kept[idx] = None
+                metadata[idx] = None
+        if skip:
+            continue
+        kept.append(candidate)
+        metadata.append({"signature": signature, "outgoing": outgoing_keys})
+    return [candidate for candidate in kept if candidate is not None]
 
 
 def print_value_bars(candidate: dict[str, Any]) -> None:

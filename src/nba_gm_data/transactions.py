@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import random
+import re
+from datetime import date
 from itertools import combinations
 from pathlib import Path
 from typing import Any
@@ -26,6 +28,23 @@ TRADE_ASSET_KINDS = {"player", "pick"}
 TAX_LINE = 187_895_000
 SECOND_APRON = 207_824_000
 ANNUAL_CAP_GROWTH_RATE = 0.035
+RECENTLY_TRADED_DAYS = 60
+
+
+def parse_iso_date(value: Any) -> date | None:
+    try:
+        return date.fromisoformat(str(value)[:10])
+    except (TypeError, ValueError):
+        return None
+
+
+def transaction_reference_date(canonical: dict[str, Any] | None = None, proposal: TradeProposal | dict[str, Any] | None = None, fallback: str = CANONICAL_START_DATE) -> str:
+    if proposal is not None:
+        proposal_date = getattr(proposal, "date", None) if not isinstance(proposal, dict) else proposal.get("date")
+        if proposal_date:
+            return str(proposal_date)
+    current = ((canonical or {}).get("meta") or {}).get("current_date")
+    return str(current or fallback)
 
 
 def default_transaction_model_config() -> dict[str, Any]:
@@ -534,11 +553,14 @@ def evaluate_trade(
 def simulate_ai_trades(canonical: dict[str, Any] | Any, from_date: str, through_date: str, seed: int = 1, limit: int = 10, config: dict[str, Any] | None = None) -> dict[str, Any]:
     canonical = with_transaction_context(canonical, config)
     rng = random.Random(f"{seed}:{from_date}:{through_date}:ai_trades")
-    entries = sorted(canonical["trade_block_entries"], key=lambda item: item["block_score"], reverse=True)[:70]
+    recent_players = recently_traded_player_ids(canonical, through_date)
+    entries = sorted(canonical["trade_block_entries"], key=lambda item: item["block_score"], reverse=True)[:120]
     proposals = []
     for entry in entries:
         player = player_by_id(canonical, entry["player_id"])
         if not player:
+            continue
+        if player.get("id") in recent_players:
             continue
         seller = team_by_id(canonical, player.get("team_id"))
         if not seller:
@@ -546,11 +568,11 @@ def simulate_ai_trades(canonical: dict[str, Any] | Any, from_date: str, through_
         possible_buyers = buyer_teams_for_player(canonical, player)
         rng.shuffle(possible_buyers)
         accepted_for_player = False
-        for buyer in possible_buyers[:4]:
+        for buyer in possible_buyers[:6]:
             if buyer["id"] == seller["id"]:
                 continue
-            packages = buyer_offer_packages(canonical, buyer, seller, player, seed, max_results=4, max_player_options=4)
-            for buyer_assets in packages[:4]:
+            packages = buyer_offer_packages(canonical, buyer, seller, player, seed, max_results=5, max_player_options=6)
+            for buyer_assets in packages[:5]:
                 report = evaluate_trade(
                     canonical,
                     seller["abbrev"],
@@ -558,6 +580,7 @@ def simulate_ai_trades(canonical: dict[str, Any] | Any, from_date: str, through_
                     [{"kind": "player", "value": player["name"]}],
                     buyer_assets,
                     seed=seed,
+                    date=through_date,
                     config=config,
                 )
                 candidate = candidate_from_evaluation(canonical, report)
@@ -639,6 +662,7 @@ def max_player_value_from_assets(canonical: dict[str, Any], assets: list[dict[st
 
 
 def apply_trade_to_save(save_path: str | Path, proposal_id: str, date: str = CANONICAL_START_DATE) -> dict[str, Any]:
+    date = date or CANONICAL_START_DATE
     path = Path(save_path)
     if path.exists():
         with path.open("r", encoding="utf-8") as handle:
@@ -654,6 +678,26 @@ def apply_trade_to_save(save_path: str | Path, proposal_id: str, date: str = CAN
             "notes": "No pending proposal with this id exists in the save ledger. Generate/evaluate a proposal and add it to pending_trade_proposals before applying.",
         }
     proposal_payload = proposal.get("proposal") or proposal
+    if save.get("version") == "league_save_v1":
+        live_issues = trade_live_validation_issues(save, proposal_payload, date)
+        if live_issues:
+            save["pending_trade_proposals"] = [
+                item
+                for item in save.get("pending_trade_proposals", [])
+                if (item.get("proposal", {}).get("id") or item.get("id")) != proposal_id
+            ]
+            prune_result = prune_trade_offers_touching_assets(save, proposal_asset_identity_keys(proposal_payload), exclude_proposal_id=proposal_id)
+            from .save import write_save
+
+            write_save(path, save)
+            return {
+                "status": "not_applied_stale_assets",
+                "proposal_id": proposal_id,
+                "save": str(path),
+                "issues": live_issues,
+                "pruned": prune_result,
+                "notes": "Trade was skipped because at least one asset moved, became locked, or recently traded before this offer was applied.",
+            }
     log = TransactionLog(
         id=stable_id("transaction_log", proposal_id, date),
         date=date,
@@ -674,29 +718,174 @@ def apply_trade_to_save(save_path: str | Path, proposal_id: str, date: str = CAN
                 save.setdefault("roster_overrides", {})[asset["id"]] = to_team_id
             if asset.get("kind") == "pick":
                 save.setdefault("draft_pick_overrides", {})[asset["id"]] = to_team_id
+                update_retraded_pick_obligation(save, asset["id"], to_team_id, date)
         for asset in proposal_payload.get("to_assets", []):
             if asset.get("kind") == "player":
                 save.setdefault("roster_overrides", {})[asset["id"]] = from_team_id
             if asset.get("kind") == "pick":
                 save.setdefault("draft_pick_overrides", {})[asset["id"]] = from_team_id
+                update_retraded_pick_obligation(save, asset["id"], from_team_id, date)
         for team_id in [from_team_id, to_team_id]:
             if team_id:
                 save.setdefault("rotation_snapshots", {}).pop(team_id, None)
         apply_pick_obligation_terms_to_save(save, proposal_payload, proposal.get("pick_obligation_terms") or [], date)
-        from .save import add_news
+        from .save import add_league_event, add_news
 
-        add_news(save, "trade", trade_headline_from_payload(proposal_payload), date_value=date)
-        queue_press_event_if_user_involved(save, "trade", trade_headline_from_payload(proposal_payload), [from_team_id, to_team_id], date)
+        headline = trade_headline_from_payload(proposal_payload)
+        add_news(save, "trade", headline, date_value=date)
+        add_league_event(
+            save,
+            "trade",
+            headline,
+            date_value=date,
+            team_ids=[from_team_id, to_team_id],
+            player_ids=trade_player_ids(proposal_payload),
+            importance=0.74,
+            details=trade_event_details_from_payload(proposal_payload),
+        )
+        queue_press_event_if_user_involved(save, "trade", headline, [from_team_id, to_team_id], date)
     save.setdefault("transaction_logs", []).append(to_plain(log))
     save["pending_trade_proposals"] = [
         item
         for item in save.get("pending_trade_proposals", [])
         if (item.get("proposal", {}).get("id") or item.get("id")) != proposal_id
     ]
+    pruned = prune_trade_offers_touching_assets(save, proposal_asset_identity_keys(proposal_payload), exclude_proposal_id=proposal_id)
     from .save import write_save
 
     write_save(path, save)
-    return {"status": "applied", "save": str(path), "transaction_log": to_plain(log)}
+    return {"status": "applied", "save": str(path), "transaction_log": to_plain(log), "pruned": pruned}
+
+
+def update_retraded_pick_obligation(save: dict[str, Any], pick_id: str, new_owner_team_id: str | None, date: str) -> None:
+    if not pick_id or not new_owner_team_id:
+        return
+    locked = set(save.setdefault("locked_pick_assets", []))
+    for obligation in save.get("pick_obligations", []):
+        if obligation.get("type") != "protected_pick" or obligation.get("primary_pick_id") != pick_id:
+            continue
+        if obligation.get("status", "active") not in {"active", "pending_resolution"}:
+            continue
+        sender = obligation.get("sender_team_id")
+        if new_owner_team_id == sender:
+            obligation["status"] = "resolved_reacquired_by_sender"
+            obligation["resolved_date"] = date
+            obligation["notes"] = f"{obligation.get('notes', '')} Sender reacquired protected-pick rights before resolution; fallback unlocked.".strip()
+            for fallback_id in obligation.get("fallback_pick_ids") or []:
+                locked.discard(fallback_id)
+        else:
+            obligation["receiver_team_id"] = new_owner_team_id
+            obligation["receiver_updated_date"] = date
+            obligation["notes"] = f"{obligation.get('notes', '')} Protected-pick rights were re-traded before resolution.".strip()
+    save["locked_pick_assets"] = sorted(locked)
+
+
+def trade_player_ids(proposal: dict[str, Any]) -> list[str]:
+    return sorted(
+        {
+            asset.get("id")
+            for asset in [*(proposal.get("from_assets") or []), *(proposal.get("to_assets") or [])]
+            if asset.get("kind") == "player" and asset.get("id")
+        }
+    )
+
+
+def proposal_asset_identity_keys(proposal: dict[str, Any]) -> set[str]:
+    payload = proposal.get("proposal") or proposal
+    keys: set[str] = set()
+    for asset in [*(payload.get("from_assets") or []), *(payload.get("to_assets") or [])]:
+        kind = str(asset.get("kind") or "").lower()
+        identifier = asset.get("id") or asset.get("player_id") or asset.get("pick_id") or asset.get("value")
+        if kind and identifier:
+            keys.add(f"{kind}:{identifier}")
+    return keys
+
+
+def prune_trade_offers_touching_assets(save: dict[str, Any], asset_keys: set[str], exclude_proposal_id: str | None = None) -> dict[str, int]:
+    if not asset_keys:
+        return {"pending_trade_proposals": 0, "user_trade_offers": 0}
+    pending_before = len(save.get("pending_trade_proposals", []))
+    save["pending_trade_proposals"] = [
+        item
+        for item in save.get("pending_trade_proposals", [])
+        if ((item.get("proposal") or {}).get("id") or item.get("id")) == exclude_proposal_id
+        or not proposal_asset_identity_keys(item).intersection(asset_keys)
+    ]
+    user_pruned = 0
+    for offer in save.get("user_trade_offers", []):
+        offer_id = ((offer.get("proposal") or {}).get("id") or offer.get("id"))
+        if offer_id == exclude_proposal_id:
+            continue
+        context = offer.setdefault("offer_context", {})
+        if context.get("status") != "pending_user_review":
+            continue
+        if proposal_asset_identity_keys(offer).intersection(asset_keys):
+            context["status"] = "stale_asset_moved"
+            context["stale_reason"] = "An asset in this offer moved, was waived, or became unavailable."
+            user_pruned += 1
+    return {"pending_trade_proposals": pending_before - len(save.get("pending_trade_proposals", [])), "user_trade_offers": user_pruned}
+
+
+def transaction_log_player_ids(log: dict[str, Any]) -> set[str]:
+    assets = log.get("assets") or {}
+    return {
+        asset.get("id")
+        for asset in [*(assets.get("from_assets") or []), *(assets.get("to_assets") or [])]
+        if asset.get("kind") == "player" and asset.get("id")
+    }
+
+
+def recently_traded_player_ids(canonical_or_save: dict[str, Any], as_of_date: str | None = None, days: int = RECENTLY_TRADED_DAYS) -> set[str]:
+    current = parse_iso_date(as_of_date or ((canonical_or_save.get("meta") or {}).get("current_date")) or CANONICAL_START_DATE)
+    if current is None:
+        return set()
+    recent: set[str] = set()
+    for log in canonical_or_save.get("transaction_logs", []):
+        if log.get("transaction_type") != "trade" or log.get("status") not in {"applied_to_save_ledger", "applied"}:
+            continue
+        traded_on = parse_iso_date(log.get("date"))
+        if traded_on is None:
+            continue
+        elapsed = (current - traded_on).days
+        if 0 <= elapsed < int(days):
+            recent.update(transaction_log_player_ids(log))
+    return recent
+
+
+def trade_live_validation_issues(save: dict[str, Any], proposal: dict[str, Any], date_value: str | None = None) -> list[str]:
+    issues: list[str] = []
+    roster_overrides = save.get("roster_overrides") or {}
+    pick_overrides = save.get("draft_pick_overrides") or {}
+    locked_picks = set(save.get("locked_pick_assets") or [])
+    for side, expected_team_id in [("from_assets", proposal.get("from_team_id")), ("to_assets", proposal.get("to_team_id"))]:
+        for asset in proposal.get(side, []) or []:
+            label = asset.get("label") or asset.get("name") or asset.get("id") or "Asset"
+            if asset.get("kind") == "player":
+                player_id = asset.get("id")
+                if player_id in roster_overrides and roster_overrides.get(player_id) != expected_team_id:
+                    issues.append(f"{label} is no longer on the offering team.")
+            elif asset.get("kind") == "pick":
+                pick_id = asset.get("id")
+                if pick_id in pick_overrides and pick_overrides.get(pick_id) != expected_team_id:
+                    issues.append(f"{label} is no longer owned by the offering team.")
+                if pick_id in locked_picks:
+                    issues.append(f"{label} is locked as protection/fallback collateral.")
+    recent = recently_traded_player_ids(save, date_value)
+    for side in ["from_assets", "to_assets"]:
+        for asset in proposal.get(side, []) or []:
+            if asset.get("kind") == "player" and asset.get("id") in recent:
+                label = asset.get("label") or asset.get("name") or asset.get("id") or "Player"
+                issues.append(f"{label} was traded within the last {RECENTLY_TRADED_DAYS} days.")
+    return sorted(dict.fromkeys(issues))
+
+
+def trade_event_details_from_payload(proposal: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "from_team_id": proposal.get("from_team_id"),
+        "to_team_id": proposal.get("to_team_id"),
+        "from_assets": to_plain(proposal.get("from_assets") or []),
+        "to_assets": to_plain(proposal.get("to_assets") or []),
+    }
 
 
 def apply_pick_obligation_terms_to_save(save: dict[str, Any], proposal: dict[str, Any], terms: list[dict[str, Any]], date: str) -> None:
@@ -721,6 +910,54 @@ def apply_pick_obligation_terms_to_save(save: dict[str, Any], proposal: dict[str
         for pick_id in obligation.get("fallback_pick_ids") or []:
             locked.add(pick_id)
     save["locked_pick_assets"] = sorted(locked)
+
+
+def canonical_with_pending_pick_terms(canonical: dict[str, Any], terms: list[dict[str, Any]] | None) -> dict[str, Any]:
+    working = to_plain(canonical)
+    if not terms:
+        return working
+    obligations = list(working.get("pick_obligations") or [])
+    locked = set(working.get("locked_pick_assets") or [])
+    existing = {item.get("id") for item in obligations}
+    for term in terms:
+        if not term or term.get("type") == "unprotected":
+            continue
+        obligation = {
+            **term,
+            "id": term.get("id") or stable_id("pick_obligation_preview", term.get("primary_pick_id"), term.get("receiver_team_id"), term.get("label")),
+            "status": "active",
+        }
+        if obligation["id"] not in existing:
+            obligations.append(obligation)
+            existing.add(obligation["id"])
+        for pick_id in obligation.get("fallback_pick_ids") or []:
+            locked.add(pick_id)
+    working["pick_obligations"] = obligations
+    working["locked_pick_assets"] = sorted(locked)
+    annotate_pick_obligation_context(working)
+    return working
+
+
+def trade_result_with_pick_terms(result: dict[str, Any], terms: list[dict[str, Any]] | None) -> dict[str, Any]:
+    if not terms:
+        return result
+    payload = to_plain(result)
+    active_terms = [term for term in terms if term and term.get("type") != "unprotected"]
+    if not active_terms:
+        return payload
+    payload["pick_obligation_terms"] = active_terms
+    proposal = payload.get("proposal") or {}
+    old_id = proposal.get("id")
+    signature = stable_id("pick_terms", json.dumps(active_terms, sort_keys=True))
+    if old_id and proposal.get("pick_terms_signature") != signature:
+        new_id = stable_id("trade_proposal", old_id, signature)
+        proposal["id"] = new_id
+        proposal["pick_terms_signature"] = signature
+        for evaluation in payload.get("evaluations", []):
+            evaluation["proposal_id"] = new_id
+            if evaluation.get("perspective_team_id"):
+                evaluation["id"] = stable_id("trade_evaluation", new_id, evaluation.get("perspective_team_id"))
+    return payload
 
 
 def queue_press_event_if_user_involved(save: dict[str, Any], kind: str, headline: str, team_ids: list[str | None], date: str) -> None:
@@ -822,6 +1059,23 @@ def annotate_pick_obligation_context(canonical: dict[str, Any]) -> None:
         if obligations_for_pick:
             pick["_obligations"] = obligations_for_pick
             pick["_protection_value_factor"] = pick_obligation_value_factor(obligations_for_pick)
+            primary = next((item for item in obligations_for_pick if item.get("type") == "protected_pick" and not item.get("_fallback_lock")), None)
+            if primary:
+                pick["protection_summary"] = pick_obligation_label(primary)
+
+
+def pick_obligation_label(obligation: dict[str, Any]) -> str:
+    label = str(obligation.get("label") or "").strip()
+    if label:
+        return label
+    protected = obligation.get("protected_range") or {}
+    low = int(protected.get("from") or 1)
+    high = int(protected.get("through") or obligation.get("protected_top_n") or 0)
+    if low == 1 and high:
+        return f"top-{high} protected"
+    if low and high:
+        return f"picks {low}-{high} protected"
+    return "protected"
 
 
 def pick_obligation_value_factor(obligations: list[dict[str, Any]]) -> float:
@@ -1092,7 +1346,8 @@ def buyer_offer_packages_for_value(
     max_results: int = 18,
     max_player_options: int = 9,
 ) -> list[list[dict[str, Any]]]:
-    excluded_player_ids = excluded_player_ids or set()
+    as_of_date = ((canonical.get("meta") or {}).get("current_date")) or CANONICAL_START_DATE
+    excluded_player_ids = set(excluded_player_ids or set()) | recently_traded_player_ids(canonical, as_of_date)
     valuations = {value["player_id"]: value for value in canonical["player_asset_valuations"]}
     buyer_players = [player for player in canonical["players"] if player["team_id"] == buyer["id"]]
     block = {entry["player_id"]: entry for entry in canonical["trade_block_entries"] if entry["team_id"] == buyer["id"]}
@@ -1545,12 +1800,15 @@ def evaluate_trade_for_team(
 def trade_legality(canonical: dict[str, Any], proposal: TradeProposal, config: dict[str, Any]) -> dict[str, Any]:
     issues: list[str] = []
     manual: list[str] = []
+    recent_players = recently_traded_player_ids(canonical, transaction_reference_date(canonical, proposal))
     for team_id, assets in [(proposal.from_team_id, proposal.from_assets), (proposal.to_team_id, proposal.to_assets)]:
         for asset in assets:
             if asset["kind"] == "player":
                 player = player_by_id(canonical, asset["id"])
                 if not player or player["team_id"] != team_id:
                     issues.append(f"{asset.get('label', asset.get('id'))} is not on {team_by_id(canonical, team_id)['abbrev']}.")
+                if asset["id"] in recent_players:
+                    issues.append(f"{asset.get('label', asset.get('id'))} was traded within the last {RECENTLY_TRADED_DAYS} days.")
                 contract = contract_for_player(canonical, asset["id"])
                 if contract_expired_without_rights(contract):
                     issues.append(f"{asset.get('label', asset.get('id'))} has an expired contract and no retained rights, so he cannot be traded in this phase.")
@@ -1588,12 +1846,30 @@ def normalize_assets(canonical: dict[str, Any], team: dict[str, Any], assets: li
         value = asset.get("value") or asset.get("id")
         if kind == "player":
             player = resolve_player(canonical, str(value), team_id=team["id"])
-            normalized.append({"kind": "player", "id": player["id"], "label": player["name"]})
+            normalized.append(
+                {
+                    "kind": "player",
+                    "id": player["id"],
+                    "label": player["name"],
+                    "minutes_projection": display_minutes_projection(player),
+                }
+            )
         elif kind == "pick":
             pick = pick_by_id(canonical, str(value))
             if not pick:
                 raise ValueError(f"No pick found with id {value!r}")
-            normalized.append({"kind": "pick", "id": pick["id"], "label": pick_label(canonical, pick)})
+            normalized.append(
+                {
+                    "kind": "pick",
+                    "id": pick["id"],
+                    "label": pick_label(canonical, pick),
+                    "season": pick.get("season"),
+                    "round": pick.get("round"),
+                    "original_team_id": pick.get("original_team_id"),
+                    "current_owner_team_id": pick.get("current_owner_team_id"),
+                    "protection_summary": pick.get("protection_summary") or pick.get("protections"),
+                }
+            )
         else:
             raise ValueError(f"Unknown trade asset kind {kind!r}")
     return normalized
@@ -1914,16 +2190,22 @@ def team_fit_for_player(player: dict[str, Any], valuation: dict[str, Any], state
     if not player:
         return 0.0
     fit = 0.0
+    age = maybe_float(player.get("age")) or 30
+    minutes = maybe_float(player.get("minutes_projection")) or 0.0
     if "playoff_rotation" in state.get("needs", []) and valuation["playoff_value"] >= 62:
         fit += 4
-    if "youth_and_picks" in state.get("needs", []) and (maybe_float(player.get("age")) or 30) <= 24:
+    if "youth_and_picks" in state.get("needs", []) and age <= 24:
         fit += 5
     if "shooting" in state.get("needs", []) and valuation["portability"] >= 64:
         fit += 2
     if state.get("phase") in {"contending", "contending_with_future_upside"} and valuation["player_value"] >= 45:
         fit += 3
-    if state.get("phase") == "rebuilding" and (maybe_float(player.get("age")) or 30) >= 30:
+    if state.get("phase") in {"contending", "contending_with_future_upside"} and age >= 30 and minutes >= 22 and valuation["playoff_value"] >= 58:
+        fit += 2.5
+    if state.get("phase") in {"rebuilding", "developing"} and age >= 30:
         fit -= 4
+    if state.get("phase") == "rebuilding" and valuation["player_value"] >= 48 and minutes >= 24 and age >= 28:
+        fit -= 2
     return fit
 
 
@@ -2301,6 +2583,7 @@ def tradeable_picks_for_team(canonical: dict[str, Any], team_id: str) -> list[di
             int(pick.get("round") or 0),
             pick.get("original_team_id"),
             pick.get("current_owner_team_id"),
+            normalize_pick_protection_text(pick),
         )
         pick["_active_season"] = active_season
         previous = deduped.get(key)
@@ -2318,7 +2601,7 @@ def tradeable_picks_for_team(canonical: dict[str, Any], team_id: str) -> list[di
 
 
 def normalize_pick_protection_text(pick: dict[str, Any]) -> str:
-    return " ".join(str(pick.get("protections") or pick.get("protection_summary") or "").lower().split())
+    return " ".join(str(pick.get("protection_summary") or pick.get("protections") or "").lower().split())
 
 
 def pick_record_sort_key(pick: dict[str, Any]) -> tuple[float, int, str]:
@@ -2435,21 +2718,47 @@ def compact_player(player: dict[str, Any]) -> dict[str, Any]:
 
 
 def pick_label(canonical: dict[str, Any], pick: dict[str, Any]) -> str:
-    owner = team_by_id(canonical, pick["current_owner_team_id"])["abbrev"] if pick.get("current_owner_team_id") else "UNK"
-    original = team_by_id(canonical, pick["original_team_id"])["abbrev"] if pick.get("original_team_id") else "UNK"
+    teams = {team.get("id"): team.get("abbrev") for team in canonical.get("teams", [])}
+    owner = teams.get(pick.get("current_owner_team_id")) or "TBD"
+    original = teams.get(pick.get("original_team_id")) or "TBD"
     ownership = f"owned by {owner}" if owner != original else "own pick"
-    return f"{pick['season']} R{pick['round']} {original} ({ownership})"
+    return f"{pick['season']} R{pick['round']} {original} ({ownership}){pick_label_note(pick)}"
 
 
-def pick_label_note(pick: dict[str, Any]) -> str:
-    text = str(pick.get("protections") or pick.get("protection_summary") or "").strip()
+def clean_pick_protection_summary(pick: dict[str, Any]) -> str:
+    text = str(pick.get("protection_summary") or pick.get("protections") or "").strip()
     if not text:
         return ""
     compact = " ".join(text.split())
+    compact = re.sub(r"\s+and\s+if\s+.*$", "", compact, flags=re.IGNORECASE)
+    compact = re.sub(r"\s*\(via [^)]+\)", "", compact, flags=re.IGNORECASE)
     if compact.upper() == compact and compact.isalpha() and 2 <= len(compact) <= 4:
         return ""
-    if len(compact) > 54:
-        compact = compact[:51].rstrip() + "..."
+    if re.search(r"\bvia\b", compact, flags=re.IGNORECASE) and not re.search(r"\b(if|protected|protection|top)\b", compact, flags=re.IGNORECASE):
+        return ""
+    if re.match(r"^from\b", compact, flags=re.IGNORECASE) and not re.search(r"\b(if|protected|protection|top)\b", compact, flags=re.IGNORECASE):
+        return ""
+    top_match = re.search(r"\btop[- ]?(\d{1,2})\s+protected\b", compact, flags=re.IGNORECASE)
+    if top_match:
+        return f"top-{int(top_match.group(1))} protected"
+    protected_match = re.search(r"\bpicks?\s+(\d{1,2})\s*-\s*(\d{1,2})\s+protected\b", compact, flags=re.IGNORECASE)
+    if protected_match:
+        start = int(protected_match.group(1))
+        end = int(protected_match.group(2))
+        return f"top-{end} protected" if start == 1 else f"picks {start}-{end} protected"
+    if_match = re.search(r"(?:\b[A-Z]{2,4}\s+)?\bIf\s+(\d{1,2})\s*-\s*(\d{1,2})\b", compact, flags=re.IGNORECASE)
+    if if_match:
+        start = int(if_match.group(1))
+        end = int(if_match.group(2))
+        return f"top-{end} protected" if start == 1 else f"conveys {start}-{end}"
+    compact = re.sub(r"^\b[A-Z]{2,4}\s+", "", compact)
+    return compact[:37].rstrip() + "..." if len(compact) > 40 else compact
+
+
+def pick_label_note(pick: dict[str, Any]) -> str:
+    compact = clean_pick_protection_summary(pick)
+    if not compact:
+        return ""
     return f" ({compact})"
 
 

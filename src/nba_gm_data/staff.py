@@ -433,6 +433,23 @@ def hire_staff_from_save(save: dict[str, Any], negotiation_id: str) -> dict[str,
     team_abbrev = str(team_id).replace("team_", "").upper()
     headline = f"{team_abbrev} hires {candidate['name']} as {ROLE_LABELS.get(slot_name, slot_name)}."
     append_news_item_once(save, news_item(save, "staff_hire", headline))
+    from .save import add_league_event
+
+    candidate_grade = round(staff_grade(candidate), 2)
+    add_league_event(
+        save,
+        "staff_hire",
+        headline,
+        team_ids=[team_id],
+        importance=0.74 if candidate_grade > 89 else 0.38,
+        details={
+            "staff_id": candidate.get("id"),
+            "staff_name": candidate.get("name"),
+            "slot": slot_name,
+            "staff_grade": candidate_grade,
+            "action": "hire",
+        },
+    )
     queue_press_event_if_user_involved(save, "staff_hire", headline, [team_id])
     return {"status": "applied", "transaction_log": log, "staff": candidate, "previous_staff": current}
 
@@ -461,8 +478,26 @@ def fire_staff_from_save(save: dict[str, Any], team_id: str, slot: str) -> dict[
     save["staff_slots"].sort(key=lambda item: (item.get("team_id") or "", item.get("slot") or "", item.get("id") or ""))
     log = staff_transaction_log(save, "staff_fire", stable_id("staff_fire", team_id, slot, save.get("state", {}).get("current_date")), [team_id], {"fired_staff": fired, "interim_staff": interim}, [])
     save.setdefault("transaction_logs", []).append(log)
-    append_news_item_once(save, news_item(save, "staff_fire", f"{fired['name']} fired from {ROLE_LABELS.get(slot, slot)}."))
-    queue_press_event_if_user_involved(save, "staff_fire", f"{fired['name']} fired from {ROLE_LABELS.get(slot, slot)}.", [team_id])
+    headline = f"{fired['name']} fired from {ROLE_LABELS.get(slot, slot)}."
+    append_news_item_once(save, news_item(save, "staff_fire", headline))
+    from .save import add_league_event
+
+    fired_grade = round(staff_grade(fired), 2)
+    add_league_event(
+        save,
+        "staff_fire",
+        headline,
+        team_ids=[team_id],
+        importance=0.76 if fired_grade > 89 else 0.42,
+        details={
+            "staff_id": fired.get("id"),
+            "staff_name": fired.get("name"),
+            "slot": slot,
+            "staff_grade": fired_grade,
+            "action": "fire",
+        },
+    )
+    queue_press_event_if_user_involved(save, "staff_fire", headline, [team_id])
     return {"status": "applied", "transaction_log": log, "fired_staff": fired, "interim_staff": interim}
 
 

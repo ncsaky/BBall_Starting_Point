@@ -614,9 +614,26 @@ def apply_contract_to_save(save_path: str | Path, negotiation_id: str, date: str
             headline = f"{team_label} extends {player_label}."
         else:
             headline = f"{team_label} signs {player_label}."
-        from .save import add_news
+        from .save import add_league_event, add_news
 
         add_news(save, transaction_kind, headline, date_value=date)
+        annual_salary = float((accepted_offer or {}).get("annual_salary") or (accepted_offer or {}).get("salary") or 0.0)
+        add_league_event(
+            save,
+            transaction_kind,
+            headline,
+            date_value=date,
+            team_ids=[team_id],
+            player_ids=[player_id],
+            importance=0.74 if annual_salary > 25_000_000 else None,
+            details={
+                "player_id": player_id,
+                "team_id": team_id,
+                "contract": accepted_offer or {},
+                "annual_salary": annual_salary,
+                "aav_millions": round(annual_salary / 1_000_000, 2) if annual_salary else 0.0,
+            },
+        )
         queue_press_event_if_user_involved(
             save,
             transaction_kind,

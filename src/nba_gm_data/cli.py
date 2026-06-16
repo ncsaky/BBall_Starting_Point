@@ -224,6 +224,8 @@ def main(argv: list[str] | None = None) -> int:
     events_parser.add_argument("--save", required=True)
     events_parser.add_argument("--kind", default=None)
     events_parser.add_argument("--limit", type=int, default=40)
+    events_parser.add_argument("--major", action="store_true")
+    events_parser.add_argument("--recent-days", type=int, default=None)
 
     press_parser = subparsers.add_parser("hold-press-conference", help="Answer a press question and apply morale/social effects.", parents=[common])
     press_parser.add_argument("--save", required=True)
@@ -698,7 +700,7 @@ def main(argv: list[str] | None = None) -> int:
         print_json(social_feed_view(data, args.save, team_query=args.team, limit=args.limit))
         return 0
     if args.command == "league-events":
-        print_json(league_events_view(data, args.save, limit=args.limit, kind=args.kind))
+        print_json(league_events_view(data, args.save, limit=args.limit, kind=args.kind, major_only=args.major, recent_days=args.recent_days))
         return 0
     if args.command == "hold-press-conference":
         try:
