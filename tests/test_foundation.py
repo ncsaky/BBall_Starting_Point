@@ -70,6 +70,7 @@ from nba_gm_data.save import (
     run_draft_lottery,
     save_status,
     simulate_playoff_round,
+    simulate_next_playoff_game,
     social_feed_view,
     start_playoffs,
     team_dashboard,
@@ -253,6 +254,9 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(players["trey alexander"].height_inches, 77)
         self.assertEqual(players["karlo matkovic"].height_inches, 82)
         self.assertEqual(players["hunter dickinson"].height_inches, 85)
+        self.assertEqual(players["dru smith"].height_inches, 74)
+        self.assertEqual(players["keshad johnson"].height_inches, 78)
+        self.assertEqual(players["jordan goodwin"].height_inches, 75)
 
     def test_ledger_gaps_are_explicit(self):
         summary = self.universe.coverage_report.summary
@@ -392,9 +396,12 @@ class DataFoundationTests(unittest.TestCase):
         missing_team_pick = {"season": "2030", "round": 2, "original_team_id": None, "current_owner_team_id": "team_nyk"}
         self.assertEqual(pick_label(synthetic, provenance_pick), "2026 R2 WAS (owned by NYK)")
         conditional_label = pick_label(synthetic, conditional_pick)
-        self.assertIn("conveys 9-30", conditional_label)
+        self.assertIn("top-8 protected", conditional_label)
         self.assertNotIn("and if", conditional_label)
         self.assertNotIn("via", conditional_label)
+        self.assertNotIn("...", conditional_label)
+        swap_pick = {**conditional_pick, "protections": "BKN Or swap with BKN"}
+        self.assertNotIn("swap", pick_label(synthetic, swap_pick).lower())
         self.assertNotIn("UNK", pick_label(synthetic, missing_team_pick))
 
         with tempfile.TemporaryDirectory() as tmp:
@@ -1130,6 +1137,9 @@ class DataFoundationTests(unittest.TestCase):
             bracket = start_playoffs(self.plain, save_path, seed=7)
             self.assertEqual(bracket["round"], "first_round")
             self.assertGreaterEqual(len(bracket["series"]), 4)
+            one_game = simulate_next_playoff_game(self.plain, save_path, seed=7)
+            self.assertEqual(one_game["status"], "simulated_game")
+            self.assertEqual(len(load_save(save_path)["playoff_state"]["games"]), 1)
             completed = simulate_playoff_round(self.plain, save_path, seed=7)
             self.assertGreater(len(completed["completed_series"]), 0)
             order = run_draft_lottery(self.plain, save_path, year="2027", seed=7)
@@ -1526,6 +1536,50 @@ class DataFoundationTests(unittest.TestCase):
         self.assertGreater(free_agents_report(free_agent_active, "GSW")["candidate_count"], 0)
         extensions = extension_candidates_report(self.plain, "GSW")
         self.assertTrue(any(candidate["name"] == "Stephen Curry" for candidate in extensions["candidates"]))
+
+    def test_extension_override_preserves_current_contract_season(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "extension_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=41)
+            active = canonical_with_save(self.plain, save)
+            curry = next(player for player in active["players"] if player["normalized_name"] == "stephen curry")
+            current_contract = next(contract for contract in active["contracts"] if contract["player_id"] == curry["id"])
+            negotiation_id = "test_curry_extension"
+            accepted_offer = {
+                "id": "test_curry_extension_offer",
+                "negotiation_id": negotiation_id,
+                "team_id": curry["team_id"],
+                "player_id": curry["id"],
+                "offer_type": "extension",
+                "round": 1,
+                "years": 1,
+                "start_season": "2026-27",
+                "annual_salary": 42_500_000,
+                "total_value": 42_500_000,
+                "status": "accepted",
+            }
+            save["pending_contract_negotiations"].append(
+                {
+                    "negotiation": {
+                        "id": negotiation_id,
+                        "negotiation_type": "extension",
+                        "player_id": curry["id"],
+                        "player_name": curry["name"],
+                        "team_id": curry["team_id"],
+                        "date": "2026-01-10",
+                        "current_contract_seasons": current_contract["seasons"],
+                    },
+                    "decision": {"accepted": True, "accepted_offer": accepted_offer},
+                    "accepted": True,
+                }
+            )
+            write_save(save_path, save)
+            self.assertEqual(apply_contract_to_save(save_path, negotiation_id, date="2026-01-10")["status"], "applied")
+            updated = canonical_with_save(self.plain, load_save(save_path))
+            contract = next(contract for contract in updated["contracts"] if contract["player_id"] == curry["id"])
+            salaries = {row["season"]: row.get("salary") for row in contract["seasons"]}
+            self.assertIsNotNone(salaries.get("2025-26"))
+            self.assertEqual(salaries.get("2026-27"), 42_500_000)
         first = simulate_free_agency(self.plain, "2026-07-01", "2026-07-08", seed=2, limit=2)
         second = simulate_free_agency(self.plain, "2026-07-01", "2026-07-08", seed=2, limit=2)
         self.assertEqual(first, second)

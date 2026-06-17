@@ -29,6 +29,12 @@ TAX_LINE = 187_895_000
 SECOND_APRON = 207_824_000
 ANNUAL_CAP_GROWTH_RATE = 0.035
 RECENTLY_TRADED_DAYS = 60
+RECENTLY_ACQUIRED_PREMIUM_DAYS = 180
+UNSUPPORTED_PICK_CONDITION_RE = re.compile(
+    r"\b(swap|favo[u]?rable|least|most|better|worse|higher|lower|then|or\s+swap)\b",
+    re.IGNORECASE,
+)
+UNSUPPORTED_PICK_FALLBACK_RE = re.compile(r"\bif\b.+\bconveys?\b", re.IGNORECASE)
 
 
 def parse_iso_date(value: Any) -> date | None:
@@ -337,6 +343,10 @@ def build_trade_block_entries(
         valuation = value_by_player[player["id"]]
         state = state_by_team[player["team_id"]]
         score, reasons, preferred = trade_block_score(canonical, player, valuation, state)
+        if player["id"] in set(canonical.get("ai_trade_pressure_player_ids", [])):
+            score += 18.0
+            reasons = [*reasons, "extension_talks_stalled"]
+            preferred = "best_asset_or_young_player"
         if score < 34:
             continue
         output.append(
@@ -995,6 +1005,7 @@ def parse_cli_assets(canonical: dict[str, Any], from_team: str, to_team: str, sp
 def with_transaction_context(canonical: dict[str, Any] | Any, config: dict[str, Any] | None = None) -> dict[str, Any]:
     canonical = to_plain(canonical)
     ensure_future_second_round_scaffolds(canonical)
+    simplify_unsupported_pick_conditions(canonical)
     if transaction_context_is_complete(canonical):
         annotate_pick_value_context(canonical)
         annotate_pick_obligation_context(canonical)
@@ -1037,6 +1048,44 @@ def ensure_future_second_round_scaffolds(canonical: dict[str, Any]) -> None:
                 }
             )
             existing.add(key)
+
+
+def simplify_unsupported_pick_conditions(canonical: dict[str, Any]) -> None:
+    """Normalize unsupported public pick-condition prose into clean, playable assets."""
+    for pick in canonical.get("draft_picks", []):
+        raw = str(pick.get("protection_summary") or pick.get("protections") or "").strip()
+        if not raw:
+            continue
+        clean = clean_pick_protection_summary(pick)
+        if unsupported_pick_backup_condition(raw) and not clean:
+            pick["protection_summary"] = None
+            pick["protections"] = None
+            pick["_unsupported_pick_condition_simplified"] = True
+            pick["_obligation_locked"] = True
+            pick.setdefault("notes", "")
+            pick["notes"] = " ".join(
+                part for part in [str(pick.get("notes") or "").strip(), "Unsupported conditional backup removed from tradeable assets."]
+                if part
+            )
+        elif unsupported_pick_condition(raw):
+            pick["protection_summary"] = clean or None
+            pick["protections"] = clean or None
+            pick["_unsupported_pick_condition_simplified"] = True
+            pick.setdefault("notes", "")
+            pick["notes"] = " ".join(
+                part for part in [str(pick.get("notes") or "").strip(), "Unsupported swap/favorable condition simplified to a regular pick."]
+                if part
+            )
+        elif clean and clean != raw:
+            pick["protection_summary"] = clean
+
+
+def unsupported_pick_condition(text: str) -> bool:
+    return bool(UNSUPPORTED_PICK_CONDITION_RE.search(str(text or "")))
+
+
+def unsupported_pick_backup_condition(text: str) -> bool:
+    return bool(UNSUPPORTED_PICK_FALLBACK_RE.search(str(text or "")))
 
 
 def annotate_pick_obligation_context(canonical: dict[str, Any]) -> None:
@@ -1091,8 +1140,6 @@ def pick_obligation_value_factor(obligations: list[dict[str, Any]]) -> float:
                 top_n = maybe_float(protected.get("through") or protected.get("max"))
             if top_n is not None:
                 factor *= clamp(1.0 - float(top_n) * 0.018, 0.52, 0.98)
-        elif obligation.get("type") == "pick_swap":
-            factor *= 0.62
     return round(clamp(factor, 0.05, 1.0), 3)
 
 
@@ -1821,7 +1868,7 @@ def trade_legality(canonical: dict[str, Any], proposal: TradeProposal, config: d
                 if not pick or pick.get("current_owner_team_id") != team_id:
                     issues.append(f"Pick {asset.get('id')} is not owned by {team_by_id(canonical, team_id)['abbrev']}.")
                 elif pick.get("_obligation_locked"):
-                    issues.append(f"{pick_label(canonical, pick)} is locked as protection/swap/fallback collateral and cannot be traded.")
+                    issues.append(f"{pick_label(canonical, pick)} is locked as protection collateral and cannot be traded.")
     duplicate_assets = duplicate_trade_assets([*proposal.from_assets, *proposal.to_assets])
     if duplicate_assets:
         issues.append(f"Duplicate assets in proposal: {', '.join(sorted(duplicate_assets))}.")
@@ -1959,6 +2006,11 @@ def contract_surplus_value(on_court: float, age_curve: float, development: float
         surplus += 2.0
     if salary_m <= 6 and development > 4:
         surplus += 4.0
+    if surplus < 0 and on_court >= 62:
+        relief = 0.42 if on_court >= 72 else 0.55 if on_court >= 68 else 0.72
+        surplus *= relief
+    if surplus < 0 and on_court >= 58 and development >= 5:
+        surplus *= 0.78
     return clamp(surplus, -32, 34)
 
 
@@ -2227,12 +2279,50 @@ def package_value_for_team(
             multiplier = multipliers.get(asset["id"], 1.0)
             player_value = market_trade_target_value(player, value)
             adjusted = (player_value + team_fit_for_player(player, value, state)) * multiplier
+            adjusted += recently_acquired_player_premium(canonical, player, perspective_team_id, player_value)
             player_adjusted_values.append(adjusted)
             total += adjusted
         elif asset["kind"] == "pick":
             pick = pick_by_id(canonical, asset["id"])
             total += pick_asset_value(pick, state["phase"])
     return total + package_concentration_adjustment(player_adjusted_values)
+
+
+def recently_acquired_player_premium(canonical: dict[str, Any], player: dict[str, Any] | None, team_id: str, base_value: float) -> float:
+    if not player or player.get("team_id") != team_id:
+        return 0.0
+    if base_value < 42.0 and float(player.get("minutes_projection") or 0.0) < 22.0:
+        return 0.0
+    current = parse_iso_date(((canonical.get("meta") or {}).get("current_date")) or CANONICAL_START_DATE)
+    if current is None:
+        return 0.0
+    player_id = player.get("id")
+    for log in sorted(canonical.get("transaction_logs", []), key=lambda item: str(item.get("date") or ""), reverse=True):
+        if log.get("transaction_type") != "trade":
+            continue
+        log_date = parse_iso_date(log.get("date"))
+        if log_date is None:
+            continue
+        days = (current - log_date).days
+        if days < RECENTLY_TRADED_DAYS or days > RECENTLY_ACQUIRED_PREMIUM_DAYS:
+            continue
+        teams = list(log.get("teams") or [])
+        if len(teams) < 2:
+            continue
+        from_team, to_team = teams[0], teams[1]
+        assets = log.get("assets") or {}
+        destination = None
+        if any(asset.get("kind") == "player" and asset.get("id") == player_id for asset in assets.get("from_assets", [])):
+            destination = to_team
+        elif any(asset.get("kind") == "player" and asset.get("id") == player_id for asset in assets.get("to_assets", [])):
+            destination = from_team
+        if destination != team_id:
+            continue
+        decay = 1.0 - (days - RECENTLY_TRADED_DAYS) / max(1, RECENTLY_ACQUIRED_PREMIUM_DAYS - RECENTLY_TRADED_DAYS)
+        quality = clamp((base_value - 40.0) / 42.0, 0.0, 1.0)
+        minutes = clamp((float(player.get("minutes_projection") or 0.0) - 18.0) / 16.0, 0.0, 1.0)
+        return round((5.0 + 11.0 * max(quality, minutes)) * decay, 2)
+    return 0.0
 
 
 def package_concentration_adjustment(player_values: list[float]) -> float:
@@ -2601,7 +2691,7 @@ def tradeable_picks_for_team(canonical: dict[str, Any], team_id: str) -> list[di
 
 
 def normalize_pick_protection_text(pick: dict[str, Any]) -> str:
-    return " ".join(str(pick.get("protection_summary") or pick.get("protections") or "").lower().split())
+    return " ".join(clean_pick_protection_summary(pick).lower().split())
 
 
 def pick_record_sort_key(pick: dict[str, Any]) -> tuple[float, int, str]:
@@ -2732,6 +2822,10 @@ def clean_pick_protection_summary(pick: dict[str, Any]) -> str:
     compact = " ".join(text.split())
     compact = re.sub(r"\s+and\s+if\s+.*$", "", compact, flags=re.IGNORECASE)
     compact = re.sub(r"\s*\(via [^)]+\)", "", compact, flags=re.IGNORECASE)
+    if unsupported_pick_backup_condition(compact):
+        return ""
+    if unsupported_pick_condition(compact):
+        return ""
     if compact.upper() == compact and compact.isalpha() and 2 <= len(compact) <= 4:
         return ""
     if re.search(r"\bvia\b", compact, flags=re.IGNORECASE) and not re.search(r"\b(if|protected|protection|top)\b", compact, flags=re.IGNORECASE):
@@ -2750,9 +2844,11 @@ def clean_pick_protection_summary(pick: dict[str, Any]) -> str:
     if if_match:
         start = int(if_match.group(1))
         end = int(if_match.group(2))
-        return f"top-{end} protected" if start == 1 else f"conveys {start}-{end}"
+        if start > 1:
+            return f"top-{start - 1} protected"
+        return f"picks {start}-{end} protected"
     compact = re.sub(r"^\b[A-Z]{2,4}\s+", "", compact)
-    return compact[:37].rstrip() + "..." if len(compact) > 40 else compact
+    return compact if len(compact) <= 40 else ""
 
 
 def pick_label_note(pick: dict[str, Any]) -> str:

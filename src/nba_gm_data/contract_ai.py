@@ -427,7 +427,9 @@ def negotiate_extension(
             source_ids=["src_contract_market_config_v1"],
             notes="Extension negotiation blocked by v1 eligibility/manual-review guardrails.",
         )
-        return {"negotiation": to_plain(negotiation), "decision": None, "candidate": candidate, "accepted": False}
+        payload = to_plain(negotiation)
+        payload["current_contract_seasons"] = list((contract_for_player(canonical, player["id"]) or {}).get("seasons") or [])
+        return {"negotiation": payload, "decision": None, "candidate": candidate, "accepted": False}
     return negotiate_contract(canonical, player, team, "extension", seed, max_rounds, date, config)
 
 
@@ -580,6 +582,7 @@ def apply_contract_to_save(save_path: str | Path, negotiation_id: str, date: str
     if accepted_offer and negotiation_payload.get("negotiation_type") == "extension":
         accepted_offer.setdefault("start_season", extension_start_season_from_date(date))
         accepted_offer.setdefault("team_id", negotiation_payload.get("team_id"))
+        accepted_offer = merge_extension_offer_with_existing_contract(accepted_offer, negotiation_payload)
     log = TransactionLog(
         id=stable_id("transaction_log", "contract", negotiation_id, date),
         date=date,
@@ -670,6 +673,70 @@ def extension_start_season_from_date(date_value: str) -> str:
     return f"{start}-{str(start + 1)[-2:]}"
 
 
+def merge_extension_offer_with_existing_contract(offer: dict[str, Any], negotiation_payload: dict[str, Any]) -> dict[str, Any]:
+    start_season = str(offer.get("start_season") or extension_start_season_from_date(str(negotiation_payload.get("date") or CANONICAL_START_DATE)))
+    current_seasons = [
+        dict(season)
+        for season in negotiation_payload.get("current_contract_seasons", [])
+        if season.get("season") and str(season.get("season")) < start_season
+    ]
+    extension_seasons = offer_contract_seasons(offer, start_season, "extension")
+    if current_seasons or extension_seasons:
+        merged = {str(season.get("season")): season for season in current_seasons}
+        for season in extension_seasons:
+            merged[str(season.get("season"))] = season
+        offer["seasons"] = [merged[key] for key in sorted(merged)]
+        offer["original_contract_years"] = len(extension_seasons)
+    return offer
+
+
+def offer_contract_seasons(offer: dict[str, Any], start_season: str, guarantee_status: str) -> list[dict[str, Any]]:
+    years = int(offer.get("years") or offer.get("term_years") or 1)
+    annual = float(offer.get("annual_salary") or offer.get("salary") or offer.get("aav") or 0.0)
+    if annual and annual < 1_000_000:
+        annual *= 1_000_000
+    try:
+        start = int(start_season.split("-")[0])
+    except (ValueError, AttributeError):
+        start = 2026
+    return [
+        {
+            "season": f"{start + offset}-{str(start + offset + 1)[-2:]}",
+            "salary": int(round(annual)),
+            "option_type": offer.get("option_type"),
+            "guarantee_status": guarantee_status,
+        }
+        for offset in range(max(1, years))
+    ]
+
+
+def projected_retirement_start_year(player: dict[str, Any], active_start_year: int | None = None) -> int | None:
+    age = maybe_float(player.get("display_age", player.get("age"))) or 27.0
+    if age < 36:
+        return None
+    active_start_year = active_start_year or 2025
+    digest = sum(ord(char) for char in str(player.get("id") or player.get("name") or "player"))
+    if age >= 42:
+        years_until = 1
+    elif age >= 40:
+        years_until = 3
+    elif age >= 39:
+        years_until = 2 + digest % 2
+    elif age >= 38:
+        years_until = 2 + digest % 2
+    elif age >= 37:
+        years_until = 3 + digest % 2
+    else:
+        years_until = 4 + digest % 2
+    if display_minutes_for_contract(player) >= 24 and age < 40:
+        years_until += 1
+    return active_start_year + years_until
+
+
+def display_minutes_for_contract(player: dict[str, Any]) -> float:
+    return float(player.get("minutes_projection") or player.get("projected_minutes") or 0.0)
+
+
 def negotiate_contract(
     canonical: dict[str, Any],
     player: dict[str, Any],
@@ -758,7 +825,10 @@ def negotiate_contract(
         source_ids=["src_contract_market_config_v1"],
         notes="Deterministic v1 negotiation with bounded front-office personality effects and inferred player priorities.",
     )
-    return {"negotiation": to_plain(negotiation), "decision": to_plain(accepted_decision), "accepted": accepted_decision.accepted}
+    payload = to_plain(negotiation)
+    if negotiation_type == "extension":
+        payload["current_contract_seasons"] = list((contract_for_player(canonical, player["id"]) or {}).get("seasons") or [])
+    return {"negotiation": payload, "decision": to_plain(accepted_decision), "accepted": accepted_decision.accepted}
 
 
 def contract_role_tier(player: dict[str, Any], valuation: dict[str, Any], features: dict[str, float]) -> str:
@@ -1295,6 +1365,15 @@ def contract_legality(canonical: dict[str, Any], player: dict[str, Any], team: d
         candidate = next((item for item in canonical.get("extension_candidates", []) if item["player_id"] == player["id"]), None)
         if candidate and not candidate.get("eligible"):
             manual.append(f"Extension eligibility is {candidate.get('eligibility_status')}.")
+        start_label = extension_start_season_from_date(str((canonical.get("meta") or {}).get("current_date") or CANONICAL_START_DATE))
+    else:
+        start_label = str((canonical.get("meta") or {}).get("active_season") or "2025-26")
+    start_year = season_start_year_for_contract(start_label)
+    retirement_start = projected_retirement_start_year(player, start_year)
+    if retirement_start is not None and retirement_start <= start_year + int(offer.years) - 1:
+        issues.append(
+            f"{player.get('name', 'Player')} is projected to retire before this {offer.years}-year deal would finish."
+        )
     if offer_type != "extension" and not any(item["player_id"] == player["id"] for item in canonical.get("free_agent_candidates", [])):
         manual.append("Player is not in the projected v1 free-agent pool.")
     roster_count = sum(1 for p in canonical["players"] if p["team_id"] == team["id"])
@@ -1310,6 +1389,13 @@ def contract_legality(canonical: dict[str, Any], player: dict[str, Any], team: d
     else:
         status = "legal"
     return {"status": status, "issues": issues, "manual_review": manual, "salary_posture": posture}
+
+
+def season_start_year_for_contract(season: str) -> int:
+    try:
+        return int(str(season).split("-")[0])
+    except (TypeError, ValueError):
+        return 2025
 
 
 def team_offer_score(canonical: dict[str, Any], player: dict[str, Any], team: dict[str, Any], offer: ContractOffer, offer_type: str, seed: int, config: dict[str, Any]) -> float:

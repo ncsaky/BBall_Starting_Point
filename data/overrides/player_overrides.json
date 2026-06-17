@@ -55,6 +55,24 @@
       "height_inches": 71,
       "notes": "User playtest data correction: Isaiah Stevens listed height should be 5'11\".",
       "player_name": "Isaiah Stevens"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 74,
+      "notes": "User playtest data correction: Dru Smith listed height should be 6'2\".",
+      "player_name": "Dru Smith"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 78,
+      "notes": "User playtest data correction: Keshad Johnson listed height should be 6'6\".",
+      "player_name": "Keshad Johnson"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 75,
+      "notes": "User playtest data correction: Jordan Goodwin listed height should be 6'3\".",
+      "player_name": "Jordan Goodwin"
     }
   ]
 }
