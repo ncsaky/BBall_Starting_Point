@@ -154009,7 +154009,7 @@
           "value": 577.0
         }
       },
-      "height_inches": null,
+      "height_inches": 67,
       "id": "player_chi-yuki-kawamura",
       "minutes_projection": 12.6,
       "missing_critical_fields": [
@@ -157263,7 +157263,7 @@
           "value": 819.8
         }
       },
-      "height_inches": null,
+      "height_inches": 79,
       "id": "player_gsw-gui-santos",
       "minutes_projection": 18.1,
       "missing_critical_fields": [
@@ -157355,7 +157355,7 @@
           "value": 306.2
         }
       },
-      "height_inches": null,
+      "height_inches": 81,
       "id": "player_gsw-malevy-leons",
       "minutes_projection": 7.3,
       "missing_critical_fields": [
@@ -157420,7 +157420,7 @@
           "value": 1025.0
         }
       },
-      "height_inches": null,
+      "height_inches": 74,
       "id": "player_gsw-pat-spencer",
       "minutes_projection": 17.2,
       "missing_critical_fields": [
@@ -157459,7 +157459,7 @@
           "value": 789.4
         }
       },
-      "height_inches": null,
+      "height_inches": 84,
       "id": "player_gsw-quinten-post",
       "minutes_projection": 17.3,
       "missing_critical_fields": [
@@ -157560,7 +157560,7 @@
           "value": 814.8
         }
       },
-      "height_inches": null,
+      "height_inches": 75,
       "id": "player_gsw-will-richard",
       "minutes_projection": 19.5,
       "missing_critical_fields": [
@@ -410541,7 +410541,7 @@
       ],
       "source_kind": "inferred_trait_model_v1",
       "trait_key": "shot_versatility",
-      "value": 54.05
+      "value": 46
     },
     {
       "components": {
@@ -410572,7 +410572,7 @@
       ],
       "source_kind": "inferred_trait_model_v1",
       "trait_key": "rim_pressure",
-      "value": 59.77
+      "value": 42
     },
     {
       "components": {
@@ -410603,7 +410603,7 @@
       ],
       "source_kind": "inferred_trait_model_v1",
       "trait_key": "handle_pressure",
-      "value": 66.29
+      "value": 44
     },
     {
       "components": {
@@ -410632,7 +410632,7 @@
       ],
       "source_kind": "inferred_trait_model_v1",
       "trait_key": "passing_reads",
-      "value": 72.84
+      "value": 50
     },
     {
       "components": {
@@ -410662,7 +410662,7 @@
       ],
       "source_kind": "inferred_trait_model_v1",
       "trait_key": "foot_speed_lateral_agility",
-      "value": 76.13
+      "value": 52
     },
     {
       "components": {
@@ -410717,7 +410717,7 @@
       ],
       "source_kind": "inferred_trait_model_v1",
       "trait_key": "defensive_effort",
-      "value": 75.5
+      "value": 54
     },
     {
       "components": {
@@ -410745,7 +410745,7 @@
       ],
       "source_kind": "inferred_trait_model_v1",
       "trait_key": "scheme_iq",
-      "value": 69.26
+      "value": 52
     },
     {
       "components": {
@@ -410775,7 +410775,7 @@
       ],
       "source_kind": "inferred_trait_model_v1",
       "trait_key": "rim_deterrence",
-      "value": 37.1
+      "value": 24
     },
     {
       "components": {
@@ -410805,7 +410805,7 @@
       ],
       "source_kind": "inferred_trait_model_v1",
       "trait_key": "screen_navigation",
-      "value": 74.89
+      "value": 50
     },
     {
       "components": {
@@ -410833,7 +410833,7 @@
       ],
       "source_kind": "inferred_trait_model_v1",
       "trait_key": "offensive_rebounding",
-      "value": 31.58
+      "value": 66
     },
     {
       "components": {
@@ -410861,7 +410861,7 @@
       ],
       "source_kind": "inferred_trait_model_v1",
       "trait_key": "portability",
-      "value": 76.14
+      "value": 56
     },
     {
       "components": {
@@ -410892,7 +410892,7 @@
       ],
       "source_kind": "inferred_trait_model_v1",
       "trait_key": "playoff_translation",
-      "value": 69.6
+      "value": 50
     },
     {
       "components": {

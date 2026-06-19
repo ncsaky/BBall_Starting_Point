@@ -419,6 +419,7 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
     save.setdefault("draft_pick_overrides", {})
     save.setdefault("pick_obligations", [])
     save.setdefault("locked_pick_assets", [])
+    repair_reacquired_pick_obligations(save, canonical)
     save.setdefault("draft_rights", [])
     save.setdefault("rookie_contracts", [])
     save.setdefault("incoming_rookies", [])
@@ -485,6 +486,30 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
     sync_social_from_news(save)
     dedupe_save_event_lists(save)
     return save
+
+
+def repair_reacquired_pick_obligations(save: dict[str, Any], canonical: dict[str, Any] | None = None) -> None:
+    picks = {pick.get("id"): pick for pick in (canonical or {}).get("draft_picks", [])}
+    locked = set(save.setdefault("locked_pick_assets", []))
+    overrides = save.setdefault("draft_pick_overrides", {})
+    for obligation in save.setdefault("pick_obligations", []):
+        if obligation.get("type") != "protected_pick":
+            continue
+        if obligation.get("status", "active") not in {"active", "pending_resolution"}:
+            continue
+        pick_id = obligation.get("primary_pick_id")
+        sender = obligation.get("sender_team_id")
+        if not pick_id or not sender:
+            continue
+        current_owner = overrides.get(pick_id) or (picks.get(pick_id) or {}).get("current_owner_team_id")
+        if current_owner != sender:
+            continue
+        obligation["status"] = "resolved_reacquired_by_sender"
+        obligation.setdefault("resolved_date", (save.get("state") or {}).get("current_date"))
+        obligation["notes"] = f"{obligation.get('notes', '')} Sender reacquired protected-pick rights before resolution; fallback unlocked.".strip()
+        for fallback_id in obligation.get("fallback_pick_ids") or []:
+            locked.discard(fallback_id)
+    save["locked_pick_assets"] = sorted(locked)
 
 
 def set_save_date_phase(save: dict[str, Any], date_value: str) -> None:
@@ -1536,13 +1561,17 @@ def simulate_next_playoff_game(canonical: dict[str, Any] | Any, save_path: str |
     ]
     if not open_series:
         return {"status": "no_open_series", "playoff_state": state}
-    series = open_series[0]
-    result = simulate_one_series_game(canonical, save, state, series, seed, root)
-    if max((series.get("wins") or {}).values(), default=0) >= 4:
-        winner = max((series.get("wins") or {}).items(), key=lambda item: item[1])[0]
-        series["winner_team_id"] = winner
-        series["status"] = "completed"
-        add_news(save, "playoffs", f"{team_by_id(canonical, winner)['abbrev']} wins {series['round']} series.")
+    results: list[dict[str, Any]] = []
+    completed: list[dict[str, Any]] = []
+    for series in open_series:
+        result = simulate_one_series_game(canonical, save, state, series, seed, root)
+        results.append(result)
+        if max((series.get("wins") or {}).values(), default=0) >= 4:
+            winner = max((series.get("wins") or {}).items(), key=lambda item: item[1])[0]
+            series["winner_team_id"] = winner
+            series["status"] = "completed"
+            completed.append(series)
+            add_news(save, "playoffs", f"{team_by_id(canonical, winner)['abbrev']} wins {series['round']} series.")
     current_series = [item for item in state.get("series", []) if item.get("round") == current_round]
     if current_series and all(item.get("status") == "completed" for item in current_series):
         winners = [item["winner_team_id"] for item in current_series if item.get("winner_team_id")]
@@ -1555,7 +1584,7 @@ def simulate_next_playoff_game(canonical: dict[str, Any] | Any, save_path: str |
     save["playoff_state"] = state
     update_save_date_to_latest_playoff_game(save)
     write_save(save_path, save)
-    return {"status": "simulated_game", "game": result, "playoff_state": state}
+    return {"status": "simulated_game", "game": results[0] if results else None, "games": results, "completed_series": completed, "playoff_state": state}
 
 
 def simulate_one_series_game(
@@ -1590,7 +1619,9 @@ def run_draft_lottery(canonical: dict[str, Any] | Any, save_path: str | Path, ye
 
     standings = save_standings_for_draft(canonical, save)
     order = generate_draft_order(canonical_with_save(canonical, save), year, seed=seed, standings=standings)
+    annotate_lottery_odds_context(canonical, save, order)
     resolve_pick_obligations_for_year(save, order, str(year))
+    refresh_draft_order_from_save(order, save)
     save.setdefault("draft_orders", {})[str(year)] = order
     add_news(save, "draft_lottery", f"{year} draft order generated.")
     current_phase = save.get("state", {}).get("phase")
@@ -1600,9 +1631,62 @@ def run_draft_lottery(canonical: dict[str, Any] | Any, save_path: str | Path, ye
     return order
 
 
+def annotate_lottery_odds_context(canonical: dict[str, Any], save: dict[str, Any], order: dict[str, Any]) -> None:
+    lottery = order.get("lottery") or {}
+    if not lottery.get("odds_by_team"):
+        return
+    from .transactions import pick_obligation_context_note, with_transaction_context
+
+    active = with_transaction_context(canonical_with_save(canonical, save))
+    picks = {pick.get("id"): pick for pick in active.get("draft_picks", [])}
+    context: dict[str, str] = {}
+    for row in order.get("draft_order") or []:
+        if int(row.get("round") or 0) != 1:
+            continue
+        original = row.get("original_team_id")
+        if original not in lottery.get("odds_by_team", {}):
+            continue
+        pick = picks.get(row.get("id") or row.get("pick_id"))
+        if not pick:
+            continue
+        owner = pick.get("current_owner_team_id")
+        parts: list[str] = []
+        if owner and owner != original:
+            parts.append(f"[owned by {team_id_to_abbrev(owner)}]")
+        protection = pick_obligation_context_note(active, pick)
+        if protection:
+            parts.append(f"[{protection}]")
+        if parts:
+            context[original] = " ".join(parts)
+    lottery["odds_context_by_team"] = context
+    order["lottery"] = lottery
+
+
+def refresh_draft_order_from_save(order: dict[str, Any], save: dict[str, Any]) -> None:
+    overrides = save.get("draft_pick_overrides") or {}
+    for row in order.get("draft_order") or []:
+        pick_id = row.get("id") or row.get("pick_id")
+        if not pick_id:
+            continue
+        row["pick_id"] = pick_id
+        row["id"] = pick_id
+        owner = overrides.get(pick_id) or row.get("current_owner_team_id") or row.get("owner_team_id")
+        if owner == "used_draft_pick":
+            continue
+        if owner:
+            row["current_owner_team_id"] = owner
+            row["owner_team_id"] = owner
+            row["team_abbrev"] = team_id_to_abbrev(owner)
+
+
 def resolve_pick_obligations_for_year(save: dict[str, Any], order: dict[str, Any], year: str) -> None:
     draft_order = order.get("draft_order") or []
-    by_pick = {item.get("id"): item for item in draft_order}
+    by_pick = {}
+    for item in draft_order:
+        if item.get("id"):
+            by_pick[item.get("id")] = item
+        if item.get("pick_id"):
+            by_pick[item.get("pick_id")] = item
     locked = set(save.setdefault("locked_pick_assets", []))
     for obligation in save.get("pick_obligations", []):
         if obligation.get("status") not in {"active", "pending_resolution"}:
@@ -3235,14 +3319,15 @@ def apply_saved_draft_order_to_pick(pick: dict[str, Any], save: dict[str, Any]) 
     year = str(pick.get("draft_year") or season_end_year(str(pick.get("season") or save.get("meta", {}).get("season") or CANONICAL_SEASON)))
     order = ((save.get("draft_orders") or {}).get(year) or {}).get("draft_order") or []
     for item in order:
-        if item.get("pick_id") != pick.get("id"):
+        if (item.get("pick_id") or item.get("id")) != pick.get("id"):
             continue
         pick["overall_pick"] = item.get("overall_pick")
         pick["round"] = item.get("round") or pick.get("round")
         pick["pick_in_round"] = item.get("pick_in_round") or pick.get("pick_in_round")
         pick["lottery_order_team_id"] = item.get("team_id") or item.get("original_team_id")
-        if item.get("owner_team_id"):
-            pick["current_owner_team_id"] = item.get("owner_team_id")
+        owner = item.get("owner_team_id") or item.get("current_owner_team_id")
+        if owner:
+            pick["current_owner_team_id"] = owner
         return
 
 

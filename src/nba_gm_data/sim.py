@@ -581,10 +581,33 @@ def normalize_game_team_abbrev(abbrev: str | None) -> str | None:
 
 
 def normalize_minutes(pool: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    total = sum(item["minutes"] for item in pool)
+    cap = 48.0
+    raw_minutes = [max(0.0, float(item.get("minutes") or 0.0)) for item in pool]
+    total = sum(raw_minutes)
     if total <= 0:
         return pool
-    return [{**item, "minutes": round(item["minutes"] * 240 / total, 2)} for item in pool]
+    minutes = [value * 240.0 / total for value in raw_minutes]
+    capped = {idx for idx, value in enumerate(minutes) if value >= cap}
+    while capped:
+        remaining_total = 240.0 - cap * len(capped)
+        uncapped = [idx for idx in range(len(minutes)) if idx not in capped]
+        if not uncapped:
+            break
+        uncapped_raw = sum(raw_minutes[idx] for idx in uncapped)
+        if uncapped_raw <= 0:
+            break
+        changed = False
+        for idx in uncapped:
+            next_value = raw_minutes[idx] * remaining_total / uncapped_raw
+            if next_value >= cap:
+                capped.add(idx)
+                changed = True
+            minutes[idx] = min(cap, next_value)
+        if not changed:
+            break
+    for idx in capped:
+        minutes[idx] = cap
+    return [{**item, "minutes": round(min(cap, max(0.0, minutes[idx])), 2)} for idx, item in enumerate(pool)]
 
 
 def projected_game_minutes(player: dict[str, Any]) -> float:

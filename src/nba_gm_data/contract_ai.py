@@ -675,10 +675,20 @@ def extension_start_season_from_date(date_value: str) -> str:
 
 def merge_extension_offer_with_existing_contract(offer: dict[str, Any], negotiation_payload: dict[str, Any]) -> dict[str, Any]:
     start_season = str(offer.get("start_season") or extension_start_season_from_date(str(negotiation_payload.get("date") or CANONICAL_START_DATE)))
+    requested_start_year = season_start_year_for_contract(start_season)
+    existing_paid_years = [
+        season_start_year_for_contract(str(season.get("season")))
+        for season in negotiation_payload.get("current_contract_seasons", [])
+        if season.get("season") and maybe_float(season.get("salary")) and maybe_float(season.get("salary")) > 0
+    ]
+    latest_existing_year = max(existing_paid_years, default=None)
+    if latest_existing_year is not None and latest_existing_year >= requested_start_year:
+        start_season = season_label_from_start_year(latest_existing_year + 1)
+        offer["start_season"] = start_season
     current_seasons = [
         dict(season)
         for season in negotiation_payload.get("current_contract_seasons", [])
-        if season.get("season") and str(season.get("season")) < start_season
+        if season.get("season") and season_start_year_for_contract(str(season.get("season"))) < season_start_year_for_contract(start_season)
     ]
     extension_seasons = offer_contract_seasons(offer, start_season, "extension")
     if current_seasons or extension_seasons:
@@ -688,6 +698,10 @@ def merge_extension_offer_with_existing_contract(offer: dict[str, Any], negotiat
         offer["seasons"] = [merged[key] for key in sorted(merged)]
         offer["original_contract_years"] = len(extension_seasons)
     return offer
+
+
+def season_label_from_start_year(start: int) -> str:
+    return f"{start}-{str(start + 1)[-2:]}"
 
 
 def offer_contract_seasons(offer: dict[str, Any], start_season: str, guarantee_status: str) -> list[dict[str, Any]]:

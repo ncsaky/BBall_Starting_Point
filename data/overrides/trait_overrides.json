@@ -235,6 +235,24 @@
       }
     },
     {
+      "player_name": "Brandin Podziemski",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "shot_versatility": {"value": 46, "confidence": 0.7, "notes": "User playtest correction: shooting and rebounding remain positives, but self-created scoring should not grade like a primary creator."},
+        "handle_pressure": {"value": 44, "confidence": 0.68, "notes": "Useful connective handle without star-level advantage creation."},
+        "rim_pressure": {"value": 42, "confidence": 0.68, "notes": "Does not consistently bend defenses at the rim; scoring value should come more from shooting, cuts, and role play."},
+        "passing_reads": {"value": 50, "confidence": 0.7, "notes": "Functional mover and connector, but the prior read/creation profile was too generous."},
+        "scheme_iq": {"value": 52, "confidence": 0.66, "notes": "Solid role understanding without inflating him into a high-end processing hub."},
+        "defensive_effort": {"value": 54, "confidence": 0.62, "notes": "Competitive enough, but not a major defensive-value driver."},
+        "foot_speed_lateral_agility": {"value": 52, "confidence": 0.62, "notes": "Average guard/wing movement; avoid over-crediting all-around athletic impact."},
+        "screen_navigation": {"value": 50, "confidence": 0.6, "notes": "Functional, not a standout chase-defense trait."},
+        "rim_deterrence": {"value": 24, "confidence": 0.72, "notes": "Guard size provides negligible rim deterrence."},
+        "offensive_rebounding": {"value": 66, "confidence": 0.72, "notes": "Keep the real guard rebounding strength visible while nerfing broader creation/read inflation."},
+        "portability": {"value": 56, "confidence": 0.62, "notes": "Shooting and rebounding make him useful, but creation/read limits should lower broad trade value."},
+        "playoff_translation": {"value": 50, "confidence": 0.6, "notes": "Role-player shooting/rebounding can translate, while creation limitations cap playoff value."}
+      }
+    },
+    {
       "player_name": "Zion Williamson",
       "source_ids": ["src_manual_overrides_2025_26"],
       "traits": {

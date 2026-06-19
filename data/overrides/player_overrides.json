@@ -73,6 +73,42 @@
       "height_inches": 75,
       "notes": "User playtest data correction: Jordan Goodwin listed height should be 6'3\".",
       "player_name": "Jordan Goodwin"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 79,
+      "notes": "User playtest data correction: Gui Santos listed height should be 6'7\".",
+      "player_name": "Gui Santos"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 75,
+      "notes": "User playtest data correction: Will Richard listed height should be 6'3\".",
+      "player_name": "Will Richard"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 74,
+      "notes": "User playtest data correction: Pat Spencer listed height should be 6'2\".",
+      "player_name": "Pat Spencer"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 84,
+      "notes": "User playtest data correction: Quinten Post listed height should be 7'0\".",
+      "player_name": "Quinten Post"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 81,
+      "notes": "User playtest data correction: Malevy Leons listed height should be 6'9\".",
+      "player_name": "Malevy Leons"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 67,
+      "notes": "User playtest data correction: Yuki Kawamura listed height should be 5'7\".",
+      "player_name": "Yuki Kawamura"
     }
   ]
 }

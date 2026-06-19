@@ -31,7 +31,7 @@ ANNUAL_CAP_GROWTH_RATE = 0.035
 RECENTLY_TRADED_DAYS = 60
 RECENTLY_ACQUIRED_PREMIUM_DAYS = 180
 UNSUPPORTED_PICK_CONDITION_RE = re.compile(
-    r"\b(swap|favo[u]?rable|least|most|better|worse|higher|lower|then|or\s+swap)\b",
+    r"\b(swap|favo[u]?rable|least|most|better|worse|higher|lower|then|or\s+swap|conveys?)\b",
     re.IGNORECASE,
 )
 UNSUPPORTED_PICK_FALLBACK_RE = re.compile(r"\bif\b.+\bconveys?\b", re.IGNORECASE)
@@ -298,6 +298,15 @@ def build_player_asset_valuations(canonical: dict[str, Any] | Any, config: dict[
             + (playoff - 50) * float(weights.get("playoff_value", 0.16))
             - health_risk * float(weights.get("health_risk", 0.55))
         )
+        value = max(value, drafted_rookie_value_floor(player, ability=maybe_float(player.get("current_ability")) or on_court, potential=maybe_float(player.get("potential")) or on_court))
+        if on_court >= 72:
+            star_floor = 66.0 + (on_court - 72.0) * 0.58 + max(0.0, playoff - 70.0) * 0.16 + max(0.0, portability - 70.0) * 0.1 - health_risk * 0.035
+            value = max(value, star_floor)
+        elif on_court >= 66:
+            value = max(value, 54.0 + (on_court - 66.0) * 0.52 + max(0.0, playoff - 64.0) * 0.1 - health_risk * 0.025)
+        if goat_exception_player(player):
+            value = 99.0
+            surplus = max(surplus, 0.0)
         output.append(
             PlayerAssetValuation(
                 id=stable_id("player_asset_value", player["id"]),
@@ -952,6 +961,8 @@ def trade_result_with_pick_terms(result: dict[str, Any], terms: list[dict[str, A
     if not terms:
         return result
     payload = to_plain(result)
+    payload["pick_obligation_terms_prompted"] = True
+    payload["pick_trade_terms"] = to_plain(terms)
     active_terms = [term for term in terms if term and term.get("type") != "unprotected"]
     if not active_terms:
         return payload
@@ -1057,7 +1068,17 @@ def simplify_unsupported_pick_conditions(canonical: dict[str, Any]) -> None:
         if not raw:
             continue
         clean = clean_pick_protection_summary(pick)
-        if unsupported_pick_backup_condition(raw) and not clean:
+        if re.search(r"\bfrozen\s+pick\b", raw, flags=re.IGNORECASE):
+            pick["protection_summary"] = None
+            pick["protections"] = None
+            pick["_unsupported_pick_condition_simplified"] = True
+            pick["_obligation_locked"] = True
+            pick.setdefault("notes", "")
+            pick["notes"] = " ".join(
+                part for part in [str(pick.get("notes") or "").strip(), "Locked protection backup hidden from tradeable assets."]
+                if part
+            )
+        elif unsupported_pick_backup_condition(raw) and not clean:
             pick["protection_summary"] = None
             pick["protections"] = None
             pick["_unsupported_pick_condition_simplified"] = True
@@ -1125,6 +1146,58 @@ def pick_obligation_label(obligation: dict[str, Any]) -> str:
     if low and high:
         return f"picks {low}-{high} protected"
     return "protected"
+
+
+def active_primary_pick_obligation_for_label(pick: dict[str, Any]) -> dict[str, Any] | None:
+    return next(
+        (
+            obligation
+            for obligation in pick.get("_obligations", [])
+            if obligation.get("type") == "protected_pick" and not obligation.get("_fallback_lock")
+        ),
+        None,
+    )
+
+
+def team_id_fallback(team_id: str | None) -> str:
+    return str(team_id or "TEAM").replace("team_", "").upper()
+
+
+def pick_short_label(canonical: dict[str, Any], pick: dict[str, Any] | None) -> str:
+    if not pick:
+        return "fallback pick"
+    teams = {team.get("id"): team.get("abbrev") for team in canonical.get("teams", [])}
+    original = teams.get(pick.get("original_team_id")) or "TBD"
+    return f"{pick.get('season', '----')} R{pick.get('round', '?')} {original}"
+
+
+def pick_obligation_context_note(canonical: dict[str, Any], pick: dict[str, Any], include_fallback: bool = True) -> str:
+    obligation = active_primary_pick_obligation_for_label(pick)
+    if not obligation:
+        if pick.get("current_owner_team_id") and pick.get("current_owner_team_id") == pick.get("original_team_id"):
+            return ""
+        return clean_pick_protection_summary(pick)
+    teams = {team.get("id"): team.get("abbrev") for team in canonical.get("teams", [])}
+    sender = obligation.get("sender_team_id")
+    beneficiary = pick.get("current_owner_team_id") if pick.get("current_owner_team_id") != sender else obligation.get("receiver_team_id")
+    parts = [pick_obligation_label(obligation)]
+    if sender:
+        parts.append(f"Transfers to {teams.get(sender) or team_id_fallback(sender)} if in protected range")
+    fallback_id = next((pid for pid in obligation.get("fallback_pick_ids") or [] if pid), None)
+    fallback = pick_by_id(canonical, fallback_id) if fallback_id else None
+    if include_fallback and fallback and beneficiary and beneficiary != sender:
+        parts.append(f"{teams.get(beneficiary) or team_id_fallback(beneficiary)} receives {pick_short_label(canonical, fallback)} in this case")
+    return "; ".join(part for part in parts if part)
+
+
+def pick_display_label(canonical: dict[str, Any], pick: dict[str, Any], include_fallback: bool = True) -> str:
+    teams = {team.get("id"): team.get("abbrev") for team in canonical.get("teams", [])}
+    owner = teams.get(pick.get("current_owner_team_id")) or "TBD"
+    original = teams.get(pick.get("original_team_id")) or "TBD"
+    ownership = f"owned by {owner}" if owner != original else "own pick"
+    note = pick_obligation_context_note(canonical, pick, include_fallback=include_fallback)
+    suffix = f"; {note}" if note else ""
+    return f"{pick.get('season', '----')} R{pick.get('round', '?')} {original} ({ownership}){suffix}"
 
 
 def pick_obligation_value_factor(obligations: list[dict[str, Any]]) -> float:
@@ -1262,6 +1335,9 @@ def fallback_asset_valuation(player: dict[str, Any] | None) -> dict[str, float]:
     age = maybe_float(player.get("age")) or 24.0
     development = max(0.0, potential - ability) * (1.0 if age <= 24 else 0.45)
     player_value = clamp(ability * 0.54 + minutes * 1.15 + development * 0.42, 1, 99)
+    player_value = max(player_value, drafted_rookie_value_floor(player, ability=ability, potential=potential))
+    if goat_exception_player(player):
+        player_value = 99.0
     portability = clamp(ability * 0.72 + minutes * 0.6, 1, 99)
     return {
         "player_value": round(player_value, 2),
@@ -1343,10 +1419,15 @@ def buyer_offer_packages(
 
 def market_trade_target_value(player: dict[str, Any], valuation: dict[str, Any]) -> float:
     raw = float(valuation.get("player_value") or 0.0)
+    if goat_exception_player(player):
+        return 99.0
     minutes = display_minutes_projection(player)
     ability = maybe_float(player.get("current_ability")) or maybe_float(player.get("overall")) or (38.0 + minutes * 1.15)
     potential = maybe_float(player.get("potential")) or ability
     upside = max(0.0, potential - ability)
+    rookie_floor = drafted_rookie_value_floor(player, ability=ability, potential=potential)
+    if rookie_floor:
+        raw = max(raw, rookie_floor)
     saved_stats = player.get("_save_stats") or {}
     logged_games = maybe_float(saved_stats.get("games")) or 0.0
     logged_minutes = maybe_float(saved_stats.get("minutes")) or 0.0
@@ -1365,6 +1446,8 @@ def market_trade_target_value(player: dict[str, Any], valuation: dict[str, Any])
         raw = min(raw, max(elite_prospect_floor, 28.0 + max(0.0, ability - 52.0) * 0.58 + upside * 0.38 + minutes * 0.32))
     if logged_games >= 8 and logged_mpg < 6 and ppg < 4 and raw < 72:
         raw = min(raw, 19.0 + max(0.0, ability - 52.0) * 0.5 + upside * 0.32)
+    if rookie_floor:
+        return round(clamp(max(raw, rookie_floor), 1.0, 99.0), 2)
     if raw < 62 or minutes >= 28:
         return round(clamp(raw, 1.0, 99.0), 2)
     role_scale = clamp((max(4.0, minutes) / 30.0) ** 1.22, 0.36, 1.0)
@@ -1380,6 +1463,30 @@ def market_trade_target_value(player: dict[str, Any], valuation: dict[str, Any])
 def deterministic_low_role_value_variation(player: dict[str, Any]) -> float:
     token = f"{player.get('id')}:{player.get('name')}:{player.get('position')}:{player.get('age')}"
     return round(((sum(ord(char) for char in token) % 900) / 900.0) * 7.0, 2)
+
+
+def drafted_rookie_value_floor(player: dict[str, Any] | None, ability: float | None = None, potential: float | None = None) -> float:
+    if not player:
+        return 0.0
+    try:
+        overall = int(player.get("draft_pick") or player.get("overall_pick") or 0)
+    except (TypeError, ValueError):
+        overall = 0
+    if overall <= 0:
+        return 0.0
+    ability = float(ability if ability is not None else maybe_float(player.get("current_ability")) or maybe_float(player.get("overall")) or 50.0)
+    potential = float(potential if potential is not None else maybe_float(player.get("potential")) or ability)
+    if overall <= 30:
+        base = 83.0 - (overall - 1) * 1.42
+        talent = max(0.0, potential - 70.0) * 0.3 + max(0.0, ability - 52.0) * 0.24
+        return round(clamp(base + talent, 34.0, 88.0), 2)
+    base = 27.0 - (overall - 31) * 0.32
+    talent = max(0.0, potential - 64.0) * 0.18 + max(0.0, ability - 50.0) * 0.12
+    return round(clamp(base + talent, 7.0, 32.0), 2)
+
+
+def goat_exception_player(player: dict[str, Any] | None) -> bool:
+    return normalize_name((player or {}).get("name") or "") == "lebron james"
 
 
 def buyer_offer_packages_for_value(
@@ -1854,6 +1961,8 @@ def trade_legality(canonical: dict[str, Any], proposal: TradeProposal, config: d
                 player = player_by_id(canonical, asset["id"])
                 if not player or player["team_id"] != team_id:
                     issues.append(f"{asset.get('label', asset.get('id'))} is not on {team_by_id(canonical, team_id)['abbrev']}.")
+                elif goat_exception_player(player):
+                    issues.append("LeBron James is a GOAT exception and cannot be traded.")
                 if asset["id"] in recent_players:
                     issues.append(f"{asset.get('label', asset.get('id'))} was traded within the last {RECENTLY_TRADED_DAYS} days.")
                 contract = contract_for_player(canonical, asset["id"])
@@ -2006,9 +2115,14 @@ def contract_surplus_value(on_court: float, age_curve: float, development: float
         surplus += 2.0
     if salary_m <= 6 and development > 4:
         surplus += 4.0
-    if surplus < 0 and on_court >= 62:
-        relief = 0.42 if on_court >= 72 else 0.55 if on_court >= 68 else 0.72
-        surplus *= relief
+    if surplus < 0 and on_court >= 74:
+        surplus = max(surplus * 0.18, -8.0)
+    elif surplus < 0 and on_court >= 70:
+        surplus = max(surplus * 0.28, -12.0)
+    elif surplus < 0 and on_court >= 66:
+        surplus = max(surplus * 0.42, -16.0)
+    elif surplus < 0 and on_court >= 62:
+        surplus *= 0.6
     if surplus < 0 and on_court >= 58 and development >= 5:
         surplus *= 0.78
     return clamp(surplus, -32, 34)
@@ -2589,15 +2703,15 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     distance = max(0, pick_start - active_start)
     if round_no == 1:
         if slot_value:
-            value = clamp(75 - slot_value * 1.35, 24, 75)
+            value = clamp(88 - slot_value * 1.65, 34, 88)
         elif pick.get("status") == "verified_2026_draft_board" and pick.get("id", "").split("-"):
             try:
                 pick_no = int(pick["id"].split("-")[2])
             except (ValueError, IndexError):
                 pick_no = 18
-            value = clamp(72 - pick_no * 1.35, 26, 72)
+            value = clamp(86 - pick_no * 1.62, 34, 86)
         else:
-            value = 38.0
+            value = 43.0
         value -= max(0, distance - 1) * 1.18
     else:
         if slot_value:
@@ -2615,7 +2729,7 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     distance_noise = deterministic_pick_uncertainty_bonus(pick, distance, round_no)
     value += distance_noise
     value *= float(pick.get("_protection_value_factor") or 1.0)
-    return round(clamp(value, 1, 80), 2)
+    return round(clamp(value, 1, 90), 2)
 
 
 def deterministic_pick_uncertainty_bonus(pick: dict[str, Any], distance: int, round_no: int) -> float:
@@ -2808,11 +2922,7 @@ def compact_player(player: dict[str, Any]) -> dict[str, Any]:
 
 
 def pick_label(canonical: dict[str, Any], pick: dict[str, Any]) -> str:
-    teams = {team.get("id"): team.get("abbrev") for team in canonical.get("teams", [])}
-    owner = teams.get(pick.get("current_owner_team_id")) or "TBD"
-    original = teams.get(pick.get("original_team_id")) or "TBD"
-    ownership = f"owned by {owner}" if owner != original else "own pick"
-    return f"{pick['season']} R{pick['round']} {original} ({ownership}){pick_label_note(pick)}"
+    return pick_display_label(canonical, pick)
 
 
 def clean_pick_protection_summary(pick: dict[str, Any]) -> str:
@@ -2820,6 +2930,10 @@ def clean_pick_protection_summary(pick: dict[str, Any]) -> str:
     if not text:
         return ""
     compact = " ".join(text.split())
+    if "..." in compact or "…" in compact:
+        return ""
+    if re.search(r"\bfrozen\s+pick\b", compact, flags=re.IGNORECASE):
+        return ""
     compact = re.sub(r"\s+and\s+if\s+.*$", "", compact, flags=re.IGNORECASE)
     compact = re.sub(r"\s*\(via [^)]+\)", "", compact, flags=re.IGNORECASE)
     if unsupported_pick_backup_condition(compact):
@@ -2847,6 +2961,8 @@ def clean_pick_protection_summary(pick: dict[str, Any]) -> str:
         if start > 1:
             return f"top-{start - 1} protected"
         return f"picks {start}-{end} protected"
+    if re.search(r"(?:\b[A-Z]{2,4}\s+)?\bIf\s+\d{1,2}\b", compact, flags=re.IGNORECASE):
+        return ""
     compact = re.sub(r"^\b[A-Z]{2,4}\s+", "", compact)
     return compact if len(compact) <= 40 else ""
 

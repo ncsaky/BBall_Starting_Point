@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import random
 from pathlib import Path
 from typing import Any
@@ -500,14 +501,24 @@ def generate_draft_order(canonical: dict[str, Any] | Any, year: str, seed: int =
     pre_rank = {team["id"]: index for index, team in enumerate(lottery_candidates, start=1)}
     odds = lottery_odds_by_team(lottery_candidates, config)
     order: list[DraftOrderPick] = []
+    canonical_picks = list(canonical.get("draft_picks", []))
     for round_no, team_order in [(1, first_round_original_order), (2, second_round_original_order)]:
         for slot, original_team in enumerate(team_order, start=1):
             overall = slot if round_no == 1 else 30 + slot
-            owner_team_id = owner_for_generated_pick(canonical, year, round_no, original_team["id"])
+            existing_candidates = [
+                pick
+                for pick in canonical_picks
+                if str(pick.get("season")) == str(year)
+                and int(pick.get("round") or 0) == round_no
+                and (pick.get("original_team_id") == original_team["id"] or pick.get("team_id") == original_team["id"])
+                and pick.get("current_owner_team_id")
+            ]
+            existing_pick = sorted(existing_candidates, key=lambda item: (item.get("status") == "research_pending", item.get("id", "")))[0] if existing_candidates else None
+            owner_team_id = (existing_pick or {}).get("current_owner_team_id") or owner_for_generated_pick(canonical, year, round_no, original_team["id"])
             owner = team_by_id(canonical, owner_team_id)
             order.append(
                 DraftOrderPick(
-                    id=stable_id("pick", year, round_no, overall, owner["abbrev"].lower()),
+                    id=(existing_pick or {}).get("id") or stable_id("pick", year, round_no, overall, owner["abbrev"].lower()),
                     draft_year=year,
                     round=round_no,
                     overall_pick=overall,
@@ -867,8 +878,22 @@ def choose_entry_with_draft_chaos(
     staff = scouting_staff_score(canonical, team_id)
     confidence = float(staff.get("confidence") or 0.55)
     top_grade = draft_selection_score(canonical, ranked[0], prospects.get(ranked[0]["prospect_id"], {}), team_id, overall_pick, seed, confidence) if ranked else 0.0
-    tier_gap = (5.8 + (1.0 - confidence) * 6.0) if overall_pick <= 5 else (8.0 + (1.0 - confidence) * 7.2) if overall_pick <= 20 else 11.5
-    window = 8 if overall_pick <= 5 else 14 if overall_pick <= 20 else 22
+    if overall_pick <= 5:
+        tier_gap = 10.0 + (1.0 - confidence) * 6.0
+        window = 10
+        temperature = 4.8
+    elif overall_pick <= 14:
+        tier_gap = 18.0 + (1.0 - confidence) * 8.5
+        window = 22
+        temperature = 8.5
+    elif overall_pick <= 30:
+        tier_gap = 30.0 + (1.0 - confidence) * 10.0
+        window = 38
+        temperature = 12.0
+    else:
+        tier_gap = 44.0 + (1.0 - confidence) * 12.0
+        window = 55
+        temperature = 16.0
     pool = [
         item for item in ranked[: min(window, len(ranked))]
         if top_grade - draft_selection_score(canonical, item, prospects.get(item["prospect_id"], {}), team_id, overall_pick, seed, confidence) <= tier_gap
@@ -890,13 +915,15 @@ def choose_entry_with_draft_chaos(
     pool = [item for _, item in scored]
     top_grade = scored[0][0] if scored else top_grade
     second_gap = top_grade - scored[1][0] if len(scored) > 1 else 99.0
-    if overall_pick <= 3 and second_gap >= 6.5 and rng.random() < 0.64:
+    if overall_pick <= 3 and second_gap >= 9.0 and rng.random() < 0.58:
         return pool[0]
-    weights = [
-        max(0.1, 1.0 - max(0.0, top_grade - draft_selection_score(canonical, item, prospects.get(item["prospect_id"], {}), team_id, overall_pick, seed, confidence)) / max(tier_gap + 1.0, 1.0))
-        / max(1.0, idx + 1) ** (0.06 + confidence * 0.06)
-        for idx, item in enumerate(pool)
-    ]
+    weights = []
+    for idx, item in enumerate(pool):
+        score = draft_selection_score(canonical, item, prospects.get(item["prospect_id"], {}), team_id, overall_pick, seed, confidence)
+        grade_weight = math.exp((score - top_grade) / max(temperature, 0.5))
+        rank_drag = max(1.0, idx + 1) ** (0.025 if overall_pick <= 14 else 0.01)
+        swing = rng.uniform(0.82, 1.18) if overall_pick <= 5 else rng.uniform(0.55, 1.55)
+        weights.append(max(0.02, grade_weight * swing / rank_drag))
     return weighted_choice(pool, weights, rng)
 
 
@@ -924,7 +951,15 @@ def draft_selection_score(
     bad_fit = max(0.0, 44.0 - fit) * (0.28 if overall_pick <= 14 else 0.18)
     public_tier_bonus = {1: 4.0, 2: 1.6}.get(prospect_priority_tier(prospect), 0.0)
     rng = random.Random(f"{seed}:{team_id}:{overall_pick}:{entry.get('prospect_id')}:scout_pick")
-    uncertainty = rng.uniform(-1.0, 1.0) * (1.0 - confidence) * (5.2 if overall_pick <= 10 else 7.2)
+    if overall_pick <= 5:
+        chaos = 5.8
+    elif overall_pick <= 14:
+        chaos = 12.0
+    elif overall_pick <= 30:
+        chaos = 18.0
+    else:
+        chaos = 24.0
+    uncertainty = rng.uniform(-1.0, 1.0) * (1.15 - confidence * 0.45) * chaos
     return base + timeline + public_tier_bonus + uncertainty - bad_fit
 
 
@@ -940,21 +975,37 @@ def prospect_priority_tier(prospect: dict[str, Any]) -> int:
 
 def choose_generated_with_draft_chaos(ranked: list[dict[str, Any]], overall_pick: int, team_id: str, seed: int) -> dict[str, Any]:
     top_grade = generated_bpa_grade(ranked[0]) if ranked else 0.0
-    tier_gap = 6.6 if overall_pick <= 5 else 9.0 if overall_pick <= 20 else 11.0
-    window = 8 if overall_pick <= 5 else 14 if overall_pick <= 20 else 22
+    if overall_pick <= 5:
+        tier_gap = 10.0
+        window = 10
+        temperature = 4.8
+    elif overall_pick <= 14:
+        tier_gap = 18.0
+        window = 22
+        temperature = 8.5
+    elif overall_pick <= 30:
+        tier_gap = 30.0
+        window = 38
+        temperature = 12.0
+    else:
+        tier_gap = 44.0
+        window = 55
+        temperature = 16.0
     pool = [
         prospect for prospect in ranked[: min(window, len(ranked))]
         if top_grade - generated_bpa_grade(prospect) <= tier_gap
     ] or ranked[: min(3, len(ranked))]
     rng = random.Random(f"{seed}:{team_id}:{overall_pick}:generated_draft_chaos")
     second_gap = top_grade - generated_bpa_grade(pool[1]) if len(pool) > 1 else 99.0
-    if overall_pick <= 3 and second_gap >= 6.8 and rng.random() < 0.58:
+    if overall_pick <= 3 and second_gap >= 9.0 and rng.random() < 0.54:
         return pool[0]
-    weights = [
-        max(0.12, 1.0 - max(0.0, top_grade - generated_bpa_grade(prospect)) / max(tier_gap + 1.0, 1.0))
-        / max(1.0, idx + 1) ** 0.07
-        for idx, prospect in enumerate(pool)
-    ]
+    weights = []
+    for idx, prospect in enumerate(pool):
+        score = generated_bpa_grade(prospect)
+        grade_weight = math.exp((score - top_grade) / max(temperature, 0.5))
+        rank_drag = max(1.0, idx + 1) ** (0.025 if overall_pick <= 14 else 0.01)
+        swing = rng.uniform(0.82, 1.18) if overall_pick <= 5 else rng.uniform(0.55, 1.55)
+        weights.append(max(0.02, grade_weight * swing / rank_drag))
     return weighted_choice(pool, weights, rng)
 
 

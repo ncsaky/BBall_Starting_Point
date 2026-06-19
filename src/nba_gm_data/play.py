@@ -59,7 +59,7 @@ from .save import (
     write_save,
 )
 from .staff import ROLE_LABELS, STAFF_SLOTS, fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, staff_budget_snapshot, staff_effect_summary, staff_market_report, staff_role_effect, staff_team_report
-from .transactions import apply_trade_to_save, canonical_with_pending_pick_terms, clean_pick_protection_summary, contract_for_player, current_salary, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, pick_season_start, proposal_asset_identity_keys, prune_trade_offers_touching_assets, recently_traded_player_ids, resolve_team, trade_result_with_pick_terms, tradeable_picks_for_team, with_transaction_context
+from .transactions import apply_trade_to_save, canonical_with_pending_pick_terms, clean_pick_protection_summary, contract_for_player, current_salary, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, pick_display_label, pick_obligation_context_note, pick_season_start, proposal_asset_identity_keys, prune_trade_offers_touching_assets, recently_traded_player_ids, resolve_team, trade_result_with_pick_terms, tradeable_picks_for_team, with_transaction_context
 from .utils import clamp, stable_id
 
 
@@ -524,15 +524,7 @@ def print_home(root: Path, canonical: dict[str, Any], save_path: Path) -> None:
         print(style(f"Trade deadline passed: {deadline}", "danger"))
     if status["phase"] in {"draft_lottery", "draft", "free_agency"}:
         print(style(f"STOP: {status['phase']} is active. Review league actions before advancing.", "accent"))
-    pending_parts = [
-        f"user offers {pending.get('user_trade_offers', 0)}",
-        f"AI {pending.get('ai_actions', 0)}",
-    ]
-    if pending.get("staff"):
-        pending_parts.append(f"staff decisions {pending['staff']}")
-    if pending.get("cutdowns"):
-        pending_parts.append(f"roster cutdowns {pending['cutdowns']}")
-    print("Pending: " + " | ".join(pending_parts))
+    print(f"Pending: user offers {pending.get('user_trade_offers', 0)}")
     if status.get("recent_news"):
         print_rule()
         for item in status["recent_news"][-3:]:
@@ -957,23 +949,18 @@ def playoff_room(root: Path, canonical: dict[str, Any], save_path: Path, seed: i
                 print("3. Sim entire playoffs")
             print("4. View playoff box score")
             print("5. Playoff stat leaders / Finals MVP")
+            print("6. Talk rotation with head coach")
             if forced:
                 print("0. Save and quit")
             else:
                 print("0. Back")
             choice = input("> Pick a number: ").strip()
             if choice == "1" and state.get("status") != "completed":
-                result = simulate_next_playoff_game(canonical, save_path, seed=seed, root=root)
-                clear_screen()
-                print_title("Playoffs")
-                print_playoff_bracket(canonical, result.get("playoff_state", {}), save_path)
-                wait()
+                simulate_next_playoff_game(canonical, save_path, seed=seed, root=root)
+                continue
             elif choice == "2" and state.get("status") != "completed":
-                result = simulate_playoff_round(canonical, save_path, seed=seed, root=root)
-                clear_screen()
-                print_title("Playoffs")
-                print_playoff_bracket(canonical, result.get("playoff_state", {}), save_path)
-                wait()
+                simulate_playoff_round(canonical, save_path, seed=seed, root=root)
+                continue
             elif choice == "3" and state.get("status") != "completed":
                 result: dict[str, Any] = {"playoff_state": state}
                 with loading_screen(root, "Simulating the full postseason...", seed=seed):
@@ -982,17 +969,37 @@ def playoff_room(root: Path, canonical: dict[str, Any], save_path: Path, seed: i
                         state = result.get("playoff_state", {})
                         if state.get("status") == "completed":
                             break
-                clear_screen()
-                print_title("Playoffs")
-                print_playoff_bracket(canonical, result.get("playoff_state", {}), save_path)
-                wait()
+                continue
             elif choice == "4":
                 playoff_box_score_picker(canonical, save_path)
             elif choice == "5":
                 playoff_leaders_room(canonical, save_path)
+            elif choice == "6":
+                playoff_rotation_room(canonical, save_path)
             else:
                 clear_screen()
                 return "quit" if forced else "back"
+
+
+def playoff_rotation_room(canonical: dict[str, Any], save_path: Path) -> None:
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    state = save.get("playoff_state") or {}
+    user_team_id = save.get("meta", {}).get("user_team_id")
+    user_team = save.get("meta", {}).get("user_team_abbrev") or team_id_to_abbrev(user_team_id)
+    if not user_team_id or not state or state.get("status") == "completed":
+        pause("Your team is not active in the playoffs.")
+        return
+    current_round = state.get("round")
+    alive = any(
+        user_team_id in (series.get("team_ids") or [])
+        and series.get("round") == current_round
+        and series.get("status") != "completed"
+        for series in state.get("series", [])
+    )
+    if not alive:
+        pause("Your team has been eliminated, so playoff rotation changes are closed.")
+        return
+    minutes_room(canonical, save_path, user_team)
 
 
 def playoff_box_score_picker(canonical: dict[str, Any], save_path: Path) -> None:
@@ -1210,7 +1217,7 @@ def store_trade_offer(save_path: Path, proposal: dict[str, Any]) -> None:
 
 def attach_pick_terms_to_trade(canonical: dict[str, Any], save_path: Path, proposal: dict[str, Any]) -> dict[str, Any]:
     proposal_payload = proposal.get("proposal") or {}
-    if proposal.get("pick_obligation_terms"):
+    if proposal.get("pick_obligation_terms") or proposal.get("pick_obligation_terms_prompted"):
         finalized = finalize_pick_terms_for_proposal(proposal.get("pick_obligation_terms") or [], proposal_payload)
         return trade_result_with_pick_terms({**proposal, "pick_obligation_terms": finalized}, finalized)
     terms: list[dict[str, Any]] = []
@@ -1236,6 +1243,8 @@ def prompt_pick_trade_terms(canonical: dict[str, Any], save_path: Path, pick_id:
     active = with_transaction_context(canonical_with_save(canonical, save))
     pick = next((item for item in active.get("draft_picks", []) if item.get("id") == pick_id), None)
     if not pick or int(pick.get("round") or 2) != 1:
+        return {"type": "unprotected", "primary_pick_id": pick_id}
+    if pick_slot_is_determined_for_trade(save, pick):
         return {"type": "unprotected", "primary_pick_id": pick_id}
     if active_primary_pick_obligation(pick):
         return {"type": "unprotected", "primary_pick_id": pick_id}
@@ -1290,7 +1299,7 @@ def pick_terms_from_selected_assets(assets: list[dict[str, Any]]) -> list[dict[s
     return [
         asset["pick_obligation_term"]
         for asset in assets
-        if asset.get("pick_obligation_term") and asset["pick_obligation_term"].get("type") != "unprotected"
+        if asset.get("pick_obligation_term")
     ]
 
 
@@ -1488,32 +1497,46 @@ def extensions_room(canonical: dict[str, Any], save_path: Path, user_team: str, 
     if not player.get("eligible") or player.get("manual_review_required"):
         pause(f"{player['name']} cannot negotiate an extension: {clean_label(player.get('eligibility_status'))}.")
         return
+    roster_player = next((item for item in active.get("players", []) if item.get("id") == player.get("player_id")), player)
+    ask_millions = float(player.get("projected_aav_millions") or 0.0)
+    preferred_years = int(player.get("projected_years") or 3)
+    start_season = extension_start_season_for_date(current)
+    safe_years = extension_safe_year_limit(roster_player, start_season, 5)
+    if safe_years < 1:
+        pause(f"{player['name']} is projected to retire before an extension season would begin.")
+        return
+    preferred_years = min(preferred_years, safe_years)
+    print_title("Extension Setup")
+    print(f"{player['name']} ask: ${ask_millions:.1f}M x {preferred_years}y")
+    player_id = player.get("player_id") or player.get("id")
+    team_id = resolve_team(active, user_team)["id"]
+    print_extension_cap_projection(active, save, team_id, player_id, start_season, max(2, preferred_years))
+    max_legal_aav = extension_max_legal_aav(active, save, team_id, player_id, start_season, preferred_years)
+    print(style(f"Max legal extension AAV under hard cap: ${max_legal_aav:.1f}M", "accent"))
+    if safe_years < 5:
+        print(style(f"Retirement risk caps this negotiation at {safe_years} year(s).", "accent"))
+    print("0. Back")
+    years = pick_number("Years", 0, safe_years, default=preferred_years)
+    if years == 0:
+        return
+    max_legal_aav = extension_max_legal_aav(active, save, team_id, player_id, start_season, years)
+    if extension_retirement_blocked(roster_player, start_season, years):
+        pause(f"{player['name']} is expected to retire before a {years}-year extension would finish. Offer fewer years.")
+        return
     result = negotiate_extension(active, player["name"], user_team, seed=seed, max_rounds=3, date=current)
     negotiation = result.get("negotiation") or {}
     ask = negotiation.get("player_ask") or {}
     walkaway = negotiation.get("team_walkaway") or {}
-    ask_millions = float(ask.get("aav_millions") or player.get("projected_aav_millions") or 0.0)
-    preferred_years = int(ask.get("preferred_years") or player.get("projected_years") or 3)
-    start_season = extension_start_season_for_date(current)
-    print_title("Extension Setup")
-    print(f"{player['name']} ask: ${ask_millions:.1f}M x {preferred_years}y")
-    print_extension_cap_projection(active, save, resolve_team(active, user_team)["id"], player.get("id"), start_season, max(2, preferred_years))
-    max_legal_aav = extension_max_legal_aav(active, save, resolve_team(active, user_team)["id"], player.get("id"), start_season, preferred_years)
-    print(style(f"Max legal extension AAV under hard cap: ${max_legal_aav:.1f}M", "accent"))
-    years = pick_number("Years", 1, 5, default=preferred_years)
-    max_legal_aav = extension_max_legal_aav(active, save, resolve_team(active, user_team)["id"], player.get("id"), start_season, years)
-    if extension_retirement_blocked(player, start_season, years):
-        pause(f"{player['name']} is expected to retire before a {years}-year extension would finish. Offer fewer years.")
-        return
-    flexibility = round(max(8.0, min(92.0, 38.0 + float(player.get("team_fit_score") or 50.0) * 0.18 + (sum(ord(char) for char in f'{seed}:{player.get("id")}:extension') % 31) - 15)), 1)
+    ask_millions = float(ask.get("aav_millions") or ask_millions or 0.0)
+    flexibility = round(max(8.0, min(92.0, 38.0 + float(player.get("team_fit_score") or 50.0) * 0.18 + (sum(ord(char) for char in f'{seed}:{player_id}:extension') % 31) - 15)), 1)
     final_offer = ask_millions
     accepted_preview = False
     actual_offers: list[dict[str, Any]] = []
     for round_no in range(1, 4):
         print_title(f"Extension Talk | Round {round_no}/3")
         print(f"{player['name']} ask: ${ask_millions:.1f}M x {years}")
-        print_extension_cap_projection(active, save, resolve_team(active, user_team)["id"], player.get("id"), start_season, max(2, years))
-        max_legal_aav = extension_max_legal_aav(active, save, resolve_team(active, user_team)["id"], player.get("id"), start_season, years)
+        print_extension_cap_projection(active, save, team_id, player_id, start_season, max(2, years))
+        max_legal_aav = extension_max_legal_aav(active, save, team_id, player_id, start_season, years)
         print(style(f"Max legal offer: ${max_legal_aav:.1f}M AAV", "accent"))
         suggested = round(max(1.5, ask_millions * (0.93 if flexibility >= 65 else 1.0)), 1)
         suggested = min(suggested, max_legal_aav)
@@ -1531,7 +1554,11 @@ def extensions_room(canonical: dict[str, Any], save_path: Path, user_team: str, 
                 f"Front-office comfort: up to roughly ${float(walkaway.get('max_annual_salary') or 0)/1_000_000:.1f}M "
                 f"| fit {float(walkaway.get('fit_score') or 0):.1f}/100"
             )
-        final_offer = prompt_extension_aav(suggested, max_legal_aav)
+        print("Enter 0 to go back without saving this negotiation.")
+        final_offer_value = prompt_extension_aav(suggested, max_legal_aav, allow_back=True)
+        if final_offer_value is None:
+            return
+        final_offer = final_offer_value
         actual_interest = offer_interest_score(final_offer, ask_millions, years, years, flexibility)
         accepted_this_round = final_offer >= ask_millions * (1.02 - flexibility / 260.0)
         actual_offers.append(
@@ -1553,12 +1580,12 @@ def extensions_room(canonical: dict[str, Any], save_path: Path, user_team: str, 
             print(f"Agent response: not enough yet. {interest_bar(actual_interest)} Ask moves to about ${ask_millions:.1f}M.")
     decision: dict[str, Any] = {}
     if accepted_preview:
-        negotiation_id = negotiation.get("id") or stable_id("contract_negotiation", "extension", current, resolve_team(active, user_team)["id"], player.get("id"), seed, "interactive")
+        negotiation_id = negotiation.get("id") or stable_id("contract_negotiation", "extension", current, team_id, player_id, seed, "interactive")
         offer = {
-            "id": stable_id("contract_offer", negotiation_id, "user", player.get("id"), len(actual_offers), round(final_offer * 1_000_000)),
+            "id": stable_id("contract_offer", negotiation_id, "user", player_id, len(actual_offers), round(final_offer * 1_000_000)),
             "negotiation_id": negotiation_id,
-            "team_id": resolve_team(active, user_team)["id"],
-            "player_id": player.get("id"),
+            "team_id": team_id,
+            "player_id": player_id,
             "offer_type": "extension",
             "round": len(actual_offers),
             "years": years,
@@ -1576,8 +1603,8 @@ def extensions_room(canonical: dict[str, Any], save_path: Path, user_team: str, 
         decision = {
             "id": stable_id("signing_decision", negotiation["id"], "user_extension"),
             "negotiation_id": negotiation["id"],
-            "player_id": negotiation.get("player_id"),
-            "team_id": negotiation.get("team_id"),
+            "player_id": player_id,
+            "team_id": team_id,
             "accepted": True,
             "decision": "accept",
             "accepted_offer": offer,
@@ -1594,16 +1621,12 @@ def extensions_room(canonical: dict[str, Any], save_path: Path, user_team: str, 
         result["actual_user_offers"] = actual_offers
     if negotiation:
         negotiation["player_name"] = player.get("name")
-        negotiation["player_id"] = player.get("id")
-        negotiation["team_id"] = resolve_team(active, user_team)["id"]
+        negotiation["player_id"] = player_id
+        negotiation["team_id"] = team_id
         negotiation["negotiation_type"] = "extension"
         negotiation["date"] = current
-        negotiation["current_contract_seasons"] = list((contract_for_player(active, player.get("id")) or {}).get("seasons") or [])
+        negotiation["current_contract_seasons"] = list((contract_for_player(active, player_id) or {}).get("seasons") or [])
         result["negotiation"] = negotiation
-    if result.get("accepted"):
-        save = load_save(save_path)
-        save.setdefault("pending_contract_negotiations", []).append(result)
-        write_save(save_path, save)
     print_title("Extension Negotiation")
     print(f"{player['name']} | accepted={result.get('accepted')} | status={negotiation.get('status')}")
     print(f"Final ask read: ${ask_millions:.1f}M | Offer: ${final_offer:.1f}M")
@@ -1612,9 +1635,16 @@ def extensions_room(canonical: dict[str, Any], save_path: Path, user_team: str, 
         print(f"Round {offer['round']}: ${offer['aav_millions']:.1f}M x {offer['years']}y | interest {offer['interest']:.1f}/100 | {offer['status']}")
     if decision.get("reasons"):
         print("Reasons: " + ", ".join(decision.get("reasons", [])[:5]))
-    if result.get("accepted") and yes_no("Apply extension now?"):
-        applied = apply_contract_to_save(save_path, negotiation["id"], date=current)
-        print(f"Apply result: {applied.get('status')}")
+    if result.get("accepted"):
+        print("0. Back without applying")
+        if yes_no("Apply extension now?"):
+            save = load_save(save_path)
+            save.setdefault("pending_contract_negotiations", []).append(result)
+            write_save(save_path, save)
+            applied = apply_contract_to_save(save_path, negotiation["id"], date=current)
+            print(f"Apply result: {applied.get('status')}")
+        else:
+            print("Extension not applied.")
     wait()
 
 
@@ -1708,8 +1738,13 @@ def choose_assets(
                     receiver_team_id,
                     allow_open_receiver=allow_open_receiver,
                 )
-                if term and term.get("type") != "unprotected":
+                if term:
                     asset["pick_obligation_term"] = term
+                    if term.get("type") != "unprotected":
+                        preview = canonical_with_pending_pick_terms(canonical, [term])
+                        preview_pick = next((item for item in preview.get("draft_picks", []) if item.get("id") == value), None)
+                        if preview_pick:
+                            asset["label"] = clean_pick_label_for_user(preview, preview_pick, save)
             selected.append(asset)
             if max_select and len(selected) >= max_select:
                 break
@@ -2314,6 +2349,8 @@ def ensure_live_draft_state(canonical: dict[str, Any], save_path: Path, year: st
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     state = save.get("draft_state") or {}
     if state.get("year") == year and state.get("status") in {"in_progress", "completed"} and state.get("draft"):
+        if refresh_live_draft_state_ownership(canonical, save, year):
+            write_save(save_path, save)
         return state
     active = canonical_with_save(canonical, save)
     draft = simulate_draft(active, year, seed=seed)
@@ -2329,6 +2366,45 @@ def ensure_live_draft_state(canonical: dict[str, Any], save_path: Path, year: st
         save.setdefault("draft_orders", {})[year] = {"draft_order": draft.get("draft_order", []), "lottery": draft.get("lottery")}
     write_save(save_path, save)
     return save["draft_state"]
+
+
+def refresh_live_draft_state_ownership(canonical: dict[str, Any], save: dict[str, Any], year: str | None = None) -> bool:
+    state = save.get("draft_state") or {}
+    if year and str(state.get("year") or "") != str(year):
+        return False
+    draft = state.get("draft") or {}
+    pending = draft.get("pending_draft_selections") or []
+    if not pending:
+        return False
+    active = canonical_with_save(canonical, save)
+    teams = {team.get("id"): team for team in active.get("teams", [])}
+    active_picks = {pick.get("id"): pick for pick in active.get("draft_picks", [])}
+    order = ((save.get("draft_orders") or {}).get(str(state.get("year") or year or "")) or {}).get("draft_order") or []
+    order_by_pick_id = {pick.get("id"): pick for pick in order}
+    overrides = save.get("draft_pick_overrides") or {}
+    changed = False
+    for item in pending:
+        selection = item.setdefault("selection", {})
+        pick = item.setdefault("pick", {})
+        pick_id = selection.get("pick_id") or pick.get("id")
+        if not pick_id:
+            continue
+        override = overrides.get(pick_id)
+        if override == "used_draft_pick":
+            continue
+        owner_id = override or (order_by_pick_id.get(pick_id) or {}).get("current_owner_team_id") or (active_picks.get(pick_id) or {}).get("current_owner_team_id")
+        if not owner_id or owner_id == selection.get("team_id"):
+            continue
+        selection["team_id"] = owner_id
+        pick["current_owner_team_id"] = owner_id
+        if pick_id in order_by_pick_id:
+            order_by_pick_id[pick_id]["current_owner_team_id"] = owner_id
+            order_by_pick_id[pick_id]["team_abbrev"] = (teams.get(owner_id) or {}).get("abbrev")
+        if item.get("decision"):
+            item["decision"]["team_id"] = owner_id
+        item["team"] = teams.get(owner_id, {"id": owner_id, "abbrev": team_id_to_abbrev(owner_id)})
+        changed = True
+    return changed
 
 
 def current_draft_selection(state: dict[str, Any]) -> dict[str, Any] | None:
@@ -2724,15 +2800,15 @@ def print_lottery(order: dict[str, Any]) -> None:
         print(f"Lottery seed: {lottery.get('seed')} | method: {lottery.get('method')}")
         odds = lottery.get("odds_by_team") or {}
         if odds:
+            odds_context = lottery.get("odds_context_by_team") or {}
             print("\nOdds")
             for team_id, pct in sorted(odds.items(), key=lambda item: -float(item[1]))[:14]:
-                print(f"{str(team_id).replace('team_', '').upper():<4} {float(pct) * 100:>5.1f}%")
+                context = f" {odds_context.get(team_id)}" if odds_context.get(team_id) else ""
+                print(f"{str(team_id).replace('team_', '').upper():<4} {float(pct) * 100:>5.1f}%{context}")
             print("\nReveal")
     for idx, pick in enumerate((order.get("draft_order") or [])[:14], start=1):
         owner = pick.get("team_abbrev") or team_id_to_abbrev(pick.get("current_owner_team_id"))
-        original = team_id_to_abbrev(pick.get("original_team_id"))
-        own_text = f" [owned by {owner}]" if original and owner and owner != original else ""
-        print(f"{idx:>2}. {original or owner}  #{pick.get('overall_pick')}{own_text}")
+        print(f"{idx:>2}. {owner}  #{pick.get('overall_pick')}")
 
 
 def team_abbrev_for_selection(canonical: dict[str, Any], item: dict[str, Any]) -> str:
@@ -2909,16 +2985,13 @@ def clean_pick_label_for_user(canonical: dict[str, Any], pick: dict[str, Any], s
             original = teams.get(order_pick.get("original_team_id")) or "TBD"
             overall = f"#{order_pick.get('overall_pick')}"
             owned_by = f"owned by {owner}" if owner and owner != original else "own pick"
-            return f"{overall} {owner} | R{order_pick.get('round')} {original} ({owned_by}){pick_context_note(pick)}"
-    owner = teams.get(pick.get("current_owner_team_id")) or "TBD"
-    original = teams.get(pick.get("original_team_id")) or "TBD"
-    season = pick.get("season") or "----"
-    round_no = pick.get("round") or "?"
-    ownership = f"owned by {owner}" if owner and owner != original else "own pick"
-    parts = [str(season), f"R{round_no}", str(original)]
+            note = pick_obligation_context_note(canonical, pick)
+            suffix = f"; {note}" if note else ""
+            return f"{overall} {owner} | R{order_pick.get('round')} {original} ({owned_by}){suffix}"
+    label = pick_display_label(canonical, pick)
     if pick.get("overall_pick"):
-        parts.append(f"#{pick.get('overall_pick')}")
-    return f"{' '.join(parts)} ({ownership}){pick_context_note(pick)}".strip()
+        return f"{label} #{pick.get('overall_pick')}"
+    return label
 
 
 def pick_context_note(pick: dict[str, Any]) -> str:
@@ -2932,6 +3005,13 @@ def saved_order_pick_for_pick(save: dict[str, Any], pick: dict[str, Any]) -> dic
     season = str(pick.get("season") or "")
     order = ((save.get("draft_orders") or {}).get(season) or {}).get("draft_order") or []
     return next((item for item in order if item.get("id") == pick.get("id")), None)
+
+
+def pick_slot_is_determined_for_trade(save: dict[str, Any], pick: dict[str, Any]) -> bool:
+    if pick.get("overall_pick") or pick.get("lottery_slot"):
+        return True
+    order_pick = saved_order_pick_for_pick(save, pick)
+    return bool(order_pick and order_pick.get("overall_pick"))
 
 
 def used_draft_pick_ids(save: dict[str, Any]) -> set[str]:
@@ -6174,10 +6254,21 @@ def extension_retirement_blocked(player: dict[str, Any], start_season: str, year
     return retirement_start is not None and retirement_start <= start + max(1, years) - 1
 
 
-def prompt_extension_aav(default: float, max_legal: float) -> float:
+def extension_safe_year_limit(player: dict[str, Any], start_season: str, max_years: int = 5) -> int:
+    start = season_start_int(start_season)
+    retirement_start = projected_retirement_start_year(player, start)
+    if retirement_start is None:
+        return max_years
+    return max(0, min(max_years, retirement_start - start))
+
+
+def prompt_extension_aav(default: float, max_legal: float, allow_back: bool = False) -> float | None:
     default = round(max(0.0, min(float(default), float(max_legal))), 1)
     while True:
-        raw = input(f"Offer AAV in millions [{default:.1f}, max {max_legal:.1f}]: ").strip()
+        back_text = ", 0 to back" if allow_back else ""
+        raw = input(f"Offer AAV in millions [{default:.1f}, max {max_legal:.1f}{back_text}]: ").strip()
+        if allow_back and raw.lower() in {"0", "b", "back"}:
+            return None
         try:
             value = float(raw) if raw else default
         except ValueError:
