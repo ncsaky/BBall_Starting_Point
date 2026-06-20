@@ -30,6 +30,16 @@ SECOND_APRON = 207_824_000
 ANNUAL_CAP_GROWTH_RATE = 0.035
 RECENTLY_TRADED_DAYS = 60
 RECENTLY_ACQUIRED_PREMIUM_DAYS = 180
+RECENTLY_SIGNED_UNLOCK_MONTH = 12
+RECENTLY_SIGNED_UNLOCK_DAY = 1
+SIGNING_TRANSACTION_TYPES = {
+    "free_agent_signing",
+    "free_agency",
+    "free_agency_signing",
+    "ai_free_agent_signing",
+    "ai_re_signing",
+    "auto_depth_signing",
+}
 UNSUPPORTED_PICK_CONDITION_RE = re.compile(
     r"\b(swap|favo[u]?rable|least|most|better|worse|higher|lower|then|or\s+swap|conveys?)\b",
     re.IGNORECASE,
@@ -854,6 +864,12 @@ def transaction_log_player_ids(log: dict[str, Any]) -> set[str]:
     }
 
 
+def transaction_log_signed_player_ids(log: dict[str, Any]) -> set[str]:
+    assets = log.get("assets") or {}
+    player_id = assets.get("player_id") or log.get("player_id")
+    return {player_id} if player_id else set()
+
+
 def recently_traded_player_ids(canonical_or_save: dict[str, Any], as_of_date: str | None = None, days: int = RECENTLY_TRADED_DAYS) -> set[str]:
     current = parse_iso_date(as_of_date or ((canonical_or_save.get("meta") or {}).get("current_date")) or CANONICAL_START_DATE)
     if current is None:
@@ -869,6 +885,23 @@ def recently_traded_player_ids(canonical_or_save: dict[str, Any], as_of_date: st
         if 0 <= elapsed < int(days):
             recent.update(transaction_log_player_ids(log))
     return recent
+
+
+def recently_signed_player_ids(canonical_or_save: dict[str, Any], as_of_date: str | None = None) -> set[str]:
+    current = parse_iso_date(as_of_date or ((canonical_or_save.get("meta") or {}).get("current_date")) or CANONICAL_START_DATE)
+    if current is None:
+        return set()
+    restricted: set[str] = set()
+    for log in canonical_or_save.get("transaction_logs", []):
+        if log.get("transaction_type") not in SIGNING_TRANSACTION_TYPES or log.get("status") not in {"applied_to_save_ledger", "applied"}:
+            continue
+        signed_on = parse_iso_date(log.get("date"))
+        if signed_on is None:
+            continue
+        unlock = date(signed_on.year, RECENTLY_SIGNED_UNLOCK_MONTH, RECENTLY_SIGNED_UNLOCK_DAY)
+        if signed_on <= current < unlock:
+            restricted.update(transaction_log_signed_player_ids(log))
+    return restricted
 
 
 def trade_live_validation_issues(save: dict[str, Any], proposal: dict[str, Any], date_value: str | None = None) -> list[str]:
@@ -895,6 +928,12 @@ def trade_live_validation_issues(save: dict[str, Any], proposal: dict[str, Any],
             if asset.get("kind") == "player" and asset.get("id") in recent:
                 label = asset.get("label") or asset.get("name") or asset.get("id") or "Player"
                 issues.append(f"{label} was traded within the last {RECENTLY_TRADED_DAYS} days.")
+    recently_signed = recently_signed_player_ids(save, date_value)
+    for side in ["from_assets", "to_assets"]:
+        for asset in proposal.get(side, []) or []:
+            if asset.get("kind") == "player" and asset.get("id") in recently_signed:
+                label = asset.get("label") or asset.get("name") or asset.get("id") or "Player"
+                issues.append(f"{label} signed recently and cannot be traded until Dec. 1.")
     return sorted(dict.fromkeys(issues))
 
 
@@ -916,6 +955,8 @@ def apply_pick_obligation_terms_to_save(save: dict[str, Any], proposal: dict[str
     for term in terms:
         if not term or term.get("type") == "unprotected":
             continue
+        if not pick_obligation_fallback_rounds_match(save, proposal, term):
+            continue
         obligation = {
             **term,
             "id": term.get("id") or stable_id("pick_obligation", proposal.get("id"), term.get("primary_pick_id"), term.get("type")),
@@ -931,6 +972,26 @@ def apply_pick_obligation_terms_to_save(save: dict[str, Any], proposal: dict[str
     save["locked_pick_assets"] = sorted(locked)
 
 
+def pick_obligation_fallback_rounds_match(canonical_or_save: dict[str, Any], proposal: dict[str, Any] | None, term: dict[str, Any]) -> bool:
+    primary_id = term.get("primary_pick_id")
+    fallback_ids = [pick_id for pick_id in term.get("fallback_pick_ids") or [] if pick_id]
+    if not primary_id or not fallback_ids:
+        return True
+    picks = {pick.get("id"): pick for pick in canonical_or_save.get("draft_picks", [])}
+    for asset in [*((proposal or {}).get("from_assets") or []), *((proposal or {}).get("to_assets") or [])]:
+        if asset.get("kind") == "pick" and asset.get("id"):
+            picks.setdefault(asset.get("id"), asset)
+    primary_round = int((picks.get(primary_id) or {}).get("round") or term.get("primary_round") or 0)
+    fallback_rounds = [
+        int((picks.get(pick_id) or {}).get("round") or 0)
+        for pick_id in fallback_ids
+    ]
+    fallback_rounds = [round_no for round_no in fallback_rounds if round_no]
+    if not primary_round or not fallback_rounds:
+        return True
+    return all(round_no == primary_round for round_no in fallback_rounds)
+
+
 def canonical_with_pending_pick_terms(canonical: dict[str, Any], terms: list[dict[str, Any]] | None) -> dict[str, Any]:
     working = to_plain(canonical)
     if not terms:
@@ -940,6 +1001,8 @@ def canonical_with_pending_pick_terms(canonical: dict[str, Any], terms: list[dic
     existing = {item.get("id") for item in obligations}
     for term in terms:
         if not term or term.get("type") == "unprotected":
+            continue
+        if not pick_obligation_fallback_rounds_match(working, None, term):
             continue
         obligation = {
             **term,
@@ -963,7 +1026,10 @@ def trade_result_with_pick_terms(result: dict[str, Any], terms: list[dict[str, A
     payload = to_plain(result)
     payload["pick_obligation_terms_prompted"] = True
     payload["pick_trade_terms"] = to_plain(terms)
-    active_terms = [term for term in terms if term and term.get("type") != "unprotected"]
+    active_terms = [
+        term for term in terms
+        if term and term.get("type") != "unprotected" and pick_obligation_fallback_rounds_match(payload.get("proposal") or {}, payload.get("proposal") or {}, term)
+    ]
     if not active_terms:
         return payload
     payload["pick_obligation_terms"] = active_terms
@@ -1958,6 +2024,7 @@ def trade_legality(canonical: dict[str, Any], proposal: TradeProposal, config: d
     issues: list[str] = []
     manual: list[str] = []
     recent_players = recently_traded_player_ids(canonical, transaction_reference_date(canonical, proposal))
+    recently_signed = recently_signed_player_ids(canonical, transaction_reference_date(canonical, proposal))
     for team_id, assets in [(proposal.from_team_id, proposal.from_assets), (proposal.to_team_id, proposal.to_assets)]:
         for asset in assets:
             if asset["kind"] == "player":
@@ -1968,6 +2035,8 @@ def trade_legality(canonical: dict[str, Any], proposal: TradeProposal, config: d
                     issues.append("LeBron James is a GOAT exception and cannot be traded.")
                 if asset["id"] in recent_players:
                     issues.append(f"{asset.get('label', asset.get('id'))} was traded within the last {RECENTLY_TRADED_DAYS} days.")
+                if asset["id"] in recently_signed:
+                    issues.append(f"{asset.get('label', asset.get('id'))} signed recently and cannot be traded until Dec. 1.")
                 contract = contract_for_player(canonical, asset["id"])
                 if contract_expired_without_rights(contract):
                     issues.append(f"{asset.get('label', asset.get('id'))} has an expired contract and no retained rights, so he cannot be traded in this phase.")
@@ -2729,13 +2798,13 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     distance = max(0, pick_start - active_start)
     if round_no == 1:
         if slot_value:
-            value = clamp(86 - slot_value * 1.92, 24, 88)
+            value = clamp(92 - slot_value * 2.15, 26, 90)
         elif pick.get("status") == "verified_2026_draft_board" and pick.get("id", "").split("-"):
             try:
                 pick_no = int(pick["id"].split("-")[2])
             except (ValueError, IndexError):
                 pick_no = 18
-            value = clamp(86 - pick_no * 1.92, 24, 86)
+            value = clamp(92 - pick_no * 2.15, 26, 90)
         else:
             value = 43.0
         value -= max(0, distance - 1) * 1.18

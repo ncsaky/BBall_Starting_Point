@@ -256,9 +256,10 @@ def startup_gameplay_pick_obligations(canonical: dict[str, Any] | None) -> list[
                     [
                         item
                         for item in picks
-                        if int(item.get("round") or 0) == 2
+                        if int(item.get("round") or 0) == int(pick.get("round") or 0)
                         and item.get("original_team_id") == sender
                         and item.get("current_owner_team_id") == sender
+                        and item.get("id") != pick.get("id")
                         and str(item.get("season") or "") >= str(pick.get("season") or "")
                     ],
                     key=lambda item: (item.get("id") in used_fallback_ids, str(item.get("season") or ""), str(item.get("id") or "")),
@@ -286,7 +287,7 @@ def startup_gameplay_pick_obligations(canonical: dict[str, Any] | None) -> list[
                 "source": "src_gameplay_startup_pick_obligations_v1",
                 "notes": (
                     "Gameplay fallback generated for startup protected-pick clarity. If the primary lands in the protected range, "
-                    "original team keeps it and the receiver gets the fallback second-round pick."
+                    "original team keeps it and the receiver gets the same-round fallback pick."
                 ),
             }
         )
@@ -294,8 +295,21 @@ def startup_gameplay_pick_obligations(canonical: dict[str, Any] | None) -> list[
 
 
 def merge_startup_pick_obligations(save: dict[str, Any], canonical: dict[str, Any] | None = None) -> int:
+    from .transactions import pick_obligation_fallback_rounds_match
+
     obligations = save.setdefault("pick_obligations", [])
     locked = set(save.setdefault("locked_pick_assets", []))
+    if canonical:
+        valid_obligations = []
+        invalid_fallback_ids: set[str] = set()
+        for obligation in obligations:
+            if obligation.get("type") == "protected_pick" and not pick_obligation_fallback_rounds_match(canonical, None, obligation):
+                invalid_fallback_ids.update(obligation.get("fallback_pick_ids") or [])
+                continue
+            valid_obligations.append(obligation)
+        if len(valid_obligations) != len(obligations):
+            obligations[:] = valid_obligations
+            locked.difference_update(invalid_fallback_ids)
     existing_primary_ids = {
         item.get("primary_pick_id")
         for item in obligations

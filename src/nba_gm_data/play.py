@@ -61,7 +61,7 @@ from .save import (
 )
 from .staff import ROLE_LABELS, STAFF_SLOTS, fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, staff_budget_snapshot, staff_effect_summary, staff_market_report, staff_role_effect, staff_team_report
 from .schema import CANONICAL_START_DATE
-from .transactions import apply_trade_to_save, canonical_with_pending_pick_terms, candidate_from_evaluation, clean_pick_protection_summary, contract_for_player, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, pick_by_id, pick_display_label, pick_obligation_context_note, pick_season_start, player_by_id, proposal_asset_identity_keys, prune_trade_offers_touching_assets, recently_traded_player_ids, resolve_team, team_by_id, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_picks_for_team, with_transaction_context
+from .transactions import apply_trade_to_save, canonical_with_pending_pick_terms, candidate_from_evaluation, clean_pick_protection_summary, contract_for_player, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, pick_by_id, pick_display_label, pick_obligation_context_note, pick_season_start, player_by_id, proposal_asset_identity_keys, prune_trade_offers_touching_assets, recently_signed_player_ids, recently_traded_player_ids, resolve_team, team_by_id, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_picks_for_team, with_transaction_context
 from .utils import clamp, stable_id
 
 
@@ -1359,6 +1359,7 @@ def guided_trade_builder(canonical: dict[str, Any], save_path: Path, user_team: 
             pause("Pick another team as the trade partner.")
             continue
         result: dict[str, Any] | None = None
+        apply_allowed = False
         while True:
             save = ensure_league_save_defaults(load_save(save_path), canonical)
             active = canonical_with_save(canonical, save)
@@ -1380,13 +1381,19 @@ def guided_trade_builder(canonical: dict[str, Any], save_path: Path, user_team: 
             result = propose_trade_to_save(active, save_path, user_team, partner, specs, seed=seed, store=False, pick_obligation_terms=terms)
             print_trade_result(result)
             if result.get("legality", {}).get("status") == "legal":
+                apply_allowed = user_can_apply_trade(canonical, result, user_team)
+                if apply_allowed:
+                    break
+                print("Offer rejected.")
+                if yes_no("Reselect assets and re-offer?"):
+                    continue
                 break
             print_legality_failures(result.get("legality") or {})
             if not yes_no("Reselect assets and re-offer?"):
                 break
         if result is None:
             continue
-        if user_can_apply_trade(canonical, result, user_team) and yes_no("Apply legal trade now?"):
+        if apply_allowed and yes_no("Apply legal trade now?"):
             result = attach_pick_terms_to_trade(canonical, save_path, result)
             store_trade_offer(save_path, result)
             applied = apply_trade_to_save(save_path, result["proposal"]["id"], date=load_save(save_path).get("state", {}).get("current_date"))
@@ -1487,9 +1494,11 @@ def prompt_pick_trade_terms(canonical: dict[str, Any], save_path: Path, pick_id:
     if not fallback:
         pause("Protected picks need a fallback asset in this v1 model. This pick will be treated as unprotected.")
         return {"type": "unprotected", "primary_pick_id": pick_id}
+    fallback_pick = next((item for item in active.get("draft_picks", []) if item.get("id") == fallback), {})
     return {
         "type": "protected_pick",
         "primary_pick_id": pick_id,
+        "primary_round": int(pick.get("round") or 0),
         "sender_team_id": sender_id,
         "receiver_team_id": receiver_id,
         "receiver_pending": receiver_id is None,
@@ -1497,6 +1506,7 @@ def prompt_pick_trade_terms(canonical: dict[str, Any], save_path: Path, pick_id:
         "protected_range": protected_range,
         "protected_top_n": protected_range.get("through") if protected_range.get("from") == 1 else None,
         "fallback_pick_ids": [fallback],
+        "fallback_rounds": [int(fallback_pick.get("round") or 0)] if fallback_pick else [],
         "label": label,
         "notes": "Gameplay V1 protected-pick obligation. Fallback pick is locked until the obligation resolves.",
     }
@@ -1552,11 +1562,12 @@ def choose_fallback_pick_for_protection(canonical: dict[str, Any], save: dict[st
         return None
     primary_pick = next((pick for pick in canonical.get("draft_picks", []) if pick.get("id") == primary_pick_id), {})
     primary_year = pick_season_start(primary_pick) or 0
+    primary_round = int(primary_pick.get("round") or 0)
     picks = [
         pick for pick in tradeable_picks_for_team(canonical, team_id)
         if pick.get("id") != primary_pick_id
         and not pick.get("_obligation_locked")
-        and int(pick.get("round") or 2) in {1, 2}
+        and int(pick.get("round") or 0) == primary_round
         and (pick_season_start(pick) or 0) >= primary_year
     ]
     picks = sorted(picks, key=lambda pick: (str(pick.get("season") or ""), int(pick.get("round") or 9), clean_pick_label_for_user(canonical, pick, save)))
@@ -1884,6 +1895,7 @@ def choose_assets(
     team_state = next((state for state in canonical.get("team_strategic_states", []) if state.get("team_id") == team["id"]), {})
     current_date = save.get("state", {}).get("current_date") or "2025-10-01"
     recent_players = recently_traded_player_ids(save, current_date)
+    signed_lock_players = recently_signed_player_ids(save, current_date)
     players = sorted(
         [p for p in canonical.get("players", []) if p.get("team_id") == team["id"] and p.get("id") not in recent_players],
         key=lambda player: (
@@ -1929,10 +1941,17 @@ def choose_assets(
             f"| GP {gp:>2}/{team_games:<2} {trade_health_text(health.get(player['id'], {})):<13}"
         )
         assets.append(("player", player["name"], f"{left:<122} {contract_text}"))
+        if player["id"] in signed_lock_players:
+            assets[-1] = (
+                assets[-1][0],
+                assets[-1][1],
+                f"{assets[-1][2]} | trade-locked until Dec. 1",
+            )
     for pick in picks:
         trade_value = pick_asset_value(pick, team_state.get("phase", "balanced"))
         assets.append(("pick", pick["id"], f"Value {single_value_bar(trade_value, scale=100, width=10)} {trade_value:>5.1f}  {clean_pick_label_for_user(canonical, pick, save)}"))
     print_title(title)
+    print_team_asset_cap_summary(canonical, save, team["id"])
     for idx, (_, _, label) in enumerate(assets, start=1):
         print(f"{idx:>2}. {label}")
     print(" 0. Back")
@@ -1966,6 +1985,19 @@ def choose_assets(
             if max_select and len(selected) >= max_select:
                 break
     return selected
+
+
+def print_team_asset_cap_summary(canonical: dict[str, Any], save: dict[str, Any], team_id: str) -> None:
+    season = save.get("meta", {}).get("season")
+    cap = team_cap_summary(canonical, save, team_id, season=season)
+    unresolved = int(cap.get("unresolved_contract_count") or 0)
+    unresolved_text = f" | unresolved contracts {unresolved}" if unresolved else ""
+    print(
+        f"Cap: payroll ${float(cap.get('salary_total_millions') or 0):.1f}M | "
+        f"tax room ${float(cap.get('tax_space_millions') or 0):+.1f}M | "
+        f"hard-cap room ${float(cap.get('hard_cap_space_millions') or 0):+.1f}M{unresolved_text}"
+    )
+    print_rule()
 
 
 def staff_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int) -> None:
@@ -2781,7 +2813,7 @@ def draft_trade_lower_pick_for_buyer(active: dict[str, Any], state: dict[str, An
             and pick_id not in used
         ):
             active_pick = pick_by_id(active, pick_id) or pick
-            candidates.append((overall, active_pick))
+            candidates.append((overall, {**active_pick, "overall_pick": overall}))
     return sorted(candidates, key=lambda item: item[0])[0][1] if candidates else None
 
 
@@ -2794,6 +2826,8 @@ def draft_trade_offer_assets(active: dict[str, Any], state: dict[str, Any], buye
     target_pick = pick_by_id(active, target_pick_id)
     target_value = pick_asset_value(target_pick, "neutral")
     current_value = sum(pick_asset_value(pick_by_id(active, asset["value"]), "neutral") for asset in assets)
+    lower_overall = int((lower_pick or {}).get("overall_pick") or (lower_pick or {}).get("projected_pick_slot") or 999)
+    move_down = max(0, lower_overall - overall) if lower_pick else 99
     extras = [
         pick for pick in tradeable_picks_for_team(active, buyer_team_id)
         if pick.get("id") not in {target_pick_id, *(asset["value"] for asset in assets), *traded, *used}
@@ -2808,18 +2842,27 @@ def draft_trade_offer_assets(active: dict[str, Any], state: dict[str, Any], buye
         key=lambda pick: pick_asset_value(pick, "neutral"),
         reverse=True,
     )
-    required_factor = 0.96 if overall <= 10 else 0.88
-    if overall <= 10 and current_value < target_value * 0.9 and firsts:
-        assets.append({"kind": "pick", "value": firsts[0]["id"]})
-        current_value += pick_asset_value(firsts[0], "neutral")
+    required_factor = 1.08 if overall <= 10 else 1.0 if overall <= 18 or move_down >= 5 else 0.92
+    need_future_first = (overall <= 18 or move_down >= 5 or not lower_pick) and current_value < target_value * min(1.0, required_factor)
+    first_idx = 0
+    while first_idx < len(firsts) and (need_future_first or current_value < target_value * 0.86):
+        pick = firsts[first_idx]
+        assets.append({"kind": "pick", "value": pick["id"]})
+        current_value += pick_asset_value(pick, "neutral")
+        first_idx += 1
+        need_future_first = False
+        if current_value >= target_value * required_factor or len(assets) >= 3:
+            break
     for pick in seconds[:3]:
         if current_value >= target_value * required_factor and len(assets) > 1:
             break
+        if move_down >= 5 and current_value < target_value * 0.95:
+            continue
         assets.append({"kind": "pick", "value": pick["id"]})
         current_value += pick_asset_value(pick, "neutral")
     if lower_pick and len(assets) == 1:
         return []
-    if current_value < target_value * (0.9 if overall <= 10 else 0.78):
+    if current_value < target_value * (1.0 if overall <= 10 else 0.88 if overall <= 18 or move_down >= 5 else 0.8):
         return []
     return assets[:4]
 
@@ -4721,9 +4764,13 @@ def free_agency_cap_dump_candidate_for_team(active: dict[str, Any], save: dict[s
     team = team_by_id(active, team_id)
     values = {value["player_id"]: value for value in active.get("player_asset_valuations", [])}
     recent = recently_traded_player_ids(active, save.get("state", {}).get("current_date"))
+    signed_lock = recently_signed_player_ids(active, save.get("state", {}).get("current_date"))
     roster = [
         player for player in active.get("players", [])
-        if player.get("team_id") == team_id and player.get("id") not in recent and not player.get("id", "").startswith("rookie_")
+        if player.get("team_id") == team_id
+        and player.get("id") not in recent
+        and player.get("id") not in signed_lock
+        and not player.get("id", "").startswith("rookie_")
     ]
     dumpable = []
     for player in roster:
@@ -4816,9 +4863,10 @@ def similar_trade_target_for_lost_free_agent(active: dict[str, Any], save: dict[
     lost_attrs = player_attribute_summary(active, lost_player["id"])
     lost_value = float(values.get(lost_player["id"], fallback_asset_valuation(lost_player)).get("player_value") or 0.0)
     recent = recently_traded_player_ids(active, save.get("state", {}).get("current_date"))
+    signed_lock = recently_signed_player_ids(active, save.get("state", {}).get("current_date"))
     rows = []
     for player in active.get("players", []):
-        if not player.get("team_id") or player.get("team_id") in {buyer_team_id, user_team_id} or player.get("id") in recent:
+        if not player.get("team_id") or player.get("team_id") in {buyer_team_id, user_team_id} or player.get("id") in recent or player.get("id") in signed_lock:
             continue
         if player.get("id") in set(save.get("free_agent_player_ids") or []):
             continue
