@@ -1516,18 +1516,21 @@ def buyer_offer_packages_for_value(
         reverse=True,
     )
     tradable_players = []
+    buyer_state = next((item for item in canonical.get("team_strategic_states", []) if item.get("team_id") == buyer["id"]), {})
     for player in candidates:
-        value = float(valuations.get(player["id"], fallback_asset_valuation(player))["player_value"])
+        valuation = valuations.get(player["id"], fallback_asset_valuation(player))
+        value = float(valuation["player_value"])
         block_score = float(block.get(player["id"], {}).get("block_score") or 0.0)
         if value >= 72 and target_value < 70:
             continue
         if value >= 58 and block_score < 55 and target_value < 68:
             continue
+        if value >= 62 and block_score < 62 and team_fit_for_player(player, valuation, buyer_state) >= 7.0 and target_value < value + 12.0:
+            continue
         if value > target_value * (1.08 if target_value >= 70 else 1.24):
             continue
         tradable_players.append(player)
     tradable_players = tradable_players[:max(3, int(max_player_options))]
-    buyer_state = next((item for item in canonical.get("team_strategic_states", []) if item.get("team_id") == buyer["id"]), {})
     picks = sorted(
         tradeable_picks_for_team(canonical, buyer["id"]),
         key=lambda pick: pick_offer_preference_score(pick, buyer_state.get("phase", "balanced"), target_value),
@@ -2083,7 +2086,7 @@ def player_health_risk(profile: dict[str, Any], state: dict[str, Any]) -> float:
     risk += min(6.0, len(profile.get("major_prior_injuries") or []) * 2.2)
     risk += min(3.0, len(profile.get("body_area_risk_tags") or []) * 0.45)
     if state.get("availability_status") != "active":
-        risk += 12.0
+        risk += 3.0
     risk += float(state.get("rust") or 0) * 0.08
     return clamp(risk, 0, 34)
 
@@ -2358,20 +2361,43 @@ def team_fit_for_player(player: dict[str, Any], valuation: dict[str, Any], state
     fit = 0.0
     age = maybe_float(player.get("age")) or 30
     minutes = maybe_float(player.get("minutes_projection")) or 0.0
+    player_value = float(valuation.get("player_value") or 0.0)
+    playoff_value = float(valuation.get("playoff_value") or 0.0)
+    portability = float(valuation.get("portability") or 0.0)
+    development = float(valuation.get("development_upside") or 0.0)
     if "playoff_rotation" in state.get("needs", []) and valuation["playoff_value"] >= 62:
         fit += 4
     if "youth_and_picks" in state.get("needs", []) and age <= 24:
         fit += 5
     if "shooting" in state.get("needs", []) and valuation["portability"] >= 64:
         fit += 2
-    if state.get("phase") in {"contending", "contending_with_future_upside"} and valuation["player_value"] >= 45:
+    if state.get("phase") in {"contending", "contending_with_future_upside"} and player_value >= 45:
         fit += 3
-    if state.get("phase") in {"contending", "contending_with_future_upside"} and age >= 30 and minutes >= 22 and valuation["playoff_value"] >= 58:
+    if state.get("phase") in {"contending", "contending_with_future_upside"} and age >= 30 and minutes >= 22 and playoff_value >= 58:
         fit += 2.5
     if state.get("phase") in {"rebuilding", "developing"} and age >= 30:
         fit -= 4
-    if state.get("phase") == "rebuilding" and valuation["player_value"] >= 48 and minutes >= 24 and age >= 28:
+    if state.get("phase") == "rebuilding" and player_value >= 48 and minutes >= 24 and age >= 28:
         fit -= 2
+    large_asset = player_value >= 64 or playoff_value >= 68 or development >= 12
+    if large_asset:
+        needs_text = " ".join(str(item) for item in state.get("needs", []))
+        excess_text = " ".join(str(item) for item in state.get("excesses", []))
+        if state.get("phase") in {"contending", "contending_with_future_upside"} and playoff_value >= 68:
+            fit += 4.5
+        if state.get("phase") in {"rebuilding", "developing"} and age <= 24 and development >= 8:
+            fit += 5.0
+        if state.get("phase") in {"rebuilding", "developing"} and age >= 30 and player_value >= 58:
+            fit -= 6.0
+        if "shooting" in needs_text and portability >= 70:
+            fit += 3.0
+        if "primary_creation" in needs_text and player_value >= 68:
+            fit += 3.0
+        bucket = player_position_bucket(player)
+        if f"{bucket}_depth" in needs_text:
+            fit += 2.6
+        if f"{bucket}_depth" in excess_text and player_value < 72:
+            fit -= 3.2
     return fit
 
 
@@ -2703,20 +2729,20 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     distance = max(0, pick_start - active_start)
     if round_no == 1:
         if slot_value:
-            value = clamp(88 - slot_value * 1.65, 34, 88)
+            value = clamp(86 - slot_value * 1.92, 24, 88)
         elif pick.get("status") == "verified_2026_draft_board" and pick.get("id", "").split("-"):
             try:
                 pick_no = int(pick["id"].split("-")[2])
             except (ValueError, IndexError):
                 pick_no = 18
-            value = clamp(86 - pick_no * 1.62, 34, 86)
+            value = clamp(86 - pick_no * 1.92, 24, 86)
         else:
             value = 43.0
         value -= max(0, distance - 1) * 1.18
     else:
         if slot_value:
             second_slot = slot_value + 30 if slot_value <= 30 else max(31, slot_value)
-            value = clamp(17.5 - (second_slot - 31) * 0.23, 5.0, 17.5)
+            value = clamp(24.5 - (second_slot - 31) * 0.32, 8.0, 24.5)
         else:
             value = 9.5
         value -= max(0, distance - 1) * 0.42

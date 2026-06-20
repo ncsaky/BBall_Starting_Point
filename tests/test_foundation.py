@@ -73,6 +73,7 @@ from nba_gm_data.save import (
     refresh_draft_order_from_save,
     simulate_playoff_round,
     simulate_next_playoff_game,
+    social_subject,
     social_feed_view,
     start_playoffs,
     team_dashboard,
@@ -81,6 +82,7 @@ from nba_gm_data.save import (
     merge_health_results,
     maybe_queue_rare_drama,
     press_impact,
+    prune_rotation_recommendations,
     queue_aggregated_press_event,
     generate_league_awards,
     resolve_pick_obligations_for_year,
@@ -90,17 +92,23 @@ from nba_gm_data.save import (
 from nba_gm_data.play import (
     box_score_influence,
     choose_fallback_pick_for_protection,
+    choose_save_path,
     contract_start_season_for_signing,
     contextual_press_answers,
+    deterministic_random_team,
     extension_safe_year_limit,
     free_agency_user_offer_limit,
     initialize_free_agency_market,
+    league_trait_rows,
+    maybe_run_ai_draft_trades_before_pick,
     offer_interest_score,
     pick_slot_is_determined_for_trade,
+    print_free_agency_day_recap,
     print_lottery,
     print_home,
     refresh_live_draft_state_ownership,
     signing_cap_check,
+    sync_live_draft_state_to_saved_order,
 )
 from nba_gm_data.schema import TradeProposal, to_plain
 from nba_gm_data.sim import (
@@ -133,7 +141,7 @@ from nba_gm_data.sim import (
 )
 from nba_gm_data.storage import write_outputs
 from nba_gm_data.staff import fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, simulate_ai_staff_changes, staff_budget_for_team, staff_budget_snapshot, staff_grade, staff_market_report, staff_team_report
-from nba_gm_data.transactions import apply_trade_to_save, canonical_with_pending_pick_terms, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, gm_report, market_trade_target_value, package_value_for_team, pick_asset_value, pick_label, pick_season_start, simulate_ai_trades, stepien_guardrail_issues, trade_block_report, trade_result_with_pick_terms, tradeable_picks_for_team, with_transaction_context
+from nba_gm_data.transactions import apply_trade_to_save, canonical_with_pending_pick_terms, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, gm_report, market_trade_target_value, package_value_for_team, pick_asset_value, pick_label, pick_season_start, player_health_risk, simulate_ai_trades, stepien_guardrail_issues, trade_block_report, trade_result_with_pick_terms, tradeable_picks_for_team, with_transaction_context
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -495,6 +503,19 @@ class DataFoundationTests(unittest.TestCase):
             fallback = next(pick for pick in active["draft_picks"] if pick["id"] == fallback_id)
             self.assertGreaterEqual(pick_season_start(fallback), pick_season_start(primary))
 
+    def test_startup_protected_pick_labels_have_gameplay_fallback_context(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "startup_pick_obligation_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=412)
+            self.assertGreaterEqual(len(save.get("pick_obligations", [])), 22)
+            active = with_transaction_context(canonical_with_save(self.plain, save))
+            gsw_dal_pick = next(pick for pick in active["draft_picks"] if pick["id"] == "pick_future-gsw-2030-1-2")
+            label = pick_label(active, gsw_dal_pick)
+            self.assertIn("top-20 protected", label)
+            self.assertIn("Transfers to DAL if in protected range", label)
+            self.assertIn("GSW receives 2030 R2 DAL in this case", label)
+            self.assertFalse(any(pick["id"] == "pick_dal-2030-2" for pick in tradeable_picks_for_team(active, "team_dal")))
+
     def test_draft_pick_transfer_refreshes_live_queue_and_slot_picks_do_not_prompt_for_protection(self):
         with tempfile.TemporaryDirectory() as tmp:
             save_path = Path(tmp) / "draft_trade_refresh.json"
@@ -546,6 +567,73 @@ class DataFoundationTests(unittest.TestCase):
             self.assertEqual(current["selection"]["team_id"], "team_chi")
             self.assertEqual(current["pick"]["current_owner_team_id"], "team_chi")
             self.assertEqual(current["team"]["abbrev"], "CHI")
+
+    def test_ai_draft_trade_hook_applies_once_and_queues_breaking_news(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "ai_draft_trade_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=413)
+            firsts = [
+                pick for pick in self.plain["draft_picks"]
+                if pick.get("season") == "2026"
+                and int(pick.get("round") or 0) == 1
+                and pick.get("current_owner_team_id") != "team_gsw"
+            ]
+            pick_a = firsts[0]
+            pick_b = next(pick for pick in firsts[1:] if pick.get("current_owner_team_id") != pick_a.get("current_owner_team_id"))
+            save["state"] = {"current_date": "2026-06-26", "phase": "draft", "legal_actions": ["trades", "draft_picks"]}
+            save["draft_state"] = {
+                "year": "2026",
+                "status": "in_progress",
+                "current_index": 0,
+                "draft": {
+                    "pending_draft_selections": [
+                        {
+                            "id": "selection_ai_trade_a",
+                            "selection": {"id": "selection_ai_trade_a", "pick_id": pick_a["id"], "team_id": pick_a["current_owner_team_id"], "prospect_id": "draft_prospect_a", "draft_year": "2026", "overall_pick": 7},
+                            "pick": dict(pick_a),
+                            "team": {"id": pick_a["current_owner_team_id"], "abbrev": "AAA"},
+                            "prospect": {"id": "draft_prospect_a", "name": "Prospect A"},
+                        },
+                        {
+                            "id": "selection_ai_trade_b",
+                            "selection": {"id": "selection_ai_trade_b", "pick_id": pick_b["id"], "team_id": pick_b["current_owner_team_id"], "prospect_id": "draft_prospect_b", "draft_year": "2026", "overall_pick": 12},
+                            "pick": dict(pick_b),
+                            "team": {"id": pick_b["current_owner_team_id"], "abbrev": "BBB"},
+                            "prospect": {"id": "draft_prospect_b", "name": "Prospect B"},
+                        },
+                    ]
+                },
+            }
+            candidate = {
+                "proposal": {
+                    "id": "ai_draft_trade_test",
+                    "date": "2026-06-26",
+                    "from_team_id": pick_a["current_owner_team_id"],
+                    "to_team_id": pick_b["current_owner_team_id"],
+                    "from_assets": [{"kind": "pick", "id": pick_a["id"], "label": pick_a["id"], "round": 1}],
+                    "to_assets": [{"kind": "pick", "id": pick_b["id"], "label": pick_b["id"], "round": 1}],
+                },
+                "legality": {"status": "legal", "issues": [], "manual_review": []},
+                "evaluations": [],
+                "accepted_by_all": True,
+                "summary": "AI draft trade test",
+            }
+            write_save(save_path, save)
+            with patch("nba_gm_data.play.best_ai_draft_trade_candidate", return_value=candidate):
+                result = maybe_run_ai_draft_trades_before_pick(self.plain, save_path, "GSW", seed=1, force=True)
+                self.assertEqual(result["applied_count"], 1)
+                second = maybe_run_ai_draft_trades_before_pick(self.plain, save_path, "GSW", seed=1, force=True)
+                self.assertEqual(second["applied_count"], 0)
+            saved = load_save(save_path)
+            self.assertEqual(saved["draft_pick_overrides"][pick_a["id"]], pick_b["current_owner_team_id"])
+            self.assertEqual(saved["draft_pick_overrides"][pick_b["id"]], pick_a["current_owner_team_id"])
+            self.assertIn(pick_a["id"], saved["draft_state"]["ai_draft_traded_pick_ids"])
+            self.assertIn(pick_b["id"], saved["draft_state"]["ai_draft_traded_pick_ids"])
+            self.assertEqual(len(saved["draft_state"]["ai_draft_trade_news_queue"]), 1)
+            headline = saved["draft_state"]["ai_draft_trade_news_queue"][0]["headline"]
+            self.assertIn("Pick #7", headline)
+            self.assertIn("Pick #12", headline)
+            self.assertNotIn(pick_a["id"], headline)
 
     def test_lottery_reveal_shows_final_owner_only(self):
         order = {
@@ -1299,11 +1387,15 @@ class DataFoundationTests(unittest.TestCase):
             saved = load_save(save_path)
             saved["state"] = {"current_date": "2026-01-15", "phase": "regular_season", "legal_actions": ["trades", "advance"]}
             write_save(save_path, saved)
-            advance_save(ROOT, self.plain, save_path, to_date="2026-01-16", seed=6)
-            processed = process_ai_actions(self.plain, save_path, seed=6, execute=False)
-            self.assertGreaterEqual(processed["processed_count"], 1)
+            advanced = advance_save(ROOT, self.plain, save_path, to_date="2026-01-16", seed=6)
+            self.assertGreaterEqual(advanced["ai_applied_count"], 1)
             saved = load_save(save_path)
-            self.assertTrue(any(action["action_type"] == "trade_recommendations" for action in saved["pending_ai_actions"]))
+            trade_actions = [action for action in saved["pending_ai_actions"] if action["action_type"] == "trade_recommendations"]
+            self.assertTrue(trade_actions)
+            self.assertTrue(all(action["status"] == "executed" for action in trade_actions))
+            self.assertTrue(any(log.get("transaction_type") == "trade" and log.get("date") == "2026-01-16" for log in saved.get("transaction_logs", [])))
+            processed = process_ai_actions(self.plain, save_path, seed=6, execute=False)
+            self.assertEqual(processed["processed_count"], 0)
 
     def test_press_answers_are_question_specific(self):
         answers = contextual_press_answers(
@@ -1629,7 +1721,12 @@ class DataFoundationTests(unittest.TestCase):
             self.assertEqual(applied_outcome["applied_candidate_count"], 1)
             saved = load_save(save_path)
             self.assertEqual(len(saved["transaction_logs"]), 1)
+            self.assertEqual(saved["transaction_logs"][0]["date"], "2026-01-20")
+            self.assertEqual(saved["pending_ai_actions"][0]["status"], "executed")
             self.assertIn(saved["roster_overrides"][seth["id"]], {"team_was", "team_bkn"})
+            again = process_ai_actions(self.plain, save_path, seed=6, execute=True, limit=1)
+            self.assertEqual(again["processed_count"], 0)
+            self.assertEqual(len(load_save(save_path)["transaction_logs"]), 1)
 
     def test_trade_application_prunes_stale_offers_and_blocks_recently_traded_players(self):
         seth = next(player for player in self.plain["players"] if player["name"] == "Seth Curry")
@@ -2010,6 +2107,47 @@ class DataFoundationTests(unittest.TestCase):
             self.assertLessEqual(adjusted["minutes_projection"], 27.0)
             self.assertAlmostEqual(sum(float(player.get("minutes_projection") or 0) for player in roster), 240.0, delta=0.3)
 
+    def test_stale_rotation_recommendations_are_pruned_when_player_leaves(self):
+        curry = next(player for player in self.plain["players"] if player["name"] == "Stephen Curry")
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "stale_rotation_rec.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=414)
+            save["rotation_recommendations"][curry["id"]] = {
+                "player_id": curry["id"],
+                "team_id": "team_gsw",
+                "target_minutes": 24.0,
+                "coach_commitment": 0.68,
+                "status": "active",
+            }
+            save["roster_overrides"][curry["id"]] = "team_bos"
+            self.assertEqual(prune_rotation_recommendations(save, self.plain), 1)
+            self.assertNotIn(curry["id"], save["rotation_recommendations"])
+            write_save(save_path, save)
+            team_dashboard(ROOT, self.plain, save_path, "GSW")
+            self.assertNotIn(curry["id"], load_save(save_path)["rotation_recommendations"])
+
+    def test_free_agency_day_recap_surfaces_ai_trade_news(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "fa_trade_news.json"
+            create_league_save(ROOT, self.plain, "GSW", save_path, seed=415)
+            result = {"accepted_count": 0, "ask_adjusted_count": 0, "accepted_offers": [], "ai_trade_news": [{"headline": "Trade completed: Team A pick for Team B player."}]}
+            with redirect_stdout(StringIO()) as output:
+                print_free_agency_day_recap(self.plain, save_path, 1, result)
+            text = output.getvalue()
+            self.assertIn("League trades", text)
+            self.assertIn("Team A pick", text)
+
+    def test_head_coach_firing_reason_is_major_league_event(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "staff_firing_reason.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=416)
+            result = fire_staff_from_save(save, "team_bos", "head_coach", reason="on 2-15 skid")
+            self.assertEqual(result["status"], "applied")
+            write_save(save_path, save)
+            view = league_events_view(self.plain, save_path, major_only=True, limit=10)
+            headlines = [event.get("headline", "") for event in view.get("events", [])]
+            self.assertTrue(any("on 2-15 skid" in headline for headline in headlines))
+
     def test_save_rotation_projection_sums_to_240_and_zeros_injured_players(self):
         curry = next(player for player in self.plain["players"] if player["name"] == "Stephen Curry")
         with tempfile.TemporaryDirectory() as tmp:
@@ -2356,6 +2494,77 @@ class DataFoundationTests(unittest.TestCase):
         self.assertGreater(contender["defensive_events"], 51)
         self.assertLess(rebuild["impact"], 48)
         self.assertLess(rebuild["top_creation"], 49)
+
+    def test_random_team_default_creates_seeded_team_filename(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            expected = deterministic_random_team(self.plain, seed=17)
+            with patch("builtins.input", side_effect=["", "", "", ""]), redirect_stdout(StringIO()):
+                path = choose_save_path(Path(tmp), self.plain, None, None, seed=17)
+            self.assertEqual(path.name, f"{expected.lower()}_test.json")
+            self.assertTrue(path.exists())
+            self.assertEqual(load_save(path)["meta"]["user_team_abbrev"], expected)
+
+    def test_league_leaders_are_stats_only_and_traits_are_separate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "save.json"
+            create_league_save(ROOT, self.plain, "GSW", save_path, seed=4)
+            with self.assertRaises(ValueError):
+                league_leaders(self.plain, save_path, stat="overall", limit=5)
+            rows = league_trait_rows(self.plain, save_path, "overall")
+            self.assertGreater(len(rows), 20)
+            self.assertGreaterEqual(rows[0]["attrs"]["overall"], rows[1]["attrs"]["overall"])
+            self.assertIn("contract", rows[0])
+            self.assertIn("minutes", rows[0])
+
+    def test_social_subject_preserves_initials_and_avoids_truncation_dots(self):
+        text = "Trade completed: T.J. McConnell, 2027 R1 HOU (own pick) for Norman Powell, 2028 R2 DEN (own pick)."
+        subject = social_subject(text)
+        self.assertIn("T.J. McConnell", subject)
+        self.assertNotEqual(subject, "Trade completed: T.J")
+        self.assertNotIn("...", subject)
+
+    def test_late_first_and_early_second_pick_values_are_neighbors(self):
+        base = {"season": "2026", "current_owner_team_id": "team_gsw", "original_team_id": "team_gsw", "_active_season": "2025-26"}
+        late_first = pick_asset_value({**base, "id": "pick_2026_30_gsw", "round": 1, "overall_pick": 30}, "neutral")
+        early_second = pick_asset_value({**base, "id": "pick_2026_31_gsw", "round": 2, "overall_pick": 31}, "neutral")
+        self.assertGreater(late_first, early_second)
+        self.assertLess(late_first - early_second, 8.0)
+
+    def test_current_injury_is_modest_value_risk_but_history_still_matters(self):
+        active = player_health_risk({"durability": 62}, {"availability_status": "active"})
+        temporarily_out = player_health_risk({"durability": 62}, {"availability_status": "out", "current_injury_id": "injury_test"})
+        recurring = player_health_risk(
+            {"durability": 50, "injury_prone": True, "major_prior_injuries": [{"body_area": "leg"}, {"body_area": "back"}]},
+            {"availability_status": "active"},
+        )
+        self.assertLessEqual(temporarily_out - active, 3.5)
+        self.assertGreater(recurring - active, 10.0)
+
+    def test_live_draft_state_syncs_pick_ids_to_saved_lottery_order(self):
+        save = {
+            "draft_orders": {
+                "2026": {
+                    "draft_order": [
+                        {"id": "pick_2026_1_chi", "pick_id": "pick_2026_1_chi", "overall_pick": 1, "round": 1, "season": "2026", "original_team_id": "team_chi", "current_owner_team_id": "team_chi"},
+                        {"id": "pick_2026_2_lac", "pick_id": "pick_2026_2_lac", "overall_pick": 2, "round": 1, "season": "2026", "original_team_id": "team_lac", "current_owner_team_id": "team_lac"},
+                    ]
+                }
+            },
+            "draft_state": {
+                "year": "2026",
+                "current_index": 0,
+                "draft": {
+                    "pending_draft_selections": [
+                        {"selection": {"overall_pick": 1, "pick_id": "pick_2026_1_chi", "team_id": "team_chi"}, "pick": {"id": "pick_2026_1_chi"}},
+                        {"selection": {"overall_pick": 2, "pick_id": "pick_2026_2_uta", "team_id": "team_uta"}, "pick": {"id": "pick_2026_2_uta"}},
+                    ]
+                },
+            },
+        }
+        self.assertTrue(sync_live_draft_state_to_saved_order(self.plain, save, "2026"))
+        second = save["draft_state"]["draft"]["pending_draft_selections"][1]
+        self.assertEqual(second["selection"]["pick_id"], "pick_2026_2_lac")
+        self.assertEqual(second["selection"]["team_id"], "team_lac")
 
     def test_outputs_are_written(self):
         with tempfile.TemporaryDirectory() as tmp:

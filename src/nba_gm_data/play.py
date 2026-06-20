@@ -30,6 +30,7 @@ from .save import (
     ensure_league_save_defaults,
     display_minutes_projection,
     prepare_free_agency_pool,
+    prune_rotation_recommendations,
     hold_press_conference,
     league_leaders,
     league_events_view,
@@ -59,7 +60,8 @@ from .save import (
     write_save,
 )
 from .staff import ROLE_LABELS, STAFF_SLOTS, fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, staff_budget_snapshot, staff_effect_summary, staff_market_report, staff_role_effect, staff_team_report
-from .transactions import apply_trade_to_save, canonical_with_pending_pick_terms, clean_pick_protection_summary, contract_for_player, current_salary, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, pick_display_label, pick_obligation_context_note, pick_season_start, proposal_asset_identity_keys, prune_trade_offers_touching_assets, recently_traded_player_ids, resolve_team, trade_result_with_pick_terms, tradeable_picks_for_team, with_transaction_context
+from .schema import CANONICAL_START_DATE
+from .transactions import apply_trade_to_save, canonical_with_pending_pick_terms, candidate_from_evaluation, clean_pick_protection_summary, contract_for_player, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, pick_by_id, pick_display_label, pick_obligation_context_note, pick_season_start, player_by_id, proposal_asset_identity_keys, prune_trade_offers_touching_assets, recently_traded_player_ids, resolve_team, team_by_id, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_picks_for_team, with_transaction_context
 from .utils import clamp, stable_id
 
 
@@ -96,7 +98,7 @@ def choose_save_path(root: Path, canonical: dict[str, Any], save_path: str | Pat
     if save_path is not None:
         path = Path(save_path)
         if not path.exists():
-            chosen_team = team or choose_team(canonical)
+            chosen_team = resolve_chosen_team(canonical, team, seed)
             difficulty = choose_difficulty()
             path = unique_save_path(path)
             create_league_save(root, canonical, chosen_team, path, seed=seed, ai_difficulty=difficulty)
@@ -131,7 +133,7 @@ def choose_save_path(root: Path, canonical: dict[str, Any], save_path: str | Pat
         if choice == len(existing) + 3:
             delete_all_saves_prompt(existing)
             return choose_save_path(root, canonical, save_path, team, seed)
-    chosen_team = team or choose_team(canonical)
+    chosen_team = resolve_chosen_team(canonical, team, seed)
     difficulty = choose_difficulty()
     default_path = saves_dir / f"{chosen_team.lower()}_test.json"
     raw = input(f"Save path [{default_path}]: ").strip()
@@ -158,13 +160,33 @@ def unique_save_path(path: Path) -> Path:
         index += 1
 
 
-def choose_team(canonical: dict[str, Any]) -> str:
+def resolve_chosen_team(canonical: dict[str, Any], team: str | None, seed: int) -> str:
+    if team and team.strip().lower() not in {"random", "rand", "random_team"}:
+        return team.strip().upper()
+    if team and team.strip().lower() in {"random", "rand", "random_team"}:
+        return deterministic_random_team(canonical, seed)
+    return choose_team(canonical, seed)
+
+
+def deterministic_random_team(canonical: dict[str, Any], seed: int) -> str:
+    teams = sorted(canonical.get("teams", []), key=lambda item: item["abbrev"])
+    if not teams:
+        raise ValueError("No teams available for random team selection.")
+    rng = random.Random(f"{seed}:new_save_random_team")
+    return rng.choice(teams)["abbrev"]
+
+
+def choose_team(canonical: dict[str, Any], seed: int = 1) -> str:
     teams = sorted(canonical.get("teams", []), key=lambda item: item["abbrev"])
     print_title("Choose Team")
-    for idx, team in enumerate(teams, start=1):
+    random_abbrev = deterministic_random_team(canonical, seed)
+    print(f" 1. Random team ({random_abbrev})")
+    for idx, team in enumerate(teams, start=2):
         print(f"{idx:>2}. {team['abbrev']}  {team['name']}")
-    choice = pick_number("Team", 1, len(teams), default=teams.index(next((t for t in teams if t["abbrev"] == "GSW"), teams[0])) + 1)
-    return teams[choice - 1]["abbrev"]
+    choice = pick_number("Team", 1, len(teams) + 1, default=1)
+    if choice == 1:
+        return random_abbrev
+    return teams[choice - 2]["abbrev"]
 
 
 def choose_difficulty() -> str:
@@ -542,7 +564,7 @@ def print_home(root: Path, canonical: dict[str, Any], save_path: Path) -> None:
     print(f" 4. {season_stop_label(status)}")
     print(" 5. Team dashboard")
     print(" 6. Standings")
-    print(" 7. League leaders / player ratings")
+    print(" 7. League leaders / player traits")
     if phase not in {"preseason", "training_camp"}:
         print(" 8. Calendar / box scores")
     if "trades" in legal:
@@ -583,17 +605,18 @@ def handle_choice(root: Path, canonical: dict[str, Any], save_path: Path, choice
     if choice == "1":
         with loading_screen(root, "Advancing to next event...", seed=seed):
             result = advance_save(root, canonical, save_path, next_event=True, seed=seed)
+            process_ai_actions(canonical, save_path, seed=seed, execute=True, limit=30)
         print(summary_lines("Advanced", result, ["through_date", "phase"]))
     elif choice == "2":
         target = add_days(current, 7)
         with loading_screen(root, "Working through the week...", seed=seed):
-            result = advance_save(root, canonical, save_path, to_date=target, seed=seed)
+            result = advance_save_with_ai_checkpoints(root, canonical, save_path, target, seed, checkpoint_days=7)
         print(summary_lines("Advanced one week", result, ["through_date", "phase"]))
     elif choice == "3":
         target = add_days(current, 31)
         print(style("Simulating the month. This can take a moment...", "accent"))
         with loading_screen(root, "Simulating one month...", seed=seed):
-            result = advance_save(root, canonical, save_path, to_date=target, seed=seed)
+            result = advance_save_with_ai_checkpoints(root, canonical, save_path, target, seed, checkpoint_days=31)
         print(summary_lines("Advanced one month", result, ["through_date", "phase"]))
     elif choice == "4":
         season = save.get("meta", {}).get("season") or "2025-26"
@@ -618,9 +641,7 @@ def handle_choice(root: Path, canonical: dict[str, Any], save_path: Path, choice
         print_standings(canonical, save_path)
         wait()
     elif choice == "7":
-        stat = input("Stat [points/rebounds/assists/steals/blocks/fg3m/overall/shooting/creation/defense] [points]: ").strip() or "points"
-        print_leaders(canonical, save_path, stat)
-        wait()
+        league_player_browser_room(canonical, save_path)
     elif choice == "8":
         if save.get("state", {}).get("phase") in {"preseason", "training_camp"}:
             pause("Calendar and box scores unlock once games are on the schedule.")
@@ -709,10 +730,201 @@ def league_events_room(canonical: dict[str, Any], save_path: Path) -> None:
             recent_only = not recent_only
 
 
+def league_player_browser_room(canonical: dict[str, Any], save_path: Path) -> None:
+    while True:
+        clear_screen()
+        print_title("League Player Browser")
+        print("1. Stat leaders")
+        print("2. Player traits")
+        print("0. Back")
+        choice = input("> Pick a number: ").strip()
+        if choice == "0":
+            clear_screen()
+            return
+        if choice == "1":
+            stat_leaders_room(canonical, save_path)
+        elif choice == "2":
+            save = ensure_league_save_defaults(load_save(save_path), canonical)
+            if save.get("state", {}).get("phase") in PLAYOFF_PHASES:
+                pause("Player trait browser is available outside the playoffs.")
+            else:
+                league_traits_room(canonical, save_path)
+
+
+STAT_LEADER_OPTIONS = [
+    ("points", "Points"),
+    ("rebounds", "Rebounds"),
+    ("assists", "Assists"),
+    ("steals", "Steals"),
+    ("blocks", "Blocks"),
+    ("fg3m", "3PM"),
+]
+
+
+def stat_leaders_room(canonical: dict[str, Any], save_path: Path) -> None:
+    while True:
+        clear_screen()
+        print_title("League Stat Leaders")
+        for idx, (_, label) in enumerate(STAT_LEADER_OPTIONS, start=1):
+            print(f"{idx}. {label}")
+        print("0. Back")
+        choice = pick_number("Stat", 0, len(STAT_LEADER_OPTIONS), default=1)
+        if choice == 0:
+            return
+        print_leaders(canonical, save_path, STAT_LEADER_OPTIONS[choice - 1][0])
+        wait()
+
+
+LEAGUE_TRAIT_SORTS = [
+    ("overall", "Overall"),
+    ("offense", "Offense"),
+    ("defense", "Defense"),
+    ("spacing", "Spacing"),
+    ("creation", "Creation"),
+    ("rim_pressure", "Rim pressure"),
+    ("rebounding", "Rebounding"),
+    ("athleticism", "Athleticism"),
+    ("disruption", "Disruption"),
+    ("rim_protection", "Rim protection"),
+]
+
+
+def league_traits_room(canonical: dict[str, Any], save_path: Path) -> None:
+    sort_key = "overall"
+    offset = 0
+    page_size = 18
+    page_step = page_size // 2
+    while True:
+        clear_screen()
+        rows = league_trait_rows(canonical, save_path, sort_key)
+        print_title(f"Player Traits | sort: {trait_label(sort_key)}")
+        print_league_trait_table(rows[offset:offset + page_size], start=offset + 1)
+        print_rule()
+        print("1. Next page")
+        print("2. Previous page")
+        print("3. Change sort")
+        print("0. Back")
+        choice = input("> Pick a number: ").strip()
+        if choice == "0":
+            return
+        if choice == "1":
+            if offset + page_size < len(rows):
+                offset += page_step
+        elif choice == "2":
+            offset = max(0, offset - page_step)
+        elif choice == "3":
+            new_sort = choose_trait_sort(sort_key)
+            if new_sort:
+                sort_key = new_sort
+                offset = 0
+
+
+def choose_trait_sort(default: str) -> str | None:
+    clear_screen()
+    print_title("Sort Player Traits")
+    default_idx = next((idx for idx, (key, _) in enumerate(LEAGUE_TRAIT_SORTS, start=1) if key == default), 1)
+    for idx, (_, label) in enumerate(LEAGUE_TRAIT_SORTS, start=1):
+        print(f"{idx}. {label}")
+    print("0. Back")
+    choice = pick_number("Sort", 0, len(LEAGUE_TRAIT_SORTS), default=default_idx)
+    if choice == 0:
+        return None
+    return LEAGUE_TRAIT_SORTS[choice - 1][0]
+
+
+def league_trait_rows(canonical: dict[str, Any], save_path: Path, sort_key: str) -> list[dict[str, Any]]:
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    teams = {team["id"]: team for team in active.get("teams", [])}
+    stats_by_player = save.get("player_season_stats") or {}
+    rows: list[dict[str, Any]] = []
+    for player in active.get("players", []):
+        if not player.get("team_id") or player.get("id") in set(save.get("free_agent_player_ids") or []):
+            continue
+        attrs = derived_trait_attributes(player_attribute_summary(active, player["id"]))
+        totals = stats_by_player.get(player["id"], {})
+        games = int(totals.get("games") or 0)
+        stat_games = max(1, games)
+        salary = current_salary(contract_for_player(active, player["id"]))
+        rows.append(
+            {
+                "player": player,
+                "team": teams.get(player.get("team_id"), {}),
+                "attrs": attrs,
+                "games": games,
+                "minutes": round(float(totals.get("minutes") or 0.0) / stat_games if games else display_minutes_projection(player), 1),
+                "points": round(float(totals.get("points") or 0.0) / stat_games, 1) if games else 0.0,
+                "rebounds": round(float(totals.get("rebounds") or 0.0) / stat_games, 1) if games else 0.0,
+                "assists": round(float(totals.get("assists") or 0.0) / stat_games, 1) if games else 0.0,
+                "steals": round(float(totals.get("steals") or 0.0) / stat_games, 1) if games else 0.0,
+                "blocks": round(float(totals.get("blocks") or 0.0) / stat_games, 1) if games else 0.0,
+                "contract": contract_summary_text(salary),
+            }
+        )
+    rows.sort(key=lambda row: (-float((row["attrs"] or {}).get(sort_key) or 0.0), row["player"].get("name") or ""))
+    return rows
+
+
+def derived_trait_attributes(attrs: dict[str, Any]) -> dict[str, float]:
+    shooting = float(attrs.get("shooting") or 0.0)
+    creation = float(attrs.get("creation") or 0.0)
+    passing = float(attrs.get("passing") or 0.0)
+    rim_pressure = float(attrs.get("rim_pressure") or 0.0)
+    defense = float(attrs.get("defense") or 0.0)
+    spacing = shooting * 0.45 + float(attrs.get("range") or 0.0) * 0.35 + float(attrs.get("release") or 0.0) * 0.20
+    offense = shooting * 0.35 + creation * 0.32 + passing * 0.18 + rim_pressure * 0.15
+    disruption = (
+        float(attrs.get("def_effort") or 0.0) * 0.40
+        + float(attrs.get("screen_nav") or 0.0) * 0.25
+        + defense * 0.25
+        + float(attrs.get("portability") or 0.0) * 0.10
+    )
+    return {
+        **{key: float(value or 0.0) for key, value in attrs.items()},
+        "offense": round(clamp(offense, 1, 99), 1),
+        "spacing": round(clamp(spacing, 1, 99), 1),
+        "disruption": round(clamp(disruption, 1, 99), 1),
+        "rim_protection": round(clamp(float(attrs.get("rim_deterrence") or 0.0), 1, 99), 1),
+    }
+
+
+def print_league_trait_table(rows: list[dict[str, Any]], start: int = 1) -> None:
+    print(
+        f" #  {'Player':<22} {'Tm':<3} {'Pos':<3} {'Age':>3} {'Min':>4} "
+        f"{'PTS':>4} {'REB':>4} {'AST':>4} {'STL':>4} {'BLK':>4} "
+        f"{'OVR':>4} {'OFF':>4} {'DEF':>4} {'SPC':>4} {'CRE':>4} {'RPr':>4} {'REB':>4} {'ATH':>4} {'DIS':>4} {'Rim':>4} {'Contract':>9}"
+    )
+    for idx, row in enumerate(rows, start=start):
+        player = row["player"]
+        attrs = row["attrs"]
+        print(
+            f"{idx:>2}. {str(player.get('name') or '')[:22]:<22} {(row.get('team') or {}).get('abbrev', ''):<3} "
+            f"{compact_position(player.get('position')):<3} {age_text(player, 3)} {float(row.get('minutes') or 0):>4.1f} "
+            f"{float(row.get('points') or 0):>4.1f} {float(row.get('rebounds') or 0):>4.1f} {float(row.get('assists') or 0):>4.1f} "
+            f"{float(row.get('steals') or 0):>4.1f} {float(row.get('blocks') or 0):>4.1f} "
+            f"{float(attrs.get('overall') or 0):>4.0f} {float(attrs.get('offense') or 0):>4.0f} {float(attrs.get('defense') or 0):>4.0f} "
+            f"{float(attrs.get('spacing') or 0):>4.0f} {float(attrs.get('creation') or 0):>4.0f} {float(attrs.get('rim_pressure') or 0):>4.0f} "
+            f"{float(attrs.get('rebounding') or 0):>4.0f} {float(attrs.get('athleticism') or 0):>4.0f} {float(attrs.get('disruption') or 0):>4.0f} "
+            f"{float(attrs.get('rim_protection') or 0):>4.0f} {row.get('contract', ''):>9}"
+        )
+
+
+def trait_label(key: str) -> str:
+    return next((label for sort_key, label in LEAGUE_TRAIT_SORTS if sort_key == key), clean_label(key))
+
+
+def contract_summary_text(salary: float | int | None) -> str:
+    if salary is None:
+        return "FA"
+    return f"${float(salary) / 1_000_000:.1f}M"
+
+
 def minutes_room(canonical: dict[str, Any], save_path: Path, user_team: str) -> None:
     while True:
         clear_screen()
         save = ensure_league_save_defaults(load_save(save_path), canonical)
+        if prune_rotation_recommendations(save, canonical):
+            write_save(save_path, save)
         active = canonical_with_save(canonical, save)
         team = resolve_team(active, user_team)
         active_recs = [
@@ -1139,45 +1351,50 @@ def trade_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed:
 
 
 def guided_trade_builder(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int) -> None:
-    partner = choose_team_abbrev(canonical, "Trade partner", default=user_team, allow_back=True)
-    if not partner:
-        return
-    if partner == user_team:
-        pause("Pick another team as the trade partner.")
-        return
-    result: dict[str, Any] | None = None
     while True:
-        save = ensure_league_save_defaults(load_save(save_path), canonical)
-        active = canonical_with_save(canonical, save)
-        user_team_id = resolve_team(active, user_team)["id"]
-        partner_id = resolve_team(active, partner)["id"]
-        to_assets = choose_assets(active, save, partner, "Assets you receive from " + partner, save_path=save_path, sender_team_id=partner_id, receiver_team_id=user_team_id, prompt_pick_terms=True)
-        if to_assets is None:
-            pause("Trade cancelled.")
+        partner = choose_team_abbrev(canonical, "Trade partner", default=user_team, allow_back=True)
+        if not partner:
             return
-        from_assets = choose_assets(active, save, user_team, "Assets you send to " + partner, save_path=save_path, sender_team_id=user_team_id, receiver_team_id=partner_id, prompt_pick_terms=True)
-        if from_assets is None or to_assets is None or (not from_assets and not to_assets):
-            pause("Trade cancelled.")
-            return
-        specs = [f"FROM:{asset['kind']}:{asset['value']}" for asset in from_assets] + [f"TO:{asset['kind']}:{asset['value']}" for asset in to_assets]
-        terms = pick_terms_from_selected_assets([*from_assets, *to_assets])
-        result = propose_trade_to_save(active, save_path, user_team, partner, specs, seed=seed, store=False, pick_obligation_terms=terms)
-        print_trade_result(result)
-        if result.get("legality", {}).get("status") == "legal":
-            break
-        print_legality_failures(result.get("legality") or {})
-        if not yes_no("Reselect assets and re-offer?"):
-            break
-    if result and user_can_apply_trade(canonical, result, user_team) and yes_no("Apply legal trade now?"):
-        result = attach_pick_terms_to_trade(canonical, save_path, result)
-        store_trade_offer(save_path, result)
-        applied = apply_trade_to_save(save_path, result["proposal"]["id"], date=load_save(save_path).get("state", {}).get("current_date"))
-        print(f"Trade apply result: {applied.get('status')}")
-    elif result and yes_no("Save this offer/counter in pending actions?"):
-        result = attach_pick_terms_to_trade(canonical, save_path, result)
-        store_trade_offer(save_path, result)
-        print("Offer saved in pending actions.")
-    wait()
+        if partner == user_team:
+            pause("Pick another team as the trade partner.")
+            continue
+        result: dict[str, Any] | None = None
+        while True:
+            save = ensure_league_save_defaults(load_save(save_path), canonical)
+            active = canonical_with_save(canonical, save)
+            user_team_id = resolve_team(active, user_team)["id"]
+            partner_id = resolve_team(active, partner)["id"]
+            to_assets = choose_assets(active, save, partner, "Assets you receive from " + partner, save_path=save_path, sender_team_id=partner_id, receiver_team_id=user_team_id, prompt_pick_terms=True)
+            if to_assets is None:
+                result = None
+                break
+            from_assets = choose_assets(active, save, user_team, "Assets you send to " + partner, save_path=save_path, sender_team_id=user_team_id, receiver_team_id=partner_id, prompt_pick_terms=True)
+            if from_assets is None:
+                result = None
+                break
+            if not from_assets and not to_assets:
+                pause("No assets selected.")
+                continue
+            specs = [f"FROM:{asset['kind']}:{asset['value']}" for asset in from_assets] + [f"TO:{asset['kind']}:{asset['value']}" for asset in to_assets]
+            terms = pick_terms_from_selected_assets([*from_assets, *to_assets])
+            result = propose_trade_to_save(active, save_path, user_team, partner, specs, seed=seed, store=False, pick_obligation_terms=terms)
+            print_trade_result(result)
+            if result.get("legality", {}).get("status") == "legal":
+                break
+            print_legality_failures(result.get("legality") or {})
+            if not yes_no("Reselect assets and re-offer?"):
+                break
+        if result is None:
+            continue
+        if user_can_apply_trade(canonical, result, user_team) and yes_no("Apply legal trade now?"):
+            result = attach_pick_terms_to_trade(canonical, save_path, result)
+            store_trade_offer(save_path, result)
+            applied = apply_trade_to_save(save_path, result["proposal"]["id"], date=load_save(save_path).get("state", {}).get("current_date"))
+            print(f"Trade apply result: {applied.get('status')}")
+        else:
+            print("Offer not applied. Go back and re-select assets if you want to try a different structure.")
+        wait()
+        return
 
 
 def user_can_apply_trade(canonical: dict[str, Any], result: dict[str, Any], user_team: str) -> bool:
@@ -1395,13 +1612,13 @@ def trade_finder_room(canonical: dict[str, Any], save_path: Path, user_team: str
                 continue
             trade_finder_followup(active, report, save_path)
         elif choice == "2":
-            target_team = choose_team_abbrev(active, "Choose the team with the asset you want", default=user_team, allow_back=True)
-            if not target_team:
-                continue
-            if target_team == user_team:
-                pause("That is your team. Use 'Shop my asset(s)' for your own roster.")
-                continue
             while True:
+                target_team = choose_team_abbrev(active, "Choose the team with the asset you want", default=user_team, allow_back=True)
+                if not target_team:
+                    break
+                if target_team == user_team:
+                    pause("That is your team. Use 'Shop my asset(s)' for your own roster.")
+                    continue
                 save = ensure_league_save_defaults(load_save(save_path), canonical)
                 active = canonical_with_save(canonical, save)
                 target_team_id = resolve_team(active, target_team)["id"]
@@ -1418,7 +1635,7 @@ def trade_finder_room(canonical: dict[str, Any], save_path: Path, user_team: str
                     prompt_pick_terms=True,
                 )
                 if selected is None:
-                    break
+                    continue
                 if not selected:
                     pause("No assets selected.")
                     continue
@@ -1900,8 +2117,7 @@ def actions_room(canonical: dict[str, Any], save_path: Path, seed: int) -> None:
     print("2. Process bundles automatically")
     print("3. Reject/clear processed suggestions")
     if trades_legal:
-        print("4. Review saved trade offers")
-        print("5. Review AI trade offers to you")
+        print("4. Review AI trade offers to you")
     print("0. Back")
     choice = input("> Pick a number: ").strip()
     if choice == "1":
@@ -1919,8 +2135,6 @@ def actions_room(canonical: dict[str, Any], save_path: Path, seed: int) -> None:
         write_save(save_path, save)
         print(f"Cleared {before - len(save['pending_ai_actions'])} old AI action(s).")
     elif choice == "4" and trades_legal:
-        saved_trades_room(canonical, save_path)
-    elif choice == "5" and trades_legal:
         user_trade_offers_room(canonical, save_path)
     wait()
 
@@ -2303,18 +2517,23 @@ def draft_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed:
                 if chosen is None:
                     continue
                 current = chosen
-            result = apply_current_draft_selection(save_path, current)
+            result = apply_current_draft_selection(save_path, current, canonical=canonical, user_team=user_team, seed=seed)
+            print_draft_breaking_news(drain_draft_trade_news(save_path))
             print_draft_apply_result(result)
             wait()
         elif choice == "2":
             print(style("Simulating to your next pick...", "accent"))
             with loading_screen(save_path.parent.parent if save_path.parent.name == "saves" else Path.cwd(), "Simulating to your next pick...", seed=seed):
-                result = sim_to_next_user_pick(canonical, save_path, user_team)
+                result = sim_to_next_user_pick(canonical, save_path, user_team, seed=seed)
+            news = result.get("draft_trade_news") or []
+            print_draft_breaking_news(news)
             print(f"Simulated {result['applied_count']} pick(s).")
             if result.get("current_selection"):
                 print("Stopped at your next pick.")
             else:
                 print("Draft complete.")
+            if news:
+                wait()
             continue
         elif choice == "3":
             print_draft_board(canonical, save_path, user_team, limit=60)
@@ -2329,7 +2548,8 @@ def draft_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed:
         elif choice == "6":
             print(style("Simulating the rest of the draft...", "accent"))
             with loading_screen(save_path.parent.parent if save_path.parent.name == "saves" else Path.cwd(), "Simulating the full draft...", seed=seed):
-                result = sim_entire_draft(save_path)
+                result = sim_entire_draft(save_path, canonical=canonical, user_team=user_team, seed=seed)
+            print_draft_breaking_news(result.get("draft_trade_news") or [])
             print(f"Draft complete. Applied {result['applied_count']} pick(s).")
             print_full_draft_recap(canonical, save_path, year)
             wait()
@@ -2349,7 +2569,9 @@ def ensure_live_draft_state(canonical: dict[str, Any], save_path: Path, year: st
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     state = save.get("draft_state") or {}
     if state.get("year") == year and state.get("status") in {"in_progress", "completed"} and state.get("draft"):
-        if refresh_live_draft_state_ownership(canonical, save, year):
+        changed = sync_live_draft_state_to_saved_order(canonical, save, year)
+        changed = refresh_live_draft_state_ownership(canonical, save, year) or changed
+        if changed:
             write_save(save_path, save)
         return state
     active = canonical_with_save(canonical, save)
@@ -2361,11 +2583,287 @@ def ensure_live_draft_state(canonical: dict[str, Any], save_path: Path, year: st
         "current_index": 0,
         "draft": draft,
         "applied_selection_ids": [],
+        "ai_draft_traded_pick_ids": [],
+        "ai_draft_trade_budget": {"top_10": 0, "picks_11_25": 0, "total": 0},
+        "ai_draft_trade_news_queue": [],
     }
     if draft.get("draft_order") or draft.get("lottery"):
         save.setdefault("draft_orders", {})[year] = {"draft_order": draft.get("draft_order", []), "lottery": draft.get("lottery")}
     write_save(save_path, save)
     return save["draft_state"]
+
+
+def ensure_draft_ai_trade_state(state: dict[str, Any]) -> None:
+    state.setdefault("ai_draft_traded_pick_ids", [])
+    state.setdefault("ai_draft_trade_budget", {"top_10": 0, "picks_11_25": 0, "total": 0})
+    state.setdefault("ai_draft_trade_news_queue", [])
+
+
+def apply_ai_trade_candidate_to_save(canonical: dict[str, Any], save_path: Path, candidate: dict[str, Any], date_value: str) -> dict[str, Any]:
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    proposal = candidate.get("proposal") or {}
+    proposal_id = proposal.get("id")
+    if not proposal_id:
+        return {"status": "not_applied", "notes": "AI trade candidate had no proposal id."}
+    pending = save.setdefault("pending_trade_proposals", [])
+    if not any(((item.get("proposal") or {}).get("id") or item.get("id")) == proposal_id for item in pending):
+        pending.append({**candidate, "accepted_by_all": True})
+    write_save(save_path, save)
+    return apply_trade_to_save(save_path, proposal_id, date=date_value)
+
+
+def maybe_run_ai_draft_trades_before_pick(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int, force: bool = False) -> dict[str, Any]:
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    state = save.setdefault("draft_state", {})
+    ensure_draft_ai_trade_state(state)
+    current = current_draft_selection(state)
+    if not current:
+        write_save(save_path, save)
+        return {"applied_count": 0, "trades": []}
+    user_team_id = resolve_team(canonical, user_team)["id"]
+    selection = current.get("selection") or {}
+    seller_team_id = selection.get("team_id")
+    pick_id = selection.get("pick_id") or (current.get("pick") or {}).get("id")
+    overall = int(selection.get("overall_pick") or 999)
+    if not pick_id or seller_team_id == user_team_id or overall > 25:
+        write_save(save_path, save)
+        return {"applied_count": 0, "trades": []}
+    traded_ids = set(state.get("ai_draft_traded_pick_ids") or [])
+    used_ids = set(state.get("used_pick_ids") or [])
+    if pick_id in traded_ids or pick_id in used_ids:
+        write_save(save_path, save)
+        return {"applied_count": 0, "trades": []}
+    budget = state.setdefault("ai_draft_trade_budget", {"top_10": 0, "picks_11_25": 0, "total": 0})
+    if not force:
+        if int(budget.get("total") or 0) >= 6:
+            write_save(save_path, save)
+            return {"applied_count": 0, "trades": []}
+        if overall <= 10 and int(budget.get("top_10") or 0) >= 2:
+            write_save(save_path, save)
+            return {"applied_count": 0, "trades": []}
+        if 11 <= overall <= 25 and int(budget.get("picks_11_25") or 0) >= 5:
+            write_save(save_path, save)
+            return {"applied_count": 0, "trades": []}
+    active = with_transaction_context(canonical_with_save(canonical, save))
+    candidate = best_ai_draft_trade_candidate(active, save, state, current, user_team_id, seed)
+    if not candidate:
+        write_save(save_path, save)
+        return {"applied_count": 0, "trades": []}
+    applied = apply_ai_trade_candidate_to_save(canonical, save_path, candidate, save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
+    if applied.get("status") != "applied":
+        return {"applied_count": 0, "trades": [], "skipped": applied}
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    state = save.setdefault("draft_state", {})
+    ensure_draft_ai_trade_state(state)
+    proposal = candidate.get("proposal") or {}
+    involved_pick_ids = {
+        asset.get("id")
+        for asset in [*(proposal.get("from_assets") or []), *(proposal.get("to_assets") or [])]
+        if asset.get("kind") == "pick" and asset.get("id")
+    }
+    state["ai_draft_traded_pick_ids"] = sorted(set(state.get("ai_draft_traded_pick_ids") or []) | involved_pick_ids)
+    budget = state.setdefault("ai_draft_trade_budget", {"top_10": 0, "picks_11_25": 0, "total": 0})
+    budget["total"] = int(budget.get("total") or 0) + 1
+    if overall <= 10:
+        budget["top_10"] = int(budget.get("top_10") or 0) + 1
+    elif overall <= 25:
+        budget["picks_11_25"] = int(budget.get("picks_11_25") or 0) + 1
+    headline = draft_trade_headline(active, state, proposal)
+    state.setdefault("ai_draft_trade_news_queue", []).append(
+        {
+            "id": stable_id("draft_breaking_news", proposal.get("id"), overall),
+            "overall_pick": overall,
+            "headline": headline,
+            "proposal_id": proposal.get("id"),
+        }
+    )
+    refresh_live_draft_state_ownership(canonical, save, state.get("year"))
+    write_save(save_path, save)
+    return {"applied_count": 1, "trades": [candidate], "apply_result": applied}
+
+
+def best_ai_draft_trade_candidate(
+    active: dict[str, Any],
+    save: dict[str, Any],
+    state: dict[str, Any],
+    current: dict[str, Any],
+    user_team_id: str,
+    seed: int,
+) -> dict[str, Any] | None:
+    selection = current.get("selection") or {}
+    pick_id = selection.get("pick_id") or (current.get("pick") or {}).get("id")
+    seller_team_id = selection.get("team_id")
+    overall = int(selection.get("overall_pick") or 999)
+    if not pick_id or not seller_team_id:
+        return None
+    seller = team_by_id(active, seller_team_id)
+    unavailable = taken_draft_prospect_ids(state)
+    seller_recs = pick_recommendations(active, seller["abbrev"], pick_id, limit=5, seed=seed, unavailable_prospect_ids=unavailable).get("recommendations") or []
+    seller_top = float(((seller_recs[0] or {}).get("entry") or {}).get("risk_adjusted_grade") or 0.0) if seller_recs else 0.0
+    seller_second = float(((seller_recs[1] or {}).get("entry") or {}).get("risk_adjusted_grade") or seller_top) if len(seller_recs) > 1 else seller_top
+    seller_willingness = max(0.0, 8.0 - max(0.0, seller_top - seller_second))
+    candidates: list[tuple[float, dict[str, Any]]] = []
+    for buyer in sorted(active.get("teams", []), key=lambda item: item.get("abbrev", "")):
+        if buyer.get("id") in {seller_team_id, user_team_id}:
+            continue
+        lower_pick = draft_trade_lower_pick_for_buyer(active, state, buyer["id"], overall)
+        if not lower_pick and overall <= 10:
+            continue
+        buyer_recs = pick_recommendations(active, buyer["abbrev"], pick_id, limit=3, seed=seed, unavailable_prospect_ids=unavailable).get("recommendations") or []
+        if not buyer_recs:
+            continue
+        buyer_grade = float(((buyer_recs[0] or {}).get("entry") or {}).get("risk_adjusted_grade") or 0.0)
+        if buyer_grade < (60.0 if overall <= 10 else 55.0):
+            continue
+        to_assets = draft_trade_offer_assets(active, state, buyer["id"], pick_id, lower_pick, overall)
+        if not to_assets:
+            continue
+        try:
+            report = evaluate_trade(active, seller["abbrev"], buyer["abbrev"], [{"kind": "pick", "value": pick_id}], to_assets, seed=seed, date=save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
+        except ValueError:
+            continue
+        candidate = candidate_from_evaluation(active, report)
+        if candidate.get("legality", {}).get("status") != "legal":
+            continue
+        seller_eval = next((item for item in candidate.get("evaluations", []) if item.get("perspective_team_id") == seller_team_id), {})
+        buyer_eval = next((item for item in candidate.get("evaluations", []) if item.get("perspective_team_id") == buyer["id"]), {})
+        seller_net = float(seller_eval.get("net_value") or -99.0)
+        buyer_net = float(buyer_eval.get("net_value") or -99.0)
+        seller_state = next((item for item in active.get("team_strategic_states", []) if item.get("team_id") == seller_team_id), {})
+        seller_floor = 4.0 if overall <= 5 else 1.5 if overall <= 10 else -2.0
+        if overall <= 8 and seller_state.get("phase") in {"rebuilding", "developing"}:
+            seller_floor += 4.0
+        if seller_net < seller_floor or buyer_net < -22.0:
+            continue
+        move_down = draft_trade_move_down_distance(state, buyer["id"], overall)
+        urgency = buyer_grade - max(0.0, move_down - 5) * 0.55
+        score = seller_net * 1.6 + buyer_net * 0.45 + urgency + seller_willingness
+        candidate["accepted_by_all"] = True
+        candidate["ai_draft_trade_context"] = {
+            "overall_pick": overall,
+            "buyer_grade": round(buyer_grade, 2),
+            "seller_willingness": round(seller_willingness, 2),
+            "move_down": move_down,
+        }
+        candidates.append((score, candidate))
+    if not candidates:
+        return None
+    candidates.sort(key=lambda item: (item[0], jsonable_proposal_id(item[1])), reverse=True)
+    return candidates[0][1]
+
+
+def taken_draft_prospect_ids(state: dict[str, Any]) -> set[str]:
+    pending = state.get("draft", {}).get("pending_draft_selections", [])
+    index = int(state.get("current_index") or 0)
+    return {
+        (item.get("selection") or {}).get("prospect_id")
+        for item in pending[:index]
+        if (item.get("selection") or {}).get("prospect_id")
+    }
+
+
+def draft_trade_lower_pick_for_buyer(active: dict[str, Any], state: dict[str, Any], buyer_team_id: str, current_overall: int) -> dict[str, Any] | None:
+    traded = set(state.get("ai_draft_traded_pick_ids") or [])
+    used = set(state.get("used_pick_ids") or [])
+    pending = state.get("draft", {}).get("pending_draft_selections", [])
+    max_drop = 8 if current_overall <= 10 else 10
+    candidates = []
+    for item in pending[int(state.get("current_index") or 0) + 1:]:
+        selection = item.get("selection") or {}
+        pick = item.get("pick") or {}
+        pick_id = selection.get("pick_id") or pick.get("id")
+        overall = int(selection.get("overall_pick") or 999)
+        if (
+            selection.get("team_id") == buyer_team_id
+            and int(pick.get("round") or (1 if overall <= 30 else 2)) == 1
+            and current_overall < overall <= current_overall + max_drop
+            and pick_id not in traded
+            and pick_id not in used
+        ):
+            active_pick = pick_by_id(active, pick_id) or pick
+            candidates.append((overall, active_pick))
+    return sorted(candidates, key=lambda item: item[0])[0][1] if candidates else None
+
+
+def draft_trade_offer_assets(active: dict[str, Any], state: dict[str, Any], buyer_team_id: str, target_pick_id: str, lower_pick: dict[str, Any] | None, overall: int) -> list[dict[str, Any]]:
+    traded = set(state.get("ai_draft_traded_pick_ids") or [])
+    used = set(state.get("used_pick_ids") or [])
+    assets: list[dict[str, Any]] = []
+    if lower_pick:
+        assets.append({"kind": "pick", "value": lower_pick["id"]})
+    target_pick = pick_by_id(active, target_pick_id)
+    target_value = pick_asset_value(target_pick, "neutral")
+    current_value = sum(pick_asset_value(pick_by_id(active, asset["value"]), "neutral") for asset in assets)
+    extras = [
+        pick for pick in tradeable_picks_for_team(active, buyer_team_id)
+        if pick.get("id") not in {target_pick_id, *(asset["value"] for asset in assets), *traded, *used}
+    ]
+    firsts = sorted(
+        [pick for pick in extras if int(pick.get("round") or 0) == 1 and str(pick.get("season") or "") != str((target_pick or {}).get("season") or "")],
+        key=lambda pick: pick_asset_value(pick, "neutral"),
+        reverse=True,
+    )
+    seconds = sorted(
+        [pick for pick in extras if int(pick.get("round") or 0) == 2],
+        key=lambda pick: pick_asset_value(pick, "neutral"),
+        reverse=True,
+    )
+    required_factor = 0.96 if overall <= 10 else 0.88
+    if overall <= 10 and current_value < target_value * 0.9 and firsts:
+        assets.append({"kind": "pick", "value": firsts[0]["id"]})
+        current_value += pick_asset_value(firsts[0], "neutral")
+    for pick in seconds[:3]:
+        if current_value >= target_value * required_factor and len(assets) > 1:
+            break
+        assets.append({"kind": "pick", "value": pick["id"]})
+        current_value += pick_asset_value(pick, "neutral")
+    if lower_pick and len(assets) == 1:
+        return []
+    if current_value < target_value * (0.9 if overall <= 10 else 0.78):
+        return []
+    return assets[:4]
+
+
+def draft_trade_headline(active: dict[str, Any], state: dict[str, Any], proposal: dict[str, Any]) -> str:
+    from_assets = ", ".join(draft_trade_asset_label(active, state, asset) for asset in proposal.get("from_assets", [])) or "assets"
+    to_assets = ", ".join(draft_trade_asset_label(active, state, asset) for asset in proposal.get("to_assets", [])) or "assets"
+    return f"Trade completed: {from_assets} for {to_assets}."
+
+
+def draft_trade_asset_label(active: dict[str, Any], state: dict[str, Any], asset: dict[str, Any]) -> str:
+    if asset.get("kind") != "pick":
+        return asset.get("label") or asset.get("name") or asset.get("id") or "asset"
+    pick_id = asset.get("id") or asset.get("value")
+    pending = (state.get("draft") or {}).get("pending_draft_selections") or []
+    item = next(
+        (
+            row for row in pending
+            if ((row.get("selection") or {}).get("pick_id") or (row.get("pick") or {}).get("id")) == pick_id
+        ),
+        None,
+    )
+    if item:
+        selection = item.get("selection") or {}
+        pick = item.get("pick") or {}
+        owner = selection.get("team_id") or pick.get("current_owner_team_id")
+        return f"Pick #{selection.get('overall_pick')} (owned by {team_id_to_abbrev(owner)})"
+    pick = pick_by_id(active, pick_id)
+    return pick_display_label(active, pick) if pick else asset.get("label") or str(pick_id)
+
+
+def draft_trade_move_down_distance(state: dict[str, Any], buyer_team_id: str, current_overall: int) -> int:
+    pending = state.get("draft", {}).get("pending_draft_selections", [])
+    later = [
+        int((item.get("selection") or {}).get("overall_pick") or 999)
+        for item in pending
+        if (item.get("selection") or {}).get("team_id") == buyer_team_id
+        and int((item.get("selection") or {}).get("overall_pick") or 999) > current_overall
+    ]
+    return min(later) - current_overall if later else 12
+
+
+def jsonable_proposal_id(candidate: dict[str, Any]) -> str:
+    return str((candidate.get("proposal") or {}).get("id") or candidate.get("summary") or "")
 
 
 def refresh_live_draft_state_ownership(canonical: dict[str, Any], save: dict[str, Any], year: str | None = None) -> bool:
@@ -2428,14 +2926,82 @@ def apply_saved_draft_order_to_draft(canonical: dict[str, Any], save: dict[str, 
         item = picks_by_overall.get(overall)
         if not item:
             continue
-        team_id = pick_order.get("current_owner_team_id")
+        team_id = pick_order.get("current_owner_team_id") or pick_order.get("owner_team_id")
+        pick_id = pick_order.get("id") or pick_order.get("pick_id")
         if not team_id:
             continue
-        item.setdefault("selection", {})["team_id"] = team_id
-        item.setdefault("pick", {})["current_owner_team_id"] = team_id
+        selection = item.setdefault("selection", {})
+        pick = item.setdefault("pick", {})
+        selection["team_id"] = team_id
+        if pick_id:
+            selection["pick_id"] = pick_id
+            pick["id"] = pick_id
+            pick["pick_id"] = pick_id
+        if pick_order.get("original_team_id"):
+            selection["original_team_id"] = pick_order.get("original_team_id")
+            pick["original_team_id"] = pick_order.get("original_team_id")
+        pick["current_owner_team_id"] = team_id
+        pick["owner_team_id"] = team_id
+        for key in ("season", "round", "overall_pick", "lottery_slot", "pre_lottery_rank"):
+            if pick_order.get(key) is not None:
+                pick[key] = pick_order.get(key)
         item["team"] = teams.get(team_id, {"id": team_id, "abbrev": str(team_id).replace("team_", "").upper()})
     draft["pending_draft_selections"] = sorted(pending, key=lambda item: int((item.get("selection") or {}).get("overall_pick") or 999))
     return draft
+
+
+def sync_live_draft_state_to_saved_order(canonical: dict[str, Any], save: dict[str, Any], year: str) -> bool:
+    state = save.get("draft_state") or {}
+    if str(state.get("year") or "") != str(year):
+        return False
+    draft = state.get("draft") or {}
+    pending = draft.get("pending_draft_selections") or []
+    order = ((save.get("draft_orders") or {}).get(str(year)) or {}).get("draft_order") or []
+    if not pending or not order:
+        return False
+    teams = {team["id"]: team for team in canonical.get("teams", [])}
+    order_by_overall = {int(row.get("overall_pick") or 0): row for row in order if row.get("overall_pick")}
+    current_index = int(state.get("current_index") or 0)
+    changed = False
+    for idx, item in enumerate(pending):
+        if idx < current_index:
+            continue
+        selection = item.setdefault("selection", {})
+        overall = int(selection.get("overall_pick") or idx + 1)
+        row = order_by_overall.get(overall)
+        if not row:
+            continue
+        pick_id = row.get("id") or row.get("pick_id")
+        owner_id = row.get("current_owner_team_id") or row.get("owner_team_id")
+        if not pick_id or not owner_id:
+            continue
+        pick = item.setdefault("pick", {})
+        before = (
+            selection.get("pick_id"),
+            selection.get("team_id"),
+            pick.get("id"),
+            pick.get("current_owner_team_id"),
+        )
+        selection["pick_id"] = pick_id
+        selection["team_id"] = owner_id
+        selection["original_team_id"] = row.get("original_team_id")
+        pick["id"] = pick_id
+        pick["pick_id"] = pick_id
+        pick["original_team_id"] = row.get("original_team_id")
+        pick["current_owner_team_id"] = owner_id
+        pick["owner_team_id"] = owner_id
+        for key in ("season", "round", "overall_pick", "lottery_slot", "pre_lottery_rank"):
+            if row.get(key) is not None:
+                pick[key] = row.get(key)
+        item["team"] = teams.get(owner_id, {"id": owner_id, "abbrev": team_id_to_abbrev(owner_id)})
+        after = (
+            selection.get("pick_id"),
+            selection.get("team_id"),
+            pick.get("id"),
+            pick.get("current_owner_team_id"),
+        )
+        changed = changed or before != after
+    return changed
 
 
 def print_draft_clock(canonical: dict[str, Any], state: dict[str, Any], current: dict[str, Any] | None, user_team: str | None = None) -> None:
@@ -2517,7 +3083,19 @@ def choose_user_draft_pick(canonical: dict[str, Any], save_path: Path, state: di
     return current
 
 
-def apply_current_draft_selection(save_path: Path, current: dict[str, Any]) -> dict[str, Any]:
+def apply_current_draft_selection(
+    save_path: Path,
+    current: dict[str, Any],
+    canonical: dict[str, Any] | None = None,
+    user_team: str | None = None,
+    seed: int = 1,
+) -> dict[str, Any]:
+    if canonical is not None and user_team:
+        maybe_run_ai_draft_trades_before_pick(canonical, save_path, user_team, seed)
+        save_after_trade = load_save(save_path)
+        refreshed = current_draft_selection(save_after_trade.get("draft_state") or {})
+        if refreshed:
+            current = refreshed
     save = load_save(save_path)
     selection_id = current.get("id") or current.get("selection", {}).get("id")
     save.setdefault("pending_draft_selections", [])
@@ -2538,7 +3116,7 @@ def apply_current_draft_selection(save_path: Path, current: dict[str, Any]) -> d
     return result
 
 
-def sim_to_next_user_pick(canonical: dict[str, Any], save_path: Path, user_team: str) -> dict[str, Any]:
+def sim_to_next_user_pick(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int = 1) -> dict[str, Any]:
     team = resolve_team(canonical, user_team)
     applied = 0
     current_payload = None
@@ -2552,12 +3130,12 @@ def sim_to_next_user_pick(canonical: dict[str, Any], save_path: Path, user_team:
         if (current.get("selection") or {}).get("team_id") == team["id"]:
             current_payload = current
             break
-        apply_current_draft_selection(save_path, current)
+        apply_current_draft_selection(save_path, current, canonical=canonical, user_team=user_team, seed=seed)
         applied += 1
-    return {"applied_count": applied, "current_selection": current_payload}
+    return {"applied_count": applied, "current_selection": current_payload, "draft_trade_news": drain_draft_trade_news(save_path)}
 
 
-def sim_entire_draft(save_path: Path) -> dict[str, Any]:
+def sim_entire_draft(save_path: Path, canonical: dict[str, Any] | None = None, user_team: str | None = None, seed: int = 1) -> dict[str, Any]:
     applied = 0
     while True:
         save = load_save(save_path)
@@ -2567,9 +3145,31 @@ def sim_entire_draft(save_path: Path) -> dict[str, Any]:
             state["status"] = "completed"
             write_save(save_path, save)
             break
-        apply_current_draft_selection(save_path, current)
+        apply_current_draft_selection(save_path, current, canonical=canonical, user_team=user_team, seed=seed)
         applied += 1
-    return {"applied_count": applied}
+    return {"applied_count": applied, "draft_trade_news": drain_draft_trade_news(save_path)}
+
+
+def drain_draft_trade_news(save_path: Path) -> list[dict[str, Any]]:
+    save = load_save(save_path)
+    state = save.setdefault("draft_state", {})
+    news = list(state.get("ai_draft_trade_news_queue") or [])
+    if news:
+        state["ai_draft_trade_news_queue"] = []
+        write_save(save_path, save)
+    return news
+
+
+def print_draft_breaking_news(news: list[dict[str, Any]]) -> None:
+    if not news:
+        return
+    print_title("Breaking News")
+    print("Draft-night trade activity")
+    for item in news:
+        pick = item.get("overall_pick")
+        prefix = f"Pick #{pick}: " if pick else ""
+        print(f"  {prefix}{item.get('headline')}")
+    print_rule()
 
 
 def print_draft_apply_result(result: dict[str, Any]) -> None:
@@ -3232,7 +3832,12 @@ def free_agency_room(canonical: dict[str, Any], save_path: Path, user_team: str,
         elif choice == "3":
             with loading_screen(save_path.parent.parent if save_path.parent.name == "saves" else Path.cwd(), "Simulating free agency...", seed=seed):
                 result = simulate_free_agency_to_end(canonical, save_path, user_team, seed)
-            pause(f"Free agency completed: {result.get('accepted_count', 0)} signing(s), {result.get('auto_fill_count', 0)} roster repair signing(s).")
+            print_free_agency_breaking_news(result.get("ai_trade_news") or [])
+            pause(
+                f"Free agency completed: {result.get('accepted_count', 0)} signing(s), "
+                f"{result.get('auto_fill_count', 0)} roster repair signing(s), "
+                f"{result.get('ai_trade_count', 0)} AI trade(s)."
+            )
             finish_free_agency_phase(canonical, save_path)
             return "done" if forced else None
         elif choice == "4":
@@ -3981,11 +4586,30 @@ def print_free_agency_day_recap(canonical: dict[str, Any], save_path: Path, day:
         player = players.get(offer.get("player_id"), {"name": offer.get("player_id")})
         team = teams.get(offer.get("team_id"), {})
         print(f"  {player.get('name')} -> {team.get('abbrev') or 'TEAM'} ${float(offer.get('aav_millions') or 0):.1f}M x {offer.get('years')}")
+    trade_news = result.get("ai_trade_news") or []
+    if trade_news:
+        print_rule()
+        print(style("League trades", "accent"))
+        for item in trade_news[-8:]:
+            print(f"  {item.get('headline')}")
+
+
+def print_free_agency_breaking_news(news: list[dict[str, Any]]) -> None:
+    if not news:
+        return
+    clear_screen()
+    print_title("Breaking News")
+    print("Free-agency trade activity")
+    for item in news[-10:]:
+        print(f"  {item.get('headline')}")
+    print_rule()
 
 
 def advance_free_agency_day(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int) -> dict[str, Any]:
     process_ai_free_agency_offers_for_day(canonical, save_path, user_team, seed)
+    pre_trades = maybe_run_free_agency_ai_trades(canonical, save_path, user_team, seed, phase="pre_resolution")
     accepted = resolve_free_agency_day(canonical, save_path, seed)
+    post_trades = maybe_run_free_agency_ai_trades(canonical, save_path, user_team, seed, phase="post_resolution")
     adjusted = adjust_free_agent_asks(canonical, save_path, seed)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     state = save.setdefault("free_agency_state", {})
@@ -4001,7 +4625,215 @@ def advance_free_agency_day(canonical: dict[str, Any], save_path: Path, user_tea
         "accepted_count": accepted.get("accepted_count", 0),
         "accepted_offers": accepted.get("accepted_offers", []),
         "ask_adjusted_count": adjusted.get("ask_adjusted_count", 0),
+        "ai_trade_news": [*(pre_trades.get("news") or []), *(post_trades.get("news") or [])],
     }
+
+
+def maybe_run_free_agency_ai_trades(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int, phase: str) -> dict[str, Any]:
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    state = save.setdefault("free_agency_state", {})
+    if state.get("status") == "completed":
+        return {"applied_count": 0, "news": []}
+    day = int(state.get("day") or 1)
+    key = f"{state.get('season')}:{day}:{phase}"
+    processed = set(state.setdefault("ai_trade_days_processed", []))
+    if key in processed:
+        return {"applied_count": 0, "news": []}
+    state.setdefault("ai_trade_days_processed", []).append(key)
+    write_save(save_path, save)
+    user_team_id = resolve_team(canonical, user_team)["id"]
+    active = with_transaction_context(canonical_with_save(canonical, save))
+    candidates = (
+        free_agency_cap_dump_candidates(active, save, user_team_id, seed)
+        if phase == "pre_resolution"
+        else free_agency_fallback_trade_candidates(active, save, user_team_id, seed)
+    )
+    if not candidates and phase == "post_resolution" and int(state.get("ai_general_trade_count") or 0) < 3:
+        candidates = free_agency_general_trade_candidates(active, save, user_team_id, seed)
+    news: list[dict[str, Any]] = []
+    applied_count = 0
+    for candidate in candidates[:2]:
+        result = apply_ai_trade_candidate_to_save(canonical, save_path, candidate, save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
+        if result.get("status") != "applied":
+            continue
+        applied_count += 1
+        proposal = candidate.get("proposal") or {}
+        headline = trade_headline_from_payload(proposal)
+        news.append({"headline": headline, "proposal_id": proposal.get("id"), "phase": phase})
+        if phase == "pre_resolution":
+            upgrade_free_agency_offer_after_dump(canonical, save_path, candidate, user_team_id, seed)
+        elif candidate.get("free_agency_context", {}).get("offer_id"):
+            saved = ensure_league_save_defaults(load_save(save_path), canonical)
+            saved.setdefault("free_agency_state", {}).setdefault("ai_fallback_trade_offer_ids", []).append(candidate["free_agency_context"]["offer_id"])
+            write_save(save_path, saved)
+        elif (candidate.get("free_agency_context") or {}).get("kind") == "general_market_trade":
+            saved = ensure_league_save_defaults(load_save(save_path), canonical)
+            saved.setdefault("free_agency_state", {})["ai_general_trade_count"] = int((saved.get("free_agency_state") or {}).get("ai_general_trade_count") or 0) + 1
+            write_save(save_path, saved)
+    return {"applied_count": applied_count, "news": news}
+
+
+def free_agency_general_trade_candidates(active: dict[str, Any], save: dict[str, Any], user_team_id: str, seed: int) -> list[dict[str, Any]]:
+    from .transactions import simulate_ai_trades
+
+    current = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+    day = int((save.get("free_agency_state") or {}).get("day") or 1)
+    payload = simulate_ai_trades(active, current, current, seed=seed + day * 17, limit=12)
+    candidates: list[dict[str, Any]] = []
+    for candidate in payload.get("proposals", []):
+        proposal = candidate.get("proposal") or {}
+        if user_team_id in {proposal.get("from_team_id"), proposal.get("to_team_id")}:
+            continue
+        if not candidate.get("accepted_by_all") or (candidate.get("legality") or {}).get("status") != "legal":
+            continue
+        candidate["free_agency_context"] = {"kind": "general_market_trade"}
+        candidates.append(candidate)
+    return candidates[:1]
+
+
+def free_agency_cap_dump_candidates(active: dict[str, Any], save: dict[str, Any], user_team_id: str, seed: int) -> list[dict[str, Any]]:
+    del seed
+    players = {player["id"]: player for player in active.get("players", [])}
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for offer in save.get("free_agent_offers", []):
+        if offer.get("status") == "active":
+            grouped.setdefault(offer.get("player_id"), []).append(offer)
+    candidates: list[tuple[float, dict[str, Any]]] = []
+    for player_id, offers in grouped.items():
+        player = players.get(player_id, {})
+        if display_minutes_projection(player) < 18 and max(float(offer.get("aav_millions") or 0.0) for offer in offers) < 10:
+            continue
+        best = max(offers, key=lambda item: (float(item.get("interest_score") or 0.0), float(item.get("aav_millions") or 0.0)))
+        for offer in offers:
+            team_id = offer.get("team_id")
+            if team_id == user_team_id or team_id == best.get("team_id") or offer.get("source") != "ai":
+                continue
+            if float(best.get("interest_score") or 0.0) - float(offer.get("interest_score") or 0.0) > 16.0:
+                continue
+            candidate = free_agency_cap_dump_candidate_for_team(active, save, team_id, user_team_id, offer)
+            if candidate:
+                candidates.append((float(offer.get("interest_score") or 0.0), candidate))
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    return [candidate for _, candidate in candidates]
+
+
+def free_agency_cap_dump_candidate_for_team(active: dict[str, Any], save: dict[str, Any], team_id: str, user_team_id: str, offer: dict[str, Any]) -> dict[str, Any] | None:
+    team = team_by_id(active, team_id)
+    values = {value["player_id"]: value for value in active.get("player_asset_valuations", [])}
+    recent = recently_traded_player_ids(active, save.get("state", {}).get("current_date"))
+    roster = [
+        player for player in active.get("players", [])
+        if player.get("team_id") == team_id and player.get("id") not in recent and not player.get("id", "").startswith("rookie_")
+    ]
+    dumpable = []
+    for player in roster:
+        salary = current_salary(contract_for_player(active, player["id"])) or 0.0
+        value = float(values.get(player["id"], fallback_asset_valuation(player)).get("player_value") or 0.0)
+        if salary >= 3_000_000 and value < 44.0 and display_minutes_projection(player) < 22:
+            dumpable.append((value + display_minutes_projection(player) * 0.35, salary, player))
+    if not dumpable:
+        return None
+    _, salary, player = sorted(dumpable, key=lambda item: (item[0], -item[1]))[0]
+    recipients = []
+    for other in active.get("teams", []):
+        if other.get("id") in {team_id, user_team_id}:
+            continue
+        cap = team_cap_summary(active, save, other["id"])
+        if float(cap.get("tax_space_millions") or 0.0) >= salary / 1_000_000 + 1.0:
+            recipients.append(other)
+    if not recipients:
+        return None
+    sweetener = next((pick for pick in tradeable_picks_for_team(active, team_id) if int(pick.get("round") or 0) == 2), None)
+    from_assets = [{"kind": "player", "value": player["name"]}]
+    if sweetener:
+        from_assets.append({"kind": "pick", "value": sweetener["id"]})
+    for recipient in sorted(recipients, key=lambda item: item.get("abbrev", "")):
+        try:
+            report = evaluate_trade(active, team["abbrev"], recipient["abbrev"], from_assets, [], seed=1, date=save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
+        except ValueError:
+            continue
+        if report.get("legality", {}).get("status") != "legal":
+            continue
+        candidate = candidate_from_evaluation(active, report)
+        candidate["accepted_by_all"] = True
+        candidate["free_agency_context"] = {"kind": "cap_dump", "offer_id": offer.get("id"), "player_id": offer.get("player_id")}
+        return candidate
+    return None
+
+
+def upgrade_free_agency_offer_after_dump(canonical: dict[str, Any], save_path: Path, candidate: dict[str, Any], user_team_id: str, seed: int) -> None:
+    context = candidate.get("free_agency_context") or {}
+    offer_id = context.get("offer_id")
+    if not offer_id:
+        return
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    offer = next((item for item in save.get("free_agent_offers", []) if item.get("id") == offer_id and item.get("status") == "active"), None)
+    if not offer or offer.get("team_id") == user_team_id:
+        return
+    active = canonical_with_save(canonical, save)
+    player = player_by_id(active, offer.get("player_id"))
+    team = team_by_id(active, offer.get("team_id"))
+    ask = float((save.get("free_agency_state") or {}).get("player_asks_millions", {}).get(offer.get("player_id")) or offer.get("ask_millions") or offer.get("aav_millions") or 0.0)
+    bumped = round(min(max(float(offer.get("aav_millions") or 0.0) + 3.0, ask * 1.04), ask * 1.18), 1)
+    reserved = active_bid_commitment(save, team["id"], exclude_player_id=offer.get("player_id"))
+    if not signing_cap_check(active, save, team["abbrev"], bumped, reserved_millions=reserved).get("ok"):
+        return
+    offer["aav_millions"] = bumped
+    context_score = float((offer.get("interest_context") or {}).get("context_score") or 55.0)
+    offer["interest_score"] = offer_interest_score(bumped, ask, int(offer.get("years") or 1), int(offer.get("years") or 1), context_score)
+    offer.setdefault("notes", "AI cleared salary and improved this free-agency offer.")
+    write_save(save_path, save)
+
+
+def free_agency_fallback_trade_candidates(active: dict[str, Any], save: dict[str, Any], user_team_id: str, seed: int) -> list[dict[str, Any]]:
+    processed = set((save.get("free_agency_state") or {}).get("ai_fallback_trade_offer_ids") or [])
+    candidates: list[dict[str, Any]] = []
+    for offer in save.get("free_agent_offers", []):
+        if offer.get("id") in processed or offer.get("source") != "ai" or offer.get("team_id") == user_team_id:
+            continue
+        if offer.get("status") != "rejected_player_chose_other_offer":
+            continue
+        lost_player = player_by_id(active, offer.get("player_id"))
+        if not lost_player or (display_minutes_projection(lost_player) < 18 and float(offer.get("aav_millions") or 0.0) < 10):
+            continue
+        target = similar_trade_target_for_lost_free_agent(active, save, lost_player, offer.get("team_id"), user_team_id)
+        if not target:
+            continue
+        seller = team_by_id(active, target.get("team_id"))
+        buyer = team_by_id(active, offer.get("team_id"))
+        report = find_trade_for_assets(active, seller["abbrev"], [{"kind": "player", "value": target["name"]}], for_team=buyer["abbrev"], limit=5, seed=seed)
+        accepted = next((candidate for candidate in report.get("candidates", []) if candidate.get("legality", {}).get("status") == "legal"), None)
+        if not accepted:
+            continue
+        accepted["accepted_by_all"] = True
+        accepted["free_agency_context"] = {"kind": "missed_target_fallback", "offer_id": offer.get("id"), "lost_player_id": lost_player.get("id")}
+        candidates.append(accepted)
+    return candidates
+
+
+def similar_trade_target_for_lost_free_agent(active: dict[str, Any], save: dict[str, Any], lost_player: dict[str, Any], buyer_team_id: str, user_team_id: str) -> dict[str, Any] | None:
+    values = {value["player_id"]: value for value in active.get("player_asset_valuations", [])}
+    lost_attrs = player_attribute_summary(active, lost_player["id"])
+    lost_value = float(values.get(lost_player["id"], fallback_asset_valuation(lost_player)).get("player_value") or 0.0)
+    recent = recently_traded_player_ids(active, save.get("state", {}).get("current_date"))
+    rows = []
+    for player in active.get("players", []):
+        if not player.get("team_id") or player.get("team_id") in {buyer_team_id, user_team_id} or player.get("id") in recent:
+            continue
+        if player.get("id") in set(save.get("free_agent_player_ids") or []):
+            continue
+        if player.get("position") != lost_player.get("position"):
+            continue
+        value = float(values.get(player["id"], fallback_asset_valuation(player)).get("player_value") or 0.0)
+        if abs(value - lost_value) > 16.0:
+            continue
+        attrs = player_attribute_summary(active, player["id"])
+        skill_gap = sum(
+            abs(float(attrs.get(key) or 50.0) - float(lost_attrs.get(key) or 50.0))
+            for key in ["shooting", "creation", "defense", "rim_deterrence", "passing"]
+        )
+        rows.append((skill_gap + abs(display_minutes_projection(player) - display_minutes_projection(lost_player)) * 1.2, player))
+    return sorted(rows, key=lambda item: (item[0], item[1].get("name", "")))[0][1] if rows else None
 
 
 def resolve_free_agency_day(canonical: dict[str, Any], save_path: Path, seed: int) -> dict[str, Any]:
@@ -4175,14 +5007,18 @@ def adjust_free_agent_asks(canonical: dict[str, Any], save_path: Path, seed: int
 
 def simulate_free_agency_to_end(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int) -> dict[str, Any]:
     total_accepted = 0
+    total_ai_trades = 0
+    trade_news: list[dict[str, Any]] = []
     for _ in range(6):
         save = initialize_free_agency_market(canonical, save_path, user_team, seed)
         if (save.get("free_agency_state") or {}).get("status") == "completed":
             break
         result = advance_free_agency_day(canonical, save_path, user_team, seed)
         total_accepted += int(result.get("accepted_count") or 0)
+        total_ai_trades += len(result.get("ai_trade_news") or [])
+        trade_news.extend(result.get("ai_trade_news") or [])
     auto_fill = final_free_agency_roster_repair(canonical, save_path, seed)
-    return {"accepted_count": total_accepted, "auto_fill_count": auto_fill.get("signed_count", 0)}
+    return {"accepted_count": total_accepted, "auto_fill_count": auto_fill.get("signed_count", 0), "ai_trade_count": total_ai_trades, "ai_trade_news": trade_news}
 
 
 def final_free_agency_roster_repair(canonical: dict[str, Any], save_path: Path, seed: int) -> dict[str, Any]:
@@ -5442,18 +6278,9 @@ def print_standings(canonical: dict[str, Any], save_path: Path) -> None:
 def print_leaders(canonical: dict[str, Any], save_path: Path, stat: str) -> None:
     payload = league_leaders(canonical, save_path, stat=stat, limit=15)
     stat_key = payload["stat"]
-    suffix = "rating" if payload.get("mode") == "attributes" else "/game"
-    print_title(f"League Leaders: {stat_key} {suffix}")
+    print_title(f"League Leaders: {stat_key} /game")
     for idx, row in enumerate(payload["leaders"], start=1):
-        if payload.get("mode") == "attributes":
-            attrs = row.get("attributes") or {}
-            print(
-                f"{idx:>2}. {row['player'].get('name', ''):<28} {row.get('team_abbrev') or '':<3} "
-                f"{row.get(stat_key, 0):>5} | OVR {attrs.get('overall', 0):>5} "
-                f"SH {attrs.get('shooting', 0):>5} CR {attrs.get('creation', 0):>5} DEF {attrs.get('defense', 0):>5}"
-            )
-        else:
-            print(f"{idx:>2}. {row['player'].get('name', ''):<28} {row.get('team_abbrev') or '':<3} {row.get(stat_key + '_per_game', 0):>5}/g  GP {row.get('games', 0):>2}  total {row.get(stat_key, 0):>6}")
+        print(f"{idx:>2}. {row['player'].get('name', ''):<28} {row.get('team_abbrev') or '':<3} {row.get(stat_key + '_per_game', 0):>5}/g  GP {row.get('games', 0):>2}  total {row.get(stat_key, 0):>6}")
 
 
 def print_actions(canonical: dict[str, Any], save_path: Path) -> None:
@@ -5465,7 +6292,7 @@ def print_actions(canonical: dict[str, Any], save_path: Path) -> None:
     count_text = " | ".join(
         f"{clean_label(key)} {value}"
         for key, value in counts.items()
-        if int(value or 0) > 0
+        if key != "trades" and int(value or 0) > 0
     )
     print(count_text or "No pending items.")
     visible_actions = [action for action in payload["pending_ai_actions"] if ai_action_has_visible_content(action)]
@@ -5493,8 +6320,6 @@ def print_actions(canonical: dict[str, Any], save_path: Path) -> None:
                 f"{ROLE_LABELS.get(item.get('slot'), item.get('slot'))} | "
                 f"{current.get('name', 'current')} -> {candidate.get('name')}"
             )
-    for trade in payload["pending_trade_proposals"][:6]:
-        print(f"\nSaved trade: {proposal_headline(trade)} | {clean_label((trade.get('legality') or {}).get('status'))}")
     user_offers = [
         offer for offer in payload.get("user_trade_offers", [])
         if (offer.get("offer_context") or {}).get("status") == "pending_user_review"

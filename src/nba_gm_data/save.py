@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import random
+import re
 from copy import deepcopy
 from datetime import date, timedelta
 from pathlib import Path
@@ -11,7 +12,7 @@ from typing import Any
 from .health import advance_development, simulate_health
 from .schema import CANONICAL_SEASON, CANONICAL_START_DATE, CoachRating, to_plain
 from .sim import build_sim_indices, espn_team_id_map, load_sim_context, sim_game_with_context
-from .staff import ROLE_LABELS, STAFF_SLOTS, apply_head_coach_reputation, hire_staff_from_save, initialize_save_staff_slots, interim_staff, is_interim_staff, negotiate_staff_hire, simulate_ai_staff_changes, staff_grade
+from .staff import ROLE_LABELS, STAFF_SLOTS, apply_head_coach_reputation, fire_staff_from_save, hire_staff_from_save, initialize_save_staff_slots, interim_staff, is_interim_staff, negotiate_staff_hire, simulate_ai_staff_changes, staff_grade
 from .utils import clamp, normalize_name, stable_id
 
 
@@ -47,7 +48,7 @@ SOCIAL_INJURY_GAMES_THRESHOLD = 10
 MAJOR_FREE_AGENT_AAV_THRESHOLD = 25_000_000
 MAJOR_PLAYER_MPG_THRESHOLD = 29.0
 MAJOR_INJURY_GAMES_THRESHOLD = 41
-MAJOR_STAFF_GRADE_THRESHOLD = 89.0
+MAJOR_STAFF_GRADE_THRESHOLD = 82.0
 MAJOR_STAT_LINE_THRESHOLDS = {
     "points": 49,
     "rebounds": 20,
@@ -115,6 +116,8 @@ def create_league_save(
         "pending_ai_actions": [],
         "user_trade_offers": [],
         "pending_roster_cutdowns": [],
+        "staff_firing_history": [],
+        "staff_interim_review_due": {},
         "staff_retention_windows": [],
         "processed_hidden_ai_actions": [],
         "pending_press_events": [],
@@ -155,6 +158,7 @@ def create_league_save(
         ],
     }
     seed_startup_free_agents(canonical, save, seed)
+    merge_startup_pick_obligations(save, canonical)
     align_real_head_coach_names(canonical, save)
     write_save(save_path, save)
     return save
@@ -214,6 +218,113 @@ def load_pick_obligation_overrides(root: str | Path) -> list[dict[str, Any]]:
         obligation.setdefault("source", "data/overrides/pick_obligations_overrides.json")
         output.append(obligation)
     return sorted(output, key=lambda item: str(item.get("id") or ""))
+
+
+def protected_pick_top_n_from_text(text: str) -> int | None:
+    compact = " ".join(str(text or "").split()).lower()
+    match = re.search(r"\btop[- ]?(\d{1,2})\s+protected\b", compact)
+    if match:
+        return int(match.group(1))
+    match = re.search(r"\bpicks?\s+1\s*-\s*(\d{1,2})\s+protected\b", compact)
+    if match:
+        return int(match.group(1))
+    return None
+
+
+def startup_gameplay_pick_obligations(canonical: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not canonical:
+        return []
+    from .transactions import clean_pick_protection_summary
+
+    used_fallback_ids: set[str] = set()
+    obligations: list[dict[str, Any]] = []
+    picks = list((canonical or {}).get("draft_picks", []))
+    for pick in sorted(picks, key=lambda item: (str(item.get("season") or ""), str(item.get("current_owner_team_id") or ""), str(item.get("id") or ""))):
+        if int(pick.get("round") or 0) != 1:
+            continue
+        sender = pick.get("original_team_id")
+        receiver = pick.get("current_owner_team_id")
+        if not sender or not receiver or sender == receiver:
+            continue
+        top_n = protected_pick_top_n_from_text(clean_pick_protection_summary(pick))
+        if not top_n:
+            continue
+        fallback = next(
+            (
+                candidate
+                for candidate in sorted(
+                    [
+                        item
+                        for item in picks
+                        if int(item.get("round") or 0) == 2
+                        and item.get("original_team_id") == sender
+                        and item.get("current_owner_team_id") == sender
+                        and str(item.get("season") or "") >= str(pick.get("season") or "")
+                    ],
+                    key=lambda item: (item.get("id") in used_fallback_ids, str(item.get("season") or ""), str(item.get("id") or "")),
+                )
+                if candidate.get("id")
+            ),
+            None,
+        )
+        if not fallback:
+            continue
+        used_fallback_ids.add(fallback["id"])
+        obligations.append(
+            {
+                "id": stable_id("pick_obligation", "startup_gameplay", pick.get("id"), receiver, sender, top_n, fallback.get("id")),
+                "type": "protected_pick",
+                "season": str(pick.get("season") or ""),
+                "primary_pick_id": pick.get("id"),
+                "sender_team_id": sender,
+                "receiver_team_id": receiver,
+                "protected_range": {"from": 1, "through": top_n},
+                "protected_top_n": top_n,
+                "fallback_pick_ids": [fallback["id"]],
+                "label": f"top-{top_n} protected",
+                "status": "active",
+                "source": "src_gameplay_startup_pick_obligations_v1",
+                "notes": (
+                    "Gameplay fallback generated for startup protected-pick clarity. If the primary lands in the protected range, "
+                    "original team keeps it and the receiver gets the fallback second-round pick."
+                ),
+            }
+        )
+    return obligations
+
+
+def merge_startup_pick_obligations(save: dict[str, Any], canonical: dict[str, Any] | None = None) -> int:
+    obligations = save.setdefault("pick_obligations", [])
+    locked = set(save.setdefault("locked_pick_assets", []))
+    existing_primary_ids = {
+        item.get("primary_pick_id")
+        for item in obligations
+        if item.get("type") == "protected_pick" and item.get("primary_pick_id")
+    }
+    existing_ids = {item.get("id") for item in obligations}
+    picks = {pick.get("id"): pick for pick in (canonical or {}).get("draft_picks", [])}
+    added = 0
+    for obligation in startup_gameplay_pick_obligations(canonical):
+        primary_id = obligation.get("primary_pick_id")
+        primary = picks.get(primary_id)
+        override_owner = (save.get("draft_pick_overrides") or {}).get(primary_id)
+        current_owner = override_owner or (primary or {}).get("current_owner_team_id")
+        if override_owner == "used_draft_pick" or current_owner == obligation.get("sender_team_id"):
+            continue
+        if current_owner and current_owner != obligation.get("receiver_team_id"):
+            obligation = {**obligation, "receiver_team_id": current_owner}
+        if primary_id in existing_primary_ids or obligation.get("id") in existing_ids:
+            continue
+        obligations.append(obligation)
+        existing_primary_ids.add(primary_id)
+        existing_ids.add(obligation.get("id"))
+        added += 1
+    for obligation in obligations:
+        if obligation.get("type") == "protected_pick" and obligation.get("status", "active") in {"active", "pending_resolution"}:
+            for fallback_id in obligation.get("fallback_pick_ids") or []:
+                locked.add(fallback_id)
+    save["locked_pick_assets"] = sorted(locked)
+    return added
 
 
 def seed_startup_free_agents(canonical: dict[str, Any], save: dict[str, Any], seed: int, target_count: int = 30) -> None:
@@ -419,6 +530,7 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
     save.setdefault("draft_pick_overrides", {})
     save.setdefault("pick_obligations", [])
     save.setdefault("locked_pick_assets", [])
+    merge_startup_pick_obligations(save, canonical)
     repair_reacquired_pick_obligations(save, canonical)
     save.setdefault("draft_rights", [])
     save.setdefault("rookie_contracts", [])
@@ -436,6 +548,8 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
     save.setdefault("pending_ai_actions", [])
     save.setdefault("user_trade_offers", [])
     save.setdefault("pending_roster_cutdowns", [])
+    save.setdefault("staff_firing_history", [])
+    save.setdefault("staff_interim_review_due", {})
     save.setdefault("staff_retention_windows", [])
     save.setdefault("processed_hidden_ai_actions", [])
     save.setdefault("processed_ai_extensions", [])
@@ -510,6 +624,45 @@ def repair_reacquired_pick_obligations(save: dict[str, Any], canonical: dict[str
         for fallback_id in obligation.get("fallback_pick_ids") or []:
             locked.discard(fallback_id)
     save["locked_pick_assets"] = sorted(locked)
+
+
+def prune_rotation_recommendations(save: dict[str, Any], canonical: dict[str, Any] | None = None) -> int:
+    recommendations = save.setdefault("rotation_recommendations", {})
+    if not recommendations:
+        return 0
+    players = {
+        player.get("id"): player
+        for player in [*((canonical or {}).get("players", [])), *save.get("generated_players", [])]
+        if player.get("id")
+    }
+    retired = set(save.get("retired_player_ids") or [])
+    free_agents = set(save.get("free_agent_player_ids") or [])
+    roster_overrides = save.get("roster_overrides") or {}
+    removed = 0
+    touched_teams: set[str] = set()
+    for player_id, rec in list(recommendations.items()):
+        player = players.get(player_id)
+        rec_team = rec.get("team_id")
+        actual_team = roster_overrides.get(player_id, (player or {}).get("team_id"))
+        stale = (
+            not player
+            or player_id in retired
+            or player_id in free_agents
+            or not actual_team
+            or (rec_team and actual_team != rec_team)
+            or rec.get("status") not in {None, "", "active"}
+        )
+        if not stale:
+            continue
+        recommendations.pop(player_id, None)
+        removed += 1
+        if rec_team:
+            touched_teams.add(rec_team)
+        if actual_team:
+            touched_teams.add(actual_team)
+    for team_id in touched_teams:
+        save.setdefault("rotation_snapshots", {}).pop(team_id, None)
+    return removed
 
 
 def set_save_date_phase(save: dict[str, Any], date_value: str) -> None:
@@ -716,6 +869,8 @@ def advance_save(root: str | Path, canonical: dict[str, Any] | Any, save_path: s
     add_monthly_social_digest(canonical_with_save(canonical, save), save, current, target)
     maybe_queue_rare_drama(save, canonical, current, target, effective_seed)
     write_save(save_path, save)
+    auto_ai = process_ai_actions(canonical, save_path, seed=effective_seed, execute=True, limit=30)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
     simulated_after = len(save.get("schedule_state", {}).get("simulated_game_ids", []))
     return {
         "status": "advanced",
@@ -726,6 +881,7 @@ def advance_save(root: str | Path, canonical: dict[str, Any] | Any, save_path: s
         "games_simulated": simulated_after - simulated_before,
         "total_simulated_games": simulated_after,
         "development_months_processed": sorted(save.get("applied_development_months", [])),
+        "ai_applied_count": auto_ai.get("applied_count", 0),
         "notes": "Sandbox save advancement. Real-minutes replay remains validation-only.",
     }
 
@@ -838,10 +994,11 @@ def process_ai_actions(canonical: dict[str, Any] | Any, save_path: str | Path, s
     processed: list[dict[str, Any]] = []
     applied: list[dict[str, Any]] = []
     for action in list(save.get("pending_ai_actions", []))[: max(0, limit)]:
-        if action.get("status") == "processed":
+        if action.get("status") in {"processed", "executed", "rejected"}:
             continue
         outcome = {"id": action.get("id"), "action_type": action.get("action_type"), "status": "reviewed"}
         payload = action.get("payload") or {}
+        action_date = action.get("date") or save.get("state", {}).get("current_date") or CANONICAL_START_DATE
         if action.get("action_type") == "trade_recommendations":
             accepted = [
                 proposal for proposal in payload.get("proposals", [])
@@ -865,7 +1022,7 @@ def process_ai_actions(canonical: dict[str, Any] | Any, save_path: str | Path, s
                         continue
                     save.setdefault("pending_trade_proposals", []).append(proposal)
                     write_save(save_path, save)
-                    applied_result = apply_trade_to_save(save_path, proposal["proposal"]["id"], date=save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
+                    applied_result = apply_trade_to_save(save_path, proposal["proposal"]["id"], date=action_date)
                     save = ensure_league_save_defaults(load_save(save_path), canonical)
                     if applied_result.get("status") == "applied":
                         applied_in_bundle += 1
@@ -885,7 +1042,7 @@ def process_ai_actions(canonical: dict[str, Any] | Any, save_path: str | Path, s
                 write_save(save_path, save)
                 from .contract_ai import apply_contract_to_save
 
-                applied_result = apply_contract_to_save(save_path, accepted[0]["negotiation"]["id"], date=save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
+                applied_result = apply_contract_to_save(save_path, accepted[0]["negotiation"]["id"], date=action_date)
                 save = ensure_league_save_defaults(load_save(save_path), canonical)
                 applied.append(applied_result)
                 outcome["status"] = "executed"
@@ -935,11 +1092,38 @@ def apply_ai_staff_recommendations(canonical: dict[str, Any], save: dict[str, An
     user_team_id = save.get("meta", {}).get("user_team_id")
     signed_staff_candidate_ids: set[str] = set()
     applied: list[dict[str, Any]] = []
-    teams_by_id = {team["id"]: team for team in canonical.get("teams", [])}
     date_value = payload.get("through_date") or save.get("state", {}).get("current_date") or CANONICAL_START_DATE
     for recommendation in payload.get("recommendations", []):
-        if recommendation.get("team_id") == user_team_id:
+        team_id = recommendation.get("team_id")
+        slot = recommendation.get("slot")
+        if team_id == user_team_id:
             continue
+        action = recommendation.get("action") or "hire_replacement"
+        if action in {"fire_then_hire", "fire_only"}:
+            reason = recommendation.get("firing_reason")
+            fire_result = fire_staff_from_save(save, team_id, slot, reason=reason)
+            applied.append(fire_result)
+            if fire_result.get("status") == "applied":
+                save.setdefault("staff_firing_history", []).append(
+                    {
+                        "id": stable_id("staff_firing_history", date_value, team_id, slot, (fire_result.get("fired_staff") or {}).get("id")),
+                        "date": date_value,
+                        "season": save.get("meta", {}).get("season"),
+                        "team_id": team_id,
+                        "slot": slot,
+                        "staff_id": (fire_result.get("fired_staff") or {}).get("id"),
+                        "staff_name": (fire_result.get("fired_staff") or {}).get("name"),
+                        "reason": reason,
+                    }
+                )
+                try:
+                    review_due = (parse_date(date_value) + timedelta(days=24)).isoformat()
+                except (TypeError, ValueError):
+                    review_due = date_value
+                save.setdefault("staff_interim_review_due", {})[f"{team_id}:{slot}"] = review_due
+                active = canonical_with_save(canonical, save)
+            if action == "fire_only" or not recommendation.get("candidate_id"):
+                continue
         if recommendation.get("candidate_id") in signed_staff_candidate_ids:
             applied.append({"status": "not_applied", "recommendation_id": recommendation.get("id"), "notes": "Candidate already accepted another staff job in this bundle."})
             continue
@@ -950,7 +1134,7 @@ def apply_ai_staff_recommendations(canonical: dict[str, Any], save: dict[str, An
                 save,
                 recommendation["candidate_id"],
                 recommendation.get("team_abbrev") or recommendation["team_id"],
-                recommendation["slot"],
+                slot,
                 seed=seed,
                 offer_salary_millions=float(offer.get("annual_salary_millions") or 0),
                 offer_years=int(offer.get("years") or 2),
@@ -964,6 +1148,7 @@ def apply_ai_staff_recommendations(canonical: dict[str, Any], save: dict[str, An
         applied_result = hire_staff_from_save(save, negotiation["id"])
         if applied_result.get("status") == "applied":
             signed_staff_candidate_ids.add(recommendation.get("candidate_id"))
+            save.setdefault("staff_interim_review_due", {}).pop(f"{team_id}:{slot}", None)
         applied.append(applied_result)
         active = canonical_with_save(canonical, save)
     return {"applied_count": len([item for item in applied if item.get("status") == "applied"]), "applied": applied}
@@ -1108,26 +1293,8 @@ def league_leaders(canonical: dict[str, Any] | Any, save_path: str | Path, stat:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     active = canonical_with_save(canonical, save)
     stat_key = {"pts": "points", "reb": "rebounds", "ast": "assists", "stl": "steals", "blk": "blocks"}.get(stat, stat)
-    if stat_key in {"overall", "shooting", "creation", "defense", "athleticism", "iq"}:
-        teams = {team["id"]: team for team in active.get("teams", [])}
-        rows = []
-        for player in active.get("players", []):
-            if not player.get("team_id"):
-                continue
-            attributes = player_attribute_summary(active, player["id"])
-            rows.append(
-                {
-                    "player": player,
-                    "team_id": player.get("team_id"),
-                    "team_abbrev": teams.get(player.get("team_id"), {}).get("abbrev"),
-                    "games": save.get("player_season_stats", {}).get(player["id"], {}).get("games", 0),
-                    stat_key: attributes.get(stat_key, 0),
-                    f"{stat_key}_per_game": attributes.get(stat_key, 0),
-                    "attributes": attributes,
-                }
-            )
-        rows.sort(key=lambda item: (-float(item.get(stat_key, 0)), item["player"].get("name") or ""))
-        return {"stat": stat_key, "leaders": rows[:limit], "as_of_date": save.get("state", {}).get("current_date"), "mode": "attributes"}
+    if stat_key in {"overall", "shooting", "spacing", "creation", "defense", "athleticism", "iq", "rim_pressure", "rebounding", "disruption", "rim_protection"}:
+        raise ValueError("League leaders only supports box-score stats. Use the player traits browser for ratings.")
     players = {player["id"]: player for player in canonical.get("players", [])}
     rows = []
     team_games = {
@@ -1388,6 +1555,10 @@ def contract_event_is_major(details: dict[str, Any]) -> bool:
 
 
 def staff_event_is_major(details: dict[str, Any]) -> bool:
+    slot = str(details.get("slot") or "")
+    action = str(details.get("action") or "")
+    if slot == "head_coach" and action == "fire":
+        return True
     return float(details.get("staff_grade") or details.get("candidate_grade") or details.get("fired_staff_grade") or 0.0) > MAJOR_STAFF_GRADE_THRESHOLD
 
 
@@ -2151,6 +2322,8 @@ def quick_sim_current_season(root: str | Path, canonical: dict[str, Any] | Any, 
 def team_dashboard(root: str | Path, canonical: dict[str, Any] | Any, save_path: str | Path, team_query: str) -> dict[str, Any]:
     canonical = to_plain(canonical)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
+    if prune_rotation_recommendations(save, canonical):
+        write_save(save_path, save)
     team = resolve_team(canonical, team_query)
     active = canonical_with_save(canonical, save)
     rotation_projection = team_rotation_projection(active, save, team["id"], integer=True)
@@ -2879,7 +3052,8 @@ def queue_ai_recommendations(canonical: dict[str, Any], save: dict[str, Any], fr
             )
     trade_start = f"{season_start_year_from_date(through_date)}-11-15"
     trade_deadline = trade_deadline_date(season_start_year_from_date(through_date))
-    if "trades" in legal_actions_for_date(through_date) and trade_start <= through_date <= trade_deadline:
+    trade_window_open = phase == "preseason" or trade_start <= through_date <= trade_deadline
+    if "trades" in legal_actions_for_date(through_date) and trade_window_open:
         action_id = stable_id("ai_action", "trades", through_date, seed)
         if action_id not in queued_keys:
             from .transactions import simulate_ai_trades
@@ -2899,13 +3073,25 @@ def queue_ai_recommendations(canonical: dict[str, Any], save: dict[str, Any], fr
             ][:4]
             if user_offers:
                 queue_user_trade_offers(save, user_offers, through_date)
+            try:
+                window_days = max(1, (parse_date(through_date) - parse_date(from_date)).days)
+            except (TypeError, ValueError):
+                window_days = 31
+            checkpoint_cap = 1 if window_days <= 10 else 3
+            season_trade_count = sum(
+                1
+                for log in save.get("transaction_logs", [])
+                if log.get("transaction_type") == "trade"
+                and f"{season_start_year_from_date(through_date)}-10-01" <= str(log.get("date") or "") <= trade_deadline
+            )
+            proposal_cap = max(0, min(checkpoint_cap, 28 - season_trade_count))
             payload["proposals"] = [
                 proposal for proposal in legal_accepted
                 if user_team_id not in {
                     (proposal.get("proposal") or {}).get("from_team_id"),
                     (proposal.get("proposal") or {}).get("to_team_id"),
                 }
-            ][:28]
+            ][:proposal_cap]
             payload["proposal_count"] = len(payload["proposals"])
             if not payload["proposals"]:
                 return
@@ -3015,10 +3201,13 @@ def add_monthly_social_digest(canonical: dict[str, Any], save: dict[str, Any], f
         by_team.setdefault(log.get("team_id"), []).append(log)
     streaks = []
     for team_id, logs in by_team.items():
-        if len(logs) < 5:
+        if len(logs) < 10:
             continue
         wins = sum(1 for log in logs if log.get("result") == "W")
         losses = len(logs) - wins
+        win_pct = wins / max(1, len(logs))
+        if wins - losses < 8 and win_pct < 0.82:
+            continue
         streaks.append((wins - losses, wins, losses, team_id))
     if streaks:
         score, wins, losses, team_id = sorted(streaks, reverse=True)[0]
@@ -4435,6 +4624,8 @@ def social_subject(text: str) -> str:
     if not text:
         return "League chatter"
     cleaned = text.strip().rstrip(".")
+    if cleaned.startswith("Trade completed:"):
+        return cleaned if len(cleaned) <= 120 else cleaned[:117].rstrip()
     if len(cleaned) <= 86:
         return cleaned
     for separator in [". ", " | ", " - "]:
@@ -4442,7 +4633,7 @@ def social_subject(text: str) -> str:
             first = cleaned.split(separator)[0].strip()
             if 8 <= len(first) <= 86:
                 return first
-    return cleaned[:83].rstrip() + "..."
+    return cleaned[:86].rstrip()
 
 
 def social_sentiment(kind: str, text: str) -> float:

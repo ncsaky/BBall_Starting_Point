@@ -17,6 +17,8 @@ STAFF_SLOTS = [
     "performance_lead",
 ]
 
+VOLATILE_STAFF_SLOTS = {"head_coach", "offensive_coordinator", "defensive_coordinator"}
+
 ROLE_LABELS = {
     "head_coach": "Head Coach",
     "offensive_coordinator": "Offensive Coordinator",
@@ -454,7 +456,7 @@ def hire_staff_from_save(save: dict[str, Any], negotiation_id: str) -> dict[str,
     return {"status": "applied", "transaction_log": log, "staff": candidate, "previous_staff": current}
 
 
-def fire_staff_from_save(save: dict[str, Any], team_id: str, slot: str) -> dict[str, Any]:
+def fire_staff_from_save(save: dict[str, Any], team_id: str, slot: str, reason: str | None = None) -> dict[str, Any]:
     current = current_staff_slot(save, team_id, slot)
     if not current:
         return {"status": "not_found", "team_id": team_id, "slot": slot}
@@ -478,7 +480,8 @@ def fire_staff_from_save(save: dict[str, Any], team_id: str, slot: str) -> dict[
     save["staff_slots"].sort(key=lambda item: (item.get("team_id") or "", item.get("slot") or "", item.get("id") or ""))
     log = staff_transaction_log(save, "staff_fire", stable_id("staff_fire", team_id, slot, save.get("state", {}).get("current_date")), [team_id], {"fired_staff": fired, "interim_staff": interim}, [])
     save.setdefault("transaction_logs", []).append(log)
-    headline = f"{fired['name']} fired from {ROLE_LABELS.get(slot, slot)}."
+    reason_text = f" Reason: {reason}." if reason else ""
+    headline = f"{fired['name']} fired from {ROLE_LABELS.get(slot, slot)}.{reason_text}"
     append_news_item_once(save, news_item(save, "staff_fire", headline))
     from .save import add_league_event
 
@@ -488,13 +491,15 @@ def fire_staff_from_save(save: dict[str, Any], team_id: str, slot: str) -> dict[
         "staff_fire",
         headline,
         team_ids=[team_id],
-        importance=0.76 if fired_grade > 89 else 0.42,
+        importance=0.76 if fired_grade > 82 or slot == "head_coach" else 0.52,
         details={
             "staff_id": fired.get("id"),
             "staff_name": fired.get("name"),
             "slot": slot,
             "staff_grade": fired_grade,
+            "fired_staff_grade": fired_grade,
             "action": "fire",
+            "reason": reason,
         },
     )
     queue_press_event_if_user_involved(save, "staff_fire", headline, [team_id])
@@ -765,6 +770,8 @@ def simulate_ai_staff_changes(
     offices = {profile.get("team_id"): profile for profile in canonical.get("front_office_profiles", [])}
     recommendations: list[dict[str, Any]] = []
     reserved_candidate_ids: set[str] = set()
+    season = str((save.get("meta") or {}).get("season") or "")
+    firing_history = save.get("staff_firing_history") or []
     for team in teams:
         slots = {slot.get("slot"): slot for slot in save.get("staff_slots", []) if slot.get("team_id") == team["id"]}
         record = save.get("team_records", {}).get(team["id"], {})
@@ -774,13 +781,33 @@ def simulate_ai_staff_changes(
         games = int(record.get("wins") or 0) + int(record.get("losses") or 0)
         win_pct = float(record.get("wins") or 0) / max(1, games)
         expected_pct = clamp(0.25 + float(state.get("contention_ceiling") or 55.0) / 170.0, 0.25, 0.72)
-        underperforming = games >= 20 and win_pct + 0.12 < expected_pct
+        injury_burden = staff_team_injury_burden(canonical, save, team["id"])
+        recent_skid = staff_recent_skid(save, team["id"])
+        underperforming = games >= 20 and win_pct + 0.12 < expected_pct and injury_burden < 18.0
         seasonal_review = through_date[5:] in {"02-05", "09-01", "10-01"}
         for slot in STAFF_SLOTS:
+            if slot not in VOLATILE_STAFF_SLOTS:
+                continue
             current = slots.get(slot)
             if not current:
                 continue
+            fired_this_season = any(
+                item.get("team_id") == team["id"]
+                and item.get("slot") == slot
+                and (not season or item.get("season") == season)
+                for item in firing_history
+            )
+            if fired_this_season and not is_interim_staff(current):
+                continue
             score, reasons = ai_staff_trigger_score(current, slot, state, team_pressure, underperforming, through_date)
+            if recent_skid.get("losses", 0) >= 10 and slot == "head_coach" and injury_burden < 18.0:
+                score += min(18.0, float(recent_skid["losses"]) * 1.15)
+                reasons.append("team_in_free_fall")
+            if slot != "head_coach":
+                score -= 6.0
+            if fired_this_season and is_interim_staff(current):
+                score += 9.0
+                reasons.append("interim_review_due")
             market_sample = generate_staff_market(canonical, save, slot=slot)[:18]
             if staff_grade(current) <= 68 and any(staff_grade(candidate) >= 82 for candidate in market_sample):
                 score += 10.0
@@ -803,10 +830,37 @@ def simulate_ai_staff_changes(
                     continue
                 candidates.append((upgrade + min(8.0, max_offer - ask) * 0.12, candidate, ask))
             if not candidates:
+                if slot == "head_coach" and not is_interim_staff(current) and score >= conservative_staff_threshold(slot, seasonal_review) + 12.0:
+                    recommendations.append(
+                        {
+                            "id": stable_id("ai_staff_rec", through_date, team["id"], slot, "interim"),
+                            "team_id": team["id"],
+                            "team_abbrev": team["abbrev"],
+                            "slot": slot,
+                            "role_label": ROLE_LABELS.get(slot, slot),
+                            "current_staff": compact_staff(current),
+                            "candidate": None,
+                            "candidate_id": None,
+                            "current_grade": round(staff_grade(current), 2),
+                            "candidate_grade": None,
+                            "upgrade": 0.0,
+                            "trigger_score": round(score + rng.uniform(-1.5, 1.5), 2),
+                            "reasons": reasons,
+                            "action": "fire_only",
+                            "firing_reason": staff_firing_reason(slot, record, expected_pct, recent_skid, underperforming, injury_burden, seasonal_review),
+                            "recommended_offer": {},
+                            "max_offer_millions": round(max_staff_offer_millions(canonical, save, team["id"], slot), 2),
+                            "notes": "AI staff firing recommendation; team may use an interim until the next review.",
+                        }
+                    )
                 continue
             candidates.sort(key=lambda item: (item[0], item[1].get("grade", 0), item[1].get("name", "")), reverse=True)
             _, candidate, ask = candidates[0]
+            better_replacement_available = staff_grade(candidate) - staff_grade(current) >= 7.0 and staff_grade(candidate) >= 80.0
+            if better_replacement_available and "immediate_better_replacement_available" not in reasons:
+                reasons.append("immediate_better_replacement_available")
             reserved_candidate_ids.add(candidate["id"])
+            action = "hire_replacement" if is_interim_staff(current) else "fire_then_hire"
             recommendations.append(
                 {
                     "id": stable_id("ai_staff_rec", through_date, team["id"], slot, candidate["id"]),
@@ -822,6 +876,17 @@ def simulate_ai_staff_changes(
                     "upgrade": round(staff_grade(candidate) - staff_grade(current), 2),
                     "trigger_score": round(score + rng.uniform(-1.5, 1.5), 2),
                     "reasons": reasons,
+                    "action": action,
+                    "firing_reason": staff_firing_reason(
+                        slot,
+                        record,
+                        expected_pct,
+                        recent_skid,
+                        underperforming,
+                        injury_burden,
+                        seasonal_review,
+                        replacement_available=better_replacement_available,
+                    ),
                     "recommended_offer": {
                         "annual_salary_millions": round(min(ask, max_offer), 2),
                         "years": int(candidate.get("asking_years") or 2),
@@ -840,6 +905,57 @@ def simulate_ai_staff_changes(
         "recommendations": recommendations,
         "notes": "Deterministic AI staff-change recommendations based on pressure, performance, phase, staff grade, contract status, and market fit.",
     }
+
+
+def staff_team_injury_burden(canonical: dict[str, Any], save: dict[str, Any], team_id: str) -> float:
+    injured = {
+        state.get("player_id")
+        for state in save.get("health_states", [])
+        if state.get("availability_status") and state.get("availability_status") != "active"
+    }
+    burden = 0.0
+    for player in canonical.get("players", []):
+        if player.get("team_id") == team_id and player.get("id") in injured:
+            burden += float(player.get("minutes_projection") or 0.0)
+    return round(burden, 2)
+
+
+def staff_recent_skid(save: dict[str, Any], team_id: str, window: int = 17) -> dict[str, int]:
+    logs = [
+        log for log in save.get("team_game_logs", [])
+        if log.get("team_id") == team_id and log.get("result") in {"W", "L"}
+    ]
+    logs = sorted(logs, key=lambda item: str(item.get("date") or ""))[-window:]
+    wins = sum(1 for log in logs if log.get("result") == "W")
+    losses = sum(1 for log in logs if log.get("result") == "L")
+    return {"wins": wins, "losses": losses, "games": len(logs)}
+
+
+def staff_firing_reason(
+    slot: str,
+    record: dict[str, Any],
+    expected_pct: float,
+    recent_skid: dict[str, int],
+    underperforming: bool,
+    injury_burden: float,
+    seasonal_review: bool,
+    replacement_available: bool = False,
+) -> str:
+    if replacement_available:
+        return "immediate better replacement available"
+    if recent_skid.get("games", 0) >= 8 and recent_skid.get("losses", 0) >= 10:
+        return f"on {recent_skid.get('wins', 0)}-{recent_skid.get('losses', 0)} skid"
+    wins = int(record.get("wins") or 0)
+    losses = int(record.get("losses") or 0)
+    games = wins + losses
+    expected_wins = int(round(expected_pct * max(82, games or 82)))
+    if underperforming and games:
+        return f"disappointing season: {wins}-{losses}, expected {expected_wins}+ wins"
+    if injury_burden >= 18.0:
+        return "interim review after injuries clouded evaluation"
+    if seasonal_review:
+        return f"{ROLE_LABELS.get(slot, slot)} review after season checkpoint"
+    return "staff performance review"
 
 
 def compact_staff(staff: dict[str, Any] | None) -> dict[str, Any]:
@@ -879,16 +995,16 @@ def ai_staff_trigger_score(
     if grade < 56:
         score += (56 - grade) * 0.85 + 8
         reasons.append("staff_grade_below_league_standard")
-    if underperforming and slot in {"head_coach", "offensive_coordinator", "defensive_coordinator", "performance_lead"}:
+    if underperforming and slot in VOLATILE_STAFF_SLOTS:
         score += 8 + max(0.0, pressure - 65) * 0.10
         reasons.append("team_underperforming_expectations")
-    if pressure >= 76 and slot in {"head_coach", "offensive_coordinator", "defensive_coordinator"}:
+    if pressure >= 76 and slot in VOLATILE_STAFF_SLOTS:
         score += 5
         reasons.append("owner_pressure")
     if phase in {"rebuilding", "developing"} and slot in {"development_lead", "scouting_lead"}:
         score += 4
         reasons.append("phase_values_development_and_scouting")
-    if phase in {"contending", "contending_with_future_upside"} and slot in {"head_coach", "offensive_coordinator", "defensive_coordinator", "performance_lead"}:
+    if phase in {"contending", "contending_with_future_upside"} and slot in VOLATILE_STAFF_SLOTS:
         score += 3
         reasons.append("phase_values_win_now_staff")
     if through_date[5:] in {"02-05", "09-01", "10-01"}:
