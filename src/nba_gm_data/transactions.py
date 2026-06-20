@@ -706,6 +706,13 @@ def apply_trade_to_save(save_path: str | Path, proposal_id: str, date: str = CAN
             "save": str(path),
             "notes": "No pending proposal with this id exists in the save ledger. Generate/evaluate a proposal and add it to pending_trade_proposals before applying.",
         }
+    if not trade_apply_authorized(proposal):
+        return {
+            "status": "not_applied_rejected",
+            "proposal_id": proposal_id,
+            "save": str(path),
+            "notes": "Rejected saved or AI trade proposals cannot be applied. Rebuild or counter the offer instead.",
+        }
     proposal_payload = proposal.get("proposal") or proposal
     if save.get("version") == "league_save_v1":
         live_issues = trade_live_validation_issues(save, proposal_payload, date)
@@ -784,6 +791,19 @@ def apply_trade_to_save(save_path: str | Path, proposal_id: str, date: str = CAN
 
     write_save(path, save)
     return {"status": "applied", "save": str(path), "transaction_log": to_plain(log), "pruned": pruned}
+
+
+def trade_apply_authorized(proposal: dict[str, Any]) -> bool:
+    if (proposal.get("legality") or {}).get("status") != "legal":
+        return False
+    if proposal.get("accepted_by_all"):
+        return True
+    context = proposal.get("offer_context") or {}
+    return bool(
+        context.get("status") == "user_override_pending_apply"
+        and context.get("created_by_user")
+        and context.get("override_team_id")
+    )
 
 
 def update_retraded_pick_obligation(save: dict[str, Any], pick_id: str, new_owner_team_id: str | None, date: str) -> None:
@@ -2798,13 +2818,29 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     distance = max(0, pick_start - active_start)
     if round_no == 1:
         if slot_value:
-            value = clamp(92 - slot_value * 2.15, 26, 90)
+            if slot_value <= 5:
+                value = 98.0 - slot_value * 2.3
+            elif slot_value <= 10:
+                value = 86.5 - (slot_value - 5) * 1.9
+            elif slot_value <= 20:
+                value = 77.0 - (slot_value - 10) * 2.5
+            else:
+                value = 52.0 - (slot_value - 20) * 2.1
+            value = clamp(value, 28, 96)
         elif pick.get("status") == "verified_2026_draft_board" and pick.get("id", "").split("-"):
             try:
                 pick_no = int(pick["id"].split("-")[2])
             except (ValueError, IndexError):
                 pick_no = 18
-            value = clamp(92 - pick_no * 2.15, 26, 90)
+            if pick_no <= 5:
+                value = 98.0 - pick_no * 2.3
+            elif pick_no <= 10:
+                value = 86.5 - (pick_no - 5) * 1.9
+            elif pick_no <= 20:
+                value = 77.0 - (pick_no - 10) * 2.5
+            else:
+                value = 52.0 - (pick_no - 20) * 2.1
+            value = clamp(value, 28, 96)
         else:
             value = 43.0
         value -= max(0, distance - 1) * 1.18
@@ -2824,7 +2860,7 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     distance_noise = deterministic_pick_uncertainty_bonus(pick, distance, round_no)
     value += distance_noise
     value *= float(pick.get("_protection_value_factor") or 1.0)
-    return round(clamp(value, 1, 90), 2)
+    return round(clamp(value, 1, 96), 2)
 
 
 def deterministic_pick_uncertainty_bonus(pick: dict[str, Any], distance: int, round_no: int) -> float:
@@ -2882,6 +2918,7 @@ def tradeable_picks_for_team(canonical: dict[str, Any], team_id: str) -> list[di
             int(pick.get("round") or 0),
             pick.get("original_team_id"),
             pick.get("current_owner_team_id"),
+            pick.get("overall_pick") if pick.get("overall_pick") is not None else None,
             normalize_pick_protection_text(pick),
         )
         pick["_active_season"] = active_season
@@ -2893,6 +2930,7 @@ def tradeable_picks_for_team(canonical: dict[str, Any], team_id: str) -> list[di
         key=lambda pick: (
             str(pick.get("season") or ""),
             int(pick.get("round") or 9),
+            int(pick.get("overall_pick") or pick.get("projected_pick_slot") or 999),
             pick.get("original_team_id") or "",
             pick.get("id") or "",
         ),

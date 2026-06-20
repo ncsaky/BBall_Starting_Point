@@ -3266,9 +3266,9 @@ def filter_free_agency_payload_to_available(canonical: dict[str, Any], save: dic
 
 
 def process_ai_extensions(canonical: dict[str, Any], save: dict[str, Any], through_date: str, seed: int, limit: int = 8) -> dict[str, Any]:
-    from .contract_ai import extension_candidates_report, merge_extension_offer_with_existing_contract, negotiate_extension
+    from .contract_ai import extension_candidates_report, merge_extension_offer_with_existing_contract, negotiate_extension, with_contract_context
 
-    active = canonical_with_save(canonical, save)
+    active = with_contract_context(canonical_with_save(canonical, save))
     report = extension_candidates_report(active)
     user_team_id = save.get("meta", {}).get("user_team_id")
     processed = set(save.setdefault("processed_ai_extensions", []))
@@ -4988,10 +4988,28 @@ def generate_league_awards(canonical: dict[str, Any], save: dict[str, Any], seas
         digest = hashlib.sha256(f"{seed}:{season}:{award}:{player_id}".encode("utf-8")).hexdigest()
         return (int(digest[:8], 16) / 0xFFFFFFFF - 0.5) * 1.8
 
+    def dpoy_score(row: dict[str, Any]) -> float:
+        elite_anchor_bonus = max(0.0, row["rim_deterrence"] - 85.0) * 0.85 + max(0.0, row["defense"] - 80.0) * 0.45
+        non_elite_penalty = max(0.0, 70.0 - row["rim_deterrence"]) * 0.25 + max(0.0, 70.0 - row["defense"]) * 0.20
+        block_value = min(row["blocks_per_game"], 3.8) * 3.2
+        steal_value = min(row["steals_per_game"], 2.4) * 2.6
+        return (
+            row["defense"] * 0.58
+            + row["rim_deterrence"] * 0.55
+            + row["def_effort"] * 0.20
+            + row["screen_nav"] * 0.14
+            + block_value
+            + steal_value
+            + row["win_pct"] * 5.0
+            + elite_anchor_bonus
+            - non_elite_penalty
+            + small_noise(row["player_id"], "DPOY")
+        )
+
     award_specs = {
         "MVP": lambda row: row["points_per_game"] * 1.25 + row["assists_per_game"] * 1.08 + row["rebounds_per_game"] * 0.66 + row["overall"] * 0.42 + row["win_pct"] * 17.0 + min(5.0, row["games"] / 14.0) + small_noise(row["player_id"], "MVP"),
         "ROTY": lambda row: (-999.0 if not row["rookie"] else row["points_per_game"] * 1.18 + row["assists_per_game"] * 0.92 + row["rebounds_per_game"] * 0.72 + row["overall"] * 0.48 + row["minutes_per_game"] * 0.18 + small_noise(row["player_id"], "ROTY")),
-        "DPOY": lambda row: row["defense"] * 0.48 + row["rim_deterrence"] * 0.34 + row["def_effort"] * 0.24 + row["screen_nav"] * 0.16 + row["blocks_per_game"] * 4.2 + row["steals_per_game"] * 3.0 + row["win_pct"] * 6.0 + small_noise(row["player_id"], "DPOY"),
+        "DPOY": dpoy_score,
     }
     awards: list[dict[str, Any]] = []
     for award_name, score_fn in award_specs.items():

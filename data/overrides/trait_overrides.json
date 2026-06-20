@@ -57,6 +57,18 @@
       }
     },
     {
+      "player_name": "Jusuf Nurkić",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "rim_deterrence": {"value": 62, "confidence": 0.78, "notes": "Manual playtest correction: raw block/height/role proxies were treating Nurkic like an elite DPOY rim deterrent. He should profile as a physical positional center, not a Wembanyama-level anchor."},
+        "defensive_effort": {"value": 58, "confidence": 0.72, "notes": "Solid veteran physicality should not become top-of-league defensive event/effort value."},
+        "screen_navigation": {"value": 38, "confidence": 0.72, "notes": "Traditional center mobility should remain a playoff and switch-coverage limitation."},
+        "scheme_iq": {"value": 62, "confidence": 0.68, "notes": "Functional team-defense understanding without elevating him into an elite organizer."},
+        "foot_speed_lateral_agility": {"value": 34, "confidence": 0.72, "notes": "Slow-footed big context; broad defensive proxies were over-crediting movement."},
+        "offensive_rebounding": {"value": 74, "confidence": 0.72, "notes": "Keep the real rebounding/physicality positive while separating it from DPOY-level defense."}
+      }
+    },
+    {
       "player_name": "Giannis Antetokounmpo",
       "traits": {
         "shot_versatility": {"value": 70, "confidence": 0.76, "notes": "Raw proxy understated his self-created paint scoring and foul-pressure versatility because it overweighted jumper indicators."},

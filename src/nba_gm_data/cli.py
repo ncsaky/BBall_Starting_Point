@@ -42,7 +42,7 @@ from .draft import (
     simulate_draft,
 )
 from .health import advance_development, health_player_report, health_team_report, simulate_health
-from .ingest import build_universe
+from .ingest import OVERRIDES_DIR, build_universe
 from .research import refresh_betting_odds_research, refresh_boxscore_research, refresh_coach_reputation_research, refresh_draft_prospect_research, refresh_research
 from .save import (
     advance_save,
@@ -73,7 +73,7 @@ from .save import (
     team_dashboard,
     write_save,
 )
-from .play import run_play_session
+from .play import new_save_seed, resolve_chosen_team, run_play_session
 from .schema import to_plain
 from .sim import calibrate_market, coach_ratings, explain_game_probability, player_feature_vector, print_json, sim_game, team_feature_vector, validate, validate_game_probabilities, validate_season_probabilities
 from .staff import evaluate_staff_hire, fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, resolve_team as resolve_staff_team, staff_market_report, staff_team_report
@@ -119,12 +119,12 @@ def main(argv: list[str] | None = None) -> int:
     play_parser = subparsers.add_parser("play", help="Launch the interactive CLI GM mode.", parents=[common])
     play_parser.add_argument("--save", default=None)
     play_parser.add_argument("--team", default=None)
-    play_parser.add_argument("--seed", type=int, default=1)
+    play_parser.add_argument("--seed", type=int, default=None)
 
     new_save_parser = subparsers.add_parser("new-save", help="Create a deterministic league_save_v1 file.", parents=[common])
     new_save_parser.add_argument("--team", required=True)
     new_save_parser.add_argument("--save", required=True)
-    new_save_parser.add_argument("--seed", type=int, default=1)
+    new_save_parser.add_argument("--seed", type=int, default=None)
     new_save_parser.add_argument("--ai-difficulty", choices=["easy", "normal", "hard"], default="normal")
 
     save_status_parser = subparsers.add_parser("save-status", help="Inspect current save date, phase, legal actions, and pending decisions.", parents=[common])
@@ -615,7 +615,9 @@ def main(argv: list[str] | None = None) -> int:
         return run_play_session(root, data, save_path=args.save, team=args.team, seed=args.seed)
     if args.command == "new-save":
         try:
-            print_json(create_league_save(root, data, args.team, args.save, seed=args.seed, ai_difficulty=args.ai_difficulty))
+            save_seed = new_save_seed(args.seed)
+            chosen_team = resolve_chosen_team(data, args.team, save_seed)
+            print_json(create_league_save(root, data, chosen_team, args.save, seed=save_seed, ai_difficulty=args.ai_difficulty))
             return 0
         except ValueError as exc:
             print(str(exc), file=sys.stderr)
@@ -927,9 +929,20 @@ def load_or_build(root: Path, out: Path) -> dict[str, Any]:
     if json_path.exists():
         data = load_universe_json(json_path)
         required = ["draft_classes", "draft_prospects", "draft_prospect_traits", "scouting_reports", "draft_board_entries"]
-        if all(key in data for key in required):
+        if all(key in data for key in required) and not canonical_export_is_stale(root, json_path):
             return data
     return to_plain(build_universe(root))
+
+
+def canonical_export_is_stale(root: Path, json_path: Path) -> bool:
+    try:
+        canonical_mtime = json_path.stat().st_mtime
+    except OSError:
+        return True
+    override_dir = root / OVERRIDES_DIR
+    if not override_dir.exists():
+        return False
+    return any(path.stat().st_mtime > canonical_mtime for path in override_dir.glob("*.json") if path.is_file())
 
 
 def load_optional_cli_json(path: str | None) -> Any | None:

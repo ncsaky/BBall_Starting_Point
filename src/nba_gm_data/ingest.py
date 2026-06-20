@@ -698,6 +698,12 @@ def build_players(player_rows: list[dict[str, Any]], player_overrides: dict[str,
         wingspan_inches = maybe_float(override.get("wingspan_inches"))
         if wingspan_inches is None:
             wingspan_inches = parse_inches(row.get("Wingspan"))
+        minutes_projection = maybe_float(override.get("minutes_projection"))
+        if minutes_projection is None:
+            minutes_projection = maybe_float(row.get("minutes")) or 0.0
+        prior_minutes = maybe_float(override.get("prior_minutes"))
+        if prior_minutes is None:
+            prior_minutes = maybe_float(row.get("2025minutes"))
         base_slug = slugify(name)
         seen_key = f"{team_abbrev}:{base_slug}"
         seen[seen_key] += 1
@@ -720,11 +726,11 @@ def build_players(player_rows: list[dict[str, Any]], player_overrides: dict[str,
                 height_inches=height_inches,
                 weight_lbs=weight_lbs,
                 wingspan_inches=wingspan_inches,
-                minutes_projection=maybe_float(row.get("minutes")) or 0.0,
-                prior_minutes=maybe_float(row.get("2025minutes")),
-                primary_off_role=row.get("primaryOffRole"),
-                secondary_off_role=row.get("secondaryOffRole"),
-                primary_def_role=row.get("primaryDefRole"),
+                minutes_projection=minutes_projection,
+                prior_minutes=prior_minutes,
+                primary_off_role=override.get("primary_off_role") or row.get("primaryOffRole"),
+                secondary_off_role=override.get("secondary_off_role") or row.get("secondaryOffRole"),
+                primary_def_role=override.get("primary_def_role") or row.get("primaryDefRole"),
                 sim_eligible_raw=bool(row.get("simEligible")),
                 missing_critical_fields=list(row.get("missingCriticalFields") or []),
                 critical_field_fallbacks=build_critical_field_fallbacks(row),

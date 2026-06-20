@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 from nba_gm_data.assets import install_loading_assets
 from nba_gm_data.animation import auto_frame_size, colorize_frame, default_video_path, load_animation_frames
-from nba_gm_data.cli import main as cli_main
+from nba_gm_data.cli import load_or_build, main as cli_main
 from nba_gm_data.contract_ai import (
     apply_contract_to_save,
     contract_market_report,
@@ -103,6 +103,7 @@ from nba_gm_data.play import (
     initialize_free_agency_market,
     league_trait_rows,
     maybe_run_ai_draft_trades_before_pick,
+    ratings_guide,
     offer_interest_score,
     pick_slot_is_determined_for_trade,
     print_free_agency_day_recap,
@@ -134,6 +135,8 @@ from nba_gm_data.sim import (
     player_star_power_score,
     recent_scoring_context_for_team,
     scheduled_game_for_context,
+    assist_rate_from_features,
+    plausible_point_cap,
     scoring_weight,
     sim_game,
     team_feature_vector,
@@ -311,12 +314,15 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(players["dru smith"].height_inches, 74)
         self.assertEqual(players["keshad johnson"].height_inches, 78)
         self.assertEqual(players["jordan goodwin"].height_inches, 75)
+        self.assertEqual(players["justin champagnie"].height_inches, 78)
+        self.assertEqual(players["tristan vukcevic"].height_inches, 84)
         self.assertEqual(players["gui santos"].height_inches, 79)
         self.assertEqual(players["will richard"].height_inches, 75)
         self.assertEqual(players["pat spencer"].height_inches, 74)
         self.assertEqual(players["quinten post"].height_inches, 84)
         self.assertEqual(players["malevy leons"].height_inches, 81)
         self.assertEqual(players["yuki kawamura"].height_inches, 67)
+        self.assertGreaterEqual(players["trae young"].minutes_projection, 34.0)
 
     def test_ledger_gaps_are_explicit(self):
         summary = self.universe.coverage_report.summary
@@ -1180,15 +1186,21 @@ class DataFoundationTests(unittest.TestCase):
             players = {player["normalized_name"]: player for player in self.plain["players"]}
             curry = players["stephen curry"]
             wemby = players["victor wembanyama"]
+            nurkic = players["jusuf nurkic"]
             save["team_records"][curry["team_id"]]["wins"] = 58
             save["team_records"][curry["team_id"]]["losses"] = 24
             save["team_records"][wemby["team_id"]]["wins"] = 47
             save["team_records"][wemby["team_id"]]["losses"] = 35
+            save["team_records"][nurkic["team_id"]]["wins"] = 50
+            save["team_records"][nurkic["team_id"]]["losses"] = 32
             save["player_season_stats"][curry["id"]] = {"games": 74, "minutes": 2450, "points": 2300, "rebounds": 330, "assists": 610, "steals": 95, "blocks": 25}
             save["player_season_stats"][wemby["id"]] = {"games": 72, "minutes": 2520, "points": 1900, "rebounds": 920, "assists": 310, "steals": 95, "blocks": 265}
+            save["player_season_stats"][nurkic["id"]] = {"games": 72, "minutes": 2200, "points": 1050, "rebounds": 850, "assists": 280, "steals": 80, "blocks": 190}
             awards = generate_league_awards(self.plain, save, "2025-26", seed=31)
             self.assertTrue(any(award["award"] == "MVP" for award in awards))
             self.assertTrue(any(award["award"] == "DPOY" for award in awards))
+            dpoy = next(award for award in awards if award["award"] == "DPOY")
+            self.assertEqual(dpoy["player_name"], "Victor Wembanyama")
             self.assertTrue(any(item.get("kind") == "award" for item in save.get("news_items", [])))
 
     def test_public_staff_sources_populate_key_roles(self):
@@ -1536,6 +1548,17 @@ class DataFoundationTests(unittest.TestCase):
             self.assertEqual(salaries.get("2026-27"), salary)
             self.assertNotIn("2027-28", salaries)
 
+    def test_playable_canonical_uses_fresh_contract_overrides(self):
+        data = load_or_build(ROOT, ROOT / "data/canonical")
+        players = {player["normalized_name"]: player for player in data["players"]}
+        contracts = {contract["player_id"]: contract for contract in data["contracts"]}
+        for name, salary in {"bub carrington": 4_750_000, "cam whitmore": 5_500_000}.items():
+            contract = contracts[players[name]["id"]]
+            salaries = {row["season"]: row.get("salary") for row in contract.get("seasons", [])}
+            self.assertEqual(contract.get("status"), "manual_gameplay_confirmed")
+            self.assertEqual(salaries.get("2026-27"), salary)
+            self.assertNotIn("2027-28", salaries)
+
     def test_health_profiles_states_and_startup_injuries_are_exported(self):
         self.assertEqual(len(self.universe.player_health_profiles), len(self.universe.players))
         self.assertEqual(len(self.universe.player_health_states), len(self.universe.players))
@@ -1880,6 +1903,21 @@ class DataFoundationTests(unittest.TestCase):
             self.assertTrue(any("cannot be traded until Dec. 1" in issue for issue in locked["legality"]["issues"]))
             unlocked = evaluate_trade(active, "GSW", "WAS", [{"kind": "player", "value": "Seth Curry"}], [], seed=1, date="2026-12-01")
             self.assertFalse(any("cannot be traded until Dec. 1" in issue for issue in unlocked["legality"]["issues"]))
+
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "rejected_apply_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=65)
+            rejected = player_trade("rejected_seth", "team_was")
+            rejected["accepted_by_all"] = False
+            rejected["evaluations"] = [
+                {"perspective_team_id": "team_gsw", "team_abbrev": "GSW", "decision": "reject", "accepted": False, "net_value": -1.0},
+                {"perspective_team_id": "team_was", "team_abbrev": "WAS", "decision": "reject", "accepted": False, "net_value": -1.0},
+            ]
+            save["pending_trade_proposals"] = [rejected]
+            write_save(save_path, save)
+            blocked = apply_trade_to_save(save_path, "rejected_seth", date="2026-01-20")
+            self.assertEqual(blocked["status"], "not_applied_rejected")
+            self.assertEqual(len(load_save(save_path).get("transaction_logs", [])), 0)
 
     def test_contract_market_profiles_price_roles_without_low_minute_star_leakage(self):
         sga = contract_market_report(self.plain, "Shai Gilgeous-Alexander")
@@ -2367,6 +2405,8 @@ class DataFoundationTests(unittest.TestCase):
         clowney = player_feature_vector(plain, players["noah clowney"])
         wemby = player_feature_vector(plain, players["victor wembanyama"])
         draymond = player_feature_vector(plain, players["draymond green"])
+        trae = player_feature_vector(plain, players["trae young"])
+        sga = player_feature_vector(plain, players["shai gilgeous alexander"])
         okc = team_feature_vector(plain, teams["OKC"])
         self.assertGreaterEqual(curry.features["spacing"], 90)
         self.assertGreaterEqual(luka.features["usage"], 80)
@@ -2385,6 +2425,11 @@ class DataFoundationTests(unittest.TestCase):
         self.assertLess(clowney.features["usage"], 68)
         self.assertGreaterEqual(wemby.features["rim_deterrence"], 75)
         self.assertGreaterEqual(draymond.features["passing"], 85)
+        self.assertGreaterEqual(assist_rate_from_features(trae.features), 0.27)
+        self.assertLessEqual(
+            plausible_point_cap({"minutes": 33.5, "player": players["shai gilgeous alexander"]}, sga.features),
+            36,
+        )
         self.assertIn("primary_creator", okc.features)
         self.assertIn("defensive_anchor", okc.features)
         self.assertGreater(okc.features["defensive_events"], 55)
@@ -2608,6 +2653,18 @@ class DataFoundationTests(unittest.TestCase):
             self.assertTrue(path.exists())
             self.assertEqual(load_save(path)["meta"]["user_team_abbrev"], expected)
 
+        with tempfile.TemporaryDirectory() as tmp:
+            rng = patch("nba_gm_data.play.random.SystemRandom")
+            with rng as system_random:
+                system_random.return_value.randrange.side_effect = [1, 2, 3]
+                paths = []
+                for idx in range(3):
+                    with patch("builtins.input", side_effect=["", ""]), redirect_stdout(StringIO()):
+                        paths.append(choose_save_path(Path(tmp), self.plain, Path(tmp) / f"save{idx}.json", "random", seed=None))
+            teams = [load_save(path)["meta"]["user_team_abbrev"] for path in paths]
+            self.assertEqual(teams, [deterministic_random_team(self.plain, seed) for seed in [1, 2, 3]])
+            self.assertGreater(len(set(teams)), 1)
+
     def test_league_leaders_are_stats_only_and_traits_are_separate(self):
         with tempfile.TemporaryDirectory() as tmp:
             save_path = Path(tmp) / "save.json"
@@ -2617,8 +2674,14 @@ class DataFoundationTests(unittest.TestCase):
             rows = league_trait_rows(self.plain, save_path, "overall")
             self.assertGreater(len(rows), 20)
             self.assertGreaterEqual(rows[0]["attrs"]["overall"], rows[1]["attrs"]["overall"])
+            self.assertIn("raw_attrs", rows[0])
+            self.assertGreaterEqual(rows[0]["attrs"]["overall"], 90)
+            self.assertLess(rows[0]["raw_attrs"]["overall"], rows[0]["attrs"]["overall"])
             self.assertIn("contract", rows[0])
             self.assertIn("minutes", rows[0])
+            guide = ratings_guide(self.plain)
+            self.assertGreaterEqual(len(guide["rows"]), 15)
+            self.assertIn("engine calculations keep raw trait values", guide["display_scale"])
 
     def test_social_subject_preserves_initials_and_avoids_truncation_dots(self):
         text = "Trade completed: T.J. McConnell, 2027 R1 HOU (own pick) for Norman Powell, 2028 R2 DEN (own pick)."
@@ -2631,8 +2694,12 @@ class DataFoundationTests(unittest.TestCase):
         base = {"season": "2026", "current_owner_team_id": "team_gsw", "original_team_id": "team_gsw", "_active_season": "2025-26"}
         late_first = pick_asset_value({**base, "id": "pick_2026_30_gsw", "round": 1, "overall_pick": 30}, "neutral")
         early_second = pick_asset_value({**base, "id": "pick_2026_31_gsw", "round": 2, "overall_pick": 31}, "neutral")
+        top_first = pick_asset_value({**base, "id": "pick_2026_1_gsw", "round": 1, "overall_pick": 1}, "neutral")
+        lottery_first = pick_asset_value({**base, "id": "pick_2026_10_gsw", "round": 1, "overall_pick": 10}, "neutral")
         self.assertGreater(late_first, early_second)
         self.assertLess(late_first - early_second, 8.0)
+        self.assertGreater(top_first - lottery_first, 15.0)
+        self.assertGreater(lottery_first - late_first, 35.0)
 
     def test_current_injury_is_modest_value_risk_but_history_still_matters(self):
         active = player_health_risk({"durability": 62}, {"availability_status": "active"})
@@ -2669,6 +2736,45 @@ class DataFoundationTests(unittest.TestCase):
         second = save["draft_state"]["draft"]["pending_draft_selections"][1]
         self.assertEqual(second["selection"]["pick_id"], "pick_2026_2_lac")
         self.assertEqual(second["selection"]["team_id"], "team_lac")
+
+        duplicate = {
+            "draft_pick_overrides": {"pick_2026_1_chi": "team_gsw"},
+            "draft_orders": {
+                "2026": {
+                    "draft_order": [
+                        {"id": "pick_2026_1_chi", "pick_id": "pick_2026_1_chi", "overall_pick": 1, "round": 1, "season": "2026", "original_team_id": "team_chi", "current_owner_team_id": "team_chi"},
+                        {"id": "pick_2026_1_chi", "pick_id": "pick_2026_1_chi", "overall_pick": 2, "round": 1, "season": "2026", "original_team_id": "team_lac", "current_owner_team_id": "team_lac"},
+                    ]
+                }
+            },
+            "draft_state": {
+                "year": "2026",
+                "current_index": 0,
+                "draft": {
+                    "pending_draft_selections": [
+                        {"selection": {"overall_pick": 1, "pick_id": "pick_2026_1_chi", "team_id": "team_chi"}, "pick": {"id": "pick_2026_1_chi"}},
+                        {"selection": {"overall_pick": 2, "pick_id": "pick_2026_2_lac", "team_id": "team_lac"}, "pick": {"id": "pick_2026_2_lac"}},
+                    ]
+                },
+            },
+        }
+        self.assertTrue(sync_live_draft_state_to_saved_order(self.plain, duplicate, "2026"))
+        self.assertTrue(refresh_live_draft_state_ownership(self.plain, duplicate, "2026"))
+        first_dup, second_dup = duplicate["draft_state"]["draft"]["pending_draft_selections"]
+        self.assertEqual(first_dup["selection"]["team_id"], "team_gsw")
+        self.assertEqual(second_dup["selection"]["pick_id"], "pick_2026_2_lac")
+        self.assertEqual(second_dup["selection"]["team_id"], "team_lac")
+
+    def test_current_year_pick_assets_keep_slot_identity(self):
+        canonical = {
+            "meta": {"active_season": "2025-26"},
+            "draft_picks": [
+                {"id": "pick_a", "season": "2026", "round": 1, "overall_pick": 11, "original_team_id": "team_lac", "current_owner_team_id": "team_gsw"},
+                {"id": "pick_b", "season": "2026", "round": 1, "overall_pick": 19, "original_team_id": "team_lac", "current_owner_team_id": "team_gsw"},
+            ],
+        }
+        picks = tradeable_picks_for_team(canonical, "team_gsw")
+        self.assertEqual([pick["id"] for pick in picks], ["pick_a", "pick_b"])
 
     def test_outputs_are_written(self):
         with tempfile.TemporaryDirectory() as tmp:

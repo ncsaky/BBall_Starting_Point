@@ -1103,9 +1103,13 @@ def assist_rate_from_features(feat: dict[str, float]) -> float:
     rate += max(0.0, passing - 74.0) * 0.0032
     rate += max(0.0, passing - 88.0) * 0.0042
     rate += max(0.0, creation - 80.0) * 0.0012
+    if passing >= 88.0 and usage >= 70.0:
+        rate += 0.018 + max(0.0, passing - 90.0) * 0.003 + max(0.0, usage - 76.0) * 0.0015
+    if passing >= 80.0 and usage >= 86.0 and creation >= 78.0:
+        rate += 0.08 + max(0.0, passing - 80.0) * 0.004 + max(0.0, usage - 86.0) * 0.002
     if passing < 58 and usage < 62:
         rate -= 0.012
-    return clamp(rate, 0.035, 0.31)
+    return clamp(rate, 0.035, 0.36)
 
 
 def shooting_line(points: int, feat: dict[str, float], minutes: float, rng: random.Random) -> dict[str, int]:
@@ -1307,7 +1311,7 @@ def plausible_point_cap(item: dict[str, Any], features: dict[str, float]) -> int
         star_cap_bonus += 0.08
     if spacing >= 90 and shot_creation >= 82:
         star_cap_bonus += 0.05
-    return max(4, int(round(minutes * clamp(ppm + star_cap_bonus, 0.45, 1.14))))
+    return max(4, int(round(minutes * clamp(ppm + star_cap_bonus, 0.45, 1.06))))
 
 
 def resolve_overtime_if_tied(
@@ -1380,7 +1384,8 @@ def scoring_weight(item: dict[str, Any], features: dict[str, float]) -> float:
         frontcourt_hub += max(0.0, creation - 88) * 0.019 + max(0.0, ball_usage - 76) * 0.007
     primary_guard_star = 1.0
     if ("PG" in position or "SG" in position) and ball_usage >= 80:
-        primary_guard_star += max(0.0, ball_usage - 80) * 0.027 + max(0.0, rim_pressure - 60) * 0.017
+        primary_guard_star += max(0.0, ball_usage - 80) * 0.020 + max(0.0, rim_pressure - 60) * 0.010
+        primary_guard_star = min(primary_guard_star, 1.48)
     elite_hub = 1.0
     if ball_usage >= 72 and impact >= 76:
         elite_hub += max(0.0, creation - 85) * 0.020 + max(0.0, impact - 80) * 0.017 + max(0.0, ball_usage - 76) * 0.010
