@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import csv
+from bisect import bisect_left, bisect_right
+from collections import defaultdict
+from dataclasses import replace
+from pathlib import Path
 from typing import Any
 
 from .schema import CANONICAL_START_DATE, TraitValue
-from .utils import clamp, confidence_from_fields, mean, maybe_float, percentile, stable_id
+from .utils import clamp, confidence_from_fields, mean, maybe_float, normalize_name, percentile, stable_id
 
 
 TRAIT_LABELS = {
@@ -69,6 +74,54 @@ PERCENTILE_FIELDS = [
     "TransitionPPP",
 ]
 
+LEAGUE_TRAIT_RATINGS_SOURCE_ID = "src_league_trait_ratings_2026_06_20"
+
+LEAGUE_TRAIT_RATING_COLUMNS = {
+    "ReleaseSpeed": "release_speed",
+    "ShootingRange": "shooting_range",
+    "ShotVersatility": "shot_versatility",
+    "RimPressure": "rim_pressure",
+    "HandleUnderPressure": "handle_pressure",
+    "PassingReads": "passing_reads",
+    "FootSpeed": "foot_speed_lateral_agility",
+    "Stamina": "stamina_cardio",
+    "DefensiveEffort": "defensive_effort",
+    "SchemeIQ": "scheme_iq",
+    "RimDeterrence": "rim_deterrence",
+    "ScreenNavigation": "screen_navigation",
+    "OffensiveRebounding": "offensive_rebounding",
+    "Portability": "portability",
+    "PlayoffTranslation": "playoff_translation",
+}
+
+LEAGUE_TRAIT_COMPOSITE_COLUMNS = {
+    "OFF": (
+        "offense",
+        ["release_speed", "shooting_range", "shot_versatility", "rim_pressure", "handle_pressure", "passing_reads"],
+        0.3,
+    ),
+    "DEF": (
+        "defense",
+        ["defensive_effort", "scheme_iq", "rim_deterrence", "screen_navigation", "foot_speed_lateral_agility"],
+        0.3,
+    ),
+    "REB": (
+        "rebounding",
+        ["offensive_rebounding", "rim_deterrence", "stamina_cardio"],
+        0.28,
+    ),
+    "OVR": (
+        "overall",
+        list(TRAIT_LABELS.keys()),
+        0.16,
+    ),
+}
+
+LEAGUE_TRAIT_RATING_ALIASES = {
+    "ron holland": "ronald holland ii",
+    "carlton carrington": "bub carrington",
+}
+
 
 def weighted_mean(values: list[tuple[float | None, float]]) -> float | None:
     clean = [(float(value), weight) for value, weight in values if value is not None and weight > 0]
@@ -76,6 +129,334 @@ def weighted_mean(values: list[tuple[float | None, float]]) -> float | None:
     if not clean or total_weight <= 0:
         return None
     return sum(value * weight for value, weight in clean) / total_weight
+
+
+def load_league_trait_ratings(path: str | Path) -> list[dict[str, Any]]:
+    path = Path(path)
+    if not path.exists():
+        return []
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        return [dict(row) for row in csv.DictReader(handle) if row.get("Player")]
+
+
+def match_league_trait_ratings(players: list[Any], rows: list[dict[str, Any]]) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
+    players_by_name: dict[str, list[Any]] = defaultdict(list)
+    for player in players:
+        players_by_name[normalize_name(_player_get(player, "name"))].append(player)
+
+    matched: dict[str, dict[str, Any]] = {}
+    report: dict[str, Any] = {
+        "source_rows": len(rows),
+        "matched_count": 0,
+        "unmatched_csv_rows": [],
+        "unmatched_player_rows": [],
+        "ambiguous_rows": [],
+        "team_mismatches": [],
+        "alias_matches": [],
+        "duplicate_rows": [],
+    }
+    for row in rows:
+        csv_name = str(row.get("Player") or "").strip()
+        normalized = normalize_name(csv_name)
+        alias = LEAGUE_TRAIT_RATING_ALIASES.get(normalized)
+        lookup = normalize_name(alias or csv_name)
+        candidates = players_by_name.get(lookup) or []
+        if not candidates:
+            report["unmatched_csv_rows"].append(_rating_report_row(row))
+            continue
+        if len(candidates) > 1:
+            csv_team = str(row.get("Team") or "").strip()
+            team_matches = [player for player in candidates if _player_get(player, "team_abbrev") == csv_team]
+            if len(team_matches) == 1:
+                candidates = team_matches
+            else:
+                report["ambiguous_rows"].append({**_rating_report_row(row), "candidate_count": len(candidates)})
+                continue
+        player = candidates[0]
+        player_id = _player_get(player, "id")
+        if player_id in matched:
+            report["duplicate_rows"].append({**_rating_report_row(row), "player_id": player_id})
+            continue
+        matched[player_id] = row
+        if alias:
+            report["alias_matches"].append({"csv_player": csv_name, "matched_player": _player_get(player, "name")})
+        csv_team = str(row.get("Team") or "").strip()
+        player_team = str(_player_get(player, "team_abbrev") or "").strip()
+        if csv_team and player_team and csv_team != player_team:
+            report["team_mismatches"].append(
+                {"csv_player": csv_name, "csv_team": csv_team, "canonical_team": player_team}
+            )
+
+    matched_ids = set(matched)
+    for player in players:
+        if _player_get(player, "id") in matched_ids:
+            continue
+        minutes = _display_minutes(_player_get(player, "minutes_projection"))
+        if minutes >= 8.0:
+            report["unmatched_player_rows"].append(
+                {
+                    "player": _player_get(player, "name"),
+                    "team": _player_get(player, "team_abbrev"),
+                    "minutes": round(minutes, 1),
+                }
+            )
+
+    report["matched_count"] = len(matched)
+    report["unmatched_csv_count"] = len(report["unmatched_csv_rows"])
+    report["unmatched_player_count"] = len(report["unmatched_player_rows"])
+    report["ambiguous_count"] = len(report["ambiguous_rows"])
+    report["team_mismatch_count"] = len(report["team_mismatches"])
+    return matched, report
+
+
+def apply_league_trait_calibration(
+    traits: list[TraitValue],
+    players: list[Any],
+    rows: list[dict[str, Any]],
+) -> tuple[list[TraitValue], dict[str, Any]]:
+    matched_rows, report = match_league_trait_ratings(players, rows)
+    if not matched_rows:
+        return traits, report
+
+    players_by_id = {_player_get(player, "id"): player for player in players}
+    values_by_player: dict[str, dict[str, float]] = defaultdict(dict)
+    trait_by_key: dict[tuple[str, str], TraitValue] = {}
+    for trait in traits:
+        trait_by_key[(trait.player_id, trait.trait_key)] = trait
+        values_by_player[trait.player_id][trait.trait_key] = float(trait.value)
+
+    csv_distributions = {
+        column: sorted(float(value) for row in rows if (value := maybe_float(row.get(column))) is not None)
+        for column in [*LEAGUE_TRAIT_RATING_COLUMNS.keys(), *LEAGUE_TRAIT_COMPOSITE_COLUMNS.keys()]
+    }
+    engine_distributions = {
+        trait_key: sorted(float(trait.value) for trait in traits if trait.trait_key == trait_key)
+        for trait_key in LEAGUE_TRAIT_RATING_COLUMNS.values()
+    }
+    engine_composite_distributions: dict[str, list[float]] = defaultdict(list)
+    for player_id, trait_values in values_by_player.items():
+        player = players_by_id.get(player_id)
+        composites = _trait_composites(trait_values, _display_minutes(_player_get(player, "minutes_projection")))
+        for key, value in composites.items():
+            engine_composite_distributions[key].append(value)
+    sorted_composite_distributions = {key: sorted(values) for key, values in engine_composite_distributions.items()}
+
+    calibration: dict[tuple[str, str], dict[str, Any]] = {}
+    for player_id, row in matched_rows.items():
+        player = players_by_id.get(player_id)
+        blend_weight = _calibration_blend_weight(player)
+        for column, trait_key in LEAGUE_TRAIT_RATING_COLUMNS.items():
+            csv_value = maybe_float(row.get(column))
+            if csv_value is None or (player_id, trait_key) not in trait_by_key:
+                continue
+            trait = trait_by_key[(player_id, trait_key)]
+            previous = values_by_player[player_id].get(trait_key, 50.0)
+            target = _quantile_map(csv_value, csv_distributions.get(column) or [], engine_distributions.get(trait_key) or [])
+            target = _engine_target_floor(column, csv_value, target)
+            trait_weight = _trait_calibration_weight(blend_weight, trait, previous, target)
+            calibrated = previous + (target - previous) * trait_weight
+            values_by_player[player_id][trait_key] = round(clamp(calibrated), 2)
+            calibration[(player_id, trait_key)] = {
+                "player_name": row.get("Player"),
+                "csv_team": row.get("Team"),
+                "csv_rank": _maybe_int(row.get("Rank")),
+                "csv_column": column,
+                "csv_value": round(float(csv_value), 2),
+                "previous_value": round(previous, 2),
+                "engine_target": round(target, 2),
+                "blend_weight": round(trait_weight, 3),
+                "composite_nudges": [],
+            }
+
+        for column, (composite_key, trait_keys, coefficient) in LEAGUE_TRAIT_COMPOSITE_COLUMNS.items():
+            csv_value = maybe_float(row.get(column))
+            if csv_value is None:
+                continue
+            current = _trait_composites(
+                values_by_player[player_id],
+                _display_minutes(_player_get(player, "minutes_projection")),
+            ).get(composite_key, 50.0)
+            target = _quantile_map(
+                csv_value,
+                csv_distributions.get(column) or [],
+                sorted_composite_distributions.get(composite_key) or [],
+            )
+            nudge = clamp(target - current, -8.0, 8.0) * float(coefficient)
+            if abs(nudge) < 0.05:
+                continue
+            for trait_key in trait_keys:
+                if (player_id, trait_key) not in trait_by_key:
+                    continue
+                before = values_by_player[player_id].get(trait_key, 50.0)
+                values_by_player[player_id][trait_key] = round(clamp(before + nudge), 2)
+                calibration.setdefault(
+                    (player_id, trait_key),
+                    {
+                        "player_name": row.get("Player"),
+                        "csv_team": row.get("Team"),
+                        "csv_rank": _maybe_int(row.get("Rank")),
+                        "previous_value": round(before, 2),
+                        "blend_weight": round(blend_weight, 3),
+                        "composite_nudges": [],
+                    },
+                )["composite_nudges"].append(
+                    {
+                        "column": column,
+                        "csv_value": round(float(csv_value), 2),
+                        "engine_target": round(target, 2),
+                        "previous_composite": round(current, 2),
+                        "applied_delta": round(nudge, 2),
+                    }
+                )
+
+    calibrated_traits: list[TraitValue] = []
+    adjusted_count = 0
+    for trait in traits:
+        info = calibration.get((trait.player_id, trait.trait_key))
+        if not info:
+            calibrated_traits.append(trait)
+            continue
+        value = values_by_player[trait.player_id][trait.trait_key]
+        source_ids = list(dict.fromkeys([*trait.source_ids, LEAGUE_TRAIT_RATINGS_SOURCE_ID]))
+        components = {
+            **trait.components,
+            "league_trait_rating_calibration": {
+                **info,
+                "final_value": round(value, 2),
+                "source": "subjective full-health ratings prior dated 2026-06-20",
+            },
+        }
+        calibrated_traits.append(
+            replace(
+                trait,
+                value=round(clamp(value), 2),
+                confidence=round(clamp(max(float(trait.confidence), 0.56 + float(info.get("blend_weight") or 0.0) * 0.22), 0.0, 1.0), 3),
+                source_kind="inferred_trait_model_v1_with_league_rating_calibration",
+                source_ids=source_ids,
+                notes=f"{trait.notes} Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides.",
+                components=components,
+            )
+        )
+        adjusted_count += 1
+
+    report["adjusted_trait_count"] = adjusted_count
+    report["source_id"] = LEAGUE_TRAIT_RATINGS_SOURCE_ID
+    report["trait_columns"] = dict(LEAGUE_TRAIT_RATING_COLUMNS)
+    report["composite_columns"] = {
+        column: {"composite": spec[0], "traits": spec[1], "coefficient": spec[2]}
+        for column, spec in LEAGUE_TRAIT_COMPOSITE_COLUMNS.items()
+    }
+    return calibrated_traits, report
+
+
+def _trait_composites(values: dict[str, float], minutes: float) -> dict[str, float]:
+    def get(key: str, default: float = 50.0) -> float:
+        return float(values.get(key, default))
+
+    def avg(keys: list[str]) -> float:
+        return sum(get(key) for key in keys) / max(1, len(keys))
+
+    shooting = avg(["shooting_range", "shot_versatility", "release_speed"])
+    creation = avg(["handle_pressure", "passing_reads", "rim_pressure", "shot_versatility"])
+    defense = avg(["defensive_effort", "scheme_iq", "screen_navigation", "rim_deterrence"])
+    athleticism = avg(["foot_speed_lateral_agility", "stamina_cardio", "rim_pressure"])
+    iq = avg(["scheme_iq", "passing_reads", "portability", "playoff_translation"])
+    rebounding = get("offensive_rebounding") * 0.66 + get("rim_deterrence") * 0.18 + get("stamina_cardio") * 0.16
+    overall = shooting * 0.22 + creation * 0.25 + defense * 0.22 + athleticism * 0.13 + iq * 0.12 + min(6.0, minutes / 7.0)
+    offense = shooting * 0.35 + creation * 0.32 + get("passing_reads") * 0.18 + get("rim_pressure") * 0.15
+    return {
+        "overall": clamp(overall, 1, 99),
+        "offense": clamp(offense, 1, 99),
+        "defense": clamp(defense, 1, 99),
+        "rebounding": clamp(rebounding, 1, 99),
+    }
+
+
+def _quantile_map(value: float, source_values: list[float], target_values: list[float]) -> float:
+    if not source_values or not target_values:
+        return clamp(value)
+    return _value_at_percentile(target_values, _percentile_rank(source_values, value))
+
+
+def _engine_target_floor(column: str, csv_value: float, target: float) -> float:
+    if column == "ShotVersatility" and csv_value >= 70.0:
+        return max(target, csv_value * 0.82)
+    return target
+
+
+def _percentile_rank(sorted_values: list[float], value: float) -> float:
+    left = bisect_left(sorted_values, value)
+    right = bisect_right(sorted_values, value)
+    rank = left + max(1, right - left) * 0.5
+    return clamp(rank / max(1, len(sorted_values)), 0.0, 1.0)
+
+
+def _value_at_percentile(sorted_values: list[float], pct: float) -> float:
+    if not sorted_values:
+        return 50.0
+    if len(sorted_values) == 1:
+        return sorted_values[0]
+    position = clamp(pct, 0.0, 1.0) * (len(sorted_values) - 1)
+    lower = int(position)
+    upper = min(len(sorted_values) - 1, lower + 1)
+    fraction = position - lower
+    return sorted_values[lower] * (1.0 - fraction) + sorted_values[upper] * fraction
+
+
+def _calibration_blend_weight(player: Any) -> float:
+    minutes = _display_minutes(_player_get(player, "minutes_projection"))
+    if minutes >= 28:
+        return 0.78
+    if minutes >= 18:
+        return 0.68
+    if minutes >= 10:
+        return 0.56
+    if minutes >= 4:
+        return 0.4
+    return 0.24
+
+
+def _trait_calibration_weight(base_weight: float, trait: TraitValue, previous: float, target: float) -> float:
+    weight = float(base_weight)
+    confidence = float(trait.confidence or 0.0)
+    if confidence <= 0.28:
+        weight = max(weight, 0.92)
+    elif confidence <= 0.42:
+        weight = max(weight, 0.82)
+    if previous <= 5.0 and target >= 30.0:
+        weight = max(weight, 0.94)
+    return clamp(weight, 0.0, 0.96)
+
+
+def _display_minutes(value: Any) -> float:
+    minutes = maybe_float(value) or 0.0
+    if minutes > 80:
+        minutes = minutes / 82.0
+    return clamp(minutes, 0.0, 42.0)
+
+
+def _player_get(player: Any, key: str) -> Any:
+    if player is None:
+        return None
+    if isinstance(player, dict):
+        return player.get(key)
+    return getattr(player, key, None)
+
+
+def _rating_report_row(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "rank": _maybe_int(row.get("Rank")),
+        "player": row.get("Player"),
+        "team": row.get("Team"),
+        "pos": row.get("Pos"),
+    }
+
+
+def _maybe_int(value: Any) -> int | None:
+    try:
+        return int(str(value))
+    except (TypeError, ValueError):
+        return None
 
 
 def build_traits_for_player(row: dict[str, Any], row_idx: int, player_id: str, percentiles: dict[str, dict[int, float]]) -> list[TraitValue]:

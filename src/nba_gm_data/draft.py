@@ -1482,9 +1482,28 @@ def infer_trait_values(position: str, archetype: str, stats: dict[str, Any], hei
         "rim_protecting_big": {"rim_protection": 14, "size": 7},
         "energy_big": {"rebounding": 9, "motor": 8},
     }.get(archetype, {})
+    athletic_bias = {
+        "lead_creator": 4.0,
+        "scoring_wing": 4.5,
+        "two_way_wing": 5.0,
+        "connector_guard": 1.5,
+        "movement_shooter": 1.0,
+        "rim_pressure_guard": 8.0,
+        "versatile_forward": 4.0,
+        "stretch_big": 1.5,
+        "rim_protecting_big": 3.0,
+        "energy_big": 6.0,
+    }.get(archetype, 0.0)
     for key, bonus in archetype_bias.items():
         values[key] += bonus
-    values["athleticism"] += values["rim_pressure"] * 0.08 + values["defense"] * 0.05 - 4
+    values["athleticism"] = (
+        38.0
+        + values["rim_pressure"] * 0.22
+        + values["defense"] * 0.10
+        + values["size"] * 0.08
+        + athletic_bias
+        + max(0.0, float(advanced.get("usg", 20)) - 22.0) * 0.18
+    )
     values["motor"] += float(per36.get("reb", 5)) * 0.7 + float(per36.get("stl", 0.8)) * 2.5
     values["nba_readiness"] += float(advanced.get("bpm", 5)) * 1.1 + float(advanced.get("tspct", 0.55)) * 22 - 12
     return {key: clamp(value, 25, 95) for key, value in values.items()}
@@ -1492,7 +1511,8 @@ def infer_trait_values(position: str, archetype: str, stats: dict[str, Any], hei
 
 def generated_trait_values(prospect: DraftProspect, rng: random.Random) -> dict[str, float]:
     base = {key: clamp(prospect.current_ability + rng.gauss(0, 8), 25, 94) for key in DRAFT_TRAITS}
-    return infer_trait_values(prospect.position, prospect.archetype, {}, prospect.height_inches) | {key: round((base[key] + infer_trait_values(prospect.position, prospect.archetype, {}, prospect.height_inches)[key]) / 2, 2) for key in DRAFT_TRAITS}
+    inferred = infer_trait_values(prospect.position, prospect.archetype, {}, prospect.height_inches)
+    return {key: round((base[key] + inferred[key]) / 2, 2) for key in DRAFT_TRAITS}
 
 
 def development_curve(age: float | None, class_year: str | None, archetype: str) -> str:

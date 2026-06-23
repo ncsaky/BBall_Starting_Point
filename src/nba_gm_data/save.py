@@ -1797,13 +1797,20 @@ def simulate_one_series_game(
     return result
 
 
-def run_draft_lottery(canonical: dict[str, Any] | Any, save_path: str | Path, year: str = "2026", seed: int = 1) -> dict[str, Any]:
+def lottery_seed(seed: int | None = None) -> int:
+    if seed is not None:
+        return int(seed)
+    return random.SystemRandom().randrange(1, 2_147_483_647)
+
+
+def run_draft_lottery(canonical: dict[str, Any] | Any, save_path: str | Path, year: str = "2026", seed: int | None = None) -> dict[str, Any]:
     canonical = to_plain(canonical)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     from .draft import generate_draft_order
 
+    effective_seed = lottery_seed(seed)
     standings = save_standings_for_draft(canonical, save)
-    order = generate_draft_order(canonical_with_save(canonical, save), year, seed=seed, standings=standings)
+    order = generate_draft_order(canonical_with_save(canonical, save), year, seed=effective_seed, standings=standings)
     annotate_lottery_odds_context(canonical, save, order)
     resolve_pick_obligations_for_year(save, order, str(year))
     refresh_draft_order_from_save(order, save)

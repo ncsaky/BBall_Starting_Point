@@ -1086,13 +1086,32 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
                 **shooting_line(points, feat, item["minutes"], rng),
                 "rim_attempts": max(0, int(round(item["minutes"] * feat["rim_pressure"] / 1150 + rng.random()))),
                 "rebounds": max(0, int(round(item["minutes"] * (0.105 + feat["offensive_rebounding"] / 500 + feat["rim_deterrence"] / 1800 + max(0.0, feat["rim_deterrence"] - 92) * 0.0018) + rng.gauss(0.45, 1.35)))),
-                "assists": max(0, int(round(item["minutes"] * assist_rate_from_features(feat) + rng.gauss(0.2, 1.12)))),
+                "assists": max(0, int(round(item["minutes"] * assist_rate_for_player(player, feat) + rng.gauss(0.2, 1.12)))),
                 "turnovers": max(0, int(round(item["minutes"] * (0.015 + feat["usage"] / 2200) + rng.random() * 0.6))),
-                "steals": max(0, int(round(item["minutes"] * feat["defensive_events"] / 2100 + rng.random() * 0.55))),
+                "steals": max(0, int(round(item["minutes"] * feat["defensive_events"] / 1850 + rng.random() * 0.62))),
                 "blocks": max(0, int(round(item["minutes"] * (feat["rim_deterrence"] / 2200 + max(0.0, feat["rim_deterrence"] - 88) * 0.0034) + rng.random() * 0.95))),
             }
         )
     return lines
+
+
+def assist_rate_for_player(player: dict[str, Any], feat: dict[str, float]) -> float:
+    rate = assist_rate_from_features(feat)
+    position = str(player.get("position") or "").upper()
+    passing = float(feat.get("passing") or 50.0)
+    usage = float(feat.get("usage") or feat.get("scoring_usage") or 50.0)
+    creation = float(feat.get("shot_creation") or usage)
+    is_guard = "PG" in position or "SG" in position
+    is_big = "C" in position or "PF" in position
+    if is_guard and passing >= 72.0:
+        rate += 0.010 + max(0.0, passing - 78.0) * 0.0018
+    if "PG" in position and usage >= 66.0:
+        rate += 0.012 + max(0.0, creation - 72.0) * 0.0012
+    if is_big and passing < 88.0:
+        rate = min(rate, 0.175)
+    if is_big and passing >= 94.0 and usage >= 70.0:
+        rate += 0.020
+    return clamp(rate, 0.035, 0.36)
 
 
 def assist_rate_from_features(feat: dict[str, float]) -> float:
@@ -1100,13 +1119,15 @@ def assist_rate_from_features(feat: dict[str, float]) -> float:
     usage = float(feat.get("usage") or feat.get("scoring_usage") or 50.0)
     creation = float(feat.get("shot_creation") or usage)
     rate = 0.026 + passing / 900.0 + usage / 3300.0
+    rate += max(0.0, passing - 68.0) * 0.0012
+    rate += max(0.0, passing - 76.0) * 0.0014
     rate += max(0.0, passing - 74.0) * 0.0032
     rate += max(0.0, passing - 88.0) * 0.0042
     rate += max(0.0, creation - 80.0) * 0.0012
     if passing >= 88.0 and usage >= 70.0:
         rate += 0.018 + max(0.0, passing - 90.0) * 0.003 + max(0.0, usage - 76.0) * 0.0015
     if passing >= 80.0 and usage >= 86.0 and creation >= 78.0:
-        rate += 0.08 + max(0.0, passing - 80.0) * 0.004 + max(0.0, usage - 86.0) * 0.002
+        rate += 0.095 + max(0.0, passing - 80.0) * 0.004 + max(0.0, usage - 86.0) * 0.002
     if passing < 58 and usage < 62:
         rate -= 0.012
     return clamp(rate, 0.035, 0.36)
@@ -1227,7 +1248,7 @@ def enforce_elite_scoring_floors(pool: list[dict[str, Any]], features: dict[str,
 
 
 def elite_scoring_floor(item: dict[str, Any], features: dict[str, float]) -> int:
-    minutes = float(item.get("minutes") or 0.0)
+    minutes = sim_line_minutes(item)
     if minutes < 26:
         return 0
     scoring_usage = float(features.get("scoring_usage") or features.get("usage") or 50)
@@ -1240,24 +1261,24 @@ def elite_scoring_floor(item: dict[str, Any], features: dict[str, float]) -> int
         return 0
     position = str((item.get("player") or {}).get("position") or "").upper()
     ppm = (
-        0.54
-        + max(0.0, scoring_usage - 72) * 0.012
-        + max(0.0, shot_creation - 78) * 0.006
-        + max(0.0, spacing - 82) * 0.004
-        + max(0.0, rim_pressure - 72) * 0.006
-        + max(0.0, impact - 82) * 0.005
+        0.49
+        + max(0.0, scoring_usage - 72) * 0.009
+        + max(0.0, shot_creation - 78) * 0.004
+        + max(0.0, spacing - 82) * 0.003
+        + max(0.0, rim_pressure - 72) * 0.004
+        + max(0.0, impact - 82) * 0.003
     )
     if ("C" in position or "PF" in position) and impact >= 82 and passing >= 90:
-        ppm += 0.12 + max(0.0, passing - 90) * 0.006
+        ppm += 0.09 + max(0.0, passing - 90) * 0.004
     if ("PG" in position or "SG" in position) and spacing >= 88 and shot_creation >= 82:
-        ppm += 0.08 + max(0.0, spacing - 90) * 0.003
+        ppm += 0.05 + max(0.0, spacing - 90) * 0.002
     if rim_pressure >= 86 and shot_creation >= 84:
-        ppm += 0.045
-    return int(round(minutes * clamp(ppm, 0.0, 0.96)))
+        ppm += 0.028
+    return int(round(minutes * clamp(ppm, 0.0, 0.86)))
 
 
 def role_scoring_floor(item: dict[str, Any], features: dict[str, float]) -> int:
-    minutes = float(item.get("minutes") or 0.0)
+    minutes = sim_line_minutes(item)
     usage = float(features.get("scoring_usage") or features.get("usage") or 50)
     return int(round(minutes * clamp(0.16 + max(0.0, usage - 52) * 0.003, 0.12, 0.35)))
 
@@ -1276,7 +1297,7 @@ def weighted_index(candidates: list[int], weights: list[float], rng: random.Rand
 
 
 def plausible_point_cap(item: dict[str, Any], features: dict[str, float]) -> int:
-    minutes = max(1.0, float(item.get("minutes") or 0))
+    minutes = max(1.0, sim_line_minutes(item))
     scoring_usage = float(features.get("scoring_usage") or features.get("usage") or 50)
     ball_usage = float(features.get("usage") or scoring_usage)
     impact = float(features.get("impact") or 50)
@@ -1286,32 +1307,39 @@ def plausible_point_cap(item: dict[str, Any], features: dict[str, float]) -> int
     spacing = float(features.get("spacing") or 50)
     position = str((item.get("player") or {}).get("position") or "").upper()
     ppm = (
-        0.60
-        + max(0.0, scoring_usage - 60) * 0.010
-        + max(0.0, ball_usage - 78) * 0.021
-        + max(0.0, impact - 82) * 0.009
-        + max(0.0, rim_pressure - 62) * 0.018
+        0.55
+        + max(0.0, scoring_usage - 60) * 0.008
+        + max(0.0, ball_usage - 78) * 0.014
+        + max(0.0, impact - 82) * 0.006
+        + max(0.0, rim_pressure - 62) * 0.012
     )
     if ("C" in position or "PF" in position) and impact >= 78:
-        ppm += max(0.0, passing - 85) * 0.008
+        ppm += max(0.0, passing - 85) * 0.006
     skill_ceiling = (
-        0.58
-        + max(0.0, scoring_usage - 55) * 0.010
-        + max(0.0, shot_creation - 60) * 0.006
-        + max(0.0, spacing - 60) * 0.003
-        + max(0.0, rim_pressure - 75) * 0.006
-        + max(0.0, impact - 78) * 0.004
-        + max(0.0, ball_usage - 80) * 0.012
+        0.54
+        + max(0.0, scoring_usage - 55) * 0.008
+        + max(0.0, shot_creation - 60) * 0.005
+        + max(0.0, spacing - 60) * 0.002
+        + max(0.0, rim_pressure - 75) * 0.004
+        + max(0.0, impact - 78) * 0.003
+        + max(0.0, ball_usage - 80) * 0.008
     )
     if shot_creation < 58 and spacing < 55:
         skill_ceiling = min(skill_ceiling, 0.78)
     ppm = min(ppm, skill_ceiling)
     star_cap_bonus = 0.0
     if impact >= 82 and (shot_creation >= 82 or passing >= 90):
-        star_cap_bonus += 0.08
+        star_cap_bonus += 0.04
     if spacing >= 90 and shot_creation >= 82:
-        star_cap_bonus += 0.05
-    return max(4, int(round(minutes * clamp(ppm + star_cap_bonus, 0.45, 1.06))))
+        star_cap_bonus += 0.03
+    return max(4, int(round(minutes * clamp(ppm + star_cap_bonus, 0.45, 0.98))))
+
+
+def sim_line_minutes(item: dict[str, Any]) -> float:
+    minutes = float(item.get("minutes") or 0.0)
+    if minutes > 80:
+        minutes /= 82.0
+    return minutes
 
 
 def resolve_overtime_if_tied(
@@ -1368,7 +1396,7 @@ def scoring_weight(item: dict[str, Any], features: dict[str, float]) -> float:
     creation = features.get("passing", 50)
     spacing = features.get("spacing", 50)
     rim_pressure = features.get("rim_pressure", 50)
-    self_creation = 1 + max(0.0, usage - 70) ** 1.13 * 0.019 + max(0.0, shot_creation - 64) * 0.017
+    self_creation = 1 + max(0.0, usage - 70) ** 1.13 * 0.014 + max(0.0, shot_creation - 64) * 0.014
     assisted_finishing = 1 + max(0.0, rim_pressure - 60) * 0.006
     spot_up_spacing = 1 + max(0.0, spacing - 70) * 0.0045
     connective_creation = 1 + max(0.0, creation - 60) * 0.003
@@ -1377,18 +1405,18 @@ def scoring_weight(item: dict[str, Any], features: dict[str, float]) -> float:
     low_creation_cap = 1 - max(0.0, 54 - shot_creation) * 0.006
     star_floor = 1 + max(0.0, usage - 78) * 0.014 + max(0.0, impact - 82) * 0.004
     minutes_role = clamp((minutes / 32.0) ** 0.8, 0.45, 1.08)
-    on_ball_star = 1 + max(0.0, ball_usage - 78) * 0.024 + max(0.0, impact - 80) * 0.008 + max(0.0, rim_pressure - 62) * 0.009
+    on_ball_star = 1 + max(0.0, ball_usage - 78) * 0.017 + max(0.0, impact - 80) * 0.005 + max(0.0, rim_pressure - 62) * 0.006
     position = str((item.get("player") or {}).get("position") or "").upper()
     frontcourt_hub = 1.0
     if ("C" in position or "PF" in position) and impact >= 78:
         frontcourt_hub += max(0.0, creation - 88) * 0.019 + max(0.0, ball_usage - 76) * 0.007
     primary_guard_star = 1.0
     if ("PG" in position or "SG" in position) and ball_usage >= 80:
-        primary_guard_star += max(0.0, ball_usage - 80) * 0.020 + max(0.0, rim_pressure - 60) * 0.010
-        primary_guard_star = min(primary_guard_star, 1.48)
+        primary_guard_star += max(0.0, ball_usage - 80) * 0.014 + max(0.0, rim_pressure - 60) * 0.006
+        primary_guard_star = min(primary_guard_star, 1.32)
     elite_hub = 1.0
     if ball_usage >= 72 and impact >= 76:
-        elite_hub += max(0.0, creation - 85) * 0.020 + max(0.0, impact - 80) * 0.017 + max(0.0, ball_usage - 76) * 0.010
+        elite_hub += max(0.0, creation - 85) * 0.014 + max(0.0, impact - 80) * 0.012 + max(0.0, ball_usage - 76) * 0.007
     return (
         minutes
         * max(0.32, usage / 62)

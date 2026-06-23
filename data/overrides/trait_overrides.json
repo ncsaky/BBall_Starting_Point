@@ -280,6 +280,99 @@
         "portability": {"value": 66, "confidence": 0.64, "notes": "Rim pressure is elite, but non-shooting fit and availability limit universal roster fit."},
         "playoff_translation": {"value": 74, "confidence": 0.62, "notes": "Paint force translates when healthy, while spacing and defensive targeting keep the ceiling from becoming automatic."}
       }
+    },
+    {
+      "player_name": "Shai Gilgeous-Alexander",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "defensive_effort": {"value": 72, "confidence": 0.78, "notes": "Playtest correction after league-wide calibration: SGA is a positive guard defender, but not an elite all-defense event/effort outlier."},
+        "scheme_iq": {"value": 74, "confidence": 0.72, "notes": "Keep good team-defense feel without letting offensive star priors inflate defensive composite value."},
+        "screen_navigation": {"value": 68, "confidence": 0.74, "notes": "Reliable guard navigation, short of elite chase-defense specialist value."},
+        "rim_deterrence": {"value": 42, "confidence": 0.78, "notes": "Guard size/activity should not read as real rim protection."},
+        "foot_speed_lateral_agility": {"value": 78, "confidence": 0.72, "notes": "Strong guard movement remains a plus, separated from inflated defensive impact."}
+      }
+    },
+    {
+      "player_name": "Kyle Anderson",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "defensive_effort": {"value": 62, "confidence": 0.76, "notes": "Playtest correction: smart veteran defender, but the prior 90s-style effort/event profile was too high."},
+        "scheme_iq": {"value": 74, "confidence": 0.72, "notes": "Preserve the high-feel veteran read without treating him like an elite defensive quarterback."},
+        "screen_navigation": {"value": 58, "confidence": 0.72, "notes": "Useful positional defender, not a point-of-attack screen-navigation specialist."},
+        "rim_deterrence": {"value": 50, "confidence": 0.72, "notes": "Forward size gives some help value, not real big-man deterrence."},
+        "foot_speed_lateral_agility": {"value": 48, "confidence": 0.72, "notes": "Slow-mo movement should remain a matchup limitation."}
+      }
+    },
+    {
+      "player_name": "Kevin Durant",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "defensive_effort": {"value": 66, "confidence": 0.76, "notes": "Playtest correction: still long and useful, but no longer a top defensive-effort wing."},
+        "scheme_iq": {"value": 76, "confidence": 0.72, "notes": "Veteran defensive processing remains good without inflating him into an elite anchor."},
+        "screen_navigation": {"value": 56, "confidence": 0.72, "notes": "Age and size make repeated chase/navigation actions a limitation."},
+        "rim_deterrence": {"value": 62, "confidence": 0.74, "notes": "Length helps as a secondary contest player, but the previous rim deterrence was far too high."},
+        "foot_speed_lateral_agility": {"value": 58, "confidence": 0.72, "notes": "Later-career mobility should not drive elite defensive value."}
+      }
+    },
+    {
+      "player_name": "Draymond Green",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "release_speed": {"value": 22, "confidence": 0.82, "notes": "Playtest correction: jumper release and shooting threat should be a major offensive limitation."},
+        "shooting_range": {"value": 25, "confidence": 0.84, "notes": "Draymond's range must sit below Jimmy Butler III and should not create spacing gravity."},
+        "shot_versatility": {"value": 31, "confidence": 0.78, "notes": "Connector offense remains through passing and screening, not shotmaking versatility."}
+      }
+    },
+    {
+      "player_name": "D'Angelo Russell",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "release_speed": {"value": 46, "confidence": 0.78, "notes": "Playtest correction: offensive and shooting impact were too forgiving for the current role."},
+        "shooting_range": {"value": 49, "confidence": 0.8, "notes": "Harsh shooting nerf to stop the model treating him like a reliable high-value spacer."},
+        "shot_versatility": {"value": 40, "confidence": 0.78, "notes": "Shotmaking inconsistency should drag offensive value."},
+        "handle_pressure": {"value": 58, "confidence": 0.72, "notes": "Still has guard craft, but no longer creates pressure like a premium initiator."},
+        "rim_pressure": {"value": 42, "confidence": 0.76, "notes": "Limited rim pressure and downhill force should be visible."},
+        "passing_reads": {"value": 70, "confidence": 0.72, "notes": "Keep some passing value while lowering the broader offensive engine."},
+        "defensive_effort": {"value": 34, "confidence": 0.78, "notes": "Harsh defensive correction: should be a targetable guard defender."},
+        "scheme_iq": {"value": 46, "confidence": 0.7, "notes": "Defensive processing and engagement should not prop up the composite."},
+        "screen_navigation": {"value": 32, "confidence": 0.76, "notes": "Repeated guard actions should pressure him defensively."},
+        "rim_deterrence": {"value": 18, "confidence": 0.8, "notes": "No meaningful rim deterrence."},
+        "foot_speed_lateral_agility": {"value": 40, "confidence": 0.72, "notes": "Movement defense is a clear weakness."},
+        "portability": {"value": 38, "confidence": 0.74, "notes": "On-ball dependence, defense, and streaky shooting limit lineup portability."},
+        "playoff_translation": {"value": 40, "confidence": 0.72, "notes": "Weaknesses become more targetable in playoff-style environments."}
+      }
+    },
+    {
+      "player_name": "Daniss Jenkins",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "defensive_effort": {"value": 62, "confidence": 0.68, "notes": "Playtest correction: his defensive profile should be more credible than the initial generated/fringe estimate."},
+        "foot_speed_lateral_agility": {"value": 64, "confidence": 0.66, "notes": "Guard movement should support better point-of-attack defense."},
+        "screen_navigation": {"value": 60, "confidence": 0.66, "notes": "Boosted guard navigation from playtest scouting."},
+        "scheme_iq": {"value": 50, "confidence": 0.58, "notes": "Functional enough to avoid a hard defensive drag, while still not a proven high-IQ defender."},
+        "rim_deterrence": {"value": 24, "confidence": 0.64, "notes": "Guard size still limits rim protection."}
+      }
+    },
+    {
+      "player_name": "Derrick White",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "release_speed": {"value": 76, "confidence": 0.78, "notes": "Playtest correction: excellent role shooter, but the offense was reading too close to star-level shooting."},
+        "shooting_range": {"value": 70, "confidence": 0.78, "notes": "Range stays positive without overstating consistency/gravity."},
+        "shot_versatility": {"value": 50, "confidence": 0.76, "notes": "Reduce self-created shot versatility and consistency so offense is role-plus, not primary-option quality."},
+        "handle_pressure": {"value": 62, "confidence": 0.7, "notes": "Secondary handler pressure, not a top creator."},
+        "rim_pressure": {"value": 54, "confidence": 0.7, "notes": "Smart driver, but not a rim-pressure engine."},
+        "rim_deterrence": {"value": 58, "confidence": 0.76, "notes": "Elite shot-blocking guard context, not a big-man rim deterrence anchor."}
+      }
+    },
+    {
+      "player_name": "Desmond Bane",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "offensive_rebounding": {"value": 38, "confidence": 0.78, "notes": "Playtest correction: rebounding output was too high for his guard/wing role."},
+        "rim_deterrence": {"value": 48, "confidence": 0.72, "notes": "Lower defensive-size/rebounding proxy that was bleeding into rebounds per game."},
+        "stamina_cardio": {"value": 56, "confidence": 0.66, "notes": "Keep durable starter stamina without creating extra rebounding volume."}
+      }
     }
   ]
 }

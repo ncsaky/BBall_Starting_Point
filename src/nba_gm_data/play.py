@@ -533,7 +533,7 @@ def forced_lottery_room(canonical: dict[str, Any], save_path: Path, user_team: s
     choice = input("> Pick a number: ").strip()
     if choice == "0":
         return "quit"
-    order = run_draft_lottery(canonical, save_path, year=year, seed=seed)
+    order = run_draft_lottery(canonical, save_path, year=year, seed=None)
     print_lottery(order)
     wait()
     return "done"
@@ -808,8 +808,9 @@ def league_traits_room(canonical: dict[str, Any], save_path: Path) -> None:
     while True:
         clear_screen()
         rows = league_trait_rows(canonical, save_path, sort_key)
+        thresholds = league_trait_rating_thresholds(rows)
         print_title(f"Player Traits | sort: {trait_label(sort_key)}")
-        print_league_trait_table(rows[offset:offset + page_size], start=offset + 1)
+        print_league_trait_table(rows[offset:offset + page_size], start=offset + 1, thresholds=thresholds)
         print_rule()
         print("1. Next page")
         print("2. Previous page")
@@ -877,7 +878,6 @@ def league_trait_rows(canonical: dict[str, Any], save_path: Path, sort_key: str)
                 "contract": contract_summary_text(salary),
             }
         )
-    apply_display_rating_scale(rows)
     rows.sort(key=lambda row: (-float((row["attrs"] or {}).get(sort_key) or 0.0), row["player"].get("name") or ""))
     return rows
 
@@ -947,7 +947,8 @@ def ratings_guide(canonical: dict[str, Any]) -> dict[str, Any]:
         )
     return {
         "rows": rows,
-        "display_scale": "Visible ratings are percentile-rescaled for users; engine calculations keep raw trait values.",
+        "display_scale": "Visible ratings use the calibrated 1-99 game scale shown on team dashboards; engine calculations use the same underlying raw trait values.",
+        "calibration_stack": "Trait stack: inferred stat model -> full-health 2026 league ratings prior -> manual playtest overrides; health, rust, and injury risk are applied separately.",
         "composites": [
             "Overall: shooting 22%, creation 25%, defense 22%, athleticism 13%, IQ 12%, plus a small minutes role bonus.",
             "Offense: shooting 35%, creation 32%, passing 18%, rim pressure 15%.",
@@ -961,6 +962,7 @@ def print_ratings_guide(canonical: dict[str, Any]) -> None:
     guide = ratings_guide(canonical)
     print_title("Ratings Guide")
     print(guide["display_scale"])
+    print(guide["calibration_stack"])
     print_rule()
     for formula in guide["composites"]:
         print(f"- {formula}")
@@ -996,7 +998,20 @@ def derived_trait_attributes(attrs: dict[str, Any]) -> dict[str, float]:
     }
 
 
-def print_league_trait_table(rows: list[dict[str, Any]], start: int = 1) -> None:
+def print_league_trait_table(rows: list[dict[str, Any]], start: int = 1, thresholds: dict[str, tuple[float, float]] | None = None) -> None:
+    rating_keys = [
+        "overall",
+        "offense",
+        "defense",
+        "spacing",
+        "creation",
+        "rim_pressure",
+        "rebounding",
+        "athleticism",
+        "disruption",
+        "rim_protection",
+    ]
+    thresholds = thresholds or {}
     print(
         f" #  {'Player':<22} {'Tm':<3} {'Pos':<3} {'Age':>3} {'Min':>4} "
         f"{'PTS':>4} {'REB':>4} {'AST':>4} {'STL':>4} {'BLK':>4} "
@@ -1010,11 +1025,34 @@ def print_league_trait_table(rows: list[dict[str, Any]], start: int = 1) -> None
             f"{compact_position(player.get('position')):<3} {age_text(player, 3)} {float(row.get('minutes') or 0):>4.1f} "
             f"{float(row.get('points') or 0):>4.1f} {float(row.get('rebounds') or 0):>4.1f} {float(row.get('assists') or 0):>4.1f} "
             f"{float(row.get('steals') or 0):>4.1f} {float(row.get('blocks') or 0):>4.1f} "
-            f"{float(attrs.get('overall') or 0):>4.0f} {float(attrs.get('offense') or 0):>4.0f} {float(attrs.get('defense') or 0):>4.0f} "
-            f"{float(attrs.get('spacing') or 0):>4.0f} {float(attrs.get('creation') or 0):>4.0f} {float(attrs.get('rim_pressure') or 0):>4.0f} "
-            f"{float(attrs.get('rebounding') or 0):>4.0f} {float(attrs.get('athleticism') or 0):>4.0f} {float(attrs.get('disruption') or 0):>4.0f} "
-            f"{float(attrs.get('rim_protection') or 0):>4.0f} {row.get('contract', ''):>9}"
+            + " ".join(rating_cell(float(attrs.get(key) or 0), thresholds.get(key, (45.0, 65.0))).strip() for key in rating_keys)
+            + f" {row.get('contract', ''):>9}"
         )
+
+
+def league_trait_rating_thresholds(rows: list[dict[str, Any]]) -> dict[str, tuple[float, float]]:
+    keys = [
+        "overall",
+        "offense",
+        "defense",
+        "spacing",
+        "creation",
+        "rim_pressure",
+        "rebounding",
+        "athleticism",
+        "disruption",
+        "rim_protection",
+    ]
+    thresholds: dict[str, tuple[float, float]] = {}
+    for key in keys:
+        values = sorted(float((row.get("attrs") or {}).get(key) or 0.0) for row in rows)
+        if not values:
+            thresholds[key] = (45.0, 65.0)
+            continue
+        low_index = max(0, min(len(values) - 1, len(values) // 3))
+        high_index = max(0, min(len(values) - 1, (len(values) * 2) // 3))
+        thresholds[key] = (values[low_index], values[high_index])
+    return thresholds
 
 
 def trait_label(key: str) -> str:
@@ -2543,7 +2581,7 @@ def offseason_room(canonical: dict[str, Any], save_path: Path, user_team: str, s
                 print_title("You Are Entering The Draft Lottery")
                 print("Lottery odds are based on this save's standings. Press Enter to reveal the order.")
                 input()
-                order = run_draft_lottery(canonical, save_path, year=year, seed=seed)
+                order = run_draft_lottery(canonical, save_path, year=year, seed=None)
                 print_lottery(order)
                 wait()
             elif phase == "draft":
@@ -6678,7 +6716,7 @@ def print_trade_offer_details(canonical: dict[str, Any], candidate: dict[str, An
             trade_value = market_trade_target_value(player, value or fallback_asset_valuation(player))
             print(
                 f"  {style(player.get('name', asset.get('label')), 'accent'):<24} "
-                f"{compact_position(player.get('position')):<3} age {age_text(player, 2)} | "
+                f"{compact_position(player.get('position')):<3} age {age_text(player, 2)} ht {height_text(player):<5} | "
                 f"Value {single_value_bar(trade_value, scale=100, width=12)} {trade_value:>5.1f}"
             )
             print(

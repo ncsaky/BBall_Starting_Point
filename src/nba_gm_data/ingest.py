@@ -71,7 +71,13 @@ from .schema import (
     to_plain,
 )
 from .teams import TEAM_INFO
-from .traits import PERCENTILE_FIELDS, build_traits_for_player
+from .traits import (
+    LEAGUE_TRAIT_RATINGS_SOURCE_ID,
+    PERCENTILE_FIELDS,
+    apply_league_trait_calibration,
+    build_traits_for_player,
+    load_league_trait_ratings,
+)
 from .transactions import (
     build_front_office_profiles,
     build_player_asset_valuations,
@@ -93,6 +99,7 @@ OVERRIDES_DIR = Path("data/overrides")
 STAFF_OVERRIDES_FILE = OVERRIDES_DIR / "staff_overrides.json"
 PLAYER_OVERRIDES_FILE = OVERRIDES_DIR / "player_overrides.json"
 TRAIT_OVERRIDES_FILE = OVERRIDES_DIR / "trait_overrides.json"
+LEAGUE_TRAIT_RATINGS_FILE = OVERRIDES_DIR / "league_trait_ratings_2026_06_20.csv"
 CONTRACT_OVERRIDES_FILE = OVERRIDES_DIR / "contract_overrides.json"
 GAMEPLAY_STAFF_SEED_FILE = OVERRIDES_DIR / "gameplay_staff_seed.json"
 PLAYER_HEALTH_OVERRIDES_FILE = OVERRIDES_DIR / "player_health_overrides.json"
@@ -140,6 +147,7 @@ def build_universe(root: str | Path = ".") -> CanonicalUniverse:
     contract_overrides = load_optional_json(root, CONTRACT_OVERRIDES_FILE) or {}
     gameplay_staff_seed = load_optional_json(root, GAMEPLAY_STAFF_SEED_FILE) or {}
     player_health_overrides = load_optional_json(root, PLAYER_HEALTH_OVERRIDES_FILE) or {}
+    league_trait_ratings = load_league_trait_ratings(root / LEAGUE_TRAIT_RATINGS_FILE)
     injury_model_config = load_injury_model_config(root)
     front_office_overrides = load_front_office_overrides(root)
     transaction_model_config = load_transaction_model_config(root)
@@ -166,6 +174,7 @@ def build_universe(root: str | Path = ".") -> CanonicalUniverse:
     for idx, row in enumerate(player_rows):
         player = players[idx]
         traits.extend(build_traits_for_player(row, idx, player.id, percentiles))
+    traits, rating_calibration_report = apply_league_trait_calibration(traits, players, league_trait_ratings)
     traits = apply_trait_overrides(traits, players, trait_overrides)
     contracts = build_contracts(players, research_contracts, contract_overrides)
     draft_picks = build_draft_picks(teams, research_draft_picks, research_future_picks)
@@ -247,6 +256,7 @@ def build_universe(root: str | Path = ".") -> CanonicalUniverse:
         "canonical_start_date": CANONICAL_START_DATE,
         "generated_at": source_generated_at,
         "philosophy": "Public/cited, rotation-first, confidence-aware. Raw inputs are ingestion sources, not canonical truth.",
+        "rating_calibration_report": rating_calibration_report,
         "counts": {
             "sources": len(source_ids),
             "teams": len(teams),
@@ -516,6 +526,15 @@ def build_source_registry(
             notes="Transparent proxy model that converts public/raw stats into hidden basketball traits with confidence scores.",
         ),
         SourceEvidence(
+            id=LEAGUE_TRAIT_RATINGS_SOURCE_ID,
+            title="League-wide subjective player trait ratings, June 20 2026",
+            kind="local_subjective_trait_prior",
+            trust_level="human_reviewed_full_health_prior",
+            path=str((root / LEAGUE_TRAIT_RATINGS_FILE).resolve()) if (root / LEAGUE_TRAIT_RATINGS_FILE).exists() else None,
+            retrieved_at="2026-06-20",
+            notes="Human-eye league ratings prior used only as a full-health calibration layer. Values are quantile-mapped into engine trait space, then manual overrides remain authoritative.",
+        ),
+        SourceEvidence(
             id="src_manual_overrides_2025_26",
             title="Manual 2025-26 preseason overrides",
             kind="local_manual_override",
@@ -742,19 +761,27 @@ def build_players(player_rows: list[dict[str, Any]], player_overrides: dict[str,
 
 
 def player_override_for(normalized_name: str, player_overrides: dict[str, Any]) -> dict[str, Any]:
+    loose_name = loose_override_name_key(normalized_name)
     for override in player_overrides.get("players", []):
-        if normalize_name(override.get("player_name")) == normalized_name:
+        override_name = normalize_name(override.get("player_name"))
+        if override_name == normalized_name or loose_override_name_key(override_name) == loose_name:
             return override
     return {}
+
+
+def loose_override_name_key(value: str) -> str:
+    return normalize_name(value).replace("'", "").replace(" ", "")
 
 
 def apply_trait_overrides(traits: list[Any], players: list[Player], trait_overrides: dict[str, Any]) -> list[Any]:
     if not trait_overrides.get("players"):
         return traits
     players_by_name = {player.normalized_name: player for player in players}
+    players_by_loose_name = {loose_override_name_key(player.normalized_name): player for player in players}
     overrides_by_trait: dict[tuple[str, str], dict[str, Any]] = {}
     for player_override in trait_overrides.get("players", []):
-        player = players_by_name.get(normalize_name(player_override.get("player_name")))
+        override_name = normalize_name(player_override.get("player_name"))
+        player = players_by_name.get(override_name) or players_by_loose_name.get(loose_override_name_key(override_name))
         if not player:
             continue
         for trait_key, override in (player_override.get("traits") or {}).items():

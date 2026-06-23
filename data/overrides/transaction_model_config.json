@@ -9,7 +9,7 @@
     "maximum_roster": 18
   },
   "phase_thresholds": {
-    "contender_ceiling": 65,
+    "contender_ceiling": 64,
     "playoff_ceiling": 60,
     "high_youth_pipeline": 45,
     "old_core_age": 30.5
@@ -18,7 +18,7 @@
     "contract_surplus": 0.42,
     "age_curve": 0.9,
     "development_upside": 0.75,
-    "health_risk": 0.55,
+    "health_risk": 0.42,
     "role_scarcity": 0.55,
     "playoff_value": 0.16
   },

@@ -128,6 +128,457 @@
       "height_inches": 67,
       "notes": "User playtest data correction: Yuki Kawamura listed height should be 5'7\".",
       "player_name": "Yuki Kawamura"
+    },
+    {
+      "confidence": 0.82,
+      "height_inches": 80,
+      "notes": "Verified public roster/profile fill for missing dashboard height.",
+      "player_name": "Eli John Ndiaye"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 81,
+      "notes": "Verified public roster/profile fill for missing dashboard height.",
+      "player_name": "Jacob Toppin"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 75,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Keaton Wallace"
+    },
+    {
+      "confidence": 0.82,
+      "height_inches": 83,
+      "notes": "Verified public roster/profile fill for missing dashboard height.",
+      "player_name": "N'Faly Dante"
+    },
+    {
+      "confidence": 0.86,
+      "height_inches": 80,
+      "notes": "Verified public draft/profile fill for missing dashboard height.",
+      "player_name": "Nikola Đurišić"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 74,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "RayJ Dennis"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 78,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Ben Saraf"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 80,
+      "notes": "Verified public roster/profile fill for missing dashboard height.",
+      "player_name": "Hunter Tyson"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 78,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Tyrese Martin"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 72,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Tyson Etienne"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 83,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Amari Williams"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 78,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Hugo González"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 77,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Ron Harper Jr."
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 77,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Antonio Reeves"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 80,
+      "notes": "Verified public roster/profile fill for missing dashboard height.",
+      "player_name": "Drew Peterson"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 74,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "KJ Simpson"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 80,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "PJ Hall"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 80,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Lachlan Olbrich"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 81,
+      "notes": "Verified public roster/profile fill for missing dashboard height.",
+      "player_name": "Trentyn Flowers"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 78,
+      "notes": "Verified public roster/profile fill for missing dashboard height.",
+      "player_name": "Chris Livingston"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 77,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Emanuel Miller"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 78,
+      "notes": "Verified public roster/profile fill for missing dashboard height.",
+      "player_name": "Luke Travers"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 80,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Nae'Qwan Tomlin"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 73,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Brandon Williams"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 76,
+      "notes": "Verified public roster/profile fill for missing dashboard height.",
+      "player_name": "Miles Kelly"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 71,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Ryan Nembhard"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 75,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Curtis Jones"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 79,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Spencer Jones"
+    },
+    {
+      "confidence": 0.86,
+      "height_inches": 77,
+      "notes": "Verified public draft/profile fill for missing dashboard height.",
+      "player_name": "Tamar Bates"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 76,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Daniss Jenkins"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 80,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Isaac Jones"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 77,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Javonte Green"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 83,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Tolu Smith"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 78,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Isaiah Crawford"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 77,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Tristen Newton"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 79,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Kobe Brown"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 81,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Micah Potter"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 76,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Quenton Jackson"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 75,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Taelon Peter"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 82,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Tony Bradley"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 83,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Yanic Konan Niederhäuser"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 82,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Drew Timme"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 75,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Jahmai Mashack"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 74,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Scotty Pippen Jr."
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 77,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Pelle Larsson"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 84,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Vladislav Goldin"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 76,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "AJ Green"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 77,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Kevin Porter Jr."
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 79,
+      "notes": "Verified public roster/profile fill for missing dashboard height.",
+      "player_name": "Nigel Hayes-Davis"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 81,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Pete Nance"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 81,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Enrique Freeman"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 83,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Joan Beringer"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 79,
+      "notes": "Verified public roster/profile fill for missing dashboard height.",
+      "player_name": "Johnny Juzang"
+    },
+    {
+      "age": 25,
+      "confidence": 0.9,
+      "height_inches": 76,
+      "notes": "Verified ESPN roster fill for missing dashboard age and height.",
+      "player_name": "Zyon Pullin"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 84,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Ariel Hukporti"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 81,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Mohamed Diawara"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 80,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Tosan Evbuomwan"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 84,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Branden Carlson"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 78,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Brooks Barnhizer"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 79,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Jamal Cain"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 79,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Noah Penda"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 79,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Justin Edwards"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 73,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Collin Gillespie"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 74,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Jamaree Bouyea"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 75,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Caleb Love"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 79,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Rayan Rupert"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 80,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Vít Krejčí"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 80,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Bismack Biyombo"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 76,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "David Jones Garcia"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 77,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Lindy Waters III"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 78,
+      "notes": "Verified public roster/profile fill for missing dashboard height.",
+      "player_name": "Stanley Umude"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 78,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "A.J. Lawson"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 72,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Chucky Hepburn"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 79,
+      "notes": "Verified ESPN roster fill for missing dashboard height.",
+      "player_name": "Jamison Battle"
+    },
+    {
+      "confidence": 0.9,
+      "height_inches": 75,
+      "notes": "Verified public roster/profile fill for missing dashboard height.",
+      "player_name": "Elijah Harkless"
     }
   ]
 }

@@ -306,7 +306,7 @@ def build_player_asset_valuations(canonical: dict[str, Any] | Any, config: dict[
             + surplus * float(weights.get("contract_surplus", 0.42))
             + scarcity * float(weights.get("role_scarcity", 0.55))
             + (playoff - 50) * float(weights.get("playoff_value", 0.16))
-            - health_risk * float(weights.get("health_risk", 0.55))
+            - health_risk * float(weights.get("health_risk", 0.42))
         )
         value = max(value, drafted_rookie_value_floor(player, ability=maybe_float(player.get("current_ability")) or on_court, potential=maybe_float(player.get("potential")) or on_court))
         if on_court >= 72:
@@ -366,7 +366,7 @@ def build_trade_block_entries(
             score += 18.0
             reasons = [*reasons, "extension_talks_stalled"]
             preferred = "best_asset_or_young_player"
-        if score < 34:
+        if score < 28:
             continue
         output.append(
             TradeBlockEntry(
@@ -526,8 +526,15 @@ def effectively_untouchable(canonical: dict[str, Any], player: dict[str, Any]) -
     valuation = next((value for value in canonical.get("player_asset_valuations", []) if value.get("player_id") == player.get("id")), fallback_asset_valuation(player))
     block = next((entry for entry in canonical.get("trade_block_entries", []) if entry.get("player_id") == player.get("id")), {})
     market_value = market_trade_target_value(player, valuation)
+    state = next((item for item in canonical.get("team_strategic_states", []) if item.get("team_id") == player.get("team_id")), {})
+    age = maybe_float(player.get("age")) or 27.0
+    old_win_now_icon = (
+        market_value >= 82.0
+        and age >= 32.0
+        and state.get("phase") in {"contending", "contending_with_future_upside"}
+    )
     return (
-        market_value >= 70.0
+        (market_value >= 94.0 or old_win_now_icon)
         and float(valuation.get("health_risk") or 0.0) <= 10.0
         and float(block.get("block_score") or 0.0) < 55.0
     )
@@ -1951,7 +1958,7 @@ def package_value_breakdown(canonical: dict[str, Any], assets: list[dict[str, An
             pieces["contract"] += float(valuation.get("contract_surplus") or 0.0) * 0.34
             if player and state:
                 pieces["lineup_fit"] += fit * 1.4
-            pieces["health"] -= max(0.0, float(valuation.get("health_risk") or 0.0) - 45.0) * 0.08
+            pieces["health"] -= max(0.0, float(valuation.get("health_risk") or 0.0) - 12.0) * 0.25
             pieces["cap_roster"] += max(-4.0, min(4.0, float(valuation.get("contract_surplus") or 0.0) * 0.12))
             asset_details.append(
                 {
@@ -2169,14 +2176,14 @@ def player_development_upside(player: dict[str, Any], age: float, features: dict
 
 def player_health_risk(profile: dict[str, Any], state: dict[str, Any]) -> float:
     durability = float(profile.get("durability") or 62)
-    risk = max(0.0, 65 - durability) * 0.5
+    risk = max(0.0, 65 - durability) * 0.3
     if profile.get("injury_prone"):
-        risk += 6.5
-    risk += min(6.0, len(profile.get("major_prior_injuries") or []) * 2.2)
-    risk += min(3.0, len(profile.get("body_area_risk_tags") or []) * 0.45)
+        risk += 4.0
+    risk += min(4.0, len(profile.get("major_prior_injuries") or []) * 1.4)
+    risk += min(1.5, len(profile.get("body_area_risk_tags") or []) * 0.25)
     if state.get("availability_status") != "active":
-        risk += 3.0
-    risk += float(state.get("rust") or 0) * 0.08
+        risk += 1.25
+    risk += float(state.get("rust") or 0) * 0.035
     return clamp(risk, 0, 34)
 
 
@@ -2207,6 +2214,8 @@ def contract_surplus_value(on_court: float, age_curve: float, development: float
         surplus += 2.0
     if salary_m <= 6 and development > 4:
         surplus += 4.0
+    if salary_m >= 50.0 and age_curve < 0.0 and surplus > -2.0:
+        surplus = min(surplus, -0.5 - (salary_m - 50.0) * 0.12 + age_curve * 0.35)
     if surplus < 0 and on_court >= 74:
         surplus = max(surplus * 0.18, -8.0)
     elif surplus < 0 and on_court >= 70:
@@ -2328,6 +2337,7 @@ def salary_posture(canonical: dict[str, Any], team_id: str) -> dict[str, Any]:
 
 def classify_team_phase(profile: dict[str, Any], ceiling: float, core_age: float | None, youth: float, pick_inventory: dict[str, Any], config: dict[str, Any]) -> str:
     timeline = str(profile.get("timeline") or "").lower()
+    has_timeline_signal = bool(timeline and timeline != "research_pending")
     thresholds = config.get("phase_thresholds", {})
     if "contending_with_future" in timeline:
         return "contending_with_future_upside"
@@ -2337,6 +2347,8 @@ def classify_team_phase(profile: dict[str, Any], ceiling: float, core_age: float
         return "contending"
     if "rebuild" in timeline:
         return "rebuilding"
+    if not has_timeline_signal and ceiling < 67 and youth >= 75 and (core_age or 30) <= 24.5:
+        return "developing"
     if ceiling >= float(thresholds.get("contender_ceiling", 69)):
         return "contending_with_future_upside" if youth >= 45 and (core_age or 30) < 29 else "contending"
     if ceiling >= float(thresholds.get("playoff_ceiling", 60)):
@@ -2417,6 +2429,9 @@ def trade_block_score(canonical: dict[str, Any], player: dict[str, Any], valuati
     if player_position_bucket(player) in " ".join(state.excesses):
         score += 12
         reasons.append("position_surplus")
+        if age >= 35:
+            score += 6
+            reasons.append("veteran_surplus_slot")
     if valuation.health_risk >= 12 and state.phase in {"contending", "contending_with_future_upside"}:
         score += 9
         reasons.append("health_risk_for_win_now_team")
@@ -2425,7 +2440,7 @@ def trade_block_score(canonical: dict[str, Any], player: dict[str, Any], valuati
         reasons.append("blocked_prospect")
         preferred.append("clearer_development_path")
     if valuation.player_value >= 72 and state.phase not in {"rebuilding"}:
-        score -= 62
+        score -= 18 if "older_than_team_timeline" in reasons else 62
     if valuation.contract_surplus >= 10 and age <= 25:
         score -= 22
     if state.phase in {"contending", "contending_with_future_upside"} and valuation.on_court_value >= 60 and float(player.get("minutes_projection") or 0) >= 26:
@@ -2454,6 +2469,7 @@ def team_fit_for_player(player: dict[str, Any], valuation: dict[str, Any], state
     playoff_value = float(valuation.get("playoff_value") or 0.0)
     portability = float(valuation.get("portability") or 0.0)
     development = float(valuation.get("development_upside") or 0.0)
+    health_risk = float(valuation.get("health_risk") or 0.0)
     if "playoff_rotation" in state.get("needs", []) and valuation["playoff_value"] >= 62:
         fit += 4
     if "youth_and_picks" in state.get("needs", []) and age <= 24:
@@ -2464,6 +2480,8 @@ def team_fit_for_player(player: dict[str, Any], valuation: dict[str, Any], state
         fit += 3
     if state.get("phase") in {"contending", "contending_with_future_upside"} and age >= 30 and minutes >= 22 and playoff_value >= 58:
         fit += 2.5
+    if state.get("phase") in {"contending", "contending_with_future_upside"} and health_risk >= 16.0:
+        fit -= min(5.0, (health_risk - 14.0) * 0.5)
     if state.get("phase") in {"rebuilding", "developing"} and age >= 30:
         fit -= 4
     if state.get("phase") == "rebuilding" and player_value >= 48 and minutes >= 24 and age >= 28:
@@ -2508,6 +2526,7 @@ def package_value_for_team(
             multiplier = multipliers.get(asset["id"], 1.0)
             player_value = market_trade_target_value(player, value)
             adjusted = (player_value + team_fit_for_player(player, value, state)) * multiplier
+            adjusted -= max(0.0, float(value.get("health_risk") or 0.0) - 12.0) * 0.25
             adjusted += recently_acquired_player_premium(canonical, player, perspective_team_id, player_value)
             player_adjusted_values.append(adjusted)
             total += adjusted

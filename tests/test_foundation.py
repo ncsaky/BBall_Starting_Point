@@ -57,6 +57,7 @@ from nba_gm_data.save import (
     league_leaders,
     league_standings,
     load_save,
+    lottery_seed,
     morale_report,
     offseason_status,
     pending_actions_view,
@@ -88,6 +89,7 @@ from nba_gm_data.save import (
     resolve_pick_obligations_for_year,
     team_rotation_projection,
     team_cap_summary,
+    player_attribute_summary,
 )
 from nba_gm_data.play import (
     box_score_influence,
@@ -102,6 +104,7 @@ from nba_gm_data.play import (
     free_agency_user_offer_limit,
     initialize_free_agency_market,
     league_trait_rows,
+    league_trait_rating_thresholds,
     maybe_run_ai_draft_trades_before_pick,
     ratings_guide,
     offer_interest_score,
@@ -109,6 +112,8 @@ from nba_gm_data.play import (
     print_free_agency_day_recap,
     print_lottery,
     print_home,
+    print_league_trait_table,
+    print_trade_offer_details,
     refresh_live_draft_state_ownership,
     signing_cap_check,
     sync_live_draft_state_to_saved_order,
@@ -135,6 +140,7 @@ from nba_gm_data.sim import (
     player_star_power_score,
     recent_scoring_context_for_team,
     scheduled_game_for_context,
+    assist_rate_for_player,
     assist_rate_from_features,
     plausible_point_cap,
     scoring_weight,
@@ -147,6 +153,7 @@ from nba_gm_data.sim import (
 from nba_gm_data.storage import write_outputs
 from nba_gm_data.staff import fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, simulate_ai_staff_changes, staff_budget_for_team, staff_budget_snapshot, staff_grade, staff_market_report, staff_team_report
 from nba_gm_data.transactions import apply_trade_to_save, canonical_with_pending_pick_terms, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, gm_report, market_trade_target_value, package_value_for_team, pick_asset_value, pick_label, pick_season_start, player_health_risk, simulate_ai_trades, stepien_guardrail_issues, trade_block_report, trade_result_with_pick_terms, tradeable_picks_for_team, with_transaction_context
+from nba_gm_data.traits import LEAGUE_TRAIT_RATING_COLUMNS, LEAGUE_TRAIT_RATINGS_SOURCE_ID, load_league_trait_ratings, match_league_trait_ratings
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -306,6 +313,57 @@ class DataFoundationTests(unittest.TestCase):
         self.assertLessEqual(traits[(podz.id, "handle_pressure")].value, 44)
         self.assertGreaterEqual(traits[(podz.id, "offensive_rebounding")].value, 60)
 
+    def test_league_trait_ratings_prior_import_audit_and_manual_precedence(self):
+        rows = load_league_trait_ratings(ROOT / "data/overrides/league_trait_ratings_2026_06_20.csv")
+        self.assertGreaterEqual(len(rows), 500)
+        self.assertEqual(LEAGUE_TRAIT_RATING_COLUMNS["ShootingRange"], "shooting_range")
+        matched, report = match_league_trait_ratings(self.universe.players, rows)
+        self.assertGreaterEqual(len(matched), 370)
+        alias_pairs = {(item["csv_player"], item["matched_player"]) for item in report["alias_matches"]}
+        self.assertIn(("Ron Holland", "Ronald Holland II"), alias_pairs)
+        self.assertIn(("Carlton Carrington", "Bub Carrington"), alias_pairs)
+
+        meta_report = self.plain["meta"]["rating_calibration_report"]
+        self.assertEqual(meta_report["matched_count"], report["matched_count"])
+        self.assertGreaterEqual(meta_report["adjusted_trait_count"], 5000)
+        self.assertEqual(meta_report["source_id"], LEAGUE_TRAIT_RATINGS_SOURCE_ID)
+        self.assertIn(LEAGUE_TRAIT_RATINGS_SOURCE_ID, {source.id for source in self.universe.sources})
+
+        traits = {(trait.player_id, trait.trait_key): trait for trait in self.universe.traits}
+        players = {player.normalized_name: player for player in self.universe.players}
+        tatum = players["jayson tatum"]
+        tatum_versatility = traits[(tatum.id, "shot_versatility")]
+        self.assertIn(LEAGUE_TRAIT_RATINGS_SOURCE_ID, tatum_versatility.source_ids)
+        self.assertIn("league_trait_rating_calibration", tatum_versatility.components)
+
+        nurkic = players["jusuf nurkic"]
+        nurkic_rim = traits[(nurkic.id, "rim_deterrence")]
+        self.assertEqual(nurkic_rim.value, 62)
+        self.assertIn("manual", nurkic_rim.source_kind)
+
+    def test_league_trait_calibration_sanity_corrects_rank_shape(self):
+        players = {player.normalized_name: player for player in self.universe.players}
+        summaries = {
+            normalized: player_attribute_summary(self.plain, player.id)
+            for normalized, player in players.items()
+        }
+        top_overall = sorted(
+            ((attrs["overall"], players[name].name) for name, attrs in summaries.items()),
+            reverse=True,
+        )[:25]
+        top_names = {name for _, name in top_overall}
+        self.assertIn("Shai Gilgeous-Alexander", top_names)
+        self.assertIn("Nikola Jokić", top_names)
+        self.assertNotIn("Collin Gillespie", top_names)
+
+        self.assertGreaterEqual(summaries["shai gilgeous alexander"]["creation"], 80)
+        self.assertGreaterEqual(summaries["nikola jokic"]["passing"], 94)
+        self.assertGreaterEqual(summaries["victor wembanyama"]["rim_deterrence"], 96)
+        self.assertGreaterEqual(summaries["jaren jackson jr"]["rim_deterrence"], 90)
+        self.assertGreaterEqual(summaries["trae young"]["passing"], 82)
+        self.assertGreaterEqual(summaries["jayson tatum"]["versatility"], 50)
+        self.assertLess(summaries["collin gillespie"]["overall"], 62)
+
     def test_manual_player_physical_overrides_apply(self):
         players = {player.normalized_name: player for player in self.universe.players}
         self.assertEqual(players["trey alexander"].height_inches, 77)
@@ -316,6 +374,8 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(players["jordan goodwin"].height_inches, 75)
         self.assertEqual(players["justin champagnie"].height_inches, 78)
         self.assertEqual(players["tristan vukcevic"].height_inches, 84)
+        self.assertEqual(players["nfaly dante"].height_inches, 83)
+        self.assertEqual(players["naeqwan tomlin"].height_inches, 80)
         self.assertEqual(players["gui santos"].height_inches, 79)
         self.assertEqual(players["will richard"].height_inches, 75)
         self.assertEqual(players["pat spencer"].height_inches, 74)
@@ -323,6 +383,47 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(players["malevy leons"].height_inches, 81)
         self.assertEqual(players["yuki kawamura"].height_inches, 67)
         self.assertGreaterEqual(players["trae young"].minutes_projection, 34.0)
+
+    def test_rostered_players_have_dashboard_core_data(self):
+        teams = {team.id: team.abbrev for team in self.universe.teams}
+        contracts_by_player: dict[str, list] = {}
+        for contract in self.universe.contracts:
+            contracts_by_player.setdefault(contract.player_id, []).append(contract)
+        missing = []
+        for player in self.universe.players:
+            if not player.team_id:
+                continue
+            if player.age is None or player.height_inches is None or not contracts_by_player.get(player.id):
+                missing.append((teams.get(player.team_id), player.name, player.age, player.height_inches, bool(contracts_by_player.get(player.id))))
+        self.assertEqual(missing, [])
+
+        players = {player.normalized_name: player for player in self.universe.players}
+        bub = contracts_by_player[players["bub carrington"].id]
+        cam = contracts_by_player[players["cam whitmore"].id]
+        bub_years = {item["season"]: float(item["salary"]) for contract in bub for item in contract.seasons}
+        cam_years = {item["season"]: float(item["salary"]) for contract in cam for item in contract.seasons}
+        self.assertAlmostEqual(sum(bub_years.values()) / len(bub_years), 4_750_000, delta=25_000)
+        self.assertEqual(max(bub_years), "2026-27")
+        self.assertAlmostEqual(sum(cam_years.values()) / len(cam_years), 5_500_000, delta=25_000)
+        self.assertEqual(max(cam_years), "2026-27")
+
+    def test_playtest_trait_adjustments_apply_after_league_calibration(self):
+        players = {player.normalized_name: player for player in self.universe.players}
+        summaries = {
+            name: player_attribute_summary(self.plain, player.id)
+            for name, player in players.items()
+        }
+        self.assertLess(summaries["shai gilgeous alexander"]["defense"], 70)
+        self.assertLess(summaries["kyle anderson"]["defense"], 64)
+        self.assertLess(summaries["kevin durant"]["defense"], 68)
+        self.assertLess(summaries["draymond green"]["shooting"], summaries["jimmy butler iii"]["shooting"])
+        self.assertLess(summaries["draymond green"]["range"], summaries["jimmy butler iii"]["range"])
+        self.assertLess(summaries["dangelo russell"]["shooting"], 50)
+        self.assertLess(summaries["dangelo russell"]["defense"], 36)
+        self.assertGreater(summaries["daniss jenkins"]["defense"], 45)
+        self.assertLess(summaries["derrick white"]["shooting"], 68)
+        self.assertLess(summaries["derrick white"]["rim_deterrence"], 62)
+        self.assertLess(summaries["desmond bane"]["rebounding"], 46)
 
     def test_ledger_gaps_are_explicit(self):
         summary = self.universe.coverage_report.summary
@@ -332,7 +433,7 @@ class DataFoundationTests(unittest.TestCase):
             if pick.status == "inferred_future_second_round_scaffold"
         ]
         self.assertEqual(summary["research_pending"]["contracts"], 0)
-        self.assertEqual(summary["contract_manual_review_count"], 3)
+        self.assertEqual(summary["contract_manual_review_count"], 0)
         self.assertGreaterEqual(summary["research_pending"]["draft_picks"] + len(future_second_scaffolds), 1)
         self.assertEqual(summary["research_pending"]["staff_profiles"], 0)
         self.assertEqual(summary["missing_gameplay_staff_slots"], 0)
@@ -363,6 +464,18 @@ class DataFoundationTests(unittest.TestCase):
         self.assertIn("src_tankathon_2026_mock_draft", prospects["aj dybantsa"].source_ids)
         self.assertLessEqual(prospects["aj dybantsa"].rank_range["low"], prospects["aj dybantsa"].rank_range["high"])
         self.assertGreater(prospects["aj dybantsa"].height_inches, 78)
+        traits_by_prospect: dict[str, dict[str, float]] = {}
+        for trait in self.universe.draft_prospect_traits:
+            traits_by_prospect.setdefault(trait.prospect_id, {})[trait.trait_key] = float(trait.value)
+        aj_traits = traits_by_prospect[prospects["aj dybantsa"].id]
+        peterson_traits = traits_by_prospect[prospects["darryn peterson"].id]
+        boozer_traits = traits_by_prospect[prospects["cameron boozer"].id]
+        athleticism_values = [traits["athleticism"] for traits in traits_by_prospect.values()]
+        self.assertGreaterEqual(aj_traits["shot_creation"], 65)
+        self.assertGreaterEqual(peterson_traits["rim_pressure"], 62)
+        self.assertGreaterEqual(boozer_traits["rebounding"], 74)
+        self.assertGreaterEqual(max(athleticism_values), 70)
+        self.assertGreater(max(athleticism_values) - min(athleticism_values), 10)
 
     def test_generated_draft_classes_are_deterministic_and_variable(self):
         first = to_plain(generate_draft_class_records("2028", seed=7))
@@ -378,6 +491,10 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(len(names), len(set(names)))
         self.assertFalse(any(any(char.isdigit() for char in name) for name in names))
         self.assertGreaterEqual(len({name.split()[-1] for name in names}), 35)
+        trait_rows = first["draft_prospect_traits"]
+        athleticism_values = [float(trait["value"]) for trait in trait_rows if trait["trait_key"] == "athleticism"]
+        self.assertGreaterEqual(max(athleticism_values), 62)
+        self.assertGreater(max(athleticism_values) - min(athleticism_values), 12)
 
     def test_cap_growth_contract_metadata_and_old_pick_expiry(self):
         self.assertGreater(cap_lines_for_season("2028-29")["tax_line"], cap_lines_for_season("2025-26")["tax_line"])
@@ -1532,10 +1649,18 @@ class DataFoundationTests(unittest.TestCase):
     def test_manual_contract_overrides_classify_uncertainty(self):
         players = {player.normalized_name: player for player in self.universe.players}
         contracts = {contract.player_id: contract for contract in self.universe.contracts}
-        for name in ["mason plumlee", "mike conley", "svi mykhailiuk"]:
+        newly_confirmed = {
+            "mason plumlee": {"2025-26": 3_634_153},
+            "mike conley": {"2025-26": 10_774_038},
+            "svi mykhailiuk": {"2025-26": 3_675_000, "2026-27": 3_850_000, "2027-28": 4_025_000},
+        }
+        for name, expected_salaries in newly_confirmed.items():
             contract = contracts[players[name].id]
-            self.assertEqual(contract.status, "manual_research_pending")
+            self.assertEqual(contract.status, "manual_gameplay_confirmed")
             self.assertIn("src_manual_overrides_2025_26", contract.source_ids)
+            salaries = {row["season"]: row.get("salary") for row in contract.seasons}
+            for season, salary in expected_salaries.items():
+                self.assertEqual(salaries.get(season), salary)
         confirmed = {
             "bub carrington": 4_750_000,
             "cam whitmore": 5_500_000,
@@ -1700,7 +1825,7 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(legal["legality"]["status"], "legal")
         decisions = {evaluation["perspective_team_id"]: evaluation["decision"] for evaluation in legal["evaluations"]}
         self.assertEqual(decisions["team_was"], "accept")
-        self.assertEqual(decisions["team_sac"], "reject")
+        self.assertEqual(decisions["team_sac"], "accept")
         self.assertTrue(all("acceptance_score" in evaluation for evaluation in legal["evaluations"]))
         self.assertIn("asset_details", legal["value_breakdown"]["to_team_receives"])
         illegal = evaluate_trade(
@@ -2426,9 +2551,10 @@ class DataFoundationTests(unittest.TestCase):
         self.assertGreaterEqual(wemby.features["rim_deterrence"], 75)
         self.assertGreaterEqual(draymond.features["passing"], 85)
         self.assertGreaterEqual(assist_rate_from_features(trae.features), 0.27)
+        self.assertGreaterEqual(assist_rate_for_player(players["trae young"], trae.features), 0.31)
         self.assertLessEqual(
             plausible_point_cap({"minutes": 33.5, "player": players["shai gilgeous alexander"]}, sga.features),
-            36,
+            34,
         )
         self.assertIn("primary_creator", okc.features)
         self.assertIn("defensive_anchor", okc.features)
@@ -2665,6 +2791,11 @@ class DataFoundationTests(unittest.TestCase):
             self.assertEqual(teams, [deterministic_random_team(self.plain, seed) for seed in [1, 2, 3]])
             self.assertGreater(len(set(teams)), 1)
 
+    def test_unseeded_lottery_uses_fresh_entropy_but_seeded_lottery_stays_deterministic(self):
+        self.assertEqual(lottery_seed(17), 17)
+        draws = {lottery_seed(None) for _ in range(5)}
+        self.assertGreater(len(draws), 1)
+
     def test_league_leaders_are_stats_only_and_traits_are_separate(self):
         with tempfile.TemporaryDirectory() as tmp:
             save_path = Path(tmp) / "save.json"
@@ -2674,14 +2805,24 @@ class DataFoundationTests(unittest.TestCase):
             rows = league_trait_rows(self.plain, save_path, "overall")
             self.assertGreater(len(rows), 20)
             self.assertGreaterEqual(rows[0]["attrs"]["overall"], rows[1]["attrs"]["overall"])
-            self.assertIn("raw_attrs", rows[0])
-            self.assertGreaterEqual(rows[0]["attrs"]["overall"], 90)
-            self.assertLess(rows[0]["raw_attrs"]["overall"], rows[0]["attrs"]["overall"])
+            self.assertNotIn("raw_attrs", rows[0])
+            raw_attrs = player_attribute_summary(self.plain, rows[0]["player"]["id"])
+            self.assertAlmostEqual(rows[0]["attrs"]["overall"], raw_attrs["overall"], delta=0.5)
             self.assertIn("contract", rows[0])
             self.assertIn("minutes", rows[0])
+            thresholds = league_trait_rating_thresholds(rows)
+            class TtyStringIO(StringIO):
+                def isatty(self):
+                    return True
+
+            stdout = TtyStringIO()
+            with patch.dict(os.environ, {"NO_COLOR": ""}, clear=False), redirect_stdout(stdout):
+                print_league_trait_table(rows[:3], thresholds=thresholds)
+            self.assertIn("\033[", stdout.getvalue())
             guide = ratings_guide(self.plain)
             self.assertGreaterEqual(len(guide["rows"]), 15)
-            self.assertIn("engine calculations keep raw trait values", guide["display_scale"])
+            self.assertIn("engine calculations use the same underlying raw trait values", guide["display_scale"])
+            self.assertIn("full-health 2026 league ratings prior", guide["calibration_stack"])
 
     def test_social_subject_preserves_initials_and_avoids_truncation_dots(self):
         text = "Trade completed: T.J. McConnell, 2027 R1 HOU (own pick) for Norman Powell, 2028 R2 DEN (own pick)."
@@ -2689,6 +2830,31 @@ class DataFoundationTests(unittest.TestCase):
         self.assertIn("T.J. McConnell", subject)
         self.assertNotEqual(subject, "Trade completed: T.J")
         self.assertNotIn("...", subject)
+
+    def test_trade_inspection_includes_player_height(self):
+        players = {player["normalized_name"]: player for player in self.plain["players"]}
+        dlo = players["dangelo russell"]
+        daniss = players["daniss jenkins"]
+        candidate = {
+            "summary": {"headline": "Inspection test"},
+            "proposal": {
+                "id": "proposal_height_test",
+                "from_team_id": dlo["team_id"],
+                "to_team_id": daniss["team_id"],
+                "from_assets": [{"kind": "player", "id": dlo["id"], "label": dlo["name"]}],
+                "to_assets": [{"kind": "player", "id": daniss["id"], "label": daniss["name"]}],
+            },
+            "evaluations": [],
+            "legality": {"status": "legal", "issues": []},
+        }
+        stdout = StringIO()
+        with redirect_stdout(stdout):
+            print_trade_offer_details(self.plain, candidate)
+        output = stdout.getvalue()
+        self.assertIn("Daniss Jenkins", output)
+        self.assertIn("D'Angelo Russell", output)
+        self.assertIn("age 24 ht 6'4\"", output)
+        self.assertIn("age 29 ht 6'3\"", output)
 
     def test_late_first_and_early_second_pick_values_are_neighbors(self):
         base = {"season": "2026", "current_owner_team_id": "team_gsw", "original_team_id": "team_gsw", "_active_season": "2025-26"}
@@ -2708,7 +2874,7 @@ class DataFoundationTests(unittest.TestCase):
             {"durability": 50, "injury_prone": True, "major_prior_injuries": [{"body_area": "leg"}, {"body_area": "back"}]},
             {"availability_status": "active"},
         )
-        self.assertLessEqual(temporarily_out - active, 3.5)
+        self.assertLessEqual(temporarily_out - active, 2.0)
         self.assertGreater(recurring - active, 10.0)
 
     def test_live_draft_state_syncs_pick_ids_to_saved_lottery_order(self):

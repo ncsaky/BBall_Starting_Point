@@ -206,7 +206,7 @@ def main(argv: list[str] | None = None) -> int:
     draft_lottery_parser = subparsers.add_parser("run-draft-lottery", help="Generate and store a draft order from save state.", parents=[common])
     draft_lottery_parser.add_argument("--save", required=True)
     draft_lottery_parser.add_argument("--year", default="2026")
-    draft_lottery_parser.add_argument("--seed", type=int, default=1)
+    draft_lottery_parser.add_argument("--seed", type=int, default=None)
 
     offseason_parser = subparsers.add_parser("offseason-status", help="Inspect save-state offseason scaffolds.", parents=[common])
     offseason_parser.add_argument("--save", required=True)
@@ -942,7 +942,12 @@ def canonical_export_is_stale(root: Path, json_path: Path) -> bool:
     override_dir = root / OVERRIDES_DIR
     if not override_dir.exists():
         return False
-    return any(path.stat().st_mtime > canonical_mtime for path in override_dir.glob("*.json") if path.is_file())
+    return any(
+        path.stat().st_mtime > canonical_mtime
+        for pattern in ("*.json", "*.csv")
+        for path in override_dir.glob(pattern)
+        if path.is_file()
+    )
 
 
 def load_optional_cli_json(path: str | None) -> Any | None:

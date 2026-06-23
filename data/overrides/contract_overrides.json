@@ -1,27 +1,60 @@
 {
   "contracts": [
     {
-      "confidence": 0.2,
-      "notes": "Manual ledger classification. User confirmed Mason Plumlee started the year on CHA. Exact 2025-26 salary, guarantee, and transaction context are not yet verified. Do not use for hard cap/trade legality.",
+      "confidence": 0.72,
+      "notes": "Verified gameplay contract fill from public salary references: one-year Charlotte minimum-scale veteran deal. Later real-life movement is not applied to the preseason sandbox roster.",
       "player_name": "Mason Plumlee",
-      "seasons": [],
-      "status": "manual_research_pending",
+      "seasons": [
+        {
+          "season": "2025-26",
+          "salary": 3634153,
+          "option_type": null,
+          "guarantee_status": "public_salary_confirmed_final_year"
+        }
+      ],
+      "status": "manual_gameplay_confirmed",
       "team_abbrev": "CHA"
     },
     {
-      "confidence": 0.25,
-      "notes": "Manual ledger classification. User confirmed Mike Conley was in MIN all year except for a deadline trade path that resulted in a buyout and re-signing in MIN. Exact 2025-26 salary, guarantee, and transaction context are intentionally unresolved until deeper contract research.",
+      "confidence": 0.64,
+      "notes": "Gameplay contract fill for the intended Minnesota preseason context using the second year of his public 2024 extension. Later public sources conflict after his real deadline buyout/re-sign path, so the sandbox keeps a single final-year salary row instead of leaving the dashboard blank.",
       "player_name": "Mike Conley",
-      "seasons": [],
-      "status": "manual_research_pending",
+      "seasons": [
+        {
+          "season": "2025-26",
+          "salary": 10774038,
+          "option_type": null,
+          "guarantee_status": "manual_gameplay_confirmed_final_year"
+        }
+      ],
+      "status": "manual_gameplay_confirmed",
       "team_abbrev": "MIN"
     },
     {
-      "confidence": 0.2,
-      "notes": "Manual ledger classification. User confirmed Svi Mykhailiuk on UTA. Exact 2025-26 salary, guarantee, and transaction context are not yet verified. Do not use for hard cap/trade legality.",
+      "confidence": 0.78,
+      "notes": "Verified public salary fill for Utah contract. Guarantees/options are simplified to usable gameplay salary rows.",
       "player_name": "Svi Mykhailiuk",
-      "seasons": [],
-      "status": "manual_research_pending",
+      "seasons": [
+        {
+          "season": "2025-26",
+          "salary": 3675000,
+          "option_type": null,
+          "guarantee_status": "public_salary_confirmed"
+        },
+        {
+          "season": "2026-27",
+          "salary": 3850000,
+          "option_type": null,
+          "guarantee_status": "public_salary_confirmed"
+        },
+        {
+          "season": "2027-28",
+          "salary": 4025000,
+          "option_type": null,
+          "guarantee_status": "public_salary_confirmed_final_year"
+        }
+      ],
+      "status": "manual_gameplay_confirmed",
       "team_abbrev": "UTA"
     },
     {
