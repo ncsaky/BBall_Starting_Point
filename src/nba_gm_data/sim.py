@@ -298,6 +298,8 @@ def projected_scoring_usage(player: dict[str, Any], get: Any, impact: float) -> 
         - max(0.0, 50 - shot_creation) * 0.16
         - connector_discount
     )
+    if curry_off_ball_veteran_profile(player):
+        value -= 5.5
     return clamp(value, 12, 88)
 
 
@@ -616,6 +618,10 @@ def projected_game_minutes(player: dict[str, Any]) -> float:
     if minutes > 80:
         minutes = minutes / 82.0
     return round(clamp(minutes, 0.0, 42.0), 3)
+
+
+def curry_off_ball_veteran_profile(player: dict[str, Any] | None) -> bool:
+    return normalize_name((player or {}).get("name") or "") == "stephen curry"
 
 
 def game_team_features(context: dict[str, Any] | None, canonical: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]], mode: str) -> dict[str, float]:
@@ -1111,6 +1117,8 @@ def assist_rate_for_player(player: dict[str, Any], feat: dict[str, float]) -> fl
         rate = min(rate, 0.175)
     if is_big and passing >= 94.0 and usage >= 70.0:
         rate += 0.020
+    if curry_off_ball_veteran_profile(player):
+        rate *= 0.58
     return clamp(rate, 0.035, 0.36)
 
 
@@ -1274,6 +1282,8 @@ def elite_scoring_floor(item: dict[str, Any], features: dict[str, float]) -> int
         ppm += 0.05 + max(0.0, spacing - 90) * 0.002
     if rim_pressure >= 86 and shot_creation >= 84:
         ppm += 0.028
+    if curry_off_ball_veteran_profile(item.get("player")):
+        ppm -= 0.09
     return int(round(minutes * clamp(ppm, 0.0, 0.86)))
 
 
@@ -1332,6 +1342,8 @@ def plausible_point_cap(item: dict[str, Any], features: dict[str, float]) -> int
         star_cap_bonus += 0.04
     if spacing >= 90 and shot_creation >= 82:
         star_cap_bonus += 0.03
+    if curry_off_ball_veteran_profile(item.get("player")):
+        star_cap_bonus -= 0.08
     return max(4, int(round(minutes * clamp(ppm + star_cap_bonus, 0.45, 0.98))))
 
 
@@ -1417,6 +1429,7 @@ def scoring_weight(item: dict[str, Any], features: dict[str, float]) -> float:
     elite_hub = 1.0
     if ball_usage >= 72 and impact >= 76:
         elite_hub += max(0.0, creation - 85) * 0.014 + max(0.0, impact - 80) * 0.012 + max(0.0, ball_usage - 76) * 0.007
+    off_ball_veteran_discount = 0.86 if curry_off_ball_veteran_profile(item.get("player")) else 1.0
     return (
         minutes
         * max(0.32, usage / 62)
@@ -1433,6 +1446,7 @@ def scoring_weight(item: dict[str, Any], features: dict[str, float]) -> float:
         * elite_hub
         * frontcourt_hub
         * primary_guard_star
+        * off_ball_veteran_discount
         * (1 + max(0.0, impact - 78) * 0.002)
     )
 

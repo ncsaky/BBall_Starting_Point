@@ -49,6 +49,7 @@ from .save import (
     simulate_next_playoff_game,
     simulate_playoff_round,
     start_playoffs,
+    starting_lineup_slots,
     social_feed_view,
     team_cap_summary,
     team_dashboard,
@@ -63,7 +64,7 @@ from .save import (
 from .staff import ROLE_LABELS, STAFF_SLOTS, fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, staff_budget_snapshot, staff_effect_summary, staff_market_report, staff_role_effect, staff_team_report
 from .schema import CANONICAL_START_DATE
 from .traits import TRAIT_LABELS
-from .transactions import apply_trade_to_save, canonical_with_pending_pick_terms, candidate_from_evaluation, clean_pick_protection_summary, contract_for_player, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, pick_by_id, pick_display_label, pick_obligation_context_note, pick_season_start, player_by_id, proposal_asset_identity_keys, prune_trade_offers_touching_assets, recently_signed_player_ids, recently_traded_player_ids, resolve_team, team_by_id, trade_apply_authorized, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_picks_for_team, with_transaction_context
+from .transactions import apply_trade_to_save, canonical_with_pending_pick_terms, candidate_from_evaluation, clean_pick_protection_summary, contract_for_player, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, pick_by_id, pick_display_label, pick_obligation_context_note, pick_season_start, pick_swap_asset_value, pick_swap_display_label, player_by_id, proposal_asset_identity_keys, prune_trade_offers_touching_assets, recently_signed_player_ids, recently_traded_player_ids, resolve_team, team_by_id, trade_apply_authorized, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_pick_swaps_for_team, tradeable_picks_for_team, with_transaction_context
 from .utils import clamp, stable_id
 
 
@@ -719,19 +720,29 @@ def calendar_room(root: Path, canonical: dict[str, Any], save_path: Path) -> Non
 
 def league_events_room(canonical: dict[str, Any], save_path: Path) -> None:
     recent_only = False
+    filter_options = [
+        ("transactions", "All transactions"),
+        ("trades", "Trades"),
+        ("extensions", "Extensions"),
+        ("staff_hires", "Staff hires"),
+        ("staff_fires", "Staff fires"),
+    ]
+    filter_index = 0
     while True:
         clear_screen()
-        view = league_events_view(canonical, save_path, limit=60, major_only=True, recent_days=30 if recent_only else None)
-        print_title("Recent Major League Events" if recent_only else "Major League Events")
+        filter_kind, filter_label = filter_options[filter_index]
+        view = league_events_view(canonical, save_path, limit=80, kind=filter_kind, recent_days=30 if recent_only else None)
+        print_title(f"League Events | {filter_label}{' | last 30 days' if recent_only else ''}")
         events = view.get("events") or []
         if not events:
-            print("No major league events match this view yet.")
+            print("No league transactions match this view yet.")
         for event in events[:40]:
             importance = float(event.get("importance") or 0.0)
             color = "good" if importance >= 0.78 else "accent" if importance >= 0.55 else "muted"
             print(f"{event.get('date', '')}  {style(clean_label(event.get('kind')), color):<24} {event.get('headline', '')}")
         print_rule()
-        print("1. Show all major events" if recent_only else "1. Show recent major events")
+        print("1. Recent only: " + ("on" if recent_only else "off"))
+        print("2. Filter: " + filter_label)
         print("0. Back")
         choice = input("> Pick a number: ").strip()
         if choice == "0":
@@ -739,6 +750,8 @@ def league_events_room(canonical: dict[str, Any], save_path: Path) -> None:
             return
         if choice == "1":
             recent_only = not recent_only
+        elif choice == "2":
+            filter_index = (filter_index + 1) % len(filter_options)
 
 
 def league_player_browser_room(canonical: dict[str, Any], save_path: Path) -> None:
@@ -1307,7 +1320,7 @@ def playoff_room(root: Path, canonical: dict[str, Any], save_path: Path, seed: i
                 print("3. Sim entire playoffs")
             print("4. View playoff box score")
             print("5. Playoff stat leaders / Finals MVP")
-            print("6. Talk rotation with head coach")
+            print("6. Team dashboard")
             if forced:
                 print("0. Save and quit")
             else:
@@ -1333,7 +1346,12 @@ def playoff_room(root: Path, canonical: dict[str, Any], save_path: Path, seed: i
             elif choice == "5":
                 playoff_leaders_room(canonical, save_path)
             elif choice == "6":
-                playoff_rotation_room(canonical, save_path)
+                save = ensure_league_save_defaults(load_save(save_path), canonical)
+                user_team = save.get("meta", {}).get("user_team_abbrev")
+                if user_team:
+                    print_dashboard(root, canonical, save_path, user_team, user_team=user_team, seed=seed)
+                else:
+                    pause("No user team is attached to this save.")
             else:
                 clear_screen()
                 return "quit" if forced else "back"
@@ -1524,7 +1542,8 @@ def guided_trade_builder(canonical: dict[str, Any], save_path: Path, user_team: 
                 continue
             specs = [f"FROM:{asset['kind']}:{asset['value']}" for asset in from_assets] + [f"TO:{asset['kind']}:{asset['value']}" for asset in to_assets]
             terms = pick_terms_from_selected_assets([*from_assets, *to_assets])
-            result = propose_trade_to_save(active, save_path, user_team, partner, specs, seed=seed, store=False, pick_obligation_terms=terms)
+            evaluation_active = canonical_with_pending_pick_terms(active, terms) if terms else active
+            result = propose_trade_to_save(evaluation_active, save_path, user_team, partner, specs, seed=seed, store=False, pick_obligation_terms=terms)
             print_trade_result(result)
             if result.get("legality", {}).get("status") == "legal":
                 apply_allowed = user_can_apply_trade(canonical, result, user_team)
@@ -1617,22 +1636,64 @@ def prompt_pick_trade_terms(canonical: dict[str, Any], save_path: Path, pick_id:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     active = with_transaction_context(canonical_with_save(canonical, save))
     pick = next((item for item in active.get("draft_picks", []) if item.get("id") == pick_id), None)
-    if not pick or int(pick.get("round") or 2) != 1:
+    if not pick:
         return {"type": "unprotected", "primary_pick_id": pick_id}
     if pick_slot_is_determined_for_trade(save, pick):
         return {"type": "unprotected", "primary_pick_id": pick_id}
-    if active_primary_pick_obligation(pick):
+    has_active_protection = bool(active_primary_pick_obligation(pick))
+    protected_available = int(pick.get("round") or 2) == 1 and not has_active_protection
+    swap_candidates = eligible_swap_counterparty_picks(active, receiver_id, pick) if receiver_id else []
+    swap_available = bool(swap_candidates)
+    if not protected_available and not swap_available:
         return {"type": "unprotected", "primary_pick_id": pick_id}
+    print_title("Pick Terms")
+    print(f"{clean_pick_label_for_user(active, pick, save)}")
+    options: list[tuple[str, str]] = [("unprotected", "Unprotected")]
+    if protected_available:
+        options.append(("protected", "Protected pick"))
+    if swap_available:
+        options.append(("pick_swap", "Pick swap"))
+    for idx, (_, label) in enumerate(options, start=1):
+        print(f"{idx}. {label}")
+    print("0. Cancel terms and treat as unprotected")
+    choice = pick_number("Terms", 0, len(options), default=1)
+    if choice == 0 or options[choice - 1][0] == "unprotected":
+        return {"type": "unprotected", "primary_pick_id": pick_id}
+    if options[choice - 1][0] == "pick_swap":
+        counterparty_pick = choose_pick_for_swap(active, save, swap_candidates)
+        if not counterparty_pick:
+            return {"type": "unprotected", "primary_pick_id": pick_id}
+        term = {
+            "id": stable_id("pick_swap", pick_id, counterparty_pick.get("id"), receiver_id, sender_id),
+            "type": "pick_swap",
+            "season": pick.get("season"),
+            "round": int(pick.get("round") or 0),
+            "team_a_pick_id": pick_id,
+            "team_b_pick_id": counterparty_pick.get("id"),
+            "original_rights_holder_team_id": receiver_id,
+            "current_rights_holder_team_id": receiver_id,
+            "counterparty_team_id": sender_id,
+            "receiver_team_id": receiver_id,
+            "sender_team_id": sender_id,
+            "label": "pick swap right",
+            "pending_asset_grant": True,
+            "notes": "Gameplay V1 pick-swap obligation. The rights holder receives the better same-season same-round pick at resolution.",
+            "transfer_history": [],
+        }
+        print_rule()
+        print(pick_swap_display_label(canonical_with_pending_pick_terms(active, [term]), term))
+        if not yes_no("Attach this swap right?"):
+            return {"type": "unprotected", "primary_pick_id": pick_id}
+        return term
     print_title("Pick Protection")
     print(f"{clean_pick_label_for_user(active, pick, save)}")
-    print("1. Unprotected")
-    print("2. Top-N protected")
-    print("3. Protected range")
+    print("1. Top-N protected")
+    print("2. Protected range")
     print("0. Cancel protection and treat as unprotected")
-    choice = pick_number("Protection", 0, 3, default=1)
-    if choice in {0, 1}:
+    protection_choice = pick_number("Protection", 0, 2, default=1)
+    if protection_choice == 0:
         return {"type": "unprotected", "primary_pick_id": pick_id}
-    if choice == 2:
+    if protection_choice == 1:
         top_n = pick_number("Top protected through pick", 1, 30, default=4)
         protected_range = {"from": 1, "through": top_n}
         label = f"top-{top_n} protected"
@@ -1661,6 +1722,37 @@ def prompt_pick_trade_terms(canonical: dict[str, Any], save_path: Path, pick_id:
         "label": label,
         "notes": "Gameplay V1 protected-pick obligation. Fallback pick is locked until the obligation resolves.",
     }
+
+
+def eligible_swap_counterparty_picks(canonical: dict[str, Any], receiver_id: str | None, primary_pick: dict[str, Any]) -> list[dict[str, Any]]:
+    if not receiver_id or not primary_pick:
+        return []
+    primary_round = int(primary_pick.get("round") or 0)
+    primary_season = str(primary_pick.get("season") or "")
+    return sorted(
+        [
+            pick for pick in tradeable_picks_for_team(canonical, receiver_id)
+            if pick.get("id") != primary_pick.get("id")
+            and not pick.get("_obligation_locked")
+            and str(pick.get("season") or "") == primary_season
+            and int(pick.get("round") or 0) == primary_round
+        ],
+        key=lambda pick: (-pick_asset_value(pick, "neutral"), clean_pick_label_for_user(canonical, pick)),
+    )
+
+
+def choose_pick_for_swap(canonical: dict[str, Any], save: dict[str, Any], candidates: list[dict[str, Any]]) -> dict[str, Any] | None:
+    if not candidates:
+        return None
+    print_rule()
+    print("Choose the same-year same-round pick used as the other side of the swap:")
+    for idx, pick in enumerate(candidates[:18], start=1):
+        print(f"{idx:>2}. {clean_pick_label_for_user(canonical, pick, save)}")
+    print(" 0. No swap")
+    choice = pick_number("Swap pick", 0, min(18, len(candidates)), default=1)
+    if choice == 0:
+        return None
+    return candidates[choice - 1]
 
 
 def active_primary_pick_obligation(pick: dict[str, Any]) -> dict[str, Any] | None:
@@ -2070,6 +2162,11 @@ def choose_assets(
         ),
         reverse=True,
     )
+    pick_swaps = sorted(
+        tradeable_pick_swaps_for_team(canonical, team["id"]),
+        key=lambda item: (pick_swap_asset_value(canonical, item, team_state.get("phase", "balanced")), str(item.get("season") or ""), str(item.get("id") or "")),
+        reverse=True,
+    )
     assets: list[tuple[str, str, str]] = []
     season = save.get("meta", {}).get("season")
     team_games = int((save.get("team_records", {}).get(team["id"]) or {}).get("wins", 0)) + int((save.get("team_records", {}).get(team["id"]) or {}).get("losses", 0))
@@ -2101,6 +2198,9 @@ def choose_assets(
     for pick in picks:
         trade_value = pick_asset_value(pick, team_state.get("phase", "balanced"))
         assets.append(("pick", pick["id"], f"Value {single_value_bar(trade_value, scale=100, width=10)} {trade_value:>5.1f}  {clean_pick_label_for_user(canonical, pick, save)}"))
+    for swap in pick_swaps:
+        trade_value = pick_swap_asset_value(canonical, swap, team_state.get("phase", "balanced"))
+        assets.append(("pick_swap", swap["id"], f"Value {single_value_bar(trade_value, scale=100, width=10)} {trade_value:>5.1f}  {swap.get('label') or pick_swap_display_label(canonical, swap)}"))
     print_title(title)
     print_team_asset_cap_summary(canonical, save, team["id"])
     for idx, (_, _, label) in enumerate(assets, start=1):
@@ -2127,7 +2227,16 @@ def choose_assets(
                 )
                 if term:
                     asset["pick_obligation_term"] = term
-                    if term.get("type") != "unprotected":
+                    if term.get("type") == "pick_swap":
+                        preview = canonical_with_pending_pick_terms(canonical, [term])
+                        asset = {
+                            "kind": "pick_swap",
+                            "value": term.get("id"),
+                            "id": term.get("id"),
+                            "label": pick_swap_display_label(preview, term),
+                            "pick_obligation_term": term,
+                        }
+                    elif term.get("type") != "unprotected":
                         preview = canonical_with_pending_pick_terms(canonical, [term])
                         preview_pick = next((item for item in preview.get("draft_picks", []) if item.get("id") == value), None)
                         if preview_pick:
@@ -3809,6 +3918,8 @@ def clean_asset_label(asset: dict[str, Any]) -> str:
         if len(parts) >= 3 and parts[0].isdigit() and parts[1].isdigit():
             return f"{parts[0]} R{parts[1]} {parts[2].upper()}"
         return clean_label(pick_id)
+    if asset.get("kind") == "pick_swap":
+        return asset.get("label") or clean_label(str(asset.get("id") or asset.get("value") or "pick swap"))
     return clean_label(str(asset))
 
 
@@ -6179,10 +6290,11 @@ def print_dashboard(root: Path, canonical: dict[str, Any], save_path: Path, team
         print("2. Ratings / traits")
         print("3. Contracts")
         print("4. Development")
+        print("5. Starting 5")
         if user_team and payload["team"]["abbrev"] == user_team:
-            print("5. Talk rotation with head coach")
+            print("6. Talk rotation with head coach")
         print("0. Back")
-        max_choice = 5 if user_team and payload["team"]["abbrev"] == user_team else 4
+        max_choice = 6 if user_team and payload["team"]["abbrev"] == user_team else 5
         choice = pick_number("Tab", 0, max_choice, default=0)
         if choice == 0:
             return
@@ -6194,7 +6306,12 @@ def print_dashboard(root: Path, canonical: dict[str, Any], save_path: Path, team
             print_dashboard_contracts(canonical, save_path, payload, user_team=user_team, seed=seed)
         elif choice == 4:
             print_dashboard_development(canonical, save_path, payload)
-        elif choice == 5 and user_team and payload["team"]["abbrev"] == user_team:
+        elif choice == 5:
+            if user_team and payload["team"]["abbrev"] == user_team:
+                starting_five_room(root, canonical, save_path, payload["team"]["abbrev"])
+                continue
+            print_dashboard_starting_five(payload)
+        elif choice == 6 and user_team and payload["team"]["abbrev"] == user_team:
             minutes_room(canonical, save_path, user_team)
             continue
         wait()
@@ -6207,14 +6324,20 @@ def print_dashboard_overview(canonical: dict[str, Any], save_path: Path, payload
     print(f"Fans  {morale_bar(morale.get('fan_confidence'))}")
     print(f"Owner {morale_bar(morale.get('owner_confidence'))}")
     print_team_identity(payload.get("team_identity") or {})
+    if payload.get("starting_five"):
+        print("\nStarting 5")
+        print("   " + " | ".join(f"{row.get('slot')}. {row.get('player_name')}" for row in payload.get("starting_five", [])))
     print("\nRoster")
-    print(" #  Player                   Pos Age   GP  Season Coach   PPG   RPG   APG  Health / coach")
+    stats_label = (payload.get("stats_context") or {}).get("label") or "Regular season"
+    print(f"Stats: {stats_label}")
+    print(" #  Player                   Pos Age   GP  Stats  Coach   PPG   RPG   APG  Health / coach")
     for idx, player in enumerate(payload["rotation"], start=1):
         injury = dashboard_health_text(player.get("health") or {})
         rec = player.get("minutes_recommendation")
         coach = f" | GM {float(rec.get('target_minutes') or 0):.0f} -> coach {float(player.get('coach_minutes_projection') or player.get('minutes_projection') or 0):.0f}" if rec else ""
+        slot = f"{int(player.get('starting_slot'))}" if player.get("is_starting_five") else ""
         print(
-            f"{idx:>2}. {player['name']:<24} {compact_position(player.get('position')):<3} {age_text(player, 3)} {player.get('gp_display', '0/0'):>5} "
+            f"{slot or idx:>2}. {player['name']:<24} {compact_position(player.get('position')):<3} {age_text(player, 3)} {player.get('gp_display', '0/0'):>5} "
             f"{float(player.get('display_mpg') or 0):>6.0f} {float(player.get('coach_minutes_projection') or player.get('minutes_projection') or 0):>5.0f} {float(player.get('points_per_game') or 0):>5.1f} "
             f"{float(player.get('rebounds_per_game') or 0):>5.1f} {float(player.get('assists_per_game') or 0):>5.1f}  {injury}{coach}"
         )
@@ -6255,19 +6378,93 @@ def print_team_identity(identity: dict[str, Any]) -> None:
 
 def print_dashboard_rotation(payload: dict[str, Any]) -> None:
     print_title("Rotation Stats")
-    print(" #  Player                   Age   GP Season Coach   PPG   RPG   APG  STL  BLK   FG%   3PA   3P%  FTA   FT%  Health / coach")
+    stats_label = (payload.get("stats_context") or {}).get("label") or "Regular season"
+    print(f"Stats: {stats_label}")
+    print(" #  Player                   Age   GP  Stats Coach   PPG   RPG   APG  STL  BLK   FG%   3PA   3P%  FTA   FT%  Health / coach")
     for idx, player in enumerate(payload["rotation"], start=1):
         rec = player.get("minutes_recommendation") or {}
         rec_text = f"GM {float(rec.get('target_minutes') or 0):.0f} -> {float(player.get('coach_minutes_projection') or player.get('minutes_projection') or 0):.0f}" if rec else ""
         status = dashboard_health_text(player.get("health") or {})
+        slot = f"{int(player.get('starting_slot'))}" if player.get("is_starting_five") else str(idx)
         print(
-            f"{idx:>2}. {player['name']:<24} {age_text(player, 3)} {player.get('gp_display', '0/0'):>5} {float(player.get('display_mpg') or 0):>6.0f} {float(player.get('coach_minutes_projection') or player.get('minutes_projection') or 0):>5.0f} "
+            f"{slot:>2}. {player['name']:<24} {age_text(player, 3)} {player.get('gp_display', '0/0'):>5} {float(player.get('display_mpg') or 0):>6.0f} {float(player.get('coach_minutes_projection') or player.get('minutes_projection') or 0):>5.0f} "
             f"{float(player.get('points_per_game') or 0):>5.1f} {float(player.get('rebounds_per_game') or 0):>5.1f} "
             f"{float(player.get('assists_per_game') or 0):>5.1f} {float(player.get('steals_per_game') or 0):>4.1f} "
             f"{float(player.get('blocks_per_game') or 0):>4.1f} {pct_text(player.get('fg_pct')):>5} "
             f"{float(player.get('fg3a_per_game') or 0):>5.1f} {pct_text(player.get('fg3_pct')):>5} "
             f"{float(player.get('fta_per_game') or 0):>4.1f} {pct_text(player.get('ft_pct')):>5}  {status}{' | ' + rec_text if rec_text else ''}"
         )
+
+
+def print_dashboard_starting_five(payload: dict[str, Any]) -> None:
+    print_title("Starting 5")
+    rows = payload.get("starting_five") or []
+    if not rows:
+        print("No lineup is available for this roster yet.")
+        return
+    for row in rows:
+        print(f"{int(row.get('slot') or 0):>2}. {row.get('player_name'):<24} {compact_position(row.get('position')):<3}")
+    print()
+    print("Visualization only: this does not change sim minutes, morale, rotations, or coaching decisions.")
+
+
+def starting_five_room(root: Path, canonical: dict[str, Any], save_path: Path, team_abbrev: str) -> None:
+    while True:
+        payload = team_dashboard(root, canonical, save_path, team_abbrev)
+        clear_screen()
+        print_dashboard_starting_five(payload)
+        print_rule()
+        print("1. Edit slot 1")
+        print("2. Edit slot 2")
+        print("3. Edit slot 3")
+        print("4. Edit slot 4")
+        print("5. Edit slot 5")
+        print("6. Auto-fill from roster")
+        print("0. Back")
+        choice = pick_number("Starting 5", 0, 6, default=0)
+        if choice == 0:
+            return
+        save = ensure_league_save_defaults(load_save(save_path), canonical)
+        active = canonical_with_save(canonical, save)
+        team = resolve_team(active, team_abbrev)
+        if choice == 6:
+            save.setdefault("starting_lineups", {}).pop(team["id"], None)
+            starting_lineup_slots(active, save, team["id"], persist=True)
+            write_save(save_path, save)
+            continue
+        roster = [
+            player for player in payload.get("rotation", [])
+            if player.get("id")
+        ]
+        if not roster:
+            pause("No roster players are available.")
+            continue
+        clear_screen()
+        print_title(f"Choose Slot {choice}")
+        for idx, player in enumerate(roster, start=1):
+            marker = f"slot {player.get('starting_slot')}" if player.get("is_starting_five") else ""
+            print(
+                f"{idx:>2}. {player['name']:<24} {compact_position(player.get('position')):<3} "
+                f"{float(player.get('coach_minutes_projection') or player.get('minutes_projection') or 0):>4.0f} min {marker}"
+            )
+        print(" 0. Back")
+        player_choice = pick_number("Player", 0, len(roster), default=0)
+        if player_choice == 0:
+            continue
+        selected_id = roster[player_choice - 1]["id"]
+        lineups = save.setdefault("starting_lineups", {})
+        current = lineups.setdefault(team["id"], {"slots": {}, "source": "user"})
+        slots = {str(key): value for key, value in (current.get("slots") or {}).items()}
+        for slot, player_id in list(slots.items()):
+            if player_id == selected_id:
+                slots.pop(slot, None)
+        slots[str(choice)] = selected_id
+        current["slots"] = slots
+        current["source"] = "user"
+        current["updated_date"] = save.get("state", {}).get("current_date")
+        lineups[team["id"]] = current
+        starting_lineup_slots(active, save, team["id"], persist=True)
+        write_save(save_path, save)
 
 
 def print_dashboard_ratings(payload: dict[str, Any]) -> None:
@@ -6707,6 +6904,9 @@ def print_trade_offer_details(canonical: dict[str, Any], candidate: dict[str, An
         for asset in assets:
             if asset.get("kind") == "pick":
                 print(f"  {style('PICK', 'value_pick'):<8} {asset.get('label') or clean_label(asset.get('id'))}")
+                continue
+            if asset.get("kind") == "pick_swap":
+                print(f"  {style('SWAP', 'value_pick'):<8} {asset.get('label') or clean_label(asset.get('id'))}")
                 continue
             player = players.get(asset.get("id"), {})
             value = values.get(asset.get("id"), {})

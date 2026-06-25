@@ -128,6 +128,7 @@ def create_league_save(
         "team_morale": initial_team_morale(canonical),
         "player_morale": initial_player_morale(canonical),
         "rotation_recommendations": {},
+        "starting_lineups": {},
         "rotation_baselines": initial_rotation_baselines(canonical),
         "rotation_snapshots": {},
         "fan_confidence": initial_team_metric(canonical, 55.0),
@@ -295,17 +296,54 @@ def startup_gameplay_pick_obligations(canonical: dict[str, Any] | None) -> list[
 
 
 def merge_startup_pick_obligations(save: dict[str, Any], canonical: dict[str, Any] | None = None) -> int:
-    from .transactions import pick_obligation_fallback_rounds_match
+    from .transactions import pick_obligation_validation_errors
 
     obligations = save.setdefault("pick_obligations", [])
     locked = set(save.setdefault("locked_pick_assets", []))
     if canonical:
         valid_obligations = []
         invalid_fallback_ids: set[str] = set()
+        used_fallback_ids = {
+            fallback_id
+            for obligation in obligations
+            if obligation.get("type") == "protected_pick"
+            for fallback_id in obligation.get("fallback_pick_ids") or []
+            if fallback_id
+        }
         for obligation in obligations:
-            if obligation.get("type") == "protected_pick" and not pick_obligation_fallback_rounds_match(canonical, None, obligation):
-                invalid_fallback_ids.update(obligation.get("fallback_pick_ids") or [])
-                continue
+            if obligation.get("type") == "protected_pick":
+                check = {**obligation, "_existing_fallback_pick_ids": obligation.get("fallback_pick_ids") or []}
+                errors = pick_obligation_validation_errors(canonical, None, check)
+                if errors:
+                    repaired = repair_protected_pick_fallback(obligation, canonical, used_fallback_ids)
+                    if repaired:
+                        check = {**repaired, "_existing_fallback_pick_ids": repaired.get("fallback_pick_ids") or []}
+                        errors = pick_obligation_validation_errors(canonical, None, check)
+                    if errors:
+                        invalid_fallback_ids.update(obligation.get("fallback_pick_ids") or [])
+                        save.setdefault("pick_obligation_audit", []).append(
+                            {
+                                "id": stable_id("pick_obligation_audit", obligation.get("id"), "invalid"),
+                                "obligation_id": obligation.get("id"),
+                                "primary_pick_id": obligation.get("primary_pick_id"),
+                                "status": "removed_invalid_protected_pick",
+                                "errors": errors,
+                            }
+                        )
+                        continue
+                    obligation = repaired or obligation
+            elif obligation.get("type") == "pick_swap":
+                errors = pick_obligation_validation_errors(canonical, None, obligation)
+                if errors:
+                    save.setdefault("pick_obligation_audit", []).append(
+                        {
+                            "id": stable_id("pick_obligation_audit", obligation.get("id"), "invalid"),
+                            "obligation_id": obligation.get("id"),
+                            "status": "removed_invalid_pick_swap",
+                            "errors": errors,
+                        }
+                    )
+                    continue
             valid_obligations.append(obligation)
         if len(valid_obligations) != len(obligations):
             obligations[:] = valid_obligations
@@ -339,6 +377,43 @@ def merge_startup_pick_obligations(save: dict[str, Any], canonical: dict[str, An
                 locked.add(fallback_id)
     save["locked_pick_assets"] = sorted(locked)
     return added
+
+
+def repair_protected_pick_fallback(obligation: dict[str, Any], canonical: dict[str, Any], used_fallback_ids: set[str] | None = None) -> dict[str, Any] | None:
+    primary_id = obligation.get("primary_pick_id")
+    if not primary_id:
+        return None
+    picks = {pick.get("id"): pick for pick in canonical.get("draft_picks", []) if pick.get("id")}
+    primary = picks.get(primary_id)
+    if not primary:
+        return None
+    sender = obligation.get("sender_team_id") or primary.get("original_team_id")
+    primary_round = int(primary.get("round") or 0)
+    primary_year = int(str(primary.get("season") or "0").split("-")[0] or 0)
+    used = set(used_fallback_ids or set()) - set(obligation.get("fallback_pick_ids") or [])
+    candidates = sorted(
+        [
+            pick
+            for pick in canonical.get("draft_picks", [])
+            if pick.get("id")
+            and pick.get("id") != primary_id
+            and pick.get("id") not in used
+            and int(pick.get("round") or 0) == primary_round
+            and pick.get("original_team_id") == sender
+            and pick.get("current_owner_team_id") == sender
+            and (int(str(pick.get("season") or "0").split("-")[0] or 0) >= primary_year)
+        ],
+        key=lambda pick: (str(pick.get("season") or ""), str(pick.get("id") or "")),
+    )
+    if not candidates:
+        return None
+    fallback = candidates[0]
+    repaired = {**obligation, "fallback_pick_ids": [fallback["id"]]}
+    repaired["id"] = stable_id("pick_obligation", repaired.get("type"), repaired.get("primary_pick_id"), repaired.get("receiver_team_id"), fallback["id"])
+    repaired["notes"] = f"{repaired.get('notes', '')} Invalid fallback repaired deterministically to {fallback['id']}.".strip()
+    if used_fallback_ids is not None:
+        used_fallback_ids.add(fallback["id"])
+    return repaired
 
 
 def seed_startup_free_agents(canonical: dict[str, Any], save: dict[str, Any], seed: int, target_count: int = 30) -> None:
@@ -575,6 +650,7 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
     save.setdefault("team_morale", initial_team_morale(canonical or {"teams": []}))
     save.setdefault("player_morale", initial_player_morale(canonical or {"players": []}))
     save.setdefault("rotation_recommendations", {})
+    save.setdefault("starting_lineups", {})
     save.setdefault("rotation_baselines", initial_rotation_baselines(canonical or {"players": []}))
     save.setdefault("rotation_snapshots", {})
     save.setdefault("fan_confidence", initial_team_metric(canonical or {"teams": []}, 55.0))
@@ -1362,6 +1438,88 @@ def playoff_leaders(canonical: dict[str, Any] | Any, save_path: str | Path, stat
     }
 
 
+STARTING_FIVE_SLOT_FITS = {
+    "1": {"PG": 12.0, "SG": 6.0},
+    "2": {"SG": 12.0, "PG": 5.0, "SF": 4.0},
+    "3": {"SF": 12.0, "SG": 5.0, "PF": 4.0},
+    "4": {"PF": 12.0, "SF": 5.0, "C": 4.0},
+    "5": {"C": 12.0, "PF": 5.0},
+}
+
+
+def player_position_tokens(player: dict[str, Any]) -> list[str]:
+    raw = str(player.get("position") or "").upper().replace("/", "-")
+    return [part.strip() for part in raw.split("-") if part.strip()] or ["G"]
+
+
+def starting_slot_score(player: dict[str, Any], slot: str, minutes: float, attrs: dict[str, float]) -> float:
+    fits = STARTING_FIVE_SLOT_FITS.get(str(slot), {})
+    fit = max([fits.get(token, 0.0) for token in player_position_tokens(player)] or [0.0])
+    return minutes * 1.25 + float(attrs.get("overall") or 50.0) * 0.32 + fit
+
+
+def auto_starting_five(canonical: dict[str, Any], save: dict[str, Any], team_id: str) -> dict[str, str]:
+    projection = team_rotation_projection(canonical, save, team_id, integer=False)
+    roster = [player for player in canonical.get("players", []) if player.get("team_id") == team_id]
+    chosen: dict[str, str] = {}
+    used: set[str] = set()
+    for slot in ["1", "2", "3", "4", "5"]:
+        candidates = []
+        for player in roster:
+            if player.get("id") in used:
+                continue
+            minutes = float(projection.get(player.get("id"), display_minutes_projection(player)))
+            attrs = player_attribute_summary(canonical, player.get("id"))
+            candidates.append((starting_slot_score(player, slot, minutes, attrs), minutes, player.get("name") or "", player))
+        if not candidates:
+            continue
+        _, _, _, selected = max(candidates, key=lambda item: item[:3])
+        chosen[slot] = selected["id"]
+        used.add(selected["id"])
+    return chosen
+
+
+def starting_lineup_slots(canonical: dict[str, Any], save: dict[str, Any], team_id: str, persist: bool = True) -> dict[str, str]:
+    save.setdefault("starting_lineups", {})
+    roster_ids = {player.get("id") for player in canonical.get("players", []) if player.get("team_id") == team_id}
+    stored = save["starting_lineups"].get(team_id) or {}
+    raw_slots = stored.get("slots") if isinstance(stored, dict) else {}
+    raw_slots = raw_slots if isinstance(raw_slots, dict) else {}
+    slots: dict[str, str] = {}
+    used: set[str] = set()
+    for slot in ["1", "2", "3", "4", "5"]:
+        player_id = raw_slots.get(slot) or raw_slots.get(int(slot))
+        if player_id in roster_ids and player_id not in used:
+            slots[slot] = player_id
+            used.add(player_id)
+    auto = auto_starting_five(canonical, save, team_id)
+    for slot in ["1", "2", "3", "4", "5"]:
+        player_id = auto.get(slot)
+        if slot not in slots and player_id in roster_ids and player_id not in used:
+            slots[slot] = player_id
+            used.add(player_id)
+    if persist:
+        existing = save["starting_lineups"].get(team_id)
+        source = (existing or {}).get("source", "auto") if isinstance(existing, dict) else "auto"
+        if not existing or (isinstance(existing, dict) and existing.get("slots") != slots):
+            save["starting_lineups"][team_id] = {"slots": slots, "source": source}
+    return slots
+
+
+def starting_five_rows(canonical: dict[str, Any], save: dict[str, Any], team_id: str) -> list[dict[str, Any]]:
+    slots = starting_lineup_slots(canonical, save, team_id, persist=True)
+    players = {player.get("id"): player for player in canonical.get("players", [])}
+    return [
+        {
+            "slot": int(slot),
+            "player_id": player_id,
+            "player_name": (players.get(player_id) or {}).get("name") or player_id,
+            "position": (players.get(player_id) or {}).get("position"),
+        }
+        for slot, player_id in sorted(slots.items(), key=lambda item: int(item[0]))
+    ]
+
+
 def league_events_view(
     canonical: dict[str, Any] | Any,
     save_path: str | Path,
@@ -1374,7 +1532,7 @@ def league_events_view(
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     events = [enriched_league_event(canonical, save, event) for event in save.get("league_events", [])]
     if kind:
-        events = [event for event in events if event.get("kind") == kind]
+        events = [event for event in events if league_event_kind_matches(event, kind)]
     if major_only:
         events = [event for event in events if is_major_league_event(canonical, save, event)]
     if recent_days is not None:
@@ -1382,6 +1540,22 @@ def league_events_view(
     events = sorted(events, key=lambda item: (item.get("date") or "", item.get("importance") or 0.0, item.get("headline") or ""), reverse=True)
     events = dedupe_trade_events_for_view(events)
     return {"as_of_date": save.get("state", {}).get("current_date"), "events": events[:limit], "event_count": len(events)}
+
+
+def league_event_kind_matches(event: dict[str, Any], kind: str) -> bool:
+    requested = str(kind or "").strip().lower()
+    event_kind = str(event.get("kind") or "").strip().lower()
+    groups = {
+        "transactions": {"trade", "extension", "staff_hire", "staff_fire"},
+        "all_transactions": {"trade", "extension", "staff_hire", "staff_fire"},
+        "trades": {"trade"},
+        "extensions": {"extension"},
+        "staff_hires": {"staff_hire"},
+        "staff_fires": {"staff_fire"},
+    }
+    if requested in groups:
+        return event_kind in groups[requested]
+    return event_kind == requested
 
 
 def dedupe_trade_events_for_view(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -1931,7 +2105,73 @@ def resolve_pick_obligations_for_year(save: dict[str, Any], order: dict[str, Any
                     details={"obligation_id": obligation.get("id"), "primary_pick_id": pick_id},
                 )
         elif obligation.get("type") == "pick_swap":
-            obligation["status"] = "ignored_unsupported_swap"
+            pick_a_id = obligation.get("team_a_pick_id") or obligation.get("primary_pick_id")
+            pick_b_id = obligation.get("team_b_pick_id") or obligation.get("counterparty_pick_id")
+            row_a = by_pick.get(pick_a_id)
+            row_b = by_pick.get(pick_b_id)
+            rights_holder = (
+                obligation.get("current_rights_holder_team_id")
+                or obligation.get("original_rights_holder_team_id")
+                or obligation.get("receiver_team_id")
+            )
+            if not row_a or not row_b or not rights_holder:
+                continue
+            owner_a = save.get("draft_pick_overrides", {}).get(pick_a_id) or row_a.get("current_owner_team_id") or row_a.get("owner_team_id")
+            owner_b = save.get("draft_pick_overrides", {}).get(pick_b_id) or row_b.get("current_owner_team_id") or row_b.get("owner_team_id")
+            overall_a = int(row_a.get("overall_pick") or 999)
+            overall_b = int(row_b.get("overall_pick") or 999)
+            if overall_a <= overall_b:
+                better_id, better_row, better_owner = pick_a_id, row_a, owner_a
+                worse_id, worse_row, worse_owner = pick_b_id, row_b, owner_b
+            else:
+                better_id, better_row, better_owner = pick_b_id, row_b, owner_b
+                worse_id, worse_row, worse_owner = pick_a_id, row_a, owner_a
+            if better_owner == rights_holder:
+                obligation["status"] = "resolved_swap_not_exercised"
+                obligation["resolved_date"] = save.get("state", {}).get("current_date")
+                obligation["resolved_better_pick_id"] = better_id
+                obligation["resolved_worse_pick_id"] = worse_id
+                add_league_event(
+                    save,
+                    "pick_swap",
+                    f"{team_id_to_abbrev(rights_holder)} keeps the better pick; swap right is not exercised.",
+                    date_value=save.get("state", {}).get("current_date"),
+                    team_ids=sorted({rights_holder, owner_a, owner_b} - {None}),
+                    importance=0.42,
+                    details={"obligation_id": obligation.get("id"), "better_pick_id": better_id, "worse_pick_id": worse_id, "exercised": False},
+                )
+                continue
+            displaced_owner = better_owner or obligation.get("counterparty_team_id") or worse_owner
+            if rights_holder:
+                save.setdefault("draft_pick_overrides", {})[better_id] = rights_holder
+                better_row["current_owner_team_id"] = rights_holder
+                better_row["owner_team_id"] = rights_holder
+                better_row["team_abbrev"] = team_id_to_abbrev(rights_holder)
+            if displaced_owner:
+                save.setdefault("draft_pick_overrides", {})[worse_id] = displaced_owner
+                worse_row["current_owner_team_id"] = displaced_owner
+                worse_row["owner_team_id"] = displaced_owner
+                worse_row["team_abbrev"] = team_id_to_abbrev(displaced_owner)
+            obligation["status"] = "resolved_swap_exercised"
+            obligation["resolved_date"] = save.get("state", {}).get("current_date")
+            obligation["resolved_better_pick_id"] = better_id
+            obligation["resolved_worse_pick_id"] = worse_id
+            add_league_event(
+                save,
+                "pick_swap",
+                f"{team_id_to_abbrev(rights_holder)} exercises pick swap rights and receives the better pick.",
+                date_value=save.get("state", {}).get("current_date"),
+                team_ids=sorted({rights_holder, displaced_owner, owner_a, owner_b} - {None}),
+                importance=0.58,
+                details={
+                    "obligation_id": obligation.get("id"),
+                    "better_pick_id": better_id,
+                    "worse_pick_id": worse_id,
+                    "rights_holder_team_id": rights_holder,
+                    "displaced_owner_team_id": displaced_owner,
+                    "exercised": True,
+                },
+            )
     save["locked_pick_assets"] = sorted(locked)
 
 
@@ -2343,24 +2583,46 @@ def quick_sim_current_season(root: str | Path, canonical: dict[str, Any] | Any, 
 def team_dashboard(root: str | Path, canonical: dict[str, Any] | Any, save_path: str | Path, team_query: str) -> dict[str, Any]:
     canonical = to_plain(canonical)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
-    if prune_rotation_recommendations(save, canonical):
-        write_save(save_path, save)
+    should_write = bool(prune_rotation_recommendations(save, canonical))
     team = resolve_team(canonical, team_query)
     active = canonical_with_save(canonical, save)
     rotation_projection = team_rotation_projection(active, save, team["id"], integer=True)
+    lineup_before = json.dumps(save.setdefault("starting_lineups", {}).get(team["id"], {}), sort_keys=True)
+    starting_slots = starting_lineup_slots(active, save, team["id"], persist=True)
+    lineup_after = json.dumps(save.setdefault("starting_lineups", {}).get(team["id"], {}), sort_keys=True)
+    should_write = should_write or lineup_before != lineup_after
+    slot_by_player = {player_id: int(slot) for slot, player_id in starting_slots.items()}
     roster = sorted(
         [player for player in active.get("players", []) if player["team_id"] == team["id"]],
-        key=lambda player: (float(rotation_projection.get(player["id"], 0.0)), display_minutes_projection(player), player.get("name", "")),
-        reverse=True,
+        key=lambda player: (
+            0 if player.get("id") in slot_by_player else 1,
+            slot_by_player.get(player.get("id"), 99),
+            -float(rotation_projection.get(player["id"], 0.0)),
+            player.get("name", ""),
+        ),
     )
+    if should_write:
+        write_save(save_path, save)
     record = save.get("team_records", {}).get(team["id"], empty_team_record(team))
     logs = [log for log in save.get("team_game_logs", []) if log.get("team_id") == team["id"]]
     health = [
         state for state in save.get("health_states", []) if next((player for player in active.get("players", []) if player["id"] == state["player_id"] and player["team_id"] == team["id"]), None)
     ]
-    season_stats = save.get("player_season_stats", {})
+    phase = save.get("state", {}).get("phase")
+    use_playoff_stats = phase in {"play_in", "playoffs"} and bool(save.get("playoff_player_stats"))
+    season_stats = save.get("playoff_player_stats", {}) if use_playoff_stats else save.get("player_season_stats", {})
+    stats_context = {
+        "label": "Playoffs" if use_playoff_stats else "Regular season",
+        "source": "playoff_player_stats" if use_playoff_stats else "player_season_stats",
+    }
     health_by_player = {state.get("player_id"): state for state in save.get("health_states", [])}
-    team_games = int(record.get("wins", 0)) + int(record.get("losses", 0))
+    if use_playoff_stats:
+        team_games = max(
+            [int(totals.get("games") or 0) for totals in season_stats.values() if totals.get("team_id") == team["id"]]
+            or [0]
+        )
+    else:
+        team_games = int(record.get("wins", 0)) + int(record.get("losses", 0))
     recommendations = save.get("rotation_recommendations") or {}
     identity_metrics = team_identity_report(active, save)
     return {
@@ -2378,6 +2640,8 @@ def team_dashboard(root: str | Path, canonical: dict[str, Any] | Any, save_path:
                 "height_inches": player.get("height_inches"),
                 "minutes_projection": float(rotation_projection.get(player["id"], display_minutes_projection(player))),
                 "coach_minutes_projection": float(rotation_projection.get(player["id"], display_minutes_projection(player))),
+                "is_starting_five": player["id"] in slot_by_player,
+                "starting_slot": slot_by_player.get(player["id"]),
                 "season_minutes_per_game": per_game_stat(season_stats.get(player["id"], {}), "minutes"),
                 "display_mpg": (
                     per_game_stat(season_stats.get(player["id"], {}), "minutes")
@@ -2408,6 +2672,8 @@ def team_dashboard(root: str | Path, canonical: dict[str, Any] | Any, save_path:
         "last_games": sorted(logs, key=lambda item: item["date"], reverse=True)[:5],
         "next_games": next_team_games(root, canonical, save, team["id"], limit=5),
         "health_summary": health_summary(health),
+        "stats_context": stats_context,
+        "starting_five": starting_five_rows(active, save, team["id"]),
         "staff_slots": sorted([slot for slot in save.get("staff_slots", []) if slot.get("team_id") == team["id"]], key=lambda item: item["slot"]),
         "cap_posture": next((state.get("salary_posture") for state in canonical.get("team_strategic_states", []) if state["team_id"] == team["id"]), "unknown"),
         "cap_summary": team_cap_summary(active, save, team["id"], season=save_active_contract_season(save)),

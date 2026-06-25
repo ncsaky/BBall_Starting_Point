@@ -24,7 +24,7 @@ from .utils import clamp, maybe_float, normalize_name, stable_id
 
 FRONT_OFFICE_OVERRIDES_FILE = Path("data/overrides/front_office_overrides.json")
 TRANSACTION_MODEL_CONFIG_FILE = Path("data/overrides/transaction_model_config.json")
-TRADE_ASSET_KINDS = {"player", "pick"}
+TRADE_ASSET_KINDS = {"player", "pick", "pick_swap"}
 TAX_LINE = 187_895_000
 SECOND_APRON = 207_824_000
 ANNUAL_CAP_GROWTH_RATE = 0.035
@@ -500,7 +500,8 @@ def find_trade_for_assets(
             for buyer in buyer_teams_for_asset_package(canonical, seller, normalized_target):
                 if buyer["id"] == seller["id"]:
                     continue
-                for buyer_assets in buyer_offer_packages_for_value(canonical, buyer, seller, target_value, target_salary, seed, selected_player_ids)[:5]:
+                buyer_context_target_value = package_value_for_team(canonical, normalized_target, buyer["id"])
+                for buyer_assets in buyer_offer_packages_for_value(canonical, buyer, seller, buyer_context_target_value, target_salary, seed, selected_player_ids)[:5]:
                     report = evaluate_trade(canonical, seller["abbrev"], buyer["abbrev"], target_specs, buyer_assets, seed=seed)
                     candidates.append(candidate_from_evaluation(canonical, report))
         mode = "shop_package"
@@ -722,7 +723,8 @@ def apply_trade_to_save(save_path: str | Path, proposal_id: str, date: str = CAN
         }
     proposal_payload = proposal.get("proposal") or proposal
     if save.get("version") == "league_save_v1":
-        live_issues = trade_live_validation_issues(save, proposal_payload, date)
+        validation_payload = {**proposal_payload, "pick_obligation_terms": proposal.get("pick_obligation_terms") or []}
+        live_issues = trade_live_validation_issues(save, validation_payload, date)
         if live_issues:
             save["pending_trade_proposals"] = [
                 item
@@ -762,12 +764,16 @@ def apply_trade_to_save(save_path: str | Path, proposal_id: str, date: str = CAN
             if asset.get("kind") == "pick":
                 save.setdefault("draft_pick_overrides", {})[asset["id"]] = to_team_id
                 update_retraded_pick_obligation(save, asset["id"], to_team_id, date)
+            if asset.get("kind") == "pick_swap":
+                update_retraded_pick_swap_obligation(save, asset["id"], to_team_id, date)
         for asset in proposal_payload.get("to_assets", []):
             if asset.get("kind") == "player":
                 save.setdefault("roster_overrides", {})[asset["id"]] = from_team_id
             if asset.get("kind") == "pick":
                 save.setdefault("draft_pick_overrides", {})[asset["id"]] = from_team_id
                 update_retraded_pick_obligation(save, asset["id"], from_team_id, date)
+            if asset.get("kind") == "pick_swap":
+                update_retraded_pick_swap_obligation(save, asset["id"], from_team_id, date)
         for team_id in [from_team_id, to_team_id]:
             if team_id:
                 save.setdefault("rotation_snapshots", {}).pop(team_id, None)
@@ -834,6 +840,109 @@ def update_retraded_pick_obligation(save: dict[str, Any], pick_id: str, new_owne
             obligation["receiver_updated_date"] = date
             obligation["notes"] = f"{obligation.get('notes', '')} Protected-pick rights were re-traded before resolution.".strip()
     save["locked_pick_assets"] = sorted(locked)
+
+
+def update_retraded_pick_swap_obligation(save: dict[str, Any], obligation_id: str, new_holder_team_id: str | None, date: str) -> bool:
+    if not obligation_id or not new_holder_team_id:
+        return False
+    for obligation in save.get("pick_obligations", []):
+        if obligation.get("id") != obligation_id or obligation.get("type") != "pick_swap":
+            continue
+        if obligation.get("status", "active") not in {"active", "pending_resolution"}:
+            return False
+        old_holder = obligation.get("current_rights_holder_team_id") or obligation.get("original_rights_holder_team_id")
+        obligation["current_rights_holder_team_id"] = new_holder_team_id
+        obligation["rights_updated_date"] = date
+        history = obligation.setdefault("transfer_history", [])
+        history.append({"date": date, "from_team_id": old_holder, "to_team_id": new_holder_team_id})
+        obligation["notes"] = f"{obligation.get('notes', '')} Pick-swap right was re-traded before resolution.".strip()
+        return True
+    return False
+
+
+def active_pick_obligations(canonical_or_save: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        item
+        for item in canonical_or_save.get("pick_obligations", [])
+        if item.get("status", "active") in {"active", "pending_resolution"}
+    ]
+
+
+def pick_lookup_for_obligation(canonical_or_save: dict[str, Any], proposal: dict[str, Any] | None = None) -> dict[str, dict[str, Any]]:
+    picks = {pick.get("id"): pick for pick in canonical_or_save.get("draft_picks", []) if pick.get("id")}
+    for asset in [*((proposal or {}).get("from_assets") or []), *((proposal or {}).get("to_assets") or [])]:
+        if asset.get("kind") == "pick" and asset.get("id"):
+            picks.setdefault(asset.get("id"), asset)
+    return picks
+
+
+def pick_obligation_validation_errors(canonical_or_save: dict[str, Any], proposal: dict[str, Any] | None, term: dict[str, Any]) -> list[str]:
+    if not term or term.get("type") in {None, "unprotected"}:
+        return []
+    errors: list[str] = []
+    picks = pick_lookup_for_obligation(canonical_or_save, proposal)
+    has_pick_table = bool(canonical_or_save.get("draft_picks"))
+    locked = set(canonical_or_save.get("locked_pick_assets") or [])
+    if term.get("type") == "protected_pick":
+        primary_id = term.get("primary_pick_id")
+        fallback_ids = [pick_id for pick_id in term.get("fallback_pick_ids") or [] if pick_id]
+        if not primary_id:
+            errors.append("protected pick is missing a primary pick")
+        if not fallback_ids:
+            errors.append("protected pick is missing fallback collateral")
+        if len(fallback_ids) != len(set(fallback_ids)):
+            errors.append("protected pick has duplicate fallback collateral")
+        if primary_id and primary_id in fallback_ids:
+            errors.append("protected pick fallback cannot be the same pick")
+        primary = picks.get(primary_id)
+        if primary_id and not primary and has_pick_table:
+            errors.append("protected pick primary does not exist")
+        primary_round = int((primary or {}).get("round") or term.get("primary_round") or 0)
+        primary_year = pick_season_start(primary or {"season": term.get("season")}) or pick_season_start({"season": term.get("season")}) or 0
+        for fallback_id in fallback_ids:
+            fallback = picks.get(fallback_id)
+            if not fallback:
+                if not has_pick_table:
+                    continue
+                errors.append(f"fallback pick {fallback_id} does not exist")
+                continue
+            fallback_round = int(fallback.get("round") or 0)
+            if primary_round and fallback_round and fallback_round != primary_round:
+                errors.append("protected pick fallback must match the primary pick round")
+            fallback_year = pick_season_start(fallback) or 0
+            if primary_year and fallback_year and fallback_year < primary_year:
+                errors.append("protected pick fallback cannot be earlier than the primary pick")
+            if fallback_id in locked and fallback_id not in set(term.get("_existing_fallback_pick_ids") or []):
+                errors.append(f"fallback pick {fallback_id} is already locked")
+            if fallback.get("_obligation_locked"):
+                errors.append(f"fallback pick {fallback_id} is already locked")
+        return sorted(dict.fromkeys(errors))
+    if term.get("type") == "pick_swap":
+        pick_a_id = term.get("team_a_pick_id") or term.get("primary_pick_id")
+        pick_b_id = term.get("team_b_pick_id") or term.get("counterparty_pick_id")
+        if not pick_a_id or not pick_b_id:
+            errors.append("pick swap requires two subject picks")
+        if pick_a_id and pick_b_id and pick_a_id == pick_b_id:
+            errors.append("pick swap cannot use the same pick twice")
+        pick_a = picks.get(pick_a_id)
+        pick_b = picks.get(pick_b_id)
+        if pick_a_id and not pick_a and has_pick_table:
+            errors.append("pick swap first pick does not exist")
+        if pick_b_id and not pick_b and has_pick_table:
+            errors.append("pick swap second pick does not exist")
+        if pick_a and pick_b:
+            if str(pick_a.get("season") or "") != str(pick_b.get("season") or ""):
+                errors.append("pick swap picks must be in the same season")
+            if int(pick_a.get("round") or 0) != int(pick_b.get("round") or 0):
+                errors.append("pick swap picks must be in the same round")
+        if not (term.get("current_rights_holder_team_id") or term.get("original_rights_holder_team_id") or term.get("receiver_team_id")):
+            errors.append("pick swap is missing a rights holder")
+        return sorted(dict.fromkeys(errors))
+    return []
+
+
+def validate_pick_obligation_term(canonical_or_save: dict[str, Any], proposal: dict[str, Any] | None, term: dict[str, Any]) -> bool:
+    return not pick_obligation_validation_errors(canonical_or_save, proposal, term)
 
 
 def trade_player_ids(proposal: dict[str, Any]) -> list[str]:
@@ -935,6 +1044,19 @@ def trade_live_validation_issues(save: dict[str, Any], proposal: dict[str, Any],
     issues: list[str] = []
     roster_overrides = save.get("roster_overrides") or {}
     pick_overrides = save.get("draft_pick_overrides") or {}
+    swap_right_holders = {
+        obligation.get("id"): obligation.get("current_rights_holder_team_id") or obligation.get("original_rights_holder_team_id") or obligation.get("receiver_team_id")
+        for obligation in save.get("pick_obligations", [])
+        if obligation.get("type") == "pick_swap" and obligation.get("status", "active") in {"active", "pending_resolution"}
+    }
+    proposal_swap_grantors: dict[str, str | None] = {}
+    for term in proposal.get("pick_obligation_terms") or []:
+        if term.get("type") == "pick_swap" and term.get("id"):
+            proposal_swap_grantors[term.get("id")] = term.get("sender_team_id") or term.get("counterparty_team_id")
+            swap_right_holders.setdefault(
+                term.get("id"),
+                term.get("current_rights_holder_team_id") or term.get("original_rights_holder_team_id") or term.get("receiver_team_id"),
+            )
     locked_picks = set(save.get("locked_pick_assets") or [])
     for side, expected_team_id in [("from_assets", proposal.get("from_team_id")), ("to_assets", proposal.get("to_team_id"))]:
         for asset in proposal.get(side, []) or []:
@@ -949,6 +1071,15 @@ def trade_live_validation_issues(save: dict[str, Any], proposal: dict[str, Any],
                     issues.append(f"{label} is no longer owned by the offering team.")
                 if pick_id in locked_picks:
                     issues.append(f"{label} is locked as protection/fallback collateral.")
+            elif asset.get("kind") == "pick_swap":
+                holder = swap_right_holders.get(asset.get("id"))
+                grantor = proposal_swap_grantors.get(asset.get("id"))
+                if grantor == expected_team_id:
+                    continue
+                if not holder:
+                    issues.append(f"{label} is no longer an active swap right.")
+                elif holder != expected_team_id:
+                    issues.append(f"{label} is no longer held by the offering team.")
     recent = recently_traded_player_ids(save, date_value)
     for side in ["from_assets", "to_assets"]:
         for asset in proposal.get(side, []) or []:
@@ -982,7 +1113,7 @@ def apply_pick_obligation_terms_to_save(save: dict[str, Any], proposal: dict[str
     for term in terms:
         if not term or term.get("type") == "unprotected":
             continue
-        if not pick_obligation_fallback_rounds_match(save, proposal, term):
+        if not validate_pick_obligation_term(save, proposal, term):
             continue
         obligation = {
             **term,
@@ -991,6 +1122,11 @@ def apply_pick_obligation_terms_to_save(save: dict[str, Any], proposal: dict[str
             "date_created": date,
             "status": "active",
         }
+        if obligation.get("type") == "pick_swap":
+            obligation.setdefault("original_rights_holder_team_id", obligation.get("current_rights_holder_team_id") or obligation.get("receiver_team_id"))
+            obligation.setdefault("current_rights_holder_team_id", obligation.get("original_rights_holder_team_id"))
+            obligation.setdefault("transfer_history", [])
+            obligation.pop("pending_asset_grant", None)
         if obligation["id"] not in existing:
             obligations.append(obligation)
             existing.add(obligation["id"])
@@ -1000,23 +1136,7 @@ def apply_pick_obligation_terms_to_save(save: dict[str, Any], proposal: dict[str
 
 
 def pick_obligation_fallback_rounds_match(canonical_or_save: dict[str, Any], proposal: dict[str, Any] | None, term: dict[str, Any]) -> bool:
-    primary_id = term.get("primary_pick_id")
-    fallback_ids = [pick_id for pick_id in term.get("fallback_pick_ids") or [] if pick_id]
-    if not primary_id or not fallback_ids:
-        return True
-    picks = {pick.get("id"): pick for pick in canonical_or_save.get("draft_picks", [])}
-    for asset in [*((proposal or {}).get("from_assets") or []), *((proposal or {}).get("to_assets") or [])]:
-        if asset.get("kind") == "pick" and asset.get("id"):
-            picks.setdefault(asset.get("id"), asset)
-    primary_round = int((picks.get(primary_id) or {}).get("round") or term.get("primary_round") or 0)
-    fallback_rounds = [
-        int((picks.get(pick_id) or {}).get("round") or 0)
-        for pick_id in fallback_ids
-    ]
-    fallback_rounds = [round_no for round_no in fallback_rounds if round_no]
-    if not primary_round or not fallback_rounds:
-        return True
-    return all(round_no == primary_round for round_no in fallback_rounds)
+    return validate_pick_obligation_term(canonical_or_save, proposal, term)
 
 
 def canonical_with_pending_pick_terms(canonical: dict[str, Any], terms: list[dict[str, Any]] | None) -> dict[str, Any]:
@@ -1029,13 +1149,17 @@ def canonical_with_pending_pick_terms(canonical: dict[str, Any], terms: list[dic
     for term in terms:
         if not term or term.get("type") == "unprotected":
             continue
-        if not pick_obligation_fallback_rounds_match(working, None, term):
+        if not validate_pick_obligation_term(working, None, term):
             continue
         obligation = {
             **term,
             "id": term.get("id") or stable_id("pick_obligation_preview", term.get("primary_pick_id"), term.get("receiver_team_id"), term.get("label")),
             "status": "active",
         }
+        if obligation.get("type") == "pick_swap":
+            obligation.setdefault("original_rights_holder_team_id", obligation.get("current_rights_holder_team_id") or obligation.get("receiver_team_id"))
+            obligation.setdefault("current_rights_holder_team_id", obligation.get("original_rights_holder_team_id"))
+            obligation.setdefault("transfer_history", [])
         if obligation["id"] not in existing:
             obligations.append(obligation)
             existing.add(obligation["id"])
@@ -1055,7 +1179,7 @@ def trade_result_with_pick_terms(result: dict[str, Any], terms: list[dict[str, A
     payload["pick_trade_terms"] = to_plain(terms)
     active_terms = [
         term for term in terms
-        if term and term.get("type") != "unprotected" and pick_obligation_fallback_rounds_match(payload.get("proposal") or {}, payload.get("proposal") or {}, term)
+        if term and term.get("type") != "unprotected" and validate_pick_obligation_term(payload.get("proposal") or {}, payload.get("proposal") or {}, term)
     ]
     if not active_terms:
         return payload
@@ -1264,12 +1388,104 @@ def pick_short_label(canonical: dict[str, Any], pick: dict[str, Any] | None) -> 
     return f"{pick.get('season', '----')} R{pick.get('round', '?')} {original}"
 
 
+def pick_swap_obligations_for_pick(pick: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        obligation
+        for obligation in pick.get("_obligations", [])
+        if obligation.get("type") == "pick_swap" and not obligation.get("_fallback_lock")
+    ]
+
+
+def pick_swap_display_label(canonical: dict[str, Any], obligation: dict[str, Any]) -> str:
+    teams = {team.get("id"): team.get("abbrev") for team in canonical.get("teams", [])}
+    pick_a = pick_by_id(canonical, obligation.get("team_a_pick_id") or obligation.get("primary_pick_id"))
+    pick_b = pick_by_id(canonical, obligation.get("team_b_pick_id") or obligation.get("counterparty_pick_id"))
+    right_holder = obligation.get("current_rights_holder_team_id") or obligation.get("original_rights_holder_team_id") or obligation.get("receiver_team_id")
+    holder = teams.get(right_holder) or team_id_fallback(right_holder)
+    if pick_a and pick_b:
+        season = pick_a.get("season") or pick_b.get("season") or obligation.get("season") or "----"
+        round_no = pick_a.get("round") or pick_b.get("round") or obligation.get("round") or "?"
+        a_original = teams.get(pick_a.get("original_team_id")) or "TBD"
+        b_original = teams.get(pick_b.get("original_team_id")) or "TBD"
+        return f"{season} R{round_no} swap right: {holder} may receive better of {a_original}/{b_original}; other team receives less favorable"
+    return str(obligation.get("label") or "pick swap right")
+
+
+def pick_swap_context_note(canonical: dict[str, Any], obligation: dict[str, Any]) -> str:
+    label = pick_swap_display_label(canonical, obligation)
+    return f"Subject to {label}"
+
+
+def pick_swap_asset_value(canonical: dict[str, Any], obligation: dict[str, Any], phase: str = "neutral") -> float:
+    pick_a = pick_by_id(canonical, obligation.get("team_a_pick_id") or obligation.get("primary_pick_id"))
+    pick_b = pick_by_id(canonical, obligation.get("team_b_pick_id") or obligation.get("counterparty_pick_id"))
+    if not pick_a or not pick_b:
+        return 0.0
+    value_a = pick_asset_value(pick_a, phase)
+    value_b = pick_asset_value(pick_b, phase)
+    if value_a <= 0 or value_b <= 0:
+        return 0.0
+    spread = abs(value_a - value_b)
+    year = pick_season_start(pick_a) or pick_season_start(pick_b) or 2028
+    active_year = season_start_from_label(str(canonical.get("meta", {}).get("active_season") or "2025-26"))
+    distance = max(0, year - active_year)
+    uncertainty = clamp(0.68 - distance * 0.08, 0.34, 0.68)
+    base = 2.2 + spread * uncertainty
+    if int(pick_a.get("round") or 0) == 1:
+        base += 2.5
+    else:
+        base *= 0.62
+    return round(clamp(base, 1.0, 34.0), 2)
+
+
+def pick_swap_by_id(canonical: dict[str, Any], obligation_id: str | None) -> dict[str, Any] | None:
+    if not obligation_id:
+        return None
+    return next(
+        (
+            obligation
+            for obligation in canonical.get("pick_obligations", [])
+            if obligation.get("id") == obligation_id and obligation.get("type") == "pick_swap"
+        ),
+        None,
+    )
+
+
+def tradeable_pick_swaps_for_team(canonical: dict[str, Any], team_id: str) -> list[dict[str, Any]]:
+    swaps = []
+    for obligation in active_pick_obligations(canonical):
+        if obligation.get("type") != "pick_swap":
+            continue
+        holder = obligation.get("current_rights_holder_team_id") or obligation.get("original_rights_holder_team_id") or obligation.get("receiver_team_id")
+        if holder != team_id:
+            continue
+        value = pick_swap_asset_value(canonical, obligation, "neutral")
+        if value <= 0:
+            continue
+        swaps.append(
+            {
+                "kind": "pick_swap",
+                "id": obligation.get("id"),
+                "label": pick_swap_display_label(canonical, obligation),
+                "season": obligation.get("season"),
+                "round": obligation.get("round"),
+                "current_rights_holder_team_id": holder,
+                "team_a_pick_id": obligation.get("team_a_pick_id") or obligation.get("primary_pick_id"),
+                "team_b_pick_id": obligation.get("team_b_pick_id") or obligation.get("counterparty_pick_id"),
+                "value": value,
+            }
+        )
+    return sorted(swaps, key=lambda item: (str(item.get("season") or ""), int(item.get("round") or 9), str(item.get("id") or "")))
+
+
 def pick_obligation_context_note(canonical: dict[str, Any], pick: dict[str, Any], include_fallback: bool = True) -> str:
     obligation = active_primary_pick_obligation_for_label(pick)
+    swap_notes = [pick_swap_context_note(canonical, item) for item in pick_swap_obligations_for_pick(pick)]
     if not obligation:
         if pick.get("current_owner_team_id") and pick.get("current_owner_team_id") == pick.get("original_team_id"):
-            return ""
-        return clean_pick_protection_summary(pick)
+            return "; ".join(swap_notes)
+        clean = clean_pick_protection_summary(pick)
+        return "; ".join(part for part in [clean, *swap_notes] if part)
     teams = {team.get("id"): team.get("abbrev") for team in canonical.get("teams", [])}
     sender = obligation.get("sender_team_id")
     beneficiary = pick.get("current_owner_team_id") if pick.get("current_owner_team_id") != sender else obligation.get("receiver_team_id")
@@ -1280,6 +1496,7 @@ def pick_obligation_context_note(canonical: dict[str, Any], pick: dict[str, Any]
     fallback = pick_by_id(canonical, fallback_id) if fallback_id else None
     if include_fallback and fallback and beneficiary and beneficiary != sender:
         parts.append(f"{teams.get(beneficiary) or team_id_fallback(beneficiary)} receives {pick_short_label(canonical, fallback)} in this case")
+    parts.extend(swap_notes)
     return "; ".join(part for part in parts if part)
 
 
@@ -1454,10 +1671,13 @@ def find_selling_candidates(
     package_player_options: int = 9,
 ) -> list[dict[str, Any]]:
     candidates = []
+    valuations = {value["player_id"]: value for value in canonical.get("player_asset_valuations", [])}
+    target_value = market_trade_target_value(target, valuations.get(target.get("id"), fallback_asset_valuation(target)))
+    per_buyer_limit = 10 if target_value >= 70 else 4
     for buyer in buyer_teams_for_player(canonical, target):
         if buyer["id"] == user_team["id"]:
             continue
-        for buyer_assets in buyer_offer_packages(canonical, buyer, user_team, target, seed, max_results=package_result_limit, max_player_options=package_player_options)[:4]:
+        for buyer_assets in buyer_offer_packages(canonical, buyer, user_team, target, seed, max_results=package_result_limit, max_player_options=package_player_options)[:per_buyer_limit]:
             report = evaluate_trade(canonical, user_team["abbrev"], buyer["abbrev"], [{"kind": "player", "value": target["name"]}], buyer_assets, seed=seed)
             candidates.append(candidate_from_evaluation(canonical, report))
     return candidates
@@ -1521,6 +1741,7 @@ def market_trade_target_value(player: dict[str, Any], valuation: dict[str, Any])
     rookie_floor = drafted_rookie_value_floor(player, ability=ability, potential=potential)
     if rookie_floor:
         raw = max(raw, rookie_floor)
+    raw = market_value_after_star_and_surplus_shape(player, valuation, raw)
     saved_stats = player.get("_save_stats") or {}
     logged_games = maybe_float(saved_stats.get("games")) or 0.0
     logged_minutes = maybe_float(saved_stats.get("minutes")) or 0.0
@@ -1551,6 +1772,27 @@ def market_trade_target_value(player: dict[str, Any], valuation: dict[str, Any])
     if minutes < 24:
         compressed = min(compressed, 32.0 + max(0.0, overall_proxy - 55.0) * 0.68 + minutes * 0.43)
     return round(clamp(compressed, 1.0, raw), 2)
+
+
+def market_value_after_star_and_surplus_shape(player: dict[str, Any], valuation: dict[str, Any], raw: float) -> float:
+    on_court = float(valuation.get("on_court_value") or raw)
+    playoff = float(valuation.get("playoff_value") or 50.0)
+    surplus = float(valuation.get("contract_surplus") or 0.0)
+    development = float(valuation.get("development_upside") or 0.0)
+    minutes = display_minutes_projection(player)
+    age = maybe_float(player.get("age")) or 27.0
+    if surplus > 16.0 and on_court < 80.0 and development < 13.5:
+        penalty_rate = 0.82 if on_court >= 74.0 else 1.12
+        raw -= max(0.0, surplus - 16.0) * penalty_rate
+        if age >= 31.0:
+            raw -= min(7.5, (age - 30.0) * 1.05)
+    if minutes >= 28.0 and on_court >= 79.0 and playoff >= 80.0:
+        superstar_floor = 92.0 + max(0.0, on_court - 79.0) * 1.05 + max(0.0, playoff - 80.0) * 0.34
+        superstar_floor -= max(0.0, age - 32.0) * 0.16
+        raw = max(raw, superstar_floor)
+    elif minutes >= 28.0 and on_court >= 76.5 and playoff >= 76.0 and surplus < 18.0:
+        raw = max(raw, 84.0 + max(0.0, on_court - 76.5) * 0.68 + max(0.0, playoff - 76.0) * 0.18)
+    return clamp(raw, 1.0, 99.0)
 
 
 def deterministic_low_role_value_variation(player: dict[str, Any]) -> float:
@@ -1631,14 +1873,22 @@ def buyer_offer_packages_for_value(
     )[:9]
     firsts = [pick for pick in picks if int(pick.get("round") or 2) == 1]
     seconds = [pick for pick in picks if int(pick.get("round") or 2) == 2]
+    swaps = sorted(
+        tradeable_pick_swaps_for_team(canonical, buyer["id"]),
+        key=lambda swap: pick_swap_asset_value(canonical, swap, buyer_state.get("phase", "neutral")),
+        reverse=True,
+    )[:3]
     pick_variants = [()]
     pick_variants.extend((pick,) for pick in seconds[:4])
+    pick_variants.extend((swap,) for swap in swaps)
     if len(seconds) >= 2:
         pick_variants.extend(combinations(seconds[:4], 2))
     if len(seconds) >= 3:
         pick_variants.append(tuple(seconds[:3]))
     if target_value >= 38:
         pick_variants.extend((pick,) for pick in firsts[:3])
+        if target_value >= 70 and len(firsts) >= 2:
+            pick_variants.extend(combinations(firsts[:5], 2))
         for first in firsts[:2]:
             for second in seconds[:3]:
                 pick_variants.append((first, second))
@@ -1653,15 +1903,43 @@ def buyer_offer_packages_for_value(
             for pick_group in pick_variants:
                 if len(player_assets) + len(pick_group) > 4:
                     continue
-                assets = [*player_assets, *[{"kind": "pick", "value": pick["id"]} for pick in pick_group]]
+                assets = [
+                    *player_assets,
+                    *[
+                        {"kind": pick.get("kind", "pick"), "value": pick["id"]}
+                        for pick in pick_group
+                    ],
+                ]
                 rough_value = sum(offer_player_rough_value(canonical, player, target_value, target_salary, valuations) for player in player_group)
-                rough_value += sum(pick_asset_value(pick, buyer_state.get("phase", "neutral")) for pick in pick_group)
-                if rough_value < target_value * (0.34 if target_value >= 56 else 0.38) or rough_value > target_value * 1.48 + 14:
+                rough_value += sum(
+                    pick_swap_asset_value(canonical, pick, buyer_state.get("phase", "neutral"))
+                    if pick.get("kind") == "pick_swap"
+                    else pick_asset_value(pick, buyer_state.get("phase", "neutral"))
+                    for pick in pick_group
+                )
+                search_value = rough_value
+                if target_value >= 70:
+                    normalized_assets = [
+                        *[
+                            {"kind": "player", "id": player["id"], "label": player["name"]}
+                            for player in player_group
+                        ],
+                        *[
+                            {
+                                "kind": pick.get("kind", "pick"),
+                                "id": pick["id"],
+                                "label": pick.get("label") or pick.get("id"),
+                            }
+                            for pick in pick_group
+                        ],
+                    ]
+                    search_value = package_value_for_team(canonical, normalized_assets, seller["id"])
+                if search_value < target_value * (0.34 if target_value >= 56 else 0.38) or search_value > target_value * 1.48 + 14:
                     continue
                 salary_gap = abs(player_salary - (target_salary or player_salary)) / 1_000_000
                 complexity_cost = max(0, len(assets) - 2) * (0.1 if target_value >= 56 else 0.32)
                 distant_risk = sum(far_future_pick_risk(pick) for pick in pick_group)
-                packages.append((abs(rough_value - target_value) + salary_gap * 0.22 + complexity_cost + distant_risk, assets))
+                packages.append((abs(search_value - target_value) + salary_gap * 0.22 + complexity_cost + distant_risk, assets))
     if not packages:
         fallback = fallback_trade_packages(canonical, buyer, seller, tradable_players, seconds, firsts, target_value, target_salary, valuations)
         packages.extend(fallback)
@@ -1707,8 +1985,6 @@ def fallback_trade_packages(
     target_salary: float | None,
     valuations: dict[str, dict[str, Any]],
 ) -> list[tuple[float, list[dict[str, Any]]]]:
-    if target_value >= 70:
-        return []
     packages: list[tuple[float, list[dict[str, Any]]]] = []
     salary_sorted = sorted(
         tradable_players,
@@ -1720,7 +1996,9 @@ def fallback_trade_packages(
     for player in salary_sorted[:8]:
         player_value = offer_player_rough_value(canonical, player, target_value, target_salary, valuations)
         pick_pool = seconds[:3]
-        if target_value >= 44 and firsts:
+        if target_value >= 70 and firsts:
+            pick_pool = [*firsts[:2], *seconds[:2]]
+        elif target_value >= 44 and firsts:
             pick_pool = [*seconds[:2], firsts[0]]
         for pick_count in range(0, min(3, len(pick_pool)) + 1):
             pick_group = tuple(pick_pool[:pick_count])
@@ -1728,7 +2006,24 @@ def fallback_trade_packages(
             rough = player_value + sum(pick_asset_value(pick, "neutral") for pick in pick_group)
             if rough < max(10.0, target_value * 0.28):
                 continue
+            if target_value >= 70 and rough < target_value * 0.74:
+                continue
             packages.append((abs(rough - target_value) + len(assets) * 0.45 + sum(far_future_pick_risk(pick) for pick in pick_group), assets))
+    if target_value >= 70 and firsts:
+        player_pairs = list(combinations(salary_sorted[:8], 2))
+        for player_group in player_pairs[:18]:
+            player_value = sum(offer_player_rough_value(canonical, player, target_value, target_salary, valuations) for player in player_group)
+            player_assets = [{"kind": "player", "value": player["name"]} for player in player_group]
+            for pick_group in [tuple(firsts[:1]), tuple(firsts[:2]), tuple([*firsts[:1], *seconds[:1]])]:
+                if not pick_group:
+                    continue
+                assets = [*player_assets, *[{"kind": "pick", "value": pick["id"]} for pick in pick_group]]
+                if len(assets) > 4:
+                    continue
+                rough = player_value + sum(pick_asset_value(pick, "neutral") for pick in pick_group)
+                if rough < target_value * 0.78:
+                    continue
+                packages.append((abs(rough - target_value) + len(assets) * 0.38 + sum(far_future_pick_risk(pick) for pick in pick_group), assets))
     return packages
 
 
@@ -1741,6 +2036,8 @@ def asset_package_value(canonical: dict[str, Any], assets: list[dict[str, Any]],
             total += market_trade_target_value(player, values.get(asset.get("id"), fallback_asset_valuation(player)))
         elif asset.get("kind") == "pick":
             total += pick_asset_value(pick_by_id(canonical, asset.get("id")), phase)
+        elif asset.get("kind") == "pick_swap":
+            total += pick_swap_asset_value(canonical, pick_swap_by_id(canonical, asset.get("id")) or asset, phase)
     return round(total, 2)
 
 
@@ -1765,6 +2062,8 @@ def trade_specs_from_normalized(assets: list[dict[str, Any]]) -> list[dict[str, 
             specs.append({"kind": "player", "value": asset.get("label") or asset.get("id")})
         elif asset.get("kind") == "pick":
             specs.append({"kind": "pick", "value": asset.get("id")})
+        elif asset.get("kind") == "pick_swap":
+            specs.append({"kind": "pick_swap", "value": asset.get("id")})
     return specs
 
 
@@ -1870,9 +2169,11 @@ def user_facing_trade_candidate_ok(canonical: dict[str, Any], candidate: dict[st
     proposal = candidate.get("proposal") or {}
     evaluations = candidate.get("evaluations") or []
     non_user_evals = [item for item in evaluations if item.get("perspective_team_id") != user_team_id]
-    if non_user_evals and not any(item.get("accepted") or float(item.get("net_value") or 0) >= -3.0 for item in non_user_evals):
+    if non_user_evals and not any(item.get("accepted") for item in non_user_evals):
         return False
     user_eval = next((item for item in evaluations if item.get("perspective_team_id") == user_team_id), {})
+    if float(user_eval.get("net_value") or 0) < -18.0:
+        return False
     if float(user_eval.get("net_value") or 0) > 28:
         return False
     incoming = proposal.get("to_assets", []) if proposal.get("from_team_id") == user_team_id else proposal.get("from_assets", [])
@@ -1905,6 +2206,8 @@ def simple_asset_total(canonical: dict[str, Any], assets: list[dict[str, Any]]) 
             total += market_trade_target_value(player, values.get(asset.get("id"), fallback_asset_valuation(player)))
         elif asset.get("kind") == "pick":
             total += pick_asset_value(pick_by_id(canonical, asset.get("id")), state.get("phase", "balanced"))
+        elif asset.get("kind") == "pick_swap":
+            total += pick_swap_asset_value(canonical, pick_swap_by_id(canonical, asset.get("id")) or asset, state.get("phase", "balanced"))
     return total
 
 
@@ -1912,7 +2215,10 @@ def max_player_value(canonical: dict[str, Any], assets: list[dict[str, Any]]) ->
     values = {value["player_id"]: value for value in canonical.get("player_asset_valuations", [])}
     return max(
         [
-            float(values.get(asset.get("id"), fallback_asset_valuation(player_by_id(canonical, asset.get("id")))).get("player_value") or 0.0)
+            market_trade_target_value(
+                player_by_id(canonical, asset.get("id")),
+                values.get(asset.get("id"), fallback_asset_valuation(player_by_id(canonical, asset.get("id")))),
+            )
             for asset in assets
             if asset.get("kind") == "player"
         ]
@@ -1983,6 +2289,21 @@ def package_value_breakdown(canonical: dict[str, Any], assets: list[dict[str, An
                     "role_multiplier": 1.0,
                     "adjusted_value": round(pick_value, 2),
                     "expected_role": "draft asset",
+                }
+            )
+        elif asset.get("kind") == "pick_swap":
+            swap = pick_swap_by_id(canonical, asset.get("id")) or asset
+            swap_value = pick_swap_asset_value(canonical, swap, state.get("phase", "balanced"))
+            pieces["pick_value"] += swap_value
+            asset_details.append(
+                {
+                    "kind": "pick_swap",
+                    "id": asset.get("id"),
+                    "label": asset.get("label") or pick_swap_display_label(canonical, swap),
+                    "raw_value": round(swap_value, 2),
+                    "role_multiplier": 1.0,
+                    "adjusted_value": round(swap_value, 2),
+                    "expected_role": "swap right",
                 }
             )
     pressure = float(front.get("owner_pressure") or state.get("pressure") or 55.0)
@@ -2077,6 +2398,12 @@ def trade_legality(canonical: dict[str, Any], proposal: TradeProposal, config: d
                     issues.append(f"Pick {asset.get('id')} is not owned by {team_by_id(canonical, team_id)['abbrev']}.")
                 elif pick.get("_obligation_locked"):
                     issues.append(f"{pick_label(canonical, pick)} is locked as protection collateral and cannot be traded.")
+            elif asset["kind"] == "pick_swap":
+                swap = pick_swap_by_id(canonical, asset["id"])
+                holder = (swap or {}).get("current_rights_holder_team_id") or (swap or {}).get("original_rights_holder_team_id") or (swap or {}).get("receiver_team_id")
+                grantor = (swap or {}).get("sender_team_id") or (swap or {}).get("counterparty_team_id")
+                if not swap or (holder != team_id and not (swap.get("pending_asset_grant") and grantor == team_id)):
+                    issues.append(f"Pick swap {asset.get('id')} is not held by {team_by_id(canonical, team_id)['abbrev']}.")
     duplicate_assets = duplicate_trade_assets([*proposal.from_assets, *proposal.to_assets])
     if duplicate_assets:
         issues.append(f"Duplicate assets in proposal: {', '.join(sorted(duplicate_assets))}.")
@@ -2123,6 +2450,22 @@ def normalize_assets(canonical: dict[str, Any], team: dict[str, Any], assets: li
                     "original_team_id": pick.get("original_team_id"),
                     "current_owner_team_id": pick.get("current_owner_team_id"),
                     "protection_summary": pick.get("protection_summary") or pick.get("protections"),
+                }
+            )
+        elif kind == "pick_swap":
+            swap = pick_swap_by_id(canonical, str(value))
+            if not swap:
+                raise ValueError(f"No pick swap found with id {value!r}")
+            normalized.append(
+                {
+                    "kind": "pick_swap",
+                    "id": swap["id"],
+                    "label": pick_swap_display_label(canonical, swap),
+                    "season": swap.get("season"),
+                    "round": swap.get("round"),
+                    "team_a_pick_id": swap.get("team_a_pick_id") or swap.get("primary_pick_id"),
+                    "team_b_pick_id": swap.get("team_b_pick_id") or swap.get("counterparty_pick_id"),
+                    "current_rights_holder_team_id": swap.get("current_rights_holder_team_id") or swap.get("original_rights_holder_team_id") or swap.get("receiver_team_id"),
                 }
             )
         else:
@@ -2533,6 +2876,8 @@ def package_value_for_team(
         elif asset["kind"] == "pick":
             pick = pick_by_id(canonical, asset["id"])
             total += pick_asset_value(pick, state["phase"])
+        elif asset["kind"] == "pick_swap":
+            total += pick_swap_asset_value(canonical, pick_swap_by_id(canonical, asset["id"]) or asset, state["phase"])
     return total + package_concentration_adjustment(player_adjusted_values)
 
 
@@ -2666,6 +3011,8 @@ def strategic_fit_adjustment(canonical: dict[str, Any], incoming: list[dict[str,
     for asset in incoming:
         if asset["kind"] == "pick" and state["phase"] in {"rebuilding", "developing"}:
             adjustment += float(config.get("decision", {}).get("rebuilder_pick_bonus", 7.0))
+        if asset["kind"] == "pick_swap" and state["phase"] in {"rebuilding", "developing"}:
+            adjustment += float(config.get("decision", {}).get("rebuilder_pick_bonus", 7.0)) * 0.38
         if asset["kind"] == "player":
             valuation = next(item for item in canonical["player_asset_valuations"] if item["player_id"] == asset["id"])
             if state["phase"] in {"contending", "contending_with_future_upside"} and valuation["playoff_value"] >= 64:
@@ -2673,6 +3020,8 @@ def strategic_fit_adjustment(canonical: dict[str, Any], incoming: list[dict[str,
     for asset in outgoing:
         if asset["kind"] == "pick" and state["phase"] in {"contending", "contending_with_future_upside"}:
             adjustment -= 1.5
+        if asset["kind"] == "pick_swap" and state["phase"] in {"contending", "contending_with_future_upside"}:
+            adjustment -= 0.6
     return adjustment
 
 
@@ -2838,14 +3187,14 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     if round_no == 1:
         if slot_value:
             if slot_value <= 5:
-                value = 98.0 - slot_value * 2.3
+                value = 100.5 - slot_value * 1.9
             elif slot_value <= 10:
-                value = 86.5 - (slot_value - 5) * 1.9
+                value = 91.0 - (slot_value - 5) * 2.2
             elif slot_value <= 20:
-                value = 77.0 - (slot_value - 10) * 2.5
+                value = 80.0 - (slot_value - 10) * 2.7
             else:
-                value = 52.0 - (slot_value - 20) * 2.1
-            value = clamp(value, 28, 96)
+                value = 53.0 - (slot_value - 20) * 2.15
+            value = clamp(value, 28, 99)
         elif pick.get("status") == "verified_2026_draft_board" and pick.get("id", "").split("-"):
             try:
                 pick_no = int(pick["id"].split("-")[2])

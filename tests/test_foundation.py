@@ -87,6 +87,8 @@ from nba_gm_data.save import (
     queue_aggregated_press_event,
     generate_league_awards,
     resolve_pick_obligations_for_year,
+    repair_protected_pick_fallback,
+    starting_lineup_slots,
     team_rotation_projection,
     team_cap_summary,
     player_attribute_summary,
@@ -152,7 +154,7 @@ from nba_gm_data.sim import (
 )
 from nba_gm_data.storage import write_outputs
 from nba_gm_data.staff import fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, simulate_ai_staff_changes, staff_budget_for_team, staff_budget_snapshot, staff_grade, staff_market_report, staff_team_report
-from nba_gm_data.transactions import apply_trade_to_save, canonical_with_pending_pick_terms, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, gm_report, market_trade_target_value, package_value_for_team, pick_asset_value, pick_label, pick_season_start, player_health_risk, simulate_ai_trades, stepien_guardrail_issues, trade_block_report, trade_result_with_pick_terms, tradeable_picks_for_team, with_transaction_context
+from nba_gm_data.transactions import apply_trade_to_save, canonical_with_pending_pick_terms, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, gm_report, market_trade_target_value, package_value_for_team, pick_asset_value, pick_label, pick_season_start, pick_swap_asset_value, pick_swap_display_label, player_health_risk, simulate_ai_trades, stepien_guardrail_issues, trade_block_report, trade_result_with_pick_terms, tradeable_pick_swaps_for_team, tradeable_picks_for_team, validate_pick_obligation_term, with_transaction_context
 from nba_gm_data.traits import LEAGUE_TRAIT_RATING_COLUMNS, LEAGUE_TRAIT_RATINGS_SOURCE_ID, load_league_trait_ratings, match_league_trait_ratings
 
 
@@ -964,6 +966,93 @@ class DataFoundationTests(unittest.TestCase):
             self.assertEqual(obligation["status"], "resolved_reacquired_by_sender")
             self.assertNotIn(fallback["id"], reacquired["locked_pick_assets"])
 
+    def test_pick_obligation_validator_repairs_self_fallback_and_pick_swaps_resolve(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "swap_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=421)
+            active = with_transaction_context(canonical_with_save(self.plain, save))
+            gsw_firsts = sorted(
+                [pick for pick in tradeable_picks_for_team(active, "team_gsw") if int(pick.get("round") or 0) == 1],
+                key=lambda pick: (pick_season_start(pick) or 0, pick["id"]),
+            )
+            gsw_pick = next(
+                pick for pick in gsw_firsts
+                if any(other["id"] != pick["id"] and (pick_season_start(other) or 0) >= (pick_season_start(pick) or 0) for other in gsw_firsts)
+            )
+            self_fallback = {
+                "id": "bad_self_fallback",
+                "type": "protected_pick",
+                "primary_pick_id": gsw_pick["id"],
+                "sender_team_id": "team_gsw",
+                "receiver_team_id": "team_bos",
+                "season": gsw_pick["season"],
+                "primary_round": 1,
+                "protected_range": {"from": 1, "through": 9},
+                "fallback_pick_ids": [gsw_pick["id"]],
+            }
+            self.assertFalse(validate_pick_obligation_term(active, None, self_fallback))
+            repaired_obligation = repair_protected_pick_fallback(self_fallback, active, set())
+            self.assertIsNotNone(repaired_obligation)
+            self.assertNotEqual(repaired_obligation.get("fallback_pick_ids", [None])[0], gsw_pick["id"])
+            self.assertTrue(validate_pick_obligation_term(active, None, repaired_obligation))
+
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "swap_lifecycle.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=423)
+            active = with_transaction_context(canonical_with_save(self.plain, save))
+            gsw_pick = next(pick for pick in tradeable_picks_for_team(active, "team_gsw") if int(pick.get("round") or 0) == 1 and str(pick.get("season")) == "2028")
+            bos_pick = next(pick for pick in tradeable_picks_for_team(active, "team_bos") if int(pick.get("round") or 0) == 1 and str(pick.get("season")) == str(gsw_pick.get("season")))
+            swap = {
+                "id": "test_swap_right",
+                "type": "pick_swap",
+                "season": gsw_pick["season"],
+                "round": 1,
+                "team_a_pick_id": gsw_pick["id"],
+                "team_b_pick_id": bos_pick["id"],
+                "original_rights_holder_team_id": "team_bos",
+                "current_rights_holder_team_id": "team_bos",
+                "counterparty_team_id": "team_gsw",
+                "status": "active",
+            }
+            self.assertTrue(validate_pick_obligation_term(active, None, swap))
+            save["pick_obligations"].append(swap)
+            write_save(save_path, save)
+            active = with_transaction_context(canonical_with_save(self.plain, load_save(save_path)))
+            self.assertIn("swap right", pick_swap_display_label(active, swap))
+            self.assertGreater(pick_swap_asset_value(active, swap), 0)
+            self.assertTrue(any(item["id"] == "test_swap_right" for item in tradeable_pick_swaps_for_team(active, "team_bos")))
+            self.assertIn("Subject to", pick_label(active, next(pick for pick in active["draft_picks"] if pick["id"] == gsw_pick["id"])))
+            saved = load_save(save_path)
+            saved["pending_trade_proposals"] = [
+                {
+                    "proposal": {
+                        "id": "swap_retrade",
+                        "from_team_id": "team_bos",
+                        "to_team_id": "team_nyk",
+                        "from_assets": [{"kind": "pick_swap", "id": "test_swap_right", "label": pick_swap_display_label(active, swap)}],
+                        "to_assets": [],
+                    },
+                    "legality": {"status": "legal"},
+                    "accepted_by_all": True,
+                    "evaluations": [],
+                }
+            ]
+            write_save(save_path, saved)
+            self.assertEqual(apply_trade_to_save(save_path, "swap_retrade")["status"], "applied")
+            retraded = load_save(save_path)
+            obligation = next(item for item in retraded["pick_obligations"] if item["id"] == "test_swap_right")
+            self.assertEqual(obligation["current_rights_holder_team_id"], "team_nyk")
+            order = {
+                "draft_order": [
+                    {"id": gsw_pick["id"], "round": 1, "overall_pick": 4, "current_owner_team_id": "team_gsw", "original_team_id": "team_gsw"},
+                    {"id": bos_pick["id"], "round": 1, "overall_pick": 18, "current_owner_team_id": "team_bos", "original_team_id": "team_bos"},
+                ]
+            }
+            resolve_pick_obligations_for_year(retraded, order, str(gsw_pick["season"]))
+            self.assertEqual(retraded["draft_pick_overrides"][gsw_pick["id"]], "team_nyk")
+            self.assertEqual(retraded["draft_pick_overrides"][bos_pick["id"]], "team_gsw")
+            self.assertEqual(next(item for item in retraded["pick_obligations"] if item["id"] == "test_swap_right")["status"], "resolved_swap_exercised")
+
     def test_league_events_and_playoff_leaders_views_are_save_backed(self):
         with tempfile.TemporaryDirectory() as tmp:
             save_path = Path(tmp) / "events_save.json"
@@ -1001,6 +1090,65 @@ class DataFoundationTests(unittest.TestCase):
             leaders = playoff_leaders(self.plain, save_path, stat="points", limit=3)
             self.assertEqual(leaders["leaders"][0]["player"]["name"], "Stephen Curry")
             self.assertEqual(leaders["finals_mvp"]["player_name"], "Stephen Curry")
+
+    def test_dashboard_starting_five_and_playoff_stat_context_are_save_backed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "dashboard_playoff_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=424)
+            curry = next(player for player in self.plain["players"] if player["normalized_name"] == "stephen curry")
+            save["state"] = {"current_date": "2026-05-10", "phase": "playoffs", "legal_actions": ["advance"]}
+            save["player_season_stats"][curry["id"]] = {"games": 10, "minutes": 320, "points": 200, "rebounds": 40, "assists": 80}
+            save["playoff_player_stats"][curry["id"]] = {
+                "player_id": curry["id"],
+                "player_name": curry["name"],
+                "team_id": curry["team_id"],
+                "team_abbrev": "GSW",
+                "games": 2,
+                "minutes": 72,
+                "points": 60,
+                "rebounds": 12,
+                "assists": 14,
+            }
+            save["starting_lineups"] = {"team_gsw": {"source": "user", "slots": {"1": "missing_player", "2": curry["id"]}}}
+            write_save(save_path, save)
+            payload = team_dashboard(ROOT, self.plain, save_path, "GSW")
+            self.assertEqual(payload["stats_context"]["label"], "Playoffs")
+            curry_row = next(row for row in payload["rotation"] if row["id"] == curry["id"])
+            self.assertEqual(curry_row["points_per_game"], 30.0)
+            self.assertTrue(curry_row["is_starting_five"])
+            self.assertFalse(any(row["player_id"] == "missing_player" for row in payload["starting_five"]))
+            saved = load_save(save_path)
+            self.assertNotIn("missing_player", (saved.get("starting_lineups", {}).get("team_gsw", {}).get("slots") or {}).values())
+            saved["state"] = {"current_date": "2026-10-21", "phase": "regular_season", "legal_actions": ["advance"]}
+            write_save(save_path, saved)
+            regular = team_dashboard(ROOT, self.plain, save_path, "GSW")
+            self.assertEqual(regular["stats_context"]["label"], "Regular season")
+
+    def test_league_events_transactions_filters_are_not_major_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "events_transactions.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=425)
+            save["state"]["current_date"] = "2026-02-15"
+            save["league_events"] = [
+                {"id": "t1", "date": "2026-02-10", "kind": "trade", "headline": "Trade happened.", "team_ids": [], "player_ids": [], "importance": 0.3, "details": {}},
+                {"id": "e1", "date": "2026-02-11", "kind": "extension", "headline": "Extension happened.", "team_ids": [], "player_ids": [], "importance": 0.3, "details": {"annual_salary": 10_000_000}},
+                {"id": "h1", "date": "2026-02-12", "kind": "staff_hire", "headline": "Staff hire happened.", "team_ids": [], "player_ids": [], "importance": 0.3, "details": {"staff_grade": 70}},
+                {"id": "f1", "date": "2026-02-13", "kind": "staff_fire", "headline": "Staff fire happened.", "team_ids": [], "player_ids": [], "importance": 0.3, "details": {"staff_grade": 70}},
+                {"id": "p1", "date": "2026-02-14", "kind": "playoff_result", "headline": "Game happened.", "team_ids": [], "player_ids": [], "importance": 0.9, "details": {}},
+                {"id": "old", "date": "2025-12-01", "kind": "trade", "headline": "Old trade happened.", "team_ids": [], "player_ids": [], "importance": 0.3, "details": {}},
+            ]
+            write_save(save_path, save)
+            transactions = league_events_view(self.plain, save_path, kind="transactions", limit=20)
+            headlines = {event["headline"] for event in transactions["events"]}
+            self.assertIn("Trade happened.", headlines)
+            self.assertIn("Extension happened.", headlines)
+            self.assertIn("Staff hire happened.", headlines)
+            self.assertIn("Staff fire happened.", headlines)
+            self.assertNotIn("Game happened.", headlines)
+            trades = league_events_view(self.plain, save_path, kind="trades", limit=20)
+            self.assertEqual({event["kind"] for event in trades["events"]}, {"trade"})
+            recent = league_events_view(self.plain, save_path, kind="transactions", recent_days=30, limit=20)
+            self.assertNotIn("Old trade happened.", {event["headline"] for event in recent["events"]})
 
     def test_league_events_major_filter_uses_strict_business_rules(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1812,6 +1960,34 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(package["mode"], "shop_package")
         self.assertGreater(package["candidate_count"], 0)
         self.assertTrue(all(candidate["legality"]["status"] == "legal" for candidate in package["candidates"]))
+        jrue = find_trade(self.plain, "Jrue Holiday", "POR", limit=6, seed=2)
+        for candidate in jrue["candidates"]:
+            self.assertEqual(candidate["legality"]["status"], "legal")
+            user_eval = next(item for item in candidate["evaluations"] if item["perspective_team_id"] == "team_por")
+            partner_eval = next(item for item in candidate["evaluations"] if item["perspective_team_id"] != "team_por")
+            self.assertGreaterEqual(float(user_eval["net_value"]), -18.0)
+            self.assertTrue(partner_eval["accepted"])
+
+    def test_superstar_trade_value_benchmark_rejects_light_giannis_packages(self):
+        active = with_transaction_context(self.plain)
+        values = {value["player_id"]: value for value in active["player_asset_valuations"]}
+        players = {player["normalized_name"]: player for player in active["players"]}
+        giannis = players["giannis antetokounmpo"]
+        herro = players["tyler herro"]
+        jrue = players["jrue holiday"]
+        self.assertGreater(market_trade_target_value(giannis, values[giannis["id"]]), market_trade_target_value(herro, values[herro["id"]]) + 6)
+        self.assertGreater(market_trade_target_value(giannis, values[giannis["id"]]), market_trade_target_value(jrue, values[jrue["id"]]) + 10)
+        light = evaluate_trade(
+            active,
+            "MIL",
+            "HOU",
+            [{"kind": "player", "value": "Giannis Antetokounmpo"}, {"kind": "player", "value": "Bobby Portis"}],
+            [{"kind": "player", "value": "Fred VanVleet"}],
+            seed=2,
+        )
+        mil_eval = next(item for item in light["evaluations"] if item["perspective_team_id"] == "team_mil")
+        self.assertFalse(mil_eval["accepted"])
+        self.assertLess(float(mil_eval["net_value"]), -40.0)
 
     def test_trade_evaluation_uses_team_context_and_legality(self):
         legal = evaluate_trade(
@@ -2545,6 +2721,8 @@ class DataFoundationTests(unittest.TestCase):
             scoring_weight({"minutes": 32}, curry.features),
             scoring_weight({"minutes": 32}, draymond.features) * 1.6,
         )
+        self.assertLessEqual(plausible_point_cap({"minutes": 34, "player": players["stephen curry"]}, curry.features), 30)
+        self.assertLessEqual(assist_rate_for_player(players["stephen curry"], curry.features) * 34, 8.5)
         self.assertLess(luka.features["defensive_events"], 55)
         self.assertGreater(luka.features["defensive_weak_link"], 55)
         self.assertLess(clowney.features["usage"], 68)
