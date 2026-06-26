@@ -341,30 +341,7 @@ nba-gm-data team OKC --staff --root .
 - Display-scale player ratings plus a ratings guide, while the engine keeps its internal calibrated values.
 - Optional ASCII highlight loading screens.
 
-## Known Alpha/Beta Caveats
 
-- The game is terminal-only. There is no one-click launcher or graphical UI yet.
-- Some screens are still dense, especially trades, draft, ratings, and free agency.
-- CBA rules are practical approximations, not full NBA legal modeling.
-- AI GMs are much livelier than before, but trade value, draft logic, and roster-building behavior still need more human playtest tuning.
-- Player ratings and stat outputs are now much better, but named-player calibration will remain an ongoing balance pass.
-- Windows should work, but macOS has had more direct testing.
-- Saves are local JSON files. Back up `saves/` before trying risky test branches or big code changes.
-- The loading-screen video source is not stored in normal Git history. Testers should use the release asset zip unless they are rebuilding their own cache.
-
-## What Is Missing Before A Wider Public Release?
-
-For private friend testing, the game is close. For a broader public beta, the biggest missing pieces are:
-
-- A simpler installer or launcher so non-technical users do not need Git, virtual environments, or terminal commands.
-- A short “how to play” guide inside or beside the game, not just setup instructions.
-- More balance passes for star trade value, AI roster logic, draft behavior, extensions, player ratings, and stat distributions.
-- More Windows playtesting.
-- Better save compatibility/migration guarantees as the data model keeps changing quickly.
-- Cleaner error handling when a tester does something unexpected.
-- A small curated test script for playtesters: what to try, what to report, and how to send save files.
-
-My current recommendation: **release privately to friends as an alpha/beta test**, not publicly. Ask testers to expect rough edges, keep save files, and send screenshots or tracebacks.
 
 ## Data Notes
 
@@ -372,15 +349,3 @@ Raw folders such as `Player Stats/`, `NBA Schedule/`, `Pre-Season manifestos/`, 
 
 Research caches live under `data/research/`. Manual overrides live under `data/overrides/`. Canonical exports live under `data/canonical/` when generated.
 
-## GitHub Hygiene
-
-Before pushing publicly, keep the repo private and avoid committing:
-
-- `saves/`
-- virtual environments
-- caches
-- local logs
-- generated SQLite/database files
-- OS/editor metadata
-
-The current target is private friends-and-family testing, then installer/onboarding polish, then broader beta.
