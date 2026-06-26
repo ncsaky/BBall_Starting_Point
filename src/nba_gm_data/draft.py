@@ -773,6 +773,7 @@ def apply_draft_selection_to_save(save_path: str | Path, selection_id: str, date
             onboarding["player_id"] = rookie_player["id"]
             onboarding["roster_status"] = "signed_rookie"
             onboarding["rights_status"] = "signed_rookie_contract"
+            save.setdefault("rotation_baselines", {})[rookie_player["id"]] = float(rookie_player.get("minutes_projection") or 0.0)
         if payload.get("pick_id"):
             save.setdefault("draft_pick_overrides", {})[payload["pick_id"]] = "used_draft_pick"
             draft_state = save.setdefault("draft_state", {})
@@ -1146,8 +1147,16 @@ def rookie_player_record(onboarding: dict[str, Any], prospect: dict[str, Any], t
     overall = int(onboarding.get("overall_pick") or 60)
     ability = float(prospect.get("current_ability") or 45.0)
     potential = float(prospect.get("potential") or 55.0)
-    minutes = clamp(3.5 + max(0.0, ability - 44.0) * 0.32 + max(0, 31 - overall) * 0.2, 2.0, 23.0)
-    priority = "development_priority" if overall <= 14 or potential >= 72 else "rookie_depth"
+    slot_bonus = max(0, 31 - overall) * 0.38 if overall <= 30 else max(0, 45 - overall) * 0.08
+    readiness = max(0.0, ability - 43.0) * 0.48 + max(0.0, potential - 64.0) * 0.08
+    minutes = clamp(4.0 + readiness + slot_bonus, 2.0, 29.0)
+    if overall <= 5:
+        minutes = max(minutes, 22.0)
+    elif overall <= 10:
+        minutes = max(minutes, 17.0)
+    elif overall <= 20:
+        minutes = max(minutes, 11.0)
+    priority = "core_rotation" if overall <= 8 and ability >= 55 else "development_priority" if overall <= 20 or potential >= 72 else "rookie_depth"
     return {
         "id": stable_id("rookie_player", onboarding.get("draft_year"), team.get("id"), onboarding.get("name")),
         "name": onboarding.get("name"),
@@ -1686,7 +1695,36 @@ def prospect_team_fit(canonical: dict[str, Any], team_id: str, prospect: DraftPr
         )
         if young_franchise_center and prospect.get("archetype") in {"rim_protecting_big", "traditional_center", "interior_big"}:
             fit -= 12.0
+    if redundant_small_offense_guard_pick(canonical, team_id, prospect):
+        fit -= 14.0
     return clamp(fit, 1, 99)
+
+
+def redundant_small_offense_guard_pick(canonical: dict[str, Any], team_id: str, prospect: dict[str, Any]) -> bool:
+    position = str(prospect.get("position") or "").upper()
+    archetype = str(prospect.get("archetype") or "")
+    if "PG" not in position and "SG" not in position:
+        return False
+    if archetype not in {"lead_creator", "rim_pressure_guard", "scoring_guard", "movement_shooter"}:
+        return False
+    try:
+        height = float(prospect.get("height_inches") or 78.0)
+    except (TypeError, ValueError):
+        height = 78.0
+    if height > 76.5:
+        return False
+    values = {item.get("player_id"): item for item in canonical.get("player_asset_valuations", [])}
+    for player in canonical.get("players", []):
+        if player.get("team_id") != team_id:
+            continue
+        name = normalize_name(player.get("name"))
+        pos = str(player.get("position") or "").upper()
+        value = float((values.get(player.get("id")) or {}).get("player_value") or 0.0)
+        if name == normalize_name("Luka Doncic"):
+            return True
+        if ("PG" in pos or "SG" in pos) and value >= 84.0 and float(player.get("age") or 30.0) <= 31.0:
+            return True
+    return False
 
 
 def prospect_cap_value(canonical: dict[str, Any], team_id: str, prospect: DraftProspect | dict[str, Any]) -> float:

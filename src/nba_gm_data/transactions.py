@@ -1205,9 +1205,24 @@ def queue_press_event_if_user_involved(save: dict[str, Any], kind: str, headline
 
 
 def trade_headline_from_payload(proposal: dict[str, Any]) -> str:
-    from_assets = ", ".join(asset.get("label") or asset.get("name") or asset.get("id", "") for asset in proposal.get("from_assets", [])) or "assets"
-    to_assets = ", ".join(asset.get("label") or asset.get("name") or asset.get("id", "") for asset in proposal.get("to_assets", [])) or "assets"
+    from_assets = trade_headline_side_label(proposal.get("from_assets", []))
+    to_assets = trade_headline_side_label(proposal.get("to_assets", []))
     return f"Trade completed: {from_assets} for {to_assets}."
+
+
+def trade_headline_side_label(assets: list[dict[str, Any]] | None) -> str:
+    labels = []
+    for asset in assets or []:
+        label = asset.get("label") or asset.get("name") or asset.get("headline_label")
+        if not label and asset.get("kind") == "player":
+            label = asset.get("player_name") or asset.get("id")
+        if not label and asset.get("kind") == "pick":
+            label = asset.get("pick_label") or asset.get("id")
+        if not label and asset.get("kind") == "pick_swap":
+            label = asset.get("swap_label") or asset.get("id")
+        if label:
+            labels.append(str(label))
+    return ", ".join(labels) if labels else "future considerations"
 
 
 def parse_cli_assets(canonical: dict[str, Any], from_team: str, to_team: str, specs: list[str]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -1339,6 +1354,10 @@ def annotate_pick_obligation_context(canonical: dict[str, Any]) -> None:
             locked.add(pick_id)
             by_pick.setdefault(pick_id, []).append({**obligation, "_fallback_lock": True})
     for pick in canonical.get("draft_picks", []):
+        pick.pop("_obligations", None)
+        pick.pop("_protection_value_factor", None)
+        if not pick.get("_unsupported_pick_condition_simplified") and pick.get("id") not in locked:
+            pick.pop("_obligation_locked", None)
         pick_id = pick.get("id")
         if pick_id in locked:
             pick["_obligation_locked"] = True
@@ -1402,13 +1421,23 @@ def pick_swap_display_label(canonical: dict[str, Any], obligation: dict[str, Any
     pick_b = pick_by_id(canonical, obligation.get("team_b_pick_id") or obligation.get("counterparty_pick_id"))
     right_holder = obligation.get("current_rights_holder_team_id") or obligation.get("original_rights_holder_team_id") or obligation.get("receiver_team_id")
     holder = teams.get(right_holder) or team_id_fallback(right_holder)
+    benefit = pick_swap_benefit(obligation)
     if pick_a and pick_b:
         season = pick_a.get("season") or pick_b.get("season") or obligation.get("season") or "----"
         round_no = pick_a.get("round") or pick_b.get("round") or obligation.get("round") or "?"
         a_original = teams.get(pick_a.get("original_team_id")) or "TBD"
         b_original = teams.get(pick_b.get("original_team_id")) or "TBD"
+        if benefit == "worse":
+            return f"{season} R{round_no} swap obligation: {holder} receives less favorable of {a_original}/{b_original}; other team receives better"
         return f"{season} R{round_no} swap right: {holder} may receive better of {a_original}/{b_original}; other team receives less favorable"
     return str(obligation.get("label") or "pick swap right")
+
+
+def pick_swap_benefit(obligation: dict[str, Any]) -> str:
+    benefit = str(obligation.get("benefit") or obligation.get("swap_benefit") or obligation.get("rights_benefit") or "better").lower()
+    if benefit in {"worse", "less", "less_favorable", "lower"}:
+        return "worse"
+    return "better"
 
 
 def pick_swap_context_note(canonical: dict[str, Any], obligation: dict[str, Any]) -> str:
@@ -1430,12 +1459,13 @@ def pick_swap_asset_value(canonical: dict[str, Any], obligation: dict[str, Any],
     active_year = season_start_from_label(str(canonical.get("meta", {}).get("active_season") or "2025-26"))
     distance = max(0, year - active_year)
     uncertainty = clamp(0.68 - distance * 0.08, 0.34, 0.68)
-    base = 2.2 + spread * uncertainty
+    base = 3.8 + spread * uncertainty
     if int(pick_a.get("round") or 0) == 1:
-        base += 2.5
+        base += 4.0
     else:
         base *= 0.62
-    return round(clamp(base, 1.0, 34.0), 2)
+    value = round(clamp(base, 1.0, 42.0), 2)
+    return -value if pick_swap_benefit(obligation) == "worse" else value
 
 
 def pick_swap_by_id(canonical: dict[str, Any], obligation_id: str | None) -> dict[str, Any] | None:
@@ -1460,8 +1490,6 @@ def tradeable_pick_swaps_for_team(canonical: dict[str, Any], team_id: str) -> li
         if holder != team_id:
             continue
         value = pick_swap_asset_value(canonical, obligation, "neutral")
-        if value <= 0:
-            continue
         swaps.append(
             {
                 "kind": "pick_swap",
@@ -1733,7 +1761,7 @@ def buyer_offer_packages(
 def market_trade_target_value(player: dict[str, Any], valuation: dict[str, Any]) -> float:
     raw = float(valuation.get("player_value") or 0.0)
     if goat_exception_player(player):
-        return 99.0
+        return 112.0
     minutes = display_minutes_projection(player)
     ability = maybe_float(player.get("current_ability")) or maybe_float(player.get("overall")) or (38.0 + minutes * 1.15)
     potential = maybe_float(player.get("potential")) or ability
@@ -1760,10 +1788,11 @@ def market_trade_target_value(player: dict[str, Any], valuation: dict[str, Any])
         raw = min(raw, max(elite_prospect_floor, 28.0 + max(0.0, ability - 52.0) * 0.58 + upside * 0.38 + minutes * 0.32))
     if logged_games >= 8 and logged_mpg < 6 and ppg < 4 and raw < 72:
         raw = min(raw, 19.0 + max(0.0, ability - 52.0) * 0.5 + upside * 0.32)
+    cap = market_trade_value_cap(player, valuation, raw)
     if rookie_floor:
-        return round(clamp(max(raw, rookie_floor), 1.0, 99.0), 2)
+        return round(clamp(max(raw, rookie_floor), 1.0, min(cap, 99.0)), 2)
     if raw < 62 or minutes >= 28:
-        return round(clamp(raw, 1.0, 99.0), 2)
+        return round(clamp(raw, 1.0, cap), 2)
     role_scale = clamp((max(4.0, minutes) / 30.0) ** 1.22, 0.36, 1.0)
     overall_proxy = float(ability)
     compressed = raw * role_scale
@@ -1787,12 +1816,30 @@ def market_value_after_star_and_surplus_shape(player: dict[str, Any], valuation:
         if age >= 31.0:
             raw -= min(7.5, (age - 30.0) * 1.05)
     if minutes >= 28.0 and on_court >= 79.0 and playoff >= 80.0:
-        superstar_floor = 92.0 + max(0.0, on_court - 79.0) * 1.05 + max(0.0, playoff - 80.0) * 0.34
+        superstar_floor = 94.0 + max(0.0, on_court - 79.0) * 1.55 + max(0.0, playoff - 80.0) * 0.66
+        if on_court >= 86.0 and playoff >= 84.0:
+            superstar_floor += 7.5 + max(0.0, on_court - 88.0) * 0.55
+        if raw >= 84.0 and playoff >= 82.0:
+            superstar_floor += 8.0 + max(0.0, raw - 85.0) * 0.82
         superstar_floor -= max(0.0, age - 32.0) * 0.16
         raw = max(raw, superstar_floor)
     elif minutes >= 28.0 and on_court >= 76.5 and playoff >= 76.0 and surplus < 18.0:
         raw = max(raw, 84.0 + max(0.0, on_court - 76.5) * 0.68 + max(0.0, playoff - 76.0) * 0.18)
-    return clamp(raw, 1.0, 99.0)
+    return clamp(raw, 1.0, market_trade_value_cap(player, valuation, raw))
+
+
+def market_trade_value_cap(player: dict[str, Any], valuation: dict[str, Any], raw: float | None = None) -> float:
+    on_court = float(valuation.get("on_court_value") or raw or valuation.get("player_value") or 0.0)
+    playoff = float(valuation.get("playoff_value") or 50.0)
+    player_value = float(valuation.get("player_value") or raw or 0.0)
+    minutes = display_minutes_projection(player)
+    if minutes >= 30.0 and on_court >= 86.0 and playoff >= 84.0:
+        return 124.0
+    if minutes >= 28.0 and player_value >= 84.0 and playoff >= 82.0:
+        return 118.0
+    if minutes >= 28.0 and on_court >= 82.0 and playoff >= 80.0:
+        return 112.0
+    return 99.0
 
 
 def deterministic_low_role_value_variation(player: dict[str, Any]) -> float:
@@ -3012,7 +3059,8 @@ def strategic_fit_adjustment(canonical: dict[str, Any], incoming: list[dict[str,
         if asset["kind"] == "pick" and state["phase"] in {"rebuilding", "developing"}:
             adjustment += float(config.get("decision", {}).get("rebuilder_pick_bonus", 7.0))
         if asset["kind"] == "pick_swap" and state["phase"] in {"rebuilding", "developing"}:
-            adjustment += float(config.get("decision", {}).get("rebuilder_pick_bonus", 7.0)) * 0.38
+            swap_value = pick_swap_asset_value(canonical, pick_swap_by_id(canonical, asset.get("id")) or asset, state.get("phase", "balanced"))
+            adjustment += float(config.get("decision", {}).get("rebuilder_pick_bonus", 7.0)) * (0.38 if swap_value >= 0 else -0.22)
         if asset["kind"] == "player":
             valuation = next(item for item in canonical["player_asset_valuations"] if item["player_id"] == asset["id"])
             if state["phase"] in {"contending", "contending_with_future_upside"} and valuation["playoff_value"] >= 64:
@@ -3021,7 +3069,8 @@ def strategic_fit_adjustment(canonical: dict[str, Any], incoming: list[dict[str,
         if asset["kind"] == "pick" and state["phase"] in {"contending", "contending_with_future_upside"}:
             adjustment -= 1.5
         if asset["kind"] == "pick_swap" and state["phase"] in {"contending", "contending_with_future_upside"}:
-            adjustment -= 0.6
+            swap_value = pick_swap_asset_value(canonical, pick_swap_by_id(canonical, asset.get("id")) or asset, state.get("phase", "balanced"))
+            adjustment += -0.6 if swap_value >= 0 else 0.35
     return adjustment
 
 
@@ -3187,14 +3236,14 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     if round_no == 1:
         if slot_value:
             if slot_value <= 5:
-                value = 100.5 - slot_value * 1.9
+                value = 111.0 - slot_value * 2.2
             elif slot_value <= 10:
-                value = 91.0 - (slot_value - 5) * 2.2
+                value = 99.0 - (slot_value - 5) * 2.4
             elif slot_value <= 20:
-                value = 80.0 - (slot_value - 10) * 2.7
+                value = 87.0 - (slot_value - 10) * 3.1
             else:
-                value = 53.0 - (slot_value - 20) * 2.15
-            value = clamp(value, 28, 99)
+                value = 54.0 - (slot_value - 20) * 2.25
+            value = clamp(value, 28, 108)
         elif pick.get("status") == "verified_2026_draft_board" and pick.get("id", "").split("-"):
             try:
                 pick_no = int(pick["id"].split("-")[2])
@@ -3208,7 +3257,7 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
                 value = 77.0 - (pick_no - 10) * 2.5
             else:
                 value = 52.0 - (pick_no - 20) * 2.1
-            value = clamp(value, 28, 96)
+            value = clamp(value, 28, 104)
         else:
             value = 43.0
         value -= max(0, distance - 1) * 1.18
@@ -3228,7 +3277,7 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     distance_noise = deterministic_pick_uncertainty_bonus(pick, distance, round_no)
     value += distance_noise
     value *= float(pick.get("_protection_value_factor") or 1.0)
-    return round(clamp(value, 1, 96), 2)
+    return round(clamp(value, 1, 108 if round_no == 1 else 96), 2)
 
 
 def deterministic_pick_uncertainty_bonus(pick: dict[str, Any], distance: int, round_no: int) -> float:

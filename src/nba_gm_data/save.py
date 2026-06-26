@@ -6,6 +6,7 @@ import random
 import re
 from copy import deepcopy
 from datetime import date, timedelta
+from itertools import permutations
 from pathlib import Path
 from typing import Any
 
@@ -250,26 +251,19 @@ def startup_gameplay_pick_obligations(canonical: dict[str, Any] | None) -> list[
         top_n = protected_pick_top_n_from_text(clean_pick_protection_summary(pick))
         if not top_n:
             continue
-        fallback = next(
-            (
-                candidate
-                for candidate in sorted(
-                    [
-                        item
-                        for item in picks
-                        if int(item.get("round") or 0) == int(pick.get("round") or 0)
-                        and item.get("original_team_id") == sender
-                        and item.get("current_owner_team_id") == sender
-                        and item.get("id") != pick.get("id")
-                        and str(item.get("season") or "") >= str(pick.get("season") or "")
-                    ],
-                    key=lambda item: (item.get("id") in used_fallback_ids, str(item.get("season") or ""), str(item.get("id") or "")),
-                )
-                if candidate.get("id")
-            ),
-            None,
-        )
+        fallback = protected_pick_fallback_candidate(canonical, pick, sender, used_fallback_ids)
         if not fallback:
+            fallback = create_gameplay_fallback_pick(canonical, pick, sender, used_fallback_ids)
+            picks = list(canonical.get("draft_picks", []))
+        if not fallback:
+            canonical.setdefault("pick_obligation_audit", []).append(
+                {
+                    "id": stable_id("pick_obligation_audit", pick.get("id"), "missing_fallback"),
+                    "primary_pick_id": pick.get("id"),
+                    "status": "startup_protection_skipped_missing_fallback",
+                    "notes": "No valid same-round same-or-later fallback could be selected or created.",
+                }
+            )
             continue
         used_fallback_ids.add(fallback["id"])
         obligations.append(
@@ -367,6 +361,22 @@ def merge_startup_pick_obligations(save: dict[str, Any], canonical: dict[str, An
             obligation = {**obligation, "receiver_team_id": current_owner}
         if primary_id in existing_primary_ids or obligation.get("id") in existing_ids:
             continue
+        errors = pick_obligation_validation_errors(canonical or {}, None, obligation)
+        if errors:
+            repaired = repair_protected_pick_fallback(obligation, canonical or {}, set())
+            obligation = repaired or obligation
+            errors = pick_obligation_validation_errors(canonical or {}, None, obligation)
+        if errors:
+            save.setdefault("pick_obligation_audit", []).append(
+                {
+                    "id": stable_id("pick_obligation_audit", obligation.get("id"), "startup_invalid"),
+                    "obligation_id": obligation.get("id"),
+                    "primary_pick_id": primary_id,
+                    "status": "startup_protection_skipped_invalid",
+                    "errors": errors,
+                }
+            )
+            continue
         obligations.append(obligation)
         existing_primary_ids.add(primary_id)
         existing_ids.add(obligation.get("id"))
@@ -383,14 +393,36 @@ def repair_protected_pick_fallback(obligation: dict[str, Any], canonical: dict[s
     primary_id = obligation.get("primary_pick_id")
     if not primary_id:
         return None
-    picks = {pick.get("id"): pick for pick in canonical.get("draft_picks", []) if pick.get("id")}
-    primary = picks.get(primary_id)
+    primary = next((pick for pick in canonical.get("draft_picks", []) if pick.get("id") == primary_id), None)
     if not primary:
         return None
     sender = obligation.get("sender_team_id") or primary.get("original_team_id")
-    primary_round = int(primary.get("round") or 0)
-    primary_year = int(str(primary.get("season") or "0").split("-")[0] or 0)
     used = set(used_fallback_ids or set()) - set(obligation.get("fallback_pick_ids") or [])
+    fallback = protected_pick_fallback_candidate(canonical, primary, sender, used)
+    if not fallback:
+        fallback = create_gameplay_fallback_pick(canonical, primary, sender, used)
+    if not fallback:
+        return None
+    repaired = {**obligation, "fallback_pick_ids": [fallback["id"]]}
+    repaired["id"] = stable_id("pick_obligation", repaired.get("type"), repaired.get("primary_pick_id"), repaired.get("receiver_team_id"), fallback["id"])
+    repaired["notes"] = f"{repaired.get('notes', '')} Invalid fallback repaired deterministically to {fallback['id']}.".strip()
+    if used_fallback_ids is not None:
+        used_fallback_ids.add(fallback["id"])
+    return repaired
+
+
+def protected_pick_fallback_candidate(
+    canonical: dict[str, Any],
+    primary: dict[str, Any],
+    sender_team_id: str | None,
+    used_fallback_ids: set[str] | None = None,
+) -> dict[str, Any] | None:
+    if not primary or not sender_team_id:
+        return None
+    primary_id = primary.get("id")
+    primary_round = int(primary.get("round") or 0)
+    primary_year = pick_season_start_local(primary)
+    used = set(used_fallback_ids or set())
     candidates = sorted(
         [
             pick
@@ -399,21 +431,58 @@ def repair_protected_pick_fallback(obligation: dict[str, Any], canonical: dict[s
             and pick.get("id") != primary_id
             and pick.get("id") not in used
             and int(pick.get("round") or 0) == primary_round
-            and pick.get("original_team_id") == sender
-            and pick.get("current_owner_team_id") == sender
-            and (int(str(pick.get("season") or "0").split("-")[0] or 0) >= primary_year)
+            and pick.get("original_team_id") == sender_team_id
+            and pick.get("current_owner_team_id") == sender_team_id
+            and pick_season_start_local(pick) >= primary_year
+            and not pick.get("_obligation_locked")
         ],
-        key=lambda pick: (str(pick.get("season") or ""), str(pick.get("id") or "")),
+        key=lambda pick: (pick_season_start_local(pick), str(pick.get("id") or "")),
     )
-    if not candidates:
+    return candidates[0] if candidates else None
+
+
+def create_gameplay_fallback_pick(
+    canonical: dict[str, Any],
+    primary: dict[str, Any],
+    sender_team_id: str | None,
+    used_fallback_ids: set[str] | None = None,
+) -> dict[str, Any] | None:
+    if not canonical or not primary or not sender_team_id:
         return None
-    fallback = candidates[0]
-    repaired = {**obligation, "fallback_pick_ids": [fallback["id"]]}
-    repaired["id"] = stable_id("pick_obligation", repaired.get("type"), repaired.get("primary_pick_id"), repaired.get("receiver_team_id"), fallback["id"])
-    repaired["notes"] = f"{repaired.get('notes', '')} Invalid fallback repaired deterministically to {fallback['id']}.".strip()
-    if used_fallback_ids is not None:
-        used_fallback_ids.add(fallback["id"])
-    return repaired
+    primary_round = int(primary.get("round") or 0)
+    primary_year = pick_season_start_local(primary)
+    if primary_round not in {1, 2} or primary_year <= 0:
+        return None
+    teams = {team.get("id"): team.get("abbrev") for team in canonical.get("teams", [])}
+    abbrev = str(teams.get(sender_team_id) or sender_team_id.replace("team_", "")).lower()
+    existing_ids = {pick.get("id") for pick in canonical.get("draft_picks", [])}
+    used = set(used_fallback_ids or set())
+    for offset in range(1, 9):
+        year = primary_year + offset
+        pick_id = f"pick_gameplay-fallback-{abbrev}-{year}-{primary_round}-{stable_id(primary.get('id'), sender_team_id, year)[-8:]}"
+        if pick_id in existing_ids or pick_id in used:
+            continue
+        fallback = {
+            "id": pick_id,
+            "season": str(year),
+            "round": primary_round,
+            "original_team_id": sender_team_id,
+            "current_owner_team_id": sender_team_id,
+            "status": "gameplay_fallback_pick",
+            "confidence": 0.38,
+            "source_ids": ["src_gameplay_startup_pick_obligations_v1"],
+            "notes": "Deterministic gameplay fallback created so protected-pick obligations never point to the primary pick.",
+        }
+        canonical.setdefault("draft_picks", []).append(fallback)
+        return fallback
+    return None
+
+
+def pick_season_start_local(pick: dict[str, Any]) -> int:
+    try:
+        return int(str(pick.get("season") or "0").split("-")[0])
+    except (TypeError, ValueError):
+        return 0
 
 
 def seed_startup_free_agents(canonical: dict[str, Any], save: dict[str, Any], seed: int, target_count: int = 30) -> None:
@@ -493,6 +562,34 @@ def seed_startup_free_agents(canonical: dict[str, Any], save: dict[str, Any], se
     save["startup_free_agents"] = sorted(dict.fromkeys(save.get("free_agent_player_ids", [])[:target_count]))
 
 
+def save_season_start_year(save: dict[str, Any]) -> int:
+    season = str((save.get("meta") or {}).get("season") or CANONICAL_SEASON)
+    try:
+        return int(season.split("-")[0])
+    except (TypeError, ValueError):
+        return season_start_year(CANONICAL_SEASON)
+
+
+def recent_rookie_protected_player_ids(save: dict[str, Any]) -> set[str]:
+    current_start = save_season_start_year(save)
+    protected: set[str] = set()
+    for player in save.get("generated_players", []):
+        try:
+            draft_year = int(player.get("draft_year") or 0)
+        except (TypeError, ValueError):
+            draft_year = 0
+        if draft_year and draft_year >= current_start - 1:
+            protected.add(player.get("id"))
+    for rookie in save.get("incoming_rookies", []):
+        try:
+            draft_year = int(rookie.get("draft_year") or rookie.get("season") or 0)
+        except (TypeError, ValueError):
+            draft_year = 0
+        if draft_year and draft_year >= current_start - 1:
+            protected.add(rookie.get("player_id") or rookie.get("id"))
+    return {player_id for player_id in protected if player_id}
+
+
 def refresh_roster_cutdowns(canonical: dict[str, Any] | None, save: dict[str, Any]) -> None:
     if canonical is None or not is_league_save(save):
         save.setdefault("pending_roster_cutdowns", [])
@@ -500,6 +597,7 @@ def refresh_roster_cutdowns(canonical: dict[str, Any] | None, save: dict[str, An
     active = active_players_for_roster_checks(canonical, save)
     user_team_id = save.get("meta", {}).get("user_team_id")
     date_value = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+    protected_rookies = recent_rookie_protected_player_ids(save)
     pending: list[dict[str, Any]] = []
     for team in canonical.get("teams", []):
         players = sorted(
@@ -510,8 +608,11 @@ def refresh_roster_cutdowns(canonical: dict[str, Any] | None, save: dict[str, An
         if len(players) <= target_count:
             continue
         overflow = len(players) - target_count
+        cuttable = [player for player in players if player.get("id") not in protected_rookies]
+        if not cuttable:
+            continue
         if team.get("id") != user_team_id:
-            for player in players[:overflow]:
+            for player in cuttable[:overflow]:
                 save.setdefault("roster_overrides", {})[player["id"]] = None
                 add_news(
                     save,
@@ -527,7 +628,7 @@ def refresh_roster_cutdowns(canonical: dict[str, Any] | None, save: dict[str, An
                 "team_abbrev": team.get("abbrev"),
                 "current_count": len(players),
                 "target_count": target_count,
-                "cut_required": overflow,
+                "cut_required": min(overflow, len(cuttable)),
                 "status": "mandatory_before_regular_season",
                 "date": date_value,
                 "notes": "Roster overflow is allowed during transactions, but the user must cut to the regular-season limit before advancing into games.",
@@ -1440,7 +1541,7 @@ def playoff_leaders(canonical: dict[str, Any] | Any, save_path: str | Path, stat
 
 STARTING_FIVE_SLOT_FITS = {
     "1": {"PG": 12.0, "SG": 6.0},
-    "2": {"SG": 12.0, "PG": 5.0, "SF": 4.0},
+    "2": {"SG": 12.0, "PG": 9.5, "SF": 4.0},
     "3": {"SF": 12.0, "SG": 5.0, "PF": 4.0},
     "4": {"PF": 12.0, "SF": 5.0, "C": 4.0},
     "5": {"C": 12.0, "PF": 5.0},
@@ -1453,56 +1554,141 @@ def player_position_tokens(player: dict[str, Any]) -> list[str]:
 
 
 def starting_slot_score(player: dict[str, Any], slot: str, minutes: float, attrs: dict[str, float]) -> float:
-    fits = STARTING_FIVE_SLOT_FITS.get(str(slot), {})
-    fit = max([fits.get(token, 0.0) for token in player_position_tokens(player)] or [0.0])
-    return minutes * 1.25 + float(attrs.get("overall") or 50.0) * 0.32 + fit
+    slot = str(slot)
+    height = player_height_inches(player)
+    tokens = player_position_tokens(player)
+    fits = STARTING_FIVE_SLOT_FITS.get(slot, {})
+    position_fit = max([fits.get(token, 0.0) for token in tokens] or [0.0])
+    overall = float(attrs.get("overall") or 50.0)
+    creation = float(attrs.get("creation") or attrs.get("create") or 50.0)
+    passing = float(attrs.get("passing") or 50.0)
+    spacing = float(attrs.get("spacing") or attrs.get("shooting") or 50.0)
+    defense = float(attrs.get("defense") or 50.0)
+    rebound = float(attrs.get("rebounding") or attrs.get("rebound") or 50.0)
+    rim = float(attrs.get("rim_protection") or attrs.get("rim_deterrence") or 50.0)
+    if starting_slot_hard_violation(slot, height, tokens):
+        return -10_000.0
+    score = minutes * 1.15 + overall * 0.34 + position_fit
+    if slot == "1":
+        score += creation * 0.18 + passing * 0.16 - max(0.0, height - 81.0) * 2.6
+    elif slot == "2":
+        score += spacing * 0.16 + creation * 0.10 + defense * 0.08
+        score -= max(0.0, height - 82.0) * 1.2
+    elif slot == "3":
+        score += spacing * 0.11 + defense * 0.12 + max(0.0, min(height, 82.0) - 76.0) * 1.3
+        score -= max(0.0, 75.5 - height) * 4.0
+    elif slot == "4":
+        score += rebound * 0.12 + rim * 0.08 + spacing * 0.08 + max(0.0, height - 79.0) * 2.0
+        score -= max(0.0, 78.5 - height) * 8.0
+    else:
+        score += rebound * 0.18 + rim * 0.18 + max(0.0, height - 80.0) * 2.8
+        score -= spacing * 0.03
+        score -= max(0.0, 80.0 - height) * 9.0
+    if height >= 84.0 and slot in {"4", "5"}:
+        score += 12.0
+    if height >= 84.0 and slot in {"1", "2", "3"} and "SF" not in tokens:
+        score -= 35.0
+    return score
+
+
+def player_height_inches(player: dict[str, Any]) -> float:
+    try:
+        return float(player.get("height_inches") or player.get("height") or 78.0)
+    except (TypeError, ValueError):
+        return 78.0
+
+
+def starting_slot_hard_violation(slot: str, height: float, tokens: list[str]) -> bool:
+    if slot in {"4", "5"} and height < 76.5 and not any(token in {"PF", "C"} for token in tokens):
+        return True
+    if slot == "5" and height < 78.0 and "C" not in tokens:
+        return True
+    if slot in {"1", "2", "3"} and height >= 84.0 and "PG" not in tokens and "SG" not in tokens and "SF" not in tokens:
+        return True
+    if slot in {"1", "2"} and "C" in tokens and "PF" not in tokens and height >= 82.0:
+        return True
+    return False
 
 
 def auto_starting_five(canonical: dict[str, Any], save: dict[str, Any], team_id: str) -> dict[str, str]:
     projection = team_rotation_projection(canonical, save, team_id, integer=False)
-    roster = [player for player in canonical.get("players", []) if player.get("team_id") == team_id]
-    chosen: dict[str, str] = {}
-    used: set[str] = set()
-    for slot in ["1", "2", "3", "4", "5"]:
-        candidates = []
-        for player in roster:
-            if player.get("id") in used:
-                continue
-            minutes = float(projection.get(player.get("id"), display_minutes_projection(player)))
-            attrs = player_attribute_summary(canonical, player.get("id"))
-            candidates.append((starting_slot_score(player, slot, minutes, attrs), minutes, player.get("name") or "", player))
-        if not candidates:
-            continue
-        _, _, _, selected = max(candidates, key=lambda item: item[:3])
-        chosen[slot] = selected["id"]
-        used.add(selected["id"])
-    return chosen
+    unavailable_ids = unavailable_player_ids_for_starting_five(save)
+    roster = [
+        player for player in canonical.get("players", [])
+        if player.get("team_id") == team_id and player.get("id") not in unavailable_ids
+    ]
+    if not roster:
+        return {}
+    candidate_rows = []
+    for player in roster:
+        player_id = player.get("id")
+        minutes = float(projection.get(player_id, display_minutes_projection(player)))
+        attrs = player_attribute_summary(canonical, player_id)
+        base = minutes * 1.3 + float(attrs.get("overall") or 50.0) * 0.5
+        candidate_rows.append((base, minutes, player.get("name") or "", player, attrs))
+    candidate_rows = sorted(candidate_rows, key=lambda item: (item[0], item[1], item[2]), reverse=True)[:9]
+    slots = ["1", "2", "3", "4", "5"][: min(5, len(candidate_rows))]
+    best_score = -1_000_000.0
+    best_assignment: tuple[tuple[float, float, str, dict[str, Any], dict[str, float]], ...] | None = None
+    for assignment in permutations(candidate_rows, len(slots)):
+        total = 0.0
+        for slot, row in zip(slots, assignment, strict=False):
+            _, minutes, _, player, attrs = row
+            total += starting_slot_score(player, slot, minutes, attrs)
+        if total > best_score:
+            best_score = total
+            best_assignment = assignment
+    if not best_assignment:
+        return {}
+    return {
+        slot: row[3]["id"]
+        for slot, row in zip(slots, best_assignment, strict=False)
+        if row[3].get("id")
+    }
+
+
+def unavailable_player_ids_for_starting_five(save: dict[str, Any]) -> set[str]:
+    return {
+        state.get("player_id")
+        for state in save.get("health_states", [])
+        if state.get("player_id") and player_unavailable_for_rotation(state)
+    }
 
 
 def starting_lineup_slots(canonical: dict[str, Any], save: dict[str, Any], team_id: str, persist: bool = True) -> dict[str, str]:
     save.setdefault("starting_lineups", {})
     roster_ids = {player.get("id") for player in canonical.get("players", []) if player.get("team_id") == team_id}
+    unavailable_ids = unavailable_player_ids_for_starting_five(save)
+    available_roster_ids = roster_ids - unavailable_ids
     stored = save["starting_lineups"].get(team_id) or {}
     raw_slots = stored.get("slots") if isinstance(stored, dict) else {}
     raw_slots = raw_slots if isinstance(raw_slots, dict) else {}
+    cleaned_raw_slots: dict[str, str] = {}
+    cleaned_used: set[str] = set()
+    for slot in ["1", "2", "3", "4", "5"]:
+        player_id = raw_slots.get(slot) or raw_slots.get(int(slot))
+        if player_id in roster_ids and player_id not in cleaned_used:
+            cleaned_raw_slots[slot] = player_id
+            cleaned_used.add(player_id)
     slots: dict[str, str] = {}
     used: set[str] = set()
     for slot in ["1", "2", "3", "4", "5"]:
-        player_id = raw_slots.get(slot) or raw_slots.get(int(slot))
-        if player_id in roster_ids and player_id not in used:
+        player_id = cleaned_raw_slots.get(slot)
+        if player_id in available_roster_ids and player_id not in used:
             slots[slot] = player_id
             used.add(player_id)
     auto = auto_starting_five(canonical, save, team_id)
     for slot in ["1", "2", "3", "4", "5"]:
         player_id = auto.get(slot)
-        if slot not in slots and player_id in roster_ids and player_id not in used:
+        if slot not in slots and player_id in available_roster_ids and player_id not in used:
             slots[slot] = player_id
             used.add(player_id)
     if persist:
         existing = save["starting_lineups"].get(team_id)
         source = (existing or {}).get("source", "auto") if isinstance(existing, dict) else "auto"
-        if not existing or (isinstance(existing, dict) and existing.get("slots") != slots):
-            save["starting_lineups"][team_id] = {"slots": slots, "source": source}
+        stored_slots = cleaned_raw_slots if source == "user" else slots
+        if not existing or (isinstance(existing, dict) and existing.get("slots") != stored_slots):
+            save["starting_lineups"][team_id] = {"slots": stored_slots, "source": source}
     return slots
 
 
@@ -2105,6 +2291,8 @@ def resolve_pick_obligations_for_year(save: dict[str, Any], order: dict[str, Any
                     details={"obligation_id": obligation.get("id"), "primary_pick_id": pick_id},
                 )
         elif obligation.get("type") == "pick_swap":
+            from .transactions import pick_swap_benefit
+
             pick_a_id = obligation.get("team_a_pick_id") or obligation.get("primary_pick_id")
             pick_b_id = obligation.get("team_b_pick_id") or obligation.get("counterparty_pick_id")
             row_a = by_pick.get(pick_a_id)
@@ -2126,40 +2314,57 @@ def resolve_pick_obligations_for_year(save: dict[str, Any], order: dict[str, Any
             else:
                 better_id, better_row, better_owner = pick_b_id, row_b, owner_b
                 worse_id, worse_row, worse_owner = pick_a_id, row_a, owner_a
-            if better_owner == rights_holder:
-                obligation["status"] = "resolved_swap_not_exercised"
+            benefit = pick_swap_benefit(obligation)
+            target_id, target_row, target_owner = (better_id, better_row, better_owner) if benefit == "better" else (worse_id, worse_row, worse_owner)
+            other_id, other_row, other_owner = (worse_id, worse_row, worse_owner) if benefit == "better" else (better_id, better_row, better_owner)
+            if target_owner == rights_holder:
+                obligation["status"] = "resolved_swap_not_exercised" if benefit == "better" else "resolved_less_favorable_already_held"
                 obligation["resolved_date"] = save.get("state", {}).get("current_date")
                 obligation["resolved_better_pick_id"] = better_id
                 obligation["resolved_worse_pick_id"] = worse_id
                 add_league_event(
                     save,
                     "pick_swap",
-                    f"{team_id_to_abbrev(rights_holder)} keeps the better pick; swap right is not exercised.",
+                    (
+                        f"{team_id_to_abbrev(rights_holder)} keeps the better pick; swap right is not exercised."
+                        if benefit == "better"
+                        else f"{team_id_to_abbrev(rights_holder)} already holds the less favorable pick from the swap obligation."
+                    ),
                     date_value=save.get("state", {}).get("current_date"),
                     team_ids=sorted({rights_holder, owner_a, owner_b} - {None}),
                     importance=0.42,
-                    details={"obligation_id": obligation.get("id"), "better_pick_id": better_id, "worse_pick_id": worse_id, "exercised": False},
+                    details={
+                        "obligation_id": obligation.get("id"),
+                        "better_pick_id": better_id,
+                        "worse_pick_id": worse_id,
+                        "benefit": benefit,
+                        "exercised": False,
+                    },
                 )
                 continue
-            displaced_owner = better_owner or obligation.get("counterparty_team_id") or worse_owner
+            displaced_owner = target_owner or obligation.get("counterparty_team_id") or other_owner
             if rights_holder:
-                save.setdefault("draft_pick_overrides", {})[better_id] = rights_holder
-                better_row["current_owner_team_id"] = rights_holder
-                better_row["owner_team_id"] = rights_holder
-                better_row["team_abbrev"] = team_id_to_abbrev(rights_holder)
+                save.setdefault("draft_pick_overrides", {})[target_id] = rights_holder
+                target_row["current_owner_team_id"] = rights_holder
+                target_row["owner_team_id"] = rights_holder
+                target_row["team_abbrev"] = team_id_to_abbrev(rights_holder)
             if displaced_owner:
-                save.setdefault("draft_pick_overrides", {})[worse_id] = displaced_owner
-                worse_row["current_owner_team_id"] = displaced_owner
-                worse_row["owner_team_id"] = displaced_owner
-                worse_row["team_abbrev"] = team_id_to_abbrev(displaced_owner)
-            obligation["status"] = "resolved_swap_exercised"
+                save.setdefault("draft_pick_overrides", {})[other_id] = displaced_owner
+                other_row["current_owner_team_id"] = displaced_owner
+                other_row["owner_team_id"] = displaced_owner
+                other_row["team_abbrev"] = team_id_to_abbrev(displaced_owner)
+            obligation["status"] = "resolved_swap_exercised" if benefit == "better" else "resolved_less_favorable_assigned"
             obligation["resolved_date"] = save.get("state", {}).get("current_date")
             obligation["resolved_better_pick_id"] = better_id
             obligation["resolved_worse_pick_id"] = worse_id
             add_league_event(
                 save,
                 "pick_swap",
-                f"{team_id_to_abbrev(rights_holder)} exercises pick swap rights and receives the better pick.",
+                (
+                    f"{team_id_to_abbrev(rights_holder)} exercises pick swap rights and receives the better pick."
+                    if benefit == "better"
+                    else f"{team_id_to_abbrev(rights_holder)} receives the less favorable pick from a swap obligation."
+                ),
                 date_value=save.get("state", {}).get("current_date"),
                 team_ids=sorted({rights_holder, displaced_owner, owner_a, owner_b} - {None}),
                 importance=0.58,
@@ -2167,6 +2372,7 @@ def resolve_pick_obligations_for_year(save: dict[str, Any], order: dict[str, Any
                     "obligation_id": obligation.get("id"),
                     "better_pick_id": better_id,
                     "worse_pick_id": worse_id,
+                    "benefit": benefit,
                     "rights_holder_team_id": rights_holder,
                     "displaced_owner_team_id": displaced_owner,
                     "exercised": True,
@@ -5603,6 +5809,7 @@ def ensure_draft_processed(canonical: dict[str, Any], save: dict[str, Any], draf
             "original_contract_years": len(contract.get("seasons", [])),
             "signed_season": contract.get("seasons", [{}])[0].get("season"),
         }
+        save.setdefault("rotation_baselines", {})[player["id"]] = float(player.get("minutes_projection") or 0.0)
         signed_count += 1
     if signed_count:
         add_news(save, "draft", f"{draft_year} AI draft processed and {signed_count} rookies signed.", date_value=f"{draft_year}-06-26")
@@ -5618,6 +5825,9 @@ def sign_unsigned_rookies(save: dict[str, Any], draft_year: str) -> int:
         if not player_id:
             continue
         save.setdefault("roster_overrides", {})[player_id] = rookie.get("team_id")
+        player = next((item for item in save.get("generated_players", []) if item.get("id") == player_id), None)
+        if player:
+            save.setdefault("rotation_baselines", {})[player_id] = float(player.get("minutes_projection") or 0.0)
         rookie["roster_status"] = "signed_rookie"
         rookie["rights_status"] = "signed_rookie_contract"
         signed += 1

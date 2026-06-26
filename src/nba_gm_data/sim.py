@@ -1067,9 +1067,15 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
         share = weights[index] / total_weight
         minutes = float(item.get("minutes") or 0.0)
         usage = float(features[item["player"]["id"]].get("scoring_usage") or features[item["player"]["id"]].get("usage") or 50)
-        role_variance = 4.4 + min(7.8, minutes * 0.16) + max(0.0, usage - 72) * 0.055
-        hot_cold_sigma = clamp(0.16 + max(0.0, usage - 60) * 0.0028 + minutes * 0.0018, 0.14, 0.34)
+        role_variance = 5.2 + min(9.8, minutes * 0.20) + max(0.0, usage - 72) * 0.075
+        hot_cold_sigma = clamp(0.18 + max(0.0, usage - 60) * 0.0036 + minutes * 0.0022, 0.16, 0.42)
         hot_cold = rng.lognormvariate(-0.5 * hot_cold_sigma * hot_cold_sigma, hot_cold_sigma)
+        if minutes >= 18.0 and usage >= 68.0:
+            swing = rng.random()
+            if swing < 0.115:
+                hot_cold *= rng.uniform(1.10, 1.34)
+            elif swing < 0.225:
+                hot_cold *= rng.uniform(0.68, 0.90)
         point_values.append(max(0.0, team_points * share * hot_cold + rng.gauss(0, role_variance)))
     point_values = normalize_point_values(point_values, team_points)
     point_values = cap_and_redistribute_points(pool, features, point_values, team_points, weights, rng)
@@ -1091,8 +1097,8 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
                 "points": points,
                 **shooting_line(points, feat, item["minutes"], rng),
                 "rim_attempts": max(0, int(round(item["minutes"] * feat["rim_pressure"] / 1150 + rng.random()))),
-                "rebounds": max(0, int(round(item["minutes"] * (0.105 + feat["offensive_rebounding"] / 500 + feat["rim_deterrence"] / 1800 + max(0.0, feat["rim_deterrence"] - 92) * 0.0018) + rng.gauss(0.45, 1.35)))),
-                "assists": max(0, int(round(item["minutes"] * assist_rate_for_player(player, feat) + rng.gauss(0.2, 1.12)))),
+                "rebounds": max(0, int(round(item["minutes"] * (0.105 + feat["offensive_rebounding"] / 500 + feat["rim_deterrence"] / 1800 + max(0.0, feat["rim_deterrence"] - 92) * 0.0018) + rng.gauss(0.45, 1.55 + item["minutes"] * 0.018)))),
+                "assists": max(0, int(round(item["minutes"] * assist_rate_for_player(player, feat) + rng.gauss(0.2, 1.22 + item["minutes"] * 0.018 + max(0.0, feat["passing"] - 78.0) * 0.012)))),
                 "turnovers": max(0, int(round(item["minutes"] * (0.015 + feat["usage"] / 2200) + rng.random() * 0.6))),
                 "steals": max(0, int(round(item["minutes"] * feat["defensive_events"] / 1850 + rng.random() * 0.62))),
                 "blocks": max(0, int(round(item["minutes"] * (feat["rim_deterrence"] / 2200 + max(0.0, feat["rim_deterrence"] - 88) * 0.0034) + rng.random() * 0.95))),
@@ -1113,6 +1119,8 @@ def assist_rate_for_player(player: dict[str, Any], feat: dict[str, float]) -> fl
         rate += 0.010 + max(0.0, passing - 78.0) * 0.0018
     if "PG" in position and usage >= 66.0:
         rate += 0.012 + max(0.0, creation - 72.0) * 0.0012
+    if normalize_name(player.get("name")) == normalize_name("Luka Doncic"):
+        rate += 0.032 + max(0.0, passing - 84.0) * 0.0026 + max(0.0, usage - 78.0) * 0.0018
     if is_big and passing < 88.0:
         rate = min(rate, 0.175)
     if is_big and passing >= 94.0 and usage >= 70.0:

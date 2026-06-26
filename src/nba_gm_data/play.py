@@ -32,6 +32,7 @@ from .save import (
     display_minutes_projection,
     prepare_free_agency_pool,
     prune_rotation_recommendations,
+    recent_rookie_protected_player_ids,
     hold_press_conference,
     league_leaders,
     league_events_view,
@@ -451,13 +452,20 @@ def cut_player_from_roster(canonical: dict[str, Any], save_path: Path, team_abbr
     active = canonical_with_save(canonical, save)
     team = resolve_team(active, team_abbrev)
     roster = sorted(
-        [player for player in active.get("players", []) if player.get("team_id") == team["id"]],
+        [
+            player for player in active.get("players", [])
+            if player.get("team_id") == team["id"]
+            and player.get("id") not in recent_rookie_protected_player_ids(save)
+        ],
         key=lambda player: (
             display_minutes_projection(player),
             float((player_attribute_summary(active, player["id"]) or {}).get("overall") or 0.0),
             str(player.get("name") or ""),
         ),
     )
+    if not roster:
+        pause("No cuttable players are available. Current and prior-year draftees are protected from cutdowns.")
+        return
     season = contract_start_season_for_signing(save)
     stats = save.get("player_season_stats", {})
     print_title(f"Cut Player | {team['abbrev']}")
@@ -585,7 +593,7 @@ def print_home(root: Path, canonical: dict[str, Any], save_path: Path) -> None:
         print("10. Offseason room / draft / free agency")
     elif phase in PLAYOFF_PHASES:
         print("10. Playoff bracket / results")
-    print("11. Pending AI / league actions")
+    print("11. Review AI trade offers to you")
     print("12. Staff room")
     print("13. Current free agents")
     print("14. Social feed / morale")
@@ -673,7 +681,7 @@ def handle_choice(root: Path, canonical: dict[str, Any], save_path: Path, choice
         else:
             pause("Offseason rooms unlock when the calendar reaches the offseason.")
     elif choice == "11":
-        actions_room(canonical, save_path, seed)
+        user_trade_offers_room(canonical, save_path)
     elif choice == "12":
         staff_room(canonical, save_path, user_team, seed)
     elif choice == "13":
@@ -1663,8 +1671,14 @@ def prompt_pick_trade_terms(canonical: dict[str, Any], save_path: Path, pick_id:
         counterparty_pick = choose_pick_for_swap(active, save, swap_candidates)
         if not counterparty_pick:
             return {"type": "unprotected", "primary_pick_id": pick_id}
+        print_rule()
+        print("Choose the swap direction:")
+        print("1. Receiving team may receive the better pick")
+        print("2. Receiving team receives the less favorable pick")
+        direction_choice = pick_number("Swap direction", 1, 2, default=1)
+        benefit = "better" if direction_choice == 1 else "worse"
         term = {
-            "id": stable_id("pick_swap", pick_id, counterparty_pick.get("id"), receiver_id, sender_id),
+            "id": stable_id("pick_swap", pick_id, counterparty_pick.get("id"), receiver_id, sender_id, benefit),
             "type": "pick_swap",
             "season": pick.get("season"),
             "round": int(pick.get("round") or 0),
@@ -1675,9 +1689,10 @@ def prompt_pick_trade_terms(canonical: dict[str, Any], save_path: Path, pick_id:
             "counterparty_team_id": sender_id,
             "receiver_team_id": receiver_id,
             "sender_team_id": sender_id,
-            "label": "pick swap right",
+            "benefit": benefit,
+            "label": "pick swap right" if benefit == "better" else "less favorable swap obligation",
             "pending_asset_grant": True,
-            "notes": "Gameplay V1 pick-swap obligation. The rights holder receives the better same-season same-round pick at resolution.",
+            "notes": "Gameplay V1 pick-swap obligation. Direction controls whether the holder receives the better or less favorable same-season same-round pick at resolution.",
             "transfer_history": [],
         }
         print_rule()
@@ -3541,12 +3556,12 @@ def print_draft_board(canonical: dict[str, Any], save_path: Path, user_team: str
             picked = idx - 1 < current_index
             status = "PICKED" if picked else "AVAIL"
             selected_by = team_abbrev_for_selection(canonical, item) if picked else ""
-            now, pot = prospect_now_pot_for_display(canonical, prospect, team_id)
+            scout = prospect_scout_display(canonical, prospect, team_id, save)
             line = (
                 f"{idx:>2}. {status:<7} {prospect.get('name', ''):<24} {compact_position(prospect.get('position')):<3} "
-                f"{prospect_age_text(prospect):>3} {prospect_height(prospect):<6} {prospect_scouted_pct(canonical, prospect.get('id') or prospect.get('prospect_id'), team_id, save):>5.0f}% "
+                f"{prospect_age_text(prospect):>3} {prospect_height(prospect):<6} {scout['scouted_pct']:>5.0f}% "
                 f"{clean_label(str(prospect.get('archetype') or 'prospect')):<20} "
-                f"{now:>4.0f}/{pot:<4.0f} {selected_by}"
+                f"{scout['now']:>4.0f}/{scout['potential']:<4.0f} {selected_by}"
             )
             print(style(line, "danger") if picked else line)
         print_rule()
@@ -3572,11 +3587,11 @@ def inspect_undrafted_prospect_prompt(canonical: dict[str, Any], save_path: Path
     print("Inspect an undrafted prospect?")
     for idx, item in enumerate(rows[:30], start=1):
         prospect = item.get("prospect") or {}
-        now, pot = prospect_now_pot_for_display(canonical, prospect, team_id)
+        scout = prospect_scout_display(canonical, prospect, team_id, save)
         print(
             f"{idx:>2}. {prospect.get('name', ''):<24} {compact_position(prospect.get('position')):<3} "
-            f"age {prospect_age_text(prospect)} | {prospect_height(prospect):<6} | {now:.0f}/{pot:.0f} | "
-            f"{prospect_scouted_pct(canonical, prospect.get('id') or prospect.get('prospect_id'), team_id, save):.0f}%"
+            f"age {prospect_age_text(prospect)} | {prospect_height(prospect):<6} | {scout['now']:.0f}/{scout['potential']:.0f} | "
+            f"{scout['scouted_pct']:.0f}%"
         )
     print(" 0. Skip")
     choice = pick_number("Prospect row", 0, min(30, len(rows)), default=0)
@@ -3589,20 +3604,29 @@ def inspect_undrafted_prospect_prompt(canonical: dict[str, Any], save_path: Path
 def print_prospect_inspection(canonical: dict[str, Any], save: dict[str, Any], prospect: dict[str, Any], team_id: str) -> None:
     prospect_id = prospect.get("id") or prospect.get("prospect_id")
     report = scouting_report_for(canonical, prospect_id, team_id)
-    now, pot = prospect_now_pot_for_display(canonical, prospect, team_id)
+    scout = prospect_scout_display(canonical, prospect, team_id, save)
     print_title(f"Prospect Report | {prospect.get('name')}")
     print(
         f"{compact_position(prospect.get('position')):<3} | age {prospect_age_text(prospect)} | {prospect_height(prospect)} | "
-        f"{prospect_scouted_pct(canonical, prospect_id, team_id, save):.0f}% scouted"
+        f"{scout['scouted_pct']:.0f}% scouted"
     )
     print(f"Archetype: {clean_label(str(prospect.get('archetype') or 'prospect'))}")
-    print(f"Now/Potential: {now:.0f}/{pot:.0f}")
+    print(f"Now/Potential: {scout['now']:.0f}/{scout['potential']:.0f}")
     traits = report.get("trait_estimates") or {}
     print("Scout read: bars show your staff's current best estimate.")
     interesting = ["current_ability", "potential", "floor", "ceiling", "shooting", "shot_creation", "passing", "defense", "rim_protection", "athleticism", "feel", "volatility"]
     printed = 0
     for key in interesting:
-        value = traits.get(key)
+        if key == "current_ability":
+            value = {"mid": scout["now"]}
+        elif key == "potential":
+            value = {"mid": scout["potential"]}
+        elif key == "floor":
+            value = {"mid": scout["floor"]}
+        elif key == "ceiling":
+            value = {"mid": scout["ceiling"]}
+        else:
+            value = traits.get(key)
         label = "downside floor" if key == "floor" else key
         if isinstance(value, dict) and value.get("mid") is not None:
             print(f"  {clean_label(label):<16} {morale_bar(float(value['mid']), width=12)} {float(value['mid']):>5.1f}")
@@ -3617,14 +3641,21 @@ def print_prospect_inspection(canonical: dict[str, Any], save: dict[str, Any], p
                 print(f"  {clean_label(label):<16} {morale_bar(float(prospect[key]), width=12)} {float(prospect[key]):>5.1f}")
 
 
-def prospect_now_pot_for_display(canonical: dict[str, Any], prospect: dict[str, Any], team_id: str) -> tuple[float, float]:
+def prospect_scout_display(canonical: dict[str, Any], prospect: dict[str, Any], team_id: str | None, save: dict[str, Any] | None = None) -> dict[str, float]:
     report = scouting_report_for(canonical, prospect.get("id") or prospect.get("prospect_id"), team_id)
     current = (report.get("estimated_current") or {}).get("mid")
     potential = (report.get("estimated_potential") or {}).get("mid")
-    return (
-        float(current if current is not None else prospect.get("current_ability") or 0.0),
-        float(potential if potential is not None else prospect.get("potential") or 0.0),
-    )
+    now = float(current if current is not None else prospect.get("current_ability") or 0.0)
+    pot = float(potential if potential is not None else prospect.get("potential") or 0.0)
+    floor = float(prospect.get("floor") if prospect.get("floor") is not None else max(20.0, now - 8.0))
+    ceiling = float(prospect.get("ceiling") if prospect.get("ceiling") is not None else max(pot, pot + 7.0))
+    pct = prospect_scouted_pct(canonical, prospect.get("id") or prospect.get("prospect_id"), team_id, save)
+    return {"now": now, "potential": pot, "floor": floor, "ceiling": ceiling, "scouted_pct": pct}
+
+
+def prospect_now_pot_for_display(canonical: dict[str, Any], prospect: dict[str, Any], team_id: str) -> tuple[float, float]:
+    scout = prospect_scout_display(canonical, prospect, team_id)
+    return scout["now"], scout["potential"]
 
 
 def print_user_draft_recap(canonical: dict[str, Any], save_path: Path, user_team: str, year: str) -> None:
@@ -3771,7 +3802,9 @@ def print_prospect_line(prospect: dict[str, Any], prefix: str = "Prospect", team
     comp = prospect.get("comp") or prospect.get("archetype") or prospect.get("role_archetype") or "scouted prospect"
     confidence = ""
     if team_id and canonical is not None:
-        confidence = f" | {prospect_scouted_pct(canonical, prospect.get('id') or prospect.get('prospect_id'), team_id, save):.0f}% scouted"
+        scout = prospect_scout_display(canonical, prospect, team_id, save)
+        confidence = f" | {scout['scouted_pct']:.0f}% scouted"
+        traits = prospect_trait_summary_from_scout(scout, prospect)
     print(f"{prefix}: {prospect.get('name')} ({prospect.get('position') or '-'}) age {prospect_age_text(prospect)} {height} | {clean_label(comp)}{confidence}")
     if traits:
         print(f"  Traits: {traits}")
@@ -3888,6 +3921,19 @@ def prospect_age_text(prospect: dict[str, Any]) -> str:
 def prospect_trait_summary(prospect: dict[str, Any]) -> str:
     pairs = []
     for key, label in [("current_ability", "now"), ("potential", "pot"), ("floor", "floor"), ("ceiling", "ceil"), ("shooting", "shoot"), ("defense", "def")]:
+        if prospect.get(key) is not None:
+            pairs.append(f"{label} {float(prospect[key]):.0f}")
+    return ", ".join(pairs[:5])
+
+
+def prospect_trait_summary_from_scout(scout: dict[str, float], prospect: dict[str, Any]) -> str:
+    pairs = [
+        f"now {float(scout.get('now') or 0):.0f}",
+        f"pot {float(scout.get('potential') or 0):.0f}",
+        f"floor {float(scout.get('floor') or 0):.0f}",
+        f"ceil {float(scout.get('ceiling') or 0):.0f}",
+    ]
+    for key, label in [("shooting", "shoot"), ("defense", "def")]:
         if prospect.get(key) is not None:
             pairs.append(f"{label} {float(prospect[key]):.0f}")
     return ", ".join(pairs[:5])
@@ -4304,6 +4350,7 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
         print("1. Negotiate with a player")
         print("2. Advance exclusive day")
         print("3. Skip to open free agency")
+        print("4. Trade Room")
         print("5. Team dashboard")
         print("0. Save and quit" if forced else "0. Back")
         choice = input("> Pick a number: ").strip()
@@ -4352,6 +4399,8 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
             state["re_signing_status"] = "completed"
             write_save(save_path, save)
             return "done"
+        elif choice == "4":
+            trade_room(active, save_path, user_team, seed)
         elif choice == "5":
             root = save_path.parent.parent if save_path.parent.name == "saves" else Path.cwd()
             print_dashboard(root, canonical, save_path, user_team, user_team=user_team, seed=seed)

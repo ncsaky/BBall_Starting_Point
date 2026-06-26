@@ -2,7 +2,33 @@
 
 A local, CLI-first NBA front-office simulator built around the 2025-26 preseason universe. The goal is a deeper, more basketball-aware version of classic GM modes: roster building, staff decisions, trades, free agency, draft scouting, injuries, development, morale, press conferences, social reaction, and sandbox season simulation.
 
-Current status: **playable pre-alpha / internal alpha candidate**. It is ready for private testing by patient testers, not public beta.
+Current status: **private alpha / beta candidate**. It is ready for private testing by friends who are comfortable following terminal instructions and reporting bugs. It is not packaged as a public one-click release yet.
+
+## Should You Play This Build?
+
+Yes, if you want to run a deep NBA GM sandbox and you are okay with a few rough edges. The core loop is now playable:
+
+- Create a save, pick or randomize a team, and sim through multiple seasons.
+- Manage trades, extensions, free agency, staff, rotations, and a visual Starting 5.
+- Watch injuries, morale, social media, press conferences, league events, playoffs, lottery, draft night, rookies, and offseason rollover.
+- Use the full ASCII loading-screen animation if optional assets are installed.
+
+The game is best described as a **friends-and-family beta**: good enough for real playtesting, still too terminal-heavy and balance-sensitive for a broad public audience.
+
+## Easiest Setup For Friends
+
+If you are testing for the first time, do these steps in order.
+
+1. Install **Git**.
+2. Install **Python 3.11 or newer**.
+3. Open Terminal or PowerShell.
+4. Clone the repo.
+5. Create the Python environment.
+6. Install the game.
+7. Install optional loading assets.
+8. Run `nba-gm-data play --root .`
+
+Detailed commands are below.
 
 ## Setup From Zero
 
@@ -74,6 +100,8 @@ Start the game:
 nba-gm-data play --root .
 ```
 
+If you get stuck, take a screenshot of the terminal and send it with the last command you ran.
+
 ### Windows Setup
 
 Install:
@@ -126,6 +154,18 @@ nba-gm-data play --root .
 ```
 
 If `nba-gm-data` is not found, make sure the virtual environment is active. You should see `(.venv)` at the start of the terminal prompt.
+
+If PowerShell blocks activation with a script policy warning, run:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+Then close PowerShell, reopen it, return to the repo folder, and run:
+
+```powershell
+.venv\Scripts\activate
+```
 
 ## Quick Start For Returning Testers
 
@@ -228,6 +268,8 @@ The interactive launcher lets you pick an existing save, delete a save, or creat
 - Save file path
 - AI difficulty: `easy`, `normal`, or `hard`
 
+`Random team` is the default team option when creating a save. If you do not pass a seed, new random saves use fresh randomness. If you pass `--seed`, the same seed stays deterministic for reproducible testing.
+
 Example direct launch:
 
 ```bash
@@ -241,13 +283,14 @@ Saves live in `saves/` and are intentionally ignored by Git.
 Good first test run:
 
 1. Create a save with any team.
-2. Open the team dashboard and inspect rotation stats, ratings, contracts, staff, morale, and development.
+2. Open the team dashboard and inspect rotation stats, ratings, contracts, cap room, staff, morale, development, and Starting 5.
 3. Sim a week or month.
 4. Try the trade finder and manual trade builder.
 5. Reach the trade deadline.
 6. Finish the regular season.
 7. Watch the playoffs, lottery, draft, and free agency.
 8. Advance into the next season and check whether rosters, rookies, stats, morale, and contracts changed.
+9. Review AI trade offers from the main menu when they appear.
 
 The game is still rough. Please report bugs with:
 
@@ -289,20 +332,39 @@ nba-gm-data team OKC --staff --root .
 
 - Canonical 2025-26 preseason NBA universe with players, teams, staff context, contracts, picks, traits, health, and sources.
 - Persistent local saves that advance through seasons.
-- Sandbox game simulation with saved box scores, standings, leaders, injuries, fatigue, and monthly development.
-- AI trade, extension, free-agency, draft, and staff-decision scaffolds.
-- Draft lottery, draft room, rookie signing, free-agency market, playoffs, and offseason rollover.
+- Sandbox game simulation with saved box scores, standings, leaders, injuries, fatigue, rust, and monthly development.
+- AI trade, extension, free-agency, draft, draft-night trade, and staff-decision systems.
+- Draft lottery, draft room, rookie signing, rookie onboarding, free-agency market, playoffs, and offseason rollover.
 - Staff management for head coach, coordinators, development, scouting, and performance.
-- Morale, social posts, and mandatory contextual press conferences after major events.
+- Morale, social posts, league events, and contextual press conferences after major events.
+- Protected picks and same-year same-round pick swaps.
+- Display-scale player ratings plus a ratings guide, while the engine keeps its internal calibrated values.
+- Optional ASCII highlight loading screens.
 
-## Known Pre-Alpha Caveats
+## Known Alpha/Beta Caveats
 
-- The CLI is improving quickly, but some screens are still dense.
+- The game is terminal-only. There is no one-click launcher or graphical UI yet.
+- Some screens are still dense, especially trades, draft, ratings, and free agency.
 - CBA rules are practical approximations, not full NBA legal modeling.
-- The roster model uses a save baseline for current broad preseason data, then forces cutdowns when transactions add overflow.
-- AI GMs are intentionally bounded but still need more playtest tuning.
-- Some ratings and player stat outputs still need named-player calibration.
-- Setup is currently command-line based; a one-click launcher is a future packaging pass.
+- AI GMs are much livelier than before, but trade value, draft logic, and roster-building behavior still need more human playtest tuning.
+- Player ratings and stat outputs are now much better, but named-player calibration will remain an ongoing balance pass.
+- Windows should work, but macOS has had more direct testing.
+- Saves are local JSON files. Back up `saves/` before trying risky test branches or big code changes.
+- The loading-screen video source is not stored in normal Git history. Testers should use the release asset zip unless they are rebuilding their own cache.
+
+## What Is Missing Before A Wider Public Release?
+
+For private friend testing, the game is close. For a broader public beta, the biggest missing pieces are:
+
+- A simpler installer or launcher so non-technical users do not need Git, virtual environments, or terminal commands.
+- A short “how to play” guide inside or beside the game, not just setup instructions.
+- More balance passes for star trade value, AI roster logic, draft behavior, extensions, player ratings, and stat distributions.
+- More Windows playtesting.
+- Better save compatibility/migration guarantees as the data model keeps changing quickly.
+- Cleaner error handling when a tester does something unexpected.
+- A small curated test script for playtesters: what to try, what to report, and how to send save files.
+
+My current recommendation: **release privately to friends as an alpha/beta test**, not publicly. Ask testers to expect rough edges, keep save files, and send screenshots or tracebacks.
 
 ## Data Notes
 
@@ -321,4 +383,4 @@ Before pushing publicly, keep the repo private and avoid committing:
 - generated SQLite/database files
 - OS/editor metadata
 
-The current target is private roommate testing, then installer/onboarding polish, then broader alpha.
+The current target is private friends-and-family testing, then installer/onboarding polish, then broader beta.
