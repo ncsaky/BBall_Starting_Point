@@ -65,7 +65,7 @@ from .save import (
 from .staff import ROLE_LABELS, STAFF_SLOTS, fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, staff_budget_snapshot, staff_effect_summary, staff_market_report, staff_role_effect, staff_team_report
 from .schema import CANONICAL_START_DATE
 from .traits import TRAIT_LABELS
-from .transactions import apply_trade_to_save, canonical_with_pending_pick_terms, candidate_from_evaluation, clean_pick_protection_summary, contract_for_player, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, pick_by_id, pick_display_label, pick_obligation_context_note, pick_season_start, pick_swap_asset_value, pick_swap_display_label, player_by_id, proposal_asset_identity_keys, prune_trade_offers_touching_assets, recently_signed_player_ids, recently_traded_player_ids, resolve_team, team_by_id, trade_apply_authorized, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_pick_swaps_for_team, tradeable_picks_for_team, with_transaction_context
+from .transactions import apply_trade_to_save, canonical_with_pending_pick_terms, candidate_from_evaluation, clean_pick_protection_summary, contract_for_player, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, pick_by_id, pick_display_label, pick_obligation_context_note, pick_season_start, pick_swap_asset_value, pick_swap_display_label, player_by_id, proposal_asset_identity_keys, protected_pick_fallback_is_distinct, prune_trade_offers_touching_assets, recently_signed_player_ids, recently_traded_player_ids, resolve_team, team_by_id, trade_apply_authorized, trade_candidate_with_current_asset_labels, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_pick_swaps_for_team, tradeable_picks_for_team, with_transaction_context
 from .utils import clamp, stable_id
 
 
@@ -1827,6 +1827,7 @@ def choose_fallback_pick_for_protection(canonical: dict[str, Any], save: dict[st
         and not pick.get("_obligation_locked")
         and int(pick.get("round") or 0) == primary_round
         and (pick_season_start(pick) or 0) >= primary_year
+        and protected_pick_fallback_is_distinct(primary_pick, pick)
     ]
     picks = sorted(picks, key=lambda pick: (str(pick.get("season") or ""), int(pick.get("round") or 9), clean_pick_label_for_user(canonical, pick, save)))
     if not picks:
@@ -1939,6 +1940,11 @@ def trade_finder_report_for_selection(
             finalized_terms = finalize_pick_terms_for_proposal(terms, candidate.get("proposal") or {})
             candidates.append(trade_result_with_pick_terms(candidate, finalized_terms))
         report["candidates"] = candidates
+    user_team_id = resolve_team(search_canonical, user_team)["id"]
+    report["candidates"] = [
+        mark_trade_finder_offer(candidate, user_team_id)
+        for candidate in report.get("candidates", [])
+    ]
     report["candidates"] = difficulty_filter_trade_candidates(
         report.get("candidates", []),
         save.get("meta", {}).get("ai_difficulty", "normal"),
@@ -1947,6 +1953,58 @@ def trade_finder_report_for_selection(
     report["candidates"] = remove_inferior_superset_trade_candidates(report["candidates"], save.get("meta", {}).get("user_team_id"))
     report["candidate_count"] = len(report["candidates"])
     return report
+
+
+def finder_offer_counterparty_team_id(candidate: dict[str, Any], user_team_id: str | None) -> str | None:
+    return next(
+        (
+            evaluation.get("perspective_team_id")
+            for evaluation in candidate.get("evaluations", [])
+            if evaluation.get("perspective_team_id") != user_team_id and evaluation.get("accepted")
+        ),
+        None,
+    )
+
+
+def mark_trade_finder_offer(candidate: dict[str, Any], user_team_id: str | None) -> dict[str, Any]:
+    """Mark a finder result as an offer the counterparty has already approved."""
+    partner_id = finder_offer_counterparty_team_id(candidate, user_team_id)
+    if not partner_id:
+        return candidate
+    candidate["offer_context"] = {
+        **(candidate.get("offer_context") or {}),
+        "status": "finder_offer_pending_user_acceptance",
+        "source": "trade_finder",
+        "finder_partner_team_id": partner_id,
+        "finder_partner_accepted": True,
+    }
+    return candidate
+
+
+def accept_trade_finder_offer(candidate: dict[str, Any], user_team_id: str | None) -> dict[str, Any] | None:
+    """Record the user's acceptance of a counterparty-approved finder offer."""
+    candidate = mark_trade_finder_offer(candidate, user_team_id)
+    context = candidate.get("offer_context") or {}
+    if context.get("status") != "finder_offer_pending_user_acceptance":
+        return None
+    partner_id = context.get("finder_partner_team_id")
+    if not partner_id or not context.get("finder_partner_accepted"):
+        return None
+    for evaluation in candidate.get("evaluations", []):
+        if evaluation.get("perspective_team_id") != user_team_id:
+            continue
+        evaluation["accepted"] = True
+        evaluation["decision"] = "accept_user_selected_finder_offer"
+        reasons = evaluation.setdefault("reasons", [])
+        if "user_selected_finder_offer" not in reasons:
+            reasons.append("user_selected_finder_offer")
+    candidate["accepted_by_all"] = True
+    candidate["offer_context"] = {
+        **context,
+        "status": "finder_offer_user_accepted",
+        "user_team_id": user_team_id,
+    }
+    return candidate
 
 
 def extensions_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int) -> None:
@@ -6885,7 +6943,7 @@ def trade_finder_followup(canonical: dict[str, Any], report: dict[str, Any], sav
     choice = pick_number("Offer", 0, len(candidates), default=0)
     if choice == 0:
         return
-    candidate = candidates[choice - 1]
+    candidate = trade_candidate_with_current_asset_labels(canonical, candidates[choice - 1])
     while True:
         clear_screen()
         print_title("Trade Offer")
@@ -6912,6 +6970,10 @@ def trade_finder_followup(canonical: dict[str, Any], report: dict[str, Any], sav
             pause("Trade blocked: this offer is not legal anymore.")
             return
         candidate = attach_pick_terms_to_trade(canonical, save_path, candidate)
+        candidate = accept_trade_finder_offer(candidate, (report.get("for_team") or {}).get("id"))
+        if not candidate:
+            pause("Trade blocked: the other team no longer has an active approval for this offer.")
+            return
         save.setdefault("pending_trade_proposals", []).append(candidate)
         write_save(save_path, save)
         result = apply_trade_to_save(save_path, candidate["proposal"]["id"], date=save.get("state", {}).get("current_date"))
@@ -6932,6 +6994,7 @@ def print_trade_offer_details(canonical: dict[str, Any], candidate: dict[str, An
     if save:
         canonical = canonical_with_save(canonical, ensure_league_save_defaults(save, canonical))
     canonical = with_transaction_context(canonical)
+    candidate = trade_candidate_with_current_asset_labels(canonical, candidate)
     proposal = candidate.get("proposal") or {}
     teams = {team["id"]: team for team in canonical.get("teams", [])}
     players = {player["id"]: player for player in canonical.get("players", [])}

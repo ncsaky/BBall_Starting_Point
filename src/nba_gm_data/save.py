@@ -96,6 +96,7 @@ def create_league_save(
         "roster_overrides": {},
         "contract_overrides": {},
         "draft_pick_overrides": {},
+        "generated_draft_picks": [],
         "pick_obligations": load_pick_obligation_overrides(root),
         "locked_pick_assets": [],
         "draft_rights": [],
@@ -292,6 +293,14 @@ def startup_gameplay_pick_obligations(canonical: dict[str, Any] | None) -> list[
 def merge_startup_pick_obligations(save: dict[str, Any], canonical: dict[str, Any] | None = None) -> int:
     from .transactions import pick_obligation_validation_errors
 
+    if canonical is not None and save.get("generated_draft_picks"):
+        canonical = deepcopy(canonical)
+        existing_pick_ids = {pick.get("id") for pick in canonical.get("draft_picks", [])}
+        canonical.setdefault("draft_picks", []).extend(
+            deepcopy(pick)
+            for pick in save.get("generated_draft_picks", [])
+            if pick.get("id") and pick.get("id") not in existing_pick_ids
+        )
     obligations = save.setdefault("pick_obligations", [])
     locked = set(save.setdefault("locked_pick_assets", []))
     if canonical:
@@ -339,9 +348,10 @@ def merge_startup_pick_obligations(save: dict[str, Any], canonical: dict[str, An
                     )
                     continue
             valid_obligations.append(obligation)
-        if len(valid_obligations) != len(obligations):
-            obligations[:] = valid_obligations
-            locked.difference_update(invalid_fallback_ids)
+        # Repairs can preserve the count while changing collateral. Always write the
+        # validated list back so an old self/duplicate fallback cannot survive load.
+        obligations[:] = valid_obligations
+        locked.difference_update(invalid_fallback_ids)
     existing_primary_ids = {
         item.get("primary_pick_id")
         for item in obligations
@@ -381,11 +391,23 @@ def merge_startup_pick_obligations(save: dict[str, Any], canonical: dict[str, An
         existing_primary_ids.add(primary_id)
         existing_ids.add(obligation.get("id"))
         added += 1
-    for obligation in obligations:
-        if obligation.get("type") == "protected_pick" and obligation.get("status", "active") in {"active", "pending_resolution"}:
-            for fallback_id in obligation.get("fallback_pick_ids") or []:
-                locked.add(fallback_id)
-    save["locked_pick_assets"] = sorted(locked)
+    active_fallbacks = {
+        fallback_id
+        for obligation in obligations
+        if obligation.get("type") == "protected_pick" and obligation.get("status", "active") in {"active", "pending_resolution"}
+        for fallback_id in obligation.get("fallback_pick_ids") or []
+        if fallback_id
+    }
+    save["locked_pick_assets"] = sorted(active_fallbacks)
+    generated_by_id = {
+        pick.get("id"): pick
+        for pick in save.get("generated_draft_picks", [])
+        if pick.get("id")
+    }
+    for pick in (canonical or {}).get("draft_picks", []):
+        if pick.get("status") == "gameplay_fallback_pick" and pick.get("id"):
+            generated_by_id[pick["id"]] = deepcopy(pick)
+    save["generated_draft_picks"] = [generated_by_id[pick_id] for pick_id in sorted(generated_by_id)]
     return added
 
 
@@ -417,6 +439,8 @@ def protected_pick_fallback_candidate(
     sender_team_id: str | None,
     used_fallback_ids: set[str] | None = None,
 ) -> dict[str, Any] | None:
+    from .transactions import protected_pick_fallback_is_distinct
+
     if not primary or not sender_team_id:
         return None
     primary_id = primary.get("id")
@@ -434,6 +458,7 @@ def protected_pick_fallback_candidate(
             and pick.get("original_team_id") == sender_team_id
             and pick.get("current_owner_team_id") == sender_team_id
             and pick_season_start_local(pick) >= primary_year
+            and protected_pick_fallback_is_distinct(primary, pick)
             and not pick.get("_obligation_locked")
         ],
         key=lambda pick: (pick_season_start_local(pick), str(pick.get("id") or "")),
@@ -718,6 +743,7 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
     save.setdefault("roster_overrides", {})
     save.setdefault("contract_overrides", {})
     save.setdefault("draft_pick_overrides", {})
+    save.setdefault("generated_draft_picks", [])
     save.setdefault("pick_obligations", [])
     save.setdefault("locked_pick_assets", [])
     merge_startup_pick_obligations(save, canonical)
@@ -883,6 +909,12 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
     canonical["save_team_records"] = deepcopy(save.get("team_records", {}))
     canonical["transaction_logs"] = deepcopy(save.get("transaction_logs", []))
     canonical["ai_trade_pressure_player_ids"] = list(save.get("ai_trade_pressure_player_ids", []))
+    existing_pick_ids = {pick.get("id") for pick in canonical.get("draft_picks", [])}
+    canonical.setdefault("draft_picks", []).extend(
+        deepcopy(pick)
+        for pick in save.get("generated_draft_picks", [])
+        if pick.get("id") and pick.get("id") not in existing_pick_ids
+    )
     from .transactions import ensure_future_second_round_scaffolds
 
     ensure_future_second_round_scaffolds(canonical)

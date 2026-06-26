@@ -52,6 +52,7 @@ from nba_gm_data.save import (
     calendar_view,
     complete_offseason_and_rollover,
     create_league_save,
+    ensure_league_save_defaults,
     hold_press_conference,
     league_events_view,
     league_leaders,
@@ -122,6 +123,8 @@ from nba_gm_data.play import (
     signing_cap_check,
     sync_live_draft_state_to_saved_order,
     prospect_scout_display,
+    accept_trade_finder_offer,
+    trade_finder_report_for_selection,
 )
 from nba_gm_data.schema import TradeProposal, to_plain
 from nba_gm_data.sim import (
@@ -157,7 +160,7 @@ from nba_gm_data.sim import (
 )
 from nba_gm_data.storage import write_outputs
 from nba_gm_data.staff import fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, simulate_ai_staff_changes, staff_budget_for_team, staff_budget_snapshot, staff_grade, staff_market_report, staff_team_report
-from nba_gm_data.transactions import annotate_pick_obligation_context, apply_trade_to_save, canonical_with_pending_pick_terms, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, gm_report, market_trade_target_value, package_value_for_team, pick_asset_value, pick_label, pick_season_start, pick_swap_asset_value, pick_swap_display_label, player_health_risk, simulate_ai_trades, stepien_guardrail_issues, trade_block_report, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_pick_swaps_for_team, tradeable_picks_for_team, validate_pick_obligation_term, with_transaction_context
+from nba_gm_data.transactions import annotate_pick_obligation_context, apply_trade_to_save, canonical_with_pending_pick_terms, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, gm_report, market_trade_target_value, package_value_for_team, pick_asset_value, pick_label, pick_season_start, pick_swap_asset_value, pick_swap_display_label, player_health_risk, protected_pick_fallback_is_distinct, simulate_ai_trades, stepien_guardrail_issues, trade_apply_authorized, trade_block_report, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_pick_swaps_for_team, tradeable_picks_for_team, validate_pick_obligation_term, with_transaction_context
 from nba_gm_data.traits import LEAGUE_TRAIT_RATING_COLUMNS, LEAGUE_TRAIT_RATINGS_SOURCE_ID, load_league_trait_ratings, match_league_trait_ratings
 
 
@@ -450,7 +453,13 @@ class DataFoundationTests(unittest.TestCase):
         future_picks = [pick for pick in self.universe.draft_picks if pick.status == "verified_future_pick_reference"]
         self.assertGreaterEqual(len(verified_contracts), 300)
         self.assertEqual(len(verified_picks), 60)
-        self.assertGreaterEqual(len(future_picks), 180)
+        self.assertGreaterEqual(len(future_picks), 150)
+        underlying_future_pick_keys = {
+            (pick.season, pick.round, pick.original_team_id)
+            for pick in future_picks
+            if pick.original_team_id
+        }
+        self.assertEqual(len(future_picks), len(underlying_future_pick_keys))
         self.assertTrue(any("src_spotrac_future_picks" in pick.source_ids for pick in future_picks))
         curry = next(player for player in self.universe.players if player.normalized_name == "stephen curry")
         curry_contract = next(contract for contract in self.universe.contracts if contract.player_id == curry.id)
@@ -640,18 +649,98 @@ class DataFoundationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             save_path = Path(tmp) / "startup_pick_obligation_save.json"
             save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=412)
-            self.assertGreaterEqual(len(save.get("pick_obligations", [])), 22)
+            self.assertGreaterEqual(len(save.get("pick_obligations", [])), 12)
             active = with_transaction_context(canonical_with_save(self.plain, save))
             gsw_dal_pick = next(pick for pick in active["draft_picks"] if pick["id"] == "pick_future-gsw-2030-1-2")
             label = pick_label(active, gsw_dal_pick)
             self.assertIn("top-20 protected", label)
-            self.assertIn("Transfers to DAL if in protected range", label)
-            self.assertIn("GSW receives", label)
-            self.assertIn("R1 DAL in this case", label)
+            self.assertIn("DAL keeps this pick if it lands in the protected range", label)
+            self.assertIn("GSW instead receives", label)
+            self.assertNotIn("Transfers to", label)
             obligation = next(item for item in save.get("pick_obligations", []) if item.get("primary_pick_id") == gsw_dal_pick["id"])
             fallback = next(pick for pick in active["draft_picks"] if pick["id"] == obligation["fallback_pick_ids"][0])
             self.assertEqual(int(fallback.get("round") or 0), 1)
+            self.assertTrue(protected_pick_fallback_is_distinct(gsw_dal_pick, fallback))
             self.assertFalse(any(pick["id"] == fallback["id"] for pick in tradeable_picks_for_team(active, "team_dal")))
+
+    def test_startup_pick_ledger_and_fallbacks_never_duplicate_an_underlying_pick(self):
+        future_keys = [
+            (str(pick.get("season")), int(pick.get("round") or 0), pick.get("original_team_id"))
+            for pick in self.plain["draft_picks"]
+            if pick.get("status") == "verified_future_pick_reference" and pick.get("original_team_id")
+        ]
+        self.assertEqual(len(future_keys), len(set(future_keys)))
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "startup_pick_ledger.json"
+            save = create_league_save(ROOT, self.plain, "POR", save_path, seed=413)
+            active = with_transaction_context(canonical_with_save(self.plain, save))
+            picks = {pick["id"]: pick for pick in active["draft_picks"]}
+            for obligation in save.get("pick_obligations", []):
+                if obligation.get("type") != "protected_pick":
+                    continue
+                primary = picks[obligation["primary_pick_id"]]
+                fallback = picks[obligation["fallback_pick_ids"][0]]
+                self.assertTrue(protected_pick_fallback_is_distinct(primary, fallback))
+                label = pick_label(active, primary)
+                self.assertIn("keeps this pick if it lands in the protected range", label)
+                self.assertIn("instead receives", label)
+                self.assertNotIn("Transfers to", label)
+
+    def test_loading_an_old_duplicate_fallback_repairs_and_persists_the_new_collateral(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "old_duplicate_fallback.json"
+            save = create_league_save(ROOT, self.plain, "POR", save_path, seed=416)
+            active = canonical_with_save(self.plain, save)
+            obligation = next(item for item in save["pick_obligations"] if item.get("type") == "protected_pick")
+            primary = next(pick for pick in active["draft_picks"] if pick["id"] == obligation["primary_pick_id"])
+            duplicate_id = "legacy_duplicate_fallback"
+            legacy_canonical = json.loads(json.dumps(self.plain))
+            legacy_canonical["draft_picks"].append(
+                {
+                    **primary,
+                    "id": duplicate_id,
+                    "current_owner_team_id": obligation["sender_team_id"],
+                }
+            )
+            obligation["fallback_pick_ids"] = [duplicate_id]
+            save["locked_pick_assets"] = [duplicate_id]
+            ensure_league_save_defaults(save, legacy_canonical)
+            repaired = next(item for item in save["pick_obligations"] if item["primary_pick_id"] == primary["id"])
+            self.assertNotEqual(repaired["fallback_pick_ids"], [duplicate_id])
+            self.assertNotIn(duplicate_id, save["locked_pick_assets"])
+            repaired_canonical = canonical_with_save(legacy_canonical, save)
+            fallback = next(pick for pick in repaired_canonical["draft_picks"] if pick["id"] == repaired["fallback_pick_ids"][0])
+            self.assertTrue(protected_pick_fallback_is_distinct(primary, fallback))
+
+    def test_trade_finder_offer_is_authorized_after_the_counterparty_approves(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "finder_offer.json"
+            save = create_league_save(ROOT, self.plain, "POR", save_path, seed=414)
+            active = canonical_with_save(self.plain, save)
+            report = trade_finder_report_for_selection(
+                active,
+                save,
+                "POR",
+                "POR",
+                [{"kind": "player", "value": "Jerami Grant"}],
+                seed=1,
+            )
+            self.assertTrue(report["candidates"])
+            candidate = next(
+                item for item in report["candidates"]
+                if item["proposal"].get("to_team_id") == "team_det"
+            )
+            self.assertFalse(candidate["accepted_by_all"])
+            self.assertEqual(candidate["offer_context"]["status"], "finder_offer_pending_user_acceptance")
+            self.assertTrue(trade_apply_authorized(candidate))
+            candidate = accept_trade_finder_offer(candidate, report["for_team"]["id"])
+            self.assertIsNotNone(candidate)
+            self.assertTrue(candidate["accepted_by_all"])
+            self.assertEqual(candidate["offer_context"]["status"], "finder_offer_user_accepted")
+            save["pending_trade_proposals"] = [candidate]
+            write_save(save_path, save)
+            result = apply_trade_to_save(save_path, candidate["proposal"]["id"], date="2025-10-01")
+            self.assertEqual(result["status"], "applied")
 
     def test_draft_pick_transfer_refreshes_live_queue_and_slot_picks_do_not_prompt_for_protection(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -862,8 +951,8 @@ class DataFoundationTests(unittest.TestCase):
             bos_picks = tradeable_picks_for_team(active, "team_bos")
             protected_label = next(pick_label(active, pick) for pick in bos_picks if pick["id"] == primary["id"])
             self.assertIn("top-9 protected", protected_label)
-            self.assertIn("Transfers to GSW if in protected range", protected_label)
-            self.assertIn(f"BOS receives {fallback['season']} R1 GSW in this case", protected_label)
+            self.assertIn("GSW keeps this pick if it lands in the protected range", protected_label)
+            self.assertIn(f"BOS instead receives {fallback['season']} R1 GSW", protected_label)
             self.assertFalse(any(pick["id"] == fallback["id"] for pick in tradeable_picks_for_team(active, "team_gsw")))
             self.assertTrue(any("top-9 protected" in event.get("headline", "") for event in saved.get("league_events", [])))
             order = {
@@ -901,7 +990,7 @@ class DataFoundationTests(unittest.TestCase):
             lottery_context = order["lottery"]["odds_context_by_team"]["team_gsw"]
             self.assertIn("[owned by BOS]", lottery_context)
             self.assertIn("top-9 protected", lottery_context)
-            self.assertIn("BOS receives", lottery_context)
+            self.assertIn("BOS instead receives", lottery_context)
             resolve_pick_obligations_for_year(saved, order, str(primary["season"]))
             refresh_draft_order_from_save(order, saved)
             self.assertEqual(saved["draft_pick_overrides"][primary["id"]], "team_gsw")
@@ -1000,6 +1089,19 @@ class DataFoundationTests(unittest.TestCase):
             self.assertIsNotNone(repaired_obligation)
             self.assertNotEqual(repaired_obligation.get("fallback_pick_ids", [None])[0], gsw_pick["id"])
             self.assertTrue(validate_pick_obligation_term(active, None, repaired_obligation))
+
+            duplicate_id = "duplicate_underlying_gsw_pick"
+            duplicate = {**gsw_pick, "id": duplicate_id, "current_owner_team_id": "team_gsw"}
+            active["draft_picks"].append(duplicate)
+            duplicate_fallback = {**self_fallback, "id": "bad_duplicate_fallback", "fallback_pick_ids": [duplicate_id]}
+            self.assertFalse(validate_pick_obligation_term(active, None, duplicate_fallback))
+            repaired_duplicate = repair_protected_pick_fallback(duplicate_fallback, active, set())
+            self.assertIsNotNone(repaired_duplicate)
+            repaired_fallback = next(
+                pick for pick in active["draft_picks"]
+                if pick["id"] == repaired_duplicate["fallback_pick_ids"][0]
+            )
+            self.assertTrue(protected_pick_fallback_is_distinct(gsw_pick, repaired_fallback))
 
         with tempfile.TemporaryDirectory() as tmp:
             save_path = Path(tmp) / "swap_lifecycle.json"

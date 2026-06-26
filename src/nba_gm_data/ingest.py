@@ -1128,6 +1128,7 @@ def build_draft_picks(teams: list[Team], research_draft_picks: dict[str, Any] | 
                 notes=f"Owner-side future-pick asset from Spotrac. Description: {description}",
             )
         )
+    picks = normalize_future_pick_ledger(picks)
     for team in teams:
         for season in ["2027", "2028", "2029", "2030", "2031", "2032"]:
             for round_number in [1, 2]:
@@ -1155,6 +1156,51 @@ def build_draft_picks(teams: list[Team], research_draft_picks: dict[str, Any] | 
                     )
                 )
     return picks
+
+
+def normalize_future_pick_ledger(picks: list[DraftPick]) -> list[DraftPick]:
+    """Keep one gameplay asset for each underlying future team/year/round pick.
+
+    Spotrac's owner-side lists can show both sides of a conditional obligation. They
+    are useful research evidence, but treating each listing as a separate draft pick
+    creates duplicate assets and lets a pick become its own fallback. The transferred
+    record wins when present because it represents the currently tradeable right.
+    """
+    grouped: dict[tuple[str, int, str], list[tuple[int, DraftPick]]] = {}
+    passthrough: list[tuple[int, DraftPick]] = []
+    for index, pick in enumerate(picks):
+        original = pick.original_team_id
+        if pick.status != "verified_future_pick_reference" or not original:
+            passthrough.append((index, pick))
+            continue
+        key = (str(pick.season), int(pick.round), original)
+        grouped.setdefault(key, []).append((index, pick))
+
+    normalized: list[tuple[int, DraftPick]] = list(passthrough)
+    for (_, _, _), entries in grouped.items():
+        def priority(entry: tuple[int, DraftPick]) -> tuple[int, int, int, float, str]:
+            index, pick = entry
+            description = str(pick.protections or "").lower()
+            transferred = int(bool(pick.current_owner_team_id and pick.current_owner_team_id != pick.original_team_id))
+            conditional = int(" if " in f" {description} " or "protected" in description)
+            supported = int(not any(word in description for word in ("swap", "favorable", "conveys")))
+            return (transferred, conditional, supported, float(pick.confidence or 0.0), f"{999999 - index:06d}")
+
+        retained_index, retained = max(entries, key=priority)
+        if len(entries) > 1:
+            retained = replace(
+                retained,
+                notes=" ".join(
+                    part
+                    for part in [
+                        str(retained.notes or "").strip(),
+                        f"Gameplay ledger normalized {len(entries)} overlapping owner-side source entries into one underlying pick asset.",
+                    ]
+                    if part
+                ),
+            )
+        normalized.append((retained_index, retained))
+    return [pick for _, pick in sorted(normalized, key=lambda item: item[0])]
 
 
 def build_staff_profiles(

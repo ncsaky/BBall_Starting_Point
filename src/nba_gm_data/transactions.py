@@ -812,6 +812,16 @@ def trade_apply_authorized(proposal: dict[str, Any]) -> bool:
     if proposal.get("accepted_by_all"):
         return True
     context = proposal.get("offer_context") or {}
+    if context.get("status") == "finder_offer_pending_user_acceptance":
+        partner_id = context.get("finder_partner_team_id")
+        return bool(
+            context.get("finder_partner_accepted")
+            and partner_id
+            and any(
+                evaluation.get("perspective_team_id") == partner_id and evaluation.get("accepted")
+                for evaluation in proposal.get("evaluations", [])
+            )
+        )
     return bool(
         context.get("status") == "user_override_pending_apply"
         and context.get("created_by_user")
@@ -876,6 +886,26 @@ def pick_lookup_for_obligation(canonical_or_save: dict[str, Any], proposal: dict
     return picks
 
 
+def protected_pick_fallback_is_distinct(primary: dict[str, Any] | None, fallback: dict[str, Any] | None) -> bool:
+    """Return whether fallback collateral is a different underlying draft asset."""
+    if not primary or not fallback:
+        return False
+    if primary.get("id") == fallback.get("id"):
+        return False
+    identity = lambda pick: (
+        str(pick.get("season") or ""),
+        int(pick.get("round") or 0),
+        pick.get("original_team_id"),
+    )
+    primary_identity = identity(primary)
+    fallback_identity = identity(fallback)
+    return not (
+        all(primary_identity)
+        and all(fallback_identity)
+        and primary_identity == fallback_identity
+    )
+
+
 def pick_obligation_validation_errors(canonical_or_save: dict[str, Any], proposal: dict[str, Any] | None, term: dict[str, Any]) -> list[str]:
     if not term or term.get("type") in {None, "unprotected"}:
         return []
@@ -909,6 +939,8 @@ def pick_obligation_validation_errors(canonical_or_save: dict[str, Any], proposa
             fallback_round = int(fallback.get("round") or 0)
             if primary_round and fallback_round and fallback_round != primary_round:
                 errors.append("protected pick fallback must match the primary pick round")
+            if primary and not protected_pick_fallback_is_distinct(primary, fallback):
+                errors.append("protected pick fallback cannot represent the same underlying draft pick")
             fallback_year = pick_season_start(fallback) or 0
             if primary_year and fallback_year and fallback_year < primary_year:
                 errors.append("protected pick fallback cannot be earlier than the primary pick")
@@ -1519,11 +1551,11 @@ def pick_obligation_context_note(canonical: dict[str, Any], pick: dict[str, Any]
     beneficiary = pick.get("current_owner_team_id") if pick.get("current_owner_team_id") != sender else obligation.get("receiver_team_id")
     parts = [pick_obligation_label(obligation)]
     if sender:
-        parts.append(f"Transfers to {teams.get(sender) or team_id_fallback(sender)} if in protected range")
+        parts.append(f"{teams.get(sender) or team_id_fallback(sender)} keeps this pick if it lands in the protected range")
     fallback_id = next((pid for pid in obligation.get("fallback_pick_ids") or [] if pid), None)
     fallback = pick_by_id(canonical, fallback_id) if fallback_id else None
-    if include_fallback and fallback and beneficiary and beneficiary != sender:
-        parts.append(f"{teams.get(beneficiary) or team_id_fallback(beneficiary)} receives {pick_short_label(canonical, fallback)} in this case")
+    if include_fallback and fallback and protected_pick_fallback_is_distinct(pick, fallback) and beneficiary and beneficiary != sender:
+        parts.append(f"{teams.get(beneficiary) or team_id_fallback(beneficiary)} instead receives {pick_short_label(canonical, fallback)}")
     parts.extend(swap_notes)
     return "; ".join(part for part in parts if part)
 
@@ -1536,6 +1568,27 @@ def pick_display_label(canonical: dict[str, Any], pick: dict[str, Any], include_
     note = pick_obligation_context_note(canonical, pick, include_fallback=include_fallback)
     suffix = f"; {note}" if note else ""
     return f"{pick.get('season', '----')} R{pick.get('round', '?')} {original} ({ownership}){suffix}"
+
+
+def trade_candidate_with_current_asset_labels(canonical: dict[str, Any], candidate: dict[str, Any]) -> dict[str, Any]:
+    """Refresh mutable pick labels before presenting an offer to the user."""
+    refreshed = to_plain(candidate)
+    proposal = refreshed.get("proposal") or {}
+    for side in ("from_assets", "to_assets"):
+        for asset in proposal.get(side, []) or []:
+            if asset.get("kind") == "pick":
+                pick = pick_by_id(canonical, asset.get("id"))
+                if pick:
+                    asset["label"] = pick_display_label(canonical, pick)
+                    asset["protection_summary"] = pick.get("protection_summary") or pick.get("protections")
+            elif asset.get("kind") == "pick_swap":
+                swap = pick_swap_by_id(canonical, asset.get("id"))
+                if swap:
+                    asset["label"] = pick_swap_display_label(canonical, swap)
+    if proposal:
+        refreshed["proposal"] = proposal
+        refreshed["summary"] = proposal_summary(canonical, proposal)
+    return refreshed
 
 
 def pick_obligation_value_factor(obligations: list[dict[str, Any]]) -> float:
@@ -3529,7 +3582,7 @@ def proposal_summary(canonical: dict[str, Any], proposal: dict[str, Any]) -> str
     to_team = team_by_id(canonical, proposal["to_team_id"])["abbrev"]
     from_assets = ", ".join(asset.get("label", asset["id"]) for asset in proposal["from_assets"])
     to_assets = ", ".join(asset.get("label", asset["id"]) for asset in proposal["to_assets"])
-    return f"{from_team} sends {from_assets or 'nothing'} to {to_team}; {to_team} sends {to_assets or 'nothing'} to {from_team}."
+    return f"{from_team} sends: {from_assets or 'future considerations'}. {to_team} sends: {to_assets or 'future considerations'}."
 
 
 def deterministic_offset(*parts: str) -> int:
