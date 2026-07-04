@@ -105,6 +105,14 @@ def build_contract_ai_context(canonical: dict[str, Any] | Any, config: dict[str,
 
 
 def with_contract_context(canonical: dict[str, Any] | Any, config: dict[str, Any] | None = None) -> dict[str, Any]:
+    if (
+        isinstance(canonical, dict)
+        and canonical.get("player_contract_market_profiles")
+        and canonical.get("player_contract_preferences")
+        and canonical.get("extension_candidates") is not None
+        and canonical.get("free_agent_candidates") is not None
+    ):
+        return canonical
     canonical = with_transaction_context(canonical)
     if (
         canonical.get("player_contract_market_profiles")

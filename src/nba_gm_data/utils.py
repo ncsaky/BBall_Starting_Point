@@ -3,10 +3,12 @@ from __future__ import annotations
 import math
 import re
 import unicodedata
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterable
 
 
+@lru_cache(maxsize=20000)
 def normalize_name(name: str | None) -> str:
     if not name:
         return ""
@@ -18,14 +20,25 @@ def normalize_name(name: str | None) -> str:
     return text
 
 
-def slugify(text: str | None) -> str:
+@lru_cache(maxsize=20000)
+def _slugify_cached(text: str) -> str:
     base = normalize_name(text).replace("'", "")
     return re.sub(r"[^a-z0-9]+", "-", base).strip("-")
 
 
-def stable_id(prefix: str, *parts: object) -> str:
-    body = "-".join(slugify(str(part)) for part in parts if part is not None and str(part) != "")
+def slugify(text: str | None) -> str:
+    return _slugify_cached("" if text is None else str(text))
+
+
+@lru_cache(maxsize=50000)
+def _stable_id_cached(prefix: str, parts: tuple[str, ...]) -> str:
+    body = "-".join(slugify(part) for part in parts if part)
     return f"{prefix}_{body}" if body else prefix
+
+
+def stable_id(prefix: str, *parts: object) -> str:
+    clean_parts = tuple(str(part) for part in parts if part is not None and str(part) != "")
+    return _stable_id_cached(str(prefix), clean_parts)
 
 
 def maybe_float(value: Any) -> float | None:

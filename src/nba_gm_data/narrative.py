@@ -12,7 +12,7 @@ from .schema import CANONICAL_SEASON
 from .utils import clamp, stable_id
 
 
-NARRATIVE_PROMPT_VERSION = "narrative_v9"
+NARRATIVE_PROMPT_VERSION = "narrative_v11"
 SOCIAL_TEXT_MAX_CHARS = 760
 TAX_LINE = 187_895_000
 SECOND_APRON = 207_824_000
@@ -112,6 +112,7 @@ class OllamaNarrativeProvider:
             "prompt": prompt,
             "stream": False,
             "format": "json",
+            "think": False,
             "options": {
                 "temperature": float(settings.get("temperature") or 0.8),
                 "num_predict": int(settings.get("max_tokens") or 650),
@@ -148,6 +149,8 @@ class OllamaNarrativeProvider:
         try:
             envelope = json.loads(raw)
             content = envelope.get("response") if isinstance(envelope, dict) else None
+            if not content and isinstance(envelope, dict):
+                content = envelope.get("thinking")
             if not isinstance(content, str):
                 raise ValueError("missing response")
             return json.loads(content)
@@ -839,16 +842,33 @@ def weighted_asset_rating(assets: list[dict[str, Any]], key: str) -> float:
     return round(sum(value * weight for value, weight in values) / max(1.0, total_weight), 1)
 
 
+def team_aliases_for_context(team: dict[str, Any], abbrev: str | None) -> list[str]:
+    aliases: list[str] = []
+    if abbrev:
+        aliases.append(str(abbrev))
+    name = str(team.get("name") or "").strip()
+    if name:
+        aliases.append(name)
+        parts = name.split()
+        if len(parts) > 1:
+            aliases.append(parts[-1])
+            aliases.append(" ".join(parts[:-1]))
+    return list(dict.fromkeys(alias for alias in aliases if alias))
+
+
 def trade_side_analysis(
     team_id: str | None,
     receives: list[dict[str, Any]],
     sends: list[dict[str, Any]],
     abbrev_by_id: dict[str, str],
+    teams_by_id: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     salary_in = sum(float(asset.get("salary_millions") or 0.0) for asset in receives if asset.get("kind") == "player")
     salary_out = sum(float(asset.get("salary_millions") or 0.0) for asset in sends if asset.get("kind") == "player")
+    team_abbrev = abbrev_by_id.get(team_id or "", team_id)
     return {
-        "team": abbrev_by_id.get(team_id or "", team_id),
+        "team": team_abbrev,
+        "team_aliases": team_aliases_for_context((teams_by_id or {}).get(team_id or "") or {}, team_abbrev),
         "receives": [asset.get("label") for asset in receives],
         "sends": [asset.get("label") for asset in sends],
         "incoming_players": [asset for asset in receives if asset.get("kind") == "player"],
@@ -874,6 +894,7 @@ def trade_social_analysis(
 ) -> dict[str, Any]:
     from_team_id = details.get("from_team_id")
     to_team_id = details.get("to_team_id")
+    teams_by_id, _ = team_maps(canonical)
     active_season = (canonical.get("meta") or {}).get("active_season") or (save.get("meta") or {}).get("season")
     traits_by_player = trait_index(canonical)
     from_assets = [
@@ -902,10 +923,18 @@ def trade_social_analysis(
             hooks.append("protected pick language is present; only describe protection using the supplied labels")
     else:
         hooks.append("no picks involved; do not mention pick math")
-    for side in [
-        trade_side_analysis(to_team_id, from_assets, to_assets, abbrev_by_id),
-        trade_side_analysis(from_team_id, to_assets, from_assets, abbrev_by_id),
-    ]:
+    sides = [
+        trade_side_analysis(to_team_id, from_assets, to_assets, abbrev_by_id, teams_by_id),
+        trade_side_analysis(from_team_id, to_assets, from_assets, abbrev_by_id, teams_by_id),
+    ]
+    direction_facts = [
+        f"{side.get('team')} receives {', '.join(str(asset.get('label') or asset.get('name')) for asset in side.get('incoming_players', [])[:3]) or 'no players'}; "
+        f"sends {', '.join(str(asset.get('label') or asset.get('name')) for asset in side.get('outgoing_players', [])[:3]) or 'no players'}"
+        for side in sides
+    ]
+    if direction_facts:
+        hooks.append("Trade sides are exact: " + " | ".join(direction_facts))
+    for side in sides:
         deltas = side.get("deltas") or {}
         if any(abs(float(deltas.get(key) or 0.0)) >= 4.0 for key in ["spacing", "creation", "defense", "overall"]):
             hooks.append(
@@ -922,10 +951,7 @@ def trade_social_analysis(
             "from": abbrev_by_id.get(from_team_id or "", from_team_id),
             "to": abbrev_by_id.get(to_team_id or "", to_team_id),
         },
-        "sides": [
-            trade_side_analysis(to_team_id, from_assets, to_assets, abbrev_by_id),
-            trade_side_analysis(from_team_id, to_assets, from_assets, abbrev_by_id),
-        ],
+        "sides": sides,
         "asset_mix": {
             "players": sum(1 for asset in all_assets if asset.get("kind") == "player"),
             "picks": len(picks),
@@ -1103,7 +1129,10 @@ def extension_social_analysis(
     if cap_context.get("evidence"):
         evidence.append(str(cap_context["evidence"]))
     if playmaking_rank:
-        optional_context.append(f"[{team_abbrev} PLY rank #{int(playmaking_rank.get('rank') or 0)}, {player.get('name') or 'player'} PLY {player_playmaking:.0f}]")
+        optional_context.append(
+            f"[{team_abbrev} team playmaking rank #{int(playmaking_rank.get('rank') or 0)} league-wide; "
+            f"{player.get('name') or 'player'} player PLY {player_playmaking:.0f}]"
+        )
     if conference_context.get("evidence"):
         optional_context.append(str(conference_context["evidence"]))
     if extension_board.get("evidence"):
@@ -1117,6 +1146,7 @@ def extension_social_analysis(
         "If discussing cap pressure, use the supplied cap room and hard-cap room snippet. Never mention aprons.",
         "Only mention conference leaders if you are explicitly discussing the standings race, and only use the supplied same-conference context.",
         "Only mention extension-board context if discussing team-building priorities or unresolved teammate negotiations.",
+        "If using team playmaking rank, make clear the rank belongs to the team. The player only has a player PLY rating, not a league rank.",
         "If discussing health, cite only supplied sim injury-risk or missed-games evidence. Do not mention normal early-season GP.",
     ]
     age = float(ratings.get("age") or player.get("age") or 0.0)
@@ -1433,6 +1463,40 @@ def cache_key(mode: str, source_id: str | None, context_hash: str, persona: str 
     return stable_id("narrative", NARRATIVE_PROMPT_VERSION, mode, source_id or "source", context_hash, persona or "")
 
 
+def narrative_provider_cache_key(settings: dict[str, Any], provider: NarrativeProvider | None = None) -> str:
+    provider_name = str(getattr(provider, "name", "") or settings.get("provider") or "ollama").lower()
+    if provider_name == "ollama":
+        return "|".join(
+            [
+                "ollama",
+                str(settings.get("ollama_base_url") or "http://localhost:11434").rstrip("/"),
+                str(settings.get("ollama_model") or "llama3.1"),
+                f"tokens={int(settings.get('max_tokens') or 650)}",
+                f"temp={float(settings.get('temperature') or 0.8):.3f}",
+            ]
+        )
+    return provider_name
+
+
+def cached_social_entry_for_source(cache: dict[str, Any], item: dict[str, Any], persona: dict[str, str], provider_key: str) -> dict[str, Any] | None:
+    source_id = item.get("id")
+    if not source_id:
+        return None
+    for entry in cache.values():
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("source_item_id") != source_id:
+            continue
+        if entry.get("prompt_version") != NARRATIVE_PROMPT_VERSION:
+            continue
+        if entry.get("handle") != persona.get("handle"):
+            continue
+        if entry.get("provider_key") != provider_key:
+            continue
+        return entry
+    return None
+
+
 def build_social_prompt(context: dict[str, Any], persona: dict[str, str]) -> str:
     stance = context.get("stance") or {}
     analysis = context.get("analysis") or {}
@@ -1460,6 +1524,10 @@ def build_social_prompt(context: dict[str, Any], persona: dict[str, str]) -> str
         "If has_picks is false, do not mention picks, pick math, draft capital, swaps, or protections.\n"
         "If protected_picks is 0, do not call any pick protected.\n"
         "If only one second-round pick is involved, treat it as minor value unless analysis says otherwise.\n"
+        "For trades, use analysis.sides as the authority: incoming_players are what that team receives, outgoing_players are what it sends.\n"
+        "Never say a team acquired, received, traded for, or overpaid for a player it actually sent away.\n"
+        "Never say a team sent, moved, shipped out, or gave up a player it actually received.\n"
+        "If mentioning player salary or contract money in a trade, use only salary_millions from analysis.sides or exact salary-delta hooks.\n"
         "For trades, say what each team is plausibly trying to accomplish: fit, salary, timeline, rotation, value, or picks.\n"
         "Vary length naturally: sometimes one punchy sentence under 90 characters, sometimes 2-4 short sentences when the evidence needs room.\n"
         "Use slang only when it fits the persona. Mix positive, skeptical, funny, excited, and analytical reads across posts.\n"
@@ -1537,7 +1605,13 @@ def fallback_social_payload(item: dict[str, Any], persona: dict[str, str]) -> di
     elif kind == "player_high":
         stat = (analysis.get("stat") or "box-score").replace("_", " ")
         line = analysis.get("season_line") or {}
-        text = f"That {stat} spike matters more with the season line at {float(line.get('ppg') or 0.0):.1f}/{float(line.get('rpg') or 0.0):.1f}/{float(line.get('apg') or 0.0):.1f}. React to the actual game, not folklore."
+        if int(line.get("games") or 0) > 0:
+            text = (
+                f"That {stat} spike hits harder with the season line at "
+                f"{float(line.get('ppg') or 0.0):.1f}/{float(line.get('rpg') or 0.0):.1f}/{float(line.get('apg') or 0.0):.1f}."
+            )
+        else:
+            text = f"That {stat} spike is loud enough on its own. The box score did the talking."
     else:
         text = "The agenda merchants have enough material to be annoying and maybe right."
     return {
@@ -1709,6 +1783,11 @@ def has_banned_narrative_claim(text: str) -> bool:
         "last year's actual",
         "according to espn",
         "nba.com reports",
+        "react to the actual game",
+        "do not mention",
+        "use only supplied",
+        "context json",
+        "hard rules:",
         "roster construction implications",
         "watching closely",
         "time will tell",
@@ -1722,6 +1801,8 @@ def has_banned_narrative_claim(text: str) -> bool:
 def clean_generated_social_text(text: str) -> str:
     cleaned = " ".join(str(text or "").split())
     cleaned = re.sub(r"\[\d+\]", "", cleaned).strip()
+    cleaned = re.sub(r"\bages?\s+(\d+(?:\.\d+)?),\s*\[age\s+\1(?:\.0)?\]", r"age \1", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\bage\s+(\d+)\.0\b", r"age \1", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\b(?:second\s+apron|first\s+apron|tax\s+apron|apron\s+pain|apron)\b", "hard-cap pressure", cleaned, flags=re.IGNORECASE)
     if cleaned.startswith("["):
         close = cleaned.find("]")
@@ -1792,6 +1873,150 @@ def unsupported_cap_pressure_claim(text: str, analysis: dict[str, Any]) -> bool:
     return not any(pattern in low for pattern in room_language)
 
 
+def misstates_team_rank_as_player_rank(text: str, analysis: dict[str, Any]) -> bool:
+    if analysis.get("kind") != "extension":
+        return False
+    player = analysis.get("player") or {}
+    player_name = str(player.get("name") or "").strip()
+    team_metrics = analysis.get("team_metrics") or {}
+    team_rank = (team_metrics.get("playmaking_rank") or {}).get("rank")
+    if not player_name or not team_rank:
+        return False
+    low = str(text or "").lower()
+    try:
+        rank_i = int(team_rank)
+    except (TypeError, ValueError):
+        return False
+    rank_patterns = [rf"#\s*{rank_i}", ordinal_text(rank_i)]
+    name_tokens = [token for token in re.findall(r"[A-Za-z][A-Za-z'.-]*", player_name) if token.lower() not in {"jr", "sr", "ii", "iii", "iv"}]
+    aliases = [player_name]
+    if name_tokens:
+        aliases.append(name_tokens[-1])
+    for alias in aliases:
+        alias_pattern = re.escape(alias.lower())
+        for rank_pattern in rank_patterns:
+            if re.search(rf"{alias_pattern}[^.\n]{{0,80}}(?:ply|playmaking|playmaker)[^.\n]{{0,40}}(?:rank|ranked)?\s*{rank_pattern}", low):
+                return True
+            if re.search(rf"{alias_pattern}[^.\n]{{0,80}}(?:rank|ranked)\s*{rank_pattern}[^.\n]{{0,40}}(?:ply|playmaking|playmaker)", low):
+                return True
+    if re.search(rf"\b(?:he|she|they|you|player)\b[^.\n]{{0,60}}(?:ply|playmaking|playmaker)[^.\n]{{0,40}}(?:rank|ranked)?\s*(?:#\s*{rank_i}|{ordinal_text(rank_i)})", low):
+        return True
+    return False
+
+
+def ordinal_text(value: int) -> str:
+    suffix = "th"
+    if value % 100 not in {11, 12, 13}:
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(value % 10, "th")
+    return f"{value}{suffix}"
+
+
+def social_asset_aliases(asset: dict[str, Any]) -> list[str]:
+    aliases: list[str] = []
+    for key in ["name", "label"]:
+        value = str(asset.get(key) or "").strip()
+        if value:
+            aliases.append(value)
+    name = str(asset.get("name") or "").strip()
+    tokens = [token for token in re.findall(r"[A-Za-z][A-Za-z'.-]*", name) if token.lower() not in {"jr", "sr", "ii", "iii", "iv"}]
+    if len(tokens) >= 2 and len(tokens[-1]) >= 4:
+        aliases.append(tokens[-1])
+    return list(dict.fromkeys(alias for alias in aliases if len(alias) >= 3))
+
+
+def near_team_asset_claim(text: str, team_alias: str, asset_alias: str, verbs: list[str]) -> bool:
+    if not team_alias or not asset_alias:
+        return False
+    verb_pattern = "|".join(verbs)
+    team = re.escape(team_alias)
+    asset = re.escape(asset_alias)
+    return re.search(
+        rf"(?<![A-Za-z0-9]){team}(?![A-Za-z0-9])[^.\n]{{0,120}}\b(?:{verb_pattern})\b[^.\n]{{0,90}}(?<![A-Za-z0-9]){asset}(?![A-Za-z0-9])",
+        text,
+        flags=re.IGNORECASE,
+    ) is not None
+
+
+def wrong_trade_direction_claim(text: str, analysis: dict[str, Any]) -> bool:
+    if analysis.get("kind") != "trade":
+        return False
+    receive_verbs = [
+        "gets?",
+        "receives?",
+        "adds?",
+        "lands?",
+        "acquires?",
+        "trades?\\s+for",
+        "traded\\s+for",
+        "overpays?\\s+for",
+        "overpaid\\s+for",
+        "paid\\s+for",
+        "brings?\\s+in",
+    ]
+    send_verbs = [
+        "sends?",
+        "sent",
+        "ships?",
+        "shipped",
+        "moves?",
+        "moved",
+        "trades?\\s+away",
+        "traded\\s+away",
+        "gives?\\s+up",
+        "gave\\s+up",
+        "giving\\s+up",
+    ]
+    for side in analysis.get("sides") or []:
+        team_aliases = [str(alias) for alias in side.get("team_aliases") or [side.get("team")] if str(alias)]
+        incoming_aliases = [alias for asset in side.get("incoming_players") or [] for alias in social_asset_aliases(asset)]
+        outgoing_aliases = [alias for asset in side.get("outgoing_players") or [] for alias in social_asset_aliases(asset)]
+        for team_alias in team_aliases:
+            for alias in incoming_aliases:
+                if near_team_asset_claim(text, team_alias, alias, send_verbs):
+                    return True
+            for alias in outgoing_aliases:
+                if near_team_asset_claim(text, team_alias, alias, receive_verbs):
+                    return True
+    return False
+
+
+def unsupported_trade_salary_claim(text: str, analysis: dict[str, Any]) -> bool:
+    if analysis.get("kind") != "trade" or "$" not in str(text or ""):
+        return False
+    low = str(text or "").lower()
+    if not any(token in low for token in ["salary", "contract", "cap", "money", "payroll", "dollar", "$"]):
+        return False
+    allowed_amounts: list[float] = []
+    for side in analysis.get("sides") or []:
+        deltas = side.get("deltas") or {}
+        try:
+            delta = abs(float(deltas.get("salary_millions") or 0.0))
+            if delta >= 0.1:
+                allowed_amounts.append(delta)
+        except (TypeError, ValueError):
+            pass
+        for asset in [*(side.get("incoming_players") or []), *(side.get("outgoing_players") or [])]:
+            try:
+                amount = float(asset.get("salary_millions") or 0.0)
+            except (TypeError, ValueError):
+                amount = 0.0
+            if amount > 0:
+                allowed_amounts.append(amount)
+    if not allowed_amounts:
+        return True
+    for match in re.finditer(r"\$([0-9]+(?:\.[0-9]+)?)\s*(m|million|mil)?", str(text or ""), flags=re.IGNORECASE):
+        try:
+            mentioned = float(match.group(1))
+        except (TypeError, ValueError):
+            continue
+        unit = str(match.group(2) or "").lower()
+        if not unit and mentioned > 1_000:
+            mentioned /= 1_000_000
+        if not any(abs(mentioned - allowed) <= 0.75 for allowed in allowed_amounts):
+            return True
+    return False
+
+
 def violates_extension_context_claims(text: str, context: dict[str, Any], canonical: dict[str, Any]) -> bool:
     low = str(text or "").lower()
     analysis = context.get("analysis") or {}
@@ -1803,6 +2028,8 @@ def violates_extension_context_claims(text: str, context: dict[str, Any], canoni
     if uses_optional_context_irrelevantly(text, analysis):
         return True
     if unsupported_cap_pressure_claim(text, analysis):
+        return True
+    if misstates_team_rank_as_player_rank(text, analysis):
         return True
     player = analysis.get("player") or {}
     contract = analysis.get("contract") or {}
@@ -1891,6 +2118,10 @@ def violates_social_context_claims(text: str, context: dict[str, Any], canonical
     if violates_extension_context_claims(text, context, canonical):
         return True
     if analysis.get("kind") == "trade":
+        if wrong_trade_direction_claim(text, analysis):
+            return True
+        if unsupported_trade_salary_claim(text, analysis):
+            return True
         has_picks = bool(asset_mix.get("has_picks"))
         if not has_picks and any(token in low for token in ["pick math", "draft capital", "protected", "protection", "swap", "r1", "r2", "second-round pick", "first-round pick"]):
             return True
@@ -2060,15 +2291,19 @@ def social_cache_entry(
     persona = deterministic_persona(item.get("id") or item.get("subject"))
     context = social_context_packet(canonical, save, item, team_id=team_id)
     context_hash = stable_context_hash(context)
-    key = cache_key("social", item.get("id"), context_hash, persona["handle"])
+    settings = save["narrative_settings"]
+    active_provider = provider or provider_from_settings(settings)
+    provider_key = narrative_provider_cache_key(settings, active_provider)
+    key = cache_key("social", item.get("id"), context_hash, f"{persona['handle']}:{provider_key}")
     cache = save.setdefault("narrative_cache", {}).setdefault("social", {})
+    existing_entry = cached_social_entry_for_source(cache, item, persona, provider_key)
+    if existing_entry is not None:
+        return existing_entry
     if key in cache:
         return cache[key]
-    settings = save["narrative_settings"]
     payload = None
     source = "fallback"
     if settings.get("enabled"):
-        active_provider = provider or provider_from_settings(settings)
         try:
             payload = active_provider.generate_json(build_social_prompt(context, persona), settings)
             source = getattr(active_provider, "name", "ollama")
@@ -2108,6 +2343,7 @@ def social_cache_entry(
         "analysis": context.get("analysis") or {},
         "context_hash": context_hash,
         "prompt_version": NARRATIVE_PROMPT_VERSION,
+        "provider_key": provider_key,
     }
     cache[key] = entry
     return entry
@@ -2148,15 +2384,16 @@ def press_cache_entry(
     context = press_context_packet(canonical, save, team_id, event, base_prompt)
     context_hash = stable_context_hash(context)
     source_id = (event or {}).get("id") or base_prompt.get("topic") or team_id
-    key = cache_key("press", str(source_id), context_hash)
+    settings = save["narrative_settings"]
+    active_provider = provider or provider_from_settings(settings)
+    provider_key = narrative_provider_cache_key(settings, active_provider)
+    key = cache_key("press", str(source_id), context_hash, provider_key)
     cache = save.setdefault("narrative_cache", {}).setdefault("press", {})
     if key in cache:
         return cache[key]
-    settings = save["narrative_settings"]
     payload = None
     source = "fallback"
     if settings.get("enabled"):
-        active_provider = provider or provider_from_settings(settings)
         try:
             payload = active_provider.generate_json(build_press_prompt(context), settings)
             source = getattr(active_provider, "name", "ollama")
@@ -2174,6 +2411,7 @@ def press_cache_entry(
         "source_event_id": source_id,
         "context_hash": context_hash,
         "prompt_version": NARRATIVE_PROMPT_VERSION,
+        "provider_key": provider_key,
     }
     cache[key] = entry
     return entry

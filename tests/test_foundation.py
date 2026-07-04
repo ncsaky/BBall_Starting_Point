@@ -46,7 +46,9 @@ from nba_gm_data.health import (
 )
 from nba_gm_data.ingest import build_universe
 from nba_gm_data.narrative import (
+    NARRATIVE_PROMPT_VERSION,
     NarrativeProviderError,
+    OllamaNarrativeProvider,
     default_narrative_settings,
     narrative_status,
     press_cache_entry,
@@ -187,7 +189,7 @@ from nba_gm_data.sim import (
 )
 from nba_gm_data.storage import write_outputs
 from nba_gm_data.staff import fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, simulate_ai_staff_changes, staff_budget_for_team, staff_budget_snapshot, staff_grade, staff_market_report, staff_team_report
-from nba_gm_data.transactions import annotate_pick_obligation_context, apply_trade_to_save, canonical_with_pending_pick_terms, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, gm_report, market_trade_target_value, package_value_for_team, pick_asset_value, pick_label, pick_season_start, pick_swap_asset_value, pick_swap_display_label, player_health_risk, protected_pick_fallback_is_distinct, simulate_ai_trades, stepien_guardrail_issues, trade_apply_authorized, trade_block_report, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_pick_swaps_for_team, tradeable_picks_for_team, validate_pick_obligation_term, with_transaction_context
+from nba_gm_data.transactions import annotate_pick_obligation_context, apply_trade_to_save, buyer_offer_package_options, canonical_with_pending_pick_terms, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, gm_report, market_trade_target_value, package_value_for_team, pick_asset_value, pick_label, pick_season_start, pick_swap_asset_value, pick_swap_display_label, player_health_risk, protected_pick_fallback_is_distinct, simulate_ai_trades, stepien_guardrail_issues, trade_apply_authorized, trade_block_report, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_pick_swaps_for_team, tradeable_picks_for_team, validate_pick_obligation_term, with_transaction_context
 from nba_gm_data.traits import LEAGUE_TRAIT_RATING_COLUMNS, LEAGUE_TRAIT_RATINGS_SOURCE_ID, load_league_trait_ratings, match_league_trait_ratings
 
 
@@ -732,6 +734,27 @@ class DataFoundationTests(unittest.TestCase):
             self.assertNotIn("AI 1", text)
             self.assertNotIn("staff decisions", text)
 
+    def test_user_trade_offers_expire_after_trade_deadline(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "deadline_offer_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=417)
+            save["state"] = {"current_date": "2026-02-04", "phase": "regular_season", "legal_actions": ["trades", "advance"]}
+            save["user_trade_offers"] = [
+                {
+                    "id": "deadline_offer",
+                    "proposal": {"id": "deadline_offer", "from_team_id": "team_gsw", "to_team_id": "team_bos"},
+                    "offer_context": {"status": "pending_user_review", "created_date": "2026-02-04"},
+                }
+            ]
+            write_save(save_path, save)
+            before = pending_actions_view(self.plain, save_path)
+            self.assertEqual(before["pending_counts"]["user_trade_offers"], 1)
+            advance_save(ROOT, self.plain, save_path, to_date="2026-02-06", seed=417)
+            saved = load_save(save_path)
+            self.assertEqual(saved["user_trade_offers"][0]["offer_context"]["status"], "expired_trade_deadline")
+            after = pending_actions_view(self.plain, save_path)
+            self.assertEqual(after["pending_counts"]["user_trade_offers"], 0)
+
     def test_press_and_game_news_do_not_create_league_events(self):
         save = {"state": {"current_date": "2025-11-01"}, "news_items": [], "league_events": [], "social_feed": []}
         add_news(save, "press_conference", "GSW GM press conference: staff moves (accountable).")
@@ -773,12 +796,86 @@ class DataFoundationTests(unittest.TestCase):
             provider = FakeProvider()
             update_narrative_settings(save_path, enabled=True, provider="ollama", max_posts_per_view=4)
             first = social_feed_view(self.plain, save_path, "GSW", limit=3, narrative_provider=provider)
+            saved_after_first = load_save(save_path)
+            saved_after_first["team_records"]["team_gsw"]["wins"] += 3
+            saved_after_first["social_feed"][0]["narrative"] = {"source": "stale_hydrated_copy_should_not_affect_cache"}
+            write_save(save_path, saved_after_first)
             second = social_feed_view(self.plain, save_path, "GSW", limit=3, narrative_provider=provider)
             self.assertEqual(provider.calls, 1)
             self.assertIn("rotation fit", first["items"][0]["text"])
             self.assertEqual(first["items"][0]["text"], second["items"][0]["text"])
             status = narrative_settings_view(save_path)
             self.assertEqual(status["cache_counts"]["social"], 1)
+
+    def test_narrative_model_switch_retries_cached_fallback_and_qwen_thinking_json(self):
+        class FakeHTTPResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+            def read(self):
+                return json.dumps(
+                    {
+                        "response": "",
+                        "thinking": json.dumps(
+                            {"text": "qwen works", "author": "A", "handle": "@a", "persona": "test"}
+                        ),
+                    }
+                ).encode("utf-8")
+
+        class FailingProvider:
+            name = "ollama"
+
+            def generate_json(self, prompt, settings):
+                raise NarrativeProviderError("old model failed")
+
+        class WorkingProvider:
+            name = "ollama"
+
+            def __init__(self):
+                self.calls = 0
+
+            def generate_json(self, prompt, settings):
+                self.calls += 1
+                return {"text": "New model writes this with real rotation context."}
+
+        with patch("nba_gm_data.narrative.urllib.request.urlopen", return_value=FakeHTTPResponse()):
+            parsed = OllamaNarrativeProvider().generate_json(
+                "Return JSON.",
+                {**default_narrative_settings(), "ollama_model": "qwen3.5:4b"},
+            )
+        self.assertEqual(parsed["text"], "qwen works")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "narrative_model_switch.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=422)
+            save["social_feed"].append(
+                {
+                    "id": "social_model_switch_trade",
+                    "date": "2025-10-01",
+                    "kind": "trade",
+                    "text": "GSW completes a trade.",
+                    "author": "System",
+                    "handle": "@system",
+                    "persona": "template",
+                    "subject": "GSW completes a trade",
+                    "team_ids": ["team_gsw"],
+                    "sentiment": 0,
+                    "importance": 90,
+                }
+            )
+            write_save(save_path, save)
+            update_narrative_settings(save_path, enabled=True, provider="ollama", ollama_model="llama3.1")
+            fallback_view = social_feed_view(self.plain, save_path, "GSW", limit=1, narrative_provider=FailingProvider())
+            self.assertEqual(fallback_view["items"][0]["narrative"]["source"], "fallback")
+            update_narrative_settings(save_path, provider="ollama", ollama_model="qwen3.5:4b")
+            provider = WorkingProvider()
+            qwen_view = social_feed_view(self.plain, save_path, "GSW", limit=1, narrative_provider=provider)
+            self.assertEqual(provider.calls, 1)
+            self.assertEqual(qwen_view["items"][0]["narrative"]["source"], "ollama")
+            self.assertIn("New model writes", qwen_view["items"][0]["text"])
 
     def test_extension_social_subject_includes_contract_terms(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1095,6 +1192,31 @@ class DataFoundationTests(unittest.TestCase):
                     persona,
                 )
             )
+            wemby_rank_context = context_for("Victor Wembanyama", "SAS", 53_500_000, 5)
+            team_rank_snippet = next(
+                snippet for snippet in wemby_rank_context["analysis"]["optional_context_snippets"]
+                if "team playmaking rank" in snippet
+            )
+            rank = wemby_rank_context["analysis"]["team_metrics"]["playmaking_rank"]["rank"]
+            self.assertIn("team playmaking rank", team_rank_snippet)
+            self.assertIn("player PLY", team_rank_snippet)
+            wemby_rating_snippet = next(snippet for snippet in wemby_rank_context["analysis"]["evidence_snippets"] if "Ratings:" in snippet)
+            self.assertIsNone(
+                validate_social_payload(
+                    {"text": f"Wembanyama is PLY rank #{rank}, which makes this deal a playmaking bet. {wemby_rating_snippet}"},
+                    wemby_rank_context,
+                    self.plain,
+                    persona,
+                )
+            )
+            self.assertIsNotNone(
+                validate_social_payload(
+                    {"text": f"SAS has a team playmaking rank #{rank}, while Wembanyama is the player bet here. {team_rank_snippet} {wemby_rating_snippet}"},
+                    wemby_rank_context,
+                    self.plain,
+                    persona,
+                )
+            )
 
     def test_social_timeline_marks_fallback_posts_red_when_terminal_supports_color(self):
         item = {
@@ -1170,6 +1292,39 @@ class DataFoundationTests(unittest.TestCase):
             saved = load_save(save_path)
             cached = next(iter(saved["narrative_cache"]["social"].values()))
             self.assertEqual(cached["source"], "fallback")
+
+            save["social_feed"] = [
+                {
+                    "id": "social_gsw_player_high",
+                    "date": "2025-10-02",
+                    "kind": "player_high",
+                    "text": "Stephen Curry posted a season-high watch line: 51 points for GSW.",
+                    "author": "System",
+                    "handle": "@system",
+                    "persona": "template",
+                    "subject": "Stephen Curry posted a season-high watch line: 51 points for GSW",
+                    "team_ids": ["team_gsw"],
+                    "player_ids": ["player_stephen-curry"],
+                    "sentiment": 0.1,
+                    "importance": 95,
+                }
+            ]
+            save["league_events"] = [
+                {
+                    "id": "player_high_event",
+                    "date": "2025-10-02",
+                    "kind": "major_stat_line",
+                    "headline": "Stephen Curry recorded 51 points for GSW.",
+                    "team_ids": ["team_gsw"],
+                    "player_ids": ["player_stephen-curry"],
+                    "details": {"player_id": "player_stephen-curry", "stat": "points", "value": 51},
+                }
+            ]
+            save["narrative_cache"] = {"version": NARRATIVE_PROMPT_VERSION, "social": {}, "press": {}}
+            write_save(save_path, save)
+            high_view = social_feed_view(self.plain, save_path, "GSW", limit=1, narrative_provider=FailingProvider())
+            self.assertNotIn("React to the actual game", high_view["items"][0]["text"])
+            self.assertNotIn("folklore", high_view["items"][0]["text"])
 
     def test_narrative_validators_reject_unsafe_or_malformed_output(self):
         save = {"version": "league_save_v1", "state": {"current_date": "2025-10-01", "phase": "regular_season"}, "team_records": {}}
@@ -1252,6 +1407,9 @@ class DataFoundationTests(unittest.TestCase):
         persona = {"author": "Test", "handle": "@test", "persona": "tester"}
         self.assertIsNone(validate_social_payload({"text": "What does this mean for ORL's playoff push?"}, context, self.plain, persona))
         self.assertIsNone(validate_social_payload({"text": "The pick math makes this whole trade hilarious."}, context, self.plain, persona))
+        self.assertIsNone(validate_social_payload({"text": f"BOS sent {gsw_player['name']} away for cleaner role math."}, context, self.plain, persona))
+        self.assertIsNone(validate_social_payload({"text": f"The Celtics did not overpay for {bos_player['name']} here."}, context, self.plain, persona))
+        self.assertIsNone(validate_social_payload({"text": f"{gsw_player['name']}'s salary is $999M, so the cap sheet is cooked."}, context, self.plain, persona))
         self.assertIsNotNone(validate_social_payload({"text": "GSW got cleaner role math, but BOS has to justify the roster swing fast."}, context, self.plain, persona))
 
     def test_narrative_rejects_protected_pick_claim_without_protected_pick_context(self):
@@ -2119,6 +2277,44 @@ class DataFoundationTests(unittest.TestCase):
             self.assertEqual(retraded["draft_pick_overrides"][gsw_pick["id"]], "team_nyk")
             self.assertEqual(retraded["draft_pick_overrides"][bos_pick["id"]], "team_gsw")
             self.assertEqual(next(item for item in retraded["pick_obligations"] if item["id"] == "test_swap_right")["status"], "resolved_swap_exercised")
+
+    def test_ai_offer_packages_can_create_pick_swap_sweeteners(self):
+        active = with_transaction_context(self.plain)
+        buyer = next(team for team in active["teams"] if team["abbrev"] == "CLE")
+        seller = next(team for team in active["teams"] if team["abbrev"] == "NOP")
+        target = next(player for player in active["players"] if player["normalized_name"] == "deandre jordan")
+        self.assertEqual(target["team_id"], seller["id"])
+        packages = buyer_offer_package_options(
+            active,
+            buyer,
+            seller,
+            target,
+            seed=5,
+            max_results=12,
+            max_player_options=6,
+            allow_new_pick_swaps=True,
+        )
+        swap_package = next((package for package in packages if package.get("pick_obligation_terms")), None)
+        self.assertIsNotNone(swap_package)
+        term = swap_package["pick_obligation_terms"][0]
+        self.assertEqual(term["type"], "pick_swap")
+        self.assertEqual(term["sender_team_id"], buyer["id"])
+        self.assertEqual(term["receiver_team_id"], seller["id"])
+        self.assertTrue(validate_pick_obligation_term(active, None, term))
+        preview = canonical_with_pending_pick_terms(active, [term])
+        report = evaluate_trade(
+            preview,
+            seller["abbrev"],
+            buyer["abbrev"],
+            [{"kind": "player", "value": target["name"]}],
+            swap_package["assets"],
+            seed=5,
+            context_ready=True,
+        )
+        report = trade_result_with_pick_terms(report, [term])
+        self.assertTrue(any(asset["kind"] == "pick_swap" for asset in report["proposal"]["to_assets"]))
+        self.assertIn("pick_obligation_terms", report)
+        self.assertIn("swap right", trade_headline_from_payload(report["proposal"]))
 
     def test_pick_obligation_repair_creates_fallback_and_swap_direction_can_be_negative(self):
         synthetic = {

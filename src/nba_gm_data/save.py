@@ -815,6 +815,7 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
     if current_date:
         save.setdefault("state", {})["phase"] = phase_for_date(current_date)
         save["state"]["legal_actions"] = legal_actions_for_date(current_date)
+        expire_user_trade_offers_after_deadline(save, current_date)
     clean_free_agency_state(save, save.get("meta", {}).get("season"))
     if canonical is not None:
         save.setdefault("team_records", initial_team_records(canonical))
@@ -916,7 +917,8 @@ def save_active_contract_season(save: dict[str, Any]) -> str:
 
 
 def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -> dict[str, Any]:
-    canonical = deepcopy(to_plain(canonical))
+    canonical = deepcopy(canonical) if isinstance(canonical, dict) else to_plain(canonical)
+    canonical["_allow_internal_caches"] = True
     if not is_league_save(save):
         return canonical
     active_season = save_active_contract_season(save)
@@ -1076,12 +1078,14 @@ def advance_save(root: str | Path, canonical: dict[str, Any] | Any, save_path: s
         context["schedule"] = schedule_for_save(root, save)
         context["indices"] = build_sim_indices(context)
         context["indices"]["coach_by_team"] = save_coach_ratings(sim_canonical, save)
+        simulated_game_ids = set(save.get("schedule_state", {}).get("simulated_game_ids", []))
         for game in scheduled_games_between(root, save, current, target):
             game_id = str(game.get("externalGameId"))
-            if game_id in set(save.get("schedule_state", {}).get("simulated_game_ids", [])):
+            if game_id in simulated_game_ids:
                 continue
             result = to_plain(sim_game_with_context(context, game_id, mode="sandbox-sim", seed=effective_seed))
             record_game_result(save, canonical, game, result)
+            simulated_game_ids.add(game_id)
         development_canonical = canonical_with_save(canonical, save)
         for month in development_months_between(current, target):
             if month in save.get("applied_development_months", []):
@@ -1100,6 +1104,7 @@ def advance_save(root: str | Path, canonical: dict[str, Any] | Any, save_path: s
             )
             add_notable_development_social(save, development_canonical, development.get("events", []), month)
     set_save_date_phase(save, target)
+    expire_user_trade_offers_after_deadline(save, target)
     if save["state"]["phase"] in {"draft_lottery", "draft", "free_agency"}:
         prepare_free_agency_pool(canonical, save)
     elif save["state"]["phase"] in {"preseason", "regular_season", "training_camp"}:
@@ -2780,6 +2785,7 @@ def complete_offseason_and_rollover(root: str | Path, canonical: dict[str, Any] 
     save["playoff_state"] = {}
     save["pending_ai_actions"] = []
     save["pending_trade_proposals"] = []
+    save["user_trade_offers"] = []
     save["pending_contract_negotiations"] = []
     save["pending_draft_selections"] = []
     save["applied_development_months"] = []
@@ -3265,15 +3271,18 @@ def filter_result_to_active_game_rosters(save: dict[str, Any], canonical: dict[s
     game_teams = {home_id, away_id}
     free_agents = set(save.get("free_agent_player_ids") or [])
     retired = set(save.get("retired_player_ids") or [])
-    active = canonical_with_save(canonical, save)
+    roster_overrides = save.get("roster_overrides") or {}
     active_team_by_player = {
         player.get("id"): player.get("team_id")
-        for player in active.get("players", [])
+        for player in [*canonical.get("players", []), *save.get("generated_players", [])]
         if player.get("id")
-        and player.get("team_id") in game_teams
         and player.get("id") not in free_agents
         and player.get("id") not in retired
+        and (roster_overrides.get(player.get("id"), player.get("team_id")) in game_teams)
     }
+    for player_id, team_id in roster_overrides.items():
+        if team_id in game_teams and player_id not in free_agents and player_id not in retired:
+            active_team_by_player[player_id] = team_id
     filtered = [
         line for line in lines
         if line.get("player_id")
@@ -3465,6 +3474,7 @@ def update_narrative_settings(
     save = load_save(save_path)
     ensure_narrative_state(save)
     settings = dict(save.get("narrative_settings") or {})
+    previous_settings = normalize_narrative_settings(settings)
     if enabled is not None:
         settings["enabled"] = bool(enabled)
     if provider is not None:
@@ -3478,7 +3488,13 @@ def update_narrative_settings(
     if max_posts_per_view is not None:
         settings["max_posts_per_view"] = max_posts_per_view
     save["narrative_settings"] = normalize_narrative_settings(settings)
+    changed_generation_backend = any(
+        previous_settings.get(key) != save["narrative_settings"].get(key)
+        for key in ["provider", "ollama_base_url", "ollama_model", "max_tokens", "temperature"]
+    )
     if reset_cache:
+        reset_narrative_cache(save)
+    elif changed_generation_backend:
         reset_narrative_cache(save)
     write_save(save_path, save)
     return narrative_settings_view(save_path, test_connection=test_connection)
@@ -3824,6 +3840,27 @@ def queue_user_trade_offers(save: dict[str, Any], offers: list[dict[str, Any]], 
         queued += 1
     if queued:
         add_news(save, "trade_offer", f"{queued} AI trade offer(s) arrived for your review.", date_value=date_value)
+
+
+def expire_user_trade_offers_after_deadline(save: dict[str, Any], current_date: str | None = None) -> int:
+    current_date = current_date or save.get("state", {}).get("current_date")
+    if not current_date:
+        return 0
+    try:
+        deadline = trade_deadline_date(season_start_year_from_date(str(current_date)))
+    except Exception:
+        return 0
+    if str(current_date) <= deadline:
+        return 0
+    expired = 0
+    for offer in save.get("user_trade_offers", []) or []:
+        context = offer.setdefault("offer_context", {})
+        if context.get("status") != "pending_user_review":
+            continue
+        context["status"] = "expired_trade_deadline"
+        context["expired_date"] = str(current_date)
+        expired += 1
+    return expired
 
 
 def add_monthly_social_digest(canonical: dict[str, Any], save: dict[str, Any], from_date: str, through_date: str) -> None:
@@ -4497,6 +4534,7 @@ def apply_development_events_to_traits(canonical: dict[str, Any], events: list[d
         if key in deltas:
             trait["value"] = round(clamp(float(trait.get("value") or 50.0) + deltas[key], 0, 100), 3)
             trait["notes"] = f"{trait.get('notes', '')} Save-state development deltas applied.".strip()
+    canonical.pop("_trait_values_by_player", None)
 
 
 def apply_save_rotation_projection(canonical: dict[str, Any], save: dict[str, Any]) -> None:
@@ -4852,9 +4890,35 @@ def percentage_stat(totals: dict[str, Any], made_key: str, attempt_key: str) -> 
     return round(float((totals or {}).get(made_key) or 0.0) / attempts * 100.0, 1)
 
 
+def trait_values_by_player(canonical: dict[str, Any]) -> dict[str, dict[str, float]]:
+    cached = canonical.get("_trait_values_by_player")
+    if isinstance(cached, dict):
+        return cached
+    values: dict[str, dict[str, float]] = {}
+    for trait in canonical.get("traits", []):
+        player_id = trait.get("player_id")
+        trait_key = trait.get("trait_key")
+        if not player_id or not trait_key:
+            continue
+        values.setdefault(player_id, {})[trait_key] = float(trait.get("value") or 50.0)
+    if canonical.get("_allow_internal_caches"):
+        canonical["_trait_values_by_player"] = values
+    return values
+
+
+def players_by_id_index(canonical: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    cached = canonical.get("_players_by_id")
+    if isinstance(cached, dict):
+        return cached
+    players = {player.get("id"): player for player in canonical.get("players", []) if player.get("id")}
+    if canonical.get("_allow_internal_caches"):
+        canonical["_players_by_id"] = players
+    return players
+
+
 def player_attribute_summary(canonical: dict[str, Any], player_id: str) -> dict[str, float]:
-    traits = {trait.get("trait_key"): float(trait.get("value") or 50.0) for trait in canonical.get("traits", []) if trait.get("player_id") == player_id}
-    player = next((item for item in canonical.get("players", []) if item.get("id") == player_id), {})
+    traits = trait_values_by_player(canonical).get(player_id, {})
+    player = players_by_id_index(canonical).get(player_id, {})
     minutes = display_minutes_projection(player)
 
     def avg(keys: list[str], default: float = 50.0) -> float:
@@ -6301,14 +6365,24 @@ def contract_last_season(contract: dict[str, Any]) -> str | None:
 def strategic_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any], free_agents: list[str], next_season: str, seed: int) -> set[str]:
     active = canonical_with_save(canonical, save)
     teams = sorted(canonical.get("teams", []), key=lambda item: item["abbrev"])
+    roster_by_team: dict[str, list[dict[str, Any]]] = {
+        team["id"]: [player for player in active.get("players", []) if player.get("team_id") == team["id"]]
+        for team in teams
+    }
+    cap_room_by_team: dict[str, dict[str, float]] = {}
+    for team in teams:
+        cap = team_cap_summary(active, save, team["id"], season=next_season)
+        cap_room_by_team[team["id"]] = {
+            "tax": float(cap.get("tax_space_millions") or 0.0) * 1_000_000,
+            "hard": float(cap.get("hard_cap_space_millions") or 0.0) * 1_000_000,
+        }
     candidates = [
         player for player in active.get("players", [])
         if player["id"] in set(free_agents) and player["id"] not in set(save.get("retired_player_ids", []))
     ]
     signed: set[str] = set()
     for team in teams:
-        active = canonical_with_save(canonical, save)
-        roster = [player for player in active.get("players", []) if player.get("team_id") == team["id"]]
+        roster = roster_by_team.setdefault(team["id"], [])
         open_slots = max(0, 17 - len(roster))
         if open_slots <= 0:
             continue
@@ -6322,9 +6396,9 @@ def strategic_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any
             if score < 8.5:
                 continue
             salary = strategic_signing_salary(player, score)
-            cap = team_cap_summary(canonical_with_save(canonical, save), save, team["id"], season=next_season)
-            tax_space = float(cap.get("tax_space_millions") or 0.0) * 1_000_000
-            hard_space = float(cap.get("hard_cap_space_millions") or 0.0) * 1_000_000
+            cap_room = cap_room_by_team.setdefault(team["id"], {"tax": 0.0, "hard": 0.0})
+            tax_space = cap_room["tax"]
+            hard_space = cap_room["hard"]
             minimum_salary = 2_250_000
             if salary > hard_space:
                 if len(roster) < ROSTER_MINIMUM:
@@ -6365,6 +6439,9 @@ def strategic_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any
                     "notes": "AI offseason signing from roster need, player role, salary scale, and deterministic fit noise.",
                 }
             )
+            cap_room["tax"] -= salary
+            cap_room["hard"] -= salary
+            roster.append({**player, "team_id": team["id"], "team_abbrev": team.get("abbrev")})
             maybe_add_major_free_agent_news(save, team, player, salary, next_season)
     return signed
 
@@ -6664,6 +6741,10 @@ def strategic_signing_salary(player: dict[str, Any], score: float) -> int:
 def auto_fill_rosters(canonical: dict[str, Any], save: dict[str, Any], free_agents: list[str], next_season: str, seed: int) -> set[str]:
     active = canonical_with_save(canonical, save)
     teams = sorted(canonical.get("teams", []), key=lambda item: item["abbrev"])
+    roster_by_team: dict[str, list[dict[str, Any]]] = {
+        team["id"]: [player for player in active.get("players", []) if player.get("team_id") == team["id"]]
+        for team in teams
+    }
     available = [
         player for player in active.get("players", [])
         if player["id"] in set(free_agents) and player["id"] not in set(save.get("retired_player_ids", []))
@@ -6671,8 +6752,7 @@ def auto_fill_rosters(canonical: dict[str, Any], save: dict[str, Any], free_agen
     available.sort(key=lambda player: (-display_minutes_projection(player), player["name"]))
     signed: set[str] = set()
     for team in teams:
-        active = canonical_with_save(canonical, save)
-        roster = [player for player in active.get("players", []) if player.get("team_id") == team["id"]]
+        roster = roster_by_team.setdefault(team["id"], [])
         while len(roster) < ROSTER_MINIMUM:
             candidate = next((player for player in available if player["id"] not in signed), None)
             if candidate is None:
