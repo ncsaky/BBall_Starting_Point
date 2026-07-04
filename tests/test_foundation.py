@@ -11,6 +11,7 @@ from pathlib import Path
 from collections import Counter
 from unittest.mock import patch
 
+import nba_gm_data.transactions as transactions_module
 from nba_gm_data.assets import install_loading_assets
 from nba_gm_data.animation import auto_frame_size, colorize_frame, default_video_path, load_animation_frames
 from nba_gm_data.cli import load_or_build, main as cli_main
@@ -44,15 +45,29 @@ from nba_gm_data.health import (
     simulate_health,
 )
 from nba_gm_data.ingest import build_universe
+from nba_gm_data.narrative import (
+    NarrativeProviderError,
+    default_narrative_settings,
+    narrative_status,
+    press_cache_entry,
+    social_context_packet,
+    validate_press_payload,
+    validate_social_payload,
+)
 from nba_gm_data.research import existing_game_boxscores
 from nba_gm_data.save import (
     advance_save,
+    add_league_event,
+    add_news,
     annotate_lottery_odds_context,
     box_score_view,
     calendar_view,
     complete_offseason_and_rollover,
     create_league_save,
+    ai_extension_due_date,
+    ai_extension_team_pass_outlook,
     ensure_league_save_defaults,
+    extension_headline_with_terms,
     hold_press_conference,
     league_events_view,
     league_leaders,
@@ -60,6 +75,7 @@ from nba_gm_data.save import (
     load_save,
     lottery_seed,
     morale_report,
+    narrative_settings_view,
     offseason_status,
     pending_actions_view,
     apply_ai_staff_recommendations,
@@ -67,6 +83,7 @@ from nba_gm_data.save import (
     playoff_picture,
     playoff_leaders,
     cap_lines_for_season,
+    process_ai_extensions,
     process_ai_actions,
     propose_trade_to_save,
     quick_sim_current_season,
@@ -81,6 +98,7 @@ from nba_gm_data.save import (
     start_playoffs,
     team_dashboard,
     write_save,
+    update_narrative_settings,
     canonical_with_save,
     merge_health_results,
     maybe_queue_rare_drama,
@@ -94,6 +112,8 @@ from nba_gm_data.save import (
     team_rotation_projection,
     team_cap_summary,
     player_attribute_summary,
+    process_inseason_released_free_agent_signings,
+    record_game_result,
 )
 from nba_gm_data.play import (
     box_score_influence,
@@ -105,6 +125,7 @@ from nba_gm_data.play import (
     deterministic_random_team,
     draft_trade_offer_assets,
     extension_safe_year_limit,
+    free_agent_durability_flag,
     free_agency_user_offer_limit,
     initialize_free_agency_market,
     league_trait_rows,
@@ -117,13 +138,19 @@ from nba_gm_data.play import (
     print_lottery,
     print_prospect_line,
     print_home,
+    press_room,
     print_league_trait_table,
     print_trade_offer_details,
+    social_timeline_lines,
+    social_timeline_text,
     refresh_live_draft_state_ownership,
     signing_cap_check,
     sync_live_draft_state_to_saved_order,
     prospect_scout_display,
     accept_trade_finder_offer,
+    attach_pick_terms_to_trade,
+    apply_saved_draft_order_to_draft,
+    best_ai_draft_trade_candidate,
     trade_finder_report_for_selection,
 )
 from nba_gm_data.schema import TradeProposal, to_plain
@@ -334,6 +361,7 @@ class DataFoundationTests(unittest.TestCase):
         meta_report = self.plain["meta"]["rating_calibration_report"]
         self.assertEqual(meta_report["matched_count"], report["matched_count"])
         self.assertGreaterEqual(meta_report["adjusted_trait_count"], 5000)
+        self.assertGreater(meta_report["fringe_role_cap_adjusted_player_count"], 0)
         self.assertEqual(meta_report["source_id"], LEAGUE_TRAIT_RATINGS_SOURCE_ID)
         self.assertIn(LEAGUE_TRAIT_RATINGS_SOURCE_ID, {source.id for source in self.universe.sources})
 
@@ -371,6 +399,11 @@ class DataFoundationTests(unittest.TestCase):
         self.assertGreaterEqual(summaries["trae young"]["passing"], 82)
         self.assertGreaterEqual(summaries["jayson tatum"]["versatility"], 50)
         self.assertLess(summaries["collin gillespie"]["overall"], 62)
+        self.assertLess(summaries["tyty washington jr"]["overall"], 56)
+        self.assertLess(summaries["tyty washington jr"]["defense"], 62)
+        self.assertLessEqual(summaries["javon small"]["passing"], 60)
+        self.assertLessEqual(summaries["chucky hepburn"]["rim_pressure"], 54)
+        self.assertGreater(summaries["matisse thybulle"]["defense"], 75)
 
     def test_manual_player_physical_overrides_apply(self):
         players = {player.normalized_name: player for player in self.universe.players}
@@ -545,6 +578,7 @@ class DataFoundationTests(unittest.TestCase):
             save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=404)
             self.assertGreaterEqual(len(save.get("free_agent_player_ids", [])), 30)
             self.assertGreaterEqual(len(save.get("startup_free_agents", [])), 30)
+            self.assertIn("released_free_agents", save)
             self.assertIn("league_events", save)
             self.assertIn("user_trade_offers", save)
             self.assertIn("pick_obligations", save)
@@ -556,6 +590,95 @@ class DataFoundationTests(unittest.TestCase):
             if len(generated_startup) >= 20:
                 last_names = [player["name"].split()[-1] for player in generated_startup]
                 self.assertGreaterEqual(len(set(last_names)), min(len(last_names), 20))
+
+    def test_inseason_released_good_free_agent_gets_ai_signing_next_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "released_fa_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=405)
+            active = canonical_with_save(self.plain, save)
+            curry = next(player for player in active["players"] if player["name"] == "Stephen Curry")
+            was = next(team for team in active["teams"] if team["abbrev"] == "WAS")
+            for player in active["players"]:
+                if player.get("team_id") == was["id"]:
+                    save.setdefault("roster_overrides", {})[player["id"]] = None
+            save["roster_overrides"][curry["id"]] = None
+            save.setdefault("free_agent_player_ids", []).append(curry["id"])
+            save["free_agent_player_ids"] = sorted(set(save["free_agent_player_ids"]))
+            save.setdefault("released_free_agents", {})[curry["id"]] = {
+                "player_id": curry["id"],
+                "player_name": curry["name"],
+                "waived_by_team_id": "team_gsw",
+                "waived_by_team_abbrev": "GSW",
+                "release_date": "2025-10-20",
+                "status": "available",
+            }
+            signed = process_inseason_released_free_agent_signings(self.plain, save, seed=405, date_value="2025-10-22")
+            self.assertIn(curry["id"], signed)
+            self.assertNotIn(curry["id"], save["free_agent_player_ids"])
+            self.assertNotEqual(save["roster_overrides"][curry["id"]], "team_gsw")
+            self.assertNotEqual(save["roster_overrides"][curry["id"]], save["released_free_agents"][curry["id"]]["waived_by_team_id"])
+            self.assertEqual(save["released_free_agents"][curry["id"]]["status"], "signed")
+            self.assertEqual(save["contract_overrides"][curry["id"]]["status"], "ai_inseason_released_free_agent_signing")
+
+    def test_inseason_released_fringe_free_agent_is_not_forced_signed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "released_depth_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=406)
+            player_id = save["startup_free_agents"][0]
+            player = next(player for player in canonical_with_save(self.plain, save)["players"] if player["id"] == player_id)
+            save.setdefault("released_free_agents", {})[player_id] = {
+                "player_id": player_id,
+                "player_name": player["name"],
+                "waived_by_team_id": "team_gsw",
+                "release_date": "2025-10-20",
+                "status": "available",
+            }
+            signed = process_inseason_released_free_agent_signings(self.plain, save, seed=406, date_value="2025-10-22")
+            self.assertNotIn(player_id, signed)
+            self.assertIn(player_id, save["free_agent_player_ids"])
+            self.assertEqual(save["released_free_agents"][player_id]["status"], "available")
+
+    def test_free_agent_player_lines_do_not_create_ghost_stats(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "ghost_stats_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=407)
+            active = canonical_with_save(self.plain, save)
+            curry = next(player for player in active["players"] if player["name"] == "Stephen Curry")
+            gsw = next(team for team in active["teams"] if team["abbrev"] == "GSW")
+            bos = next(team for team in active["teams"] if team["abbrev"] == "BOS")
+            save.setdefault("roster_overrides", {})[curry["id"]] = None
+            save.setdefault("free_agent_player_ids", []).append(curry["id"])
+            save["player_season_stats"][curry["id"]] = {
+                "player_id": curry["id"],
+                "player_name": curry["name"],
+                "team_id": gsw["id"],
+                "team_abbrev": "GSW",
+                "games": 1,
+                "game_ids": ["old_game"],
+                "points": 30.0,
+                "rebounds": 5.0,
+                "assists": 8.0,
+            }
+            result = {
+                "game_id": "ghost_game",
+                "home_team_id": gsw["id"],
+                "away_team_id": bos["id"],
+                "home_score": 110,
+                "away_score": 100,
+                "team_lines": [
+                    {"team_id": bos["id"], "team_abbrev": "BOS", "points": 100},
+                    {"team_id": gsw["id"], "team_abbrev": "GSW", "points": 110},
+                ],
+                "player_lines": [
+                    {"player_id": curry["id"], "player_name": curry["name"], "team_id": gsw["id"], "team_abbrev": "GSW", "minutes": 34, "points": 40, "rebounds": 4, "assists": 9},
+                ],
+            }
+            record_game_result(save, self.plain, {"externalGameId": "ghost_game", "gameDate": "2025-10-22"}, result)
+            self.assertEqual(save["player_season_stats"][curry["id"]]["games"], 1)
+            self.assertEqual(save["player_season_stats"][curry["id"]]["game_ids"], ["old_game"])
+            self.assertFalse(any(log.get("player_id") == curry["id"] and log.get("game_id") == "ghost_game" for log in save.get("player_game_logs", [])))
+            saved_result = next(item for item in save["game_results"] if item["game_id"] == "ghost_game")
+            self.assertEqual(saved_result["player_lines"], [])
 
     def test_locked_pick_obligations_block_trade_legality_and_value(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -578,15 +701,751 @@ class DataFoundationTests(unittest.TestCase):
             save_path = Path(tmp) / "home_pending_save.json"
             save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=410)
             save["pending_ai_actions"] = [{"id": "ai_action_test"}]
+            save["news_items"].append({"id": "news_home_test", "date": "2025-10-01", "kind": "trade", "headline": "GSW made a factual league move.", "status": "unread"})
+            add_league_event(save, "trade", "GSW made a factual league move.", date_value="2025-10-01")
+            save["social_feed"].append(
+                {
+                    "id": "social_home_test",
+                    "date": "2025-10-01",
+                    "kind": "trade",
+                    "text": "GSW timeline item should stay off the home dashboard.",
+                    "author": "Test",
+                    "handle": "@test",
+                    "persona": "test",
+                    "subject": "GSW timeline item",
+                    "team_ids": ["team_gsw"],
+                    "sentiment": 0,
+                    "importance": 99,
+                }
+            )
             write_save(save_path, save)
             with redirect_stdout(StringIO()) as output:
                 print_home(ROOT, self.plain, save_path)
             text = output.getvalue()
             self.assertIn("Pending: user offers 0", text)
             self.assertIn("11. Review AI trade offers to you", text)
+            self.assertIn("Recent league events", text)
+            self.assertNotIn("Recent league news", text)
+            self.assertNotIn("Top of the timeline", text)
+            self.assertNotIn("@test", text)
             self.assertNotIn("Pending AI / league actions", text)
             self.assertNotIn("AI 1", text)
             self.assertNotIn("staff decisions", text)
+
+    def test_press_and_game_news_do_not_create_league_events(self):
+        save = {"state": {"current_date": "2025-11-01"}, "news_items": [], "league_events": [], "social_feed": []}
+        add_news(save, "press_conference", "GSW GM press conference: staff moves (accountable).")
+        add_news(save, "game_result", "GSW 120, LAL 118.")
+        add_news(save, "extension", "GSW extends Stephen Curry to $40.0M x 1.")
+        headlines = [event.get("headline") for event in save.get("league_events", [])]
+        self.assertEqual(headlines, ["GSW extends Stephen Curry to $40.0M x 1."])
+
+    def test_narrative_social_generation_is_lazy_cached_and_optional(self):
+        class FakeProvider:
+            name = "fake"
+
+            def __init__(self):
+                self.calls = 0
+
+            def generate_json(self, prompt, settings):
+                self.calls += 1
+                return {"text": "GSW trade math is spicy, but the rotation fit has to prove it quickly."}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "narrative_social.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=411)
+            save["social_feed"].append(
+                {
+                    "id": "social_gsw_trade",
+                    "date": "2025-10-01",
+                    "kind": "trade",
+                    "text": "GSW completes a trade.",
+                    "author": "System",
+                    "handle": "@system",
+                    "persona": "template",
+                    "subject": "GSW completes a trade",
+                    "team_ids": ["team_gsw"],
+                    "sentiment": 0,
+                    "importance": 90,
+                }
+            )
+            write_save(save_path, save)
+            provider = FakeProvider()
+            update_narrative_settings(save_path, enabled=True, provider="ollama", max_posts_per_view=4)
+            first = social_feed_view(self.plain, save_path, "GSW", limit=3, narrative_provider=provider)
+            second = social_feed_view(self.plain, save_path, "GSW", limit=3, narrative_provider=provider)
+            self.assertEqual(provider.calls, 1)
+            self.assertIn("rotation fit", first["items"][0]["text"])
+            self.assertEqual(first["items"][0]["text"], second["items"][0]["text"])
+            status = narrative_settings_view(save_path)
+            self.assertEqual(status["cache_counts"]["social"], 1)
+
+    def test_extension_social_subject_includes_contract_terms(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "extension_social_terms.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=418)
+            contract = {"annual_salary": 25_000_000, "years": 4, "original_contract_years": 4}
+            save["league_events"].append(
+                {
+                    "id": "extension_terms_event",
+                    "date": "2025-12-02",
+                    "kind": "extension",
+                    "headline": "UTA extends Keyonte George.",
+                    "team_ids": ["team_uta"],
+                    "player_ids": [],
+                    "importance": 0.7,
+                    "details": {"contract": contract, "annual_salary": 25_000_000, "years": 4},
+                }
+            )
+            save["social_feed"].append(
+                {
+                    "id": "extension_terms_social",
+                    "date": "2025-12-02",
+                    "kind": "extension",
+                    "text": "UTA extends Keyonte George. The extension table got serious.",
+                    "author": "System",
+                    "handle": "@system",
+                    "persona": "template",
+                    "subject": "UTA extends Keyonte George.",
+                    "team_ids": ["team_uta"],
+                    "sentiment": 0,
+                    "importance": 76,
+                }
+            )
+            write_save(save_path, save)
+            update_narrative_settings(save_path, enabled=True, provider="fallback")
+            view = social_feed_view(self.plain, save_path, "UTA", limit=1)
+            self.assertIn("UTA extends Keyonte George to $25M x 4", view["items"][0]["narrative"]["display_subject"])
+            self.assertNotIn("UTA extends Keyonte George to $25M x 4", view["items"][0]["text"])
+
+    def test_extension_social_requires_sim_evidence_for_health_money_position_and_conference_claims(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "extension_social_context.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=421)
+            for team_id, wins, losses in [
+                ("team_nyk", 50, 20),
+                ("team_bos", 45, 25),
+                ("team_tor", 38, 32),
+                ("team_okc", 52, 18),
+                ("team_lac", 47, 23),
+                ("team_sac", 1, 5),
+            ]:
+                save["team_records"][team_id]["wins"] = wins
+                save["team_records"][team_id]["losses"] = losses
+            players = {player["name"]: player for player in self.plain["players"]}
+            persona = {"author": "Test", "handle": "@test", "persona": "tester"}
+
+            def context_for(player_name, team_abbrev, annual, years, extra_events=None):
+                player = players[player_name]
+                team_id = player["team_id"]
+                event = {
+                    "id": f"extension_context_{player['id']}",
+                    "date": "2025-11-01",
+                    "kind": "extension",
+                    "headline": f"{team_abbrev} extends {player_name} to ${annual / 1_000_000:.1f}M x {years}.",
+                    "team_ids": [team_id],
+                    "player_ids": [player["id"]],
+                    "importance": 0.8,
+                    "details": {
+                        "player_id": player["id"],
+                        "team_id": team_id,
+                        "annual_salary": annual,
+                        "years": years,
+                        "contract": {"annual_salary": annual, "years": years, "original_contract_years": years},
+                    },
+                }
+                item = {
+                    "id": f"social_{player['id']}",
+                    "date": "2025-11-01",
+                    "kind": "extension",
+                    "text": event["headline"],
+                    "subject": event["headline"],
+                    "team_ids": [team_id],
+                    "player_ids": [player["id"]],
+                }
+                local_save = {**save, "league_events": [event, *(extra_events or [])]}
+                return social_context_packet(self.plain, local_save, item, team_id=team_id)
+
+            def context_with_cap(context, evidence, rows, posture):
+                adjusted = json.loads(json.dumps(context))
+                cap_context = {"rows": rows, "posture": posture, "evidence": evidence}
+                adjusted["analysis"]["team_metrics"]["cap_context"] = cap_context
+                adjusted["analysis"]["evidence_snippets"] = [
+                    snippet
+                    for snippet in adjusted["analysis"]["evidence_snippets"]
+                    if not str(snippet).startswith("[Cap:")
+                ] + [evidence]
+                return adjusted
+
+            zion_context = context_for("Zion Williamson", "NOP", 48_100_000, 4)
+            self.assertEqual(zion_context["analysis"]["kind"], "extension")
+            self.assertTrue(any("injury risk" in snippet for snippet in zion_context["analysis"]["evidence_snippets"]))
+            zion_repaired = validate_social_payload(
+                {"text": "Zion's extension got serious. Can he stay healthy and live up to the hype?"},
+                zion_context,
+                self.plain,
+                persona,
+            )
+            self.assertIsNotNone(zion_repaired)
+            self.assertIn("injury risk", zion_repaired["text"])
+            cap_repaired = validate_social_payload(
+                {"text": "This puts NOP in apron pain territory unless the room holds up."},
+                zion_context,
+                self.plain,
+                persona,
+            )
+            self.assertIsNotNone(cap_repaired)
+            self.assertIn("hard-cap pressure", cap_repaired["text"])
+            self.assertIn("[Cap:", cap_repaired["text"])
+            self.assertIsNone(
+                validate_social_payload(
+                    {"text": "Zion has only played 6 games, so the health bet is scary."},
+                    zion_context,
+                    self.plain,
+                    persona,
+                )
+            )
+            health_snippet = next(snippet for snippet in zion_context["analysis"]["evidence_snippets"] if "injury risk" in snippet)
+            self.assertIsNotNone(
+                validate_social_payload(
+                    {"text": f"Big swing, but the health variable has to be real {health_snippet}."},
+                    zion_context,
+                    self.plain,
+                    persona,
+                )
+            )
+
+            save["team_records"]["team_tor"]["wins"] = 6
+            save["team_records"]["team_tor"]["losses"] = 0
+            ingram_id = players["Brandon Ingram"]["id"]
+            save["player_season_stats"][ingram_id] = {"games": 6, "points": 120, "rebounds": 30, "assists": 24, "minutes": 204}
+            early_ingram_context = context_for("Brandon Ingram", "TOR", 27_300_000, 3)
+            self.assertFalse(any("6/6 GP" in snippet for snippet in early_ingram_context["analysis"]["evidence_snippets"]))
+            self.assertIsNone(
+                validate_social_payload(
+                    {"text": "Only 6 games played makes this a durability bet."},
+                    early_ingram_context,
+                    self.plain,
+                    persona,
+                )
+            )
+            save["team_records"]["team_tor"]["wins"] = 38
+            save["team_records"]["team_tor"]["losses"] = 32
+            save["player_season_stats"].pop(ingram_id, None)
+
+            jrue_context = context_for("Jrue Holiday", "POR", 25_300_000, 2)
+            self.assertIsNone(
+                validate_social_payload(
+                    {"text": f"POR found its PG of the future {jrue_context['analysis']['evidence_snippets'][1]}."},
+                    jrue_context,
+                    self.plain,
+                    persona,
+                )
+            )
+
+            wemby_context = context_for("Victor Wembanyama", "SAS", 53_500_000, 5)
+            self.assertIsNone(
+                validate_social_payload(
+                    {"text": f"Five years at $53.5M is roughly $10M AAV, which is a bargain {wemby_context['analysis']['evidence_snippets'][1]}."},
+                    wemby_context,
+                    self.plain,
+                    persona,
+                )
+            )
+
+            deni_context = context_for("Deni Avdija", "POR", 25_300_000, 4)
+            self.assertIsNone(
+                validate_social_payload(
+                    {"text": "This is a cap-sheet debate, full stop. [West top: OKC 6-0 #1, UTA 5-0 #2] [Contract: $25.3M x 4 AAV, total $101.2M]"},
+                    deni_context,
+                    self.plain,
+                    persona,
+                )
+            )
+            self.assertIsNone(
+                validate_social_payload(
+                    {"text": "They're locking in Avdija on an annual avg of $63M, but the fit is real. [Contract: $25.3M x 4 AAV, total $101.2M]"},
+                    deni_context,
+                    self.plain,
+                    persona,
+                )
+            )
+            cleaned_deni = validate_social_payload(
+                {"text": "[This is a real cap opinion with actual numbers.] [Contract: $25.3M x 4 AAV, total $101.2M][1]"},
+                deni_context,
+                self.plain,
+                persona,
+            )
+            self.assertIsNotNone(cleaned_deni)
+            self.assertNotIn("[1]", cleaned_deni["text"])
+            self.assertFalse(cleaned_deni["text"].startswith("[This"))
+
+            ingram_context = context_for("Brandon Ingram", "TOR", 27_300_000, 3)
+            self.assertIsNone(
+                validate_social_payload(
+                    {"text": f"TOR has to chase the East's top teams; LAC and OKC are holding strong spots {ingram_context['analysis']['evidence_snippets'][1]}."},
+                    ingram_context,
+                    self.plain,
+                    persona,
+                )
+            )
+            east_snippet = next(snippet for snippet in ingram_context["analysis"]["optional_context_snippets"] if "East top" in snippet)
+            ingram_rating_snippet = next(snippet for snippet in ingram_context["analysis"]["evidence_snippets"] if "Ratings:" in snippet)
+            self.assertIsNotNone(
+                validate_social_payload(
+                    {"text": f"TOR's next question is the actual East ladder {east_snippet}, and the player case is real {ingram_rating_snippet}."},
+                    ingram_context,
+                    self.plain,
+                    persona,
+                )
+            )
+
+            bilal_context = context_for("Bilal Coulibaly", "WAS", 21_900_000, 4)
+            self.assertEqual(bilal_context["analysis"]["player"]["position"], "SF")
+            self.assertIsNone(
+                validate_social_payload(
+                    {"text": f"Solid move, but how does it fix the backcourt {bilal_context['analysis']['evidence_snippets'][1]}?"},
+                    bilal_context,
+                    self.plain,
+                    persona,
+                )
+            )
+
+            sabonis_context = context_for("Domantas Sabonis", "SAC", 25_700_000, 3)
+            self.assertIsNone(
+                validate_social_payload(
+                    {"text": f"Next question is how this impacts SAC's playoff push {sabonis_context['analysis']['evidence_snippets'][1]}."},
+                    sabonis_context,
+                    self.plain,
+                    persona,
+                )
+            )
+            healthy_cap = "[Cap: 2026-27 payroll $148.7M, cap room $+45.8M, hard-cap room $+66.4M; 2027-28 payroll $109.5M, cap room $+91.8M, hard-cap room $+113.1M]"
+            ja_context = context_with_cap(
+                context_for("Ja Morant", "MEM", 47_300_000, 5),
+                healthy_cap,
+                [
+                    {"season": "2026-27", "cap_space_millions": 45.8, "hard_cap_space_millions": 66.4},
+                    {"season": "2027-28", "cap_space_millions": 91.8, "hard_cap_space_millions": 113.1},
+                ],
+                "healthy_space",
+            )
+            self.assertIsNone(
+                validate_social_payload(
+                    {"text": f"Ja Morant's deal puts MEM in a tough cap spot next year. {healthy_cap}"},
+                    ja_context,
+                    self.plain,
+                    persona,
+                )
+            )
+            self.assertIsNotNone(
+                validate_social_payload(
+                    {"text": f"Expensive deal, but MEM still has room to maneuver. {healthy_cap}"},
+                    ja_context,
+                    self.plain,
+                    persona,
+                )
+            )
+            tight_cap = "[Cap: 2026-27 payroll $217.0M, cap room $-22.5M, hard-cap room $-1.9M; 2027-28 payroll $221.7M, cap room $-20.4M, hard-cap room $+0.8M]"
+            black_context = context_with_cap(
+                context_for("Anthony Black", "ORL", 21_900_000, 4),
+                tight_cap,
+                [
+                    {"season": "2026-27", "cap_space_millions": -22.5, "hard_cap_space_millions": -1.9},
+                    {"season": "2027-28", "cap_space_millions": -20.4, "hard_cap_space_millions": 0.8},
+                ],
+                "tight",
+            )
+            self.assertIsNotNone(
+                validate_social_payload(
+                    {"text": f"That is real cap pressure unless the roster math changes. {tight_cap}"},
+                    black_context,
+                    self.plain,
+                    persona,
+                )
+            )
+            bilal = players["Bilal Coulibaly"]
+            trae = players["Trae Young"]
+            unresolved_event = {
+                "id": "extension_context_trae_unresolved",
+                "date": "2025-11-01",
+                "kind": "extension",
+                "headline": "WAS and Trae Young leave extension talks unresolved: extension talks remain unresolved.",
+                "team_ids": [bilal["team_id"]],
+                "player_ids": [trae["id"]],
+                "details": {
+                    "player_id": trae["id"],
+                    "team_id": bilal["team_id"],
+                    "reason": "extension talks remain unresolved",
+                },
+            }
+            bilal_board_context = context_for("Bilal Coulibaly", "WAS", 21_900_000, 4, extra_events=[unresolved_event])
+            board_snippet = next(
+                snippet for snippet in bilal_board_context["analysis"]["optional_context_snippets"]
+                if "extension board:" in snippet
+            )
+            self.assertIn("Trae Young unresolved", board_snippet)
+            self.assertIn("backcourt money still undecided", board_snippet)
+            bilal_rating_snippet = next(snippet for snippet in bilal_board_context["analysis"]["evidence_snippets"] if "Ratings:" in snippet)
+            self.assertIsNotNone(
+                validate_social_payload(
+                    {"text": f"This reads like WAS paid the wing first while the backcourt money stays unresolved. {board_snippet} {bilal_rating_snippet}"},
+                    bilal_board_context,
+                    self.plain,
+                    persona,
+                )
+            )
+
+    def test_social_timeline_marks_fallback_posts_red_when_terminal_supports_color(self):
+        item = {
+            "subject": "WAS extends Bilal Coulibaly to $21.3M x 4.",
+            "text": "Good teams keep the right guys before the market gets weird.",
+            "persona": "template",
+            "narrative": {
+                "source": "fallback",
+                "display_subject": "WAS extends Bilal Coulibaly to $21.3M x 4.",
+            },
+        }
+        with patch("nba_gm_data.play.sys.stdout.isatty", return_value=True), patch.dict(os.environ, {"NO_COLOR": ""}):
+            rendered = social_timeline_text(item)
+            lines = social_timeline_lines(item, width=58)
+        self.assertIn("\033[1;31mGood teams keep the right guys", rendered)
+        self.assertTrue(any("\033[1;31mGood teams keep" in line for line in lines[1:]))
+
+    def test_social_timeline_wraps_long_generated_posts_without_truncating_evidence(self):
+        cap_snippet = "[Cap: 2026-27 payroll $174.5M, cap room $+20.0M, hard-cap room $+40.6M; 2027-28 payroll $122.1M, cap room $+79.2M, hard-cap room $+99.8M]"
+        body = (
+            "The cap implications here are real, but the story is not a crisis. WAS can still move carefully around the "
+            f"next Trae decision. {cap_snippet}"
+        )
+        item = {
+            "date": "2025-10-21",
+            "handle": "@jules_on_hoops",
+            "sentiment": 0.0,
+            "subject": "WAS and Trae Young leave extension talks unresolved: extension talks remain unresolved.",
+            "text": body,
+            "narrative": {
+                "source": "ollama",
+                "display_subject": "WAS and Trae Young leave extension talks unresolved: extension talks remain unresolved.",
+            },
+        }
+        lines = social_timeline_lines(item, width=92)
+        joined = " ".join(line.strip() for line in lines)
+        self.assertGreater(len(lines), 3)
+        self.assertIn(cap_snippet, joined)
+        self.assertTrue(joined.endswith("]"))
+        self.assertNotIn(" har", joined[-8:])
+
+    def test_narrative_provider_failure_falls_back_without_breaking_social(self):
+        class FailingProvider:
+            name = "fake"
+
+            def generate_json(self, prompt, settings):
+                raise NarrativeProviderError("offline")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "narrative_fallback.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=412)
+            save["social_feed"].append(
+                {
+                    "id": "social_gsw_injury",
+                    "date": "2025-10-01",
+                    "kind": "injury",
+                    "text": "Stephen Curry expected to miss 12 games for GSW.",
+                    "author": "System",
+                    "handle": "@system",
+                    "persona": "template",
+                    "subject": "Stephen Curry expected to miss 12 games",
+                    "team_ids": ["team_gsw"],
+                    "player_ids": ["player_stephen-curry"],
+                    "sentiment": -0.2,
+                    "importance": 95,
+                }
+            )
+            write_save(save_path, save)
+            update_narrative_settings(save_path, enabled=True, provider="ollama")
+            view = social_feed_view(self.plain, save_path, "GSW", limit=1, narrative_provider=FailingProvider())
+            self.assertEqual(view["item_count"], 1)
+            self.assertIn("Depth", view["items"][0]["text"])
+            saved = load_save(save_path)
+            cached = next(iter(saved["narrative_cache"]["social"].values()))
+            self.assertEqual(cached["source"], "fallback")
+
+    def test_narrative_validators_reject_unsafe_or_malformed_output(self):
+        save = {"version": "league_save_v1", "state": {"current_date": "2025-10-01", "phase": "regular_season"}, "team_records": {}}
+        item = {"id": "social_test", "date": "2025-10-01", "kind": "trade", "text": "GSW completed a trade.", "subject": "GSW completed a trade", "team_ids": ["team_gsw"]}
+        context = social_context_packet(self.plain, save, item, team_id="team_gsw")
+        persona = {"author": "Test", "handle": "@test", "persona": "tester"}
+        core_names = {
+            player["name"]
+            for team in context.get("team_context", [])
+            for player in team.get("core_players", [])
+        }
+        self.assertIn("Stephen Curry", core_names)
+        self.assertIsNotNone(
+            validate_social_payload(
+                {"text": "GSW can still make this work next to Stephen Curry if the spacing math holds."},
+                context,
+                self.plain,
+                persona,
+            )
+        )
+        self.assertIsNone(validate_social_payload({"text": "LAL is involved even though the context only says GSW made this move."}, context, self.plain, persona))
+        self.assertIsNone(validate_social_payload({"text": "According to ESPN, this real life locker room has always hated the coach."}, context, self.plain, persona))
+        self.assertIsNone(validate_social_payload({"text": "The trade significantly alters roster construction implications. Watching closely."}, context, self.plain, persona))
+        self.assertIsNone(validate_social_payload({"text": "GSW needs a new OG to space the floor for DeMar after this."}, context, self.plain, persona))
+        self.assertIsNone(validate_social_payload({"text": "Tom Thibodeau is going to love this second-unit wrinkle."}, context, self.plain, persona))
+        press_context = {
+            "topic": "trade",
+            "team": {"abbrev": "GSW"},
+            "event": {"headline": "GSW completed a trade"},
+            "involved_teams": [{"abbrev": "GSW"}],
+        }
+        bad_press = {
+            "reporter": {"name": "Dana Price", "beat": "accountability", "question": "GSW completed a trade. What is the plan now?"},
+            "answers": [
+                {"line": "This is the correct answer for the room.", "tone": "accountable", "quality": "good", "rationale": "too obvious"},
+                {"line": "We believe in the upside but have to show it.", "tone": "optimistic", "quality": "mixed", "rationale": "ok"},
+                {"line": "No details today, the work stays internal.", "tone": "deflect", "quality": "bad", "rationale": "evasive"},
+                {"line": "The standard has to rise immediately.", "tone": "challenge", "quality": "mixed", "rationale": "ok"},
+            ],
+        }
+        self.assertIsNone(validate_press_payload(bad_press, press_context, self.plain))
+
+    def test_narrative_trade_context_uses_actual_teams_and_pick_facts(self):
+        gsw_player = next(player for player in self.plain["players"] if player["name"] == "Stephen Curry")
+        bos_player = next(player for player in self.plain["players"] if player["team_id"] == "team_bos" and float(player.get("minutes_projection") or 0.0) >= 20)
+        save = {
+            "version": "league_save_v1",
+            "state": {"current_date": "2025-10-01", "phase": "regular_season"},
+            "team_records": {},
+            "league_events": [
+                {
+                    "id": "trade_context_test",
+                    "date": "2025-10-01",
+                    "kind": "trade",
+                    "headline": f"Trade completed: {gsw_player['name']} for {bos_player['name']}.",
+                    "team_ids": ["team_gsw", "team_bos"],
+                    "player_ids": [gsw_player["id"], bos_player["id"]],
+                    "importance": 0.7,
+                    "details": {
+                        "from_team_id": "team_gsw",
+                        "to_team_id": "team_bos",
+                        "from_assets": [{"kind": "player", "id": gsw_player["id"], "label": gsw_player["name"]}],
+                        "to_assets": [{"kind": "player", "id": bos_player["id"], "label": bos_player["name"]}],
+                    },
+                }
+            ],
+        }
+        item = {
+            "id": "social_trade_context_test",
+            "date": "2025-10-01",
+            "kind": "trade",
+            "text": f"Trade completed: {gsw_player['name']} for {bos_player['name']}.",
+            "subject": f"Trade completed: {gsw_player['name']} for {bos_player['name']}",
+            "team_ids": [],
+        }
+        context = social_context_packet(self.plain, save, item, team_id="team_orl")
+        teams = {team["abbrev"] for team in context.get("involved_teams", [])}
+        self.assertEqual(teams, {"BOS", "GSW"})
+        self.assertIn("GSW sends", context["source"]["display_subject"])
+        persona = {"author": "Test", "handle": "@test", "persona": "tester"}
+        self.assertIsNone(validate_social_payload({"text": "What does this mean for ORL's playoff push?"}, context, self.plain, persona))
+        self.assertIsNone(validate_social_payload({"text": "The pick math makes this whole trade hilarious."}, context, self.plain, persona))
+        self.assertIsNotNone(validate_social_payload({"text": "GSW got cleaner role math, but BOS has to justify the roster swing fast."}, context, self.plain, persona))
+
+    def test_narrative_rejects_protected_pick_claim_without_protected_pick_context(self):
+        gsw_player = next(player for player in self.plain["players"] if player["name"] == "Stephen Curry")
+        pick = next(pick for pick in self.plain["draft_picks"] if pick.get("current_owner_team_id") == "team_bos" and int(pick.get("round") or 0) == 2)
+        save = {
+            "version": "league_save_v1",
+            "state": {"current_date": "2025-10-01", "phase": "regular_season"},
+            "team_records": {},
+            "league_events": [
+                {
+                    "id": "unprotected_pick_trade_test",
+                    "date": "2025-10-01",
+                    "kind": "trade",
+                    "headline": f"Trade completed: {gsw_player['name']} for {pick['season']} R2 BOS.",
+                    "team_ids": ["team_gsw", "team_bos"],
+                    "player_ids": [gsw_player["id"]],
+                    "importance": 0.7,
+                    "details": {
+                        "from_team_id": "team_gsw",
+                        "to_team_id": "team_bos",
+                        "from_assets": [{"kind": "player", "id": gsw_player["id"], "label": gsw_player["name"]}],
+                        "to_assets": [{"kind": "pick", "id": pick["id"], "label": f"{pick['season']} R2 BOS (own pick)", "round": 2, "season": pick["season"]}],
+                    },
+                }
+            ],
+        }
+        item = {
+            "id": "social_unprotected_pick_trade_test",
+            "date": "2025-10-01",
+            "kind": "trade",
+            "text": f"Trade completed: {gsw_player['name']} for {pick['season']} R2 BOS.",
+            "subject": f"Trade completed: {gsw_player['name']} for {pick['season']} R2 BOS",
+            "team_ids": [],
+        }
+        context = social_context_packet(self.plain, save, item)
+        self.assertTrue(context["analysis"]["asset_mix"]["has_picks"])
+        self.assertEqual(context["analysis"]["asset_mix"]["protected_picks"], 0)
+        persona = {"author": "Test", "handle": "@test", "persona": "tester"}
+        self.assertIsNone(validate_social_payload({"text": "That protected second-round pick is sneakier than people think."}, context, self.plain, persona))
+        self.assertIsNotNone(validate_social_payload({"text": "One R2 is not premium capital, so the player fit has to carry the argument."}, context, self.plain, persona))
+
+    def test_narrative_defaults_timeout_ceiling_and_social_subject_prefix(self):
+        defaults = default_narrative_settings()
+        self.assertTrue(defaults["enabled"])
+        self.assertEqual(defaults["timeout_seconds"], 45.0)
+        self.assertEqual(defaults["max_posts_per_view"], 12)
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "narrative_defaults.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=419)
+            write_save(save_path, save)
+            update_narrative_settings(save_path, timeout_seconds=90.0, max_posts_per_view=40)
+            status = narrative_settings_view(save_path)
+            self.assertEqual(status["timeout_seconds"], 90.0)
+            self.assertEqual(status["max_posts_per_view"], 40)
+        item = {
+            "subject": "UTA extends Keyonte George to $25M x 4.",
+            "text": "Fine if the role is real. Ugly if this is just paying for comfort.",
+            "narrative": {"display_subject": "UTA extends Keyonte George to $25M x 4."},
+        }
+        rendered = social_timeline_text(item)
+        self.assertTrue(rendered.startswith("UTA extends Keyonte George to $25M x 4."))
+        self.assertIn("\n  Fine if the role is real", rendered)
+        self.assertIn("Fine if the role is real", rendered)
+
+    def test_narrative_press_generation_is_cached_and_bounded(self):
+        class FakePressProvider:
+            name = "fake"
+
+            def __init__(self):
+                self.calls = 0
+
+            def generate_json(self, prompt, settings):
+                self.calls += 1
+                return {
+                    "reporter": {
+                        "name": "Miles Kwon",
+                        "beat": "transactions and cap pressure",
+                        "question": "GSW completed a trade. What basketball problem did this move have to solve?",
+                    },
+                    "answers": [
+                        {"line": "We paid a real price because standing still had a price too.", "tone": "accountable", "quality": "good", "rationale": "owns the cost"},
+                        {"line": "The fit gives us a cleaner way to play, but it has to show quickly.", "tone": "optimistic", "quality": "good", "rationale": "positive but grounded"},
+                        {"line": "This should sharpen everyone because roles are not guaranteed.", "tone": "challenge", "quality": "mixed", "rationale": "useful but risky"},
+                        {"line": "We are not going to explain the asset math from the podium.", "tone": "deflect", "quality": "bad", "rationale": "too evasive"},
+                    ],
+                }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "narrative_press.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=413)
+            update_narrative_settings(save_path, enabled=True, provider="ollama")
+            save = load_save(save_path)
+            event = {"id": "press_trade_test", "kind": "trades", "headline": "GSW completed a trade.", "question": "How do you defend the move?"}
+            base_prompt = {"topic": "trade", "reporters": [{"name": "Dana Price", "question": "GSW completed a trade. What now?"}]}
+            provider = FakePressProvider()
+            first = press_cache_entry(self.plain, save, "team_gsw", event, base_prompt, provider=provider)
+            second = press_cache_entry(self.plain, save, "team_gsw", event, base_prompt, provider=provider)
+            self.assertEqual(provider.calls, 1)
+            self.assertEqual(first["id"], second["id"])
+            self.assertEqual(len(first["answers"]), 4)
+            self.assertTrue({answer["tone"] for answer in first["answers"]}.issubset({"accountable", "optimistic", "deflect", "challenge"}))
+
+    def test_narrative_generation_does_not_run_during_save_advancement(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "narrative_advance.json"
+            create_league_save(ROOT, self.plain, "GSW", save_path, seed=414)
+            update_narrative_settings(save_path, enabled=True, provider="ollama")
+            before = narrative_settings_view(save_path)
+            advance_save(ROOT, self.plain, save_path, to_date="2025-10-21", seed=414)
+            after = narrative_settings_view(save_path)
+            self.assertEqual(before["cache_counts"], after["cache_counts"])
+
+    def test_narrative_settings_cli_updates_save_without_requiring_ollama(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "narrative_cli.json"
+            create_league_save(ROOT, self.plain, "GSW", save_path, seed=415)
+            stdout = StringIO()
+            with redirect_stdout(stdout):
+                code = cli_main([
+                    "--root",
+                    str(ROOT),
+                    "narrative-settings",
+                    "--save",
+                    str(save_path),
+                    "--enable",
+                    "--provider",
+                    "ollama",
+                    "--model",
+                    "llama3.1",
+                    "--max-posts",
+                    "3",
+                ])
+            self.assertEqual(code, 0)
+            payload = json.loads(stdout.getvalue())
+            self.assertTrue(payload["enabled"])
+            self.assertEqual(payload["max_posts_per_view"], 3)
+            saved = load_save(save_path)
+            self.assertTrue(saved["narrative_settings"]["enabled"])
+
+    def test_narrative_status_explains_missing_ollama_model(self):
+        class MissingModelProvider:
+            name = "fake"
+
+            def generate_json(self, prompt, settings):
+                raise NarrativeProviderError("model 'llama3.1' not found")
+
+        save = {
+            "version": "league_save_v1",
+            "narrative_settings": {"enabled": True, "provider": "ollama", "ollama_model": "llama3.1"},
+            "narrative_cache": {"version": "narrative_v1", "social": {}, "press": {}},
+        }
+        with patch("nba_gm_data.narrative.ollama_available_models", return_value=["gemma4:e4b"]):
+            status = narrative_status(save, provider=MissingModelProvider())
+        self.assertIn("model 'llama3.1' not found", status["connection"])
+        self.assertIn("Available local models: gemma4:e4b", status["connection"])
+        self.assertIn("ollama pull llama3.1", status["connection"])
+
+    def test_single_generated_press_reporter_skips_reporter_selection_prompt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "narrative_press_room.json"
+            create_league_save(ROOT, self.plain, "GSW", save_path, seed=416)
+            update_narrative_settings(save_path, enabled=True, provider="fallback")
+            event = {
+                "id": "press_staff_test",
+                "date": "2025-10-01",
+                "kind": "staff_moves",
+                "headline": "GSW hires a new head coach.",
+                "question": "What should change because of the hire?",
+            }
+            with patch("builtins.input", side_effect=["1", ""]), redirect_stdout(StringIO()) as output:
+                press_room(self.plain, save_path, "GSW", seed=416, event=event)
+            text = output.getvalue()
+            self.assertNotIn("Choose a reporter.", text)
+            self.assertIn("Dana Price:", text)
+            saved = load_save(save_path)
+            self.assertEqual(saved["press_conferences"][-1]["narrative"]["source"], "fallback")
+
+    def test_aggregated_press_fallback_asks_about_move_pattern(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save = create_league_save(ROOT, self.plain, "GSW", Path(tmp) / "aggregate_press.json", seed=419)
+            save["narrative_settings"] = {**default_narrative_settings(), "enabled": True, "provider": "fallback"}
+            event = {
+                "id": "press_aggregate_test",
+                "date": "2025-12-02",
+                "kind": "staff_moves",
+                "headline": "2 staff moves require GM availability.",
+                "headlines": ["GSW fires an offensive coordinator.", "GSW hires a new offensive coordinator."],
+                "question": "How do these moves connect?",
+            }
+            base_prompt = {"topic": "staff moves", "reporters": [{"name": "Dana Price", "question": "How do these moves connect?"}]}
+            entry = press_cache_entry(self.plain, save, "team_gsw", event, base_prompt)
+            self.assertIn("2 related moves", entry["reporter"]["question"])
+            self.assertIn("through-line", entry["reporter"]["question"])
 
     def test_pick_labels_and_protection_fallbacks_stay_readable_and_chronological(self):
         synthetic = {
@@ -742,6 +1601,33 @@ class DataFoundationTests(unittest.TestCase):
             result = apply_trade_to_save(save_path, candidate["proposal"]["id"], date="2025-10-01")
             self.assertEqual(result["status"], "applied")
 
+    def test_trade_finder_does_not_reprompt_pick_terms_after_acceptance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "finder_terms.json"
+            create_league_save(ROOT, self.plain, "UTA", save_path, seed=432)
+            pick = next(
+                item for item in self.plain["draft_picks"]
+                if item.get("current_owner_team_id") == "team_uta" and int(item.get("round") or 0) == 1 and str(item.get("season") or "") >= "2030"
+            )
+            candidate = {
+                "proposal": {
+                    "id": "finder_terms_offer",
+                    "from_team_id": "team_uta",
+                    "to_team_id": "team_tor",
+                    "from_assets": [{"kind": "pick", "id": pick["id"], "value": pick["id"]}],
+                    "to_assets": [],
+                },
+                "offer_context": {"source": "trade_finder", "status": "finder_offer_pending_user_acceptance"},
+                "pick_trade_terms": [{"type": "unprotected", "primary_pick_id": pick["id"]}],
+                "legality": {"status": "legal"},
+                "evaluations": [{"perspective_team_id": "team_tor", "accepted": True}],
+            }
+            with patch("nba_gm_data.play.prompt_pick_trade_terms", side_effect=AssertionError("duplicate prompt")):
+                finalized = attach_pick_terms_to_trade(self.plain, save_path, candidate)
+            self.assertTrue(finalized["pick_obligation_terms_prompted"])
+            self.assertEqual(finalized["pick_trade_terms"][0]["type"], "unprotected")
+            self.assertNotIn("pick_obligation_terms", finalized)
+
     def test_draft_pick_transfer_refreshes_live_queue_and_slot_picks_do_not_prompt_for_protection(self):
         with tempfile.TemporaryDirectory() as tmp:
             save_path = Path(tmp) / "draft_trade_refresh.json"
@@ -861,6 +1747,35 @@ class DataFoundationTests(unittest.TestCase):
             self.assertIn("Pick #12", headline)
             self.assertNotIn(pick_a["id"], headline)
 
+    def test_mid_first_ai_draft_trade_market_finds_value_when_quiet(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "ai_draft_trade_market.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=77)
+            active = with_transaction_context(canonical_with_save(self.plain, save))
+            draft = simulate_draft(active, "2026", seed=77)
+            state = {
+                "year": "2026",
+                "status": "in_progress",
+                "current_index": 10,
+                "draft": draft,
+                "ai_draft_traded_pick_ids": [],
+                "ai_draft_trade_budget": {"top_10": 0, "picks_11_25": 0, "total": 0},
+                "used_pick_ids": [],
+            }
+            current = state["draft"]["pending_draft_selections"][10]
+            candidate = best_ai_draft_trade_candidate(active, save, state, current, save["meta"]["user_team_id"], seed=77)
+            self.assertIsNotNone(candidate)
+            self.assertEqual(candidate["legality"]["status"], "legal")
+            self.assertTrue(candidate["accepted_by_all"])
+            to_assets = (candidate["proposal"] or {}).get("to_assets") or []
+            self.assertTrue(
+                any(
+                    asset.get("kind") == "pick"
+                    and int((next((pick for pick in active["draft_picks"] if pick["id"] == (asset.get("id") or asset.get("value"))), {}) or {}).get("round") or 0) == 1
+                    for asset in to_assets
+                )
+            )
+
     def test_lottery_reveal_shows_final_owner_only(self):
         order = {
             "lottery": {"seed": 1, "method": "test", "odds_by_team": {}},
@@ -880,6 +1795,51 @@ class DataFoundationTests(unittest.TestCase):
         text = output.getvalue()
         self.assertIn("1. CHI  #1", text)
         self.assertNotIn("POR  #1 [owned by CHI]", text)
+
+    def test_lottery_odds_context_does_not_copy_protection_to_receiver_pick(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "lottery_context.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=431)
+            dal_pick = next(
+                pick for pick in self.plain["draft_picks"]
+                if pick.get("season") == "2027" and pick.get("original_team_id") == "team_dal" and int(pick.get("round") or 0) == 1
+            )
+            cha_pick = next(
+                pick for pick in self.plain["draft_picks"]
+                if pick.get("season") == "2027" and pick.get("original_team_id") == "team_cha" and int(pick.get("round") or 0) == 1
+            )
+            fallback = next(
+                pick for pick in self.plain["draft_picks"]
+                if str(pick.get("season") or "") > "2027" and pick.get("original_team_id") == "team_dal" and int(pick.get("round") or 0) == 1
+            )
+            save["draft_pick_overrides"][dal_pick["id"]] = "team_cha"
+            save["pick_obligations"] = [
+                {
+                    "id": "test_dal_to_cha_top2",
+                    "type": "protected_pick",
+                    "status": "active",
+                    "season": "2027",
+                    "round": 1,
+                    "primary_pick_id": dal_pick["id"],
+                    "sender_team_id": "team_dal",
+                    "receiver_team_id": "team_cha",
+                    "protected_range": {"from": 1, "through": 2},
+                    "protected_top_n": 2,
+                    "fallback_pick_ids": [fallback["id"]],
+                }
+            ]
+            order = {
+                "lottery": {"seed": 1, "method": "test", "odds_by_team": {"team_dal": 10.5, "team_cha": 3.0}},
+                "draft_order": [
+                    {**dal_pick, "overall_pick": 5, "current_owner_team_id": "team_cha"},
+                    {**cha_pick, "overall_pick": 11, "current_owner_team_id": "team_cha"},
+                ],
+            }
+            annotate_lottery_odds_context(self.plain, save, order)
+            context = order["lottery"]["odds_context_by_team"]
+            self.assertIn("owned by CHA", context["team_dal"])
+            self.assertIn("top-2 protected", context["team_dal"])
+            self.assertNotIn("top-2 protected", context.get("team_cha", ""))
 
     def test_protected_pick_visibility_locking_resolution_and_retrade(self):
         def build_protected_trade_save(save_path: Path) -> tuple[dict, dict, dict, dict]:
@@ -1348,8 +2308,10 @@ class DataFoundationTests(unittest.TestCase):
             save["league_events"] = [
                 {"id": "t1", "date": "2026-02-10", "kind": "trade", "headline": "Trade happened.", "team_ids": [], "player_ids": [], "importance": 0.3, "details": {}},
                 {"id": "e1", "date": "2026-02-11", "kind": "extension", "headline": "Extension happened.", "team_ids": [], "player_ids": [], "importance": 0.3, "details": {"annual_salary": 10_000_000}},
+                {"id": "s1", "date": "2026-02-11", "kind": "free_agent_signing", "headline": "Signing happened.", "team_ids": [], "player_ids": [], "importance": 0.3, "details": {"annual_salary": 8_000_000}},
                 {"id": "h1", "date": "2026-02-12", "kind": "staff_hire", "headline": "Staff hire happened.", "team_ids": [], "player_ids": [], "importance": 0.3, "details": {"staff_grade": 70}},
                 {"id": "f1", "date": "2026-02-13", "kind": "staff_fire", "headline": "Staff fire happened.", "team_ids": [], "player_ids": [], "importance": 0.3, "details": {"staff_grade": 70}},
+                {"id": "d1", "date": "2026-02-13", "kind": "trade_demand", "headline": "Trade demand happened.", "team_ids": [], "player_ids": [], "importance": 0.7, "details": {}},
                 {"id": "p1", "date": "2026-02-14", "kind": "playoff_result", "headline": "Game happened.", "team_ids": [], "player_ids": [], "importance": 0.9, "details": {}},
                 {"id": "old", "date": "2025-12-01", "kind": "trade", "headline": "Old trade happened.", "team_ids": [], "player_ids": [], "importance": 0.3, "details": {}},
             ]
@@ -1358,8 +2320,10 @@ class DataFoundationTests(unittest.TestCase):
             headlines = {event["headline"] for event in transactions["events"]}
             self.assertIn("Trade happened.", headlines)
             self.assertIn("Extension happened.", headlines)
+            self.assertIn("Signing happened.", headlines)
             self.assertIn("Staff hire happened.", headlines)
             self.assertIn("Staff fire happened.", headlines)
+            self.assertIn("Trade demand happened.", headlines)
             self.assertNotIn("Game happened.", headlines)
             trades = league_events_view(self.plain, save_path, kind="trades", limit=20)
             self.assertEqual({event["kind"] for event in trades["events"]}, {"trade"})
@@ -1559,6 +2523,17 @@ class DataFoundationTests(unittest.TestCase):
             "neutral",
         )
         self.assertGreaterEqual(top_pick_value, 84)
+        sixth_pick_value = pick_asset_value(
+            {
+                "id": "pick_value_test_6",
+                "season": "2026",
+                "round": 1,
+                "overall_pick": 6,
+                "original_team_id": "team_was",
+                "current_owner_team_id": "team_was",
+            },
+            "neutral",
+        )
         tenth_pick_value = pick_asset_value(
             {
                 "id": "pick_value_test_10",
@@ -1581,6 +2556,7 @@ class DataFoundationTests(unittest.TestCase):
             },
             "neutral",
         )
+        self.assertGreater(top_pick_value - sixth_pick_value, 25.0)
         self.assertGreater(top_pick_value - tenth_pick_value, 15.0)
         self.assertGreater(tenth_pick_value - thirtieth_pick_value, 35.0)
         rookie = {
@@ -1646,6 +2622,33 @@ class DataFoundationTests(unittest.TestCase):
         active["draft_picks"].extend([target, lower])
         assets = draft_trade_offer_assets(active, state, buyer["id"], target["id"], lower, 12)
         self.assertTrue(any(asset["kind"] == "pick" and int(next(pick for pick in active["draft_picks"] if pick["id"] == asset["value"]).get("round") or 0) == 1 and asset["value"] != lower["id"] for asset in assets))
+
+        target_one = {**target, "id": "draft_pick_target_1", "overall_pick": 1}
+        lower_six = {**lower, "id": "draft_pick_lower_6", "overall_pick": 6}
+        second_only = {"id": "draft_pick_second_only", "season": "2028", "round": 2, "projected_pick_slot": 34, "original_team_id": buyer["id"], "current_owner_team_id": buyer["id"]}
+        controlled = {
+            **active,
+            "draft_picks": [
+                pick
+                for pick in active["draft_picks"]
+                if pick.get("current_owner_team_id") != buyer["id"]
+            ],
+        }
+        controlled["draft_picks"].extend([target_one, lower_six, second_only])
+        self.assertEqual(draft_trade_offer_assets(controlled, state, buyer["id"], target_one["id"], lower_six, 1), [])
+
+        future_first = {"id": "draft_pick_future_first", "season": "2028", "round": 1, "projected_pick_slot": 8, "original_team_id": buyer["id"], "current_owner_team_id": buyer["id"]}
+        extra_future_first = {"id": "draft_pick_extra_future_first", "season": "2029", "round": 1, "projected_pick_slot": 15, "original_team_id": buyer["id"], "current_owner_team_id": buyer["id"]}
+        controlled["draft_picks"].extend([future_first, extra_future_first])
+        stronger = draft_trade_offer_assets(controlled, state, buyer["id"], target_one["id"], lower_six, 1)
+        self.assertTrue(
+            any(
+                int(next(pick for pick in controlled["draft_picks"] if pick["id"] == asset["value"]).get("round") or 0) == 1
+                and asset["value"] != lower_six["id"]
+                for asset in stronger
+            )
+        )
+        self.assertGreaterEqual(len(stronger), 2)
 
     def test_prospect_picker_board_and_report_share_scout_display_values(self):
         report = next(item for item in self.plain.get("scouting_reports", []) if item.get("prospect_id") and item.get("team_id"))
@@ -1719,6 +2722,35 @@ class DataFoundationTests(unittest.TestCase):
             dpoy = next(award for award in awards if award["award"] == "DPOY")
             self.assertEqual(dpoy["player_name"], "Victor Wembanyama")
             self.assertTrue(any(item.get("kind") == "award" for item in save.get("news_items", [])))
+
+    def test_rookie_of_year_only_counts_first_season(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "roty_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=433)
+            rookie = {
+                "id": "rookie_test_repeat",
+                "name": "Repeat Rookie",
+                "normalized_name": "repeat rookie",
+                "team_id": "team_gsw",
+                "team_abbrev": "GSW",
+                "position": "PG",
+                "age": 20.0,
+                "display_age": 20.0,
+                "height_inches": 76,
+                "minutes_projection": 30.0,
+                "source_kind": "generated_rookie",
+                "draft_year": 2026,
+            }
+            save["generated_players"].append(rookie)
+            save["incoming_rookies"].append({"id": "incoming_repeat", "player_id": rookie["id"], "draft_year": 2026, "team_id": "team_gsw", "overall_pick": 4})
+            save["team_records"]["team_gsw"] = {"team_id": "team_gsw", "team_abbrev": "GSW", "wins": 45, "losses": 37}
+            save["player_season_stats"] = {
+                rookie["id"]: {"games": 74, "minutes": 2200, "points": 1500, "rebounds": 350, "assists": 520, "steals": 80, "blocks": 20}
+            }
+            first = generate_league_awards(self.plain, save, "2026-27", seed=433)
+            self.assertEqual(next(award for award in first if award["award"] == "ROTY")["player_id"], rookie["id"])
+            second = generate_league_awards(self.plain, save, "2027-28", seed=434)
+            self.assertFalse(any(award["award"] == "ROTY" and award["player_id"] == rookie["id"] for award in second))
 
     def test_public_staff_sources_populate_key_roles(self):
         verified_staff = [staff for staff in self.universe.staff_profiles if staff.status != "research_pending"]
@@ -2267,6 +3299,30 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(illegal["legality"]["status"], "illegal")
         self.assertTrue(any("salary" in issue for issue in illegal["legality"]["issues"]))
 
+    def test_transaction_context_reuses_pick_annotation_until_inputs_change(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "context_cache_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=509)
+            active = with_transaction_context(canonical_with_save(self.plain, save))
+            self.assertIn("_transaction_pick_context_signature", active)
+            with patch("nba_gm_data.transactions.annotate_pick_value_context", wraps=transactions_module.annotate_pick_value_context) as annotated:
+                evaluate_trade(active, "GSW", "BOS", [{"kind": "player", "value": "Seth Curry"}], [], seed=1)
+                evaluate_trade(active, "GSW", "BOS", [{"kind": "player", "value": "Seth Curry"}], [], seed=1)
+                self.assertEqual(annotated.call_count, 0)
+            original_signature = active["_transaction_pick_context_signature"]
+            active.setdefault("save_team_records", {}).setdefault("team_bos", {})["wins"] = 8
+            with patch("nba_gm_data.transactions.annotate_pick_value_context", wraps=transactions_module.annotate_pick_value_context) as annotated:
+                refreshed = with_transaction_context(active)
+                self.assertEqual(annotated.call_count, 1)
+            self.assertNotEqual(original_signature, refreshed["_transaction_pick_context_signature"])
+            record_signature = refreshed["_transaction_pick_context_signature"]
+            movable_pick = next(pick for pick in refreshed["draft_picks"] if pick.get("current_owner_team_id") and pick.get("status") not in {"used_draft_pick", "expired_draft_pick"})
+            movable_pick["current_owner_team_id"] = "team_bos" if movable_pick["current_owner_team_id"] != "team_bos" else "team_gsw"
+            with patch("nba_gm_data.transactions.annotate_pick_value_context", wraps=transactions_module.annotate_pick_value_context) as annotated:
+                pick_refreshed = with_transaction_context(refreshed)
+                self.assertEqual(annotated.call_count, 1)
+            self.assertNotEqual(record_signature, pick_refreshed["_transaction_pick_context_signature"])
+
     def test_trade_package_value_discounts_depth_without_destination_minutes(self):
         active = with_transaction_context(self.plain)
         values = {item["player_id"]: item for item in active["player_asset_valuations"]}
@@ -2485,6 +3541,14 @@ class DataFoundationTests(unittest.TestCase):
         self.assertLessEqual(tyty["market_profile"]["asking_aav"], 16_000_000)
         self.assertLessEqual(lebron["market_profile"]["preferred_years"], 2)
 
+    def test_free_agent_investigation_shows_real_durability_flag(self):
+        players = {player["name"]: player for player in self.plain["players"]}
+        ayo = players["Ayo Dosunmu"]
+        flag = free_agent_durability_flag(self.plain, ayo)
+        self.assertNotIn("Unknown", flag)
+        self.assertIn("/10", flag)
+        self.assertIn("GP/yr", flag)
+
     def test_extension_and_free_agency_negotiations_are_deterministic_and_explainable(self):
         first = negotiate_extension(self.plain, "Stephen Curry", "GSW", seed=4, max_rounds=4)
         second = negotiate_extension(self.plain, "Stephen Curry", "GSW", seed=4, max_rounds=4)
@@ -2495,7 +3559,7 @@ class DataFoundationTests(unittest.TestCase):
         cj = negotiate_extension(self.plain, "CJ McCollum", "ATL", seed=4, max_rounds=4)
         self.assertFalse(cj["accepted"])
         self.assertIsNone(cj["decision"])
-        self.assertIn(cj["negotiation"]["status"], {"original_contract_shorter_than_three_years", "not_in_final_two_contract_seasons"})
+        self.assertIn(cj["negotiation"]["status"], {"original_contract_shorter_than_three_years", "not_in_extension_window"})
         phx_offer = evaluate_signing(self.plain, "LeBron James", "PHX", 2, 35, seed=3)
         was_offer = evaluate_signing(self.plain, "LeBron James", "WAS", 2, 35, seed=3)
         self.assertTrue(phx_offer["accepted_by_all"])
@@ -2767,6 +3831,49 @@ class DataFoundationTests(unittest.TestCase):
             self.assertEqual(new_head["market_status"], "contract_expired_pending_user_decision")
             self.assertTrue(any(window.get("staff_name") == old_name and window.get("status") == "pending_user_decision" for window in save.get("staff_retention_windows", [])))
 
+    def test_ai_staff_expiry_retains_elite_staff_within_budget(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "ai_staff_retention.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=434)
+            staff = next(slot for slot in save["staff_slots"] if slot["team_id"] == "team_bos" and slot["slot"] == "development_lead")
+            staff["name"] = "Elite Development Lead"
+            staff["skill_traits"] = {key: 88.0 for key in staff["skill_traits"]}
+            staff["personality_traits"] = {key: 86.0 for key in staff["personality_traits"]}
+            staff["contract"]["annual_salary_millions"] = 3.0
+            staff["contract"]["years_remaining"] = 1
+            save["team_records"]["team_bos"] = {"team_id": "team_bos", "team_abbrev": "BOS", "wins": 52, "losses": 30}
+            save["state"]["current_date"] = "2026-10-01"
+            age_staff_contracts(save, self.plain, seed=434)
+            retained = next(slot for slot in save["staff_slots"] if slot["team_id"] == "team_bos" and slot["slot"] == "development_lead")
+            self.assertEqual(retained["name"], "Elite Development Lead")
+            self.assertEqual(retained["market_status"], "employed")
+            self.assertGreaterEqual(int(retained["contract"]["years_remaining"]), 2)
+            self.assertFalse(any(item.get("name") == "Elite Development Lead" for item in save.get("former_staff", [])))
+            spent = sum(float(slot.get("contract", {}).get("annual_salary_millions") or 0.0) for slot in save["staff_slots"] if slot.get("team_id") == "team_bos")
+            self.assertLessEqual(spent, staff_budget_for_team(self.plain, "team_bos") + 0.01)
+
+    def test_support_staff_can_be_fired_for_role_specific_failures(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "support_staff_fire.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=435)
+            staff = next(slot for slot in save["staff_slots"] if slot["team_id"] == "team_bos" and slot["slot"] == "development_lead")
+            staff["skill_traits"] = {key: 48.0 for key in staff["skill_traits"]}
+            staff["personality_traits"] = {key: 50.0 for key in staff["personality_traits"]}
+            save["team_records"]["team_bos"] = {"team_id": "team_bos", "team_abbrev": "BOS", "wins": 42, "losses": 40}
+            save["development_events"] = [
+                {
+                    "id": f"poor_dev_{idx}",
+                    "team_id": "team_bos",
+                    "player_id": f"player_{idx}",
+                    "trait_deltas": {"release_speed": -0.02, "scheme_iq": 0.0},
+                }
+                for idx in range(18)
+            ]
+            payload = simulate_ai_staff_changes(self.plain, save, "2026-06-30", "2026-09-01", seed=435, limit=10)
+            rec = next((item for item in payload["recommendations"] if item["team_id"] == "team_bos" and item["slot"] == "development_lead"), None)
+            self.assertIsNotNone(rec)
+            self.assertIn("development", rec["firing_reason"])
+
     def test_box_score_influence_sort_key_values_all_around_lines(self):
         scorer = {"points": 28, "rebounds": 2, "assists": 1, "steals": 0, "blocks": 0, "turnovers": 4}
         all_around = {"points": 17, "rebounds": 10, "assists": 9, "steals": 2, "blocks": 1, "turnovers": 1}
@@ -2775,7 +3882,7 @@ class DataFoundationTests(unittest.TestCase):
     def test_extension_eligibility_uses_original_term_and_active_save_season(self):
         extensions = {candidate["name"]: candidate for candidate in extension_candidates_report(self.plain, "GSW")["candidates"]}
         self.assertTrue(extensions["Stephen Curry"]["eligible"])
-        self.assertEqual(extensions["Stephen Curry"]["eligibility_status"], "eligible_final_two_seasons")
+        self.assertEqual(extensions["Stephen Curry"]["eligibility_status"], "eligible_extension_window")
         self.assertFalse(extensions["Jimmy Butler III"]["eligible"])
         contract = {"_active_season": "2026-27", "seasons": [{"season": "2025-26", "salary": 10}, {"season": "2026-27", "salary": 20}]}
         self.assertEqual(current_salary(contract), 20)
@@ -2783,6 +3890,81 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(current_salary(rookie_projection), 3_100_000)
         expired_contract = {"_active_season": "2026-27", "seasons": [{"season": "2025-26", "salary": 5_000_000}]}
         self.assertIsNone(current_salary(expired_contract))
+
+    def test_ai_extensions_have_leaguewide_volume_and_trade_demand_pressure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "ai_extensions.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=123)
+            good_teams = {"team_phi", "team_lac", "team_phx", "team_mil", "team_bos", "team_nyk", "team_okc", "team_cle"}
+            for team in self.plain["teams"]:
+                if team["id"] == save["meta"]["user_team_id"]:
+                    continue
+                good = team["id"] in good_teams
+                save["team_records"][team["id"]] = {
+                    "team_id": team["id"],
+                    "team_abbrev": team["abbrev"],
+                    "wins": 24 if good else 9,
+                    "losses": 10 if good else 25,
+                }
+            result = process_ai_extensions(self.plain, save, "2026-01-10", seed=123, limit=24)
+            self.assertGreaterEqual(result["applied_count"], 18)
+            self.assertGreaterEqual(result["refusal_count"], 1)
+            self.assertGreaterEqual(
+                len([log for log in save.get("transaction_logs", []) if log.get("transaction_type") == "extension"]),
+                18,
+            )
+            self.assertTrue(save.get("ai_trade_pressure_player_ids"))
+            self.assertTrue(any(event.get("kind") == "trade_demand" for event in save.get("league_events", [])))
+
+    def test_ai_extension_timing_and_older_player_caution(self):
+        save = {
+            "version": "league_save_v1",
+            "state": {"current_date": "2025-10-01", "phase": "regular_season"},
+            "team_records": {"team_test": {"wins": 8, "losses": 18}},
+            "player_season_stats": {
+                "old_player": {"games": 14, "points": 110},
+                "young_star": {"games": 14, "points": 350},
+            },
+        }
+        young = {"id": "young_star", "display_age": 23, "minutes_projection": 33}
+        older = {"id": "old_player", "display_age": 32, "minutes_projection": 26}
+        high_due = ai_extension_due_date(save, {"team_id": "team_test"}, young, 85.0, seed=9)
+        lower_due = ai_extension_due_date(save, {"team_id": "team_test"}, older, 58.0, seed=9)
+        self.assertLess(high_due, lower_due)
+        pass_outlook = ai_extension_team_pass_outlook(
+            save,
+            {"team_id": "team_test", "projected_aav_millions": 22.0},
+            older,
+            "team_test",
+            priority=60.0,
+        )
+        self.assertIsNotNone(pass_outlook)
+        self.assertTrue(pass_outlook["team_passed_on_extension"])
+
+    def test_ai_staff_can_fire_weak_coordinator_before_secure_head_coach(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "coordinator_weak_link.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=420)
+            team_id = "team_atl"
+            save["state"] = {"current_date": "2026-01-20", "phase": "regular_season", "legal_actions": ["staff_changes"]}
+            save["team_records"][team_id] = {"team_id": team_id, "team_abbrev": "ATL", "wins": 10, "losses": 30}
+            save["team_game_logs"] = [
+                {"team_id": team_id, "date": f"2026-01-{idx + 1:02d}", "result": "W" if idx < 2 else "L"}
+                for idx in range(17)
+            ]
+            for staff in save["staff_slots"]:
+                if staff.get("team_id") == team_id and staff.get("slot") == "head_coach":
+                    for key in staff.get("skill_traits", {}):
+                        staff["skill_traits"][key] = 90.0
+                    staff["job_security"] = 84.0
+                if staff.get("team_id") == team_id and staff.get("slot") == "offensive_coordinator":
+                    for key in staff.get("skill_traits", {}):
+                        staff["skill_traits"][key] = 45.0
+                    staff["job_security"] = 35.0
+            payload = simulate_ai_staff_changes(self.plain, save, "2026-01-01", "2026-01-20", seed=99, limit=10)
+            atl_recs = [item for item in payload["recommendations"] if item["team_id"] == team_id]
+            self.assertTrue(any(item["slot"] == "offensive_coordinator" for item in atl_recs))
+            self.assertFalse(any(item["slot"] == "head_coach" for item in atl_recs))
 
     def test_rotation_recommendation_anchors_coach_adjusted_minutes(self):
         curry = next(player for player in self.plain["players"] if player["name"] == "Stephen Curry")
@@ -2843,6 +4025,26 @@ class DataFoundationTests(unittest.TestCase):
             headlines = [event.get("headline", "") for event in view.get("events", [])]
             self.assertTrue(any("on 2-15 skid" in headline for headline in headlines))
 
+    def test_ai_head_coach_firings_reach_realistic_bad_season_volume(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "staff_firing_volume.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=417)
+            save["state"] = {"current_date": "2026-06-20", "phase": "offseason", "legal_actions": ["staff_changes"]}
+            for idx, team in enumerate(self.plain["teams"]):
+                if team["id"] == save["meta"]["user_team_id"]:
+                    continue
+                wins = 18 + (idx % 10)
+                save["team_records"][team["id"]] = {
+                    "team_id": team["id"],
+                    "team_abbrev": team["abbrev"],
+                    "wins": wins,
+                    "losses": 82 - wins,
+                }
+            payload = simulate_ai_staff_changes(self.plain, save, "2026-04-15", "2026-06-20", seed=417, limit=10)
+            head_coach_moves = [item for item in payload["recommendations"] if item["slot"] == "head_coach"]
+            self.assertGreaterEqual(len(head_coach_moves), 4)
+            self.assertTrue(all(item.get("firing_reason") for item in head_coach_moves))
+
     def test_save_rotation_projection_sums_to_240_and_zeros_injured_players(self):
         curry = next(player for player in self.plain["players"] if player["name"] == "Stephen Curry")
         with tempfile.TemporaryDirectory() as tmp:
@@ -2863,8 +4065,10 @@ class DataFoundationTests(unittest.TestCase):
         first = queue_aggregated_press_event(save, "trade", "GSW trades Player A for Player B.", ["team_gsw"], "2026-01-10")
         second = queue_aggregated_press_event(save, "trade", "GSW adds a second-round pick in a follow-up move.", ["team_gsw"], "2026-01-10")
         third = queue_aggregated_press_event(save, "staff_hire", "GSW hires a new scouting lead.", ["team_gsw"], "2026-01-10")
+        fourth = queue_aggregated_press_event(save, "staff_hire", "GSW hires Dana Price as Head Coach.", ["team_gsw"], "2026-01-10")
         self.assertEqual(first["id"], second["id"])
-        self.assertNotEqual(first["id"], third["id"])
+        self.assertIsNone(third)
+        self.assertNotEqual(first["id"], fourth["id"])
         self.assertEqual(len(save["pending_press_events"]), 2)
         trade_event = next(item for item in save["pending_press_events"] if item["kind"] == "trades")
         self.assertEqual(len(trade_event["headlines"]), 2)
@@ -3318,6 +4522,21 @@ class DataFoundationTests(unittest.TestCase):
         self.assertLessEqual(temporarily_out - active, 2.0)
         self.assertGreater(recurring - active, 10.0)
 
+    def test_startup_injured_stars_keep_long_term_trade_value(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "startup_injured_star_value.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=701)
+            active = canonical_with_save(self.plain, save)
+            enriched = with_transaction_context(active)
+            valuations = {value["player_id"]: value for value in enriched["player_asset_valuations"]}
+            players = {player["name"]: player for player in enriched["players"]}
+            for name in ["Tyrese Haliburton", "Jayson Tatum"]:
+                player = players[name]
+                self.assertEqual(float(player.get("minutes_projection") or 0.0), 0.0)
+                self.assertTrue(player.get("_trade_value_unavailable"))
+                self.assertGreaterEqual(float(player.get("_trade_value_minutes_projection") or 0.0), 27.0)
+                self.assertGreater(market_trade_target_value(player, valuations[player["id"]]), 70.0)
+
     def test_live_draft_state_syncs_pick_ids_to_saved_lottery_order(self):
         save = {
             "draft_orders": {
@@ -3371,6 +4590,36 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(first_dup["selection"]["team_id"], "team_gsw")
         self.assertEqual(second_dup["selection"]["pick_id"], "pick_2026_2_lac")
         self.assertEqual(second_dup["selection"]["team_id"], "team_lac")
+
+    def test_saved_lottery_order_replaces_draft_payload_order_before_persist(self):
+        save = {
+            "draft_orders": {
+                "2026": {
+                    "lottery": {"seed": 99, "method": "test_reveal"},
+                    "draft_order": [
+                        {"id": "pick_2026_1_chi", "pick_id": "pick_2026_1_chi", "overall_pick": 1, "round": 1, "season": "2026", "original_team_id": "team_chi", "current_owner_team_id": "team_chi"},
+                        {"id": "pick_2026_2_lac", "pick_id": "pick_2026_2_lac", "overall_pick": 2, "round": 1, "season": "2026", "original_team_id": "team_lac", "current_owner_team_id": "team_lac"},
+                    ],
+                }
+            }
+        }
+        draft = {
+            "lottery": {"seed": 1, "method": "stale"},
+            "draft_order": [
+                {"id": "pick_stale_1", "pick_id": "pick_stale_1", "overall_pick": 1, "round": 1, "season": "2026", "original_team_id": "team_nyk", "current_owner_team_id": "team_nyk"},
+                {"id": "pick_stale_2", "pick_id": "pick_stale_2", "overall_pick": 2, "round": 1, "season": "2026", "original_team_id": "team_lal", "current_owner_team_id": "team_lal"},
+            ],
+            "pending_draft_selections": [
+                {"selection": {"overall_pick": 1, "pick_id": "pick_stale_1", "team_id": "team_nyk"}, "pick": {"id": "pick_stale_1"}, "team": {"id": "team_nyk", "abbrev": "NYK"}},
+                {"selection": {"overall_pick": 2, "pick_id": "pick_stale_2", "team_id": "team_lal"}, "pick": {"id": "pick_stale_2"}, "team": {"id": "team_lal", "abbrev": "LAL"}},
+            ],
+        }
+        updated = apply_saved_draft_order_to_draft(self.plain, save, "2026", draft)
+        self.assertEqual(updated["lottery"]["seed"], 99)
+        self.assertEqual(updated["draft_order"][0]["pick_id"], "pick_2026_1_chi")
+        self.assertEqual(updated["draft_order"][1]["current_owner_team_id"], "team_lac")
+        self.assertEqual(updated["pending_draft_selections"][1]["selection"]["pick_id"], "pick_2026_2_lac")
+        self.assertEqual(updated["pending_draft_selections"][1]["team"]["abbrev"], "LAC")
 
     def test_current_year_pick_assets_keep_slot_identity(self):
         canonical = {

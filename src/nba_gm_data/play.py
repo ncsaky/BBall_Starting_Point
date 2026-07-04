@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import os
 import random
+import shutil
 import sys
+import textwrap
 from bisect import bisect_left, bisect_right
+from copy import deepcopy
 from datetime import timedelta
 from pathlib import Path
 from typing import Any
@@ -44,6 +47,7 @@ from .save import (
     playoff_picture,
     process_ai_actions,
     propose_trade_to_save,
+    narrative_settings_view,
     run_draft_lottery,
     save_status,
     set_save_date_phase,
@@ -56,16 +60,18 @@ from .save import (
     team_dashboard,
     player_attribute_summary,
     player_salary_table,
+    update_narrative_settings,
     ROSTER_SEASON_MAXIMUM,
     trade_deadline_date,
     season_start_year_from_date,
     extension_deadline_date,
     write_save,
 )
+from .narrative import hydrate_social_items, press_cache_entry
 from .staff import ROLE_LABELS, STAFF_SLOTS, fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, staff_budget_snapshot, staff_effect_summary, staff_market_report, staff_role_effect, staff_team_report
 from .schema import CANONICAL_START_DATE
 from .traits import TRAIT_LABELS
-from .transactions import apply_trade_to_save, canonical_with_pending_pick_terms, candidate_from_evaluation, clean_pick_protection_summary, contract_for_player, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, pick_by_id, pick_display_label, pick_obligation_context_note, pick_season_start, pick_swap_asset_value, pick_swap_display_label, player_by_id, proposal_asset_identity_keys, protected_pick_fallback_is_distinct, prune_trade_offers_touching_assets, recently_signed_player_ids, recently_traded_player_ids, resolve_team, team_by_id, trade_apply_authorized, trade_candidate_with_current_asset_labels, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_pick_swaps_for_team, tradeable_picks_for_team, with_transaction_context
+from .transactions import apply_trade_to_save, canonical_with_pending_pick_terms, candidate_from_evaluation, clean_pick_protection_summary, contract_for_player, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, pick_by_id, pick_display_label, pick_obligation_context_note, pick_season_start, pick_swap_asset_value, pick_swap_display_label, player_by_id, player_health_risk, proposal_asset_identity_keys, protected_pick_fallback_is_distinct, prune_trade_offers_touching_assets, recently_signed_player_ids, recently_traded_player_ids, resolve_team, team_by_id, trade_apply_authorized, trade_candidate_with_current_asset_labels, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_pick_swaps_for_team, tradeable_picks_for_team, with_transaction_context
 from .utils import clamp, stable_id
 
 
@@ -490,12 +496,41 @@ def cut_player_from_roster(canonical: dict[str, Any], save_path: Path, team_abbr
     if not yes_no(f"Waive {player['name']} from {team['abbrev']}?"):
         return
     save = ensure_league_save_defaults(load_save(save_path), canonical)
+    date_value = save.get("state", {}).get("current_date")
     save.setdefault("roster_overrides", {})[player["id"]] = None
+    save.setdefault("free_agent_player_ids", [])
+    if player["id"] not in save["free_agent_player_ids"]:
+        save["free_agent_player_ids"].append(player["id"])
+        save["free_agent_player_ids"] = sorted(save["free_agent_player_ids"])
+    save.setdefault("released_free_agents", {})[player["id"]] = {
+        "player_id": player["id"],
+        "player_name": player.get("name"),
+        "waived_by_team_id": team["id"],
+        "waived_by_team_abbrev": team.get("abbrev"),
+        "release_date": date_value,
+        "status": "available",
+    }
+    save.setdefault("rotation_recommendations", {}).pop(player["id"], None)
+    save.setdefault("rotation_snapshots", {}).pop(team["id"], None)
     add_news(
         save,
         "roster_cut",
         f"{team['abbrev']} waived {player['name']} to reach the roster limit.",
-        date_value=save.get("state", {}).get("current_date"),
+        date_value=date_value,
+    )
+    save.setdefault("transaction_logs", []).append(
+        {
+            "id": stable_id("transaction_log", "roster_cut", date_value, team["id"], player["id"]),
+            "date": date_value,
+            "transaction_type": "roster_cut",
+            "proposal_id": stable_id("roster_cut", date_value, team["id"], player["id"]),
+            "status": "applied_to_save_ledger",
+            "teams": [team["id"]],
+            "assets": {"player_id": player["id"], "name": player.get("name"), "waived_by_team_id": team["id"]},
+            "evaluations": [],
+            "source_ids": ["src_contract_market_config_v1"],
+            "notes": "User manually waived this player; strong released players can draw AI in-season free-agent interest on the next advancement.",
+        }
     )
     save = ensure_league_save_defaults(save, canonical)
     prune_trade_offers_touching_assets(save, {f"player:{player['id']}"})
@@ -567,16 +602,12 @@ def print_home(root: Path, canonical: dict[str, Any], save_path: Path) -> None:
     if status["phase"] in {"draft_lottery", "draft", "free_agency"}:
         print(style(f"STOP: {status['phase']} is active. Review league actions before advancing.", "accent"))
     print(f"Pending: user offers {pending.get('user_trade_offers', 0)}")
-    if status.get("recent_news"):
+    event_view = league_events_view(canonical, save_path, limit=5, kind="transactions")
+    if event_view.get("events"):
         print_rule()
-        for item in status["recent_news"][-3:]:
-            print(f"{item.get('date', '')}  {item.get('headline', '')}")
-    if status.get("high_importance_social"):
-        print_rule()
-        print(style("Top of the timeline", "accent"))
-        for item in status["high_importance_social"][:3]:
-            text = highlight_subject(item.get("text", ""), item.get("subject"))
-            print(f"{item.get('date', '')} {style(item.get('handle', '@league'), 'accent')} {text}")
+        print(style("Recent league events", "accent"))
+        for event in event_view["events"][:5]:
+            print(f"{event.get('date', '')}  {clean_label(event.get('kind'))}: {event.get('headline', '')}")
     print_rule()
     print(" 1. Advance to next event/day")
     print(" 2. Sim one week")
@@ -598,6 +629,7 @@ def print_home(root: Path, canonical: dict[str, Any], save_path: Path) -> None:
     print("13. Current free agents")
     print("14. Social feed / morale")
     print("15. League events")
+    print("16. Narrative settings")
     print(" 0. Save and quit")
 
 
@@ -692,6 +724,8 @@ def handle_choice(root: Path, canonical: dict[str, Any], save_path: Path, choice
         print_social_and_morale(canonical, save_path, team)
     elif choice == "15":
         league_events_room(canonical, save_path)
+    elif choice == "16":
+        narrative_settings_room(save_path)
     else:
         pause("Unknown menu choice.")
 
@@ -760,6 +794,67 @@ def league_events_room(canonical: dict[str, Any], save_path: Path) -> None:
             recent_only = not recent_only
         elif choice == "2":
             filter_index = (filter_index + 1) % len(filter_options)
+
+
+def narrative_settings_room(save_path: Path) -> None:
+    while True:
+        clear_screen()
+        status = narrative_settings_view(save_path)
+        print_title("Narrative Settings")
+        print(f"Status: {'enabled' if status.get('enabled') else 'disabled'}")
+        print(f"Provider: {status.get('provider')} | Model: {status.get('ollama_model')}")
+        print(f"Ollama URL: {status.get('ollama_base_url')}")
+        print(f"Timeout: {float(status.get('timeout_seconds') or 0):.1f}s | Social posts per view: {status.get('max_posts_per_view')}")
+        counts = status.get("cache_counts") or {}
+        print(f"Cache: social {counts.get('social', 0)} | press {counts.get('press', 0)}")
+        print_rule()
+        print("1. Toggle enabled")
+        print("2. Set Ollama model")
+        print("3. Set Ollama URL")
+        print("4. Set timeout seconds")
+        print("5. Set max social posts per view")
+        print("6. Reset narrative cache")
+        print("7. Test Ollama connection")
+        print("0. Back")
+        choice = input("> Pick a number: ").strip()
+        if choice == "0":
+            clear_screen()
+            return
+        if choice == "1":
+            updated = update_narrative_settings(save_path, enabled=not bool(status.get("enabled")))
+            pause(f"Narrative is now {'enabled' if updated.get('enabled') else 'disabled'}.")
+        elif choice == "2":
+            model = input(f"Model [{status.get('ollama_model') or 'llama3.1'}]: ").strip()
+            if model:
+                update_narrative_settings(save_path, provider="ollama", ollama_model=model)
+        elif choice == "3":
+            url = input(f"URL [{status.get('ollama_base_url') or 'http://localhost:11434'}]: ").strip()
+            if url:
+                update_narrative_settings(save_path, provider="ollama", ollama_base_url=url)
+        elif choice == "4":
+            raw = input(f"Timeout seconds [{status.get('timeout_seconds')}]: ").strip()
+            if raw:
+                try:
+                    update_narrative_settings(save_path, timeout_seconds=float(raw))
+                except ValueError:
+                    pause("Timeout must be a number.")
+        elif choice == "5":
+            raw = input(f"Max posts [{status.get('max_posts_per_view')}]: ").strip()
+            if raw:
+                try:
+                    update_narrative_settings(save_path, max_posts_per_view=int(raw))
+                except ValueError:
+                    pause("Max posts must be a whole number.")
+        elif choice == "6":
+            update_narrative_settings(save_path, reset_cache=True)
+            pause("Narrative cache reset.")
+        elif choice == "7":
+            tested = narrative_settings_view(save_path, test_connection=True)
+            available = tested.get("available_models") or []
+            details = f"Connection: {tested.get('connection', 'not tested')}"
+            if available:
+                details += "\nAvailable models: " + ", ".join(available)
+            pause(details)
 
 
 def league_player_browser_room(canonical: dict[str, Any], save_path: Path) -> None:
@@ -1619,6 +1714,14 @@ def store_trade_offer(save_path: Path, proposal: dict[str, Any]) -> None:
 
 def attach_pick_terms_to_trade(canonical: dict[str, Any], save_path: Path, proposal: dict[str, Any]) -> dict[str, Any]:
     proposal_payload = proposal.get("proposal") or {}
+    context = proposal.get("offer_context") or {}
+    if context.get("source") in {"trade_finder", "ai_trade_offer_to_user"}:
+        if proposal.get("pick_trade_terms") is not None:
+            finalized = finalize_pick_terms_for_proposal(proposal.get("pick_trade_terms") or [], proposal_payload)
+            if finalized:
+                return trade_result_with_pick_terms({**proposal, "pick_obligation_terms": finalized}, finalized)
+            return {**proposal, "pick_obligation_terms_prompted": True, "pick_trade_terms": proposal.get("pick_trade_terms") or []}
+        return {**proposal, "pick_obligation_terms_prompted": True, "pick_trade_terms": []}
     if proposal.get("pick_obligation_terms") or proposal.get("pick_obligation_terms_prompted"):
         finalized = finalize_pick_terms_for_proposal(proposal.get("pick_obligation_terms") or [], proposal_payload)
         return trade_result_with_pick_terms({**proposal, "pick_obligation_terms": finalized}, finalized)
@@ -3067,6 +3170,9 @@ def best_ai_draft_trade_candidate(
     seller_second = float(((seller_recs[1] or {}).get("entry") or {}).get("risk_adjusted_grade") or seller_top) if len(seller_recs) > 1 else seller_top
     seller_willingness = max(0.0, 8.0 - max(0.0, seller_top - seller_second))
     candidates: list[tuple[float, dict[str, Any]]] = []
+    budget = state.get("ai_draft_trade_budget") or {}
+    prior_trade_count = int(budget.get("total") or 0)
+    quiet_mid_first_market = overall >= 11 and prior_trade_count < max(1, (overall - 8) // 5)
     for buyer in sorted(active.get("teams", []), key=lambda item: item.get("abbrev", "")):
         if buyer.get("id") in {seller_team_id, user_team_id}:
             continue
@@ -3077,7 +3183,10 @@ def best_ai_draft_trade_candidate(
         if not buyer_recs:
             continue
         buyer_grade = float(((buyer_recs[0] or {}).get("entry") or {}).get("risk_adjusted_grade") or 0.0)
-        if buyer_grade < (60.0 if overall <= 10 else 55.0):
+        buyer_grade_floor = 60.0 if overall <= 10 else 55.0
+        if quiet_mid_first_market:
+            buyer_grade_floor -= 4.0
+        if buyer_grade < buyer_grade_floor:
             continue
         to_assets = draft_trade_offer_assets(active, state, buyer["id"], pick_id, lower_pick, overall)
         if not to_assets:
@@ -3094,10 +3203,14 @@ def best_ai_draft_trade_candidate(
         seller_net = float(seller_eval.get("net_value") or -99.0)
         buyer_net = float(buyer_eval.get("net_value") or -99.0)
         seller_state = next((item for item in active.get("team_strategic_states", []) if item.get("team_id") == seller_team_id), {})
-        seller_floor = 4.0 if overall <= 5 else 1.5 if overall <= 10 else -2.0
+        seller_floor = 8.0 if overall == 1 else 4.0 if overall <= 5 else 1.5 if overall <= 10 else -2.0
         if overall <= 8 and seller_state.get("phase") in {"rebuilding", "developing"}:
             seller_floor += 4.0
-        if seller_net < seller_floor or buyer_net < -22.0:
+        buyer_floor = -22.0
+        if quiet_mid_first_market:
+            seller_floor -= 2.5
+            buyer_floor -= 4.0
+        if seller_net < seller_floor or buyer_net < buyer_floor:
             continue
         move_down = draft_trade_move_down_distance(state, buyer["id"], overall)
         urgency = buyer_grade - max(0.0, move_down - 5) * 0.55
@@ -3174,7 +3287,11 @@ def draft_trade_offer_assets(active: dict[str, Any], state: dict[str, Any], buye
         key=lambda pick: pick_asset_value(pick, "neutral"),
         reverse=True,
     )
-    if overall <= 5:
+    if overall == 1:
+        required_factor = 1.34
+    elif overall <= 3:
+        required_factor = 1.28
+    elif overall <= 5:
         required_factor = 1.22
     elif overall <= 10:
         required_factor = 1.16
@@ -3206,6 +3323,8 @@ def draft_trade_offer_assets(active: dict[str, Any], state: dict[str, Any], buye
         if asset.get("kind") == "pick"
     )
     if lower_pick and len(assets) == 1:
+        return []
+    if overall == 1 and lower_pick and move_down >= 2 and not has_future_first:
         return []
     if overall <= 10 and move_down >= 3 and not has_future_first and current_value < target_value * 1.08:
         return []
@@ -3335,6 +3454,9 @@ def apply_saved_draft_order_to_draft(canonical: dict[str, Any], save: dict[str, 
         pick_id = draft_pick_identity(pick_order)
         if not team_id:
             continue
+        pick_order["current_owner_team_id"] = team_id
+        pick_order["owner_team_id"] = team_id
+        pick_order["team_abbrev"] = team_id_to_abbrev(team_id)
         selection = item.setdefault("selection", {})
         pick = item.setdefault("pick", {})
         selection["team_id"] = team_id
@@ -3348,6 +3470,8 @@ def apply_saved_draft_order_to_draft(canonical: dict[str, Any], save: dict[str, 
             selection["pick_id"] = pick_id
             pick["id"] = pick_id
             pick["pick_id"] = pick_id
+            pick_order["id"] = pick_id
+            pick_order["pick_id"] = pick_id
         if pick_order.get("original_team_id"):
             selection["original_team_id"] = pick_order.get("original_team_id")
             pick["original_team_id"] = pick_order.get("original_team_id")
@@ -3358,6 +3482,10 @@ def apply_saved_draft_order_to_draft(canonical: dict[str, Any], save: dict[str, 
                 pick[key] = pick_order.get(key)
         item["team"] = teams.get(team_id, {"id": team_id, "abbrev": str(team_id).replace("team_", "").upper()})
     draft["pending_draft_selections"] = sorted(pending, key=lambda item: int((item.get("selection") or {}).get("overall_pick") or 999))
+    saved_order = ((save.get("draft_orders") or {}).get(str(year)) or {})
+    draft["draft_order"] = [deepcopy(row) for row in sorted(order, key=lambda row: int(row.get("overall_pick") or 999))]
+    if saved_order.get("lottery"):
+        draft["lottery"] = deepcopy(saved_order.get("lottery"))
     return draft
 
 
@@ -5780,14 +5908,12 @@ def save_pool_free_agent_signing(
 def print_free_agent_investigation(active: dict[str, Any], save: dict[str, Any], player: dict[str, Any], market: dict[str, Any], user_team: str) -> None:
     attrs = player_attribute_summary(active, player.get("id"))
     stats = active_season_line(save, player.get("id"), player)
-    health = next((item for item in active.get("player_health_profiles", []) if item.get("player_id") == player.get("id")), {})
-    injury_risk = float(health.get("durability_risk") or health.get("injury_prone_score") or health.get("risk_score") or 0.0)
     projected_aav = round(max(2.0, float(market.get("projected_aav_millions") or 0.0) or display_minutes_projection(player) * 0.45), 1)
     print_title(f"Free-Agent Investigation | {player.get('name')}")
     print(f"{compact_position(player.get('position'))} | age {age_text(player, 2)} | {height_text(player)} | {display_minutes_projection(player):.0f} projected MPG")
     print(f"Recent line: {stats['ppg']:.1f} PPG, {stats['rpg']:.1f} RPG, {stats['apg']:.1f} APG")
     print(f"Ask range: around ${projected_aav:.1f}M AAV | Fit with {user_team}: {float(market.get('team_fit_score') or 0):.1f}/100")
-    print(f"Injury/durability flag: {injury_risk_text(injury_risk)}")
+    print(f"Injury/durability flag: {free_agent_durability_flag(active, player)}")
     team = resolve_team(active, user_team)
     cap_season = contract_start_season_for_signing(save)
     print_cap_summary(active, save, team["id"], team_cap_summary(active, save, team["id"], season=cap_season))
@@ -5807,6 +5933,28 @@ def free_agent_flexibility_score(active: dict[str, Any], player: dict[str, Any],
     years_pref = float(market.get("max_years") or 3)
     deterministic = (sum(ord(char) for char in f"{seed}:{user_team}:{player.get('id')}") % 21) - 10
     return round(max(8.0, min(92.0, 44.0 + (fit - 50.0) * 0.28 + max(0.0, age - 31) * 0.9 + years_pref * 2.2 + deterministic)), 1)
+
+
+def free_agent_durability_flag(active: dict[str, Any], player: dict[str, Any]) -> str:
+    player_id = player.get("id")
+    profile = next((item for item in active.get("player_health_profiles", []) if item.get("player_id") == player_id), {})
+    state = next((item for item in active.get("player_health_states", []) if item.get("player_id") == player_id), {})
+    risk = player_health_risk(profile, state)
+    durability = float(profile.get("durability") or 62.0)
+    risk_ten = int(round(clamp(1.0 + risk / 34.0 * 9.0, 1.0, 10.0)))
+    projected_games = int(round(clamp(82.0 - risk * 1.35 - max(0.0, 58.0 - durability) * 0.18, 38.0, 82.0)))
+    status = str(state.get("availability_status") or "active").lower()
+    current = bool(state.get("current_injury_id") or status not in {"", "active", "healthy"})
+    if risk_ten >= 7:
+        label = style("High", "danger")
+    elif risk_ten >= 4:
+        label = style("Medium", "accent")
+    else:
+        label = style("Low", "good")
+    current_note = " | currently out" if current else ""
+    if state.get("return_date") and current:
+        current_note = f" | out until {state.get('return_date')}"
+    return f"{label} ({risk_ten}/10, ~{projected_games} GP/yr{current_note})"
 
 
 def injury_risk_text(value: float) -> str:
@@ -6034,13 +6182,25 @@ def press_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed:
     team = user_team if event else (input(f"Team [{user_team}]: ").strip() or user_team)
     print_title("Press Conference")
     prompt = press_prompt(canonical, save_path, team, seed, event=event)
-    print("Choose a reporter.")
-    for idx, reporter in enumerate(prompt["reporters"], start=1):
-        print(f"{idx}. {reporter['name']}")
-    reporter = prompt["reporters"][pick_number("Reporter", 1, len(prompt["reporters"]), default=1) - 1]
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    if save.get("narrative_settings", {}).get("enabled"):
+        before_cache = json_cache_marker(save, "press")
+        team_id = resolve_team(canonical, team)["id"]
+        entry = press_cache_entry(canonical, save, team_id, event, prompt)
+        prompt["reporters"] = [{**entry["reporter"], "answers": entry["answers"], "narrative_entry": entry}]
+        prompt["narrative_entry"] = entry
+        if json_cache_marker(save, "press") != before_cache:
+            write_save(save_path, save)
+    if len(prompt["reporters"]) == 1:
+        reporter = prompt["reporters"][0]
+    else:
+        print("Choose a reporter.")
+        for idx, reporter in enumerate(prompt["reporters"], start=1):
+            print(f"{idx}. {reporter['name']}")
+        reporter = prompt["reporters"][pick_number("Reporter", 1, len(prompt["reporters"]), default=1) - 1]
     question = reporter["question"]
     answer_rng = random.Random(f"{prompt.get('answer_seed')}:{reporter.get('name')}:{question}")
-    answers = contextual_press_answers(prompt["topic"], prompt["team_abbrev"], prompt["player_name"], answer_rng, question=question)
+    answers = reporter.get("answers") or contextual_press_answers(prompt["topic"], prompt["team_abbrev"], prompt["player_name"], answer_rng, question=question)
     print_rule()
     print(f"{reporter['name']}: {question}")
     print("\nPick your answer.")
@@ -6057,6 +6217,13 @@ def press_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed:
         save["press_conferences"][-1]["answer"] = answer["line"]
         save["press_conferences"][-1]["reporter"] = reporter
         save["press_conferences"][-1]["answer_choice"] = answer
+        if prompt.get("narrative_entry"):
+            save["press_conferences"][-1]["narrative"] = {
+                "id": prompt["narrative_entry"].get("id"),
+                "source": prompt["narrative_entry"].get("source"),
+                "quality": answer.get("quality"),
+                "rationale": answer.get("rationale"),
+            }
         write_save(save_path, save)
     print_title("Press Room")
     print(f"Question: {result['question']}")
@@ -6069,6 +6236,10 @@ def press_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed:
     print_metric_change("Fans", before.get("fan_confidence"), after.get("fan_confidence"))
     print_metric_change("Owner", before.get("owner_confidence"), after.get("owner_confidence"))
     wait()
+
+
+def json_cache_marker(save: dict[str, Any], section: str) -> str:
+    return str(hash(tuple(sorted((save.get("narrative_cache", {}).get(section, {}) or {}).keys()))))
 
 
 def print_metric_change(label: str, before: Any, after: Any) -> None:
@@ -7344,20 +7515,31 @@ def print_social_and_morale(canonical: dict[str, Any], save_path: Path, team: st
             clear_screen()
             return
         save = load_save(save_path)
+        limit = social_timeline_limit(save)
         if choice == 1:
-            items = team_social_items(save, team_record["id"], team_record["abbrev"], limit=24)
+            items = team_social_items(save, team_record["id"], team_record["abbrev"], limit=limit)
             title = f"{team_record['abbrev']} Timeline"
         else:
-            items = league_social_items(save, team_record["id"], limit=24)
+            items = league_social_items(save, team_record["id"], limit=limit)
             title = "Biggest League-Wide Timeline"
+        items, changed = hydrate_social_items(canonical_with_save(canonical, save), save, items, team_id=team_record["id"])
+        if changed:
+            write_save(save_path, save)
         clear_screen()
         print_title(title)
         if not items:
             print("No posts match this view yet.")
         for item in items:
-            text = highlight_subject(item.get("text", ""), item.get("subject"))
-            print(f"{item.get('date', '')} {style(item.get('handle', '@league'), 'accent')} [{item.get('sentiment', 0):>5}] {text}")
+            for line in social_timeline_lines(item):
+                print(line)
         wait()
+
+
+def social_timeline_limit(save: dict[str, Any]) -> int:
+    settings = save.get("narrative_settings") or {}
+    if settings.get("enabled"):
+        return int(max(1, min(24, int(settings.get("max_posts_per_view") or 12))))
+    return 24
 
 
 def team_social_items(save: dict[str, Any], team_id: str, abbrev: str, limit: int = 20) -> list[dict[str, Any]]:
@@ -7383,6 +7565,61 @@ def highlight_subject(text: str, subject: str | None) -> str:
     if not subject or subject not in text:
         return text
     return text.replace(subject, style(subject, "subject"), 1)
+
+
+def social_event_subject(item: dict[str, Any]) -> str:
+    narrative = item.get("narrative") or {}
+    return str(narrative.get("display_subject") or item.get("subject") or "").strip()
+
+
+def social_timeline_parts(item: dict[str, Any]) -> tuple[str, str, bool]:
+    text = str(item.get("text") or "")
+    subject = social_event_subject(item)
+    narrative = item.get("narrative") or {}
+    canned = str(narrative.get("source") or "").lower() == "fallback" or (not narrative and str(item.get("persona") or "").lower() in {"template", "system"})
+    if not subject:
+        return "", text, canned
+    stripped_subject = subject.rstrip(".")
+    stripped_text = text.strip()
+    remainder = stripped_text
+    if stripped_text.lower().startswith(subject.lower()):
+        remainder = stripped_text[len(subject):].lstrip(" .")
+    elif stripped_text.lower().startswith(stripped_subject.lower()):
+        remainder = stripped_text[len(stripped_subject):].lstrip(" .")
+    return subject, remainder, canned
+
+
+def social_timeline_text(item: dict[str, Any]) -> str:
+    subject, remainder, canned = social_timeline_parts(item)
+    if not subject:
+        return style(remainder, "danger") if canned else remainder
+    if not remainder:
+        return style(subject, "subject")
+    body = style(remainder, "danger") if canned else remainder
+    return f"{style(subject, 'subject')}\n  {body}".strip()
+
+
+def social_timeline_lines(item: dict[str, Any], width: int | None = None) -> list[str]:
+    width = int(width or shutil.get_terminal_size((116, 20)).columns)
+    subject, remainder, canned = social_timeline_parts(item)
+    date_text = str(item.get("date") or "")
+    handle_text = style(str(item.get("handle") or "@league"), "accent")
+    sentiment_text = f"[{item.get('sentiment', 0):>5}]"
+    if subject:
+        header = f"{date_text} {handle_text} {sentiment_text} {style(subject, 'subject')}".strip()
+    else:
+        header = f"{date_text} {handle_text} {sentiment_text}".strip()
+    lines = [header]
+    body = remainder.strip()
+    if not body and not subject:
+        body = str(item.get("text") or "").strip()
+    if body:
+        body_width = max(36, width - 2)
+        wrapped = textwrap.wrap(body, width=body_width, break_long_words=False, break_on_hyphens=False) or [body]
+        for line in wrapped:
+            rendered = style(line, "danger") if canned else line
+            lines.append(f"  {rendered}")
+    return lines
 
 
 def morale_bar(value: Any, width: int = 20) -> str:

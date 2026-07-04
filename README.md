@@ -218,6 +218,26 @@ nba-gm-data install-assets --root . --zip "$HOME\Downloads\loading-assets-v1.zip
 
 The asset zip installs pre-rendered loading-screen frames into `.cache/`, so testers do not need `ffmpeg` or the original video file.
 
+## Optional Local LLM Narrative
+
+The game can run without any AI writing tools. New saves try to use local AI writing by default, but social media and press conferences automatically fall back to built-in writing if Ollama is not running or the selected model is unavailable.
+
+For richer local social posts and press-conference questions, optionally install **Ollama** from [ollama.com](https://ollama.com/) and pull a local model:
+
+```bash
+ollama pull llama3.1
+```
+
+Then launch the game and open **Narrative settings** from the main menu if you need to change the model, test the connection, or adjust the wait time. The game talks to Ollama at `http://localhost:11434` by default. If you already have a different local model installed, run `ollama list` and set the in-game model name to one of those installed models.
+
+You can also configure it from the terminal:
+
+```bash
+nba-gm-data narrative-settings --root . --save saves/YOUR_SAVE.json --enable --provider ollama --model llama3.1 --test
+```
+
+This feature is optional and sandboxed. The model receives only the current sim context that the game provides, and the game falls back to built-in writing if Ollama is not running, times out, or returns malformed text.
+
 ## Optional Custom Loading-Screen Videos
 
 Large video files are intentionally not stored in normal Git history because GitHub blocks large repository files. To use custom ASCII loading screens, create this folder after cloning:
@@ -328,6 +348,13 @@ nba-gm-data player "Stephen Curry" --traits --root .
 nba-gm-data team OKC --staff --root .
 ```
 
+Inspect or configure optional local narrative:
+
+```bash
+nba-gm-data narrative-settings --root . --save saves/YOUR_SAVE.json
+nba-gm-data narrative-settings --root . --save saves/YOUR_SAVE.json --enable --test
+```
+
 ## What Is In The Game
 
 - Canonical 2025-26 preseason NBA universe with players, teams, staff context, contracts, picks, traits, health, and sources.
@@ -336,7 +363,7 @@ nba-gm-data team OKC --staff --root .
 - AI trade, extension, free-agency, draft, draft-night trade, and staff-decision systems.
 - Draft lottery, draft room, rookie signing, rookie onboarding, free-agency market, playoffs, and offseason rollover.
 - Staff management for head coach, coordinators, development, scouting, and performance.
-- Morale, social posts, league events, and contextual press conferences after major events.
+- Morale, social posts, league events, contextual press conferences after major events, and optional Ollama-backed narrative writing.
 - Protected picks and same-year same-round pick swaps.
 - Display-scale player ratings plus a ratings guide, while the engine keeps its internal calibrated values.
 - Optional ASCII highlight loading screens.
@@ -348,4 +375,3 @@ nba-gm-data team OKC --staff --root .
 Raw folders such as `Player Stats/`, `NBA Schedule/`, `Pre-Season manifestos/`, `HTML Pages with Stats AND Writing/`, `Even more stats/`, and `Computed Stats From Previous Project/` are ingestion sources, not canonical truth. The canonical layer can be rebuilt from source data and caches.
 
 Research caches live under `data/research/`. Manual overrides live under `data/overrides/`. Canonical exports live under `data/canonical/` when generated.
-

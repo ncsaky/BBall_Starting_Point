@@ -58,6 +58,7 @@ from .save import (
     league_standings,
     load_save,
     morale_report,
+    narrative_settings_view,
     offseason_status,
     pending_actions_view,
     playoff_picture,
@@ -71,6 +72,7 @@ from .save import (
     social_feed_view,
     start_playoffs,
     team_dashboard,
+    update_narrative_settings,
     write_save,
 )
 from .play import new_save_seed, resolve_chosen_team, run_play_session
@@ -226,6 +228,19 @@ def main(argv: list[str] | None = None) -> int:
     events_parser.add_argument("--limit", type=int, default=40)
     events_parser.add_argument("--major", action="store_true")
     events_parser.add_argument("--recent-days", type=int, default=None)
+
+    narrative_parser = subparsers.add_parser("narrative-settings", help="Inspect or update optional local LLM narrative settings.", parents=[common])
+    narrative_parser.add_argument("--save", required=True)
+    narrative_toggle = narrative_parser.add_mutually_exclusive_group()
+    narrative_toggle.add_argument("--enable", action="store_true")
+    narrative_toggle.add_argument("--disable", action="store_true")
+    narrative_parser.add_argument("--provider", choices=["ollama", "fallback"], default=None)
+    narrative_parser.add_argument("--ollama-url", default=None)
+    narrative_parser.add_argument("--model", default=None)
+    narrative_parser.add_argument("--timeout", type=float, default=None)
+    narrative_parser.add_argument("--max-posts", type=int, default=None)
+    narrative_parser.add_argument("--reset-cache", action="store_true")
+    narrative_parser.add_argument("--test", action="store_true", help="Try the configured provider and report connection status.")
 
     press_parser = subparsers.add_parser("hold-press-conference", help="Answer a press question and apply morale/social effects.", parents=[common])
     press_parser.add_argument("--save", required=True)
@@ -703,6 +718,37 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "league-events":
         print_json(league_events_view(data, args.save, limit=args.limit, kind=args.kind, major_only=args.major, recent_days=args.recent_days))
+        return 0
+    if args.command == "narrative-settings":
+        if any(
+            value is not None and value is not False
+            for value in [
+                args.enable,
+                args.disable,
+                args.provider,
+                args.ollama_url,
+                args.model,
+                args.timeout,
+                args.max_posts,
+                args.reset_cache,
+            ]
+        ):
+            enabled = True if args.enable else False if args.disable else None
+            print_json(
+                update_narrative_settings(
+                    args.save,
+                    enabled=enabled,
+                    provider=args.provider,
+                    ollama_base_url=args.ollama_url,
+                    ollama_model=args.model,
+                    timeout_seconds=args.timeout,
+                    max_posts_per_view=args.max_posts,
+                    reset_cache=args.reset_cache,
+                    test_connection=args.test,
+                )
+            )
+        else:
+            print_json(narrative_settings_view(args.save, test_connection=args.test))
         return 0
     if args.command == "hold-press-conference":
         try:

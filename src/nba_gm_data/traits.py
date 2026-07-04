@@ -309,6 +309,38 @@ def apply_league_trait_calibration(
                     }
                 )
 
+    fringe_adjusted_count = 0
+    fringe_adjusted_players: set[str] = set()
+    for player_id, player in players_by_id.items():
+        if player_id in matched_rows or not _low_evidence_unmatched_player(player):
+            continue
+        ceiling = _fringe_trait_ceiling(player)
+        for trait_key, previous in list(values_by_player.get(player_id, {}).items()):
+            trait = trait_by_key.get((player_id, trait_key))
+            if not trait:
+                continue
+            trait_ceiling = _fringe_trait_ceiling_for_trait(ceiling, trait_key, player)
+            if previous <= trait_ceiling:
+                continue
+            values_by_player[player_id][trait_key] = round(trait_ceiling, 2)
+            calibration[(player_id, trait_key)] = {
+                "player_name": _player_get(player, "name"),
+                "csv_team": None,
+                "csv_rank": None,
+                "previous_value": round(previous, 2),
+                "engine_target": round(trait_ceiling, 2),
+                "blend_weight": 1.0,
+                "composite_nudges": [],
+                "fringe_role_cap": {
+                    "reason": "unmatched_low_evidence_fringe_player",
+                    "minutes": round(_display_minutes(_player_get(player, "minutes_projection")), 2),
+                    "prior_minutes": round(maybe_float(_player_get(player, "prior_minutes")) or 0.0, 2),
+                    "ceiling": round(trait_ceiling, 2),
+                },
+            }
+            fringe_adjusted_count += 1
+            fringe_adjusted_players.add(player_id)
+
     calibrated_traits: list[TraitValue] = []
     adjusted_count = 0
     for trait in traits:
@@ -342,6 +374,8 @@ def apply_league_trait_calibration(
     report["adjusted_trait_count"] = adjusted_count
     report["source_id"] = LEAGUE_TRAIT_RATINGS_SOURCE_ID
     report["trait_columns"] = dict(LEAGUE_TRAIT_RATING_COLUMNS)
+    report["fringe_role_cap_adjusted_player_count"] = len(fringe_adjusted_players)
+    report["fringe_role_cap_adjusted_trait_count"] = fringe_adjusted_count
     report["composite_columns"] = {
         column: {"composite": spec[0], "traits": spec[1], "coefficient": spec[2]}
         for column, spec in LEAGUE_TRAIT_COMPOSITE_COLUMNS.items()
@@ -426,6 +460,48 @@ def _trait_calibration_weight(base_weight: float, trait: TraitValue, previous: f
     if previous <= 5.0 and target >= 30.0:
         weight = max(weight, 0.94)
     return clamp(weight, 0.0, 0.96)
+
+
+def _low_evidence_unmatched_player(player: Any) -> bool:
+    minutes = _display_minutes(_player_get(player, "minutes_projection"))
+    if minutes >= 22.0:
+        return False
+    age = maybe_float(_player_get(player, "age")) or 24.0
+    prior_minutes = maybe_float(_player_get(player, "prior_minutes")) or 0.0
+    rotation_priority = str(_player_get(player, "rotation_priority") or "").lower()
+    if rotation_priority == "fringe" and minutes < 8.0 and prior_minutes < 900.0:
+        return True
+    if age >= 27.0 and prior_minutes >= 250.0:
+        return False
+    if minutes < 8.0 and prior_minutes < 900.0:
+        return True
+    if minutes < 16.0 and prior_minutes < 500.0:
+        return True
+    if minutes < 22.0 and prior_minutes < 160.0:
+        return True
+    return False
+
+
+def _fringe_trait_ceiling(player: Any) -> float:
+    minutes = _display_minutes(_player_get(player, "minutes_projection"))
+    if minutes >= 18.0:
+        return 62.0
+    if minutes >= 10.0:
+        return 58.0
+    return 54.0
+
+
+def _fringe_trait_ceiling_for_trait(base: float, trait_key: str, player: Any) -> float:
+    position = str(_player_get(player, "position") or "").upper()
+    if trait_key == "stamina_cardio":
+        return max(base, 62.0)
+    if trait_key == "rim_deterrence" and "C" in position:
+        return min(62.0, base + 4.0)
+    if trait_key in {"defensive_effort", "screen_navigation"} and any(token in position for token in ["PG", "SG", "SF"]):
+        return min(60.0, base + 4.0)
+    if trait_key in {"passing_reads", "handle_pressure"} and any(token in position for token in ["PG", "SG"]):
+        return min(60.0, base + 4.0)
+    return base
 
 
 def _display_minutes(value: Any) -> float:

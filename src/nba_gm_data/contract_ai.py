@@ -247,17 +247,17 @@ def build_extension_candidates(
         remaining = salary_seasons_remaining(contract)
         manual = contract_needs_manual_review(contract)
         original_years = int(contract.get("original_contract_years") or 0)
-        eligible = not manual and player.get("team_id") is not None and original_years >= 3 and 1 <= remaining <= 2
+        eligible = not manual and player.get("team_id") is not None and original_years >= 3 and 1 <= remaining <= 3
         if manual:
             status = "manual_review_required"
         elif original_years < 3:
             status = "original_contract_shorter_than_three_years"
-        elif remaining > 2:
-            status = "not_in_final_two_contract_seasons"
+        elif remaining > 3:
+            status = "not_in_extension_window"
         elif remaining < 1:
             status = "no_salary_seasons_remaining"
         elif eligible:
-            status = "eligible_final_two_seasons"
+            status = "eligible_extension_window"
         else:
             status = "not_extension_eligible"
         priority_score, reasons = extension_priority_score(canonical, player, valuation, profile, eligible, manual)
@@ -614,7 +614,9 @@ def apply_contract_to_save(save_path: str | Path, negotiation_id: str, date: str
         team_label = str(team_id or "").replace("team_", "").upper()
         transaction_kind = negotiation_payload.get("negotiation_type", "contract")
         if transaction_kind == "extension":
-            headline = f"{team_label} extends {player_label}."
+            from .save import extension_headline_with_terms
+
+            headline = extension_headline_with_terms(team_label, player_label, accepted_offer)
         else:
             headline = f"{team_label} signs {player_label}."
         from .save import add_league_event, add_news
@@ -635,6 +637,7 @@ def apply_contract_to_save(save_path: str | Path, negotiation_id: str, date: str
                 "contract": accepted_offer or {},
                 "annual_salary": annual_salary,
                 "aav_millions": round(annual_salary / 1_000_000, 2) if annual_salary else 0.0,
+                "years": int((accepted_offer or {}).get("original_contract_years") or (accepted_offer or {}).get("years") or 0),
             },
         )
         queue_press_event_if_user_involved(

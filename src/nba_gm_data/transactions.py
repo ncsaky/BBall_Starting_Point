@@ -557,7 +557,7 @@ def evaluate_trade(
     date: str = CANONICAL_START_DATE,
     config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    canonical = with_transaction_context(canonical, config)
+    canonical = canonical if transaction_context_ready(canonical) else with_transaction_context(canonical, config)
     config = config or default_transaction_model_config()
     from_team = resolve_team(canonical, from_team_query)
     to_team = resolve_team(canonical, to_team_query)
@@ -1282,13 +1282,15 @@ def with_transaction_context(canonical: dict[str, Any] | Any, config: dict[str, 
     ensure_future_second_round_scaffolds(canonical)
     simplify_unsupported_pick_conditions(canonical)
     if transaction_context_is_complete(canonical):
-        annotate_pick_value_context(canonical)
+        ensure_pick_value_context(canonical)
         annotate_pick_obligation_context(canonical)
+        mark_pick_value_context_current(canonical)
         return canonical
     context = build_transaction_context(canonical, config)
     enriched = {**canonical, **context}
-    annotate_pick_value_context(enriched)
+    ensure_pick_value_context(enriched)
     annotate_pick_obligation_context(enriched)
+    mark_pick_value_context_current(enriched)
     return enriched
 
 
@@ -1620,6 +1622,98 @@ def transaction_context_is_complete(canonical: dict[str, Any]) -> bool:
     return active_players.issubset(valued)
 
 
+def transaction_context_ready(canonical: Any) -> bool:
+    return isinstance(canonical, dict) and transaction_context_is_complete(canonical) and pick_value_context_current(canonical)
+
+
+def ensure_pick_value_context(canonical: dict[str, Any]) -> None:
+    signature = transaction_pick_context_signature(canonical)
+    if canonical.get("_transaction_pick_context_signature") == signature:
+        return
+    annotate_pick_value_context(canonical)
+    canonical["_transaction_pick_context_signature"] = signature
+
+
+def mark_pick_value_context_current(canonical: dict[str, Any]) -> None:
+    canonical["_transaction_pick_context_signature"] = transaction_pick_context_signature(canonical)
+
+
+def pick_value_context_current(canonical: dict[str, Any]) -> bool:
+    return canonical.get("_transaction_pick_context_signature") == transaction_pick_context_signature(canonical)
+
+
+def transaction_pick_context_signature(canonical: dict[str, Any]) -> str:
+    meta = canonical.get("meta") or {}
+    records = canonical.get("save_team_records") or {}
+    payload = {
+        "active_season": meta.get("active_season"),
+        "teams": sorted(
+            (
+                team.get("id"),
+                state.get("phase"),
+                maybe_float(state.get("contention_ceiling")),
+                maybe_float(state.get("pressure")),
+            )
+            for team in canonical.get("teams", [])
+            for state in [next((item for item in canonical.get("team_strategic_states", []) if item.get("team_id") == team.get("id")), {})]
+        ),
+        "records": sorted(
+            (
+                team_id,
+                maybe_float(record.get("wins")) or 0.0,
+                maybe_float(record.get("losses")) or 0.0,
+            )
+            for team_id, record in records.items()
+        ),
+        "rosters": sorted(
+            (player.get("id"), player.get("team_id"))
+            for player in canonical.get("players", [])
+            if player.get("id")
+        ),
+        "picks": sorted(
+            (
+                pick.get("id"),
+                str(pick.get("season") or ""),
+                int(pick.get("round") or 0),
+                pick.get("original_team_id"),
+                pick.get("current_owner_team_id"),
+                pick.get("status"),
+                pick.get("overall_pick"),
+                pick.get("protection_summary"),
+                pick.get("protections"),
+            )
+            for pick in canonical.get("draft_picks", [])
+            if pick.get("id")
+        ),
+        "obligations": sorted(
+            json.dumps(
+                {
+                    key: obligation.get(key)
+                    for key in [
+                        "id",
+                        "type",
+                        "status",
+                        "season",
+                        "round",
+                        "primary_pick_id",
+                        "fallback_pick_ids",
+                        "sender_team_id",
+                        "receiver_team_id",
+                        "current_rights_holder_team_id",
+                        "counterparty_team_id",
+                        "team_a_pick_id",
+                        "team_b_pick_id",
+                    ]
+                },
+                sort_keys=True,
+            )
+            for obligation in canonical.get("pick_obligations", [])
+        ),
+        "locked_pick_assets": sorted(canonical.get("locked_pick_assets") or []),
+    }
+    return stable_id("transaction_pick_context", json.dumps(payload, sort_keys=True, default=str))
+
+
 def annotate_pick_value_context(canonical: dict[str, Any]) -> None:
     states = {state.get("team_id"): state for state in canonical.get("team_strategic_states", [])}
     records = canonical.get("save_team_records") or {}
@@ -1815,7 +1909,7 @@ def market_trade_target_value(player: dict[str, Any], valuation: dict[str, Any])
     raw = float(valuation.get("player_value") or 0.0)
     if goat_exception_player(player):
         return 112.0
-    minutes = display_minutes_projection(player)
+    minutes = trade_value_role_minutes(player, valuation)
     ability = maybe_float(player.get("current_ability")) or maybe_float(player.get("overall")) or (38.0 + minutes * 1.15)
     potential = maybe_float(player.get("potential")) or ability
     upside = max(0.0, potential - ability)
@@ -1861,7 +1955,7 @@ def market_value_after_star_and_surplus_shape(player: dict[str, Any], valuation:
     playoff = float(valuation.get("playoff_value") or 50.0)
     surplus = float(valuation.get("contract_surplus") or 0.0)
     development = float(valuation.get("development_upside") or 0.0)
-    minutes = display_minutes_projection(player)
+    minutes = trade_value_role_minutes(player, valuation)
     age = maybe_float(player.get("age")) or 27.0
     if surplus > 16.0 and on_court < 80.0 and development < 13.5:
         penalty_rate = 0.82 if on_court >= 74.0 else 1.12
@@ -1885,7 +1979,7 @@ def market_trade_value_cap(player: dict[str, Any], valuation: dict[str, Any], ra
     on_court = float(valuation.get("on_court_value") or raw or valuation.get("player_value") or 0.0)
     playoff = float(valuation.get("playoff_value") or 50.0)
     player_value = float(valuation.get("player_value") or raw or 0.0)
-    minutes = display_minutes_projection(player)
+    minutes = trade_value_role_minutes(player, valuation)
     if minutes >= 30.0 and on_court >= 86.0 and playoff >= 84.0:
         return 124.0
     if minutes >= 28.0 and player_value >= 84.0 and playoff >= 82.0:
@@ -2445,7 +2539,7 @@ def evaluate_trade_for_team(
     strategic = strategic_fit_adjustment(canonical, incoming_assets, outgoing_assets, perspective_team_id, config)
     personality = personality_trade_adjustment(canonical, perspective_team_id, proposal.id, seed)
     net = incoming - outgoing + strategic + personality["total"]
-    threshold = acceptance_threshold(canonical, perspective_team_id, config)
+    threshold = contextual_acceptance_threshold(canonical, perspective_team_id, config, incoming_assets, outgoing_assets)
     accepted = net >= threshold and legality["status"] == "legal"
     decision = "accept" if accepted else "reject"
     if legality["status"] == "manual_review_required":
@@ -3105,6 +3199,27 @@ def display_minutes_projection(player: dict[str, Any] | None) -> float:
     }.get(rotation, 8.0)
 
 
+def trade_value_role_minutes(player: dict[str, Any] | None, valuation: dict[str, Any] | None = None) -> float:
+    if not player:
+        return 0.0
+    current_minutes = display_minutes_projection(player)
+    if current_minutes >= 2.0 or not player.get("_trade_value_unavailable"):
+        return current_minutes
+    baseline = maybe_float(player.get("_trade_value_minutes_projection"))
+    if baseline is None:
+        return current_minutes
+    valuation = valuation or {}
+    long_term_quality = max(
+        float(valuation.get("player_value") or 0.0),
+        float(valuation.get("on_court_value") or 0.0),
+        float(valuation.get("playoff_value") or 0.0),
+    )
+    rotation = str(player.get("rotation_priority") or "")
+    if long_term_quality < 42.0 and rotation not in {"core_rotation", "rotation", "development_priority"}:
+        return current_minutes
+    return round(clamp(baseline, current_minutes, 42.0), 1)
+
+
 def strategic_fit_adjustment(canonical: dict[str, Any], incoming: list[dict[str, Any]], outgoing: list[dict[str, Any]], team_id: str, config: dict[str, Any]) -> float:
     state = next(item for item in canonical["team_strategic_states"] if item["team_id"] == team_id)
     adjustment = 0.0
@@ -3155,6 +3270,42 @@ def acceptance_threshold(canonical: dict[str, Any], team_id: str, config: dict[s
     base += (float(front.get("competence") or 55) - 55) * 0.025
     base -= (float(front.get("owner_pressure") or 55) - 55) * 0.03
     return round(base, 3)
+
+
+def contextual_acceptance_threshold(
+    canonical: dict[str, Any],
+    team_id: str,
+    config: dict[str, Any],
+    incoming_assets: list[dict[str, Any]],
+    outgoing_assets: list[dict[str, Any]],
+) -> float:
+    threshold = acceptance_threshold(canonical, team_id, config)
+    values = {value["player_id"]: value for value in canonical.get("player_asset_valuations", [])}
+
+    def max_player_value(assets: list[dict[str, Any]]) -> float:
+        best = 0.0
+        for asset in assets:
+            if asset.get("kind") != "player":
+                continue
+            player = player_by_id(canonical, asset.get("id"))
+            if not player:
+                continue
+            value = values.get(player["id"], fallback_asset_valuation(player))
+            best = max(best, float(value.get("player_value") or 0.0))
+        return best
+
+    incoming_star = max_player_value(incoming_assets)
+    outgoing_star = max_player_value(outgoing_assets)
+    if incoming_star >= 78.0 and incoming_star >= outgoing_star + 8.0:
+        state = next((item for item in canonical.get("team_strategic_states", []) if item.get("team_id") == team_id), {})
+        front = next((item for item in canonical.get("front_office_profiles", []) if item.get("team_id") == team_id), {})
+        discount = 0.55
+        discount += max(0.0, float(state.get("pressure") or 55.0) - 65.0) * 0.015
+        discount += max(0.0, float(front.get("star_chasing") or 55.0) - 55.0) * 0.015
+        if state.get("phase") in {"contending", "contending_with_future_upside"}:
+            discount += 0.25
+        threshold -= min(1.3, discount)
+    return round(threshold, 3)
 
 
 def evaluation_notes(canonical: dict[str, Any], team_id: str, net: float, threshold: float, strategic: float, personality: dict[str, float], legality: dict[str, Any]) -> str:
@@ -3288,15 +3439,21 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     distance = max(0, pick_start - active_start)
     if round_no == 1:
         if slot_value:
-            if slot_value <= 5:
-                value = 111.0 - slot_value * 2.2
+            if slot_value == 1:
+                value = 126.0
+            elif slot_value == 2:
+                value = 118.0
+            elif slot_value == 3:
+                value = 112.0
+            elif slot_value <= 5:
+                value = 108.0 - (slot_value - 4) * 4.5
             elif slot_value <= 10:
-                value = 99.0 - (slot_value - 5) * 2.4
+                value = 96.0 - (slot_value - 6) * 3.0
             elif slot_value <= 20:
                 value = 87.0 - (slot_value - 10) * 3.1
             else:
                 value = 54.0 - (slot_value - 20) * 2.25
-            value = clamp(value, 28, 108)
+            value = clamp(value, 28, 128)
         elif pick.get("status") == "verified_2026_draft_board" and pick.get("id", "").split("-"):
             try:
                 pick_no = int(pick["id"].split("-")[2])
@@ -3330,7 +3487,7 @@ def pick_asset_value(pick: dict[str, Any], phase: str) -> float:
     distance_noise = deterministic_pick_uncertainty_bonus(pick, distance, round_no)
     value += distance_noise
     value *= float(pick.get("_protection_value_factor") or 1.0)
-    return round(clamp(value, 1, 108 if round_no == 1 else 96), 2)
+    return round(clamp(value, 1, 128 if round_no == 1 else 96), 2)
 
 
 def deterministic_pick_uncertainty_bonus(pick: dict[str, Any], distance: int, round_no: int) -> float:
