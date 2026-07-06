@@ -3,6 +3,7 @@ import json
 import os
 import random
 import tempfile
+import threading
 import unittest
 import zipfile
 from contextlib import redirect_stdout
@@ -10,8 +11,11 @@ from io import StringIO
 from pathlib import Path
 from collections import Counter
 from unittest.mock import patch
+from urllib import request as urlrequest
 
 import nba_gm_data.transactions as transactions_module
+from nba_gm_data.app_actions import APP_ACTION_PROTOCOL_VERSION, dispatch_app_action
+from nba_gm_data.app_server import make_gui_server
 from nba_gm_data.assets import install_loading_assets
 from nba_gm_data.animation import auto_frame_size, colorize_frame, default_video_path, load_animation_frames
 from nba_gm_data.cli import load_or_build, main as cli_main
@@ -69,6 +73,7 @@ from nba_gm_data.save import (
     ai_extension_due_date,
     ai_extension_team_pass_outlook,
     ensure_league_save_defaults,
+    ensure_draft_processed,
     extension_headline_with_terms,
     hold_press_conference,
     league_events_view,
@@ -114,6 +119,7 @@ from nba_gm_data.save import (
     team_rotation_projection,
     team_cap_summary,
     player_attribute_summary,
+    press_conferences_enabled,
     process_inseason_released_free_agent_signings,
     record_game_result,
 )
@@ -129,6 +135,7 @@ from nba_gm_data.play import (
     extension_safe_year_limit,
     free_agent_durability_flag,
     free_agency_user_offer_limit,
+    handle_forced_phase,
     initialize_free_agency_market,
     league_trait_rows,
     league_trait_rating_thresholds,
@@ -754,6 +761,168 @@ class DataFoundationTests(unittest.TestCase):
             self.assertEqual(saved["user_trade_offers"][0]["offer_context"]["status"], "expired_trade_deadline")
             after = pending_actions_view(self.plain, save_path)
             self.assertEqual(after["pending_counts"]["user_trade_offers"], 0)
+
+    def test_app_action_layer_creates_local_save_and_serves_core_payloads(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_dir = Path(tmp) / "app_saves"
+            runtime = dispatch_app_action("runtime_status", root=ROOT, save_dir=save_dir, canonical=self.plain)
+            self.assertEqual(runtime["protocol_version"], APP_ACTION_PROTOCOL_VERSION)
+            self.assertTrue(runtime["runtime"]["ios_standalone_target"])
+            self.assertFalse(runtime["runtime"]["requires_remote_backend"])
+
+            created = dispatch_app_action(
+                "create_save",
+                {"team": "GSW", "seed": 501, "save_name": "gui_smoke"},
+                root=ROOT,
+                save_dir=save_dir,
+                canonical=self.plain,
+            )
+            save_path = created["save_path"]
+            self.assertEqual(created["status"], "created")
+            self.assertFalse(created["game_settings"]["press_conferences_enabled"])
+
+            listed = dispatch_app_action("list_saves", root=ROOT, save_dir=save_dir, canonical=self.plain)
+            self.assertEqual(listed["save_count"], 1)
+            home = dispatch_app_action("home", {"save_path": save_path}, root=ROOT, save_dir=save_dir, canonical=self.plain)
+            self.assertEqual(home["save"]["user_team"]["abbrev"], "GSW")
+            self.assertIn("league_events", home)
+            dashboard = dispatch_app_action("team_dashboard", {"save_path": save_path, "team": "GSW"}, root=ROOT, save_dir=save_dir, canonical=self.plain)
+            self.assertEqual(dashboard["team"]["abbrev"], "GSW")
+            self.assertIn("rotation", dashboard)
+            self.assertIn("cap_by_year", dashboard)
+
+            league_stats = dispatch_app_action("league_leaders", {"save_path": save_path, "stat": "points"}, root=ROOT, save_dir=save_dir, canonical=self.plain)
+            self.assertEqual(league_stats["stat"], "points")
+            league_traits = dispatch_app_action("league_traits", {"save_path": save_path, "trait": "overall"}, root=ROOT, save_dir=save_dir, canonical=self.plain)
+            self.assertEqual(league_traits["rating_scale"], "dashboard_display")
+
+            starter_slots = {str(idx): row["id"] for idx, row in enumerate(dashboard["rotation"][:5], start=1)}
+            lineup = dispatch_app_action(
+                "set_starting_five",
+                {"save_path": save_path, "team": "GSW", "slots": starter_slots},
+                root=ROOT,
+                save_dir=save_dir,
+                canonical=self.plain,
+            )
+            self.assertEqual(lineup["status"], "updated")
+            self.assertEqual(len(lineup["dashboard"]["starting_five"]), 5)
+
+            minutes = {row["id"]: 0 for row in dashboard["rotation"]}
+            for row in dashboard["rotation"][:5]:
+                minutes[row["id"]] = 48
+            rotation = dispatch_app_action(
+                "set_rotation_minutes",
+                {"save_path": save_path, "team": "GSW", "minutes": minutes},
+                root=ROOT,
+                save_dir=save_dir,
+                canonical=self.plain,
+            )
+            self.assertEqual(rotation["status"], "updated")
+            self.assertEqual(rotation["total_minutes"], 240)
+
+            assets = dispatch_app_action("team_assets", {"save_path": save_path, "team": "GSW"}, root=ROOT, save_dir=save_dir, canonical=self.plain)
+            self.assertEqual(assets["team"]["abbrev"], "GSW")
+            self.assertTrue(assets["players"])
+            self.assertIn("hard_cap_space_millions", assets["cap"])
+
+            staff_room = dispatch_app_action("staff_room", {"save_path": save_path, "team": "GSW", "limit": 5}, root=ROOT, save_dir=save_dir, canonical=self.plain)
+            self.assertEqual(staff_room["team_report"]["team"]["abbrev"], "GSW")
+            self.assertLessEqual(len(staff_room["market"]["candidates"]), 5)
+
+            free_agency_room = dispatch_app_action("free_agency_room", {"save_path": save_path, "team": "GSW"}, root=ROOT, save_dir=save_dir, canonical=self.plain)
+            self.assertEqual(free_agency_room["team"]["abbrev"], "GSW")
+            self.assertIn("candidates", free_agency_room)
+
+            draft_room = dispatch_app_action("draft_room", {"save_path": save_path, "team": "GSW", "seed": 501}, root=ROOT, save_dir=save_dir, canonical=self.plain)
+            self.assertEqual(draft_room["state"]["status"], "locked_until_draft")
+            self.assertIsNone(draft_room["current_selection"])
+            self.assertTrue(draft_room["draft_board"]["entries"])
+
+            playoff_room = dispatch_app_action("playoff_room", {"save_path": save_path}, root=ROOT, save_dir=save_dir, canonical=self.plain)
+            self.assertIn("picture", playoff_room)
+            self.assertIn("East", playoff_room["picture"])
+            self.assertIn("West", playoff_room["picture"])
+            self.assertIn("series", playoff_room)
+
+            advanced = dispatch_app_action(
+                "advance_save",
+                {"save_path": save_path, "days": 1, "seed": 501, "process_ai": False},
+                root=ROOT,
+                save_dir=save_dir,
+                canonical=self.plain,
+            )
+            self.assertEqual(advanced["status"], "advanced")
+            reloaded = load_save(save_path)
+            self.assertEqual(reloaded["state"]["current_date"], "2025-10-02")
+            self.assertFalse(press_conferences_enabled(reloaded))
+
+            updated = dispatch_app_action(
+                "update_game_settings",
+                {"save_path": save_path, "settings": {"press_conferences_enabled": True}},
+                root=ROOT,
+                save_dir=save_dir,
+                canonical=self.plain,
+            )
+            self.assertTrue(updated["press_conferences_enabled"])
+            self.assertIn("press_conferences", load_save(save_path)["state"]["legal_actions"])
+
+    def test_local_gui_server_serves_static_assets_and_json_actions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_dir = Path(tmp) / "gui_saves"
+            server = make_gui_server(root=ROOT, save_dir=save_dir, host="127.0.0.1", port=0)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            base_url = f"http://127.0.0.1:{server.server_address[1]}"
+
+            def post_action(action: str, payload: dict | None = None) -> dict:
+                body = json.dumps({"action": action, "payload": payload or {}}).encode("utf-8")
+                req = urlrequest.Request(
+                    f"{base_url}/api/action",
+                    data=body,
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urlrequest.urlopen(req, timeout=30) as response:
+                    data = json.loads(response.read().decode("utf-8"))
+                self.assertTrue(data["ok"], data)
+                return data["result"]
+
+            try:
+                with urlrequest.urlopen(f"{base_url}/", timeout=30) as response:
+                    index = response.read().decode("utf-8")
+                self.assertIn("NBA GM Sandbox", index)
+                teams = post_action("teams")
+                self.assertIn("GSW", {team["abbrev"] for team in teams["teams"]})
+                created = post_action("create_save", {"team": "GSW", "seed": 511, "save_name": "server_gui_smoke"})
+                save_path = created["save_path"]
+                home = post_action("home", {"save_path": save_path})
+                self.assertEqual(home["save"]["user_team"]["abbrev"], "GSW")
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join(timeout=30)
+
+    def test_press_conferences_are_disabled_as_forced_interruptions_by_default(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "press_disabled_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=418)
+            save["state"] = {"current_date": "2025-10-21", "phase": "regular_season", "legal_actions": ["trades", "advance"]}
+            save["pending_press_events"] = [
+                {
+                    "id": "pending_press_disabled",
+                    "kind": "trade",
+                    "date": "2025-10-21",
+                    "headline": "GSW makes a test move.",
+                    "team_ids": ["team_gsw"],
+                }
+            ]
+            write_save(save_path, save)
+            result = handle_forced_phase(ROOT, self.plain, save_path, seed=418)
+            self.assertIsNone(result)
+            saved = ensure_league_save_defaults(load_save(save_path), self.plain)
+            self.assertFalse(press_conferences_enabled(saved))
+            self.assertEqual(len(saved["pending_press_events"]), 1)
+            self.assertNotIn("press_conferences", saved["state"]["legal_actions"])
 
     def test_press_and_game_news_do_not_create_league_events(self):
         save = {"state": {"current_date": "2025-11-01"}, "news_items": [], "league_events": [], "social_feed": []}
@@ -2894,6 +3063,21 @@ class DataFoundationTests(unittest.TestCase):
             self.assertEqual(float(active_rookie["display_age"]), float(rookie["age"]))
             projection = team_rotation_projection(active, saved, active_rookie["team_id"], integer=False)
             self.assertGreaterEqual(float(projection.get(rookie_id) or 0.0), 17.0)
+
+    def test_automated_draft_processing_unblocks_free_agency_advance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "automated_draft_save.json"
+            save = create_league_save(ROOT, self.plain, "ATL", save_path, seed=12)
+            save["state"] = {"current_date": "2026-06-27", "phase": "draft", "legal_actions": ["trades", "draft_picks"]}
+            result = ensure_draft_processed(self.plain, save, "2026", seed=12)
+            self.assertEqual(result["status"], "processed_ai_draft")
+            self.assertEqual(save.get("pending_draft_selections"), [])
+            self.assertEqual(save.get("draft_state", {}).get("status"), "completed")
+            self.assertGreater(result["rookies_signed"], 0)
+            write_save(save_path, save)
+            advanced = advance_save(ROOT, self.plain, save_path, to_date="2026-07-01", seed=12)
+            self.assertEqual(advanced["status"], "advanced")
+            self.assertEqual(load_save(save_path)["state"]["phase"], "free_agency")
 
     def test_awards_generate_from_saved_stats(self):
         with tempfile.TemporaryDirectory() as tmp:

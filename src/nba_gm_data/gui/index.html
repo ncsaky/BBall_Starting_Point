@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NBA GM Sandbox</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="mark">GM</div>
+          <div>
+            <h1>NBA GM Sandbox</h1>
+            <p id="runtime">Loading engine...</p>
+          </div>
+        </div>
+        <section class="save-panel">
+          <label for="saveSelect">Loaded save</label>
+          <div class="save-row">
+            <select id="saveSelect"></select>
+            <button id="refreshSaves" title="Refresh saves">↻</button>
+          </div>
+        </section>
+        <nav id="nav">
+          <button data-view="dashboard" class="active">Dashboard</button>
+          <button data-view="trade">Trade</button>
+          <button data-view="offers">AI Offers</button>
+          <button data-view="freeagents">Free Agents</button>
+          <button data-view="staff">Staff</button>
+          <button data-view="league">League</button>
+          <button data-view="calendar">Calendar</button>
+          <button data-view="social">Social</button>
+          <button data-view="settings">Settings</button>
+        </nav>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <div class="court-strip" aria-hidden="true"></div>
+          <div>
+            <p class="eyebrow" id="phaseLine">No save loaded</p>
+            <h2 id="headline">Dashboard</h2>
+          </div>
+          <div class="actions">
+            <button id="advanceDay">Next Event</button>
+            <button id="advanceWeek">Sim Week</button>
+            <button id="advanceMonth">Sim Month</button>
+            <button id="advanceDeadline">Trade Deadline</button>
+            <button id="advanceSeasonEnd">End Season</button>
+          </div>
+        </header>
+
+        <section id="startupScreen" class="startup-screen" hidden>
+          <div class="startup-card">
+            <div class="brand startup-brand">
+              <div class="mark">GM</div>
+              <div>
+                <h1>NBA GM Sandbox</h1>
+                <p id="startupRuntime">Loading engine...</p>
+              </div>
+            </div>
+            <div class="startup-grid">
+              <section>
+                <div class="section-head"><h3>Load Save</h3><button id="startupRefreshSaves">Refresh</button></div>
+                <select id="startupSaveSelect"></select>
+                <button id="startupLoadSave" class="primary-action">Enter Save</button>
+              </section>
+              <section>
+                <div class="section-head"><h3>New Save</h3></div>
+                <select id="teamSelect" title="New save team">
+                  <option value="random">Random team</option>
+                </select>
+                <input id="saveName" placeholder="Save name" />
+                <button id="createSave" class="primary-action">Create New Save</button>
+              </section>
+            </div>
+          </div>
+        </section>
+
+        <section id="statusCards" class="cards"></section>
+        <section id="content" class="content"></section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+    <div id="modalRoot" class="modal-root" hidden></div>
+    <script src="/app.js" defer></script>
+  </body>
+</html>

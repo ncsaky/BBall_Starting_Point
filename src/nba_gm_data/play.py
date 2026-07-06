@@ -45,6 +45,7 @@ from .save import (
     morale_report,
     pending_actions_view,
     playoff_picture,
+    press_conferences_enabled,
     process_ai_actions,
     propose_trade_to_save,
     narrative_settings_view,
@@ -265,7 +266,7 @@ def handle_forced_phase(root: Path, canonical: dict[str, Any], save_path: Path, 
         return staff_retention_room(canonical, save_path, user_team, seed, forced=True) or "handled"
     if phase in {"training_camp", "preseason", "regular_season"} and user_roster_cutdown(save):
         return roster_cutdown_room(root, canonical, save_path, user_team, seed, forced=True) or "handled"
-    if save.get("pending_press_events"):
+    if save.get("pending_press_events") and press_conferences_enabled(save):
         return forced_press_event_room(canonical, save_path, user_team, seed) or "handled"
     if save.get("pending_offseason_review"):
         return forced_offseason_review_room(canonical, save_path, user_team) or "handled"

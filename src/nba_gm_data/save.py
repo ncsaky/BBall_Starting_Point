@@ -96,7 +96,7 @@ def create_league_save(
         "state": {
             "current_date": CANONICAL_START_DATE,
             "phase": phase_for_date(CANONICAL_START_DATE),
-            "legal_actions": legal_actions_for_date(CANONICAL_START_DATE),
+            "legal_actions": [action for action in legal_actions_for_date(CANONICAL_START_DATE) if action != "press_conferences"],
         },
         "schedule_state": {"simulated_game_ids": []},
         "season_schedules": {},
@@ -162,6 +162,9 @@ def create_league_save(
         "news_items": [],
         "social_feed": [],
         "press_conferences": [],
+        "game_settings": {
+            "press_conferences_enabled": False,
+        },
         "narrative_settings": default_narrative_settings(),
         "narrative_cache": {"version": NARRATIVE_PROMPT_VERSION, "social": {}, "press": {}},
         "inbox_items": [
@@ -808,13 +811,14 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
     save.setdefault("news_items", [])
     save.setdefault("social_feed", [])
     save.setdefault("press_conferences", [])
+    ensure_game_settings(save)
     ensure_narrative_state(save)
     save.setdefault("inbox_items", [])
     save.setdefault("free_agency_prepared_seasons", [])
     current_date = save.get("state", {}).get("current_date")
     if current_date:
         save.setdefault("state", {})["phase"] = phase_for_date(current_date)
-        save["state"]["legal_actions"] = legal_actions_for_date(current_date)
+        save["state"]["legal_actions"] = save_legal_actions_for_date(save, current_date)
         expire_user_trade_offers_after_deadline(save, current_date)
     clean_free_agency_state(save, save.get("meta", {}).get("season"))
     if canonical is not None:
@@ -2842,6 +2846,9 @@ def quick_sim_current_season(root: str | Path, canonical: dict[str, Any] | Any, 
         if state.get("status") == "completed":
             break
     lottery = run_draft_lottery(canonical, save_path, year=str(end_year), seed=seed)
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    draft_result = ensure_draft_processed(canonical, save, str(end_year), seed)
+    write_save(save_path, save)
     offseason_steps = []
     offseason_steps.append(advance_save(root, canonical, save_path, to_date=f"{end_year}-07-01", seed=seed))
     offseason_steps.append(process_ai_actions(canonical, save_path, seed=seed, execute=True, limit=5))
@@ -2853,6 +2860,7 @@ def quick_sim_current_season(root: str | Path, canonical: dict[str, Any] | Any, 
         "playoff_setup": playoff_setup,
         "playoff_rounds": playoff_rounds,
         "draft_lottery": lottery,
+        "draft_result": draft_result,
         "offseason_steps": offseason_steps,
         "rollover": rollover_result,
         "save": str(save_path),
@@ -2904,6 +2912,13 @@ def team_dashboard(root: str | Path, canonical: dict[str, Any] | Any, save_path:
         team_games = int(record.get("wins", 0)) + int(record.get("losses", 0))
     recommendations = save.get("rotation_recommendations") or {}
     identity_metrics = team_identity_report(active, save)
+    salary_seasons: set[str] = set()
+    for player in roster:
+        salary_seasons.update(str(season) for season in player_salary_table(active, player["id"]).keys())
+    cap_by_year = {
+        season: team_cap_summary(active, save, team["id"], season=season)
+        for season in sorted(salary_seasons)[:6]
+    }
     return {
         "team": team,
         "current_date": save.get("state", {}).get("current_date"),
@@ -2956,6 +2971,7 @@ def team_dashboard(root: str | Path, canonical: dict[str, Any] | Any, save_path:
         "staff_slots": sorted([slot for slot in save.get("staff_slots", []) if slot.get("team_id") == team["id"]], key=lambda item: item["slot"]),
         "cap_posture": next((state.get("salary_posture") for state in canonical.get("team_strategic_states", []) if state["team_id"] == team["id"]), "unknown"),
         "cap_summary": team_cap_summary(active, save, team["id"], season=save_active_contract_season(save)),
+        "cap_by_year": cap_by_year,
         "team_identity": identity_metrics.get(team["id"], {}),
         "pending_counts": pending_counts(save),
     }
@@ -3120,6 +3136,23 @@ def legal_actions_for_phase(phase: str) -> list[str]:
         "offseason": ["extensions", "staff_changes", "press_conferences", "social_media", "advance"],
     }
     return actions.get(phase, ["advance"])
+
+
+def ensure_game_settings(save: dict[str, Any]) -> dict[str, Any]:
+    settings = save.setdefault("game_settings", {})
+    settings.setdefault("press_conferences_enabled", False)
+    return settings
+
+
+def press_conferences_enabled(save: dict[str, Any]) -> bool:
+    return bool(ensure_game_settings(save).get("press_conferences_enabled"))
+
+
+def save_legal_actions_for_date(save: dict[str, Any], value: str) -> list[str]:
+    actions = legal_actions_for_date(value)
+    if not press_conferences_enabled(save):
+        actions = [action for action in actions if action != "press_conferences"]
+    return actions
 
 
 def legal_actions_for_date(value: str) -> list[str]:
@@ -6246,6 +6279,8 @@ def retain_expiring_player(save: dict[str, Any], player: dict[str, Any], team_id
 def ensure_draft_processed(canonical: dict[str, Any], save: dict[str, Any], draft_year: str, seed: int) -> dict[str, Any]:
     if any(str(item.get("draft_year")) == str(draft_year) for item in save.get("incoming_rookies", [])):
         signed = sign_unsigned_rookies(save, draft_year)
+        save["pending_draft_selections"] = []
+        save.setdefault("draft_state", {})["status"] = "completed"
         return {"status": "already_present", "rookies_signed": signed}
     from .draft import rookie_player_record, rookie_trait_records, simulate_draft
 
@@ -6301,6 +6336,11 @@ def ensure_draft_processed(canonical: dict[str, Any], save: dict[str, Any], draf
         signed_count += 1
     if signed_count:
         add_news(save, "draft", f"{draft_year} AI draft processed and {signed_count} rookies signed.", date_value=f"{draft_year}-06-26")
+    save["pending_draft_selections"] = []
+    state = save.setdefault("draft_state", {})
+    state["status"] = "completed"
+    state["current_index"] = max(int(state.get("current_index") or 0), int(draft.get("selection_count") or 0))
+    state["completed_year"] = str(draft_year)
     return {"status": "processed_ai_draft", "selection_count": draft.get("selection_count", 0), "rookies_signed": signed_count}
 
 

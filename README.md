@@ -15,6 +15,20 @@ Yes, if you want to run a deep NBA GM sandbox and you are okay with a few rough 
 
 The game is best described as a **friends-and-family beta**: good enough for real playtesting, still too terminal-heavy and balance-sensitive for a broad public audience.
 
+## Local GUI Preview
+
+The project now includes an early local browser GUI on top of the same Python engine used by the CLI. It is a development preview for the eventual standalone macOS/iPhone app, not a separate version of the game.
+
+After installing with `python -m pip install -e .`, run:
+
+```bash
+nba-gm-data-gui --root . --open
+```
+
+If the browser does not open automatically, go to `http://127.0.0.1:8765`.
+
+The GUI can create/load saves, show the team dashboard, browse league events, calendar, market, social/settings views, run basic trade-finder searches, and advance time. The CLI remains the most complete interface while the GUI is built out screen by screen.
+
 ## Easiest Setup For Friends
 
 If you are testing for the first time, do these steps in order.
