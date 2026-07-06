@@ -1058,9 +1058,20 @@ function userConferenceStandings() {
   const user = userTeam();
   const userRow = standings.find((row) => teamLabel(row.team) === user);
   const conference = userRow?.team?.conference || "Conference";
-  const rows = standings.filter((row) => row.team?.conference === conference);
+  const rows = standings
+    .filter((row) => row.team?.conference === conference)
+    .slice(0, 10);
+
   return `${sectionHead(`${conference} Standings`)}
-    ${table(["#", "Team", "W", "L", "Win%"], rows, (row, index) => [index + 1, teamLabel(row.team) === user ? html(`<strong class="user-highlight">${escapeHtml(teamLabel(row.team))}</strong>`) : teamLabel(row.team), row.wins, row.losses, winPct(row.win_pct)], "dashboard-standings")}`;
+    ${table(["#", "Team", "W", "L", "Win%"], rows, (row, index) => [
+      index + 1,
+      teamLabel(row.team) === user
+        ? html(`<strong class="user-highlight">${escapeHtml(teamLabel(row.team))}</strong>`)
+        : teamLabel(row.team),
+      row.wins,
+      row.losses,
+      winPct(row.win_pct),
+    ], "dashboard-standings")}`;
 }
 
 function dashboardMonthCalendar() {
