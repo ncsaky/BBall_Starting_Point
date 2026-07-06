@@ -80,8 +80,7 @@ select {
 }
 
 #app {
-  display: grid;
-  grid-template-columns: 282px minmax(0, 1fr);
+  display: block;
   height: 100vh;
   min-height: 0;
 }
@@ -180,17 +179,15 @@ p {
 }
 
 nav {
-  display: grid;
-  gap: 3px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
 }
 
 nav button {
   background: transparent;
   border-color: transparent;
-  justify-content: flex-start;
-  min-height: 34px;
-  padding-left: 10px;
-  text-align: left;
+  min-height: 32px;
 }
 
 nav button.active {
@@ -211,6 +208,7 @@ main {
   align-items: center;
   border: 1px solid var(--line);
   display: flex;
+  flex-wrap: wrap;
   gap: 16px;
   justify-content: space-between;
   margin-bottom: 8px;
@@ -229,13 +227,6 @@ main {
   justify-content: flex-end;
 }
 
-.cards {
-  display: grid;
-  gap: 8px;
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
-  margin-bottom: 8px;
-}
-
 .kpi,
 .card,
 .section,
@@ -249,77 +240,8 @@ main {
   border-radius: 2px;
 }
 
-.kpi {
-  min-height: 62px;
-  padding: 7px 9px;
-  text-align: left;
-  width: 100%;
-}
-
-.kpi-label,
-.card .label {
-  color: var(--muted);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.kpi-row {
-  align-items: end;
-  display: grid;
-  gap: 8px;
-  grid-template-columns: minmax(0, 1fr) 74px;
-  margin-top: 7px;
-}
-
-.kpi-value,
-.card .value {
-  font-family: var(--display);
-  font-size: 21px;
-  font-weight: 900;
-  line-height: 0.95;
-}
-
-.kpi-detail {
-  color: var(--muted);
-  margin-top: 6px;
-}
-
-.kpi-good,
-.grade-good {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.kpi-bad,
-.grade-bad {
-  border-color: var(--negative);
-  color: var(--negative);
-}
 
 .grade-neutral,
-.kpi-neutral {
-  border-color: var(--warn);
-  color: var(--warn);
-}
-
-.sparkline {
-  height: 32px;
-  width: 74px;
-}
-
-.sparkline polyline {
-  fill: none;
-  stroke: var(--accent);
-  stroke-linecap: square;
-  stroke-linejoin: round;
-  stroke-width: 2;
-}
-
-.empty-spark {
-  border-bottom: 1px solid var(--line);
-  display: inline-block;
-}
 
 .content {
   animation: content-in 180ms ease both;
@@ -357,7 +279,6 @@ main {
 }
 
 .section-head,
-.dashboard-header,
 .modal-head,
 .moment-topline {
   align-items: center;
@@ -368,6 +289,8 @@ main {
   margin-bottom: 7px;
   padding-bottom: 7px;
 }
+
+
 
 .dashboard-meta {
   color: var(--muted);
@@ -426,8 +349,41 @@ main {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
+.calendar-head {
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.calendar-head-controls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  justify-content: flex-end;
+}
+
+.calendar-actions {
+  gap: 5px;
+}
+
+.calendar-actions button {
+  min-height: 28px;
+  padding: 0 8px;
+}
+
+.toolbar.compact {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 0;
+}
+
+.toolbar.compact button {
+  min-height: 28px;
+  padding: 0 9px;
+}
+
 .dashboard-overview {
-  grid-template-columns: 0.66fr 1.02fr 1.62fr;
+  grid-template-columns: 0.17fr 0.17fr 0.5fr 0.3fr;
   grid-template-rows: minmax(190px, 0.92fr) minmax(168px, 0.78fr);
   height: 100%;
   min-height: 0;
@@ -437,8 +393,37 @@ main {
   min-height: 0;
 }
 
+.calendar-card {
+  order: 3;
+}
+
 .identity-card {
+  order: 1;
+}
+
+.standings-card {
+  order: 2;
+}
+
+.starting-card {
+  order: 4;
+}
+
+.rotation-card {
+  order: 5;
+}
+
+.events-card {
+  order: 6;
+}
+
+.identity-card {
+  align-self: start;
   grid-row: auto;
+}
+
+.starting-card {
+  align-self: start;
 }
 
 .rotation-card {

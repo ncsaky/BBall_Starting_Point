@@ -29,6 +29,7 @@ const state = {
 };
 
 const els = {};
+const LAST_SAVE_KEY = "nbaGmLastSave";
 
 document.addEventListener("DOMContentLoaded", () => {
   for (const id of [
@@ -43,15 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "saveName",
     "createSave",
     "nav",
-    "phaseLine",
-    "headline",
-    "advanceDay",
-    "advanceWeek",
-    "advanceMonth",
-    "advanceDeadline",
-    "advanceSeasonEnd",
     "startupScreen",
-    "statusCards",
     "content",
     "toast",
     "modalRoot",
@@ -67,6 +60,7 @@ function wireEvents() {
   els.startupRefreshSaves.addEventListener("click", loadSaves);
   els.startupLoadSave.addEventListener("click", async () => {
     state.currentSave = els.startupSaveSelect.value || "";
+    localStorage.setItem(LAST_SAVE_KEY, state.currentSave);
     state.view = "dashboard";
     state.dashboardTeam = "";
     await refreshHome();
@@ -74,6 +68,7 @@ function wireEvents() {
   els.createSave.addEventListener("click", createSave);
   els.saveSelect.addEventListener("change", async () => {
     state.currentSave = els.saveSelect.value;
+    localStorage.setItem(LAST_SAVE_KEY, state.currentSave);
     state.view = "dashboard";
     state.dashboardTeam = "";
     await refreshHome();
@@ -90,19 +85,17 @@ function wireEvents() {
     await ensureViewData(true);
     render();
   });
-  els.advanceDay.addEventListener("click", () => advance({ next_event: true }));
-  els.advanceWeek.addEventListener("click", () => advance({ days: 7, checkpoint_days: 7 }));
-  els.advanceMonth.addEventListener("click", () => advance({ days: 31, checkpoint_days: 31 }));
-  els.advanceDeadline.addEventListener("click", () => advanceToMilestone("deadline"));
-  els.advanceSeasonEnd.addEventListener("click", () => advanceToMilestone("season_end"));
-  els.statusCards.addEventListener("click", async (event) => {
-    const button = event.target.closest("[data-kpi-view]");
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-advance]");
     if (!button) return;
-    state.view = button.dataset.kpiView;
-    if (button.dataset.kpiTab) state.dashboardTab = button.dataset.kpiTab;
-    if (state.view === "dashboard") state.dashboardTeam = userTeam();
-    await ensureViewData(true);
-    render();
+
+    const mode = button.dataset.advance;
+
+    if (mode === "next-event") return advance({ next_event: true });
+    if (mode === "week") return advance({ days: 7, checkpoint_days: 7 });
+    if (mode === "month") return advance({ days: 31, checkpoint_days: 31 });
+    if (mode === "deadline") return advanceToMilestone("deadline");
+    if (mode === "season-end") return advanceToMilestone("season_end");
   });
   els.content.addEventListener("click", (event) => {
     const button = event.target.closest("[data-sort-table]");
@@ -123,6 +116,7 @@ async function init() {
     const status = await apiGet("/api/status");
     els.runtime.textContent = `${status.engine} | ${status.protocol_version}`;
     els.startupRuntime.textContent = `${status.engine} | ${status.protocol_version}`;
+    state.currentSave = localStorage.getItem(LAST_SAVE_KEY) || "";
     await loadTeams();
     await loadSaves();
   } catch (error) {
@@ -185,6 +179,7 @@ async function createSave() {
   const saveName = els.saveName.value.trim();
   const result = await action("create_save", { team, save_name: saveName || undefined });
   state.currentSave = result.save_path;
+  localStorage.setItem(LAST_SAVE_KEY, state.currentSave);
   state.view = "dashboard";
   state.dashboardTeam = "";
   els.saveName.value = "";
@@ -296,9 +291,6 @@ function render() {
   applyPhaseRouting();
   document.body.dataset.view = state.currentSave ? state.view : "startup";
   els.startupScreen.hidden = Boolean(state.currentSave);
-  els.phaseLine.textContent = save ? `${save.current_date} | ${save.phase} | ${userTeam()}` : "No save loaded";
-  els.headline.textContent = titleForView(state.view);
-  renderCards(save);
   if (!state.currentSave) {
     renderStartup();
     return;
@@ -320,7 +312,6 @@ function render() {
 }
 
 function renderStartup() {
-  els.statusCards.innerHTML = "";
   els.content.innerHTML = "";
   els.startupScreen.hidden = false;
   els.startupLoadSave.disabled = !els.startupSaveSelect.value;
@@ -341,27 +332,6 @@ function syncNavActive() {
   }
 }
 
-function renderCards(save) {
-  if (!save) {
-    els.statusCards.innerHTML = "";
-    return;
-  }
-  const pending = state.home?.pending?.pending_counts || state.home?.pending || {};
-  const dash = state.data.statusDashboard || state.data.dashboard || {};
-  const record = dash.record || save.user_team_record || save.record || {};
-  const wins = Number(record.wins || 0);
-  const losses = Number(record.losses || 0);
-  const cap = dash.cap_summary || {};
-  const lastMargins = (dash.last_games || []).slice().reverse().map((game) => Number(game.points || 0) - Number(game.opponent_points || 0));
-  const values = [
-    kpiCard("Record", `${wins}-${losses}`, `${pct(wins, wins + losses)} win pct`, lastMargins, gradeClass(wins - losses, 5, -5)),
-    kpiCard("Tax Room", signedMoney(cap.tax_space_millions), `payroll ${money(cap.salary_total_millions)}`, [cap.tax_space_millions || 0, cap.hard_cap_space_millions || 0], gradeClass(Number(cap.tax_space_millions || 0), 15, 0)),
-    kpiCard("Hard Cap Room", signedMoney(cap.hard_cap_space_millions), "open contracts", [], gradeClass(Number(cap.hard_cap_space_millions || 0), 15, 0), { view: "dashboard", tab: "contracts" }),
-    kpiCard("AI Offers", pending.user_trade_offers ?? pending.user_offers ?? 0, "review incoming trades", [], "neutral", { view: "offers" }),
-  ];
-  els.statusCards.innerHTML = values.join("");
-}
-
 function renderDashboard() {
   const dash = state.data.dashboard || {};
   const rows = rosterRows(dash);
@@ -370,29 +340,9 @@ function renderDashboard() {
   const editable = viewedTeam === userTeam();
   els.content.innerHTML = `
     <section class="section dashboard-shell">
-      <div class="dashboard-header">
-        <div>
-          <p class="eyebrow">${escapeHtml(statsContextLabel(dash.stats_context) || dash.phase || "Team operating room")}</p>
-          <h3>${escapeHtml(teamLabel(dash.team || userTeam()))} Command Center</h3>
-        </div>
-        <div class="dashboard-meta">
-          <select id="dashboardTeamSelect">${dashboardTeamOptions(viewedTeam)}</select>
-          <span>${escapeHtml(dash.current_date || state.home?.save?.current_date || "")}</span>
-          <span>${escapeHtml(rowLabel(dash.phase || state.home?.save?.phase || ""))}</span>
-          ${editable ? `<span>User controls active</span>` : `<span>Read-only scouting view</span>`}
-        </div>
-      </div>
-      <div class="tabs segmented">${tabs.map((tab) => `<button data-tab="${tab}" class="${tab === state.dashboardTab ? "active" : ""}">${tabLabel(tab)}</button>`).join("")}</div>
       <div id="dashboardTab"></div>
+      <div class="tabs segmented">${tabs.map((tab) => `<button data-tab="${tab}" class="${tab === state.dashboardTab ? "active" : ""}">${tabLabel(tab)}</button>`).join("")}</div>
     </section>`;
-  document.getElementById("dashboardTeamSelect").addEventListener("change", async (event) => {
-    state.dashboardTeam = event.target.value || userTeam();
-    state.dashboardTab = "overview";
-    state.expandedContractSeason = "";
-    state.rotationDraft = {};
-    await ensureViewData(true);
-    renderDashboard();
-  });
   els.content.querySelector(".tabs").addEventListener("click", (event) => {
     const button = event.target.closest("button[data-tab]");
     if (!button) return;
@@ -857,6 +807,7 @@ function renderSettings() {
     await refreshHome();
   });
   document.getElementById("leaveGame").addEventListener("click", () => {
+    localStorage.removeItem(LAST_SAVE_KEY);
     state.currentSave = "";
     state.home = null;
     state.view = "dashboard";
@@ -963,33 +914,6 @@ function wireViewJumpButtons() {
   });
 }
 
-function kpiCard(label, value, detail, sparkPoints = [], grade = "neutral", actionTarget = null) {
-  const attrs = actionTarget ? ` data-kpi-view="${escapeAttr(actionTarget.view)}"${actionTarget.tab ? ` data-kpi-tab="${escapeAttr(actionTarget.tab)}"` : ""}` : "";
-  const tag = actionTarget ? "button" : "div";
-  return `
-    <${tag} class="kpi kpi-${escapeAttr(grade)}"${attrs}>
-      <div class="kpi-label">${escapeHtml(label)}</div>
-      <div class="kpi-row">
-        <div class="kpi-value">${escapeHtml(value)}</div>
-        ${sparkline(sparkPoints)}
-      </div>
-      <div class="kpi-detail">${escapeHtml(detail || "")}</div>
-    </${tag}>`;
-}
-
-function sparkline(points) {
-  const values = (points || []).map(Number).filter(Number.isFinite);
-  if (values.length < 2) return "";
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
-  const coords = values.map((value, index) => {
-    const x = values.length === 1 ? 50 : (index / (values.length - 1)) * 100;
-    const y = 30 - ((value - min) / range) * 26;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(" ");
-  return `<svg class="sparkline" viewBox="0 0 100 32" aria-hidden="true"><polyline points="${coords}" /></svg>`;
-}
 
 function metricTile(label, value, detail, grade = "neutral") {
   return `<div class="metric-tile grade-${escapeAttr(grade)}"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong><small>${escapeHtml(detail || "")}</small></div>`;
@@ -1146,13 +1070,31 @@ function dashboardMonthCalendar() {
   const month = state.calendarMonth || current.slice(0, 7);
   const games = (state.data.dashboardCalendar?.games || []).filter((game) => [game.home, game.home_team, game.away, game.away_team].includes(team));
   const cells = monthCalendarCells(month);
-  return `<div class="section-head">
+
+  return `<div class="section-head calendar-head">
       <h3>${escapeHtml(month || "Calendar")}</h3>
-      <div class="toolbar compact"><button data-calendar-step="-1">‹</button><button data-calendar-step="1">›</button></div>
+      <div class="calendar-head-controls">
+        ${simControls()}
+        <div class="toolbar compact">
+          <button data-calendar-step="-1">‹</button>
+          <button data-calendar-step="1">›</button>
+        </div>
+      </div>
     </div>
     <div class="calendar-grid">
       ${["M", "T", "W", "T", "F", "S", "S"].map((day) => `<div class="calendar-label">${day}</div>`).join("")}
       ${cells.map((cell) => calendarCell(cell, games, current, team)).join("")}
+    </div>`;
+}
+
+function simControls() {
+  return `
+    <div class="actions calendar-actions">
+      <button data-advance="next-event">Next Event</button>
+      <button data-advance="week">Sim Week</button>
+      <button data-advance="month">Sim Month</button>
+      <button data-advance="deadline">Trade Deadline</button>
+      <button data-advance="season-end">End Season</button>
     </div>`;
 }
 
