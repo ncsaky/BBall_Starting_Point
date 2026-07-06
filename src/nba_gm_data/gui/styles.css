@@ -269,12 +269,14 @@ main {
 
 .dashboard-shell {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   min-height: 0;
+  height: calc(100vh - 86px);
 }
 
 #dashboardTab {
   min-height: 0;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -432,69 +434,142 @@ main {
   padding-bottom: 4px;
 }
 
-
-
-
 .dashboard-overview {
   grid-template-columns: 0.17fr 0.17fr 0.3fr 0.5fr;
-  grid-template-rows: 360px auto auto;
-  align-items: stretch;
+  grid-template-rows: 112px 560px minmax(112px, 1fr);
+  align-items: start;
   height: 100%;
   min-height: 0;
 }
 
+/* Left top cards stay tall */
 .standings-card {
   grid-column: 1;
-  grid-row: 1;
+  grid-row: 1 / 3;
 }
 
 .identity-card {
   grid-column: 2;
-  grid-row: 1;
+  grid-row: 1 / 3;
 }
 
+/* Starting 5 sits above Rotation */
+.starting-card {
+  grid-column: 3;
+  grid-row: 1;
+  align-self: start;
+}
+
+/* Rotation sits directly below Starting 5 and keeps its useful height */
 .rotation-card {
   grid-column: 3;
-  grid-row: 1 / 3;
-  align-self: stretch;
+  grid-row: 2;
+  align-self: start;
   display: flex;
   flex-direction: column;
-  height: auto;
+  height: 570px;
   min-height: 0;
+  overflow: hidden;
 }
 
 .calendar-card {
   grid-column: 4;
-  grid-row: 1;
+  grid-row: 1 / 3;
 }
 
-.starting-card {
-  grid-column: 1 / 3;
-  grid-row: 2;
-  align-self: start;
-}
 
 .events-card {
   grid-column: 1 / -1;
   grid-row: 3;
+  align-self: end;
+  justify-self: center;
+  width: min(760px, 48vw);
+  min-height: 112px;
 }
 
-.rotation-card .section-head {
+.event-rotator {
+  display: grid;
+  gap: 8px;
+  min-height: 58px;
+  overflow: hidden;
+}
+
+.event-rotator.empty {
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  padding: 12px;
+}
+
+.event-rotator-body {
+  min-height: 48px;
+}
+
+.event-rotator-body.event-swap {
+  animation: event-swap-in 260ms ease both;
+}
+
+.event-slide {
+  background: var(--panel-2);
+  border: 1px solid var(--line-soft);
+  display: grid;
+  gap: 5px;
+  min-height: 48px;
+  padding: 8px 10px;
+}
+
+.event-slide strong {
+  color: var(--text);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.event-slide p {
+  color: var(--muted);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-progress {
+  background: #0d0f12;
+  border: 1px solid var(--line-soft);
+  height: 5px;
+  overflow: hidden;
+}
+
+.event-progress span {
+  background: var(--accent);
   display: block;
-  position: relative;
-  padding-right: 150px;
+  height: 100%;
+  transform-origin: left center;
+  width: 100%;
 }
 
-.rotation-card .section-head h3 {
-  line-height: 1.02;
+.event-progress span.event-progress-run {
+  animation: event-progress-drain 6500ms linear both;
 }
 
-.rotation-card .section-head .tabs,
-.rotation-card .section-head .toolbar {
-  position: absolute;
-  right: 0;
-  top: -10px;
-  margin-bottom: 0;
+@keyframes event-swap-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes event-progress-drain {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
 }
 
 .rotation-card > *:last-child {
@@ -506,14 +581,14 @@ main {
 }
 
 .rotation-list-full {
-  gap: 3px;
+  gap: 2px;
   margin-bottom: 0;
 }
 
 .rotation-row-compact {
   gap: 6px;
   grid-template-columns: minmax(96px, 1fr) minmax(82px, 0.85fr) 22px;
-  min-height: 27px;
+  min-height: 25px;
 }
 
 .rotation-player {
@@ -919,19 +994,7 @@ body[data-view="startup"] .content {
   display: none;
 }
 
-.starting-strip {
-  display: grid;
-  gap: 4px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-}
 
-.starter-slot {
-  border: 1px dashed var(--line);
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-  padding: 4px;
-}
 
 .slot-num {
   color: var(--warn);
@@ -939,56 +1002,144 @@ body[data-view="startup"] .content {
   font-size: 17px;
 }
 
-.starter-card,
-.starter-empty {
-  background: var(--panel-2);
-  border: 1px solid var(--line-soft);
-  display: grid;
-  min-height: 58px;
-  padding: 5px;
-  text-align: left;
-  width: 100%;
-}
 
-.starter-card span,
-.starter-card small {
-  color: var(--muted);
-}
 
-.bench-dock {
-  border-top: 1px solid var(--line-soft);
+
+
+.starting-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 5px;
-  padding-top: 5px;
+  gap: 6px;
 }
 
-.bench-chip {
+.starting-actions button {
+  min-height: 28px;
+  padding: 0 9px;
+}
+
+.starting-five-row {
+  border: 1px solid var(--line);
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: 7px;
+}
+
+.starting-five-row.set {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent-soft);
+}
+
+.starting-five-row.needs-fill {
+  border-color: var(--warn);
+  box-shadow: inset 0 0 0 1px var(--warn-soft);
+}
+
+.starting-five-button {
+  background: var(--panel-2);
+  border-color: var(--line);
+  display: grid;
+  gap: 3px;
+  min-height: 46px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 5px 6px;
+  position: relative;
+  text-align: left;
+}
+
+.starting-five-button strong {
+  font-size: 12px;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.starting-five-button.set {
+  border-color: var(--accent);
+}
+
+.starting-five-button.pending {
+  border-color: var(--warn);
+}
+
+.starting-five-button.empty {
+  border-color: var(--negative);
+  color: var(--negative);
+}
+
+.starting-five-button:not(.empty):hover::after {
   align-items: center;
-  display: inline-flex;
-  gap: 5px;
-  min-height: 22px;
-  padding: 2px 6px;
+  background: rgba(217, 74, 74, 0.78);
+  color: #fff;
+  content: "×";
+  display: grid;
+  font-size: 24px;
+  font-weight: 900;
+  inset: 0;
+  place-items: center;
+  position: absolute;
 }
 
-.starter-slot select {
+.starting-slot-num {
+  color: var(--warn);
   font-size: 10px;
-  min-height: 22px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 120ms ease;
+  line-height: 1;
 }
 
-.starter-slot:hover select,
-.starter-slot:focus-within select {
-  opacity: 1;
-  pointer-events: auto;
+.starting-picker {
+  background: var(--panel-3);
+  border: 1px solid var(--accent);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  margin-top: 8px;
+  max-width: 320px;
+  padding: 8px;
+  position: relative;
+  z-index: 4;
 }
 
-.bench-chip span {
+.starting-picker-head {
+  align-items: center;
+  border-bottom: 1px solid var(--line-soft);
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+}
+
+.starting-picker-head button {
+  min-height: 24px;
+  padding: 0 7px;
+}
+
+.starting-picker-list {
+  display: grid;
+  gap: 4px;
+  max-height: 180px;
+  overflow: auto;
+}
+
+.starting-picker-list button {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  min-height: 28px;
+  padding: 4px 7px;
+  text-align: left;
+}
+
+.starting-picker-list span {
   color: var(--muted);
+  font-size: 10px;
+  margin-left: 8px;
+  white-space: nowrap;
 }
+
+.starting-five-row.pending {
+  border-color: var(--warn);
+  box-shadow: inset 0 0 0 1px var(--warn-soft);
+}
+
 
 .mini-tabs {
   margin: 0;

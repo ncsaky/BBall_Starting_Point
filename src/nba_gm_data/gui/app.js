@@ -7,7 +7,6 @@ const state = {
   view: "dashboard",
   dashboardTab: "overview",
   dashboardTeam: "",
-  dashboardInnerTab: "rotation",
   calendarMonth: "",
   expandedContractSeason: "",
   rotationDraft: {},
@@ -26,10 +25,16 @@ const state = {
   selectedStaff: null,
   modal: null,
   data: {},
+  startingDraft: null,
+  startingPickerSlot: null,
 };
+
+
 
 const els = {};
 const LAST_SAVE_KEY = "nbaGmLastSave";
+
+
 
 document.addEventListener("DOMContentLoaded", () => {
   for (const id of [
@@ -335,22 +340,17 @@ function syncNavActive() {
 function renderDashboard() {
   const dash = state.data.dashboard || {};
   const rows = rosterRows(dash);
-  const tabs = ["overview", "contracts"];
   const viewedTeam = teamLabel(dash.team || state.dashboardTeam || userTeam());
   const editable = viewedTeam === userTeam();
+
+  state.dashboardTab = "overview";
+
   els.content.innerHTML = `
     <section class="section dashboard-shell">
       <div id="dashboardTab"></div>
-      <div class="tabs segmented">${tabs.map((tab) => `<button data-tab="${tab}" class="${tab === state.dashboardTab ? "active" : ""}">${tabLabel(tab)}</button>`).join("")}</div>
     </section>`;
-  els.content.querySelector(".tabs").addEventListener("click", (event) => {
-    const button = event.target.closest("button[data-tab]");
-    if (!button) return;
-    state.dashboardTab = button.dataset.tab;
-    state.expandedContractSeason = "";
-    renderDashboard();
-  });
-  renderDashboardTab(rows);
+
+  renderDashboardTab(rows, dash, editable);
 }
 
 function renderDashboardTab(rows) {
@@ -365,13 +365,61 @@ function renderDashboardTab(rows) {
         <section class="section panel-rail rotation-card">${rotationRatingsBlock(rows, editable)}</section>
         <section class="section panel-rail standings-card">${userConferenceStandings()}</section>
         <section class="section panel-rail calendar-card">${dashboardMonthCalendar()}</section>
-        <section class="section panel-rail events-card">${sectionHead("Recent League Events")}${list((state.home?.league_events?.events || []).slice(0, 5).map(eventLine))}</section>
+        <section class="section panel-rail events-card">${leagueEventRotator()}</section>
       </div>`;
     wireDashboardOverview(editable);
+    startLeagueEventRotator();
     return;
   }
   target.innerHTML = contractsBlock(rows, dash);
   wireContractsBlock();
+}
+
+let leagueEventRotatorTimer = null;
+
+function startLeagueEventRotator() {
+  if (leagueEventRotatorTimer) {
+    clearInterval(leagueEventRotatorTimer);
+    leagueEventRotatorTimer = null;
+  }
+
+  const rotator = document.querySelector("[data-event-rotator]");
+  const dataNode = document.getElementById("leagueEventRotatorData");
+  if (!rotator || !dataNode) return;
+
+  let events = [];
+  try {
+    events = JSON.parse(dataNode.textContent || "[]");
+  } catch {
+    events = [];
+  }
+
+  if (events.length <= 1) return;
+
+  const body = rotator.querySelector(".event-rotator-body");
+  let index = 0;
+
+  leagueEventRotatorTimer = setInterval(() => {
+    index = (index + 1) % events.length;
+    rotator.dataset.eventIndex = String(index);
+
+    if (body) {
+      body.innerHTML = leagueEventSlide(events[index]);
+      body.classList.remove("event-swap");
+      void body.offsetWidth;
+      body.classList.add("event-swap");
+    }
+
+    const progress = rotator.querySelector(".event-progress span");
+    if (progress) {
+      progress.classList.remove("event-progress-run");
+      void progress.offsetWidth;
+      progress.classList.add("event-progress-run");
+    }
+  }, 6500);
+
+  const progress = rotator.querySelector(".event-progress span");
+  if (progress) progress.classList.add("event-progress-run");
 }
 
 function renderTrade() {
@@ -962,14 +1010,111 @@ function teamIdentityRankBlock(dash) {
 }
 
 function startingFiveBlock(rows, editable) {
-  const bySlot = new Map(rows.filter((row) => row.starting_slot).map((row) => [Number(row.starting_slot), row]));
-  const bench = rows.filter((row) => !row.starting_slot).slice(0, 5);
+  ensureStartingDraft(rows);
+
+  const draft = state.startingDraft || {};
+  const allFilled = [1, 2, 3, 4, 5].every((slot) => draft[slot]);
+  const hasEmpty = !allFilled;
+  const changed = startingDraftChanged(rows);
+
+  const rowClass = !allFilled
+    ? "needs-fill"
+    : changed
+      ? "pending"
+      : "set";
+
   return `
-    <div class="section-head"><h3>Starting 5</h3>${editable ? `<button id="autoStartingFive">Auto</button>` : `<span class="pill">Read-only</span>`}</div>
-    <div class="starting-strip">
-      ${[1, 2, 3, 4, 5].map((slot) => starterCard(slot, bySlot.get(slot), editable)).join("")}
+    <div class="section-head">
+      <h3>Starting 5</h3>
+      <div class="starting-actions">
+        ${editable ? `<button id="autoStartingFive">Auto</button>` : `<span class="pill">Read-only</span>`}
+        ${editable ? `<button id="setStartingFive" class="primary-action" ${allFilled ? "" : "disabled"}>Set</button>` : ""}
+      </div>
     </div>
-    ${editable ? `<div class="bench-dock">${bench.map((row) => benchChip(row)).join("")}</div>` : ""}`;
+
+    <div class="starting-five-row ${rowClass}">
+      ${[1, 2, 3, 4, 5]
+        .map((slot) => startingFiveButton(slot, rows, draft[slot], editable, hasEmpty, changed))
+        .join("")}
+    </div>
+
+    ${editable && state.startingPickerSlot ? startingFivePicker(rows, Number(state.startingPickerSlot)) : ""}`;
+}
+
+function ensureStartingDraft(rows) {
+  if (state.startingDraft) return;
+
+  const draft = {};
+  for (const slot of [1, 2, 3, 4, 5]) {
+    const starter = rows.find((row) => Number(row.starting_slot) === slot);
+    draft[slot] = starter?.id || "";
+  }
+  state.startingDraft = draft;
+}
+
+function startingFiveButton(slot, rows, playerId, editable, hasEmpty, changed) {
+  const row = rows.find((player) => String(player.id) === String(playerId));
+  const empty = !row;
+  const label = row?.name || `Slot ${slot}`;
+
+  const statusClass = empty
+    ? "empty"
+    : changed || hasEmpty
+      ? "pending"
+      : "set";
+
+  return `<button
+    class="starting-five-button ${statusClass}"
+    data-starting-slot-button="${slot}"
+    ${editable ? "" : "disabled"}
+    title="${empty ? "Choose starter" : "Click to clear this starter"}"
+  >
+    <span class="starting-slot-num">${slot}</span>
+    <strong>${escapeHtml(label)}</strong>
+  </button>`;
+}
+
+function startingFivePicker(rows, slot) {
+  const draft = state.startingDraft || {};
+  const selectedIds = new Set(
+    Object.entries(draft)
+      .filter(([draftSlot, playerId]) => Number(draftSlot) !== slot && playerId)
+      .map(([, playerId]) => String(playerId))
+  );
+
+  const available = rows.filter((row) => !selectedIds.has(String(row.id)));
+
+  return `<div class="starting-picker">
+    <div class="starting-picker-head">
+      <strong>Choose Slot ${slot}</strong>
+      <button data-close-starting-picker>×</button>
+    </div>
+
+    <div class="starting-picker-list">
+      ${available.map((row) => `<button data-starting-pick="${escapeAttr(row.id)}">
+        <strong>${escapeHtml(row.name)}</strong>
+        <span>${escapeHtml(compactPos(row.position))} · ${Number(mpgFromRow(row) || 0).toFixed(0)} MPG</span>
+      </button>`).join("")}
+    </div>
+  </div>`;
+}
+
+function savedStartingFiveMap(rows) {
+  const saved = {};
+  for (const slot of [1, 2, 3, 4, 5]) {
+    const starter = rows.find((row) => Number(row.starting_slot) === slot);
+    saved[slot] = starter?.id || "";
+  }
+  return saved;
+}
+
+function startingDraftChanged(rows) {
+  const saved = savedStartingFiveMap(rows);
+  const draft = state.startingDraft || saved;
+
+  return [1, 2, 3, 4, 5].some(
+    (slot) => String(draft[slot] || "") !== String(saved[slot] || "")
+  );
 }
 
 function starterCard(slot, row, editable) {
@@ -996,16 +1141,11 @@ function benchChip(row) {
 }
 
 function rotationRatingsBlock(rows, editable) {
-  const active = state.dashboardInnerTab || "rotation";
   return `
     <div class="section-head">
-      <h3>${active === "rotation" ? "Rotation" : "Ratings"}</h3>
-      <div class="tabs mini-tabs">
-        <button data-inner-tab="rotation" class="${active === "rotation" ? "active" : ""}">Rotation</button>
-        <button data-inner-tab="ratings" class="${active === "ratings" ? "active" : ""}">Ratings</button>
-      </div>
+      <h3>Rotation</h3>
     </div>
-    ${active === "ratings" ? ratingsTable(rows) : rotationEditor(rows, editable)}`;
+    ${rotationEditor(rows, editable)}`;
 }
 
 function rotationEditor(rows, editable) {
@@ -1197,12 +1337,6 @@ function contractYearColumn(season, rows, cap, expanded) {
 }
 
 function wireDashboardOverview(editable) {
-  els.content.querySelectorAll("[data-inner-tab]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.dashboardInnerTab = button.dataset.innerTab;
-      renderDashboard();
-    });
-  });
   els.content.querySelectorAll("[data-calendar-step]").forEach((button) => {
     button.addEventListener("click", async () => {
       state.calendarMonth = addMonths(state.calendarMonth || String(state.home?.save?.current_date || "").slice(0, 7), Number(button.dataset.calendarStep || 0));
@@ -1214,24 +1348,45 @@ function wireDashboardOverview(editable) {
     button.addEventListener("click", () => openBoxScore(button.dataset.boxScore));
   });
   if (!editable) return;
-  els.content.querySelectorAll("[data-lineup-slot]").forEach((select) => {
-    select.addEventListener("change", () => saveStartingFiveFromControls());
+  els.content.querySelectorAll("[data-starting-slot-button]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const slot = Number(button.dataset.startingSlotButton);
+    if (!state.startingDraft) return;
+
+    if (state.startingDraft[slot]) {
+      state.startingDraft[slot] = "";
+      state.startingPickerSlot = null;
+    } else {
+      state.startingPickerSlot = slot;
+    }
+
+    renderDashboard();
   });
-  els.content.querySelectorAll("[data-drag-player]").forEach((node) => {
-    node.addEventListener("dragstart", (event) => event.dataTransfer.setData("text/plain", node.dataset.dragPlayer));
   });
-  els.content.querySelectorAll("[data-start-slot]").forEach((slot) => {
-    slot.addEventListener("dragover", (event) => event.preventDefault());
-    slot.addEventListener("drop", (event) => {
-      event.preventDefault();
-      const playerId = event.dataTransfer.getData("text/plain");
-      const select = slot.querySelector("[data-lineup-slot]");
-      if (select && playerId) {
-        select.value = playerId;
-        saveStartingFiveFromControls();
-      }
+
+  els.content.querySelectorAll("[data-starting-pick]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const slot = Number(state.startingPickerSlot);
+      if (!slot || !state.startingDraft) return;
+
+      state.startingDraft[slot] = button.dataset.startingPick;
+      state.startingPickerSlot = null;
+      renderDashboard();
     });
   });
+
+  const closeStartingPicker = els.content.querySelector("[data-close-starting-picker]");
+  if (closeStartingPicker) {
+    closeStartingPicker.addEventListener("click", () => {
+      state.startingPickerSlot = null;
+      renderDashboard();
+    });
+  }
+
+  const setStartingFive = document.getElementById("setStartingFive");
+  if (setStartingFive) {
+    setStartingFive.addEventListener("click", saveStartingFiveFromDraft);
+  }
   const auto = document.getElementById("autoStartingFive");
   if (auto) auto.addEventListener("click", () => saveStartingFive({}));
   els.content.querySelectorAll("[data-minute-player]").forEach((input) => {
@@ -1266,20 +1421,34 @@ function wireContractsBlock() {
   });
 }
 
-async function saveStartingFiveFromControls() {
-  const slots = {};
-  els.content.querySelectorAll("[data-lineup-slot]").forEach((select) => {
-    slots[select.dataset.lineupSlot] = select.value;
+async function saveStartingFiveFromDraft() {
+  const draft = state.startingDraft || {};
+  const allFilled = [1, 2, 3, 4, 5].every((slot) => draft[slot]);
+
+  if (!allFilled) {
+    showToast("Fill all five starting spots before setting the lineup.", true);
+    return;
+  }
+
+  await saveStartingFive({
+    1: draft[1],
+    2: draft[2],
+    3: draft[3],
+    4: draft[4],
+    5: draft[5],
   });
-  await saveStartingFive(slots);
 }
 
 async function saveStartingFive(slots) {
   const result = await action("set_starting_five", { ...savePayload(), team: userTeam(), slots });
   if (result.status === "blocked") return showToast(result.reason || "Starting 5 update blocked.", true);
+
   state.data.dashboard = result.dashboard;
   state.data.statusDashboard = result.dashboard;
   state.rotationDraft = {};
+  state.startingDraft = null;
+  state.startingPickerSlot = null;
+
   renderDashboard();
   showToast("Starting 5 updated");
 }
@@ -1642,6 +1811,80 @@ function eventLine(event) {
   const kind = event.kind || event.type || "";
   const text = event.text || event.headline || event.summary || event.description || textValue(event);
   return `<strong>${escapeHtml(date)} ${escapeHtml(kind)}</strong><span>${escapeHtml(text)}</span>`;
+}
+
+function leagueEventRotator() {
+  const events = state.home?.league_events?.events || [];
+
+  if (!events.length) {
+    return `
+      ${sectionHead("Recent League Events")}
+      <div class="event-rotator empty">
+        No recent league events.
+      </div>`;
+  }
+
+  return `
+    ${sectionHead("Recent League Events")}
+    <div class="event-rotator" data-event-rotator data-event-index="0">
+      <div class="event-rotator-body">
+        ${leagueEventSlide(events[0])}
+      </div>
+      <div class="event-progress"><span></span></div>
+    </div>
+    <script type="application/json" id="leagueEventRotatorData">
+      ${JSON.stringify(events.slice(0, 12)).replace(/</g, "\\u003c")}
+    </script>`;
+}
+
+function leagueEventSlide(event) {
+  const normalized = normalizeLeagueEvent(event);
+
+  return `
+    <div class="event-slide">
+      <strong>${escapeHtml(normalized.date)}${normalized.kind ? ` ${escapeHtml(normalized.kind)}` : ""}</strong>
+      <p>${escapeHtml(normalized.text)}</p>
+    </div>`;
+}
+
+function normalizeLeagueEvent(event) {
+  if (typeof event === "string") {
+    return {
+      date: "",
+      kind: "",
+      text: event,
+    };
+  }
+
+  const date =
+    event.date ||
+    event.event_date ||
+    event.created_at ||
+    event.day ||
+    "";
+
+  const kind =
+    event.kind ||
+    event.type ||
+    event.category ||
+    "";
+
+  const text =
+    event.text ||
+    event.headline ||
+    event.summary ||
+    event.message ||
+    event.description ||
+    event.details ||
+    event.body ||
+    event.content ||
+    "";
+
+  return {
+    date: textValue(date),
+    kind: textValue(kind),
+    text: textValue(text || event),
+  };
 }
 
 function postLine(post) {
