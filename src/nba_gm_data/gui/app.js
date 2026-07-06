@@ -1010,31 +1010,69 @@ function rotationRatingsBlock(rows, editable) {
 
 function rotationEditor(rows, editable) {
   if (!Object.keys(state.rotationDraft).length) {
-    state.rotationDraft = Object.fromEntries(rows.map((row) => [row.id, Math.round(Number(row.coach_minutes_projection ?? row.minutes_projection ?? 0))]));
+    state.rotationDraft = Object.fromEntries(
+      rows.map((row) => [
+        row.id,
+        Math.round(Number(row.coach_minutes_projection ?? row.minutes_projection ?? 0)),
+      ])
+    );
   } else {
     for (const row of rows) {
-      if (state.rotationDraft[row.id] === undefined) state.rotationDraft[row.id] = Math.round(Number(row.coach_minutes_projection ?? row.minutes_projection ?? 0));
+      if (state.rotationDraft[row.id] === undefined) {
+        state.rotationDraft[row.id] = Math.round(
+          Number(row.coach_minutes_projection ?? row.minutes_projection ?? 0)
+        );
+      }
     }
   }
-  const initial = state.rotationDraft;
-  const total = Object.values(initial).reduce((sum, value) => sum + Number(value || 0), 0);
+  
+  const total = Object.values(state.rotationDraft).reduce(
+    (sum, value) => sum + Number(value || 0),
+    0
+  );
   const remaining = 240 - total;
+
   return `
     <div class="rotation-toolbar">
-      <span class="minute-counter ${remaining === 0 ? "ok" : "bad"}">${remaining === 0 ? "240 assigned" : `${signedNumber(remaining, 0)} minutes remaining`}</span>
+      <span id="rotationMinuteCounter" class="minute-counter ${remaining === 0 ? "ok" : "bad"}">
+        ${remaining === 0 ? "240 assigned" : `${signedNumber(remaining, 0)} minutes remaining`}
+      </span>
       ${editable ? `<button id="saveRotation" ${remaining === 0 ? "" : "disabled"}>Set Rotation</button>` : ""}
     </div>
-    <div class="rotation-list">
-      ${rows.slice(0, 8).map((row) => {
-        const value = clampNumber(Number(initial[row.id] ?? row.minutes_projection ?? 0), 0, 48);
-        return `<div class="rotation-row">
-          <div><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(compactPos(row.position))} | ${statLine(row)} ${activeHealthText(row.health)}</span></div>
+
+    <div class="rotation-list rotation-list-full">
+      ${rows.map((row) => {
+        const value = clampNumber(Number(state.rotationDraft[row.id] ?? row.minutes_projection ?? 0), 0, 48);
+        return `<div class="rotation-row rotation-row-compact">
+          <div class="rotation-player">
+            <strong>${escapeHtml(row.name)}</strong>
+            <span>${escapeHtml(compactPos(row.position))} | ${statLine(row)} ${activeHealthText(row.health)}</span>
+          </div>
           <input type="range" min="0" max="48" step="1" value="${value}" data-minute-player="${escapeAttr(row.id)}" ${editable ? "" : "disabled"} />
           <output>${value}</output>
         </div>`;
       }).join("")}
-    </div>
-    ${table(["Player", "Start", "Coach", "PTS", "REB", "AST"], rows.slice(0, 8), (row) => [row.name, row.starting_slot ? `#${row.starting_slot}` : "", Number(row.coach_minutes_projection ?? row.minutes_projection ?? 0), statFromRow(row, "points"), statFromRow(row, "rebounds"), statFromRow(row, "assists")], "dashboard-rotation")}`;
+    </div>`;
+}
+
+function updateRotationMinuteCounter() {
+  const total = Object.values(state.rotationDraft).reduce(
+    (sum, value) => sum + Number(value || 0),
+    0
+  );
+  const remaining = 240 - total;
+
+  const counter = document.getElementById("rotationMinuteCounter");
+  if (counter) {
+    counter.classList.toggle("ok", remaining === 0);
+    counter.classList.toggle("bad", remaining !== 0);
+    counter.textContent = remaining === 0
+      ? "240 assigned"
+      : `${signedNumber(remaining, 0)} minutes remaining`;
+  }
+
+  const save = document.getElementById("saveRotation");
+  if (save) save.disabled = remaining !== 0;
 }
 
 function ratingsTable(rows) {
@@ -1198,8 +1236,16 @@ function wireDashboardOverview(editable) {
   if (auto) auto.addEventListener("click", () => saveStartingFive({}));
   els.content.querySelectorAll("[data-minute-player]").forEach((input) => {
     input.addEventListener("input", () => {
-      state.rotationDraft[input.dataset.minutePlayer] = Number(input.value);
-      renderDashboard();
+      const playerId = input.dataset.minutePlayer;
+      const value = Number(input.value);
+
+      state.rotationDraft[playerId] = value;
+
+      const row = input.closest(".rotation-row");
+      const output = row?.querySelector("output");
+      if (output) output.textContent = value;
+
+      updateRotationMinuteCounter();
     });
   });
   const saveRotation = document.getElementById("saveRotation");

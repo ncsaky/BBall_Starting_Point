@@ -497,13 +497,54 @@ main {
   margin-bottom: 0;
 }
 
-
-
-
-
-
 .rotation-card > *:last-child {
   min-height: 0;
+}
+
+.rotation-card {
+  overflow: hidden;
+}
+
+.rotation-list-full {
+  gap: 3px;
+  margin-bottom: 0;
+}
+
+.rotation-row-compact {
+  gap: 6px;
+  grid-template-columns: minmax(96px, 1fr) minmax(82px, 0.85fr) 22px;
+  min-height: 27px;
+}
+
+.rotation-player {
+  min-width: 0;
+}
+
+.rotation-player strong {
+  display: block;
+  font-size: 12px;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rotation-player span {
+  display: block;
+  font-size: 9px;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rotation-row-compact input[type="range"] {
+  width: 100%;
+}
+
+.rotation-row-compact output {
+  font-size: 11px;
+  text-align: right;
 }
 
 .league-leader-grid {
