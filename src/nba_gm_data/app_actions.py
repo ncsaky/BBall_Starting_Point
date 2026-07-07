@@ -92,6 +92,7 @@ def dispatch_app_action(
     save_dir: str | Path | None = None,
     canonical: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    action = str(action or "").replace("-", "_")
     root_path = Path(root)
     payload = dict(payload or {})
     data = canonical or load_app_canonical(root_path)
@@ -160,6 +161,8 @@ def runtime_status(root: Path, save_dir: Path) -> dict[str, Any]:
                 "team_dashboard",
                 "team_assets",
                 "standings",
+                "dashboard-summary-leaders",
+                "dashboard_summary_leaders",
                 "league_leaders",
                 "league_traits",
                 "league_events",
@@ -289,6 +292,8 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return team_assets_payload(canonical, save_path, str(payload.get("team") or user_team_abbrev(canonical, save_path)))
     if action == "standings":
         return league_standings(canonical, save_path)
+    if action in {"dashboard_summary_leaders", "dashboard-summary-leaders"}:
+        return dashboard_summary_leaders_payload(canonical, save_path, limit=int(payload.get("limit") or 10))
     if action == "league_leaders":
         return league_leaders(canonical, save_path, stat=str(payload.get("stat") or "points"), limit=int(payload.get("limit") or 20))
     if action == "league_traits":
@@ -558,6 +563,98 @@ def league_traits_payload(canonical: dict[str, Any], save_path: Path, trait: str
         "leaders": rows[:limit],
         "as_of_date": save.get("state", {}).get("current_date"),
         "rating_scale": "dashboard_display",
+    }
+
+
+def dashboard_summary_leaders_payload(canonical: dict[str, Any], save_path: Path, limit: int = 10) -> dict[str, Any]:
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    teams = {team["id"]: team for team in active.get("teams", [])}
+    stats = save.get("player_season_stats", {})
+    rows: list[dict[str, Any]] = []
+    for player in active.get("players", []):
+        team_id = player.get("team_id")
+        if not team_id:
+            continue
+        attrs = player_attribute_summary(active, player["id"])
+        totals = stats.get(player["id"], {})
+        games = int(totals.get("games") or 0) if totals else 0
+        divisor = max(1, games)
+        row = {
+            "player_id": player["id"],
+            "player_name": player.get("name"),
+            "position": compact_position(player.get("position")),
+            "team_id": team_id,
+            "team_abbrev": teams.get(team_id, {}).get("abbrev", team_id),
+            "values": {
+                "overall": attrs.get("overall"),
+                "shooting": attrs.get("shooting"),
+                "creation": attrs.get("creation"),
+                "defense": attrs.get("defense"),
+                "spacing": attrs.get("spacing") or composite_rating(attrs, ["shooting", "range", "release", "versatility"], [0.36, 0.36, 0.14, 0.14]),
+                "passing": attrs.get("passing"),
+                "rebounding": attrs.get("rebounding"),
+                "rim_deterrence": attrs.get("rim_deterrence"),
+                "athleticism": attrs.get("athleticism"),
+                "minutes": round(float(totals.get("minutes") or 0.0) / divisor, 1) if games else display_minutes_projection(player),
+                "points": round(float(totals.get("points") or 0.0) / divisor, 1) if totals else 0.0,
+                "rebounds": round(float(totals.get("rebounds") or 0.0) / divisor, 1) if totals else 0.0,
+                "assists": round(float(totals.get("assists") or 0.0) / divisor, 1) if totals else 0.0,
+                "steals": round(float(totals.get("steals") or 0.0) / divisor, 1) if totals else 0.0,
+                "blocks": round(float(totals.get("blocks") or 0.0) / divisor, 1) if totals else 0.0,
+                "turnovers": round(float(totals.get("turnovers") or 0.0) / divisor, 1) if totals else 0.0,
+            },
+        }
+        rows.append(row)
+
+    fields = [
+        ("overall", "OVR"),
+        ("shooting", "Shot"),
+        ("creation", "Create"),
+        ("defense", "Def"),
+        ("spacing", "Space"),
+        ("passing", "Pass"),
+        ("rebounding", "Reb"),
+        ("rim_deterrence", "Rim"),
+        ("athleticism", "Ath"),
+        ("minutes", "MPG"),
+        ("points", "PTS"),
+        ("rebounds", "REB"),
+        ("assists", "AST"),
+        ("steals", "STL"),
+        ("blocks", "BLK"),
+        ("turnovers", "TO"),
+    ]
+    payload_fields = []
+    for key, label in fields:
+        leaders = []
+        ordered = sorted(
+            rows,
+            key=lambda item: (
+                -float(item.get("values", {}).get(key) or 0.0),
+                -float(item.get("values", {}).get("minutes") or 0.0),
+                item.get("player_name") or "",
+            ),
+        )
+        for item in ordered[: max(1, int(limit))]:
+            value = item.get("values", {}).get(key)
+            if value is None:
+                continue
+            leaders.append(
+                {
+                    "player_id": item.get("player_id"),
+                    "player_name": item.get("player_name"),
+                    "team_id": item.get("team_id"),
+                    "team_abbrev": item.get("team_abbrev"),
+                    "position": item.get("position"),
+                    "value": round(float(value), 1),
+                }
+            )
+        payload_fields.append({"key": key, "label": label, "title": f"{label} Top 10", "leaders": leaders})
+    return {
+        "as_of_date": save.get("state", {}).get("current_date"),
+        "limit": max(1, int(limit)),
+        "fields": payload_fields,
     }
 
 

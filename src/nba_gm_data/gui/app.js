@@ -27,6 +27,7 @@ const state = {
   data: {},
   startingDraft: null,
   startingPickerSlot: null,
+  hydrating: false,
 };
 
 
@@ -117,14 +118,18 @@ function wireEvents() {
 }
 
 async function init() {
+  state.currentSave = localStorage.getItem(LAST_SAVE_KEY) || "";
+  state.hydrating = Boolean(state.currentSave);
+  render();
   try {
     const status = await apiGet("/api/status");
     els.runtime.textContent = `${status.engine} | ${status.protocol_version}`;
     els.startupRuntime.textContent = `${status.engine} | ${status.protocol_version}`;
-    state.currentSave = localStorage.getItem(LAST_SAVE_KEY) || "";
     await loadTeams();
     await loadSaves();
   } catch (error) {
+    state.hydrating = false;
+    render();
     showToast(error.message || String(error), true);
   }
 }
@@ -195,6 +200,7 @@ async function createSave() {
 async function refreshHome() {
   clearViewCaches();
   if (!state.currentSave) {
+    state.hydrating = false;
     state.home = null;
     render();
     return;
@@ -204,6 +210,7 @@ async function refreshHome() {
   syncDefaultPartner();
   applyPhaseRouting();
   await ensureViewData(true);
+  state.hydrating = false;
   render();
 }
 
@@ -234,6 +241,7 @@ async function ensureViewData(force = false) {
       : await action("team_dashboard", { ...savePayload(), team });
     await loadDashboardCalendar(team);
     state.data.dashboardStandings = await action("standings", savePayload());
+    state.data.dashboardSummaryLeaders = await action("dashboard_summary_leaders", { ...savePayload(), limit: 10 });
   }
   if (key === "league") {
     state.data.standings = await action("standings", savePayload());
@@ -341,7 +349,7 @@ function renderDashboard() {
   const dash = state.data.dashboard || {};
   const rows = rosterRows(dash);
   const viewedTeam = teamLabel(dash.team || state.dashboardTeam || userTeam());
-  const editable = viewedTeam === userTeam();
+  const editable = !state.hydrating && viewedTeam === userTeam();
 
   state.dashboardTab = "overview";
 
@@ -356,20 +364,23 @@ function renderDashboard() {
 function renderDashboardTab(rows) {
   const target = document.getElementById("dashboardTab");
   const dash = state.data.dashboard || {};
-  const editable = teamLabel(dash.team || state.dashboardTeam) === userTeam();
+  const editable = !state.hydrating && teamLabel(dash.team || state.dashboardTeam) === userTeam();
   if (state.dashboardTab === "overview") {
     target.innerHTML = `
       <div class="dashboard-overview">
         <section class="section panel-rail identity-card">${teamIdentityRankBlock(dash)}</section>
         <section class="section panel-rail starting-card">${startingFiveBlock(rows, editable)}</section>
-        <section class="section panel-rail rotation-card">${rotationRatingsBlock(rows, editable)}</section>
+        <section class="section panel-rail player-summary-card">${dashboardPlayerSummaryTable(rows)}</section>
+        <section class="section panel-rail summary-side-card">${summaryLeaderRotator()}</section>       
         <section class="section panel-rail staff-card">${staffDashboardCard(rows, dash)}</section>
         <section class="section panel-rail standings-card">${userConferenceStandings()}</section>
         <section class="section panel-rail calendar-card">${dashboardMonthCalendar()}</section>
+        <section class="section panel-rail contract-chart-card">${contractChartCard(rows, dash)}</section>
         <section class="section panel-rail events-card">${leagueEventRotator()}</section>
       </div>`;
     wireDashboardOverview(editable);
     startLeagueEventRotator();
+    startSummaryLeaderRotator();
     return;
   }
   target.innerHTML = contractsBlock(rows, dash);
@@ -377,6 +388,7 @@ function renderDashboardTab(rows) {
 }
 
 let leagueEventRotatorTimer = null;
+let summaryLeaderRotatorTimer = null;
 
 function startLeagueEventRotator() {
   if (leagueEventRotatorTimer) {
@@ -421,6 +433,27 @@ function startLeagueEventRotator() {
 
   const progress = rotator.querySelector(".event-progress span");
   if (progress) progress.classList.add("event-progress-run");
+}
+
+function startSummaryLeaderRotator() {
+  if (summaryLeaderRotatorTimer) {
+    clearInterval(summaryLeaderRotatorTimer);
+    summaryLeaderRotatorTimer = null;
+  }
+
+  const rotator = document.querySelector("[data-summary-leader-rotator]");
+  if (!rotator) return;
+  const slides = Array.from(rotator.querySelectorAll(".summary-leader-slide"));
+  if (slides.length <= 1) return;
+
+  let index = 0;
+  slides.forEach((slide, slideIndex) => slide.classList.toggle("active", slideIndex === index));
+
+  summaryLeaderRotatorTimer = setInterval(() => {
+    slides[index].classList.remove("active");
+    index = (index + 1) % slides.length;
+    slides[index].classList.add("active");
+  }, 5200);
 }
 
 function renderTrade() {
@@ -807,26 +840,28 @@ function staffDashboardCard(rows, dash) {
 
 function staffRoleButton(row) {
   const role = row.slot || row.role || "";
-  const name = row.name || "Vacant";
-  const grade = row.grade ?? row.rating ?? row.overall ?? "";
+  const name = staffName(row);
+  const grade = staffGrade(row);
   const aav = staffAav(row);
+  const years = staffYears(row);
 
   return `<button class="staff-role-button" data-staff-role="${escapeAttr(role)}">
     <span class="staff-role">${escapeHtml(rowLabel(role))}</span>
     <strong>${escapeHtml(name)}</strong>
     <span class="staff-meta">
       ${grade !== "" ? `G ${Number(grade).toFixed(1)}` : "G —"}
-      ${aav ? ` · ${money(aav)}` : ""}
+      ${aav ? ` · ${money(aav)}${years ? ` x ${years}` : ""}` : ""}
     </span>
   </button>`;
 }
 
 function staffBudgetMiniChart(staff) {
   const paidStaff = staff
-    .map((row, index) => {
-      const aav = staffAav(row);
-      return { row, index, aav };
-    })
+    .map((row, index) => ({
+      row,
+      index,
+      aav: staffAav(row),
+    }))
     .filter((item) => item.aav > 0)
     .sort((a, b) => b.aav - a.aav);
 
@@ -843,28 +878,85 @@ function staffBudgetMiniChart(staff) {
       <span class="staff-salary-stack" style="height:${clampNumber((total / scale) * 100, 0, 100)}%">
         ${paidStaff.map((item) => `<span
           class="staff-salary-segment staff-salary-${item.index % 8}"
-          style="height:${clampNumber((item.aav / Math.max(1, total)) * 100, 3, 100)}%"
-          title="${escapeAttr(rowLabel(item.row.slot || item.row.role))}: ${escapeAttr(item.row.name || "Vacant")} ${money(item.aav)}"
+          style="height:${clampNumber((item.aav / Math.max(1, total)) * 100, 4, 100)}%"
+          title="${escapeAttr(rowLabel(item.row.slot || item.row.role))}: ${escapeAttr(staffName(item.row))} ${money(item.aav)}"
         ></span>`).join("")}
       </span>
     </div>
 
     <div class="staff-cap-footer">
-      <strong>Staff</strong>
-      <span>${money(total)} / ${money(budget)}</span>
+      <strong>${money(total)}</strong>
+      <span>Budget ${money(budget)}</span>
     </div>
   </div>`;
 }
 
 function staffAav(row) {
-  return Number(
+  return normalizeStaffMoney(
     row.aav_millions ??
     row.salary_millions ??
     row.contract_aav_millions ??
     row.annual_salary_millions ??
     row.asking_salary_millions ??
+    row.aav ??
+    row.salary ??
+    row.contract?.aav_millions ??
+    row.contract?.salary_millions ??
+    row.contract?.annual_salary_millions ??
+    row.contract?.aav ??
+    row.contract?.salary ??
+    row.staff?.aav_millions ??
+    row.staff?.salary_millions ??
+    row.staff?.contract?.aav_millions ??
+    row.staff?.contract?.salary_millions ??
     0
   );
+}
+
+function staffName(row) {
+  return (
+    row.name ??
+    row.staff?.name ??
+    row.person?.name ??
+    row.employee?.name ??
+    "Vacant"
+  );
+}
+
+function staffGrade(row) {
+  return (
+    row.grade ??
+    row.rating ??
+    row.overall ??
+    row.staff?.grade ??
+    row.staff?.rating ??
+    row.staff?.overall ??
+    row.evaluation?.grade ??
+    ""
+  );
+}
+
+function staffYears(row) {
+  return (
+    row.years ??
+    row.contract_years ??
+    row.years_remaining ??
+    row.contract?.years ??
+    row.contract?.years_remaining ??
+    row.staff?.contract?.years ??
+    row.staff?.contract?.years_remaining ??
+    ""
+  );
+}
+
+function normalizeStaffMoney(value) {
+  const number = Number(value || 0);
+  if (!Number.isFinite(number) || number <= 0) return 0;
+
+  // Backend may return raw dollars instead of millions.
+  if (number > 100000) return number / 1000000;
+
+  return number;
 }
 
 function staffBudgetMillions(staff, paidStaff) {
@@ -1156,7 +1248,7 @@ function ensureStartingDraft(rows) {
 function startingFiveButton(slot, rows, playerId, editable, hasEmpty, changed) {
   const row = rows.find((player) => String(player.id) === String(playerId));
   const empty = !row;
-  const label = row?.name || `Slot ${slot}`;
+  const label = row ? row.name.split(" ").map(escapeHtml).join("<br>") : `Slot ${slot}`;
 
   const statusClass = empty
     ? "empty"
@@ -1170,8 +1262,7 @@ function startingFiveButton(slot, rows, playerId, editable, hasEmpty, changed) {
     ${editable ? "" : "disabled"}
     title="${empty ? "Choose starter" : "Click to clear this starter"}"
   >
-    <span class="starting-slot-num">${slot}</span>
-    <strong>${escapeHtml(label)}</strong>
+    <strong>${label}</strong>
   </button>`;
 }
 
@@ -1313,10 +1404,11 @@ function rotationEditor(rows, editable) {
     <div class="rotation-list rotation-list-full">
       ${rows.map((row) => {
         const value = clampNumber(Number(state.rotationDraft[row.id] ?? row.minutes_projection ?? 0), 0, 48);
+        const injured = isPlayerInjured(row.health);
         return `<div class="rotation-row rotation-row-compact">
           <div class="rotation-player">
-            <strong>${escapeHtml(row.name)}</strong>
-            <span>${escapeHtml(compactPos(row.position))} | ${statLine(row)} ${activeHealthText(row.health)}</span>
+            <strong class="${injured ? "injured-player-name" : ""}">${escapeHtml(row.name)}</strong>
+            <span>${rotationPlayerMeta(row)}</span>
           </div>
           <input type="range" min="0" max="48" step="1" value="${value}" data-minute-player="${escapeAttr(row.id)}" ${editable ? "" : "disabled"} />
           <output>${value}</output>
@@ -1361,6 +1453,136 @@ function ratingsTable(rows) {
   ], "dashboard-ratings");
 }
 
+function summaryLeaderRotator() {
+  const fields = state.data.dashboardSummaryLeaders?.fields || [];
+  const slides = fields.map((field, fieldIndex) => {
+    const leaders = field.leaders || [];
+    return `
+      <div class="summary-leader-slide ${fieldIndex === 0 ? "active" : ""}">
+        <div class="summary-leader-title">
+          <span>${escapeHtml(field.label || field.key || "Field")}</span>
+          <em>Top 10</em>
+        </div>
+        <ol class="summary-leader-list">
+          ${leaders.map((leader, index) => `
+            <li>
+              <span class="summary-rank">${index + 1}</span>
+              <span class="summary-player">
+                <strong>${escapeHtml(leader.player_name || "Unknown")}</strong>
+                <small>${escapeHtml([leader.team_abbrev, leader.position].filter(Boolean).join(" "))}</small>
+              </span>
+              <em>${Number(leader.value || 0).toFixed(1)}</em>
+            </li>
+          `).join("") || `<li class="empty">No league leaders available.</li>`}
+        </ol>
+      </div>`;
+  }).join("");
+
+  return `
+    ${sectionHead("League Leaders")}
+    <div class="summary-leader-rotator" data-summary-leader-rotator>
+      <div class="summary-leader-track">
+        ${slides || `<div class="empty">No league leaders available.</div>`}
+      </div>
+    </div>`;
+}
+
+function dashboardPlayerSummaryTable(rows) {
+  ensureRotationDraft(rows);
+  const seasons = contractSeasons(rows).slice(0, 5);
+  const total = Object.values(state.rotationDraft).reduce(
+    (sum, value) => sum + Number(value || 0),
+    0
+  );
+  const remaining = 240 - total;
+  const dash = state.data.dashboard || {};
+  const editable = !state.hydrating && teamLabel(dash.team || state.dashboardTeam) === userTeam();
+  return `
+    <div class="section-head summary-head">
+      <h3>Player Ratings / Season Box Score / Contracts</h3>
+      <div class="rotation-head-actions">
+        <span id="rotationMinuteCounter" class="minute-counter ${remaining === 0 ? "ok" : "bad"}">
+          ${remaining === 0 ? "240 assigned" : `${signedNumber(remaining, 0)} minutes remaining`}
+        </span>
+        ${editable ? `<button id="saveRotation" ${remaining === 0 ? "" : "disabled"}>Set Rotation</button>` : ""}
+      </div>
+    </div>
+    <div class="dashboard-mini-table">
+      ${table(["Player", "Pos", "Height", "Age", "OVR", "Shot", "Create", "Def", "Space", "Pass", "Reb", "Rim", "Ath", "MPG", "Coach", "Set", "PTS", "REB", "AST", "STL", "BLK", "TO", ...seasons], rows, (row) => [
+        row.name,
+        compactPos(row.position),
+        heightFromRow(row) || "—",
+        row.age ?? "—",
+        plainNumber(rating(row, "overall")),
+        plainNumber(rating(row, "shooting")),
+        plainNumber(rating(row, "creation")),
+        plainNumber(rating(row, "defense")),
+        plainNumber(rating(row, "spacing") || rating(row, "range")),
+        plainNumber(rating(row, "passing")),
+        plainNumber(rating(row, "rebounding")),
+        plainNumber(rating(row, "rim_deterrence")),
+        plainNumber(rating(row, "athleticism")),
+        Number(mpgFromRow(row) || 0).toFixed(1),
+        Number(row.coach_minutes_projection ?? row.minutes_projection ?? 0).toFixed(0),
+        rotationSliderCell(row, editable),
+        statNumber(row, "points"),
+        statNumber(row, "rebounds"),
+        statNumber(row, "assists"),
+        statNumber(row, "steals"),
+        statNumber(row, "blocks"),
+        statNumber(row, "turnovers"),
+        ...seasons.map((season) => money(row.salary_by_year?.[season]) || "—"),
+      ], "dashboard-player-summary")}
+    </div>`;
+}
+
+function rotationSliderCell(row, editable) {
+  const value = clampNumber(Number(state.rotationDraft[row.id] ?? row.minutes_projection ?? 0), 0, 48);
+  return html(`
+    <div class="summary-minute-control">
+      <input type="range" min="0" max="48" step="1" value="${value}" data-minute-player="${escapeAttr(row.id)}" ${editable ? "" : "disabled"} />
+      <output data-minute-output="${escapeAttr(row.id)}">${value}</output>
+    </div>`);
+}
+
+function dashboardPlayerRatingsTable(rows) {
+  return `
+    ${sectionHead("Player Ratings")}
+    <div class="dashboard-mini-table">
+      ${ratingsTable(rows)}
+    </div>`;
+}
+
+function dashboardPlayerStatsTable(rows) {
+  return `
+    ${sectionHead("Season Box Score")}
+    <div class="dashboard-mini-table">
+      ${table(["Player", "Pos", "MPG", "PTS", "REB", "AST", "STL", "BLK", "TO"], rows, (row) => [
+        row.name,
+        compactPos(row.position),
+        Number(mpgFromRow(row) || 0).toFixed(1),
+        statNumber(row, "points"),
+        statNumber(row, "rebounds"),
+        statNumber(row, "assists"),
+        statNumber(row, "steals"),
+        statNumber(row, "blocks"),
+        statNumber(row, "turnovers"),
+      ], "dashboard-season-box")}
+    </div>`;
+}
+
+function statNumber(row, stat) {
+  const value =
+    statFromRow(row, stat) ??
+    row[`${stat}_per_game`] ??
+    row[`${stat}_pg`] ??
+    row[stat] ??
+    "";
+
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toFixed(1) : value;
+}
+
 function userConferenceStandings() {
   const standings = standingsRows(state.data.dashboardStandings);
   const user = userTeam();
@@ -1371,15 +1593,41 @@ function userConferenceStandings() {
     .slice(0, 10);
 
   return `${sectionHead(`${conference} Standings`)}
-    ${table(["#", "Team", "W", "L", "Win%"], rows, (row, index) => [
-      index + 1,
-      teamLabel(row.team) === user
-        ? html(`<strong class="user-highlight">${escapeHtml(teamLabel(row.team))}</strong>`)
-        : teamLabel(row.team),
-      row.wins,
-      row.losses,
-      winPct(row.win_pct),
-    ], "dashboard-standings")}`;
+    ${dashboardStandingsTable(rows, user)}`;
+}
+
+function dashboardStandingsTable(rows, user) {
+  if (!rows.length) return `<div class="empty">No standings yet.</div>`;
+  return `
+    <div class="table-wrap">
+      <table class="data-table dashboard-standings">
+        <colgroup>
+          <col class="standings-rank-col" />
+          <col class="standings-team-col" />
+          <col class="standings-record-col" />
+          <col class="standings-pct-col" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Team</th>
+            <th>W-L</th>
+            <th>Win%</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map((row, index) => {
+            const team = teamLabel(row.team);
+            return `<tr class="${index === 6 ? "play-in-cutoff-row" : ""}">
+              <td class="standings-rank">${index + 1}.</td>
+              <td class="standings-team">${team === user ? `<strong class="user-highlight">${escapeHtml(team)}</strong>` : escapeHtml(team)}</td>
+              <td class="standings-record">${escapeHtml(`${row.wins || 0}-${row.losses || 0}`)}</td>
+              <td>${escapeHtml(winPct(row.win_pct))}</td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>`;
 }
 
 function dashboardMonthCalendar() {
@@ -1403,6 +1651,45 @@ function dashboardMonthCalendar() {
     <div class="calendar-grid">
       ${["M", "T", "W", "T", "F", "S", "S"].map((day) => `<div class="calendar-label">${day}</div>`).join("")}
       ${cells.map((cell) => calendarCell(cell, games, current, team)).join("")}
+    </div>`;
+}
+
+function contractChartCard(rows, dash) {
+  const seasons = contractSeasons(rows).slice(0, 5);
+  if (!rows.length || !seasons.length) {
+    return `${sectionHead("Contract Chart")}<div class="empty">No contract data loaded.</div>`;
+  }
+  return `
+    ${sectionHead("Contract Chart")}
+    <div class="contract-year-columns">
+      ${seasons.map((season) => contractPayrollColumn(season, rows, dash.cap_by_year?.[season])).join("")}
+    </div>`;
+}
+
+function contractPayrollColumn(season, rows, cap) {
+  const salaries = rows
+    .map((row, index) => ({ row, index, salary: Number(row.salary_by_year?.[season] || 0) }))
+    .filter((item) => item.salary > 0)
+    .sort((a, b) => b.salary - a.salary);
+  const tax = Number(cap?.tax_line_millions || 190);
+  const hard = Number(cap?.hard_cap_millions || 230);
+  const payroll = Number(cap?.salary_total_millions || salaries.reduce((sum, item) => sum + item.salary, 0));
+  const scale = Math.max(hard, tax, payroll, 1);
+  return `
+    <div class="contract-payroll-column">
+      <strong>${escapeHtml(season)}</strong>
+      <div class="contract-payroll-stack-shell">
+        <span class="contract-cap-line tax" style="bottom:${clampNumber((tax / scale) * 100, 0, 100)}%"><em>Tax</em></span>
+        <span class="contract-cap-line hard" style="bottom:${clampNumber((hard / scale) * 100, 0, 100)}%"><em>Hard</em></span>
+        <span class="contract-payroll-stack" style="height:${clampNumber((payroll / scale) * 100, 0, 100)}%">
+          ${salaries.map((item) => `<span
+            class="contract-salary-segment staff-salary-${item.index % 8}"
+            style="height:${clampNumber((item.salary / Math.max(1, payroll)) * 100, 3, 100)}%"
+            title="${escapeAttr(item.row.name)} ${money(item.salary)}"
+          ></span>`).join("")}
+        </span>
+      </div>
+      <span>${money(payroll)}</span>
     </div>`;
 }
 
@@ -1527,7 +1814,9 @@ function wireDashboardOverview(editable) {
       state.rotationDraft[playerId] = value;
 
       const row = input.closest(".rotation-row");
-      const output = row?.querySelector("output");
+      const output =
+        row?.querySelector("output") ||
+        Array.from(document.querySelectorAll("[data-minute-output]")).find((node) => node.dataset.minuteOutput === playerId);
       if (output) output.textContent = value;
 
       updateRotationMinuteCounter();
@@ -1615,6 +1904,13 @@ function gradeNumber(value) {
   return html(`<span class="grade-cell grade-${gradeClass(num)}"><span class="grade-dot"></span>${num.toFixed(1)}</span>`);
 }
 
+function plainNumber(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  const cls = n >= 70 ? "grade-good" : n < 50 ? "grade-bad" : "grade-neutral";
+  return `<span class="summary-rating ${cls}">${n.toFixed(1)}</span>`;
+}
+
 function gradeText(value, grade = "neutral") {
   return html(`<span class="grade-cell grade-${escapeAttr(grade)}"><span class="grade-dot"></span>${escapeHtml(value)}</span>`);
 }
@@ -1673,15 +1969,48 @@ function compactPos(value) {
   return String(value || "").toUpperCase().replace("POSITION_", "").split(/[\/,\-\s]/)[0] || "";
 }
 
-function statLine(row) {
-  return `${Number(statFromRow(row, "points") || 0).toFixed(1)} PTS ${Number(statFromRow(row, "rebounds") || 0).toFixed(1)} REB ${Number(statFromRow(row, "assists") || 0).toFixed(1)} AST`;
-}
-
 function activeHealthText(health) {
   if (!health) return "";
   const status = String(health.status || health.label || "").toLowerCase();
-  if (!status || status === "healthy" || status === "active") return "";
+  if (!status || status === "healthy" || status === "active" || status === "ok") return "";
   return ` | ${health.label || health.status}`;
+}
+
+function isPlayerInjured(health) {
+  if (!health) return false;
+  const status = String(health.status || "").toLowerCase();
+  const label = String(health.label || "").toLowerCase();
+  return Boolean(status && !["ok", "healthy", "active"].includes(status)) || Boolean(label && !["ok", "healthy"].includes(label));
+}
+
+function rotationPlayerMeta(row) {
+  const pieces = [
+    compactPos(row.position),
+    heightFromRow(row),
+    rotationAgeText(row.age),
+  ].filter(Boolean);
+  const injury = rotationInjuryText(row.health);
+  if (injury) pieces.push(injury);
+  return escapeHtml(pieces.join(" | "));
+}
+
+function rotationAgeText(age) {
+  if (age === undefined || age === null || age === "") return "";
+  const value = Number(age);
+  if (!Number.isFinite(value)) return `age ${age}`;
+  return `age ${value.toFixed(value % 1 ? 1 : 0)}`;
+}
+
+function rotationInjuryText(health) {
+  if (!isPlayerInjured(health)) return "";
+  const label = String(health.label || health.status || "injured").trim();
+  const match = label.match(/~\s*(\d+)\s*g/i);
+  if (match) return `${label.replace(/\s*~\s*\d+\s*g/i, "").trim()} (${match[1]} games missed remaining)`;
+  if (health.days_left !== undefined && health.days_left !== null) {
+    const games = Math.max(1, Math.round(Number(health.days_left || 0) / 2.4));
+    return `${label} (${games} games missed remaining)`;
+  }
+  return label;
 }
 
 function resultForTeam(game, team) {
@@ -1909,7 +2238,7 @@ function table(headers, rows, mapper, tableId = "table") {
   if (sort) {
     mapped.sort((a, b) => compareCell(a.cells[sort.index], b.cells[sort.index], sort.direction));
   }
-  return `<div class="table-wrap"><table class="data-table"><thead><tr>${headers.map((header, index) => `<th><button class="sort-head" data-sort-table="${escapeAttr(tableId)}" data-sort-index="${index}">${escapeHtml(header)}${sort?.index === index ? (sort.direction === "asc" ? " ↑" : " ↓") : ""}</button></th>`).join("")}</tr></thead><tbody>${mapped.map(({ cells }) => `<tr>${cells.map((cell) => `<td>${formatCell(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  return `<div class="table-wrap"><table class="data-table ${escapeAttr(tableId)}"><thead><tr>${headers.map((header, index) => `<th><button class="sort-head" data-sort-table="${escapeAttr(tableId)}" data-sort-index="${index}">${escapeHtml(header)}${sort?.index === index ? (sort.direction === "asc" ? " ↑" : " ↓") : ""}</button></th>`).join("")}</tr></thead><tbody>${mapped.map(({ cells }) => `<tr>${cells.map((cell) => `<td>${formatCell(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 
 function compareCell(a, b, direction) {
@@ -1931,7 +2260,9 @@ function sortValue(value) {
 function formatCell(value) {
   if (value === undefined || value === null || value === "") return "";
   if (typeof value === "object" && value.__html !== undefined) return value.__html;
+  if (typeof value === "object" && value.html !== undefined) return value.html;
   if (typeof value === "number") return escapeHtml(Number.isInteger(value) ? String(value) : value.toFixed(1));
+  if (typeof value === "string" && value.startsWith(`<span class="summary-rating`)) return value;
   return String(value).includes("<button") ? String(value) : escapeHtml(String(value));
 }
 
