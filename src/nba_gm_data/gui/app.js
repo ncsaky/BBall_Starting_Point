@@ -363,6 +363,7 @@ function renderDashboardTab(rows) {
         <section class="section panel-rail identity-card">${teamIdentityRankBlock(dash)}</section>
         <section class="section panel-rail starting-card">${startingFiveBlock(rows, editable)}</section>
         <section class="section panel-rail rotation-card">${rotationRatingsBlock(rows, editable)}</section>
+        <section class="section panel-rail staff-card">${staffDashboardCard(rows, dash)}</section>
         <section class="section panel-rail standings-card">${userConferenceStandings()}</section>
         <section class="section panel-rail calendar-card">${dashboardMonthCalendar()}</section>
         <section class="section panel-rail events-card">${leagueEventRotator()}</section>
@@ -785,6 +786,106 @@ async function fireStaff(slot) {
   renderStaff();
 }
 
+function staffDashboardCard(rows, dash) {
+  const room = state.data.staff || {};
+  const report = room.team_report || {};
+  const staff = staffRows(dash).length
+    ? staffRows(dash)
+    : report.gameplay_staff_slots || [];
+
+  return `
+    ${sectionHead("Staff")}
+    <div class="staff-dashboard-grid">
+      <div class="staff-role-list">
+        ${staff.length
+          ? staff.map(staffRoleButton).join("")
+          : `<div class="empty">No staff data loaded.</div>`}
+      </div>
+      ${staffBudgetMiniChart(staff)}
+    </div>`;
+}
+
+function staffRoleButton(row) {
+  const role = row.slot || row.role || "";
+  const name = row.name || "Vacant";
+  const grade = row.grade ?? row.rating ?? row.overall ?? "";
+  const aav = staffAav(row);
+
+  return `<button class="staff-role-button" data-staff-role="${escapeAttr(role)}">
+    <span class="staff-role">${escapeHtml(rowLabel(role))}</span>
+    <strong>${escapeHtml(name)}</strong>
+    <span class="staff-meta">
+      ${grade !== "" ? `G ${Number(grade).toFixed(1)}` : "G —"}
+      ${aav ? ` · ${money(aav)}` : ""}
+    </span>
+  </button>`;
+}
+
+function staffBudgetMiniChart(staff) {
+  const paidStaff = staff
+    .map((row, index) => {
+      const aav = staffAav(row);
+      return { row, index, aav };
+    })
+    .filter((item) => item.aav > 0)
+    .sort((a, b) => b.aav - a.aav);
+
+  const budget = staffBudgetMillions(staff, paidStaff);
+  const total = paidStaff.reduce((sum, item) => sum + item.aav, 0);
+  const scale = Math.max(budget, total, 1);
+
+  return `<div class="staff-cap-mini">
+    <div class="staff-cap-column">
+      <span class="staff-budget-line" style="bottom:${clampNumber((budget / scale) * 100, 0, 100)}%">
+        <em>Budget</em>
+      </span>
+
+      <span class="staff-salary-stack" style="height:${clampNumber((total / scale) * 100, 0, 100)}%">
+        ${paidStaff.map((item) => `<span
+          class="staff-salary-segment staff-salary-${item.index % 8}"
+          style="height:${clampNumber((item.aav / Math.max(1, total)) * 100, 3, 100)}%"
+          title="${escapeAttr(rowLabel(item.row.slot || item.row.role))}: ${escapeAttr(item.row.name || "Vacant")} ${money(item.aav)}"
+        ></span>`).join("")}
+      </span>
+    </div>
+
+    <div class="staff-cap-footer">
+      <strong>Staff</strong>
+      <span>${money(total)} / ${money(budget)}</span>
+    </div>
+  </div>`;
+}
+
+function staffAav(row) {
+  return Number(
+    row.aav_millions ??
+    row.salary_millions ??
+    row.contract_aav_millions ??
+    row.annual_salary_millions ??
+    row.asking_salary_millions ??
+    0
+  );
+}
+
+function staffBudgetMillions(staff, paidStaff) {
+  const room = state.data.staff || {};
+  const report = room.team_report || {};
+
+  const explicit =
+    report.staff_budget_millions ??
+    report.budget_millions ??
+    report.staff_salary_budget_millions ??
+    room.staff_budget_millions ??
+    room.budget_millions;
+
+  if (explicit !== undefined && explicit !== null) return Number(explicit);
+
+  const total = paidStaff.reduce((sum, item) => sum + item.aav, 0);
+
+  // Fallback until we know the exact backend field name.
+  return Math.max(20, Math.ceil(total * 1.25));
+}
+
 function renderLeague() {
   const standings = standingsRows(state.data.standings);
   const east = standings.filter((row) => row.team?.conference === "East");
@@ -1140,15 +1241,7 @@ function benchChip(row) {
   return `<button class="bench-chip" draggable="true" data-drag-player="${escapeAttr(row.id)}"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(compactPos(row.position))}</span></button>`;
 }
 
-function rotationRatingsBlock(rows, editable) {
-  return `
-    <div class="section-head">
-      <h3>Rotation</h3>
-    </div>
-    ${rotationEditor(rows, editable)}`;
-}
-
-function rotationEditor(rows, editable) {
+function ensureRotationDraft(rows) {
   if (!Object.keys(state.rotationDraft).length) {
     state.rotationDraft = Object.fromEntries(
       rows.map((row) => [
@@ -1165,7 +1258,9 @@ function rotationEditor(rows, editable) {
       }
     }
   }
-  
+}
+
+function rotationRatingsBlock(rows, editable) {
   const total = Object.values(state.rotationDraft).reduce(
     (sum, value) => sum + Number(value || 0),
     0
@@ -1173,13 +1268,48 @@ function rotationEditor(rows, editable) {
   const remaining = 240 - total;
 
   return `
-    <div class="rotation-toolbar">
-      <span id="rotationMinuteCounter" class="minute-counter ${remaining === 0 ? "ok" : "bad"}">
-        ${remaining === 0 ? "240 assigned" : `${signedNumber(remaining, 0)} minutes remaining`}
-      </span>
-      ${editable ? `<button id="saveRotation" ${remaining === 0 ? "" : "disabled"}>Set Rotation</button>` : ""}
+    <div class="section-head rotation-head">
+      <h3>Rotation</h3>
+      <div class="rotation-head-actions">
+        <span id="rotationMinuteCounter" class="minute-counter ${remaining === 0 ? "ok" : "bad"}">
+          ${remaining === 0 ? "240 assigned" : `${signedNumber(remaining, 0)} minutes remaining`}
+        </span>
+        ${editable ? `<button id="saveRotation" ${remaining === 0 ? "" : "disabled"}>Set Rotation</button>` : ""}
+      </div>
     </div>
+    ${rotationEditor(rows, editable)}`;
+}
 
+function rotationRatingsBlock(rows, editable) {
+  ensureRotationDraft(rows);
+
+  const total = Object.values(state.rotationDraft).reduce(
+    (sum, value) => sum + Number(value || 0),
+    0
+  );
+  const remaining = 240 - total;
+
+  return `
+    <div class="section-head rotation-head">
+      <h3>Rotation</h3>
+      <div class="rotation-head-actions">
+        <span id="rotationMinuteCounter" class="minute-counter ${remaining === 0 ? "ok" : "bad"}">
+          ${remaining === 0 ? "240 assigned" : `${signedNumber(remaining, 0)} minutes remaining`}
+        </span>
+        ${
+          editable
+            ? `<button id="saveRotation" ${remaining === 0 ? "" : "disabled"}>Set Rotation</button>`
+            : ""
+        }
+      </div>
+    </div>
+    ${rotationEditor(rows, editable)}`;
+}
+
+function rotationEditor(rows, editable) {
+  ensureRotationDraft(rows);
+
+  return `
     <div class="rotation-list rotation-list-full">
       ${rows.map((row) => {
         const value = clampNumber(Number(state.rotationDraft[row.id] ?? row.minutes_projection ?? 0), 0, 48);
