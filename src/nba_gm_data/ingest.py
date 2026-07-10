@@ -1,3 +1,10 @@
+"""Build the reproducible canonical league from evidence and model layers.
+
+Runtime saves must not be folded into this pipeline. The ordering here is part
+of the data contract: identities precede inferred traits, league calibration
+precedes named overrides, and audit output observes the completed universe.
+"""
+
 from __future__ import annotations
 
 import json
@@ -130,6 +137,7 @@ def load_optional_json(root: Path, relative: Path) -> Any | None:
 
 
 def build_universe(root: str | Path = ".") -> CanonicalUniverse:
+    """Build one deterministic baseline universe from repository inputs."""
     root = Path(root).resolve()
     player_input = load_json(root, RAW_PLAYER_INPUT)
     source_generated_at = player_input.get("generatedAt") or CANONICAL_START_DATE

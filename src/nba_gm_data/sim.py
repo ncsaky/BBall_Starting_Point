@@ -1,3 +1,10 @@
+"""Deterministic feature-based basketball game simulation.
+
+The simulator consumes an active league snapshot and returns results without
+owning save persistence. Reusable context and indices avoid repeating I/O and
+normalization when a date range contains many games.
+"""
+
 from __future__ import annotations
 
 import json
@@ -358,6 +365,7 @@ def sim_game(root: str | Path, game_id: str, mode: str = "replay-real-minutes", 
 
 
 def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "replay-real-minutes", seed: int = 1) -> SimGameResult:
+    """Simulate one game from preloaded context using a domain-scoped seed."""
     if mode not in SIM_MODES:
         raise ValueError(f"Unknown sim mode {mode!r}")
     canonical = context["canonical"]

@@ -1,3 +1,10 @@
+"""Own mutable league saves, chronological advancement, and season lifecycle.
+
+Canonical data is the reproducible baseline; a save is the evolving overlay.
+Functions in this module coordinate domain services in causal order, so their
+sequence is gameplay behavior rather than incidental implementation detail.
+"""
+
 from __future__ import annotations
 
 import hashlib
@@ -921,6 +928,12 @@ def save_active_contract_season(save: dict[str, Any]) -> str:
 
 
 def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -> dict[str, Any]:
+    """Return a disposable active universe with one save's overrides applied.
+
+    The input canonical universe remains untouched. Derived transaction and
+    simulation context is intentionally discarded when save-owned inputs may
+    have changed.
+    """
     canonical = deepcopy(canonical) if isinstance(canonical, dict) else to_plain(canonical)
     canonical["_allow_internal_caches"] = True
     if not is_league_save(save):
@@ -1043,6 +1056,11 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
 
 
 def advance_save(root: str | Path, canonical: dict[str, Any] | Any, save_path: str | Path, to_date: str | None = None, next_event: bool = False, seed: int | None = None) -> dict[str, Any]:
+    """Advance through every causal checkpoint up to the requested date.
+
+    A long-range action is still chronological: health and games precede the
+    record-sensitive AI and phase work that depends on those outcomes.
+    """
     root = Path(root)
     canonical = to_plain(canonical)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
@@ -1742,6 +1760,14 @@ def starting_lineup_slots(canonical: dict[str, Any], save: dict[str, Any], team_
         if slot not in slots and player_id in available_roster_ids and player_id not in used:
             slots[slot] = player_id
             used.add(player_id)
+    for slot in ["1", "2", "3", "4", "5"]:
+        if slot in slots:
+            continue
+        for player_id in auto.values():
+            if player_id in available_roster_ids and player_id not in used:
+                slots[slot] = player_id
+                used.add(player_id)
+                break
     if persist:
         existing = save["starting_lineups"].get(team_id)
         source = (existing or {}).get("source", "auto") if isinstance(existing, dict) else "auto"

@@ -1,3 +1,10 @@
+"""Expose the Python game engine as JSON-compatible application actions.
+
+This is an interface boundary, not a second rules engine. CLI, browser, and
+future native clients should share these domain mutations; per-save locks only
+protect concurrent requests inside the current local process.
+"""
+
 from __future__ import annotations
 
 import random
@@ -25,7 +32,10 @@ from .save import (
     morale_report,
     narrative_settings_view,
     pending_actions_view,
+    per_game_stat,
     player_attribute_summary,
+    player_health_label,
+    player_salary_table,
     playoff_picture,
     press_conferences_enabled,
     process_ai_actions,
@@ -92,6 +102,7 @@ def dispatch_app_action(
     save_dir: str | Path | None = None,
     canonical: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """Dispatch one read or mutation and serialize access to an active save."""
     action = str(action or "").replace("-", "_")
     root_path = Path(root)
     payload = dict(payload or {})
@@ -131,6 +142,7 @@ MUTATING_ACTIONS = {
     "respond_user_trade_offer",
     "set_rotation_minutes",
     "set_starting_five",
+    "simulate_playoff_all",
     "simulate_playoff_game",
     "simulate_playoff_round",
     "submit_free_agent_offer",
@@ -163,9 +175,11 @@ def runtime_status(root: Path, save_dir: Path) -> dict[str, Any]:
                 "standings",
                 "dashboard-summary-leaders",
                 "dashboard_summary_leaders",
+                "dashboard_trends",
                 "league_leaders",
                 "league_traits",
                 "league_events",
+                "player_finder",
                 "social_feed",
                 "calendar",
                 "box_score",
@@ -185,6 +199,7 @@ def runtime_status(root: Path, save_dir: Path) -> dict[str, Any]:
                 "draft_sim_to_user",
                 "draft_sim_all",
                 "playoff_room",
+                "simulate_playoff_all",
                 "simulate_playoff_game",
                 "simulate_playoff_round",
                 "evaluate_trade",
@@ -294,10 +309,14 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return league_standings(canonical, save_path)
     if action in {"dashboard_summary_leaders", "dashboard-summary-leaders"}:
         return dashboard_summary_leaders_payload(canonical, save_path, limit=int(payload.get("limit") or 10))
+    if action == "dashboard_trends":
+        return dashboard_trends_payload(canonical, save_path, str(payload.get("team") or user_team_abbrev(canonical, save_path)))
     if action == "league_leaders":
         return league_leaders(canonical, save_path, stat=str(payload.get("stat") or "points"), limit=int(payload.get("limit") or 20))
     if action == "league_traits":
         return league_traits_payload(canonical, save_path, trait=str(payload.get("trait") or "overall"), limit=int(payload.get("limit") or 80))
+    if action == "player_finder":
+        return player_finder_payload(canonical, save_path)
     if action == "league_events":
         return league_events_view(
             canonical,
@@ -319,7 +338,11 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
     if action == "free_agents":
         save = ensure_league_save_defaults(load_save(save_path), canonical)
         active = with_transaction_context(canonical_with_save(canonical, save))
-        return free_agents_report(active, team_query=payload.get("team"), position=payload.get("position"), limit=payload.get("limit"))
+        report = free_agents_report(active, team_query=payload.get("team"), position=payload.get("position"))
+        limit = payload.get("limit")
+        if limit:
+            report["candidates"] = report.get("candidates", [])[: int(limit)]
+        return report
     if action == "free_agency_room":
         return free_agency_room_payload(canonical, save_path, str(payload.get("team") or user_team_abbrev(canonical, save_path)), int(payload.get("seed") or 1))
     if action == "submit_free_agent_offer":
@@ -350,6 +373,8 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return draft_sim_action(canonical, save_path, payload, mode="all")
     if action == "playoff_room":
         return playoff_room_payload(canonical, save_path)
+    if action == "simulate_playoff_all":
+        return simulate_playoff_action(canonical, save_path, root, int(payload.get("seed") or 1), mode="all")
     if action == "simulate_playoff_game":
         return simulate_playoff_action(canonical, save_path, root, int(payload.get("seed") or 1), mode="game")
     if action == "simulate_playoff_round":
@@ -508,6 +533,68 @@ def team_assets_payload(canonical: dict[str, Any], save_path: Path, team_query: 
     }
 
 
+def player_finder_payload(canonical: dict[str, Any], save_path: Path) -> dict[str, Any]:
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    teams = {team["id"]: team for team in active.get("teams", [])}
+    stats = save.get("player_season_stats", {})
+    health = {state.get("player_id"): state for state in save.get("health_states", [])}
+    current_date = save.get("state", {}).get("current_date")
+    team_games = {
+        team_id: int(record.get("wins") or 0) + int(record.get("losses") or 0)
+        for team_id, record in (save.get("team_records") or {}).items()
+    }
+    rows: list[dict[str, Any]] = []
+    salary_seasons: set[str] = set()
+    for player in active.get("players", []):
+        team_id = player.get("team_id")
+        attrs = player_attribute_summary(active, player["id"])
+        totals = stats.get(player["id"], {})
+        games = int(totals.get("games") or 0) if totals else 0
+        salary_by_year = player_salary_table(active, player["id"])
+        salary_seasons.update(str(season) for season in salary_by_year)
+        row = {
+            "id": player["id"],
+            "name": player.get("name"),
+            "team_id": team_id,
+            "team_abbrev": teams.get(team_id, {}).get("abbrev", "FA") if team_id else "FA",
+            "position": compact_position(player.get("position")),
+            "age": player.get("display_age", player.get("age")),
+            "height": height_label(player),
+            "height_inches": player.get("height_inches"),
+            "ratings": attrs,
+            "health": player_health_label(health.get(player["id"]), current_date),
+            "games": games,
+            "team_games": team_games.get(team_id, 0),
+            "games_missed": int((player_health_label(health.get(player["id"]), current_date) or {}).get("games_missed") or 0),
+            "minutes_projection": display_minutes_projection(player),
+            "display_mpg": per_game_stat(totals, "minutes") if games else display_minutes_projection(player),
+            "points_per_game": per_game_stat(totals, "points") if totals else 0.0,
+            "rebounds_per_game": per_game_stat(totals, "rebounds") if totals else 0.0,
+            "assists_per_game": per_game_stat(totals, "assists") if totals else 0.0,
+            "steals_per_game": per_game_stat(totals, "steals") if totals else 0.0,
+            "blocks_per_game": per_game_stat(totals, "blocks") if totals else 0.0,
+            "turnovers_per_game": per_game_stat(totals, "turnovers") if totals else 0.0,
+            "salary_by_year": salary_by_year,
+        }
+        rows.append(row)
+    rows.sort(
+        key=lambda row: (
+            -float((row.get("ratings") or {}).get("overall") or 0.0),
+            -float(row.get("display_mpg") or 0.0),
+            str(row.get("name") or ""),
+        )
+    )
+    seasons = sorted(salary_seasons)[:5]
+    return {
+        "as_of_date": save.get("state", {}).get("current_date"),
+        "rows": rows,
+        "seasons": seasons,
+        "default_sort": "overall",
+        "filters": ["player", "team", "position", "height", "age", "overall", "shooting", "creation", "defense", "spacing", "passing", "rebounding", "rim_deterrence", "athleticism", "games_missed", "display_mpg", "points_per_game", "rebounds_per_game", "assists_per_game", "steals_per_game", "blocks_per_game", "turnovers_per_game", *seasons],
+    }
+
+
 def league_traits_payload(canonical: dict[str, Any], save_path: Path, trait: str = "overall", limit: int = 80) -> dict[str, Any]:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     active = canonical_with_save(canonical, save)
@@ -584,6 +671,8 @@ def dashboard_summary_leaders_payload(canonical: dict[str, Any], save_path: Path
             "player_id": player["id"],
             "player_name": player.get("name"),
             "position": compact_position(player.get("position")),
+            "age": player.get("display_age", player.get("age")),
+            "height": height_label(player),
             "team_id": team_id,
             "team_abbrev": teams.get(team_id, {}).get("abbrev", team_id),
             "values": {
@@ -647,15 +736,189 @@ def dashboard_summary_leaders_payload(canonical: dict[str, Any], save_path: Path
                     "team_id": item.get("team_id"),
                     "team_abbrev": item.get("team_abbrev"),
                     "position": item.get("position"),
+                    "age": item.get("age"),
+                    "height": item.get("height"),
                     "value": round(float(value), 1),
                 }
             )
-        payload_fields.append({"key": key, "label": label, "title": f"{label} Top 10", "leaders": leaders})
+        payload_fields.append({"key": key, "label": label, "title": f"{label} Top {max(1, int(limit))}", "leaders": leaders})
     return {
         "as_of_date": save.get("state", {}).get("current_date"),
         "limit": max(1, int(limit)),
         "fields": payload_fields,
     }
+
+
+def dashboard_trends_payload(canonical: dict[str, Any], save_path: Path, team_query: str) -> dict[str, Any]:
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    team = resolve_team(active, team_query)
+    teams = {item["id"]: item for item in active.get("teams", [])}
+    conference_team_ids = {
+        item["id"]
+        for item in active.get("teams", [])
+        if item.get("conference") == team.get("conference")
+    }
+    standings_points = weekly_standing_rank_points(save, teams, conference_team_ids, team["id"])
+    if not standings_points:
+        current = league_standings(canonical, save_path).get("standings", [])
+        conference_rows = [row for row in current if row.get("team", {}).get("conference") == team.get("conference")]
+        rank = next((index + 1 for index, row in enumerate(conference_rows) if row.get("team", {}).get("id") == team["id"]), None)
+        if rank:
+            standings_points = [{"label": "Now", "value": rank, "record": record_label(save.get("team_records", {}).get(team["id"], {}))}]
+
+    development_lines = player_development_trend_lines(active, save, team["id"])
+    return {
+        "team": {"id": team["id"], "abbrev": team.get("abbrev"), "conference": team.get("conference")},
+        "standings": {
+            "title": f"{team.get('abbrev')} Weekly Standing",
+            "points": standings_points,
+            "scale": "conference_rank",
+        },
+        "development": {
+            "title": "Monthly Player Development",
+            "lines": development_lines,
+            "scale": "estimated_overall",
+            "latest_month": latest_development_month_for_team(save, team["id"]),
+            "applied_months": sorted(save.get("applied_development_months", [])),
+        },
+    }
+
+
+def weekly_standing_rank_points(
+    save: dict[str, Any],
+    teams: dict[str, dict[str, Any]],
+    conference_team_ids: set[str],
+    target_team_id: str,
+) -> list[dict[str, Any]]:
+    logs = sorted(
+        [
+            log for log in save.get("team_game_logs", [])
+            if log.get("team_id") in conference_team_ids and str(log.get("date") or "")[:10]
+        ],
+        key=lambda item: (str(item.get("date") or ""), str(item.get("team_id") or "")),
+    )
+    if not logs:
+        return []
+    records = {team_id: {"wins": 0, "losses": 0, "point_diff": 0} for team_id in conference_team_ids}
+    first_day = safe_date(logs[0].get("date"))
+    next_cutoff = first_day + timedelta(days=7) if first_day else None
+    points: list[dict[str, Any]] = []
+    for log in logs:
+        log_day = safe_date(log.get("date"))
+        while next_cutoff and log_day and log_day >= next_cutoff and records[target_team_id]["wins"] + records[target_team_id]["losses"] > 0:
+            points.append(standing_rank_point(next_cutoff.isoformat(), records, teams, target_team_id))
+            next_cutoff += timedelta(days=7)
+        record = records.setdefault(str(log.get("team_id")), {"wins": 0, "losses": 0, "point_diff": 0})
+        if str(log.get("result") or "").upper() == "W":
+            record["wins"] += 1
+        else:
+            record["losses"] += 1
+        record["point_diff"] += int(log.get("points") or 0) - int(log.get("opponent_points") or 0)
+    final_date = str(logs[-1].get("date") or "")[:10]
+    final_point = standing_rank_point(final_date, records, teams, target_team_id)
+    if not points or points[-1].get("label") != final_point.get("label"):
+        points.append(final_point)
+    return points[-16:]
+
+
+def standing_rank_point(label: str, records: dict[str, dict[str, int]], teams: dict[str, dict[str, Any]], target_team_id: str) -> dict[str, Any]:
+    ordered = sorted(
+        records.items(),
+        key=lambda item: (
+            -win_pct_value(item[1]),
+            -int(item[1].get("wins") or 0),
+            -int(item[1].get("point_diff") or 0),
+            teams.get(item[0], {}).get("abbrev") or item[0],
+        ),
+    )
+    rank = next((index + 1 for index, (team_id, _record) in enumerate(ordered) if team_id == target_team_id), len(ordered))
+    return {"label": label[5:] if len(label) >= 7 else label, "value": rank, "record": record_label(records.get(target_team_id, {}))}
+
+
+def win_pct_value(record: dict[str, Any]) -> float:
+    wins = int(record.get("wins") or 0)
+    losses = int(record.get("losses") or 0)
+    games = wins + losses
+    return wins / games if games else 0.0
+
+
+def record_label(record: dict[str, Any]) -> str:
+    return f"{int(record.get('wins') or 0)}-{int(record.get('losses') or 0)}"
+
+
+def safe_date(value: Any) -> date | None:
+    try:
+        return date.fromisoformat(str(value)[:10])
+    except (TypeError, ValueError):
+        return None
+
+
+def player_development_trend_lines(active: dict[str, Any], save: dict[str, Any], team_id: str) -> list[dict[str, Any]]:
+    players = {player["id"]: player for player in active.get("players", []) if player.get("team_id") == team_id}
+    if not players:
+        return []
+    events_by_player: dict[str, list[dict[str, Any]]] = {}
+    for event in save.get("development_events", []):
+        player_id = event.get("player_id")
+        if player_id in players:
+            events_by_player.setdefault(str(player_id), []).append(event)
+    moved_ids = sorted(
+        events_by_player,
+        key=lambda player_id: (
+            -abs(sum(estimated_overall_delta(event) for event in events_by_player.get(player_id, []))),
+            -display_minutes_projection(players[player_id]),
+            players[player_id].get("name") or "",
+        ),
+    )
+    minute_ids = [
+        player["id"]
+        for player in sorted(players.values(), key=display_minutes_projection, reverse=True)
+        if player["id"] not in moved_ids
+    ]
+    top_ids = (moved_ids + minute_ids)[:16]
+    lines: list[dict[str, Any]] = []
+    for player_id in top_ids:
+        events = sorted(events_by_player.get(player_id, []), key=lambda item: str(item.get("month") or item.get("date") or ""))
+        if not events:
+            continue
+        current = float(player_attribute_summary(active, player_id).get("overall") or 0.0)
+        monthly_deltas = [(str(event.get("month") or event.get("date") or "")[:7], estimated_overall_delta(event)) for event in events]
+        baseline = current - sum(delta for _month, delta in monthly_deltas)
+        value = baseline
+        points = [{"label": "Start", "value": round(value, 1)}]
+        for month, delta in monthly_deltas:
+            value += delta
+            points.append({"label": month[5:] if len(month) >= 7 else month, "value": round(value, 1)})
+        lines.append(
+            {
+                "player_id": player_id,
+                "name": players[player_id].get("name"),
+                "position": compact_position(players[player_id].get("position")),
+                "points": points[-10:],
+            }
+        )
+    return lines
+
+
+def latest_development_month_for_team(save: dict[str, Any], team_id: str) -> str:
+    months = [
+        str(event.get("month") or event.get("date") or "")[:7]
+        for event in save.get("development_events", [])
+        if event.get("team_id") == team_id and str(event.get("month") or event.get("date") or "")[:7]
+    ]
+    return max(months) if months else ""
+
+
+def estimated_overall_delta(event: dict[str, Any]) -> float:
+    deltas = [float(value or 0.0) for value in (event.get("trait_deltas") or {}).values()]
+    if not deltas:
+        return 0.0
+    # Dashboard-only OVR estimate: actual engine traits move individually, but
+    # averaging every trait delta made the chart visually flat. A scaled net
+    # movement keeps the intended +/-5 season display envelope without changing
+    # saved trait math.
+    return round(max(-0.65, min(0.65, sum(deltas) * 0.75)), 3)
 
 
 def composite_rating(attrs: dict[str, Any], keys: list[str], weights: list[float]) -> float:
@@ -676,6 +939,11 @@ def set_starting_five_action(root: Path, canonical: dict[str, Any], save_path: P
     team = resolve_team(active, str(payload.get("team") or user_team_abbrev(canonical, save_path)))
     if team.get("id") != save.get("meta", {}).get("user_team_id"):
         return {"status": "blocked", "reason": "Only the user team's Starting 5 can be edited."}
+    if payload.get("auto"):
+        save.setdefault("starting_lineups", {}).pop(team["id"], None)
+        starting_lineup_slots(active, save, team["id"], persist=True)
+        write_save(save_path, save)
+        return {"status": "updated", "dashboard": team_dashboard(root, canonical, save_path, team["abbrev"])}
     roster_ids = {player.get("id") for player in active.get("players", []) if player.get("team_id") == team["id"]}
     raw_slots = payload.get("slots") or {}
     if not isinstance(raw_slots, dict):
@@ -693,6 +961,8 @@ def set_starting_five_action(root: Path, canonical: dict[str, Any], save_path: P
             raise AppActionError("A player cannot occupy multiple Starting 5 slots.")
         cleaned[slot] = player_id
         used.add(player_id)
+    if len(cleaned) < 5:
+        return {"status": "blocked", "reason": "Choose all five starters before saving the Starting 5."}
     save.setdefault("starting_lineups", {})[team["id"]] = {
         "slots": cleaned,
         "source": "user",
@@ -1021,11 +1291,17 @@ def playoff_room_payload(canonical: dict[str, Any], save_path: Path) -> dict[str
 
 
 def simulate_playoff_action(canonical: dict[str, Any], save_path: Path, root: Path, seed: int, mode: str) -> dict[str, Any]:
-    result = (
-        simulate_playoff_round(canonical, save_path, seed=seed, root=root)
-        if mode == "round"
-        else simulate_next_playoff_game(canonical, save_path, seed=seed, root=root)
-    )
+    if mode == "all":
+        result: dict[str, Any] = {"status": "not_started"}
+        for _ in range(8):
+            result = simulate_playoff_round(canonical, save_path, seed=seed, root=root)
+            playoff_state = result.get("playoff_state") or {}
+            if playoff_state.get("status") == "completed":
+                break
+    elif mode == "round":
+        result = simulate_playoff_round(canonical, save_path, seed=seed, root=root)
+    else:
+        result = simulate_next_playoff_game(canonical, save_path, seed=seed, root=root)
     return {"status": result.get("status") or "simulated", "result": result, "room": playoff_room_payload(canonical, save_path)}
 
 

@@ -1,3 +1,5 @@
+// This client owns interaction and presentation only. Basketball legality,
+// simulation, and save mutations must remain behind the Python action API.
 const state = {
   busy: false,
   teams: [],
@@ -7,6 +9,7 @@ const state = {
   view: "dashboard",
   dashboardTab: "overview",
   dashboardTeam: "",
+  dashboardStandingsConference: "",
   calendarMonth: "",
   expandedContractSeason: "",
   rotationDraft: {},
@@ -24,9 +27,15 @@ const state = {
   staffSlot: "",
   selectedStaff: null,
   modal: null,
+  playerFinder: null,
   data: {},
   startingDraft: null,
+  startingSavedSignature: "",
   startingPickerSlot: null,
+  developmentPlayerIds: [],
+  developmentSelectionTouched: false,
+  developmentSeenSignature: "",
+  developmentNewSignature: "",
   hydrating: false,
 };
 
@@ -102,6 +111,7 @@ function wireEvents() {
     if (mode === "month") return advance({ days: 31, checkpoint_days: 31 });
     if (mode === "deadline") return advanceToMilestone("deadline");
     if (mode === "season-end") return advanceToMilestone("season_end");
+    if (mode === "next-season") return advance({ next_event: true });
   });
   els.content.addEventListener("click", (event) => {
     const button = event.target.closest("[data-sort-table]");
@@ -218,6 +228,9 @@ function clearViewCaches() {
   state.data = {};
   state.tradeCandidate = null;
   state.tradeResults = [];
+  state.startingDraft = null;
+  state.startingSavedSignature = "";
+  state.startingPickerSlot = null;
 }
 
 function syncDefaultPartner() {
@@ -241,7 +254,12 @@ async function ensureViewData(force = false) {
       : await action("team_dashboard", { ...savePayload(), team });
     await loadDashboardCalendar(team);
     state.data.dashboardStandings = await action("standings", savePayload());
-    state.data.dashboardSummaryLeaders = await action("dashboard_summary_leaders", { ...savePayload(), limit: 10 });
+    state.data.dashboardSummaryLeaders = await action("dashboard_summary_leaders", { ...savePayload(), limit: 5 });
+    state.data.dashboardStaffMarket = await action("staff_market", { ...savePayload(), limit: 60 });
+    state.data.dashboardFreeAgents = await action("free_agents", { ...savePayload(), team, limit: 60 });
+    state.data.dashboardTrends = await action("dashboard_trends", { ...savePayload(), team });
+    state.data.dashboardAssets = await action("team_assets", { ...savePayload(), team });
+    state.data.dashboardOffers = await action("user_trade_offers", savePayload());
   }
   if (key === "league") {
     state.data.standings = await action("standings", savePayload());
@@ -278,13 +296,63 @@ async function loadTradeAssets() {
 
 async function advance(payload) {
   if (!state.currentSave) return showToast("Create or select a save first.", true);
+  if (!(await ensureStartingFiveReadyForAdvance())) return;
+  const previousDevelopmentSignature = developmentTrendSignature();
   const result = await action("advance_save", { ...savePayload(), ...payload });
   state.home = result.home;
   clearViewCaches();
   applyPhaseRouting();
   await ensureViewData(true);
+  syncDevelopmentAdvanceState(previousDevelopmentSignature);
   render();
   showToast(`Advanced to ${state.home?.save?.current_date || "next date"}`);
+}
+
+async function ensureStartingFiveReadyForAdvance() {
+  const user = userTeam();
+  if (!user) return true;
+  let dash = state.data.statusDashboard;
+  if (!dash) {
+    dash = await action("team_dashboard", { ...savePayload(), team: user });
+    state.data.statusDashboard = dash;
+    if (state.view === "dashboard" && (!state.dashboardTeam || state.dashboardTeam === user)) {
+      state.data.dashboard = dash;
+    }
+  }
+
+  const rows = rosterRows(dash);
+  const saved = savedStartingFiveMap(rows, dash);
+  const savedComplete = startingMapComplete(saved);
+  const isUserDashboard =
+    state.view === "dashboard" &&
+    teamLabel((state.data.dashboard || dash || {}).team || state.dashboardTeam || user) === user;
+
+  if (isUserDashboard) {
+    ensureStartingDraft(rows);
+    if (!startingMapComplete(state.startingDraft)) {
+      await showStartingFiveAdvanceBlock("Set a complete Starting 5 before simming.");
+      return false;
+    }
+    if (startingDraftChanged(rows)) {
+      await showStartingFiveAdvanceBlock("Press Set to save your Starting 5 before simming.");
+      return false;
+    }
+  }
+
+  if (!savedComplete) {
+    await showStartingFiveAdvanceBlock("Set a complete Starting 5 before simming.");
+    return false;
+  }
+  return true;
+}
+
+async function showStartingFiveAdvanceBlock(message) {
+  state.view = "dashboard";
+  state.dashboardTeam = userTeam();
+  syncNavActive();
+  await ensureViewData(true);
+  render();
+  showToast(message, true);
 }
 
 function advanceToMilestone(kind) {
@@ -310,6 +378,7 @@ function render() {
   }
   els.startupScreen.hidden = true;
   syncNavActive();
+  if (state.view !== "dashboard") stopDashboardRotatorClock();
   if (state.view === "dashboard") renderDashboard();
   if (state.view === "trade") renderTrade();
   if (state.view === "offers") renderOffers();
@@ -365,6 +434,7 @@ function renderDashboardTab(rows) {
   const target = document.getElementById("dashboardTab");
   const dash = state.data.dashboard || {};
   const editable = !state.hydrating && teamLabel(dash.team || state.dashboardTeam) === userTeam();
+  const readonlyClass = editable ? "" : " readonly-card";
   if (state.dashboardTab === "overview") {
     target.innerHTML = `
       <div class="dashboard-overview">
@@ -372,88 +442,190 @@ function renderDashboardTab(rows) {
         <section class="section panel-rail starting-card">${startingFiveBlock(rows, editable)}</section>
         <section class="section panel-rail player-summary-card">${dashboardPlayerSummaryTable(rows)}</section>
         <section class="section panel-rail summary-side-card">${summaryLeaderRotator()}</section>       
-        <section class="section panel-rail staff-card">${staffDashboardCard(rows, dash)}</section>
+        <section class="section panel-rail staff-card">${staffDashboardCard(rows, dash, editable)}</section>
         <section class="section panel-rail standings-card">${userConferenceStandings()}</section>
         <section class="section panel-rail calendar-card">${dashboardMonthCalendar()}</section>
         <section class="section panel-rail contract-chart-card">${contractChartCard(rows, dash)}</section>
+        <section class="section panel-rail dashboard-actions-card${readonlyClass}">${dashboardActionsCard(editable)}</section>
+        <section class="section panel-rail staff-market-card${readonlyClass}">${dashboardStaffMarketCard(editable)}</section>
+        <section class="section panel-rail free-agent-market-card${readonlyClass}">${dashboardFreeAgentMarketCard(editable)}</section>
+        <section class="section panel-rail standings-trend-card">${standingsTrendCard()}</section>
+        <section class="section panel-rail development-trend-card">${developmentTrendCard(rows)}</section>
+        <section class="section panel-rail draft-picks-card">${draftPicksCard()}</section>
         <section class="section panel-rail events-card">${leagueEventRotator()}</section>
       </div>`;
     wireDashboardOverview(editable);
     startLeagueEventRotator();
     startSummaryLeaderRotator();
+    startDashboardMarketRotators();
     return;
   }
   target.innerHTML = contractsBlock(rows, dash);
   wireContractsBlock();
 }
 
-let leagueEventRotatorTimer = null;
-let summaryLeaderRotatorTimer = null;
+const DASHBOARD_ROTATOR_MS = 6500;
+const dashboardRotatorState = {
+  frame: null,
+  elapsed: 0,
+  lastFrame: 0,
+  paused: false,
+};
 
 function startLeagueEventRotator() {
-  if (leagueEventRotatorTimer) {
-    clearInterval(leagueEventRotatorTimer);
-    leagueEventRotatorTimer = null;
-  }
+  stopDashboardRotatorClock();
+}
 
+function startSummaryLeaderRotator() {
+  const rotator = document.querySelector("[data-summary-leader-rotator]");
+  if (!rotator) return;
+  const select = document.getElementById("summaryLeaderSelect");
+  setSummaryLeaderActive(Number(select?.value || 0));
+  if (select) {
+    select.addEventListener("change", () => {
+      setSummaryLeaderActive(Number(select.value || 0));
+      resetDashboardRotatorProgress();
+    });
+  }
+}
+
+function startDashboardMarketRotators() {
+  const rotators = Array.from(document.querySelectorAll("[data-market-rotator]"));
+  rotators.forEach((rotator) => {
+    setMarketRotatorActive(rotator, Number(rotator.dataset.marketIndex || 0));
+  });
+  document.querySelectorAll("[data-market-select]").forEach((select) => {
+    select.addEventListener("change", () => {
+      const rotator = document.querySelector(`[data-market-rotator][data-market-id="${select.dataset.marketSelect}"]`);
+      if (rotator) setMarketRotatorActive(rotator, Number(select.value || 0));
+      resetDashboardRotatorProgress();
+    });
+  });
+  startDashboardRotatorClock();
+}
+
+function stopDashboardRotatorClock() {
+  if (dashboardRotatorState.frame) cancelAnimationFrame(dashboardRotatorState.frame);
+  dashboardRotatorState.frame = null;
+  dashboardRotatorState.elapsed = 0;
+  dashboardRotatorState.lastFrame = 0;
+  dashboardRotatorState.paused = false;
+}
+
+function startDashboardRotatorClock() {
+  stopDashboardRotatorClock();
+  wireDashboardRotatorPauseCards();
+  resetDashboardRotatorProgress();
+  dashboardRotatorState.lastFrame = performance.now();
+  const step = (now) => {
+    const delta = now - dashboardRotatorState.lastFrame;
+    dashboardRotatorState.lastFrame = now;
+    if (!dashboardRotatorState.paused) {
+      dashboardRotatorState.elapsed += delta;
+      while (dashboardRotatorState.elapsed >= DASHBOARD_ROTATOR_MS) {
+        dashboardRotatorState.elapsed -= DASHBOARD_ROTATOR_MS;
+        advanceDashboardRotatorCards();
+      }
+      updateDashboardRotatorProgress();
+    }
+    dashboardRotatorState.frame = requestAnimationFrame(step);
+  };
+  dashboardRotatorState.frame = requestAnimationFrame(step);
+}
+
+function resetDashboardRotatorProgress() {
+  dashboardRotatorState.elapsed = 0;
+  updateDashboardRotatorProgress();
+}
+
+function updateDashboardRotatorProgress() {
+  const scale = clampNumber(1 - dashboardRotatorState.elapsed / DASHBOARD_ROTATOR_MS, 0, 1);
+  document.querySelectorAll(".dashboard-overview .rotator-progress span").forEach((span) => {
+    span.style.transform = `scaleX(${scale})`;
+  });
+}
+
+function wireDashboardRotatorPauseCards() {
+  document.querySelectorAll(".events-card, .summary-side-card, .staff-market-card, .free-agent-market-card").forEach((card) => {
+    card.addEventListener("mouseenter", () => {
+      dashboardRotatorState.paused = true;
+      card.closest(".dashboard-overview")?.classList.add("rotators-paused");
+    });
+    card.addEventListener("mouseleave", () => {
+      dashboardRotatorState.paused = false;
+      dashboardRotatorState.lastFrame = performance.now();
+      card.closest(".dashboard-overview")?.classList.remove("rotators-paused");
+    });
+  });
+}
+
+function advanceDashboardRotatorCards() {
+  advanceLeagueEventRotator();
+  advanceSummaryLeaderRotator();
+  advanceMarketRotators();
+}
+
+function advanceLeagueEventRotator() {
   const rotator = document.querySelector("[data-event-rotator]");
   const dataNode = document.getElementById("leagueEventRotatorData");
   if (!rotator || !dataNode) return;
-
   let events = [];
   try {
     events = JSON.parse(dataNode.textContent || "[]");
   } catch {
     events = [];
   }
-
   if (events.length <= 1) return;
-
+  const current = Number(rotator.dataset.eventIndex || 0);
+  const next = (current + 1) % events.length;
   const body = rotator.querySelector(".event-rotator-body");
-  let index = 0;
-
-  leagueEventRotatorTimer = setInterval(() => {
-    index = (index + 1) % events.length;
-    rotator.dataset.eventIndex = String(index);
-
-    if (body) {
-      body.innerHTML = leagueEventSlide(events[index]);
-      body.classList.remove("event-swap");
-      void body.offsetWidth;
-      body.classList.add("event-swap");
-    }
-
-    const progress = rotator.querySelector(".event-progress span");
-    if (progress) {
-      progress.classList.remove("event-progress-run");
-      void progress.offsetWidth;
-      progress.classList.add("event-progress-run");
-    }
-  }, 6500);
-
-  const progress = rotator.querySelector(".event-progress span");
-  if (progress) progress.classList.add("event-progress-run");
+  rotator.dataset.eventIndex = String(next);
+  if (body) {
+    body.innerHTML = leagueEventSlide(events[next]);
+    body.classList.remove("event-swap");
+    void body.offsetWidth;
+    body.classList.add("event-swap");
+  }
 }
 
-function startSummaryLeaderRotator() {
-  if (summaryLeaderRotatorTimer) {
-    clearInterval(summaryLeaderRotatorTimer);
-    summaryLeaderRotatorTimer = null;
-  }
+function setSummaryLeaderActive(value) {
+  const rotator = document.querySelector("[data-summary-leader-rotator]");
+  if (!rotator) return;
+  const slides = Array.from(rotator.querySelectorAll(".summary-leader-slide"));
+  if (!slides.length) return;
+  const index = Math.max(0, Math.min(slides.length - 1, Number(value || 0)));
+  slides.forEach((slide, slideIndex) => slide.classList.toggle("active", slideIndex === index));
+  const select = document.getElementById("summaryLeaderSelect");
+  if (select) select.value = String(index);
+}
 
+function advanceSummaryLeaderRotator() {
   const rotator = document.querySelector("[data-summary-leader-rotator]");
   if (!rotator) return;
   const slides = Array.from(rotator.querySelectorAll(".summary-leader-slide"));
   if (slides.length <= 1) return;
+  const current = Math.max(0, slides.findIndex((slide) => slide.classList.contains("active")));
+  setSummaryLeaderActive((current + 1) % slides.length);
+}
 
-  let index = 0;
+function advanceMarketRotators() {
+  document.querySelectorAll("[data-market-rotator]").forEach((rotator) => {
+    const slides = Array.from(rotator.querySelectorAll(".market-slide"));
+    if (slides.length <= 1) return;
+    const current = Number(rotator.dataset.marketIndex || 0);
+    const next = (current + 1) % slides.length;
+    setMarketRotatorActive(rotator, next);
+  });
+}
+
+function setMarketRotatorActive(rotator, value) {
+  const slides = Array.from(rotator.querySelectorAll(".market-slide"));
+  if (!slides.length) return;
+  const index = Math.max(0, Math.min(slides.length - 1, Number(value || 0)));
   slides.forEach((slide, slideIndex) => slide.classList.toggle("active", slideIndex === index));
-
-  summaryLeaderRotatorTimer = setInterval(() => {
-    slides[index].classList.remove("active");
-    index = (index + 1) % slides.length;
-    slides[index].classList.add("active");
-  }, 5200);
+  rotator.dataset.marketIndex = String(index);
+  const select = document.querySelector(`[data-market-select="${rotator.dataset.marketId}"]`);
+  if (select) select.value = String(index);
 }
 
 function renderTrade() {
@@ -621,12 +793,41 @@ function renderOffers() {
         <div><h3>AI Trade Offers To You</h3><p class="muted">Only active incoming offers remain here. Deadline-expired offers are cleared by the engine.</p></div>
         <span class="pill">${offers.length} active</span>
       </div>
-      <div class="stack">${offers.length ? offers.map((offer, index) => offerCard(offer, index)).join("") : `<div class="empty">No active AI offers to your team.</div>`}</div>
+      ${tradeOffersList(offers)}
     </section>`;
-  els.content.querySelectorAll("[data-offer-accept]").forEach((button) => {
+  wireOfferButtons(els.content, offers);
+}
+
+function tradeOffersList(offers) {
+  return `<div class="stack">${offers.length ? offers.map((offer, index) => offerCard(offer, index)).join("") : `<div class="empty">No active AI offers to your team.</div>`}</div>`;
+}
+
+function tradeOffersModalBody(offers) {
+  return `
+    <p class="muted">Only active incoming offers remain here. Deadline-expired offers are cleared by the engine.</p>
+    ${tradeOffersList(offers)}`;
+}
+
+async function openTradeOffersModal() {
+  if (!state.data.dashboardOffers) {
+    state.data.dashboardOffers = await action("user_trade_offers", savePayload());
+  }
+  const offers = state.data.dashboardOffers?.offers || [];
+  state.modal = {
+    kind: "tradeOffers",
+    title: "AI Trade Offers To You",
+    subtitle: `${offers.length} active incoming offer${offers.length === 1 ? "" : "s"}`,
+    offers,
+    body: tradeOffersModalBody(offers),
+  };
+  renderModal();
+}
+
+function wireOfferButtons(root, offers) {
+  root.querySelectorAll("[data-offer-accept]").forEach((button) => {
     button.addEventListener("click", () => respondOffer(offers[Number(button.dataset.offerAccept)], "accept"));
   });
-  els.content.querySelectorAll("[data-offer-reject]").forEach((button) => {
+  root.querySelectorAll("[data-offer-reject]").forEach((button) => {
     button.addEventListener("click", () => respondOffer(offers[Number(button.dataset.offerReject)], "reject"));
   });
 }
@@ -635,7 +836,21 @@ async function respondOffer(offer, decision) {
   const proposalId = offer?.proposal?.id || offer?.id;
   const result = await action("respond_user_trade_offer", { ...savePayload(), proposal_id: proposalId, decision });
   state.data.offers = result.offers;
+  state.data.dashboardOffers = result.offers;
   showToast(`Offer ${result.status}`);
+  if (state.modal?.kind === "tradeOffers") {
+    await refreshHome();
+    const offers = state.data.dashboardOffers?.offers || [];
+    state.modal = {
+      kind: "tradeOffers",
+      title: "AI Trade Offers To You",
+      subtitle: `${offers.length} active incoming offer${offers.length === 1 ? "" : "s"}`,
+      offers,
+      body: tradeOffersModalBody(offers),
+    };
+    renderModal();
+    return;
+  }
   await refreshHome();
 }
 
@@ -669,7 +884,15 @@ function renderDraft() {
             <button id="draftApply">Make Current Pick</button>
             <button id="draftToUser">Sim To User Pick</button>
             <button id="draftAll">Sim Full Draft</button>
-          </div>` : `<div class="empty">Draft complete.</div>`}
+          </div>` : `
+          <div class="headline-block">
+            <p class="eyebrow">Draft complete</p>
+            <h3>${escapeHtml(draft.year || "")} Draft Finished</h3>
+            <p class="muted">Advance to the next stage when you are ready.</p>
+          </div>
+          <div class="toolbar">
+            <button id="draftAdvanceStage">Advance To Next Stage</button>
+          </div>`}
         ${list((draft.trade_news || []).map((item) => item.headline || textValue(item)))}
       </section>
       <section class="section panel-rail">
@@ -689,6 +912,8 @@ function renderDraft() {
   if (toUser) toUser.addEventListener("click", () => draftSim("draft_sim_to_user"));
   const all = document.getElementById("draftAll");
   if (all) all.addEventListener("click", () => draftSim("draft_sim_all"));
+  const advanceStage = document.getElementById("draftAdvanceStage");
+  if (advanceStage) advanceStage.addEventListener("click", draftAdvanceStage);
 }
 
 async function draftApplyCurrent() {
@@ -705,11 +930,23 @@ async function draftSim(actionName) {
   renderDraft();
 }
 
+async function draftAdvanceStage() {
+  const result = await action("advance_save", { ...savePayload(), next_event: true, seed: 7 });
+  state.home = result.home;
+  clearViewCaches();
+  applyPhaseRouting();
+  await ensureViewData(true);
+  render();
+  showToast(`Advanced to ${state.home?.save?.current_date || "next stage"}`);
+}
+
 function renderFreeAgency() {
   const room = state.data.freeagency || {};
   const candidates = room.candidates || [];
   const selected = state.selectedFreeAgent ? candidates.find((item) => item.id === state.selectedFreeAgent) : candidates[0];
-  const freeAgencyOpen = room.phase === "free_agency" || Boolean(room.state?.day || room.state?.status === "active");
+  const freeAgencyStatus = String(room.state?.status || "");
+  const freeAgencyCompleted = freeAgencyStatus === "completed";
+  const freeAgencyOpen = !freeAgencyCompleted && (room.phase === "free_agency" || Boolean(room.state?.day || freeAgencyStatus === "active"));
   const roomTitle = freeAgencyOpen ? "Free Agency" : "Current Free Agents";
   const roomSubtitle = freeAgencyOpen ? `Day ${room.state?.day || "-"} of ${room.state?.day_count || "-"}` : rowLabel(room.phase || "regular_season");
   if (!state.selectedFreeAgent && selected) state.selectedFreeAgent = selected.id;
@@ -721,6 +958,14 @@ function renderFreeAgency() {
         ${freeAgencyOpen ? `<div class="toolbar">
           <button id="faAdvanceDay">Sim FA Day</button>
           <button id="faAdvanceEnd">Sim To End</button>
+        </div>` : freeAgencyCompleted ? `
+        <div class="headline-block">
+          <p class="eyebrow">Free agency complete</p>
+          <h3>Market Closed</h3>
+          <p class="muted">Advance to the next phase when you are ready.</p>
+        </div>
+        <div class="toolbar">
+          <button id="faAdvanceStage">Advance To Next Phase</button>
         </div>` : `<div class="court-note">In-season free agents can be investigated and offered contracts. Offseason day controls appear when the league reaches free agency.</div>`}
         ${list((room.bidding_wars || []).map((war) => `${war.player_name}: ${war.offer_count} offers, best ${war.best_team} ${money(war.best_aav)}`))}
       </section>
@@ -744,6 +989,8 @@ function renderFreeAgency() {
   if (day) day.addEventListener("click", () => advanceFreeAgency("day"));
   const end = document.getElementById("faAdvanceEnd");
   if (end) end.addEventListener("click", () => advanceFreeAgency("end"));
+  const advanceStage = document.getElementById("faAdvanceStage");
+  if (advanceStage) advanceStage.addEventListener("click", freeAgencyAdvanceStage);
 }
 
 async function submitFreeAgentOffer() {
@@ -761,6 +1008,17 @@ async function advanceFreeAgency(mode) {
   state.data.freeagency = result.room;
   showToast(`Free agency advanced: ${result.status}`);
   renderFreeAgency();
+}
+
+async function freeAgencyAdvanceStage() {
+  const result = await action("advance_save", { ...savePayload(), next_event: true, seed: 7 });
+  state.home = result.home;
+  clearViewCaches();
+  applyPhaseRouting();
+  if (state.view === "freeagents" || state.view === "freeagency") state.view = "dashboard";
+  await ensureViewData(true);
+  render();
+  showToast(`Advanced to ${state.home?.save?.current_date || "next phase"}`);
 }
 
 function renderStaff() {
@@ -819,60 +1077,70 @@ async function fireStaff(slot) {
   renderStaff();
 }
 
-function staffDashboardCard(rows, dash) {
+function staffDashboardCard(rows, dash, editable = true) {
   const room = state.data.staff || {};
   const report = room.team_report || {};
   const staff = staffRows(dash).length
     ? staffRows(dash)
     : report.gameplay_staff_slots || [];
+  const budget = staffBudgetSummary(staff);
 
   return `
-    ${sectionHead("Staff")}
+    ${sectionHead("Staff", `${money(budget.used)} / ${money(budget.max)}`)}
     <div class="staff-dashboard-grid">
       <div class="staff-role-list">
         ${staff.length
-          ? staff.map(staffRoleButton).join("")
+          ? staff.map((row) => staffRoleButton(row, editable)).join("")
           : `<div class="empty">No staff data loaded.</div>`}
       </div>
       ${staffBudgetMiniChart(staff)}
     </div>`;
 }
 
-function staffRoleButton(row) {
+function staffRoleButton(row, editable = true) {
   const role = row.slot || row.role || "";
   const name = staffName(row);
   const grade = staffGrade(row);
   const aav = staffAav(row);
   const years = staffYears(row);
 
-  return `<button class="staff-role-button" data-staff-role="${escapeAttr(role)}">
+  return `<button class="staff-role-button" data-staff-role="${escapeAttr(role)}" ${editable ? "" : "disabled"}>
     <span class="staff-role">${escapeHtml(rowLabel(role))}</span>
-    <strong>${escapeHtml(name)}</strong>
+    <span class="staff-name-row">
+      <strong>${escapeHtml(name)}</strong>
+      <em>${grade !== "" ? Number(grade).toFixed(1) : "—"}</em>
+    </span>
     <span class="staff-meta">
-      ${grade !== "" ? `G ${Number(grade).toFixed(1)}` : "G —"}
-      ${aav ? ` · ${money(aav)}${years ? ` x ${years}` : ""}` : ""}
+      ${aav ? `${money(aav)}${years ? ` x ${years}` : ""}` : "No contract data"}
     </span>
   </button>`;
 }
 
-function staffBudgetMiniChart(staff) {
+function staffBudgetSummary(staff) {
   const paidStaff = staff
     .map((row, index) => ({
       row,
       index,
       aav: staffAav(row),
     }))
-    .filter((item) => item.aav > 0)
-    .sort((a, b) => b.aav - a.aav);
+    .filter((item) => item.aav > 0);
+  return {
+    paidStaff,
+    used: paidStaff.reduce((sum, item) => sum + item.aav, 0),
+    max: staffBudgetMillions(staff, paidStaff),
+  };
+}
 
-  const budget = staffBudgetMillions(staff, paidStaff);
-  const total = paidStaff.reduce((sum, item) => sum + item.aav, 0);
+function staffBudgetMiniChart(staff) {
+  const budgetSummary = staffBudgetSummary(staff);
+  const paidStaff = budgetSummary.paidStaff.sort((a, b) => b.aav - a.aav);
+  const budget = budgetSummary.max;
+  const total = budgetSummary.used;
   const scale = Math.max(budget, total, 1);
 
   return `<div class="staff-cap-mini">
     <div class="staff-cap-column">
       <span class="staff-budget-line" style="bottom:${clampNumber((budget / scale) * 100, 0, 100)}%">
-        <em>Budget</em>
       </span>
 
       <span class="staff-salary-stack" style="height:${clampNumber((total / scale) * 100, 0, 100)}%">
@@ -882,11 +1150,6 @@ function staffBudgetMiniChart(staff) {
           title="${escapeAttr(rowLabel(item.row.slot || item.row.role))}: ${escapeAttr(staffName(item.row))} ${money(item.aav)}"
         ></span>`).join("")}
       </span>
-    </div>
-
-    <div class="staff-cap-footer">
-      <strong>${money(total)}</strong>
-      <span>Budget ${money(budget)}</span>
     </div>
   </div>`;
 }
@@ -924,16 +1187,25 @@ function staffName(row) {
 }
 
 function staffGrade(row) {
-  return (
+  const direct = (
     row.grade ??
     row.rating ??
     row.overall ??
+    row.staff_grade ??
+    row.reputation_grade_target ??
     row.staff?.grade ??
     row.staff?.rating ??
     row.staff?.overall ??
     row.evaluation?.grade ??
     ""
   );
+  if (direct !== "") return direct;
+  const traitValues = [
+    ...Object.values(row.skill_traits || {}),
+    ...Object.values(row.personality_traits || {}),
+  ].map(Number).filter(Number.isFinite);
+  if (!traitValues.length) return "";
+  return traitValues.reduce((sum, value) => sum + value, 0) / traitValues.length;
 }
 
 function staffYears(row) {
@@ -1061,7 +1333,9 @@ function renderSettings() {
 function renderPlayoffs() {
   const room = state.data.playoffs || {};
   const series = room.series || [];
-  const picture = room.picture || {};
+  const playoffPhase = ["play_in", "playoffs"].includes(String(room.phase || ""));
+  const canSim = playoffPhase && room.status !== "completed";
+  const canAdvanceStage = room.status === "completed";
   els.content.innerHTML = `
     <section class="moment-screen playoff-moment">
       <div class="moment-topline">
@@ -1077,22 +1351,185 @@ function renderPlayoffs() {
         </div>
       </div>
       ${room.champion ? `<div class="headline-block champion-line">Champion: ${escapeHtml(teamLabel(room.champion))}</div>` : ""}
+      ${canSim ? `<div class="toolbar playoff-controls">
+        <button data-playoff-sim="game">Sim 1 Game Per Series</button>
+        <button data-playoff-sim="round">Sim Rest Of Series</button>
+        <button data-playoff-sim="all">Sim Remaining Playoffs</button>
+      </div>` : ""}
+      ${canAdvanceStage ? `<div class="toolbar playoff-controls">
+        <button id="playoffAdvanceStage">Advance To Next Stage</button>
+      </div>` : ""}
       <div class="playoff-grid">
-        <section class="section panel-rail">
-          ${sectionHead("East Picture")}
-          ${table(["Seed", "Team", "W", "L", "Win%", "Diff"], picture.East || [], (row) => [row.seed, teamLabel(row.team), row.wins, row.losses, winPct(row.win_pct), signedNumber(row.point_diff || 0, 0)])}
-        </section>
-        <section class="section panel-rail">
-          ${sectionHead("West Picture")}
-          ${table(["Seed", "Team", "W", "L", "Win%", "Diff"], picture.West || [], (row) => [row.seed, teamLabel(row.team), row.wins, row.losses, winPct(row.win_pct), signedNumber(row.point_diff || 0, 0)])}
-        </section>
         <section class="section wide panel-rail">
           ${sectionHead("Bracket")}
-          ${series.length ? `<div class="bracket-list">${series.map(seriesCard).join("")}</div>` : `<div class="empty">Bracket will generate when the save reaches play-in/playoffs. Until then, this is the live playoff picture.</div>`}
+          ${series.length ? playoffBracket(series, room.champion) : `<div class="empty">Bracket will generate when the save reaches play-in/playoffs. Until then, this is the live playoff picture.</div>`}
         </section>
       </div>
     </section>`;
   wireViewJumpButtons();
+  els.content.querySelectorAll("[data-playoff-sim]").forEach((button) => {
+    button.addEventListener("click", () => playoffSim(button.dataset.playoffSim || "game"));
+  });
+  const advanceStage = document.getElementById("playoffAdvanceStage");
+  if (advanceStage) advanceStage.addEventListener("click", playoffAdvanceStage);
+}
+
+async function playoffSim(mode) {
+  const actions = {
+    game: "simulate_playoff_game",
+    round: "simulate_playoff_round",
+    all: "simulate_playoff_all",
+  };
+  const result = await action(actions[mode] || actions.game, { ...savePayload(), seed: 7 });
+  state.data.playoffs = result.room;
+  const games = result.result?.games?.length || (result.result?.game ? 1 : 0);
+  const completed = result.result?.completed_series?.length || result.result?.completed_play_in?.length || 0;
+  showToast(`Playoff sim: ${games ? `${games} game(s)` : result.status}${completed ? `, ${completed} series done` : ""}`);
+  renderPlayoffs();
+}
+
+async function playoffAdvanceStage() {
+  const result = await action("advance_save", { ...savePayload(), next_event: true, seed: 7 });
+  state.home = result.home;
+  clearViewCaches();
+  applyPhaseRouting();
+  await ensureViewData(true);
+  render();
+  showToast(`Advanced to ${state.home?.save?.current_date || "next stage"}`);
+}
+
+async function openPlayerFinderModal() {
+  const payload = await action("player_finder", savePayload());
+  state.playerFinder = {
+    payload,
+    sortField: payload.default_sort || "overall",
+    filterField: "player",
+    filterValue: "",
+  };
+  state.modal = {
+    kind: "playerFinder",
+    title: "Player Finder",
+    subtitle: `${payload.rows?.length || 0} league players | ${payload.as_of_date || ""}`,
+    body: playerFinderModalBody(),
+  };
+  renderModal();
+}
+
+function playerFinderModalBody() {
+  const finder = state.playerFinder || {};
+  const payload = finder.payload || {};
+  const fields = playerFinderFields(payload.seasons || []);
+  const sortField = finder.sortField || "overall";
+  const filterField = finder.filterField || "player";
+  const filterValue = finder.filterValue || "";
+  const rows = filteredPlayerFinderRows(payload.rows || [], filterField, filterValue, sortField);
+  return `
+    <div class="player-finder-controls">
+      <label>Sort
+        <select id="playerFinderSort">
+          ${fields.map((field) => `<option value="${escapeAttr(field.key)}" ${field.key === sortField ? "selected" : ""}>${escapeHtml(field.label)}</option>`).join("")}
+        </select>
+      </label>
+      <label>Filter
+        <select id="playerFinderFilterField">
+          ${fields.map((field) => `<option value="${escapeAttr(field.key)}" ${field.key === filterField ? "selected" : ""}>${escapeHtml(field.label)}</option>`).join("")}
+        </select>
+      </label>
+      <label>Value
+        <input id="playerFinderFilterValue" value="${escapeAttr(filterValue)}" placeholder="Text contains or numeric minimum" />
+      </label>
+      <span class="pill" id="playerFinderCount">${rows.length} shown</span>
+    </div>
+    <div class="player-finder-table-wrap" id="playerFinderTableWrap">
+      ${playerFinderTable(rows, payload.seasons || [])}
+    </div>`;
+}
+
+function playerFinderFields(seasons = []) {
+  return [
+    { key: "player", label: "Player", type: "text" },
+    { key: "team", label: "Team", type: "text" },
+    { key: "position", label: "Pos", type: "text" },
+    { key: "height", label: "Height", type: "text" },
+    { key: "age", label: "Age", type: "number" },
+    { key: "overall", label: "OVR", type: "number" },
+    { key: "shooting", label: "Shot", type: "number" },
+    { key: "creation", label: "Create", type: "number" },
+    { key: "defense", label: "Def", type: "number" },
+    { key: "spacing", label: "Space", type: "number" },
+    { key: "passing", label: "Pass", type: "number" },
+    { key: "rebounding", label: "Reb", type: "number" },
+    { key: "rim_deterrence", label: "Rim", type: "number" },
+    { key: "athleticism", label: "Ath", type: "number" },
+    { key: "games_missed", label: "GM", type: "number" },
+    { key: "display_mpg", label: "MPG", type: "number" },
+    { key: "points_per_game", label: "PTS", type: "number" },
+    { key: "rebounds_per_game", label: "REB", type: "number" },
+    { key: "assists_per_game", label: "AST", type: "number" },
+    { key: "steals_per_game", label: "STL", type: "number" },
+    { key: "blocks_per_game", label: "BLK", type: "number" },
+    { key: "turnovers_per_game", label: "TO", type: "number" },
+    ...seasons.map((season) => ({ key: season, label: season, type: "number" })),
+  ];
+}
+
+function filteredPlayerFinderRows(rows, filterField, filterValue, sortField) {
+  const query = String(filterValue || "").trim().toLowerCase();
+  const numericQuery = Number(query);
+  const filtered = query
+    ? rows.filter((row) => {
+      const value = playerFinderValue(row, filterField);
+      const numericValue = Number(value);
+      if (Number.isFinite(numericQuery) && Number.isFinite(numericValue)) return numericValue >= numericQuery;
+      return String(value ?? "").toLowerCase().includes(query);
+    })
+    : [...rows];
+  filtered.sort((a, b) => {
+    const av = playerFinderValue(a, sortField);
+    const bv = playerFinderValue(b, sortField);
+    const an = Number(av);
+    const bn = Number(bv);
+    if (Number.isFinite(an) && Number.isFinite(bn)) return bn - an || String(a.name || "").localeCompare(String(b.name || ""));
+    return String(av ?? "").localeCompare(String(bv ?? ""), undefined, { numeric: true, sensitivity: "base" });
+  });
+  return filtered;
+}
+
+function playerFinderValue(row, key) {
+  if (key === "player") return row.name || "";
+  if (key === "team") return row.team_abbrev || "";
+  if (key === "height") return row.height || "";
+  if (row.salary_by_year && Object.prototype.hasOwnProperty.call(row.salary_by_year, key)) return row.salary_by_year[key] ?? "";
+  if (["overall", "shooting", "creation", "defense", "spacing", "passing", "rebounding", "rim_deterrence", "athleticism"].includes(key)) return rating(row, key);
+  return row[key] ?? row.ratings?.[key] ?? "";
+}
+
+function playerFinderTable(rows, seasons) {
+  return table(["Player", "Team", "Pos", "Height", "Age", "OVR", "Shot", "Create", "Def", "Space", "Pass", "Reb", "Rim", "Ath", "GM", "MPG", "PTS", "REB", "AST", "STL", "BLK", "TO", ...seasons], rows, (row) => [
+    summaryPlayerNameCell(row),
+    row.team_abbrev || "FA",
+    compactPos(row.position),
+    heightFromRow(row) || "—",
+    row.age ?? "—",
+    plainNumber(rating(row, "overall")),
+    plainNumber(rating(row, "shooting")),
+    plainNumber(rating(row, "creation")),
+    plainNumber(rating(row, "defense")),
+    plainNumber(rating(row, "spacing") || rating(row, "range")),
+    plainNumber(rating(row, "passing")),
+    plainNumber(rating(row, "rebounding")),
+    plainNumber(rating(row, "rim_deterrence")),
+    plainNumber(rating(row, "athleticism")),
+    gamesMissedFromRow(row),
+    Number(mpgFromRow(row) || 0).toFixed(1),
+    statNumber(row, "points"),
+    statNumber(row, "rebounds"),
+    statNumber(row, "assists"),
+    statNumber(row, "steals"),
+    statNumber(row, "blocks"),
+    statNumber(row, "turnovers"),
+    ...seasons.map((season) => money(row.salary_by_year?.[season]) || "—"),
+  ], "player-finder-table");
 }
 
 async function openBoxScore(gameId) {
@@ -1130,8 +1567,9 @@ function renderModal() {
     return;
   }
   els.modalRoot.hidden = false;
+  const modalClass = state.modal.kind === "playerFinder" ? " modal-wide" : "";
   els.modalRoot.innerHTML = `
-    <div class="modal-shell" role="dialog" aria-modal="true">
+    <div class="modal-shell${modalClass}" role="dialog" aria-modal="true">
       <header class="modal-head">
         <div>
           <p class="eyebrow">${escapeHtml(state.modal.subtitle || "")}</p>
@@ -1141,6 +1579,46 @@ function renderModal() {
       </header>
       <div class="modal-body">${state.modal.body || ""}</div>
     </div>`;
+  if (state.modal.kind === "tradeOffers") {
+    wireOfferButtons(els.modalRoot, state.modal.offers || []);
+  }
+  if (state.modal.kind === "playerFinder") {
+    wirePlayerFinderModal();
+  }
+  els.modalRoot.querySelectorAll("[data-dashboard-team-jump]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      closeModal();
+      await switchDashboardTeam(button.dataset.dashboardTeamJump || userTeam());
+    });
+  });
+}
+
+function wirePlayerFinderModal() {
+  const sort = document.getElementById("playerFinderSort");
+  if (sort) sort.addEventListener("change", () => {
+    state.playerFinder.sortField = sort.value || "overall";
+    refreshPlayerFinderTable();
+  });
+  const filterField = document.getElementById("playerFinderFilterField");
+  if (filterField) filterField.addEventListener("change", () => {
+    state.playerFinder.filterField = filterField.value || "player";
+    refreshPlayerFinderTable();
+  });
+  const filterValue = document.getElementById("playerFinderFilterValue");
+  if (filterValue) filterValue.addEventListener("input", () => {
+    state.playerFinder.filterValue = filterValue.value || "";
+    refreshPlayerFinderTable();
+  });
+}
+
+function refreshPlayerFinderTable() {
+  const finder = state.playerFinder || {};
+  const payload = finder.payload || {};
+  const rows = filteredPlayerFinderRows(payload.rows || [], finder.filterField || "player", finder.filterValue || "", finder.sortField || "overall");
+  const count = document.getElementById("playerFinderCount");
+  if (count) count.textContent = `${rows.length} shown`;
+  const wrap = document.getElementById("playerFinderTableWrap");
+  if (wrap) wrap.innerHTML = playerFinderTable(rows, payload.seasons || []);
 }
 
 function wireViewJumpButtons() {
@@ -1180,7 +1658,7 @@ function rankedBarList(rows) {
 function dashboardTeamOptions(selected) {
   return state.teams.map((team) => {
     const value = team.abbrev;
-    return `<option value="${escapeAttr(value)}" ${value === selected ? "selected" : ""}>${escapeHtml(value)} ${escapeHtml(team.name || "")}</option>`;
+    return `<option value="${escapeAttr(value)}" ${value === selected ? "selected" : ""}>${escapeHtml(value)}</option>`;
   }).join("");
 }
 
@@ -1189,7 +1667,10 @@ function teamIdentityRankBlock(dash) {
   const metrics = identity.metrics || {};
   const ranks = identity.ranks || {};
   const count = identity.league_team_count || 30;
-  return `${sectionHead("Team Identity")}
+  const selected = teamLabel(dash.team || state.dashboardTeam || userTeam());
+  return `<div class="section-head identity-head">
+      <h3><select id="dashboardTeamSelect" aria-label="Dashboard team">${dashboardTeamOptions(selected)}</select> Identity</h3>
+    </div>
     ${rankedBarList([
       ["Overall", metrics.overall, ranks.overall, count],
       ["Offense", metrics.offense, ranks.offense, count],
@@ -1225,7 +1706,7 @@ function startingFiveBlock(rows, editable) {
       </div>
     </div>
 
-    <div class="starting-five-row ${rowClass}">
+    <div class="staff-role-list starting-five-list ${rowClass}">
       ${[1, 2, 3, 4, 5]
         .map((slot) => startingFiveButton(slot, rows, draft[slot], editable, hasEmpty, changed))
         .join("")}
@@ -1235,20 +1716,20 @@ function startingFiveBlock(rows, editable) {
 }
 
 function ensureStartingDraft(rows) {
-  if (state.startingDraft) return;
+  const saved = savedStartingFiveMap(rows);
+  const savedSignature = startingMapSignature(saved);
+  const currentSignature = state.startingDraft ? startingMapSignature(state.startingDraft) : "";
+  const draftStillMatchesSaved = !state.startingDraft || !state.startingSavedSignature || currentSignature === state.startingSavedSignature;
 
-  const draft = {};
-  for (const slot of [1, 2, 3, 4, 5]) {
-    const starter = rows.find((row) => Number(row.starting_slot) === slot);
-    draft[slot] = starter?.id || "";
+  if (!state.startingDraft || (draftStillMatchesSaved && savedSignature !== state.startingSavedSignature)) {
+    state.startingDraft = { ...saved };
   }
-  state.startingDraft = draft;
+  state.startingSavedSignature = savedSignature;
 }
 
 function startingFiveButton(slot, rows, playerId, editable, hasEmpty, changed) {
   const row = rows.find((player) => String(player.id) === String(playerId));
   const empty = !row;
-  const label = row ? row.name.split(" ").map(escapeHtml).join("<br>") : `Slot ${slot}`;
 
   const statusClass = empty
     ? "empty"
@@ -1257,12 +1738,16 @@ function startingFiveButton(slot, rows, playerId, editable, hasEmpty, changed) {
       : "set";
 
   return `<button
-    class="starting-five-button ${statusClass}"
+    class="staff-role-button starting-five-button ${statusClass}"
     data-starting-slot-button="${slot}"
     ${editable ? "" : "disabled"}
     title="${empty ? "Choose starter" : "Click to clear this starter"}"
   >
-    <strong>${label}</strong>
+    <span class="staff-role">${slot}.${row ? ` ${escapeHtml(compactPos(row.position))}` : ""}</span>
+    <span class="starting-player-line">
+      <strong>${row ? escapeHtml(row.name) : "Open"}</strong>
+      <span class="staff-meta">${row ? `${escapeHtml(heightFromRow(row) || "—")} · ${Number(mpgFromRow(row) || 0).toFixed(0)} MPG` : "Choose starter"}</span>
+    </span>
   </button>`;
 }
 
@@ -1291,11 +1776,17 @@ function startingFivePicker(rows, slot) {
   </div>`;
 }
 
-function savedStartingFiveMap(rows) {
+function savedStartingFiveMap(rows, dash = state.data.dashboard || state.data.statusDashboard || {}) {
   const saved = {};
   for (const slot of [1, 2, 3, 4, 5]) {
     const starter = rows.find((row) => Number(row.starting_slot) === slot);
     saved[slot] = starter?.id || "";
+  }
+  if (!startingMapComplete(saved) && Array.isArray(dash?.starting_five)) {
+    for (const item of dash.starting_five) {
+      const slot = Number(item.slot);
+      if (slot >= 1 && slot <= 5 && item.player_id) saved[slot] = item.player_id;
+    }
   }
   return saved;
 }
@@ -1307,6 +1798,14 @@ function startingDraftChanged(rows) {
   return [1, 2, 3, 4, 5].some(
     (slot) => String(draft[slot] || "") !== String(saved[slot] || "")
   );
+}
+
+function startingMapComplete(map) {
+  return [1, 2, 3, 4, 5].every((slot) => map && map[slot]);
+}
+
+function startingMapSignature(map) {
+  return [1, 2, 3, 4, 5].map((slot) => String(map?.[slot] || "")).join("|");
 }
 
 function starterCard(slot, row, editable) {
@@ -1457,19 +1956,16 @@ function summaryLeaderRotator() {
   const fields = state.data.dashboardSummaryLeaders?.fields || [];
   const slides = fields.map((field, fieldIndex) => {
     const leaders = field.leaders || [];
+    const label = field.label || field.key || "Field";
     return `
-      <div class="summary-leader-slide ${fieldIndex === 0 ? "active" : ""}">
-        <div class="summary-leader-title">
-          <span>${escapeHtml(field.label || field.key || "Field")}</span>
-          <em>Top 10</em>
-        </div>
+      <div class="summary-leader-slide ${fieldIndex === 0 ? "active" : ""}" data-field-label="${escapeAttr(label)}">
         <ol class="summary-leader-list">
           ${leaders.map((leader, index) => `
             <li>
               <span class="summary-rank">${index + 1}</span>
               <span class="summary-player">
                 <strong>${escapeHtml(leader.player_name || "Unknown")}</strong>
-                <small>${escapeHtml([leader.team_abbrev, leader.position].filter(Boolean).join(" "))}</small>
+                <small>${escapeHtml([leader.team_abbrev, leader.position, leader.age ? `age ${leader.age}` : "", leader.height].filter(Boolean).join(", "))}</small>
               </span>
               <em>${Number(leader.value || 0).toFixed(1)}</em>
             </li>
@@ -1479,17 +1975,23 @@ function summaryLeaderRotator() {
   }).join("");
 
   return `
-    ${sectionHead("League Leaders")}
+    <div class="section-head summary-leader-head">
+      <h3>League Leader:</h3>
+      <select id="summaryLeaderSelect" aria-label="League leader category">
+        ${fields.map((field, index) => `<option value="${index}">${escapeHtml(field.label || field.key || "Field")}</option>`).join("")}
+      </select>
+    </div>
     <div class="summary-leader-rotator" data-summary-leader-rotator>
       <div class="summary-leader-track">
         ${slides || `<div class="empty">No league leaders available.</div>`}
       </div>
-    </div>`;
+    </div>
+    <div class="rotator-progress"><span></span></div>`;
 }
 
 function dashboardPlayerSummaryTable(rows) {
   ensureRotationDraft(rows);
-  const seasons = contractSeasons(rows).slice(0, 5);
+  const seasons = contractSeasons(rows).slice(0, 4);
   const total = Object.values(state.rotationDraft).reduce(
     (sum, value) => sum + Number(value || 0),
     0
@@ -1497,6 +1999,15 @@ function dashboardPlayerSummaryTable(rows) {
   const remaining = 240 - total;
   const dash = state.data.dashboard || {};
   const editable = !state.hydrating && teamLabel(dash.team || state.dashboardTeam) === userTeam();
+  const summaryRows = rows.length >= 17
+    ? rows
+    : [
+      ...rows,
+      ...Array.from({ length: 17 - rows.length }, (_unused, index) => ({
+        __summaryEmpty: true,
+        id: `summary-empty-${index}`,
+      })),
+    ];
   return `
     <div class="section-head summary-head">
       <h3>Player Ratings / Season Box Score / Contracts</h3>
@@ -1508,8 +2019,8 @@ function dashboardPlayerSummaryTable(rows) {
       </div>
     </div>
     <div class="dashboard-mini-table">
-      ${table(["Player", "Pos", "Height", "Age", "OVR", "Shot", "Create", "Def", "Space", "Pass", "Reb", "Rim", "Ath", "MPG", "Coach", "Set", "PTS", "REB", "AST", "STL", "BLK", "TO", ...seasons], rows, (row) => [
-        row.name,
+      ${table(["Player", "Pos", "Height", "Age", "OVR", "Shot", "Create", "Def", "Space", "Pass", "Reb", "Rim", "Ath", "GM", "Set", "MPG", "PTS", "REB", "AST", "STL", "BLK", "TO", ...seasons], summaryRows, (row) => row.__summaryEmpty ? Array.from({ length: 22 + seasons.length }, () => "—") : [
+        summaryPlayerNameCell(row),
         compactPos(row.position),
         heightFromRow(row) || "—",
         row.age ?? "—",
@@ -1522,9 +2033,9 @@ function dashboardPlayerSummaryTable(rows) {
         plainNumber(rating(row, "rebounding")),
         plainNumber(rating(row, "rim_deterrence")),
         plainNumber(rating(row, "athleticism")),
-        Number(mpgFromRow(row) || 0).toFixed(1),
-        Number(row.coach_minutes_projection ?? row.minutes_projection ?? 0).toFixed(0),
+        gamesMissedFromRow(row),
         rotationSliderCell(row, editable),
+        Number(mpgFromRow(row) || 0).toFixed(1),
         statNumber(row, "points"),
         statNumber(row, "rebounds"),
         statNumber(row, "assists"),
@@ -1534,6 +2045,17 @@ function dashboardPlayerSummaryTable(rows) {
         ...seasons.map((season) => money(row.salary_by_year?.[season]) || "—"),
       ], "dashboard-player-summary")}
     </div>`;
+}
+
+function summaryPlayerNameCell(row) {
+  const name = row.name || "";
+  if (!isPlayerInjured(row.health)) return name;
+  return html(`<span class="injured-player-name">${escapeHtml(name)}</span>`);
+}
+
+function gamesMissedFromRow(row) {
+  const value = Number(row.health?.games_missed ?? row.games_missed ?? 0);
+  return Number.isFinite(value) ? value : 0;
 }
 
 function rotationSliderCell(row, editable) {
@@ -1586,14 +2108,19 @@ function statNumber(row, stat) {
 function userConferenceStandings() {
   const standings = standingsRows(state.data.dashboardStandings);
   const user = userTeam();
+  const viewed = teamLabel(state.data.dashboard?.team || state.dashboardTeam || user);
   const userRow = standings.find((row) => teamLabel(row.team) === user);
-  const conference = userRow?.team?.conference || "Conference";
+  const defaultConference = userRow?.team?.conference || "East";
+  const conference = ["East", "West"].includes(state.dashboardStandingsConference) ? state.dashboardStandingsConference : defaultConference;
   const rows = standings
     .filter((row) => row.team?.conference === conference)
     .slice(0, 10);
 
-  return `${sectionHead(`${conference} Standings`)}
-    ${dashboardStandingsTable(rows, user)}`;
+  return `<div class="section-head standings-head">
+      <h3><button class="standings-conference-toggle" data-standings-conference-toggle data-standings-conference="${escapeAttr(conference)}">${escapeHtml(conference)}</button> Standings</h3>
+      <button class="standings-view-all" data-standings-view-all>View All</button>
+    </div>
+    ${dashboardStandingsTable(rows, viewed)}`;
 }
 
 function dashboardStandingsTable(rows, user) {
@@ -1620,7 +2147,7 @@ function dashboardStandingsTable(rows, user) {
             const team = teamLabel(row.team);
             return `<tr class="${index === 6 ? "play-in-cutoff-row" : ""}">
               <td class="standings-rank">${index + 1}.</td>
-              <td class="standings-team">${team === user ? `<strong class="user-highlight">${escapeHtml(team)}</strong>` : escapeHtml(team)}</td>
+              <td class="standings-team"><button data-dashboard-team-jump="${escapeAttr(team)}" class="${team === user ? "user-highlight" : ""}">${escapeHtml(team)}</button></td>
               <td class="standings-record">${escapeHtml(`${row.wins || 0}-${row.losses || 0}`)}</td>
               <td>${escapeHtml(winPct(row.win_pct))}</td>
             </tr>`;
@@ -1630,6 +2157,27 @@ function dashboardStandingsTable(rows, user) {
     </div>`;
 }
 
+function openStandingsModal() {
+  const standings = standingsRows(state.data.dashboardStandings);
+  const conferences = ["East", "West"];
+  const viewed = teamLabel(state.data.dashboard?.team || state.dashboardTeam || userTeam());
+  state.modal = {
+    kind: "standings",
+    title: "Full Standings",
+    subtitle: state.home?.save?.current_date || "",
+    body: `<div class="standings-modal-grid">
+      ${conferences.map((conference) => {
+        const rows = standings.filter((row) => String(row.team?.conference || "") === conference);
+        return `<section>
+          ${sectionHead(`${conference} Conference`)}
+          ${dashboardStandingsTable(rows, viewed)}
+        </section>`;
+      }).join("")}
+    </div>`,
+  };
+  renderModal();
+}
+
 function dashboardMonthCalendar() {
   const dash = state.data.dashboard || {};
   const team = teamLabel(dash.team || userTeam());
@@ -1637,25 +2185,26 @@ function dashboardMonthCalendar() {
   const month = state.calendarMonth || current.slice(0, 7);
   const games = (state.data.dashboardCalendar?.games || []).filter((game) => [game.home, game.home_team, game.away, game.away_team].includes(team));
   const cells = monthCalendarCells(month);
+  const weekRows = Math.max(1, Math.ceil(cells.length / 7));
 
   return `<div class="section-head calendar-head">
-      <h3>${escapeHtml(month || "Calendar")}</h3>
+      <h3>${escapeHtml(calendarHeaderDate(current, month))}</h3>
       <div class="calendar-head-controls">
-        ${simControls()}
         <div class="toolbar compact">
           <button data-calendar-step="-1">‹</button>
           <button data-calendar-step="1">›</button>
         </div>
       </div>
     </div>
-    <div class="calendar-grid">
+    <div class="calendar-grid" style="grid-template-rows: 12px repeat(${weekRows}, minmax(0, 1fr))">
       ${["M", "T", "W", "T", "F", "S", "S"].map((day) => `<div class="calendar-label">${day}</div>`).join("")}
       ${cells.map((cell) => calendarCell(cell, games, current, team)).join("")}
-    </div>`;
+    </div>
+    <div class="calendar-footer">${simControls()}</div>`;
 }
 
 function contractChartCard(rows, dash) {
-  const seasons = contractSeasons(rows).slice(0, 5);
+  const seasons = contractSeasons(rows).slice(0, 4);
   if (!rows.length || !seasons.length) {
     return `${sectionHead("Contract Chart")}<div class="empty">No contract data loaded.</div>`;
   }
@@ -1666,6 +2215,526 @@ function contractChartCard(rows, dash) {
     </div>`;
 }
 
+function dashboardStaffMarketCard(editable = true) {
+  const candidates = marketCandidates(state.data.dashboardStaffMarket);
+  const slotOrder = ["head_coach", "offensive_coordinator", "defensive_coordinator", "development_lead", "performance_lead", "scouting_lead"];
+  const pages = slotOrder
+    .map((slot) => ({
+      key: slot,
+      label: rowLabel(slot),
+      rows: candidates
+        .filter((candidate) => String(candidate.slot || candidate.role_preference || "") === slot)
+        .sort((a, b) => Number(staffGrade(b) || 0) - Number(staffGrade(a) || 0))
+        .slice(0, 5),
+    }))
+    .filter((page) => page.rows.length);
+  pages.push({
+    key: "all",
+    label: "All Positions",
+    rows: [...candidates]
+      .sort((a, b) => Number(staffGrade(b) || 0) - Number(staffGrade(a) || 0))
+      .slice(0, 5),
+  });
+  return marketRotatorCard("Available Staff", pages, staffMarketLine, "staff", !editable);
+}
+
+function dashboardFreeAgentMarketCard(editable = true) {
+  const candidates = marketCandidates(state.data.dashboardFreeAgents);
+  const positions = ["PG", "SG", "SF", "PF", "C"];
+  const pages = positions
+    .map((position) => ({
+      key: position,
+      label: position,
+      rows: candidates
+        .filter((player) => String(player.position || "").toUpperCase().includes(position))
+        .sort((a, b) => freeAgentSortValue(b) - freeAgentSortValue(a))
+        .slice(0, 5),
+    }))
+    .filter((page) => page.rows.length);
+  pages.push({
+    key: "all",
+    label: "All Positions",
+    rows: [...candidates].sort((a, b) => freeAgentSortValue(b) - freeAgentSortValue(a)).slice(0, 5),
+  });
+  return marketRotatorCard("Player Free Agents", pages, freeAgentMarketLine, "free-agents", !editable);
+}
+
+function dashboardActionsCard(editable = true) {
+  const offerCount = Number(state.data.dashboardOffers?.offers?.length || 0);
+  const disabled = editable ? "" : "disabled";
+  return `
+    ${sectionHead("Front Office")}
+    <div class="dashboard-action-list">
+      <button class="dashboard-action-button" data-dashboard-trade="builder" ${disabled}>
+        <strong>Trade Builder</strong>
+      </button>
+      <button class="dashboard-action-button" data-dashboard-trade="finder" ${disabled}>
+        <strong>Trade Finder</strong>
+      </button>
+      <button class="dashboard-action-button" data-dashboard-player-finder ${disabled}>
+        <strong>Player Finder</strong>
+      </button>
+      <button class="dashboard-action-button" data-dashboard-view="draft" ${disabled}>
+        <strong>Prospects</strong>
+      </button>
+      <button class="dashboard-action-button offer-action ${offerCount ? "has-offers" : ""}" data-dashboard-offers ${disabled}>
+        <strong>Trade Offers</strong>
+      </button>
+    </div>`;
+}
+
+function marketRotatorCard(title, pages, rowRenderer, id, disabled = false) {
+  const usable = pages.filter((page) => page.rows?.length);
+  return `
+    <div class="section-head market-card-head">
+      <h3>${escapeHtml(title)}</h3>
+      <select data-market-select="${escapeAttr(id)}" aria-label="${escapeAttr(`${title} category`)}" ${disabled ? "disabled" : ""}>
+        ${usable.map((page, index) => `<option value="${index}">${escapeHtml(page.label)}</option>`).join("")}
+      </select>
+    </div>
+    <div class="market-rotator" data-market-rotator data-market-id="${escapeAttr(id)}">
+      ${usable.map((page, index) => `
+        <div class="market-slide ${index === 0 ? "active" : ""}">
+          <div class="market-list">
+            ${page.rows.map(rowRenderer).join("")}
+          </div>
+        </div>`).join("") || `<div class="empty">No market data available.</div>`}
+    </div>
+    <div class="rotator-progress"><span></span></div>`;
+}
+
+function staffMarketLine(candidate, index) {
+  return `
+    <div class="market-row">
+      <span class="market-rank">${index + 1}</span>
+      <span class="market-main">
+        <strong>${escapeHtml(staffName(candidate))}</strong>
+        <small>${escapeHtml(rowLabel(candidate.slot || candidate.role_preference))}</small>
+      </span>
+      <span class="market-score">${Number(staffGrade(candidate) || 0).toFixed(1)}</span>
+      <span class="market-ask">${money(staffAav(candidate))} x ${escapeHtml(staffYears(candidate) || candidate.asking_years || 1)}</span>
+    </div>`;
+}
+
+function freeAgentMarketLine(player, index) {
+  return `
+    <div class="market-row">
+      <span class="market-rank">${index + 1}</span>
+      <span class="market-main">
+        <strong>${escapeHtml(player.name || "Unknown")}</strong>
+        <small>${escapeHtml([player.position, player.age ? `age ${player.age}` : ""].filter(Boolean).join(" "))}</small>
+      </span>
+      <span class="market-score">${plainNumber(freeAgentOverall(player))}</span>
+      <span class="market-ask">${money(freeAgentAsk(player))}</span>
+    </div>`;
+}
+
+function standingsTrendCard() {
+  const data = state.data.dashboardTrends?.standings || {};
+  const points = data.points || [];
+  return `
+    ${sectionHead("Standings Position")}
+    <div class="trend-card-body">
+      ${singleLineChart(points, { invert: true, fixedSlots: 26, minValue: 1, maxValue: 30, endLabel: "Season End", empty: "No weekly standings history yet." })}
+      <div class="trend-note">${points.length > 1 ? "Week by week conference rank" : "Current snapshot until games are played"}</div>
+    </div>`;
+}
+
+function developmentTrendCard(rows = []) {
+  const candidates = developmentPlayerCandidates(rows);
+  ensureDevelopmentSelection(candidates);
+  const selectedIds = state.developmentPlayerIds.filter((id) => candidates.some((candidate) => candidate.player_id === id)).slice(0, 5);
+  const selectedLines = selectedIds.map((id) => candidates.find((candidate) => candidate.player_id === id)).filter(Boolean);
+  const isNew = state.developmentNewSignature && state.developmentNewSignature === developmentTrendSignature();
+  return `
+    ${sectionHead("Player Development", "", isNew ? `<span class="development-new-badge">NEW</span>` : "")}
+    <div class="development-trend-body">
+      <div class="development-chart-panel">
+        ${developmentLineChart(selectedLines, { empty: "No development players selected." })}
+      </div>
+      <div class="development-legend-panel">
+        ${developmentLegend(selectedLines, candidates)}
+      </div>
+    </div>`;
+}
+
+function developmentPlayerCandidates(rows = []) {
+  const trendLines = state.data.dashboardTrends?.development?.lines || [];
+  const byId = new Map();
+  for (const line of trendLines) {
+    if (!line.player_id) continue;
+    byId.set(String(line.player_id), {
+      player_id: String(line.player_id),
+      name: line.name || "Unknown",
+      position: line.position || "",
+      current: Number(line.points?.[line.points.length - 1]?.value || 0),
+      points: line.points || [],
+    });
+  }
+  for (const row of rows) {
+    if (!row.id || row.__summaryEmpty) continue;
+    const id = String(row.id);
+    const current = Number(rating(row, "overall") || row.overall || 0);
+    const existing = byId.get(id);
+    byId.set(id, {
+      player_id: id,
+      name: row.name || existing?.name || "Unknown",
+      position: compactPos(row.position || existing?.position || ""),
+      current: Number.isFinite(current) && current > 0 ? current : Number(existing?.current || 0),
+      points: existing?.points?.length ? existing.points : [],
+      minutes: Number(mpgFromRow(row) || 0),
+    });
+  }
+  return [...byId.values()].sort((a, b) => {
+    const movementDiff = developmentMovementScore(b) - developmentMovementScore(a);
+    if (movementDiff) return movementDiff;
+    const minuteDiff = Number(b.minutes || 0) - Number(a.minutes || 0);
+    if (minuteDiff) return minuteDiff;
+    return Number(b.current || 0) - Number(a.current || 0);
+  });
+}
+
+function ensureDevelopmentSelection(candidates) {
+  const candidateIds = new Set(candidates.map((candidate) => candidate.player_id));
+  state.developmentPlayerIds = state.developmentPlayerIds.filter((id) => candidateIds.has(id)).slice(0, 5);
+  if (state.developmentSelectionTouched) return;
+  const preferred = [...candidates].sort((a, b) => {
+    const movementDiff = developmentMovementScore(b) - developmentMovementScore(a);
+    if (movementDiff) return movementDiff;
+    const minuteDiff = Number(b.minutes || 0) - Number(a.minutes || 0);
+    if (minuteDiff) return minuteDiff;
+    return Number(b.current || 0) - Number(a.current || 0);
+  });
+  for (const candidate of preferred) {
+    if (state.developmentPlayerIds.length >= 5) break;
+    if (!state.developmentPlayerIds.includes(candidate.player_id)) {
+      state.developmentPlayerIds.push(candidate.player_id);
+    }
+  }
+}
+
+function developmentMovementScore(candidate) {
+  const points = candidate?.points || [];
+  const values = points.map((point) => Number(point.value)).filter(Number.isFinite);
+  if (values.length < 2) return 0;
+  return Math.abs(values[values.length - 1] - values[0]);
+}
+
+function developmentTrendSignature() {
+  const development = state.data.dashboardTrends?.development || {};
+  return development.latest_month || (development.applied_months || []).slice(-1)[0] || "";
+}
+
+function syncDevelopmentAdvanceState(previousSignature) {
+  const nextSignature = developmentTrendSignature();
+  if (nextSignature && nextSignature !== previousSignature) {
+    state.developmentSelectionTouched = false;
+    state.developmentPlayerIds = [];
+    state.developmentSeenSignature = nextSignature;
+    state.developmentNewSignature = nextSignature;
+    return;
+  }
+  state.developmentNewSignature = "";
+}
+
+function clearDevelopmentNewBadge() {
+  state.developmentNewSignature = "";
+}
+
+function developmentLegend(lines, candidates) {
+  const selected = new Set(lines.map((line) => line.player_id));
+  const addable = candidates.filter((candidate) => !selected.has(candidate.player_id));
+  const colors = developmentLineColors();
+  return `
+    <div class="development-legend-list">
+      ${lines.map((line, index) => `
+        <div class="development-legend-row">
+          <span class="development-swatch" style="background:${colors[index % colors.length]}"></span>
+          <select data-development-swap="${index}" aria-label="Development player ${index + 1}">
+            ${developmentPlayerOptions(candidates, selected, line.player_id)}
+          </select>
+          <button data-development-remove="${escapeAttr(line.player_id)}" title="Remove ${escapeAttr(line.name || "player")}">×</button>
+        </div>
+      `).join("")}
+      ${lines.length < 5 && addable.length ? `
+        <div class="development-add-row">
+          <button data-development-add title="Add player">+</button>
+          <select data-development-add-select aria-label="Add development player">
+            ${addable.map((candidate) => `<option value="${escapeAttr(candidate.player_id)}">${escapeHtml(shortName(candidate.name || "Player"))}</option>`).join("")}
+          </select>
+        </div>
+      ` : ""}
+    </div>`;
+}
+
+function developmentPlayerOptions(candidates, selected, currentId) {
+  return candidates
+    .filter((candidate) => candidate.player_id === currentId || !selected.has(candidate.player_id))
+    .map((candidate) => `<option value="${escapeAttr(candidate.player_id)}" ${candidate.player_id === currentId ? "selected" : ""}>${escapeHtml(shortName(candidate.name || "Player"))}</option>`)
+    .join("");
+}
+
+function developmentLineColors() {
+  return ["#2fbf75", "#5b8fd9", "#d7b84f", "#d94a4a", "#966ce6"];
+}
+
+function draftPicksCard() {
+  const years = nextDraftYears();
+  const picks = state.data.dashboardAssets?.picks || [];
+  const grouped = new Map();
+  for (const pick of picks) {
+    const year = String(pick.season || "").slice(0, 4);
+    const round = Number(pick.round || 0);
+    if (!years.includes(year) || ![1, 2].includes(round)) continue;
+    const key = `${year}:R${round}`;
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push(pick);
+  }
+  for (const list of grouped.values()) {
+    list.sort((a, b) => pickTeamAbbrev(a).localeCompare(pickTeamAbbrev(b)));
+  }
+
+  return `
+    ${sectionHead("Draft Picks")}
+    <div class="draft-pick-mini-table">
+      <div class="draft-pick-head year">Draft</div>
+      <div class="draft-pick-head">R1</div>
+      <div class="draft-pick-head">R2</div>
+      ${years.map((year) => `
+        <div class="draft-pick-year">${escapeHtml(year)}</div>
+        <div class="draft-pick-cell">${draftPickMarks(grouped.get(`${year}:R1`) || [])}</div>
+        <div class="draft-pick-cell">${draftPickMarks(grouped.get(`${year}:R2`) || [])}</div>
+      `).join("")}
+    </div>`;
+}
+
+function draftPickMarks(picks) {
+  if (!picks.length) return `<span class="draft-pick-empty">—</span>`;
+  return picks.map((pick) => {
+    const team = pickTeamAbbrev(pick);
+    const logo = teamLogoSrc(team);
+    const label = pick.label || `${team} pick`;
+    if (!logo) return `<span class="team-logo-dot logo-missing" title="${escapeAttr(label)}" aria-label="${escapeAttr(label)}"></span>`;
+    return `<span class="team-logo-dot" title="${escapeAttr(label)}"><img src="${escapeAttr(logo)}" alt="${escapeAttr(team)}" loading="lazy" /></span>`;
+  }).join("");
+}
+
+function pickTeamAbbrev(pick) {
+  const label = String(pick.label || "");
+  const match = label.match(/^\d{4}\s+R[12]\s+([A-Z]{2,3})\b/);
+  return match?.[1] || teamLabel(pick.original_team || pick.team || pick.team_abbrev || pick.owner_team || "");
+}
+
+function teamLogoSrc(team) {
+  const abbrev = String(team || "").toUpperCase();
+  const known = new Set([
+    "ATL", "BOS", "BKN", "CHA", "CHI", "CLE", "DAL", "DEN", "DET", "GSW",
+    "HOU", "IND", "LAC", "LAL", "MEM", "MIA", "MIL", "MIN", "NOP", "NYK",
+    "OKC", "ORL", "PHI", "PHX", "POR", "SAC", "SAS", "TOR", "UTA", "WAS",
+  ]);
+  return known.has(abbrev) ? `assets/team_logos/${abbrev}.png` : "";
+}
+
+function nextDraftYears() {
+  const seasonStart = Number(String(state.home?.save?.season || "").slice(0, 4));
+  if (Number.isFinite(seasonStart) && seasonStart > 2000) {
+    const firstDraftYear = seasonStart + 1;
+    return Array.from({ length: 4 }, (_unused, index) => String(firstDraftYear + index));
+  }
+  const current = String(state.home?.save?.current_date || "");
+  const currentYear = Number(current.slice(0, 4)) || 2025;
+  const firstDraftYear = currentYear + 1;
+  return Array.from({ length: 4 }, (_unused, index) => String(firstDraftYear + index));
+}
+
+function marketCandidates(payload) {
+  if (!payload) return [];
+  for (const key of ["candidates", "players", "rows", "market", "free_agents", "staff"]) {
+    if (Array.isArray(payload[key])) return payload[key];
+  }
+  return Array.isArray(payload) ? payload : [];
+}
+
+function freeAgentAsk(player) {
+  return (
+    player.ask_millions ??
+    player.projected_aav_millions ??
+    player.asking_aav_millions ??
+    player.market_aav_millions ??
+    player.aav_millions ??
+    player.projected_aav ??
+    0
+  );
+}
+
+function freeAgentOverall(player) {
+  return (
+    player.ratings?.overall ??
+    player.attributes?.overall ??
+    player.overall ??
+    player.rating ??
+    player.value ??
+    0
+  );
+}
+
+function freeAgentSortValue(player) {
+  return Number(freeAgentOverall(player) || 0) * 2 + Number(freeAgentAsk(player) || 0) + Number(player.team_fit_score || 0) * 0.1;
+}
+
+function singleLineChart(points, options = {}) {
+  const rows = points.length === 1 && !options.fixedSlots ? [{ ...points[0], label: "Start" }, points[0]] : points;
+  if (!rows.length) return `<div class="empty">${escapeHtml(options.empty || "No chart data.")}</div>`;
+  const values = rows.map((point) => Number(point.value)).filter(Number.isFinite);
+  const min = Number.isFinite(Number(options.minValue)) ? Number(options.minValue) : Math.min(...values);
+  const max = Number.isFinite(Number(options.maxValue)) ? Number(options.maxValue) : Math.max(...values);
+  const span = Math.max(1, max - min);
+  const width = 320;
+  const height = 150;
+  const padX = 24;
+  const padY = 18;
+  const fixedSlots = Number(options.fixedSlots || 0);
+  const xDenominator = fixedSlots > 1 ? fixedSlots - 1 : Math.max(1, rows.length - 1);
+  const coords = rows.map((point, index) => {
+    const value = Number(point.value || 0);
+    const x = padX + (index / xDenominator) * (width - padX * 2);
+    const y = options.invert
+      ? padY + ((value - min) / span) * (height - padY * 2)
+      : height - padY - ((value - min) / span) * (height - padY * 2);
+    return { x, y, point };
+  });
+  return `
+    <svg class="trend-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Trend line">
+      <path class="trend-grid" d="M${padX} ${padY}H${width - padX}M${padX} ${height / 2}H${width - padX}M${padX} ${height - padY}H${width - padX}" />
+      <polyline class="trend-line primary" points="${coords.map((coord) => `${coord.x.toFixed(1)},${coord.y.toFixed(1)}`).join(" ")}" />
+      ${coords.map((coord) => `<circle class="trend-dot" cx="${coord.x.toFixed(1)}" cy="${coord.y.toFixed(1)}" r="3"><title>${escapeAttr(coord.point.label || "")}: ${escapeAttr(coord.point.value)} ${escapeAttr(coord.point.record || "")}</title></circle>`).join("")}
+      <text class="trend-axis left" x="${padX}" y="${height - 4}">${escapeHtml(rows[0]?.label || "")}</text>
+      <text class="trend-axis right" x="${width - padX}" y="${height - 4}">${escapeHtml(options.endLabel || rows[rows.length - 1]?.label || "")}</text>
+    </svg>`;
+}
+
+function multiLineChart(lines, options = {}) {
+  const usable = lines.filter((line) => Array.isArray(line.points) && line.points.length);
+  if (!usable.length) return `<div class="empty">${escapeHtml(options.empty || "No chart data.")}</div>`;
+  const values = usable.flatMap((line) => line.points.map((point) => Number(point.value))).filter(Number.isFinite);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = Math.max(1, max - min);
+  const width = 420;
+  const height = 155;
+  const padX = 24;
+  const padY = 18;
+  const colors = ["#2fbf75", "#5b8fd9", "#d7b84f", "#d94a4a", "#966ce6", "#46becd", "#e68c46", "#c2c2c2"];
+  const paths = usable.slice(0, 8).map((line, lineIndex) => {
+    const points = line.points.length === 1 ? [{ ...line.points[0], label: "Start" }, line.points[0]] : line.points;
+    const coords = points.map((point, index) => {
+      const x = padX + (points.length <= 1 ? 0 : (index / (points.length - 1)) * (width - padX * 2));
+      const y = height - padY - ((Number(point.value || 0) - min) / span) * (height - padY * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    return `<polyline class="trend-line" style="stroke:${colors[lineIndex % colors.length]}" points="${coords.join(" ")}"><title>${escapeHtml(line.name || "Player")}</title></polyline>`;
+  }).join("");
+  const legend = usable.slice(0, 6).map((line, index) => `
+    <span><i style="background:${colors[index % colors.length]}"></i>${escapeHtml(shortName(line.name || "Player"))}</span>
+  `).join("");
+  return `
+    <svg class="trend-svg multi" viewBox="0 0 ${width} ${height}" role="img" aria-label="Player development trend">
+      <path class="trend-grid" d="M${padX} ${padY}H${width - padX}M${padX} ${height / 2}H${width - padX}M${padX} ${height - padY}H${width - padX}" />
+      ${paths}
+    </svg>
+    <div class="trend-legend">${legend}</div>`;
+}
+
+function developmentLineChart(lines, options = {}) {
+  if (!lines.length) return `<div class="empty">${escapeHtml(options.empty || "No chart data.")}</div>`;
+  const months = developmentSeasonMonths();
+  const series = lines.map((line) => normalizeDevelopmentSeries(line, months));
+  const paddedMin = -5;
+  const paddedMax = 5;
+  const span = paddedMax - paddedMin;
+  const width = 560;
+  const height = 220;
+  const padX = 24;
+  const padY = 17;
+  const colors = developmentLineColors();
+  const paths = series.map((line, lineIndex) => {
+    const coords = line.values.map((value, index) => {
+      if (!Number.isFinite(value)) return null;
+      const x = padX + (index / Math.max(1, months.length - 1)) * (width - padX * 2);
+      const y = height - padY - ((clampNumber(Number(value || 0), paddedMin, paddedMax) - paddedMin) / span) * (height - padY * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).filter(Boolean);
+    const color = colors[lineIndex % colors.length];
+    if (coords.length <= 1) {
+      const [point] = coords;
+      if (!point) return "";
+      const [x, y] = point.split(",");
+      return `<circle class="trend-dot" style="fill:${color}" cx="${x}" cy="${y}" r="2.4"><title>${escapeHtml(line.name || "Player")}</title></circle>`;
+    }
+    return `<polyline class="trend-line" style="stroke:${color}" points="${coords.join(" ")}"><title>${escapeHtml(line.name || "Player")}</title></polyline>`;
+  }).join("");
+  return `
+    <svg class="trend-svg development-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Player development trend">
+      <path class="trend-grid" d="M${padX} ${padY}H${width - padX}M${padX} ${height / 2}H${width - padX}M${padX} ${height - padY}H${width - padX}" />
+      <text class="trend-axis left" x="${padX}" y="${padY - 4}">+5</text>
+      <text class="trend-axis left" x="${padX}" y="${height / 2 - 4}">0</text>
+      <text class="trend-axis left" x="${padX}" y="${height - padY - 4}">-5</text>
+      ${paths}
+      ${months.map((month, index) => {
+        const x = padX + (index / Math.max(1, months.length - 1)) * (width - padX * 2);
+        return `<text class="trend-axis development-axis" x="${x.toFixed(1)}" y="${height - 3}">${escapeHtml(month.label)}</text>`;
+      }).join("")}
+    </svg>`;
+}
+
+function normalizeDevelopmentSeries(line, months) {
+  const byLabel = new Map();
+  const currentMonthIndex = developmentCurrentMonthIndex(months);
+  let startValue = null;
+  for (const point of line.points || []) {
+    const label = String(point.label || "");
+    const value = Number(point.value);
+    if (label.toLowerCase() === "start") {
+      if (Number.isFinite(value)) startValue = value;
+      continue;
+    }
+    const month = label.length >= 7 ? label.slice(5, 7) : label.padStart(2, "0");
+    if (Number.isFinite(value)) byLabel.set(month, value);
+  }
+  let current = Number.isFinite(startValue) ? startValue : Number(line.current || 0);
+  const rawValues = months.map((month, index) => {
+    if (index > currentMonthIndex) return null;
+    if (byLabel.has(month.key)) current = byLabel.get(month.key);
+    return current;
+  });
+  const baseline = Number.isFinite(startValue) ? startValue : rawValues.find(Number.isFinite) ?? current;
+  const values = rawValues.map((value) => (Number.isFinite(value) ? value - baseline : null));
+  return { name: line.name, values };
+}
+
+function developmentCurrentMonthIndex(months) {
+  const date = state.home?.save?.current_date || "";
+  const monthNumber = Number(date.slice(5, 7));
+  const index = months.findIndex((month) => Number(month.key) === monthNumber);
+  if (index >= 0) return index;
+  if (monthNumber >= 7 && monthNumber <= 9) return months.length - 1;
+  return 0;
+}
+
+function developmentSeasonMonths() {
+  return [
+    { key: "10", label: "Oct" },
+    { key: "11", label: "Nov" },
+    { key: "12", label: "Dec" },
+    { key: "01", label: "Jan" },
+    { key: "02", label: "Feb" },
+    { key: "03", label: "Mar" },
+    { key: "04", label: "Apr" },
+    { key: "05", label: "May" },
+    { key: "06", label: "Jun" },
+  ];
+}
+
 function contractPayrollColumn(season, rows, cap) {
   const salaries = rows
     .map((row, index) => ({ row, index, salary: Number(row.salary_by_year?.[season] || 0) }))
@@ -1674,7 +2743,7 @@ function contractPayrollColumn(season, rows, cap) {
   const tax = Number(cap?.tax_line_millions || 190);
   const hard = Number(cap?.hard_cap_millions || 230);
   const payroll = Number(cap?.salary_total_millions || salaries.reduce((sum, item) => sum + item.salary, 0));
-  const scale = Math.max(hard, tax, payroll, 1);
+  const scale = Math.max(hard, tax, payroll, 1) * 1.08;
   return `
     <div class="contract-payroll-column">
       <strong>${escapeHtml(season)}</strong>
@@ -1694,6 +2763,15 @@ function contractPayrollColumn(season, rows, cap) {
 }
 
 function simControls() {
+  const save = state.home?.save || {};
+  const currentDate = String(save.current_date || "");
+  const isOffseasonRollover = String(save.phase || "") === "offseason" && currentDate.slice(5) >= "09-01";
+  if (isOffseasonRollover) {
+    return `
+      <div class="actions calendar-actions">
+        <button data-advance="next-season">Advance To Next Season</button>
+      </div>`;
+  }
   return `
     <div class="actions calendar-actions">
       <button data-advance="next-event">Next Event</button>
@@ -1714,6 +2792,29 @@ function calendarCell(cell, games, current, team) {
   </div>`;
 }
 
+function calendarHeaderDate(current, month) {
+  const dateText = formatWrittenDate(current);
+  if (dateText) return dateText;
+  const [year, mon] = String(month || "").split("-").map(Number);
+  if (!year || !mon) return "Calendar";
+  return new Date(Date.UTC(year, mon - 1, 1)).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+function formatWrittenDate(value) {
+  const [year, month, day] = String(value || "").slice(0, 10).split("-").map(Number);
+  if (!year || !month || !day) return "";
+  return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 function calendarGamePill(game, team, past) {
   const home = game.home || game.home_team;
   const away = game.away || game.away_team;
@@ -1722,11 +2823,11 @@ function calendarGamePill(game, team, past) {
   const result = game.result || resultForTeam(game, team);
   const cls = result === "W" ? "win" : result === "L" ? "loss" : "";
   const gameId = game.game_id || game.id;
-  return `<button class="game-pill ${cls}" ${past && gameId ? `data-box-score="${escapeAttr(gameId)}"` : "disabled"}>${escapeHtml(opponent || "")} ${escapeHtml(score || "")}</button>`;
+  return `<button class="game-pill ${cls}" ${past && gameId ? `data-box-score="${escapeAttr(gameId)}"` : "disabled"}>${escapeHtml([opponent, score].filter(Boolean).join(" "))}</button>`;
 }
 
 function contractsBlock(rows, dash) {
-  const seasons = contractSeasons(rows).slice(0, 5);
+  const seasons = contractSeasons(rows).slice(0, 4);
   const expanded = state.expandedContractSeason;
   return `
     ${expanded ? `<button id="closeContractYear">Back To Contracts</button>` : ""}
@@ -1754,6 +2855,53 @@ function contractYearColumn(season, rows, cap, expanded) {
 }
 
 function wireDashboardOverview(editable) {
+  const teamSelect = document.getElementById("dashboardTeamSelect");
+  if (teamSelect) {
+    teamSelect.addEventListener("change", async (event) => {
+      await switchDashboardTeam(event.target.value || userTeam());
+    });
+  }
+  els.content.querySelectorAll("[data-dashboard-team-jump]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      await switchDashboardTeam(button.dataset.dashboardTeamJump || userTeam());
+    });
+  });
+  els.content.querySelectorAll("[data-dashboard-trade]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      state.tradeTab = button.dataset.dashboardTrade || "builder";
+      state.view = "trade";
+      syncNavActive();
+      await ensureViewData(true);
+      render();
+      window.scrollTo({ top: 0, left: 0 });
+    });
+  });
+  els.content.querySelectorAll("[data-dashboard-offers]").forEach((button) => {
+    button.addEventListener("click", openTradeOffersModal);
+  });
+  els.content.querySelectorAll("[data-dashboard-player-finder]").forEach((button) => {
+    button.addEventListener("click", openPlayerFinderModal);
+  });
+  els.content.querySelectorAll("[data-standings-conference-toggle]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const current = button.dataset.standingsConference || "East";
+      state.dashboardStandingsConference = current === "East" ? "West" : "East";
+      renderDashboard();
+    });
+  });
+  els.content.querySelectorAll("[data-standings-view-all]").forEach((button) => {
+    button.addEventListener("click", openStandingsModal);
+  });
+  wireDevelopmentLegend();
+  els.content.querySelectorAll("[data-dashboard-view]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      state.view = button.dataset.dashboardView || "dashboard";
+      syncNavActive();
+      await ensureViewData(true);
+      render();
+      window.scrollTo({ top: 0, left: 0 });
+    });
+  });
   els.content.querySelectorAll("[data-calendar-step]").forEach((button) => {
     button.addEventListener("click", async () => {
       state.calendarMonth = addMonths(state.calendarMonth || String(state.home?.save?.current_date || "").slice(0, 7), Number(button.dataset.calendarStep || 0));
@@ -1805,7 +2953,7 @@ function wireDashboardOverview(editable) {
     setStartingFive.addEventListener("click", saveStartingFiveFromDraft);
   }
   const auto = document.getElementById("autoStartingFive");
-  if (auto) auto.addEventListener("click", () => saveStartingFive({}));
+  if (auto) auto.addEventListener("click", () => saveStartingFive({}, { auto: true }));
   els.content.querySelectorAll("[data-minute-player]").forEach((input) => {
     input.addEventListener("input", () => {
       const playerId = input.dataset.minutePlayer;
@@ -1824,6 +2972,57 @@ function wireDashboardOverview(editable) {
   });
   const saveRotation = document.getElementById("saveRotation");
   if (saveRotation) saveRotation.addEventListener("click", saveRotationMinutes);
+}
+
+async function switchDashboardTeam(team) {
+  state.dashboardTeam = team || userTeam();
+  state.startingDraft = null;
+  state.startingSavedSignature = "";
+  state.startingPickerSlot = null;
+  state.developmentPlayerIds = [];
+  state.developmentSelectionTouched = false;
+  await ensureViewData(true);
+  renderDashboard();
+}
+
+function wireDevelopmentLegend() {
+  els.content.querySelectorAll("[data-development-remove]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const playerId = button.dataset.developmentRemove;
+      state.developmentSelectionTouched = true;
+      clearDevelopmentNewBadge();
+      state.developmentPlayerIds = state.developmentPlayerIds.filter((id) => id !== playerId);
+      renderDashboard();
+    });
+  });
+  els.content.querySelectorAll("[data-development-swap]").forEach((select) => {
+    select.addEventListener("change", () => {
+      const index = Number(select.dataset.developmentSwap || 0);
+      const nextId = select.value;
+      if (!nextId) return;
+      state.developmentSelectionTouched = true;
+      clearDevelopmentNewBadge();
+      const draft = [...state.developmentPlayerIds];
+      if (!draft.includes(nextId) || draft[index] === nextId) {
+        draft[index] = nextId;
+        state.developmentPlayerIds = [...new Set(draft)].slice(0, 5);
+        renderDashboard();
+      }
+    });
+  });
+  const add = els.content.querySelector("[data-development-add]");
+  const addSelect = els.content.querySelector("[data-development-add-select]");
+  if (add && addSelect) {
+    add.addEventListener("click", () => {
+      if (state.developmentPlayerIds.length >= 5 || !addSelect.value) return;
+      state.developmentSelectionTouched = true;
+      clearDevelopmentNewBadge();
+      if (!state.developmentPlayerIds.includes(addSelect.value)) {
+        state.developmentPlayerIds = [...state.developmentPlayerIds, addSelect.value].slice(0, 5);
+        renderDashboard();
+      }
+    });
+  }
 }
 
 function wireContractsBlock() {
@@ -1858,14 +3057,18 @@ async function saveStartingFiveFromDraft() {
   });
 }
 
-async function saveStartingFive(slots) {
-  const result = await action("set_starting_five", { ...savePayload(), team: userTeam(), slots });
+async function saveStartingFive(slots, options = {}) {
+  const payload = { ...savePayload(), team: userTeam() };
+  if (options.auto) payload.auto = true;
+  else payload.slots = slots;
+  const result = await action("set_starting_five", payload);
   if (result.status === "blocked") return showToast(result.reason || "Starting 5 update blocked.", true);
 
   state.data.dashboard = result.dashboard;
   state.data.statusDashboard = result.dashboard;
   state.rotationDraft = {};
   state.startingDraft = null;
+  state.startingSavedSignature = "";
   state.startingPickerSlot = null;
 
   renderDashboard();
@@ -1891,6 +3094,43 @@ function seriesCard(series) {
       <div class="series-team"><strong>${escapeHtml(teamLabel(teams[0]))}</strong><span>${scores[0] ?? 0}</span></div>
       <div class="series-team"><strong>${escapeHtml(teamLabel(teams[1]))}</strong><span>${scores[1] ?? 0}</span></div>
       ${series.winner ? `<div class="series-winner">Winner: ${escapeHtml(teamLabel(series.winner))}</div>` : ""}
+    </div>`;
+}
+
+function playoffBracket(series, champion) {
+  const finals = series.filter((item) => item.round === "finals");
+  return `
+    <div class="tournament-bracket">
+      ${bracketConference("East", series)}
+      <div class="bracket-finals">
+        <div class="bracket-conference-title">Finals</div>
+        ${finals.length ? finals.map((item) => `<div class="bracket-node final-node">${seriesCard(item)}</div>`).join("") : `<div class="bracket-node empty-final">Finals matchup pending</div>`}
+        ${champion ? `<div class="bracket-champion">Champion: ${escapeHtml(teamLabel(champion))}</div>` : ""}
+      </div>
+      ${bracketConference("West", series)}
+    </div>`;
+}
+
+function bracketConference(conference, series) {
+  const roundOrder = ["first_round", "conference_semifinals", "conference_finals"];
+  return `
+    <div class="bracket-conference ${conference.toLowerCase()}">
+      <div class="bracket-conference-title">${escapeHtml(conference)}</div>
+      <div class="bracket-rounds">
+        ${roundOrder.map((round) => bracketRound(round, series.filter((item) => item.conference === conference && item.round === round))).join("")}
+      </div>
+    </div>`;
+}
+
+function bracketRound(round, roundSeries) {
+  return `
+    <div class="bracket-round bracket-${escapeAttr(round)}">
+      <div class="bracket-round-title">${escapeHtml(rowLabel(round))}</div>
+      <div class="bracket-node-stack">
+        ${roundSeries.length
+          ? roundSeries.map((item) => `<div class="bracket-node">${seriesCard(item)}</div>`).join("")
+          : `<div class="bracket-node bracket-placeholder">${escapeHtml(rowLabel(round))} pending</div>`}
+      </div>
     </div>`;
 }
 
@@ -2222,8 +3462,8 @@ function listSection(title, items) {
   return `<section class="section">${sectionHead(title)}${list(items)}</section>`;
 }
 
-function sectionHead(title) {
-  return `<div class="section-head"><h3>${escapeHtml(title)}</h3></div>`;
+function sectionHead(title, meta = "", extra = "") {
+  return `<div class="section-head"><h3>${escapeHtml(title)}</h3>${extra || ""}${meta ? `<span class="pill">${escapeHtml(meta)}</span>` : ""}</div>`;
 }
 
 function list(items) {
@@ -2291,7 +3531,7 @@ function leagueEventRotator() {
       <div class="event-rotator-body">
         ${leagueEventSlide(events[0])}
       </div>
-      <div class="event-progress"><span></span></div>
+      <div class="rotator-progress"><span></span></div>
     </div>
     <script type="application/json" id="leagueEventRotatorData">
       ${JSON.stringify(events.slice(0, 12)).replace(/</g, "\\u003c")}
@@ -2355,7 +3595,11 @@ function postLine(post) {
 }
 
 function scoreLine(game) {
-  if (game.away_score !== undefined && game.home_score !== undefined) return `${game.away_score}-${game.home_score}`;
+  if (game.away_score === null || game.away_score === undefined || game.away_score === "") return "";
+  if (game.home_score === null || game.home_score === undefined || game.home_score === "") return "";
+  const away = Number(game.away_score);
+  const home = Number(game.home_score);
+  if (Number.isFinite(away) && Number.isFinite(home)) return `${away}-${home}`;
   return "";
 }
 
@@ -2446,6 +3690,12 @@ function teamLabel(team) {
   if (!team) return "";
   if (typeof team === "string") return team.replace("team_", "").toUpperCase();
   return team.abbrev || team.name || team.id || textValue(team);
+}
+
+function shortName(name) {
+  const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 1) return parts[0] || "";
+  return `${parts[0][0]}. ${parts[parts.length - 1]}`;
 }
 
 function userTeam() {

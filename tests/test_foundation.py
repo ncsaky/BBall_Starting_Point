@@ -14,7 +14,7 @@ from unittest.mock import patch
 from urllib import request as urlrequest
 
 import nba_gm_data.transactions as transactions_module
-from nba_gm_data.app_actions import APP_ACTION_PROTOCOL_VERSION, dispatch_app_action
+from nba_gm_data.app_actions import APP_ACTION_PROTOCOL_VERSION, dispatch_app_action, estimated_overall_delta
 from nba_gm_data.app_server import make_gui_server
 from nba_gm_data.assets import install_loading_assets
 from nba_gm_data.animation import auto_frame_size, colorize_frame, default_video_path, load_animation_frames
@@ -2665,6 +2665,76 @@ class DataFoundationTests(unittest.TestCase):
             healthy_slots = starting_lineup_slots(active, save, "team_gsw", persist=True)
             self.assertEqual(healthy_slots["1"], curry["id"])
 
+    def test_starting_five_autofill_uses_next_unused_auto_starter_for_open_manual_slot(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "lineup_injury_collision.json"
+            save = create_league_save(ROOT, self.plain, "MIA", save_path, seed=432)
+            active = canonical_with_save(self.plain, save)
+            players_by_name = {player["normalized_name"]: player for player in active["players"] if player.get("team_id") == "team_mia"}
+            herro = players_by_name["tyler herro"]
+            powell = players_by_name["norman powell"]
+            wiggins = players_by_name["andrew wiggins"]
+            adebayo = players_by_name["bam adebayo"]
+            ware = players_by_name["kelel ware"]
+            save["starting_lineups"] = {
+                "team_mia": {
+                    "source": "user",
+                    "slots": {
+                        "1": herro["id"],
+                        "2": powell["id"],
+                        "3": wiggins["id"],
+                        "4": adebayo["id"],
+                        "5": ware["id"],
+                    },
+                }
+            }
+            save.setdefault("health_states", []).append(
+                {
+                    "player_id": powell["id"],
+                    "availability_status": "out",
+                    "current_injury_id": "test_powell_injury",
+                    "return_date": "2025-11-15",
+                }
+            )
+            injured_slots = starting_lineup_slots(active, save, "team_mia", persist=True)
+            self.assertEqual(len(injured_slots), 5)
+            self.assertNotIn(powell["id"], injured_slots.values())
+            self.assertEqual(injured_slots["1"], herro["id"])
+
+    def test_gui_starting_five_auto_saves_real_slots_and_blocks_empty_manual_lineup(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_dir = Path(tmp)
+            created = dispatch_app_action(
+                "create_save",
+                {"team": "GSW", "seed": 431, "save_name": "lineup_auto"},
+                root=ROOT,
+                save_dir=save_dir,
+                canonical=self.plain,
+            )
+            save_path = created["save_path"]
+            blocked = dispatch_app_action(
+                "set_starting_five",
+                {"save_path": save_path, "team": "GSW", "slots": {}},
+                root=ROOT,
+                save_dir=save_dir,
+                canonical=self.plain,
+            )
+            self.assertEqual(blocked["status"], "blocked")
+
+            auto = dispatch_app_action(
+                "set_starting_five",
+                {"save_path": save_path, "team": "GSW", "auto": True},
+                root=ROOT,
+                save_dir=save_dir,
+                canonical=self.plain,
+            )
+            self.assertEqual(auto["status"], "updated")
+            self.assertEqual(len(auto["dashboard"]["starting_five"]), 5)
+            saved = load_save(save_path)
+            stored = saved.get("starting_lineups", {}).get("team_gsw", {})
+            self.assertEqual(stored.get("source"), "auto")
+            self.assertEqual(len(stored.get("slots") or {}), 5)
+
     def test_league_events_transactions_filters_are_not_major_only(self):
         with tempfile.TemporaryDirectory() as tmp:
             save_path = Path(tmp) / "events_transactions.json"
@@ -3546,6 +3616,12 @@ class DataFoundationTests(unittest.TestCase):
         self.assertGreater(sum(kon_event["trait_deltas"].values()), 0)
         self.assertTrue(all(abs(delta) <= 0.12 for delta in lebron_event["trait_deltas"].values()))
         self.assertIn("stamina_cardio", kon_event["trait_deltas"])
+
+    def test_development_dashboard_uses_visible_estimated_ovr_scale(self):
+        event = {"trait_deltas": {"shooting_range": 0.18, "rim_pressure": 0.14, "scheme_iq": 0.12}}
+        self.assertGreaterEqual(estimated_overall_delta(event), 0.3)
+        self.assertLessEqual(estimated_overall_delta({"trait_deltas": {"a": 2.0}}), 0.65)
+        self.assertGreaterEqual(estimated_overall_delta({"trait_deltas": {"a": -2.0}}), -0.65)
 
     def test_gm_transaction_context_exports_core_records(self):
         self.assertEqual(len(self.universe.front_office_profiles), len(self.universe.teams))

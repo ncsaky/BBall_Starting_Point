@@ -1,3 +1,10 @@
+"""Generate optional local-LLM prose without delegating league truth.
+
+Save-backed events remain authoritative. Model output is lazy, cached,
+strictly parsed, semantically validated against a compact sim-only packet, and
+replaced by deterministic fallback text whenever that contract fails.
+"""
+
 from __future__ import annotations
 
 import hashlib
@@ -2356,6 +2363,7 @@ def hydrate_social_items(
     team_id: str | None = None,
     provider: NarrativeProvider | None = None,
 ) -> tuple[list[dict[str, Any]], bool]:
+    """Lazily enrich a bounded visible slice and report cache mutation."""
     ensure_narrative_state(save)
     before = json.dumps(save.get("narrative_cache", {}).get("social", {}), sort_keys=True)
     if not save.get("narrative_settings", {}).get("enabled"):

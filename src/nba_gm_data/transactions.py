@@ -1,3 +1,10 @@
+"""Evaluate and apply contextual player, pick, and pick-right transactions.
+
+Asset value is receiver- and package-dependent, while legality and consent are
+separate decisions. Structured pick obligations are shared by valuation,
+display, transfer, lockout, and eventual lottery/draft resolution.
+"""
+
 from __future__ import annotations
 
 import json
@@ -1287,6 +1294,12 @@ def parse_cli_assets(canonical: dict[str, Any], from_team: str, to_team: str, sp
 
 
 def with_transaction_context(canonical: dict[str, Any] | Any, config: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Attach reusable transaction projections, rebuilding only when stale.
+
+    Callers may evaluate many packages against this object. Cache signatures
+    must therefore include every season, record, ownership, and obligation
+    input that can alter a projected value.
+    """
     if isinstance(canonical, dict) and canonical.get("_allow_internal_caches") and transaction_context_ready(canonical):
         return canonical
     if isinstance(canonical, dict) and canonical.get("_allow_internal_caches") and transaction_context_is_complete(canonical):
