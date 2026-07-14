@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import random
 from copy import deepcopy
@@ -259,19 +260,40 @@ def startup_injury_event(player: Player, current: dict[str, Any], config: dict[s
     )
 
 
-def simulate_health(root: str | Path, canonical: dict[str, Any] | Any, from_date: str, through_date: str, seed: int = 1) -> dict[str, Any]:
+def simulate_health(
+    root: str | Path,
+    canonical: dict[str, Any] | Any,
+    from_date: str,
+    through_date: str,
+    seed: int = 1,
+    schedule: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     root = Path(root)
     canonical = to_plain(canonical)
     config = load_injury_model_config(root)
-    schedule = schedule_games_in_range(root, from_date, through_date)
+    schedule = schedule_games_in_range(root, from_date, through_date, games=schedule)
     team_by_espn = espn_team_id_map_from_canonical(canonical)
     players_by_team = rotation_players_by_team(canonical)
     profiles = {profile["player_id"]: profile for profile in canonical.get("player_health_profiles", [])}
     states = {state["player_id"]: dict(state) for state in canonical.get("player_health_states", [])}
     traits = trait_lookup(canonical)
     last_game_date: dict[str, date] = {}
-    severity_counts = {severity: 0 for severity in config.get("severity_bands", {})}
-    body_counts = {body: 0 for body in config.get("body_area_weights", {})}
+    season_start_year = season_start_year_for_health_date(from_date)
+    season_floor = f"{season_start_year}-07-01"
+    season_ceiling = f"{season_start_year + 1}-06-30"
+    existing_season_events = [
+        event
+        for event in canonical.get("injury_events", [])
+        if season_floor <= str(event.get("start_date") or "")[:10] <= season_ceiling
+    ]
+    severity_counts = {
+        severity: sum(str(event.get("severity") or "") == severity for event in existing_season_events)
+        for severity in config.get("severity_bands", {})
+    }
+    body_counts = {
+        body: sum(str(event.get("body_area") or "") == body for event in existing_season_events)
+        for body in config.get("body_area_weights", {})
+    }
     events: list[dict[str, Any]] = []
     for game in schedule:
         game_date = parse_date(game["gameDate"])
@@ -346,6 +368,8 @@ def advance_development(canonical: dict[str, Any] | Any, month: str, seed: int =
     coaches = coach_development_by_team(canonical)
     events: list[dict[str, Any]] = []
     for player in canonical.get("players", []):
+        if player.get("_inactive_player"):
+            continue
         age = maybe_float(player.get("age"))
         minutes = float(player.get("minutes_projection") or 0)
         if not should_generate_development_event(player, age, minutes):
@@ -660,14 +684,51 @@ def monthly_trait_delta(
         role_factor *= 0.72
     cap_room = clamp((92.0 - current) / 42.0, 0.08, 1.0)
     focus_multiplier = clamp(focus_multiplier, 0.12, 1.45)
-    growth = 0.08 * age_factor * role_factor * cap_room * float(staff.get("development_multiplier", 1.0)) * float(staff.get("patience_multiplier", 1.0)) * focus_multiplier
-    growth -= health_drag * (0.04 if trait_key in PHYSICAL_TRAITS else 0.022)
-    if age >= 33 and trait_key in PHYSICAL_TRAITS:
-        growth -= min(0.08, (age - 32.0) * 0.012)
-    if age >= 35 and trait_key not in {"scheme_iq", "passing_reads"}:
-        growth -= 0.012
+    upside_multiplier = development_upside_multiplier(player, seed)
+    growth = 0.20 * age_factor * role_factor * cap_room * float(staff.get("development_multiplier", 1.0)) * float(staff.get("patience_multiplier", 1.0)) * focus_multiplier * upside_multiplier
+    health_penalty = health_drag * (0.04 if trait_key in PHYSICAL_TRAITS else 0.022)
+    if age <= 30:
+        # Short injuries interrupt development; they should not permanently
+        # reverse a young player's skill curve by themselves.
+        growth -= min(max(0.0, growth) * 0.88, health_penalty)
+    else:
+        growth -= health_penalty
+    if age >= 31 and trait_key in PHYSICAL_TRAITS:
+        growth -= min(0.16, 0.025 + (age - 30.0) * 0.025)
+    if age >= 32 and trait_key not in {"scheme_iq", "passing_reads", "portability"}:
+        growth -= min(0.09, 0.012 + (age - 31.0) * 0.013)
     noise = rng.gauss(0, 0.012 + 0.012 * focus_multiplier)
-    return clamp(growth + noise, -0.12, 0.24)
+    return clamp(growth + noise, -0.12, 0.36 if upside_multiplier > 1.0 else 0.24)
+
+
+def development_upside_multiplier(player: dict[str, Any], seed: int) -> float:
+    """Convert explicit prospect upside into stable career growth variance.
+
+    Established players without draft upside metadata retain the calibrated
+    1.0 multiplier. Prospects can become busts or breakouts, but the outcome is
+    fixed by save seed and player id so reloads never reroll a career arc.
+    """
+    potential = maybe_float(player.get("potential"))
+    ability = maybe_float(player.get("current_ability"))
+    if potential is None or ability is None:
+        return 1.0
+    upside = max(0.0, potential - ability)
+    base = clamp(0.75 + upside / 18.0, 0.65, 2.35)
+    marker = int(
+        hashlib.sha256(f"{seed}:{player.get('id')}:development_realization".encode("utf-8")).hexdigest()[:8],
+        16,
+    ) / 0xFFFFFFFF
+    if marker < 0.12:
+        realization = 0.55
+    elif marker < 0.30:
+        realization = 0.80
+    elif marker < 0.78:
+        realization = 1.0
+    elif marker < 0.94:
+        realization = 1.12
+    else:
+        realization = 1.28
+    return round(clamp(base * realization, 0.45, 2.8), 4)
 
 
 def development_trait_focus(player: dict[str, Any], staff: dict[str, Any], player_traits: dict[str, Any], seed: int, month: str) -> dict[str, float]:
@@ -730,13 +791,13 @@ def development_trait_focus(player: dict[str, Any], staff: dict[str, Any], playe
 
 def development_age_factor(age: float) -> float:
     if age <= 20:
-        return 1.08
+        return 1.25
     if age <= 23:
-        return 0.88
+        return 1.0
     if age <= 26:
-        return 0.38
+        return 0.45
     if age <= 30:
-        return 0.12
+        return 0.10
     if age <= 32:
         return 0.03
     return 0.0
@@ -771,19 +832,30 @@ def coach_development_by_team(canonical: dict[str, Any]) -> dict[str, float]:
         return {team["id"]: 3.0 for team in canonical.get("teams", [])}
 
 
-def schedule_games_in_range(root: Path, from_date: str, through_date: str) -> list[dict[str, Any]]:
-    with (root / SCHEDULE_FILE).open("r", encoding="utf-8") as handle:
-        games = json.load(handle).get("games", [])
+def schedule_games_in_range(
+    root: Path,
+    from_date: str,
+    through_date: str,
+    games: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    if games is None:
+        with (root / SCHEDULE_FILE).open("r", encoding="utf-8") as handle:
+            games = json.load(handle).get("games", [])
     return sorted(
         [game for game in games if from_date <= str(game.get("gameDate") or "") <= through_date],
         key=lambda item: (item.get("gameDate") or "", item.get("externalGameId") or ""),
     )
 
 
+def season_start_year_for_health_date(value: str) -> int:
+    day = parse_date(value)
+    return day.year if day.month >= 7 else day.year - 1
+
+
 def rotation_players_by_team(canonical: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
     players_by_team: dict[str, list[dict[str, Any]]] = {}
     for player in canonical.get("players", []):
-        if float(player.get("minutes_projection") or 0.0) >= 8.0:
+        if player.get("team_id") and not player.get("_inactive_player") and float(player.get("minutes_projection") or 0.0) >= 8.0:
             players_by_team.setdefault(player["team_id"], []).append(player)
     for team_id, players in players_by_team.items():
         players_by_team[team_id] = sorted(players, key=lambda item: item.get("minutes_projection") or 0, reverse=True)[:11]
@@ -791,7 +863,10 @@ def rotation_players_by_team(canonical: dict[str, Any]) -> dict[str, list[dict[s
 
 
 def trait_lookup(canonical: dict[str, Any]) -> dict[tuple[str, str], float]:
-    return {(trait["player_id"], trait["trait_key"]): float(trait.get("value") or 50.0) for trait in canonical.get("traits", [])}
+    return {
+        (trait["player_id"], trait["trait_key"]): float(trait.get("value") if trait.get("value") is not None else 50.0)
+        for trait in canonical.get("traits", [])
+    }
 
 
 def traits_by_player(canonical: dict[str, Any]) -> dict[str, dict[str, dict[str, Any]]]:

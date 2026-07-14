@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from .app_actions import AppActionError, dispatch_app_action
+from .app_actions import AppActionError, dispatch_app_action, load_app_canonical
 from .schema import to_plain
 
 
@@ -46,10 +46,12 @@ def make_gui_server(
 ) -> ThreadingHTTPServer:
     root_path = Path(root).resolve()
     save_path = Path(save_dir).resolve() if save_dir else None
+    canonical = load_app_canonical(root_path)
 
     class Handler(GuiRequestHandler):
         app_root = root_path
         app_save_dir = save_path
+        app_canonical = canonical
 
     return ThreadingHTTPServer((host, int(port)), Handler)
 
@@ -57,6 +59,7 @@ def make_gui_server(
 class GuiRequestHandler(BaseHTTPRequestHandler):
     app_root: Path = Path(".")
     app_save_dir: Path | None = None
+    app_canonical: dict[str, Any] | None = None
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
@@ -98,6 +101,7 @@ class GuiRequestHandler(BaseHTTPRequestHandler):
                 payload.get("payload") or {},
                 root=self.app_root,
                 save_dir=self.app_save_dir,
+                canonical=self.app_canonical,
             )
             self.write_json({"ok": True, "result": result})
         except Exception as exc:

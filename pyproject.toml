@@ -9,8 +9,11 @@ dependencies = []
 nba-gm-data = "nba_gm_data.cli:main"
 nba-gm-data-gui = "nba_gm_data.app_server:main"
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["nba_gm_data"]
 [tool.setuptools.package-data]
-nba_gm_data = ["gui/*"]
+nba_gm_data = ["gui/*", "gui/assets/team_logos/*.png"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

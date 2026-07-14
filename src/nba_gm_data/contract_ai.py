@@ -557,20 +557,18 @@ def simulate_free_agency(
     }
 
 
-def apply_contract_to_save(save_path: str | Path, negotiation_id: str, date: str = CANONICAL_START_DATE) -> dict[str, Any]:
-    path = Path(save_path)
-    if path.exists():
-        with path.open("r", encoding="utf-8") as handle:
-            save = json.load(handle)
-    else:
-        save = {"version": "save_transaction_ledger_v1", "pending_contract_negotiations": [], "transaction_logs": []}
+def apply_contract_to_save_state(
+    save: dict[str, Any],
+    negotiation_id: str,
+    date: str = CANONICAL_START_DATE,
+) -> dict[str, Any]:
+    """Apply an accepted contract negotiation to an already-loaded save."""
     pending = save.get("pending_contract_negotiations", []) or save.get("pending_contracts", [])
     negotiation = next((item for item in pending if (item.get("negotiation", {}).get("id") or item.get("id")) == negotiation_id), None)
     if not negotiation:
         return {
             "status": "not_found",
             "negotiation_id": negotiation_id,
-            "save": str(path),
             "notes": "No pending contract negotiation with this id exists in the save ledger.",
         }
     negotiation_payload = negotiation.get("negotiation") or negotiation
@@ -579,7 +577,6 @@ def apply_contract_to_save(save_path: str | Path, negotiation_id: str, date: str
         return {
             "status": "not_applied",
             "negotiation_id": negotiation_id,
-            "save": str(path),
             "notes": "The pending negotiation does not have an accepted signing decision.",
         }
     accepted_offer = (decision or {}).get("accepted_offer") or accepted_offer_from_negotiation(negotiation_payload)
@@ -661,10 +658,23 @@ def apply_contract_to_save(save_path: str | Path, negotiation_id: str, date: str
     ]
     if "pending_contracts" in save:
         save["pending_contracts"] = [item for item in save.get("pending_contracts", []) if (item.get("negotiation", {}).get("id") or item.get("id")) != negotiation_id]
-    from .save import write_save
+    return {"status": "applied", "transaction_log": to_plain(log)}
 
-    write_save(path, save)
-    return {"status": "applied", "save": str(path), "transaction_log": to_plain(log)}
+
+def apply_contract_to_save(save_path: str | Path, negotiation_id: str, date: str = CANONICAL_START_DATE) -> dict[str, Any]:
+    path = Path(save_path)
+    if path.exists():
+        with path.open("r", encoding="utf-8") as handle:
+            save = json.load(handle)
+    else:
+        save = {"version": "save_transaction_ledger_v1", "pending_contract_negotiations": [], "transaction_logs": []}
+    result = apply_contract_to_save_state(save, negotiation_id, date=date)
+    if result.get("status") == "applied":
+        from .save import write_save
+
+        write_save(path, save)
+    result["save"] = str(path)
+    return result
 
 
 def queue_press_event_if_user_involved(save: dict[str, Any], kind: str, headline: str, team_ids: list[str | None], date: str) -> None:
@@ -1405,7 +1415,11 @@ def contract_legality(canonical: dict[str, Any], player: dict[str, Any], team: d
     if offer_type != "extension" and team["id"] != player["team_id"] and roster_count >= 21:
         manual.append("Offseason roster count is at/above practical v1 limit before corresponding cuts.")
     posture = salary_posture(canonical, team["id"])
-    if "unresolved_contracts" in posture["posture"]:
+    # An uncertain teammate salary should not veto an otherwise-known
+    # extension; the save layer checks every proposed extension year against
+    # the hard cap before applying it. External signings still require the
+    # broader team salary picture to be complete.
+    if offer_type != "extension" and "unresolved_contracts" in posture["posture"]:
         manual.append("Team salary posture includes unresolved contract rows.")
     if issues:
         status = "illegal"

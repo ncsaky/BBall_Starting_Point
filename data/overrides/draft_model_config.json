@@ -12,9 +12,9 @@
   },
   "class_strength": {
     "mean": 58.0,
-    "season_variance": 9.0,
-    "top_end_variance": 11.0,
-    "depth_variance": 8.0
+    "season_variance": 4.5,
+    "top_end_variance": 5.5,
+    "depth_variance": 4.0
   },
   "archetype_weights": {
     "lead_creator": 0.11,

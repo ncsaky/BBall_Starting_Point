@@ -399,7 +399,7 @@ def trait_index(canonical: dict[str, Any]) -> dict[str, dict[str, float]]:
         if not player_id or not key:
             continue
         try:
-            value = float(trait.get("value") or 50.0)
+            value = float(trait.get("value") if trait.get("value") is not None else 50.0)
         except (TypeError, ValueError):
             value = 50.0
         output.setdefault(player_id, {})[str(key)] = value

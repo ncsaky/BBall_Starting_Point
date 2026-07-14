@@ -988,7 +988,7 @@ def simulate_team_line(
         120,
     )
     off_rating = (
-        114.0
+        110.5
         + lineup_quality_effect(team_features, opp_features)
         + unsupported_creation_effect(team_features)
         + (team_features["offense_creation"] - 50) * 0.16
@@ -1112,7 +1112,65 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
                 "blocks": max(0, int(round(item["minutes"] * (feat["rim_deterrence"] / 2200 + max(0.0, feat["rim_deterrence"] - 88) * 0.0034) + rng.random() * 0.95))),
             }
         )
+    normalize_secondary_box_score_totals(lines, features, team_points, possessions)
     return lines
+
+
+def normalize_secondary_box_score_totals(
+    lines: list[dict[str, Any]],
+    features: dict[str, dict[str, float]],
+    team_points: int,
+    possessions: float,
+) -> None:
+    """Keep generated player texture while restoring NBA-scale team totals.
+
+    Player-level formulas intentionally create noisy, role-sensitive lines. A
+    direct sum of those independent draws, however, inflates every secondary
+    category as roster depth grows. Rescaling after all draws preserves who
+    produced the events and consumes no extra RNG, so scores, winners, and the
+    opposing team's simulation remain bit-for-bit unaffected.
+    """
+    if not lines:
+        return
+
+    total_minutes = sum(max(0.0, float(line.get("minutes") or 0.0)) for line in lines) or 1.0
+
+    def weighted_feature(key: str) -> float:
+        return sum(
+            max(0.0, float(line.get("minutes") or 0.0))
+            * float((features.get(str(line.get("player_id"))) or {}).get(key) or 50.0)
+            for line in lines
+        ) / total_minutes
+
+    raw = {key: sum(max(0, int(line.get(key) or 0)) for line in lines) for key in ("rebounds", "assists", "steals", "blocks")}
+    targets = {
+        "rebounds": round(clamp(43.8 + (weighted_feature("offensive_rebounding") - 60.0) * 0.055 + (possessions - 99.0) * 0.11 + (raw["rebounds"] - 66.0) * 0.16, 35, 54)),
+        "assists": round(clamp(26.2 + (weighted_feature("passing") - 60.0) * 0.075 + (team_points - 114.0) * 0.045 + (raw["assists"] - 32.0) * 0.18, 18, 36)),
+        "steals": round(clamp(7.7 + (weighted_feature("defensive_events") - 60.0) * 0.045 + (possessions - 99.0) * 0.035 + (raw["steals"] - 11.5) * 0.16, 3, 14)),
+        "blocks": round(clamp(5.0 + (weighted_feature("rim_deterrence") - 60.0) * 0.055 + (raw["blocks"] - 12.5) * 0.12, 1, 12)),
+    }
+    powers = {"rebounds": 1.32, "assists": 1.20, "steals": 1.55, "blocks": 2.0}
+    for key, target in targets.items():
+        redistribute_integer_stat(lines, key, int(target), powers[key])
+
+
+def redistribute_integer_stat(lines: list[dict[str, Any]], key: str, target: int, power: float) -> None:
+    weights = [max(0.0, float(line.get(key) or 0.0)) ** power for line in lines]
+    total_weight = sum(weights)
+    if total_weight <= 0:
+        return
+    scaled = [target * weight / total_weight for weight in weights]
+    assigned = [int(value) for value in scaled]
+    remainder = max(0, int(target) - sum(assigned))
+    order = sorted(
+        range(len(lines)),
+        key=lambda index: (scaled[index] - assigned[index], str(lines[index].get("player_id") or "")),
+        reverse=True,
+    )
+    for index in order[:remainder]:
+        assigned[index] += 1
+    for index, line in enumerate(lines):
+        line[key] = assigned[index]
 
 
 def assist_rate_for_player(player: dict[str, Any], feat: dict[str, float]) -> float:
@@ -1324,6 +1382,11 @@ def weighted_index(candidates: list[int], weights: list[float], rng: random.Rand
 
 def plausible_point_cap(item: dict[str, Any], features: dict[str, float]) -> int:
     minutes = max(1.0, sim_line_minutes(item))
+    # Additional regular-season workload creates opportunity, but scoring does
+    # not continue scaling linearly into 38-40 minute emergency rotations.
+    # Keeping the scoring exposure at a star-sized 34 minutes prevents an
+    # injury-thinned roster from manufacturing a 39 PPG season by itself.
+    scoring_minutes = min(minutes, 34.0)
     scoring_usage = float(features.get("scoring_usage") or features.get("usage") or 50)
     ball_usage = float(features.get("usage") or scoring_usage)
     impact = float(features.get("impact") or 50)
@@ -1360,7 +1423,7 @@ def plausible_point_cap(item: dict[str, Any], features: dict[str, float]) -> int
         star_cap_bonus += 0.03
     if curry_off_ball_veteran_profile(item.get("player")):
         star_cap_bonus -= 0.08
-    return max(4, int(round(minutes * clamp(ppm + star_cap_bonus, 0.45, 0.98))))
+    return max(4, int(round(scoring_minutes * clamp(ppm + star_cap_bonus, 0.45, 0.98))))
 
 
 def sim_line_minutes(item: dict[str, Any]) -> float:

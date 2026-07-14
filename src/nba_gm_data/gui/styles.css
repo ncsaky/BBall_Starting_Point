@@ -566,6 +566,246 @@ main {
   row-gap: 3px;
 }
 
+.phase-takeover-card {
+  display: flex;
+  flex-direction: column;
+  grid-column: 2 / 6;
+  grid-row: 2 / 8;
+  height: calc(100vh - 458px);
+  min-height: 560px;
+  overflow: hidden;
+  padding: 10px;
+  width: 100%;
+}
+
+.phase-workspace-head {
+  align-items: center;
+  border-bottom: 1px solid var(--line-soft);
+  display: grid;
+  flex: 0 0 auto;
+  gap: 12px;
+  grid-template-columns: minmax(250px, 1fr) auto auto;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+}
+
+.phase-workspace-head h3 {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.phase-workspace-controls {
+  justify-content: flex-end;
+  margin: 0;
+}
+
+.phase-workspace-controls button {
+  min-height: 30px;
+  padding: 0 10px;
+}
+
+.phase-champion {
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+  flex: 0 0 auto;
+  margin-bottom: 8px;
+  padding: 7px 10px;
+}
+
+.phase-champion strong {
+  color: var(--accent);
+  font-family: var(--display);
+  font-size: 18px;
+  margin-left: 8px;
+}
+
+.phase-playoff-layout,
+.phase-draft-layout,
+.phase-free-agency-layout,
+.phase-cutdown-layout,
+.phase-staff-retention-layout {
+  display: grid;
+  flex: 1;
+  gap: 8px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.phase-playoff-layout {
+  grid-template-columns: minmax(0, 1fr) 220px;
+}
+
+.phase-bracket-shell,
+.phase-leaders-panel,
+.phase-focus-panel,
+.phase-board-panel,
+.phase-upcoming-panel,
+.phase-market-panel,
+.phase-offer-panel,
+.phase-bidding-panel {
+  background: var(--panel-2);
+  border: 1px solid var(--line-soft);
+  min-height: 0;
+  overflow: auto;
+  padding: 9px;
+}
+
+.phase-bracket-shell .tournament-bracket {
+  height: 100%;
+  min-width: 980px;
+}
+
+.phase-leaders-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.phase-leader-list {
+  display: grid;
+  flex: 1;
+  list-style: none;
+  margin: 0;
+  min-height: 0;
+  padding: 0;
+}
+
+.phase-leader-list li {
+  align-items: baseline;
+  border-bottom: 1px solid var(--line-soft);
+  display: grid;
+  gap: 5px;
+  grid-template-columns: 18px minmax(0, 1fr) 32px 36px;
+  padding: 4px 0;
+}
+
+.phase-leader-list li > span,
+.phase-leader-list li > small {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.phase-leader-list li > strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.phase-leader-list li > em {
+  color: var(--accent);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.phase-draft-layout {
+  grid-template-columns: minmax(220px, 0.62fr) minmax(420px, 1.25fr) minmax(300px, 0.8fr);
+}
+
+.phase-focus-panel,
+.phase-board-panel,
+.phase-upcoming-panel,
+.phase-market-panel,
+.phase-offer-panel,
+.phase-bidding-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.phase-prospect-name {
+  color: var(--accent);
+  font-family: var(--display);
+  font-size: 25px;
+  margin-top: 10px;
+}
+
+.phase-news-list {
+  margin-top: 14px;
+}
+
+.phase-draft-layout .table-wrap {
+  flex: 1;
+  overflow: auto;
+}
+
+.phase-free-agency-layout {
+  grid-template-columns: minmax(330px, 0.9fr) minmax(430px, 1.15fr) minmax(260px, 0.72fr);
+}
+
+.phase-cutdown-layout {
+  grid-template-columns: minmax(230px, 0.3fr) minmax(720px, 1fr);
+}
+
+.phase-staff-retention-layout {
+  grid-template-columns: minmax(260px, 0.7fr) minmax(280px, 0.65fr) minmax(420px, 1.2fr);
+}
+
+.staff-retention-effects {
+  display: grid;
+  gap: 7px;
+  margin-top: 16px;
+}
+
+.staff-retention-effects > div {
+  border-bottom: 1px solid var(--line-soft);
+  display: grid;
+  gap: 3px 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding-bottom: 7px;
+}
+
+.staff-retention-effects small {
+  color: var(--muted);
+  grid-column: 1 / 3;
+}
+
+.staff-retention-offer label {
+  color: var(--muted);
+  display: grid;
+  font-size: 11px;
+  gap: 5px;
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+
+.staff-retention-market .scroll-list {
+  flex: 1;
+  max-height: none;
+}
+
+.staff-retention-market .list-row {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 44px 78px;
+  text-align: left;
+}
+
+.phase-cutdown-layout .table-wrap {
+  flex: 1;
+  overflow: auto;
+}
+
+.phase-cutdown-layout td:last-child,
+.phase-cutdown-layout th:last-child {
+  text-align: right;
+}
+
+.phase-market-panel .scroll-list {
+  flex: 1;
+  max-height: none;
+  overflow: auto;
+}
+
+.phase-offer-panel .form-grid {
+  margin-top: auto;
+}
+
+.phase-bidding-panel .list {
+  overflow: auto;
+}
+
 /* Left top cards stay tall */
 .standings-card {
   grid-column: 4;
@@ -2877,6 +3117,14 @@ body[data-view="playoffs"] main {
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.bracket-round-title {
+  align-items: flex-end;
+  display: flex;
+  line-height: 1.15;
+  min-height: 26px;
+  white-space: normal;
 }
 
 .bracket-conference-title {

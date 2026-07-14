@@ -2,6 +2,7 @@
 // simulation, and save mutations must remain behind the Python action API.
 const state = {
   busy: false,
+  busyDepth: 0,
   teams: [],
   saves: [],
   currentSave: "",
@@ -151,6 +152,7 @@ async function apiGet(path) {
 }
 
 async function action(name, payload = {}) {
+  state.busyDepth += 1;
   setBusy(true);
   try {
     const response = await fetch("/api/action", {
@@ -162,7 +164,8 @@ async function action(name, payload = {}) {
     if (!response.ok || data.ok === false) throw new Error(data.error || `${response.status} ${response.statusText}`);
     return data.result;
   } finally {
-    setBusy(false);
+    state.busyDepth = Math.max(0, state.busyDepth - 1);
+    setBusy(state.busyDepth > 0 || state.hydrating);
   }
 }
 
@@ -212,16 +215,23 @@ async function refreshHome() {
   if (!state.currentSave) {
     state.hydrating = false;
     state.home = null;
+    setBusy(state.busyDepth > 0);
     render();
     return;
   }
-  state.home = await action("home", savePayload());
-  if (!state.dashboardTeam) state.dashboardTeam = userTeam();
-  syncDefaultPartner();
-  applyPhaseRouting();
-  await ensureViewData(true);
-  state.hydrating = false;
-  render();
+  state.hydrating = true;
+  setBusy(true);
+  try {
+    state.home = await action("home", savePayload());
+    if (!state.dashboardTeam) state.dashboardTeam = userTeam();
+    syncDefaultPartner();
+    applyPhaseRouting();
+    await ensureViewData(true);
+  } finally {
+    state.hydrating = false;
+    setBusy(state.busyDepth > 0);
+    render();
+  }
 }
 
 function clearViewCaches() {
@@ -252,6 +262,24 @@ async function ensureViewData(force = false) {
     state.data.dashboard = team === userTeam()
       ? state.data.statusDashboard
       : await action("team_dashboard", { ...savePayload(), team });
+    const phase = dashboardPhaseKind();
+    if (phase === "playoffs") {
+      state.data.playoffs = await action("playoff_room", savePayload());
+      state.data.playoffLeaders = await action("playoff_leaders", { ...savePayload(), stat: "points", limit: 9 });
+    }
+    if (phase === "draft") {
+      state.data.draft = await action("draft_room", { ...savePayload(), team: userTeam(), seed: 7 });
+    }
+    if (phase === "free_agency") {
+      state.data.freeagency = await action("free_agency_room", { ...savePayload(), team: userTeam(), seed: 7 });
+    }
+    if (phase === "staff_retention") {
+      state.data.staffRetention = await action("staff_retention_room", savePayload());
+    }
+    if (phase === "cutdown") {
+      state.data.cutdown = await action("roster_cutdown", savePayload());
+    }
+    if (phase) return;
     await loadDashboardCalendar(team);
     state.data.dashboardStandings = await action("standings", savePayload());
     state.data.dashboardSummaryLeaders = await action("dashboard_summary_leaders", { ...savePayload(), limit: 5 });
@@ -401,11 +429,20 @@ function renderStartup() {
 
 function applyPhaseRouting() {
   if (!state.currentSave || !state.home?.save) return;
-  const phase = String(state.home.save.phase || "");
-  if (phase === "draft") state.view = "draft";
-  else if (phase === "free_agency") state.view = "freeagents";
-  else if (phase === "play_in" || phase === "playoffs") state.view = "playoffs";
-  else if (state.view === "draft" || state.view === "playoffs") state.view = "dashboard";
+  // Seasonal command rooms now live inside the dashboard. Keep the legacy
+  // routes callable, but never strand a save on a separate full-page screen.
+  if (["draft", "playoffs", "freeagents", "freeagency"].includes(state.view)) state.view = "dashboard";
+}
+
+function dashboardPhaseKind() {
+  const phase = String(state.home?.save?.phase || "");
+  if (Number(state.home?.save?.pending_counts?.staff || 0) > 0) return "staff_retention";
+  if (Number(state.home?.save?.pending_counts?.cutdowns || 0) > 0) return "cutdown";
+  if (phase === "play_in" || phase === "playoffs") return "playoffs";
+  if (phase === "draft_lottery" && state.home?.save?.playoff_status === "completed") return "playoffs";
+  if (phase === "draft_lottery" || phase === "draft") return "draft";
+  if (phase === "free_agency") return "free_agency";
+  return "";
 }
 
 function syncNavActive() {
@@ -435,33 +472,337 @@ function renderDashboardTab(rows) {
   const dash = state.data.dashboard || {};
   const editable = !state.hydrating && teamLabel(dash.team || state.dashboardTeam) === userTeam();
   const readonlyClass = editable ? "" : " readonly-card";
+  const phaseKind = dashboardPhaseKind();
   if (state.dashboardTab === "overview") {
     target.innerHTML = `
-      <div class="dashboard-overview">
+      <div class="dashboard-overview ${phaseKind ? `phase-dashboard phase-dashboard-${phaseKind}` : ""}">
         <section class="section panel-rail identity-card">${teamIdentityRankBlock(dash)}</section>
         <section class="section panel-rail starting-card">${startingFiveBlock(rows, editable)}</section>
         <section class="section panel-rail player-summary-card">${dashboardPlayerSummaryTable(rows)}</section>
-        <section class="section panel-rail summary-side-card">${summaryLeaderRotator()}</section>       
         <section class="section panel-rail staff-card">${staffDashboardCard(rows, dash, editable)}</section>
-        <section class="section panel-rail standings-card">${userConferenceStandings()}</section>
-        <section class="section panel-rail calendar-card">${dashboardMonthCalendar()}</section>
-        <section class="section panel-rail contract-chart-card">${contractChartCard(rows, dash)}</section>
         <section class="section panel-rail dashboard-actions-card${readonlyClass}">${dashboardActionsCard(editable)}</section>
-        <section class="section panel-rail staff-market-card${readonlyClass}">${dashboardStaffMarketCard(editable)}</section>
-        <section class="section panel-rail free-agent-market-card${readonlyClass}">${dashboardFreeAgentMarketCard(editable)}</section>
-        <section class="section panel-rail standings-trend-card">${standingsTrendCard()}</section>
-        <section class="section panel-rail development-trend-card">${developmentTrendCard(rows)}</section>
-        <section class="section panel-rail draft-picks-card">${draftPicksCard()}</section>
-        <section class="section panel-rail events-card">${leagueEventRotator()}</section>
+        ${phaseKind ? `<section class="section panel-rail phase-takeover-card">${dashboardPhaseWorkspace(phaseKind)}</section>` : `
+          <section class="section panel-rail summary-side-card">${summaryLeaderRotator()}</section>
+          <section class="section panel-rail standings-card">${userConferenceStandings()}</section>
+          <section class="section panel-rail calendar-card">${dashboardMonthCalendar()}</section>
+          <section class="section panel-rail contract-chart-card">${contractChartCard(rows, dash)}</section>
+          <section class="section panel-rail staff-market-card${readonlyClass}">${dashboardStaffMarketCard(editable)}</section>
+          <section class="section panel-rail free-agent-market-card${readonlyClass}">${dashboardFreeAgentMarketCard(editable)}</section>
+          <section class="section panel-rail standings-trend-card">${standingsTrendCard()}</section>
+          <section class="section panel-rail development-trend-card">${developmentTrendCard(rows)}</section>
+          <section class="section panel-rail draft-picks-card">${draftPicksCard()}</section>
+          <section class="section panel-rail events-card">${leagueEventRotator()}</section>
+        `}
       </div>`;
     wireDashboardOverview(editable);
-    startLeagueEventRotator();
-    startSummaryLeaderRotator();
-    startDashboardMarketRotators();
+    if (phaseKind) {
+      wireDashboardPhaseWorkspace(phaseKind);
+    } else {
+      startLeagueEventRotator();
+      startSummaryLeaderRotator();
+      startDashboardMarketRotators();
+    }
     return;
   }
   target.innerHTML = contractsBlock(rows, dash);
   wireContractsBlock();
+}
+
+function dashboardPhaseWorkspace(kind) {
+  if (kind === "playoffs") return playoffDashboardWorkspace();
+  if (kind === "draft") return draftDashboardWorkspace();
+  if (kind === "free_agency") return freeAgencyDashboardWorkspace();
+  if (kind === "cutdown") return rosterCutdownDashboardWorkspace();
+  if (kind === "staff_retention") return staffRetentionDashboardWorkspace();
+  return `<div class="empty">Seasonal workspace unavailable.</div>`;
+}
+
+function playoffDashboardWorkspace() {
+  const room = state.data.playoffs || {};
+  const series = room.series || [];
+  const canSim = ["play_in", "playoffs"].includes(String(room.phase || "")) && room.status !== "completed";
+  const leaders = state.data.playoffLeaders?.leaders || [];
+  return `
+    <div class="phase-workspace-head">
+      <div>
+        <p class="eyebrow">${escapeHtml(room.current_date || state.home?.save?.current_date || "")}</p>
+        <h3>Playoff Command Board</h3>
+      </div>
+      <div class="dashboard-meta">
+        <span>${escapeHtml(rowLabel(room.round || "picture"))}</span>
+        <span>${escapeHtml(rowLabel(room.status || "live"))}</span>
+      </div>
+      <div class="toolbar phase-workspace-controls">
+        ${canSim ? `
+          <button data-playoff-sim="game">Sim 1 Game Per Series</button>
+          <button data-playoff-sim="round">Sim Rest Of Round</button>
+          <button data-playoff-sim="all">Sim Remaining Playoffs</button>` : ""}
+        ${room.status === "completed" ? `<button id="playoffAdvanceStage">Advance To Next Stage</button>` : ""}
+      </div>
+    </div>
+    ${room.champion ? `<div class="phase-champion">Champion <strong>${escapeHtml(teamLabel(room.champion))}</strong></div>` : ""}
+    <div class="phase-playoff-layout">
+      <div class="phase-bracket-shell">
+        ${series.length ? playoffBracket(series, room.champion) : `<div class="empty">The bracket will populate when playoff play begins.</div>`}
+      </div>
+      <aside class="phase-leaders-panel">
+        ${sectionHead("Playoff Leaders", "Points per game")}
+        <ol class="phase-leader-list">
+          ${leaders.slice(0, 9).map((row, index) => `<li>
+            <span>${index + 1}</span>
+            <strong>${escapeHtml(row.player?.name || row.player_name || "Unknown")}</strong>
+            <small>${escapeHtml(row.team_abbrev || "")}</small>
+            <em>${Number(row.points_per_game || 0).toFixed(1)}</em>
+          </li>`).join("") || `<li class="empty">Leaders appear after playoff games.</li>`}
+        </ol>
+      </aside>
+    </div>`;
+}
+
+function draftDashboardWorkspace() {
+  const draft = state.data.draft || {};
+  const current = draft.current_selection || {};
+  const selection = current.selection || {};
+  const prospect = current.prospect || {};
+  const status = draft.state?.status || "in_progress";
+  const locked = status === "locked_until_draft";
+  return `
+    <div class="phase-workspace-head">
+      <div>
+        <p class="eyebrow">${locked ? "Draft lottery and scouting" : `Pick ${Number(draft.state?.current_index || 0) + 1} of ${draft.state?.total_picks || 0}`}</p>
+        <h3>${escapeHtml(draft.year || "")} Draft Room</h3>
+      </div>
+      <div class="dashboard-meta"><span>${escapeHtml(rowLabel(status))}</span><span>${escapeHtml(teamLabel(draft.team || userTeam()))}</span></div>
+      <div class="toolbar phase-workspace-controls">
+        ${!locked && current.selection ? `
+          <button id="draftApply">Make Current Pick</button>
+          <button id="draftToUser">Sim To User Pick</button>
+          <button id="draftAll">Sim Full Draft</button>` : ""}
+        ${!locked && !current.selection ? `<button id="draftAdvanceStage">Advance To Next Stage</button>` : ""}
+        ${locked ? `<button data-advance="next-event">Advance To Draft Night</button>` : ""}
+      </div>
+    </div>
+    <div class="phase-draft-layout">
+      <section class="phase-focus-panel">
+        ${locked ? `
+          <p class="eyebrow">Scouting preview</p>
+          <h3>Lottery order pending</h3>
+          <p class="muted">The board is live. Draft controls unlock on draft night.</p>` : current.selection ? `
+          <p class="eyebrow">On the clock</p>
+          <h3>#${escapeHtml(selection.overall_pick)} ${escapeHtml(teamLabel(current.team || selection.team_id))}</h3>
+          <p class="phase-prospect-name">${escapeHtml(prospect.name || "Recommended prospect TBD")}</p>
+          <p class="muted">${escapeHtml(prospect.position || "")} ${escapeHtml(heightFromRow(prospect))}</p>` : `
+          <p class="eyebrow">Draft complete</p>
+          <h3>All selections are in</h3>
+          <p class="muted">Rookie contracts and rights are ready for the next stage.</p>`}
+        ${(draft.trade_news || []).length ? `<div class="phase-news-list">${list(draft.trade_news.map((item) => item.headline || textValue(item)))}</div>` : ""}
+      </section>
+      <section class="phase-board-panel">
+        ${sectionHead("Team Board")}
+        ${table(["Rank", "Prospect", "Pos", "Age", "Ht", "Now", "Pot", "Fit"], draftBoardRows(draft.draft_board), (row) => [row.rank, row.name, row.position, row.age, row.height || "—", gradeNumber(row.now), gradeNumber(row.potential), gradeNumber(row.fit || row.grade)])}
+      </section>
+      <section class="phase-upcoming-panel">
+        ${sectionHead("Upcoming Picks")}
+        ${table(["Pick", "Team", "Prospect", "Pos"], draft.upcoming || [], (row) => [`#${row.selection?.overall_pick || ""}`, teamLabel(row.team || row.selection?.team_id), row.prospect?.name || "TBD", row.prospect?.position || ""])}
+      </section>
+    </div>`;
+}
+
+function freeAgencyDashboardWorkspace() {
+  const room = state.data.freeagency || {};
+  const candidates = room.candidates || [];
+  const selected = state.selectedFreeAgent ? candidates.find((item) => item.id === state.selectedFreeAgent) : candidates[0];
+  if (!state.selectedFreeAgent && selected) state.selectedFreeAgent = selected.id;
+  const status = String(room.state?.status || "active");
+  return `
+    <div class="phase-workspace-head">
+      <div>
+        <p class="eyebrow">Day ${escapeHtml(room.state?.day || "-")} of ${escapeHtml(room.state?.day_count || "-")}</p>
+        <h3>Free Agency Command Board</h3>
+      </div>
+      <div class="dashboard-meta">
+        <span>Payroll ${money(room.cap?.salary_total_millions)}</span>
+        <span>Hard cap ${signedMoney(room.cap?.hard_cap_space_millions)}</span>
+      </div>
+      <div class="toolbar phase-workspace-controls">
+        ${status !== "completed" ? `<button id="faAdvanceDay">Sim FA Day</button><button id="faAdvanceEnd">Sim To End</button>` : `<button id="faAdvanceStage">Advance To Next Phase</button>`}
+      </div>
+    </div>
+    <div class="phase-free-agency-layout">
+      <section class="phase-market-panel">
+        <div class="section-head"><h3>Market</h3><span class="pill">${candidates.length}</span></div>
+        <div class="scroll-list stack">${candidates.slice(0, 70).map(freeAgentButton).join("") || `<div class="empty">No free agents available.</div>`}</div>
+      </section>
+      <section class="phase-offer-panel">${selected ? freeAgentOfferPanel(selected) : `<div class="empty">Select a free agent.</div>`}</section>
+      <section class="phase-bidding-panel">
+        ${sectionHead("Bidding Wars")}
+        ${list((room.bidding_wars || []).map((war) => `${war.player_name}: ${war.offer_count} offers, best ${war.best_team} ${money(war.best_aav)}`))}
+      </section>
+    </div>`;
+}
+
+function rosterCutdownDashboardWorkspace() {
+  const room = state.data.cutdown || {};
+  const pending = room.pending || {};
+  return `
+    <div class="phase-workspace-head">
+      <div>
+        <p class="eyebrow">${escapeHtml(room.date || state.home?.save?.current_date || "")}</p>
+        <h3>Mandatory Roster Cutdown</h3>
+      </div>
+      <div class="dashboard-meta">
+        <span>${escapeHtml(teamLabel(room.team || userTeam()))}</span>
+        <span>${escapeHtml(room.current_count || 0)} / ${escapeHtml(room.target_count || 15)} players</span>
+      </div>
+    </div>
+    <div class="phase-cutdown-layout">
+      <section class="phase-focus-panel cutdown-brief">
+        <p class="eyebrow">Before opening night</p>
+        <h3>${escapeHtml(pending.cut_required || Math.max(0, Number(room.current_count || 0) - Number(room.target_count || 15)))} move(s) required</h3>
+        <p class="muted">Choose which contracts leave the roster. Recent draft picks remain protected from this cutdown.</p>
+      </section>
+      <section class="phase-board-panel">
+        ${table(["Player", "Pos", "Age", "Ht", "MPG", "OVR", "Contract", ""], room.players || [], (row) => [
+          row.name,
+          compactPos(row.position),
+          row.age,
+          row.height || "—",
+          Number(row.minutes || 0).toFixed(1),
+          gradeNumber(row.overall),
+          compactSalaryYears(row.salary_by_year),
+          row.can_waive
+            ? html(`<button data-waive-player="${escapeAttr(row.player_id)}">Waive</button>`)
+            : html(`<span class="muted">Protected</span>`),
+        ])}
+      </section>
+    </div>`;
+}
+
+function staffRetentionDashboardWorkspace() {
+  const room = state.data.staffRetention || {};
+  const windowRow = room.window || {};
+  const staff = room.staff || {};
+  const candidates = room.market?.candidates || [];
+  if (room.status !== "required") return `<div class="empty">No staff contract decision is pending.</div>`;
+  return `
+    <div class="phase-workspace-head">
+      <div>
+        <p class="eyebrow">${escapeHtml(windowRow.team_abbrev || userTeam())} · ${escapeHtml(rowLabel(windowRow.slot || "staff"))}</p>
+        <h3>Staff Contract Decision</h3>
+      </div>
+      <div class="dashboard-meta">
+        <span>Budget ${money(room.budget?.current_spend_millions)} / ${money(room.budget?.annual_budget_millions)}</span>
+        <span>Max offer ${money(room.max_offer_millions)}</span>
+      </div>
+    </div>
+    <div class="phase-staff-retention-layout">
+      <section class="phase-focus-panel staff-retention-current">
+        <p class="eyebrow">Expiring ${escapeHtml(rowLabel(windowRow.slot || "staff"))}</p>
+        <h3>${escapeHtml(staff.name || windowRow.staff_name || "Staff member")}</h3>
+        <p class="phase-prospect-name">Grade ${plainNumber(room.staff_grade)}</p>
+        <div class="staff-retention-effects">
+          ${(room.effect_rows || []).map((effect) => `<div><strong>${escapeHtml(effect.label || effect.name || "Impact")}</strong><span>${plainNumber(effect.value ?? effect.rating)}</span><small>${escapeHtml(effect.description || "")}</small></div>`).join("")}
+        </div>
+      </section>
+      <section class="phase-offer-panel staff-retention-offer">
+        ${sectionHead("Re-sign", `${money(room.ask_millions)} × ${room.ask_years || 2}`)}
+        <label>Annual salary<input id="staffRetentionSalary" type="number" min="0.1" max="${escapeAttr(room.max_offer_millions || 0)}" step="0.1" value="${escapeAttr(Math.min(Number(room.ask_millions || 0), Number(room.max_offer_millions || 0)).toFixed(2))}"></label>
+        <label>Years<input id="staffRetentionYears" type="number" min="1" max="5" step="1" value="${escapeAttr(room.ask_years || 2)}"></label>
+        <div class="toolbar">
+          <button id="staffRetentionResign">Submit Offer</button>
+          <button id="staffRetentionInterim">Accept Interim</button>
+        </div>
+        <p class="muted">This role must be resolved before league play continues.</p>
+      </section>
+      <section class="phase-board-panel staff-retention-market">
+        ${sectionHead("Available Replacements", rowLabel(windowRow.slot || "staff"))}
+        <div class="scroll-list stack">
+          ${candidates.map((candidate) => `<button class="list-row" data-retention-candidate="${escapeAttr(candidate.id)}">
+            <span><strong>${escapeHtml(candidate.name || "Candidate")}</strong><small>${escapeHtml(candidate.archetype || "")}</small></span>
+            <em>${plainNumber(candidate.grade)}</em>
+            <small>${money(candidate.asking_salary_millions)} × ${escapeHtml(candidate.asking_years || 1)}</small>
+          </button>`).join("") || `<div class="empty">No replacements are currently available.</div>`}
+        </div>
+      </section>
+    </div>`;
+}
+
+function wireDashboardPhaseWorkspace(kind) {
+  if (kind === "playoffs") {
+    document.querySelectorAll("[data-playoff-sim]").forEach((button) => button.addEventListener("click", () => playoffSim(button.dataset.playoffSim || "game")));
+    document.getElementById("playoffAdvanceStage")?.addEventListener("click", playoffAdvanceStage);
+  }
+  if (kind === "draft") {
+    document.getElementById("draftApply")?.addEventListener("click", draftApplyCurrent);
+    document.getElementById("draftToUser")?.addEventListener("click", () => draftSim("draft_sim_to_user"));
+    document.getElementById("draftAll")?.addEventListener("click", () => draftSim("draft_sim_all"));
+    document.getElementById("draftAdvanceStage")?.addEventListener("click", draftAdvanceStage);
+  }
+  if (kind === "free_agency") {
+    document.querySelectorAll("[data-fa-id]").forEach((button) => button.addEventListener("click", () => {
+      state.selectedFreeAgent = button.dataset.faId;
+      renderDashboard();
+    }));
+    document.getElementById("submitFaOffer")?.addEventListener("click", submitFreeAgentOffer);
+    document.getElementById("faAdvanceDay")?.addEventListener("click", () => advanceFreeAgency("day"));
+    document.getElementById("faAdvanceEnd")?.addEventListener("click", () => advanceFreeAgency("end"));
+    document.getElementById("faAdvanceStage")?.addEventListener("click", freeAgencyAdvanceStage);
+  }
+  if (kind === "cutdown") {
+    document.querySelectorAll("[data-waive-player]").forEach((button) => button.addEventListener("click", async () => {
+      const playerId = button.dataset.waivePlayer;
+      const player = (state.data.cutdown?.players || []).find((row) => row.player_id === playerId);
+      if (!window.confirm(`Waive ${player?.name || "this player"}?`)) return;
+      const result = await action("waive_player", { ...savePayload(), player_id: playerId });
+      showToast(result.status === "waived" ? `${result.player_name} waived` : (result.reason || result.status), result.status !== "waived");
+      await refreshHome();
+    }));
+  }
+  if (kind === "staff_retention") {
+    document.getElementById("staffRetentionResign")?.addEventListener("click", () => resolveStaffRetention("re_sign"));
+    document.getElementById("staffRetentionInterim")?.addEventListener("click", () => resolveStaffRetention("interim"));
+    document.querySelectorAll("[data-retention-candidate]").forEach((button) => {
+      button.addEventListener("click", () => replaceExpiringStaff(button.dataset.retentionCandidate));
+    });
+  }
+}
+
+async function resolveStaffRetention(choice) {
+  const room = state.data.staffRetention || {};
+  const windowId = room.window?.id;
+  if (!windowId) return;
+  const payload = { ...savePayload(), window_id: windowId, choice };
+  if (choice === "re_sign") {
+    payload.salary_millions = Number(document.getElementById("staffRetentionSalary")?.value || room.ask_millions || 0);
+    payload.years = Number(document.getElementById("staffRetentionYears")?.value || room.ask_years || 2);
+  } else if (!window.confirm(`Accept an interim ${rowLabel(room.window?.slot || "staff role")}?`)) {
+    return;
+  }
+  const result = await action("resolve_staff_retention", payload);
+  showToast(result.status === "re_signed" || result.status === "applied" ? "Staff role resolved" : rowLabel(result.status), !["re_signed", "applied"].includes(result.status));
+  await refreshHome();
+}
+
+async function replaceExpiringStaff(candidateId) {
+  const room = state.data.staffRetention || {};
+  const candidate = (room.market?.candidates || []).find((row) => row.id === candidateId);
+  if (!candidate || !room.window) return;
+  const negotiation = await action("negotiate_staff", {
+    ...savePayload(),
+    team: userTeam(),
+    staff_id: candidate.id,
+    slot: room.window.slot,
+    salary_millions: candidate.asking_salary_millions,
+    years: candidate.asking_years,
+    seed: 7,
+  });
+  if (!negotiation.negotiation?.accepted) {
+    showToast("The replacement declined the offer.", true);
+    return;
+  }
+  const hired = await action("hire_staff", { ...savePayload(), negotiation_id: negotiation.negotiation.id });
+  showToast(hired.status === "applied" ? `${candidate.name} hired` : rowLabel(hired.status), hired.status !== "applied");
+  await refreshHome();
 }
 
 const DASHBOARD_ROTATOR_MS = 6500;
@@ -878,7 +1219,7 @@ function renderDraft() {
           <div class="headline-block">
             <p class="eyebrow">On the clock</p>
             <h3>#${escapeHtml(selection.overall_pick)} ${escapeHtml(teamLabel(current.team || selection.team_id))}</h3>
-            <p>${escapeHtml(prospect.name || "Recommended prospect TBD")} <span class="muted">${escapeHtml(prospect.position || "")} ${escapeHtml(prospect.height || "")}</span></p>
+            <p>${escapeHtml(prospect.name || "Recommended prospect TBD")} <span class="muted">${escapeHtml(prospect.position || "")} ${escapeHtml(heightFromRow(prospect))}</span></p>
           </div>
           <div class="toolbar">
             <button id="draftApply">Make Current Pick</button>
@@ -893,11 +1234,11 @@ function renderDraft() {
           <div class="toolbar">
             <button id="draftAdvanceStage">Advance To Next Stage</button>
           </div>`}
-        ${list((draft.trade_news || []).map((item) => item.headline || textValue(item)))}
+        ${(draft.trade_news || []).length ? list(draft.trade_news.map((item) => item.headline || textValue(item))) : ""}
       </section>
       <section class="section panel-rail">
         ${sectionHead("Team Board")}
-        ${table(["Rank", "Prospect", "Pos", "Age", "Now", "Pot", "Fit"], draftBoardRows(draft.draft_board), (row) => [row.rank, row.name, row.position, row.age, gradeNumber(row.now), gradeNumber(row.potential), gradeNumber(row.fit || row.grade)])}
+        ${table(["Rank", "Prospect", "Pos", "Age", "Ht", "Now", "Pot", "Fit"], draftBoardRows(draft.draft_board), (row) => [row.rank, row.name, row.position, row.age, row.height || "—", gradeNumber(row.now), gradeNumber(row.potential), gradeNumber(row.fit || row.grade)])}
       </section>
       <section class="section wide panel-rail">
         ${sectionHead("Upcoming Picks")}
@@ -918,16 +1259,14 @@ function renderDraft() {
 
 async function draftApplyCurrent() {
   const result = await action("draft_apply_current", { ...savePayload(), team: userTeam(), seed: 7 });
-  state.data.draft = result.room;
   showToast(`Draft pick: ${result.status}`);
-  renderDraft();
+  await refreshDashboardAfterPhaseMutation("draft", result.room);
 }
 
 async function draftSim(actionName) {
   const result = await action(actionName, { ...savePayload(), team: userTeam(), seed: 7 });
-  state.data.draft = result.room;
   showToast(`Draft sim: ${result.result?.applied_count || 0} pick(s)`);
-  renderDraft();
+  await refreshDashboardAfterPhaseMutation("draft", result.room);
 }
 
 async function draftAdvanceStage() {
@@ -999,15 +1338,14 @@ async function submitFreeAgentOffer() {
   const aav = Number(document.getElementById("faAav").value || 0);
   const result = await action("submit_free_agent_offer", { ...savePayload(), player_id: player, team: userTeam(), years, aav_millions: aav, auto_apply: true, seed: 7 });
   showToast(result.apply_result ? `Signing ${result.apply_result.status}` : `Offer ${result.status}`);
-  state.data.freeagency = await action("free_agency_room", { ...savePayload(), team: userTeam(), seed: 7 });
-  renderFreeAgency();
+  const room = await action("free_agency_room", { ...savePayload(), team: userTeam(), seed: 7 });
+  await refreshDashboardAfterPhaseMutation("freeagency", room);
 }
 
 async function advanceFreeAgency(mode) {
   const result = await action("advance_free_agency", { ...savePayload(), team: userTeam(), mode, seed: 7 });
-  state.data.freeagency = result.room;
   showToast(`Free agency advanced: ${result.status}`);
-  renderFreeAgency();
+  await refreshDashboardAfterPhaseMutation("freeagency", result.room);
 }
 
 async function freeAgencyAdvanceStage() {
@@ -1380,12 +1718,46 @@ async function playoffSim(mode) {
     round: "simulate_playoff_round",
     all: "simulate_playoff_all",
   };
-  const result = await action(actions[mode] || actions.game, { ...savePayload(), seed: 7 });
-  state.data.playoffs = result.room;
-  const games = result.result?.games?.length || (result.result?.game ? 1 : 0);
-  const completed = result.result?.completed_series?.length || result.result?.completed_play_in?.length || 0;
+  let result;
+  let games = 0;
+  let completed = 0;
+  if (mode === "all") {
+    showToast("Simulating the remaining playoffs...");
+    for (let round = 0; round < 8; round += 1) {
+      result = await action(actions.round, { ...savePayload(), seed: 7 });
+      games += result.result?.games?.length || (result.result?.game ? 1 : 0);
+      completed += result.result?.completed_series?.length || result.result?.completed_play_in?.length || 0;
+      const room = result.room || {};
+      if (room.status === "completed" || room.round === "champion" || !["play_in", "playoffs"].includes(room.phase)) break;
+    }
+  } else {
+    result = await action(actions[mode] || actions.game, { ...savePayload(), seed: 7 });
+    games = result.result?.games?.length || (result.result?.game ? 1 : 0);
+    completed = result.result?.completed_series?.length || result.result?.completed_play_in?.length || 0;
+  }
+  if (!result) throw new Error("The playoff simulation did not return a result.");
   showToast(`Playoff sim: ${games ? `${games} game(s)` : result.status}${completed ? `, ${completed} series done` : ""}`);
-  renderPlayoffs();
+  await refreshDashboardAfterPhaseMutation("playoffs", result.room);
+}
+
+async function refreshDashboardAfterPhaseMutation(roomKey, room) {
+  state.home = await action("home", savePayload());
+  state.view = "dashboard";
+  const phaseKind = dashboardPhaseKind();
+  const expectedKind = roomKey === "freeagency" ? "free_agency" : roomKey;
+  if (!phaseKind || phaseKind !== expectedKind) {
+    await refreshHome();
+    return;
+  }
+  state.data[roomKey] = room;
+  const team = state.dashboardTeam || userTeam();
+  const dash = await action("team_dashboard", { ...savePayload(), team });
+  state.data.dashboard = dash;
+  if (team === userTeam()) state.data.statusDashboard = dash;
+  if (roomKey === "playoffs") {
+    state.data.playoffLeaders = await action("playoff_leaders", { ...savePayload(), stat: "points", limit: 9 });
+  }
+  renderDashboard();
 }
 
 async function playoffAdvanceStage() {
@@ -2765,7 +3137,7 @@ function contractPayrollColumn(season, rows, cap) {
 function simControls() {
   const save = state.home?.save || {};
   const currentDate = String(save.current_date || "");
-  const isOffseasonRollover = String(save.phase || "") === "offseason" && currentDate.slice(5) >= "09-01";
+  const isOffseasonRollover = ["offseason", "training_camp"].includes(String(save.phase || "")) && currentDate.slice(5) >= "09-01";
   if (isOffseasonRollover) {
     return `
       <div class="actions calendar-actions">
@@ -2981,8 +3353,15 @@ async function switchDashboardTeam(team) {
   state.startingPickerSlot = null;
   state.developmentPlayerIds = [];
   state.developmentSelectionTouched = false;
-  await ensureViewData(true);
-  renderDashboard();
+  state.hydrating = true;
+  setBusy(true);
+  try {
+    await ensureViewData(true);
+  } finally {
+    state.hydrating = false;
+    setBusy(state.busyDepth > 0);
+    renderDashboard();
+  }
 }
 
 function wireDevelopmentLegend() {
@@ -3123,13 +3502,18 @@ function bracketConference(conference, series) {
 }
 
 function bracketRound(round, roundSeries) {
+  const label = {
+    first_round: "First Round",
+    conference_semifinals: "Semifinals",
+    conference_finals: "Conference Final",
+  }[round] || rowLabel(round);
   return `
     <div class="bracket-round bracket-${escapeAttr(round)}">
-      <div class="bracket-round-title">${escapeHtml(rowLabel(round))}</div>
+      <div class="bracket-round-title">${escapeHtml(label)}</div>
       <div class="bracket-node-stack">
         ${roundSeries.length
           ? roundSeries.map((item) => `<div class="bracket-node">${seriesCard(item)}</div>`).join("")
-          : `<div class="bracket-node bracket-placeholder">${escapeHtml(rowLabel(round))} pending</div>`}
+          : `<div class="bracket-node bracket-placeholder">${escapeHtml(label)} pending</div>`}
       </div>
     </div>`;
 }
@@ -3177,11 +3561,16 @@ function opponentLabel(game) {
 }
 
 function contractSeasons(rows) {
+  const active = String(state.home?.save?.season || "");
+  const start = Number(active.split("-")[0]);
+  if (Number.isFinite(start) && start > 1900) {
+    return Array.from({ length: 4 }, (_, offset) => `${start + offset}-${String(start + offset + 1).slice(-2)}`);
+  }
   const seasons = new Set();
   for (const row of rows || []) {
     for (const season of Object.keys(row.salary_by_year || {})) seasons.add(season);
   }
-  return [...seasons].sort();
+  return [...seasons].sort().slice(-4);
 }
 
 function pct(numerator, denominator) {
@@ -3399,6 +3788,7 @@ function draftBoardRows(board) {
       name: prospect.name,
       position: prospect.position,
       age: prospect.age,
+      height: heightFromRow(prospect),
       now: scout.now ?? prospect.now ?? prospect.current_rating ?? prospect.current_ability,
       potential: scout.potential || prospect.potential || prospect.potential_rating,
       fit: entry.fit_grade || entry.risk_adjusted_grade || entry.grade,
@@ -3655,6 +4045,15 @@ function money(value) {
   return String(value);
 }
 
+function compactSalaryYears(rows) {
+  return Object.entries(rows || {})
+    .filter(([, value]) => value !== null && value !== undefined)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .slice(0, 2)
+    .map(([season, value]) => `${season} ${money(value)}`)
+    .join(" / ") || "—";
+}
+
 function signedMoney(value) {
   const num = Number(value);
   if (!Number.isFinite(num)) return "";
@@ -3705,7 +4104,19 @@ function userTeam() {
 function setBusy(isBusy) {
   state.busy = isBusy;
   document.body.classList.toggle("busy", isBusy);
-  for (const button of document.querySelectorAll("button")) button.disabled = isBusy;
+  for (const control of document.querySelectorAll("button, select, input, textarea")) {
+    if (isBusy) {
+      if (!control.disabled) {
+        control.dataset.busyDisabled = "true";
+        control.disabled = true;
+      }
+      continue;
+    }
+    if (control.dataset.busyDisabled === "true") {
+      control.disabled = false;
+      delete control.dataset.busyDisabled;
+    }
+  }
 }
 
 function showToast(message, isError = false) {

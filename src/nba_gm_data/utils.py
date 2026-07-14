@@ -8,8 +8,11 @@ from pathlib import Path
 from typing import Any, Iterable
 
 
-@lru_cache(maxsize=20000)
-def normalize_name(name: str | None) -> str:
+_NORMALIZE_CACHE_TEXT_LIMIT = 256
+_STABLE_ID_CACHE_TEXT_LIMIT = 512
+
+
+def _normalize_name_uncached(name: str | None) -> str:
     if not name:
         return ""
     text = unicodedata.normalize("NFKD", name)
@@ -21,24 +24,56 @@ def normalize_name(name: str | None) -> str:
 
 
 @lru_cache(maxsize=20000)
-def _slugify_cached(text: str) -> str:
-    base = normalize_name(text).replace("'", "")
+def _normalize_name_cached(name: str) -> str:
+    return _normalize_name_uncached(name)
+
+
+def normalize_name(name: str | None) -> str:
+    text = "" if name is None else str(name)
+    if len(text) > _NORMALIZE_CACHE_TEXT_LIMIT:
+        return _normalize_name_uncached(text)
+    return _normalize_name_cached(text)
+
+
+def _slugify_uncached(text: str) -> str:
+    base = _normalize_name_uncached(text).replace("'", "")
     return re.sub(r"[^a-z0-9]+", "-", base).strip("-")
 
 
+@lru_cache(maxsize=20000)
+def _slugify_cached(text: str) -> str:
+    return _slugify_uncached(text)
+
+
 def slugify(text: str | None) -> str:
-    return _slugify_cached("" if text is None else str(text))
+    value = "" if text is None else str(text)
+    if len(value) > _NORMALIZE_CACHE_TEXT_LIMIT:
+        return _slugify_uncached(value)
+    return _slugify_cached(value)
 
 
-@lru_cache(maxsize=50000)
-def _stable_id_cached(prefix: str, parts: tuple[str, ...]) -> str:
+def _stable_id_uncached(prefix: str, parts: tuple[str, ...]) -> str:
     body = "-".join(slugify(part) for part in parts if part)
     return f"{prefix}_{body}" if body else prefix
 
 
+@lru_cache(maxsize=50000)
+def _stable_id_cached(prefix: str, parts: tuple[str, ...]) -> str:
+    return _stable_id_uncached(prefix, parts)
+
+
 def stable_id(prefix: str, *parts: object) -> str:
     clean_parts = tuple(str(part) for part in parts if part is not None and str(part) != "")
+    if sum(len(part) for part in clean_parts) > _STABLE_ID_CACHE_TEXT_LIMIT:
+        return _stable_id_uncached(str(prefix), clean_parts)
     return _stable_id_cached(str(prefix), clean_parts)
+
+
+def clear_utility_caches() -> None:
+    """Release deterministic lookup caches without changing their outputs."""
+    _normalize_name_cached.cache_clear()
+    _slugify_cached.cache_clear()
+    _stable_id_cached.cache_clear()
 
 
 def maybe_float(value: Any) -> float | None:

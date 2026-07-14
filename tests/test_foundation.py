@@ -14,7 +14,9 @@ from unittest.mock import patch
 from urllib import request as urlrequest
 
 import nba_gm_data.transactions as transactions_module
-from nba_gm_data.app_actions import APP_ACTION_PROTOCOL_VERSION, dispatch_app_action, estimated_overall_delta
+import nba_gm_data.utils as utils_module
+import nba_gm_data.save as save_module
+from nba_gm_data.app_actions import APP_ACTION_PROTOCOL_VERSION, advance_action, dispatch_app_action, estimated_overall_delta
 from nba_gm_data.app_server import make_gui_server
 from nba_gm_data.assets import install_loading_assets
 from nba_gm_data.animation import auto_frame_size, colorize_frame, default_video_path, load_animation_frames
@@ -36,15 +38,18 @@ from nba_gm_data.draft import (
     find_draft_trade,
     generate_draft_order,
     generate_draft_class_records,
+    nba_trait_values_from_prospect,
     pick_recommendations,
     project_rookie_contract,
     simulate_draft,
 )
 from nba_gm_data.health import (
     advance_development,
+    development_upside_multiplier,
     health_player_report,
     health_team_report,
     load_injury_model_config,
+    monthly_trait_delta,
     performance_staff_modifiers,
     simulate_health,
 )
@@ -63,6 +68,7 @@ from nba_gm_data.narrative import (
 from nba_gm_data.research import existing_game_boxscores
 from nba_gm_data.save import (
     advance_save,
+    ai_re_signing_fits_hard_cap,
     add_league_event,
     add_news,
     annotate_lottery_odds_context,
@@ -72,7 +78,10 @@ from nba_gm_data.save import (
     create_league_save,
     ai_extension_due_date,
     ai_extension_team_pass_outlook,
+    ai_re_signing_contract_terms,
+    archive_excess_free_agents,
     ensure_league_save_defaults,
+    ensure_roster_minimums,
     ensure_draft_processed,
     extension_headline_with_terms,
     hold_press_conference,
@@ -92,9 +101,11 @@ from nba_gm_data.save import (
     cap_lines_for_season,
     process_ai_extensions,
     process_ai_actions,
+    queue_ai_recommendations,
     propose_trade_to_save,
     quick_sim_current_season,
     recent_rookie_protected_player_ids,
+    refresh_roster_cutdowns,
     run_draft_lottery,
     save_status,
     refresh_draft_order_from_save,
@@ -108,6 +119,7 @@ from nba_gm_data.save import (
     update_narrative_settings,
     canonical_with_save,
     merge_health_results,
+    materialize_draft_order_pick_assets,
     maybe_queue_rare_drama,
     press_impact,
     prune_rotation_recommendations,
@@ -195,8 +207,8 @@ from nba_gm_data.sim import (
     validate_season_probabilities,
 )
 from nba_gm_data.storage import write_outputs
-from nba_gm_data.staff import fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, simulate_ai_staff_changes, staff_budget_for_team, staff_budget_snapshot, staff_grade, staff_market_report, staff_team_report
-from nba_gm_data.transactions import annotate_pick_obligation_context, apply_trade_to_save, buyer_offer_package_options, canonical_with_pending_pick_terms, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, gm_report, market_trade_target_value, package_value_for_team, pick_asset_value, pick_label, pick_season_start, pick_swap_asset_value, pick_swap_display_label, player_health_risk, protected_pick_fallback_is_distinct, simulate_ai_trades, stepien_guardrail_issues, trade_apply_authorized, trade_block_report, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_pick_swaps_for_team, tradeable_picks_for_team, validate_pick_obligation_term, with_transaction_context
+from nba_gm_data.staff import fire_staff_from_save, generate_staff_market, hire_staff_from_save, initialize_save_staff_slots, negotiate_staff_hire, simulate_ai_staff_changes, staff_budget_for_team, staff_budget_snapshot, staff_grade, staff_market_report, staff_team_report
+from nba_gm_data.transactions import annotate_pick_obligation_context, apply_trade_to_save, buyer_offer_package_options, canonical_with_pending_pick_terms, current_salary, drafted_rookie_value_floor, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, gm_report, market_trade_target_value, package_value_for_team, pick_asset_value, pick_label, pick_season_start, pick_swap_asset_value, pick_swap_display_label, player_health_risk, protected_pick_fallback_is_distinct, simulate_ai_trades, stepien_guardrail_issues, trade_apply_authorized, trade_block_report, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_pick_swaps_for_team, tradeable_picks_for_team, validate_pick_obligation_term, with_transaction_context
 from nba_gm_data.traits import LEAGUE_TRAIT_RATING_COLUMNS, LEAGUE_TRAIT_RATINGS_SOURCE_ID, load_league_trait_ratings, match_league_trait_ratings
 
 
@@ -214,6 +226,54 @@ class DataFoundationTests(unittest.TestCase):
         self.assertGreaterEqual(len(self.universe.players), 500)
         self.assertEqual(len(self.universe.traits), len(self.universe.players) * 15)
         self.assertGreaterEqual(len(self.universe.sources), 8)
+
+    def test_oversized_stable_ids_are_deterministic_without_polluting_caches(self):
+        utils_module.clear_utility_caches()
+        long_term = "Pick swap terms " + ("receive better pick " * 80)
+        first = utils_module.stable_id("proposal", long_term)
+        second = utils_module.stable_id("proposal", long_term)
+        self.assertEqual(first, second)
+        self.assertEqual(first, f"proposal_{utils_module.slugify(long_term)}")
+        self.assertEqual(utils_module._stable_id_cached.cache_info().currsize, 0)
+        utils_module.stable_id("proposal", "short", "terms")
+        self.assertEqual(utils_module._stable_id_cached.cache_info().currsize, 1)
+
+    def test_save_writes_replace_atomically_for_concurrent_gui_reads(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "atomic.json"
+            before = {"version": "league_save_v1", "marker": "before", "rows": [1, 2, 3]}
+            after = {"version": "league_save_v1", "marker": "after", "rows": list(range(1000))}
+            write_save(save_path, before)
+            entered = threading.Event()
+            release = threading.Event()
+            failures: list[BaseException] = []
+            original_dump = save_module.json.dump
+
+            def blocked_dump(*args, **kwargs):
+                entered.set()
+                release.wait(5)
+                return original_dump(*args, **kwargs)
+
+            def writer() -> None:
+                try:
+                    write_save(save_path, after)
+                except BaseException as exc:  # surfaced in the test thread below
+                    failures.append(exc)
+
+            with patch.object(save_module.json, "dump", side_effect=blocked_dump):
+                thread = threading.Thread(target=writer)
+                thread.start()
+                try:
+                    self.assertTrue(entered.wait(5))
+                    self.assertEqual(load_save(save_path)["marker"], "before")
+                finally:
+                    release.set()
+                thread.join(5)
+
+            self.assertFalse(thread.is_alive())
+            self.assertEqual(failures, [])
+            self.assertEqual(load_save(save_path)["marker"], "after")
+            self.assertEqual(list(save_path.parent.glob(f".{save_path.name}.*.tmp")), [])
 
     def test_playtest_player_data_overrides_apply_to_canonical(self):
         players = {player["name"]: player for player in self.plain["players"]}
@@ -414,6 +474,36 @@ class DataFoundationTests(unittest.TestCase):
         self.assertLessEqual(summaries["chucky hepburn"]["rim_pressure"], 54)
         self.assertGreater(summaries["matisse thybulle"]["defense"], 75)
 
+    def test_zero_traits_remain_zero_through_development_and_rating_reads(self):
+        canonical = json.loads(json.dumps(self.plain))
+        player = next(item for item in canonical["players"] if item.get("normalized_name") == "mason plumlee")
+        release = next(
+            trait
+            for trait in canonical["traits"]
+            if trait.get("player_id") == player["id"] and trait.get("trait_key") == "release_speed"
+        )
+        release["value"] = 0.0
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "zero_trait.json"
+            save = create_league_save(ROOT, canonical, "GSW", save_path, seed=17)
+            save["development_events"] = [
+                {
+                    "id": "zero_trait_regression",
+                    "player_id": player["id"],
+                    "team_id": player.get("team_id"),
+                    "month": "2025-11",
+                    "trait_deltas": {"release_speed": -0.12},
+                }
+            ]
+            active = canonical_with_save(canonical, save)
+        active_release = next(
+            trait
+            for trait in active["traits"]
+            if trait.get("player_id") == player["id"] and trait.get("trait_key") == "release_speed"
+        )
+        self.assertEqual(float(active_release["value"]), 0.0)
+        self.assertEqual(player_attribute_summary(active, player["id"])["release"], 1.0)
+
     def test_manual_player_physical_overrides_apply(self):
         players = {player.normalized_name: player for player in self.universe.players}
         self.assertEqual(players["trey alexander"].height_inches, 77)
@@ -552,6 +642,83 @@ class DataFoundationTests(unittest.TestCase):
         self.assertGreaterEqual(max(athleticism_values), 62)
         self.assertGreater(max(athleticism_values) - min(athleticism_values), 12)
 
+    def test_generated_future_classes_keep_nba_ready_top_tiers_without_talent_inflation(self):
+        for year in range(2027, 2047):
+            prospects = to_plain(generate_draft_class_records(str(year), seed=20260710))["draft_prospects"]
+            abilities = [float(prospect["current_ability"]) for prospect in prospects]
+            self.assertGreaterEqual(abilities[0], 55.0)
+            self.assertGreaterEqual(min(abilities[:3]), 53.0)
+            self.assertGreaterEqual(min(abilities[:5]), 51.0)
+            self.assertGreaterEqual(min(abilities[:14]), 44.0)
+            self.assertGreaterEqual(sum(abilities) / len(abilities), 40.0)
+            self.assertLessEqual(sum(abilities) / len(abilities), 52.0)
+            self.assertLessEqual(max(abilities), 65.0)
+
+    def test_rookie_trait_conversion_respects_current_ability_without_flattening_specialists(self):
+        profile = {
+            "shooting": 58.0,
+            "shot_creation": 54.0,
+            "rim_pressure": 57.0,
+            "passing": 50.0,
+            "defense": 61.0,
+            "rim_protection": 86.0,
+            "rebounding": 72.0,
+            "feel": 55.0,
+            "athleticism": 68.0,
+            "size": 82.0,
+            "motor": 66.0,
+            "nba_readiness": 52.0,
+        }
+        top = nba_trait_values_from_prospect(profile, 60.0, 86.0, "C", "rim_protecting_big")
+        late = nba_trait_values_from_prospect(profile, 44.0, 61.0, "C", "rim_protecting_big")
+        self.assertGreater(sum(top.values()) / len(top), sum(late.values()) / len(late) + 12.0)
+        self.assertGreater(late["rim_deterrence"], sum(late.values()) / len(late) + 12.0)
+
+    def test_prospect_upside_drives_bounded_deterministic_career_variance(self):
+        high_template = {
+            "current_ability": 55.0,
+            "potential": 88.0,
+            "rotation_priority": "development_priority",
+        }
+        low_template = {**high_template, "potential": 65.0}
+        factors = [
+            development_upside_multiplier({**high_template, "id": f"prospect_{index}"}, seed=77)
+            for index in range(100)
+        ]
+        self.assertLess(min(factors), 1.5)
+        self.assertGreater(max(factors), 2.6)
+        player_id = next(
+            f"prospect_{index}"
+            for index in range(100)
+            if development_upside_multiplier({**high_template, "id": f"prospect_{index}"}, seed=77) >= 2.2
+        )
+
+        def trajectory(template: dict[str, object]) -> float:
+            player = {**template, "id": player_id}
+            current = 55.0
+            staff = {"development_multiplier": 1.0, "patience_multiplier": 1.0}
+            for year in range(8):
+                for month in range(9):
+                    current += monthly_trait_delta(
+                        player,
+                        "passing_reads",
+                        current,
+                        19.0 + year,
+                        24.0,
+                        staff,
+                        0.0,
+                        77,
+                        f"{2027 + year}-{month + 1:02d}",
+                        0.32,
+                    )
+            return current
+
+        high_result = trajectory(high_template)
+        low_result = trajectory(low_template)
+        self.assertGreater(high_result - 55.0, 6.0)
+        self.assertGreater(high_result - low_result, 2.5)
+        self.assertLess(high_result, 80.0)
+
     def test_cap_growth_contract_metadata_and_old_pick_expiry(self):
         self.assertGreater(cap_lines_for_season("2028-29")["tax_line"], cap_lines_for_season("2025-26")["tax_line"])
         with tempfile.TemporaryDirectory() as tmp:
@@ -580,6 +747,18 @@ class DataFoundationTests(unittest.TestCase):
         second_round = [pick for pick in first["draft_order"] if pick["round"] == 2]
         self.assertEqual([pick["overall_pick"] for pick in first_round], list(range(1, 31)))
         self.assertEqual([pick["overall_pick"] for pick in second_round], list(range(31, 61)))
+        self.assertEqual(len({pick["id"] for pick in first["draft_order"]}), 60)
+        self.assertEqual(len({pick["original_team_id"] for pick in first_round}), 30)
+        self.assertEqual(len({pick["original_team_id"] for pick in second_round}), 30)
+
+        modeled_save = {"generated_draft_picks": []}
+        added = materialize_draft_order_pick_assets(self.plain, modeled_save, first)
+        all_pick_ids = {
+            pick["id"]
+            for pick in [*self.plain.get("draft_picks", []), *modeled_save["generated_draft_picks"]]
+        }
+        self.assertGreater(added, 0)
+        self.assertTrue({pick["id"] for pick in first["draft_order"]}.issubset(all_pick_ids))
 
     def test_new_save_seeds_startup_free_agents_and_event_collections(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -689,6 +868,124 @@ class DataFoundationTests(unittest.TestCase):
             saved_result = next(item for item in save["game_results"] if item["game_id"] == "ghost_game")
             self.assertEqual(saved_result["player_lines"], [])
 
+    def test_auto_depth_signing_removes_player_from_free_agent_pool(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "roster_repair_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=408)
+            active = canonical_with_save(self.plain, save)
+            team = next(team for team in active["teams"] if team["abbrev"] != "GSW")
+            roster = [player for player in active["players"] if player.get("team_id") == team["id"]]
+            for player in roster[: max(0, len(roster) - 12)]:
+                save.setdefault("roster_overrides", {})[player["id"]] = None
+                save.setdefault("free_agent_player_ids", []).append(player["id"])
+            signed = ensure_roster_minimums(self.plain, save, seed=408)
+            self.assertTrue(signed)
+            repaired = canonical_with_save(self.plain, save)
+            rostered_ids = {player["id"] for player in repaired["players"] if player.get("team_id")}
+            self.assertFalse(rostered_ids & set(save.get("free_agent_player_ids", [])))
+
+    def test_repeated_same_day_ai_roster_cut_upserts_one_transaction(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "repeat_ai_cut_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=4081)
+            team_id = "team_bos"
+            injected = save["startup_free_agents"][:8]
+            for player_id in injected:
+                save.setdefault("roster_overrides", {})[player_id] = team_id
+            save["free_agent_player_ids"] = [
+                item for item in save.get("free_agent_player_ids", []) if item not in set(injected)
+            ]
+            refresh_roster_cutdowns(self.plain, save)
+            player_id = next(
+                item for item in injected if save["roster_overrides"].get(item) is None
+            )
+            save["roster_overrides"][player_id] = team_id
+            save["free_agent_player_ids"] = [
+                item for item in save.get("free_agent_player_ids", []) if item != player_id
+            ]
+            refresh_roster_cutdowns(self.plain, save)
+            self.assertIsNone(save["roster_overrides"].get(player_id))
+            self.assertIn(player_id, save["free_agent_player_ids"])
+            matching = [
+                row
+                for row in save.get("transaction_logs", [])
+                if row.get("transaction_type") == "roster_cut"
+                and (row.get("assets") or {}).get("player_id") == player_id
+                and team_id in (row.get("teams") or [])
+            ]
+            self.assertEqual(len(matching), 1)
+            save["transaction_logs"].append(json.loads(json.dumps(matching[0])))
+            write_save(save_path, save)
+            repaired = load_save(save_path)
+            repaired_matching = [
+                row
+                for row in repaired.get("transaction_logs", [])
+                if row.get("id") == matching[0]["id"]
+            ]
+            self.assertEqual(len(repaired_matching), 1)
+
+    def test_offseason_free_agent_attrition_preserves_recent_and_meaningful_players(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "free_agent_attrition_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=409)
+            active = canonical_with_save(self.plain, save)
+            curry = next(player for player in active["players"] if player["name"] == "Stephen Curry")
+            recent_id = save["startup_free_agents"][0]
+            save.setdefault("roster_overrides", {})[curry["id"]] = None
+            save["free_agent_player_ids"] = sorted(set(save["startup_free_agents"][:18]) | {curry["id"]})
+            save.setdefault("released_free_agents", {})[curry["id"]] = {
+                "player_id": curry["id"],
+                "release_date": "2025-10-20",
+                "status": "available",
+            }
+            save.setdefault("incoming_rookies", []).append(
+                {"id": "recent_rookie_rights", "player_id": recent_id, "draft_year": "2026"}
+            )
+
+            exits = archive_excess_free_agents(
+                self.plain,
+                save,
+                "2025-26",
+                "2026-27",
+                seed=409,
+                target=5,
+            )
+
+            self.assertTrue(exits)
+            self.assertIn(curry["id"], save["free_agent_player_ids"])
+            self.assertIn(recent_id, save["free_agent_player_ids"])
+            self.assertNotIn(curry["id"], save["league_exit_player_ids"])
+            self.assertNotIn(recent_id, save["league_exit_player_ids"])
+            self.assertTrue(set(save["league_exit_player_ids"]).issubset(set(save["retired_player_ids"])))
+            self.assertTrue(set(save["league_exit_player_ids"]).isdisjoint(set(save["free_agent_player_ids"])))
+            self.assertLessEqual(len(save["free_agent_player_ids"]), 7)
+            inactive_active = canonical_with_save(self.plain, save)
+            inactive_ids = {
+                player["id"]
+                for player in inactive_active["players"]
+                if player.get("_inactive_player")
+            }
+            self.assertTrue(set(save["league_exit_player_ids"]).issubset(inactive_ids))
+            development = advance_development(inactive_active, "2026-11", seed=409)
+            self.assertTrue(
+                set(save["league_exit_player_ids"]).isdisjoint(
+                    {event["player_id"] for event in development["events"]}
+                )
+            )
+            write_save(save_path, save)
+            finder = dispatch_app_action(
+                "player_finder",
+                {"save_path": str(save_path)},
+                root=ROOT,
+                save_dir=Path(tmp),
+                canonical=self.plain,
+            )
+            self.assertTrue(
+                set(save["league_exit_player_ids"]).isdisjoint(
+                    {row["id"] for row in finder["rows"]}
+                )
+            )
+
     def test_locked_pick_obligations_block_trade_legality_and_value(self):
         with tempfile.TemporaryDirectory() as tmp:
             save_path = Path(tmp) / "pick_lock_save.json"
@@ -786,6 +1083,7 @@ class DataFoundationTests(unittest.TestCase):
             home = dispatch_app_action("home", {"save_path": save_path}, root=ROOT, save_dir=save_dir, canonical=self.plain)
             self.assertEqual(home["save"]["user_team"]["abbrev"], "GSW")
             self.assertIn("league_events", home)
+            self.assertEqual(set(home["pending"]), {"current_date", "phase", "pending_counts"})
             dashboard = dispatch_app_action("team_dashboard", {"save_path": save_path, "team": "GSW"}, root=ROOT, save_dir=save_dir, canonical=self.plain)
             self.assertEqual(dashboard["team"]["abbrev"], "GSW")
             self.assertIn("rotation", dashboard)
@@ -832,6 +1130,9 @@ class DataFoundationTests(unittest.TestCase):
             free_agency_room = dispatch_app_action("free_agency_room", {"save_path": save_path, "team": "GSW"}, root=ROOT, save_dir=save_dir, canonical=self.plain)
             self.assertEqual(free_agency_room["team"]["abbrev"], "GSW")
             self.assertIn("candidates", free_agency_room)
+            free_agents = dispatch_app_action("free_agents", {"save_path": save_path, "team": "GSW", "limit": 5}, root=ROOT, save_dir=save_dir, canonical=self.plain)
+            self.assertTrue(free_agents["candidates"])
+            self.assertTrue(all(float(candidate["ratings"]["overall"]) > 0 for candidate in free_agents["candidates"]))
 
             draft_room = dispatch_app_action("draft_room", {"save_path": save_path, "team": "GSW", "seed": 501}, root=ROOT, save_dir=save_dir, canonical=self.plain)
             self.assertEqual(draft_room["state"]["status"], "locked_until_draft")
@@ -843,6 +1144,8 @@ class DataFoundationTests(unittest.TestCase):
             self.assertIn("East", playoff_room["picture"])
             self.assertIn("West", playoff_room["picture"])
             self.assertIn("series", playoff_room)
+            playoff_stats = dispatch_app_action("playoff_leaders", {"save_path": save_path, "stat": "points"}, root=ROOT, save_dir=save_dir, canonical=self.plain)
+            self.assertEqual(playoff_stats["stat"], "points")
 
             advanced = dispatch_app_action(
                 "advance_save",
@@ -2103,6 +2406,29 @@ class DataFoundationTests(unittest.TestCase):
                 )
             )
 
+    def test_future_draft_pick_recommendations_use_generated_class(self):
+        future_pick = next(
+            pick
+            for pick in self.plain["draft_picks"]
+            if str(pick.get("season")) == "2027" and int(pick.get("round") or 0) == 1
+        )
+        report = pick_recommendations(self.plain, "BOS", future_pick["id"], limit=4, seed=77)
+        self.assertEqual(report["recommendation_count"], 4)
+        self.assertTrue(
+            all(
+                str(((row.get("entry") or {}).get("prospect") or {}).get("draft_year")) == "2027"
+                for row in report["recommendations"]
+            )
+        )
+        self.assertTrue(all((row.get("decision") or {}).get("pick_id") == future_pick["id"] for row in report["recommendations"]))
+
+        active = with_transaction_context(json.loads(json.dumps(self.plain)))
+        active_pick = next(pick for pick in active["draft_picks"] if pick.get("id") == future_pick["id"])
+        with patch("nba_gm_data.draft.generate_draft_class_records", wraps=generate_draft_class_records) as generator:
+            pick_recommendations(active, "BOS", active_pick["id"], limit=2, seed=78)
+            pick_recommendations(active, "ATL", active_pick["id"], limit=2, seed=78)
+        self.assertEqual(generator.call_count, 1)
+
     def test_lottery_reveal_shows_final_owner_only(self):
         order = {
             "lottery": {"seed": 1, "method": "test", "odds_by_team": {}},
@@ -2625,6 +2951,30 @@ class DataFoundationTests(unittest.TestCase):
             regular = team_dashboard(ROOT, self.plain, save_path, "GSW")
             self.assertEqual(regular["stats_context"]["label"], "Regular season")
 
+    def test_completed_playoff_status_is_exposed_for_gui_stage_gate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "completed_playoffs.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=425)
+            save["state"] = {
+                "current_date": "2026-06-22",
+                "phase": "draft_lottery",
+                "legal_actions": ["draft_lottery", "advance"],
+            }
+            save["playoff_state"] = {
+                "status": "completed",
+                "round": "champion",
+                "champion_team_id": "team_gsw",
+                "series": [],
+                "games": [],
+            }
+            write_save(save_path, save)
+
+            status = save_status(ROOT, self.plain, save_path)
+            self.assertEqual(status["phase"], "draft_lottery")
+            self.assertEqual(status["playoff_status"], "completed")
+            self.assertEqual(status["playoff_round"], "champion")
+            self.assertEqual(status["playoff_champion_team_id"], "team_gsw")
+
     def test_starting_five_optimizer_respects_lineup_shape_for_okc_and_sas(self):
         with tempfile.TemporaryDirectory() as tmp:
             save_path = Path(tmp) / "lineups.json"
@@ -2893,6 +3243,8 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(board["team"]["abbrev"], "WAS")
         self.assertEqual(board["entry_count"], 5)
         self.assertEqual(board["entries"][0]["prospect"]["name"], "AJ Dybantsa")
+        self.assertIsNotNone(board["entries"][0]["prospect"]["age"])
+        self.assertIn("'", board["entries"][0]["prospect"]["height"])
 
     def test_ai_draft_decisions_recommendations_trades_and_save_ledger(self):
         recommendations = pick_recommendations(self.plain, "WAS", "pick_2026-1-1-was", limit=3, seed=3)
@@ -3006,6 +3358,23 @@ class DataFoundationTests(unittest.TestCase):
         rookie_value = fallback_asset_valuation(rookie)
         self.assertGreaterEqual(rookie_value["player_value"], 84)
         self.assertGreaterEqual(market_trade_target_value(rookie, rookie_value), 84)
+        second_contract_player = {
+            **rookie,
+            "name": "Established Former Top Pick",
+            "age": 28,
+            "display_age": 28,
+            "draft_year": "2026",
+            "_active_season": "2034-35",
+        }
+        established_value = fallback_asset_valuation(second_contract_player)
+        self.assertLess(established_value["player_value"], 84)
+        self.assertEqual(drafted_rookie_value_floor(second_contract_player), 0.0)
+        same_age_rookie = {**rookie, "age": 23, "draft_year": "2026", "_active_season": "2026-27"}
+        same_age_veteran = {**same_age_rookie, "_active_season": "2030-31"}
+        self.assertGreater(
+            fallback_asset_valuation(same_age_rookie)["player_value"],
+            fallback_asset_valuation(same_age_veteran)["player_value"],
+        )
         active = with_transaction_context(self.plain)
         report = evaluate_trade(active, "LAL", "BOS", [{"kind": "player", "value": "LeBron James"}], [], seed=5)
         self.assertEqual(report["legality"]["status"], "illegal")
@@ -3124,12 +3493,22 @@ class DataFoundationTests(unittest.TestCase):
             saved = load_save(save_path)
             rookie_id = applied["incoming_rookie"]["player_id"]
             rookie = next(player for player in saved["generated_players"] if player["id"] == rookie_id)
+            self.assertEqual(float(rookie["current_ability"]), float(applied["incoming_rookie"]["current_ability"]))
+            self.assertEqual(float(rookie["potential"]), float(applied["incoming_rookie"]["potential"]))
+            self.assertEqual(int(rookie["overall_pick"]), int(applied["incoming_rookie"]["overall_pick"]))
+            self.assertEqual(str(rookie["draft_year"]), str(applied["incoming_rookie"]["draft_year"]))
             self.assertGreaterEqual(float(saved.get("rotation_baselines", {}).get(rookie_id) or 0.0), 17.0)
             self.assertIn(rookie_id, recent_rookie_protected_player_ids(saved))
+            rookie.pop("current_ability")
+            rookie.pop("potential")
+            rookie.pop("overall_pick")
+            rookie.pop("draft_year")
             saved["meta"]["season"] = "2027-28"
             saved["state"] = {"current_date": "2027-10-01", "phase": "preseason", "legal_actions": []}
             active = canonical_with_save(self.plain, saved)
             active_rookie = next(player for player in active["players"] if player["id"] == rookie["id"])
+            self.assertEqual(float(active_rookie["current_ability"]), float(applied["incoming_rookie"]["current_ability"]))
+            self.assertEqual(float(active_rookie["potential"]), float(applied["incoming_rookie"]["potential"]))
             self.assertEqual(float(active_rookie["display_age"]), float(rookie["age"]))
             projection = team_rotation_projection(active, saved, active_rookie["team_id"], integer=False)
             self.assertGreaterEqual(float(projection.get(rookie_id) or 0.0), 17.0)
@@ -3239,6 +3618,20 @@ class DataFoundationTests(unittest.TestCase):
             self.assertEqual(save["state"]["current_date"], "2025-10-01")
             self.assertEqual(save["state"]["phase"], "preseason")
             self.assertEqual(len(save["staff_slots"]), len(self.universe.teams) * 6)
+            active_start = canonical_with_save(self.plain, save)
+            roster_counts = Counter(
+                player.get("team_id")
+                for player in active_start["players"]
+                if player.get("team_id")
+            )
+            self.assertTrue(all(count <= 17 for count in roster_counts.values()))
+            for team in self.plain["teams"]:
+                spend = sum(
+                    float((slot.get("contract") or {}).get("annual_salary_millions") or 0.0)
+                    for slot in save["staff_slots"]
+                    if slot.get("team_id") == team["id"]
+                )
+                self.assertLessEqual(spend, staff_budget_for_team(self.plain, team["id"]) + 0.01)
             self.assertEqual(save["schedule_state"]["simulated_game_ids"], [])
 
             first = advance_save(ROOT, self.plain, save_path, to_date="2025-10-21", seed=9)
@@ -3301,6 +3694,90 @@ class DataFoundationTests(unittest.TestCase):
             self.assertTrue(any(row["label"] == "Availability" for row in hired["effect_rows"]))
             self.assertEqual(self.plain["gameplay_staff_slots"], original_canonical_staff)
             self.assertEqual(len([slot for slot in saved["staff_slots"] if slot["team_id"] == "team_gsw"]), 6)
+
+    def test_staff_hire_revalidates_authoritative_team_budget(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "staff_budget_guard.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=6)
+            candidate = staff_market_report(self.plain, save, slot="head_coach", limit=1)["candidates"][0]
+            save.setdefault("pending_staff_negotiations", []).append(
+                {
+                    "id": "stale_over_budget_staff_offer",
+                    "accepted": True,
+                    "budget_legal": True,
+                    "team_id": "team_bkn",
+                    "slot": "head_coach",
+                    "candidate": candidate,
+                    "team_offer": {
+                        "annual_salary_millions": staff_budget_for_team(self.plain, "team_bkn") + 5.0,
+                        "years": 3,
+                    },
+                }
+            )
+            result = hire_staff_from_save(save, "stale_over_budget_staff_offer", canonical=self.plain)
+            self.assertEqual(result["status"], "not_applied")
+            self.assertLess(result["budget"]["available_after_offer_millions"], 0)
+
+            payload = simulate_ai_staff_changes(self.plain, save, "2025-10-01", "2026-02-05", seed=6, limit=8)
+            apply_ai_staff_recommendations(self.plain, save, payload, seed=6)
+            for team in self.plain["teams"]:
+                spend = sum(
+                    float((slot.get("contract") or {}).get("annual_salary_millions") or 0.0)
+                    for slot in save.get("staff_slots", [])
+                    if slot.get("team_id") == team["id"]
+                )
+                self.assertLessEqual(spend, staff_budget_for_team(self.plain, team["id"]) + 0.01)
+
+    def test_staff_queue_keeps_live_strategy_from_raising_budget(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "staff_live_context_budget_guard.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=6)
+            save["state"]["phase"] = "offseason"
+            candidate = staff_market_report(self.plain, save, slot="head_coach", limit=1)["candidates"][0]
+            offer = {
+                "annual_salary_millions": float(candidate["asking_salary_millions"]),
+                "years": int(candidate["asking_years"]),
+            }
+            payload = {
+                "recommendations": [
+                    {
+                        "id": "bkn_live_context_budget_test",
+                        "team_id": "team_bkn",
+                        "team_abbrev": "BKN",
+                        "slot": "head_coach",
+                        "action": "fire_then_hire",
+                        "firing_reason": "test replacement",
+                        "candidate_id": candidate["id"],
+                        "recommended_offer": offer,
+                    }
+                ]
+            }
+            live = json.loads(json.dumps(self.plain))
+            bkn_strategy = next(row for row in live["team_strategic_states"] if row["team_id"] == "team_bkn")
+            bkn_strategy.update({"pressure": 100.0, "contention_ceiling": 100.0, "phase": "contending"})
+
+            with patch("nba_gm_data.save.simulate_ai_staff_changes", return_value=payload):
+                queue_ai_recommendations(
+                    live,
+                    save,
+                    "2026-08-01",
+                    "2026-08-02",
+                    seed=6,
+                    authoritative_canonical=self.plain,
+                )
+
+            spend = sum(
+                float((slot.get("contract") or {}).get("annual_salary_millions") or 0.0)
+                for slot in save.get("staff_slots", [])
+                if slot.get("team_id") == "team_bkn"
+            )
+            self.assertLessEqual(spend, staff_budget_for_team(self.plain, "team_bkn") + 0.01)
+            self.assertFalse(
+                any(
+                    event.get("kind") == "staff_hire" and candidate["name"] in event.get("headline", "")
+                    for event in save.get("league_events", [])
+                )
+            )
 
     def test_elite_staff_hire_and_fire_create_major_league_events(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -3604,6 +4081,26 @@ class DataFoundationTests(unittest.TestCase):
             self.assertGreaterEqual(first["body_area_counts"][body_area], quota["min_per_season"])
             self.assertLessEqual(first["body_area_counts"][body_area], quota["max_per_season"])
 
+    def test_health_simulation_accepts_generated_future_schedule(self):
+        future_game = {
+            "externalGameId": "sim_game_2027-28-health-test",
+            "gameDate": "2027-10-21",
+            "awayTeamId": "9",
+            "homeTeamId": "2",
+            "phase": "regular",
+        }
+        result = simulate_health(
+            ROOT,
+            self.plain,
+            "2027-10-20",
+            "2027-10-21",
+            seed=17,
+            schedule=[future_game],
+        )
+        self.assertEqual(result["game_count"], 1)
+        self.assertEqual(result["from_date"], "2027-10-20")
+        self.assertEqual(result["through_date"], "2027-10-21")
+
     def test_monthly_development_is_trait_level_and_deterministic(self):
         first = advance_development(self.plain, "2025-11", seed=4)
         second = advance_development(self.plain, "2025-11", seed=4)
@@ -3755,6 +4252,60 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(illegal["legality"]["status"], "illegal")
         self.assertTrue(any("salary" in issue for issue in illegal["legality"]["issues"]))
 
+    def test_trade_legality_blocks_worsened_future_hard_cap_overage(self):
+        canonical = {
+            "meta": {"active_season": "2025-26"},
+            "teams": [
+                {"id": "team_a", "abbrev": "AAA"},
+                {"id": "team_b", "abbrev": "BBB"},
+            ],
+            "players": [
+                {"id": "player_a", "name": "Player A", "team_id": "team_a"},
+                {"id": "filler_a", "name": "Filler A", "team_id": "team_a"},
+                {"id": "player_b", "name": "Player B", "team_id": "team_b"},
+            ],
+            "contracts": [
+                {
+                    "player_id": "player_a",
+                    "seasons": [
+                        {"season": "2025-26", "salary": 10_000_000},
+                        {"season": "2026-27", "salary": 10_000_000},
+                    ],
+                },
+                {
+                    "player_id": "filler_a",
+                    "seasons": [
+                        {"season": "2025-26", "salary": 100_000_000},
+                        {"season": "2026-27", "salary": 200_000_000},
+                    ],
+                },
+                {
+                    "player_id": "player_b",
+                    "seasons": [
+                        {"season": "2025-26", "salary": 10_000_000},
+                        {"season": "2026-27", "salary": 25_000_000},
+                    ],
+                },
+            ],
+        }
+        proposal = TradeProposal(
+            id="future_cap_guard",
+            date="2026-02-01",
+            from_team_id="team_a",
+            to_team_id="team_b",
+            from_assets=[{"kind": "player", "id": "player_a", "label": "Player A"}],
+            to_assets=[{"kind": "player", "id": "player_b", "label": "Player B"}],
+            status="proposed",
+            source_ids=["test"],
+            notes="future cap test",
+        )
+        issue = transactions_module.salary_matching_issue(
+            canonical,
+            proposal,
+            transactions_module.default_transaction_model_config(),
+        )
+        self.assertIn("2026-27 hard-cap overage", issue)
+
     def test_transaction_context_reuses_pick_annotation_until_inputs_change(self):
         with tempfile.TemporaryDirectory() as tmp:
             save_path = Path(tmp) / "context_cache_save.json"
@@ -3877,13 +4428,17 @@ class DataFoundationTests(unittest.TestCase):
             applied_outcome = result["processed"][0]
             self.assertEqual(applied_outcome["applied_candidate_count"], 1)
             saved = load_save(save_path)
-            self.assertEqual(len(saved["transaction_logs"]), 1)
-            self.assertEqual(saved["transaction_logs"][0]["date"], "2026-01-20")
+            trade_logs = [row for row in saved["transaction_logs"] if row.get("transaction_type") == "trade"]
+            self.assertEqual(len(trade_logs), 1)
+            self.assertEqual(trade_logs[0]["date"], "2026-01-20")
             self.assertEqual(saved["pending_ai_actions"][0]["status"], "executed")
             self.assertIn(saved["roster_overrides"][seth["id"]], {"team_was", "team_bkn"})
             again = process_ai_actions(self.plain, save_path, seed=6, execute=True, limit=1)
             self.assertEqual(again["processed_count"], 0)
-            self.assertEqual(len(load_save(save_path)["transaction_logs"]), 1)
+            self.assertEqual(
+                len([row for row in load_save(save_path)["transaction_logs"] if row.get("transaction_type") == "trade"]),
+                1,
+            )
 
     def test_trade_application_prunes_stale_offers_and_blocks_recently_traded_players(self):
         seth = next(player for player in self.plain["players"] if player["name"] == "Seth Curry")
@@ -4031,6 +4586,37 @@ class DataFoundationTests(unittest.TestCase):
         self.assertGreater(free_agents_report(free_agent_active, "GSW")["candidate_count"], 0)
         extensions = extension_candidates_report(self.plain, "GSW")
         self.assertTrue(any(candidate["name"] == "Stephen Curry" for candidate in extensions["candidates"]))
+
+    def test_ai_re_signing_respects_each_future_hard_cap_year(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "re_signing_cap_save.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=73)
+            active = canonical_with_save(self.plain, save)
+            cle_player = next(player for player in active["players"] if player.get("team_id") == "team_cle")
+            atl_player = next(player for player in active["players"] if player.get("team_id") == "team_atl")
+            self.assertFalse(ai_re_signing_fits_hard_cap(self.plain, save, cle_player, "team_cle", "2026-27"))
+            self.assertTrue(ai_re_signing_fits_hard_cap(self.plain, save, atl_player, "team_atl", "2026-27"))
+
+            terms = ai_re_signing_contract_terms(save, atl_player, "2026-27")
+            cap = team_cap_summary(active, save, "team_atl", season="2026-27")
+            room = float(cap["hard_cap_space_millions"]) * 1_000_000
+            other = next(
+                player
+                for player in active["players"]
+                if player.get("team_id") == "team_atl"
+                and player["id"] != atl_player["id"]
+                and not any(
+                    row.get("season") == "2026-27" and row.get("salary") is not None
+                    for row in next((contract for contract in active["contracts"] if contract.get("player_id") == player["id"]), {}).get("seasons", [])
+                )
+            )
+            reserved_salary = max(2_000_000, room - float(terms["salary"]) + 100_000)
+            save.setdefault("contract_overrides", {})[other["id"]] = {
+                "team_id": "team_atl",
+                "status": "ai_re_signing",
+                "seasons": [{"season": "2026-27", "salary": int(reserved_salary)}],
+            }
+            self.assertFalse(ai_re_signing_fits_hard_cap(self.plain, save, atl_player, "team_atl", "2026-27"))
 
     def test_extension_override_preserves_current_contract_season(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -4286,6 +4872,69 @@ class DataFoundationTests(unittest.TestCase):
             self.assertEqual(new_head["name"], old_name)
             self.assertEqual(new_head["market_status"], "contract_expired_pending_user_decision")
             self.assertTrue(any(window.get("staff_name") == old_name and window.get("status") == "pending_user_decision" for window in save.get("staff_retention_windows", [])))
+            write_save(save_path, save)
+            room = dispatch_app_action(
+                "staff_retention_room",
+                {"save_path": str(save_path)},
+                root=ROOT,
+                save_dir=Path(tmp),
+                canonical=self.plain,
+            )
+            self.assertEqual(room["status"], "required")
+            self.assertEqual(room["window"]["slot"], "head_coach")
+            resolved = dispatch_app_action(
+                "resolve_staff_retention",
+                {"save_path": str(save_path), "window_id": room["window"]["id"], "choice": "re_sign"},
+                root=ROOT,
+                save_dir=Path(tmp),
+                canonical=self.plain,
+            )
+            self.assertEqual(resolved["status"], "re_signed")
+            updated = load_save(save_path)
+            retained = next(slot for slot in updated["staff_slots"] if slot["team_id"] == "team_gsw" and slot["slot"] == "head_coach")
+            self.assertEqual(retained["market_status"], "employed")
+            self.assertGreaterEqual(int(retained["contract"]["years_remaining"]), 1)
+            self.assertFalse(any(window.get("status") == "pending_user_decision" for window in updated.get("staff_retention_windows", [])))
+
+    def test_initial_staff_contracts_are_staggered_and_market_identity_stays_unique(self):
+        slots = initialize_save_staff_slots(self.plain, seed=436)
+        terms = {int((slot.get("contract") or {}).get("years_remaining") or 0) for slot in slots}
+        self.assertTrue(terms.issubset({2, 3, 4, 5}))
+        self.assertGreaterEqual(len(terms), 3)
+        self.assertGreaterEqual(max(terms), 4)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "staff_identity.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=436)
+            candidate = generate_staff_market(self.plain, save, slot="head_coach")[0]
+            source_id = candidate["market_source_id"]
+            employed = json.loads(json.dumps(candidate))
+            employed.update(
+                {
+                    "id": "save_staff_employed_source",
+                    "team_id": "team_bos",
+                    "market_status": "employed",
+                    "market_source_id": source_id,
+                }
+            )
+            former = json.loads(json.dumps(candidate))
+            former.update(
+                {
+                    "id": "save_staff_former_source",
+                    "team_id": None,
+                    "market_status": "fired",
+                    "market_source_id": source_id,
+                }
+            )
+            save["staff_slots"] = [
+                slot
+                for slot in save["staff_slots"]
+                if not (slot.get("team_id") == "team_bos" and slot.get("slot") == "head_coach")
+            ] + [employed]
+            save.setdefault("former_staff", []).append(former)
+
+            market = generate_staff_market(self.plain, save, slot="head_coach")
+            self.assertNotIn(source_id, {row.get("market_source_id") for row in market})
 
     def test_ai_staff_expiry_retains_elite_staff_within_budget(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -4307,6 +4956,27 @@ class DataFoundationTests(unittest.TestCase):
             self.assertFalse(any(item.get("name") == "Elite Development Lead" for item in save.get("former_staff", [])))
             spent = sum(float(slot.get("contract", {}).get("annual_salary_millions") or 0.0) for slot in save["staff_slots"] if slot.get("team_id") == "team_bos")
             self.assertLessEqual(spent, staff_budget_for_team(self.plain, "team_bos") + 0.01)
+
+    def test_simultaneous_ai_staff_retentions_share_one_live_budget(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "ai_staff_retention_batch.json"
+            save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=437)
+            team_id = "team_nop"
+            save["team_records"][team_id] = {"team_id": team_id, "team_abbrev": "NOP", "wins": 60, "losses": 22}
+            save["state"]["current_date"] = "2026-10-01"
+            for staff in save["staff_slots"]:
+                if staff.get("team_id") != team_id:
+                    continue
+                staff["skill_traits"] = {key: 95.0 for key in staff.get("skill_traits", {})}
+                staff["personality_traits"] = {key: 92.0 for key in staff.get("personality_traits", {})}
+                staff["contract"]["years_remaining"] = 1
+
+            age_staff_contracts(save, self.plain, seed=437)
+
+            team_staff = [staff for staff in save["staff_slots"] if staff.get("team_id") == team_id]
+            spent = sum(float(staff.get("contract", {}).get("annual_salary_millions") or 0.0) for staff in team_staff)
+            self.assertEqual(len(team_staff), 6)
+            self.assertLessEqual(spent, staff_budget_for_team(self.plain, team_id) + 0.01)
 
     def test_support_staff_can_be_fired_for_role_specific_failures(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -4347,6 +5017,22 @@ class DataFoundationTests(unittest.TestCase):
         expired_contract = {"_active_season": "2026-27", "seasons": [{"season": "2025-26", "salary": 5_000_000}]}
         self.assertIsNone(current_salary(expired_contract))
 
+    def test_known_extension_is_not_blocked_by_unresolved_teammate_contract(self):
+        canonical = json.loads(json.dumps(self.plain))
+        canonical["contracts"].append(
+            {
+                "id": "unresolved_teammate_contract",
+                "player_id": "unresolved_teammate",
+                "team_id": "team_gsw",
+                "status": "manual_research_pending",
+                "seasons": [{"season": "2025-26", "salary": None}],
+            }
+        )
+        result = negotiate_extension(canonical, "Stephen Curry", "GSW", seed=123, date="2025-10-21")
+        offers = (result.get("negotiation") or {}).get("offers") or []
+        self.assertTrue(offers)
+        self.assertTrue(all((offer.get("legality") or {}).get("status") != "manual_review_required" for offer in offers))
+
     def test_ai_extensions_have_leaguewide_volume_and_trade_demand_pressure(self):
         with tempfile.TemporaryDirectory() as tmp:
             save_path = Path(tmp) / "ai_extensions.json"
@@ -4371,6 +5057,14 @@ class DataFoundationTests(unittest.TestCase):
             )
             self.assertTrue(save.get("ai_trade_pressure_player_ids"))
             self.assertTrue(any(event.get("kind") == "trade_demand" for event in save.get("league_events", [])))
+            process_ai_extensions(self.plain, save, "2026-02-05", seed=123, limit=100)
+            volume = save.get("ai_extension_volume", {}).get("2025-26", {})
+            self.assertLessEqual(int(volume.get("rookie_scale") or 0), 15)
+            self.assertLessEqual(int(volume.get("veteran") or 0), 15)
+            self.assertLessEqual(
+                len([log for log in save.get("transaction_logs", []) if log.get("transaction_type") == "extension"]),
+                30,
+            )
 
     def test_ai_extension_timing_and_older_player_caution(self):
         save = {
@@ -4499,7 +5193,13 @@ class DataFoundationTests(unittest.TestCase):
             payload = simulate_ai_staff_changes(self.plain, save, "2026-04-15", "2026-06-20", seed=417, limit=10)
             head_coach_moves = [item for item in payload["recommendations"] if item["slot"] == "head_coach"]
             self.assertGreaterEqual(len(head_coach_moves), 4)
+            self.assertLessEqual(len(head_coach_moves), 6)
             self.assertTrue(all(item.get("firing_reason") for item in head_coach_moves))
+
+            save["state"] = {"current_date": "2026-01-20", "phase": "regular_season", "legal_actions": ["staff_changes"]}
+            midseason = simulate_ai_staff_changes(self.plain, save, "2026-01-01", "2026-01-20", seed=417, limit=10)
+            midseason_head_moves = [item for item in midseason["recommendations"] if item["slot"] == "head_coach"]
+            self.assertLessEqual(len(midseason_head_moves), 3)
 
     def test_save_rotation_projection_sums_to_240_and_zeros_injured_players(self):
         curry = next(player for player in self.plain["players"] if player["name"] == "Stephen Curry")
@@ -4640,6 +5340,10 @@ class DataFoundationTests(unittest.TestCase):
         self.assertGreaterEqual(assist_rate_for_player(players["luka doncic"], luka.features) * 36, 9.0)
         self.assertLess(clowney.features["usage"], 68)
         self.assertGreaterEqual(wemby.features["rim_deterrence"], 75)
+        self.assertLessEqual(
+            plausible_point_cap({"minutes": 39.5, "player": players["victor wembanyama"]}, wemby.features),
+            34,
+        )
         self.assertGreaterEqual(draymond.features["passing"], 85)
         self.assertGreaterEqual(assist_rate_from_features(trae.features), 0.27)
         self.assertGreaterEqual(assist_rate_for_player(players["trae young"], trae.features), 0.31)
@@ -4673,6 +5377,17 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertAlmostEqual(sum(line["minutes"] for line in first["player_lines"] if line["team_id"] == first["home_team_id"]), 240, places=1)
         self.assertTrue(all(line["points"] >= 0 for line in first["player_lines"]))
+        for team_line in first["team_lines"]:
+            team_players = [line for line in first["player_lines"] if line["team_id"] == team_line["team_id"]]
+            for key, lower, upper in [
+                ("rebounds", 35, 54),
+                ("assists", 18, 36),
+                ("steals", 3, 14),
+                ("blocks", 1, 12),
+            ]:
+                self.assertEqual(team_line[key], sum(line[key] for line in team_players))
+                self.assertGreaterEqual(team_line[key], lower)
+                self.assertLessEqual(team_line[key], upper)
 
     def test_replay_real_minutes_normalizes_game_team_abbreviations(self):
         context = load_sim_context(ROOT, to_plain(self.universe))
@@ -5087,6 +5802,126 @@ class DataFoundationTests(unittest.TestCase):
         }
         picks = tradeable_picks_for_team(canonical, "team_gsw")
         self.assertEqual([pick["id"] for pick in picks], ["pick_a", "pick_b"])
+
+    def test_gui_milestone_advance_uses_intermediate_ai_checkpoints(self):
+        save_path = Path("/tmp/gui_milestone_checkpoint_test.json")
+        with (
+            patch("nba_gm_data.app_actions.load_save", return_value={"state": {"current_date": "2025-10-01"}}),
+            patch("nba_gm_data.app_actions.advance_with_checkpoints", return_value={"status": "advanced"}) as checkpoints,
+            patch("nba_gm_data.app_actions.home_payload", return_value={"save": {"phase": "play_in"}}),
+        ):
+            result = advance_action(
+                ROOT,
+                self.plain,
+                save_path,
+                {
+                    "to_date": "2026-04-15",
+                    "checkpoint_days": 31,
+                    "seed": 7,
+                    "process_ai": False,
+                },
+            )
+        checkpoints.assert_called_once_with(ROOT, self.plain, save_path, "2026-04-15", 7, 31)
+        self.assertEqual(result["home"]["save"]["phase"], "play_in")
+
+    def test_gui_advance_reuses_core_ai_result_without_duplicate_processing(self):
+        save_path = Path("/tmp/gui_single_ai_pass_test.json")
+        with (
+            patch("nba_gm_data.app_actions.advance_save", return_value={"status": "advanced", "ai_applied_count": 3}) as core_advance,
+            patch("nba_gm_data.app_actions.process_ai_actions") as duplicate_ai,
+            patch("nba_gm_data.app_actions.home_payload", return_value={"save": {"phase": "regular_season"}}),
+        ):
+            result = advance_action(
+                ROOT,
+                self.plain,
+                save_path,
+                {"to_date": "2025-11-01", "seed": 7},
+            )
+        core_advance.assert_called_once_with(ROOT, self.plain, save_path, to_date="2025-11-01", next_event=False, seed=7)
+        duplicate_ai.assert_not_called()
+        self.assertEqual(result["result"]["ai_processing"]["applied_count"], 3)
+
+    def test_gui_roster_cutdown_can_be_completed_through_app_actions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_dir = Path(tmp)
+            save_path = save_dir / "gui_cutdown.json"
+            save = create_league_save(ROOT, self.plain, "MIA", save_path, seed=812)
+            candidate = next(
+                player
+                for player in self.plain["players"]
+                if player.get("team_id") == "team_bos" and float(player.get("age") or 0) >= 27
+            )
+            save["roster_overrides"][candidate["id"]] = "team_mia"
+            save["free_agent_player_ids"] = [player_id for player_id in save.get("free_agent_player_ids", []) if player_id != candidate["id"]]
+            save = ensure_league_save_defaults(save, self.plain)
+            write_save(save_path, save)
+
+            room = dispatch_app_action("roster_cutdown", {"save_path": save_path}, root=ROOT, save_dir=save_dir, canonical=self.plain)
+            self.assertEqual(room["status"], "required")
+            self.assertEqual(room["current_count"], 16)
+            result = dispatch_app_action(
+                "waive_player",
+                {"save_path": save_path, "player_id": candidate["id"]},
+                root=ROOT,
+                save_dir=save_dir,
+                canonical=self.plain,
+            )
+            self.assertEqual(result["status"], "waived")
+            self.assertEqual(result["room"]["status"], "clear")
+            updated = load_save(save_path)
+            self.assertIsNone(updated["roster_overrides"][candidate["id"]])
+            self.assertIn(candidate["id"], updated["free_agent_player_ids"])
+
+    def test_ai_roster_cutdown_moves_waived_player_to_free_agency(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            save_path = Path(tmp) / "ai_cutdown.json"
+            save = create_league_save(ROOT, self.plain, "MIA", save_path, seed=913)
+            filler_id = "player_test_ai_cutdown_filler"
+            save.setdefault("generated_players", []).append(
+                {
+                    "id": filler_id,
+                    "name": "Test Cutdown Filler",
+                    "team_id": "team_bos",
+                    "team_abbrev": "BOS",
+                    "position": "SG",
+                    "age": 60,
+                    "height_inches": 76,
+                    "minutes_projection": 0.0,
+                    "rotation_priority": "replacement",
+                    "market_status": "rostered",
+                    "missing_critical_fields": [],
+                    "critical_field_fallbacks": {},
+                }
+            )
+            save.setdefault("roster_overrides", {})[filler_id] = "team_bos"
+            save["free_agent_player_ids"] = [
+                player_id for player_id in save.get("free_agent_player_ids", []) if player_id != filler_id
+            ]
+
+            refresh_roster_cutdowns(self.plain, save)
+
+            self.assertIsNone(save["roster_overrides"][filler_id])
+            self.assertIn(filler_id, save["free_agent_player_ids"])
+            self.assertEqual(
+                save["released_free_agents"][filler_id]["reason"],
+                "ai_preseason_roster_cutdown",
+            )
+            self.assertTrue(
+                any(
+                    log.get("transaction_type") == "roster_cut"
+                    and (log.get("assets") or {}).get("player_id") == filler_id
+                    for log in save.get("transaction_logs", [])
+                )
+            )
+
+            save["free_agent_player_ids"].remove(filler_id)
+            save["released_free_agents"].pop(filler_id)
+            repaired = ensure_league_save_defaults(save, self.plain)
+            self.assertIn(filler_id, repaired["free_agent_player_ids"])
+            self.assertEqual(
+                repaired["released_free_agents"][filler_id]["reason"],
+                "legacy_unpooled_roster_cut_repair",
+            )
 
     def test_outputs_are_written(self):
         with tempfile.TemporaryDirectory() as tmp:

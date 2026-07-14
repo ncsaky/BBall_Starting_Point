@@ -127,9 +127,12 @@ def initialize_save_staff_slots(canonical: dict[str, Any], seed: int) -> list[di
     for slot in sorted(canonical.get("gameplay_staff_slots", []), key=lambda item: (item["team_id"], item["slot"])):
         record = deepcopy(slot)
         score = staff_grade(record)
+        contract = staff_contract(record["slot"], score, seed, record["id"])
+        term_rng = random.Random(f"{seed}:{record['id']}:initial_staff_term")
+        contract["years_remaining"] = 2 + int(term_rng.random() * 4)
         record.update(
             {
-                "contract": staff_contract(record["slot"], score, seed, record["id"]),
+                "contract": contract,
                 "morale": 64.0,
                 "job_security": round(clamp(58 + (score - 60) * 0.35, 35, 88), 2),
                 "market_status": "employed",
@@ -138,6 +141,24 @@ def initialize_save_staff_slots(canonical: dict[str, Any], seed: int) -> list[di
             }
         )
         slots.append(record)
+    # Seeded salaries are generated independently by role, while legality is
+    # team-wide. Normalize only the handful of staffs whose rounded starting
+    # contracts exceed their budget; relative salaries and grades stay intact.
+    for team in canonical.get("teams", []):
+        team_slots = [record for record in slots if record.get("team_id") == team.get("id")]
+        spend = sum(staff_budget_salary(record) for record in team_slots)
+        budget = staff_budget_for_team(canonical, team.get("id"))
+        if not team_slots or spend <= budget:
+            continue
+        factor = max(0.1, (budget - 0.01) / spend)
+        for record in team_slots:
+            contract = record.setdefault("contract", {})
+            contract["annual_salary_millions"] = round(staff_budget_salary(record) * factor, 2)
+        rounded_spend = sum(staff_budget_salary(record) for record in team_slots)
+        if rounded_spend > budget:
+            largest = max(team_slots, key=staff_budget_salary)
+            contract = largest.setdefault("contract", {})
+            contract["annual_salary_millions"] = round(max(0.8, staff_budget_salary(largest) - (rounded_spend - budget) - 0.01), 2)
     return slots
 
 
@@ -180,7 +201,8 @@ def generate_staff_market(canonical: dict[str, Any], save: dict[str, Any], slot:
         preferred_slot = former.get("role_preference") or former.get("slot")
         if slot and preferred_slot != slot:
             continue
-        if former.get("id") in unavailable_sources:
+        market_source_id = former.get("market_source_id") or former.get("id")
+        if market_source_id in unavailable_sources:
             continue
         candidate = deepcopy(former)
         candidate["team_id"] = None
@@ -190,7 +212,7 @@ def generate_staff_market(canonical: dict[str, Any], save: dict[str, Any], slot:
         candidate["market_status"] = "free_agent"
         candidate["former_staff_id"] = former.get("id")
         candidate["id"] = stable_id("staff_market_former", candidate.get("name"), preferred_slot, former.get("id"))
-        candidate["market_source_id"] = former.get("id") or candidate["id"]
+        candidate["market_source_id"] = market_source_id or candidate["id"]
         score = staff_grade(candidate)
         ask = staff_contract(preferred_slot, score, seed, candidate["id"])
         candidate["asking_salary_millions"] = round(float(ask["annual_salary_millions"]) * 0.95, 2)
@@ -382,7 +404,11 @@ def negotiate_staff_hire(
     return negotiation
 
 
-def hire_staff_from_save(save: dict[str, Any], negotiation_id: str) -> dict[str, Any]:
+def hire_staff_from_save(
+    save: dict[str, Any],
+    negotiation_id: str,
+    canonical: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     pending = save.get("pending_staff_negotiations", [])
     negotiation = next((item for item in pending if item.get("id") == negotiation_id), None)
     if not negotiation:
@@ -393,6 +419,19 @@ def hire_staff_from_save(save: dict[str, Any], negotiation_id: str) -> dict[str,
         return {"status": "not_applied", "negotiation_id": negotiation_id, "notes": "This staff deal exceeded the staff budget."}
     team_id = negotiation["team_id"]
     slot_name = negotiation["slot"]
+    if canonical is not None:
+        offered_salary = float((negotiation.get("team_offer") or {}).get("annual_salary_millions") or 0.0)
+        budget = staff_budget_snapshot(canonical, save, team_id, slot_name, offered_salary)
+        if budget["available_after_offer_millions"] < -0.01:
+            negotiation["budget"] = budget
+            negotiation["budget_legal"] = False
+            negotiation["status"] = "budget_blocked"
+            return {
+                "status": "not_applied",
+                "negotiation_id": negotiation_id,
+                "budget": budget,
+                "notes": "The staff budget changed after negotiation; this deal is no longer legal.",
+            }
     candidate = deepcopy(negotiation["candidate"])
     current = current_staff_slot(save, team_id, slot_name)
     if current:
@@ -452,6 +491,7 @@ def hire_staff_from_save(save: dict[str, Any], negotiation_id: str) -> dict[str,
             "action": "hire",
         },
     )
+    resolve_matching_staff_retention_window(save, team_id, slot_name, "resolved_replaced")
     queue_press_event_if_user_involved(save, "staff_hire", headline, [team_id])
     return {"status": "applied", "transaction_log": log, "staff": candidate, "previous_staff": current}
 
@@ -502,8 +542,129 @@ def fire_staff_from_save(save: dict[str, Any], team_id: str, slot: str, reason: 
             "reason": reason,
         },
     )
+    resolve_matching_staff_retention_window(save, team_id, slot, "resolved_interim_accepted")
     queue_press_event_if_user_involved(save, "staff_fire", headline, [team_id])
     return {"status": "applied", "transaction_log": log, "fired_staff": fired, "interim_staff": interim}
+
+
+def pending_staff_retention_window(save: dict[str, Any], window_id: str | None = None) -> dict[str, Any] | None:
+    user_team_id = (save.get("meta") or {}).get("user_team_id")
+    return next(
+        (
+            window
+            for window in save.get("staff_retention_windows", [])
+            if window.get("status") == "pending_user_decision"
+            and window.get("team_id") == user_team_id
+            and (not window_id or window.get("id") == window_id)
+        ),
+        None,
+    )
+
+
+def staff_retention_snapshot(canonical: dict[str, Any], save: dict[str, Any], window_id: str | None = None) -> dict[str, Any]:
+    window = pending_staff_retention_window(save, window_id)
+    if not window:
+        return {"status": "clear", "window": None}
+    staff = next((item for item in save.get("staff_slots", []) if item.get("id") == window.get("staff_id")), None)
+    if not staff:
+        return {"status": "invalid", "window": deepcopy(window), "notes": "The expiring staff member is no longer assigned."}
+    current_salary = staff_budget_salary(staff) or 2.0
+    ask = round(max(0.75, current_salary * 1.08), 2)
+    ask_years = int((staff.get("contract") or {}).get("asking_years") or 2)
+    budget = staff_budget_snapshot(canonical, save, str(window["team_id"]), str(window["slot"]), 0.0)
+    return {
+        "status": "required",
+        "window": deepcopy(window),
+        "staff": deepcopy(staff),
+        "staff_grade": round(staff_grade(staff), 1),
+        "effect_rows": staff_effect_rows(staff),
+        "ask_millions": ask,
+        "ask_years": ask_years,
+        "max_offer_millions": float(budget.get("max_offer_millions") or 0.0),
+        "budget": budget,
+    }
+
+
+def resolve_staff_retention_re_sign(
+    canonical: dict[str, Any],
+    save: dict[str, Any],
+    window_id: str,
+    salary_millions: float | None = None,
+    years: int | None = None,
+) -> dict[str, Any]:
+    snapshot = staff_retention_snapshot(canonical, save, window_id)
+    if snapshot.get("status") != "required":
+        return snapshot
+    window = snapshot["window"]
+    staff = next((item for item in save.get("staff_slots", []) if item.get("id") == window.get("staff_id")), None)
+    if not staff:
+        return {"status": "not_found", "window_id": window_id}
+    ask = float(snapshot["ask_millions"])
+    max_offer = float(snapshot["max_offer_millions"])
+    offer = round(float(salary_millions if salary_millions is not None else min(ask, max_offer)), 2)
+    term = max(1, min(5, int(years if years is not None else snapshot["ask_years"])))
+    if offer <= 0 or offer > max_offer + 0.001:
+        return {"status": "budget_blocked", "offer_millions": offer, "max_offer_millions": max_offer, "snapshot": snapshot}
+    context = 58.0 + min(20.0, staff_grade(staff) / 4.0)
+    interest = staff_retention_interest_score(offer, ask, term, int(snapshot["ask_years"]), context)
+    if interest < 58.0:
+        return {"status": "rejected", "interest": interest, "offer_millions": offer, "ask_millions": ask, "snapshot": snapshot}
+    staff["contract"] = {
+        "annual_salary_millions": offer,
+        "years_remaining": term,
+        "guarantee_level": "standard",
+    }
+    staff["market_status"] = "employed"
+    staff["status"] = "active"
+    resolve_matching_staff_retention_window(save, str(window["team_id"]), str(window["slot"]), "resolved_re_signed")
+    team_abbrev = str(window.get("team_abbrev") or str(window.get("team_id") or "").replace("team_", "").upper())
+    headline = f"{team_abbrev} re-signs {staff.get('name')} as {ROLE_LABELS.get(window.get('slot'), window.get('slot'))}."
+    log = staff_transaction_log(
+        save,
+        "staff_hire",
+        stable_id("staff_retention", window_id, offer, term),
+        [str(window["team_id"])],
+        {"staff": deepcopy(staff), "retained": True},
+        [{"decision": "re_sign", "interest": interest, "ask_millions": ask}],
+    )
+    save.setdefault("transaction_logs", []).append(log)
+    append_news_item_once(save, news_item(save, "staff_hire", headline))
+    from .save import add_league_event
+
+    add_league_event(
+        save,
+        "staff_hire",
+        headline,
+        team_ids=[str(window["team_id"])],
+        importance=0.74 if staff_grade(staff) > 89 else 0.38,
+        details={
+            "staff_id": staff.get("id"),
+            "staff_name": staff.get("name"),
+            "slot": window.get("slot"),
+            "staff_grade": round(staff_grade(staff), 2),
+            "action": "retain",
+        },
+    )
+    return {"status": "re_signed", "interest": interest, "staff": deepcopy(staff), "transaction_log": log}
+
+
+def staff_retention_interest_score(
+    offer_millions: float,
+    ask_millions: float,
+    years: int,
+    preferred_years: int,
+    context_score: float,
+) -> float:
+    salary_part = 52.0 * min(1.3, max(0.0, offer_millions) / max(ask_millions, 0.1))
+    years_part = 16.0 * min(1.0, max(1, years) / max(1, preferred_years))
+    context_part = (clamp(context_score, 0.0, 100.0) - 50.0) * 0.42
+    return round(clamp(salary_part + years_part + context_part, 0.0, 100.0), 1)
+
+
+def resolve_matching_staff_retention_window(save: dict[str, Any], team_id: str, slot: str, status: str) -> None:
+    for window in save.get("staff_retention_windows", []):
+        if window.get("team_id") == team_id and window.get("slot") == slot and window.get("status") == "pending_user_decision":
+            window["status"] = status
 
 
 def queue_press_event_if_user_involved(save: dict[str, Any], kind: str, headline: str, team_ids: list[str | None]) -> None:
@@ -773,6 +934,7 @@ def simulate_ai_staff_changes(
     season = str((save.get("meta") or {}).get("season") or "")
     firing_history = save.get("staff_firing_history") or []
     save_phase = str((save.get("state") or {}).get("phase") or "")
+    offseason_review = save_phase in {"offseason", "draft_lottery", "draft", "free_agency", "training_camp"}
     head_coach_firings_this_season = sum(
         1
         for item in firing_history
@@ -806,6 +968,11 @@ def simulate_ai_staff_changes(
             )
             if fired_this_season and not is_interim_staff(current):
                 continue
+            if slot == "head_coach" and not is_interim_staff(current):
+                pending_head_recs = sum(1 for item in recommendations if item.get("slot") == "head_coach" and item.get("action") != "hire_replacement")
+                firing_ceiling = 6 if offseason_review else 3
+                if head_coach_firings_this_season + pending_head_recs >= firing_ceiling:
+                    continue
             score, reasons = ai_staff_trigger_score(current, slot, state, team_pressure, underperforming, through_date)
             if slot == "head_coach":
                 pending_head_recs = sum(1 for item in recommendations if item.get("slot") == "head_coach")

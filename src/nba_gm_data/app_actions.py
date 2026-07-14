@@ -18,6 +18,7 @@ from .draft import draft_board_report
 from .ingest import build_universe
 from .save import (
     advance_save,
+    add_news,
     box_score_view,
     calendar_view,
     canonical_with_save,
@@ -31,14 +32,16 @@ from .save import (
     load_save,
     morale_report,
     narrative_settings_view,
-    pending_actions_view,
     per_game_stat,
     player_attribute_summary,
     player_health_label,
     player_salary_table,
+    playoff_leaders,
     playoff_picture,
     press_conferences_enabled,
     process_ai_actions,
+    recent_rookie_protected_player_ids,
+    refresh_roster_cutdowns,
     save_legal_actions_for_date,
     save_status,
     simulate_next_playoff_game,
@@ -55,9 +58,11 @@ from .staff import (
     fire_staff_from_save,
     hire_staff_from_save,
     negotiate_staff_hire,
+    resolve_staff_retention_re_sign,
     staff_budget_snapshot,
     staff_grade,
     staff_market_report,
+    staff_retention_snapshot,
     staff_team_report,
 )
 from .storage import JSON_FILENAME, load_universe_json
@@ -73,6 +78,7 @@ from .transactions import (
     pick_display_label,
     pick_swap_asset_value,
     pick_swap_display_label,
+    prune_trade_offers_touching_assets,
     resolve_team,
     team_by_id,
     trade_candidate_with_current_asset_labels,
@@ -140,6 +146,8 @@ MUTATING_ACTIONS = {
     "negotiate_staff",
     "process_ai_actions",
     "respond_user_trade_offer",
+    "resolve_staff_retention",
+    "waive_player",
     "set_rotation_minutes",
     "set_starting_five",
     "simulate_playoff_all",
@@ -190,15 +198,18 @@ def runtime_status(root: Path, save_dir: Path) -> dict[str, Any]:
                 "advance_free_agency",
                 "staff_market",
                 "staff_room",
+                "staff_retention_room",
                 "negotiate_staff",
                 "hire_staff",
                 "fire_staff",
+                "resolve_staff_retention",
                 "draft_board",
                 "draft_room",
                 "draft_apply_current",
                 "draft_sim_to_user",
                 "draft_sim_all",
                 "playoff_room",
+                "playoff_leaders",
                 "simulate_playoff_all",
                 "simulate_playoff_game",
                 "simulate_playoff_round",
@@ -208,6 +219,8 @@ def runtime_status(root: Path, save_dir: Path) -> dict[str, Any]:
                 "apply_trade_candidate",
                 "user_trade_offers",
                 "respond_user_trade_offer",
+                "roster_cutdown",
+                "waive_player",
                 "set_rotation_minutes",
                 "set_starting_five",
                 "apply_contract",
@@ -339,6 +352,10 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         save = ensure_league_save_defaults(load_save(save_path), canonical)
         active = with_transaction_context(canonical_with_save(canonical, save))
         report = free_agents_report(active, team_query=payload.get("team"), position=payload.get("position"))
+        for candidate in report.get("candidates", []):
+            player_id = str(candidate.get("player_id") or "")
+            if player_id:
+                candidate["ratings"] = player_attribute_summary(active, player_id)
         limit = payload.get("limit")
         if limit:
             report["candidates"] = report.get("candidates", [])[: int(limit)]
@@ -354,12 +371,16 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return staff_market_report(canonical, save, slot=payload.get("slot"), limit=payload.get("limit"))
     if action == "staff_room":
         return staff_room_payload(canonical, save_path, str(payload.get("team") or user_team_abbrev(canonical, save_path)), slot=payload.get("slot"), limit=payload.get("limit"))
+    if action == "staff_retention_room":
+        return staff_retention_room_payload(canonical, save_path, payload.get("window_id"))
     if action == "negotiate_staff":
         return negotiate_staff_action(canonical, save_path, payload)
     if action == "hire_staff":
         return hire_staff_action(canonical, save_path, str(payload["negotiation_id"]))
     if action == "fire_staff":
         return fire_staff_action(canonical, save_path, payload)
+    if action == "resolve_staff_retention":
+        return resolve_staff_retention_action(canonical, save_path, payload)
     if action == "draft_board":
         team = str(payload.get("team") or user_team_abbrev(canonical, save_path))
         return draft_board_report(canonical, team, str(payload.get("year") or "2026"), limit=payload.get("limit"))
@@ -373,6 +394,8 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return draft_sim_action(canonical, save_path, payload, mode="all")
     if action == "playoff_room":
         return playoff_room_payload(canonical, save_path)
+    if action == "playoff_leaders":
+        return playoff_leaders(canonical, save_path, stat=str(payload.get("stat") or "points"), limit=int(payload.get("limit") or 10))
     if action == "simulate_playoff_all":
         return simulate_playoff_action(canonical, save_path, root, int(payload.get("seed") or 1), mode="all")
     if action == "simulate_playoff_game":
@@ -421,6 +444,10 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return set_starting_five_action(root, canonical, save_path, payload)
     if action == "set_rotation_minutes":
         return set_rotation_minutes_action(root, canonical, save_path, payload)
+    if action == "roster_cutdown":
+        return roster_cutdown_payload(canonical, save_path)
+    if action == "waive_player":
+        return waive_player_action(root, canonical, save_path, payload)
     if action == "narrative_settings":
         return narrative_settings_view(save_path, test_connection=bool(payload.get("test_connection", False)))
     if action == "advance_save":
@@ -441,9 +468,16 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
 
 
 def home_payload(root: Path, canonical: dict[str, Any], save_path: Path) -> dict[str, Any]:
+    status = save_status(root, canonical, save_path)
     return {
-        "save": save_status(root, canonical, save_path),
-        "pending": pending_actions_view(canonical, save_path),
+        "save": status,
+        # The dashboard only needs counts. Full historical AI bundles can grow to
+        # megabytes over long saves and are available through their dedicated views.
+        "pending": {
+            "current_date": status.get("current_date"),
+            "phase": status.get("phase"),
+            "pending_counts": dict(status.get("pending_counts") or {}),
+        },
         "league_events": league_events_view(canonical, save_path, limit=8, kind="transactions"),
         "game_settings": current_game_settings(canonical, save_path),
     }
@@ -547,6 +581,8 @@ def player_finder_payload(canonical: dict[str, Any], save_path: Path) -> dict[st
     rows: list[dict[str, Any]] = []
     salary_seasons: set[str] = set()
     for player in active.get("players", []):
+        if player.get("_inactive_player"):
+            continue
         team_id = player.get("team_id")
         attrs = player_attribute_summary(active, player["id"])
         totals = stats.get(player["id"], {})
@@ -1026,6 +1062,100 @@ def set_rotation_minutes_action(root: Path, canonical: dict[str, Any], save_path
     }
 
 
+def roster_cutdown_payload(canonical: dict[str, Any], save_path: Path) -> dict[str, Any]:
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    team_id = save.get("meta", {}).get("user_team_id")
+    team = team_by_id(active, str(team_id))
+    pending = next((item for item in save.get("pending_roster_cutdowns", []) if item.get("team_id") == team_id), None)
+    protected = recent_rookie_protected_player_ids(save)
+    health_by_player = {row.get("player_id"): row for row in save.get("health_states", [])}
+    rows = []
+    for player in active.get("players", []):
+        if player.get("team_id") != team_id:
+            continue
+        attrs = player_attribute_summary(active, player["id"])
+        rows.append(
+            {
+                "player_id": player["id"],
+                "name": player.get("name"),
+                "position": player.get("position"),
+                "age": player.get("display_age", player.get("age")),
+                "height": player.get("height_display") or player.get("height"),
+                "minutes": round(display_minutes_projection(player), 1),
+                "overall": round(float(attrs.get("overall") or 0.0), 1),
+                "health": player_health_label(health_by_player.get(player["id"]), save.get("state", {}).get("current_date")),
+                "salary_by_year": player_salary_table(active, player["id"]),
+                "can_waive": player["id"] not in protected,
+                "protected_reason": "Current and prior-year draft picks are protected from automatic cutdowns." if player["id"] in protected else "",
+            }
+        )
+    rows.sort(key=lambda row: (row["can_waive"], float(row["minutes"]), float(row["overall"]), str(row["name"])), reverse=False)
+    return {
+        "status": "required" if pending else "clear",
+        "date": save.get("state", {}).get("current_date"),
+        "team": team,
+        "pending": pending,
+        "current_count": len(rows),
+        "target_count": int((pending or {}).get("target_count") or 15),
+        "players": rows,
+    }
+
+
+def waive_player_action(root: Path, canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    team_id = save.get("meta", {}).get("user_team_id")
+    team = team_by_id(active, str(team_id))
+    player_id = str(payload.get("player_id") or "")
+    player = next((row for row in active.get("players", []) if row.get("id") == player_id), None)
+    if not player or player.get("team_id") != team_id:
+        raise AppActionError("That player is not on the user-controlled roster.")
+    if player_id in recent_rookie_protected_player_ids(save):
+        return {"status": "blocked", "reason": "Current and prior-year draft picks cannot be waived during automatic cutdowns."}
+    date_value = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+    save.setdefault("roster_overrides", {})[player_id] = None
+    free_agents = set(save.setdefault("free_agent_player_ids", []))
+    free_agents.add(player_id)
+    save["free_agent_player_ids"] = sorted(free_agents)
+    save.setdefault("released_free_agents", {})[player_id] = {
+        "player_id": player_id,
+        "player_name": player.get("name"),
+        "waived_by_team_id": team_id,
+        "waived_by_team_abbrev": team.get("abbrev"),
+        "release_date": date_value,
+        "status": "available",
+    }
+    save.setdefault("rotation_recommendations", {}).pop(player_id, None)
+    save.setdefault("rotation_snapshots", {}).pop(team_id, None)
+    save.setdefault("starting_lineups", {}).pop(team_id, None)
+    add_news(save, "roster_cut", f"{team.get('abbrev')} waived {player.get('name')} to reach the roster limit.", date_value=date_value)
+    save.setdefault("transaction_logs", []).append(
+        {
+            "id": stable_id("transaction_log", "roster_cut", date_value, team_id, player_id),
+            "date": date_value,
+            "transaction_type": "roster_cut",
+            "proposal_id": stable_id("roster_cut", date_value, team_id, player_id),
+            "status": "applied_to_save_ledger",
+            "teams": [team_id],
+            "assets": {"player_id": player_id, "name": player.get("name"), "waived_by_team_id": team_id},
+            "evaluations": [],
+            "source_ids": ["src_contract_market_config_v1"],
+            "notes": "GUI roster cut applied through the shared application-action boundary.",
+        }
+    )
+    prune_trade_offers_touching_assets(save, {f"player:{player_id}"})
+    refresh_roster_cutdowns(canonical, save)
+    write_save(save_path, save)
+    return {
+        "status": "waived",
+        "player_id": player_id,
+        "player_name": player.get("name"),
+        "room": roster_cutdown_payload(canonical, save_path),
+        "home": home_payload(root, canonical, save_path),
+    }
+
+
 def free_agency_room_payload(canonical: dict[str, Any], save_path: Path, team_query: str, seed: int = 1) -> dict[str, Any]:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     phase = str((save.get("state") or {}).get("phase") or "")
@@ -1133,6 +1263,38 @@ def staff_room_payload(canonical: dict[str, Any], save_path: Path, team_query: s
     return {"team_report": team_report, "market": market}
 
 
+def staff_retention_room_payload(canonical: dict[str, Any], save_path: Path, window_id: str | None = None) -> dict[str, Any]:
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    snapshot = staff_retention_snapshot(canonical, save, str(window_id) if window_id else None)
+    slot = ((snapshot.get("window") or {}).get("slot"))
+    snapshot["market"] = staff_market_report(canonical, save, slot=slot, limit=8) if slot else {"candidates": []}
+    return snapshot
+
+
+def resolve_staff_retention_action(canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    window_id = str(payload.get("window_id") or "")
+    choice = str(payload.get("choice") or "re_sign")
+    snapshot = staff_retention_snapshot(canonical, save, window_id or None)
+    if snapshot.get("status") != "required":
+        return snapshot
+    window = snapshot["window"]
+    if choice == "re_sign":
+        result = resolve_staff_retention_re_sign(
+            canonical,
+            save,
+            str(window["id"]),
+            salary_millions=float(payload["salary_millions"]) if payload.get("salary_millions") not in {None, ""} else None,
+            years=int(payload["years"]) if payload.get("years") not in {None, ""} else None,
+        )
+    elif choice == "interim":
+        result = fire_staff_from_save(save, str(window["team_id"]), str(window["slot"]), reason="contract expired; interim accepted")
+    else:
+        raise AppActionError(f"Unsupported staff-retention choice {choice!r}.")
+    write_save(save_path, save)
+    return {"status": result.get("status"), "result": result, "room": staff_retention_room_payload(canonical, save_path)}
+
+
 def negotiate_staff_action(canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     negotiation = negotiate_staff_hire(
@@ -1151,7 +1313,7 @@ def negotiate_staff_action(canonical: dict[str, Any], save_path: Path, payload: 
 
 def hire_staff_action(canonical: dict[str, Any], save_path: Path, negotiation_id: str) -> dict[str, Any]:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
-    result = hire_staff_from_save(save, negotiation_id)
+    result = hire_staff_from_save(save, negotiation_id, canonical=canonical)
     write_save(save_path, save)
     return {"status": result.get("status"), "result": result, "room": staff_room_payload(canonical, save_path, user_team_abbrev(canonical, save_path))}
 
@@ -1452,6 +1614,18 @@ def advance_action(root: Path, canonical: dict[str, Any], save_path: Path, paylo
         current = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
         target = add_days(current, int(payload["days"]))
         result = advance_with_checkpoints(root, canonical, save_path, target, seed, int(payload.get("checkpoint_days") or 31))
+    elif payload.get("to_date") and payload.get("checkpoint_days") is not None:
+        # Milestone buttons still need intermediate AI checkpoints. The user
+        # sees one action, but records, injuries, and team needs evolve before
+        # the deadline or season-end target is reached.
+        result = advance_with_checkpoints(
+            root,
+            canonical,
+            save_path,
+            str(payload["to_date"]),
+            seed,
+            int(payload.get("checkpoint_days") or 31),
+        )
     else:
         result = advance_save(
             root,
@@ -1462,7 +1636,16 @@ def advance_action(root: Path, canonical: dict[str, Any], save_path: Path, paylo
             seed=seed,
         )
     if bool(payload.get("process_ai", True)):
-        result = {**result, "ai_processing": process_ai_actions(canonical, save_path, seed=seed, execute=True, limit=int(payload.get("ai_limit") or 30))}
+        # advance_save owns the chronological AI pass after games, health, and
+        # development are committed. Re-running it here repeats expensive
+        # candidate searches against an unchanged date without adding context.
+        result = {
+            **result,
+            "ai_processing": {
+                "status": "processed_during_advance",
+                "applied_count": int(result.get("ai_applied_count") or 0),
+            },
+        }
     return {"status": "advanced", "result": result, "home": home_payload(root, canonical, save_path)}
 
 
@@ -1474,7 +1657,6 @@ def advance_with_checkpoints(root: Path, canonical: dict[str, Any], save_path: P
     while current < target:
         step = min(add_days(current, checkpoint_days), target)
         result = advance_save(root, canonical, save_path, to_date=step, seed=seed)
-        process_ai_actions(canonical, save_path, seed=seed, execute=True, limit=30)
         save = ensure_league_save_defaults(load_save(save_path), canonical)
         current = save.get("state", {}).get("current_date") or step
     return result or advance_save(root, canonical, save_path, to_date=target, seed=seed)

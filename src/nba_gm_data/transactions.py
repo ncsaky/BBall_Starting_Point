@@ -1859,6 +1859,8 @@ def _fallback_asset_valuation_cached(key: tuple[Any, ...]) -> tuple[tuple[str, f
         age_raw,
         draft_pick,
         overall_pick,
+        draft_year,
+        active_season,
     ) = key
     player = {
         "id": player_id,
@@ -1871,6 +1873,8 @@ def _fallback_asset_valuation_cached(key: tuple[Any, ...]) -> tuple[tuple[str, f
         "age": age_raw,
         "draft_pick": draft_pick,
         "overall_pick": overall_pick,
+        "draft_year": draft_year,
+        "_active_season": active_season,
     }
     minutes = maybe_float(minutes_raw) or 0.0
     if minutes > 80:
@@ -1922,6 +1926,8 @@ def fallback_asset_valuation(player: dict[str, Any] | None) -> dict[str, float]:
         player.get("age"),
         player.get("draft_pick"),
         player.get("overall_pick"),
+        player.get("draft_year"),
+        player.get("_active_season"),
     )
     return dict(_fallback_asset_valuation_cached(key))
 
@@ -2121,15 +2127,32 @@ def drafted_rookie_value_floor(player: dict[str, Any] | None, ability: float | N
         overall = 0
     if overall <= 0:
         return 0.0
+    floor_factor = 1.0
+    try:
+        draft_year = int(player.get("draft_year") or 0)
+    except (TypeError, ValueError):
+        draft_year = 0
+    active_season = str(player.get("_active_season") or "")
+    if draft_year and active_season:
+        seasons_since_draft = season_start_from_label(active_season) - draft_year
+        if seasons_since_draft > 3:
+            return 0.0
+        floor_factor = {0: 1.0, 1: 0.92, 2: 0.82, 3: 0.70}.get(max(0, seasons_since_draft), 1.0)
+    else:
+        age = maybe_float(player.get("display_age")) or maybe_float(player.get("age"))
+        if age is not None and age > 24.5:
+            return 0.0
+        if age is not None:
+            floor_factor = clamp(1.0 - max(0.0, age - 21.0) * 0.1, 0.70, 1.0)
     ability = float(ability if ability is not None else maybe_float(player.get("current_ability")) or maybe_float(player.get("overall")) or 50.0)
     potential = float(potential if potential is not None else maybe_float(player.get("potential")) or ability)
     if overall <= 30:
         base = 83.0 - (overall - 1) * 1.42
         talent = max(0.0, potential - 70.0) * 0.3 + max(0.0, ability - 52.0) * 0.24
-        return round(clamp(base + talent, 34.0, 88.0), 2)
+        return round(clamp(base + talent, 34.0, 88.0) * floor_factor, 2)
     base = 27.0 - (overall - 31) * 0.32
     talent = max(0.0, potential - 64.0) * 0.18 + max(0.0, ability - 50.0) * 0.12
-    return round(clamp(base + talent, 7.0, 32.0), 2)
+    return round(clamp(base + talent, 7.0, 32.0) * floor_factor, 2)
 
 
 def goat_exception_player(player: dict[str, Any] | None) -> bool:
@@ -3600,6 +3623,26 @@ def salary_matching_issue(canonical: dict[str, Any], proposal: TradeProposal, co
         hard_cap = cap_lines_for_season(active_season)["hard_cap"]
         if after_total > hard_cap and after_total > current_total + 250_000:
             return f"{team_by_id(canonical, team_id)['abbrev']} would move above the hard-cap/apron guardrail."
+    active_start = season_start_from_label(active_season)
+    for offset in range(1, 4):
+        start = active_start + offset
+        season = f"{start}-{str(start + 1)[-2:]}"
+        for team_id, outgoing, incoming in [
+            (proposal.from_team_id, proposal.from_assets, proposal.to_assets),
+            (proposal.to_team_id, proposal.to_assets, proposal.from_assets),
+        ]:
+            current_total = team_salary_total_for_season(canonical, team_id, season)
+            outgoing_salary = package_salary_for_season(canonical, outgoing, season)
+            incoming_salary = package_salary_for_season(canonical, incoming, season)
+            if current_total is None or outgoing_salary is None or incoming_salary is None:
+                continue
+            after_total = current_total - outgoing_salary + incoming_salary
+            hard_cap = cap_lines_for_season(season)["hard_cap"]
+            # Future payroll can still be trimmed with a fringe/minimum roster
+            # move before that league year begins. Block material overages, not
+            # a sub-minimum bookkeeping edge that roster cutdown can repair.
+            if after_total > hard_cap + 2_500_000 and after_total > current_total + 250_000:
+                return f"{team_by_id(canonical, team_id)['abbrev']} would worsen a {season} hard-cap overage."
     return None
 
 
@@ -3609,6 +3652,41 @@ def package_salary(canonical: dict[str, Any], assets: list[dict[str, Any]]) -> f
         if asset["kind"] != "player":
             continue
         salary = current_salary(contract_for_player(canonical, asset["id"]))
+        if salary is None:
+            return None
+        total += salary
+    return total
+
+
+def contract_salary_for_trade_season(contract: dict[str, Any] | None, season: str) -> float | None:
+    if not contract:
+        return 0.0
+    for row in contract.get("seasons", []):
+        if str(row.get("season") or "") != season:
+            continue
+        salary = row.get("salary")
+        return None if salary is None else float(salary)
+    return 0.0
+
+
+def package_salary_for_season(canonical: dict[str, Any], assets: list[dict[str, Any]], season: str) -> float | None:
+    total = 0.0
+    for asset in assets:
+        if asset["kind"] != "player":
+            continue
+        salary = contract_salary_for_trade_season(contract_for_player(canonical, asset["id"]), season)
+        if salary is None:
+            return None
+        total += salary
+    return total
+
+
+def team_salary_total_for_season(canonical: dict[str, Any], team_id: str, season: str) -> float | None:
+    total = 0.0
+    for player in canonical.get("players", []):
+        if player.get("team_id") != team_id:
+            continue
+        salary = contract_salary_for_trade_season(contract_for_player(canonical, player["id"]), season)
         if salary is None:
             return None
         total += salary

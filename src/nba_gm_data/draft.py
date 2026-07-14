@@ -86,9 +86,9 @@ def default_draft_model_config() -> dict[str, Any]:
         },
         "class_strength": {
             "mean": 58.0,
-            "season_variance": 9.0,
-            "top_end_variance": 11.0,
-            "depth_variance": 8.0,
+            "season_variance": 4.5,
+            "top_end_variance": 5.5,
+            "depth_variance": 4.0,
         },
         "archetype_weights": {
             "lead_creator": 0.11,
@@ -277,9 +277,17 @@ def generate_draft_class_records(year: str, seed: int = 1, config: dict[str, Any
     rng = random.Random(f"{year}:{seed}:draft_class")
     size = int(config.get("generated_class_size", 60))
     strength_mean = float(config["class_strength"]["mean"])
-    class_strength = clamp(rng.gauss(strength_mean, float(config["class_strength"]["season_variance"])), 42, 76)
-    top_strength = clamp(class_strength + rng.gauss(0, float(config["class_strength"]["top_end_variance"])), 38, 84)
-    depth_strength = clamp(class_strength + rng.gauss(0, float(config["class_strength"]["depth_variance"])), 38, 76)
+    class_strength = clamp(rng.gauss(strength_mean, float(config["class_strength"]["season_variance"])), 50, 68)
+    top_strength = clamp(
+        max(class_strength + 1.5, class_strength + rng.gauss(3.0, float(config["class_strength"]["top_end_variance"]))),
+        53,
+        74,
+    )
+    depth_strength = clamp(
+        class_strength + rng.gauss(-1.5, float(config["class_strength"]["depth_variance"])),
+        50,
+        66,
+    )
     prospects: list[DraftProspect] = []
     traits: list[DraftProspectTrait] = []
     archetypes = weighted_archetypes(config)
@@ -291,6 +299,8 @@ def generate_draft_class_records(year: str, seed: int = 1, config: dict[str, Any
         readiness = top_strength if rank <= 14 else depth_strength
         current_cap = 69 if rank <= 3 else 65 if rank <= 14 else 60 if rank <= 30 else 56
         current = clamp(43 + (readiness - 55) * 0.46 + max(0, 18 - rank) * 0.36 + rng.gauss(0, 3.6), 28, current_cap)
+        current_floor = 55.0 if rank == 1 else 53.0 if rank <= 3 else 51.0 if rank <= 5 else 44.0 if rank <= 14 else 28.0
+        current = max(current, current_floor)
         potential = clamp(current + 11 + max(0, 22 - rank) * 0.5 + rng.gauss(0, 5.6), current + 2, 97)
         floor = clamp(current - rng.uniform(5, 13), 20, current)
         ceiling = clamp(potential + rng.uniform(2, 9), potential, 99)
@@ -438,7 +448,7 @@ def generate_draft_order(canonical: dict[str, Any] | Any, year: str, seed: int =
                     pick for pick in canonical_picks
                     if pick.get("season") == "2026"
                     and int(pick.get("round") or 1) == round_no
-                    and (pick.get("original_team_id") == original_team_id or pick.get("team_id") == original_team_id)
+                    and (pick.get("original_team_id") or pick.get("team_id")) == original_team_id
                 ),
                 None,
             )
@@ -510,7 +520,7 @@ def generate_draft_order(canonical: dict[str, Any] | Any, year: str, seed: int =
                 for pick in canonical_picks
                 if str(pick.get("season")) == str(year)
                 and int(pick.get("round") or 0) == round_no
-                and (pick.get("original_team_id") == original_team["id"] or pick.get("team_id") == original_team["id"])
+                and (pick.get("original_team_id") or pick.get("team_id")) == original_team["id"]
                 and pick.get("current_owner_team_id")
             ]
             existing_pick = sorted(existing_candidates, key=lambda item: (item.get("status") == "research_pending", item.get("id", "")))[0] if existing_candidates else None
@@ -605,6 +615,40 @@ def pick_recommendations(
     if not pick:
         raise ValueError(f"No pick found with id {pick_id!r}")
     year = str(pick.get("season") or "2026")
+    if year != "2026":
+        board = generated_board_report(canonical, team["abbrev"], year, seed=seed, limit=None, config=config)
+        unavailable_prospect_ids = unavailable_prospect_ids or set()
+        available = [
+            entry
+            for entry in board.get("entries", [])
+            if (entry.get("prospect") or {}).get("id") not in unavailable_prospect_ids
+        ]
+        top_grade = float((available[0] if available else {}).get("risk_adjusted_grade") or 0.0)
+        recommendations = []
+        for board_rank, entry in enumerate(available[:limit], start=1):
+            prospect = entry.get("prospect") or {}
+            grade = float(entry.get("risk_adjusted_grade") or 0.0)
+            entry_payload = {
+                **entry,
+                "board_rank": board_rank,
+                "bpa_grade": round(grade, 2),
+                "need_fit": round(float(entry.get("fit_grade") or 50.0) - 50.0, 2),
+            }
+            decision = {
+                "id": stable_id("draft_pick_decision", pick["id"], team["id"], prospect.get("id"), seed),
+                "pick_id": pick["id"],
+                "team_id": team["id"],
+                "prospect_id": prospect.get("id"),
+                "decision": "select",
+                "bpa_rank": int(prospect.get("rank") or board_rank),
+                "team_board_rank": board_rank,
+                "grade_gap_to_bpa": round(top_grade - grade, 3),
+                "reasons": generated_pick_reasons(canonical, team["id"], prospect, (available[0].get("prospect") or {}) if available else prospect),
+                "source_ids": ["src_draft_model_config_v1"],
+                "notes": f"{team['abbrev']} generated draft recommendation from deterministic board, team fit, and rookie-contract value.",
+            }
+            recommendations.append({"entry": entry_payload, "decision": decision})
+        return {"team": team, "pick": pick, "recommendation_count": len(recommendations), "recommendations": recommendations}
     prospects = {p["id"]: p for p in canonical["draft_prospects"] if p["draft_year"] == year}
     entries = [entry for entry in canonical["draft_board_entries"] if entry["team_id"] == team["id"] and entry["draft_year"] == year]
     taken_before = int(pick["id"].split("-")[2]) - 1 if pick.get("status") == "verified_2026_draft_board" and "-" in pick["id"] else 0
@@ -718,16 +762,22 @@ def simulate_draft(canonical: dict[str, Any] | Any, year: str = "2026", seed: in
     }
 
 
-def apply_draft_selection_to_save(save_path: str | Path, selection_id: str, date: str = CANONICAL_START_DATE, sign_rookie: bool = False) -> dict[str, Any]:
-    path = Path(save_path)
-    if path.exists():
-        with path.open("r", encoding="utf-8") as handle:
-            save = json.load(handle)
-    else:
-        save = {"version": "save_transaction_ledger_v1", "pending_draft_selections": [], "transaction_logs": []}
+def apply_draft_selection_to_save_state(
+    save: dict[str, Any],
+    selection_id: str,
+    date: str = CANONICAL_START_DATE,
+    sign_rookie: bool = False,
+) -> dict[str, Any]:
+    """Apply one pending selection to an already-loaded save.
+
+    Draft-night simulation calls this state-level boundary so a pick can update
+    rookie records, the live draft queue, and the transaction ledger before one
+    durable save write. The file wrapper below remains the compatibility API for
+    standalone ledger callers.
+    """
     selection = next((item for item in save.get("pending_draft_selections", []) if item.get("id") == selection_id or item.get("selection", {}).get("id") == selection_id), None)
     if not selection:
-        return {"status": "not_found", "selection_id": selection_id, "save": str(path), "notes": "No pending draft selection with this id exists in the save ledger."}
+        return {"status": "not_found", "selection_id": selection_id, "notes": "No pending draft selection with this id exists in the save ledger."}
     payload = selection.get("selection") or selection
     prospect_payload = selection.get("prospect") or {"id": payload.get("prospect_id"), "name": payload.get("prospect_name") or payload.get("prospect_id")}
     pick_payload = selection.get("pick") or {"id": payload.get("pick_id"), "round": 1 if int(payload.get("overall_pick") or 60) <= 30 else 2}
@@ -785,17 +835,31 @@ def apply_draft_selection_to_save(save_path: str | Path, selection_id: str, date
     upsert_save_record(save, "incoming_rookies", onboarding)
     save.setdefault("transaction_logs", []).append(to_plain(log))
     save["pending_draft_selections"] = [item for item in save.get("pending_draft_selections", []) if (item.get("id") or item.get("selection", {}).get("id")) != selection_id]
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(save, handle, ensure_ascii=False, indent=2, sort_keys=True)
-        handle.write("\n")
     return {
         "status": "applied",
-        "save": str(path),
         "draft_rights": to_plain(rights),
         "rookie_contract": to_plain(contract),
         "incoming_rookie": onboarding,
         "transaction_log": to_plain(log),
     }
+
+
+def apply_draft_selection_to_save(save_path: str | Path, selection_id: str, date: str = CANONICAL_START_DATE, sign_rookie: bool = False) -> dict[str, Any]:
+    path = Path(save_path)
+    if path.exists():
+        with path.open("r", encoding="utf-8") as handle:
+            save = json.load(handle)
+    else:
+        save = {"version": "save_transaction_ledger_v1", "pending_draft_selections": [], "transaction_logs": []}
+    result = apply_draft_selection_to_save_state(save, selection_id, date=date, sign_rookie=sign_rookie)
+    if result.get("status") == "applied":
+        # Local import avoids coupling the draft model to save construction while
+        # keeping one consistent, deduplicating persistence boundary.
+        from .save import write_save
+
+        write_save(path, save)
+    result["save"] = str(path)
+    return result
 
 
 def simulate_generated_draft(canonical: dict[str, Any], year: str, seed: int, config: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -1181,6 +1245,10 @@ def rookie_player_record(onboarding: dict[str, Any], prospect: dict[str, Any], t
         "critical_field_fallbacks": {},
         "rookie_contract_id": contract.id,
         "draft_pick": overall,
+        "overall_pick": overall,
+        "draft_year": str(onboarding.get("draft_year") or ""),
+        "current_ability": round(ability, 2),
+        "potential": round(potential, 2),
     }
 
 
@@ -1210,7 +1278,11 @@ def draft_traits_for_prospect(save: dict[str, Any], prospect_id: str | None) -> 
 
 
 def rookie_trait_records(player: dict[str, Any], prospect: dict[str, Any], draft_traits: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
-    prospect_values = {trait.get("trait_key"): float(trait.get("value") or 50.0) for trait in (draft_traits or []) if trait.get("trait_key")}
+    prospect_values = {
+        trait.get("trait_key"): float(trait.get("value") if trait.get("value") is not None else 50.0)
+        for trait in (draft_traits or [])
+        if trait.get("trait_key")
+    }
     if not prospect_values:
         prospect_values = infer_trait_values(
             str(prospect.get("position") or player.get("position") or ""),
@@ -1294,6 +1366,14 @@ def nba_trait_values_from_prospect(values: dict[str, float], current: float, pot
     if archetype == "movement_shooter":
         output["release_speed"] += 4.0
         output["shooting_range"] += 3.0
+    # Prospect subtraits are intentionally expressive, but public-stat and
+    # archetype priors can otherwise make a low-readiness second-rounder look
+    # like an established NBA starter. Preserve the shape of the profile while
+    # anchoring its league-ready level to the scout model's current ability.
+    raw_mean = sum(output.values()) / max(1, len(output))
+    target_mean = clamp(float(current) + 7.0, 35.0, 82.0)
+    anchor_shift = clamp(target_mean - raw_mean, -10.0, 4.0)
+    output = {trait_key: value + anchor_shift for trait_key, value in output.items()}
     return output
 
 
@@ -1741,6 +1821,11 @@ def prospect_cap_value(canonical: dict[str, Any], team_id: str, prospect: DraftP
 
 
 def board_entry_payload(entry: dict[str, Any], prospect: dict[str, Any]) -> dict[str, Any]:
+    height_inches = maybe_float(prospect.get("height_inches"))
+    height = ""
+    if height_inches is not None:
+        rounded_height = int(round(height_inches))
+        height = f"{rounded_height // 12}'{rounded_height % 12}\""
     return {
         **entry,
         "prospect": {
@@ -1748,6 +1833,9 @@ def board_entry_payload(entry: dict[str, Any], prospect: dict[str, Any]) -> dict
             "name": prospect["name"],
             "rank": prospect["rank"],
             "position": prospect["position"],
+            "age": prospect.get("age"),
+            "height_inches": height_inches,
+            "height": height,
             "source_team": prospect.get("source_team"),
             "archetype": prospect["archetype"],
             "current_ability": prospect["current_ability"],
@@ -1817,8 +1905,14 @@ def draft_trade_reasons(report: dict[str, Any], buyer_entry: dict[str, Any], sel
 
 def generated_board_report(canonical: dict[str, Any], team_query: str, year: str, seed: int, limit: int | None, config: dict[str, Any] | None) -> dict[str, Any]:
     team = resolve_team(canonical, team_query)
-    generated = generate_draft_class_records(str(year), seed=seed, config=config)
-    prospects = [to_plain(p) for p in generated["draft_prospects"]]
+    class_cache = canonical.setdefault("_generated_draft_class_cache", {}) if canonical.get("_allow_internal_caches") else {}
+    cache_key = f"{year}:{seed}"
+    prospects = class_cache.get(cache_key)
+    if prospects is None:
+        generated = generate_draft_class_records(str(year), seed=seed, config=config)
+        prospects = [to_plain(p) for p in generated["draft_prospects"]]
+        if canonical.get("_allow_internal_caches"):
+            class_cache[cache_key] = prospects
     entries = []
     for prospect in prospects:
         fit = prospect_team_fit(canonical, team["id"], prospect)

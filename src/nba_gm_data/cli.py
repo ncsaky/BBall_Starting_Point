@@ -787,7 +787,7 @@ def main(argv: list[str] | None = None) -> int:
             return 1
     if args.command == "hire-staff":
         save = load_save(args.save)
-        result = hire_staff_from_save(save, args.negotiation_id)
+        result = hire_staff_from_save(save, args.negotiation_id, canonical=data)
         write_save(args.save, save)
         print_json(result)
         return 0
