@@ -37,6 +37,9 @@ const state = {
   developmentSelectionTouched: false,
   developmentSeenSignature: "",
   developmentNewSignature: "",
+  dashboardExperience: localStorage.getItem("nbaGmDashboardExperience") || "journey",
+  journeyChapter: "today",
+  journeyObserver: null,
   hydrating: false,
 };
 
@@ -45,6 +48,7 @@ const state = {
 const els = {};
 const LAST_SAVE_KEY = "nbaGmLastSave";
 const THEME_KEY = "nbaGmTheme";
+const DASHBOARD_EXPERIENCE_KEY = "nbaGmDashboardExperience";
 const THEME_OPTIONS = [
   { key: "classic", name: "Classic Green", description: "The current league desk palette.", swatches: ["#2fbf75", "#d7b84f", "#5b8fd9"] },
   { key: "courtside", name: "Courtside Gold", description: "Warm gold with a deep arena floor.", swatches: ["#d7b84f", "#d9794a", "#d9c46a"] },
@@ -526,45 +530,17 @@ function renderDashboardTab(rows) {
   const phaseKind = dashboardPhaseKind();
   if (state.dashboardTab === "overview") {
     const viewedTeam = teamLabel(dash.team || state.dashboardTeam || userTeam());
-    target.innerHTML = `
-      <div class="dashboard-overview ${phaseKind ? `phase-dashboard phase-dashboard-${phaseKind}` : ""}" ${teamBrandStyle(viewedTeam)}>
-        <aside class="dashboard-team-rail">
-          <section class="section panel-rail identity-card">${teamIdentityRankBlock(dash)}</section>
-          <section class="section panel-rail dashboard-actions-card${readonlyClass}">${dashboardActionsCard(editable)}</section>
-          <section class="section panel-rail starting-card">${startingFiveBlock(rows, editable)}</section>
-          <section class="section panel-rail staff-card">${staffDashboardCard(rows, dash, editable)}</section>
-        </aside>
-        <div class="dashboard-command-deck">
-          <section class="section panel-rail player-summary-card">${dashboardPlayerSummaryTable(rows)}</section>
-          ${phaseKind ? `<section class="section panel-rail phase-takeover-card">${dashboardPhaseWorkspace(phaseKind)}</section>` : `
-            <div class="dashboard-intelligence-grid">
-              <div class="dashboard-column schedule-column">
-                <section class="section panel-rail calendar-card">${dashboardMonthCalendar()}</section>
-                <section class="section panel-rail events-card">${leagueEventRotator()}</section>
-              </div>
-              <div class="dashboard-column trend-column">
-                <section class="section panel-rail development-trend-card">${developmentTrendCard(rows)}</section>
-                <section class="section panel-rail standings-trend-card">${standingsTrendCard()}</section>
-              </div>
-              <div class="dashboard-column competition-column">
-                <section class="section panel-rail standings-card">${userConferenceStandings()}</section>
-                <section class="section panel-rail summary-side-card">${summaryLeaderRotator()}</section>
-              </div>
-              <div class="dashboard-column finance-column">
-                <section class="section panel-rail contract-chart-card">${contractChartCard(rows, dash)}</section>
-                <section class="section panel-rail draft-picks-card">${draftPicksCard()}</section>
-              </div>
-              <div class="dashboard-column market-column">
-                <section class="section panel-rail staff-market-card${readonlyClass}">${dashboardStaffMarketCard(editable)}</section>
-                <section class="section panel-rail free-agent-market-card${readonlyClass}">${dashboardFreeAgentMarketCard(editable)}</section>
-              </div>
-            </div>`}
-        </div>
-      </div>`;
+    const useJourney = state.dashboardExperience === "journey";
+    document.body.dataset.dashboardExperience = useJourney ? "journey" : "command";
+    target.innerHTML = useJourney
+      ? franchiseJourneyMarkup(rows, dash, editable, readonlyClass, phaseKind, viewedTeam)
+      : commandDashboardMarkup(rows, dash, editable, readonlyClass, phaseKind, viewedTeam);
     wireDashboardOverview(editable);
+    if (useJourney) wireFranchiseJourney();
     if (phaseKind) {
       wireDashboardPhaseWorkspace(phaseKind);
-    } else {
+    }
+    if (!phaseKind || useJourney) {
       startLeagueEventRotator();
       startSummaryLeaderRotator();
       startDashboardMarketRotators();
@@ -573,6 +549,188 @@ function renderDashboardTab(rows) {
   }
   target.innerHTML = contractsBlock(rows, dash);
   wireContractsBlock();
+}
+
+function commandDashboardMarkup(rows, dash, editable, readonlyClass, phaseKind, viewedTeam) {
+  return `
+    <div class="dashboard-overview ${phaseKind ? `phase-dashboard phase-dashboard-${phaseKind}` : ""}" ${teamBrandStyle(viewedTeam)}>
+      <button class="experience-switch command-experience-switch" data-dashboard-experience="journey">Enter Journey View</button>
+      <aside class="dashboard-team-rail">
+        <section class="section panel-rail identity-card">${teamIdentityRankBlock(dash)}</section>
+        <section class="section panel-rail dashboard-actions-card${readonlyClass}">${dashboardActionsCard(editable)}</section>
+        <section class="section panel-rail starting-card">${startingFiveBlock(rows, editable)}</section>
+        <section class="section panel-rail staff-card">${staffDashboardCard(rows, dash, editable)}</section>
+      </aside>
+      <div class="dashboard-command-deck">
+        <section class="section panel-rail player-summary-card">${dashboardPlayerSummaryTable(rows)}</section>
+        ${phaseKind ? `<section class="section panel-rail phase-takeover-card">${dashboardPhaseWorkspace(phaseKind)}</section>` : `
+          <div class="dashboard-intelligence-grid">
+            <div class="dashboard-column schedule-column">
+              <section class="section panel-rail calendar-card">${dashboardMonthCalendar()}</section>
+              <section class="section panel-rail events-card">${leagueEventRotator()}</section>
+            </div>
+            <div class="dashboard-column trend-column">
+              <section class="section panel-rail development-trend-card">${developmentTrendCard(rows)}</section>
+              <section class="section panel-rail standings-trend-card">${standingsTrendCard()}</section>
+            </div>
+            <div class="dashboard-column competition-column">
+              <section class="section panel-rail standings-card">${userConferenceStandings()}</section>
+              <section class="section panel-rail summary-side-card">${summaryLeaderRotator()}</section>
+            </div>
+            <div class="dashboard-column finance-column">
+              <section class="section panel-rail contract-chart-card">${contractChartCard(rows, dash)}</section>
+              <section class="section panel-rail draft-picks-card">${draftPicksCard()}</section>
+            </div>
+            <div class="dashboard-column market-column">
+              <section class="section panel-rail staff-market-card${readonlyClass}">${dashboardStaffMarketCard(editable)}</section>
+              <section class="section panel-rail free-agent-market-card${readonlyClass}">${dashboardFreeAgentMarketCard(editable)}</section>
+            </div>
+          </div>`}
+      </div>
+    </div>`;
+}
+
+function franchiseJourneyMarkup(rows, dash, editable, readonlyClass, phaseKind, viewedTeam) {
+  const identity = dash.team_identity || {};
+  const metrics = identity.metrics || {};
+  const logo = teamLogoSrc(viewedTeam);
+  const teamName = dashboardTeamName(viewedTeam);
+  const record = dashboardTeamRecord(viewedTeam);
+  const save = state.home?.save || {};
+  const nextGame = journeyNextGame(viewedTeam);
+  const latestEvent = normalizeLeagueEvent((state.home?.league_events?.events || [])[0] || {});
+  const franchisePlayer = [...rows].filter((row) => !row.__summaryEmpty).sort((a, b) => Number(rating(b, "overall") || 0) - Number(rating(a, "overall") || 0))[0];
+  const chapters = phaseKind
+    ? [["today", "Now"], ["moment", rowLabel(phaseKind)], ["roster", "Roster"], ["league", "League"], ["office", "Office"]]
+    : [["today", "Now"], ["roster", "Roster"], ["season", "Season"], ["league", "League"], ["office", "Office"]];
+  return `
+    <div class="franchise-journey" ${teamBrandStyle(viewedTeam)}>
+      <header class="journey-topbar">
+        <button class="journey-club" data-journey-jump="today" aria-label="Return to today">
+          ${logo ? `<img src="${escapeAttr(logo)}" alt="" />` : ""}
+          <span><strong>${escapeHtml(viewedTeam)}</strong><small>${escapeHtml(String(save.season || "Franchise"))}</small></span>
+        </button>
+        <div class="journey-date"><span>${escapeHtml(formatWrittenDate(save.current_date) || save.current_date || "")}</span><strong>${escapeHtml(rowLabel(save.phase || "season"))}</strong></div>
+        <div class="journey-view-switch" aria-label="Dashboard experience">
+          <button class="active" data-dashboard-experience="journey">Journey</button>
+          <button data-dashboard-experience="command">Command View</button>
+        </div>
+      </header>
+
+      <nav class="journey-rail" aria-label="Franchise journey chapters">
+        ${chapters.map(([key, label], index) => `<button class="${index === 0 ? "active" : ""}" data-journey-jump="${escapeAttr(key)}"><span>${String(index + 1).padStart(2, "0")}</span><em>${escapeHtml(label)}</em></button>`).join("")}
+      </nav>
+
+      <main class="journey-scroll" data-journey-scroll>
+        <section class="journey-chapter journey-today" data-journey-chapter="today">
+          <div class="journey-court-lines" aria-hidden="true"></div>
+          <div class="journey-hero-copy">
+            <p class="journey-kicker">Your franchise / ${escapeHtml(String(save.season || "current season"))}</p>
+            <h1>${escapeHtml(teamName)}</h1>
+            <div class="journey-record"><strong>${escapeHtml(record.split(" · ")[0] || record)}</strong><span>${escapeHtml(record.split(" · ")[1] || rowLabel(save.phase || "season"))}</span></div>
+            <div class="journey-hero-actions">
+              <button class="journey-primary-action" data-advance="next-event"><span>Advance</span><strong>Next Event</strong></button>
+              <button data-dashboard-trade="finder"><span>Explore</span><strong>Trade Market</strong></button>
+            </div>
+          </div>
+          <div class="journey-logo-stage" data-journey-logo-stage>
+            <span class="journey-logo-index">${escapeHtml(viewedTeam)}</span>
+            ${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(`${teamName} logo`)}" />` : `<strong>${escapeHtml(viewedTeam)}</strong>`}
+          </div>
+          <div class="journey-scoreboard">
+            <div><small>OVR</small><strong>${Number(metrics.overall || 0).toFixed(1)}</strong></div>
+            <div><small>OFF</small><strong>${Number(metrics.offense || 0).toFixed(1)}</strong></div>
+            <div><small>DEF</small><strong>${Number(metrics.defense || 0).toFixed(1)}</strong></div>
+            <div><small>DEPTH</small><strong>${Number(metrics.depth || 0).toFixed(1)}</strong></div>
+          </div>
+          <article class="journey-next-card">
+            <p>${nextGame ? "Next on the schedule" : "Franchise focus"}</p>
+            <strong>${escapeHtml(nextGame?.title || franchisePlayer?.name || "Build the next contender")}</strong>
+            <span>${escapeHtml(nextGame?.detail || (franchisePlayer ? `${compactPos(franchisePlayer.position)} · ${Number(rating(franchisePlayer, "overall") || 0).toFixed(1)} OVR` : rowLabel(save.phase || "season")))}</span>
+          </article>
+          <article class="journey-wire-tease">
+            <span>League wire</span>
+            <p>${escapeHtml(latestEvent.text || "The league is quiet. For now.")}</p>
+          </article>
+          <button class="journey-scroll-cue" data-journey-jump="${escapeAttr(chapters[1][0])}"><span>Scroll to enter the season</span><i>↓</i></button>
+        </section>
+
+        ${phaseKind ? `
+          <section class="journey-chapter journey-moment" data-journey-chapter="moment">
+            ${journeyChapterIntro("Live Moment", `${rowLabel(phaseKind)} takes the floor`, "The active phase becomes the center of the experience. Everything else waits in the wings.")}
+            <section class="section panel-rail phase-takeover-card">${dashboardPhaseWorkspace(phaseKind)}</section>
+          </section>` : ""}
+
+        <section class="journey-chapter journey-roster" data-journey-chapter="roster">
+          ${journeyChapterIntro("The Roster", "Know every piece", "Ratings, roles, health, minutes, and contracts in one deliberate basketball workspace.")}
+          <div class="journey-roster-stage">
+            <section class="section panel-rail player-summary-card">${dashboardPlayerSummaryTable(rows)}</section>
+            <aside class="journey-roster-aside">
+              <section class="section panel-rail identity-card">${teamIdentityRankBlock(dash)}</section>
+              <section class="section panel-rail starting-card">${startingFiveBlock(rows, editable)}</section>
+            </aside>
+          </div>
+        </section>
+
+        ${!phaseKind ? `
+          <section class="journey-chapter journey-season" data-journey-chapter="season">
+            ${journeyChapterIntro("The Season", "Time moves. Context changes.", "Read the schedule, watch the standings bend, and see development accumulate as the year unfolds.")}
+            <div class="journey-season-stage">
+              <section class="section panel-rail calendar-card">${dashboardMonthCalendar()}</section>
+              <section class="section panel-rail standings-card">${userConferenceStandings()}</section>
+              <section class="section panel-rail development-trend-card">${developmentTrendCard(rows)}</section>
+              <section class="section panel-rail standings-trend-card">${standingsTrendCard()}</section>
+            </div>
+          </section>` : ""}
+
+        <section class="journey-chapter journey-league" data-journey-chapter="league">
+          ${journeyChapterIntro("Around The League", "Thirty stories. One season.", "The news cycle, the best players, and the talent market move whether you are watching or not.")}
+          <div class="journey-league-stage">
+            <section class="section panel-rail events-card">${leagueEventRotator()}</section>
+            <section class="section panel-rail summary-side-card">${summaryLeaderRotator()}</section>
+            <section class="section panel-rail staff-market-card${readonlyClass}">${dashboardStaffMarketCard(editable)}</section>
+            <section class="section panel-rail free-agent-market-card${readonlyClass}">${dashboardFreeAgentMarketCard(editable)}</section>
+          </div>
+        </section>
+
+        <section class="journey-chapter journey-office" data-journey-chapter="office">
+          ${journeyChapterIntro("Front Office", "Build beyond tonight", "Contracts, staff, picks, and transactions turn a good season into a durable franchise.")}
+          <div class="journey-office-stage">
+            <section class="section panel-rail dashboard-actions-card${readonlyClass}">${dashboardActionsCard(editable)}</section>
+            <section class="section panel-rail contract-chart-card">${contractChartCard(rows, dash)}</section>
+            <section class="section panel-rail draft-picks-card">${draftPicksCard()}</section>
+            <section class="section panel-rail staff-card">${staffDashboardCard(rows, dash, editable)}</section>
+          </div>
+        </section>
+      </main>
+      <div class="journey-progress" aria-hidden="true"><span></span></div>
+    </div>`;
+}
+
+function journeyChapterIntro(eyebrow, title, description) {
+  return `<header class="journey-chapter-intro"><p>${escapeHtml(eyebrow)}</p><h2>${escapeHtml(title)}</h2><span>${escapeHtml(description)}</span></header>`;
+}
+
+function dashboardTeamName(team) {
+  const source = state.teams.find((candidate) => teamLabel(candidate) === team) || {};
+  return source.full_name || source.name || [source.city, source.nickname].filter(Boolean).join(" ") || `${team} Basketball`;
+}
+
+function journeyNextGame(team) {
+  const current = String(state.home?.save?.current_date || "").slice(0, 10);
+  const games = (state.data.dashboardCalendar?.games || [])
+    .filter((game) => [game.home, game.home_team, game.away, game.away_team].includes(team))
+    .filter((game) => String(game.date || "").slice(0, 10) >= current)
+    .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+  const game = games[0];
+  if (!game) return null;
+  const home = teamLabel(game.home || game.home_team);
+  const away = teamLabel(game.away || game.away_team);
+  const opponent = home === team ? away : home;
+  return {
+    title: `${home === team ? "vs" : "at"} ${opponent}`,
+    detail: formatWrittenDate(game.date) || String(game.date || "Upcoming game"),
+  };
 }
 
 function teamBrandStyle(team) {
@@ -3463,6 +3621,18 @@ function contractYearColumn(season, rows, cap, expanded) {
 }
 
 function wireDashboardOverview(editable) {
+  els.content.querySelectorAll("[data-dashboard-experience]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const experience = button.dataset.dashboardExperience === "command" ? "command" : "journey";
+      if (experience === state.dashboardExperience) return;
+      state.dashboardExperience = experience;
+      state.journeyChapter = "today";
+      localStorage.setItem(DASHBOARD_EXPERIENCE_KEY, experience);
+      state.journeyObserver?.disconnect();
+      state.journeyObserver = null;
+      renderDashboard();
+    });
+  });
   const teamSelect = document.getElementById("dashboardTeamSelect");
   if (teamSelect) {
     teamSelect.addEventListener("change", async (event) => {
@@ -3581,6 +3751,71 @@ function wireDashboardOverview(editable) {
   });
   const saveRotation = document.getElementById("saveRotation");
   if (saveRotation) saveRotation.addEventListener("click", saveRotationMinutes);
+}
+
+function wireFranchiseJourney() {
+  const scroller = els.content.querySelector("[data-journey-scroll]");
+  const chapters = [...els.content.querySelectorAll("[data-journey-chapter]")];
+  const navButtons = [...els.content.querySelectorAll("[data-journey-jump]")];
+  const progress = els.content.querySelector(".journey-progress span");
+  if (!scroller || !chapters.length) return;
+
+  const activateChapter = (key) => {
+    state.journeyChapter = key;
+    navButtons.forEach((button) => button.classList.toggle("active", button.dataset.journeyJump === key));
+    chapters.forEach((chapter) => chapter.classList.toggle("is-active", chapter.dataset.journeyChapter === key));
+  };
+
+  navButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const key = button.dataset.journeyJump;
+      const chapter = chapters.find((candidate) => candidate.dataset.journeyChapter === key);
+      if (!chapter) return;
+      activateChapter(key);
+      chapter.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  state.journeyObserver?.disconnect();
+  state.journeyObserver = new IntersectionObserver((entries) => {
+    const visible = entries
+      .filter((entry) => entry.isIntersecting)
+      .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+    if (visible?.target?.dataset?.journeyChapter) activateChapter(visible.target.dataset.journeyChapter);
+  }, { root: scroller, threshold: [0.45, 0.62, 0.8] });
+  chapters.forEach((chapter) => state.journeyObserver.observe(chapter));
+
+  const updateProgress = () => {
+    if (!progress) return;
+    const distance = Math.max(1, scroller.scrollHeight - scroller.clientHeight);
+    progress.style.transform = `scaleX(${clampNumber(scroller.scrollTop / distance, 0, 1)})`;
+  };
+  scroller.addEventListener("scroll", updateProgress, { passive: true });
+  updateProgress();
+
+  const logoStage = els.content.querySelector("[data-journey-logo-stage]");
+  const hero = els.content.querySelector(".journey-today");
+  if (logoStage && hero && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    hero.addEventListener("pointermove", (event) => {
+      const bounds = hero.getBoundingClientRect();
+      const x = ((event.clientX - bounds.left) / Math.max(1, bounds.width) - 0.5) * 2;
+      const y = ((event.clientY - bounds.top) / Math.max(1, bounds.height) - 0.5) * 2;
+      logoStage.style.setProperty("--journey-pointer-x", x.toFixed(3));
+      logoStage.style.setProperty("--journey-pointer-y", y.toFixed(3));
+    });
+    hero.addEventListener("pointerleave", () => {
+      logoStage.style.setProperty("--journey-pointer-x", "0");
+      logoStage.style.setProperty("--journey-pointer-y", "0");
+    });
+  }
+
+  const initialKey = chapters.some((chapter) => chapter.dataset.journeyChapter === state.journeyChapter)
+    ? state.journeyChapter
+    : chapters[0].dataset.journeyChapter;
+  activateChapter(initialKey);
+  if (initialKey !== chapters[0].dataset.journeyChapter) {
+    requestAnimationFrame(() => chapters.find((chapter) => chapter.dataset.journeyChapter === initialKey)?.scrollIntoView({ block: "start" }));
+  }
 }
 
 async function switchDashboardTeam(team) {
