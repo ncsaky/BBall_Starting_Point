@@ -44,6 +44,13 @@ const state = {
 
 const els = {};
 const LAST_SAVE_KEY = "nbaGmLastSave";
+const THEME_KEY = "nbaGmTheme";
+const THEME_OPTIONS = [
+  { key: "classic", name: "Classic Green", description: "The current league desk palette.", swatches: ["#2fbf75", "#d7b84f", "#5b8fd9"] },
+  { key: "courtside", name: "Courtside Gold", description: "Warm gold with a deep arena floor.", swatches: ["#d7b84f", "#d9794a", "#d9c46a"] },
+  { key: "ice", name: "Ice Blue", description: "Cool, analytical, and quietly bright.", swatches: ["#5b8fd9", "#7bc4e8", "#a9d8f3"] },
+  { key: "crimson", name: "Crimson Night", description: "A darker broadcast-room treatment.", swatches: ["#d95b65", "#d7b84f", "#8f6bd9"] },
+];
 
 
 
@@ -92,6 +99,10 @@ function wireEvents() {
   els.nav.addEventListener("click", async (event) => {
     const button = event.target.closest("button[data-view]");
     if (!button) return;
+    if (button.dataset.view === "trade") {
+      await openTradeRoomModal();
+      return;
+    }
     state.view = button.dataset.view;
     if (state.view === "dashboard") {
       state.dashboardTeam = userTeam();
@@ -129,6 +140,7 @@ function wireEvents() {
 }
 
 async function init() {
+  applyTheme(localStorage.getItem(THEME_KEY) || "classic");
   state.currentSave = localStorage.getItem(LAST_SAVE_KEY) || "";
   state.hydrating = Boolean(state.currentSave);
   render();
@@ -395,6 +407,28 @@ function savePayload() {
   return { save_path: state.currentSave };
 }
 
+function currentTheme() {
+  const saved = localStorage.getItem(THEME_KEY) || "classic";
+  return THEME_OPTIONS.some((theme) => theme.key === saved) ? saved : "classic";
+}
+
+function applyTheme(themeKey) {
+  const theme = THEME_OPTIONS.some((option) => option.key === themeKey) ? themeKey : "classic";
+  document.documentElement.dataset.theme = theme === "classic" ? "" : theme;
+  localStorage.setItem(THEME_KEY, theme);
+}
+
+function returnToSaveSelection() {
+  localStorage.removeItem(LAST_SAVE_KEY);
+  state.currentSave = "";
+  state.home = null;
+  state.view = "dashboard";
+  state.dashboardTeam = "";
+  clearViewCaches();
+  closeModal();
+  render();
+}
+
 function render() {
   const save = state.home?.save;
   applyPhaseRouting();
@@ -408,7 +442,12 @@ function render() {
   syncNavActive();
   if (state.view !== "dashboard") stopDashboardRotatorClock();
   if (state.view === "dashboard") renderDashboard();
-  if (state.view === "trade") renderTrade();
+  // Trade Room is an overlay so the user never loses the dashboard context.
+  if (state.view === "trade") {
+    state.view = "dashboard";
+    syncNavActive();
+    renderDashboard();
+  }
   if (state.view === "offers") renderOffers();
   if (state.view === "draft") renderDraft();
   if (state.view === "playoffs") renderPlayoffs();
@@ -969,43 +1008,71 @@ function setMarketRotatorActive(rotator, value) {
   if (select) select.value = String(index);
 }
 
-function renderTrade() {
+function tradeRoomModalBody() {
   const user = userTeam();
   const partnerOptions = state.teams
     .filter((team) => team.abbrev !== user)
     .map((team) => `<option value="${escapeAttr(team.abbrev)}" ${team.abbrev === state.tradePartner ? "selected" : ""}>${escapeHtml(team.abbrev)} ${escapeHtml(team.name || "")}</option>`)
     .join("");
-  els.content.innerHTML = `
-    <section class="section featured">
-      <div class="section-head">
-        <div><h3>Trade Room</h3><p class="muted">Build exact packages or shop an asset through the engine.</p></div>
+  return `
+    <div class="trade-room-toolbar">
+      <label class="trade-partner-field" for="tradePartner">
+        <span>Trade partner</span>
         <select id="tradePartner">${partnerOptions}</select>
-      </div>
-      <div class="tabs">
+      </label>
+      <div class="tabs" aria-label="Trade tools">
         <button data-trade-tab="builder" class="${state.tradeTab === "builder" ? "active" : ""}">Builder</button>
         <button data-trade-tab="finder" class="${state.tradeTab === "finder" ? "active" : ""}">Finder</button>
       </div>
-      <div id="tradeBody"></div>
-    </section>`;
-  document.getElementById("tradePartner").addEventListener("change", async (event) => {
+    </div>
+    <div id="tradeBody"></div>`;
+}
+
+async function openTradeRoomModal(tab = state.tradeTab || "builder") {
+  state.tradeTab = tab;
+  syncDefaultPartner();
+  await loadTradeAssets();
+  state.modal = {
+    kind: "tradeRoom",
+    title: "Trade Room",
+    subtitle: "Build exact packages or shop an asset through the engine.",
+    body: tradeRoomModalBody(),
+  };
+  renderModal();
+}
+
+function renderTradeRoom() {
+  if (state.modal?.kind !== "tradeRoom") return;
+  state.modal = {
+    ...state.modal,
+    body: tradeRoomModalBody(),
+  };
+  renderModal();
+}
+
+function wireTradeRoom() {
+  const root = els.modalRoot;
+  const partner = root.querySelector("#tradePartner");
+  partner?.addEventListener("change", async (event) => {
     state.tradePartner = event.target.value;
     state.selectedTo = [];
     state.tradeCandidate = null;
     await loadTradeAssets();
-    renderTrade();
+    renderTradeRoom();
   });
-  els.content.querySelector(".tabs").addEventListener("click", (event) => {
+  root.querySelector(".tabs")?.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-trade-tab]");
     if (!button) return;
     state.tradeTab = button.dataset.tradeTab;
-    renderTrade();
+    renderTradeRoom();
   });
-  if (state.tradeTab === "finder") renderTradeFinder();
-  else renderTradeBuilder();
+  if (state.tradeTab === "finder") renderTradeFinder(root);
+  else renderTradeBuilder(root);
 }
 
-function renderTradeBuilder() {
-  const body = document.getElementById("tradeBody");
+function renderTradeBuilder(root) {
+  const body = root.querySelector("#tradeBody");
+  if (!body) return;
   const userAssets = state.data.tradeUser || {};
   const partnerAssets = state.data.tradePartner || {};
   body.innerHTML = `
@@ -1031,14 +1098,14 @@ function renderTradeBuilder() {
   body.querySelectorAll("[data-remove-side]").forEach((button) => {
     button.addEventListener("click", () => removeAsset(button.dataset.removeSide, button.dataset.assetId));
   });
-  document.getElementById("clearTrade").addEventListener("click", () => {
+  body.querySelector("#clearTrade").addEventListener("click", () => {
     state.selectedFrom = [];
     state.selectedTo = [];
     state.tradeCandidate = null;
-    renderTrade();
+    renderTradeRoom();
   });
-  document.getElementById("evaluateTrade").addEventListener("click", evaluateBuiltTrade);
-  const applyButton = document.getElementById("applyBuiltTrade");
+  body.querySelector("#evaluateTrade").addEventListener("click", evaluateBuiltTrade);
+  const applyButton = body.querySelector("#applyBuiltTrade");
   if (applyButton) applyButton.addEventListener("click", () => applyCandidate(state.tradeCandidate, "builder"));
 }
 
@@ -1067,8 +1134,9 @@ function assetButton(asset, side) {
     </button>`;
 }
 
-function renderTradeFinder() {
-  const body = document.getElementById("tradeBody");
+function renderTradeFinder(root) {
+  const body = root.querySelector("#tradeBody");
+  if (!body) return;
   body.innerHTML = `
     <div class="grid-2">
       <section class="section">
@@ -1085,7 +1153,7 @@ function renderTradeFinder() {
         <div id="tradeResults" class="stack">${tradeResultCards(state.tradeResults)}</div>
       </section>
     </div>`;
-  document.getElementById("runTrade").addEventListener("click", runTradeSearch);
+  body.querySelector("#runTrade").addEventListener("click", runTradeSearch);
   body.querySelectorAll("[data-apply-finder]").forEach((button) => {
     button.addEventListener("click", () => applyCandidate(state.tradeResults[Number(button.dataset.applyFinder)], "trade_finder"));
   });
@@ -1103,16 +1171,17 @@ async function evaluateBuiltTrade() {
   });
   result.headline = tradeHeadline(result);
   state.tradeCandidate = result;
-  renderTrade();
+  renderTradeRoom();
 }
 
 async function runTradeSearch() {
-  const player = document.getElementById("tradePlayer").value.trim();
+  const root = els.modalRoot;
+  const player = root.querySelector("#tradePlayer")?.value.trim();
   if (!player) return showToast("Enter a player name.", true);
-  const team = document.getElementById("tradeTeam").value.trim();
+  const team = root.querySelector("#tradeTeam")?.value.trim();
   const data = await action("find_trade", { ...savePayload(), player, for_team: team || userTeam(), limit: 8, seed: 7 });
   state.tradeResults = data.candidates || data.offers || [];
-  renderTrade();
+  renderTradeRoom();
 }
 
 async function applyCandidate(candidate, source) {
@@ -1124,6 +1193,10 @@ async function applyCandidate(candidate, source) {
   state.tradeCandidate = null;
   state.tradeResults = [];
   await refreshHome();
+  if (state.modal?.kind === "tradeRoom") {
+    await loadTradeAssets();
+    renderTradeRoom();
+  }
 }
 
 function renderOffers() {
@@ -1931,6 +2004,38 @@ function closeModal() {
   renderModal();
 }
 
+function openSettingsModal() {
+  const selectedTheme = currentTheme();
+  state.modal = {
+    kind: "dashboardSettings",
+    title: "Settings",
+    subtitle: "Presentation and save session",
+    body: `
+      <section class="settings-modal-section">
+        <div class="settings-modal-copy">
+          <p class="eyebrow">Theme</p>
+          <p>Choose the visual treatment for this device. Your selection stays in place when you return to the game.</p>
+        </div>
+        <div class="theme-option-grid">
+          ${THEME_OPTIONS.map((theme) => `
+            <button class="theme-option ${theme.key === selectedTheme ? "selected" : ""}" data-theme-option="${escapeAttr(theme.key)}" aria-pressed="${theme.key === selectedTheme}">
+              <span class="theme-swatches">${theme.swatches.map((color) => `<i style="background:${color}"></i>`).join("")}</span>
+              <strong>${escapeHtml(theme.name)}</strong>
+              <small>${escapeHtml(theme.description)}</small>
+            </button>`).join("")}
+        </div>
+      </section>
+      <section class="settings-modal-section settings-save-section">
+        <div class="settings-modal-copy">
+          <p class="eyebrow">Save Session</p>
+          <p>Return to the save selection screen. Your current save remains unchanged and can be loaded again at any time.</p>
+        </div>
+        <button class="settings-return-button" data-return-save-selection>Back to Save Selection</button>
+      </section>`,
+  };
+  renderModal();
+}
+
 function renderModal() {
   if (!els.modalRoot) return;
   if (!state.modal) {
@@ -1939,7 +2044,16 @@ function renderModal() {
     return;
   }
   els.modalRoot.hidden = false;
-  const modalClass = state.modal.kind === "playerFinder" ? " modal-wide" : "";
+  const modalClass = state.modal.kind === "playerFinder"
+    ? " modal-wide"
+    : state.modal.kind === "tradeRoom"
+      ? " modal-trade-room"
+      : state.modal.kind === "dashboardSettings"
+        ? " modal-settings"
+        : "";
+  const closeControl = state.modal.kind === "tradeRoom"
+    ? `<button class="modal-close-icon" data-close-modal aria-label="Close Trade Room" title="Close Trade Room">×</button>`
+    : `<button data-close-modal>Close</button>`;
   els.modalRoot.innerHTML = `
     <div class="modal-shell${modalClass}" role="dialog" aria-modal="true">
       <header class="modal-head">
@@ -1947,7 +2061,7 @@ function renderModal() {
           <p class="eyebrow">${escapeHtml(state.modal.subtitle || "")}</p>
           <h3>${escapeHtml(state.modal.title || "Detail")}</h3>
         </div>
-        <button data-close-modal>Close</button>
+        ${closeControl}
       </header>
       <div class="modal-body">${state.modal.body || ""}</div>
     </div>`;
@@ -1956,6 +2070,18 @@ function renderModal() {
   }
   if (state.modal.kind === "playerFinder") {
     wirePlayerFinderModal();
+  }
+  if (state.modal.kind === "tradeRoom") {
+    wireTradeRoom();
+  }
+  if (state.modal.kind === "dashboardSettings") {
+    els.modalRoot.querySelectorAll("[data-theme-option]").forEach((button) => {
+      button.addEventListener("click", () => {
+        applyTheme(button.dataset.themeOption || "classic");
+        openSettingsModal();
+      });
+    });
+    els.modalRoot.querySelector("[data-return-save-selection]")?.addEventListener("click", returnToSaveSelection);
   }
   els.modalRoot.querySelectorAll("[data-dashboard-team-jump]").forEach((button) => {
     button.addEventListener("click", async () => {
@@ -2043,16 +2169,66 @@ function teamIdentityRankBlock(dash) {
   return `<div class="section-head identity-head">
       <h3><select id="dashboardTeamSelect" aria-label="Dashboard team">${dashboardTeamOptions(selected)}</select> Identity</h3>
     </div>
-    ${rankedBarList([
+    <div class="identity-primary-bars">${rankedBarList([
       ["Overall", metrics.overall, ranks.overall, count],
       ["Offense", metrics.offense, ranks.offense, count],
       ["Defense", metrics.defense, ranks.defense, count],
-      ["Spacing", metrics.spacing, ranks.spacing, count],
-      ["Creation", metrics.creation, ranks.creation, count],
-      ["Rim Protection", metrics.rim_protection, ranks.rim_protection, count],
       ["Depth", metrics.depth, ranks.depth, count],
-      ["Timeline", metrics.age_timeline, ranks.age_timeline, count],
-    ])}`;
+    ])}</div>
+    ${teamIdentityRadarChart(metrics, ranks, count)}`;
+}
+
+function teamIdentityRadarChart(metrics, ranks, leagueCount) {
+  const axes = [
+    { key: "spacing", label: "Spacing" },
+    { key: "creation", label: "Creation" },
+    { key: "rim_pressure", label: "Rim pressure" },
+    { key: "rebounding", label: "Rebounding" },
+    { key: "rim_protection", label: "Rim protect" },
+    { key: "defensive_disruption", label: "Disruption" },
+  ];
+  const width = 252;
+  const height = 158;
+  const centerX = width / 2;
+  const centerY = 76;
+  const radius = 52;
+  const angleFor = (index) => (-Math.PI / 2) + (index * Math.PI * 2) / axes.length;
+  const pointFor = (index, proportion = 1, extra = 0) => {
+    const angle = angleFor(index);
+    return {
+      x: centerX + Math.cos(angle) * (radius * proportion + extra),
+      y: centerY + Math.sin(angle) * (radius * proportion + extra),
+    };
+  };
+  const polygon = (proportion) => axes.map((_, index) => {
+    const point = pointFor(index, proportion);
+    return `${point.x.toFixed(1)},${point.y.toFixed(1)}`;
+  }).join(" ");
+  const profilePoints = axes.map((axis, index) => {
+    const value = clampNumber(Number(metrics[axis.key] || 0), 1, 99) / 99;
+    const point = pointFor(index, value);
+    return `${point.x.toFixed(1)},${point.y.toFixed(1)}`;
+  }).join(" ");
+  return `
+    <div class="identity-radar-panel">
+      <div class="identity-radar-caption"><span>Team profile</span><small>rotation-weighted</small></div>
+      <svg class="identity-radar" viewBox="0 0 ${width} ${height}" role="img" aria-label="Team profile radar chart">
+        ${[0.25, 0.5, 0.75, 1].map((level) => `<polygon class="identity-radar-grid" points="${polygon(level)}" />`).join("")}
+        ${axes.map((axis, index) => {
+          const edge = pointFor(index);
+          return `<line class="identity-radar-axis" x1="${centerX}" y1="${centerY}" x2="${edge.x.toFixed(1)}" y2="${edge.y.toFixed(1)}" />`;
+        }).join("")}
+        <polygon class="identity-radar-shape" points="${profilePoints}">
+          <title>${escapeHtml(axes.map((axis) => `${axis.label}: ${Number(metrics[axis.key] || 0).toFixed(1)} (#${ranks[axis.key] || leagueCount}/${leagueCount})`).join(" | "))}</title>
+        </polygon>
+        ${axes.map((axis, index) => {
+          const label = pointFor(index, 1, 18);
+          const anchor = Math.abs(label.x - centerX) < 5 ? "middle" : label.x < centerX ? "end" : "start";
+          const baseline = label.y < centerY - 12 ? "auto" : label.y > centerY + 12 ? "hanging" : "middle";
+          return `<text class="identity-radar-label" text-anchor="${anchor}" dominant-baseline="${baseline}" x="${label.x.toFixed(1)}" y="${label.y.toFixed(1)}">${escapeHtml(axis.label)}</text>`;
+        }).join("")}
+      </svg>
+    </div>`;
 }
 
 function startingFiveBlock(rows, editable) {
@@ -2646,11 +2822,17 @@ function dashboardActionsCard(editable = true) {
       <button class="dashboard-action-button" data-dashboard-player-finder ${disabled}>
         <strong>Player Finder</strong>
       </button>
+      <button class="dashboard-action-button placeholder-action" disabled title="Coming soon">
+        <strong>Contract Extensions</strong>
+      </button>
       <button class="dashboard-action-button" data-dashboard-view="draft" ${disabled}>
         <strong>Prospects</strong>
       </button>
       <button class="dashboard-action-button offer-action ${offerCount ? "has-offers" : ""}" data-dashboard-offers ${disabled}>
         <strong>Trade Offers</strong>
+      </button>
+      <button class="dashboard-action-button" data-dashboard-settings ${disabled}>
+        <strong>Settings</strong>
       </button>
     </div>`;
 }
@@ -3240,12 +3422,7 @@ function wireDashboardOverview(editable) {
   });
   els.content.querySelectorAll("[data-dashboard-trade]").forEach((button) => {
     button.addEventListener("click", async () => {
-      state.tradeTab = button.dataset.dashboardTrade || "builder";
-      state.view = "trade";
-      syncNavActive();
-      await ensureViewData(true);
-      render();
-      window.scrollTo({ top: 0, left: 0 });
+      await openTradeRoomModal(button.dataset.dashboardTrade || "builder");
     });
   });
   els.content.querySelectorAll("[data-dashboard-offers]").forEach((button) => {
@@ -3253,6 +3430,9 @@ function wireDashboardOverview(editable) {
   });
   els.content.querySelectorAll("[data-dashboard-player-finder]").forEach((button) => {
     button.addEventListener("click", openPlayerFinderModal);
+  });
+  els.content.querySelectorAll("[data-dashboard-settings]").forEach((button) => {
+    button.addEventListener("click", openSettingsModal);
   });
   els.content.querySelectorAll("[data-standings-conference-toggle]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -3689,7 +3869,7 @@ function toggleAsset(side, kind, id) {
   if (existing >= 0) list.splice(existing, 1);
   else list.push({ kind: asset.kind, id: asset.id, value: asset.value || asset.id, label: asset.label || asset.name || asset.id });
   state.tradeCandidate = null;
-  renderTrade();
+  renderTradeRoom();
 }
 
 function selectedList(side) {
@@ -3701,7 +3881,7 @@ function removeAsset(side, id) {
   const idx = list.findIndex((item) => item.id === id);
   if (idx >= 0) list.splice(idx, 1);
   state.tradeCandidate = null;
-  renderTrade();
+  renderTradeRoom();
 }
 
 function assetSpec(asset) {
