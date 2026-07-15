@@ -51,6 +51,18 @@ const THEME_OPTIONS = [
   { key: "ice", name: "Ice Blue", description: "Cool, analytical, and quietly bright.", swatches: ["#5b8fd9", "#7bc4e8", "#a9d8f3"] },
   { key: "crimson", name: "Crimson Night", description: "A darker broadcast-room treatment.", swatches: ["#d95b65", "#d7b84f", "#8f6bd9"] },
 ];
+const TEAM_BRAND_COLORS = {
+  ATL: ["#E03A3E", "#C1D32F"], BKN: ["#FFFFFF", "#6B7075"], BOS: ["#007A33", "#BA9653"],
+  CHA: ["#1D1160", "#00788C"], CHI: ["#CE1141", "#000000"], CLE: ["#860038", "#FDBB30"],
+  DAL: ["#00538C", "#B8C4CA"], DEN: ["#0E2240", "#FEC524"], DET: ["#C8102E", "#1D42BA"],
+  GSW: ["#1D428A", "#FFC72C"], HOU: ["#CE1141", "#C4CED4"], IND: ["#002D62", "#FDBB30"],
+  LAC: ["#C8102E", "#1D428A"], LAL: ["#552583", "#FDB927"], MEM: ["#5D76A9", "#12173F"],
+  MIA: ["#98002E", "#F9A01B"], MIL: ["#00471B", "#EEE1C6"], MIN: ["#0C2340", "#78BE20"],
+  NOP: ["#0C2340", "#C8102E"], NYK: ["#006BB6", "#F58426"], OKC: ["#007AC1", "#EF3B24"],
+  ORL: ["#0077C0", "#C4CED4"], PHI: ["#006BB6", "#ED174C"], PHX: ["#1D1160", "#E56020"],
+  POR: ["#E03A3E", "#A7A9AC"], SAC: ["#5A2D81", "#63727A"], SAS: ["#C4CED4", "#8A8D8F"],
+  TOR: ["#CE1141", "#B4975A"], UTA: ["#002B5C", "#F9A01B"], WAS: ["#002B5C", "#E31837"],
+};
 
 
 
@@ -513,25 +525,41 @@ function renderDashboardTab(rows) {
   const readonlyClass = editable ? "" : " readonly-card";
   const phaseKind = dashboardPhaseKind();
   if (state.dashboardTab === "overview") {
+    const viewedTeam = teamLabel(dash.team || state.dashboardTeam || userTeam());
     target.innerHTML = `
-      <div class="dashboard-overview ${phaseKind ? `phase-dashboard phase-dashboard-${phaseKind}` : ""}">
-        <section class="section panel-rail identity-card">${teamIdentityRankBlock(dash)}</section>
-        <section class="section panel-rail starting-card">${startingFiveBlock(rows, editable)}</section>
-        <section class="section panel-rail player-summary-card">${dashboardPlayerSummaryTable(rows)}</section>
-        <section class="section panel-rail staff-card">${staffDashboardCard(rows, dash, editable)}</section>
-        <section class="section panel-rail dashboard-actions-card${readonlyClass}">${dashboardActionsCard(editable)}</section>
-        ${phaseKind ? `<section class="section panel-rail phase-takeover-card">${dashboardPhaseWorkspace(phaseKind)}</section>` : `
-          <section class="section panel-rail summary-side-card">${summaryLeaderRotator()}</section>
-          <section class="section panel-rail standings-card">${userConferenceStandings()}</section>
-          <section class="section panel-rail calendar-card">${dashboardMonthCalendar()}</section>
-          <section class="section panel-rail contract-chart-card">${contractChartCard(rows, dash)}</section>
-          <section class="section panel-rail staff-market-card${readonlyClass}">${dashboardStaffMarketCard(editable)}</section>
-          <section class="section panel-rail free-agent-market-card${readonlyClass}">${dashboardFreeAgentMarketCard(editable)}</section>
-          <section class="section panel-rail standings-trend-card">${standingsTrendCard()}</section>
-          <section class="section panel-rail development-trend-card">${developmentTrendCard(rows)}</section>
-          <section class="section panel-rail draft-picks-card">${draftPicksCard()}</section>
-          <section class="section panel-rail events-card">${leagueEventRotator()}</section>
-        `}
+      <div class="dashboard-overview ${phaseKind ? `phase-dashboard phase-dashboard-${phaseKind}` : ""}" ${teamBrandStyle(viewedTeam)}>
+        <aside class="dashboard-team-rail">
+          <section class="section panel-rail identity-card">${teamIdentityRankBlock(dash)}</section>
+          <section class="section panel-rail dashboard-actions-card${readonlyClass}">${dashboardActionsCard(editable)}</section>
+          <section class="section panel-rail starting-card">${startingFiveBlock(rows, editable)}</section>
+          <section class="section panel-rail staff-card">${staffDashboardCard(rows, dash, editable)}</section>
+        </aside>
+        <div class="dashboard-command-deck">
+          <section class="section panel-rail player-summary-card">${dashboardPlayerSummaryTable(rows)}</section>
+          ${phaseKind ? `<section class="section panel-rail phase-takeover-card">${dashboardPhaseWorkspace(phaseKind)}</section>` : `
+            <div class="dashboard-intelligence-grid">
+              <div class="dashboard-column schedule-column">
+                <section class="section panel-rail calendar-card">${dashboardMonthCalendar()}</section>
+                <section class="section panel-rail events-card">${leagueEventRotator()}</section>
+              </div>
+              <div class="dashboard-column trend-column">
+                <section class="section panel-rail development-trend-card">${developmentTrendCard(rows)}</section>
+                <section class="section panel-rail standings-trend-card">${standingsTrendCard()}</section>
+              </div>
+              <div class="dashboard-column competition-column">
+                <section class="section panel-rail standings-card">${userConferenceStandings()}</section>
+                <section class="section panel-rail summary-side-card">${summaryLeaderRotator()}</section>
+              </div>
+              <div class="dashboard-column finance-column">
+                <section class="section panel-rail contract-chart-card">${contractChartCard(rows, dash)}</section>
+                <section class="section panel-rail draft-picks-card">${draftPicksCard()}</section>
+              </div>
+              <div class="dashboard-column market-column">
+                <section class="section panel-rail staff-market-card${readonlyClass}">${dashboardStaffMarketCard(editable)}</section>
+                <section class="section panel-rail free-agent-market-card${readonlyClass}">${dashboardFreeAgentMarketCard(editable)}</section>
+              </div>
+            </div>`}
+        </div>
       </div>`;
     wireDashboardOverview(editable);
     if (phaseKind) {
@@ -545,6 +573,11 @@ function renderDashboardTab(rows) {
   }
   target.innerHTML = contractsBlock(rows, dash);
   wireContractsBlock();
+}
+
+function teamBrandStyle(team) {
+  const [primary, secondary] = TEAM_BRAND_COLORS[team] || ["#2fbf75", "#d7b84f"];
+  return `style="--team-accent:${escapeAttr(primary)};--team-secondary:${escapeAttr(secondary)}"`;
 }
 
 function dashboardPhaseWorkspace(kind) {
@@ -2166,8 +2199,16 @@ function teamIdentityRankBlock(dash) {
   const ranks = identity.ranks || {};
   const count = identity.league_team_count || 30;
   const selected = teamLabel(dash.team || state.dashboardTeam || userTeam());
+  const logo = teamLogoSrc(selected);
+  const record = dashboardTeamRecord(selected);
   return `<div class="section-head identity-head">
-      <h3><select id="dashboardTeamSelect" aria-label="Dashboard team">${dashboardTeamOptions(selected)}</select> Identity</h3>
+      <div class="identity-club-mark">
+        ${logo ? `<img src="${escapeAttr(logo)}" alt="" aria-hidden="true" />` : ""}
+        <div>
+          <h3><select id="dashboardTeamSelect" aria-label="Dashboard team">${dashboardTeamOptions(selected)}</select> Identity</h3>
+          <small>${escapeHtml(record)}</small>
+        </div>
+      </div>
     </div>
     <div class="identity-primary-bars">${rankedBarList([
       ["Overall", metrics.overall, ranks.overall, count],
@@ -2176,6 +2217,15 @@ function teamIdentityRankBlock(dash) {
       ["Depth", metrics.depth, ranks.depth, count],
     ])}</div>
     ${teamIdentityRadarChart(metrics, ranks, count)}`;
+}
+
+function dashboardTeamRecord(team) {
+  const rows = standingsRows(state.data.dashboardStandings);
+  const row = rows.find((candidate) => teamLabel(candidate.team) === team);
+  if (!row) return "League intelligence profile";
+  const conference = row.team?.conference || "League";
+  const rank = rows.filter((candidate) => candidate.team?.conference === conference).findIndex((candidate) => teamLabel(candidate.team) === team) + 1;
+  return `${Number(row.wins || 0)}-${Number(row.losses || 0)} · ${conference}${rank > 0 ? ` #${rank}` : ""}`;
 }
 
 function teamIdentityRadarChart(metrics, ranks, leagueCount) {
@@ -2555,11 +2605,15 @@ function dashboardPlayerSummaryTable(rows) {
         __summaryEmpty: true,
         id: `summary-empty-${index}`,
       })),
-    ];
+  ];
   return `
     <div class="section-head summary-head">
-      <h3>Player Ratings / Season Box Score / Contracts</h3>
+      <div class="roster-command-title">
+        <p class="eyebrow">Roster Command</p>
+        <h3>Ratings <span>/</span> Season Box Score <span>/</span> Contracts</h3>
+      </div>
       <div class="rotation-head-actions">
+        <span class="roster-context">${escapeHtml(state.home?.save?.current_date || "")}</span>
         <span id="rotationMinuteCounter" class="minute-counter ${remaining === 0 ? "ok" : "bad"}">
           ${remaining === 0 ? "240 assigned" : `${signedNumber(remaining, 0)} minutes remaining`}
         </span>
@@ -3444,6 +3498,9 @@ function wireDashboardOverview(editable) {
   els.content.querySelectorAll("[data-standings-view-all]").forEach((button) => {
     button.addEventListener("click", openStandingsModal);
   });
+  els.content.querySelectorAll("[data-events-view-all]").forEach((button) => {
+    button.addEventListener("click", openLeagueEventsModal);
+  });
   wireDevelopmentLegend();
   els.content.querySelectorAll("[data-dashboard-view]").forEach((button) => {
     button.addEventListener("click", async () => {
@@ -4086,17 +4143,18 @@ function eventLine(event) {
 
 function leagueEventRotator() {
   const events = state.home?.league_events?.events || [];
+  const eventHead = `<div class="section-head events-head"><h3>League Wire</h3><button data-events-view-all>View All</button></div>`;
 
   if (!events.length) {
     return `
-      ${sectionHead("Recent League Events")}
+      ${eventHead}
       <div class="event-rotator empty">
         No recent league events.
       </div>`;
   }
 
   return `
-    ${sectionHead("Recent League Events")}
+    ${eventHead}
     <div class="event-rotator" data-event-rotator data-event-index="0">
       <div class="event-rotator-body">
         ${leagueEventSlide(events[0])}
@@ -4106,6 +4164,25 @@ function leagueEventRotator() {
     <script type="application/json" id="leagueEventRotatorData">
       ${JSON.stringify(events.slice(0, 12)).replace(/</g, "\\u003c")}
     </script>`;
+}
+
+function openLeagueEventsModal() {
+  const events = state.home?.league_events?.events || [];
+  state.modal = {
+    kind: "leagueEvents",
+    title: "League Wire",
+    subtitle: `${events.length} recent events · ${state.home?.save?.current_date || ""}`,
+    body: `<div class="league-events-modal-list">
+      ${events.map((event) => {
+        const normalized = normalizeLeagueEvent(event);
+        return `<article class="league-event-modal-row">
+          <div><strong>${escapeHtml(normalized.date)}</strong><span>${escapeHtml(normalized.kind || "league")}</span></div>
+          <p>${escapeHtml(normalized.text)}</p>
+        </article>`;
+      }).join("") || `<div class="empty">No league events available.</div>`}
+    </div>`,
+  };
+  renderModal();
 }
 
 function leagueEventSlide(event) {
