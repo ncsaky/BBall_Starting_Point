@@ -148,6 +148,7 @@ function wireEvents() {
     const index = Number(button.dataset.sortIndex || 0);
     const existing = state.sorts[tableId] || {};
     state.sorts[tableId] = { index, direction: existing.index === index && existing.direction === "asc" ? "desc" : "asc" };
+    if (refreshDashboardTable(button, tableId)) return;
     render();
   });
   els.modalRoot.addEventListener("click", (event) => {
@@ -310,7 +311,7 @@ async function ensureViewData(force = false) {
     if (phase) return;
     await loadDashboardCalendar(team);
     state.data.dashboardStandings = await action("standings", savePayload());
-    state.data.dashboardSummaryLeaders = await action("dashboard_summary_leaders", { ...savePayload(), limit: 5 });
+    state.data.dashboardSummaryLeaders = await action("dashboard_summary_leaders", { ...savePayload(), limit: 9 });
     state.data.dashboardStaffMarket = await action("staff_market", { ...savePayload(), limit: 60 });
     state.data.dashboardFreeAgents = await action("free_agents", { ...savePayload(), team, limit: 60 });
     state.data.dashboardTrends = await action("dashboard_trends", { ...savePayload(), team });
@@ -554,7 +555,6 @@ function renderDashboardTab(rows) {
 function commandDashboardMarkup(rows, dash, editable, readonlyClass, phaseKind, viewedTeam) {
   return `
     <div class="dashboard-overview ${phaseKind ? `phase-dashboard phase-dashboard-${phaseKind}` : ""}" ${teamBrandStyle(viewedTeam)}>
-      <button class="experience-switch command-experience-switch" data-dashboard-experience="journey">Enter Journey View</button>
       <aside class="dashboard-team-rail">
         <section class="section panel-rail identity-card">${teamIdentityRankBlock(dash)}</section>
         <section class="section panel-rail dashboard-actions-card${readonlyClass}">${dashboardActionsCard(editable)}</section>
@@ -601,8 +601,8 @@ function franchiseJourneyMarkup(rows, dash, editable, readonlyClass, phaseKind, 
   const latestEvent = normalizeLeagueEvent((state.home?.league_events?.events || [])[0] || {});
   const franchisePlayer = [...rows].filter((row) => !row.__summaryEmpty).sort((a, b) => Number(rating(b, "overall") || 0) - Number(rating(a, "overall") || 0))[0];
   const chapters = phaseKind
-    ? [["today", "Now"], ["moment", rowLabel(phaseKind)], ["roster", "Roster"], ["league", "League"], ["office", "Office"]]
-    : [["today", "Now"], ["roster", "Roster"], ["season", "Season"], ["league", "League"], ["office", "Office"]];
+    ? [["today", "Now"], ["moment", rowLabel(phaseKind)], ["roster", "Roster"], ["office", "Office"], ["league", "League"]]
+    : [["today", "Now"], ["roster", "Roster"], ["season", "Season"], ["office", "Office"], ["league", "League"]];
   return `
     <div class="franchise-journey" ${teamBrandStyle(viewedTeam)}>
       <header class="journey-topbar">
@@ -683,16 +683,6 @@ function franchiseJourneyMarkup(rows, dash, editable, readonlyClass, phaseKind, 
             </div>
           </section>` : ""}
 
-        <section class="journey-chapter journey-league" data-journey-chapter="league">
-          ${journeyChapterIntro("Around The League", "Thirty stories. One season.", "The news cycle, the best players, and the talent market move whether you are watching or not.")}
-          <div class="journey-league-stage">
-            <section class="section panel-rail events-card">${leagueEventRotator()}</section>
-            <section class="section panel-rail summary-side-card">${summaryLeaderRotator()}</section>
-            <section class="section panel-rail staff-market-card${readonlyClass}">${dashboardStaffMarketCard(editable)}</section>
-            <section class="section panel-rail free-agent-market-card${readonlyClass}">${dashboardFreeAgentMarketCard(editable)}</section>
-          </div>
-        </section>
-
         <section class="journey-chapter journey-office" data-journey-chapter="office">
           ${journeyChapterIntro("Front Office", "Build beyond tonight", "Contracts, staff, picks, and transactions turn a good season into a durable franchise.")}
           <div class="journey-office-stage">
@@ -700,6 +690,16 @@ function franchiseJourneyMarkup(rows, dash, editable, readonlyClass, phaseKind, 
             <section class="section panel-rail contract-chart-card">${contractChartCard(rows, dash)}</section>
             <section class="section panel-rail draft-picks-card">${draftPicksCard()}</section>
             <section class="section panel-rail staff-card">${staffDashboardCard(rows, dash, editable)}</section>
+          </div>
+        </section>
+
+        <section class="journey-chapter journey-league" data-journey-chapter="league">
+          ${journeyChapterIntro("Around The League", "Thirty stories. One season.", "The news cycle, the best players, and the talent market move whether you are watching or not.")}
+          <div class="journey-league-stage">
+            <section class="section panel-rail events-card">${leagueEventRotator()}</section>
+            <section class="section panel-rail summary-side-card">${summaryLeaderRotator(9, true)}</section>
+            <section class="section panel-rail staff-market-card${readonlyClass}">${dashboardStaffMarketCard(editable, 9, true)}</section>
+            <section class="section panel-rail free-agent-market-card${readonlyClass}">${dashboardFreeAgentMarketCard(editable, 9, true)}</section>
           </div>
         </section>
       </main>
@@ -2218,6 +2218,13 @@ function openSettingsModal() {
       </section>
       <section class="settings-modal-section settings-save-section">
         <div class="settings-modal-copy">
+          <p class="eyebrow">Dashboard</p>
+          <p>Switch to the immersive franchise journey without leaving this save.</p>
+        </div>
+        <button class="settings-return-button" data-settings-dashboard-experience="journey">Enter Journey View</button>
+      </section>
+      <section class="settings-modal-section settings-save-section">
+        <div class="settings-modal-copy">
           <p class="eyebrow">Save Session</p>
           <p>Return to the save selection screen. Your current save remains unchanged and can be loaded again at any time.</p>
         </div>
@@ -2273,6 +2280,15 @@ function renderModal() {
       });
     });
     els.modalRoot.querySelector("[data-return-save-selection]")?.addEventListener("click", returnToSaveSelection);
+    els.modalRoot.querySelector("[data-settings-dashboard-experience]")?.addEventListener("click", () => {
+      state.dashboardExperience = "journey";
+      state.journeyChapter = "today";
+      localStorage.setItem(DASHBOARD_EXPERIENCE_KEY, "journey");
+      state.journeyObserver?.disconnect();
+      state.journeyObserver = null;
+      closeModal();
+      renderDashboard();
+    });
   }
   els.modalRoot.querySelectorAll("[data-dashboard-team-jump]").forEach((button) => {
     button.addEventListener("click", async () => {
@@ -2413,7 +2429,10 @@ function teamIdentityRadarChart(metrics, ranks, leagueCount) {
     return `${point.x.toFixed(1)},${point.y.toFixed(1)}`;
   }).join(" ");
   const profilePoints = axes.map((axis, index) => {
-    const value = clampNumber(Number(metrics[axis.key] || 0), 1, 99) / 99;
+    const rank = Number(ranks[axis.key]);
+    const value = Number.isFinite(rank) && rank > 0
+      ? clampNumber((Number(leagueCount) - rank + 1) / Math.max(1, Number(leagueCount)), 0.08, 1)
+      : clampNumber(Number(metrics[axis.key] || 0), 8, 99) / 99;
     const point = pointFor(index, value);
     return `${point.x.toFixed(1)},${point.y.toFixed(1)}`;
   }).join(" ");
@@ -2708,13 +2727,13 @@ function ratingsTable(rows) {
   ], "dashboard-ratings");
 }
 
-function summaryLeaderRotator() {
+function summaryLeaderRotator(limit = 5, expanded = false) {
   const fields = state.data.dashboardSummaryLeaders?.fields || [];
   const slides = fields.map((field, fieldIndex) => {
-    const leaders = field.leaders || [];
+    const leaders = (field.leaders || []).slice(0, limit);
     const label = field.label || field.key || "Field";
     return `
-      <div class="summary-leader-slide ${fieldIndex === 0 ? "active" : ""}" data-field-label="${escapeAttr(label)}">
+      <div class="summary-leader-slide ${expanded ? "journey-expanded-list" : ""} ${fieldIndex === 0 ? "active" : ""}" data-field-label="${escapeAttr(label)}">
         <ol class="summary-leader-list">
           ${leaders.map((leader, index) => `
             <li>
@@ -2779,7 +2798,12 @@ function dashboardPlayerSummaryTable(rows) {
       </div>
     </div>
     <div class="dashboard-mini-table">
-      ${table(["Player", "Pos", "Height", "Age", "OVR", "Shot", "Create", "Def", "Space", "Pass", "Reb", "Rim", "Ath", "GM", "Set", "MPG", "PTS", "REB", "AST", "STL", "BLK", "TO", ...seasons], summaryRows, (row) => row.__summaryEmpty ? Array.from({ length: 22 + seasons.length }, () => "—") : [
+      ${dashboardPlayerSummaryTableInner(summaryRows, seasons, editable)}
+    </div>`;
+}
+
+function dashboardPlayerSummaryTableInner(summaryRows, seasons, editable) {
+  return table(["Player", "Pos", "Height", "Age", "OVR", "Shot", "Create", "Def", "Space", "Pass", "Reb", "Rim", "Ath", "GM", "Set", "MPG", "PTS", "REB", "AST", "STL", "BLK", "TO", ...seasons], summaryRows, (row) => row.__summaryEmpty ? Array.from({ length: 22 + seasons.length }, () => "—") : [
         summaryPlayerNameCell(row),
         compactPos(row.position),
         heightFromRow(row) || "—",
@@ -2803,8 +2827,7 @@ function dashboardPlayerSummaryTable(rows) {
         statNumber(row, "blocks"),
         statNumber(row, "turnovers"),
         ...seasons.map((season) => money(row.salary_by_year?.[season]) || "—"),
-      ], "dashboard-player-summary")}
-    </div>`;
+      ], "dashboard-player-summary");
 }
 
 function summaryPlayerNameCell(row) {
@@ -2975,7 +2998,7 @@ function contractChartCard(rows, dash) {
     </div>`;
 }
 
-function dashboardStaffMarketCard(editable = true) {
+function dashboardStaffMarketCard(editable = true, limit = 5, expanded = false) {
   const candidates = marketCandidates(state.data.dashboardStaffMarket);
   const slotOrder = ["head_coach", "offensive_coordinator", "defensive_coordinator", "development_lead", "performance_lead", "scouting_lead"];
   const pages = slotOrder
@@ -2985,7 +3008,7 @@ function dashboardStaffMarketCard(editable = true) {
       rows: candidates
         .filter((candidate) => String(candidate.slot || candidate.role_preference || "") === slot)
         .sort((a, b) => Number(staffGrade(b) || 0) - Number(staffGrade(a) || 0))
-        .slice(0, 5),
+        .slice(0, limit),
     }))
     .filter((page) => page.rows.length);
   pages.push({
@@ -2993,12 +3016,12 @@ function dashboardStaffMarketCard(editable = true) {
     label: "All Positions",
     rows: [...candidates]
       .sort((a, b) => Number(staffGrade(b) || 0) - Number(staffGrade(a) || 0))
-      .slice(0, 5),
+      .slice(0, limit),
   });
-  return marketRotatorCard("Available Staff", pages, staffMarketLine, "staff", !editable);
+  return marketRotatorCard("Available Staff", pages, staffMarketLine, "staff", !editable, expanded);
 }
 
-function dashboardFreeAgentMarketCard(editable = true) {
+function dashboardFreeAgentMarketCard(editable = true, limit = 5, expanded = false) {
   const candidates = marketCandidates(state.data.dashboardFreeAgents);
   const positions = ["PG", "SG", "SF", "PF", "C"];
   const pages = positions
@@ -3008,15 +3031,15 @@ function dashboardFreeAgentMarketCard(editable = true) {
       rows: candidates
         .filter((player) => String(player.position || "").toUpperCase().includes(position))
         .sort((a, b) => freeAgentSortValue(b) - freeAgentSortValue(a))
-        .slice(0, 5),
+        .slice(0, limit),
     }))
     .filter((page) => page.rows.length);
   pages.push({
     key: "all",
     label: "All Positions",
-    rows: [...candidates].sort((a, b) => freeAgentSortValue(b) - freeAgentSortValue(a)).slice(0, 5),
+    rows: [...candidates].sort((a, b) => freeAgentSortValue(b) - freeAgentSortValue(a)).slice(0, limit),
   });
-  return marketRotatorCard("Player Free Agents", pages, freeAgentMarketLine, "free-agents", !editable);
+  return marketRotatorCard("Player Free Agents", pages, freeAgentMarketLine, "free-agents", !editable, expanded);
 }
 
 function dashboardActionsCard(editable = true) {
@@ -3041,7 +3064,7 @@ function dashboardActionsCard(editable = true) {
         <strong>Prospects</strong>
       </button>
       <button class="dashboard-action-button offer-action ${offerCount ? "has-offers" : ""}" data-dashboard-offers ${disabled}>
-        <strong>Trade Offers</strong>
+        <strong>Trade Offers</strong><span>${offerCount} active</span>
       </button>
       <button class="dashboard-action-button" data-dashboard-settings ${disabled}>
         <strong>Settings</strong>
@@ -3049,7 +3072,7 @@ function dashboardActionsCard(editable = true) {
     </div>`;
 }
 
-function marketRotatorCard(title, pages, rowRenderer, id, disabled = false) {
+function marketRotatorCard(title, pages, rowRenderer, id, disabled = false, expanded = false) {
   const usable = pages.filter((page) => page.rows?.length);
   return `
     <div class="section-head market-card-head">
@@ -3060,7 +3083,7 @@ function marketRotatorCard(title, pages, rowRenderer, id, disabled = false) {
     </div>
     <div class="market-rotator" data-market-rotator data-market-id="${escapeAttr(id)}">
       ${usable.map((page, index) => `
-        <div class="market-slide ${index === 0 ? "active" : ""}">
+        <div class="market-slide ${expanded ? "journey-expanded-list" : ""} ${index === 0 ? "active" : ""}">
           <div class="market-list">
             ${page.rows.map(rowRenderer).join("")}
           </div>
@@ -3620,6 +3643,65 @@ function contractYearColumn(season, rows, cap, expanded) {
   </button>`;
 }
 
+function refreshDashboardTable(button, tableId) {
+  if (state.view !== "dashboard" || tableId !== "dashboard-player-summary") return false;
+  const target = button.closest(".dashboard-mini-table");
+  const rows = rosterRows(state.data.dashboard || {});
+  if (!target || !rows.length) return false;
+  const seasons = contractSeasons(rows).slice(0, 4);
+  const summaryRows = rows.length >= 17
+    ? rows
+    : [...rows, ...Array.from({ length: 17 - rows.length }, (_unused, index) => ({ __summaryEmpty: true, id: `summary-empty-${index}` }))];
+  const editable = !state.hydrating && teamLabel(state.data.dashboard?.team || state.dashboardTeam) === userTeam();
+  target.innerHTML = dashboardPlayerSummaryTableInner(summaryRows, seasons, editable);
+  wireRotationMinuteInputs(target);
+  return true;
+}
+
+function refreshDashboardStandings(root) {
+  const card = root.closest(".standings-card");
+  if (!card) return false;
+  card.innerHTML = userConferenceStandings();
+  wireDashboardStandingsControls(card);
+  wireDashboardTeamJumps(card);
+  return true;
+}
+
+function wireDashboardTeamJumps(root = els.content) {
+  root.querySelectorAll("[data-dashboard-team-jump]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      await switchDashboardTeam(button.dataset.dashboardTeamJump || userTeam());
+    });
+  });
+}
+
+function wireDashboardStandingsControls(root = els.content) {
+  root.querySelectorAll("[data-standings-conference-toggle]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const current = button.dataset.standingsConference || "East";
+      state.dashboardStandingsConference = current === "East" ? "West" : "East";
+      if (!refreshDashboardStandings(button)) renderDashboard();
+    });
+  });
+  root.querySelectorAll("[data-standings-view-all]").forEach((button) => {
+    button.addEventListener("click", openStandingsModal);
+  });
+}
+
+function wireRotationMinuteInputs(root = els.content) {
+  root.querySelectorAll("[data-minute-player]").forEach((input) => {
+    input.addEventListener("input", () => {
+      const playerId = input.dataset.minutePlayer;
+      const value = Number(input.value);
+      state.rotationDraft[playerId] = value;
+      const row = input.closest(".rotation-row");
+      const output = row?.querySelector("output") || Array.from(document.querySelectorAll("[data-minute-output]")).find((node) => node.dataset.minuteOutput === playerId);
+      if (output) output.textContent = value;
+      updateRotationMinuteCounter();
+    });
+  });
+}
+
 function wireDashboardOverview(editable) {
   els.content.querySelectorAll("[data-dashboard-experience]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -3639,11 +3721,7 @@ function wireDashboardOverview(editable) {
       await switchDashboardTeam(event.target.value || userTeam());
     });
   }
-  els.content.querySelectorAll("[data-dashboard-team-jump]").forEach((button) => {
-    button.addEventListener("click", async () => {
-      await switchDashboardTeam(button.dataset.dashboardTeamJump || userTeam());
-    });
-  });
+  wireDashboardTeamJumps();
   els.content.querySelectorAll("[data-dashboard-trade]").forEach((button) => {
     button.addEventListener("click", async () => {
       await openTradeRoomModal(button.dataset.dashboardTrade || "builder");
@@ -3658,16 +3736,7 @@ function wireDashboardOverview(editable) {
   els.content.querySelectorAll("[data-dashboard-settings]").forEach((button) => {
     button.addEventListener("click", openSettingsModal);
   });
-  els.content.querySelectorAll("[data-standings-conference-toggle]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const current = button.dataset.standingsConference || "East";
-      state.dashboardStandingsConference = current === "East" ? "West" : "East";
-      renderDashboard();
-    });
-  });
-  els.content.querySelectorAll("[data-standings-view-all]").forEach((button) => {
-    button.addEventListener("click", openStandingsModal);
-  });
+  wireDashboardStandingsControls();
   els.content.querySelectorAll("[data-events-view-all]").forEach((button) => {
     button.addEventListener("click", openLeagueEventsModal);
   });
@@ -3733,22 +3802,7 @@ function wireDashboardOverview(editable) {
   }
   const auto = document.getElementById("autoStartingFive");
   if (auto) auto.addEventListener("click", () => saveStartingFive({}, { auto: true }));
-  els.content.querySelectorAll("[data-minute-player]").forEach((input) => {
-    input.addEventListener("input", () => {
-      const playerId = input.dataset.minutePlayer;
-      const value = Number(input.value);
-
-      state.rotationDraft[playerId] = value;
-
-      const row = input.closest(".rotation-row");
-      const output =
-        row?.querySelector("output") ||
-        Array.from(document.querySelectorAll("[data-minute-output]")).find((node) => node.dataset.minuteOutput === playerId);
-      if (output) output.textContent = value;
-
-      updateRotationMinuteCounter();
-    });
-  });
+  wireRotationMinuteInputs();
   const saveRotation = document.getElementById("saveRotation");
   if (saveRotation) saveRotation.addEventListener("click", saveRotationMinutes);
 }

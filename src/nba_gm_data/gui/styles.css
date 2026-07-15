@@ -5206,9 +5206,21 @@ body[data-dashboard-experience="journey"] .dashboard-shell {
   line-height: 1.38;
 }
 
-.journey-league-stage .summary-leader-list li,
-.journey-league-stage .market-row {
-  min-height: 42px;
+.journey-league-stage .summary-leader-slide,
+.journey-league-stage .market-slide {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.journey-league-stage .journey-expanded-list .summary-leader-list,
+.journey-league-stage .journey-expanded-list .market-list {
+  align-content: stretch;
+  grid-auto-rows: minmax(0, 1fr);
+  height: 100%;
+}
+
+.journey-league-stage .journey-expanded-list .summary-leader-list li,
+.journey-league-stage .journey-expanded-list .market-row {
+  min-height: 0;
 }
 
 .journey-league-stage .summary-player strong,
@@ -5251,24 +5263,6 @@ body[data-dashboard-experience="journey"] .dashboard-shell {
 
 .journey-moment .phase-takeover-card {
   min-height: 0;
-}
-
-.command-experience-switch {
-  background: color-mix(in srgb, var(--panel) 92%, var(--team-accent) 8%);
-  border-color: var(--team-accent);
-  bottom: auto;
-  font-size: 8px;
-  letter-spacing: 0.08em;
-  min-height: 112px;
-  padding: 8px 5px;
-  position: fixed;
-  right: 0;
-  text-transform: uppercase;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 28px;
-  writing-mode: vertical-rl;
-  z-index: 40;
 }
 
 .dashboard-overview {
