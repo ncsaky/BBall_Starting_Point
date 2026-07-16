@@ -618,8 +618,14 @@ function franchiseJourneyMarkup(rows, dash, editable, readonlyClass, phaseKind, 
       </header>
 
       <nav class="journey-rail" aria-label="Franchise journey chapters">
+        <span class="journey-rail-ball" data-journey-rail-ball aria-hidden="true"></span>
         ${chapters.map(([key, label], index) => `<button class="${index === 0 ? "active" : ""}" data-journey-jump="${escapeAttr(key)}"><span>${String(index + 1).padStart(2, "0")}</span><em>${escapeHtml(label)}</em></button>`).join("")}
       </nav>
+
+      <div class="journey-handoff" data-journey-handoff aria-hidden="true">
+        <span class="journey-handoff-shadow" data-journey-handoff-shadow></span>
+        <span class="journey-handoff-ball" data-journey-handoff-ball></span>
+      </div>
 
       <main class="journey-scroll" data-journey-scroll>
         <section class="journey-chapter journey-today" data-journey-chapter="today">
@@ -3808,13 +3814,102 @@ function wireDashboardOverview(editable) {
 }
 
 function wireFranchiseJourney() {
+  const root = els.content.querySelector(".franchise-journey");
   const scroller = els.content.querySelector("[data-journey-scroll]");
   const chapters = [...els.content.querySelectorAll("[data-journey-chapter]")];
   const navButtons = [...els.content.querySelectorAll("[data-journey-jump]")];
+  const rail = els.content.querySelector(".journey-rail");
+  const railButtons = [...(rail?.querySelectorAll("button[data-journey-jump]") || [])];
+  const railBall = els.content.querySelector("[data-journey-rail-ball]");
   const progress = els.content.querySelector(".journey-progress span");
-  if (!scroller || !chapters.length) return;
+  const handoff = els.content.querySelector("[data-journey-handoff]");
+  const handoffBall = els.content.querySelector("[data-journey-handoff-ball]");
+  const handoffShadow = els.content.querySelector("[data-journey-handoff-shadow]");
+  if (!root || !scroller || !chapters.length) return;
 
-  const activateChapter = (key) => {
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  let handoffAnimation = null;
+  let shadowAnimation = null;
+  let arrivalTimer = null;
+  let transitionSerial = 0;
+  let progressFrame = null;
+  let programmedTarget = null;
+  let programmedTargetTimer = null;
+
+  const chapterFor = (key) => chapters.find((chapter) => chapter.dataset.journeyChapter === key);
+  const chapterIndex = (key) => chapters.findIndex((chapter) => chapter.dataset.journeyChapter === key);
+
+  const clearJourneyMotion = () => {
+    handoffAnimation?.cancel();
+    shadowAnimation?.cancel();
+    handoffAnimation = null;
+    shadowAnimation = null;
+    window.clearTimeout(arrivalTimer);
+    root.classList.remove("is-handoff-active");
+    chapters.forEach((chapter) => chapter.classList.remove("is-departing", "is-receiving", "has-arrived"));
+  };
+
+  const playJourneyHandoff = (fromKey, toKey) => {
+    const fromIndex = chapterIndex(fromKey);
+    const toIndex = chapterIndex(toKey);
+    const target = chapterFor(toKey);
+    if (reducedMotion.matches || !handoff || !handoffBall || !handoffShadow || !target || fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return;
+
+    clearJourneyMotion();
+    const serial = ++transitionSerial;
+    const direction = toIndex > fromIndex ? 1 : -1;
+    const width = Math.max(640, root.clientWidth);
+    const height = Math.max(480, root.clientHeight);
+    const startX = direction > 0 ? Math.max(116, width * 0.15) : width * 0.82;
+    const endX = direction > 0 ? width * 0.79 : Math.max(124, width * 0.19);
+    const centerX = width * (direction > 0 ? 0.5 : 0.48);
+    const startY = height * 0.64;
+    const apexY = Math.max(86, height * 0.16);
+    const landingY = height * 0.57;
+    const rotation = direction * (Math.abs(toIndex - fromIndex) > 1 ? 900 : 620);
+
+    chapterFor(fromKey)?.classList.add("is-departing");
+    target.classList.add("is-receiving");
+    root.classList.add("is-handoff-active");
+
+    handoffAnimation = handoffBall.animate([
+      { opacity: 0, transform: `translate3d(${startX}px, ${startY + 24}px, 0) scale(0.72) rotate(0deg)`, offset: 0 },
+      { opacity: 1, transform: `translate3d(${startX}px, ${startY}px, 0) scale(0.88) rotate(${rotation * 0.08}deg)`, offset: 0.12 },
+      { opacity: 1, transform: `translate3d(${centerX}px, ${apexY}px, 0) scale(1.08) rotate(${rotation * 0.52}deg)`, offset: 0.5 },
+      { opacity: 1, transform: `translate3d(${endX}px, ${landingY}px, 0) scale(0.94) rotate(${rotation * 0.82}deg)`, offset: 0.76 },
+      { opacity: 1, transform: `translate3d(${endX + direction * 12}px, ${landingY - 28}px, 0) scale(0.98) rotate(${rotation * 0.9}deg)`, offset: 0.87 },
+      { opacity: 0, transform: `translate3d(${endX + direction * 24}px, ${landingY + 8}px, 0) scale(0.86) rotate(${rotation}deg)`, offset: 1 },
+    ], {
+      duration: 760,
+      easing: "cubic-bezier(0.22, 0.72, 0.18, 1)",
+      fill: "both",
+    });
+
+    shadowAnimation = handoffShadow.animate([
+      { opacity: 0, transform: `translate3d(${startX + 9}px, ${startY + 58}px, 0) scaleX(0.62)`, offset: 0 },
+      { opacity: 0.28, transform: `translate3d(${startX + 9}px, ${startY + 46}px, 0) scaleX(0.82)`, offset: 0.12 },
+      { opacity: 0.06, transform: `translate3d(${centerX + 9}px, ${landingY + 46}px, 0) scaleX(0.42)`, offset: 0.5 },
+      { opacity: 0.4, transform: `translate3d(${endX + 9}px, ${landingY + 43}px, 0) scaleX(1)`, offset: 0.76 },
+      { opacity: 0.12, transform: `translate3d(${endX + direction * 12 + 9}px, ${landingY + 43}px, 0) scaleX(0.58)`, offset: 0.87 },
+      { opacity: 0, transform: `translate3d(${endX + direction * 24 + 9}px, ${landingY + 43}px, 0) scaleX(0.8)`, offset: 1 },
+    ], {
+      duration: 760,
+      easing: "cubic-bezier(0.22, 0.72, 0.18, 1)",
+      fill: "both",
+    });
+
+    handoffAnimation.finished.then(() => {
+      if (serial !== transitionSerial) return;
+      root.classList.remove("is-handoff-active");
+      chapters.forEach((chapter) => chapter.classList.remove("is-departing", "is-receiving"));
+      target.classList.add("has-arrived");
+      arrivalTimer = window.setTimeout(() => target.classList.remove("has-arrived"), 560);
+    }).catch(() => {});
+  };
+
+  const activateChapter = (key, { animate = false } = {}) => {
+    const previousKey = state.journeyChapter;
+    if (animate && previousKey && previousKey !== key) playJourneyHandoff(previousKey, key);
     state.journeyChapter = key;
     navButtons.forEach((button) => button.classList.toggle("active", button.dataset.journeyJump === key));
     chapters.forEach((chapter) => chapter.classList.toggle("is-active", chapter.dataset.journeyChapter === key));
@@ -3823,10 +3918,15 @@ function wireFranchiseJourney() {
   navButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const key = button.dataset.journeyJump;
-      const chapter = chapters.find((candidate) => candidate.dataset.journeyChapter === key);
+      const chapter = chapterFor(key);
       if (!chapter) return;
-      activateChapter(key);
-      chapter.scrollIntoView({ behavior: "smooth", block: "start" });
+      programmedTarget = key;
+      window.clearTimeout(programmedTargetTimer);
+      programmedTargetTimer = window.setTimeout(() => {
+        programmedTarget = null;
+      }, 1200);
+      activateChapter(key, { animate: true });
+      chapter.scrollIntoView({ behavior: reducedMotion.matches ? "auto" : "smooth", block: "start" });
     });
   });
 
@@ -3835,16 +3935,40 @@ function wireFranchiseJourney() {
     const visible = entries
       .filter((entry) => entry.isIntersecting)
       .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-    if (visible?.target?.dataset?.journeyChapter) activateChapter(visible.target.dataset.journeyChapter);
+    const visibleKey = visible?.target?.dataset?.journeyChapter;
+    if (!visibleKey) return;
+    if (programmedTarget) {
+      if (visibleKey === programmedTarget) {
+        window.clearTimeout(programmedTargetTimer);
+        programmedTarget = null;
+      }
+      return;
+    }
+    activateChapter(visibleKey, { animate: true });
   }, { root: scroller, threshold: [0.45, 0.62, 0.8] });
   chapters.forEach((chapter) => state.journeyObserver.observe(chapter));
 
   const updateProgress = () => {
-    if (!progress) return;
     const distance = Math.max(1, scroller.scrollHeight - scroller.clientHeight);
-    progress.style.transform = `scaleX(${clampNumber(scroller.scrollTop / distance, 0, 1)})`;
+    const ratio = clampNumber(scroller.scrollTop / distance, 0, 1);
+    if (progress) progress.style.transform = `scaleX(${ratio})`;
+    if (railBall && railButtons.length > 1) {
+      const first = railButtons[0];
+      const last = railButtons[railButtons.length - 1];
+      const start = first.offsetTop + first.offsetHeight / 2;
+      const finish = last.offsetTop + last.offsetHeight / 2;
+      railBall.style.top = `${start + (finish - start) * ratio}px`;
+      railBall.style.transform = `translate(-50%, -50%) rotate(${ratio * 720}deg)`;
+    }
   };
-  scroller.addEventListener("scroll", updateProgress, { passive: true });
+  const queueProgressUpdate = () => {
+    if (progressFrame) return;
+    progressFrame = window.requestAnimationFrame(() => {
+      progressFrame = null;
+      updateProgress();
+    });
+  };
+  scroller.addEventListener("scroll", queueProgressUpdate, { passive: true });
   updateProgress();
 
   const logoStage = els.content.querySelector("[data-journey-logo-stage]");
