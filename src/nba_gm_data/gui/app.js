@@ -275,11 +275,12 @@ function wireEvents() {
 }
 
 async function init() {
-  setAppLoading(true);
-  state.currentSave = localStorage.getItem(LAST_SAVE_KEY) || "";
-  state.hydrating = Boolean(state.currentSave);
-  render();
+  let loadingStartedAt = null;
   try {
+    loadingStartedAt = await showAppLoading();
+    state.currentSave = localStorage.getItem(LAST_SAVE_KEY) || "";
+    state.hydrating = Boolean(state.currentSave);
+    render();
     const status = await apiGet("/api/status");
     els.startupRuntime.textContent = `${status.engine} | ${status.protocol_version}`;
     await loadTeams();
@@ -290,7 +291,7 @@ async function init() {
     render();
     showToast(error.message || String(error), true);
   } finally {
-    setAppLoading(false);
+    await hideAppLoading(loadingStartedAt);
   }
 }
 
@@ -743,11 +744,12 @@ async function loadTradeAssets() {
 
 async function advance(payload) {
   const showLoading = Boolean(payload?.next_event || [7, 31].includes(Number(payload?.days)));
-  if (showLoading) setAppLoading(true);
+  let loadingStartedAt = null;
   try {
+    if (showLoading) loadingStartedAt = await showAppLoading();
     return await advanceSave(payload);
   } finally {
-    if (showLoading) setAppLoading(false);
+    if (showLoading) await hideAppLoading(loadingStartedAt);
   }
 }
 
@@ -8410,6 +8412,21 @@ function setAppLoading(visible) {
   if (!dialog) return;
   dialog.hidden = !visible;
   dialog.setAttribute("aria-hidden", String(!visible));
+}
+
+async function showAppLoading() {
+  const startedAt = performance.now();
+  setAppLoading(true);
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  return startedAt;
+}
+
+async function hideAppLoading(startedAt) {
+  if (startedAt !== null) {
+    const remaining = 400 - (performance.now() - startedAt);
+    if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
+  }
+  setAppLoading(false);
 }
 
 function showToast(message, isError = false) {
