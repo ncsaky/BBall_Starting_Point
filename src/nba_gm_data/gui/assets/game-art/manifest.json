@@ -1,0 +1,170 @@
+[
+  {
+    "category": "shooting",
+    "subject": "curry",
+    "crop": [
+      416,
+      66,
+      608,
+      944
+    ],
+    "size": [
+      192,
+      878
+    ]
+  },
+  {
+    "category": "rebounding",
+    "subject": "rodman-chicago",
+    "crop": [
+      217,
+      155,
+      811,
+      866
+    ],
+    "size": [
+      594,
+      711
+    ]
+  },
+  {
+    "category": "trade-builder",
+    "subject": "builder",
+    "crop": [
+      52,
+      263,
+      959,
+      773
+    ],
+    "size": [
+      907,
+      510
+    ]
+  },
+  {
+    "category": "trade-finder",
+    "subject": "finder",
+    "crop": [
+      142,
+      220,
+      831,
+      760
+    ],
+    "size": [
+      689,
+      540
+    ]
+  },
+  {
+    "category": "defense",
+    "subject": "kawhi",
+    "crop": [
+      95,
+      65,
+      928,
+      960
+    ],
+    "size": [
+      833,
+      895
+    ]
+  },
+  {
+    "category": "mentality",
+    "subject": "kobe-portrait",
+    "crop": [
+      74,
+      64,
+      949,
+      960
+    ],
+    "size": [
+      875,
+      896
+    ]
+  },
+  {
+    "category": "coach",
+    "subject": "popovich-arms",
+    "crop": [
+      257,
+      66,
+      766,
+      960
+    ],
+    "size": [
+      509,
+      894
+    ]
+  },
+  {
+    "category": "prospects",
+    "subject": "draft-night",
+    "crop": [
+      300,
+      64,
+      723,
+      960
+    ],
+    "size": [
+      423,
+      896
+    ]
+  },
+  {
+    "category": "staff",
+    "subject": "clipboard",
+    "crop": [
+      218,
+      64,
+      805,
+      960
+    ],
+    "size": [
+      587,
+      896
+    ]
+  },
+  {
+    "category": "awards",
+    "subject": "trophy",
+    "crop": [
+      235,
+      64,
+      789,
+      960
+    ],
+    "size": [
+      554,
+      896
+    ]
+  },
+  {
+    "category": "payroll",
+    "subject": "cash",
+    "crop": [
+      64,
+      179,
+      960,
+      845
+    ],
+    "size": [
+      896,
+      666
+    ]
+  },
+  {
+    "category": "availability",
+    "subject": "availability",
+    "crop": [
+      64,
+      123,
+      960,
+      901
+    ],
+    "size": [
+      896,
+      778
+    ]
+  }
+]

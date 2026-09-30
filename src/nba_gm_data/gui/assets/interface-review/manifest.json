@@ -1,0 +1,322 @@
+[
+  {
+    "id": "dashboard",
+    "title": "This season",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "player",
+    "title": "Player card",
+    "overflow": false,
+    "modal": {
+      "width": 1238,
+      "client": 1238,
+      "background": "rgb(13, 14, 16)"
+    },
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "development",
+    "title": "Team development",
+    "overflow": false,
+    "modal": {
+      "width": 1648,
+      "client": 1648,
+      "background": "rgb(13, 14, 16)"
+    },
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "player-finder",
+    "title": "Player finder",
+    "overflow": false,
+    "modal": {
+      "width": 1648,
+      "client": 1648,
+      "background": "rgb(13, 14, 16)"
+    },
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "calendar",
+    "title": "Calendar",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "standings",
+    "title": "Standings",
+    "overflow": false,
+    "modal": {
+      "width": 1118,
+      "client": 1118,
+      "background": "rgb(13, 14, 16)"
+    },
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "league",
+    "title": "League leaders",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "trade-builder",
+    "title": "Trade builder",
+    "overflow": false,
+    "modal": {
+      "width": 1648,
+      "client": 1648,
+      "background": "rgb(13, 14, 16)"
+    },
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "trade-finder",
+    "title": "Trade finder",
+    "overflow": false,
+    "modal": {
+      "width": 1648,
+      "client": 1648,
+      "background": "rgb(13, 14, 16)"
+    },
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "trade-offers",
+    "title": "Trade offers",
+    "overflow": false,
+    "modal": {
+      "width": 1238,
+      "client": 1238,
+      "background": "rgb(13, 14, 16)"
+    },
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "staff",
+    "title": "Coaching staff",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "staff-negotiation",
+    "title": "Staff negotiation",
+    "overflow": false,
+    "modal": {
+      "width": 698,
+      "client": 698,
+      "background": "rgb(13, 14, 16)"
+    },
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "free-agency",
+    "title": "Free agency",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "negotiation",
+    "title": "Player negotiation",
+    "overflow": false,
+    "modal": {
+      "width": 1648,
+      "client": 1648,
+      "background": "rgb(13, 14, 16)"
+    },
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "comparison",
+    "title": "Player comparison",
+    "overflow": false,
+    "modal": {
+      "width": 1648,
+      "client": 1648,
+      "background": "rgb(13, 14, 16)"
+    },
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "re-signing",
+    "title": "Re-signing",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "extension",
+    "title": "Contract extension",
+    "overflow": false,
+    "modal": {
+      "width": 1648,
+      "client": 1648,
+      "background": "rgb(13, 14, 16)"
+    },
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "playoffs",
+    "title": "Playoffs",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "box-score",
+    "title": "Box score",
+    "overflow": false,
+    "modal": {
+      "width": 1648,
+      "client": 1648,
+      "background": "rgb(13, 14, 16)"
+    },
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "prospects",
+    "title": "Prospects",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "lottery-odds",
+    "title": "Lottery odds",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "lottery-reveal",
+    "title": "Lottery reveal",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "draft",
+    "title": "Draft night",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "draft-summary",
+    "title": "Draft summary",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "fantasy-draft",
+    "title": "Fantasy draft",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "cutdown",
+    "title": "Roster cutdown",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "staff-retention",
+    "title": "Staff retention",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "league-wire",
+    "title": "League wire",
+    "overflow": false,
+    "modal": {
+      "width": 1118,
+      "client": 1118,
+      "background": "rgb(13, 14, 16)"
+    },
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "social",
+    "title": "Social",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "settings",
+    "title": "Settings",
+    "overflow": false,
+    "modal": {
+      "width": 418,
+      "client": 418,
+      "background": "rgb(13, 14, 16)"
+    },
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "commands",
+    "title": "Commands",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "shortcuts",
+    "title": "Keyboard shortcuts",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  },
+  {
+    "id": "startup",
+    "title": "Save selection",
+    "overflow": false,
+    "modal": null,
+    "invalid": false,
+    "errors": []
+  }
+]

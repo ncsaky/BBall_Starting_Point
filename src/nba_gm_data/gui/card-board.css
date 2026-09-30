@@ -1,0 +1,155 @@
+/* The window shell is intentionally separate from card data styling. */
+body .season-command-dashboard.has-card-board { position:relative; }
+body .has-card-board .card-board-scroll {
+  display:block;
+  position:relative;
+  overflow:auto;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  scrollbar-color:var(--season-line) var(--season-bg);
+}
+.card-board-canvas { position:relative; min-width:100%; min-height:100%; }
+.card-board-window {
+  position:absolute;
+  margin:0;
+  padding:0;
+  isolation:isolate;
+  background:var(--season-panel);
+  border-radius:3px 3px 0 0;
+  box-shadow:0 3px 7px #1c304425;
+}
+.card-board-window[hidden], .card-board-gallery[hidden] { display:none !important; }
+.card-board-window.is-active { box-shadow:0 4px 12px #1c304440; }
+.card-board-window.is-dragging { box-shadow:0 8px 18px #1c304455; }
+body .has-card-board .card-board-titlebar {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:2px;
+  height:24px;
+  min-height:24px;
+  padding:2px 3px;
+  background:#dce2e8 !important;
+  border:1px solid var(--season-line);
+  border-bottom:0;
+  border-radius:3px 3px 0 0;
+  box-shadow:inset 1px 1px #fff;
+}
+body .has-card-board .is-active > .card-board-titlebar { background:#bfd0df !important; border-color:#6b879e; }
+body .has-card-board .card-board-move {
+  display:flex;
+  align-items:center;
+  gap:5px;
+  flex:1;
+  min-width:0;
+  min-height:0;
+  height:19px;
+  padding:0 2px;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:var(--season-text);
+  text-align:left;
+  cursor:grab;
+  user-select:none;
+  touch-action:none;
+}
+body .has-card-board .card-board-move:hover { background:transparent; }
+body .has-card-board .card-board-move span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:600 10px Tahoma,"Trebuchet MS",Arial,sans-serif; }
+body .has-card-board .card-board-move[aria-disabled="true"] { cursor:default; }
+.card-board-window-mark { flex:0 0 9px; height:9px; border:1px solid #6a7d8e; background:var(--season-panel); box-shadow:inset 0 2px #89a6c0; }
+.card-board-window-controls { display:flex; gap:2px; }
+body .has-card-board .card-board-control {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 19px;
+  width:19px;
+  height:19px;
+  min-height:19px;
+  padding:2px;
+  border:1px solid #8d99a5;
+  border-radius:2px;
+  background:#edf0f3;
+  box-shadow:inset 1px 1px #fff,inset -1px -1px #c7cdd3;
+  color:var(--season-text);
+}
+body .has-card-board .card-board-control:hover { background:#dce8f2; border-color:#6c879d; }
+body .has-card-board .card-board-control:active { box-shadow:inset 1px 1px #89949f; }
+body .has-card-board .card-board-close:hover { background:#f2d5d8; border-color:#bd4b58; }
+body .has-card-board .card-board-control[aria-pressed="true"] { background:#cbddeb; box-shadow:inset 1px 1px #89949f; }
+.card-board-control img, .card-board-gallery-toggle img { display:block; width:13px; height:13px; object-fit:contain; }
+body .has-card-board .card-board-body { display:block; height:calc(100% - 24px); padding:0; gap:0; min-height:0; }
+body .has-card-board .card-board-body > .season-command-panel { margin:0; border-radius:0; }
+body.unified-terminal-ui .has-card-board .card-board-body .season-panel-header { background:var(--season-raised) !important; }
+body .has-card-board .card-board-body.assets-desktop { padding:0; display:block; background:var(--season-panel); overflow:hidden; }
+body .has-card-board .card-board-body.assets-desktop > .season-command-panel { display:flex; flex-direction:column; }
+body .has-card-board .is-minimized > .card-board-body { display:none !important; }
+body .has-card-board .is-minimized > .card-board-titlebar { height:auto; min-height:24px; flex-wrap:wrap; border-bottom:1px solid var(--season-line); }
+body .has-card-board .is-minimized > .card-board-titlebar,
+body .has-card-board .is-minimized > .card-board-titlebar .card-board-actions { cursor:grab; touch-action:none; user-select:none; }
+body .has-card-board .is-minimized > .card-board-titlebar .card-board-actions > button { cursor:pointer; touch-action:auto; }
+.card-board-actions[hidden] { display:none !important; }
+.card-board-actions { display:flex; justify-content:flex-end; align-items:center; gap:4px; flex-basis:100%; padding:3px 0 2px; flex-wrap:wrap; }
+body .has-card-board .card-board-actions > button { width:auto !important; height:22px !important; min-height:22px !important; margin:0; padding:0 6px; background:var(--season-panel) !important; border:1px solid var(--season-line); color:var(--season-text); font-size:9px; display:inline-flex; align-items:center; gap:4px; }
+body .has-card-board .season-award-head { gap:2px; overflow:hidden; }
+body .has-card-board .season-award-head h3 { flex:0 0 auto; }
+body .has-card-board .season-award-actions { gap:1px; }
+body .has-card-board .season-award-actions > button { height:14px !important; min-height:14px !important; padding:0 2px !important; font-size:6px !important; }
+body .has-card-board .season-award-actions .shortcut-hint { display:none !important; }
+.card-board-actions .trade-launch-art { display:none; }
+body .has-card-board .card-board-actions strong { font-size:10px; }
+body .has-card-board .card-board-assets-seed { position:absolute; left:0; top:0; visibility:hidden; pointer-events:none; width:100%; height:100%; padding:0; }
+body .has-card-board .card-board-assets-seed .assets-grid { height:calc(100% - 90px); }
+body .season-command-dashboard > .card-board-assets-seed { position:absolute; left:0; top:0; visibility:hidden; pointer-events:none; width:calc(100% - 14px); height:calc(100% - 90px); padding:0; }
+body .card-board-assets-seed .assets-grid { height:100%; }
+.card-board-tools { display:flex; align-items:center; gap:4px; }
+body .has-card-board .card-board-gallery-toggle {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  min-height:25px;
+  height:25px;
+  padding:0 8px;
+  background:#f4f5f6;
+  border:1px solid var(--season-line);
+  border-radius:2px;
+  box-shadow:inset 1px 1px #fff,inset -1px -1px #c7cdd3;
+  font:11px Tahoma,"Trebuchet MS",Arial,sans-serif !important;
+}
+body .has-card-board .card-board-gallery-toggle:is(:hover,.is-open) { background:#dce8f2; border-color:#6c879d; }
+body .has-card-board .card-board-gallery {
+  position:absolute;
+  z-index:1100;
+  top:58px;
+  bottom:40px;
+  right:10px;
+  width:min(370px,calc(100% - 20px));
+  display:flex;
+  flex-direction:column;
+  background:var(--season-panel);
+  border:1px solid var(--season-line);
+  border-radius:3px;
+  box-shadow:0 8px 24px #1c304445,inset 1px 1px #fff;
+}
+.card-board-gallery-head { display:flex; align-items:center; justify-content:space-between; height:30px; flex:0 0 30px; padding:3px 5px 3px 10px; border-bottom:1px solid var(--season-line); background:var(--season-raised); }
+body .has-card-board .card-board-gallery-head h2 { margin:0; font:600 12px Tahoma,"Trebuchet MS",Arial,sans-serif !important; }
+.card-board-gallery-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:136px; gap:8px; align-content:start; overflow:auto; min-height:0; padding:10px; overscroll-behavior:contain; }
+.card-board-gallery-entry { min-width:0; background:var(--season-panel); border:1px solid var(--season-soft-line); border-radius:2px; overflow:hidden; }
+.card-board-gallery-entry.is-on-board { border-color:#9ab1c2; }
+body .has-card-board .card-board-thumbnail { position:relative; display:block; width:100%; height:100px; border:0; border-bottom:1px solid var(--season-soft-line); border-radius:0; padding:5px; background:#e7ebef; cursor:grab; touch-action:none; }
+body .has-card-board .card-board-thumbnail:hover { background:#dce8f2; }
+body .has-card-board .card-board-thumbnail.is-drag-source { opacity:.5; }
+body .has-card-board .card-board-thumb-frame { display:block; position:relative; width:100%; height:100%; padding:0; overflow:hidden; pointer-events:none; }
+.card-board-preview { position:absolute; transform-origin:top left; pointer-events:none; user-select:none; }
+.card-board-gallery-entry footer { display:flex; align-items:center; justify-content:space-between; gap:3px; min-height:33px; padding:4px 5px; }
+.card-board-gallery-entry footer > span { min-width:0; font:10px Tahoma,Arial,sans-serif; }
+.card-board-status { position:absolute; width:1px; height:1px; padding:0; margin:-1px; clip-path:inset(50%); overflow:hidden; white-space:nowrap; }
+@media (max-width:700px) {
+  body .season-command-dashboard > .season-command-grid:not(.card-board-scroll) { min-width:1266px; min-height:600px; }
+  body .season-command-dashboard > .card-board-assets-seed { min-width:1266px; min-height:600px; }
+  body .has-card-board .season-command-header { grid-template-columns:minmax(100px,1fr) auto; gap:6px; padding:0 4px; }
+  body .has-card-board .season-command-date { display:none; }
+  body .has-card-board .season-command-actions { justify-content:flex-end; gap:3px; }
+  body .has-card-board .card-board-gallery { top:50px; bottom:35px; }
+}

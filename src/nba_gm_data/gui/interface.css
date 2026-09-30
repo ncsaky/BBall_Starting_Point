@@ -1,0 +1,588 @@
+/* Authoritative finish shared by every room. Geometry remains in styles.css. */
+:root, body.unified-terminal-ui {
+  --ui-bg: #0d0e10;
+  --ui-panel: #131517;
+  --ui-header: #191c1f;
+  --ui-hover: #23272b;
+  --ui-line: #35393e;
+  --ui-soft: #24282c;
+  --ui-text: #e3e5e7;
+  --ui-muted: #9ba1a7;
+  --ui-focus: #b8d5ee;
+  --bg: var(--ui-bg);
+  --panel: var(--ui-panel);
+  --panel-2: var(--ui-header);
+  --panel-3: var(--ui-hover);
+  --text: var(--ui-text);
+  --muted: var(--ui-muted);
+  --line: var(--ui-line);
+  --line-soft: var(--ui-soft);
+  --terminal-bg: var(--ui-bg);
+  --terminal-panel: var(--ui-panel);
+  --terminal-raised: var(--ui-header);
+  --terminal-line: var(--ui-line);
+  --terminal-line-soft: var(--ui-soft);
+  --terminal-ink: var(--ui-text);
+  --terminal-muted: var(--ui-muted);
+  --terminal-fill: #a5adb4;
+  --terminal-font: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --display: var(--terminal-font);
+  --body: var(--terminal-font);
+  --terminal-control-height: 28px;
+  font-family: var(--terminal-font);
+}
+body.unified-terminal-ui :is(h1,h2,h3,h4,h5,h6,strong,b,button,th) { font-family:var(--terminal-font) !important; font-weight:400 !important; letter-spacing:0; }
+body.unified-terminal-ui :is(button,select,input,textarea) { font-family: inherit; text-transform: none; letter-spacing: 0; }
+body.unified-terminal-ui button { transition: background-color 100ms ease, color 100ms ease, border-color 100ms ease; }
+body.unified-terminal-ui button:active { transform: none; }
+body.unified-terminal-ui button:disabled { cursor: default; opacity: .38; }
+body.unified-terminal-ui :is(button,a,input,select,textarea,[tabindex]):focus-visible {
+  outline: 2px solid var(--ui-focus) !important;
+  outline-offset: -2px;
+  box-shadow: none;
+}
+body.unified-terminal-ui :is(input:not([type="range"]):not([type="checkbox"]), select, textarea) {
+  background: var(--ui-bg); border: 1px solid var(--ui-line); border-radius: 2px;
+  color: var(--ui-text); font-size: 12px; min-height: 28px;
+}
+body.unified-terminal-ui input[type="checkbox"] { width: 13px; height: 13px; min-height: 0; margin: 0; accent-color: #b9c3cc; }
+body.unified-terminal-ui button.ui-command,
+body.unified-terminal-ui :is(.trade-evaluate-button,.trade-clear-button,.settings-return-button,.free-agency-market-tools button,.market-intelligence-actions button) {
+  align-items: center; background: var(--ui-header); border: 1px solid transparent;
+  border-radius: 2px; color: var(--ui-text); display: inline-flex; gap: 6px;
+  justify-content: center; line-height: 1; min-height: 25px; padding: 0 9px;
+  text-transform: none; white-space: nowrap;
+}
+body.unified-terminal-ui button.ui-command:hover:not(:disabled),
+body.unified-terminal-ui :is(.trade-evaluate-button,.trade-clear-button,.settings-return-button):hover:not(:disabled) {
+  background: var(--ui-hover); border-color: #50565c; color: #fff;
+}
+body.unified-terminal-ui :is(.tabs,.free-agency-market-scopes) {
+  align-items: stretch; background: transparent; border: 0; gap: 3px;
+}
+body.unified-terminal-ui :is(.tabs,.free-agency-market-scopes) button {
+  background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0;
+  color: var(--ui-muted); min-height: 28px; padding: 0 10px;
+}
+body.unified-terminal-ui :is(.tabs,.free-agency-market-scopes) button:is(.active,.is-active,[aria-selected="true"]) {
+  background: transparent; border-bottom-color: var(--ui-text); color: var(--ui-text);
+}
+body.unified-terminal-ui :is(.sort-head,.local-sort,.draft-sort-button) {
+  background: transparent !important; border: 0 !important; border-radius: 0; color: var(--ui-muted);
+  font: inherit; min-height: 0; padding: 4px 0; text-align: inherit; width: 100%;
+}
+th[aria-sort="ascending"] .local-sort::after { content: " ↑"; color: var(--ui-text); }
+th[aria-sort="descending"] .local-sort::after { content: " ↓"; color: var(--ui-text); }
+body.unified-terminal-ui :is(tbody tr,.season-minute-row):focus-within { background: #20262b; }
+body.unified-terminal-ui .section-head { align-items: center; gap: 10px; min-height: 36px; padding: 5px 10px; }
+body.unified-terminal-ui .section-head h3 { font-size: 13px; }
+body.unified-terminal-ui .eyebrow { letter-spacing: 0; text-transform: none; }
+body.unified-terminal-ui .pill { border: 0; font-size: 11px; letter-spacing: 0; text-transform: none; }
+body.unified-terminal-ui .toolbar { align-items: center; gap: 5px; }
+body.unified-terminal-ui .toolbar button { min-height: 27px; }
+
+/* The established dashboard keeps its authored proportions and table gaps. */
+body .season-command-dashboard {
+  --season-bg: var(--ui-bg); --season-panel: var(--ui-panel); --season-raised: var(--ui-header);
+  --season-line: var(--ui-line); --season-soft-line: var(--ui-soft);
+  --season-text: var(--ui-text); --season-muted: var(--ui-muted);
+}
+body .season-command-header { background: var(--ui-bg); border-color: transparent transparent var(--ui-line); }
+body .season-panel-header { background: var(--ui-header); border-bottom: 1px solid var(--ui-line); }
+body .season-panel-header h2 { color: var(--ui-text); }
+body .season-command-actions .ui-command { background: transparent; min-height: 28px; }
+body .season-panel-header .ui-command, body .season-sim-actions .ui-command {
+  background: transparent; min-height: 20px; padding: 0 6px;
+}
+body .season-standing-row.active { background: #252c31 !important; box-shadow: none; }
+body .season-week-node { background: var(--ui-panel); }
+body .season-week-day.today .season-week-node { box-shadow: none !important; }
+body .season-league-wire { background: var(--ui-panel); }
+body .season-league-wire > button { background: var(--ui-header); border-color: transparent; }
+body .season-minute-slider > i { background: #343a40; }
+body .season-minute-slider > i b { background: #a6b0b8; }
+
+/* One dialog frame, consistent at every depth of an interaction. */
+body.unified-terminal-ui .modal-root { padding: 16px; background: rgba(4,5,6,.8); backdrop-filter: none; }
+body.unified-terminal-ui :is(.modal-root,.modal-shell) { animation:none; opacity:1; }
+body.unified-terminal-ui .modal-shell {
+  border: 1px solid #4c535a; border-radius: 3px;
+  box-shadow: 0 14px 60px #0008; padding: 0; overflow: hidden;
+  display: flex; flex-direction: column; max-height: calc(100dvh - 32px);
+}
+body.unified-terminal-ui .modal-shell.modal-fantasy-player {
+  animation:playerCardEnter 260ms cubic-bezier(.18,.72,.25,1) both;
+  will-change:opacity,transform;
+}
+@keyframes playerCardEnter {
+  from { opacity:.35; transform:translateY(22px) scale(.975); }
+  to { opacity:1; transform:translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion:reduce) {
+  body.unified-terminal-ui .modal-shell.modal-fantasy-player { animation-duration:1ms; }
+}
+body.unified-terminal-ui .modal-head {
+  display: flex; align-items: center; gap: 16px; flex: 0 0 auto;
+  min-height: 44px; padding: 8px 12px; border-bottom: 1px solid var(--ui-line);
+  background: var(--ui-header);
+}
+body.unified-terminal-ui .modal-head > div:first-child { display:flex; align-items:baseline; flex-wrap:wrap; gap:12px; flex:1; min-width:0; }
+body.unified-terminal-ui .modal-head h3 { font-size: 15px; order: -1; line-height: 1.25; }
+body.unified-terminal-ui .modal-head .eyebrow { color: var(--ui-muted); font-size: 11px; margin: 0; }
+body.unified-terminal-ui .modal-head [data-close-modal] {
+  flex: 0 0 auto; margin: 0; position: static; width: 28px; height: 28px; min-height: 28px;
+  font-size: 18px; padding: 0; background: transparent; border-color: transparent;
+}
+body.unified-terminal-ui .modal-body { flex:1; min-height:0; padding:8px; overflow:auto; }
+body.unified-terminal-ui .modal-shell:is(.modal-wide,.modal-trade-room,.modal-fantasy-player,.modal-box-score,.modal-free-agent-negotiation,.modal-contract-extension) {
+  width: calc(100vw - 32px); max-width: 1840px; height: calc(100dvh - 32px);
+}
+body.unified-terminal-ui .modal-shell.modal-settings { width:420px; height:auto; }
+body.unified-terminal-ui .settings-save-section { display:grid; gap:6px; padding:4px; }
+body.unified-terminal-ui .settings-save-section button { display:flex; justify-content:space-between; align-items:center; text-align:left; min-height:36px; padding:0 12px; font-size:12px; }
+body.unified-terminal-ui .settings-modal-section { border:0; margin:0; }
+
+/* Full player and roster views share the dashboard's data-first rhythm. */
+body.unified-terminal-ui .approved-player-card { grid-template-columns:minmax(260px, .95fr) minmax(0, 1.75fr) minmax(240px, .92fr); gap:6px; }
+body.unified-terminal-ui .approved-player-identity { padding:10px 12px; }
+body.unified-terminal-ui .approved-player-identity h3 { font-size:20px; margin:5px 0; }
+body.unified-terminal-ui .approved-player-identity > p { font-size:11px; margin:0 0 6px; }
+body.unified-terminal-ui .approved-player-evidence { margin-top:5px; }
+body.unified-terminal-ui .approved-player-identity-ratings { margin-top:8px; grid-template-rows:26px minmax(0,1fr); }
+body.unified-terminal-ui .approved-player-middle { grid-template-rows:minmax(0, 1.2fr) minmax(0, 1fr) 64px minmax(0,.5fr); gap:6px; }
+body.unified-terminal-ui .approved-player-right { gap:6px; }
+body.unified-terminal-ui .approved-card-panel > header,
+body.unified-terminal-ui .approved-player-identity-ratings > header {
+  font:11px var(--terminal-font); color:var(--ui-text); min-height:27px; padding:6px 9px; background:var(--ui-header); border-bottom:1px solid var(--ui-line);
+}
+body.unified-terminal-ui .approved-rating-rail { padding:3px 8px; }
+body.unified-terminal-ui .approved-rating-rail > div { grid-template-columns:minmax(126px,1fr) minmax(30px,1fr) 30px; }
+body.unified-terminal-ui .approved-rating-rail :is(span,strong) { font-size:10px; white-space:nowrap; }
+body.unified-terminal-ui .approved-player-evidence :is(span,strong) { font-size:11px; }
+body.unified-terminal-ui .approved-player-shape .fantasy-player-radar h4 { font-size:11px; }
+body.unified-terminal-ui .approved-roster-modal { display:grid; height:100%; grid-template-rows:minmax(160px, .37fr) minmax(0, 1fr); gap:7px; }
+body.unified-terminal-ui .approved-roster-overview { min-height:0; margin:0; gap:6px; grid-template-columns:repeat(2,minmax(0,1fr)) minmax(0,1.2fr) minmax(0,1fr); }
+body.unified-terminal-ui .free-agency-roster-scroll { min-width:0; }
+body.unified-terminal-ui .free-agency-roster-table { width:100%; table-layout:fixed; height:100%; }
+body.unified-terminal-ui .free-agency-roster-table :is(td,th) { height:auto; font-size:9px; padding:3px 4px; border-bottom:0; text-align:right; }
+body.unified-terminal-ui .free-agency-roster-table :is(td,th):first-child { width:146px; text-align:left; }
+body.unified-terminal-ui .free-agency-roster-table td button { font-size:9px; text-transform:none; background:transparent; border:0; padding:0; min-height:0; }
+body.unified-terminal-ui .free-agency-roster-table tr:nth-child(even) { background:#ffffff03; }
+body.unified-terminal-ui .free-agency-roster-table .injured td { color:var(--negative); }
+
+/* Rooms use the same header, line weight, surface and control treatment. */
+body.unified-terminal-ui .unified-phase-dashboard { padding:7px; gap:6px; }
+body.unified-terminal-ui .phase-workspace-head { min-height:48px; padding:7px 10px; margin:0; background:var(--ui-header); }
+body.unified-terminal-ui .phase-workspace-head h3 { font-size:17px; }
+body.unified-terminal-ui .phase-workspace-head .eyebrow { font-size:11px; }
+body.unified-terminal-ui .unified-phase-day { font-size:13px; text-transform:none; }
+body.unified-terminal-ui .free-agency-market-head { min-height:40px; }
+body.unified-terminal-ui .free-agency-market-scopes button { font-size:11px; }
+body.unified-terminal-ui .market-intelligence-actions { display:flex; flex-wrap:wrap; gap:5px; }
+body.unified-terminal-ui .market-intelligence-actions button { flex:1 1 auto; white-space:nowrap; padding:6px 8px; min-height:27px; }
+body.unified-terminal-ui .trade-room-kicker, body.unified-terminal-ui .trade-finder-mark { display:none; }
+body.unified-terminal-ui .trade-room-toolbar { min-height:42px; padding:5px 8px; margin-bottom:6px; }
+body.unified-terminal-ui .trade-room-mode { gap:0; }
+body.unified-terminal-ui .trade-partner-field { display:flex; align-items:center; gap:10px; }
+body.unified-terminal-ui .trade-partner-field span { font-size:11px; }
+body.unified-terminal-ui .trade-finder-layout { grid-template-columns:minmax(0,1fr) minmax(220px,.65fr) minmax(0,1.2fr); gap:6px; }
+body.unified-terminal-ui .trade-asset-card { min-height:0; padding:7px 9px; border:0; border-bottom:1px solid var(--ui-soft); border-radius:0; }
+body.unified-terminal-ui .trade-asset-card.selected { background:#263038; box-shadow:none; }
+body.unified-terminal-ui .trade-asset-main { gap:7px; }
+body.unified-terminal-ui .trade-asset-mark { width:23px; height:23px; }
+body.unified-terminal-ui .trade-asset-copy strong { font-size:12px; }
+body.unified-terminal-ui .trade-asset-copy small, body.unified-terminal-ui .trade-asset-detail { font-size:10px; line-height:1.4; }
+body.unified-terminal-ui .trade-asset-value strong { font-size:15px; }
+body.unified-terminal-ui .trade-asset-meter { height:3px; margin-top:5px; }
+body.unified-terminal-ui .trade-desk-head h3, body.unified-terminal-ui .trade-results-head h3 { font-size:15px; }
+body.unified-terminal-ui .approved-trade-desk > * { flex-shrink:0; }
+body.unified-terminal-ui .approved-trade-cap { flex:1 0 250px; display:flex; flex-direction:column; }
+body.unified-terminal-ui .approved-trade-cap-teams { flex:1; min-height:0; }
+body.unified-terminal-ui .approved-trade-cap-team { display:grid; grid-template-rows:18px minmax(65px,1fr) minmax(116px,.8fr); gap:5px; }
+body.unified-terminal-ui .approved-trade-cap-bars { height:100%; min-height:0; margin:0; }
+body.unified-terminal-ui .approved-trade-cap-bars > div { min-height:0; grid-template-rows:15px minmax(0,1fr) 15px; }
+body.unified-terminal-ui .approved-trade-cap-bars :is(span,small), body.unified-terminal-ui .approved-trade-cap-team > strong { font-size:10px; }
+body.unified-terminal-ui .approved-trade-cap-team table { table-layout:fixed; margin:0; }
+body.unified-terminal-ui .approved-trade-cap-team :is(td,th) { font-size:9px; padding:2px 3px; }
+body.unified-terminal-ui .approved-trade-cap-team td small { display:block; font-size:9px; }
+body.unified-terminal-ui .approved-trade-values footer span { font-size:9px; }
+body.unified-terminal-ui :is(.approved-trade-values,.approved-trade-cap) > header { font-size:11px; text-transform:none; letter-spacing:0; padding:6px 9px; min-height:28px; background:var(--ui-header); }
+body.unified-terminal-ui .trade-partner-field span { text-transform:none; letter-spacing:0; }
+body.unified-terminal-ui .playoff-command-header { padding:8px 10px; min-height:48px; }
+body.unified-terminal-ui .playoff-command-title h3 { font-size:17px; }
+body.unified-terminal-ui .playoff-command-title p { font-size:11px; }
+body.unified-terminal-ui .playoff-command-center .series-card { border-radius:2px; box-shadow:none; }
+body.unified-terminal-ui .phase-leader-list li { min-height:0; }
+body.unified-terminal-ui .phase-leader-list li :is(strong,small,em) { font-size:11px; }
+body.unified-terminal-ui .draft-clock-strip { padding:7px 10px; }
+body.unified-terminal-ui .draft-prospect-table :is(th,td) { font-size:12px; padding:6px 9px; }
+body.unified-terminal-ui .draft-prospect-name { text-transform:none; font-size:12px; }
+body.unified-terminal-ui .draft-prospect-name { border:0; background:transparent; padding:0; min-height:0; }
+body.unified-terminal-ui .draft-prospect-table :is(th,td) { padding:5px 9px; }
+body.unified-terminal-ui .draft-prospect-table .draft-status { border:0; background:transparent; }
+body.unified-terminal-ui .draft-ledger-row { min-height:40px; }
+body.unified-terminal-ui .startup-brand h1 { font:22px var(--terminal-font); }
+body.unified-terminal-ui .startup-card { max-width:1140px; background:var(--ui-panel); border:1px solid var(--ui-line); border-radius:3px; }
+body.unified-terminal-ui .startup-brand .mark { font-weight:400; border-color:var(--ui-line); color:var(--ui-text); }
+body.unified-terminal-ui .startup-grid > section { background:transparent; border:0; border-left:1px solid var(--ui-line); border-radius:0; }
+body.unified-terminal-ui .startup-grid > section:first-child { border-left:0; }
+body.unified-terminal-ui .startup-grid :is(button,input,select) { font-size:12px; }
+body.unified-terminal-ui .approved-card-panel > header { text-transform:none; letter-spacing:0; }
+body.unified-terminal-ui .fantasy-player-radar :is(h4,text) { font-family:var(--terminal-font); text-transform:none; font-weight:400; }
+body.unified-terminal-ui #roomNavigation { display:flex; align-items:center; gap:14px; height:40px; padding:5px 9px; border-bottom:1px solid var(--ui-line); }
+#roomNavigation > span { flex:1; color:var(--ui-text); font-size:12px; }
+#roomNavigation button { background:transparent; border:0; min-height:28px; padding:0 9px; }
+body.unified-terminal-ui main:has(> #roomNavigation) { display:flex; flex-direction:column; }
+body.unified-terminal-ui #roomNavigation + #content { flex:1; min-height:0; height:calc(100dvh - 40px); overflow:auto; padding:7px; }
+body.unified-terminal-ui .prospect-preview { height:100%; display:flex; flex-direction:column; padding:0; }
+body.unified-terminal-ui .prospect-preview > .draft-prospect-scroll { flex:1; min-height:0; }
+body.unified-terminal-ui .staff-workspace { display:grid; grid-template-rows:auto minmax(0,1fr); gap:6px; height:100%; }
+body.unified-terminal-ui .staff-workspace > section { display:flex; flex-direction:column; min-height:0; padding:0; }
+body.unified-terminal-ui .staff-workspace .section-head { flex:none; background:var(--ui-header); }
+body.unified-terminal-ui .staff-workspace .table-wrap { min-height:0; overflow:auto; }
+body.unified-terminal-ui .staff-workspace table { width:100%; table-layout:fixed; }
+body.unified-terminal-ui .staff-workspace :is(th,td) { font-size:11px; padding:4px 10px; height:29px; white-space:nowrap; }
+body.unified-terminal-ui .staff-workspace td button { min-height:23px; border:0; background:var(--ui-header); padding:0 9px; }
+body.unified-terminal-ui .staff-workspace [data-fire-slot]:hover { color:var(--negative); }
+body.unified-terminal-ui .staff-grade-cell { display:flex; align-items:center; gap:10px; }
+body.unified-terminal-ui .staff-grade-cell i { width:65px; height:5px; background:var(--ui-line); }
+body.unified-terminal-ui .staff-grade-cell b { display:block; height:100%; background:var(--bar-color); width:var(--fill); }
+
+/* Keyboard navigation is visible only while being used. */
+body.unified-terminal-ui .fantasy-player-radar h5 { font:11px var(--terminal-font); text-transform:none; color:var(--ui-text); }
+body.unified-terminal-ui :is(.approved-player-evidence,.approved-negotiation-evidence) > div { grid-template-columns:minmax(100px,1fr) minmax(24px,.8fr) max-content; gap:7px; }
+body.unified-terminal-ui :is(.approved-player-evidence,.approved-negotiation-evidence) :is(span,strong) { font-size:10px; white-space:nowrap; }
+body.unified-terminal-ui :is(.approved-season-line,.approved-negotiation-season) small { font-size:10px; }
+body.unified-terminal-ui :is(.approved-season-line,.approved-negotiation-season) strong { font-size:12px; }
+body.unified-terminal-ui :is(.approved-salary-ledger,.approved-recent-games) :is(span,strong,em) { font-size:11px; white-space:nowrap; }
+body.unified-terminal-ui .approved-recent-games > div { grid-template-columns:40px repeat(3,minmax(39px,1fr)) 49px; gap:5px; padding:4px 7px; }
+body.unified-terminal-ui .approved-recent-games :is(strong,span,em) { font-size:10px; }
+body.unified-terminal-ui .approved-cap-year > :is(span,strong) { font-size:11px; }
+body.unified-terminal-ui .approved-cap-column .cap-other-payroll { background:#758089; }
+body.unified-terminal-ui .approved-cap-column :is(.cap-tax,.cap-hard) { z-index:2; }
+body.unified-terminal-ui .approved-roster-morale { align-content:stretch; grid-template-rows:27px repeat(4,minmax(0,1fr)); gap:0; padding:0; }
+body.unified-terminal-ui .approved-roster-morale > div { padding:0 9px; grid-template-columns:minmax(80px,1fr) minmax(35px,1fr) 30px; min-height:0; }
+body.unified-terminal-ui .approved-roster-morale :is(span,strong) { font-size:10px; }
+body.unified-terminal-ui .approved-roster-overview > .approved-card-panel:not(.approved-roster-morale) { display:grid; grid-template-rows:27px minmax(0,1fr); }
+body.unified-terminal-ui .approved-roster-overview .fantasy-player-radar { display:grid; grid-template-rows:minmax(0,1fr); min-height:0; padding:0; height:100%; }
+body.unified-terminal-ui .approved-roster-overview .fantasy-player-radar h5 { display:none; }
+body.unified-terminal-ui .approved-roster-overview .fantasy-player-radar svg { min-height:0; height:100%; max-height:100%; }
+body.unified-terminal-ui .approved-roster-cap .cap-intelligence { display:grid; grid-template-rows:34px minmax(0,1fr); height:100%; min-height:0; }
+body.unified-terminal-ui .approved-roster-cap .market-cap-chart { height:100%; min-height:0; margin:0; }
+body.unified-terminal-ui .approved-roster-morale i b { background:var(--bar-color); width:var(--fill); }
+body.unified-terminal-ui .approved-game-score-chart { height:calc(100% - 28px); min-height:0; }
+body.unified-terminal-ui .approved-game-score-chart :is(svg,.line-chart) { height:100%; min-height:0; max-height:100%; }
+body.unified-terminal-ui .player-game-score-chart { display:block; width:100%; background:#0d1317; }
+body.unified-terminal-ui .player-game-score-chart .grid { stroke:#26343b; stroke-opacity:.74; stroke-width:.65; vector-effect:non-scaling-stroke; }
+body.unified-terminal-ui .player-game-score-chart .grid.zero { stroke:#687781; stroke-opacity:.72; }
+body.unified-terminal-ui .player-game-score-chart .axis-label { fill:#7d8991; font:7px var(--terminal-font); text-anchor:end; dominant-baseline:middle; }
+body.unified-terminal-ui .player-game-score-chart polyline { fill:none; stroke-width:2; stroke-linejoin:miter; stroke-linecap:butt; vector-effect:non-scaling-stroke; }
+body.unified-terminal-ui .player-game-score-chart .positive { stroke:var(--positive); }
+body.unified-terminal-ui .player-game-score-chart .negative { stroke:var(--negative); }
+body.unified-terminal-ui .player-game-score-chart .neutral { stroke:var(--ui-text); }
+
+/* Trade values are explained per asset, with negatives diverging left of zero. */
+body.unified-terminal-ui .trade-selected-row { grid-template-columns:auto minmax(0,1fr) auto auto; }
+body.unified-terminal-ui .trade-selected-overall { align-items:baseline; display:flex; gap:3px; color:var(--ui-text); font-size:12px; font-style:normal; white-space:nowrap; }
+body.unified-terminal-ui .trade-selected-overall small { color:var(--ui-muted); font-size:8px; }
+body.unified-terminal-ui .trade-value-team { border-bottom:1px solid var(--ui-soft); padding:4px 8px; }
+body.unified-terminal-ui .trade-value-team > strong { display:block; color:var(--ui-muted); font-size:9px; font-weight:400; padding:2px 0; }
+body.unified-terminal-ui .approved-value-row { grid-template-columns:minmax(78px,105px) minmax(0,1fr) 34px; gap:7px; min-height:20px; padding:2px 0; }
+body.unified-terminal-ui .approved-value-row > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:9px; }
+body.unified-terminal-ui .approved-value-row.net { border-top:1px solid var(--ui-line); margin-top:2px; }
+body.unified-terminal-ui .approved-value-row.net > span { color:var(--ui-text); }
+body.unified-terminal-ui .trade-value-diverging { display:grid; grid-template-columns:1fr 1px 1fr; height:9px; }
+body.unified-terminal-ui .trade-value-diverging > b { background:#7b878e; }
+body.unified-terminal-ui .trade-value-diverging > span { display:flex; min-width:0; }
+body.unified-terminal-ui .trade-value-diverging .negative-side { flex-direction:row-reverse; justify-content:flex-start; }
+body.unified-terminal-ui .trade-value-diverging i { display:block; height:100%; min-width:1px; }
+body.unified-terminal-ui .trade-value-diverging .negative-side i { filter:saturate(.7); opacity:.8; }
+body.unified-terminal-ui .value-quality { color:#6aa6ca; }
+body.unified-terminal-ui i.value-quality { background:#6aa6ca; }
+body.unified-terminal-ui .value-age_upside { color:#49b9a6; }
+body.unified-terminal-ui i.value-age_upside { background:#49b9a6; }
+body.unified-terminal-ui .value-contract { color:#ddb957; }
+body.unified-terminal-ui i.value-contract { background:#ddb957; }
+body.unified-terminal-ui .value-scarcity { color:#a68bc4; }
+body.unified-terminal-ui i.value-scarcity { background:#a68bc4; }
+body.unified-terminal-ui .value-playoffs { color:#df895d; }
+body.unified-terminal-ui i.value-playoffs { background:#df895d; }
+body.unified-terminal-ui .value-health { color:#d65a61; }
+body.unified-terminal-ui i.value-health { background:#d65a61; }
+body.unified-terminal-ui .value-fit { color:#77b966; }
+body.unified-terminal-ui i.value-fit { background:#77b966; }
+body.unified-terminal-ui .value-role { color:#6992d0; }
+body.unified-terminal-ui i.value-role { background:#6992d0; }
+body.unified-terminal-ui :is(.value-draft_capital,.value-swap_value) { color:#cf9e4b; }
+body.unified-terminal-ui :is(i.value-draft_capital,i.value-swap_value) { background:#cf9e4b; }
+body.unified-terminal-ui .value-asset_value { color:#9aa6ac; }
+body.unified-terminal-ui i.value-asset_value { background:#9aa6ac; }
+body.unified-terminal-ui .trade-value-empty { color:var(--ui-muted); font-size:9px; min-height:20px; padding:3px 0; }
+body.unified-terminal-ui .approved-trade-values footer { flex-wrap:wrap; gap:4px 11px; padding:5px 8px; }
+
+body.unified-terminal-ui .approved-trade-cap-team { grid-template-rows:18px minmax(72px,1fr) minmax(98px,.8fr); }
+body.unified-terminal-ui .trade-cap-delta-chart { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px; min-height:70px; position:relative; padding-bottom:15px; }
+body.unified-terminal-ui .trade-cap-delta-year { display:grid; grid-template-rows:13px minmax(0,1fr) 14px; min-width:0; text-align:center; }
+body.unified-terminal-ui .trade-cap-delta-year > span,
+body.unified-terminal-ui .trade-cap-delta-year > strong { font-size:8px; font-weight:400; white-space:nowrap; }
+body.unified-terminal-ui .trade-cap-delta-year > strong.positive { color:#3ebd78 !important; }
+body.unified-terminal-ui .trade-cap-delta-year > strong.negative { color:#d75058 !important; }
+body.unified-terminal-ui .trade-cap-delta-track { background:var(--ui-header); position:relative; }
+body.unified-terminal-ui .trade-cap-delta-track > b { border-top:1px solid #7b878e; left:0; position:absolute; right:0; top:50%; }
+body.unified-terminal-ui .trade-cap-delta-track > i { left:22%; position:absolute; right:22%; }
+body.unified-terminal-ui .trade-cap-delta-track > .salary-added { background:#d75058; bottom:50%; }
+body.unified-terminal-ui .trade-cap-delta-track > .space-gained { background-color:transparent; background-image:repeating-linear-gradient(135deg,#3ebd78 0 3px,transparent 3px 7px) !important; top:50%; }
+body.unified-terminal-ui .trade-cap-delta-legend { bottom:0; display:flex; gap:13px; grid-column:1/-1; left:0; position:absolute; }
+body.unified-terminal-ui .trade-cap-delta-legend span { color:var(--ui-muted); font-size:8px; }
+body.unified-terminal-ui .trade-cap-delta-legend span::before { content:""; display:inline-block; height:6px; margin-right:4px; width:10px; }
+body.unified-terminal-ui .trade-cap-delta-legend .salary-added::before { background:#d75058; }
+body.unified-terminal-ui .trade-cap-delta-legend .space-gained::before { background-color:transparent; background-image:repeating-linear-gradient(135deg,#3ebd78 0 2px,transparent 2px 5px) !important; }
+
+body.unified-terminal-ui .trade-finder-layout { grid-template-columns:minmax(300px,.72fr) minmax(0,1.7fr); gap:6px; }
+body.unified-terminal-ui .trade-finder-workspace { display:grid; gap:6px; grid-template-rows:minmax(180px,.65fr) minmax(0,1.35fr); min-height:0; }
+body.unified-terminal-ui .trade-finder-brief { display:grid; gap:5px; grid-template-rows:28px minmax(0,1fr) 30px; min-height:0; padding:0; }
+body.unified-terminal-ui .trade-finder-brief .trade-desk-head { padding:4px 8px; }
+body.unified-terminal-ui .trade-finder-control-grid { display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); min-height:0; }
+body.unified-terminal-ui .trade-finder-control-grid > * + * { border-left:1px solid var(--ui-line); }
+body.unified-terminal-ui .trade-finder-control-grid .trade-selected-package { height:100%; min-height:0; }
+body.unified-terminal-ui .trade-finder-cap { min-width:0; padding:0 8px; }
+body.unified-terminal-ui .trade-finder-cap > header { color:var(--ui-muted); font-size:9px; padding:3px 0; }
+body.unified-terminal-ui .trade-finder-actions { display:grid; gap:5px; grid-template-columns:1fr auto; padding:0 6px 5px; }
+body.unified-terminal-ui .trade-finder-results { min-height:0; }
+body.unified-terminal-ui .trade-finder-results .approved-trade-values { margin:5px 0; }
+
+/* Analytical radar fills are intentionally opaque; only their outlines overlap. */
+body.unified-terminal-ui .player-radar-shape { fill:#668ea7; fill-opacity:1; stroke:#b7c6cf; }
+body.unified-terminal-ui .fantasy-player-radar.defense .player-radar-shape { fill:#c49a54; fill-opacity:1; stroke:#ead19b; }
+body.unified-terminal-ui .season-radar-healthy { fill:#5f6970; fill-opacity:1; stroke:#aab3b8; }
+body.unified-terminal-ui .season-radar-current { fill:#668ea7; fill-opacity:1; stroke:#c3d0d7; }
+body.unified-terminal-ui .approved-negotiation { grid-template-columns:minmax(260px,.8fr) minmax(0,4fr); grid-template-rows:74px minmax(0,1fr); gap:6px; }
+body.unified-terminal-ui .approved-negotiation-work { gap:6px; grid-template-rows:118px minmax(120px,1fr) minmax(160px,.7fr); }
+body.unified-terminal-ui .approved-ask-grid small { font-size:11px; }
+body.unified-terminal-ui .approved-ask-grid > span > strong { font-size:23px; white-space:nowrap; }
+body.unified-terminal-ui .approved-interest-factors > div { height:calc(100% - 28px); align-content:space-evenly; }
+body.unified-terminal-ui .approved-interest-factors span { grid-template-columns:118px 1fr 30px; font-size:11px; }
+body.unified-terminal-ui .approved-interest-factors strong { font-size:11px; }
+body.unified-terminal-ui .approved-offer-salary-table { height:calc(100% - 28px); }
+body.unified-terminal-ui .approved-offer-salary-table :is(td,th) { height:auto; font-size:10px; padding:3px 5px; }
+body.unified-terminal-ui .approved-offer-cap-chart > div > :is(span,small) { font-size:11px; }
+body.unified-terminal-ui .playoff-command-center .bracket-node { align-content:center; }
+body.unified-terminal-ui .playoff-command-center .series-card { height:72px; padding:6px; }
+body.unified-terminal-ui .playoff-command-center .series-team { min-height:28px; grid-template-columns:23px minmax(0,1fr) 20px; }
+body.unified-terminal-ui .playoff-command-center .series-team img { width:21px; height:21px; }
+body.unified-terminal-ui .playoff-command-center .series-team :is(strong,span) { font-size:12px; font-weight:400; color:var(--ui-text); }
+body.unified-terminal-ui .playoff-command-center .bracket-placeholder { height:72px; font-size:11px; }
+body.unified-terminal-ui .playoff-command-center .bracket-round-title { font-size:10px; text-transform:none; letter-spacing:0; font-weight:400; }
+body.unified-terminal-ui .playoff-command-center .phase-leader-list li { border:0; grid-template-columns:17px minmax(0,1fr) 27px 36px; }
+body.unified-terminal-ui .playoff-command-center .phase-leader-list li :is(strong,small,em) { font-size:12px; font-weight:400; }
+.command-overlay { position:fixed; inset:0; z-index:10000; background:#050608b8; display:flex; align-items:flex-start; justify-content:center; padding:12vh 16px 20px; }
+.command-menu { width:590px; max-width:100%; background:var(--ui-panel); border:1px solid #59636c; border-radius:4px; box-shadow:0 20px 90px #000a; overflow:hidden; font:12px var(--terminal-font); }
+.command-menu > header { display:flex; justify-content:space-between; align-items:center; padding:8px 14px; background:var(--ui-header); border-bottom:1px solid var(--ui-line); }
+.command-menu > header button { border:0; background:transparent; min-height:24px; width:24px; font-size:18px; padding:0; }
+body.unified-terminal-ui .command-menu > input { width:100%; border:0; border-bottom:1px solid var(--ui-line); min-height:48px; padding:0 16px; border-radius:0; font-size:14px; }
+.command-menu [role="listbox"] { max-height:52vh; overflow:auto; padding:5px; }
+.command-menu [role="option"] { display:flex; align-items:center; justify-content:space-between; min-height:36px; gap:15px; padding:6px 10px; cursor:pointer; }
+.command-menu [role="option"][aria-selected="true"] { background:#29343d; color:#fff; }
+.command-trailing { display:flex; gap:4px; color:var(--ui-muted); font-size:10px; }
+kbd { font:10px var(--terminal-font); border:1px solid #555d64; border-radius:3px; min-width:20px; padding:2px 5px; text-align:center; color:var(--ui-text); text-transform:uppercase; }
+.shortcut-hint { display:inline-flex; flex:none; align-items:center; margin-left:6px; padding:2px 3px; border:1px solid var(--ui-line); border-radius:2px; color:var(--ui-muted); font:9px/1 var(--terminal-font); white-space:nowrap; vertical-align:middle; }
+.season-command-dashboard button .shortcut-hint { display:inline-flex; background:transparent; color:var(--ui-muted); border-radius:2px; font-size:8px; height:auto; min-width:0; padding:2px; margin-left:4px; }
+body.unified-terminal-ui .modal-head [data-close-modal]:has(.shortcut-hint) { width:auto; padding:0 4px; }
+.command-empty { padding:18px 12px; color:var(--ui-muted); }
+#keySequence { position:fixed; bottom:36px; left:50%; transform:translateX(-50%); background:var(--ui-header); border:1px solid #636e77; color:var(--ui-text); border-radius:3px; padding:8px 12px; display:flex; gap:9px; align-items:center; z-index:10001; font:12px var(--terminal-font); }
+@media (prefers-reduced-motion:reduce) {
+  *, *::before, *::after { scroll-behavior:auto !important; animation:none !important; transition:none !important; }
+  body .season-wire-track { padding-left:10px; transform:none; }
+  body .season-wire-window { overflow-x:auto; scrollbar-width:none; }
+}
+@media (max-width:1300px) {
+  body.unified-terminal-ui .approved-player-card { grid-template-columns:minmax(220px,.9fr) minmax(0,1.6fr) minmax(220px,.95fr); }
+  body.unified-terminal-ui .free-agency-roster-table :is(td,th) { font-size:8px; padding:3px 2px; }
+  body.unified-terminal-ui .free-agency-roster-table :is(td,th):first-child { width:126px; }
+}
+
+/* Shared desktop card surfaces and content-sized decision dialogs. */
+.assets-desktop .assets-grid { display:grid; grid-template-columns:minmax(0,1.08fr) minmax(0,1fr) minmax(0,1fr); grid-template-rows:minmax(0,1.62fr) minmax(0,.7fr) minmax(0,.7fr); gap:7px; min-height:0; flex:1; }
+.assets-desktop .season-command-panel { display:flex; flex-direction:column; min-height:0; }
+.assets-desktop .season-panel-header { flex-shrink:0; }
+.assets-roster { grid-column:1/-1; }
+.assets-payroll { grid-column:1; grid-row:2/4; }
+.assets-picks { grid-column:2; grid-row:2; }
+.assets-block { grid-column:2; grid-row:3; }
+.assets-trade-tools { grid-column:3; grid-row:2; }
+.assets-panel-body { min-height:0; flex:1; overflow:auto; padding:4px 8px; }
+.assets-panel-body .table-wrap { max-height:100%; overflow:auto; }
+.assets-panel-body table { width:100%; table-layout:fixed; }
+.assets-panel-body :is(td,th) { padding:4px; height:24px; font-size:10px; font-weight:400; white-space:nowrap; text-align:right; }
+.assets-panel-body :is(td,th):first-child { text-align:left; width:45%; }
+.assets-roster :is(td,th) { font-size:9px; padding:3px 2px; }
+.assets-roster :is(td,th):first-child { width:144px; }
+.assets-roster :is(td,th):nth-child(2), .assets-roster :is(td,th):nth-child(3) { width:32px; }
+.assets-roster table button { font:inherit; background:none; border:0; padding:0; text-transform:none; }
+.asset-contract-expiring { color:#a98216; }
+.assets-empty { padding:6px; font-size:11px; color:var(--ui-muted); }
+.assets-payroll .contract-year-columns { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); height:100%; gap:8px; }
+.assets-payroll .contract-payroll-column { display:grid; grid-template-rows:20px minmax(0,1fr) 20px; min-height:0; font-size:10px; }
+.assets-payroll .contract-payroll-stack-shell { height:100%; min-height:0; }
+.assets-payroll .contract-payroll-column strong { font-size:10px; font-weight:400; }
+.salary-horizon-chart { align-items:stretch; display:grid; gap:7px; grid-template-columns:repeat(4,minmax(0,1fr)); height:100%; min-height:0; padding:5px 8px 16px; position:relative; }
+.salary-horizon-year { align-self:stretch; display:grid; grid-template-rows:17px minmax(0,1fr) 17px; height:100%; min-height:0; text-align:center; }
+.salary-horizon-year > span,.salary-horizon-year > strong { align-content:center; font-size:8px; font-weight:400; }
+.salary-horizon-column { background:var(--ui-soft); border:1px solid var(--ui-line); min-height:0; position:relative; }
+.salary-horizon-stack { bottom:0; display:flex; flex-direction:column-reverse; left:14%; position:absolute; right:14%; }
+.salary-segment { border-top:1px solid var(--ui-panel); display:block; flex:none; min-height:1px; }
+.salary-segment-other { background:#6d7881; }
+.salary-segment-0 { background:#668ea7; }.salary-segment-1 { background:#84988a; }.salary-segment-2 { background:#a69775; }.salary-segment-3 { background:#7c8498; }
+.salary-segment-4 { background:#9a858f; }.salary-segment-5 { background:#64888a; }.salary-segment-6 { background:#99a4aa; }.salary-segment-7 { background:#64778e; }
+.salary-horizon-chart.is-player-focus .salary-segment:not(.is-highlighted) { background:#9ca5ac; opacity:.46; }
+.salary-horizon-chart .salary-segment.is-highlighted { background:#b44f48; opacity:1; }
+.salary-horizon-chart.is-offer .salary-segment.is-highlighted { background:#b57642; }
+.salary-horizon-column > b { left:0; pointer-events:none; position:absolute; right:0; z-index:4; }
+.salary-tax-line { border-top:1px dashed #a78624; }.salary-hard-line { border-top:1px dashed #a3423d; }
+.salary-horizon-legend { bottom:2px; color:var(--ui-muted); display:flex; font-size:7px; gap:12px; justify-content:center; left:0; position:absolute; right:0; }
+.salary-horizon-legend span::before { content:''; display:inline-block; margin-right:3px; vertical-align:middle; width:10px; }
+.salary-horizon-legend span:first-child::before { border-top:1px dashed #a78624; }.salary-horizon-legend span:last-child::before { border-top:1px dashed #a3423d; }
+.approved-cap-share.salary-horizon-chart { height:calc(100% - 30px); }
+.approved-trade-cap-team > .salary-horizon-chart { height:92px; padding-top:3px; }
+body.unified-terminal-ui .modal-shell.modal-fantasy-player { width:min(1240px,calc(100vw - 32px)); height:min(660px,calc(100dvh - 32px)); }
+body.unified-terminal-ui .modal-fantasy-player .approved-player-card { display:grid; height:100%; min-height:0; grid-template-columns:minmax(420px,1.3fr) minmax(400px,1.35fr) minmax(235px,.78fr); grid-template-rows:minmax(0,1fr) 64px 190px; gap:6px; }
+body.unified-terminal-ui .modal-fantasy-player :is(.approved-player-middle,.approved-player-right) { display:contents; }
+body.unified-terminal-ui .modal-fantasy-player .approved-player-identity { grid-column:1; grid-row:1/4; padding:8px; }
+body.unified-terminal-ui .modal-fantasy-player .approved-player-spatial { grid-column:2; grid-row:1; min-height:0; }
+body.unified-terminal-ui .modal-fantasy-player .approved-season-line { grid-column:2; grid-row:2; }
+body.unified-terminal-ui .modal-fantasy-player .approved-game-score { grid-column:2; grid-row:3; }
+body.unified-terminal-ui .modal-fantasy-player .approved-cap-panel { grid-column:3; grid-row:1/3; }
+body.unified-terminal-ui .modal-fantasy-player .approved-recent-panel { grid-column:3; grid-row:3; }
+body.unified-terminal-ui .modal-fantasy-player .approved-rating-rail > div { grid-template-columns:minmax(113px,1fr) 65px 28px; min-height:0; }
+body.unified-terminal-ui .modal-fantasy-player .approved-rating-rail { gap:0; padding:2px 0; }
+body.unified-terminal-ui .modal-fantasy-player .approved-recent-games { grid-template-rows:repeat(5,minmax(0,1fr)); }
+body.unified-terminal-ui .modal-fantasy-player .approved-recent-games > div { grid-template-columns:34px repeat(3,minmax(0,1fr)) 40px; padding:3px; gap:3px; }
+body.unified-terminal-ui .modal-fantasy-player .approved-recent-games :is(span,strong,em) { font-size:9px; }
+body.unified-terminal-ui .modal-fantasy-player .approved-player-profile-head { align-items:center; border-bottom:1px solid var(--ui-line); display:grid; flex:none; gap:12px; grid-template-columns:minmax(0,1fr) 86px; padding:3px 2px 10px; }
+body.unified-terminal-ui .modal-fantasy-player .approved-player-profile-head h3 { font-size:21px; line-height:1.1; margin:0 0 5px; }
+body.unified-terminal-ui .modal-fantasy-player .approved-player-profile-head p { color:var(--ui-text); font-size:11px; margin:0; }
+body.unified-terminal-ui .modal-fantasy-player .approved-player-overall { align-items:baseline; border-left:1px solid var(--ui-line); display:grid; gap:3px; justify-items:center; padding:2px 0 2px 10px; }
+body.unified-terminal-ui .modal-fantasy-player .approved-player-overall span { color:var(--ui-text); font-size:11px; }
+body.unified-terminal-ui .modal-fantasy-player .approved-player-overall strong { color:var(--ui-text); font-size:23px; font-weight:400; line-height:1; }
+body.unified-terminal-ui .modal-fantasy-player .approved-player-evidence { display:block; flex:none; margin:8px 0 0; }
+.player-evidence-rings { display:flex; gap:7px; justify-content:space-between; }
+.player-evidence-ring { align-items:center; display:grid; gap:6px; grid-template-columns:44px minmax(0,1fr); min-width:0; }
+.player-evidence-ring > span { display:grid; height:42px; place-items:center; position:relative; width:42px; }
+.player-evidence-ring svg { height:42px; transform:rotate(-90deg); width:42px; }
+.player-evidence-ring circle { fill:none; stroke:var(--ui-soft); stroke-width:4; }
+.player-evidence-ring circle:last-child { stroke-linecap:round; transition:stroke-dashoffset .22s ease; }
+.player-evidence-ring > span strong { color:var(--ui-text); font-size:10px; font-weight:400; position:absolute; }
+.player-evidence-ring > div { display:grid; gap:2px; min-width:0; }
+.player-evidence-ring b { color:var(--ui-text); font-size:9px; font-weight:400; white-space:nowrap; }
+.player-evidence-ring small { color:var(--ui-muted); font-size:8px; white-space:nowrap; }
+.player-trade-evidence { align-content:center; display:grid; gap:4px; grid-template-columns:1fr 30px; }
+.player-trade-evidence span { color:var(--ui-text); font-size:9px; }
+.player-trade-evidence i { background:var(--ui-soft); display:block; grid-column:1/-1; height:5px; overflow:hidden; }
+.player-trade-evidence i b { display:block; height:100%; }
+.player-trade-evidence strong { font-size:10px; font-weight:400; text-align:right; }
+body.unified-terminal-ui .modal-fantasy-player .approved-player-identity-ratings { border:0; display:grid; flex:1; grid-template-rows:minmax(0,1fr); margin:0; min-height:0; }
+body.unified-terminal-ui .modal-fantasy-player .approved-player-identity-ratings > header { align-items:center; display:flex; font-size:10px; }
+.approved-rating-groups { display:grid; gap:12px; grid-template-columns:repeat(2,minmax(0,1fr)); min-height:0; overflow:hidden; }
+.approved-rating-column { display:flex; flex-direction:column; gap:5px; min-height:0; }
+.approved-rating-column section { display:grid; flex:var(--rating-rows) 1 0; grid-template-rows:19px minmax(0,1fr); min-height:0; }
+.approved-rating-column h4 { border-bottom:1px solid var(--ui-line); color:var(--ui-text); font-size:9px; font-weight:400; margin:0; padding:3px 0; }
+body.unified-terminal-ui .modal-fantasy-player .approved-rating-column .approved-rating-rail { display:grid; grid-template-rows:repeat(var(--rating-rows),minmax(0,1fr)); overflow:hidden; padding:0; }
+body.unified-terminal-ui .modal-fantasy-player .approved-rating-column .approved-rating-rail > div { border-bottom:1px solid var(--ui-soft); grid-template-columns:minmax(86px,1fr) minmax(42px,.65fr) 27px; min-height:0; }
+body.unified-terminal-ui .modal-fantasy-player .approved-rating-column .approved-rating-rail :is(span,strong) { font-size:8px; }
+body.unified-terminal-ui .unified-phase-dashboard:is([data-phase="cutdown"],[data-phase="staff_retention"]) { width:min(1080px,calc(100% - 32px)); height:auto; max-height:calc(100dvh - 48px); min-height:0; margin:24px auto; overflow:auto; }
+body.unified-terminal-ui .unified-phase-dashboard[data-phase="staff_retention"] { width:min(980px,calc(100% - 32px)); }
+body.unified-terminal-ui .unified-phase-dashboard:is([data-phase="cutdown"],[data-phase="staff_retention"]) :is(.phase-cutdown-layout,.phase-staff-retention-layout) { height:auto; min-height:0; grid-template-rows:auto; }
+body.unified-terminal-ui .unified-phase-dashboard:is([data-phase="cutdown"],[data-phase="staff_retention"]) :is(td,th) { height:28px; padding:4px 8px; font-size:11px; }
+body.unified-terminal-ui .approved-roster-overview { grid-template-columns:200px minmax(240px,1fr) minmax(240px,1fr); }
+body.unified-terminal-ui .approved-roster-shape > div { display:grid; grid-template-rows:repeat(2,minmax(0,1fr)); height:calc(100% - 27px); min-height:0; }
+body.unified-terminal-ui .approved-roster-shape .fantasy-player-radar { grid-template-rows:13px minmax(0,1fr); }
+body.unified-terminal-ui .approved-roster-shape .fantasy-player-radar h5 { display:block; font-size:9px; margin:0; }
+body.unified-terminal-ui .assets-panel-body table { height:auto; }
+body.unified-terminal-ui .assets-roster :is(td,th) { height:19px; padding:2px; line-height:14px; }
+body.unified-terminal-ui .assets-roster table button { height:auto; min-height:0; padding:0; font:inherit; line-height:14px; }
+body.unified-terminal-ui .unified-phase-dashboard[data-phase="cutdown"] .phase-cutdown-layout { grid-template-columns:1fr; }
+body.unified-terminal-ui .unified-phase-dashboard[data-phase="cutdown"] .cutdown-brief { display:none; }
+body.unified-terminal-ui .unified-phase-dashboard[data-phase="cutdown"] table { table-layout:auto; width:100%; }
+body.unified-terminal-ui .unified-phase-dashboard[data-phase="cutdown"] :is(td,th) { white-space:nowrap; }
+body.unified-terminal-ui .unified-phase-dashboard[data-phase="staff_retention"] .phase-staff-retention-layout { grid-template-columns:minmax(0,1fr) minmax(0,1.25fr); gap:6px; }
+body.unified-terminal-ui .staff-retention-current { grid-column:1; grid-row:1; }
+body.unified-terminal-ui .staff-retention-current .phase-prospect-name { display:flex; gap:10px; font-size:12px; margin:8px 0; }
+body.unified-terminal-ui .staff-retention-offer { grid-column:1; grid-row:2; }
+body.unified-terminal-ui .staff-retention-market { grid-column:2; grid-row:1/3; }
+body.unified-terminal-ui .staff-retention-market table { width:100%; table-layout:fixed; }
+body.unified-terminal-ui .staff-retention-market :is(td,th):first-child { width:45%; }
+body.unified-terminal-ui .staff-retention-market table button { font:inherit; background:none; border:0; padding:0; min-height:0; white-space:nowrap; }
+body.unified-terminal-ui .staff-retention-market :is(td,th) { white-space:nowrap; }
+
+.assets-picks .assets-panel-body { overflow:hidden; }
+.draft-assets-board { display:grid; grid-template-columns:32px repeat(7,minmax(0,1fr)); grid-template-rows:20px repeat(2,minmax(0,1fr)); height:100%; min-height:0; align-items:center; text-align:center; }
+.draft-assets-board > strong,.draft-assets-board > b,.draft-assets-corner { color:var(--ui-muted); font-size:8px; font-weight:400; }
+.draft-assets-cell { align-items:center; align-self:stretch; border-left:1px solid var(--ui-soft); border-top:1px solid var(--ui-soft); display:flex; flex-wrap:wrap; gap:1px; justify-content:center; min-width:0; padding:1px; }
+.draft-asset-glyph { appearance:none; background:transparent; border:0; border-radius:0; cursor:help; height:22px; min-height:0; min-width:22px; padding:0; position:relative; width:24px; }
+.draft-asset-logos { align-items:center; display:flex; height:100%; justify-content:center; position:relative; }
+.draft-asset-logos > span { align-items:center; background:var(--ui-panel); border:1px solid var(--ui-line); border-radius:50%; display:flex; height:20px; justify-content:center; overflow:hidden; width:20px; }
+.draft-asset-logos img { height:15px; object-fit:contain; width:15px; }
+.draft-asset-glyph.is-swap { width:28px; }
+.draft-asset-glyph.is-swap .draft-asset-logos > span:first-child { transform:translateX(4px); }
+.draft-asset-glyph.is-swap .draft-asset-logos > span:last-child { transform:translateX(-4px); }
+.draft-asset-swap,.draft-asset-condition { align-items:center; background:var(--ui-header); border:1px solid var(--ui-line); border-radius:50%; color:var(--ui-text); display:flex; font-size:7px; font-weight:400; height:10px; justify-content:center; line-height:1; position:absolute; right:0; top:0; width:10px; z-index:3; }
+.draft-asset-swap { bottom:-1px; left:50%; right:auto; top:auto; transform:translateX(-50%); width:18px; }
+.draft-asset-tooltip { background:var(--ui-text); border:1px solid var(--ui-line); bottom:calc(100% + 5px); color:var(--ui-panel); display:none; font-size:9px; left:50%; max-width:240px; padding:5px 7px; position:absolute; text-align:left; transform:translateX(-50%); white-space:normal; width:max-content; z-index:50; }
+.draft-asset-glyph:is(:hover,:focus-visible) .draft-asset-tooltip { display:block; }
+.draft-asset-glyph.is-compact { height:25px; width:31px; }
+.draft-asset-glyph.is-compact .draft-asset-logos > span { height:23px; width:23px; }
+.draft-asset-glyph.is-compact .draft-asset-logos img { height:17px; width:17px; }
+
+.assets-block-caption { align-items:center; border-bottom:1px solid var(--ui-soft); display:flex; gap:5px; height:20px; justify-content:space-between; color:var(--ui-muted); font-size:9px; }
+.assets-block-caption > span { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.assets-block-nav { display:flex; flex:none; gap:2px; }
+.assets-block-caption button { align-items:center; background:transparent; border:0; color:var(--ui-muted); display:flex; font-size:14px; height:18px; justify-content:center; min-height:0; padding:0; width:18px; }
+.assets-block-caption button:hover { color:var(--ui-text); }
+.assets-block-caption b { font-weight:400; }
+[data-assets-block-body] { height:100%; min-height:0; }
+.assets-block-table { display:grid; grid-template-rows:18px repeat(6,minmax(0,1fr)); height:calc(100% - 20px); min-height:0; }
+.team-block-table { grid-template-rows:20px repeat(6,minmax(0,1fr)); height:100%; }
+.assets-block-head,.assets-block-row { align-items:center; display:grid; gap:4px; grid-template-columns:30px minmax(88px,1.4fr) 26px 28px repeat(3,56px) minmax(100px,1.5fr); min-width:0; }
+.assets-block-head { color:var(--ui-muted); font-size:8px; }
+.assets-block-head > span:nth-child(n+5):nth-child(-n+7),.assets-block-row > span:nth-child(n+5):nth-child(-n+7) { text-align:left; }
+.assets-block-row { border-top:1px solid var(--ui-soft); font-size:9px; }
+.assets-block-row > * { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.assets-block-row button { background:none; border:0; color:inherit; font:inherit; min-height:0; padding:0; text-align:left; }
+.assets-block-team { align-items:center; display:flex; justify-content:center; }
+.assets-block-team img { height:20px; object-fit:contain; width:20px; }
+.team-block-row { min-height:0; }
+.team-block-player { align-items:center; display:flex; gap:3px; justify-content:space-between; min-width:0; }
+.team-block-player button:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.team-block-player button:last-child { color:var(--ui-muted); flex:none; text-align:center; width:16px; }
+.team-block-row select { background:transparent; border:0; color:var(--ui-muted); font:inherit; height:18px; min-height:0; padding:0; width:100%; }
+.team-block-row .linked-rating { width:52px; }
+
+.assets-trade-tools { display:grid; gap:5px; grid-template-columns:1fr 1fr; grid-template-rows:minmax(0,1fr); height:100%; }
+.assets-trade-tools > button:not(.assets-offer-strip) { align-items:flex-start; background:var(--ui-panel); border:1px solid var(--ui-line); color:var(--ui-text); display:flex; flex-direction:column; justify-content:center; min-height:0; padding:8px; text-align:left; }
+.assets-trade-tools > button:not(.assets-offer-strip):hover { background:var(--ui-hover); }
+.assets-trade-tools strong { font-size:12px; font-weight:400; }
+.assets-trade-tools small { color:var(--ui-muted); font-size:8px; line-height:1.25; margin-top:4px; }
+.assets-trade-preview,.assets-finder-preview { align-items:center; display:flex; height:27px; margin-bottom:5px; position:relative; width:100%; }
+.assets-trade-preview i { border:1px solid var(--ui-line); flex:1; height:20px; }
+.assets-trade-preview b { font-size:16px; font-weight:400; margin:0 5px; }
+.assets-finder-preview { gap:4px; }
+.assets-finder-preview i { background:var(--ui-muted); display:block; height:5px; width:22%; }
+.assets-finder-preview b { font-size:14px; font-weight:400; margin-left:auto; }
+body.unified-terminal-ui .unified-phase-dashboard[data-phase="cutdown"] td button { min-height:20px; height:20px; padding:2px 7px; font-size:10px; }
+body.unified-terminal-ui .unified-phase-dashboard:is([data-phase="cutdown"],[data-phase="staff_retention"]) .unified-phase-settings { position:static; justify-self:end; width:auto; margin:6px 0 0; }
+.assets-payroll .staff-salary-0 { background:#789aaf; }
+.assets-payroll .staff-salary-1 { background:#879e90; }
+.assets-payroll .staff-salary-2 { background:#a99d80; }
+.assets-payroll .staff-salary-3 { background:#7c879b; }
+.assets-payroll .staff-salary-4 { background:#a09096; }
+.assets-payroll .staff-salary-5 { background:#688a8b; }
+.assets-payroll .staff-salary-6 { background:#9da9ae; }
+.assets-payroll .staff-salary-7 { background:#657c91; }
+@media(max-height:780px) {
+  .assets-desktop .assets-grid { grid-template-rows:minmax(0,1.9fr) minmax(0,.55fr) minmax(0,.7fr); }
+  body.unified-terminal-ui .assets-roster :is(td,th) { height:16px; line-height:12px; padding:2px; }
+  body.unified-terminal-ui .assets-roster table button { line-height:12px; }
+  .assets-trade-tools small { display:none; }
+  .assets-trade-preview,.assets-finder-preview { height:21px; margin-bottom:2px; }
+  .assets-trade-preview i { height:15px; }
+}

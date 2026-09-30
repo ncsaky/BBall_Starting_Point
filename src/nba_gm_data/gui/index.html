@@ -5,8 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>NBA GM Sandbox</title>
     <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/interface.css" />
+    <link rel="stylesheet" href="/design-studies.css" />
+    <link rel="stylesheet" href="/paper-fidelity.css" />
+    <link rel="stylesheet" href="/card-board.css" />
   </head>
-  <body>
+  <body class="unified-terminal-ui" data-review-skin="silver">
     <div id="app">
       <main>
         <header class="topbar">
@@ -23,6 +27,7 @@
             <button data-view="settings">Settings</button>
           </nav>
         </header>
+        <div id="multiplayerBar" class="multiplayer-bar" hidden></div>
 
         <section id="startupScreen" class="startup-screen" hidden>
           <div class="startup-card">
@@ -44,10 +49,33 @@
                 <select id="teamSelect" title="New save team">
                   <option value="random">Random team</option>
                 </select>
+                <select id="gameModeSelect" title="New save game mode">
+                  <option value="standard">Standard Rosters</option>
+                  <option value="fantasy_draft">Fantasy Draft</option>
+                </select>
                 <input id="saveName" placeholder="Save name" />
                 <button id="createSave" class="primary-action">Create New Save</button>
               </section>
+              <section class="multiplayer-start-card">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Shared League</p>
+                    <h3>Multiplayer</h3>
+                  </div>
+                  <span class="live-dot">Live</span>
+                </div>
+                <input id="multiplayerName" maxlength="32" placeholder="Your GM name" />
+                <div class="multiplayer-start-actions">
+                  <input id="multiplayerLeagueName" maxlength="64" placeholder="League name" />
+                  <button id="multiplayerCreate" class="primary-action">Create Lobby</button>
+                </div>
+                <div class="multiplayer-join-row">
+                  <input id="multiplayerCode" maxlength="6" placeholder="JOIN CODE" />
+                  <button id="multiplayerJoin">Join</button>
+                </div>
+              </section>
             </div>
+            <section id="multiplayerLobby" class="multiplayer-lobby" hidden></section>
           </div>
         </section>
         <section id="content" class="content"></section>
@@ -56,20 +84,20 @@
 
     <div id="toast" class="toast" hidden></div>
     <div id="modalRoot" class="modal-root" hidden></div>
-    <script src="/app.js" defer></script>
-      <div class="brand" hidden>
-      <div class="mark">GM</div>
-      <div>
-        <h1>NBA GM Sandbox</h1>
-        <p id="runtime">Loading engine...</p>
-      </div>
+    <div id="appLoading" class="app-loading-overlay" role="dialog" aria-modal="true" aria-labelledby="appLoadingLabel" aria-hidden="true" hidden>
+      <section class="app-loading-window">
+        <header>NBA GM Sandbox</header>
+        <p id="appLoadingLabel">Loading...</p>
+        <div class="app-loading-progress" role="progressbar" aria-label="Loading" aria-valuetext="Loading">
+          <span aria-hidden="true"></span>
+        </div>
+      </section>
     </div>
-    <section class="save-panel" hidden>
-      <label for="saveSelect">Loaded save</label>
-      <div class="save-row">
-        <select id="saveSelect"></select>
-        <button id="refreshSaves" title="Refresh saves">↻</button>
-      </div>
-    </section>
+    <script src="/interface.js" defer></script>
+    <script src="/card-board.js" defer></script>
+    <script src="/app.js" defer></script>
+    <script src="/assets-desktop.js" defer></script>
+    <script src="/interface-review.js" defer></script>
+    <script src="/density-concepts.js" defer></script>
   </body>
 </html>

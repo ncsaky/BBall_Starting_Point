@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NBA GM · Design studies</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#101214;color:#e8eaeb;font:13px Arial,sans-serif}button,select,a{font:inherit;color:inherit}button,select{border:1px solid #515961;background:#23272b;padding:7px 10px;border-radius:2px;cursor:pointer}button[aria-pressed=true]{background:#e0e5e8;color:#111}a{text-decoration:none}a:hover{text-decoration:underline}button:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid #98c8eb;outline-offset:2px}header{display:flex;align-items:center;gap:15px;padding:13px 18px;border-bottom:1px solid #41484e;flex-wrap:wrap}h1{font-size:17px;font-weight:400;margin:0 15px 0 0}header a{margin-left:auto}.toolbar{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid #30373d;flex-wrap:wrap}.toolbar label{display:flex;align-items:center;gap:9px}.mode{display:flex;gap:4px;margin-left:auto}main{padding:16px 18px}.compare{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.compare.single{grid-template-columns:1fr}.study{min-width:0}.study-head{display:flex;align-items:center;gap:12px;margin:0 0 9px;min-height:28px}.study-head h2{font-size:15px;font-weight:400;margin:0;flex:1}.study-head a{font-size:12px}.frame{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;background:#171b1e;outline:1px solid #515961}.frame iframe{width:1600px;height:900px;border:0;transform-origin:0 0;position:absolute;left:0;top:0}.study p{color:#b4bec7;line-height:1.6;margin:12px 0;font-size:13px}.inventory{margin-top:18px;padding-top:16px;border-top:1px solid #41484e;display:grid;grid-template-columns:1fr 1fr;gap:22px}.inventory h3{font-size:14px;font-weight:400;margin:0 0 8px}.inventory p{line-height:1.7;color:#bec7ce;margin:0}.status{font-size:12px;color:#bcc6ce;margin:0;padding:10px 18px;background:#1b2024}.index{display:flex;gap:7px;flex-wrap:wrap;margin-top:17px}.index button{padding:5px 8px;background:transparent;border-color:#383f45;font-size:12px}.index button.current{border-color:#c1d2df;color:#fff}.study[hidden]{display:none}@media(max-width:850px){.compare{grid-template-columns:1fr}.inventory{grid-template-columns:1fr}.mode{margin-left:0}}
+</style></head><body>
+<header><h1>Design studies</h1><span>Information density + surface treatments</span><a href="/interface-gallery.html">Previous screen review</a><a href="/">Open game</a></header>
+<div class="toolbar"><label>Screen <select id="screen"></select></label><label>Layout <select id="layout"><option value="proposed">Dense proposal</option><option value="current">Current game</option></select></label><div class="mode"><button id="compare" aria-pressed="true">Compare two</button><button id="single" aria-pressed="false">Large preview</button><select id="skin" aria-label="Treatment"><option value="carbon">Carbon</option><option value="silver">Silver</option></select></div></div>
+<p class="status" id="status">Preview data only. Layout proposals do not alter saves or replace the game's layouts.</p>
+<main><div class="compare" id="studies" style="grid-template-columns:repeat(2,minmax(0,1fr))"></div><section class="inventory"><div><h3>Information on this screen</h3><p id="contents"></p></div><div><h3>Comparison rules</h3><p>The same information and geometry are shown in each treatment. Carbon uses square edges and underlined commands. Silver uses cool light surfaces and raised controls. The main dashboard's layout is unchanged in every treatment.</p></div></section><nav class="index" id="index" aria-label="All screens"></nav></main>
+<script>
+const proposals={player:['Player card','Full ratings · court influence · two radars · latest season · game-score history · payroll share · six-year salary · last five games'],'trade-builder':['Trade builder','Both player inventories · both pick inventories · two outgoing packages · value composition · four-year cap tables and graphs · legality'],'trade-finder':['Trade finder','Assets to shop · available returns · own picks · target coverage · cap capacity · team needs'],'free-agency':['Free agency','Expanded market table · selected player · live offers · four-year cap · expiring contracts · roster coverage · signing wire'],negotiation:['Negotiation','Full ratings · ask and offer · interest components · competing offers · cap impact · salary and team position · health and upside'],draft:['Draft','Prospect board · draft order · selected prospect evidence · pick inventory · rotation needs · rookie cap room'],playoffs:['Playoffs','Bracket · matchup rotation · team shape · playoff leaders · availability · staff'],staff:['Staff','Assigned staff · staff market · budget · coaching effects · morale and job security']};
+const skins=[['carbon','Carbon','Monospaced. Near-black panels, precise rules, square corners. Underlined commands brighten on hover.'],['silver','Silver','Sans serif. Cool light surfaces, stronger ink contrast, raised controls and hairline boundaries.']];
+let mode='compare',screen='dashboard',manifest=[];
+const params=new URLSearchParams(location.search);if(params.has('screen'))screen=params.get('screen');
+const select=document.getElementById('screen'),layout=document.getElementById('layout'),skinSelect=document.getElementById('skin');
+const supported=id=>Object.hasOwn(proposals,id);
+function url(id,skin){const q=new URLSearchParams({'ui-review':id,skin});if(layout.value==='proposed'&&supported(id))q.set('dense',id);return '/?'+q;}
+function render(){
+  const main=document.getElementById('studies');main.classList.toggle('single',mode==='single');main.style.gridTemplateColumns=mode==='single'?'1fr':'repeat(2,minmax(0,1fr))';main.replaceChildren();
+  skins.filter(([key])=>mode==='compare'||key===skinSelect.value).forEach(([key,title,desc])=>{
+    const article=document.createElement('article');article.className='study';
+    const head=document.createElement('div');head.className='study-head';const h=document.createElement('h2');h.textContent=title;
+    const open=document.createElement('a');open.href=url(screen,key);open.target='_blank';open.rel='noopener';open.textContent='Full size ↗';head.append(h,open);
+    const frame=document.createElement('div');frame.className='frame';const iframe=document.createElement('iframe');iframe.title=title+' '+screen;iframe.src=url(screen,key);frame.append(iframe);
+    const text=document.createElement('p');text.textContent=desc;article.append(head,frame,text);main.append(article);
+    new ResizeObserver(()=>{iframe.style.transform=`scale(${frame.clientWidth/1600})`;}).observe(frame);
+  });
+  document.getElementById('contents').textContent=screen==='dashboard'?'Your current dashboard. No panels moved, added, removed or resized. Only the surface treatment changes.':(layout.value==='proposed'&&supported(screen)?proposals[screen][1]:'Current production renderer, with the selected styling treatment. No density proposal for this supporting dialog.');
+  document.getElementById('status').textContent='Preview only. Sample league data; block listings and phase scenarios are illustrative. New layouts are proposals, not live game replacements.';
+  document.querySelectorAll('#index button').forEach(b=>b.classList.toggle('current',b.dataset.screen===screen));
+  history.replaceState(null,'','?screen='+encodeURIComponent(screen));
+}
+function choose(id){screen=id;select.value=id;render();}
+(async()=>{
+  manifest=await fetch('/assets/interface-review/manifest.json').then(r=>r.json());
+  const screens=[['dashboard','Main dashboard'],...Object.entries(proposals).map(([id,[title]])=>[id,title]),...manifest.filter(x=>x.id!=='dashboard'&&!supported(x.id)).map(x=>[x.id,x.title])];
+  screens.forEach(([id,title])=>{const o=document.createElement('option');o.value=id;o.textContent=title;select.append(o);const b=document.createElement('button');b.textContent=title;b.dataset.screen=id;b.onclick=()=>choose(id);document.getElementById('index').append(b);});
+  if(!screens.some(([id])=>id===screen))screen='dashboard';select.value=screen;render();
+})();
+select.onchange=()=>choose(select.value);layout.onchange=render;skinSelect.onchange=render;
+for(const id of ['compare','single'])document.getElementById(id).onclick=()=>{mode=id;document.getElementById('compare').setAttribute('aria-pressed',String(id==='compare'));document.getElementById('single').setAttribute('aria-pressed',String(id==='single'));render();};
+</script></body></html>
