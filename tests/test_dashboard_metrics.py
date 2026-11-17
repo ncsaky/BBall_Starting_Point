@@ -75,7 +75,7 @@ class DashboardMetricsTests(unittest.TestCase):
 
     def test_award_changes_use_frozen_rank_not_display_position(self):
         save = {"meta": {"season": "2029-30"}, "award_preseason_baselines": {"2029-30": {"MVP": {"a": {"rank": 1, "score": 100}, "b": {"rank": 2, "score": 90}}}}, "player_season_stats": {"a": {"games": 10, "points": 100}, "b": {"games": 10, "points": 400}}}
-        rows = [{"player_id": pid, "player_name": pid, "team_id": "was", "team_abbrev": "WAS", "rookie": False, "values": {"overall": 80}} for pid in ("a", "b")]
+        rows = [{"player_id": pid, "player_name": pid, "team_id": "was", "team_abbrev": "WAS", "headshot_url": None, "rookie": False, "values": {"overall": 80}} for pid in ("a", "b")]
         ranks = award_watch_payload(rows, save)["MVP"]
         self.assertEqual([(row["player_id"], row["rank_change"]) for row in ranks], [("b", 1), ("a", -1)])
         save["player_season_stats"] = {}

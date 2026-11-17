@@ -11,7 +11,7 @@ Current priority: the new engine (`docs/agents/ENGINE_ROADMAP.md`). GUI tasks ar
 Suggested settings: your strongest model, high effort. This is the most important task Codex has this month. If usage runs out mid-task, keep the resume state current so a fresh chat can continue.
 
 ```
-Read AGENTS.md, docs/agents/BOARD.md and docs/agents/ENGINE_ROADMAP.md first. You own task E2. Mark it "in progress (Codex)" on the board.
+Read AGENTS.md, docs/agents/BOARD.md, docs/agents/ENGINE_ROADMAP.md and docs/agents/STAGE1_DESIGN.md first. You own task E2: component A in STAGE1_DESIGN. Claude is building the adapter (component B) in parallel against your output format, so keep the output schema stable and documented at the top of your report. Mark it "in progress (Codex)" on the board.
 
 GOAL
 Every player in the game needs values for the approved 94-input player model (src/nba_gm_data/player_model.py, player_model_registry.py; design in docs/PLAYER_OBJECT_THREE_COLUMN_MAP_2026_11_12.md). Today only 32 players have partial hand-researched inputs (docs/ratings-evidence-2026-10-29/*_INPUTS_*.json packets). Build a deterministic, evidence-based ESTIMATOR that produces inputs for ALL 691 players in data/canonical/universe_2026_27_offseason.json, plus a function for draft prospects.

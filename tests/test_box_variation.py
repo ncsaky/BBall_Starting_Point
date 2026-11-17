@@ -3,8 +3,11 @@ from copy import deepcopy
 import json
 from pathlib import Path
 import statistics
+import sys
 import unittest
 from unittest.mock import patch
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 
 from nba_gm_data.sim import load_sim_context, sim_game_with_context, game_team_features
 from nba_gm_data.schema import to_plain

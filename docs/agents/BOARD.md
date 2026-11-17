@@ -13,15 +13,20 @@ _Last updated: 2026-11-16 by Claude Code (handover from Codex)._
 
 ## Direction (user decision, 2026-11-16)
 
-**Finish the new engine first.** The plan is in `docs/agents/ENGINE_ROADMAP.md`. GUI wishlist work is parked until the engine is live.
+Two stages (`docs/agents/ENGINE_ROADMAP.md`):
+- **Stage 1 (now):** the 94-input ratings drive the current engine, with a new player card and new front-office valuations. Design: `docs/agents/STAGE1_DESIGN.md`.
+- **Stage 2:** the possession engine becomes the real engine.
+
+GUI wishlist work is parked.
 
 ## In flight
 
 | Task | Owner | Status | Files it may touch |
 |---|---|---|---|
 | E3 Calibration targets and comparison tool | Claude (subagent) | **done** (5/5 tests verified). Report: `docs/agents/tasks/e3-calibration-targets.md` | `data/calibration/*`, `src/nba_gm_data/calibration_targets.py`, `scripts/build_calibration_targets.py`, `scripts/calibration_report.py`, `tests/test_calibration_targets.py` |
-| E2 League-wide input estimator | Codex | queued (paste from `CODEX_QUEUE.md`) | `src/nba_gm_data/input_estimator.py`, `scripts/build_player_inputs.py`, `data/canonical/player_inputs_2026_27.json`, `tests/test_input_estimator.py` |
-| E1 Whole-game engine shell | Claude | waiting for user go-ahead on the roadmap | `src/nba_gm_data/game_engine.py` (new), engine-selection hook in `sim.py` |
+| E2 League-wide input estimator | Codex | **in progress (Codex)** | `src/nba_gm_data/input_estimator.py`, `scripts/build_player_inputs.py`, `data/canonical/player_inputs_2026_27.json`, `tests/test_input_estimator.py` |
+| T1 Make tests trustworthy | Claude (subagent) | **review**. Core suite `scripts/run_core_tests.sh`: 329 tests in about 160 s, passing. Full-suite leftovers listed below. | `tests/`, `scripts/run_core_tests.sh` |
+| S1-B Adapter: inputs to the 15 hidden ratings | Claude | next (builds against E2's output format) | `src/nba_gm_data/trait_adapter.py`, `tests/test_trait_adapter.py` |
 
 ## Decided (2026-11-16)
 
@@ -32,21 +37,36 @@ _Last updated: 2026-11-16 by Claude Code (handover from Codex)._
 ## Waiting on the user
 
 1. Turn off iCloud "Optimize Mac Storage", or move the repo out of iCloud-synced Documents. Otherwise files get offloaded again when the disk fills.
-2. Should GitHub's `main` be fast-forwarded to the pushed branch?
 
-## Engine queue
+## Stage 1 queue (see `STAGE1_DESIGN.md`)
 
-| ID | Task | Owner | Week |
-|---|---|---|---|
-| E1 | Whole-game shell: clock, lineups, substitutions, possession starts, stand-in actions, plus-minus | Claude | 1 |
-| E2 | Input estimator for all 691 players plus prospects | Codex | 1 |
-| E3 | Real-NBA calibration targets and comparison report | Claude subagent | 1 |
-| E4 | Fast live decision rule fitted to the exact decision model | Claude | 2 |
-| E5 | Season calibration runs, then fix the biggest engine errors | Claude, with Codex for bounded fixes | 2–3 |
-| E6 | Missing mechanics flagged by calibration (closeouts, rebounds, transition) | Codex for bounded pieces | 3 |
-| E7 | Ratings display and AI valuation derived from the 94 inputs | Claude | 3 |
-| E8 | Development and aging of inputs; prospects use the estimator | Claude or Codex | 3–4 |
-| E9 | Five-season soak, default switch, beta rebuild | Claude | 4 |
+| ID | Task | Owner |
+|---|---|---|
+| E2 / S1-A | Input estimator: all 691 players plus prospects | Codex (in progress) |
+| S1-B | Adapter: inputs to the 15 hidden ratings | Claude |
+| S1-C | Development writes to inputs | Claude |
+| S1-D | New player card (four layers) plus derived OVR/OFF/DEF without clipping; rewrite rating-pin tests | Claude |
+| S1-E | Front-office AI (trades, contracts, FA, draft) reads new ratings | Claude, Codex for bounded parts |
+| S1-F | Prospects generated with inputs | Claude or Codex |
+| BBI | Basketball Index capture plan and importer (free pages first, then subscribe) | after E2 |
+| T2 | Regenerate test fixtures lost in the 2026-11-16 cleanup into `tests/fixtures/` (tracked, gzipped): `pick-investment-2026-10-28/stable17/saves/trade_year.json`, `roster-forecast-pass/fixtures/mature2036.json`, `balance/career-29/run.json`, `offense-season/career-29/run.json`, `context-demand-pass/attribution-before/context-builds.json` | Codex or subagent |
+| T3 | Investigate likely real front-office bugs (below) | Claude / Codex |
+
+## Full-suite leftovers after T1 (2026-11-16)
+
+- **Rating pins (rewrite in S1-D):** `test_imported_rookie_ratings` (6), `test_player_tuning` (2), `test_roster_alignment` (3), `test_rotation_profile_calibration` (2), `test_long_term_health` (1), `test_contract_import_separation` (1).
+- **Likely real bugs (T3):**
+  - AI trades applied count is 0, with `not_applied_stale_assets`.
+  - AI roster cutdown frees nobody.
+  - Expiring players are dropped during the draft.
+  - Giannis trade value 86.87 sits below Herro's 92.43.
+  - Luka goes 45th in the fantasy draft.
+  - Staff fire/interim and staff queue events.
+  - Future pick value and recommendations.
+  - Free-agency day market; team strategy phase pressure.
+- **Stale (fix with current data):** the Curry extension tests (his contract now runs through 2028-29) and several others listed in the T1 report.
+- **Data gap:** 11 rostered players have no height (DeVries, Fricks, Sellers, Agee, Cooper, Dix, Tilly, Holifield, Nkrumah, Burnett, Wague).
+- **Borderline:** `test_box_variation` FG% shift 0.0264 vs a 0.025 limit. A possible timing flake in the atomic-save test.
 
 ## Parked GUI queue (prompts in `CODEX_QUEUE.md`)
 

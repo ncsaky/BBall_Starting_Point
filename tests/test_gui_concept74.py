@@ -36,7 +36,7 @@ class Concept74GuiTests(unittest.TestCase):
         ]
         prospects = APP[
             APP.index("function seasonProspectsCard"):
-            APP.index("function seasonProspectStock")
+            APP.index("function regularSeasonProgressSlot")
         ]
         self.assertIn("performanceBarStyle(score)", mini_rating)
         self.assertIn("performanceBarStyle(confidence)", prospects)
@@ -73,10 +73,8 @@ class Concept74GuiTests(unittest.TestCase):
             specification.index(".season-prospects-head,"):
             specification.index(".season-prospects-head {")
         ]
-        self.assertIn("minmax(88px, 1.42fr)", minutes)
-        self.assertIn("24px minmax(60px, .92fr)", minutes)
-        self.assertIn("minmax(32px, .6fr)", minutes)
-        self.assertIn("minmax(60px, 1.1fr)", minutes)
+        # Minutes table was reduced to Player / Pos / Height / Minutes / Fatigue columns.
+        self.assertIn("minmax(112px,1.25fr) minmax(88px,1fr) minmax(52px,.7fr)", minutes)
         self.assertIn("minmax(0, 1.6fr)", prospects)
         self.assertNotIn("minmax(100px", prospects)
 
@@ -86,9 +84,8 @@ class Concept74GuiTests(unittest.TestCase):
             APP.index("function seasonMiniRating")
         ]
         specification = CSS[CSS.rindex("Regular-season command surface") :]
-        self.assertIn("<span>Player</span><span>Age</span><span>Pos</span>", minutes)
-        self.assertIn(":nth-child(7)", specification)
-        self.assertIn(":nth-child(11)", specification)
+        # The Age column was removed from the minutes card (and its nth-child group-gap CSS with it).
+        self.assertIn("<span>Player</span><span>Pos</span><span>Height</span><span>Minutes</span><span>Fatigue</span>", minutes)
 
     def test_team_radars_are_stacked_between_signals_and_standings(self):
         dashboard = APP[
@@ -107,23 +104,18 @@ class Concept74GuiTests(unittest.TestCase):
             APP.index("function seasonEfficiencyCard"):
             APP.index("function seasonProspectsCard")
         ]
-        stock = APP[
-            APP.index("function seasonProspectStock"):
-            APP.index("function seasonAwardsCard")
-        ]
         development = APP[
-            APP.index("function seasonDevelopmentSparkline"):
-            APP.index("function openTeamDevelopmentModal")
+            APP.index("function developmentLineChart"):
+            APP.index("function normalizeDevelopmentSeries")
         ]
-        self.assertIn("const seasonSlots = 26", efficiency)
-        self.assertIn("Math.max(1, seasonSlots - 1)", efficiency)
-        self.assertIn("regularSeasonProgressSlot(seasonSlots)", stock)
-        self.assertIn("developmentSeasonMonths().length", development)
+        self.assertIn("Math.max(26, source.length", efficiency)
+        self.assertIn("seasonSlots - 1", efficiency)
+        # The prospect-stock chart was removed; its season-progress helper remains.
+        self.assertIn("function regularSeasonProgressSlot(totalSlots = 26)", APP)
+        self.assertIn("months.length", development)
         self.assertNotIn("season-horizon-guide", efficiency)
-        self.assertIn("season-horizon-guide", stock)
         self.assertIn("season-horizon-guide", development)
-        self.assertIn('x1="0" y1="10"', stock)
-        self.assertIn('x1="0" y1="${height / 2}"', development)
+        self.assertIn('x1="${padX}" y1="${height / 2}"', development)
 
     def test_dashboard_includes_four_factors_and_real_rookie_candidates(self):
         signals = APP[
@@ -143,12 +135,12 @@ class Concept74GuiTests(unittest.TestCase):
             APP.index("function seasonEfficiencyCard"):
             APP.index("function seasonProspectsCard")
         ]
-        self.assertIn("length: 13", efficiency)
-        self.assertIn("length: 7", efficiency)
+        # Dense fixed grid is now built from seasonSlots (>= 26 weekly slots) rather than 13/7 literals.
+        self.assertIn("Array.from({length: seasonSlots}", efficiency)
+        self.assertIn("gridRows", efficiency)
         self.assertIn('class="net ', efficiency)
         self.assertIn('class="offense secondary', efficiency)
         self.assertIn('class="defense secondary', efficiency)
-        self.assertIn("linearGradient", efficiency)
 
     def test_weekly_efficiency_footer_clarifies_average_without_axis_overlap(self):
         efficiency = APP[
@@ -157,10 +149,12 @@ class Concept74GuiTests(unittest.TestCase):
         ]
         self.assertIn("chartHeight - 42", efficiency)
         self.assertNotIn('class="axis-caption"', efficiency)
-        self.assertIn('class="season-efficiency-context"', efficiency)
-        self.assertIn("leagueAverage.toFixed(1)", efficiency)
+        # The league-average context caption was replaced by series plotted relative to the league average,
+        # with a legend row; the card-board panel now has two grid rows.
+        self.assertIn("league_average", efficiency)
+        self.assertIn('class="season-efficiency-legend"', efficiency)
         board_css = (ROOT / "src/nba_gm_data/gui/card-board.css").read_text(encoding="utf-8")
-        self.assertIn("season-efficiency-panel.card-board-headerless { grid-template-rows:minmax(0,1fr) auto auto; }", board_css)
+        self.assertIn("season-efficiency-panel.card-board-headerless { grid-template-rows:minmax(0,1fr) auto; }", board_css)
 
     def test_minutes_use_visible_fill_rail(self):
         minutes = APP[

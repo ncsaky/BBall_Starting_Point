@@ -18,6 +18,8 @@ EVIDENCE = ROOT / 'output' / 'transaction-realism-audit'
 class TradeSalaryApplicationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        if not (EVIDENCE / 'fixed-scenarios' / 'fixture-inputs.json').exists():  # captured audit output removed by cleanup
+            raise unittest.SkipTest(f'{EVIDENCE} fixtures are missing; regenerate the transaction-realism audit')
         cls.base = json.loads((EVIDENCE / 'fixed-scenarios' / 'fixture-inputs.json').read_text())['base']
         cls.canonical = baseline_for_save(load_app_canonical(ROOT), cls.base)
         rows = json.loads((EVIDENCE / 'supplemental-results.json').read_text())

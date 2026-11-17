@@ -114,7 +114,8 @@ class ApiSecurityTests(unittest.TestCase):
 
     def test_simulation_stream_has_incremental_events_and_terminal_error_or_result(self):
         from nba_gm_data.simulation_progress import emit_progress
-        body = json.dumps({"action":"advance_save","payload":{"save_name":"fixture","days":1}}).encode()
+        # The stream endpoint now requires a client-supplied simulation_id (used for cancel/stop).
+        body = json.dumps({"action":"advance_save","simulation_id":"sim-1","payload":{"save_name":"fixture","days":1}}).encode()
         def run(*args,**kwargs):
             emit_progress({'state':{'current_date':'2027-06-01'}},'date')
             return {'saved':True}

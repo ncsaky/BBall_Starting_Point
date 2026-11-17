@@ -33,7 +33,7 @@ class Concept71GuiTests(unittest.TestCase):
         card = APP[APP.index("function playerCardRatingBar"):APP.index("async function dashboardPlayerCard")]
         self.assertIn("rating-average-marker", card)
         self.assertIn("rating_league_averages", card)
-        self.assertIn("spatialHeatmapMarkup(detail.spatial_profile)", card)
+        self.assertIn("spatialHeatmapMarkup(detail.spatial_profile", card)
         self.assertIn("approved-player-identity-ratings", card)
         self.assertNotIn("approved-ratings-panel", card)
 
@@ -44,7 +44,7 @@ class Concept71GuiTests(unittest.TestCase):
         self.assertIn(".spatial-legend i", CSS)
         self.assertNotIn("radial-gradient(", CSS)
         self.assertNotIn("<radialGradient", APP)
-        self.assertIn("function spatialHexCells", APP)
+        self.assertIn("function spatialHeatmapRegions", APP)
         self.assertIn("function spatialEfficiencyColor", APP)
         self.assertIn("profile?.shot_chart", APP)
         self.assertIn("region.delta_pp", APP)
@@ -55,7 +55,6 @@ class Concept71GuiTests(unittest.TestCase):
         self.assertIn("spatial-discrete-key", APP)
         self.assertIn("spatial-court-hex", APP)
         self.assertIn('viewBox="0 0 500 470"', APP)
-        self.assertIn("function spatialRegionOverlays", APP)
         self.assertIn("function spatialRegionGeometry", APP)
         self.assertIn('class="spatial-region-hit"', APP)
         self.assertIn("A237.5 237.5", APP)

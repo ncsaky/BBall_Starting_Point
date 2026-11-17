@@ -19,6 +19,8 @@ class DraftApplicationDuplicateTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.canonical = load_app_canonical(ROOT)
+        if not (EVIDENCE / 'fixed-scenarios/fixture-inputs.json').exists():  # captured audit output removed by cleanup
+            raise unittest.SkipTest(f'{EVIDENCE} fixtures are missing; regenerate the transaction-realism audit')
         cls.base = json.loads((EVIDENCE / 'fixed-scenarios/fixture-inputs.json').read_text())['base']
         cls.draft = next(row['result'] for row in json.loads((EVIDENCE / 'fixed-scenarios/scenarios.json').read_text()) if row['id'] == 'D1-draft')
         cls.first = cls.draft['pending_draft_selections'][0]

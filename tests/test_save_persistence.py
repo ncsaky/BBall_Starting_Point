@@ -170,7 +170,7 @@ module.write_save(path, save)
         legacy = fixture()
         self.path.write_text(json.dumps(legacy))
         original = self.path.read_bytes()
-        self.assertEqual(load_save(self.path), legacy)
+        self.assertEqual(load_save(self.path), {**legacy, "staff_season_changes": {}})  # Load normalization adds staff_season_changes.
         write_save(self.path, legacy)
         self.assertEqual(migration_backup_path(self.path).read_bytes(), original)
         hydrated = load_save(self.path, include_history=True)
@@ -264,7 +264,7 @@ module.write_save(path, save)
         legacy = {"version": "league_save_v1", "meta": {}, "marker": "legacy"}
         self.path.write_text(json.dumps(legacy))
         first, stale = load_save(self.path), load_save(self.path)
-        self.assertEqual(first, legacy)  # Reading does not silently migrate metadata.
+        self.assertEqual(first, {**legacy, "staff_season_changes": {}})  # Reading does not silently migrate metadata (staff_season_changes is a normalization default).
         first["marker"] = "updated"
         write_save(self.path, first)
         self.assertNotIn("id", first["meta"])

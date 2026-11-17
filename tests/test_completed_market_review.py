@@ -31,7 +31,7 @@ class CompletedMarketReviewTests(unittest.TestCase):
         self.assertEqual(result["opening_80_plus_no_longer_free_without_signed_offer"], ["premium"])
 
     def test_fixed_minute_counts_do_not_use_role_dependent_display(self):
-        result = metrics([{"fixed24_engine": 60, "display": 95, "age": 21}])
+        result = metrics([{"fixed24_engine": 85, "display": 95, "age": 21}])  # display grade is now the model grade itself (no inflation)
         self.assertEqual(result["fixed24_display_at_least"]["80"], 1)
         self.assertEqual(result["fixed24_display_at_least"]["90"], 0)
 

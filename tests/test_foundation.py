@@ -294,7 +294,8 @@ class DataFoundationTests(unittest.TestCase):
             save = create_league_save(
                 ROOT, self.plain, "MIA", Path(tmp) / "offseason.json", seed=2026
             )
-        self.assertEqual(save["state"]["phase"], "offseason")
+        # New careers start the day before the regular-season opener (new_career_start_date), in preseason.
+        self.assertEqual(save["state"]["phase"], "preseason")
         schedule = save["season_schedules"]["2026-27"]
         self.assertEqual(schedule["game_count"], 1230)
         self.assertEqual(Counter(team for game in schedule["games"] for team in [game["homeTeamId"], game["awayTeamId"]]),
@@ -303,7 +304,7 @@ class DataFoundationTests(unittest.TestCase):
 
     def test_2026_official_roster_snapshot_maps_every_player_once(self):
         snapshot = json.loads(
-            (ROOT / "data/research/nba_official_rosters_2026_07_28.json").read_text()
+            (ROOT / "data/research/nba_official_rosters_2026_10_13.json").read_text()
         )
         players_by_key = {}
         for player in self.universe.players:
@@ -316,7 +317,7 @@ class DataFoundationTests(unittest.TestCase):
             for team in snapshot["teams"]
             for player in team["roster"]
         ]
-        self.assertEqual(len(official_rows), 588)
+        self.assertEqual(len(official_rows), 616)  # Oct 13 roster refresh snapshot
         self.assertEqual(snapshot["duplicate_cross_team_rows"], [])
         self.assertEqual(
             len({str(player["nba_player_id"]) for _, player in official_rows}),
@@ -337,7 +338,8 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(players_by_key["mikeconley"].team_abbrev, "BOS")
         self.assertEqual(players_by_key["kristapsporzingis"].team_abbrev, "GSW")
         self.assertEqual(players_by_key["mouhamedgueye"].team_abbrev, "ATL")
-        self.assertEqual(players_by_key["mouhamadougueye"].team_abbrev, "CHA")
+        # Mouhamadou Gueye was removed from the universe by the Oct 13 roster refresh.
+        self.assertNotIn("mouhamadougueye", players_by_key)
 
     def test_2026_draft_results_map_to_current_players_and_contracts(self):
         draft = json.loads(
@@ -352,10 +354,17 @@ class DataFoundationTests(unittest.TestCase):
         }
         self.assertEqual(len(draft["picks"]), 60)
         self.assertEqual(draft["unmatched_lines"], [])
+        # Second-round picks the Oct 13 roster refresh did not carry onto a roster.
+        removed_by_refresh = {
+            "Richie Saunders", "Jack Kayil", "Lajae Jones", "Vsevolod Ishchenko",
+            "Narcisse Ngoy", "Trey Kaufman-Renn", "Malique Lewis",
+        }
         for pick in draft["picks"]:
-            player = players_by_key[
-                official_player_key(pick.get("normalized_name") or pick["name"])
-            ]
+            key = official_player_key(pick.get("normalized_name") or pick["name"])
+            if pick["name"] in removed_by_refresh:
+                self.assertNotIn(key, players_by_key)
+                continue
+            player = players_by_key[key]
             self.assertEqual(player.team_abbrev, pick["final_team_abbrev"])
             self.assertTrue(
                 any(
@@ -752,9 +761,11 @@ class DataFoundationTests(unittest.TestCase):
         ]
         self.assertGreater(summary["research_pending"]["contracts"], 0)
         self.assertEqual(summary["contract_manual_review_count"], 0)
-        self.assertGreaterEqual(
-            summary["research_pending"]["draft_picks"] + len(future_pick_scaffolds),
-            1,
+        # Future picks now come from the RealGM underlying-pick table (Oct 13 refresh): none are research-pending.
+        self.assertEqual(summary["research_pending"]["draft_picks"] + len(future_pick_scaffolds), 0)
+        self.assertEqual(
+            {pick.status for pick in self.universe.draft_picks},
+            {"verified_realgm_underlying_pick", "forfeited"},
         )
         self.assertEqual(summary["research_pending"]["staff_profiles"], 0)
         self.assertEqual(summary["missing_gameplay_staff_slots"], 0)
@@ -763,7 +774,7 @@ class DataFoundationTests(unittest.TestCase):
     def test_public_contract_and_draft_sources_populate_ledger(self):
         verified_contracts = [contract for contract in self.universe.contracts if contract.status == "verified_public_salary_table"]
         verified_picks = [pick for pick in self.universe.draft_picks if pick.status == "verified_2026_draft_board"]
-        future_picks = [pick for pick in self.universe.draft_picks if pick.status == "verified_future_pick_reference"]
+        future_picks = [pick for pick in self.universe.draft_picks if pick.status == "verified_realgm_underlying_pick"]
         self.assertGreaterEqual(len(verified_contracts), 300)
         self.assertEqual(len(verified_picks), 0)
         self.assertGreaterEqual(len(future_picks), 150)
@@ -773,7 +784,7 @@ class DataFoundationTests(unittest.TestCase):
             if pick.original_team_id
         }
         self.assertEqual(len(future_picks), len(underlying_future_pick_keys))
-        self.assertTrue(any("src_spotrac_future_picks" in pick.source_ids for pick in future_picks))
+        self.assertTrue(any("src_realgm_future_pick_pages" in pick.source_ids for pick in future_picks))
         curry = next(player for player in self.universe.players if player.normalized_name == "stephen curry")
         curry_contract = next(contract for contract in self.universe.contracts if contract.player_id == curry.id)
         self.assertEqual(curry_contract.seasons[0]["season"], "2026-27")
@@ -3284,7 +3295,7 @@ class DataFoundationTests(unittest.TestCase):
             save["pick_obligations"].append(swap)
             write_save(save_path, save)
             active = with_transaction_context(canonical_with_save(self.plain, load_save(save_path)))
-            self.assertIn("swap right", pick_swap_display_label(active, swap))
+            self.assertRegex(pick_swap_display_label(active, swap), r"favou?rable of")  # label wording replaced "swap right"
             self.assertGreater(pick_swap_asset_value(active, swap), 0)
             self.assertTrue(any(item["id"] == "test_swap_right" for item in tradeable_pick_swaps_for_team(active, "team_bos")))
             self.assertIn("Subject to", pick_label(active, next(pick for pick in active["draft_picks"] if pick["id"] == gsw_pick["id"])))
@@ -3412,7 +3423,7 @@ class DataFoundationTests(unittest.TestCase):
             }
             self.assertTrue(validate_pick_obligation_term(active, None, swap))
             labelled = canonical_with_pending_pick_terms(active, [swap])
-            self.assertIn("less favorable", pick_swap_display_label(labelled, swap))
+            self.assertRegex(pick_swap_display_label(labelled, swap), r"less favou?rable")
             self.assertLess(pick_swap_asset_value(labelled, swap), 0)
             save["pick_obligations"].append(swap)
             order = {
@@ -4310,8 +4321,8 @@ class DataFoundationTests(unittest.TestCase):
             save_path = Path(tmp) / "league_save.json"
             save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=9)
             self.assertEqual(save["version"], "league_save_v1")
-            self.assertEqual(save["state"]["current_date"], CANONICAL_START_DATE)
-            self.assertEqual(save["state"]["phase"], "offseason")
+            self.assertEqual(save["state"]["current_date"], "2026-10-20")  # new-career start: day before the regular-season opener
+            self.assertEqual(save["state"]["phase"], "preseason")
             self.assertEqual(len(save["staff_slots"]), len(self.universe.teams) * 6)
             active_start = canonical_with_save(self.plain, save)
             roster_counts = Counter(
@@ -4628,10 +4639,10 @@ class DataFoundationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             save_path = Path(tmp) / "league_save.json"
             create_league_save(ROOT, self.plain, "GSW", save_path, seed=6)
-            preview = propose_trade_to_save(self.plain, save_path, "GSW", "WAS", ["FROM:player:Seth Curry"], seed=2, store=False)
+            preview = propose_trade_to_save(self.plain, save_path, "GSW", "WAS", ["FROM:player:Gui Santos"], seed=2, store=False)
             self.assertEqual(preview["status"], "evaluated")
             self.assertEqual(len(load_save(save_path).get("pending_trade_proposals", [])), 0)
-            proposal = propose_trade_to_save(self.plain, save_path, "GSW", "WAS", ["FROM:player:Seth Curry"], seed=2)
+            proposal = propose_trade_to_save(self.plain, save_path, "GSW", "WAS", ["FROM:player:Gui Santos"], seed=2)
             self.assertEqual(proposal["status"], "stored")
             actions = pending_actions_view(self.plain, save_path)
             self.assertEqual(actions["pending_counts"]["trades"], 1)
@@ -4779,10 +4790,13 @@ class DataFoundationTests(unittest.TestCase):
             {row["season"]: row.get("salary") for row in svi.seasons},
             {"2026-27": 3_850_000, "2027-28": 4_025_000},
         )
+        # Cam Whitmore moved to DEN on a two-way deal in the Oct 13 roster refresh (no longer a manual override).
         confirmed = {
             "bub carrington": 4_750_000,
-            "cam whitmore": 5_500_000,
         }
+        whitmore = contracts[players["cam whitmore"].id]
+        self.assertEqual(whitmore.status, "inferred_two_way_gameplay_salary")
+        self.assertEqual({row["season"]: row.get("salary") for row in whitmore.seasons}, {"2026-27": 675_000})
         for name, salary in confirmed.items():
             contract = contracts[players[name].id]
             self.assertEqual(contract.status, "manual_gameplay_confirmed")
@@ -4795,7 +4809,7 @@ class DataFoundationTests(unittest.TestCase):
         data = load_or_build(ROOT, ROOT / "data/canonical")
         players = {player["normalized_name"]: player for player in data["players"]}
         contracts = {contract["player_id"]: contract for contract in data["contracts"]}
-        for name, salary in {"bub carrington": 4_750_000, "cam whitmore": 5_500_000}.items():
+        for name, salary in {"bub carrington": 4_750_000}.items():
             contract = contracts[players[name]["id"]]
             salaries = {row["season"]: row.get("salary") for row in contract.get("seasons", [])}
             self.assertEqual(contract.get("status"), "manual_gameplay_confirmed")
@@ -4927,7 +4941,7 @@ class DataFoundationTests(unittest.TestCase):
         block = trade_block_report(self.plain, "PHX")
         self.assertGreater(block["entry_count"], 0)
         self.assertTrue(all(entry["reasons"] for entry in block["entries"]))
-        report = find_trade(self.plain, "Luke Kennard", "PHX", limit=2, seed=2)
+        report = find_trade(self.plain, "Ryan Dunn", "PHX", limit=2, seed=2)
         self.assertGreater(report["candidate_count"], 0)
         self.assertIn("summary", report["candidates"][0])
         self.assertEqual(len(report["candidates"][0]["evaluations"]), 2)
@@ -4935,7 +4949,7 @@ class DataFoundationTests(unittest.TestCase):
     def test_trade_finder_preserves_untouchables_and_bounded_multi_asset_packages(self):
         self.assertEqual(find_trade(self.plain, "Stephen Curry", "GSW", limit=4, seed=2)["candidate_count"], 0)
         self.assertEqual(find_trade(self.plain, "Victor Wembanyama", "SAS", limit=4, seed=2)["candidate_count"], 0)
-        movable = find_trade(self.plain, "Norman Powell", "CHI", limit=8, seed=9)
+        movable = find_trade(self.plain, "Dailyn Swain", "CHI", limit=8, seed=9)
         self.assertGreater(movable["candidate_count"], 0)
         self.assertTrue(all(candidate["legality"]["status"] == "legal" for candidate in movable["candidates"]))
         self.assertTrue(all(len(candidate["proposal"]["from_assets"]) <= 4 for candidate in movable["candidates"]))
@@ -4949,7 +4963,7 @@ class DataFoundationTests(unittest.TestCase):
         package = find_trade_for_assets(
             self.plain,
             "GSW",
-            [{"kind": "player", "value": "Seth Curry"}, {"kind": "pick", "value": gsw_pick["id"]}],
+            [{"kind": "player", "value": "Gui Santos"}, {"kind": "pick", "value": gsw_pick["id"]}],
             "GSW",
             limit=4,
             seed=2,
@@ -5011,7 +5025,7 @@ class DataFoundationTests(unittest.TestCase):
             "WAS",
             "GSW",
             [{"kind": "player", "value": "Anthony Davis"}],
-            [{"kind": "player", "value": "Seth Curry"}],
+            [{"kind": "player", "value": "Gui Santos"}],
             seed=2,
         )
         self.assertEqual(illegal["legality"]["status"], "illegal")
@@ -5085,8 +5099,8 @@ class DataFoundationTests(unittest.TestCase):
             self.assertIsNot(active.get("draft_picks"), prepared.get("draft_picks"))
             self.assertIn("_transaction_pick_context_signature", active)
             with patch("nba_gm_data.transactions.annotate_pick_value_context", wraps=transactions_module.annotate_pick_value_context) as annotated:
-                evaluate_trade(active, "GSW", "BOS", [{"kind": "player", "value": "Seth Curry"}], [], seed=1)
-                evaluate_trade(active, "GSW", "BOS", [{"kind": "player", "value": "Seth Curry"}], [], seed=1)
+                evaluate_trade(active, "GSW", "BOS", [{"kind": "player", "value": "Gui Santos"}], [], seed=1)
+                evaluate_trade(active, "GSW", "BOS", [{"kind": "player", "value": "Gui Santos"}], [], seed=1)
                 self.assertEqual(annotated.call_count, 0)
             original_signature = active["_transaction_pick_context_signature"]
             active.setdefault("save_team_records", {}).setdefault("team_bos", {})["wins"] = 8
@@ -5185,7 +5199,7 @@ class DataFoundationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             save_path = Path(tmp) / "league_save.json"
             save = create_league_save(ROOT, self.plain, "GSW", save_path, seed=6)
-            seth = next(player for player in self.plain["players"] if player["name"] == "Seth Curry")
+            seth = next(player for player in self.plain["players"] if player["name"] == "Gui Santos")
             proposals = []
             for idx, team_id in enumerate(["team_was", "team_bkn"], start=1):
                 proposal = {
@@ -5193,7 +5207,7 @@ class DataFoundationTests(unittest.TestCase):
                         "id": f"overlap_trade_{idx}",
                         "from_team_id": "team_gsw",
                         "to_team_id": team_id,
-                        "from_assets": [{"kind": "player", "id": seth["id"], "label": "Seth Curry"}],
+                        "from_assets": [{"kind": "player", "id": seth["id"], "label": "Gui Santos"}],
                         "to_assets": [],
                     },
                     "legality": {"status": "legal", "issues": []},
@@ -5228,7 +5242,7 @@ class DataFoundationTests(unittest.TestCase):
             )
 
     def test_trade_application_prunes_stale_offers_and_blocks_recently_traded_players(self):
-        seth = next(player for player in self.plain["players"] if player["name"] == "Seth Curry")
+        seth = next(player for player in self.plain["players"] if player["name"] == "Gui Santos")
 
         def player_trade(proposal_id: str, to_team_id: str) -> dict:
             return {
@@ -5237,7 +5251,7 @@ class DataFoundationTests(unittest.TestCase):
                     "date": "2026-01-20",
                     "from_team_id": "team_gsw",
                     "to_team_id": to_team_id,
-                    "from_assets": [{"kind": "player", "id": seth["id"], "label": "Seth Curry"}],
+                    "from_assets": [{"kind": "player", "id": seth["id"], "label": "Gui Santos"}],
                     "to_assets": [],
                 },
                 "legality": {"status": "legal", "issues": []},
@@ -5280,12 +5294,12 @@ class DataFoundationTests(unittest.TestCase):
                     "date": "2026-01-01",
                     "transaction_type": "trade",
                     "status": "applied_to_save_ledger",
-                    "assets": {"from_assets": [{"kind": "player", "id": seth["id"], "label": "Seth Curry"}], "to_assets": []},
+                    "assets": {"from_assets": [{"kind": "player", "id": seth["id"], "label": "Gui Santos"}], "to_assets": []},
                 }
             ]
             write_save(save_path, save)
             active = canonical_with_save(self.plain, load_save(save_path))
-            report = evaluate_trade(active, "GSW", "WAS", [{"kind": "player", "value": "Seth Curry"}], [], seed=1, date="2026-01-20")
+            report = evaluate_trade(active, "GSW", "WAS", [{"kind": "player", "value": "Gui Santos"}], [], seed=1, date="2026-01-20")
             self.assertEqual(report["legality"]["status"], "illegal")
             self.assertTrue(any("last 60 days" in issue for issue in report["legality"]["issues"]))
 
@@ -5305,10 +5319,10 @@ class DataFoundationTests(unittest.TestCase):
             ]
             write_save(save_path, save)
             active = canonical_with_save(self.plain, load_save(save_path))
-            locked = evaluate_trade(active, "GSW", "WAS", [{"kind": "player", "value": "Seth Curry"}], [], seed=1, date="2026-07-02")
+            locked = evaluate_trade(active, "GSW", "WAS", [{"kind": "player", "value": "Gui Santos"}], [], seed=1, date="2026-07-02")
             self.assertEqual(locked["legality"]["status"], "illegal")
             self.assertTrue(any("cannot be traded until Dec. 1" in issue for issue in locked["legality"]["issues"]))
-            unlocked = evaluate_trade(active, "GSW", "WAS", [{"kind": "player", "value": "Seth Curry"}], [], seed=1, date="2026-12-01")
+            unlocked = evaluate_trade(active, "GSW", "WAS", [{"kind": "player", "value": "Gui Santos"}], [], seed=1, date="2026-12-01")
             self.assertFalse(any("cannot be traded until Dec. 1" in issue for issue in unlocked["legality"]["issues"]))
 
         with tempfile.TemporaryDirectory() as tmp:
@@ -5370,7 +5384,7 @@ class DataFoundationTests(unittest.TestCase):
         free_agent_active = json.loads(json.dumps(self.plain))
         for key in ["player_contract_market_profiles", "player_contract_preferences", "extension_candidates", "free_agent_candidates"]:
             free_agent_active.pop(key, None)
-        next(player for player in free_agent_active["players"] if player["name"] == "Seth Curry")["team_id"] = None
+        next(player for player in free_agent_active["players"] if player["name"] == "Gui Santos")["team_id"] = None
         self.assertGreater(free_agents_report(free_agent_active, "GSW")["candidate_count"], 0)
         extensions = extension_candidates_report(self.plain, "GSW")
         self.assertTrue(any(candidate["name"] == "Stephen Curry" for candidate in extensions["candidates"]))
@@ -6781,8 +6795,8 @@ class DataFoundationTests(unittest.TestCase):
         output = stdout.getvalue()
         self.assertIn("Daniss Jenkins", output)
         self.assertIn("D'Angelo Russell", output)
-        self.assertIn("age 24 ht 6'4\"", output)
-        self.assertIn("age 30 ht 6'3\"", output)
+        self.assertIn("age 25 ht 6'4\"", output)
+        self.assertIn("age 29 ht 6'3\"", output)
 
     def test_late_first_and_early_second_pick_values_are_neighbors(self):
         base = {"season": "2026", "current_owner_team_id": "team_gsw", "original_team_id": "team_gsw", "_active_season": "2025-26"}
