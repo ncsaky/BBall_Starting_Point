@@ -3433,7 +3433,9 @@ def refresh_live_draft_state_ownership(canonical: dict[str, Any], save: dict[str
     overrides = save.get("draft_pick_overrides") or {}
     changed = False
     seen_pending_pick_ids: set[str] = set()
-    for item in pending:
+    current_index = int(state.get("current_index") or 0)
+    rechoose: list[int] = []
+    for position, item in enumerate(pending):
         selection = item.setdefault("selection", {})
         pick = item.setdefault("pick", {})
         pick_id = selection.get("pick_id") or pick.get("id")
@@ -3457,7 +3459,42 @@ def refresh_live_draft_state_ownership(canonical: dict[str, Any], save: dict[str
             item["decision"]["team_id"] = owner_id
         item["team"] = teams.get(owner_id, {"id": owner_id, "abbrev": team_id_to_abbrev(owner_id)})
         changed = True
+        if position >= current_index:
+            rechoose.append(position)
+    for position in rechoose:
+        rechoose_pending_draft_pick(active, state, pending, position)
     return changed
+
+
+def rechoose_pending_draft_pick(active: dict[str, Any], state: dict[str, Any], pending: list[dict[str, Any]], index: int) -> bool:
+    """A team that acquired a pick mid-draft picks for itself: it chooses from the prospects still unpicked
+    (this slot and later ones), and the chosen prospect swaps into this slot - the same swap the user's own
+    picks use, so every later slot still holds exactly one available prospect."""
+    from .draft import preferred_prospect_for_pick
+    item = pending[index]
+    selection = item.setdefault("selection", {})
+    team_id = selection.get("team_id")
+    year = str(state.get("year") or selection.get("draft_year") or "")
+    candidates = [deepcopy(p.get("prospect")) for p in pending[index:] if p.get("prospect")]
+    overall = int(selection.get("overall_pick") or (item.get("pick") or {}).get("overall_pick") or index + 1)
+    seed = int((state.get("draft") or {}).get("seed") or 1)
+    choice = preferred_prospect_for_pick(active, year, team_id, overall, candidates, seed)
+    if not choice or choice.get("id") == (item.get("prospect") or {}).get("id"):
+        return False
+    other_index = next((i for i in range(index + 1, len(pending))
+                        if (pending[i].get("prospect") or {}).get("id") == choice.get("id")), None)
+    if other_index is None:
+        return False
+    other = pending[other_index]
+    item["prospect"], other["prospect"] = deepcopy(other.get("prospect")), deepcopy(item.get("prospect"))
+    for entry in (item, other):
+        entry_selection = entry.setdefault("selection", {})
+        selected_id = (entry.get("prospect") or {}).get("id")
+        entry_selection["prospect_id"] = selected_id
+        entry_selection["id"] = stable_id("draft_selection", entry_selection.get("pick_id"), selected_id, "rechosen")
+        entry["id"] = entry_selection["id"]
+        entry.pop("decision", None)
+    return True
 
 
 def current_draft_selection(state: dict[str, Any]) -> dict[str, Any] | None:

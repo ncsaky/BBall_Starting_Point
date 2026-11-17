@@ -34,7 +34,12 @@ def write_json(value: Any, path: Path) -> None:
 
 def load_universe_json(path: str | Path) -> dict[str, Any]:
     with Path(path).open("r", encoding="utf-8") as handle:
-        return json.load(handle)
+        data = json.load(handle)
+    if data.get("draft_prospects"):
+        # Stored universes predate public ranking; number generated classes by public grade on load.
+        from .draft import apply_public_ranks
+        apply_public_ranks(data["draft_prospects"])
+    return data
 
 
 def write_sqlite(universe: CanonicalUniverse, path: Path) -> None:

@@ -113,7 +113,9 @@ class ProspectRatingParityTests(unittest.TestCase):
 
     def test_canonical_class_keeps_its_skill_records_in_the_live_draft_payload(self):
         context = self.context()
-        prospect = context['draft_prospects'][0]
+        # The preview projects minutes from the board rank, so draft the rank-1 prospect at pick 1. (Classes are
+        # numbered by public grade since 2026-11-17, so list order is no longer rank order.)
+        prospect = min(context['draft_prospects'], key=lambda p: int(p.get('rank') or 99))
         team = {'id':'team_test','abbrev':'TST'}
         pick = {'id':'pick:1','overall_pick':1,'round':1,'current_owner_team_id':team['id']}
         context.update(teams=[team],draft_picks=[],draft_board_entries=[{'team_id':team['id'],'prospect_id':prospect['id']}])
