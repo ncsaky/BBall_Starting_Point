@@ -114,6 +114,10 @@ GUI wishlist work is parked.
 - **M01 done 2026-11-17 (user chose the rust marker):** players back from injury show a small red ↓ with the exact current in-game penalty (`sim.rust_penalty_points`: rust × 0.08, capped at 4, the same function the sim uses). The tooltip says it fades in about N days. Shown wherever the injury cross appears: the shared name helper (finder, roster and dashboard rows, next opponent, trade ledger, FA table), the Minutes + Availability table, and the player card's availability note ("Rusty after injury · in-game ratings −X · fades in about N days"). Payloads: `health_label` / `player_health_label` add rust, rust_penalty and rust_days for active players. Visual check passed with a sample marker; no player in the user's save is rusty at Nov 15.
 - **M01 finding (injury rating display):** injuries do NOT lower any stored or displayed rating today. OVR/OFF/DEF everywhere are full-health values. The only temporary effect is an in-game penalty from rust (after a return) and fatigue, applied to per-game features inside the sim (`sim.health_adjusted_player_features`). An "injury-adjusted OVR" would therefore need a new, defined derivation of that penalty. **User decision for the morning:** show a small red "rust" marker (games or percentage penalty) on returning players, versus deriving an effective OVR.
 
+## Decided (2026-11-17)
+
+- **Value fit stays monotone** (user, 2026-11-17): improving any skill rating can never lower a player's overall or trade value. Accepted trade-off: defense-poor high scorers rank lower (Trae, Brunson), and the out-of-fold fit is r 0.86 instead of 0.88.
+
 ## Decided (2026-11-16)
 
 - Two-stage plan approved: Stage 1 puts the new ratings into the current engine, with a new player card and new trade/contract valuations. Stage 2 is the new engine.
