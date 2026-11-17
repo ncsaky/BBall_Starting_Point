@@ -1,0 +1,4780 @@
+{
+ "version": "bbi_input_mapping_v1_2026_11_17",
+ "notes": "Reviewed map from Basketball Index (BBI) metric names to the 94 approved player-model inputs. Metric names only; BBI definition text stays in the git-ignored capture catalog. Layers are kept separate: technique inputs (S/F) use rate, per-shot or versus-expected quality metrics; tendency inputs (T) use frequencies, shares and attempt rates; physical inputs (P) use only listed height/weight and weak in-game speed; coach usage, teammates, opponents and on/off impact are context only. direction: +1 means a higher metric value means more of the input (better skill, larger tool, or more frequent choice); -1 the reverse. Direction is about the raw BBI value; check whether a capture stores a percentile already ordered by desirability before applying it. strength: primary = the most direct available measure; supporting = relevant but mixed with other factors; weak = indirect, use only as a small nudge. Every BBI result is an effective on-court observation that also contains physical tools, role and teammates. It constrains the estimate; it is not 'technique only'. Metrics named '... Per 75' must be divided by the relevant exposure (touches, drives, attempts, contests) before informing a skill. A metric listed under several inputs is one shared signal (one correlation group), never independent evidence. BBI 'Talent' grades fold in volume or self-creation, so per-shot 'Shot Making Efficiency' and 'Stable' percentages are preferred as primary. Passing families share three generic recognition metrics and two generic execution metrics; only drive-and-kick, connector, skip and outlet passes have any family-specific signal. For distribution inputs, outcome names the registry outcome the metric informs; T02 outcomes three_corner_share and three_deep_share describe detail within the three region.",
+ "inputs": {
+  "P01": {
+   "name": "Height",
+   "kind": "physical",
+   "metrics": [
+    {
+     "metric": "Height",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Listed height in inches; convert to cm."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Listed heights may be shoe-on or inflated; no measurement protocol/date."
+  },
+  "P02": {
+   "name": "Wingspan",
+   "kind": "physical",
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "BBI has no wingspan. Keep combine/scouting sources."
+  },
+  "P03": {
+   "name": "Standing reach",
+   "kind": "physical",
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "BBI has no standing reach."
+  },
+  "P04": {
+   "name": "Body mass",
+   "kind": "physical",
+   "metrics": [
+    {
+     "metric": "Weight",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Listed weight in pounds; convert to kg."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Listed weight, not a dated measurement; says nothing about strength."
+  },
+  "P05": {
+   "name": "Acceleration / first step",
+   "kind": "physical",
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "No first-step or acceleration data. Average speeds are not acceleration."
+  },
+  "P06": {
+   "name": "Straight-line speed",
+   "kind": "physical",
+   "metrics": [
+    {
+     "metric": "Avg Speed Offense",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Average tracked speed on offense; reflects role, pace and effort as well as top speed."
+    },
+    {
+     "metric": "Avg Speed Defense",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Average tracked speed on defense; reflects assignment and effort as well as top speed."
+    },
+    {
+     "metric": "Movement Speed Rating",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Offensive speed compared with players in the same offensive role, which removes some role effect."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Only average in-game speeds, never top speed. Heavily mixed with role, pace and effort; use as a weak nudge only."
+  },
+  "P07": {
+   "name": "Lateral mobility / change of direction",
+   "kind": "physical",
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "No lateral/change-of-direction data. By model rule, screen-navigation and isolation-defense results must not be used as lateral quickness."
+  },
+  "P08": {
+   "name": "Functional strength",
+   "kind": "physical",
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "No strength measurement. Do not infer from post or rebounding outcomes."
+  },
+  "P09": {
+   "name": "Physical balance / stability",
+   "kind": "physical",
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "No balance measurement."
+  },
+  "P10": {
+   "name": "Vertical / jump capacity",
+   "kind": "physical",
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "No vertical data. Do not infer from blocks, dunks or rebounds."
+  },
+  "P11": {
+   "name": "Conditioning",
+   "kind": "physical",
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "Distance-per-possession metrics reflect effort and role (mapped to effort allocation), not the ability to sustain execution. No fatigue-decay data."
+  },
+  "P12": {
+   "name": "Recovery between efforts",
+   "kind": "physical",
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "No between-effort recovery data."
+  },
+  "S01": {
+   "name": "Catch-and-shoot three-point execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "C&S 3PT Shot Making Efficiency",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Per-shot catch-and-shoot three accuracy against the difficulty-adjusted expectation."
+    },
+    {
+     "metric": "Stable C&S 3PT%",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Catch-and-shoot three percentage shrunk for sample size."
+    },
+    {
+     "metric": "C&S 3PT Shooting Talent",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "BBI catch-and-shoot talent grade; also folds in attempt volume, so not pure accuracy."
+    },
+    {
+     "metric": "C&S 3PT FG%",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Raw catch-and-shoot three percentage; noisy at low volume."
+    },
+    {
+     "metric": "Stable Corner 3PT%",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Corner threes are mostly catch-and-shoot; shrunk for sample."
+    },
+    {
+     "metric": "3PT Shot Making Efficiency",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "All-three difficulty-adjusted accuracy; shared with pull-up threes."
+    },
+    {
+     "metric": "C&S 3PT Shot Making",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Aggregate (volume-weighted) catch-and-shoot shot-making; prefer the per-shot version."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Catch-and-shoot includes catches after movement, so it partly overlaps the movement-three skill."
+  },
+  "S02": {
+   "name": "Pull-up three-point execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "3PT Pull Up Shot Making Efficiency",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Per-shot pull-up three accuracy against difficulty-adjusted expectation."
+    },
+    {
+     "metric": "Stable Pull Up 3PT%",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Pull-up three percentage shrunk for sample size."
+    },
+    {
+     "metric": "3PT Pull Up Talent",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "BBI pull-up three talent grade; also includes volume and self-creation."
+    },
+    {
+     "metric": "3PT Pull Up FG%",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Raw pull-up three percentage; noisy at low volume."
+    },
+    {
+     "metric": "3PT Shot Making Efficiency",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "All-three difficulty-adjusted accuracy; shared with catch-and-shoot."
+    },
+    {
+     "metric": "3PT Pull Up Shot Making",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Aggregate (volume-weighted) pull-up shot-making; prefer the per-shot version."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Low-volume pull-up shooters will stay uncertain; dribble pickup/footwork is not separated from accuracy."
+  },
+  "S03": {
+   "name": "Movement three-point execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Stable Off-Ball Screen PPP",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Points per off-screen possession (all shot types, includes turnovers and fouls)."
+    },
+    {
+     "metric": "Off-Ball Shot Making Efficiency",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Per-shot accuracy on potentially assisted shots; mixes stationary and moving catches."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No off-screen three-point split. Off-screen points per possession mixes threes, midrange and finishing."
+  },
+  "S04": {
+   "name": "Catch-and-shoot midrange execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Midrange Shot Making Efficiency",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "All midrange shot-making; mostly pull-ups for creators, so only a weak catch signal."
+    },
+    {
+     "metric": "Non-Paint Midrange Shot Making Efficiency",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Midrange beyond the paint against expectation; mixes catch and pull-up."
+    },
+    {
+     "metric": "Stable Long Midrange FG%",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Long-two percentage shrunk for sample; mixes catch and pull-up."
+    },
+    {
+     "metric": "Midrange Talent",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "BBI midrange talent grade; includes self-creation, so tilts toward pull-ups."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No catch-and-shoot midrange split. A non-pull-up midrange percentage can be derived: (Midrange FGM Per 75 - Midrange Pull Up FGM Per 75) / (Midrange FGA Per 75 - Midrange Pull Up FGA Per 75), with its own sample size."
+  },
+  "S05": {
+   "name": "Pull-up midrange execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Midrange Pull Up Shot Making Efficiency",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Per-shot pull-up midrange accuracy against difficulty-adjusted expectation."
+    },
+    {
+     "metric": "Midrange Pull Up Talent",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "BBI pull-up midrange talent grade; includes volume and self-creation."
+    },
+    {
+     "metric": "Midrange Pull Up FG%",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Raw pull-up midrange percentage."
+    },
+    {
+     "metric": "Midrange Pull Up Shot Making",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Aggregate (volume-weighted) version; prefer per-shot."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Does not separate dribble pickup/footwork from release accuracy."
+  },
+  "S06": {
+   "name": "Movement midrange execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Stable Off-Ball Screen PPP",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Off-screen points per possession; mixes all shot types."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No movement-midrange split at all; this should remain a wide, visibly uncertain estimate."
+  },
+  "S07": {
+   "name": "Free-throw execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Stable FT%",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Free-throw percentage shrunk for sample size."
+    },
+    {
+     "metric": "Free Throw Percentage",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Raw free-throw percentage."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": ""
+  },
+  "S08": {
+   "name": "Release / preparation technique",
+   "kind": "grade",
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "No release-time or shot-preparation data."
+  },
+  "S09": {
+   "name": "Distance-extension technique",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Deep 3PT Shot Making Efficiency",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Per-shot accuracy on 26+ ft threes against expectation; compare with the standard three skill to isolate range."
+    },
+    {
+     "metric": "Deep 3PT Shooting Talent",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "BBI deep-three talent grade; includes volume and self-creation."
+    },
+    {
+     "metric": "Deep 3PT Shot Making",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Aggregate (volume-weighted) deep-three shot-making."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Measures deep accuracy, not how mechanics hold up with distance. Use the gap between deep and standard three accuracy, not deep accuracy as a second shooting bonus."
+  },
+  "S10": {
+   "name": "Layup / close-touch execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Rim Shot Making Efficiency",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Per-shot rim accuracy against difficulty-adjusted expectation."
+    },
+    {
+     "metric": "Stable Rim FG%",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Rim percentage shrunk for sample size."
+    },
+    {
+     "metric": "Finishing Talent",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "BBI rim talent grade; includes self-creation rate."
+    },
+    {
+     "metric": "Rim FG%",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Raw rim percentage."
+    },
+    {
+     "metric": "Rim Shot Making",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Aggregate (volume-weighted) rim shot-making."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Rim data mixes layups with dunks, and size/vertical help conversion; treat as an effective-finishing constraint, not pure touch."
+  },
+  "S11": {
+   "name": "Floater / short-paint touch",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Floater Shot Making Efficiency",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Per-shot floater accuracy against expectation."
+    },
+    {
+     "metric": "Floater Talent",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "BBI floater talent grade; includes self-creation."
+    },
+    {
+     "metric": "Floater FG%",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Raw floater percentage."
+    },
+    {
+     "metric": "Paint Shot Making Efficiency",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Non-rim paint shot-making against expectation (floaters, push shots, short hooks)."
+    },
+    {
+     "metric": "Paint Shooting Talent",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "BBI non-rim paint talent grade."
+    },
+    {
+     "metric": "Stable Short Midrange FG%",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Short-two percentage shrunk for sample."
+    },
+    {
+     "metric": "Floater Shot Making",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Aggregate (volume-weighted) floater shot-making."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Low-volume floater shooters stay uncertain."
+  },
+  "S12": {
+   "name": "Dunk execution",
+   "kind": "grade",
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "No dunk-specific data; rim data does not separate dunks from layups."
+  },
+  "S13": {
+   "name": "Aerial catch-to-finish execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "PnR Screener Shot Making Efficiency",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Roll-man shot-making, which includes many lob and dump-off finishes."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No lob/alley-oop finish split."
+  },
+  "S14": {
+   "name": "Receiving / catch control",
+   "kind": "grade",
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "No fumble or catch-error data; catch control cannot be isolated from turnovers."
+  },
+  "S15": {
+   "name": "Contact finishing technique",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Contact Finish Rate",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Share of two-point shooting fouls converted into and-ones."
+    },
+    {
+     "metric": "Stable And 1s Per 75",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "And-one volume; depends on attack volume, divide by rim attempts."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Contact finishing is mixed with strength; no blocked-shot-rate or contested-finish split for the shooter."
+  },
+  "S16": {
+   "name": "Dribble manipulation",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Stable Isolation PPP",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Isolation points per possession; mixes handle with shooting and separation."
+    },
+    {
+     "metric": "Stable Travels Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Travel violations; divide by on-ball time."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No handle or dribble-move tracking. Mostly a scouting-led input."
+  },
+  "S17": {
+   "name": "Handle security",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Isolation Turnover Rate",
+     "direction": -1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Turnovers per isolation possession, a rate at comparable exposure."
+    },
+    {
+     "metric": "Turnovers Per 100 Touches",
+     "direction": -1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Turnovers per touch; includes passing turnovers."
+    },
+    {
+     "metric": "Stable Lost Ball Turnovers Per 75",
+     "direction": -1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Lost-ball turnovers; divide by touches or dribbles before use."
+    },
+    {
+     "metric": "Stable Live Lost Ball Turnovers Per 75",
+     "direction": -1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Stripped (live-ball) losses; divide by touches."
+    },
+    {
+     "metric": "Stable Non Bad Pass Turnovers Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "All non-passing turnovers; divide by touches."
+    },
+    {
+     "metric": "Stable Lost Ball Out Of Bounds Turnovers Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Ball lost out of bounds; divide by touches."
+    },
+    {
+     "metric": "Stable Step Out Of Bounds Turnovers Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Stepping out of bounds with the ball; body/ball control error."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Per-75 counts must be normalized by touches/dribbles (exposure). No pressure-specific (trap, press) split."
+  },
+  "S18": {
+   "name": "Perimeter separation craft",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Self-Created Openness Rating",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "How open a player gets on self-created shots."
+    },
+    {
+     "metric": "Pull-Up Openness Rating",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "How open pull-up attempts are."
+    },
+    {
+     "metric": "Isolation Shot Quality",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Quality of shots generated in isolation; mixes separation with shot choice."
+    },
+    {
+     "metric": "One on One Shot Quality",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Quality of one-on-one shots (post and perimeter)."
+    },
+    {
+     "metric": "Isolation Shot Making Efficiency",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Isolation shot-making against expectation; mixes separation with shooting."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Openness is also driven by how much defenses respect the shooter (great shooters get guarded tighter). Footwork/fakes are not measured."
+  },
+  "S19": {
+   "name": "Driving craft",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Rim Shot Creation",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Ability to self-create rim attempts; includes volume, so normalize by on-ball time."
+    },
+    {
+     "metric": "Rim Openness Rating",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "How open rim attempts are; partly team spacing."
+    },
+    {
+     "metric": "Stable P&R Ball Handler PPP",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Pick-and-roll handler points per possession; mixes driving with shooting."
+    },
+    {
+     "metric": "PnR Ball Handler Shot Making Efficiency",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Handler shot-making against expectation."
+    },
+    {
+     "metric": "Stable Charge Fouls Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Offensive charges taken by the player; out-of-control drives."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No drive success rate (blow-bys, paint arrivals per drive). Speed and spacing contaminate everything here."
+  },
+  "S20": {
+   "name": "Attack recognition",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Half Court Shot Quality",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Quality of half-court shots taken; partly decision quality, partly shot-difficulty appetite."
+    },
+    {
+     "metric": "PnR Ball Handler Shot Quality",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Quality of shots the handler takes out of pick-and-roll."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No measure of reads against available options. Mostly scouting-led."
+  },
+  "S21": {
+   "name": "Post establishment / sealing",
+   "kind": "grade",
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "No seal, post-position or entry-depth data."
+  },
+  "S22": {
+   "name": "Post moves / counters",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Post Up Shot Quality",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Quality of shots created from post-ups; counters create better looks."
+    },
+    {
+     "metric": "Stable Post Up PPP",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Post-up points per possession, including fouls and turnovers."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No post move/counter tracking; strength and size affect results."
+  },
+  "S23": {
+   "name": "Post-specific finish execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Post Up Shot Making Efficiency",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Per-shot post-up accuracy against expectation."
+    },
+    {
+     "metric": "Post Up Shooting Talent",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "BBI post-up shooting talent grade."
+    },
+    {
+     "metric": "Post Up Shot Making",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Aggregate (volume-weighted) post-up shot-making."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Includes non-hook shots from the post, which the model assigns to other shot skills."
+  },
+  "S24": {
+   "name": "Foul-drawing craft",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Drive Foul Drawn Rate",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Fouls drawn per drive."
+    },
+    {
+     "metric": "Isolation Foul Drawn Rate",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Fouls drawn per isolation possession."
+    },
+    {
+     "metric": "Drive Foul Rate",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Fouls drawn per drive (second BBI version)."
+    },
+    {
+     "metric": "3PT Foul Rate",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Share of three-point attempts that draw a foul."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Rates also reflect how often the player seeks contact (a tendency), so share with contact-seeking carefully."
+  },
+  "S25": {
+   "name": "Cutting-route execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Stable Cut PPP",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Points per cut/dump-off possession, shrunk for sample."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Cut efficiency also reflects finishing and passer quality; no route timing data."
+  },
+  "S26": {
+   "name": "Relocation / shooting-route execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Assisted Openness Rating",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "How open the player is on assisted shots; getting open off the ball."
+    },
+    {
+     "metric": "C&S 3PT Openness Rating",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "How open catch-and-shoot threes are."
+    },
+    {
+     "metric": "Stable Off-Ball Screen PPP",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Off-screen points per possession."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Openness depends on teammates drawing attention and on defenses respecting the shooter."
+  },
+  "S27": {
+   "name": "Screen execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Screening Talent",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "BBI screening grade from screen volume and quality."
+    },
+    {
+     "metric": "Stable Offensive Fouls Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Offensive fouls, many of them moving screens for bigs."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Screening Talent folds in volume; separate frequency belongs to the screen tendency."
+  },
+  "S28": {
+   "name": "Screen-action recognition",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Stable P&R Roll Man PPP",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Roll/pop man points per possession; good roll/pop/slip choices raise it."
+    },
+    {
+     "metric": "PnR Screener Shot Quality",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Quality of shots the screener gets out of pick-and-roll."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No direct record of when a player holds, re-screens, slips or pops."
+  },
+  "S29": {
+   "name": "Offensive rebound reading / pursuit technique",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Offensive Rebounding Crashing Skill",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "BBI estimate of getting into position to compete for offensive rebounds."
+    },
+    {
+     "metric": "Offensive Rebounding Talent",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "BBI offensive rebounding grade (positioning plus conversion)."
+    },
+    {
+     "metric": "Stable Self OReb Percent of FGA",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Rebounding own misses; reading own shot trajectory."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Crashing skill partly reflects how often a player chooses or is told to crash."
+  },
+  "S30": {
+   "name": "Defensive rebound reading / positioning",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Defensive Rebounding Crashing Skill",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "BBI estimate of getting into position for defensive rebounds."
+    },
+    {
+     "metric": "Defensive Rebounding Talent",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "BBI defensive rebounding grade (positioning plus conversion)."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Mixed with size and with team scheme (who is assigned to rebound)."
+  },
+  "S31": {
+   "name": "Box-out technique",
+   "kind": "grade",
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "No box-out data at all. Needs scouting/tracking."
+  },
+  "S32": {
+   "name": "Rebound control",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Offensive Rebounding Conversion Skill",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "BBI estimate of winning offensive rebound chances."
+    },
+    {
+     "metric": "Defensive Rebounding Conversion Skill",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "BBI estimate of winning defensive rebound chances."
+    },
+    {
+     "metric": "Adjusted Offensive Rebounding Success Rate",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Win rate on offensive rebound chances, excluding deferrals."
+    },
+    {
+     "metric": "Adjusted Defensive Rebounding Success Rate",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Win rate on defensive rebound chances, excluding deferrals."
+    },
+    {
+     "metric": "Percentage of Offensive Rebounds Contested",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Share of offensive boards won in traffic."
+    },
+    {
+     "metric": "Percentage of Defensive Rebounds Contested",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Share of defensive boards won in traffic."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Conversion is heavily helped by height, reach and jump; subtract those effects rather than double-counting."
+  },
+  "S33": {
+   "name": "On-ball containment technique",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Perimeter Isolation Defense",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Lowers shot quality and attempts in isolation, adjusted for opponent skill."
+    },
+    {
+     "metric": "Screener Mobile Defense",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Screener defense in containment-first coverages (bigs on the perimeter)."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Results include lateral quickness and length; separate those before calling it technique."
+  },
+  "S34": {
+   "name": "Contact resistance / leverage technique",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Post Defense",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Ability to disrupt opponent post-ups."
+    },
+    {
+     "metric": "Stable Charge Fouls Drawn Per 75",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Charges drawn; absorbing contact legally (also a positioning choice)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Strength and mass dominate post defense results; no contact-technique data."
+  },
+  "S35": {
+   "name": "Screen-navigation technique",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Ball Screen Navigation",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Lowers shot quality and attempts on ball screens, adjusted for opponent skill."
+    },
+    {
+     "metric": "Off-Ball Chaser Defense",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Lowers shot quality and attempts on off-ball screens, adjusted for opponent skill."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Includes lateral speed and length; not to be reused as lateral quickness."
+  },
+  "S36": {
+   "name": "Interior positioning",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Rim Deterrence",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Opponents take fewer rim shots with the player on court."
+    },
+    {
+     "metric": "Screener Rim Defense",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Screener defense in rim-first coverages (drop)."
+    },
+    {
+     "metric": "Rim Deterrence Per 100",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Same idea per 100 possessions."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Deterrence mixes positioning with size and reputation; scheme matters."
+  },
+  "S37": {
+   "name": "Contest technique",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Stable Rim dFG% vs. Expected",
+     "direction": -1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Opponent rim percentage against expectation when contested, shrunk for sample (lower is better)."
+    },
+    {
+     "metric": "Rim dFG% vs Expected",
+     "direction": -1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Raw version (lower is better)."
+    },
+    {
+     "metric": "Stable Defensive FG% at Rim",
+     "direction": -1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Opponent rim percentage when contested, shrunk (lower is better)."
+    },
+    {
+     "metric": "Rim Disruption",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Disrupting rim shots, adjusted for players defended."
+    },
+    {
+     "metric": "Block Rate on Contests",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Share of contests that become blocks."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Only rim contests are measured; no perimeter contest effectiveness. Height/reach/jump also drive these."
+  },
+  "S38": {
+   "name": "Rotation recognition",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Help Effectiveness Rating",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "How effectively a player disrupts scoring chances when helping."
+    },
+    {
+     "metric": "Help Defense Talent",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "BBI help grade; also includes help frequency, which is a tendency."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Measures help outcomes, not the timing of reads."
+  },
+  "S39": {
+   "name": "Off-ball coverage positioning",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Help Effectiveness Rating",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Help outcomes partly reflect good starting position."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No gap/denial/tag positioning data."
+  },
+  "S40": {
+   "name": "Closeout / arrival control",
+   "kind": "grade",
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "No closeout or spot-up defense data in the catalog."
+  },
+  "S41": {
+   "name": "Defensive anticipation",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Passing Lane Defense",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Interceptions and deflections rate; partly anticipation."
+    },
+    {
+     "metric": "Loose Ball Recovery Rate",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Share of available loose balls recovered; reading where the ball goes."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Anticipation is mixed with gambling appetite and hands."
+  },
+  "S42": {
+   "name": "On-ball steal technique",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Pickpocket Rating",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Rate of on-ball (lost-ball) steals."
+    },
+    {
+     "metric": "Stable Lost Ball Steals Per 75",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "On-ball steals shrunk for sample."
+    },
+    {
+     "metric": "Stable Steals Per Loose Ball Fouls Ratio",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Clean steals relative to reach-in fouls."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Steal counts also rise with gambling frequency."
+  },
+  "S43": {
+   "name": "Passing-lane interception technique",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Passing Lane Defense",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Rate of interceptions and deflections."
+    },
+    {
+     "metric": "Stable Bad Pass Steals Per 75",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Interceptions shrunk for sample."
+    },
+    {
+     "metric": "Pick 6s per 75 Poss",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Interceptions turned straight into scores."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Also rises with gambling frequency and reach."
+  },
+  "S44": {
+   "name": "Attention / responsibility execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Stable Defensive 3-Second Violations Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Defensive three-second calls; a lapse in responsibility/awareness."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Almost nothing measures assignment awareness. Mostly scouting-led."
+  },
+  "S45": {
+   "name": "Foul-control technique",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Stable Blocks Per Shooting Fouls Ratio",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Blocks per shooting foul; contesting without fouling."
+    },
+    {
+     "metric": "Stable Steals Per Loose Ball Fouls Ratio",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Clean steals per loose-ball foul."
+    },
+    {
+     "metric": "Stable Shooting Fouls Per 75",
+     "direction": -1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Shooting fouls committed; normalize by defensive involvement."
+    },
+    {
+     "metric": "Stable Fouls Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "All fouls committed; normalize by defensive involvement."
+    },
+    {
+     "metric": "Stable Blocks Per Fouls Ratio",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Blocks per foul committed."
+    },
+    {
+     "metric": "Stable Blocks Per Defensive Goaltends Ratio",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Blocks per goaltend."
+    },
+    {
+     "metric": "Stable Defensive Goaltends Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Goaltending calls."
+    },
+    {
+     "metric": "Stable Loose Ball Fouls Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Loose-ball fouls."
+    },
+    {
+     "metric": "Stable Non Shooting Penalty Non Take Fouls Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Non-intentional, non-shooting penalty fouls."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Foul counts rise with role (rim protectors, point-of-attack defenders); divide by contests or involvement."
+  },
+  "S46": {
+   "name": "Defensive communication",
+   "kind": "grade",
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "No communication data. Scouting-led only."
+  },
+  "F01.recognition": {
+   "name": "Connector / swing / reversal — recognition",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Quick Decision Making Assist %",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Share of quick (<0.5s) touches that become assists; quick, correct ball movement."
+    },
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Expected value of the shots a player creates for teammates; better reads find better shots (shared across all pass types)."
+    },
+    {
+     "metric": "Role-Adjusted Potential Assists Per 100 Passes",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Share of passes that lead to a teammate shot, compared with players in the same role (shared across all pass types)."
+    },
+    {
+     "metric": "Passing Versatility",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Range of pass types a player makes; wider range implies more reads available (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Only generic passing quality plus quick-touch assists; no swing/reversal-specific data."
+  },
+  "F01.execution": {
+   "name": "Connector / swing / reversal — execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Passing Efficiency",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+    },
+    {
+     "metric": "Stable Bad Pass Turnovers Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Only generic passing accuracy; nothing swing-pass specific."
+  },
+  "F02.recognition": {
+   "name": "Post entry — recognition",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Expected value of the shots a player creates for teammates; better reads find better shots (shared across all pass types)."
+    },
+    {
+     "metric": "Role-Adjusted Potential Assists Per 100 Passes",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Share of passes that lead to a teammate shot, compared with players in the same role (shared across all pass types)."
+    },
+    {
+     "metric": "Passing Versatility",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Range of pass types a player makes; wider range implies more reads available (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Generic passing signals only. Nothing post-entry specific in BBI."
+  },
+  "F02.execution": {
+   "name": "Post entry — execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Passing Efficiency",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+    },
+    {
+     "metric": "Stable Bad Pass Turnovers Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Generic passing signals only. Nothing post-entry specific in BBI."
+  },
+  "F03.recognition": {
+   "name": "Pocket / roll feed — recognition",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Expected value of the shots a player creates for teammates; better reads find better shots (shared across all pass types)."
+    },
+    {
+     "metric": "Role-Adjusted Potential Assists Per 100 Passes",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Share of passes that lead to a teammate shot, compared with players in the same role (shared across all pass types)."
+    },
+    {
+     "metric": "Passing Versatility",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Range of pass types a player makes; wider range implies more reads available (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Generic passing signals only. Nothing pocket/roll-pass specific (the P&R creation rate has no definition and looks like volume)."
+  },
+  "F03.execution": {
+   "name": "Pocket / roll feed — execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Passing Efficiency",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+    },
+    {
+     "metric": "Stable Bad Pass Turnovers Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Generic passing signals only. Nothing pocket/roll-pass specific (the P&R creation rate has no definition and looks like volume)."
+  },
+  "F04.recognition": {
+   "name": "Lob — recognition",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Expected value of the shots a player creates for teammates; better reads find better shots (shared across all pass types)."
+    },
+    {
+     "metric": "Role-Adjusted Potential Assists Per 100 Passes",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Share of passes that lead to a teammate shot, compared with players in the same role (shared across all pass types)."
+    },
+    {
+     "metric": "Passing Versatility",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Range of pass types a player makes; wider range implies more reads available (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Generic passing signals only. Lob attempts are only available as a frequency (used for passing risk appetite), not success."
+  },
+  "F04.execution": {
+   "name": "Lob — execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Passing Efficiency",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+    },
+    {
+     "metric": "Stable Bad Pass Turnovers Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Generic passing signals only. Lob attempts are only available as a frequency (used for passing risk appetite), not success."
+  },
+  "F05.recognition": {
+   "name": "Short-roll playmaking — recognition",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Expected value of the shots a player creates for teammates; better reads find better shots (shared across all pass types)."
+    },
+    {
+     "metric": "Role-Adjusted Potential Assists Per 100 Passes",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Share of passes that lead to a teammate shot, compared with players in the same role (shared across all pass types)."
+    },
+    {
+     "metric": "Passing Versatility",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Range of pass types a player makes; wider range implies more reads available (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Generic passing signals only. Nothing short-roll specific."
+  },
+  "F05.execution": {
+   "name": "Short-roll playmaking — execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Passing Efficiency",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+    },
+    {
+     "metric": "Stable Bad Pass Turnovers Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Generic passing signals only. Nothing short-roll specific."
+  },
+  "F06.recognition": {
+   "name": "Drive-and-kick — recognition",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Drive Assist Per Pass Rate",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Share of passes out of drives that become assists; finding the right outlet."
+    },
+    {
+     "metric": "Drive Assist Rate",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Share of drives ending in an assist; mixes reads with pass-first tendency."
+    },
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Expected value of the shots a player creates for teammates; better reads find better shots (shared across all pass types)."
+    },
+    {
+     "metric": "Role-Adjusted Potential Assists Per 100 Passes",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Share of passes that lead to a teammate shot, compared with players in the same role (shared across all pass types)."
+    },
+    {
+     "metric": "Passing Versatility",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Range of pass types a player makes; wider range implies more reads available (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Drive passing is the best-covered pass type, but assists depend on teammate shooting."
+  },
+  "F06.execution": {
+   "name": "Drive-and-kick — execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Drive Assist Per Pass Rate",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Drive passes that become assists also need accurate delivery."
+    },
+    {
+     "metric": "Passing Efficiency",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+    },
+    {
+     "metric": "Stable Bad Pass Turnovers Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No drive-specific turnover rate."
+  },
+  "F07.recognition": {
+   "name": "Skip / cross-court — recognition",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Expected value of the shots a player creates for teammates; better reads find better shots (shared across all pass types)."
+    },
+    {
+     "metric": "Role-Adjusted Potential Assists Per 100 Passes",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Share of passes that lead to a teammate shot, compared with players in the same role (shared across all pass types)."
+    },
+    {
+     "metric": "Passing Versatility",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Range of pass types a player makes; wider range implies more reads available (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Generic passing signals only; no skip-pass data."
+  },
+  "F07.execution": {
+   "name": "Skip / cross-court — execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Stable Live Ball Bad Pass Turnovers Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Intercepted (live-ball) bad passes; long cross-court passes are often picked off."
+    },
+    {
+     "metric": "Pick 6s Thrown Per 75 Poss",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Interceptions returned for scores."
+    },
+    {
+     "metric": "Passing Efficiency",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+    },
+    {
+     "metric": "Stable Bad Pass Turnovers Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No skip-pass data."
+  },
+  "F08.recognition": {
+   "name": "Post playmaking — recognition",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Expected value of the shots a player creates for teammates; better reads find better shots (shared across all pass types)."
+    },
+    {
+     "metric": "Role-Adjusted Potential Assists Per 100 Passes",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Share of passes that lead to a teammate shot, compared with players in the same role (shared across all pass types)."
+    },
+    {
+     "metric": "Passing Versatility",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Range of pass types a player makes; wider range implies more reads available (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Generic passing signals only. Nothing post-passing specific."
+  },
+  "F08.execution": {
+   "name": "Post playmaking — execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Passing Efficiency",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+    },
+    {
+     "metric": "Stable Bad Pass Turnovers Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Generic passing signals only. Nothing post-passing specific."
+  },
+  "F09.recognition": {
+   "name": "Transition / outlet / advance — recognition",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Expected value of the shots a player creates for teammates; better reads find better shots (shared across all pass types)."
+    },
+    {
+     "metric": "Role-Adjusted Potential Assists Per 100 Passes",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Share of passes that lead to a teammate shot, compared with players in the same role (shared across all pass types)."
+    },
+    {
+     "metric": "Passing Versatility",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Range of pass types a player makes; wider range implies more reads available (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Generic passing signals only; no outlet/advance pass data."
+  },
+  "F09.execution": {
+   "name": "Transition / outlet / advance — execution",
+   "kind": "grade",
+   "metrics": [
+    {
+     "metric": "Stable Bad Pass Out Of Bounds Turnovers Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Passes thrown out of bounds; common on long advance passes."
+    },
+    {
+     "metric": "Passing Efficiency",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+    },
+    {
+     "metric": "Stable Bad Pass Turnovers Per 75",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No outlet/advance pass data."
+  },
+  "T01": {
+   "name": "Shoot / drive / pass / post / reset choices",
+   "kind": "distribution",
+   "metrics": [
+    {
+     "metric": "Stable FGA Per 75",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "shoot",
+     "why": "Shot attempts; divide by touches to get shoot-per-touch."
+    },
+    {
+     "metric": "Quick Decision Making Shot %",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": "shoot",
+     "why": "Share of quick touches that end in a shot."
+    },
+    {
+     "metric": "Drives Per 75 Possessions",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": "drive",
+     "why": "Drives; divide by touches to get drive-per-touch."
+    },
+    {
+     "metric": "Drive Passout Rate",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "pass",
+     "why": "Share of drives ending in a pass."
+    },
+    {
+     "metric": "Quick Decision Making Pass %",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": "pass",
+     "why": "Share of quick touches that end in a pass."
+    },
+    {
+     "metric": "Passing Creation Volume",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "pass",
+     "why": "Shots created for teammates; pass-first volume."
+    },
+    {
+     "metric": "Potential Assists Per 75 Possessions",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": "pass",
+     "why": "Passes leading to a teammate shot."
+    },
+    {
+     "metric": "Paint Touches Per 75 Possessions",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": "post",
+     "why": "Paint touches include post catches; no direct post-up frequency exists."
+    },
+    {
+     "metric": "Post Up Impact Per 75 Possessions",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": "post",
+     "why": "Post-up points added; volume-driven, so a rough post frequency proxy."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No post-up frequency and nothing on resets/swing-backs. Observed choices are also shaped by the coach and role."
+  },
+  "T02": {
+   "name": "Shot-location preferences",
+   "kind": "distribution",
+   "metrics": [
+    {
+     "metric": "3PT Attempt Rate",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": "three",
+     "why": "Share of shots that are threes."
+    },
+    {
+     "metric": "Rim Shot Attempts Per 75 Possessions",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "rim",
+     "why": "Rim attempts; divide by total attempts for the rim share."
+    },
+    {
+     "metric": "Midrange FGA Per 75",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "midrange",
+     "why": "Midrange attempts; divide by total attempts."
+    },
+    {
+     "metric": "Stable Avg 2PT Shot Distance",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "midrange",
+     "why": "Longer average two-point distance means more midrange, fewer rim shots."
+    },
+    {
+     "metric": "Corner 3 to ATB Ratio",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "three_corner_share",
+     "why": "Within threes: corner versus above-the-break preference."
+    },
+    {
+     "metric": "Stable Avg 3PT Shot Distance",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "three_deep_share",
+     "why": "Within threes: deep-range preference."
+    },
+    {
+     "metric": "Average 3PT Attempt Distance",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": "three_deep_share",
+     "why": "Raw version of three-point distance."
+    },
+    {
+     "metric": "Shot Versatility",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Balance across shot locations (evenness of the distribution)."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "No left/right side data and no explicit short-paint attempt count (derive by subtraction). Outcomes ending in _share are within-three detail, not a fifth region."
+  },
+  "T03": {
+   "name": "Shooting-mode preferences",
+   "kind": "distribution",
+   "metrics": [
+    {
+     "metric": "C&S to Pull Up Ratio",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": "catch",
+     "why": "Catch-and-shoot versus pull-up three attempts."
+    },
+    {
+     "metric": "Spot Up%",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "catch",
+     "why": "Spot-up share (no BBI definition; assumed play-type share)."
+    },
+    {
+     "metric": "3PT Pull Up FGA Per 75",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "pull_up",
+     "why": "Pull-up three attempts; divide by total attempts."
+    },
+    {
+     "metric": "Midrange Pull Up FGA Per 75",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "pull_up",
+     "why": "Pull-up midrange attempts; divide by total attempts."
+    },
+    {
+     "metric": "Off-Ball Screen Possessions Per 75 Possessions",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "movement",
+     "why": "Off-screen possessions; shots after movement."
+    },
+    {
+     "metric": "3PT Versatility",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Balance across three-point types."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Off-screen usage is partly a coach play-call, not just preference."
+  },
+  "T04": {
+   "name": "Shot difficulty tolerance",
+   "kind": "propensity",
+   "metrics": [
+    {
+     "metric": "Overall Shot Quality",
+     "direction": -1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Lower expected quality of shots taken means more tolerance for difficult shots."
+    },
+    {
+     "metric": "Overall Openness Rating",
+     "direction": -1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Less open attempts means more willingness to shoot contested."
+    },
+    {
+     "metric": "3PT Openness Rating",
+     "direction": -1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Same idea for threes."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Shot quality also reflects location skill and defensive attention; it is the decision side, not accuracy."
+  },
+  "T05": {
+   "name": "Pace / early-attack preference",
+   "kind": "propensity",
+   "metrics": [
+    {
+     "metric": "Transition Shot Creation",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Self-creating transition shots; pushing early."
+    },
+    {
+     "metric": "Offensive Transition Frequency Impact",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Team transition frequency rises with the player on court."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No individual transition play frequency or early-offense data."
+  },
+  "T06": {
+   "name": "Dribble / possession persistence",
+   "kind": "propensity",
+   "metrics": [
+    {
+     "metric": "Average Dribbles Per Touch",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Dribbles per touch."
+    },
+    {
+     "metric": "Average Seconds Per Touch",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Seconds per touch."
+    },
+    {
+     "metric": "Dribbles Per Second on Offense",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Dribbling rate while on offense."
+    },
+    {
+     "metric": "Quick Decision Making %",
+     "direction": -1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Share of touches under half a second (less holding)."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Role (primary handler vs spacer) drives most of this; condition on role."
+  },
+  "T07": {
+   "name": "Passing risk appetite",
+   "kind": "propensity",
+   "metrics": [
+    {
+     "metric": "Lob Passing Creation Rate",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Rate of lob attempts; a high-reward, riskier pass."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No pass-difficulty or risky-attempt data beyond lobs. Turnover counts mix risk with accuracy and are kept on the execution side."
+  },
+  "T08": {
+   "name": "Offensive involvement preference",
+   "kind": "propensity",
+   "metrics": [
+    {
+     "metric": "Stable True Usage%",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Share of team offense used (shrunk); also set by the coach."
+    },
+    {
+     "metric": "Offensive Involvement Rate",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "On-ball actions (isolations, post-ups, pick-and-roll handling) per 100 possessions."
+    },
+    {
+     "metric": "On-Ball Action Share",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Share of the team's on-ball actions."
+    },
+    {
+     "metric": "Ball Dominance %",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Share of offensive time on the ball."
+    },
+    {
+     "metric": "Touches Per 75",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Touches per 75 possessions."
+    },
+    {
+     "metric": "Usage Rate",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Box-score usage."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Observed usage is the player wanting the ball plus the coach giving it; the coach part must stay outside the player rating."
+  },
+  "T09": {
+   "name": "Cutting frequency",
+   "kind": "propensity",
+   "metrics": [
+    {
+     "metric": "Cuts Per 75 Possessions",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Cuts and dump-offs per 75 possessions."
+    },
+    {
+     "metric": "Movement Attack Rate",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Share of possessions from off-ball screens, cuts and dump-offs."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Some cuts are play-called."
+  },
+  "T10": {
+   "name": "Relocation / off-ball movement frequency",
+   "kind": "propensity",
+   "metrics": [
+    {
+     "metric": "Off-Ball Screen Possessions Per 75 Possessions",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "Off-screen possessions per 75."
+    },
+    {
+     "metric": "Movement Attack Rate",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Share of possessions from off-ball movement."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Off-screen sets are often coach play-calls; relocation without screens is not tracked."
+  },
+  "T11": {
+   "name": "Screen / roll / pop / slip preferences",
+   "kind": "distribution",
+   "metrics": [
+    {
+     "metric": "Screen Assists Per 75 Possessions",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "screen",
+     "why": "Screens leading to scores; screen frequency proxy."
+    },
+    {
+     "metric": "Roll Man Poss Per 75 Possessions",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "roll",
+     "why": "Roll/pop/slip finishing possessions."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No roll vs pop vs slip split."
+  },
+  "T12": {
+   "name": "Offensive crash versus retreat",
+   "kind": "propensity",
+   "metrics": [
+    {
+     "metric": "Offensive Rebounding Chances Per 75 Possessions",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "How often the player is in the mix for offensive boards."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Also driven by coach crash/retreat strategy and position."
+  },
+  "T13": {
+   "name": "Defensive pursuit versus box-out emphasis",
+   "kind": "distribution",
+   "metrics": [
+    {
+     "metric": "Defensive Rebounding Chances Per 75 Possessions",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "pursue",
+     "why": "How often the player goes for defensive boards."
+    },
+    {
+     "metric": "Average Defensive Rebounding Distance from Rim",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": "pursue",
+     "why": "Longer-distance boards suggest chasing the ball."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No box-out frequency data."
+  },
+  "T14": {
+   "name": "Steal / disruption gamble frequency",
+   "kind": "propensity",
+   "metrics": [
+    {
+     "metric": "Deflections Per 75 Possessions",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Deflection volume; the closest thing to gamble frequency."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No steal-attempt data; deflections also reflect skill."
+  },
+  "T15": {
+   "name": "Help commitment",
+   "kind": "propensity",
+   "metrics": [
+    {
+     "metric": "Help Defensive Activity",
+     "direction": 1,
+     "strength": "primary",
+     "outcome": null,
+     "why": "How often the player engages in help defense."
+    },
+    {
+     "metric": "Percentage of Shots at Rim Contested",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Share of opponent rim shots contested while on court."
+    }
+   ],
+   "coverage": "good",
+   "gap_note": "Scheme decides some help duties."
+  },
+  "T16": {
+   "name": "Contest commitment / stay-down preference",
+   "kind": "distribution",
+   "metrics": [
+    {
+     "metric": "Stable Rim DFGA Per 75 Possessions",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": "jump",
+     "why": "Rim contests, usually jumping contests."
+    },
+    {
+     "metric": "3PT Contests Per 75 Possessions",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": "conservative_contest",
+     "why": "Perimeter contests, mostly controlled ones."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No split between jumping, contesting conservatively and staying down."
+  },
+  "T17": {
+   "name": "Effort allocation",
+   "kind": "distribution",
+   "metrics": [
+    {
+     "metric": "Matchup Adjusted Defensive Feet Per Minute",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "defense",
+     "why": "Defensive distance compared with the same defensive role."
+    },
+    {
+     "metric": "Defensive Miles Per 75 Possessions",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "defense",
+     "why": "Defensive distance per possession."
+    },
+    {
+     "metric": "Movement Distance Rating",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": "offense",
+     "why": "Offensive distance compared with the same offensive role."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "No transition effort data. Distance is also tied to assignment and scheme."
+  },
+  "T18": {
+   "name": "Contact-seeking preference",
+   "kind": "propensity",
+   "metrics": [
+    {
+     "metric": "Stable FTA Per 75",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Free-throw attempts; divide by shot attempts for a free-throw rate."
+    },
+    {
+     "metric": "Stable Shooting Fouls Drawn Per 75",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Shooting fouls drawn; divide by attacks."
+    },
+    {
+     "metric": "Stable Fouls Drawn Per 75",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "All fouls drawn."
+    }
+   ],
+   "coverage": "partial",
+   "gap_note": "Cannot separate seeking contact (tendency) from skill at drawing fouls; per-attack foul rates stay with the foul-drawing skill."
+  }
+ },
+ "context_only": [
+  {
+   "metric": "% of Minutes in Foul Trouble",
+   "use": "usage",
+   "why": "Foul-trouble time; coach and game context (foul control uses rate metrics instead)."
+  },
+  {
+   "metric": "% of Shots at Rim Unassisted",
+   "use": "role",
+   "why": "Shot origin mix (assisted vs self-created) reflects role and teammates."
+  },
+  {
+   "metric": "% of Time Guarding Athletic Finishers",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Centers",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Low Minute Players",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Movement Shooters",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Off-Screen Shooters",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Point Guards",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Post Scorers",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Power Forwards",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Primary Ball Handlers",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Roll & Cut Bigs",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Secondary Ball Handlers",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Shooting Guards",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Shot Creators",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Slashers",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Small Forwards",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Stationary Shooters",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Stretch Bigs",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Usage Tier 1 Players",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Usage Tier 2 Players",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Usage Tier 3 Players",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Usage Tier 4 Players",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Usage Tier 5 Players",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Usage Tier 6 Players",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time Guarding Versatile Bigs",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "% of Time as Big",
+   "use": "role",
+   "why": "Position/role label assigned by BBI; useful for role priors only."
+  },
+  {
+   "metric": "% of Time as Guard",
+   "use": "role",
+   "why": "Position/role label assigned by BBI; useful for role priors only."
+  },
+  {
+   "metric": "% of Time as Wing",
+   "use": "role",
+   "why": "Position/role label assigned by BBI; useful for role priors only."
+  },
+  {
+   "metric": "3PT %",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "3PT FGA Per 75 Possessions",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "3PT Functional Versatility",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "3PT Pull Up FGM Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "3PT Pull Up Openness Rating",
+   "use": "impact",
+   "why": "Shot openness depends on defensive attention and teammates; used to interpret shot-making, not a skill by itself."
+  },
+  {
+   "metric": "3PT Pull Up Shot Creation",
+   "use": "usage",
+   "why": "\"Shot creation\" ratings measure how many shots of that kind a player generates (volume of self-creation), which is a usage/tendency signal, not accuracy."
+  },
+  {
+   "metric": "3PT Pull Up Shot Quality",
+   "use": "impact",
+   "why": "Shot-quality descriptor for one shot family; already covered by the overall shot-difficulty tendency and by per-family shot-making."
+  },
+  {
+   "metric": "3PT Shooting Talent",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "3PT Shot Creation",
+   "use": "usage",
+   "why": "\"Shot creation\" ratings measure how many shots of that kind a player generates (volume of self-creation), which is a usage/tendency signal, not accuracy."
+  },
+  {
+   "metric": "3PT Shot Making",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "3PT Shot Quality",
+   "use": "impact",
+   "why": "Shot-quality descriptor for one shot family; already covered by the overall shot-difficulty tendency and by per-family shot-making."
+  },
+  {
+   "metric": "3PTA Open%",
+   "use": "impact",
+   "why": "Shot openness depends on defensive attention and teammates; used to interpret shot-making, not a skill by itself."
+  },
+  {
+   "metric": "3PTM Per 75 Possessions",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "ATB 3PT FG%",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Advanced Position",
+   "use": "role",
+   "why": "Position/role label assigned by BBI; useful for role priors only."
+  },
+  {
+   "metric": "Age",
+   "use": "biographical",
+   "why": "Biographical; age/experience feed development and aging, not current ability."
+  },
+  {
+   "metric": "Assist Points Per 75 Possessions",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Assists Per 75 Possessions",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Average Offensive Rebounding Distance from Rim",
+   "use": "role",
+   "why": "Where a player secures offensive boards; reflects position more than skill."
+  },
+  {
+   "metric": "Avg Height Guarded",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "BPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "BPM LA-RAPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Blocks Per 75 Possessions",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Box Creation",
+   "use": "impact",
+   "why": "Attention a player draws from defenses; an outcome of skill and reputation, used to read openness and teammate effects, not as an input."
+  },
+  {
+   "metric": "C&S 3PT Shot Quality",
+   "use": "impact",
+   "why": "Shot-quality descriptor for one shot family; already covered by the overall shot-difficulty tendency and by per-family shot-making."
+  },
+  {
+   "metric": "Clutch Minutes Played",
+   "use": "usage",
+   "why": "Playing-time volume; set by the coach."
+  },
+  {
+   "metric": "Clutch Time%",
+   "use": "usage",
+   "why": "Playing-time volume; set by the coach."
+  },
+  {
+   "metric": "Corner 3PT FG%",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Cut Scoring Impact Per 75",
+   "use": "impact",
+   "why": "Volume times efficiency (\"points added\"); mixes usage with skill. Calibration target only."
+  },
+  {
+   "metric": "D-BPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "D-BPM LA-RAPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "D-DPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "D-DRIP",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "D-EBRON",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "D-LEBRON",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "D-LEBRON Box Impact",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "D-LEBRON Vs Role Average",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "DHO Coverage Aggression",
+   "use": "team_context",
+   "why": "Screen-coverage style is mostly the team scheme, not a player trait."
+  },
+  {
+   "metric": "DHO Coverage Versatility",
+   "use": "team_context",
+   "why": "Screen-coverage style is mostly the team scheme, not a player trait."
+  },
+  {
+   "metric": "DPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "DRIP",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Deep 3PT Openness Rating",
+   "use": "impact",
+   "why": "Shot openness depends on defensive attention and teammates; used to interpret shot-making, not a skill by itself."
+  },
+  {
+   "metric": "Deep 3PT Shot Creation",
+   "use": "usage",
+   "why": "\"Shot creation\" ratings measure how many shots of that kind a player generates (volume of self-creation), which is a usage/tendency signal, not accuracy."
+  },
+  {
+   "metric": "Deep 3PT Shot Quality",
+   "use": "impact",
+   "why": "Shot-quality descriptor for one shot family; already covered by the overall shot-difficulty tendency and by per-family shot-making."
+  },
+  {
+   "metric": "Defensive FT Rate Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Defensive Impact Luck",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Defensive Impact on Opponent Shot Quality",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Defensive Impact on Possession Quality",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Defensive Optimization",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Defensive Playmaking",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Defensive Portability ",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Defensive Position",
+   "use": "role",
+   "why": "Position/role label assigned by BBI; useful for role priors only."
+  },
+  {
+   "metric": "Defensive Position Estimate",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Defensive Positional Versatility",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Defensive Possession Volume Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Defensive RAPTOR",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Defensive Reb Per 75 Possessions",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Defensive Rebounding Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Defensive Rebounds Per Game",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Defensive Role Versatility",
+   "use": "role",
+   "why": "Balance of assignments guarded; describes deployment, not ability."
+  },
+  {
+   "metric": "Defensive Talent",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Defensive Transition Frequency Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Defensive Turnover Generation Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Defensive eFG% Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "EBRON",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Effective FG%",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Floater Openness Rating",
+   "use": "impact",
+   "why": "Shot openness depends on defensive attention and teammates; used to interpret shot-making, not a skill by itself."
+  },
+  {
+   "metric": "Floater Shot Creation",
+   "use": "usage",
+   "why": "\"Shot creation\" ratings measure how many shots of that kind a player generates (volume of self-creation), which is a usage/tendency signal, not accuracy."
+  },
+  {
+   "metric": "Floater Shot Quality",
+   "use": "impact",
+   "why": "Shot-quality descriptor for one shot family; already covered by the overall shot-difficulty tendency and by per-family shot-making."
+  },
+  {
+   "metric": "Fouls Drawn / 75",
+   "use": "usage",
+   "why": "Raw fouls-drawn count; the stabilized version is used for contact-seeking."
+  },
+  {
+   "metric": "Games Played",
+   "use": "usage",
+   "why": "Playing-time volume; set by the coach."
+  },
+  {
+   "metric": "Games Started",
+   "use": "usage",
+   "why": "Playing-time volume; set by the coach."
+  },
+  {
+   "metric": "Garbage Time%",
+   "use": "usage",
+   "why": "Playing-time volume; set by the coach."
+  },
+  {
+   "metric": "Guarded 3PT Shooting Talent",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded 3PT Shot Creation",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded 3PT Shot Making",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded Bigs%",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded Finishing Talent",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded Guards%",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded Midrange Talent",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded O-LEBRON",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded Offensive Involvement Rate",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded Offensive Rebounding Talent",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded On-Ball %",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded One on One Talent",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded Pick & Roll Ball Handler Frequency%",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded Playmaking Talent",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded Projected Usage%",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded Rim Shot Creation",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded Rim Shot Making",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded Shooting Talent",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded Stable Post Up PPP",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded USG%",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded Wing%",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Guarded by Ball Screen Navigation",
+   "use": "team_context",
+   "why": "Quality of the defenders guarding this player; opponent context used to adjust offensive results."
+  },
+  {
+   "metric": "Guarded by Help Defensive Activity",
+   "use": "team_context",
+   "why": "Quality of the defenders guarding this player; opponent context used to adjust offensive results."
+  },
+  {
+   "metric": "Guarded by Matchup Difficulty",
+   "use": "team_context",
+   "why": "Quality of the defenders guarding this player; opponent context used to adjust offensive results."
+  },
+  {
+   "metric": "Guarded by Off-Ball Chaser Defense",
+   "use": "team_context",
+   "why": "Quality of the defenders guarding this player; opponent context used to adjust offensive results."
+  },
+  {
+   "metric": "Guarded by Perimeter Isolation Defense",
+   "use": "team_context",
+   "why": "Quality of the defenders guarding this player; opponent context used to adjust offensive results."
+  },
+  {
+   "metric": "Guarded by Rim Protection",
+   "use": "team_context",
+   "why": "Quality of the defenders guarding this player; opponent context used to adjust offensive results."
+  },
+  {
+   "metric": "Half Court Openness Rating",
+   "use": "impact",
+   "why": "Shot openness depends on defensive attention and teammates; used to interpret shot-making, not a skill by itself."
+  },
+  {
+   "metric": "Half Court Shooting Talent",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Half Court Shot Creation",
+   "use": "usage",
+   "why": "\"Shot creation\" ratings measure how many shots of that kind a player generates (volume of self-creation), which is a usage/tendency signal, not accuracy."
+  },
+  {
+   "metric": "Half Court Shot Making",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Half Court Shot Making Efficiency",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "High Value Assists Per 75 Possessions",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Isolation Shooting Talent",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Isolation Shot Making",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "LEBRON",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "LEBRON Box Impact",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "LEBRON Contract Value",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "LEBRON Defensive Points Saved",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "LEBRON Offensive Points Added",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "LEBRON Salary Over Expected",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "LEBRON Vs Role Average",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "LEBRON WAR",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Long Mid Range FG%",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Luck-Adjusted DRAPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Luck-Adjusted ORAPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Luck-Adjusted RAPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Matchup Difficulty",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Midrange FGM Per 75",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Midrange Openness Rating",
+   "use": "impact",
+   "why": "Shot openness depends on defensive attention and teammates; used to interpret shot-making, not a skill by itself."
+  },
+  {
+   "metric": "Midrange Pull Up FGM Per 75",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Midrange Pull Up Openness Rating",
+   "use": "impact",
+   "why": "Shot openness depends on defensive attention and teammates; used to interpret shot-making, not a skill by itself."
+  },
+  {
+   "metric": "Midrange Pull Up Shot Creation",
+   "use": "usage",
+   "why": "\"Shot creation\" ratings measure how many shots of that kind a player generates (volume of self-creation), which is a usage/tendency signal, not accuracy."
+  },
+  {
+   "metric": "Midrange Pull Up Shot Quality",
+   "use": "impact",
+   "why": "Shot-quality descriptor for one shot family; already covered by the overall shot-difficulty tendency and by per-family shot-making."
+  },
+  {
+   "metric": "Midrange Shot Creation",
+   "use": "usage",
+   "why": "\"Shot creation\" ratings measure how many shots of that kind a player generates (volume of self-creation), which is a usage/tendency signal, not accuracy."
+  },
+  {
+   "metric": "Midrange Shot Making",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Midrange Shot Quality",
+   "use": "impact",
+   "why": "Shot-quality descriptor for one shot family; already covered by the overall shot-difficulty tendency and by per-family shot-making."
+  },
+  {
+   "metric": "Minutes",
+   "use": "usage",
+   "why": "Playing-time volume; set by the coach."
+  },
+  {
+   "metric": "Minutes Consistency",
+   "use": "usage",
+   "why": "Playing-time volume; set by the coach."
+  },
+  {
+   "metric": "Minutes Per Game",
+   "use": "usage",
+   "why": "Playing-time volume; set by the coach."
+  },
+  {
+   "metric": "Movement Points Per 75 Possessions",
+   "use": "impact",
+   "why": "Volume times efficiency (\"points added\"); mixes usage with skill. Calibration target only."
+  },
+  {
+   "metric": "Movement Scoring Impact Per 75 Possessions",
+   "use": "impact",
+   "why": "Volume times efficiency (\"points added\"); mixes usage with skill. Calibration target only."
+  },
+  {
+   "metric": "Multi-Year D-LEBRON",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Multi-Year LEBRON",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Multi-Year O-LEBRON",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Net Possession Quality Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Net Possession Volume Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Net Shot Quality Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Non Garbage-Time Minutes",
+   "use": "usage",
+   "why": "Playing-time volume; set by the coach."
+  },
+  {
+   "metric": "Non-Paint Midrange Openness Rating",
+   "use": "impact",
+   "why": "Shot openness depends on defensive attention and teammates; used to interpret shot-making, not a skill by itself."
+  },
+  {
+   "metric": "Non-Paint Midrange Shooting Talent",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Non-Paint Midrange Shot Creation",
+   "use": "usage",
+   "why": "\"Shot creation\" ratings measure how many shots of that kind a player generates (volume of self-creation), which is a usage/tendency signal, not accuracy."
+  },
+  {
+   "metric": "Non-Paint Midrange Shot Making",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Non-Paint Midrange Shot Quality",
+   "use": "impact",
+   "why": "Shot-quality descriptor for one shot family; already covered by the overall shot-difficulty tendency and by per-family shot-making."
+  },
+  {
+   "metric": "O-BPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "O-BPM LA-RAPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "O-DPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "O-DRIP",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "O-EBRON",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "O-LEBRON",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "O-LEBRON Box Impact",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "O-LEBRON Vs Role Average",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Off-Ball Coverage Aggression",
+   "use": "team_context",
+   "why": "Screen-coverage style is mostly the team scheme, not a player trait."
+  },
+  {
+   "metric": "Off-Ball Coverage Versatility",
+   "use": "team_context",
+   "why": "Screen-coverage style is mostly the team scheme, not a player trait."
+  },
+  {
+   "metric": "Off-Ball Gravity",
+   "use": "impact",
+   "why": "Attention a player draws from defenses; an outcome of skill and reputation, used to read openness and teammate effects, not as an input."
+  },
+  {
+   "metric": "Off-Ball Shot Making",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Off-Ball Shot Quality",
+   "use": "impact",
+   "why": "Shot-quality descriptor for one shot family; already covered by the overall shot-difficulty tendency and by per-family shot-making."
+  },
+  {
+   "metric": "Off-Screen Impact Per 75",
+   "use": "impact",
+   "why": "Volume times efficiency (\"points added\"); mixes usage with skill. Calibration target only."
+  },
+  {
+   "metric": "Offense Position",
+   "use": "role",
+   "why": "Position/role label assigned by BBI; useful for role priors only."
+  },
+  {
+   "metric": "Offensive FT Rate Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Offensive Impact Luck",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Offensive Impact on Possession Quality",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Offensive Impact on Teammate Shot Quality",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Offensive Optimization",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Offensive Portability",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Offensive Possession Volume Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Offensive RAPTOR",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Offensive Rebounding Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Offensive Rebounds Per 75 Possessions",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Offensive Rebounds Per Game",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Offensive Talent",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Offensive Turnover Generation Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Offensive eFG% Impact on Teammates",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "On-Ball Gravity",
+   "use": "impact",
+   "why": "Attention a player draws from defenses; an outcome of skill and reputation, used to read openness and teammate effects, not as an input."
+  },
+  {
+   "metric": "One on One Shooting Talent",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "One on One Shot Making",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "One on One Shot Making Efficiency",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "One on One Stable eFG%",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Overall Coverage Aggression",
+   "use": "team_context",
+   "why": "Screen-coverage style is mostly the team scheme, not a player trait."
+  },
+  {
+   "metric": "Overall Coverage Versatility",
+   "use": "team_context",
+   "why": "Screen-coverage style is mostly the team scheme, not a player trait."
+  },
+  {
+   "metric": "Overall Gravity",
+   "use": "impact",
+   "why": "Attention a player draws from defenses; an outcome of skill and reputation, used to read openness and teammate effects, not as an input."
+  },
+  {
+   "metric": "Overall Optimization",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Overall Screener Defense",
+   "use": "impact",
+   "why": "BBI summary grades that roll up many skills; comparing against them is a sanity check, but feeding them in would double count."
+  },
+  {
+   "metric": "Overall Shooting Talent",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Overall Shot Creation",
+   "use": "usage",
+   "why": "\"Shot creation\" ratings measure how many shots of that kind a player generates (volume of self-creation), which is a usage/tendency signal, not accuracy."
+  },
+  {
+   "metric": "Overall Shot Making",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Overall Shot Making Efficiency",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Overall Talent",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Overall Turnover Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "P&R Coverage Aggression",
+   "use": "team_context",
+   "why": "Screen-coverage style is mostly the team scheme, not a player trait."
+  },
+  {
+   "metric": "P&R Coverage Versatility",
+   "use": "team_context",
+   "why": "Screen-coverage style is mostly the team scheme, not a player trait."
+  },
+  {
+   "metric": "P&R Creation Rate",
+   "use": "usage",
+   "why": "No BBI definition; appears to be a pick-and-roll creation frequency. Confirm before any use."
+  },
+  {
+   "metric": "Padded Guarded O-LEBRON",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Padded Guarded Usage%",
+   "use": "role",
+   "why": "Who the defender is assigned to guard; describes deployment and difficulty, not ability. Used to adjust defensive results."
+  },
+  {
+   "metric": "Paint Openness Rating",
+   "use": "impact",
+   "why": "Shot openness depends on defensive attention and teammates; used to interpret shot-making, not a skill by itself."
+  },
+  {
+   "metric": "Paint Shot Creation",
+   "use": "usage",
+   "why": "\"Shot creation\" ratings measure how many shots of that kind a player generates (volume of self-creation), which is a usage/tendency signal, not accuracy."
+  },
+  {
+   "metric": "Paint Shot Making",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Paint Shot Quality",
+   "use": "impact",
+   "why": "Shot-quality descriptor for one shot family; already covered by the overall shot-difficulty tendency and by per-family shot-making."
+  },
+  {
+   "metric": "Percent of Games Started",
+   "use": "usage",
+   "why": "Playing-time volume; set by the coach."
+  },
+  {
+   "metric": "Playmaking Talent",
+   "use": "impact",
+   "why": "BBI summary grades that roll up many skills; comparing against them is a sanity check, but feeding them in would double count."
+  },
+  {
+   "metric": "PnR Ball Handler Shooting Talent",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "PnR Ball Handler Shot Making",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "PnR Screener Shooting Talent",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "PnR Screener Shot Making",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Points Over Expectation / 75",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Points Per 75 Possessions",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Points Per Possession",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Points Per Shot",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Portability",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Potential Assists Per 100 Passes",
+   "use": "usage",
+   "why": "Volume of potential assists per 100 passes (not role-adjusted); the role-adjusted version is used for passing reads."
+  },
+  {
+   "metric": "Predictive D-LEBRON",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Predictive LEBRON",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Predictive O-LEBRON",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Primary Defender Involvement Rate",
+   "use": "role",
+   "why": "Defensive assignment load; describes the job the coach gives, used to normalize defensive rates."
+  },
+  {
+   "metric": "Pull-Up Shooting Talent",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Pull-Up Shot Creation",
+   "use": "usage",
+   "why": "\"Shot creation\" ratings measure how many shots of that kind a player generates (volume of self-creation), which is a usage/tendency signal, not accuracy."
+  },
+  {
+   "metric": "Pull-Up Shot Making",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Pull-Up Shot Making Efficiency",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Pull-Up Shot Quality",
+   "use": "impact",
+   "why": "Shot-quality descriptor for one shot family; already covered by the overall shot-difficulty tendency and by per-family shot-making."
+  },
+  {
+   "metric": "Putback Scoring Impact Per 75 Possessions",
+   "use": "impact",
+   "why": "Volume times efficiency (\"points added\"); mixes usage with skill. Calibration target only."
+  },
+  {
+   "metric": "Quick Decision Making Assists/100",
+   "use": "usage",
+   "why": "Volume of quick-decision assists/shots; usage driven."
+  },
+  {
+   "metric": "Quick Decision Making Assists/75",
+   "use": "usage",
+   "why": "Volume of offensive use; tied to coach role (the player-preference part is in offensive involvement)."
+  },
+  {
+   "metric": "Quick Decision Making Shots/100",
+   "use": "usage",
+   "why": "Volume of offensive use; tied to coach role (the player-preference part is in offensive involvement)."
+  },
+  {
+   "metric": "Quick Decision Making Shots/75",
+   "use": "usage",
+   "why": "Volume of offensive use; tied to coach role (the player-preference part is in offensive involvement)."
+  },
+  {
+   "metric": "RAPTOR",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "RAPTOR WAR",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Rebounds Per 75 Possessions",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Relative True Shooting%",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Rim Contests Per 75 Possessions",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Rim Points Saved Per 75 Possessions",
+   "use": "impact",
+   "why": "Volume times efficiency (\"points added\"); mixes usage with skill. Calibration target only."
+  },
+  {
+   "metric": "Rim Protection",
+   "use": "impact",
+   "why": "BBI summary grades that roll up many skills; comparing against them is a sanity check, but feeding them in would double count."
+  },
+  {
+   "metric": "Rim Shot Quality",
+   "use": "impact",
+   "why": "Shot-quality descriptor for one shot family; already covered by the overall shot-difficulty tendency and by per-family shot-making."
+  },
+  {
+   "metric": "Role Adjusted Stable TS%",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Role Adjusted Stable eFG%",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Roll Man Impact Per 75 Possessions",
+   "use": "impact",
+   "why": "Volume times efficiency (\"points added\"); mixes usage with skill. Calibration target only."
+  },
+  {
+   "metric": "Salary",
+   "use": "biographical",
+   "why": "Contract context, not ability."
+  },
+  {
+   "metric": "Scoring Possessions Per 75 Possessions",
+   "use": "usage",
+   "why": "Volume of offensive use; tied to coach role (the player-preference part is in offensive involvement)."
+  },
+  {
+   "metric": "Self-Created Shot Making",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Self-Created Shot Making Efficiency",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Self-Created Shot Quality",
+   "use": "impact",
+   "why": "Shot-quality descriptor for one shot family; already covered by the overall shot-difficulty tendency and by per-family shot-making."
+  },
+  {
+   "metric": "Short Mid Range FG%",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Stable 2PTA Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable 3PTA Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable ATB 3PT%",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Stable Assists Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable At Rim Assists Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable Blocks Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable Dead Ball Turnovers Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable Defensive Rebounds Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable Defensive Two Point Rebounds Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable FG2%",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Stable FG3%",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Stable FT Defensive Rebounds Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable FT Defensive Rebounds as a % of Defensive Rebounds",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable FT Offensive Rebounds Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable Handoff PPP",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Stable Live Ball Turnovers Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable Location Shot Making",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Stable Location Shot Quality Avg",
+   "use": "impact",
+   "why": "Shot-quality descriptor for one shot family; already covered by the overall shot-difficulty tendency and by per-family shot-making."
+  },
+  {
+   "metric": "Stable Loose Ball Fouls Drawn Per 75",
+   "use": "impact",
+   "why": "Fouls drawn off the ball or on loose balls; mostly situational."
+  },
+  {
+   "metric": "Stable Non Shooting Fouls Drawn Per 75",
+   "use": "impact",
+   "why": "Fouls drawn off the ball or on loose balls; mostly situational."
+  },
+  {
+   "metric": "Stable Non Shooting Penalty Non Take Fouls Drawn Per 75",
+   "use": "impact",
+   "why": "Fouls drawn off the ball or on loose balls; mostly situational."
+  },
+  {
+   "metric": "Stable NonHeave ATB 3PT%",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Stable Offensive Fouls Drawn Per 75",
+   "use": "impact",
+   "why": "Fouls drawn off the ball or on loose balls; mostly situational."
+  },
+  {
+   "metric": "Stable Offensive Rebounds Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable On-Court DRtg",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Stable On-Court Net Rating",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Stable On-Court ORtg",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Stable Penalty Offense Poss%",
+   "use": "usage",
+   "why": "Volume of offensive use; tied to coach role (the player-preference part is in offensive involvement)."
+  },
+  {
+   "metric": "Stable PenaltyDefensePoss%",
+   "use": "usage",
+   "why": "Volume of offensive use; tied to coach role (the player-preference part is in offensive involvement)."
+  },
+  {
+   "metric": "Stable Plus Minus Per 75",
+   "use": "impact",
+   "why": "Plus-minus per possession; team result, not a specific input."
+  },
+  {
+   "metric": "Stable Points Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable Putback Points Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable Putbacks PPP",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Stable Rebounds Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable Recovered Blocks Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable Recovered Blocks%",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable Relative True Shooting%",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Stable Self OReb Percent of OR",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable Self OReb Percent on Rim FGA",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable Self Offensive Rebounds Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable Spot Up PPP",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Stable Steals Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable TOV Per 75",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Stable Transition PPP",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Stable True Shooting%",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Stable eFG%",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Steals Per 75 Possessions",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Talent Contract Value",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Talent Salary Over Expected",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Talent WAR",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Teammate 3PT Attempt rate",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate 3PT Pull Up Shot Creation",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate 3PT Pull Up Shot Making",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate 3PT Pull Up Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate 3PT Shooting Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate 3PT Shot Creation",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate 3PT Shot Making",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate 3PT Versatility Rating",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Age",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Assist%",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Avg Height Guarded",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Ball Screen Navigation",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate C&S 3PT Shooting Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate C&S 3PT Shot Making",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate D-DPM",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate D-LEBRON",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate DPM",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Deep 3PT Shooting Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Defensive Position Estimate",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Defensive Positional Versatility",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Defensive Rebounding Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Defensive Role Versatility",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Experience",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate FT Rate",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate FT%",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Finishing Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Floater Shot Making",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Floater Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate GS%",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Half Court Shooting Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Half Court Shot Creation",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Half Court Shot Making",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Height",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Help Defense Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Help Defensive Activity",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Help Effectiveness Rating",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate LEBRON",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Lob Creation Rate",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Matchup Difficulty",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Midrange Pull Up Shot Creation",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Midrange Pull Up Shot Making",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Midrange Pull Up Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Midrange Shot Creation",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Midrange Shot Making",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Midrange Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Minutes Per Game",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Movement Points Per 75",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Movement Scoring Impact Per 75 Possessions",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate O-DPM",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate O-LEBRON",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Off-Ball Chaser Defense",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Off-Ball Gravity",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Off-Ball Shot Making",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Off-Ball%",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Offensive Involvement Rate",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Offensive Portability",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Offensive Rebounding Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate On-Ball Gravity",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate On-Ball%",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate One on One Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Overall Coverage Aggression",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Overall Coverage Versatility",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Overall Gravity",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Overall Shooting Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Overall Shot Creation",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Overall Shot Making",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate P&R Coverage Aggression",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate P&R Coverage Versatility",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Padded True Usage%",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Passing Creation Quality",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Passing Creation Volume",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Passing Efficiency",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Passing Versatility",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Perimeter Isolation Defense",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Playmaking Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Portability",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Position Estimate",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Post Defense",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Primary Defender Involvement Rate",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Pull-Up Shooting Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Quick Decision Making%",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Rim Protection",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Rim Shot Creation",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Rim Shot Making",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Screener Mobile Defense",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Screener Rim Defense",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Screening Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Self-Created Shot Making",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Stable Rim dFG%",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Stable Rim dFG% vs Expected%",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate TS%",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Transition Shooting Talent",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Transition Shot Creation",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Transition Shot Making",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate True Usage%",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Turnover%",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Two Way Usage",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Teammate Usage Rate%",
+   "use": "teammate_quality",
+   "why": "Average quality/style of on-court teammates; context for adjusting this player's numbers, never part of the player's own rating."
+  },
+  {
+   "metric": "Time Decay D-RAPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Time Decay LA-DRAPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Time Decay LA-ORAPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Time Decay LA-RAPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Time Decay O-RAPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Time Decay RAPM",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Time Off-Ball %",
+   "use": "usage",
+   "why": "Volume of offensive use; tied to coach role (the player-preference part is in offensive involvement)."
+  },
+  {
+   "metric": "Total FT Rate Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Total Impact Luck",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Total Rebounding Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Total eFG% Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Touches Per Game",
+   "use": "usage",
+   "why": "Volume of offensive use; tied to coach role (the player-preference part is in offensive involvement)."
+  },
+  {
+   "metric": "Transition Frequency Impact",
+   "use": "impact",
+   "why": "Team four-factor impact estimate (on/off based); judges results, not a specific input."
+  },
+  {
+   "metric": "Transition Openness Rating",
+   "use": "impact",
+   "why": "Shot openness depends on defensive attention and teammates; used to interpret shot-making, not a skill by itself."
+  },
+  {
+   "metric": "Transition Shooting Talent",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Transition Shot Making",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Transition Shot Making Efficiency",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "Transition Shot Quality",
+   "use": "impact",
+   "why": "Shot-quality descriptor for one shot family; already covered by the overall shot-difficulty tendency and by per-family shot-making."
+  },
+  {
+   "metric": "True Shooting %",
+   "use": "impact",
+   "why": "Aggregate or blended scoring efficiency across several skills; best used as a real-stat calibration target, not as evidence for one input."
+  },
+  {
+   "metric": "True Shot Attempts Per 75 Possessions",
+   "use": "usage",
+   "why": "Volume of offensive use; tied to coach role (the player-preference part is in offensive involvement)."
+  },
+  {
+   "metric": "True Usage",
+   "use": "usage",
+   "why": "Volume of offensive use; tied to coach role (the player-preference part is in offensive involvement)."
+  },
+  {
+   "metric": "Turnovers Per 75 Possessions",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Two-Way Load",
+   "use": "usage",
+   "why": "Volume of offensive use; tied to coach role (the player-preference part is in offensive involvement)."
+  },
+  {
+   "metric": "Two-Way Usage",
+   "use": "usage",
+   "why": "Volume of offensive use; tied to coach role (the player-preference part is in offensive involvement)."
+  },
+  {
+   "metric": "Unassisted Rim Shot Attempts Per 75 Possessions",
+   "use": "usage",
+   "why": "Counting stat per possession; volume driven by role and minutes. Skill inputs use the rate versions."
+  },
+  {
+   "metric": "Usage Consistency",
+   "use": "usage",
+   "why": "Playing-time volume; set by the coach."
+  },
+  {
+   "metric": "VORP",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  },
+  {
+   "metric": "Years of Experience",
+   "use": "biographical",
+   "why": "Biographical; age/experience feed development and aging, not current ability."
+  },
+  {
+   "metric": "delta DRIP",
+   "use": "impact",
+   "why": "On/off or plus-minus style impact and value estimate; judges overall results, not a specific input."
+  }
+ ],
+ "excluded": [
+  {
+   "metric": "3PT Attempt Consistency",
+   "why": "Game-to-game consistency (variance), not ability level. Possible later use for hot/cold streakiness, not ratings."
+  },
+  {
+   "metric": "3PT Make Consistency",
+   "why": "Game-to-game consistency (variance), not ability level. Possible later use for hot/cold streakiness, not ratings."
+  },
+  {
+   "metric": "Assist Consistency",
+   "why": "Game-to-game consistency (variance), not ability level. Possible later use for hot/cold streakiness, not ratings."
+  },
+  {
+   "metric": "Assist Points Consistency",
+   "why": "Game-to-game consistency (variance), not ability level. Possible later use for hot/cold streakiness, not ratings."
+  },
+  {
+   "metric": "At Rim Assist Consistency",
+   "why": "Game-to-game consistency (variance), not ability level. Possible later use for hot/cold streakiness, not ratings."
+  },
+  {
+   "metric": "Blocks Consistency",
+   "why": "Game-to-game consistency (variance), not ability level. Possible later use for hot/cold streakiness, not ratings."
+  },
+  {
+   "metric": "Defensive Rebounding Consistency",
+   "why": "Game-to-game consistency (variance), not ability level. Possible later use for hot/cold streakiness, not ratings."
+  },
+  {
+   "metric": "DraftKings Fantasy Points Per 75 Possessions",
+   "why": "Fantasy scoring; not basketball evidence."
+  },
+  {
+   "metric": "Fouls Committed / 75",
+   "why": "Duplicate of a stabilized foul count that is already mapped."
+  },
+  {
+   "metric": "Fouls Consistency",
+   "why": "Game-to-game consistency (variance), not ability level. Possible later use for hot/cold streakiness, not ratings."
+  },
+  {
+   "metric": "Offensive Rebounding Consistency",
+   "why": "Game-to-game consistency (variance), not ability level. Possible later use for hot/cold streakiness, not ratings."
+  },
+  {
+   "metric": "Personal Fouls Per 75 Possessions",
+   "why": "Duplicate of a stabilized foul count that is already mapped."
+  },
+  {
+   "metric": "Rim Attempt Consistency",
+   "why": "Game-to-game consistency (variance), not ability level. Possible later use for hot/cold streakiness, not ratings."
+  },
+  {
+   "metric": "Rim Makes Consistency",
+   "why": "Game-to-game consistency (variance), not ability level. Possible later use for hot/cold streakiness, not ratings."
+  },
+  {
+   "metric": "Stable 3-Second Violations Per 75",
+   "why": "Rare event, mostly role/position noise."
+  },
+  {
+   "metric": "Stable Blocked Shots At Rim Per 75",
+   "why": "Ambiguous: unclear whether these are shots the player had blocked or blocks the player made at the rim. Confirm before use."
+  },
+  {
+   "metric": "Stable Offensive Goaltends Per 75",
+   "why": "Rare event, mostly role/position noise."
+  },
+  {
+   "metric": "Steals Consistency",
+   "why": "Game-to-game consistency (variance), not ability level. Possible later use for hot/cold streakiness, not ratings."
+  },
+  {
+   "metric": "Turnovers Consistency",
+   "why": "Game-to-game consistency (variance), not ability level. Possible later use for hot/cold streakiness, not ratings."
+  }
+ ]
+}
