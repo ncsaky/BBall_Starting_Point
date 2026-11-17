@@ -99,6 +99,23 @@ def _visible_counts(connection: sqlite3.Connection, revision: int, versioned: bo
     return dict(connection.execute(sql, [revision]).fetchall())
 
 
+# History files that passed the full check, keyed by path, with the file state and the JSON metadata they
+# passed with. The integrity scan reads the whole database (hundreds of MB after several seasons) and an
+# advance validates many times, so an unchanged file that already passed is not rescanned.
+_VALIDATED: dict[str, tuple] = {}
+
+
+def _file_state(path: Path) -> tuple:
+    out = []
+    for candidate in (path, path.with_name(path.name + "-wal")):
+        try:
+            stat = candidate.stat()
+            out.append((stat.st_ino, stat.st_size, stat.st_mtime_ns))
+        except OSError:
+            out.append(None)
+    return tuple(out)
+
+
 def validate_save_components(save_path: str | Path, save: dict[str, Any]) -> None:
     """Validate required history without creating, repairing, or migrating it."""
     store = save.get("history_store")
@@ -121,6 +138,9 @@ def validate_save_components(save_path: str | Path, save: dict[str, Any]) -> Non
     database = history_sidecar_path(save_path, save)
     if not database.is_file():
         raise SaveValidationError(f"Required history file '{database.name}' is missing. Keep the JSON and history together, or restore a complete save export.")
+    fingerprint = (version, revision, store.get("snapshot_id"), json.dumps(declared_counts, sort_keys=True), _file_state(database))
+    if _VALIDATED.get(str(database)) == fingerprint:
+        return
     try:
         with closing(_read_connection(database)) as connection:
             # A transaction gives all integrity/checkpoint checks one DB snapshot.
@@ -148,6 +168,8 @@ def validate_save_components(save_path: str | Path, save: dict[str, Any]) -> Non
             bad = connection.execute("SELECT 1 FROM history_records WHERE revision<=? AND (NOT json_valid(payload_json) OR json_type(payload_json) != 'object') LIMIT 1", (revision,)).fetchone()
             if bad:
                 raise SaveValidationError("A historical record is corrupt. Restore a complete save export.")
+        if _file_state(database) == fingerprint[-1]:
+            _VALIDATED[str(database)] = fingerprint
     except SaveValidationError:
         raise
     except (sqlite3.Error, OSError, ValueError, TypeError) as exc:

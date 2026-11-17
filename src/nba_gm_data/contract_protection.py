@@ -111,10 +111,22 @@ def season_window(save, season):
     return result
 
 
+# First/last regular-season date per schedule list (the same list object, unchanged length). Game dates are
+# never edited in place; a rebuilt schedule is a new list. Waiver costs ask for this thousands of times a day.
+_WINDOW_CACHE: dict[int, tuple] = {}
+
+
 def _uncached_season_window(save, season):
     games = ((save.get('season_schedules') or {}).get(season) or {}).get('games', [])
-    dates = sorted(g.get('gameDate') or g.get('date') for g in games if g.get('phase') == 'regular' and (g.get('gameDate') or g.get('date')))
-    return (date.fromisoformat(dates[0][:10]), date.fromisoformat(dates[-1][:10])) if dates else (None, None)
+    hit = _WINDOW_CACHE.get(id(games))
+    if hit is not None and hit[0] is games and hit[1] == len(games):
+        return hit[2]
+    dates = [g.get('gameDate') or g.get('date') for g in games if g.get('phase') == 'regular' and (g.get('gameDate') or g.get('date'))]
+    result = (date.fromisoformat(min(dates)[:10]), date.fromisoformat(max(dates)[:10])) if dates else (None, None)
+    if len(_WINDOW_CACHE) >= 16:
+        _WINDOW_CACHE.clear()
+    _WINDOW_CACHE[id(games)] = (games, len(games), result)
+    return result
 
 
 def waiver_projection(canonical, save, player, team_id, stamp=None):

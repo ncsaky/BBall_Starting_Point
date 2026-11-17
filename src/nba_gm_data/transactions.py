@@ -4946,8 +4946,9 @@ def salary_matching_issue(canonical: dict[str, Any], proposal: TradeProposal, co
     if not salary_config.get("enabled", True):
         return None
     season = str(canonical.get('meta', {}).get('active_season') or CANONICAL_SEASON)
+    involved = set(trade_team_ids(proposal))   # once per check: the obligation ledger grows every season
     if any(s.get('salary') is None for r in canonical.get('waived_salary_obligations', [])
-           if r['team_id'] in trade_team_ids(proposal)
+           if r['team_id'] in involved
            for s in r['seasons'] if s['season'] >= season):
         return 'Waived salary is unresolved; salary matching requires review.'
     floor = float(salary_config.get("salary_floor", 7_500_000))
