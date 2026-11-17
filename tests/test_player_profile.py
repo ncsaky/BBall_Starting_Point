@@ -33,7 +33,7 @@ def all_entries(profile):
                 yield pair["delivery"]
 
 
-@unittest.skipUnless(INPUTS.exists() and UNIVERSE.exists(), "player inputs file not built yet")
+@unittest.skipUnless((INPUTS.exists() or INPUTS.with_name(INPUTS.name + ".gz").exists()) and UNIVERSE.exists(), "player inputs file not built yet")
 class PlayerProfileTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -91,7 +91,7 @@ class PlayerProfileTests(unittest.TestCase):
         self.assertIsNone(pp.player_profile(self.active, "player_does-not-exist"))
 
 
-@unittest.skipUnless(INPUTS.exists() and UNIVERSE.exists(), "player inputs file not built yet")
+@unittest.skipUnless((INPUTS.exists() or INPUTS.with_name(INPUTS.name + ".gz").exists()) and UNIVERSE.exists(), "player inputs file not built yet")
 class PlayerCardPayloadTests(unittest.TestCase):
     def test_inputs_profile_only_for_inputs_model_saves(self):
         from nba_gm_data.app_actions import player_card_payload

@@ -24,7 +24,9 @@ class RoutingTests(unittest.TestCase):
         inputs = {"S08": grade(50), "S03": grade(50), "S02": grade(50), "S01": grade(50)}
         deltas = rm.route_trait_deltas(inputs, {"release_speed": 4.0})
         self.assertAlmostEqual(sum(deltas.values()), 4.0)
-        self.assertAlmostEqual(deltas["S08"], 4.0 * 0.45)
+        from nba_gm_data.trait_adapter import trait_input_weights
+        self.assertAlmostEqual(deltas["S08"], 4.0 * trait_input_weights("release_speed")["S08"] / sum(
+            w for i, w in trait_input_weights("release_speed").items() if i in inputs))
 
     def test_measurements_are_never_moved_by_development(self):
         height = {"status": "estimated", "value": {"measurements": [{"value": 200.0, "unit": "cm"}]},
@@ -46,7 +48,7 @@ class RoutingTests(unittest.TestCase):
             self.assertEqual(rm.ratings_model_for({}), rm.LEGACY)
 
 
-@unittest.skipUnless(INPUTS.exists() and UNIVERSE.exists(), "player inputs file not built yet")
+@unittest.skipUnless((INPUTS.exists() or INPUTS.with_name(INPUTS.name + ".gz").exists()) and UNIVERSE.exists(), "player inputs file not built yet")
 class InputsModelIntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

@@ -32,3 +32,6 @@ Animation Videos/
 
 # Generated evidence/artifacts (~19 GB). Already-tracked files stay tracked.
 output/
+
+# Uncompressed player inputs (~92 MB); git tracks player_inputs_2026_27.json.gz
+data/canonical/player_inputs_2026_27.json

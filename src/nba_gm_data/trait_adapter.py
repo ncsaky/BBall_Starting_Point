@@ -34,20 +34,25 @@ PASS_EXECUTION = [f"{f}.execution" for f in PASS_FAMILIES]
 Term = tuple[str | list[str], float]
 
 ADAPTER_SPEC: dict[str, list[Term]] = {
-    "release_speed": [("S08", 0.45), ("S03", 0.20), ("S02", 0.20), ("S01", 0.15)],
+    # Legacy traits mixed skill with usage (e.g. release_speed came from 3PA volume, 3P%, off-screen and
+    # handoff usage). The adapter recombines the separated skill and tendency inputs in a similar mix so the
+    # legacy engine keeps receiving the information it was calibrated on.
+    "release_speed": [("S08", 0.30), ("S03", 0.10), ("S01", 0.10), ("S02", 0.10), ("T02:three", 0.25), ("T10", 0.15)],
     # Legacy shooting_range also sets three-point VOLUME in the engine, so it includes the share of shots a
     # player takes from three (T02 tendency) alongside shooting skill.
-    "shooting_range": [("S09", 0.25), ("S01", 0.15), ("S02", 0.15), ("S03", 0.05), ("S07", 0.05), ("T02:three", 0.35)],
+    "shooting_range": [("T02:three", 0.55), ("S09", 0.15), ("S01", 0.10), ("S02", 0.10), ("S03", 0.05), ("S07", 0.05)],
+    # Legacy shot_versatility counted how many play types a player is used in (a usage signal), so the
+    # adapter pairs shot-making breadth with involvement and difficult-shot appetite tendencies.
     "shot_versatility": [
-        ("S01", 0.10), ("S02", 0.20), ("S03", 0.10), ("S04", 0.10), ("S05", 0.20),
-        ("S06", 0.10), ("S10", 0.10), ("S11", 0.10),
+        ("S02", 0.15), ("S05", 0.15), ("S03", 0.05), ("S06", 0.05), ("S11", 0.10), ("S01", 0.05),
+        ("S04", 0.05), ("S10", 0.05), ("T08", 0.25), ("T04", 0.10),
     ],
     # Legacy rim pressure drives rim attempts and free throws: self-created drives AND rolls/lobs/dunks.
     "rim_pressure": [
-        ("S19", 0.15), ("S10", 0.10), ("S12", 0.10), ("S13", 0.05), ("S15", 0.10), ("S24", 0.15),
-        ("P05", 0.05), ("T01:drive", 0.10), ("T02:rim", 0.20),
+        ("S19", 0.10), ("S10", 0.05), ("S12", 0.05), ("S13", 0.05), ("S15", 0.05), ("S24", 0.15),
+        ("P05", 0.05), ("T01:drive", 0.15), ("T02:rim", 0.20), ("T08", 0.15),
     ],
-    "handle_pressure": [("S17", 0.35), ("S16", 0.25), ("S18", 0.15), ("S20", 0.15), ("P09", 0.10)],
+    "handle_pressure": [("S17", 0.25), ("S16", 0.20), ("S18", 0.10), ("S20", 0.10), ("P09", 0.05), ("T08", 0.20), ("T06", 0.10)],
     "passing_reads": [(PASS_RECOGNITION, 0.45), (PASS_EXECUTION, 0.30), ("S20", 0.15), ("S28", 0.10)],
     "foot_speed_lateral_agility": [("P07", 0.45), ("P05", 0.25), ("P06", 0.15), ("S33", 0.15)],
     "stamina_cardio": [("P11", 0.60), ("P12", 0.40)],

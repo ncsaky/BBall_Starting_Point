@@ -24,7 +24,7 @@ GUI wishlist work is parked.
 | Task | Owner | Status | Files it may touch |
 |---|---|---|---|
 | E3 Calibration targets and comparison tool | Claude (subagent) | **done** (5/5 tests verified). Report: `docs/agents/tasks/e3-calibration-targets.md` | `data/calibration/*`, `src/nba_gm_data/calibration_targets.py`, `scripts/build_calibration_targets.py`, `scripts/calibration_report.py`, `tests/test_calibration_targets.py` |
-| E2 League-wide input estimator | Codex | **review** — adapter feedback 1–4 addressed; 691 × 94 inputs; 76 focused tests pass. Report: `docs/agents/tasks/e2-input-estimator.md` | `src/nba_gm_data/input_estimator.py`, `scripts/build_player_inputs.py`, `data/canonical/player_inputs_2026_27.json`, `tests/test_input_estimator.py` |
+| E2 League-wide input estimator | Codex | **accepted 2026-11-16** by Claude (91 tests rerun OK; output tracked as `player_inputs_2026_27.json.gz`). Report: `docs/agents/tasks/e2-input-estimator.md` | `src/nba_gm_data/input_estimator.py`, `scripts/build_player_inputs.py`, `data/canonical/player_inputs_2026_27.json`, `tests/test_input_estimator.py` |
 | T1 Make tests trustworthy | Claude (subagent) | **review**. Core suite `scripts/run_core_tests.sh`: 329 tests in about 160 s, passing. Full-suite leftovers listed below. | `tests/`, `scripts/run_core_tests.sh` |
 | S1-B Adapter: inputs to the 15 hidden ratings | Claude | **done** (9 tests) | `src/nba_gm_data/trait_adapter.py`, `tests/test_trait_adapter.py` |
 | S1-C Opt-in inputs model; development writes inputs | Claude | **done** (8 tests). Saves opt in with `meta.ratings_model = "inputs_v1"`; save-less tools with `NBA_GM_RATINGS_MODEL=inputs_v1`. Default stays legacy. | `src/nba_gm_data/ratings_model.py`, hooks in `save.py` and `sim.py`, `tests/test_ratings_model.py` |
@@ -43,7 +43,7 @@ GUI wishlist work is parked.
 
 | ID | Task | Owner |
 |---|---|---|
-| E2 / S1-A | Input estimator: all 691 players plus prospects | Codex (review) |
+| E2 / S1-A | Input estimator: all 691 players plus prospects | Codex (**accepted**) |
 | S1-B | Adapter: inputs to the 15 hidden ratings | Claude |
 | S1-C | Development writes to inputs | Claude |
 | S1-D | New player card (four layers) plus derived OVR/OFF/DEF without clipping; rewrite rating-pin tests | Claude. **Card done**: mockup approved by user; live in inputs-model saves (`player_profile.py`, `gui/player-card-layers.css`). New saves via `new-save --ratings-model inputs_v1`. Open: rating-pin test rewrite; injured players show 0.0 projected minutes. |
@@ -116,14 +116,29 @@ The full suite (`PYTHONPATH=src .venv/bin/python -m unittest discover -s tests`)
 
 ## Stage 1 scorecard: new inputs vs old traits (real-stats targets, 1,230 games, seed 1)
 
-| | Old traits | New inputs (E2 draft output, adapter v1) |
-|---|---|---|
-| League metrics in band | 12/18 | **14/18** |
-| Points per 36, avg error | 2.9 | 4.1 |
-| 3PA per 36, avg error | 0.52 | 1.79 |
-| Assists per 36, avg error | 1.11 | 0.98 |
+Average error per 36 minutes across 150 high-minute players:
 
-Player-level accuracy is held back by flat priors (86% of input values), including shot location (T02), which is a prior for every player. Feedback: `docs/agents/tasks/e2-feedback-from-adapter.md`. Rerun the scorecard with:
+| | Old traits | New inputs (accepted E2 + adapter v2) |
+|---|---|---|
+| League metrics in band | 12/18 | **13/18** |
+| 3PA | 0.524 | **0.504** |
+| True shooting % | 0.040 | **0.032** |
+| Rebounds | 1.346 | **1.286** |
+| Assists | 1.114 | **1.018** |
+| Points | **2.887** | 3.187 |
+| FGA | **1.955** | 2.369 |
+| FTA | **1.627** | 1.664 |
+| Blocks | **0.586** | 0.656 |
+| Steals | **0.647** | 0.659 |
+| Turnovers | **0.589** | 0.607 |
+
+Adapter v2 changes:
+- Recombines skill with usage tendencies the way the legacy traits mixed them (three-point share, involvement, difficult-shot appetite).
+- Re-anchors the offense model's observed-stat profiles to the input-derived baseline, so a model switch isn't read as instant development. That re-anchoring fixed 3PA, which went from 1.58 to 0.50.
+
+Remaining gaps are scoring volume and blocks, driven mainly by the prior-heavy usage and defense inputs. Basketball Index is the next lever.
+
+Rerun with:
 
 ```
 NBA_GM_RATINGS_MODEL=inputs_v1 PYTHONPATH=src .venv/bin/python scripts/calibration_report.py --games 1230

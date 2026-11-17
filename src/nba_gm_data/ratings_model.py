@@ -43,10 +43,13 @@ def ratings_model_for(save: Mapping[str, Any] | None = None) -> str:
 
 
 def _inputs_path(root: Path | None = None) -> Path:
+    """The uncompressed build output if present, otherwise the git-tracked .json.gz copy."""
     if root is None:
         from .resource_paths import game_resource_root
         root = game_resource_root()
-    return Path(root) / INPUTS_FILE
+    path = Path(root) / INPUTS_FILE
+    compressed = path.with_name(path.name + ".gz")
+    return path if path.exists() or not compressed.exists() else compressed
 
 
 def _load_inputs_keyed(root: Path | None = None) -> tuple[str, dict[str, dict[str, Any]]]:
@@ -55,7 +58,12 @@ def _load_inputs_keyed(root: Path | None = None) -> tuple[str, dict[str, dict[st
     if key not in _INPUT_CACHE:
         if not path.exists():
             raise FileNotFoundError(f"{path} is missing; build it with scripts/build_player_inputs.py")
-        section = json.loads(path.read_text())
+        if path.suffix == ".gz":
+            import gzip
+            with gzip.open(path, "rt", encoding="utf-8") as handle:
+                section = json.load(handle)
+        else:
+            section = json.loads(path.read_text())
         _INPUT_CACHE[key] = {pid: doc["inputs"] for pid, doc in section["players"].items()}
     return key, _INPUT_CACHE[key]
 
@@ -137,14 +145,38 @@ def install_inputs_model(canonical: dict[str, Any], root: Path | None = None) ->
         _FITTED_CACHE[fitted_key] = fit_adapter({pid: ins for pid, ins in league_inputs.items() if pid in baseline}, baseline)
     canonical[MODEL_KEY] = {"mode": INPUTS_V1, "inputs_key": inputs_key, "fitted_key": list(fitted_key),
                             "effective_inputs": {}}
-    _rederive(canonical, league_inputs.keys())
+    derived_baseline = _rederive(canonical, league_inputs.keys())
+    _rebase_offensive_profile_anchors(canonical, derived_baseline)
+
+
+def _rebase_offensive_profile_anchors(canonical: dict[str, Any], derived: Mapping[str, Mapping[str, float]]) -> None:
+    """Re-anchor observed offensive profiles to the input-derived baseline traits.
+
+    offense.offensive_profile starts from a player's frozen observed rates (e.g. threes per 36) and adjusts by
+    each trait's change since its "anchor" value. Anchors were legacy trait values; switching models would
+    otherwise read as instant development and distort real observed volumes. After rebasing, only genuine
+    development (change from the derived baseline) moves the observed rates. The meta dict is copied so a
+    shared canonical universe is never mutated.
+    """
+    meta = canonical.get("meta") or {}
+    profiles = meta.get("offensive_profiles")
+    if not profiles:
+        return
+    rebased = {}
+    for pid, profile in profiles.items():
+        anchors = profile.get("anchors") if isinstance(profile, dict) else None
+        values = derived.get(pid)
+        if anchors and values:
+            profile = {**profile, "anchors": {k: values.get(k, v) for k, v in anchors.items()}}
+        rebased[pid] = profile
+    canonical["meta"] = {**meta, "offensive_profiles": rebased}
 
 
 def _base_inputs(model: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
     return _INPUT_CACHE[model["inputs_key"]]
 
 
-def _rederive(canonical: dict[str, Any], player_ids: Iterable[str]) -> None:
+def _rederive(canonical: dict[str, Any], player_ids: Iterable[str]) -> dict[str, dict[str, float]]:
     model = canonical[MODEL_KEY]
     fitted = _FITTED_CACHE[tuple(model["fitted_key"])]
     base = _base_inputs(model)
@@ -159,6 +191,7 @@ def _rederive(canonical: dict[str, Any], player_ids: Iterable[str]) -> None:
         if values and trait.get("trait_key") in values:
             trait["value"] = values[trait["trait_key"]]
     canonical.pop("_trait_values_by_player", None)
+    return derived
 
 
 def apply_development(canonical: dict[str, Any], totals: Mapping[str, Mapping[str, float]] | None,
