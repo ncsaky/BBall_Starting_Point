@@ -2265,37 +2265,37 @@
     {
      "metric": "Stable True Usage%",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "primary",
      "outcome": null,
-     "why": "Share of team offense used (shrunk); also set by the coach."
+     "why": "Share of team offense used (shrunk); also set by the coach. Primary 2026-11-17: true usage counts creating for teammates as well as own shots, the closest measure of involvement for hubs and guards alike."
     },
     {
      "metric": "Offensive Involvement Rate",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "weak",
      "outcome": null,
-     "why": "On-ball actions (isolations, post-ups, pick-and-roll handling) per 100 possessions."
+     "why": "On-ball actions (isolations, post-ups, pick-and-roll handling) per 100 possessions. Weak 2026-11-17: counts only isolation/pick-and-roll/hold-the-ball actions, so hub passers look uninvolved."
     },
     {
      "metric": "On-Ball Action Share",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "weak",
      "outcome": null,
-     "why": "Share of the team's on-ball actions."
+     "why": "Share of the team's on-ball actions. Weak 2026-11-17: counts only isolation/pick-and-roll/hold-the-ball actions, so hub passers look uninvolved."
     },
     {
      "metric": "Ball Dominance %",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "weak",
      "outcome": null,
-     "why": "Share of offensive time on the ball."
+     "why": "Share of offensive time on the ball. Weak 2026-11-17: counts only isolation/pick-and-roll/hold-the-ball actions, so hub passers look uninvolved."
     },
     {
      "metric": "Touches Per 75",
      "direction": 1,
-     "strength": "weak",
+     "strength": "supporting",
      "outcome": null,
-     "why": "Touches per 75 possessions."
+     "why": "Touches per 75 possessions. Supporting 2026-11-17: direct volume of involvement (hub bigs touch the ball constantly)."
     },
     {
      "metric": "Usage Rate",

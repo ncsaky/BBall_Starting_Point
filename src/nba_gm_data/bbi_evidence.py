@@ -48,7 +48,7 @@ GRADE_SLOPE = 1.31
 VERSION = "bbi_evidence_overlay_v2_2026_11_17"
 OVERLAY_KINDS = ("grade", "propensity", "physical")
 # Shot-region mix is already built from observed shot locations; BBI would only repeat that data.
-SKIP_DISTRIBUTIONS = {"T02"}
+SKIP_DISTRIBUTIONS = {"T02", "T01"}  # T01 is set from measured per-touch rates (apply_measured_action_mix)
 _ND = NormalDist()
 
 
@@ -69,8 +69,37 @@ def _values_batches(index: Mapping[str, Any]) -> set[str]:
     return out
 
 
+RECENT_CACHE = "values_recent.json.gz"
+
+
+def _recent_values(root: Path) -> dict[tuple[str, str], dict[str, tuple[float, float, str | None]]]:
+    """Every metric's Values rows for the recent seasons, from a compact cache rebuilt whenever the imported data
+    changes (reading the full normalized store scans millions of rows)."""
+    import gzip
+    folder = Path(root) / CACHE_DIR
+    source = folder / "normalized.json"
+    stamp = f"{source.stat().st_size}:{int(source.stat().st_mtime)}"
+    cache = folder / RECENT_CACHE
+    if cache.exists():
+        try:
+            data = json.loads(gzip.decompress(cache.read_bytes()))
+            if data.get("stamp") == stamp:
+                return {tuple(k.split("|", 1)): {pk: tuple(v) for pk, v in rows.items()} for k, rows in data["table"].items()}
+        except (OSError, ValueError):
+            pass
+    table = _collect_from_store(root, None)
+    payload = {"stamp": stamp, "table": {f"{s}|{m}": rows for (s, m), rows in table.items()}}
+    cache.write_bytes(gzip.compress(json.dumps(payload).encode(), compresslevel=6))
+    return table
+
+
 def collect_values(root: Path, metrics: set[str]) -> dict[tuple[str, str], dict[str, tuple[float, float, str | None]]]:
     """(season, metric) -> {player_key: (value, minutes, canonical_id)} from Values captures, recent seasons only."""
+    table = _recent_values(root)
+    return {key: rows for key, rows in table.items() if key[1] in metrics}
+
+
+def _collect_from_store(root: Path, metrics: set[str] | None) -> dict[tuple[str, str], dict[str, tuple[float, float, str | None]]]:
     from .bbi_import import iter_records
     folder = Path(root) / CACHE_DIR
     index = json.loads((folder / "normalized.json").read_text())
@@ -80,7 +109,7 @@ def collect_values(root: Path, metrics: set[str]) -> dict[tuple[str, str], dict[
         if row.get("batch_id") not in keep or row.get("season") not in SEASON_WEIGHTS:
             continue
         metric = row.get("metric_name")
-        if metric not in metrics:
+        if metrics is not None and metric not in metrics:
             continue
         value = row.get("raw_value")
         if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value):
@@ -337,3 +366,75 @@ def apply_overlay(section: dict[str, Any], root: Path, mapping: Mapping[str, Any
             changed += 1
             by_kind[mode] += 1
     return {"players_with_bbi": players, "cells_changed": changed, "by_mode": dict(by_kind), "version": VERSION}
+
+
+# Measured per-touch action rates for T01 (shoot / drive / pass / reset; post keeps the estimate).
+T01_MEASURES = ("Touches Per 75", "Stable FGA Per 75", "Drives Per 75 Possessions",
+                "Potential Assists Per 75 Possessions", "Potential Assists Per 100 Passes")
+
+
+def measured_action_mix(root: Path) -> dict[str, dict[str, Any]]:
+    """canonical_id -> {"mix": {shoot, drive, pass, reset} per touch (season-weighted), "weight": evidence weight}.
+
+    pass = passes that create a shot (potential assists) per touch; reset = other passes per touch;
+    shoot = field-goal attempts per touch; drive = drives per touch. Shares, not counts, so a hub big who
+    touches the ball constantly and a guard who creates on most touches are both visible."""
+    table = collect_values(root, set(T01_MEASURES))
+    acc: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
+    for season, season_weight in SEASON_WEIGHTS.items():
+        touches = table.get((season, "Touches Per 75"), {})
+        for key, (touch, minutes, cid) in touches.items():
+            if not cid or touch <= 0:
+                continue
+            get = lambda m: (table.get((season, m), {}).get(key) or (None,))[0]
+            fga, drives, pa, pa100 = (get(m) for m in T01_MEASURES[1:])
+            if None in (fga, drives, pa, pa100) or pa100 <= 0:
+                continue
+            passes = pa / (pa100 / 100.0)
+            rates = {"shoot": fga / touch, "drive": drives / touch, "pass": pa / touch,
+                     "reset": max(0.0, passes - pa) / touch}
+            w = season_weight * minutes / (minutes + MINUTES_HALF)
+            for k, v in rates.items():
+                acc[cid][k] += w * v
+            acc[cid]["_w"] += w
+    out = {}
+    for cid, sums in acc.items():
+        w = sums.pop("_w")
+        if w > 0:
+            out[cid] = {"mix": {k: v / w for k, v in sums.items()}, "weight": w}
+    return out
+
+
+def apply_measured_action_mix(section: dict[str, Any], root: Path) -> dict[str, Any]:
+    """Blend measured per-touch rates into T01 by evidence weight; the post share keeps its estimate."""
+    measured = measured_action_mix(root)
+    changed = 0
+    for pid, doc in section["players"].items():
+        ev = measured.get(pid)
+        record = doc["inputs"].get("T01")
+        mix = _mix(record) if record else None
+        if not ev or not mix or "post" not in mix:
+            continue
+        post = float(mix["post"])
+        rates = ev["mix"]
+        total = sum(rates.values())
+        if total <= 0:
+            continue
+        observed = {k: (1.0 - post) * v / total for k, v in rates.items()}
+        share = ev["weight"] / (ev["weight"] + PRIOR_WEIGHT)
+        new_mix = {k: (share * observed[k] + (1 - share) * float(mix[k])) if k in observed else float(mix[k]) for k in mix}
+        norm = sum(new_mix.values())
+        new_mix = {k: round(v / norm, 6) for k, v in new_mix.items()}
+        record["value"] = {**record["value"], "rows": [dict(record["value"]["rows"][0], probabilities=new_mix)]}
+        record["evidence"] = [*(record.get("evidence") or []), {
+            "source": f"{CACHE_DIR}/normalized.json (Leaderboards Values)",
+            "method": (f"{VERSION}: measured per-touch rates (shots, drives, shot-creating passes, other passes) "
+                       f"blended at share {share:.2f}; post share kept from the estimate"),
+            "shared_evidence_id": f"bbi:{pid}:T01",
+            "notes": "per touch: " + ", ".join(f"{k} {v:.3f}" for k, v in rates.items()),
+        }]
+        if share >= 0.5:
+            record["status"] = "estimated"
+            record["reason"] = "estimated"
+        changed += 1
+    return {"t01_measured": changed}

@@ -104,6 +104,27 @@ class OverlayTests(unittest.TestCase):
             self.assertAlmostEqual(be._quantile(pool, be._ND.cdf(be._rank_z(pool, x))), x)
 
 
+class MeasuredActionMixTests(unittest.TestCase):
+    def test_measured_rates_blend_in_and_post_share_is_kept(self):
+        section = {"players": {"hub": {"inputs": {"T01": {"status": "estimated", "reason": "prior", "value": {"rows": [
+            {"condition": "reference_opportunity",
+             "probabilities": {"drive": 0.2, "pass": 0.3, "post": 0.18, "reset": 0.12, "shoot": 0.2}}]}}}}}}
+        fake = {"hub": {"mix": {"shoot": 0.17, "drive": 0.04, "pass": 0.18, "reset": 0.55}, "weight": 5.0}}
+        original = be.measured_action_mix
+        be.measured_action_mix = lambda root: fake
+        try:
+            summary = be.apply_measured_action_mix(section, ROOT)
+        finally:
+            be.measured_action_mix = original
+        mix = section["players"]["hub"]["inputs"]["T01"]["value"]["rows"][0]["probabilities"]
+        self.assertEqual(summary["t01_measured"], 1)
+        self.assertAlmostEqual(sum(mix.values()), 1.0, places=5)
+        self.assertAlmostEqual(mix["post"], 0.18, places=2)          # no per-touch measure: estimate kept
+        self.assertLess(mix["drive"], 0.1)                            # measured: a hub who rarely drives
+        self.assertGreater(mix["reset"], 0.35)
+        self.assertEqual(section["players"]["hub"]["inputs"]["T01"]["reason"], "estimated")
+
+
 @unittest.skipUnless(MAPPING.exists(), "BBI mapping not present")
 class MappingFileTests(unittest.TestCase):
     def test_mapping_covers_all_inputs_with_valid_entries(self):

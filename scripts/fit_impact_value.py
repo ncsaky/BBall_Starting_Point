@@ -20,7 +20,7 @@ from nba_gm_data import bbi_evidence as be
 from nba_gm_data.app_actions import load_app_canonical
 from nba_gm_data.impact_value import FIT_FILE, PREDICTORS, predictor_row
 from nba_gm_data.offense import offensive_profile
-from nba_gm_data.ratings_model import install_inputs_model
+from nba_gm_data.ratings_model import effective_inputs, install_inputs_model
 from nba_gm_data.save import trait_values_by_player
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -77,7 +77,8 @@ def main() -> None:
                 minutes = max(minutes, cell[1])
         if len(values) == 2 and minutes >= 200:
             profile = offensive_profile(canonical, player, traits[pid])
-            rows.append((pid, player["name"], predictor_row(traits[pid], player, profile), values, minutes))
+            rows.append((pid, player["name"], predictor_row(traits[pid], player, profile, effective_inputs(canonical, pid)),
+                         values, minutes))
     weights = [m / (m + 800.0) for *_, m in rows]
     X = [[1.0, *r[2]] for r in rows]
     fit = {"version": "impact_value_fit_v1_2026_11_17", "season": SEASON, "targets": TARGETS, "predictors": PREDICTORS,

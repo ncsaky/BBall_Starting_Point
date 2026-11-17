@@ -2,11 +2,96 @@
 
 Paste one prompt into a **fresh** Codex chat. One task per chat keeps it from drifting after context compaction. Each prompt is self-contained. Claude reviews the result and updates `BOARD.md`.
 
-Current priority: Stage 1 (`docs/agents/STAGE1_DESIGN.md`). GUI tasks are parked at the bottom.
+Current priority (2026-11-17): the three "Ready now" tasks below. GUI tasks are parked at the bottom.
 
 ---
 
-## E2b: Stop priors from averaging away elite players (NEXT)
+## Ready now (2026-11-17): three independent tasks, one fresh chat each
+
+Run them in separate chats; they touch different files. Claude is meanwhile working on ratings/value files (`bbi_evidence.py`, `impact_value.py`, `trait_adapter.py`, `ratings_model.py`, `sim.py` assist/rebound functions, `transactions.py` valuation, the BBI mapping and `data/canonical/*`). **Do not edit those.**
+
+### SPD: Fewer full league rebuilds per sim day (exact speedup)
+
+Suggested settings: GPT-6.1 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first (see "Speed check (rule 10)"). You own task SPD; mark it "in progress (Codex)" on the board.
+
+GOAL: make simulating a month faster without changing any result.
+
+FACTS (measured 2026-11-17 by Claude):
+- A headless mid-season month (Feb 15 -> Mar 15, AI on) takes ~20.6 s; an early-season month (Oct 20 -> Nov 20, fresh save) ~55 s. Target: 10-20 s.
+- A cProfile of the month shows save.canonical_with_save (a full league rebuild, ~0.37 s each) is still called about once per sim day from advance_lifecycle_to (save.py), plus extra rebuilds in advance_save_day for ai_canonical and role_active, and in review_ai_releases when rosters change. The game sim itself (sim_game_with_context) is ~27% and is out of scope.
+- Claude already made two exact changes: an early exit in process_inseason_released_free_agent_signings, and reuse of the day's lifecycle state for ensure_roster_minimums and the in-season signing check (same reuse rule the code uses for ai_canonical). Read those diffs (git log -p --follow src/nba_gm_data/save.py | head -300) to see the pattern.
+
+WHAT TO TRY (your design; keep it exact):
+- Carry the active league state across consecutive days within one advance_save call when the roster, contract and free-agent inputs did not change (refresh_active_runtime_state exists for health/minutes refreshes). advance_lifecycle_to currently resets `active = None` per call.
+- Avoid rebuilding role_active when nothing roster-related changed since ai_canonical.
+- Anything else the profile shows, as long as results stay identical.
+
+HARNESS (reuse; scripts are in output/overnight-2026-11-17/):
+- speed_month.py advances a copy of a seed-103 legacy save (output/overnight-2026-11-17/crash103/s3.json + its .history.sqlite3*; copy both to a scratch folder first, never edit the originals) to a date and prints seconds.
+- fresh_month.py creates a fresh BOS seed-55 save and advances it to 2026-11-20.
+- Exactness check: run old code and new code from identical starting files and compare the saved JSON after removing meta.save_snapshot_id and history_store.snapshot_id (and history_store.path if file names differ). They must be EQUAL. Also compare the history sqlite tables' row counts.
+- Also verify a new-ratings save (create_league_save(..., ratings_model="inputs_v1")) for one month the same way.
+
+BOUNDARIES: edit only src/nba_gm_data/save.py (and a new test file). Do not change formulas, RNG streams, or any file listed at the top of this queue.
+
+ACCEPTANCE:
+1. Byte-identical results (as defined above) on: the mid-season legacy month, the fresh early-season month, and one new-ratings month.
+2. Report before/after seconds for each (median of 2 runs).
+3. bash scripts/run_core_tests.sh passes (329 tests).
+4. A short plain-language report in docs/agents/tasks/spd-sim-speed.md; set the board row to "review". Do not commit.
+```
+
+### T2b: Fix the 10-season driver and rebuild the 2036 test fixture
+
+Suggested settings: GPT-6.1 Sol, Medium, fresh chat. Long compute (~2 h); start it early.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md (task T2 row) first. You own task T2b; mark it "in progress (Codex)".
+
+GOAL: restore the last missing test fixture, output/roster-forecast-pass/fixtures/mature2036.json, which tests/test_roster_forecast_performance.py::test_archived_2036_generated_and_injured_rosters_without_advancing_the_career needs (it currently skips). The test asserts state.current_date == '2036-11-01' and uses the save's players, health states and generated (drafted) players.
+
+FACTS:
+- The original generator scripts/prepare_roster_forecast_fixture.py extracted from a 565 MB archived checkpoint that no longer exists.
+- scripts/ten_season_soak.py is stale: it dies at the draft-lottery phase (a 2027-06-22 save now needs the `draft_lottery` action). scripts/overnight_market_health.py has a current phase driver you can learn from.
+- One simulated month takes ~20-60 s headless, so 10 seasons is roughly 1.5-2.5 h. Run it in the background, check progress, and keep a log.
+
+STEPS:
+1. Fix scripts/ten_season_soak.py (or write scripts/build_mature_fixture.py) to drive a fresh seed-17 legacy save through every phase (regular season, playoffs, lottery, draft, re-signing, free agency, preseason) to 2036-11-01, with AI on, saving periodic checkpoints under output/t2b/ so a crash can resume.
+2. Produce the fixture. Store it as a tracked, compressed file under tests/fixtures/ (keep only the save fields the test reads, if that is enough; target under 15 MB) and point the test's loader at it, falling back to a skip with a clear message if absent. Do not change any assertion.
+3. Report any engine crash with the traceback (don't fix engine code; note it for Claude).
+
+BOUNDARIES: scripts/ten_season_soak.py or a new script, tests/fixtures/, and the fixture-loading lines of tests/test_roster_forecast_performance.py only. Don't edit src/.
+
+ACCEPTANCE: PYTHONPATH=src:scripts:tests .venv/bin/python -m unittest tests.test_roster_forecast_performance runs with 0 skips (or report exactly why not). Short report in docs/agents/tasks/t2b-mature-fixture.md; board row to "review". Do not commit.
+```
+
+### TST: Triage and fix stale tests in the full suite (tests only)
+
+Suggested settings: GPT-6.1 Sol, Medium, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md ("Test suite health" and "Full-suite leftovers" sections) first. You own task TST; mark it "in progress (Codex)".
+
+GOAL: a full test suite that is green or explicitly quarantined, so real regressions are visible.
+
+STEPS:
+1. Run the full suite once: PYTHONPATH=src:scripts:tests .venv/bin/python -m unittest discover -s tests 2>&1 | tee output/tst/full_before.log (takes ~40 min; run in background). Note: some tests need scripts/ on the path; plain src fails their imports.
+2. Classify every failure: (a) stale pin, where the game changed on purpose (roster refresh, ratings refresh, new save fields, renamed GUI functions); (b) fixture/path problem; (c) likely real bug.
+3. Fix (a) and (b) in tests/ only. For each changed assertion, add a one-line comment saying why the new expectation is right, with evidence (commit, data change, board note). NEVER loosen a tolerance or delete an assertion just to pass; if unsure, mark it with unittest.skip("needs review: <reason>") and list it.
+4. Do not fix (c); list each with the failing assertion and your diagnosis for Claude.
+Known context: rating-pin tests (test_imported_rookie_ratings, test_player_tuning, test_roster_alignment, test_rotation_profile_calibration) pin legacy-mode values. Check whether the legacy values changed deliberately (git log -S) before updating. Today's engine commits changed box-score steals/blocks/rebounds/free throws (scores unchanged), so tests pinning those box stats may need new expectations: verify they are improvements, not regressions.
+
+BOUNDARIES: tests/ only (including tests/fixtures/). Do not edit src/ or scripts/.
+
+ACCEPTANCE: rerun the full suite; report before/after counts (pass/fail/error/skip), the list of quarantined tests with reasons, and the suspected real bugs. Report in docs/agents/tasks/tst-suite-triage.md; board row to "review". Do not commit.
+```
+
+---
+
+## E2b: Stop priors from averaging away elite players (DONE, accepted 2026-11-16)
 
 Suggested settings: GPT-6.1 Sol, High, in a fresh chat.
 
@@ -53,7 +138,7 @@ Set the board row to "review". Do not commit.
 
 ---
 
-## E2c: Generated players are defined by the generator, not shrunk to priors (after E2b)
+## E2c: Generated players are defined by the generator, not shrunk to priors (DONE, accepted 2026-11-16)
 
 Suggested settings: GPT-6.1 Sol, High, in a fresh chat or continuing the E2b chat if it still has context.
 

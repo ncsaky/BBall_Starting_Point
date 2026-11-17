@@ -47,3 +47,4 @@ data/research/bbi/normalized.json
 data/research/bbi/normalized/
 data/research/bbi/raw/
 data/research/bbi/captures/bbi_metric_catalog*.json
+data/research/bbi/values_recent.json.gz

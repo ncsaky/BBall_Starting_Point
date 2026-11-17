@@ -19,7 +19,19 @@ from .trait_adapter import LEGACY_TRAITS
 
 FIT_FILE = "data/canonical/impact_value_fit.json"
 PROFILE_PREDICTORS = ("three_per36", "three_pct", "two_pct", "ft_pct")
-PREDICTORS = [*LEGACY_TRAITS, "height_inches", *PROFILE_PREDICTORS]
+# Grouped technique grades and involvement from the 94 inputs: the 15 hidden ratings saturate for star guards
+# (several sit at the 96th-100th percentile), so the inputs' finer detail is what separates them.
+INPUT_GROUPS = {
+    "in_shooting": [f"S{n:02d}" for n in range(1, 10)],
+    "in_finishing": [f"S{n:02d}" for n in range(10, 16)],
+    "in_creation": [f"S{n:02d}" for n in (16, 17, 18, 19, 20, 24)],
+    "in_post": ["S21", "S22", "S23"],
+    "in_offball": [f"S{n:02d}" for n in range(25, 29)],
+    "in_rebounding": [f"S{n:02d}" for n in range(29, 33)],
+    "in_defense": [f"S{n:02d}" for n in range(33, 47)],
+    "in_pass_reading": [f"F{n:02d}.recognition" for n in range(1, 10)],
+}
+PREDICTORS = [*LEGACY_TRAITS, "height_inches", *PROFILE_PREDICTORS, *INPUT_GROUPS, "in_involvement"]
 TABLE_KEY = "_impact_value_tables"
 _FIT_CACHE: dict[str, Any] = {}
 
@@ -27,14 +39,29 @@ _FIT_CACHE: dict[str, Any] = {}
 _PROFILE_DEFAULTS = {"three_per36": 3.0, "three_pct": 0.34, "two_pct": 0.52, "ft_pct": 0.76}
 
 
+def input_features(inputs: Mapping[str, Any] | None) -> list[float]:
+    """Mean technique grade per group plus involvement (T08); league-typical values when inputs are missing."""
+    out = []
+    for ids in INPUT_GROUPS.values():
+        grades = [float(inputs[i]["value"]["grade"]) for i in ids
+                  if inputs and isinstance((inputs.get(i) or {}).get("value"), dict) and "grade" in inputs[i]["value"]]
+        out.append(sum(grades) / len(grades) if grades else 50.0)
+    try:
+        out.append(float(inputs["T08"]["value"]["probability"]))
+    except (KeyError, TypeError, ValueError):
+        out.append(0.45)
+    return out
+
+
 def predictor_row(traits: Mapping[str, float], player: Mapping[str, Any],
-                  profile: Mapping[str, float] | None = None) -> list[float]:
-    """Hidden ratings, height, and the engine's shooting profile (observed make rates and three-point volume,
-    adjusted by development) - the same player representation the game sim scores with."""
+                  profile: Mapping[str, float] | None = None, inputs: Mapping[str, Any] | None = None) -> list[float]:
+    """Hidden ratings, height, the engine's shooting profile (observed make rates and three-point volume,
+    adjusted by development) and grouped input grades - the same player the game sim plays with."""
     row = [float(traits.get(trait, 50.0)) for trait in LEGACY_TRAITS]
     row.append(float(player.get("height_inches") or 78.0))
     profile = profile or {}
     row.extend(float(profile.get(key, default)) for key, default in _PROFILE_DEFAULTS.items())
+    row.extend(input_features(inputs))
     return row
 
 
@@ -48,8 +75,8 @@ def load_fit(root: Path | None = None) -> dict[str, Any] | None:
 
 
 def predict(fit: Mapping[str, Any], traits: Mapping[str, float], player: Mapping[str, Any],
-            profile: Mapping[str, float] | None = None) -> dict[str, float]:
-    row = predictor_row(traits, player, profile)
+            profile: Mapping[str, float] | None = None, inputs: Mapping[str, Any] | None = None) -> dict[str, float]:
+    row = predictor_row(traits, player, profile, inputs)
     out = {}
     for side in ("offense", "defense"):
         c = fit["coefficients"][side]
@@ -93,6 +120,11 @@ def _profile(canonical: Mapping[str, Any], player: Mapping[str, Any], traits: Ma
     return offensive_profile(canonical, player, traits) if offense_enabled(canonical) else {}
 
 
+def _inputs(canonical: Mapping[str, Any], player: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    from .ratings_model import effective_inputs
+    return effective_inputs(canonical, player["id"])
+
+
 _TABLE_CACHE: dict[tuple, dict[str, Any]] = {}
 _BUILDING = False
 
@@ -123,7 +155,8 @@ def install_summary_tables(canonical: dict[str, Any], root: Path | None = None) 
             summaries = {p["id"]: _uncached_player_attribute_summary(canonical, p["id"]) for p in players}
         finally:
             _BUILDING = False
-        predictions = {p["id"]: predict(fit, traits[p["id"]], p, _profile(canonical, p, traits[p["id"]])) for p in players}
+        predictions = {p["id"]: predict(fit, traits[p["id"]], p, _profile(canonical, p, traits[p["id"]]), _inputs(canonical, p))
+                       for p in players}
         scales = {k: [s[k] for s in summaries.values() if k in s] for k in ("overall", "offense", "defense")}
         _TABLE_CACHE[key] = build_tables(predictions, {k: v for k, v in scales.items() if v})
     model["impact_tables_key"] = list(key[0]) + [key[1]]
@@ -143,7 +176,8 @@ def summary_override(canonical: Mapping[str, Any], player: Mapping[str, Any], tr
     fit = load_fit()
     if tables is None or fit is None:
         return None
-    prediction = predict(fit, traits, player, profile if profile is not None else _profile(canonical, player, traits))
+    prediction = predict(fit, traits, player, profile if profile is not None else _profile(canonical, player, traits),
+                         _inputs(canonical, player))
     return {key: round(mapped(tables, prediction, key), 1) for key in tables}
 
 
@@ -153,7 +187,8 @@ def remap_on_court(canonical: Mapping[str, Any], players: list[Mapping[str, Any]
     fit = load_fit()
     if _model(canonical) is None or fit is None or len(legacy_on_court) < 30:
         return dict(legacy_on_court)
-    predictions = {p["id"]: predict(fit, traits_by_id.get(p["id"], {}), p, _profile(canonical, p, traits_by_id.get(p["id"], {})))
+    predictions = {p["id"]: predict(fit, traits_by_id.get(p["id"], {}), p, _profile(canonical, p, traits_by_id.get(p["id"], {})),
+                                    _inputs(canonical, p))
                    for p in players if p["id"] in legacy_on_court}
     tables = build_tables(predictions, {"on_court": list(legacy_on_court.values())})
     return {pid: round(mapped(tables, prediction, "on_court"), 4) for pid, prediction in predictions.items()}
