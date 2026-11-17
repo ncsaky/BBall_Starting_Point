@@ -8960,6 +8960,10 @@ def process_inseason_released_free_agent_signings(canonical: dict[str, Any], sav
         return set()
     pool = set(save.get("free_agent_player_ids") or [])
     retired = set(save.get("retired_player_ids") or [])
+    # Most days nobody released is still available; skip the full league rebuild then (same result, cheaper).
+    if not any(release.get("status") == "available" and player_id in pool and player_id not in retired
+               for player_id, release in released.items()):
+        return set()
     active = canonical_with_save(canonical, save)
     players = {player.get("id"): player for player in active.get("players", []) if player.get("id")}
     profiles = {profile.get("player_id"): profile for profile in active.get("player_contract_market_profiles", [])}
