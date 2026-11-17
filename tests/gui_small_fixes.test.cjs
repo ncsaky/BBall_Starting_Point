@@ -309,3 +309,14 @@ test('rating bars use the provided reference (e.g. positional) and never a made-
   const league = ctx.playerCardRatingBar('Shooting', 60, 'shooting', {rating_league_averages: {shooting: 52}});
   assert.match(league, /League average: 52\.0/);
 });
+
+test('development chart axis fits real (small) OVR changes instead of a fixed +/-5', () => {
+  const grab = (name) => app.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n}\\n`))[0];
+  const ctx = {};
+  vm.createContext(ctx);
+  vm.runInContext(grab('developmentAxisLimit'), ctx);
+  assert.equal(ctx.developmentAxisLimit([0.2, -0.4, null]), 1);
+  assert.equal(ctx.developmentAxisLimit([1.6, -0.3]), 2);
+  assert.equal(ctx.developmentAxisLimit([-4.2]), 5);
+  assert.equal(ctx.developmentAxisLimit([]), 1);
+});

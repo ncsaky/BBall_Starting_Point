@@ -18,7 +18,7 @@ from urllib import request as urlrequest
 import nba_gm_data.transactions as transactions_module
 import nba_gm_data.utils as utils_module
 import nba_gm_data.save as save_module
-from nba_gm_data.app_actions import APP_ACTION_PROTOCOL_VERSION, AppActionError, advance_action, clean_draft_order_item, dispatch_app_action, estimated_overall_delta
+from nba_gm_data.app_actions import APP_ACTION_PROTOCOL_VERSION, AppActionError, advance_action, clean_draft_order_item, dispatch_app_action, development_overall_path
 from nba_gm_data.app_server import make_gui_server
 from nba_gm_data.assets import install_loading_assets
 from nba_gm_data.animation import auto_frame_size, colorize_frame, default_video_path, load_animation_frames
@@ -4889,11 +4889,17 @@ class DataFoundationTests(unittest.TestCase):
         self.assertTrue(all(abs(delta) <= 0.12 for delta in lebron_event["trait_deltas"].values()))
         self.assertIn("stamina_cardio", kon_event["trait_deltas"])
 
-    def test_development_dashboard_uses_visible_estimated_ovr_scale(self):
-        event = {"trait_deltas": {"shooting_range": 0.18, "rim_pressure": 0.14, "scheme_iq": 0.12}}
-        self.assertGreaterEqual(estimated_overall_delta(event), 0.3)
-        self.assertLessEqual(estimated_overall_delta({"trait_deltas": {"a": 2.0}}), 0.65)
-        self.assertGreaterEqual(estimated_overall_delta({"trait_deltas": {"a": -2.0}}), -0.65)
+    def test_development_dashboard_shows_the_engines_real_ovr_path(self):
+        # The chart walks today's ratings back through saved monthly changes and uses the engine's own OVR
+        # formula (rule 4), instead of the old capped estimate that ran ~4x the real change.
+        player = next(p for p in self.plain["players"] if p.get("team_id"))
+        today = player_attribute_summary(self.plain, player["id"])["overall"]
+        months = [("2026-10", {"shooting_range": 3.0, "passing_reads": 2.0}), ("2026-11", {"scheme_iq": 1.5})]
+        start, values = development_overall_path(self.plain, player, months)
+        self.assertAlmostEqual(values[-1], today, places=6)
+        self.assertLess(start, values[0])
+        self.assertLessEqual(values[0], values[1])
+        self.assertLess(values[-1] - start, 0.75 * 6.5)  # far smaller than the old sum x 0.75 estimate
 
     def test_gm_transaction_context_exports_core_records(self):
         self.assertEqual(len(self.universe.front_office_profiles), len(self.universe.teams))

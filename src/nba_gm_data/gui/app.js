@@ -4028,8 +4028,8 @@ function seasonDevelopmentCard(rows) {
           <span class="season-development-age">${escapeHtml(age)}</span>
           ${seasonDevelopmentUpside(upside)}
           <span class="season-development-metrics">
-            ${seasonDevelopmentMetric("Season", seasonDelta)}
-            ${seasonDevelopmentMetric(monthLabel, monthDelta)}
+            ${seasonDevelopmentMetric("Season", seasonDelta, 2)}
+            ${seasonDevelopmentMetric(monthLabel, monthDelta, 0.5)}
           </span>
         </button>`;
       }).join("") || `<div class="empty">Development history will appear after the first monthly update.</div>`}
@@ -4065,11 +4065,12 @@ function seasonDevelopmentMonthLabel(value) {
   return month >= 1 && month <= 12 ? months[month - 1] : "Month";
 }
 
-function seasonDevelopmentMetric(label, delta) {
+// scale: the OVR change that fills half the bar (real season changes are ~0-2 points, months ~0-0.5).
+function seasonDevelopmentMetric(label, delta, scale = 2) {
   const amount = Number.isFinite(Number(delta)) ? Number(delta) : 0;
   const rounded = Number(amount.toFixed(1));
   const tone = rounded > 0 ? "positive" : rounded < 0 ? "negative" : "neutral";
-  const width = clampNumber((Math.abs(amount) / 5) * 50, 0, 50);
+  const width = clampNumber((Math.abs(amount) / Math.max(0.1, scale)) * 50, 0, 50);
   const direction = amount < 0 ? `right:50%` : `left:50%`;
   return `<span class="season-development-metric">
     <span class="season-development-period">${escapeHtml(label)}</span>
@@ -10930,8 +10931,10 @@ function developmentLineChart(lines, options = {}) {
   if (!lines.length) return `<div class="empty">${escapeHtml(options.empty || "No chart data.")}</div>`;
   const months = developmentSeasonMonths();
   const series = lines.map((line) => normalizeDevelopmentSeries(line, months));
-  const paddedMin = -5;
-  const paddedMax = 5;
+  // Real OVR changes are small (tenths per month), so the axis fits the data instead of a fixed +/-5.
+  const limit = developmentAxisLimit(series.flatMap((line) => line.values));
+  const paddedMin = -limit;
+  const paddedMax = limit;
   const span = paddedMax - paddedMin;
   const width = 560;
   const height = 220;
@@ -10958,15 +10961,21 @@ function developmentLineChart(lines, options = {}) {
     <svg class="trend-svg development-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Player development trend">
       <path class="trend-grid" d="M${padX} ${padY}H${width - padX}M${padX} ${height - padY}H${width - padX}" />
       <line class="season-horizon-guide" x1="${padX}" y1="${height / 2}" x2="${width - padX}" y2="${height / 2}"></line>
-      <text class="trend-axis left" x="${padX}" y="${padY - 4}">+5</text>
+      <text class="trend-axis left" x="${padX}" y="${padY - 4}">+${limit}</text>
       <text class="trend-axis left" x="${padX}" y="${height / 2 - 4}">0</text>
-      <text class="trend-axis left" x="${padX}" y="${height - padY - 4}">-5</text>
+      <text class="trend-axis left" x="${padX}" y="${height - padY - 4}">-${limit}</text>
       ${paths}
       ${months.map((month, index) => {
         const x = padX + (index / Math.max(1, months.length - 1)) * (width - padX * 2);
         return `<text class="trend-axis development-axis" x="${x.toFixed(1)}" y="${height - 3}">${escapeHtml(month.label)}</text>`;
       }).join("")}
     </svg>`;
+}
+
+// Smallest "nice" symmetric axis limit (OVR points) that holds every value; never below 1.
+function developmentAxisLimit(values) {
+  const peak = Math.max(0, ...values.filter(Number.isFinite).map((value) => Math.abs(value)));
+  return [1, 2, 3, 5, 10, 20].find((step) => peak <= step) ?? Math.ceil(peak);
 }
 
 function normalizeDevelopmentSeries(line, months) {

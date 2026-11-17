@@ -2457,6 +2457,35 @@ def safe_date(value: Any) -> date | None:
         return None
 
 
+def development_overall_path(active: dict[str, Any], player: dict[str, Any], deltas_by_month: list[tuple[str, dict[str, float]]]) -> tuple[float, list[float]]:
+    """Exact OVR at the start and after each month, from the engine's own summary formula.
+
+    Today's hidden ratings are walked back through the saved monthly development changes, then the same
+    player_attribute_summary the card and AI use is evaluated at every month end. Minutes are held at today's
+    projection, so the line isolates development (skill change), not role changes. Approximate only in the new
+    inputs mode, where development is routed through the 94 inputs before ratings are re-derived."""
+    player_id = player["id"]
+    from .save import trait_values_by_player
+    current = dict(trait_values_by_player(active).get(player_id, {}))
+    meta = active.get("meta", {})
+
+    def overall(traits: dict[str, float]) -> float:
+        context = {"meta": meta, "players": [player],
+                   "traits": [{"player_id": player_id, "trait_key": key, "value": value} for key, value in traits.items()]}
+        return float(player_attribute_summary(context, player_id).get("overall") or 0.0)
+
+    states = [current]
+    for _month, deltas in reversed(deltas_by_month):
+        previous = dict(states[-1])
+        for key, delta in deltas.items():
+            if key in previous:
+                previous[key] = previous[key] - float(delta or 0.0)
+        states.append(previous)
+    states.reverse()  # start, after month 1, ..., today
+    values = [overall(traits) for traits in states]
+    return values[0], values[1:]
+
+
 def player_development_trend_lines(active: dict[str, Any], save: dict[str, Any], team_id: str) -> list[dict[str, Any]]:
     players = {player["id"]: player for player in active.get("players", []) if player.get("team_id") == team_id}
     if not players:
@@ -2470,10 +2499,21 @@ def player_development_trend_lines(active: dict[str, Any], save: dict[str, Any],
         month = str(event.get("month") or event.get("date") or "")[:7]
         if player_id in players and first_month <= month <= last_month:
             events_by_player.setdefault(str(player_id), []).append(event)
+    paths: dict[str, tuple[float, list[tuple[str, float]]]] = {}
+    for player_id, events in events_by_player.items():
+        by_month: dict[str, dict[str, float]] = {}
+        for event in sorted(events, key=lambda item: str(item.get("month") or item.get("date") or "")):
+            month = str(event.get("month") or event.get("date") or "")[:7]
+            bucket = by_month.setdefault(month, {})
+            for key, delta in (event.get("trait_deltas") or {}).items():
+                bucket[key] = bucket.get(key, 0.0) + float(delta or 0.0)
+        ordered = sorted(by_month.items())
+        start, values = development_overall_path(active, players[player_id], ordered)
+        paths[player_id] = (start, [(month, value) for (month, _), value in zip(ordered, values)])
     moved_ids = sorted(
-        events_by_player,
+        paths,
         key=lambda player_id: (
-            -abs(sum(estimated_overall_delta(event) for event in events_by_player.get(player_id, []))),
+            -abs((paths[player_id][1][-1][1] if paths[player_id][1] else paths[player_id][0]) - paths[player_id][0]),
             -display_minutes_projection(players[player_id]),
             players[player_id].get("name") or "",
         ),
@@ -2486,20 +2526,11 @@ def player_development_trend_lines(active: dict[str, Any], save: dict[str, Any],
     top_ids = (moved_ids + minute_ids)[:16]
     lines: list[dict[str, Any]] = []
     for player_id in top_ids:
-        events = sorted(events_by_player.get(player_id, []), key=lambda item: str(item.get("month") or item.get("date") or ""))
-        if not events:
+        if player_id not in paths:
             continue
-        current = float(player_attribute_summary(active, player_id).get("overall") or 0.0)
-        delta_by_month: dict[str, float] = {}
-        for event in events:
-            month = str(event.get("month") or event.get("date") or "")[:7]
-            delta_by_month[month] = delta_by_month.get(month, 0.0) + estimated_overall_delta(event)
-        monthly_deltas = sorted(delta_by_month.items())
-        baseline = current - sum(delta for _month, delta in monthly_deltas)
-        value = baseline
-        points = [{"label": "Start", "season_slot": 0, "value": round(value, 1)}]
-        for month, delta in monthly_deltas:
-            value += delta
+        start, monthly = paths[player_id]
+        points = [{"label": "Start", "season_slot": 0, "value": round(start, 2)}]
+        for month, value in monthly:
             year = int(month[:4])
             month_number = int(month[5:7])
             month_index = (year - season_start) * 12 + month_number - 10
@@ -2507,7 +2538,7 @@ def player_development_trend_lines(active: dict[str, Any], save: dict[str, Any],
                 {
                     "label": month[5:] if len(month) >= 7 else month,
                     "season_slot": max(1, min(9, month_index + 1)),
-                    "value": round(value, 1),
+                    "value": round(value, 2),
                 }
             )
         lines.append(
@@ -2532,17 +2563,6 @@ def latest_development_month_for_team(save: dict[str, Any], team_id: str) -> str
         and first_month <= str(event.get("month") or event.get("date") or "")[:7] <= last_month
     ]
     return max(months) if months else ""
-
-
-def estimated_overall_delta(event: dict[str, Any]) -> float:
-    deltas = [float(value or 0.0) for value in (event.get("trait_deltas") or {}).values()]
-    if not deltas:
-        return 0.0
-    # Dashboard-only OVR estimate: actual engine traits move individually, but
-    # averaging every trait delta made the chart visually flat. A scaled net
-    # movement keeps the intended +/-5 season display envelope without changing
-    # saved trait math.
-    return round(max(-0.65, min(0.65, sum(deltas) * 0.75)), 3)
 
 
 def composite_rating(attrs: dict[str, Any], keys: list[str], weights: list[float]) -> float:
