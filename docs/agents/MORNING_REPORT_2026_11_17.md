@@ -1,65 +1,81 @@
 # Overnight report, Nov 17, 2026
 
 **TL;DR**
-- Basketball Index capture ran all night with no clicks needed from you. All 664 raw stats for every player-season since 2013-14 are in the project, and the new ratings were rebuilt from them. **With the rebuilt ratings, the sim's game-by-game win probabilities now score as well as the betting market** (Brier 0.1957 vs the market's 0.1962; the old ratings scored 0.2144).
-- Fixed a crash that could stop a season mid-sim (AI three-team trades with a pick swap), plus three places where the game showed you numbers the engine doesn't use: draft "potential", the player development chart, and prospect rating markers.
-- Diagnosed why top draft prospects "fall" (three separate causes) and audited the development/upside labels. Each needs a short decision from you (listed at the bottom).
+- All 664 Basketball Index stats (every player-season since 2013-14) are captured, and the new ratings were rebuilt from them. **The sim's game-by-game win probabilities now score as well as the betting market** (Brier 0.196 vs the market's 0.196; the old ratings scored 0.214).
+- Fixed four engine problems that affected every save without changing any game score: steals/blocks went to the wrong players, too many free throws, rebounds ignored height, and a foul rate. **All 18 of 18 league stats are now in the realistic range** (was 12 of 18).
+- Also fixed: a crash that could stop a season mid-sim, plus three spots where the game showed numbers the engine doesn't use. Six short decisions for you are at the bottom.
 
-Everything below is committed and pushed to both branches. No save dialogs were opened.
+Everything is committed and pushed to both branches. Core tests: 329 pass. No save dialogs were opened by me, but see the note in section 1 about possible leftover download prompts.
 
 ## 1. Basketball Index data
 
-- **Leaderboards (the main source):** all 664 stats, 10 at a time, for all 6,804 player-seasons since 2013-14, in raw values. Files land in Downloads, and a background importer moves and imports them automatically.
-  - Overnight fixes: the page sometimes ignored a "Run" click (it now re-clicks, and a watchdog kicks it after 4 idle minutes); the importer's file search silently matched nothing in this shell (fixed); one file had blank column titles from a background-tab redraw (the importer now rebuilds them only when the layout matches exactly).
-  - I stopped before the optional extra display modes (season percentile/grade/"Value+"). After about 2:20 AM, the browser pane's downloads began landing as hidden temporary files in Downloads (`.Q6L2SF6YDW.com.anthropic.claudefordesktop.*`) instead of finishing. I recovered the data from the page's memory, but stopped rather than risk piling up save prompts. **You may see pending download prompts in the app**; cancel them, since the data is already saved. The hidden temp files in Downloads can be deleted.
-- **Fanspo tools:** Value Trends (582 players, 4 time windows) and Shooting Talent daily projections with uncertainty ranges (908 players, about two-thirds of the list). Not captured yet: Player Trends (one player at a time), shot maps, lineups, play-by-play.
+- **Leaderboards tool:** all 664 stats for all 6,804 player-seasons, in raw values, imported into the project.
+  - Fixed along the way: the page sometimes ignored a "Run" click; the auto-importer silently matched no files; one file had blank column titles.
+  - I skipped the optional extra display modes (percentile/grade versions of the same stats). From about 2:20 AM, downloads from the app's browser pane started landing as hidden temporary files instead of finishing. I recovered the data from the page's memory, then stopped rather than risk piling up save prompts.
+  - **If you see download prompts in the app, cancel them;** the data is already saved. The hidden files `~/Downloads/.Q6L2SF6YDW.com.anthropic.claudefordesktop.*` can be deleted.
+- **Fanspo tools:** Value Trends (582 players, 4 time windows) and Shooting Talent projections with uncertainty ranges (908 players, about two-thirds of the list). Not captured: Player Trends, shot maps, lineups, play-by-play.
 
-## 2. Ratings (Stage 1)
+## 2. New ratings (Stage 1)
 
-- **Evidence overlay v2:** Basketball Index now feeds tendencies too (what players choose to do), not just skills. Examples: usage, dribble-holding, shot difficulty, the shoot/drive/pass/post mix, catch-and-shoot vs pull-up. Each tendency keeps its existing scale, and Basketball Index only re-ranks players within it. Inputs backed only by weak proxies (like straight-line speed from average tracked speed) move less than ones with direct measures.
-- **Fake plateau removed:** about 1,100 old ratings were placeholder 50s for players with no data. They made Jokić, Cade and Wembanyama tie at exactly the same shooting-range value. They're now excluded from the converter.
-- **Rebuild results (new-ratings mode, which is still opt-in; normal saves are unchanged):**
+What changed in how the 94 inputs are built:
+- Basketball Index now feeds tendencies (usage, dribbling, shot difficulty, shoot/drive/pass mix, catch-and-shoot vs pull-up), not just skills. Each keeps its scale; the data only re-ranks players. Weak evidence moves ratings less than direct evidence.
+- Three bad evidence choices were corrected because they measured volume, not skill. Turnover counts are now divided by touches. Pass "execution" no longer uses Basketball Index at all (every available stat ranked Trae Young, Chris Paul and Harden below Gobert). Attack recognition no longer uses half-court shot quality, which is mostly dunks.
+- The converter from inputs to the 15 hidden ratings now matches how the old ratings were defined for scheme IQ (half offense, half defense) and passing (skill plus passing volume). About 1,100 placeholder "50" ratings no longer distort it.
 
-  | | Old ratings | New, before BBI | New, with BBI |
-  |---|---|---|---|
-  | Betting odds: Brier (market 0.1962) | 0.2144 | 0.2038 | **0.1957** |
-  | Betting odds: log loss (market 0.574) | 0.632 | 0.601 | **0.580** |
-  | Average point-spread miss vs market | 6.63 | 5.46 | **5.08** |
-  | Real stats: league metrics in range (of 18) | 12 | 13 | **14** |
-  | Real stats: points per 36 error | 2.89 | 3.11 | 2.92 |
-  | Real stats: assists per 36 error | 1.11 | 1.08 | 1.26 (worse) |
+Scorecards (new ratings are still opt-in; normal new saves use the old ratings):
 
-  - **Top 12 by overall now:** SGA, Cade, Derrick White, Jalen Williams, Haliburton, Luka, Reaves, Curry, Donovan Mitchell, Jokić, Jamal Murray, Kawhi. That's much closer to how analysts rank guards and wings.
-  - **Still wrong: big men.** Gobert ranks 324th overall, Sabonis 212th, Giannis 52nd. The overall number averages skills with heavy weight on shooting and creation, gives no weight to rebounding, and its defense number is 60% perimeter mobility and only 40% rim protection. The old hand-set ratings hid this by inflating bigs' perimeter ratings. I tested two formula tweaks (more rim protection in defense, 8% rebounding in overall): Jokić moves to #3, Mobley #11, Davis #47, but Gobert only to #233. A real fix probably means basing the overall number on impact, not a skill average. **Your call.**
-  - **Assists got worse** because the sim's assist formula has steep hand-set cutoffs tuned to the old ratings. For example, big men are capped unless their passing is at least 88; Jokić's passing came out 86.4, so his assists halved. This needs an engine retune (tune the engine around the ratings, per your rule), not a ratings change.
-  - Three Basketball Index mappings were corrected during the rebuild, because they measured volume instead of skill. Turnover counts are now divided by touches. Pass "execution" no longer uses Basketball Index at all: every available stat ranked Trae Young, Chris Paul and Harden below Gobert. The converter's "scheme IQ" was rebalanced to half offense, half defense, matching how the old rating was defined.
-- **Finding for Stage 1:** the trade and contract AI does **not** read the overall rating. It uses its own "on-court value" built from game features. The overall rating drives rotations, free agency, awards and trade wants. So fixing the hidden ratings themselves fixes both at once. See `docs/agents/tasks/s1e-quality-sources-2026-11-17.md`.
-- **Experiment:** if the AI's quality numbers used skill-only ratings (no "how often he shoots threes" mixed in), Jokić's offense rank would go from 72nd to 20th. Worth deciding after the rebuild.
+| | Old ratings | New, start of night | New, now |
+|---|---|---|---|
+| Betting odds: Brier (market 0.1962) | 0.2144 | 0.2038 | **0.1961** |
+| Betting odds: log loss (market 0.574) | 0.632 | 0.601 | **0.580** |
+| Point-spread miss vs market | 6.63 | 5.46 | **5.00** |
+| League stats in realistic range (of 18) | 12 → **17** now | 13 | **18** |
+| Per-player error per 36 min: points | 2.89 | 3.11 | 2.93 |
+| rebounds | 1.35 → 1.20 now | 1.24 | 1.24 |
+| assists | 1.11 | 1.08 | 1.19 |
+| steals | 0.65 → 0.29 now | 0.66 | **0.26** |
+| blocks | 0.59 → 0.28 now | 0.63 | **0.33** |
+| free throws | 1.63 → 1.20 now | 1.67 | **1.19** |
 
-## 3. Bugs fixed
+**Who's on top (new ratings, overall):** SGA, Cade, Derrick White, Jalen Williams, Haliburton, Luka, Reaves, Curry, Mitchell, Jokić, Murray, Kawhi. Script: `scripts/ratings_sniff_report.py`.
 
-- **Rebounds ignored height.** The sim split rebounds without any size term, so Wembanyama got 7 per 36 against 14 real. Rebound chances now come from a small fit to real rebounding (rebounding rating plus height); rebound error fell about 12–15%.
-- **Too many free throws (every save).** Box scores gave every player about one extra free-throw attempt per game no matter how they play (a biased rounding step), so the league shot 34 free throws per 100 possessions against the NBA's 23. Fixed without changing any game score. After this and a small personal-foul calibration, the real-stats scorecard has **all 18 of 18 league stats in the realistic range** with the new ratings (17 of 18 with the old ones; only true shooting % is slightly high). It was 12 of 18 at the start of the night.
+**Still wrong (needs your input):**
+- **Big men.** Gobert ranks 324th overall, Sabonis 212th, Giannis 52nd.
+  - The overall number is a skill average weighted toward shooting and creation, with no rebounding.
+  - Its defense part is 60% perimeter mobility and 40% rim protection.
+  - The old hand-set ratings hid this by inflating bigs' perimeter ratings.
+  - Formula tweaks I tested help only partly (Jokić to #3, Gobert only to #233). A real fix likely means an impact-based overall.
+- **Assists for elite passers.** The sim's assist formula has hard cliffs tuned to the old ratings:
+  - Big men are capped unless passing is at least 88, so Jokić (86.4) gets 5 per 36 instead of 11.
+  - A big bonus switches on above fixed usage and creation lines, so Jamal Murray and Derrick White get 10–12.
+  - Smoothing these is engine work I'd like your OK on.
 
-- **Steals and blocks went to the wrong players (every save).** After each game the sim rescales steals, blocks, assists and rebounds to realistic team totals. Leftover units always went to the same players, decided by a fixed alphabetical-ish ID order. Seventeen players, all with first names A–D (Sengun, Podziemski, Gillespie, Bruce Brown, Sexton…), simulated zero steals all season. Fixed. Real-stat error for steals fell by more than half (0.65 → 0.30 per 36 min) and blocks by half (0.59 → 0.28), in both rating modes.
+**Finding:** the trade and contract AI uses its own "on-court value" built from game features, not the overall number. Fixing the hidden ratings improves both. Details: `docs/agents/tasks/s1e-quality-sources-2026-11-17.md`.
 
-- **Season crash:** an AI three-team trade carrying a pick swap could crash a whole sim day ("Every draft condition must refer to one selected pick"). Reproduced on a real season and fixed. That season now runs through the trade deadline.
-- **Draft potential:** for draft classes from 2028 on, the board showed a prospect's secret true potential, while every AI team only sees the public scouting number. "96-potential" prospects then seemed to fall for no reason. The board now shows the same public number the AI uses.
-- **Development chart:** "Net growth" showed an estimate about 4 times larger than the real rating change (a young riser +2.6 shown vs +0.6 real). It now shows the engine's real change, and the axis fits the data.
-- **Prospect rating bars:** prospect cards drew a made-up "league average 50" marker. They now mark the average for the prospect's position (e.g., the SF/PF average).
-- **Draft boards:** prospect injury history, any current injury and projected injury risk are now visible (from the engine's existing medical profiles; nothing invented).
+## 3. Bugs fixed (all saves unless noted)
 
-## 4. Decisions for you (short)
+- **Steals and blocks went to the wrong players.** Leftover units after scaling to team totals always went to the same players in a fixed ID order. 17 players (Sengun, Podziemski, Gillespie, Bruce Brown, Sexton…) simulated zero steals all season.
+- **Too many free throws.** A biased rounding step gave every player about one extra attempt per game (34 per 100 possessions vs the NBA's 23). Fixed with game scores provably unchanged.
+- **Rebounds ignored height.** Wembanyama got 7 per 36 against 14 real. Now uses a small fit to real rebounding (rebounding rating plus height).
+- **Personal fouls** were set slightly low (17.8 vs 19.4 per 100); now matches the NBA.
+- **Season crash:** an AI three-team trade with a pick swap could crash a whole sim day. Reproduced and fixed; that season now runs through the deadline.
+- **Draft potential:** for 2028+ draft classes the board showed a prospect's secret true potential while the AI used the public number. That made "96-potential" prospects look like they fell for no reason. Now the board shows the public number.
+- **Development chart:** "Net growth" showed about 4x the real change (+2.6 shown vs +0.6 real). Now it shows the engine's real change, and the axis fits the data.
+- **Prospect rating bars:** prospect cards drew a made-up "league average 50" marker; now they show the average for the prospect's position (e.g. SF/PF).
+- **Draft boards** now show prospect injury history, current injury and projected risk (from existing engine data; nothing invented).
+- **Tests:** two lost test fixtures were rebuilt as small tracked files (skipped tests 9 → 3).
 
-0. **Big men and assists (above):** (a) base the overall number on impact, or tweak the skill-average formula; (b) OK to retune the sim's assist formula for the new ratings?
+Checked in the running game: the development card (real ±0.1 changes) and the prospect card's position markers.
 
-1. **Injured players' ratings (M01):** injuries don't lower displayed ratings at all today. After a return, the sim applies a temporary "rust" penalty in games. Options: (a) a small red "rust" marker with games left, or (b) a computed "effective OVR". I'd recommend (a).
-2. **Draft randomness:** top-5 prospects fall past pick 10 about 27% of the time, mostly from stacked random draws. Want a target such as "consensus top 3 rarely (under 5%) fall past 10"?
-3. **Draft board rank:** "rank" is just the order prospects were generated, not a grade. Should it become a real public ranking?
-4. **Draft-day trades:** a team that trades up gets the player the seller wanted. Should the buyer re-choose? (This changes seeded draft results.)
-5. **Development labels (M03):** "Upside remaining" is really a 0–5 market index (0 for everyone 27+), not potential. Proposed renames and tooltips are in `docs/agents/tasks/m03-development-definitions.md`.
-6. **Basketball Index renewal:** auto-renews Dec 16. Your call whether to keep it.
+## 4. Decisions for you
 
-## 5. Still to check visually
+1. **Big men and assists:** impact-based overall vs tweaking the skill average; OK to retune the assist formula?
+2. **Injured players' ratings:** injuries don't lower displayed ratings today; after a return, the sim applies a temporary "rust" penalty. (a) Small red "rust" marker with games left (my pick), or (b) a computed "effective OVR"?
+3. **Draft randomness:** top-5 prospects fall past pick 10 about 27% of the time, mostly from stacked random draws. Set a target, e.g. "consensus top 3 fall past 10 under 5%"?
+4. **Draft board rank:** it's just generation order, not a grade. Make it a real public ranking?
+5. **Draft-day trades:** a team trading up gets the player the seller wanted. Let the buyer re-choose? (Changes seeded draft results.)
+6. **Development labels:** "Upside remaining" is a 0–5 market index (0 for everyone 27+), not potential. Proposed renames are in `docs/agents/tasks/m03-development-definitions.md`.
 
-The new draft-board injury column, the positional markers on prospect cards, the development chart's new scale, and the earlier small GUI fixes (next opponent, S shortcut, lottery grid, playoff stats table).
+Also: Basketball Index auto-renews Dec 16 (your call), and a long 10-season test fixture (2036 save, ~2 h to build) is still missing.
+
+Full details: `docs/agents/BOARD.md` ("Overnight plan" section) and the reports in `docs/agents/tasks/`.
