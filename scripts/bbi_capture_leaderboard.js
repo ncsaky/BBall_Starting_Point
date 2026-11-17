@@ -48,7 +48,8 @@
     try { dt = await waitFor(rendered, 600000); } finally { clearInterval(nudge); }
     dt.page.len(-1).draw(false);
     await waitFor(() => { const n = dt.rows({ page: 'current' }).count(); return n > 0 && n >= dt.page.info().recordsTotal; });
-    const columns = dt.columns().header().toArray().map(h => h.innerText.trim());
+    // Titles from DataTables' own settings: header innerText can read blank in a background tab mid-redraw.
+    const columns = dt.settings()[0].aoColumns.map(c => String(c.sTitle || '').replace(/<[^>]*>/g, '').trim());
     const rows = dt.rows({ page: 'current' }).data().toArray();
     return { metrics, display, columns, rows, recordsTotal: dt.page.info().recordsTotal, runClicks: clicks };
   }

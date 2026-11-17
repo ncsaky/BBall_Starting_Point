@@ -30,8 +30,28 @@ DOWNLOADS = Path.home() / "Downloads"
 ID_COLUMNS = ("", "Season", "Player", "Age", "Team(s)", "Minutes", "Rotation Role", "Offensive Role", "Defensive Role")
 
 
+def repaired_columns(query: dict) -> list[str] | None:
+    """Column names for a query, rebuilding them when the capture read blank header text.
+
+    In a background browser tab the header text can read empty during a redraw while the data is intact. The tool
+    always lays columns out as the 9 id columns, the metrics in query order, then each metric's percentile, so the
+    names are rebuilt only when the row width matches that layout exactly; otherwise the query is skipped."""
+    cols = list(query["columns"])
+    if "Player" in cols:
+        return cols
+    metrics = [m.replace(" *", "") for m in query["metrics"]]
+    expected = [*ID_COLUMNS, *metrics, *[m + "_percentile" for m in metrics]]
+    widths = {len(row) for row in query["rows"]}
+    # Any names that were captured (often the hidden percentile columns) must agree with the rebuilt layout.
+    consistent = len(cols) == len(expected) and all(not c or c == e for c, e in zip(cols, expected))
+    return expected if widths == {len(expected)} and consistent else None
+
+
 def query_to_long(query: dict) -> list[list]:
-    cols = query["columns"]
+    cols = repaired_columns(query)
+    if cols is None:
+        print(f"skipped query with unreadable headers: {query['metrics'][:2]}...", file=sys.stderr)
+        return []
     index = {c: i for i, c in enumerate(cols)}
     metrics = [c for c in cols if c not in ID_COLUMNS and not c.endswith("_percentile")]
     out = []

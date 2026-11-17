@@ -26,6 +26,12 @@ def prospect_rating_projection(canonical, prospect, report, coverage, save=None)
     # authoritative prospect before converting it, including legacy saves.
     full = {**full, **prospect, **pending}
     projected = dict(full)
+    # Generated prospects can carry a latent upside tail that no draft evaluator can observe; the AI reads the
+    # public scouting_prior instead (draft.prospect_evaluation_value). Show the user the same public numbers.
+    public = full.get('scouting_prior') or {}
+    for field in ('potential', 'ceiling'):
+        if public.get(field) is not None:
+            projected[field] = float(public[field])
     if coverage < 100:
         for field, estimate in (('current_ability', 'estimated_current'), ('potential', 'estimated_potential')):
             mid = (report.get(estimate) or {}).get('mid')
@@ -56,7 +62,7 @@ def prospect_rating_projection(canonical, prospect, report, coverage, save=None)
     return {'now': ratings['overall'], 'ratings': ratings,
             'potential': presentation_rating_value(potential),
             'floor': presentation_rating_value(full.get('floor') if full.get('floor') is not None else max(20, ability - 8)),
-            'ceiling': presentation_rating_value(full.get('ceiling') if full.get('ceiling') is not None else potential + 7)}
+            'ceiling': presentation_rating_value(projected.get('ceiling') if projected.get('ceiling') is not None else potential + 7)}
 
 
 def college_production(prospect):

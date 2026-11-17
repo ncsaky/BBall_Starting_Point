@@ -3603,10 +3603,12 @@ def prepare_ai_trade_candidate(
     evaluation_seed = int(candidate.get('evaluation_seed', seed))
     proposal_date = date or proposal.get('date') or CANONICAL_START_DATE
     if proposal.get('transfers'):
-        from .multi_team_trades import evaluate_multi_team_trade
+        from .multi_team_trades import evaluate_multi_team_trade, transfers_for_revalidation
+        # A pick-swap condition turns its pick into a pick_swap asset in the stored proposal; re-evaluation
+        # needs the original pick back (same as the apply and app paths), or compile_pick_rules cannot find it.
         prepared = evaluate_multi_team_trade(
             canonical,
-            proposal['transfers'],
+            transfers_for_revalidation(candidate),
             pick_rules=candidate.get('pick_rules'),
             seed=evaluation_seed,
             date=proposal_date,
