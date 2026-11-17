@@ -50,7 +50,7 @@ GUI wishlist work is parked.
 | S1-C | Development writes to inputs | Claude |
 | S1-D | New player card (four layers) plus derived OVR/OFF/DEF without clipping; rewrite rating-pin tests | Claude. **Card done**: mockup approved by user; live in inputs-model saves (`player_profile.py`, `gui/player-card-layers.css`). New saves via `new-save --ratings-model inputs_v1`. Open: rating-pin test rewrite. (Injured players now show 'Out (injured) · expected back DATE'.) |
 | S1-E | Front-office AI (trades, contracts, FA, draft) reads new ratings | Claude, Codex for bounded parts |
-| S1-F | Prospects generated with inputs | Claude or Codex |
+| S1-F | Prospects generated with inputs | Claude: plumbing **done**. A new-ratings save carried through the 2027 draft and rollover gives all 60 rookies 94 inputs, with 0 card/engine mismatches. Values are wrong (top picks OVR 3–31) because the prospect path ignores the generator's definition; fix queued as **E2c** for Codex. |
 | BBI | Basketball Index capture plan and importer | Codex (**accepted**). Ready to subscribe; follow the day-1 checklist in `tasks/bbi-capture-plan.md`. |
 | T2 | Regenerate test fixtures lost in the 2026-11-16 cleanup into `tests/fixtures/` (tracked, gzipped): `pick-investment-2026-10-28/stable17/saves/trade_year.json`, `roster-forecast-pass/fixtures/mature2036.json`, `balance/career-29/run.json`, `offense-season/career-29/run.json`, `context-demand-pass/attribution-before/context-builds.json` | Codex or subagent |
 | T3 | Investigate likely real front-office bugs (below) | Claude / Codex |

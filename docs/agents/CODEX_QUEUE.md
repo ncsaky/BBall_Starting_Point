@@ -53,6 +53,41 @@ Set the board row to "review". Do not commit.
 
 ---
 
+## E2c: Generated players are defined by the generator, not shrunk to priors (after E2b)
+
+Suggested settings: GPT-6.1 Sol, High, in a fresh chat or continuing the E2b chat if it still has context.
+
+```
+Read AGENTS.md, docs/agents/BOARD.md, docs/agents/STAGE1_DESIGN.md (section F) and src/nba_gm_data/ratings_model.py (_install_generated_players) first. You own task E2c.
+
+PROBLEM (measured 2026-11-16)
+In a new-ratings save, the 2027 draft class got inputs through `InputEstimator().estimate_player_inputs(player, legacy_traits, prospect=True)`, but their derived display ratings are near the league floor. Pick 1 shows OVR 24.0, pick 3 OVR 3.0, pick 5 OVR 31.4, against a league median of 50. The prospect path treats the draft model's current_ability, potential, archetype and generated traits as "not technique evidence". That is correct for REAL people, but wrong for FICTIONAL generated players: for them, the generator's output DEFINES the player.
+
+FIX
+For players with source_kind in ("generated_rookie", "generated_prospect", or any other generated kind you find in draft.py/save.py), build the 94 inputs FROM the generator's definition, deterministically from the player id/seed:
+- current_ability (talent level now) and potential.
+- The archetype (draft.py archetype weights) for the skill shape: shooter, creator, rim protector, and so on.
+- The generated 12 draft traits and/or legacy rookie traits for the per-skill profile.
+- height/weight for the physicals.
+Unobserved detail within an archetype can vary deterministically per player. Calibrate the mapping on REAL players: choose it so that a generated player with current_ability X and archetype A lands where real players of similar overall and role land in the existing input distribution. Real-player input data is the reference. Simulation outcomes are not.
+Label these records clearly, e.g. reason "generated", with evidence source "draft_model". This needs a small, coordinated schema decision; if the schema forbids a new reason, use reason "estimated" plus a distinct evidence method, and propose the schema change in your report.
+
+Keep real prospects (the 2026 real class with college stats) on the current evidence path; that one is correct.
+
+ACCEPTANCE
+1. In a new-ratings save carried through a draft, the derived OVR of generated rookies tracks their draft model ability: the top-5 picks' median display OVR is roughly in line with real current NBA rookies/second-year players of similar pick slot. Report the comparison.
+2. There are no near-zero display ratings for any lottery pick.
+3. Tests pass, and output is deterministic.
+   - Test save: copy /private/tmp/claude-501/-Users-noahtyler--claude-spares-spare-kEIEMb/aa8ffa3d-9829-4c0d-b448-e9409427c53d/scratchpad/cycle/inputs_save.* (with its sidecar files, original names) into your own scratch dir.
+   - Inspect it with ratings_model + player_profile.
+
+Files: src/nba_gm_data/input_estimator.py (prospect/generated path), tests/test_input_estimator.py, docs/agents/tasks/e2c-generated-players.md. Do not edit ratings_model.py or draft.py without noting it in the report.
+
+Set the board row to "review". Do not commit.
+```
+
+---
+
 ## BBI: Basketball Index capture pipeline (DONE, accepted 2026-11-16)
 
 Suggested settings: GPT-6.1 Sol, High, in a fresh chat.
