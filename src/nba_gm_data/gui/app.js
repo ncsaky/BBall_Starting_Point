@@ -3977,7 +3977,7 @@ function seasonMinutesCard(rows, editable) {
       <div class="season-minutes-head"><span>Player</span><span>Pos</span><span>Height</span><span>Minutes</span><span>Fatigue</span></div>
       ${sortedRows.map((row) => {
         const injured = isPlayerInjured(row.health);
-        const injuryStatus = playerInjuryStatusMarkup(row);
+        const injuryStatus = playerInjuryStatusMarkup(row) + playerRustMarkup(row);
         const minuteValue = injured ? 0 : clampNumber(assigned(row), 0, 48);
         const rotationLocked = !injured && (state.rotationLockedPlayerIds.has(row.id) || row.rotation_user_set);
         const position = String(row.position || "—").trim() || "—";
@@ -10329,7 +10329,7 @@ function playerHeadshotMarkup(row, className = "player-headshot") {
 function summaryPlayerNameCell(row, interactive = false, includePortrait = false) {
   const name = row.name || "";
   if (!interactive) {
-    return isPlayerInjured(row.health) ? html(playerNameWithInjuryMarkup(row, name)) : name;
+    return isPlayerInjured(row.health) || playerHasRust(row.health) ? html(playerNameWithInjuryMarkup(row, name)) : name;
   }
   const portrait = includePortrait ? playerHeadshotMarkup(row, "roster-player-headshot") : "";
   return html(`<button class="summary-player-card-button${includePortrait ? " roster-player-card-button" : ""}" data-dashboard-player-card="${escapeAttr(row.id)}" aria-label="Open player card for ${escapeAttr(name)}">${portrait}${playerNameWithInjuryMarkup(row, name)}</button>`);
@@ -10343,7 +10343,21 @@ function playerInjuryStatusMarkup(row) {
 }
 
 function playerNameWithInjuryMarkup(row, name = row.name || row.player_name || "Unknown") {
-  return `<span class="summary-player-name-label player-name-with-injury"><span class="player-name-text">${escapeHtml(name)}</span>${playerInjuryStatusMarkup(row)}</span>`;
+  return `<span class="summary-player-name-label player-name-with-injury"><span class="player-name-text">${escapeHtml(name)}</span>${playerInjuryStatusMarkup(row)}${playerRustMarkup(row)}</span>`;
+}
+
+// Back from injury but rusty: the engine lowers this player's in-game ratings by `rust_penalty` points until the
+// rust fades (about `rust_days` days). Shown as a small red down arrow with the exact penalty.
+function playerHasRust(health) {
+  return Boolean(health) && !isPlayerInjured(health) && Number(health.rust_penalty) >= 0.1;
+}
+
+function playerRustMarkup(row) {
+  if (!playerHasRust(row?.health)) return "";
+  const penalty = Number(row.health.rust_penalty);
+  const days = Number(row.health.rust_days);
+  const description = `Rusty after injury: in-game ratings −${penalty.toFixed(1)}${Number.isFinite(days) ? `, fades in about ${days} day${days === 1 ? "" : "s"}` : ""}`;
+  return `<span class="season-injury-status player-rust-status" role="img" aria-label="${escapeAttr(description)}" title="${escapeAttr(description)}"><span aria-hidden="true">↓</span><span>${penalty.toFixed(1)}</span></span>`;
 }
 
 function injuryGamesRemaining(row) {

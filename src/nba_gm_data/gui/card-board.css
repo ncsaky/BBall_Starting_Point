@@ -5062,3 +5062,8 @@ body.unified-terminal-ui .playoff-stats-panel .playoff-stats-empty td { height:4
 .prospect-injury-risk-high { color:#c0392b; }
 .prospect-injury-risk-low { opacity:.6; }
 .draft-prospect-table td.draft-prospect-injury .prospect-injury-marker { margin-left:0; }
+
+/* Return-from-injury rust: same red family as the injury cross, slightly lighter so "out" stays the louder signal. */
+body.unified-terminal-ui .player-rust-status,
+body.unified-terminal-ui .player-rust-status > span { color:#c4585f !important; }
+body.unified-terminal-ui .player-name-with-injury > .player-rust-status { flex:0 0 auto; margin-left:3px; }

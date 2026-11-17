@@ -56,3 +56,21 @@ class LeagueOffenseCalibrationTests(unittest.TestCase):
         self.assertEqual(league_offense_calibration({}), 0.0)
         self.assertEqual(league_offense_calibration({MODEL_KEY: {"mode": INPUTS_V1}}), INPUTS_OFFENSE_CALIBRATION)
         self.assertGreater(INPUTS_OFFENSE_CALIBRATION, 0)
+
+
+class RustDisplayTests(unittest.TestCase):
+    def test_display_matches_the_engine_penalty(self):
+        from nba_gm_data.sim import health_adjusted_player_features, rust_display, rust_penalty_points
+        from nba_gm_data.save import player_health_label
+        from nba_gm_data.app_actions import health_label
+        state = {"availability_status": "active", "rust": 16.0, "fatigue": 0.0}
+        shown = rust_display(state)
+        self.assertEqual(shown["rust_penalty"], round(rust_penalty_points(16.0), 1))
+        self.assertEqual(shown["rust_days"], 3)
+        # The engine lowers in-game impact by exactly that penalty (impact weight 1.0).
+        adjusted = health_adjusted_player_features({"impact": 60.0}, {"health_rust": 16.0, "health_fatigue": 0.0})
+        self.assertAlmostEqual(60.0 - adjusted["impact"], rust_penalty_points(16.0), places=3)
+        self.assertEqual(player_health_label(state, "2026-11-20")["rust_penalty"], shown["rust_penalty"])
+        self.assertEqual(health_label(state)["rust_penalty"], shown["rust_penalty"])
+        self.assertEqual(rust_display({"availability_status": "out", "rust": 16.0}), {})   # still out: no rust marker
+        self.assertNotIn("rust_penalty", health_label({"availability_status": "active", "rust": 0.0}))

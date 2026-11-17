@@ -320,3 +320,18 @@ test('development chart axis fits real (small) OVR changes instead of a fixed +/
   assert.equal(ctx.developmentAxisLimit([-4.2]), 5);
   assert.equal(ctx.developmentAxisLimit([]), 1);
 });
+
+test('rust marker shows the exact in-game penalty for players back from injury, never for injured or healthy ones', () => {
+  const grab = (name) => app.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n}\\n`))[0];
+  const ctx = {escapeHtml: (v) => String(v), escapeAttr: (v) => String(v)};
+  vm.createContext(ctx);
+  vm.runInContext(`${grab('isPlayerInjured')}\n${grab('playerHasRust')}\n${grab('playerRustMarkup')}`, ctx);
+  const rusty = {health: {status: 'ok', label: '', rust: 16, rust_penalty: 1.3, rust_days: 3}};
+  const html = ctx.playerRustMarkup(rusty);
+  assert.match(html, /↓/);
+  assert.match(html, />1\.3</);
+  assert.match(html, /fades in about 3 days/);
+  assert.equal(ctx.playerRustMarkup({health: {status: 'out', label: 'short ~3g', rust_penalty: 1.3}}), '');   // injured: cross only
+  assert.equal(ctx.playerRustMarkup({health: {status: 'ok', label: ''}}), '');                               // healthy
+  assert.equal(ctx.playerRustMarkup({health: {status: 'healthy', label: 'Healthy', rust_penalty: 0.04}}), ''); // negligible
+});

@@ -1869,6 +1869,13 @@ def player_card_payload(canonical: dict[str, Any], save_path: Path, player_id: s
             if active_injury:
                 returns = str(active_injury.get("return_date") or "")[:10]
                 inputs_profile["coach"]["availability_note"] = f"Out (injured){f' · expected back {returns}' if returns else ''}"
+            else:
+                from .sim import rust_display
+                state_row = next((row for row in save.get("health_states", []) if str(row.get("player_id")) == player_id), None)
+                rust = rust_display(state_row)
+                if rust:
+                    inputs_profile["coach"]["availability_note"] = (
+                        f"Rusty after injury · in-game ratings −{rust['rust_penalty']} · fades in about {rust['rust_days']} days")
             result["inputs_profile"] = inputs_profile
     context["player_cards"][player_id] = result
     return result
@@ -4742,7 +4749,8 @@ def health_label(state: dict[str, Any] | None, current_date: str | None = None) 
         return {"status": "healthy", "label": "Healthy"}
     status = str(state.get("availability_status") or "active")
     if status == "active":
-        return {"status": "healthy", "label": "Healthy", "games_missed": int(state.get("games_missed") or 0)}
+        from .sim import rust_display
+        return {"status": "healthy", "label": "Healthy", "games_missed": int(state.get("games_missed") or 0), **rust_display(state)}
     severity = state.get("injury_severity") or state.get("current_injury_severity") or "out"
     display = player_health_label(state, current_date)
     return {

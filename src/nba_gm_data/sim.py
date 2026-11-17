@@ -922,13 +922,32 @@ def lineup_feature_vector(canonical: dict[str, Any], pool: list[dict[str, Any]])
     return {key: round(value, 3) for key, value in features.items()}
 
 
+RUST_PENALTY_PER_POINT = 0.08
+RUST_PENALTY_CAP = 4.0
+RUST_DECAY_PER_STEP = 7.5  # health config tuning "rust_decay_per_game" at an average recovery staff
+
+
+def rust_penalty_points(rust: float) -> float:
+    """In-game rating penalty for return-from-injury rust (scaled per feature in health_adjusted_player_features)."""
+    return clamp(float(rust or 0.0) * RUST_PENALTY_PER_POINT, 0.0, RUST_PENALTY_CAP)
+
+
+def rust_display(state: dict[str, Any] | None) -> dict[str, Any]:
+    """Rust fields for the GUI: the exact current penalty and roughly how many days until it is gone."""
+    rust = float((state or {}).get("rust") or 0.0)
+    if rust <= 0 or str((state or {}).get("availability_status") or "active") != "active":
+        return {}
+    return {"rust": round(rust, 1), "rust_penalty": round(rust_penalty_points(rust), 1),
+            "rust_days": max(1, math.ceil(rust / RUST_DECAY_PER_STEP))}
+
+
 def health_adjusted_player_features(features: dict[str, float], item: dict[str, Any]) -> dict[str, float]:
     fatigue = float(item.get("health_fatigue") or 0.0)
     rust = float(item.get("health_rust") or 0.0)
     if fatigue <= 0 and rust <= 0:
         return features
     fatigue_penalty = clamp(max(0.0, fatigue - 35.0) * 0.065, 0.0, 4.6)
-    rust_penalty = clamp(rust * 0.08, 0.0, 4.0)
+    rust_penalty = rust_penalty_points(rust)
     penalty = fatigue_penalty + rust_penalty
     adjusted = dict(features)
     weights = {

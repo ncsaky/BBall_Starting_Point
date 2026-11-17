@@ -7219,7 +7219,9 @@ def player_health_label(state: dict[str, Any] | None, current_date: str | None) 
     status = state.get("availability_status") or "active"
     fatigue = round(float(state.get("fatigue") or 0.0), 2)
     if status == "active":
-        return {"status": "ok", "label": "", "games_missed": int(state.get("games_missed") or 0), "fatigue": fatigue}
+        from .sim import rust_display
+        return {"status": "ok", "label": "", "games_missed": int(state.get("games_missed") or 0), "fatigue": fatigue,
+                **rust_display(state)}
     return_date = state.get("return_date")
     days_left = None
     if return_date and current_date:
