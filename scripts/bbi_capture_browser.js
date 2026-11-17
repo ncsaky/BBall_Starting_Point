@@ -33,8 +33,12 @@
     const f = document.createElement('iframe');
     f.style.cssText = 'position:fixed;left:-6000px;top:0;width:1300px;height:3000px';
     f.src = url; document.body.appendChild(f);
+    try {
     await new Promise(r => { f.onload = r; setTimeout(r, 20000); });
     const d = f.contentDocument;
+    // A null document means the frame got something other than the normal page (e.g. the site's bot/rate
+    // protection). Treat it as push-back: the caller backs off and eventually stops. Never work around it.
+    if (!d) throw new Error('blocked_or_unreadable');
     let full = null;
     for (let t = 0; t < 40 && !full; t++) { await sleep(250); full = [...d.querySelectorAll('button,[role=tab]')].find(e => e.innerText.trim() === 'Full data'); }
     if (full) full.click();
@@ -46,8 +50,8 @@
       last = rows.length;
     }
     const meta = (d.body.innerText.match(/[A-Z][A-Za-z .'&-]+ · [A-Z]{1,2}(?:-[A-Z]{1,2})? · \d{4}-\d{2}/) || [''])[0];
-    f.remove();
     return { rows, meta };
+    } finally { f.remove(); }
   };
 
   // Player profile links for the season currently shown in the list page's table, across all pages.
@@ -72,27 +76,43 @@
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
   }
 
-  // Capture a list of profile links in batches; each batch is one downloaded JSON file.
+  // Capture a list of profile links in batches; each batch is one downloaded JSON file of GOOD profiles only.
+  // Polite fixed pace; on push-back from the site, back off exponentially and stop after maxConsecutiveFails.
   // Status lives in window.__bbiStatus so progress can be checked without returning big payloads.
-  window.__bbiRun = async function ({ season, players, batchSize = 50, pauseMs = 2500, startBatch = 0, tag = '' }) {
-    const st = window.__bbiStatus = { season, total: players.length, done: 0, failed: [], batches: 0, running: true, started: new Date().toISOString() };
-    for (let b = startBatch * batchSize; b < players.length; b += batchSize) {
-      const batch = { kind: 'bbi-fanspo-profiles', season, captured_at: new Date().toISOString(), source: location.origin, profiles: [] };
-      for (const p of players.slice(b, b + batchSize)) {
-        if (window.__bbiStop) { st.running = false; st.stopped = true; return st; }
-        try {
-          const { rows, meta } = await window.__bbiLoad(p.href);
-          const m = p.href.match(/player-profiles\/([^/]+)\/([^/]+)\/(\d+)$/);
-          batch.profiles.push({ url: location.origin + p.href, name: p.name, season_slug: m && m[1], slug: m && m[2], nba_id: m && m[3], meta, rows });
-          if (rows.length < 300) st.failed.push({ href: p.href, rows: rows.length });
-        } catch (e) { st.failed.push({ href: p.href, error: String(e) }); }
-        st.done += 1;
-        await sleep(pauseMs);
+  window.__bbiRun = async function ({ season, players, batchSize = 50, pauseMs = 20000, startIndex = 0, tag = '', maxConsecutiveFails = 4 }) {
+    const st = window.__bbiStatus = { season, total: players.length, index: startIndex, good: 0, failed: [], batches: 0,
+      running: true, started: new Date().toISOString(), consecutiveFails: 0 };
+    let batch = null, batchNo = 0;
+    const flush = () => {
+      if (batch && batch.profiles.length) {
+        download(`bbi_${season}${tag}_from${String(batch.firstIndex).padStart(3, '0')}.json`, batch);
+        st.batches += 1;
       }
-      const idx = String(Math.floor(b / batchSize)).padStart(2, '0');
-      download(`bbi_${season}${tag}_batch${idx}.json`, batch);
-      st.batches += 1;
+      batch = null;
+    };
+    for (let i = startIndex; i < players.length; i++) {
+      if (window.__bbiStop) { flush(); st.running = false; st.stopped = true; return st; }
+      if (!batch) batch = { kind: 'bbi-fanspo-profiles', season, captured_at: new Date().toISOString(), source: location.origin, firstIndex: i, profiles: [] };
+      const p = players[i]; st.index = i;
+      try {
+        const { rows, meta } = await window.__bbiLoad(p.href);
+        if (rows.length < 300) throw new Error('incomplete_rows_' + rows.length);
+        const m = p.href.match(/player-profiles\/([^/]+)\/([^/]+)\/(\d+)$/);
+        batch.profiles.push({ url: location.origin + p.href, name: p.name, season_slug: m && m[1], slug: m && m[2], nba_id: m && m[3], meta, rows });
+        st.good += 1; st.consecutiveFails = 0;
+        await sleep(pauseMs);
+      } catch (e) {
+        st.failed.push({ index: i, href: p.href, error: String(e).slice(0, 80) });
+        st.consecutiveFails += 1;
+        if (st.consecutiveFails >= maxConsecutiveFails) { flush(); st.running = false; st.halted = 'site push-back: stopped after ' + st.consecutiveFails + ' consecutive failures'; return st; }
+        const backoff = Math.min(15 * 60000, 60000 * 2 ** (st.consecutiveFails - 1));
+        st.backingOffUntil = new Date(Date.now() + backoff).toISOString();
+        await sleep(backoff);
+        i -= 1; // retry the same player once the back-off ends
+      }
+      if (batch && batch.profiles.length >= batchSize) flush();
     }
+    flush();
     st.running = false; st.finished = new Date().toISOString();
     return st;
   };
