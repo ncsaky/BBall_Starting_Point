@@ -58,7 +58,21 @@ GUI wishlist work is parked.
 ## Full-suite leftovers after T1 (2026-11-16)
 
 - **Rating pins (rewrite in S1-D):** `test_imported_rookie_ratings` (6), `test_player_tuning` (2), `test_roster_alignment` (3), `test_rotation_profile_calibration` (2), `test_long_term_health` (1), `test_contract_import_separation` (1).
-- **Likely real bugs (T3):**
+- **T3 diagnosis (2026-11-16, subagent; real-save evidence):**
+  - Stale tests, not bugs:
+    - AI trades: 8 trades Oct 20–Dec 31 in a real save. The trade calendar is now seeded, so tests need a forced slot.
+    - Roster cutdown: now goes through waivers; all 30 teams reach 14–15 players.
+    - Expiring players through the draft: the test picks a player who was already cut.
+    - FA day market: new `screening` key.
+    - Future pick values: SAC owns no second-round picks.
+    - Staff fire/interim: one change per season is now enforced.
+  - Unclear: `test_staff_queue_keeps_live_strategy`, which may be a budget-guard issue.
+  - **REAL BUG, front-office valuation:**
+    - `player_value` clips at 99, so a dozen players tie: Flagg, Ausar Thompson, Clingan and Castle sit level with SGA and Wembanyama.
+    - Giannis 85.1 (rank 85) and Luka 82.8 (rank 107) fall below Herro 91.3.
+    - Causes: the superstar floor needs on_court >= 79 (`transactions.py:2849-2878`), which Giannis (78.6) and Luka (72.5) miss; and contract surplus (+34 cap, `transactions.py:354-360`) lifts cheap players above stars.
+    - Fix belongs in S1-E (front office on the new ratings).
+- **Previously suspected real bugs, superseded by the T3 diagnosis above:**
   - AI trades applied count is 0, with `not_applied_stale_assets`.
   - AI roster cutdown frees nobody.
   - Expiring players are dropped during the draft.
