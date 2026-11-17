@@ -38,6 +38,8 @@ Everything below is committed and pushed to both branches. No save dialogs were 
 
 ## 3. Bugs fixed
 
+- **Steals and blocks went to the wrong players (every save).** After each game the sim rescales steals, blocks, assists and rebounds to realistic team totals. Leftover units always went to the same players, decided by a fixed alphabetical-ish ID order. Seventeen players, all with first names A–D (Sengun, Podziemski, Gillespie, Bruce Brown, Sexton…), simulated zero steals all season. Fixed. Real-stat error for steals fell by more than half (0.65 → 0.30 per 36 min) and blocks by half (0.59 → 0.28), in both rating modes.
+
 - **Season crash:** an AI three-team trade carrying a pick swap could crash a whole sim day ("Every draft condition must refer to one selected pick"). Reproduced on a real season and fixed. That season now runs through the trade deadline.
 - **Draft potential:** for draft classes from 2028 on, the board showed a prospect's secret true potential, while every AI team only sees the public scouting number. "96-potential" prospects then seemed to fall for no reason. The board now shows the same public number the AI uses.
 - **Development chart:** "Net growth" showed an estimate about 4 times larger than the real rating change (a young riser +2.6 shown vs +0.6 real). It now shows the engine's real change, and the axis fits the data.

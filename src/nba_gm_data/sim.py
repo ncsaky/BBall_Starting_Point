@@ -1325,9 +1325,17 @@ def redistribute_integer_stat(lines: list[dict[str, Any]], key: str, target: int
     scaled = [target * weight / total_weight for weight in weights]
     assigned = [int(value) for value in scaled]
     remainder = max(0, int(target) - sum(assigned))
+    # Ties (common: most players start from the same small count) are broken by a hash that changes from game
+    # to game. A fixed player-id order handed every leftover unit to the same players all season, so players
+    # whose ids sorted early (first names A-D) simulated zero steals and blocks. No RNG is consumed.
+    import hashlib
+    game_salt = hashlib.sha256("|".join(
+        f"{line.get('player_id')}:{line.get('minutes')}:{line.get('points')}" for line in lines
+    ).encode()).hexdigest() + f":{key}:{target}"
+    tiebreak = [hashlib.sha256(f"{game_salt}:{line.get('player_id')}".encode()).hexdigest() for line in lines]
     order = sorted(
         range(len(lines)),
-        key=lambda index: (scaled[index] - assigned[index], str(lines[index].get("player_id") or "")),
+        key=lambda index: (scaled[index] - assigned[index], tiebreak[index]),
         reverse=True,
     )
     for index in order[:remainder]:
