@@ -335,3 +335,17 @@ test('rust marker shows the exact in-game penalty for players back from injury, 
   assert.equal(ctx.playerRustMarkup({health: {status: 'ok', label: ''}}), '');                               // healthy
   assert.equal(ctx.playerRustMarkup({health: {status: 'healthy', label: 'Healthy', rust_penalty: 0.04}}), ''); // negligible
 });
+
+test('decline watch shows for veterans without growth runway, with athletic and skill split', () => {
+  const grab = (name) => app.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n}\\n`))[0];
+  const tip = app.match(/const DECLINE_WATCH_TIP = [^\n]+\n/)[0];
+  const ctx = {escapeHtml: (v) => String(v), escapeAttr: (v) => String(v)};
+  vm.createContext(ctx);
+  vm.runInContext(`${tip}${grab('declineWatchApplies')}\n${grab('declineWatchDetail')}\n${grab('seasonDevelopmentDecline')}`, ctx);
+  const vet = {upside_remaining: 0, decline_watch: {per_year: -1.02, athletic: -1.44, skill: -0.81}};
+  assert.equal(ctx.declineWatchApplies(vet), true);
+  assert.equal(ctx.declineWatchApplies({upside_remaining: 2.1, decline_watch: vet.decline_watch}), false);
+  assert.equal(ctx.declineWatchApplies({upside_remaining: 0, decline_watch: null}), false);
+  const html = ctx.seasonDevelopmentDecline(vet.decline_watch);
+  assert.match(html, /↓/); assert.match(html, />1\.0</); assert.match(html, /athletic -1\.4, skills -0\.8/);
+});

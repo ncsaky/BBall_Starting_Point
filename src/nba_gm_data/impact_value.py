@@ -31,7 +31,8 @@ INPUT_GROUPS = {
     "in_defense": [f"S{n:02d}" for n in range(33, 47)],
     "in_pass_reading": [f"F{n:02d}.recognition" for n in range(1, 10)],
 }
-PREDICTORS = [*LEGACY_TRAITS, "height_inches", *PROFILE_PREDICTORS, *INPUT_GROUPS, "in_involvement"]
+BODY_PREDICTORS = ("height_inches", "weight_lbs", "wingspan_inches")   # fixed body measures (sign-free in the fit)
+PREDICTORS = [*LEGACY_TRAITS, *BODY_PREDICTORS, *PROFILE_PREDICTORS, *INPUT_GROUPS, "in_involvement"]
 TABLE_KEY = "_impact_value_tables"
 _FIT_CACHE: dict[str, Any] = {}
 
@@ -58,7 +59,10 @@ def predictor_row(traits: Mapping[str, float], player: Mapping[str, Any],
     """Hidden ratings, height, the engine's shooting profile (observed make rates and three-point volume,
     adjusted by development) and grouped input grades - the same player the game sim plays with."""
     row = [float(traits.get(trait, 50.0)) for trait in LEGACY_TRAITS]
-    row.append(float(player.get("height_inches") or 78.0))
+    height = float(player.get("height_inches") or 78.0)
+    row.append(height)
+    row.append(float(player.get("weight_lbs") or (215.0 + (height - 78.0) * 7.0)))
+    row.append(float(player.get("wingspan_inches") or (height + 3.0)))
     profile = profile or {}
     row.extend(float(profile.get(key, default)) for key, default in _PROFILE_DEFAULTS.items())
     row.extend(input_features(inputs))

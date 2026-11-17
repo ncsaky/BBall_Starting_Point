@@ -4403,6 +4403,23 @@ def quick_sim_current_season(root: str | Path, canonical: dict[str, Any] | Any, 
     }
 
 
+DECLINE_WATCH_MIN_AGE = 27.0
+
+
+def decline_watch_value(active: dict[str, Any], player: dict[str, Any], development_upside: Any) -> dict[str, float] | None:
+    """Expected change of the hidden ratings over the next 12 months (if healthy) for veterans whose growth runway
+    is used up: average per rating, and split into athletic vs skill ratings. None when not declining."""
+    age = maybe_float(player.get("display_age", player.get("age")))
+    if age is None or age < DECLINE_WATCH_MIN_AGE or float(development_upside or 0.0) > 0.0:
+        return None
+    from .development_outlook import decline_summary, expected_rating_changes
+    try:
+        summary = decline_summary(expected_rating_changes(active, player, 12, seed=int(active.get("meta", {}).get("seed") or 1)))
+    except (KeyError, TypeError, ValueError):
+        return None
+    return summary if summary and summary["per_year"] <= -0.1 else None
+
+
 def team_dashboard(
     root: str | Path,
     canonical: dict[str, Any] | Any,
@@ -4580,6 +4597,7 @@ def team_dashboard(
                 "ts_pct": roster_true_shooting(player["id"]),
                 "health_risk": round(float((asset_value_by_player.get(player["id"]) or {}).get("health_risk") or 0.0), 1),
                 "upside_remaining": round(max(0.0, min(5.0, float((asset_value_by_player.get(player["id"]) or {}).get("development_upside") or 0.0) / 22.0 * 5.0)), 1),
+                "decline_watch": decline_watch_value(active, player, (asset_value_by_player.get(player["id"]) or {}).get("development_upside")),
                 "trade_value": round(float((asset_value_by_player.get(player["id"]) or {}).get("player_value") or 0.0), 1),
                 "health": player_health_label(health_by_player.get(player["id"]), save.get("state", {}).get("current_date")),
                 "attributes": player_attribute_summary(active, player["id"]),

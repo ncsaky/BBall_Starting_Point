@@ -18,7 +18,7 @@ from pathlib import Path
 
 from nba_gm_data import bbi_evidence as be
 from nba_gm_data.app_actions import load_app_canonical
-from nba_gm_data.impact_value import FIT_FILE, PREDICTORS, predictor_row
+from nba_gm_data.impact_value import BODY_PREDICTORS, FIT_FILE, PREDICTORS, predictor_row
 from nba_gm_data.offense import offensive_profile
 from nba_gm_data.ratings_model import effective_inputs, install_inputs_model
 from nba_gm_data.save import trait_values_by_player
@@ -46,6 +46,24 @@ def ridge(X, y, w, lam):
     for i in reversed(range(n)):
         coef[i] = (b[i] - sum(A[i][k] * coef[k] for k in range(i + 1, n))) / A[i][i]
     return coef
+
+
+def ridge_nonnegative(X, y, w, lam, free=()):
+    """Ridge with every weight except the intercept and the `free` columns held >= 0 (active-set refits).
+    A better hidden rating or input must never lower a player's value; free columns (height) can be signed."""
+    n = len(X[0])
+    active = list(range(n))
+    while True:
+        cols = active
+        coef_sub = ridge([[row[c] for c in cols] for row in X], y, w, lam)
+        coef = [0.0] * n
+        for c, value in zip(cols, coef_sub):
+            coef[c] = value
+        negative = [c for c in cols if c != 0 and c not in free and coef[c] < 0]
+        if not negative:
+            return coef
+        worst = min(negative, key=lambda c: coef[c])
+        active = [c for c in active if c != worst]
 
 
 def wcorr(a, b, w):
@@ -81,7 +99,8 @@ def main() -> None:
                          values, minutes))
     weights = [m / (m + 800.0) for *_, m in rows]
     X = [[1.0, *r[2]] for r in rows]
-    fit = {"version": "impact_value_fit_v1_2026_11_17", "season": SEASON, "targets": TARGETS, "predictors": PREDICTORS,
+    FREE = {1 + PREDICTORS.index(name) for name in (*BODY_PREDICTORS, "in_involvement")}  # not changed by development
+    fit = {"version": "impact_value_fit_v2_monotone_2026_11_17", "season": SEASON, "targets": TARGETS, "predictors": PREDICTORS,
            "ridge": RIDGE, "players": len(rows), "coefficients": {}, "cv_weighted_corr": {}}
     idx = list(range(len(rows)))
     random.Random(11).shuffle(idx)
@@ -97,10 +116,10 @@ def main() -> None:
         oof = [0.0] * len(rows)
         for f in folds:
             tr = [i for i in idx if i not in f]
-            c = ridge([Z[i] for i in tr], [y[i] for i in tr], [weights[i] for i in tr], RIDGE)
+            c = ridge_nonnegative([Z[i] for i in tr], [y[i] for i in tr], [weights[i] for i in tr], RIDGE, FREE)
             for i in f:
                 oof[i] = sum(a * b for a, b in zip(Z[i], c))
-        coef = ridge(Z, y, weights, RIDGE)
+        coef = ridge_nonnegative(Z, y, weights, RIDGE, FREE)
         fit["coefficients"][side] = {"intercept": coef[0], "mean": mu, "sd": sd, "weights": coef[1:]}
         fit["cv_weighted_corr"][side] = round(wcorr(y, oof, weights), 3)
         oof_all[side] = oof

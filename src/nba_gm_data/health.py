@@ -744,7 +744,10 @@ def monthly_trait_delta(
     month: str,
     focus_multiplier: float = 1.0,
     trait_context: dict[str, Any] | None = None,
+    expected: bool = False,
 ) -> float:
+    """One month of change for one hidden rating. expected=True leaves out the month's random noise (used for
+    projections such as the decline watch); everything else is identical."""
     age = 27.0 if age is None else age
     rng = random.Random(f"{seed}:{month}:{player['id']}:{trait_key}:development")
     age_factor = development_age_factor(age, player=player, seed=seed)
@@ -799,7 +802,7 @@ def monthly_trait_delta(
         growth -= min(0.16, 0.025 + (age - 30.0) * 0.025)
     if age >= 32 and trait_key not in {"scheme_iq", "passing_reads", "portability"}:
         growth -= min(0.09, 0.012 + (age - 31.0) * 0.013)
-    noise = rng.gauss(0, 0.012 + 0.012 * focus_multiplier)
+    noise = 0.0 if expected else rng.gauss(0, 0.012 + 0.012 * focus_multiplier)
     growth_cap = .36 + .45 * raw_learning if upside_multiplier > 1.0 else .24
     delta = clamp(growth + noise, -0.12, growth_cap)
     # Noise cannot trickle through a plateau; decline and actual health drag stay.

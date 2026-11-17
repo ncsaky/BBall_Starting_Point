@@ -46,6 +46,7 @@ from .save_recovery import (
     recover_previous_save, restore_export,
 )
 from .save import (
+    decline_watch_value,
     advance_save,
     add_news,
     annotate_lottery_odds_context,
@@ -1815,6 +1816,7 @@ def player_card_payload(canonical: dict[str, Any], save_path: Path, player_id: s
         "spatial_profile": player_spatial_profile(active, player, include_chart=True),
         "health_risk": round(float(valuation.get("health_risk") or 0.0), 1),
         "upside_remaining": round(display_upside, 1),
+        "decline_watch": decline_watch_value(active, player, development_signal),
         "trade_value": round(market_trade_target_value(player, valuation), 1),
         "season": {
             "games": games,

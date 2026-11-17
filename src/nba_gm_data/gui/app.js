@@ -4014,7 +4014,7 @@ function seasonDevelopmentCard(rows) {
     state.data?.dashboardTrends?.development?.latest_month || candidates[0]?.points?.at(-1)?.label,
   );
   return `<div class="season-development-list" style="--development-count:${Math.max(1, Math.min(9, candidates.length))};--development-total:${Math.max(1, candidates.length)}">
-      <div class="season-development-head"><span>Player</span><span>Age</span><span title="Growth runway: room this player has left to improve, from age, role and current level, on a 0-5 scale. Not a prediction of a future rating; 0 for most players 27 and older.">Growth runway</span><span title="Change in overall rating this season (October to June) and in the latest month, from the game's actual rating changes.">Rating change</span></div>
+      <div class="season-development-head"><span>Player</span><span>Age</span><span title="Growth runway (young players) or decline watch (veterans, ↓ per year). Growth runway: room this player has left to improve, from age, role and current level, on a 0-5 scale. Not a prediction of a future rating; 0 for most players 27 and older.">Growth runway</span><span title="Change in overall rating this season (October to June) and in the latest month, from the game's actual rating changes.">Rating change</span></div>
       ${candidates.map((player) => {
         const points = player.points || [];
         const values = points.map((point) => Number(point.value)).filter(Number.isFinite);
@@ -4026,7 +4026,7 @@ function seasonDevelopmentCard(rows) {
         return `<button type="button" class="season-development-row" data-dashboard-player-card="${escapeAttr(player.player_id)}" aria-label="${escapeAttr(summary)}">
           <span class="season-development-player">${playerHeadshotMarkup(player, "roster-player-headshot")}<span class="season-development-name">${escapeHtml(player.name)}</span></span>
           <span class="season-development-age">${escapeHtml(age)}</span>
-          ${seasonDevelopmentUpside(upside)}
+          ${declineWatchApplies(player) ? seasonDevelopmentDecline(player.decline_watch) : seasonDevelopmentUpside(upside)}
           <span class="season-development-metrics">
             ${seasonDevelopmentMetric("Season", seasonDelta, 2)}
             ${seasonDevelopmentMetric(monthLabel, monthDelta, 0.5)}
@@ -4056,6 +4056,25 @@ function seasonDevelopmentUpside(value) {
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="9" style="stroke:${color};stroke-dasharray:${circumference};stroke-dashoffset:${circumference * (1 - upside / 5)}"></circle></svg>
     <strong>${upside.toFixed(1)}</strong>
   </span>`;
+}
+
+// Decline watch: veterans with no growth runway left show the engine's expected change in overall over the
+// next 12 months if healthy (same monthly development model as the season, without its random noise).
+const DECLINE_WATCH_TIP = "Decline watch: how much his hidden ratings are expected to drop over the next 12 months if he stays healthy, from the game's aging and development model (average per rating). An average, not a guarantee.";
+
+function declineWatchApplies(row) {
+  const value = Number(row?.decline_watch?.per_year);
+  return Number.isFinite(value) && value <= -0.1 && Number(row?.upside_remaining || 0) <= 0;
+}
+
+function declineWatchDetail(decline) {
+  return `${DECLINE_WATCH_TIP} Next year: ${Number(decline.per_year).toFixed(1)} per rating (athletic ${Number(decline.athletic).toFixed(1)}, skills ${Number(decline.skill).toFixed(1)}).`;
+}
+
+function seasonDevelopmentDecline(decline) {
+  const amount = Number(decline.per_year);
+  const label = declineWatchDetail(decline);
+  return `<span class="season-development-upside season-development-decline" role="img" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}"><span aria-hidden="true">↓</span><strong>${Math.abs(amount).toFixed(1)}</strong><small>/yr</small></span>`;
 }
 
 function seasonDevelopmentMonthLabel(value) {
@@ -7506,7 +7525,7 @@ function playerCardEvidence(detail) {
   const upside = clampNumber(Number(detail.upside_remaining || 0), 0, 5);
   const healthColor = health >= 7 ? "#e04d55" : health >= 4 ? "#bd5b5d" : "#8e6263";
   const upsideColor = playerUpsideColor(upside);
-  return `<div class="approved-player-evidence"><div class="player-evidence-rings">${playerEvidenceRing("Health risk", health, 10, healthColor, "/10")}${playerEvidenceRing("Growth runway", upside, 5, upsideColor, " / 5")}${playerEvidenceRing("Trade Value", detail.trade_value, 100, "#668ea7")}</div></div>`;
+  return `<div class="approved-player-evidence"><div class="player-evidence-rings">${playerEvidenceRing("Health risk", health, 10, healthColor, "/10")}${declineWatchApplies(detail) ? `<div class="player-evidence-ring player-decline-watch" title="${escapeAttr(declineWatchDetail(detail.decline_watch))}" aria-label="${escapeAttr(declineWatchDetail(detail.decline_watch))}"><span><strong>${Number(detail.decline_watch.per_year).toFixed(1)}</strong></span><div><b>Decline watch</b><small>per rating, next year</small></div></div>` : playerEvidenceRing("Growth runway", upside, 5, upsideColor, " / 5")}${playerEvidenceRing("Trade Value", detail.trade_value, 100, "#668ea7")}</div></div>`;
 }
 
 function playerUpsideColor(upside) {
@@ -10706,6 +10725,7 @@ function developmentPlayerCandidates(rows = []) {
       age: row.age ?? existing?.age ?? null,
       current: Number.isFinite(current) && current > 0 ? current : Number(existing?.current || 0),
       upside_remaining: Number(row.upside_remaining ?? existing?.upside_remaining ?? 0),
+      decline_watch: row.decline_watch ?? existing?.decline_watch ?? null,
       points: existing?.points?.length ? existing.points : [],
       minutes: Number(mpgFromRow(row) || 0),
     });
