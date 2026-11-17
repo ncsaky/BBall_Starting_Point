@@ -6,7 +6,54 @@ Current priority: Stage 1 (`docs/agents/STAGE1_DESIGN.md`). GUI tasks are parked
 
 ---
 
-## BBI: Basketball Index capture pipeline, built and tested on free pages (NEXT, do first)
+## E2b: Stop priors from averaging away elite players (NEXT)
+
+Suggested settings: GPT-6.1 Sol, High, in a fresh chat.
+
+```
+Read AGENTS.md, docs/agents/BOARD.md (the "T3 diagnosis" and "Inputs mode is NOT ready" notes), docs/agents/STAGE1_DESIGN.md and your own E2 report docs/agents/tasks/e2-input-estimator.md first. You own task E2b. Mark it "in progress (Codex)" on the board.
+
+PROBLEM (measured 2026-11-16 by the coordinator)
+In the new-ratings mode (NBA_GM_RATINGS_MODEL=inputs_v1), the AI's on-court value compresses stars toward ordinary rotation players. On-court value is computed from the 15 legacy traits that trait_adapter.py derives from your inputs:
+
+| Player | Legacy on-court | Inputs-mode on-court | Market rank, legacy -> inputs |
+|---|---|---|---|
+| Jokić | 83.7 | 73.9 | 3 -> 28 |
+| Wembanyama | 87.5 | 72.4 | 1 -> 40 |
+| Giannis | 78.6 | 68.8 | 23 -> 66 |
+
+Reproduce with:
+
+    NBA_GM_RATINGS_MODEL=inputs_v1 PYTHONPATH=src .venv/bin/python scripts/market_sanity_report.py
+
+and compare against the same command without the variable.
+
+Cause: about 86% of input cells are priors. Each prior is a position/role mean plus a small, bounded personal residual. For an elite player most technique inputs have no direct evidence, so they sit near the position average, and the elite signal is averaged away.
+
+FIX (statistically principled, evidence-based, NOT fitted to the market report)
+Make priors hierarchical. A player's prior for an unobserved skill should be centred on the position/role mean SHIFTED by that player's general talent level in the related family, estimated from his own evidence: his directly estimated inputs in the same family, provider impact metrics already in the data (Crafted DPM/OPM, LEBRON or similar if present, BBallIQ), minutes/usage, and his legacy traits as weak evidence. Skills are positively correlated, so a player who is excellent on every observed skill is more likely above average on an unobserved one.
+- Shrink the shift by sample size and uncertainty.
+- Keep it labeled `reason: prior` with honest wide bands.
+- Do not use simulation outcomes, the market report, or named-player overrides to set coefficients. Declare the correlation and shift assumptions in code comments and the report.
+
+ACCEPTANCE
+1. The adapter-derived on-court values (computed by the engine) for the top 50 legacy on-court players retain a spread comparable to legacy: the standard deviation across those 50 is at least 80% of the legacy SD. Report both.
+2. The rank correlation between inputs-mode and legacy on-court across rotation players (minutes_projection >= 15) is at least 0.7. Report it; legacy is not ground truth, so also list the 15 biggest movers with a one-line reason each.
+3. The real-stats scorecard does not get worse:
+
+       NBA_GM_RATINGS_MODEL=inputs_v1 PYTHONPATH=src .venv/bin/python scripts/calibration_report.py --games 1230
+
+   Current per-36 average errors: points 3.19, FGA 2.37, 3PA 0.50, REB 1.29, AST 1.02.
+4. Existing estimator, BBI and player-model tests pass, and determinism is preserved.
+
+FILES: src/nba_gm_data/input_estimator.py, tests/test_input_estimator.py, regenerate data/canonical/player_inputs_2026_27.json and .json.gz via scripts/build_player_inputs.py, and docs/agents/tasks/e2b-elite-priors.md (report, TL;DR first, plain language). Do not edit trait_adapter.py, ratings_model.py, transactions.py or the GUI.
+
+Set the board row to "review". Do not commit.
+```
+
+---
+
+## BBI: Basketball Index capture pipeline (DONE, accepted 2026-11-16)
 
 Suggested settings: GPT-6.1 Sol, High, in a fresh chat.
 
