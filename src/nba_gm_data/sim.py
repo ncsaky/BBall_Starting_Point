@@ -1182,7 +1182,7 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
                 "points": points,
                 **shooting_line(points, feat, item["minutes"], rng),
                 "rim_attempts": max(0, int(round(item["minutes"] * feat["rim_pressure"] / 1150 + rng.random()))),
-                "rebounds": max(0, int(round(item["minutes"] * (0.105 + feat["offensive_rebounding"] / 500 + feat["rim_deterrence"] / 1800 + max(0.0, feat["rim_deterrence"] - 92) * 0.0018) + rng.gauss(0.45, 1.55 + item["minutes"] * 0.018)))),
+                "rebounds": max(0, int(round(item["minutes"] * rebound_rate_per_minute(player, feat) + rng.gauss(0.45, 1.55 + item["minutes"] * 0.018)))),
                 "assists": max(0, int(round(item["minutes"] * assist_rate_for_player(player, feat) + rng.gauss(0.2, 1.22 + item["minutes"] * 0.018 + max(0.0, feat["passing"] - 78.0) * 0.012)))),
                 "turnovers": max(0, int(round(item["minutes"] * (0.015 + feat["usage"] / 2200) + rng.random() * 0.6))),
                 "steals": max(0, int(round(item["minutes"] * feat["defensive_events"] / 1850 + rng.random() * 0.62))),
@@ -1343,6 +1343,17 @@ def redistribute_integer_stat(lines: list[dict[str, Any]], key: str, target: int
         assigned[index] += 1
     for index, line in enumerate(lines):
         line[key] = assigned[index]
+
+
+def rebound_rate_per_minute(player: dict[str, Any], feat: dict[str, float]) -> float:
+    """Raw rebound chances per minute before the team total is rescaled to a realistic game total.
+
+    Fitted (2026-11-17) to real 2025-26 rebounds per 36 for 150 rotation players: height carries most of the
+    defensive-rebounding signal that the 15 hidden ratings lack (correlation with real rebounding 0.74 -> 0.82).
+    """
+    height = float(player.get("height_inches") or 78.0)
+    per36 = clamp(-30.58 + 0.0411 * float(feat.get("offensive_rebounding") or 50.0) + 0.4408 * height, 1.5, 16.0)
+    return per36 / 36.0
 
 
 def assist_rate_for_player(player: dict[str, Any], feat: dict[str, float]) -> float:

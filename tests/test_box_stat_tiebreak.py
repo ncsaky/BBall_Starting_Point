@@ -35,3 +35,15 @@ class TiebreakTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReboundRateTests(unittest.TestCase):
+    def test_taller_and_better_rebounders_get_more_chances(self):
+        from nba_gm_data.sim import rebound_rate_per_minute
+        guard = rebound_rate_per_minute({"height_inches": 75}, {"offensive_rebounding": 40})
+        center = rebound_rate_per_minute({"height_inches": 84}, {"offensive_rebounding": 40})
+        crasher = rebound_rate_per_minute({"height_inches": 84}, {"offensive_rebounding": 90})
+        self.assertLess(guard, center)
+        self.assertLess(center, crasher)
+        self.assertGreater(guard * 36, 1.4)          # bounded, never zero
+        self.assertLess(rebound_rate_per_minute({"height_inches": 92}, {"offensive_rebounding": 99}) * 36, 16.01)
