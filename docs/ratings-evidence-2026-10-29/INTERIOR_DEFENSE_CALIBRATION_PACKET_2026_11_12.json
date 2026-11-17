@@ -1,0 +1,829 @@
+{
+  "date": "2026-11-12",
+  "milestone": "bounded first interior-defense calibration packet",
+  "cohort_count": 12,
+  "provisional_range_count": 8,
+  "source_snapshot": "probe_artifacts/interior_cohort_source_snapshot_20261112.json",
+  "coverage_ledger": "PLAYER_MODEL_EVIDENCE_COVERAGE_2026_11_12.json",
+  "range_scale": "provisional technique0-100 reference:50 functional reference,75 strong,90 exceptional; semantic calibration judgment only, not adopted coefficients or empirical percentile",
+  "range_boundaries": "ranges are not confidence intervals and not separately measured pure skill; effective outcomes remain external constraints until tool/context decomposition validated",
+  "focus_ids": [
+    "S36",
+    "S37",
+    "S38",
+    "S39",
+    "S40",
+    "S41",
+    "S44",
+    "S45",
+    "S46",
+    "S30",
+    "S31",
+    "S32",
+    "P01",
+    "P02",
+    "P03",
+    "P05",
+    "P08",
+    "P09",
+    "P10",
+    "T13",
+    "T15",
+    "T16",
+    "T17",
+    "P04",
+    "P06",
+    "P07",
+    "P11",
+    "P12"
+  ],
+  "extra_control_id": "S33 (Bam mobile-containment contrast)",
+  "cohort": [
+    {
+      "canonical_player_id": "player_sas-victor-wembanyama",
+      "name": "Victor Wembanyama",
+      "espn_player_id": "5104157",
+      "reported_physical_tools": {
+        "P01": 88.0,
+        "P02": 96.0,
+        "P04": 235.0,
+        "units": {
+          "P01": "inches",
+          "P02": "inches",
+          "P04": "pounds"
+        },
+        "P03": null,
+        "quality": "reported canonical values, not verified direct measurement/date; standing reach unavailable"
+      },
+      "observed_2025_26": {
+        "source_id": "L2",
+        "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/5104157/stats?seasontype=2",
+        "games": 64,
+        "minutes": 1868.8,
+        "blocks": 197.0,
+        "blocks_per36": 3.795,
+        "steals": 66.0,
+        "limits": "counts do not isolate contest technique, deterrence, positioning or actual contest opportunity"
+      },
+      "partial_provider_context": {
+        "BLKpct": "10.3",
+        "PF": 2.6,
+        "dPGpct": 7.7,
+        "dSGpct": 11.1,
+        "dSFpct": 15.2,
+        "dPFpct": 18.2,
+        "dCpct": 47,
+        "MatchupDifficulty": "34.9",
+        "primaryDefRole": "Rim Protector"
+      },
+      "scouting": {
+        "path": "EPISODE_4_CENTERS_EXTRACTION.md",
+        "published_on": "2026-09-02",
+        "timestamp": "01:35:07\u201301:45:37",
+        "speaker": "unidentified/local turns; no persistent identities",
+        "explicit_judgment": "Exceptional reach, rim prevention and ground coverage; switched-space and Finals limits remain.",
+        "reasonable_implication": "Contest timing/positioning likely strong, but much of exceptional coverage is tool-mediated.",
+        "counterevidence_limits": "Not proof he has the highest technique score or every defensive skill; award and on/off are not technique coefficients."
+      },
+      "intended_contrast": "Effective C27/C36 rare-tail reference; larger reachable coverage than guards without a second height/rim bonus.",
+      "provisional_input_ranges": [
+        {
+          "design_id": "S37",
+          "range": [
+            80,
+            94
+          ],
+          "basis": "Extraordinary contest outcomes and repeated timing/prevention assessment support strong technique, not all credit assigned to tools.",
+          "claim_type": "reasonable_implication",
+          "confidence": "moderate direction; low-to-moderate isolated magnitude",
+          "not_a_statistical_CI": true,
+          "not_production_value": true
+        }
+      ],
+      "unassigned_interior_inputs": "Other technique/tool/tendency inputs remain separately recorded, shared-prior/unresolved, not inferred by copying the old rim/effort/IQ values."
+    },
+    {
+      "canonical_player_id": "player_min-rudy-gobert",
+      "name": "Rudy Gobert",
+      "espn_player_id": "3032976",
+      "reported_physical_tools": {
+        "P01": 85.0,
+        "P02": 92.5,
+        "P04": 258.0,
+        "units": {
+          "P01": "inches",
+          "P02": "inches",
+          "P04": "pounds"
+        },
+        "P03": null,
+        "quality": "reported canonical values, not verified direct measurement/date; standing reach unavailable"
+      },
+      "observed_2025_26": {
+        "source_id": "L2",
+        "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3032976/stats?seasontype=2",
+        "games": 76,
+        "minutes": 2378.8,
+        "blocks": 124.0,
+        "blocks_per36": 1.877,
+        "steals": 58.0,
+        "limits": "counts do not isolate contest technique, deterrence, positioning or actual contest opportunity"
+      },
+      "partial_provider_context": {
+        "BLKpct": "4.1",
+        "PF": 2.7,
+        "dPGpct": 6.2,
+        "dSGpct": 8.5,
+        "dSFpct": 8.9,
+        "dPFpct": 16.3,
+        "dCpct": 58.6,
+        "MatchupDifficulty": "41.6",
+        "primaryDefRole": "Rim Protector"
+      },
+      "scouting": {
+        "path": "EPISODE_4_CENTERS_EXTRACTION.md",
+        "published_on": "2026-09-02",
+        "timestamp": "00:51:38\u201300:59:07",
+        "speaker": "unidentified/local turns; no persistent identities",
+        "explicit_judgment": "Dependable elite anchor, coverage/positioning, some post/space defense; offensive limits separate.",
+        "reasonable_implication": "Interior depth/angle and contest execution support an experienced technical anchor hypothesis.",
+        "counterevidence_limits": "Block counts omit avoidance; some space utility is not universal guard containment."
+      },
+      "intended_contrast": "High interior-position/contest anchor; technique can overlap/exceed Wembanyama while tools differ.",
+      "provisional_input_ranges": [
+        {
+          "design_id": "S36",
+          "range": [
+            86,
+            96
+          ],
+          "basis": "Elite anchor positioning/coverage assessment supports a high interior-position technique prior.",
+          "claim_type": "reasonable_implication",
+          "confidence": "moderate direction; low-to-moderate isolated technique magnitude",
+          "not_a_statistical_CI": true,
+          "not_production_value": true
+        }
+      ],
+      "unassigned_interior_inputs": "Other technique/tool/tendency inputs remain separately recorded, shared-prior/unresolved, not inferred by copying the old rim/effort/IQ values."
+    },
+    {
+      "canonical_player_id": "player_mia-bam-adebayo",
+      "name": "Bam Adebayo",
+      "espn_player_id": "4066261",
+      "reported_physical_tools": {
+        "P01": 81.0,
+        "P02": 86.75,
+        "P04": 260.0,
+        "units": {
+          "P01": "inches",
+          "P02": "inches",
+          "P04": "pounds"
+        },
+        "P03": null,
+        "quality": "reported canonical values, not verified direct measurement/date; standing reach unavailable"
+      },
+      "observed_2025_26": {
+        "source_id": "L2",
+        "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4066261/stats?seasontype=2",
+        "games": 73,
+        "minutes": 2365.2,
+        "blocks": 49.0,
+        "blocks_per36": 0.746,
+        "steals": 86.0,
+        "limits": "counts do not isolate contest technique, deterrence, positioning or actual contest opportunity"
+      },
+      "partial_provider_context": {
+        "BLKpct": "1.9",
+        "PF": 1.7,
+        "dPGpct": 8.1,
+        "dSGpct": 11.2,
+        "dSFpct": 16.1,
+        "dPFpct": 19.5,
+        "dCpct": 44.8,
+        "MatchupDifficulty": "44.5",
+        "primaryDefRole": "Rim Protector"
+      },
+      "scouting": {
+        "path": "EPISODE_4_CENTERS_EXTRACTION.md",
+        "published_on": "2026-09-02",
+        "timestamp": "01:06:54\u201301:13:07",
+        "speaker": "unidentified/local turns; no persistent identities",
+        "explicit_judgment": "Excellent switching/versatile defense, playmaking; Chet distinguished by stronger rim deterrence.",
+        "reasonable_implication": "Strong containment/contact/read technique plausible; lower block rate does not identify worse positioning or effort.",
+        "counterevidence_limits": "Tools, coverage assignment and contest selection contribute; not a pure technique or standing-reach measurement."
+      },
+      "intended_contrast": "Mobile coverage contrast: strong C23/C26 need not equal exceptional deep-rim C27 coverage.",
+      "provisional_input_ranges": [
+        {
+          "design_id": "S33",
+          "range": [
+            78,
+            92
+          ],
+          "basis": "Strong switching-defense assessment supports containment technique as a mobile-big contrast.",
+          "claim_type": "reasonable_implication",
+          "confidence": "moderate profile; low isolated technique magnitude",
+          "not_a_statistical_CI": true,
+          "not_production_value": true
+        }
+      ],
+      "unassigned_interior_inputs": "Other technique/tool/tendency inputs remain separately recorded, shared-prior/unresolved, not inferred by copying the old rim/effort/IQ values."
+    },
+    {
+      "canonical_player_id": "player_ind-ivica-zubac",
+      "name": "Ivica Zubac",
+      "espn_player_id": "4017837",
+      "reported_physical_tools": {
+        "P01": 84.0,
+        "P02": 88.0,
+        "P04": 240.0,
+        "units": {
+          "P01": "inches",
+          "P02": "inches",
+          "P04": "pounds"
+        },
+        "P03": null,
+        "quality": "reported canonical values, not verified direct measurement/date; standing reach unavailable"
+      },
+      "observed_2025_26": {
+        "source_id": "L2",
+        "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4017837/stats?seasontype=2",
+        "games": 48,
+        "minutes": 1444.8000000000002,
+        "blocks": 40.0,
+        "blocks_per36": 0.997,
+        "steals": 18.0,
+        "limits": "counts do not isolate contest technique, deterrence, positioning or actual contest opportunity"
+      },
+      "partial_provider_context": {
+        "BLKpct": "3.6",
+        "PF": 2.4,
+        "dPGpct": 7.4,
+        "dSGpct": 8.4,
+        "dSFpct": 11.4,
+        "dPFpct": 16.7,
+        "dCpct": 54.8,
+        "MatchupDifficulty": "43.8",
+        "primaryDefRole": "Rim Protector"
+      },
+      "scouting": {
+        "path": "EPISODE_4_CENTERS_EXTRACTION.md",
+        "published_on": "2026-09-02",
+        "timestamp": "00:17:18\u201300:38:52 (Zubac/Duren interleaved)",
+        "speaker": "unidentified/local turns; no persistent identities",
+        "explicit_judgment": "Dependable drop/rim protection, physical rebounding/screens; praise for Denver matchup, Indiana pace adjustment.",
+        "reasonable_implication": "Drop depth/positioning is a useful inferred technical anchor, not simply height credit.",
+        "counterevidence_limits": "Claimed minutes/matchup outcomes are commentary, final retained48-game season differs; pace/context and technique isolation uncertain."
+      },
+      "intended_contrast": "Conventional large-anchor reference; do not equate fewer blocks with guard-like interior coverage.",
+      "provisional_input_ranges": [
+        {
+          "design_id": "S36",
+          "range": [
+            76,
+            90
+          ],
+          "basis": "Dependable drop/rim description supports good depth/angle technique; broad range reflects tool/context uncertainty.",
+          "claim_type": "reasonable_implication",
+          "confidence": "moderate profile; low magnitude",
+          "not_a_statistical_CI": true,
+          "not_production_value": true
+        }
+      ],
+      "unassigned_interior_inputs": "Other technique/tool/tendency inputs remain separately recorded, shared-prior/unresolved, not inferred by copying the old rim/effort/IQ values."
+    },
+    {
+      "canonical_player_id": "player_mil-myles-turner",
+      "name": "Myles Turner",
+      "espn_player_id": "3133628",
+      "reported_physical_tools": {
+        "P01": 83.0,
+        "P02": 88.0,
+        "P04": 250.0,
+        "units": {
+          "P01": "inches",
+          "P02": "inches",
+          "P04": "pounds"
+        },
+        "P03": null,
+        "quality": "reported canonical values, not verified direct measurement/date; standing reach unavailable"
+      },
+      "observed_2025_26": {
+        "source_id": "L2",
+        "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3133628/stats?seasontype=2",
+        "games": 71,
+        "minutes": 1909.8999999999999,
+        "blocks": 115.0,
+        "blocks_per36": 2.168,
+        "steals": 50.0,
+        "limits": "counts do not isolate contest technique, deterrence, positioning or actual contest opportunity"
+      },
+      "partial_provider_context": {
+        "BLKpct": "5.5",
+        "PF": 2.6,
+        "dPGpct": 6.7,
+        "dSGpct": 8.9,
+        "dSFpct": 16.9,
+        "dPFpct": 23.6,
+        "dCpct": 42.6,
+        "MatchupDifficulty": "34.7",
+        "primaryDefRole": "Rim Protector"
+      },
+      "scouting": {
+        "path": "CROSS_VIDEO_CLAIM_INDEX.md",
+        "published_on": "2026-10-02",
+        "timestamp": "EP2 02:02\u201302:10 contextual departure reference",
+        "speaker": "unidentified/local turns; no persistent identities",
+        "explicit_judgment": "Retained discussion mainly uses his departure/spacing as Pacers context; no detailed new interior-technique assessment found.",
+        "reasonable_implication": "Block production constrains effective contests; raw legacy rim100 is not S37 or S36 identification.",
+        "counterevidence_limits": "No independent current positioning, help or foul-control detail acquired; exact technique prior remains broad."
+      },
+      "intended_contrast": "Strong block-capable big comparison, not automatically equal to Wembanyama from a clipped legacy score.",
+      "provisional_input_ranges": [],
+      "unassigned_interior_inputs": "Other technique/tool/tendency inputs remain separately recorded, shared-prior/unresolved, not inferred by copying the old rim/effort/IQ values."
+    },
+    {
+      "canonical_player_id": "player_den-nikola-jokic",
+      "name": "Nikola Joki\u0107",
+      "espn_player_id": "3112335",
+      "reported_physical_tools": {
+        "P01": 83.0,
+        "P02": 87.0,
+        "P04": 284.0,
+        "units": {
+          "P01": "inches",
+          "P02": "inches",
+          "P04": "pounds"
+        },
+        "P03": null,
+        "quality": "reported canonical values, not verified direct measurement/date; standing reach unavailable"
+      },
+      "observed_2025_26": {
+        "source_id": "L2",
+        "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3112335/stats?seasontype=2",
+        "games": 65,
+        "minutes": 2262.0,
+        "blocks": 53.0,
+        "blocks_per36": 0.844,
+        "steals": 92.0,
+        "limits": "counts do not isolate contest technique, deterrence, positioning or actual contest opportunity"
+      },
+      "partial_provider_context": {
+        "BLKpct": "1.6",
+        "PF": 2.7,
+        "dPGpct": 7.2,
+        "dSGpct": 11.9,
+        "dSFpct": 10.9,
+        "dPFpct": 14.8,
+        "dCpct": 52.8,
+        "MatchupDifficulty": "31.8",
+        "primaryDefRole": "Rim Protector"
+      },
+      "scouting": {
+        "path": "EPISODE_4_CENTERS_EXTRACTION.md",
+        "published_on": "2026-09-02",
+        "timestamp": "01:32:23\u201301:35:07;01:36:54\u201301:38:45",
+        "speaker": "unidentified/local turns; no persistent identities",
+        "explicit_judgment": "Historic offense; Minnesota series defensive/support concerns; contextual disagreement.",
+        "reasonable_implication": "Large-body interior access can coexist with limited mobility/contest output. Offensive intelligence is not defensive communication evidence.",
+        "counterevidence_limits": "One series and team metrics do not set global S36/S38/S46; no narrow new technique range assigned."
+      },
+      "intended_contrast": "Large low-block contrast; size and offensive IQ must not grant automatic elite C27 or S38.",
+      "provisional_input_ranges": [],
+      "unassigned_interior_inputs": "Other technique/tool/tendency inputs remain separately recorded, shared-prior/unresolved, not inferred by copying the old rim/effort/IQ values."
+    },
+    {
+      "canonical_player_id": "player_tor-scottie-barnes",
+      "name": "Scottie Barnes",
+      "espn_player_id": "4433134",
+      "reported_physical_tools": {
+        "P01": 80.0,
+        "P02": 86.75,
+        "P04": 237.0,
+        "units": {
+          "P01": "inches",
+          "P02": "inches",
+          "P04": "pounds"
+        },
+        "P03": null,
+        "quality": "reported canonical values, not verified direct measurement/date; standing reach unavailable"
+      },
+      "observed_2025_26": {
+        "source_id": "L2",
+        "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4433134/stats?seasontype=2",
+        "games": 80,
+        "minutes": 2680.0,
+        "blocks": 116.0,
+        "blocks_per36": 1.558,
+        "steals": 114.0,
+        "limits": "counts do not isolate contest technique, deterrence, positioning or actual contest opportunity"
+      },
+      "partial_provider_context": {
+        "BLKpct": "2.9",
+        "PF": 2.9,
+        "dPGpct": 11.8,
+        "dSGpct": 13.2,
+        "dSFpct": 21.2,
+        "dPFpct": 31.3,
+        "dCpct": 21.4,
+        "MatchupDifficulty": "71.6",
+        "primaryDefRole": "Mobile Forward"
+      },
+      "scouting": {
+        "path": "POWER_FORWARD_FULL_EXTRACTION.md",
+        "published_on": "2026-08-28",
+        "timestamp": "01:10:00\u201301:17:38",
+        "speaker": "unidentified/local turns; no persistent identities",
+        "explicit_judgment": "Strong guard/wing coverage, hands, help and rim versatility.",
+        "reasonable_implication": "Useful rotations/positioning likely contribute beyond tools; support strong helper rather than automatic full-time center equivalence.",
+        "counterevidence_limits": "Raw rim90.32 includes subjective inflation; no current direct help/rim-event sample."
+      },
+      "intended_contrast": "Helper C26 reference with flexible spatial coverage; C27 anchor response depends on tools/position/context.",
+      "provisional_input_ranges": [
+        {
+          "design_id": "S38",
+          "range": [
+            78,
+            92
+          ],
+          "basis": "Broad help/versatility assessment supports good recognition, not an inference from blocks alone.",
+          "claim_type": "reasonable_implication",
+          "confidence": "moderate direction; low isolated magnitude",
+          "not_a_statistical_CI": true,
+          "not_production_value": true
+        }
+      ],
+      "unassigned_interior_inputs": "Other technique/tool/tendency inputs remain separately recorded, shared-prior/unresolved, not inferred by copying the old rim/effort/IQ values."
+    },
+    {
+      "canonical_player_id": "player_gsw-draymond-green",
+      "name": "Draymond Green",
+      "espn_player_id": "6589",
+      "reported_physical_tools": {
+        "P01": 78.0,
+        "P02": 85.25,
+        "P04": 235.0,
+        "units": {
+          "P01": "inches",
+          "P02": "inches",
+          "P04": "pounds"
+        },
+        "P03": null,
+        "quality": "reported canonical values, not verified direct measurement/date; standing reach unavailable"
+      },
+      "observed_2025_26": {
+        "source_id": "L2",
+        "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/6589/stats?seasontype=2",
+        "games": 68,
+        "minutes": 1870.0,
+        "blocks": 42.0,
+        "blocks_per36": 0.809,
+        "steals": 61.0,
+        "limits": "counts do not isolate contest technique, deterrence, positioning or actual contest opportunity"
+      },
+      "partial_provider_context": {
+        "BLKpct": "3.4",
+        "PF": 2.9,
+        "dPGpct": 10.5,
+        "dSGpct": 11,
+        "dSFpct": 19.4,
+        "dPFpct": 22.1,
+        "dCpct": 35.8,
+        "MatchupDifficulty": "59.1",
+        "primaryDefRole": "Rim Protector"
+      },
+      "scouting": {
+        "path": "TEAM_RANKING_FULL_EXTRACTION.md",
+        "published_on": "2026-10-07",
+        "timestamp": "00:15:00\u201300:22:29;EP2 01:25\u201301:34",
+        "speaker": "unidentified/local turns; no persistent identities",
+        "explicit_judgment": "Warriors complementary lineup/size/switching/connection context; not a detailed communication or contest assessment.",
+        "reasonable_implication": "Experienced helper/communication hypothesis is worth checking, but the retained passage does not independently identify S46 or a precise S38.",
+        "counterevidence_limits": "Do not manufacture a95 communication score from reputation or teammate results. Earlier named-source review lacking; no narrow numeric range here.",
+        "secondary_source": {
+          "path": "TEAMS_20_TO_11_FULL_EXTRACTION.md",
+          "published_on": "2026-10-02",
+          "timestamp": "01:25\u201301:34",
+          "scope": "lineup context, not isolated S46"
+        }
+      },
+      "intended_contrast": "Shorter-big support/positioning comparison; allow tool limits and strong technical hypotheses to remain distinct.",
+      "provisional_input_ranges": [],
+      "unassigned_interior_inputs": "Other technique/tool/tendency inputs remain separately recorded, shared-prior/unresolved, not inferred by copying the old rim/effort/IQ values."
+    },
+    {
+      "canonical_player_id": "player_bos-derrick-white",
+      "name": "Derrick White",
+      "espn_player_id": "3078576",
+      "reported_physical_tools": {
+        "P01": 76.0,
+        "P02": 79.5,
+        "P04": 190.0,
+        "units": {
+          "P01": "inches",
+          "P02": "inches",
+          "P04": "pounds"
+        },
+        "P03": null,
+        "quality": "reported canonical values, not verified direct measurement/date; standing reach unavailable"
+      },
+      "observed_2025_26": {
+        "source_id": "L2",
+        "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3078576/stats?seasontype=2",
+        "games": 77,
+        "minutes": 2625.7000000000003,
+        "blocks": 98.0,
+        "blocks_per36": 1.344,
+        "steals": 88.0,
+        "limits": "counts do not isolate contest technique, deterrence, positioning or actual contest opportunity"
+      },
+      "partial_provider_context": {
+        "BLKpct": "2.8",
+        "PF": 1.5,
+        "dPGpct": 17.6,
+        "dSGpct": 26.9,
+        "dSFpct": 25.2,
+        "dPFpct": 20,
+        "dCpct": 8.6,
+        "MatchupDifficulty": "44.3",
+        "primaryDefRole": "Mobile Forward"
+      },
+      "scouting": {
+        "path": "SHOOTING_GUARDS_TOP_10_FULL_EXTRACTION.md",
+        "published_on": "2026-08-14",
+        "timestamp": "01:34\u201301:44",
+        "speaker": "unidentified/local turns; no persistent identities",
+        "explicit_judgment": "Anticipation, positioning, guard help blocks and defensive work praised.",
+        "reasonable_implication": "Controlled timing/help recognition can be high even with guard-sized geometry.",
+        "counterevidence_limits": "Blocks include reachable opportunities; high guard technique does not prove center anchoring or standing reach."
+      },
+      "intended_contrast": "Good S37/S38 with limited C27 physical coverage; broad skill must not be stereotyped by height.",
+      "provisional_input_ranges": [
+        {
+          "design_id": "S37",
+          "range": [
+            78,
+            92
+          ],
+          "basis": "Guard help-block success plus anticipation/positioning assessment supports timing/control despite smaller geometry.",
+          "claim_type": "reasonable_implication",
+          "confidence": "moderate direction; low-to-moderate isolated magnitude",
+          "not_a_statistical_CI": true,
+          "not_production_value": true
+        },
+        {
+          "design_id": "S38",
+          "range": [
+            80,
+            92
+          ],
+          "basis": "Explicit positioning/anticipation/help praise supports a strong rotation-recognition prior.",
+          "claim_type": "reasonable_implication",
+          "confidence": "moderate direction; low isolated magnitude",
+          "not_a_statistical_CI": true,
+          "not_production_value": true
+        }
+      ],
+      "unassigned_interior_inputs": "Other technique/tool/tendency inputs remain separately recorded, shared-prior/unresolved, not inferred by copying the old rim/effort/IQ values."
+    },
+    {
+      "canonical_player_id": "player_sas-stephon-castle",
+      "name": "Stephon Castle",
+      "espn_player_id": "4845367",
+      "reported_physical_tools": {
+        "P01": 78.0,
+        "P02": 81.0,
+        "P04": 215.0,
+        "units": {
+          "P01": "inches",
+          "P02": "inches",
+          "P04": "pounds"
+        },
+        "P03": null,
+        "quality": "reported canonical values, not verified direct measurement/date; standing reach unavailable"
+      },
+      "observed_2025_26": {
+        "source_id": "L2",
+        "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4845367/stats?seasontype=2",
+        "games": 68,
+        "minutes": 2040.0,
+        "blocks": 19.0,
+        "blocks_per36": 0.335,
+        "steals": 78.0,
+        "limits": "counts do not isolate contest technique, deterrence, positioning or actual contest opportunity"
+      },
+      "partial_provider_context": {
+        "BLKpct": "0.9",
+        "PF": 3.3,
+        "dPGpct": 19.5,
+        "dSGpct": 27.9,
+        "dSFpct": 27.3,
+        "dPFpct": 14,
+        "dCpct": 10.5,
+        "MatchupDifficulty": "95.3",
+        "primaryDefRole": "Versatile Stopper"
+      },
+      "scouting": {
+        "path": "POINT_GUARDS_FULL_EXTRACTION.md",
+        "published_on": "2026-08-05",
+        "timestamp": "00:18:37\u201300:22:05;00:26:37\u201300:29:26",
+        "speaker": "unidentified/local turns; no persistent identities",
+        "explicit_judgment": "Strong physical POA defense; weaker secondary rim/help/disruption, foul concern and Wembanyama support.",
+        "reasonable_implication": "Help-recognition/execution may lag White despite containment strength; T15/S39/context are alternative explanations too.",
+        "counterevidence_limits": "No automatic low contest technique from low blocks; confidence in isolated S38 magnitude is lower than in overall profile difference."
+      },
+      "intended_contrast": "POA vs helper contrast; stronger containment need not raise C27/C26 equally.",
+      "provisional_input_ranges": [
+        {
+          "design_id": "S38",
+          "range": [
+            55,
+            75
+          ],
+          "basis": "Explicit secondary help weakness supports lower helper prior than White; responsibility/commitment alternatives remain.",
+          "claim_type": "reasonable_implication",
+          "confidence": "moderate profile separation; low isolated magnitude",
+          "not_a_statistical_CI": true,
+          "not_production_value": true
+        }
+      ],
+      "unassigned_interior_inputs": "Other technique/tool/tendency inputs remain separately recorded, shared-prior/unresolved, not inferred by copying the old rim/effort/IQ values."
+    },
+    {
+      "canonical_player_id": "player_gsw-stephen-curry",
+      "name": "Stephen Curry",
+      "espn_player_id": "3975",
+      "reported_physical_tools": {
+        "P01": 74.0,
+        "P02": 75.5,
+        "P04": 200.0,
+        "units": {
+          "P01": "inches",
+          "P02": "inches",
+          "P04": "pounds"
+        },
+        "P03": null,
+        "quality": "reported canonical values, not verified direct measurement/date; standing reach unavailable"
+      },
+      "observed_2025_26": {
+        "source_id": "L2",
+        "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3975/stats?seasontype=2",
+        "games": 43,
+        "minutes": 1328.7,
+        "blocks": 17.0,
+        "blocks_per36": 0.461,
+        "steals": 49.0,
+        "limits": "counts do not isolate contest technique, deterrence, positioning or actual contest opportunity"
+      },
+      "partial_provider_context": {
+        "BLKpct": "1.3",
+        "PF": 1.9,
+        "dPGpct": 20.2,
+        "dSGpct": 29.2,
+        "dSFpct": 26.2,
+        "dPFpct": 15.7,
+        "dCpct": 6.8,
+        "MatchupDifficulty": "37.1",
+        "primaryDefRole": "Hidden"
+      },
+      "scouting": {
+        "path": "POINT_GUARDS_FULL_EXTRACTION.md",
+        "published_on": "2026-08-05",
+        "timestamp": "01:11:36\u201301:25:46",
+        "speaker": "unidentified/local turns; no persistent identities",
+        "explicit_judgment": "Segment mainly establishes offense, age and availability; defensive subskills not comprehensively assessed.",
+        "reasonable_implication": "Hidden label does not identify technique, attention or help preference; high offensive stamina proxy is not defensive conditioning.",
+        "counterevidence_limits": "No precise interior technique or current sheltered share identified."
+      },
+      "intended_contrast": "Low-rim-responsibility guard control with nonzero legal help/closeout/rebound obligations.",
+      "provisional_input_ranges": [],
+      "unassigned_interior_inputs": "Other technique/tool/tendency inputs remain separately recorded, shared-prior/unresolved, not inferred by copying the old rim/effort/IQ values."
+    },
+    {
+      "canonical_player_id": "player_nyk-jalen-brunson",
+      "name": "Jalen Brunson",
+      "espn_player_id": "3934672",
+      "reported_physical_tools": {
+        "P01": 74.0,
+        "P02": 76.0,
+        "P04": 190.0,
+        "units": {
+          "P01": "inches",
+          "P02": "inches",
+          "P04": "pounds"
+        },
+        "P03": null,
+        "quality": "reported canonical values, not verified direct measurement/date; standing reach unavailable"
+      },
+      "observed_2025_26": {
+        "source_id": "L2",
+        "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3934672/stats?seasontype=2",
+        "games": 74,
+        "minutes": 2590.0,
+        "blocks": 8.0,
+        "blocks_per36": 0.111,
+        "steals": 57.0,
+        "limits": "counts do not isolate contest technique, deterrence, positioning or actual contest opportunity"
+      },
+      "partial_provider_context": {
+        "BLKpct": "0.3",
+        "PF": 2.3,
+        "dPGpct": 23.2,
+        "dSGpct": 24.8,
+        "dSFpct": 30.2,
+        "dPFpct": 13.5,
+        "dCpct": 6,
+        "MatchupDifficulty": "34.7",
+        "primaryDefRole": "Hidden"
+      },
+      "scouting": {
+        "path": "POINT_GUARDS_FULL_EXTRACTION.md",
+        "published_on": "2026-08-05",
+        "timestamp": "01:06:18\u201301:11:36;EP1 03:25:17\u201303:27:02",
+        "speaker": "unidentified/local turns; no persistent identities",
+        "explicit_judgment": "Defensive vulnerability insulated by team infrastructure; shielding from switches discussed.",
+        "reasonable_implication": "Support needs/reduced assignment are contextual; do not infer zero technique, low effort or poor recognition from height/usage.",
+        "counterevidence_limits": "No direct current interior contest/help/charge opportunity table, no precise raw defensive estimate.",
+        "secondary_source": {
+          "path": "TEAM_RANKING_FULL_EXTRACTION.md",
+          "published_on": "2026-10-07",
+          "timestamp": "03:25:17\u201303:27:02",
+          "scope": "shielding/switch context"
+        }
+      },
+      "intended_contrast": "Sheltered-assignment control; compare C27 tools/duties without declaring universal incompetence.",
+      "provisional_input_ranges": [],
+      "unassigned_interior_inputs": "Other technique/tool/tendency inputs remain separately recorded, shared-prior/unresolved, not inferred by copying the old rim/effort/IQ values."
+    }
+  ],
+  "bbi_smallest_useful_check": {
+    "target_player_seasons": "same12 cohort \u00d7 completed2025-26/2024-25 regular season, up to24 season-total rows plus explicit team stints; availability unverified",
+    "fields": [
+      "identity/season/team/total-vs-stint/minutes",
+      "Rim dFG% vs Expected",
+      "Rim Contests Per 75 Possessions",
+      "Stable Rim dFG% vs. Expected",
+      "Stable Rim DFGA Per 75 Possessions",
+      "Rim Deterrence Per 100",
+      "Block Rate on Contests",
+      "Help Defensive Activity",
+      "Help Effectiveness Rating",
+      "Screener Rim Defense",
+      "Screener Mobile Defense",
+      "Fouls Committed / 75"
+    ],
+    "metadata_requested_not_verified": [
+      "defended FGM/FGA",
+      "help/screen event denominators",
+      "units/sign",
+      "provider as-of/model version",
+      "filters/default minute cutoffs"
+    ],
+    "cannot_resolve": [
+      "technique vs reach/jump separately without external tools/evidence",
+      "recognition delay vs travel speed vs commitment from a single outcome grade",
+      "communication/attention/conditioning or every tendency",
+      "all18 passing dimensions independently"
+    ],
+    "access_status": "no paid access, purchase or current player rows acquired"
+  },
+  "blocking_status": "No access blocker to this research milestone; paid feasibility/standing reach/event-level separation remain data limitations for stronger calibration, not grounds to delete inputs.",
+  "contrast_constraints": [
+    {
+      "target": "C27/C36 effective interior coverage with reported tools and declared reference opportunities",
+      "higher_reference": [
+        "Victor Wembanyama",
+        "Rudy Gobert"
+      ],
+      "lower_reference": [
+        "Derrick White",
+        "Stephon Castle",
+        "Stephen Curry",
+        "Jalen Brunson"
+      ],
+      "confidence": "strong directional reference, not exact forced order among anchors",
+      "reason": "reach/tools plus sustained outcomes and scouting; no extra legacy rim bonus"
+    },
+    {
+      "target": "S38 and contextual helper profile",
+      "higher_reference": [
+        "Derrick White",
+        "Scottie Barnes"
+      ],
+      "lower_reference": [
+        "Stephon Castle"
+      ],
+      "confidence": "moderate profile direction; isolated S38 decomposition less certain",
+      "reason": "explicit help/anticipation versus secondary-help weakness; T15/S39/tools alternatives retained"
+    },
+    {
+      "target": "technique-only S37",
+      "constraint": "Do not force bigs above guards solely by height or Wembanyama above Gobert solely by total impact.",
+      "confidence": "architectural/evidence boundary"
+    },
+    {
+      "target": "T17/P11/P12",
+      "constraint": "No defensive laziness or intrinsic conditioning inferred automatically from offensive workload/projected minutes.",
+      "confidence": "architectural/evidence boundary"
+    }
+  ]
+}

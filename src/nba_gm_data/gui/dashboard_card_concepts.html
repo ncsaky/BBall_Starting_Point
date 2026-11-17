@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Card Lab</title>
+  <style>
+    :root {
+      --page: #05080a;
+      --panel: #0a1014;
+      --panel-2: #0e171c;
+      --line: #24343d;
+      --line-strong: #3b525e;
+      --text: #e8eef1;
+      --muted: #8d9ba3;
+      --cyan: #54c9dc;
+      --green: #58c990;
+      --amber: #f0b94e;
+      --orange: #e57a45;
+      --red: #e15d67;
+      --blue: #719ce8;
+    }
+    * { box-sizing: border-box; font-weight: 400; }
+    html { background: var(--page); color: var(--text); font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace; }
+    body { margin: 0; padding: 34px; background: var(--page); }
+    button { font: inherit; }
+    .page-head { width: 1716px; margin: 0 auto 32px; border-bottom: 1px solid var(--line-strong); padding-bottom: 18px; }
+    .page-head h1 { margin: 0 0 8px; font-size: 25px; letter-spacing: .02em; }
+    .page-head p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; max-width: 940px; }
+    .family { width: 1716px; margin: 0 auto 38px; }
+    .family-head { display: flex; align-items: end; justify-content: space-between; margin: 0 0 12px; }
+    .family-head h2 { margin: 0; font-size: 17px; }
+    .family-head span { color: var(--muted); font-size: 11px; }
+    .concept-grid { display: grid; grid-template-columns: repeat(3, 560px); gap: 18px; }
+    .concept-wrap { min-width: 0; }
+    .concept-meta { display: flex; align-items: center; justify-content: space-between; height: 35px; padding: 0 2px; }
+    .concept-meta span { color: var(--muted); font-size: 11px; }
+    .copy { border: 1px solid var(--line-strong); background: transparent; color: var(--text); padding: 6px 10px; font-size: 10px; cursor: pointer; }
+    .copy:hover { border-color: var(--cyan); }
+
+    .card { width: 560px; height: 360px; overflow: hidden; border: 1px solid var(--line-strong); background: var(--panel); padding: 16px; position: relative; }
+    .card-header { height: 34px; display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid var(--line); }
+    .card-title { font-size: 15px; color: var(--text); }
+    .card-kicker { color: var(--cyan); font-size: 10px; }
+    .section-label { color: var(--muted); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+    .value { font-variant-numeric: tabular-nums; }
+    .positive { color: var(--green); }
+    .negative { color: var(--red); }
+    .neutral { color: var(--amber); }
+    .team-logo { width: 48px; height: 48px; object-fit: contain; }
+    .team-logo.small { width: 23px; height: 23px; }
+    .team-logo.tiny { width: 17px; height: 17px; }
+    .divider { height: 1px; background: var(--line); }
+    .rail { height: 5px; background: #172229; position: relative; overflow: hidden; }
+    .rail > i { display: block; height: 100%; background: var(--cyan); }
+    .rail > b { position: absolute; top: -3px; height: 11px; width: 1px; background: #d4dce0; }
+    .spark { width: 74px; height: 22px; overflow: visible; }
+    .spark polyline { fill: none; stroke: var(--cyan); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+
+    /* Opponent scouting */
+    .opp-head { display: grid; grid-template-columns: 54px 1fr auto; gap: 10px; align-items: center; padding: 11px 0 9px; }
+    .opp-name { font-size: 16px; margin-bottom: 5px; }
+    .opp-record { color: var(--muted); font-size: 11px; }
+    .seed-block { text-align: right; }
+    .seed-block strong { display: block; font-size: 22px; color: var(--amber); }
+    .seed-block span { color: var(--muted); font-size: 9px; }
+    .metric-ribbon { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); }
+    .metric-ribbon > div { padding: 7px 8px; border-right: 1px solid var(--line); }
+    .metric-ribbon > div:last-child { border-right: 0; }
+    .metric-ribbon span { color: var(--muted); font-size: 8px; display: block; margin-bottom: 3px; }
+    .metric-ribbon strong { font-size: 13px; }
+    .rotation-table { margin-top: 9px; }
+    .rotation-row { height: 25px; display: grid; grid-template-columns: 18px 1fr 31px 104px; gap: 7px; align-items: center; border-bottom: 1px solid #19252b; font-size: 10px; }
+    .rotation-row .rank { color: var(--muted); }
+    .rotation-row .mpg { text-align: right; color: var(--text); }
+    .injury-ticker { position: absolute; left: 16px; right: 16px; bottom: 12px; height: 23px; display: flex; align-items: center; gap: 9px; border-top: 1px solid var(--line); color: var(--muted); font-size: 9px; white-space: nowrap; overflow: hidden; }
+    .injury-ticker .tag { color: var(--red); }
+    .opponent-b .opp-layout { display: grid; grid-template-columns: 173px 1fr; gap: 15px; padding-top: 10px; }
+    .opponent-b .identity { border-right: 1px solid var(--line); min-height: 257px; padding-right: 14px; }
+    .opponent-b .team-logo { width: 70px; height: 70px; display: block; margin: 0 auto 8px; }
+    .opponent-b .identity .opp-name { text-align: center; }
+    .record-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 9px; }
+    .record-grid div { background: var(--panel-2); padding: 7px; }
+    .record-grid span { display: block; color: var(--muted); font-size: 8px; }
+    .record-grid strong { font-size: 12px; }
+    .metric-bullets { margin-top: 10px; }
+    .metric-bullet { display: grid; grid-template-columns: 48px 1fr 34px; gap: 7px; align-items: center; height: 25px; font-size: 9px; }
+    .metric-bullet strong { text-align: right; font-size: 10px; }
+    .threat-list { margin-top: 8px; }
+    .threat-row { height: 36px; display: grid; grid-template-columns: 21px 1fr 132px 33px; gap: 7px; align-items: center; border-bottom: 1px solid #19252b; font-size: 9px; }
+    .threat-row .rail { height: 7px; }
+    .threat-row .rail i { background: var(--amber); }
+    .opponent-c .scan-grid { display: grid; grid-template-columns: 178px 1fr; gap: 14px; padding-top: 11px; }
+    .opponent-c .team-pane { border-right: 1px solid var(--line); padding-right: 13px; }
+    .opponent-c .logo-record { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .opponent-c .logo-record .team-logo { width: 59px; height: 59px; }
+    .matrix { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .matrix div { height: 46px; background: var(--panel-2); padding: 7px; border-left: 2px solid var(--line-strong); }
+    .matrix span { display: block; color: var(--muted); font-size: 8px; margin-bottom: 4px; }
+    .matrix strong { font-size: 12px; }
+    .minute-lanes { margin-top: 2px; }
+    .minute-lane { height: 39px; border-bottom: 1px solid #19252b; padding-top: 5px; }
+    .minute-lane .line-one { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 5px; }
+    .minute-lane .rail { height: 6px; }
+    .minute-lane:nth-child(2n) .rail i { background: var(--green); }
+
+    /* Ratings trend */
+    .chart-body { position: relative; height: 259px; margin-top: 12px; border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .chart-body svg { width: 100%; height: 100%; display: block; }
+    .gridline { stroke: #1b292f; stroke-width: 1; vector-effect: non-scaling-stroke; }
+    .off-line { fill: none; stroke: var(--cyan); stroke-width: 2; vector-effect: non-scaling-stroke; }
+    .def-line { fill: none; stroke: var(--orange); stroke-width: 2; vector-effect: non-scaling-stroke; }
+    .avg-line { fill: none; stroke: #74838a; stroke-width: 1; stroke-dasharray: 4 4; vector-effect: non-scaling-stroke; }
+    .chart-legend { display: flex; gap: 16px; align-items: center; font-size: 9px; color: var(--muted); }
+    .legend-key { display: flex; gap: 5px; align-items: center; }
+    .legend-key i { width: 15px; height: 2px; background: var(--cyan); }
+    .legend-key.def i { background: var(--orange); }
+    .summary-values { display: flex; gap: 17px; align-items: baseline; }
+    .summary-values span { font-size: 10px; color: var(--muted); }
+    .summary-values strong { font-size: 14px; color: var(--text); }
+    .rating-b .small-multiple { height: 124px; margin-top: 10px; position: relative; border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .rating-b .small-multiple + .small-multiple { margin-top: 13px; }
+    .rating-b .small-multiple svg { width: 100%; height: 100%; }
+    .multiple-label { position: absolute; left: 8px; top: 6px; z-index: 2; font-size: 10px; }
+    .multiple-value { position: absolute; right: 7px; top: 5px; z-index: 2; font-size: 12px; }
+    .rating-c .net-strip { height: 35px; display: grid; grid-template-columns: 88px 1fr 55px; gap: 9px; align-items: center; margin-top: 8px; font-size: 9px; }
+    .net-strip .rail { height: 8px; background: #162127; overflow: visible; }
+    .net-strip .rail::before, .net-strip .rail::after { content: ""; position: absolute; top: 0; width: calc(50% - 1px); height: 8px; }
+    .net-strip .rail::before { left: 0; background: var(--red); }
+    .net-strip .rail::after { right: 0; background: var(--green); }
+    .net-strip .marker { position: absolute; width: 2px; height: 14px; background: white; top: -3px; }
+
+    /* Four factors */
+    .factor-list { margin-top: 11px; }
+    .factor-row { height: 62px; border-bottom: 1px solid #1b282e; display: grid; grid-template-columns: 72px 54px 1fr 57px; gap: 9px; align-items: center; }
+    .factor-name { font-size: 12px; }
+    .factor-value { font-size: 12px; text-align: right; }
+    .factor-delta { text-align: right; font-size: 10px; }
+    .diverge { height: 12px; position: relative; background: #151f24; }
+    .diverge::after { content: ""; position: absolute; left: 50%; top: -3px; width: 1px; height: 18px; background: #c8d0d4; }
+    .diverge i { position: absolute; top: 2px; height: 8px; }
+    .diverge i.right { left: 50%; background: var(--green); }
+    .diverge i.left { right: 50%; background: var(--red); }
+    .factors-b .factor-row { grid-template-columns: 68px 1fr 48px; height: 64px; }
+    .bullet { height: 9px; background: #162127; position: relative; }
+    .bullet i { display: block; height: 100%; background: var(--cyan); }
+    .bullet b { position: absolute; top: -4px; width: 2px; height: 17px; background: var(--amber); }
+    .bullet-labels { display: flex; justify-content: space-between; margin-top: 6px; color: var(--muted); font-size: 8px; }
+    .factors-c .factor-row { grid-template-columns: 70px 1fr 57px; height: 64px; }
+    .lollipop { position: relative; height: 22px; border-bottom: 1px solid var(--line); }
+    .lollipop::before { content: ""; position: absolute; left: 50%; top: 4px; width: 1px; height: 17px; background: #b8c1c6; }
+    .lollipop i { position: absolute; top: 12px; left: 50%; height: 2px; background: var(--green); }
+    .lollipop b { position: absolute; top: 8px; width: 9px; height: 9px; border-radius: 50%; background: var(--green); }
+
+    /* Awards */
+    .award-columns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-top: 11px; }
+    .award-column { background: var(--panel-2); padding: 10px; min-width: 0; }
+    .award-column h3 { margin: 0 0 8px; font-size: 11px; color: var(--amber); }
+    .candidate { height: 47px; border-bottom: 1px solid #1d2a30; padding-top: 4px; }
+    .candidate:last-child { border-bottom: 0; }
+    .candidate-line { display: grid; grid-template-columns: 15px 20px 1fr 29px; gap: 4px; align-items: center; font-size: 8px; margin-bottom: 5px; }
+    .candidate-line .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .candidate .rail { height: 4px; }
+    .candidate:nth-child(3) .rail i { background: var(--green); }
+    .awards-b .podiums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+    .podium { height: 275px; border: 1px solid var(--line); padding: 11px; display: flex; flex-direction: column; }
+    .podium h3 { margin: 0; font-size: 11px; color: var(--amber); }
+    .winner { text-align: center; margin: 12px 0 8px; }
+    .winner .team-logo { display: block; margin: 0 auto 5px; width: 45px; height: 45px; }
+    .winner .name { font-size: 11px; margin-bottom: 3px; }
+    .winner .score { color: var(--cyan); font-size: 17px; }
+    .podium-row { display: grid; grid-template-columns: 15px 1fr 36px; gap: 5px; align-items: center; height: 32px; border-top: 1px solid #1d2a30; font-size: 8px; }
+    .awards-c .race { height: 87px; display: grid; grid-template-columns: 51px 1fr; gap: 10px; border-bottom: 1px solid var(--line); padding-top: 8px; }
+    .race-title { color: var(--amber); font-size: 11px; }
+    .race-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .momentum { background: var(--panel-2); padding: 6px; }
+    .momentum .top { display: grid; grid-template-columns: 18px 1fr auto; gap: 5px; align-items: center; font-size: 8px; }
+    .momentum .spark { width: 100%; height: 25px; margin-top: 3px; }
+
+    /* Prospects */
+    .prospect-table { margin-top: 9px; }
+    .prospect-head, .prospect-row { display: grid; grid-template-columns: 30px 1fr 27px 30px 35px 38px 38px 42px; gap: 5px; align-items: center; }
+    .prospect-head { height: 21px; color: var(--muted); font-size: 7px; border-bottom: 1px solid var(--line); }
+    .prospect-row { height: 31px; border-bottom: 1px solid #19252b; font-size: 8px; }
+    .prospect-row .name { font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stock-up { color: var(--green); }
+    .stock-down { color: var(--red); }
+    .prospects-b .prospect-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 11px; }
+    .prospect-card { background: var(--panel-2); height: 274px; padding: 10px; }
+    .prospect-card .rank { color: var(--amber); font-size: 17px; }
+    .prospect-card .name { font-size: 11px; margin: 6px 0 3px; }
+    .prospect-card .meta { color: var(--muted); font-size: 8px; }
+    .trait-bullet { margin-top: 13px; }
+    .trait-bullet .line { display: flex; justify-content: space-between; font-size: 8px; margin-bottom: 5px; }
+    .trait-bullet .rail { height: 6px; }
+    .range { margin-top: 13px; border-top: 1px solid var(--line); padding-top: 8px; font-size: 8px; }
+    .prospects-c .stock-layout { display: grid; grid-template-columns: 1fr 165px; gap: 12px; margin-top: 10px; }
+    .stock-row { height: 47px; display: grid; grid-template-columns: 23px 1fr 74px 42px; gap: 6px; align-items: center; border-bottom: 1px solid #1a272d; font-size: 8px; }
+    .stock-row .name { font-size: 9px; }
+    .scout-panel { background: var(--panel-2); padding: 10px; }
+    .scout-panel h3 { margin: 0 0 12px; color: var(--amber); font-size: 11px; }
+    .scout-event { margin-bottom: 15px; }
+    .scout-event span { color: var(--muted); font-size: 8px; display: block; margin-bottom: 4px; }
+    .scout-event strong { font-size: 10px; }
+  </style>
+</head>
+<body>
+  <header class="page-head">
+    <h1>Dashboard Card Lab</h1>
+    <p>Fifteen interchangeable Bloomberg-terminal card concepts. Each family preserves the same information and changes only the visual model. Copy any card into Paper as an editable, nested element.</p>
+  </header>
+
+  <main id="gallery"></main>
+
+  <script>
+    const logo = (team, size = "tiny") => `<img class="team-logo ${size}" src="/assets/team_logos/${team}.png" alt="${team}" />`;
+    const rail = (pct, marker = null, color = "") => `<div class="rail"><i style="width:${pct}%;${color ? `background:${color}` : ""}"></i>${marker === null ? "" : `<b style="left:${marker}%"></b>`}</div>`;
+    const spark = (points, color = "") => `<svg class="spark" viewBox="0 0 74 22" aria-hidden="true"><polyline ${color ? `style="stroke:${color}"` : ""} points="${points}" /></svg>`;
+    const copyMeta = (id, label) => `<div class="concept-meta"><span>${label}</span><button class="copy" data-copy="${id}">Copy editable HTML</button></div>`;
+    const wrap = (id, label, card) => `<div class="concept-wrap">${copyMeta(id, label)}${card}</div>`;
+    const family = (title, note, cards) => `<section class="family"><div class="family-head"><h2>${title}</h2><span>${note}</span></div><div class="concept-grid">${cards.join("")}</div></section>`;
+    const header = (title, right) => `<div class="card-header" data-paper-group="Header"><div class="card-title">${title}</div><div class="card-kicker">${right}</div></div>`;
+
+    const topSix = [
+      ["Shai Gilgeous-Alexander", "PG", 35], ["Jalen Williams", "SF", 33], ["Chet Holmgren", "C", 31],
+      ["Luguentz Dort", "SG", 28], ["Isaiah Hartenstein", "C", 27], ["Cason Wallace", "SG", 25]
+    ];
+    function rotationRows(mode = "table") {
+      return topSix.map((p, i) => mode === "lane"
+        ? `<div class="minute-lane"><div class="line-one"><span>${i + 1}. ${p[0]} · ${p[1]}</span><span>${p[2]} MPG</span></div>${rail(p[2] / 38 * 100)}</div>`
+        : `<div class="rotation-row"><span class="rank">${i + 1}</span><span>${p[0]}</span><span class="mpg">${p[2]}</span>${rail(p[2] / 38 * 100)}</div>`).join("");
+    }
+    const oppMetrics = `<div class="metric-ribbon" data-paper-group="Team metrics"><div><span>OVR</span><strong>87.4</strong></div><div><span>OFF</span><strong>89.1</strong></div><div><span>DEF</span><strong>86.8</strong></div><div><span>PACE</span><strong>99.7</strong></div></div>`;
+    const ticker = `<div class="injury-ticker" data-paper-group="Injury ticker"><span class="tag">Injury wire</span><span>Alex Caruso · out 3 games</span><span>·</span><span>Jaylin Williams · questionable</span><span>·</span><span>Kenrich Williams · available</span></div>`;
+    const opponentCards = [
+      wrap("opponent-ledger", "01 · Opponent ledger", `<article id="opponent-ledger" layer-name="Next Opponent - Ledger" class="card opponent-a">${header("Next Opponent", "DEC 18 · AWAY")}<div class="opp-head" data-paper-group="Opponent identity">${logo("OKC", "")}<div><div class="opp-name">Oklahoma City Thunder</div><div class="opp-record">22–7 · L10 8–2</div></div><div class="seed-block"><strong>#1</strong><span>WEST</span></div></div>${oppMetrics}<div class="rotation-table" data-paper-group="Top six rotation">${rotationRows()}</div>${ticker}</article>`),
+      wrap("opponent-matchup", "02 · Matchup scan", `<article id="opponent-matchup" layer-name="Next Opponent - Matchup Scan" class="card opponent-b">${header("Next Opponent", "SCOUTING FILE")}<div class="opp-layout"><div class="identity" data-paper-group="Opponent identity">${logo("OKC", "")}<div class="opp-name">Oklahoma City</div><div class="record-grid"><div><span>RECORD</span><strong>22–7</strong></div><div><span>L10</span><strong>8–2</strong></div><div><span>SEED</span><strong>#1 W</strong></div><div><span>PACE</span><strong>99.7</strong></div></div><div class="metric-bullets"><div class="metric-bullet"><span>OVR</span>${rail(87.4, 74)}<strong>87.4</strong></div><div class="metric-bullet"><span>OFF</span>${rail(89.1, 75)}<strong>89.1</strong></div><div class="metric-bullet"><span>DEF</span>${rail(86.8, 74)}<strong>86.8</strong></div></div></div><div data-paper-group="Top six rotation"><div class="section-label">Top six · assigned minutes</div><div class="threat-list">${topSix.map((p,i)=>`<div class="threat-row"><span>${i+1}</span><span>${p[0]} · ${p[1]}</span>${rail(p[2]/38*100)}<span>${p[2]}</span></div>`).join("")}</div></div></div>${ticker}</article>`),
+      wrap("opponent-matrix", "03 · Threat matrix", `<article id="opponent-matrix" layer-name="Next Opponent - Threat Matrix" class="card opponent-c">${header("Next Opponent", "MATCHUP MATRIX")}<div class="scan-grid"><div class="team-pane" data-paper-group="Opponent identity and metrics"><div class="logo-record">${logo("OKC", "")}<div><div class="opp-name">Oklahoma City</div><div class="opp-record">22–7 · 8–2 · #1 W</div></div></div><div class="matrix"><div><span>OVERALL</span><strong>87.4</strong></div><div><span>OFFENSE</span><strong>89.1</strong></div><div><span>DEFENSE</span><strong>86.8</strong></div><div><span>PACE</span><strong>99.7</strong></div></div></div><div data-paper-group="Top six rotation"><div class="section-label">Minute hierarchy</div><div class="minute-lanes">${rotationRows("lane")}</div></div></div>${ticker}</article>`)
+    ];
+
+    const chartSvg = (split = false) => `<svg viewBox="0 0 500 250" preserveAspectRatio="none" aria-label="Weekly offensive and defensive rating"><line class="gridline" x1="0" y1="35" x2="500" y2="35"/><line class="gridline" x1="0" y1="95" x2="500" y2="95"/><line class="gridline" x1="0" y1="155" x2="500" y2="155"/><line class="gridline" x1="0" y1="215" x2="500" y2="215"/><polyline class="avg-line" points="0,126 500,126"/><polyline class="off-line" points="0,172 38,150 77,160 115,125 154,133 192,98 231,112 269,78 308,93 346,61 385,73 423,52 462,67 500,44"/><polyline class="def-line" points="0,93 38,102 77,81 115,112 154,103 192,129 231,117 269,141 308,130 346,158 385,149 423,171 462,161 500,184"/></svg>`;
+    const ratingCards = [
+      wrap("rating-overlay", "04 · Overlay trend", `<article id="rating-overlay" layer-name="Weekly Ratings - Overlay" class="card rating-a">${header("Weekly Efficiency", `<div class="chart-legend"><span class="legend-key"><i></i>OffRtg</span><span class="legend-key def"><i></i>DefRtg</span></div>`)}<div class="chart-body" data-paper-group="Weekly line chart">${chartSvg()}</div><div class="summary-values" style="position:absolute;left:24px;top:58px"><span>OFF <strong>119.4</strong></span><span>DEF <strong>110.8</strong></span><span>NET <strong class="positive">+8.6</strong></span></div></article>`),
+      wrap("rating-split", "05 · Stacked small multiples", `<article id="rating-split" layer-name="Weekly Ratings - Split" class="card rating-b">${header("Weekly Efficiency", "LOWER DEFRTG IS BETTER")}<div class="small-multiple" data-paper-group="Offensive rating chart"><div class="multiple-label">Offensive rating</div><div class="multiple-value positive">119.4</div><svg viewBox="0 0 500 250" preserveAspectRatio="none"><line class="gridline" x1="0" y1="65" x2="500" y2="65"/><line class="gridline" x1="0" y1="130" x2="500" y2="130"/><line class="gridline" x1="0" y1="195" x2="500" y2="195"/><polyline class="avg-line" points="0,126 500,126"/><polyline class="off-line" points="0,180 38,158 77,166 115,131 154,139 192,103 231,116 269,81 308,95 346,61 385,74 423,50 462,66 500,42"/></svg></div><div class="small-multiple" data-paper-group="Defensive rating chart"><div class="multiple-label">Defensive rating</div><div class="multiple-value positive">110.8</div><svg viewBox="0 0 500 250" preserveAspectRatio="none"><line class="gridline" x1="0" y1="65" x2="500" y2="65"/><line class="gridline" x1="0" y1="130" x2="500" y2="130"/><line class="gridline" x1="0" y1="195" x2="500" y2="195"/><polyline class="avg-line" points="0,126 500,126"/><polyline class="def-line" points="0,70 38,81 77,61 115,95 154,85 192,117 231,103 269,135 308,120 346,157 385,144 423,178 462,165 500,192"/></svg></div></article>`),
+      wrap("rating-net", "06 · Efficiency spread", `<article id="rating-net" layer-name="Weekly Ratings - Efficiency Spread" class="card rating-c">${header("Weekly Efficiency", "14 WEEKS")}<div class="chart-body" style="height:235px" data-paper-group="Weekly line chart">${chartSvg()}</div><div class="net-strip" data-paper-group="Net rating strip"><span>NET RATING</span><div class="rail"><span class="marker" style="left:76%"></span></div><strong class="positive">+8.6</strong></div></article>`)
+    ];
+
+    const factors = [
+      ["eFG%", "56.8", "54.7", 35, "+2.1"], ["TOV%", "12.1", "13.4", 23, "+1.3"],
+      ["OREB%", "29.8", "26.1", 47, "+3.7"], ["FTR", ".267", ".252", 19, "+.015"]
+    ];
+    const factorCards = [
+      wrap("factors-diverge", "07 · League-relative divergence", `<article id="factors-diverge" layer-name="Four Factors - Diverging" class="card factors-a">${header("Four Factors", "TEAM VS LEAGUE")}<div class="factor-list">${factors.map(f=>`<div class="factor-row"><div class="factor-name">${f[0]}</div><div class="factor-value">${f[1]}</div><div class="diverge"><i class="right" style="width:${f[3]}%"></i></div><div class="factor-delta positive">${f[4]}</div></div>`).join("")}</div></article>`),
+      wrap("factors-bullet", "08 · Bullet benchmarks", `<article id="factors-bullet" layer-name="Four Factors - Bullet" class="card factors-b">${header("Four Factors", "LEAGUE AVG MARKER")}<div class="factor-list">${factors.map((f,i)=>`<div class="factor-row"><div><div class="factor-name">${f[0]}</div><div class="section-label">#${[5,8,4,11][i]} / 30</div></div><div><div class="bullet"><i style="width:${[76,64,81,59][i]}%"></i><b style="left:${[61,70,58,53][i]}%"></b></div><div class="bullet-labels"><span>LOW</span><span>LEAGUE ${f[2]}</span><span>HIGH</span></div></div><div class="factor-value">${f[1]}</div></div>`).join("")}</div></article>`),
+      wrap("factors-lollipop", "09 · Advantage lollipops", `<article id="factors-lollipop" layer-name="Four Factors - Lollipop" class="card factors-c">${header("Four Factors", "ADVANTAGE →")}<div class="factor-list">${factors.map((f,i)=>`<div class="factor-row"><div><div class="factor-name">${f[0]}</div><div class="section-label">AVG ${f[2]}</div></div><div class="lollipop"><i style="width:${f[3]}%"></i><b style="left:${50+f[3]}%"></b></div><div><div class="factor-value">${f[1]}</div><div class="factor-delta positive">${f[4]}</div></div></div>`).join("")}</div></article>`)
+    ];
+
+    const awards = {
+      MVP: [["DEN","Nikola Jokić",82],["OKC","S. Gilgeous-Alexander",77],["DAL","Luka Dončić",70],["MIL","Giannis Antetokounmpo",64],["BOS","Jayson Tatum",56]],
+      DPOY: [["SAS","Victor Wembanyama",79],["CLE","Evan Mobley",72],["MIN","Rudy Gobert",63],["MIA","Bam Adebayo",57],["OKC","Chet Holmgren",51]],
+      ROTY: [["UTA","Jonas Lang",75],["WAS","Kellan Moreau",68],["BKN","Simeon Rhodes",61],["CHA","Quentin Mendez",52],["POR","Malik Sarr",47]]
+    };
+    const candidateList = (rows) => rows.map((r,i)=>`<div class="candidate"><div class="candidate-line"><span>${i+1}</span>${logo(r[0],"tiny")}<span class="name">${r[1]}</span><span>${r[2]}</span></div>${rail(r[2])}</div>`).join("");
+    const awardCards = [
+      wrap("awards-races", "10 · Three race lanes", `<article id="awards-races" layer-name="Awards - Race Lanes" class="card awards-a">${header("Awards Watch", "UPDATED WEEKLY")}<div class="award-columns">${Object.entries(awards).map(([name,rows])=>`<section class="award-column" data-paper-group="${name} race"><h3>${name}</h3>${candidateList(rows)}</section>`).join("")}</div></article>`),
+      wrap("awards-podium", "11 · Leader podiums", `<article id="awards-podium" layer-name="Awards - Podiums" class="card awards-b">${header("Awards Watch", "TOP THREE")}<div class="podiums">${Object.entries(awards).map(([name,rows])=>`<section class="podium" data-paper-group="${name} podium"><h3>${name}</h3><div class="winner">${logo(rows[0][0],"")}<div class="name">${rows[0][1]}</div><div class="score">${rows[0][2]}</div></div>${rows.slice(1,4).map((r,i)=>`<div class="podium-row"><span>${i+2}</span><span>${r[1]}</span><span>${r[2]}</span></div>`).join("")}</section>`).join("")}</div></article>`),
+      wrap("awards-momentum", "12 · Momentum board", `<article id="awards-momentum" layer-name="Awards - Momentum" class="card awards-c">${header("Awards Watch", "RANK + MOMENTUM")}<div style="margin-top:7px">${Object.entries(awards).map(([name,rows],a)=>`<section class="race" data-paper-group="${name} momentum"><div class="race-title">${name}</div><div class="race-list">${rows.slice(0,3).map((r,i)=>`<div class="momentum"><div class="top">${logo(r[0],"tiny")}<span>${r[1]}</span><span class="${i===0?'positive':'neutral'}">#${i+1}</span></div>${spark([["0,18 12,16 24,17 36,10 48,11 60,5 74,3"],["0,14 12,15 24,11 36,13 48,8 60,9 74,6"],["0,7 12,9 24,8 36,12 48,10 60,13 74,11"]][i][0], i===0?'var(--green)':i===1?'var(--cyan)':'var(--amber)')}</div>`).join("")}</div></section>`).join("")}</div></article>`)
+    ];
+
+    const prospects = [
+      [1,"Jonas Lang","PG",19,66,84,81,"▲3"],[2,"Kellan Moreau","PF",20,63,82,76,"—"],[3,"Simeon Rhodes","SF",20,62,85,74,"▲1"],
+      [4,"Quentin Mendez","PG",21,61,79,68,"▼2"],[5,"Malik Sarr","C",19,58,86,83,"▲4"],[6,"Tomas Vuković","SG",20,60,78,72,"—"],[7,"Darius Wynn","PF",21,59,77,79,"▲2"],[8,"Ari Okafor","C",19,56,84,65,"▼1"]
+    ];
+    const prospectCards = [
+      wrap("prospects-ledger", "13 · Scout ledger", `<article id="prospects-ledger" layer-name="Prospects - Scout Ledger" class="card prospects-a">${header("Upcoming Prospects", "2027 CLASS")}<div class="prospect-table" data-paper-group="Prospect table"><div class="prospect-head"><span>RK</span><span>PROSPECT</span><span>POS</span><span>AGE</span><span>NOW</span><span>POT</span><span>FIT</span><span>STOCK</span></div>${prospects.map(p=>`<div class="prospect-row"><span>${p[0]}</span><span class="name">${p[1]}</span><span>${p[2]}</span><span>${p[3]}</span><span>${p[4]}</span><span>${p[5]}</span><span>${p[6]}</span><span class="${p[7].includes('▲')?'stock-up':p[7].includes('▼')?'stock-down':''}">${p[7]}</span></div>`).join("")}</div></article>`),
+      wrap("prospects-cards", "14 · Archetype cards", `<article id="prospects-cards" layer-name="Prospects - Archetype Cards" class="card prospects-b">${header("Upcoming Prospects", "TOP THREE")}<div class="prospect-cards">${prospects.slice(0,3).map(p=>`<section class="prospect-card" data-paper-group="${p[1]}"><div class="rank">#${p[0]}</div><div class="name">${p[1]}</div><div class="meta">${p[2]} · AGE ${p[3]}</div><div class="trait-bullet"><div class="line"><span>NOW</span><span>${p[4]}</span></div>${rail(p[4])}</div><div class="trait-bullet"><div class="line"><span>POTENTIAL</span><span>${p[5]}</span></div>${rail(p[5],null,'var(--amber)')}</div><div class="trait-bullet"><div class="line"><span>TEAM FIT</span><span>${p[6]}</span></div>${rail(p[6],null,'var(--green)')}</div><div class="range">PROJECTED RANGE<br><span style="font-size:13px;color:var(--text)">${p[0]}–${p[0]+4}</span></div></section>`).join("")}</div></article>`),
+      wrap("prospects-stock", "15 · Stock tape", `<article id="prospects-stock" layer-name="Prospects - Stock Tape" class="card prospects-c">${header("Upcoming Prospects", "SCOUTING TAPE")}<div class="stock-layout"><div data-paper-group="Prospect stock list">${prospects.slice(0,5).map((p,i)=>`<div class="stock-row"><span>#${p[0]}</span><div><div class="name">${p[1]}</div><span class="section-label">${p[2]} · AGE ${p[3]} · POT ${p[5]}</span></div>${spark(["0,17 12,15 24,16 36,11 48,12 60,7 74,5","0,8 12,10 24,9 36,12 48,11 60,13 74,12","0,18 12,16 24,14 36,10 48,8 60,7 74,4"][i%3],p[7].includes('▼')?'var(--red)':'var(--green)')}<span class="${p[7].includes('▲')?'stock-up':p[7].includes('▼')?'stock-down':''}">${p[7]}</span></div>`).join("")}</div><aside class="scout-panel" data-paper-group="Scouting schedule"><h3>Next looks</h3><div class="scout-event"><span>DEC 20</span><strong>Big Ten Showcase</strong></div><div class="scout-event"><span>JAN 04</span><strong>EuroCup Round 9</strong></div><div class="scout-event"><span>JAN 18</span><strong>SEC Challenge</strong></div><div class="divider"></div><div style="margin-top:13px"><span class="section-label">Class signal</span><div style="font-size:17px;margin-top:5px">Strong top 5</div></div></aside></div></article>`)
+    ];
+
+    document.getElementById("gallery").innerHTML = [
+      family("Next Opponent Scouting", "same data · three hierarchy models", opponentCards),
+      family("Weekly Offensive / Defensive Rating", "points scored and allowed per 100 possessions", ratingCards),
+      family("Four Factors", "eFG% · TOV% · OREB% · FTR", factorCards),
+      family("Awards Tracking", "MVP · DPOY · ROTY", awardCards),
+      family("Upcoming Prospects", "board · archetype · movement", prospectCards)
+    ].join("");
+
+    async function imageToDataUrl(url) {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+    function directText(element) {
+      return [...element.childNodes].filter((node) => node.nodeType === Node.TEXT_NODE).map((node) => node.textContent.replace(/\s+/g, " ")).join(" ").trim();
+    }
+    function paperLayerName(element, text, index) {
+      return element.getAttribute("layer-name") || element.getAttribute("data-paper-group") || text?.slice(0, 48) || (typeof element.className === "string" ? element.className.split(" ")[0] : "") || `${element.tagName.toLowerCase()}-${index}`;
+    }
+    function applyPaperStyle(layer, source, rect, rootRect, hasText) {
+      const computed = getComputedStyle(source);
+      const hasBackground = computed.backgroundColor !== "rgba(0, 0, 0, 0)";
+      const hasBorder = [computed.borderTopWidth, computed.borderRightWidth, computed.borderBottomWidth, computed.borderLeftWidth].some((width) => parseFloat(width) > 0);
+      const multiline = hasText && rect.height > (parseFloat(computed.lineHeight) || 16) * 1.55;
+      Object.assign(layer.style, {
+        position:"absolute", left:`${rect.left-rootRect.left}px`, top:`${rect.top-rootRect.top}px`,
+        width:`${rect.width + (hasText&&!hasBackground&&!hasBorder ? 10 : 0)}px`, height:`${rect.height + (hasText&&!hasBackground&&!hasBorder ? 3 : 0)}px`,
+        minWidth:"0", minHeight:"0", maxWidth:"none", maxHeight:"none", margin:"0", padding:computed.padding,
+        boxSizing:"border-box", backgroundColor:computed.backgroundColor, color:computed.color,
+        borderTop:computed.borderTop, borderRight:computed.borderRight, borderBottom:computed.borderBottom, borderLeft:computed.borderLeft,
+        borderRadius:computed.borderRadius, opacity:computed.opacity, overflow:hasText?"visible":"hidden", objectFit:computed.objectFit,
+        fontFamily:"IBM Plex Mono, SFMono-Regular, Consolas, monospace", fontSize:computed.fontSize, fontWeight:"400", lineHeight:computed.lineHeight,
+        letterSpacing:computed.letterSpacing, textAlign:computed.textAlign, textTransform:computed.textTransform,
+        whiteSpace:multiline?"pre-wrap":"nowrap", overflowWrap:"normal", wordBreak:"normal", transform:"none", display:"block"
+      });
+    }
+    function isVisible(element, root) {
+      const rect=element.getBoundingClientRect(); let ancestor=element.parentElement;
+      while(ancestor&&ancestor!==root){ const style=getComputedStyle(ancestor); const frame=ancestor.getBoundingClientRect();
+        if((style.overflowX!=="visible"&&(rect.left<frame.left||rect.right>frame.right))||(style.overflowY!=="visible"&&(rect.top<frame.top||rect.bottom>frame.bottom))) return false; ancestor=ancestor.parentElement; }
+      return true;
+    }
+    async function buildPaperClone(source) {
+      const rootRect=source.getBoundingClientRect(), rootStyle=getComputedStyle(source), root=document.createElement("div");
+      root.setAttribute("layer-name",source.getAttribute("layer-name")||source.id); Object.assign(root.style,{position:"relative",width:`${rootRect.width}px`,height:`${rootRect.height}px`,minWidth:`${rootRect.width}px`,minHeight:`${rootRect.height}px`,overflow:"hidden",boxSizing:"border-box",backgroundColor:rootStyle.backgroundColor,color:rootStyle.color,fontFamily:"IBM Plex Mono, monospace"});
+      const groups=new Map(), nodes=[...source.querySelectorAll("*")];
+      for(let i=0;i<nodes.length;i++){const n=nodes[i],rect=n.getBoundingClientRect(); if(rect.width<=0||rect.height<=0||!isVisible(n,source))continue;
+        const text=directText(n),isImage=n instanceof HTMLImageElement,isGroup=n.hasAttribute("data-paper-group"),computed=getComputedStyle(n),hasBackground=computed.backgroundColor!=="rgba(0, 0, 0, 0)",hasBorder=[computed.borderTopWidth,computed.borderRightWidth,computed.borderBottomWidth,computed.borderLeftWidth].some(w=>parseFloat(w)>0);
+        if(!text&&!isImage&&!isGroup&&!hasBackground&&!hasBorder)continue; const parentSource=n.parentElement?.closest("[data-paper-group]"),parent=parentSource?groups.get(parentSource):root; if(!parent)continue;
+        const layer=document.createElement(isImage?"img":"div"); layer.setAttribute("layer-name",paperLayerName(n,text,i)); if(text)layer.textContent=text; applyPaperStyle(layer,n,rect,parentSource?parentSource.getBoundingClientRect():rootRect,Boolean(text));
+        if(isImage){layer.src=await imageToDataUrl(n.src);layer.alt=n.alt||"";} parent.appendChild(layer); if(isGroup)groups.set(n,layer);
+      } return root;
+    }
+    async function copyForPaper(id,button){const clone=await buildPaperClone(document.getElementById(id)),html=clone.outerHTML;await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([html],{type:"text/plain"})})]);button.textContent="Copied — paste in Paper";setTimeout(()=>button.textContent="Copy editable HTML",1800);}
+    document.querySelectorAll("[data-copy]").forEach(button=>button.addEventListener("click",()=>copyForPaper(button.dataset.copy,button)));
+  </script>
+</body>
+</html>

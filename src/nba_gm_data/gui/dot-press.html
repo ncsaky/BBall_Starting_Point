@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dot press / Action studies</title>
+  <link rel="stylesheet" href="dot-press.css">
+</head>
+<body>
+<main>
+  <header class="masthead"><div><h1>Dot press</h1><p>Action photography / Refined cutouts</p></div><a href="assets/dot-press/dot-press-review.zip?v=refined-edges-3" download>Download assets</a></header>
+  <section class="toolbar" aria-label="Artwork preview settings">
+    <div class="segments" aria-label="Treatment"><button data-mode="press" aria-pressed="true">Dot press</button><button data-mode="photo" aria-pressed="false">Photo cutouts</button></div>
+    <div class="controls"><label>Dots <select id="density"><option value="fine">Fine</option><option value="press" selected>Standard</option><option value="coarse">Coarse</option></select></label><div class="segments" aria-label="Preview surface"><button data-surface="silver" aria-pressed="true">Silver</button><button data-surface="ink" aria-pressed="false">Ink</button></div><span>1024 × 1024 · Transparent PNG</span></div>
+  </section>
+  <section class="gallery" id="gallery" aria-label="Image candidates"></section>
+  <section class="comparison">
+    <header><h2>From the photograph</h2><label>Subject <select id="subject"><option value="curry">Stephen Curry</option><option value="rodman-detroit">Rodman / Detroit</option><option value="rodman-chicago">Rodman / Chicago</option><option value="allen">Ray Allen</option></select></label></header>
+    <div class="process-grid"><figure><div class="source-stage"><img id="original" alt="Original action photograph"></div><figcaption>Original photograph</figcaption></figure><figure><div class="art-stage"><img id="cutout" alt="Photographic subject with background removed"></div><figcaption>Background removed</figcaption></figure><figure><div class="art-stage"><img id="processed" alt="Same photographic cutout in dot press"></div><figcaption>Dot press</figcaption></figure></div>
+    <details class="edge-inspection"><summary>Inspect edges / Before and after</summary><img id="edge-proof" alt="Enlarged source details, previous mask, and refined cutout on white and dark backgrounds" width="1120" height="1224"></details>
+  </section>
+  <section class="placement"><header><h2>At interface scale</h2><span>Category art, not player portraits</span></header><div class="placements"><article><img data-small="curry" alt="Shooting category artwork"><h3>Shooting</h3></article><article><img data-small="rodman-detroit" alt="Rebounding category artwork"><h3>Rebounding</h3></article><article><img data-small="builder" alt="Trade builder artwork"><h3>Trade builder</h3></article><article><img data-small="finder" alt="Trade finder artwork"><h3>Trade finder</h3></article></div></section>
+  <footer><p>Curry and Rodman: visual studies only, image rights not cleared for release. Allen: credited CC BY-SA 2.0 warmup photograph. Tool illustrations: original project artwork.</p><a href="assets/dot-press/ATTRIBUTION.md">Sources and credits</a><a href="image-studies.html">First study</a></footer>
+</main>
+<dialog id="detail"><header><h2 id="detail-title"></h2><button id="close" aria-label="Close image">×</button></header><img id="detail-image" alt=""><a id="detail-download" download>Download PNG</a></dialog>
+<script src="dot-press.js?v=refined-edges-3"></script>
+</body>
+</html>

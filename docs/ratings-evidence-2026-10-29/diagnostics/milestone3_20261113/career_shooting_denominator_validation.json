@@ -1,0 +1,653 @@
+{
+  "source": "retained ESPN career raw totals; no historical game-cache denominator used",
+  "records": [
+    {
+      "canonical_id": "player_gsw-stephen-curry",
+      "name": "Stephen Curry",
+      "season": "2025-26",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/3975.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3975/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 374.0,
+        "fga": 799.0,
+        "fg3m": 190.0,
+        "fg3a": 484.0,
+        "ftm": 204.0,
+        "fta": 221.0
+      }
+    },
+    {
+      "canonical_id": "player_gsw-stephen-curry",
+      "name": "Stephen Curry",
+      "season": "2024-25",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/3975.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3975/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 564.0,
+        "fga": 1258.0,
+        "fg3m": 311.0,
+        "fg3a": 784.0,
+        "ftm": 279.0,
+        "fta": 299.0
+      }
+    },
+    {
+      "canonical_id": "player_orl-desmond-bane",
+      "name": "Desmond Bane",
+      "season": "2025-26",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/4066320.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4066320/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 583.0,
+        "fga": 1205.0,
+        "fg3m": 167.0,
+        "fg3a": 427.0,
+        "ftm": 314.0,
+        "fta": 346.0
+      }
+    },
+    {
+      "canonical_id": "player_orl-desmond-bane",
+      "name": "Desmond Bane",
+      "season": "2024-25",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/4066320.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4066320/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 493.0,
+        "fga": 1018.0,
+        "fg3m": 164.0,
+        "fg3a": 418.0,
+        "ftm": 177.0,
+        "fta": 198.0
+      }
+    },
+    {
+      "canonical_id": "player_sas-devin-vassell",
+      "name": "Devin Vassell",
+      "season": "2025-26",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/4395630.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4395630/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 330.0,
+        "fga": 755.0,
+        "fg3m": 166.0,
+        "fg3a": 432.0,
+        "ftm": 106.0,
+        "fta": 130.0
+      }
+    },
+    {
+      "canonical_id": "player_sas-devin-vassell",
+      "name": "Devin Vassell",
+      "season": "2024-25",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/4395630.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4395630/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 394.0,
+        "fga": 889.0,
+        "fg3m": 158.0,
+        "fg3a": 429.0,
+        "ftm": 95.0,
+        "fta": 120.0
+      }
+    },
+    {
+      "canonical_id": "player_bos-derrick-white",
+      "name": "Derrick White",
+      "season": "2025-26",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/3078576.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3078576/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 437.0,
+        "fga": 1108.0,
+        "fg3m": 209.0,
+        "fg3a": 640.0,
+        "ftm": 184.0,
+        "fta": 204.0
+      }
+    },
+    {
+      "canonical_id": "player_bos-derrick-white",
+      "name": "Derrick White",
+      "season": "2024-25",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/3078576.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3078576/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 424.0,
+        "fga": 959.0,
+        "fg3m": 265.0,
+        "fg3a": 691.0,
+        "ftm": 135.0,
+        "fta": 161.0
+      }
+    },
+    {
+      "canonical_id": "player_lal-luka-doncic",
+      "name": "Luka Don\u010di\u0107",
+      "season": "2025-26",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/3945274.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3945274/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 693.0,
+        "fga": 1457.0,
+        "fg3m": 254.0,
+        "fg3a": 694.0,
+        "ftm": 503.0,
+        "fta": 645.0
+      }
+    },
+    {
+      "canonical_id": "player_lal-luka-doncic",
+      "name": "Luka Don\u010di\u0107",
+      "season": "2024-25",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/3945274.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3945274/stats?seasontype=2",
+      "selection": "single combined season total",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 461.0,
+        "fga": 1025.0,
+        "fg3m": 177.0,
+        "fg3a": 481.0,
+        "ftm": 309.0,
+        "fta": 395.0
+      }
+    },
+    {
+      "canonical_id": "player_lac-darius-garland",
+      "name": "Darius Garland",
+      "season": "2025-26",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/4396907.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4396907/stats?seasontype=2",
+      "selection": "single combined season total",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 309.0,
+        "fga": 672.0,
+        "fg3m": 122.0,
+        "fg3a": 308.0,
+        "ftm": 105.0,
+        "fta": 122.0
+      }
+    },
+    {
+      "canonical_id": "player_lac-darius-garland",
+      "name": "Darius Garland",
+      "season": "2024-25",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/4396907.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4396907/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 554.0,
+        "fga": 1174.0,
+        "fg3m": 212.0,
+        "fg3a": 529.0,
+        "ftm": 224.0,
+        "fta": 255.0
+      }
+    },
+    {
+      "canonical_id": "player_nop-zion-williamson",
+      "name": "Zion Williamson",
+      "season": "2025-26",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/4395628.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4395628/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 484.0,
+        "fga": 807.0,
+        "fg3m": 1.0,
+        "fg3a": 4.0,
+        "ftm": 333.0,
+        "fta": 465.0
+      }
+    },
+    {
+      "canonical_id": "player_nop-zion-williamson",
+      "name": "Zion Williamson",
+      "season": "2024-25",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/4395628.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4395628/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 288.0,
+        "fga": 508.0,
+        "fg3m": 3.0,
+        "fg3a": 13.0,
+        "ftm": 158.0,
+        "fta": 241.0
+      }
+    },
+    {
+      "canonical_id": "player_sas-dylan-harper",
+      "name": "Dylan Harper",
+      "season": "2025-26",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/5037871.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/5037871/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 331.0,
+        "fga": 656.0,
+        "fg3m": 61.0,
+        "fg3a": 178.0,
+        "ftm": 90.0,
+        "fta": 119.0
+      }
+    },
+    {
+      "player": "Dylan Harper",
+      "season": "2024-25",
+      "status": "no_NBA_row_expected_for_rookie",
+      "no_zero_fill": true
+    },
+    {
+      "canonical_id": "player_min-rudy-gobert",
+      "name": "Rudy Gobert",
+      "season": "2025-26",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/3032976.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3032976/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 335.0,
+        "fga": 491.0,
+        "fg3m": 0.0,
+        "fg3a": 5.0,
+        "ftm": 159.0,
+        "fta": 302.0
+      }
+    },
+    {
+      "canonical_id": "player_min-rudy-gobert",
+      "name": "Rudy Gobert",
+      "season": "2024-25",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/3032976.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3032976/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 341.0,
+        "fga": 510.0,
+        "fg3m": 0.0,
+        "fg3a": 0.0,
+        "ftm": 184.0,
+        "fta": 273.0
+      }
+    },
+    {
+      "canonical_id": "player_ind-ivica-zubac",
+      "name": "Ivica Zubac",
+      "season": "2025-26",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/4017837.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4017837/stats?seasontype=2",
+      "selection": "single combined season total",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 288.0,
+        "fga": 482.0,
+        "fg3m": 0.0,
+        "fg3a": 0.0,
+        "ftm": 101.0,
+        "fta": 142.0
+      }
+    },
+    {
+      "canonical_id": "player_ind-ivica-zubac",
+      "name": "Ivica Zubac",
+      "season": "2024-25",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/4017837.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4017837/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 592.0,
+        "fga": 942.0,
+        "fg3m": 0.0,
+        "fg3a": 0.0,
+        "ftm": 156.0,
+        "fta": 236.0
+      }
+    },
+    {
+      "canonical_id": "player_mia-bam-adebayo",
+      "name": "Bam Adebayo",
+      "season": "2025-26",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/4066261.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4066261/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 506.0,
+        "fga": 1145.0,
+        "fg3m": 127.0,
+        "fg3a": 400.0,
+        "ftm": 329.0,
+        "fta": 423.0
+      }
+    },
+    {
+      "canonical_id": "player_mia-bam-adebayo",
+      "name": "Bam Adebayo",
+      "season": "2024-25",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/4066261.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4066261/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 540.0,
+        "fga": 1113.0,
+        "fg3m": 79.0,
+        "fg3a": 221.0,
+        "ftm": 251.0,
+        "fta": 328.0
+      }
+    },
+    {
+      "canonical_id": "player_sas-victor-wembanyama",
+      "name": "Victor Wembanyama",
+      "season": "2025-26",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/5104157.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/5104157/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 553.0,
+        "fga": 1080.0,
+        "fg3m": 122.0,
+        "fg3a": 350.0,
+        "ftm": 372.0,
+        "fta": 450.0
+      }
+    },
+    {
+      "canonical_id": "player_sas-victor-wembanyama",
+      "name": "Victor Wembanyama",
+      "season": "2024-25",
+      "season_type": "regular",
+      "source_file": "data/research/espn_career_raw/5104157.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/5104157/stats?seasontype=2",
+      "selection": "sum retained team stints once",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "counts_valid": true,
+        "points_identity": true
+      },
+      "shooting_counts": {
+        "fgm": 408.0,
+        "fga": 857.0,
+        "fg3m": 142.0,
+        "fg3a": 403.0,
+        "ftm": 158.0,
+        "fta": 189.0
+      }
+    }
+  ],
+  "hashes": {
+    "data/research/espn_career_raw/3975.json": "c83dc163af77a5be3c025521952cb3d89330d6f1f1907084043fb6c8ca49eb24",
+    "data/research/espn_career_raw/4066320.json": "52625b6df34edc58909f5ff91389d027b13887f7214d1e0f467bce600df906e0",
+    "data/research/espn_career_raw/4395630.json": "0e93b41349027017883e38fddc94641a8fca6dcf591651421d047751aa1c597b",
+    "data/research/espn_career_raw/3078576.json": "5b27c736d4a8dbc953bcda42739f44df66e57490f85add65faa2aff179dad2f7",
+    "data/research/espn_career_raw/3945274.json": "7aea0440379961c61c443ae1c492a2c189352d7829d643686c9562decb259e29",
+    "data/research/espn_career_raw/4396907.json": "71c6b432aced37b0e1dfff340ccdeeecf1c667f57fdff4b4fc549527846cb951",
+    "data/research/espn_career_raw/4395628.json": "717405818206cba6d7333ef662f7f9948b6aae1b70ff60b928eff6dd34e2a3cb",
+    "data/research/espn_career_raw/5037871.json": "256940e32ea57e4a65502563c3276dca76cd37b8310392e40e765082ff44fedb",
+    "data/research/espn_career_raw/3032976.json": "5cf5378174ad128596aaab91fb65239344ef41f8100b597cf6e58daa4251d14f",
+    "data/research/espn_career_raw/4017837.json": "e5266e7e6ed0677ff5bab24ae6ea9510d73266abd5fa00362ca3cbac73f13e12",
+    "data/research/espn_career_raw/4066261.json": "888937421d8a53ee246e263f52bcb317411241b04b0457ac4b9332a1ec2b018f",
+    "data/research/espn_career_raw/5104157.json": "8fdb112ea3ffedc924de9e69e67816d7c74582f701907a14b649236ef1deb08b",
+    "docs/ratings-evidence-2026-10-29/EPISODE_4_CENTERS_EXTRACTION.md": "86be51b5c5d7a5c202d335ee433c463ca28066e06bc012b6f52591ab7a60bc1d",
+    "docs/ratings-evidence-2026-10-29/POINT_GUARDS_FULL_EXTRACTION.md": "4f6fe61daad5b0fdbdb27c263f793317742ef865826d4fb71af505040c5e2002",
+    "docs/ratings-evidence-2026-10-29/POWER_FORWARD_FULL_EXTRACTION.md": "7f65dff52d5e363de96fe05cab45c85ee97de17759b81a048bc8df76f64ca446",
+    "docs/ratings-evidence-2026-10-29/SHOOTING_GUARDS_TOP_10_FULL_EXTRACTION.md": "2c3d4f70f6cbf2bcceb8cff46444f635915817260d9f4c7bd300e2bdfcd20e69",
+    "docs/PLAYER_OBJECT_THREE_COLUMN_MAP_2026_11_12.md": "208d51f643d78eae2d5ee23db6771522723a1c92fe9d4de5366fa1afa59cda00",
+    "data/research/player_career_stats.json": "a489be0581ab49c46513eae197f62232d75e042ca0e88c5b1ee28f70f9e85a1e",
+    "data/canonical/universe_2026_27_offseason.json": "dd993731ab5411066ea1f8d7e7053e9718deefa08758f5f51a274a3aef1a8e31"
+  }
+}

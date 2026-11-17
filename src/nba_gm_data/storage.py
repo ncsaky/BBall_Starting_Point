@@ -9,8 +9,8 @@ from typing import Any
 from .schema import CanonicalUniverse, to_plain
 
 
-JSON_FILENAME = "universe_2025_26_preseason.json"
-SQLITE_FILENAME = "universe_2025_26_preseason.sqlite"
+JSON_FILENAME = "universe_2026_27_offseason.json"
+SQLITE_FILENAME = "universe_2026_27_offseason.sqlite"
 COVERAGE_FILENAME = "coverage_report.json"
 
 
@@ -50,6 +50,9 @@ def write_sqlite(universe: CanonicalUniverse, path: Path) -> None:
         create_table(conn, "roster_slots", universe.roster_slots)
         create_table(conn, "traits", universe.traits)
         create_table(conn, "contracts", universe.contracts)
+        conn.execute('CREATE TABLE waived_salary_obligations (id TEXT PRIMARY KEY, payload_json TEXT NOT NULL)')
+        for row in universe.waived_salary_obligations:
+            conn.execute('INSERT INTO waived_salary_obligations VALUES (?, ?)', (row['id'], json.dumps(row, sort_keys=True)))
         create_table(conn, "draft_picks", universe.draft_picks)
         create_table(conn, "draft_classes", universe.draft_classes)
         create_table(conn, "draft_prospects", universe.draft_prospects)

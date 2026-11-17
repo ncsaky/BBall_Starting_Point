@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import json
 import hashlib
+import re
 from collections import Counter, defaultdict
 from dataclasses import replace
+from datetime import datetime
 from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any
@@ -24,8 +26,13 @@ from .contract_ai import (
     build_player_contract_preferences,
     load_contract_market_config,
 )
-from .draft import DRAFT_MODEL_CONFIG_FILE, build_draft_context, load_draft_model_config
+from .draft import (
+    DRAFT_MODEL_CONFIG_FILE, build_draft_context, load_draft_model_config,
+    prospect_from_research_row, prospect_traits_from_row, rookie_trait_records,
+)
 from .health import build_health_records, load_injury_model_config
+from .roster_alignment import SOURCE_ID as ROSTER_ALIGNMENT_SOURCE_ID, STARTING_DATA_VERSION, align_imported_roster
+from .traits import repair_preserved_stamina, STAMINA_SOURCE_ID
 from .research import (
     BREF_CONTRACTS_URL,
     BREF_TEAM_URL_TEMPLATE,
@@ -75,6 +82,7 @@ from .schema import (
     StaffProfile,
     Team,
     TeamProfile,
+    TraitValue,
     to_plain,
 )
 from .teams import TEAM_INFO
@@ -102,6 +110,14 @@ RAW_SCHEDULE = Path("NBA Schedule/schedule_v2025_2026.json")
 RAW_MINUTES = Path("NBA Schedule/real_game_minutes_2025_26.json")
 RAW_GRAVITY = Path("Computed Stats From Previous Project/player_gravity_profiles_adjusted_2025_26.json")
 RAW_MANIFESTOS = Path("Pre-Season manifestos")
+OFFICIAL_ROSTERS_2026_FILE = Path(
+    "data/research/nba_official_rosters_2026_10_13.json"
+)
+OFFICIAL_DRAFT_2026_FILE = Path("data/research/nba_official_draft_2026.json")
+ESPN_PLAYER_METADATA_FILE = Path("data/research/espn_nba_player_metadata_2026_10_02.json")
+PREVIOUS_CANONICAL_FILE = Path(
+    "data/canonical/universe_2025_26_preseason.json"
+)
 OVERRIDES_DIR = Path("data/overrides")
 STAFF_OVERRIDES_FILE = OVERRIDES_DIR / "staff_overrides.json"
 PLAYER_OVERRIDES_FILE = OVERRIDES_DIR / "player_overrides.json"
@@ -136,23 +152,39 @@ def load_optional_json(root: Path, relative: Path) -> Any | None:
         return json.load(handle)
 
 
+def roster_rating_baseline(root: Path) -> dict[str, Any]:
+    """Use the previous released ratings for the October identity refresh."""
+    archived = root / "data/canonical/baselines/2026-07-28.json.gz"
+    if archived.exists():
+        import gzip
+        with gzip.open(archived, "rt", encoding="utf-8") as handle:
+            return json.load(handle)
+    return load_optional_json(root, PREVIOUS_CANONICAL_FILE) or {}
+
+
 def build_universe(root: str | Path = ".") -> CanonicalUniverse:
     """Build one deterministic baseline universe from repository inputs."""
     root = Path(root).resolve()
     player_input = load_json(root, RAW_PLAYER_INPUT)
     source_generated_at = player_input.get("generatedAt") or CANONICAL_START_DATE
-    research_contracts = load_optional_json(root, CONTRACTS_FILE)
+    research_contracts = load_optional_json(root, Path("data/research/player_contracts_bref_2026_10_13.json")) or load_optional_json(root, CONTRACTS_FILE)
     research_staff = load_optional_json(root, STAFF_FILE)
     research_official_staff = load_optional_json(root, NBA_OFFICIAL_STAFF_FILE)
     research_coaches = load_optional_json(root, COACHES_FILE)
     research_general_managers = load_optional_json(root, GENERAL_MANAGERS_FILE)
     research_draft_picks = load_optional_json(root, DRAFT_PICKS_FILE)
     research_draft_prospects = load_optional_json(root, DRAFT_PROSPECTS_FILE)
-    research_future_picks = load_optional_json(root, FUTURE_PICKS_FILE)
+    research_future_picks = load_optional_json(root, Path("data/research/future_picks_realgm_2026_10_13.json")) or load_optional_json(root, FUTURE_PICKS_FILE)
+    official_rosters = load_optional_json(root, OFFICIAL_ROSTERS_2026_FILE) or {}
+    official_draft = load_optional_json(root, OFFICIAL_DRAFT_2026_FILE) or {}
+    espn_player_metadata = load_player_external_metadata(root)
     staff_overrides = load_optional_json(root, STAFF_OVERRIDES_FILE) or {}
     player_overrides = load_optional_json(root, PLAYER_OVERRIDES_FILE) or {}
     trait_overrides = load_optional_json(root, TRAIT_OVERRIDES_FILE) or {}
     contract_overrides = load_optional_json(root, CONTRACT_OVERRIDES_FILE) or {}
+    current_contract_overrides = load_optional_json(root, Path("data/overrides/contracts_2026_10_13.json")) or {}
+    contract_overrides = {**contract_overrides, "contracts": [
+        *current_contract_overrides.get("contracts", []), *contract_overrides.get("contracts", [])]}
     gameplay_staff_seed = load_optional_json(root, GAMEPLAY_STAFF_SEED_FILE) or {}
     player_health_overrides = load_optional_json(root, PLAYER_HEALTH_OVERRIDES_FILE) or {}
     league_trait_ratings = load_league_trait_ratings(root / LEAGUE_TRAIT_RATINGS_FILE)
@@ -161,7 +193,15 @@ def build_universe(root: str | Path = ".") -> CanonicalUniverse:
     transaction_model_config = load_transaction_model_config(root)
     contract_market_config = load_contract_market_config(root)
     draft_model_config = load_draft_model_config(root)
-    player_rows: list[dict[str, Any]] = list(player_input["players"])
+    base_player_rows, new_player_rows, roster_update_report = (
+        apply_official_roster_snapshot(
+            list(player_input["players"]),
+            official_rosters,
+            official_draft,
+            research_draft_prospects,
+        )
+    )
+    player_rows = [*base_player_rows, *new_player_rows]
     source_ids = build_source_registry(
         root,
         player_input,
@@ -173,19 +213,84 @@ def build_universe(root: str | Path = ".") -> CanonicalUniverse:
         research_draft_picks,
         research_draft_prospects,
         research_future_picks,
+        official_rosters,
+        official_draft,
+        espn_player_metadata,
     )
     teams = build_teams(player_rows)
-    players = build_players(player_rows, player_overrides)
-    roster_slots = build_roster_slots(players)
-    percentiles = percentile_maps(player_rows, PERCENTILE_FIELDS)
-    traits = []
-    for idx, row in enumerate(player_rows):
+    players = build_players(player_rows, player_overrides, espn_player_metadata)
+    roster_slots = build_roster_slots(players, player_rows)
+    # Preserve the existing engine distribution for returning players. Newly
+    # listed rookies/camp players must not move every veteran's percentiles.
+    percentiles = percentile_maps(base_player_rows, PERCENTILE_FIELDS)
+    returning_traits = []
+    for idx, row in enumerate(base_player_rows):
         player = players[idx]
-        traits.extend(build_traits_for_player(row, idx, player.id, percentiles))
-    traits, rating_calibration_report = apply_league_trait_calibration(traits, players, league_trait_ratings)
-    traits = apply_trait_overrides(traits, players, trait_overrides)
-    contracts = build_contracts(players, research_contracts, contract_overrides)
-    draft_picks = build_draft_picks(teams, research_draft_picks, research_future_picks)
+        returning_traits.extend(
+            # The released roster's percentile/health context remains frozen.
+            # Its reconcilable stamina values are corrected after health below.
+            build_traits_for_player(row, idx, player.id, percentiles, legacy_stamina=True)
+        )
+    returning_players = players[: len(base_player_rows)]
+    returning_traits, rating_calibration_report = apply_league_trait_calibration(
+        returning_traits, returning_players, league_trait_ratings
+    )
+    returning_traits, preserved_rating_report = preserve_returning_trait_values(
+        returning_traits,
+        returning_players,
+        roster_rating_baseline(root),
+    )
+    # The roster migration preserves the established engine baseline first;
+    # explicit playtest calibrations remain the final authority afterward.
+    returning_traits = apply_trait_overrides(
+        returning_traits, returning_players, trait_overrides
+    )
+    new_traits = []
+    for idx, row in enumerate(new_player_rows, start=len(base_player_rows)):
+        new_traits.extend(
+            build_traits_for_player(row, idx, players[idx].id, percentiles, legacy_stamina=True)
+        )
+    new_traits, new_preserved = preserve_returning_trait_values(
+        new_traits, players[len(base_player_rows):], roster_rating_baseline(root)
+    )
+    preserved_rating_report["preserved_player_count"] += new_preserved["preserved_player_count"]
+    preserved_rating_report["preserved_trait_count"] += new_preserved["preserved_trait_count"]
+    new_players, new_traits, rookie_rating_report = imported_rookie_ratings(
+        players[len(base_player_rows):], new_traits, research_draft_prospects, official_draft
+    )
+    new_traits = apply_trait_overrides(new_traits, new_players, trait_overrides)
+    players = [*returning_players, *new_players]
+    traits = [*returning_traits, *new_traits]
+    players, traits, roster_alignment_report = align_imported_roster(
+        players, traits, load_optional_json(root, Path("data/research/player_career_stats.json")) or {},
+        int(CANONICAL_SEASON[:4]),
+    )
+    source_ids.append(SourceEvidence(
+        id=ROSTER_ALIGNMENT_SOURCE_ID, title="Versioned imported-roster NBA-role calibration",
+        kind="model", trust_level="modeled_prior", path="src/nba_gm_data/roster_alignment.py",
+        notes="Bounded priors from existing draft conversion and pre-start career evidence. Not measured NBA skill ratings.",
+    ))
+    from .contract_imports import RESOLUTIONS_FILE, resolve_contract_imports
+    resolutions = json.loads((root / RESOLUTIONS_FILE).read_text())
+    for resolution in resolutions.get('resolutions', []):
+        component = json.loads((root / resolution['component_artifact']).read_text())
+        rows = [r for r in component.get('contracts', []) if r.get('normalized_name') == resolution['normalized_name']]
+        if rows != resolution['component_rows']:
+            raise ValueError('Contract component evidence changed; review '+resolution['id'])
+    research_contracts, imported_obligations, contract_import_report = resolve_contract_imports(
+        players, teams, research_contracts, resolutions)
+    for resolution in resolutions.get('resolutions', []):
+        source_ids.append(SourceEvidence(id=resolution['id'], title='Team-separated imported contract resolution',
+            kind='research_override', trust_level='public_components_with_explicit_gross_reserve',
+            path=RESOLUTIONS_FILE, notes='Preserved aggregate source and team components; set-off/net unknown.'))
+    contracts = build_contracts(
+        players,
+        research_contracts,
+        contract_overrides,
+        roster_slots=roster_slots,
+        official_draft=official_draft,
+    )
+    draft_picks = build_draft_picks(teams, None, research_future_picks)
     staff_profiles = build_staff_profiles(teams, research_staff, research_official_staff, research_coaches, research_general_managers, staff_overrides)
     team_profiles = build_team_profiles(root, teams, players)
     gameplay_staff_slots = build_gameplay_staff_slots(teams, team_profiles, gameplay_staff_seed)
@@ -196,13 +301,75 @@ def build_universe(root: str | Path = ".") -> CanonicalUniverse:
         player_health_overrides,
         injury_model_config,
     )
+    player_health_states, injury_events = resolve_pre_snapshot_injuries(
+        player_health_states, injury_events
+    )
+    # Scouting corrections change ability, not the prior's medical history or
+    # durability. Apply after alignment/health, before ratings-derived markets.
+    traits, stamina_role_bonus_report = repair_preserved_stamina(traits)
+    source_ids.append(SourceEvidence(
+        id=STAMINA_SOURCE_ID, title="Imported stamina role-bonus arithmetic correction",
+        kind="model", trust_level="modeled_prior", path="src/nba_gm_data/traits.py",
+        notes="V6 unreviewed preserved input correction only. No medical profile or existing-career migration.",
+    ))
+    traits = apply_trait_overrides(
+        traits, players, {"players": trait_overrides.get("post_alignment_players", [])}
+    )
+    from .imported_skill_calibration import calibrate_imported_skills, SOURCE_ID as SKILL_EVIDENCE_SOURCE_ID
+
+    traits, imported_skill_report = calibrate_imported_skills(
+        players, traits, load_optional_json(root, Path("data/research/player_career_stats.json")) or {},
+        int(CANONICAL_SEASON[:4]),
+    )
+    source_ids.append(SourceEvidence(
+        id=SKILL_EVIDENCE_SOURCE_ID, title="Imported NBA skill evidence and proxy uncertainty calibration",
+        kind="model", trust_level="modeled_prior", path="src/nba_gm_data/imported_skill_calibration.py",
+        notes="V7 bounded skill-specific checks, never an overall floor. Reviewed profiles, medicals and existing careers are preserved.",
+    ))
+    from .rotation_profile_calibration import calibrate_rotation_profiles, SOURCE_ID as ROTATION_PROFILE_SOURCE_ID
+
+    traits, rotation_profile_report = calibrate_rotation_profiles(
+        players, traits, load_optional_json(root, Path("data/research/player_career_stats.json")) or {},
+        int(CANONICAL_SEASON[:4]),
+    )
+    source_ids.append(SourceEvidence(
+        id=ROTATION_PROFILE_SOURCE_ID, title="Demonstrated NBA rotation profile correction",
+        kind="model", trust_level="modeled_prior", path="src/nba_gm_data/rotation_profile_calibration.py",
+        notes="V8 bounded contradictory-ranking and conditioning corrections. Medicals, current rookies and existing careers stay unchanged.",
+    ))
+    from .five_player_calibration import apply_calibration, SOURCE_ID as SCOUTING_SOURCE_ID
+    scouting = load_optional_json(root, Path("data/overrides/five_player_calibration_v11.json"))
+    if scouting:
+        traits = apply_calibration(players, traits, scouting)
+        source_ids.append(SourceEvidence(id=SCOUTING_SOURCE_ID,
+            title="Reviewed five-player scouting calibration", kind="research_override",
+            trust_level="modeled_prior", path="data/overrides/five_player_calibration_v11.json",
+            notes="Absolute final-stage v11 new-career decisions; existing baselines retained."))
     development_events = []
     front_office_profiles = build_front_office_profiles(teams, team_profiles, front_office_overrides)
+    from .talent import MODEL_VERSION as TALENT_MODEL_VERSION, SOURCE_ID as TALENT_SOURCE_ID
+
+    source_ids.append(SourceEvidence(
+        id=TALENT_SOURCE_ID, title="Versioned skill diversity, role value and career capacity",
+        kind="model", trust_level="modeled_prior", path="src/nba_gm_data/talent.py",
+        notes="New-game V4 rules; pre-V4 saves retain legacy conversion, valuation and development.",
+    ))
+    from .offense import MODEL_VERSION as OFFENSE_MODEL_VERSION, SOURCE_ID as OFFENSE_SOURCE_ID, build_priors
+    offensive_profiles = build_priors(to_plain(players), to_plain(traits),
+        load_optional_json(root, Path("data/research/player_career_stats.json")) or {}, player_rows)
+    source_ids.append(SourceEvidence(
+        id=OFFENSE_SOURCE_ID, title="Versioned offensive roles and shot profiles",
+        kind="model", trust_level="modeled_prior", path="src/nba_gm_data/offense.py",
+        notes="Identity-checked NBA shot samples and conservative post/roll priors. Screening is a size/skill proxy, not measured screen assists. Existing careers stay pinned.",
+    ))
     transaction_seed = {
+        "meta": {"talent_model_version": TALENT_MODEL_VERSION,
+                 "offense_model_version": OFFENSE_MODEL_VERSION, "offensive_profiles": offensive_profiles},
         "teams": to_plain(teams),
         "players": to_plain(players),
         "traits": to_plain(traits),
         "contracts": to_plain(contracts),
+        "waived_salary_obligations": imported_obligations,
         "draft_picks": to_plain(draft_picks),
         "team_profiles": to_plain(team_profiles),
         "player_health_profiles": to_plain(player_health_profiles),
@@ -224,7 +391,7 @@ def build_universe(root: str | Path = ".") -> CanonicalUniverse:
     trade_block_entries = build_trade_block_entries(transaction_seed, team_strategic_states, player_asset_valuations, transaction_model_config)
     transaction_seed["trade_block_entries"] = to_plain(trade_block_entries)
     transaction_seed["gameplay_staff_slots"] = to_plain(gameplay_staff_slots)
-    draft_context = build_draft_context(transaction_seed, research_draft_prospects, draft_model_config)
+    draft_context = build_draft_context(transaction_seed, None, draft_model_config)
     draft_classes = [DraftClass(**item) for item in draft_context["draft_classes"]]
     draft_prospects = [DraftProspect(**item) for item in draft_context["draft_prospects"]]
     draft_prospect_traits = [DraftProspectTrait(**item) for item in draft_context["draft_prospect_traits"]]
@@ -259,12 +426,25 @@ def build_universe(root: str | Path = ".") -> CanonicalUniverse:
         generated_at=source_generated_at,
     )
     meta = {
-        "id": "universe_2025_26_preseason",
+        "id": "universe_2026_27_offseason",
         "season": CANONICAL_SEASON,
         "canonical_start_date": CANONICAL_START_DATE,
+        "starting_data_version": STARTING_DATA_VERSION,
+        "contract_import_resolutions": contract_import_report,
+        "talent_model_version": TALENT_MODEL_VERSION,
+        "offense_model_version": OFFENSE_MODEL_VERSION,
+        "offensive_profiles": offensive_profiles,
+        "roster_snapshot_date": official_rosters.get("snapshot_date"),
         "generated_at": source_generated_at,
         "philosophy": "Public/cited, rotation-first, confidence-aware. Raw inputs are ingestion sources, not canonical truth.",
         "rating_calibration_report": rating_calibration_report,
+        "preserved_rating_report": preserved_rating_report,
+        "rookie_rating_report": rookie_rating_report,
+        "roster_alignment_report": roster_alignment_report,
+        "stamina_role_bonus_report": stamina_role_bonus_report,
+        "imported_skill_report": imported_skill_report,
+        "rotation_profile_report": rotation_profile_report,
+        "roster_update_report": roster_update_report,
         "counts": {
             "sources": len(source_ids),
             "teams": len(teams),
@@ -272,6 +452,7 @@ def build_universe(root: str | Path = ".") -> CanonicalUniverse:
             "roster_slots": len(roster_slots),
             "traits": len(traits),
             "contracts": len(contracts),
+            "waived_salary_obligations": len(imported_obligations),
             "draft_picks": len(draft_picks),
             "draft_classes": len(draft_classes),
             "draft_prospects": len(draft_prospects),
@@ -303,6 +484,7 @@ def build_universe(root: str | Path = ".") -> CanonicalUniverse:
         roster_slots=roster_slots,
         traits=traits,
         contracts=contracts,
+        waived_salary_obligations=imported_obligations,
         draft_picks=draft_picks,
         draft_classes=draft_classes,
         draft_prospects=draft_prospects,
@@ -339,9 +521,74 @@ def build_source_registry(
     research_draft_picks: dict[str, Any] | None,
     research_draft_prospects: dict[str, Any] | None,
     research_future_picks: dict[str, Any] | None,
+    official_rosters: dict[str, Any] | None,
+    official_draft: dict[str, Any] | None,
+    espn_player_metadata: dict[str, Any] | None = None,
 ) -> list[SourceEvidence]:
     generated_at = player_input.get("generatedAt")
     sources = [
+        SourceEvidence(
+            id="src_nba_official_rosters_2026_10_13",
+            title="NBA.com official team rosters, October 13 2026",
+            kind="official_team_rosters",
+            trust_level="official_public_research",
+            path=str((root / OFFICIAL_ROSTERS_2026_FILE).resolve()),
+            url="https://www.nba.com/teams",
+            retrieved_at=(official_rosters or {}).get("source", {}).get(
+                "retrieved_at"
+            ),
+            notes=(
+                "Official NBA team roster pages provide current team identity, "
+                "age, birthdate, position, height, weight, experience, and "
+                "acquisition context. Existing engine ratings remain unchanged."
+            ),
+        ),
+        SourceEvidence(
+            id="src_nba_official_2026_draft_results",
+            title="NBA.com official 2026 NBA Draft results",
+            kind="official_draft_results",
+            trust_level="official_public_research",
+            path=str((root / OFFICIAL_DRAFT_2026_FILE).resolve()),
+            url="https://www.nba.com/news/2026-nba-draft-order",
+            retrieved_at=(official_draft or {}).get("source", {}).get(
+                "retrieved_at"
+            ),
+            notes="Official completed 2026 draft order and transaction text.",
+        ),
+        SourceEvidence(
+            id="src_nba_offseason_deals_2026",
+            title="NBA.com 2026 offseason deals by team",
+            kind="official_transaction_tracker",
+            trust_level="official_public_research",
+            url="https://www.nba.com/news/nba-offseason-deals-2026",
+            retrieved_at=CANONICAL_START_DATE,
+            notes=(
+                "Officially announced 2026 trades, signings, extensions, and "
+                "waivers cross-check the team-page roster snapshot. Reported "
+                "or on-hold moves are not treated as completed."
+            ),
+        ),
+        SourceEvidence(
+            id="src_nba_offseason_trade_tracker_2026",
+            title="NBA.com 2026 offseason trade tracker",
+            kind="official_transaction_tracker",
+            trust_level="official_public_research",
+            url="https://www.nba.com/news/2026-offseason-trade-tracker",
+            retrieved_at=CANONICAL_START_DATE,
+            notes="Official player and draft-asset trade details through the snapshot date.",
+        ),
+        SourceEvidence(
+            id="src_nba_salary_cap_2026_27",
+            title="NBA 2026-27 salary cap, tax, and apron levels",
+            kind="official_salary_cap_release",
+            trust_level="official_public_research",
+            url="https://www.nba.com/news/nba-salary-cap-2026-27-season",
+            retrieved_at="2026-06-30",
+            notes=(
+                "Sets the game baseline to the official $200.428M tax line and "
+                "$221.686M second apron for 2026-27."
+            ),
+        ),
         SourceEvidence(
             id="src_player_skill_input_2025_26",
             title="Hybrid player skill input 2025-26",
@@ -392,13 +639,15 @@ def build_source_registry(
             notes="Team identity and narrative context converted into structured profiles where available.",
         ),
         SourceEvidence(
-            id="src_bref_contracts_players_2026",
-            title="Basketball-Reference 2025-26 NBA Player Contracts",
+            id="src_bref_contracts_players_2027",
+            title="Basketball-Reference 2026-27 NBA Player Contracts",
             kind="public_contract_table",
             trust_level="public_cited_research",
-            path=str((root / CONTRACTS_FILE).resolve()) if (root / CONTRACTS_FILE).exists() else None,
+            path=str((root / "data/research/player_contracts_bref_2026_10_13.json").resolve()),
             url=BREF_CONTRACTS_URL,
-            retrieved_at=(research_contracts or {}).get("source", {}).get("fetched_at"),
+            retrieved_at=(research_contracts or {}).get("source", {}).get(
+                "retrieved_at"
+            ),
             notes="Public salary table used to populate contract seasons, option markers, team, and guaranteed salary. Contract terms still need deeper CBA/legal review before trade validation.",
         ),
         SourceEvidence(
@@ -508,16 +757,20 @@ def build_source_registry(
             trust_level="public_cited_research",
             path=str((root / FUTURE_PICKS_FILE).resolve()) if (root / FUTURE_PICKS_FILE).exists() else None,
             url=SPOTRAC_FUTURE_PICKS_URL,
-            retrieved_at=(research_future_picks or {}).get("source", {}).get("fetched_at"),
-            notes="Public future-pick reference used to populate 2027-2032 owner-side first-round assets and protection notes. Second-round assignments remain a separate ledger pass.",
+            retrieved_at=(research_future_picks or {}).get("source", {}).get(
+                "retrieved_at"
+            ),
+            notes="Public future-pick reference used to populate 2027-2033 owner-side first- and second-round assets and protection notes.",
         ),
         SourceEvidence(
             id="src_realgm_future_pick_pages",
             title="RealGM future draft pick pages",
             kind="public_future_pick_reference",
-            trust_level="manual_research_needed",
+            trust_level="public_cited_research",
             url="https://basketball.realgm.com/nba/draft/future_drafts/team",
-            notes="Candidate source for full future-pick protections. Not automatically fetched in this workspace because direct scripted access returned a Cloudflare challenge.",
+            path=str(root / "data/research/future_picks_realgm_2026_10_13.json"),
+            retrieved_at="2026-10-13",
+            notes="Reviewed all 30 originating-team ledgers. One asset per underlying pick; native comparison/protection terms and simplifications are recorded in normalization_audit.",
         ),
         SourceEvidence(
             id="src_critical_field_fallback_method_v1",
@@ -665,8 +918,340 @@ def build_source_registry(
             trust_level="not_yet_canonical",
             notes="Contracts, picks, and staff are scaffolded here until each item is researched against public cited sources.",
         ),
+        SourceEvidence(
+            id="src_october_2026_contract_corrections",
+            title="October 2026 new-contract corrections",
+            kind="public_terms_and_gameplay_estimates",
+            trust_level="confidence_scored_public_research",
+            path=str(root / "data/overrides/contracts_2026_10_13.json"),
+            retrieved_at="2026-10-13",
+            notes="Reported new-deal totals and NBA-confirmed two-way signings replace stale prior-team salary rows. Estimated annual amounts remain explicitly labeled.",
+        ),
     ]
+    if espn_player_metadata:
+        source = espn_player_metadata.get("source") or {}
+        sources.append(
+            SourceEvidence(
+                id="src_espn_nba_player_profiles",
+                title="ESPN NBA athlete profiles and draft metadata",
+                kind="public_athlete_profiles",
+                trust_level="public_research_reference_only",
+                path=str((root / ESPN_PLAYER_METADATA_FILE).resolve()),
+                url=source.get("athlete_collection_url")
+                or "https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/athletes",
+                retrieved_at=source.get("retrieved_at"),
+                notes=(
+                    "ESPN profile IDs, profile URLs, headshot source URLs, and draft history are stored for local metadata reference. "
+                    "Headshot reuse rights are not cleared; image URLs must not be embedded or redistributed without rights-holder permission."
+                ),
+            )
+        )
     return sources
+
+
+OFFICIAL_PLAYER_ALIASES = {
+    "bobbyportisjr": "bobbyportis",
+    "labaronphilonjr": "labaronphilon",
+    "morezjohnsonjr": "morezjohnson",
+}
+
+
+def official_player_key(value: Any) -> str:
+    key = loose_override_name_key(normalize_name(value))
+    return OFFICIAL_PLAYER_ALIASES.get(key, key)
+
+
+def apply_official_roster_snapshot(
+    player_rows: list[dict[str, Any]],
+    official_rosters: dict[str, Any],
+    official_draft: dict[str, Any],
+    draft_research: dict[str, Any] | None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    """Overlay current identity/roster facts without recalibrating veterans."""
+    rows = [dict(row) for row in player_rows]
+    by_key = {
+        official_player_key(row.get("normalizedName") or row.get("name")): row
+        for row in rows
+    }
+    for row in rows:
+        row["_initial_roster_status"] = "free_agent"
+
+    draft_by_key = {
+        official_player_key(row.get("normalized_name") or row.get("player")): row
+        for row in (draft_research or {}).get("prospects", [])
+    }
+    pick_by_key = {
+        official_player_key(row.get("normalized_name") or row.get("name")): row
+        for row in official_draft.get("picks", [])
+    }
+    matched: list[str] = []
+    additions: list[dict[str, Any]] = []
+    for team in official_rosters.get("teams", []):
+        team_abbrev = str(team.get("team_abbrev") or "")
+        for official in team.get("roster", []):
+            key = official_player_key(
+                official.get("normalized_name") or official.get("name")
+            )
+            row = by_key.get(key)
+            if row is None:
+                row = new_official_player_row(
+                    official,
+                    team_abbrev,
+                    draft_by_key.get(key),
+                    pick_by_key.get(key),
+                )
+                additions.append(row)
+                by_key[key] = row
+            else:
+                matched.append(row.get("name") or "")
+                update_player_row_from_official(row, official, team_abbrev)
+            row["_initial_roster_status"] = (
+                "official_two_way_or_supplemental"
+                if int(official.get("supplemental_status") or 0)
+                else "official_offseason_roster"
+            )
+
+    unmatched = [
+        row.get("name")
+        for row in rows
+        if row.get("_initial_roster_status") == "free_agent"
+    ]
+    return rows, additions, {
+        "snapshot_date": official_rosters.get("snapshot_date"),
+        "official_team_count": official_rosters.get("team_count"),
+        "official_roster_rows": official_rosters.get("player_count"),
+        "matched_returning_players": len(matched),
+        "new_official_players": len(additions),
+        "prior_players_now_free_agents": len(unmatched),
+        "prior_free_agent_names": sorted(name for name in unmatched if name),
+    }
+
+
+def update_player_row_from_official(
+    row: dict[str, Any], official: dict[str, Any], team_abbrev: str
+) -> None:
+    row["teamAbbrev"] = team_abbrev
+    row["Tm"] = team_abbrev
+    row["Team"] = team_abbrev
+    row["position"] = normalized_official_position(
+        official.get("position"), row.get("position") or row.get("Pos")
+    )
+    if projects_as_primary_point_guard(official.get("position"), row):
+        row["position"] = "PG"
+    row["Pos"] = row["position"]
+    if official.get("age") is not None:
+        row["Age"] = official["age"]
+        row["AGE"] = official["age"]
+    if official.get("height"):
+        row["HeightSocks"] = official_height_inches(official["height"])
+        row["Height"] = str(official["height"]).replace("-", "'") + '"'
+    if official.get("weight_lbs") is not None:
+        row["Weight"] = official["weight_lbs"]
+    if official.get("birthdate"):
+        row["Birthdate"] = official_birthdate(official["birthdate"])
+    row["_official_nba_player_id"] = official.get("nba_player_id")
+    row["_official_how_acquired"] = official.get("how_acquired")
+    row["_official_experience"] = official.get("experience")
+    row["_official_supplemental_status"] = int(
+        official.get("supplemental_status") or 0
+    )
+
+
+def new_official_player_row(
+    official: dict[str, Any],
+    team_abbrev: str,
+    prospect: dict[str, Any] | None,
+    draft_pick: dict[str, Any] | None,
+) -> dict[str, Any]:
+    stats = (prospect or {}).get("public_stats") or {}
+    per_game = stats.get("per_game") or {}
+    per_36 = stats.get("per_36") or {}
+    advanced = stats.get("advanced") or {}
+    overall_pick = int((draft_pick or {}).get("overall") or 0)
+    minutes = rookie_minutes_projection(overall_pick, official)
+    name = str(official.get("name") or (prospect or {}).get("player") or "")
+    position = normalized_official_position(
+        official.get("position"), (prospect or {}).get("position")
+    )
+    row = {
+        "name": name,
+        "player": name,
+        "normalizedName": normalize_name(name),
+        "teamAbbrev": team_abbrev,
+        "Tm": team_abbrev,
+        "Team": team_abbrev,
+        "position": position,
+        "Pos": position,
+        "minutes": minutes,
+        "MIN": minutes,
+        "MPG": minutes,
+        "2025minutes": 0,
+        "Age": official.get("age") or (prospect or {}).get("age"),
+        "AGE": official.get("age") or (prospect or {}).get("age"),
+        "Birthdate": official_birthdate(official.get("birthdate")),
+        "HeightSocks": official_height_inches(
+            official.get("height") or (prospect or {}).get("height")
+        ),
+        "Weight": official.get("weight_lbs")
+        or (prospect or {}).get("weight_lbs"),
+        "PTS": per_game.get("pts") or 0.0,
+        "REB": per_game.get("reb") or 0.0,
+        "AST": per_game.get("ast") or 0.0,
+        "STL": per_game.get("stl") or 0.0,
+        "BLK": per_game.get("blk") or 0.0,
+        "PTSp75": per_36.get("pts") or 0.0,
+        "REBp75": per_36.get("reb") or 0.0,
+        "ASTp75": per_36.get("ast") or 0.0,
+        "STLp75": per_36.get("stl") or 0.0,
+        "BLKp75": per_36.get("blk") or 0.0,
+        "BPM": advanced.get("bpm"),
+        "OBPM": advanced.get("obpm"),
+        "DBPM": advanced.get("dbpm"),
+        "TS%": (
+            round(float(advanced["tspct"]) * 100.0, 1)
+            if advanced.get("tspct") is not None
+            else None
+        ),
+        "USG%": advanced.get("usg"),
+        "Rookie": str(official.get("experience") or "") == "R",
+        "simEligible": False,
+        "missingCriticalFields": [
+            "touches",
+            "BBallIQ",
+            "CraftedOPM",
+            "CraftedDPM",
+        ],
+        "missingFields": [
+            "touches",
+            "BBallIQ",
+            "CraftedOPM",
+            "CraftedDPM",
+        ],
+        "primaryOffRole": rookie_off_role(position),
+        "secondaryOffRole": "Development",
+        "primaryDefRole": rookie_def_role(position),
+        "source": "nba_official_2026_offseason_addition",
+        "_official_nba_player_id": official.get("nba_player_id"),
+        "_official_how_acquired": official.get("how_acquired"),
+        "_official_experience": official.get("experience"),
+        "_official_supplemental_status": int(
+            official.get("supplemental_status") or 0
+        ),
+        "_draft_overall": overall_pick or None,
+    }
+    return row
+
+
+def rookie_minutes_projection(
+    overall_pick: int, official: dict[str, Any]
+) -> float:
+    if int(official.get("supplemental_status") or 0):
+        return 2.0
+    if overall_pick <= 0:
+        return 1.0
+    if overall_pick <= 5:
+        return 24.0
+    if overall_pick <= 14:
+        return 18.0
+    if overall_pick <= 30:
+        return 12.0
+    if overall_pick <= 45:
+        return 7.0
+    return 3.0
+
+
+def official_height_inches(value: Any) -> float | None:
+    if value is None:
+        return None
+    match = re.match(r"^\s*(\d+)\s*[-']\s*(\d+)", str(value))
+    if match:
+        return float(int(match.group(1)) * 12 + int(match.group(2)))
+    return maybe_float(value)
+
+
+def official_birthdate(value: Any) -> str | None:
+    if not value:
+        return None
+    text = str(value).strip()
+    for pattern in ("%b %d, %Y", "%m/%d/%Y"):
+        try:
+            return datetime.strptime(text.title(), pattern).date().isoformat()
+        except ValueError:
+            continue
+    return text
+
+
+def normalized_official_position(value: Any, fallback: Any = None) -> str:
+    text = str(value or fallback or "").upper().strip()
+    if text in {"PG", "SG", "SF", "PF", "C"}:
+        return text
+
+    # The official roster feed frequently supplies only a broad position such
+    # as G or F. Preserve the more specific basketball position from the
+    # existing player model instead of turning every guard into a point guard
+    # and every forward/big into a small forward.
+    fallback_text = str(fallback or "").upper().strip()
+    fallback_positions = [
+        token
+        for token in fallback_text.replace("/", "-").replace(",", "-").split("-")
+        if token in {"PG", "SG", "SF", "PF", "C"}
+    ]
+    compatible_positions = {
+        "G": {"PG", "SG", "SF"},
+        "F": {"SF", "PF", "C"},
+        "G-F": {"SG", "SF"},
+        "F-G": {"SF", "SG"},
+        "F-C": {"PF", "C"},
+        "C-F": {"C", "PF"},
+    }
+    for position in fallback_positions:
+        if position in compatible_positions.get(text, set()):
+            return position
+
+    return {
+        "G": "SG",
+        "F": "SF",
+        "G-F": "SG",
+        "F-G": "SF",
+        "F-C": "PF",
+        "C-F": "C",
+    }.get(text, fallback_positions[0] if fallback_positions else "SF")
+
+
+def projects_as_primary_point_guard(official_position: Any, row: dict[str, Any]) -> bool:
+    """Identify real lead initiators without treating every generic guard as a PG."""
+    official_text = str(official_position or "").upper().strip()
+    if "G" not in official_text:
+        return False
+    fallback = str(row.get("position") or row.get("Pos") or "").upper().strip()
+    if fallback == "PG":
+        return True
+
+    assists_per_75 = maybe_float(row.get("ASTp75")) or 0.0
+    passer_rating = maybe_float(row.get("passerRating")) or 0.0
+    primary_role = str(row.get("primaryOffRole") or "")
+    secondary_role = str(row.get("secondaryOffRole") or "")
+    if assists_per_75 >= 7.5 and passer_rating >= 70.0:
+        return True
+    if (
+        assists_per_75 >= 6.0
+        and passer_rating >= 65.0
+        and primary_role == "Primary Ball Handler"
+    ):
+        return True
+    return (
+        assists_per_75 >= 5.5
+        and passer_rating >= 65.0
+        and secondary_role == "Primary Ball Handler"
+    )
+
+
+def rookie_off_role(position: str) -> str:
+    return "Primary Ball Handler" if position in {"PG", "SG"} else "Connector"
+
+
+def rookie_def_role(position: str) -> str:
+    return "Rim Protector" if position == "C" else "Mobile Forward"
 
 
 def build_teams(player_rows: list[dict[str, Any]]) -> list[Team]:
@@ -703,9 +1288,20 @@ def rotation_priority(row: dict[str, Any]) -> str:
     return "fringe"
 
 
-def build_players(player_rows: list[dict[str, Any]], player_overrides: dict[str, Any] | None = None) -> list[Player]:
+def build_players(
+    player_rows: list[dict[str, Any]],
+    player_overrides: dict[str, Any] | None = None,
+    espn_player_metadata: dict[str, Any] | None = None,
+) -> list[Player]:
     players: list[Player] = []
     seen: Counter[str] = Counter()
+    external_by_game_id = {
+        str(item.get("game_player_id")): item
+        for item in (espn_player_metadata or {}).get("players", [])
+        if item.get("game_player_id")
+    }
+    external_by_name = {official_player_key(item.get("normalized_name") or item.get("name")): item
+        for item in (espn_player_metadata or {}).get("players", [])}
     for row in player_rows:
         name = str(row.get("name") or row.get("player") or "").strip()
         normalized = normalize_name(row.get("normalizedName") or name)
@@ -728,6 +1324,8 @@ def build_players(player_rows: list[dict[str, Any]], player_overrides: dict[str,
         minutes_projection = maybe_float(override.get("minutes_projection"))
         if minutes_projection is None:
             minutes_projection = maybe_float(row.get("minutes")) or 0.0
+        if minutes_projection > 80:
+            minutes_projection /= 82.0
         prior_minutes = maybe_float(override.get("prior_minutes"))
         if prior_minutes is None:
             prior_minutes = maybe_float(row.get("2025minutes"))
@@ -736,9 +1334,16 @@ def build_players(player_rows: list[dict[str, Any]], player_overrides: dict[str,
         seen[seen_key] += 1
         suffix = f"-{seen[seen_key]}" if seen[seen_key] > 1 else ""
         player_id = stable_id("player", team_abbrev, f"{base_slug}{suffix}")
+        external = external_by_game_id.get(player_id) or external_by_name.get(official_player_key(normalized)) or {}
         source_ids = ["src_player_skill_input_2025_26"]
+        if row.get("_initial_roster_status") != "free_agent":
+            source_ids.append("src_nba_official_rosters_2026_10_13")
+        if row.get("_draft_overall"):
+            source_ids.append("src_nba_official_2026_draft_results")
         if override:
             source_ids.append("src_manual_overrides_2025_26")
+        if external.get("espn_player_id"):
+            source_ids.append("src_espn_nba_player_profiles")
         players.append(
             Player(
                 id=player_id,
@@ -747,7 +1352,7 @@ def build_players(player_rows: list[dict[str, Any]], player_overrides: dict[str,
                 slug=base_slug,
                 team_id=stable_id("team", team_abbrev),
                 team_abbrev=team_abbrev,
-                position=row.get("position") or row.get("Pos"),
+                position=override.get("position") or row.get("position") or row.get("Pos"),
                 age=age,
                 birthdate=row.get("Birthdate"),
                 height_inches=height_inches,
@@ -763,9 +1368,50 @@ def build_players(player_rows: list[dict[str, Any]], player_overrides: dict[str,
                 critical_field_fallbacks=build_critical_field_fallbacks(row),
                 rotation_priority=rotation_priority(row),
                 source_ids=source_ids,
+                espn_player_id=external.get("espn_player_id"),
+                espn_profile_url=external.get("espn_profile_url"),
+                headshot_url=external.get("headshot_url"),
+                headshot_url_source=external.get("headshot_url_source"),
+                headshot_rights_status=external.get("headshot_rights_status"),
+                headshot_asset_path=external.get("headshot_asset_path"),
+                draft_year=external.get("draft_year"),
+                draft_round=external.get("draft_round"),
+                draft_position=external.get("draft_position"),
+                draft_status=external.get("draft_status") or "unknown",
             )
         )
     return players
+
+
+def load_player_external_metadata(root: Path) -> dict[str, Any]:
+    return load_optional_json(root, ESPN_PLAYER_METADATA_FILE) or {}
+
+
+def enrich_player_external_metadata(
+    player_rows: list[dict[str, Any]], metadata: dict[str, Any] | None
+) -> None:
+    """Attach sidecar ESPN identity/draft fields to already-built player records."""
+    fields = (
+        "espn_player_id", "espn_profile_url", "headshot_url", "headshot_url_source", "headshot_rights_status",
+        "headshot_asset_path", "draft_year", "draft_round", "draft_position", "draft_status",
+    )
+    by_game_id = {
+        str(item.get("game_player_id")): item
+        for item in (metadata or {}).get("players", [])
+        if item.get("game_player_id")
+    }
+    by_name = {official_player_key(item.get("normalized_name") or item.get("name")): item
+               for item in (metadata or {}).get("players", [])}
+    for player in player_rows:
+        external = by_game_id.get(str(player.get("id"))) or by_name.get(official_player_key(player.get("normalized_name") or player.get("name")))
+        if not external:
+            continue
+        for field_name in fields:
+            player[field_name] = external.get(field_name)
+        if external.get("espn_player_id"):
+            source_ids = player.setdefault("source_ids", [])
+            if "src_espn_nba_player_profiles" not in source_ids:
+                source_ids.append("src_espn_nba_player_profiles")
 
 
 def player_override_for(normalized_name: str, player_overrides: dict[str, Any]) -> dict[str, Any]:
@@ -794,7 +1440,10 @@ def apply_trait_overrides(traits: list[Any], players: list[Player], trait_overri
             continue
         for trait_key, override in (player_override.get("traits") or {}).items():
             if isinstance(override, dict):
-                overrides_by_trait[(player.id, trait_key)] = {**override, "player_name": player.name}
+                overrides_by_trait[(player.id, trait_key)] = {
+                    **override, "player_name": player.name,
+                    "evidence_urls": player_override.get("evidence_urls") or [],
+                }
     updated = []
     for trait in traits:
         override = overrides_by_trait.get((trait.player_id, trait.trait_key))
@@ -816,6 +1465,8 @@ def apply_trait_overrides(traits: list[Any], players: list[Player], trait_overri
                 "notes": override.get("notes"),
             },
         }
+        if override["evidence_urls"]:
+            components["manual_calibration"]["evidence_urls"] = list(override["evidence_urls"])
         updated.append(
             replace(
                 trait,
@@ -828,6 +1479,195 @@ def apply_trait_overrides(traits: list[Any], players: list[Player], trait_overri
             )
         )
     return updated
+
+
+def imported_rookie_ratings(
+    players: list[Player],
+    traits: list[TraitValue],
+    research: dict[str, Any] | None,
+    official_draft: dict[str, Any],
+) -> tuple[list[Player], list[TraitValue], dict[str, Any]]:
+    """Give newly imported draftees NBA priors without recalibrating veterans."""
+    year = str(official_draft.get("draft_year") or "")
+    picks = {
+        official_player_key(row.get("normalized_name") or row.get("name")): row
+        for row in official_draft.get("picks", [])
+    }
+    researched = {
+        official_player_key(row.get("normalized_name") or row.get("player")): row
+        for row in (research or {}).get("prospects", [])
+    }
+    replacements: dict[tuple[str, str], dict[str, Any]] = {}
+    updated_players = []
+    report: dict[str, Any] = {"policy": "imported_draftees_use_nba_prospect_conversion_v1", "players": []}
+    for player in players:
+        key = official_player_key(player.normalized_name)
+        pick = picks.get(key)
+        slot = int((pick or {}).get("overall") or 0)
+        if not year or not slot or not pick or float(player.prior_minutes or 0) > 0:
+            updated_players.append(player)
+            continue
+        row = researched.get(key)
+        has_research = row is not None
+        if row is None:
+            row = {
+                "player": player.name, "mock_rank": slot, "age": player.age,
+                "position": player.position, "height": player.height_inches,
+                "public_stats": {}, "source_ids": ["src_draft_model_config_v1"],
+            }
+        prospect_record = prospect_from_research_row(row, year)
+        prospect = to_plain(prospect_record)
+        # Inference defaults are model priors, not observed NBA statistics.
+        draft_traits = to_plain(prospect_traits_from_row(prospect_record, row))
+        records = rookie_trait_records(to_plain(player), prospect, draft_traits)
+        for record in records:
+            record["confidence"] = 0.48 if has_research else 0.30
+            record["source_ids"] = list(dict.fromkeys([
+                *record["source_ids"], *prospect["source_ids"], "src_nba_official_2026_draft_results",
+            ]))
+            record["notes"] = (
+                "Modeled NBA rookie trait converted from college prospect research. "
+                if has_research else "Low-confidence NBA rookie prior from actual draft slot and position; no college research matched. "
+            ) + "Not a measured NBA skill rating."
+            record["components"]["imported_rookie_prior"] = {
+                "draft_year": year, "actual_draft_position": slot,
+                "research_rank": prospect["rank"] if has_research else None,
+                "has_college_research": has_research,
+            }
+            replacements[(player.id, record["trait_key"])] = record
+        updated_players.append(replace(
+            player, current_ability=prospect["current_ability"], potential=prospect["potential"],
+        ))
+        report["players"].append({
+            "player_id": player.id, "name": player.name, "draft_position": slot,
+            "has_college_research": has_research,
+            "current_ability": prospect["current_ability"], "potential": prospect["potential"],
+        })
+    updated_traits = []
+    for trait in traits:
+        record = replacements.get((trait.player_id, trait.trait_key))
+        if record is not None:
+            record = {**record, "id": trait.id}
+            updated_traits.append(TraitValue(**record))
+        else:
+            updated_traits.append(trait)
+    report["converted_player_count"] = len(report["players"])
+    return updated_players, updated_traits, report
+
+
+def preserve_returning_trait_values(
+    traits: list[Any],
+    players: list[Player],
+    previous_canonical: dict[str, Any],
+) -> tuple[list[Any], dict[str, Any]]:
+    """Keep returning-player engine ratings unchanged across the roster refresh.
+
+    The July 2026 update is an identity, roster, contract, and pick-ledger
+    migration. Matching by normalized name lets a traded player's prior trait
+    values follow them even though team-scoped player IDs have changed.
+    """
+    old_players = {
+        official_player_key(player.get("normalized_name") or player.get("name")):
+        player
+        for player in previous_canonical.get("players", [])
+    }
+    old_traits = {
+        (trait.get("player_id"), trait.get("trait_key")): trait
+        for trait in previous_canonical.get("traits", [])
+    }
+    old_player_id_by_new_id = {}
+    for player in players:
+        old_player = old_players.get(official_player_key(player.normalized_name))
+        if old_player:
+            old_player_id_by_new_id[player.id] = old_player.get("id")
+
+    preserved = 0
+    preserved_players: set[str] = set()
+    updated = []
+    for trait in traits:
+        old_player_id = old_player_id_by_new_id.get(trait.player_id)
+        old_trait = old_traits.get((old_player_id, trait.trait_key))
+        old_value = maybe_float((old_trait or {}).get("value"))
+        if old_value is None:
+            updated.append(trait)
+            continue
+        updated.append(
+            replace(
+                trait,
+                value=round(clamp(old_value), 2),
+                source_ids=list(
+                    dict.fromkeys(
+                        [*trait.source_ids, "src_2025_26_rating_baseline_preserved"]
+                    )
+                ),
+                notes=(
+                    f"{trait.notes} Engine value preserved from the prior "
+                    "released canonical rating snapshot during this roster refresh."
+                ),
+                components={
+                    **trait.components,
+                    "2026_roster_refresh": {
+                        "previous_player_id": old_player_id,
+                        "pre_refresh_inferred_value": trait.value,
+                        "preserved_value": round(clamp(old_value), 2),
+                    },
+                },
+            )
+        )
+        preserved += 1
+        preserved_players.add(trait.player_id)
+    return updated, {
+        "policy": "returning_player_engine_values_preserved_by_normalized_name",
+        "baseline_file": "data/canonical/baselines/2026-07-28.json.gz",
+        "preserved_player_count": len(preserved_players),
+        "preserved_trait_count": preserved,
+        "unmatched_returning_player_count": max(
+            0, len(players) - len(preserved_players)
+        ),
+    }
+
+
+def resolve_pre_snapshot_injuries(
+    states: list[Any], events: list[Any]
+) -> tuple[list[Any], list[Any]]:
+    """Close injuries whose recorded return date predates the new epoch."""
+    completed_ids = {
+        event.id
+        for event in events
+        if event.return_date and event.return_date <= CANONICAL_START_DATE
+    }
+    normalized_states = []
+    for state in states:
+        if state.current_injury_id not in completed_ids:
+            normalized_states.append(state)
+            continue
+        normalized_states.append(
+            replace(
+                state,
+                as_of_date=CANONICAL_START_DATE,
+                current_injury_id=None,
+                availability_status="active",
+                return_date=None,
+                rust=0.0,
+                source_ids=list(
+                    dict.fromkeys(
+                        [*state.source_ids, "src_2026_offseason_snapshot_update"]
+                    )
+                ),
+                notes=(
+                    f"{state.notes} The recorded return date preceded the "
+                    "2026-07-28 canonical start, so the active injury flag was "
+                    "closed during the epoch migration."
+                ),
+            )
+        )
+    normalized_events = [
+        replace(event, status="completed")
+        if event.id in completed_ids
+        else event
+        for event in events
+    ]
+    return normalized_states, normalized_events
 
 
 def build_critical_field_fallbacks(row: dict[str, Any]) -> dict[str, Any]:
@@ -917,29 +1757,52 @@ def fallback_payload(value: float, confidence: float, method: str, notes: str) -
     return {"value": value, "confidence": confidence, "method": method, "notes": notes}
 
 
-def build_roster_slots(players: list[Player]) -> list[RosterSlot]:
+def build_roster_slots(
+    players: list[Player], player_rows: list[dict[str, Any]]
+) -> list[RosterSlot]:
     return [
         RosterSlot(
             id=stable_id("roster", player.team_id, player.id),
             team_id=player.team_id,
             player_id=player.id,
-            status="active_or_camp_roster_unverified",
+            status=str(
+                player_rows[index].get("_initial_roster_status")
+                or "active_or_camp_roster_unverified"
+            ),
             rotation_priority=player.rotation_priority,
             minutes_projection=player.minutes_projection,
-            source_ids=["src_player_skill_input_2025_26"],
+            source_ids=list(player.source_ids),
         )
-        for player in players
+        for index, player in enumerate(players)
     ]
 
 
-def build_contracts(players: list[Player], research_contracts: dict[str, Any] | None, contract_overrides: dict[str, Any] | None) -> list[Contract]:
+def build_contracts(
+    players: list[Player],
+    research_contracts: dict[str, Any] | None,
+    contract_overrides: dict[str, Any] | None,
+    roster_slots: list[RosterSlot] | None = None,
+    official_draft: dict[str, Any] | None = None,
+) -> list[Contract]:
     by_name_team: dict[tuple[str, str], dict[str, Any]] = {}
     by_name: dict[str, list[dict[str, Any]]] = defaultdict(list)
     source_id = (research_contracts or {}).get("source", {}).get("id") or "src_ledger_research_pending"
     for contract in (research_contracts or {}).get("contracts", []):
+        if contract.get('record_kind') == 'resolved_aggregate_source':
+            continue
         if contract.get("team_abbrev"):
             by_name_team[(contract["normalized_name"], contract["team_abbrev"])] = contract
         by_name[contract["normalized_name"]].append(contract)
+    roster_status = {
+        slot.player_id: slot.status
+        for slot in (roster_slots or [])
+    }
+    draft_position = {
+        official_player_key(pick.get("normalized_name") or pick.get("name")): int(
+            pick.get("overall") or 0
+        )
+        for pick in (official_draft or {}).get("picks", [])
+    }
 
     contracts: list[Contract] = []
     for player in players:
@@ -956,6 +1819,9 @@ def build_contracts(players: list[Player], research_contracts: dict[str, Any] | 
         if match is None:
             match = fuzzy_contract_match(player, by_name_team)
         if match:
+            if match.get('record_kind') == 'resolved_active_contract':
+                contracts.append(contract_from_override(player, match, extension_metadata))
+                continue
             seasons = [
                 {
                     "season": season["season"],
@@ -977,12 +1843,19 @@ def build_contracts(players: list[Player], research_contracts: dict[str, Any] | 
                     team_id=player.team_id,
                     status="verified_public_salary_table",
                     seasons=seasons,
-                    confidence=0.82 if source_id == "src_bref_contracts_players_2026" else 0.72,
+                    confidence=0.82 if source_id == "src_bref_contracts_players_2027" else 0.72,
                     source_ids=[source_id],
                     notes="Matched to public salary table. Salary/options are cited where available; guarantee mechanics, incentives, cap holds, two-way status, and trade restrictions still need deeper ledger review.",
                     original_contract_years=original_years,
                     signed_season=signed_season,
                     extension_eligibility=extension_metadata,
+                )
+            )
+        elif str(roster_status.get(player.id) or "").startswith("official_"):
+            contracts.append(
+                inferred_offseason_roster_contract(
+                    player,
+                    draft_position.get(official_player_key(player.normalized_name)),
                 )
             )
         else:
@@ -1002,6 +1875,68 @@ def build_contracts(players: list[Player], research_contracts: dict[str, Any] | 
                 )
             )
     return contracts
+
+
+def inferred_offseason_roster_contract(
+    player: Player,
+    overall_pick: int | None,
+) -> Contract:
+    """Supply gameplay-safe terms where membership is official but salary is not.
+
+    These values keep cap and market systems operational; they are deliberately
+    labeled as estimates and never promoted to public-source salary evidence.
+    """
+    active_start = int(CANONICAL_SEASON.split("-")[0])
+    if overall_pick and overall_pick <= 30:
+        years = 4
+        year_one = max(2_650_000, 12_700_000 * (0.925 ** max(0, overall_pick - 1)))
+        contract_kind = "first-round rookie-scale estimate"
+    elif overall_pick:
+        years = 2
+        year_one = 1_350_000 + max(0, 60 - overall_pick) * 18_000
+        contract_kind = "second-round minimum-framework estimate"
+    else:
+        years = 1
+        age = float(player.age or 25.0)
+        year_one = 2_100_000 + max(0.0, age - 25.0) * 85_000
+        contract_kind = "offseason roster minimum-scale estimate"
+    seasons = [
+        {
+            "season": f"{active_start + offset}-{str(active_start + offset + 1)[-2:]}",
+            "salary": int(round(year_one * (1.08 ** offset))),
+            "option_type": (
+                "team_option"
+                if overall_pick and overall_pick <= 30 and offset >= 2
+                else None
+            ),
+            "guarantee_status": "gameplay_estimate_pending_public_terms",
+        }
+        for offset in range(years)
+    ]
+    return Contract(
+        id=stable_id("contract", player.id),
+        player_id=player.id,
+        team_id=player.team_id,
+        status="inferred_gameplay_contract",
+        seasons=seasons,
+        confidence=0.35 if overall_pick else 0.22,
+        source_ids=[
+            "src_nba_official_rosters_2026_10_13",
+            *(
+                ["src_nba_official_2026_draft_results", "src_draft_model_config_v1"]
+                if overall_pick
+                else []
+            ),
+        ],
+        notes=(
+            f"{contract_kind}; official roster membership is confirmed, but exact "
+            "salary, guarantees, options, and restrictions were not in the public "
+            "salary table as of the snapshot date."
+        ),
+        original_contract_years=years,
+        signed_season=CANONICAL_SEASON,
+        extension_eligibility={},
+    )
 
 
 def contract_override_for_player(player: Player, contract_overrides: dict[str, Any]) -> dict[str, Any] | None:
@@ -1027,14 +1962,38 @@ def maybe_int(value: Any) -> int | None:
 
 def contract_from_override(player: Player, override: dict[str, Any], extension_metadata: dict[str, Any] | None = None) -> Contract:
     extension_metadata = extension_metadata or {}
+    active_start_year = int(CANONICAL_SEASON.split("-")[0])
+    current_seasons = [
+        dict(season)
+        for season in (override.get("seasons") or [])
+        if str(season.get("season") or "") == "remaining_total"
+        or (
+            str(season.get("season") or "").split("-")[0].isdigit()
+            and int(str(season["season"]).split("-")[0]) >= active_start_year
+        )
+    ]
+    if not any(season.get("salary") is not None for season in current_seasons):
+        return Contract(
+            id=stable_id("contract", player.id),
+            player_id=player.id,
+            team_id=player.team_id,
+            status="research_pending",
+            seasons=[],
+            confidence=0.0,
+            source_ids=["src_ledger_research_pending"],
+            notes="The prior manual contract record expired before the active 2026-27 snapshot; current terms still require public-source confirmation.",
+            original_contract_years=maybe_int(extension_metadata.get("original_contract_years")),
+            signed_season=extension_metadata.get("signed_season"),
+            extension_eligibility=extension_metadata,
+        )
     return Contract(
         id=stable_id("contract", player.id),
         player_id=player.id,
         team_id=player.team_id,
         status=override.get("status") or "manual_research_pending",
-        seasons=list(override.get("seasons") or []),
+        seasons=current_seasons,
         confidence=maybe_float(override.get("confidence")) or 0.1,
-        source_ids=["src_manual_overrides_2025_26"],
+        source_ids=override.get("source_ids") or ["src_manual_overrides_2025_26"],
         notes=override.get("notes") or "Manual contract override. Exact cap/legal details remain intentionally unresolved.",
         original_contract_years=maybe_int(extension_metadata.get("original_contract_years")) or maybe_int(override.get("original_contract_years")),
         signed_season=extension_metadata.get("signed_season") or override.get("signed_season"),
@@ -1085,6 +2044,21 @@ def simplify_contract_name(name: str) -> str:
 
 def build_draft_picks(teams: list[Team], research_draft_picks: dict[str, Any] | None, research_future_picks: dict[str, Any] | None) -> list[DraftPick]:
     teams_by_abbrev = {team.abbrev: team for team in teams}
+    if (research_future_picks or {}).get("format") == "underlying_pick_ledger_v1":
+        output = []
+        for row in research_future_picks["picks"]:
+            original = teams_by_abbrev[row["original_team_abbrev"]]
+            owner = teams_by_abbrev[row["owner_team_abbrev"]]
+            output.append(DraftPick(
+                id=stable_id("pick", original.abbrev, str(row["season"]), int(row["round"])),
+                team_id=owner.id, season=str(row["season"]), round=int(row["round"]),
+                status=row.get("status") or "verified_realgm_underlying_pick",
+                original_team_id=original.id, current_owner_team_id=owner.id,
+                protections=row.get("protections"), confidence=float(row.get("confidence", .9)),
+                source_ids=row.get("source_ids") or ["src_realgm_future_pick_pages"],
+                notes=row.get("notes") or "Normalized underlying pick from the league-wide RealGM ledger.",
+            ))
+        return output
     picks: list[DraftPick] = []
     for pick in (research_draft_picks or {}).get("picks", []):
         owner = teams_by_abbrev.get(pick.get("owner_team_abbrev"))
@@ -1106,7 +2080,6 @@ def build_draft_picks(teams: list[Team], research_draft_picks: dict[str, Any] | 
                 notes=f"2026 pick board entry: round {pick['round']}, pick {pick['pick']}, overall {pick['overall']}. Trade note from ESPN: {pick.get('trade_note') or 'own pick inferred'}.",
             )
         )
-    covered_future_slots: set[tuple[str, str, int]] = set()
     future_index_counter: Counter[tuple[str, str, int]] = Counter()
     for pick in (research_future_picks or {}).get("picks", []):
         owner = teams_by_abbrev.get(pick.get("owner_team_abbrev"))
@@ -1114,12 +2087,11 @@ def build_draft_picks(teams: list[Team], research_draft_picks: dict[str, Any] | 
             continue
         season = str(pick.get("season"))
         round_number = int(pick.get("round") or 1)
-        if season < "2027" or season > "2032":
+        if season < "2027" or season > "2033":
             continue
         original = teams_by_abbrev.get(pick.get("original_team_abbrev") or "")
         future_index_counter[(owner.abbrev, season, round_number)] += 1
         asset_index = int(pick.get("asset_index") or future_index_counter[(owner.abbrev, season, round_number)])
-        covered_future_slots.add((owner.abbrev, season, round_number))
         description = pick.get("description") or "Future pick asset listed by source."
         picks.append(
             DraftPick(
@@ -1137,29 +2109,39 @@ def build_draft_picks(teams: list[Team], research_draft_picks: dict[str, Any] | 
             )
         )
     picks = normalize_future_pick_ledger(picks)
+    team_abbrev_by_id = {team.id: team.abbrev for team in teams}
+    covered_underlying = {
+        (
+            team_abbrev_by_id.get(pick.original_team_id),
+            str(pick.season),
+            int(pick.round),
+        )
+        for pick in picks
+        if pick.original_team_id
+    }
     for team in teams:
-        for season in ["2027", "2028", "2029", "2030", "2031", "2032"]:
+        for season in ["2027", "2028", "2029", "2030", "2031", "2032", "2033"]:
             for round_number in [1, 2]:
-                if (team.abbrev, season, round_number) in covered_future_slots:
+                if (team.abbrev, season, round_number) in covered_underlying:
                     continue
-                second_round_scaffold = round_number == 2
                 picks.append(
                     DraftPick(
                         id=stable_id("pick", team.abbrev, season, round_number),
                         team_id=team.id,
                         season=season,
                         round=round_number,
-                        status="inferred_future_second_round_scaffold" if second_round_scaffold else "research_pending",
+                        status="research_pending_underlying_pick",
                         original_team_id=team.id,
-                        current_owner_team_id=team.id if second_round_scaffold else None,
+                        current_owner_team_id=team.id,
                         protections=None,
-                        confidence=0.35 if second_round_scaffold else 0.0,
+                        confidence=0.25,
                         source_ids=["src_ledger_research_pending"],
                         notes=(
-                            "Low-confidence future second-round scaffold: assigned to original team so v1 trades can use normal R2 currency. "
-                            "Correct if later public research finds a traded/protected second."
-                            if second_round_scaffold
-                            else "Placeholder only. Ownership and protections must be researched before transaction logic uses this pick."
+                            "Low-confidence underlying-pick completion record. "
+                            "Spotrac's owner-side prose did not expose this "
+                            "team/year/round as a standalone asset; correct the "
+                            "owner if later protection research identifies a "
+                            "transfer."
                         ),
                     )
                 )

@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/NYK-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/NYK-v2-1.jpg",
+      "kind": "basketball",
+      "team": "NYK",
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 390,
+          "team": "NYK",
+          "opponent": "ORL",
+          "action": "Brunson late three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 49,
+          "frames": 300,
+          "team": "NYK",
+          "opponent": "MIL",
+          "action": "Brunson jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 726
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/NYK-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/NYK-v2-2.jpg",
+      "kind": "basketball",
+      "team": "NYK",
+      "clips": [
+        {
+          "source_start": 80,
+          "frames": 300,
+          "team": "NYK",
+          "opponent": "CHA",
+          "action": "Brunson basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 64,
+          "frames": 330,
+          "team": "NYK",
+          "opponent": "MIL",
+          "action": "Brunson paint finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 666
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/NYK-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/NYK-v2-3.jpg",
+      "kind": "basketball",
+      "team": "NYK",
+      "clips": [
+        {
+          "source_start": 163,
+          "frames": 480,
+          "team": "NYK",
+          "opponent": "CHI",
+          "action": "Brunson basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 109,
+          "frames": 540,
+          "team": "NYK",
+          "opponent": "CHA",
+          "action": "Brunson jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 1056
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "4Q5dZ400RHo",
+    "url": "https://www.youtube.com/watch?v=4Q5dZ400RHo",
+    "title": "Jalen Brunson's TOP PLAYS From The 2025 Emirates NBA Cup \ud83c\udfc6 | 2025-26 Season",
+    "channel": "NBA",
+    "path": ".cache/startup-team-correction/NYK.mp4",
+    "query": "2025-26 New York Knicks Jalen Brunson best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 0,
+      "frames": 390,
+      "team": "NYK",
+      "opponent": "ORL",
+      "action": "Brunson late three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 49,
+      "frames": 300,
+      "team": "NYK",
+      "opponent": "MIL",
+      "action": "Brunson jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 80,
+      "frames": 300,
+      "team": "NYK",
+      "opponent": "CHA",
+      "action": "Brunson basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 64,
+      "frames": 330,
+      "team": "NYK",
+      "opponent": "MIL",
+      "action": "Brunson paint finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 163,
+      "frames": 480,
+      "team": "NYK",
+      "opponent": "CHI",
+      "action": "Brunson basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 109,
+      "frames": 540,
+      "team": "NYK",
+      "opponent": "CHA",
+      "action": "Brunson jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 105.13333333333334
+}

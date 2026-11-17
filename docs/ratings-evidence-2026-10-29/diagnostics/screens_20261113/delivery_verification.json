@@ -1,0 +1,83 @@
+{
+  "date": "2026-11-13",
+  "schema_sections": 12,
+  "all94_ids_and_exact_roundtrips": true,
+  "base_pure_profile_compilations": 14,
+  "role_specific_screen_profile_rejections": [
+    {
+      "name": "Derrick White",
+      "roles": [
+        "navigator"
+      ],
+      "error": "S35: unsupported screen technique scale"
+    },
+    {
+      "name": "Stephon Castle",
+      "roles": [
+        "navigator"
+      ],
+      "error": "S35: unsupported screen technique scale"
+    },
+    {
+      "name": "Ivica Zubac",
+      "roles": [
+        "screener",
+        "coverage"
+      ],
+      "error": "T11: declare one on_ball_screen condition"
+    },
+    {
+      "name": "Rudy Gobert",
+      "roles": [
+        "screener",
+        "coverage"
+      ],
+      "error": "T11: declare one on_ball_screen condition"
+    }
+  ],
+  "source_known_required_cells": 54,
+  "source_unknown_required_cells": 218,
+  "role_specific_screen_added_cells": 16,
+  "role_specific_screen_added_unknown_source_cells": 4,
+  "source_records_preserved_except_documented_optional_span_alias": true,
+  "source_hash_checks": {
+    "docs/ratings-evidence-2026-10-29/CREATION_PASSING_DEFENSE_INPUTS_2026_11_13.json": true,
+    "docs/ratings-evidence-2026-10-29/OFFENSE_INTERIOR_INTERACTION_INPUTS_2026_11_13.json": true,
+    "docs/ratings-evidence-2026-10-29/INTERIOR_DEFENSE_EXPERIMENT_INPUTS_2026_11_13.json": true,
+    "data/canonical/universe_2026_27_offseason.json": true,
+    "docs/PLAYER_OBJECT_THREE_COLUMN_MAP_2026_11_12.md": true,
+    "docs/ratings-evidence-2026-10-29/EPISODE_4_CENTERS_EXTRACTION.md": true,
+    "docs/ratings-evidence-2026-10-29/SHOOTING_GUARDS_TOP_10_FULL_EXTRACTION.md": true,
+    "docs/ratings-evidence-2026-10-29/TEAM_RANKING_FULL_EXTRACTION.md": true,
+    "docs/ratings-evidence-2026-10-29/POINT_GUARDS_FULL_EXTRACTION.md": true,
+    "docs/ratings-evidence-2026-10-29/CROSS_VIDEO_CLAIM_INDEX.md": true,
+    "data/research/espn_career_raw/4845367.json": true
+  },
+  "module_hash_checks_against_capture": {
+    "src/nba_gm_data/offense_response.py": true,
+    "src/nba_gm_data/creation_passing.py": true,
+    "src/nba_gm_data/interior_defense.py": true,
+    "src/nba_gm_data/interior_game.py": true,
+    "src/nba_gm_data/player_model.py": true,
+    "src/nba_gm_data/player_model_registry.py": true,
+    "src/nba_gm_data/screen_navigation.py": false
+  },
+  "concurrent_backend_drift_if_any": [
+    "src/nba_gm_data/screen_navigation.py"
+  ],
+  "artifact_sha256": {
+    "SCREEN_NAVIGATION_INPUTS_2026_11_13.md": "3a8599917d0bb54c67db94457fe27db25d37b97bc8f69e8b151fa41fc047dcfc",
+    "SCREEN_NAVIGATION_INPUTS_2026_11_13.json": "4e49eb36104bbbdfa8f8fab2d6c8f6dd8cbcb32b11723338e3696c0f67cf842d",
+    "PILOT_PROFILE_READINESS_2026_11_13.md": "ba1204e7a0dc98cf701a5cf9c81eb713d7b11b23904127fa382ca6681b6d7fd6",
+    "PILOT_PROFILE_READINESS_2026_11_13.json": "a5114b08b2a02165a98603681c7fc50c2e031d97b24daeb4b0ba96843f4c248f",
+    "SCREEN_INPUTS_ACTIVE_TASK.md": "2fd2c3a2f377c80a8f03afbcc00253a21bc7fc2e3f26b74697a9eeea91904d66",
+    "diagnostics/screens_20261113/validation.json": "3ba48f963919f70f727bb2ee7f3f5ed4b37c0df36aab25856bc79b05a67901d5",
+    "diagnostics/screens_20261113/compiler_dependency_capture.json": "d802a5767cc32937e131e380a8ed1fc992ed9b56d816f79b2ac2cda670e65908",
+    "diagnostics/screens_20261113/screen_contract_gap.json": "35677b04ba9d80b2f418aa77a923256c9cbeb477990a16ecfc989a842ecedd73"
+  },
+  "local_links_checked": 19,
+  "code_files_written": 0,
+  "game_save_network_calls": 0,
+  "scope": "Read-only schema and pure profile compilation. No action/game or final calibration; screen compatibility rejected and explicit mapping/role requirements documented.",
+  "concurrent_backend_note": "Screen module changed after contract capture; final four role-specific compilation calls still rejected. Detailed screen dependency tables describe the recorded capture; later integration must recheck newer edits. Bounded research stops without chasing further changes."
+}

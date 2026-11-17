@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-14",
+  "version": "pilot_targeted_input_overlay_2026_11_14_v1",
+  "artifact_sha256": {
+    "PILOT_TARGETED_INPUT_UPDATES_2026_11_14.md": "3139da045e9114ee0d21073cd7f23953c093c7af219a2ed72670ac567744f4ef",
+    "PILOT_TARGETED_INPUT_UPDATES_2026_11_14.json": "2ea987d06cabd45ce370fd6b35426bab28d8808938f564d7b9579788fa297a63",
+    "PILOT_TARGETED_INPUTS_ACTIVE_TASK.md": "2d0b768e87bc0aeff355aea307ca88b1333c8d9af3e9e309d803728c19e49461",
+    "diagnostics/pilot_targeted_20261114/validation.json": "8f58f597785f2bb76307fe7426d64837b0372333a03d6c5c6fcc6a7a59ed08d2",
+    "diagnostics/pilot_targeted_20261114/public_evidence_notes.json": "3ddb821886332daa8cdfaf269b8dc4b2dd32133e7b89175c40ad0f82c0762e84"
+  },
+  "owned_writes": "new targeted review/sidecar/diagnostics and authorized active checkpoint only",
+  "new_or_revised_targeted_records": 8,
+  "carried_unchanged_proposals": 4,
+  "actually_compiled": false,
+  "simulations": 0,
+  "production_or_save_changes_by_research": false,
+  "stop": "bounded targeted evidence overlay delivered"
+}

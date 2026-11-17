@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Concept 75 - Dense Intelligence Rail</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; min-height: 100%; margin: 0; background: #030608; color: #e7eef1; }
+    body { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+    button { font: inherit; color: inherit; }
+    .board { width: 1682px; height: 963px; padding: 10px; display: flex; flex-direction: column; gap: 6px; background: #070b0d; overflow: hidden; }
+    .card { background: #0b1216; border: 1px solid #263840; overflow: hidden; }
+    .header { height: 46px; display: flex; align-items: center; padding: 0 12px; gap: 12px; }
+    .header img { width: 28px; height: 28px; object-fit: contain; }
+    .team { font-size: 16px; line-height: 18px; }
+    .header-context { color: #8fa0a8; font-size: 10px; }
+    .spacer { flex: 1; }
+    .date { color: #c8d2d7; font-size: 10px; padding-right: 8px; }
+    .btn { border: 1px solid #344a54; background: #111a1f; border-radius: 2px; height: 26px; padding: 0 10px; font-size: 10px; }
+    .btn.attn { border-color: #d1a547; color: #f0ce75; }
+    .week { height: 82px; display: flex; align-items: center; padding: 7px 12px; gap: 12px; }
+    .week-title { width: 128px; flex-shrink: 0; }
+    .week-title div:first-child { font-size: 14px; }
+    .week-title div:last-child { color: #8fa0a8; font-size: 9px; padding-top: 4px; }
+    .week-path { flex: 1; height: 62px; display: flex; align-items: center; }
+    .day { width: 116px; height: 62px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; gap: 3px; }
+    .day:not(:last-child)::after { content: ""; position: absolute; top: 26px; left: 73px; width: 86px; height: 1px; background: #344a54; }
+    .day .date-num { color: #8fa0a8; font-size: 8px; }
+    .node { width: 34px; height: 34px; border-radius: 50%; border: 1px solid #344a54; background: #070b0d; display: flex; align-items: center; justify-content: center; position: relative; z-index: 1; }
+    .node img { width: 24px; height: 24px; object-fit: contain; }
+    .node.today { border-color: #e7c85b; box-shadow: 0 0 0 2px rgba(231,200,91,.12); }
+    .result { color: #8fa0a8; font-size: 8px; white-space: nowrap; }
+    .result.win { color: #62d39a; }
+    .result.loss { color: #e35d5d; }
+    .week-actions { width: 250px; display: flex; justify-content: flex-end; gap: 5px; }
+    .matrix { height: 759px; display: flex; gap: 6px; }
+    .col-left { width: 500px; display: flex; flex-direction: column; gap: 6px; }
+    .col-center { width: 742px; display: flex; flex-direction: column; gap: 6px; }
+    .col-right { width: 408px; display: flex; flex-direction: column; gap: 6px; }
+    .titlebar { height: 30px; display: flex; align-items: center; justify-content: space-between; padding: 0 9px; border-bottom: 1px solid #263840; font-size: 13px; }
+    .titlebar .minor { color: #8fa0a8; font-size: 9px; }
+    .identity { height: 410px; }
+    .heatmaps { height: 176px; display: flex; gap: 6px; padding: 7px 8px 5px; border-bottom: 1px solid #263840; }
+    .court-wrap { width: 50%; display: flex; flex-direction: column; gap: 3px; }
+    .court-label { display: flex; justify-content: space-between; color: #9eabb1; font-size: 8px; }
+    .court { width: 100%; height: 142px; border: 1px solid #263840; background: #071014; }
+    .radars { height: 203px; display: flex; padding: 6px 8px 7px; gap: 6px; }
+    .radar { width: 50%; border: 1px solid #1c2a31; position: relative; display: flex; align-items: center; justify-content: center; }
+    .radar h4 { position: absolute; top: 6px; left: 8px; margin: 0; font-size: 10px; font-weight: 400; }
+    .signals { height: 343px; }
+    .signal-row { height: 22px; display: flex; align-items: center; padding: 0 9px; gap: 8px; border-bottom: 1px solid #172329; font-size: 9px; }
+    .signal-row .label { width: 104px; color: #c4cfd4; }
+    .signal-row .rank { width: 40px; text-align: right; color: #e7eef1; }
+    .bar { height: 5px; flex: 1; background: #172329; position: relative; }
+    .bar > i { height: 100%; display: block; background: var(--bar, #4bb8ff); width: var(--value, 50%); }
+    .bar .avg { position: absolute; top: -3px; left: 50%; width: 1px; height: 11px; background: #e7eef1; opacity: .75; }
+    .group-label { height: 16px; padding: 3px 9px 0; color: #6f858f; font-size: 8px; border-bottom: 1px solid #263840; }
+    .minutes { height: 510px; }
+    .minutes-head, .player-row { display: flex; align-items: center; padding: 0 8px; }
+    .minutes-head { height: 22px; color: #8fa0a8; font-size: 8px; border-bottom: 1px solid #263840; }
+    .player-row { height: 28px; border-bottom: 1px solid #172329; font-size: 9px; }
+    .player-row.injured { color: #ff5c62; }
+    .p-name { width: 126px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .p-pos { width: 72px; white-space: nowrap; font-size: 8px; }
+    .rating { width: 36px; display: flex; flex-direction: column; gap: 2px; }
+    .mini { width: 28px; height: 2px; background: #18242a; }
+    .mini i { display: block; height: 2px; background: #4bb8ff; }
+    .box { width: 28px; }
+    .sep { border-left: 1px solid #344a54; padding-left: 7px; }
+    .fatigue { width: 66px; display: flex; gap: 3px; }
+    .fatigue i { width: 7px; height: 7px; background: #18242a; border: 1px solid #263840; }
+    .fatigue i.on { background: #e7c85b; }
+    .dev { width: 78px; display: flex; align-items: center; gap: 5px; }
+    .dev span { width: 27px; }
+    .dev svg { width: 45px; height: 15px; }
+    .mins { width: 92px; display: flex; align-items: center; gap: 5px; }
+    .mins .rail { width: 64px; height: 3px; background: #18242a; }
+    .mins .rail i { display: block; height: 3px; background: #4bb8ff; }
+    .efficiency { height: 243px; }
+    .metric-set { display: flex; gap: 14px; font-size: 9px; }
+    .metric-set span:nth-child(1) { color: #62b8ff; }
+    .metric-set span:nth-child(2) { color: #f0b15a; }
+    .metric-set span:nth-child(3) { color: #62d39a; }
+    .chart { height: 208px; padding: 6px 9px 8px; }
+    .standings { height: 170px; }
+    .stand-row { height: 13px; display: flex; align-items: center; padding: 0 8px; font-size: 8px; border-bottom: 1px solid #172329; }
+    .stand-row.head { height: 17px; color: #8fa0a8; }
+    .stand-row .rk { width: 22px; }
+    .stand-row .tm { width: 114px; display: flex; align-items: center; gap: 5px; }
+    .stand-row .tm img { width: 12px; height: 12px; object-fit: contain; }
+    .stand-row .wl { width: 52px; }
+    .stand-row .pct { width: 44px; }
+    .stand-row.user { color: #62d39a; background: #0e1b18; }
+    .opponent { height: 215px; }
+    .opp-summary { height: 42px; display: flex; align-items: center; padding: 3px 8px; gap: 8px; border-bottom: 1px solid #263840; }
+    .opp-summary img { width: 31px; height: 31px; object-fit: contain; }
+    .opp-name { width: 117px; font-size: 10px; }
+    .opp-record { width: 78px; color: #c4cfd4; font-size: 8px; }
+    .opp-ratings { flex: 1; display: flex; justify-content: flex-end; gap: 8px; font-size: 8px; }
+    .opp-player { height: 20px; display: flex; align-items: center; padding: 0 7px; border-bottom: 1px solid #172329; font-size: 8px; }
+    .opp-player .name { width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .triplet { flex: 1; display: flex; gap: 6px; }
+    .triplet span { width: 78px; display: flex; align-items: center; gap: 3px; }
+    .triplet i { height: 3px; flex: 1; background: #172329; }
+    .triplet b { height: 3px; display: block; background: #4bb8ff; }
+    .ticker { height: 23px; display: flex; align-items: center; padding: 0 8px; background: #100e11; color: #ff7478; font-size: 8px; white-space: nowrap; overflow: hidden; }
+    .awards { height: 130px; }
+    .race-wrap { height: 100px; display: flex; }
+    .race { width: 33.333%; border-right: 1px solid #263840; }
+    .race-name { height: 18px; display: flex; align-items: center; padding: 0 6px; color: #8fa0a8; font-size: 8px; }
+    .candidate { height: 27px; display: flex; align-items: center; padding: 0 5px; gap: 4px; border-top: 1px solid #172329; font-size: 8px; }
+    .candidate img { width: 13px; height: 13px; object-fit: contain; }
+    .candidate span { width: 76px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .candidate svg { width: 32px; height: 13px; }
+    .prospects { height: 155px; }
+    .pros-head, .pros-row { display: flex; align-items: center; padding: 0 6px; font-size: 7.5px; }
+    .pros-head { height: 18px; color: #8fa0a8; border-bottom: 1px solid #263840; }
+    .pros-row { height: 22px; border-bottom: 1px solid #172329; }
+    .pros-row .pr { width: 18px; }
+    .pros-row .pn { width: 103px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pros-row .pp { width: 27px; }
+    .pros-row .np { width: 47px; }
+    .pros-row .range { width: 46px; }
+    .pros-row .stock { width: 58px; }
+    .pros-row .scout { width: 83px; display: flex; align-items: center; gap: 4px; }
+    .scoutbar { width: 50px; height: 5px; background: linear-gradient(90deg,#e35d5d,#8952a6,#4bb8ff); position: relative; }
+    .scoutbar i { position: absolute; top: -2px; width: 2px; height: 9px; background: white; }
+    .staff { height: 65px; }
+    .staff-body { height: 35px; display: flex; }
+    .staff-cell { width: 33.33%; display: flex; flex-direction: column; justify-content: center; padding: 0 7px; border-right: 1px solid #263840; font-size: 8px; gap: 2px; }
+    .staff-cell span:first-child { color: #8fa0a8; }
+    .wire { height: 38px; display: flex; align-items: center; padding: 0 9px; gap: 9px; }
+    .wire-title { width: 88px; color: #f0ce75; font-size: 10px; }
+    .wire-item { flex: 1; display: flex; align-items: center; gap: 7px; border-left: 1px solid #263840; padding-left: 9px; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .wire-item img { width: 17px; height: 17px; object-fit: contain; }
+  </style>
+</head>
+<body>
+<main class="board">
+  <header class="card header">
+    <img src="../src/nba_gm_data/gui/assets/team_logos/WAS.png" alt="Washington Wizards">
+    <div class="team">Washington Wizards</div>
+    <div class="header-context">Regular season · 18–12 · 4th East</div>
+    <div class="spacer"></div>
+    <div class="date">December 16, 2026</div>
+    <button class="btn">Trade Room</button><button class="btn attn">Offers 3</button><button class="btn">Player Finder</button><button class="btn">Prospects</button><button class="btn">Settings</button>
+  </header>
+
+  <section class="card week">
+    <div class="week-title"><div>This Week</div><div>Dec 14–20</div></div>
+    <div class="week-path" id="week"></div>
+    <div class="week-actions"><button class="btn">Sim Day</button><button class="btn">Sim Week</button><button class="btn">Sim Month</button></div>
+  </section>
+
+  <section class="matrix">
+    <div class="col-left">
+      <section class="card identity">
+        <div class="titlebar"><span>Team Identity</span><span class="minor">Current rotation</span></div>
+        <div class="heatmaps" id="heatmaps"></div>
+        <div class="radars" id="radars"></div>
+      </section>
+      <section class="card signals">
+        <div class="titlebar"><span>League Position + Morale + Four Factors</span><span class="minor">AVG marker</span></div>
+        <div id="signals"></div>
+      </section>
+    </div>
+
+    <div class="col-center">
+      <section class="card minutes">
+        <div class="titlebar"><span>Minutes + Availability</span><span class="minor">Rotation 240 / 240</span></div>
+        <div class="minutes-head"><span class="p-name">Player</span><span class="p-pos">Pos / availability</span><span class="rating">OVR</span><span class="rating">OFF</span><span class="rating">DEF</span><span class="box sep">MPG</span><span class="box">PTS</span><span class="box">REB</span><span class="box">AST</span><span class="fatigue">Fatigue</span><span class="dev">Development</span><span class="mins">Minutes</span></div>
+        <div id="players"></div>
+      </section>
+      <section class="card efficiency">
+        <div class="titlebar"><span>Weekly Efficiency</span><div class="metric-set"><span>OFF 119.4</span><span>DEF 110.8</span><span>NET +8.6</span></div></div>
+        <div class="chart" id="efficiency"></div>
+      </section>
+    </div>
+
+    <div class="col-right">
+      <section class="card standings">
+        <div class="titlebar"><span>East Standings</span><button class="btn" style="height:20px;padding:0 6px;font-size:8px">View all</button></div>
+        <div id="standings"></div>
+      </section>
+      <section class="card opponent">
+        <div class="titlebar"><span>Next Opponent</span><span class="minor">Dec 18 · Away</span></div>
+        <div class="opp-summary"><img src="../src/nba_gm_data/gui/assets/team_logos/OKC.png"><div class="opp-name">Oklahoma City</div><div class="opp-record">22–7 · L10 8–2 · #1 W</div><div class="opp-ratings"><span>OVR 87</span><span>OFF 89</span><span>DEF 87</span><span>PACE 100</span></div></div>
+        <div id="opp-players"></div>
+        <div class="ticker">INJURY WIRE · Alex Caruso out 3 games · Jaylin Williams questionable</div>
+      </section>
+      <section class="card awards"><div class="titlebar"><span>Awards Watch</span><span class="minor">Trend</span></div><div class="race-wrap" id="awards"></div></section>
+      <section class="card prospects"><div class="titlebar"><span>Upcoming Prospects</span><button class="btn" style="height:20px;padding:0 6px;font-size:8px">Open board</button></div><div id="prospects"></div></section>
+      <section class="card staff"><div class="titlebar"><span>Coaching Staff</span><span class="minor">Manage</span></div><div class="staff-body"><div class="staff-cell"><span>HEAD COACH</span><span>Brian Keefe · 76 · $8.1M/2Y</span></div><div class="staff-cell"><span>OFFENSE</span><span>M. Calder · 72 · $4.1M/3Y</span></div><div class="staff-cell"><span>DEFENSE</span><span>P. Cole · 69 · $4.0M/2Y</span></div></div></section>
+    </div>
+  </section>
+
+  <footer class="card wire"><div class="wire-title">LEAGUE WIRE</div><div class="wire-item"><img src="../src/nba_gm_data/gui/assets/team_logos/MIA.png"><span>Miami signs Brandon Miller to $32.2M × 4</span></div><div class="wire-item"><img src="../src/nba_gm_data/gui/assets/team_logos/CHI.png"><span>Chicago fires Billy Donovan after a 4–13 skid</span></div><button class="btn" style="height:24px">View all</button></footer>
+  </main>
+
+  <script>
+    const logo = team => `../src/nba_gm_data/gui/assets/team_logos/${team}.png`;
+    const week = [
+      ['Mon 14','BOS','W 121–113','win'],['Tue 15',null,'',''],['Wed 16','PHI','Today','today'],['Thu 17',null,'',''],['Fri 18','OKC','#1 West',''],['Sat 19','CLE','#3 East',''],['Sun 20',null,'','']
+    ];
+    document.querySelector('#week').innerHTML = week.map(([d,t,r,c]) => `<div class="day"><div class="date-num">${d}</div><div class="node ${c==='today'?'today':''}">${t?`<img src="${logo(t)}">`:''}</div><div class="result ${c}">${r}</div></div>`).join('');
+
+    function courtSvg(label, shift) {
+      const pts = [[22,94,8],[38,76,10],[56,59,12],[76,48,9],[95,43,11],[116,49,8],[136,60,12],[155,77,10],[171,95,7],[66,88,8],[96,78,13],[126,89,8],[96,108,10]];
+      return `<div class="court-wrap"><div class="court-label"><span>${label}</span><span>${label==='OFFENSE'?'Threat':'Suppression'}</span></div><svg class="court" viewBox="0 0 194 142"><rect x="1" y="1" width="192" height="140" fill="#071014" stroke="#31444c"/><path d="M31 141V94 Q97 12 163 94V141 M69 141V105H125V141 M79 105A18 18 0 0 1 115 105 M87 129A10 10 0 0 1 107 129 M91 135H103" fill="none" stroke="#526871" stroke-width="1"/>${pts.map(([x,y,s],i)=>`<hexagon></hexagon><circle cx="${x}" cy="${y}" r="${Math.max(3,s+(i%3)-1)}" fill="${i%4===0?'#ffcf57':i%4===1?'#e86443':i%4===2?'#684ca6':'#2976aa'}" opacity="${.58+(i%3)*.12}"/>`).join('')}</svg></div>`;
+    }
+    document.querySelector('#heatmaps').innerHTML = courtSvg('OFFENSE',0)+courtSvg('DEFENSE',1);
+
+    function radar(title, vals, color) {
+      const center=[95,105], r=64, n=vals.length;
+      const axes=vals.map((v,i)=>{const a=-Math.PI/2+i*2*Math.PI/n;return [center[0]+Math.cos(a)*r*v/100,center[1]+Math.sin(a)*r*v/100]});
+      const labels=['Rim','Mid','3PT','Create','Pass','Reb'];
+      return `<div class="radar"><h4>${title}</h4><svg viewBox="0 0 190 190" width="190" height="190">${[.25,.5,.75,1].map(k=>`<polygon points="${labels.map((_,i)=>{const a=-Math.PI/2+i*2*Math.PI/n;return `${center[0]+Math.cos(a)*r*k},${center[1]+Math.sin(a)*r*k}`}).join(' ')}" fill="none" stroke="#263840"/>`).join('')}${labels.map((l,i)=>{const a=-Math.PI/2+i*2*Math.PI/n;return `<line x1="95" y1="105" x2="${95+Math.cos(a)*r}" y2="${105+Math.sin(a)*r}" stroke="#263840"/><text x="${95+Math.cos(a)*78}" y="${108+Math.sin(a)*78}" text-anchor="middle" fill="#9eabb1" font-size="8">${l}</text>`}).join('')}<polygon points="${axes.map(p=>p.join(',')).join(' ')}" fill="${color}" fill-opacity=".16" stroke="${color}" stroke-width="1.5"/></svg></div>`;
+    }
+    document.querySelector('#radars').innerHTML = radar('Offensive profile',[84,57,78,89,92,51],'#4bb8ff') + radar('Defensive profile',[71,64,59,77,68,74],'#e7c85b');
+
+    const signals=[['GROUP','LEAGUE POSITION'],['Overall','#6 / 30',82,'#4bb8ff'],['Offense','#3 / 30',91,'#4bb8ff'],['Defense','#12 / 30',62,'#e7c85b'],['Depth','#9 / 30',71,'#62d39a'],['GROUP','MORALE'],['Morale','78',78,'#62d39a'],['Locker room','82',82,'#4bb8ff'],['Coach trust','66',66,'#e7c85b'],['Fans','74',74,'#62d39a'],['GROUP','FOUR FACTORS'],['eFG%','55.8',74,'#62d39a',1],['TOV%','11.9',69,'#e7c85b',1],['OREB%','29.2',58,'#e7c85b',1],['FTR','.238',44,'#e35d5d',1]];
+    document.querySelector('#signals').innerHTML=signals.map(s=>s[0]==='GROUP'?`<div class="group-label">${s[1]}</div>`:`<div class="signal-row"><span class="label">${s[0]}</span><span class="rank">${s[1]}</span><span class="bar" style="--value:${s[2]}%;--bar:${s[3]}"><i></i>${s[4]?'<b class="avg"></b>':''}</span></div>`).join('');
+
+    const players=[
+      ['Trae Young','PG',84,94,42,34.0,26.4,3.0,10.2,3,1.2,35],['Jordan Poole','SG',72,78,55,32.1,21.8,3.1,5.9,2,.6,34],['Alex Sarr','C',73,69,82,29.8,15.7,8.9,2.1,2,1.8,31],['Bilal Coulibaly','SF',68,61,79,30.2,13.6,5.8,2.8,2,1.4,31],['Bub Carrington','SG',66,70,58,24.9,11.8,4.1,4.5,2,1.1,26],['Corey Kispert','SF',65,72,53,25.7,12.5,3.7,1.8,1,.1,27],['Kyshawn George','SF',63,62,65,21.6,9.2,4.4,2.3,2,.9,23],['Tre Johnson','SG',64,71,50,19.8,10.1,2.5,2.0,1,1.6,21],['Marvin Bagley III','C',60,62,59,17.4,7.9,5.2,.8,3,-.3,18],['Justin Champagnie','SF',58,56,62,15.1,5.8,3.9,1.0,2,.2,16],['Richaun Holmes','C',57,55,61,12.6,4.9,4.2,.7,4,-.6,13],['Malcolm Brogdon','SG · out 9 gms',64,68,60,0,0,0,0,0,-.4,0,true],['Johnny Davis','SG',51,48,57,8.2,2.4,1.3,.9,1,0,8],['Patrick Baldwin Jr.','PF',50,54,44,4.1,1.7,1.1,.3,1,.2,4],['Anthony Gill','PF',48,46,52,0,0,0,0,0,-.5,0],['Jared Butler','PG',49,52,45,0,0,0,0,0,.1,0]
+    ];
+    const color=v=>v>=75?'#4bb8ff':v>=65?'#62d39a':v>=55?'#e7c85b':'#e35d5d';
+    document.querySelector('#players').innerHTML=players.map(p=>{const [n,pos,o,of,d,mpg,pts,reb,ast,fat,dev,min,inj]=p;const rating=v=>`<span class="rating">${v}<i class="mini"><i style="width:${v*.28}px;background:${color(v)}"></i></i></span>`;return `<div class="player-row ${inj?'injured':''}"><span class="p-name">${n}</span><span class="p-pos">${pos}</span>${rating(o)}${rating(of)}${rating(d)}<span class="box sep">${mpg}</span><span class="box">${pts}</span><span class="box">${reb}</span><span class="box">${ast}</span><span class="fatigue">${[0,1,2,3,4,5].map(i=>`<i class="${i<fat?'on':''}"></i>`).join('')}</span><span class="dev"><span style="color:${dev>0?'#62d39a':dev<0?'#e35d5d':'#8fa0a8'}">${dev>0?'+':''}${dev.toFixed(1)}</span><svg viewBox="0 0 45 15"><polyline points="1,10 9,${10-dev*1.2} 18,${9-dev*1.5} 27,${8-dev*1.8} 36,${7-dev*2} 44,${7-dev*2.2}" fill="none" stroke="${dev>=0?'#62d39a':'#e35d5d'}"/></svg></span><span class="mins"><i class="rail"><i style="width:${min/36*64}px"></i></i>${min}</span></div>`}).join('');
+
+    document.querySelector('#efficiency').innerHTML=`<svg viewBox="0 0 720 195" width="100%" height="100%"><defs><linearGradient id="blueFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4bb8ff" stop-opacity=".32"/><stop offset="1" stop-color="#10243b" stop-opacity=".02"/></linearGradient><linearGradient id="warmFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3bd" stop-opacity=".28"/><stop offset=".45" stop-color="#e59b42" stop-opacity=".15"/><stop offset="1" stop-color="#4a2516" stop-opacity=".02"/></linearGradient></defs>${[35,70,105,140,175].map(y=>`<line x1="35" y1="${y}" x2="704" y2="${y}" stroke="#263840"/>`).join('')}${[35,102,169,236,303,370,437,504,571,638,704].map(x=>`<line x1="${x}" y1="20" x2="${x}" y2="175" stroke="#1b2a31"/>`).join('')}<path d="M35 145 L102 128 L169 132 L236 111 L303 103 L370 90 L437 83 L504 65 L571 70 L638 52 L704 46 L704 175 L35 175 Z" fill="url(#blueFill)"/><polyline points="35,145 102,128 169,132 236,111 303,103 370,90 437,83 504,65 571,70 638,52 704,46" fill="none" stroke="#4bb8ff" stroke-width="2"/><path d="M35 58 L102 70 L169 64 L236 82 L303 76 L370 98 L437 104 L504 110 L571 122 L638 118 L704 133 L704 175 L35 175 Z" fill="url(#warmFill)"/><polyline points="35,58 102,70 169,64 236,82 303,76 370,98 437,104 504,110 571,122 638,118 704,133" fill="none" stroke="#f0b15a" stroke-width="2"/>${['OCT','NOV','DEC','JAN','FEB','MAR','APR'].map((m,i)=>`<text x="${55+i*104}" y="191" fill="#8fa0a8" font-size="8">${m}</text>`).join('')}</svg>`;
+
+    const stands=[['BOS','22–7','.759'],['CLE','20–8','.714'],['NYK','19–9','.679'],['WAS','18–12','.600'],['ORL','16–13','.552'],['MIL','16–14','.533'],['PHI','15–14','.517'],['MIA','15–15','.500'],['ATL','14–15','.483'],['IND','13–17','.433']];
+    document.querySelector('#standings').innerHTML='<div class="stand-row head"><span class="rk">#</span><span class="tm">TEAM</span><span class="wl">W–L</span><span class="pct">PCT</span></div>'+stands.map((s,i)=>`<div class="stand-row ${s[0]==='WAS'?'user':''}"><span class="rk">${i+1}</span><span class="tm"><img src="${logo(s[0])}">${s[0]}</span><span class="wl">${s[1]}</span><span class="pct">${s[2]}</span></div>`).join('');
+
+    const opp=[['Shai Gilgeous-Alexander',92,95,87],['Jalen Williams',84,86,82],['Chet Holmgren',82,79,88],['Luguentz Dort',70,63,83],['Isaiah Hartenstein',69,61,81],['Cason Wallace',68,60,84]];
+    document.querySelector('#opp-players').innerHTML=opp.map(p=>`<div class="opp-player"><span class="name">${p[0]}</span><span class="triplet">${p.slice(1).map((v,i)=>`<span>${['OVR','OFF','DEF'][i]} ${v}<i><b style="width:${v*.22}px"></b></i></span>`).join('')}</span></div>`).join('');
+
+    const races=[['MVP',[['Trae Young','WAS'],['Nikola Jokić','DEN'],['Shai Gilgeous-Alexander','OKC']]],['DPOY',[['Victor Wembanyama','SAS'],['Chet Holmgren','OKC'],['Evan Mobley','CLE']]],['ROTY',[['Tre Johnson','WAS'],['Cooper Flagg','DAL'],['Dylan Harper','SAS']]]];
+    document.querySelector('#awards').innerHTML=races.map(([r,ps])=>`<div class="race"><div class="race-name">${r}</div>${ps.map((p,i)=>`<div class="candidate"><img src="${logo(p[1])}"><span>${i+1}. ${p[0]}</span><svg viewBox="0 0 32 13"><polyline points="1,${10-i} 7,${8+i} 14,${9-i} 21,${5+i} 31,${3+i}" fill="none" stroke="${i===0?'#e7c85b':'#4bb8ff'}"/></svg></div>`).join('')}</div>`).join('');
+
+    const pro=[['1','K. Moreau','PF','67/88','1–3',92],['2','M. Mercer','SG','65/86','2–6',81],['3','J. Lang','PG','64/84','3–8',74],['4','S. Rhodes','SF','62/87','4–11',63],['5','Q. Mendez','C','61/82','7–15',48]];
+    document.querySelector('#prospects').innerHTML='<div class="pros-head"><span class="pr">RK</span><span class="pn">PROSPECT</span><span class="pp">POS</span><span class="np">NOW/POT</span><span class="range">RANGE</span><span class="stock">STOCK</span><span class="scout">SCOUTED</span></div>'+pro.map((p,i)=>`<div class="pros-row"><span class="pr">${p[0]}</span><span class="pn">${p[1]}</span><span class="pp">${p[2]}</span><span class="np">${p[3]}</span><span class="range">${p[4]}</span><span class="stock"><svg viewBox="0 0 52 14" width="50" height="13"><polyline points="1,${10-i} 10,${8+i} 20,${9-i} 30,${6+i} 40,${7-i} 51,${4+i}" fill="none" stroke="#e7c85b"/></svg></span><span class="scout"><i class="scoutbar"><i style="left:${p[5]*.5-1}px"></i></i>${p[5]}%</span></div>`).join('');
+  </script>
+</body>
+</html>

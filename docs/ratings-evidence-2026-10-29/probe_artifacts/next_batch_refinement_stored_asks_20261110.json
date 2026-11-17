@@ -1,0 +1,116 @@
+{
+  "Desmond Bane": {
+    "fa": {
+      "annual_salary": 32000000.0,
+      "aav_millions": 32.0,
+      "preferred_years": 3,
+      "minimum_annual_salary": 26240000.0,
+      "role_tier": "elite_specialist",
+      "notes": "Open-market ask from contract market profile. Competition can move accepted offers above or below this ask."
+    },
+    "extension": {
+      "annual_salary": 32000000.0,
+      "aav_millions": 32.0,
+      "preferred_years": 3,
+      "minimum_annual_salary": 26240000.0,
+      "role_tier": "elite_specialist",
+      "notes": "Current-team extension ask with a small loyalty discount when inferred loyalty is high."
+    },
+    "mode": "existing stored profile; no rebuild"
+  },
+  "Austin Reaves": {
+    "fa": {
+      "annual_salary": 31897202.29,
+      "aav_millions": 31.9,
+      "preferred_years": 3,
+      "minimum_annual_salary": 24218246.19,
+      "role_tier": "high_end_starter",
+      "notes": "Open-market ask from contract market profile. Competition can move accepted offers above or below this ask."
+    },
+    "extension": {
+      "annual_salary": 31897202.29,
+      "aav_millions": 31.9,
+      "preferred_years": 3,
+      "minimum_annual_salary": 24218246.19,
+      "role_tier": "high_end_starter",
+      "notes": "Current-team extension ask with a small loyalty discount when inferred loyalty is high."
+    },
+    "mode": "existing stored profile; no rebuild"
+  },
+  "Tyler Herro": {
+    "fa": {
+      "annual_salary": 52848083.46,
+      "aav_millions": 52.85,
+      "preferred_years": 4,
+      "minimum_annual_salary": 40795011.79,
+      "role_tier": "franchise_anchor",
+      "notes": "Open-market ask from contract market profile. Competition can move accepted offers above or below this ask."
+    },
+    "extension": {
+      "annual_salary": 52848083.46,
+      "aav_millions": 52.85,
+      "preferred_years": 5,
+      "minimum_annual_salary": 40795011.79,
+      "role_tier": "franchise_anchor",
+      "notes": "Current-team extension ask with a small loyalty discount when inferred loyalty is high."
+    },
+    "mode": "existing stored profile; no rebuild"
+  },
+  "Jaylen Brown": {
+    "fa": {
+      "annual_salary": 51968955.52,
+      "aav_millions": 51.97,
+      "preferred_years": 4,
+      "minimum_annual_salary": 40116386.72,
+      "role_tier": "all_star_core",
+      "notes": "Open-market ask from contract market profile. Competition can move accepted offers above or below this ask."
+    },
+    "extension": {
+      "annual_salary": 51968955.52,
+      "aav_millions": 51.97,
+      "preferred_years": 5,
+      "minimum_annual_salary": 40116386.72,
+      "role_tier": "all_star_core",
+      "notes": "Current-team extension ask with a small loyalty discount when inferred loyalty is high."
+    },
+    "mode": "existing stored profile; no rebuild"
+  },
+  "Kevin Durant": {
+    "fa": {
+      "annual_salary": 41841005.26,
+      "aav_millions": 41.84,
+      "preferred_years": 1,
+      "minimum_annual_salary": 32155587.37,
+      "role_tier": "legacy_star",
+      "notes": "Open-market ask from contract market profile. Competition can move accepted offers above or below this ask."
+    },
+    "extension": {
+      "annual_salary": 41841005.26,
+      "aav_millions": 41.84,
+      "preferred_years": 1,
+      "minimum_annual_salary": 32155587.37,
+      "role_tier": "legacy_star",
+      "notes": "Current-team extension ask with a small loyalty discount when inferred loyalty is high."
+    },
+    "mode": "existing stored profile; no rebuild"
+  },
+  "Darius Garland": {
+    "fa": {
+      "annual_salary": 26753762.39,
+      "aav_millions": 26.75,
+      "preferred_years": 3,
+      "minimum_annual_salary": 20313041.82,
+      "role_tier": "high_end_starter",
+      "notes": "Open-market ask from contract market profile. Competition can move accepted offers above or below this ask."
+    },
+    "extension": {
+      "annual_salary": 26753762.39,
+      "aav_millions": 26.75,
+      "preferred_years": 3,
+      "minimum_annual_salary": 20313041.82,
+      "role_tier": "high_end_starter",
+      "notes": "Current-team extension ask with a small loyalty discount when inferred loyalty is high."
+    },
+    "mode": "existing stored profile; no rebuild"
+  }
+}

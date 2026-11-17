@@ -1,0 +1,29 @@
+{
+  "date": "2026-11-13",
+  "supersedes": "Interpretation of matched_CHI_rows in residual_one_game_check.json: inventory rows are not all identified successful joins",
+  "game_id": "401810150",
+  "identified_playing_rows": 9,
+  "identified_DNP_rows": 2,
+  "unidentified_zero_stat_rows": 1,
+  "identified_player_totals": {
+    "FGM": 38,
+    "FGA": 84,
+    "3PM": 14,
+    "3PA": 33,
+    "FTM": 9,
+    "FTA": 16,
+    "PTS": 99
+  },
+  "team_source_totals": {
+    "FGM": 39,
+    "FGA": 87,
+    "3PM": 14,
+    "3PA": 34,
+    "FTM": 9,
+    "FTA": 16,
+    "PTS_from_components": 101
+  },
+  "conclusion": "Retained authoritative response has team/player disagreement. Cause and attribution unknown; no invented allocation or repaired production data. Other six exceptions unreviewed.",
+  "source_sha256": "78a57e309f09b39f7dcfd68a0f97b3717a7a6a6d747693a8b6a2d3caec9493e5",
+  "additional_requests": 0
+}

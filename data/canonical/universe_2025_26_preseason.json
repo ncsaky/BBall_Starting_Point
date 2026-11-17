@@ -1004,10 +1004,17 @@
     },
     {
       "confidence": 0.72,
-      "extension_eligibility": {},
+      "extension_eligibility": {
+        "player_name": "Michael Porter Jr.",
+        "original_contract_years": 5,
+        "signed_season": "2022-23",
+        "confidence": 0.95,
+        "source_url": "https://www.nba.com/news/reports-nuggets-michael-porter-jr-agree-to-max-extension",
+        "notes": "Five-year extension agreed in September 2021, effective 2022-23 through 2026-27. Public salary tables list only remaining seasons; that count is not the original contract term."
+      },
       "id": "contract_player-bkn-michael-porter-jr",
       "notes": "Matched to public salary table. Salary/options are cited where available; guarantee mechanics, incentives, cap holds, two-way status, and trade restrictions still need deeper ledger review.",
-      "original_contract_years": 2,
+      "original_contract_years": 5,
       "player_id": "player_bkn-michael-porter-jr",
       "seasons": [
         {
@@ -1023,7 +1030,7 @@
           "season": "2026-27"
         }
       ],
-      "signed_season": "2025-26",
+      "signed_season": "2022-23",
       "source_ids": [
         "src_hoopshype_salaries_players_2026"
       ],

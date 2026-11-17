@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-16",
+  "status": "DELIVERED",
+  "packet_version": "mixed_pop_input_updates_v1_2026_11_16",
+  "files": [
+    {
+      "path": "docs/ratings-evidence-2026-10-29/MIXED_POP_INPUT_UPDATES_2026_11_16.md",
+      "sha256": "51e8f8ab06b70af8b40cc32a9fedd333c45d1473d1b527f9f5fff4e63801cade"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/MIXED_POP_INPUT_UPDATES_2026_11_16.json",
+      "sha256": "dbabcc349525b440d703e96f24af9ae562633ff904574bc88efd7abb8b060eba"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/MIXED_POP_EVIDENCE_ACTIVE_TASK.md",
+      "sha256": "02797dbe42d53c702b78e602a3a939b34b537b6e3941b9f6e72c7178866fb815"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/mixed_pop_20261116/source_ledger.json",
+      "sha256": "48dc246e9a0e4e131ad03c80f1109ddf7496220a423adc92edba7b6438d15d5d"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/mixed_pop_20261116/inheritance_ledger.json",
+      "sha256": "702c32541412a00fb7ba0143cb16274dc9ced4371b4f6fc829a51e51192c443d"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/mixed_pop_20261116/validation.json",
+      "sha256": "721c5568e74a6cdafc9ad23fe1549f4694899d469d3de75a08fcc026b2bef1fb"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/mixed_pop_20261116/build_packet.py",
+      "sha256": "b197f171bdda0ac35f61c01993ed98681458e098e6e90bef76f526c1064217eb"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/mixed_pop_20261116/validate_delivery.py",
+      "sha256": "5bdde6b67bb84152f1b3b24a2b50b4b49b9d636be0194a8486101338923f348f"
+    }
+  ],
+  "production_or_save_writes": 0,
+  "profile_compilations": 0,
+  "simulations": 0,
+  "milestone11_outcomes_inspected": false
+}

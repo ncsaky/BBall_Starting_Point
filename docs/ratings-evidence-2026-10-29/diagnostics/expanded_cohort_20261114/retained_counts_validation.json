@@ -1,0 +1,198 @@
+{
+  "records": [
+    {
+      "name": "Stephen Curry",
+      "player_id": "player_gsw-stephen-curry",
+      "season": "2025-26",
+      "season_type": "regular",
+      "games": 43,
+      "counts": {
+        "fgm": 374.0,
+        "fga": 799.0,
+        "fg3m": 190.0,
+        "fg3a": 484.0,
+        "ftm": 204.0,
+        "fta": 221.0,
+        "assists": 203.0,
+        "turnovers": 121.0
+      },
+      "source_file": "data/research/espn_career_raw/3975.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3975/stats?seasontype=2",
+      "classification": "validated global outcomes/exposure; not shot-mode, pressure, receiving or latent preference denominator",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "assists": true,
+        "turnovers": true,
+        "scoring_identity": true
+      },
+      "row_selection": "stints once"
+    },
+    {
+      "name": "Jalen Brunson",
+      "player_id": "player_nyk-jalen-brunson",
+      "season": "2025-26",
+      "season_type": "regular",
+      "games": 74,
+      "counts": {
+        "fgm": 689.0,
+        "fga": 1475.0,
+        "fg3m": 195.0,
+        "fg3a": 528.0,
+        "ftm": 354.0,
+        "fta": 421.0,
+        "assists": 503.0,
+        "turnovers": 175.0
+      },
+      "source_file": "data/research/espn_career_raw/3934672.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3934672/stats?seasontype=2",
+      "classification": "validated global outcomes/exposure; not shot-mode, pressure, receiving or latent preference denominator",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "assists": true,
+        "turnovers": true,
+        "scoring_identity": true
+      },
+      "row_selection": "stints once"
+    },
+    {
+      "name": "Victor Wembanyama",
+      "player_id": "player_sas-victor-wembanyama",
+      "season": "2025-26",
+      "season_type": "regular",
+      "games": 64,
+      "counts": {
+        "fgm": 553.0,
+        "fga": 1080.0,
+        "fg3m": 122.0,
+        "fg3a": 350.0,
+        "ftm": 372.0,
+        "fta": 450.0,
+        "assists": 199.0,
+        "turnovers": 155.0
+      },
+      "source_file": "data/research/espn_career_raw/5104157.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/5104157/stats?seasontype=2",
+      "classification": "validated global outcomes/exposure; not shot-mode, pressure, receiving or latent preference denominator",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "assists": true,
+        "turnovers": true,
+        "scoring_identity": true
+      },
+      "row_selection": "stints once"
+    },
+    {
+      "name": "Nikola Joki\u0107",
+      "player_id": "player_den-nikola-jokic",
+      "season": "2025-26",
+      "season_type": "regular",
+      "games": 65,
+      "counts": {
+        "fgm": 644.0,
+        "fga": 1132.0,
+        "fg3m": 112.0,
+        "fg3a": 295.0,
+        "ftm": 399.0,
+        "fta": 480.0,
+        "assists": 697.0,
+        "turnovers": 243.0
+      },
+      "source_file": "data/research/espn_career_raw/3112335.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3112335/stats?seasontype=2",
+      "classification": "validated global outcomes/exposure; not shot-mode, pressure, receiving or latent preference denominator",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "assists": true,
+        "turnovers": true,
+        "scoring_identity": true
+      },
+      "row_selection": "stints once"
+    },
+    {
+      "name": "Myles Turner",
+      "player_id": "player_mil-myles-turner",
+      "season": "2025-26",
+      "season_type": "regular",
+      "games": 71,
+      "counts": {
+        "fgm": 284.0,
+        "fga": 646.0,
+        "fg3m": 147.0,
+        "fg3a": 384.0,
+        "ftm": 131.0,
+        "fta": 177.0,
+        "assists": 103.0,
+        "turnovers": 83.0
+      },
+      "source_file": "data/research/espn_career_raw/3133628.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3133628/stats?seasontype=2",
+      "classification": "validated global outcomes/exposure; not shot-mode, pressure, receiving or latent preference denominator",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "assists": true,
+        "turnovers": true,
+        "scoring_identity": true
+      },
+      "row_selection": "stints once"
+    },
+    {
+      "name": "Scottie Barnes",
+      "player_id": "player_tor-scottie-barnes",
+      "season": "2025-26",
+      "season_type": "regular",
+      "games": 80,
+      "counts": {
+        "fgm": 569.0,
+        "fga": 1123.0,
+        "fg3m": 68.0,
+        "fg3a": 224.0,
+        "ftm": 242.0,
+        "fta": 297.0,
+        "assists": 474.0,
+        "turnovers": 210.0
+      },
+      "source_file": "data/research/espn_career_raw/4433134.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4433134/stats?seasontype=2",
+      "classification": "validated global outcomes/exposure; not shot-mode, pressure, receiving or latent preference denominator",
+      "checks": {
+        "fgm": true,
+        "fga": true,
+        "fg3m": true,
+        "fg3a": true,
+        "ftm": true,
+        "fta": true,
+        "assists": true,
+        "turnovers": true,
+        "scoring_identity": true
+      },
+      "row_selection": "stints once"
+    }
+  ],
+  "all_checks_pass": true,
+  "historical_game_cache_used": false
+}

@@ -1,0 +1,158 @@
+{
+  "records": [
+    {
+      "name": "Luka Don\u010di\u0107",
+      "player_id": "player_lal-luka-doncic",
+      "season": "2025-26",
+      "season_type": "regular",
+      "games": 64,
+      "counts": {
+        "fgm": 693.0,
+        "fga": 1457.0,
+        "fg3m": 254.0,
+        "fg3a": 694.0,
+        "ftm": 503.0,
+        "fta": 645.0,
+        "assists": 530.0,
+        "turnovers": 255.0
+      },
+      "source_file": "data/research/espn_career_raw/3945274.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3945274/stats?seasontype=2",
+      "selection": "sum stints once",
+      "handling_loss_count": null,
+      "passing_loss_count": null,
+      "offensive_foul_count": null,
+      "notes": "Global attempts/outcomes, not mode/opening/pressure denominators. No per-touch mismatch rates computed."
+    },
+    {
+      "name": "Dylan Harper",
+      "player_id": "player_sas-dylan-harper",
+      "season": "2025-26",
+      "season_type": "regular",
+      "games": 69,
+      "counts": {
+        "fgm": 331.0,
+        "fga": 656.0,
+        "fg3m": 61.0,
+        "fg3a": 178.0,
+        "ftm": 90.0,
+        "fta": 119.0,
+        "assists": 266.0,
+        "turnovers": 99.0
+      },
+      "source_file": "data/research/espn_career_raw/5037871.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/5037871/stats?seasontype=2",
+      "selection": "sum stints once",
+      "handling_loss_count": null,
+      "passing_loss_count": null,
+      "offensive_foul_count": null,
+      "notes": "Global attempts/outcomes, not mode/opening/pressure denominators. No per-touch mismatch rates computed."
+    },
+    {
+      "name": "Derrick White",
+      "player_id": "player_bos-derrick-white",
+      "season": "2025-26",
+      "season_type": "regular",
+      "games": 77,
+      "counts": {
+        "fgm": 437.0,
+        "fga": 1108.0,
+        "fg3m": 209.0,
+        "fg3a": 640.0,
+        "ftm": 184.0,
+        "fta": 204.0,
+        "assists": 414.0,
+        "turnovers": 134.0
+      },
+      "source_file": "data/research/espn_career_raw/3078576.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3078576/stats?seasontype=2",
+      "selection": "sum stints once",
+      "handling_loss_count": null,
+      "passing_loss_count": null,
+      "offensive_foul_count": null,
+      "notes": "Global attempts/outcomes, not mode/opening/pressure denominators. No per-touch mismatch rates computed."
+    },
+    {
+      "name": "Stephon Castle",
+      "player_id": "player_sas-stephon-castle",
+      "season": "2025-26",
+      "season_type": "regular",
+      "games": 68,
+      "counts": {
+        "fgm": 385.0,
+        "fga": 817.0,
+        "fg3m": 81.0,
+        "fg3a": 244.0,
+        "ftm": 282.0,
+        "fta": 384.0,
+        "assists": 502.0,
+        "turnovers": 217.0
+      },
+      "source_file": "data/research/espn_career_raw/4845367.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4845367/stats?seasontype=2",
+      "selection": "sum stints once",
+      "handling_loss_count": null,
+      "passing_loss_count": null,
+      "offensive_foul_count": null,
+      "notes": "Global attempts/outcomes, not mode/opening/pressure denominators. No per-touch mismatch rates computed."
+    },
+    {
+      "name": "Ivica Zubac",
+      "player_id": "player_ind-ivica-zubac",
+      "season": "2025-26",
+      "season_type": "regular",
+      "games": 48,
+      "counts": {
+        "fgm": 288.0,
+        "fga": 482.0,
+        "fg3m": 0.0,
+        "fg3a": 0.0,
+        "ftm": 101.0,
+        "fta": 142.0,
+        "assists": 105.0,
+        "turnovers": 86.0
+      },
+      "source_file": "data/research/espn_career_raw/4017837.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4017837/stats?seasontype=2",
+      "selection": "single combined total once",
+      "handling_loss_count": null,
+      "passing_loss_count": null,
+      "offensive_foul_count": null,
+      "notes": "Global attempts/outcomes, not mode/opening/pressure denominators. No per-touch mismatch rates computed."
+    },
+    {
+      "name": "Rudy Gobert",
+      "player_id": "player_min-rudy-gobert",
+      "season": "2025-26",
+      "season_type": "regular",
+      "games": 76,
+      "counts": {
+        "fgm": 335.0,
+        "fga": 491.0,
+        "fg3m": 0.0,
+        "fg3a": 5.0,
+        "ftm": 159.0,
+        "fta": 302.0,
+        "assists": 128.0,
+        "turnovers": 106.0
+      },
+      "source_file": "data/research/espn_career_raw/3032976.json",
+      "source_url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3032976/stats?seasontype=2",
+      "selection": "sum stints once",
+      "handling_loss_count": null,
+      "passing_loss_count": null,
+      "offensive_foul_count": null,
+      "notes": "Global attempts/outcomes, not mode/opening/pressure denominators. No per-touch mismatch rates computed."
+    }
+  ],
+  "raw_source_hashes": {
+    "data/research/espn_career_raw/3945274.json": "7aea0440379961c61c443ae1c492a2c189352d7829d643686c9562decb259e29",
+    "data/research/espn_career_raw/5037871.json": "256940e32ea57e4a65502563c3276dca76cd37b8310392e40e765082ff44fedb",
+    "data/research/espn_career_raw/3078576.json": "5b27c736d4a8dbc953bcda42739f44df66e57490f85add65faa2aff179dad2f7",
+    "data/research/espn_career_raw/4845367.json": "28d88e3f89bd3ac557cda4d7e6a3804758aa5156efc6d92737c79155f73423ea",
+    "data/research/espn_career_raw/4017837.json": "e5266e7e6ed0677ff5bab24ae6ea9510d73266abd5fa00362ca3cbac73f13e12",
+    "data/research/espn_career_raw/3032976.json": "5cf5378174ad128596aaab91fb65239344ef41f8100b597cf6e58daa4251d14f"
+  },
+  "all_raw_totals_match_store": true,
+  "historical_game_cache_used": false
+}

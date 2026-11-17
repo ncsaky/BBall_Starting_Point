@@ -1,0 +1,58 @@
+{
+  "packet_version": "contest_input_batch_v1_2026_11_16",
+  "status": "PASS",
+  "counts": {
+    "players": 7,
+    "dimensions_per_player": 94,
+    "passing_dimensions_per_player": 18,
+    "base_records": 658,
+    "inherited_supported": 104,
+    "new_unknown_cell_proposals": 9,
+    "supported_after": 113,
+    "target_cells": 21,
+    "target_new_proposals": 8,
+    "target_unknown_after": 8,
+    "corrections": 0,
+    "operational_defaults": 0,
+    "unknown_after": 545
+  },
+  "schema_layers": [
+    "base_source_input_section",
+    "proposed_source_input_section"
+  ],
+  "roundtrips": 7,
+  "all658_base_records_exact": true,
+  "all104_supported_records_unchanged": true,
+  "physical_passing_tendency_records_exact": true,
+  "only_unknown_grade_cells_filled": true,
+  "declared_ranges_scales_verified": true,
+  "source_hash_checks": {
+    "docs/ratings-evidence-2026-10-29/PERIMETER_CONTEST_EVIDENCE_2026_11_16.json": true,
+    "docs/ratings-evidence-2026-10-29/diagnostics/perimeter_contest_20261116/inherited_source_snapshot.json": true,
+    "docs/PLAYER_OBJECT_THREE_COLUMN_MAP_2026_11_12.md": true,
+    "src/nba_gm_data/player_model_registry.py": true,
+    "src/nba_gm_data/player_model.py": true,
+    "docs/ratings-evidence-2026-10-29/PERIMETER_CONTEST_EVIDENCE_2026_11_16.md": true,
+    "docs/ratings-evidence-2026-10-29/diagnostics/perimeter_contest_20261116/readiness_ledger.json": true,
+    "docs/ratings-evidence-2026-10-29/captions/Ckufse6eWsM.en.vtt": true,
+    "docs/ratings-evidence-2026-10-29/transcripts/episode8_transcript.txt": true,
+    "docs/ratings-evidence-2026-10-29/transcripts/episode5_transcript.txt": true,
+    "docs/ratings-evidence-2026-10-29/transcripts/episode4_transcript.txt": true
+  },
+  "simulations": 0,
+  "profile_compilations": 0,
+  "scope": "Research source/schema/lineage validation only.",
+  "independent_delivery_check": {
+    "status": "PASS",
+    "seven_profiles_658_base_records_recompared": true,
+    "104_supported_records_exact": true,
+    "nine_unknown_only_changes_match_proposals": true,
+    "all_physical_passing_tendency_records_preserved": true,
+    "source_dates_ranges_scale_and_claims_valid": true,
+    "C37_supported_cells_after": 20,
+    "C37_unknown_cells_after": 50,
+    "local_links_resolved": 10,
+    "source_hashes_unchanged": true,
+    "scope": "Research schema/lineage/provenance validation only; no runtime compile or numerical effect test."
+  }
+}

@@ -1,0 +1,2420 @@
+{
+  "plan_version": 1,
+  "date": "2026-11-11",
+  "status": "planning_only_no_purchase_or_account_access",
+  "scope": "league-wide NBA skill/context acquisition after feasibility; not a four-player study",
+  "season_policy": {
+    "essential_observed_regular_seasons": [
+      "2025-26",
+      "2024-25"
+    ],
+    "supporting_observed_regular_season": "2023-24",
+    "postseason": "optional separately typed matched prior-season samples, never pooled silently",
+    "exclude_from_opening_baseline": [
+      "2026-27 projected talent",
+      "2026-27 post-start performance"
+    ],
+    "demo_seasons": [
+      "2018-19",
+      "2019-20"
+    ],
+    "demo_warning": "2019-20 is not last season; year selectors may use ending year"
+  },
+  "public_definition_source": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqxPLTuFQwWBFof7XlhHBYidVupesU81LllfS1G8uBTeHfpbByEbh1bM0Ih1aUU4XDCcHTKKLSuITT/pubhtml/sheet?headers=false&gid=263593269",
+  "groups": [
+    {
+      "id": "shooting_general",
+      "priority": "P1",
+      "purpose": "Accuracy, difficulty and self-creation rather than one shooting rank",
+      "count": 8,
+      "required_sample_metadata": [
+        "shot_attempts",
+        "shot_makes",
+        "defender_distance_or_expected_quality_sample"
+      ],
+      "engine_use_note": "shooting_range / shot_versatility; no direct release-time measurement"
+    },
+    {
+      "id": "shooting_contexts",
+      "priority": "P1",
+      "purpose": "Catch-and-shoot, pull-up, deep and midrange profiles",
+      "count": 14,
+      "required_sample_metadata": [
+        "attempts_by_shot_context",
+        "shot_distance_definition",
+        "stabilization_metadata"
+      ],
+      "engine_use_note": "situational shooting evidence; totals/subcomponents overlap"
+    },
+    {
+      "id": "finishing_access",
+      "priority": "P1",
+      "purpose": "Getting to the rim versus converting chances",
+      "count": 9,
+      "required_sample_metadata": [
+        "rim_fgm",
+        "rim_fga",
+        "drives",
+        "possessions",
+        "rim_distance_definition"
+      ],
+      "engine_use_note": "rim_pressure combines distinct access and finishing; do not double count composite"
+    },
+    {
+      "id": "fouls_post_touch",
+      "priority": "P1",
+      "purpose": "Contact/foul generation and post/intermediate outcomes",
+      "count": 9,
+      "required_sample_metadata": [
+        "drives",
+        "fouled_2pt_attempts",
+        "post_possessions",
+        "floater_attempts"
+      ],
+      "engine_use_note": "contact-finish denominator is fouled 2pt attempts, not all contact; post skill and opportunity differ"
+    },
+    {
+      "id": "passing_handling_creation",
+      "priority": "P1",
+      "purpose": "Passing production, reads, quality and ball security relative to opportunity",
+      "count": 14,
+      "required_sample_metadata": [
+        "touches",
+        "passes",
+        "potential_assists",
+        "turnover_types",
+        "isolation_possessions",
+        "drives"
+      ],
+      "engine_use_note": "passing_reads / handle_pressure; no direct pressure-specific handle or processing-speed measurement confirmed"
+    },
+    {
+      "id": "screening_rolling",
+      "priority": "P1",
+      "purpose": "Screen execution and roll/pop/slip production",
+      "count": 4,
+      "required_sample_metadata": [
+        "screens_set",
+        "roll_pop_slip_possessions",
+        "screen_action_definition"
+      ],
+      "engine_use_note": "screen model versus role/volume-adjusted scoring; impact name here means action production, not standalone intrinsic skill"
+    },
+    {
+      "id": "off_ball_movement",
+      "priority": "P1",
+      "purpose": "Cutting, off-screen use and movement context",
+      "count": 8,
+      "required_sample_metadata": [
+        "cut_attempts",
+        "offscreen_possessions",
+        "offensive_distance_time",
+        "role_definition"
+      ],
+      "engine_use_note": "movement speed/distance relative to offensive role, not intrinsic speed or stamina"
+    },
+    {
+      "id": "offensive_rebounding",
+      "priority": "P1",
+      "purpose": "Chance creation, conversion and putbacks",
+      "count": 9,
+      "required_sample_metadata": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "putback_attempts"
+      ],
+      "engine_use_note": "offensive_rebounding; crash execution is not necessarily coach-selected crash tendency"
+    },
+    {
+      "id": "defensive_rebounding",
+      "priority": "P1",
+      "purpose": "Separate securing rebounds and chance creation",
+      "count": 7,
+      "required_sample_metadata": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "box_outs_if_available"
+      ],
+      "engine_use_note": "DREB evidence may support blueprint; no automatic new trait or rim proxy substitution"
+    },
+    {
+      "id": "rim_contest_prevention",
+      "priority": "P1",
+      "purpose": "Contest outcome, opportunity and prevention",
+      "count": 9,
+      "required_sample_metadata": [
+        "defended_fgm",
+        "defended_fga",
+        "on_court_possessions",
+        "opponent_rim_attempts",
+        "distance_definition"
+      ],
+      "engine_use_note": "rim_deterrence; composite includes subchannels; height/role bonuses not additional observed evidence"
+    },
+    {
+      "id": "perimeter_screens_pursuit",
+      "priority": "P1",
+      "purpose": "Containment and navigation distinct from activity",
+      "count": 6,
+      "required_sample_metadata": [
+        "guarded_possessions",
+        "on_ball_screens",
+        "off_ball_screens",
+        "opponent_quality",
+        "assignment_time"
+      ],
+      "engine_use_note": "lateral / navigation evidence; provider estimates not pure physical tests"
+    },
+    {
+      "id": "help_activity_work",
+      "priority": "P1",
+      "purpose": "Help execution, disruptions and work context",
+      "count": 10,
+      "required_sample_metadata": [
+        "help_events",
+        "defensive_possessions",
+        "distance_time",
+        "fouls",
+        "matchup_context"
+      ],
+      "engine_use_note": "scheme_iq / defensive_effort; distance and role-adjusted travel not cardio capacity"
+    },
+    {
+      "id": "deployment_coverage",
+      "priority": "P1",
+      "purpose": "What was assigned, not what ability must be",
+      "count": 7,
+      "required_sample_metadata": [
+        "coverage_actions",
+        "assignment_shares",
+        "role_definition_version"
+      ],
+      "engine_use_note": "experimental role context only; no label-based talent grants"
+    }
+  ],
+  "fields": [
+    {
+      "group_id": "shooting_general",
+      "metric_name": "3PT %",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "shot_attempts",
+        "shot_makes",
+        "defender_distance_or_expected_quality_sample"
+      ],
+      "engine_use_note": "shooting_range / shot_versatility; no direct release-time measurement"
+    },
+    {
+      "group_id": "shooting_general",
+      "metric_name": "3PT FGA Per 75 Possessions",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "shot_attempts",
+        "shot_makes",
+        "defender_distance_or_expected_quality_sample"
+      ],
+      "engine_use_note": "shooting_range / shot_versatility; no direct release-time measurement"
+    },
+    {
+      "group_id": "shooting_general",
+      "metric_name": "3PT Shot Making",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "shot_attempts",
+        "shot_makes",
+        "defender_distance_or_expected_quality_sample"
+      ],
+      "engine_use_note": "shooting_range / shot_versatility; no direct release-time measurement"
+    },
+    {
+      "group_id": "shooting_general",
+      "metric_name": "3PT Shot Quality",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "shot_attempts",
+        "shot_makes",
+        "defender_distance_or_expected_quality_sample"
+      ],
+      "engine_use_note": "shooting_range / shot_versatility; no direct release-time measurement"
+    },
+    {
+      "group_id": "shooting_general",
+      "metric_name": "3PT Shot Creation",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "shot_attempts",
+        "shot_makes",
+        "defender_distance_or_expected_quality_sample"
+      ],
+      "engine_use_note": "shooting_range / shot_versatility; no direct release-time measurement"
+    },
+    {
+      "group_id": "shooting_general",
+      "metric_name": "3PT Functional Versatility",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "shot_attempts",
+        "shot_makes",
+        "defender_distance_or_expected_quality_sample"
+      ],
+      "engine_use_note": "shooting_range / shot_versatility; no direct release-time measurement"
+    },
+    {
+      "group_id": "shooting_general",
+      "metric_name": "Average 3PT Attempt Distance",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "shot_attempts",
+        "shot_makes",
+        "defender_distance_or_expected_quality_sample"
+      ],
+      "engine_use_note": "shooting_range / shot_versatility; no direct release-time measurement"
+    },
+    {
+      "group_id": "shooting_general",
+      "metric_name": "3PT Shooting Talent",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "shot_attempts",
+        "shot_makes",
+        "defender_distance_or_expected_quality_sample"
+      ],
+      "engine_use_note": "shooting_range / shot_versatility; no direct release-time measurement"
+    },
+    {
+      "group_id": "shooting_contexts",
+      "metric_name": "C&S 3PT FG%",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "attempts_by_shot_context",
+        "shot_distance_definition",
+        "stabilization_metadata"
+      ],
+      "engine_use_note": "situational shooting evidence; totals/subcomponents overlap"
+    },
+    {
+      "group_id": "shooting_contexts",
+      "metric_name": "C&S 3PT Shot Making",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "attempts_by_shot_context",
+        "shot_distance_definition",
+        "stabilization_metadata"
+      ],
+      "engine_use_note": "situational shooting evidence; totals/subcomponents overlap"
+    },
+    {
+      "group_id": "shooting_contexts",
+      "metric_name": "C&S 3PT Shot Quality",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "attempts_by_shot_context",
+        "shot_distance_definition",
+        "stabilization_metadata"
+      ],
+      "engine_use_note": "situational shooting evidence; totals/subcomponents overlap"
+    },
+    {
+      "group_id": "shooting_contexts",
+      "metric_name": "3PT Pull Up FG%",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "attempts_by_shot_context",
+        "shot_distance_definition",
+        "stabilization_metadata"
+      ],
+      "engine_use_note": "situational shooting evidence; totals/subcomponents overlap"
+    },
+    {
+      "group_id": "shooting_contexts",
+      "metric_name": "3PT Pull Up Shot Making",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "attempts_by_shot_context",
+        "shot_distance_definition",
+        "stabilization_metadata"
+      ],
+      "engine_use_note": "situational shooting evidence; totals/subcomponents overlap"
+    },
+    {
+      "group_id": "shooting_contexts",
+      "metric_name": "3PT Pull Up Shot Quality",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "attempts_by_shot_context",
+        "shot_distance_definition",
+        "stabilization_metadata"
+      ],
+      "engine_use_note": "situational shooting evidence; totals/subcomponents overlap"
+    },
+    {
+      "group_id": "shooting_contexts",
+      "metric_name": "Deep 3PT Shot Making",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "attempts_by_shot_context",
+        "shot_distance_definition",
+        "stabilization_metadata"
+      ],
+      "engine_use_note": "situational shooting evidence; totals/subcomponents overlap"
+    },
+    {
+      "group_id": "shooting_contexts",
+      "metric_name": "C&S to Pull Up Ratio",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "attempts_by_shot_context",
+        "shot_distance_definition",
+        "stabilization_metadata"
+      ],
+      "engine_use_note": "situational shooting evidence; totals/subcomponents overlap"
+    },
+    {
+      "group_id": "shooting_contexts",
+      "metric_name": "Corner 3 to ATB Ratio",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "attempts_by_shot_context",
+        "shot_distance_definition",
+        "stabilization_metadata"
+      ],
+      "engine_use_note": "situational shooting evidence; totals/subcomponents overlap"
+    },
+    {
+      "group_id": "shooting_contexts",
+      "metric_name": "Midrange Pull Up FG%",
+      "public_category": "One on One",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "attempts_by_shot_context",
+        "shot_distance_definition",
+        "stabilization_metadata"
+      ],
+      "engine_use_note": "situational shooting evidence; totals/subcomponents overlap"
+    },
+    {
+      "group_id": "shooting_contexts",
+      "metric_name": "Midrange Shot Making",
+      "public_category": "One on One",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "attempts_by_shot_context",
+        "shot_distance_definition",
+        "stabilization_metadata"
+      ],
+      "engine_use_note": "situational shooting evidence; totals/subcomponents overlap"
+    },
+    {
+      "group_id": "shooting_contexts",
+      "metric_name": "Midrange Shot Quality",
+      "public_category": "One on One",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "attempts_by_shot_context",
+        "shot_distance_definition",
+        "stabilization_metadata"
+      ],
+      "engine_use_note": "situational shooting evidence; totals/subcomponents overlap"
+    },
+    {
+      "group_id": "shooting_contexts",
+      "metric_name": "Stable C&S 3PT_pct",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "stabilized_estimate",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "attempts_by_shot_context",
+        "shot_distance_definition",
+        "stabilization_metadata"
+      ],
+      "engine_use_note": "situational shooting evidence; totals/subcomponents overlap"
+    },
+    {
+      "group_id": "shooting_contexts",
+      "metric_name": "Stable Pull Up 3PT_pct",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "stabilized_estimate",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "attempts_by_shot_context",
+        "shot_distance_definition",
+        "stabilization_metadata"
+      ],
+      "engine_use_note": "situational shooting evidence; totals/subcomponents overlap"
+    },
+    {
+      "group_id": "finishing_access",
+      "metric_name": "Rim FG%",
+      "public_category": "Finishing",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rim_fgm",
+        "rim_fga",
+        "drives",
+        "possessions",
+        "rim_distance_definition"
+      ],
+      "engine_use_note": "rim_pressure combines distinct access and finishing; do not double count composite"
+    },
+    {
+      "group_id": "finishing_access",
+      "metric_name": "Rim Shot Attempts Per 75 Possessions",
+      "public_category": "Finishing",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rim_fgm",
+        "rim_fga",
+        "drives",
+        "possessions",
+        "rim_distance_definition"
+      ],
+      "engine_use_note": "rim_pressure combines distinct access and finishing; do not double count composite"
+    },
+    {
+      "group_id": "finishing_access",
+      "metric_name": "% of Shots at Rim Unassisted",
+      "public_category": "Finishing",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rim_fgm",
+        "rim_fga",
+        "drives",
+        "possessions",
+        "rim_distance_definition"
+      ],
+      "engine_use_note": "rim_pressure combines distinct access and finishing; do not double count composite"
+    },
+    {
+      "group_id": "finishing_access",
+      "metric_name": "Rim Shot Creation",
+      "public_category": "Finishing",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rim_fgm",
+        "rim_fga",
+        "drives",
+        "possessions",
+        "rim_distance_definition"
+      ],
+      "engine_use_note": "rim_pressure combines distinct access and finishing; do not double count composite"
+    },
+    {
+      "group_id": "finishing_access",
+      "metric_name": "Rim Shot Making",
+      "public_category": "Finishing",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rim_fgm",
+        "rim_fga",
+        "drives",
+        "possessions",
+        "rim_distance_definition"
+      ],
+      "engine_use_note": "rim_pressure combines distinct access and finishing; do not double count composite"
+    },
+    {
+      "group_id": "finishing_access",
+      "metric_name": "Rim Shot Quality",
+      "public_category": "Finishing",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rim_fgm",
+        "rim_fga",
+        "drives",
+        "possessions",
+        "rim_distance_definition"
+      ],
+      "engine_use_note": "rim_pressure combines distinct access and finishing; do not double count composite"
+    },
+    {
+      "group_id": "finishing_access",
+      "metric_name": "Rim Openness Rating",
+      "public_category": "Finishing",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rim_fgm",
+        "rim_fga",
+        "drives",
+        "possessions",
+        "rim_distance_definition"
+      ],
+      "engine_use_note": "rim_pressure combines distinct access and finishing; do not double count composite"
+    },
+    {
+      "group_id": "finishing_access",
+      "metric_name": "Drives Per 75 Possessions",
+      "public_category": "Finishing",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rim_fgm",
+        "rim_fga",
+        "drives",
+        "possessions",
+        "rim_distance_definition"
+      ],
+      "engine_use_note": "rim_pressure combines distinct access and finishing; do not double count composite"
+    },
+    {
+      "group_id": "finishing_access",
+      "metric_name": "Finishing Talent",
+      "public_category": "Finishing",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rim_fgm",
+        "rim_fga",
+        "drives",
+        "possessions",
+        "rim_distance_definition"
+      ],
+      "engine_use_note": "rim_pressure combines distinct access and finishing; do not double count composite"
+    },
+    {
+      "group_id": "fouls_post_touch",
+      "metric_name": "Drive Foul Drawn Rate",
+      "public_category": "Finishing",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "drives",
+        "fouled_2pt_attempts",
+        "post_possessions",
+        "floater_attempts"
+      ],
+      "engine_use_note": "contact-finish denominator is fouled 2pt attempts, not all contact; post skill and opportunity differ"
+    },
+    {
+      "group_id": "fouls_post_touch",
+      "metric_name": "Contact Finish Rate",
+      "public_category": "Finishing",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "drives",
+        "fouled_2pt_attempts",
+        "post_possessions",
+        "floater_attempts"
+      ],
+      "engine_use_note": "contact-finish denominator is fouled 2pt attempts, not all contact; post skill and opportunity differ"
+    },
+    {
+      "group_id": "fouls_post_touch",
+      "metric_name": "Floater FG%",
+      "public_category": "One on One",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "drives",
+        "fouled_2pt_attempts",
+        "post_possessions",
+        "floater_attempts"
+      ],
+      "engine_use_note": "contact-finish denominator is fouled 2pt attempts, not all contact; post skill and opportunity differ"
+    },
+    {
+      "group_id": "fouls_post_touch",
+      "metric_name": "Floater Shot Making",
+      "public_category": "One on One",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "drives",
+        "fouled_2pt_attempts",
+        "post_possessions",
+        "floater_attempts"
+      ],
+      "engine_use_note": "contact-finish denominator is fouled 2pt attempts, not all contact; post skill and opportunity differ"
+    },
+    {
+      "group_id": "fouls_post_touch",
+      "metric_name": "Floater Shot Quality",
+      "public_category": "One on One",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "drives",
+        "fouled_2pt_attempts",
+        "post_possessions",
+        "floater_attempts"
+      ],
+      "engine_use_note": "contact-finish denominator is fouled 2pt attempts, not all contact; post skill and opportunity differ"
+    },
+    {
+      "group_id": "fouls_post_touch",
+      "metric_name": "Paint Touches Per 75 Possessions",
+      "public_category": "Post Play",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "drives",
+        "fouled_2pt_attempts",
+        "post_possessions",
+        "floater_attempts"
+      ],
+      "engine_use_note": "contact-finish denominator is fouled 2pt attempts, not all contact; post skill and opportunity differ"
+    },
+    {
+      "group_id": "fouls_post_touch",
+      "metric_name": "Post Up Draw Foul Rate",
+      "public_category": "Post Play",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "drives",
+        "fouled_2pt_attempts",
+        "post_possessions",
+        "floater_attempts"
+      ],
+      "engine_use_note": "contact-finish denominator is fouled 2pt attempts, not all contact; post skill and opportunity differ"
+    },
+    {
+      "group_id": "fouls_post_touch",
+      "metric_name": "Post Up Points Per Shot",
+      "public_category": "Post Play",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "drives",
+        "fouled_2pt_attempts",
+        "post_possessions",
+        "floater_attempts"
+      ],
+      "engine_use_note": "contact-finish denominator is fouled 2pt attempts, not all contact; post skill and opportunity differ"
+    },
+    {
+      "group_id": "fouls_post_touch",
+      "metric_name": "Stable Post Up PPP",
+      "public_category": "Post Play",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "stabilized_estimate",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "drives",
+        "fouled_2pt_attempts",
+        "post_possessions",
+        "floater_attempts"
+      ],
+      "engine_use_note": "contact-finish denominator is fouled 2pt attempts, not all contact; post skill and opportunity differ"
+    },
+    {
+      "group_id": "passing_handling_creation",
+      "metric_name": "Passing Creation Volume",
+      "public_category": "Playmaking",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "touches",
+        "passes",
+        "potential_assists",
+        "turnover_types",
+        "isolation_possessions",
+        "drives"
+      ],
+      "engine_use_note": "passing_reads / handle_pressure; no direct pressure-specific handle or processing-speed measurement confirmed"
+    },
+    {
+      "group_id": "passing_handling_creation",
+      "metric_name": "Passing Creation Quality",
+      "public_category": "Playmaking",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "touches",
+        "passes",
+        "potential_assists",
+        "turnover_types",
+        "isolation_possessions",
+        "drives"
+      ],
+      "engine_use_note": "passing_reads / handle_pressure; no direct pressure-specific handle or processing-speed measurement confirmed"
+    },
+    {
+      "group_id": "passing_handling_creation",
+      "metric_name": "Passing Efficiency",
+      "public_category": "Playmaking",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "touches",
+        "passes",
+        "potential_assists",
+        "turnover_types",
+        "isolation_possessions",
+        "drives"
+      ],
+      "engine_use_note": "passing_reads / handle_pressure; no direct pressure-specific handle or processing-speed measurement confirmed"
+    },
+    {
+      "group_id": "passing_handling_creation",
+      "metric_name": "Passing Versatility",
+      "public_category": "Playmaking",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "touches",
+        "passes",
+        "potential_assists",
+        "turnover_types",
+        "isolation_possessions",
+        "drives"
+      ],
+      "engine_use_note": "passing_reads / handle_pressure; no direct pressure-specific handle or processing-speed measurement confirmed"
+    },
+    {
+      "group_id": "passing_handling_creation",
+      "metric_name": "Playmaking Talent",
+      "public_category": "Playmaking",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "touches",
+        "passes",
+        "potential_assists",
+        "turnover_types",
+        "isolation_possessions",
+        "drives"
+      ],
+      "engine_use_note": "passing_reads / handle_pressure; no direct pressure-specific handle or processing-speed measurement confirmed"
+    },
+    {
+      "group_id": "passing_handling_creation",
+      "metric_name": "On-Ball Gravity",
+      "public_category": "Playmaking",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "touches",
+        "passes",
+        "potential_assists",
+        "turnover_types",
+        "isolation_possessions",
+        "drives"
+      ],
+      "engine_use_note": "passing_reads / handle_pressure; no direct pressure-specific handle or processing-speed measurement confirmed"
+    },
+    {
+      "group_id": "passing_handling_creation",
+      "metric_name": "Potential Assists Per 100 Passes",
+      "public_category": "Playmaking",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "touches",
+        "passes",
+        "potential_assists",
+        "turnover_types",
+        "isolation_possessions",
+        "drives"
+      ],
+      "engine_use_note": "passing_reads / handle_pressure; no direct pressure-specific handle or processing-speed measurement confirmed"
+    },
+    {
+      "group_id": "passing_handling_creation",
+      "metric_name": "Role-Adjusted Potential Assists Per 100 Passes",
+      "public_category": "Playmaking",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "touches",
+        "passes",
+        "potential_assists",
+        "turnover_types",
+        "isolation_possessions",
+        "drives"
+      ],
+      "engine_use_note": "passing_reads / handle_pressure; no direct pressure-specific handle or processing-speed measurement confirmed"
+    },
+    {
+      "group_id": "passing_handling_creation",
+      "metric_name": "Box Creation",
+      "public_category": "Playmaking",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "touches",
+        "passes",
+        "potential_assists",
+        "turnover_types",
+        "isolation_possessions",
+        "drives"
+      ],
+      "engine_use_note": "passing_reads / handle_pressure; no direct pressure-specific handle or processing-speed measurement confirmed"
+    },
+    {
+      "group_id": "passing_handling_creation",
+      "metric_name": "Turnovers Per 100 Touches",
+      "public_category": "Playmaking",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "touches",
+        "passes",
+        "potential_assists",
+        "turnover_types",
+        "isolation_possessions",
+        "drives"
+      ],
+      "engine_use_note": "passing_reads / handle_pressure; no direct pressure-specific handle or processing-speed measurement confirmed"
+    },
+    {
+      "group_id": "passing_handling_creation",
+      "metric_name": "Stable Lost Ball Turnovers Per 75",
+      "public_category": "Playmaking",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "stabilized_estimate",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "touches",
+        "passes",
+        "potential_assists",
+        "turnover_types",
+        "isolation_possessions",
+        "drives"
+      ],
+      "engine_use_note": "passing_reads / handle_pressure; no direct pressure-specific handle or processing-speed measurement confirmed"
+    },
+    {
+      "group_id": "passing_handling_creation",
+      "metric_name": "Stable Live Ball Bad Pass Turnovers Per 75",
+      "public_category": "Playmaking",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "stabilized_estimate",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "touches",
+        "passes",
+        "potential_assists",
+        "turnover_types",
+        "isolation_possessions",
+        "drives"
+      ],
+      "engine_use_note": "passing_reads / handle_pressure; no direct pressure-specific handle or processing-speed measurement confirmed"
+    },
+    {
+      "group_id": "passing_handling_creation",
+      "metric_name": "Isolation Turnover Rate",
+      "public_category": "One on One",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "touches",
+        "passes",
+        "potential_assists",
+        "turnover_types",
+        "isolation_possessions",
+        "drives"
+      ],
+      "engine_use_note": "passing_reads / handle_pressure; no direct pressure-specific handle or processing-speed measurement confirmed"
+    },
+    {
+      "group_id": "passing_handling_creation",
+      "metric_name": "Drive Passout Rate",
+      "public_category": "Finishing",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "touches",
+        "passes",
+        "potential_assists",
+        "turnover_types",
+        "isolation_possessions",
+        "drives"
+      ],
+      "engine_use_note": "passing_reads / handle_pressure; no direct pressure-specific handle or processing-speed measurement confirmed"
+    },
+    {
+      "group_id": "screening_rolling",
+      "metric_name": "Screen Assists Per 75 Possessions",
+      "public_category": "Screening & Rolling",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "screens_set",
+        "roll_pop_slip_possessions",
+        "screen_action_definition"
+      ],
+      "engine_use_note": "screen model versus role/volume-adjusted scoring; impact name here means action production, not standalone intrinsic skill"
+    },
+    {
+      "group_id": "screening_rolling",
+      "metric_name": "Screening Talent",
+      "public_category": "Screening & Rolling",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "screens_set",
+        "roll_pop_slip_possessions",
+        "screen_action_definition"
+      ],
+      "engine_use_note": "screen model versus role/volume-adjusted scoring; impact name here means action production, not standalone intrinsic skill"
+    },
+    {
+      "group_id": "screening_rolling",
+      "metric_name": "Roll Man Poss Per 75 Possessions",
+      "public_category": "Screening & Rolling",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "screens_set",
+        "roll_pop_slip_possessions",
+        "screen_action_definition"
+      ],
+      "engine_use_note": "screen model versus role/volume-adjusted scoring; impact name here means action production, not standalone intrinsic skill"
+    },
+    {
+      "group_id": "screening_rolling",
+      "metric_name": "Roll Man Impact Per 75 Possessions",
+      "public_category": "Screening & Rolling",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "screens_set",
+        "roll_pop_slip_possessions",
+        "screen_action_definition"
+      ],
+      "engine_use_note": "screen model versus role/volume-adjusted scoring; impact name here means action production, not standalone intrinsic skill"
+    },
+    {
+      "group_id": "off_ball_movement",
+      "metric_name": "Cuts Per 75 Possessions",
+      "public_category": "Off-Ball Movement",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "cut_attempts",
+        "offscreen_possessions",
+        "offensive_distance_time",
+        "role_definition"
+      ],
+      "engine_use_note": "movement speed/distance relative to offensive role, not intrinsic speed or stamina"
+    },
+    {
+      "group_id": "off_ball_movement",
+      "metric_name": "Cut FG%",
+      "public_category": "Off-Ball Movement",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "cut_attempts",
+        "offscreen_possessions",
+        "offensive_distance_time",
+        "role_definition"
+      ],
+      "engine_use_note": "movement speed/distance relative to offensive role, not intrinsic speed or stamina"
+    },
+    {
+      "group_id": "off_ball_movement",
+      "metric_name": "Off-Ball Screen Possessions Per 75 Possessions",
+      "public_category": "Off-Ball Movement",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "cut_attempts",
+        "offscreen_possessions",
+        "offensive_distance_time",
+        "role_definition"
+      ],
+      "engine_use_note": "movement speed/distance relative to offensive role, not intrinsic speed or stamina"
+    },
+    {
+      "group_id": "off_ball_movement",
+      "metric_name": "Off-Ball Screen eFG%",
+      "public_category": "Off-Ball Movement",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "cut_attempts",
+        "offscreen_possessions",
+        "offensive_distance_time",
+        "role_definition"
+      ],
+      "engine_use_note": "movement speed/distance relative to offensive role, not intrinsic speed or stamina"
+    },
+    {
+      "group_id": "off_ball_movement",
+      "metric_name": "Movement Attack Rate",
+      "public_category": "Off-Ball Movement",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "cut_attempts",
+        "offscreen_possessions",
+        "offensive_distance_time",
+        "role_definition"
+      ],
+      "engine_use_note": "movement speed/distance relative to offensive role, not intrinsic speed or stamina"
+    },
+    {
+      "group_id": "off_ball_movement",
+      "metric_name": "Movement Distance Rating",
+      "public_category": "Off-Ball Movement",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "cut_attempts",
+        "offscreen_possessions",
+        "offensive_distance_time",
+        "role_definition"
+      ],
+      "engine_use_note": "movement speed/distance relative to offensive role, not intrinsic speed or stamina"
+    },
+    {
+      "group_id": "off_ball_movement",
+      "metric_name": "Movement Speed Rating",
+      "public_category": "Off-Ball Movement",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "cut_attempts",
+        "offscreen_possessions",
+        "offensive_distance_time",
+        "role_definition"
+      ],
+      "engine_use_note": "movement speed/distance relative to offensive role, not intrinsic speed or stamina"
+    },
+    {
+      "group_id": "off_ball_movement",
+      "metric_name": "Off-Ball Gravity",
+      "public_category": "Perimeter Shooting",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "cut_attempts",
+        "offscreen_possessions",
+        "offensive_distance_time",
+        "role_definition"
+      ],
+      "engine_use_note": "movement speed/distance relative to offensive role, not intrinsic speed or stamina"
+    },
+    {
+      "group_id": "offensive_rebounding",
+      "metric_name": "Offensive Rebounds Per 75 Possessions",
+      "public_category": "Offensive Rebounding",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "putback_attempts"
+      ],
+      "engine_use_note": "offensive_rebounding; crash execution is not necessarily coach-selected crash tendency"
+    },
+    {
+      "group_id": "offensive_rebounding",
+      "metric_name": "Offensive Rebounding Chances Per 75 Possessions",
+      "public_category": "Offensive Rebounding",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "putback_attempts"
+      ],
+      "engine_use_note": "offensive_rebounding; crash execution is not necessarily coach-selected crash tendency"
+    },
+    {
+      "group_id": "offensive_rebounding",
+      "metric_name": "Adjusted Offensive Rebounding Success Rate",
+      "public_category": "Offensive Rebounding",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "putback_attempts"
+      ],
+      "engine_use_note": "offensive_rebounding; crash execution is not necessarily coach-selected crash tendency"
+    },
+    {
+      "group_id": "offensive_rebounding",
+      "metric_name": "Percentage of Offensive Rebounds Contested",
+      "public_category": "Offensive Rebounding",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "putback_attempts"
+      ],
+      "engine_use_note": "offensive_rebounding; crash execution is not necessarily coach-selected crash tendency"
+    },
+    {
+      "group_id": "offensive_rebounding",
+      "metric_name": "Offensive Rebounding Crashing Skill",
+      "public_category": "Offensive Rebounding",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "putback_attempts"
+      ],
+      "engine_use_note": "offensive_rebounding; crash execution is not necessarily coach-selected crash tendency"
+    },
+    {
+      "group_id": "offensive_rebounding",
+      "metric_name": "Offensive Rebounding Conversion Skill",
+      "public_category": "Offensive Rebounding",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "putback_attempts"
+      ],
+      "engine_use_note": "offensive_rebounding; crash execution is not necessarily coach-selected crash tendency"
+    },
+    {
+      "group_id": "offensive_rebounding",
+      "metric_name": "Offensive Rebounding Talent",
+      "public_category": "Offensive Rebounding",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "putback_attempts"
+      ],
+      "engine_use_note": "offensive_rebounding; crash execution is not necessarily coach-selected crash tendency"
+    },
+    {
+      "group_id": "offensive_rebounding",
+      "metric_name": "Putback per Offensive Rebound",
+      "public_category": "Offensive Rebounding",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "putback_attempts"
+      ],
+      "engine_use_note": "offensive_rebounding; crash execution is not necessarily coach-selected crash tendency"
+    },
+    {
+      "group_id": "offensive_rebounding",
+      "metric_name": "Putback Points Per Shot",
+      "public_category": "Offensive Rebounding",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "putback_attempts"
+      ],
+      "engine_use_note": "offensive_rebounding; crash execution is not necessarily coach-selected crash tendency"
+    },
+    {
+      "group_id": "defensive_rebounding",
+      "metric_name": "Defensive Reb Per 75 Possessions",
+      "public_category": "Defensive Rebounding",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "box_outs_if_available"
+      ],
+      "engine_use_note": "DREB evidence may support blueprint; no automatic new trait or rim proxy substitution"
+    },
+    {
+      "group_id": "defensive_rebounding",
+      "metric_name": "Defensive Rebonding Chances Per 75 Possessions",
+      "public_category": "Defensive Rebounding",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "box_outs_if_available"
+      ],
+      "engine_use_note": "DREB evidence may support blueprint; no automatic new trait or rim proxy substitution"
+    },
+    {
+      "group_id": "defensive_rebounding",
+      "metric_name": "Adjusted Defensive Rebounding Success Rate",
+      "public_category": "Defensive Rebounding",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "box_outs_if_available"
+      ],
+      "engine_use_note": "DREB evidence may support blueprint; no automatic new trait or rim proxy substitution"
+    },
+    {
+      "group_id": "defensive_rebounding",
+      "metric_name": "Percentage of Defensive Rebounds Contested",
+      "public_category": "Defensive Rebounding",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "box_outs_if_available"
+      ],
+      "engine_use_note": "DREB evidence may support blueprint; no automatic new trait or rim proxy substitution"
+    },
+    {
+      "group_id": "defensive_rebounding",
+      "metric_name": "Defensive Rebounding Crashing Skill",
+      "public_category": "Defensive Rebounding",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "box_outs_if_available"
+      ],
+      "engine_use_note": "DREB evidence may support blueprint; no automatic new trait or rim proxy substitution"
+    },
+    {
+      "group_id": "defensive_rebounding",
+      "metric_name": "Defensive Rebounding Conversion Skill",
+      "public_category": "Defensive Rebounding",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "box_outs_if_available"
+      ],
+      "engine_use_note": "DREB evidence may support blueprint; no automatic new trait or rim proxy substitution"
+    },
+    {
+      "group_id": "defensive_rebounding",
+      "metric_name": "Defensive Rebounding Talent",
+      "public_category": "Defensive Rebounding",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "rebounding_chances",
+        "contested_chances",
+        "deferred_chances",
+        "box_outs_if_available"
+      ],
+      "engine_use_note": "DREB evidence may support blueprint; no automatic new trait or rim proxy substitution"
+    },
+    {
+      "group_id": "rim_contest_prevention",
+      "metric_name": "Rim dFG% vs Expected",
+      "public_category": "Interior Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "historical_only_if_in_retained_sample",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "defended_fgm",
+        "defended_fga",
+        "on_court_possessions",
+        "opponent_rim_attempts",
+        "distance_definition"
+      ],
+      "engine_use_note": "rim_deterrence; composite includes subchannels; height/role bonuses not additional observed evidence"
+    },
+    {
+      "group_id": "rim_contest_prevention",
+      "metric_name": "Rim Contests Per 75 Possessions",
+      "public_category": "Interior Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "historical_only_if_in_retained_sample",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "defended_fgm",
+        "defended_fga",
+        "on_court_possessions",
+        "opponent_rim_attempts",
+        "distance_definition"
+      ],
+      "engine_use_note": "rim_deterrence; composite includes subchannels; height/role bonuses not additional observed evidence"
+    },
+    {
+      "group_id": "rim_contest_prevention",
+      "metric_name": "Stable Rim dFG% vs. Expected",
+      "public_category": "Interior Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "stabilized_estimate",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "defended_fgm",
+        "defended_fga",
+        "on_court_possessions",
+        "opponent_rim_attempts",
+        "distance_definition"
+      ],
+      "engine_use_note": "rim_deterrence; composite includes subchannels; height/role bonuses not additional observed evidence"
+    },
+    {
+      "group_id": "rim_contest_prevention",
+      "metric_name": "Stable Rim DFGA Per 75 Possessions",
+      "public_category": "Interior Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "stabilized_estimate",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "defended_fgm",
+        "defended_fga",
+        "on_court_possessions",
+        "opponent_rim_attempts",
+        "distance_definition"
+      ],
+      "engine_use_note": "rim_deterrence; composite includes subchannels; height/role bonuses not additional observed evidence"
+    },
+    {
+      "group_id": "rim_contest_prevention",
+      "metric_name": "Rim Deterrence",
+      "public_category": "Interior Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "defended_fgm",
+        "defended_fga",
+        "on_court_possessions",
+        "opponent_rim_attempts",
+        "distance_definition"
+      ],
+      "engine_use_note": "rim_deterrence; composite includes subchannels; height/role bonuses not additional observed evidence"
+    },
+    {
+      "group_id": "rim_contest_prevention",
+      "metric_name": "Rim Deterrence Per 100",
+      "public_category": "Interior Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "defended_fgm",
+        "defended_fga",
+        "on_court_possessions",
+        "opponent_rim_attempts",
+        "distance_definition"
+      ],
+      "engine_use_note": "rim_deterrence; composite includes subchannels; height/role bonuses not additional observed evidence"
+    },
+    {
+      "group_id": "rim_contest_prevention",
+      "metric_name": "Block Rate on Contests",
+      "public_category": "Interior Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "defended_fgm",
+        "defended_fga",
+        "on_court_possessions",
+        "opponent_rim_attempts",
+        "distance_definition"
+      ],
+      "engine_use_note": "rim_deterrence; composite includes subchannels; height/role bonuses not additional observed evidence"
+    },
+    {
+      "group_id": "rim_contest_prevention",
+      "metric_name": "Rim Protection",
+      "public_category": "Interior Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "historical_only_if_in_retained_sample",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "defended_fgm",
+        "defended_fga",
+        "on_court_possessions",
+        "opponent_rim_attempts",
+        "distance_definition"
+      ],
+      "engine_use_note": "rim_deterrence; composite includes subchannels; height/role bonuses not additional observed evidence"
+    },
+    {
+      "group_id": "rim_contest_prevention",
+      "metric_name": "Screener Rim Defense",
+      "public_category": "Interior Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "defended_fgm",
+        "defended_fga",
+        "on_court_possessions",
+        "opponent_rim_attempts",
+        "distance_definition"
+      ],
+      "engine_use_note": "rim_deterrence; composite includes subchannels; height/role bonuses not additional observed evidence"
+    },
+    {
+      "group_id": "perimeter_screens_pursuit",
+      "metric_name": "Perimeter Isolation Defense",
+      "public_category": "Perimeter Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "guarded_possessions",
+        "on_ball_screens",
+        "off_ball_screens",
+        "opponent_quality",
+        "assignment_time"
+      ],
+      "engine_use_note": "lateral / navigation evidence; provider estimates not pure physical tests"
+    },
+    {
+      "group_id": "perimeter_screens_pursuit",
+      "metric_name": "Ball Screen Navigation",
+      "public_category": "Perimeter Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "historical_only_if_in_retained_sample",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "guarded_possessions",
+        "on_ball_screens",
+        "off_ball_screens",
+        "opponent_quality",
+        "assignment_time"
+      ],
+      "engine_use_note": "lateral / navigation evidence; provider estimates not pure physical tests"
+    },
+    {
+      "group_id": "perimeter_screens_pursuit",
+      "metric_name": "Off-Ball Chaser Defense",
+      "public_category": "Perimeter Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "historical_only_if_in_retained_sample",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "guarded_possessions",
+        "on_ball_screens",
+        "off_ball_screens",
+        "opponent_quality",
+        "assignment_time"
+      ],
+      "engine_use_note": "lateral / navigation evidence; provider estimates not pure physical tests"
+    },
+    {
+      "group_id": "perimeter_screens_pursuit",
+      "metric_name": "Screener Mobile Defense",
+      "public_category": "Interior Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "historical_only_if_in_retained_sample",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "guarded_possessions",
+        "on_ball_screens",
+        "off_ball_screens",
+        "opponent_quality",
+        "assignment_time"
+      ],
+      "engine_use_note": "lateral / navigation evidence; provider estimates not pure physical tests"
+    },
+    {
+      "group_id": "perimeter_screens_pursuit",
+      "metric_name": "Matchup Difficulty",
+      "public_category": "Contextual Data",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "historical_only_if_in_retained_sample",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "guarded_possessions",
+        "on_ball_screens",
+        "off_ball_screens",
+        "opponent_quality",
+        "assignment_time"
+      ],
+      "engine_use_note": "lateral / navigation evidence; provider estimates not pure physical tests"
+    },
+    {
+      "group_id": "perimeter_screens_pursuit",
+      "metric_name": "Defensive Positional Versatility",
+      "public_category": "Contextual Data",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "guarded_possessions",
+        "on_ball_screens",
+        "off_ball_screens",
+        "opponent_quality",
+        "assignment_time"
+      ],
+      "engine_use_note": "lateral / navigation evidence; provider estimates not pure physical tests"
+    },
+    {
+      "group_id": "help_activity_work",
+      "metric_name": "Help Defense Talent",
+      "public_category": "Interior Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "help_events",
+        "defensive_possessions",
+        "distance_time",
+        "fouls",
+        "matchup_context"
+      ],
+      "engine_use_note": "scheme_iq / defensive_effort; distance and role-adjusted travel not cardio capacity"
+    },
+    {
+      "group_id": "help_activity_work",
+      "metric_name": "Help Defensive Activity",
+      "public_category": "Interior Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "help_events",
+        "defensive_possessions",
+        "distance_time",
+        "fouls",
+        "matchup_context"
+      ],
+      "engine_use_note": "scheme_iq / defensive_effort; distance and role-adjusted travel not cardio capacity"
+    },
+    {
+      "group_id": "help_activity_work",
+      "metric_name": "Help Effectiveness Rating",
+      "public_category": "Interior Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "help_events",
+        "defensive_possessions",
+        "distance_time",
+        "fouls",
+        "matchup_context"
+      ],
+      "engine_use_note": "scheme_iq / defensive_effort; distance and role-adjusted travel not cardio capacity"
+    },
+    {
+      "group_id": "help_activity_work",
+      "metric_name": "Deflections Per 75 Possessions",
+      "public_category": "Perimeter Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "help_events",
+        "defensive_possessions",
+        "distance_time",
+        "fouls",
+        "matchup_context"
+      ],
+      "engine_use_note": "scheme_iq / defensive_effort; distance and role-adjusted travel not cardio capacity"
+    },
+    {
+      "group_id": "help_activity_work",
+      "metric_name": "Passing Lane Defense",
+      "public_category": "Perimeter Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "help_events",
+        "defensive_possessions",
+        "distance_time",
+        "fouls",
+        "matchup_context"
+      ],
+      "engine_use_note": "scheme_iq / defensive_effort; distance and role-adjusted travel not cardio capacity"
+    },
+    {
+      "group_id": "help_activity_work",
+      "metric_name": "Pickpocket Rating",
+      "public_category": "Perimeter Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "help_events",
+        "defensive_possessions",
+        "distance_time",
+        "fouls",
+        "matchup_context"
+      ],
+      "engine_use_note": "scheme_iq / defensive_effort; distance and role-adjusted travel not cardio capacity"
+    },
+    {
+      "group_id": "help_activity_work",
+      "metric_name": "Defensive Miles Per 75 Possessions",
+      "public_category": "Perimeter Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "historical_only_if_in_retained_sample",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "help_events",
+        "defensive_possessions",
+        "distance_time",
+        "fouls",
+        "matchup_context"
+      ],
+      "engine_use_note": "scheme_iq / defensive_effort; distance and role-adjusted travel not cardio capacity"
+    },
+    {
+      "group_id": "help_activity_work",
+      "metric_name": "Matchup Adjusted Defensive Feet Per Minute",
+      "public_category": "Perimeter Defense",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "help_events",
+        "defensive_possessions",
+        "distance_time",
+        "fouls",
+        "matchup_context"
+      ],
+      "engine_use_note": "scheme_iq / defensive_effort; distance and role-adjusted travel not cardio capacity"
+    },
+    {
+      "group_id": "help_activity_work",
+      "metric_name": "Fouls Committed / 75",
+      "public_category": "Contextual Data",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "help_events",
+        "defensive_possessions",
+        "distance_time",
+        "fouls",
+        "matchup_context"
+      ],
+      "engine_use_note": "scheme_iq / defensive_effort; distance and role-adjusted travel not cardio capacity"
+    },
+    {
+      "group_id": "help_activity_work",
+      "metric_name": "% of Minutes in Foul Trouble",
+      "public_category": "Contextual Data",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "observational_rate_or_summary",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "help_events",
+        "defensive_possessions",
+        "distance_time",
+        "fouls",
+        "matchup_context"
+      ],
+      "engine_use_note": "scheme_iq / defensive_effort; distance and role-adjusted travel not cardio capacity"
+    },
+    {
+      "group_id": "deployment_coverage",
+      "metric_name": "Defensive Role Versatility",
+      "public_category": "Contextual Data",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "coverage_actions",
+        "assignment_shares",
+        "role_definition_version"
+      ],
+      "engine_use_note": "experimental role context only; no label-based talent grants"
+    },
+    {
+      "group_id": "deployment_coverage",
+      "metric_name": "P&R Coverage Aggression",
+      "public_category": "Contextual Data",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "coverage_actions",
+        "assignment_shares",
+        "role_definition_version"
+      ],
+      "engine_use_note": "experimental role context only; no label-based talent grants"
+    },
+    {
+      "group_id": "deployment_coverage",
+      "metric_name": "P&R Coverage Versatility",
+      "public_category": "Contextual Data",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "coverage_actions",
+        "assignment_shares",
+        "role_definition_version"
+      ],
+      "engine_use_note": "experimental role context only; no label-based talent grants"
+    },
+    {
+      "group_id": "deployment_coverage",
+      "metric_name": "DHO Coverage Aggression",
+      "public_category": "Contextual Data",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "coverage_actions",
+        "assignment_shares",
+        "role_definition_version"
+      ],
+      "engine_use_note": "experimental role context only; no label-based talent grants"
+    },
+    {
+      "group_id": "deployment_coverage",
+      "metric_name": "DHO Coverage Versatility",
+      "public_category": "Contextual Data",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "coverage_actions",
+        "assignment_shares",
+        "role_definition_version"
+      ],
+      "engine_use_note": "experimental role context only; no label-based talent grants"
+    },
+    {
+      "group_id": "deployment_coverage",
+      "metric_name": "Off-Ball Coverage Aggression",
+      "public_category": "Contextual Data",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "coverage_actions",
+        "assignment_shares",
+        "role_definition_version"
+      ],
+      "engine_use_note": "experimental role context only; no label-based talent grants"
+    },
+    {
+      "group_id": "deployment_coverage",
+      "metric_name": "Off-Ball Coverage Versatility",
+      "public_category": "Contextual Data",
+      "priority": "P1",
+      "documentation_status": "public_glossary_entry_label_verified; exact units/version and account availability require capture-time confirmation",
+      "paid_player_season_access": "unverified",
+      "public_demo_values": "not_acquired",
+      "evidence_kind_working_label": "provider_model_or_context",
+      "units": "verify exact encoding; per75/per100/percent names are not sample counts",
+      "required_samples": [
+        "coverage_actions",
+        "assignment_shares",
+        "role_definition_version"
+      ],
+      "engine_use_note": "experimental role context only; no label-based talent grants"
+    }
+  ],
+  "essential_metadata": {
+    "requested": [
+      "provider_player_id_if_exposed",
+      "player_name_raw",
+      "season_label_raw",
+      "season_type",
+      "team_stint_or_total",
+      "minutes",
+      "games_if_exposed",
+      "age_or_birthdate_if_exposed",
+      "provider_as_of",
+      "retrieved_at_utc",
+      "units",
+      "representation",
+      "query_filters",
+      "source_url",
+      "capture_method",
+      "sample_denominators",
+      "missing_reason"
+    ],
+    "availability": "minutes/names/season/team/roles verified in historical demo; other IDs/counts/as-of/units availability must be checked"
+  },
+  "requested_not_confirmed": [
+    {
+      "field": "raw shot/defended-shot/screen/help event counts and provider sample reliability",
+      "reason": "rates and model values do not establish event denominators"
+    },
+    {
+      "field": "box-out counts, opportunities and outcomes",
+      "reason": "DREB chance/conversion not identical to box-out technique; not located in inspected catalog categories"
+    },
+    {
+      "field": "pressure-tagged dribble/handle errors, recovery speed, strength, release time, true cardio capacity",
+      "reason": "not established by public metric names or current model descriptions"
+    },
+    {
+      "field": "opponent-ID and offensive-role assignment shares/time",
+      "reason": "roles and difficulty exist but row-level shares/IDs availability unverified"
+    },
+    {
+      "field": "bulk CSV/XLSX skill export and retention route",
+      "reason": "no public skills-export promise verified; must use exposed permitted download/copy methods"
+    }
+  ],
+  "supporting_P2": {
+    "scope": "same useful P1 families in2023-24 where available, season-age/injury/role flags and historical definitions; complete all requested-year presence/missingness matrix",
+    "do_not_infer": "absence does not mean zero ability; prior season not NBA yet, injury or metric not collected may explain absence"
+  },
+  "optional_P3": {
+    "families": [
+      "LEBRON / O-LEBRON / D-LEBRON / WAR",
+      "Offensive Talent / Defensive Talent composites and optimization",
+      "stabilized lineup outcomes and teammate/opponent context",
+      "minutes and roster context",
+      "age-curve projections",
+      "separate postseason skill/action samples"
+    ],
+    "purpose": "validation, drift/confounder checks and forecasts only; no direct simulator coefficients or imported potential/growth mechanics",
+    "access_status": "package/free-tool documentation varies; exact fields/seasons/player rows unverified except prior historical sample"
+  },
+  "population": {
+    "acquire": "all exposed NBA player-season rows in essential seasons, including low-minute/free-agent and traded players; do not restrict to stars or prototype cases",
+    "join": "provider IDs to canonical IDs via explicit NBA/ESPN/name-team-season crosswalk; no invented ID",
+    "report_strata": [
+      "all rows",
+      ">=500-minute descriptive audit stratum",
+      "<500-minute stratum",
+      "rookies",
+      "traded/multi-team players",
+      "current free agents with NBA history",
+      "no-NBA-history prospects separately excluded"
+    ],
+    "no_ability_filter": "minutes threshold for reports is not acquisition eligibility or talent floor"
+  },
+  "feasibility_pilot": [
+    "Stephen Curry",
+    "Luka Doncic",
+    "Jalen Brunson",
+    "Dylan Harper",
+    "Desmond Bane",
+    "Derrick White",
+    "Scottie Barnes",
+    "Victor Wembanyama",
+    "Isaiah Stewart",
+    "Jay Huff",
+    "Nick Richards",
+    "Alex Caruso"
+  ],
+  "permitted_paths": [
+    "exposed provider CSV/XLSX or documented download if actually available",
+    "exposed table copy with headers and pagination manifest when permitted",
+    "visible read-only table capture with exact filters and QA when permitted; no hidden state/endpoints"
+  ],
+  "not_authorized": [
+    "purchase",
+    "credentials",
+    "paid account navigation",
+    "paywall/hidden endpoint access",
+    "bulk player data acquisition in this planning task",
+    "rate-limit retries",
+    "production imports",
+    "simulations"
+  ],
+  "success_targets": {
+    "identity_coverage": "goal >=95% eligible canonical NBA veterans for each completed essential season, with100% unmatched/missing rows assigned reasons; target not promise",
+    "channel_coverage": "all13 P1 groups attempted league-wide; report each exact metric and channel coverage, opportunity/sample quality separately, and never call a composite-only group independent subchannel coverage",
+    "missingness": "no silent zero-fill; unknown denominators/units explicitly recorded",
+    "reproducibility": "each preserved batch has source/filter/as-of/retrieval/representation/hash metadata; normalized records link back to raw cells",
+    "value": "two observed seasons of broad distinct offense/defense/context coverage outweigh many redundant columns or a narrow star-only sample"
+  },
+  "definition_checks": {
+    "verified_public_examples": [
+      "3PT Shot Making",
+      "3PT Shot Quality",
+      "3PT Shot Creation",
+      "3PT Functional Versatility",
+      "Finishing Talent",
+      "Rim Shot Creation",
+      "Rim Shot Quality",
+      "Contact Finish Rate",
+      "Drive Foul Drawn Rate",
+      "Passing Creation Quality",
+      "Passing Efficiency",
+      "Passing Versatility",
+      "Screening Talent",
+      "Roll Man Impact Per 75 Possessions",
+      "Movement Speed Rating",
+      "Movement Distance Rating",
+      "Offensive Rebounding Crashing Skill",
+      "Offensive Rebounding Conversion Skill",
+      "Defensive Rebounding Crashing Skill",
+      "Defensive Rebounding Conversion Skill",
+      "Adjusted Defensive Rebounding Success Rate",
+      "Perimeter Isolation Defense",
+      "Matchup Adjusted Defensive Feet Per Minute",
+      "Help Defensive Activity",
+      "Help Effectiveness Rating"
+    ],
+    "summary": "Targeted public definitions read for counts/rates versus provider estimates and role-relative measures. Not a claim every field has unchanged formula across all seasons. Typographic/raw labels must be preserved."
+  }
+}

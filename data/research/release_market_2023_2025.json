@@ -1,0 +1,39 @@
+{
+  "retrieved_on": "2026-10-27",
+  "scope": "Explicit completed buyouts in the spring veteran market-watch lists; not all waivers, not all annual buyouts, and not a league-wide census.",
+  "spring_samples": [
+    {
+      "year": 2023,
+      "source_url": "https://www.hoopsrumors.com/2023/02/2023-nba-buyout-market-watch.html",
+      "explicit_buyouts": ["Reggie Jackson", "Danny Green", "Terrence Ross", "Justin Holiday", "Kevin Love", "Patrick Beverley", "Russell Westbrook", "Will Barton", "Leandro Bolmaro", "Nerlens Noel"],
+      "count": 10
+    },
+    {
+      "year": 2024,
+      "source_url": "https://www.hoopsrumors.com/2024/02/2024-nba-buyout-market-watch.html",
+      "explicit_buyouts": ["Daniel Theis", "Kyle Lowry", "Delon Wright", "Mike Muscala", "Shake Milton"],
+      "count": 5
+    },
+    {
+      "year": 2025,
+      "source_url": "https://www.hoopsrumors.com/2025/02/2025-nba-buyout-market-watch.html",
+      "explicit_buyouts": ["Ben Simmons", "Javonte Green"],
+      "count": 2
+    }
+  ],
+  "stretch_examples_not_annual_totals": [
+    {"year": 2023, "player": "JaVale McGee", "source_url": "https://www.hoopsrumors.com/2023/08/mavericks-officially-waive-javale-mcgee.html"},
+    {"year": 2024, "player": "Nassir Little", "source_url": "https://www.nbcsports.com/nba/news/suns-waive-nassir-little-ej-liddell-to-open-up-roster-spot"},
+    {"year": 2025, "player": "Damian Lillard", "source_url": "https://api-hub.nba.com/news/damian-lillard-to-return-to-trail-blazers"},
+    {"year": 2025, "player": "Bradley Beal", "source_url": "https://www.nbcsports.com/nba/news/phoenix-suns-bradley-beal-agree-to-buyout-guard-will-sign-two-year-contract-with-clippers"}
+  ],
+  "rules": [
+    "https://cms.nba.com/wp-content/uploads/sites/4/2024/11/2024-25-CBA-101.pdf",
+    "https://www.nbpa.com/cba"
+  ],
+  "limits": [
+    "Market-watch coverage is selective and the cutoff dates differ. Count only explicitly labeled completed buyouts, not possible candidates or ordinary waivers.",
+    "The examples establish real stretch usage in several years but do not establish its exact annual frequency.",
+    "Do not turn these samples into mandatory transaction quotas."
+  ]
+}

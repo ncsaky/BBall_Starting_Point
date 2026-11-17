@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/GSW-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/GSW-v2-1.jpg",
+      "kind": "basketball",
+      "team": "GSW",
+      "clips": [
+        {
+          "source_start": 2,
+          "frames": 300,
+          "team": "GSW",
+          "opponent": "LAL",
+          "action": "Warriors assist and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 13,
+          "frames": 300,
+          "team": "GSW",
+          "opponent": "DEN",
+          "action": "Curry late three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 636
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/GSW-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/GSW-v2-2.jpg",
+      "kind": "basketball",
+      "team": "GSW",
+      "clips": [
+        {
+          "source_start": 38,
+          "frames": 180,
+          "team": "GSW",
+          "opponent": "MEM",
+          "action": "Warriors steal and scoring play",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 54,
+          "frames": 450,
+          "team": "GSW",
+          "opponent": "MIL",
+          "action": "Curry three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 666
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/GSW-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/GSW-v2-3.jpg",
+      "kind": "basketball",
+      "team": "GSW",
+      "clips": [
+        {
+          "source_start": 92,
+          "frames": 390,
+          "team": "GSW",
+          "opponent": "SAC",
+          "action": "Warriors lob finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 144,
+          "frames": 360,
+          "team": "GSW",
+          "opponent": "SAS",
+          "action": "Curry jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 786
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "qJxK4Ki0XlY",
+    "url": "https://www.youtube.com/watch?v=qJxK4Ki0XlY",
+    "title": "Golden State Warriors Plays of the Year | 2025-26 NBA Season",
+    "channel": "Golden State Warriors",
+    "path": ".cache/startup-team-correction/GSW.mp4",
+    "query": "2025-26 Golden State Warriors Stephen Curry best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 2,
+      "frames": 300,
+      "team": "GSW",
+      "opponent": "LAL",
+      "action": "Warriors assist and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 13,
+      "frames": 300,
+      "team": "GSW",
+      "opponent": "DEN",
+      "action": "Curry late three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 38,
+      "frames": 180,
+      "team": "GSW",
+      "opponent": "MEM",
+      "action": "Warriors steal and scoring play",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 54,
+      "frames": 450,
+      "team": "GSW",
+      "opponent": "MIL",
+      "action": "Curry three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 92,
+      "frames": 390,
+      "team": "GSW",
+      "opponent": "SAC",
+      "action": "Warriors lob finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 144,
+      "frames": 360,
+      "team": "GSW",
+      "opponent": "SAS",
+      "action": "Curry jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 93.13333333333334
+}

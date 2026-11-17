@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/CHI-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/CHI-v2-1.jpg",
+      "kind": "basketball",
+      "team": "CHI",
+      "clips": [
+        {
+          "source_start": 8.5,
+          "frames": 255,
+          "team": "CHI",
+          "opponent": "UTA",
+          "action": "Giddey driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 17,
+          "frames": 330,
+          "team": "CHI",
+          "opponent": "ATL",
+          "action": "Giddey drive in Atlanta",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 621
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/CHI-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/CHI-v2-2.jpg",
+      "kind": "basketball",
+      "team": "CHI",
+      "clips": [
+        {
+          "source_start": 28,
+          "frames": 300,
+          "team": "CHI",
+          "opponent": "MIL",
+          "action": "Giddey assist for Bulls finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 63,
+          "frames": 210,
+          "team": "CHI",
+          "opponent": "CHA",
+          "action": "Giddey long pass and Bulls finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 546
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/CHI-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/CHI-v2-3.jpg",
+      "kind": "basketball",
+      "team": "CHI",
+      "clips": [
+        {
+          "source_start": 82,
+          "frames": 300,
+          "team": "CHI",
+          "opponent": "PHI",
+          "action": "Giddey assist against Philadelphia",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 103,
+          "frames": 270,
+          "team": "CHI",
+          "opponent": "LAC",
+          "action": "Giddey assist and Bulls finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 606
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "yYtzjK0GAKE",
+    "url": "https://www.youtube.com/watch?v=yYtzjK0GAKE",
+    "title": "20 minutes of Josh Giddey dropping dimes & getting buckets",
+    "channel": "Chicago Bulls",
+    "path": ".cache/startup-team-correction/CHI.mp4",
+    "query": "2025-26 Chicago Bulls Josh Giddey best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 8.5,
+      "frames": 255,
+      "team": "CHI",
+      "opponent": "UTA",
+      "action": "Giddey driving basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 17,
+      "frames": 330,
+      "team": "CHI",
+      "opponent": "ATL",
+      "action": "Giddey drive in Atlanta",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 28,
+      "frames": 300,
+      "team": "CHI",
+      "opponent": "MIL",
+      "action": "Giddey assist for Bulls finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 63,
+      "frames": 210,
+      "team": "CHI",
+      "opponent": "CHA",
+      "action": "Giddey long pass and Bulls finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 82,
+      "frames": 300,
+      "team": "CHI",
+      "opponent": "PHI",
+      "action": "Giddey assist against Philadelphia",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 103,
+      "frames": 270,
+      "team": "CHI",
+      "opponent": "LAC",
+      "action": "Giddey assist and Bulls finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 82.63333333333334
+}

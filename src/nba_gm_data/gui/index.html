@@ -4,13 +4,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>NBA GM Sandbox</title>
-    <link rel="stylesheet" href="/styles.css" />
-    <link rel="stylesheet" href="/interface.css" />
-    <link rel="stylesheet" href="/design-studies.css" />
-    <link rel="stylesheet" href="/paper-fidelity.css" />
-    <link rel="stylesheet" href="/card-board.css" />
+    <link rel="stylesheet" href="/styles.css?v=opponent-injury-ticker-1" />
+    <link rel="stylesheet" href="/interface.css?v=contract-security-1" />
+    <link rel="stylesheet" href="/production-skin.css?v=box-score-free-throws-38" />
+    <link rel="stylesheet" href="/paper-fidelity.css?v=roster-content-fit-86" />
+    <link rel="stylesheet" href="/card-board.css?v=next-opponent-sort-band-9" />
+    <link rel="stylesheet" href="/startup.css?v=click-to-open-4" />
+    <link rel="stylesheet" href="/tutorial.css" />
+    <link rel="stylesheet" href="/assistant-phone.css?v=live-sim-trade-alerts-1" />
+    <link rel="stylesheet" href="/trade-workspace.css?v=trade-window-chrome-5" />
+    <link rel="stylesheet" href="/heatmaps.css?v=continuous-1" />
   </head>
-  <body class="unified-terminal-ui" data-review-skin="silver">
+  <body class="unified-terminal-ui">
     <div id="app">
       <main>
         <header class="topbar">
@@ -30,51 +35,146 @@
         <div id="multiplayerBar" class="multiplayer-bar" hidden></div>
 
         <section id="startupScreen" class="startup-screen" hidden>
-          <div class="startup-card">
-            <div class="brand startup-brand">
-              <div class="mark">GM</div>
-              <div>
-                <h1>NBA GM Sandbox</h1>
-                <p id="startupRuntime">Loading engine...</p>
-              </div>
+          <div class="startup-video-backdrop" aria-hidden="true">
+            <video class="startup-video-player" data-startup-video muted loop playsinline
+              preload="none" tabindex="-1" poster="/assets/startup/video/poster.jpg"></video>
+            <video class="startup-channel-static" data-startup-static muted playsinline preload="none" tabindex="-1"></video>
+            <div class="startup-video-tint"></div>
+            <div class="startup-video-dots"></div>
+            <div class="startup-video-vignette"></div>
+          </div>
+          <div class="startup-photo-rail" aria-hidden="true">
+            <div class="startup-photo-track">
+              <figure class="startup-photo"><img src="/assets/startup/press/iguodala.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/carmelo-anthony.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/james-worthy.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/kobe-bryant.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/kobe-bryant-layup.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/larry-sanders.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/lebron-james.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/pau-gasol.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/giannis-antetokounmpo.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/bradley-beal.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/curry-thunder-wide.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/thunder-team-celebration.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/shai-vs-rockets.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/thunder-bucks-action.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/thunder-paint-action.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/curry-team-moment.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/lebron-edwards-postgame.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/lebron-edwards-drive.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/lebron-edwards-matchup.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/lebron-wade-team-usa.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/iguodala.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/carmelo-anthony.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/james-worthy.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/kobe-bryant.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/kobe-bryant-layup.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/larry-sanders.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/lebron-james.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/pau-gasol.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/giannis-antetokounmpo.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/bradley-beal.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/curry-thunder-wide.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/thunder-team-celebration.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/shai-vs-rockets.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/thunder-bucks-action.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/thunder-paint-action.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/curry-team-moment.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/lebron-edwards-postgame.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/lebron-edwards-drive.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/lebron-edwards-matchup.png" alt="" /></figure>
+              <figure class="startup-photo"><img src="/assets/startup/press/lebron-wade-team-usa.png" alt="" /></figure>
             </div>
+          </div>
+          <div class="startup-content">
             <div class="startup-grid">
-              <section>
-                <div class="section-head"><h3>Load Save</h3><button id="startupRefreshSaves">Refresh</button></div>
-                <select id="startupSaveSelect"></select>
-                <button id="startupLoadSave" class="primary-action">Enter Save</button>
+              <section class="startup-pane startup-load-pane" data-startup-pane="load">
+                <button type="button" class="startup-pane-preview" aria-expanded="false" aria-controls="startup-load-content">
+                  <svg class="startup-preview-icon" viewBox="0 0 36 36" aria-hidden="true"><path d="M7 4h15l5 5v23H7z M12 4v10h10V4 M12 22h10v10H12z"/></svg>
+                  <span class="startup-preview-copy"><strong>Load Save</strong><span>Continue your league</span></span>
+                  <span class="startup-preview-chevron" aria-hidden="true">⌃</span>
+                </button>
+                <div id="startup-load-content" class="startup-pane-content" hidden inert>
+                <div class="startup-pane-toolbar"><span>Saved leagues</span><button id="startupRefreshSaves" class="ui-command">Refresh</button></div>
+                <select id="startupSaveSelect" aria-label="Saved leagues" aria-describedby="startupSaveHealth"></select>
+                <p id="startupSaveHealth" class="startup-save-status" role="status" hidden></p>
+                <button id="startupLoadSave" class="ui-command startup-primary-action">Enter Save</button>
+                <div class="startup-save-actions">
+                  <button id="startupExportSave" class="ui-command" disabled>Export Backup</button>
+                  <button id="startupRecoverSave" class="ui-command" disabled>Recover Previous</button>
+                </div>
+                <div class="startup-save-restore">
+                  <label for="startupRestoreName">Restore backup into a new save</label>
+                  <input id="startupRestoreName" placeholder="New save name" autocomplete="off" />
+                  <input id="startupRestoreFile" type="file" accept=".zip,application/zip" aria-label="Choose a save backup ZIP" hidden />
+                  <button id="startupRestoreSave" class="ui-command">Restore Backup…</button>
+                </div>
+                <p id="startupSaveMessage" class="startup-save-status" role="status" aria-live="polite" hidden></p>
+                <button type="button" id="startupReportIssue" class="ui-command">Report an Issue</button>
+              
+                </div>
               </section>
-              <section>
-                <div class="section-head"><h3>New Save</h3></div>
-                <select id="teamSelect" title="New save team">
+              <section class="startup-pane startup-new-pane" data-startup-pane="new">
+                <button type="button" class="startup-pane-preview" aria-expanded="false" aria-controls="startup-new-content">
+                  <svg class="startup-preview-icon" viewBox="0 0 36 36" aria-hidden="true"><path d="M3 6h30v24H3z M18 6v24 M18 13a5 5 0 1 0 0 10 5 5 0 0 0 0-10 M3 12h5v12H3 M33 12h-5v12h5"/></svg>
+                  <span class="startup-preview-copy"><strong>New Save</strong><span>Choose your franchise</span></span>
+                  <span class="startup-preview-chevron" aria-hidden="true">⌃</span>
+                </button>
+                <div id="startup-new-content" class="startup-pane-content" hidden inert>
+                <p class="startup-field-hint">CHOOSE YOUR FRANCHISE · PREVIEW HIGHLIGHTS</p>
+                <div class="startup-team-picker">
+                  <div class="startup-team-selected">
+                    <span class="startup-team-selection-label">Selected team</span>
+                    <div class="startup-selected-team-mark"><img id="startupTeamSelectedLogo" alt="" hidden /><b id="startupTeamSelectedFallback" aria-hidden="true">?</b></div>
+                    <strong id="startupTeamSelectedName">Random team</strong>
+                  </div>
+                  <div class="startup-wheel-controls">
+                    <button type="button" class="ui-command startup-wheel-step" data-startup-wheel-step="-1" aria-label="Previous team">‹</button>
+                    <div id="startupTeamWheel" class="startup-team-wheel" role="radiogroup" aria-label="Choose a team"></div>
+                    <button type="button" class="ui-command startup-wheel-step" data-startup-wheel-step="1" aria-label="Next team">›</button>
+                  </div>
+                </div>
+                <select id="teamSelect" class="startup-team-select-native" title="New save team" aria-hidden="true" tabindex="-1">
                   <option value="random">Random team</option>
                 </select>
-                <select id="gameModeSelect" title="New save game mode">
-                  <option value="standard">Standard Rosters</option>
-                  <option value="fantasy_draft">Fantasy Draft</option>
-                </select>
-                <input id="saveName" placeholder="Save name" />
-                <button id="createSave" class="primary-action">Create New Save</button>
-              </section>
-              <section class="multiplayer-start-card">
-                <div class="section-head">
-                  <div>
-                    <p class="eyebrow">Shared League</p>
-                    <h3>Multiplayer</h3>
-                  </div>
-                  <span class="live-dot">Live</span>
+                <div class="startup-new-fields">
+                  <label><span>League format</span><select id="gameModeSelect" title="New save game mode">
+                    <option value="standard">Standard Rosters</option>
+                    <option value="fantasy_draft">Fantasy Draft</option>
+                  </select></label>
+                  <label><span>Save name <small>Optional</small></span><input id="saveName" placeholder="My League" /></label>
                 </div>
+                <button id="createSave" class="ui-command startup-primary-action">Create New Save</button>
+              
+                </div>
+              </section>
+              <section class="startup-pane multiplayer-start-card" data-startup-pane="multiplayer">
+                <button type="button" class="startup-pane-preview" aria-expanded="false" aria-controls="startup-multiplayer-content">
+                  <svg class="startup-preview-icon" viewBox="0 0 36 36" aria-hidden="true"><path d="M12 15a5 5 0 1 0 0-10 5 5 0 0 0 0 10 M25 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M3 30v-5c0-8 18-8 18 0v5 M24 21c7-1 9 3 9 9"/></svg>
+                  <span class="startup-preview-copy"><strong>Multiplayer</strong><span>Run a league together</span></span>
+                  <span class="startup-preview-chevron" aria-hidden="true">⌃</span>
+                </button>
+                <div id="startup-multiplayer-content" class="startup-pane-content" hidden inert>
+                <span class="startup-live-indicator"><i></i> Shared league</span>
                 <input id="multiplayerName" maxlength="32" placeholder="Your GM name" />
                 <div class="multiplayer-start-actions">
                   <input id="multiplayerLeagueName" maxlength="64" placeholder="League name" />
-                  <button id="multiplayerCreate" class="primary-action">Create Lobby</button>
+                  <button id="multiplayerCreate" class="ui-command startup-primary-action">Create Lobby</button>
                 </div>
                 <div class="multiplayer-join-row">
                   <input id="multiplayerCode" maxlength="6" placeholder="JOIN CODE" />
-                  <button id="multiplayerJoin">Join</button>
+                  <button id="multiplayerJoin" class="ui-command">Join</button>
+                </div>
+              
                 </div>
               </section>
             </div>
+            <footer class="startup-photo-credits">
+              Muted NBA action and draft-room footage, screened in the project dot-press style.
+              <a href="/assets/startup/ATTRIBUTION.md" target="_blank" rel="noreferrer">Photo credits and licenses</a>
+              <a href="/assets/startup/VIDEO_SOURCES.md" target="_blank" rel="noreferrer">Video sources</a>
+            </footer>
             <section id="multiplayerLobby" class="multiplayer-lobby" hidden></section>
           </div>
         </section>
@@ -84,6 +184,7 @@
 
     <div id="toast" class="toast" hidden></div>
     <div id="modalRoot" class="modal-root" hidden></div>
+    <div id="gameTutorial" class="game-tutorial" hidden></div>
     <div id="appLoading" class="app-loading-overlay" role="dialog" aria-modal="true" aria-labelledby="appLoadingLabel" aria-hidden="true" hidden>
       <section class="app-loading-window">
         <header>NBA GM Sandbox</header>
@@ -93,11 +194,19 @@
         </div>
       </section>
     </div>
-    <script src="/interface.js" defer></script>
-    <script src="/card-board.js" defer></script>
-    <script src="/app.js" defer></script>
-    <script src="/assets-desktop.js" defer></script>
-    <script src="/interface-review.js" defer></script>
-    <script src="/density-concepts.js" defer></script>
+    <script src="/interface.js?v=player-finder-128" defer></script>
+    <script src="/card-visuals.js?v=player-finder-128" defer></script>
+    <script src="/card-board.js?v=live-sim-stats-trades-1" defer></script>
+    <script src="/startup-cards.js?v=player-finder-128" defer></script>
+    <script src="/startup-video.js?v=player-finder-128" defer></script>
+    <script src="/feedback.js?v=player-finder-128" defer></script>
+    <script src="/assistant-phone.js?v=live-sim-trade-alerts-1" defer></script>
+    <script src="/trade-projection.js?v=rotation-preview-1" defer></script>
+    <script src="/trade-pick-terms.js?v=1" defer></script>
+    <script src="/simulation-presentation.js?v=live-1" defer></script>
+    <script src="/app.js?v=next-opponent-sort-band-3" defer></script>
+    <script src="/assets-desktop.js?v=live-sim-stats-trades-1" defer></script>
+    <script src="/team-wants.js?v=1" defer></script>
+    <link rel="stylesheet" href="/team-wants.css?v=1">
   </body>
 </html>

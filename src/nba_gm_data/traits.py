@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import math
 from bisect import bisect_left, bisect_right
 from collections import defaultdict
 from dataclasses import replace
@@ -9,6 +10,49 @@ from typing import Any
 
 from .schema import CANONICAL_START_DATE, TraitValue
 from .utils import clamp, confidence_from_fields, mean, maybe_float, normalize_name, percentile, stable_id
+
+STAMINA_SOURCE_ID = "src_imported_stamina_role_bonus_v6"
+
+
+def inferred_stamina(workload: list[float | None], role_bonus: float) -> float | None:
+    values = [value for value in workload if value is not None and math.isfinite(value)]
+    estimate = mean(values)
+    return clamp(estimate + role_bonus) if estimate is not None else None
+
+
+def repair_preserved_stamina(traits: list[TraitValue]) -> tuple[list[TraitValue], dict[str, Any]]:
+    """Correct only preserved, unreviewed values that reconcile to old math."""
+    protected = {"manual_calibration", "roster_alignment", "imported_rookie_prior",
+                 "league_trait_rating_calibration", "stamina_role_bonus_v6"}
+    updated, changes = [], []
+    for trait in traits:
+        components = trait.components
+        pieces = components.get("components")
+        if (trait.trait_key != "stamina_cardio" or not components.get("2026_roster_refresh")
+                or protected & components.keys() or not isinstance(pieces, list) or len(pieces) not in (2, 3)):
+            updated.append(trait)
+            continue
+        bonus = components.get("role_bonus", pieces[2] if len(pieces) == 3 else 0)
+        values = [value for value in pieces[:2] if value is not None]
+        if not values or bonus is None or not all(isinstance(v, (int, float)) and math.isfinite(v) for v in [*values, bonus]):
+            updated.append(trait)
+            continue
+        legacy = mean([*values, bonus])
+        target = inferred_stamina(pieces[:2], bonus)
+        if abs(trait.value - legacy) > .021 or target is None or abs(target - trait.value) < .01:
+            updated.append(trait)
+            continue
+        info = {"previous": trait.value, "corrected": round(target, 2),
+                "workload_percentiles": pieces[:2], "role_bonus": bonus,
+                "reason": "role_bonus_is_additive_not_an_evidence_sample"}
+        changes.append({"player_id": trait.player_id, **info})
+        updated.append(replace(trait, value=round(target, 2),
+            source_ids=list(dict.fromkeys([*trait.source_ids, STAMINA_SOURCE_ID])),
+            source_kind=f"{trait.source_kind}_stamina_role_bonus_v6",
+            confidence=min(trait.confidence, .62),
+            components={**components, "stamina_role_bonus_v6": info},
+            notes=f"{trait.notes} V6 additive role-bonus arithmetic correction; availability remains separate."))
+    return updated, {"policy": "preserved_unreviewed_stamina_role_bonus_v6", "adjusted_trait_count": len(changes), "changes": changes}
 
 
 TRAIT_LABELS = {
@@ -535,7 +579,7 @@ def _maybe_int(value: Any) -> int | None:
         return None
 
 
-def build_traits_for_player(row: dict[str, Any], row_idx: int, player_id: str, percentiles: dict[str, dict[int, float]]) -> list[TraitValue]:
+def build_traits_for_player(row: dict[str, Any], row_idx: int, player_id: str, percentiles: dict[str, dict[int, float]], *, legacy_stamina: bool = False) -> list[TraitValue]:
     role_off = str(row.get("primaryOffRole") or row.get("O_Role") or "")
     role_def = str(row.get("primaryDefRole") or row.get("d_role") or "")
     position = str(row.get("position") or row.get("Pos") or "")
@@ -635,13 +679,16 @@ def build_traits_for_player(row: dict[str, Any], row_idx: int, player_id: str, p
         {"components": agility_components},
     )
 
-    stamina_components = [p("minutes"), p("2025minutes"), role_boost("movement shooter", "movement ball", amount=8)]
+    stamina_components = [p("minutes"), p("2025minutes")]
+    stamina_bonus = role_boost("movement shooter", "movement ball", amount=8)
     trait_specs["stamina_cardio"] = (
-        mean(stamina_components),
+        mean([*stamina_components, stamina_bonus]) if legacy_stamina else inferred_stamina(stamina_components, stamina_bonus),
         confidence_from_fields(row, ["minutes", "2025minutes"], base=0.22, cap=0.62),
         ["minutes", "2025minutes", "primaryOffRole"],
         "Inferred from projected minutes, prior minutes, and movement-heavy offensive role.",
-        {"components": stamina_components},
+        ({"components": [*stamina_components, stamina_bonus]} if legacy_stamina else
+         {"components": stamina_components, "role_bonus": stamina_bonus,
+          "aggregation": "workload_mean_plus_role_bonus"}),
     )
 
     effort_boost = role_boost("disruptor", "on-ball", "versatile", amount=12)

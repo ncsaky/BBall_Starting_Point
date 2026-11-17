@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/PHI-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/PHI-v2-1.jpg",
+      "kind": "basketball",
+      "team": "PHI",
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 165,
+          "team": "PHI",
+          "opponent": "BOS",
+          "action": "Maxey jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 60,
+          "frames": 240,
+          "team": "PHI",
+          "opponent": "WAS",
+          "action": "Maxey jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 441
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/PHI-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/PHI-v2-2.jpg",
+      "kind": "basketball",
+      "team": "PHI",
+      "clips": [
+        {
+          "source_start": 142,
+          "frames": 360,
+          "team": "PHI",
+          "opponent": "DET",
+          "action": "Maxey drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 98,
+          "frames": 270,
+          "team": "PHI",
+          "opponent": "CHI",
+          "action": "Maxey jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 666
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/PHI-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/PHI-v2-3.jpg",
+      "kind": "basketball",
+      "team": "PHI",
+      "clips": [
+        {
+          "source_start": 109,
+          "frames": 165,
+          "team": "PHI",
+          "opponent": "CLE",
+          "action": "Maxey finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 130,
+          "frames": 330,
+          "team": "PHI",
+          "opponent": "DET",
+          "action": "Maxey assist and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 531
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "inpnEbumi2I",
+    "url": "https://www.youtube.com/watch?v=inpnEbumi2I",
+    "title": "Tyrese Maxey Keeps On LEVELING UP | 2025-26 Season Highlights",
+    "channel": "Philadelphia 76ers",
+    "path": ".cache/startup-team-correction/PHI.mp4",
+    "query": "2025-26 Philadelphia 76ers Tyrese Maxey best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 0,
+      "frames": 165,
+      "team": "PHI",
+      "opponent": "BOS",
+      "action": "Maxey jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 60,
+      "frames": 240,
+      "team": "PHI",
+      "opponent": "WAS",
+      "action": "Maxey jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 142,
+      "frames": 360,
+      "team": "PHI",
+      "opponent": "DET",
+      "action": "Maxey drive and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 98,
+      "frames": 270,
+      "team": "PHI",
+      "opponent": "CHI",
+      "action": "Maxey jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 109,
+      "frames": 165,
+      "team": "PHI",
+      "opponent": "CLE",
+      "action": "Maxey finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 130,
+      "frames": 330,
+      "team": "PHI",
+      "opponent": "DET",
+      "action": "Maxey assist and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 78.13333333333334
+}

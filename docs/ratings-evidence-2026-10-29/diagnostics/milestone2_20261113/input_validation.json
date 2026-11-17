@@ -1,0 +1,24 @@
+{
+  "accepted": true,
+  "utility": "nba_gm_data.player_model.PlayerInputs + validate_input_section",
+  "version": "player_performance_inputs_v1",
+  "registry_version": "player_performance_registry_v1",
+  "counts": {
+    "players": 12,
+    "explicit_inputs_per_player": 31,
+    "explicit_records": 372,
+    "reported_physical_estimates": 36,
+    "scouting_technique_estimates": 8,
+    "unknown_records": 328,
+    "other_approved_inputs_omitted_as_unknown_per_player": 63,
+    "scenario_sections": 8,
+    "context_conditions": 7
+  },
+  "sections_accepted": 9,
+  "source_section_roundtrip_exact": true,
+  "all94_registry_ids_preserved": true,
+  "registry_sha256": "9cc7c51792a202ebdfa83105c92b5ce1dcbe2496844341ec758c68e246255e94",
+  "validator_sha256": "af55fbe292a0b86d601a1530e5be231a02c05593ac6405b31ae7df40e0cb52ba",
+  "no_save_or_game_calls": true,
+  "meaning": "validation proves storage contract only, not physics, coefficients or player accuracy"
+}

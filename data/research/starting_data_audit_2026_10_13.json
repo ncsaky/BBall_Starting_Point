@@ -1,0 +1,3043 @@
+{
+  "snapshot_date": "2026-10-13",
+  "scope": "starting_data_for_new_saves_only",
+  "teams": 30,
+  "official_players": 616,
+  "underlying_picks": 420,
+  "protected_terms": 17,
+  "swap_terms": 68,
+  "owner_corrections": 232,
+  "returning_trait_changes": 0,
+  "synthetic_draft_orders_audited": 700,
+  "brooklyn_2029_orderings_audited": 6,
+  "starting_save_terms_preserved": 85,
+  "existing_baseline_players_contracts_picks_unchanged": true,
+  "team_roster_changes": [
+    {
+      "team": "ATL",
+      "official_roster_count": 21,
+      "added": [
+        "Cameron Corhen",
+        "Dorian Finney-Smith",
+        "Isaac McKneely",
+        "Kobe Johnson"
+      ],
+      "removed": [
+        "Buddy Hield",
+        "Devin Carter",
+        "Gabe Vincent",
+        "Jonathan Kuminga",
+        "Keaton Wallace",
+        "Ryan Nembhard",
+        "Tony Bradley"
+      ]
+    },
+    {
+      "team": "BKN",
+      "official_roster_count": 19,
+      "added": [
+        "Ben Humrichous",
+        "Grant Nelson",
+        "Moritz Wagner"
+      ],
+      "removed": [
+        "E.J. Liddell",
+        "Tyson Etienne"
+      ]
+    },
+    {
+      "team": "BOS",
+      "official_roster_count": 21,
+      "added": [
+        "Devin Carter",
+        "Gabe McGlothan",
+        "Hayden Gray"
+      ],
+      "removed": [
+        "Max Shulga"
+      ]
+    },
+    {
+      "team": "CHA",
+      "official_roster_count": 21,
+      "added": [
+        "Dennis Schröder",
+        "Jarkel Joiner",
+        "Wyatt Fricks"
+      ],
+      "removed": [
+        "Antonio Reeves",
+        "Dorian Finney-Smith",
+        "Mouhamadou Gueye",
+        "Tre Mann",
+        "Xavier Tillman"
+      ]
+    },
+    {
+      "team": "CHI",
+      "official_roster_count": 21,
+      "added": [
+        "Brandon Boston",
+        "Buddy Hield",
+        "Drew Peterson",
+        "Jalen Bridges",
+        "Jordan Hawkins",
+        "Orlando Robinson"
+      ],
+      "removed": [
+        "Rob Dillingham"
+      ]
+    },
+    {
+      "team": "CLE",
+      "official_roster_count": 21,
+      "added": [
+        "Jaxson Robinson",
+        "Khalifa Diop",
+        "Mario Hezonja",
+        "Noam Yaacov",
+        "Peyton Watson",
+        "Rashaun Agee",
+        "Zack Austin"
+      ],
+      "removed": [
+        "Dennis Schröder",
+        "Max Strus",
+        "Olivier Sarr"
+      ]
+    },
+    {
+      "team": "DAL",
+      "official_roster_count": 21,
+      "added": [
+        "Matt Cross",
+        "Seth Lundy"
+      ],
+      "removed": [
+        "Brandon Williams",
+        "Klay Thompson",
+        "Vsevolod Ishchenko"
+      ]
+    },
+    {
+      "team": "DEN",
+      "official_roster_count": 20,
+      "added": [
+        "Cam Whitmore",
+        "Coleman Hawkins",
+        "Dane Goodwin",
+        "DeMar DeRozan",
+        "Emanuel Miller",
+        "Ryan Nembhard"
+      ],
+      "removed": [
+        "Bruce Brown",
+        "Curtis Jones",
+        "David Roddy",
+        "Jalen Pickett",
+        "KJ Simpson",
+        "Peyton Watson"
+      ]
+    },
+    {
+      "team": "DET",
+      "official_roster_count": 20,
+      "added": [
+        "Brice Williams",
+        "John Ukomadu"
+      ],
+      "removed": [
+        "Gary Harris",
+        "Wendell Moore Jr."
+      ]
+    },
+    {
+      "team": "GSW",
+      "official_roster_count": 21,
+      "added": [
+        "Alex Toohey",
+        "Brandon Williams",
+        "Dalen Terry",
+        "Georges Niang",
+        "Graham Ike",
+        "Tyler Burton"
+      ],
+      "removed": [
+        "Lajae Jones",
+        "Nate Williams",
+        "Seth Curry"
+      ]
+    },
+    {
+      "team": "HOU",
+      "official_roster_count": 18,
+      "added": [
+        "Sean Pedulla"
+      ],
+      "removed": [
+        "Aaron Holiday",
+        "JD Davison",
+        "Jeff Green",
+        "Tristen Newton"
+      ]
+    },
+    {
+      "team": "IND",
+      "official_roster_count": 20,
+      "added": [
+        "James Johnson",
+        "Keba Keita",
+        "Rienk Mast"
+      ],
+      "removed": [
+        "Ethan Thompson"
+      ]
+    },
+    {
+      "team": "LAC",
+      "official_roster_count": 21,
+      "added": [
+        "Blake Wesley",
+        "Brandon Ingram",
+        "Gradey Dick",
+        "Jahmyl Telfort",
+        "Jalen Pickett",
+        "Max Strus",
+        "Yuki Kawamura"
+      ],
+      "removed": [
+        "Bennedict Mathurin",
+        "Kawhi Leonard",
+        "Narcisse Ngoy",
+        "Nicolas Batum",
+        "Norchad Omier",
+        "Sean Pedulla",
+        "TyTy Washington Jr."
+      ]
+    },
+    {
+      "team": "LAL",
+      "official_roster_count": 21,
+      "added": [
+        "Cole Swider",
+        "Rafael Castro"
+      ],
+      "removed": []
+    },
+    {
+      "team": "MEM",
+      "official_roster_count": 20,
+      "added": [
+        "Carson Cooper",
+        "Micah Peavy"
+      ],
+      "removed": [
+        "AJ Johnson",
+        "D'Angelo Russell",
+        "Richie Saunders",
+        "Taj Gibson"
+      ]
+    },
+    {
+      "team": "MIA",
+      "official_roster_count": 21,
+      "added": [
+        "Bez Mbeng",
+        "Gabe Madsen",
+        "Ian Schieffelin",
+        "Klay Thompson",
+        "Kylor Kelley",
+        "Nick Richards"
+      ],
+      "removed": [
+        "Jahmir Young",
+        "Trevor Keels"
+      ]
+    },
+    {
+      "team": "MIL",
+      "official_roster_count": 21,
+      "added": [
+        "Jake Stephens",
+        "Johni Broome"
+      ],
+      "removed": [
+        "Alex Antetokounmpo",
+        "Andre Jackson Jr.",
+        "Malique Lewis",
+        "Thanasis Antetokounmpo"
+      ]
+    },
+    {
+      "team": "MIN",
+      "official_roster_count": 21,
+      "added": [
+        "Antonio Reeves",
+        "Cody Williams",
+        "Drew Timme",
+        "Jonathan Kuminga",
+        "KJ Martin",
+        "Norchad Omier"
+      ],
+      "removed": [
+        "Joe Ingles",
+        "Josh Green",
+        "Trey Kaufman-Renn"
+      ]
+    },
+    {
+      "team": "NOP",
+      "official_roster_count": 20,
+      "added": [
+        "AJ Johnson",
+        "Bennedict Mathurin",
+        "Jalon Moore",
+        "Julian Reese",
+        "Malik Dia",
+        "Trendon Watford"
+      ],
+      "removed": [
+        "Christian Koloko",
+        "Hunter Dickinson",
+        "Jordan Hawkins",
+        "Josh Oduro",
+        "Micah Peavy"
+      ]
+    },
+    {
+      "team": "NYK",
+      "official_roster_count": 21,
+      "added": [
+        "Bruce Brown",
+        "Drew Eubanks",
+        "Jaden Akins",
+        "James Wiseman",
+        "Ochai Agbaji",
+        "Tony Bradley"
+      ],
+      "removed": [
+        "Dillon Jones",
+        "Jack Kayil",
+        "Jeremy Sochan",
+        "Trey Jemison III"
+      ]
+    },
+    {
+      "team": "OKC",
+      "official_roster_count": 21,
+      "added": [
+        "Andrew Holifield",
+        "Anthony Pritchard",
+        "Christoph Tilly",
+        "Zhaire Smith"
+      ],
+      "removed": []
+    },
+    {
+      "team": "ORL",
+      "official_roster_count": 20,
+      "added": [
+        "JD Davison",
+        "Kevin Knox II",
+        "Malaki Branham"
+      ],
+      "removed": [
+        "Moritz Wagner"
+      ]
+    },
+    {
+      "team": "PHI",
+      "official_roster_count": 21,
+      "added": [
+        "Dillon Jones",
+        "Jameer Nelson Jr.",
+        "Kentavious Caldwell-Pope",
+        "Saint Thomas",
+        "Tacko Fall"
+      ],
+      "removed": [
+        "Johni Broome",
+        "Kyle Lowry",
+        "MarJon Beauchamp",
+        "Trendon Watford",
+        "Tyrese Martin"
+      ]
+    },
+    {
+      "team": "PHX",
+      "official_roster_count": 21,
+      "added": [
+        "Duop Reath",
+        "Kennedy Chandler",
+        "Phillip Wheeler"
+      ],
+      "removed": [
+        "Amir Coffey",
+        "Isaiah Livers"
+      ]
+    },
+    {
+      "team": "POR",
+      "official_roster_count": 18,
+      "added": [
+        "Jeremy Sochan"
+      ],
+      "removed": [
+        "Blake Wesley"
+      ]
+    },
+    {
+      "team": "SAC",
+      "official_roster_count": 21,
+      "added": [
+        "Aaron Nkrumah",
+        "Ben Simmons",
+        "Damari Monsanto",
+        "Elfrid Payton",
+        "Leaky Black",
+        "Tristen Newton"
+      ],
+      "removed": [
+        "Doug McDermott",
+        "Drew Eubanks",
+        "Killian Hayes",
+        "Patrick Baldwin Jr.",
+        "Russell Westbrook"
+      ]
+    },
+    {
+      "team": "SAS",
+      "official_roster_count": 21,
+      "added": [
+        "Jon Elmore",
+        "Malik Williams",
+        "R.J. Davis",
+        "Taelon Peter"
+      ],
+      "removed": [
+        "Bismack Biyombo",
+        "Kelly Olynyk",
+        "Lindy Waters III",
+        "Mason Plumlee"
+      ]
+    },
+    {
+      "team": "TOR",
+      "official_roster_count": 21,
+      "added": [
+        "Jamarion Sharp",
+        "Kawhi Leonard",
+        "Malachi Smith",
+        "Nimari Burnett",
+        "Trey Jemison III",
+        "Tyreke Key",
+        "Tyson Degenhart"
+      ],
+      "removed": [
+        "A.J. Lawson",
+        "Brandon Ingram",
+        "Chucky Hepburn",
+        "Gradey Dick"
+      ]
+    },
+    {
+      "team": "UTA",
+      "official_roster_count": 21,
+      "added": [
+        "Jonas Aidoo",
+        "Josh Green",
+        "Mohamed Wague",
+        "Taylor Funk"
+      ],
+      "removed": [
+        "Bez Mbeng",
+        "Cody Williams",
+        "Hayden Gray",
+        "John Konchar",
+        "Kevin Love"
+      ]
+    },
+    {
+      "team": "WAS",
+      "official_roster_count": 21,
+      "added": [
+        "Alondes Williams",
+        "Chris Livingston",
+        "Reece Beekman",
+        "Tre Mann",
+        "Trevor Keels"
+      ],
+      "removed": [
+        "Cam Whitmore",
+        "Julian Reese",
+        "Sharife Cooper"
+      ]
+    }
+  ],
+  "pick_owner_changes": [
+    {
+      "original_team": "ATL",
+      "year": "2027",
+      "round": 1,
+      "previous_owner": "team_mil",
+      "new_owner": "team_sas",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "ATL",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_atl",
+      "new_owner": "team_dal",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "ATL",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_atl",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "ATL",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_cle",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "ATL",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_nyk",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "ATL",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_atl",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "ATL",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_atl",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BKN",
+      "year": "2027",
+      "round": 1,
+      "previous_owner": "team_nyk",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BKN",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_bkn",
+      "new_owner": "team_was",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BKN",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_atl",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BKN",
+      "year": "2029",
+      "round": 1,
+      "previous_owner": "team_nyk",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BKN",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_dal",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BKN",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_bos",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BKN",
+      "year": "2031",
+      "round": 1,
+      "previous_owner": "team_nyk",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BKN",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_lal",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BKN",
+      "year": "2032",
+      "round": 1,
+      "previous_owner": "team_den",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BKN",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_den",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BOS",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_bos",
+      "new_owner": "team_uta",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BOS",
+      "year": "2028",
+      "round": 1,
+      "previous_owner": "team_lac",
+      "new_owner": "team_bos",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BOS",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_mil",
+      "new_owner": "team_nyk",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BOS",
+      "year": "2029",
+      "round": 1,
+      "previous_owner": "team_bos",
+      "new_owner": "team_por",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BOS",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_bos",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BOS",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_was",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BOS",
+      "year": "2031",
+      "round": 1,
+      "previous_owner": "team_phi",
+      "new_owner": "team_bos",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "BOS",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_bos",
+      "new_owner": "team_uta",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CHA",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_mem",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CHA",
+      "year": "2028",
+      "round": 1,
+      "previous_owner": "team_min",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CHA",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_hou",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CHA",
+      "year": "2029",
+      "round": 1,
+      "previous_owner": "team_cle",
+      "new_owner": "team_phx",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CHA",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_den",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CHA",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_mil",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CHA",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_mil",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CHA",
+      "year": "2033",
+      "round": 1,
+      "previous_owner": "team_min",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CHI",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_cle",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CHI",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_nyk",
+      "new_owner": "team_chi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CHI",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_ind",
+      "new_owner": "team_chi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CHI",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_den",
+      "new_owner": "team_chi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CHI",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_hou",
+      "new_owner": "team_chi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CLE",
+      "year": "2027",
+      "round": 1,
+      "previous_owner": "team_cle",
+      "new_owner": "team_mem",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CLE",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_cle",
+      "new_owner": "team_chi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CLE",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_cle",
+      "new_owner": "team_uta",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CLE",
+      "year": "2029",
+      "round": 1,
+      "previous_owner": "team_cle",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CLE",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_cle",
+      "new_owner": "team_atl",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CLE",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_cle",
+      "new_owner": "team_sas",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CLE",
+      "year": "2031",
+      "round": 1,
+      "previous_owner": "team_cle",
+      "new_owner": "team_den",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CLE",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_cle",
+      "new_owner": "team_bos",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "CLE",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_sac",
+      "new_owner": "team_uta",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DAL",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_dal",
+      "new_owner": "team_mil",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DAL",
+      "year": "2028",
+      "round": 1,
+      "previous_owner": "team_okc",
+      "new_owner": "team_dal",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DAL",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_dal",
+      "new_owner": "team_lac",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DAL",
+      "year": "2029",
+      "round": 1,
+      "previous_owner": "team_lal",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DAL",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_hou",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DAL",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_dal",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DAL",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_dal",
+      "new_owner": "team_det",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DAL",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_dal",
+      "new_owner": "team_nyk",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DAL",
+      "year": "2033",
+      "round": 2,
+      "previous_owner": "team_dal",
+      "new_owner": "team_was",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DEN",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_den",
+      "new_owner": "team_uta",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DEN",
+      "year": "2028",
+      "round": 1,
+      "previous_owner": "team_okc",
+      "new_owner": "team_den",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DEN",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_den",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DEN",
+      "year": "2030",
+      "round": 1,
+      "previous_owner": "team_okc",
+      "new_owner": "team_den",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DEN",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_den",
+      "new_owner": "team_mem",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DEN",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_sac",
+      "new_owner": "team_chi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DEN",
+      "year": "2032",
+      "round": 1,
+      "previous_owner": "team_den",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DEN",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_den",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DET",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_mia",
+      "new_owner": "team_phi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DET",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_mil",
+      "new_owner": "team_det",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "DET",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_dal",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "GSW",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_gsw",
+      "new_owner": "team_phi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "GSW",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_gsw",
+      "new_owner": "team_bos",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "GSW",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_gsw",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "GSW",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_was",
+      "new_owner": "team_gsw",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "GSW",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_gsw",
+      "new_owner": "team_det",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "HOU",
+      "year": "2027",
+      "round": 1,
+      "previous_owner": "team_phx",
+      "new_owner": "team_hou",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "HOU",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_por",
+      "new_owner": "team_phi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "HOU",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_hou",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "HOU",
+      "year": "2029",
+      "round": 1,
+      "previous_owner": "team_dal",
+      "new_owner": "team_hou",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "HOU",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_hou",
+      "new_owner": "team_mem",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "HOU",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_hou",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "HOU",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_bos",
+      "new_owner": "team_hou",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "HOU",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_hou",
+      "new_owner": "team_phx",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "HOU",
+      "year": "2033",
+      "round": 2,
+      "previous_owner": "team_hou",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "IND",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_uta",
+      "new_owner": "team_nop",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "IND",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_was",
+      "new_owner": "team_ind",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "LAC",
+      "year": "2027",
+      "round": 1,
+      "previous_owner": "team_okc",
+      "new_owner": "team_lac",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "LAC",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_lac",
+      "new_owner": "team_uta",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "LAC",
+      "year": "2028",
+      "round": 1,
+      "previous_owner": "team_lac",
+      "new_owner": "team_bos",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "LAC",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_dal",
+      "new_owner": "team_det",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "LAC",
+      "year": "2029",
+      "round": 1,
+      "previous_owner": "team_ind",
+      "new_owner": "team_lac",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "LAC",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_lac",
+      "new_owner": "team_sas",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "LAC",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_lac",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "LAL",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_lal",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "LAL",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_lal",
+      "new_owner": "team_orl",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "LAL",
+      "year": "2029",
+      "round": 1,
+      "previous_owner": "team_lal",
+      "new_owner": "team_dal",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "LAL",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_lal",
+      "new_owner": "team_mem",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "LAL",
+      "year": "2030",
+      "round": 1,
+      "previous_owner": "team_uta",
+      "new_owner": "team_lal",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "LAL",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_lal",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "LAL",
+      "year": "2031",
+      "round": 1,
+      "previous_owner": "team_lal",
+      "new_owner": "team_uta",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "LAL",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_was",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "LAL",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_was",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "LAL",
+      "year": "2033",
+      "round": 1,
+      "previous_owner": "team_lal",
+      "new_owner": "team_uta",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MEM",
+      "year": "2027",
+      "round": 1,
+      "previous_owner": "team_uta",
+      "new_owner": "team_mem",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MEM",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_mem",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MEM",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_mem",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MEM",
+      "year": "2029",
+      "round": 1,
+      "previous_owner": "team_orl",
+      "new_owner": "team_mem",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MEM",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_por",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MEM",
+      "year": "2030",
+      "round": 1,
+      "previous_owner": "team_orl",
+      "new_owner": "team_mem",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MEM",
+      "year": "2031",
+      "round": 1,
+      "previous_owner": "team_phx",
+      "new_owner": "team_mem",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MEM",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_phi",
+      "new_owner": "team_mem",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIA",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_okc",
+      "new_owner": "team_nyk",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIA",
+      "year": "2028",
+      "round": 1,
+      "previous_owner": "team_cha",
+      "new_owner": "team_mia",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIA",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_mia",
+      "new_owner": "team_det",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIA",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_mia",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIA",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_mia",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIA",
+      "year": "2031",
+      "round": 1,
+      "previous_owner": "team_mia",
+      "new_owner": "team_mil",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIA",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_mia",
+      "new_owner": "team_was",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIA",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_mia",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIA",
+      "year": "2033",
+      "round": 1,
+      "previous_owner": "team_mia",
+      "new_owner": "team_mil",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIA",
+      "year": "2033",
+      "round": 2,
+      "previous_owner": "team_mia",
+      "new_owner": "team_mil",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIL",
+      "year": "2027",
+      "round": 1,
+      "previous_owner": "team_mil",
+      "new_owner": "team_nop",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIL",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_dal",
+      "new_owner": "team_mil",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIL",
+      "year": "2028",
+      "round": 1,
+      "previous_owner": "team_por",
+      "new_owner": "team_mil",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIL",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_mil",
+      "new_owner": "team_phi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIL",
+      "year": "2029",
+      "round": 1,
+      "previous_owner": "team_mil",
+      "new_owner": "team_was",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIL",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_mil",
+      "new_owner": "team_det",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIL",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_mil",
+      "new_owner": "team_orl",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIL",
+      "year": "2031",
+      "round": 1,
+      "previous_owner": "team_mia",
+      "new_owner": "team_mil",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIL",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_mil",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIL",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_mil",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIL",
+      "year": "2033",
+      "round": 1,
+      "previous_owner": "team_mia",
+      "new_owner": "team_mil",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIN",
+      "year": "2027",
+      "round": 1,
+      "previous_owner": "team_min",
+      "new_owner": "team_phx",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIN",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_min",
+      "new_owner": "team_por",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIN",
+      "year": "2028",
+      "round": 1,
+      "previous_owner": "team_cha",
+      "new_owner": "team_min",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIN",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_min",
+      "new_owner": "team_den",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIN",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_min",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIN",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_min",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIN",
+      "year": "2031",
+      "round": 1,
+      "previous_owner": "team_min",
+      "new_owner": "team_sac",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIN",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_min",
+      "new_owner": "team_chi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIN",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_min",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIN",
+      "year": "2033",
+      "round": 1,
+      "previous_owner": "team_min",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "MIN",
+      "year": "2033",
+      "round": 2,
+      "previous_owner": "team_min",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "NOP",
+      "year": "2027",
+      "round": 1,
+      "previous_owner": "team_nop",
+      "new_owner": "team_atl",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "NOP",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_hou",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "NOP",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_nop",
+      "new_owner": "team_sas",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "NOP",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_nop",
+      "new_owner": "team_sas",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "NOP",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_orl",
+      "new_owner": "team_nop",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "NOP",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_tor",
+      "new_owner": "team_orl",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "NYK",
+      "year": "2027",
+      "round": 1,
+      "previous_owner": "team_nyk",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "NYK",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_was",
+      "new_owner": "team_nyk",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "NYK",
+      "year": "2028",
+      "round": 1,
+      "previous_owner": "team_bkn",
+      "new_owner": "team_nyk",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "NYK",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_bos",
+      "new_owner": "team_uta",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "NYK",
+      "year": "2029",
+      "round": 1,
+      "previous_owner": "team_nyk",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "NYK",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_phx",
+      "new_owner": "team_chi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "NYK",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_phi",
+      "new_owner": "team_atl",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "NYK",
+      "year": "2031",
+      "round": 1,
+      "previous_owner": "team_nyk",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "NYK",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_nyk",
+      "new_owner": "team_chi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "NYK",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_dal",
+      "new_owner": "team_nyk",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "OKC",
+      "year": "2027",
+      "round": 1,
+      "previous_owner": "team_sac",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "OKC",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_cha",
+      "new_owner": "team_mia",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "OKC",
+      "year": "2028",
+      "round": 1,
+      "previous_owner": "team_dal",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "OKC",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_uta",
+      "new_owner": "team_phi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "OKC",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_bos",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "OKC",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_atl",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "OKC",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_atl",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "OKC",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_lal",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "OKC",
+      "year": "2033",
+      "round": 2,
+      "previous_owner": "team_okc",
+      "new_owner": "team_mem",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "ORL",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_orl",
+      "new_owner": "team_phx",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "ORL",
+      "year": "2028",
+      "round": 1,
+      "previous_owner": "team_orl",
+      "new_owner": "team_por",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "ORL",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_was",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "ORL",
+      "year": "2029",
+      "round": 1,
+      "previous_owner": "team_mem",
+      "new_owner": "team_orl",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "ORL",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_mem",
+      "new_owner": "team_orl",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "ORL",
+      "year": "2030",
+      "round": 1,
+      "previous_owner": "team_orl",
+      "new_owner": "team_mem",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "ORL",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_mil",
+      "new_owner": "team_orl",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "ORL",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_nop",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "PHI",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_mia",
+      "new_owner": "team_was",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "PHI",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_bkn",
+      "new_owner": "team_phi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "PHI",
+      "year": "2029",
+      "round": 1,
+      "previous_owner": "team_lac",
+      "new_owner": "team_phi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "PHI",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_por",
+      "new_owner": "team_nyk",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "PHI",
+      "year": "2031",
+      "round": 1,
+      "previous_owner": "team_phi",
+      "new_owner": "team_bos",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "PHX",
+      "year": "2027",
+      "round": 1,
+      "previous_owner": "team_cle",
+      "new_owner": "team_hou",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "PHX",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_phx",
+      "new_owner": "team_was",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "PHX",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_phx",
+      "new_owner": "team_nyk",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "PHX",
+      "year": "2029",
+      "round": 1,
+      "previous_owner": "team_cha",
+      "new_owner": "team_hou",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "PHX",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_phx",
+      "new_owner": "team_nyk",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "PHX",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_phx",
+      "new_owner": "team_bos",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "PHX",
+      "year": "2031",
+      "round": 1,
+      "previous_owner": "team_phx",
+      "new_owner": "team_mem",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "PHX",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_phx",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "PHX",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_phx",
+      "new_owner": "team_chi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "PHX",
+      "year": "2033",
+      "round": 1,
+      "previous_owner": "team_phx",
+      "new_owner": "team_cha",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "PHX",
+      "year": "2033",
+      "round": 2,
+      "previous_owner": "team_phx",
+      "new_owner": "team_nyk",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "POR",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_min",
+      "new_owner": "team_por",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "POR",
+      "year": "2028",
+      "round": 1,
+      "previous_owner": "team_orl",
+      "new_owner": "team_por",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "POR",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_chi",
+      "new_owner": "team_por",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "POR",
+      "year": "2029",
+      "round": 1,
+      "previous_owner": "team_bos",
+      "new_owner": "team_por",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "POR",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_ind",
+      "new_owner": "team_mem",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "POR",
+      "year": "2030",
+      "round": 1,
+      "previous_owner": "team_mil",
+      "new_owner": "team_por",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "POR",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_por",
+      "new_owner": "team_phi",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "SAC",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_sac",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "SAC",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_sac",
+      "new_owner": "team_por",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "SAC",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_sac",
+      "new_owner": "team_nyk",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "SAC",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_sac",
+      "new_owner": "team_sas",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "SAC",
+      "year": "2031",
+      "round": 1,
+      "previous_owner": "team_min",
+      "new_owner": "team_sac",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "SAC",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_sac",
+      "new_owner": "team_den",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "SAC",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_sac",
+      "new_owner": "team_den",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "SAC",
+      "year": "2033",
+      "round": 2,
+      "previous_owner": "team_sac",
+      "new_owner": "team_atl",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "SAS",
+      "year": "2027",
+      "round": 1,
+      "previous_owner": "team_atl",
+      "new_owner": "team_sac",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "SAS",
+      "year": "2028",
+      "round": 1,
+      "previous_owner": "team_bos",
+      "new_owner": "team_sas",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "SAS",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_nop",
+      "new_owner": "team_sas",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "SAS",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_lac",
+      "new_owner": "team_sas",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "SAS",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_cle",
+      "new_owner": "team_sas",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "SAS",
+      "year": "2031",
+      "round": 1,
+      "previous_owner": "team_sac",
+      "new_owner": "team_sas",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "TOR",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_tor",
+      "new_owner": "team_lac",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "TOR",
+      "year": "2031",
+      "round": 1,
+      "previous_owner": "team_tor",
+      "new_owner": "team_lac",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "TOR",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_tor",
+      "new_owner": "team_nop",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "TOR",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_tor",
+      "new_owner": "team_bkn",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "TOR",
+      "year": "2033",
+      "round": 1,
+      "previous_owner": "team_tor",
+      "new_owner": "team_lac",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "TOR",
+      "year": "2033",
+      "round": 2,
+      "previous_owner": "team_tor",
+      "new_owner": "team_lac",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "UTA",
+      "year": "2027",
+      "round": 1,
+      "previous_owner": "team_min",
+      "new_owner": "team_uta",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "UTA",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_lal",
+      "new_owner": "team_ind",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "UTA",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_cle",
+      "new_owner": "team_okc",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "UTA",
+      "year": "2030",
+      "round": 1,
+      "previous_owner": "team_lal",
+      "new_owner": "team_uta",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "UTA",
+      "year": "2031",
+      "round": 1,
+      "previous_owner": "team_lal",
+      "new_owner": "team_uta",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "UTA",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_cle",
+      "new_owner": "team_uta",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "UTA",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_cle",
+      "new_owner": "team_was",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "UTA",
+      "year": "2033",
+      "round": 1,
+      "previous_owner": "team_lal",
+      "new_owner": "team_uta",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "WAS",
+      "year": "2027",
+      "round": 2,
+      "previous_owner": "team_bos",
+      "new_owner": "team_nyk",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "WAS",
+      "year": "2028",
+      "round": 2,
+      "previous_owner": "team_lal",
+      "new_owner": "team_was",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "WAS",
+      "year": "2029",
+      "round": 1,
+      "previous_owner": "team_por",
+      "new_owner": "team_was",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "WAS",
+      "year": "2029",
+      "round": 2,
+      "previous_owner": "team_lal",
+      "new_owner": "team_por",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "WAS",
+      "year": "2030",
+      "round": 2,
+      "previous_owner": "team_phx",
+      "new_owner": "team_was",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "WAS",
+      "year": "2031",
+      "round": 2,
+      "previous_owner": "team_mia",
+      "new_owner": "team_lal",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "WAS",
+      "year": "2032",
+      "round": 2,
+      "previous_owner": "team_uta",
+      "new_owner": "team_lal",
+      "status": "verified_realgm_underlying_pick"
+    },
+    {
+      "original_team": "WAS",
+      "year": "2033",
+      "round": 2,
+      "previous_owner": "team_was",
+      "new_owner": "team_mem",
+      "status": "verified_realgm_underlying_pick"
+    }
+  ],
+  "normalization_audit": [
+    {
+      "case": "2027 second via LAC",
+      "gameplay_policy": "LAC own second remains owed to UTA. WAS receives the PHI median-pool entitlement acquired via LAC; normalized to PHI own second as documented below.",
+      "picks": [
+        "pick_lac-2027-2",
+        "pick_phi-2027-2"
+      ],
+      "source_summaries": [
+        "To UTA (via ATL to LAC)0",
+        "Own*; More favorable of GSW and PHX (via WAS)*; Most favorable of OKC, HOU, IND and MIA (via HOU to DET to OKC; via IND and MIA to OKC; via OKC to PHI)* *Second most favorable of these to WAS 2"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2027 R1 ranked pool CLE/UTA/MIN",
+      "gameplay_policy": "Shared allocation normalized to ranked slots MEM/UTA/PHX. Native two-pick comparisons preserve allocation counts; nested source exceptions are removed.",
+      "picks": [
+        "pick_cle-2027-1",
+        "pick_uta-2027-1",
+        "pick_min-2027-1"
+      ],
+      "source_summaries": [
+        "Most favorable of CLE, MIN and UTA (cannot be 1-5) to MEM; second most favorable to UTA and least favorable to PHX (via UTA)0",
+        "Second most favorable of UTA (cannot be 1-5), CLE and MIN; most favorable to MEM and least favorable to PHX (via UTA)1",
+        "Most favorable of MIN, CLE and UTA (cannot be 1-5) to MEM; second most favorable to UTA and least favorable to PHX (via UTA)0"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2029 R1 ranked pool HOU/PHX/DAL",
+      "gameplay_policy": "Shared allocation normalized to ranked slots HOU/HOU/BKN. Native two-pick comparisons preserve allocation counts; nested source exceptions are removed.",
+      "picks": [
+        "pick_hou-2029-1",
+        "pick_phx-2029-1",
+        "pick_dal-2029-1"
+      ],
+      "source_summaries": [
+        "Two most favorable of HOU, DAL and PHX then other to BKN (via DAL and PHX to BKN; via DAL or PHX to HOU; via HOU swap for DAL or PHX)2",
+        "Two most favorable of PHX, DAL and HOU to HOU then other to BKN (via DAL and PHX to BKN; via DAL or PHX to HOU; via HOU swap for DAL or PHX) --- PHX will receive a least favorable pick from a complex CHA-MIN conveyance, including CHA's swap right 1",
+        "Two most favorable of DAL, HOU and PHX to HOU then other to BKN (via DAL and PHX to BKN; via DAL or PHX to HOU; via HOU swap for DAL or PHX); LAL 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2029 POR/BOS/MIL median right",
+      "gameplay_policy": "WAS receives the less favorable of BOS/MIL; POR retains its own and the better of BOS/MIL. The IRL median-of-three clause is simplified to a two-pick comparison.",
+      "picks": [
+        "pick_bos-2029-1",
+        "pick_mil-2029-1",
+        "pick_por-2029-1"
+      ],
+      "source_summaries": [
+        "Most and least favorable of BOS, POR and MIL to POR; second most favorable to WAS (via BOS to POR; via MIL to POR; via POR to WAS)0",
+        "Most and least favorable of MIL, BOS and POR to POR; second most favorable to WAS (via BOS to POR; via MIL to POR; via POR to WAS)0",
+        "Most and least favorable of POR, BOS and MIL; second most favorable to WAS (via BOS to POR; via MIL to POR; via POR to WAS)2"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2027 R2 ranked pool HOU/IND/MIA/OKC",
+      "gameplay_policy": "Shared allocation normalized to ranked slots PHI/NOP/NYK/MIA. Native two-pick comparisons preserve allocation counts; nested source exceptions are removed.",
+      "picks": [
+        "pick_hou-2027-2",
+        "pick_ind-2027-2",
+        "pick_mia-2027-2",
+        "pick_okc-2027-2"
+      ],
+      "source_summaries": [
+        "Most favorable of HOU, OKC, IND and MIA to PHI; second most favorable to NOP and third most favorable to NYK; more favorable of (i) SAS and (ii) least favorable of HOU, OKC, IND and MIA to SAS then least favorable of all to MIA [PHI may convey to WAS] (via HOU to DET to OKC to NYK to NOP; via IND and MIA to OKC to UTA to SAS to MIA; via OKC to PHI); Less favorable of POR and NOP if 56-60 (via POR to BOS)1",
+        "Most favorable of IND, OKC, HOU and MIA to PHI; second most favorable to NOP and third most favorable to NYK; more favorable of (i) SAS and (ii) least favorable of IND, OKC, HOU and MIA to SAS then least favorable of all to MIA [PHI may convey to WAS] (via IND and MIA to OKC to UTA to SAS to MIA; via HOU to DET to OKC to NYK to NOP; via OKC to PHI); UTA (via CLE)1",
+        "Least favorable of MIA, OKC, HOU, IND and SAS; most favorable of MIA, OKC, HOU and IND to PHI; second most favorable to NOP and third most favorable to NYK; more favorable of (i) SAS and (ii) least favorable of MIA, OKC, HOU and IND to SAS [PHI may convey to WAS] (via MIA and IND to OKC to UTA to SAS to MIA; via HOU to DET to OKC to NYK to NOP; via OKC to PHI) 1",
+        "Most favorable of OKC, HOU, IND and MIA to PHI; second most favorable to NOP and third most favorable to NYK; more favorable of (i) SAS and (ii) least favorable of OKC, HOU, IND and MIA to SAS then least favorable of all to MIA [PHI may convey to WAS] (via HOU to DET to OKC to NYK to NOP; via IND and MIA to OKC to UTA to SAS to MIA; via OKC to PHI); CHA if SAS 1-16 in 2027 (via SAC); CHI (via WAS to NOP to WAS to DAL); SAC if SAS 1-16 in 2027 1 + 2"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2028 R2 ranked pool GSW/MIL/OKC",
+      "gameplay_policy": "Shared allocation normalized to ranked slots BOS/PHI/PHI. Native two-pick comparisons preserve allocation counts; nested source exceptions are removed.",
+      "picks": [
+        "pick_gsw-2028-2",
+        "pick_mil-2028-2",
+        "pick_okc-2028-2"
+      ],
+      "source_summaries": [
+        "Most favorable of GSW, MIL and OKC to BOS then others to PHI (via GSW to POR to WAS to PHI; via MIL to BKN to HOU to OKC to PHI; via OKC to PHI)0",
+        "Most favorable of MIL, GSW and OKC to BOS then others to PHI (via MIL to BKN to HOU to OKC to PHI; via GSW to POR to WAS to PHI; via OKC to PHI)0",
+        "Most favorable of OKC, GSW and MIL to BOS then others to PHI (via OKC to PHI; GSW to POR to WAS to PHI; via MIL to BKN to HOU to OKC to PHI); UTA 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2028 R2 ranked pool CHI/IND/PHX",
+      "gameplay_policy": "Shared allocation normalized to ranked slots CHI/IND/NYK. Native two-pick comparisons preserve allocation counts; nested source exceptions are removed.",
+      "picks": [
+        "pick_chi-2028-2",
+        "pick_ind-2028-2",
+        "pick_phx-2028-2"
+      ],
+      "source_summaries": [
+        "Most favorable of CHI, IND and PHX; less favorable of (i) CHI and (ii) more favorable of IND and PHX to IND (via PHX to IND; via CHI swap for IND or PHX) 1",
+        "Less favorable of (i) more favorable of IND and PHX and (ii) CHI then most favorable of all to CHI; less favorable of IND and PHX to NYK (via PHX to IND; via CHI swap for IND or PHX)1",
+        "Less favorable of (i) more favorable of PHX and IND and (ii) CHI to IND then most favorable of all to CHI; less favorable of PHX and IND to NYK (via PHX to IND; via CHI swap for IND or PHX)0"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2029 R2 ranked pool DET/MIL/NYK",
+      "gameplay_policy": "Shared allocation normalized to ranked slots DET/DET/CHI. Native two-pick comparisons preserve allocation counts; nested source exceptions are removed.",
+      "picks": [
+        "pick_det-2029-2",
+        "pick_mil-2029-2",
+        "pick_nyk-2029-2"
+      ],
+      "source_summaries": [
+        "Two most favorable of DET, MIL and NYK then other to CHI (via MIL to BKN to DET; via NYK to DET; via DET to MEM; via MEM to DET; via SAC to CHI)2",
+        "Two most favorable of MIL, DET and NYK to DET then other to CHI (via MIL to BKN to DET; via NYK to DET; via DET to MEM; via MEM to DET; via SAC to CHI)0",
+        "Two most favorable of NYK, DET and MIL to DET then other to CHI (via MIL to BKN to DET; via NYK to DET; via DET to MEM; via MEM to DET; via SAC to CHI); PHX; SAC (via WAS to HOU)2"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2030 R2 ranked pool DEN/HOU/MIA",
+      "gameplay_policy": "Shared allocation normalized to ranked slots MEM/OKC/OKC. Native two-pick comparisons preserve allocation counts; nested source exceptions are removed.",
+      "picks": [
+        "pick_den-2030-2",
+        "pick_hou-2030-2",
+        "pick_mia-2030-2"
+      ],
+      "source_summaries": [
+        "Most favorable of DEN, HOU and MIA to MEM; two least favorable to OKC (via DEN to CHA to OKC or DEN to OKC; via OKC to MEM) 0",
+        "Most favorable of HOU, DEN and MIA to MEM then others to OKC (via DEN to CHA to OKC or DEN to OKC; via OKC to MEM)0",
+        "Most favorable of MIA, DEN and HOU to MEM then others to OKC (via DEN to CHA to OKC or DEN to OKC; via OKC to MEM)0"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2030 R2 ranked pool PHX/POR/WAS",
+      "gameplay_policy": "Shared allocation normalized to ranked slots BOS/PHI/WAS. Native two-pick comparisons preserve allocation counts; nested source exceptions are removed.",
+      "picks": [
+        "pick_phx-2030-2",
+        "pick_por-2030-2",
+        "pick_was-2030-2"
+      ],
+      "source_summaries": [
+        "Less favorable of (i) more favorable of PHX and POR and (ii) WAS to PHI then most favorable of all to BOS; less favorable of PHX and POR to WAS (via PHX and POR to WAS to PHI)0",
+        "Less favorable of (i) more favorable of POR and PHX and (ii) WAS to PHI then most favorable of all to BOS; less favorable of POR and PHX to WAS (via PHX and POR to WAS to PHI)0",
+        "Less favorable of (i) WAS and (ii) more favorable of PHX and POR to PHI then most favorable of all to BOS (via PHX and POR to WAS to PHI); Less favorable of PHX and POR 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2029 R1 ranked pool UTA/CLE/MIN",
+      "gameplay_policy": "Shared allocation normalized to ranked slots UTA/CHA/UTA. Native two-pick comparisons preserve allocation counts; nested source exceptions are removed.",
+      "picks": [
+        "pick_uta-2029-1",
+        "pick_cle-2029-1",
+        "pick_min-2029-1"
+      ],
+      "source_summaries": [
+        "Most / two most favorable of UTA, CLE and MIN 6-30 to UTA; least / less favorable to CHA (via CLE and MIN to UTA; via UTA to PHX to CHA; via CHA swap of CHA, CLE or UTA for MIN)* *CHA will also have a complex swap right with MIN and PHX will receive a least favorable pick 1 + 1",
+        "Most / two most favorable of CLE, UTA and MIN 6-30 to UTA; least / less favorable to CHA (via CLE and MIN to UTA; via UTA to PHX to CHA; via CHA swap of CHA, CLE or UTA for MIN)* *CHA will also have a complex swap right with MIN and PHX will receive a least favorable pick 0",
+        "1-5 Own; most / two most favorable of MIN 6-30, CLE and UTA to UTA then other to CHA (via CLE and MIN to UTA; via UTA to PHX to CHA; via CHA swap of CHA, CLE or UTA for MIN)* *CHA will also have a complex swap right with MIN and PHX will receive a least favorable pick 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2027 R1: UTA/CLE/MIN",
+      "gameplay_policy": "Rank the three picks MEM/UTA/PHX; the UTA top-five exclusion is simplified to the ranked allocation.",
+      "picks": [
+        "pick_uta-2027-1",
+        "pick_cle-2027-1",
+        "pick_min-2027-1"
+      ],
+      "source_summaries": [
+        "Second most favorable of UTA (cannot be 1-5), CLE and MIN; most favorable to MEM and least favorable to PHX (via UTA)1",
+        "Most favorable of CLE, MIN and UTA (cannot be 1-5) to MEM; second most favorable to UTA and least favorable to PHX (via UTA)0",
+        "Most favorable of MIN, CLE and UTA (cannot be 1-5) to MEM; second most favorable to UTA and least favorable to PHX (via UTA)0"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2027 R1: OKC/DEN/LAC/TOR",
+      "gameplay_policy": "OKC retains two picks; compare its weaker held pick with LAC, then LAC with TOR. DEN protection resolves first.",
+      "picks": [
+        "pick_okc-2027-1",
+        "pick_den-2027-1",
+        "pick_lac-2027-1",
+        "pick_tor-2027-1"
+      ],
+      "source_summaries": [
+        "Two most / more favorable of OKC, DEN 6-30 and LAC; more favorable of (i) least / less favorable of OKC, DEN 6-30 and LAC and (ii) TOR to LAC then least favorable of all to TOR (via OKC swap of OKC or DEN for LAC; via LAC swap of DEN, OKC or LAC for TOR); SAS 17-30 (via SAC)1 + 2",
+        "1-5 Own; two most / more favorable of DEN 6-30, OKC and LAC to OKC; more favorable of (i) least / less favorable of DEN 6-30, OKC and LAC and (ii) TOR to LAC then least favorable of all to TOR (via OKC swap of OKC or DEN for LAC; via LAC swap of DEN, OKC or LAC for TOR)1",
+        "More favorable of (i) least / less favorable of LAC, DEN 6-30 and OKC and (ii) TOR then least favorable of all to TOR; two most / more favorable of LAC, DEN 6-30 and OKC to OKC (via OKC swap of OKC or DEN for LAC; via LAC swap of LAC, DEN or OKC for TOR)1",
+        "Least / less favorable of TOR, LAC, DEN 6-30 and OKC; more favorable of (i) TOR and (i) least / less favorable of LAC, DEN 6-30 and OKC to LAC (via OKC swap of OKC or DEN for LAC; via LAC swap of LAC, DEN or OKC for TOR)1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2027 R2: PHI/GSW/HOU",
+      "gameplay_policy": "WAS receives PHI own second as simplified second-best-of-three collateral; PHI retains the other two pool rights. Do not create an extra second.",
+      "picks": [
+        "pick_phi-2027-2",
+        "pick_gsw-2027-2",
+        "pick_hou-2027-2"
+      ],
+      "source_summaries": [
+        "Own*; More favorable of GSW and PHX (via WAS)*; Most favorable of OKC, HOU, IND and MIA (via HOU to DET to OKC; via IND and MIA to OKC; via OKC to PHI)* *Second most favorable of these to WAS 2",
+        "More favorable of GSW and PHX to PHI then other to WAS [PHI may convey to WAS] (via WAS)0",
+        "Most favorable of HOU, OKC, IND and MIA to PHI; second most favorable to NOP and third most favorable to NYK; more favorable of (i) SAS and (ii) least favorable of HOU, OKC, IND and MIA to SAS then least favorable of all to MIA [PHI may convey to WAS] (via HOU to DET to OKC to NYK to NOP; via IND and MIA to OKC to UTA to SAS to MIA; via OKC to PHI); Less favorable of POR and NOP if 56-60 (via POR to BOS)1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2027 R2: SAS/CHA/SAC",
+      "gameplay_policy": "SAN first split is modeled as an unconditional SAC first; the conditional CHA/SAC seconds are assigned SAC/OKC without cross-round contingencies.",
+      "picks": [
+        "pick_sas-2027-2",
+        "pick_cha-2027-2",
+        "pick_sac-2027-2"
+      ],
+      "source_summaries": [
+        "More favorable of (i) SAS and (ii) least favorable of OKC, HOU, IND and MIA then least favorable of all to MIA (via HOU to DET to OKC; via MIA to OKC to UTA to SAS to MIA)1",
+        "To OKC if SAS 1-16 in 2027 or to SAC if SAS 17-30 in 2027 (via NYK to ATL to SAS to SAC); MEM (via LAC to HOU); More favorable of POR and NOP (via POR)2",
+        "To OKC if SAS 1-16 in 2027; CHA if SAS 17-30 in 2027 (via NYK to ATL to SAS)2"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2027 R2: LAL",
+      "gameplay_policy": "LAL second assigned BKN; the alternative MEM recipient tied to LAL first conveyance is removed.",
+      "picks": [
+        "pick_lal-2027-2"
+      ],
+      "source_summaries": [
+        "To BKN if LAL conveys 1st round pick to MEM in 2027 or to MEM if LAL does not convey 1st round pick to MEM in 2027 (via UTA to MEM)0"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2027 R2: NOP/POR",
+      "gameplay_policy": "CHA receives the better second, POR the worse. Conditional 56-60 HOU transfer is removed.",
+      "picks": [
+        "pick_nop-2027-2",
+        "pick_por-2027-2"
+      ],
+      "source_summaries": [
+        "More favorable of NOP and POR to CHA then other to POR [POR may convey to HOU] (via NOP); Second most favorable of OKC, HOU, IND and MIA (via HOU to DET to OKC to NYK)1",
+        "Less favorable of POR and NOP then other to CHA [POR may convey to HOU; see following]; then less favorable of POR and NOP to HOU if 56-60 (via POR to NOP to CHA; via POR to BOS to HOU); MIN (via HOU to OKC to NYK)1 + 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2028 R1: BKN/PHX/NYK/PHI/WAS/MIL/POR",
+      "gameplay_policy": "BKN keeps its own pick, PHI top-8 protected incoming first, and sequential PHX/NYK swaps. WAS/PHX and WAS/MIL comparisons follow. Remove the PHI-third-best exception and substitute same-round PHI fallback for IRL first-to-second conversion.",
+      "picks": [
+        "pick_bkn-2028-1",
+        "pick_phx-2028-1",
+        "pick_nyk-2028-1",
+        "pick_phi-2028-1",
+        "pick_was-2028-1",
+        "pick_mil-2028-1",
+        "pick_por-2028-1"
+      ],
+      "source_summaries": [
+        "If (i) PHI 9-30 is third most favorable and (ii) NYK is most or second most favorable of BKN, PHI 9-30, PHX and NYK, then most and third most favorable to BKN; or most / two most favorable to BKN in all other scenarios; least favorable of BKN, PHX and NYK to NYK if NYK and / or if PHI 9-30 is less favorable than BKN and PHX; or second most favorable of BKN, PHX and NYK to NYK in all other scenarios; more favorable of (i) WAS and (ii) least / less favorable of BKN, PHI 9-30 and PHX to WAS then least favorable of all to PHX [WAS can then swap with MIL] (via BKN swap of BKN or PHI for PHX; via BKN swap of BKN or PHX for NYK; via WAS swap for PHX, BKN or PHI)1 + 1",
+        "Least favorable of PHX, PHI 9-30, WAS and BKN; more favorable of (i) WAS and (ii) least / less favorable of PHX, PHI 9-30 and BKN to WAS [WAS can then swap with MIL]; if (i) PHI 9-30 is third most favorable and (ii) NYK is most or second most favorable of PHX, PHI 9-30, BKN and NYK, then most and third most favorable to BKN; or most / two most favorable to BKN in all other scenarios; least favorable of PHX, BKN and NYK to NYK if NYK and / or if PHI 9-30 is less favorable than PHX and BKN; or second most favorable of PHX, BKN and NYK to NYK in all other scenarios (via BKN swap of BKN or PHI for PHX; via BKN swap of BKN or PHX for NYK; via WAS swap for PHX, BKN or PHI)1",
+        "Least favorable of NYK, BKN and PHX if NYK and / or if PHI 9-30 is less favorable than BKN and PHX; or second most favorable of NYK, BKN and PHX in all other scenarios; if (i) PHI 9-30 is third most favorable and (ii) NYK is most or second most favorable of NYK, BKN, PHI 9-30 and PHX, then most and third most favorable to BKN; or most / two most favorable to BKN in all other scenarios (via BKN swap of BKN or PHI for PHX; via BKN swap of BKN or PHX for NYK; via WAS swap for PHX, BKN or PHI)1",
+        "1-8 Own if LAC 17-30; or [via swap from BOS] least favorable of (i) PHI 1-8, LAC 1-16, BOS and SAS or (ii) LAC 1-16, BOS and SAS; more favorable of (i) more favorable of PHI 1-8 and LAC 1-16 [or (i) LAC 1-16 if PHI 9-30] and (ii) less favorable of BOS and SAS to BOS; if (i) PHI 9-30 is third most favorable and (ii) NYK is most or second most favorable of PHI 9-30, PHX, BKN and NYK, then most and third most favorable to BKN; or most / two most favorable to BKN in all other scenarios; least favorable of PHX, BKN and NYK to NYK if NYK and / or if PHI 9-30 is less favorable than PHX and BKN; or second most favorable of PHX, BKN and NYK to NYK in all other scenarios; more favorable of (i) WAS and (ii) least / less favorable of PHI 9-30, PHX and BKN to WAS then least favorable of all to PHX [WAS can then swap with MIL] (via SAS swap for BOS; via BOS swap of BOS or SAS for PHI or LAC; via BKN swap of BKN or PHI for PHX; via BKN swap of BKN or PHX for NYK; via WAS swap for PHX, BKN or PHI)1",
+        "More favorable of (i) more favorable of (a) WAS and (b) least / less favorable of BKN, PHI 9-30 and PHX and (ii) less favorable of MIL and POR then less favorable of (i) and (ii) to MIL; least favorable of WAS, PHI 9-30, BKN and PHX to PHX (via POR swap for MIL; via BKN swap of BKN or PHI for PHX; via WAS swap for PHX, BKN or PHI; via WAS swap of WAS, BKN, PHI or PHX for MIL or POR)1",
+        "Less favorable of (i) less favorable of MIL and POR and (ii) more favorable of (a) WAS and (b) least / less favorable of BKN, PHI 9-30 and PHX then more favorable of (i) and (ii) to WAS (via POR swap for MIL; via BKN swap of BKN or PHI for PHX; via WAS swap for PHX, BKN or PHI; via WAS swap of WAS, BKN, PHI or PHX for MIL or POR)1",
+        "Own or swap for MIL [WAS then has a complex swap right with MIL]; ORL (via MEM)2"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2028 R1: BOS/LAC/PHI",
+      "gameplay_policy": "LAC top-16 protected first goes to BOS with same-round LAC fallback. Remove the nested BOS/PHI/LAC top-8 crossover; SAN/BOS swap remains top-1 protected.",
+      "picks": [
+        "pick_bos-2028-1",
+        "pick_lac-2028-1",
+        "pick_phi-2028-1"
+      ],
+      "source_summaries": [
+        "1 Own; 2-30 Own or SAS (via SAS swap for BOS) [BOS then has a complex swap right with PHI]; LAC 17-30 or [by swap from BOS] more favorable of (i) less favorable of BOS and SAS and (ii) more favorable of PHI 1-8 and LAC 1-16 [or (ii) LAC 1-16 if PHI 9-30] then least favorable of all to PHI (via SAS swap for BOS; via BOS swap of BOS or SAS for PHI or LAC)1 + 1",
+        "LAC 17-30 to BOS or [via swap from BOS] more favorable of (i) more favorable of LAC 1-16 and PHI 1-8 [or (i) LAC 1-16 if PHI 9-30] and (ii) less favorable of BOS and SAS to BOS then least favorable of all to PHI (via SAS swap for BOS; via BOS swap of BOS or SAS for LAC or PHI)0",
+        "1-8 Own if LAC 17-30; or [via swap from BOS] least favorable of (i) PHI 1-8, LAC 1-16, BOS and SAS or (ii) LAC 1-16, BOS and SAS; more favorable of (i) more favorable of PHI 1-8 and LAC 1-16 [or (i) LAC 1-16 if PHI 9-30] and (ii) less favorable of BOS and SAS to BOS; if (i) PHI 9-30 is third most favorable and (ii) NYK is most or second most favorable of PHI 9-30, PHX, BKN and NYK, then most and third most favorable to BKN; or most / two most favorable to BKN in all other scenarios; least favorable of PHX, BKN and NYK to NYK if NYK and / or if PHI 9-30 is less favorable than PHX and BKN; or second most favorable of PHX, BKN and NYK to NYK in all other scenarios; more favorable of (i) WAS and (ii) least / less favorable of PHI 9-30, PHX and BKN to WAS then least favorable of all to PHX [WAS can then swap with MIL] (via SAS swap for BOS; via BOS swap of BOS or SAS for PHI or LAC; via BKN swap of BKN or PHI for PHX; via BKN swap of BKN or PHX for NYK; via WAS swap for PHX, BKN or PHI)1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2028 R1: UTA/CLE/LAL/ATL",
+      "gameplay_policy": "Sequential UTA/CLE, UTA/LAL and ATL/CLE comparisons; each later comparison follows the current held pick.",
+      "picks": [
+        "pick_uta-2028-1",
+        "pick_cle-2028-1",
+        "pick_lal-2028-1",
+        "pick_atl-2028-1"
+      ],
+      "source_summaries": [
+        "Most favorable of UTA, CLE and LAL; less favorable of (i) more favorable of UTA and CLE and (ii) LAL to LAL; less favorable of UTA and CLE to CLE [CLE may convey UTA to ATL] (via UTA swap for CLE; via UTA swap of UTA or CLE for LAL) 1",
+        "Least favorable of CLE, UTA and ATL; less favorable of (i) more favorable of CLE and UTA and (ii) LAL to LAL then most favorable of all to UTA; more favorable of (i) ATL and (ii) less favorable of CLE and UTA to ATL (via UTA swap for CLE; via UTA swap of UTA or CLE for LAL; via ATL swap for CLE or UTA)1",
+        "Less favorable of (i) LAL and (ii) more favorable of UTA and CLE then most favorable of all to UTA (via UTA swap for CLE; via UTA swap of UTA or CLE for LAL)1",
+        "More favorable of (i) ATL and (ii) less favorable of UTA and CLE then least favorable of all to CLE (via UTA swap for CLE; via ATL swap for CLE or UTA)1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2028 R2: DET/MIA/NYK/CHA/LAC",
+      "gameplay_policy": "DET top-55 protected second to PHI; assign NYK second to UTA as simplified least-favorable collateral, preserve CHA/LAC comparison. Remove DAL first contingency and extra DET pool allocation.",
+      "picks": [
+        "pick_det-2028-2",
+        "pick_mia-2028-2",
+        "pick_nyk-2028-2",
+        "pick_cha-2028-2",
+        "pick_lac-2028-2"
+      ],
+      "source_summaries": [
+        "31-55 Own*; 56-60 to PHI; Less favorable of CHA and LAC (via CHA to DAL)*; MIA if DAL conveys 1st round pick to CHA in 2027 (via SAS to DAL)*; NYK* *Least / less favorable of these to UTA 1 + 2",
+        "To DET if DAL conveys 1st round pick to CHA in 2027 or to CHA if DAL does not convey 1st round pick to CHA in 2027 [DET may convey to UTA] (via SAS to DAL)0",
+        "To DET [DET may convey to UTA]; BOS 46-60 (via ORL to PHX); Less favorable of IND and PHX (via IND)1 + 1",
+        "More favorable of CHA and LAC then other to DET [DET may convey to UTA] (via CHA to DAL); HOU; MIA if DAL does not convey 1st round pick to CHA in 2027 (via SAS to DAL); ORL 3 + 1",
+        "More favorable of LAC and CHA to CHA then other to DET [DET may convey to UTA] (via CHA to DAL); DAL (via SAC to IND)1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2028 R2: BOS",
+      "gameplay_policy": "BOS second top-45 protected to NYK with same-round fallback; remove SAN first-overall contingency.",
+      "picks": [
+        "pick_bos-2028-2"
+      ],
+      "source_summaries": [
+        "31-45 to SAS if BOS 1 in 2028; 46-60 to NYK (via ORL to PHX); Most favorable of GSW, MIL and OKC (via GSW to POR to WAS to PHI; via MIL to BKN to HOU to OKC to PHI; via OKC to PHI)1 + 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2029 R1: MIN/UTA/CLE/CHA/PHX",
+      "gameplay_policy": "UTA holds CLE and MIN top-5 protected firsts. PHX owns CHA first and can compare with MIN; CHA retains subsequent swap right. Remove the nested residual and conveyance-dependent branches.",
+      "picks": [
+        "pick_min-2029-1",
+        "pick_uta-2029-1",
+        "pick_cle-2029-1",
+        "pick_cha-2029-1",
+        "pick_phx-2029-1"
+      ],
+      "source_summaries": [
+        "1-5 Own; most / two most favorable of MIN 6-30, CLE and UTA to UTA then other to CHA (via CLE and MIN to UTA; via UTA to PHX to CHA; via CHA swap of CHA, CLE or UTA for MIN)* *CHA will also have a complex swap right with MIN and PHX will receive a least favorable pick 1",
+        "Most / two most favorable of UTA, CLE and MIN 6-30 to UTA; least / less favorable to CHA (via CLE and MIN to UTA; via UTA to PHX to CHA; via CHA swap of CHA, CLE or UTA for MIN)* *CHA will also have a complex swap right with MIN and PHX will receive a least favorable pick 1 + 1",
+        "Most / two most favorable of CLE, UTA and MIN 6-30 to UTA; least / less favorable to CHA (via CLE and MIN to UTA; via UTA to PHX to CHA; via CHA swap of CHA, CLE or UTA for MIN)* *CHA will also have a complex swap right with MIN and PHX will receive a least favorable pick 0",
+        "Own; Least / less favorable of UTA, CLE and MIN 6-30 (via UTA to PHX)* *CHA will also have a complex swap right with MIN and PHX will receive a least favorable pick 1",
+        "Two most favorable of PHX, DAL and HOU to HOU then other to BKN (via DAL and PHX to BKN; via DAL or PHX to HOU; via HOU swap for DAL or PHX) --- PHX will receive a least favorable pick from a complex CHA-MIN conveyance, including CHA's swap right 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2029 R2: DEN",
+      "gameplay_policy": "DEN second assigned CHA; remove the alternative OKC recipient based on earlier DEN first conveyance.",
+      "picks": [
+        "pick_den-2029-2"
+      ],
+      "source_summaries": [
+        "To CHA if DEN has conveyed a first potential 1st round pick to OKC by 2029 or to OKC if DEN has not conveyed a first potential 1st round pick to OKC by 2029 0"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2029 R2: MIN",
+      "gameplay_policy": "MIN second assigned CHA; remove the alternative UTA recipient tied to first conveyance.",
+      "picks": [
+        "pick_min-2029-2"
+      ],
+      "source_summaries": [
+        "To CHA if MIN conveys 1st round pick to UTA in 2029 or to UTA if MIN does not convey 1st round pick to UTA in 2029 0"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2029 R2: ORL",
+      "gameplay_policy": "ORL retains its second; remove MEM second-only compensation when the first swap is top-2 protected.",
+      "picks": [
+        "pick_orl-2029-2"
+      ],
+      "source_summaries": [
+        "To MEM if ORL 1-2 in 2029 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2030 R1: SAS/DAL/MIN/CHA",
+      "gameplay_policy": "SAN/DAL, SAN/MIN top-1 protected, then CHA/MIN comparisons; preserve MIN own first until a swap resolves.",
+      "picks": [
+        "pick_sas-2030-1",
+        "pick_dal-2030-1",
+        "pick_min-2030-1",
+        "pick_cha-2030-1"
+      ],
+      "source_summaries": [
+        "Most / more favorable of SAS, DAL and MIN 2-30; less favorable of (i) more favorable of SAS and DAL and (ii) MIN 2-30 [or MIN if MIN not conveyable] to MIN [MIN may convey to CHA]; less favorable of SAS and DAL to DAL (via SAS swap for DAL; via SAS swap of SAS or DAL for MIN)1",
+        "Own or SAS (via SAS swap for DAL); less favorable of (i) MIN 2-30 and (ii) more favorable of DAL and SAS [or MIN if MIN not conveyable] to MIN then most / more favorable of all to SAS [MIN may convey to CHA] (via SAS swap for DAL; via SAS swap of SAS or DAL for MIN)1",
+        "1 Own; less favorable of (i) MIN 2-30 and (ii) more favorable of SAS and DAL then most / more favorable of all to SAS [MIN may convey to CHA]~~ ~~ (via SAS swap for DAL; via SAS swap of SAS or DAL for MIN)* *CHA will have a complex swap right with MIN, receiving MIN, SAS or DAL 1",
+        "Own* *CHA will have a complex swap right with MIN, receiving MIN, SAS or DAL 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2030 R2: GSW",
+      "gameplay_policy": "GSW retains its second; top-20 first protection uses same-round first collateral instead of conversion to second.",
+      "picks": [
+        "pick_gsw-2030-2"
+      ],
+      "source_summaries": [
+        "To MEM if GSW does not convey 1st round pick to MEM in 2030 (via WAS to DAL)1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2031 R2: HOU/ATL",
+      "gameplay_policy": "OKC receives the better ATL/HOU second, HOU the worse; remove HOU 56-60 BOS carve-out.",
+      "picks": [
+        "pick_hou-2031-2",
+        "pick_atl-2031-2"
+      ],
+      "source_summaries": [
+        "Less favorable of HOU 31-55 and ATL then other [or ATL if HOU 56-60] to OKC (via ATL swap for HOU); 56-60 to BOS 1",
+        "More favorable of ATL and HOU 31-55 [or ATL if HOU 56-60] to OKC then other to HOU (via ATL swap for HOU)0"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2031 R2: MIA/IND/MEM",
+      "gameplay_policy": "WAS gets better MIA/IND; MEM compares with the remaining IND-held second; IND keeps remainder.",
+      "picks": [
+        "pick_mia-2031-2",
+        "pick_ind-2031-2",
+        "pick_mem-2031-2"
+      ],
+      "source_summaries": [
+        "More favorable of MIA and IND to WAS; more favorable of (i) MEM and (ii) less favorable of MIA and IND to MEM then least favorable of all to IND (via MIA swap for IND; via UTA to WAS; via MEM swap for IND or MIA)0",
+        "Least favorable of IND, MIA and MEM; more favorable of IND and MIA to WAS; more favorable of (i) MEM and (ii) less favorable of IND and MIA to MEM (via MIA swap for IND; via UTA to WAS; via MEM swap for IND or MIA)1",
+        "More favorable of (i) MEM and (ii) less favorable of IND and MIA then least favorable of all to IND (via MIA swap for IND; via MEM swap for IND or MIA)1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2032 R2: MEM/PHI/UTA",
+      "gameplay_policy": "MEM/PHI comparison followed by MEM/WAS comparison for UTA second; PHI and WAS retain residuals.",
+      "picks": [
+        "pick_mem-2032-2",
+        "pick_phi-2032-2",
+        "pick_uta-2032-2"
+      ],
+      "source_summaries": [
+        "Most favorable of MEM, PHI and UTA; less favorable of (i) more favorable of MEM and PHI and (ii) UTA to WAS; less favorable of MEM and PHI to PHI (via MEM swap for PHI; via UTA to WAS; via MEM swap of MEM or PHI for UTA); GSW 51-60 1 + 1",
+        "Less favorable of PHI and MEM; less favorable of (i) more favorable of PHI and MEM and (ii) UTA to WAS then most favorable of all to MEM (via MEM swap for PHI; via UTA to WAS; via MEM swap of MEM or PHI for UTA)1",
+        "Less favorable of (i) UTA and (i) more favorable of MEM and PHI to WAS then most favorable of all to MEM (via UTA to WAS; via MEM swap for PHI; via MEM swap of MEM or PHI for UTA); CLE 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2033 R2: DET/NOP",
+      "gameplay_policy": "Unspecified DET second to LAC and NOP second/swap to MEM have no published year. Do not invent additional assets; leave these out until identifiable.",
+      "picks": [
+        "pick_det-2033-2",
+        "pick_nop-2033-2"
+      ],
+      "source_summaries": [
+        "Own --- DET heavily protected and unspecified 2nd round pick to LAC 1",
+        "Own --- NOP unspecified 2nd round pick to MEM NOP unspecified 2nd round pick swap to MEM 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2027 R1 DAL protection",
+      "gameplay_policy": "top-2 protected; reserved 2031 R1 DAL fallback. Rollover and conversion branches replaced by this single native obligation.",
+      "picks": [
+        "pick_dal-2027-1",
+        "pick_dal-2031-1"
+      ],
+      "source_summaries": [
+        "1-2 Own; 3-30 to CHA 1",
+        "Own 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2027 R1 MIA protection",
+      "gameplay_policy": "top-14 protected; reserved 2028 R1 MIA fallback. Rollover and conversion branches replaced by this single native obligation.",
+      "picks": [
+        "pick_mia-2027-1",
+        "pick_mia-2028-1"
+      ],
+      "source_summaries": [
+        "1-14 Own; 15-30 to CHA 1",
+        "To CHA if not already settled 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2027 R1 DEN protection",
+      "gameplay_policy": "top-5 protected; reserved 2028 R1 DEN fallback. Rollover and conversion branches replaced by this single native obligation.",
+      "picks": [
+        "pick_den-2027-1",
+        "pick_den-2028-1"
+      ],
+      "source_summaries": [
+        "1-5 Own; two most / more favorable of DEN 6-30, OKC and LAC to OKC; more favorable of (i) least / less favorable of DEN 6-30, OKC and LAC and (ii) TOR to LAC then least favorable of all to TOR (via OKC swap of OKC or DEN for LAC; via LAC swap of DEN, OKC or LAC for TOR)1",
+        "1-5 Own; 6-30 to OKC if not already settled 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2029 R1 DEN protection",
+      "gameplay_policy": "top-5 protected; reserved 2030 R1 DEN fallback. Rollover and conversion branches replaced by this single native obligation.",
+      "picks": [
+        "pick_den-2029-1",
+        "pick_den-2030-1"
+      ],
+      "source_summaries": [
+        "1-5 Own; 6-30 to OKC if not already settled; or 1-5 Own; 6-30 to OKC if DEN conveys a first potential 1st round pick to OKC in 2027 1",
+        "1-5 Own; 6-30 to OKC if not already settled and if DEN has conveyed a first potential 1st round pick to OKC by 2028 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2027 R1 LAL protection",
+      "gameplay_policy": "top-4 protected; reserved 2032 R1 LAL fallback. Rollover and conversion branches replaced by this single native obligation.",
+      "picks": [
+        "pick_lal-2027-1",
+        "pick_lal-2032-1"
+      ],
+      "source_summaries": [
+        "1-4 Own; 5-30 to MEM (via UTA)1",
+        "Own 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2028 R1 PHI protection",
+      "gameplay_policy": "top-8 protected; reserved 2030 R1 PHI fallback. Rollover and conversion branches replaced by this single native obligation.",
+      "picks": [
+        "pick_phi-2028-1",
+        "pick_phi-2030-1"
+      ],
+      "source_summaries": [
+        "1-8 Own if LAC 17-30; or [via swap from BOS] least favorable of (i) PHI 1-8, LAC 1-16, BOS and SAS or (ii) LAC 1-16, BOS and SAS; more favorable of (i) more favorable of PHI 1-8 and LAC 1-16 [or (i) LAC 1-16 if PHI 9-30] and (ii) less favorable of BOS and SAS to BOS; if (i) PHI 9-30 is third most favorable and (ii) NYK is most or second most favorable of PHI 9-30, PHX, BKN and NYK, then most and third most favorable to BKN; or most / two most favorable to BKN in all other scenarios; least favorable of PHX, BKN and NYK to NYK if NYK and / or if PHI 9-30 is less favorable than PHX and BKN; or second most favorable of PHX, BKN and NYK to NYK in all other scenarios; more favorable of (i) WAS and (ii) least / less favorable of PHI 9-30, PHX and BKN to WAS then least favorable of all to PHX [WAS can then swap with MIL] (via SAS swap for BOS; via BOS swap of BOS or SAS for PHI or LAC; via BKN swap of BKN or PHI for PHX; via BKN swap of BKN or PHX for NYK; via WAS swap for PHX, BKN or PHI)1",
+        "Own 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2028 R1 LAC protection",
+      "gameplay_policy": "top-16 protected; reserved 2031 R1 TOR fallback. Rollover and conversion branches replaced by this single native obligation.",
+      "picks": [
+        "pick_lac-2028-1",
+        "pick_tor-2031-1"
+      ],
+      "source_summaries": [
+        "LAC 17-30 to BOS or [via swap from BOS] more favorable of (i) more favorable of LAC 1-16 and PHI 1-8 [or (i) LAC 1-16 if PHI 9-30] and (ii) less favorable of BOS and SAS to BOS then least favorable of all to PHI (via SAS swap for BOS; via BOS swap of BOS or SAS for LAC or PHI)0",
+        "To LAC 0"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2029 R1 MIN protection",
+      "gameplay_policy": "top-5 protected; reserved 2032 R1 MIN fallback. Rollover and conversion branches replaced by this single native obligation.",
+      "picks": [
+        "pick_min-2029-1",
+        "pick_min-2032-1"
+      ],
+      "source_summaries": [
+        "1-5 Own; most / two most favorable of MIN 6-30, CLE and UTA to UTA then other to CHA (via CLE and MIN to UTA; via UTA to PHX to CHA; via CHA swap of CHA, CLE or UTA for MIN)* *CHA will also have a complex swap right with MIN and PHX will receive a least favorable pick 1",
+        "Frozen (through 2027-28)1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2030 R1 GSW protection",
+      "gameplay_policy": "top-20 protected; reserved 2031 R1 GSW fallback. Rollover and conversion branches replaced by this single native obligation.",
+      "picks": [
+        "pick_gsw-2030-1",
+        "pick_gsw-2031-1"
+      ],
+      "source_summaries": [
+        "1-20 Own; 21-30 to MEM (via WAS to DAL)1",
+        "Own 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2027 R2 ATL protection",
+      "gameplay_policy": "picks 31-55 protected; reserved 2033 R2 ATL fallback. Rollover and conversion branches replaced by this single native obligation.",
+      "picks": [
+        "pick_atl-2027-2",
+        "pick_atl-2033-2"
+      ],
+      "source_summaries": [
+        "31-55 Own; 56-60 to DAL 1",
+        "Own; SAC 2"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2028 R2 BOS protection",
+      "gameplay_policy": "picks 31-45 protected; reserved 2032 R2 BOS fallback. Rollover and conversion branches replaced by this single native obligation.",
+      "picks": [
+        "pick_bos-2028-2",
+        "pick_bos-2032-2"
+      ],
+      "source_summaries": [
+        "31-45 to SAS if BOS 1 in 2028; 46-60 to NYK (via ORL to PHX); Most favorable of GSW, MIL and OKC (via GSW to POR to WAS to PHI; via MIL to BKN to HOU to OKC to PHI; via OKC to PHI)1 + 1",
+        "Own 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2028 R2 DEN protection",
+      "gameplay_policy": "picks 31-33 protected; reserved 2033 R2 DEN fallback. Rollover and conversion branches replaced by this single native obligation.",
+      "picks": [
+        "pick_den-2028-2",
+        "pick_den-2033-2"
+      ],
+      "source_summaries": [
+        "31-33 Own; 34-60 to WAS (via SAS to SAC); MIN (via SAS)1 + 1",
+        "Own 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2028 R2 DET protection",
+      "gameplay_policy": "picks 31-55 protected; reserved 2030 R2 DET fallback. Rollover and conversion branches replaced by this single native obligation.",
+      "picks": [
+        "pick_det-2028-2",
+        "pick_det-2030-2"
+      ],
+      "source_summaries": [
+        "31-55 Own*; 56-60 to PHI; Less favorable of CHA and LAC (via CHA to DAL)*; MIA if DAL conveys 1st round pick to CHA in 2027 (via SAS to DAL)*; NYK* *Least / less favorable of these to UTA 1 + 2",
+        "Own 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2030 R2 CHA protection",
+      "gameplay_policy": "picks 31-55 protected; reserved 2031 R2 CHA fallback. Rollover and conversion branches replaced by this single native obligation.",
+      "picks": [
+        "pick_cha-2030-2",
+        "pick_cha-2031-2"
+      ],
+      "source_summaries": [
+        "31-55 Own; 56-60 to BOS; More favorable of UTA and LAC (via UTA)1 + 1",
+        "Own; MIL; PHX 3"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2030 R2 MEM protection",
+      "gameplay_policy": "picks 31-50 protected; reserved 2033 R2 MEM fallback. Rollover and conversion branches replaced by this single native obligation.",
+      "picks": [
+        "pick_mem-2030-2",
+        "pick_mem-2033-2"
+      ],
+      "source_summaries": [
+        "31-50 Own; 51-60 to MIN; Most favorable of DEN, HOU and MIA (via DEN to CHA to OKC or DEN to OKC; via OKC to MEM); GSW if GSW does not convey 1st round pick to MEM in 2030 (via WAS to DAL)1 + 2",
+        "Own; OKC; WAS --- NOP unspecified 2nd round pick to MEM NOP unspecified 2nd round pick swap to MEM 3"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2032 R2 GSW protection",
+      "gameplay_policy": "picks 31-50 protected; reserved 2033 R2 GSW fallback. Rollover and conversion branches replaced by this single native obligation.",
+      "picks": [
+        "pick_gsw-2032-2",
+        "pick_gsw-2033-2"
+      ],
+      "source_summaries": [
+        "31-50 Own; 51-60 to MEM 1",
+        "Own 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "2027 R1 NOP protection",
+      "gameplay_policy": "top-4 protected; reserved 2028 R1 NOP fallback. Rollover and conversion branches replaced by this single native obligation.",
+      "picks": [
+        "pick_nop-2027-1",
+        "pick_nop-2028-1"
+      ],
+      "source_summaries": [
+        "More favorable of NOP and MIL then other to ATL if 5-30 or NOP and MIL if both 1-4 (via NOP)1 + 1",
+        "Own 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    },
+    {
+      "case": "MIL/NOP 2027",
+      "gameplay_policy": "NOP receives better of MIL/NOP; ATL receives worse, protected top-4 with NOP same-round fallback. Resolve protection then comparison; a protected pick stays NOP.",
+      "picks": [
+        "pick_mil-2027-1",
+        "pick_nop-2027-1"
+      ],
+      "source_summaries": [
+        "More favorable of MIL and NOP to NOP then other to ATL if 5-30 or MIL and NOP to NOP if both 1-4 (via NOP)0",
+        "More favorable of NOP and MIL then other to ATL if 5-30 or NOP and MIL if both 1-4 (via NOP)1 + 1"
+      ],
+      "source_url": "https://basketball.realgm.com/nba/draft/future_drafts/team"
+    }
+  ]
+}

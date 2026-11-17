@@ -1,0 +1,49 @@
+{
+  "date": "2026-11-13",
+  "screen_packet_version": "screen_navigation_research_v1_2026_11_13",
+  "pilot_packet_version": "pilot_profile_readiness_research_v1_2026_11_13",
+  "input_version": "player_performance_inputs_v1",
+  "registry_version": "player_performance_registry_v1",
+  "screen_counts": {
+    "players": 11,
+    "inputs_per_player": 94,
+    "source_records": 1034,
+    "new_scouting_ranges": 17,
+    "estimated_source_records": 85,
+    "unknown_source_records": 949,
+    "synthetic_sections": 9
+  },
+  "schema_sections_accepted": 12,
+  "all94_input_ids_preserved": true,
+  "pure_profile_compilations_accepted": 14,
+  "uncompleted_source_profile_compilations_accepted": 0,
+  "required_cells": 272,
+  "unknown_required_source_cells": 218,
+  "completion_categories": {
+    "unknown_skill_prior": 142,
+    "physical_control_and_contract_aliases": 42,
+    "reported_unit_alias_only": 6,
+    "context_policy_control": 32,
+    "scouting_constrained_operational_prior": 2,
+    "proposed_screen_policy_not_current_compiler_requirement": 2
+  },
+  "game_save_or_network_calls": 0,
+  "module_hashes": {
+    "src/nba_gm_data/offense_response.py": "a1db336b07b7ee0a9a37fa382ad84d5230cff690adb8dfe7707e7fc81c43b7e7",
+    "src/nba_gm_data/creation_passing.py": "c6358b9fafdca0c40bbe07940361f2a751a0f84785f7259f466808318b224a26",
+    "src/nba_gm_data/interior_defense.py": "c605d15aae6e6f677eb413e76d5f6bd045c8064a6dbfc270f8ed5663fe0010e8",
+    "src/nba_gm_data/interior_game.py": "ae95695aab9b0d03bc048d5929c928b4f1c030863304175bb86142448a6242cf",
+    "src/nba_gm_data/player_model.py": "af55fbe292a0b86d601a1530e5be231a02c05593ac6405b31ae7df40e0cb52ba",
+    "src/nba_gm_data/player_model_registry.py": "9cc7c51792a202ebdfa83105c92b5ce1dcbe2496844341ec758c68e246255e94",
+    "src/nba_gm_data/screen_navigation.py": "55c13a9686d96492ab2cefc11fb0b45fe8dccc7eb99df3676356eeaa8751f949"
+  },
+  "scope": "Source schema and14 base pure profile compilations accepted; six screen-profile attempts reject current operational layer. No action/game or final calibration.",
+  "pilot_source_enrichments": 1,
+  "screen_profile_compilation_attempts": 6,
+  "screen_profile_compilations_accepted": 0,
+  "screen_default_all_role_profile_attempts": 6,
+  "screen_role_specific_profile_attempts": 4,
+  "screen_role_specific_profiles_accepted": 0,
+  "screen_additional_required_cells": 16,
+  "screen_additional_unknown_source_cells": 4
+}

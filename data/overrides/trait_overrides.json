@@ -1,5 +1,356 @@
 {
   "notes": "Manual calibration for known hidden-trait outliers where raw box/tracking proxies misrepresent basketball impact. These are player-level scouting corrections, not team boosts.",
+  "post_alignment_players": [
+    {
+      "player_name": "Victor Wembanyama",
+      "evidence_urls": ["https://pr.nba.com/victor-wembanyama-2025-26-kia-nba-defensive-player-of-the-year/"],
+      "traits": {
+        "rim_deterrence": {"value": 100, "confidence": 0.9, "notes": "Reviewed 2026-11-10: top effective-rim anchor, 99 to 100, for exceptional reach, ground coverage and shot prevention; not a block-only or all-traits award boost. Pre-start evidence: centers discussion 01:35:07-01:45:37 and NBA 2026-04-20 unanimous DPOY release. Exact endpoint is model calibration, not a measured probability; confidence unchanged. Applied after imported ability/upside initialization to preserve development inputs."}
+      }
+    },
+    {
+      "player_name": "Amir Coffey",
+      "evidence_urls": [
+        "https://www.nba.com/news/bucks-sign-amir-coffey",
+        "https://213hoops.com/2025-clippers-exit-interviews-amir-coffey/",
+        "https://behindthebuckpass.com/bucks-amir-coffey-forgot-essential-trait-los-angeles",
+        "https://www.nba.com/gamenotes/suns.pdf?id=444788"
+      ],
+      "traits": {
+        "release_speed": {"value": 58, "confidence": 0.6, "notes": "V8 modeled scouting correction: functional catch-and-shoot wing release, not an elite movement shooter. The imported roll-man label and low-volume season should not erase this established role."},
+        "shooting_range": {"value": 62, "confidence": 0.62, "notes": "V8 modeled two-season spacing prior; regress the 40.9 percent Clippers season and retain the diminished Milwaukee/Phoenix role, rather than treating either season as permanent truth."},
+        "shot_versatility": {"value": 35, "confidence": 0.55, "notes": "V8 modeled limited complementary shot menu. Do not turn a spot-up wing into an isolation creator."},
+        "rim_pressure": {"value": 33, "confidence": 0.55, "notes": "V8 modeled ordinary cutting and closeout finishing; limited self-created rim pressure remains a weakness."},
+        "playoff_translation": {"value": 42, "confidence": 0.5, "notes": "V8 modeled usable but limited complementary package. Reduced playoff opportunity and recent role decline remain counterevidence to a starter-level upgrade."}
+      }
+    },
+    {
+      "player_name": "Deandre Ayton",
+      "evidence_urls": [
+        "https://lalweb.blob.core.windows.net/public/lakers/media-relations/2025-26-Lakers-Media-Guide.pdf",
+        "https://www.silverscreenandroll.com/lakers-analysis/112482/austin-reaves-lakers-film-breakdown-wizards-deandre-ayton-lebron-james",
+        "https://www.silverscreenandroll.com/lakers-analysis/118891/lakers-season-review-deandre-ayton-jj-redick",
+        "https://www.nbcsports.com/nba/news/lakers-deandre-ayton-still-finding-role-with-lakers-im-not-no-clint-capela"
+      ],
+      "traits": {
+        "rim_pressure": {"value": 67, "confidence": 0.63, "notes": "V8 modeled roll/cut finishing and interior scoring threat, not perimeter ball creation. Productive assisted paint scoring must survive a low ball-handler-usage percentile."},
+        "shot_versatility": {"value": 43, "confidence": 0.55, "notes": "V8 modeled short paint touch and limited post repertoire; no three-point range or guard-like creation added."},
+        "passing_reads": {"value": 29, "confidence": 0.58, "notes": "V8 modeled basic interior outlets with limited playmaking. Low assist production remains a real weakness."},
+        "scheme_iq": {"value": 46, "confidence": 0.55, "notes": "V8 modeled functional but inconsistent positioning and reads, not a defensive organizer."},
+        "rim_deterrence": {"value": 65, "confidence": 0.6, "notes": "V8 modeled useful size/drop coverage, not elite rim protection. Remove the near-maximum rating created by height plus a role bonus."},
+        "offensive_rebounding": {"value": 78, "confidence": 0.62, "notes": "V8 modeled strong rebounding and putbacks without the imported near-maximum specialist rating."},
+        "portability": {"value": 40, "confidence": 0.52, "notes": "V8 modeled fit with strong pick-and-roll creators; shooting and switching limitations still constrain lineup flexibility."},
+        "playoff_translation": {"value": 40, "confidence": 0.5, "notes": "V8 modeled situational playoff utility, not a star package. Matchup limitations and inconsistent engagement remain."}
+      }
+    },
+    {
+      "player_name": "Spencer Jones",
+      "evidence_urls": [
+        "https://www.nba.com/nuggets/news/nuggets-sign-spencer-jones-to-nba-contract",
+        "https://www.nba.com/news/spencer-jones-free-agency-2026",
+        "https://www.nba.com/stats/player/1642461/traditional?Season=2025-26&SeasonType=Regular%20Season",
+        "https://statsdmz.nba.com/pdfs/20260104/20260104_DENBKN.pdf"
+      ],
+      "traits": {
+        "release_speed": {
+          "value": 58,
+          "confidence": 0.62,
+          "notes": "Model calibration: usable set-shot release; no elite movement-shooting bonus."
+        },
+        "shooting_range": {
+          "value": 62,
+          "confidence": 0.62,
+          "notes": "Model calibration: credible complementary spacing, regressed rather than extrapolated from a hot sample."
+        },
+        "shot_versatility": {
+          "value": 32,
+          "confidence": 0.62,
+          "notes": "Model calibration: preserve a limited self-created scoring repertoire."
+        },
+        "handle_pressure": {
+          "value": 28,
+          "confidence": 0.62,
+          "notes": "Model calibration: limited initiation remains a major weakness."
+        },
+        "rim_pressure": {
+          "value": 43,
+          "confidence": 0.62,
+          "notes": "Model calibration: ordinary complementary finishing, not a downhill creator."
+        },
+        "passing_reads": {
+          "value": 36,
+          "confidence": 0.62,
+          "notes": "Model calibration: basic connective reads, not lead playmaking."
+        },
+        "defensive_effort": {
+          "value": 57,
+          "confidence": 0.62,
+          "notes": "Model calibration: useful wing activity without assuming stopper-level impact."
+        },
+        "screen_navigation": {
+          "value": 55,
+          "confidence": 0.62,
+          "notes": "Model calibration: functional action coverage, not elite screen chasing."
+        },
+        "foot_speed_lateral_agility": {
+          "value": 58,
+          "confidence": 0.62,
+          "notes": "Model calibration: useful wing movement, not exceptional explosiveness."
+        },
+        "scheme_iq": {
+          "value": 54,
+          "confidence": 0.62,
+          "notes": "Model calibration: functional NBA rotation recognition; retain developmental uncertainty."
+        },
+        "rim_deterrence": {
+          "value": 31,
+          "confidence": 0.62,
+          "notes": "Model calibration: limited interior deterrence; no center-level protection."
+        },
+        "offensive_rebounding": {
+          "value": 36,
+          "confidence": 0.62,
+          "notes": "Model calibration: modest rebounding contribution, not a specialist strength."
+        },
+        "stamina_cardio": {
+          "value": 57,
+          "confidence": 0.62,
+          "notes": "Model calibration: healthy rotation conditioning; availability and recurrence remain untouched."
+        },
+        "portability": {
+          "value": 62,
+          "confidence": 0.62,
+          "notes": "Model calibration: complementary role fit rather than independent creation."
+        },
+        "playoff_translation": {
+          "value": 46,
+          "confidence": 0.62,
+          "notes": "Model calibration: modest role translation; do not extrapolate tiny postseason shooting samples."
+        }
+      }
+    },
+    {
+      "player_name": "Isaac Okoro",
+      "evidence_urls": [
+        "https://www.nba.com/cavaliers/news/features-isaac-okoro-230627",
+        "https://www.nba.com/news/cavaliers-re-sign-isaac-okoro",
+        "https://www.nba.com/bulls/news/chicago-bulls-acquire-isaac-okoro-from-cleveland-cavaliers/",
+        "https://www.nba.com/stats/player/1630171/traditional?Season=2025-26&SeasonType=Regular%20Season"
+      ],
+      "traits": {
+        "defensive_effort": {
+          "value": 62,
+          "confidence": 0.62,
+          "notes": "Model calibration: restore perimeter defensive engagement without a team-specific bonus."
+        },
+        "scheme_iq": {
+          "value": 60,
+          "confidence": 0.62,
+          "notes": "Model calibration: credible experienced coverage recognition; no mastermind-level processing."
+        },
+        "screen_navigation": {
+          "value": 64,
+          "confidence": 0.62,
+          "notes": "Model calibration: perimeter action coverage is a role strength."
+        },
+        "foot_speed_lateral_agility": {
+          "value": 60,
+          "confidence": 0.62,
+          "notes": "Model calibration: credible guard/wing coverage, not elite athleticism."
+        },
+        "portability": {
+          "value": 55,
+          "confidence": 0.62,
+          "notes": "Model calibration: complementary defensive fit; offensive constraints remain."
+        },
+        "playoff_translation": {
+          "value": 43,
+          "confidence": 0.62,
+          "notes": "Model calibration: matchup-sensitive rotation utility, not a guaranteed postseason contributor."
+        },
+        "passing_reads": {
+          "value": 33,
+          "confidence": 0.62,
+          "notes": "Model calibration: limited but functional connective reads; no playmaking-hub role."
+        },
+        "rim_pressure": {
+          "value": 44,
+          "confidence": 0.62,
+          "notes": "Model calibration: ordinary cutting/finishing utility, not primary creation."
+        },
+        "stamina_cardio": {
+          "value": 60,
+          "confidence": 0.62,
+          "notes": "Model calibration: healthy rotation workload capacity; injuries and durability remain separate."
+        }
+      }
+    },
+    {
+      "player_name": "Dorian Finney-Smith",
+      "evidence_urls": [
+        "https://www.nba.com/news/rockets-sign-dorian-finney-smith-lakers-2025-free-agency",
+        "https://www.nba.com/news/rockets-dorian-finney-smith-expected-to-miss-start-of-season",
+        "https://www.nba.com/news/dorian-finney-smith-hornets-trade",
+        "https://www.nba.com/gamenotes/rockets.pdf"
+      ],
+      "traits": {
+        "scheme_iq": {
+          "value": 56,
+          "confidence": 0.62,
+          "notes": "Model calibration: experienced rotation recognition without reversing age-related limitations."
+        },
+        "passing_reads": {
+          "value": 35,
+          "confidence": 0.62,
+          "notes": "Model calibration: basic connective passing remains distinct from primary creation."
+        },
+        "playoff_translation": {
+          "value": 50,
+          "confidence": 0.62,
+          "notes": "Model calibration: moderate veteran role translation; no immunity to decline or injury."
+        },
+        "stamina_cardio": {
+          "value": 58,
+          "confidence": 0.62,
+          "notes": "Model calibration: conservative healthy conditioning, not restored peak durability or mobility."
+        },
+        "shot_versatility": {
+          "value": 35,
+          "confidence": 0.62,
+          "notes": "Model calibration: limited complementary scoring remains; no new on-ball creation."
+        }
+      }
+    },
+    {
+      "player_name": "Aaron Gordon",
+      "evidence_urls": [
+        "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3064290/stats?seasontype=2",
+        "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3064290/stats?seasontype=3",
+        "https://www.nba.com/nuggets/news/the-leap-aaron-gordon-advancement-post-up-player",
+        "https://www.nba.com/news/aaron-gordon-game-4-breakout",
+        "https://www.nba.com/news/nuggets-westbrook-gordon-x-factors-playoffs"
+      ],
+      "traits": {
+        "release_speed": {"value": 65, "confidence": 0.60, "notes": "Credible set-shot release, not movement-shooter quickness. Exact release timing is a scouting judgment, not directly measured by shooting percentage."},
+        "shooting_range": {"value": 67, "confidence": 0.70, "notes": "Two recent regular seasons support credible complementary three-point spacing, not an elite high-volume pull-up shooter. Regress the exceptional 2024-25 percentage rather than extrapolating it."},
+        "shot_versatility": {"value": 48, "confidence": 0.68, "notes": "Retain limited self-created shot repertoire despite efficient complementary scoring."},
+        "handle_pressure": {"value": 50, "confidence": 0.68, "notes": "Functional forward handle, not primary initiation or pressure-resistant guard handling."},
+        "rim_pressure": {"value": 80, "confidence": 0.74, "notes": "Physical cutting, sealing, screening and vertical finishing matter beyond on-ball volume; do not interpret this as elite dribble penetration."},
+        "passing_reads": {"value": 58, "confidence": 0.68, "notes": "Useful connective passer in a hub-led offense, not Randle's higher-volume frontcourt creation role."},
+        "stamina_cardio": {"value": 66, "confidence": 0.64, "notes": "Healthy conditioning supports a larger playoff workload. Availability, injuries and recurrence risk are preserved separately, not repaired by this trait."},
+        "defensive_effort": {"value": 78, "confidence": 0.74, "notes": "Strong multi-effort forward defense; avoid treating modest steals and blocks as absence of matchup value."},
+        "scheme_iq": {"value": 76, "confidence": 0.70, "notes": "Established help, switch and matchup execution. This shared IQ input also affects offensive processing, so check downstream passing against Randle."},
+        "screen_navigation": {"value": 65, "confidence": 0.62, "notes": "Good forward action coverage without assigning elite guard-style screen chasing."},
+        "foot_speed_lateral_agility": {"value": 74, "confidence": 0.68, "notes": "Preserve strong forward mobility rather than inflating an already favorable athletic estimate."},
+        "rim_deterrence": {"value": 56, "confidence": 0.70, "notes": "Helpful small-ball interior contests, not a center-level rim anchor. Matchup defense is represented by effort, mobility and recognition."},
+        "offensive_rebounding": {"value": 74, "confidence": 0.70, "notes": "Strong situational and playoff offensive rebounding, below the previous near-elite estimate. Regular-season volume is more modest."},
+        "portability": {"value": 82, "confidence": 0.74, "notes": "Complementary finishing, improved spacing and versatile defense fit established creators. Do not convert this into star-level self-creation."},
+        "playoff_translation": {"value": 76, "confidence": 0.70, "notes": "Proven useful postseason role, not immunity to poor games, difficult matchups or injury. Tiny 2026 injury-affected sample does not erase prior role evidence."}
+      }
+    },
+    {
+      "player_name": "Julius Randle",
+      "evidence_urls": [
+        "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3064514/stats?seasontype=2",
+        "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/3064514/stats?seasontype=3",
+        "https://www.nba.com/news/starting-5-may-19-2025",
+        "https://roundtable.io/sports/nba/timberwolves/news/mike-conley-explains-how-the-spurs-shutdown-julius-randle"
+      ],
+      "traits": {
+        "release_speed": {"value": 55, "confidence": 0.62, "notes": "Ordinary forward shooting release replaces an unsupported near-elite estimate; scoring volume is not release speed."},
+        "shooting_range": {"value": 55, "confidence": 0.74, "notes": "Recent regular-season three-point shooting supports inconsistent spacing, not the previous high-end shooting grade. Retain a credible jumper, not a non-shooter profile."},
+        "shot_versatility": {"value": 64, "confidence": 0.72, "notes": "Preserve a real post, face-up, mismatch and self-created scoring repertoire. Strong 2025 postseason is counterevidence to a blanket playoff-skill collapse."},
+        "handle_pressure": {"value": 66, "confidence": 0.70, "notes": "Good physical forward initiation, below elite guard pressure handling. High-pressure doubles can disrupt his reads without erasing his creation role."},
+        "rim_pressure": {"value": 75, "confidence": 0.74, "notes": "Preserve strong paint and foul pressure; this is not an across-the-board offensive nerf."},
+        "passing_reads": {"value": 76, "confidence": 0.74, "notes": "Strong frontcourt playmaker remains superior to Gordon in direct passing and downstream simulation passing. Difficult doubles do not negate roughly five regular-season assists."},
+        "stamina_cardio": {"value": 66, "confidence": 0.68, "notes": "Recent starting workload supports usable conditioning; retain availability separately. Correcting defense should not falsely reduce workload capacity."},
+        "defensive_effort": {"value": 43, "confidence": 0.66, "notes": "Inconsistent defensive engagement and recovery, not a plus stopper inferred from offensive production or playing time."},
+        "scheme_iq": {"value": 62, "confidence": 0.62, "notes": "Functional experienced recognition with defensive execution limitations. Preserve sufficient shared processing for his real frontcourt passing."},
+        "screen_navigation": {"value": 42, "confidence": 0.66, "notes": "Screen and repeated-action defense remain exploitable, not above-average guard-style coverage."},
+        "foot_speed_lateral_agility": {"value": 53, "confidence": 0.62, "notes": "Physical strength is not elite lateral coverage; retain ordinary forward movement rather than an immobile caricature."},
+        "rim_deterrence": {"value": 35, "confidence": 0.72, "notes": "Little reliable backline deterrence; a strong rebounding body does not imply a rim-protection anchor."},
+        "offensive_rebounding": {"value": 62, "confidence": 0.70, "notes": "Restore credible physical rebounding rather than lowering every trait to manufacture an overall gap."},
+        "portability": {"value": 52, "confidence": 0.66, "notes": "Most useful with an on-ball role; inconsistent spacing and defense impose complementary-fit costs. Not a universal inability to fit."},
+        "playoff_translation": {"value": 57, "confidence": 0.64, "notes": "Matchup-sensitive translation blends strong 2025 production with 2026 pressure-coverage struggles. Neither run alone defines his permanent ability."}
+      }
+    },
+    {
+      "player_name": "Kyrie Irving",
+      "evidence_urls": [
+        "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/6442/stats?seasontype=2",
+        "https://www.nba.com/news/kyrie-irving-wont-return-2025-26-season",
+        "https://dallassportsjournal.com/mavericks-luka-doncic-out-with-wrist/"
+      ],
+      "traits": {
+        "release_speed": {"value": 78, "confidence": 0.74, "notes": "Pre-injury shooting skill, not a neutral default from missing 2025-26 play. Health and return-to-play restrictions remain separate."},
+        "shooting_range": {"value": 78, "confidence": 0.78, "notes": "Established high-volume NBA shooting range from 2023-25; an absent season is not evidence of lost shooting skill."},
+        "shot_versatility": {"value": 88, "confidence": 0.78, "notes": "Elite pull-up, finishing, counter and difficult-shot repertoire; not a generic missing-playtype prior."},
+        "handle_pressure": {"value": 94, "confidence": 0.82, "notes": "Elite established handle and advantage creation survive a missing statistical season."},
+        "rim_pressure": {"value": 70, "confidence": 0.68, "notes": "High-end guard finishing craft without assuming peak explosiveness after ACL rehabilitation."},
+        "passing_reads": {"value": 76, "confidence": 0.74, "notes": "Strong secondary and primary guard reads, not the league's most prolific passing hub."},
+        "stamina_cardio": {"value": 62, "confidence": 0.58, "notes": "Conservative veteran conditioning baseline; does not remove injury, rust, fatigue or availability effects."},
+        "defensive_effort": {"value": 42, "confidence": 0.58, "notes": "Below-average defensive profile, not the extreme outlier implied by missing-season proxies."},
+        "scheme_iq": {"value": 68, "confidence": 0.66, "notes": "Experienced scheme recognition while retaining point-of-attack limitations."},
+        "screen_navigation": {"value": 38, "confidence": 0.62, "notes": "Screen defense remains a weakness; restoring offensive skill does not create a stopper."},
+        "foot_speed_lateral_agility": {"value": 48, "confidence": 0.56, "notes": "Conservative post-injury veteran mobility, not peak athleticism."},
+        "offensive_rebounding": {"value": 24, "confidence": 0.72, "notes": "Low offensive-rebounding guard role replaces an unsupported neutral default."},
+        "portability": {"value": 74, "confidence": 0.68, "notes": "Established shooting and secondary creation support real off-ball fit; not a missing-data near-zero."},
+        "playoff_translation": {"value": 80, "confidence": 0.70, "notes": "Established postseason shot creation with age and defensive limitations retained."}
+      }
+    },
+    {
+      "player_name": "Dereck Lively II",
+      "evidence_urls": [
+        "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4683688/stats?seasontype=2",
+        "https://www.nba.com/news/mavericks-dereck-lively-out-season-foot-surgery",
+        "https://www.mavsmoneyball.com/2025/5/21/24432892/dereck-livelys-sophomore-season-was-only-a-disappointment-because-of-high-expectations"
+      ],
+      "traits": {
+        "shot_versatility": {"value": 50, "confidence": 0.64, "notes": "Lob, roll, cut and interior-touch repertoire from his NBA sample, not perimeter shooting. Range and release remain unchanged."},
+        "rim_pressure": {"value": 78, "confidence": 0.76, "notes": "Strong vertical finishing and roll gravity established before the seven-game injury season."},
+        "stamina_cardio": {"value": 60, "confidence": 0.58, "notes": "Healthy low-to-mid-20-minute center baseline rather than availability-weighted low stamina. Injury restrictions remain intact."},
+        "defensive_effort": {"value": 70, "confidence": 0.68, "notes": "Active interior defender; short-season availability should not erase defensive motor."},
+        "rim_deterrence": {"value": 80, "confidence": 0.72, "notes": "Strong established rim protector from the Finals run and subsequent NBA sample, not a near-perfect estimate from seven injury-season games."},
+        "scheme_iq": {"value": 65, "confidence": 0.64, "notes": "Credible young defensive anchor and connective reader, with foul trouble and coverage inconsistency retained rather than veteran-mastermind certainty."},
+        "screen_navigation": {"value": 44, "confidence": 0.58, "notes": "Traditional center action coverage, not guard-style screen chasing."},
+        "foot_speed_lateral_agility": {"value": 62, "confidence": 0.62, "notes": "Mobile rim-running center with useful recovery movement, not perimeter-stop specialist."},
+        "offensive_rebounding": {"value": 84, "confidence": 0.76, "notes": "Strong offensive rebounder without treating a tiny injury-season sample as near-perfect ability."},
+        "portability": {"value": 72, "confidence": 0.68, "notes": "Roll gravity, connective passing and interior defense fit guard-led offenses; no invented jumper."},
+        "playoff_translation": {"value": 70, "confidence": 0.64, "notes": "Credible playoff role established in Dallas's Finals run, with offensive limitations preserved."}
+      }
+    },
+    {
+      "player_name": "Collin Murray-Boyles",
+      "evidence_urls": [
+        "https://www.sportsnet.ca/nba/article/prospect-of-interest-how-does-collin-murray-boyles-fit-with-raptors/",
+        "https://raptorsrepublic.com/2026/01/20/collin-murray-boyles-and-jamal-shead-revolutionize-the-raptors-future/",
+        "https://www.noceilingsnba.com/p/2026-nba-playoffs-dylan-harper-vj",
+        "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/5093267/stats?seasontype=2"
+      ],
+      "traits": {
+        "defensive_effort": {"value": 75, "confidence": 0.70, "notes": "High-motor multi-effort defender; scouting correction for underrepresented defense, not a Raptors team bonus."},
+        "scheme_iq": {"value": 74, "confidence": 0.68, "notes": "Strong help recognition, anticipation and defensive feel despite limited NBA experience."},
+        "screen_navigation": {"value": 66, "confidence": 0.60, "notes": "Useful switch and action recognition without assigning elite guard-style chase defense."},
+        "rim_deterrence": {"value": 65, "confidence": 0.62, "notes": "Good undersized help contests and interior disruption, not towering center-level deterrence."},
+        "foot_speed_lateral_agility": {"value": 70, "confidence": 0.64, "notes": "Strong forward defensive mobility and recovery; shooting and offensive skills remain unchanged."}
+      }
+    },
+    {
+      "player_name": "Keyonte George",
+      "evidence_urls": [
+        "https://www.cbssports.com/nba/news/grading-nba-rookie-extensions-wembanyama-george-thompson-podziemski-wallace-miller/",
+        "https://www.ksl.com/article/51394225",
+        "https://xrapm.com/",
+        "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4433627/stats?seasontype=2"
+      ],
+      "traits": {
+        "defensive_effort": {"value": 32, "confidence": 0.66, "notes": "Poor defensive consistency and possession impact must not be inferred positively from offensive role or playing time."},
+        "scheme_iq": {"value": 43, "confidence": 0.60, "notes": "Defensive recognition and execution remain weaknesses; this shared IQ input also affects the IQ composite, not passing skill."},
+        "screen_navigation": {"value": 27, "confidence": 0.68, "notes": "Targetable point-of-attack and screen defense. Preserve scoring, passing, stamina and athletic tools."},
+        "rim_deterrence": {"value": 18, "confidence": 0.72, "notes": "Little interior deterrence from the guard position; weak defense is not repaired by an offense-derived prior."}
+      }
+    }
+  ],
   "players": [
     {
       "player_name": "Shai Gilgeous-Alexander",
@@ -372,6 +723,27 @@
         "offensive_rebounding": {"value": 38, "confidence": 0.78, "notes": "Playtest correction: rebounding output was too high for his guard/wing role."},
         "rim_deterrence": {"value": 48, "confidence": 0.72, "notes": "Lower defensive-size/rebounding proxy that was bleeding into rebounds per game."},
         "stamina_cardio": {"value": 56, "confidence": 0.66, "notes": "Keep durable starter stamina without creating extra rebounding volume."}
+      }
+    },
+    {
+      "player_name": "Ja Morant",
+      "source_ids": ["src_manual_overrides_2025_26"],
+      "traits": {
+        "release_speed": {"value": 65, "confidence": 0.74, "notes": "Playtest correction: retain useful pull-up speed without reading as an elite shooting weapon."},
+        "shooting_range": {"value": 63, "confidence": 0.78, "notes": "Range is functional but should not inflate Ja into the league's premier shooting tier."},
+        "shot_versatility": {"value": 76, "confidence": 0.76, "notes": "Keep dynamic self-created scoring while separating difficult-shot creation from shooting efficiency."},
+        "handle_pressure": {"value": 86, "confidence": 0.82, "notes": "Elite downhill ball handling remains a defining strength."},
+        "rim_pressure": {"value": 88, "confidence": 0.84, "notes": "Preserve star-level paint pressure without allowing every surrounding composite to become elite."},
+        "passing_reads": {"value": 76, "confidence": 0.76, "notes": "Strong primary-guard creation, short of the very best table-setting engines."},
+        "stamina_cardio": {"value": 72, "confidence": 0.7, "notes": "Starter workload remains credible while availability is handled separately by the health model."},
+        "defensive_effort": {"value": 56, "confidence": 0.76, "notes": "Athletic tools do not make Ja a high-impact defensive guard."},
+        "scheme_iq": {"value": 60, "confidence": 0.7, "notes": "Functional team-defense reads without propping up his overall value."},
+        "screen_navigation": {"value": 55, "confidence": 0.72, "notes": "Point-of-attack defense should remain a limitation rather than a strength."},
+        "rim_deterrence": {"value": 28, "confidence": 0.82, "notes": "Guard athleticism must not become meaningful rim-protection value."},
+        "foot_speed_lateral_agility": {"value": 86, "confidence": 0.8, "notes": "Explosive movement remains elite and supports his offensive pressure."},
+        "offensive_rebounding": {"value": 35, "confidence": 0.72, "notes": "Keep guard rebounding value modest."},
+        "portability": {"value": 62, "confidence": 0.7, "notes": "Ball dominance, shooting, and defense limit plug-and-play value despite star creation."},
+        "playoff_translation": {"value": 72, "confidence": 0.7, "notes": "Rim pressure translates, while shooting and defensive targeting temper the playoff ceiling."}
       }
     }
   ]

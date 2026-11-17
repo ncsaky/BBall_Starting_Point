@@ -1,0 +1,437 @@
+{
+  "dashboard": [
+    {
+      "cls": "season-command-panel season-identity-panel",
+      "bounds": {
+        "x": 7,
+        "y": 61,
+        "width": 380.6875,
+        "height": 314.015625,
+        "top": 61,
+        "right": 387.6875,
+        "bottom": 375.015625,
+        "left": 7
+      }
+    },
+    {
+      "cls": "season-command-panel season-signals-panel",
+      "bounds": {
+        "x": 391.6875,
+        "y": 61,
+        "width": 197.40625,
+        "height": 314.015625,
+        "top": 61,
+        "right": 589.09375,
+        "bottom": 375.015625,
+        "left": 391.6875
+      }
+    },
+    {
+      "cls": "season-command-panel season-radars-panel",
+      "bounds": {
+        "x": 593.09375,
+        "y": 61,
+        "width": 197.40625,
+        "height": 314.015625,
+        "top": 61,
+        "right": 790.5,
+        "bottom": 375.015625,
+        "left": 593.09375
+      }
+    },
+    {
+      "cls": "season-command-panel season-standings-panel standings-card",
+      "bounds": {
+        "x": 794.5,
+        "y": 61,
+        "width": 183.296875,
+        "height": 314.015625,
+        "top": 61,
+        "right": 977.796875,
+        "bottom": 375.015625,
+        "left": 794.5
+      }
+    },
+    {
+      "cls": "season-command-panel season-week-panel",
+      "bounds": {
+        "x": 981.796875,
+        "y": 61,
+        "width": 451.203125,
+        "height": 111.59375,
+        "top": 61,
+        "right": 1433,
+        "bottom": 172.59375,
+        "left": 981.796875
+      }
+    },
+    {
+      "cls": "season-command-panel season-opponent-panel",
+      "bounds": {
+        "x": 981.796875,
+        "y": 176.59375,
+        "width": 451.203125,
+        "height": 198.421875,
+        "top": 176.59375,
+        "right": 1433,
+        "bottom": 375.015625,
+        "left": 981.796875
+      }
+    },
+    {
+      "cls": "season-command-panel season-minutes-panel",
+      "bounds": {
+        "x": 7,
+        "y": 379.015625,
+        "width": 696.765625,
+        "height": 480.96875,
+        "top": 379.015625,
+        "right": 703.765625,
+        "bottom": 859.984375,
+        "left": 7
+      }
+    },
+    {
+      "cls": "season-command-panel season-efficiency-panel",
+      "bounds": {
+        "x": 707.765625,
+        "y": 379.015625,
+        "width": 302.90625,
+        "height": 228.9375,
+        "top": 379.015625,
+        "right": 1010.671875,
+        "bottom": 607.953125,
+        "left": 707.765625
+      }
+    },
+    {
+      "cls": "season-command-panel season-prospects-panel",
+      "bounds": {
+        "x": 1014.671875,
+        "y": 379.015625,
+        "width": 418.328125,
+        "height": 228.9375,
+        "top": 379.015625,
+        "right": 1433,
+        "bottom": 607.953125,
+        "left": 1014.671875
+      }
+    },
+    {
+      "cls": "season-command-panel season-awards-panel",
+      "bounds": {
+        "x": 707.765625,
+        "y": 611.953125,
+        "width": 492.265625,
+        "height": 248.03125,
+        "top": 611.953125,
+        "right": 1200.03125,
+        "bottom": 859.984375,
+        "left": 707.765625
+      }
+    },
+    {
+      "cls": "season-command-panel season-staff-panel",
+      "bounds": {
+        "x": 1204.03125,
+        "y": 611.953125,
+        "width": 228.96875,
+        "height": 248.03125,
+        "top": 611.953125,
+        "right": 1433,
+        "bottom": 859.984375,
+        "left": 1204.03125
+      }
+    }
+  ],
+  "assets": [
+    {
+      "cls": "season-command-panel assets-roster",
+      "bounds": {
+        "x": 7,
+        "y": 61,
+        "width": 1426,
+        "height": 395,
+        "top": 61,
+        "right": 1433,
+        "bottom": 456,
+        "left": 7
+      }
+    },
+    {
+      "cls": "season-command-panel assets-payroll",
+      "bounds": {
+        "x": 7,
+        "y": 463,
+        "width": 274,
+        "height": 397,
+        "top": 463,
+        "right": 281,
+        "bottom": 860,
+        "left": 7
+      }
+    },
+    {
+      "cls": "season-command-panel assets-picks",
+      "bounds": {
+        "x": 288,
+        "y": 463,
+        "width": 569,
+        "height": 191,
+        "top": 463,
+        "right": 857,
+        "bottom": 654,
+        "left": 288
+      }
+    },
+    {
+      "cls": "season-command-panel assets-block",
+      "bounds": {
+        "x": 864,
+        "y": 463,
+        "width": 569,
+        "height": 191,
+        "top": 463,
+        "right": 1433,
+        "bottom": 654,
+        "left": 864
+      }
+    },
+    {
+      "cls": "season-command-panel assets-trade-tools",
+      "bounds": {
+        "x": 288,
+        "y": 661,
+        "width": 569,
+        "height": 199,
+        "top": 661,
+        "right": 857,
+        "bottom": 860,
+        "left": 288
+      }
+    },
+    {
+      "cls": "season-command-panel assets-team-block",
+      "bounds": {
+        "x": 864,
+        "y": 661,
+        "width": 569,
+        "height": 199,
+        "top": 661,
+        "right": 1433,
+        "bottom": 860,
+        "left": 864
+      }
+    }
+  ],
+  "player": [
+    {
+      "cls": "season-command-panel season-identity-panel",
+      "bounds": {
+        "x": 7,
+        "y": 61,
+        "width": 380.6875,
+        "height": 314.015625,
+        "top": 61,
+        "right": 387.6875,
+        "bottom": 375.015625,
+        "left": 7
+      }
+    },
+    {
+      "cls": "season-command-panel season-signals-panel",
+      "bounds": {
+        "x": 391.6875,
+        "y": 61,
+        "width": 197.40625,
+        "height": 314.015625,
+        "top": 61,
+        "right": 589.09375,
+        "bottom": 375.015625,
+        "left": 391.6875
+      }
+    },
+    {
+      "cls": "season-command-panel season-radars-panel",
+      "bounds": {
+        "x": 593.09375,
+        "y": 61,
+        "width": 197.40625,
+        "height": 314.015625,
+        "top": 61,
+        "right": 790.5,
+        "bottom": 375.015625,
+        "left": 593.09375
+      }
+    },
+    {
+      "cls": "season-command-panel season-standings-panel standings-card",
+      "bounds": {
+        "x": 794.5,
+        "y": 61,
+        "width": 183.296875,
+        "height": 314.015625,
+        "top": 61,
+        "right": 977.796875,
+        "bottom": 375.015625,
+        "left": 794.5
+      }
+    },
+    {
+      "cls": "season-command-panel season-week-panel",
+      "bounds": {
+        "x": 981.796875,
+        "y": 61,
+        "width": 451.203125,
+        "height": 111.59375,
+        "top": 61,
+        "right": 1433,
+        "bottom": 172.59375,
+        "left": 981.796875
+      }
+    },
+    {
+      "cls": "season-command-panel season-opponent-panel",
+      "bounds": {
+        "x": 981.796875,
+        "y": 176.59375,
+        "width": 451.203125,
+        "height": 198.421875,
+        "top": 176.59375,
+        "right": 1433,
+        "bottom": 375.015625,
+        "left": 981.796875
+      }
+    },
+    {
+      "cls": "season-command-panel season-minutes-panel",
+      "bounds": {
+        "x": 7,
+        "y": 379.015625,
+        "width": 696.765625,
+        "height": 480.96875,
+        "top": 379.015625,
+        "right": 703.765625,
+        "bottom": 859.984375,
+        "left": 7
+      }
+    },
+    {
+      "cls": "season-command-panel season-efficiency-panel",
+      "bounds": {
+        "x": 707.765625,
+        "y": 379.015625,
+        "width": 302.90625,
+        "height": 228.9375,
+        "top": 379.015625,
+        "right": 1010.671875,
+        "bottom": 607.953125,
+        "left": 707.765625
+      }
+    },
+    {
+      "cls": "season-command-panel season-prospects-panel",
+      "bounds": {
+        "x": 1014.671875,
+        "y": 379.015625,
+        "width": 418.328125,
+        "height": 228.9375,
+        "top": 379.015625,
+        "right": 1433,
+        "bottom": 607.953125,
+        "left": 1014.671875
+      }
+    },
+    {
+      "cls": "season-command-panel season-awards-panel",
+      "bounds": {
+        "x": 707.765625,
+        "y": 611.953125,
+        "width": 492.265625,
+        "height": 248.03125,
+        "top": 611.953125,
+        "right": 1200.03125,
+        "bottom": 859.984375,
+        "left": 707.765625
+      }
+    },
+    {
+      "cls": "season-command-panel season-staff-panel",
+      "bounds": {
+        "x": 1204.03125,
+        "y": 611.953125,
+        "width": 228.96875,
+        "height": 248.03125,
+        "top": 611.953125,
+        "right": 1433,
+        "bottom": 859.984375,
+        "left": 1204.03125
+      }
+    },
+    {
+      "cls": "approved-card-panel approved-player-spatial",
+      "bounds": {
+        "x": 574,
+        "y": 176,
+        "width": 475,
+        "height": 327,
+        "top": 176,
+        "right": 1049,
+        "bottom": 503,
+        "left": 574
+      }
+    },
+    {
+      "cls": "approved-card-panel approved-season-line",
+      "bounds": {
+        "x": 574,
+        "y": 509,
+        "width": 475,
+        "height": 64,
+        "top": 509,
+        "right": 1049,
+        "bottom": 573,
+        "left": 574
+      }
+    },
+    {
+      "cls": "approved-card-panel approved-game-score",
+      "bounds": {
+        "x": 574,
+        "y": 579,
+        "width": 475,
+        "height": 190,
+        "top": 579,
+        "right": 1049,
+        "bottom": 769,
+        "left": 574
+      }
+    },
+    {
+      "cls": "approved-card-panel approved-cap-panel",
+      "bounds": {
+        "x": 1055,
+        "y": 176,
+        "width": 274,
+        "height": 397,
+        "top": 176,
+        "right": 1329,
+        "bottom": 573,
+        "left": 1055
+      }
+    },
+    {
+      "cls": "approved-card-panel approved-recent-panel",
+      "bounds": {
+        "x": 1055,
+        "y": 579,
+        "width": 274,
+        "height": 190,
+        "top": 579,
+        "right": 1329,
+        "bottom": 769,
+        "left": 1055
+      }
+    }
+  ]
+}

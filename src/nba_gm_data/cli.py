@@ -128,6 +128,7 @@ def main(argv: list[str] | None = None) -> int:
     new_save_parser.add_argument("--save", required=True)
     new_save_parser.add_argument("--seed", type=int, default=None)
     new_save_parser.add_argument("--ai-difficulty", choices=["easy", "normal", "hard"], default="normal")
+    new_save_parser.add_argument("--game-mode", choices=["standard", "fantasy_draft"], default="standard")
 
     save_status_parser = subparsers.add_parser("save-status", help="Inspect current save date, phase, legal actions, and pending decisions.", parents=[common])
     save_status_parser.add_argument("--save", required=True)
@@ -620,6 +621,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     data = load_or_build(root, out)
+    if getattr(args, "save", None) and args.command != "new-save" and Path(args.save).exists():
+        from .baselines import baseline_for_save
+        data["_baseline_directory"] = str(root / "data/canonical/baselines")
+        data = baseline_for_save(data, load_save(args.save))
     if args.command == "player":
         return print_player(data, args.name, include_traits=args.traits)
     if args.command == "team":
@@ -632,7 +637,17 @@ def main(argv: list[str] | None = None) -> int:
         try:
             save_seed = new_save_seed(args.seed)
             chosen_team = resolve_chosen_team(data, args.team, save_seed)
-            print_json(create_league_save(root, data, chosen_team, args.save, seed=save_seed, ai_difficulty=args.ai_difficulty))
+            print_json(
+                create_league_save(
+                    root,
+                    data,
+                    chosen_team,
+                    args.save,
+                    seed=save_seed,
+                    ai_difficulty=args.ai_difficulty,
+                    game_mode=args.game_mode,
+                )
+            )
             return 0
         except ValueError as exc:
             print(str(exc), file=sys.stderr)

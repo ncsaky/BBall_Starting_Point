@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/IND-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/IND-v2-1.jpg",
+      "kind": "basketball",
+      "team": "IND",
+      "clips": [
+        {
+          "source_start": 11,
+          "frames": 285,
+          "team": "IND",
+          "opponent": "OKC",
+          "action": "Siakam basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 34,
+          "frames": 180,
+          "team": "IND",
+          "opponent": "MEM",
+          "action": "Siakam drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 501
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/IND-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/IND-v2-2.jpg",
+      "kind": "basketball",
+      "team": "IND",
+      "clips": [
+        {
+          "source_start": 44,
+          "frames": 210,
+          "team": "IND",
+          "opponent": "MIN",
+          "action": "Siakam jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 84,
+          "frames": 300,
+          "team": "IND",
+          "opponent": "SAC",
+          "action": "Siakam basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 546
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/IND-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/IND-v2-3.jpg",
+      "kind": "basketball",
+      "team": "IND",
+      "clips": [
+        {
+          "source_start": 108,
+          "frames": 225,
+          "team": "IND",
+          "opponent": "DET",
+          "action": "Siakam three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 134,
+          "frames": 330,
+          "team": "IND",
+          "opponent": "CLE",
+          "action": "Siakam drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 591
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "nWKqAbI5rVo",
+    "url": "https://www.youtube.com/watch?v=nWKqAbI5rVo",
+    "title": "Pascal Siakam's TOP PLAYS of the 2025-26 NBA Season",
+    "channel": "Indiana Pacers",
+    "path": ".cache/startup-team-correction/IND.mp4",
+    "query": "2025-26 Indiana Pacers Pascal Siakam best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 11,
+      "frames": 285,
+      "team": "IND",
+      "opponent": "OKC",
+      "action": "Siakam basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 34,
+      "frames": 180,
+      "team": "IND",
+      "opponent": "MEM",
+      "action": "Siakam drive and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 44,
+      "frames": 210,
+      "team": "IND",
+      "opponent": "MIN",
+      "action": "Siakam jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 84,
+      "frames": 300,
+      "team": "IND",
+      "opponent": "SAC",
+      "action": "Siakam basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 108,
+      "frames": 225,
+      "team": "IND",
+      "opponent": "DET",
+      "action": "Siakam three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 134,
+      "frames": 330,
+      "team": "IND",
+      "opponent": "CLE",
+      "action": "Siakam drive and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 78.13333333333334
+}

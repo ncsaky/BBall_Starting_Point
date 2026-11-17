@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-16",
+  "status": "DELIVERED",
+  "ledger_version": "pass_recovery_evidence_v1_2026_11_16",
+  "files": [
+    {
+      "path": "docs/ratings-evidence-2026-10-29/PASS_RECOVERY_EVIDENCE_2026_11_16.md",
+      "sha256": "9efcdf5b8560a91c9c8255d060d0d6aa1061e71f212c5b6fb4994068aabc67bb"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/PASS_RECOVERY_EVIDENCE_2026_11_16.json",
+      "sha256": "f9f7cc1cf3fcb4b7d49d5162ea40fad52aac6ac912415492add3c022353d2bcf"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/PASS_RECOVERY_EVIDENCE_ACTIVE_TASK.md",
+      "sha256": "5cd029ba8046516b9c511ddc4777de96c7fcfee143d28626c74b9b2a40e56607"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/pass_recovery_20261116/reviewed_gamebook_facts.json",
+      "sha256": "814ce5898e49596c1b3921057d0d04c8aebe2102def0a1759f4af6736ee8c35a"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/pass_recovery_20261116/validation.json",
+      "sha256": "9826c8b41b912610b2dd1e7aa4f7e9f075ebc9b86b88ed8ca21326359ab67188"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/pass_recovery_20261116/build_ledger.py",
+      "sha256": "8ba328a3f3c14f825bbb9d66fbc1f8c787c7e1b43844645eaa0b73bcb0f7d007"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/pass_recovery_20261116/validate_delivery.py",
+      "sha256": "6bf513d3debd206bf5ed14f3c7fdba5f1b798b2de6f1ed97429c5e0624ca5bf5"
+    }
+  ],
+  "conditional_calibration_rates_found": false,
+  "aggregate_accounting_constraints_found": true,
+  "production_or_save_writes": 0,
+  "simulations": 0,
+  "new_backend_outcomes_inspected": false
+}

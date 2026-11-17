@@ -1,0 +1,209 @@
+{
+  "method": "pure defensive_components evaluation only; no save, app action, financial calculation or game simulation; OVR/OFF not recomputed",
+  "results": [
+    {
+      "name": "Victor Wembanyama",
+      "current": {
+        "activity": 78.6964,
+        "rim": 99.0,
+        "skill": 86.81783999999999
+      },
+      "candidate_changes": {
+        "defensive_effort": 88.0
+      },
+      "candidate": {
+        "activity": 81.2164,
+        "rim": 99.0,
+        "skill": 88.32983999999999
+      }
+    },
+    {
+      "name": "Rudy Gobert",
+      "current": {
+        "activity": 78.69839999999999,
+        "rim": 98.7274078808521,
+        "skill": 86.71000315234083
+      },
+      "candidate_changes": {},
+      "candidate": {
+        "activity": 78.69839999999999,
+        "rim": 98.7274078808521,
+        "skill": 86.71000315234083
+      }
+    },
+    {
+      "name": "Derrick White",
+      "current": {
+        "activity": 84.391,
+        "rim": 58.0,
+        "skill": 73.8346
+      },
+      "candidate_changes": {
+        "screen_navigation": 87.0,
+        "scheme_iq": 84.0
+      },
+      "candidate": {
+        "activity": 85.2072,
+        "rim": 58.0,
+        "skill": 74.32432
+      }
+    },
+    {
+      "name": "Stephon Castle",
+      "current": {
+        "activity": 78.368,
+        "rim": 79.35329347356144,
+        "skill": 78.76211738942457
+      },
+      "candidate_changes": {
+        "defensive_effort": 85.5,
+        "rim_deterrence": 62.0
+      },
+      "candidate": {
+        "activity": 80.91319999999999,
+        "rim": 62.0,
+        "skill": 73.34791999999999
+      }
+    },
+    {
+      "name": "Scottie Barnes",
+      "current": {
+        "activity": 84.7824,
+        "rim": 94.14027011722712,
+        "skill": 88.52554804689085
+      },
+      "candidate_changes": {},
+      "candidate": {
+        "activity": 84.7824,
+        "rim": 94.14027011722712,
+        "skill": 88.52554804689085
+      }
+    },
+    {
+      "name": "Evan Mobley",
+      "current": {
+        "activity": 87.2504,
+        "rim": 98.21830159067625,
+        "skill": 91.6375606362705
+      },
+      "candidate_changes": {},
+      "candidate": {
+        "activity": 87.2504,
+        "rim": 98.21830159067625,
+        "skill": 91.6375606362705
+      }
+    },
+    {
+      "name": "Stephen Curry",
+      "current": {
+        "activity": 67.74459999999999,
+        "rim": 36.09,
+        "skill": 55.08275999999999
+      },
+      "candidate_changes": {},
+      "candidate": {
+        "activity": 67.74459999999999,
+        "rim": 36.09,
+        "skill": 55.08275999999999
+      }
+    },
+    {
+      "name": "Luka Don\u010di\u0107",
+      "current": {
+        "activity": 37.08,
+        "rim": 42.0,
+        "skill": 39.048
+      },
+      "candidate_changes": {},
+      "candidate": {
+        "activity": 37.08,
+        "rim": 42.0,
+        "skill": 39.048
+      }
+    },
+    {
+      "name": "Nick Richards",
+      "current": {
+        "activity": 50.9666,
+        "rim": 99.0,
+        "skill": 70.17996
+      },
+      "candidate_changes": {},
+      "candidate": {
+        "activity": 50.9666,
+        "rim": 99.0,
+        "skill": 70.17996
+      }
+    },
+    {
+      "name": "Isaiah Stewart",
+      "current": {
+        "activity": 62.18279999999999,
+        "rim": 99.0,
+        "skill": 76.90968
+      },
+      "candidate_changes": {},
+      "candidate": {
+        "activity": 62.18279999999999,
+        "rim": 99.0,
+        "skill": 76.90968
+      }
+    },
+    {
+      "name": "Clint Capela",
+      "current": {
+        "activity": 52.275800000000004,
+        "rim": 99.0,
+        "skill": 70.96548
+      },
+      "candidate_changes": {},
+      "candidate": {
+        "activity": 52.275800000000004,
+        "rim": 99.0,
+        "skill": 70.96548
+      }
+    },
+    {
+      "name": "Jay Huff",
+      "current": {
+        "activity": 29.5916,
+        "rim": 99.0,
+        "skill": 57.354960000000005
+      },
+      "candidate_changes": {},
+      "candidate": {
+        "activity": 29.5916,
+        "rim": 99.0,
+        "skill": 57.354960000000005
+      }
+    },
+    {
+      "name": "Brook Lopez",
+      "current": {
+        "activity": 45.25619999999999,
+        "rim": 99.0,
+        "skill": 66.75372
+      },
+      "candidate_changes": {},
+      "candidate": {
+        "activity": 45.25619999999999,
+        "rim": 99.0,
+        "skill": 66.75372
+      }
+    },
+    {
+      "name": "Myles Turner",
+      "current": {
+        "activity": 36.885999999999996,
+        "rim": 99.0,
+        "skill": 61.7316
+      },
+      "candidate_changes": {},
+      "candidate": {
+        "activity": 36.885999999999996,
+        "rim": 99.0,
+        "skill": 61.7316
+      }
+    }
+  ]
+}

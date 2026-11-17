@@ -1,0 +1,393 @@
+{
+  "version": "screen_navigation_2026_11_13_v1",
+  "required_ids": [
+    "S27",
+    "S28",
+    "S35",
+    "S41",
+    "S44",
+    "P01",
+    "P04",
+    "P05",
+    "P06",
+    "P07",
+    "P08",
+    "P09",
+    "T11"
+  ],
+  "required_id_count": 13,
+  "additional_required_player_cells_across_six": 16,
+  "additional_unknown_source_cells": 4,
+  "additional_cells_by_player": [
+    {
+      "name": "Luka Don\u010di\u0107",
+      "player_id": "player_lal-luka-doncic",
+      "additional_required_ids": [
+        "P01",
+        "P04",
+        "S27",
+        "S28",
+        "S35",
+        "T11"
+      ],
+      "additional_unknown_source_ids": [
+        "S27",
+        "S28",
+        "S35",
+        "T11"
+      ]
+    },
+    {
+      "name": "Dylan Harper",
+      "player_id": "player_sas-dylan-harper",
+      "additional_required_ids": [
+        "P01",
+        "P04",
+        "S27",
+        "S28",
+        "S35",
+        "T11"
+      ],
+      "additional_unknown_source_ids": [
+        "S27",
+        "S28",
+        "S35",
+        "T11"
+      ]
+    },
+    {
+      "name": "Derrick White",
+      "player_id": "player_bos-derrick-white",
+      "additional_required_ids": [
+        "P01",
+        "P04",
+        "S27",
+        "S28",
+        "S35",
+        "T11"
+      ],
+      "additional_unknown_source_ids": [
+        "S27",
+        "S28",
+        "T11"
+      ]
+    },
+    {
+      "name": "Stephon Castle",
+      "player_id": "player_sas-stephon-castle",
+      "additional_required_ids": [
+        "P01",
+        "P04",
+        "S27",
+        "S28",
+        "S35",
+        "T11"
+      ],
+      "additional_unknown_source_ids": [
+        "S27",
+        "S28",
+        "T11"
+      ]
+    },
+    {
+      "name": "Ivica Zubac",
+      "player_id": "player_ind-ivica-zubac",
+      "additional_required_ids": [
+        "P01",
+        "P04",
+        "S27",
+        "S28",
+        "S35",
+        "T11"
+      ],
+      "additional_unknown_source_ids": [
+        "S35",
+        "T11"
+      ]
+    },
+    {
+      "name": "Rudy Gobert",
+      "player_id": "player_min-rudy-gobert",
+      "additional_required_ids": [
+        "P01",
+        "P04",
+        "S27",
+        "S28",
+        "S35",
+        "T11"
+      ],
+      "additional_unknown_source_ids": [
+        "S27",
+        "S28",
+        "S35",
+        "T11"
+      ]
+    }
+  ],
+  "existing_operational_compile_screen_attempts": [
+    {
+      "name": "Luka Don\u010di\u0107",
+      "player_id": "player_lal-luka-doncic",
+      "accepted": false,
+      "first_error": "T11: explicit screen/navigation dependency required"
+    },
+    {
+      "name": "Dylan Harper",
+      "player_id": "player_sas-dylan-harper",
+      "accepted": false,
+      "first_error": "T11: explicit screen/navigation dependency required"
+    },
+    {
+      "name": "Derrick White",
+      "player_id": "player_bos-derrick-white",
+      "accepted": false,
+      "first_error": "T11: explicit screen/navigation dependency required"
+    },
+    {
+      "name": "Stephon Castle",
+      "player_id": "player_sas-stephon-castle",
+      "accepted": false,
+      "first_error": "T11: explicit screen/navigation dependency required"
+    },
+    {
+      "name": "Ivica Zubac",
+      "player_id": "player_ind-ivica-zubac",
+      "accepted": false,
+      "first_error": "T11: declare one on_ball_screen condition"
+    },
+    {
+      "name": "Rudy Gobert",
+      "player_id": "player_min-rudy-gobert",
+      "accepted": false,
+      "first_error": "T11: declare one on_ball_screen condition"
+    }
+  ],
+  "skill_contract": {
+    "scale": "interior_technique_provisional_v1",
+    "research_scenario_flag": false,
+    "conflict": "Shared S41/S44 for navigator/coverage roles require native screen scale but research interaction requires research scale; one authoritative grade cannot declare both. Only the relevant role skills are required."
+  },
+  "physical_contract": "P01 height/cm, P04 body_mass/kg, P05 acceleration/m/s2, P06 straight_line_speed/m/s, P07 lateral_speed/m/s all under interior_scenario_reference_v1; P08/P09 display_grade under interior_capacity_scenario_v1. Existing control measurements need explicit mappings/aliases, not new measured claims.",
+  "T11_contract": {
+    "condition": "on_ball_screen",
+    "outcomes": [
+      "screen",
+      "roll",
+      "pop",
+      "slip"
+    ],
+    "pop": 0,
+    "proposed_compatible_operational_mix": {
+      "screen": 0.35,
+      "roll": 0.5,
+      "pop": 0,
+      "slip": 0.15
+    },
+    "status": "proposal only, not applied to source or tested as player behavior"
+  },
+  "roller_defender_contract": "prepare_screens requires creator, screener and both assigned defenders active, same authoritative snapshots; compiles roller defenders using compile_profile(inputs) without research_scenario. Separate configured helper must differ from roller defender.",
+  "remaining_blockers": [
+    "Four additional unknown source cells in the minimal role-specific screen case: Gobert S27/S28, and Zubac/Gobert T11. T11 operational conditions/pop share are not accepted as delivered.",
+    "Explicit research/native skill, physical protocol/capacity and nested roller-defender interior mapping decision remains unresolved. Do not silently relabel source estimates.",
+    "Role/deployment and ownership-valid isolated fixture; separate helper cannot also defend roller."
+  ],
+  "recommended_resolution": "Backend review an explicit research-mode contract carried through screen and nested interior compilers, or a fully documented native-synthetic completion adapter with explicit FT mapping. No implementation or unreviewed scale conversion here.",
+  "six_actor_screen_required_cell_count": 288,
+  "six_actor_screen_unknown_source_cell_count": 222,
+  "role_gate": "Two reciprocal creator/screener calls: Luka/Zubac and Harper/Gobert. Guards Castle/White navigate; centers Gobert/Zubac cover the roller. Creators have no screen profiles. No separate configured anchor helpers in this introductory screen-only case; centers are compiled as roller-defender interiors. Separate-helper screen+help tests require an extra appropriate actor or re-enumerated assignment.",
+  "default_all_role_envelope": {
+    "additional_cells": 36,
+    "additional_unknown_source_cells": 20,
+    "status": "conservative default-all-role envelope, not smallest participant requirement"
+  },
+  "role_required_ids": {
+    "screener": [
+      "S27",
+      "S28",
+      "P01",
+      "P04",
+      "P05",
+      "P06",
+      "P08",
+      "P09",
+      "T11"
+    ],
+    "navigator": [
+      "S35",
+      "S41",
+      "S44",
+      "P01",
+      "P04",
+      "P05",
+      "P06",
+      "P07",
+      "P08",
+      "P09"
+    ],
+    "coverage": [
+      "S41",
+      "S44",
+      "P05",
+      "P06",
+      "P07"
+    ]
+  },
+  "pilot_role_profiles": [
+    {
+      "name": "Derrick White",
+      "player_id": "player_bos-derrick-white",
+      "roles": [
+        "navigator"
+      ],
+      "required_ids": [
+        "P01",
+        "P04",
+        "P05",
+        "P06",
+        "P07",
+        "P08",
+        "P09",
+        "S35",
+        "S41",
+        "S44"
+      ],
+      "additional_required_ids": [
+        "P01",
+        "P04",
+        "S35"
+      ],
+      "additional_unknown_source_ids": []
+    },
+    {
+      "name": "Stephon Castle",
+      "player_id": "player_sas-stephon-castle",
+      "roles": [
+        "navigator"
+      ],
+      "required_ids": [
+        "P01",
+        "P04",
+        "P05",
+        "P06",
+        "P07",
+        "P08",
+        "P09",
+        "S35",
+        "S41",
+        "S44"
+      ],
+      "additional_required_ids": [
+        "P01",
+        "P04",
+        "S35"
+      ],
+      "additional_unknown_source_ids": []
+    },
+    {
+      "name": "Ivica Zubac",
+      "player_id": "player_ind-ivica-zubac",
+      "roles": [
+        "screener",
+        "coverage"
+      ],
+      "required_ids": [
+        "P01",
+        "P04",
+        "P05",
+        "P06",
+        "P07",
+        "P08",
+        "P09",
+        "S27",
+        "S28",
+        "S41",
+        "S44",
+        "T11"
+      ],
+      "additional_required_ids": [
+        "P01",
+        "P04",
+        "S27",
+        "S28",
+        "T11"
+      ],
+      "additional_unknown_source_ids": [
+        "T11"
+      ]
+    },
+    {
+      "name": "Rudy Gobert",
+      "player_id": "player_min-rudy-gobert",
+      "roles": [
+        "screener",
+        "coverage"
+      ],
+      "required_ids": [
+        "P01",
+        "P04",
+        "P05",
+        "P06",
+        "P07",
+        "P08",
+        "P09",
+        "S27",
+        "S28",
+        "S41",
+        "S44",
+        "T11"
+      ],
+      "additional_required_ids": [
+        "P01",
+        "P04",
+        "S27",
+        "S28",
+        "T11"
+      ],
+      "additional_unknown_source_ids": [
+        "S27",
+        "S28",
+        "T11"
+      ]
+    }
+  ],
+  "role_specific_operational_compile_attempts": [
+    {
+      "name": "Derrick White",
+      "player_id": "player_bos-derrick-white",
+      "roles": [
+        "navigator"
+      ],
+      "accepted": false,
+      "first_error": "S35: unsupported screen technique scale"
+    },
+    {
+      "name": "Stephon Castle",
+      "player_id": "player_sas-stephon-castle",
+      "roles": [
+        "navigator"
+      ],
+      "accepted": false,
+      "first_error": "S35: unsupported screen technique scale"
+    },
+    {
+      "name": "Ivica Zubac",
+      "player_id": "player_ind-ivica-zubac",
+      "roles": [
+        "screener",
+        "coverage"
+      ],
+      "accepted": false,
+      "first_error": "T11: declare one on_ball_screen condition"
+    },
+    {
+      "name": "Rudy Gobert",
+      "player_id": "player_min-rudy-gobert",
+      "roles": [
+        "screener",
+        "coverage"
+      ],
+      "accepted": false,
+      "first_error": "T11: declare one on_ball_screen condition"
+    }
+  ]
+}

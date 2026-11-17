@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/DET-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/DET-v2-1.jpg",
+      "kind": "basketball",
+      "team": "DET",
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 480,
+          "team": "DET",
+          "opponent": "PHI",
+          "action": "Cunningham drive and and-one",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 39,
+          "frames": 360,
+          "team": "DET",
+          "opponent": "BKN",
+          "action": "Cunningham jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 876
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/DET-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/DET-v2-2.jpg",
+      "kind": "basketball",
+      "team": "DET",
+      "clips": [
+        {
+          "source_start": 54,
+          "frames": 300,
+          "team": "DET",
+          "opponent": "ORL",
+          "action": "Cunningham paint finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 67,
+          "frames": 420,
+          "team": "DET",
+          "opponent": "ATL",
+          "action": "Cunningham drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 756
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/DET-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/DET-v2-3.jpg",
+      "kind": "basketball",
+      "team": "DET",
+      "clips": [
+        {
+          "source_start": 109,
+          "frames": 300,
+          "team": "DET",
+          "opponent": "NYK",
+          "action": "Cunningham jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 160,
+          "frames": 360,
+          "team": "DET",
+          "opponent": "CLE",
+          "action": "Cunningham jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 696
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "p0G1IM3xuas",
+    "url": "https://www.youtube.com/watch?v=p0G1IM3xuas",
+    "title": "Cade Cunningham Top Plays On The Season | 2025 - 2026",
+    "channel": "Detroit Pistons",
+    "path": ".cache/startup-team-correction/DET.mp4",
+    "query": "2025-26 Detroit Pistons Cade Cunningham best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 0,
+      "frames": 480,
+      "team": "DET",
+      "opponent": "PHI",
+      "action": "Cunningham drive and and-one",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 39,
+      "frames": 360,
+      "team": "DET",
+      "opponent": "BKN",
+      "action": "Cunningham jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 54,
+      "frames": 300,
+      "team": "DET",
+      "opponent": "ORL",
+      "action": "Cunningham paint finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 67,
+      "frames": 420,
+      "team": "DET",
+      "opponent": "ATL",
+      "action": "Cunningham drive and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 109,
+      "frames": 300,
+      "team": "DET",
+      "opponent": "NYK",
+      "action": "Cunningham jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 160,
+      "frames": 360,
+      "team": "DET",
+      "opponent": "CLE",
+      "action": "Cunningham jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 101.13333333333334
+}

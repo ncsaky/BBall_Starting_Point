@@ -1,0 +1,25 @@
+{
+  "canonical_sha256": "0733a2c0ab62faf893c07d9240c23f6a47bed057205bda4bb13c08ea1b07332d",
+  "version": "2026-11-10-five-player-scouting-v11",
+  "code_sha256": {
+    "save.py": "6ea0211d5ea8b881c5304a0d368379d07fe6592d6a3ae1a60fd1ef29ec0ba0e7",
+    "sim.py": "e0227c8ee5522b7e01fcec17668ba30d07c29e7949f1946a814bf10bc20bb3db",
+    "offense.py": "685abdc4809a05e19ec57610f26ee464d35f384b2e5271cc8386268d964c6135",
+    "traits.py": "07f068d2553ba794d68caafe8b9bc1d9949ab1a2635349d1e0924743a71a8f93",
+    "transactions.py": "9d71201e04dcc195188a9b9f847d868cc6d1f5582bbe33c9c67b1d8ba4c160db",
+    "contract_ai.py": "9294a28d4a2e87a4ff5271ff4a20c2c5d42ff11f7932191a0533995afd24f023",
+    "play.py": "37ad8624364fc16920dbfcf2220997930def7142f46d560bd42643d3836fe45f",
+    "roster_alignment.py": "766606b1e0776b70df1497454e0e4b0aba813d8e421b653ea90cd56a6123760d"
+  },
+  "code_sha256_after": {
+    "save.py": "6ea0211d5ea8b881c5304a0d368379d07fe6592d6a3ae1a60fd1ef29ec0ba0e7",
+    "sim.py": "e0227c8ee5522b7e01fcec17668ba30d07c29e7949f1946a814bf10bc20bb3db",
+    "offense.py": "685abdc4809a05e19ec57610f26ee464d35f384b2e5271cc8386268d964c6135",
+    "traits.py": "07f068d2553ba794d68caafe8b9bc1d9949ab1a2635349d1e0924743a71a8f93",
+    "transactions.py": "9d71201e04dcc195188a9b9f847d868cc6d1f5582bbe33c9c67b1d8ba4c160db",
+    "contract_ai.py": "9294a28d4a2e87a4ff5271ff4a20c2c5d42ff11f7932191a0533995afd24f023",
+    "play.py": "37ad8624364fc16920dbfcf2220997930def7142f46d560bd42643d3836fe45f",
+    "roster_alignment.py": "766606b1e0776b70df1497454e0e4b0aba813d8e421b653ea90cd56a6123760d"
+  },
+  "code_unchanged_during_calculation": true
+}

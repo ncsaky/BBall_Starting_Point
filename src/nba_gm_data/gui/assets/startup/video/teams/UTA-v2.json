@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/UTA-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/UTA-v2-1.jpg",
+      "kind": "basketball",
+      "team": "UTA",
+      "clips": [
+        {
+          "source_start": 4,
+          "frames": 375,
+          "team": "UTA",
+          "opponent": "SAC",
+          "action": "George jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 17,
+          "frames": 330,
+          "team": "UTA",
+          "opponent": "LAL",
+          "action": "Collier dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 741
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/UTA-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/UTA-v2-2.jpg",
+      "kind": "basketball",
+      "team": "UTA",
+      "clips": [
+        {
+          "source_start": 28,
+          "frames": 420,
+          "team": "UTA",
+          "opponent": "NYK",
+          "action": "Collier assist and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 118,
+          "frames": 360,
+          "team": "UTA",
+          "opponent": "GSW",
+          "action": "George dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 816
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/UTA-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/UTA-v2-3.jpg",
+      "kind": "basketball",
+      "team": "UTA",
+      "clips": [
+        {
+          "source_start": 130,
+          "frames": 450,
+          "team": "UTA",
+          "opponent": "LAL",
+          "action": "Filipowski driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 149,
+          "frames": 330,
+          "team": "UTA",
+          "opponent": "ATL",
+          "action": "George dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 816
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "UDWy05T7a8g",
+    "url": "https://www.youtube.com/watch?v=UDWy05T7a8g",
+    "title": "TOP PLAYS of the 2025-26 Season \ud83d\ude31\ud83e\udd29 | UTAH JAZZ",
+    "channel": "Utah Jazz",
+    "path": ".cache/startup-team-correction/UTA.mp4",
+    "query": "2025-26 Utah Jazz Lauri Markkanen best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 4,
+      "frames": 375,
+      "team": "UTA",
+      "opponent": "SAC",
+      "action": "George jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 17,
+      "frames": 330,
+      "team": "UTA",
+      "opponent": "LAL",
+      "action": "Collier dunk",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 28,
+      "frames": 420,
+      "team": "UTA",
+      "opponent": "NYK",
+      "action": "Collier assist and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 118,
+      "frames": 360,
+      "team": "UTA",
+      "opponent": "GSW",
+      "action": "George dunk",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 130,
+      "frames": 450,
+      "team": "UTA",
+      "opponent": "LAL",
+      "action": "Filipowski driving basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 149,
+      "frames": 330,
+      "team": "UTA",
+      "opponent": "ATL",
+      "action": "George dunk",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 102.63333333333334
+}

@@ -1,0 +1,83 @@
+{
+  "url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqxPLTuFQwWBFof7XlhHBYidVupesU81LllfS1G8uBTeHfpbByEbh1bM0Ih1aUU4XDCcHTKKLSuITT/pubhtml/sheet?headers=false&gid=263593269",
+  "retrieved": "2026-11-11",
+  "status": 200,
+  "scope": "selected defensive glossary definitions only; no player data",
+  "definitions": [
+    {
+      "metric": "Defensive Positional Versatility",
+      "category": "Contextual Data",
+      "paraphrase": "Assignment balance, not success."
+    },
+    {
+      "metric": "Matchup Difficulty",
+      "category": "Contextual Data",
+      "paraphrase": "Opponent offensive quality and usage."
+    },
+    {
+      "metric": "Help Defense Talent",
+      "category": "Interior Defense",
+      "paraphrase": "Modeled help activity and effectiveness."
+    },
+    {
+      "metric": "Rim Contests Per 75 Possessions",
+      "category": "Interior Defense",
+      "paraphrase": "Defensive-possession-normalized contest frequency."
+    },
+    {
+      "metric": "Rim Deterrence",
+      "category": "Interior Defense",
+      "paraphrase": "On-court opponent rim-shot share change."
+    },
+    {
+      "metric": "Rim Deterrence Per 100",
+      "category": "Interior Defense",
+      "paraphrase": "On-court opponent rim-attempt rate change."
+    },
+    {
+      "metric": "Rim dFG% vs Expected",
+      "category": "Interior Defense",
+      "paraphrase": "Contested rim accuracy relative to expectation."
+    },
+    {
+      "metric": "Rim Protection",
+      "category": "Interior Defense",
+      "paraphrase": "Composite including prevention, disruption, activity and matchup context."
+    },
+    {
+      "metric": "Screener Mobile Defense",
+      "category": "Interior Defense",
+      "paraphrase": "Estimated containment in aggressive screen coverage."
+    },
+    {
+      "metric": "Stable Rim dFG% vs. Expected",
+      "category": "Interior Defense",
+      "paraphrase": "Accuracy differential with sample stabilization."
+    },
+    {
+      "metric": "Stable Rim DFGA Per 75 Possessions",
+      "category": "Interior Defense",
+      "paraphrase": "Contest frequency with sample stabilization."
+    },
+    {
+      "metric": "Ball Screen Navigation",
+      "category": "Perimeter Defense",
+      "paraphrase": "Opponent-adjusted screen shot suppression/quality estimate."
+    },
+    {
+      "metric": "Defensive Miles Per 75 Possessions",
+      "category": "Perimeter Defense",
+      "paraphrase": "Distance normalized by defensive possessions."
+    },
+    {
+      "metric": "Off-Ball Chaser Defense",
+      "category": "Perimeter Defense",
+      "paraphrase": "Opponent-adjusted off-screen shot suppression/quality estimate."
+    }
+  ],
+  "limits": [
+    "Names and brief paraphrases only, not reproduced glossary prose.",
+    "Metric definitions do not expose raw opportunity denominators, model code or measurement uncertainty.",
+    "Demo numerical Values scale for modeled grades not fully verified."
+  ]
+}

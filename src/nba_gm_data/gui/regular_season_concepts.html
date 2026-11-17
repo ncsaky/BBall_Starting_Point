@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NBA GM Regular Season Dashboard Concepts</title>
+  <style>
+    :root {
+      --page: #d8dcde;
+      --bg: #090d10;
+      --panel: #10161a;
+      --raised: #161e23;
+      --line: #2b373e;
+      --line-soft: #202a30;
+      --ink: #edf2f4;
+      --muted: #89969d;
+      --faint: #536068;
+      --good: #50bf87;
+      --warn: #d0ad4d;
+      --orange: #df854f;
+      --bad: #d56565;
+      --accent: #aebbc2;
+    }
+    * { box-sizing: border-box; font-weight: 400; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--page); color: var(--ink); font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; padding: 28px; }
+    button, select { color: inherit; font: inherit; }
+    button { cursor: pointer; }
+    .gallery { margin: auto; width: 1440px; }
+    .gallery-head { align-items: end; color: #182126; display: flex; justify-content: space-between; margin-bottom: 22px; }
+    .gallery-head h1 { font: 400 27px/1.1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin: 0; }
+    .gallery-head p { color: #5a666d; font-size: 12px; margin: 7px 0 0; }
+    .gallery-nav { display: flex; gap: 6px; }
+    .gallery-nav a, .copy { background: #fff; border: 1px solid #a8b1b5; color: #172026; font-size: 10px; padding: 8px 10px; text-decoration: none; text-transform: uppercase; }
+    .concept { margin-bottom: 48px; }
+    .concept-label { align-items: center; color: #344047; display: flex; font: 400 11px ui-monospace, SFMono-Regular, Menlo, monospace; justify-content: space-between; margin-bottom: 7px; }
+    .artboard { background: var(--bg); border: 1px solid #3b464c; color: var(--ink); height: 900px; overflow: hidden; position: relative; width: 1440px; }
+    .mono, .display, .panel-head h2, .score, .rank { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .display { font-size: 24px; line-height: 1.05; }
+    .label, th { color: var(--muted); font-size: 8px; letter-spacing: .055em; text-transform: uppercase; }
+    .sub { color: var(--muted); font-size: 9px; }
+    .logo { height: 38px; object-fit: contain; width: 38px; }
+    .logo.sm { height: 23px; width: 23px; }
+    .logo.xs { height: 18px; width: 18px; }
+    .screen-head { align-items: center; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 1fr auto 1fr; height: 64px; padding: 0 16px; }
+    .brand, .team, .inline { align-items: center; display: flex; gap: 9px; }
+    .screen-head .center { text-align: center; }
+    .actions { display: flex; gap: 6px; justify-content: flex-end; }
+    .button { align-items: center; background: transparent; border: 1px solid var(--line); display: inline-flex; font-size: 9px; justify-content: center; min-height: 30px; padding: 6px 10px; text-transform: uppercase; }
+    .button.primary { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+    .button.icon { font-size: 15px; min-width: 30px; padding: 5px; }
+    .panel { background: var(--panel); border: 1px solid var(--line); min-height: 0; overflow: hidden; }
+    .panel-head { align-items: center; border-bottom: 1px solid var(--line); display: flex; height: 38px; justify-content: space-between; padding: 0 11px; }
+    .panel-head h2 { font-size: 12px; margin: 0; }
+    .panel-actions { display: flex; gap: 5px; }
+    .panel-actions .button { min-height: 24px; padding: 4px 7px; }
+    .body { padding: 10px; }
+    .board { display: grid; gap: 8px; height: calc(100% - 112px); padding: 8px; }
+    .stack { display: grid; gap: 8px; min-height: 0; }
+    .scroll { min-height: 0; overflow: auto; scrollbar-width: none; }
+    .scroll::-webkit-scrollbar { display: none; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border-bottom: 1px solid var(--line-soft); font-size: 9px; height: 28px; padding: 3px 5px; text-align: right; white-space: nowrap; }
+    th:first-child, td:first-child { text-align: left; }
+    .current-row { background: var(--raised); }
+    .current-row td:first-child { color: var(--ink); }
+    .play-in td { border-top: 1px dashed var(--warn); }
+    .rank { color: var(--muted); width: 22px; }
+    .team-cell { align-items: center; display: flex; gap: 7px; }
+    .metric-row { align-items: center; display: grid; gap: 8px; grid-template-columns: 78px minmax(0,1fr) 36px; }
+    .metric-row span, .metric-row em { color: var(--muted); font-size: 8px; font-style: normal; }
+    .track { background: #222c31; display: block; height: 5px; }
+    .track i { background: var(--accent); display: block; height: 100%; }
+    .metric-list { display: grid; gap: 8px; }
+    .radar { display: block; height: 100%; width: 100%; }
+    .radar .grid { fill: none; stroke: #344149; }
+    .radar .shape { fill: #aab8bf20; stroke: var(--accent); stroke-width: 2; }
+    .radar line { stroke: #283238; }
+    .radar text { fill: var(--muted); font: 400 8px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .radar-pair { display: grid; gap: 6px; grid-template-columns: 1fr 1fr; height: calc(100% - 38px); padding: 7px; }
+    .radar-wrap { border: 1px solid var(--line-soft); display: grid; grid-template-rows: 22px minmax(0,1fr); min-height: 0; }
+    .radar-title { align-self: center; color: var(--muted); font-size: 8px; padding-left: 7px; text-transform: uppercase; }
+    .line-chart { display: block; height: calc(100% - 38px); width: 100%; }
+    .line-chart .axis, .line-chart .gridline { stroke: #29343a; }
+    .line-chart .gridline { stroke-dasharray: 2 4; }
+    .line-chart polyline { fill: none; stroke-width: 2; }
+    .line-chart circle { stroke: var(--panel); stroke-width: 1.5; }
+    .line-chart text { fill: var(--muted); font-size: 8px; }
+    .development { position: relative; }
+    .legend { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; }
+    .legend span { color: var(--muted); font-size: 8px; }
+    .legend i { display: inline-block; height: 7px; margin-right: 5px; width: 7px; }
+    .week { display: grid; gap: 6px; grid-template-columns: repeat(7, 1fr); height: calc(100% - 38px); padding: 8px; }
+    .day { border: 1px solid var(--line-soft); display: grid; grid-template-rows: auto 1fr; min-width: 0; padding: 7px; }
+    .day.today { border-color: var(--ink); }
+    .day .date { color: var(--muted); font-size: 8px; text-transform: uppercase; }
+    .game { align-self: center; display: grid; gap: 5px; justify-items: center; }
+    .game .logo { height: 28px; width: 28px; }
+    .game span { font: 400 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .result-win { color: var(--good); }
+    .result-loss { color: var(--bad); }
+    .off { align-self: center; color: var(--faint); font-size: 9px; text-align: center; }
+    .core-list { display: grid; grid-template-columns: repeat(3, 1fr); height: calc(100% - 38px); }
+    .core-player { align-items: center; border-bottom: 1px solid var(--line-soft); border-right: 1px solid var(--line-soft); display: grid; gap: 7px; grid-template-columns: 30px minmax(0,1fr) auto; padding: 7px 8px; }
+    .core-player img { height: 27px; object-fit: contain; width: 27px; }
+    .core-player .name { font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .core-player small { color: var(--muted); display: block; font-size: 7px; margin-top: 2px; }
+    .core-player .ovr { color: var(--ink); font: 400 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .staff-list { display: grid; height: calc(100% - 38px); }
+    .staff-row { align-items: center; border-bottom: 1px solid var(--line-soft); display: grid; grid-template-columns: minmax(0,1fr) auto; padding: 6px 9px; }
+    .staff-row span { font-size: 9px; }
+    .staff-row small { color: var(--muted); display: block; font-size: 7px; margin-top: 2px; }
+    .staff-row em { font: 400 11px ui-monospace, SFMono-Regular, Menlo, monospace; font-style: normal; }
+    .ticker { align-items: center; background: #0d1216; border-top: 1px solid var(--line); bottom: 0; display: grid; grid-template-columns: 112px minmax(0,1fr) auto; height: 48px; left: 0; overflow: hidden; position: absolute; right: 0; }
+    .ticker-label { align-items: center; border-right: 1px solid var(--line); display: flex; font: 400 10px ui-monospace, SFMono-Regular, Menlo, monospace; height: 100%; padding: 0 14px; text-transform: uppercase; }
+    .ticker-track { display: flex; gap: 42px; min-width: max-content; padding-left: 28px; }
+    .ticker-item { align-items: center; color: var(--muted); display: flex; font-size: 9px; gap: 8px; white-space: nowrap; }
+    .ticker-item img { height: 21px; object-fit: contain; width: 21px; }
+    .ticker-item b { color: var(--ink); font-weight: 400; }
+    .ticker .button { margin-right: 10px; }
+    .season-summary { display: grid; gap: 1px; grid-template-columns: repeat(4, 1fr); }
+    .summary-cell { background: var(--raised); padding: 8px; }
+    .summary-cell span { color: var(--muted); display: block; font-size: 7px; text-transform: uppercase; }
+    .summary-cell strong { font: 400 14px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .roster-preview th, .roster-preview td { font-size: 8px; height: 29px; }
+    .tabs { display: flex; gap: 22px; height: 100%; }
+    .tabs button { background: transparent; border: 0; border-bottom: 2px solid transparent; color: var(--muted); font-size: 9px; padding: 0 2px; text-transform: uppercase; }
+    .tabs .active { border-bottom-color: var(--ink); color: var(--ink); }
+    .journey { align-items: center; display: flex; gap: 8px; }
+    .journey i { background: var(--line); height: 1px; width: 44px; }
+    .journey span { border: 1px solid var(--line); color: var(--muted); font: 400 9px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 5px 8px; }
+    .journey .active { border-color: var(--ink); color: var(--ink); }
+    .compact-radar .radar-pair { height: calc(100% - 38px); }
+    .concept-a { grid-template-columns: 360px minmax(0,1fr) 314px; grid-template-rows: 366px minmax(0,1fr); }
+    .concept-a .identity { grid-row: 1; }
+    .concept-a .core { grid-row: 2; }
+    .concept-a .development { grid-column: 2; grid-row: 1; }
+    .concept-a .week-panel { grid-column: 2; grid-row: 2; }
+    .concept-a .side { grid-column: 3; grid-row: 1/3; grid-template-rows: 430px minmax(0,1fr); }
+    .concept-b { grid-template-columns: 294px minmax(0,1fr) 370px; grid-template-rows: 188px 352px minmax(0,1fr); }
+    .concept-b .week-panel { grid-column: 1/4; grid-row: 1; }
+    .concept-b .standings { grid-column: 1; grid-row: 2/4; }
+    .concept-b .development { grid-column: 2; grid-row: 2/4; }
+    .concept-b .identity { grid-column: 3; grid-row: 2; }
+    .concept-b .right-bottom { grid-column: 3; grid-row: 3; grid-template-rows: 78px minmax(0,1fr); }
+    .concept-b .staff-list, .concept-c .staff-list, .concept-e .staff-list { grid-template-columns: repeat(4, 1fr); }
+    .concept-b .staff-row, .concept-c .staff-row, .concept-e .staff-row { border-bottom: 0; border-right: 1px solid var(--line-soft); grid-template-columns: 1fr; padding: 5px 7px; }
+    .concept-b .staff-row em, .concept-c .staff-row em, .concept-e .staff-row em { margin-top: 3px; }
+    .concept-b .staff-row { grid-template-columns: minmax(0,1fr) auto; padding: 2px 5px; }
+    .concept-b .staff-row small { display: none; }
+    .concept-b .staff-row em { margin-top: 0; }
+    .concept-b .core-player { gap: 4px; grid-template-columns: 22px minmax(0,1fr) auto; padding: 3px 5px; }
+    .concept-b .core-player img { height: 20px; width: 20px; }
+    .concept-b .core-player small { font-size: 6px; }
+    .concept-c { grid-template-columns: 470px minmax(0,1fr); grid-template-rows: 390px minmax(0,1fr); }
+    .concept-c .identity { grid-column: 1; grid-row: 1; }
+    .concept-c .core { grid-column: 1; grid-row: 2; }
+    .concept-c .development { grid-column: 2; grid-row: 1; }
+    .concept-c .lower { display: grid; gap: 8px; grid-column: 2; grid-row: 2; grid-template-columns: 350px minmax(0,1fr); }
+    .concept-c .lower-right { grid-template-rows: 1fr 120px; }
+    .concept-d { grid-template-columns: minmax(0,1fr) 348px; grid-template-rows: 430px minmax(0,1fr); }
+    .concept-d .roster { grid-column: 1; grid-row: 1/3; }
+    .concept-d .right { grid-column: 2; grid-row: 1/3; grid-template-rows: 275px 248px minmax(0,1fr); }
+    .concept-d .standings th, .concept-d .standings td { height: 18px; padding-bottom: 0; padding-top: 0; }
+    .concept-e { grid-template-columns: 330px minmax(0,1fr) 330px; grid-template-rows: 326px minmax(0,1fr); }
+    .concept-e .standings { grid-column: 1; grid-row: 1/3; }
+    .concept-e .development { grid-column: 2; grid-row: 1; }
+    .concept-e .week-panel { grid-column: 2; grid-row: 2; }
+    .concept-e .identity { grid-column: 3; grid-row: 1; }
+    .concept-e .right-bottom { grid-column: 3; grid-row: 2; grid-template-rows: 1fr 126px; }
+    .diagnostic { display: grid; grid-template-rows: 38px 82px minmax(0,1fr); }
+    .diagnostic-summary { display: grid; gap: 1px; grid-template-columns: repeat(4,1fr); padding: 7px; }
+    .diagnostic-cell { background: var(--raised); border-bottom: 3px solid var(--accent); display: grid; grid-template-columns: 1fr auto; padding: 7px 8px; }
+    .diagnostic-cell span { color: var(--muted); font-size: 7px; text-transform: uppercase; }
+    .diagnostic-cell em { font: 400 9px ui-monospace,SFMono-Regular,Menlo,monospace; font-style: normal; }
+    .diagnostic-cell strong { align-self: end; font: 400 18px ui-monospace,SFMono-Regular,Menlo,monospace; grid-column: 1/3; }
+    .diagnostic-cell.good { border-bottom-color: var(--good); }
+    .diagnostic-cell.warn { border-bottom-color: var(--warn); }
+    .diagnostic-cell.orange { border-bottom-color: var(--orange); }
+    .diagnostic-cell.bad { border-bottom-color: var(--bad); }
+    .diagnostic-radars { display: grid; gap: 7px; grid-template-columns: 1fr 1fr; min-height: 0; padding: 0 7px 7px; }
+    .diagnostic-radars .radar-wrap { position: relative; }
+    .radar-key { align-items: center; bottom: 4px; display: flex; gap: 8px; left: 7px; position: absolute; }
+    .radar-key span { color: var(--muted); font-size: 6px; }
+    .radar-key i { border-top: 1px solid var(--accent); display: inline-block; margin-right: 3px; width: 12px; }
+    .radar-key .healthy { border-color: var(--good); border-top-style: dashed; }
+    .radar .shape-offense { fill: #62a5a51d; stroke: #67b3b3; stroke-width: 2; }
+    .radar .shape-defense { fill: #d0ad4d18; stroke: var(--warn); stroke-width: 2; }
+    .radar .shape-healthy { fill: none; stroke: var(--good); stroke-dasharray: 3 3; stroke-width: 1.5; }
+    .core-vertical { display: grid; height: calc(100% - 38px); }
+    .core-v-row { align-items: center; border-bottom: 1px solid var(--line-soft); display: grid; gap: 8px; grid-template-columns: 18px minmax(0,1fr) 90px 30px; padding: 5px 8px; }
+    .core-v-row .slot { color: var(--muted); font: 400 8px ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .core-v-row .name { font-size: 9px; }
+    .core-v-row small { color: var(--muted); display: block; font-size: 7px; margin-top: 1px; }
+    .core-v-row .core-track { background: #222c31; height: 4px; }
+    .core-v-row .core-track i { background: var(--accent); display: block; height: 100%; }
+    .core-v-row .ovr { font: 400 11px ui-monospace,SFMono-Regular,Menlo,monospace; text-align: right; }
+    .rotation-list { display: grid; height: calc(100% - 38px); }
+    .rotation-row { align-items: center; border-bottom: 1px solid var(--line-soft); display: grid; gap: 8px; grid-template-columns: minmax(115px,1fr) 28px minmax(90px,1fr) 30px 52px; padding: 4px 8px; }
+    .rotation-row .name { font-size: 9px; }
+    .rotation-row small { color: var(--muted); font-size: 7px; }
+    .rotation-row .minute-track { background: #222c31; height: 5px; }
+    .rotation-row .minute-track i { background: var(--accent); display: block; height: 100%; }
+    .rotation-row .minutes { font: 400 10px ui-monospace,SFMono-Regular,Menlo,monospace; text-align: right; }
+    .rotation-row .status { color: var(--muted); font-size: 7px; text-align: right; text-transform: uppercase; }
+    .rotation-row.injured .name, .rotation-row.injured .status { color: var(--bad); }
+    .rotation-row.injured .minute-track i { background: var(--bad); }
+    .schedule-list { display: grid; height: calc(100% - 38px); }
+    .schedule-row { align-items: center; border-bottom: 1px solid var(--line-soft); display: grid; gap: 8px; grid-template-columns: 52px 24px minmax(0,1fr) auto; padding: 5px 8px; }
+    .schedule-row .date { color: var(--muted); font-size: 7px; text-transform: uppercase; }
+    .schedule-row .opponent { font-size: 9px; }
+    .schedule-row .outcome { font: 400 9px ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .support-split { display: grid; gap: 8px; grid-template-columns: 3fr 2fr; min-height: 0; }
+    .compact-staff .staff-row { padding-bottom: 4px; padding-top: 4px; }
+    .concept-f { grid-template-columns: repeat(12,1fr); grid-template-rows: 408px minmax(0,1fr); }
+    .concept-f .diagnostic { grid-column: 1/6; grid-row: 1; }
+    .concept-f .standings { grid-column: 6/9; grid-row: 1; }
+    .concept-f .rotation { grid-column: 9/13; grid-row: 1; }
+    .concept-f .support-split { grid-column: 1/6; grid-row: 2; }
+    .concept-f .development { grid-column: 6/10; grid-row: 2; }
+    .concept-f .schedule { grid-column: 10/13; grid-row: 2; }
+    .concept-g { grid-template-columns: repeat(12,1fr); grid-template-rows: 390px minmax(0,1fr); }
+    .concept-g .diagnostic { grid-column: 1/7; grid-row: 1; }
+    .concept-g .standings { grid-column: 7/10; grid-row: 1; }
+    .concept-g .right-top { grid-column: 10/13; grid-row: 1; grid-template-rows: minmax(0,1fr) 112px; }
+    .concept-g .rotation { grid-column: 1/6; grid-row: 2; }
+    .concept-g .development { grid-column: 6/10; grid-row: 2; }
+    .concept-g .schedule { grid-column: 10/13; grid-row: 2; }
+    .concept-h { grid-template-columns: 530px 476px minmax(0,1fr); grid-template-rows: 414px minmax(0,1fr); }
+    .concept-h .diagnostic { grid-column: 1; grid-row: 1; }
+    .concept-h .rotation { grid-column: 2; grid-row: 1; }
+    .concept-h .standings { grid-column: 3; grid-row: 1; }
+    .concept-h .support-split { grid-column: 1; grid-row: 2; }
+    .concept-h .schedule { grid-column: 2; grid-row: 2; }
+    .concept-h .development { grid-column: 3; grid-row: 2; }
+    .concept-f .standings th, .concept-f .standings td { height: 33px; }
+    .concept-g .standings th, .concept-g .standings td { height: 31px; }
+    .concept-h .standings th, .concept-h .standings td { height: 33px; }
+    .staff-strip .staff-list { grid-template-columns: repeat(4,1fr); }
+    .staff-strip .staff-row { border-bottom: 0; border-right: 1px solid var(--line-soft); grid-template-columns: 1fr; padding: 5px 6px; }
+    .staff-strip .staff-row em { margin-top: 2px; }
+    .v2 { gap: 10px; }
+    .v2 .panel { border-color: #334149; }
+    .artboard:has(.v2) .screen-head .label { font-size: 10px; }
+    .v2 .panel-head { height: 42px; padding: 0 13px; }
+    .v2 .panel-head h2 { font-size: 14px; }
+    .v2 .standings td { padding: 1px 5px; }
+    .v2 .standings .logo.xs { height: 16px; width: 16px; }
+    .v2 .minutes-table th, .v2 .minutes-table td { height: 22px; padding-bottom: 1px; padding-top: 1px; }
+    .v2 .button { font-size: 10px; }
+    .v2 .standings th, .v2 .standings td { font-size: 10px; }
+    .v2 .legend span { font-size: 10px; }
+    .v2 .line-chart text { font-size: 10px; }
+    .diagnostic-v2 { display: grid; grid-template-rows: 42px 94px minmax(0,1fr); }
+    .rank-band { display: grid; gap: 7px; grid-template-columns: repeat(4,1fr); padding: 9px 11px; }
+    .rank-block { display: grid; gap: 6px; }
+    .rank-block header { align-items: baseline; display: flex; justify-content: space-between; }
+    .rank-block span { color: var(--muted); font-size: 10px; text-transform: uppercase; }
+    .rank-block em { color: var(--ink); font: 400 11px ui-monospace,SFMono-Regular,Menlo,monospace; font-style: normal; }
+    .rank-block strong { font: 400 18px ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .rank-track { background: #222c31; border-radius: 8px; height: 9px; overflow: hidden; }
+    .rank-track i { background: var(--good); border-radius: inherit; display: block; height: 100%; }
+    .rank-block.mid .rank-track i { background: var(--warn); }
+    .rank-block.low .rank-track i { background: var(--orange); }
+    .diagnostic-v2 .diagnostic-radars { padding-bottom: 10px; }
+    .diagnostic-v2 .radar-title { font-size: 10px; }
+    .diagnostic-v2 .radar text { font-size: 9px; }
+    .minutes-table { table-layout: fixed; }
+    .minutes-table th, .minutes-table td { font-size: 10px; height: 27px; overflow: hidden; padding: 3px 7px; text-overflow: ellipsis; }
+    .minutes-table th:nth-child(1), .minutes-table td:nth-child(1) { width: 154px; }
+    .minutes-table th:nth-child(2), .minutes-table td:nth-child(2) { text-align: left; width: 116px; }
+    .minutes-table th:nth-child(3), .minutes-table td:nth-child(3) { width: 42px; }
+    .minutes-table th:nth-child(4), .minutes-table td:nth-child(4), .minutes-table th:nth-child(5), .minutes-table td:nth-child(5), .minutes-table th:nth-child(6), .minutes-table td:nth-child(6) { width: 48px; }
+    .minutes-table th:nth-child(7), .minutes-table td:nth-child(7) { width: 150px; }
+    .minutes-table th:nth-child(8), .minutes-table td:nth-child(8) { width: 44px; }
+    .minutes-table .position { color: var(--muted); font-size: 10px; white-space: nowrap; }
+    .minutes-table .position.out, .minutes-table .injured-name { color: var(--bad); }
+    .minute-control { align-items: center; display: grid; gap: 8px; grid-template-columns: minmax(0,1fr) 27px; }
+    .minute-control .rail { background: #242e34; border-radius: 6px; height: 7px; overflow: hidden; }
+    .minute-control .rail i { background: var(--accent); border-radius: inherit; display: block; height: 100%; }
+    .minute-control em { font: 400 10px ui-monospace,SFMono-Regular,Menlo,monospace; font-style: normal; }
+    .morale-panel { display: grid; grid-template-rows: 42px minmax(0,1fr); }
+    .morale-bars { display: grid; gap: 9px; padding: 11px 13px; }
+    .morale-row { align-items: center; display: grid; gap: 9px; grid-template-columns: 112px minmax(0,1fr) 35px; }
+    .morale-row span, .morale-row em { font-size: 10px; font-style: normal; }
+    .morale-row em { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; text-align: right; }
+    .morale-track { background: #222c31; border-radius: 8px; height: 8px; overflow: hidden; }
+    .morale-track i { background: var(--good); border-radius: inherit; display: block; height: 100%; }
+    .morale-row.warn .morale-track i { background: var(--warn); }
+    .morale-row.low .morale-track i { background: var(--orange); }
+    .week-ribbon { align-items: stretch; display: grid; gap: 6px; grid-template-columns: repeat(7,1fr); height: calc(100% - 42px); padding: 9px 11px; }
+    .week-chip { align-items: center; border: 1px solid var(--line-soft); border-radius: 18px; display: grid; gap: 4px; grid-template-columns: 28px minmax(0,1fr); padding: 8px 10px; }
+    .week-chip.today { border-color: var(--ink); }
+    .week-chip img { grid-row: 1/3; height: 25px; object-fit: contain; width: 25px; }
+    .week-chip .day-label { color: var(--muted); font-size: 10px; text-transform: uppercase; }
+    .week-chip .game-label { font: 400 11px ui-monospace,SFMono-Regular,Menlo,monospace; white-space: nowrap; }
+    .week-chip.off { display: flex; flex-direction: column; justify-content: center; }
+    .v2 .week-ribbon { gap: 4px; padding: 7px 8px; }
+    .v2 .week-chip { align-items: center; display: flex; flex-direction: column; gap: 3px; justify-content: center; min-width: 0; padding: 5px 2px; }
+    .v2 .week-chip img { height: 18px; width: 18px; }
+    .v2 .week-chip .day-label, .v2 .week-chip .game-label { font-size: 9px; line-height: 1.1; text-align: center; white-space: nowrap; }
+    .v2 .radar-title { font-size: 10px; }
+    .v2 .radar text { font-size: 9px; }
+    .v2 .development .line-chart { height: calc(100% - 42px); }
+    .staff-table th, .staff-table td { font-size: 10px; height: 34px; }
+    .staff-table td:nth-child(2) { color: var(--muted); text-align: left; }
+    .staff-grade { border: 1px solid var(--line); border-radius: 12px; display: inline-block; min-width: 38px; padding: 3px 7px; text-align: center; }
+    .skill-pills { display: flex; gap: 4px; justify-content: flex-end; }
+    .skill-pills i { background: var(--raised); border: 1px solid var(--line); border-radius: 10px; color: var(--muted); font-size: 9px; font-style: normal; padding: 2px 6px; }
+    .diagnostic-pills { display: grid; grid-template-rows: 42px minmax(0,1fr); }
+    .diagnostic-pill-body { display: grid; gap: 9px; grid-template-columns: 1.1fr 1fr; min-height: 0; padding: 9px 11px; }
+    .diagnostic-pill-body .radar-wrap { min-height: 0; }
+    .diagnostic-pill-body .radar text { font-size: 10px; }
+    .diagnostic-chip-grid { align-content: center; display: grid; gap: 7px; grid-template-columns: 1fr 1fr; }
+    .diagnostic-chip { align-items: center; background: var(--raised); border: 1px solid var(--line); border-radius: 18px; display: flex; font-size: 10px; justify-content: space-between; min-height: 38px; padding: 7px 10px; }
+    .diagnostic-chip em { font: 400 11px ui-monospace,SFMono-Regular,Menlo,monospace; font-style: normal; }
+    .diagnostic-chip.good { border-color: var(--good); }
+    .diagnostic-chip.warn { border-color: var(--warn); }
+    .diagnostic-chip.low { border-color: var(--orange); }
+    .diagnostic-ledger { display: grid; grid-template-rows: 42px minmax(0,1fr); }
+    .diagnostic-ledger-body { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; min-height: 0; padding: 9px 11px; }
+    .diagnostic-ledger table td { font-size: 10px; height: 25px; }
+    .diagnostic-ledger table td:nth-child(2) { width: 100px; }
+    .ledger-meter { background: #222c31; display: block; height: 4px; }
+    .ledger-meter i { background: var(--accent); display: block; height: 100%; }
+    .rating-pill { border: 1px solid var(--line); border-radius: 12px; display: inline-block; min-width: 34px; padding: 3px 6px; text-align: center; }
+    .rating-stack { align-items: center; display: flex; gap: 5px; justify-content: flex-end; }
+    .rating-stack i { background: #222c31; display: inline-block; height: 4px; width: 30px; }
+    .rating-stack i::after { background: var(--accent); content: ""; display: block; height: 100%; width: var(--rating); }
+    .minutes-table.multi th:nth-child(1), .minutes-table.multi td:nth-child(1) { width: 138px; }
+    .minutes-table.multi th:nth-child(2), .minutes-table.multi td:nth-child(2) { width: 112px; }
+    .minutes-table.multi th:nth-child(3), .minutes-table.multi td:nth-child(3), .minutes-table.multi th:nth-child(4), .minutes-table.multi td:nth-child(4), .minutes-table.multi th:nth-child(5), .minutes-table.multi td:nth-child(5) { width: 64px; }
+    .minutes-table.multi th:nth-child(6), .minutes-table.multi td:nth-child(6), .minutes-table.multi th:nth-child(7), .minutes-table.multi td:nth-child(7), .minutes-table.multi th:nth-child(8), .minutes-table.multi td:nth-child(8) { width: 42px; }
+    .minutes-table.multi th:nth-child(9), .minutes-table.multi td:nth-child(9) { width: 132px; }
+    .minutes-table.multi th:nth-child(10), .minutes-table.multi td:nth-child(10) { width: 40px; }
+    .staff-cards { display: grid; gap: 7px; grid-template-columns: 1fr 1fr; height: calc(100% - 42px); padding: 9px; }
+    .staff-card { background: var(--raised); border: 1px solid var(--line-soft); border-radius: 9px; display: grid; grid-template-rows: auto auto 1fr; padding: 9px; }
+    .staff-card header { align-items: center; display: flex; gap: 7px; justify-content: space-between; }
+    .staff-card .staff-name { font-size: 11px; }
+    .staff-card .staff-role { color: var(--muted); font-size: 10px; margin-top: 4px; }
+    .staff-card .coach-bar { align-self: end; background: #242e34; border-radius: 8px; height: 7px; overflow: hidden; }
+    .staff-card .coach-bar i { background: var(--accent); border-radius: inherit; display: block; height: 100%; }
+    .week-timeline { align-items: center; display: grid; grid-template-columns: repeat(7,1fr); height: calc(100% - 42px); padding: 18px 14px 12px; position: relative; }
+    .week-timeline::before { background: var(--line); content: ""; height: 1px; left: 8%; position: absolute; right: 8%; top: 49%; }
+    .timeline-day { align-items: center; display: grid; gap: 7px; justify-items: center; position: relative; z-index: 1; }
+    .timeline-day span { background: var(--panel); color: var(--muted); font-size: 10px; padding: 2px 6px; }
+    .timeline-dot { align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 50%; display: flex; height: 34px; justify-content: center; width: 34px; }
+    .timeline-dot img { height: 22px; object-fit: contain; width: 22px; }
+    .timeline-day.today .timeline-dot { border-color: var(--ink); }
+    .timeline-day em { background: var(--panel); font: 400 10px ui-monospace,SFMono-Regular,Menlo,monospace; font-style: normal; padding: 2px 6px; }
+    .v2 .week-timeline { padding: 6px 8px; }
+    .v2 .timeline-day { gap: 2px; }
+    .v2 .timeline-dot { height: 25px; width: 25px; }
+    .v2 .timeline-dot img { height: 16px; width: 16px; }
+    .v2 .timeline-day span, .v2 .timeline-day em { font-size: 9px; padding: 1px 3px; }
+    .development-compact .line-chart { height: calc(100% - 72px); }
+    .development-compact .legend { bottom: 10px; left: 12px!important; right: 12px; }
+    .diagnostic-glass-body { display: grid; gap: 12px; grid-template-columns: 1.15fr 1fr; height: calc(100% - 42px); padding: 10px 12px; }
+    .diagnostic-glass-body .radar-wrap { min-height: 0; }
+    .diagnostic-glass-body .radar text { font-size: 10px; }
+    .glass-metrics { align-content: center; display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+    .glass-metric { background: #ffffff08; border: 1px solid #64747d; border-radius: 14px; display: grid; gap: 5px; min-height: 58px; padding: 9px 11px; }
+    .glass-metric span { color: #bcc7cd; font-size: 10px; }
+    .glass-metric strong { font: 400 17px ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .glass-metric em { color: var(--muted); font-size: 10px; font-style: normal; }
+    .dev-delta-list { display: grid; gap: 6px; height: calc(100% - 42px); padding: 9px 11px; }
+    .dev-delta-row { align-items: center; display: grid; gap: 8px; grid-template-columns: 112px minmax(0,1fr) 42px; min-height: 24px; }
+    .dev-delta-row span { font-size: 10px; white-space: nowrap; }
+    .dev-delta-row em { font: 400 10px ui-monospace,SFMono-Regular,Menlo,monospace; font-style: normal; text-align: right; }
+    .delta-scale { background: #252e33; display: block; height: 5px; position: relative; }
+    .delta-scale::before { background: #657079; content: ""; height: 11px; left: 50%; position: absolute; top: -3px; width: 1px; }
+    .delta-scale i { background: var(--good); display: block; height: 100%; left: 50%; position: absolute; width: var(--delta); }
+    .dev-delta-row.negative .delta-scale i { background: var(--bad); left: calc(50% - var(--delta)); }
+    .development-ledger table th, .development-ledger table td { font-size: 10px; height: 29px; }
+    .development-ledger .spark { height: 17px; vertical-align: middle; width: 74px; }
+    .development-ledger .spark polyline { fill: none; stroke: var(--accent); stroke-width: 1.8; }
+    .staff-compact-list { display: grid; height: calc(100% - 42px); }
+    .staff-compact-row { align-items: center; border-bottom: 1px solid var(--line-soft); display: grid; gap: 7px; grid-template-columns: minmax(0,1fr) 40px; padding: 7px 9px; }
+    .staff-compact-row:last-child { border-bottom: 0; }
+    .staff-compact-row span { display: block; font-size: 10px; white-space: nowrap; }
+    .staff-compact-row em { color: var(--muted); display: block; font-size: 10px; font-style: normal; margin-top: 3px; white-space: nowrap; }
+    .staff-compact-row strong { border: 1px solid var(--line); border-radius: 13px; font: 400 11px ui-monospace,SFMono-Regular,Menlo,monospace; padding: 4px; text-align: center; }
+    .concept-i { grid-template-columns: repeat(12,1fr); grid-template-rows: 292px minmax(0,1fr); }
+    .concept-i .diagnostic-v2 { grid-column: 1/6; grid-row: 1; }
+    .concept-i .standings { grid-column: 6/9; grid-row: 1; }
+    .concept-i .top-right { grid-column: 9/13; grid-row: 1; grid-template-rows: 135px minmax(0,1fr); }
+    .concept-i .minutes-panel { grid-column: 1/8; grid-row: 2; }
+    .concept-i .development { grid-column: 8/11; grid-row: 2; }
+    .concept-i .staff-compact { grid-column: 11/13; grid-row: 2; }
+    .concept-i .standings th, .concept-i .standings td { height: 22px; }
+    .soft-surface .panel { border-radius: 10px; box-shadow: 0 8px 22px #00000030; }
+    .soft-surface .panel-head { border-bottom-color: transparent; }
+    .soft-surface .rank-block { background: var(--raised); border-radius: 12px; padding: 8px; }
+    .soft-surface .minutes-table tr { border-bottom: 0; }
+    .soft-surface .minutes-table th, .soft-surface .minutes-table td { height: 22px; }
+    .soft-surface .minutes-table td { background: var(--raised); border-bottom: 2px solid var(--panel); }
+    .soft-surface .minutes-table td:first-child { border-radius: 12px 0 0 12px; }
+    .soft-surface .minutes-table td:last-child { border-radius: 0 12px 12px 0; }
+    .soft-surface .rating-pill { padding: 1px 6px; }
+    .concept-j { grid-template-columns: repeat(12,1fr); grid-template-rows: 308px minmax(0,1fr); }
+    .concept-j .diagnostic-pills { grid-column: 1/7; grid-row: 1; }
+    .concept-j .standings { grid-column: 7/10; grid-row: 1; }
+    .concept-j .morale-panel { grid-column: 10/13; grid-row: 1; }
+    .concept-j .minutes-panel { grid-column: 1/9; grid-row: 2; }
+    .concept-j .right-bottom { grid-column: 9/13; grid-row: 2; grid-template-rows: 100px 154px minmax(0,1fr); }
+    .concept-j .dev-delta-list { gap: 3px; padding: 6px 10px; }
+    .concept-j .dev-delta-row { min-height: 17px; }
+    .concept-j .dev-delta-row:nth-child(6) { display: none; }
+    .concept-j .staff-cards { gap: 5px; padding: 6px; }
+    .concept-j .staff-card { padding: 6px; }
+    .concept-j .standings th, .concept-j .standings td { height: 24px; }
+    .glass-surface { background: #071014; }
+    .glass-surface .panel { background: #152027d9; border-color: #52636c; border-radius: 14px; box-shadow: 0 12px 28px #00000045; }
+    .glass-surface .panel-head { background: #ffffff05; }
+    .glass-surface .week-chip { background: #ffffff05; border-color: #52636c; }
+    .glass-surface .minutes-table td { border-bottom-color: #39464d; }
+    .glass-surface .rank-track, .glass-surface .morale-track, .glass-surface .minute-control .rail { background: #071014; }
+    .concept-k { grid-template-columns: repeat(12,1fr); grid-template-rows: 306px minmax(0,1fr); }
+    .concept-k .diagnostic-glass { grid-column: 1/6; grid-row: 1; }
+    .concept-k .standings { grid-column: 6/9; grid-row: 1; }
+    .concept-k .staff-v2 { grid-column: 9/13; grid-row: 1; }
+    .concept-k .minutes-panel { grid-column: 1/9; grid-row: 2; }
+    .concept-k .right-bottom { grid-column: 9/13; grid-row: 2; grid-template-rows: 136px 126px minmax(0,1fr); }
+    .concept-k .dev-delta-list { gap: 3px; padding: 6px 10px; }
+    .concept-k .dev-delta-row { min-height: 17px; }
+    .concept-k .standings th, .concept-k .standings td { height: 24px; }
+    .ledger-surface .panel { background: #0c1114; border-color: #3b454a; }
+    .ledger-surface .rank-band { border-bottom: 1px solid var(--line); }
+    .ledger-surface .rank-block { border-right: 1px solid var(--line); padding-right: 8px; }
+    .ledger-surface .rank-track { border-radius: 0; height: 4px; }
+    .ledger-surface .minute-control .rail, .ledger-surface .morale-track { border-radius: 0; }
+    .concept-l { grid-template-columns: repeat(12,1fr); grid-template-rows: 286px minmax(0,1fr); }
+    .concept-l .diagnostic-ledger { grid-column: 1/6; grid-row: 1; }
+    .concept-l .standings { grid-column: 6/9; grid-row: 1; }
+    .concept-l .top-right { grid-column: 9/13; grid-row: 1; grid-template-rows: 128px minmax(0,1fr); }
+    .concept-l .minutes-panel { grid-column: 1/8; grid-row: 2; }
+    .concept-l .development { grid-column: 8/11; grid-row: 2; }
+    .concept-l .staff-compact { grid-column: 11/13; grid-row: 2; }
+    .concept-l .standings th, .concept-l .standings td { height: 22px; }
+    .neon-surface { --good: #26e98f; --warn: #f0d44c; --orange: #ff8648; --bad: #ff515f; }
+    .neon-surface .panel { background: #0b1013; border-color: #334047; }
+    .neon-surface .panel-head { background: #0d1317; }
+    .identity-v3-body { display: grid; gap: 10px; grid-template-columns: minmax(0,1.6fr) minmax(245px,1fr); height: calc(100% - 42px); padding: 8px 10px 10px; }
+    .identity-v3-visuals { display: grid; grid-template-rows: 86px minmax(0,1fr); min-height: 0; }
+    .identity-v3-heat { display: grid; grid-template-rows: 13px minmax(0,1fr) 10px; min-height: 0; }
+    .identity-v3-heat-head, .identity-v3-heat-legend { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+    .identity-v3-heat-head span { font-size: 9px; text-align: center; }
+    .identity-v3-heat svg { display: block; height: 100%; width: 100%; }
+    .identity-v3-heat .court-floor { fill: #0c1317; stroke: #35434a; }
+    .identity-v3-heat .court-line { fill: none; stroke: #526169; stroke-width: .7; }
+    .identity-v3-heat-legend span { color: var(--muted); font-size: 7px; text-align: center; }
+    .identity-v3 .diagnostic-radars { gap: 8px; padding: 0; }
+    .identity-v3 .radar-wrap { border-color: #2d3a40; }
+    .identity-v3 .radar-title { color: var(--ink); font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 10px; text-transform: none; }
+    .identity-v3 .radar text { fill: var(--ink); font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 9px; }
+    .identity-v3 .shape-healthy { stroke: #d7e0e4; stroke-dasharray: 5 4; stroke-width: 1.5; }
+    .identity-v3 .radar-key { align-items: center; display: flex; gap: 12px; justify-content: center; padding: 0 0 5px; }
+    .identity-v3 .radar-key span { align-items: center; color: var(--muted); display: flex; font-size: 9px; gap: 5px; }
+    .identity-v3 .radar-key i { background: var(--accent); display: inline-block; height: 2px; width: 15px; }
+    .identity-v3 .radar-key i.baseline { background: transparent; border-top: 1px dashed #d7e0e4; }
+    .identity-signals { display: grid; gap: 5px; min-height: 0; }
+    .signal-group { display: grid; gap: 6px; }
+    .signal-group + .signal-group { border-top: 1px solid #2c373d; margin-top: 3px; padding-top: 7px; }
+    .signal-label { color: #c7d0d4; font-size: 10px; letter-spacing: .04em; text-transform: uppercase; }
+    .signal-row { align-items: center; display: grid; gap: 7px; grid-template-columns: 84px minmax(0,1fr) 42px; }
+    .signal-row span, .signal-row em { font-size: 10px; font-style: normal; white-space: nowrap; }
+    .signal-row em { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; text-align: right; }
+    .signal-track { background: #1d272c; display: block; height: 7px; overflow: hidden; }
+    .signal-track i { background: linear-gradient(90deg,#dc4854 0%,#e6815a 28%,#dfca72 50%,#66acd0 73%,#487ee8 100%); display: block; height: 100%; }
+    .signal-row > span { color: var(--text); }
+    .minutes-v3 { table-layout: fixed; }
+    .minutes-v3 th, .minutes-v3 td { font-size: 10px; height: 22px; overflow: hidden; padding: 1px 5px; text-overflow: ellipsis; }
+    .minutes-v3 th:nth-child(1), .minutes-v3 td:nth-child(1) { width: 140px; }
+    .minutes-v3 th:nth-child(2), .minutes-v3 td:nth-child(2) { text-align: left; width: 122px; }
+    .minutes-v3 th:nth-child(3), .minutes-v3 td:nth-child(3), .minutes-v3 th:nth-child(4), .minutes-v3 td:nth-child(4), .minutes-v3 th:nth-child(5), .minutes-v3 td:nth-child(5) { width: 58px; }
+    .minutes-v3 th:nth-child(6), .minutes-v3 td:nth-child(6), .minutes-v3 th:nth-child(7), .minutes-v3 td:nth-child(7), .minutes-v3 th:nth-child(8), .minutes-v3 td:nth-child(8), .minutes-v3 th:nth-child(9), .minutes-v3 td:nth-child(9) { width: 42px; }
+    .minutes-v3 th:nth-child(10), .minutes-v3 td:nth-child(10) { width: 78px; }
+    .minutes-v3 th:nth-child(11), .minutes-v3 td:nth-child(11) { width: 142px; }
+    .mini-rating { align-items: center; display: flex; gap: 5px; justify-content: flex-end; }
+    .mini-rating i { background: #253037; display: inline-block; height: 5px; width: 24px; }
+    .mini-rating i::after { background: #b9c5ca; content: ""; display: block; height: 100%; width: var(--rating); }
+    .fatigue-cells { display: flex; gap: 4px; justify-content: flex-end; }
+    .fatigue-cells i { background: #20292e; border: 1px solid #303c42; display: block; height: 8px; width: 8px; }
+    .fatigue-cells i.filled:nth-child(-n+2) { background: var(--good); border-color: var(--good); }
+    .fatigue-cells i.filled:nth-child(n+3):nth-child(-n+4) { background: var(--warn); border-color: var(--warn); }
+    .fatigue-cells i.filled:nth-child(n+5) { background: var(--bad); border-color: var(--bad); }
+    .assignment-meter { align-items: center; display: grid; gap: 7px; grid-template-columns: minmax(0,1fr) 24px; }
+    .assignment-meter > i { background: #222b30; display: block; height: 8px; }
+    .assignment-meter > i > i { background: #929da3; display: block; height: 100%; width: var(--minutes); }
+    .assignment-meter em { font: 400 10px ui-monospace,SFMono-Regular,Menlo,monospace; font-style: normal; text-align: right; }
+    .staff-text-grid { display: grid; grid-template-columns: 1fr 1fr; height: calc(100% - 42px); }
+    .staff-text-cell { align-content: center; border-bottom: 1px solid #28343a; border-right: 1px solid #28343a; display: grid; gap: 5px; grid-template-columns: minmax(0,1fr) 36px; padding: 8px 10px; }
+    .staff-text-cell:nth-child(even) { border-right: 0; }
+    .staff-text-cell:nth-child(n+3) { border-bottom: 0; }
+    .staff-text-cell span { font-size: 11px; white-space: nowrap; }
+    .staff-text-cell em { color: var(--muted); font-size: 10px; font-style: normal; white-space: nowrap; }
+    .staff-text-cell strong { align-self: center; font: 400 12px ui-monospace,SFMono-Regular,Menlo,monospace; grid-column: 2; grid-row: 1/3; text-align: right; }
+    .staff-rows-v3 table th, .staff-rows-v3 table td { font-size: 10px; height: 28px; }
+    .staff-rows-v3 table td:nth-child(2), .staff-rows-v3 table th:nth-child(2) { text-align: left; }
+    .staff-rows-v3 table { height: calc(100% - 42px); }
+    .staff-rows-v3 table th:nth-child(3), .staff-rows-v3 table td:nth-child(3),
+    .staff-rows-v3 table th:nth-child(4), .staff-rows-v3 table td:nth-child(4) { text-align: right; }
+    .staff-strip-v3 { display: grid; grid-template-columns: repeat(4,1fr); height: calc(100% - 42px); }
+    .staff-strip-item { align-content: center; border-right: 1px solid #2b373e; display: grid; gap: 5px; padding: 8px 10px; }
+    .staff-strip-item:last-child { border-right: 0; }
+    .staff-strip-item header { align-items: center; display: flex; justify-content: space-between; }
+    .staff-strip-item span { font-size: 11px; white-space: nowrap; }
+    .staff-strip-item strong { font: 400 12px ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .staff-strip-item em { color: var(--muted); font-size: 10px; font-style: normal; white-space: nowrap; }
+    .dev-hybrid-list { display: grid; height: calc(100% - 42px); padding: 7px 10px; }
+    .dev-hybrid-row { align-items: center; border-bottom: 1px solid #263137; display: grid; gap: 8px; grid-template-columns: 104px 70px minmax(0,1fr) 34px; }
+    .dev-hybrid-row:last-child { border-bottom: 0; }
+    .dev-hybrid-row span, .dev-hybrid-row em { font-size: 10px; font-style: normal; white-space: nowrap; }
+    .dev-hybrid-row em { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; text-align: right; }
+    .dev-spark { height: 20px; width: 70px; }
+    .dev-spark polyline { fill: none; stroke: #aab6bb; stroke-width: 1.6; }
+    .dev-lollipop { height: calc(100% - 42px); width: 100%; }
+    .dev-lollipop .axis { stroke: #56636a; }
+    .dev-lollipop .gridline { stroke: #253036; }
+    .dev-lollipop text { fill: #aab5ba; font: 400 10px ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .dev-lollipop .stem { stroke: #55636a; stroke-width: 1; }
+    .dev-lollipop .positive { fill: var(--good); }
+    .dev-lollipop .negative { fill: var(--bad); }
+    .dev-small-grid { display: grid; gap: 6px; grid-template-columns: 1fr 1fr; height: calc(100% - 42px); padding: 7px; }
+    .dev-small { border-bottom: 1px solid #29343a; display: grid; gap: 4px; grid-template-columns: minmax(0,1fr) 44px; grid-template-rows: 20px minmax(0,1fr); padding: 4px 6px; }
+    .dev-small span, .dev-small em { font-size: 10px; font-style: normal; }
+    .dev-small em { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; text-align: right; }
+    .dev-small svg { grid-column: 1/3; height: 100%; width: 100%; }
+    .dev-small polyline { fill: none; stroke: #b9c5ca; stroke-width: 2; }
+    .dev-small line { stroke: #2b373e; }
+    .concept-m, .concept-n, .concept-o { grid-template-columns: repeat(12,1fr); grid-template-rows: 338px minmax(0,1fr); }
+    .concept-m .identity-v3, .concept-n .identity-v3, .concept-o .identity-v3 { grid-column: 1/7; grid-row: 1; }
+    .concept-m .standings, .concept-n .standings, .concept-o .standings { grid-column: 7/10; grid-row: 1; }
+    .concept-m .top-right, .concept-n .top-right, .concept-o .top-right { grid-column: 10/13; grid-row: 1; grid-template-rows: 112px minmax(0,1fr); }
+    .concept-m .minutes-panel, .concept-n .minutes-panel, .concept-o .minutes-panel { grid-column: 1/9; grid-row: 2; }
+    .concept-m .development-v3, .concept-n .development-v3, .concept-o .development-v3 { grid-column: 9/13; grid-row: 2; }
+    .concept-m .standings th, .concept-m .standings td, .concept-n .standings th, .concept-n .standings td, .concept-o .standings th, .concept-o .standings td { height: 22px; }
+    .concept-m .standings table, .concept-m .minutes-v3 { height: calc(100% - 42px); }
+    .concept-m .standings th, .concept-m .standings td, .concept-m .minutes-v3 th, .concept-m .minutes-v3 td { height: auto; }
+    .concept-m .minutes-v3 tr.injured-row td, .concept-m .minutes-v3 tr.injured-row span, .concept-m .minutes-v3 tr.injured-row em { color: var(--bad); }
+    .concept-m .timeline-day em { min-height: 11px; white-space: nowrap; }
+    .concept-m .ticker .button { background: var(--ink); color: var(--bg); opacity: 1; }
+    .concept-n .panel { border-radius: 4px; }
+    .concept-n .signal-track, .concept-n .assignment-meter > i { border-radius: 3px; }
+    .concept-n .staff-rows-v3 table th, .concept-n .staff-rows-v3 table td { height: 26px; }
+    .concept-o .identity-v3-body { grid-template-columns: minmax(0,1.75fr) minmax(225px,.85fr); }
+    .concept-o .staff-strip-v3 { grid-template-columns: 1fr 1fr; }
+    .concept-o .staff-strip-item:nth-child(2) { border-right: 0; }
+    .concept-o .staff-strip-item:nth-child(-n+2) { border-bottom: 1px solid #2b373e; }
+    .concept-o .dev-small-grid { gap: 4px; padding: 5px; }
+    .concept-o .dev-small { padding: 2px 5px; }
+  </style>
+</head>
+<body>
+  <main class="gallery">
+    <header class="gallery-head">
+      <div><h1>Regular Season Dashboard Studies</h1><p>Fifteen information architectures · component and layout exploration · 1440 × 900</p></div>
+      <nav class="gallery-nav" id="nav"></nav>
+    </header>
+    <div id="concepts"></div>
+  </main>
+  <script>
+    const logo = (team, size="") => `<img class="logo ${size}" src="assets/team_logos/${team}.png" alt="${team}" />`;
+    const button = (text, cls="") => `<button class="button ${cls}">${text}</button>`;
+    const header = (center="REGULAR SEASON", showRecord=true) => `<header class="screen-head"><div class="brand">${logo("WAS")}<div><div class="display">Washington Wizards</div>${showRecord?`<div class="sub">28–19 · 5th East</div>`:""}</div></div><div class="center"><div class="label">${center}</div><div class="mono" style="font-size:11px;margin-top:3px">January 28, 2027</div></div><div class="actions">${button("Trade Room")}${button("Player Finder")}${button("Prospects")}${button("Settings","icon")}</div></header>`;
+    const panel = (title, body, cls="", actions="") => `<section class="panel ${cls}"><div class="panel-head"><h2>${title}</h2><div class="panel-actions">${actions}</div></div>${body}</section>`;
+    const add = (num, name, body) => { const section=document.createElement("section"); section.className="concept"; section.id=`concept-${num}`; section.innerHTML=`<div class="concept-label"><span>CONCEPT ${num} · ${name.toUpperCase()}</span><button class="copy" data-copy="artboard-${num}">Copy editable HTML</button></div><article class="artboard" id="artboard-${num}" layer-name="Concept ${num} - ${name}">${body}</article>`; document.getElementById("concepts").append(section); const link=document.createElement("a"); link.href=`#concept-${num}`; link.textContent=num; document.getElementById("nav").append(link); };
+    const panelGrid = values => values.map(([name, value, rank]) => `<div class="metric-row"><span>${name}</span><i class="track"><i style="width:${value}%"></i></i><em>#${rank}/30</em></div>`).join("");
+    const radar = (labels, values) => { const polygon=(scale=1)=>values.map((_,i)=>{const a=-Math.PI/2+i*Math.PI*2/values.length;return `${100+Math.cos(a)*66*scale},${83+Math.sin(a)*62*scale}`}).join(" "); const shape=values.map((v,i)=>{const a=-Math.PI/2+i*Math.PI*2/values.length;return `${100+Math.cos(a)*66*v/100},${83+Math.sin(a)*62*v/100}`}).join(" "); return `<svg class="radar" viewBox="0 0 200 166">${[.25,.5,.75,1].map(s=>`<polygon class="grid" points="${polygon(s)}"/>`).join("")}${values.map((_,i)=>{const a=-Math.PI/2+i*Math.PI*2/values.length;return `<line x1="100" y1="83" x2="${100+Math.cos(a)*66}" y2="${83+Math.sin(a)*62}"/>`}).join("")}<polygon class="shape" points="${shape}"/>${labels.map((label,i)=>{const a=-Math.PI/2+i*Math.PI*2/labels.length;return `<text text-anchor="middle" x="${100+Math.cos(a)*87}" y="${86+Math.sin(a)*75}">${label}</text>`}).join("")}</svg>`; };
+    const diagnosticRadar = (labels, values, healthy, kind) => {
+      const polygon = (numbers, scale=1) => numbers.map((v,i) => {
+        const a=-Math.PI/2+i*Math.PI*2/numbers.length;
+        return `${100+Math.cos(a)*66*(v/100)*scale},${83+Math.sin(a)*62*(v/100)*scale}`;
+      }).join(" ");
+      const healthyShape = healthy ? `<polygon class="shape-healthy" points="${polygon(healthy)}"/>` : "";
+      return `<svg class="radar" viewBox="0 0 200 166">${[.25,.5,.75,1].map(s=>`<polygon class="grid" points="${labels.map((_,i)=>{const a=-Math.PI/2+i*Math.PI*2/labels.length;return `${100+Math.cos(a)*66*s},${83+Math.sin(a)*62*s}`}).join(" ")}"/>`).join("")}${labels.map((_,i)=>{const a=-Math.PI/2+i*Math.PI*2/labels.length;return `<line x1="100" y1="83" x2="${100+Math.cos(a)*66}" y2="${83+Math.sin(a)*62}"/>`}).join("")}<polygon class="shape-${kind}" points="${polygon(values)}"/>${healthyShape}${labels.map((label,i)=>{const a=-Math.PI/2+i*Math.PI*2/labels.length;return `<text text-anchor="middle" x="${100+Math.cos(a)*87}" y="${86+Math.sin(a)*75}">${label}</text>`}).join("")}</svg>`;
+    };
+    const conceptSpatialHeatmap = () => `<div class="identity-v3-heat"><div class="identity-v3-heat-head"><span>Offense</span><span>Defense</span></div><svg viewBox="0 0 520 95" aria-label="Rotation-weighted offensive and defensive court heatmap"><rect class="court-floor" x="1" y="1" width="518" height="93"/><line class="court-line" x1="260" y1="1" x2="260" y2="94"/><circle class="court-line" cx="260" cy="47.5" r="13"/><path class="court-line" d="M1 22h45v51H1M519 22h-45v51h45M1 32h17v31H1M519 32h-17v31h17"/><path class="court-line" d="M46 25a34 34 0 0 1 0 45M474 25a34 34 0 0 0 0 45"/>${[[32,48,18,"#ff515f"],[88,47,21,"#ff8648"],[154,20,18,"#f0d44c"],[207,24,19,"#26e98f"],[211,71,16,"#26e98f"],[488,48,19,"#26e98f"],[430,46,21,"#26e98f"],[365,22,17,"#f0d44c"],[311,25,18,"#ff8648"],[308,72,15,"#ff515f"]].map(s=>`<circle cx="${s[0]}" cy="${s[1]}" r="${s[2]}" fill="${s[3]}" opacity=".34"/>`).join("")}</svg><div class="identity-v3-heat-legend"><span>Low threat · High threat</span><span>Vulnerable · Strong suppression</span></div></div>`;
+    const teamDiagnostic = () => panel("Team Diagnostics", `<div class="diagnostic-summary"><div class="diagnostic-cell good"><span>Overall</span><em>#9/30</em><strong>78.4</strong></div><div class="diagnostic-cell good"><span>Offense</span><em>#6/30</em><strong>81.7</strong></div><div class="diagnostic-cell warn"><span>Defense</span><em>#13/30</em><strong>73.2</strong></div><div class="diagnostic-cell warn"><span>Depth</span><em>#10/30</em><strong>75.8</strong></div></div><div class="diagnostic-radars"><div class="radar-wrap"><span class="radar-title">Offensive Shape</span>${diagnosticRadar(["SHOT #8","RANGE #11","RIM #5","CREATE #4","PASS #7","PACE #18"],[76,67,83,88,78,49],[77,69,83,89,79,50],"offense")}<div class="radar-key"><span><i></i>Active</span><span><i class="healthy"></i>Healthy</span></div></div><div class="radar-wrap"><span class="radar-title">Defense + Roster</span>${diagnosticRadar(["POINT #12","WING #3","RIM #15","REBOUND #20","ATH #6","DEPTH #9"],[64,91,54,40,82,71],[69,92,60,43,83,76],"defense")}<div class="radar-key"><span><i></i>Active</span><span><i class="healthy"></i>Healthy</span></div></div></div>`, "diagnostic", button("Compare"));
+    const identity = () => panel("Team Identity", `<div class="radar-pair"><div class="radar-wrap"><span class="radar-title">Offensive Shape</span>${radar(["SHOT #8","RANGE #11","RIM #5","CREATE #4","PASS #7","PACE #18"],[76,67,83,88,78,49])}</div><div class="radar-wrap"><span class="radar-title">Defense + Roster</span>${radar(["POINT #12","WING #3","RIM #15","REBOUND #20","ATH #6","DEPTH #9"],[64,91,54,40,82,71])}</div></div>`, "identity compact-radar");
+    const standingRows = [["BOS",35,11],["CLE",33,14],["NYK",31,15],["ORL",29,17],["WAS",28,19],["PHI",27,20],["MIA",25,21],["ATL",24,23],["MIL",22,25],["TOR",20,27]];
+    const standings = () => panel("East Standings", `<table><thead><tr><th>#</th><th>Team</th><th>W–L</th><th>PCT</th><th>GB</th></tr></thead><tbody>${standingRows.map((r,i)=>`<tr class="${r[0]==="WAS"?"current-row":""} ${i===6?"play-in":""}"><td class="rank">${i+1}</td><td><span class="team-cell">${logo(r[0],"xs")} ${r[0]}</span></td><td>${r[1]}–${r[2]}</td><td>${(r[1]/(r[1]+r[2])).toFixed(3).replace("0.",".")}</td><td>${i?((standingRows[0][1]-r[1]+r[2]-standingRows[0][2])/2).toFixed(1):"—"}</td></tr>`).join("")}</tbody></table>`, "standings", button("West")+button("View All"));
+    const players = [["Trae Young","PG",93,"26.4 PTS · 10.8 AST"],["Bilal Coulibaly","SF",84,"17.1 PTS · 5.8 REB"],["Alex Sarr","C",82,"15.8 PTS · 2.2 BLK"],["Tre Johnson","SG",80,"18.3 PTS · 4.1 AST"],["Kyshawn George","PF",76,"12.6 PTS · 6.4 REB"],["Bub Carrington","PG",74,"11.9 PTS · 5.2 AST"]];
+    const core = () => panel("Core Six", `<div class="core-list">${players.map((p,i)=>`<div class="core-player">${logo("WAS","sm")}<div><div class="name">${p[0]}</div><small>${p[1]} · ${p[3]}</small></div><div class="ovr">${p[2]}</div></div>`).join("")}</div>`, "core", button("Full Roster"));
+    const coreVertical = () => panel("Core Six", `<div class="core-vertical">${players.map((p,i)=>`<div class="core-v-row"><span class="slot">${i+1}</span><div><div class="name">${p[0]}</div><small>${p[1]} · ${p[3]}</small></div><i class="core-track"><i style="width:${p[2]}%"></i></i><span class="ovr">${p[2]}</span></div>`).join("")}</div>`, "core-v", button("Roster"));
+    const staff = () => panel("Staff", `<div class="staff-list">${[["Head Coach","Elliot Lang",86],["Offensive Coordinator","Miles Calder",79],["Defensive Coordinator","Preston Cole",81],["Development Lead","Jonah Reeves",75]].map(s=>`<div class="staff-row"><div><span>${s[1]}</span><small>${s[0]}</small></div><em>${s[2]}</em></div>`).join("")}</div>`, "staff", button("Manage"));
+    const staffStrip = () => panel("Staff", `<div class="staff-list">${[["HC","Elliot Lang",86],["OC","Miles Calder",79],["DC","Preston Cole",81],["DEV","Jonah Reeves",75]].map(s=>`<div class="staff-row"><div><span>${s[1]}</span><small>${s[0]}</small></div><em>${s[2]}</em></div>`).join("")}</div>`, "staff-strip", button("Manage"));
+    const minuteRows = [["Trae Young","PG",35,"Healthy"],["Bilal Coulibaly","SF",33,"Healthy"],["Alex Sarr","C",32,"Healthy"],["Tre Johnson","SG",30,"Healthy"],["Kyshawn George","PF",28,"Healthy"],["Bub Carrington","PG",25,"Healthy"],["Marcus Smart","SG",21,"Healthy"],["Khris Middleton","SF",0,"Out 8"],["Richaun Holmes","C",16,"Healthy"]];
+    const rotation = () => panel("Minutes + Availability", `<div class="rotation-list">${minuteRows.map(r=>`<div class="rotation-row ${r[3].startsWith("Out")?"injured":""}"><div><span class="name">${r[0]}</span><small>${r[1]}</small></div><span class="minutes">${r[2]}</span><i class="minute-track"><i style="width:${r[2]/36*100}%"></i></i><span class="minutes">${r[2]?`${r[2]}m`:"—"}</span><span class="status">${r[3]}</span></div>`).join("")}</div>`, "rotation", button("Edit"));
+    const fullRoster = [["Trae Young","PG","",93,96,42,26.4,3.2,10.8,35],["Bilal Coulibaly","SF","",84,82,88,17.1,5.8,4.2,33],["Alex Sarr","C","",82,78,91,15.8,8.9,2.4,32],["Tre Johnson","SG","",80,87,66,18.3,4.1,4.1,30],["Kyshawn George","PF","",76,74,80,12.6,6.4,3.7,28],["Bub Carrington","PG","",74,78,61,11.9,3.3,5.2,25],["Marcus Smart","SG","",71,62,89,8.8,3.1,4.4,21],["Khris Middleton","SF","OUT — 8 GMS",70,76,64,14.2,4.7,4.8,0],["Richaun Holmes","C","",68,64,75,7.1,6.6,1.2,16],["Corey Kispert","SF","",67,79,48,8.4,2.3,1.1,10],["Justin Champagnie","SF","",64,61,69,4.9,3.1,0.8,6],["Tristan Vukcevic","C","",62,67,57,3.8,2.7,0.7,4],["AJ Johnson","SG","",59,63,51,1.6,0.9,0.8,0],["Pacome Dadiet","SF","",57,58,55,1.1,0.8,0.3,0],["Jared Butler","PG","",55,60,46,0.8,0.4,0.7,0],["Sidy Cissoko","SF","",54,52,58,0.0,0.0,0.0,0],["Colby Jones","SG","",52,50,55,0.0,0.0,0.0,0]];
+    const tierColor = value => value >= 75 ? "var(--good)" : value >= 60 ? "var(--warn)" : value >= 45 ? "var(--orange)" : "var(--bad)";
+    const ratingCell = (value, mode) => mode === "pill" ? `<span class="rating-pill" style="border-color:${tierColor(value)}">${value}</span>` : mode === "multi" ? `<span class="rating-stack"><i style="--rating:${value}%"></i>${value}</span>` : `${value}`;
+    const minutesV2 = (mode="plain") => { const multi=mode==="multi"; return panel("Minutes + Availability", `<table class="minutes-table ${multi?"multi":""}"><thead><tr><th>Player</th><th>Position / Status</th><th>OVR</th>${multi?"<th>OFF</th><th>DEF</th>":""}<th>PTS</th><th>REB</th><th>AST</th><th>Minute Assignment</th><th>MPG</th></tr></thead><tbody>${fullRoster.map(r=>`<tr><td class="${r[2]?"injured-name":""}">${r[0]}</td><td><span class="position ${r[2]?"out":""}">${r[1]}${r[2]?` · ${r[2]}`:""}</span></td><td>${ratingCell(r[3],mode)}</td>${multi?`<td>${ratingCell(r[4],"multi")}</td><td>${ratingCell(r[5],"multi")}</td>`:""}<td>${r[6].toFixed(1)}</td><td>${r[7].toFixed(1)}</td><td>${r[8].toFixed(1)}</td><td><span class="minute-control"><i class="rail"><i style="width:${r[9]/36*100}%"></i></i><em>${r[9]}</em></span></td><td>${r[9] ? (r[9]-.4).toFixed(1) : "0.0"}</td></tr>`).join("")}</tbody></table>`, "minutes-panel", button("Edit Minutes")); };
+    const fatigueLevels = [4,3,3,4,2,3,5,6,2,2,1,1,1,1,1,1,1];
+    const fatigueCells = level => `<span class="fatigue-cells" title="Fatigue ${level}/6">${[1,2,3,4,5,6].map(i=>`<i class="${i<=level?"filled":""}"></i>`).join("")}</span>`;
+    const miniRating = value => `<span class="mini-rating"><i style="--rating:${value}%"></i>${value}</span>`;
+    const minutesV3 = () => panel("Minutes + Availability", `<table class="minutes-v3"><thead><tr><th>Player</th><th>Position</th><th>OVR</th><th>OFF</th><th>DEF</th><th>MPG</th><th>PTS</th><th>REB</th><th>AST</th><th>Fatigue</th><th>Minute Assignment</th></tr></thead><tbody>${fullRoster.map((r,i)=>`<tr class="${r[2]?"injured-row":""}"><td>${r[0]}</td><td><span class="position">${r[1]}${r[2]?` · ${r[2]}`:""}</span></td><td>${miniRating(r[3])}</td><td>${miniRating(r[4])}</td><td>${miniRating(r[5])}</td><td>${r[9]?(r[9]-.4).toFixed(1):"0.0"}</td><td>${r[6].toFixed(1)}</td><td>${r[7].toFixed(1)}</td><td>${r[8].toFixed(1)}</td><td>${fatigueCells(fatigueLevels[i])}</td><td><span class="assignment-meter"><i><i style="--minutes:${r[9]/36*100}%"></i></i><em>${r[9]}</em></span></td></tr>`).join("")}</tbody></table>`, "minutes-panel", button("Edit Minutes"));
+    const identityV3 = () => panel("Team Identity", `<div class="identity-v3-body"><div class="identity-v3-visuals">${conceptSpatialHeatmap()}<div class="diagnostic-radars"><div class="radar-wrap"><span class="radar-title">Offensive Shape</span>${diagnosticRadar(["Shot #8","Range #11","Rim #5","Create #4","Pass #7","Pace #18"],[76,67,83,88,78,49],[80,72,85,90,81,52],"offense")}<div class="radar-key"><span><i></i>Minute plan</span><span><i class="baseline"></i>Full-health auto</span></div></div><div class="radar-wrap"><span class="radar-title">Defense + Roster</span>${diagnosticRadar(["Point #12","Wing #3","Rim #15","Rebound #20","Ath #6","Depth #9"],[64,91,54,40,82,71],[70,92,63,46,84,79],"defense")}<div class="radar-key"><span><i></i>Minute plan</span><span><i class="baseline"></i>Full-health auto</span></div></div></div></div><div class="identity-signals"><div class="signal-group"><div class="signal-label">League Position</div>${[["Overall",72,9,""],["Offense",81,6,""],["Defense",61,13,"warn"],["Depth",70,10,""]].map(r=>`<div class="signal-row ${r[3]}"><span>${r[0]}</span><i class="signal-track"><i style="width:${r[1]}%"></i></i><em>#${r[2]}/30</em></div>`).join("")}</div><div class="signal-group"><div class="signal-label">Morale</div>${[["Locker Room",78,""],["Coach Trust",71,""],["Owner",63,"warn"],["Fans",54,"low"]].map(r=>`<div class="signal-row ${r[2]}"><span>${r[0]}</span><i class="signal-track"><i style="width:${r[1]}%"></i></i><em>${r[1]}</em></div>`).join("")}</div></div></div>`, "identity-v3", button("Details"));
+    const staffV3 = mode => {
+      const staffData=[["Elliot Lang","Head Coach",86,"$8.6M × 3"],["Miles Calder","Offensive Coordinator",79,"$4.8M × 2"],["Preston Cole","Defensive Coordinator",81,"$5.1M × 2"],["Jonah Reeves","Development Lead",75,"$3.7M × 2"]];
+      if(mode==="rows") return panel("Coaching Staff", `<table><thead><tr><th>Name</th><th>Role</th><th>Grade</th><th>Contract</th></tr></thead><tbody>${staffData.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("")}</tbody></table>`, "staff-rows-v3", button("Manage"));
+      if(mode==="strip") return panel("Coaching Staff", `<div class="staff-strip-v3">${staffData.map(r=>`<div class="staff-strip-item"><header><span>${r[0]}</span><strong>${r[2]}</strong></header><em>${r[1]}</em><em>${r[3]}</em></div>`).join("")}</div>`, "staff-strip-panel", button("Manage"));
+      return panel("Coaching Staff", `<div class="staff-text-grid">${staffData.map(r=>`<div class="staff-text-cell"><span>${r[0]}</span><em>${r[1]}</em><strong>${r[2]}</strong></div>`).join("")}</div>`, "staff-text-panel", button("Manage"));
+    };
+    const moraleV2 = () => panel("Morale", `<div class="morale-bars">${[["Locker Room",78,""],["Coach Trust",71,""],["Owner Confidence",63,"warn"],["Fan Sentiment",54,"low"]].map(r=>`<div class="morale-row ${r[2]}"><span>${r[0]}</span><i class="morale-track"><i style="width:${r[1]}%"></i></i><em>${r[1]}</em></div>`).join("")}</div>`, "morale-panel");
+    const diagnosticV2 = () => panel("Team Diagnostics", `<div class="rank-band">${[["Overall",78.4,9,"good"],["Offense",81.7,6,"good"],["Defense",73.2,13,"mid"],["Depth",75.8,10,"mid"]].map(r=>`<div class="rank-block ${r[3]}"><header><span>${r[0]}</span><em>#${r[2]}/30</em></header><strong>${r[1]}</strong><i class="rank-track"><i style="width:${100-(r[2]-1)/29*72}%"></i></i></div>`).join("")}</div><div class="diagnostic-radars"><div class="radar-wrap"><span class="radar-title">Offensive Shape</span>${diagnosticRadar(["SHOT #8","RANGE #11","RIM #5","CREATE #4","PASS #7","PACE #18"],[76,67,83,88,78,49],null,"offense")}</div><div class="radar-wrap"><span class="radar-title">Defense + Roster</span>${diagnosticRadar(["POINT #12","WING #3","RIM #15","REBOUND #20","ATH #6","DEPTH #9"],[64,91,54,40,82,71],null,"defense")}</div></div>`, "diagnostic-v2", button("Details"));
+    const diagnosticPills = () => panel("Team Identity", `<div class="diagnostic-pill-body"><div class="radar-wrap"><span class="radar-title">Complete Team Shape</span>${radar(["OFF #6","DEF #13","SPACE #8","CREATE #4","RIM #15","DEPTH #10"],[82,73,77,88,64,76])}</div><div class="diagnostic-chip-grid">${[["Overall","#9/30","good"],["Spacing","#8/30","good"],["Creation","#4/30","good"],["Rebounding","#20/30","low"],["Rim Pressure","#5/30","good"],["Rim Defense","#15/30","warn"],["Athleticism","#6/30","good"],["Timeline","#12/30","warn"]].map(r=>`<div class="diagnostic-chip ${r[2]}"><span>${r[0]}</span><em>${r[1]}</em></div>`).join("")}</div></div>`, "diagnostic-pills", button("Details"));
+    const diagnosticLedger = () => panel("Team Diagnostics", `<div class="diagnostic-ledger-body"><table><tbody>${[["Overall",78.4,9],["Offense",81.7,6],["Defense",73.2,13],["Depth",75.8,10],["Spacing",76.1,8],["Creation",84.8,4],["Rebounding",59.2,20],["Rim Defense",68.4,15]].map(r=>`<tr><td>${r[0]}</td><td><i class="ledger-meter"><i style="width:${r[1]}%"></i></i></td><td>#${r[2]}/30</td></tr>`).join("")}</tbody></table><div class="radar-wrap"><span class="radar-title">Team Shape</span>${radar(["OFF","DEF","SPACE","CREATE","RIM","DEPTH"],[82,73,76,85,68,76])}</div></div>`, "diagnostic-ledger", button("Details"));
+    const diagnosticGlass = () => panel("Team Profile", `<div class="diagnostic-glass-body"><div class="radar-wrap"><span class="radar-title">League Shape</span>${radar(["OFF #6","DEF #13","SPACE #8","CREATE #4","RIM #15","DEPTH #10"],[82,73,77,88,64,76])}</div><div class="glass-metrics">${[["Overall","78.4","#9/30"],["Offense","81.7","#6/30"],["Defense","73.2","#13/30"],["Depth","75.8","#10/30"],["Rebounding","59.2","#20/30"],["Athleticism","83.5","#6/30"]].map(r=>`<div class="glass-metric"><span>${r[0]}</span><strong>${r[1]}</strong><em>${r[2]}</em></div>`).join("")}</div></div>`, "diagnostic-glass", button("Details"));
+    const staffV2 = (mode="table") => mode === "cards" ? panel("Coaching Staff", `<div class="staff-cards">${[["Elliot Lang","Head Coach",86,86],["Miles Calder","Offensive Coordinator",79,82],["Preston Cole","Defensive Coordinator",81,84],["Jonah Reeves","Development Lead",75,77]].map(r=>`<div class="staff-card"><header><span class="staff-name">${r[0]}</span><span class="staff-grade">${r[2]}</span></header><span class="staff-role">${r[1]}</span><i class="coach-bar"><i style="width:${r[3]}%"></i></i></div>`).join("")}</div>`, "staff-v2", button("Manage")) : panel("Coaching Staff", `<table class="staff-table"><thead><tr><th>Name</th><th>Role</th><th>Grade</th><th>Strengths</th></tr></thead><tbody>${[["Elliot Lang","Head Coach",86,["TACT","MORALE"]],["Miles Calder","Offensive Coordinator",79,["PACE","CREATE"]],["Preston Cole","Defensive Coordinator",81,["WING","SCHEME"]],["Jonah Reeves","Development Lead",75,["YOUTH","SKILL"]]].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td><span class="staff-grade">${r[2]}</span></td><td><span class="skill-pills">${r[3].map(x=>`<i>${x}</i>`).join("")}</span></td></tr>`).join("")}</tbody></table>`, "staff-v2", button("Manage"));
+    const staffCompactV2 = () => panel("Coaching Staff", `<div class="staff-compact-list">${[["Elliot Lang","Head Coach",86],["Miles Calder","Offensive Coordinator",79],["Preston Cole","Defensive Coordinator",81],["Jonah Reeves","Development Lead",75]].map(r=>`<div class="staff-compact-row"><div><span>${r[0]}</span><em>${r[1]}</em></div><strong>${r[2]}</strong></div>`).join("")}</div>`, "staff-compact", button("Manage"));
+    const weekRibbon = () => panel("This Week", `<div class="week-ribbon">${weekDays.map((d,i)=>d[1]?`<div class="week-chip ${i===3?"today":""}">${logo(d[1],"sm")}<span class="day-label">${d[0]}</span><span class="game-label ${d[2][0]==="W"?"result-win":d[2][0]==="L"?"result-loss":""}">${d[2]}</span></div>`:`<div class="week-chip off ${i===3?"today":""}"><span class="day-label">${d[0]}</span><span class="game-label">${d[2]}</span></div>`).join("")}</div>`, "week-v2", button("Calendar"));
+    const weekTimeline = () => panel("This Week", `<div class="week-timeline">${weekDays.map((d,i)=>`<div class="timeline-day ${i===3?"today":""}"><span>${d[0]}</span><i class="timeline-dot">${d[1]?logo(d[1],"xs"):"·"}</i><em class="${d[2][0]==="W"?"result-win":d[2][0]==="L"?"result-loss":""}">${d[2]}</em></div>`).join("")}</div>`, "week-v2", button("Sim Day")+button("Sim Week")+button("Sim Month"));
+    const weekDays = [["MON 25","PHI","W 121–113"],["TUE 26","",""],["WED 27","NYK","L 108–112"],["THU 28","","TODAY"],["FRI 29","MIA",""],["SAT 30","",""],["SUN 31","BOS",""]];
+    const week = () => panel("This Week", `<div class="week">${weekDays.map((d,i)=>`<div class="day ${i===3?"today":""}"><span class="date">${d[0]}</span>${d[1]?`<div class="game">${logo(d[1],"sm")}<span class="${d[2][0]==="W"?"result-win":d[2][0]==="L"?"result-loss":""}">${d[2]}</span></div>`:`<div class="off">${d[2]}</div>`}</div>`).join("")}</div>`, "week-panel", button("Full Calendar"));
+    const scheduleList = () => panel("Schedule", `<div class="schedule-list">${[["JAN 25","PHI","Philadelphia","W 121–113"],["JAN 27","NYK","New York","L 108–112"],["JAN 29","MIA","Miami","7:30 PM"],["JAN 31","BOS","Boston","6:00 PM"],["FEB 02","CLE","Cleveland","7:00 PM"],["FEB 04","ORL","Orlando","7:30 PM"]].map(r=>`<div class="schedule-row"><span class="date">${r[0]}</span>${logo(r[1],"xs")}<span class="opponent">${r[2]}</span><span class="outcome ${r[3][0]==="W"?"result-win":r[3][0]==="L"?"result-loss":""}">${r[3]}</span></div>`).join("")}</div>`, "schedule", button("Calendar"));
+    const development = (title="Player Development") => panel(title, `<svg class="line-chart" viewBox="0 0 760 310" preserveAspectRatio="none"><line class="axis" x1="48" y1="20" x2="48" y2="275"/><line class="axis" x1="48" y1="148" x2="735" y2="148"/>${[20,84,212,275].map(y=>`<line class="gridline" x1="48" y1="${y}" x2="735" y2="${y}"/>`).join("")}<text x="16" y="24">+5</text><text x="23" y="151">0</text><text x="16" y="279">−5</text>${["Oct","Nov","Dec","Jan","Feb","Mar","Apr"].map((m,i)=>`<text x="${48+i*114}" y="298">${m}</text>`).join("")}<polyline stroke="#50bf87" points="48,148 162,135 276,111 390,88"/><polyline stroke="#6fa4de" points="48,148 162,141 276,126 390,119"/><polyline stroke="#d0ad4d" points="48,148 162,154 276,169 390,157"/><polyline stroke="#df854f" points="48,148 162,164 276,181 390,190"/><polyline stroke="#d56565" points="48,148 162,147 276,158 390,176"/>${[[390,88,"#50bf87"],[390,119,"#6fa4de"],[390,157,"#d0ad4d"],[390,190,"#df854f"],[390,176,"#d56565"]].map(c=>`<circle cx="${c[0]}" cy="${c[1]}" r="4" fill="${c[2]}"/>`).join("")}</svg><div class="legend" style="bottom:11px;left:65px;position:absolute"><span><i style="background:#50bf87"></i>Alex Sarr +2.3</span><span><i style="background:#6fa4de"></i>Tre Johnson +1.1</span><span><i style="background:#d0ad4d"></i>Bilal Coulibaly −0.3</span><span><i style="background:#df854f"></i>Khris Middleton −1.7</span><span><i style="background:#d56565"></i>Marcus Smart −1.1</span></div>`, "development", button("Players"));
+    const developmentDeltas = () => panel("Monthly Development", `<div class="dev-delta-list">${[["Alex Sarr",2.3,false],["Tre Johnson",1.1,false],["Bub Carrington",0.7,false],["Bilal Coulibaly",-0.3,true],["Marcus Smart",-1.1,true],["Khris Middleton",-1.7,true]].map(r=>`<div class="dev-delta-row ${r[2]?"negative":""}"><span>${r[0]}</span><i class="delta-scale" style="--delta:${Math.abs(r[1])/5*50}%"><i></i></i><em>${r[1]>0?"+":""}${r[1].toFixed(1)}</em></div>`).join("")}</div>`, "development-deltas", button("All Players"));
+    const developmentLedger = () => panel("Player Development", `<table><thead><tr><th>Player</th><th>Oct</th><th>Jan</th><th>Change</th><th>Trend</th></tr></thead><tbody>${[["Alex Sarr",79.7,82.0,"+2.3","8,14 25,13 42,9 59,5 74,2"],["Tre Johnson",78.9,80.0,"+1.1","8,14 25,12 42,9 59,8 74,7"],["Bub Carrington",73.3,74.0,"+0.7","8,13 25,13 42,10 59,10 74,8"],["Bilal Coulibaly",84.3,84.0,"−0.3","8,8 25,9 42,11 59,10 74,11"],["Marcus Smart",72.1,71.0,"−1.1","8,5 25,7 42,9 59,11 74,14"],["Khris Middleton",71.7,70.0,"−1.7","8,4 25,6 42,9 59,12 74,15"]].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td><svg class="spark" viewBox="0 0 82 20"><polyline points="${r[4]}"/></svg></td></tr>`).join("")}</tbody></table>`, "development development-ledger", button("All Players"));
+    const developmentHybrid = () => panel("Player Development", `<div class="dev-hybrid-list">${[["Alex Sarr",2.3,false,"4,16 20,14 36,10 52,5 68,3"],["Tre Johnson",1.1,false,"4,16 20,14 36,11 52,9 68,8"],["Bub Carrington",0.7,false,"4,15 20,15 36,12 52,12 68,9"],["Bilal Coulibaly",-0.3,true,"4,8 20,9 36,12 52,10 68,11"],["Kyshawn George",0.2,false,"4,13 20,13 36,12 52,11 68,11"],["Corey Kispert",-0.5,true,"4,10 20,11 36,12 52,13 68,14"],["Marcus Smart",-1.1,true,"4,5 20,7 36,9 52,12 68,15"],["Khris Middleton",-1.7,true,"4,4 20,6 36,10 52,13 68,16"],["Tristan Vukcevic",0.4,false,"4,15 20,14 36,13 52,12 68,10"]].map(r=>`<div class="dev-hybrid-row ${r[2]?"negative":""}"><span>${r[0]}</span><svg class="dev-spark" viewBox="0 0 72 20"><polyline points="${r[3]}"/></svg><i class="delta-scale" style="--delta:${Math.abs(r[1])/5*50}%"><i></i></i><em>${r[1]>0?"+":""}${r[1].toFixed(1)}</em></div>`).join("")}</div>`, "development-v3 development-hybrid", button("All Players"));
+    const developmentLollipop = () => panel("Player Development", `<svg class="dev-lollipop" viewBox="0 0 430 400" preserveAspectRatio="none"><line class="axis" x1="215" y1="38" x2="215" y2="365"/><line class="gridline" x1="80" y1="38" x2="80" y2="365"/><line class="gridline" x1="350" y1="38" x2="350" y2="365"/><text x="65" y="24">−5</text><text x="210" y="24">0</text><text x="340" y="24">+5</text>${[["Alex Sarr",2.3],["Tre Johnson",1.1],["Bub Carrington",0.7],["Kyshawn George",0.2],["Bilal Coulibaly",-0.3],["Marcus Smart",-1.1],["Khris Middleton",-1.7]].map((r,i)=>{const y=67+i*45;const x=215+r[1]/5*135;return `<text x="10" y="${y+4}">${r[0]}</text><line class="stem" x1="215" y1="${y}" x2="${x}" y2="${y}"/><circle class="${r[1]>=0?"positive":"negative"}" cx="${x}" cy="${y}" r="6"/><text x="${r[1]>=0?x+10:x-34}" y="${y+4}">${r[1]>0?"+":""}${r[1]}</text>`}).join("")}</svg>`, "development-v3 development-lollipop", button("All Players"));
+    const developmentSmallMultiples = () => panel("Player Development", `<div class="dev-small-grid">${[["Alex Sarr","+2.3","5,27 30,24 56,16 82,8 108,4"],["Tre Johnson","+1.1","5,26 30,23 56,18 82,14 108,12"],["Bub Carrington","+0.7","5,24 30,24 56,19 82,18 108,15"],["Kyshawn George","+0.2","5,21 30,20 56,19 82,18 108,18"],["Bilal Coulibaly","−0.3","5,12 30,14 56,18 82,16 108,17"],["Marcus Smart","−1.1","5,8 30,12 56,17 82,22 108,27"],["Khris Middleton","−1.7","5,6 30,10 56,18 82,25 108,30"],["Corey Kispert","−0.5","5,13 30,15 56,17 82,18 108,20"]].map(r=>`<div class="dev-small"><span>${r[0]}</span><em>${r[1]}</em><svg viewBox="0 0 114 36" preserveAspectRatio="none"><line x1="0" y1="18" x2="114" y2="18"/><polyline points="${r[2]}"/></svg></div>`).join("")}</div>`, "development-v3 development-small-multiples", button("All Players"));
+    const metrics = () => panel("Team Position", `<div class="body"><div class="season-summary"><div class="summary-cell"><span>Overall</span><strong>9 / 30</strong></div><div class="summary-cell"><span>Offense</span><strong>6 / 30</strong></div><div class="summary-cell"><span>Defense</span><strong>13 / 30</strong></div><div class="summary-cell"><span>Depth</span><strong>10 / 30</strong></div></div><div class="metric-list" style="margin-top:12px">${panelGrid([["Spacing",72,8],["Creation",84,4],["Rim pressure",78,5],["Rebounding",43,20],["Rim defense",51,15]])}</div></div>`);
+    const ticker = () => `<footer class="ticker"><div class="ticker-label">League Wire</div><div class="ticker-track"><div class="ticker-item">${logo("BOS","xs")}<b>BOS 118, NYK 111</b> · Tatum scores 34 in the East’s top matchup</div><div class="ticker-item">${logo("OKC","xs")}<b>OKC extends Cason Wallace</b> · $25.2M × 4</div><div class="ticker-item">${logo("DEN","xs")}<b>Denver acquires Deni Avdija</b> · two-player package and a 2029 first</div><div class="ticker-item">${logo("SAS","xs")}<b>Wembanyama: 29 PTS, 14 REB, 6 BLK</b> · SAS wins its fifth straight</div></div>${button("View All")}</footer>`;
+    const journey = () => `<div class="journey"><span>Training Camp</span><i></i><span class="active">Regular Season</span><i></i><span>Trade Deadline</span><i></i><span>Playoffs</span></div>`;
+    const rosterPreview = () => `<table class="roster-preview"><thead><tr><th>Player</th><th>Pos</th><th>Age</th><th>OVR</th><th>Shot</th><th>Create</th><th>Def</th><th>Reb</th><th>MPG</th><th>PTS</th><th>REB</th><th>AST</th><th>2027-28</th><th>2028-29</th></tr></thead><tbody>${players.concat([["Corey Kispert","SF",72,"9.8 PTS"],["Richaun Holmes","C",68,"7.1 PTS"],["Jordan Poole","SG",67,"13.2 PTS"],["Justin Champagnie","SF",64,"6.3 PTS"],["Tristan Vukcevic","C",62,"5.9 PTS"]]).map((p,i)=>`<tr><td>${p[0]}</td><td>${p[1]}</td><td>${20+i}</td><td>${p[2]}</td><td>${Math.max(48,p[2]-2+i%4)}</td><td>${Math.max(45,p[2]-4+i%5)}</td><td>${Math.max(42,p[2]-8+i%8)}</td><td>${Math.max(39,p[2]-10+i%7)}</td><td>${Math.max(10,34-i*2)}</td><td>${Math.max(4,26.4-i*1.8).toFixed(1)}</td><td>${(3.1+i*.45).toFixed(1)}</td><td>${Math.max(1.2,10.8-i*.75).toFixed(1)}</td><td>$${Math.max(2.1,42-i*3.2).toFixed(1)}M</td><td>${i%3===0?`$${Math.max(3,38-i*2.2).toFixed(1)}M`:"—"}</td></tr>`).join("")}</tbody></table>`;
+
+    add(59, "Command Grid", `${header()}<main class="board concept-a">${identity()}${core()}${development()}${week()}<aside class="stack side">${standings()}${staff()}</aside></main>${ticker()}`);
+    add(60, "Season Desk", `${header("SEASON DESK") }<main class="board concept-b">${week()}${standings()}${development("Development Through January")} ${identity()}<div class="stack right-bottom">${staff()}${core()}</div></main>${ticker()}`);
+    add(61, "Team Laboratory", `${header("TEAM LAB") }<main class="board concept-c">${identity()}${core()}${development("Development + Regression")}<div class="lower">${standings()}<div class="stack lower-right">${week()}${staff()}</div></div></main>${ticker()}`);
+    add(62, "Roster Ledger", `${header("ROSTER LEDGER") }<main class="board concept-d"><section class="panel roster"><div class="panel-head"><div class="tabs"><button class="active">Ratings</button><button>Season Stats</button><button>Contracts</button><button>Minutes</button></div><div class="panel-actions">${button("Full Roster")}</div></div>${rosterPreview()}</section><aside class="stack right">${identity()}${standings()}${week()}</aside></main>${ticker()}`);
+    add(63, "League Context", `${header("LEAGUE CONTEXT") }<main class="board concept-e">${standings()}${development("Player Development")} ${week()}${identity()}<div class="stack right-bottom">${core()}${staff()}</div></main>${ticker()}`);
+    add(64, "Diagnostic Command", `${header("REGULAR SEASON") }<main class="board concept-f">${teamDiagnostic()}${standings()}${rotation()}<div class="support-split">${coreVertical()}${staff()}</div>${development("Player Development")}${scheduleList()}</main>${ticker()}`);
+    add(65, "Team First", `${header("TEAM FIRST") }<main class="board concept-g">${teamDiagnostic()}${standings()}<div class="stack right-top">${coreVertical()}${staffStrip()}</div>${rotation()}${development("Player Development")}${scheduleList()}</main>${ticker()}`);
+    add(66, "Balanced Operations", `${header("REGULAR SEASON") }<main class="board concept-h">${teamDiagnostic()}${rotation()}${standings()}<div class="support-split">${coreVertical()}${staff()}</div>${scheduleList()}${development("Player Development")}</main>${ticker()}`);
+    add(67, "Broadcast Control", `${header("GAME NIGHT DESK") }<main class="board v2 concept-i">${diagnosticV2()}${standings()}<div class="stack top-right">${weekRibbon()}${moraleV2()}</div>${minutesV2("plain")}${development("Player Development")}${staffCompactV2()}</main>${ticker()}`);
+    add(68, "Soft Operations", `${header("TEAM OPERATIONS") }<main class="board v2 concept-j soft-surface">${diagnosticPills()}${standings()}${moraleV2()}${minutesV2("pill")}<div class="stack right-bottom">${weekTimeline()}${developmentDeltas()}${staffV2("cards")}</div></main>${ticker()}`);
+    add(69, "Glass Bench", `${header("SEASON ROOM") }<main class="board v2 concept-k glass-surface">${diagnosticGlass()}${standings()}${staffV2("cards")}${minutesV2("multi")}<div class="stack right-bottom">${weekRibbon()}${moraleV2()}${developmentDeltas()}</div></main>${ticker()}`);
+    add(70, "Front Office Ledger", `${header("WASHINGTON · 2026–27") }<main class="board v2 concept-l ledger-surface">${diagnosticLedger()}${standings()}<div class="stack top-right">${weekTimeline()}${moraleV2()}</div>${minutesV2("plain")}${developmentLedger()}${staffCompactV2()}</main>${ticker()}`);
+    add(71, "Neon Rotation", `${header("REGULAR SEASON", false) }<main class="board v2 concept-m neon-surface ledger-surface">${identityV3()}${standings()}<div class="stack top-right">${weekTimeline()}${staffV3("rows")}</div>${minutesV3()}${developmentHybrid()}</main>${ticker()}`);
+    add(72, "Recovery Monitor", `${header("TEAM OPERATIONS") }<main class="board v2 concept-n neon-surface">${identityV3()}${standings()}<div class="stack top-right">${weekTimeline()}${staffV3("rows")}</div>${minutesV3()}${developmentLollipop()}</main>${ticker()}`);
+    add(73, "Signal Room", `${header("WASHINGTON · JAN 28") }<main class="board v2 concept-o neon-surface ledger-surface">${identityV3()}${standings()}<div class="stack top-right">${weekTimeline()}${staffV3("strip")}</div>${minutesV3()}${developmentSmallMultiples()}</main>${ticker()}`);
+
+    document.querySelectorAll(".copy").forEach(button => button.addEventListener("click", async () => { const source=document.getElementById(button.dataset.copy); const clone=source.cloneNode(true); const originals=[source,...source.querySelectorAll("*")]; const clones=[clone,...clone.querySelectorAll("*")]; originals.forEach((node,index)=>{const style=getComputedStyle(node); clones[index].setAttribute("style",Array.from(style).map(prop=>`${prop}:${style.getPropertyValue(prop)};`).join(""));}); await navigator.clipboard.writeText(clone.outerHTML); const old=button.textContent; button.textContent="Copied"; setTimeout(()=>button.textContent=old,1000); }));
+  </script>
+</body>
+</html>

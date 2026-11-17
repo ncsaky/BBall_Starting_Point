@@ -1,0 +1,220 @@
+{
+  "packet_version": "mixed_pop_input_updates_v1_2026_11_16",
+  "sources": {
+    "CE": {
+      "path": "transcripts/episode4_transcript.txt",
+      "date": "2026-09-02",
+      "video_id": "CbartUy6cMY",
+      "kind": "retained user-supplied timestamped transcript",
+      "coverage_this_task": "selected windows, not a new complete episode review",
+      "independence_group": "nerd_sesh_retained_commentary"
+    },
+    "T30": {
+      "path": "transcripts/episode3_transcript.txt",
+      "date": "2026-09-30",
+      "kind": "retained user-supplied timestamped transcript",
+      "coverage_this_task": "selected Turner context",
+      "independence_group": "nerd_sesh_retained_commentary"
+    },
+    "T20": {
+      "path": "captions/ZaA4usLpBWI.en.vtt",
+      "date": "2026-10-02",
+      "video_id": "ZaA4usLpBWI",
+      "kind": "retained auto-captions",
+      "coverage_this_task": "selected Jokic context",
+      "independence_group": "nerd_sesh_retained_commentary"
+    },
+    "T10": {
+      "path": "captions/J6STkjbVuUg.en.vtt",
+      "date": "2026-10-07",
+      "video_id": "J6STkjbVuUg",
+      "kind": "retained auto-captions",
+      "coverage_this_task": "selected Holmgren context",
+      "independence_group": "nerd_sesh_retained_commentary"
+    },
+    "TURNER2015": {
+      "url": "https://hoopshabit.com/2015/06/11/scouting-report-myles-turner/",
+      "date": "2015-06-11",
+      "date_basis": "dated URL/search metadata; college2014–15 context explicit",
+      "author": "Ed Isaacson",
+      "kind": "original draft scouting, written offense sections reviewed",
+      "coverage_this_task": "Post Offense and Perimeter Offense; no media review",
+      "independence_group": "isaacson_2015_college_scouting",
+      "temporal_limit": "Eleven-year-old college evidence; current continuity is an assumption, not a fresh 2026 observation."
+    },
+    "CHET2024": {
+      "url": "https://www.nba.com/news/what-weve-seen-from-chet-holmgren-this-season",
+      "date": "2024-04-11",
+      "date_basis": "page Updated on; statistics state through March13",
+      "author": "John Schuhmann",
+      "kind": "NBA original written action analysis",
+      "coverage_this_task": "Film room famous: pop/roll examples; no embedded video review",
+      "independence_group": "schuhmann_2024_chet_actions",
+      "temporal_limit": "Rookie-season actions, corroborated only broadly by retained2026 role assessment."
+    },
+    "JOKIC2025": {
+      "url": "https://www.nba.com/nuggets/news/first-round-series-preview-4-nuggets-vs-5-clippers",
+      "date": "2025-04-17",
+      "author": "Matt Brooks",
+      "kind": "team-published original written action analysis; opinions not front-office conclusions",
+      "coverage_this_task": "three-point/pick-and-pop section; no media review",
+      "independence_group": "brooks_nuggets_offense",
+      "temporal_limit": "2024–25 season; opportunity quality is a confound, not preparation-speed proof."
+    },
+    "JOKIC2026": {
+      "url": "https://www.nba.com/nuggets/news/first-round-series-preview-3-nuggets-vs-6-timberwolves",
+      "date": "2026-04-16",
+      "author": "Matt Brooks",
+      "kind": "team-published original written action analysis; opinions not front-office conclusions",
+      "coverage_this_task": "Chicago-action and jumper sections; no media review",
+      "independence_group": "brooks_nuggets_offense",
+      "temporal_limit": "Pre-start2025–26 evidence, not post-opener2026–27 performance."
+    },
+    "CATCH_TABLE": {
+      "url": "https://www.nba.com/news/best-shooters-of-the-2024-25-season",
+      "date": "2025-04-02",
+      "author": "John Schuhmann",
+      "kind": "dated NBA tracking-stat table",
+      "coverage_this_task": "catch-and-shoot table only; through April1,2025",
+      "independence_group": "nba_2025_catch_tracking",
+      "correlation": "Earlier cutoff of the same season discussed in JOKIC2025; not an independent skill experiment."
+    },
+    "TOWNS2025": {
+      "url": "https://shaxnba.substack.com/p/anatomy-of-a-possession",
+      "date": "2025-12-15",
+      "author": "Shax",
+      "kind": "original analyst single-possession classification/explanation",
+      "coverage_this_task": "public written article; no embedded video or spreadsheet reviewed",
+      "independence_group": "shax_single_possession_2025",
+      "temporal_limit": "One selected prior-season possession; not1987 Towns screening samples or proof of adaptive reading."
+    }
+  },
+  "claims": [
+    {
+      "id": "MP01",
+      "player_id": "player_mil-myles-turner",
+      "source_id": "T30",
+      "locator": "00:11:44–00:12:33",
+      "direct_assessment": "Turner two-point efficiency reportedly declined outside elite playmaking/infrastructure; contract criticism is separate.",
+      "direct_or_inferred": "direct commentator assessment; speaker statistics not independently verified",
+      "decision": "counterevidence only; no hands, screen or release deduction from aggregate efficiency",
+      "confounds": "pass quality, shot diet, teammates and finishing technique are not isolated"
+    },
+    {
+      "id": "MP02",
+      "player_id": "player_nyk-karl-anthony-towns",
+      "source_id": "CE",
+      "locator": "01:28:30–01:28:53",
+      "direct_assessment": "Towns hands praised in high-drop defensive activity/rim-protection context.",
+      "direct_or_inferred": "direct defensive assessment, not offensive receiving",
+      "decision": "reject transfer to S14; no numerical addition from this passage",
+      "confounds": "same word hands refers to a different responsibility"
+    },
+    {
+      "id": "MP03",
+      "player_id": "player_okc-chet-holmgren",
+      "source_id": "CE",
+      "locator": "01:00:07–01:00:35;01:03:46–01:04:23",
+      "direct_assessment": "Fluid roller, good open shooter; slow-release access concerns. Speakers disagree about when mechanics changed.",
+      "direct_or_inferred": "direct role/shot-access assessment; no timed motion",
+      "decision": "retain S01/S08 exactly; corroboration for broad role only",
+      "confounds": "catch radius is not independent catch-control skill; lack of time differs from missed open shots"
+    },
+    {
+      "id": "MP04",
+      "player_id": "player_okc-chet-holmgren",
+      "source_id": "T10",
+      "locator": "03:38:49–03:39:50",
+      "direct_assessment": "Spurs mismatch and missing secondary creators left Holmgren in an unsuitable advantage-creation responsibility.",
+      "direct_or_inferred": "direct matchup/context assessment",
+      "decision": "counterevidence to universal offensive downgrade; not independent catch/screen measurement",
+      "confounds": "same commentary channel as CE; broad corroboration is correlated"
+    },
+    {
+      "id": "MP05",
+      "player_id": "player_den-nikola-jokic",
+      "source_id": "T20",
+      "locator": "01:23:38–01:24:14",
+      "direct_assessment": "Jokic pulling Wembanyama into space and touch scoring described as a favorable matchup.",
+      "direct_or_inferred": "direct broad matchup assessment",
+      "decision": "do not infer catch-three grade or S09 from space alone",
+      "confounds": "post touch, self-created shots and preparation not separated"
+    },
+    {
+      "id": "MP06",
+      "player_id": "player_mil-myles-turner",
+      "source_id": "TURNER2015",
+      "locator": "Post Offense, last paragraphs; Perimeter Offense, first two paragraphs",
+      "direct_assessment": "Draft scouting credits generally good hands and perimeter screening, with rushed catching/mechanics errors and a pop-oriented college role.",
+      "direct_or_inferred": "direct historical scouting; current S14/S27 continuity is inferred",
+      "decision": "new broad S14/S27 hypotheses; S08/S09 remain unknown; qualitative historical tendency only",
+      "confounds": "college-to-NBA distance, age, development and scheme; independent of2016 reporting but neither is current2026 evidence"
+    },
+    {
+      "id": "MP07",
+      "player_id": "player_okc-chet-holmgren",
+      "source_id": "CHET2024",
+      "locator": "Film room famous: pick-and-pop and finishing-at-rim examples",
+      "direct_assessment": "Holmgren pops against drop and rolls against higher coverage, including a reverse alley-oop.",
+      "direct_or_inferred": "written action descriptions; S14/S26/S28 raw decomposition inferred",
+      "decision": "three stage-specific broad hypotheses; not a direct screening-contact grade",
+      "confounds": "selected successful actions; teammate delivery/coaching and role remain confounds; no media reviewed"
+    },
+    {
+      "id": "MP08",
+      "player_id": "player_den-nikola-jokic",
+      "source_id": "JOKIC2025",
+      "locator": "pick-and-pop section",
+      "direct_assessment": "Jokic catch-three accuracy reported47.3%, mostly pick-and-pop, with an ample-time example.",
+      "direct_or_inferred": "reported performance and action context; not measured release speed",
+      "decision": "new S01 hypothesis; qualitative context; no S08 or T11 distribution",
+      "confounds": "single-season shot quality; no isolated pressure or distance denominator; same underlying season as MP10"
+    },
+    {
+      "id": "MP09",
+      "player_id": "player_den-nikola-jokic",
+      "source_id": "JOKIC2026",
+      "locator": "Chicago-action section and X factor: jumper section",
+      "direct_assessment": "Jokic supplies handoff screens and uses pindowns to reach catch threes.",
+      "direct_or_inferred": "written action description; S26 technique magnitude inferred",
+      "decision": "new S26 hypothesis; existing S27/S28 receive supplementary provenance without record overwrite",
+      "confounds": "same Matt Brooks author as MP08, team perspective, selected actions, not independent universal route samples"
+    },
+    {
+      "id": "MP10",
+      "player_ids": [
+        "player_nyk-karl-anthony-towns",
+        "player_den-nikola-jokic"
+      ],
+      "source_id": "CATCH_TABLE",
+      "locator": "catch-and-shoot table, through April1,2025",
+      "direct_assessment": "Through April1,2025: Towns126/268 catch threes; Jokic97/215; league37.4%.",
+      "direct_or_inferred": "reported mode-specific realized counts; raw technique remains inferred",
+      "decision": "corroborate existing Towns S01 and new Jokic S01; no arithmetic grade conversion",
+      "confounds": "historical cutoff, location, pressure and preparation; overlaps MP08 rather than independent confirmation"
+    },
+    {
+      "id": "MP11",
+      "player_id": "player_nyk-karl-anthony-towns",
+      "source_id": "TOWNS2025",
+      "locator": "The Brain, final paragraph; The Heart, example bullet list",
+      "direct_assessment": "After ball-screen actions, Towns leaves the dunker spot to set Anunoby a corner pindown; a lightly contested short jumper follows and misses.",
+      "direct_or_inferred": "one analyst-described sequence; S27/S28 grades inferred",
+      "decision": "broad execution/sequence-reading hypotheses, not shot-outcome grading",
+      "confounds": "called set versus adaptive read; no legal-contact success rate; passing/shot belong to Brunson/Anunoby, not Towns"
+    }
+  ],
+  "coverage": "Targeted transcript windows and written sections only; no new complete episode or audiovisual review. Speakers unidentified/local turns.",
+  "correlation_policy": "Same-channel commentary is not independent replication. Brooks2025/2026 share author/publisher; same-season NBA catch counts overlap. Shared groups stay correlated across receiving/route/read inferences.",
+  "lookup_limits": {
+    "search_rounds": 3,
+    "failed": [
+      {
+        "url": "https://sports.yahoo.com/the-knicks-two-man-game-of-karl-anthony-towns-and-jalen-brunson-is-all-out-frightening-171232563.html",
+        "status": "429; no retry; unavailable body not used for numerical estimates"
+      }
+    ],
+    "not_used": "Search-only social comments, unrelated injury/defensive-hands stories, generic secondary estimates, post-start game pages and inaccessible bodies. No subscription, downloads or broad campaign.",
+    "stop": "Targeted acquisition ended before packet construction."
+  }
+}

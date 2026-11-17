@@ -1,0 +1,176 @@
+from pathlib import Path
+import unittest
+
+
+ROOT = Path(__file__).resolve().parents[1]
+APP = (ROOT / "src/nba_gm_data/gui/app.js").read_text(encoding="utf-8")
+CSS = (ROOT / "src/nba_gm_data/gui/styles.css").read_text(encoding="utf-8")
+
+
+class Concept74GuiTests(unittest.TestCase):
+    def test_dashboard_uses_authored_two_row_composition(self):
+        dashboard = APP[
+            APP.index("function seasonCommandDashboardMarkup"):
+            APP.index("function seasonPanelHeader")
+        ]
+        for class_name in (
+            "season-diagnostics-row",
+            "season-operations-row",
+            "season-matchup-stack",
+            "season-intelligence-grid",
+        ):
+            self.assertIn(class_name, dashboard)
+        self.assertIn("seasonIdentityCard", dashboard)
+        self.assertIn("seasonTeamSignalsCard", dashboard)
+        self.assertIn("seasonTeamRadarsCard", dashboard)
+        self.assertIn("seasonOpponentCard", dashboard)
+        self.assertNotIn("seasonPreviousGamesCard", dashboard)
+        self.assertIn("seasonEfficiencyCard", dashboard)
+        self.assertIn("seasonProspectsCard", dashboard)
+        self.assertIn("seasonAwardsCard", dashboard)
+
+    def test_rating_and_scouting_bars_use_solid_sampled_color(self):
+        mini_rating = APP[
+            APP.index("function seasonMiniRating"):
+            APP.index("function seasonFatigueCell")
+        ]
+        prospects = APP[
+            APP.index("function seasonProspectsCard"):
+            APP.index("function seasonProspectStock")
+        ]
+        self.assertIn("performanceBarStyle(score)", mini_rating)
+        self.assertIn("performanceBarStyle(confidence)", prospects)
+        self.assertIn("grid-template-columns: 18px minmax(0, 1fr)", CSS)
+        self.assertIn("background: var(--bar-color", CSS)
+        self.assertNotIn("linear-gradient", mini_rating)
+        self.assertNotIn("linear-gradient", prospects)
+
+    def test_minutes_and_opponent_share_row_height(self):
+        specification = CSS[CSS.rindex("Regular-season command surface") :]
+        self.assertIn(
+            ".season-opponent-table { display: grid; grid-template-rows: 15px repeat(6, minmax(0, 1fr))",
+            specification,
+        )
+        self.assertIn("grid-template-rows: 18px repeat(var(--roster-count), minmax(0, 1fr));", specification)
+        self.assertIn(".season-minutes-table {", specification)
+
+    def test_outer_rows_share_exact_width_and_header_treatment(self):
+        specification = CSS[CSS.rindex("Regular-season command surface") :]
+        self.assertIn(".season-diagnostics-row,\n.season-operations-row", specification)
+        self.assertIn("width: 100%;", specification)
+        self.assertIn("--season-card-header-height", specification)
+        self.assertIn("white-space: nowrap;", specification)
+        self.assertIn("--season-text: #edf2f4", specification)
+        self.assertIn("--season-muted: #8e9ba1", specification)
+
+    def test_dense_tables_reserve_status_and_mpg_width_without_card_overflow(self):
+        specification = CSS[CSS.rindex("Regular-season command surface") :]
+        minutes = specification[
+            specification.index(".season-minutes-head,"):
+            specification.index(".season-minutes-head {")
+        ]
+        prospects = specification[
+            specification.index(".season-prospects-head,"):
+            specification.index(".season-prospects-head {")
+        ]
+        self.assertIn("minmax(88px, 1.42fr)", minutes)
+        self.assertIn("24px minmax(60px, .92fr)", minutes)
+        self.assertIn("minmax(32px, .6fr)", minutes)
+        self.assertIn("minmax(60px, 1.1fr)", minutes)
+        self.assertIn("minmax(0, 1.6fr)", prospects)
+        self.assertNotIn("minmax(100px", prospects)
+
+    def test_minutes_add_age_and_preserve_authored_group_gaps(self):
+        minutes = APP[
+            APP.index("function seasonMinutesCard"):
+            APP.index("function seasonMiniRating")
+        ]
+        specification = CSS[CSS.rindex("Regular-season command surface") :]
+        self.assertIn("<span>Player</span><span>Age</span><span>Pos</span>", minutes)
+        self.assertIn(":nth-child(7)", specification)
+        self.assertIn(":nth-child(11)", specification)
+
+    def test_team_radars_are_stacked_between_signals_and_standings(self):
+        dashboard = APP[
+            APP.index("function seasonCommandDashboardMarkup"):
+            APP.index("function seasonPanelHeader")
+        ]
+        signals_at = dashboard.index("season-signals-panel")
+        radars_at = dashboard.index("season-radars-panel")
+        standings_at = dashboard.index("season-standings-panel")
+        self.assertLess(signals_at, radars_at)
+        self.assertLess(radars_at, standings_at)
+        self.assertIn("grid-template-rows: repeat(2, minmax(0, 1fr))", CSS)
+
+    def test_trend_charts_keep_fixed_season_horizons(self):
+        efficiency = APP[
+            APP.index("function seasonEfficiencyCard"):
+            APP.index("function seasonProspectsCard")
+        ]
+        stock = APP[
+            APP.index("function seasonProspectStock"):
+            APP.index("function seasonAwardsCard")
+        ]
+        development = APP[
+            APP.index("function seasonDevelopmentSparkline"):
+            APP.index("function openTeamDevelopmentModal")
+        ]
+        self.assertIn("const seasonSlots = 26", efficiency)
+        self.assertIn("Math.max(1, seasonSlots - 1)", efficiency)
+        self.assertIn("regularSeasonProgressSlot(seasonSlots)", stock)
+        self.assertIn("developmentSeasonMonths().length", development)
+        self.assertNotIn("season-horizon-guide", efficiency)
+        self.assertIn("season-horizon-guide", stock)
+        self.assertIn("season-horizon-guide", development)
+        self.assertIn('x1="0" y1="10"', stock)
+        self.assertIn('x1="0" y1="${height / 2}"', development)
+
+    def test_dashboard_includes_four_factors_and_real_rookie_candidates(self):
+        signals = APP[
+            APP.index("function seasonTeamSignalsCard"):
+            APP.index("function performanceBarColor")
+        ]
+        awards = APP[
+            APP.index("function seasonAwardsCard"):
+            APP.index("function seasonStaffCard")
+        ]
+        self.assertIn("four_factors", signals)
+        self.assertIn("Four Factors", signals)
+        self.assertIn("dashboardSummaryLeaders?.rookies", awards)
+
+    def test_weekly_efficiency_uses_dense_fixed_grid_and_three_series(self):
+        efficiency = APP[
+            APP.index("function seasonEfficiencyCard"):
+            APP.index("function seasonProspectsCard")
+        ]
+        self.assertIn("length: 13", efficiency)
+        self.assertIn("length: 7", efficiency)
+        self.assertIn('class="net ', efficiency)
+        self.assertIn('class="offense secondary', efficiency)
+        self.assertIn('class="defense secondary', efficiency)
+        self.assertIn("linearGradient", efficiency)
+
+    def test_weekly_efficiency_footer_clarifies_average_without_axis_overlap(self):
+        efficiency = APP[
+            APP.index("function seasonEfficiencyCard"):
+            APP.index("function seasonProspectsCard")
+        ]
+        self.assertIn("chartHeight - 42", efficiency)
+        self.assertNotIn('class="axis-caption"', efficiency)
+        self.assertIn('class="season-efficiency-context"', efficiency)
+        self.assertIn("leagueAverage.toFixed(1)", efficiency)
+        board_css = (ROOT / "src/nba_gm_data/gui/card-board.css").read_text(encoding="utf-8")
+        self.assertIn("season-efficiency-panel.card-board-headerless { grid-template-rows:minmax(0,1fr) auto auto; }", board_css)
+
+    def test_minutes_use_visible_fill_rail(self):
+        minutes = APP[
+            APP.index("function seasonMinutesCard"):
+            APP.index("function seasonMiniRating")
+        ]
+        self.assertIn("season-minute-slider", minutes)
+        self.assertIn("season-minute-fill", minutes)
+        self.assertIn("minuteValue / 48", minutes)
+
+
+if __name__ == "__main__":
+    unittest.main()

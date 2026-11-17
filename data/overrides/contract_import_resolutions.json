@@ -1,0 +1,233 @@
+{
+  "version": 1,
+  "resolutions": [
+    {
+      "id": "src_lillard_contract_components_2026_10_30",
+      "player_id": "player_por-damian-lillard",
+      "normalized_name": "damian lillard",
+      "source_id": "src_bref_contracts_players_2027",
+      "source_retrieved_at": "2026-10-13T07:06:44+00:00",
+      "expected_aggregate_rows": [
+        {
+          "player_name": "Damian Lillard",
+          "normalized_name": "damian lillard",
+          "team_abbrev": "MIL",
+          "seasons": [
+            {
+              "season": "2026-27",
+              "salary": 35915403
+            },
+            {
+              "season": "2027-28",
+              "salary": 36620603
+            },
+            {
+              "season": "2028-29",
+              "salary": 22516603
+            },
+            {
+              "season": "2029-30",
+              "salary": 22516603
+            }
+          ],
+          "remaining_guaranteed": 90066412
+        },
+        {
+          "player_name": "Damian Lillard",
+          "normalized_name": "damian lillard",
+          "team_abbrev": "POR",
+          "seasons": [
+            {
+              "season": "2026-27",
+              "salary": 35915403
+            },
+            {
+              "season": "2027-28",
+              "salary": 36620603
+            },
+            {
+              "season": "2028-29",
+              "salary": 22516603
+            },
+            {
+              "season": "2029-30",
+              "salary": 22516603
+            }
+          ],
+          "remaining_guaranteed": 13398800
+        }
+      ],
+      "component_artifact": "data/research/contracts_public_players_2026.json",
+      "component_source": {
+        "fallback_reason": "Basketball-Reference returned HTTP 429: Too Many Requests",
+        "fetched_at": "2026-05-21T23:54:03+00:00",
+        "id": "src_hoopshype_salaries_players_2026",
+        "title": "HoopsHype NBA team salary pages",
+        "url_template": "https://hoopshype.com/salaries/{team_slug}/"
+      },
+      "component_rows": [
+        {
+          "guaranteed": null,
+          "hoopshype_player_id": "463121",
+          "normalized_name": "damian lillard",
+          "player": "Damian Lillard",
+          "seasons": [
+            {
+              "notes": "",
+              "option_type": null,
+              "salary": 22516603,
+              "season": "2025-26",
+              "two_way_contract": false
+            },
+            {
+              "notes": "",
+              "option_type": null,
+              "salary": 22516603,
+              "season": "2026-27",
+              "two_way_contract": false
+            },
+            {
+              "notes": "",
+              "option_type": null,
+              "salary": 22516603,
+              "season": "2027-28",
+              "two_way_contract": false
+            },
+            {
+              "notes": "",
+              "option_type": null,
+              "salary": 22516603,
+              "season": "2028-29",
+              "two_way_contract": false
+            },
+            {
+              "notes": "",
+              "option_type": null,
+              "salary": 22516603,
+              "season": "2029-30",
+              "two_way_contract": false
+            }
+          ],
+          "source_url": "https://hoopshype.com/salaries/milwaukee_bucks/",
+          "team_abbrev": "MIL",
+          "update_date": "2026-04-21T20:03:31.715487Z"
+        },
+        {
+          "guaranteed": null,
+          "hoopshype_player_id": "463121",
+          "normalized_name": "damian lillard",
+          "player": "Damian Lillard",
+          "seasons": [
+            {
+              "notes": "",
+              "option_type": null,
+              "salary": 14104000,
+              "season": "2025-26",
+              "two_way_contract": false
+            },
+            {
+              "notes": "",
+              "option_type": null,
+              "salary": 13398800,
+              "season": "2026-27",
+              "two_way_contract": false
+            },
+            {
+              "notes": "",
+              "option_type": "player_option",
+              "salary": 14104000,
+              "season": "2027-28",
+              "two_way_contract": false
+            }
+          ],
+          "source_url": "https://hoopshype.com/salaries/portland_trail_blazers/",
+          "team_abbrev": "POR",
+          "update_date": "2026-04-21T20:03:31.715468Z"
+        }
+      ],
+      "verified_at": "2026-10-30",
+      "evidence_urls": [
+        "https://www.nba.com/news/damian-lillard-to-return-to-trail-blazers",
+        "https://www.nba.com/news/bucks-waive-damian-lillard",
+        "https://www.basketball-reference.com/contracts/MIL.html",
+        "https://www.salaryswish.com/players/damian-lillard"
+      ],
+      "active_contract": {
+        "player_name": "Damian Lillard",
+        "team_abbrev": "POR",
+        "original_contract_years": 3,
+        "signed_season": "2025-26",
+        "status": "resolved_team_separated_public_terms",
+        "confidence": 0.9,
+        "source_ids": [
+          "src_lillard_contract_components_2026_10_30"
+        ],
+        "notes": "Portland active deal only; original 2025-26 through 2027-28 term. Published annual components and reported guarantee/PO. No trade protection inferred. Resolution: data/overrides/contract_import_resolutions.json.",
+        "seasons": [
+          {
+            "season": "2025-26",
+            "salary": 14104000,
+            "option_type": null,
+            "guarantee_status": "guaranteed",
+            "guaranteed_salary": 14104000,
+            "protection_basis": "reported_original_two_guaranteed_years_then_player_option"
+          },
+          {
+            "season": "2026-27",
+            "salary": 13398800,
+            "option_type": null,
+            "guarantee_status": "guaranteed",
+            "guaranteed_salary": 13398800,
+            "protection_basis": "reported_original_two_guaranteed_years_then_player_option"
+          },
+          {
+            "season": "2027-28",
+            "salary": 14104000,
+            "option_type": "player_option",
+            "guarantee_status": "player_option_pending",
+            "guaranteed_salary": null,
+            "protection_basis": "reported_original_two_guaranteed_years_then_player_option"
+          }
+        ]
+      },
+      "former_team_obligations": [
+        {
+          "former_team_abbrev": "MIL",
+          "date": "2025-07-07",
+          "type": "imported_waived_stretch",
+          "original_contract_years": null,
+          "original_stretch_installments": 5,
+          "original_stretch_schedule": [
+            {
+              "season": "2025-26",
+              "gross_salary": 22516603
+            },
+            {
+              "season": "2026-27",
+              "gross_salary": 22516603
+            },
+            {
+              "season": "2027-28",
+              "gross_salary": 22516603
+            },
+            {
+              "season": "2028-29",
+              "gross_salary": 22516603
+            },
+            {
+              "season": "2029-30",
+              "gross_salary": 22516603
+            }
+          ],
+          "setoff": {
+            "status": "unknown_unverified",
+            "amount": null,
+            "net_cap_charge": null
+          },
+          "planning_basis": "gross_stretch_reserve_no_unverified_setoff_applied",
+          "notes": "Gross cap installments only; exact set-off/net charge is unverified. Use gross conservatively as an explicit planning assumption, not verified net debt. The original underlying contract duration is not inferred from the five stretch installments."
+        }
+      ]
+    }
+  ]
+}

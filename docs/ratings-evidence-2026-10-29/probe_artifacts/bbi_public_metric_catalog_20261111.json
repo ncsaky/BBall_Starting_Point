@@ -1,0 +1,896 @@
+{
+  "url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqxPLTuFQwWBFof7XlhHBYidVupesU81LllfS1G8uBTeHfpbByEbh1bM0Ih1aUU4XDCcHTKKLSuITT/pubhtml/sheet?headers=false&gid=263593269",
+  "checked_on": "2026-11-11",
+  "http_status": 200,
+  "purpose": "public metric dictionary catalog; no player values or credentials",
+  "metrics": [
+    {
+      "name": "% of Minutes in Foul Trouble",
+      "category": "Contextual Data"
+    },
+    {
+      "name": "Defensive Positional Versatility",
+      "category": "Contextual Data"
+    },
+    {
+      "name": "Defensive Role Versatility",
+      "category": "Contextual Data"
+    },
+    {
+      "name": "DHO Coverage Aggression",
+      "category": "Contextual Data"
+    },
+    {
+      "name": "DHO Coverage Versatility",
+      "category": "Contextual Data"
+    },
+    {
+      "name": "Fouls Committed / 75",
+      "category": "Contextual Data"
+    },
+    {
+      "name": "Fouls Drawn / 75",
+      "category": "Contextual Data"
+    },
+    {
+      "name": "Matchup Difficulty",
+      "category": "Contextual Data"
+    },
+    {
+      "name": "Off-Ball Coverage Aggression",
+      "category": "Contextual Data"
+    },
+    {
+      "name": "Off-Ball Coverage Versatility",
+      "category": "Contextual Data"
+    },
+    {
+      "name": "Overall Coverage Aggression",
+      "category": "Contextual Data"
+    },
+    {
+      "name": "Overall Coverage Versatility",
+      "category": "Contextual Data"
+    },
+    {
+      "name": "P&R Coverage Aggression",
+      "category": "Contextual Data"
+    },
+    {
+      "name": "P&R Coverage Versatility",
+      "category": "Contextual Data"
+    },
+    {
+      "name": "Shot Versatility",
+      "category": "Contextual Data"
+    },
+    {
+      "name": "Stable Avg 2PT Shot Distance",
+      "category": "Contextual Data"
+    },
+    {
+      "name": "Adjusted Defensive Rebounding Success Rate",
+      "category": "Defensive Rebounding"
+    },
+    {
+      "name": "Average Defensive Rebounding Distance from Rim",
+      "category": "Defensive Rebounding"
+    },
+    {
+      "name": "Defensive Reb Per 75 Possessions",
+      "category": "Defensive Rebounding"
+    },
+    {
+      "name": "Defensive Rebonding Chances Per 75 Possessions",
+      "category": "Defensive Rebounding"
+    },
+    {
+      "name": "Defensive Rebounding Conversion Skill",
+      "category": "Defensive Rebounding"
+    },
+    {
+      "name": "Defensive Rebounding Crashing Skill",
+      "category": "Defensive Rebounding"
+    },
+    {
+      "name": "Defensive Rebounding Talent",
+      "category": "Defensive Rebounding"
+    },
+    {
+      "name": "Defensive Rebounds Per Game",
+      "category": "Defensive Rebounding"
+    },
+    {
+      "name": "Percentage of Defensive Rebounds Contested",
+      "category": "Defensive Rebounding"
+    },
+    {
+      "name": "Stable Defensive Two Point Rebounds Per 75",
+      "category": "Defensive Rebounding"
+    },
+    {
+      "name": "Stable FT Defensive Rebounds as a % of Defensive Rebounds",
+      "category": "Defensive Rebounding"
+    },
+    {
+      "name": "Stable FT Defensive Rebounds Per 75",
+      "category": "Defensive Rebounding"
+    },
+    {
+      "name": "% of Shots at Rim Unassisted",
+      "category": "Finishing"
+    },
+    {
+      "name": "Contact Finish Rate",
+      "category": "Finishing"
+    },
+    {
+      "name": "Drive Assist Per Pass Rate",
+      "category": "Finishing"
+    },
+    {
+      "name": "Drive Assist Rate",
+      "category": "Finishing"
+    },
+    {
+      "name": "Drive Foul Drawn Rate",
+      "category": "Finishing"
+    },
+    {
+      "name": "Drive Foul Rate",
+      "category": "Finishing"
+    },
+    {
+      "name": "Drive Passout Rate",
+      "category": "Finishing"
+    },
+    {
+      "name": "Drives Per 75 Possessions",
+      "category": "Finishing"
+    },
+    {
+      "name": "Finishing Talent",
+      "category": "Finishing"
+    },
+    {
+      "name": "Rim FG%",
+      "category": "Finishing"
+    },
+    {
+      "name": "Rim Openness Rating",
+      "category": "Finishing"
+    },
+    {
+      "name": "Rim Shot Attempts Per 75 Possessions",
+      "category": "Finishing"
+    },
+    {
+      "name": "Rim Shot Creation",
+      "category": "Finishing"
+    },
+    {
+      "name": "Rim Shot Making",
+      "category": "Finishing"
+    },
+    {
+      "name": "Rim Shot Making Efficiency",
+      "category": "Finishing"
+    },
+    {
+      "name": "Rim Shot Quality",
+      "category": "Finishing"
+    },
+    {
+      "name": "Stable Blocked Shots At Rim Per 75",
+      "category": "Finishing"
+    },
+    {
+      "name": "Stable Rim FG_pct",
+      "category": "Finishing"
+    },
+    {
+      "name": "Unassisted Rim Shot Attempts Per 75 Possessions",
+      "category": "Finishing"
+    },
+    {
+      "name": "Block Rate on Contests",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Blocks Per 75 Possessions",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Help Defense Talent",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Help Defensive Activity",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Help Effectiveness Rating",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Percentage of Shots at Rim Contested",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Post Defense",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Rim Contests Per 75 Possessions",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Rim Deterrence",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Rim Deterrence Per 100",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Rim dFG% vs Expected",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Rim Disruption",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Rim Points Saved Per 75 Possessions",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Rim Protection",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Screener Mobile Defense",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Screener Rim Defense",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Stable Blocks Per Defensive Goaltends Ratio",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Stable Blocks Per Shooting Fouls Ratio",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Stable Defensive FG% at Rim",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Stable Defensive Goaltends Per 75",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Stable Rim dFG% vs. Expected",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Stable Rim DFGA Per 75 Possessions",
+      "category": "Interior Defense"
+    },
+    {
+      "name": "Cut FG%",
+      "category": "Off-Ball Movement"
+    },
+    {
+      "name": "Cuts Per 75 Possessions",
+      "category": "Off-Ball Movement"
+    },
+    {
+      "name": "Movement Attack Rate",
+      "category": "Off-Ball Movement"
+    },
+    {
+      "name": "Movement Distance Rating",
+      "category": "Off-Ball Movement"
+    },
+    {
+      "name": "Movement Points Per 75 Possessions",
+      "category": "Off-Ball Movement"
+    },
+    {
+      "name": "Movement Scoring Impact Per 75 Possessions",
+      "category": "Off-Ball Movement"
+    },
+    {
+      "name": "Movement Speed Rating",
+      "category": "Off-Ball Movement"
+    },
+    {
+      "name": "Off-Ball Screen eFG%",
+      "category": "Off-Ball Movement"
+    },
+    {
+      "name": "Off-Ball Screen Possessions Per 75 Possessions",
+      "category": "Off-Ball Movement"
+    },
+    {
+      "name": "Adjusted Offensive Rebounding Success Rate",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Average Offensive Rebounding Distance from Rim",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Offensive Rebounding Chances Per 75 Possessions",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Offensive Rebounding Conversion Skill",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Offensive Rebounding Crashing Skill",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Offensive Rebounding Talent",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Offensive Rebounds Per 75 Possessions",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Offensive Rebounds Per Game",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Percentage of Offensive Rebounds Contested",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Putback per Offensive Rebound",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Putback Points Per Shot",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Putback Scoring Impact Per 75 Possessions",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Putbacks Per 75 Possessions",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Stable FT Offensive Rebounds Per 75",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Stable Self Offensive Rebounds Per 75",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Stable Self OReb Percent of FGA",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Stable Self OReb Percent of OR",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Stable Self OReb Percent on Rim FGA",
+      "category": "Offensive Rebounding"
+    },
+    {
+      "name": "Floater FG%",
+      "category": "One on One"
+    },
+    {
+      "name": "Floater Openness Rating",
+      "category": "One on One"
+    },
+    {
+      "name": "Floater Shot Creation",
+      "category": "One on One"
+    },
+    {
+      "name": "Floater Shot Making",
+      "category": "One on One"
+    },
+    {
+      "name": "Floater Shot Making Efficiency",
+      "category": "One on One"
+    },
+    {
+      "name": "Floater Shot Quality",
+      "category": "One on One"
+    },
+    {
+      "name": "Floater Talent",
+      "category": "One on One"
+    },
+    {
+      "name": "Isolation Foul Drawn Rate",
+      "category": "One on One"
+    },
+    {
+      "name": "Isolation Turnover Rate",
+      "category": "One on One"
+    },
+    {
+      "name": "Long Mid Range FG_pct",
+      "category": "One on One"
+    },
+    {
+      "name": "Midrange Openness Rating",
+      "category": "One on One"
+    },
+    {
+      "name": "Midrange Pull Up FG%",
+      "category": "One on One"
+    },
+    {
+      "name": "Midrange Pull Up Openness Rating",
+      "category": "One on One"
+    },
+    {
+      "name": "Midrange Pull Up Shot Creation",
+      "category": "One on One"
+    },
+    {
+      "name": "Midrange Pull Up Shot Making",
+      "category": "One on One"
+    },
+    {
+      "name": "Midrange Pull Up Shot Making Efficiency",
+      "category": "One on One"
+    },
+    {
+      "name": "Midrange Pull Up Shot Quality",
+      "category": "One on One"
+    },
+    {
+      "name": "Midrange Pull Up Talent",
+      "category": "One on One"
+    },
+    {
+      "name": "Midrange Shot Creation",
+      "category": "One on One"
+    },
+    {
+      "name": "Midrange Shot Making",
+      "category": "One on One"
+    },
+    {
+      "name": "Midrange Shot Making Efficiency",
+      "category": "One on One"
+    },
+    {
+      "name": "Midrange Shot Quality",
+      "category": "One on One"
+    },
+    {
+      "name": "Midrange Talent",
+      "category": "One on One"
+    },
+    {
+      "name": "One on One Shot Making",
+      "category": "One on One"
+    },
+    {
+      "name": "One on One Shot Making Efficiency",
+      "category": "One on One"
+    },
+    {
+      "name": "One on One Shot Quality",
+      "category": "One on One"
+    },
+    {
+      "name": "One on One Stable eFG%",
+      "category": "One on One"
+    },
+    {
+      "name": "Pull-Up Shooting Talent",
+      "category": "One on One"
+    },
+    {
+      "name": "Pull-Up Shot Creation",
+      "category": "One on One"
+    },
+    {
+      "name": "Pull-Up Shot Making",
+      "category": "One on One"
+    },
+    {
+      "name": "Pull-Up Shot Quality",
+      "category": "One on One"
+    },
+    {
+      "name": "Self-Created Openness Rating",
+      "category": "One on One"
+    },
+    {
+      "name": "Short Mid Range FG_pct",
+      "category": "One on One"
+    },
+    {
+      "name": "Stable Long Midrange FG_pct",
+      "category": "One on One"
+    },
+    {
+      "name": "Stable Short Midrange FG_pct",
+      "category": "One on One"
+    },
+    {
+      "name": "Total Isolation eFG%",
+      "category": "One on One"
+    },
+    {
+      "name": "Total Isolation Impact Per 75 Possessions",
+      "category": "One on One"
+    },
+    {
+      "name": "3PT Contests Per 75 Possessions",
+      "category": "Perimeter Defense"
+    },
+    {
+      "name": "Ball Screen Navigation",
+      "category": "Perimeter Defense"
+    },
+    {
+      "name": "Defensive Miles Per 75 Possessions",
+      "category": "Perimeter Defense"
+    },
+    {
+      "name": "Deflections Per 75 Possessions",
+      "category": "Perimeter Defense"
+    },
+    {
+      "name": "Loose Ball Recovery Rate",
+      "category": "Perimeter Defense"
+    },
+    {
+      "name": "Matchup Adjusted Defensive Feet Per Minute",
+      "category": "Perimeter Defense"
+    },
+    {
+      "name": "Off-Ball Chaser Defense",
+      "category": "Perimeter Defense"
+    },
+    {
+      "name": "Passing Lane Defense",
+      "category": "Perimeter Defense"
+    },
+    {
+      "name": "Perimeter Isolation Defense",
+      "category": "Perimeter Defense"
+    },
+    {
+      "name": "Pickpocket Rating",
+      "category": "Perimeter Defense"
+    },
+    {
+      "name": "Stable Steals Per Loose Ball Fouls Ratio",
+      "category": "Perimeter Defense"
+    },
+    {
+      "name": "Steals Per 75 Possessions",
+      "category": "Perimeter Defense"
+    },
+    {
+      "name": "3PT %",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT Attempt Rate",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT FGA Per 75 Possessions",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT Foul Rate",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT Functional Versatility",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT Openness Rating",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT Pull Up FG%",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT Pull Up Openness Rating",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT Pull Up Shot Creation",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT Pull Up Shot Making",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT Pull Up Shot Making Efficiency",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT Pull Up Shot Quality",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT Pull Up Talent",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT Shooting Talent",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT Shot Creation",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT Shot Making",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT Shot Making Efficiency",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT Shot Quality",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PT Versatility",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "3PTA Open_pct",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "ATB 3PT FG%",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Average 3PT Attempt Distance",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "C&S 3PT FG%",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "C&S 3PT Openness Rating",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "C&S 3PT Shooting Talent",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "C&S 3PT Shot Making",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "C&S 3PT Shot Making Efficiency",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "C&S 3PT Shot Quality",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "C&S to Pull Up Ratio",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Corner 3 to ATB Ratio",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Corner 3PT FG%",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Deep 3PT Openness Rating",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Deep 3PT Shooting Talent",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Deep 3PT Shot Creation",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Deep 3PT Shot Making",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Deep 3PT Shot Making Efficiency",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Deep 3PT Shot Quality",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Off-Ball Gravity",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Overall Gravity",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Stable ATB 3PT_pct",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Stable Avg 3PT Shot Distance",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Stable C&S 3PT_pct",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Stable Corner 3PT_pct",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Stable NonHeave ATB 3PT_pct",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Stable Pull Up 3PT_pct",
+      "category": "Perimeter Shooting"
+    },
+    {
+      "name": "Assist Points Per 75 Possessions",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Box Creation",
+      "category": "Playmaking"
+    },
+    {
+      "name": "High Value Assists Per 75 Possessions",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Lob Passing Creation Rate",
+      "category": "Playmaking"
+    },
+    {
+      "name": "On-Ball Gravity",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Passing Creation Quality",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Passing Creation Volume",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Passing Efficiency",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Passing Versatility",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Playmaking Talent",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Potential Assists Per 100 Passes",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Role-Adjusted Potential Assists Per 100 Passes",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Stable At Rim Assists Per 75",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Stable Bad Pass Out Of Bounds Turnovers Per 75",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Stable Bad Pass Turnovers Per 75",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Stable Dead Ball Turnovers Per 75",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Stable Live Ball Bad Pass Turnovers Per 75",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Stable Live Ball Turnovers Per 75",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Stable Lost Ball Out Of Bounds Turnovers Per 75",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Stable Lost Ball Turnovers Per 75",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Stable Non Bad Pass Turnovers Per 75",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Stable Step Out Of Bounds Turnovers Per 75",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Turnovers Per 100 Touches",
+      "category": "Playmaking"
+    },
+    {
+      "name": "Paint Touches Per 75 Possessions",
+      "category": "Post Play"
+    },
+    {
+      "name": "Post Up Draw Foul Rate",
+      "category": "Post Play"
+    },
+    {
+      "name": "Post Up Impact Per 75 Possessions",
+      "category": "Post Play"
+    },
+    {
+      "name": "Post Up Points Per Shot",
+      "category": "Post Play"
+    },
+    {
+      "name": "Stable Post Up PPP",
+      "category": "Post Play"
+    },
+    {
+      "name": "Roll Man Impact Per 75 Possessions",
+      "category": "Screening & Rolling"
+    },
+    {
+      "name": "Roll Man Poss Per 75 Possessions",
+      "category": "Screening & Rolling"
+    },
+    {
+      "name": "Screen Assists Per 75 Possessions",
+      "category": "Screening & Rolling"
+    },
+    {
+      "name": "Screening Talent",
+      "category": "Screening & Rolling"
+    }
+  ]
+}

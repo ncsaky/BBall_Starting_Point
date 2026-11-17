@@ -1,0 +1,236 @@
+{
+  "player": {
+    "id": "rookie_player_2027-team-atl-dajuan-bennett",
+    "name": "Dajuan Bennett",
+    "team_id": "team_atl",
+    "age": 22,
+    "position": "SF",
+    "minutes_projection": 4.6,
+    "rotation_priority": "rookie_depth",
+    "primary_off_role": "versatile_forward",
+    "potential": 46.33,
+    "current_ability": 44.21
+  },
+  "traits": [
+    {
+      "player_id": "rookie_player_2027-team-atl-dajuan-bennett",
+      "trait_key": "defensive_effort",
+      "value": 51.25,
+      "components": {
+        "career_capacity": {
+          "ability": 44.21,
+          "aptitude": 0.676,
+          "entry_value": 51.254,
+          "potential": 46.33,
+          "version": 2
+        }
+      }
+    },
+    {
+      "player_id": "rookie_player_2027-team-atl-dajuan-bennett",
+      "trait_key": "foot_speed_lateral_agility",
+      "value": 54.89,
+      "components": {
+        "career_capacity": {
+          "ability": 44.21,
+          "aptitude": 0.78,
+          "entry_value": 54.894,
+          "potential": 46.33,
+          "version": 2
+        }
+      }
+    },
+    {
+      "player_id": "rookie_player_2027-team-atl-dajuan-bennett",
+      "trait_key": "handle_pressure",
+      "value": 43.2,
+      "components": {
+        "career_capacity": {
+          "ability": 44.21,
+          "aptitude": 0.446,
+          "entry_value": 43.202,
+          "potential": 46.33,
+          "version": 2
+        }
+      }
+    },
+    {
+      "player_id": "rookie_player_2027-team-atl-dajuan-bennett",
+      "trait_key": "offensive_rebounding",
+      "value": 56.97,
+      "components": {
+        "career_capacity": {
+          "ability": 44.21,
+          "aptitude": 0.839,
+          "entry_value": 56.969,
+          "potential": 46.33,
+          "version": 2
+        }
+      }
+    },
+    {
+      "player_id": "rookie_player_2027-team-atl-dajuan-bennett",
+      "trait_key": "passing_reads",
+      "value": 52.84,
+      "components": {
+        "career_capacity": {
+          "ability": 44.21,
+          "aptitude": 0.721,
+          "entry_value": 52.842,
+          "potential": 46.33,
+          "version": 2
+        }
+      }
+    },
+    {
+      "player_id": "rookie_player_2027-team-atl-dajuan-bennett",
+      "trait_key": "playoff_translation",
+      "value": 44.58,
+      "components": {
+        "career_capacity": {
+          "ability": 44.21,
+          "aptitude": 0.485,
+          "entry_value": 44.578,
+          "potential": 46.33,
+          "version": 2
+        }
+      }
+    },
+    {
+      "player_id": "rookie_player_2027-team-atl-dajuan-bennett",
+      "trait_key": "portability",
+      "value": 51.58,
+      "components": {
+        "career_capacity": {
+          "ability": 44.21,
+          "aptitude": 0.685,
+          "entry_value": 51.582,
+          "potential": 46.33,
+          "version": 2
+        }
+      }
+    },
+    {
+      "player_id": "rookie_player_2027-team-atl-dajuan-bennett",
+      "trait_key": "release_speed",
+      "value": 46.27,
+      "components": {
+        "career_capacity": {
+          "ability": 44.21,
+          "aptitude": 0.533,
+          "entry_value": 46.269,
+          "potential": 46.33,
+          "version": 2
+        }
+      }
+    },
+    {
+      "player_id": "rookie_player_2027-team-atl-dajuan-bennett",
+      "trait_key": "rim_deterrence",
+      "value": 50.18,
+      "components": {
+        "career_capacity": {
+          "ability": 44.21,
+          "aptitude": 0.645,
+          "entry_value": 50.183,
+          "potential": 46.33,
+          "version": 2
+        }
+      }
+    },
+    {
+      "player_id": "rookie_player_2027-team-atl-dajuan-bennett",
+      "trait_key": "rim_pressure",
+      "value": 45.86,
+      "components": {
+        "career_capacity": {
+          "ability": 44.21,
+          "aptitude": 0.522,
+          "entry_value": 45.859,
+          "potential": 46.33,
+          "version": 2
+        }
+      }
+    },
+    {
+      "player_id": "rookie_player_2027-team-atl-dajuan-bennett",
+      "trait_key": "scheme_iq",
+      "value": 51.57,
+      "components": {
+        "career_capacity": {
+          "ability": 44.21,
+          "aptitude": 0.685,
+          "entry_value": 51.574,
+          "potential": 46.33,
+          "version": 2
+        }
+      }
+    },
+    {
+      "player_id": "rookie_player_2027-team-atl-dajuan-bennett",
+      "trait_key": "screen_navigation",
+      "value": 52.38,
+      "components": {
+        "career_capacity": {
+          "ability": 44.21,
+          "aptitude": 0.708,
+          "entry_value": 52.384,
+          "potential": 46.33,
+          "version": 2
+        }
+      }
+    },
+    {
+      "player_id": "rookie_player_2027-team-atl-dajuan-bennett",
+      "trait_key": "shooting_range",
+      "value": 45.48,
+      "components": {
+        "career_capacity": {
+          "ability": 44.21,
+          "aptitude": 0.511,
+          "entry_value": 45.476,
+          "potential": 46.33,
+          "version": 2
+        }
+      }
+    },
+    {
+      "player_id": "rookie_player_2027-team-atl-dajuan-bennett",
+      "trait_key": "shot_versatility",
+      "value": 41.7,
+      "components": {
+        "career_capacity": {
+          "ability": 44.21,
+          "aptitude": 0.403,
+          "entry_value": 41.704,
+          "potential": 46.33,
+          "version": 2
+        }
+      }
+    },
+    {
+      "player_id": "rookie_player_2027-team-atl-dajuan-bennett",
+      "trait_key": "stamina_cardio",
+      "value": 51.43,
+      "components": {
+        "career_capacity": {
+          "ability": 44.21,
+          "aptitude": 0.681,
+          "entry_value": 51.429,
+          "potential": 46.33,
+          "version": 2
+        }
+      }
+    }
+  ],
+  "staff": {
+    "coach_development_rating": 3,
+    "development_multiplier": 1.0965,
+    "feedback_clarity": 70.3,
+    "patience_multiplier": 1.0284,
+    "prospect_patience": 67.11,
+    "skill_development": 70.93
+  },
+  "month": "2027-07",
+  "seed": 71
+}

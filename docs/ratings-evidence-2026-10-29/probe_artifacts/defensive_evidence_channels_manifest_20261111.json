@@ -1,0 +1,71 @@
+{
+  "date": "2026-11-11",
+  "deliverable": "docs/ratings-evidence-2026-10-29/DEFENSIVE_EVIDENCE_CHANNELS_2026_11_11.md",
+  "scope": "Research evidence channels only; no backend reconstruction, production writes, save/game/test/UI work",
+  "sources": [
+    {
+      "url": "https://www.bball-index.com/data-tools-package/",
+      "status": "public package documentation read; $5/month and full tools/seasons advertised, not purchased"
+    },
+    {
+      "url": "https://www.bball-index.com/skills-application/",
+      "status": "public demo/access description read"
+    },
+    {
+      "url": "https://bball-index.shinyapps.io/SkillsDemo/",
+      "status": "one rendered defensive query, four 2019-20 rows retained; 2018-19/2019-20 Lakers scope; navigation initially timed out then existing tab rendered; no repeated reload"
+    },
+    {
+      "url": "https://bball-index.shinyapps.io/LeaderboardAppDemo/",
+      "status": "parser loading only; no rows; no repeated requests"
+    },
+    {
+      "url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqxPLTuFQwWBFof7XlhHBYidVupesU81LllfS1G8uBTeHfpbByEbh1bM0Ih1aUU4XDCcHTKKLSuITT/pubhtml/sheet?headers=false&gid=263593269",
+      "status": "public glossary sheet HTTP200; selected defensive definitions paraphrased; no player data"
+    },
+    {
+      "url": "https://fanspo.com/bbi-role-explorer/game-lebron",
+      "status": "public interface columns and export control read, zero rows in parser; no export acquired"
+    },
+    {
+      "url": "https://bball-index.shinyapps.io/lineup-free/",
+      "status": "interface dated November8, loading/no rows in parser"
+    },
+    {
+      "url": "https://bball-index.shinyapps.io/NBAMinutebyGame/",
+      "status": "loading only; no rows"
+    },
+    {
+      "url": "https://www.nba.com/thunder/news/release-wallace-extension-261019",
+      "status": "pre-start October19 primary report read; narrow defensive corroboration only"
+    },
+    {
+      "url": "https://www.nba.com/stats/player/1630558/defense-dash",
+      "status": "official search result corroborates Davion height only; no metric rows acquired"
+    },
+    {
+      "url": "https://www.nba.com/news/starting-5-june-5-2026",
+      "status": "read; did not verify charge-drawn claims; not used as defensive evidence"
+    }
+  ],
+  "artifacts": {
+    "docs/ratings-evidence-2026-10-29/DEFENSIVE_EVIDENCE_CHANNELS_2026_11_11.md": "bcf22d133e5f890dc725aafc2229f48036fe09d668c60db1e8cfca7362290a3b",
+    "docs/ratings-evidence-2026-10-29/probe_artifacts/bbi_skills_demo_four_rows_20261111.json": "d3793657c630fa5fc6f2b574b5dba2d48c1b770013d039c22e15caa912a3a8cd",
+    "docs/ratings-evidence-2026-10-29/probe_artifacts/bbi_defensive_glossary_rows_20261111.json": "da007e8235d8918b93f7e0aec199ffcc1979a4ef6993c2d0d979444113658a10",
+    "docs/ratings-evidence-2026-10-29/probe_artifacts/defensive_channels_contrasts_20261111.json": "dc3a98d7c02b181d7b4afba46ed69d12ab70cb55f625642741538c71f356de9a"
+  },
+  "prior_baseline_recheck": {
+    "data/canonical/universe_2026_27_offseason.json": {
+      "sha256": "dd993731ab5411066ea1f8d7e7053e9718deefa08758f5f51a274a3aef1a8e31",
+      "matches_prior": true
+    },
+    "src/nba_gm_data/traits.py": {
+      "sha256": "07f068d2553ba794d68caafe8b9bc1d9949ab1a2635349d1e0924743a71a8f93",
+      "matches_prior": true
+    },
+    "src/nba_gm_data/defense.py": {
+      "sha256": "62e47209b0398ec5e043f36cd3791de413bb8f424bcb893e7f4d5ceb145117b9",
+      "matches_prior": true
+    }
+  }
+}

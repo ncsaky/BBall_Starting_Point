@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-11",
+  "status": "planning_only",
+  "new_player_rows_acquired": 0,
+  "public_dictionary_labels_cataloged": 222,
+  "requested_distinct_fields": 114,
+  "groups": 13,
+  "source_checks": [
+    {
+      "url": "https://www.bball-index.com/data-tools-package/",
+      "verified": "public price/package scope only; no account"
+    },
+    {
+      "url": "https://www.bball-index.com/leaderboards-tool/",
+      "verified": "values/grades/percentiles documented; Export text search unmatched"
+    },
+    {
+      "url": "https://www.bball-index.com/skills-application/",
+      "verified": "full-season access advertised; download text search unmatched"
+    },
+    {
+      "url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqxPLTuFQwWBFof7XlhHBYidVupesU81LllfS1G8uBTeHfpbByEbh1bM0Ih1aUU4XDCcHTKKLSuITT/pubhtml/sheet?headers=false&gid=263593269",
+      "verified": "public glossary label/category catalog;25 targeted definitions read; no player values"
+    },
+    {
+      "url": "https://www.bball-index.com/a-guide-to-passing-stats/",
+      "verified": "public passing components/stabilization/opportunity description"
+    },
+    {
+      "url": "https://www.bball-index.com/offensive-talent-introduction/",
+      "verified": "public total talent model/constituent overlap description"
+    },
+    {
+      "url": "https://www.bball-index.com/explaining-defensive-rebounding-talent-grades/",
+      "verified": "2018 legacy method; not asserted unchanged"
+    }
+  ],
+  "files": {
+    "docs/ratings-evidence-2026-10-29/BBI_ACQUISITION_PLAN_2026_11_11.md": "bc657b75a5b20295bbf295f8b4e199e63ae918aa4ea1ce60e3f2a78f4c1f5735",
+    "docs/ratings-evidence-2026-10-29/BBI_ACQUISITION_MANIFEST_2026_11_11.json": "278110f1475bb3e4fc6494182594b40aaa8278f79404541132a663a59452164c",
+    "docs/ratings-evidence-2026-10-29/BBI_PRESERVATION_SCHEMA_2026_11_11.json": "015f28f130214527132cd5c150e99ca427d615243b60329021ab46ac24979121",
+    "docs/ratings-evidence-2026-10-29/probe_artifacts/bbi_public_metric_catalog_20261111.json": "d836d0331e390a747207c6a679c7c82ea24d2768009bec6e069ba8c83d36347a"
+  },
+  "limits": [
+    "No purchase, login, credentials or paid acquisition.",
+    "No player-table export capability verified.",
+    "No production code/data/saves, simulations or UI work.",
+    "Public dictionary checks only; prior four historical player rows reused."
+  ]
+}

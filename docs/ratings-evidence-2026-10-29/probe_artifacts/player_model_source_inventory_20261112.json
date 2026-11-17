@@ -1,0 +1,1298 @@
+{
+  "captured": "2026-11-12",
+  "canonical_version": "2026-11-10-five-player-scouting-v11",
+  "population": 691,
+  "hashes": {
+    "docs/PLAYER_OBJECT_THREE_COLUMN_MAP_2026_11_12.md": "208d51f643d78eae2d5ee23db6771522723a1c92fe9d4de5366fa1afa59cda00",
+    "data/canonical/universe_2026_27_offseason.json": "dd993731ab5411066ea1f8d7e7053e9718deefa08758f5f51a274a3aef1a8e31",
+    "Player Stats/player_skill_input_2025_26.json": "44a53443687cc9af61737362baa9d925b1a0f5a6e9798f3fe1d612e28ef56335",
+    "Player Stats/player_stats.json": "a7bcb4792e347c681b733c89c493e938371741f977ae65b4bce799459eb9bb74",
+    "data/research/player_career_stats.json": "a489be0581ab49c46513eae197f62232d75e042ca0e88c5b1ee28f70f9e85a1e",
+    "data/research/game_boxscores_2025_26.json": "9a4cf3b1bfcc4b9b605a09d4d744e5a7779a7b031ad35fc97337245a5d66339f",
+    "data/research/player_shot_zones_2025_26.json": "689865ef188959f1e63358b4c50f85f98fc4aa6698b8784317d4abe2a011b507",
+    "data/research/shot_chart_reference.json": "918b93dc67ee36aea4e31a934ab81605d014efc8929c2036787ee801aa7914be",
+    "data/research/shot_chart_model.json": "10896e20f3be5dc8ddc29b99c6078186ef227316654aa93601025afe43cc70af",
+    "data/research/tracking_sources_2025_26.json": "572a330c1387ef3a5b5be198183e7d78b9c868315856688fc699812fb7ac3e7c"
+  },
+  "raw_skill": {
+    "rows": 526,
+    "generated_at": "2026-03-11T22:36:29.668610Z",
+    "matched_canonical_players": 526,
+    "unmatched_canonical_players": 165,
+    "ambiguous_matches": [],
+    "field_coverage": {
+      "GP": {
+        "populated_raw_rows": 509,
+        "matched_canonical_players": 509
+      },
+      "minutes": {
+        "populated_raw_rows": 526,
+        "matched_canonical_players": 526
+      },
+      "HeightSocks": {
+        "populated_raw_rows": 433,
+        "matched_canonical_players": 433
+      },
+      "Wingspan": {
+        "populated_raw_rows": 427,
+        "matched_canonical_players": 427
+      },
+      "Weight": {
+        "populated_raw_rows": 433,
+        "matched_canonical_players": 433
+      },
+      "StandingReach": {
+        "populated_raw_rows": 0,
+        "matched_canonical_players": 0
+      },
+      "touches": {
+        "populated_raw_rows": 278,
+        "matched_canonical_players": 278
+      },
+      "BBallIQ": {
+        "populated_raw_rows": 444,
+        "matched_canonical_players": 444
+      },
+      "3P%": {
+        "populated_raw_rows": 504,
+        "matched_canonical_players": 504
+      },
+      "3PAp75": {
+        "populated_raw_rows": 508,
+        "matched_canonical_players": 508
+      },
+      "FT%": {
+        "populated_raw_rows": 504,
+        "matched_canonical_players": 504
+      },
+      "FTA": {
+        "populated_raw_rows": 509,
+        "matched_canonical_players": 509
+      },
+      "LT_06_PCT": {
+        "populated_raw_rows": 505,
+        "matched_canonical_players": 505
+      },
+      "Prbh%": {
+        "populated_raw_rows": 286,
+        "matched_canonical_players": 286
+      },
+      "PrbhPPP": {
+        "populated_raw_rows": 286,
+        "matched_canonical_players": 286
+      },
+      "PnrrPPP": {
+        "populated_raw_rows": 216,
+        "matched_canonical_players": 216
+      },
+      "SpotUp%": {
+        "populated_raw_rows": 359,
+        "matched_canonical_players": 359
+      },
+      "SpotUpPPP": {
+        "populated_raw_rows": 359,
+        "matched_canonical_players": 359
+      },
+      "OffScreen%": {
+        "populated_raw_rows": 173,
+        "matched_canonical_players": 173
+      },
+      "OffScreenPPP": {
+        "populated_raw_rows": 173,
+        "matched_canonical_players": 173
+      },
+      "Handoff%": {
+        "populated_raw_rows": 226,
+        "matched_canonical_players": 226
+      },
+      "Cut%": {
+        "populated_raw_rows": 312,
+        "matched_canonical_players": 312
+      },
+      "CutPPP": {
+        "populated_raw_rows": 312,
+        "matched_canonical_players": 312
+      },
+      "Post%": {
+        "populated_raw_rows": 131,
+        "matched_canonical_players": 131
+      },
+      "PostPPP": {
+        "populated_raw_rows": 131,
+        "matched_canonical_players": 131
+      },
+      "Putback%": {
+        "populated_raw_rows": 283,
+        "matched_canonical_players": 283
+      },
+      "PutbackPPP": {
+        "populated_raw_rows": 283,
+        "matched_canonical_players": 283
+      },
+      "FTr": {
+        "populated_raw_rows": 484,
+        "matched_canonical_players": 484
+      },
+      "ASTp75": {
+        "populated_raw_rows": 508,
+        "matched_canonical_players": 508
+      },
+      "passerRating": {
+        "populated_raw_rows": 488,
+        "matched_canonical_players": 488
+      },
+      "boxCreationEst": {
+        "populated_raw_rows": 488,
+        "matched_canonical_players": 488
+      },
+      "cTOVpct": {
+        "populated_raw_rows": 481,
+        "matched_canonical_players": 481
+      },
+      "ORBpct": {
+        "populated_raw_rows": 506,
+        "matched_canonical_players": 506
+      },
+      "ORBp75": {
+        "populated_raw_rows": 508,
+        "matched_canonical_players": 508
+      },
+      "DRBpct": {
+        "populated_raw_rows": 507,
+        "matched_canonical_players": 507
+      },
+      "DRBp75": {
+        "populated_raw_rows": 508,
+        "matched_canonical_players": 508
+      },
+      "BLKpct": {
+        "populated_raw_rows": 507,
+        "matched_canonical_players": 507
+      },
+      "DEFLECTIONS": {
+        "populated_raw_rows": 505,
+        "matched_canonical_players": 505
+      },
+      "STLpct": {
+        "populated_raw_rows": 507,
+        "matched_canonical_players": 507
+      },
+      "CraftedDPM": {
+        "populated_raw_rows": 520,
+        "matched_canonical_players": 520
+      },
+      "DARKO": {
+        "populated_raw_rows": 515,
+        "matched_canonical_players": 515
+      },
+      "VersatilityRating": {
+        "populated_raw_rows": 454,
+        "matched_canonical_players": 454
+      },
+      "MatchupDifficulty": {
+        "populated_raw_rows": 454,
+        "matched_canonical_players": 454
+      },
+      "primaryDefRole": {
+        "populated_raw_rows": 526,
+        "matched_canonical_players": 526
+      }
+    },
+    "all_scalar_field_coverage": {
+      "#": {
+        "raw_rows_populated": 520,
+        "canonical_matches_populated": 520
+      },
+      "0.625": {
+        "raw_rows_populated": 504,
+        "canonical_matches_populated": 504
+      },
+      "2025minutes": {
+        "raw_rows_populated": 524,
+        "canonical_matches_populated": 524
+      },
+      "3P%": {
+        "raw_rows_populated": 504,
+        "canonical_matches_populated": 504
+      },
+      "3PA": {
+        "raw_rows_populated": 504,
+        "canonical_matches_populated": 504
+      },
+      "3PAp75": {
+        "raw_rows_populated": 508,
+        "canonical_matches_populated": 508
+      },
+      "3PAr": {
+        "raw_rows_populated": 473,
+        "canonical_matches_populated": 473
+      },
+      "AGE": {
+        "raw_rows_populated": 517,
+        "canonical_matches_populated": 517
+      },
+      "AST": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "ASTp75": {
+        "raw_rows_populated": 508,
+        "canonical_matches_populated": 508
+      },
+      "Age": {
+        "raw_rows_populated": 524,
+        "canonical_matches_populated": 524
+      },
+      "BBallIQ": {
+        "raw_rows_populated": 444,
+        "canonical_matches_populated": 444
+      },
+      "BC": {
+        "raw_rows_populated": 484,
+        "canonical_matches_populated": 484
+      },
+      "BLK": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "BLK%": {
+        "raw_rows_populated": 504,
+        "canonical_matches_populated": 504
+      },
+      "BLKp75": {
+        "raw_rows_populated": 508,
+        "canonical_matches_populated": 508
+      },
+      "BLKpct": {
+        "raw_rows_populated": 507,
+        "canonical_matches_populated": 507
+      },
+      "BPM": {
+        "raw_rows_populated": 506,
+        "canonical_matches_populated": 506
+      },
+      "Birthdate": {
+        "raw_rows_populated": 524,
+        "canonical_matches_populated": 524
+      },
+      "C%": {
+        "raw_rows_populated": 506,
+        "canonical_matches_populated": 506
+      },
+      "CDPM": {
+        "raw_rows_populated": 499,
+        "canonical_matches_populated": 499
+      },
+      "COPM": {
+        "raw_rows_populated": 499,
+        "canonical_matches_populated": 499
+      },
+      "CPM": {
+        "raw_rows_populated": 499,
+        "canonical_matches_populated": 499
+      },
+      "CraftedDPM": {
+        "raw_rows_populated": 520,
+        "canonical_matches_populated": 520
+      },
+      "CraftedDPMpercentile": {
+        "raw_rows_populated": 518,
+        "canonical_matches_populated": 518
+      },
+      "CraftedOPM": {
+        "raw_rows_populated": 520,
+        "canonical_matches_populated": 520
+      },
+      "CraftedOPMpercentile": {
+        "raw_rows_populated": 518,
+        "canonical_matches_populated": 518
+      },
+      "CraftedPM": {
+        "raw_rows_populated": 518,
+        "canonical_matches_populated": 518
+      },
+      "CraftedPMPercentile": {
+        "raw_rows_populated": 518,
+        "canonical_matches_populated": 518
+      },
+      "CraftedPeakPM": {
+        "raw_rows_populated": 281,
+        "canonical_matches_populated": 281
+      },
+      "CraftedWARP": {
+        "raw_rows_populated": 524,
+        "canonical_matches_populated": 524
+      },
+      "Cut%": {
+        "raw_rows_populated": 312,
+        "canonical_matches_populated": 312
+      },
+      "CutPPP": {
+        "raw_rows_populated": 312,
+        "canonical_matches_populated": 312
+      },
+      "DARKO": {
+        "raw_rows_populated": 515,
+        "canonical_matches_populated": 515
+      },
+      "DBPM": {
+        "raw_rows_populated": 506,
+        "canonical_matches_populated": 506
+      },
+      "DDARKO": {
+        "raw_rows_populated": 515,
+        "canonical_matches_populated": 515
+      },
+      "DDRIP": {
+        "raw_rows_populated": 502,
+        "canonical_matches_populated": 502
+      },
+      "DEFL": {
+        "raw_rows_populated": 499,
+        "canonical_matches_populated": 499
+      },
+      "DEFLECTIONS": {
+        "raw_rows_populated": 505,
+        "canonical_matches_populated": 505
+      },
+      "DLEBRON": {
+        "raw_rows_populated": 504,
+        "canonical_matches_populated": 504
+      },
+      "DRB": {
+        "raw_rows_populated": 504,
+        "canonical_matches_populated": 504
+      },
+      "DRB%": {
+        "raw_rows_populated": 504,
+        "canonical_matches_populated": 504
+      },
+      "DRBp75": {
+        "raw_rows_populated": 508,
+        "canonical_matches_populated": 508
+      },
+      "DRBpct": {
+        "raw_rows_populated": 507,
+        "canonical_matches_populated": 507
+      },
+      "DREB": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "DRIP": {
+        "raw_rows_populated": 502,
+        "canonical_matches_populated": 502
+      },
+      "FG%": {
+        "raw_rows_populated": 504,
+        "canonical_matches_populated": 504
+      },
+      "FG3A": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "FG3M": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "FG3_PCT": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "FGA": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "FGAp75": {
+        "raw_rows_populated": 508,
+        "canonical_matches_populated": 508
+      },
+      "FGM": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "FG_PCT": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "FREQ": {
+        "raw_rows_populated": 505,
+        "canonical_matches_populated": 505
+      },
+      "FT%": {
+        "raw_rows_populated": 504,
+        "canonical_matches_populated": 504
+      },
+      "FTA": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "FTAp75": {
+        "raw_rows_populated": 508,
+        "canonical_matches_populated": 508
+      },
+      "FTM": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "FT_PCT": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "FTr": {
+        "raw_rows_populated": 484,
+        "canonical_matches_populated": 484
+      },
+      "FairGame": {
+        "raw_rows_populated": 485,
+        "canonical_matches_populated": 485
+      },
+      "FairGame%": {
+        "raw_rows_populated": 475,
+        "canonical_matches_populated": 475
+      },
+      "GP": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "GR": {
+        "raw_rows_populated": 505,
+        "canonical_matches_populated": 505
+      },
+      "GS": {
+        "raw_rows_populated": 524,
+        "canonical_matches_populated": 524
+      },
+      "GmScAvg": {
+        "raw_rows_populated": 485,
+        "canonical_matches_populated": 485
+      },
+      "GoodGame": {
+        "raw_rows_populated": 485,
+        "canonical_matches_populated": 485
+      },
+      "GoodGame%": {
+        "raw_rows_populated": 475,
+        "canonical_matches_populated": 475
+      },
+      "GreatGame": {
+        "raw_rows_populated": 485,
+        "canonical_matches_populated": 485
+      },
+      "GreatGame%": {
+        "raw_rows_populated": 475,
+        "canonical_matches_populated": 475
+      },
+      "Handoff%": {
+        "raw_rows_populated": 226,
+        "canonical_matches_populated": 226
+      },
+      "HandoffPPP": {
+        "raw_rows_populated": 226,
+        "canonical_matches_populated": 226
+      },
+      "Height": {
+        "raw_rows_populated": 433,
+        "canonical_matches_populated": 433
+      },
+      "HeightSocks": {
+        "raw_rows_populated": 433,
+        "canonical_matches_populated": 433
+      },
+      "Iso%": {
+        "raw_rows_populated": 240,
+        "canonical_matches_populated": 240
+      },
+      "IsoPPP": {
+        "raw_rows_populated": 240,
+        "canonical_matches_populated": 240
+      },
+      "LEBRON": {
+        "raw_rows_populated": 504,
+        "canonical_matches_populated": 504
+      },
+      "LOAD": {
+        "raw_rows_populated": 484,
+        "canonical_matches_populated": 484
+      },
+      "LT_06_%": {
+        "raw_rows_populated": 499,
+        "canonical_matches_populated": 499
+      },
+      "LT_06_PCT": {
+        "raw_rows_populated": 505,
+        "canonical_matches_populated": 505
+      },
+      "Length": {
+        "raw_rows_populated": 427,
+        "canonical_matches_populated": 427
+      },
+      "LineupValue": {
+        "raw_rows_populated": 524,
+        "canonical_matches_populated": 524
+      },
+      "MD": {
+        "raw_rows_populated": 442,
+        "canonical_matches_populated": 442
+      },
+      "MIN": {
+        "raw_rows_populated": 511,
+        "canonical_matches_populated": 511
+      },
+      "MP": {
+        "raw_rows_populated": 524,
+        "canonical_matches_populated": 524
+      },
+      "MPG": {
+        "raw_rows_populated": 504,
+        "canonical_matches_populated": 504
+      },
+      "MYCraftedPM": {
+        "raw_rows_populated": 519,
+        "canonical_matches_populated": 519
+      },
+      "MYCraftedPMPercentile": {
+        "raw_rows_populated": 519,
+        "canonical_matches_populated": 519
+      },
+      "MatchupDifficulty": {
+        "raw_rows_populated": 454,
+        "canonical_matches_populated": 454
+      },
+      "NewHeadshotURL": {
+        "raw_rows_populated": 523,
+        "canonical_matches_populated": 523
+      },
+      "NewPos": {
+        "raw_rows_populated": 524,
+        "canonical_matches_populated": 524
+      },
+      "OBPM": {
+        "raw_rows_populated": 506,
+        "canonical_matches_populated": 506
+      },
+      "ODARKO": {
+        "raw_rows_populated": 515,
+        "canonical_matches_populated": 515
+      },
+      "ODRIP": {
+        "raw_rows_populated": 502,
+        "canonical_matches_populated": 502
+      },
+      "OLEBRON": {
+        "raw_rows_populated": 504,
+        "canonical_matches_populated": 504
+      },
+      "ORB": {
+        "raw_rows_populated": 504,
+        "canonical_matches_populated": 504
+      },
+      "ORB%": {
+        "raw_rows_populated": 504,
+        "canonical_matches_populated": 504
+      },
+      "ORBp75": {
+        "raw_rows_populated": 508,
+        "canonical_matches_populated": 508
+      },
+      "ORBpct": {
+        "raw_rows_populated": 506,
+        "canonical_matches_populated": 506
+      },
+      "OREB": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "O_Role": {
+        "raw_rows_populated": 362,
+        "canonical_matches_populated": 362
+      },
+      "OffScreen%": {
+        "raw_rows_populated": 173,
+        "canonical_matches_populated": 173
+      },
+      "OffScreenPPP": {
+        "raw_rows_populated": 173,
+        "canonical_matches_populated": 173
+      },
+      "Origin": {
+        "raw_rows_populated": 500,
+        "canonical_matches_populated": 500
+      },
+      "OutForSeason": {
+        "raw_rows_populated": 3,
+        "canonical_matches_populated": 3
+      },
+      "PASSES_MADE": {
+        "raw_rows_populated": 505,
+        "canonical_matches_populated": 505
+      },
+      "PASSES_RECEIVED": {
+        "raw_rows_populated": 505,
+        "canonical_matches_populated": 505
+      },
+      "PCraftedDPM": {
+        "raw_rows_populated": 524,
+        "canonical_matches_populated": 524
+      },
+      "PCraftedOPM": {
+        "raw_rows_populated": 524,
+        "canonical_matches_populated": 524
+      },
+      "PCraftedPM": {
+        "raw_rows_populated": 524,
+        "canonical_matches_populated": 524
+      },
+      "PF": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "PF%": {
+        "raw_rows_populated": 506,
+        "canonical_matches_populated": 506
+      },
+      "PG%": {
+        "raw_rows_populated": 506,
+        "canonical_matches_populated": 506
+      },
+      "PLUSMINUS": {
+        "raw_rows_populated": 505,
+        "canonical_matches_populated": 505
+      },
+      "PM": {
+        "raw_rows_populated": 499,
+        "canonical_matches_populated": 499
+      },
+      "PORT": {
+        "raw_rows_populated": 484,
+        "canonical_matches_populated": 484
+      },
+      "PR": {
+        "raw_rows_populated": 484,
+        "canonical_matches_populated": 484
+      },
+      "PTS": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "PTSp75": {
+        "raw_rows_populated": 508,
+        "canonical_matches_populated": 508
+      },
+      "PasserRatingAdded": {
+        "raw_rows_populated": 486,
+        "canonical_matches_populated": 486
+      },
+      "PeakWAR": {
+        "raw_rows_populated": 281,
+        "canonical_matches_populated": 281
+      },
+      "Pnrr%": {
+        "raw_rows_populated": 249,
+        "canonical_matches_populated": 249
+      },
+      "PnrrPPP": {
+        "raw_rows_populated": 216,
+        "canonical_matches_populated": 216
+      },
+      "PointsAdded": {
+        "raw_rows_populated": 357,
+        "canonical_matches_populated": 357
+      },
+      "PoorGame": {
+        "raw_rows_populated": 485,
+        "canonical_matches_populated": 485
+      },
+      "PoorGame%": {
+        "raw_rows_populated": 475,
+        "canonical_matches_populated": 475
+      },
+      "Portability": {
+        "raw_rows_populated": 486,
+        "canonical_matches_populated": 486
+      },
+      "Pos": {
+        "raw_rows_populated": 526,
+        "canonical_matches_populated": 526
+      },
+      "PosSize": {
+        "raw_rows_populated": 418,
+        "canonical_matches_populated": 418
+      },
+      "PositionalSize": {
+        "raw_rows_populated": 433,
+        "canonical_matches_populated": 433
+      },
+      "Post%": {
+        "raw_rows_populated": 131,
+        "canonical_matches_populated": 131
+      },
+      "PostPPP": {
+        "raw_rows_populated": 131,
+        "canonical_matches_populated": 131
+      },
+      "Prbh%": {
+        "raw_rows_populated": 286,
+        "canonical_matches_populated": 286
+      },
+      "PrbhPPP": {
+        "raw_rows_populated": 286,
+        "canonical_matches_populated": 286
+      },
+      "ProjWARP": {
+        "raw_rows_populated": 508,
+        "canonical_matches_populated": 508
+      },
+      "Putback%": {
+        "raw_rows_populated": 283,
+        "canonical_matches_populated": 283
+      },
+      "PutbackPPP": {
+        "raw_rows_populated": 283,
+        "canonical_matches_populated": 283
+      },
+      "REB": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "REBp75": {
+        "raw_rows_populated": 506,
+        "canonical_matches_populated": 506
+      },
+      "Rookie": {
+        "raw_rows_populated": 524,
+        "canonical_matches_populated": 524
+      },
+      "SF%": {
+        "raw_rows_populated": 506,
+        "canonical_matches_populated": 506
+      },
+      "SG%": {
+        "raw_rows_populated": 506,
+        "canonical_matches_populated": 506
+      },
+      "SQ": {
+        "raw_rows_populated": 470,
+        "canonical_matches_populated": 470
+      },
+      "STL": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "STL%": {
+        "raw_rows_populated": 504,
+        "canonical_matches_populated": 504
+      },
+      "STLp75": {
+        "raw_rows_populated": 508,
+        "canonical_matches_populated": 508
+      },
+      "STLpct": {
+        "raw_rows_populated": 507,
+        "canonical_matches_populated": 507
+      },
+      "Secondary_O_Role": {
+        "raw_rows_populated": 362,
+        "canonical_matches_populated": 362
+      },
+      "SpotUp%": {
+        "raw_rows_populated": 359,
+        "canonical_matches_populated": 359
+      },
+      "SpotUpPPP": {
+        "raw_rows_populated": 359,
+        "canonical_matches_populated": 359
+      },
+      "TDREB": {
+        "raw_rows_populated": 505,
+        "canonical_matches_populated": 505
+      },
+      "TOV": {
+        "raw_rows_populated": 509,
+        "canonical_matches_populated": 509
+      },
+      "TOV%": {
+        "raw_rows_populated": 502,
+        "canonical_matches_populated": 502
+      },
+      "TOVp75": {
+        "raw_rows_populated": 508,
+        "canonical_matches_populated": 508
+      },
+      "TOVpct": {
+        "raw_rows_populated": 505,
+        "canonical_matches_populated": 505
+      },
+      "TS%": {
+        "raw_rows_populated": 497,
+        "canonical_matches_populated": 497
+      },
+      "TSpct": {
+        "raw_rows_populated": 502,
+        "canonical_matches_populated": 502
+      },
+      "Team": {
+        "raw_rows_populated": 500,
+        "canonical_matches_populated": 500
+      },
+      "Tm": {
+        "raw_rows_populated": 526,
+        "canonical_matches_populated": 526
+      },
+      "Transition%": {
+        "raw_rows_populated": 326,
+        "canonical_matches_populated": 326
+      },
+      "TransitionPPP": {
+        "raw_rows_populated": 326,
+        "canonical_matches_populated": 326
+      },
+      "TwoYrMinutes": {
+        "raw_rows_populated": 524,
+        "canonical_matches_populated": 524
+      },
+      "USG%": {
+        "raw_rows_populated": 504,
+        "canonical_matches_populated": 504
+      },
+      "USGpct": {
+        "raw_rows_populated": 508,
+        "canonical_matches_populated": 508
+      },
+      "VORP": {
+        "raw_rows_populated": 506,
+        "canonical_matches_populated": 506
+      },
+      "VR": {
+        "raw_rows_populated": 442,
+        "canonical_matches_populated": 442
+      },
+      "VersatilityRating": {
+        "raw_rows_populated": 454,
+        "canonical_matches_populated": 454
+      },
+      "WS": {
+        "raw_rows_populated": 506,
+        "canonical_matches_populated": 506
+      },
+      "Weight": {
+        "raw_rows_populated": 433,
+        "canonical_matches_populated": 433
+      },
+      "Wingspan": {
+        "raw_rows_populated": 427,
+        "canonical_matches_populated": 427
+      },
+      "a": {
+        "raw_rows_populated": 522,
+        "canonical_matches_populated": 522
+      },
+      "boxCreationEst": {
+        "raw_rows_populated": 488,
+        "canonical_matches_populated": 488
+      },
+      "cTOV%": {
+        "raw_rows_populated": 478,
+        "canonical_matches_populated": 478
+      },
+      "cTOVpct": {
+        "raw_rows_populated": 481,
+        "canonical_matches_populated": 481
+      },
+      "coverageScore": {
+        "raw_rows_populated": 526,
+        "canonical_matches_populated": 526
+      },
+      "cut_pct": {
+        "raw_rows_populated": 327,
+        "canonical_matches_populated": 327
+      },
+      "cut_ppp": {
+        "raw_rows_populated": 324,
+        "canonical_matches_populated": 324
+      },
+      "dC%": {
+        "raw_rows_populated": 399,
+        "canonical_matches_populated": 399
+      },
+      "dCpct": {
+        "raw_rows_populated": 403,
+        "canonical_matches_populated": 403
+      },
+      "dPF%": {
+        "raw_rows_populated": 399,
+        "canonical_matches_populated": 399
+      },
+      "dPFpct": {
+        "raw_rows_populated": 403,
+        "canonical_matches_populated": 403
+      },
+      "dPG%": {
+        "raw_rows_populated": 399,
+        "canonical_matches_populated": 399
+      },
+      "dPGpct": {
+        "raw_rows_populated": 403,
+        "canonical_matches_populated": 403
+      },
+      "dPosition": {
+        "raw_rows_populated": 524,
+        "canonical_matches_populated": 524
+      },
+      "dSF%": {
+        "raw_rows_populated": 399,
+        "canonical_matches_populated": 399
+      },
+      "dSFpct": {
+        "raw_rows_populated": 403,
+        "canonical_matches_populated": 403
+      },
+      "dSG%": {
+        "raw_rows_populated": 399,
+        "canonical_matches_populated": 399
+      },
+      "dSGpct": {
+        "raw_rows_populated": 403,
+        "canonical_matches_populated": 403
+      },
+      "d_role": {
+        "raw_rows_populated": 405,
+        "canonical_matches_populated": 405
+      },
+      "defRoleFeaturesUsed": {
+        "raw_rows_populated": 526,
+        "canonical_matches_populated": 526
+      },
+      "featureCoverageScore": {
+        "raw_rows_populated": 526,
+        "canonical_matches_populated": 526
+      },
+      "handoff_pct": {
+        "raw_rows_populated": 239,
+        "canonical_matches_populated": 239
+      },
+      "handoff_ppp": {
+        "raw_rows_populated": 236,
+        "canonical_matches_populated": 236
+      },
+      "iso_pct": {
+        "raw_rows_populated": 255,
+        "canonical_matches_populated": 255
+      },
+      "iso_ppp": {
+        "raw_rows_populated": 253,
+        "canonical_matches_populated": 253
+      },
+      "latitude": {
+        "raw_rows_populated": 500,
+        "canonical_matches_populated": 500
+      },
+      "longitude": {
+        "raw_rows_populated": 500,
+        "canonical_matches_populated": 500
+      },
+      "minutes": {
+        "raw_rows_populated": 526,
+        "canonical_matches_populated": 526
+      },
+      "name": {
+        "raw_rows_populated": 526,
+        "canonical_matches_populated": 526
+      },
+      "normalizedName": {
+        "raw_rows_populated": 526,
+        "canonical_matches_populated": 526
+      },
+      "oLoad": {
+        "raw_rows_populated": 475,
+        "canonical_matches_populated": 475
+      },
+      "offRoleFeaturesUsed": {
+        "raw_rows_populated": 526,
+        "canonical_matches_populated": 526
+      },
+      "offensiveLoad": {
+        "raw_rows_populated": 488,
+        "canonical_matches_populated": 488
+      },
+      "offscreen_pct": {
+        "raw_rows_populated": 184,
+        "canonical_matches_populated": 184
+      },
+      "offscreen_ppp": {
+        "raw_rows_populated": 182,
+        "canonical_matches_populated": 182
+      },
+      "orole": {
+        "raw_rows_populated": 296,
+        "canonical_matches_populated": 296
+      },
+      "passerRating": {
+        "raw_rows_populated": 488,
+        "canonical_matches_populated": 488
+      },
+      "player": {
+        "raw_rows_populated": 526,
+        "canonical_matches_populated": 526
+      },
+      "pnrr_pct": {
+        "raw_rows_populated": 260,
+        "canonical_matches_populated": 260
+      },
+      "pnrr_ppp": {
+        "raw_rows_populated": 219,
+        "canonical_matches_populated": 219
+      },
+      "position": {
+        "raw_rows_populated": 526,
+        "canonical_matches_populated": 526
+      },
+      "post_pct": {
+        "raw_rows_populated": 135,
+        "canonical_matches_populated": 135
+      },
+      "post_ppp": {
+        "raw_rows_populated": 133,
+        "canonical_matches_populated": 133
+      },
+      "prbh_pct": {
+        "raw_rows_populated": 299,
+        "canonical_matches_populated": 299
+      },
+      "prbh_ppp": {
+        "raw_rows_populated": 297,
+        "canonical_matches_populated": 297
+      },
+      "primaryDefRole": {
+        "raw_rows_populated": 526,
+        "canonical_matches_populated": 526
+      },
+      "primaryOffRole": {
+        "raw_rows_populated": 526,
+        "canonical_matches_populated": 526
+      },
+      "putback_pct": {
+        "raw_rows_populated": 293,
+        "canonical_matches_populated": 293
+      },
+      "putback_ppp": {
+        "raw_rows_populated": 289,
+        "canonical_matches_populated": 289
+      },
+      "r3PAr": {
+        "raw_rows_populated": 475,
+        "canonical_matches_populated": 475
+      },
+      "rDRB%": {
+        "raw_rows_populated": 496,
+        "canonical_matches_populated": 496
+      },
+      "rDRBpct": {
+        "raw_rows_populated": 498,
+        "canonical_matches_populated": 498
+      },
+      "rORB%": {
+        "raw_rows_populated": 484,
+        "canonical_matches_populated": 484
+      },
+      "rORBpct": {
+        "raw_rows_populated": 489,
+        "canonical_matches_populated": 489
+      },
+      "rPF": {
+        "raw_rows_populated": 505,
+        "canonical_matches_populated": 505
+      },
+      "rTS%": {
+        "raw_rows_populated": 497,
+        "canonical_matches_populated": 497
+      },
+      "rTSpct": {
+        "raw_rows_populated": 500,
+        "canonical_matches_populated": 500
+      },
+      "raDRB": {
+        "raw_rows_populated": 491,
+        "canonical_matches_populated": 491
+      },
+      "raDRDB": {
+        "raw_rows_populated": 507,
+        "canonical_matches_populated": 507
+      },
+      "raDTOV": {
+        "raw_rows_populated": 507,
+        "canonical_matches_populated": 507
+      },
+      "raORB": {
+        "raw_rows_populated": 484,
+        "canonical_matches_populated": 484
+      },
+      "raORDB": {
+        "raw_rows_populated": 500,
+        "canonical_matches_populated": 500
+      },
+      "roleSource": {
+        "raw_rows_populated": 526,
+        "canonical_matches_populated": 526
+      },
+      "secondaryOffRole": {
+        "raw_rows_populated": 359,
+        "canonical_matches_populated": 359
+      },
+      "simEligible": {
+        "raw_rows_populated": 526,
+        "canonical_matches_populated": 526
+      },
+      "slug": {
+        "raw_rows_populated": 524,
+        "canonical_matches_populated": 524
+      },
+      "source": {
+        "raw_rows_populated": 526,
+        "canonical_matches_populated": 526
+      },
+      "spotup_pct": {
+        "raw_rows_populated": 374,
+        "canonical_matches_populated": 374
+      },
+      "spotup_ppp": {
+        "raw_rows_populated": 371,
+        "canonical_matches_populated": 371
+      },
+      "talentLevel": {
+        "raw_rows_populated": 524,
+        "canonical_matches_populated": 524
+      },
+      "teamAbbrev": {
+        "raw_rows_populated": 526,
+        "canonical_matches_populated": 526
+      },
+      "threePAr": {
+        "raw_rows_populated": 475,
+        "canonical_matches_populated": 475
+      },
+      "touches": {
+        "raw_rows_populated": 278,
+        "canonical_matches_populated": 278
+      },
+      "transition_pct": {
+        "raw_rows_populated": 331,
+        "canonical_matches_populated": 331
+      },
+      "transition_ppp": {
+        "raw_rows_populated": 329,
+        "canonical_matches_populated": 329
+      }
+    },
+    "additional_context_note": "dPGpct/dSGpct/dSFpct/dPFpct/dCpct are provider aggregate assignment-like fields, not defender/opponent rows; sample/units/as-of unverified. PF is a foul rate-like field, PF% a position mix: do not conflate."
+  },
+  "canonical_populated_fields": {
+    "height_inches": 680,
+    "wingspan_inches": 427,
+    "weight_lbs": 651,
+    "espn_player_id": 622
+  },
+  "physical_warning": "Field population is not proof of a measurement; no inspected row-level standing reach/physical testing provenance.",
+  "career_stats": {
+    "retrieved_at": "2026-10-14T05:42:54.067559+00:00",
+    "profile_count": 679,
+    "canonical_ids_matched": 616,
+    "seasons": {
+      "2025-26": {
+        "matched_player_rows": 539,
+        "positive_games": 539,
+        "positive_minutes": 539,
+        "field_nonmissing": {
+          "games": 539,
+          "minutes": 539,
+          "blocks": 539,
+          "steals": 539,
+          "rebounds": 539,
+          "assists": 539,
+          "turnovers": 539,
+          "fg3m": 539,
+          "fg3a": 539,
+          "ftm": 539,
+          "fta": 539
+        }
+      },
+      "2024-25": {
+        "matched_player_rows": 455,
+        "positive_games": 455,
+        "positive_minutes": 455,
+        "field_nonmissing": {
+          "games": 455,
+          "minutes": 455,
+          "blocks": 455,
+          "steals": 455,
+          "rebounds": 455,
+          "assists": 455,
+          "turnovers": 455,
+          "fg3m": 455,
+          "fg3a": 455,
+          "ftm": 455,
+          "fta": 455
+        }
+      },
+      "2023-24": {
+        "matched_player_rows": 372,
+        "positive_games": 372,
+        "positive_minutes": 372,
+        "field_nonmissing": {
+          "games": 372,
+          "minutes": 372,
+          "blocks": 372,
+          "steals": 372,
+          "rebounds": 372,
+          "assists": 372,
+          "turnovers": 372,
+          "fg3m": 372,
+          "fg3a": 372,
+          "ftm": 372,
+          "fta": 372
+        }
+      }
+    }
+  },
+  "shot_zones": {
+    "official_2025_26_profiles": 0,
+    "reference_2024_25_profiles": 32,
+    "reference_matched_canonical": 32,
+    "warning": "32-player reference sample is not league census; model profiles not independent observations"
+  },
+  "boxscores": {
+    "source": {
+      "fetched_at": "2026-05-23T19:02:20+00:00",
+      "id": "src_espn_game_boxscores_2025_26",
+      "title": "ESPN NBA game summary box scores",
+      "url_template": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event={game_id}"
+    },
+    "games": 1310,
+    "phases": {
+      "regular": 1235,
+      "playoffs": 75
+    },
+    "players_with_positive_minute_rows": 582,
+    "canonical_players_with_positive_minute_rows": 539,
+    "basic_consistency_flags": {
+      "fg3m_exceeds_fgm": 16050
+    },
+    "examples": [
+      {
+        "game_id": "401809243",
+        "player": "Jabari Smith Jr.",
+        "fgm": 0,
+        "fga": 0,
+        "fg3m": 2
+      },
+      {
+        "game_id": "401809243",
+        "player": "Alperen Sengun",
+        "fgm": 0,
+        "fga": 0,
+        "fg3m": 5
+      }
+    ],
+    "warning": "Presence is not calibration-ready quality. Mixed logs contain impossible field relationships; do not use zero-filled shot counts as observed opportunity."
+  }
+}

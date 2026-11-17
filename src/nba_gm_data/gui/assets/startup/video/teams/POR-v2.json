@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/POR-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/POR-v2-1.jpg",
+      "kind": "basketball",
+      "team": "POR",
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 210,
+          "team": "POR",
+          "opponent": "MIN",
+          "action": "Avdija drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 27,
+          "frames": 330,
+          "team": "POR",
+          "opponent": "GSW",
+          "action": "Avdija attack and dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 576
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/POR-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/POR-v2-2.jpg",
+      "kind": "basketball",
+      "team": "POR",
+      "clips": [
+        {
+          "source_start": 39,
+          "frames": 300,
+          "team": "POR",
+          "opponent": "LAC",
+          "action": "Avdija driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 64,
+          "frames": 210,
+          "team": "POR",
+          "opponent": "LAL",
+          "action": "Avdija dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 546
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/POR-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/POR-v2-3.jpg",
+      "kind": "basketball",
+      "team": "POR",
+      "clips": [
+        {
+          "source_start": 74,
+          "frames": 210,
+          "team": "POR",
+          "opponent": "SAC",
+          "action": "Avdija transition basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 134,
+          "frames": 270,
+          "team": "POR",
+          "opponent": "ORL",
+          "action": "Avdija driving finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 516
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "OBuu8x54uOQ",
+    "url": "https://www.youtube.com/watch?v=OBuu8x54uOQ",
+    "title": "Deni Avdija's Top Plays | 2025-26 Season | Portland Trail Blazers",
+    "channel": "Portland Trail Blazers",
+    "path": ".cache/startup-team-correction/POR.mp4",
+    "query": "2025-26 Portland Trail Blazers Deni Avdija best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 0,
+      "frames": 210,
+      "team": "POR",
+      "opponent": "MIN",
+      "action": "Avdija drive and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 27,
+      "frames": 330,
+      "team": "POR",
+      "opponent": "GSW",
+      "action": "Avdija attack and dunk",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 39,
+      "frames": 300,
+      "team": "POR",
+      "opponent": "LAC",
+      "action": "Avdija driving basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 64,
+      "frames": 210,
+      "team": "POR",
+      "opponent": "LAL",
+      "action": "Avdija dunk",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 74,
+      "frames": 210,
+      "team": "POR",
+      "opponent": "SAC",
+      "action": "Avdija transition basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 134,
+      "frames": 270,
+      "team": "POR",
+      "opponent": "ORL",
+      "action": "Avdija driving finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 78.13333333333334
+}

@@ -1,0 +1,144 @@
+{
+  "game_id": "401810150",
+  "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401810150",
+  "source_sha256": "78a57e309f09b39f7dcfd68a0f97b3717a7a6a6d747693a8b6a2d3caec9493e5",
+  "scope": "one bounded representative of seven residual final-team mismatches",
+  "matched_CHI_rows": [
+    {
+      "id": "4711294",
+      "name": "Matas Buzelis",
+      "old_points": 8,
+      "new_points": "8",
+      "FG": "3-9",
+      "old3PM": 2,
+      "new3PT": "2-5",
+      "oldFTM": 0,
+      "newFT": "0-2"
+    },
+    {
+      "id": "6478",
+      "name": "Nikola Vucevic",
+      "old_points": 16,
+      "new_points": "16",
+      "FG": "5-14",
+      "old3PM": 2,
+      "new3PT": "2-5",
+      "oldFTM": 4,
+      "newFT": "4-4"
+    },
+    {
+      "id": "4066372",
+      "name": "Kevin Huerter",
+      "old_points": 15,
+      "new_points": "15",
+      "FG": "6-14",
+      "old3PM": 3,
+      "new3PT": "3-8",
+      "oldFTM": 0,
+      "newFT": "0-0"
+    },
+    {
+      "id": "4397002",
+      "name": "Ayo Dosunmu",
+      "old_points": 15,
+      "new_points": "15",
+      "FG": "6-13",
+      "old3PM": 3,
+      "new3PT": "3-6",
+      "oldFTM": 0,
+      "newFT": "0-1"
+    },
+    {
+      "id": "4871145",
+      "name": "Josh Giddey",
+      "old_points": 17,
+      "new_points": "17",
+      "FG": "7-13",
+      "old3PM": 2,
+      "new3PT": "2-5",
+      "oldFTM": 1,
+      "newFT": "1-4"
+    },
+    {
+      "id": "4431687",
+      "name": "Patrick Williams",
+      "old_points": 2,
+      "new_points": "2",
+      "FG": "1-7",
+      "old3PM": 0,
+      "new3PT": "0-1",
+      "oldFTM": 0,
+      "newFT": "0-0"
+    },
+    {
+      "id": "4432872",
+      "name": "Emanuel Miller",
+      "old_points": 6,
+      "new_points": "6",
+      "FG": "2-3",
+      "old3PM": 1,
+      "new3PT": "1-1",
+      "oldFTM": 1,
+      "newFT": "1-2"
+    },
+    {
+      "id": "3133635",
+      "name": "Jevon Carter",
+      "old_points": 3,
+      "new_points": "3",
+      "FG": "1-2",
+      "old3PM": 1,
+      "new3PT": "1-2",
+      "oldFTM": 0,
+      "newFT": "0-0"
+    },
+    {
+      "id": "4395626",
+      "name": "Tre Jones",
+      "old_points": 17,
+      "new_points": "17",
+      "FG": "7-9",
+      "old3PM": 0,
+      "new3PT": "0-0",
+      "oldFTM": 3,
+      "newFT": "3-3"
+    },
+    {
+      "id": null,
+      "name": null,
+      "old_points": 0,
+      "new_points": "0",
+      "FG": "0-0",
+      "old3PM": 0,
+      "new3PT": "0-0",
+      "oldFTM": 0,
+      "newFT": "0-0"
+    },
+    {
+      "id": "5105553",
+      "name": "Julian Phillips",
+      "old_points": 0,
+      "new_points": null,
+      "FG": null,
+      "old3PM": 0,
+      "new3PT": null,
+      "oldFTM": 0,
+      "newFT": null
+    },
+    {
+      "id": "5165257",
+      "name": "Trentyn Flowers",
+      "old_points": 0,
+      "new_points": null,
+      "FG": null,
+      "old3PM": 0,
+      "new3PT": null,
+      "oldFTM": 0,
+      "newFT": null
+    }
+  ],
+  "point_changes": [],
+  "raw_preserved": true,
+  "current_source_player_FGM_sum": 38,
+  "scoring_component_discrepancies": []
+}

@@ -1,8 +1,20 @@
 # NBA GM Sandbox
 
-A local, CLI-first NBA front-office simulator built around the 2025-26 preseason universe. The goal is a deeper, more basketball-aware version of classic GM modes: roster building, staff decisions, trades, free agency, draft scouting, injuries, development, morale, press conferences, social reaction, and sandbox season simulation.
+A local NBA front-office simulator with starting rosters and pick rights updated through **October 13, 2026**. New saves begin in the 2026 offseason with the 2026-27 league universe. The Python engine powers both the detailed CLI and the browser GUI: roster building, staff decisions, trades, free agency, draft scouting, injuries, development, morale, social reaction, multiplayer leagues, fantasy drafts, and sandbox season simulation.
 
-Current status: **private alpha / beta candidate**. It is ready for private testing by friends who are comfortable following terminal instructions and reporting bugs. It is not packaged as a public one-click release yet.
+Current status: **private friends-and-family beta candidate**. Self-contained Mac downloads are available for private testing and bug reports. This is not a broad public release yet.
+
+**Private Mac download:** self-contained betas are built with
+`./scripts/build_macos_beta.sh --version 0.1.0-beta.10 --arch arm64` or `--arch x86_64` and written to `dist/macos/`. Both beta.10 ZIPs passed isolated packaged acceptance; Intel execution was tested under Rosetta. Friends extract
+the versioned ZIP and double-click `NBA GM Sandbox.app`; Python, Git, Terminal,
+and this repository are not required. Choose Apple Silicon (arm64) or Intel
+(x86_64); both target macOS 11.0 or later. See [Mac beta packaging and verification](docs/MACOS_BETA.md)
+and [friend launch instructions](packaging/macos/START%20HERE.txt).
+
+**Windows packaging:** a separate native x64 launcher, portable ZIP recipe and
+manual acceptance workflow are now in place. **No Windows executable has been
+built or verified yet.** Build from the complete working tree on Windows, then
+run the extracted-artifact checks before sharing. See [Windows beta](docs/WINDOWS_BETA.md).
 
 ## Should You Play This Build?
 
@@ -13,11 +25,11 @@ Yes, if you want to run a deep NBA GM sandbox and you are okay with a few rough 
 - Watch injuries, morale, social media, press conferences, league events, playoffs, lottery, draft night, rookies, and offseason rollover.
 - Use the full ASCII loading-screen animation if optional assets are installed.
 
-The game is best described as a **friends-and-family beta**: good enough for real playtesting, still too terminal-heavy and balance-sensitive for a broad public audience.
+The game is best described as a **friends-and-family beta**: ready for focused playtesting, with balance and clean-machine compatibility still needing feedback before a broad public release.
 
-## Local GUI Preview
+## Local GUI
 
-The project now includes an early local browser GUI on top of the same Python engine used by the CLI. It is a development preview for the eventual standalone macOS/iPhone app, not a separate version of the game.
+The browser GUI runs on top of the same Python engine and save format as the CLI. It includes the command dashboard, immersive journey view, phase-specific draft/playoff/free-agency rooms, trade builder/finder, team and league views, and save management.
 
 After installing with `python -m pip install -e .`, run:
 
@@ -27,7 +39,60 @@ nba-gm-data-gui --root . --open
 
 If the browser does not open automatically, go to `http://127.0.0.1:8765`.
 
-The GUI can create/load saves, show the team dashboard, browse league events, calendar, market, social/settings views, run basic trade-finder searches, and advance time. The CLI remains the most complete interface while the GUI is built out screen by screen.
+The downloadable beta keeps this ordinary launch on loopback. Its API validates
+Host/Origin, obtains a fresh browser-protection token at runtime, limits JSON and
+backup uploads, and contains GUI save paths within the configured save directory.
+See [local API security and compatibility](docs/LOCAL_API_SECURITY.md) for HTTP
+client requirements and explicit network-test boundaries.
+
+### Multiplayer Alpha
+
+The GUI now supports one authoritative shared league for **2–30 human GMs**:
+
+- Create a lobby and share its six-character join code.
+- Every manager claims a different team; AI controls unclaimed teams.
+- Configure weekly or monthly action windows and a 1–20 season dynasty.
+- Mark ready to advance early, or let the shared clock advance everyone together.
+- Human actions use revision checks and idempotency keys, so stale browsers cannot overwrite newer league state.
+- Human-to-human trades wait for explicit approval from the other GM and are revalidated against the live save before execution.
+- Draft, free agency, and playoff windows use coordinated league clocks.
+- Fantasy-draft leagues use a per-pick clock and stop automatically on each human manager's turn.
+- The final dynasty table ranks championships first, then regular-season wins.
+
+For a same-network test, the host runs:
+
+```bash
+nba-gm-data-gui --root . --host 0.0.0.0 --port 8765 --public-multiplayer-only
+```
+
+Friends on that network open `http://HOST-LAN-IP:8765`. Do not expose this development server directly to the public internet without HTTPS and the deployment protections described in [docs/MULTIPLAYER_ARCHITECTURE.md](docs/MULTIPLAYER_ARCHITECTURE.md) and [docs/HOSTING.md](docs/HOSTING.md).
+
+For a temporary internet test with friends, install Cloudflare's tunnel client once:
+
+```bash
+brew install cloudflared
+```
+
+Then run:
+
+```bash
+./scripts/run_public_multiplayer_test.sh
+```
+
+Share the temporary `trycloudflare.com` URL printed in Terminal. This mode intentionally hides local saves and blocks direct single-player API actions. It is for short tests, not permanent hosting.
+
+### Fantasy Draft
+
+Choose **Fantasy Draft** when creating a solo save or multiplayer lobby:
+
+- The 30-team order is randomized from the save seed.
+- Teams select 15 players apiece in a 450-pick snake draft.
+- Every player keeps the contract, age, health, traits, and development state already modeled by the game.
+- AI boards blend the reviewed league-wide OVR prior, current engine impact, contract surplus and term, age, health, playoff translation, and roster fit.
+- Position and skill redundancy matter as rosters form, so a team with multiple creator guards begins prioritizing wings, size, defense, spacing, or rebounding.
+- When the draft finishes, each franchise has exactly 15 unique players.
+- Prior real-world pick trades and conditions are cleared; every franchise begins with one own R1 and R2 in each modeled draft year.
+- Multiplayer fantasy drafts pause on human turns, auto-run intervening AI picks, and support one clock extension per pick.
 
 ## Easiest Setup For Friends
 
@@ -349,6 +414,18 @@ Build deterministic canonical exports:
 nba-gm-data build --root . --out data/canonical
 ```
 
+The October roster and pick audit is documented in `docs/starting_data_audit_2026_10_13.md`. Existing saves use their archived July baseline; only new saves receive the refreshed roster, salary, and pick inputs. The offseason start date remains July 28.
+
+Refresh the official roster snapshot and compile the reviewed RealGM pick snapshot before rebuilding:
+
+```bash
+PYTHONPATH=src python3 scripts/refresh_2026_rosters.py
+PYTHONPATH=src python3 scripts/normalize_realgm_pick_snapshot.py
+```
+
+See [docs/2026_OFFSEASON_UPDATE.md](docs/2026_OFFSEASON_UPDATE.md) for source
+provenance, audit counts, rating-preservation policy, and known boundaries.
+
 Run tests:
 
 ```bash
@@ -371,7 +448,7 @@ nba-gm-data narrative-settings --root . --save saves/YOUR_SAVE.json --enable --t
 
 ## What Is In The Game
 
-- Canonical 2025-26 preseason NBA universe with players, teams, staff context, contracts, picks, traits, health, and sources.
+- Canonical July 28, 2026 NBA universe with current rosters, completed 2026 draft results, 2026-27 contracts, 2027-2033 picks, traits, health, staff context, and source provenance.
 - Persistent local saves that advance through seasons.
 - Sandbox game simulation with saved box scores, standings, leaders, injuries, fatigue, rust, and monthly development.
 - AI trade, extension, free-agency, draft, draft-night trade, and staff-decision systems.

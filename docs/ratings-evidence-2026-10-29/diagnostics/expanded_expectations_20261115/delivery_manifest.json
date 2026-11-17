@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-15",
+  "status": "DELIVERED",
+  "files": [
+    {
+      "path": "docs/ratings-evidence-2026-10-29/EXPANDED_COHORT_EXPECTATIONS_2026_11_15.md",
+      "sha256": "c17f1125fb23c21d2c4da20d92572210ca83a72a17874303ea964c89d325a826"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/EXPANDED_COHORT_EXPECTATIONS_2026_11_15.json",
+      "sha256": "6ca084c23939d8e0196f05a84af05665e72396b43eafa3eaf01c66c2764418ba"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/EXPANDED_COHORT_EXPECTATIONS_ACTIVE_TASK.md",
+      "sha256": "0ff6ccf059110e857eaf09844a4c484543540edfddc73f32e251635dd1da9691"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/expanded_expectations_20261115/validation.json",
+      "sha256": "af05c3265117f2df26bdf324dc73c730646df68177f1bfbef8ed7dd94f9f043e"
+    }
+  ],
+  "production_changes": false,
+  "simulations": 0,
+  "milestone9_outcomes_inspected": false
+}

@@ -9,16 +9,26 @@ from __future__ import annotations
 
 import json
 import math
+import pickle
 import random
 import statistics
 from collections import Counter, defaultdict
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 from .research import BETTING_ODDS_FILE, COACH_REPUTATION_FILE, GAME_BOXSCORES_FILE, TRACKING_SOURCES_FILE
 from .schema import CoachRating, SimFeatureVector, SimGameResult, ValidationReport, to_plain
+from .spatial import (
+    flatten_spatial_profile,
+    player_spatial_profile,
+    spatial_matchup_adjustment,
+    spatial_profile_from_features,
+    team_spatial_profile,
+)
 from .teams import TEAM_INFO
+from .talent import enabled as talent_enabled, role_skill_value
 from .utils import normalize_name, stable_id
 
 
@@ -32,6 +42,7 @@ PROBABILITY_BETA_ALPHA = 6.0
 PROBABILITY_MARGIN_WEIGHT_BASE = 0.90
 PROBABILITY_MARGIN_WEIGHT_PER_RUN = 0.003
 _SIM_FEATURE_CACHE: dict[int, dict[str, Any]] = {}
+_SIM_FEATURE_CACHE_LIMIT = 4
 
 COACH_DEFAULTS = {
     "rotation_trust": 3.0,
@@ -65,17 +76,32 @@ def load_json(path: Path) -> Any:
         return json.load(handle)
 
 
+@lru_cache(maxsize=4)
+def _reference_json_bytes(path: str, stamp: tuple[int, ...]) -> bytes:
+    # Only serialize our JSON parser's output. Never unpickle bytes from disk.
+    return pickle.dumps(load_json(Path(path)), protocol=pickle.HIGHEST_PROTOCOL)
+
+
+def load_reference_json(path: Path) -> Any:
+    """Reuse reference parsing without sharing mutable data across contexts."""
+    stat = path.stat()
+    if stat.st_size > 32 * 1024 * 1024:
+        return load_json(path)
+    stamp = (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+    return pickle.loads(_reference_json_bytes(str(path.resolve()), stamp))
+
+
 def load_sim_context(root: str | Path, canonical: dict[str, Any] | None = None) -> dict[str, Any]:
     root = Path(root)
     if canonical is None:
-        canonical = load_json(root / "data/canonical/universe_2025_26_preseason.json")
-    schedule = load_json(root / SCHEDULE_FILE)["games"]
+        canonical = load_json(root / "data/canonical/universe_2026_27_offseason.json")
+    schedule = load_reference_json(root / SCHEDULE_FILE)["games"]
     boxscores = load_optional_research(root, GAME_BOXSCORES_FILE, "games")
     context = {
         "root": root,
         "canonical": canonical,
         "schedule": schedule,
-        "real_minutes": load_json(root / REAL_MINUTES_FILE) if (root / REAL_MINUTES_FILE).exists() else {},
+        "real_minutes": load_reference_json(root / REAL_MINUTES_FILE) if (root / REAL_MINUTES_FILE).exists() else {},
         "boxscores": boxscores,
         "odds": load_odds(root),
         "manifestos": load_manifestos(root),
@@ -89,7 +115,7 @@ def load_optional_research(root: Path, relative: Path, key: str) -> list[dict[st
     path = root / relative
     if not path.exists():
         return []
-    return list(load_json(path).get(key, []))
+    return list(load_reference_json(path).get(key, []))
 
 
 def load_odds(root: Path) -> dict[str, dict[str, Any]]:
@@ -161,32 +187,52 @@ def build_sim_indices(context: dict[str, Any]) -> dict[str, Any]:
 
 
 def canonical_sim_cache(canonical: dict[str, Any]) -> dict[str, Any]:
+    from .offense import enabled as offense_enabled
     key = id(canonical)
     traits = canonical.get("traits", [])
     players = canonical.get("players", [])
-    cache = _SIM_FEATURE_CACHE.get(key)
-    if cache and cache.get("traits_id") == id(traits) and cache.get("players_id") == id(players):
+    owned = canonical.get("_allow_internal_caches")
+    cache = canonical.get("_sim_feature_cache") if owned else _SIM_FEATURE_CACHE.get(key)
+    if cache and cache.get("owner_id") == key and cache.get("traits_source") is traits and cache.get("players_source") is players and cache.get("talent_model") == talent_enabled(canonical) and cache.get("offense_model") == offense_enabled(canonical):
         return cache
     traits_by_player: dict[str, dict[str, Any]] = defaultdict(dict)
     for trait in traits:
         traits_by_player[trait["player_id"]][trait["trait_key"]] = trait
     cache = {
-        "traits_id": id(traits),
-        "players_id": id(players),
+        "owner_id": key,
+        "traits_source": traits,
+        "players_source": players,
+        "talent_model": talent_enabled(canonical),
+        "offense_model": offense_enabled(canonical),
         "traits_by_player": traits_by_player,
         "player_features": {},
     }
-    _SIM_FEATURE_CACHE[key] = cache
+    if owned:
+        # Disposable universes own their indexes; global entries kept entire
+        # discarded trait graphs alive for the lifetime of a long simulation.
+        canonical["_sim_feature_cache"] = cache
+    else:
+        if len(_SIM_FEATURE_CACHE) >= _SIM_FEATURE_CACHE_LIMIT:
+            _SIM_FEATURE_CACHE.pop(next(iter(_SIM_FEATURE_CACHE)))
+        _SIM_FEATURE_CACHE[key] = cache
     return cache
 
 
-def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any]) -> SimFeatureVector:
+def invalidate_sim_cache(canonical: dict[str, Any]) -> None:
+    """Discard derived feature vectors after active traits or roles change."""
+    _SIM_FEATURE_CACHE.pop(id(canonical), None)
+    canonical.pop("_sim_feature_cache", None)
+
+
+def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any], *, include_spatial: bool = True) -> SimFeatureVector:
+    """Full game features by default; strength-only forecasts can omit zone expansion."""
     cache = canonical_sim_cache(canonical)
     feature_key = (
         player.get("id"),
         player.get("rotation_priority"),
         float(player.get("minutes_projection") or 0),
         float(player.get("actual_points") or 0),
+        include_spatial,
     )
     cached = cache["player_features"].get(feature_key)
     if cached:
@@ -194,11 +240,10 @@ def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any]) -> 
     traits = cache["traits_by_player"].get(player["id"], {})
     get = lambda key, default=50.0: float(traits.get(key, {}).get("value", default))
     synthetic_actual = player.get("rotation_priority") == "actual_boxscore_unmatched"
-    defensive_mobility = weighted_average(
-        [get("defensive_effort"), get("foot_speed_lateral_agility"), get("screen_navigation")],
-        [0.42, 0.36, 0.22],
-    )
-    impact = player_impact_score(get)
+    from .defense import defensive_components
+    defense = defensive_components(get)
+    defensive_mobility = defense.activity
+    impact = player_impact_score(get, player.get("position"), role_aware=talent_enabled(canonical))
     usage = synthetic_actual_usage(player) if synthetic_actual else projected_usage(player, get, impact)
     scoring_usage = synthetic_actual_usage(player) if synthetic_actual else projected_scoring_usage(player, get, impact)
     features = {
@@ -210,12 +255,20 @@ def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any]) -> 
         "rim_pressure": nonlinear_high(get("rim_pressure"), 64),
         "offensive_rebounding": nonlinear_high(get("offensive_rebounding"), 66),
         "defensive_events": defensive_mobility,
-        "rim_deterrence": nonlinear_high(get("rim_deterrence"), 68),
+        "rim_deterrence": defense.rim,
         "passing": blend([get("passing_reads"), get("scheme_iq")]),
         "stamina": get("stamina_cardio"),
         "playoff_translation": get("playoff_translation"),
         "defensive_weak_link": nonlinear_low(defensive_mobility, 48),
     }
+    from .offense import enabled as offense_enabled, offensive_profile
+    if offense_enabled(canonical):
+        profile = offensive_profile(canonical, player, {key: float(row['value']) for key, row in traits.items()})
+        features.update({key: value for key, value in profile.items() if key != 'offensive_rebounding'})
+        features['offensive_rebound_skill'] = profile['offensive_rebounding']
+        features['spacing'] *= clamp(profile['three_per36']/5, 0, 1)
+    if include_spatial:
+        features.update(flatten_spatial_profile(player_spatial_profile(canonical, player)))
     rounded = {key: round(value, 3) for key, value in features.items()}
     vector = SimFeatureVector(
         id=stable_id("sim_feature", "player", player["id"]),
@@ -236,7 +289,7 @@ def synthetic_actual_usage(player: dict[str, Any]) -> float:
     return clamp(43 + minutes * 0.22 + actual_points * 0.55, 42, 72)
 
 
-def player_impact_score(get: Any) -> float:
+def player_impact_score(get: Any, position: str | None = None, *, role_aware: bool = False) -> float:
     skill_values = [
         get("shooting_range"),
         get("shot_versatility"),
@@ -251,6 +304,18 @@ def player_impact_score(get: Any) -> float:
     balanced_skill = blend(skill_values)
     elite_skill = weighted_top_average(skill_values, [1.0 for _ in skill_values], top_n=3)
     impact = balanced_skill * 0.48 + elite_skill * 0.34 + get("playoff_translation") * 0.18
+    if role_aware:
+        from .defense import defensive_components
+        avg = lambda keys: sum(get(key) for key in keys) / len(keys)
+        role = role_skill_value((
+            avg(["shooting_range", "shot_versatility", "release_speed"]),
+            avg(["handle_pressure", "passing_reads", "rim_pressure", "shot_versatility"]),
+            defensive_components(get).skill,
+            avg(["foot_speed_lateral_agility", "stamina_cardio", "rim_pressure"]),
+            avg(["scheme_iq", "passing_reads", "portability", "playoff_translation"]),
+            get("offensive_rebounding") * .66 + get("rim_deterrence") * .18 + get("stamina_cardio") * .16,
+        ), position)
+        impact = impact * .55 + role * .45
     return clamp(impact, 1, 99)
 
 
@@ -310,9 +375,10 @@ def projected_scoring_usage(player: dict[str, Any], get: Any, impact: float) -> 
     return clamp(value, 12, 88)
 
 
-def team_feature_vector(canonical: dict[str, Any], team: dict[str, Any]) -> SimFeatureVector:
+def team_feature_vector(canonical: dict[str, Any], team: dict[str, Any], *, include_spatial: bool = True) -> SimFeatureVector:
+    """Aggregate all game features, or only non-spatial features for private forecasts."""
     players = [player for player in canonical["players"] if player["team_id"] == team["id"]]
-    player_features = {player["id"]: player_feature_vector(canonical, player).features for player in players}
+    player_features = {player["id"]: player_feature_vector(canonical, player, include_spatial=include_spatial).features for player in players}
     weights = {player["id"]: max(1.0, projected_game_minutes(player)) for player in players}
     features = {}
     for key in ["impact", "scoring_usage", "shot_creation", "spacing", "rim_pressure", "offensive_rebounding", "defensive_events", "rim_deterrence", "passing", "stamina", "playoff_translation", "defensive_weak_link"]:
@@ -326,6 +392,11 @@ def team_feature_vector(canonical: dict[str, Any], team: dict[str, Any]) -> SimF
     features["star_power"] = weighted_top_average([player_star_power_score(player_features[player["id"]]) for player in players], usage_weights, top_n=3)
     features["primary_creator"] = max([primary_creator_score(player_features[player["id"]]) for player in players] or [50])
     features["defensive_anchor"] = max([defensive_anchor_score(player_features[player["id"]]) for player in players] or [50])
+    if include_spatial:
+        spatial_weights = {player["id"]: max(0.0, projected_game_minutes(player)) for player in players}
+        features.update(flatten_spatial_profile(team_spatial_profile(canonical, team["id"], spatial_weights)))
+    from .offense import extend_lineup_features
+    extend_lineup_features(features, player_features, weights)
     features.update(offensive_feature_summary_from_values(features))
     features.update(defensive_feature_summary_from_values(features))
     return SimFeatureVector(
@@ -364,7 +435,7 @@ def sim_game(root: str | Path, game_id: str, mode: str = "replay-real-minutes", 
     return sim_game_with_context(load_sim_context(root), game_id, mode=mode, seed=seed)
 
 
-def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "replay-real-minutes", seed: int = 1) -> SimGameResult:
+def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "replay-real-minutes", seed: int = 1, *, interior_experiment: Any = None) -> SimGameResult:
     """Simulate one game from preloaded context using a domain-scoped seed."""
     if mode not in SIM_MODES:
         raise ValueError(f"Unknown sim mode {mode!r}")
@@ -390,6 +461,13 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
     game_date = game.get("gameDate") or game.get("date")
     home_players = game_player_pool(context, game_id, home_team, mode, game_date=game_date)
     away_players = game_player_pool(context, game_id, away_team, mode, game_date=game_date)
+    if interior_experiment is not None:
+        # Explicit isolated mechanism experiment; saves/settings never enable it.
+        # Ordinary preparation/scoring/RNG and response schemas remain unchanged.
+        from .interior_game import simulate_interior_game
+
+        return simulate_interior_game(canonical, game, home_team, away_team,
+                                      home_players, away_players, mode, seed, interior_experiment)
     coach_by_team = context.get("indices", {}).get("coach_by_team") or {rating.team_id: rating for rating in coach_ratings(canonical)}
     if mode == "sandbox-sim":
         home_players = matchup_adjusted_player_pool(
@@ -440,7 +518,25 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
         rest_context=away_game_context,
         opp_rest_context=home_game_context,
     )
-    overtime_periods = resolve_overtime_if_tied(home_line, away_line, home_team_line, away_team_line, rng)
+    scoring_periods = []
+    overtime_periods = resolve_overtime_if_tied(home_line, away_line, home_team_line, away_team_line, rng,
+                                             tracking_periods=scoring_periods)
+    from .box_variation import vary_box_score
+    vary_box_score(canonical, [home_line, away_line], [home_team_line, away_team_line],
+                   [home_features, away_features], f"{seed}:{game_id}:{mode}:box-variation")
+    from .box_score import reconcile_box_score
+    reconcile_box_score(home_line + away_line, [home_team_line, away_team_line])
+    foul_rng = random.Random(f"{seed}:{game_id}:{mode}:personal-fouls")
+    for player_lines, team_line in [(home_line, home_team_line), (away_line, away_team_line)]:
+        assign_personal_fouls(player_lines, foul_rng)
+        team_line["personal_fouls"] = sum(line["personal_fouls"] for line in player_lines)
+    from .plus_minus import track_plus_minus
+    defense = {}
+    for item in home_players+away_players:
+        feat = health_adjusted_player_features(player_feature_vector(canonical, item['player']).features, item)
+        defense[item['player']['id']] = feat['defensive_events']*.6+feat['rim_deterrence']*.4
+    plus_minus_tracking = track_plus_minus(home_line+away_line, [home_team_line, away_team_line],
+        f'{seed}:{game_id}:{mode}:plus-minus-v1', snapshots=scoring_periods, defense=defense)
     possessions = round((home_team_line["possessions"] + away_team_line["possessions"]) / 2, 1)
     notes = "V0 deterministic sim result. Replay-real-minutes uses actual availability/minutes where available; sandbox-sim uses generated rotation minutes."
     if overtime_periods:
@@ -459,6 +555,7 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
         team_lines=[home_team_line, away_team_line],
         source_ids=["src_player_skill_input_2025_26", "src_trait_method_v1", *(["src_injury_model_config_v1"] if mode == "sandbox-sim" else [])],
         notes=notes,
+        plus_minus_tracking=plus_minus_tracking,
     )
 
 
@@ -661,42 +758,13 @@ def game_team_features(context: dict[str, Any] | None, canonical: dict[str, Any]
 
 
 def apply_manifesto_feature_adjustments(context: dict[str, Any] | None, canonical: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]], features: dict[str, float]) -> dict[str, float]:
-    text = (context or {}).get("manifestos", {}).get(team["abbrev"], "")
-    if not text:
-        return features
-    low = text.lower()
-    adjusted = dict(features)
-    notes: list[str] = []
-    if any(phrase in low for phrase in ["lack shot creation", "lacked both the shot creation", "no go-to scoring", "bottom 10 offense", "bottom five offense", "missing that presence", "lead creator"]):
-        adjusted["primary_creator"] = adjusted.get("primary_creator", 50) - 1.4
-        adjusted["top_creation"] = adjusted.get("top_creation", 50) - 1.0
-        adjusted["passing"] = adjusted.get("passing", 50) - 0.5
-        notes.append("manifesto_shot_creation_drag")
-    if any(phrase in low for phrase in ["lack a truly elite passer", "lack passing", "limited passer", "limited passers", "not an elite passer", "no great connective", "weakest part of his offense"]):
-        adjusted["passing"] = adjusted.get("passing", 50) - 1.8
-        adjusted["top_creation"] = adjusted.get("top_creation", 50) - 0.5
-        notes.append("manifesto_passing_drag")
-    if any(phrase in low for phrase in ["not a great three-point shooting", "lack floor spacing", "lack of floor spacing", "lack of a consistent outside shot", "lack a jumper", "can't really space", "can't space"]):
-        adjusted["spacing"] = adjusted.get("spacing", 50) - 1.5
-        notes.append("manifesto_spacing_drag")
-    if any(phrase in low for phrase in ["number one defense", "second best defense", "top 10 defense", "suffocating defense", "suffocating defensive", "top tier defense"]):
-        adjusted["defensive_events"] = adjusted.get("defensive_events", 50) + 1.0
-        adjusted["rim_deterrence"] = adjusted.get("rim_deterrence", 50) + 0.8
-        adjusted["defensive_anchor"] = adjusted.get("defensive_anchor", 50) + 1.2
-        notes.append("manifesto_defensive_identity")
-    if any(phrase in low for phrase in ["league's best offense", "best regular season offense", "best offense", "top three offense", "top 10 offense"]):
-        adjusted["primary_creator"] = adjusted.get("primary_creator", 50) + 0.8
-        adjusted["spacing"] = adjusted.get("spacing", 50) + 0.6
-        notes.append("manifesto_offensive_upside")
-    apply_manifesto_expectation_adjustments(low, adjusted, notes)
-    for key in ["impact", "scoring_usage", "shot_creation", "spacing", "rim_pressure", "offensive_rebounding", "defensive_events", "rim_deterrence", "passing", "defensive_weak_link", "top_creation", "star_power", "primary_creator", "defensive_anchor"]:
-        if key in adjusted:
-            adjusted[key] = clamp(float(adjusted[key]), 1, 99)
-    adjusted.update(offensive_feature_summary_from_values(adjusted))
-    adjusted.update(defensive_feature_summary_from_values(adjusted))
-    adjusted["manifesto_dependency_penalty"] = 0.0
-    adjusted["manifesto_adjustment_count"] = len(notes)
-    return {key: round(value, 3) for key, value in adjusted.items()}
+    """Compatibility hook: historical write-ups are context, never live ratings.
+
+    Creation, spacing, defense and availability are calculated from the current
+    personnel above. Prose has no roster/date/health ownership and may describe
+    negated or hypothetical situations, so it cannot adjust those features.
+    """
+    return features
 
 
 def apply_availability_dependency_adjustments(canonical: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]], features: dict[str, float]) -> dict[str, float]:
@@ -805,44 +873,8 @@ def replacement_context_for_absence(player_features: dict[str, float], available
 
 
 def apply_manifesto_expectation_adjustments(low: str, adjusted: dict[str, float], notes: list[str]) -> None:
-    if any(phrase in low for phrase in ["improved upon their biggest weakness", "fix the offense", "added shooting", "added two high level three-point shooters", "much needed floor spacing", "much needed presence as a floor spacer"]):
-        adjusted["spacing"] = adjusted.get("spacing", 50) + 1.8
-        adjusted["passing"] = adjusted.get("passing", 50) + 0.7
-        adjusted["top_creation"] = adjusted.get("top_creation", 50) + 0.7
-        adjusted["primary_creator"] = adjusted.get("primary_creator", 50) + 0.6
-        adjusted["impact"] = adjusted.get("impact", 50) + 0.4
-        notes.append("manifesto_resolved_offensive_weakness")
-    if any(phrase in low for phrase in ["best team in basketball", "clear favorites", "clear number one defense", "best defensive teams we've ever seen", "70 wins wouldn't be out of the question"]):
-        adjusted["impact"] = adjusted.get("impact", 50) + 1.2
-        adjusted["star_power"] = adjusted.get("star_power", 50) + 0.8
-        adjusted["defensive_events"] = adjusted.get("defensive_events", 50) + 1.4
-        adjusted["rim_deterrence"] = adjusted.get("rim_deterrence", 50) + 1.0
-        adjusted["defensive_anchor"] = adjusted.get("defensive_anchor", 50) + 1.2
-        adjusted["top_creation"] = adjusted.get("top_creation", 50) + 0.7
-        notes.append("manifesto_elite_contender_context")
-    if any(phrase in low for phrase in ["winning any less than 50", "pushing 60", "legitimate shot at a championship", "inner circle", "win 50 or more games"]):
-        adjusted["impact"] = adjusted.get("impact", 50) + 0.8
-        adjusted["star_power"] = adjusted.get("star_power", 50) + 0.6
-        adjusted["top_creation"] = adjusted.get("top_creation", 50) + 0.5
-        notes.append("manifesto_high_win_expectation")
-    if any(phrase in low for phrase in ["clear tanking effort", "dead last", "one of the worst offensive and defensive teams", "shocked if they win more than 20", "only a couple of these guys are legitimate impact players right now"]):
-        adjusted["impact"] = adjusted.get("impact", 50) - 2.8
-        adjusted["star_power"] = adjusted.get("star_power", 50) - 2.2
-        adjusted["primary_creator"] = adjusted.get("primary_creator", 50) - 1.8
-        adjusted["top_creation"] = adjusted.get("top_creation", 50) - 1.8
-        adjusted["passing"] = adjusted.get("passing", 50) - 0.8
-        adjusted["defensive_events"] = adjusted.get("defensive_events", 50) - 1.2
-        adjusted["rim_deterrence"] = adjusted.get("rim_deterrence", 50) - 1.0
-        adjusted["defensive_anchor"] = adjusted.get("defensive_anchor", 50) - 1.0
-        notes.append("manifesto_current_rebuild_drag")
-    if any(phrase in low for phrase in ["old age", "extremely old", "prioritizing health", "health over anything else", "take somewhat of a backseat in the regular season"]):
-        adjusted["impact"] = adjusted.get("impact", 50) - 1.6
-        adjusted["star_power"] = adjusted.get("star_power", 50) - 1.4
-        adjusted["top_creation"] = adjusted.get("top_creation", 50) - 1.0
-        adjusted["defensive_events"] = adjusted.get("defensive_events", 50) - 1.1
-        adjusted["defensive_anchor"] = adjusted.get("defensive_anchor", 50) - 0.8
-        adjusted["stamina"] = adjusted.get("stamina", 50) - 2.8
-        notes.append("manifesto_regular_season_health_drag")
+    """Retained for callers of the old helper; expectations do not alter skills."""
+    return None
 
 
 def lineup_feature_vector(canonical: dict[str, Any], pool: list[dict[str, Any]]) -> dict[str, float]:
@@ -863,6 +895,18 @@ def lineup_feature_vector(canonical: dict[str, Any], pool: list[dict[str, Any]])
     features["star_power"] = weighted_top_average([player_star_power_score(player_features[item["player"]["id"]]) for item in pool], usage_weights, top_n=3)
     features["primary_creator"] = max([primary_creator_score(player_features[item["player"]["id"]]) for item in pool] or [50])
     features["defensive_anchor"] = max([defensive_anchor_score(player_features[item["player"]["id"]]) for item in pool] or [50])
+    features.update(
+        flatten_spatial_profile(
+            team_spatial_profile(
+                canonical,
+                str(pool[0]["player"].get("team_id") or "lineup") if pool else "lineup",
+                {item["player"]["id"]: float(item.get("minutes") or 0.0) for item in pool},
+                roster=[item["player"] for item in pool],
+            )
+        )
+    )
+    from .offense import extend_lineup_features
+    extend_lineup_features(features, player_features, weights)
     features.update(offensive_feature_summary_from_values(features))
     features.update(defensive_feature_summary_from_values(features))
     return {key: round(value, 3) for key, value in features.items()}
@@ -889,6 +933,10 @@ def health_adjusted_player_features(features: dict[str, float], item: dict[str, 
         "stamina": 1.15,
         "playoff_translation": 0.2,
         "defensive_weak_link": -0.62,
+        "post_creation": 0.75,
+        "assisted_finishing": 0.8,
+        "screening": 0.6,
+        "offensive_passing": 0.32,
     }
     for key, weight in weights.items():
         if key not in adjusted:
@@ -897,6 +945,9 @@ def health_adjusted_player_features(features: dict[str, float], item: dict[str, 
             adjusted[key] = clamp(float(adjusted[key]) - penalty * weight, 1, 99)
         else:
             adjusted[key] = clamp(float(adjusted[key]) + penalty * abs(weight), 1, 99)
+    if features.get('offense_model_version'):
+        for key, weight in (('two_pct', .0018), ('three_pct', .0012), ('ft_pct', .0006)):
+            adjusted[key] = clamp(float(adjusted[key])-penalty*weight, .20, .95)
     return {key: round(value, 3) for key, value in adjusted.items()}
 
 
@@ -959,6 +1010,7 @@ def simulate_team_line(
     rest_context: dict[str, Any] | None = None,
     opp_rest_context: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    from .offense import team_contribution
     coach_mod = scaled_coach_effect(coach, team_features)
     opp_coach_mod = scaled_coach_effect(opp_coach, opp_features)
     availability_mod = availability_gap_effect(team_features)
@@ -995,6 +1047,7 @@ def simulate_team_line(
         + (team_features["offense_spacing"] - 50) * 0.15
         + (team_features["offense_pressure"] - 50) * 0.08
         + (team_features["offense_possession_extension"] - 50) * 0.06
+        + team_contribution(team_features)
         + coach_mod["offense"]
         + availability_mod["offense"]
         + home_mod
@@ -1060,33 +1113,53 @@ def simulate_team_line(
         "ftm": sum(line.get("ftm", 0) for line in player_lines),
         "fta": sum(line.get("fta", 0) for line in player_lines),
     }
+    missed_shots = max(0, int(team_line["fga"]) - int(team_line["fgm"]))
+    offensive_rebound_rate = clamp(0.24 + (team_features["offensive_rebounding"] - 50.0) * 0.0022, 0.16, 0.38)
+    team_line["offensive_rebounds"] = min(int(team_line["rebounds"]), int(round(missed_shots * offensive_rebound_rate)))
+    team_line["defensive_rebounds"] = max(0, int(team_line["rebounds"]) - int(team_line["offensive_rebounds"]))
     return player_lines, team_line
 
 
 def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]], team_points: int, possessions: float, rng: random.Random) -> list[dict[str, Any]]:
+    from .offense import support_passing
     features = {
         item["player"]["id"]: health_adjusted_player_features(player_feature_vector(canonical, item["player"]).features, item)
         for item in pool
     }
-    weights = [scoring_weight(item, features[item["player"]["id"]]) for item in pool]
-    total_weight = sum(weights) or 1
+    weights = [scoring_weight(item, features[item["player"]["id"]],
+               feeder=support_passing(pool, features, item['player']['id'])
+               if features[item['player']['id']].get('offense_model_version') else 50) for item in pool]
+    scoring_expectations = scoring_expectations_with_caps(pool, features, team_points, weights)
     point_values = []
     for index, item in enumerate(pool):
-        share = weights[index] / total_weight
         minutes = float(item.get("minutes") or 0.0)
-        usage = float(features[item["player"]["id"]].get("scoring_usage") or features[item["player"]["id"]].get("usage") or 50)
-        role_variance = 5.2 + min(9.8, minutes * 0.20) + max(0.0, usage - 72) * 0.075
-        hot_cold_sigma = clamp(0.18 + max(0.0, usage - 60) * 0.0036 + minutes * 0.0022, 0.16, 0.42)
+        feat = features[item["player"]["id"]]
+        usage = float(feat.get("scoring_usage") or feat.get("usage") or 50)
+        hot_cold_sigma = scoring_game_volatility(item, feat)
+        # A mean-one lognormal draw changes who supplies the fixed team total
+        # without moving the player's long-run scoring expectation.
         hot_cold = rng.lognormvariate(-0.5 * hot_cold_sigma * hot_cold_sigma, hot_cold_sigma)
-        if minutes >= 18.0 and usage >= 68.0:
+        if minutes >= 18.0 and usage >= 65.0:
             swing = rng.random()
-            if swing < 0.115:
-                hot_cold *= rng.uniform(1.10, 1.34)
-            elif swing < 0.225:
-                hot_cold *= rng.uniform(0.68, 0.90)
-        point_values.append(max(0.0, team_points * share * hot_cold + rng.gauss(0, role_variance)))
+            if swing < 0.035:
+                hot_cold *= rng.uniform(1.35, 1.65)
+            elif swing < 0.080:
+                hot_cold *= rng.uniform(1.15, 1.35)
+            elif swing < 0.115:
+                hot_cold *= rng.uniform(0.55, 0.75)
+            elif swing < 0.170:
+                hot_cold *= rng.uniform(0.72, 0.90)
+        point_values.append(max(0.0, scoring_expectations[index] * hot_cold))
     point_values = normalize_point_values(point_values, team_points)
-    point_values = cap_and_redistribute_points(pool, features, point_values, team_points, weights, rng)
+    point_values = cap_and_redistribute_points(
+        pool,
+        features,
+        point_values,
+        team_points,
+        weights,
+        rng,
+        scoring_expectations,
+    )
     lines = []
     for index, item in enumerate(pool):
         player = item["player"]
@@ -1114,6 +1187,92 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
         )
     normalize_secondary_box_score_totals(lines, features, team_points, possessions)
     return lines
+
+
+def assign_personal_fouls(lines: list[dict[str, Any]], rng: random.Random) -> None:
+    """Record minute-weighted fouls using a separate game RNG after overtime.
+
+    This box-score statistic does not consume the scoring RNG or alter rotations.
+    """
+    for line in lines:
+        minutes = max(0.0, float(line.get("minutes") or 0.0))
+        # Poisson event count, averaging 2.7 personal fouls per 36 minutes.
+        threshold = math.exp(-minutes * 2.7 / 36.0)
+        probability = 1.0
+        fouls = 0
+        while fouls < 6 and probability > threshold:
+            probability *= rng.random()
+            if probability > threshold:
+                fouls += 1
+        line["personal_fouls"] = fouls
+
+
+def scoring_game_volatility(item: dict[str, Any], features: dict[str, float]) -> float:
+    """Estimate scoring volatility from role and shot profile, not reputation."""
+    player = item.get("player") or {}
+    minutes = max(1.0, sim_line_minutes(item))
+    usage = float(features.get("scoring_usage") or features.get("usage") or 50.0)
+    creation = float(features.get("shot_creation") or usage)
+    spacing = float(features.get("spacing") or 50.0)
+    rim_pressure = float(features.get("rim_pressure") or 50.0)
+    passing = float(features.get("passing") or 50.0)
+    volatility = 0.245
+    volatility += clamp((24.0 - minutes) * 0.005, -0.040, 0.065)
+    volatility += max(0.0, spacing - rim_pressure) * 0.00115
+    volatility += max(0.0, usage - 76.0) * 0.0020
+    volatility += max(0.0, creation - 82.0) * 0.0012
+    volatility -= max(0.0, rim_pressure - spacing) * 0.00065
+    volatility -= max(0.0, passing - 90.0) * 0.0010
+    # A small deterministic latent component gives similarly shaped players
+    # distinct stability without relying on real-world reputation.
+    marker = sum(ord(char) for char in str(player.get("id") or player.get("name") or "player"))
+    volatility += ((marker % 15) - 7) * 0.004
+    return clamp(volatility, 0.17, 0.43)
+
+
+def scoring_expectations_with_caps(
+    pool: list[dict[str, Any]],
+    features: dict[str, dict[str, float]],
+    team_points: int,
+    weights: list[float],
+) -> list[float]:
+    """Build the old calibrated scoring hierarchy as a soft expectation.
+
+    The former single-game caps were doing useful season-average calibration,
+    but applying them after every random draw made stars land on the same two
+    or three values nightly. Water filling preserves that calibrated hierarchy;
+    the game draw can then move above or below it.
+    """
+    if not pool:
+        return []
+    caps = [
+        float(plausible_point_cap(item, features[item["player"]["id"]]))
+        for item in pool
+    ]
+    output = [0.0 for _ in pool]
+    remaining = set(range(len(pool)))
+    points_left = float(max(0, team_points))
+    while remaining and points_left > 0.0001:
+        weight_total = sum(max(0.01, float(weights[index])) for index in remaining)
+        capped: list[int] = []
+        for index in remaining:
+            proposed = points_left * max(0.01, float(weights[index])) / weight_total
+            if proposed >= caps[index]:
+                output[index] = caps[index]
+                capped.append(index)
+        if not capped:
+            for index in remaining:
+                output[index] = points_left * max(0.01, float(weights[index])) / weight_total
+            points_left = 0.0
+            break
+        for index in capped:
+            points_left -= output[index]
+            remaining.remove(index)
+    if points_left > 0.0001 and output:
+        # Defensive fallback for an unusually low-cap roster.
+        total = sum(output) or 1.0
+        output = [value + points_left * value / total for value in output]
+    return output
 
 
 def normalize_secondary_box_score_totals(
@@ -1216,6 +1375,9 @@ def assist_rate_from_features(feat: dict[str, float]) -> float:
 
 
 def shooting_line(points: int, feat: dict[str, float], minutes: float, rng: random.Random) -> dict[str, int]:
+    if feat.get('offense_model_version'):
+        from .offense import shooting_line as profile_shooting_line
+        return profile_shooting_line(points, feat, minutes, rng)
     spacing = float(feat.get("spacing") or 50)
     rim_pressure = float(feat.get("rim_pressure") or 50)
     creation = float(feat.get("shot_creation") or feat.get("usage") or 50)
@@ -1223,20 +1385,28 @@ def shooting_line(points: int, feat: dict[str, float], minutes: float, rng: rand
     ft_rate = clamp(0.13 + max(0.0, rim_pressure - 55) * 0.0028 + max(0.0, creation - 70) * 0.0015, 0.08, 0.34)
     fta = max(0, int(round(points * ft_rate + rng.random() * 1.8)))
     ft_pct = clamp(0.70 + max(0.0, spacing - 55) * 0.0022 + max(0.0, creation - 65) * 0.0012, 0.58, 0.92)
-    ftm = min(fta, max(0, int(round(fta * ft_pct + rng.gauss(0, 0.7)))))
+    sampled_ftm = min(fta, max(0, int(round(fta * ft_pct + rng.gauss(0, 0.7)))))
     volume_role = clamp(0.45 + max(0.0, usage - 55) * 0.018 + max(0.0, creation - 70) * 0.006, 0.35, 1.08)
     fg3a = max(0, int(round(minutes * (0.048 + spacing / 980 + max(0.0, creation - 70) / 2100 + max(0.0, spacing - 78) * 0.010 * volume_role + max(0.0, creation - 82) * 0.003) + rng.random() * 1.35)))
     fg3_pct = clamp(0.30 + max(0.0, spacing - 50) * 0.0017 + max(0.0, creation - 72) * 0.0009, 0.25, 0.45)
-    fg3m = min(fg3a, max(0, int(round(fg3a * fg3_pct + rng.gauss(0, 0.55)))))
-    two_points = max(0, points - ftm - fg3m * 3)
+    sampled_fg3m = min(fg3a, max(0, int(round(fg3a * fg3_pct + rng.gauss(0, 0.55)))))
+    ftm = min(sampled_ftm, points)
+    fg3m = min(sampled_fg3m, (points - ftm) // 3)
+    # When the point budget caps threes, reduce their sampled volume as well.
+    # Otherwise low-scoring lines systematically acquire extra missed threes.
+    fg3a = max(fg3m, fg3a - int(round((sampled_fg3m - fg3m) / fg3_pct)))
+    two_points = points - ftm - fg3m * 3
     fg2m = int(two_points // 2)
     if two_points % 2:
-        ftm = min(fta, ftm + 1)
+        # Adjust one free throw so the remaining points form two-point makes.
+        ftm += 1
+        fg2m = (points - ftm - fg3m * 3) // 2
+    fta = max(ftm, fta + ftm - sampled_ftm)
     fg_pct = clamp(0.45 + max(0.0, rim_pressure - 58) * 0.0017 + max(0.0, creation - 72) * 0.0008 - max(0.0, spacing - 82) * 0.0005, 0.38, 0.62)
     fgm = fg2m + fg3m
     fga = max(fgm, int(round(fgm / fg_pct + rng.random() * 1.4)))
     fg3a = max(fg3a, fg3m)
-    fga = max(fga, fg3a)
+    fga = max(fga, fg3a + fg2m)
     return {"fgm": fgm, "fga": fga, "fg3m": fg3m, "fg3a": fg3a, "ftm": ftm, "fta": fta}
 
 
@@ -1271,13 +1441,23 @@ def cap_and_redistribute_points(
     team_points: int,
     weights: list[float],
     rng: random.Random,
+    expected_points: list[float] | None = None,
 ) -> list[int]:
     if not points:
         return points
-    caps = [
-        plausible_point_cap(item, features[item["player"]["id"]])
-        for item in pool
+    expected_points = expected_points or [
+        team_points * max(0.0, weight) / (sum(weights) or 1.0)
+        for weight in weights
     ]
+    caps = []
+    for idx, item in enumerate(pool):
+        feat = features[item["player"]["id"]]
+        expected = max(0.0, float(expected_points[idx] if idx < len(expected_points) else 0.0))
+        usage = float(feat.get("scoring_usage") or feat.get("usage") or 50.0)
+        statistical_ceiling = expected + 4.25 * math.sqrt(max(1.0, expected))
+        if usage >= 80.0:
+            statistical_ceiling += 3.0
+        caps.append(max(plausible_point_cap(item, feat), int(round(statistical_ceiling))))
     output = [min(value, caps[idx]) for idx, value in enumerate(points)]
     surplus = int(team_points) - sum(output)
     while surplus > 0:
@@ -1295,7 +1475,6 @@ def cap_and_redistribute_points(
         index = max(candidates, key=lambda idx: output[idx] - caps[idx])
         output[index] -= 1
         surplus += 1
-    output = enforce_elite_scoring_floors(pool, features, output)
     return output
 
 
@@ -1439,10 +1618,14 @@ def resolve_overtime_if_tied(
     home_team_line: dict[str, Any],
     away_team_line: dict[str, Any],
     rng: random.Random,
+    *, tracking_periods: list | None = None,
 ) -> int:
     if int(home_team_line["points"]) != int(away_team_line["points"]):
         return 0
     periods = 1
+    if tracking_periods is not None:
+        from .plus_minus import scoring_snapshot
+        tracking_periods.append(scoring_snapshot(home_line+away_line))
     while int(home_team_line["points"]) == int(away_team_line["points"]) and periods <= 4:
         home_extra = max(4, int(round(rng.gauss(10.2, 3.0))))
         away_extra = max(4, int(round(rng.gauss(10.0, 3.0))))
@@ -1453,10 +1636,18 @@ def resolve_overtime_if_tied(
                 away_extra += 1 + int(rng.random() * 3)
         add_overtime_points(home_line, home_extra)
         add_overtime_points(away_line, away_extra)
+        add_overtime_minutes(home_line)
+        add_overtime_minutes(away_line)
+        if tracking_periods is not None:
+            tracking_periods.append(scoring_snapshot(home_line+away_line))
         home_team_line["points"] = int(home_team_line["points"]) + home_extra
         away_team_line["points"] = int(away_team_line["points"]) + away_extra
         home_team_line["possessions"] = round(float(home_team_line.get("possessions") or 0) + 5.0, 1)
         away_team_line["possessions"] = round(float(away_team_line.get("possessions") or 0) + 5.0, 1)
+        for players, team in [(home_line, home_team_line), (away_line, away_team_line)]:
+            for key in ["fgm", "fga", "fg3m", "fg3a", "ftm", "fta"]:
+                team[key] = sum(int(line.get(key) or 0) for line in players)
+            team["off_rating"] = round(team["points"] / max(1.0, team["possessions"]) * 100.0, 2)
         home_team_line["overtime_periods"] = periods
         away_team_line["overtime_periods"] = periods
         periods += 1
@@ -1470,15 +1661,42 @@ def add_overtime_points(lines: list[dict[str, Any]], extra_points: int) -> None:
     extras = normalize_point_values(weights, extra_points)
     for line, points in zip(lines, extras, strict=False):
         line["points"] = int(line.get("points") or 0) + points
-        if points >= 3:
-            line["fg3m"] = int(line.get("fg3m") or 0) + (1 if points >= 6 else 0)
-            line["fg3a"] = int(line.get("fg3a") or 0) + (1 if points >= 6 else 0)
-        made = max(1 if points else 0, points // 2)
+        threes = 1 if points >= 6 else 0
+        twos, frees = divmod(points - threes * 3, 2)
+        line["fg3m"] = int(line.get("fg3m") or 0) + threes
+        line["fg3a"] = int(line.get("fg3a") or 0) + threes
+        line["ftm"] = int(line.get("ftm") or 0) + frees
+        line["fta"] = int(line.get("fta") or 0) + frees
+        made = threes + twos
         line["fgm"] = int(line.get("fgm") or 0) + made
         line["fga"] = int(line.get("fga") or 0) + made + (1 if points >= 5 else 0)
 
 
-def scoring_weight(item: dict[str, Any], features: dict[str, float]) -> float:
+def add_overtime_minutes(lines: list[dict[str, Any]]) -> None:
+    active = [line for line in lines if float(line.get("minutes") or 0) > 0]
+    if not active:
+        return
+    # Five players over five minutes: allocate exactly 2,500 hundredths.
+    extras = normalize_point_values([float(line["minutes"]) for line in active], 2500)
+    # Regulation rounding can leave 239.99 minutes and give a capped player
+    # 5.01 overtime minutes. Move any excess to another participant.
+    for index in range(len(extras)):
+        excess = max(0, extras[index] - 500)
+        if not excess:
+            continue
+        for other in range(len(extras)):
+            moved = min(excess, max(0, 500 - extras[other]))
+            extras[other] += moved
+            extras[index] -= moved
+            excess -= moved
+            if not excess:
+                break
+    for line, extra in zip(active, extras, strict=True):
+        line["minutes"] = round(float(line["minutes"]) + extra / 100.0, 2)
+
+
+def scoring_weight(item: dict[str, Any], features: dict[str, float], *, feeder: float = 50) -> float:
+    from .offense import finishing_multiplier
     minutes = max(1.0, float(item.get("minutes") or 0))
     usage = features.get("scoring_usage", features.get("usage", 50))
     ball_usage = features.get("usage", usage)
@@ -1489,6 +1707,8 @@ def scoring_weight(item: dict[str, Any], features: dict[str, float]) -> float:
     rim_pressure = features.get("rim_pressure", 50)
     self_creation = 1 + max(0.0, usage - 70) ** 1.13 * 0.014 + max(0.0, shot_creation - 64) * 0.014
     assisted_finishing = 1 + max(0.0, rim_pressure - 60) * 0.006
+    if features.get('offense_model_version'):
+        assisted_finishing = finishing_multiplier(features, feeder)
     spot_up_spacing = 1 + max(0.0, spacing - 70) * 0.0045
     connective_creation = 1 + max(0.0, creation - 60) * 0.003
     role_suppression = 1 - max(0.0, 52 - usage) * 0.01
@@ -2571,6 +2791,15 @@ def team_shot_diet(team_features: dict[str, float], opp_features: dict[str, floa
     above_break_three = clamp(0.205 + spacing_boost * 0.7, 0.12, 0.34)
     free_throw = clamp(0.165 + (team_features["rim_pressure"] - 50) * 0.0012, 0.08, 0.26)
     midrange = max(0.04, 1.0 - (rim + pull_up_three + corner_three + above_break_three + free_throw))
+    spatial = spatial_matchup_adjustment(
+        spatial_profile_from_features(team_features, "offense"),
+        spatial_profile_from_features(opp_features, "defense"),
+    )
+    category_delta = spatial["category_delta"]
+    rim = clamp(rim + category_delta.get("rim", 0.0), 0.18, 0.48)
+    midrange = clamp(midrange + category_delta.get("midrange", 0.0), 0.04, 0.35)
+    corner_three = clamp(corner_three + category_delta.get("corner_three", 0.0), 0.04, 0.21)
+    above_break_three = clamp(above_break_three + category_delta.get("above_break_three", 0.0), 0.12, 0.34)
     total = rim + pull_up_three + corner_three + above_break_three + free_throw + midrange
     diet = {
         "rim": rim / total,
@@ -2586,6 +2815,7 @@ def team_shot_diet(team_features: dict[str, float], opp_features: dict[str, floa
         + max(0.0, opp_features["defensive_weak_link"] - 55) * 0.025
         - max(0.0, opp_features["rim_deterrence"] - 65) * 0.035
         - max(0.0, opp_features["defensive_events"] - 62) * 0.02
+        + float(spatial["shot_quality_delta"])
     )
     diet["shot_quality_delta"] = clamp(shot_quality_delta, -4.5, 4.5)
     return diet

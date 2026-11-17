@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-13",
+  "schema_sections_accepted": 12,
+  "source_player_roundtrip_exact": true,
+  "source_files_matching_packet_hashes": {
+    "data/research/espn_career_raw/3975.json": true,
+    "data/research/espn_career_raw/4066320.json": true,
+    "data/research/espn_career_raw/4395630.json": true,
+    "data/research/espn_career_raw/3078576.json": true,
+    "data/research/espn_career_raw/3945274.json": true,
+    "data/research/espn_career_raw/4396907.json": true,
+    "data/research/espn_career_raw/4395628.json": true,
+    "data/research/espn_career_raw/5037871.json": true,
+    "data/research/espn_career_raw/3032976.json": true,
+    "data/research/espn_career_raw/4017837.json": true,
+    "data/research/espn_career_raw/4066261.json": true,
+    "data/research/espn_career_raw/5104157.json": true,
+    "docs/ratings-evidence-2026-10-29/EPISODE_4_CENTERS_EXTRACTION.md": true,
+    "docs/ratings-evidence-2026-10-29/POINT_GUARDS_FULL_EXTRACTION.md": true,
+    "docs/ratings-evidence-2026-10-29/POWER_FORWARD_FULL_EXTRACTION.md": true,
+    "docs/ratings-evidence-2026-10-29/SHOOTING_GUARDS_TOP_10_FULL_EXTRACTION.md": true,
+    "docs/PLAYER_OBJECT_THREE_COLUMN_MAP_2026_11_12.md": true,
+    "data/research/player_career_stats.json": true,
+    "data/canonical/universe_2026_27_offseason.json": true
+  },
+  "approved_architecture_matches_ledger_hash": true,
+  "all94_ledger_inputs_preserved": true,
+  "registry_and_validator_match_capture": true,
+  "main_report_local_links_resolve": 12,
+  "FT_proxy_scale_separate": true,
+  "historical_game_cache_used_as_shooting_denominator": false,
+  "engine_games_or_save_calls": false,
+  "scope": "Offline schema/arithmetic/document checks only. No proof of final physics, response or basketball calibration. Concurrent backend work is outside this research write scope.",
+  "artifacts_sha256": {
+    "OFFENSE_INTERIOR_INTERACTION_INPUTS_2026_11_13.md": "829ac920c09d323cd2577572e39d8edffd99c0d1ab2d4d5d5fb3fc96e7990a02",
+    "OFFENSE_INTERIOR_INTERACTION_INPUTS_2026_11_13.json": "a0b751ba2bcd9594e73338335ef6170386296ef9afda9c1e46756ac174b24676",
+    "diagnostics/milestone3_20261113/build_offense_packet.py": "b8d147ca865ad0a302d177f1c6672cd2f95557e56a567513c2054627c6f8840a",
+    "diagnostics/milestone3_20261113/input_validation.json": "ea7362ae18ed16c309b4407c629d0c446787d495d1ba7716a3579a00572f2f73",
+    "diagnostics/milestone3_20261113/career_shooting_denominator_validation.json": "a4d7c48b087e2b8c199d43645b67b00a1d7bee414d69931696bd3f93ad533876",
+    "diagnostics/milestone3_20261113/residual_coverage_correction.json": "00b0100bcb55b6138f7312113b339ccd3d337dcc5ddf08e55c282ff6096912e2"
+  }
+}

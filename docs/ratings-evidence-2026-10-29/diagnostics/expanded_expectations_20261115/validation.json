@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-15",
+  "version": "expanded_cohort_expectations_v1_2026_11_15",
+  "frozen_packet": {
+    "path": "docs/ratings-evidence-2026-10-29/EXPANDED_ACTION_COHORT_2026_11_14.json",
+    "version": "expanded_action_cohort_research_v1_2026_11_14",
+    "sha256": "e61a71e7b1225f83c0e357386b98a08ce2a449c310e99f5846b80b00a32755d2"
+  },
+  "claim_count": 9,
+  "classification_counts": {
+    "evidence_supported": 3,
+    "unknown_control_dependent": 3,
+    "missing_mechanism_not_testable": 3
+  },
+  "semantic_audits": 8,
+  "prespecified_alternatives": 5,
+  "all_input_ids_registered": true,
+  "six_player_ids_match_frozen_packet": true,
+  "source_windows_and_links_present": true,
+  "source_ranges_match_frozen_estimates_or_inherited_notes": true,
+  "control_units_and_policies_valid": true,
+  "source_hash_checks": {
+    "docs/ratings-evidence-2026-10-29/EXPANDED_ACTION_COHORT_2026_11_14.json": true,
+    "docs/ratings-evidence-2026-10-29/EXPANDED_ACTION_COHORT_2026_11_14.md": true,
+    "docs/ratings-evidence-2026-10-29/EXPANDED_ACTION_COHORT_READINESS_2026_11_14.md": true,
+    "docs/ratings-evidence-2026-10-29/diagnostics/expanded_cohort_20261114/source_readiness_ledger.json": true,
+    "docs/PLAYER_OBJECT_THREE_COLUMN_MAP_2026_11_12.md": true,
+    "docs/ratings-evidence-2026-10-29/transcripts/episode8_transcript.txt": true,
+    "docs/ratings-evidence-2026-10-29/transcripts/episode4_transcript.txt": true,
+    "docs/ratings-evidence-2026-10-29/transcripts/episode5_transcript.txt": true,
+    "docs/ratings-evidence-2026-10-29/captions/J6STkjbVuUg.en.vtt": true,
+    "docs/ratings-evidence-2026-10-29/TEAMS_20_TO_11_FULL_EXTRACTION.md": true
+  },
+  "player_values_changed": 0,
+  "proposed_source_corrections": 0,
+  "M9_results_inspected": false,
+  "profile_compilations": 0,
+  "simulations": 0,
+  "scope": "Small sidecar reference/provenance/prespecification validation only; not an input-packet rebuild or engine test.",
+  "local_links_resolve": 10,
+  "inherited_remote_citations": 1
+}

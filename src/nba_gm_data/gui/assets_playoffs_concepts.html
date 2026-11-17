@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NBA GM Assets and Playoffs Concepts</title>
+  <style>
+    :root {
+      --page: #bcc2c5;
+      --bg: #090e11;
+      --panel: #0d1418;
+      --raised: #111a1f;
+      --line: #2a3940;
+      --soft: #1d2a30;
+      --text: #edf2f4;
+      --muted: #9aa7ad;
+      --cyan: #50b8ea;
+      --blue: #3978d4;
+      --green: #39d58a;
+      --yellow: #d8be6c;
+      --orange: #e58052;
+      --red: #ff5964;
+      --gap: 4px;
+      --head: 27px;
+    }
+    * { box-sizing: border-box; font-weight: 400; }
+    body { background: var(--page); color: var(--text); font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; margin: 0; padding: 28px 0 80px; }
+    button { color: inherit; cursor: pointer; font: inherit; }
+    .gallery { margin: 0 auto; width: 1682px; }
+    .gallery-title { color: #142027; display: flex; justify-content: space-between; margin: 0 0 24px; }
+    .gallery-title h1 { font-size: 22px; margin: 0 0 5px; }
+    .gallery-title p { color: #435159; font: 13px/1.45 system-ui, sans-serif; margin: 0; max-width: 900px; }
+    .concept { margin-bottom: 44px; }
+    .concept-label { color: #26343b; display: flex; font-size: 12px; justify-content: space-between; margin: 0 0 7px; }
+    .artboard { background: var(--bg); border: 1px solid #536068; display: grid; gap: var(--gap); grid-template-rows: 50px minmax(0, 1fr) 29px; height: 963px; overflow: hidden; padding: 7px; width: 1682px; }
+    .screen-head { align-items: center; background: var(--panel); border: 1px solid var(--line); display: grid; grid-template-columns: minmax(350px, 1fr) auto minmax(480px, 1fr); min-width: 0; padding: 0 10px; }
+    .head-club, .head-date, .head-actions, .panel-head, .button-row, .team-mark { align-items: center; display: flex; }
+    .head-club, .team-mark { gap: 8px; }
+    .head-club img { height: 25px; object-fit: contain; width: 25px; }
+    .head-club span { font-size: 13px; }
+    .head-date { color: var(--muted); flex-direction: column; font-size: 9px; gap: 2px; }
+    .head-date strong { color: var(--text); font-size: 10px; }
+    .head-actions { gap: 5px; justify-content: flex-end; }
+    .button, .head-actions button, .panel-head button { align-items: center; background: var(--raised); border: 1px solid var(--line); border-radius: 0; color: var(--text); display: inline-flex; font-size: 8px; height: 22px; justify-content: center; padding: 0 9px; text-transform: none; }
+    .button.icon, .head-actions .icon { font-size: 14px; min-width: 24px; padding: 0 6px; }
+    .button.active { background: var(--text); border-color: var(--text); color: var(--bg); }
+    .workspace { display: grid; gap: var(--gap); min-height: 0; min-width: 0; }
+    .panel { background: var(--panel); border: 1px solid var(--line); min-height: 0; min-width: 0; overflow: hidden; }
+    .panel-head { border-bottom: 1px solid var(--line); height: var(--head); justify-content: space-between; padding: 0 8px; }
+    .panel-head h2, .panel-head h3 { font-size: 11px; margin: 0; white-space: nowrap; }
+    .panel-head span { color: var(--muted); font-size: 8px; white-space: nowrap; }
+    .panel-tools { align-items: center; display: flex; gap: 4px; }
+    .scroll { min-height: 0; overflow: auto; scrollbar-width: none; }
+    .scroll::-webkit-scrollbar { display: none; }
+    .ticker { align-items: center; background: var(--panel); border: 1px solid var(--line); display: grid; grid-template-columns: 110px minmax(0, 1fr) 58px; min-width: 0; overflow: hidden; }
+    .ticker-label { align-items: center; border-right: 1px solid var(--line); display: flex; font-size: 9px; height: 100%; padding: 0 10px; }
+    .ticker-track { display: flex; gap: 34px; min-width: max-content; padding-left: 20px; }
+    .ticker-item { align-items: center; color: var(--muted); display: flex; font-size: 8px; gap: 7px; white-space: nowrap; }
+    .ticker-item img { height: 16px; object-fit: contain; width: 16px; }
+    .ticker-item strong { color: var(--text); }
+    .ticker button { background: var(--raised); border: 1px solid var(--line); color: var(--text); font: 8px inherit; height: 21px; margin-right: 5px; }
+
+    /* Shared asset tables */
+    .asset-table { display: grid; grid-template-rows: 21px repeat(15, minmax(0, 1fr)); height: calc(100% - var(--head)); padding: 3px 7px 6px; }
+    .asset-head, .asset-row { align-items: center; display: grid; gap: 4px; grid-template-columns: minmax(126px, 1.4fr) 24px 26px repeat(3, 28px) repeat(9, 27px) 31px repeat(4, 30px) 49px minmax(120px, 1.45fr); min-width: 0; }
+    .asset-head { color: var(--muted); font-size: 7px; }
+    .asset-row { border-top: 1px solid var(--soft); font-size: 7px; }
+    .asset-row > *, .asset-head > * { min-width: 0; overflow: hidden; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+    .asset-row .player, .asset-head .player { background: transparent; border: 0; color: var(--text); padding: 0; text-align: left; }
+    .asset-row.injured > * { color: var(--red); }
+    .rating-cell { align-items: center; display: grid; gap: 3px; grid-template-columns: 15px minmax(0, 1fr); }
+    .mini-track, .track { background: #172228; display: block; height: 3px; overflow: hidden; }
+    .mini-track i, .track i { background: var(--bar, var(--cyan)); display: block; height: 100%; width: var(--fill, 50%); }
+    .value-cell { align-items: center; display: grid; gap: 6px; grid-template-columns: 28px minmax(0, 1fr); }
+    .value-stack { display: flex; height: 7px; min-width: 0; overflow: hidden; }
+    .value-stack i { height: 100%; }
+    .talent { background: #3978d4; }
+    .age { background: #51a6d6; }
+    .contract { background: #d8be6c; }
+    .fit { background: #39d58a; }
+    .risk { background: #ff5964; }
+    .legend { align-items: center; display: flex; gap: 10px; }
+    .legend span { align-items: center; color: var(--muted); display: flex; font-size: 7px; gap: 4px; }
+    .legend i { height: 5px; width: 11px; }
+    .cap-body { display: grid; gap: 5px; grid-template-rows: auto minmax(0, 1fr); height: calc(100% - var(--head)); padding: 6px 8px; }
+    .cap-summary { display: grid; grid-template-columns: repeat(3, 1fr); }
+    .cap-summary div { border-right: 1px solid var(--soft); padding: 2px 7px; }
+    .cap-summary div:last-child { border: 0; }
+    .cap-summary span, .cap-years span { color: var(--muted); display: block; font-size: 7px; }
+    .cap-summary strong { font-size: 11px; }
+    .cap-years { align-items: end; display: grid; gap: 8px; grid-template-columns: repeat(4, 1fr); min-height: 0; }
+    .cap-year { display: grid; gap: 3px; grid-template-rows: 12px minmax(0, 1fr) 10px; height: 100%; }
+    .cap-column { align-self: end; background: #162127; height: 100%; position: relative; }
+    .cap-column b { background: #3978d4; bottom: 0; display: block; left: 0; position: absolute; right: 0; }
+    .cap-column::before, .cap-column::after { border-top: 1px dashed var(--yellow); content: ""; left: 0; position: absolute; right: 0; }
+    .cap-column::before { bottom: 72%; }
+    .cap-column::after { border-color: var(--red); bottom: 90%; }
+    .cap-year em { color: var(--text); font-size: 7px; font-style: normal; text-align: center; }
+    .compact-list { display: grid; height: calc(100% - var(--head)); min-height: 0; padding: 3px 7px 6px; }
+    .compact-row { align-items: center; border-top: 1px solid var(--soft); display: grid; gap: 5px; min-height: 0; }
+    .compact-row:first-child { border-top: 0; }
+    .compact-row span, .compact-row button { font-size: 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .compact-row button { background: none; border: 0; color: var(--text); padding: 0; text-align: left; }
+    .compact-row .muted { color: var(--muted); }
+    .block-row { grid-template-columns: 18px minmax(86px, 1fr) 22px 26px repeat(3, 26px) 43px; }
+    .block-row img, .pick-row img { height: 15px; object-fit: contain; width: 15px; }
+    .block-row.league-top { background: #121d22; }
+    .my-block-row { grid-template-columns: minmax(0, 1fr) 31px 45px 19px; }
+    .my-block-row .remove { border: 1px solid var(--line); height: 17px; text-align: center; }
+    .pick-row { grid-template-columns: 18px 36px minmax(0, 1fr) 42px; }
+    .pick-round { border: 1px solid var(--line); color: var(--muted); padding: 2px 4px; text-align: center; }
+    .mini-line { height: 22px; width: 100%; }
+    .mini-line polyline { fill: none; stroke: var(--green); stroke-width: 1.5; }
+    .mini-line .negative { stroke: var(--red); }
+
+    /* Assets 75 */
+    .assets-75 { grid-template-columns: minmax(0, 2.45fr) minmax(365px, .8fr); }
+    .assets-75 .right-rail { display: grid; gap: var(--gap); grid-template-rows: 208px 142px 160px minmax(0, 1fr); min-height: 0; }
+    .assets-75 .my-block .compact-list { grid-template-rows: repeat(5, minmax(0, 1fr)); }
+    .assets-75 .picks .compact-list { grid-template-rows: repeat(4, minmax(0, 1fr)); }
+    .assets-75 .market .compact-list { grid-template-rows: repeat(7, minmax(0, 1fr)); }
+
+    /* Assets 76 */
+    .assets-76 { grid-template-columns: minmax(0, 2.25fr) minmax(390px, .75fr); grid-template-rows: minmax(0, 58fr) minmax(0, 42fr); }
+    .assets-76 .roster { grid-column: 1; grid-row: 1; }
+    .assets-76 .roster .asset-table { grid-template-rows: 21px repeat(15, minmax(0, 1fr)); }
+    .assets-76 .cap { grid-column: 2; grid-row: 1; }
+    .assets-76 .market-wide { grid-column: 1; grid-row: 2; }
+    .assets-76 .market-columns { display: grid; grid-template-columns: repeat(3, 1fr); height: calc(100% - var(--head)); min-height: 0; }
+    .market-team { border-right: 1px solid var(--soft); display: grid; grid-template-rows: 24px repeat(4, minmax(0, 1fr)); min-height: 0; padding: 0 7px 5px; }
+    .market-team:last-child { border-right: 0; }
+    .market-team h4 { align-items: center; display: flex; font-size: 8px; gap: 6px; margin: 0; }
+    .market-team h4 img { height: 15px; object-fit: contain; width: 15px; }
+    .market-team .compact-row { grid-template-columns: minmax(0, 1fr) 25px 25px 48px; }
+    .assets-76 .action-stack { display: grid; gap: var(--gap); grid-column: 2; grid-row: 2; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; min-height: 0; }
+    .assets-76 .action-stack .panel:first-child { grid-column: 1 / -1; }
+    .assets-76 .action-stack .compact-list { grid-template-rows: repeat(4, minmax(0, 1fr)); }
+    .quick-trade { align-items: center; display: grid; gap: 7px; grid-template-columns: 1fr auto 1fr; height: calc(100% - var(--head)); padding: 8px; }
+    .quick-team { align-items: center; display: flex; font-size: 9px; gap: 6px; }
+    .quick-team:last-child { justify-content: flex-end; }
+    .quick-team img { height: 25px; object-fit: contain; width: 25px; }
+    .quick-trade .swap { color: var(--muted); font-size: 15px; }
+
+    /* Assets 77 */
+    .assets-77 { grid-template-columns: minmax(0, 1.75fr) minmax(0, .85fr); grid-template-rows: minmax(0, 68fr) minmax(0, 32fr); }
+    .assets-77 .roster { grid-column: 1; grid-row: 1; }
+    .assets-77 .roster .asset-table { grid-template-rows: 21px repeat(13, minmax(0, 1fr)); }
+    .assets-77 .roster .asset-head, .assets-77 .roster .asset-row { grid-template-columns: minmax(120px, 1.3fr) 24px 26px repeat(3, 28px) repeat(5, 27px) 31px repeat(3, 30px) 49px minmax(120px, 1.35fr); }
+    .assets-77 .market { grid-column: 2; grid-row: 1; }
+    .assets-77 .market .compact-list { grid-template-rows: repeat(12, minmax(0, 1fr)); }
+    .assets-77 .lower { display: grid; gap: var(--gap); grid-column: 1 / -1; grid-row: 2; grid-template-columns: 1.3fr .9fr .9fr 1fr; min-height: 0; }
+    .exposure-body { display: grid; gap: 5px; grid-template-rows: repeat(5, 1fr); height: calc(100% - var(--head)); padding: 6px 8px; }
+    .exposure-row { align-items: center; display: grid; gap: 7px; grid-template-columns: 78px minmax(0, 1fr) 38px; }
+    .exposure-row span, .exposure-row strong { font-size: 7px; }
+    .exposure-row strong { text-align: right; }
+    .exposure-row .track { height: 5px; }
+    .rights-body { display: grid; grid-template-rows: repeat(5, 1fr); height: calc(100% - var(--head)); padding: 4px 7px 6px; }
+    .right-row { align-items: center; border-top: 1px solid var(--soft); display: grid; font-size: 7px; grid-template-columns: 42px minmax(0, 1fr) 44px; }
+    .right-row:first-child { border-top: 0; }
+    .right-row span:last-child { color: var(--muted); text-align: right; }
+
+    /* Playoff bracket */
+    .playoff-workspace { grid-template-columns: minmax(0, 1fr) 294px; }
+    .bracket-panel { display: grid; grid-template-rows: var(--head) minmax(0, 1fr); }
+    .bracket-body { display: grid; gap: 7px; grid-template-columns: 1fr 1fr 1fr .9fr 1fr 1fr 1fr; min-height: 0; padding: 7px; }
+    .bracket-round { display: grid; gap: 6px; min-height: 0; }
+    .bracket-round.r1 { grid-template-rows: 18px repeat(4, 1fr); }
+    .bracket-round.r2 { grid-template-rows: 18px repeat(2, 1fr); padding: 82px 0; }
+    .bracket-round.r3 { grid-template-rows: 18px 1fr; padding: 226px 0; }
+    .bracket-round.finals { grid-template-rows: 18px 1fr; padding: 255px 0; }
+    .round-title { color: var(--muted); font-size: 7px; text-align: center; }
+    .series { align-self: center; background: var(--raised); border: 1px solid var(--line); display: grid; min-height: 55px; padding: 4px 5px; position: relative; }
+    .series.live { border-color: var(--text); }
+    .series-team { align-items: center; display: grid; gap: 4px; grid-template-columns: 15px 14px minmax(0, 1fr) 14px; min-width: 0; }
+    .series-team + .series-team { border-top: 1px solid var(--soft); }
+    .series-team img, .series-team .tbd-crest { height: 13px; object-fit: contain; width: 13px; }
+    .series-team .tbd-crest { color: var(--muted); display: grid; place-items: center; }
+    .series-team span { font-size: 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .series-team .seed { color: var(--muted); text-align: right; }
+    .series-team .wins { text-align: right; }
+    .series-team.winner span, .series-team.winner .wins { color: var(--green); }
+    .playoff-side { display: grid; gap: var(--gap); grid-template-rows: 235px minmax(0, 1fr) 88px; min-height: 0; }
+    .leaders-list { display: grid; grid-template-rows: repeat(5, 1fr); height: calc(100% - var(--head)); padding: 3px 7px 6px; }
+    .leader-row { align-items: center; border-top: 1px solid var(--soft); display: grid; gap: 5px; grid-template-columns: 16px minmax(0, 1fr) 65px 34px; min-height: 0; }
+    .leader-row:first-child { border-top: 0; }
+    .leader-row img { height: 14px; object-fit: contain; width: 14px; }
+    .leader-row span, .leader-row strong { font-size: 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .leader-row strong { color: var(--green); text-align: right; }
+    .playoff-actions { display: grid; gap: 5px; grid-template-columns: repeat(3, 1fr); padding: 7px; }
+    .playoff-actions .button { height: 28px; }
+    .series-ledger { display: grid; grid-template-rows: repeat(5, 1fr); height: calc(100% - var(--head)); padding: 3px 7px 6px; }
+    .series-game { align-items: center; background: transparent; border: 0; border-top: 1px solid var(--soft); color: var(--text); display: grid; font-size: 7px; gap: 4px; grid-template-columns: 30px minmax(0, 1fr) 54px; padding: 0; text-align: left; }
+    .series-game:first-child { border-top: 0; }
+    .series-game span:last-child { text-align: right; }
+
+    /* Playoffs 79 */
+    .playoffs-79 { grid-template-columns: minmax(0, 1.8fr) minmax(430px, .8fr); }
+    .series-room { display: grid; gap: var(--gap); grid-template-rows: 110px 145px minmax(0, 1fr); min-height: 0; }
+    .matchup-hero { align-items: center; display: grid; grid-template-columns: 1fr 120px 1fr; height: calc(100% - var(--head)); padding: 8px 18px; }
+    .matchup-team { align-items: center; display: flex; gap: 10px; }
+    .matchup-team:last-child { flex-direction: row-reverse; text-align: right; }
+    .matchup-team img { height: 49px; object-fit: contain; width: 49px; }
+    .matchup-team strong { display: block; font-size: 14px; }
+    .matchup-team span { color: var(--muted); font-size: 8px; }
+    .matchup-score { text-align: center; }
+    .matchup-score strong { display: block; font-size: 24px; }
+    .matchup-score span { color: var(--muted); font-size: 8px; }
+    .game-timeline { align-items: center; display: grid; grid-template-columns: repeat(7, 1fr); height: calc(100% - var(--head)); padding: 8px 18px; }
+    .game-node { align-items: center; display: grid; grid-template-rows: 14px 30px 13px; justify-items: center; position: relative; }
+    .game-node:not(:last-child)::after { background: var(--line); content: ""; height: 1px; left: calc(50% + 16px); position: absolute; top: 29px; width: calc(100% - 32px); }
+    .game-node span, .game-node em { color: var(--muted); font-size: 7px; font-style: normal; }
+    .game-node i { align-items: center; background: var(--raised); border: 1px solid var(--line); border-radius: 50%; display: flex; font-size: 8px; height: 28px; justify-content: center; width: 28px; z-index: 1; }
+    .game-node.win i { border-color: var(--green); color: var(--green); }
+    .game-node.loss i { border-color: var(--red); color: var(--red); }
+    .series-matchup-grid { display: grid; gap: var(--gap); grid-template-columns: 1fr 1fr; min-height: 0; }
+    .team-roster { display: grid; grid-template-rows: 20px repeat(8, minmax(0, 1fr)); height: calc(100% - var(--head)); padding: 3px 7px 6px; }
+    .team-roster-row { align-items: center; border-top: 1px solid var(--soft); display: grid; font-size: 7px; gap: 4px; grid-template-columns: minmax(90px, 1fr) repeat(3, 29px) 38px 34px; }
+    .team-roster-row:first-child { border-top: 0; color: var(--muted); }
+    .team-roster-row > *:not(:first-child) { text-align: right; }
+    .playoffs-79 .right { display: grid; gap: var(--gap); grid-template-rows: 345px minmax(0, 1fr) 222px; min-height: 0; }
+    .mini-bracket { display: grid; gap: 6px; grid-template-columns: repeat(4, 1fr); height: calc(100% - var(--head)); padding: 7px; }
+    .mini-bracket-col { display: grid; gap: 5px; grid-auto-rows: 1fr; min-height: 0; }
+    .mini-series { align-self: center; background: var(--raised); border: 1px solid var(--line); display: grid; font-size: 6px; gap: 3px; padding: 4px; }
+    .mini-series span { display: flex; justify-content: space-between; }
+    .matchup-factors { display: grid; grid-template-rows: repeat(6, minmax(0, 1fr)); height: calc(100% - var(--head)); padding: 4px 7px 6px; }
+    .matchup-factor { align-items: center; border-top: 1px solid var(--soft); display: grid; gap: 6px; grid-template-columns: 38px minmax(0, 1fr) 78px minmax(0, 1fr) 38px; min-height: 0; }
+    .matchup-factor:first-child { border-top: 0; }
+    .matchup-factor span { font-size: 7px; }
+    .matchup-factor span:first-child { color: var(--cyan); }
+    .matchup-factor span:last-child { color: var(--orange); text-align: right; }
+    .matchup-factor em { color: var(--muted); font-size: 7px; font-style: normal; text-align: center; }
+    .matchup-factor .track:first-of-type i { background: var(--cyan); }
+    .matchup-factor .track:last-of-type i { background: var(--orange); }
+
+    /* Playoffs 80 */
+    .playoffs-80 { grid-template-rows: minmax(0, 2.45fr) minmax(0, .75fr); }
+    .playoffs-80 .top { display: grid; gap: var(--gap); grid-template-columns: minmax(0, 1fr) 300px; min-height: 0; }
+    .playoffs-80 .bottom { display: grid; gap: var(--gap); grid-template-columns: 1.15fr 1fr 1fr 1fr; min-height: 0; }
+    .injury-list { display: grid; grid-template-rows: repeat(4, 1fr); height: calc(100% - var(--head)); padding: 3px 7px 6px; }
+    .injury-row { align-items: center; border-top: 1px solid var(--soft); display: grid; font-size: 7px; gap: 4px; grid-template-columns: 16px minmax(0, 1fr) 60px 32px; }
+    .injury-row:first-child { border-top: 0; }
+    .injury-row img { height: 14px; object-fit: contain; width: 14px; }
+    .injury-row span:nth-child(3), .injury-row span:last-child { color: var(--red); text-align: right; }
+    .round-progress { align-items: center; display: grid; grid-template-columns: repeat(4, 1fr); height: calc(100% - var(--head)); padding: 10px; }
+    .round-step { align-items: center; display: grid; grid-template-rows: 20px 14px; justify-items: center; position: relative; }
+    .round-step:not(:last-child)::after { background: var(--line); content: ""; height: 1px; left: calc(50% + 7px); position: absolute; top: 7px; width: calc(100% - 14px); }
+    .round-step i { background: var(--raised); border: 1px solid var(--line); border-radius: 50%; height: 14px; width: 14px; z-index: 1; }
+    .round-step.done i { background: var(--green); border-color: var(--green); }
+    .round-step.current i { border-color: var(--text); }
+    .round-step span { color: var(--muted); font-size: 7px; }
+    .scoreboard-list { display: grid; grid-template-rows: repeat(8, minmax(0, 1fr)); height: calc(100% - var(--head)); padding: 3px 7px 6px; }
+    .scoreboard-row { align-items: center; border-top: 1px solid var(--soft); display: grid; font-size: 7px; gap: 4px; grid-template-columns: 16px minmax(0, 1fr) 43px 26px; min-height: 0; }
+    .scoreboard-row:first-child { border-top: 0; }
+    .scoreboard-row img { height: 14px; object-fit: contain; width: 14px; }
+    .scoreboard-row span:nth-child(3), .scoreboard-row span:last-child { text-align: right; }
+    .scoreboard-row.live { background: var(--raised); }
+    .slate-list { display: grid; grid-template-rows: repeat(5, minmax(0, 1fr)); height: calc(100% - var(--head)); padding: 3px 7px 6px; }
+    .slate-row { align-items: center; border-top: 1px solid var(--soft); display: grid; font-size: 7px; gap: 4px; grid-template-columns: 42px minmax(0, 1fr) 56px; min-height: 0; }
+    .slate-row:first-child { border-top: 0; }
+    .slate-row span:last-child { color: var(--muted); text-align: right; }
+  </style>
+</head>
+<body>
+  <main class="gallery">
+    <header class="gallery-title">
+      <div><h1>Assets + Playoffs desktops</h1><p>Six production-scale directions using the finished regular-season dashboard as the authoritative visual system.</p></div>
+      <p>1682 × 963 · fixed viewport · IBM-style mono rhythm</p>
+    </header>
+
+    <section class="concept" id="assets75"><div class="concept-label"><span>Concept 75 · Value Ledger</span><span>Roster is the product</span></div><div class="artboard" data-concept="assets75"></div></section>
+    <section class="concept" id="assets76"><div class="concept-label"><span>Concept 76 · Market Desk</span><span>League block activity is the second axis</span></div><div class="artboard" data-concept="assets76"></div></section>
+    <section class="concept" id="assets77"><div class="concept-label"><span>Concept 77 · Portfolio Risk</span><span>Construction, obligations, and leverage</span></div><div class="artboard" data-concept="assets77"></div></section>
+    <section class="concept" id="playoffs78"><div class="concept-label"><span>Concept 78 · Bracket Command</span><span>League bracket primary</span></div><div class="artboard" data-concept="playoffs78"></div></section>
+    <section class="concept" id="playoffs79"><div class="concept-label"><span>Concept 79 · Series Room</span><span>User matchup primary</span></div><div class="artboard" data-concept="playoffs79"></div></section>
+    <section class="concept" id="playoffs80"><div class="concept-label"><span>Concept 80 · League Postseason</span><span>Bracket plus operational tape</span></div><div class="artboard" data-concept="playoffs80"></div></section>
+  </main>
+
+  <script>
+    const logo = (team) => `/assets/team_logos/${team}.png`;
+    const players = [
+      ["Tyrese Haliburton",28,"PG",91,95,86,94,96,72,97,96,53,31,83,77,41.3,30.0,6.2,9.5,"$49.8M",96,[52,14,12,16,6]],
+      ["Jalen Suggs",27,"SG",88,85,93,87,81,96,78,80,65,46,70,91,34.5,20.8,5.1,5.8,"$35.1M",88,[48,17,10,18,7]],
+      ["Brandon Miller",26,"SF",88,85,84,91,86,79,92,74,58,67,55,84,36.2,23.9,6.5,3.7,"$14.8M",87,[46,24,13,12,5]],
+      ["Alex Sarr",24,"C",87,80,94,75,72,95,78,76,61,94,96,88,32.8,18.2,10.4,2.8,"$13.0M",86,[45,26,11,11,7]],
+      ["Bilal Coulibaly",25,"SF",84,80,89,81,74,92,76,79,65,71,75,93,30.2,14.8,5.9,3.1,"$11.9M",78,[42,29,10,12,7]],
+      ["Bub Carrington",23,"PG",82,84,79,85,88,72,83,85,63,54,43,86,27.5,13.6,4.1,5.9,"$6.8M",76,[40,31,11,12,6]],
+      ["Corey Kispert",29,"SF",79,84,71,93,73,68,94,65,56,48,31,72,22.1,11.8,2.9,1.7,"$13.4M",60,[43,9,20,17,11]],
+      ["Kyshawn George",24,"SF",78,76,81,79,69,85,81,70,59,68,64,82,20.4,8.9,4.4,2.1,"$4.2M",63,[38,31,9,15,7]],
+      ["Richaun Holmes",34,"C",76,72,81,55,61,82,60,64,45,88,85,70,16.8,7.4,5.8,1.0,"$12.9M",38,[55,3,19,8,15]],
+      ["Justin Champagnie",28,"SF",75,73,78,78,60,80,76,59,49,72,67,78,13.5,5.8,3.3,0.9,"$3.1M",41,[51,8,16,11,14]],
+      ["Tristan Vukcevic",25,"C",74,76,72,80,67,69,79,68,62,76,73,65,10.2,4.7,2.2,0.8,"$2.4M",39,[47,18,18,9,8]],
+      ["Johnny Davis",25,"SG",72,68,77,63,58,82,65,57,45,51,40,80,7.8,2.9,1.4,0.7,"$5.3M",30,[48,11,12,9,20]],
+      ["Jared Butler",27,"PG",71,74,68,76,79,63,73,74,55,44,32,75,6.5,2.7,0.8,1.2,"$2.2M",28,[52,9,11,8,20]],
+      ["Anthony Gill",33,"PF",69,65,73,61,51,76,66,48,42,69,67,62,3.2,1.1,0.9,0.2,"$2.0M",17,[50,2,11,6,31]],
+      ["Patrick Baldwin Jr.",27,"PF",67,69,64,75,54,61,74,50,43,63,55,57,0.0,0.0,0.0,0.0,"—",13,[45,8,13,8,26]]
+    ];
+    const barColor = (v) => v >= 84 ? "#3978d4" : v >= 76 ? "#69a7d5" : v >= 68 ? "#d8be6c" : "#e58052";
+    const valueBar = (parts) => `<span class="value-stack">${parts.map((v,i)=>`<i class="${["talent","age","contract","fit","risk"][i]}" style="width:${v}%"></i>`).join("")}</span>`;
+    const rating = (v) => `<span class="rating-cell"><em>${v}</em><i class="mini-track"><i style="--fill:${v}%;--bar:${barColor(v)}"></i></i></span>`;
+    const head = (mode, arrow) => `<header class="screen-head"><div class="head-club">${arrow === "left" ? `<button class="button icon">‹</button>` : ""}<img src="${logo("WAS")}"><span>Washington Wizards</span></div><div class="head-date"><strong>${mode}</strong><span>March 31, 2029</span></div><div class="head-actions"><button>Offers 3</button><button>Player Finder</button><button>Prospects</button><button>Settings</button>${arrow === "right" ? `<button class="icon">›</button>` : ""}</div></header>`;
+    const ticker = () => `<footer class="ticker"><span class="ticker-label">League Wire</span><div class="ticker-track"><span class="ticker-item"><img src="${logo("MEM")}"><strong>MEM</strong> places Desmond Bane on the block</span><span class="ticker-item"><img src="${logo("BOS")}"><strong>BOS</strong> defeats NYK 118–109</span><span class="ticker-item"><img src="${logo("DEN")}"><strong>Jokić</strong> records 31 PTS, 14 REB, 11 AST</span></div><button>View all</button></footer>`;
+    const assetHeaders = (short=false) => `<div class="asset-head"><span class="player">Player</span><span>Age</span><span>Pos</span><span>OVR</span><span>OFF</span><span>DEF</span><span>Shot</span><span>Create</span><span>Stop</span><span>Space</span><span>Pass</span>${short ? "" : `<span>Reb</span><span>Rim</span><span>Ath</span><span>Ups</span>`}<span>MPG</span><span>PTS</span><span>REB</span><span>AST</span><span>2029–30</span><span>Asset value</span></div>`;
+    const assetRows = (count=15, short=false) => players.slice(0,count).map((p,idx)=>`<div class="asset-row${idx===8 ? " injured" : ""}"><button class="player">${p[0]}</button><span>${p[1]}</span><span>${p[2]}</span>${rating(p[3])}${rating(p[4])}${rating(p[5])}<span>${p[6]}</span><span>${p[7]}</span><span>${p[8]}</span><span>${p[9]}</span><span>${p[10]}</span>${short ? "" : `<span>${p[11]}</span><span>${p[12]}</span><span>${p[13]}</span><span>${p[14]}</span>`}<span>${p[15]}</span><span>${p[16]}</span><span>${p[17]}</span><span>${p[18]}</span><span>${p[19]}</span><span class="value-cell"><em>${p[20]}</em>${valueBar(p[21])}</span></div>`).join("");
+    const rosterPanel = (count=15, short=false) => `<section class="panel roster"><div class="panel-head"><h2>Asset Ledger</h2><div class="panel-tools"><div class="legend"><span><i class="talent"></i>Talent</span><span><i class="age"></i>Age</span><span><i class="contract"></i>Contract</span><span><i class="fit"></i>Fit</span><span><i class="risk"></i>Risk</span></div><button>Trade Builder</button><button>Trade Finder</button></div></div><div class="asset-table scroll">${assetHeaders(short)}${assetRows(count,short)}</div></section>`;
+    const capPanel = () => `<section class="panel cap"><div class="panel-head"><h2>Cap Position</h2><span>Tax and hard-cap markers</span></div><div class="cap-body"><div class="cap-summary"><div><span>Payroll</span><strong>$173.8M</strong></div><div><span>Tax room</span><strong>$9.4M</strong></div><div><span>Hard-cap room</span><strong>$18.7M</strong></div></div><div class="cap-years">${[["29–30",84,"$174M"],["30–31",72,"$151M"],["31–32",51,"$108M"],["32–33",35,"$76M"]].map(y=>`<div class="cap-year"><span>${y[0]}</span><div class="cap-column"><b style="height:${y[1]}%"></b></div><em>${y[2]}</em></div>`).join("")}</div></div></section>`;
+    const myBlock = () => `<section class="panel my-block"><div class="panel-head"><h2>My Trade Block</h2><button>Add asset</button></div><div class="compact-list">${[["Corey Kispert",79,"$13.4M"],["Richaun Holmes",76,"$12.9M"],["2029 R1",72,"Own"],["2031 R2",31,"BOS"]].map(r=>`<div class="compact-row my-block-row"><button>${r[0]}</button><span>${r[1]}</span><span class="muted">${r[2]}</span><button class="remove">×</button></div>`).join("")}<div class="compact-row my-block-row"><button class="muted">2 slots available</button><span></span><span></span><span></span></div></div></section>`;
+    const picks = () => `<section class="panel picks"><div class="panel-head"><h2>Draft Pick Chest</h2><button>All picks</button></div><div class="compact-list">${[["29","R1","WAS own","19th"],["30","R1","WAS own","—"],["30","R2","BOS via WAS","—"],["31","R1","WAS own","—"]].map(r=>`<div class="compact-row pick-row"><img src="${logo("WAS")}"><span>${r[0]}</span><span><i class="pick-round">${r[1]}</i> ${r[2]}</span><span class="muted">${r[3]}</span></div>`).join("")}</div></section>`;
+    const blockRows = (count=7) => {
+      const rows = [["MEM","Desmond Bane",30,"SG",88,86,89,"$34.0M"],["POR","Jerami Grant",35,"PF",80,82,77,"$31.5M"],["ATL","De'Andre Hunter",31,"SF",79,81,76,"$24.9M"],["BKN","Cam Thomas",27,"SG",82,87,72,"$21.4M"],["BOS","Payton Pritchard",31,"PG",78,81,74,"$7.2M"],["CHA","Grant Williams",30,"PF",76,73,80,"$14.6M"],["CHI","Ayo Dosunmu",29,"SG",77,75,80,"$9.0M"],["CLE","Max Strus",32,"SF",78,82,73,"$15.8M"],["DAL","Daniel Gafford",30,"C",81,74,90,"$18.2M"],["DEN","Michael Porter Jr.",31,"SF",84,89,76,"$38.3M"],["DET","Isaiah Stewart",28,"C",78,71,88,"$15.0M"],["GSW","Moses Moody",27,"SG",80,82,77,"$12.4M"]];
+      return rows.slice(0,count).map((r,i)=>`<div class="compact-row block-row${i<2?" league-top":""}"><img src="${logo(r[0])}"><button>${r[1]}</button><span>${r[2]}</span><span>${r[3]}</span><span>${r[4]}</span><span>${r[5]}</span><span>${r[6]}</span><span>${r[7]}</span></div>`).join("");
+    };
+    const market = (count=7) => `<section class="panel market"><div class="panel-head"><h2>On the Block</h2><span>Updates every 14 days</span></div><div class="compact-list scroll">${blockRows(count)}</div></section>`;
+    const developmentPanel = () => `<section class="panel"><div class="panel-head"><h2>Asset Trend</h2><span>Value movement · this season</span></div><div class="exposure-body">${[["Haliburton",8,"green"],["Miller",12,"green"],["Sarr",4,"green"],["Suggs",-3,"red"],["Holmes",-11,"red"]].map((r,i)=>`<div class="exposure-row"><span>${r[0]}</span><svg class="mini-line" viewBox="0 0 100 22" preserveAspectRatio="none"><polyline class="${r[2]==="red"?"negative":""}" points="0,${14-i} 18,${12+i} 36,${13-i} 54,${9+i} 72,${10-i} 100,${5+i}"></polyline></svg><strong style="color:var(--${r[2]})">${r[1]>0?"+":""}${r[1]}%</strong></div>`).join("")}</div></section>`;
+
+    function renderAssets75() {
+      return `${head("Assets", "left")}<div class="workspace assets-75">${rosterPanel()}<div class="right-rail">${capPanel()}${myBlock()}${picks()}${market()}</div></div>${ticker()}`;
+    }
+    function renderAssets76() {
+      const teams = [["Top league",[["Desmond Bane",88,86,"$34.0M"],["Michael Porter Jr.",84,89,"$38.3M"],["Cam Thomas",82,87,"$21.4M"],["Daniel Gafford",81,74,"$18.2M"],["De'Andre Hunter",79,81,"$24.9M"]],"NBA"],["Atlanta",[["De'Andre Hunter",79,81,"$24.9M"],["Clint Capela",77,68,"$19.6M"],["Bogdan Bogdanović",76,83,"$17.3M"],["2029 R2",41,41,"ATL"],["2031 R1",68,68,"ATL"]],"ATL"],["Brooklyn",[["Cam Thomas",82,87,"$21.4M"],["Dorian Finney-Smith",77,73,"$15.1M"],["Day'Ron Sharpe",76,70,"$8.2M"],["2030 R1",69,69,"PHX"],["2031 R2",36,36,"BKN"]],"BKN"]];
+      const marketWide = `<section class="panel market-wide"><div class="panel-head"><h2>League Block Scanner</h2><div class="panel-tools"><button class="active">All</button><button>Players</button><button>Picks</button><button>Needs</button></div></div><div class="market-columns">${teams.map(t=>`<div class="market-team"><h4>${t[2]==="NBA"?"":`<img src="${logo(t[2])}">`}${t[0]}</h4>${t[1].map(r=>`<div class="compact-row"><button>${r[0]}</button><span>${r[1]}</span><span>${r[2]}</span><span class="muted">${r[3]}</span></div>`).join("")}</div>`).join("")}</div></section>`;
+      const actions = `<div class="action-stack"><section class="panel"><div class="panel-head"><h2>Deal Desk</h2><div class="panel-tools"><button>Builder</button><button>Finder</button></div></div><div class="quick-trade"><span class="quick-team"><img src="${logo("WAS")}">WAS</span><span class="swap">⇄</span><span class="quick-team">Select team<img src="${logo("UTA")}"></span></div></section>${myBlock()}${picks()}</div>`;
+      return `${head("Assets", "left")}<div class="workspace assets-76">${rosterPanel(15)}${capPanel()}${marketWide}${actions}</div>${ticker()}`;
+    }
+    function renderAssets77() {
+      const exposure = `<section class="panel"><div class="panel-head"><h2>Asset Concentration</h2><span>Share of total team value</span></div><div class="exposure-body">${[["Top 3 players",62,62],["Players 25 & under",71,71],["Draft capital",46,46],["Expiring salary",23,23],["Negative contracts",14,14]].map(r=>`<div class="exposure-row"><span>${r[0]}</span><i class="track"><i style="--fill:${r[1]}%;--bar:${barColor(r[1])}"></i></i><strong>${r[2]}%</strong></div>`).join("")}</div></section>`;
+      const rights = `<section class="panel"><div class="panel-head"><h2>Rights + Obligations</h2><button>Full ledger</button></div><div class="rights-body">${[["2029 R1","WAS own","Clear"],["2030 R1","WAS own","Clear"],["2030 R2","BOS via WAS","Owned"],["2031 R1","WAS own","Swap BKN"],["2032 R1","WAS own","Frozen"]].map(r=>`<div class="right-row"><span>${r[0]}</span><span>${r[1]}</span><span>${r[2]}</span></div>`).join("")}</div></section>`;
+      return `${head("Assets", "left")}<div class="workspace assets-77">${rosterPanel(13,true)}${market(12)}<div class="lower">${capPanel()}${exposure}${rights}${myBlock()}</div></div>${ticker()}`;
+    }
+
+    const seriesData = [
+      [[1,"BOS",3],[8,"ATL",1]], [[4,"CLE",2],[5,"IND",2]], [[3,"NYK",3],[6,"ORL",1]], [[2,"MIL",2],[7,"MIA",2]],
+      [[1,"OKC",3],[8,"SAC",1]], [[4,"DEN",2],[5,"LAL",2]], [[3,"MIN",3],[6,"HOU",1]], [[2,"MEM",2],[7,"GSW",2]]
+    ];
+    const seriesCard = (s, live=false) => `<button class="series${live?" live":""}">${s.map((t,i)=>`<span class="series-team${t[2]===3?" winner":""}"><span class="seed">${t[0]}</span>${t[1] === "TBD" ? `<span class="tbd-crest">—</span>` : `<img src="${logo(t[1])}">`}<span>${t[1]}</span><span class="wins">${t[2]}</span></span>`).join("")}</button>`;
+    const bracket = () => {
+      const east1=seriesData.slice(0,4).map((s,i)=>seriesCard(s,i===3)).join("");
+      const west1=seriesData.slice(4).map(seriesCard).join("");
+      return `<div class="bracket-body"><div class="bracket-round r1"><span class="round-title">East first round</span>${east1}</div><div class="bracket-round r2"><span class="round-title">Semifinals</span>${seriesCard([[1,"BOS",1],[4,"CLE",0]])}${seriesCard([[3,"NYK",0],[2,"MIL",1]],true)}</div><div class="bracket-round r3"><span class="round-title">East final</span>${seriesCard([[1,"BOS",0],[2,"MIL",0]])}</div><div class="bracket-round finals"><span class="round-title">NBA Finals</span>${seriesCard([[0,"TBD",0],[0,"TBD",0]])}</div><div class="bracket-round r3"><span class="round-title">West final</span>${seriesCard([[1,"OKC",0],[3,"MIN",0]])}</div><div class="bracket-round r2"><span class="round-title">Semifinals</span>${seriesCard([[1,"OKC",1],[4,"DEN",0]])}${seriesCard([[3,"MIN",1],[2,"MEM",0]])}</div><div class="bracket-round r1"><span class="round-title">West first round</span>${west1}</div></div>`;
+    };
+    const leaders = () => `<section class="panel"><div class="panel-head"><h2>Playoff Leaders</h2><button>PTS ▾</button></div><div class="leaders-list">${[["DEN","Nikola Jokić","31.8",92],["OKC","Shai Gilgeous-Alexander","30.6",89],["BOS","Jayson Tatum","29.4",85],["MIL","Giannis Antetokounmpo","28.9",83],["MIN","Anthony Edwards","28.2",80]].map((r,i)=>`<div class="leader-row"><img src="${logo(r[0])}"><span>${i+1}. ${r[1]}</span><i class="track"><i style="--fill:${r[3]}%;--bar:${barColor(r[3])}"></i></i><strong>${r[2]}</strong></div>`).join("")}</div></section>`;
+    const games = () => `<section class="panel"><div class="panel-head"><h2>Washington Series</h2><button>Open matchup</button></div><div class="series-ledger">${[["G1","WAS 118 – MIL 113","W"],["G2","MIL 121 – WAS 109","L"],["G3","WAS 126 – MIL 119","W"],["G4","MIL 114 – WAS 110","L"],["G5","Tomorrow","—"]].map(r=>`<button class="series-game"><span>${r[0]}</span><span>${r[1]}</span><span style="color:${r[2]==="W"?"var(--green)":r[2]==="L"?"var(--red)":"var(--muted)"}">${r[2]}</span></button>`).join("")}</div></section>`;
+    const controls = () => `<section class="panel"><div class="panel-head"><h2>Advance</h2><span>Every active series</span></div><div class="playoff-actions"><button class="button">1 game</button><button class="button">Finish round</button><button class="button">Finish playoffs</button></div></section>`;
+    function renderPlayoffs78() {
+      return `${head("Playoffs · Conference Semifinals", "right")}<div class="workspace playoff-workspace"><section class="panel bracket-panel"><div class="panel-head"><h2>2029 Playoff Bracket</h2><span>Click any series for game-by-game box scores</span></div>${bracket()}</section><div class="playoff-side">${leaders()}${games()}${controls()}</div></div>${ticker()}`;
+    }
+    const rosterMini = (team, names) => `<section class="panel"><div class="panel-head"><h2>${team} Rotation</h2><button>Full roster</button></div><div class="team-roster"><div class="team-roster-row"><span>Player</span><span>OVR</span><span>OFF</span><span>DEF</span><span>MPG</span><span>Series</span></div>${names.map((n,i)=>`<div class="team-roster-row"><span>${n}</span><span>${91-i}</span><span>${94-i}</span><span>${87+i}</span><span>${(39-i*1.4).toFixed(1)}</span><span>${(29-i*2.1).toFixed(1)}</span></div>`).join("")}</div></section>`;
+    const miniBracket = () => `<section class="panel"><div class="panel-head"><h2>Live Bracket</h2><button>Expand</button></div><div class="mini-bracket"><div class="mini-bracket-col">${["BOS 3–1 ATL","CLE 2–2 IND","NYK 3–1 ORL","MIL 2–2 WAS"].map(x=>`<span class="mini-series"><span>${x}</span></span>`).join("")}</div><div class="mini-bracket-col">${["BOS 1–0 CLE","MIL 0–0 NYK"].map(x=>`<span class="mini-series"><span>${x}</span></span>`).join("")}</div><div class="mini-bracket-col"><span class="mini-series"><span>East final</span><span>TBD</span></span><span class="mini-series"><span>West final</span><span>TBD</span></span></div><div class="mini-bracket-col">${["OKC 1–0 DEN","MIN 1–0 MEM"].map(x=>`<span class="mini-series"><span>${x}</span></span>`).join("")}</div></div></section>`;
+    function renderPlayoffs79() {
+      const hero = `<section class="panel"><div class="panel-head"><h2>Eastern Semifinals · Game 5</h2><span>Series tied 2–2</span></div><div class="matchup-hero"><div class="matchup-team"><img src="${logo("WAS")}"><div><strong>Washington</strong><span>49–33 · #6 seed</span></div></div><div class="matchup-score"><strong>2 — 2</strong><span>Next: Apr 29 · Away</span></div><div class="matchup-team"><img src="${logo("MIL")}"><div><strong>Milwaukee</strong><span>56–26 · #2 seed</span></div></div></div></section>`;
+      const timeline = `<section class="panel"><div class="panel-head"><h2>Series Timeline</h2><div class="panel-tools"><button>Previous game</button><button>Latest box score</button></div></div><div class="game-timeline">${[["G1","W","118–113"],["G2","L","109–121"],["G3","W","126–119"],["G4","L","110–114"],["G5","","Apr 29"],["G6","","May 1"],["G7","","May 3"]].map(r=>`<span class="game-node ${r[1]==="W"?"win":r[1]==="L"?"loss":""}"><span>${r[0]}</span><i>${r[1]||"·"}</i><em>${r[2]}</em></span>`).join("")}</div></section>`;
+      const matchup = `<div class="series-matchup-grid">${rosterMini("WAS",["Tyrese Haliburton","Jalen Suggs","Brandon Miller","Alex Sarr","Bilal Coulibaly","Bub Carrington","Corey Kispert","Kyshawn George"])}${rosterMini("MIL",["Giannis Antetokounmpo","Damian Lillard","Khris Middleton","Brook Lopez","Bobby Portis","Gary Trent Jr.","Andre Jackson Jr.","Pat Connaughton"])}</div>`;
+      const factors = `<section class="panel"><div class="panel-head"><h2>Matchup Factors</h2><span>WAS · MIL</span></div><div class="matchup-factors">${[["112.8",62,"Net rating",72,"116.2"],["58%",58,"Rim pressure",83,"71%"],["37%",66,"3PT quality",59,"35%"],["14.1",72,"Turnover rate",61,"15.5"],["29%",55,"Off. rebounding",78,"34%"],["97.1",68,"Pace",64,"96.3"]].map(r=>`<div class="matchup-factor"><span>${r[0]}</span><i class="track"><i style="--fill:${r[1]}%"></i></i><em>${r[2]}</em><i class="track"><i style="--fill:${r[3]}%"></i></i><span>${r[4]}</span></div>`).join("")}</div></section>`;
+      return `${head("Playoffs · Series Room", "right")}<div class="workspace playoffs-79"><div class="series-room">${hero}${timeline}${matchup}</div><div class="right">${miniBracket()}${factors}<div class="series-matchup-grid">${leaders()}${controls()}</div></div></div>${ticker()}`;
+    }
+    function renderPlayoffs80() {
+      const injuries = `<section class="panel"><div class="panel-head"><h2>Playoff Injuries</h2><button>All teams</button></div><div class="injury-list">${[["BOS","Jaylen Brown","Questionable","1"],["DEN","Jamal Murray","Out","3"],["MIA","Jimmy Butler","Out","5"],["WAS","Richaun Holmes","Out","2"]].map(r=>`<div class="injury-row"><img src="${logo(r[0])}"><span>${r[1]}</span><span>${r[2]}</span><span>${r[3]} G</span></div>`).join("")}</div></section>`;
+      const progress = `<section class="panel"><div class="panel-head"><h2>Postseason Progress</h2><span>Conference semifinals</span></div><div class="round-progress">${[["Round 1","done"],["Semis","current"],["Conf. finals",""],["NBA finals",""]].map(r=>`<span class="round-step ${r[1]}"><i></i><span>${r[0]}</span></span>`).join("")}</div></section>`;
+      const scoreboard = `<section class="panel"><div class="panel-head"><h2>Round Scoreboard</h2><span>Conference semifinals</span></div><div class="scoreboard-list">${[["BOS","BOS – CLE","1–0","G2"],["MIL","MIL – NYK","1–0","G2"],["OKC","OKC – DEN","1–0","G2"],["MIN","MIN – MEM","1–0","G2"],["WAS","WAS – MIL","2–2","G5"],["LAL","DEN – LAL","2–2","G5"],["HOU","MIN – HOU","3–1","Final"],["SAC","OKC – SAC","3–1","Final"]].map((r,i)=>`<div class="scoreboard-row${i===4?" live":""}"><img src="${logo(r[0])}"><span>${r[1]}</span><span>${r[2]}</span><span>${r[3]}</span></div>`).join("")}</div></section>`;
+      const slate = `<section class="panel"><div class="panel-head"><h2>Next Slate</h2><button>Schedule</button></div><div class="slate-list">${[["Apr 29","WAS at MIL","Game 5"],["Apr 29","DEN at LAL","Game 5"],["Apr 30","CLE at BOS","Game 2"],["Apr 30","NYK at MIL","Game 2"],["May 1","MIL at WAS","Game 6"]].map(r=>`<div class="slate-row"><span>${r[0]}</span><span>${r[1]}</span><span>${r[2]}</span></div>`).join("")}</div></section>`;
+      return `${head("Playoffs · League Postseason", "right")}<div class="workspace playoffs-80"><div class="top"><section class="panel bracket-panel"><div class="panel-head"><h2>2029 Playoff Bracket</h2><div class="panel-tools"><button>East</button><button>West</button><button class="active">Both</button></div></div>${bracket()}</section><div class="playoff-side">${scoreboard}${slate}${controls()}</div></div><div class="bottom">${progress}${injuries}${leaders()}${games()}</div></div>${ticker()}`;
+    }
+
+    const renderers = { assets75:renderAssets75, assets76:renderAssets76, assets77:renderAssets77, playoffs78:renderPlayoffs78, playoffs79:renderPlayoffs79, playoffs80:renderPlayoffs80 };
+    document.querySelectorAll("[data-concept]").forEach(node => { node.innerHTML = renderers[node.dataset.concept](); });
+  </script>
+</body>
+</html>

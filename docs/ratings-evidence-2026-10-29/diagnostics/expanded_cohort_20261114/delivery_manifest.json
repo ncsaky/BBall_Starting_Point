@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-14",
+  "packet_version": "expanded_action_cohort_research_v1_2026_11_14",
+  "artifact_sha256": {
+    "EXPANDED_ACTION_COHORT_2026_11_14.md": "5e6072730a8e15cd3d342ebfc1cb7fb07ded57b3cbdecf40be50335dc9535223",
+    "EXPANDED_ACTION_COHORT_2026_11_14.json": "e61a71e7b1225f83c0e357386b98a08ce2a449c310e99f5846b80b00a32755d2",
+    "EXPANDED_ACTION_COHORT_READINESS_2026_11_14.md": "b9f5433d43909862a9142a70ba8d91f3a052cf5d37642ed9d3eca5b451c63629",
+    "EXPANDED_ACTION_COHORT_ACTIVE_TASK.md": "3507784a64632edf5b3f967b9443100329230964bc63f898691857bf7103c2bf",
+    "diagnostics/expanded_cohort_20261114/source_readiness_ledger.json": "e3f7f3bfa44af0a733ac0432221024a1841f745d7e76cc93695770dd536c3af6",
+    "diagnostics/expanded_cohort_20261114/compiler_dependency_snapshot.json": "1bc7bf5315958332779a200e1207b5e7ab18356e1733a8a6612f443d7e451e08",
+    "diagnostics/expanded_cohort_20261114/retained_counts_validation.json": "f34d9aad15dd4bafc1d15cc7ed7070af9481c4be57e88a752272be4edbd4f6ce",
+    "diagnostics/expanded_cohort_20261114/validation.json": "fd1aa958bbaccca848bf30983e22223cac3e5444238c32dd2bcb057f7e64e236"
+  },
+  "scope": "authorized new research packet/readiness/diagnostics and active checkpoint only",
+  "schema_sections_validated": 3,
+  "profiles_compiled": 0,
+  "simulations": 0,
+  "production_mutations_by_research": false,
+  "status": "DELIVERED; STOP for coordinator review"
+}

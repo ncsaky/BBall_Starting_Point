@@ -5,9 +5,8 @@ import random
 import shutil
 import sys
 import textwrap
-from bisect import bisect_left, bisect_right
 from copy import deepcopy
-from datetime import timedelta
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -22,7 +21,7 @@ from .contract_ai import (
     projected_retirement_start_year,
     simulate_free_agency,
 )
-from .draft import apply_draft_selection_to_save, apply_draft_selection_to_save_state, find_draft_trade, pick_recommendations, simulate_draft
+from .draft import apply_draft_selection_to_save, apply_draft_selection_to_save_state, draft_selection_rejection, load_draft_application_save, find_draft_trade, pick_recommendations, simulate_draft
 from .save import (
     advance_save,
     add_news,
@@ -53,7 +52,7 @@ from .save import (
     narrative_settings_view,
     run_draft_lottery,
     save_status,
-    set_save_date_phase,
+    advance_lifecycle_to,
     simulate_next_playoff_game,
     simulate_playoff_round,
     start_playoffs,
@@ -62,19 +61,22 @@ from .save import (
     team_cap_summary,
     team_dashboard,
     player_attribute_summary,
+    presentation_rating_value,
     player_salary_table,
     update_narrative_settings,
     ROSTER_SEASON_MAXIMUM,
     trade_deadline_date,
     season_start_year_from_date,
     extension_deadline_date,
+    human_controlled_team_ids,
     write_save,
 )
 from .narrative import hydrate_social_items, press_cache_entry
 from .staff import ROLE_LABELS, STAFF_SLOTS, fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, staff_budget_snapshot, staff_effect_summary, staff_market_report, staff_role_effect, staff_team_report
-from .schema import CANONICAL_START_DATE
+from .schema import CANONICAL_SEASON, CANONICAL_START_DATE
 from .traits import TRAIT_LABELS
-from .transactions import apply_trade_to_save, canonical_with_pending_pick_terms, candidate_from_evaluation, clean_pick_protection_summary, contract_for_player, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, pick_by_id, pick_display_label, pick_obligation_context_note, pick_season_start, pick_swap_asset_value, pick_swap_display_label, player_by_id, player_health_risk, proposal_asset_identity_keys, protected_pick_fallback_is_distinct, prune_trade_offers_touching_assets, recently_signed_player_ids, recently_traded_player_ids, resolve_team, team_by_id, trade_apply_authorized, trade_candidate_with_current_asset_labels, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_pick_swaps_for_team, tradeable_picks_for_team, with_transaction_context
+from .transactions import apply_trade_to_save, apply_trade_to_state, canonical_with_pending_pick_terms, candidate_from_evaluation, clean_pick_protection_summary, contract_for_player, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, pick_by_id, pick_display_label, pick_obligation_context_note, pick_season_start, pick_swap_asset_value, pick_swap_display_label, player_by_id, player_health_risk, proposal_asset_identity_keys, protected_pick_fallback_is_distinct, prune_trade_offers_touching_assets, recently_signed_player_ids, recently_traded_player_ids, resolve_team, team_by_id, trade_apply_authorized, trade_candidate_with_current_asset_labels, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_pick_swaps_for_team, tradeable_picks_for_team, with_transaction_context
+from .transactions import trade_team_ids
 from .utils import clamp, stable_id
 
 
@@ -256,7 +258,7 @@ def delete_all_saves_prompt(existing: list[Path]) -> None:
     pause(f"Deleted {len(existing)} save file(s).")
 
 
-OFFSEASON_PHASES = {"draft_lottery", "draft", "free_agency", "offseason"}
+OFFSEASON_PHASES = {"draft_lottery", "draft", "re_signing", "free_agency", "offseason"}
 PLAYOFF_PHASES = {"play_in", "playoffs"}
 
 
@@ -278,7 +280,7 @@ def handle_forced_phase(root: Path, canonical: dict[str, Any], save_path: Path, 
         return forced_lottery_room(canonical, save_path, user_team, seed) or "handled"
     if phase == "draft":
         return draft_room(canonical, save_path, user_team, seed, forced=True) or "handled"
-    if phase == "free_agency":
+    if phase in {"re_signing", "free_agency"}:
         return free_agency_room(canonical, save_path, user_team, seed, forced=True) or "handled"
     return None
 
@@ -500,19 +502,8 @@ def cut_player_from_roster(canonical: dict[str, Any], save_path: Path, team_abbr
         return
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     date_value = save.get("state", {}).get("current_date")
-    save.setdefault("roster_overrides", {})[player["id"]] = None
-    save.setdefault("free_agent_player_ids", [])
-    if player["id"] not in save["free_agent_player_ids"]:
-        save["free_agent_player_ids"].append(player["id"])
-        save["free_agent_player_ids"] = sorted(save["free_agent_player_ids"])
-    save.setdefault("released_free_agents", {})[player["id"]] = {
-        "player_id": player["id"],
-        "player_name": player.get("name"),
-        "waived_by_team_id": team["id"],
-        "waived_by_team_abbrev": team.get("abbrev"),
-        "release_date": date_value,
-        "status": "available",
-    }
+    from .waivers import request_waiver
+    request_waiver(active, save, player, team['id'], date_value)
     save.setdefault("rotation_recommendations", {}).pop(player["id"], None)
     save.setdefault("rotation_snapshots", {}).pop(team["id"], None)
     add_news(
@@ -572,7 +563,7 @@ def forced_offseason_review_room(canonical: dict[str, Any], save_path: Path, use
 
 def forced_lottery_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int) -> str:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
-    year = str(int(str(save.get("meta", {}).get("season") or "2025-26").split("-")[0]) + 1)
+    year = str(int(str(save.get("meta", {}).get("season") or CANONICAL_SEASON).split("-")[0]) + 1)
     print_title("You Are Entering The Draft Lottery")
     print("Lottery odds are based on this save's standings.")
     print("1. Reveal lottery")
@@ -602,7 +593,7 @@ def print_home(root: Path, canonical: dict[str, Any], save_path: Path) -> None:
         print(style(f"Trade deadline: {deadline} (final day to trade)", "accent"))
     elif phase in {"preseason", "regular_season"}:
         print(style(f"Trade deadline passed: {deadline}", "danger"))
-    if status["phase"] in {"draft_lottery", "draft", "free_agency"}:
+    if status["phase"] in {"draft_lottery", "draft", "re_signing", "free_agency"}:
         print(style(f"STOP: {status['phase']} is active. Review league actions before advancing.", "accent"))
     print(f"Pending: user offers {pending.get('user_trade_offers', 0)}")
     event_view = league_events_view(canonical, save_path, limit=5, kind="transactions")
@@ -674,7 +665,7 @@ def handle_choice(root: Path, canonical: dict[str, Any], save_path: Path, choice
             result = advance_save_with_ai_checkpoints(root, canonical, save_path, target, seed, checkpoint_days=31)
         print(summary_lines("Advanced one month", result, ["through_date", "phase"]))
     elif choice == "4":
-        season = save.get("meta", {}).get("season") or "2025-26"
+        season = save.get("meta", {}).get("season") or CANONICAL_SEASON
         deadline = trade_deadline_date(int(str(season).split("-")[0]))
         regular_end = f"{int(str(season).split('-')[0]) + 1}-04-12"
         if current < deadline:
@@ -1004,28 +995,18 @@ def league_trait_rows(canonical: dict[str, Any], save_path: Path, sort_key: str)
 def apply_display_rating_scale(rows: list[dict[str, Any]]) -> None:
     if not rows:
         return
-    keys = sorted({key for row in rows for key in (row.get("attrs") or {}).keys()})
-    value_sets = {
-        key: sorted(float((row.get("attrs") or {}).get(key) or 0.0) for row in rows)
-        for key in keys
-    }
     for row in rows:
         raw_attrs = {key: float(value or 0.0) for key, value in (row.get("attrs") or {}).items()}
         row["raw_attrs"] = raw_attrs
         row["attrs"] = {
-            key: display_rating_value(value, value_sets.get(key) or [])
+            key: display_rating_value(value)
             for key, value in raw_attrs.items()
         }
 
 
-def display_rating_value(value: float, sorted_values: list[float]) -> float:
-    if not sorted_values:
-        return round(clamp(value, 1, 99), 1)
-    left = bisect_left(sorted_values, value)
-    right = bisect_right(sorted_values, value)
-    percentile = (left + max(1, right - left) * 0.5) / max(1, len(sorted_values))
-    display = 35.0 + percentile * 64.0
-    return round(clamp(display, 1, 99), 1)
+def display_rating_value(value: float, sorted_values: list[float] | None = None) -> float:
+    """Return the fixed dashboard scale; ``sorted_values`` is legacy API input."""
+    return presentation_rating_value(value)
 
 
 def ratings_guide(canonical: dict[str, Any]) -> dict[str, Any]:
@@ -1044,7 +1025,7 @@ def ratings_guide(canonical: dict[str, Any]) -> dict[str, Any]:
         "foot_speed_lateral_agility": "athleticism, defense, matchup fit",
         "stamina_cardio": "athleticism, minutes durability, development",
         "defensive_effort": "defense, disruption, DPOY",
-        "scheme_iq": "defense, IQ, team fit, coaching context",
+        "scheme_iq": "spatial help/contests, IQ, team fit, coaching context",
         "rim_deterrence": "defense, rim protection, rebounds, DPOY",
         "screen_navigation": "defense, disruption, guard/wing matchup value",
         "offensive_rebounding": "rebounding, possession value",
@@ -1066,13 +1047,14 @@ def ratings_guide(canonical: dict[str, Any]) -> dict[str, Any]:
         )
     return {
         "rows": rows,
-        "display_scale": "Visible ratings use the calibrated 1-99 game scale shown on team dashboards; engine calculations use the same underlying raw trait values.",
+        "display_scale": "OFF, DEF, OVR and subratings directly show the same 1-99 model-grade scale; engine calculations use the same underlying raw trait values. Scores are ability estimates, not percentages or percentiles. Composites describe different jobs; the same score does not imply identical matchup impact.",
         "calibration_stack": "Trait stack: inferred stat model -> full-health 2026 league ratings prior -> manual playtest overrides; health, rust, and injury risk are applied separately.",
         "composites": [
-            "Overall: shooting 22%, creation 25%, defense 22%, athleticism 13%, IQ 12%, plus a small minutes role bonus.",
-            "Offense: shooting 35%, creation 32%, passing 18%, rim pressure 15%.",
-            "Defense: defensive effort, scheme IQ, screen navigation, and rim deterrence.",
+            "Overall: a shooting/creation/defense/athleticism/IQ base and minutes role bonus, blended with position-specific skill value when enabled. A broad current-ability grade, not a league rank or win probability.",
+            "Offense: shooting/creation/passing/rim-pressure base, blended with post creation, assisted finishing, screening and offensive rebounding according to offensive role. Not points per 100 possessions.",
+            "Defense: 60% activity (effort 42%, lateral agility 36%, navigation 22%) and 40% effective rim ability. Scheme IQ separately affects spatial help and contests; weak-link targeting is not a skill grade.",
             "Rebounding: offensive rebounding 66%, rim deterrence 18%, stamina 16%.",
+            "Subratings: tool estimates or derived skill grades on the same numeric scale. Gameplay responses, court-zone suppression and matchup context remain separate from those grades.",
         ],
     }
 
@@ -1101,7 +1083,7 @@ def derived_trait_attributes(attrs: dict[str, Any]) -> dict[str, float]:
     rim_pressure = float(attrs.get("rim_pressure") or 0.0)
     defense = float(attrs.get("defense") or 0.0)
     spacing = shooting * 0.45 + float(attrs.get("range") or 0.0) * 0.35 + float(attrs.get("release") or 0.0) * 0.20
-    offense = shooting * 0.35 + creation * 0.32 + passing * 0.18 + rim_pressure * 0.15
+    offense = attrs.get("offense", shooting * 0.35 + creation * 0.32 + passing * 0.18 + rim_pressure * 0.15)
     disruption = (
         float(attrs.get("def_effort") or 0.0) * 0.40
         + float(attrs.get("screen_nav") or 0.0) * 0.25
@@ -2853,8 +2835,8 @@ def offseason_room(canonical: dict[str, Any], save_path: Path, user_team: str, s
             print("1. Draft room")
         else:
             print("1. Draft room (locked until draft)")
-        if phase == "free_agency":
-            print("2. Free agency room")
+        if phase in {"re_signing", "free_agency"}:
+            print("2. Re-signing / free agency room")
         else:
             print("2. Free agency room (locked until free agency)")
         print("3. Year review / retirement reports")
@@ -2865,7 +2847,7 @@ def offseason_room(canonical: dict[str, Any], save_path: Path, user_team: str, s
             return
         if choice == "1":
             if phase == "draft_lottery":
-                year = str(int(str(save.get("meta", {}).get("season") or "2025-26").split("-")[0]) + 1)
+                year = str(int(str(save.get("meta", {}).get("season") or CANONICAL_SEASON).split("-")[0]) + 1)
                 print_title("You Are Entering The Draft Lottery")
                 print("Lottery odds are based on this save's standings. Press Enter to reveal the order.")
                 input()
@@ -2877,7 +2859,7 @@ def offseason_room(canonical: dict[str, Any], save_path: Path, user_team: str, s
             else:
                 pause("The draft room unlocks when the draft begins.")
         elif choice == "2":
-            if phase == "free_agency":
+            if phase in {"re_signing", "free_agency"}:
                 free_agency_room(canonical, save_path, user_team, seed)
             else:
                 pause("Free agency opens after the draft.")
@@ -2936,7 +2918,7 @@ def draft_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed:
     while True:
         clear_screen()
         save = load_save(save_path)
-        year = str(int(str(save.get("meta", {}).get("season") or "2025-26").split("-")[0]) + 1)
+        year = str(int(str(save.get("meta", {}).get("season") or CANONICAL_SEASON).split("-")[0]) + 1)
         state = ensure_live_draft_state(canonical, save_path, year, seed)
         current = current_draft_selection(state)
         print_title(f"Draft Room | {year}")
@@ -2954,13 +2936,13 @@ def draft_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed:
             print("1. Full draft recap")
             print("5. Team dashboard")
             print("9. Trade room / move draft assets")
-            print("0. Continue to free agency")
+            print("0. Continue to re-signing")
         if current and forced:
             print("0. Save and quit")
         choice = input("> Pick a number: ").strip()
         if choice == "0" and not current:
             root = save_path.parent.parent if save_path.parent.name == "saves" else Path.cwd()
-            with loading_screen(root, "Opening free agency...", seed=seed):
+            with loading_screen(root, "Opening the re-signing window...", seed=seed):
                 finish_draft_phase(canonical, save_path, year)
             clear_screen()
             return "done"
@@ -3030,7 +3012,7 @@ def finish_draft_phase(canonical: dict[str, Any], save_path: Path, year: str) ->
     state = save.get("draft_state") or {}
     if state.get("year") == str(year):
         state["status"] = "completed"
-    set_save_date_phase(save, f"{year}-06-27")
+    advance_lifecycle_to(canonical, save, f"{year}-06-27", int(save.get("meta", {}).get("seed", 1)))
     prepare_free_agency_pool(canonical, save)
     write_save(save_path, save)
 
@@ -3039,7 +3021,15 @@ def ensure_live_draft_state(canonical: dict[str, Any], save_path: Path, year: st
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     state = save.get("draft_state") or {}
     if state.get("year") == year and state.get("status") in {"in_progress", "completed"} and state.get("draft"):
-        changed = bool(materialize_draft_order_pick_assets(canonical, save, state.get("draft") or {}))
+        draft = state["draft"]
+        changed = False
+        if not draft.get("draft_prospect_traits") and state.get("status") == "in_progress":
+            ids = {(item.get("prospect") or {}).get("id") for item in draft.get("pending_draft_selections", [])}
+            traits = [row for row in canonical.get("draft_prospect_traits", []) if row.get("prospect_id") in ids]
+            if traits:
+                draft["draft_prospect_traits"] = deepcopy(traits)
+                changed = True
+        changed = bool(materialize_draft_order_pick_assets(canonical, save, draft)) or changed
         changed = sync_live_draft_state_to_saved_order(canonical, save, year) or changed
         changed = refresh_live_draft_state_ownership(canonical, save, year) or changed
         if changed:
@@ -3058,6 +3048,7 @@ def ensure_live_draft_state(canonical: dict[str, Any], save_path: Path, year: st
         "ai_draft_traded_pick_ids": [],
         "ai_draft_trade_budget": {"top_10": 0, "picks_11_25": 0, "total": 0},
         "ai_draft_trade_news_queue": [],
+        "ai_draft_trade_history": [],
     }
     if draft.get("draft_order") or draft.get("lottery"):
         save.setdefault("draft_orders", {})[year] = {"draft_order": draft.get("draft_order", []), "lottery": draft.get("lottery")}
@@ -3069,6 +3060,7 @@ def ensure_draft_ai_trade_state(state: dict[str, Any]) -> None:
     state.setdefault("ai_draft_traded_pick_ids", [])
     state.setdefault("ai_draft_trade_budget", {"top_10": 0, "picks_11_25": 0, "total": 0})
     state.setdefault("ai_draft_trade_news_queue", [])
+    state.setdefault("ai_draft_trade_history", [])
 
 
 def apply_ai_trade_candidate_to_save(canonical: dict[str, Any], save_path: Path, candidate: dict[str, Any], date_value: str) -> dict[str, Any]:
@@ -3086,17 +3078,33 @@ def apply_ai_trade_candidate_to_save(canonical: dict[str, Any], save_path: Path,
 
 def maybe_run_ai_draft_trades_before_pick(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int, force: bool = False) -> dict[str, Any]:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = with_transaction_context(canonical_with_save(canonical, save))
+    result = maybe_run_ai_draft_trades_before_pick_state(canonical, save, active, user_team, seed, force=force)
+    if result.get("applied_count"):
+        write_save(save_path, save)
+    return result
+
+
+def maybe_run_ai_draft_trades_before_pick_state(
+    canonical: dict[str, Any],
+    save: dict[str, Any],
+    active: dict[str, Any],
+    user_team: str,
+    seed: int,
+    *,
+    force: bool = False,
+) -> dict[str, Any]:
     state = save.setdefault("draft_state", {})
     ensure_draft_ai_trade_state(state)
     current = current_draft_selection(state)
     if not current:
         return {"applied_count": 0, "trades": []}
-    user_team_id = resolve_team(canonical, user_team)["id"]
+    human_team_ids = human_controlled_team_ids(save)
     selection = current.get("selection") or {}
     seller_team_id = selection.get("team_id")
     pick_id = selection.get("pick_id") or (current.get("pick") or {}).get("id")
     overall = int(selection.get("overall_pick") or 999)
-    if not pick_id or seller_team_id == user_team_id or overall > 25:
+    if not pick_id or seller_team_id in human_team_ids or overall > 25:
         return {"applied_count": 0, "trades": []}
     traded_ids = set(state.get("ai_draft_traded_pick_ids") or [])
     used_ids = set(state.get("used_pick_ids") or [])
@@ -3110,17 +3118,24 @@ def maybe_run_ai_draft_trades_before_pick(canonical: dict[str, Any], save_path: 
             return {"applied_count": 0, "trades": []}
         if 11 <= overall <= 25 and int(budget.get("picks_11_25") or 0) >= 5:
             return {"applied_count": 0, "trades": []}
-    active = with_transaction_context(canonical_with_save(canonical, save))
-    candidate = best_ai_draft_trade_candidate(active, save, state, current, user_team_id, seed)
+    candidate = best_ai_draft_trade_candidate(active, save, state, current, human_team_ids, seed)
     if not candidate:
         return {"applied_count": 0, "trades": []}
-    applied = apply_ai_trade_candidate_to_save(canonical, save_path, candidate, save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
+    proposal = candidate.get("proposal") or {}
+    proposal_id = proposal.get("id")
+    if not proposal_id:
+        return {"applied_count": 0, "trades": [], "skipped": {"status": "not_applied", "notes": "AI trade candidate had no proposal id."}}
+    pending = save.setdefault("pending_trade_proposals", [])
+    if not any(((item.get("proposal") or {}).get("id") or item.get("id")) == proposal_id for item in pending):
+        pending.append({**candidate, "accepted_by_all": True})
+    social_ids_before = {str(item.get("id") or "") for item in save.get("social_feed") or []}
+    applied = apply_trade_to_state(
+        save,
+        proposal_id,
+        date=save.get("state", {}).get("current_date") or CANONICAL_START_DATE,
+    )
     if applied.get("status") != "applied":
         return {"applied_count": 0, "trades": [], "skipped": applied}
-    save = ensure_league_save_defaults(load_save(save_path), canonical)
-    state = save.setdefault("draft_state", {})
-    ensure_draft_ai_trade_state(state)
-    proposal = candidate.get("proposal") or {}
     involved_pick_ids = {
         asset.get("id")
         for asset in [*(proposal.get("from_assets") or []), *(proposal.get("to_assets") or [])]
@@ -3134,16 +3149,35 @@ def maybe_run_ai_draft_trades_before_pick(canonical: dict[str, Any], save_path: 
     elif overall <= 25:
         budget["picks_11_25"] = int(budget.get("picks_11_25") or 0) + 1
     headline = draft_trade_headline(active, state, proposal)
-    state.setdefault("ai_draft_trade_news_queue", []).append(
-        {
-            "id": stable_id("draft_breaking_news", proposal.get("id"), overall),
-            "overall_pick": overall,
-            "headline": headline,
-            "proposal_id": proposal.get("id"),
-        }
-    )
+    trade_posts = [
+        item for item in reversed(save.get("social_feed") or [])
+        if item.get("kind") == "trade"
+        and item.get("date") == (save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
+    ]
+    social_post = next((item for item in trade_posts if str(item.get("id") or "") not in social_ids_before), None)
+    social_post = social_post or next(iter(trade_posts), None)
+    if social_post:
+        social_post = {key: social_post.get(key) for key in ("id", "date", "author", "handle", "text")}
+    news_item = {
+        "id": stable_id("draft_breaking_news", proposal.get("id"), overall),
+        "date": save.get("state", {}).get("current_date") or CANONICAL_START_DATE,
+        "overall_pick": overall,
+        "headline": headline,
+        "proposal_id": proposal.get("id"),
+        "social_post": social_post,
+    }
+    state.setdefault("ai_draft_trade_news_queue", []).append(news_item)
+    state.setdefault("ai_draft_trade_history", []).append(news_item)
     refresh_live_draft_state_ownership(canonical, save, state.get("year"))
-    write_save(save_path, save)
+    from_team_id = proposal.get("from_team_id")
+    to_team_id = proposal.get("to_team_id")
+    owner_by_pick_id = {
+        **{str(asset.get("id")): to_team_id for asset in proposal.get("from_assets", []) if asset.get("kind") == "pick" and asset.get("id")},
+        **{str(asset.get("id")): from_team_id for asset in proposal.get("to_assets", []) if asset.get("kind") == "pick" and asset.get("id")},
+    }
+    for pick in active.get("draft_picks", []):
+        if str(pick.get("id")) in owner_by_pick_id:
+            pick["current_owner_team_id"] = owner_by_pick_id[str(pick.get("id"))]
     return {"applied_count": 1, "trades": [candidate], "apply_result": applied}
 
 
@@ -3152,7 +3186,7 @@ def best_ai_draft_trade_candidate(
     save: dict[str, Any],
     state: dict[str, Any],
     current: dict[str, Any],
-    user_team_id: str,
+    human_team_ids: set[str],
     seed: int,
 ) -> dict[str, Any] | None:
     selection = current.get("selection") or {}
@@ -3172,7 +3206,7 @@ def best_ai_draft_trade_candidate(
     prior_trade_count = int(budget.get("total") or 0)
     quiet_mid_first_market = overall >= 11 and prior_trade_count < max(1, (overall - 8) // 5)
     for buyer in sorted(active.get("teams", []), key=lambda item: item.get("abbrev", "")):
-        if buyer.get("id") in {seller_team_id, user_team_id}:
+        if buyer.get("id") == seller_team_id or buyer.get("id") in human_team_ids:
             continue
         lower_pick = draft_trade_lower_pick_for_buyer(active, state, buyer["id"], overall)
         if not lower_pick and overall <= 10:
@@ -3435,13 +3469,65 @@ def current_draft_selection(state: dict[str, Any]) -> dict[str, Any] | None:
     return pending[index]
 
 
+def draft_pick_presentation_event(current: dict[str, Any]) -> dict[str, Any]:
+    selection = current.get("selection") or {}
+    team = current.get("team") or {}
+    prospect = current.get("prospect") or {}
+    team_id = selection.get("team_id") or team.get("id")
+    return {
+        "type": "pick",
+        "selection_id": current.get("id") or selection.get("id"),
+        "overall_pick": int(selection.get("overall_pick") or 0),
+        "team": {
+            "id": team_id,
+            "abbrev": team.get("abbrev") or team_id_to_abbrev(team_id),
+            "name": team.get("name") or team.get("abbrev") or team_id_to_abbrev(team_id),
+        },
+        "prospect": {
+            "id": prospect.get("id") or selection.get("prospect_id"),
+            "name": prospect.get("name") or selection.get("prospect_name") or "Unknown prospect",
+            "position": prospect.get("position") or "",
+        },
+    }
+
+
+def new_draft_trade_presentation_events(state: dict[str, Any], known_ids: set[str]) -> list[dict[str, Any]]:
+    return [
+        {"type": "trade", **item}
+        for item in state.get("ai_draft_trade_news_queue") or []
+        if str(item.get("id") or "") not in known_ids
+    ]
+
+
+def saved_order_pending_slots(pending: list[dict[str, Any]], order: list[dict[str, Any]], consumed: int = 0) -> dict[int, dict[str, Any]]:
+    """Align eligible selection order when forfeitures leave different slot gaps."""
+    ordered = sorted(order, key=lambda row: int(row.get("overall_pick") or 0))
+    slots = [int((item.get("selection") or {}).get("overall_pick") or index + 1)
+             for index, item in enumerate(pending)]
+    actual_slots = [int(row.get("overall_pick") or 0) for row in ordered]
+    if len(pending) != len(ordered):
+        raise ValueError("The saved eligible draft order and pending selections have different lengths. No queued pick or prospect has been discarded.")
+    if len(set(actual_slots)) != len(actual_slots):
+        raise ValueError("The saved draft order contains duplicate selection slots.")
+    if slots != actual_slots:
+        # A stalled legacy queue is repairable only if no consumed pick would
+        # be reassigned. Never rewrite a completed selection or drop a prospect.
+        for item, row in zip(pending[:consumed], ordered[:consumed], strict=True):
+            selection = item.get("selection") or {}
+            if (selection.get("pick_id") != draft_pick_identity(row)
+                    or int(selection.get("overall_pick") or 0) != int(row.get("overall_pick") or 0)):
+                raise ValueError("The saved draft order conflicts with already applied picks. Restore a pre-draft backup rather than reassigning consumed selections.")
+        return dict(zip(actual_slots, pending, strict=True))
+    return dict(zip(slots, pending, strict=True))
+
+
 def apply_saved_draft_order_to_draft(canonical: dict[str, Any], save: dict[str, Any], year: str, draft: dict[str, Any]) -> dict[str, Any]:
     order = ((save.get("draft_orders") or {}).get(str(year)) or {}).get("draft_order") or []
     pending = draft.get("pending_draft_selections") or []
     if not order or not pending:
         return draft
     teams = {team["id"]: team for team in canonical.get("teams", [])}
-    picks_by_overall = {int((item.get("selection") or {}).get("overall_pick") or idx + 1): item for idx, item in enumerate(pending)}
+    picks_by_overall = saved_order_pending_slots(pending, order)
     seen_pick_ids: set[str] = set()
     for pick_order in order:
         overall = int(pick_order.get("overall_pick") or 0)
@@ -3457,6 +3543,7 @@ def apply_saved_draft_order_to_draft(canonical: dict[str, Any], save: dict[str, 
         pick_order["team_abbrev"] = team_id_to_abbrev(team_id)
         selection = item.setdefault("selection", {})
         pick = item.setdefault("pick", {})
+        selection["overall_pick"] = overall
         selection["team_id"] = team_id
         if pick_id:
             if pick_id in seen_pick_ids:
@@ -3497,16 +3584,17 @@ def sync_live_draft_state_to_saved_order(canonical: dict[str, Any], save: dict[s
     if not pending or not order:
         return False
     teams = {team["id"]: team for team in canonical.get("teams", [])}
-    order_by_overall = {int(row.get("overall_pick") or 0): row for row in order if row.get("overall_pick")}
     seen_order_pick_ids: set[str] = set()
     current_index = int(state.get("current_index") or 0)
+    items_by_slot = saved_order_pending_slots(pending, order, current_index)
+    order_by_item = {id(items_by_slot[int(row["overall_pick"])]): row for row in order
+                     if row.get("overall_pick") and int(row["overall_pick"]) in items_by_slot}
     changed = False
     for idx, item in enumerate(pending):
         if idx < current_index:
             continue
         selection = item.setdefault("selection", {})
-        overall = int(selection.get("overall_pick") or idx + 1)
-        row = order_by_overall.get(overall)
+        row = order_by_item.get(id(item))
         if not row:
             continue
         pick_id = draft_pick_identity(row)
@@ -3519,6 +3607,7 @@ def sync_live_draft_state_to_saved_order(canonical: dict[str, Any], save: dict[s
             selection.get("team_id"),
             pick.get("id"),
             pick.get("current_owner_team_id"),
+            selection.get("overall_pick"),
         )
         if pick_id in seen_order_pick_ids:
             pick_id = selection.get("pick_id") or pick.get("id") or pick_id
@@ -3528,6 +3617,7 @@ def sync_live_draft_state_to_saved_order(canonical: dict[str, Any], save: dict[s
             seen_order_pick_ids.add(pick_id)
         selection["pick_id"] = pick_id
         selection["team_id"] = owner_id
+        selection["overall_pick"] = int(row["overall_pick"])
         selection["original_team_id"] = row.get("original_team_id")
         pick["id"] = pick_id
         pick["pick_id"] = pick_id
@@ -3543,6 +3633,7 @@ def sync_live_draft_state_to_saved_order(canonical: dict[str, Any], save: dict[s
             selection.get("team_id"),
             pick.get("id"),
             pick.get("current_owner_team_id"),
+            selection.get("overall_pick"),
         )
         changed = changed or before != after
     return changed
@@ -3604,25 +3695,54 @@ def choose_user_draft_pick(canonical: dict[str, Any], save_path: Path, state: di
     if choice == 0:
         return None
     chosen = board[choice - 1]
-    if chosen is current:
-        return current
-    old_prospect = current.get("prospect")
-    old_prospect_id = (current.get("selection") or {}).get("prospect_id")
-    current["prospect"] = chosen.get("prospect")
-    current["selection"]["prospect_id"] = chosen.get("selection", {}).get("prospect_id")
-    current["selection"]["id"] = stable_id("draft_selection", current["selection"].get("pick_id"), current["selection"].get("prospect_id"), "user")
-    current["id"] = current["selection"]["id"]
-    chosen["prospect"] = old_prospect
-    if chosen.get("selection") and old_prospect_id:
-        chosen["selection"]["prospect_id"] = old_prospect_id
-    save = load_save(save_path)
-    state_save = save.setdefault("draft_state", {})
-    pending_save = state_save.get("draft", {}).get("pending_draft_selections", [])
-    if index < len(pending_save):
-        pending_save[index] = current
-    chosen_index = pending.index(chosen) if chosen in pending else None
-    if chosen_index is not None and chosen_index < len(pending_save):
-        pending_save[chosen_index] = chosen
+    prospect_id = (chosen.get("prospect") or {}).get("id") or (chosen.get("selection") or {}).get("prospect_id")
+    return select_current_draft_prospect(save_path, str(prospect_id or ""))
+
+
+def select_current_draft_prospect(save_path: Path, prospect_id: str) -> dict[str, Any] | None:
+    """Attach an available prospect to the live current pick.
+
+    The simulated draft starts with a complete one-prospect-per-slot scaffold.
+    Selecting a player therefore swaps that prospect with the current slot so
+    every later AI pick still has exactly one available prospect.
+    """
+    if not prospect_id:
+        return None
+    save = load_draft_application_save(save_path)
+    state = save.setdefault("draft_state", {})
+    pending = (state.get("draft") or {}).get("pending_draft_selections") or []
+    index = int(state.get("current_index") or 0)
+    if index >= len(pending):
+        return None
+    if prospect_id in taken_draft_prospect_ids(state):
+        return None
+    chosen_index = next(
+        (
+            idx for idx in range(index, len(pending))
+            if str((pending[idx].get("prospect") or {}).get("id") or (pending[idx].get("selection") or {}).get("prospect_id") or "") == prospect_id
+        ),
+        None,
+    )
+    if chosen_index is None:
+        return None
+    current = pending[index]
+    chosen = pending[chosen_index]
+    candidate = dict(current.get("selection") or current)
+    candidate["prospect_id"] = prospect_id
+    if draft_selection_rejection(save, candidate):
+        return None
+    if chosen_index != index:
+        current_prospect = deepcopy(current.get("prospect") or {})
+        chosen_prospect = deepcopy(chosen.get("prospect") or {})
+        current["prospect"] = chosen_prospect
+        chosen["prospect"] = current_prospect
+        for item in (current, chosen):
+            selection = item.setdefault("selection", {})
+            selected_id = (item.get("prospect") or {}).get("id")
+            selection["prospect_id"] = selected_id
+            selection["id"] = stable_id("draft_selection", selection.get("pick_id"), selected_id, "live")
+            item["id"] = selection["id"]
+            item.pop("decision", None)
     write_save(save_path, save)
     return current
 
@@ -3634,13 +3754,29 @@ def apply_current_draft_selection(
     user_team: str | None = None,
     seed: int = 1,
 ) -> dict[str, Any]:
+    save = load_draft_application_save(save_path)
+    rejection = draft_selection_rejection(save, current)
+    if rejection:
+        return {**rejection, "save": str(save_path)}
+    if canonical is not None:
+        save = ensure_league_save_defaults(save, canonical)
     if canonical is not None and user_team:
-        maybe_run_ai_draft_trades_before_pick(canonical, save_path, user_team, seed)
-        save_after_trade = load_save(save_path)
-        refreshed = current_draft_selection(save_after_trade.get("draft_state") or {})
+        active = with_transaction_context(canonical_with_save(canonical, save))
+        maybe_run_ai_draft_trades_before_pick_state(canonical, save, active, user_team, seed)
+        refreshed = current_draft_selection(save.get("draft_state") or {})
         if refreshed:
             current = refreshed
-    save = load_save(save_path)
+    result = apply_current_draft_selection_state(save, current)
+    if result.get("status") == "applied":
+        write_save(save_path, save)
+    result["save"] = str(save_path)
+    return result
+
+
+def apply_current_draft_selection_state(save: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
+    rejection = draft_selection_rejection(save, current)
+    if rejection:
+        return rejection
     selection_id = current.get("id") or current.get("selection", {}).get("id")
     save.setdefault("pending_draft_selections", [])
     if selection_id not in {item.get("id") or item.get("selection", {}).get("id") for item in save["pending_draft_selections"]}:
@@ -3652,7 +3788,6 @@ def apply_current_draft_selection(
         sign_rookie=True,
     )
     if result.get("status") != "applied":
-        result["save"] = str(save_path)
         return result
     state = save.setdefault("draft_state", {})
     pick_id = (current.get("selection") or {}).get("pick_id") or (current.get("pick") or {}).get("id")
@@ -3662,17 +3797,22 @@ def apply_current_draft_selection(
     state.setdefault("applied_selection_ids", []).append(selection_id)
     if current_draft_selection(state) is None:
         state["status"] = "completed"
-    write_save(save_path, save)
-    result["save"] = str(save_path)
     return result
 
 
 def sim_to_next_user_pick(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int = 1) -> dict[str, Any]:
-    team = resolve_team(canonical, user_team)
+    save = ensure_league_save_defaults(load_draft_application_save(save_path), canonical)
+    state = save.get("draft_state") or {}
+    materialize_draft_order_pick_assets(canonical, save, state.get("draft") or {})
+    sync_live_draft_state_to_saved_order(canonical, save, str(state.get("year") or ""))
+    active = with_transaction_context(canonical_with_save(canonical, save))
+    refresh_live_draft_state_ownership(canonical, save, str(state.get("year") or ""))
+    team = resolve_team(active, user_team)
     applied = 0
+    rejected = False
     current_payload = None
+    presentation_events: list[dict[str, Any]] = []
     while True:
-        save = load_save(save_path)
         state = save.get("draft_state") or {}
         current = current_draft_selection(state)
         if not current:
@@ -3681,25 +3821,66 @@ def sim_to_next_user_pick(canonical: dict[str, Any], save_path: Path, user_team:
         if (current.get("selection") or {}).get("team_id") == team["id"]:
             current_payload = current
             break
-        apply_current_draft_selection(save_path, current, canonical=canonical, user_team=user_team, seed=seed)
+        if draft_selection_rejection(save, current):
+            rejected = True
+            break
+        queued_ids = {str(item.get("id") or "") for item in state.get("ai_draft_trade_news_queue") or []}
+        maybe_run_ai_draft_trades_before_pick_state(canonical, save, active, user_team, seed)
+        presentation_events.extend(new_draft_trade_presentation_events(save.get("draft_state") or {}, queued_ids))
+        current = current_draft_selection(save.get("draft_state") or {}) or current
+        result = apply_current_draft_selection_state(save, current)
+        if result.get("status") != "applied":
+            rejected = True
+            break
+        presentation_events.append(draft_pick_presentation_event(current))
         applied += 1
-    return {"applied_count": applied, "current_selection": current_payload, "draft_trade_news": drain_draft_trade_news(save_path)}
+    state = save.setdefault("draft_state", {})
+    news = list(state.get("ai_draft_trade_news_queue") or [])
+    state["ai_draft_trade_news_queue"] = []
+    if applied or (news and not rejected):
+        write_save(save_path, save)
+    return {"applied_count": applied, "current_selection": current_payload, "draft_trade_news": news, "presentation_events": presentation_events}
 
 
 def sim_entire_draft(save_path: Path, canonical: dict[str, Any] | None = None, user_team: str | None = None, seed: int = 1) -> dict[str, Any]:
+    save = ensure_league_save_defaults(load_draft_application_save(save_path), canonical) if canonical is not None else load_draft_application_save(save_path)
+    if canonical is not None:
+        state = save.get("draft_state") or {}
+        materialize_draft_order_pick_assets(canonical, save, state.get("draft") or {})
+        sync_live_draft_state_to_saved_order(canonical, save, str(state.get("year") or ""))
+    active = with_transaction_context(canonical_with_save(canonical, save)) if canonical is not None and user_team else None
+    if canonical is not None:
+        refresh_live_draft_state_ownership(canonical, save, str((save.get("draft_state") or {}).get("year") or ""))
     applied = 0
+    rejected = False
+    presentation_events: list[dict[str, Any]] = []
     while True:
-        save = load_save(save_path)
         state = save.get("draft_state") or {}
         current = current_draft_selection(state)
         if not current:
             if state.get("status") != "completed":
                 state["status"] = "completed"
-                write_save(save_path, save)
             break
-        apply_current_draft_selection(save_path, current, canonical=canonical, user_team=user_team, seed=seed)
+        if draft_selection_rejection(save, current):
+            rejected = True
+            break
+        if canonical is not None and user_team and active is not None:
+            queued_ids = {str(item.get("id") or "") for item in state.get("ai_draft_trade_news_queue") or []}
+            maybe_run_ai_draft_trades_before_pick_state(canonical, save, active, user_team, seed)
+            presentation_events.extend(new_draft_trade_presentation_events(save.get("draft_state") or {}, queued_ids))
+            current = current_draft_selection(save.get("draft_state") or {}) or current
+        result = apply_current_draft_selection_state(save, current)
+        if result.get("status") != "applied":
+            rejected = True
+            break
+        presentation_events.append(draft_pick_presentation_event(current))
         applied += 1
-    return {"applied_count": applied, "draft_trade_news": drain_draft_trade_news(save_path)}
+    state = save.setdefault("draft_state", {})
+    news = list(state.get("ai_draft_trade_news_queue") or [])
+    state["ai_draft_trade_news_queue"] = []
+    if applied or not rejected:
+        write_save(save_path, save)
+    return {"applied_count": applied, "draft_trade_news": news, "presentation_events": presentation_events}
 
 
 def drain_draft_trade_news(save_path: Path) -> list[dict[str, Any]]:
@@ -3833,16 +4014,12 @@ def print_prospect_inspection(canonical: dict[str, Any], save: dict[str, Any], p
                 print(f"  {clean_label(label):<16} {morale_bar(float(prospect[key]), width=12)} {float(prospect[key]):>5.1f}")
 
 
-def prospect_scout_display(canonical: dict[str, Any], prospect: dict[str, Any], team_id: str | None, save: dict[str, Any] | None = None) -> dict[str, float]:
+def prospect_scout_display(canonical: dict[str, Any], prospect: dict[str, Any], team_id: str | None, save: dict[str, Any] | None = None) -> dict[str, Any]:
+    from .prospect_cards import prospect_rating_projection
+
     report = scouting_report_for(canonical, prospect.get("id") or prospect.get("prospect_id"), team_id)
-    current = (report.get("estimated_current") or {}).get("mid")
-    potential = (report.get("estimated_potential") or {}).get("mid")
-    now = float(current if current is not None else prospect.get("current_ability") or 0.0)
-    pot = float(potential if potential is not None else prospect.get("potential") or 0.0)
-    floor = float(prospect.get("floor") if prospect.get("floor") is not None else max(20.0, now - 8.0))
-    ceiling = float(prospect.get("ceiling") if prospect.get("ceiling") is not None else max(pot, pot + 7.0))
-    pct = prospect_scouted_pct(canonical, prospect.get("id") or prospect.get("prospect_id"), team_id, save)
-    return {"now": now, "potential": pot, "floor": floor, "ceiling": ceiling, "scouted_pct": pct}
+    pct = prospect_scouted_pct(canonical, prospect.get("id") or prospect.get("prospect_id"), team_id, save, prospect=prospect)
+    return {**prospect_rating_projection(canonical, prospect, report, pct, save), "scouted_pct": pct}
 
 
 def prospect_now_pot_for_display(canonical: dict[str, Any], prospect: dict[str, Any], team_id: str) -> tuple[float, float]:
@@ -4004,11 +4181,11 @@ def print_prospect_line(prospect: dict[str, Any], prefix: str = "Prospect", team
         print(f"  Note: {str(prospect.get('scouting_notes'))[:110]}")
 
 
-def prospect_scouted_pct(canonical: dict[str, Any], prospect_id: str | None, team_id: str | None, save: dict[str, Any] | None = None) -> float:
+def prospect_scouted_pct(canonical: dict[str, Any], prospect_id: str | None, team_id: str | None, save: dict[str, Any] | None = None, *, prospect: dict[str, Any] | None = None) -> float:
     if not prospect_id or not team_id:
         return 50.0
     if save:
-        return save_focused_scouted_pct(canonical, save, prospect_id, team_id)
+        return save_focused_scouted_pct(canonical, save, prospect_id, team_id, prospect=prospect)
     report = next(
         (
             item for item in canonical.get("scouting_reports", [])
@@ -4030,7 +4207,7 @@ def prospect_scouted_pct(canonical: dict[str, Any], prospect_id: str | None, tea
     return max(38.0, min(96.0, 48.0 + (score - 50.0) * 0.95))
 
 
-def save_focused_scouted_pct(canonical: dict[str, Any], save: dict[str, Any], prospect_id: str, team_id: str) -> float:
+def save_focused_scouted_pct(canonical: dict[str, Any], save: dict[str, Any], prospect_id: str, team_id: str, *, prospect: dict[str, Any] | None = None) -> float:
     pending = ((save.get("draft_state") or {}).get("draft") or {}).get("pending_draft_selections") or []
     prospect_rank = next(
         (
@@ -4042,7 +4219,7 @@ def save_focused_scouted_pct(canonical: dict[str, Any], save: dict[str, Any], pr
         None,
     )
     if prospect_rank is None:
-        prospect = next((item for item in canonical.get("draft_prospects", []) if item.get("id") == prospect_id), {})
+        prospect = prospect or next((item for item in canonical.get("draft_prospects", []) if item.get("id") == prospect_id), {})
         prospect_rank = int(prospect.get("rank") or prospect.get("consensus_rank") or 45)
     staff = next((slot for slot in canonical.get("gameplay_staff_slots", []) if slot.get("team_id") == team_id and slot.get("slot") == "scouting_lead"), {})
     traits = staff.get("skill_traits") or {}
@@ -4074,8 +4251,17 @@ def save_focused_scouted_pct(canonical: dict[str, Any], save: dict[str, Any], pr
     staff_bonus = (staff_score - 55.0) * 0.72
     wobble = ((sum(ord(char) for char in f"{team_id}:{prospect_id}:{save.get('meta', {}).get('seed')}") % 17) - 8) * 0.8
     full_report = (distance <= 2 and staff_score >= 68.0) or (prospect_rank <= 3 and staff_score >= 62.0)
-    value = public_base + focus + staff_bonus + wobble
-    if full_report and value >= 92.0:
+    current_date = str((save.get("state") or {}).get("current_date") or "")[:10]
+    season = str((save.get("meta") or {}).get("season") or "")
+    try:
+        start_year = int((prospect or {}).get("draft_year")) - 1 if (prospect or {}).get("draft_year") else int(season[:4])
+        start = date(start_year, 10, 1)
+        progress = max(0.0, min(1.0, (date.fromisoformat(current_date) - start).days / 240.0))
+    except ValueError:
+        progress = 0.0
+    # Public coverage grows during the season; stronger staffs learn faster in their pick range.
+    value = public_base + focus * (0.25 + 0.75 * progress) + staff_bonus + wobble + 18.0 * staff_multiplier * progress
+    if full_report and progress >= 0.8 and value >= 92.0:
         return 100.0
     return round(max(18.0, min(100.0, value)), 1)
 
@@ -4377,7 +4563,7 @@ def free_agency_room(canonical: dict[str, Any], save_path: Path, user_team: str,
         day = int(state.get("day") or 1)
         status = state.get("status") or "active"
         clear_screen()
-        if user_re_signing_window_active(canonical, save, user_team):
+        if str((save.get("state") or {}).get("phase") or "") == "re_signing" or user_re_signing_window_active(canonical, save, user_team):
             result = own_expiring_re_signing_room(canonical, save_path, user_team, seed, forced=forced)
             if result in {"quit", "back"}:
                 return result
@@ -4443,8 +4629,10 @@ def free_agency_room(canonical: dict[str, Any], save_path: Path, user_team: str,
 
 def initialize_free_agency_market(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int) -> dict[str, Any]:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
+    before_pool = tuple(save.get("free_agent_player_ids") or [])
     prepare_free_agency_pool(canonical, save)
-    season = save.get("meta", {}).get("season") or "2025-26"
+    changed = before_pool != tuple(save.get("free_agent_player_ids") or [])
+    season = save.get("meta", {}).get("season") or CANONICAL_SEASON
     state = save.get("free_agency_state") or {}
     if state.get("season") != season:
         state = {
@@ -4458,10 +4646,12 @@ def initialize_free_agency_market(canonical: dict[str, Any], save_path: Path, us
             "ai_days_processed": [],
             "user_offer_counts": {},
             "player_asks_millions": {},
+            "player_ask_changes_millions": {},
             "accepted_offer_ids": [],
         }
         save["free_agency_state"] = state
         save["free_agent_offers"] = []
+        changed = True
     active = canonical_with_save(canonical, save)
     missing_asks = [
         player_id for player_id in save.get("free_agent_player_ids", [])
@@ -4469,16 +4659,22 @@ def initialize_free_agency_market(canonical: dict[str, Any], save_path: Path, us
     ]
     report_by_id = {}
     if missing_asks:
-        report_by_id = {item.get("player_id") or item.get("id"): item for item in free_agents_report(active).get("candidates", [])}
+        report_by_id = canonical_free_agent_market_by_id(canonical)
     for player_id in missing_asks:
         if player_id in state.setdefault("player_asks_millions", {}):
             continue
         player = next((item for item in active.get("players", []) if item.get("id") == player_id), {})
         market = report_by_id.get(player_id) or {}
         state["player_asks_millions"][player_id] = free_agency_initial_ask(player, market)
-    write_save(save_path, save)
+        changed = True
+    if changed:
+        write_save(save_path, save)
+    if str((save.get("state") or {}).get("phase") or "") == "re_signing":
+        return save
     if user_re_signing_window_active(canonical, save, user_team):
-        return load_save(save_path)
+        return save
+    if free_agency_ai_day_processed(state):
+        return save
     process_ai_free_agency_offers_for_day(canonical, save_path, user_team, seed)
     return load_save(save_path)
 
@@ -4487,6 +4683,21 @@ def free_agency_initial_ask(player: dict[str, Any], market: dict[str, Any]) -> f
     projected = float(market.get("projected_aav_millions") or 0.0)
     minutes = display_minutes_projection(player)
     return round(max(1.8, projected or minutes * 0.48), 1)
+
+
+def canonical_free_agent_market_by_id(canonical: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Use precomputed market research without rebuilding contract AI context."""
+    output: dict[str, dict[str, Any]] = {}
+    for item in canonical.get("free_agent_candidates", []):
+        player_id = str(item.get("player_id") or item.get("id") or "")
+        if not player_id:
+            continue
+        output[player_id] = {
+            **item,
+            "projected_aav_millions": round(float(item.get("projected_aav") or 0.0) / 1_000_000, 2),
+            "max_years": int(item.get("projected_years") or item.get("max_years") or 4),
+        }
+    return output
 
 
 def user_re_signing_window_active(canonical: dict[str, Any], save: dict[str, Any], user_team: str) -> bool:
@@ -4503,6 +4714,18 @@ def user_re_signing_window_active(canonical: dict[str, Any], save: dict[str, Any
     )
 
 
+def open_free_agency_from_re_signing(save: dict[str, Any], team_id: str, canonical: dict[str, Any]) -> None:
+    """Close exclusive rights and move the save to the July open market."""
+    state = save.setdefault("free_agency_state", {})
+    state["re_signing_status"] = "completed"
+    state["re_signing_day"] = int(state.get("re_signing_day_count") or 2)
+    for right in save.get("re_signing_rights", []):
+        if right.get("team_id") == team_id and right.get("status") == "exclusive_review_window":
+            right["status"] = "entered_open_market"
+    end_year = int(str(save.get("meta", {}).get("season") or CANONICAL_SEASON).split("-")[0]) + 1
+    advance_lifecycle_to(canonical, save, f"{end_year}-07-01", int(save.get("meta", {}).get("seed", 1)))
+
+
 def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int, forced: bool = False) -> str | None:
     while True:
         save = ensure_league_save_defaults(load_save(save_path), canonical)
@@ -4516,7 +4739,7 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
             and right.get("season") == save.get("meta", {}).get("season")
         ]
         if not rights:
-            state["re_signing_status"] = "completed"
+            open_free_agency_from_re_signing(save, team["id"], canonical)
             write_save(save_path, save)
             return "done"
         players = {player["id"]: player for player in active.get("players", [])}
@@ -4582,13 +4805,15 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
                 pause("Player rejected the offer and may test open free agency.")
         elif choice == "2":
             if day >= day_count:
-                state["re_signing_status"] = "completed"
+                open_free_agency_from_re_signing(save, team["id"], canonical)
             else:
                 state["re_signing_day"] = day + 1
+                current = date.fromisoformat(save["state"]["current_date"])
+                advance_lifecycle_to(canonical, save, min(current + timedelta(days=1), date(current.year, 6, 30)).isoformat(), seed)
             write_save(save_path, save)
             return "done"
         elif choice == "3":
-            state["re_signing_status"] = "completed"
+            open_free_agency_from_re_signing(save, team["id"], canonical)
             write_save(save_path, save)
             return "done"
         elif choice == "4":
@@ -4660,18 +4885,60 @@ def free_agency_bidding_wars(canonical: dict[str, Any], save: dict[str, Any], li
 
 def process_ai_free_agency_offers_for_day(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int) -> dict[str, Any]:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
+    result = process_ai_free_agency_offers_for_day_state(canonical, save, user_team, seed)
+    if result.pop("_changed", False):
+        write_save(save_path, save)
+    return result
+
+
+FREE_AGENCY_BID_MODEL_VERSION = 2
+
+
+def free_agency_ai_day_processed(state: dict[str, Any]) -> bool:
+    key = f"{state.get('season')}:{int(state.get('day') or 1)}"
+    return (
+        key in state.get("ai_days_processed", [])
+        and (state.get("ai_bid_model_versions") or {}).get(key) == FREE_AGENCY_BID_MODEL_VERSION
+    )
+
+
+def free_agency_preferred_years(player: dict[str, Any], ask: float) -> int:
+    age = float(player.get("age") or 27)
+    market_years = 4 if ask >= 18 else 3 if ask >= 8 else 2
+    age_limit = 1 if age >= 38 else 2 if age >= 35 else 4
+    return min(market_years, age_limit)
+
+
+def process_ai_free_agency_offers_for_day_state(
+    canonical: dict[str, Any],
+    save: dict[str, Any],
+    user_team: str,
+    seed: int,
+    *,
+    prepared_active: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Generate one day's AI offers against an in-memory save transaction."""
     state = save.setdefault("free_agency_state", {})
     if state.get("status") == "completed":
-        return {"created_count": 0}
+        return {"created_count": 0, "_changed": False}
     day = int(state.get("day") or 1)
     day_key = f"{state.get('season')}:{day}"
-    if day_key in set(state.get("ai_days_processed", [])):
-        return {"created_count": 0}
-    active = canonical_with_save(canonical, save)
-    user_team_id = resolve_team(active, user_team)["id"]
+    if free_agency_ai_day_processed(state):
+        return {"created_count": 0, "_changed": False}
+    active = prepared_active if prepared_active is not None else canonical_with_save(canonical, save)
+    from .team_planning import refresh_team_plans
+    refresh_team_plans(active, save, save.get('state', {}).get('current_date') or CANONICAL_START_DATE)
+    active = with_transaction_context(active)
+    human_team_ids = human_controlled_team_ids(save)
     players = {player["id"]: player for player in active.get("players", [])}
-    teams = [team for team in active.get("teams", []) if team.get("id") != user_team_id]
-    report_by_id = {item.get("player_id") or item.get("id"): item for item in free_agents_report(active).get("candidates", [])}
+    teams = [team for team in active.get("teams", []) if team.get("id") not in human_team_ids]
+    start_season = contract_start_season_for_signing(save)
+    for offer in save.get("free_agent_offers", []):
+        if offer.get("status") == "active" and offer.get("source") == "ai" and extension_retirement_blocked(
+            players.get(offer.get("player_id"), {}), start_season, int(offer.get("years") or 1)
+        ):
+            offer["status"] = "withdrawn_retirement_risk"
+    report_by_id = canonical_free_agent_market_by_id(canonical)
     pool = [
         players[player_id]
         for player_id in save.get("free_agent_player_ids", [])
@@ -4683,24 +4950,50 @@ def process_ai_free_agency_offers_for_day(canonical: dict[str, Any], save_path: 
     for player in pool[:target_count]:
         market = report_by_id.get(player["id"]) or {}
         ask = float((state.get("player_asks_millions") or {}).get(player["id"]) or free_agency_initial_ask(player, market))
-        offer_count = desired_ai_offer_count(player, ask, day, seed)
+        offer_count = desired_ai_offer_count(
+            player, ask, day, seed,
+            quality=float(player_attribute_summary(active, player["id"]).get("overall") or 0),
+        )
         suitors = ai_free_agency_suitors(active, save, player, teams, market, seed, day)
-        for team in suitors[:offer_count]:
+        existing = sum(offer.get("source") == "ai" for offer in active_offers_for_player(save, player["id"]))
+        years = min(
+            int(market.get("max_years") or 4), free_agency_preferred_years(player, ask),
+            extension_safe_year_limit(player, start_season, 4),
+        )
+        if years < 1:
+            continue
+        for team in suitors:
+            if existing >= offer_count:
+                break
             if active_offer_exists(save, player["id"], team["id"]):
                 continue
+            roster_count = sum(row.get("team_id") == team["id"] for row in active.get("players", []))
+            pending_players = {
+                offer["player_id"] for offer in save.get("free_agent_offers", [])
+                if offer.get("team_id") == team["id"] and offer.get("status") == "active"
+            }
+            # The contract engine permits 21 offseason roster slots. Pending
+            # bids reserve slots as well as money, including minimum offers.
+            roster_full = roster_count + len(pending_players) >= 21
             rng = random.Random(f"{seed}:{state.get('season')}:{day}:{player['id']}:{team['id']}:ai_fa_offer")
-            years = int(max(1, min(int(market.get("max_years") or 4), 4 if ask >= 18 else 3 if ask >= 8 else 2)))
-            aav = round(max(1.8, ask * rng.uniform(0.9, 1.12 + day * 0.015)), 1)
+            aav = round(max(league_minimum_aav_millions(), ask * rng.uniform(0.9, 1.12 + day * 0.015)), 1)
             reserved = active_bid_commitment(save, team["id"], exclude_player_id=player["id"])
             cap = signing_cap_check(active, save, team["abbrev"], aav, reserved_millions=reserved)
-            if not cap.get("ok"):
+            from .contract_protection import roster_signing_plan
+            plan = roster_signing_plan(active, save, player, team['id'], aav, years)
+            from .roster_space import remember_target
+            remember_target(save, team['id'], player['id'], aav, years, plan)
+            if not cap.get('ok') or roster_full or not plan['ok']:
                 continue
             offer = build_free_agency_offer_record(active, save, player, team, years, aav, ask, seed, "ai")
+            offer['roster_plan'] = plan
             save.setdefault("free_agent_offers", []).append(offer)
             created += 1
-    state.setdefault("ai_days_processed", []).append(day_key)
-    write_save(save_path, save)
-    return {"created_count": created}
+            existing += 1
+    if day_key not in state.setdefault("ai_days_processed", []):
+        state["ai_days_processed"].append(day_key)
+    state.setdefault("ai_bid_model_versions", {})[day_key] = FREE_AGENCY_BID_MODEL_VERSION
+    return {"created_count": created, "_changed": True}
 
 
 def player_already_has_accepted_offer(save: dict[str, Any], player_id: str) -> bool:
@@ -4720,13 +5013,18 @@ def free_agency_player_priority(canonical: dict[str, Any], save: dict[str, Any],
     return float(attrs.get("overall") or 0) * 1.7 + display_minutes_projection(player) * 0.75 + float(stats.get("ppg") or 0) * 0.65
 
 
-def desired_ai_offer_count(player: dict[str, Any], ask: float, day: int, seed: int) -> int:
+def desired_ai_offer_count(player: dict[str, Any], ask: float, day: int, seed: int, *, quality: float | None = None) -> int:
     if ask >= 28 or display_minutes_projection(player) >= 28:
         base = 3 if day <= 2 else 2
     elif ask >= 12 or display_minutes_projection(player) >= 20:
         base = 2 if day <= 3 else 1
     else:
         base = 1 if day >= 2 else 0
+    # Current NBA ability matters even when a valuable young player previously
+    # had a small role. These are engine-scale thresholds, not display OVR.
+    if quality is not None and quality >= 60:
+        premium_young_player = quality >= 65 and float(player.get("age") or 27) <= 27 and day <= 2
+        base = max(base, 3 if premium_young_player else 2)
     rng = random.Random(f"{seed}:{player.get('id')}:offers:{day}")
     return max(0, min(4, base + (1 if rng.random() > 0.72 else 0)))
 
@@ -4740,12 +5038,24 @@ def ai_free_agency_suitors(
     seed: int,
     day: int,
 ) -> list[dict[str, Any]]:
+    from .contract_ai import signing_fit_score
+
     likely = set(market.get("likely_suitors") or [])
+    valuation = next(
+        (row for row in canonical.get("player_asset_valuations", []) if row.get("player_id") == player["id"]),
+        None,
+    ) or fallback_asset_valuation(player)
+    live_fit = bool(canonical.get("team_strategic_states") and canonical.get("front_office_profiles"))
     scored = []
     for team in teams:
         roster = [row for row in canonical.get("players", []) if row.get("team_id") == team["id"]]
         roster_need = max(0, 15 - len(roster)) * 4.0
-        fit = float(market.get("team_fit_score") or 50.0) if team["id"] in likely else 48.0 + roster_need
+        if live_fit:
+            fit = signing_fit_score(canonical, team["id"], player, valuation) + roster_need * 0.5
+        elif team["id"] in likely:
+            fit = float(market.get("team_fit_score") or 50.0)
+        else:
+            fit = 48.0 + roster_need
         position_need = 4.0 if sum(1 for row in roster if row.get("position") == player.get("position")) <= 2 else 0.0
         rng = random.Random(f"{seed}:{day}:{team['id']}:{player['id']}:suitor")
         scored.append((fit + position_need + rng.uniform(-6.0, 8.0), team))
@@ -4832,7 +5142,7 @@ def build_free_agency_offer_record(
     source: str,
 ) -> dict[str, Any]:
     day = int((save.get("free_agency_state") or {}).get("day") or 1)
-    preferred_years = 4 if ask_millions >= 18 else 3 if ask_millions >= 8 else 2
+    preferred_years = free_agency_preferred_years(player,ask_millions)
     context = free_agency_offer_context_score(canonical, save, player, team, years, source)
     interest = offer_interest_score(aav_millions, ask_millions, years, preferred_years, float(context["context_score"]))
     offer_id = stable_id("fa_offer", save.get("free_agency_state", {}).get("season"), day, source, team["id"], player["id"], years, round(aav_millions * 10))
@@ -4841,6 +5151,7 @@ def build_free_agency_offer_record(
         "season": save.get("free_agency_state", {}).get("season"),
         "day": day,
         "source": source,
+        "guaranteed": True,
         "player_id": player["id"],
         "team_id": team["id"],
         "years": years,
@@ -4927,6 +5238,8 @@ def compare_free_agents_then_pick(canonical: dict[str, Any], save: dict[str, Any
 def free_agency_board_players(canonical: dict[str, Any], save: dict[str, Any]) -> list[dict[str, Any]]:
     players = {player["id"]: player for player in canonical.get("players", [])}
     retired = set(save.get("retired_player_ids", []))
+    from .waivers import pending_ids
+    retired |= pending_ids(save)
     rows = [players[player_id] for player_id in save.get("free_agent_player_ids", []) if player_id in players and player_id not in retired]
     rows.sort(key=lambda player: free_agency_player_priority(canonical, save, player), reverse=True)
     return rows
@@ -5193,22 +5506,52 @@ def print_free_agency_breaking_news(news: list[dict[str, Any]]) -> None:
     print_rule()
 
 
-def advance_free_agency_day(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int) -> dict[str, Any]:
-    process_ai_free_agency_offers_for_day(canonical, save_path, user_team, seed)
-    pre_trades = maybe_run_free_agency_ai_trades(canonical, save_path, user_team, seed, phase="pre_resolution")
-    accepted = resolve_free_agency_day(canonical, save_path, seed)
-    post_trades = maybe_run_free_agency_ai_trades(canonical, save_path, user_team, seed, phase="post_resolution")
-    adjusted = adjust_free_agent_asks(canonical, save_path, seed)
+def advance_free_agency_day(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int, *, root: Path | None = None) -> dict[str, Any]:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    process_ai_free_agency_offers_for_day_state(
+        canonical,
+        save,
+        user_team,
+        seed,
+        prepared_active=active,
+    )
+    pre_trades = maybe_run_free_agency_ai_trades_state(
+        canonical,
+        save,
+        with_transaction_context(active),
+        user_team,
+        seed,
+        phase="pre_resolution",
+    )
+    accepted = resolve_free_agency_day_state(canonical, save, seed)
+    post_trades = maybe_run_free_agency_ai_trades_state(
+        canonical,
+        save,
+        with_transaction_context(canonical_with_save(canonical, save)),
+        user_team,
+        seed,
+        phase="post_resolution",
+    )
+    adjusted = adjust_free_agent_asks_state(save)
     state = save.setdefault("free_agency_state", {})
     day = int(state.get("day") or 1)
     if day >= int(state.get("day_count") or 5):
         state["status"] = "completed"
     else:
         state["day"] = day + 1
-    write_save(save_path, save)
+        current = date.fromisoformat(save["state"]["current_date"])
+        advance_lifecycle_to(canonical, save, (current + timedelta(days=1)).isoformat(), seed, root)
     if state.get("status") != "completed":
-        process_ai_free_agency_offers_for_day(canonical, save_path, user_team, seed)
+        active = canonical_with_save(canonical, save)
+        process_ai_free_agency_offers_for_day_state(
+            canonical,
+            save,
+            user_team,
+            seed,
+            prepared_active=active,
+        )
+    write_save(save_path, save)
     return {
         "accepted_count": accepted.get("accepted_count", 0),
         "accepted_offers": accepted.get("accepted_offers", []),
@@ -5219,64 +5562,146 @@ def advance_free_agency_day(canonical: dict[str, Any], save_path: Path, user_tea
 
 def maybe_run_free_agency_ai_trades(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int, phase: str) -> dict[str, Any]:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
+    result = maybe_run_free_agency_ai_trades_state(
+        canonical,
+        save,
+        with_transaction_context(canonical_with_save(canonical, save)),
+        user_team,
+        seed,
+        phase=phase,
+    )
+    if result.pop("_changed", False):
+        write_save(save_path, save)
+    return result
+
+
+def maybe_run_free_agency_ai_trades_state(
+    canonical: dict[str, Any],
+    save: dict[str, Any],
+    active: dict[str, Any],
+    user_team: str,
+    seed: int,
+    *,
+    phase: str,
+) -> dict[str, Any]:
+    """Run one free-agency AI trade phase against an in-memory save."""
     state = save.setdefault("free_agency_state", {})
     if state.get("status") == "completed":
-        return {"applied_count": 0, "news": []}
+        return {"applied_count": 0, "news": [], "_changed": False}
     day = int(state.get("day") or 1)
     key = f"{state.get('season')}:{day}:{phase}"
     processed = set(state.setdefault("ai_trade_days_processed", []))
     if key in processed:
-        return {"applied_count": 0, "news": []}
+        return {"applied_count": 0, "news": [], "_changed": False}
     state.setdefault("ai_trade_days_processed", []).append(key)
-    write_save(save_path, save)
+    if phase == 'post_resolution':
+        queue_summer_trade_offers(active, save, seed)
     user_team_id = resolve_team(canonical, user_team)["id"]
-    active = with_transaction_context(canonical_with_save(canonical, save))
     candidates = (
         free_agency_cap_dump_candidates(active, save, user_team_id, seed)
         if phase == "pre_resolution"
         else free_agency_fallback_trade_candidates(active, save, user_team_id, seed)
     )
-    if not candidates and phase == "post_resolution" and int(state.get("ai_general_trade_count") or 0) < 3:
-        candidates = free_agency_general_trade_candidates(active, save, user_team_id, seed)
+    if phase == 'pre_resolution':
+        from .release_planning import review_ai_stretches
+        if review_ai_stretches(canonical, save, save['state']['current_date']):
+            active = canonical_with_save(canonical, save)
+            candidates = free_agency_cap_dump_candidates(active, save, user_team_id, seed)
+        from .roster_space import sale_candidates
+        candidates = [*sale_candidates(active, save, user_team_id, seed), *candidates]
+    if phase == "post_resolution" and len(candidates) < 2:
+        from .trade_calendar import summer_offer_slots
+        stamp = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+        # Keep target replacements first, but do not close the whole summer
+        # market after three deals. Opportunities follow dates, not call count.
+        capacity = min(2 - len(candidates), summer_offer_slots(stamp, seed))
+        if capacity:
+            candidates = [*candidates, *free_agency_general_trade_candidates(
+                active, save, user_team_id, seed, max_results=capacity)[:capacity]]
+    human_team_ids = human_controlled_team_ids(save)
+    candidates = [
+        candidate
+        for candidate in candidates
+        if not human_team_ids.intersection(
+            trade_team_ids(candidate)
+        )
+    ]
     news: list[dict[str, Any]] = []
     applied_count = 0
     for candidate in candidates[:2]:
-        result = apply_ai_trade_candidate_to_save(canonical, save_path, candidate, save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
+        if not candidate.get('accepted_by_all') or candidate.get('legality', {}).get('status') != 'legal':
+            continue
+        proposal = candidate.get("proposal") or {}
+        proposal_id = proposal.get("id")
+        if not proposal_id:
+            continue
+        pending = save.setdefault("pending_trade_proposals", [])
+        if not any(((item.get("proposal") or {}).get("id") or item.get("id")) == proposal_id for item in pending):
+            pending.append(candidate)
+        result = apply_trade_to_state(
+            save,
+            proposal_id,
+            date=save.get("state", {}).get("current_date") or CANONICAL_START_DATE,
+            canonical=canonical,
+        )
         if result.get("status") != "applied":
             continue
         applied_count += 1
-        proposal = candidate.get("proposal") or {}
         headline = trade_headline_from_payload(proposal)
         news.append({"headline": headline, "proposal_id": proposal.get("id"), "phase": phase})
-        if phase == "pre_resolution":
-            upgrade_free_agency_offer_after_dump(canonical, save_path, candidate, user_team_id, seed)
+        if candidate.get('free_agency_context', {}).get('kind') == 'roster_space_sale':
+            from .roster_space import activate_target
+            activate_target(canonical, save, candidate['free_agency_context']['target'], seed)
+            for log in save.get('transaction_logs', []):
+                if log.get('proposal_id') == proposal_id:
+                    log['free_agency_context'] = dict(candidate['free_agency_context'])
+        elif phase == "pre_resolution":
+            upgrade_free_agency_offer_after_dump_state(canonical, save, candidate, user_team_id, seed)
         elif candidate.get("free_agency_context", {}).get("offer_id"):
-            saved = ensure_league_save_defaults(load_save(save_path), canonical)
-            saved.setdefault("free_agency_state", {}).setdefault("ai_fallback_trade_offer_ids", []).append(candidate["free_agency_context"]["offer_id"])
-            write_save(save_path, saved)
+            state.setdefault("ai_fallback_trade_offer_ids", []).append(candidate["free_agency_context"]["offer_id"])
         elif (candidate.get("free_agency_context") or {}).get("kind") == "general_market_trade":
-            saved = ensure_league_save_defaults(load_save(save_path), canonical)
-            saved.setdefault("free_agency_state", {})["ai_general_trade_count"] = int((saved.get("free_agency_state") or {}).get("ai_general_trade_count") or 0) + 1
-            write_save(save_path, saved)
-    return {"applied_count": applied_count, "news": news}
+            state["ai_general_trade_count"] = int(state.get("ai_general_trade_count") or 0) + 1
+    return {"applied_count": applied_count, "news": news, "_changed": True}
 
 
-def free_agency_general_trade_candidates(active: dict[str, Any], save: dict[str, Any], user_team_id: str, seed: int) -> list[dict[str, Any]]:
+def queue_summer_trade_offers(active, save, seed):
+    from .trade_calendar import summer_offer_slots
+    from .transactions import simulate_ai_trades, user_facing_trade_candidate_ok
+    from .save import queue_user_trade_offers
+    stamp = save.get('state', {}).get('current_date') or CANONICAL_START_DATE
+    human = human_controlled_team_ids(save)
+    slots = summer_offer_slots(stamp, seed)
+    if not slots or not human:
+        return 0
+    payload = simulate_ai_trades(active, stamp, stamp, seed=seed, limit=20,
+                                 search_depth=2, involving_team_ids=human)
+    offers = []
+    for candidate in payload.get('proposals', []):
+        proposal = candidate.get('proposal') or {}
+        parties = human.intersection(trade_team_ids(proposal))
+        if parties and candidate.get('accepted_by_all') and all(user_facing_trade_candidate_ok(active, candidate, tid) for tid in parties):
+            offers.append(candidate)
+    before = len(save.get('user_trade_offers', []))
+    queue_user_trade_offers(save, offers[:slots], stamp)
+    return len(save.get('user_trade_offers', []))-before
+
+
+def free_agency_general_trade_candidates(active: dict[str, Any], save: dict[str, Any], user_team_id: str, seed: int, *, max_results: int = 1) -> list[dict[str, Any]]:
     from .transactions import simulate_ai_trades
 
     current = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
     day = int((save.get("free_agency_state") or {}).get("day") or 1)
-    payload = simulate_ai_trades(active, current, current, seed=seed + day * 17, limit=12)
+    payload = simulate_ai_trades(active, current, current, seed=seed + day * 17, limit=12, reserve_assets=True, search_depth=2)
     candidates: list[dict[str, Any]] = []
     for candidate in payload.get("proposals", []):
         proposal = candidate.get("proposal") or {}
-        if user_team_id in {proposal.get("from_team_id"), proposal.get("to_team_id")}:
+        if user_team_id in trade_team_ids(proposal):
             continue
         if not candidate.get("accepted_by_all") or (candidate.get("legality") or {}).get("status") != "legal":
             continue
         candidate["free_agency_context"] = {"kind": "general_market_trade"}
         candidates.append(candidate)
-    return candidates[:1]
+    return candidates[:max_results]
 
 
 def free_agency_cap_dump_candidates(active: dict[str, Any], save: dict[str, Any], user_team_id: str, seed: int) -> list[dict[str, Any]]:
@@ -5344,24 +5769,36 @@ def free_agency_cap_dump_candidate_for_team(active: dict[str, Any], save: dict[s
             report = evaluate_trade(active, team["abbrev"], recipient["abbrev"], from_assets, [], seed=1, date=save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
         except ValueError:
             continue
-        if report.get("legality", {}).get("status") != "legal":
+        if report.get("legality", {}).get("status") != "legal" or not report.get('accepted_by_all'):
             continue
         candidate = candidate_from_evaluation(active, report)
-        candidate["accepted_by_all"] = True
         candidate["free_agency_context"] = {"kind": "cap_dump", "offer_id": offer.get("id"), "player_id": offer.get("player_id")}
         return candidate
     return None
 
 
 def upgrade_free_agency_offer_after_dump(canonical: dict[str, Any], save_path: Path, candidate: dict[str, Any], user_team_id: str, seed: int) -> None:
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    if upgrade_free_agency_offer_after_dump_state(canonical, save, candidate, user_team_id, seed):
+        write_save(save_path, save)
+
+
+def upgrade_free_agency_offer_after_dump_state(
+    canonical: dict[str, Any],
+    save: dict[str, Any],
+    candidate: dict[str, Any],
+    user_team_id: str,
+    seed: int,
+) -> bool:
+    """Improve an AI offer after its cap-clearing trade without persisting."""
+    del seed
     context = candidate.get("free_agency_context") or {}
     offer_id = context.get("offer_id")
     if not offer_id:
-        return
-    save = ensure_league_save_defaults(load_save(save_path), canonical)
+        return False
     offer = next((item for item in save.get("free_agent_offers", []) if item.get("id") == offer_id and item.get("status") == "active"), None)
     if not offer or offer.get("team_id") == user_team_id:
-        return
+        return False
     active = canonical_with_save(canonical, save)
     player = player_by_id(active, offer.get("player_id"))
     team = team_by_id(active, offer.get("team_id"))
@@ -5369,12 +5806,12 @@ def upgrade_free_agency_offer_after_dump(canonical: dict[str, Any], save_path: P
     bumped = round(min(max(float(offer.get("aav_millions") or 0.0) + 3.0, ask * 1.04), ask * 1.18), 1)
     reserved = active_bid_commitment(save, team["id"], exclude_player_id=offer.get("player_id"))
     if not signing_cap_check(active, save, team["abbrev"], bumped, reserved_millions=reserved).get("ok"):
-        return
+        return False
     offer["aav_millions"] = bumped
     context_score = float((offer.get("interest_context") or {}).get("context_score") or 55.0)
     offer["interest_score"] = offer_interest_score(bumped, ask, int(offer.get("years") or 1), int(offer.get("years") or 1), context_score)
     offer.setdefault("notes", "AI cleared salary and improved this free-agency offer.")
-    write_save(save_path, save)
+    return True
 
 
 def free_agency_fallback_trade_candidates(active: dict[str, Any], save: dict[str, Any], user_team_id: str, seed: int) -> list[dict[str, Any]]:
@@ -5394,10 +5831,9 @@ def free_agency_fallback_trade_candidates(active: dict[str, Any], save: dict[str
         seller = team_by_id(active, target.get("team_id"))
         buyer = team_by_id(active, offer.get("team_id"))
         report = find_trade_for_assets(active, seller["abbrev"], [{"kind": "player", "value": target["name"]}], for_team=buyer["abbrev"], limit=5, seed=seed)
-        accepted = next((candidate for candidate in report.get("candidates", []) if candidate.get("legality", {}).get("status") == "legal"), None)
+        accepted = next((candidate for candidate in report.get("candidates", []) if candidate.get("accepted_by_all") and candidate.get("legality", {}).get("status") == "legal"), None)
         if not accepted:
             continue
-        accepted["accepted_by_all"] = True
         accepted["free_agency_context"] = {"kind": "missed_target_fallback", "offer_id": offer.get("id"), "lost_player_id": lost_player.get("id")}
         candidates.append(accepted)
     return candidates
@@ -5431,6 +5867,14 @@ def similar_trade_target_for_lost_free_agent(active: dict[str, Any], save: dict[
 
 def resolve_free_agency_day(canonical: dict[str, Any], save_path: Path, seed: int) -> dict[str, Any]:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
+    result = resolve_free_agency_day_state(canonical, save, seed)
+    if result.pop("_changed", False):
+        write_save(save_path, save)
+    return result
+
+
+def resolve_free_agency_day_state(canonical: dict[str, Any], save: dict[str, Any], seed: int) -> dict[str, Any]:
+    """Resolve active offers in memory; callers decide the persistence boundary."""
     state = save.get("free_agency_state") or {}
     day = int(state.get("day") or 1)
     active = canonical_with_save(canonical, save)
@@ -5444,7 +5888,7 @@ def resolve_free_agency_day(canonical: dict[str, Any], save_path: Path, seed: in
             and (not season or not offer.get("season") or offer.get("season") == season)
         ):
             grouped.setdefault(offer.get("player_id"), []).append(offer)
-    candidates: list[tuple[float, str, dict[str, Any]]] = []
+    candidates: list[tuple[float, str, list[dict[str, Any]]]] = []
     for player_id, offers in sorted(grouped.items()):
         player = players.get(player_id, {})
         best = max(offers, key=lambda item: (float(item.get("interest_score") or 0), float(item.get("aav_millions") or 0)))
@@ -5457,26 +5901,38 @@ def resolve_free_agency_day(canonical: dict[str, Any], save_path: Path, seed: in
             + float(best.get("aav_millions") or 0) * 0.72
             + int(best.get("years") or 1) * 1.2
         )
-        candidates.append((priority, player_id, best))
+        ranked = sorted(
+            offers,
+            key=lambda item: (float(item.get("interest_score") or 0), float(item.get("aav_millions") or 0)),
+            reverse=True,
+        )
+        acceptable = [offer for offer in ranked if float(offer.get("interest_score") or 0) >= threshold]
+        candidates.append((priority, player_id, acceptable))
     accepted_count = 0
     accepted_offers: list[dict[str, Any]] = []
-    for _, _, best in sorted(candidates, key=lambda item: (item[0], item[1]), reverse=True):
-        result = apply_free_agency_offer_state(canonical, save, best["id"], seed)
-        if result.get("status") == "applied":
-            accepted_count += 1
-            accepted_offers.append(
-                {
+    committed_aav_by_team: dict[str, float] = {}
+    for _, _, offers in sorted(candidates, key=lambda item: (item[0], item[1]), reverse=True):
+        for best in offers:
+            result = apply_free_agency_offer_state(
+                canonical, save, best["id"], seed, prepared_active=active,
+                committed_aav_by_team=committed_aav_by_team,
+            )
+            if result.get("status") == "applied":
+                accepted_count += 1
+                accepted_offers.append({
                     "offer_id": best.get("id"),
                     "player_id": best.get("player_id"),
                     "team_id": best.get("team_id"),
                     "aav_millions": best.get("aav_millions"),
                     "years": best.get("years"),
                     "source": best.get("source"),
-                }
-            )
-    if candidates:
-        write_save(save_path, save)
-    return {"accepted_count": accepted_count, "accepted_offers": accepted_offers}
+                })
+                break
+    return {
+        "accepted_count": accepted_count,
+        "accepted_offers": accepted_offers,
+        "_changed": bool(candidates),
+    }
 
 
 def free_agency_accept_threshold(player: dict[str, Any], day: int) -> float:
@@ -5488,11 +5944,19 @@ def free_agency_accept_threshold(player: dict[str, Any], day: int) -> float:
     return {1: 92, 2: 78, 3: 62, 4: 46, 5: 35}.get(day, 35)
 
 
-def apply_free_agency_offer_state(canonical: dict[str, Any], save: dict[str, Any], offer_id: str, seed: int) -> dict[str, Any]:
+def apply_free_agency_offer_state(
+    canonical: dict[str, Any],
+    save: dict[str, Any],
+    offer_id: str,
+    seed: int,
+    *,
+    prepared_active: dict[str, Any] | None = None,
+    committed_aav_by_team: dict[str, float] | None = None,
+) -> dict[str, Any]:
     offer = next((item for item in save.get("free_agent_offers", []) if item.get("id") == offer_id), None)
     if not offer or offer.get("status") != "active":
         return {"status": "not_found"}
-    active = canonical_with_save(canonical, save)
+    active = prepared_active if prepared_active is not None else canonical_with_save(canonical, save)
     players = {player["id"]: player for player in active.get("players", [])}
     teams = {team["id"]: team for team in active.get("teams", [])}
     player = players.get(offer.get("player_id"), {"id": offer.get("player_id"), "name": offer.get("player_id")})
@@ -5502,21 +5966,32 @@ def apply_free_agency_offer_state(canonical: dict[str, Any], save: dict[str, Any
         return {"status": "blocked", "notes": f"{player.get('name')} is expected to retire before this contract would finish."}
     # Submission reserves room for active user bids; acceptance is checked against
     # the live cap after any earlier accepted offers have already been applied.
-    reserved = 0.0
+    team_id = str(team.get("id") or offer.get("team_id") or "")
+    reserved = float((committed_aav_by_team or {}).get(team_id) or 0.0)
     cap = signing_cap_check(active, save, team.get("abbrev"), float(offer.get("aav_millions") or 0), reserved_millions=reserved)
     if not cap.get("ok"):
         offer["status"] = "withdrawn_cap_blocked"
         return {"status": "blocked", "notes": cap.get("message")}
+    if offer.get('source') == 'ai':
+        from .contract_protection import roster_signing_plan
+        plan = roster_signing_plan(active, save, player, team_id, float(offer.get('aav_millions') or 0), int(offer.get('years') or 1))
+        offer['roster_plan'] = plan
+        if not plan['ok']:
+            offer['status'] = 'withdrawn_roster_plan_changed'
+            return {'status': 'blocked', 'notes': plan['reason']}
     negotiation = negotiation_from_free_agency_offer(save, offer, player, team, seed)
     save.setdefault("pending_contract_negotiations", []).append(negotiation)
     for item in save.get("free_agent_offers", []):
         if item.get("player_id") == offer.get("player_id") and item.get("status") == "active":
             item["status"] = "accepted" if item.get("id") == offer_id else "rejected_player_chose_other_offer"
-    return apply_contract_to_save_state(
+    result = apply_contract_to_save_state(
         save,
         negotiation["negotiation"]["id"],
         date=save.get("state", {}).get("current_date") or "2026-07-01",
     )
+    if result.get("status") == "applied" and committed_aav_by_team is not None:
+        committed_aav_by_team[team_id] = reserved + float(offer.get("aav_millions") or 0.0)
+    return result
 
 
 def apply_free_agency_offer(canonical: dict[str, Any], save_path: Path, offer_id: str, seed: int) -> dict[str, Any]:
@@ -5547,6 +6022,9 @@ def negotiation_from_free_agency_offer(save: dict[str, Any], offer: dict[str, An
         "status": "accepted",
         "notes": "Accepted free-agency day-market offer.",
     }
+    if 'guaranteed' in offer:
+        from .contract_protection import guarantee_choice
+        contract_offer['guaranteed'] = guarantee_choice(offer['guaranteed'])
     decision = {
         "id": stable_id("signing_decision", negotiation_id, "fa_day"),
         "negotiation_id": negotiation_id,
@@ -5586,9 +6064,18 @@ def negotiation_from_free_agency_offer(save: dict[str, Any], offer: dict[str, An
 
 
 def adjust_free_agent_asks(canonical: dict[str, Any], save_path: Path, seed: int) -> dict[str, Any]:
+    del seed
     save = ensure_league_save_defaults(load_save(save_path), canonical)
+    result = adjust_free_agent_asks_state(save)
+    write_save(save_path, save)
+    return result
+
+
+def adjust_free_agent_asks_state(save: dict[str, Any]) -> dict[str, Any]:
+    """Apply market-price movement without loading or writing the save."""
     state = save.setdefault("free_agency_state", {})
     asks = state.setdefault("player_asks_millions", {})
+    changes: dict[str, float] = {}
     adjusted = 0
     for player_id in list(save.get("free_agent_player_ids", [])):
         active_offers = active_offers_for_player(save, player_id)
@@ -5604,12 +6091,17 @@ def adjust_free_agent_asks(canonical: dict[str, Any], save_path: Path, seed: int
         new_value = round(max(1.6, min(65.0, new_value)), 1)
         if abs(new_value - current) >= 0.05:
             asks[player_id] = new_value
+            changes[player_id] = round(new_value - current, 1)
             adjusted += 1
-    write_save(save_path, save)
+    state["player_ask_changes_millions"] = changes
+    state["player_ask_change_effective_day"] = min(
+        int(state.get("day_count") or 5),
+        int(state.get("day") or 1) + 1,
+    )
     return {"ask_adjusted_count": adjusted}
 
 
-def simulate_free_agency_to_end(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int) -> dict[str, Any]:
+def simulate_free_agency_to_end(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int, *, root: Path | None = None) -> dict[str, Any]:
     total_accepted = 0
     total_ai_trades = 0
     trade_news: list[dict[str, Any]] = []
@@ -5617,7 +6109,7 @@ def simulate_free_agency_to_end(canonical: dict[str, Any], save_path: Path, user
         save = initialize_free_agency_market(canonical, save_path, user_team, seed)
         if (save.get("free_agency_state") or {}).get("status") == "completed":
             break
-        result = advance_free_agency_day(canonical, save_path, user_team, seed)
+        result = advance_free_agency_day(canonical, save_path, user_team, seed, root=root)
         total_accepted += int(result.get("accepted_count") or 0)
         total_ai_trades += len(result.get("ai_trade_news") or [])
         trade_news.extend(result.get("ai_trade_news") or [])
@@ -5627,7 +6119,7 @@ def simulate_free_agency_to_end(canonical: dict[str, Any], save_path: Path, user
 
 def final_free_agency_roster_repair(canonical: dict[str, Any], save_path: Path, seed: int) -> dict[str, Any]:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
-    next_start = int(str(save.get("meta", {}).get("season") or "2025-26").split("-")[0]) + 1
+    next_start = int(str(save.get("meta", {}).get("season") or CANONICAL_SEASON).split("-")[0]) + 1
     next_season = f"{next_start}-{str(next_start + 1)[-2:]}"
     before_logs = len(save.get("transaction_logs", []))
     signed = auto_fill_rosters(canonical, save, list(save.get("free_agent_player_ids", [])), next_season, seed)
@@ -5671,10 +6163,10 @@ def queue_free_agency_suggestions(canonical: dict[str, Any], save_path: Path, se
     print(f"Queued {payload.get('negotiation_count')} AI free-agency suggestions.")
 
 
-def finish_free_agency_phase(canonical: dict[str, Any], save_path: Path) -> None:
+def finish_free_agency_phase(canonical: dict[str, Any], save_path: Path, *, root: Path | None = None) -> None:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
-    end_year = int(str(save.get("meta", {}).get("season") or "2025-26").split("-")[0]) + 1
-    set_save_date_phase(save, f"{end_year}-09-01")
+    end_year = int(str(save.get("meta", {}).get("season") or CANONICAL_SEASON).split("-")[0]) + 1
+    advance_lifecycle_to(canonical, save, f"{end_year}-09-01", int(save.get("meta", {}).get("seed", 1)), root)
     save.setdefault("free_agency_state", {})["status"] = "completed"
     add_news(save, "free_agency", "Free agency period closed. Training camp is next.", date_value=f"{end_year}-09-01")
     write_save(save_path, save)
@@ -5690,6 +6182,8 @@ def current_free_agents_room(canonical: dict[str, Any], save_path: Path, user_te
             if not player.get("team_id") or player.get("id") in set(save.get("free_agent_player_ids", []))
         ]
         retired = set(save.get("retired_player_ids", []))
+        from .waivers import pending_ids
+        retired |= pending_ids(save)
         players = [player for player in players if player.get("id") not in retired]
         players.sort(
             key=lambda player: (
@@ -6047,7 +6541,7 @@ def print_free_agency_recap(canonical: dict[str, Any], save_path: Path) -> None:
     save = load_save(save_path)
     teams = {team["id"]: team for team in canonical.get("teams", [])}
     players = {player["id"]: player for player in canonical_with_save(canonical, save).get("players", [])}
-    season = str((save.get("free_agency_state") or {}).get("season") or save.get("meta", {}).get("season") or "2025-26")
+    season = str((save.get("free_agency_state") or {}).get("season") or save.get("meta", {}).get("season") or CANONICAL_SEASON)
     start_year = int(season.split("-")[0]) + 1
     offseason_start = f"{start_year}-06-01"
     offseason_end = f"{start_year}-10-01"
@@ -6075,20 +6569,24 @@ def print_free_agency_recap(canonical: dict[str, Any], save_path: Path) -> None:
         )
 
 
-def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player: dict[str, Any], team_abbrev: str, years: int, aav_millions: float, seed: int) -> dict[str, Any]:
+def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player: dict[str, Any], team_abbrev: str, years: int, aav_millions: float, seed: int, *, guaranteed: bool = True) -> dict[str, Any]:
+    from .contract_protection import guarantee_choice, security_penalty
+    guaranteed = guarantee_choice(guaranteed)
     team = resolve_team(canonical, team_abbrev)
     save_for_start = load_save(save_path)
     annual = float(aav_millions) * 1_000_000
     ask_threshold = max(1.9, display_minutes_projection(player) * 0.45)
+    ask_threshold *= 1 + security_penalty(player, guaranteed)/100
     retirement_blocked = extension_retirement_blocked(player, contract_start_season_for_signing(save_for_start), years)
     accepted = aav_millions >= ask_threshold and not retirement_blocked
-    negotiation_id = stable_id("contract_negotiation", "save_pool_fa", team["id"], player["id"], years, round(annual), seed)
+    negotiation_id = stable_id("contract_negotiation", "save_pool_fa", team["id"], player["id"], years, round(annual), seed, guaranteed, save_for_start.get('state', {}).get('current_date'))
     offer = {
         "id": stable_id("contract_offer", negotiation_id, "user"),
         "negotiation_id": negotiation_id,
         "team_id": team["id"],
         "player_id": player["id"],
         "offer_type": "free_agent_signing",
+        "guaranteed": guaranteed,
         "round": 1,
         "years": years,
         "start_season": contract_start_season_for_signing(save_for_start),
@@ -6152,6 +6650,8 @@ def signing_cap_check(
     team = resolve_team(active, team_abbrev)
     cap_season = contract_start_season_for_signing(save)
     cap = team_cap_summary(active, save, team["id"], season=cap_season)
+    if cap.get('unresolved_waived_contract_count'):
+        return {'ok': False, 'message': 'Waived salary requires review before spending more salary room.', 'cap': cap}
     hard_space = float(cap.get("hard_cap_space_millions") or 0.0) - float(reserved_millions or 0.0)
     tax_space = float(cap.get("tax_space_millions") or 0.0) - float(reserved_millions or 0.0)
     minimum = league_minimum_aav_millions()
@@ -6187,10 +6687,10 @@ def league_minimum_aav_millions() -> float:
 
 
 def contract_start_season_for_signing(save: dict[str, Any]) -> str:
-    season = str(save.get("meta", {}).get("season") or "2025-26")
+    season = str(save.get("meta", {}).get("season") or CANONICAL_SEASON)
     phase = str(save.get("state", {}).get("phase") or "")
     start = int(season.split("-")[0])
-    if phase in {"draft_lottery", "draft", "free_agency"}:
+    if phase in {"draft_lottery", "draft", "re_signing", "free_agency"}:
         start += 1
     return f"{start}-{str(start + 1)[-2:]}"
 
@@ -6854,7 +7354,11 @@ def contract_display_seasons(current: str | None) -> list[str]:
             return [f"{year}-{str(year + 1)[-2:]}" for year in range(start, start + 3)]
         except ValueError:
             pass
-    return ["2025-26", "2026-27", "2027-28"]
+    start = int(CANONICAL_SEASON.split("-")[0])
+    return [
+        f"{year}-{str(year + 1)[-2:]}"
+        for year in range(start, start + 3)
+    ]
 
 
 def salary_cell(value: Any) -> str:

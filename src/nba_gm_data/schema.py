@@ -4,8 +4,8 @@ from dataclasses import asdict, dataclass, field, is_dataclass
 from typing import Any
 
 
-CANONICAL_SEASON = "2025-26"
-CANONICAL_START_DATE = "2025-10-01"
+CANONICAL_SEASON = "2026-27"
+CANONICAL_START_DATE = "2026-07-28"
 
 
 @dataclass(frozen=True)
@@ -54,6 +54,18 @@ class Player:
     critical_field_fallbacks: dict[str, Any]
     rotation_priority: str
     source_ids: list[str]
+    espn_player_id: str | None = None
+    espn_profile_url: str | None = None
+    headshot_url: str | None = None
+    headshot_url_source: str | None = None
+    headshot_rights_status: str | None = None
+    headshot_asset_path: str | None = None
+    draft_year: int | None = None
+    draft_round: int | None = None
+    draft_position: int | None = None
+    draft_status: str = "unknown"
+    current_ability: float | None = None
+    potential: float | None = None
 
 
 @dataclass(frozen=True)
@@ -153,6 +165,8 @@ class DraftProspect:
     confidence: float
     source_ids: list[str]
     notes: str
+    medical_profile: dict[str, Any] = field(default_factory=dict)
+    scouting_prior: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -462,6 +476,11 @@ class TeamStrategicState:
     confidence: float
     source_ids: list[str]
     notes: str
+    window_phase: str = ''
+    league_rank: int | None = None
+    contender_index: float = 0.0
+    window_trend: float = 0.0
+    core_candidates: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -592,6 +611,11 @@ class TradeEvaluation:
     legality_issues: list[str]
     personality_adjustments: dict[str, float]
     notes: str
+    acceptance_threshold: float | None = None
+    window_phase: str | None = None
+    incoming_asset_value: float | None = None
+    strategic_adjustment: float | None = None
+    decision_reasons: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -610,6 +634,7 @@ class ContractOffer:
     role_promise: str
     status: str
     notes: str
+    guaranteed: bool = True
 
 
 @dataclass(frozen=True)
@@ -698,6 +723,7 @@ class SimGameResult:
     team_lines: list[dict[str, Any]]
     source_ids: list[str]
     notes: str
+    plus_minus_tracking: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -779,6 +805,7 @@ class CanonicalUniverse:
     free_agent_candidates: list[FreeAgentCandidate]
     trade_block_entries: list[TradeBlockEntry]
     coverage_report: CoverageReport
+    waived_salary_obligations: list[dict[str, Any]] = field(default_factory=list)
 
 
 def to_plain(value: Any) -> Any:

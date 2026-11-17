@@ -1,0 +1,210 @@
+.game-tutorial[hidden] {
+  display: none;
+}
+
+.game-tutorial {
+  inset: 0;
+  pointer-events: none;
+  position: fixed;
+  z-index: 20000;
+}
+
+.game-tutorial-shade {
+  background: rgba(11, 18, 25, 0.58);
+  pointer-events: auto;
+  position: fixed;
+  touch-action: none;
+}
+
+.game-tutorial-spotlight {
+  border: 2px solid #2879c6;
+  box-shadow: 0 0 0 2px rgba(232, 243, 252, 0.9), 0 0 18px rgba(13, 89, 159, 0.32);
+  pointer-events: none;
+  position: fixed;
+  z-index: 1;
+}
+
+.game-tutorial-card {
+  background: var(--panel, #edf1f4);
+  border: 1px solid #718294;
+  box-shadow: 1px 1px 0 #fff inset, -1px -1px 0 #a8b4bf inset, 0 8px 26px rgba(0, 0, 0, 0.3);
+  color: var(--text, #1a222a);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 24px);
+  max-width: calc(100vw - 24px);
+  overflow: auto;
+  pointer-events: auto;
+  position: fixed;
+  width: min(440px, calc(100vw - 24px));
+  z-index: 2;
+}
+
+.game-tutorial-card::before {
+  background: inherit;
+  border-bottom: 1px solid #718294;
+  border-left: 1px solid #718294;
+  content: "";
+  height: 10px;
+  position: absolute;
+  width: 10px;
+  z-index: 1;
+}
+
+.game-tutorial-card[data-side="right"]::before {
+  left: -6px;
+  top: calc(50% - 5px);
+  transform: rotate(45deg);
+}
+
+.game-tutorial-card[data-side="left"]::before {
+  border: 0;
+  border-right: 1px solid #718294;
+  border-top: 1px solid #718294;
+  right: -6px;
+  top: calc(50% - 5px);
+  transform: rotate(45deg);
+}
+
+.game-tutorial-card[data-side="bottom"]::before {
+  border: 0;
+  border-left: 1px solid #718294;
+  border-top: 1px solid #718294;
+  left: calc(50% - 5px);
+  top: -6px;
+  transform: rotate(45deg);
+}
+
+.game-tutorial-card[data-side="top"]::before {
+  bottom: -6px;
+  left: calc(50% - 5px);
+  transform: rotate(225deg);
+}
+
+.game-tutorial-titlebar {
+  align-items: center;
+  background: #c9d8e5;
+  border-bottom: 1px solid #8797a6;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+  color: #17212a;
+  display: flex;
+  font-size: 12px;
+  font-weight: 750;
+  justify-content: space-between;
+  min-height: 34px;
+  padding: 0 11px;
+}
+
+.game-tutorial-content {
+  overflow: auto;
+  padding: 18px 20px 17px;
+}
+
+.game-tutorial-kicker {
+  color: #465969;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0 0 7px;
+}
+
+.game-tutorial-content h2 {
+  color: #18212a;
+  font-size: 23px;
+  font-weight: 720;
+  line-height: 1.18;
+  margin: 0 0 10px;
+}
+
+.game-tutorial-content > p:last-child {
+  color: #222d36;
+  font-size: 16px;
+  line-height: 1.48;
+  margin: 0;
+  max-width: 58ch;
+}
+
+.game-tutorial-actions {
+  align-items: center;
+  background: #e1e7ec;
+  border-top: 1px solid #b0bac3;
+  display: flex;
+  justify-content: space-between;
+  min-height: 55px;
+  padding: 8px 12px;
+}
+
+.game-tutorial-arrows {
+  display: flex;
+  gap: 7px;
+}
+
+.game-tutorial button {
+  color: #111820;
+  font: inherit;
+}
+
+.game-tutorial-arrow {
+  background: #d7e0e7;
+  border: 1px solid #65788a;
+  box-shadow: 1px 1px 0 #fff inset, -1px -1px 0 #a9b4bd inset;
+  cursor: pointer;
+  font-size: 23px !important;
+  height: 36px;
+  line-height: 1;
+  min-width: 42px;
+  padding: 0 8px;
+}
+
+.game-tutorial-skip {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 14px !important;
+  padding: 7px 5px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.game-tutorial button:hover:not(:disabled) {
+  background-color: #c9d9e7;
+  color: #111820;
+}
+
+.game-tutorial-skip:hover {
+  background: transparent !important;
+}
+
+.game-tutorial button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.game-tutorial button:focus-visible,
+.game-tutorial-card:focus-visible {
+  outline: 2px solid #176fbe;
+  outline-offset: 2px;
+}
+
+@media (max-width: 620px) {
+  .game-tutorial-card {
+    width: calc(100vw - 24px);
+  }
+
+  .game-tutorial-content {
+    padding: 15px 16px;
+  }
+
+  .game-tutorial-content h2 {
+    font-size: 21px;
+  }
+
+  .game-tutorial-content > p:last-child {
+    font-size: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-tutorial * {
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/MEM-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/MEM-v2-1.jpg",
+      "kind": "basketball",
+      "team": "MEM",
+      "clips": [
+        {
+          "source_start": 29,
+          "frames": 510,
+          "team": "MEM",
+          "opponent": "MIL",
+          "action": "Morant late attack and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 54,
+          "frames": 240,
+          "team": "MEM",
+          "opponent": "DAL",
+          "action": "Morant driving finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 786
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/MEM-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/MEM-v2-2.jpg",
+      "kind": "basketball",
+      "team": "MEM",
+      "clips": [
+        {
+          "source_start": 65,
+          "frames": 165,
+          "team": "MEM",
+          "opponent": "GSW",
+          "action": "Morant basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 109,
+          "frames": 360,
+          "team": "MEM",
+          "opponent": "PHX",
+          "action": "Morant drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 561
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/MEM-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/MEM-v2-3.jpg",
+      "kind": "basketball",
+      "team": "MEM",
+      "clips": [
+        {
+          "source_start": 132,
+          "frames": 240,
+          "team": "MEM",
+          "opponent": "LAL",
+          "action": "Morant three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 149,
+          "frames": 390,
+          "team": "MEM",
+          "opponent": "NOP",
+          "action": "Morant driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 666
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "wMcxZPbo32E",
+    "url": "https://www.youtube.com/watch?v=wMcxZPbo32E",
+    "title": "Ja Morant | Top Plays of the 2025-26 season",
+    "channel": "Sports Productions ",
+    "path": ".cache/startup-team-correction/MEM.mp4",
+    "query": "2025-26 Memphis Grizzlies Ja Morant best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 29,
+      "frames": 510,
+      "team": "MEM",
+      "opponent": "MIL",
+      "action": "Morant late attack and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 54,
+      "frames": 240,
+      "team": "MEM",
+      "opponent": "DAL",
+      "action": "Morant driving finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 65,
+      "frames": 165,
+      "team": "MEM",
+      "opponent": "GSW",
+      "action": "Morant basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 109,
+      "frames": 360,
+      "team": "MEM",
+      "opponent": "PHX",
+      "action": "Morant drive and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 132,
+      "frames": 240,
+      "team": "MEM",
+      "opponent": "LAL",
+      "action": "Morant three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 149,
+      "frames": 390,
+      "team": "MEM",
+      "opponent": "NOP",
+      "action": "Morant driving basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 90.63333333333334
+}

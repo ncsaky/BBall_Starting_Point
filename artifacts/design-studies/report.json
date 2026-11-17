@@ -1,0 +1,205 @@
+{
+  "report": [
+    {
+      "screen": "assets",
+      "skin": "carbon",
+      "ready": "assets",
+      "cards": 6,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "roster",
+      "skin": "carbon",
+      "ready": "roster",
+      "cards": 6,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "player",
+      "skin": "carbon",
+      "ready": "player",
+      "cards": 7,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "trade-builder",
+      "skin": "carbon",
+      "ready": "trade-builder",
+      "cards": 9,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "trade-finder",
+      "skin": "carbon",
+      "ready": "trade-finder",
+      "cards": 6,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "free-agency",
+      "skin": "carbon",
+      "ready": "free-agency",
+      "cards": 7,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "negotiation",
+      "skin": "carbon",
+      "ready": "negotiation",
+      "cards": 7,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "draft",
+      "skin": "carbon",
+      "ready": "draft",
+      "cards": 6,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "playoffs",
+      "skin": "carbon",
+      "ready": "playoffs",
+      "cards": 6,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "staff",
+      "skin": "carbon",
+      "ready": "staff",
+      "cards": 5,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "assets",
+      "skin": "silver",
+      "ready": "assets",
+      "cards": 6,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "roster",
+      "skin": "silver",
+      "ready": "roster",
+      "cards": 6,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "player",
+      "skin": "silver",
+      "ready": "player",
+      "cards": 7,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "trade-builder",
+      "skin": "silver",
+      "ready": "trade-builder",
+      "cards": 9,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "trade-finder",
+      "skin": "silver",
+      "ready": "trade-finder",
+      "cards": 6,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "free-agency",
+      "skin": "silver",
+      "ready": "free-agency",
+      "cards": 7,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "negotiation",
+      "skin": "silver",
+      "ready": "negotiation",
+      "cards": 7,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "draft",
+      "skin": "silver",
+      "ready": "draft",
+      "cards": 6,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "playoffs",
+      "skin": "silver",
+      "ready": "playoffs",
+      "cards": 6,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    },
+    {
+      "screen": "staff",
+      "skin": "silver",
+      "ready": "staff",
+      "cards": 5,
+      "overflow": false,
+      "badCards": [],
+      "brokenImages": 0,
+      "invalid": false
+    }
+  ],
+  "errors": []
+}

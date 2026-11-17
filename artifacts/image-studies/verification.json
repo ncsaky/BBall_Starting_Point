@@ -1,0 +1,65 @@
+[
+  {
+    "surface": "silver",
+    "style": "dots",
+    "images": 6,
+    "allNonblank": true
+  },
+  {
+    "surface": "silver",
+    "style": "stencil",
+    "images": 6,
+    "allNonblank": true
+  },
+  {
+    "surface": "silver",
+    "style": "pixels",
+    "images": 6,
+    "allNonblank": true
+  },
+  {
+    "surface": "ink",
+    "style": "dots",
+    "images": 6,
+    "allNonblank": true
+  },
+  {
+    "surface": "ink",
+    "style": "stencil",
+    "images": 6,
+    "allNonblank": true
+  },
+  {
+    "surface": "ink",
+    "style": "pixels",
+    "images": 6,
+    "allNonblank": true
+  },
+  {
+    "motion": "lottery",
+    "changes": true
+  },
+  {
+    "motion": "day",
+    "changes": true
+  },
+  {
+    "motion": "card",
+    "changes": true
+  },
+  {
+    "download": "shooting-dots-silver.png"
+  },
+  {
+    "edition": "Elian Mercer"
+  },
+  {
+    "mobileOverflow": false
+  },
+  {
+    "reducedMotion": "none"
+  },
+  {
+    "errors": []
+  }
+]

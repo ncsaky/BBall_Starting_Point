@@ -1,0 +1,81 @@
+{
+  "date": "2026-11-12",
+  "scope": "schema/evidence completeness and local document integrity, not engine tests or simulations",
+  "counts": {
+    "inputs": 94,
+    "nonpassing_skills": 46,
+    "passing_skills": 18,
+    "physical_families": 12,
+    "tendency_families": 18,
+    "player_values_filled_by_this_ledger": 0
+  },
+  "outputs_referenced": {
+    "derived": 37,
+    "roles_and_summaries": 22
+  },
+  "cohort": 12,
+  "provisional_ranges": 8,
+  "full_approved_ID_set_matches": true,
+  "all_required_evidence_fields_present": true,
+  "local_links_exist": true,
+  "source_hash_recheck": {
+    "docs/PLAYER_OBJECT_THREE_COLUMN_MAP_2026_11_12.md": {
+      "sha256": "208d51f643d78eae2d5ee23db6771522723a1c92fe9d4de5366fa1afa59cda00",
+      "matches_capture": true
+    },
+    "data/canonical/universe_2026_27_offseason.json": {
+      "sha256": "dd993731ab5411066ea1f8d7e7053e9718deefa08758f5f51a274a3aef1a8e31",
+      "matches_capture": true
+    },
+    "Player Stats/player_skill_input_2025_26.json": {
+      "sha256": "44a53443687cc9af61737362baa9d925b1a0f5a6e9798f3fe1d612e28ef56335",
+      "matches_capture": true
+    },
+    "Player Stats/player_stats.json": {
+      "sha256": "a7bcb4792e347c681b733c89c493e938371741f977ae65b4bce799459eb9bb74",
+      "matches_capture": true
+    },
+    "data/research/player_career_stats.json": {
+      "sha256": "a489be0581ab49c46513eae197f62232d75e042ca0e88c5b1ee28f70f9e85a1e",
+      "matches_capture": true
+    },
+    "data/research/game_boxscores_2025_26.json": {
+      "sha256": "9a4cf3b1bfcc4b9b605a09d4d744e5a7779a7b031ad35fc97337245a5d66339f",
+      "matches_capture": true
+    },
+    "data/research/player_shot_zones_2025_26.json": {
+      "sha256": "689865ef188959f1e63358b4c50f85f98fc4aa6698b8784317d4abe2a011b507",
+      "matches_capture": true
+    },
+    "data/research/shot_chart_reference.json": {
+      "sha256": "918b93dc67ee36aea4e31a934ab81605d014efc8929c2036787ee801aa7914be",
+      "matches_capture": true
+    },
+    "data/research/shot_chart_model.json": {
+      "sha256": "10896e20f3be5dc8ddc29b99c6078186ef227316654aa93601025afe43cc70af",
+      "matches_capture": true
+    },
+    "data/research/tracking_sources_2025_26.json": {
+      "sha256": "572a330c1387ef3a5b5be198183e7d78b9c868315856688fc699812fb7ac3e7c",
+      "matches_capture": true
+    }
+  },
+  "delivered_files": {
+    "docs/ratings-evidence-2026-10-29/PLAYER_MODEL_EVIDENCE_COVERAGE_2026_11_12.md": "efca7ac0b15cf423ff3d3b342040939e67b57d3c61d252323a1100f731dadec7",
+    "docs/ratings-evidence-2026-10-29/PLAYER_MODEL_EVIDENCE_COVERAGE_2026_11_12.json": "3f219a8037854893f727416586d555227791b74abf3036691fb0705978b0b77b",
+    "docs/ratings-evidence-2026-10-29/INTERIOR_DEFENSE_CALIBRATION_PACKET_2026_11_12.md": "2afd47d0e0231bd6abe745fbec688539ca75ff455cc685515ac7228e8fc8fd41",
+    "docs/ratings-evidence-2026-10-29/INTERIOR_DEFENSE_CALIBRATION_PACKET_2026_11_12.json": "367e0d79acca120660260008ec390bc7604d70ac17ae28d1817b25c2e82250b5",
+    "docs/ratings-evidence-2026-10-29/probe_artifacts/player_model_source_inventory_20261112.json": "51cb813bd39e4bb4ddef55945b5e78f2f2849669bd760e997cf74372f171fb47",
+    "docs/ratings-evidence-2026-10-29/probe_artifacts/interior_cohort_source_snapshot_20261112.json": "ab19cb6fa2b524c8cc2c2d10a3fb498c5358f2c8dc1b7f9ef92b310421971f93"
+  },
+  "concrete_missing_question_search": {
+    "queries": [
+      "Draymond communication2026",
+      "Bam defensive versatility2025-26",
+      "Zubac rim defense2025-26"
+    ],
+    "result": "No additional specific primary communication/technique evidence acquired; existing source claims/gaps retained. Search snippets not promoted to calibrated observations."
+  },
+  "actual_access_blocker": "No access blocker to completed milestone. Current paid BBI data/export and physical/action-specific evidence remain unavailable/unverified; no purchase or credentials.",
+  "write_boundary": "research folder only; original architecture/source records preserved; backend registry/code not edited"
+}

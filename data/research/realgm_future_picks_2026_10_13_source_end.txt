@@ -1,0 +1,272 @@
+NBA Future Drafts By Team - RealGM (https://basketball.realgm.com/nba/draft/future_drafts/team)
+citeturn11view0 [wordlim: 200] Crawled: today; Content type: text/html; Source: open({"ref_id":"https://basketball.realgm.com/nba/draft/future_drafts/team","lineno":470}); Total lines: 501
+L228: Year  | First Round  | Second Round
+L229: --- | --- | ---
+L230: 2027  | Own; LAL 5-30; Most favorable of UTH (cannot be 1-5), CLE and MIN (via UTH)2 + 1  | To CHA (via LAC to HOU); LAL if LAL does not convey 1st round pick to MEM in 2027 (via UTH)1
+L231: 2028  | Own 1  | To BRK (via PHX)0
+L233: 2030  | More favorable of (i) MEM and (ii) less favorable of PHX and WAS then least favorable of all to PHX (via WAS swap for PHX; via MEM swap for PHX or WAS); GOS 21-30 (via WAS to DAL); ORL 2 + 1  | 31-50 Own;
+L234: 51-60 to MIN; Most favorable of DEN, HOU and MIA (via DEN to CHA to OKC or DEN to OKC; via OKC to MEM); GOS if GOS does not convey 1st round pick to MEM in 2030 (via WAS to DAL)1 + 2
+L235: 2031  | Own; PHX (via UTH)2  | More favorable of (i) MEM and (ii) less favorable of IND and MIA then least favorable of all to IND (via MIA swap for IND; via MEM swap for IND or MIA)1
+L236: 2032  | Own 1  | Most favorable of MEM, PHL and UTH;
+L237: less favorable of (i) more favorable of MEM and PHL and (ii) UTH to WAS;
+L238: less favorable of MEM and PHL to PHL
+L239: (via MEM swap for PHL; via UTH to WAS; via MEM swap of MEM or PHL for UTH); GOS 51-60 1 + 1
+L240: 2033  | Own 1  | Own; OKC; WAS ---
+L241: NOP unspecified 2nd round pick to MEM NOP unspecified 2nd round pick swap to MEM 3
+L242: ## Miami Heat Future NBA Draft Picks
+L243: Year  | First Round  | Second Round
+L244: --- | --- | ---
+L245: 2027  | 1-14 Own;
+L246: 15-30 to CHA 1  | Least favorable of MIA, OKC, HOU, IND and SAN;
+L247: most favorable of MIA, OKC, HOU and IND to PHL; second most favorable to NOP and third most favorable to NYK;
+L248: more favorable of (i) SAN and (ii) least favorable of MIA, OKC, HOU and IND to SAN
+L249: [PHL may convey to WAS] (via MIA and IND to OKC to UTH to SAN to MIA; via HOU to DET to OKC to NYK to NOP; via OKC to PHL) 1
+L250: 2028  | To CHA if not already settled 1  | To DET if DAL conveys 1st round pick to CHA in 2027 or to CHA if DAL does not convey 1st round pick to CHA in 2027 [DET may convey to UTH] (via SAN to DAL)0
+L251: 2029  | Own 1  | More favorable of MIA and ATL to CHA then other to OKC (via OKC)0
+L252: 2030  | Least favorable of MIA, MIL and POR;
+L253: more favorable of (i) MIA and (ii) less favorable MIL and POR to MIL
+L254: (via POR swap for MIL; via MIL swap of MIL or POR for MIA)1  | Most favorable of MIA, DEN and HOU to MEM then others to OKC (via DEN to CHA to OKC or DEN to OKC; via OKC to MEM)0
+L255: 2031  | To MIL 0  | More favorable of MIA and IND to WAS;
+L256: more favorable of (i) MEM and (ii) less favorable of MIA and IND to MEM then least favorable of all to IND
+L257: (via MIA swap for IND; via UTH to WAS; via MEM swap for IND or MIA)0
+L258: 2032  | Own 1  | To BRK
+L259: 0
+L260: 2033  | To MIL 0  | To MIL 0
+L261: ## Milwaukee Bucks Future NBA Draft Picks
+L262: Year  | First Round  | Second Round
+L263: --- | --- | ---
+L264: 2027  | More favorable of MIL and NOP to NOP then other to ATL if 5-30 or MIL and NOP to NOP if both 1-4 (via NOP)0  | Own (via PHL to DET); Less favorable of BRK and DAL (via DAL to BRK to DET to MIL)2
+L265: 2028  | Less favorable of (i) less favorable of MIL and POR and (ii) more favorable of (a) WAS and (b) least / less favorable of BRK, PHL 9-30 and PHX then more favorable of (i) and (ii) to WAS
+L266: (via POR swap for MIL; via BRK swap of BRK or PHL for PHX; via WAS swap for PHX, BRK or PHL; via WAS swap of WAS, BRK, PHL or PHX for MIL or POR)1  | Most favorable of MIL, GOS and OKC to BOS then others to PHL (via MIL to BRK to HOU to OKC to PHL; via GOS to POR to WAS to PHL; via OKC to PHL)0
+L267: 2029  | Most and least favorable of MIL, BOS and POR to POR; second most favorable to WAS (via BOS to POR; via MIL to POR; via POR to WAS)0  | Two most favorable of MIL, DET and NYK to DET then other to CHI (via MIL to BRK to DET; via NYK to DET; via DET to MEM; via MEM to DET; via SAC to CHI)0
+L268: 2030  | More favorable of (i) less favorable MIL and POR and (ii) MIA then least favorable of all to MIA;
+L269: more favorable of MIL and POR to POR
+L270: (via POR swap for MIL; via MIL swap of MIL or POR for MIA)1  | To ORL 0
+L271: 2031  | Own;
+L272: MIA 2  | To CHA 0
+L273: 2032  | Own
+L274: 1  | To CHA 0
+L275: 2033  | Own; MIA 2  | Own; MIA 2
+L276: ## Minnesota Timberwolves Future NBA Draft Picks
+L277: Year  | First Round  | Second Round
+L278: --- | --- | ---
+L279: 2027  | Most favorable of MIN, CLE and UTH (cannot be 1-5) to MEM; second most favorable to UTH and least favorable to PHX (via UTH)0  | To POR (via HOU to OKC to NYK)0
+L280: 2028  | Own or CHA (via CHA swap for MIN)1  | To DEN (via SAN)0
+L281: 2029  | 1-5 Own;
+L282: most / two most favorable of MIN 6-30, CLE and UTH to UTH then other to CHA (via CLE and MIN to UTH; via UTH to PHX to CHA; via CHA swap of CHA, CLE or UTH for MIN)* *CHA will also have a complex swap right with MIN and PHX will receive a least favorable pick 1  | To CHA if MIN conveys 1st round pick to UTH in 2029 or to UTH if MIN does not convey 1st round pick to UTH in 2029 0
+L283: 2030  | 1 Own;
+L284: less favorable of (i) MIN 2-30 and (ii) more favorable of SAN and DAL then most / more favorable of all to SAN [MIN may convey to CHA]~~ ~~ (via SAN swap for DAL; via SAN swap of SAN or DAL for MIN)* *CHA will have a complex swap right with MIN, receiving MIN, SAN or DAL 1  | To OKC (via DET); MEM 51-60 1
+L285: 2031  | To SAC (via SAN)0  | More favorable of MIN and GOS to CHI then other to DET (via MIN swap for GOS)0
+L286: 2032  | Frozen (through 2027-28)1  | To CHA 0
+L287: 2033  | To CHA 0  | To CHA 0
+L288: ## New Orleans Pelicans Future NBA Draft Picks
+L289: Year  | First Round  | Second Round
+L290: --- | --- | ---
+L291: 2027  | More favorable of NOP and MIL then other to ATL if 5-30 or NOP and MIL if both 1-4 (via NOP)1 + 1  | More favorable of NOP and POR to CHA then other to POR [POR may convey to HOU] (via NOP); Second most favorable of OKC, HOU, IND and MIA (via HOU to DET to OKC to NYK)1
+L292: 2028  | Own 1  | To SAN 0
+L293: 2029  | Own 1  | To SAN 0
+L294: 2030  | Own 1  | Own or ORL (via ORL swap for NOP)1
+L295: 2031  | Own 1  | More favorable of NOP and ORL to ORL then other to OKC (via ORL swap for NOP);
+L296: TOR 1
+L297: 2032  | Own 1  | Own 1
+L298: 2033  | Own 1  | Own ---
+L299: NOP unspecified 2nd round pick to MEM NOP unspecified 2nd round pick swap to MEM 1
+L300: ## New York Knicks Future NBA Draft Picks
+L301: Year  | First Round  | Second Round
+L302: --- | --- | ---
+L303: 2027  | To BRK 0  | Own; Third most favorable of OKC, HOU, IND and MIA (via HOU to DET to OKC); WAS (via HOU to OKC)3
+L304: 2028  | Least favorable of NYK, BRK and PHX if NYK and / or if PHL 9-30 is less favorable than BRK and PHX; or second most favorable of NYK, BRK and PHX in all other scenarios;
+L305: if (i) PHL 9-30 is third most favorable and (ii) NYK is most or second most favorable of NYK, BRK, PHL 9-30 and PHX, then most and third most favorable to BRK; or most / two most favorable to BRK in all other scenarios
+L306: (via BRK swap of BRK or PHL for PHX; via BRK swap of BRK or PHX for NYK; via WAS swap for PHX, BRK or PHL)1  | To DET [DET may convey to UTH];
+L307: BOS 46-60 (via ORL to PHX);
+L308: Less favorable of IND and PHX (via IND)1 + 1
+L309: 2029  | To BRK 0  | Two most favorable of NYK, DET and MIL to DET then other to CHI (via MIL to BRK to DET; via NYK to DET; via DET to MEM; via MEM to DET; via SAC to CHI); PHX; SAC (via WAS to HOU)2
+L310: 2030  | Own 1  | To ATL (via POR); PHL (via DAL)1
+L311: 2031  | To BRK 0  | To CHI (via CHA)0
+L312: 2032  | Own 1  | Own; DAL 2
+L313: 2033  | Own 1  | Own; PHX 2
+L314: ## Oklahoma City Thunder Future NBA Draft Picks
+L315: Year  | First Round  | Second Round
+L316: --- | --- | ---
+L317: 2027  | Two most / more favorable of OKC, DEN 6-30 and LAC;
+L318: more favorable of (i) least / less favorable of OKC, DEN 6-30 and LAC and (ii) TOR to LAC then least favorable of all to TOR
+L319: (via OKC swap of OKC or DEN for LAC; via LAC swap of DEN, OKC or LAC for TOR); SAN 17-30 (via SAC)1 + 2  | Most favorable of OKC, HOU, IND and MIA to PHL; second most favorable to NOP and third most favorable to NYK;
+L320: more favorable of (i) SAN and (ii) least favorable of OKC, HOU, IND and MIA to SAN then least favorable of all to MIA
+L321: [PHL may convey to WAS] (via HOU to DET to OKC to NYK to NOP; via IND and MIA to OKC to UTH to SAN to MIA; via OKC to PHL); CHA if SAN 1-16 in 2027 (via SAC); CHI (via WAS to NOP to WAS to DAL); SAC if SAN 1-16 in 2027 1 + 2
+L322: 2028  | Own or swap for DAL;
+L323: DEN 6-30 if not already settled 1 + 1  | Most favorable of OKC, GOS and MIL to BOS then others to PHL (via OKC to PHL; GOS to POR to WAS to PHL; via MIL to BRK to HOU to OKC to PHL);
+L324: UTH 1
+L325: 2029  | Own;
+L326: DEN 6-30 if not already settled;
+L327: or DEN 6-30 if DEN conveys a first potential 1st round pick to OKC in 2027 1 + 1  | Own;
+L328: Less favorable of ATL and MIA;
+L329: BOS;
+L330: DEN if DEN has not conveyed a first potential 1st round pick to OKC by 2029 3 + 1
+L331: 2030  | Own;
+L332: DEN 6-30 if not already settled and if DEN has conveyed a first potential 1st round pick to OKC by 2028 1 + 1  | Own; ATL; Two least favorable of DEN, HOU and MIA (via DEN to CHA or DEN to OKC); MIN (via DET)5
+L333: 2031  | Own 1  | Own; More favorable of ATL and HOU 31-55 [or ATL if HOU 56-60] (via ATL swap for HOU); DET; Less favorable of NOP and ORL (via ORL swap for NOP)4
+L334: 2032  | Own 1  | Own; ATL (via LAL to ATL; via LAL to ATL); LAL (via ATL; via ATL)3
+L335: 2033  | Own 1  | To MEM 0
+L336: ## Orlando Magic Future NBA Draft Picks
+L337: Year  | First Round  | Second Round
+L338: --- | --- | ---
+L339: 2027  | Own 1  | More favorable of ORL and BOS to UTH then other to PHX (via BOS to ORL to BOS to UTH; via ORL to CHA to PHX)0
+L340: 2028  | To POR (via MEM)0  | To CHA;
+L341: More favorable of LAL and WAS (via LAL)1
+L342: 2029  | 1-2 Own;
+L343: 3-30 Own or MEM (via MEM swap for ORL)1  | To MEM if ORL 1-2 in 2029 1
+L344: 2030  | To MEM 0  | Own or swap for NOP;
+L345: MIL 2
+L346: 2031  | Own 1  | More favorable of ORL and NOP then other to OKC (via ORL swap for NOP)1
+L347: 2032  | Own 1  | Own 1
+L348: 2033  | Own 1  | Own 1
+L349: ## Philadelphia Sixers Future NBA Draft Picks
+L350: Year  | First Round  | Second Round
+L351: --- | --- | ---
+L352: 2027  | Own 1  | Own*; More favorable of GOS and PHX (via WAS)*; Most favorable of OKC, HOU, IND and MIA (via HOU to DET to OKC; via IND and MIA to OKC; via OKC to PHL)* *Second most favorable of these to WAS 2
+L353: 2028  | 1-8 Own if LAC 17-30; or [via swap from BOS] least favorable of (i) PHL 1-8, LAC 1-16, BOS and SAN or (ii) LAC 1-16, BOS and SAN;
+L354: more favorable of (i) more favorable of PHL 1-8 and LAC 1-16 [or (i) LAC 1-16 if PHL 9-30] and (ii) less favorable of BOS and SAN to BOS;
+L355: if (i) PHL 9-30 is third most favorable and (ii) NYK is most or second most favorable of PHL 9-30, PHX, BRK and NYK, then most and third most favorable to BRK; or most / two most favorable to BRK in all other scenarios;
+L356: least favorable of PHX, BRK and NYK to NYK if NYK and / or if PHL 9-30 is less favorable than PHX and BRK; or second most favorable of PHX, BRK and NYK to NYK in all other scenarios;
+L357: more favorable of (i) WAS and (ii) least / less favorable of PHL 9-30, PHX and BRK to WAS then least favorable of all to PHX [WAS can then swap with MIL]
+L358: (via SAN swap for BOS; via BOS swap of BOS or SAN for PHL or LAC; via BRK swap of BRK or PHL for PHX; via BRK swap of BRK or PHX for NYK; via WAS swap for PHX, BRK or PHL)1  | To BRK if PHL 1-8 in 2028;
+L359: DET 56-60;
+L360: Two least favorable of GOS, MIL and OKC (via GOS to POR to WAS; via MIL to BRK to HOU to OKC)2 + 2
+L361: 2029  | Own or swap for LAC 4-30 1  | Own 1
+L362: 2030  | Own 1  | To NYK (via DAL);
+L363: Less favorable of (i) more favorable of PHX and POR and (ii) WAS (via PHX and POR to WAS)1
+L364: 2031  | To BOS 0  | Own 1
+L365: 2032  | Own 1  | Less favorable of PHL and MEM;
+L366: less favorable of (i) more favorable of PHL and MEM and (ii) UTH to WAS then most favorable of all to MEM
+L367: (via MEM swap for PHL; via UTH to WAS; via MEM swap of MEM or PHL for UTH)1
+L368: 2033  | Own 1  | Own 1
+L369: ## Phoenix Suns Future NBA Draft Picks
+L370: Year  | First Round  | Second Round
+L371: --- | --- | ---
+L372: 2027  | To HOU (via BRK);
+L373: Least favorable of UTH (cannot be 1-5), CLE and MIN (via UTH)1  | More favorable of PHX and GOS to PHL then other to WAS [PHL may convey to WAS] (via WAS); Less favorable of BOS and ORL (via BOS to ORL to CHA)1
+L374: 2028  | Least favorable of PHX, PHL 9-30, WAS and BRK;
+L375: more favorable of (i) WAS and (ii) least / less favorable of PHX, PHL 9-30 and BRK to WAS [WAS can then swap with MIL];
+L376: if (i) PHL 9-30 is third most favorable and (ii) NYK is most or second most favorable of PHX, PHL 9-30, BRK and NYK, then most and third most favorable to BRK; or most / two most favorable to BRK in all other scenarios;
+L377: least favorable of PHX, BRK and NYK to NYK if NYK and / or if PHL 9-30 is less favorable than PHX and BRK; or second most favorable of PHX, BRK and NYK to NYK in all other scenarios
+L378: (via BRK swap of BRK or PHL for PHX; via BRK swap of BRK or PHX for NYK; via WAS swap for PHX, BRK or PHL)1  | Less favorable of (i) more favorable of PHX and IND and (ii) CHI to IND then most favorable of all to CHI;
+L379: less favorable of PHX and IND to NYK
+L380: (via PHX to IND; via CHI swap for IND or PHX)0
+L381: 2029  | Two most favorable of PHX, DAL and HOU to HOU then other to BRK (via DAL and PHX to BRK; via DAL or PHX to HOU; via HOU swap for DAL or PHX) ---
+L382: PHX will receive a least favorable pick from a complex CHA-MIN conveyance, including CHA's swap right 1  | To NYK 0
+L383: 2030  | Least favorable of PHX, WAS and MEM;
+L384: more favorable of (i) MEM and (ii) less favorable of PHX and WAS to MEM;
+L385: more favorable of PHX and WAS to WAS
+L386: (via WAS swap for PHX; via MEM swap for PHX or WAS)1  | Less favorable of (i) more favorable of PHX and POR and (ii) WAS to PHL then most favorable of all to BOS;
+L387: less favorable of PHX and POR to WAS
+L388: (via PHX and POR to WAS to PHL)0
+L389: 2031  | To MEM (via UTH)0  | To CHA 0
+L390: 2032  | Frozen (through 2027-28)1  | Less favorable of PHX and HOU then other to CHI (via PHX to MIN)1
+L391: 2033  | To CHA 0  | To NYK 0
+L392: ## Portland Trail Blazers Future NBA Draft Picks
+L393: Year  | First Round  | Second Round
+L394: --- | --- | ---
+L395: 2027  | Own
+L396: 1  | Less favorable of POR and NOP then other to CHA [POR may convey to HOU; see following]; then less favorable of POR and NOP to HOU if 56-60 (via POR to NOP to CHA; via POR to BOS to HOU);
+L397: MIN (via HOU to OKC to NYK)1 + 1
+L398: 2028  | Own or swap for MIL [WAS then has a complex swap right with MIL];
+L399: ORL (via MEM)2  | Own;
+L400: SAC (via CHI to SAC to MEM)2
+L401: 2029  | Most and least favorable of POR, BOS and MIL; second most favorable to WAS (via BOS to POR; via MIL to POR; via POR to WAS)2  | To MEM (via PHL to IND);
+L402: Less favorable of IND and WAS (via IND to NYK)1
+L403: 2030  | Own or swap for MIL;
+L404: more favorable of (i) less favorable MIL and POR and (ii) MIA to MIL then least favorable of all to MIA
+L405: (via POR swap for MIL; via MIL swap of MIL or POR for MIA)
+L406: 1  | Less favorable of (i) more favorable of POR and PHX and (ii) WAS to PHL then most favorable of all to BOS;
+L407: less favorable of POR and PHX to WAS
+L408: (via PHX and POR to WAS to PHL)0
+L409: 2031  | Own 1  | Own 1
+L410: 2032  | Own 1  | Own 1
+L411: 2033  | Own 1  | Own 1
+L412: ## Sacramento Kings Future NBA Draft Picks
+L413: 
+L414: Year  | First Round  | Second Round
+L415: --- | --- | ---
+L416: 2027  | Own;
+L417: SAN 1-16 1 + 1  | To OKC if SAN 1-16 in 2027;
+L418: CHA if SAN 17-30 in 2027 (via NYK to ATL to SAN)2
+L419: 2028  | Own 1  | To POR (via CHI to SAC to MEM)0
+L420: 2029  | Own 1  | To NYK (via WAS to HOU)0
+L421: 2030  | Own 1  | To SAN (via IND)0
+L422: 2031  | Own or SAN (via SAN swap for SAC);
+L423: MIN (via SAN)2  | To DEN (via SAN)0
+L424: 2032  | Own 1  | To DEN (via CLE)0
+L425: 2033  | Own 1  | To ATL 0
+L426: ## San Antonio Spurs Future NBA Draft Picks
+L427: Year  | First Round  | Second Round
+L428: --- | --- | ---
+L429: 2027  | 1-16 to SAC;
+L430: 17-30 to OKC (via SAC);
+L431: ATL 1  | More favorable of (i) SAN and (ii) least favorable of OKC, HOU, IND and MIA then least favorable of all to MIA (via HOU to DET to OKC; via MIA to OKC to UTH to SAN to MIA)1
+L432: 2028  | Own or swap for BOS 2-30 [BOS then has a complex swap right with PHL]1  | Own; BOS 31-45 if BOS 1 in 2028; NOP 2 + 1
+L433: 2029  | Own 1  | Own;
+L434: LAC (via PHL);
+L435: NOP 3
+L436: 2030  | Most / more favorable of SAN, DAL and MIN 2-30;
+L437: less favorable of (i) more favorable of SAN and DAL and (ii) MIN 2-30 [or MIN if MIN not conveyable] to MIN [MIN may convey to CHA];
+L438: less favorable of SAN and DAL to DAL
+L439: (via SAN swap for DAL; via SAN swap of SAN or DAL for MIN)1  | Own;
+L440: CLE;
+L441: SAC (via IND)3
+L442: 2031  | Own or swap for SAC 1  | Own 1
+L443: 2032  | Own 1  | Own 1
+L444: 2033  | Own 1  | Own 1
+L445: ## Toronto Raptors Future NBA Draft Picks
+L446: 
+L447: Year  | First Round  | Second Round
+L448: --- | --- | ---
+L449: 2027  | Least / less favorable of TOR, LAC, DEN 6-30 and OKC;
+L450: more favorable of (i) TOR and (i) least / less favorable of LAC, DEN 6-30 and OKC to LAC
+L451: (via OKC swap of OKC or DEN for LAC; via LAC swap of LAC, DEN or OKC for TOR)1  | Own 1
+L452: 2028  | Own 1  | Own 1
+L453: 2029  | Own 1  | Own 1
+L454: 2030  | Own 1  | To LAC 0
+L455: 2031  | To LAC 0  | To NOP 0
+L456: 2032  | Own 1  | To BRK 0
+L457: 2033  | To LAC 0  | To LAC 0
+L458: ## Utah Jazz Future NBA Draft Picks
+L459: Year  | First Round  | Second Round
+L460: --- | --- | ---
+L461: 2027  | Second most favorable of UTH (cannot be 1-5), CLE and MIN; most favorable to MEM and least favorable to PHX (via UTH)1  | To IND (via CLE); More favorable of BOS and ORL (via BOS to ORL to BOS);
+L462: DEN (via CLE to CHI to BOS);
+L463: LAC (via ATL to LAC)3
+L464: 2028  | Most favorable of UTH, CLE and LAL;
+L465: less favorable of (i) more favorable of UTH and CLE and (ii) LAL to LAL;
+L466: less favorable of UTH and CLE to CLE
+L467: [CLE may convey UTH to ATL] (via UTH swap for CLE; via UTH swap of UTH or CLE for LAL)
+L468: 1  | To OKC; CLE; Least / less favorable of (i) DET 31-55, (ii) less favorable of CHA and LAC (via CHA to DAL), (iii) MIA if DAL conveys 1st round pick to CHA in 2027 (via SAN to DAL) and (iv) NYK 2
+L469: 2029  | Most / two most favorable of UTH, CLE and MIN 6-30 to UTH; least / less favorable to CHA (via CLE and MIN to UTH; via UTH to PHX to CHA; via CHA swap of CHA, CLE or UTH for MIN)* *CHA will also have a complex swap right with MIN and PHX will receive a least favorable pick 1 + 1  | Own;
+L470: MIN if MIN does not convey 1st round pick to UTH in 2029 1 + 1
+L471: 2030  | Own or swap for LAL 1  | Less favorable of UTH and LAC then other to CHA (via LAC to UTH)1
+L472: 2031  | Own; LAL 2  | Own;
+L473: More favorable of BOS and CLE (via CLE to ATL to BOS)2
+L474: 2032  | Own 1  | Less favorable of (i) UTH and (i) more favorable of MEM and PHL to WAS then most favorable of all to MEM (via UTH to WAS; via MEM swap for PHL; via MEM swap of MEM or PHL for UTH); CLE 1
+L475: 2033  | Own; LAL 2  | Own 1
+L476: ## Washington Wizards Future NBA Draft Picks
+L477: Year  | First Round  | Second Round
+L478: --- | --- | ---
+L479: 2027  | Own (cannot be 1)1  | To NYK (via HOU to OKC); More favorable of BRK and DAL (via DAL to BRK to DET to WAS); Less favorable of GOS and PHX; Second most favorable of (i) PHL (via LAC), (ii) more favorable of GOS and PHX (via WAS to LAC) and (iii) most favorable of OKC, HOU, IND and MIA (via HOU to DET to OKC to LAC; via IND and MIA to OKC to LAC)3
+L480: 2028  | More favorable of (i) more favorable of (a) WAS and (b) least / less favorable of BRK, PHL 9-30 and PHX and (ii) less favorable of MIL and POR then less favorable of (i) and (ii) to MIL;
+L481: least favorable of WAS, PHL 9-30, BRK and PHX to PHX
+L482: (via POR swap for MIL; via BRK swap of BRK or PHL for PHX; via WAS swap for PHX, BRK or PHL; via WAS swap of WAS, BRK, PHL or PHX for MIL or POR)1  | Less favorable of WAS and LAL then other to ORL (via WAS to LAL to ORL; via LAL to WAS);
+L483: DEN 34-60 (via SAN to SAC)1 + 1
+L484: 2029  | Own;
+L485: Second most favorable of POR, BOS and MIL (via BOS to POR; via MIL to POR; via POR to WAS)2  | More favorable of WAS and IND to IND then other to POR (via IND to NYK)0
+L486: 2030  | More favorable of WAS and PHX;
+L487: more favorable of (i) MEM and (ii) less favorable of WAS and PHX to MEM then least favorable of all to PHX
+L488: (via WAS swap for PHX; via MEM swap for WAS or PHX)1   | Less favorable of (i) WAS and (ii) more favorable of PHX and POR to PHL then most favorable of all to BOS (via PHX and POR to WAS to PHL);
+L489: Less favorable of PHX and POR 1
+L490: 2031  | Own 1  | To LAL;
+L491: More favorable of MIA and IND (via MIA swap for IND; via UTH)1
+L492: 2032  | Own 1  | To LAL; Less favorable of (i) UTH and (i) more favorable of MEM and PHL (via MEM swap for PHL; via MEM swap of MEM or PHL for UTH; via UTH to WAS)1
+L493: 2033  | Own 1  | To MEM; DAL 1
+L494: [Input]
+L495: 
+L496: cite8†NBA cite9†G League cite10†NCAA cite11†International cite12†National cite13†High School cite14†WNBA cite15†How to Watch L497: cite0†Basketball cite1†Football†football.realgm.com cite2†Baseball†baseball.realgm.com cite4†Hockey†hockey.realgm.com cite3†Soccer†soccer.realgm.com L498: cite16†Contact Us cite17†About Us cite18†Advertising cite19†Privacy Policy cite20†Terms of Use L499: 
+L500: All content © 2000-2026 RealGM, L.L.C. All rights reserved.
+

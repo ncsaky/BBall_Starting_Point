@@ -1,0 +1,124 @@
+{
+  "sources": [
+    {
+      "id": "HP_CHART",
+      "url": "https://www.basketballinsiders.com/news/rutgers-basketball-evaluating-dylan-harpers-elite-passing-potential/",
+      "author": "Ben Pfeifer",
+      "date": "2025-01-14",
+      "date_kind": "page update / charting publication",
+      "role": "Rutgers freshman primary creator",
+      "kind": "first-person subjective hand-charted analysis",
+      "sample": {
+        "passing_chances": 136,
+        "potential_assists": 126,
+        "pressured_chances": 30,
+        "pressured_passing_turnovers": 3,
+        "passing_turnovers": 10,
+        "total_turnovers": 35
+      },
+      "definitions": "Chances=assists,potential assists,passing turnovers; subjective big-time pass label. Other25 turnovers combine handling/travel/offensive fouls, not25 dribble steals. Under-pressure group is30 chances, not all possessions.",
+      "finding": "Strong pressure passing/inside feeds; two-hand preference and limited weaker-hand/live-dribble mix.",
+      "current_NBA_rate": false
+    },
+    {
+      "id": "HP_LOB",
+      "url": "https://www.nba.com/news/starting-5-october-13-top-picks-take-center-stage",
+      "author": "NBA.com Staff",
+      "date": "2025-10-13",
+      "date_kind": "published",
+      "role": "Spurs preseason debut report",
+      "kind": "reported observed examples, not a success-rate sample",
+      "finding": "Lofted Kornet feed and Wembanyama lob.",
+      "sample": "successful examples selected in report; no denominator; no video review claimed"
+    },
+    {
+      "id": "HP_SCOUT",
+      "url": "https://jjnbadraft.substack.com/p/dylan-harper-scouting-report",
+      "author": "Joel Jeon",
+      "date": "2025-06-25",
+      "date_kind": "published",
+      "role": "Rutgers pre-draft guard",
+      "kind": "original qualitative scouting",
+      "finding": "Low-man reads/interior traffic passing, but not always consistent; weaker-hand and long skip timing caveats.",
+      "limits": "No NBA skill-grade equivalence or current-percentile claim."
+    },
+    {
+      "id": "LUKA_FILM",
+      "url": "https://www.si.com/nba/mavericks/onsi/news/dallas-mavs-luka-doncic-posting-up-more-providing-major-advantage",
+      "author": "Grant Afseth",
+      "date": "2022-11-04",
+      "date_kind": "published",
+      "role": "Dallas post/drive creator",
+      "kind": "original film description/analysis",
+      "finding": "Low sweep protects ball against nail pressure and rim help; multiple counters.",
+      "limits": "Specific post/finish context, not dribble-security loss rate or whole-game protection sample."
+    },
+    {
+      "id": "LUKA_BLITZ",
+      "url": "https://www.nba.com/news/nba-finals-film-study-how-will-celtics-defend-luka-doncic",
+      "author": "John Schuhmann",
+      "date": "2024-06-04",
+      "date_kind": "updated",
+      "role": "Dallas playoff P&R creator",
+      "kind": "original film/context analysis",
+      "finding": "Blitzes effective against offense; loss type unestablished.",
+      "limits": "Cannot attribute offense efficiency to handle security alone."
+    },
+    {
+      "id": "G_SCREEN",
+      "url": "https://www.startribune.com/minnesota-timberwolves-rudy-gobert-sets-different-screens-for-different-players/600237040",
+      "author": "Chris Hine",
+      "date": "2022-12-18",
+      "date_kind": "published",
+      "role": "Minnesota screener adjusting to teammates/coverages",
+      "kind": "direct player interview reporting",
+      "finding": "Switch\u2192slip; blitz\u2192outlet; deeper defense\u2192hold.",
+      "limits": "Decisions described, not normalized intrinsic frequency or counted read-success sample."
+    },
+    {
+      "id": "G_ARCHIVE",
+      "url": "https://www.basketballinsiders.com/news/raw-to-revered-rudy-goberts-path-to-stardom/",
+      "author": "page currently credits Jeff Hawkins; original byline/date unresolved",
+      "date": "2023-09-28",
+      "date_kind": "page update only; narrative is earlier Jazz/Snyder era",
+      "role": "archival Jazz development",
+      "kind": "historical reporting/analysis",
+      "finding": "Describes learned screen variations/timed rolls and improved hands.",
+      "limits": "Not a fresh2023 or2026 evaluation; subordinate to explicitly dated2022 source for current inference."
+    },
+    {
+      "id": "G_HANDS",
+      "url": "https://www.nba.com/news/30-teams-30-days-minnesota-timberwolves-2022-23",
+      "author": "Shaun Powell",
+      "date": "2022-09-15",
+      "date_kind": "published",
+      "role": "Minnesota screen/roll context",
+      "kind": "NBA editorial scouting",
+      "finding": "Hands concerns; finishes can be inconsistent.",
+      "limits": "Qualitative and dated; no catch-quality denominator or unconditional drop rate."
+    },
+    {
+      "id": "ZU_HANDS",
+      "url": "https://www.latimes.com/sports/nba/la-sp-lakers-warriors-woike-20181225-story.html",
+      "author": "Dan Woike",
+      "date": "2018-12-25",
+      "date_kind": "published",
+      "role": "Lakers reserve elevated to P&R role",
+      "kind": "teammate observations reported first-hand",
+      "finding": "Rondo/Ball praise tight-space bounce-pass catches.",
+      "limits": "Old selected context, not current catch efficiency or all aerial coordination."
+    }
+  ],
+  "lookup_limits": {
+    "focused_query_strings": 8,
+    "blocked": [
+      "Ringer updated draft guide502, not retried or used as reviewed content"
+    ],
+    "unusable": [
+      "NBA draft prospect wrapper lacked passing text",
+      "Post-start headlines, Reddit reactions and aggregate-security rankings excluded"
+    ],
+    "no_full_video_review": true
+  },
+  "accessed_on": "2026-11-14"
+}

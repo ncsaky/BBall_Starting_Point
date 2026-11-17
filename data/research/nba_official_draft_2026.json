@@ -1,0 +1,613 @@
+{
+  "draft_year": "2026",
+  "pick_count": 60,
+  "picks": [
+    {
+      "final_team_abbrev": "WAS",
+      "name": "AJ Dybantsa",
+      "normalized_name": "aj dybantsa",
+      "original_team_abbrev": "WAS",
+      "overall": 1,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "1. Washington Wizards draft AJ Dybantsa (BYU)"
+    },
+    {
+      "final_team_abbrev": "UTA",
+      "name": "Darryn Peterson",
+      "normalized_name": "darryn peterson",
+      "original_team_abbrev": "UTA",
+      "overall": 2,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "2. Utah Jazz draft Darryn Peterson (Kansas)"
+    },
+    {
+      "final_team_abbrev": "MEM",
+      "name": "Cameron Boozer",
+      "normalized_name": "cameron boozer",
+      "original_team_abbrev": "MEM",
+      "overall": 3,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "3. Memphis Grizzlies draft Cameron Boozer (Duke)"
+    },
+    {
+      "final_team_abbrev": "CHI",
+      "name": "Caleb Wilson",
+      "normalized_name": "caleb wilson",
+      "original_team_abbrev": "CHI",
+      "overall": 4,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "4. Chicago Bulls draft Caleb Wilson (North Carolina)"
+    },
+    {
+      "final_team_abbrev": "LAC",
+      "name": "Keaton Wagler",
+      "normalized_name": "keaton wagler",
+      "original_team_abbrev": "LAC",
+      "overall": 5,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "5. LA Clippers draft Keaton Wagler (Illinois)"
+    },
+    {
+      "final_team_abbrev": "BKN",
+      "name": "Mikel Brown Jr.",
+      "normalized_name": "mikel brown jr",
+      "original_team_abbrev": "BKN",
+      "overall": 6,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "6. Brooklyn Nets draft Mikel Brown Jr. (Louisville)"
+    },
+    {
+      "final_team_abbrev": "SAC",
+      "name": "Darius Acuff Jr.",
+      "normalized_name": "darius acuff jr",
+      "original_team_abbrev": "SAC",
+      "overall": 7,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "7. Sacramento Kings draft Darius Acuff Jr. (Arkansas)"
+    },
+    {
+      "final_team_abbrev": "ATL",
+      "name": "Kingston Flemings",
+      "normalized_name": "kingston flemings",
+      "original_team_abbrev": "ATL",
+      "overall": 8,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "8. Atlanta Hawks draft Kingston Flemings (Houston)"
+    },
+    {
+      "final_team_abbrev": "DAL",
+      "name": "Morez Johnson",
+      "normalized_name": "morez johnson",
+      "original_team_abbrev": "DAL",
+      "overall": 9,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "9. Dallas Mavericks draft Morez Johnson Jr. (Michigan)"
+    },
+    {
+      "final_team_abbrev": "MIL",
+      "name": "Brayden Burries",
+      "normalized_name": "brayden burries",
+      "original_team_abbrev": "MIL",
+      "overall": 10,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "10. Milwaukee Bucks draft Brayden Burries (Arizona)"
+    },
+    {
+      "final_team_abbrev": "GSW",
+      "name": "Yaxel Lendeborg",
+      "normalized_name": "yaxel lendeborg",
+      "original_team_abbrev": "GSW",
+      "overall": 11,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "11. Golden State Warriors draft Yaxel Lendeborg (Michigan)"
+    },
+    {
+      "final_team_abbrev": "OKC",
+      "name": "Aday Mara",
+      "normalized_name": "aday mara",
+      "original_team_abbrev": "OKC",
+      "overall": 12,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "12. Oklahoma City Thunder draft Aday Mara (Michigan)"
+    },
+    {
+      "final_team_abbrev": "MIL",
+      "name": "Nate Ament",
+      "normalized_name": "nate ament",
+      "original_team_abbrev": "MIA",
+      "overall": 13,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "13. Miami Heat draft Nate Ament (Tennessee) (Traded to Milwaukee)"
+    },
+    {
+      "final_team_abbrev": "CHA",
+      "name": "Hannes Steinbach",
+      "normalized_name": "hannes steinbach",
+      "original_team_abbrev": "CHA",
+      "overall": 14,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "14. Charlotte Hornets draft Hannes Steinbach (Washington)"
+    },
+    {
+      "final_team_abbrev": "CHI",
+      "name": "Dailyn Swain",
+      "normalized_name": "dailyn swain",
+      "original_team_abbrev": "CHI",
+      "overall": 15,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "15. Chicago Bulls draft Dailyn Swain (Texas)"
+    },
+    {
+      "final_team_abbrev": "OKC",
+      "name": "Bennett Stirtz",
+      "normalized_name": "bennett stirtz",
+      "original_team_abbrev": "MEM",
+      "overall": 16,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "16. Memphis Grizzlies from Bennett Stirtz (Iowa) (Traded to Oklahoma City)"
+    },
+    {
+      "final_team_abbrev": "DET",
+      "name": "Ebuka Okorie",
+      "normalized_name": "ebuka okorie",
+      "original_team_abbrev": "OKC",
+      "overall": 17,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "17. Oklahoma City Thunder draft Ebuka Okorie (Stanford) (Traded to Detroit via Memphis)"
+    },
+    {
+      "final_team_abbrev": "CHA",
+      "name": "Christian Anderson",
+      "normalized_name": "christian anderson",
+      "original_team_abbrev": "CHA",
+      "overall": 18,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "18. Charlotte Hornets draft Christian Anderson (Texas Tech)"
+    },
+    {
+      "final_team_abbrev": "TOR",
+      "name": "Allen Graves",
+      "normalized_name": "allen graves",
+      "original_team_abbrev": "TOR",
+      "overall": 19,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "19. Toronto Raptors draft Allen Graves (Santa Clara)"
+    },
+    {
+      "final_team_abbrev": "SAS",
+      "name": "Jayden Quaintance",
+      "normalized_name": "jayden quaintance",
+      "original_team_abbrev": "SAS",
+      "overall": 20,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "20. San Antonio Spurs draft Jayden Quaintance"
+    },
+    {
+      "final_team_abbrev": "MEM",
+      "name": "Karim Lopez",
+      "normalized_name": "karim lopez",
+      "original_team_abbrev": "DET",
+      "overall": 21,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "21. Detroit Pistons draft Karim López (New Zealand Breakers) (Traded to Memphis)"
+    },
+    {
+      "final_team_abbrev": "PHI",
+      "name": "Labaron Philon",
+      "normalized_name": "labaron philon",
+      "original_team_abbrev": "PHI",
+      "overall": 22,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "22. Philadelphia 76ers draft Labaron Philon Jr. (Alabama)"
+    },
+    {
+      "final_team_abbrev": "ATL",
+      "name": "Zuby Ejiofor",
+      "normalized_name": "zuby ejiofor",
+      "original_team_abbrev": "ATL",
+      "overall": 23,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "23. Atlanta Hawks draft Zuby Ejiofor (St. John's)"
+    },
+    {
+      "final_team_abbrev": "LAL",
+      "name": "Cameron Carr",
+      "normalized_name": "cameron carr",
+      "original_team_abbrev": "NYK",
+      "overall": 24,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "24. New York Knicks draft Cameron Carr (Baylor) (Traded to Los Angeles Lakers)"
+    },
+    {
+      "final_team_abbrev": "DAL",
+      "name": "Sergio De Larrea",
+      "normalized_name": "sergio de larrea",
+      "original_team_abbrev": "LAL",
+      "overall": 25,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "25. Los Angeles Lakers draft Sergio De Larrea (Valencia) (Traded to Dallas via New York)"
+    },
+    {
+      "final_team_abbrev": "SAS",
+      "name": "Tarris Reed Jr.",
+      "normalized_name": "tarris reed jr",
+      "original_team_abbrev": "DEN",
+      "overall": 26,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "26. Denver Nuggets draft Tarris Reed Jr. (Connecticut) (Traded to San Antonio)"
+    },
+    {
+      "final_team_abbrev": "BOS",
+      "name": "Chris Cenac Jr.",
+      "normalized_name": "chris cenac jr",
+      "original_team_abbrev": "BOS",
+      "overall": 27,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "27. Boston Celtics draft Chris Cenac Jr. (Houston)"
+    },
+    {
+      "final_team_abbrev": "BKN",
+      "name": "Joshua Jefferson",
+      "normalized_name": "joshua jefferson",
+      "original_team_abbrev": "MIN",
+      "overall": 28,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "28. Minnesota Timberwolves draft Joshua Jefferson (Iowa State) (Traded to Brooklyn)"
+    },
+    {
+      "final_team_abbrev": "SAC",
+      "name": "Alex Karaban",
+      "normalized_name": "alex karaban",
+      "original_team_abbrev": "CLE",
+      "overall": 29,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "29. Cleveland Cavaliers draft Alex Karaban (Connecticut) (Traded to Sacramento)"
+    },
+    {
+      "final_team_abbrev": "PHX",
+      "name": "Koa Peat",
+      "normalized_name": "koa peat",
+      "original_team_abbrev": "DAL",
+      "overall": 30,
+      "round": 1,
+      "signed_or_rights_listed": true,
+      "transaction_text": "30. Dallas Mavericks draft Koa Peat (Arizona) (Traded to Phoenix via New York)"
+    },
+    {
+      "final_team_abbrev": "HOU",
+      "name": "Bruce Thornton",
+      "normalized_name": "bruce thornton",
+      "original_team_abbrev": "NYK",
+      "overall": 31,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "31. New York Knicks draft Bruce Thornton (Ohio State) (Traded to Houston)"
+    },
+    {
+      "final_team_abbrev": "MEM",
+      "name": "Richie Saunders",
+      "normalized_name": "richie saunders",
+      "original_team_abbrev": "MEM",
+      "overall": 32,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "32. Memphis Grizzlies draft Richie Saunders (BYU)"
+    },
+    {
+      "final_team_abbrev": "MIN",
+      "name": "Isaiah Evans",
+      "normalized_name": "isaiah evans",
+      "original_team_abbrev": "BKN",
+      "overall": 33,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "33. Brooklyn Nets draft Isaiah Evans (Duke) (Traded to Minnesota)"
+    },
+    {
+      "final_team_abbrev": "CLE",
+      "name": "Meleek Thomas",
+      "normalized_name": "meleek thomas",
+      "original_team_abbrev": "SAC",
+      "overall": 34,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "34. Sacramento Kings draft Meleek Thomas (Arkansas) (Traded to Cleveland)"
+    },
+    {
+      "final_team_abbrev": "DEN",
+      "name": "Trevon Brazile",
+      "normalized_name": "trevon brazile",
+      "original_team_abbrev": "SAS",
+      "overall": 35,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "35. San Antonio Spurs draft Trevon Brazile (Arkansas) (Traded to Denver)"
+    },
+    {
+      "final_team_abbrev": "LAC",
+      "name": "Baba Miller",
+      "normalized_name": "baba miller",
+      "original_team_abbrev": "LAC",
+      "overall": 36,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "36. LA Clippers draft Baba Miller (Cincinnati)"
+    },
+    {
+      "final_team_abbrev": "MIA",
+      "name": "Ryan Conwell",
+      "normalized_name": "ryan conwell",
+      "original_team_abbrev": "OKC",
+      "overall": 37,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "37. Oklahoma City Thunder draft Ryan Conwell (Louisville) (Traded to Miami)"
+    },
+    {
+      "final_team_abbrev": "IND",
+      "name": "Braden Smith",
+      "normalized_name": "braden smith",
+      "original_team_abbrev": "CHI",
+      "overall": 38,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "38. Chicago Bulls draft Braden Smith (Purdue) (Traded to Indiana)"
+    },
+    {
+      "final_team_abbrev": "NYK",
+      "name": "Jack Kayil",
+      "normalized_name": "jack kayil",
+      "original_team_abbrev": "HOU",
+      "overall": 39,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "39. Houston Rockets draft Jack Kayil (Alba Berlin) (Traded to New York)"
+    },
+    {
+      "final_team_abbrev": "BOS",
+      "name": "Dillon Mitchell",
+      "normalized_name": "dillon mitchell",
+      "original_team_abbrev": "BOS",
+      "overall": 40,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "40. Boston Celtics draft Dillon Mitchell (St John's)"
+    },
+    {
+      "final_team_abbrev": "OKC",
+      "name": "Otega Oweh",
+      "normalized_name": "otega oweh",
+      "original_team_abbrev": "MIA",
+      "overall": 41,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "41. Miami Heat draft Otega Oweh (Kentucky) (Traded to Oklahoma City)"
+    },
+    {
+      "final_team_abbrev": "SAS",
+      "name": "Ja'Kobi Gillespie",
+      "normalized_name": "ja'kobi gillespie",
+      "original_team_abbrev": "SAS",
+      "overall": 42,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "42. San Antonio Spurs draft Ja’Kobi Gillespie (Tennessee)"
+    },
+    {
+      "final_team_abbrev": "BKN",
+      "name": "Tyler Bilodeau",
+      "normalized_name": "tyler bilodeau",
+      "original_team_abbrev": "BKN",
+      "overall": 43,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "43. Brooklyn Nets draft Tyler Bilodeau (UCLA)"
+    },
+    {
+      "final_team_abbrev": "SAS",
+      "name": "Maliq Brown",
+      "normalized_name": "maliq brown",
+      "original_team_abbrev": "SAS",
+      "overall": 44,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "44. San Antonio Spurs draft Maliq Brown (Duke)"
+    },
+    {
+      "final_team_abbrev": "SAC",
+      "name": "Emanuel Sharp",
+      "normalized_name": "emanuel sharp",
+      "original_team_abbrev": "SAC",
+      "overall": 45,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "45. Sacramento Kings draft Emanuel Sharp (Houston)"
+    },
+    {
+      "final_team_abbrev": "WAS",
+      "name": "Felix Okpara",
+      "normalized_name": "felix okpara",
+      "original_team_abbrev": "ORL",
+      "overall": 46,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "46. Orlando Magic draft Felix Okpara (Tennessee) (Traded to Washington)"
+    },
+    {
+      "final_team_abbrev": "NYK",
+      "name": "Tyler Nickel",
+      "normalized_name": "tyler nickel",
+      "original_team_abbrev": "PHX",
+      "overall": 47,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "47. Phoenix Suns draft Tyler Nickel (Vanderbilt) (Traded to New York)"
+    },
+    {
+      "final_team_abbrev": "DAL",
+      "name": "Tobi Lawal",
+      "normalized_name": "tobi lawal",
+      "original_team_abbrev": "DAL",
+      "overall": 48,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "48. Dallas Mavericks draft Tobi Lawal (Virginia Tech)"
+    },
+    {
+      "final_team_abbrev": "DEN",
+      "name": "Bryce Hopkins",
+      "normalized_name": "bryce hopkins",
+      "original_team_abbrev": "DEN",
+      "overall": 49,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "49. Denver Nuggets draft Bryce Hopkins (St. John's)"
+    },
+    {
+      "final_team_abbrev": "TOR",
+      "name": "Jaden Bradley",
+      "normalized_name": "jaden bradley",
+      "original_team_abbrev": "TOR",
+      "overall": 50,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "50. Toronto Raptors draft Jaden Bradley (Arizona)"
+    },
+    {
+      "final_team_abbrev": "ORL",
+      "name": "Izaiyah Nelson",
+      "normalized_name": "izaiyah nelson",
+      "original_team_abbrev": "WAS",
+      "overall": 51,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "51. Washington Wizards draft Izaiyah Nelson (South Florida) (Traded to Orlando)"
+    },
+    {
+      "final_team_abbrev": "ATL",
+      "name": "Henri Veesaar",
+      "normalized_name": "henri veesaar",
+      "original_team_abbrev": "LAC",
+      "overall": 52,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "52. LA Clippers draft Henri Veesaar (North Carolina) (Traded to Atlanta)"
+    },
+    {
+      "final_team_abbrev": "DET",
+      "name": "Ugonna Onyenso",
+      "normalized_name": "ugonna onyenso",
+      "original_team_abbrev": "HOU",
+      "overall": 53,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "53. Houston Rockets draft Ugonna Onyenso (Virginia) (Traded to Detroit via New York)"
+    },
+    {
+      "final_team_abbrev": "GSW",
+      "name": "Lajae Jones",
+      "normalized_name": "lajae jones",
+      "original_team_abbrev": "GSW",
+      "overall": 54,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "54. Golden State Warriors draft Lajae Jones (Florida State)"
+    },
+    {
+      "final_team_abbrev": "LAC",
+      "name": "Nick Martinelli",
+      "normalized_name": "nick martinelli",
+      "original_team_abbrev": "NYK",
+      "overall": 55,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "55. New York Knicks draft Nick Martinelli (Northwestern) (Traded to LA Clippers via Houston)"
+    },
+    {
+      "final_team_abbrev": "DAL",
+      "name": "Vsevolod Ishchenko",
+      "normalized_name": "vsevolod ishchenko",
+      "original_team_abbrev": "CHI",
+      "overall": 56,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "56. Chicago Bulls draft Vsevolod Ishchenko (Lokomotiv Kuban) (Traded to Dallas via Los Angeles Lakers)"
+    },
+    {
+      "final_team_abbrev": "LAC",
+      "name": "Narcisse Ngoy",
+      "normalized_name": "narcisse ngoy",
+      "original_team_abbrev": "ATL",
+      "overall": 57,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "57. Atlanta Hawks draft Narcisse Ngoy (Poitiers) (Traded to LA Clippers)"
+    },
+    {
+      "final_team_abbrev": "NOP",
+      "name": "Jaron Pierre Jr.",
+      "normalized_name": "jaron pierre jr",
+      "original_team_abbrev": "NOP",
+      "overall": 58,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "58. New Orleans Pelicans draft Jaron Pierre Jr. (Southern Methodist)"
+    },
+    {
+      "final_team_abbrev": "MIN",
+      "name": "Trey Kaufman-Renn",
+      "normalized_name": "trey kaufman renn",
+      "original_team_abbrev": "MIN",
+      "overall": 59,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "59. Minnesota Timberwolves draft Trey Kaufman-Renn (Purdue)"
+    },
+    {
+      "final_team_abbrev": "MIL",
+      "name": "Malique Lewis",
+      "normalized_name": "malique lewis",
+      "original_team_abbrev": "WAS",
+      "overall": 60,
+      "round": 2,
+      "signed_or_rights_listed": true,
+      "transaction_text": "60. Washington Wizards draft Malique Lewis (South East Melbourne) (Traded to Milwaukee via Orlando)"
+    }
+  ],
+  "source": {
+    "id": "src_nba_official_2026_draft_results",
+    "retrieved_at": "2026-07-29T00:36:48+00:00",
+    "title": "2026 NBA Draft Results: Picks 1-60",
+    "url": "https://www.nba.com/news/2026-nba-draft-order"
+  },
+  "unmatched_lines": []
+}

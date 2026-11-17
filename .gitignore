@@ -29,3 +29,6 @@ data/canonical/coverage_report.json
 Project Specification.txt
 Animation Videos/
 *.mp4
+
+# Generated evidence/artifacts (~19 GB). Already-tracked files stay tracked.
+output/

@@ -12,7 +12,6 @@ import argparse
 import gc
 import json
 import math
-import shutil
 import statistics
 import time
 from collections import Counter, defaultdict
@@ -23,6 +22,7 @@ from nba_gm_data.app_actions import dispatch_app_action, load_app_canonical
 from nba_gm_data.save import canonical_with_save, ensure_league_save_defaults, load_save, player_attribute_summary, repair_unpooled_unrostered_players, team_cap_summary
 from nba_gm_data.staff import staff_budget_for_team, staff_budget_salary, staff_grade
 from nba_gm_data.transactions import pick_obligation_validation_errors
+from nba_gm_data.save_recovery import create_export, restore_export
 from nba_gm_data.utils import clear_utility_caches
 
 
@@ -904,7 +904,7 @@ class SoakRunner:
         (self.output_dir / "soak_audit.md").write_text(markdown_report(self.payload), encoding="utf-8")
 
     def snapshot_save(self, filename: str) -> None:
-        shutil.copy2(self.payload["save_path"], self.phase_save_dir / filename)
+        restore_export(self.phase_save_dir / filename, create_export(self.payload["save_path"]), replace=True)
 
     def resolve_user_roster_cutdown(self) -> int:
         waived = 0
@@ -987,6 +987,11 @@ class SoakRunner:
             save = self.load()
             if str(save.get("state", {}).get("phase")) == phase:
                 return
+            if str(save.get("state", {}).get("phase")) == "re_signing":
+                result = self.action("advance_re_signing", save_path=self.payload["save_path"], team=self.args.team, mode="open_market", seed=self.args.seed)
+                if result.get("status") != "open_market":
+                    raise RuntimeError(f"Could not leave re-signing: {result}")
+                continue
             self.action("advance_save", save_path=self.payload["save_path"], next_event=True, seed=self.args.seed)
         current = self.load().get("state", {})
         raise RuntimeError(f"Could not reach {phase}; stopped at {current}")

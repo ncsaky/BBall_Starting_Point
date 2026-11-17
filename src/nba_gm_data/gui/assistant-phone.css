@@ -1,0 +1,87 @@
+.assistant-gm-phone { position:fixed; right:0; bottom:-28px; width:360px; height:auto; aspect-ratio:2 / 3; max-width:43vw; z-index:1400; pointer-events:none; transform-origin:bottom right; animation:assistant-phone-rise .65s cubic-bezier(.2,.8,.2,1) both; }
+.assistant-phone-art { display:block; width:100%; height:100%; object-fit:contain; image-rendering:pixelated; pointer-events:none; }
+.assistant-phone-screen { position:absolute; left:18.45%; top:9.25%; width:44.2%; height:57.05%; display:flex; flex-direction:column; padding:8px 7px; box-sizing:border-box; background:#eff2f0; color:#172126; overflow:hidden; pointer-events:auto; font-family:Arial,sans-serif; }
+.assistant-phone-status { display:flex; justify-content:space-between; flex:none; font-size:7px; letter-spacing:.6px; color:#556365; margin-bottom:12px; }
+.assistant-phone-contact { display:flex; align-items:center; gap:5px; padding-bottom:9px; border-bottom:1px solid #d1dad5; flex:none; }
+.assistant-contact-icon { width:21px; height:21px; display:grid; place-items:center; flex:none; background:#496953; color:#fff; border-radius:50%; font-size:8px; font-weight:700; }
+.assistant-phone-contact strong { font-size:10px; line-height:1.2; }
+.assistant-phone-screen.is-draft-trade { padding:7px 6px; }
+.assistant-phone-screen.is-draft-trade .assistant-phone-status { margin-bottom:5px; font-size:6px; }
+.assistant-phone-screen.is-draft-trade .assistant-phone-contact { gap:4px; padding-bottom:5px; }
+.assistant-phone-screen.is-draft-trade .assistant-contact-icon { width:18px; height:18px; font-size:7px; }
+.assistant-phone-screen.is-draft-trade .assistant-phone-contact strong { font-size:9px; }
+.assistant-phone-screen.is-draft-trade .assistant-text-date { padding:5px 0; font-size:7px; }
+.assistant-draft-trade-message,
+.assistant-draft-social-post { min-width:0; overflow-wrap:anywhere; }
+.assistant-draft-trade-message { background:#f2e5bf; border:1px solid #c9a64c; color:#25251f; font-size:8px; font-weight:700; line-height:1.25; padding:5px; }
+.assistant-draft-social-post { background:#dce8de; border:1px solid #cbd9cd; border-radius:7px 7px 7px 2px; color:#1b3020; margin-top:5px; padding:5px; }
+.assistant-draft-social-post small { color:#496953; display:block; font-size:6px; font-weight:700; line-height:1.15; }
+.assistant-draft-social-post p { font-size:7px; line-height:1.3; margin:3px 0 0; }
+body.unified-terminal-ui .assistant-phone-close { margin-left:auto; padding:0 !important; border:0 !important; width:17px; height:20px; background:transparent !important; color:#43534a !important; font-size:17px; line-height:1; box-shadow:none !important; cursor:pointer; flex:none; }
+.assistant-text-date { display:block; font-size:8px; text-align:center; color:#75817b; padding:10px 0 8px; flex:none; }
+body.unified-terminal-ui .assistant-text-message { display:flex; flex-direction:column; gap:8px; padding:10px 9px !important; border:1px solid #cbd9cd !important; border-radius:9px 9px 9px 2px; background:#dce8de !important; color:#1b3020 !important; font-size:11px; line-height:1.45; text-align:left; text-transform:none !important; box-shadow:none !important; cursor:pointer; overflow:auto; min-height:0; }
+.assistant-text-message strong { font-size:11px; font-weight:700; }
+.assistant-text-message small { display:block; font-size:9px; font-weight:700; color:#496953; margin-top:2px; }
+body.unified-terminal-ui .assistant-text-message:hover { background:#cedfd1 !important; }
+body.unified-terminal-ui .assistant-phone-screen button:focus-visible { outline:2px solid #496953; outline-offset:-2px; }
+.assistant-phone-home { height:3px; width:42px; background:#1e2c25; border-radius:3px; margin:auto auto 0; flex:none; }
+.assistant-gm-phone.is-leaving { animation:assistant-phone-lower .4s ease-in both; }
+.assistant-gm-phone.is-simulation-offer { pointer-events:none; }
+.assistant-phone-screen.is-simulation-trade-offer { padding:7px 6px; }
+.assistant-phone-screen.is-simulation-trade-offer .assistant-phone-status { margin-bottom:6px; font-size:6px; }
+.assistant-phone-screen.is-simulation-trade-offer .assistant-phone-contact { gap:4px; padding-bottom:5px; }
+.assistant-phone-screen.is-simulation-trade-offer .assistant-contact-icon { width:18px; height:18px; font-size:7px; }
+.assistant-phone-screen.is-simulation-trade-offer .assistant-phone-contact strong { font-size:9px; }
+.assistant-phone-screen.is-simulation-trade-offer .assistant-text-date { padding:6px 0 5px; font-size:7px; }
+.assistant-simulation-offer-message { min-width:0; overflow-wrap:anywhere; padding:7px 6px; border:1px solid #cbd9cd; border-radius:7px 7px 7px 2px; background:#dce8de; color:#1b3020; font-size:10px; line-height:1.35; }
+.is-assistant-highlight { animation:assistant-target-highlight 2.5s ease-out; }
+@keyframes assistant-phone-rise { from { transform:translate(110%,35%) rotate(9deg); opacity:0; } to { transform:translateY(0) rotate(0); opacity:1; } }
+@keyframes assistant-phone-lower { to { transform:translate(110%,35%) rotate(9deg); opacity:0; } }
+@keyframes assistant-target-highlight { from { background-color:#fff2c8; } to { background-color:transparent; } }
+@media (max-height:720px) { .assistant-gm-phone { width:300px; height:auto; bottom:-24px; } .assistant-phone-status { margin-bottom:5px; } .assistant-text-date { padding:6px 0; } body.unified-terminal-ui .assistant-text-message { font-size:10px; padding:7px !important; } }
+@media (max-height:720px) { .assistant-draft-trade-message { font-size:7px; padding:4px; } .assistant-draft-social-post { margin-top:4px; padding:4px; } .assistant-draft-social-post p { font-size:6px; } }
+@media (max-width:600px) { .assistant-gm-phone { width:min(320px,100vw); height:auto; max-width:none; right:0; } }
+@media (prefers-reduced-motion:reduce) { .assistant-gm-phone,.assistant-gm-phone.is-leaving,.is-assistant-highlight { animation:none; } }
+
+/* Text notifications stay brief; clicking opens the full event or contract. */
+body.unified-terminal-ui .assistant-text-message { overflow:hidden; gap:0; }
+.assistant-text-message > span { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:anywhere; }
+
+.assistant-phone-screen.is-draft-trade-batch { padding:6px 6px 5px; }
+.assistant-phone-screen.is-draft-trade-batch .assistant-phone-status { align-items:center; margin-bottom:5px; font-size:6px; }
+.assistant-phone-screen.is-draft-trade-batch .assistant-phone-contact { gap:4px; padding-bottom:5px; }
+.assistant-phone-screen.is-draft-trade-batch .assistant-contact-icon { width:18px; height:18px; font-size:7px; }
+.assistant-phone-screen.is-draft-trade-batch .assistant-phone-contact strong { font-size:9px; }
+.assistant-phone-screen.is-draft-trade-batch .assistant-text-date { padding:5px 0 4px; font-size:6px; }
+.assistant-phone-screen.is-notification-batch { padding:6px 6px 5px; }
+.assistant-phone-screen.is-notification-batch .assistant-phone-status { align-items:center; margin-bottom:5px; font-size:6px; }
+.assistant-phone-screen.is-notification-batch .assistant-phone-contact { gap:4px; padding-bottom:5px; }
+.assistant-phone-screen.is-notification-batch .assistant-contact-icon { width:18px; height:18px; font-size:7px; }
+.assistant-phone-screen.is-notification-batch .assistant-phone-contact strong { font-size:9px; }
+.assistant-phone-screen.is-notification-batch .assistant-text-date { padding:5px 0 4px; font-size:6px; }
+.assistant-notification-count { display:grid; place-items:center; width:14px; height:14px; margin-left:auto; border-radius:50%; background:#bd3441; color:#fff; font-size:8px; font-weight:700; line-height:1; }
+body.unified-terminal-ui .assistant-notification-stack { position:relative; display:block; flex:1; width:100%; min-height:55px; padding:0 !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; color:#172126 !important; text-align:left; cursor:pointer; }
+.assistant-notification-stack-card { position:absolute; top:4px; left:7px; right:7px; height:72%; overflow:hidden; border:1px solid #cbd5d0; border-radius:7px 7px 7px 2px; background:#dce8de; color:transparent; font-size:0; }
+.assistant-notification-stack-card-1 { top:0; transform:rotate(-3deg); background:#d2dfd5; }
+.assistant-notification-stack-card-2 { top:3px; transform:rotate(2deg); background:#e4ece5; }
+.assistant-notification-stack-card-3 { top:7px; transform:rotate(-1deg); background:#dce8de; }
+.assistant-notification-stack-label { position:absolute; inset:16px 4px 0; display:flex; flex-direction:column; justify-content:center; gap:3px; padding:5px; border:1px solid #b9c9bd; border-radius:6px 6px 6px 2px; background:#e8f0e9; font-size:7px; line-height:1.2; }
+.assistant-notification-stack-label strong { display:-webkit-box; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; font-size:7px; }
+.assistant-notification-stack-label small { color:#496953; font-size:6px; }
+.assistant-notification-list { display:none; flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; flex-direction:column; gap:4px; scrollbar-width:thin; }
+.assistant-phone-screen.has-expanded-draft-messages .assistant-notification-stack { display:none; }
+.assistant-phone-screen.has-expanded-draft-messages .assistant-notification-list { display:flex; }
+.assistant-phone-screen.has-expanded-notifications .assistant-notification-stack { display:none; }
+.assistant-phone-screen.has-expanded-notifications .assistant-notification-list { display:flex; }
+body.unified-terminal-ui .assistant-notification-item { display:flex; flex:none; flex-direction:column; gap:2px; min-width:0; padding:5px !important; border:1px solid #cbd9cd !important; border-radius:6px 6px 6px 2px; background:#dce8de !important; color:#1b3020 !important; box-shadow:none !important; text-align:left; text-transform:none !important; white-space:normal; cursor:pointer; }
+.assistant-notification-item strong { display:-webkit-box; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; font-size:7px; line-height:1.2; }
+.assistant-notification-item small { overflow:hidden; color:#496953; font-size:6px; line-height:1.2; text-overflow:ellipsis; white-space:nowrap; }
+.assistant-notification-item span { display:-webkit-box; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; font-size:6px; line-height:1.25; }
+body.unified-terminal-ui .assistant-notification-item:hover { background:#cedfd1 !important; }
+@media (max-height:720px) {
+  .assistant-phone-screen.is-draft-trade-batch .assistant-phone-status { margin-bottom:3px; }
+  .assistant-phone-screen.is-draft-trade-batch .assistant-text-date { padding:3px 0; }
+  .assistant-phone-screen.is-notification-batch .assistant-phone-status { margin-bottom:3px; }
+  .assistant-phone-screen.is-notification-batch .assistant-text-date { padding:3px 0; }
+  .assistant-notification-item { padding:4px !important; }
+}

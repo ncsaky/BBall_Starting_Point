@@ -6,6 +6,7 @@ import random
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 from .schema import (
@@ -19,6 +20,7 @@ from .schema import (
     to_plain,
 )
 from .utils import clamp, maybe_float, normalize_name, stable_id
+from .talent import trait_ceiling
 
 
 SCHEDULE_FILE = Path("NBA Schedule/schedule_v2025_2026.json")
@@ -190,6 +192,61 @@ def overrides_by_player_name(health_overrides: dict[str, Any]) -> dict[str, dict
     }
 
 
+def generated_prospect_medical_profile(prospect_id: str, year: str, seed: int) -> dict[str, Any]:
+    """Fictional medical background; independent of the basketball-rating RNG."""
+    rng = random.Random(f"{seed}:{year}:{prospect_id}:medical_v1")
+    prone = rng.random() < 0.14
+    durability = round(clamp(rng.gauss(47 if prone else 73, 8), 28, 92), 2)
+    body = rng.choice(["ankle_foot", "knee", "back_core", "shoulder_arm_hand"])
+    history = []
+    if prone or rng.random() < 0.22:
+        history.append({"body_area": body, "severity": "medium" if prone else "short", "season": str(int(year) - 1), "status": "recovered"})
+    current = None
+    if history and rng.random() < 0.22:
+        start = date(int(year), 6, 10)
+        current = {"body_area": body, "severity": "medium", "start_date": start.isoformat(), "return_date": (start + timedelta(days=rng.randint(35, 100))).isoformat()}
+    return {"durability": durability, "injury_prone": prone, "body_area_risk_tags": [body] if history else [], "major_prior_injuries": history, "current_injury": current, "origin": "fictional_generated_prospect_v1"}
+
+
+def prospect_medical_penalty(prospect: dict[str, Any]) -> float:
+    medical = prospect.get("medical_profile") or {}
+    if not medical:
+        return 0.0
+    return round(min(9.0, max(0.0, 65 - float(medical.get("durability", 70))) * 0.12 + 1.5 * bool(medical.get("injury_prone")) + min(2, len(medical.get("major_prior_injuries") or [])) * 0.7 + 2 * bool(medical.get("current_injury"))), 2)
+
+
+def ensure_generated_player_health(canonical: dict[str, Any], save: dict[str, Any]) -> None:
+    """Persist profiles once; never reapply a healed entry injury on reload."""
+    profiles = save.setdefault("generated_health_profiles", {})
+    existing = {p["player_id"] for p in canonical.get("player_health_profiles", [])}
+    states = {s["player_id"] for s in save.get("health_states", [])}
+    traits = trait_lookup(canonical)
+    as_of = str(save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
+    seed = save.get("meta", {}).get("seed", 1)
+    for player in save.get("generated_players", []):
+        pid = player["id"]
+        if pid in existing:
+            continue
+        if pid not in profiles:
+            medical = deepcopy(player.get("medical_profile") or {})
+            body = SimpleNamespace(**{k: player.get(k) for k in ("age", "minutes_projection", "weight_lbs", "position")})
+            rng = random.Random(f"{seed}:{pid}:durability_v1")
+            durability = float(medical.get("durability", clamp(generic_durability(body, {}, traits.get((pid, "stamina_cardio"), 50)) + rng.gauss(0, 8), 28, 92)))
+            profiles[pid] = {"id": stable_id("health_profile", pid), "player_id": pid, "durability": durability, "injury_prone": bool(medical.get("injury_prone", durability < 52)), "body_area_risk_tags": medical.get("body_area_risk_tags", generic_body_area_tags(body)), "major_prior_injuries": medical.get("major_prior_injuries", []), "confidence": 0.46, "source_ids": ["src_injury_model_config_v1"], "notes": "Persistent generated-player medical profile."}
+            if pid not in states:
+                state = default_state_dict(pid, as_of)
+                injury = medical.get("current_injury") or {}
+                if str(injury.get("return_date") or "") > as_of:
+                    event_id = stable_id("prospect_entry_injury", pid)
+                    state.update(current_injury_id=event_id, availability_status="out", return_date=injury["return_date"], rust=16.0)
+                    days = (date.fromisoformat(injury["return_date"]) - date.fromisoformat(injury["start_date"])).days
+                    save.setdefault("injury_events", []).append({"id": event_id, "player_id": pid, "team_id": player.get("team_id"), **injury, "expected_days_missed": days, "expected_games_missed": max(1, round(days / 2.4)), "recurrence": False, "status": "active", "source_ids": ["src_injury_model_config_v1"], "notes": "Fictional prospect injury carried into NBA onboarding."})
+                save.setdefault("health_states", []).append(state)
+                states.add(pid)
+        canonical.setdefault("player_health_profiles", []).append(deepcopy(profiles[pid]))
+        existing.add(pid)
+
+
 def generic_durability(player: Player, row: dict[str, Any], stamina: float) -> float:
     age = maybe_float(player.age) or 27.0
     minutes = maybe_float(player.minutes_projection) or 0.0
@@ -241,13 +298,14 @@ def current_injury_override(player: Player, row: dict[str, Any], override: dict[
 
 def startup_injury_event(player: Player, current: dict[str, Any], config: dict[str, Any]) -> InjuryEvent:
     severity = current.get("severity") or "medium"
+    start_date = current.get("start_date") or CANONICAL_START_DATE
     return_date = current.get("return_date") or date_to_str(parse_date(CANONICAL_START_DATE) + timedelta(days=default_days_for_severity(severity, config)))
-    expected_days = int(maybe_float(current.get("expected_days_missed")) or days_between(CANONICAL_START_DATE, return_date))
+    expected_days = int(maybe_float(current.get("expected_days_missed")) or days_between(start_date, return_date))
     return InjuryEvent(
-        id=stable_id("injury", player.id, CANONICAL_START_DATE, severity, current.get("body_area") or "unknown"),
+        id=stable_id("injury", player.id, start_date, severity, current.get("body_area") or "unknown"),
         player_id=player.id,
         team_id=player.team_id,
-        start_date=CANONICAL_START_DATE,
+        start_date=start_date,
         return_date=return_date,
         body_area=current.get("body_area") or "unknown",
         severity=severity,
@@ -269,13 +327,17 @@ def simulate_health(
     schedule: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     root = Path(root)
-    canonical = to_plain(canonical)
+    canonical = canonical if isinstance(canonical, dict) else to_plain(canonical)
     config = load_injury_model_config(root)
     schedule = schedule_games_in_range(root, from_date, through_date, games=schedule)
     team_by_espn = espn_team_id_map_from_canonical(canonical)
     players_by_team = rotation_players_by_team(canonical)
     profiles = {profile["player_id"]: profile for profile in canonical.get("player_health_profiles", [])}
     states = {state["player_id"]: dict(state) for state in canonical.get("player_health_states", [])}
+    selected = {p["id"] for players in players_by_team.values() for p in players}
+    for player in canonical.get("players", []):
+        if player.get("team_id") and not player.get("_inactive_player") and player["id"] not in selected and states.get(player["id"], {}).get("availability_status", "active") != "active":
+            players_by_team.setdefault(player["team_id"], []).append(player)
     traits = trait_lookup(canonical)
     last_game_date: dict[str, date] = {}
     season_start_year = season_start_year_for_health_date(from_date)
@@ -310,6 +372,8 @@ def simulate_health(
                     state["games_missed"] = int(state.get("games_missed") or 0) + 1
                     continue
                 minutes = float(player.get("minutes_projection") or 0)
+                if minutes < 8:
+                    continue
                 stamina = traits.get((player["id"], "stamina_cardio"), 50.0)
                 add_game_fatigue(state, player, minutes, stamina, rest_days, config, staff)
                 risk = injury_risk_for_player(player, profiles.get(player["id"], {}), state, minutes, stamina, config, staff)
@@ -333,6 +397,7 @@ def simulate_health(
                             "rust": float((config.get("severity_bands") or {}).get(severity, {}).get("rust_after_return", 12)),
                             "source_ids": list(dict.fromkeys([*(state.get("source_ids") or []), "src_injury_model_config_v1"])),
                             "notes": f"Generated sandbox injury on {date_to_str(game_date)}.",
+                            "games_missed": int(state.get("games_missed") or 0) + 1,
                         }
                     )
             last_game_date[team["id"]] = game_date
@@ -361,7 +426,9 @@ def simulate_health(
 
 
 def advance_development(canonical: dict[str, Any] | Any, month: str, seed: int = 1) -> dict[str, Any]:
-    canonical = to_plain(canonical)
+    # This function only reads its input. Avoid recursively copying every trait
+    # and accumulated note on each monthly development checkpoint.
+    canonical = canonical if isinstance(canonical, dict) else to_plain(canonical)
     month = month[:7]
     traits = traits_by_player(canonical)
     states = {state["player_id"]: state for state in canonical.get("player_health_states", [])}
@@ -381,30 +448,33 @@ def advance_development(canonical: dict[str, Any] | Any, month: str, seed: int =
         focus = development_trait_focus(player, staff, traits.get(player["id"], {}), seed, month)
         for trait_key in DEVELOPMENT_TRAITS:
             current = float(traits.get(player["id"], {}).get(trait_key, {}).get("value", 50.0))
-            delta = monthly_trait_delta(player, trait_key, current, age, minutes, staff, health_drag, seed, month, float(focus.get(trait_key, 0.32)))
+            trait_context = (traits.get(player["id"], {}).get(trait_key, {}).get("components") or {}).get("career_capacity")
+            delta = monthly_trait_delta(player, trait_key, current, age, minutes, staff, health_drag, seed, month, float(focus.get(trait_key, 0.32)), trait_context)
             if abs(delta) >= 0.015:
                 deltas[trait_key] = round(delta, 3)
-        if deltas:
-            event = DevelopmentEvent(
-                id=stable_id("development", month, player["id"], seed),
-                player_id=player["id"],
-                team_id=player["team_id"],
-                month=month,
-                trait_deltas=dict(sorted(deltas.items())),
-                age=age,
-                minutes_context=round(minutes, 2),
-                staff_context=staff,
-                health_context={
-                    "availability_status": state.get("availability_status", "active"),
-                    "fatigue": round(float(state.get("fatigue") or 0), 2),
-                    "rust": round(float(state.get("rust") or 0), 2),
-                    "health_drag": round(health_drag, 3),
-                },
-                confidence=0.42,
-                source_ids=["src_development_model_v1", "src_gameplay_staff_seed_v1"],
-                notes="Monthly v1 trait movement from age, role/minutes, staff, coach development context, current trait level, and health. Personality is intentionally deferred.",
-            )
-            events.append(to_plain(event))
+        # An evaluated plateau is still a processed player-month. Keep the
+        # sparse delta threshold, but do not make it look like a skipped month.
+        event = DevelopmentEvent(
+            id=stable_id("development", month, player["id"], seed),
+            player_id=player["id"],
+            team_id=player["team_id"],
+            month=month,
+            trait_deltas=dict(sorted(deltas.items())),
+            age=age,
+            minutes_context=round(minutes, 2),
+            staff_context=staff,
+            health_context={
+                "availability_status": state.get("availability_status", "active"),
+                "fatigue": round(float(state.get("fatigue") or 0), 2),
+                "rust": round(float(state.get("rust") or 0), 2),
+                "health_drag": round(health_drag, 3),
+            },
+            confidence=0.42,
+            source_ids=["src_development_model_v1", "src_gameplay_staff_seed_v1"],
+            notes=("Monthly evaluation completed with no reportable trait movement."
+                   if not deltas else "Monthly trait movement from age, role/minutes, staff, current trait level, health, and stable prospect upside/realization/timing. Personality is intentionally deferred."),
+        )
+        events.append(to_plain(event))
     return {
         "month": month,
         "seed": seed,
@@ -673,10 +743,11 @@ def monthly_trait_delta(
     seed: int,
     month: str,
     focus_multiplier: float = 1.0,
+    trait_context: dict[str, Any] | None = None,
 ) -> float:
     age = 27.0 if age is None else age
     rng = random.Random(f"{seed}:{month}:{player['id']}:{trait_key}:development")
-    age_factor = development_age_factor(age)
+    age_factor = development_age_factor(age, player=player, seed=seed)
     role_factor = clamp(minutes / 24.0, 0.18, 1.18)
     if player.get("rotation_priority") == "development_priority":
         role_factor *= 1.16
@@ -685,7 +756,38 @@ def monthly_trait_delta(
     cap_room = clamp((92.0 - current) / 42.0, 0.08, 1.0)
     focus_multiplier = clamp(focus_multiplier, 0.12, 1.45)
     upside_multiplier = development_upside_multiplier(player, seed)
+    realization = prospect_development_realization(player, seed)
+    ceiling = trait_ceiling(player, trait_key, trait_context, realization, seed) if trait_context else None
+    learning = 0.0
+    raw_learning = 0.0
+    window = 0.0
+    if ceiling is not None and age < 30:
+        potential = float(trait_context["potential"])
+        fulfillment = clamp((realization - .8) / .48, 0, 1)
+        aptitude = clamp((float(trait_context["aptitude"]) - .35) / .7, 0, 1)
+        learning = clamp((potential - 70) / 20, 0, 1) * fulfillment * aptitude
+        raw_learning = (clamp((potential - float(trait_context["ability"]) - 30) / 15, 0, 1)
+                        * clamp((potential - 75) / 15, 0, 1)
+                        * clamp((realization - .8) / .32, 0, 1) * aptitude)
+        # Promising skills need a runway into the mid/late twenties. Limited
+        # game minutes reduce learning, but do not eliminate practice growth.
+        window = .4 if age <= 23 else 1.0 if age <= 26 else .75 if age <= 28 else .3
+        age_factor += .75 * learning * window
+        if learning:
+            role_factor = max(role_factor, min(.55, .18 + .5 * learning + .4 * raw_learning))
     growth = 0.20 * age_factor * role_factor * cap_room * float(staff.get("development_multiplier", 1.0)) * float(staff.get("patience_multiplier", 1.0)) * focus_multiplier * upside_multiplier
+    if ceiling is not None:
+        entry = float(trait_context["entry_value"])
+        growth *= clamp((ceiling - current) / max(2, (ceiling - entry) * .30), 0, 1)
+        elite = clamp((float(trait_context["potential"]) - 80) / 15, 0, 1)
+        fulfillment = clamp((realization - .8) / .48, 0, 1)
+        aptitude = clamp((float(trait_context["aptitude"]) - .35) / .7, 0, 1)
+        growth *= 1 + .45 * elite * fulfillment * aptitude + 1.25 * learning
+        # Raw high-upside players have farther to travel than ready-made picks;
+        # learn toward their own skill capacity, never a draft-slot OVR target.
+        growth += (max(0.0, ceiling - current) * .05 * raw_learning * window
+                   * role_factor * focus_multiplier * float(staff.get("development_multiplier", 1.0))
+                   * float(staff.get("patience_multiplier", 1.0)))
     health_penalty = health_drag * (0.04 if trait_key in PHYSICAL_TRAITS else 0.022)
     if age <= 30:
         # Short injuries interrupt development; they should not permanently
@@ -698,7 +800,10 @@ def monthly_trait_delta(
     if age >= 32 and trait_key not in {"scheme_iq", "passing_reads", "portability"}:
         growth -= min(0.09, 0.012 + (age - 31.0) * 0.013)
     noise = rng.gauss(0, 0.012 + 0.012 * focus_multiplier)
-    return clamp(growth + noise, -0.12, 0.36 if upside_multiplier > 1.0 else 0.24)
+    growth_cap = .36 + .45 * raw_learning if upside_multiplier > 1.0 else .24
+    delta = clamp(growth + noise, -0.12, growth_cap)
+    # Noise cannot trickle through a plateau; decline and actual health drag stay.
+    return min(delta, max(0.0, ceiling - current)) if ceiling is not None else delta
 
 
 def development_upside_multiplier(player: dict[str, Any], seed: int) -> float:
@@ -714,21 +819,29 @@ def development_upside_multiplier(player: dict[str, Any], seed: int) -> float:
         return 1.0
     upside = max(0.0, potential - ability)
     base = clamp(0.75 + upside / 18.0, 0.65, 2.35)
+    realization = prospect_development_realization(player, seed)
+    # Only successful high-upside careers get extra headroom. Ordinary and
+    # low-realization prospects keep their existing development rates.
+    elite_upside = clamp((potential - 65.0) / 20.0, 0.0, 1.0)
+    fulfillment = clamp((realization - 0.80) / 0.48, 0.0, 1.0)
+    headroom = 1.0 + 0.85 * elite_upside * fulfillment
+    return round(min(clamp(base * realization, 0.45, 2.8) * headroom, 3.8), 4)
+
+
+def prospect_development_realization(player: dict[str, Any], seed: int) -> float:
     marker = int(
         hashlib.sha256(f"{seed}:{player.get('id')}:development_realization".encode("utf-8")).hexdigest()[:8],
         16,
     ) / 0xFFFFFFFF
     if marker < 0.12:
-        realization = 0.55
+        return 0.55
     elif marker < 0.30:
-        realization = 0.80
+        return 0.80
     elif marker < 0.78:
-        realization = 1.0
+        return 1.0
     elif marker < 0.94:
-        realization = 1.12
-    else:
-        realization = 1.28
-    return round(clamp(base * realization, 0.45, 2.8), 4)
+        return 1.12
+    return 1.28
 
 
 def development_trait_focus(player: dict[str, Any], staff: dict[str, Any], player_traits: dict[str, Any], seed: int, month: str) -> dict[str, float]:
@@ -789,15 +902,26 @@ def development_trait_focus(player: dict[str, Any], staff: dict[str, Any], playe
     return output
 
 
-def development_age_factor(age: float) -> float:
+def development_age_factor(age: float, *, player: dict[str, Any] | None = None, seed: int = 1) -> float:
+    """Vary promising prospects' maturation, never delay veteran decline."""
+    pace = 1.0
+    if (player is not None and age < 30
+            and maybe_float(player.get("current_ability")) is not None
+            and (maybe_float(player.get("potential")) or 0) >= 70
+            and prospect_development_realization(player, seed) >= 1.0):
+        timing = int(hashlib.sha256(f"{seed}:{player.get('id')}:development_timing".encode("utf-8")).hexdigest()[:8], 16) / 0xFFFFFFFF
+        if timing < 0.20:
+            age, pace = age + 1.0, 1.12
+        elif timing >= 0.80:
+            age, pace = age - 2.0, 0.88
     if age <= 20:
-        return 1.25
+        return 1.25 * pace
     if age <= 23:
-        return 1.0
+        return pace
     if age <= 26:
-        return 0.45
+        return 0.45 * pace
     if age <= 30:
-        return 0.10
+        return 0.10 * pace
     if age <= 32:
         return 0.03
     return 0.0
@@ -813,6 +937,8 @@ def development_health_drag(state: dict[str, Any]) -> float:
 
 def should_generate_development_event(player: dict[str, Any], age: float | None, minutes: float) -> bool:
     if age is not None and age <= 26:
+        return True
+    if age is not None and age >= 31:
         return True
     if player.get("rotation_priority") == "development_priority":
         return True

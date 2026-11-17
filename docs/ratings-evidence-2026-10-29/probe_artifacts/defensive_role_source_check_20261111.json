@@ -1,0 +1,48 @@
+{
+  "checked_on": "2026-11-11",
+  "sheet": "docs/ratings-evidence-2026-10-29/DEFENSIVE_ROLE_PLAYER_INPUT_REVIEW_2026_11_11.md",
+  "sheet_sha256": "4335e9e2fa35d3eecd5cad9de44d7c0c0ac7833835ce5c757dbc7a28c57843e6",
+  "source_status": [
+    {
+      "url": "https://www.bball-index.com/defensive-roles/",
+      "result": "methodology read; no current assignment rows"
+    },
+    {
+      "url": "https://www.bball-index.com/defensive-role-lab/",
+      "result": "public landing read; paid export not verified"
+    },
+    {
+      "url": "https://www.bball-index.com/wp-content/uploads/2026/09/drl-lite-v3-index.html",
+      "result": "public text read; 2019-20 preview; one later direct open failed, cached text retrieved via reference; no current player data"
+    },
+    {
+      "url": "https://www.bball-index.com/lebron-application/",
+      "result": "landing and iframe link only; no metric rows acquired"
+    },
+    {
+      "url": "https://www.nba.com/stats/players/matchups?Season=2025-26",
+      "result": "unavailable"
+    },
+    {
+      "url": "https://www.nba.com/stats/players/defense-dash-lt6?Season=2025-26",
+      "result": "unavailable"
+    },
+    {
+      "url": "https://www.nba.com/stats/players/defense-dash-overall?Season=2025-26",
+      "result": "unavailable"
+    },
+    {
+      "url": "https://www.nba.com/stats/team/1610612756/matchups?dir=A&sort=OFF_PLAYER_NAME",
+      "result": "public shell only; no season-specific rows"
+    },
+    {
+      "url": "https://www.nba.com/stats/help/glossary",
+      "result": "page read; Partial Possessions search unmatched"
+    },
+    {
+      "url": "https://api-hub-dev.nba.com/news/all-perimeter-defense-first-team",
+      "result": "failed461; no content used"
+    }
+  ],
+  "method": "URLs for primary corroboration and publication dates retained in sheet; no login, purchase, endpoint scraping or video retrieval."
+}

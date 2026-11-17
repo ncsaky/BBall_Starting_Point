@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/LAL-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/LAL-v2-1.jpg",
+      "kind": "basketball",
+      "team": "LAL",
+      "clips": [
+        {
+          "source_start": 12,
+          "frames": 360,
+          "team": "LAL",
+          "opponent": "DEN",
+          "action": "Doncic game-winning three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 44,
+          "frames": 315,
+          "team": "LAL",
+          "opponent": "GSW",
+          "action": "Doncic jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 711
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/LAL-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/LAL-v2-2.jpg",
+      "kind": "basketball",
+      "team": "LAL",
+      "clips": [
+        {
+          "source_start": 75,
+          "frames": 300,
+          "team": "LAL",
+          "opponent": "MEM",
+          "action": "Doncic three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 93,
+          "frames": 660,
+          "team": "LAL",
+          "opponent": "CHI",
+          "action": "Doncic late three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 996
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/LAL-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/LAL-v2-3.jpg",
+      "kind": "basketball",
+      "team": "LAL",
+      "clips": [
+        {
+          "source_start": 169,
+          "frames": 450,
+          "team": "LAL",
+          "opponent": "SAS",
+          "action": "Doncic three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 183,
+          "frames": 420,
+          "team": "LAL",
+          "opponent": "ATL",
+          "action": "Doncic assist and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 906
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "x5kjIwZ3-Kw",
+    "url": "https://www.youtube.com/watch?v=x5kjIwZ3-Kw",
+    "title": "Luka Don\u010di\u0107's BEST Plays from the 2025-2026 Season",
+    "channel": "Los Angeles Lakers",
+    "path": ".cache/startup-team-correction/LAL.mp4",
+    "query": "2025-26 Los Angeles Lakers Luka Doncic best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 12,
+      "frames": 360,
+      "team": "LAL",
+      "opponent": "DEN",
+      "action": "Doncic game-winning three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 44,
+      "frames": 315,
+      "team": "LAL",
+      "opponent": "GSW",
+      "action": "Doncic jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 75,
+      "frames": 300,
+      "team": "LAL",
+      "opponent": "MEM",
+      "action": "Doncic three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 93,
+      "frames": 660,
+      "team": "LAL",
+      "opponent": "CHI",
+      "action": "Doncic late three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 169,
+      "frames": 450,
+      "team": "LAL",
+      "opponent": "SAS",
+      "action": "Doncic three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 183,
+      "frames": 420,
+      "team": "LAL",
+      "opponent": "ATL",
+      "action": "Doncic assist and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 110.63333333333334
+}

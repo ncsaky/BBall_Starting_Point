@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/DAL-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/DAL-v2-1.jpg",
+      "kind": "basketball",
+      "team": "DAL",
+      "clips": [
+        {
+          "source_start": 1,
+          "frames": 300,
+          "team": "DAL",
+          "opponent": "MIN",
+          "action": "Flagg lob finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 24.5,
+          "frames": 375,
+          "team": "DAL",
+          "opponent": "BOS",
+          "action": "Flagg transition dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 711
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/DAL-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/DAL-v2-2.jpg",
+      "kind": "basketball",
+      "team": "DAL",
+      "clips": [
+        {
+          "source_start": 83,
+          "frames": 390,
+          "team": "DAL",
+          "opponent": "CHA",
+          "action": "Flagg drive and floater",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 124,
+          "frames": 390,
+          "team": "DAL",
+          "opponent": "POR",
+          "action": "Flagg basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 816
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/DAL-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/DAL-v2-3.jpg",
+      "kind": "basketball",
+      "team": "DAL",
+      "clips": [
+        {
+          "source_start": 155,
+          "frames": 300,
+          "team": "DAL",
+          "opponent": "MIA",
+          "action": "Flagg driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 181,
+          "frames": 240,
+          "team": "DAL",
+          "opponent": "TOR",
+          "action": "Flagg jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 576
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "m6RU9K3ezec",
+    "url": "https://www.youtube.com/watch?v=m6RU9K3ezec",
+    "title": "Cooper Flagg's Rookie Season Highlights Are MUST-SEE | 2025-26 NBA Season",
+    "channel": "NBA",
+    "path": ".cache/startup-team-correction/DAL.mp4",
+    "query": "2025-26 Dallas Mavericks Cooper Flagg best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 1,
+      "frames": 300,
+      "team": "DAL",
+      "opponent": "MIN",
+      "action": "Flagg lob finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 24.5,
+      "frames": 375,
+      "team": "DAL",
+      "opponent": "BOS",
+      "action": "Flagg transition dunk",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 83,
+      "frames": 390,
+      "team": "DAL",
+      "opponent": "CHA",
+      "action": "Flagg drive and floater",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 124,
+      "frames": 390,
+      "team": "DAL",
+      "opponent": "POR",
+      "action": "Flagg basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 155,
+      "frames": 300,
+      "team": "DAL",
+      "opponent": "MIA",
+      "action": "Flagg driving basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 181,
+      "frames": 240,
+      "team": "DAL",
+      "opponent": "TOR",
+      "action": "Flagg jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 93.63333333333334
+}

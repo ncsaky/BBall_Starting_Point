@@ -1,5 +1,1679 @@
 {
-  "version": "pick_obligations_overrides_v1",
-  "notes": "No static pick obligations are required. Startup protected-pick obligations are generated from canonical pick data so first-round protections use first-round fallback collateral and second-round protections use second-round fallback collateral.",
-  "pick_obligations": []
+  "version": "realgm_2026_10_13_native_terms",
+  "starting_data_version": "2026-10-13",
+  "compatible_starting_data_versions": ["2026-10-20-rookies-v1", "2026-10-23-roster-v2", "2026-10-23-player-tuning-v3", "2026-10-23-talent-v4", "2026-10-23-forward-tuning-v5"],
+  "notes": "Reviewed league snapshot. Native protected_pick and pick_swap terms; see normalization_audit in research ledger.",
+  "pick_obligations": [
+    {
+      "id": "pick_obligation_realgm-protected-pick-dal-2027-1",
+      "type": "protected_pick",
+      "season": "2027",
+      "primary_pick_id": "pick_dal-2027-1",
+      "sender_team_id": "team_dal",
+      "receiver_team_id": "team_cha",
+      "protected_range": {
+        "from": 1,
+        "through": 2
+      },
+      "protected_top_n": 2,
+      "fallback_pick_ids": [
+        "pick_dal-2031-1"
+      ],
+      "label": "top-2 protected",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "notes": "IRL conditions normalized to native same-round fallback: original retains protected primary; receiver gets reserved fallback."
+    },
+    {
+      "id": "pick_obligation_realgm-protected-pick-mia-2027-1",
+      "type": "protected_pick",
+      "season": "2027",
+      "primary_pick_id": "pick_mia-2027-1",
+      "sender_team_id": "team_mia",
+      "receiver_team_id": "team_cha",
+      "protected_range": {
+        "from": 1,
+        "through": 14
+      },
+      "protected_top_n": 14,
+      "fallback_pick_ids": [
+        "pick_mia-2028-1"
+      ],
+      "label": "top-14 protected",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "notes": "IRL conditions normalized to native same-round fallback: original retains protected primary; receiver gets reserved fallback."
+    },
+    {
+      "id": "pick_obligation_realgm-protected-pick-den-2027-1",
+      "type": "protected_pick",
+      "season": "2027",
+      "primary_pick_id": "pick_den-2027-1",
+      "sender_team_id": "team_den",
+      "receiver_team_id": "team_okc",
+      "protected_range": {
+        "from": 1,
+        "through": 5
+      },
+      "protected_top_n": 5,
+      "fallback_pick_ids": [
+        "pick_den-2028-1"
+      ],
+      "label": "top-5 protected",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "notes": "IRL conditions normalized to native same-round fallback: original retains protected primary; receiver gets reserved fallback."
+    },
+    {
+      "id": "pick_obligation_realgm-protected-pick-den-2029-1",
+      "type": "protected_pick",
+      "season": "2029",
+      "primary_pick_id": "pick_den-2029-1",
+      "sender_team_id": "team_den",
+      "receiver_team_id": "team_okc",
+      "protected_range": {
+        "from": 1,
+        "through": 5
+      },
+      "protected_top_n": 5,
+      "fallback_pick_ids": [
+        "pick_den-2030-1"
+      ],
+      "label": "top-5 protected",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "notes": "IRL conditions normalized to native same-round fallback: original retains protected primary; receiver gets reserved fallback."
+    },
+    {
+      "id": "pick_obligation_realgm-protected-pick-lal-2027-1",
+      "type": "protected_pick",
+      "season": "2027",
+      "primary_pick_id": "pick_lal-2027-1",
+      "sender_team_id": "team_lal",
+      "receiver_team_id": "team_mem",
+      "protected_range": {
+        "from": 1,
+        "through": 4
+      },
+      "protected_top_n": 4,
+      "fallback_pick_ids": [
+        "pick_lal-2032-1"
+      ],
+      "label": "top-4 protected",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "notes": "IRL conditions normalized to native same-round fallback: original retains protected primary; receiver gets reserved fallback."
+    },
+    {
+      "id": "pick_obligation_realgm-protected-pick-phi-2028-1",
+      "type": "protected_pick",
+      "season": "2028",
+      "primary_pick_id": "pick_phi-2028-1",
+      "sender_team_id": "team_phi",
+      "receiver_team_id": "team_bkn",
+      "protected_range": {
+        "from": 1,
+        "through": 8
+      },
+      "protected_top_n": 8,
+      "fallback_pick_ids": [
+        "pick_phi-2030-1"
+      ],
+      "label": "top-8 protected",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "notes": "IRL conditions normalized to native same-round fallback: original retains protected primary; receiver gets reserved fallback."
+    },
+    {
+      "id": "pick_obligation_realgm-protected-pick-lac-2028-1",
+      "type": "protected_pick",
+      "season": "2028",
+      "primary_pick_id": "pick_lac-2028-1",
+      "sender_team_id": "team_lac",
+      "receiver_team_id": "team_bos",
+      "protected_range": {
+        "from": 1,
+        "through": 16
+      },
+      "protected_top_n": 16,
+      "fallback_pick_ids": [
+        "pick_tor-2031-1"
+      ],
+      "label": "top-16 protected",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "notes": "IRL conditions normalized to native same-round fallback: original retains protected primary; receiver gets reserved fallback."
+    },
+    {
+      "id": "pick_obligation_realgm-protected-pick-min-2029-1",
+      "type": "protected_pick",
+      "season": "2029",
+      "primary_pick_id": "pick_min-2029-1",
+      "sender_team_id": "team_min",
+      "receiver_team_id": "team_uta",
+      "protected_range": {
+        "from": 1,
+        "through": 5
+      },
+      "protected_top_n": 5,
+      "fallback_pick_ids": [
+        "pick_min-2032-1"
+      ],
+      "label": "top-5 protected",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "notes": "IRL conditions normalized to native same-round fallback: original retains protected primary; receiver gets reserved fallback."
+    },
+    {
+      "id": "pick_obligation_realgm-protected-pick-gsw-2030-1",
+      "type": "protected_pick",
+      "season": "2030",
+      "primary_pick_id": "pick_gsw-2030-1",
+      "sender_team_id": "team_gsw",
+      "receiver_team_id": "team_mem",
+      "protected_range": {
+        "from": 1,
+        "through": 20
+      },
+      "protected_top_n": 20,
+      "fallback_pick_ids": [
+        "pick_gsw-2031-1"
+      ],
+      "label": "top-20 protected",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "notes": "IRL conditions normalized to native same-round fallback: original retains protected primary; receiver gets reserved fallback."
+    },
+    {
+      "id": "pick_obligation_realgm-protected-pick-atl-2027-2",
+      "type": "protected_pick",
+      "season": "2027",
+      "primary_pick_id": "pick_atl-2027-2",
+      "sender_team_id": "team_atl",
+      "receiver_team_id": "team_dal",
+      "protected_range": {
+        "from": 31,
+        "through": 55
+      },
+      "protected_top_n": 55,
+      "fallback_pick_ids": [
+        "pick_atl-2033-2"
+      ],
+      "label": "picks 31-55 protected",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "notes": "IRL conditions normalized to native same-round fallback: original retains protected primary; receiver gets reserved fallback."
+    },
+    {
+      "id": "pick_obligation_realgm-protected-pick-bos-2028-2",
+      "type": "protected_pick",
+      "season": "2028",
+      "primary_pick_id": "pick_bos-2028-2",
+      "sender_team_id": "team_bos",
+      "receiver_team_id": "team_nyk",
+      "protected_range": {
+        "from": 31,
+        "through": 45
+      },
+      "protected_top_n": 45,
+      "fallback_pick_ids": [
+        "pick_bos-2032-2"
+      ],
+      "label": "picks 31-45 protected",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "notes": "IRL conditions normalized to native same-round fallback: original retains protected primary; receiver gets reserved fallback."
+    },
+    {
+      "id": "pick_obligation_realgm-protected-pick-den-2028-2",
+      "type": "protected_pick",
+      "season": "2028",
+      "primary_pick_id": "pick_den-2028-2",
+      "sender_team_id": "team_den",
+      "receiver_team_id": "team_was",
+      "protected_range": {
+        "from": 31,
+        "through": 33
+      },
+      "protected_top_n": 33,
+      "fallback_pick_ids": [
+        "pick_den-2033-2"
+      ],
+      "label": "picks 31-33 protected",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "notes": "IRL conditions normalized to native same-round fallback: original retains protected primary; receiver gets reserved fallback."
+    },
+    {
+      "id": "pick_obligation_realgm-protected-pick-det-2028-2",
+      "type": "protected_pick",
+      "season": "2028",
+      "primary_pick_id": "pick_det-2028-2",
+      "sender_team_id": "team_det",
+      "receiver_team_id": "team_phi",
+      "protected_range": {
+        "from": 31,
+        "through": 55
+      },
+      "protected_top_n": 55,
+      "fallback_pick_ids": [
+        "pick_det-2030-2"
+      ],
+      "label": "picks 31-55 protected",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "notes": "IRL conditions normalized to native same-round fallback: original retains protected primary; receiver gets reserved fallback."
+    },
+    {
+      "id": "pick_obligation_realgm-protected-pick-cha-2030-2",
+      "type": "protected_pick",
+      "season": "2030",
+      "primary_pick_id": "pick_cha-2030-2",
+      "sender_team_id": "team_cha",
+      "receiver_team_id": "team_bos",
+      "protected_range": {
+        "from": 31,
+        "through": 55
+      },
+      "protected_top_n": 55,
+      "fallback_pick_ids": [
+        "pick_cha-2031-2"
+      ],
+      "label": "picks 31-55 protected",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "notes": "IRL conditions normalized to native same-round fallback: original retains protected primary; receiver gets reserved fallback."
+    },
+    {
+      "id": "pick_obligation_realgm-protected-pick-mem-2030-2",
+      "type": "protected_pick",
+      "season": "2030",
+      "primary_pick_id": "pick_mem-2030-2",
+      "sender_team_id": "team_mem",
+      "receiver_team_id": "team_min",
+      "protected_range": {
+        "from": 31,
+        "through": 50
+      },
+      "protected_top_n": 50,
+      "fallback_pick_ids": [
+        "pick_mem-2033-2"
+      ],
+      "label": "picks 31-50 protected",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "notes": "IRL conditions normalized to native same-round fallback: original retains protected primary; receiver gets reserved fallback."
+    },
+    {
+      "id": "pick_obligation_realgm-protected-pick-gsw-2032-2",
+      "type": "protected_pick",
+      "season": "2032",
+      "primary_pick_id": "pick_gsw-2032-2",
+      "sender_team_id": "team_gsw",
+      "receiver_team_id": "team_mem",
+      "protected_range": {
+        "from": 31,
+        "through": 50
+      },
+      "protected_top_n": 50,
+      "fallback_pick_ids": [
+        "pick_gsw-2033-2"
+      ],
+      "label": "picks 31-50 protected",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "notes": "IRL conditions normalized to native same-round fallback: original retains protected primary; receiver gets reserved fallback."
+    },
+    {
+      "id": "pick_obligation_realgm-protected-pick-nop-2027-1",
+      "type": "protected_pick",
+      "season": "2027",
+      "primary_pick_id": "pick_nop-2027-1",
+      "sender_team_id": "team_nop",
+      "receiver_team_id": "team_atl",
+      "protected_range": {
+        "from": 1,
+        "through": 4
+      },
+      "protected_top_n": 4,
+      "fallback_pick_ids": [
+        "pick_nop-2028-1"
+      ],
+      "label": "top-4 protected",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "notes": "IRL conditions normalized to native same-round fallback: original retains protected primary; receiver gets reserved fallback."
+    },
+    {
+      "id": "pick_obligation_realgm-2027-1-cle-uta-mem-0",
+      "type": "pick_swap",
+      "season": "2027",
+      "round": 1,
+      "team_a_pick_id": "pick_cle-2027-1",
+      "team_b_pick_id": "pick_uta-2027-1",
+      "original_rights_holder_team_id": "team_mem",
+      "current_rights_holder_team_id": "team_mem",
+      "receiver_team_id": "team_mem",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_cle-2027-1",
+        "pick_uta-2027-1",
+        "pick_min-2027-1"
+      ],
+      "comparison_holder_team_id": "team_mem",
+      "comparison_counterparty_team_id": "team_uta",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2027-1-uta-min-uta-1",
+      "type": "pick_swap",
+      "season": "2027",
+      "round": 1,
+      "team_a_pick_id": "pick_uta-2027-1",
+      "team_b_pick_id": "pick_min-2027-1",
+      "original_rights_holder_team_id": "team_uta",
+      "current_rights_holder_team_id": "team_uta",
+      "receiver_team_id": "team_uta",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_cle-2027-1",
+        "pick_uta-2027-1",
+        "pick_min-2027-1"
+      ],
+      "comparison_holder_team_id": "team_uta",
+      "comparison_counterparty_team_id": "team_phx",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2027-1-cle-uta-mem-2",
+      "type": "pick_swap",
+      "season": "2027",
+      "round": 1,
+      "team_a_pick_id": "pick_cle-2027-1",
+      "team_b_pick_id": "pick_uta-2027-1",
+      "original_rights_holder_team_id": "team_mem",
+      "current_rights_holder_team_id": "team_mem",
+      "receiver_team_id": "team_mem",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_cle-2027-1",
+        "pick_uta-2027-1",
+        "pick_min-2027-1"
+      ],
+      "comparison_holder_team_id": "team_mem",
+      "comparison_counterparty_team_id": "team_uta",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2029-1-hou-dal-hou-3",
+      "type": "pick_swap",
+      "season": "2029",
+      "round": 1,
+      "team_a_pick_id": "pick_hou-2029-1",
+      "team_b_pick_id": "pick_dal-2029-1",
+      "original_rights_holder_team_id": "team_hou",
+      "current_rights_holder_team_id": "team_hou",
+      "receiver_team_id": "team_hou",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_hou-2029-1",
+        "pick_phx-2029-1",
+        "pick_dal-2029-1"
+      ],
+      "comparison_holder_team_id": "team_hou",
+      "comparison_counterparty_team_id": "team_bkn",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2029-1-mil-bos-was-4",
+      "type": "pick_swap",
+      "season": "2029",
+      "round": 1,
+      "team_a_pick_id": "pick_mil-2029-1",
+      "team_b_pick_id": "pick_bos-2029-1",
+      "original_rights_holder_team_id": "team_was",
+      "current_rights_holder_team_id": "team_was",
+      "receiver_team_id": "team_was",
+      "benefit": "worse",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages"
+    },
+    {
+      "id": "pick_obligation_realgm-2027-2-bos-orl-uta-5",
+      "type": "pick_swap",
+      "season": "2027",
+      "round": 2,
+      "team_a_pick_id": "pick_bos-2027-2",
+      "team_b_pick_id": "pick_orl-2027-2",
+      "original_rights_holder_team_id": "team_uta",
+      "current_rights_holder_team_id": "team_uta",
+      "receiver_team_id": "team_uta",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_bos-2027-2",
+        "pick_orl-2027-2"
+      ],
+      "comparison_holder_team_id": "team_uta",
+      "comparison_counterparty_team_id": "team_phx",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2027-2-bkn-dal-was-6",
+      "type": "pick_swap",
+      "season": "2027",
+      "round": 2,
+      "team_a_pick_id": "pick_bkn-2027-2",
+      "team_b_pick_id": "pick_dal-2027-2",
+      "original_rights_holder_team_id": "team_was",
+      "current_rights_holder_team_id": "team_was",
+      "receiver_team_id": "team_was",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_bkn-2027-2",
+        "pick_dal-2027-2"
+      ],
+      "comparison_holder_team_id": "team_was",
+      "comparison_counterparty_team_id": "team_mil",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2027-2-gsw-phx-phi-7",
+      "type": "pick_swap",
+      "season": "2027",
+      "round": 2,
+      "team_a_pick_id": "pick_gsw-2027-2",
+      "team_b_pick_id": "pick_phx-2027-2",
+      "original_rights_holder_team_id": "team_phi",
+      "current_rights_holder_team_id": "team_phi",
+      "receiver_team_id": "team_phi",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_gsw-2027-2",
+        "pick_phx-2027-2"
+      ],
+      "comparison_holder_team_id": "team_phi",
+      "comparison_counterparty_team_id": "team_was",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2027-2-hou-ind-phi-8",
+      "type": "pick_swap",
+      "season": "2027",
+      "round": 2,
+      "team_a_pick_id": "pick_hou-2027-2",
+      "team_b_pick_id": "pick_ind-2027-2",
+      "original_rights_holder_team_id": "team_phi",
+      "current_rights_holder_team_id": "team_phi",
+      "receiver_team_id": "team_phi",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_hou-2027-2",
+        "pick_ind-2027-2",
+        "pick_mia-2027-2",
+        "pick_okc-2027-2"
+      ],
+      "comparison_holder_team_id": "team_phi",
+      "comparison_counterparty_team_id": "team_nop",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2027-2-ind-mia-nop-9",
+      "type": "pick_swap",
+      "season": "2027",
+      "round": 2,
+      "team_a_pick_id": "pick_ind-2027-2",
+      "team_b_pick_id": "pick_mia-2027-2",
+      "original_rights_holder_team_id": "team_nop",
+      "current_rights_holder_team_id": "team_nop",
+      "receiver_team_id": "team_nop",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_hou-2027-2",
+        "pick_ind-2027-2",
+        "pick_mia-2027-2",
+        "pick_okc-2027-2"
+      ],
+      "comparison_holder_team_id": "team_nop",
+      "comparison_counterparty_team_id": "team_nyk",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2027-2-mia-okc-nyk-10",
+      "type": "pick_swap",
+      "season": "2027",
+      "round": 2,
+      "team_a_pick_id": "pick_mia-2027-2",
+      "team_b_pick_id": "pick_okc-2027-2",
+      "original_rights_holder_team_id": "team_nyk",
+      "current_rights_holder_team_id": "team_nyk",
+      "receiver_team_id": "team_nyk",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_hou-2027-2",
+        "pick_ind-2027-2",
+        "pick_mia-2027-2",
+        "pick_okc-2027-2"
+      ],
+      "comparison_holder_team_id": "team_nyk",
+      "comparison_counterparty_team_id": "team_mia",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2027-2-hou-ind-phi-11",
+      "type": "pick_swap",
+      "season": "2027",
+      "round": 2,
+      "team_a_pick_id": "pick_hou-2027-2",
+      "team_b_pick_id": "pick_ind-2027-2",
+      "original_rights_holder_team_id": "team_phi",
+      "current_rights_holder_team_id": "team_phi",
+      "receiver_team_id": "team_phi",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_hou-2027-2",
+        "pick_ind-2027-2",
+        "pick_mia-2027-2",
+        "pick_okc-2027-2"
+      ],
+      "comparison_holder_team_id": "team_phi",
+      "comparison_counterparty_team_id": "team_nop",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2027-2-ind-mia-nop-12",
+      "type": "pick_swap",
+      "season": "2027",
+      "round": 2,
+      "team_a_pick_id": "pick_ind-2027-2",
+      "team_b_pick_id": "pick_mia-2027-2",
+      "original_rights_holder_team_id": "team_nop",
+      "current_rights_holder_team_id": "team_nop",
+      "receiver_team_id": "team_nop",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_hou-2027-2",
+        "pick_ind-2027-2",
+        "pick_mia-2027-2",
+        "pick_okc-2027-2"
+      ],
+      "comparison_holder_team_id": "team_nop",
+      "comparison_counterparty_team_id": "team_nyk",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2027-2-hou-ind-phi-13",
+      "type": "pick_swap",
+      "season": "2027",
+      "round": 2,
+      "team_a_pick_id": "pick_hou-2027-2",
+      "team_b_pick_id": "pick_ind-2027-2",
+      "original_rights_holder_team_id": "team_phi",
+      "current_rights_holder_team_id": "team_phi",
+      "receiver_team_id": "team_phi",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_hou-2027-2",
+        "pick_ind-2027-2",
+        "pick_mia-2027-2",
+        "pick_okc-2027-2"
+      ],
+      "comparison_holder_team_id": "team_phi",
+      "comparison_counterparty_team_id": "team_nop",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2027-2-nop-por-cha-14",
+      "type": "pick_swap",
+      "season": "2027",
+      "round": 2,
+      "team_a_pick_id": "pick_nop-2027-2",
+      "team_b_pick_id": "pick_por-2027-2",
+      "original_rights_holder_team_id": "team_cha",
+      "current_rights_holder_team_id": "team_cha",
+      "receiver_team_id": "team_cha",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_nop-2027-2",
+        "pick_por-2027-2"
+      ],
+      "comparison_holder_team_id": "team_cha",
+      "comparison_counterparty_team_id": "team_por",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2028-2-gsw-mil-bos-15",
+      "type": "pick_swap",
+      "season": "2028",
+      "round": 2,
+      "team_a_pick_id": "pick_gsw-2028-2",
+      "team_b_pick_id": "pick_mil-2028-2",
+      "original_rights_holder_team_id": "team_bos",
+      "current_rights_holder_team_id": "team_bos",
+      "receiver_team_id": "team_bos",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_gsw-2028-2",
+        "pick_mil-2028-2",
+        "pick_okc-2028-2"
+      ],
+      "comparison_holder_team_id": "team_bos",
+      "comparison_counterparty_team_id": "team_phi",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2028-2-chi-ind-chi-16",
+      "type": "pick_swap",
+      "season": "2028",
+      "round": 2,
+      "team_a_pick_id": "pick_chi-2028-2",
+      "team_b_pick_id": "pick_ind-2028-2",
+      "original_rights_holder_team_id": "team_chi",
+      "current_rights_holder_team_id": "team_chi",
+      "receiver_team_id": "team_chi",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_chi-2028-2",
+        "pick_ind-2028-2",
+        "pick_phx-2028-2"
+      ],
+      "comparison_holder_team_id": "team_chi",
+      "comparison_counterparty_team_id": "team_ind",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2028-2-ind-phx-ind-17",
+      "type": "pick_swap",
+      "season": "2028",
+      "round": 2,
+      "team_a_pick_id": "pick_ind-2028-2",
+      "team_b_pick_id": "pick_phx-2028-2",
+      "original_rights_holder_team_id": "team_ind",
+      "current_rights_holder_team_id": "team_ind",
+      "receiver_team_id": "team_ind",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_chi-2028-2",
+        "pick_ind-2028-2",
+        "pick_phx-2028-2"
+      ],
+      "comparison_holder_team_id": "team_ind",
+      "comparison_counterparty_team_id": "team_nyk",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2028-2-chi-ind-chi-18",
+      "type": "pick_swap",
+      "season": "2028",
+      "round": 2,
+      "team_a_pick_id": "pick_chi-2028-2",
+      "team_b_pick_id": "pick_ind-2028-2",
+      "original_rights_holder_team_id": "team_chi",
+      "current_rights_holder_team_id": "team_chi",
+      "receiver_team_id": "team_chi",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_chi-2028-2",
+        "pick_ind-2028-2",
+        "pick_phx-2028-2"
+      ],
+      "comparison_holder_team_id": "team_chi",
+      "comparison_counterparty_team_id": "team_ind",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2028-2-cha-lac-cha-19",
+      "type": "pick_swap",
+      "season": "2028",
+      "round": 2,
+      "team_a_pick_id": "pick_cha-2028-2",
+      "team_b_pick_id": "pick_lac-2028-2",
+      "original_rights_holder_team_id": "team_cha",
+      "current_rights_holder_team_id": "team_cha",
+      "receiver_team_id": "team_cha",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_cha-2028-2",
+        "pick_lac-2028-2"
+      ],
+      "comparison_holder_team_id": "team_cha",
+      "comparison_counterparty_team_id": "team_det",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2028-2-lal-was-orl-20",
+      "type": "pick_swap",
+      "season": "2028",
+      "round": 2,
+      "team_a_pick_id": "pick_lal-2028-2",
+      "team_b_pick_id": "pick_was-2028-2",
+      "original_rights_holder_team_id": "team_orl",
+      "current_rights_holder_team_id": "team_orl",
+      "receiver_team_id": "team_orl",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_lal-2028-2",
+        "pick_was-2028-2"
+      ],
+      "comparison_holder_team_id": "team_orl",
+      "comparison_counterparty_team_id": "team_was",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2029-2-atl-mia-cha-21",
+      "type": "pick_swap",
+      "season": "2029",
+      "round": 2,
+      "team_a_pick_id": "pick_atl-2029-2",
+      "team_b_pick_id": "pick_mia-2029-2",
+      "original_rights_holder_team_id": "team_cha",
+      "current_rights_holder_team_id": "team_cha",
+      "receiver_team_id": "team_cha",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_atl-2029-2",
+        "pick_mia-2029-2"
+      ],
+      "comparison_holder_team_id": "team_cha",
+      "comparison_counterparty_team_id": "team_okc",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2029-2-det-nyk-det-22",
+      "type": "pick_swap",
+      "season": "2029",
+      "round": 2,
+      "team_a_pick_id": "pick_det-2029-2",
+      "team_b_pick_id": "pick_nyk-2029-2",
+      "original_rights_holder_team_id": "team_det",
+      "current_rights_holder_team_id": "team_det",
+      "receiver_team_id": "team_det",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_det-2029-2",
+        "pick_mil-2029-2",
+        "pick_nyk-2029-2"
+      ],
+      "comparison_holder_team_id": "team_det",
+      "comparison_counterparty_team_id": "team_chi",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2029-2-ind-was-ind-23",
+      "type": "pick_swap",
+      "season": "2029",
+      "round": 2,
+      "team_a_pick_id": "pick_ind-2029-2",
+      "team_b_pick_id": "pick_was-2029-2",
+      "original_rights_holder_team_id": "team_ind",
+      "current_rights_holder_team_id": "team_ind",
+      "receiver_team_id": "team_ind",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_ind-2029-2",
+        "pick_was-2029-2"
+      ],
+      "comparison_holder_team_id": "team_ind",
+      "comparison_counterparty_team_id": "team_por",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2030-2-den-hou-mem-24",
+      "type": "pick_swap",
+      "season": "2030",
+      "round": 2,
+      "team_a_pick_id": "pick_den-2030-2",
+      "team_b_pick_id": "pick_hou-2030-2",
+      "original_rights_holder_team_id": "team_mem",
+      "current_rights_holder_team_id": "team_mem",
+      "receiver_team_id": "team_mem",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_den-2030-2",
+        "pick_hou-2030-2",
+        "pick_mia-2030-2"
+      ],
+      "comparison_holder_team_id": "team_mem",
+      "comparison_counterparty_team_id": "team_okc",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2030-2-lac-uta-cha-25",
+      "type": "pick_swap",
+      "season": "2030",
+      "round": 2,
+      "team_a_pick_id": "pick_lac-2030-2",
+      "team_b_pick_id": "pick_uta-2030-2",
+      "original_rights_holder_team_id": "team_cha",
+      "current_rights_holder_team_id": "team_cha",
+      "receiver_team_id": "team_cha",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_lac-2030-2",
+        "pick_uta-2030-2"
+      ],
+      "comparison_holder_team_id": "team_cha",
+      "comparison_counterparty_team_id": "team_lac",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2030-2-phx-por-bos-26",
+      "type": "pick_swap",
+      "season": "2030",
+      "round": 2,
+      "team_a_pick_id": "pick_phx-2030-2",
+      "team_b_pick_id": "pick_por-2030-2",
+      "original_rights_holder_team_id": "team_bos",
+      "current_rights_holder_team_id": "team_bos",
+      "receiver_team_id": "team_bos",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_phx-2030-2",
+        "pick_por-2030-2",
+        "pick_was-2030-2"
+      ],
+      "comparison_holder_team_id": "team_bos",
+      "comparison_counterparty_team_id": "team_phi",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2030-2-por-was-phi-27",
+      "type": "pick_swap",
+      "season": "2030",
+      "round": 2,
+      "team_a_pick_id": "pick_por-2030-2",
+      "team_b_pick_id": "pick_was-2030-2",
+      "original_rights_holder_team_id": "team_phi",
+      "current_rights_holder_team_id": "team_phi",
+      "receiver_team_id": "team_phi",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_phx-2030-2",
+        "pick_por-2030-2",
+        "pick_was-2030-2"
+      ],
+      "comparison_holder_team_id": "team_phi",
+      "comparison_counterparty_team_id": "team_was",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2030-2-phx-por-bos-28",
+      "type": "pick_swap",
+      "season": "2030",
+      "round": 2,
+      "team_a_pick_id": "pick_phx-2030-2",
+      "team_b_pick_id": "pick_por-2030-2",
+      "original_rights_holder_team_id": "team_bos",
+      "current_rights_holder_team_id": "team_bos",
+      "receiver_team_id": "team_bos",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_phx-2030-2",
+        "pick_por-2030-2",
+        "pick_was-2030-2"
+      ],
+      "comparison_holder_team_id": "team_bos",
+      "comparison_counterparty_team_id": "team_phi",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2031-2-atl-hou-okc-29",
+      "type": "pick_swap",
+      "season": "2031",
+      "round": 2,
+      "team_a_pick_id": "pick_atl-2031-2",
+      "team_b_pick_id": "pick_hou-2031-2",
+      "original_rights_holder_team_id": "team_okc",
+      "current_rights_holder_team_id": "team_okc",
+      "receiver_team_id": "team_okc",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_atl-2031-2",
+        "pick_hou-2031-2"
+      ],
+      "comparison_holder_team_id": "team_okc",
+      "comparison_counterparty_team_id": "team_hou",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2031-2-bos-cle-uta-30",
+      "type": "pick_swap",
+      "season": "2031",
+      "round": 2,
+      "team_a_pick_id": "pick_bos-2031-2",
+      "team_b_pick_id": "pick_cle-2031-2",
+      "original_rights_holder_team_id": "team_uta",
+      "current_rights_holder_team_id": "team_uta",
+      "receiver_team_id": "team_uta",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_bos-2031-2",
+        "pick_cle-2031-2"
+      ],
+      "comparison_holder_team_id": "team_uta",
+      "comparison_counterparty_team_id": "team_bos",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2031-2-min-gsw-chi-31",
+      "type": "pick_swap",
+      "season": "2031",
+      "round": 2,
+      "team_a_pick_id": "pick_min-2031-2",
+      "team_b_pick_id": "pick_gsw-2031-2",
+      "original_rights_holder_team_id": "team_chi",
+      "current_rights_holder_team_id": "team_chi",
+      "receiver_team_id": "team_chi",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_min-2031-2",
+        "pick_gsw-2031-2"
+      ],
+      "comparison_holder_team_id": "team_chi",
+      "comparison_counterparty_team_id": "team_det",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2031-2-nop-orl-orl-32",
+      "type": "pick_swap",
+      "season": "2031",
+      "round": 2,
+      "team_a_pick_id": "pick_nop-2031-2",
+      "team_b_pick_id": "pick_orl-2031-2",
+      "original_rights_holder_team_id": "team_orl",
+      "current_rights_holder_team_id": "team_orl",
+      "receiver_team_id": "team_orl",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_nop-2031-2",
+        "pick_orl-2031-2"
+      ],
+      "comparison_holder_team_id": "team_orl",
+      "comparison_counterparty_team_id": "team_okc",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2032-2-phx-hou-chi-33",
+      "type": "pick_swap",
+      "season": "2032",
+      "round": 2,
+      "team_a_pick_id": "pick_phx-2032-2",
+      "team_b_pick_id": "pick_hou-2032-2",
+      "original_rights_holder_team_id": "team_chi",
+      "current_rights_holder_team_id": "team_chi",
+      "receiver_team_id": "team_chi",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_phx-2032-2",
+        "pick_hou-2032-2"
+      ],
+      "comparison_holder_team_id": "team_chi",
+      "comparison_counterparty_team_id": "team_phx",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2027-1-hou-bkn-hou-34",
+      "type": "pick_swap",
+      "season": "2027",
+      "round": 1,
+      "team_a_pick_id": "pick_hou-2027-1",
+      "team_b_pick_id": "pick_bkn-2027-1",
+      "original_rights_holder_team_id": "team_hou",
+      "current_rights_holder_team_id": "team_hou",
+      "receiver_team_id": "team_hou",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages"
+    },
+    {
+      "id": "pick_obligation_realgm-2028-1-okc-dal-okc-35",
+      "type": "pick_swap",
+      "season": "2028",
+      "round": 1,
+      "team_a_pick_id": "pick_okc-2028-1",
+      "team_b_pick_id": "pick_dal-2028-1",
+      "original_rights_holder_team_id": "team_okc",
+      "current_rights_holder_team_id": "team_okc",
+      "receiver_team_id": "team_okc",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages"
+    },
+    {
+      "id": "pick_obligation_realgm-2028-1-cha-min-cha-36",
+      "type": "pick_swap",
+      "season": "2028",
+      "round": 1,
+      "team_a_pick_id": "pick_cha-2028-1",
+      "team_b_pick_id": "pick_min-2028-1",
+      "original_rights_holder_team_id": "team_cha",
+      "current_rights_holder_team_id": "team_cha",
+      "receiver_team_id": "team_cha",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages"
+    },
+    {
+      "id": "pick_obligation_realgm-2028-1-sas-bos-sas-37",
+      "type": "pick_swap",
+      "season": "2028",
+      "round": 1,
+      "team_a_pick_id": "pick_sas-2028-1",
+      "team_b_pick_id": "pick_bos-2028-1",
+      "original_rights_holder_team_id": "team_sas",
+      "current_rights_holder_team_id": "team_sas",
+      "receiver_team_id": "team_sas",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "subject_protected_top_n": {
+        "pick_bos-2028-1": 1
+      }
+    },
+    {
+      "id": "pick_obligation_realgm-2029-1-phi-lac-phi-38",
+      "type": "pick_swap",
+      "season": "2029",
+      "round": 1,
+      "team_a_pick_id": "pick_phi-2029-1",
+      "team_b_pick_id": "pick_lac-2029-1",
+      "original_rights_holder_team_id": "team_phi",
+      "current_rights_holder_team_id": "team_phi",
+      "receiver_team_id": "team_phi",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "subject_protected_top_n": {
+        "pick_lac-2029-1": 3
+      }
+    },
+    {
+      "id": "pick_obligation_realgm-2029-1-mem-orl-mem-39",
+      "type": "pick_swap",
+      "season": "2029",
+      "round": 1,
+      "team_a_pick_id": "pick_mem-2029-1",
+      "team_b_pick_id": "pick_orl-2029-1",
+      "original_rights_holder_team_id": "team_mem",
+      "current_rights_holder_team_id": "team_mem",
+      "receiver_team_id": "team_mem",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "subject_protected_top_n": {
+        "pick_orl-2029-1": 2
+      }
+    },
+    {
+      "id": "pick_obligation_realgm-2030-1-sas-dal-sas-40",
+      "type": "pick_swap",
+      "season": "2030",
+      "round": 1,
+      "team_a_pick_id": "pick_sas-2030-1",
+      "team_b_pick_id": "pick_dal-2030-1",
+      "original_rights_holder_team_id": "team_sas",
+      "current_rights_holder_team_id": "team_sas",
+      "receiver_team_id": "team_sas",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages"
+    },
+    {
+      "id": "pick_obligation_realgm-2030-1-uta-lal-uta-41",
+      "type": "pick_swap",
+      "season": "2030",
+      "round": 1,
+      "team_a_pick_id": "pick_uta-2030-1",
+      "team_b_pick_id": "pick_lal-2030-1",
+      "original_rights_holder_team_id": "team_uta",
+      "current_rights_holder_team_id": "team_uta",
+      "receiver_team_id": "team_uta",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages"
+    },
+    {
+      "id": "pick_obligation_realgm-2031-1-sas-sac-sas-42",
+      "type": "pick_swap",
+      "season": "2031",
+      "round": 1,
+      "team_a_pick_id": "pick_sas-2031-1",
+      "team_b_pick_id": "pick_sac-2031-1",
+      "original_rights_holder_team_id": "team_sas",
+      "current_rights_holder_team_id": "team_sas",
+      "receiver_team_id": "team_sas",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages"
+    },
+    {
+      "id": "pick_obligation_realgm-2030-2-chi-ind-chi-43",
+      "type": "pick_swap",
+      "season": "2030",
+      "round": 2,
+      "team_a_pick_id": "pick_chi-2030-2",
+      "team_b_pick_id": "pick_ind-2030-2",
+      "original_rights_holder_team_id": "team_chi",
+      "current_rights_holder_team_id": "team_chi",
+      "receiver_team_id": "team_chi",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages"
+    },
+    {
+      "id": "pick_obligation_realgm-2030-2-orl-nop-orl-44",
+      "type": "pick_swap",
+      "season": "2030",
+      "round": 2,
+      "team_a_pick_id": "pick_orl-2030-2",
+      "team_b_pick_id": "pick_nop-2030-2",
+      "original_rights_holder_team_id": "team_orl",
+      "current_rights_holder_team_id": "team_orl",
+      "receiver_team_id": "team_orl",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages"
+    },
+    {
+      "id": "pick_obligation_realgm-2027-1-okc-lac-okc-45",
+      "type": "pick_swap",
+      "season": "2027",
+      "round": 1,
+      "team_a_pick_id": "pick_okc-2027-1",
+      "team_b_pick_id": "pick_lac-2027-1",
+      "original_rights_holder_team_id": "team_okc",
+      "current_rights_holder_team_id": "team_okc",
+      "receiver_team_id": "team_okc",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages"
+    },
+    {
+      "id": "pick_obligation_realgm-2027-1-lac-tor-lac-46",
+      "type": "pick_swap",
+      "season": "2027",
+      "round": 1,
+      "team_a_pick_id": "pick_lac-2027-1",
+      "team_b_pick_id": "pick_tor-2027-1",
+      "original_rights_holder_team_id": "team_lac",
+      "current_rights_holder_team_id": "team_lac",
+      "receiver_team_id": "team_lac",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_okc-2027-1",
+        "pick_den-2027-1",
+        "pick_lac-2027-1",
+        "pick_tor-2027-1"
+      ],
+      "comparison_holder_team_id": "team_lac",
+      "comparison_counterparty_team_id": "team_tor"
+    },
+    {
+      "id": "pick_obligation_realgm-2028-1-bkn-phx-bkn-47",
+      "type": "pick_swap",
+      "season": "2028",
+      "round": 1,
+      "team_a_pick_id": "pick_bkn-2028-1",
+      "team_b_pick_id": "pick_phx-2028-1",
+      "original_rights_holder_team_id": "team_bkn",
+      "current_rights_holder_team_id": "team_bkn",
+      "receiver_team_id": "team_bkn",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages"
+    },
+    {
+      "id": "pick_obligation_realgm-2028-1-bkn-nyk-bkn-48",
+      "type": "pick_swap",
+      "season": "2028",
+      "round": 1,
+      "team_a_pick_id": "pick_bkn-2028-1",
+      "team_b_pick_id": "pick_nyk-2028-1",
+      "original_rights_holder_team_id": "team_bkn",
+      "current_rights_holder_team_id": "team_bkn",
+      "receiver_team_id": "team_bkn",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_bkn-2028-1",
+        "pick_phx-2028-1",
+        "pick_nyk-2028-1"
+      ],
+      "comparison_holder_team_id": "team_bkn",
+      "comparison_counterparty_team_id": "team_nyk"
+    },
+    {
+      "id": "pick_obligation_realgm-2028-1-was-phx-was-49",
+      "type": "pick_swap",
+      "season": "2028",
+      "round": 1,
+      "team_a_pick_id": "pick_was-2028-1",
+      "team_b_pick_id": "pick_phx-2028-1",
+      "original_rights_holder_team_id": "team_was",
+      "current_rights_holder_team_id": "team_was",
+      "receiver_team_id": "team_was",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_bkn-2028-1",
+        "pick_phx-2028-1",
+        "pick_nyk-2028-1",
+        "pick_was-2028-1"
+      ],
+      "comparison_holder_team_id": "team_was",
+      "comparison_counterparty_team_id": "team_phx"
+    },
+    {
+      "id": "pick_obligation_realgm-2028-1-por-mil-por-50",
+      "type": "pick_swap",
+      "season": "2028",
+      "round": 1,
+      "team_a_pick_id": "pick_por-2028-1",
+      "team_b_pick_id": "pick_mil-2028-1",
+      "original_rights_holder_team_id": "team_por",
+      "current_rights_holder_team_id": "team_por",
+      "receiver_team_id": "team_por",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages"
+    },
+    {
+      "id": "pick_obligation_realgm-2028-1-was-mil-was-51",
+      "type": "pick_swap",
+      "season": "2028",
+      "round": 1,
+      "team_a_pick_id": "pick_was-2028-1",
+      "team_b_pick_id": "pick_mil-2028-1",
+      "original_rights_holder_team_id": "team_was",
+      "current_rights_holder_team_id": "team_was",
+      "receiver_team_id": "team_was",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_was-2028-1",
+        "pick_phx-2028-1",
+        "pick_mil-2028-1",
+        "pick_por-2028-1"
+      ],
+      "comparison_holder_team_id": "team_was",
+      "comparison_counterparty_team_id": "team_mil"
+    },
+    {
+      "id": "pick_obligation_realgm-2028-1-uta-cle-uta-52",
+      "type": "pick_swap",
+      "season": "2028",
+      "round": 1,
+      "team_a_pick_id": "pick_uta-2028-1",
+      "team_b_pick_id": "pick_cle-2028-1",
+      "original_rights_holder_team_id": "team_uta",
+      "current_rights_holder_team_id": "team_uta",
+      "receiver_team_id": "team_uta",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages"
+    },
+    {
+      "id": "pick_obligation_realgm-2028-1-uta-lal-uta-53",
+      "type": "pick_swap",
+      "season": "2028",
+      "round": 1,
+      "team_a_pick_id": "pick_uta-2028-1",
+      "team_b_pick_id": "pick_lal-2028-1",
+      "original_rights_holder_team_id": "team_uta",
+      "current_rights_holder_team_id": "team_uta",
+      "receiver_team_id": "team_uta",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_uta-2028-1",
+        "pick_cle-2028-1",
+        "pick_lal-2028-1"
+      ],
+      "comparison_holder_team_id": "team_uta",
+      "comparison_counterparty_team_id": "team_lal"
+    },
+    {
+      "id": "pick_obligation_realgm-2028-1-atl-cle-atl-54",
+      "type": "pick_swap",
+      "season": "2028",
+      "round": 1,
+      "team_a_pick_id": "pick_atl-2028-1",
+      "team_b_pick_id": "pick_cle-2028-1",
+      "original_rights_holder_team_id": "team_atl",
+      "current_rights_holder_team_id": "team_atl",
+      "receiver_team_id": "team_atl",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_uta-2028-1",
+        "pick_cle-2028-1",
+        "pick_lal-2028-1",
+        "pick_atl-2028-1"
+      ],
+      "comparison_holder_team_id": "team_atl",
+      "comparison_counterparty_team_id": "team_cle"
+    },
+    {
+      "id": "pick_obligation_realgm-2029-1-uta-cle-uta-55",
+      "type": "pick_swap",
+      "season": "2029",
+      "round": 1,
+      "team_a_pick_id": "pick_uta-2029-1",
+      "team_b_pick_id": "pick_cle-2029-1",
+      "original_rights_holder_team_id": "team_uta",
+      "current_rights_holder_team_id": "team_uta",
+      "receiver_team_id": "team_uta",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_uta-2029-1",
+        "pick_cle-2029-1",
+        "pick_min-2029-1"
+      ],
+      "comparison_holder_team_id": "team_uta",
+      "comparison_counterparty_team_id": "team_cha",
+      "allocation_comparison": true
+    },
+    {
+      "id": "pick_obligation_realgm-2029-1-cle-cha-cha-56",
+      "type": "pick_swap",
+      "season": "2029",
+      "round": 1,
+      "team_a_pick_id": "pick_cle-2029-1",
+      "team_b_pick_id": "pick_cha-2029-1",
+      "original_rights_holder_team_id": "team_cha",
+      "current_rights_holder_team_id": "team_cha",
+      "receiver_team_id": "team_cha",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_uta-2029-1",
+        "pick_cle-2029-1",
+        "pick_min-2029-1",
+        "pick_cha-2029-1"
+      ],
+      "comparison_holder_team_id": "team_cha",
+      "comparison_counterparty_team_id": "team_phx"
+    },
+    {
+      "id": "pick_obligation_realgm-2030-1-sas-min-sas-57",
+      "type": "pick_swap",
+      "season": "2030",
+      "round": 1,
+      "team_a_pick_id": "pick_sas-2030-1",
+      "team_b_pick_id": "pick_min-2030-1",
+      "original_rights_holder_team_id": "team_sas",
+      "current_rights_holder_team_id": "team_sas",
+      "receiver_team_id": "team_sas",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_sas-2030-1",
+        "pick_dal-2030-1",
+        "pick_min-2030-1"
+      ],
+      "comparison_holder_team_id": "team_sas",
+      "comparison_counterparty_team_id": "team_min",
+      "subject_protected_top_n": {
+        "pick_min-2030-1": 1
+      }
+    },
+    {
+      "id": "pick_obligation_realgm-2030-1-cha-min-cha-58",
+      "type": "pick_swap",
+      "season": "2030",
+      "round": 1,
+      "team_a_pick_id": "pick_cha-2030-1",
+      "team_b_pick_id": "pick_min-2030-1",
+      "original_rights_holder_team_id": "team_cha",
+      "current_rights_holder_team_id": "team_cha",
+      "receiver_team_id": "team_cha",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_sas-2030-1",
+        "pick_dal-2030-1",
+        "pick_min-2030-1",
+        "pick_cha-2030-1"
+      ],
+      "comparison_holder_team_id": "team_cha",
+      "comparison_counterparty_team_id": "team_min"
+    },
+    {
+      "id": "pick_obligation_realgm-2030-1-was-phx-was-59",
+      "type": "pick_swap",
+      "season": "2030",
+      "round": 1,
+      "team_a_pick_id": "pick_was-2030-1",
+      "team_b_pick_id": "pick_phx-2030-1",
+      "original_rights_holder_team_id": "team_was",
+      "current_rights_holder_team_id": "team_was",
+      "receiver_team_id": "team_was",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages"
+    },
+    {
+      "id": "pick_obligation_realgm-2030-1-mem-phx-mem-60",
+      "type": "pick_swap",
+      "season": "2030",
+      "round": 1,
+      "team_a_pick_id": "pick_mem-2030-1",
+      "team_b_pick_id": "pick_phx-2030-1",
+      "original_rights_holder_team_id": "team_mem",
+      "current_rights_holder_team_id": "team_mem",
+      "receiver_team_id": "team_mem",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_was-2030-1",
+        "pick_phx-2030-1",
+        "pick_mem-2030-1"
+      ],
+      "comparison_holder_team_id": "team_mem",
+      "comparison_counterparty_team_id": "team_phx"
+    },
+    {
+      "id": "pick_obligation_realgm-2030-1-por-mil-por-61",
+      "type": "pick_swap",
+      "season": "2030",
+      "round": 1,
+      "team_a_pick_id": "pick_por-2030-1",
+      "team_b_pick_id": "pick_mil-2030-1",
+      "original_rights_holder_team_id": "team_por",
+      "current_rights_holder_team_id": "team_por",
+      "receiver_team_id": "team_por",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages"
+    },
+    {
+      "id": "pick_obligation_realgm-2030-1-mil-mia-mil-62",
+      "type": "pick_swap",
+      "season": "2030",
+      "round": 1,
+      "team_a_pick_id": "pick_mil-2030-1",
+      "team_b_pick_id": "pick_mia-2030-1",
+      "original_rights_holder_team_id": "team_mil",
+      "current_rights_holder_team_id": "team_mil",
+      "receiver_team_id": "team_mil",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_por-2030-1",
+        "pick_mil-2030-1",
+        "pick_mia-2030-1"
+      ],
+      "comparison_holder_team_id": "team_mil",
+      "comparison_counterparty_team_id": "team_mia"
+    },
+    {
+      "id": "pick_obligation_realgm-2031-2-mia-ind-was-63",
+      "type": "pick_swap",
+      "season": "2031",
+      "round": 2,
+      "team_a_pick_id": "pick_mia-2031-2",
+      "team_b_pick_id": "pick_ind-2031-2",
+      "original_rights_holder_team_id": "team_was",
+      "current_rights_holder_team_id": "team_was",
+      "receiver_team_id": "team_was",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages"
+    },
+    {
+      "id": "pick_obligation_realgm-2031-2-mem-ind-mem-64",
+      "type": "pick_swap",
+      "season": "2031",
+      "round": 2,
+      "team_a_pick_id": "pick_mem-2031-2",
+      "team_b_pick_id": "pick_ind-2031-2",
+      "original_rights_holder_team_id": "team_mem",
+      "current_rights_holder_team_id": "team_mem",
+      "receiver_team_id": "team_mem",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_mia-2031-2",
+        "pick_ind-2031-2",
+        "pick_mem-2031-2"
+      ],
+      "comparison_holder_team_id": "team_mem",
+      "comparison_counterparty_team_id": "team_ind"
+    },
+    {
+      "id": "pick_obligation_realgm-2032-2-mem-phi-mem-65",
+      "type": "pick_swap",
+      "season": "2032",
+      "round": 2,
+      "team_a_pick_id": "pick_mem-2032-2",
+      "team_b_pick_id": "pick_phi-2032-2",
+      "original_rights_holder_team_id": "team_mem",
+      "current_rights_holder_team_id": "team_mem",
+      "receiver_team_id": "team_mem",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages"
+    },
+    {
+      "id": "pick_obligation_realgm-2032-2-mem-uta-mem-66",
+      "type": "pick_swap",
+      "season": "2032",
+      "round": 2,
+      "team_a_pick_id": "pick_mem-2032-2",
+      "team_b_pick_id": "pick_uta-2032-2",
+      "original_rights_holder_team_id": "team_mem",
+      "current_rights_holder_team_id": "team_mem",
+      "receiver_team_id": "team_mem",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_mem-2032-2",
+        "pick_phi-2032-2",
+        "pick_uta-2032-2"
+      ],
+      "comparison_holder_team_id": "team_mem",
+      "comparison_counterparty_team_id": "team_was"
+    },
+    {
+      "id": "pick_obligation_realgm-2027-1-mil-nop-nop-84",
+      "type": "pick_swap",
+      "season": "2027",
+      "round": 1,
+      "team_a_pick_id": "pick_mil-2027-1",
+      "team_b_pick_id": "pick_nop-2027-1",
+      "original_rights_holder_team_id": "team_nop",
+      "current_rights_holder_team_id": "team_nop",
+      "receiver_team_id": "team_nop",
+      "benefit": "better",
+      "status": "active",
+      "source": "src_realgm_future_pick_pages",
+      "comparison_pool_pick_ids": [
+        "pick_mil-2027-1",
+        "pick_nop-2027-1"
+      ],
+      "comparison_holder_team_id": "team_nop",
+      "comparison_counterparty_team_id": "team_atl"
+    }
+  ]
 }

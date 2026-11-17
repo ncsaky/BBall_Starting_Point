@@ -1,0 +1,992 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NBA GM Paper Concepts</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #202522;
+        --muted: #69716c;
+        --line: #cfd4d0;
+        --paper: #f4f3ef;
+        --white: #ffffff;
+        --green: #286654;
+        --yellow: #d6aa3c;
+        --red: #a84e3e;
+        --blue: #315f78;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        background: #dfe3e1;
+        color: var(--ink);
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        padding: 28px;
+      }
+      button { font: inherit; }
+      .gallery-intro {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin: 0 auto 22px;
+        max-width: 1672px;
+      }
+      .gallery-intro h1 { font-size: 28px; font-weight: 500; margin: 0; }
+      .gallery-intro p { color: #59615d; font-size: 12px; margin: 6px 0 0; }
+      .gallery-links { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; max-width: 1120px; }
+      .gallery-links a,
+      .capture-button {
+        background: #ffffff;
+        border: 1px solid #aeb6b1;
+        color: #242a26;
+        cursor: pointer;
+        font-size: 12px;
+        padding: 10px 13px;
+        text-decoration: none;
+      }
+      .concept-wrap { margin: 0 auto 54px; width: 1672px; }
+      .concept-toolbar {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 0 10px;
+      }
+      .concept-toolbar span { color: #4d5550; font-size: 12px; }
+      .paper-artboard {
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        height: 1050px;
+        overflow: hidden;
+        width: 1672px;
+      }
+      .paper-artboard button { cursor: default; }
+      .logo { height: 44px; object-fit: contain; width: 44px; }
+      .logo-small { height: 30px; object-fit: contain; width: 30px; }
+      .title { font-size: 28px; font-weight: 500; line-height: 32px; }
+      .section-title { font-size: 16px; font-weight: 500; line-height: 22px; }
+      .body { font-size: 16px; line-height: 22px; }
+      .meta { font-size: 12px; line-height: 16px; }
+      .button {
+        align-items: center;
+        background: transparent;
+        border: 1px solid currentColor;
+        display: flex;
+        font-size: 12px;
+        justify-content: center;
+        min-height: 38px;
+        padding: 9px 13px;
+      }
+      .stage-bar { display: flex; height: 46px; width: 100%; }
+      .stage {
+        align-items: center;
+        border-left: 1px solid var(--line);
+        display: flex;
+        font-size: 12px;
+        justify-content: center;
+        width: 20%;
+      }
+      .stage:first-child { border-left: 0; }
+      .bar-track { background: #e2e6e3; display: flex; height: 14px; width: 100%; }
+      .bar-fill { height: 100%; }
+
+      /* Timeline */
+      .timeline-board { background: #f4f3ef; color: #292925; padding: 28px 32px; }
+      .timeline-head { align-items: center; display: flex; justify-content: space-between; }
+      .brand-lockup { align-items: center; display: flex; gap: 14px; }
+      .header-actions { display: flex; gap: 8px; }
+      .timeline-stage { border: 1px solid #c7c3ba; margin-top: 20px; }
+      .timeline-stage .stage { color: #6c6962; }
+      .timeline-stage .active { background: #2f6755; color: #fff; }
+      .timeline-main { display: flex; gap: 28px; min-height: 0; padding-top: 22px; }
+      .timeline-stream { display: flex; flex-direction: column; position: relative; width: 68%; }
+      .timeline-spine { background: #c5c1b8; height: 752px; left: 22px; position: absolute; top: 22px; width: 2px; }
+      .timeline-event { align-items: flex-start; display: flex; gap: 18px; min-height: 138px; position: relative; }
+      .timeline-event.live { min-height: 236px; }
+      .timeline-dot {
+        align-items: center;
+        background: #f4f3ef;
+        border: 2px solid #aaa69d;
+        border-radius: 50%;
+        display: flex;
+        flex-shrink: 0;
+        font-size: 12px;
+        height: 46px;
+        justify-content: center;
+        width: 46px;
+      }
+      .timeline-event.live .timeline-dot { background: #2f6755; border-color: #2f6755; color: #fff; }
+      .timeline-card {
+        background: #fff;
+        border: 1px solid #cbc7be;
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 9px;
+        padding: 17px 19px;
+      }
+      .timeline-event.live .timeline-card { background: #e7efea; }
+      .timeline-card-head { align-items: center; display: flex; justify-content: space-between; }
+      .timeline-facts { display: flex; flex-direction: column; gap: 8px; }
+      .timeline-fact { align-items: center; display: flex; gap: 10px; }
+      .timeline-side { display: flex; flex-direction: column; gap: 14px; width: 32%; }
+      .dark-card { background: #292925; color: #fff; display: flex; flex-direction: column; gap: 13px; padding: 20px; }
+      .side-card { background: #fff; border: 1px solid #cbc7be; display: flex; flex-direction: column; gap: 10px; padding: 19px; }
+      .bid-row { align-items: center; border-top: 1px solid #e0ddd5; display: flex; gap: 10px; padding-top: 10px; }
+      .access-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+      .access-grid .button { color: #373934; flex: 1 1 44%; }
+
+      /* Fit Lab */
+      .fit-board { background: #f5f7f4; color: #19231e; padding: 26px 30px; }
+      .fit-head { align-items: center; display: flex; justify-content: space-between; }
+      .fit-stage { background: #fff; border: 1px solid #c9d0cb; margin-top: 18px; }
+      .fit-stage .active { background: #204f43; color: #fff; }
+      .fit-main { display: flex; gap: 16px; min-height: 0; padding-top: 18px; }
+      .fit-candidates { display: flex; flex-direction: column; gap: 12px; width: 64%; }
+      .compare-head { align-items: flex-end; display: flex; justify-content: space-between; }
+      .candidate {
+        align-items: center;
+        background: #fff;
+        border: 1px solid #cbd2cd;
+        display: flex;
+        min-height: 122px;
+        padding: 16px;
+      }
+      .candidate.selected { border-left: 5px solid #204f43; }
+      .candidate-name { display: flex; flex-direction: column; gap: 4px; width: 25%; }
+      .candidate-metric { display: flex; flex-direction: column; gap: 5px; width: 11%; }
+      .candidate-production { display: flex; flex-direction: column; gap: 8px; width: 28%; }
+      .production-line { align-items: center; display: flex; gap: 8px; }
+      .production-line span:first-child { color: #64706a; width: 28px; }
+      .candidate-market { align-items: flex-end; display: flex; flex-direction: column; gap: 5px; width: 14%; }
+      .candidate-action { align-items: flex-end; display: flex; flex-direction: column; gap: 7px; width: 11%; }
+      .fit-side { display: flex; flex-direction: column; gap: 14px; width: 36%; }
+      .profile-card { background: #1e3029; color: #fff; display: flex; flex-direction: column; gap: 13px; padding: 20px; }
+      .profile-row { align-items: center; display: flex; gap: 10px; }
+      .profile-row > span:first-child { width: 66px; }
+      .profile-row > span:last-child { text-align: right; width: 55px; }
+      .profile-row .bar-track { background: #42564e; flex: 1; height: 10px; }
+      .cap-impact { background: #fff; border: 1px solid #cbd2cd; display: flex; flex-direction: column; gap: 14px; padding: 20px; }
+      .impact-bars { align-items: flex-end; border-bottom: 1px solid #9fa9a3; display: flex; gap: 18px; height: 240px; padding: 0 16px; }
+      .impact-column { align-items: center; display: flex; flex-direction: column; gap: 7px; height: 100%; justify-content: flex-end; width: 25%; }
+      .impact-bar { background: #315f78; width: 52px; }
+      .fit-footer { display: flex; gap: 8px; }
+
+      /* Quiet Control */
+      .quiet-board { background: #fff; color: #202421; padding: 28px 34px; }
+      .quiet-head { align-items: center; border-bottom: 1px solid #d7dbd8; display: flex; justify-content: space-between; padding-bottom: 18px; }
+      .quiet-title { align-items: center; display: flex; gap: 13px; }
+      .quiet-actions { display: flex; gap: 8px; }
+      .quiet-stage { border-bottom: 1px solid #d7dbd8; height: 48px; }
+      .quiet-stage .active { border-bottom: 3px solid #222824; color: #222824; }
+      .quiet-cap { align-items: center; border-bottom: 1px solid #d7dbd8; display: flex; height: 96px; }
+      .quiet-cap-block { display: flex; flex-direction: column; gap: 5px; width: 16%; }
+      .quiet-cap-chart { display: flex; flex: 1; gap: 5px; }
+      .quiet-cap-chart > div { height: 24px; }
+      .quiet-market { display: flex; flex: 1; flex-direction: column; min-height: 0; padding-top: 18px; }
+      .quiet-market-head { align-items: center; display: flex; justify-content: space-between; padding-bottom: 12px; }
+      .quiet-columns, .quiet-row { align-items: center; display: flex; width: 100%; }
+      .quiet-columns { border-bottom: 1px solid #bfc5c1; color: #6b736e; height: 38px; }
+      .quiet-row { border-bottom: 1px solid #e0e3e1; flex: 1; min-height: 68px; }
+      .quiet-row:hover { background: #f7f8f7; }
+      .q-player { width: 25%; }
+      .q-pos { width: 6%; }
+      .q-age { width: 6%; }
+      .q-ovr { width: 7%; }
+      .q-production { width: 18%; }
+      .q-ask { width: 11%; }
+      .q-change { width: 10%; }
+      .q-bid { align-items: center; display: flex; gap: 7px; width: 12%; }
+      .q-action { display: flex; justify-content: flex-end; width: 5%; }
+      .quiet-footer { align-items: center; display: flex; gap: 8px; padding-top: 14px; }
+      .quiet-footer .spacer { flex: 1; }
+
+      /* Dark market concepts */
+      .terminal-board,
+      .exchange-board,
+      .ledger-board {
+        background: #090d10;
+        color: #d9e0e4;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        padding: 22px 26px;
+      }
+      .dark-header { align-items: center; display: flex; height: 58px; justify-content: space-between; }
+      .dark-brand { align-items: center; display: flex; gap: 12px; }
+      .dark-title { color: #f3f6f7; font-size: 22px; font-weight: 500; line-height: 26px; }
+      .dark-meta { color: #7f8b93; font-size: 11px; line-height: 15px; }
+      .dark-button { align-items: center; background: #10171c; border: 1px solid #29343c; color: #c6d0d6; display: flex; font-size: 11px; height: 34px; justify-content: center; padding: 0 12px; }
+      .dark-button.primary { background: #dce5e9; border-color: #dce5e9; color: #0b1013; }
+      .dark-actions { display: flex; gap: 7px; }
+      .micro-progress { align-items: center; display: flex; height: 34px; margin-left: auto; width: 330px; }
+      .progress-segment { background: #354149; height: 1px; width: 58px; }
+      .progress-dot { align-items: center; background: #090d10; border: 1px solid #55636c; border-radius: 50%; color: #7f8b93; display: flex; font-size: 9px; height: 18px; justify-content: center; width: 18px; }
+      .progress-dot.done { background: #53626b; border-color: #53626b; color: #fff; }
+      .progress-dot.live { background: #dce5e9; border-color: #dce5e9; color: #090d10; }
+      .market-heading { align-items: flex-end; border-bottom: 1px solid #344049; display: flex; justify-content: space-between; padding: 10px 0 12px; }
+      .market-heading h2 { color: #f2f5f6; font-size: 18px; font-weight: 500; margin: 0; }
+      .market-tabs { display: flex; gap: 6px; }
+      .market-tab { border-bottom: 1px solid transparent; color: #78858d; font-size: 10px; padding: 7px 3px; }
+      .market-tab.active { border-color: #e2e9ec; color: #e2e9ec; }
+      .scroll-cue { align-items: center; color: #63717a; display: flex; font-size: 9px; gap: 6px; }
+      .scroll-track { background: #202a30; height: 4px; width: 90px; }
+      .scroll-thumb { background: #89969e; height: 4px; width: 34px; }
+      .terminal-grid { display: grid; grid-template-columns: 1.75fr .42fr .44fr .5fr .58fr 1.14fr .76fr .72fr 1.08fr .78fr; width: 100%; }
+      .terminal-table-head { align-items: center; color: #6f7b83; display: grid; font-size: 9px; height: 34px; letter-spacing: .4px; }
+      .terminal-body { display: flex; flex: 1; flex-direction: column; height: 0; min-height: 0; overflow-y: auto; scrollbar-color: #64717a #182127; scrollbar-width: thin; }
+      .terminal-row { align-items: center; border-top: 1px solid #202a30; display: grid; height: 74px; }
+      .terminal-row.selected { background: #11191e; border-left: 2px solid #dce5e9; }
+      .terminal-cell { min-width: 0; padding: 0 9px; }
+      .terminal-name { color: #eef2f3; font-family: "Avenir Next", Inter, sans-serif; font-size: 15px; line-height: 19px; }
+      .terminal-sub { color: #728089; font-size: 10px; line-height: 14px; margin-top: 3px; }
+      .terminal-number { color: #dce3e6; font-size: 13px; }
+      .terminal-change { color: #d97f72; font-size: 11px; }
+      .bid-lockup { align-items: center; display: flex; gap: 8px; }
+      .interest { align-items: center; display: flex; gap: 7px; }
+      .interest-line { background: #283239; height: 5px; width: 50px; }
+      .interest-fill { background: #b4c1c8; height: 5px; }
+      .cap-rail { border-left: 1px solid #303b42; display: flex; flex-direction: column; gap: 16px; padding-left: 18px; }
+      .rail-card { background: #0e1418; border: 1px solid #263139; padding: 16px; }
+      .rail-label { color: #6d7a82; font-size: 9px; letter-spacing: .5px; }
+      .rail-value { color: #eef2f4; font-size: 23px; line-height: 29px; margin-top: 5px; }
+      .cap-columns { align-items: flex-end; border-bottom: 1px solid #536069; display: flex; gap: 10px; height: 210px; padding: 0 6px; position: relative; }
+      .cap-column { background: #475863; position: relative; width: 25%; }
+      .cap-column:nth-child(2) { background: #60727c; }
+      .cap-column:nth-child(3) { background: #3d4c55; }
+      .cap-column:nth-child(4) { background: #29363d; }
+      .cap-marker { border-top: 1px dashed #b3a261; left: 0; position: absolute; width: 100%; }
+      .cap-marker.hard { border-color: #9c5b58; }
+      .rail-list { display: flex; flex-direction: column; gap: 10px; }
+      .rail-line { align-items: center; border-top: 1px solid #222d33; display: flex; gap: 8px; padding-top: 10px; }
+
+      .terminal-board .terminal-main { display: grid; flex: 1; gap: 18px; grid-template-columns: minmax(0, 1fr) 276px; min-height: 0; }
+      .terminal-board .market-panel { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+      .terminal-board .terminal-row { flex: 0 0 120px; height: auto; }
+
+      .exchange-board { background: #0b1015; font-family: "Avenir Next", Inter, sans-serif; }
+      .exchange-board .dark-meta,
+      .exchange-board .terminal-sub,
+      .exchange-board .terminal-table-head { font-family: "SFMono-Regular", Consolas, monospace; }
+      .exchange-main { display: grid; flex: 1; gap: 18px; grid-template-columns: minmax(0, 1.7fr) minmax(360px, .72fr); min-height: 0; padding-top: 8px; }
+      .exchange-list { border: 1px solid #28343d; display: flex; flex-direction: column; height: 100%; min-height: 0; min-width: 0; overflow: hidden; }
+      .exchange-list .market-heading { padding: 15px 16px 12px; }
+      .exchange-list .terminal-table-head,
+      .exchange-list .terminal-row { padding: 0 8px; }
+      .exchange-grid { grid-template-columns: 1.6fr .45fr .5fr .52fr 1.12fr .76fr .72fr 1fr .76fr; }
+      .exchange-board .terminal-row { flex: 0 0 120px; height: auto; }
+      .inspect-panel { background: #10171c; border: 1px solid #2b3740; display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: hidden; padding: 18px; }
+      .inspect-head { align-items: center; border-bottom: 1px solid #2d3941; display: flex; gap: 13px; padding-bottom: 15px; }
+      .inspect-rating { border: 1px solid #53616a; display: flex; flex-direction: column; height: 68px; justify-content: center; margin-left: auto; text-align: center; width: 68px; }
+      .inspect-stats { display: grid; gap: 8px; grid-template-columns: repeat(3, 1fr); padding: 15px 0; }
+      .inspect-stat { background: #0b1115; border: 1px solid #27333a; padding: 12px; }
+      .rating-rails { display: flex; flex-direction: column; gap: 9px; }
+      .rating-rail { align-items: center; display: grid; gap: 8px; grid-template-columns: 62px 1fr 34px; }
+      .rating-rail .bar-track { background: #273139; height: 7px; }
+      .offer-stack { border-top: 1px solid #2d3941; display: flex; flex-direction: column; gap: 9px; margin-top: 16px; padding-top: 15px; }
+      .offer-card { align-items: center; background: #0b1115; border: 1px solid #27333a; display: grid; gap: 8px; grid-template-columns: 32px 1fr 74px; padding: 10px; }
+      .interest-scale { display: flex; gap: 3px; }
+      .interest-scale span { background: #2b363d; height: 6px; width: 18px; }
+      .interest-scale span.on { background: #aebbc2; }
+      .inspect-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 14px; }
+      .inspect-actions .dark-button { flex: 1; }
+
+      .ledger-board { background: #0d0f10; color: #dedfdd; font-family: "Avenir Next", Inter, sans-serif; }
+      .ledger-board .dark-meta,
+      .ledger-board .terminal-table-head,
+      .ledger-board .terminal-sub { font-family: "SFMono-Regular", Consolas, monospace; }
+      .ledger-topline { align-items: center; border-bottom: 1px solid #343638; display: flex; height: 68px; }
+      .ledger-topline .micro-progress { margin-left: 32px; }
+      .ledger-cap-strip { align-items: center; border-bottom: 1px solid #343638; display: flex; height: 94px; }
+      .ledger-cap-number { border-right: 1px solid #343638; display: flex; flex-direction: column; gap: 4px; width: 150px; }
+      .segmented-cap { display: flex; flex: 1; gap: 8px; height: 42px; margin-left: 24px; position: relative; }
+      .segmented-cap > div { background: #44525a; height: 100%; }
+      .segmented-cap .tax-space { background: #706947; }
+      .segmented-cap .hard-space { background: #554040; }
+      .ledger-market { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+      .ledger-grid { grid-template-columns: 1.7fr .38fr .42fr .48fr .55fr .55fr .55fr .55fr .9fr .72fr .72fr 1fr .72fr; }
+      .ledger-row { height: 70px; }
+      .ledger-board .ledger-row { flex: 0 0 110px; height: auto; }
+      .ledger-row .terminal-cell { padding: 0 7px; }
+      .ledger-footer { align-items: center; border-top: 1px solid #343638; display: flex; gap: 8px; height: 54px; }
+      .ledger-footer .scroll-cue { margin-left: auto; }
+
+      /* Converged market concepts */
+      .converged-board {
+        --c-bg: #090d10;
+        --c-panel: #10161a;
+        --c-panel-2: #151c21;
+        --c-line: #2a353c;
+        --c-ink: #edf2f4;
+        --c-muted: #7d8a92;
+        --c-fill: #aab7be;
+        background: var(--c-bg);
+        color: var(--c-ink);
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        padding: 20px 24px;
+      }
+      .converged-board.light-market {
+        --c-bg: #eef0ec;
+        --c-panel: #ffffff;
+        --c-panel-2: #e4e8e3;
+        --c-line: #bec7c1;
+        --c-ink: #1a2520;
+        --c-muted: #65716b;
+        --c-fill: #375d50;
+        font-family: "Avenir Next", Inter, sans-serif;
+      }
+      .converged-header { align-items: center; border-bottom: 1px solid var(--c-line); display: flex; height: 66px; }
+      .converged-brand { align-items: center; display: flex; gap: 12px; min-width: 310px; }
+      .converged-title { color: var(--c-ink); font-family: "Avenir Next", Inter, sans-serif; font-size: 21px; font-weight: 500; line-height: 25px; }
+      .converged-board:not(.light-market) .converged-title { font-family: "SFMono-Regular", Consolas, monospace; }
+      .day-progress { align-items: center; display: flex; gap: 9px; margin-left: 28px; }
+      .day-progress-copy { display: flex; flex-direction: column; gap: 2px; width: 126px; }
+      .day-progress-line { align-items: center; display: flex; }
+      .day-node { align-items: center; background: var(--c-bg); border: 1px solid var(--c-muted); border-radius: 50%; color: var(--c-muted); display: flex; font-size: 8px; height: 16px; justify-content: center; width: 16px; }
+      .day-node.complete { background: var(--c-muted); color: var(--c-bg); }
+      .day-node.current { background: var(--c-ink); border-color: var(--c-ink); color: var(--c-bg); }
+      .day-connector { background: var(--c-line); height: 1px; width: 34px; }
+      .converged-actions { display: flex; gap: 7px; margin-left: auto; }
+      .c-button { align-items: center; background: transparent; border: 1px solid var(--c-line); color: var(--c-ink); display: flex; font-size: 10px; height: 32px; justify-content: center; padding: 0 11px; }
+      .c-button.solid { background: var(--c-ink); border-color: var(--c-ink); color: var(--c-bg); }
+      .dense-market-panel { border: 1px solid var(--c-line); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+      .dense-market-tools { align-items: center; border-bottom: 1px solid var(--c-line); display: flex; height: 55px; padding: 0 12px; }
+      .dense-market-tools h2 { color: var(--c-ink); font-family: "Avenir Next", Inter, sans-serif; font-size: 17px; font-weight: 500; margin: 0 18px 0 0; }
+      .converged-board:not(.light-market) .dense-market-tools h2 { font-family: "SFMono-Regular", Consolas, monospace; }
+      .market-mode { border-bottom: 1px solid transparent; color: var(--c-muted); font-size: 9px; margin-right: 15px; padding: 7px 1px; }
+      .market-mode.active { border-color: var(--c-ink); color: var(--c-ink); }
+      .table-controls { display: flex; gap: 6px; margin-left: auto; }
+      .dense-grid { display: grid; grid-template-columns: 1.44fr .33fr .4fr .39fr .39fr .39fr .39fr .39fr .4fr 1.08fr .64fr .62fr 1fr .64fr; width: 100%; }
+      .dense-head { align-items: center; color: var(--c-muted); display: grid; flex: 0 0 30px; font-size: 8px; letter-spacing: .3px; }
+      .dense-sort { background: transparent; border: 0; color: inherit; cursor: pointer; font: inherit; padding: 0; text-align: left; }
+      .dense-sort.active { color: var(--c-ink); }
+      .dense-body { display: flex; flex: 1; flex-direction: column; height: 0; min-height: 0; overflow-y: auto; scrollbar-color: var(--c-muted) var(--c-panel-2); scrollbar-width: thin; }
+      .dense-row { align-items: center; border-top: 1px solid var(--c-line); display: grid; flex: 0 0 56px; font-size: 10px; }
+      .dense-row.selected { background: var(--c-panel-2); border-left: 2px solid var(--c-ink); }
+      .dense-cell { min-width: 0; overflow: hidden; padding: 0 6px; text-overflow: ellipsis; white-space: nowrap; }
+      .dense-player { color: var(--c-ink); font-family: "Avenir Next", Inter, sans-serif; font-size: 13px; line-height: 16px; }
+      .dense-sub { color: var(--c-muted); font-size: 8px; line-height: 11px; margin-top: 2px; }
+      .dense-change { color: #c96d62; }
+      .dense-bid { align-items: center; display: flex; gap: 6px; }
+      .dense-interest { align-items: center; display: flex; gap: 5px; }
+      .dense-interest-track { background: var(--c-panel-2); height: 4px; width: 36px; }
+      .dense-interest-fill { background: var(--c-fill); height: 4px; }
+      .combined-rail { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+      .combined-rail.full-height { height: 100%; }
+      .combined-rail.full-height .c-panel:last-child { display: flex; flex: 1; flex-direction: column; }
+      .combined-rail.full-height .c-panel:last-child .team-radar { margin-bottom: auto; margin-top: auto; }
+      .c-panel { background: var(--c-panel); border: 1px solid var(--c-line); padding: 13px; }
+      .c-panel-title { color: var(--c-muted); font-size: 8px; letter-spacing: .5px; margin-bottom: 9px; }
+      .selected-summary { align-items: center; display: flex; }
+      .selected-summary .name { color: var(--c-ink); font-family: "Avenir Next", Inter, sans-serif; font-size: 17px; line-height: 21px; }
+      .selected-ovr { align-items: center; border: 1px solid var(--c-line); display: flex; flex-direction: column; height: 54px; justify-content: center; margin-left: auto; width: 58px; }
+      .selected-metrics { display: grid; gap: 6px; grid-template-columns: repeat(3, 1fr); margin-top: 10px; }
+      .selected-metric { background: var(--c-panel-2); padding: 8px; }
+      .selected-metric strong { display: block; font-size: 15px; font-weight: 500; margin-top: 2px; }
+      .selected-rating-bars { display: flex; flex-direction: column; gap: 8px; }
+      .selected-rating-bar { align-items: center; display: grid; gap: 8px; grid-template-columns: 58px 1fr 26px; }
+      .selected-rating-bar .bar-track { background: var(--c-panel-2); height: 6px; }
+      .selected-rating-bar .bar-fill { background: var(--c-fill); }
+      .mini-offer { align-items: center; border-top: 1px solid var(--c-line); display: grid; gap: 7px; grid-template-columns: 28px 1fr 70px; padding: 8px 0; }
+      .mini-offer:first-of-type { border-top: 0; }
+      .mini-interest { display: flex; gap: 2px; }
+      .mini-interest span { background: var(--c-line); height: 5px; width: 12px; }
+      .mini-interest span.on { background: var(--c-fill); }
+      .mini-cap-chart { align-items: flex-end; border-bottom: 1px solid var(--c-muted); display: flex; gap: 8px; height: 112px; padding: 0 5px; position: relative; }
+      .mini-cap-bar { background: #53636c; width: 25%; }
+      .light-market .mini-cap-bar { background: #637a70; }
+      .mini-cap-line { border-top: 1px dashed #b39a4b; left: 0; position: absolute; width: 100%; }
+      .mini-cap-line.hard { border-color: #a45d58; }
+      .mini-cap-years { display: flex; justify-content: space-around; padding-top: 5px; }
+      .team-radar { height: 142px; margin: 0 auto; position: relative; width: 182px; }
+      .radar-back { background: var(--c-panel-2); clip-path: polygon(50% 0, 97% 35%, 79% 96%, 21% 96%, 3% 35%); inset: 12px 20px; position: absolute; }
+      .radar-ring { border: 1px solid var(--c-line); clip-path: polygon(50% 0, 97% 35%, 79% 96%, 21% 96%, 3% 35%); position: absolute; }
+      .radar-ring.one { inset: 12px 20px; }
+      .radar-ring.two { inset: 30px 42px; }
+      .radar-ring.three { inset: 47px 62px; }
+      .radar-fill { background: rgba(156, 174, 183, .32); clip-path: polygon(50% 7%, 89% 38%, 73% 87%, 28% 78%, 15% 41%); inset: 12px 20px; position: absolute; }
+      .light-market .radar-fill { background: rgba(55, 93, 80, .28); }
+      .radar-label { color: var(--c-muted); font-size: 8px; position: absolute; }
+      .radar-label.top { left: 76px; top: 0; }
+      .radar-label.right { right: 0; top: 47px; }
+      .radar-label.bottom-right { bottom: 0; right: 16px; }
+      .radar-label.bottom-left { bottom: 0; left: 10px; }
+      .radar-label.left { left: 0; top: 47px; }
+      .full-height .team-radar { height: 160px; width: 250px; }
+      .full-height .radar-ring.one,
+      .full-height .radar-back,
+      .full-height .radar-fill { inset: 18px 54px; }
+      .full-height .radar-ring.two { inset: 37px 75px; }
+      .full-height .radar-ring.three { inset: 54px 95px; }
+      .full-height .radar-label.top { left: 91px; }
+      .full-height .radar-label.bottom-right { right: 0; }
+      .full-height .radar-label.bottom-left { left: 0; }
+      .hybrid-main { display: grid; flex: 1; gap: 12px; grid-template-columns: minmax(0, 1fr) 316px; min-height: 0; padding-top: 12px; }
+      .split-main { display: grid; flex: 1; gap: 12px; grid-template-columns: 210px minmax(0, 1fr) 300px; min-height: 0; padding-top: 12px; }
+      .fit-rail { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+      .fit-need { align-items: center; border-top: 1px solid var(--c-line); display: flex; padding: 8px 0; }
+      .fit-need span:first-child { flex: 1; }
+      .fit-rank { color: var(--c-ink); font-size: 12px; }
+      .stack-main { display: flex; flex: 1; flex-direction: column; min-height: 0; padding-top: 12px; }
+      .stack-main .dense-market-panel { flex: 1; }
+      .bottom-intelligence { display: grid; flex: 0 0 205px; gap: 10px; grid-template-columns: 1.1fr 1fr .9fr; padding-top: 10px; }
+      .bottom-intelligence .c-panel { min-height: 0; }
+      .light-market .c-button { background: #f7f8f6; }
+      .light-market .c-button.solid { background: #263c33; color: #fff; }
+      .light-market .dense-row.selected { background: #e1e7e2; }
+      .light-market .dense-change { color: #a74d43; }
+      .paper-index { background: #f2efe9; }
+      .paper-index .c-panel,
+      .paper-index .dense-market-panel { background: #fbfaf7; }
+      .paper-index .dense-row.selected { background: #e6ebe5; }
+      .c-copy { color: var(--c-muted); font-size: 8px; line-height: 12px; }
+      .c-value { color: var(--c-ink); font-size: 12px; line-height: 16px; }
+      .c-statline { color: var(--c-muted); font-size: 9px; margin-top: 4px; }
+      .c-panel-actions { display: flex; gap: 6px; margin-top: 10px; }
+      .c-panel-actions .c-button { flex: 1; }
+      .cap-summary { display: grid; gap: 6px; grid-template-columns: repeat(3, 1fr); margin-bottom: 8px; }
+      .cap-summary div { background: var(--c-panel-2); padding: 7px; }
+      .cap-summary strong { display: block; font-size: 11px; font-weight: 500; margin-top: 3px; }
+      .intelligence-strip { align-items: center; border-top: 1px solid var(--c-line); display: flex; gap: 10px; padding-top: 9px; }
+      .intelligence-strip .c-copy { flex: 1; }
+      .fit-score { align-items: center; border: 1px solid var(--c-line); display: flex; flex-direction: column; height: 52px; justify-content: center; width: 60px; }
+      .fit-score strong { font-size: 17px; font-weight: 500; }
+      .bottom-player { align-items: center; display: grid; gap: 12px; grid-template-columns: 1.15fr 1fr .8fr; }
+      .bottom-offers { display: flex; gap: 8px; margin-top: 8px; }
+      .bottom-offers .mini-offer { border: 1px solid var(--c-line); flex: 1; padding: 7px; }
+      .wide-cap { align-items: flex-end; display: flex; gap: 8px; height: 92px; position: relative; }
+      .wide-cap .mini-cap-bar { width: 42px; }
+      .wide-cap-labels { color: var(--c-muted); display: flex; font-size: 8px; gap: 8px; justify-content: space-around; margin-top: 5px; }
+      .light-market .dense-player { font-weight: 500; }
+      .light-market .day-node { background: var(--c-panel); }
+      .light-market .day-node.complete { background: var(--c-muted); color: #fff; }
+      .light-market .day-node.current { background: var(--c-ink); color: #fff; }
+      .soft-divider { border-top: 1px solid var(--c-line); margin: 9px 0; }
+
+    </style>
+  </head>
+  <body>
+    <div class="gallery-intro">
+      <div>
+        <h1>NBA GM · Paper Concept Gallery</h1>
+        <p>Activate Paper Snapshot, select one complete artboard, press Enter, then paste into Paper.</p>
+      </div>
+      <div class="gallery-links">
+        <a href="#timeline">Offseason Timeline</a>
+        <a href="#fit-lab">Fit Lab</a>
+        <a href="#quiet-control">Quiet Control</a>
+        <a href="#market-terminal">Market Terminal</a>
+        <a href="#dark-exchange">Dark Exchange</a>
+        <a href="#market-ledger">Market Ledger</a>
+        <a href="#unified-terminal">Unified Terminal</a>
+        <a href="#fit-intelligence">Fit Intelligence</a>
+        <a href="#market-stack">Market Stack</a>
+        <a href="#front-office-index">Front Office Index</a>
+        <a href="#paper-market">Paper Market</a>
+      </div>
+    </div>
+
+    <section class="concept-wrap" id="timeline">
+      <div class="concept-toolbar">
+        <span>CONCEPT 11 · OFFSEASON TIMELINE</span>
+        <button class="capture-button" data-copy="timeline-artboard">Copy editable HTML</button>
+      </div>
+      <article class="paper-artboard timeline-board" id="timeline-artboard" layer-name="Concept 11 - Offseason Timeline">
+        <header class="timeline-head">
+          <div class="brand-lockup">
+            <img class="logo" src="/assets/team_logos/WAS.png" alt="Washington Wizards" />
+            <div><div class="title">Offseason Timeline</div><div class="meta">WASHINGTON · FREE AGENCY 2027</div></div>
+          </div>
+          <div class="header-actions"><button class="button">Roster</button><button class="button">Staff</button><button class="button">Draft assets</button></div>
+        </header>
+        <div class="stage-bar timeline-stage"><div class="stage">DAY 1</div><div class="stage">DAY 2</div><div class="stage active">DAY 3 · LIVE</div><div class="stage">DAY 4</div><div class="stage">DAY 5</div></div>
+        <main class="timeline-main">
+          <div class="timeline-stream">
+            <div class="timeline-spine"></div>
+            <div class="timeline-event"><div class="timeline-dot">1</div><div class="timeline-card"><div class="timeline-card-head"><span class="title">Day 1</span><span class="meta">CLOSED</span></div><span class="meta">No saved event selected for this view.</span></div></div>
+            <div class="timeline-event"><div class="timeline-dot">2</div><div class="timeline-card"><div class="timeline-card-head"><span class="title">Day 2</span><span class="meta">CLOSED</span></div><span class="meta">No saved event selected for this view.</span></div></div>
+            <div class="timeline-event live"><div class="timeline-dot">3</div><div class="timeline-card"><div class="timeline-card-head"><span class="title">Day 3</span><span class="meta">LIVE</span></div><div class="timeline-facts">
+              <div class="timeline-fact"><img class="logo-small" src="/assets/team_logos/NYK.png" alt="New York Knicks" /><span class="body">Brandon Miller · ask $30.1M · NYK leads at $32.2M × 4</span></div>
+              <div class="timeline-fact"><span class="logo-small"></span><span class="body">Cason Wallace · ask fell $2.6M to $23.4M · no bids</span></div>
+              <div class="timeline-fact"><span class="logo-small"></span><span class="body">Ausar Thompson · ask fell $3.1M to $27.7M · no bids</span></div>
+            </div><div class="header-actions"><button class="button">Open market</button><button class="button" style="background:#2f6755;color:#fff;border-color:#2f6755;">Sim day</button></div></div></div>
+            <div class="timeline-event"><div class="timeline-dot">4</div><div class="timeline-card"><div class="timeline-card-head"><span class="title">Day 4</span><span class="meta">OPEN</span></div><span class="meta">Simulation has not reached this day.</span></div></div>
+            <div class="timeline-event"><div class="timeline-dot">5</div><div class="timeline-card"><div class="timeline-card-head"><span class="title">Day 5</span><span class="meta">FINAL</span></div><span class="meta">Simulation has not reached this day.</span></div></div>
+          </div>
+          <aside class="timeline-side">
+            <div class="dark-card"><span class="title">$181.6M</span><span class="meta">PAYROLL</span><div class="bar-track" style="background:#4a4943;"><div class="bar-fill" style="width:54%;background:#d6aa3c;"></div></div><div class="timeline-card-head"><span class="meta">Tax room</span><span class="body">+$25.8M</span></div><div class="timeline-card-head"><span class="meta">Hard cap</span><span class="body">+$47.8M</span></div><button class="button">Cap projection</button></div>
+            <div class="side-card"><span class="section-title">Active bids</span><div class="bid-row"><img class="logo-small" src="/assets/team_logos/NYK.png" alt="NYK" /><span class="body" style="flex:1;">Brandon Miller</span><span class="meta">$32.2M</span></div><div class="bid-row"><img class="logo-small" src="/assets/team_logos/NOP.png" alt="NOP" /><span class="body" style="flex:1;">Cameron Johnson</span><span class="meta">$24.1M</span></div><div class="bid-row"><img class="logo-small" src="/assets/team_logos/MIN.png" alt="MIN" /><span class="body" style="flex:1;">DeMar DeRozan</span><span class="meta">$19.1M</span></div></div>
+            <div class="side-card"><span class="section-title">Team access</span><div class="access-grid"><button class="button">Player cards</button><button class="button">Contracts</button><button class="button">Minutes</button><button class="button">Starting 5</button><button class="button">Staff market</button><button class="button">Trade room</button></div></div>
+            <button class="button" style="background:#2f6755;color:#fff;border-color:#2f6755;">Sim to end of free agency</button>
+          </aside>
+        </main>
+      </article>
+    </section>
+
+    <section class="concept-wrap" id="fit-lab">
+      <div class="concept-toolbar"><span>CONCEPT 12 · FIT LAB</span><button class="capture-button" data-copy="fit-artboard">Copy editable HTML</button></div>
+      <article class="paper-artboard fit-board" id="fit-artboard" layer-name="Concept 12 - Fit Lab">
+        <header class="fit-head"><div class="brand-lockup"><img class="logo" src="/assets/team_logos/WAS.png" alt="Washington Wizards" /><div><div class="title">Fit Lab</div><div class="meta">FREE AGENCY · JULY 1, 2027</div></div></div><div class="header-actions"><button class="button">Full market</button><button class="button">Roster & contracts</button><button class="button">Staff</button></div></header>
+        <div class="stage-bar fit-stage"><div class="stage">DAY 1</div><div class="stage">DAY 2</div><div class="stage active">DAY 3 · LIVE</div><div class="stage">DAY 4</div><div class="stage">DAY 5</div></div>
+        <main class="fit-main">
+          <div class="fit-candidates">
+            <div class="compare-head"><div><div class="title">Compare candidates</div><div class="meta">VERIFIED PRODUCTION, AGE, OVR, ASK, AND BID STATUS</div></div><button class="button">Change comparison</button></div>
+            <div class="candidate selected"><div class="candidate-name"><span class="section-title">Brandon Miller</span><span class="meta">SF · age 24</span></div><div class="candidate-metric"><span class="meta">OVR</span><span class="title">87.8</span></div><div class="candidate-metric"><span class="meta">ASK</span><span class="body">$30.1M</span></div><div class="candidate-production"><div class="production-line meta"><span>PTS</span><div class="bar-track"><div class="bar-fill" style="width:89%;background:#315f78;"></div></div><b>16.3</b></div><div class="production-line meta"><span>REB</span><div class="bar-track"><div class="bar-fill" style="width:74%;background:#315f78;"></div></div><b>7.0</b></div><div class="production-line meta"><span>AST</span><div class="bar-track"><div class="bar-fill" style="width:56%;background:#315f78;"></div></div><b>3.4</b></div></div><div class="candidate-market"><img class="logo-small" src="/assets/team_logos/NYK.png" alt="NYK" /><span class="meta">$32.2M × 4</span></div><div class="candidate-action"><button class="button">Player card</button><button class="button" style="background:#204f43;color:#fff;border-color:#204f43;">Offer</button></div></div>
+            <div class="candidate"><div class="candidate-name"><span class="section-title">Cason Wallace</span><span class="meta">PG · age 23</span></div><div class="candidate-metric"><span class="meta">OVR</span><span class="title">86.5</span></div><div class="candidate-metric"><span class="meta">ASK</span><span class="body">$23.4M</span></div><div class="candidate-production"><div class="production-line meta"><span>PTS</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:#315f78;"></div></div><b>18.4</b></div><div class="production-line meta"><span>REB</span><div class="bar-track"><div class="bar-fill" style="width:44%;background:#315f78;"></div></div><b>4.1</b></div><div class="production-line meta"><span>AST</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:#315f78;"></div></div><b>6.1</b></div></div><div class="candidate-market"><span class="meta">NO BIDS</span><span class="meta" style="color:#a84e3e;">↓ $2.6M</span></div><div class="candidate-action"><button class="button">Player card</button><button class="button" style="background:#204f43;color:#fff;border-color:#204f43;">Offer</button></div></div>
+            <div class="candidate"><div class="candidate-name"><span class="section-title">Ausar Thompson</span><span class="meta">SF · age 24</span></div><div class="candidate-metric"><span class="meta">OVR</span><span class="title">85.8</span></div><div class="candidate-metric"><span class="meta">ASK</span><span class="body">$27.7M</span></div><div class="candidate-production"><div class="production-line meta"><span>PTS</span><div class="bar-track"><div class="bar-fill" style="width:93%;background:#315f78;"></div></div><b>17.2</b></div><div class="production-line meta"><span>REB</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:#315f78;"></div></div><b>9.4</b></div><div class="production-line meta"><span>AST</span><div class="bar-track"><div class="bar-fill" style="width:85%;background:#315f78;"></div></div><b>5.2</b></div></div><div class="candidate-market"><span class="meta">NO BIDS</span><span class="meta" style="color:#a84e3e;">↓ $3.1M</span></div><div class="candidate-action"><button class="button">Player card</button><button class="button" style="background:#204f43;color:#fff;border-color:#204f43;">Offer</button></div></div>
+            <div class="candidate"><div class="candidate-name"><span class="section-title">Zach LaVine</span><span class="meta">SG · age 32</span></div><div class="candidate-metric"><span class="meta">OVR</span><span class="title">84.3</span></div><div class="candidate-metric"><span class="meta">ASK</span><span class="body">$17.9M</span></div><div class="candidate-production"><div class="production-line meta"><span>PTS</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:#315f78;"></div></div><b>18.9</b></div><div class="production-line meta"><span>REB</span><div class="bar-track"><div class="bar-fill" style="width:55%;background:#315f78;"></div></div><b>5.2</b></div><div class="production-line meta"><span>AST</span><div class="bar-track"><div class="bar-fill" style="width:57%;background:#315f78;"></div></div><b>3.5</b></div></div><div class="candidate-market"><span class="meta">NO BIDS</span><span class="meta" style="color:#a84e3e;">↓ $2.0M</span></div><div class="candidate-action"><button class="button">Player card</button><button class="button" style="background:#204f43;color:#fff;border-color:#204f43;">Offer</button></div></div>
+            <div class="fit-footer"><button class="button">Compare up to 3</button><button class="button">All 80 free agents</button><button class="button">Minutes & Starting 5</button></div>
+          </div>
+          <aside class="fit-side">
+            <div class="profile-card"><span class="section-title">Washington profile</span><div class="profile-row meta"><span>Overall</span><div class="bar-track"><div class="bar-fill" style="width:59.9%;background:#d6aa3c;"></div></div><span>59.9 · #4</span></div><div class="profile-row meta"><span>Offense</span><div class="bar-track"><div class="bar-fill" style="width:60.4%;background:#d6aa3c;"></div></div><span>60.4 · #5</span></div><div class="profile-row meta"><span>Defense</span><div class="bar-track"><div class="bar-fill" style="width:68.2%;background:#d6aa3c;"></div></div><span>68.2 · #4</span></div><div class="profile-row meta"><span>Depth</span><div class="bar-track"><div class="bar-fill" style="width:50.3%;background:#d6aa3c;"></div></div><span>50.3 · #27</span></div></div>
+            <div class="cap-impact"><div class="timeline-card-head"><span class="section-title">Tax room after ask</span><span class="meta">CURRENT +$25.8M</span></div><div class="impact-bars"><div class="impact-column"><div class="impact-bar" style="height:100%;background:#204f43;"></div><span class="meta">Now</span><span class="meta">+25.8</span></div><div class="impact-column"><div class="impact-bar" style="height:12%;background:#a84e3e;"></div><span class="meta">Miller</span><span class="meta">−4.3</span></div><div class="impact-column"><div class="impact-bar" style="height:9%;background:#d6aa3c;"></div><span class="meta">Ausar</span><span class="meta">−1.9</span></div><div class="impact-column"><div class="impact-bar" style="height:31%;background:#315f78;"></div><span class="meta">LaVine</span><span class="meta">+7.9</span></div></div><button class="button">Open four-year cap projection</button></div>
+            <div class="fit-footer"><button class="button" style="flex:1;">Sim day</button><button class="button" style="background:#204f43;color:#fff;border-color:#204f43;flex:1;">Sim to end</button></div>
+          </aside>
+        </main>
+      </article>
+    </section>
+
+    <section class="concept-wrap" id="quiet-control">
+      <div class="concept-toolbar"><span>CONCEPT 14 · QUIET CONTROL</span><button class="capture-button" data-copy="quiet-artboard">Copy editable HTML</button></div>
+      <article class="paper-artboard quiet-board" id="quiet-artboard" layer-name="Concept 14 - Quiet Control">
+        <header class="quiet-head"><div class="quiet-title"><img class="logo" src="/assets/team_logos/WAS.png" alt="Washington Wizards" /><div><div class="title">Free Agency</div><div class="meta">WASHINGTON · JULY 1, 2027</div></div></div><div class="quiet-actions"><button class="button">Roster</button><button class="button">Staff</button><button class="button">Contracts</button><button class="button">Draft assets</button><button class="button">Settings</button></div></header>
+        <div class="stage-bar quiet-stage"><div class="stage">DAY 1</div><div class="stage">DAY 2</div><div class="stage active">DAY 3</div><div class="stage">DAY 4</div><div class="stage">DAY 5</div></div>
+        <section class="quiet-cap"><div class="quiet-cap-block"><span class="meta">PAYROLL</span><span class="title">$181.6M</span></div><div class="quiet-cap-block"><span class="meta">TAX ROOM</span><span class="title">+$25.8M</span></div><div class="quiet-cap-block"><span class="meta">HARD CAP</span><span class="title">+$47.8M</span></div><div class="quiet-cap-chart"><div style="background:#315f78;width:54%;"></div><div style="background:#d6aa3c;width:19%;"></div><div style="background:#286654;width:27%;"></div></div></section>
+        <main class="quiet-market"><div class="quiet-market-head"><div><div class="title">Available players</div><div class="meta">80 PLAYERS · SORTED BY OVR</div></div><div class="quiet-actions"><button class="button">Compare 0/3</button><button class="button">Filters</button></div></div>
+          <div class="quiet-columns meta"><div class="q-player">PLAYER</div><div class="q-pos">POS</div><div class="q-age">AGE</div><div class="q-ovr">OVR</div><div class="q-production">PREVIOUS SEASON</div><div class="q-ask">ASK</div><div class="q-change">CHANGE</div><div class="q-bid">LEADING BID</div><div class="q-action"></div></div>
+          <div class="quiet-row"><div class="q-player section-title">Brandon Miller</div><div class="q-pos meta">SF</div><div class="q-age meta">24</div><div class="q-ovr body">87.8</div><div class="q-production meta">16.3 PTS · 7.0 REB · 3.4 AST</div><div class="q-ask body">$30.1M</div><div class="q-change meta" style="color:#a84e3e;">↓ $0.4M</div><div class="q-bid"><img class="logo-small" src="/assets/team_logos/NYK.png" alt="NYK" /><span class="meta">$32.2M</span></div><div class="q-action"><button class="button">+</button></div></div>
+          <div class="quiet-row"><div class="q-player section-title">Cason Wallace</div><div class="q-pos meta">PG</div><div class="q-age meta">23</div><div class="q-ovr body">86.5</div><div class="q-production meta">18.4 PTS · 4.1 REB · 6.1 AST</div><div class="q-ask body">$23.4M</div><div class="q-change meta" style="color:#a84e3e;">↓ $2.6M</div><div class="q-bid meta">No bids</div><div class="q-action"><button class="button">+</button></div></div>
+          <div class="quiet-row"><div class="q-player section-title">Jimmy Butler III</div><div class="q-pos meta">SF</div><div class="q-age meta">37</div><div class="q-ovr body">85.9</div><div class="q-production meta">16.3 PTS · 6.1 REB · 6.0 AST</div><div class="q-ask body">$27.3M</div><div class="q-change meta" style="color:#a84e3e;">↓ $0.8M</div><div class="q-bid meta">No bids</div><div class="q-action"><button class="button">+</button></div></div>
+          <div class="quiet-row"><div class="q-player section-title">Ausar Thompson</div><div class="q-pos meta">SF</div><div class="q-age meta">24</div><div class="q-ovr body">85.8</div><div class="q-production meta">17.2 PTS · 9.4 REB · 5.2 AST</div><div class="q-ask body">$27.7M</div><div class="q-change meta" style="color:#a84e3e;">↓ $3.1M</div><div class="q-bid meta">No bids</div><div class="q-action"><button class="button">+</button></div></div>
+          <div class="quiet-row"><div class="q-player section-title">Cameron Johnson</div><div class="q-pos meta">PF</div><div class="q-age meta">31</div><div class="q-ovr body">84.3</div><div class="q-production meta">14.5 PTS · 4.3 REB · 2.9 AST</div><div class="q-ask body">$25.0M</div><div class="q-change meta" style="color:#a84e3e;">↓ $0.5M</div><div class="q-bid"><img class="logo-small" src="/assets/team_logos/NOP.png" alt="NOP" /><span class="meta">$24.1M</span></div><div class="q-action"><button class="button">+</button></div></div>
+          <div class="quiet-row"><div class="q-player section-title">Zach LaVine</div><div class="q-pos meta">SG</div><div class="q-age meta">32</div><div class="q-ovr body">84.3</div><div class="q-production meta">18.9 PTS · 5.2 REB · 3.5 AST</div><div class="q-ask body">$17.9M</div><div class="q-change meta" style="color:#a84e3e;">↓ $2.0M</div><div class="q-bid meta">No bids</div><div class="q-action"><button class="button">+</button></div></div>
+          <div class="quiet-row"><div class="q-player section-title">DeMar DeRozan</div><div class="q-pos meta">SF</div><div class="q-age meta">37</div><div class="q-ovr body">83.4</div><div class="q-production meta">0.0 PTS · 0.0 REB · 0.0 AST</div><div class="q-ask body">$19.2M</div><div class="q-change meta" style="color:#a84e3e;">↓ $0.6M</div><div class="q-bid"><img class="logo-small" src="/assets/team_logos/MIN.png" alt="MIN" /><span class="meta">$19.1M</span></div><div class="q-action"><button class="button">+</button></div></div>
+        </main>
+        <footer class="quiet-footer"><button class="button">Player cards</button><button class="button">Minutes & Starting 5</button><button class="button">Staff market</button><span class="spacer"></span><button class="button">Sim day</button><button class="button" style="background:#222824;color:#fff;border-color:#222824;">Sim to end</button></footer>
+      </article>
+    </section>
+
+    <section class="concept-wrap" id="market-terminal">
+      <div class="concept-toolbar"><span>CONCEPT 15 · MARKET TERMINAL</span><button class="capture-button" data-copy="terminal-artboard">Copy editable HTML</button></div>
+      <article class="paper-artboard terminal-board" id="terminal-artboard" layer-name="Concept 15 - Market Terminal">
+        <header class="dark-header">
+          <div class="dark-brand"><img class="logo" src="/assets/team_logos/WAS.png" alt="Washington Wizards" /><div><div class="dark-title">FREE AGENCY // MARKET TERMINAL</div><div class="dark-meta">WASHINGTON · JUL 01 2027 · DAY 03</div></div></div>
+          <div class="micro-progress"><span class="progress-dot done">1</span><span class="progress-segment"></span><span class="progress-dot done">2</span><span class="progress-segment"></span><span class="progress-dot live">3</span><span class="progress-segment"></span><span class="progress-dot">4</span><span class="progress-segment"></span><span class="progress-dot">5</span></div>
+          <div class="dark-actions"><button class="dark-button">ROSTER</button><button class="dark-button">STAFF</button><button class="dark-button">ASSETS</button></div>
+        </header>
+        <div class="terminal-main">
+          <main class="market-panel">
+            <div class="market-heading"><div><h2>AVAILABLE PLAYERS</h2><span class="dark-meta">SORT: OVR ↓ · ALL POSITIONS · ALL AGES</span></div><div class="market-tabs"><span class="market-tab active">MARKET</span><span class="market-tab">SHORTLIST</span><span class="market-tab">MY OFFERS</span></div></div>
+            <div class="terminal-table-head terminal-grid"><div class="terminal-cell">PLAYER</div><div class="terminal-cell">POS</div><div class="terminal-cell">AGE</div><div class="terminal-cell">OVR</div><div class="terminal-cell">ASK</div><div class="terminal-cell">PREVIOUS SEASON</div><div class="terminal-cell">MOVE</div><div class="terminal-cell">BIDS</div><div class="terminal-cell">LEADING BID</div><div class="terminal-cell">INTEREST</div></div>
+            <div class="terminal-body">
+              <div class="terminal-row terminal-grid selected"><div class="terminal-cell"><div class="terminal-name">Brandon Miller</div><div class="terminal-sub">SF · 6'7" · unrestricted</div></div><div class="terminal-cell terminal-number">SF</div><div class="terminal-cell terminal-number">24</div><div class="terminal-cell terminal-number">87.8</div><div class="terminal-cell terminal-number">$30.1M</div><div class="terminal-cell terminal-sub">16.3 PTS · 7.0 REB · 3.4 AST</div><div class="terminal-cell terminal-change">↓ $0.4M</div><div class="terminal-cell terminal-number">3</div><div class="terminal-cell"><div class="bid-lockup"><img class="logo-small" src="/assets/team_logos/NYK.png" alt="NYK" /><div><div class="terminal-number">$32.2M × 4</div><div class="terminal-sub">NEW YORK</div></div></div></div><div class="terminal-cell"><div class="interest"><div class="interest-line"><div class="interest-fill" style="width:78%;"></div></div><span class="terminal-sub">HIGH</span></div></div></div>
+              <div class="terminal-row terminal-grid"><div class="terminal-cell"><div class="terminal-name">Cason Wallace</div><div class="terminal-sub">PG · 6'4" · unrestricted</div></div><div class="terminal-cell terminal-number">PG</div><div class="terminal-cell terminal-number">23</div><div class="terminal-cell terminal-number">86.5</div><div class="terminal-cell terminal-number">$23.4M</div><div class="terminal-cell terminal-sub">18.4 PTS · 4.1 REB · 6.1 AST</div><div class="terminal-cell terminal-change">↓ $2.6M</div><div class="terminal-cell terminal-number">0</div><div class="terminal-cell terminal-sub">NO BIDS</div><div class="terminal-cell terminal-sub">—</div></div>
+              <div class="terminal-row terminal-grid"><div class="terminal-cell"><div class="terminal-name">Jimmy Butler III</div><div class="terminal-sub">SF · 6'7" · unrestricted</div></div><div class="terminal-cell terminal-number">SF</div><div class="terminal-cell terminal-number">37</div><div class="terminal-cell terminal-number">85.9</div><div class="terminal-cell terminal-number">$27.3M</div><div class="terminal-cell terminal-sub">16.3 PTS · 6.1 REB · 6.0 AST</div><div class="terminal-cell terminal-change">↓ $0.8M</div><div class="terminal-cell terminal-number">0</div><div class="terminal-cell terminal-sub">NO BIDS</div><div class="terminal-cell terminal-sub">—</div></div>
+              <div class="terminal-row terminal-grid"><div class="terminal-cell"><div class="terminal-name">Ausar Thompson</div><div class="terminal-sub">SF · 6'6" · unrestricted</div></div><div class="terminal-cell terminal-number">SF</div><div class="terminal-cell terminal-number">24</div><div class="terminal-cell terminal-number">85.8</div><div class="terminal-cell terminal-number">$27.7M</div><div class="terminal-cell terminal-sub">17.2 PTS · 9.4 REB · 5.2 AST</div><div class="terminal-cell terminal-change">↓ $3.1M</div><div class="terminal-cell terminal-number">0</div><div class="terminal-cell terminal-sub">NO BIDS</div><div class="terminal-cell terminal-sub">—</div></div>
+              <div class="terminal-row terminal-grid"><div class="terminal-cell"><div class="terminal-name">Cameron Johnson</div><div class="terminal-sub">PF · 6'8" · unrestricted</div></div><div class="terminal-cell terminal-number">PF</div><div class="terminal-cell terminal-number">31</div><div class="terminal-cell terminal-number">84.3</div><div class="terminal-cell terminal-number">$25.0M</div><div class="terminal-cell terminal-sub">14.5 PTS · 4.3 REB · 2.9 AST</div><div class="terminal-cell terminal-change">↓ $0.5M</div><div class="terminal-cell terminal-number">2</div><div class="terminal-cell"><div class="bid-lockup"><img class="logo-small" src="/assets/team_logos/NOP.png" alt="NOP" /><div><div class="terminal-number">$24.1M × 3</div><div class="terminal-sub">NEW ORLEANS</div></div></div></div><div class="terminal-cell"><div class="interest"><div class="interest-line"><div class="interest-fill" style="width:61%;"></div></div><span class="terminal-sub">WARM</span></div></div></div>
+              <div class="terminal-row terminal-grid"><div class="terminal-cell"><div class="terminal-name">Zach LaVine</div><div class="terminal-sub">SG · 6'5" · unrestricted</div></div><div class="terminal-cell terminal-number">SG</div><div class="terminal-cell terminal-number">32</div><div class="terminal-cell terminal-number">84.3</div><div class="terminal-cell terminal-number">$17.9M</div><div class="terminal-cell terminal-sub">18.9 PTS · 5.2 REB · 3.5 AST</div><div class="terminal-cell terminal-change">↓ $2.0M</div><div class="terminal-cell terminal-number">0</div><div class="terminal-cell terminal-sub">NO BIDS</div><div class="terminal-cell terminal-sub">—</div></div>
+              <div class="terminal-row terminal-grid"><div class="terminal-cell"><div class="terminal-name">DeMar DeRozan</div><div class="terminal-sub">SF · 6'6" · unrestricted</div></div><div class="terminal-cell terminal-number">SF</div><div class="terminal-cell terminal-number">37</div><div class="terminal-cell terminal-number">83.4</div><div class="terminal-cell terminal-number">$19.2M</div><div class="terminal-cell terminal-sub">0.0 PTS · 0.0 REB · 0.0 AST</div><div class="terminal-cell terminal-change">↓ $0.6M</div><div class="terminal-cell terminal-number">1</div><div class="terminal-cell"><div class="bid-lockup"><img class="logo-small" src="/assets/team_logos/MIN.png" alt="MIN" /><div><div class="terminal-number">$19.1M × 2</div><div class="terminal-sub">MINNESOTA</div></div></div></div><div class="terminal-cell"><div class="interest"><div class="interest-line"><div class="interest-fill" style="width:53%;"></div></div><span class="terminal-sub">OPEN</span></div></div></div>
+            </div>
+            <footer class="ledger-footer"><button class="dark-button">FILTERS</button><button class="dark-button">COMPARE</button><button class="dark-button">PLAYER CARD</button><div class="scroll-cue"><span>SCROLL MARKET</span><div class="scroll-track"><div class="scroll-thumb"></div></div></div></footer>
+          </main>
+          <aside class="cap-rail">
+            <div class="rail-card"><div class="rail-label">CURRENT PAYROLL</div><div class="rail-value">$181.6M</div><div class="rail-line"><span class="dark-meta" style="flex:1;">TAX ROOM</span><span class="terminal-number">+$25.8M</span></div><div class="rail-line"><span class="dark-meta" style="flex:1;">HARD CAP</span><span class="terminal-number">+$47.8M</span></div></div>
+            <div class="rail-card" style="flex:1;"><div class="rail-label">FOUR-YEAR PAYROLL</div><div class="cap-columns"><div class="cap-marker" style="top:32%;"></div><div class="cap-marker hard" style="top:16%;"></div><div class="cap-column" style="height:84%;"></div><div class="cap-column" style="height:72%;"></div><div class="cap-column" style="height:49%;"></div><div class="cap-column" style="height:34%;"></div></div><div style="display:flex;justify-content:space-around;padding-top:8px;"><span class="dark-meta">27-28</span><span class="dark-meta">28-29</span><span class="dark-meta">29-30</span><span class="dark-meta">30-31</span></div><div class="rail-line"><span class="dark-meta" style="color:#b3a261;">--- TAX</span><span class="dark-meta" style="color:#9c5b58;margin-left:auto;">--- HARD CAP</span></div></div>
+            <div class="rail-card"><div class="rail-label">USER OFFERS</div><div class="rail-list"><div class="rail-line"><span class="terminal-name" style="flex:1;">None submitted</span></div></div></div>
+            <button class="dark-button primary">SIM DAY 03</button>
+          </aside>
+        </div>
+      </article>
+    </section>
+
+    <section class="concept-wrap" id="dark-exchange">
+      <div class="concept-toolbar"><span>CONCEPT 16 · DARK EXCHANGE</span><button class="capture-button" data-copy="exchange-artboard">Copy editable HTML</button></div>
+      <article class="paper-artboard exchange-board" id="exchange-artboard" layer-name="Concept 16 - Dark Exchange">
+        <header class="dark-header"><div class="dark-brand"><img class="logo" src="/assets/team_logos/WAS.png" alt="Washington Wizards" /><div><div class="dark-title">Free Agency Exchange</div><div class="dark-meta">WASHINGTON · DAY 3 · JULY 1, 2027</div></div></div><div class="micro-progress"><span class="progress-dot done">1</span><span class="progress-segment"></span><span class="progress-dot done">2</span><span class="progress-segment"></span><span class="progress-dot live">3</span><span class="progress-segment"></span><span class="progress-dot">4</span><span class="progress-segment"></span><span class="progress-dot">5</span></div><div class="dark-actions"><button class="dark-button">TEAM</button><button class="dark-button">STAFF</button><button class="dark-button">CAP</button></div></header>
+        <main class="exchange-main">
+          <section class="exchange-list">
+            <div class="market-heading"><div><h2>Free-agent market</h2><span class="dark-meta">Click a row to inspect and negotiate</span></div><div class="market-tabs"><span class="market-tab active">ALL</span><span class="market-tab">GUARDS</span><span class="market-tab">WINGS</span><span class="market-tab">BIGS</span></div></div>
+            <div class="terminal-table-head terminal-grid exchange-grid"><div class="terminal-cell">PLAYER</div><div class="terminal-cell">AGE</div><div class="terminal-cell">OVR</div><div class="terminal-cell">ASK</div><div class="terminal-cell">PREVIOUS SEASON</div><div class="terminal-cell">MOVE</div><div class="terminal-cell">BIDS</div><div class="terminal-cell">LEADER</div><div class="terminal-cell">INTEREST</div></div>
+            <div class="terminal-body">
+              <div class="terminal-row terminal-grid exchange-grid selected"><div class="terminal-cell"><div class="terminal-name">Brandon Miller</div><div class="terminal-sub">SF · 6'7"</div></div><div class="terminal-cell terminal-number">24</div><div class="terminal-cell terminal-number">87.8</div><div class="terminal-cell terminal-number">$30.1M</div><div class="terminal-cell terminal-sub">16.3 / 7.0 / 3.4</div><div class="terminal-cell terminal-change">↓ $0.4M</div><div class="terminal-cell terminal-number">3</div><div class="terminal-cell"><div class="bid-lockup"><img class="logo-small" src="/assets/team_logos/NYK.png" alt="NYK" /><span class="terminal-number">$32.2M</span></div></div><div class="terminal-cell terminal-sub">HIGH</div></div>
+              <div class="terminal-row terminal-grid exchange-grid"><div class="terminal-cell"><div class="terminal-name">Cason Wallace</div><div class="terminal-sub">PG · 6'4"</div></div><div class="terminal-cell terminal-number">23</div><div class="terminal-cell terminal-number">86.5</div><div class="terminal-cell terminal-number">$23.4M</div><div class="terminal-cell terminal-sub">18.4 / 4.1 / 6.1</div><div class="terminal-cell terminal-change">↓ $2.6M</div><div class="terminal-cell terminal-number">0</div><div class="terminal-cell terminal-sub">—</div><div class="terminal-cell terminal-sub">—</div></div>
+              <div class="terminal-row terminal-grid exchange-grid"><div class="terminal-cell"><div class="terminal-name">Jimmy Butler III</div><div class="terminal-sub">SF · 6'7"</div></div><div class="terminal-cell terminal-number">37</div><div class="terminal-cell terminal-number">85.9</div><div class="terminal-cell terminal-number">$27.3M</div><div class="terminal-cell terminal-sub">16.3 / 6.1 / 6.0</div><div class="terminal-cell terminal-change">↓ $0.8M</div><div class="terminal-cell terminal-number">0</div><div class="terminal-cell terminal-sub">—</div><div class="terminal-cell terminal-sub">—</div></div>
+              <div class="terminal-row terminal-grid exchange-grid"><div class="terminal-cell"><div class="terminal-name">Ausar Thompson</div><div class="terminal-sub">SF · 6'6"</div></div><div class="terminal-cell terminal-number">24</div><div class="terminal-cell terminal-number">85.8</div><div class="terminal-cell terminal-number">$27.7M</div><div class="terminal-cell terminal-sub">17.2 / 9.4 / 5.2</div><div class="terminal-cell terminal-change">↓ $3.1M</div><div class="terminal-cell terminal-number">0</div><div class="terminal-cell terminal-sub">—</div><div class="terminal-cell terminal-sub">—</div></div>
+              <div class="terminal-row terminal-grid exchange-grid"><div class="terminal-cell"><div class="terminal-name">Cameron Johnson</div><div class="terminal-sub">PF · 6'8"</div></div><div class="terminal-cell terminal-number">31</div><div class="terminal-cell terminal-number">84.3</div><div class="terminal-cell terminal-number">$25.0M</div><div class="terminal-cell terminal-sub">14.5 / 4.3 / 2.9</div><div class="terminal-cell terminal-change">↓ $0.5M</div><div class="terminal-cell terminal-number">2</div><div class="terminal-cell"><div class="bid-lockup"><img class="logo-small" src="/assets/team_logos/NOP.png" alt="NOP" /><span class="terminal-number">$24.1M</span></div></div><div class="terminal-cell terminal-sub">WARM</div></div>
+              <div class="terminal-row terminal-grid exchange-grid"><div class="terminal-cell"><div class="terminal-name">Zach LaVine</div><div class="terminal-sub">SG · 6'5"</div></div><div class="terminal-cell terminal-number">32</div><div class="terminal-cell terminal-number">84.3</div><div class="terminal-cell terminal-number">$17.9M</div><div class="terminal-cell terminal-sub">18.9 / 5.2 / 3.5</div><div class="terminal-cell terminal-change">↓ $2.0M</div><div class="terminal-cell terminal-number">0</div><div class="terminal-cell terminal-sub">—</div><div class="terminal-cell terminal-sub">—</div></div>
+              <div class="terminal-row terminal-grid exchange-grid"><div class="terminal-cell"><div class="terminal-name">DeMar DeRozan</div><div class="terminal-sub">SF · 6'6"</div></div><div class="terminal-cell terminal-number">37</div><div class="terminal-cell terminal-number">83.4</div><div class="terminal-cell terminal-number">$19.2M</div><div class="terminal-cell terminal-sub">0.0 / 0.0 / 0.0</div><div class="terminal-cell terminal-change">↓ $0.6M</div><div class="terminal-cell terminal-number">1</div><div class="terminal-cell"><div class="bid-lockup"><img class="logo-small" src="/assets/team_logos/MIN.png" alt="MIN" /><span class="terminal-number">$19.1M</span></div></div><div class="terminal-cell terminal-sub">OPEN</div></div>
+            </div>
+            <footer class="ledger-footer"><button class="dark-button">FILTER</button><button class="dark-button">COMPARE</button><div class="scroll-cue"><span>SCROLL FOR FULL MARKET</span><div class="scroll-track"><div class="scroll-thumb"></div></div></div></footer>
+          </section>
+          <aside class="inspect-panel">
+            <div class="inspect-head"><div><div class="dark-title">Brandon Miller</div><div class="dark-meta">SF · AGE 24 · 6'7"</div></div><div class="inspect-rating"><span class="dark-meta">OVR</span><span class="dark-title">87.8</span></div></div>
+            <div class="inspect-stats"><div class="inspect-stat"><div class="dark-meta">PTS</div><div class="dark-title">16.3</div></div><div class="inspect-stat"><div class="dark-meta">REB</div><div class="dark-title">7.0</div></div><div class="inspect-stat"><div class="dark-meta">AST</div><div class="dark-title">3.4</div></div></div>
+            <div class="rating-rails"><div class="rating-rail"><span class="dark-meta">OFF</span><div class="bar-track"><div class="bar-fill" style="width:88%;background:#9eabb3;"></div></div><span class="terminal-number">88</span></div><div class="rating-rail"><span class="dark-meta">DEF</span><div class="bar-track"><div class="bar-fill" style="width:73%;background:#9eabb3;"></div></div><span class="terminal-number">73</span></div><div class="rating-rail"><span class="dark-meta">SPACE</span><div class="bar-track"><div class="bar-fill" style="width:91%;background:#9eabb3;"></div></div><span class="terminal-number">91</span></div><div class="rating-rail"><span class="dark-meta">CREATE</span><div class="bar-track"><div class="bar-fill" style="width:82%;background:#9eabb3;"></div></div><span class="terminal-number">82</span></div><div class="rating-rail"><span class="dark-meta">REBOUND</span><div class="bar-track"><div class="bar-fill" style="width:68%;background:#9eabb3;"></div></div><span class="terminal-number">68</span></div></div>
+            <div class="offer-stack"><div class="rail-label">LIVE OFFERS</div><div class="offer-card"><img class="logo-small" src="/assets/team_logos/NYK.png" alt="NYK" /><div><div class="terminal-number">$32.2M × 4</div><div class="terminal-sub">LEADING OFFER</div></div><div><div class="interest-scale"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><div class="terminal-sub">HIGH INTEREST</div></div></div><div class="offer-card"><img class="logo-small" src="/assets/team_logos/LAL.png" alt="LAL" /><div><div class="terminal-number">$30.8M × 4</div><div class="terminal-sub">SECOND OFFER</div></div><div><div class="interest-scale"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div><div class="terminal-sub">WARM</div></div></div></div>
+            <div class="rail-line"><span class="dark-meta" style="flex:1;">WASHINGTON TAX ROOM</span><span class="terminal-number">+$25.8M</span></div><div class="rail-line"><span class="dark-meta" style="flex:1;">MAX LEGAL AAV</span><span class="terminal-number">$25.8M</span></div>
+            <div class="inspect-actions"><button class="dark-button">PLAYER CARD</button><button class="dark-button primary">BUILD OFFER</button></div>
+          </aside>
+        </main>
+      </article>
+    </section>
+
+    <section class="concept-wrap" id="market-ledger">
+      <div class="concept-toolbar"><span>CONCEPT 17 · MARKET LEDGER</span><button class="capture-button" data-copy="ledger-artboard">Copy editable HTML</button></div>
+      <article class="paper-artboard ledger-board" id="ledger-artboard" layer-name="Concept 17 - Market Ledger">
+        <header class="ledger-topline"><div class="dark-brand"><img class="logo" src="/assets/team_logos/WAS.png" alt="Washington Wizards" /><div><div class="dark-title">Free Agency Market</div><div class="dark-meta">WASHINGTON · JULY 1, 2027</div></div></div><div class="micro-progress"><span class="progress-dot done">1</span><span class="progress-segment"></span><span class="progress-dot done">2</span><span class="progress-segment"></span><span class="progress-dot live">3</span><span class="progress-segment"></span><span class="progress-dot">4</span><span class="progress-segment"></span><span class="progress-dot">5</span></div><div class="dark-actions" style="margin-left:auto;"><button class="dark-button">ROSTER</button><button class="dark-button">STAFF</button><button class="dark-button">ASSETS</button><button class="dark-button primary">SIM DAY</button></div></header>
+        <section class="ledger-cap-strip"><div class="ledger-cap-number"><span class="dark-meta">PAYROLL</span><span class="dark-title">$181.6M</span></div><div class="ledger-cap-number" style="padding-left:18px;"><span class="dark-meta">TAX ROOM</span><span class="dark-title">+$25.8M</span></div><div class="ledger-cap-number" style="padding-left:18px;"><span class="dark-meta">HARD CAP</span><span class="dark-title">+$47.8M</span></div><div class="segmented-cap"><div style="width:54%;"></div><div class="tax-space" style="width:19%;"></div><div class="hard-space" style="width:27%;"></div></div><div style="width:260px;padding-left:18px;"><div class="dark-meta">FOUR-YEAR VIEW</div><div class="terminal-sub">27-28 &nbsp;&nbsp; 28-29 &nbsp;&nbsp; 29-30 &nbsp;&nbsp; 30-31</div></div></section>
+        <main class="ledger-market"><div class="market-heading"><div><h2>Available players</h2><span class="dark-meta">SORTED BY OVERALL · CLICK NAME FOR PLAYER CARD</span></div><div class="market-tabs"><span class="market-tab active">ALL</span><span class="market-tab">NO BIDS</span><span class="market-tab">PRICE FALLERS</span><span class="market-tab">SHORTLIST</span></div></div>
+          <div class="terminal-table-head terminal-grid ledger-grid"><div class="terminal-cell">PLAYER</div><div class="terminal-cell">AGE</div><div class="terminal-cell">OVR</div><div class="terminal-cell">OFF</div><div class="terminal-cell">DEF</div><div class="terminal-cell">SPC</div><div class="terminal-cell">CRE</div><div class="terminal-cell">REB</div><div class="terminal-cell">PREVIOUS SEASON</div><div class="terminal-cell">ASK</div><div class="terminal-cell">MOVE</div><div class="terminal-cell">LEADING BID</div><div class="terminal-cell">INTEREST</div></div>
+          <div class="terminal-body">
+            <div class="terminal-row ledger-row terminal-grid ledger-grid selected"><div class="terminal-cell"><div class="terminal-name">Brandon Miller</div><div class="terminal-sub">SF · 6'7"</div></div><div class="terminal-cell terminal-number">24</div><div class="terminal-cell terminal-number">87.8</div><div class="terminal-cell terminal-number">88</div><div class="terminal-cell terminal-number">73</div><div class="terminal-cell terminal-number">91</div><div class="terminal-cell terminal-number">82</div><div class="terminal-cell terminal-number">68</div><div class="terminal-cell terminal-sub">16.3 / 7.0 / 3.4</div><div class="terminal-cell terminal-number">$30.1M</div><div class="terminal-cell terminal-change">↓ $0.4M</div><div class="terminal-cell"><div class="bid-lockup"><img class="logo-small" src="/assets/team_logos/NYK.png" alt="NYK" /><span class="terminal-number">$32.2M × 4</span></div></div><div class="terminal-cell terminal-sub">HIGH</div></div>
+            <div class="terminal-row ledger-row terminal-grid ledger-grid"><div class="terminal-cell"><div class="terminal-name">Cason Wallace</div><div class="terminal-sub">PG · 6'4"</div></div><div class="terminal-cell terminal-number">23</div><div class="terminal-cell terminal-number">86.5</div><div class="terminal-cell terminal-number">84</div><div class="terminal-cell terminal-number">88</div><div class="terminal-cell terminal-number">81</div><div class="terminal-cell terminal-number">86</div><div class="terminal-cell terminal-number">54</div><div class="terminal-cell terminal-sub">18.4 / 4.1 / 6.1</div><div class="terminal-cell terminal-number">$23.4M</div><div class="terminal-cell terminal-change">↓ $2.6M</div><div class="terminal-cell terminal-sub">NO BIDS</div><div class="terminal-cell terminal-sub">—</div></div>
+            <div class="terminal-row ledger-row terminal-grid ledger-grid"><div class="terminal-cell"><div class="terminal-name">Jimmy Butler III</div><div class="terminal-sub">SF · 6'7"</div></div><div class="terminal-cell terminal-number">37</div><div class="terminal-cell terminal-number">85.9</div><div class="terminal-cell terminal-number">85</div><div class="terminal-cell terminal-number">87</div><div class="terminal-cell terminal-number">71</div><div class="terminal-cell terminal-number">84</div><div class="terminal-cell terminal-number">67</div><div class="terminal-cell terminal-sub">16.3 / 6.1 / 6.0</div><div class="terminal-cell terminal-number">$27.3M</div><div class="terminal-cell terminal-change">↓ $0.8M</div><div class="terminal-cell terminal-sub">NO BIDS</div><div class="terminal-cell terminal-sub">—</div></div>
+            <div class="terminal-row ledger-row terminal-grid ledger-grid"><div class="terminal-cell"><div class="terminal-name">Ausar Thompson</div><div class="terminal-sub">SF · 6'6"</div></div><div class="terminal-cell terminal-number">24</div><div class="terminal-cell terminal-number">85.8</div><div class="terminal-cell terminal-number">78</div><div class="terminal-cell terminal-number">92</div><div class="terminal-cell terminal-number">62</div><div class="terminal-cell terminal-number">75</div><div class="terminal-cell terminal-number">90</div><div class="terminal-cell terminal-sub">17.2 / 9.4 / 5.2</div><div class="terminal-cell terminal-number">$27.7M</div><div class="terminal-cell terminal-change">↓ $3.1M</div><div class="terminal-cell terminal-sub">NO BIDS</div><div class="terminal-cell terminal-sub">—</div></div>
+            <div class="terminal-row ledger-row terminal-grid ledger-grid"><div class="terminal-cell"><div class="terminal-name">Cameron Johnson</div><div class="terminal-sub">PF · 6'8"</div></div><div class="terminal-cell terminal-number">31</div><div class="terminal-cell terminal-number">84.3</div><div class="terminal-cell terminal-number">83</div><div class="terminal-cell terminal-number">74</div><div class="terminal-cell terminal-number">89</div><div class="terminal-cell terminal-number">68</div><div class="terminal-cell terminal-number">61</div><div class="terminal-cell terminal-sub">14.5 / 4.3 / 2.9</div><div class="terminal-cell terminal-number">$25.0M</div><div class="terminal-cell terminal-change">↓ $0.5M</div><div class="terminal-cell"><div class="bid-lockup"><img class="logo-small" src="/assets/team_logos/NOP.png" alt="NOP" /><span class="terminal-number">$24.1M × 3</span></div></div><div class="terminal-cell terminal-sub">WARM</div></div>
+            <div class="terminal-row ledger-row terminal-grid ledger-grid"><div class="terminal-cell"><div class="terminal-name">Zach LaVine</div><div class="terminal-sub">SG · 6'5"</div></div><div class="terminal-cell terminal-number">32</div><div class="terminal-cell terminal-number">84.3</div><div class="terminal-cell terminal-number">86</div><div class="terminal-cell terminal-number">58</div><div class="terminal-cell terminal-number">90</div><div class="terminal-cell terminal-number">79</div><div class="terminal-cell terminal-number">49</div><div class="terminal-cell terminal-sub">18.9 / 5.2 / 3.5</div><div class="terminal-cell terminal-number">$17.9M</div><div class="terminal-cell terminal-change">↓ $2.0M</div><div class="terminal-cell terminal-sub">NO BIDS</div><div class="terminal-cell terminal-sub">—</div></div>
+            <div class="terminal-row ledger-row terminal-grid ledger-grid"><div class="terminal-cell"><div class="terminal-name">DeMar DeRozan</div><div class="terminal-sub">SF · 6'6"</div></div><div class="terminal-cell terminal-number">37</div><div class="terminal-cell terminal-number">83.4</div><div class="terminal-cell terminal-number">84</div><div class="terminal-cell terminal-number">59</div><div class="terminal-cell terminal-number">67</div><div class="terminal-cell terminal-number">86</div><div class="terminal-cell terminal-number">55</div><div class="terminal-cell terminal-sub">0.0 / 0.0 / 0.0</div><div class="terminal-cell terminal-number">$19.2M</div><div class="terminal-cell terminal-change">↓ $0.6M</div><div class="terminal-cell"><div class="bid-lockup"><img class="logo-small" src="/assets/team_logos/MIN.png" alt="MIN" /><span class="terminal-number">$19.1M × 2</span></div></div><div class="terminal-cell terminal-sub">OPEN</div></div>
+          </div>
+        </main>
+        <footer class="ledger-footer"><button class="dark-button">FILTERS</button><button class="dark-button">COMPARE PLAYERS</button><button class="dark-button">MY OFFERS</button><button class="dark-button">STAFF MARKET</button><div class="scroll-cue"><span>SCROLL MARKET</span><div class="scroll-track"><div class="scroll-thumb"></div></div></div></footer>
+      </article>
+    </section>
+
+    <section class="concept-wrap" id="unified-terminal">
+      <div class="concept-toolbar"><span>CONCEPT 18 · UNIFIED TERMINAL</span><button class="capture-button" data-copy="unified-terminal-artboard">Copy editable HTML</button></div>
+      <article class="paper-artboard converged-board" id="unified-terminal-artboard" layer-name="Concept 18 - Unified Terminal">
+        <header class="converged-header" data-paper-group="Header">
+          <div class="converged-brand"><img class="logo" src="/assets/team_logos/WAS.png" alt="Washington Wizards" /><div class="converged-title">Free Agency</div></div>
+          <div class="day-progress"><span class="c-value">DAY 3 OF 5</span></div>
+          <div class="converged-actions"><button class="c-button">ROSTER</button><button class="c-button">STAFF</button><button class="c-button">TRADE ROOM</button><button class="c-button solid">SIM DAY</button></div>
+        </header>
+        <main class="hybrid-main"><section class="dense-market-panel" data-market-panel="header-sort" data-paper-group="Free Agent Market"></section><aside class="combined-rail full-height" data-combined-rail data-paper-group="Market Intelligence"></aside></main>
+      </article>
+    </section>
+
+    <section class="concept-wrap" id="fit-intelligence">
+      <div class="concept-toolbar"><span>CONCEPT 19 · FIT INTELLIGENCE</span><button class="capture-button" data-copy="fit-intelligence-artboard">Copy editable HTML</button></div>
+      <article class="paper-artboard converged-board" id="fit-intelligence-artboard" layer-name="Concept 19 - Fit Intelligence">
+        <header class="converged-header">
+          <div class="converged-brand"><img class="logo" src="/assets/team_logos/WAS.png" alt="Washington Wizards" /><div><div class="converged-title">Free Agency</div><div class="c-copy">WASHINGTON · TEAM FIT WORKSPACE</div></div></div>
+          <div class="day-progress"><div class="day-progress-copy"><span class="c-value">DAY 3 OF 5</span><span class="c-copy">JULY 1, 2027</span></div><div class="day-progress-line"><span class="day-node complete">1</span><span class="day-connector"></span><span class="day-node complete">2</span><span class="day-connector"></span><span class="day-node current">3</span><span class="day-connector"></span><span class="day-node">4</span><span class="day-connector"></span><span class="day-node">5</span></div></div>
+          <div class="converged-actions"><button class="c-button">ROSTER</button><button class="c-button">STAFF</button><button class="c-button">ASSETS</button><button class="c-button solid">SIM DAY</button></div>
+        </header>
+        <main class="split-main"><aside class="fit-rail" data-team-intel></aside><section class="dense-market-panel" data-market-panel></section><aside class="combined-rail" data-combined-rail="compact"></aside></main>
+      </article>
+    </section>
+
+    <section class="concept-wrap" id="market-stack">
+      <div class="concept-toolbar"><span>CONCEPT 20 · MARKET STACK</span><button class="capture-button" data-copy="market-stack-artboard">Copy editable HTML</button></div>
+      <article class="paper-artboard converged-board" id="market-stack-artboard" layer-name="Concept 20 - Market Stack">
+        <header class="converged-header">
+          <div class="converged-brand"><img class="logo" src="/assets/team_logos/WAS.png" alt="Washington Wizards" /><div><div class="converged-title">Free Agency</div><div class="c-copy">WASHINGTON · LEAGUE MARKET</div></div></div>
+          <div class="day-progress"><div class="day-progress-copy"><span class="c-value">DAY 3 OF 5</span><span class="c-copy">JULY 1, 2027</span></div><div class="day-progress-line"><span class="day-node complete">1</span><span class="day-connector"></span><span class="day-node complete">2</span><span class="day-connector"></span><span class="day-node current">3</span><span class="day-connector"></span><span class="day-node">4</span><span class="day-connector"></span><span class="day-node">5</span></div></div>
+          <div class="converged-actions"><button class="c-button">ROSTER</button><button class="c-button">STAFF</button><button class="c-button">ASSETS</button><button class="c-button solid">SIM DAY</button></div>
+        </header>
+        <main class="stack-main"><section class="dense-market-panel" data-market-panel></section><section class="bottom-intelligence" data-bottom-intelligence></section></main>
+      </article>
+    </section>
+
+    <section class="concept-wrap" id="front-office-index">
+      <div class="concept-toolbar"><span>CONCEPT 21 · FRONT OFFICE INDEX</span><button class="capture-button" data-copy="front-office-index-artboard">Copy editable HTML</button></div>
+      <article class="paper-artboard converged-board light-market" id="front-office-index-artboard" layer-name="Concept 21 - Front Office Index">
+        <header class="converged-header">
+          <div class="converged-brand"><img class="logo" src="/assets/team_logos/WAS.png" alt="Washington Wizards" /><div><div class="converged-title">Free Agency Index</div><div class="c-copy">WASHINGTON · 2027 OFFSEASON</div></div></div>
+          <div class="day-progress"><div class="day-progress-copy"><span class="c-value">DAY 3 OF 5</span><span class="c-copy">JULY 1, 2027</span></div><div class="day-progress-line"><span class="day-node complete">1</span><span class="day-connector"></span><span class="day-node complete">2</span><span class="day-connector"></span><span class="day-node current">3</span><span class="day-connector"></span><span class="day-node">4</span><span class="day-connector"></span><span class="day-node">5</span></div></div>
+          <div class="converged-actions"><button class="c-button">ROSTER</button><button class="c-button">STAFF</button><button class="c-button">ASSETS</button><button class="c-button solid">SIM DAY</button></div>
+        </header>
+        <main class="hybrid-main"><section class="dense-market-panel" data-market-panel></section><aside class="combined-rail" data-combined-rail></aside></main>
+      </article>
+    </section>
+
+    <section class="concept-wrap" id="paper-market">
+      <div class="concept-toolbar"><span>CONCEPT 22 · PAPER MARKET</span><button class="capture-button" data-copy="paper-market-artboard">Copy editable HTML</button></div>
+      <article class="paper-artboard converged-board light-market paper-index" id="paper-market-artboard" layer-name="Concept 22 - Paper Market">
+        <header class="converged-header">
+          <div class="converged-brand"><img class="logo" src="/assets/team_logos/WAS.png" alt="Washington Wizards" /><div><div class="converged-title">The Player Market</div><div class="c-copy">WASHINGTON · FREE AGENCY</div></div></div>
+          <div class="day-progress"><div class="day-progress-copy"><span class="c-value">DAY 3 OF 5</span><span class="c-copy">JULY 1, 2027</span></div><div class="day-progress-line"><span class="day-node complete">1</span><span class="day-connector"></span><span class="day-node complete">2</span><span class="day-connector"></span><span class="day-node current">3</span><span class="day-connector"></span><span class="day-node">4</span><span class="day-connector"></span><span class="day-node">5</span></div></div>
+          <div class="converged-actions"><button class="c-button">ROSTER</button><button class="c-button">STAFF</button><button class="c-button">ASSETS</button><button class="c-button solid">SIM DAY</button></div>
+        </header>
+        <main class="split-main"><aside class="fit-rail" data-team-intel></aside><section class="dense-market-panel" data-market-panel></section><aside class="combined-rail" data-combined-rail="compact"></aside></main>
+      </article>
+    </section>
+
+    <script>
+      const convergedPlayers = [
+        { name: "Brandon Miller", pos: "SF", height: "6'7\"", age: 24, ovr: 87.8, off: 88, def: 73, spc: 91, cre: 82, reb: 68, line: "16.3 / 7.0 / 3.4", ask: "$30.1M", move: "↓ $0.4M", logo: "NYK", bid: "$32.2M × 4", interest: "HIGH", interestValue: 78 },
+        { name: "Cason Wallace", pos: "PG", height: "6'4\"", age: 23, ovr: 86.5, off: 84, def: 88, spc: 81, cre: 86, reb: 54, line: "18.4 / 4.1 / 6.1", ask: "$23.4M", move: "↓ $2.6M" },
+        { name: "Jimmy Butler III", pos: "SF", height: "6'7\"", age: 37, ovr: 85.9, off: 85, def: 87, spc: 71, cre: 84, reb: 67, line: "16.3 / 6.1 / 6.0", ask: "$27.3M", move: "↓ $0.8M" },
+        { name: "Ausar Thompson", pos: "SF", height: "6'6\"", age: 24, ovr: 85.8, off: 78, def: 92, spc: 62, cre: 75, reb: 90, line: "17.2 / 9.4 / 5.2", ask: "$27.7M", move: "↓ $3.1M" },
+        { name: "Cameron Johnson", pos: "PF", height: "6'8\"", age: 31, ovr: 84.3, off: 83, def: 74, spc: 89, cre: 68, reb: 61, line: "14.5 / 4.3 / 2.9", ask: "$25.0M", move: "↓ $0.5M", logo: "NOP", bid: "$24.1M × 3", interest: "WARM", interestValue: 61 },
+        { name: "Zach LaVine", pos: "SG", height: "6'5\"", age: 32, ovr: 84.3, off: 86, def: 58, spc: 90, cre: 79, reb: 49, line: "18.9 / 5.2 / 3.5", ask: "$17.9M", move: "↓ $2.0M" },
+        { name: "DeMar DeRozan", pos: "SF", height: "6'6\"", age: 37, ovr: 83.4, off: 84, def: 59, spc: 67, cre: 86, reb: 55, line: "0.0 / 0.0 / 0.0", ask: "$19.2M", move: "↓ $0.6M", logo: "MIN", bid: "$19.1M × 2", interest: "OPEN", interestValue: 53 },
+        { name: "James Harden", pos: "PG", height: "6'5\"", age: 37, ovr: 83.1, off: 85, def: 55, spc: 86, cre: 90, reb: 48, line: "18.2 / 5.1 / 8.3", ask: "$22.8M", move: "↓ $1.1M" },
+        { name: "Austin Reaves", pos: "SG", height: "6'5\"", age: 29, ovr: 82.7, off: 84, def: 65, spc: 85, cre: 81, reb: 52, line: "17.0 / 4.2 / 5.4", ask: "$21.4M", move: "↓ $0.9M" },
+        { name: "Kristaps Porziņģis", pos: "C", height: "7'2\"", age: 31, ovr: 82.1, off: 82, def: 78, spc: 84, cre: 65, reb: 79, line: "16.8 / 7.2 / 2.1", ask: "$25.5M", move: "↓ $0.4M" },
+        { name: "Nikola Vučević", pos: "C", height: "6'10\"", age: 35, ovr: 80.6, off: 79, def: 65, spc: 79, cre: 70, reb: 85, line: "15.0 / 9.0 / 3.1", ask: "$18.7M", move: "↓ $1.5M" },
+        { name: "Al Horford", pos: "C", height: "6'9\"", age: 39, ovr: 79.2, off: 74, def: 81, spc: 80, cre: 69, reb: 75, line: "9.2 / 6.0 / 3.0", ask: "$12.4M", move: "↓ $0.7M" },
+        { name: "Malcolm Brogdon", pos: "PG", height: "6'4\"", age: 34, ovr: 78.8, off: 80, def: 67, spc: 82, cre: 78, reb: 47, line: "12.8 / 3.8 / 5.1", ask: "$14.8M", move: "↓ $0.3M" },
+        { name: "Clint Capela", pos: "C", height: "6'10\"", age: 33, ovr: 78.4, off: 70, def: 82, spc: 31, cre: 42, reb: 91, line: "10.7 / 10.4 / 1.3", ask: "$13.6M", move: "↓ $1.0M" },
+        { name: "Gary Trent Jr.", pos: "SG", height: "6'5\"", age: 28, ovr: 77.9, off: 79, def: 64, spc: 86, cre: 65, reb: 39, line: "13.6 / 2.8 / 2.0", ask: "$12.9M", move: "↓ $0.5M" },
+        { name: "Kelly Oubre Jr.", pos: "SF", height: "6'7\"", age: 31, ovr: 77.1, off: 76, def: 69, spc: 72, cre: 66, reb: 70, line: "14.1 / 5.8 / 1.7", ask: "$11.7M", move: "↓ $0.9M" }
+      ];
+
+      function interestBars(level = 0) {
+        return Array.from({ length: 5 }, (_, index) => `<span class="${index < level ? "on" : ""}"></span>`).join("");
+      }
+
+      function marketPanelMarkup(panel) {
+        const headerSort = panel?.dataset.marketPanel === "header-sort";
+        const fitScores = [83, 80, 77, 76, 74, 72, 70, 68, 67, 65, 64, 63, 62, 60, 59, 57];
+        const head = ["PLAYER", "AGE", "OVR", "OFF", "DEF", "SPC", "CRE", "REB", "FIT", "PTS / REB / AST", "ASK", "MOVE", "LEADING BID", "INTEREST"]
+          .map((label) => headerSort
+            ? `<div class="dense-cell"><button class="dense-sort${label === "OVR" ? " active" : ""}">${label}${label === "OVR" ? " ↓" : ""}</button></div>`
+            : `<div class="dense-cell">${label}</div>`).join("");
+        const rows = convergedPlayers.map((player, index) => {
+          const bid = player.bid
+            ? `<div class="dense-bid"><img class="logo-small" src="/assets/team_logos/${player.logo}.png" alt="${player.logo}" /><span>${player.bid}</span></div>`
+            : `<span class="c-copy">NO BIDS</span>`;
+          const interest = player.interest
+            ? `<div class="dense-interest"><div class="dense-interest-track"><div class="dense-interest-fill" style="width:${player.interestValue}%"></div></div><span>${player.interest}</span></div>`
+            : `<span class="c-copy">—</span>`;
+          return `<div class="dense-row dense-grid${index === 0 ? " selected" : ""}" data-paper-group="${player.name}">
+            <div class="dense-cell"><div class="dense-player">${player.name}</div><div class="dense-sub">${player.pos} · ${player.height}</div></div>
+            <div class="dense-cell">${player.age}</div><div class="dense-cell">${player.ovr}</div><div class="dense-cell">${player.off}</div><div class="dense-cell">${player.def}</div><div class="dense-cell">${player.spc}</div><div class="dense-cell">${player.cre}</div><div class="dense-cell">${player.reb}</div>
+            <div class="dense-cell">${fitScores[index]}</div><div class="dense-cell">${player.line}</div><div class="dense-cell">${player.ask}</div><div class="dense-cell dense-change">${player.move}</div><div class="dense-cell">${bid}</div><div class="dense-cell">${interest}</div>
+          </div>`;
+        }).join("");
+        return `<div class="dense-market-tools" data-paper-group="Market Controls"><h2>Player market</h2><span class="market-mode active">MARKET</span><span class="market-mode">SHORTLIST</span><span class="market-mode">MY OFFERS</span><div class="table-controls"><button class="c-button">FILTER</button>${headerSort ? "" : '<button class="c-button">SORT: OVR</button>'}<button class="c-button">COMPARE</button></div></div><div class="dense-head dense-grid" data-paper-group="Table Headers">${head}</div><div class="dense-body" data-paper-group="Free Agent Rows">${rows}</div>`;
+      }
+
+      function capPanelMarkup() {
+        return `<section class="c-panel" data-paper-group="Cap Position"><div class="c-panel-title">FOUR-YEAR CAP POSITION</div><div class="cap-summary"><div><span class="c-copy">PAYROLL</span><strong>$181.6M</strong></div><div><span class="c-copy">TAX ROOM</span><strong>+$25.8M</strong></div><div><span class="c-copy">HARD CAP</span><strong>+$47.8M</strong></div></div><div class="mini-cap-chart"><div class="mini-cap-line hard" style="top:13px"></div><div class="mini-cap-line" style="top:38px"></div><div class="mini-cap-bar" style="height:82%"></div><div class="mini-cap-bar" style="height:72%"></div><div class="mini-cap-bar" style="height:61%"></div><div class="mini-cap-bar" style="height:54%"></div></div><div class="mini-cap-years c-copy"><span>27-28</span><span>28-29</span><span>29-30</span><span>30-31</span></div></section>`;
+      }
+
+      function playerPanelMarkup() {
+        return `<section class="c-panel" data-paper-group="Selected Player"><div class="c-panel-title">SELECTED PLAYER PROFILE</div><div class="selected-rating-bars"><div class="selected-rating-bar"><span class="c-copy">OFF</span><div class="bar-track"><div class="bar-fill" style="width:88%"></div></div><span class="c-value">88</span></div><div class="selected-rating-bar"><span class="c-copy">DEF</span><div class="bar-track"><div class="bar-fill" style="width:73%"></div></div><span class="c-value">73</span></div><div class="selected-rating-bar"><span class="c-copy">SPACE</span><div class="bar-track"><div class="bar-fill" style="width:91%"></div></div><span class="c-value">91</span></div><div class="selected-rating-bar"><span class="c-copy">CREATE</span><div class="bar-track"><div class="bar-fill" style="width:82%"></div></div><span class="c-value">82</span></div><div class="selected-rating-bar"><span class="c-copy">REBOUND</span><div class="bar-track"><div class="bar-fill" style="width:68%"></div></div><span class="c-value">68</span></div></div><div class="c-panel-actions"><button class="c-button">PLAYER CARD</button><button class="c-button solid">BUILD OFFER</button></div></section>`;
+      }
+
+      function offersPanelMarkup() {
+        return `<section class="c-panel" data-paper-group="Live Offers"><div class="c-panel-title">LIVE OFFERS</div><div class="mini-offer"><img class="logo-small" src="/assets/team_logos/NYK.png" alt="NYK" /><div><div class="c-value">$32.2M × 4</div><div class="c-copy">LEADING</div></div><div><div class="mini-interest">${interestBars(4)}</div><div class="c-copy">HIGH</div></div></div><div class="mini-offer"><img class="logo-small" src="/assets/team_logos/LAL.png" alt="LAL" /><div><div class="c-value">$30.8M × 4</div><div class="c-copy">SECOND</div></div><div><div class="mini-interest">${interestBars(3)}</div><div class="c-copy">WARM</div></div></div></section>`;
+      }
+
+      function radarMarkup() {
+        return `<section class="c-panel" data-paper-group="Team Profile"><div class="c-panel-title">WASHINGTON TEAM PROFILE</div><div class="team-radar"><div class="radar-back"></div><div class="radar-ring one"></div><div class="radar-ring two"></div><div class="radar-ring three"></div><div class="radar-fill"></div><span class="radar-label top">OFF #5/30</span><span class="radar-label right">SPACE #12/30</span><span class="radar-label bottom-right">DEPTH #27/30</span><span class="radar-label bottom-left">DEF #4/30</span><span class="radar-label left">CREATE #9/30</span></div></section>`;
+      }
+
+      function teamIntelMarkup() {
+        return `${radarMarkup()}<section class="c-panel"><div class="c-panel-title">ROSTER NEEDS</div><div class="fit-need"><span class="c-copy">DEPTH</span><span class="fit-rank">#27</span></div><div class="fit-need"><span class="c-copy">REBOUNDING</span><span class="fit-rank">#18</span></div><div class="fit-need"><span class="c-copy">SPACING</span><span class="fit-rank">#12</span></div><div class="fit-need"><span class="c-copy">DEFENSE</span><span class="fit-rank">#4</span></div></section><section class="c-panel"><div class="c-panel-title">MARKET FIT</div><div class="fit-need"><span class="c-value">B. Miller</span><span class="fit-rank">83</span></div><div class="fit-need"><span class="c-value">C. Wallace</span><span class="fit-rank">80</span></div><div class="fit-need"><span class="c-value">A. Thompson</span><span class="fit-rank">77</span></div></section>`;
+      }
+
+      function bottomIntelligenceMarkup() {
+        return `<section class="c-panel"><div class="c-panel-title">SELECTED PLAYER + MARKET</div><div class="bottom-player"><div><div class="selected-summary"><div><div class="name">Brandon Miller</div><div class="c-copy">SF · AGE 24 · 6'7\" · ASK $30.1M</div></div><div class="selected-ovr"><span class="c-copy">OVR</span><span class="c-value">87.8</span></div></div></div><div class="selected-metrics"><div class="selected-metric"><span class="c-copy">PTS</span><strong>16.3</strong></div><div class="selected-metric"><span class="c-copy">REB</span><strong>7.0</strong></div><div class="selected-metric"><span class="c-copy">AST</span><strong>3.4</strong></div></div><div class="c-panel-actions"><button class="c-button">CARD</button><button class="c-button solid">OFFER</button></div></div><div class="bottom-offers"><div class="mini-offer"><img class="logo-small" src="/assets/team_logos/NYK.png" alt="NYK" /><div><div class="c-value">$32.2M × 4</div><div class="c-copy">HIGH INTEREST</div></div></div><div class="mini-offer"><img class="logo-small" src="/assets/team_logos/LAL.png" alt="LAL" /><div><div class="c-value">$30.8M × 4</div><div class="c-copy">WARM</div></div></div></div></section>${capPanelMarkup()}${radarMarkup()}`;
+      }
+
+      document.querySelectorAll("[data-market-panel]").forEach((panel) => { panel.innerHTML = marketPanelMarkup(panel); });
+      document.querySelectorAll("[data-combined-rail]").forEach((rail) => {
+        rail.innerHTML = `${playerPanelMarkup()}${offersPanelMarkup()}${capPanelMarkup()}${rail.dataset.combinedRail === "compact" ? "" : radarMarkup()}`;
+      });
+      document.querySelectorAll("[data-team-intel]").forEach((rail) => { rail.innerHTML = teamIntelMarkup(); });
+      document.querySelectorAll("[data-bottom-intelligence]").forEach((panel) => { panel.innerHTML = bottomIntelligenceMarkup(); });
+
+      async function imageToDataUrl(url) {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        return await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      }
+
+      function directText(element) {
+        return [...element.childNodes]
+          .filter((node) => node.nodeType === Node.TEXT_NODE)
+          .map((node) => node.textContent.replace(/\s+/g, " "))
+          .join(" ")
+          .trim();
+      }
+
+      function paperLayerName(element, text, index) {
+        if (element.getAttribute("layer-name")) return element.getAttribute("layer-name");
+        if (element.getAttribute("data-paper-group")) return element.getAttribute("data-paper-group");
+        if (text) return text.slice(0, 48);
+        const className = typeof element.className === "string" ? element.className.split(" ")[0] : "";
+        return className || `${element.tagName.toLowerCase()}-${index}`;
+      }
+
+      function applyPaperStyle(layer, source, rect, rootRect, hasText) {
+        const computed = getComputedStyle(source);
+        const left = rect.left - rootRect.left;
+        const top = rect.top - rootRect.top;
+        const multiline = hasText && rect.height > (Number.parseFloat(computed.lineHeight) || 16) * 1.55;
+        const centeredFlex = hasText && computed.display.includes("flex");
+        const hasVisibleBackground = computed.backgroundColor !== "rgba(0, 0, 0, 0)";
+        const hasVisibleBorder = [computed.borderTopWidth, computed.borderRightWidth, computed.borderBottomWidth, computed.borderLeftWidth]
+          .some((width) => Number.parseFloat(width) > 0);
+        const textSafetyWidth = hasText && !hasVisibleBackground && !hasVisibleBorder
+          ? Math.min(28, Math.max(8, rect.width * 0.08))
+          : 0;
+        const textSafetyHeight = hasText && !hasVisibleBackground && !hasVisibleBorder ? 3 : 0;
+        const sourceFontSize = Number.parseFloat(computed.fontSize);
+        const paperFontSize = hasText && sourceFontSize <= 12
+          ? `${Math.max(8, sourceFontSize - 1)}px`
+          : computed.fontSize;
+
+        Object.assign(layer.style, {
+          position: "absolute",
+          left: `${left}px`,
+          top: `${top}px`,
+          width: `${rect.width + textSafetyWidth}px`,
+          height: `${rect.height + textSafetyHeight}px`,
+          minWidth: "0",
+          minHeight: "0",
+          maxWidth: "none",
+          maxHeight: "none",
+          margin: "0",
+          padding: computed.padding,
+          boxSizing: "border-box",
+          backgroundColor: computed.backgroundColor,
+          color: computed.color,
+          borderTop: computed.borderTop,
+          borderRight: computed.borderRight,
+          borderBottom: computed.borderBottom,
+          borderLeft: computed.borderLeft,
+          borderRadius: computed.borderRadius,
+          clipPath: computed.clipPath,
+          opacity: computed.opacity,
+          overflow: hasText ? "visible" : (computed.overflow === "visible" ? "visible" : "hidden"),
+          objectFit: computed.objectFit,
+          fontFamily: "Inter, Arial, Helvetica, sans-serif",
+          fontSize: paperFontSize,
+          fontWeight: computed.fontWeight,
+          fontStyle: computed.fontStyle,
+          lineHeight: computed.lineHeight,
+          letterSpacing: computed.letterSpacing,
+          textAlign: computed.textAlign,
+          textTransform: computed.textTransform,
+          textDecoration: computed.textDecoration,
+          fontVariantNumeric: computed.fontVariantNumeric,
+          whiteSpace: multiline ? "pre-wrap" : "nowrap",
+          overflowWrap: "normal",
+          wordBreak: "normal",
+          transform: "none",
+          flex: "none"
+        });
+
+        if (centeredFlex) {
+          layer.style.display = "flex";
+          layer.style.alignItems = computed.alignItems;
+          layer.style.justifyContent = computed.justifyContent;
+        } else {
+          layer.style.display = "block";
+        }
+      }
+
+      function isFullyVisibleInsideScrollFrames(element, root) {
+        const rect = element.getBoundingClientRect();
+        let ancestor = element.parentElement;
+        while (ancestor && ancestor !== root) {
+          const style = getComputedStyle(ancestor);
+          const clipsX = style.overflowX !== "visible";
+          const clipsY = style.overflowY !== "visible";
+          if (clipsX || clipsY) {
+            const frame = ancestor.getBoundingClientRect();
+            if ((clipsX && (rect.left < frame.left || rect.right > frame.right)) ||
+                (clipsY && (rect.top < frame.top || rect.bottom > frame.bottom))) {
+              return false;
+            }
+          }
+          ancestor = ancestor.parentElement;
+        }
+        return true;
+      }
+
+      async function buildPaperClone(source) {
+        const rootRect = source.getBoundingClientRect();
+        const rootStyle = getComputedStyle(source);
+        const paperRoot = document.createElement("div");
+        paperRoot.setAttribute("layer-name", source.getAttribute("layer-name") || source.id);
+        Object.assign(paperRoot.style, {
+          position: "relative",
+          width: `${rootRect.width}px`,
+          height: `${rootRect.height}px`,
+          minWidth: `${rootRect.width}px`,
+          minHeight: `${rootRect.height}px`,
+          maxWidth: `${rootRect.width}px`,
+          maxHeight: `${rootRect.height}px`,
+          overflow: "hidden",
+          boxSizing: "border-box",
+          backgroundColor: rootStyle.backgroundColor,
+          color: rootStyle.color,
+          fontFamily: "Inter, Arial, Helvetica, sans-serif"
+        });
+
+        const sourceNodes = [...source.querySelectorAll("*")];
+        const groupLayers = new Map();
+        for (let index = 0; index < sourceNodes.length; index += 1) {
+          const sourceNode = sourceNodes[index];
+          const rect = sourceNode.getBoundingClientRect();
+          if (rect.width <= 0 || rect.height <= 0) continue;
+          if (!isFullyVisibleInsideScrollFrames(sourceNode, source)) continue;
+
+          const text = directText(sourceNode);
+          const isImage = sourceNode instanceof HTMLImageElement;
+          const isGroup = sourceNode.hasAttribute("data-paper-group");
+          const computed = getComputedStyle(sourceNode);
+          const hasBackground = computed.backgroundColor !== "rgba(0, 0, 0, 0)";
+          const hasBorder = [computed.borderTopWidth, computed.borderRightWidth, computed.borderBottomWidth, computed.borderLeftWidth]
+            .some((width) => Number.parseFloat(width) > 0);
+          if (!text && !isImage && !isGroup && !hasBackground && !hasBorder) continue;
+
+          const parentGroupSource = sourceNode.parentElement?.closest("[data-paper-group]");
+          const parentLayer = parentGroupSource ? groupLayers.get(parentGroupSource) : paperRoot;
+          if (!parentLayer) continue;
+          const parentRect = parentGroupSource ? parentGroupSource.getBoundingClientRect() : rootRect;
+          const layer = document.createElement(isImage ? "img" : "div");
+          layer.setAttribute("layer-name", paperLayerName(sourceNode, text, index));
+          if (text) layer.textContent = text;
+          applyPaperStyle(layer, sourceNode, rect, parentRect, Boolean(text));
+
+          if (isImage) {
+            layer.src = await imageToDataUrl(sourceNode.src);
+            layer.alt = sourceNode.alt || "";
+          }
+          parentLayer.appendChild(layer);
+          if (isGroup) groupLayers.set(sourceNode, layer);
+        }
+        return paperRoot;
+      }
+
+      async function copyForPaper(sourceId, button) {
+        const source = document.getElementById(sourceId);
+        const clone = await buildPaperClone(source);
+        const html = clone.outerHTML;
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": new Blob([html], { type: "text/html" }),
+            "text/plain": new Blob([html], { type: "text/plain" })
+          })
+        ]);
+        button.textContent = "Copied — paste in Paper";
+        setTimeout(() => { button.textContent = "Copy editable HTML"; }, 2200);
+      }
+
+      window.paperConceptExport = { buildPaperClone };
+
+      document.querySelectorAll("[data-copy]").forEach((button) => {
+        button.addEventListener("click", () => copyForPaper(button.dataset.copy, button));
+      });
+
+      const previewSourceId = new URLSearchParams(window.location.search).get("paper-preview");
+      if (previewSourceId && document.getElementById(previewSourceId)) {
+        requestAnimationFrame(async () => {
+          const preview = await buildPaperClone(document.getElementById(previewSourceId));
+          document.body.replaceChildren(preview);
+          Object.assign(document.body.style, { margin: "0", padding: "0", background: "#dfe3e1" });
+        });
+      }
+    </script>
+  </body>
+</html>

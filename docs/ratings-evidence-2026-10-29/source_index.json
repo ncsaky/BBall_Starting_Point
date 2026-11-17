@@ -1,0 +1,143 @@
+{
+  "inventory_date": "2026-10-29 (America/Toronto)",
+  "method": "yt-dlp 2026.03.17 metadata inspection and bounded English automatic-caption retrieval. Four retained VTT spans and seven user-supplied UTF-8 transcripts have continuous transcript-only review. Episodes 3–6 and 8–10 previously returned HTTP 429 on bounded attempts; supplied transcripts now provide reviewed text spans. See FULL_EPISODE_COVERAGE_LEDGER.md for exact intervals, runtime gaps and source provenance. No audiovisual review completed.",
+  "sources": [
+    {
+      "id": "J6STkjbVuUg",
+      "url": "https://youtu.be/J6STkjbVuUg?si=qgUBq12e0nHk7pBj",
+      "title": "Ranking The Top 10 NBA Teams: Will Spurs, Thunder or Knicks win it all? 76ers overrated? | Nerd Sesh",
+      "published": "20261007",
+      "channel": "Nerd Sesh",
+      "uploader": "Nerd Sesh",
+      "manual_caption_languages": [],
+      "auto_english_caption_metadata": true,
+      "retrieval_status": "English auto-caption VTT retained; full retained caption span reviewed 00:00:00.080-04:01:33.920; transcript-only, no audiovisual review",
+      "episode_review_coverage": "full retained span 00:00:00.080-04:01:33.920; caption-span complete; platform runtime unverified",
+      "provenance_review": "ID/title/date and surrounding Denver/Nuggets captions match the Oct 7 top-10 source. Episode 2 (Oct 2 teams 20-11) confirms Denver was #14 on one host board and episode 1 refers to the prior episode; this supports a legitimate cross-episode rank reference. Exact speaker/list identity in episode 1 remains unresolved.",
+      "transcript_span": "00:00:00.080-04:01:33.920 (241.6 minutes; exact platform runtime unverified)"
+    },
+    {
+      "id": "ZaA4usLpBWI",
+      "url": "https://youtu.be/ZaA4usLpBWI?si=QpnPYkd-BTKC2CIh",
+      "title": "Ranking Every NBA Team (#20-11): Jokic & Nuggets, Luka & Lakers NOT Top 10? | Nerd Sesh",
+      "published": "20261002",
+      "channel": "Nerd Sesh",
+      "uploader": "Nerd Sesh",
+      "manual_caption_languages": [],
+      "auto_english_caption_metadata": true,
+      "retrieval_status": "English auto-caption VTT and yt-dlp metadata JSON retained; full retained caption span reviewed 00:00:00.160-02:11:40.320; metadata duration 02:11:53; transcript-only, no audiovisual review",
+      "episode_review_coverage": "full VTT span 00:00:00.160-02:11:40.320; caption-span complete; approx. 12.7 sec after last cue have no captions",
+      "transcript_span": "00:00:00.160-02:11:40.320 (131.7 min; metadata duration 02:11:53)"
+    },
+    {
+      "id": "vVDXaHsdGg0",
+      "url": "https://youtu.be/vVDXaHsdGg0?si=hU1m1Cchml7dNjAt",
+      "title": "Ranking Every Team in the NBA (#30-21): Will Flagg take a leap? Who is the WORST team? | Nerd Sesh",
+      "published": "20260930",
+      "channel": "Nerd Sesh",
+      "uploader": "Nerd Sesh",
+      "manual_caption_languages": [],
+      "auto_english_caption_metadata": true,
+      "retrieval_status": "Bounded 2026-11-02 yt-dlp retrieval reached webpage/player metadata; English subtitle request returned HTTP 429 Too Many Requests; no VTT or info JSON retained",
+      "episode_review_coverage": "No content reviewed; no transcript artifact available. Next source is episode 4 CbartUy6cMY."
+    },
+    {
+      "id": "CbartUy6cMY",
+      "url": "https://youtu.be/CbartUy6cMY?si=ZA5cZt1R-gI2F8Zt",
+      "title": "Ranking the Top 10 Centers in the NBA: Jokic vs. Wemby debate, Is it over for AD? | Nerd Sesh",
+      "published": "20260902",
+      "channel": "Nerd Sesh",
+      "uploader": "Nerd Sesh",
+      "manual_caption_languages": [],
+      "auto_english_caption_metadata": true,
+      "retrieval_status": "Bounded 2026-11-02 yt-dlp retrieval reached webpage/player metadata; English subtitle request returned HTTP 429 Too Many Requests; no VTT or info JSON retained",
+      "episode_review_coverage": "No content reviewed; no transcript artifact available. Next attempt moved to episode 5 gPMNkhjEt6I."
+    },
+    {
+      "id": "gPMNkhjEt6I",
+      "url": "https://youtu.be/gPMNkhjEt6I?si=0UtYeA0HMIep8IXJ",
+      "title": "Ranking the Top 10 Power Forwards in the NBA: LeBron still Top 5? Will Barnes PASS Tatum? | NerdSesh",
+      "published": "20260828",
+      "channel": "Nerd Sesh",
+      "uploader": "Nerd Sesh",
+      "manual_caption_languages": [],
+      "auto_english_caption_metadata": true,
+      "retrieval_status": "User-supplied timestamped transcript; retained byte-identically with provenance/hash in transcripts/TRANSCRIPT_MANIFEST.md; header title/video ID match.",
+      "episode_review_coverage": "Supplied timestamped UTF-8 transcript reviewed continuously 00:00:00.160–01:33:06.719, through sign-off on 2026-11-07; transcript-only, exact platform runtime/tail unavailable. See POWER_FORWARD_FULL_EXTRACTION.md."
+    },
+    {
+      "id": "HM0tNscRN4k",
+      "url": "https://youtu.be/HM0tNscRN4k?si=C8e-k-WEHyOboQsB",
+      "title": "Ranking the Top 10 Small Forwards in the NBA: Jaylen Brown or Kevin Durant? Flagg Top 5? | Nerd Sesh",
+      "published": "20260819",
+      "channel": "Nerd Sesh",
+      "uploader": "Nerd Sesh",
+      "manual_caption_languages": [],
+      "auto_english_caption_metadata": true,
+      "retrieval_status": "User-supplied timestamped transcript; retained byte-identically with provenance/hash in transcripts/TRANSCRIPT_MANIFEST.md; header title/video ID match.",
+      "episode_review_coverage": "Supplied timestamped UTF-8 transcript reviewed continuously 00:00:00.160–01:37:51.119 through sign-off on 2026-11-07; transcript-only, exact platform runtime/tail unavailable. See SMALL_FORWARDS_FULL_EXTRACTION.md."
+    },
+    {
+      "id": "Ckufse6eWsM",
+      "url": "https://youtu.be/Ckufse6eWsM?si=FKi41m6jD23vr0ny",
+      "title": "Ranking The Top 10 Shooting Guards in the NBA: Mitchell or Booker? Does Reaves belong? | Nerd Sesh",
+      "published": "20260814",
+      "channel": "Nerd Sesh",
+      "uploader": "Nerd Sesh",
+      "manual_caption_languages": [],
+      "auto_english_caption_metadata": true,
+      "retrieval_status": "English auto-caption VTT and yt-dlp metadata JSON retained; full VTT span reviewed 00:00:00.160-02:12:12.960; metadata duration 02:12:26; transcript-only, no audiovisual review",
+      "episode_review_coverage": "Full retained VTT reviewed through final cue; about 13 seconds after final caption uncaptained",
+      "transcript_span": "00:00:00.160-02:12:12.960 (132.2 min; metadata duration 02:12:26)"
+    },
+    {
+      "id": "RUElsf_z3uw",
+      "url": "https://youtu.be/RUElsf_z3uw?si=zjCvccfYYWJRgctO",
+      "title": "Ranking The Top 10 Point Guards in the NBA: SGA or Luka? Steph, Cade or Brunson? | Nerd Sesh",
+      "published": "20260805",
+      "channel": "Nerd Sesh",
+      "uploader": "Nerd Sesh",
+      "manual_caption_languages": [],
+      "auto_english_caption_metadata": true,
+      "retrieval_status": "User-supplied timestamped UTF-8 transcript retained byte-identically in transcripts/episode8_transcript.txt; provenance/hash in TRANSCRIPT_MANIFEST.md.",
+      "episode_review_coverage": "Supplied timestamped UTF-8 transcript reviewed continuously 00:00:00.080–01:44:47.600 through sign-off on 2026-11-07; transcript-only; exact platform runtime/tail unavailable and final host caption noisy. See POINT_GUARDS_FULL_EXTRACTION.md."
+    },
+    {
+      "id": "1lrrgBJ_Am0",
+      "url": "https://youtu.be/1lrrgBJ_Am0?si=LgTuL9XRjiVWMzFa",
+      "title": "We ReDrafted The Entire NBA: Does Wemby, Jokic or SGA go No. 1 overall? | Nerd Sesh x SOTL",
+      "published": "20260731",
+      "channel": "Nerd Sesh",
+      "uploader": "Nerd Sesh",
+      "manual_caption_languages": [],
+      "auto_english_caption_metadata": true,
+      "retrieval_status": "User-supplied timestamped UTF-8 transcript retained byte-identically in transcripts/episode9_transcript.txt; provenance/hash in TRANSCRIPT_MANIFEST.md.",
+      "episode_review_coverage": "Supplied timestamped UTF-8 transcript reviewed continuously 00:00:00.240–00:52:21.440 through final supplied cue on 2026-11-07; transcript-only. Final caption is noisy; exact platform runtime/audio tail unavailable. See NBA_REDRAFT_FULL_EXTRACTION.md."
+    },
+    {
+      "id": "80HR9WEQLGY",
+      "url": "https://youtu.be/80HR9WEQLGY?si=1FPEa01ujJl3Khve",
+      "title": "NBA Opening Week Takeaways: LeBron & 76ers impress, Timberwolves shine, Heat struggle | Nerd Sesh",
+      "published": "20261023",
+      "channel": "Nerd Sesh",
+      "uploader": "Nerd Sesh",
+      "manual_caption_languages": [],
+      "auto_english_caption_metadata": true,
+      "retrieval_status": "User-supplied timestamped UTF-8 transcript retained byte-identically in transcripts/episode10_transcript.txt; provenance/hash in TRANSCRIPT_MANIFEST.md.",
+      "episode_review_coverage": "Supplied timestamped UTF-8 transcript reviewed continuously 00:00:00.000–01:28:52.520 through sign-off on 2026-11-07; transcript-only. Published 2026-10-23, post-start early-season source; exact platform runtime/audio unverified. See OPENING_WEEK_FULL_EXTRACTION.md."
+    },
+    {
+      "id": "xZMVSPmcQKE",
+      "url": "https://youtu.be/xZMVSPmcQKE?si=WVlsAYb_YicOVmuH",
+      "title": "NBA Draft Big Board (Top 20 Prospects): Dybantsa, Boozer or Peterson No. 1? | Nerd Sesh",
+      "published": "20260612",
+      "channel": "Nerd Sesh",
+      "uploader": "Nerd Sesh",
+      "manual_caption_languages": [],
+      "auto_english_caption_metadata": true,
+      "retrieval_status": "English auto-caption VTT retained; full retained caption span reviewed 00:00:00.320-02:49:10.880; transcript-only, no audiovisual review",
+      "episode_review_coverage": "intro 00:00:00.320-00:00:38.640; ranked discussion 00:00:38.640-02:47:40.480; outro 02:47:40.480-02:49:10.880; full VTT span reviewed",
+      "transcript_span": "00:00:00.320-02:49:10.880 (169.2 min; exact platform runtime unverified)"
+    }
+  ]
+}

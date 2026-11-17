@@ -1,0 +1,44 @@
+{
+  "source_id": "BOOK2025",
+  "date": "2025-06-05",
+  "population": "Indiana at Oklahoma City, one regulation NBA game",
+  "locator": "PDF page1 final box",
+  "team_turnovers": {
+    "IND": 25,
+    "OKC": 7
+  },
+  "summed_individual_turnovers": {
+    "IND": 24,
+    "OKC": 6
+  },
+  "player_turnovers_INDs": [
+    5,
+    1,
+    6,
+    2,
+    3,
+    3,
+    0,
+    3,
+    1,
+    0
+  ],
+  "player_turnovers_OKCs": [
+    0,
+    0,
+    1,
+    0,
+    2,
+    1,
+    0,
+    0,
+    2,
+    0,
+    0
+  ],
+  "team_events_by_difference": {
+    "IND": 1,
+    "OKC": 1
+  },
+  "observation_limit": "Selected PBP examples only; no complete subtype count or all-pass denominator reconstructed."
+}

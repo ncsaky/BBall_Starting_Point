@@ -291,6 +291,8 @@ def staff_team_report(canonical: dict[str, Any], save: dict[str, Any], team_quer
             "available_millions": round(budget - spent, 2),
             "spend_pct": round(spent / budget * 100.0, 1) if budget else 0.0,
         },
+        "dashboard_staff_slots": deepcopy(slots),
+        "staff_action_permissions": staff_action_permissions(save, team["id"]),
         "gameplay_staff_slots": [
             {**slot, "grade": round(staff_grade(slot), 2), "effect_summary": staff_effect_summary(slot), "effect_rows": staff_effect_rows(slot)}
             for slot in slots
@@ -361,6 +363,10 @@ def negotiate_staff_hire(
     offer_salary_millions: float | None = None,
     offer_years: int | None = None,
 ) -> dict[str, Any]:
+    team = resolve_team(canonical, team_query)
+    permission = staff_change_permission(save, team["id"], slot)
+    if not permission["can_negotiate"]:
+        return {"status": "season_limit_blocked", "accepted": False, "decision": "reject_season_limit", "team_id": team["id"], "slot": slot, "notes": permission["negotiate_reason"]}
     evaluation = evaluate_staff_hire(canonical, save, staff_id, team_query, slot)
     team = evaluation["team"]
     candidate = evaluation["candidate"]
@@ -419,6 +425,9 @@ def hire_staff_from_save(
         return {"status": "not_applied", "negotiation_id": negotiation_id, "notes": "This staff deal exceeded the staff budget."}
     team_id = negotiation["team_id"]
     slot_name = negotiation["slot"]
+    permission = staff_change_permission(save, team_id, slot_name)
+    if not permission["can_negotiate"]:
+        return {"status": "season_limit_blocked", "negotiation_id": negotiation_id, "notes": permission["negotiate_reason"]}
     if canonical is not None:
         offered_salary = float((negotiation.get("team_offer") or {}).get("annual_salary_millions") or 0.0)
         budget = staff_budget_snapshot(canonical, save, team_id, slot_name, offered_salary)
@@ -469,6 +478,7 @@ def hire_staff_from_save(
             if staff.get("id") != source_id
         ]
     save["pending_staff_negotiations"] = [item for item in pending if item.get("id") != negotiation_id]
+    record_staff_season_change(save, team_id, slot_name, "hired")
     log = staff_transaction_log(save, "staff_hire", negotiation_id, [team_id], {"staff": candidate, "previous_staff": current}, [negotiation])
     save.setdefault("transaction_logs", []).append(log)
     team_abbrev = str(team_id).replace("team_", "").upper()
@@ -489,6 +499,7 @@ def hire_staff_from_save(
             "slot": slot_name,
             "staff_grade": candidate_grade,
             "action": "hire",
+            "season": (save.get("meta") or {}).get("season"),
         },
     )
     resolve_matching_staff_retention_window(save, team_id, slot_name, "resolved_replaced")
@@ -500,6 +511,12 @@ def fire_staff_from_save(save: dict[str, Any], team_id: str, slot: str, reason: 
     current = current_staff_slot(save, team_id, slot)
     if not current:
         return {"status": "not_found", "team_id": team_id, "slot": slot}
+    # Accepting a vacancy after a contract expires is a retention decision,
+    # not a second dismissal. Only the actual expired incumbent qualifies.
+    contract_expired = reason == "contract expired; interim accepted" and current.get("market_status") == "contract_expired_pending_user_decision"
+    permission = staff_change_permission(save, team_id, slot)
+    if not contract_expired and not permission["can_fire"]:
+        return {"status": "season_limit_blocked", "team_id": team_id, "slot": slot, "notes": permission["fire_reason"]}
     fired = deepcopy(current)
     if not is_interim_staff(fired):
         fired["market_status"] = "fired"
@@ -518,7 +535,10 @@ def fire_staff_from_save(save: dict[str, Any], team_id: str, slot: str, reason: 
     ]
     save["staff_slots"].append(interim)
     save["staff_slots"].sort(key=lambda item: (item.get("team_id") or "", item.get("slot") or "", item.get("id") or ""))
+    if not contract_expired:
+        record_staff_season_change(save, team_id, slot, "fired")
     log = staff_transaction_log(save, "staff_fire", stable_id("staff_fire", team_id, slot, save.get("state", {}).get("current_date")), [team_id], {"fired_staff": fired, "interim_staff": interim}, [])
+    log["staff_token_exempt"] = contract_expired
     save.setdefault("transaction_logs", []).append(log)
     reason_text = f" Reason: {reason}." if reason else ""
     headline = f"{fired['name']} fired from {ROLE_LABELS.get(slot, slot)}.{reason_text}"
@@ -540,6 +560,8 @@ def fire_staff_from_save(save: dict[str, Any], team_id: str, slot: str, reason: 
             "fired_staff_grade": fired_grade,
             "action": "fire",
             "reason": reason,
+            "season": (save.get("meta") or {}).get("season"),
+            "staff_token_exempt": contract_expired,
         },
     )
     resolve_matching_staff_retention_window(save, team_id, slot, "resolved_interim_accepted")
@@ -757,6 +779,94 @@ def is_interim_staff(staff: dict[str, Any] | None) -> bool:
     return staff.get("status") == "interim_staff_vacancy" or (staff.get("contract") or {}).get("guarantee_level") == "interim"
 
 
+def staff_season_change_usage(save: dict[str, Any], team_id: str, slot: str) -> dict[str, Any]:
+    season = str((save.get("meta") or {}).get("season") or "")
+    stored = ((save.get("staff_season_changes") or {}).get(team_id) or {}).get(slot) or {}
+    if stored.get("season") == season:
+        return {"season": season, "fired": bool(stored.get("fired")), "hired": bool(stored.get("hired"))}
+    usage = {"season": season, "fired": False, "hired": False}
+
+    def this_season(item: dict[str, Any]) -> bool:
+        recorded_season = item.get("season") or (item.get("details") or {}).get("season")
+        if recorded_season:
+            return str(recorded_season) == season
+        # Older saves did not label staff transactions with their season.
+        try:
+            start_year = int(season.split("-")[0])
+        except (TypeError, ValueError):
+            return False
+        date = str(item.get("date") or "")
+        return f"{start_year}-07-01" <= date < f"{start_year + 1}-07-01"
+
+    for item in save.get("transaction_logs", []):
+        kind = item.get("transaction_type")
+        if kind not in {"staff_fire", "staff_hire"} or team_id not in (item.get("teams") or []) or not this_season(item):
+            continue
+        assets = item.get("assets") or {}
+        if assets.get("retained"):
+            continue
+        staff = assets.get("fired_staff" if kind == "staff_fire" else "staff") or {}
+        if staff.get("slot") != slot or item.get("staff_token_exempt"):
+            continue
+        if kind == "staff_fire" and is_interim_staff(staff):
+            continue
+        usage["fired" if kind == "staff_fire" else "hired"] = True
+    for item in save.get("staff_firing_history", []):
+        if item.get("team_id") == team_id and item.get("slot") == slot and this_season(item):
+            usage["fired"] = True
+    for item in save.get("league_events", []):
+        kind = item.get("kind")
+        details = item.get("details") or {}
+        if kind in {"staff_fire", "staff_hire"} and team_id in (item.get("team_ids") or []) and details.get("slot") == slot and this_season(item):
+            if details.get("action") != "retain" and not details.get("staff_token_exempt") and details.get("reason") != "contract expired; interim accepted":
+                usage["fired" if kind == "staff_fire" else "hired"] = True
+    return usage
+
+
+def staff_change_permission(save: dict[str, Any], team_id: str, slot: str) -> dict[str, Any]:
+    usage = staff_season_change_usage(save, team_id, slot)
+    current = current_staff_slot(save, team_id, slot)
+    interim = is_interim_staff(current)
+    used = usage["fired"] or usage["hired"]
+    valid_slot = slot in STAFF_SLOTS
+    can_fire = valid_slot and bool(current) and not interim and not used
+    # Appointing the permanent replacement completes the original firing cycle.
+    can_negotiate = valid_slot and (interim or not used)
+    limit_reason = f"You have already used this position's replacement for {usage['season']}. Available again next season."
+    return {
+        "season": usage["season"],
+        "can_fire": can_fire,
+        "can_negotiate": can_negotiate,
+        "fire_reason": "" if can_fire else ("Hire a permanent replacement for this interim." if interim else limit_reason if used else "No staff member to fire."),
+        "negotiate_reason": "" if can_negotiate else (limit_reason if valid_slot else "Unknown staff position."),
+    }
+
+
+def staff_action_permissions(save: dict[str, Any], team_id: str) -> dict[str, Any]:
+    return {slot: staff_change_permission(save, team_id, slot) for slot in STAFF_SLOTS}
+
+
+def initialize_staff_season_changes(save: dict[str, Any], transactions: list[dict[str, Any]], events: list[dict[str, Any]]) -> None:
+    # Existing saves may have moved the relevant firing out of their hot tail.
+    # Materialize only the role counters; leave their historical lists intact.
+    snapshot = {
+        **save,
+        "transaction_logs": [item for item in transactions if item.get("transaction_type") in {"staff_fire", "staff_hire"}],
+        "league_events": [item for item in events if item.get("kind") in {"staff_fire", "staff_hire"}],
+    }
+    team_ids = {staff.get("team_id") for staff in save.get("staff_slots", []) if staff.get("team_id")}
+    save["staff_season_changes"] = {
+        team_id: {slot: staff_season_change_usage(snapshot, team_id, slot) for slot in STAFF_SLOTS}
+        for team_id in team_ids
+    }
+
+
+def record_staff_season_change(save: dict[str, Any], team_id: str, slot: str, action: str) -> None:
+    usage = staff_season_change_usage(save, team_id, slot)
+    usage[action] = True
+    save.setdefault("staff_season_changes", {}).setdefault(team_id, {})[slot] = usage
+
+
 def staff_candidate_by_id(canonical: dict[str, Any], save: dict[str, Any], staff_id: str, slot: str | None = None) -> dict[str, Any]:
     active_candidate_ids = {
         staff.get("market_source_id") or staff.get("id")
@@ -959,6 +1069,8 @@ def simulate_ai_staff_changes(
                 continue
             current = slots.get(slot)
             if not current:
+                continue
+            if not staff_change_permission(save, team["id"], slot)["can_negotiate"]:
                 continue
             fired_this_season = any(
                 item.get("team_id") == team["id"]
@@ -1224,7 +1336,8 @@ def weakest_coordinator_slot(slots: dict[str, dict[str, Any]]) -> str | None:
 
 
 def staff_development_signal(save: dict[str, Any], team_id: str) -> dict[str, Any]:
-    events = [event for event in save.get("development_events", []) if event.get("team_id") == team_id]
+    # Coverage-only records must not change the existing staff grading sample.
+    events = [event for event in save.get("development_events", []) if event.get("team_id") == team_id and event.get("trait_deltas")]
     if len(events) < 12:
         return {"failed": False, "event_count": len(events), "positive_gain": 0.0}
     positive = sum(
@@ -1434,7 +1547,7 @@ def staff_transaction_log(save: dict[str, Any], transaction_type: str, proposal_
         source_ids=["src_gameplay_staff_seed_v1"],
         notes="Staff transaction applied to league_save_v1 only. Canonical preseason data remains immutable.",
     )
-    return to_plain(log)
+    return {**to_plain(log), "season": (save.get("meta") or {}).get("season")}
 
 
 def news_item(save: dict[str, Any], kind: str, headline: str) -> dict[str, Any]:

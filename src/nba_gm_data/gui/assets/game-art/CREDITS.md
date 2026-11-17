@@ -34,6 +34,9 @@ status are documented in [the photo-study credits](../dot-press/ATTRIBUTION.md).
   bundles, Trade Builder and Trade Finder: original project illustrations.
 - Minutes + Availability stopwatch with medical cross: original project
   illustration.
+- Six non-identifiable, fictional basketball coach portraits in
+  `coaches/coach-*.webp`: AI-generated original artwork. They are not portraits
+  of the named staff members or any real coach; no endorsement is implied.
 
 All photographs illustrate historical basketball categories, not the currently
 selected player, staff member, or generated draft class. Portraits and background
@@ -41,4 +44,5 @@ masks are retained in `assets/header-art`; the game only loads local WebP files.
 
 The approved cutouts are dot-pressed and cropped only to remove transparent
 padding, then losslessly packaged for the interface. No generative imagery is
-used. Original photographs and masks are retained with the photo study.
+used for the photographic derivatives. Coach portraits are generated original
+artwork; original photographs and masks are retained with the photo study.

@@ -1,0 +1,18 @@
+{
+  "version": "player_shot_zones_2025_26_v1",
+  "season": "2025-26",
+  "sources": [
+    {
+      "id": "src_nba_stats_shot_zones_2025_26",
+      "url": "https://www.nba.com/stats/players/shooting?DistanceRange=By+Zone&Season=2025-26",
+      "description": "Official NBA player shooting locations by zone."
+    },
+    {
+      "id": "src_nba_stats_opponent_shooting_2025_26",
+      "url": "https://www.nba.com/stats/players/defense-dash-overall",
+      "description": "Official NBA opponent-shooting and defensive dashboard context."
+    }
+  ],
+  "profiles": [],
+  "notes": "Optional matched priors live here when reproducible official zone rows are available. Runtime profiles always have a deterministic trait and archetype fallback."
+}

@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/TOR-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/TOR-v2-1.jpg",
+      "kind": "basketball",
+      "team": "TOR",
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 390,
+          "team": "TOR",
+          "opponent": "CHA",
+          "action": "Barnes defensive stop",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 19,
+          "frames": 420,
+          "team": "TOR",
+          "opponent": "PHI",
+          "action": "Barnes finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 846
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/TOR-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/TOR-v2-2.jpg",
+      "kind": "basketball",
+      "team": "TOR",
+      "clips": [
+        {
+          "source_start": 44,
+          "frames": 420,
+          "team": "TOR",
+          "opponent": "IND",
+          "action": "Barnes basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 74,
+          "frames": 270,
+          "team": "TOR",
+          "opponent": "POR",
+          "action": "Barnes dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 726
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/TOR-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/TOR-v2-3.jpg",
+      "kind": "basketball",
+      "team": "TOR",
+      "clips": [
+        {
+          "source_start": 98,
+          "frames": 300,
+          "team": "TOR",
+          "opponent": "MIA",
+          "action": "Barnes dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 155,
+          "frames": 600,
+          "team": "TOR",
+          "opponent": "BKN",
+          "action": "Barnes jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 936
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "5LAdiUKlgaQ",
+    "url": "https://www.youtube.com/watch?v=5LAdiUKlgaQ",
+    "title": "Scottie Barnes' BEST PLAYS! | 2026 NBA All-Star Reserve",
+    "channel": "NBA and Toronto Raptors",
+    "path": ".cache/startup-team-correction/TOR.mp4",
+    "query": "2025-26 Toronto Raptors Scottie Barnes best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 0,
+      "frames": 390,
+      "team": "TOR",
+      "opponent": "CHA",
+      "action": "Barnes defensive stop",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 19,
+      "frames": 420,
+      "team": "TOR",
+      "opponent": "PHI",
+      "action": "Barnes finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 44,
+      "frames": 420,
+      "team": "TOR",
+      "opponent": "IND",
+      "action": "Barnes basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 74,
+      "frames": 270,
+      "team": "TOR",
+      "opponent": "POR",
+      "action": "Barnes dunk",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 98,
+      "frames": 300,
+      "team": "TOR",
+      "opponent": "MIA",
+      "action": "Barnes dunk",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 155,
+      "frames": 600,
+      "team": "TOR",
+      "opponent": "BKN",
+      "action": "Barnes jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 107.13333333333334
+}

@@ -1,0 +1,44 @@
+{
+  "ledger_version": "pass_recovery_evidence_v1_2026_11_16",
+  "status": "PASS",
+  "claims": 10,
+  "constraints": 6,
+  "controlled_comparisons": 5,
+  "registry_inputs": 94,
+  "passing_fields": 18,
+  "source_hash_checks": {
+    "docs/ratings-evidence-2026-10-29/MIXED_POP_INPUT_UPDATES_2026_11_16.json": true,
+    "docs/ratings-evidence-2026-10-29/CREATION_PASSING_DEFENSE_INPUTS_2026_11_13.json": true,
+    "data/research/espn_career_raw/3945274.json": true,
+    "data/research/tracking_sources_2025_26.json": true,
+    "docs/PLAYER_OBJECT_THREE_COLUMN_MAP_2026_11_12.md": true,
+    "src/nba_gm_data/player_model_registry.py": true,
+    "docs/ratings-evidence-2026-10-29/MIXED_POP_INPUT_UPDATES_2026_11_16.md": true,
+    "docs/ratings-evidence-2026-10-29/diagnostics/mixed_pop_20261116/source_ledger.json": true,
+    "docs/ratings-evidence-2026-10-29/diagnostics/screen_pop_20261115/source_ledger.json": true,
+    "docs/ratings-evidence-2026-10-29/transcripts/episode4_transcript.txt": true,
+    "docs/ratings-evidence-2026-10-29/transcripts/episode8_transcript.txt": true
+  },
+  "raw_Luka_games_turnovers_assists_verified": [
+    64,
+    255,
+    530
+  ],
+  "gamebook_player_sum_arithmetic_verified": true,
+  "conditional_probabilities_estimated": 0,
+  "ratings_changed": 0,
+  "simulations": 0,
+  "scope": "Evidence-ledger/source/arithmetic validation, not basketball outcome calibration or engine tests.",
+  "independent_delivery_validation": {
+    "status": "PASS",
+    "local_links_resolved": 8,
+    "claim_source_and_registry_refs_valid": true,
+    "retained_timestamp_starting_minutes_present": true,
+    "numeric_denominators_and_derivations_explicit": true,
+    "gamebook_player_team_arithmetic_recomputed": true,
+    "no_cross_window_rate_computed": true,
+    "eleven_source_hashes_unchanged": true,
+    "no_player_updates_or_probability_proposals": true,
+    "scope": "Ledger/reference/accounting validation only; selected source facts checked, not complete game coding or calibration."
+  }
+}

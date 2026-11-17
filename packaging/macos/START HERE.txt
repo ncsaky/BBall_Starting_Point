@@ -1,0 +1,50 @@
+NBA GM Sandbox — private macOS beta @VERSION@
+
+For @PLATFORM@, macOS 11.0 or later.
+Use the matching download for your Mac's processor. Windows is not supported.
+
+1. Double-click the ZIP to extract it.
+2. Drag NBA GM Sandbox.app into Applications (or another local folder).
+3. Double-click the app. The game opens in your default browser.
+4. Create a standard save or select an existing save and click Enter Save.
+
+Keep the small server window open while playing. If you close the browser,
+click Open Browser in that window to return to the game. If port 8765 is in
+use, the app automatically uses another port; use the address it displays.
+
+To quit, wait for simulation to finish, then click Stop Server & Quit in
+the app window, close that window, or press Command-Q while the app is active.
+Closing only the browser does not stop the server.
+
+This private beta has no Developer ID signature or Apple notarization.
+If macOS blocks it, attempt to open it once, then go to System Settings >
+Privacy & Security and use Open Anyway if offered. Confirm Open. On older
+macOS releases, Finder's Control-click > Open may also be available.
+Do this only for the private archive you received from the project owner.
+If your Mac's security policy does not offer this override, ask the owner
+for help; no Terminal commands are required to play.
+
+Your saves are stored separately at:
+  ~/Library/Application Support/NBA GM Sandbox/saves/
+Use Show Saves in the app window to see them. Complete backups include the
+JSON save and its history database: use Export Backup on the Load Save tab,
+and Restore Backup to import the resulting .nbagm.zip under a new save name.
+
+To update: quit the app, replace only NBA GM Sandbox.app, then reopen it.
+The app keeps your saves, recovery backups, and local multiplayer state.
+Do not delete the NBA GM Sandbox folder in Application Support.
+
+Core gameplay, photos, dot-press art, team/college logos, and coach artwork
+work offline. The muted startup footage is bundled and also works offline.
+If playback is unavailable, the existing local photo rail remains visible.
+Any remote headshots require internet; existing local
+artwork/placeholder behavior is retained. Optional Ollama prose requires a
+separately running Ollama service; deterministic narrative fallback remains.
+
+If startup fails, the app shows the error and a log location:
+  ~/Library/Application Support/NBA GM Sandbox/logs/launcher.log
+Share that log and a description of the problem with the project owner.
+
+This is a local friends-and-family test build. It does not provide hosted
+multiplayer. Tested on the build Mac; older macOS and a fresh Mac have not
+been verified. No Python, Git, repository, or Terminal setup is needed.

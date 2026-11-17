@@ -7,16 +7,19 @@ import re
 import time
 import urllib.error
 import urllib.request
+from collections import Counter
 from datetime import UTC, date, datetime, timedelta
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
+from .historical_shooting import PARSER_VERSION as BOXSCORE_PARSER_VERSION, observed_pair, row_issues, source_identity, strict_pair
 from .teams import TEAM_INFO
 from .utils import normalize_name
 
 
 RESEARCH_DIR = Path("data/research")
-CONTRACTS_FILE = RESEARCH_DIR / "contracts_public_players_2026.json"
+CONTRACTS_FILE = RESEARCH_DIR / "contracts_public_players_2027.json"
 STAFF_FILE = RESEARCH_DIR / "staff_bref_team_pages_2026.json"
 NBA_OFFICIAL_STAFF_FILE = RESEARCH_DIR / "staff_nba_team_pages_2026.json"
 COACHES_FILE = RESEARCH_DIR / "coaches_espn_2026.json"
@@ -736,20 +739,125 @@ def parse_rookie_scale_consensus(raw: str) -> list[dict[str, Any]]:
 
 
 def fetch_spotrac_future_picks() -> dict[str, Any]:
-    raw = fetch_url(SPOTRAC_FUTURE_PICKS_JINA_URL)
-    picks = parse_spotrac_future_picks(raw)
+    raw = fetch_url(SPOTRAC_FUTURE_PICKS_URL)
+    picks = parse_spotrac_future_pick_html(raw)
     return {
         "source": {
             "id": "src_spotrac_future_picks",
             "title": "Spotrac NBA Future Draft Picks",
             "url": SPOTRAC_FUTURE_PICKS_URL,
-            "fetched_via": SPOTRAC_FUTURE_PICKS_JINA_URL,
+            "fetched_via": SPOTRAC_FUTURE_PICKS_URL,
             "fetched_at": fetched_at(),
         },
         "pick_count": len(picks),
-        "coverage_note": "Machine-ingested owner-side first-round future-pick assets from Spotrac's public future picks page. Second-round ownership remains scaffolded unless separately researched.",
+        "coverage_note": "Machine-ingested owner-side first- and second-round future-pick assets from Spotrac's public future picks page.",
         "picks": picks,
     }
+
+
+class SpotracFuturePickHTMLParser(HTMLParser):
+    """Extract both pick-round tabs while retaining each owner section."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.team_names = {
+            name: abbrev for abbrev, (name, _, _) in TEAM_INFO.items()
+        }
+        self.current_owner: str | None = None
+        self.current_round: int | None = None
+        self.current_year: str | None = None
+        self.pane_depth = 0
+        self.heading_depth = 0
+        self.heading_text: list[str] = []
+        self.row_depth = 0
+        self.row_text: list[str] = []
+        self.picks: list[dict[str, Any]] = []
+        self.asset_counts: Counter[tuple[str, str, int]] = Counter()
+
+    def handle_starttag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        attributes = dict(attrs)
+        if tag == "div":
+            if self.current_round is not None:
+                self.pane_depth += 1
+            else:
+                match = re.fullmatch(r"round([12])_\d+", attributes.get("id") or "")
+                if match:
+                    self.current_round = int(match.group(1))
+                    self.pane_depth = 1
+        if tag == "h2":
+            self.heading_depth += 1
+            if self.heading_depth == 1:
+                self.heading_text = []
+        if tag == "tr" and self.current_round is not None:
+            self.row_depth += 1
+            if self.row_depth == 1:
+                self.row_text = []
+
+    def handle_data(self, data: str) -> None:
+        if self.heading_depth:
+            self.heading_text.append(data)
+        if self.row_depth:
+            self.row_text.append(data)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "h2" and self.heading_depth:
+            self.heading_depth -= 1
+            if self.heading_depth == 0:
+                text = " ".join(" ".join(self.heading_text).split())
+                for name, abbrev in self.team_names.items():
+                    if name in text:
+                        self.current_owner = abbrev
+                        break
+                year_match = re.fullmatch(r"20(?:2[7-9]|3[0-3])", text)
+                if self.current_round is not None and year_match:
+                    self.current_year = year_match.group(0)
+        if tag == "tr" and self.row_depth:
+            self.row_depth -= 1
+            if self.row_depth == 0:
+                self._finish_row()
+        if tag == "div" and self.current_round is not None:
+            self.pane_depth -= 1
+            if self.pane_depth == 0:
+                self.current_round = None
+                self.current_year = None
+
+    def _finish_row(self) -> None:
+        if not self.current_owner or not self.current_round or not self.current_year:
+            return
+        text = " ".join(" ".join(self.row_text).split())
+        if not text or text == self.current_year:
+            return
+        tokens = text.split()
+        expected_numbers = (
+            [str(number) for number in range(1, 31)]
+            if self.current_round == 1
+            else [str(number) for number in range(31, 61)]
+        )
+        if tokens == expected_numbers:
+            return
+        key = (self.current_owner, self.current_year, self.current_round)
+        self.asset_counts[key] += 1
+        self.picks.append(
+            {
+                "season": self.current_year,
+                "round": self.current_round,
+                "asset_index": self.asset_counts[key],
+                "owner_team_abbrev": self.current_owner,
+                "original_team_abbrev": normalize_spotrac_abbrev(
+                    first_abbrev_token(text)
+                ),
+                "description": text,
+                "source_url": SPOTRAC_FUTURE_PICKS_URL,
+            }
+        )
+
+
+def parse_spotrac_future_pick_html(raw: str) -> list[dict[str, Any]]:
+    parser = SpotracFuturePickHTMLParser()
+    parser.feed(raw)
+    return parser.picks
 
 
 def parse_spotrac_future_picks(raw: str) -> list[dict[str, Any]]:
@@ -870,6 +978,8 @@ def fetch_game_boxscores(root: Path, limit: int | None = None, missing_only: boo
             "url_template": ESPN_SUMMARY_URL_TEMPLATE,
             "fetched_at": fetched_at(),
         },
+        "new_record_shooting_parser_version": BOXSCORE_PARSER_VERSION,
+        "legacy_shooting_game_count": sum(game.get("shooting_parser_version") != BOXSCORE_PARSER_VERSION for game in games),
         "mode": "missing_only" if missing_only else "full_schedule",
         "schedule_game_count": len(schedule),
         "existing_minutes_game_count": len(existing_minutes),
@@ -1477,21 +1587,28 @@ def parse_espn_summary_boxscore(raw: str, schedule_game: dict[str, Any]) -> dict
             for athlete in stat_group.get("athletes", []):
                 row = dict(zip(keys, athlete.get("stats", []), strict=False))
                 player = athlete.get("athlete", {})
+                dnp = bool(athlete.get("didNotPlay")) or (not bool(athlete.get("active", True)) and parse_minutes(row.get("minutes") or row.get("MIN")) == 0)
+                parsed = parse_boxscore_stat_row(row, dnp=dnp)
+                if len(keys) != len(athlete.get("stats", [])) or len(set(keys)) != len(keys):
+                    parsed["shooting_validation"]["issues"].append("stat_key_value_alignment_invalid")
+                    parsed["shooting_validation"]["row_usable"] = False
                 players.append(
                     {
                         "player_name": player.get("displayName"),
                         "espn_player_id": player.get("id"),
                         "team_abbrev": team_abbrev,
                         "starter": bool(athlete.get("starter")),
-                        "dnp": bool(athlete.get("didNotPlay")) or (not bool(athlete.get("active", True)) and parse_minutes(row.get("minutes") or row.get("MIN")) == 0),
+                        "dnp": dnp,
                         "comment": athlete.get("reason"),
-                        **parse_boxscore_stat_row(row),
+                        **parsed,
                     }
                 )
     competition = (data.get("header", {}).get("competitions") or [{}])[0]
     competitors = competition.get("competitors") or []
     return {
         "game_id": str(schedule_game["externalGameId"]),
+        "shooting_parser_version": BOXSCORE_PARSER_VERSION,
+        "source_identity": source_identity(data, schedule_game),
         "date": schedule_game["gameDate"],
         "phase": schedule_game.get("phase") or phase_from_competition(data),
         "round": schedule_game.get("round"),
@@ -1505,11 +1622,11 @@ def parse_espn_summary_boxscore(raw: str, schedule_game: dict[str, Any]) -> dict
     }
 
 
-def parse_boxscore_stat_row(row: dict[str, str]) -> dict[str, Any]:
-    fgm, fga = parse_made_attempt(row.get("fg") or row.get("FG"))
-    fg3m, fg3a = parse_made_attempt(row.get("threePointFieldGoalsMade-threePointFieldGoalsAttempted") or row.get("3PT"))
-    ftm, fta = parse_made_attempt(row.get("freeThrowsMade-freeThrowsAttempted") or row.get("FT"))
-    return {
+def parse_boxscore_stat_row(row: dict[str, str], *, dnp: bool = False) -> dict[str, Any]:
+    (fgm, fga), fg = observed_pair(row, "fg", dnp=dnp)
+    (fg3m, fg3a), three = observed_pair(row, "three", dnp=dnp)
+    (ftm, fta), ft = observed_pair(row, "ft", dnp=dnp)
+    result = {
         "minutes": parse_minutes(row.get("minutes") or row.get("MIN")),
         "points": parse_int(row.get("points") or row.get("PTS")),
         "rebounds": parse_int(row.get("rebounds") or row.get("REB")),
@@ -1528,6 +1645,15 @@ def parse_boxscore_stat_row(row: dict[str, str]) -> dict[str, Any]:
         "fta": fta,
         "plus_minus": parse_int(row.get("plusMinus") or row.get("+/-")),
     }
+    raw_points = row.get("points", row.get("PTS"))
+    points_observed = int(raw_points) if isinstance(raw_points, str) and re.fullmatch(r"\d+", raw_points) else None
+    issues = row_issues({**result, "points_observed": points_observed})
+    if any(item["alias_conflicts"] for item in (fg, three, ft)):
+        issues.append("conflicting_shooting_aliases")
+    result["shooting_validation"] = {"parser_version": BOXSCORE_PARSER_VERSION,
+        "fg": fg, "three": three, "ft": ft, "issues": issues,
+        "row_usable": not dnp and not issues and points_observed is not None and all(item["status"] == "observed" for item in (fg, three, ft))}
+    return result
 
 
 def parse_minutes(value: str | None) -> float:
@@ -1548,11 +1674,9 @@ def parse_int(value: str | None) -> int:
         return 0
 
 
-def parse_made_attempt(value: str | None) -> tuple[int, int]:
-    if not value or value == "--" or "-" not in value:
-        return 0, 0
-    made, attempted = value.split("-", 1)
-    return parse_int(made), parse_int(attempted)
+def parse_made_attempt(value: str | None) -> tuple[int | None, int | None]:
+    """Observed count pair, or unknown; malformed/absent never becomes 0–0."""
+    return strict_pair(value)
 
 
 def maybe_number(value: str | None) -> float:

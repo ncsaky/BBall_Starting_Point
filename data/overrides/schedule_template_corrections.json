@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "template": "NBA Schedule/schedule_v2025_2026.json",
+  "verified_at": "2026-10-04",
+  "scope": "New sandbox schedules only; preserve the raw research template and saved seasons.",
+  "excluded_games": [
+    {
+      "externalGameId": "401809839",
+      "expected": {"gameDate": "2025-12-16", "homeTeamId": "18", "awayTeamId": "24"},
+      "reason": "Cup championship does not count toward regular-season standings.",
+      "sources": ["https://www.nba.com/game/sas-vs-nyk-0062500001", "https://www.nba.com/news/nba-cup-101"]
+    },
+    {
+      "externalGameId": "401810384",
+      "expected": {"gameDate": "2026-01-08", "homeTeamId": "4", "awayTeamId": "14"},
+      "replacement": {"externalGameId": "401850920", "gameDate": "2026-01-29"},
+      "reason": "Postponed original entry; keep the makeup game.",
+      "sources": ["https://pr.nba.com/heat-bulls-schedule-adjustments/"]
+    },
+    {
+      "externalGameId": "401810499",
+      "expected": {"gameDate": "2026-01-24", "homeTeamId": "16", "awayTeamId": "9"},
+      "replacement": {"externalGameId": "401857824", "gameDate": "2026-01-25"},
+      "reason": "Postponed original entry; keep the makeup game.",
+      "sources": ["https://www.nba.com/timberwolves/news/wolves-vs-warriors-postponed-to-jan-25-at-430-p-m-cst"]
+    },
+    {
+      "externalGameId": "401810507",
+      "expected": {"gameDate": "2026-01-25", "homeTeamId": "15", "awayTeamId": "6"},
+      "replacement": {"externalGameId": "401858694", "gameDate": "2026-03-31"},
+      "reason": "Postponed original entry; keep the makeup game.",
+      "sources": ["https://www.nba.com/news/nba-schedule-adjustments-weather-2026"]
+    },
+    {
+      "externalGameId": "401810506",
+      "expected": {"gameDate": "2026-01-25", "homeTeamId": "29", "awayTeamId": "7"},
+      "replacement": {"externalGameId": "401858693", "gameDate": "2026-03-18"},
+      "reason": "Postponed original entry; keep the makeup game.",
+      "sources": ["https://www.nba.com/news/nba-schedule-adjustments-weather-2026"]
+    }
+  ]
+}

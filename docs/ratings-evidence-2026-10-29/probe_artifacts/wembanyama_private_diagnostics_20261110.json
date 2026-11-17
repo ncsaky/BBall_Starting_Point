@@ -1,0 +1,42 @@
+{
+  "current": {
+    "delta": {},
+    "components": {
+      "activity": 78.6964,
+      "rim": 98.72439790814276,
+      "skill": 86.7075991632571
+    }
+  },
+  "rim100": {
+    "delta": {
+      "rim_deterrence": 1
+    },
+    "components": {
+      "activity": 78.6964,
+      "rim": 99.0,
+      "skill": 86.81783999999999
+    }
+  },
+  "effort90_sensitivity": {
+    "delta": {
+      "defensive_effort": 8
+    },
+    "components": {
+      "activity": 82.0564,
+      "rim": 98.72439790814276,
+      "skill": 88.72359916325709
+    }
+  },
+  "combined_sensitivity": {
+    "delta": {
+      "rim_deterrence": 1,
+      "defensive_effort": 8
+    },
+    "components": {
+      "activity": 82.0564,
+      "rim": 99.0,
+      "skill": 88.83384
+    }
+  },
+  "source_hashes_match_snapshot": true
+}

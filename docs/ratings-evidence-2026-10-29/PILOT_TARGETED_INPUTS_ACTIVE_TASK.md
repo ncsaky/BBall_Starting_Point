@@ -1,0 +1,33 @@
+# Active research task: replace consequential pilot placeholders
+
+Milestone 7, authorized November 14, 2026. Supersedes the completed assumption review. After interruption/compaction reread this file AND current assignment. Record progress in resume state; no older task revival.
+
+## Objective
+
+Produce actionable player-specific estimate improvements for the SAME pilot and the uncertainties actually exposed by milestone-6 results, not another general missing-data catalogue. Read `docs/PLAYER_INPUT_PILOT_REVIEW_2026_11_14.md`, prior pilot/assumption packets and the approved player map. Base actors: Luka, Harper, White, Castle, Zubac, Gobert; Caruso/Davion/Ajay only as existing screen/navigation contrasts. Do not expand to a new league-wide cohort in this pass.
+
+## Work
+
+1. Prioritize consequential common skill priors and uncertain decompositions: creator handling security, specific pass-family recognition/delivery, receiving versus finishing, screen execution/follow-up, and help recognition/attention/positioning. Use actual milestone-6 findings to distinguish important gaps from unused fields. Preserve useful previous proposals, especially the Gobert screening correction; do not present inherited estimates as new discoveries.
+2. Use retained podcast evidence fully at the relevant passages, including justified implications. Targeted public scouting/tracking/official measurement sources are allowed where they materially resolve a gap. Record dates, role/opportunity context, precise source windows or URLs, counterevidence and uncertainty. Do not require impossible isolated measurements before providing a broad estimate. Conversely do not convert aggregate turnovers into several independent weaknesses or generic reputation into every skill.
+3. Deliver separate versioned proposed updates with old operational prior, original source status, proposed range/reference value, rationale, confidence, shared-evidence group and affected contrast. A broad defensible player-specific estimate is useful even without a measured stat; a generic 65 with a real name is not evidence. Preserve original source records and their uncertainty. Do not narrow ranges merely to stop the engine from reversing a comparison.
+4. For movement/geometry gaps, distinguish known body measurements, scouting-supported relative ordering and unmeasured absolute motion. Propose coherent relative alternatives and constraints where justified; do not fabricate m/s, force tests or exact current reach. State which response outcomes cannot yet be interpreted as player rankings. Avoid all-extreme combinations and accidental double counting of effective scouting into technique AND physical advantages.
+5. Supply `PILOT_TARGETED_INPUT_UPDATES_2026_11_14.md` and a machine-readable sidecar with stable IDs, scales, per-field origins and evidence. Reuse the earlier overlay conventions when possible. Validate IDs/types/units/provenance and source preservation; clearly label what is schema-valid versus actually compiled. Read backend contracts only as needed, without chasing evolving files. No simulations or backend edits.
+
+End with a compact comparison of which important placeholders were improved, what remains genuinely unconstrained and a small actionable human queue only if needed. No numerical output quota: quality and relevance matter more than filling cells. Stop after a bounded targeted evidence pass; no exhaustive re-transcription, subscriptions, broad data campaign, production ratings or architecture changes.
+
+## Coordination and ownership
+
+Backend simultaneously audits timing/coverage responses and will repeat old/new-input comparisons if this completed overlay is available. Do not fit estimates to desired simulation output or wait for the engine to tell you what rating to choose. Own this checkpoint/new research deliverables/diagnostics only. Do not edit original packets, coordinator status, backend active file, saves or production data. Do not message other chats without separate human authorization.
+
+## Resume state — DELIVERED November14
+
+Delivered [PILOT_TARGETED_INPUT_UPDATES_2026_11_14.md](PILOT_TARGETED_INPUT_UPDATES_2026_11_14.md)/JSON, version pilot_targeted_input_overlay_2026_11_14_v1. Pinned actual verified/initial-readiness-completion-layer.json baseline and contract; used measured milestone6 findings only to prioritize evidence, never fit a desired direction.
+
+Eight new/revised targeted records: LukaS17 76–92/ref84; HarperF04 recognition65–85/ref75 and execution68–88/ref78; HarperF03 recognition65–85/ref75 and execution68–86/ref77; GobertS28 75–92/ref83.5 and S14 50–76/ref63; ZubacS14 68–86/ref77. These replace six generic controls and revise two prior F03 hypotheses. Four prior assumption-review proposals (GobertP03/S27,ZubacS11,CastleS01) are carried exactly, not called new discoveries. Source status/old actual operational records, confidence/shared evidence and affected contrasts included per field.
+
+New useful evidence: dated Harper subjective college pressure-passing charting and original inside-read scouting; specific Oct2025 reported lofted feeds/lob; specific Nov2022 Luka protection action; Gobert Dec2022 coverage-dependent screen explanation; Zubac2018 tight-space receiving praise and mixed Gobert historical hands evidence. All dated/contextual, no current loss/catch rate invented. Eight focused query strings, no blocked retries or broad acquisition. Ringer502/unreviewed content and post-start headlines not used. Earlier Harper suppression, help/attention and absolute physical uncertainty remain explicit; no fresh SI/force measurements inferred.
+
+Validation passed: two full94-ID schema sections and exact round-trips;846 original source rows for nine existing actors preserved; only12 declared derived records changed,319 ledger rows consistent. Six new controls/source-unknown fields and two prior estimated fields distinguished. Four inherited records match prior review exactly. Per-field types/units/ranges/provenance and nine pinned source hashes checked. Changed rows clear stale interpretation audits. Declarative in-memory apply check:12 apply once,12 skip second time, conflicting baseline rejected; not a backend implementation test. Overlay NOT compiled or simulated. See diagnostics/pilot_targeted_20261114/validation.json.
+
+Next concrete action: STOP. Backend may explicitly rebase/consume the completed overlay when ready and compare old/new inputs separately from timing changes. No new human answer required. This research changed no production code/data/ratings, original packets, saves, architecture or coordinator files and did not chase backend edits. Resume only on a new assignment.

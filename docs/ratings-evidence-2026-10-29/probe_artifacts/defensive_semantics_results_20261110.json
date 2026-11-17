@@ -1,0 +1,403 @@
+{
+  "version": "2026-11-10-five-player-scouting-v11",
+  "canonical_sha256": "0733a2c0ab62faf893c07d9240c23f6a47bed057205bda4bb13c08ea1b07332d",
+  "code_sha256": {
+    "traits.py": "07f068d2553ba794d68caafe8b9bc1d9949ab1a2635349d1e0924743a71a8f93",
+    "save.py": "6ea0211d5ea8b881c5304a0d368379d07fe6592d6a3ae1a60fd1ef29ec0ba0e7",
+    "sim.py": "e0227c8ee5522b7e01fcec17668ba30d07c29e7949f1946a814bf10bc20bb3db",
+    "spatial.py": "6eeb78be281ad3a8822da720cc8314d76f80c41fe4432a23ba9746d48d640167",
+    "talent.py": "45a536f0ca63e65912555148350151d6eedcfdf82f6031e0ef7632495e297c3c",
+    "offense.py": "685abdc4809a05e19ec57610f26ee464d35f384b2e5271cc8386268d964c6135"
+  },
+  "thought_experiment": {
+    "77_SG": {
+      "height": 77,
+      "position": "SG",
+      "engine_def": 82.0,
+      "engine_ovr": 71.0,
+      "rim_feature": 83.378,
+      "activity": 84.391,
+      "impact": 73.887,
+      "spatial_defense": {
+        "restricted_area": {
+          "frequency_influence": 40.62,
+          "contest": 75.98,
+          "suppression": 77.6,
+          "intensity": 76.98
+        },
+        "paint_non_ra": {
+          "frequency_influence": 40.47,
+          "contest": 75.98,
+          "suppression": 78.02,
+          "intensity": 77.24
+        },
+        "short_mid_left": {
+          "frequency_influence": 41.42,
+          "contest": 74.61,
+          "suppression": 75.23,
+          "intensity": 75.0
+        },
+        "short_mid_right": {
+          "frequency_influence": 41.39,
+          "contest": 74.61,
+          "suppression": 75.31,
+          "intensity": 75.05
+        },
+        "long_mid_left": {
+          "frequency_influence": 41.37,
+          "contest": 74.61,
+          "suppression": 75.39,
+          "intensity": 75.09
+        },
+        "long_mid_center": {
+          "frequency_influence": 41.4,
+          "contest": 74.61,
+          "suppression": 75.3,
+          "intensity": 75.04
+        },
+        "long_mid_right": {
+          "frequency_influence": 41.75,
+          "contest": 74.61,
+          "suppression": 74.25,
+          "intensity": 74.39
+        },
+        "corner_three_left": {
+          "frequency_influence": 38.65,
+          "contest": 78.41,
+          "suppression": 83.37,
+          "intensity": 81.49
+        },
+        "above_break_left": {
+          "frequency_influence": 38.43,
+          "contest": 78.41,
+          "suppression": 84.03,
+          "intensity": 81.9
+        },
+        "above_break_center": {
+          "frequency_influence": 38.5,
+          "contest": 78.41,
+          "suppression": 83.83,
+          "intensity": 81.77
+        },
+        "above_break_right": {
+          "frequency_influence": 38.7,
+          "contest": 78.41,
+          "suppression": 83.25,
+          "intensity": 81.41
+        },
+        "corner_three_right": {
+          "frequency_influence": 38.83,
+          "contest": 78.41,
+          "suppression": 82.86,
+          "intensity": 81.17
+        }
+      }
+    },
+    "84_SG": {
+      "height": 84,
+      "position": "SG",
+      "engine_def": 82.0,
+      "engine_ovr": 71.0,
+      "rim_feature": 83.378,
+      "activity": 84.391,
+      "impact": 73.887,
+      "spatial_defense": {
+        "restricted_area": {
+          "frequency_influence": 38.99,
+          "contest": 80.78,
+          "suppression": 82.4,
+          "intensity": 81.78
+        },
+        "paint_non_ra": {
+          "frequency_influence": 38.84,
+          "contest": 80.78,
+          "suppression": 82.82,
+          "intensity": 82.04
+        },
+        "short_mid_left": {
+          "frequency_influence": 41.42,
+          "contest": 74.61,
+          "suppression": 75.23,
+          "intensity": 75.0
+        },
+        "short_mid_right": {
+          "frequency_influence": 41.39,
+          "contest": 74.61,
+          "suppression": 75.31,
+          "intensity": 75.05
+        },
+        "long_mid_left": {
+          "frequency_influence": 41.37,
+          "contest": 74.61,
+          "suppression": 75.39,
+          "intensity": 75.09
+        },
+        "long_mid_center": {
+          "frequency_influence": 41.4,
+          "contest": 74.61,
+          "suppression": 75.3,
+          "intensity": 75.04
+        },
+        "long_mid_right": {
+          "frequency_influence": 41.75,
+          "contest": 74.61,
+          "suppression": 74.25,
+          "intensity": 74.39
+        },
+        "corner_three_left": {
+          "frequency_influence": 38.65,
+          "contest": 78.41,
+          "suppression": 83.37,
+          "intensity": 81.49
+        },
+        "above_break_left": {
+          "frequency_influence": 38.43,
+          "contest": 78.41,
+          "suppression": 84.03,
+          "intensity": 81.9
+        },
+        "above_break_center": {
+          "frequency_influence": 38.5,
+          "contest": 78.41,
+          "suppression": 83.83,
+          "intensity": 81.77
+        },
+        "above_break_right": {
+          "frequency_influence": 38.7,
+          "contest": 78.41,
+          "suppression": 83.25,
+          "intensity": 81.41
+        },
+        "corner_three_right": {
+          "frequency_influence": 38.83,
+          "contest": 78.41,
+          "suppression": 82.86,
+          "intensity": 81.17
+        }
+      }
+    },
+    "77_C": {
+      "height": 77,
+      "position": "C",
+      "engine_def": 82.0,
+      "engine_ovr": 72.9,
+      "rim_feature": 83.378,
+      "activity": 84.391,
+      "impact": 75.738,
+      "spatial_defense": {
+        "restricted_area": {
+          "frequency_influence": 40.62,
+          "contest": 75.98,
+          "suppression": 77.6,
+          "intensity": 76.98
+        },
+        "paint_non_ra": {
+          "frequency_influence": 40.47,
+          "contest": 75.98,
+          "suppression": 78.02,
+          "intensity": 77.24
+        },
+        "short_mid_left": {
+          "frequency_influence": 41.42,
+          "contest": 74.61,
+          "suppression": 75.23,
+          "intensity": 75.0
+        },
+        "short_mid_right": {
+          "frequency_influence": 41.39,
+          "contest": 74.61,
+          "suppression": 75.31,
+          "intensity": 75.05
+        },
+        "long_mid_left": {
+          "frequency_influence": 41.37,
+          "contest": 74.61,
+          "suppression": 75.39,
+          "intensity": 75.09
+        },
+        "long_mid_center": {
+          "frequency_influence": 41.4,
+          "contest": 74.61,
+          "suppression": 75.3,
+          "intensity": 75.04
+        },
+        "long_mid_right": {
+          "frequency_influence": 41.75,
+          "contest": 74.61,
+          "suppression": 74.25,
+          "intensity": 74.39
+        },
+        "corner_three_left": {
+          "frequency_influence": 38.65,
+          "contest": 78.41,
+          "suppression": 83.37,
+          "intensity": 81.49
+        },
+        "above_break_left": {
+          "frequency_influence": 38.43,
+          "contest": 78.41,
+          "suppression": 84.03,
+          "intensity": 81.9
+        },
+        "above_break_center": {
+          "frequency_influence": 38.5,
+          "contest": 78.41,
+          "suppression": 83.83,
+          "intensity": 81.77
+        },
+        "above_break_right": {
+          "frequency_influence": 38.7,
+          "contest": 78.41,
+          "suppression": 83.25,
+          "intensity": 81.41
+        },
+        "corner_three_right": {
+          "frequency_influence": 38.83,
+          "contest": 78.41,
+          "suppression": 82.86,
+          "intensity": 81.17
+        }
+      }
+    },
+    "84_C": {
+      "height": 84,
+      "position": "C",
+      "engine_def": 82.0,
+      "engine_ovr": 72.9,
+      "rim_feature": 83.378,
+      "activity": 84.391,
+      "impact": 75.738,
+      "spatial_defense": {
+        "restricted_area": {
+          "frequency_influence": 38.99,
+          "contest": 80.78,
+          "suppression": 82.4,
+          "intensity": 81.78
+        },
+        "paint_non_ra": {
+          "frequency_influence": 38.84,
+          "contest": 80.78,
+          "suppression": 82.82,
+          "intensity": 82.04
+        },
+        "short_mid_left": {
+          "frequency_influence": 41.42,
+          "contest": 74.61,
+          "suppression": 75.23,
+          "intensity": 75.0
+        },
+        "short_mid_right": {
+          "frequency_influence": 41.39,
+          "contest": 74.61,
+          "suppression": 75.31,
+          "intensity": 75.05
+        },
+        "long_mid_left": {
+          "frequency_influence": 41.37,
+          "contest": 74.61,
+          "suppression": 75.39,
+          "intensity": 75.09
+        },
+        "long_mid_center": {
+          "frequency_influence": 41.4,
+          "contest": 74.61,
+          "suppression": 75.3,
+          "intensity": 75.04
+        },
+        "long_mid_right": {
+          "frequency_influence": 41.75,
+          "contest": 74.61,
+          "suppression": 74.25,
+          "intensity": 74.39
+        },
+        "corner_three_left": {
+          "frequency_influence": 38.65,
+          "contest": 78.41,
+          "suppression": 83.37,
+          "intensity": 81.49
+        },
+        "above_break_left": {
+          "frequency_influence": 38.43,
+          "contest": 78.41,
+          "suppression": 84.03,
+          "intensity": 81.9
+        },
+        "above_break_center": {
+          "frequency_influence": 38.5,
+          "contest": 78.41,
+          "suppression": 83.83,
+          "intensity": 81.77
+        },
+        "above_break_right": {
+          "frequency_influence": 38.7,
+          "contest": 78.41,
+          "suppression": 83.25,
+          "intensity": 81.41
+        },
+        "corner_three_right": {
+          "frequency_influence": 38.83,
+          "contest": 78.41,
+          "suppression": 82.86,
+          "intensity": 81.17
+        }
+      }
+    }
+  },
+  "tail": {
+    "60": {
+      "rim_feature": 60.0,
+      "presentation_value": 80.0
+    },
+    "68": {
+      "rim_feature": 68.0,
+      "presentation_value": 86.4
+    },
+    "78": {
+      "rim_feature": 80.72441024718518,
+      "presentation_value": 93.6
+    },
+    "88": {
+      "rim_feature": 94.17288093194165,
+      "presentation_value": 97.4
+    },
+    "90": {
+      "rim_feature": 96.90766501562156,
+      "presentation_value": 98.0
+    },
+    "92": {
+      "rim_feature": 99,
+      "presentation_value": 98.2
+    },
+    "94": {
+      "rim_feature": 99,
+      "presentation_value": 98.4
+    },
+    "97": {
+      "rim_feature": 99,
+      "presentation_value": 98.8
+    },
+    "99": {
+      "rim_feature": 99,
+      "presentation_value": 99.0
+    }
+  },
+  "integrity": {
+    "30": {
+      "weak_link": 65.27306043899509,
+      "integrity": 34.72693956100491
+    },
+    "48": {
+      "weak_link": 50.0,
+      "integrity": 50.0
+    },
+    "70": {
+      "weak_link": 50.0,
+      "integrity": 50.0
+    },
+    "90": {
+      "weak_link": 50.0,
+      "integrity": 50.0
+    }
+  },
+  "code_unchanged_during_calculation": true
+}

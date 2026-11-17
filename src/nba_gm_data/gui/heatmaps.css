@@ -1,0 +1,28 @@
+/* Numeric keys fit the existing compact chart footers. */
+body .spatial-heatmap .spatial-legends .spatial-legend {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto 26px;
+  justify-items:center;
+  gap:2px;
+}
+body .spatial-heatmap .spatial-legend i.spatial-numeric-key {
+  display:flex;
+  align-items:start;
+  justify-content:center;
+  width:auto;
+  min-width:0;
+  height:26px;
+  gap:5px;
+  background:none;
+}
+.spatial-numeric-key .spatial-key-stop { display:grid; justify-items:center; gap:1px; min-width:16px; }
+body .spatial-heatmap .spatial-numeric-key .spatial-key-stop b {
+  display:block;
+  width:13px;
+  height:13px;
+  flex:none;
+  border:0;
+  clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);
+}
+.spatial-numeric-key .spatial-key-stop em { color:#263b4d; font:11px/12px Tahoma,Arial,sans-serif; text-align:center; }

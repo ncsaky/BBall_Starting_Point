@@ -1,0 +1,138 @@
+{
+  "snapshot_date": "2026-10-13",
+  "notes": "Starting data only. Published terms override stale prior-team buyout/dead-salary rows; uncertain annual salaries remain marked estimates.",
+  "contracts": [
+    {
+      "player_name": "Klay Thompson",
+      "team_abbrev": "MIA",
+      "seasons": [
+        {
+          "season": "2026-27",
+          "salary": 5750000,
+          "option_type": null,
+          "guarantee_status": "reported_total_gameplay_annual_estimate"
+        },
+        {
+          "season": "2027-28",
+          "salary": 5750000,
+          "option_type": "player_option",
+          "guarantee_status": "reported_total_gameplay_annual_estimate"
+        }
+      ],
+      "status": "reported_total_gameplay_annual_estimate",
+      "confidence": 0.65,
+      "notes": "NBA.com August 24 confirms two years about $11.5M, second year player option. Equal annual allocation is an explicit gameplay estimate; replaces old DAL buyout salary. https://www.nba.com/news/klay-thompson-heat-2026-free-agency",
+      "source_ids": [
+        "src_october_2026_contract_corrections"
+      ]
+    },
+    {
+      "player_name": "Kentavious Caldwell-Pope",
+      "team_abbrev": "PHI",
+      "seasons": [
+        {
+          "season": "2026-27",
+          "salary": 3900000,
+          "option_type": null,
+          "guarantee_status": "reported_public_terms"
+        }
+      ],
+      "status": "reported_public_terms",
+      "confidence": 0.75,
+      "notes": "NBA player news July 25 reports new one-year $3.9M PHI deal after MEM buyout. Old MEM salary must not follow the new signing. https://www.nba.com/magic/player/203484/kentavious-caldwell-pope",
+      "source_ids": [
+        "src_october_2026_contract_corrections"
+      ]
+    },
+    {
+      "player_name": "Cam Whitmore",
+      "team_abbrev": "DEN",
+      "seasons": [
+        {
+          "season": "2026-27",
+          "salary": 675000,
+          "option_type": null,
+          "guarantee_status": "inferred_two_way_gameplay_salary"
+        }
+      ],
+      "status": "inferred_two_way_gameplay_salary",
+      "confidence": 0.35,
+      "notes": "Official NBA roster and team release confirm a new two-way contract. Salary is an explicit gameplay estimate; do not copy guaranteed salary from the waived prior-team contract.",
+      "source_ids": [
+        "src_october_2026_contract_corrections"
+      ]
+    },
+    {
+      "player_name": "Jordan Hawkins",
+      "team_abbrev": "CHI",
+      "seasons": [
+        {
+          "season": "2026-27",
+          "salary": 675000,
+          "option_type": null,
+          "guarantee_status": "inferred_two_way_gameplay_salary"
+        }
+      ],
+      "status": "inferred_two_way_gameplay_salary",
+      "confidence": 0.35,
+      "notes": "Official NBA roster and team release confirm a new two-way contract. Salary is an explicit gameplay estimate; do not copy guaranteed salary from the waived prior-team contract.",
+      "source_ids": [
+        "src_october_2026_contract_corrections"
+      ]
+    },
+    {
+      "player_name": "Ryan Nembhard",
+      "team_abbrev": "DEN",
+      "seasons": [
+        {
+          "season": "2026-27",
+          "salary": 675000,
+          "option_type": null,
+          "guarantee_status": "inferred_two_way_gameplay_salary"
+        }
+      ],
+      "status": "inferred_two_way_gameplay_salary",
+      "confidence": 0.35,
+      "notes": "Official NBA roster and team release confirm a new two-way contract. Salary is an explicit gameplay estimate; do not copy guaranteed salary from the waived prior-team contract.",
+      "source_ids": [
+        "src_october_2026_contract_corrections"
+      ]
+    },
+    {
+      "player_name": "Devin Carter",
+      "team_abbrev": "BOS",
+      "seasons": [
+        {
+          "season": "2026-27",
+          "salary": 2100000,
+          "option_type": null,
+          "guarantee_status": "inferred_new_contract_salary"
+        }
+      ],
+      "status": "inferred_new_contract_salary",
+      "confidence": 0.3,
+      "notes": "Official NBA roster confirms new signing after prior team waived the player. One-year minimum-framework salary is an explicit gameplay estimate pending published new terms.",
+      "source_ids": [
+        "src_october_2026_contract_corrections"
+      ]
+    },
+    {
+      "player_name": "Johni Broome",
+      "team_abbrev": "MIL",
+      "seasons": [
+        {
+          "season": "2026-27",
+          "salary": 2100000,
+          "option_type": null,
+          "guarantee_status": "inferred_new_contract_salary"
+        }
+      ],
+      "status": "inferred_new_contract_salary",
+      "confidence": 0.3,
+      "notes": "Official NBA roster confirms new signing after prior team waived the player. One-year minimum-framework salary is an explicit gameplay estimate pending published new terms.",
+      "source_ids": [
+        "src_october_2026_contract_corrections"
+      ]
+    }
+  ]
+}

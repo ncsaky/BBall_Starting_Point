@@ -1,0 +1,4775 @@
+{
+  "version": 2,
+  "teams": {
+    "ATL": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/ATL-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/ATL-v2-1.jpg",
+          "kind": "basketball",
+          "team": "ATL",
+          "clips": [
+            {
+              "source_start": 2,
+              "frames": 255,
+              "team": "ATL",
+              "opponent": "BKN",
+              "action": "Johnson drive and dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 25,
+              "frames": 255,
+              "team": "ATL",
+              "opponent": "IND",
+              "action": "Johnson driving finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 546
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/ATL-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/ATL-v2-2.jpg",
+          "kind": "basketball",
+          "team": "ATL",
+          "clips": [
+            {
+              "source_start": 68,
+              "frames": 300,
+              "team": "ATL",
+              "opponent": "MEM",
+              "action": "Johnson late driving basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 79,
+              "frames": 360,
+              "team": "ATL",
+              "opponent": "LAC",
+              "action": "Johnson cut and dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 696
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/ATL-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/ATL-v2-3.jpg",
+          "kind": "basketball",
+          "team": "ATL",
+          "clips": [
+            {
+              "source_start": 99,
+              "frames": 300,
+              "team": "ATL",
+              "opponent": "HOU",
+              "action": "Johnson chase-down block",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 169,
+              "frames": 330,
+              "team": "ATL",
+              "opponent": "PHI",
+              "action": "Johnson attack and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 666
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "wT-Hj5oWu1U",
+        "url": "https://www.youtube.com/watch?v=wT-Hj5oWu1U",
+        "title": "Jalen Johnson is an NBA All Star \ud83c\udf1f 2025-26 Season Highlights",
+        "channel": "Atlanta Hawks",
+        "path": ".cache/startup-team-correction/ATL.mp4",
+        "query": "2025-26 Atlanta Hawks Jalen Johnson best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 2,
+          "frames": 255,
+          "team": "ATL",
+          "opponent": "BKN",
+          "action": "Johnson drive and dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 25,
+          "frames": 255,
+          "team": "ATL",
+          "opponent": "IND",
+          "action": "Johnson driving finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 68,
+          "frames": 300,
+          "team": "ATL",
+          "opponent": "MEM",
+          "action": "Johnson late driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 79,
+          "frames": 360,
+          "team": "ATL",
+          "opponent": "LAC",
+          "action": "Johnson cut and dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 99,
+          "frames": 300,
+          "team": "ATL",
+          "opponent": "HOU",
+          "action": "Johnson chase-down block",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 169,
+          "frames": 330,
+          "team": "ATL",
+          "opponent": "PHI",
+          "action": "Johnson attack and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 87.13333333333334
+    },
+    "BKN": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/BKN-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/BKN-v2-1.jpg",
+          "kind": "basketball",
+          "team": "BKN",
+          "clips": [
+            {
+              "source_start": 2,
+              "frames": 270,
+              "team": "BKN",
+              "opponent": "CLE",
+              "action": "Porter three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 13,
+              "frames": 270,
+              "team": "BKN",
+              "opponent": "HOU",
+              "action": "Porter three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 576
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/BKN-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/BKN-v2-2.jpg",
+          "kind": "basketball",
+          "team": "BKN",
+          "clips": [
+            {
+              "source_start": 58,
+              "frames": 240,
+              "team": "BKN",
+              "opponent": "PHI",
+              "action": "Porter drive and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 23,
+              "frames": 270,
+              "team": "BKN",
+              "opponent": "ATL",
+              "action": "Porter scoring play",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 546
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/BKN-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/BKN-v2-3.jpg",
+          "kind": "basketball",
+          "team": "BKN",
+          "clips": [
+            {
+              "source_start": 139,
+              "frames": 195,
+              "team": "BKN",
+              "opponent": "DET",
+              "action": "Porter three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 178,
+              "frames": 180,
+              "team": "BKN",
+              "opponent": "TOR",
+              "action": "Porter driving basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 411
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "zEgrNFMdXwg",
+        "url": "https://www.youtube.com/watch?v=zEgrNFMdXwg",
+        "title": "Michael Porter Jr. 2025-2026 Season Highlights",
+        "channel": "Brooklyn Nets",
+        "path": ".cache/startup-team-correction/BKN.mp4",
+        "query": "2025-26 Brooklyn Nets Michael Porter Jr. best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 2,
+          "frames": 270,
+          "team": "BKN",
+          "opponent": "CLE",
+          "action": "Porter three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 13,
+          "frames": 270,
+          "team": "BKN",
+          "opponent": "HOU",
+          "action": "Porter three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 58,
+          "frames": 240,
+          "team": "BKN",
+          "opponent": "PHI",
+          "action": "Porter drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 23,
+          "frames": 270,
+          "team": "BKN",
+          "opponent": "ATL",
+          "action": "Porter scoring play",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 139,
+          "frames": 195,
+          "team": "BKN",
+          "opponent": "DET",
+          "action": "Porter three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 178,
+          "frames": 180,
+          "team": "BKN",
+          "opponent": "TOR",
+          "action": "Porter driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 74.63333333333334
+    },
+    "BOS": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/BOS-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/BOS-v2-1.jpg",
+          "kind": "basketball",
+          "team": "BOS",
+          "clips": [
+            {
+              "source_start": 2,
+              "frames": 360,
+              "team": "BOS",
+              "opponent": "PHI",
+              "action": "Brown defensive play",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 23,
+              "frames": 300,
+              "team": "BOS",
+              "opponent": "DET",
+              "action": "Boston drive and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 696
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/BOS-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/BOS-v2-2.jpg",
+          "kind": "basketball",
+          "team": "BOS",
+          "clips": [
+            {
+              "source_start": 34,
+              "frames": 390,
+              "team": "BOS",
+              "opponent": "CLE",
+              "action": "Boston buzzer three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 119,
+              "frames": 390,
+              "team": "BOS",
+              "opponent": "UTA",
+              "action": "Boston paint finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 816
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/BOS-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/BOS-v2-3.jpg",
+          "kind": "basketball",
+          "team": "BOS",
+          "clips": [
+            {
+              "source_start": 134,
+              "frames": 510,
+              "team": "BOS",
+              "opponent": "WAS",
+              "action": "Brown driving basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 169,
+              "frames": 270,
+              "team": "BOS",
+              "opponent": "DAL",
+              "action": "Brown basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 816
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "GVsjpWv5wLo",
+        "url": "https://www.youtube.com/watch?v=GVsjpWv5wLo",
+        "title": "Jaylen Brown | Top Plays of the 2025-26 Season",
+        "channel": "Sports Productions ",
+        "path": ".cache/startup-team-correction/BOS-GVsjpWv5wLo.mp4",
+        "query": "2025-26 Boston Celtics Jaylen Brown best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 2,
+          "frames": 360,
+          "team": "BOS",
+          "opponent": "PHI",
+          "action": "Brown defensive play",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 23,
+          "frames": 300,
+          "team": "BOS",
+          "opponent": "DET",
+          "action": "Boston drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 34,
+          "frames": 390,
+          "team": "BOS",
+          "opponent": "CLE",
+          "action": "Boston buzzer three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 119,
+          "frames": 390,
+          "team": "BOS",
+          "opponent": "UTA",
+          "action": "Boston paint finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 134,
+          "frames": 510,
+          "team": "BOS",
+          "opponent": "WAS",
+          "action": "Brown driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 169,
+          "frames": 270,
+          "team": "BOS",
+          "opponent": "DAL",
+          "action": "Brown basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 101.13333333333334
+    },
+    "CHA": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/CHA-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/CHA-v2-1.jpg",
+          "kind": "basketball",
+          "team": "CHA",
+          "clips": [
+            {
+              "source_start": 0,
+              "frames": 270,
+              "team": "CHA",
+              "opponent": "SAC",
+              "action": "Hornets basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 17,
+              "frames": 270,
+              "team": "CHA",
+              "opponent": "SAC",
+              "action": "Hornets driving basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 576
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/CHA-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/CHA-v2-2.jpg",
+          "kind": "basketball",
+          "team": "CHA",
+          "clips": [
+            {
+              "source_start": 59,
+              "frames": 390,
+              "team": "CHA",
+              "opponent": "SAS",
+              "action": "Hornets drive and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 94,
+              "frames": 390,
+              "team": "CHA",
+              "opponent": "SAS",
+              "action": "Hornets dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 816
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/CHA-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/CHA-v2-3.jpg",
+          "kind": "basketball",
+          "team": "CHA",
+          "clips": [
+            {
+              "source_start": 119,
+              "frames": 330,
+              "team": "CHA",
+              "opponent": "SAS",
+              "action": "Hornets assist and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 183,
+              "frames": 510,
+              "team": "CHA",
+              "opponent": "DAL",
+              "action": "Hornets attack against Dallas",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 876
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "MwIh--NGGHU",
+        "url": "https://www.youtube.com/watch?v=MwIh--NGGHU",
+        "title": "The Charlotte Hornets Are BUZZING! \ud83d\udc1d | Top Plays",
+        "channel": "NBA",
+        "path": ".cache/startup-team-correction/CHA.mp4",
+        "query": "2025-26 Charlotte Hornets LaMelo Ball best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 270,
+          "team": "CHA",
+          "opponent": "SAC",
+          "action": "Hornets basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 17,
+          "frames": 270,
+          "team": "CHA",
+          "opponent": "SAC",
+          "action": "Hornets driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 59,
+          "frames": 390,
+          "team": "CHA",
+          "opponent": "SAS",
+          "action": "Hornets drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 94,
+          "frames": 390,
+          "team": "CHA",
+          "opponent": "SAS",
+          "action": "Hornets dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 119,
+          "frames": 330,
+          "team": "CHA",
+          "opponent": "SAS",
+          "action": "Hornets assist and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 183,
+          "frames": 510,
+          "team": "CHA",
+          "opponent": "DAL",
+          "action": "Hornets attack against Dallas",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 99.13333333333334
+    },
+    "CHI": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/CHI-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/CHI-v2-1.jpg",
+          "kind": "basketball",
+          "team": "CHI",
+          "clips": [
+            {
+              "source_start": 8.5,
+              "frames": 255,
+              "team": "CHI",
+              "opponent": "UTA",
+              "action": "Giddey driving basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 17,
+              "frames": 330,
+              "team": "CHI",
+              "opponent": "ATL",
+              "action": "Giddey drive in Atlanta",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 621
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/CHI-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/CHI-v2-2.jpg",
+          "kind": "basketball",
+          "team": "CHI",
+          "clips": [
+            {
+              "source_start": 28,
+              "frames": 300,
+              "team": "CHI",
+              "opponent": "MIL",
+              "action": "Giddey assist for Bulls finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 63,
+              "frames": 210,
+              "team": "CHI",
+              "opponent": "CHA",
+              "action": "Giddey long pass and Bulls finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 546
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/CHI-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/CHI-v2-3.jpg",
+          "kind": "basketball",
+          "team": "CHI",
+          "clips": [
+            {
+              "source_start": 82,
+              "frames": 300,
+              "team": "CHI",
+              "opponent": "PHI",
+              "action": "Giddey assist against Philadelphia",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 103,
+              "frames": 270,
+              "team": "CHI",
+              "opponent": "LAC",
+              "action": "Giddey assist and Bulls finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 606
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "yYtzjK0GAKE",
+        "url": "https://www.youtube.com/watch?v=yYtzjK0GAKE",
+        "title": "20 minutes of Josh Giddey dropping dimes & getting buckets",
+        "channel": "Chicago Bulls",
+        "path": ".cache/startup-team-correction/CHI.mp4",
+        "query": "2025-26 Chicago Bulls Josh Giddey best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 8.5,
+          "frames": 255,
+          "team": "CHI",
+          "opponent": "UTA",
+          "action": "Giddey driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 17,
+          "frames": 330,
+          "team": "CHI",
+          "opponent": "ATL",
+          "action": "Giddey drive in Atlanta",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 28,
+          "frames": 300,
+          "team": "CHI",
+          "opponent": "MIL",
+          "action": "Giddey assist for Bulls finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 63,
+          "frames": 210,
+          "team": "CHI",
+          "opponent": "CHA",
+          "action": "Giddey long pass and Bulls finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 82,
+          "frames": 300,
+          "team": "CHI",
+          "opponent": "PHI",
+          "action": "Giddey assist against Philadelphia",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 103,
+          "frames": 270,
+          "team": "CHI",
+          "opponent": "LAC",
+          "action": "Giddey assist and Bulls finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 82.63333333333334
+    },
+    "CLE": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/CLE-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/CLE-v2-1.jpg",
+          "kind": "basketball",
+          "team": "CLE",
+          "clips": [
+            {
+              "source_start": 1,
+              "frames": 450,
+              "team": "CLE",
+              "opponent": "MIA",
+              "action": "Mitchell tying three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 38,
+              "frames": 300,
+              "team": "CLE",
+              "opponent": "WAS",
+              "action": "Mitchell drive and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 786
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/CLE-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/CLE-v2-2.jpg",
+          "kind": "basketball",
+          "team": "CLE",
+          "clips": [
+            {
+              "source_start": 64,
+              "frames": 360,
+              "team": "CLE",
+              "opponent": "ORL",
+              "action": "Mitchell three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 115.5,
+              "frames": 315,
+              "team": "CLE",
+              "opponent": "BOS",
+              "action": "Mitchell driving basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 711
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/CLE-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/CLE-v2-3.jpg",
+          "kind": "basketball",
+          "team": "CLE",
+          "clips": [
+            {
+              "source_start": 155,
+              "frames": 330,
+              "team": "CLE",
+              "opponent": "DAL",
+              "action": "Mitchell driving basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 183,
+              "frames": 240,
+              "team": "CLE",
+              "opponent": "GSW",
+              "action": "Mitchell basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 606
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "TjTVx-QEbJA",
+        "url": "https://www.youtube.com/watch?v=TjTVx-QEbJA",
+        "title": "Harden & Mitchell Became an INSTANT DUO in Cleveland \ud83e\udd2f | Top Plays | 2025-26 NBA Season",
+        "channel": "NBA",
+        "path": ".cache/startup-team-correction/CLE.mp4",
+        "query": "2025-26 Cleveland Cavaliers Donovan Mitchell best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 1,
+          "frames": 450,
+          "team": "CLE",
+          "opponent": "MIA",
+          "action": "Mitchell tying three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 38,
+          "frames": 300,
+          "team": "CLE",
+          "opponent": "WAS",
+          "action": "Mitchell drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 64,
+          "frames": 360,
+          "team": "CLE",
+          "opponent": "ORL",
+          "action": "Mitchell three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 115.5,
+          "frames": 315,
+          "team": "CLE",
+          "opponent": "BOS",
+          "action": "Mitchell driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 155,
+          "frames": 330,
+          "team": "CLE",
+          "opponent": "DAL",
+          "action": "Mitchell driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 183,
+          "frames": 240,
+          "team": "CLE",
+          "opponent": "GSW",
+          "action": "Mitchell basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 93.63333333333334
+    },
+    "DAL": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/DAL-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/DAL-v2-1.jpg",
+          "kind": "basketball",
+          "team": "DAL",
+          "clips": [
+            {
+              "source_start": 1,
+              "frames": 300,
+              "team": "DAL",
+              "opponent": "MIN",
+              "action": "Flagg lob finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 24.5,
+              "frames": 375,
+              "team": "DAL",
+              "opponent": "BOS",
+              "action": "Flagg transition dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 711
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/DAL-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/DAL-v2-2.jpg",
+          "kind": "basketball",
+          "team": "DAL",
+          "clips": [
+            {
+              "source_start": 83,
+              "frames": 390,
+              "team": "DAL",
+              "opponent": "CHA",
+              "action": "Flagg drive and floater",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 124,
+              "frames": 390,
+              "team": "DAL",
+              "opponent": "POR",
+              "action": "Flagg basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 816
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/DAL-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/DAL-v2-3.jpg",
+          "kind": "basketball",
+          "team": "DAL",
+          "clips": [
+            {
+              "source_start": 155,
+              "frames": 300,
+              "team": "DAL",
+              "opponent": "MIA",
+              "action": "Flagg driving basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 181,
+              "frames": 240,
+              "team": "DAL",
+              "opponent": "TOR",
+              "action": "Flagg jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 576
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "m6RU9K3ezec",
+        "url": "https://www.youtube.com/watch?v=m6RU9K3ezec",
+        "title": "Cooper Flagg's Rookie Season Highlights Are MUST-SEE | 2025-26 NBA Season",
+        "channel": "NBA",
+        "path": ".cache/startup-team-correction/DAL.mp4",
+        "query": "2025-26 Dallas Mavericks Cooper Flagg best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 1,
+          "frames": 300,
+          "team": "DAL",
+          "opponent": "MIN",
+          "action": "Flagg lob finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 24.5,
+          "frames": 375,
+          "team": "DAL",
+          "opponent": "BOS",
+          "action": "Flagg transition dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 83,
+          "frames": 390,
+          "team": "DAL",
+          "opponent": "CHA",
+          "action": "Flagg drive and floater",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 124,
+          "frames": 390,
+          "team": "DAL",
+          "opponent": "POR",
+          "action": "Flagg basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 155,
+          "frames": 300,
+          "team": "DAL",
+          "opponent": "MIA",
+          "action": "Flagg driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 181,
+          "frames": 240,
+          "team": "DAL",
+          "opponent": "TOR",
+          "action": "Flagg jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 93.63333333333334
+    },
+    "DEN": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/DEN-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/DEN-v2-1.jpg",
+          "kind": "basketball",
+          "team": "DEN",
+          "clips": [
+            {
+              "source_start": 0,
+              "frames": 480,
+              "team": "DEN",
+              "opponent": "MEM",
+              "action": "Jokic perimeter three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 18,
+              "frames": 240,
+              "team": "DEN",
+              "opponent": "HOU",
+              "action": "Jokic offensive rebound and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 756
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/DEN-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/DEN-v2-2.jpg",
+          "kind": "basketball",
+          "team": "DEN",
+          "clips": [
+            {
+              "source_start": 54,
+              "frames": 360,
+              "team": "DEN",
+              "opponent": "UTA",
+              "action": "Jokic three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 84,
+              "frames": 390,
+              "team": "DEN",
+              "opponent": "BOS",
+              "action": "Jokic driving finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 786
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/DEN-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/DEN-v2-3.jpg",
+          "kind": "basketball",
+          "team": "DEN",
+          "clips": [
+            {
+              "source_start": 109,
+              "frames": 360,
+              "team": "DEN",
+              "opponent": "LAL",
+              "action": "Jokic floater",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 142,
+              "frames": 300,
+              "team": "DEN",
+              "opponent": "POR",
+              "action": "Jokic assist and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 696
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "SvoFvBq9jSg",
+        "url": "https://www.youtube.com/watch?v=SvoFvBq9jSg",
+        "title": "Nikola Joki\u0107 Makes Everything Look EASY \ud83d\ude2e\u200d\ud83d\udca8 | Top Plays | 2025-26 NBA Season",
+        "channel": "NBA",
+        "path": ".cache/startup-team-correction/DEN.mp4",
+        "query": "2025-26 Denver Nuggets Nikola Jokic best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 480,
+          "team": "DEN",
+          "opponent": "MEM",
+          "action": "Jokic perimeter three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 18,
+          "frames": 240,
+          "team": "DEN",
+          "opponent": "HOU",
+          "action": "Jokic offensive rebound and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 54,
+          "frames": 360,
+          "team": "DEN",
+          "opponent": "UTA",
+          "action": "Jokic three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 84,
+          "frames": 390,
+          "team": "DEN",
+          "opponent": "BOS",
+          "action": "Jokic driving finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 109,
+          "frames": 360,
+          "team": "DEN",
+          "opponent": "LAL",
+          "action": "Jokic floater",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 142,
+          "frames": 300,
+          "team": "DEN",
+          "opponent": "POR",
+          "action": "Jokic assist and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 98.13333333333334
+    },
+    "DET": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/DET-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/DET-v2-1.jpg",
+          "kind": "basketball",
+          "team": "DET",
+          "clips": [
+            {
+              "source_start": 0,
+              "frames": 480,
+              "team": "DET",
+              "opponent": "PHI",
+              "action": "Cunningham drive and and-one",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 39,
+              "frames": 360,
+              "team": "DET",
+              "opponent": "BKN",
+              "action": "Cunningham jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 876
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/DET-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/DET-v2-2.jpg",
+          "kind": "basketball",
+          "team": "DET",
+          "clips": [
+            {
+              "source_start": 54,
+              "frames": 300,
+              "team": "DET",
+              "opponent": "ORL",
+              "action": "Cunningham paint finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 67,
+              "frames": 420,
+              "team": "DET",
+              "opponent": "ATL",
+              "action": "Cunningham drive and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 756
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/DET-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/DET-v2-3.jpg",
+          "kind": "basketball",
+          "team": "DET",
+          "clips": [
+            {
+              "source_start": 109,
+              "frames": 300,
+              "team": "DET",
+              "opponent": "NYK",
+              "action": "Cunningham jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 160,
+              "frames": 360,
+              "team": "DET",
+              "opponent": "CLE",
+              "action": "Cunningham jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 696
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "p0G1IM3xuas",
+        "url": "https://www.youtube.com/watch?v=p0G1IM3xuas",
+        "title": "Cade Cunningham Top Plays On The Season | 2025 - 2026",
+        "channel": "Detroit Pistons",
+        "path": ".cache/startup-team-correction/DET.mp4",
+        "query": "2025-26 Detroit Pistons Cade Cunningham best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 480,
+          "team": "DET",
+          "opponent": "PHI",
+          "action": "Cunningham drive and and-one",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 39,
+          "frames": 360,
+          "team": "DET",
+          "opponent": "BKN",
+          "action": "Cunningham jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 54,
+          "frames": 300,
+          "team": "DET",
+          "opponent": "ORL",
+          "action": "Cunningham paint finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 67,
+          "frames": 420,
+          "team": "DET",
+          "opponent": "ATL",
+          "action": "Cunningham drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 109,
+          "frames": 300,
+          "team": "DET",
+          "opponent": "NYK",
+          "action": "Cunningham jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 160,
+          "frames": 360,
+          "team": "DET",
+          "opponent": "CLE",
+          "action": "Cunningham jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 101.13333333333334
+    },
+    "GSW": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/GSW-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/GSW-v2-1.jpg",
+          "kind": "basketball",
+          "team": "GSW",
+          "clips": [
+            {
+              "source_start": 2,
+              "frames": 300,
+              "team": "GSW",
+              "opponent": "LAL",
+              "action": "Warriors assist and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 13,
+              "frames": 300,
+              "team": "GSW",
+              "opponent": "DEN",
+              "action": "Curry late three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 636
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/GSW-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/GSW-v2-2.jpg",
+          "kind": "basketball",
+          "team": "GSW",
+          "clips": [
+            {
+              "source_start": 38,
+              "frames": 180,
+              "team": "GSW",
+              "opponent": "MEM",
+              "action": "Warriors steal and scoring play",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 54,
+              "frames": 450,
+              "team": "GSW",
+              "opponent": "MIL",
+              "action": "Curry three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 666
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/GSW-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/GSW-v2-3.jpg",
+          "kind": "basketball",
+          "team": "GSW",
+          "clips": [
+            {
+              "source_start": 92,
+              "frames": 390,
+              "team": "GSW",
+              "opponent": "SAC",
+              "action": "Warriors lob finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 144,
+              "frames": 360,
+              "team": "GSW",
+              "opponent": "SAS",
+              "action": "Curry jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 786
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "qJxK4Ki0XlY",
+        "url": "https://www.youtube.com/watch?v=qJxK4Ki0XlY",
+        "title": "Golden State Warriors Plays of the Year | 2025-26 NBA Season",
+        "channel": "Golden State Warriors",
+        "path": ".cache/startup-team-correction/GSW.mp4",
+        "query": "2025-26 Golden State Warriors Stephen Curry best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 2,
+          "frames": 300,
+          "team": "GSW",
+          "opponent": "LAL",
+          "action": "Warriors assist and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 13,
+          "frames": 300,
+          "team": "GSW",
+          "opponent": "DEN",
+          "action": "Curry late three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 38,
+          "frames": 180,
+          "team": "GSW",
+          "opponent": "MEM",
+          "action": "Warriors steal and scoring play",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 54,
+          "frames": 450,
+          "team": "GSW",
+          "opponent": "MIL",
+          "action": "Curry three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 92,
+          "frames": 390,
+          "team": "GSW",
+          "opponent": "SAC",
+          "action": "Warriors lob finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 144,
+          "frames": 360,
+          "team": "GSW",
+          "opponent": "SAS",
+          "action": "Curry jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 93.13333333333334
+    },
+    "HOU": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/HOU-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/HOU-v2-1.jpg",
+          "kind": "basketball",
+          "team": "HOU",
+          "clips": [
+            {
+              "source_start": 0,
+              "frames": 510,
+              "team": "HOU",
+              "opponent": "PHX",
+              "action": "Durant game-winning three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 48,
+              "frames": 300,
+              "team": "HOU",
+              "opponent": "MIN",
+              "action": "Durant jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 846
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/HOU-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/HOU-v2-2.jpg",
+          "kind": "basketball",
+          "team": "HOU",
+          "clips": [
+            {
+              "source_start": 69,
+              "frames": 510,
+              "team": "HOU",
+              "opponent": "ORL",
+              "action": "Durant attack and dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 89,
+              "frames": 390,
+              "team": "HOU",
+              "opponent": "DAL",
+              "action": "Durant jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 936
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/HOU-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/HOU-v2-3.jpg",
+          "kind": "basketball",
+          "team": "HOU",
+          "clips": [
+            {
+              "source_start": 109,
+              "frames": 390,
+              "team": "HOU",
+              "opponent": "DEN",
+              "action": "Durant driving finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 130,
+              "frames": 420,
+              "team": "HOU",
+              "opponent": "LAC",
+              "action": "Durant paint finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 846
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "4I_eosXkS98",
+        "url": "https://www.youtube.com/watch?v=4I_eosXkS98",
+        "title": "Kevin Durant's BEST PLAYS! | 2026 NBA All-Star Reserve",
+        "channel": "NBA and Houston Rockets",
+        "path": ".cache/startup-team-correction/HOU.mp4",
+        "query": "2025-26 Houston Rockets Kevin Durant best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 510,
+          "team": "HOU",
+          "opponent": "PHX",
+          "action": "Durant game-winning three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 48,
+          "frames": 300,
+          "team": "HOU",
+          "opponent": "MIN",
+          "action": "Durant jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 69,
+          "frames": 510,
+          "team": "HOU",
+          "opponent": "ORL",
+          "action": "Durant attack and dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 89,
+          "frames": 390,
+          "team": "HOU",
+          "opponent": "DAL",
+          "action": "Durant jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 109,
+          "frames": 390,
+          "team": "HOU",
+          "opponent": "DEN",
+          "action": "Durant driving finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 130,
+          "frames": 420,
+          "team": "HOU",
+          "opponent": "LAC",
+          "action": "Durant paint finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 111.13333333333334
+    },
+    "IND": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/IND-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/IND-v2-1.jpg",
+          "kind": "basketball",
+          "team": "IND",
+          "clips": [
+            {
+              "source_start": 11,
+              "frames": 285,
+              "team": "IND",
+              "opponent": "OKC",
+              "action": "Siakam basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 34,
+              "frames": 180,
+              "team": "IND",
+              "opponent": "MEM",
+              "action": "Siakam drive and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 501
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/IND-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/IND-v2-2.jpg",
+          "kind": "basketball",
+          "team": "IND",
+          "clips": [
+            {
+              "source_start": 44,
+              "frames": 210,
+              "team": "IND",
+              "opponent": "MIN",
+              "action": "Siakam jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 84,
+              "frames": 300,
+              "team": "IND",
+              "opponent": "SAC",
+              "action": "Siakam basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 546
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/IND-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/IND-v2-3.jpg",
+          "kind": "basketball",
+          "team": "IND",
+          "clips": [
+            {
+              "source_start": 108,
+              "frames": 225,
+              "team": "IND",
+              "opponent": "DET",
+              "action": "Siakam three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 134,
+              "frames": 330,
+              "team": "IND",
+              "opponent": "CLE",
+              "action": "Siakam drive and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 591
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "nWKqAbI5rVo",
+        "url": "https://www.youtube.com/watch?v=nWKqAbI5rVo",
+        "title": "Pascal Siakam's TOP PLAYS of the 2025-26 NBA Season",
+        "channel": "Indiana Pacers",
+        "path": ".cache/startup-team-correction/IND.mp4",
+        "query": "2025-26 Indiana Pacers Pascal Siakam best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 11,
+          "frames": 285,
+          "team": "IND",
+          "opponent": "OKC",
+          "action": "Siakam basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 34,
+          "frames": 180,
+          "team": "IND",
+          "opponent": "MEM",
+          "action": "Siakam drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 44,
+          "frames": 210,
+          "team": "IND",
+          "opponent": "MIN",
+          "action": "Siakam jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 84,
+          "frames": 300,
+          "team": "IND",
+          "opponent": "SAC",
+          "action": "Siakam basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 108,
+          "frames": 225,
+          "team": "IND",
+          "opponent": "DET",
+          "action": "Siakam three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 134,
+          "frames": 330,
+          "team": "IND",
+          "opponent": "CLE",
+          "action": "Siakam drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 78.13333333333334
+    },
+    "LAC": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/LAC-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/LAC-v2-1.jpg",
+          "kind": "basketball",
+          "team": "LAC",
+          "clips": [
+            {
+              "source_start": 0,
+              "frames": 480,
+              "team": "LAC",
+              "opponent": "NOP",
+              "action": "Leonard game-winning finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 58,
+              "frames": 540,
+              "team": "LAC",
+              "opponent": "POR",
+              "action": "Leonard basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 1056
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/LAC-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/LAC-v2-2.jpg",
+          "kind": "basketball",
+          "team": "LAC",
+          "clips": [
+            {
+              "source_start": 79,
+              "frames": 390,
+              "team": "LAC",
+              "opponent": "PHI",
+              "action": "Leonard drive and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 104.5,
+              "frames": 345,
+              "team": "LAC",
+              "opponent": "HOU",
+              "action": "Leonard jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 771
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/LAC-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/LAC-v2-3.jpg",
+          "kind": "basketball",
+          "team": "LAC",
+          "clips": [
+            {
+              "source_start": 130,
+              "frames": 480,
+              "team": "LAC",
+              "opponent": "IND",
+              "action": "Leonard game-winning shot",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 173,
+              "frames": 450,
+              "team": "LAC",
+              "opponent": "POR",
+              "action": "Leonard transition finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 966
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "RivzZVtPds0",
+        "url": "https://www.youtube.com/watch?v=RivzZVtPds0",
+        "title": "Kawhi Leonard Was LOCKED IN This Season \ud83e\udd76 | Top Plays | 2025-26 NBA Season",
+        "channel": "NBA",
+        "path": ".cache/startup-team-correction/LAC.mp4",
+        "query": "2025-26 LA Clippers Kawhi Leonard best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 480,
+          "team": "LAC",
+          "opponent": "NOP",
+          "action": "Leonard game-winning finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 58,
+          "frames": 540,
+          "team": "LAC",
+          "opponent": "POR",
+          "action": "Leonard basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 79,
+          "frames": 390,
+          "team": "LAC",
+          "opponent": "PHI",
+          "action": "Leonard drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 104.5,
+          "frames": 345,
+          "team": "LAC",
+          "opponent": "HOU",
+          "action": "Leonard jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 130,
+          "frames": 480,
+          "team": "LAC",
+          "opponent": "IND",
+          "action": "Leonard game-winning shot",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 173,
+          "frames": 450,
+          "team": "LAC",
+          "opponent": "POR",
+          "action": "Leonard transition finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 116.63333333333334
+    },
+    "LAL": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/LAL-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/LAL-v2-1.jpg",
+          "kind": "basketball",
+          "team": "LAL",
+          "clips": [
+            {
+              "source_start": 12,
+              "frames": 360,
+              "team": "LAL",
+              "opponent": "DEN",
+              "action": "Doncic game-winning three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 44,
+              "frames": 315,
+              "team": "LAL",
+              "opponent": "GSW",
+              "action": "Doncic jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 711
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/LAL-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/LAL-v2-2.jpg",
+          "kind": "basketball",
+          "team": "LAL",
+          "clips": [
+            {
+              "source_start": 75,
+              "frames": 300,
+              "team": "LAL",
+              "opponent": "MEM",
+              "action": "Doncic three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 93,
+              "frames": 660,
+              "team": "LAL",
+              "opponent": "CHI",
+              "action": "Doncic late three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 996
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/LAL-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/LAL-v2-3.jpg",
+          "kind": "basketball",
+          "team": "LAL",
+          "clips": [
+            {
+              "source_start": 169,
+              "frames": 450,
+              "team": "LAL",
+              "opponent": "SAS",
+              "action": "Doncic three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 183,
+              "frames": 420,
+              "team": "LAL",
+              "opponent": "ATL",
+              "action": "Doncic assist and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 906
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "x5kjIwZ3-Kw",
+        "url": "https://www.youtube.com/watch?v=x5kjIwZ3-Kw",
+        "title": "Luka Don\u010di\u0107's BEST Plays from the 2025-2026 Season",
+        "channel": "Los Angeles Lakers",
+        "path": ".cache/startup-team-correction/LAL.mp4",
+        "query": "2025-26 Los Angeles Lakers Luka Doncic best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 12,
+          "frames": 360,
+          "team": "LAL",
+          "opponent": "DEN",
+          "action": "Doncic game-winning three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 44,
+          "frames": 315,
+          "team": "LAL",
+          "opponent": "GSW",
+          "action": "Doncic jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 75,
+          "frames": 300,
+          "team": "LAL",
+          "opponent": "MEM",
+          "action": "Doncic three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 93,
+          "frames": 660,
+          "team": "LAL",
+          "opponent": "CHI",
+          "action": "Doncic late three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 169,
+          "frames": 450,
+          "team": "LAL",
+          "opponent": "SAS",
+          "action": "Doncic three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 183,
+          "frames": 420,
+          "team": "LAL",
+          "opponent": "ATL",
+          "action": "Doncic assist and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 110.63333333333334
+    },
+    "MEM": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/MEM-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/MEM-v2-1.jpg",
+          "kind": "basketball",
+          "team": "MEM",
+          "clips": [
+            {
+              "source_start": 29,
+              "frames": 510,
+              "team": "MEM",
+              "opponent": "MIL",
+              "action": "Morant late attack and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 54,
+              "frames": 240,
+              "team": "MEM",
+              "opponent": "DAL",
+              "action": "Morant driving finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 786
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/MEM-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/MEM-v2-2.jpg",
+          "kind": "basketball",
+          "team": "MEM",
+          "clips": [
+            {
+              "source_start": 65,
+              "frames": 165,
+              "team": "MEM",
+              "opponent": "GSW",
+              "action": "Morant basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 109,
+              "frames": 360,
+              "team": "MEM",
+              "opponent": "PHX",
+              "action": "Morant drive and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 561
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/MEM-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/MEM-v2-3.jpg",
+          "kind": "basketball",
+          "team": "MEM",
+          "clips": [
+            {
+              "source_start": 132,
+              "frames": 240,
+              "team": "MEM",
+              "opponent": "LAL",
+              "action": "Morant three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 149,
+              "frames": 390,
+              "team": "MEM",
+              "opponent": "NOP",
+              "action": "Morant driving basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 666
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "wMcxZPbo32E",
+        "url": "https://www.youtube.com/watch?v=wMcxZPbo32E",
+        "title": "Ja Morant | Top Plays of the 2025-26 season",
+        "channel": "Sports Productions ",
+        "path": ".cache/startup-team-correction/MEM.mp4",
+        "query": "2025-26 Memphis Grizzlies Ja Morant best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 29,
+          "frames": 510,
+          "team": "MEM",
+          "opponent": "MIL",
+          "action": "Morant late attack and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 54,
+          "frames": 240,
+          "team": "MEM",
+          "opponent": "DAL",
+          "action": "Morant driving finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 65,
+          "frames": 165,
+          "team": "MEM",
+          "opponent": "GSW",
+          "action": "Morant basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 109,
+          "frames": 360,
+          "team": "MEM",
+          "opponent": "PHX",
+          "action": "Morant drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 132,
+          "frames": 240,
+          "team": "MEM",
+          "opponent": "LAL",
+          "action": "Morant three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 149,
+          "frames": 390,
+          "team": "MEM",
+          "opponent": "NOP",
+          "action": "Morant driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 90.63333333333334
+    },
+    "MIA": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/MIA-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/MIA-v2-1.jpg",
+          "kind": "basketball",
+          "team": "MIA",
+          "clips": [
+            {
+              "source_start": 23,
+              "frames": 180,
+              "team": "MIA",
+              "opponent": "WAS",
+              "action": "Adebayo basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 168,
+              "frames": 390,
+              "team": "MIA",
+              "opponent": "NYK",
+              "action": "Adebayo late three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 606
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/MIA-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/MIA-v2-2.jpg",
+          "kind": "basketball",
+          "team": "MIA",
+          "clips": [
+            {
+              "source_start": 186,
+              "frames": 390,
+              "team": "MIA",
+              "opponent": "SAS",
+              "action": "Adebayo basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 201,
+              "frames": 330,
+              "team": "MIA",
+              "opponent": "LAL",
+              "action": "Adebayo finish at Los Angeles",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 756
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/MIA-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/MIA-v2-3.jpg",
+          "kind": "basketball",
+          "team": "MIA",
+          "clips": [
+            {
+              "source_start": 233,
+              "frames": 165,
+              "team": "MIA",
+              "opponent": "CHI",
+              "action": "Adebayo transition basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 292,
+              "frames": 285,
+              "team": "MIA",
+              "opponent": "PHI",
+              "action": "Adebayo basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 486
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "cDDz3lOgDMo",
+        "url": "https://www.youtube.com/watch?v=cDDz3lOgDMo",
+        "title": "Bam Adebayo BEST HIGHLIGHTS 25-26 Season",
+        "channel": "Hoops Galaxy",
+        "path": ".cache/startup-team-correction/MIA.mp4",
+        "query": "2025-26 Miami Heat Bam Adebayo best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 23,
+          "frames": 180,
+          "team": "MIA",
+          "opponent": "WAS",
+          "action": "Adebayo basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 168,
+          "frames": 390,
+          "team": "MIA",
+          "opponent": "NYK",
+          "action": "Adebayo late three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 186,
+          "frames": 390,
+          "team": "MIA",
+          "opponent": "SAS",
+          "action": "Adebayo basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 201,
+          "frames": 330,
+          "team": "MIA",
+          "opponent": "LAL",
+          "action": "Adebayo finish at Los Angeles",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 233,
+          "frames": 165,
+          "team": "MIA",
+          "opponent": "CHI",
+          "action": "Adebayo transition basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 292,
+          "frames": 285,
+          "team": "MIA",
+          "opponent": "PHI",
+          "action": "Adebayo basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 85.13333333333334
+    },
+    "MIL": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/MIL-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/MIL-v2-1.jpg",
+          "kind": "basketball",
+          "team": "MIL",
+          "clips": [
+            {
+              "source_start": 0,
+              "frames": 480,
+              "team": "MIL",
+              "opponent": "IND",
+              "action": "Antetokounmpo game-winning shot",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 65,
+              "frames": 660,
+              "team": "MIL",
+              "opponent": "CHA",
+              "action": "Antetokounmpo paint finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 1176
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/MIL-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/MIL-v2-2.jpg",
+          "kind": "basketball",
+          "team": "MIL",
+          "clips": [
+            {
+              "source_start": 89,
+              "frames": 360,
+              "team": "MIL",
+              "opponent": "CHI",
+              "action": "Antetokounmpo driving basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 147,
+              "frames": 390,
+              "team": "MIL",
+              "opponent": "DAL",
+              "action": "Antetokounmpo dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 786
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/MIL-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/MIL-v2-3.jpg",
+          "kind": "basketball",
+          "team": "MIL",
+          "clips": [
+            {
+              "source_start": 186,
+              "frames": 360,
+              "team": "MIL",
+              "opponent": "GSW",
+              "action": "Antetokounmpo finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 123,
+              "frames": 330,
+              "team": "MIL",
+              "opponent": "PHI",
+              "action": "Antetokounmpo scoring play",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 726
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "em9OfoguUiM",
+        "url": "https://www.youtube.com/watch?v=em9OfoguUiM",
+        "title": "Giannis Antetokounmpo's BEST PLAYS! | 2026 NBA All-Star Starter",
+        "channel": "NBA and Milwaukee Bucks",
+        "path": ".cache/startup-team-correction/MIL.mp4",
+        "query": "2025-26 Milwaukee Bucks Giannis Antetokounmpo best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 480,
+          "team": "MIL",
+          "opponent": "IND",
+          "action": "Antetokounmpo game-winning shot",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 65,
+          "frames": 660,
+          "team": "MIL",
+          "opponent": "CHA",
+          "action": "Antetokounmpo paint finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 89,
+          "frames": 360,
+          "team": "MIL",
+          "opponent": "CHI",
+          "action": "Antetokounmpo driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 147,
+          "frames": 390,
+          "team": "MIL",
+          "opponent": "DAL",
+          "action": "Antetokounmpo dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 186,
+          "frames": 360,
+          "team": "MIL",
+          "opponent": "GSW",
+          "action": "Antetokounmpo finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 123,
+          "frames": 330,
+          "team": "MIL",
+          "opponent": "PHI",
+          "action": "Antetokounmpo scoring play",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 113.13333333333334
+    },
+    "MIN": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/MIN-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/MIN-v2-1.jpg",
+          "kind": "basketball",
+          "team": "MIN",
+          "clips": [
+            {
+              "source_start": 0,
+              "frames": 300,
+              "team": "MIN",
+              "opponent": "LAC",
+              "action": "Edwards dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 24,
+              "frames": 510,
+              "team": "MIN",
+              "opponent": "LAC",
+              "action": "Edwards drive and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 846
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/MIN-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/MIN-v2-2.jpg",
+          "kind": "basketball",
+          "team": "MIN",
+          "clips": [
+            {
+              "source_start": 44,
+              "frames": 390,
+              "team": "MIN",
+              "opponent": "OKC",
+              "action": "Edwards late three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 69,
+              "frames": 270,
+              "team": "MIN",
+              "opponent": "SAC",
+              "action": "Edwards drive and dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 696
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/MIN-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/MIN-v2-3.jpg",
+          "kind": "basketball",
+          "team": "MIN",
+          "clips": [
+            {
+              "source_start": 110,
+              "frames": 360,
+              "team": "MIN",
+              "opponent": "DEN",
+              "action": "Edwards three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 140,
+              "frames": 360,
+              "team": "MIN",
+              "opponent": "HOU",
+              "action": "Edwards late three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 756
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "T5I70wkGVLI",
+        "url": "https://www.youtube.com/watch?v=T5I70wkGVLI",
+        "title": "Anthony Edwards Was a PROBLEM All Season \ud83d\ude24 | Top Plays | 2025-26 NBA Season",
+        "channel": "NBA",
+        "path": ".cache/startup-team-video/MIN.mp4",
+        "query": "2025-26 Minnesota Timberwolves Anthony Edwards best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 300,
+          "team": "MIN",
+          "opponent": "LAC",
+          "action": "Edwards dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 24,
+          "frames": 510,
+          "team": "MIN",
+          "opponent": "LAC",
+          "action": "Edwards drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 44,
+          "frames": 390,
+          "team": "MIN",
+          "opponent": "OKC",
+          "action": "Edwards late three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 69,
+          "frames": 270,
+          "team": "MIN",
+          "opponent": "SAC",
+          "action": "Edwards drive and dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 110,
+          "frames": 360,
+          "team": "MIN",
+          "opponent": "DEN",
+          "action": "Edwards three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 140,
+          "frames": 360,
+          "team": "MIN",
+          "opponent": "HOU",
+          "action": "Edwards late three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 100.13333333333334
+    },
+    "NOP": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/NOP-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/NOP-v2-1.jpg",
+          "kind": "basketball",
+          "team": "NOP",
+          "clips": [
+            {
+              "source_start": 8,
+              "frames": 270,
+              "team": "NOP",
+              "opponent": "DEN",
+              "action": "Williamson basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 29,
+              "frames": 300,
+              "team": "NOP",
+              "opponent": "CHI",
+              "action": "Williamson driving finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 606
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/NOP-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/NOP-v2-2.jpg",
+          "kind": "basketball",
+          "team": "NOP",
+          "clips": [
+            {
+              "source_start": 57,
+              "frames": 330,
+              "team": "NOP",
+              "opponent": "DAL",
+              "action": "Williamson attack and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 74,
+              "frames": 360,
+              "team": "NOP",
+              "opponent": "TOR",
+              "action": "Williamson late jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 726
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/NOP-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/NOP-v2-3.jpg",
+          "kind": "basketball",
+          "team": "NOP",
+          "clips": [
+            {
+              "source_start": 89,
+              "frames": 390,
+              "team": "NOP",
+              "opponent": "UTA",
+              "action": "Williamson attacking finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 143,
+              "frames": 270,
+              "team": "NOP",
+              "opponent": "ATL",
+              "action": "Williamson drive and dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 696
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "jpUlLlbhAX0",
+        "url": "https://www.youtube.com/watch?v=jpUlLlbhAX0",
+        "title": "Zion Williamson 2025-26 NBA Season Highlights | New Orleans Pelicans",
+        "channel": "New Orleans Pelicans",
+        "path": ".cache/startup-team-correction/NOP.mp4",
+        "query": "2025-26 New Orleans Pelicans Zion Williamson best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 8,
+          "frames": 270,
+          "team": "NOP",
+          "opponent": "DEN",
+          "action": "Williamson basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 29,
+          "frames": 300,
+          "team": "NOP",
+          "opponent": "CHI",
+          "action": "Williamson driving finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 57,
+          "frames": 330,
+          "team": "NOP",
+          "opponent": "DAL",
+          "action": "Williamson attack and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 74,
+          "frames": 360,
+          "team": "NOP",
+          "opponent": "TOR",
+          "action": "Williamson late jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 89,
+          "frames": 390,
+          "team": "NOP",
+          "opponent": "UTA",
+          "action": "Williamson attacking finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 143,
+          "frames": 270,
+          "team": "NOP",
+          "opponent": "ATL",
+          "action": "Williamson drive and dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 91.13333333333334
+    },
+    "NYK": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/NYK-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/NYK-v2-1.jpg",
+          "kind": "basketball",
+          "team": "NYK",
+          "clips": [
+            {
+              "source_start": 0,
+              "frames": 390,
+              "team": "NYK",
+              "opponent": "ORL",
+              "action": "Brunson late three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 49,
+              "frames": 300,
+              "team": "NYK",
+              "opponent": "MIL",
+              "action": "Brunson jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 726
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/NYK-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/NYK-v2-2.jpg",
+          "kind": "basketball",
+          "team": "NYK",
+          "clips": [
+            {
+              "source_start": 80,
+              "frames": 300,
+              "team": "NYK",
+              "opponent": "CHA",
+              "action": "Brunson basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 64,
+              "frames": 330,
+              "team": "NYK",
+              "opponent": "MIL",
+              "action": "Brunson paint finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 666
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/NYK-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/NYK-v2-3.jpg",
+          "kind": "basketball",
+          "team": "NYK",
+          "clips": [
+            {
+              "source_start": 163,
+              "frames": 480,
+              "team": "NYK",
+              "opponent": "CHI",
+              "action": "Brunson basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 109,
+              "frames": 540,
+              "team": "NYK",
+              "opponent": "CHA",
+              "action": "Brunson jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 1056
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "4Q5dZ400RHo",
+        "url": "https://www.youtube.com/watch?v=4Q5dZ400RHo",
+        "title": "Jalen Brunson's TOP PLAYS From The 2025 Emirates NBA Cup \ud83c\udfc6 | 2025-26 Season",
+        "channel": "NBA",
+        "path": ".cache/startup-team-correction/NYK.mp4",
+        "query": "2025-26 New York Knicks Jalen Brunson best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 390,
+          "team": "NYK",
+          "opponent": "ORL",
+          "action": "Brunson late three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 49,
+          "frames": 300,
+          "team": "NYK",
+          "opponent": "MIL",
+          "action": "Brunson jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 80,
+          "frames": 300,
+          "team": "NYK",
+          "opponent": "CHA",
+          "action": "Brunson basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 64,
+          "frames": 330,
+          "team": "NYK",
+          "opponent": "MIL",
+          "action": "Brunson paint finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 163,
+          "frames": 480,
+          "team": "NYK",
+          "opponent": "CHI",
+          "action": "Brunson basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 109,
+          "frames": 540,
+          "team": "NYK",
+          "opponent": "CHA",
+          "action": "Brunson jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 105.13333333333334
+    },
+    "OKC": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/OKC-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/OKC-v2-1.jpg",
+          "kind": "basketball",
+          "team": "OKC",
+          "clips": [
+            {
+              "source_start": 0,
+              "frames": 480,
+              "team": "OKC",
+              "opponent": "DEN",
+              "action": "Gilgeous-Alexander game-winning three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 49,
+              "frames": 300,
+              "team": "OKC",
+              "opponent": "WAS",
+              "action": "Gilgeous-Alexander drive and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 816
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/OKC-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/OKC-v2-2.jpg",
+          "kind": "basketball",
+          "team": "OKC",
+          "clips": [
+            {
+              "source_start": 65,
+              "frames": 510,
+              "team": "OKC",
+              "opponent": "SAS",
+              "action": "Gilgeous-Alexander basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 88,
+              "frames": 600,
+              "team": "OKC",
+              "opponent": "MEM",
+              "action": "Gilgeous-Alexander paint finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 1146
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/OKC-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/OKC-v2-3.jpg",
+          "kind": "basketball",
+          "team": "OKC",
+          "clips": [
+            {
+              "source_start": 110,
+              "frames": 420,
+              "team": "OKC",
+              "opponent": "HOU",
+              "action": "Gilgeous-Alexander jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 161,
+              "frames": 390,
+              "team": "OKC",
+              "opponent": "LAL",
+              "action": "Gilgeous-Alexander late three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 846
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "BzKf9haIml0",
+        "url": "https://www.youtube.com/watch?v=BzKf9haIml0",
+        "title": "Shai Gilgeous-Alexander Is The 2025-26 @kia NBA Most Valuable Player!",
+        "channel": "NBA and Oklahoma City Thunder",
+        "path": ".cache/startup-team-correction/OKC.mp4",
+        "query": "2025-26 Oklahoma City Thunder Shai Gilgeous Alexander best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 480,
+          "team": "OKC",
+          "opponent": "DEN",
+          "action": "Gilgeous-Alexander game-winning three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 49,
+          "frames": 300,
+          "team": "OKC",
+          "opponent": "WAS",
+          "action": "Gilgeous-Alexander drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 65,
+          "frames": 510,
+          "team": "OKC",
+          "opponent": "SAS",
+          "action": "Gilgeous-Alexander basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 88,
+          "frames": 600,
+          "team": "OKC",
+          "opponent": "MEM",
+          "action": "Gilgeous-Alexander paint finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 110,
+          "frames": 420,
+          "team": "OKC",
+          "opponent": "HOU",
+          "action": "Gilgeous-Alexander jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 161,
+          "frames": 390,
+          "team": "OKC",
+          "opponent": "LAL",
+          "action": "Gilgeous-Alexander late three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 117.13333333333334
+    },
+    "ORL": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/ORL-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/ORL-v2-1.jpg",
+          "kind": "basketball",
+          "team": "ORL",
+          "clips": [
+            {
+              "source_start": 0,
+              "frames": 360,
+              "team": "ORL",
+              "opponent": "DEN",
+              "action": "Banchero lob assist",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 18,
+              "frames": 450,
+              "team": "ORL",
+              "opponent": "IND",
+              "action": "Banchero paint finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 846
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/ORL-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/ORL-v2-2.jpg",
+          "kind": "basketball",
+          "team": "ORL",
+          "clips": [
+            {
+              "source_start": 56,
+              "frames": 270,
+              "team": "ORL",
+              "opponent": "UTA",
+              "action": "Banchero drive and basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 65,
+              "frames": 390,
+              "team": "ORL",
+              "opponent": "DET",
+              "action": "Banchero finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 696
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/ORL-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/ORL-v2-3.jpg",
+          "kind": "basketball",
+          "team": "ORL",
+          "clips": [
+            {
+              "source_start": 81,
+              "frames": 600,
+              "team": "ORL",
+              "opponent": "MIA",
+              "action": "Banchero drive and basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 122,
+              "frames": 360,
+              "team": "ORL",
+              "opponent": "ATL",
+              "action": "Banchero paint finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 996
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "ONzDHBUYNGc",
+        "url": "https://www.youtube.com/watch?v=ONzDHBUYNGc",
+        "title": "TOP 25 PLAYS FROM 25-26 SEASON: PAOLO BANCHERO",
+        "channel": "Orlando Magic",
+        "path": ".cache/startup-team-correction/ORL.mp4",
+        "query": "2025-26 Orlando Magic Paolo Banchero best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 360,
+          "team": "ORL",
+          "opponent": "DEN",
+          "action": "Banchero lob assist",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 18,
+          "frames": 450,
+          "team": "ORL",
+          "opponent": "IND",
+          "action": "Banchero paint finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 56,
+          "frames": 270,
+          "team": "ORL",
+          "opponent": "UTA",
+          "action": "Banchero drive and basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 65,
+          "frames": 390,
+          "team": "ORL",
+          "opponent": "DET",
+          "action": "Banchero finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 81,
+          "frames": 600,
+          "team": "ORL",
+          "opponent": "MIA",
+          "action": "Banchero drive and basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 122,
+          "frames": 360,
+          "team": "ORL",
+          "opponent": "ATL",
+          "action": "Banchero paint finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 108.13333333333334
+    },
+    "PHI": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/PHI-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/PHI-v2-1.jpg",
+          "kind": "basketball",
+          "team": "PHI",
+          "clips": [
+            {
+              "source_start": 0,
+              "frames": 165,
+              "team": "PHI",
+              "opponent": "BOS",
+              "action": "Maxey jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 60,
+              "frames": 240,
+              "team": "PHI",
+              "opponent": "WAS",
+              "action": "Maxey jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 441
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/PHI-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/PHI-v2-2.jpg",
+          "kind": "basketball",
+          "team": "PHI",
+          "clips": [
+            {
+              "source_start": 142,
+              "frames": 360,
+              "team": "PHI",
+              "opponent": "DET",
+              "action": "Maxey drive and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 98,
+              "frames": 270,
+              "team": "PHI",
+              "opponent": "CHI",
+              "action": "Maxey jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 666
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/PHI-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/PHI-v2-3.jpg",
+          "kind": "basketball",
+          "team": "PHI",
+          "clips": [
+            {
+              "source_start": 109,
+              "frames": 165,
+              "team": "PHI",
+              "opponent": "CLE",
+              "action": "Maxey finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 130,
+              "frames": 330,
+              "team": "PHI",
+              "opponent": "DET",
+              "action": "Maxey assist and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 531
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "inpnEbumi2I",
+        "url": "https://www.youtube.com/watch?v=inpnEbumi2I",
+        "title": "Tyrese Maxey Keeps On LEVELING UP | 2025-26 Season Highlights",
+        "channel": "Philadelphia 76ers",
+        "path": ".cache/startup-team-correction/PHI.mp4",
+        "query": "2025-26 Philadelphia 76ers Tyrese Maxey best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 165,
+          "team": "PHI",
+          "opponent": "BOS",
+          "action": "Maxey jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 60,
+          "frames": 240,
+          "team": "PHI",
+          "opponent": "WAS",
+          "action": "Maxey jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 142,
+          "frames": 360,
+          "team": "PHI",
+          "opponent": "DET",
+          "action": "Maxey drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 98,
+          "frames": 270,
+          "team": "PHI",
+          "opponent": "CHI",
+          "action": "Maxey jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 109,
+          "frames": 165,
+          "team": "PHI",
+          "opponent": "CLE",
+          "action": "Maxey finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 130,
+          "frames": 330,
+          "team": "PHI",
+          "opponent": "DET",
+          "action": "Maxey assist and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 78.13333333333334
+    },
+    "PHX": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/PHX-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/PHX-v2-1.jpg",
+          "kind": "basketball",
+          "team": "PHX",
+          "clips": [
+            {
+              "source_start": 0,
+              "frames": 510,
+              "team": "PHX",
+              "opponent": "OKC",
+              "action": "Booker game-winning three",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 38,
+              "frames": 330,
+              "team": "PHX",
+              "opponent": "ORL",
+              "action": "Booker shot",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 876
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/PHX-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/PHX-v2-2.jpg",
+          "kind": "basketball",
+          "team": "PHX",
+          "clips": [
+            {
+              "source_start": 54,
+              "frames": 330,
+              "team": "PHX",
+              "opponent": "MEM",
+              "action": "Booker basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 69,
+              "frames": 600,
+              "team": "PHX",
+              "opponent": "CHI",
+              "action": "Booker drive and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 966
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/PHX-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/PHX-v2-3.jpg",
+          "kind": "basketball",
+          "team": "PHX",
+          "clips": [
+            {
+              "source_start": 113,
+              "frames": 450,
+              "team": "PHX",
+              "opponent": "NYK",
+              "action": "Booker jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 128,
+              "frames": 600,
+              "team": "PHX",
+              "opponent": "BOS",
+              "action": "Booker shot",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 1086
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "nFK9_WsL2lM",
+        "url": "https://www.youtube.com/watch?v=nFK9_WsL2lM",
+        "title": "Devin Booker Was UNSTOPPABLE This Season \ud83d\udd25 | Top Plays | 2025-26 NBA Season",
+        "channel": "NBA",
+        "path": ".cache/startup-team-correction/PHX-nFK9_WsL2lM.mp4",
+        "query": "2025-26 Phoenix Suns Devin Booker best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 510,
+          "team": "PHX",
+          "opponent": "OKC",
+          "action": "Booker game-winning three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 38,
+          "frames": 330,
+          "team": "PHX",
+          "opponent": "ORL",
+          "action": "Booker shot",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 54,
+          "frames": 330,
+          "team": "PHX",
+          "opponent": "MEM",
+          "action": "Booker basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 69,
+          "frames": 600,
+          "team": "PHX",
+          "opponent": "CHI",
+          "action": "Booker drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 113,
+          "frames": 450,
+          "team": "PHX",
+          "opponent": "NYK",
+          "action": "Booker jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 128,
+          "frames": 600,
+          "team": "PHX",
+          "opponent": "BOS",
+          "action": "Booker shot",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 121.13333333333334
+    },
+    "POR": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/POR-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/POR-v2-1.jpg",
+          "kind": "basketball",
+          "team": "POR",
+          "clips": [
+            {
+              "source_start": 0,
+              "frames": 210,
+              "team": "POR",
+              "opponent": "MIN",
+              "action": "Avdija drive and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 27,
+              "frames": 330,
+              "team": "POR",
+              "opponent": "GSW",
+              "action": "Avdija attack and dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 576
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/POR-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/POR-v2-2.jpg",
+          "kind": "basketball",
+          "team": "POR",
+          "clips": [
+            {
+              "source_start": 39,
+              "frames": 300,
+              "team": "POR",
+              "opponent": "LAC",
+              "action": "Avdija driving basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 64,
+              "frames": 210,
+              "team": "POR",
+              "opponent": "LAL",
+              "action": "Avdija dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 546
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/POR-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/POR-v2-3.jpg",
+          "kind": "basketball",
+          "team": "POR",
+          "clips": [
+            {
+              "source_start": 74,
+              "frames": 210,
+              "team": "POR",
+              "opponent": "SAC",
+              "action": "Avdija transition basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 134,
+              "frames": 270,
+              "team": "POR",
+              "opponent": "ORL",
+              "action": "Avdija driving finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 516
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "OBuu8x54uOQ",
+        "url": "https://www.youtube.com/watch?v=OBuu8x54uOQ",
+        "title": "Deni Avdija's Top Plays | 2025-26 Season | Portland Trail Blazers",
+        "channel": "Portland Trail Blazers",
+        "path": ".cache/startup-team-correction/POR.mp4",
+        "query": "2025-26 Portland Trail Blazers Deni Avdija best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 210,
+          "team": "POR",
+          "opponent": "MIN",
+          "action": "Avdija drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 27,
+          "frames": 330,
+          "team": "POR",
+          "opponent": "GSW",
+          "action": "Avdija attack and dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 39,
+          "frames": 300,
+          "team": "POR",
+          "opponent": "LAC",
+          "action": "Avdija driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 64,
+          "frames": 210,
+          "team": "POR",
+          "opponent": "LAL",
+          "action": "Avdija dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 74,
+          "frames": 210,
+          "team": "POR",
+          "opponent": "SAC",
+          "action": "Avdija transition basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 134,
+          "frames": 270,
+          "team": "POR",
+          "opponent": "ORL",
+          "action": "Avdija driving finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 78.13333333333334
+    },
+    "SAC": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/SAC-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/SAC-v2-1.jpg",
+          "kind": "basketball",
+          "team": "SAC",
+          "clips": [
+            {
+              "source_start": 24,
+              "frames": 390,
+              "team": "SAC",
+              "opponent": "PHX",
+              "action": "DeRozan jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 75,
+              "frames": 120,
+              "team": "SAC",
+              "opponent": "UTA",
+              "action": "DeRozan drive",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 546
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/SAC-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/SAC-v2-2.jpg",
+          "kind": "basketball",
+          "team": "SAC",
+          "clips": [
+            {
+              "source_start": 80,
+              "frames": 225,
+              "team": "SAC",
+              "opponent": "OKC",
+              "action": "DeRozan jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 105.5,
+              "frames": 165,
+              "team": "SAC",
+              "opponent": "MIL",
+              "action": "DeRozan basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 426
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/SAC-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/SAC-v2-3.jpg",
+          "kind": "basketball",
+          "team": "SAC",
+          "clips": [
+            {
+              "source_start": 123,
+              "frames": 240,
+              "team": "SAC",
+              "opponent": "DEN",
+              "action": "DeRozan jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 169,
+              "frames": 225,
+              "team": "SAC",
+              "opponent": "SAS",
+              "action": "DeRozan jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 501
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "svfDl8gpUDE",
+        "url": "https://www.youtube.com/watch?v=svfDl8gpUDE",
+        "title": "DeMar DeRozan BEST HIGHLIGHTS 25-26 Season",
+        "channel": "Hoops Galaxy",
+        "path": ".cache/startup-team-correction/SAC.mp4",
+        "query": "2025-26 Sacramento Kings DeMar DeRozan best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 24,
+          "frames": 390,
+          "team": "SAC",
+          "opponent": "PHX",
+          "action": "DeRozan jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 75,
+          "frames": 120,
+          "team": "SAC",
+          "opponent": "UTA",
+          "action": "DeRozan drive",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 80,
+          "frames": 225,
+          "team": "SAC",
+          "opponent": "OKC",
+          "action": "DeRozan jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 105.5,
+          "frames": 165,
+          "team": "SAC",
+          "opponent": "MIL",
+          "action": "DeRozan basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 123,
+          "frames": 240,
+          "team": "SAC",
+          "opponent": "DEN",
+          "action": "DeRozan jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 169,
+          "frames": 225,
+          "team": "SAC",
+          "opponent": "SAS",
+          "action": "DeRozan jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 72.63333333333334
+    },
+    "SAS": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/SAS-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/SAS-v2-1.jpg",
+          "kind": "basketball",
+          "team": "SAS",
+          "clips": [
+            {
+              "source_start": 0,
+              "frames": 540,
+              "team": "SAS",
+              "opponent": "PHX",
+              "action": "Wembanyama winning jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 42,
+              "frames": 300,
+              "team": "SAS",
+              "opponent": "GSW",
+              "action": "Wembanyama dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 876
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/SAS-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/SAS-v2-2.jpg",
+          "kind": "basketball",
+          "team": "SAS",
+          "clips": [
+            {
+              "source_start": 63,
+              "frames": 270,
+              "team": "SAS",
+              "opponent": "MEM",
+              "action": "Wembanyama dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 108,
+              "frames": 360,
+              "team": "SAS",
+              "opponent": "NYK",
+              "action": "Wembanyama roll and dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 666
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/SAS-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/SAS-v2-3.jpg",
+          "kind": "basketball",
+          "team": "SAS",
+          "clips": [
+            {
+              "source_start": 139,
+              "frames": 510,
+              "team": "SAS",
+              "opponent": "MIA",
+              "action": "Wembanyama block and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 159,
+              "frames": 540,
+              "team": "SAS",
+              "opponent": "HOU",
+              "action": "Wembanyama block and transition assist",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 1086
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "-Q-KO1VBJAY",
+        "url": "https://www.youtube.com/watch?v=-Q-KO1VBJAY",
+        "title": "Victor Wembanyama's Season Highlights Are Simply UNREAL \ud83e\udd2f | 2025-26 NBA Season",
+        "channel": "NBA",
+        "path": ".cache/startup-team-correction/SAS.mp4",
+        "query": "2025-26 San Antonio Spurs Victor Wembanyama best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 540,
+          "team": "SAS",
+          "opponent": "PHX",
+          "action": "Wembanyama winning jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 42,
+          "frames": 300,
+          "team": "SAS",
+          "opponent": "GSW",
+          "action": "Wembanyama dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 63,
+          "frames": 270,
+          "team": "SAS",
+          "opponent": "MEM",
+          "action": "Wembanyama dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 108,
+          "frames": 360,
+          "team": "SAS",
+          "opponent": "NYK",
+          "action": "Wembanyama roll and dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 139,
+          "frames": 510,
+          "team": "SAS",
+          "opponent": "MIA",
+          "action": "Wembanyama block and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 159,
+          "frames": 540,
+          "team": "SAS",
+          "opponent": "HOU",
+          "action": "Wembanyama block and transition assist",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 111.13333333333334
+    },
+    "TOR": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/TOR-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/TOR-v2-1.jpg",
+          "kind": "basketball",
+          "team": "TOR",
+          "clips": [
+            {
+              "source_start": 0,
+              "frames": 390,
+              "team": "TOR",
+              "opponent": "CHA",
+              "action": "Barnes defensive stop",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 19,
+              "frames": 420,
+              "team": "TOR",
+              "opponent": "PHI",
+              "action": "Barnes finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 846
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/TOR-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/TOR-v2-2.jpg",
+          "kind": "basketball",
+          "team": "TOR",
+          "clips": [
+            {
+              "source_start": 44,
+              "frames": 420,
+              "team": "TOR",
+              "opponent": "IND",
+              "action": "Barnes basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 74,
+              "frames": 270,
+              "team": "TOR",
+              "opponent": "POR",
+              "action": "Barnes dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 726
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/TOR-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/TOR-v2-3.jpg",
+          "kind": "basketball",
+          "team": "TOR",
+          "clips": [
+            {
+              "source_start": 98,
+              "frames": 300,
+              "team": "TOR",
+              "opponent": "MIA",
+              "action": "Barnes dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 155,
+              "frames": 600,
+              "team": "TOR",
+              "opponent": "BKN",
+              "action": "Barnes jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 936
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "5LAdiUKlgaQ",
+        "url": "https://www.youtube.com/watch?v=5LAdiUKlgaQ",
+        "title": "Scottie Barnes' BEST PLAYS! | 2026 NBA All-Star Reserve",
+        "channel": "NBA and Toronto Raptors",
+        "path": ".cache/startup-team-correction/TOR.mp4",
+        "query": "2025-26 Toronto Raptors Scottie Barnes best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 390,
+          "team": "TOR",
+          "opponent": "CHA",
+          "action": "Barnes defensive stop",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 19,
+          "frames": 420,
+          "team": "TOR",
+          "opponent": "PHI",
+          "action": "Barnes finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 44,
+          "frames": 420,
+          "team": "TOR",
+          "opponent": "IND",
+          "action": "Barnes basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 74,
+          "frames": 270,
+          "team": "TOR",
+          "opponent": "POR",
+          "action": "Barnes dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 98,
+          "frames": 300,
+          "team": "TOR",
+          "opponent": "MIA",
+          "action": "Barnes dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 155,
+          "frames": 600,
+          "team": "TOR",
+          "opponent": "BKN",
+          "action": "Barnes jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 107.13333333333334
+    },
+    "UTA": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/UTA-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/UTA-v2-1.jpg",
+          "kind": "basketball",
+          "team": "UTA",
+          "clips": [
+            {
+              "source_start": 4,
+              "frames": 375,
+              "team": "UTA",
+              "opponent": "SAC",
+              "action": "George jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 17,
+              "frames": 330,
+              "team": "UTA",
+              "opponent": "LAL",
+              "action": "Collier dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 741
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/UTA-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/UTA-v2-2.jpg",
+          "kind": "basketball",
+          "team": "UTA",
+          "clips": [
+            {
+              "source_start": 28,
+              "frames": 420,
+              "team": "UTA",
+              "opponent": "NYK",
+              "action": "Collier assist and finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 118,
+              "frames": 360,
+              "team": "UTA",
+              "opponent": "GSW",
+              "action": "George dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 816
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/UTA-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/UTA-v2-3.jpg",
+          "kind": "basketball",
+          "team": "UTA",
+          "clips": [
+            {
+              "source_start": 130,
+              "frames": 450,
+              "team": "UTA",
+              "opponent": "LAL",
+              "action": "Filipowski driving basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 149,
+              "frames": 330,
+              "team": "UTA",
+              "opponent": "ATL",
+              "action": "George dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 816
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "UDWy05T7a8g",
+        "url": "https://www.youtube.com/watch?v=UDWy05T7a8g",
+        "title": "TOP PLAYS of the 2025-26 Season \ud83d\ude31\ud83e\udd29 | UTAH JAZZ",
+        "channel": "Utah Jazz",
+        "path": ".cache/startup-team-correction/UTA.mp4",
+        "query": "2025-26 Utah Jazz Lauri Markkanen best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 4,
+          "frames": 375,
+          "team": "UTA",
+          "opponent": "SAC",
+          "action": "George jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 17,
+          "frames": 330,
+          "team": "UTA",
+          "opponent": "LAL",
+          "action": "Collier dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 28,
+          "frames": 420,
+          "team": "UTA",
+          "opponent": "NYK",
+          "action": "Collier assist and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 118,
+          "frames": 360,
+          "team": "UTA",
+          "opponent": "GSW",
+          "action": "George dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 130,
+          "frames": 450,
+          "team": "UTA",
+          "opponent": "LAL",
+          "action": "Filipowski driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 149,
+          "frames": 330,
+          "team": "UTA",
+          "opponent": "ATL",
+          "action": "George dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 102.63333333333334
+    },
+    "WAS": {
+      "playlist": [
+        {
+          "src": "/assets/startup/video/teams/WAS-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/WAS-v2-1.jpg",
+          "kind": "basketball",
+          "team": "WAS",
+          "clips": [
+            {
+              "source_start": 0,
+              "frames": 300,
+              "team": "WAS",
+              "opponent": "DAL",
+              "action": "Sarr paint basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 16,
+              "frames": 270,
+              "team": "WAS",
+              "opponent": "CHA",
+              "action": "Sarr buzzer jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 606
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-1.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+          "kind": "front-office",
+          "action": "kings-draft-room-applause",
+          "frames": 255
+        },
+        {
+          "src": "/assets/startup/video/teams/WAS-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/WAS-v2-2.jpg",
+          "kind": "basketball",
+          "team": "WAS",
+          "clips": [
+            {
+              "source_start": 28,
+              "frames": 270,
+              "team": "WAS",
+              "opponent": "PHI",
+              "action": "Sarr dunk",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 84,
+              "frames": 210,
+              "team": "WAS",
+              "opponent": "ORL",
+              "action": "Sarr finish",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 516
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-2.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+          "kind": "front-office",
+          "action": "nuggets-scout-interview",
+          "frames": 120
+        },
+        {
+          "src": "/assets/startup/video/teams/WAS-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/WAS-v2-3.jpg",
+          "kind": "basketball",
+          "team": "WAS",
+          "clips": [
+            {
+              "source_start": 104,
+              "frames": 225,
+              "team": "WAS",
+              "opponent": "NYK",
+              "action": "Sarr basket",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            },
+            {
+              "source_start": 114,
+              "frames": 360,
+              "team": "WAS",
+              "opponent": "BOS",
+              "action": "Sarr jumper",
+              "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+            }
+          ],
+          "frames": 621
+        },
+        {
+          "src": "/assets/startup/video/teams/office-v2-3.mp4",
+          "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+          "kind": "front-office",
+          "action": "nuggets-draft-room",
+          "frames": 331
+        }
+      ],
+      "source": {
+        "id": "KH8yplVJIsc",
+        "url": "https://www.youtube.com/watch?v=KH8yplVJIsc",
+        "title": "Alex Sarr Highlights from the 2025-26 Season",
+        "channel": "Washington Wizards",
+        "path": ".cache/startup-team-correction/WAS.mp4",
+        "query": "2025-26 Washington Wizards Alex Sarr best plays NBA"
+      },
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 300,
+          "team": "WAS",
+          "opponent": "DAL",
+          "action": "Sarr paint basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 16,
+          "frames": 270,
+          "team": "WAS",
+          "opponent": "CHA",
+          "action": "Sarr buzzer jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 28,
+          "frames": 270,
+          "team": "WAS",
+          "opponent": "PHI",
+          "action": "Sarr dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 84,
+          "frames": 210,
+          "team": "WAS",
+          "opponent": "ORL",
+          "action": "Sarr finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 104,
+          "frames": 225,
+          "team": "WAS",
+          "opponent": "NYK",
+          "action": "Sarr basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 114,
+          "frames": 360,
+          "team": "WAS",
+          "opponent": "BOS",
+          "action": "Sarr jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "duration_seconds": 81.63333333333334
+    }
+  }
+}

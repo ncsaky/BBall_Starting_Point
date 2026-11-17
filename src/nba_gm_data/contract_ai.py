@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import json
+import math
 import random
+from heapq import nsmallest
 from pathlib import Path
 from statistics import median
 from typing import Any
 
 from .schema import (
+    CANONICAL_SEASON,
     CANONICAL_START_DATE,
     ContractNegotiation,
     ContractOffer,
@@ -18,6 +21,7 @@ from .schema import (
     TransactionLog,
     to_plain,
 )
+from .spatial import spatial_fit_delta
 from .transactions import (
     compact_player,
     contract_active_season,
@@ -31,12 +35,14 @@ from .transactions import (
     salary_posture,
     team_by_id,
     team_fit_for_player,
+    transaction_context_is_complete,
     with_transaction_context,
 )
 from .utils import clamp, maybe_float, stable_id
 
 
 CONTRACT_MARKET_CONFIG_FILE = Path("data/overrides/contract_market_config.json")
+EXTENSION_ELIGIBLE_MAX_REMAINING_SEASONS = 2
 
 
 def default_contract_market_config() -> dict[str, Any]:
@@ -107,6 +113,7 @@ def build_contract_ai_context(canonical: dict[str, Any] | Any, config: dict[str,
 def with_contract_context(canonical: dict[str, Any] | Any, config: dict[str, Any] | None = None) -> dict[str, Any]:
     if (
         isinstance(canonical, dict)
+        and transaction_context_is_complete(canonical)
         and canonical.get("player_contract_market_profiles")
         and canonical.get("player_contract_preferences")
         and canonical.get("extension_candidates") is not None
@@ -124,19 +131,47 @@ def with_contract_context(canonical: dict[str, Any] | Any, config: dict[str, Any
     return {**canonical, **build_contract_ai_context(canonical, config)}
 
 
+def with_extension_context(canonical: dict[str, Any] | Any, config: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Build only the contract projections needed by extension decisions."""
+    canonical = with_transaction_context(canonical)
+    if (
+        canonical.get("player_contract_market_profiles")
+        and canonical.get("player_contract_preferences")
+        and canonical.get("extension_candidates") is not None
+    ):
+        return canonical
+    config = config or default_contract_market_config()
+    market_profiles = build_player_contract_market_profiles(canonical, config)
+    preferences = build_player_contract_preferences(canonical, market_profiles, config)
+    working = {
+        **canonical,
+        "player_contract_market_profiles": [to_plain(profile) for profile in market_profiles],
+        "player_contract_preferences": [to_plain(preference) for preference in preferences],
+    }
+    extension_candidates = build_extension_candidates(working, market_profiles, config)
+    return {
+        **working,
+        "extension_candidates": [to_plain(candidate) for candidate in extension_candidates],
+        # Extension reports and negotiations share the general context guard,
+        # but do not need projected free-agent suitors.
+        "free_agent_candidates": [],
+    }
+
+
 def build_player_contract_market_profiles(canonical: dict[str, Any] | Any, config: dict[str, Any] | None = None) -> list[PlayerContractMarketProfile]:
     canonical = with_transaction_context(canonical)
     config = config or default_contract_market_config()
     from .sim import player_feature_vector
 
     valuations = {value["player_id"]: value for value in canonical.get("player_asset_valuations", [])}
+    comp_pool = contract_comp_pool(canonical, valuations)
     output: list[PlayerContractMarketProfile] = []
     for player in canonical.get("players", []):
         valuation = valuations.get(player["id"]) or fallback_player_valuation(player)
         features = player_feature_vector(canonical, player).features
         contract = contract_for_player(canonical, player["id"]) or {}
         role_tier = contract_role_tier(player, valuation, features)
-        comp_player_ids, comp_summary = contract_comps(canonical, player, valuation, role_tier)
+        comp_player_ids, comp_summary = contract_comps(canonical, player, valuation, role_tier, prepared_pool=comp_pool)
         model_aav = model_expected_aav(player, valuation, features, contract, role_tier, config)
         if comp_summary["comp_count"] >= 3:
             expected = model_aav * 0.74 + float(comp_summary["median_aav"]) * 0.26
@@ -252,22 +287,11 @@ def build_extension_candidates(
         contract = contract_for_player(canonical, player["id"]) or {}
         profile = profiles[player["id"]]
         valuation = valuations.get(player["id"]) or fallback_player_valuation(player)
-        remaining = salary_seasons_remaining(contract)
-        manual = contract_needs_manual_review(contract)
-        original_years = int(contract.get("original_contract_years") or 0)
-        eligible = not manual and player.get("team_id") is not None and original_years >= 3 and 1 <= remaining <= 3
-        if manual:
-            status = "manual_review_required"
-        elif original_years < 3:
-            status = "original_contract_shorter_than_three_years"
-        elif remaining > 3:
-            status = "not_in_extension_window"
-        elif remaining < 1:
-            status = "no_salary_seasons_remaining"
-        elif eligible:
-            status = "eligible_extension_window"
-        else:
-            status = "not_extension_eligible"
+        window = extension_contract_window(contract)
+        remaining = int(window["years_remaining"])
+        manual = bool(window["manual_review_required"])
+        eligible = bool(window["eligible"]) and player.get("team_id") is not None
+        status = str(window["eligibility_status"] if player.get("team_id") is not None else "not_extension_eligible")
         priority_score, reasons = extension_priority_score(canonical, player, valuation, profile, eligible, manual)
         output.append(
             ExtensionCandidate(
@@ -285,7 +309,7 @@ def build_extension_candidates(
                 reasons=reasons,
                 confidence=round(min(profile.confidence, 0.7 if eligible else 0.48), 3),
                 source_ids=["src_contract_market_config_v1", *list(contract.get("source_ids") or [])],
-                notes="Extension candidate v1 uses practical remaining-years/options heuristics rather than full CBA eligibility.",
+                notes="Extension candidate v1 is limited to the final two active contract seasons and uses practical options heuristics rather than full CBA eligibility.",
             )
         )
     return sorted(output, key=lambda item: (item.priority, item.projected_aav, item.player_id), reverse=True)
@@ -579,7 +603,16 @@ def apply_contract_to_save_state(
             "negotiation_id": negotiation_id,
             "notes": "The pending negotiation does not have an accepted signing decision.",
         }
-    accepted_offer = (decision or {}).get("accepted_offer") or accepted_offer_from_negotiation(negotiation_payload)
+    # An opening/counter offer is not consent. Legacy ledgers may omit a
+    # decision, but must explicitly mark both the agreement and its offer.
+    accepted_offer = (
+        decision.get("accepted_offer") if decision and decision.get("accepted")
+        else accepted_offer_from_negotiation(negotiation_payload)
+        if negotiation_payload.get("status") == "agreement" else None
+    )
+    issues = contract_application_issues(save, negotiation_payload, accepted_offer)
+    if issues:
+        return {"status": "not_applied", "negotiation_id": negotiation_id, "issues": issues, "notes": " ".join(issues)}
     if accepted_offer:
         accepted_offer = dict(accepted_offer)
         accepted_offer.setdefault("original_contract_years", int(accepted_offer.get("years") or accepted_offer.get("term_years") or 1))
@@ -661,6 +694,55 @@ def apply_contract_to_save_state(
     return {"status": "applied", "transaction_log": to_plain(log)}
 
 
+def contract_application_issues(save: dict[str, Any], negotiation: dict[str, Any], offer: dict[str, Any] | None) -> list[str]:
+    """Check consent and save-owned availability before any ledger mutation.
+
+    Salary room and full eligibility still belong to the originating workflow;
+    this boundary must never invent an agreement or move a now-unavailable player.
+    """
+    if not isinstance(offer, dict) or not offer:
+        return ["The pending negotiation has no explicitly accepted contract offer."]
+    issues = []
+    if 'guaranteed' in offer and type(offer['guaranteed']) is not bool:
+        issues.append('Guaranteed salary must be true or false.')
+    player_id, team_id = negotiation.get("player_id"), negotiation.get("team_id")
+    from .release_planning import reacquisition_blocked
+    if reacquisition_blocked(save, team_id, player_id, str(save.get('state', {}).get('current_date') or '')):
+        issues.append('The releasing team cannot reacquire this player during its stretch restriction.')
+    if not player_id or not team_id:
+        issues.append("The agreement must identify a player and a team.")
+    for key in ("player_id", "team_id"):
+        if offer.get(key) != negotiation.get(key):
+            issues.append(f"Accepted offer {key} does not match the negotiation.")
+    try:
+        salary, years = float(offer.get("annual_salary") or 0), float(offer.get("years") or 0)
+        if not math.isfinite(salary) or salary <= 0 or not math.isfinite(years) or not years.is_integer() or not 1 <= years <= 5:
+            issues.append("Accepted offer must have a finite positive salary and a valid contract term.")
+    except (TypeError, ValueError):
+        issues.append("Accepted offer has invalid salary or term data.")
+    if any(log.get("proposal_id") == negotiation.get("id") for log in save.get("transaction_logs", [])):
+        issues.append("This contract agreement has already been applied.")
+    if save.get("version") == "league_save_v1":
+        from .waivers import pending_ids
+        if player_id in pending_ids(save):
+            issues.append("The player must clear waivers before signing a new contract.")
+        inactive = set(save.get("retired_player_ids") or []) | set(save.get("league_exit_player_ids") or [])
+        if player_id in inactive:
+            issues.append("The player is no longer active in this league.")
+        kind = negotiation.get("negotiation_type")
+        owners = save.get("roster_overrides") or {}
+        free_agents = set(save.get("free_agent_player_ids") or [])
+        if kind in {"free_agency", "free_agent_signing"}:
+            if player_id not in free_agents or owners.get(player_id) is not None:
+                issues.append("The player is no longer available in the save's free-agent pool.")
+        elif kind == "extension":
+            if player_id in free_agents or (player_id in owners and owners[player_id] != team_id):
+                issues.append("The player is no longer on the extending team.")
+        else:
+            issues.append("Unsupported contract agreement type.")
+    return issues
+
+
 def apply_contract_to_save(save_path: str | Path, negotiation_id: str, date: str = CANONICAL_START_DATE) -> dict[str, Any]:
     path = Path(save_path)
     if path.exists():
@@ -734,7 +816,7 @@ def offer_contract_seasons(offer: dict[str, Any], start_season: str, guarantee_s
         start = int(start_season.split("-")[0])
     except (ValueError, AttributeError):
         start = 2026
-    return [
+    seasons = [
         {
             "season": f"{start + offset}-{str(start + offset + 1)[-2:]}",
             "salary": int(round(annual)),
@@ -743,6 +825,8 @@ def offer_contract_seasons(offer: dict[str, Any], start_season: str, guarantee_s
         }
         for offset in range(max(1, years))
     ]
+    from .contract_protection import negotiated_seasons
+    return negotiated_seasons(offer, seasons)
 
 
 def projected_retirement_start_year(player: dict[str, Any], active_start_year: int | None = None) -> int | None:
@@ -904,30 +988,41 @@ def contract_role_tier(player: dict[str, Any], valuation: dict[str, Any], featur
     return "depth"
 
 
-def contract_comps(canonical: dict[str, Any], player: dict[str, Any], valuation: dict[str, Any], role_tier: str) -> tuple[list[str], dict[str, Any]]:
-    valuations = {item["player_id"]: item for item in canonical.get("player_asset_valuations", [])}
-    player_age = maybe_float(player.get("age")) or 27.0
-    player_minutes = float(player.get("minutes_projection") or 0)
-    candidates: list[tuple[float, str, float]] = []
+def contract_comp_pool(canonical: dict[str, Any], valuations: dict[str, dict[str, Any]] | None = None) -> list[tuple[str, float, float, float, float, float]]:
+    """Read comparison inputs once for a batch of contract projections."""
+    if valuations is None:
+        valuations = {item["player_id"]: item for item in canonical.get("player_asset_valuations", [])}
+    pool = []
     for other in canonical.get("players", []):
-        if other["id"] == player["id"]:
-            continue
         other_value = valuations.get(other["id"])
         if not other_value:
             continue
         salary = current_salary(contract_for_player(canonical, other["id"]))
         if salary is None or salary < 1_000_000:
             continue
-        other_age = maybe_float(other.get("age")) or 27.0
-        other_minutes = float(other.get("minutes_projection") or 0)
-        distance = abs(float(other_value["player_value"]) - float(valuation["player_value"])) * 1.1
-        distance += abs(float(other_value["on_court_value"]) - float(valuation["on_court_value"])) * 0.65
+        pool.append((other["id"], float(other_value["player_value"]), float(other_value["on_court_value"]),
+                     maybe_float(other.get("age")) or 27.0, float(other.get("minutes_projection") or 0), salary))
+    return pool
+
+
+def contract_comps(canonical: dict[str, Any], player: dict[str, Any], valuation: dict[str, Any], role_tier: str, *, prepared_pool: list[tuple[str, float, float, float, float, float]] | None = None) -> tuple[list[str], dict[str, Any]]:
+    pool = prepared_pool if prepared_pool is not None else contract_comp_pool(canonical)
+    player_age = maybe_float(player.get("age")) or 27.0
+    player_minutes = float(player.get("minutes_projection") or 0)
+    player_value = float(valuation["player_value"])
+    on_court_value = float(valuation["on_court_value"])
+    candidates: list[tuple[float, str, float]] = []
+    for other_id, other_value, other_on_court, other_age, other_minutes, salary in pool:
+        if other_id == player["id"]:
+            continue
+        distance = abs(other_value - player_value) * 1.1
+        distance += abs(other_on_court - on_court_value) * 0.65
         distance += abs(other_age - player_age) * 0.55
         distance += abs(other_minutes - player_minutes) * 0.16
-        if role_tier in {"franchise_anchor", "all_star_core", "legacy_star"} and float(other_value["on_court_value"]) < 60:
+        if role_tier in {"franchise_anchor", "all_star_core", "legacy_star"} and other_on_court < 60:
             distance += 12
-        candidates.append((distance, other["id"], salary))
-    top = sorted(candidates, key=lambda item: (item[0], item[1]))[:8]
+        candidates.append((distance, other_id, salary))
+    top = nsmallest(8, candidates, key=lambda item: (item[0], item[1]))
     salaries = [salary for _, _, salary in top]
     summary = {
         "comp_count": len(salaries),
@@ -1110,6 +1205,38 @@ def salary_seasons_remaining(contract: dict[str, Any]) -> int:
     return sum(1 for season in contract.get("seasons", []) if str(season.get("season", "")) >= active_season and season.get("salary") is not None)
 
 
+def extension_contract_window(contract: dict[str, Any] | None) -> dict[str, Any]:
+    """Return the shared final-two-seasons extension eligibility decision."""
+    contract = contract or {}
+    remaining = salary_seasons_remaining(contract)
+    manual = contract_needs_manual_review(contract)
+    original_years = int(contract.get("original_contract_years") or 0)
+    eligible = (
+        not manual
+        and original_years >= 3
+        and 1 <= remaining <= EXTENSION_ELIGIBLE_MAX_REMAINING_SEASONS
+    )
+    if manual:
+        status = "manual_review_required"
+    elif original_years < 3:
+        status = "original_contract_shorter_than_three_years"
+    elif remaining > EXTENSION_ELIGIBLE_MAX_REMAINING_SEASONS:
+        status = "not_in_extension_window"
+    elif remaining < 1:
+        status = "no_salary_seasons_remaining"
+    elif eligible:
+        status = "eligible_extension_window"
+    else:
+        status = "not_extension_eligible"
+    return {
+        "eligible": eligible,
+        "eligibility_status": status,
+        "years_remaining": remaining,
+        "original_contract_years": original_years,
+        "manual_review_required": manual,
+    }
+
+
 def contract_needs_manual_review(contract: dict[str, Any] | None) -> bool:
     if not contract:
         return True
@@ -1119,8 +1246,13 @@ def contract_needs_manual_review(contract: dict[str, Any] | None) -> bool:
 
 
 def option_status_in_remaining_window(contract: dict[str, Any]) -> str | None:
+    start_year = int(contract_active_season(contract).split("-")[0])
+    remaining_window = {
+        f"{year}-{str(year + 1)[-2:]}"
+        for year in range(start_year, start_year + 3)
+    }
     for season in contract.get("seasons", []):
-        if season.get("season") in {"2025-26", "2026-27", "2027-28"} and season.get("option_type"):
+        if season.get("season") in remaining_window and season.get("option_type"):
             return str(season.get("option_type"))
     return None
 
@@ -1218,6 +1350,7 @@ def signing_fit_score(canonical: dict[str, Any], team_id: str, player: dict[str,
     state = next(item for item in canonical["team_strategic_states"] if item["team_id"] == team_id)
     front = next(item for item in canonical["front_office_profiles"] if item["team_id"] == team_id)
     fit = team_fit_for_player(player, valuation, state) * 4.0
+    fit += spatial_fit_delta(canonical, team_id, player, cap=2.0) * 4.0
     age = maybe_float(player.get("age")) or 27.0
     position_bucket = player_position_bucket(player)
     if f"{position_bucket}_depth" in state.get("needs", []):
@@ -1225,7 +1358,7 @@ def signing_fit_score(canonical: dict[str, Any], team_id: str, player: dict[str,
     if state["phase"] in {"rebuilding", "developing"} and age <= 25:
         fit += 12
     if state["phase"] in {"rebuilding", "developing"} and age >= 31:
-        fit -= 16
+        fit -= 4 if state.get('window_phase') == 'entering' else 16
     if state["phase"] in {"contending", "contending_with_future_upside"} and float(valuation.get("playoff_value") or 0) >= 62:
         fit += 10
     if state["salary_posture"].startswith("expensive"):
@@ -1357,7 +1490,7 @@ def contract_offer(
         annual_salary=round(annual_salary, 2),
         total_value=round(annual_salary * max(1, int(years)), 2),
         option_type=None,
-        guarantee_level="standard_guarantee_unknown",
+        guarantee_level="fully_guaranteed",
         role_promise=role_promise,
         status=status,
         notes=notes,
@@ -1402,7 +1535,7 @@ def contract_legality(canonical: dict[str, Any], player: dict[str, Any], team: d
             manual.append(f"Extension eligibility is {candidate.get('eligibility_status')}.")
         start_label = extension_start_season_from_date(str((canonical.get("meta") or {}).get("current_date") or CANONICAL_START_DATE))
     else:
-        start_label = str((canonical.get("meta") or {}).get("active_season") or "2025-26")
+        start_label = str((canonical.get("meta") or {}).get("active_season") or CANONICAL_SEASON)
     start_year = season_start_year_for_contract(start_label)
     retirement_start = projected_retirement_start_year(player, start_year)
     if retirement_start is not None and retirement_start <= start_year + int(offer.years) - 1:
@@ -1593,6 +1726,4 @@ def accepted_offer_from_negotiation(negotiation: dict[str, Any]) -> dict[str, An
     for offer in negotiation.get("offers", []):
         if offer.get("status") in {"accepted", "agreement"}:
             return offer
-    if negotiation.get("offers"):
-        return negotiation["offers"][-1]
     return None

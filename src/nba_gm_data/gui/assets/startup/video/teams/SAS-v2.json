@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/SAS-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/SAS-v2-1.jpg",
+      "kind": "basketball",
+      "team": "SAS",
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 540,
+          "team": "SAS",
+          "opponent": "PHX",
+          "action": "Wembanyama winning jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 42,
+          "frames": 300,
+          "team": "SAS",
+          "opponent": "GSW",
+          "action": "Wembanyama dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 876
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/SAS-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/SAS-v2-2.jpg",
+      "kind": "basketball",
+      "team": "SAS",
+      "clips": [
+        {
+          "source_start": 63,
+          "frames": 270,
+          "team": "SAS",
+          "opponent": "MEM",
+          "action": "Wembanyama dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 108,
+          "frames": 360,
+          "team": "SAS",
+          "opponent": "NYK",
+          "action": "Wembanyama roll and dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 666
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/SAS-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/SAS-v2-3.jpg",
+      "kind": "basketball",
+      "team": "SAS",
+      "clips": [
+        {
+          "source_start": 139,
+          "frames": 510,
+          "team": "SAS",
+          "opponent": "MIA",
+          "action": "Wembanyama block and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 159,
+          "frames": 540,
+          "team": "SAS",
+          "opponent": "HOU",
+          "action": "Wembanyama block and transition assist",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 1086
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "-Q-KO1VBJAY",
+    "url": "https://www.youtube.com/watch?v=-Q-KO1VBJAY",
+    "title": "Victor Wembanyama's Season Highlights Are Simply UNREAL \ud83e\udd2f | 2025-26 NBA Season",
+    "channel": "NBA",
+    "path": ".cache/startup-team-correction/SAS.mp4",
+    "query": "2025-26 San Antonio Spurs Victor Wembanyama best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 0,
+      "frames": 540,
+      "team": "SAS",
+      "opponent": "PHX",
+      "action": "Wembanyama winning jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 42,
+      "frames": 300,
+      "team": "SAS",
+      "opponent": "GSW",
+      "action": "Wembanyama dunk",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 63,
+      "frames": 270,
+      "team": "SAS",
+      "opponent": "MEM",
+      "action": "Wembanyama dunk",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 108,
+      "frames": 360,
+      "team": "SAS",
+      "opponent": "NYK",
+      "action": "Wembanyama roll and dunk",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 139,
+      "frames": 510,
+      "team": "SAS",
+      "opponent": "MIA",
+      "action": "Wembanyama block and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 159,
+      "frames": 540,
+      "team": "SAS",
+      "opponent": "HOU",
+      "action": "Wembanyama block and transition assist",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 111.13333333333334
+}

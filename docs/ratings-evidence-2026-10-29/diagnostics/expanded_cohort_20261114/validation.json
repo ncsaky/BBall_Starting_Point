@@ -1,0 +1,65 @@
+{
+  "date": "2026-11-14",
+  "packet_version": "expanded_action_cohort_research_v1_2026_11_14",
+  "input_version": "player_performance_inputs_v1",
+  "registry_version": "player_performance_registry_v1",
+  "schema_sections_accepted": 3,
+  "source_players": 6,
+  "records_per_layer": 564,
+  "all94_ids_and18_passing_fields_preserved": true,
+  "all_player_documents_roundtrip_exact": true,
+  "inherited_records_match_original_precedence_exactly": 44,
+  "new_scouting_ranges": 36,
+  "new_validated_FT_proxies": 4,
+  "new_proposals_only_replace_unknowns_in_separate_layer": true,
+  "operational_controls_do_not_replace_supported_values": true,
+  "required_cells": 292,
+  "source_supported_required": 68,
+  "operational_completions": 224,
+  "required_unknowns_after_controls": 0,
+  "source_ledger_rows": 564,
+  "new_supported_but_unwired_fields": [
+    {
+      "name": "Stephen Curry",
+      "design_id": "S26"
+    },
+    {
+      "name": "Nikola Joki\u0107",
+      "design_id": "F08.recognition"
+    },
+    {
+      "name": "Nikola Joki\u0107",
+      "design_id": "F08.execution"
+    }
+  ],
+  "raw_regular_player_seasons_checked": 6,
+  "milestone7_artifact_authenticated_to_handoff": true,
+  "fixed_interface_dependencies_match_verified_milestone7_ledger": true,
+  "source_hash_checks": {
+    "data/research/espn_career_raw/3975.json": true,
+    "data/research/espn_career_raw/3934672.json": true,
+    "data/research/espn_career_raw/5104157.json": true,
+    "data/research/espn_career_raw/3112335.json": true,
+    "data/research/espn_career_raw/3133628.json": true,
+    "data/research/espn_career_raw/4433134.json": true,
+    "data/canonical/universe_2026_27_offseason.json": true,
+    "data/research/player_career_stats.json": true,
+    "docs/PLAYER_OBJECT_THREE_COLUMN_MAP_2026_11_12.md": true,
+    "docs/PILOT_RESPONSE_CALIBRATION_REVIEW_2026_11_14.md": true,
+    "docs/ratings-evidence-2026-10-29/PILOT_TARGETED_INPUT_UPDATES_2026_11_14.json": true,
+    "docs/ratings-evidence-2026-10-29/POINT_GUARDS_FULL_EXTRACTION.md": true,
+    "docs/ratings-evidence-2026-10-29/EPISODE_4_CENTERS_EXTRACTION.md": true,
+    "docs/ratings-evidence-2026-10-29/POWER_FORWARD_FULL_EXTRACTION.md": true,
+    "docs/ratings-evidence-2026-10-29/TEAM_RANKING_FULL_EXTRACTION.md": true,
+    "docs/ratings-evidence-2026-10-29/EPISODE_3_TEAMS_30_TO_21_EXTRACTION.md": true,
+    "docs/ratings-evidence-2026-10-29/CREATION_PASSING_DEFENSE_INPUTS_2026_11_13.json": true,
+    "docs/ratings-evidence-2026-10-29/OFFENSE_INTERIOR_INTERACTION_INPUTS_2026_11_13.json": true,
+    "docs/ratings-evidence-2026-10-29/INTERIOR_DEFENSE_EXPERIMENT_INPUTS_2026_11_13.json": true,
+    "docs/ratings-evidence-2026-10-29/TEAMS_20_TO_11_FULL_EXTRACTION.md": true
+  },
+  "profiles_compiled": 0,
+  "simulations": 0,
+  "production_mutations": false,
+  "scope": "Schema/round-trip/merge/provenance/raw-count/fixed dependency readiness checks only; no actual compiler or action/game compatibility claim.",
+  "report_links_checked": 17
+}

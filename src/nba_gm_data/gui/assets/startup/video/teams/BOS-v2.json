@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/BOS-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/BOS-v2-1.jpg",
+      "kind": "basketball",
+      "team": "BOS",
+      "clips": [
+        {
+          "source_start": 2,
+          "frames": 360,
+          "team": "BOS",
+          "opponent": "PHI",
+          "action": "Brown defensive play",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 23,
+          "frames": 300,
+          "team": "BOS",
+          "opponent": "DET",
+          "action": "Boston drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 696
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/BOS-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/BOS-v2-2.jpg",
+      "kind": "basketball",
+      "team": "BOS",
+      "clips": [
+        {
+          "source_start": 34,
+          "frames": 390,
+          "team": "BOS",
+          "opponent": "CLE",
+          "action": "Boston buzzer three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 119,
+          "frames": 390,
+          "team": "BOS",
+          "opponent": "UTA",
+          "action": "Boston paint finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 816
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/BOS-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/BOS-v2-3.jpg",
+      "kind": "basketball",
+      "team": "BOS",
+      "clips": [
+        {
+          "source_start": 134,
+          "frames": 510,
+          "team": "BOS",
+          "opponent": "WAS",
+          "action": "Brown driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 169,
+          "frames": 270,
+          "team": "BOS",
+          "opponent": "DAL",
+          "action": "Brown basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 816
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "GVsjpWv5wLo",
+    "url": "https://www.youtube.com/watch?v=GVsjpWv5wLo",
+    "title": "Jaylen Brown | Top Plays of the 2025-26 Season",
+    "channel": "Sports Productions ",
+    "path": ".cache/startup-team-correction/BOS-GVsjpWv5wLo.mp4",
+    "query": "2025-26 Boston Celtics Jaylen Brown best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 2,
+      "frames": 360,
+      "team": "BOS",
+      "opponent": "PHI",
+      "action": "Brown defensive play",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 23,
+      "frames": 300,
+      "team": "BOS",
+      "opponent": "DET",
+      "action": "Boston drive and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 34,
+      "frames": 390,
+      "team": "BOS",
+      "opponent": "CLE",
+      "action": "Boston buzzer three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 119,
+      "frames": 390,
+      "team": "BOS",
+      "opponent": "UTA",
+      "action": "Boston paint finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 134,
+      "frames": 510,
+      "team": "BOS",
+      "opponent": "WAS",
+      "action": "Brown driving basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 169,
+      "frames": 270,
+      "team": "BOS",
+      "opponent": "DAL",
+      "action": "Brown basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 101.13333333333334
+}

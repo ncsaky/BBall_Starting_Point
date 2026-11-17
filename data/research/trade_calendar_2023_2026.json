@@ -1,0 +1,793 @@
+{
+  "retrieved": "2026-10-27",
+  "count_unit": "dated tracker block, not players or team participations",
+  "limits": [
+    "Tracker omissions and grouped multi-team reporting mean these are a consistent sample, not a complete transaction census.",
+    "Report/approval dates can differ. Rescinded entries excluded. Pure pick trades included.",
+    "2024-25 tracker has one undated Porter Jr. trade; counted separately with Feb. 6 official confirmation."
+  ],
+  "sources": [
+    {
+      "season": "2023-24",
+      "period": "offseason",
+      "url": "https://www.nba.com/news/2023-offseason-trade-tracker",
+      "retrieval_sha256": "ec73546b397e9fd3b92529491191a820c616ddd0f0693a395b2331464f8c592b",
+      "entries": [
+        {
+          "date": "2023-10-01",
+          "entry_id": "560bb9c7235c6993"
+        },
+        {
+          "date": "2023-09-27",
+          "entry_id": "136cbec81dee496d"
+        },
+        {
+          "date": "2023-07-17",
+          "entry_id": "699b87d9250f8587"
+        },
+        {
+          "date": "2023-07-17",
+          "entry_id": "d30a0df00047c2ff"
+        },
+        {
+          "date": "2023-07-12",
+          "entry_id": "c14bbea78d5ef131"
+        },
+        {
+          "date": "2023-07-12",
+          "entry_id": "c01cec235988924f"
+        },
+        {
+          "date": "2023-07-11",
+          "entry_id": "5c12d30fad4495b5"
+        },
+        {
+          "date": "2023-07-08",
+          "entry_id": "1a5de58a972dcbc0"
+        },
+        {
+          "date": "2023-07-08",
+          "entry_id": "52bee2be2db7fd02"
+        },
+        {
+          "date": "2023-07-07",
+          "entry_id": "5ebaeb2dcde1bfff"
+        },
+        {
+          "date": "2023-07-07",
+          "entry_id": "136172703348af65"
+        },
+        {
+          "date": "2023-07-06",
+          "entry_id": "ce4a17ae90ba2931"
+        },
+        {
+          "date": "2023-07-06",
+          "entry_id": "57e1f9a2f339cb37"
+        },
+        {
+          "date": "2023-07-06",
+          "entry_id": "541e7e1a34627059"
+        },
+        {
+          "date": "2023-07-06",
+          "entry_id": "752bb0ea489b9d9f"
+        },
+        {
+          "date": "2023-07-06",
+          "entry_id": "f943b2603c8ee1d2"
+        },
+        {
+          "date": "2023-07-06",
+          "entry_id": "0f5feb902ad5fa8e"
+        },
+        {
+          "date": "2023-07-06",
+          "entry_id": "7546d75f474e50a6"
+        },
+        {
+          "date": "2023-06-30",
+          "entry_id": "64180beb88656526"
+        },
+        {
+          "date": "2023-06-24",
+          "entry_id": "46797265a3515a5d"
+        },
+        {
+          "date": "2023-06-23",
+          "entry_id": "4c2ac49d32248140"
+        },
+        {
+          "date": "2023-06-23",
+          "entry_id": "dcc7f0008b7a5285"
+        },
+        {
+          "date": "2023-06-23",
+          "entry_id": "514d7a0946daa73e"
+        },
+        {
+          "date": "2023-06-23",
+          "entry_id": "f749423688cc7f18"
+        },
+        {
+          "date": "2023-06-23",
+          "entry_id": "9509afdcf030ef32"
+        },
+        {
+          "date": "2023-06-23",
+          "entry_id": "44801ce5732d6309"
+        },
+        {
+          "date": "2023-06-23",
+          "entry_id": "26cd9c08720ad9a0"
+        },
+        {
+          "date": "2023-06-23",
+          "entry_id": "9760add405ee6538"
+        },
+        {
+          "date": "2023-06-23",
+          "entry_id": "304cda570370b709"
+        },
+        {
+          "date": "2023-06-22",
+          "entry_id": "8d5a9afb3e28a399"
+        }
+      ],
+      "rescinded_excluded": 0,
+      "monthly_counts": {
+        "2023-06": 12,
+        "2023-07": 16,
+        "2023-09": 1,
+        "2023-10": 1
+      },
+      "deadline_day": 0,
+      "deadline_week": 0
+    },
+    {
+      "season": "2023-24",
+      "period": "in_season",
+      "url": "https://www.nba.com/news/2023-24-nba-trade-tracker",
+      "retrieval_sha256": "973911dc16ffc7fa1c3d335de0129ba566b4884da61a3d10c842e03f31689063",
+      "entries": [
+        {
+          "date": "2024-02-08",
+          "entry_id": "0154df35fa1f2f9e"
+        },
+        {
+          "date": "2024-02-08",
+          "entry_id": "c90c30b2a21fe0ba"
+        },
+        {
+          "date": "2024-02-08",
+          "entry_id": "c34bbd90a2a8d320"
+        },
+        {
+          "date": "2024-02-08",
+          "entry_id": "ec87716202166bec"
+        },
+        {
+          "date": "2024-02-08",
+          "entry_id": "4eadb6cfd1d87122"
+        },
+        {
+          "date": "2024-02-08",
+          "entry_id": "d61faa755dd494d8"
+        },
+        {
+          "date": "2024-02-08",
+          "entry_id": "3fc4d88791159544"
+        },
+        {
+          "date": "2024-02-08",
+          "entry_id": "5dd8fbd92cf85764"
+        },
+        {
+          "date": "2024-02-08",
+          "entry_id": "9f9b83e8e954fa30"
+        },
+        {
+          "date": "2024-02-08",
+          "entry_id": "759c3ae9b7abb0e3"
+        },
+        {
+          "date": "2024-02-08",
+          "entry_id": "a2fdb82b233e8ba2"
+        },
+        {
+          "date": "2024-02-08",
+          "entry_id": "ab21705e7c99e58c"
+        },
+        {
+          "date": "2024-02-08",
+          "entry_id": "dde48f257748997e"
+        },
+        {
+          "date": "2024-02-08",
+          "entry_id": "fd02a9c1df88ef2c"
+        },
+        {
+          "date": "2024-02-08",
+          "entry_id": "6d9487ef120921d5"
+        },
+        {
+          "date": "2024-02-08",
+          "entry_id": "7168cea062f36ad1"
+        },
+        {
+          "date": "2024-02-07",
+          "entry_id": "da697f838413e582"
+        },
+        {
+          "date": "2024-02-07",
+          "entry_id": "aeb3a6d539e63c88"
+        },
+        {
+          "date": "2024-02-01",
+          "entry_id": "04d543ed5ba34ff8"
+        },
+        {
+          "date": "2024-01-17",
+          "entry_id": "a3a955be4b58dd8c"
+        },
+        {
+          "date": "2024-01-17",
+          "entry_id": "572e22a62546580b"
+        },
+        {
+          "date": "2024-01-14",
+          "entry_id": "27b98e0e64f6e902"
+        },
+        {
+          "date": "2023-12-30",
+          "entry_id": "749e3f2632b594cd"
+        },
+        {
+          "date": "2023-11-01",
+          "entry_id": "cf678a42fd6003d0"
+        },
+        {
+          "date": "2023-11-01",
+          "entry_id": "eb46b377b2511c39"
+        }
+      ],
+      "rescinded_excluded": 0,
+      "monthly_counts": {
+        "2023-11": 2,
+        "2023-12": 1,
+        "2024-01": 3,
+        "2024-02": 19
+      },
+      "deadline_day": 16,
+      "deadline_week": 18
+    },
+    {
+      "season": "2024-25",
+      "period": "offseason",
+      "url": "https://www.nba.com/news/2024-offseason-trade-tracker",
+      "retrieval_sha256": "f109a9e2e61c20402ce0c749db287979efca4649b2f8fec85d0e08b8158136db",
+      "entries": [
+        {
+          "date": "2024-10-02",
+          "entry_id": "96201fc1547d3bd2"
+        },
+        {
+          "date": "2024-07-29",
+          "entry_id": "450a7cbe5266f18b"
+        },
+        {
+          "date": "2024-07-19",
+          "entry_id": "fa1fb199a62e7d47"
+        },
+        {
+          "date": "2024-07-18",
+          "entry_id": "fc8e008df7188870"
+        },
+        {
+          "date": "2024-07-08",
+          "entry_id": "a03d8b8233e63178"
+        },
+        {
+          "date": "2024-07-06",
+          "entry_id": "bcf340e15587f7b0"
+        },
+        {
+          "date": "2024-07-06",
+          "entry_id": "9bf5cc6c2502407d"
+        },
+        {
+          "date": "2024-07-06",
+          "entry_id": "401cc7f1124ad1ba"
+        },
+        {
+          "date": "2024-07-06",
+          "entry_id": "feb917d02eb8886c"
+        },
+        {
+          "date": "2024-07-06",
+          "entry_id": "379fdd2e8f41885d"
+        },
+        {
+          "date": "2024-07-06",
+          "entry_id": "e7d64d4f7e74d42b"
+        },
+        {
+          "date": "2024-07-06",
+          "entry_id": "bd2b7ab86df5814b"
+        },
+        {
+          "date": "2024-06-28",
+          "entry_id": "186daa45582a1340"
+        },
+        {
+          "date": "2024-06-27",
+          "entry_id": "6bb4e10ae4181bb8"
+        },
+        {
+          "date": "2024-06-27",
+          "entry_id": "070deb32f7b9ed7c"
+        },
+        {
+          "date": "2024-06-27",
+          "entry_id": "f757a537c93979f7"
+        },
+        {
+          "date": "2024-06-27",
+          "entry_id": "4449f8bf17eef9f1"
+        },
+        {
+          "date": "2024-06-27",
+          "entry_id": "df40cba1e047cf43"
+        },
+        {
+          "date": "2024-06-27",
+          "entry_id": "a451e136b280d3a1"
+        },
+        {
+          "date": "2024-06-27",
+          "entry_id": "ee60d8043106ccf3"
+        },
+        {
+          "date": "2024-06-27",
+          "entry_id": "42844cb6dbbf23ff"
+        },
+        {
+          "date": "2024-06-27",
+          "entry_id": "1c5585c3caae1f1c"
+        },
+        {
+          "date": "2024-06-27",
+          "entry_id": "e30ea1f3fb2ddb4c"
+        },
+        {
+          "date": "2024-06-27",
+          "entry_id": "794bcdbfd3d7e16d"
+        },
+        {
+          "date": "2024-06-27",
+          "entry_id": "67658c4649206a2f"
+        },
+        {
+          "date": "2024-06-27",
+          "entry_id": "d67ce41db8fd2506"
+        },
+        {
+          "date": "2024-06-21",
+          "entry_id": "da550df58f06066a"
+        }
+      ],
+      "rescinded_excluded": 0,
+      "monthly_counts": {
+        "2024-06": 15,
+        "2024-07": 11,
+        "2024-10": 1
+      },
+      "deadline_day": 0,
+      "deadline_week": 0
+    },
+    {
+      "season": "2024-25",
+      "period": "in_season",
+      "url": "https://www.nba.com/news/2024-25-nba-trade-tracker",
+      "retrieval_sha256": "d27934d0de2ad96471697bc4ab69702e1a9dcabd731cffd9e82334222784cce4",
+      "entries": [
+        {
+          "date": "2025-02-06",
+          "entry_id": "95c795d539507e1d"
+        },
+        {
+          "date": "2025-02-06",
+          "entry_id": "4ed44601dff72b9b"
+        },
+        {
+          "date": "2025-02-06",
+          "entry_id": "1e43e9929a9a5a82"
+        },
+        {
+          "date": "2025-02-06",
+          "entry_id": "8b0f45b4f24ebc16"
+        },
+        {
+          "date": "2025-02-06",
+          "entry_id": "cb4420348af72cc0"
+        },
+        {
+          "date": "2025-02-06",
+          "entry_id": "cfad0579b9dd18ce"
+        },
+        {
+          "date": "2025-02-06",
+          "entry_id": "df36aba42cc6e60b"
+        },
+        {
+          "date": "2025-02-06",
+          "entry_id": "ef494f0a10f45cd4"
+        },
+        {
+          "date": "2025-02-06",
+          "entry_id": "adc7f657bad0234a"
+        },
+        {
+          "date": "2025-02-06",
+          "entry_id": "9bf3ab80595c9eac"
+        },
+        {
+          "date": "2025-02-06",
+          "entry_id": "a7ce38b6379274ac"
+        },
+        {
+          "date": "2025-02-06",
+          "entry_id": "0648db52f47f66b8"
+        },
+        {
+          "date": "2025-02-06",
+          "entry_id": "4b9b308385558d8e"
+        },
+        {
+          "date": "2025-02-06",
+          "entry_id": "031fb1ae2fced62c"
+        },
+        {
+          "date": "2025-02-05",
+          "entry_id": "bbb1390fd521cd2b"
+        },
+        {
+          "date": "2025-02-05",
+          "entry_id": "fc1d776b8052e455"
+        },
+        {
+          "date": "2025-02-04",
+          "entry_id": "b7ed96a2d81cbe57"
+        },
+        {
+          "date": "2025-02-03",
+          "entry_id": "b3f6808c7b4bc015"
+        },
+        {
+          "date": "2025-02-02",
+          "entry_id": "c81f4befab8061ff"
+        },
+        {
+          "date": "2025-02-02",
+          "entry_id": "7e8b80581fa3b434"
+        },
+        {
+          "date": "2025-02-01",
+          "entry_id": "e6834d2ee8e167c7"
+        },
+        {
+          "date": "2025-01-21",
+          "entry_id": "5f52b0288b1666bd"
+        },
+        {
+          "date": "2025-01-15",
+          "entry_id": "fb0fa5cf6ffa0453"
+        },
+        {
+          "date": "2024-12-29",
+          "entry_id": "ae5bb54d010fba6e"
+        },
+        {
+          "date": "2024-12-15",
+          "entry_id": "80d91e7e07109be2"
+        },
+        {
+          "date": "2024-12-15",
+          "entry_id": "22ece9c92cf5ee49"
+        },
+        {
+          "date": "2025-02-06",
+          "entry_id": "undated-porter-jr",
+          "date_override": true,
+          "date_override_source_url": "https://twitter.com/ClippersPR/status/1887928690777956820"
+        }
+      ],
+      "rescinded_excluded": 1,
+      "monthly_counts": {
+        "2024-12": 3,
+        "2025-01": 2,
+        "2025-02": 22
+      },
+      "deadline_day": 15,
+      "deadline_week": 22
+    },
+    {
+      "season": "2025-26",
+      "period": "offseason",
+      "url": "https://www.nba.com/news/2025-offseason-trade-tracker",
+      "retrieval_sha256": "21e1b1fbbb796d7512a24751c9886eedb2fc15dc1778d25e43c35e9ba89bc0ac",
+      "entries": [
+        {
+          "date": "2025-09-16",
+          "entry_id": "6e574a618338562d"
+        },
+        {
+          "date": "2025-08-15",
+          "entry_id": "68c50c42330d73a0"
+        },
+        {
+          "date": "2025-07-13",
+          "entry_id": "782137876a3942fe"
+        },
+        {
+          "date": "2025-07-09",
+          "entry_id": "1145e5a5084706bf"
+        },
+        {
+          "date": "2025-07-08",
+          "entry_id": "2c7f3f5f42ef564a"
+        },
+        {
+          "date": "2025-07-07",
+          "entry_id": "948ab62c21505ff6"
+        },
+        {
+          "date": "2025-07-07",
+          "entry_id": "153311fdebf2f549"
+        },
+        {
+          "date": "2025-07-07",
+          "entry_id": "bbb6222c7d6aaea6"
+        },
+        {
+          "date": "2025-07-07",
+          "entry_id": "769a09b9bfedfc3a"
+        },
+        {
+          "date": "2025-07-07",
+          "entry_id": "57e65623b99b77c7"
+        },
+        {
+          "date": "2025-07-06",
+          "entry_id": "28d9b22e83a40412"
+        },
+        {
+          "date": "2025-07-06",
+          "entry_id": "3006db6f7ef46f6c"
+        },
+        {
+          "date": "2025-07-06",
+          "entry_id": "c4213996ce11ee05"
+        },
+        {
+          "date": "2025-07-06",
+          "entry_id": "434ed64922610009"
+        },
+        {
+          "date": "2025-07-06",
+          "entry_id": "b0155a36655e8747"
+        },
+        {
+          "date": "2025-06-30",
+          "entry_id": "47faf2d27d620e43"
+        },
+        {
+          "date": "2025-06-30",
+          "entry_id": "71d997351a44e3e5"
+        },
+        {
+          "date": "2025-06-28",
+          "entry_id": "561e89841ce7d02e"
+        },
+        {
+          "date": "2025-06-26",
+          "entry_id": "1ccaa491e77d9cec"
+        },
+        {
+          "date": "2025-06-26",
+          "entry_id": "a65b8f9edc33d255"
+        },
+        {
+          "date": "2025-06-26",
+          "entry_id": "371a3e625c425556"
+        },
+        {
+          "date": "2025-06-26",
+          "entry_id": "d4554d4650626f7d"
+        },
+        {
+          "date": "2025-06-25",
+          "entry_id": "9de7b8b7b55295c2"
+        },
+        {
+          "date": "2025-06-25",
+          "entry_id": "de8e7602b6371937"
+        },
+        {
+          "date": "2025-06-25",
+          "entry_id": "a6db416de321a74f"
+        },
+        {
+          "date": "2025-06-25",
+          "entry_id": "e26c2da80bce6326"
+        },
+        {
+          "date": "2025-06-17",
+          "entry_id": "44d9ddec498a031d"
+        },
+        {
+          "date": "2025-06-15",
+          "entry_id": "f738065bd524beb5"
+        }
+      ],
+      "rescinded_excluded": 0,
+      "monthly_counts": {
+        "2025-06": 13,
+        "2025-07": 13,
+        "2025-08": 1,
+        "2025-09": 1
+      },
+      "deadline_day": 0,
+      "deadline_week": 0
+    },
+    {
+      "season": "2025-26",
+      "period": "in_season",
+      "url": "https://www.nba.com/news/2025-26-nba-trade-tracker",
+      "retrieval_sha256": "be4c5062bfacd9570da7514840a547d363cde96e8f14e82517d14d5c0a98dc7c",
+      "entries": [
+        {
+          "date": "2026-02-05",
+          "entry_id": "cee18b4c46edb373"
+        },
+        {
+          "date": "2026-02-05",
+          "entry_id": "cc7d0b96d5e52246"
+        },
+        {
+          "date": "2026-02-05",
+          "entry_id": "aa629561f8de3d8d"
+        },
+        {
+          "date": "2026-02-05",
+          "entry_id": "4f79f6c8beab781c"
+        },
+        {
+          "date": "2026-02-05",
+          "entry_id": "bf58ae83d19878d0"
+        },
+        {
+          "date": "2026-02-05",
+          "entry_id": "5d37fce3726032ec"
+        },
+        {
+          "date": "2026-02-05",
+          "entry_id": "13eb0d0608a74527"
+        },
+        {
+          "date": "2026-02-05",
+          "entry_id": "67b4861547edb42e"
+        },
+        {
+          "date": "2026-02-05",
+          "entry_id": "7b23eed9f933512a"
+        },
+        {
+          "date": "2026-02-05",
+          "entry_id": "5a1d31be36385a07"
+        },
+        {
+          "date": "2026-02-05",
+          "entry_id": "e0e4b73a867962c8"
+        },
+        {
+          "date": "2026-02-05",
+          "entry_id": "05067c03193e4db4"
+        },
+        {
+          "date": "2026-02-05",
+          "entry_id": "3f2f2e0e1fcc2057"
+        },
+        {
+          "date": "2026-02-05",
+          "entry_id": "1ce7ae244ed3b946"
+        },
+        {
+          "date": "2026-02-05",
+          "entry_id": "60b2ca7a1ce521e9"
+        },
+        {
+          "date": "2026-02-05",
+          "entry_id": "e84abe6135ba0d1e"
+        },
+        {
+          "date": "2026-02-05",
+          "entry_id": "fe44b5b9aef550dd"
+        },
+        {
+          "date": "2026-02-04",
+          "entry_id": "7912740806fba40c"
+        },
+        {
+          "date": "2026-02-04",
+          "entry_id": "773961498fc640aa"
+        },
+        {
+          "date": "2026-02-04",
+          "entry_id": "8232a921d2e09835"
+        },
+        {
+          "date": "2026-02-04",
+          "entry_id": "a89828410c283752"
+        },
+        {
+          "date": "2026-02-03",
+          "entry_id": "2a0a12e6846e54f2"
+        },
+        {
+          "date": "2026-02-03",
+          "entry_id": "37017857913c69f6"
+        },
+        {
+          "date": "2026-02-01",
+          "entry_id": "1e042480d32c65a8"
+        },
+        {
+          "date": "2026-02-01",
+          "entry_id": "831ef373bdb735a2"
+        },
+        {
+          "date": "2026-01-09",
+          "entry_id": "255c4ca8a90ccc3f"
+        }
+      ],
+      "rescinded_excluded": 0,
+      "monthly_counts": {
+        "2026-01": 1,
+        "2026-02": 25
+      },
+      "deadline_day": 17,
+      "deadline_week": 25
+    }
+  ],
+  "calendar_years": {
+    "2024": {
+      "2024-01": 3,
+      "2024-02": 19,
+      "2024-03": 0,
+      "2024-04": 0,
+      "2024-05": 0,
+      "2024-06": 15,
+      "2024-07": 11,
+      "2024-08": 0,
+      "2024-09": 0,
+      "2024-10": 1,
+      "2024-11": 0,
+      "2024-12": 3
+    },
+    "2025": {
+      "2025-01": 2,
+      "2025-02": 22,
+      "2025-03": 0,
+      "2025-04": 0,
+      "2025-05": 0,
+      "2025-06": 13,
+      "2025-07": 13,
+      "2025-08": 1,
+      "2025-09": 1,
+      "2025-10": 0,
+      "2025-11": 0,
+      "2025-12": 0
+    }
+  }
+}

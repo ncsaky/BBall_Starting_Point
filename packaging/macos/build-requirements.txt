@@ -1,0 +1,9 @@
+# Build environment only; never installed on a friend's Mac.
+altgraph==0.17.5
+macholib==1.16.4
+packaging==26.3
+pyinstaller==6.16.0
+pyinstaller-hooks-contrib==2026.8
+pyobjc-core==11.1
+pyobjc-framework-Cocoa==11.1
+setuptools==84.0.0

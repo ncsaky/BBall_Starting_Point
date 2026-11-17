@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/MIA-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/MIA-v2-1.jpg",
+      "kind": "basketball",
+      "team": "MIA",
+      "clips": [
+        {
+          "source_start": 23,
+          "frames": 180,
+          "team": "MIA",
+          "opponent": "WAS",
+          "action": "Adebayo basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 168,
+          "frames": 390,
+          "team": "MIA",
+          "opponent": "NYK",
+          "action": "Adebayo late three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 606
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/MIA-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/MIA-v2-2.jpg",
+      "kind": "basketball",
+      "team": "MIA",
+      "clips": [
+        {
+          "source_start": 186,
+          "frames": 390,
+          "team": "MIA",
+          "opponent": "SAS",
+          "action": "Adebayo basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 201,
+          "frames": 330,
+          "team": "MIA",
+          "opponent": "LAL",
+          "action": "Adebayo finish at Los Angeles",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 756
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/MIA-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/MIA-v2-3.jpg",
+      "kind": "basketball",
+      "team": "MIA",
+      "clips": [
+        {
+          "source_start": 233,
+          "frames": 165,
+          "team": "MIA",
+          "opponent": "CHI",
+          "action": "Adebayo transition basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 292,
+          "frames": 285,
+          "team": "MIA",
+          "opponent": "PHI",
+          "action": "Adebayo basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 486
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "cDDz3lOgDMo",
+    "url": "https://www.youtube.com/watch?v=cDDz3lOgDMo",
+    "title": "Bam Adebayo BEST HIGHLIGHTS 25-26 Season",
+    "channel": "Hoops Galaxy",
+    "path": ".cache/startup-team-correction/MIA.mp4",
+    "query": "2025-26 Miami Heat Bam Adebayo best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 23,
+      "frames": 180,
+      "team": "MIA",
+      "opponent": "WAS",
+      "action": "Adebayo basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 168,
+      "frames": 390,
+      "team": "MIA",
+      "opponent": "NYK",
+      "action": "Adebayo late three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 186,
+      "frames": 390,
+      "team": "MIA",
+      "opponent": "SAS",
+      "action": "Adebayo basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 201,
+      "frames": 330,
+      "team": "MIA",
+      "opponent": "LAL",
+      "action": "Adebayo finish at Los Angeles",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 233,
+      "frames": 165,
+      "team": "MIA",
+      "opponent": "CHI",
+      "action": "Adebayo transition basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 292,
+      "frames": 285,
+      "team": "MIA",
+      "opponent": "PHI",
+      "action": "Adebayo basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 85.13333333333334
+}

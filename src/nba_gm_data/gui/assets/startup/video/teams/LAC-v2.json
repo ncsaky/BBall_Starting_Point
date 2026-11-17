@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/LAC-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/LAC-v2-1.jpg",
+      "kind": "basketball",
+      "team": "LAC",
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 480,
+          "team": "LAC",
+          "opponent": "NOP",
+          "action": "Leonard game-winning finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 58,
+          "frames": 540,
+          "team": "LAC",
+          "opponent": "POR",
+          "action": "Leonard basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 1056
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/LAC-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/LAC-v2-2.jpg",
+      "kind": "basketball",
+      "team": "LAC",
+      "clips": [
+        {
+          "source_start": 79,
+          "frames": 390,
+          "team": "LAC",
+          "opponent": "PHI",
+          "action": "Leonard drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 104.5,
+          "frames": 345,
+          "team": "LAC",
+          "opponent": "HOU",
+          "action": "Leonard jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 771
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/LAC-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/LAC-v2-3.jpg",
+      "kind": "basketball",
+      "team": "LAC",
+      "clips": [
+        {
+          "source_start": 130,
+          "frames": 480,
+          "team": "LAC",
+          "opponent": "IND",
+          "action": "Leonard game-winning shot",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 173,
+          "frames": 450,
+          "team": "LAC",
+          "opponent": "POR",
+          "action": "Leonard transition finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 966
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "RivzZVtPds0",
+    "url": "https://www.youtube.com/watch?v=RivzZVtPds0",
+    "title": "Kawhi Leonard Was LOCKED IN This Season \ud83e\udd76 | Top Plays | 2025-26 NBA Season",
+    "channel": "NBA",
+    "path": ".cache/startup-team-correction/LAC.mp4",
+    "query": "2025-26 LA Clippers Kawhi Leonard best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 0,
+      "frames": 480,
+      "team": "LAC",
+      "opponent": "NOP",
+      "action": "Leonard game-winning finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 58,
+      "frames": 540,
+      "team": "LAC",
+      "opponent": "POR",
+      "action": "Leonard basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 79,
+      "frames": 390,
+      "team": "LAC",
+      "opponent": "PHI",
+      "action": "Leonard drive and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 104.5,
+      "frames": 345,
+      "team": "LAC",
+      "opponent": "HOU",
+      "action": "Leonard jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 130,
+      "frames": 480,
+      "team": "LAC",
+      "opponent": "IND",
+      "action": "Leonard game-winning shot",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 173,
+      "frames": 450,
+      "team": "LAC",
+      "opponent": "POR",
+      "action": "Leonard transition finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 116.63333333333334
+}

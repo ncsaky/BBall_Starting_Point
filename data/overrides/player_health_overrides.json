@@ -19,6 +19,7 @@
       "current_injury": {
         "body_area": "ankle_foot",
         "severity": "season_ending",
+        "start_date": "2025-10-21",
         "return_date": "2026-07-01",
         "expected_games_missed": 82,
         "recurrence": true,
@@ -46,6 +47,7 @@
       "current_injury": {
         "body_area": "ankle_foot",
         "severity": "season_ending",
+        "start_date": "2025-10-21",
         "return_date": "2026-07-01",
         "expected_games_missed": 82,
         "recurrence": true,
@@ -72,6 +74,7 @@
       "current_injury": {
         "body_area": "ankle_foot",
         "severity": "season_ending",
+        "start_date": "2025-10-21",
         "return_date": "2026-07-01",
         "expected_games_missed": 82,
         "recurrence": true,

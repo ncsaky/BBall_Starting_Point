@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-14",
+  "artifacts_sha256": {
+    "PILOT_ASSUMPTION_REVIEW_2026_11_14.md": "efa83986a1a9729473e1504459eac98dea12ed224b222b4e671659778d195ebc",
+    "PILOT_ASSUMPTION_REVIEW_2026_11_14.json": "a45ae7df68df6a383409af3bb6e633eebd5c4235fa7b02068cf10baeeccc7984",
+    "PILOT_EVIDENCE_ACTIVE_TASK.md": "e999abbbc332507ddffdefda9081a2a7f7c5a4858e922492589aec6a4f56807b",
+    "diagnostics/pilot_assumptions_20261114/validation.json": "71781a0bbf3590404e7dca5255b9fd092e040136cfc059fda478acd33beb9e00",
+    "diagnostics/pilot_assumptions_20261114/public_evidence_capture.json": "50390ba335bd5834c6b28cb13a29168a195fd948f952676316718470f4ef9076",
+    "diagnostics/pilot_assumptions_20261114/retained_observation_validation.json": "c5cf8bc8581769cac205cf13979b8bbe61cd62e5725fa72cc82ec29693c28a76"
+  },
+  "writes": "new review/sidecar/diagnostics and authorized active checkpoint only",
+  "simulations_or_saves": 0,
+  "production_changes_by_research": false,
+  "stop": "bounded assumption review delivered"
+}

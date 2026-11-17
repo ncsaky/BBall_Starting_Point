@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/BKN-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/BKN-v2-1.jpg",
+      "kind": "basketball",
+      "team": "BKN",
+      "clips": [
+        {
+          "source_start": 2,
+          "frames": 270,
+          "team": "BKN",
+          "opponent": "CLE",
+          "action": "Porter three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 13,
+          "frames": 270,
+          "team": "BKN",
+          "opponent": "HOU",
+          "action": "Porter three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 576
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/BKN-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/BKN-v2-2.jpg",
+      "kind": "basketball",
+      "team": "BKN",
+      "clips": [
+        {
+          "source_start": 58,
+          "frames": 240,
+          "team": "BKN",
+          "opponent": "PHI",
+          "action": "Porter drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 23,
+          "frames": 270,
+          "team": "BKN",
+          "opponent": "ATL",
+          "action": "Porter scoring play",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 546
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/BKN-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/BKN-v2-3.jpg",
+      "kind": "basketball",
+      "team": "BKN",
+      "clips": [
+        {
+          "source_start": 139,
+          "frames": 195,
+          "team": "BKN",
+          "opponent": "DET",
+          "action": "Porter three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 178,
+          "frames": 180,
+          "team": "BKN",
+          "opponent": "TOR",
+          "action": "Porter driving basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 411
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "zEgrNFMdXwg",
+    "url": "https://www.youtube.com/watch?v=zEgrNFMdXwg",
+    "title": "Michael Porter Jr. 2025-2026 Season Highlights",
+    "channel": "Brooklyn Nets",
+    "path": ".cache/startup-team-correction/BKN.mp4",
+    "query": "2025-26 Brooklyn Nets Michael Porter Jr. best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 2,
+      "frames": 270,
+      "team": "BKN",
+      "opponent": "CLE",
+      "action": "Porter three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 13,
+      "frames": 270,
+      "team": "BKN",
+      "opponent": "HOU",
+      "action": "Porter three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 58,
+      "frames": 240,
+      "team": "BKN",
+      "opponent": "PHI",
+      "action": "Porter drive and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 23,
+      "frames": 270,
+      "team": "BKN",
+      "opponent": "ATL",
+      "action": "Porter scoring play",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 139,
+      "frames": 195,
+      "team": "BKN",
+      "opponent": "DET",
+      "action": "Porter three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 178,
+      "frames": 180,
+      "team": "BKN",
+      "opponent": "TOR",
+      "action": "Porter driving basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 74.63333333333334
+}

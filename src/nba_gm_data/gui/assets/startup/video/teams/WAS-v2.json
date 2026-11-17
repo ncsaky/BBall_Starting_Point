@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/WAS-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/WAS-v2-1.jpg",
+      "kind": "basketball",
+      "team": "WAS",
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 300,
+          "team": "WAS",
+          "opponent": "DAL",
+          "action": "Sarr paint basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 16,
+          "frames": 270,
+          "team": "WAS",
+          "opponent": "CHA",
+          "action": "Sarr buzzer jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 606
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/WAS-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/WAS-v2-2.jpg",
+      "kind": "basketball",
+      "team": "WAS",
+      "clips": [
+        {
+          "source_start": 28,
+          "frames": 270,
+          "team": "WAS",
+          "opponent": "PHI",
+          "action": "Sarr dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 84,
+          "frames": 210,
+          "team": "WAS",
+          "opponent": "ORL",
+          "action": "Sarr finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 516
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/WAS-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/WAS-v2-3.jpg",
+      "kind": "basketball",
+      "team": "WAS",
+      "clips": [
+        {
+          "source_start": 104,
+          "frames": 225,
+          "team": "WAS",
+          "opponent": "NYK",
+          "action": "Sarr basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 114,
+          "frames": 360,
+          "team": "WAS",
+          "opponent": "BOS",
+          "action": "Sarr jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 621
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "KH8yplVJIsc",
+    "url": "https://www.youtube.com/watch?v=KH8yplVJIsc",
+    "title": "Alex Sarr Highlights from the 2025-26 Season",
+    "channel": "Washington Wizards",
+    "path": ".cache/startup-team-correction/WAS.mp4",
+    "query": "2025-26 Washington Wizards Alex Sarr best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 0,
+      "frames": 300,
+      "team": "WAS",
+      "opponent": "DAL",
+      "action": "Sarr paint basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 16,
+      "frames": 270,
+      "team": "WAS",
+      "opponent": "CHA",
+      "action": "Sarr buzzer jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 28,
+      "frames": 270,
+      "team": "WAS",
+      "opponent": "PHI",
+      "action": "Sarr dunk",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 84,
+      "frames": 210,
+      "team": "WAS",
+      "opponent": "ORL",
+      "action": "Sarr finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 104,
+      "frames": 225,
+      "team": "WAS",
+      "opponent": "NYK",
+      "action": "Sarr basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 114,
+      "frames": 360,
+      "team": "WAS",
+      "opponent": "BOS",
+      "action": "Sarr jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 81.63333333333334
+}

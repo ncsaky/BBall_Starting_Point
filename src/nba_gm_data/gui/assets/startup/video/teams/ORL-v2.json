@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/ORL-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/ORL-v2-1.jpg",
+      "kind": "basketball",
+      "team": "ORL",
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 360,
+          "team": "ORL",
+          "opponent": "DEN",
+          "action": "Banchero lob assist",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 18,
+          "frames": 450,
+          "team": "ORL",
+          "opponent": "IND",
+          "action": "Banchero paint finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 846
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/ORL-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/ORL-v2-2.jpg",
+      "kind": "basketball",
+      "team": "ORL",
+      "clips": [
+        {
+          "source_start": 56,
+          "frames": 270,
+          "team": "ORL",
+          "opponent": "UTA",
+          "action": "Banchero drive and basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 65,
+          "frames": 390,
+          "team": "ORL",
+          "opponent": "DET",
+          "action": "Banchero finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 696
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/ORL-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/ORL-v2-3.jpg",
+      "kind": "basketball",
+      "team": "ORL",
+      "clips": [
+        {
+          "source_start": 81,
+          "frames": 600,
+          "team": "ORL",
+          "opponent": "MIA",
+          "action": "Banchero drive and basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 122,
+          "frames": 360,
+          "team": "ORL",
+          "opponent": "ATL",
+          "action": "Banchero paint finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 996
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "ONzDHBUYNGc",
+    "url": "https://www.youtube.com/watch?v=ONzDHBUYNGc",
+    "title": "TOP 25 PLAYS FROM 25-26 SEASON: PAOLO BANCHERO",
+    "channel": "Orlando Magic",
+    "path": ".cache/startup-team-correction/ORL.mp4",
+    "query": "2025-26 Orlando Magic Paolo Banchero best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 0,
+      "frames": 360,
+      "team": "ORL",
+      "opponent": "DEN",
+      "action": "Banchero lob assist",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 18,
+      "frames": 450,
+      "team": "ORL",
+      "opponent": "IND",
+      "action": "Banchero paint finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 56,
+      "frames": 270,
+      "team": "ORL",
+      "opponent": "UTA",
+      "action": "Banchero drive and basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 65,
+      "frames": 390,
+      "team": "ORL",
+      "opponent": "DET",
+      "action": "Banchero finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 81,
+      "frames": 600,
+      "team": "ORL",
+      "opponent": "MIA",
+      "action": "Banchero drive and basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 122,
+      "frames": 360,
+      "team": "ORL",
+      "opponent": "ATL",
+      "action": "Banchero paint finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 108.13333333333334
+}

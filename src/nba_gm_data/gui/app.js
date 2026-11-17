@@ -11,9 +11,11 @@ const state = {
   dashboardTab: "overview",
   dashboardTeam: "",
   dashboardStandingsConference: "",
+  dashboardOpponentSort: { key: "overall", direction: "desc" },
   calendarMonth: "",
   expandedContractSeason: "",
   rotationDraft: {},
+  rotationDraftDate: null,
   rotationLockedPlayerIds: new Set(),
   sorts: {},
   leagueTab: "standings",
@@ -28,6 +30,8 @@ const state = {
   selectedDraftProspect: "",
   draftSelectionPickKey: "",
   draftLedgerCenteredKey: "",
+  draftPlaybackRunning: false,
+  draftPlaybackReveal: null,
   tradeTab: "builder",
   tradePartner: "",
   tradeAssetFilters: { from: "all", to: "all" },
@@ -35,6 +39,7 @@ const state = {
   selectedTo: [],
   tradeCandidate: null,
   tradeResults: [],
+  tradeSearchCompleted: false,
   selectedFreeAgent: null,
   freeAgentCompareIds: [],
   freeAgentCompareMode: false,
@@ -44,9 +49,14 @@ const state = {
   freeAgentFiltersOpen: false,
   freeAgentMarketFilters: { search: "", position: "all", minOverall: "" },
   playerCardDetails: {},
+  clipboardPlayerCards: [],
+  clipboardPlayerCardSequence: 0,
   staffSlot: "",
   selectedStaff: null,
   modal: null,
+  tutorial: null,
+  tutorialReturnFocus: null,
+  tutorialStartTimer: null,
   playerFinder: null,
   data: {},
   startingDraft: null,
@@ -63,6 +73,17 @@ const state = {
   dashboardIntelPanel: "profile",
   frontOfficeOpen: false,
   selectedFantasyPlayer: "",
+  simulationProcessedGames: new Set(),
+  simulationRunning: false,
+  simulationPlayerRatingsById: null,
+  simulationId: "",
+  simulationOfferIds: new Set(),
+  simulationOfferCount: 0,
+  simulationStopRequested: false,
+  tradeDeadlineAcknowledgedSave: "",
+  tradeDeadlineAcknowledgedDate: "",
+  postseasonReviewedSave: "",
+  postseasonReviewedDate: "",
   fantasySearch: "",
   fantasyPosition: "all",
   fantasyBoardScrollTop: 0,
@@ -85,6 +106,7 @@ const state = {
 
 const els = {};
 const LAST_SAVE_KEY = "nbaGmLastSave";
+const TUTORIAL_COMPLETED_KEY = "nbaGmFirstRunTutorialCompleted";
 const DASHBOARD_EXPERIENCE_KEY = "nbaGmDashboardExperience";
 const MULTIPLAYER_SESSION_KEY = "nbaGmMultiplayerSession";
 const MULTIPLAYER_MUTATIONS = new Set([
@@ -102,11 +124,13 @@ const MULTIPLAYER_MUTATIONS = new Set([
   "resolve_staff_retention",
   "set_rotation_minutes",
   "set_starting_five",
+  "set_team_wants",
+  "acknowledge_team_wants",
   "submit_free_agent_offer",
   "waive_player",
 ]);
 const DEVELOPMENT_LINE_LIMIT = 9;
-const MULTIPLAYER_LOCAL_ACTIONS = new Set(["teams", "list_saves", "create_save", "runtime_status"]);
+const MULTIPLAYER_LOCAL_ACTIONS = new Set(["teams", "list_saves", "create_save", "runtime_status", "diagnostic_runtime", "export_save", "restore_save", "recover_save"]);
 const TEAM_BRAND_COLORS = {
   ATL: ["#E03A3E", "#C1D32F"], BKN: ["#FFFFFF", "#6B7075"], BOS: ["#007A33", "#BA9653"],
   CHA: ["#1D1160", "#00788C"], CHI: ["#CE1141", "#000000"], CLE: ["#860038", "#FDBB30"],
@@ -124,11 +148,21 @@ const TEAM_BRAND_COLORS = {
 
 document.addEventListener("DOMContentLoaded", () => {
   for (const id of [
-    "startupRuntime",
     "startupSaveSelect",
     "startupRefreshSaves",
     "startupLoadSave",
+    "startupSaveHealth",
+    "startupSaveMessage",
+    "startupExportSave",
+    "startupRecoverSave",
+    "startupRestoreSave",
+    "startupRestoreName",
+    "startupRestoreFile",
     "teamSelect",
+    "startupTeamWheel",
+    "startupTeamSelectedLogo",
+    "startupTeamSelectedFallback",
+    "startupTeamSelectedName",
     "gameModeSelect",
     "saveName",
     "createSave",
@@ -137,6 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "content",
     "toast",
     "modalRoot",
+    "gameTutorial",
     "multiplayerBar",
     "multiplayerLobby",
     "multiplayerName",
@@ -155,10 +190,6 @@ document.addEventListener("DOMContentLoaded", () => {
     closeModal,
     error: error => showToast(error.message || String(error), true),
   });
-  if (new URLSearchParams(location.search).has("ui-review")) {
-    window.dispatchEvent(new Event("game-review-ready"));
-    return;
-  }
   init();
 });
 
@@ -166,56 +197,95 @@ function gameCommands() {
   const ready = () => Boolean(state.currentSave && !state.hydrating);
   const navigate = (view) => async () => {
     closeAllModals();
+    if (["staff", "calendar", "draft", "playoffs", "freeagents", "freeagency"].includes(view)) return openClipboardWindow(view);
     state.view = view;
     await ensureViewData();
     render();
   };
-  const click = selector => () => GameInterface.findControl(selector)?.click();
-  const available = selector => () => ready() && Boolean(GameInterface.findControl(selector));
+  const click = selector => () => GameInterface.findControl(selector, {includeHidden:true})?.click();
+  const available = selector => () => ready() && Boolean(GameInterface.findControl(selector, {includeHidden:true}));
   const commands = [
     {label:"This season", keys:"g h", run:navigate("dashboard"), available:ready},
-    {label:"Trade builder", keys:"g t", run:() => openTradeRoomModal("builder"), available:() => ready() && (state.data.dashboard?.legal_actions || []).some(a => ["trades","draft_trades"].includes(a))},
-    {label:"Trade finder", keys:"g b", run:() => openTradeRoomModal("finder"), available:() => ready() && (state.data.dashboard?.legal_actions || []).some(a => ["trades","draft_trades"].includes(a))},
-    {label:"Trade offers", keys:"g o", run:openTradeOffersModal, available:ready},
+    {label:"Cards gallery", keys:"g c", run:click(".card-board-gallery-toggle"), available:available(".card-board-gallery-toggle")},
+    {label:"Switch windows", keys:"g w", run:click("[data-window-switcher-open]"), available:available("[data-window-switcher-open]")},
+    {label:"Snap cards", keys:"g r", run:click("[data-board-snap]"), available:available("[data-board-snap]")},
+    {label:"Trade builder", keys:"g t", run:() => openTradeRoomModal("builder"), available:() => ready() && ["trades","draft_trades"].some(a => clipboardLegalActions().has(a))},
+    {label:"Trade finder", keys:"g b", run:() => openTradeRoomModal("finder"), available:() => ready() && ["trades","draft_trades"].some(a => clipboardLegalActions().has(a))},
+    {label:"Trade offers", keys:"g o", run:openTradeOffersModal, available:() => ready() && ["trades","draft_trades"].some(a => clipboardLegalActions().has(a))},
     {label:"Player finder", keys:"g f", run:openPlayerFinderModal, available:ready},
-    {label:"Prospects", keys:"g p", run:navigate("draft"), available:() => ready() && dashboardPhaseKind() !== "fantasy_draft"},
     {label:"Free agents", keys:"g a", run:navigate("freeagents"), available:() => ready() && dashboardPhaseKind() !== "fantasy_draft"},
     {label:"Standings", keys:"g l", run:openStandingsModal, available:() => ready() && Boolean(state.data.dashboardStandings)},
-    {label:"Calendar", keys:"g c", run:navigate("calendar"), available:ready},
-    {label:"Coaching staff", keys:"g s", run:navigate("staff"), available:ready},
-    {label:"League wire", keys:"g n", run:openLeagueEventsModal, available:ready},
-    {label:"Team development", keys:"g d", run:openTeamDevelopmentModal, available:() => ready() && Boolean(state.data.dashboardTrends)},
     {label:"Settings", keys:"g ,", run:openSettingsModal, available:ready},
-    {label:"Next event / one pick / one playoff game", keys:"s e", run:click('[data-advance="next-event"], [data-playoff-sim="game"], #fantasySimOne, #draftSimCurrent, #faAdvanceDay, #reSignAdvanceDay'), available:available('[data-advance="next-event"], [data-playoff-sim="game"], #fantasySimOne, #draftSimCurrent, #faAdvanceDay, #reSignAdvanceDay')},
-    {label:"Simulate week", keys:"s w", run:click('[data-advance="week"]'), available:available('[data-advance="week"]')},
-    {label:"Simulate month", keys:"s m", run:click('[data-advance="month"]'), available:available('[data-advance="month"]')},
+    {label:dashboardPhaseKind() === "playoffs" ? "One game per series" : "Next event / one pick", keys:"s e", run:click('[data-advance="next-event"], #fantasySimOne, #draftSimCurrent, #faAdvanceDay, #reSignAdvanceDay'), available:available('[data-advance="next-event"], #fantasySimOne, #draftSimCurrent, #faAdvanceDay, #reSignAdvanceDay')},
+    {label:dashboardPhaseKind() === "playoffs" ? "One full series" : "Simulate week", keys:"s w", run:click('[data-advance="week"]'), available:available('[data-advance="week"]')},
+    {label:dashboardPhaseKind() === "playoffs" ? "Finish playoffs" : "Simulate month", keys:"s m", run:click('[data-advance="month"]'), available:available('[data-advance="month"]')},
     {label:"Simulate to my pick", keys:"s p", run:click('#draftToUser, #fantasyToUser'), available:available('#draftToUser, #fantasyToUser')},
-    {label:"Finish round", keys:"s r", run:click('[data-playoff-sim="round"]'), available:available('[data-playoff-sim="round"]')},
-    {label:"Next phase", keys:"s n", run:click('#playoffAdvanceStage, #draftAdvanceStage, #faAdvanceStage, [data-advance="next-season"]'), available:available('#playoffAdvanceStage, #draftAdvanceStage, #faAdvanceStage, [data-advance="next-season"]')},
+    {label:"Next phase", keys:"s n", run:click('#postseasonAdvance, #draftRevealLottery, #draftEnterNight, #draftAdvanceStage, #faAdvanceStage, [data-advance="next-season"]'), available:available('#postseasonAdvance, #draftRevealLottery, #draftEnterNight, #draftAdvanceStage, #faAdvanceStage, [data-advance="next-season"]')},
     {label:"Keyboard shortcuts", run:() => GameInterface.openPalette(true)},
-    {label:"Screen gallery", run:() => window.open('/interface-gallery.html', '_blank', 'noopener')},
-    {label:"Design studies", run:() => window.open('/design-lab.html', '_blank', 'noopener')},
   ];
   return commands.map(c => ({group:c.keys?.startsWith('s ') ? 'Simulation' : 'Navigation', ...c}));
 }
 
 function closeAllModals() {
+  if (state.modal?.kind === "staffNegotiation" && state.modal.submitting) return;
   while (state.modal) closeModal();
 }
 
 function wireEvents() {
-  els.startupRefreshSaves.addEventListener("click", loadSaves);
+  els.gameTutorial.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-tutorial-action]");
+    if (!button) return;
+    if (button.dataset.tutorialAction === "previous") moveGameTutorial(-1);
+    if (button.dataset.tutorialAction === "next") moveGameTutorial(1);
+    if (button.dataset.tutorialAction === "skip") finishGameTutorial();
+  });
+  document.addEventListener("keydown", handleGameTutorialKeydown, true);
+  document.addEventListener("click", blockGameTutorialBackgroundEvent, true);
+  document.addEventListener("pointerdown", blockGameTutorialBackgroundEvent, true);
+  document.addEventListener("submit", blockGameTutorialBackgroundEvent, true);
+  document.addEventListener("wheel", handleGameTutorialWheel, { capture: true, passive: false });
+  window.addEventListener("resize", repositionGameTutorial);
+  window.addEventListener("scroll", repositionGameTutorial, true);
+  els.startupRefreshSaves.addEventListener("click", () => loadSaves().catch(showStartupSaveError));
+  els.startupExportSave.addEventListener("click", exportStartupSave);
+  document.getElementById("startupReportIssue")?.addEventListener("click", openIssueReport);
+  els.startupRecoverSave.addEventListener("click", recoverStartupSave);
+  els.startupRestoreSave.addEventListener("click", () => {
+    if (!els.startupRestoreName.value.trim()) {
+      setStartupSaveMessage("Enter a new save name for the restored backup.", true);
+      els.startupRestoreName.focus();
+      return;
+    }
+    els.startupRestoreFile.click();
+  });
+  els.startupRestoreFile.addEventListener("change", restoreStartupSave);
+  els.startupTeamWheel.addEventListener("click", (event) => {
+    const option = event.target.closest("[data-team-value]");
+    if (option) selectStartupTeam(option.dataset.teamValue);
+  });
+  els.startupTeamWheel.addEventListener("keydown", (event) => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const options = [...els.startupTeamWheel.querySelectorAll("[data-team-value]")];
+    const current = options.findIndex((option) => option.dataset.teamValue === els.teamSelect.value);
+    const next = event.key === "Home" ? 0
+      : event.key === "End" ? options.length - 1
+        : (current + (event.key === "ArrowRight" ? 1 : -1) + options.length) % options.length;
+    const option = options[next];
+    if (option) {
+      selectStartupTeam(option.dataset.teamValue, { focus: true });
+    }
+  });
+  els.startupScreen.addEventListener("click", (event) => {
+    const step = event.target.closest("[data-startup-wheel-step]");
+    if (step) stepStartupTeam(Number(step.dataset.startupWheelStep));
+  });
   els.startupSaveSelect.addEventListener("change", () => {
-    els.startupLoadSave.disabled = !els.startupSaveSelect.value;
+    setStartupSaveMessage("");
+    updateStartupSaveControls();
   });
-  els.startupLoadSave.addEventListener("click", async () => {
-    state.currentSave = els.startupSaveSelect.value || "";
-    localStorage.setItem(LAST_SAVE_KEY, state.currentSave);
-    state.view = "dashboard";
-    state.dashboardTeam = "";
-    await refreshHome();
-  });
-  els.createSave.addEventListener("click", createSave);
+  els.startupLoadSave.addEventListener("click", loadStartupSave);
+  els.createSave.addEventListener("click", () => createSave().catch(showStartupSaveError));
   els.multiplayerCreate.addEventListener("click", createMultiplayerLobby);
   els.multiplayerJoin.addEventListener("click", joinMultiplayerLobby);
   els.nav.addEventListener("click", async (event) => {
@@ -229,6 +299,7 @@ function wireEvents() {
       await openTradeRoomModal();
       return;
     }
+    if (["staff", "calendar", "draft", "playoffs", "freeagents", "freeagency"].includes(button.dataset.view)) return openClipboardWindow(button.dataset.view);
     state.view = button.dataset.view;
     if (state.view === "dashboard") {
       state.dashboardTeam = userTeam();
@@ -239,9 +310,28 @@ function wireEvents() {
     render();
   });
   document.addEventListener("click", (event) => {
-    if (event.target.closest("[data-design-studies]")) return window.open('/design-lab.html', '_blank', 'noopener');
+    const stopSimulation = event.target.closest("[data-simulation-stop]");
+    if (stopSimulation) {
+      event.preventDefault();
+      requestSimulationStop();
+      return;
+    }
+    const command = event.target.closest('[data-phase-command]');
+    if (command && !command.disabled) {
+      const handlers = {
+        'postseason-exit':()=>advance({postseason_exit:true}),
+        'lottery-reveal':()=>state.data.draft?.lottery?.revealed ? runLotteryReveal() : draftRevealLottery(),
+        'lottery-skip':()=>finishLotteryReveal(), 'draft-enter':draftEnterNight,
+        'draft-apply':draftApplyCurrent, 'draft-one':()=>draftSim('draft_sim_current'),
+        'draft-user':()=>draftSim('draft_sim_to_user'), 'draft-all':()=>draftSim('draft_sim_all'),
+        'draft-next':draftAdvanceStage,
+      };
+      const run = handlers[command.dataset.phaseCommand];
+      if (run) Promise.resolve().then(run).catch(error=>showToast(error.message || String(error),true));
+      return;
+    }
+    if (event.target.closest("[data-trade-deadline-open]")) return showTradeDeadlinePrompt();
     if (event.target.closest("[data-interface-shortcuts]")) return GameInterface.openPalette(true);
-    if (event.target.closest("[data-interface-gallery]")) return window.open('/interface-gallery.html', '_blank', 'noopener');
     if (event.target.closest("[data-interface-home]")) {
       state.view = "dashboard";
       render();
@@ -252,6 +342,9 @@ function wireEvents() {
 
     const mode = button.dataset.advance;
 
+    if (dashboardPhaseKind() === "playoffs" && ["next-event", "week", "month"].includes(mode)) {
+      return advance({ next_event:true, postseason_sim:{"next-event":"game", week:"series", month:"all"}[mode] });
+    }
     if (mode === "next-event") return advance({ next_event: true });
     if (mode === "week") return advance({ days: 7, checkpoint_days: 7 });
     if (mode === "month") return advance({ days: 31, checkpoint_days: 31 });
@@ -281,8 +374,7 @@ async function init() {
     state.currentSave = localStorage.getItem(LAST_SAVE_KEY) || "";
     state.hydrating = Boolean(state.currentSave);
     render();
-    const status = await apiGet("/api/status");
-    els.startupRuntime.textContent = `${status.engine} | ${status.protocol_version}`;
+    await apiGet("/api/status");
     await loadTeams();
     await restoreMultiplayerSession();
     await loadSaves();
@@ -295,15 +387,50 @@ async function init() {
   }
 }
 
+let apiSessionPromise = null;
+
+async function apiHeaders(actionName = "") {
+  if (!apiSessionPromise) {
+    apiSessionPromise = (async () => {
+      const response = await fetch("/api/session", { cache: "no-store", mode: "same-origin", credentials: "same-origin" });
+      if (!response.ok) {
+        const message = response.status === 403
+          ? "The local game session was rejected. Refresh this page to reconnect."
+          : `The local game server is not responding (HTTP ${response.status}). Start the game server and try again.`;
+        throw new Error(message);
+      }
+      const session = await response.json();
+      if (typeof session.token !== "string" || !session.token) throw new Error("The local game session could not be established. Refresh this page to reconnect.");
+      return session.token;
+    })().catch(error => {
+      apiSessionPromise = null;
+      throw error;
+    });
+  }
+  const headers = { "Content-Type": "application/json", "X-NBA-GM-Token": await apiSessionPromise };
+  if (actionName.replaceAll("-", "_") === "restore_save") headers["X-NBA-GM-Backup-Upload"] = "1";
+  return headers;
+}
+
 async function apiGet(path) {
-  const response = await fetch(path, { cache: "no-store" });
+  const response = await fetch(path, { cache: "no-store", mode: "same-origin", headers: await apiHeaders() });
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
   return response.json();
 }
 
-async function action(name, payload = {}) {
+async function action(name, payload = {}, options = {}) {
+  if (state.tutorial) throw new Error("Finish the tutorial before using game actions.");
+  if (state.draftPlaybackRunning && !["home", "team_dashboard"].includes(name)) throw new Error("Wait for the draft simulation to finish.");
+  if (state.simulationRunning && (name === 'advance_save' ? !options.progress : MULTIPLAYER_MUTATIONS.has(name))) throw new Error('Wait for the simulation to finish.');
+  if (state.lotteryRevealRunning && MULTIPLAYER_MUTATIONS.has(name)) throw new Error('Finish or skip the lottery reveal first.');
+  if (requiredClipboardDecision() && /^(advance_|simulate_playoff_|draft_sim_|fantasy_draft_sim_|draft_apply_current$|draft_reveal_lottery$|fantasy_draft_pick$)/.test(name)) {
+    revealRequiredClipboardDecision();
+    throw new Error("Resolve the required clipboard decision before advancing.");
+  }
   state.busyDepth += 1;
   setBusy(true);
+  const feedbackStarted = Date.now();
+  let feedbackSucceeded = false;
   try {
     if (
       state.multiplayer.session &&
@@ -320,17 +447,26 @@ async function action(name, payload = {}) {
       if (mutation && Number.isFinite(Number(response.revision))) {
         state.multiplayer.league.revision = Number(response.revision);
       }
+      feedbackSucceeded = true;
       return response.result ?? response;
     }
-    const response = await fetch("/api/action", {
+    const response = await fetch(options.progress ? "/api/action/stream" : "/api/action", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: name, payload }),
+      mode: "same-origin",
+      headers: await apiHeaders(name),
+      body: JSON.stringify({ action: name, payload, ...(options.simulationId ? {simulation_id:options.simulationId} : {}) }),
     });
+    if (options.progress) {
+      const result = await GameSimulation.readStream(response, options.progress);
+      feedbackSucceeded = true;
+      return result;
+    }
     const data = await response.json();
     if (!response.ok || data.ok === false) throw new Error(data.error || `${response.status} ${response.statusText}`);
+    feedbackSucceeded = true;
     return data.result;
   } finally {
+    globalThis.GameFeedback?.recordAction(name, Date.now() - feedbackStarted, feedbackSucceeded);
     state.busyDepth = Math.max(0, state.busyDepth - 1);
     setBusy(state.busyDepth > 0 || state.hydrating);
   }
@@ -340,7 +476,8 @@ async function multiplayerRequest(name, payload = {}) {
   const session = state.multiplayer.session || {};
   const response = await fetch("/api/multiplayer", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    mode: "same-origin",
+    headers: await apiHeaders(),
     body: JSON.stringify({
       action: name,
       payload: {
@@ -374,22 +511,215 @@ async function loadTeams() {
     const label = `${escapeHtml(team.abbrev)} ${escapeHtml(team.name || "")}`.trim();
     return `<option value="${escapeAttr(team.abbrev)}">${label}</option>`;
   }).join("");
+  renderStartupTeamWheel();
+}
+
+function renderStartupTeamWheel() {
+  const teams = [
+    { abbrev: "random", name: "Random team" },
+    ...state.teams,
+  ];
+  els.startupTeamWheel.innerHTML = teams.map((team) => {
+    const value = team.abbrev || "random";
+    const label = value === "random" ? "Random team" : `${team.name || value} (${value})`;
+    const mark = value === "random"
+      ? '<span class="startup-wheel-random-mark" aria-hidden="true">?</span>'
+      : `<img src="/assets/team_logos/${escapeAttr(value)}.png" alt="" loading="lazy" />`;
+    return `<button type="button" class="startup-team-option" data-team-value="${escapeAttr(value)}" role="radio" aria-checked="false" tabindex="-1" title="${escapeAttr(label)}"><span class="startup-team-logo">${mark}</span><span class="startup-wheel-sr-label">${escapeHtml(label)}</span></button>`;
+  }).join("");
+  selectStartupTeam(els.teamSelect.value || "random", { behavior: "auto" });
+}
+
+function selectStartupTeam(value, { behavior = "smooth", focus = false } = {}) {
+  const valid = value === "random" || state.teams.some((team) => team.abbrev === value);
+  const selected = valid ? value : "random";
+  els.teamSelect.value = selected;
+  window.StartupVideoBackdrop?.selectTeam(selected);
+  const team = state.teams.find((row) => row.abbrev === selected);
+  const label = team ? `${team.abbrev} · ${team.name || team.abbrev}` : "Random team";
+  els.startupTeamSelectedName.textContent = label;
+  els.startupTeamSelectedLogo.hidden = !team;
+  els.startupTeamSelectedFallback.hidden = Boolean(team);
+  if (team) {
+    els.startupTeamSelectedLogo.src = `/assets/team_logos/${encodeURIComponent(team.abbrev)}.png`;
+    els.startupTeamSelectedLogo.alt = "";
+  }
+  for (const option of els.startupTeamWheel.querySelectorAll("[data-team-value]")) {
+    const isSelected = option.dataset.teamValue === selected;
+    option.setAttribute("aria-checked", String(isSelected));
+    option.tabIndex = isSelected ? 0 : -1;
+    option.classList.toggle("is-locked", isSelected);
+    if (isSelected) {
+      option.scrollIntoView({ behavior, block: "nearest", inline: "center" });
+      if (focus) option.focus({ preventScroll: true });
+    }
+  }
+}
+
+function stepStartupTeam(direction) {
+  const options = [...els.startupTeamWheel.querySelectorAll("[data-team-value]")];
+  if (!options.length) return;
+  const current = options.findIndex((option) => option.dataset.teamValue === els.teamSelect.value);
+  const next = (current + direction + options.length) % options.length;
+  selectStartupTeam(options[next].dataset.teamValue, { focus: true });
 }
 
 async function loadSaves() {
   const data = await action("list_saves");
-  const saves = data.saves || [];
-  const playable = saves.filter((save) => save.status === "ok" && save.path);
-  state.saves = playable;
-  els.startupSaveSelect.innerHTML = playable.length
-    ? playable.map((save) => `<option value="${escapeAttr(save.path)}">${escapeHtml(save.name)} | ${escapeHtml(save.team || "?")} | ${escapeHtml(save.current_date || "")}</option>`).join("")
+  const previousSelection = els.startupSaveSelect.value || state.currentSave;
+  state.saves = (data.saves || []).filter((save) => save.path);
+  els.startupSaveSelect.innerHTML = state.saves.length
+    ? state.saves.map((save) => `<option value="${escapeAttr(save.path)}">${escapeHtml(save.name || "Unnamed save")} | ${save.status === "ok" ? `${escapeHtml(save.team || "?")} | ${escapeHtml(save.current_date || "")}` : "Needs recovery"}</option>`).join("")
     : '<option value="">No saves yet</option>';
-  if (!playable.some((save) => save.path === state.currentSave)) state.currentSave = "";
-  if (state.currentSave) {
-    els.startupSaveSelect.value = state.currentSave;
+  if (!state.saves.some((save) => save.status === "ok" && save.path === state.currentSave)) {
+    state.currentSave = "";
+    localStorage.removeItem(LAST_SAVE_KEY);
   }
-  els.startupLoadSave.disabled = !els.startupSaveSelect.value;
-  await refreshHome();
+  const selectedPath = state.currentSave || previousSelection;
+  if (state.saves.some((save) => save.path === selectedPath)) els.startupSaveSelect.value = selectedPath;
+  updateStartupSaveControls();
+  try {
+    await refreshHome();
+  } catch (error) {
+    // A component can disappear after listing, including during automatic resume.
+    const failedSave = state.saves.find((save) => save.path === state.currentSave);
+    if (failedSave) {
+      failedSave.status = "unreadable";
+      failedSave.error = `${error.message || String(error)} Use Refresh to check this save again.`;
+    }
+    state.currentSave = "";
+    state.home = null;
+    state.hydrating = false;
+    localStorage.removeItem(LAST_SAVE_KEY);
+    render();
+    showStartupSaveError(error);
+    throw error;
+  }
+}
+
+function selectedStartupSave() {
+  return state.saves.find((save) => save.path === els.startupSaveSelect.value);
+}
+
+function updateStartupSaveControls() {
+  const save = selectedStartupSave();
+  const healthy = save?.status === "ok";
+  const busy = state.busy || state.hydrating;
+  els.startupLoadSave.disabled = busy || !healthy;
+  els.startupExportSave.disabled = busy || !healthy;
+  els.startupRecoverSave.disabled = busy || !save?.recovery_available;
+  els.startupSaveHealth.textContent = save && !healthy
+    ? `${save.error || "This save could not be read."} ${save.recovery_available ? "Use Recover Previous to restore its last complete backup, or restore an exported backup below." : "Restore an exported backup below. Keep the existing save files for troubleshooting."}`
+    : save?.recovery_available ? "Previous complete backup available." : "";
+  els.startupSaveHealth.classList.toggle("is-error", Boolean(save && !healthy));
+  els.startupSaveHealth.hidden = !els.startupSaveHealth.textContent;
+}
+
+function setStartupSaveMessage(message, isError = false) {
+  els.startupSaveMessage.textContent = message;
+  els.startupSaveMessage.classList.toggle("is-error", isError);
+  els.startupSaveMessage.hidden = !message;
+}
+
+function showStartupSaveError(error) {
+  const message = error.message || String(error);
+  setStartupSaveMessage(message, true);
+  showToast(message, true);
+}
+
+async function loadStartupSave() {
+  const save = selectedStartupSave();
+  if (save?.status !== "ok") return;
+  state.currentSave = save.path;
+  localStorage.setItem(LAST_SAVE_KEY, state.currentSave);
+  state.view = "dashboard";
+  state.dashboardTeam = "";
+  try {
+    await refreshHome();
+  } catch (error) {
+    state.currentSave = "";
+    state.home = null;
+    localStorage.removeItem(LAST_SAVE_KEY);
+    await loadSaves().catch(() => render());
+    showStartupSaveError(error);
+  }
+}
+
+async function exportStartupSave() {
+  const save = selectedStartupSave();
+  if (save?.status !== "ok") return;
+  try {
+    setStartupSaveMessage("Preparing complete backup…");
+    const result = await action("export_save", { save_path: save.path });
+    const bytes = Uint8Array.from(atob(result.archive_base64), (char) => char.charCodeAt(0));
+    const url = URL.createObjectURL(new Blob([bytes], { type: "application/zip" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = result.filename || "nba-gm-backup.zip";
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setStartupSaveMessage("Complete backup prepared for download. Keep the ZIP file to restore this save on another computer.");
+  } catch (error) {
+    showStartupSaveError(error);
+  }
+}
+
+function readStartupBackup(file) {
+  if (file.size > 128 * 1024 * 1024) return Promise.reject(new Error("Backup is too large. The maximum ZIP size is 128 MB."));
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("The backup file could not be read. Choose the file again."));
+    reader.onabort = () => reject(new Error("Reading the backup was interrupted. Choose the file again."));
+    reader.onload = () => resolve(String(reader.result).split(",", 2)[1]);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function restoreStartupSave() {
+  const file = els.startupRestoreFile.files?.[0];
+  if (!file) return;
+  const saveName = els.startupRestoreName.value.trim();
+  if (!saveName) {
+    els.startupRestoreFile.value = "";
+    setStartupSaveMessage("Enter a new save name for the restored backup.", true);
+    return;
+  }
+  state.busyDepth += 1;
+  setBusy(true);
+  try {
+    setStartupSaveMessage("Validating and restoring backup…");
+    const archive = await readStartupBackup(file);
+    const result = await action("restore_save", { save_name: saveName, archive_base64: archive });
+    await loadSaves();
+    els.startupSaveSelect.value = result.save_path;
+    els.startupRestoreName.value = "";
+    setStartupSaveMessage(`Restored as ${saveName}. Select Enter Save to continue.`);
+  } catch (error) {
+    showStartupSaveError(error);
+  } finally {
+    els.startupRestoreFile.value = "";
+    state.busyDepth = Math.max(0, state.busyDepth - 1);
+    setBusy(state.busyDepth > 0 || state.hydrating);
+    updateStartupSaveControls();
+  }
+}
+
+async function recoverStartupSave() {
+  const save = selectedStartupSave();
+  if (!save?.recovery_available) return;
+  if (!window.confirm(`Recover ${save.name || "this save"} from its previous complete backup? Progress after that backup will be rolled back. The current valid save, if readable, will be preserved as a backup.`)) return;
+  try {
+    setStartupSaveMessage("Restoring previous complete backup…");
+    const result = await action("recover_save", { save_path: save.path });
+    await loadSaves();
+    els.startupSaveSelect.value = result.save_path;
+    updateStartupSaveControls();
+    setStartupSaveMessage("Previous complete backup restored. Select Enter Save to continue.");
+  } catch (error) {
+    showStartupSaveError(error);
+  }
 }
 
 async function createSave() {
@@ -598,14 +928,276 @@ async function refreshHome() {
     state.hydrating = false;
     setBusy(state.busyDepth > 0);
     render();
+    maybeCelebrateChampion();
+    queueFirstRunTutorial();
+    if(typeof maybeShowWantReminder==='function')maybeShowWantReminder();
   }
 }
 
+const GAME_TUTORIAL_STEPS = [
+  {
+    title: "Welcome to your front office",
+    target: ['[data-view="dashboard"]', "#nav"],
+    body: "This is your franchise workspace. Your cards bring together the roster, rotation, team trends, schedule, staff and league information. The tour introduces the main decisions and how they show up in game results.",
+  },
+  {
+    title: "Arrange your workspace",
+    target: ["[data-card-board-tools]", ".season-command-actions"],
+    body: "Cards opens the gallery, where you can add or restore windows. Drag a title bar to move a card; Snap packs the visible cards together without restoring minimized ones. Windows switches among open cards.",
+  },
+  {
+    title: "Window controls",
+    card: "minutes",
+    target: ['[data-board-window="minutes"] .card-board-titlebar', ".card-board-titlebar", "[data-card-board-tools]"],
+    body: "Use the title bar to move a window; the corner grips resize it proportionally. M minimizes or restores, P pins, Space toggles expanded/default, Esc closes, and Shift+Esc minimizes or restores. Option+Tab cycles windows forward; Option+` goes backward (Alt on Windows).",
+  },
+  {
+    title: "Set the rotation",
+    card: "minutes",
+    target: ['[data-board-window="minutes"] .card-board-titlebar', ".season-minutes-panel", "[data-card-board-tools]"],
+    body: "Minutes are one of your most direct coaching decisions. Slider changes save immediately and rebalance unlocked players to 240 team minutes. Blue sliders are your fixed targets; actual game minutes can vary with health and overtime. Use player cards for ratings and context.",
+  },
+  {
+    title: "How team performance is made",
+    card: "signals",
+    target: ['[data-board-window="signals"] .card-board-titlebar', ".season-signals-panel", ".season-identity-panel"],
+    body: "Game results and box scores come from the players on the floor and the minutes they get, shaped by lineup fit, morale, fatigue, injuries and coaching. Overall rating is only one input: role fit and deployment matter too. The box score reflects those interactions rather than simply repeating player ratings.",
+  },
+  {
+    title: "Health and development",
+    card: "development",
+    target: ['[data-board-window="development"] .card-board-titlebar', ".season-development-panel", '[data-board-window="minutes"] .card-board-titlebar'],
+    body: "Fatigue and injuries affect who is ready to play, so balance workload with recovery. Player Development separates season growth/regression from the latest month. Treat those trends as a trajectory to manage, not a guaranteed outcome.",
+  },
+  {
+    title: "Your coaching staff",
+    card: "staff",
+    target: ['[data-board-window="staff"] .card-board-titlebar', ".season-staff-panel", "[data-card-board-tools]"],
+    body: "The staff window is where you review coaches, roles, grades and payroll, and expand into staff management. Coaching is part of your team context, alongside the players and their deployment.",
+  },
+  {
+    title: "Read the season",
+    card: "week",
+    target: ['[data-board-window="week"] .card-board-titlebar', ".season-week-panel", "[data-card-board-tools]"],
+    body: "The calendar keeps played games and upcoming dates together; open a game for its result and box score. The opponent window adds form, ratings and availability so you can put each matchup in context.",
+  },
+  {
+    title: "Compare efficiency",
+    card: "efficiency",
+    target: ['[data-board-window="efficiency"] .card-board-titlebar', ".season-efficiency-panel", "[data-card-board-tools]"],
+    body: "Weekly Efficiency compares your offense and defense with the league average, then shows the net difference. Use it to diagnose where the team is gaining or giving up ground beyond the win-loss record.",
+  },
+  {
+    title: "Explore a trade",
+    target: ["[data-trade-menu-trigger]", "[data-card-board-tools]"],
+    body: "Trades opens the trade finder, builder and incoming offers. The finder suggests packages to evaluate; it does not execute them. Review players, contracts and picks, then choose whether to submit or accept a deal.",
+  },
+  {
+    title: "Advance the league",
+    target: ["[data-sim-menu-trigger]", "[data-card-board-tools]"],
+    body: "Sim to… advances to the next event, week or month. Advancing changes the save: games resolve, schedules move, and league events may occur. Your rotation, player condition, lineup fit and coaching all feed the results you review afterward.",
+  },
+  {
+    title: "Shortcuts when you need them",
+    target: ["[data-window-switcher-open]", "#nav"],
+    body: "Press ? for the shortcut reference or Cmd/Ctrl+K to search commands. G then C opens Cards, G then W switches windows, S then E advances to the next event, and S then W/M advances a week or month. You can replay this tour from Settings.",
+  },
+];
+
+function queueFirstRunTutorial() {
+  if (state.home?.save?.postseason_exit_required) return;
+  if (state.tutorial || state.view !== "dashboard" || !state.currentSave || !document.querySelector("[data-card-board-tools]") || localStorage.getItem(TUTORIAL_COMPLETED_KEY)) return;
+  clearTimeout(state.tutorialStartTimer);
+  state.tutorialStartTimer = window.setTimeout(() => {
+    if (!state.tutorial && state.view === "dashboard" && state.currentSave && !state.hydrating) startGameTutorial();
+  }, 450);
+}
+
+function startGameTutorial(force = false) {
+  if (!state.currentSave || state.view !== "dashboard" || (!force && localStorage.getItem(TUTORIAL_COMPLETED_KEY))) return;
+  clearTimeout(state.tutorialStartTimer);
+  state.tutorialReturnFocus = document.activeElement;
+  state.tutorial = { index: 0 };
+  document.getElementById("app").inert = true;
+  renderGameTutorial();
+}
+
+function finishGameTutorial() {
+  if (!state.tutorial) return;
+  window.CardBoard?.endTutorialPreview();
+  state.tutorial = null;
+  localStorage.setItem(TUTORIAL_COMPLETED_KEY, "1");
+  document.getElementById("app").inert = false;
+  els.gameTutorial.hidden = true;
+  els.gameTutorial.innerHTML = "";
+  const returnFocus = state.tutorialReturnFocus;
+  state.tutorialReturnFocus = null;
+  if (returnFocus?.isConnected && !returnFocus.disabled) returnFocus.focus({ preventScroll: true });
+  else document.querySelector("[data-window-switcher-open]")?.focus({ preventScroll: true });
+}
+
+function moveGameTutorial(direction) {
+  if (!state.tutorial) return;
+  const nextIndex = state.tutorial.index + direction;
+  if (nextIndex < 0) return;
+  if (nextIndex >= GAME_TUTORIAL_STEPS.length) return finishGameTutorial();
+  state.tutorial.index = nextIndex;
+  renderGameTutorial();
+}
+
+function handleGameTutorialKeydown(event) {
+  if (!state.tutorial) return;
+  const root = els.gameTutorial;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    finishGameTutorial();
+    return;
+  }
+  if (event.key === "ArrowRight") {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    moveGameTutorial(1);
+    return;
+  }
+  if (event.key === "ArrowLeft") {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    moveGameTutorial(-1);
+    return;
+  }
+  if (event.key === "Tab") {
+    const focusable = [...root.querySelectorAll("button:not(:disabled)")];
+    const first = focusable[0];
+    const last = focusable.at(-1);
+    if (event.shiftKey && (document.activeElement === first || !root.contains(document.activeElement))) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && (document.activeElement === last || !root.contains(document.activeElement))) {
+      event.preventDefault();
+      first?.focus();
+    }
+    event.stopImmediatePropagation();
+    return;
+  }
+  if (!root.contains(event.target)) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
+}
+
+function handleGameTutorialWheel(event) {
+  if (state.tutorial && !els.gameTutorial.contains(event.target)) event.preventDefault();
+}
+
+function blockGameTutorialBackgroundEvent(event) {
+  if (!state.tutorial || els.gameTutorial.contains(event.target)) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+}
+
+function resolveGameTutorialTarget(step) {
+  for (const selector of step.target) {
+    const target = document.querySelector(selector);
+    if (!target || !target.getClientRects().length) continue;
+    const style = getComputedStyle(target);
+    if (style.visibility === "hidden" || style.display === "none") continue;
+    const rect = target.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) return target;
+  }
+  return document.querySelector("#nav") || document.querySelector("#content");
+}
+
+function renderGameTutorial() {
+  if (!state.tutorial) return;
+  const index = state.tutorial.index;
+  const step = GAME_TUTORIAL_STEPS[index];
+  const last = index === GAME_TUTORIAL_STEPS.length - 1;
+  window.CardBoard?.previewTutorialWindow(step.card);
+  els.gameTutorial.hidden = false;
+  els.gameTutorial.innerHTML = `
+    <div class="game-tutorial-shade game-tutorial-shade--top" aria-hidden="true"></div>
+    <div class="game-tutorial-shade game-tutorial-shade--left" aria-hidden="true"></div>
+    <div class="game-tutorial-shade game-tutorial-shade--right" aria-hidden="true"></div>
+    <div class="game-tutorial-shade game-tutorial-shade--bottom" aria-hidden="true"></div>
+    <div class="game-tutorial-spotlight" aria-hidden="true"></div>
+    <article class="game-tutorial-card" role="dialog" aria-modal="true" aria-labelledby="gameTutorialTitle" aria-describedby="gameTutorialCopy" tabindex="-1">
+      <header class="game-tutorial-titlebar"><span>FRANCHISE FIELD GUIDE</span><span>${String(index + 1).padStart(2, "0")} / ${String(GAME_TUTORIAL_STEPS.length).padStart(2, "0")}</span></header>
+      <div class="game-tutorial-content" aria-live="polite">
+        <p class="game-tutorial-kicker">${String(index + 1).padStart(2, "0")} · ${escapeHtml(step.kicker || "THE FRONT OFFICE")}</p>
+        <h2 id="gameTutorialTitle">${escapeHtml(step.title)}</h2>
+        <p id="gameTutorialCopy">${escapeHtml(step.body)}</p>
+      </div>
+      <footer class="game-tutorial-actions">
+        <button type="button" class="game-tutorial-skip" data-tutorial-action="skip">Skip tutorial</button>
+        <div class="game-tutorial-arrows">
+          <button type="button" class="game-tutorial-arrow" data-tutorial-action="previous" aria-label="Previous step" title="Previous step" ${index === 0 ? "disabled" : ""}>←</button>
+          <button type="button" class="game-tutorial-arrow" data-tutorial-action="next" aria-label="${last ? "Finish tutorial" : "Next step"}" title="${last ? "Finish tutorial" : "Next step"}">${last ? "✓" : "→"}</button>
+        </div>
+      </footer>
+    </article>`;
+  const target = resolveGameTutorialTarget(step);
+  target?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  requestAnimationFrame(() => {
+    if (!state.tutorial) return;
+    positionGameTutorial(target);
+    els.gameTutorial.querySelector('[data-tutorial-action="next"]')?.focus({ preventScroll: true });
+  });
+}
+
+function positionGameTutorial(target) {
+  if (!target || !state.tutorial) return;
+  const root = els.gameTutorial;
+  const rect = target.getBoundingClientRect();
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const padding = 7;
+  const left = Math.max(0, rect.left - padding);
+  const top = Math.max(0, rect.top - padding);
+  const right = Math.min(viewportWidth, rect.right + padding);
+  const bottom = Math.min(viewportHeight, rect.bottom + padding);
+  const panes = {
+    top: [0, 0, viewportWidth, top],
+    left: [0, top, left, Math.max(0, bottom - top)],
+    right: [right, top, Math.max(0, viewportWidth - right), Math.max(0, bottom - top)],
+    bottom: [0, bottom, viewportWidth, Math.max(0, viewportHeight - bottom)],
+  };
+  for (const [name, [x, y, width, height]] of Object.entries(panes)) {
+    const pane = root.querySelector(`.game-tutorial-shade--${name}`);
+    Object.assign(pane.style, { left: `${x}px`, top: `${y}px`, width: `${width}px`, height: `${height}px` });
+  }
+  const spotlight = root.querySelector(".game-tutorial-spotlight");
+  Object.assign(spotlight.style, { left: `${left}px`, top: `${top}px`, width: `${right - left}px`, height: `${bottom - top}px` });
+
+  const card = root.querySelector(".game-tutorial-card");
+  const cardRect = card.getBoundingClientRect();
+  const gap = 18;
+  const choices = [
+    { side: "right", room: viewportWidth - rect.right, left: rect.right + gap, top: rect.top + rect.height / 2 - cardRect.height / 2 },
+    { side: "left", room: rect.left, left: rect.left - cardRect.width - gap, top: rect.top + rect.height / 2 - cardRect.height / 2 },
+    { side: "bottom", room: viewportHeight - rect.bottom, left: rect.left + rect.width / 2 - cardRect.width / 2, top: rect.bottom + gap },
+    { side: "top", room: rect.top, left: rect.left + rect.width / 2 - cardRect.width / 2, top: rect.top - cardRect.height - gap },
+  ].sort((a, b) => b.room - a.room);
+  const placement = choices.find((choice) => choice.room >= (choice.side === "left" || choice.side === "right" ? cardRect.width + gap : cardRect.height + gap)) || choices[0];
+  const cardLeft = Math.max(12, Math.min(placement.left, viewportWidth - cardRect.width - 12));
+  const cardTop = Math.max(12, Math.min(placement.top, viewportHeight - cardRect.height - 12));
+  card.dataset.side = placement.side;
+  Object.assign(card.style, { left: `${cardLeft}px`, top: `${cardTop}px` });
+}
+
+function repositionGameTutorial() {
+  if (!state.tutorial) return;
+  const target = resolveGameTutorialTarget(GAME_TUTORIAL_STEPS[state.tutorial.index]);
+  positionGameTutorial(target);
+}
+
 function clearViewCaches() {
+  state.wantsRead = null;
   state.data = {};
   state.playerCardDetails = {};
   state.tradeCandidate = null;
   state.tradeResults = [];
+  state.tradeSearchCompleted = false;
   state.startingDraft = null;
   state.startingSavedSignature = "";
   state.startingPickerSlot = null;
@@ -620,7 +1212,7 @@ function syncDefaultPartner() {
 
 async function ensureViewData(force = false) {
   if (!state.currentSave) return;
-  if (dashboardPhaseKind() === "fantasy_draft") {
+  if (dashboardPhaseKind() === "fantasy_draft" && state.view !== "dashboard") {
     if (force || !state.data.fantasyDraft) {
       state.data.fantasyDraft = await action("fantasy_draft_room", {
         ...savePayload(),
@@ -647,7 +1239,8 @@ async function ensureViewData(force = false) {
       state.data.staff = await action("staff_room", {
         ...savePayload(),
         team: userTeam(),
-        limit: 60,
+        slot: state.staffSlot || undefined,
+        limit: 30,
       });
     }
     const phase = dashboardPhaseKind();
@@ -663,6 +1256,9 @@ async function ensureViewData(force = false) {
     }
     if (phase === "draft") {
       state.data.draft = await action("draft_room", { ...savePayload(), team: userTeam(), seed: 7 });
+    }
+    if (phase !== 'playoffs' && state.home?.save?.playoff_status === 'completed') {
+      state.data.playoffs = await action('playoff_room',savePayload());
     }
     if (phase === "free_agency") {
       state.data.freeagency = await action("free_agency_room", { ...savePayload(), team: userTeam(), seed: 7 });
@@ -700,7 +1296,7 @@ async function loadDashboardSnapshot(team) {
     ...savePayload(),
     team,
     from_date: from,
-    through_date: from ? monthEndDate(from) : undefined,
+    through_date: from ? monthEndDate(`${addMonths(month, 1)}-01`) : undefined,
     draft_year: state.home ? dashboardProspectYear() : undefined,
     leader_limit: 9,
     prospect_limit: 8,
@@ -721,6 +1317,7 @@ function applyDashboardSnapshot(snapshot, team) {
   state.data.dashboardMorale = snapshot.morale;
   state.data.dashboardCalendar = snapshot.calendar;
   state.data.dashboardOffers = snapshot.offers;
+  window.CardBoard?.updateOfferCount(Number(snapshot.offers?.offers?.length || 0));
   state.data.dashboardOpponent = snapshot.opponent;
   state.data.dashboardProspects = snapshot.prospects;
   return snapshot;
@@ -731,8 +1328,57 @@ async function loadDashboardCalendar(team) {
   const month = state.calendarMonth || current.slice(0, 7);
   if (!month) return;
   const from = `${month}-01`;
-  const through = monthEndDate(from);
+  const through = monthEndDate(`${addMonths(month, 1)}-01`);
   state.data.dashboardCalendar = await action("calendar", { ...savePayload(), from_date: from, through_date: through });
+}
+
+async function loadSimulationPlayerRatings() {
+  const currentDate = String(state.home?.save?.current_date || "").slice(0, 10);
+  const cached = state.playerFinder?.saveId === state.currentSave
+    && state.playerFinder.payload?.as_of_date === currentDate
+    ? state.playerFinder.payload
+    : null;
+  const payload = cached || await action("player_finder", savePayload());
+  return new Map((payload.rows || []).map((row) => [
+    String(row.id || row.player_id || ""),
+    row.display_ratings || row.ratings || {},
+  ]).filter(([id, ratings]) => id && Object.keys(ratings).length));
+}
+
+function mergeSimulationCalendar(current, incoming) {
+  if (!incoming) return current || {};
+  const games = new Map();
+  for (const game of [...(current?.games || current?.calendar || []), ...(incoming.games || incoming.calendar || [])]) {
+    const key = String(game.game_id || game.id || `${game.date || ""}:${game.home_team || game.home_team_id || ""}:${game.away_team || game.away_team_id || ""}`);
+    games.set(key, game);
+  }
+  const ranges = [current?.from_date, incoming.from_date].filter(Boolean).sort();
+  const ends = [current?.through_date, incoming.through_date].filter(Boolean).sort();
+  return {
+    ...current,
+    ...incoming,
+    from_date:ranges[0] || incoming.from_date,
+    through_date:ends.at(-1) || incoming.through_date,
+    games:[...games.values()],
+    game_count:games.size,
+  };
+}
+
+function dashboardWeekRange(dateText) {
+  const date = new Date(`${String(dateText || "").slice(0, 10) || "2026-10-01"}T00:00:00Z`);
+  const monday = new Date(date);
+  monday.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
+  const sunday = new Date(monday);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  return {
+    from_date:monday.toISOString().slice(0, 10),
+    through_date:sunday.toISOString().slice(0, 10),
+  };
+}
+
+async function loadSimulationWeekCalendar(dateText) {
+  const calendar = await action("calendar", { ...savePayload(), ...dashboardWeekRange(dateText) });
+  state.data.dashboardCalendar = mergeSimulationCalendar(state.data.dashboardCalendar, calendar);
 }
 
 async function loadTradeAssets() {
@@ -743,20 +1389,51 @@ async function loadTradeAssets() {
 }
 
 async function advance(payload) {
-  const showLoading = Boolean(payload?.next_event || [7, 31].includes(Number(payload?.days)));
-  let loadingStartedAt = null;
+  if (state.simulationRunning || state.busy || state.lotteryRevealRunning) return;
+  state.simulationRunning = true;
+  state.simulationId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  state.simulationStopRequested = false;
+  state.simulationProcessedGames = new Set();
   try {
-    if (showLoading) loadingStartedAt = await showAppLoading();
-    return await advanceSave(payload);
+    return await advanceSave(payload, state.simulationId);
   } finally {
-    if (showLoading) await hideAppLoading(loadingStartedAt);
+    window.AssistantGMPhone?.setSimulationPlaybackActive(false);
+    state.simulationRunning = false;
+    state.simulationId = "";
+    state.simulationOfferIds = new Set();
+    state.simulationOfferCount = 0;
+    state.simulationStopRequested = false;
+    state.simulationGameCache = null;
+    state.simulationPlayerRatingsById = null;
+    document.body.classList.remove("simulation-live");
+    document.querySelector('[data-simulation-status]')?.remove();
+    document.querySelectorAll('[data-minute-player]').forEach((input) => {
+      input.disabled = Boolean(input.closest('.season-minute-row')?.classList.contains('injured'));
+    });
+    setBusy(state.busyDepth > 0 || state.hydrating);
+    maybeCelebrateChampion();
+    if(typeof maybeShowWantReminder==='function')maybeShowWantReminder();
   }
 }
 
-async function advanceSave(payload) {
+async function advanceSave(payload, simulationId) {
   if (!state.currentSave) return showToast("Create or select a save first.", true);
+  if (requiredClipboardDecision()) return revealRequiredClipboardDecision();
   if (!(await ensureStartingFiveReadyForAdvance())) return;
+  const currentDate = String(state.home?.save?.current_date || "").slice(0, 10);
+  const deadline = tradeDeadlineDate();
+  if (currentDate === deadline && hasAcknowledgedTradeDeadline(deadline)
+      && payload.trade_deadline_confirmed !== deadline) {
+    payload = {...payload, trade_deadline_confirmed:deadline};
+  }
+  const postseasonBoundary = postseasonBoundaryDate();
+  if (currentDate >= postseasonBoundary && hasReviewedPostseason(postseasonBoundary)) {
+    payload = {...payload, postseason_confirmed:postseasonBoundary};
+  }
   if (state.multiplayer.league?.status === "active") {
+    if (state.home?.save?.current_date === tradeDeadlineDate() && payload.trade_deadline_confirmed !== tradeDeadlineDate()) {
+      return showTradeDeadlinePrompt();
+    }
     try {
       const result = await multiplayerRequest("set_ready", {
         ready: true,
@@ -768,7 +1445,8 @@ async function advanceSave(payload) {
       );
       if (result.status === "advanced") {
         await refreshHome();
-        showToast("Every manager was ready. The league advanced.");
+        if (result.result?.trade_deadline_checkpoint) showTradeDeadlinePrompt(result.result.trade_deadline_checkpoint, payload);
+        else showToast("Every manager was ready. The league advanced.");
       } else {
         renderMultiplayerBar();
         showToast("Ready recorded. The league advances when everyone is ready or the clock expires.");
@@ -779,8 +1457,30 @@ async function advanceSave(payload) {
       return;
     }
   }
+  state.simulationPlayerRatingsById = await loadSimulationPlayerRatings().catch(() => new Map());
   const previousDevelopmentSignature = developmentTrendSignature();
-  const result = await action("advance_save", { ...savePayload(), ...payload });
+  const originalHome = structuredClone(state.home);
+  state.simulationGameCache = new Map();
+  state.simulationLastDate = state.home?.save?.current_date;
+  state.simulationOpponentSignature = "";
+  const initialOffers=state.data.dashboardOffers?.offers||[];
+  state.simulationOfferIds=new Set(initialOffers.map(simulationOfferKey));
+  state.simulationOfferCount=Math.max(initialOffers.length,Number(state.home?.save?.pending_counts?.user_trade_offers||0));
+  for (const payload of Object.values(state.data.playoffs?.play_in || {})) {
+    for (const game of payload.games || []) state.simulationGameCache.set(game.game_id, game);
+  }
+  let result;
+  try {
+    document.body.classList.add("simulation-live");
+    window.AssistantGMPhone?.setSimulationPlaybackActive(true);
+    result = await action("advance_save", { ...savePayload(), ...payload }, {progress:displaySimulationProgress, simulationId});
+  } catch (error) {
+    state.home = originalHome;
+    // Never replay an uncertain mutation after a dropped connection.
+    await refreshHome().catch(()=>{});
+    showToast(error.message || "Simulation failed. Your save has been refreshed.", true);
+    throw error;
+  }
   state.home = result.home;
   clearViewCaches();
   applyPhaseRouting();
@@ -791,7 +1491,781 @@ async function advanceSave(payload) {
   }
   syncDevelopmentAdvanceState(previousDevelopmentSignature);
   render();
-  showToast(`Advanced to ${state.home?.save?.current_date || "next date"}`);
+  if (result.trade_deadline_checkpoint) {
+    showTradeDeadlinePrompt(result.trade_deadline_checkpoint, payload);
+  } else if (result.postseason_checkpoint) {
+    showPostseasonPrompt(result.postseason_checkpoint, payload);
+  } else if (result.status === "stopped" || result.result?.status === "stopped") {
+    const stoppedDate = result.result?.through_date || state.home?.save?.current_date;
+    showToast(`Simulation stopped at ${stoppedDate || "the current date"}.`);
+  } else {
+    showToast(`Advanced to ${state.home?.save?.current_date || "next date"}`);
+  }
+}
+
+async function requestSimulationStop() {
+  if (!state.simulationRunning || !state.simulationId || state.simulationStopRequested) return;
+  state.simulationStopRequested = true;
+  const button = document.querySelector('[data-simulation-stop]');
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Stopping…";
+    button.setAttribute("aria-label", "Stopping simulation");
+  }
+  try {
+    const response = await fetch("/api/action", {
+      method: "POST",
+      mode: "same-origin",
+      headers: await apiHeaders("cancel_simulation"),
+      body: JSON.stringify({action:"cancel_simulation", payload:{simulation_id:state.simulationId}}),
+    });
+    const data = await response.json();
+    if (!response.ok || data.ok === false) throw new Error(data.error || `${response.status} ${response.statusText}`);
+  } catch (error) {
+    state.simulationStopRequested = false;
+    const currentStatus = document.querySelector('[data-simulation-status]');
+    if (currentStatus) {
+      currentStatus.disabled = false;
+      currentStatus.textContent = state.simulationLastDate ? `Simulating · ${formatWrittenDate(state.simulationLastDate)}` : "Starting simulation…";
+      currentStatus.setAttribute("aria-label", "Stop simulation");
+    }
+    showToast(error.message || "Couldn't stop the simulation.", true);
+  }
+}
+
+function playoffProgressFlightPlan(raw, event) {
+  const game = event?.game;
+  if (game) {
+    const entry = Object.entries(raw?.play_in || {}).find(([, payload]) => (payload.games || []).includes(game.game_id));
+    if (entry) {
+      const [conference, payload] = entry;
+      const stage = payload.games.indexOf(game.game_id);
+      const homeScore = Number(game.home_score), awayScore = Number(game.away_score);
+      if (homeScore === awayScore || !Number.isFinite(homeScore) || !Number.isFinite(awayScore)) return [];
+      const winner = homeScore > awayScore ? game.home_team_id : game.away_team_id;
+      const loser = homeScore > awayScore ? game.away_team_id : game.home_team_id;
+      if (stage === 0) return [
+        {teamId:winner, conference, sourceStage:stage, destination:"first_round", route:"qualifier", seed:"7"},
+        {teamId:loser, conference, sourceStage:stage, destination:"play_in_final", route:"7-8-loser"},
+      ];
+      if (stage === 1) return [{teamId:winner, conference, sourceStage:stage, destination:"play_in_final", route:"9-10-winner"}];
+      if (stage === 2) return [{teamId:winner, conference, sourceStage:stage, destination:"first_round", route:"qualifier", seed:"8"}];
+      return [];
+    }
+  }
+  if (event?.series_id) {
+    const series = (raw?.series || []).find(item => item.id === event.series_id);
+    const teamId = series?.winner_team_id;
+    if (series?.status === "completed" && teamId) return [{teamId, conference:series.conference, sourceSeriesId:series.id, destination:"next_series", route:"series-advance"}];
+  }
+  return [];
+}
+
+function bracketTeamRow(root, selector, teamId) {
+  const scope = root.querySelector(selector);
+  return scope && [...scope.querySelectorAll(".series-team[data-team-id]")].find(row => row.dataset.teamId === String(teamId));
+}
+
+function bracketPathScreenPoints(path) {
+  if (!path?.ownerSVGElement || !path.getScreenCTM()) return [];
+  const svg = path.ownerSVGElement;
+  const matrix = path.getScreenCTM();
+  const length = path.getTotalLength();
+  if (!length) return [];
+  return [0, 0.25, 0.5, 0.75, 1].map(fraction => {
+    const point = svg.createSVGPoint();
+    const local = path.getPointAtLength(length * fraction);
+    point.x = local.x;
+    point.y = local.y;
+    return point.matrixTransform(matrix);
+  });
+}
+
+function capturePlayoffFlights(shell, plan) {
+  return plan.flatMap(item => {
+    let source, path;
+    if (item.sourceSeriesId) {
+      source = bracketTeamRow(shell, `.bracket-node[data-bracket-series="${item.sourceSeriesId}"]`, item.teamId);
+      path = [...shell.querySelectorAll(".bracket-round-links path[data-from-series]")].find(node => node.dataset.fromSeries === item.sourceSeriesId);
+    } else {
+      source = bracketTeamRow(shell, `.bracket-play-in [data-play-in-stage="${item.sourceStage}"]`, item.teamId);
+      path = item.route === "qualifier"
+        ? [...shell.querySelectorAll(".bracket-play-in .bracket-round-links path[data-qualifier-seed]")].find(node => node.dataset.qualifierSeed === item.seed)
+        : [...shell.querySelectorAll(".play-in-feeder-links path[data-playin-flow]")].find(node => node.dataset.playinFlow === item.route);
+    }
+    const sourceLogo = source?.querySelector("img");
+    if (!sourceLogo?.getClientRects().length) return [];
+    const rect = sourceLogo.getBoundingClientRect();
+    return [{...item, sourceLogoClone:sourceLogo.cloneNode(true), startRect:rect, routePoints:bracketPathScreenPoints(path), targetSeriesId:path?.dataset.toSeries || ""}];
+  });
+}
+
+function animatePlayoffFlights(shell, flights) {
+  if (!flights.length || GameSimulation.reducedMotion() || !Element.prototype.animate) return;
+  for (const flight of flights) {
+    let target;
+    if (flight.destination === "first_round") target = bracketTeamRow(shell, ".bracket-first_round", flight.teamId);
+    else if (flight.destination === "play_in_final") target = bracketTeamRow(shell, '.bracket-play-in [data-play-in-stage="2"]', flight.teamId);
+    else if (flight.destination === "next_series") {
+      const node = [...shell.querySelectorAll(".bracket-node[data-bracket-series]")].find(item => item.dataset.bracketSeries === flight.targetSeriesId);
+      target = node && bracketTeamRow(node, ".series-card", flight.teamId);
+    }
+    const targetLogo = target?.querySelector("img");
+    if (!targetLogo?.getClientRects().length) continue;
+    const start = flight.startRect, end = targetLogo.getBoundingClientRect();
+    const points = [{x:start.left + start.width / 2,y:start.top + start.height / 2}, ...flight.routePoints, {x:end.left + end.width / 2,y:end.top + end.height / 2}];
+    const distances = points.slice(1).map((point, index) => Math.hypot(point.x - points[index].x, point.y - points[index].y));
+    const total = distances.reduce((sum, distance) => sum + distance, 0) || 1;
+    let traversed = 0;
+    const startCenterX = start.left + start.width / 2, startCenterY = start.top + start.height / 2;
+    const keyframes = points.map((point, index) => {
+      if (index) traversed += distances[index - 1];
+      const progress = traversed / total;
+      return {offset:progress,transform:`translate(${point.x - startCenterX}px,${point.y - startCenterY}px)`};
+    });
+    const clone = flight.sourceLogoClone;
+    clone.classList.add("bracket-team-flight");
+    Object.assign(clone.style,{position:"fixed",left:`${start.left}px`,top:`${start.top}px`,width:`${start.width}px`,height:`${start.height}px`,maxWidth:`${start.width}px`,maxHeight:`${start.height}px`,objectFit:"contain",margin:"0",zIndex:"99999",pointerEvents:"none"});
+    document.body.append(clone);
+    const previousOpacity = targetLogo.style.opacity;
+    targetLogo.style.opacity = "0";
+    const animation = clone.animate(keyframes,{duration:440,easing:"ease-in-out",fill:"forwards"});
+    const finish = () => { clone.remove(); targetLogo.style.opacity = previousOpacity; };
+    animation.finished.then(finish,finish);
+  }
+}
+
+function simulationOfferRows(value) {
+  if(Array.isArray(value)) return value;
+  if(Array.isArray(value?.offers)) return value.offers;
+  if(Array.isArray(value?.incoming_offers)) return value.incoming_offers;
+  if(value?.offer&&typeof value.offer==='object') return simulationOfferRows(value.offer);
+  return value&&typeof value==='object'?[value]:[];
+}
+function simulationOfferKey(offer) {
+  const id=offer?.offer_id||offer?.id||offer?.proposal?.offer_id||offer?.proposal?.id;
+  if(id!=null) return String(id);
+  try { return JSON.stringify(offer); } catch { return String(offer); }
+}
+function simulationOfferTeamAbbrev(offer) {
+  const proposal=offer?.proposal||offer?.trade_proposal||offer||{};
+  const userId=String(state.home?.save?.user_team?.id||state.home?.save?.team?.id||'');
+  const fromId=proposal.from_team_id||(typeof proposal.from_team==='object'?proposal.from_team?.id:proposal.from_team)||offer?.sender_team_id||offer?.proposing_team_id||'';
+  const toId=proposal.to_team_id||(typeof proposal.to_team==='object'?proposal.to_team?.id:proposal.to_team)||'';
+  const userAbbrev=userTeam();
+  const isUser=id=>String(id)===userId||Boolean(id&&teamLabel(id)===userAbbrev);
+  const otherId=isUser(fromId)?toId:isUser(toId)?fromId:'';
+  const direct=otherId||offer?.sender_team_abbrev||offer?.proposing_team_abbrev||offer?.counterparty_team_abbrev||offer?.partner_team_abbrev||offer?.team_abbrev||'';
+  if(direct) {
+    const team=state.teams.find(row=>String(row.id||row.team_id||'')===String(direct));
+    return team?.abbrev||teamLabel(direct);
+  }
+  const candidate=state.teams.find(row=>String(row.id||row.team_id||'')===String(fromId||toId));
+  return candidate?.abbrev||teamLabel(fromId||toId)||'an NBA team';
+}
+function simulationOfferCountFromEvent(event) {
+  const candidates=[event.pending_user_trade_offer_count,event.user_trade_offer_count,event.pending_offer_count,event.offer_count,event.pending_counts?.user_trade_offers,event.pending_counts?.trade_offers];
+  const count=candidates.find(value=>value!==undefined&&value!==null&&Number.isFinite(Number(value)));
+  return count===undefined?null:Math.max(0,Math.floor(Number(count)));
+}
+async function processSimulationTradeOffers(event) {
+  const deltaKeys=['new_user_trade_offers','trade_offers_added','new_trade_offers','incoming_offers_added','trade_offer_arrivals'];
+  let added=deltaKeys.flatMap(key=>simulationOfferRows(event[key]));
+  const singular=event.trade_offer_arrived||event.new_trade_offer||event.new_offer||((/trade[_ -]?offer/i.test(String(event.kind||event.type||'')))?event.offer:null);
+  if(singular) added.push(...simulationOfferRows(singular));
+  const cumulativeValue=event.pending_user_trade_offers??event.user_trade_offers??event.pending_offers_snapshot??event.trade_offers??event.offers;
+  const hasCumulative=cumulativeValue!==undefined&&cumulativeValue!==null;
+  const cumulative=hasCumulative?simulationOfferRows(cumulativeValue):[];
+  const previousCount=Number(state.simulationOfferCount||0);
+  const ids=state.simulationOfferIds instanceof Set?state.simulationOfferIds:(state.simulationOfferIds=new Set());
+  let fresh=[];
+  if(added.length) {
+    const batchKeys=new Set();
+    fresh=added.filter(offer=>{
+      const key=simulationOfferKey(offer);
+      if(ids.has(key)||batchKeys.has(key)) return false;
+      batchKeys.add(key); return true;
+    });
+  }
+  if(cumulative.length) {
+    const unseen=cumulative.filter(offer=>!ids.has(simulationOfferKey(offer)));
+    if(!added.length&&!ids.size&&previousCount>0&&cumulative.length>previousCount) fresh=unseen.slice(-(cumulative.length-previousCount));
+    else if(!added.length) fresh=unseen;
+    for(const offer of cumulative) ids.add(simulationOfferKey(offer));
+  }
+  for(const offer of fresh) ids.add(simulationOfferKey(offer));
+  const reportedCount=simulationOfferCountFromEvent(event);
+  const nextCount=reportedCount??(hasCumulative?cumulative.length:previousCount+fresh.length);
+  state.simulationOfferCount=nextCount;
+  let phoneAlerts=fresh;
+  const senderAbbrev=event.new_trade_offer_from_team_abbrev||event.trade_offer_from_team_abbrev||event.offer_sender_abbrev;
+  const senderId=event.new_trade_offer_from_team_id||event.trade_offer_from_team_id||event.offer_sender_team_id;
+  if(!phoneAlerts.length&&nextCount>previousCount&&(senderAbbrev||senderId)) {
+    phoneAlerts=Array.from({length:nextCount-previousCount},(_,index)=>({id:`progress-offer:${event.date||'today'}:${nextCount-index}`,sender_team_abbrev:senderAbbrev,sender_team_id:senderId}));
+  }
+  if(state.home?.save) {
+    state.home.save.pending_counts={...(state.home.save.pending_counts||{}),user_trade_offers:nextCount};
+  }
+  if(fresh.length||reportedCount!==null||hasCumulative) {
+    const prior=state.data.dashboardOffers||{};
+    const current=prior.offers||[];
+    const merged=new Map(current.map(offer=>[simulationOfferKey(offer),offer]));
+    for(const offer of hasCumulative?cumulative:fresh) merged.set(simulationOfferKey(offer),offer);
+    if(hasCumulative) state.data.dashboardOffers={...prior,offers:cumulative};
+    else if(fresh.length) state.data.dashboardOffers={...prior,offers:[...merged.values()]};
+  }
+  let displayedCount=previousCount;
+  for(const offer of phoneAlerts) {
+    if(nextCount>displayedCount) {
+      displayedCount=Math.min(nextCount,displayedCount+1);
+      window.CardBoard?.updateOfferCount(displayedCount,{animate:true});
+    }
+    await window.AssistantGMPhone?.presentSimulationTradeOffer({
+      teamAbbrev:simulationOfferTeamAbbrev(offer),
+      date:event.date?formatWrittenDate(event.date):'Today',
+    });
+  }
+  if(displayedCount!==nextCount||(!phoneAlerts.length&&(fresh.length||reportedCount!==null||hasCumulative))) {
+    window.CardBoard?.updateOfferCount(nextCount,{animate:nextCount>previousCount&&!phoneAlerts.length});
+  }
+}
+
+async function displaySimulationProgress(event) {
+  let status = document.querySelector('[data-simulation-status]');
+  if (!status) {
+    status = document.createElement('button');
+    status.type = "button";
+    status.dataset.simulationStatus = '';
+    status.dataset.simulationStop = '';
+    status.className = "ui-command simulation-stop-control";
+    status.setAttribute('role','status');
+    status.setAttribute('aria-live','polite');
+    document.querySelector('[data-card-board-tools]')?.append(status);
+  }
+  status.textContent = state.simulationStopRequested ? "Stopping…" : event.date ? `Simulating · ${formatWrittenDate(event.date)}` : 'Starting simulation…';
+  status.disabled = Boolean(state.simulationStopRequested);
+  status.setAttribute("aria-label", state.simulationStopRequested ? "Stopping simulation" : "Stop simulation");
+  // Live event contract: dashboard_stats contains a cumulative user-roster
+  // snapshot; new_user_trade_offers contains arriving offers; and
+  // pending_user_trade_offer_count is the current inbox count. Accept the
+  // equivalent aliases below while the simulation stream is being aligned.
+  // Stats rows may be display-ready or carry nested season totals.
+  const statsSnapshot=event.dashboard_stats||event.player_stats_snapshot||event.player_stats||event.user_player_stats||event.user_stats||event.user_stats_snapshot||event.dashboard?.players||event.dashboard_snapshot?.dashboard||event.live_stats||event.stats_snapshot||null;
+  if(statsSnapshot) window.updateDashboardStatsDuringSimulation?.(statsSnapshot);
+  await processSimulationTradeOffers(event);
+  if (!event.date || !state.home?.save) return;
+  const previousDate = state.simulationLastDate;
+  const dateChanged = event.date !== previousDate;
+  state.simulationLastDate = event.date;
+  state.home.save.current_date = event.date;
+  if (dateChanged) state.calendarMonth = event.date.slice(0,7);
+  if (event.calendar) state.data.dashboardCalendar = mergeSimulationCalendar(state.data.dashboardCalendar, event.calendar);
+  if (dateChanged && previousDate && dashboardWeekRange(previousDate).from_date !== dashboardWeekRange(event.date).from_date) {
+    await loadSimulationWeekCalendar(event.date).catch(() => {});
+  }
+  const time = document.querySelector('.season-command-date time');
+  if (time) { time.dateTime = event.date; time.textContent = `${formatDashboardShortDate(event.date)}, ${event.date.slice(0,4)}`; }
+  const teamRef = id => state.teams.find(team=>team.id===id) || {id,abbrev:String(id || '').replace('team_','').toUpperCase()};
+  let standingsMoved = false;
+  if (event.rotation) updateRotationDuringSimulation(event.rotation);
+  if (event.team_signals) updateTeamSignalsDuringSimulation(event.team_signals);
+  if (event.opponent) updateOpponentDuringSimulation(event.opponent);
+  if (event.game) {
+    standingsMoved = applyStandingsGameProgress(event);
+    const game = {...event.game, date:event.date, home_team:teamRef(event.game.home_team_id), away_team:teamRef(event.game.away_team_id)};
+    state.simulationGameCache.set(game.game_id, game);
+    state.data.dashboardCalendar ||= {games:[]};
+    state.data.dashboardCalendar.games = [...(state.data.dashboardCalendar.games || []).filter(g=>g.game_id!==game.game_id), {...game,status:'simulated'}];
+    showSimulationOpponentResult(event);
+  }
+  const week = document.querySelector('[data-board-window="week"] .season-week-panel');
+  if (week) {
+    const oldBubble = week.querySelector('.season-week-day.today .season-week-node')?.getBoundingClientRect();
+    if (week.classList.contains('is-expanded')) renderCalendar(week, {team:userTeam(),dataKey:'dashboardCalendar'});
+    else {
+      week.innerHTML = seasonWeekCard(state.data.dashboard || {}, userTeam());
+      wireWeekCardBoxScores(week);
+      const bubble = week.querySelector('.season-week-day.today .season-week-node');
+      if (dateChanged && bubble && oldBubble && !GameSimulation.reducedMotion()) {
+        const rect = bubble.getBoundingClientRect(), parent = week.getBoundingClientRect();
+        const scale = week.offsetWidth ? parent.width / week.offsetWidth : 1;
+        const cursor = document.createElement('span');
+        cursor.className = 'simulation-week-cursor';
+        Object.assign(cursor.style,{left:`${(rect.left-parent.left)/scale}px`,top:`${(rect.top-parent.top)/scale}px`,width:`${rect.width/scale}px`,height:`${rect.height/scale}px`});
+        week.append(cursor);
+        cursor.animate([{transform:`translate(${(oldBubble.left-rect.left)/scale}px,${(oldBubble.top-rect.top)/scale}px)`},{transform:'translate(0,0)'}],{duration:220,easing:'ease-in-out'}).finished.then(()=>cursor.remove(),()=>cursor.remove());
+      }
+    }
+  }
+  if (event.playoffs) {
+    const raw = event.playoffs;
+    const shell = document.querySelector('[data-board-window="phase-playoffs-bracket"] .phase-bracket-shell');
+    const flights = shell ? capturePlayoffFlights(shell, playoffProgressFlightPlan(raw,event)) : [];
+    let series = [...(raw.series || [])];
+    if (raw.round === 'play_in') for (const [conference, locked] of Object.entries(raw.locked_seeds || {})) {
+      const pi = raw.play_in?.[conference] || {};
+      const seeds = {...locked,7:pi.seed_7_team_id,8:pi.seed_8_team_id};
+      for (const [high,low] of [[1,8],[4,5],[3,6],[2,7]]) series.push({id:`preview:${conference}:${high}`,conference,round:'first_round',team_ids:[seeds[high],seeds[low]],pending_seed:seeds[low]?null:String(low),wins:{}});
+    }
+    const room = {...state.data.playoffs, playoff_state:raw, status:raw.status, round:raw.round,
+      champion:raw.champion_team_id ? teamRef(raw.champion_team_id) : null,
+      series:series.map(s=>({...s,teams:s.team_ids.map(id=>id?teamRef(id):null),score:s.team_ids.map(id=>s.wins?.[id] || 0),winner:s.winner_team_id?teamRef(s.winner_team_id):null})),
+      play_in:Object.fromEntries(Object.entries(raw.play_in || {}).map(([conf, pi])=>[conf,{...pi,teams:Object.fromEntries(Object.entries(pi.teams || {}).map(([seed,id])=>[seed,teamRef(id)])),games:(pi.games || []).map(id=>state.simulationGameCache.get(id)).filter(Boolean)}]))};
+    state.data.playoffs = room;
+    if (shell) {
+      const left = shell.scrollLeft;
+      shell.innerHTML = playoffBracket(room.series,room.champion,room.play_in);
+      shell.scrollLeft = left;
+      const piConference = event.game ? Object.entries(raw.play_in || {}).find(([,pi])=>(pi.games || []).includes(event.game.game_id)) : null;
+      const changed = event.series_id ? [...shell.querySelectorAll('[data-bracket-series]')].find(node=>node.dataset.bracketSeries===event.series_id) : piConference ? shell.querySelector(`.bracket-conference.${piConference[0].toLowerCase()} [data-play-in-stage="${piConference[1].games.indexOf(event.game.game_id)}"]`) : null;
+      changed?.classList.add('simulation-score-update');
+      animatePlayoffFlights(shell,flights);
+    }
+  }
+  setBusy(true);
+  const isUserGame = [event.game?.home_team_id,event.game?.away_team_id].includes(state.home.save.user_team?.id);
+  const opponentFrame = document.querySelector('[data-board-window="opponent"]');
+  const resultVisible = event.kind === "game" && isUserGame && opponentFrame
+    && !opponentFrame.classList.contains("is-minimized") && opponentFrame.getClientRects().length > 0;
+  if (event.kind==='game' && (event.playoffs || isUserGame)) await GameSimulation.wait(GameSimulation.reducedMotion()?25:resultVisible?480:180);
+  else if (event.kind==='game' && standingsMoved && !GameSimulation.reducedMotion()) await GameSimulation.wait(28);
+  else if (dateChanged) await GameSimulation.wait(GameSimulation.reducedMotion()?0:70);
+}
+
+function standingsAfterProgressGame(snapshot, game) {
+  const field = Array.isArray(snapshot) ? null
+    : ["standings", "rows", "teams"].find((key) => Array.isArray(snapshot?.[key]));
+  const sourceRows = Array.isArray(snapshot) ? snapshot : field ? snapshot[field] : [];
+  const homeScore = Number(game?.home_score), awayScore = Number(game?.away_score);
+  if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore) || homeScore === awayScore) return null;
+  const homeId = String(game.home_team_id || ""), awayId = String(game.away_team_id || "");
+  const rows = sourceRows.map((row) => ({...row, team: row.team && typeof row.team === "object" ? {...row.team} : row.team}));
+  const keyOf = (row) => String(row.team?.id || row.team_id || row.id || "");
+  const home = rows.find((row) => keyOf(row) === homeId);
+  const away = rows.find((row) => keyOf(row) === awayId);
+  if (!home || !away) return null;
+  const conferenceOf = (row) => String(row.team?.conference || row.conference || "");
+  const abbrevOf = (row) => String(row.team?.abbrev || row.team_abbrev || row.team?.name || "");
+  const compare = (left, right) => conferenceOf(left).localeCompare(conferenceOf(right))
+    || Number(right.win_pct || 0) - Number(left.win_pct || 0)
+    || Number(right.point_diff || 0) - Number(left.point_diff || 0)
+    || abbrevOf(left).localeCompare(abbrevOf(right));
+  const rankMap = (items) => {
+    const ranks = new Map();
+    let conference = null, rank = 0;
+    for (const row of [...items].sort(compare)) {
+      const current = conferenceOf(row);
+      if (current !== conference) { conference = current; rank = 0; }
+      ranks.set(keyOf(row), ++rank);
+    }
+    return ranks;
+  };
+  const previousRanks = rankMap(rows);
+  const homeWon = homeScore > awayScore;
+  for (const [row, points, pointsAgainst, won] of [[home, homeScore, awayScore, homeWon], [away, awayScore, homeScore, !homeWon]]) {
+    row.wins = Number(row.wins || 0) + Number(won);
+    row.losses = Number(row.losses || 0) + Number(!won);
+    row.games = Number(row.games || 0) + 1;
+    row.points_for = Number(row.points_for ?? 0) + points;
+    row.points_against = Number(row.points_against ?? 0) + pointsAgainst;
+    row.point_diff = Math.round((Number(row.points_for) - Number(row.points_against)) * 100) / 100;
+    row.win_pct = Math.round((row.wins / row.games) * 1000) / 1000;
+  }
+  rows.sort(compare);
+  return {
+    snapshot: Array.isArray(snapshot) ? rows : {...snapshot, [field]: rows},
+    previousRanks,
+    nextRanks: rankMap(rows),
+  };
+}
+
+function applyStandingsGameProgress(event) {
+  if (event.phase !== "regular_season" || !event.game?.game_id || !state.data.dashboardStandings) return false;
+  const gameId = String(event.game.game_id);
+  if (state.simulationProcessedGames.has(gameId)) return false;
+  const update = standingsAfterProgressGame(state.data.dashboardStandings, event.game);
+  if (!update) return false;
+  state.simulationProcessedGames.add(gameId);
+  const panel = document.querySelector('[data-board-window="standings"] .season-standings-panel');
+  const displayedRows = [...(panel?.querySelectorAll(".season-standing-row") || [])];
+  const displayedIds = displayedRows.map((row) => row.querySelector("[data-standing-team-id]")?.dataset.standingTeamId).filter(Boolean);
+  const rankChanged = displayedIds.some((id) => update.previousRanks.get(id) !== update.nextRanks.get(id));
+  const expanded = panel?.classList.contains("is-expanded") || false;
+  state.data.dashboardStandings = update.snapshot;
+  if (!panel) return false;
+  if (rankChanged) {
+    const oldPositions = new Map(displayedRows.map((row) => [
+      row.querySelector("[data-standing-team-id]")?.dataset.standingTeamId,
+      row.getBoundingClientRect().top,
+    ]));
+    setStandingsCardExpanded(expanded, panel);
+    panel.querySelectorAll(".season-standing-row").forEach((row) => {
+      const id = row.querySelector("[data-standing-team-id]")?.dataset.standingTeamId;
+      if (!id) return;
+      const movement = update.previousRanks.get(id) - update.nextRanks.get(id);
+      if (movement) showRowMovement(row, movement > 0 ? "up" : "down", Math.abs(movement));
+      const previousTop = oldPositions.get(id);
+      if (previousTop !== undefined) animateRowFromPreviousPosition(row, previousTop);
+    });
+    return true;
+  }
+  const rowsById = new Map(standingsRows(update.snapshot).map((row) => [String(row.team?.id || row.team_id || row.id || ""), row]));
+  for (const rowNode of displayedRows) {
+    const id = rowNode.querySelector("[data-standing-team-id]")?.dataset.standingTeamId;
+    const row = rowsById.get(id);
+    if (!row) continue;
+    const conference = String(row.team?.conference || row.conference || "");
+    const leader = standingsRows(update.snapshot).find((candidate) => String(candidate.team?.conference || candidate.conference || "") === conference);
+    const gamesBack = leader ? ((Number(leader.wins || 0) - Number(row.wins || 0)) + (Number(row.losses || 0) - Number(leader.losses || 0))) / 2 : 0;
+    const cells = rowNode.querySelectorAll(":scope > span");
+    if (cells[0]) cells[0].textContent = String(update.nextRanks.get(id) || "");
+    if (cells[2]) cells[2].textContent = `${Number(row.wins || 0)}-${Number(row.losses || 0)}`;
+    if (cells[3]) cells[3].textContent = winPct(row.win_pct);
+    if (cells[4]) cells[4].textContent = gamesBack <= 0 ? "—" : Number.isInteger(gamesBack) ? String(gamesBack) : gamesBack.toFixed(1).replace(/^0/, "");
+  }
+  return false;
+}
+
+function updateRotationDuringSimulation(rotation) {
+  const updates = Array.isArray(rotation) ? rotation : [];
+  const table = document.querySelector('[data-board-window="minutes"] .season-minutes-table');
+  const cardRows = table ? [...table.querySelectorAll(":scope > .season-minute-row")] : [];
+  for (const update of updates) {
+    const id = String(update.id || "");
+    if (!id) continue;
+    const minutes = Number(update.rotation_target_minutes ?? update.minutes_projection ?? 0);
+    state.rotationDraft[id] = clampNumber(Number.isFinite(minutes) ? minutes : 0, 0, 48);
+    if (update.rotation_user_set) state.rotationLockedPlayerIds.add(id);
+    else state.rotationLockedPlayerIds.delete(id);
+    const row = cardRows.find((item) => item.dataset.minuteRow === id);
+    if (!row) continue;
+    const injured = isPlayerInjured(update.health);
+    row.classList.toggle("injured", injured);
+    const input = row.querySelector("[data-minute-player]");
+    if (input) input.disabled = injured || state.simulationRunning;
+    const button = row.querySelector("button[data-dashboard-player-card]");
+    if (button) {
+      button.querySelector(".season-injury-status")?.remove();
+      const statusMarkup = playerInjuryStatusMarkup({id, name:button.dataset.playerName || "Player", health:update.health});
+      if (statusMarkup) {
+        const template = document.createElement("template");
+        template.innerHTML = statusMarkup;
+        const motion = button.querySelector(".season-row-motion");
+        button.insertBefore(template.content.firstElementChild, motion || null);
+      }
+    }
+    const fatigue = row.querySelector(".season-fatigue");
+    if (fatigue) {
+      const template = document.createElement("template");
+      template.innerHTML = seasonFatigueCell({health:update.health});
+      fatigue.replaceWith(template.content.firstElementChild);
+    }
+  }
+  if (table) {
+    syncRotationInputs(table);
+    normalizeMinutesDomOrder(table);
+  }
+}
+
+function updateTeamSignalsDuringSimulation(identity) {
+  if (teamLabel(state.data.dashboard?.team || state.dashboardTeam || userTeam()) !== userTeam()) return;
+  const panel = document.querySelector('[data-board-window="signals"] .season-identity-signals');
+  if (!panel) return;
+  const metrics = identity?.metrics || {};
+  const ranks = identity?.ranks || {};
+  const count = Number(identity?.league_team_count || identity?.team_count || 30);
+  for (const row of panel.querySelectorAll(".season-signal-row[data-team-signal-key]")) {
+    const key = row.dataset.teamSignalKey;
+    const rank = Number(ranks[key] || count);
+    const width = clampNumber(((count - rank + 1) / Math.max(1, count)) * 100, 3, 100);
+    const bar = row.querySelector("i > b");
+    const rankLabel = row.querySelector("[data-team-signal-rank]");
+    if (bar) {
+      const color = performanceBarColor(width);
+      bar.style.setProperty("--fill", `${width}%`);
+      bar.style.setProperty("--bar-color", color);
+      bar.style.setProperty("background-color", color, "important");
+    }
+    if (rankLabel) rankLabel.textContent = `#${rank}/${count}`;
+    row.title = `${Number(metrics[key] || 0).toFixed(1)} team rating · ranked ${rank} of ${count}`;
+  }
+  state.data.dashboard ||= {};
+  state.data.dashboard.team_identity = identity;
+}
+
+function updateOpponentDuringSimulation(opponent) {
+  if (teamLabel(state.data.dashboard?.team || state.dashboardTeam || userTeam()) !== userTeam()) return;
+  const game = opponent?.next_game;
+  if (!opponent?.team || !game) return;
+  opponent = simulationOpponentForDisplay(opponent);
+  const signature = JSON.stringify([
+    game.game_id, opponent.team?.id, opponent.record?.wins, opponent.record?.losses,
+    (opponent.rotation || []).map((row) => [row.id, row.minutes_projection, row.health?.status, row.health?.days_left, row.display_ratings]),
+    opponent.last_games?.[0]?.date,
+  ]);
+  if (signature === state.simulationOpponentSignature) return;
+  state.simulationOpponentSignature = signature;
+  state.data.dashboardOpponent = opponent;
+  state.data.dashboard ||= {};
+  state.data.dashboard.next_games = [game];
+  const panel = document.querySelector('[data-board-window="opponent"] .season-opponent-panel');
+  if (!panel) return;
+  const resultBanner = panel.querySelector('.season-simulation-result-banner');
+  panel.innerHTML = seasonOpponentCard(state.data.dashboard, userTeam());
+  const table = panel.querySelector('.season-opponent-table');
+  if (resultBanner && table) table.append(resultBanner);
+  wireDashboardPlayerCards(panel);
+  wireSeasonOpponentSorting(panel);
+  wireSeasonOpponentInjuryTicker(panel);
+}
+
+const DISPLAY_RATING_ANCHORS = [
+  [1, 25], [20, 36], [30, 48], [40, 60], [50, 70],
+  [60, 80], [70, 88], [80, 95], [90, 98], [99, 99],
+];
+
+function displayRatingValue(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  const raw = clampNumber(numeric, 1, 99);
+  for (let index = 1; index < DISPLAY_RATING_ANCHORS.length; index += 1) {
+    const [highRaw, highDisplay] = DISPLAY_RATING_ANCHORS[index];
+    const [lowRaw, lowDisplay] = DISPLAY_RATING_ANCHORS[index - 1];
+    if (raw <= highRaw) {
+      const share = (raw - lowRaw) / Math.max(0.001, highRaw - lowRaw);
+      return Math.round(clampNumber(lowDisplay + share * (highDisplay - lowDisplay), 1, 99) * 10) / 10;
+    }
+  }
+  return 99;
+}
+
+function simulationOpponentForDisplay(opponent) {
+  return {
+    ...opponent,
+    rotation: (opponent.rotation || []).map((row) => {
+      const cachedRatings = state.simulationPlayerRatingsById?.get(String(row.id || row.player_id || ""));
+      if (cachedRatings) return {...row, display_ratings:cachedRatings};
+      if (row.display_ratings || !row.attributes) return row;
+      const attributes = row.attributes || {};
+      const displayRatings = Object.fromEntries(Object.entries(attributes)
+        .map(([key, value]) => [key, displayRatingValue(value)])
+        .filter(([, value]) => value !== null));
+      return Object.keys(displayRatings).length ? {...row, display_ratings:displayRatings} : row;
+    }),
+  };
+}
+
+function simulationOpponentResult(event, userTeamId) {
+  const game = event?.game;
+  const home = Number(game?.home_score);
+  const away = Number(game?.away_score);
+  if (!game?.game_id || !userTeamId || !Number.isFinite(home) || !Number.isFinite(away) || home === away) return null;
+  const userIsHome = String(game.home_team_id) === String(userTeamId);
+  if (!userIsHome && String(game.away_team_id) !== String(userTeamId)) return null;
+  const score = userIsHome ? home : away;
+  const opponentScore = userIsHome ? away : home;
+  return {
+    result: score > opponentScore ? "W" : "L",
+    score,
+    opponentScore,
+    opponentId: userIsHome ? game.away_team_id : game.home_team_id,
+  };
+}
+
+function showSimulationOpponentResult(event) {
+  const frame = document.querySelector('[data-board-window="opponent"]');
+  const panel = frame?.querySelector(".season-opponent-panel");
+  const table = panel?.querySelector(".season-opponent-table");
+  const outcome = simulationOpponentResult(event, state.home?.save?.user_team?.id);
+  if (!table || !outcome || frame.dataset.resultGameId === String(event.game.game_id)) return false;
+  frame.dataset.resultGameId = String(event.game.game_id);
+  const userLabel = teamLabel(state.home?.save?.user_team || userTeam());
+  const opponent = teamLabel(state.teams.find((team) => team.id === outcome.opponentId) || outcome.opponentId);
+  panel.querySelector(".season-simulation-result-banner")?.remove();
+  const banner = document.createElement("div");
+  banner.className = `season-simulation-result-banner ${outcome.result === "W" ? "is-win" : "is-loss"}`;
+  banner.setAttribute("role", "status");
+  banner.setAttribute("aria-live", "polite");
+  banner.innerHTML = `<strong>${outcome.result}</strong><span>${escapeHtml(userLabel)} ${outcome.score} <i>·</i> ${escapeHtml(opponent)} ${outcome.opponentScore}</span><small>FINAL</small>`;
+  table.append(banner);
+  window.setTimeout(() => banner.remove(), 1500);
+  return true;
+}
+
+function captureTeamSignalBars() {
+  const panel = document.querySelector('[data-board-window="signals"] .season-identity-signals');
+  if (!panel) return null;
+  return Object.fromEntries([...panel.querySelectorAll(".season-signal-row[data-team-signal-key]")].map((row) => {
+    const bar = row.querySelector("i > b");
+    return [row.dataset.teamSignalKey, {
+      fill: bar ? getComputedStyle(bar).width : "0px",
+      color: bar ? getComputedStyle(bar).backgroundColor : "#73838b",
+    }];
+  }));
+}
+
+function animateTeamSignalsFrom(previous) {
+  if (!previous || GameSimulation.reducedMotion()) return;
+  const panel = document.querySelector('[data-board-window="signals"] .season-identity-signals');
+  if (!panel) return;
+  for (const row of panel.querySelectorAll(".season-signal-row[data-team-signal-key]")) {
+    const prior = previous[row.dataset.teamSignalKey];
+    const bar = row.querySelector("i > b");
+    if (!prior || !bar) continue;
+    const parentWidth = bar.parentElement?.clientWidth || 1;
+    const priorPercent = clampNumber((parseFloat(prior.fill) / parentWidth) * 100, 0, 100);
+    bar.style.transition = "none";
+    bar.style.setProperty("--fill", `${priorPercent}%`);
+    bar.style.setProperty("--bar-color", prior.color);
+    bar.style.setProperty("background-color", prior.color, "important");
+    void bar.offsetWidth;
+  }
+  requestAnimationFrame(() => {
+    panel.querySelectorAll(".season-signal-row[data-team-signal-key] > i > b").forEach((bar) => bar.style.removeProperty("transition"));
+    updateTeamSignalsDuringSimulation(state.data.dashboard?.team_identity || {});
+  });
+}
+
+function reorderMinutesTable(table) {
+  const rows = table ? [...table.querySelectorAll(":scope > .season-minute-row")] : [];
+  if (rows.length < 2) return;
+  const previousTops = new Map(rows.map((row) => [row, row.getBoundingClientRect().top]));
+  const previousOrder = new Map([...rows].sort((left, right) => previousTops.get(left) - previousTops.get(right)).map((row, index) => [row, index]));
+  const ordered = [...rows].sort((left, right) => {
+    const leftValue = left.classList.contains("injured") ? 0 : Number(state.rotationDraft[left.dataset.minuteRow] || 0);
+    const rightValue = right.classList.contains("injured") ? 0 : Number(state.rotationDraft[right.dataset.minuteRow] || 0);
+    return rightValue - leftValue || previousOrder.get(left) - previousOrder.get(right);
+  });
+  ordered.forEach((row, index) => { row.style.gridRow = String(index + 2); });
+  ordered.forEach((row, index) => {
+    const previousIndex = previousOrder.get(row);
+    if (previousIndex !== index) showRowMovement(row, index < previousIndex ? "up" : "down", Math.abs(previousIndex - index));
+    animateRowFromPreviousPosition(row, previousTops.get(row));
+  });
+}
+
+function normalizeMinutesDomOrder(table) {
+  if (!table) return;
+  const rows = [...table.querySelectorAll(":scope > .season-minute-row")];
+  rows.sort((left, right) => {
+    const leftValue = left.classList.contains("injured") ? 0 : Number(state.rotationDraft[left.dataset.minuteRow] || 0);
+    const rightValue = right.classList.contains("injured") ? 0 : Number(state.rotationDraft[right.dataset.minuteRow] || 0);
+    return rightValue - leftValue || left.dataset.minuteRow.localeCompare(right.dataset.minuteRow);
+  });
+  rows.forEach((row) => { row.style.gridRow = ""; table.append(row); });
+}
+
+function showRowMovement(row, direction, places = 1) {
+  const indicator = row.querySelector(".season-row-motion");
+  if (!indicator) return;
+  window.clearTimeout(indicator._movementTimer);
+  indicator.className = `season-row-motion ${direction}`;
+  indicator.textContent = `${direction === "up" ? "↑" : "↓"}${places > 1 ? places : ""}`;
+  indicator.title = `Moved ${direction} ${places} ${places === 1 ? "place" : "places"}`;
+  indicator.hidden = false;
+  indicator._movementTimer = window.setTimeout(() => { indicator.hidden = true; }, 1200);
+}
+
+function animateRowFromPreviousPosition(row, previousTop) {
+  if (previousTop === undefined || GameSimulation.reducedMotion() || typeof row.animate !== "function") return;
+  const delta = previousTop - row.getBoundingClientRect().top;
+  if (Math.abs(delta) < 1) return;
+  row.getAnimations().forEach((animation) => animation.cancel());
+  row.animate([{transform:`translateY(${delta}px)`},{transform:"translateY(0)"}], {duration:320, easing:"cubic-bezier(.2,.75,.25,1)"});
+}
+
+function maybeCelebrateChampion() {
+  if (!state.home?.save?.postseason_exit_required || state.simulationRunning || state.hydrating || state.modal || state.tutorial) return;
+  const key = `nbaGmChampionCelebrated:${state.currentSave}:${state.home.save.season}`;
+  state.championCelebratedKeys ||= new Set();
+  if (state.championCelebratedKeys.has(key)) return;
+  try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key,'1'); } catch {}
+  state.championCelebratedKeys.add(key);
+  window.CardBoard?.open('phase-playoffs-bracket');
+  const champion = teamLabel(state.data.playoffs?.champion || state.home.save.playoff_champion_team_id);
+  const confettiColors = ['#bd922e','#e2c66c','#a74a51','#607f99','#f0e6ca'];
+  const confetti = Array.from({length:30},(_,index)=>{
+    const x=(index*37+11)%100;
+    const drift=(index*19)%65-32;
+    const spin=(index*53)%500-250;
+    return `<i class="champion-confetti-piece" style="--x:${x}%;--delay:${(index%9)*42}ms;--drift:${drift}px;--spin:${spin}deg;--confetti-color:${confettiColors[index%confettiColors.length]}"></i>`;
+  }).join('');
+  state.modal = {kind:'champion',title:'NBA Champions',body:`<section class="champion-celebration"><div class="champion-confetti" aria-hidden="true">${confetti}</div><img class="champion-trophy" src="/assets/header-art/exports/trophy-press-ink.png" alt="Championship trophy"/><h2>${escapeHtml(dashboardTeamName(champion) || champion)}</h2><p>${escapeHtml(state.home.save.season)} NBA Champions</p><button type="button" class="ui-command" data-champion-bracket data-close-modal>View Bracket</button></section>`};
+  renderModal();
+}
+
+function tradeDeadlineDate() {
+  const current = String(state.home?.save?.current_date || "");
+  const startYear = Number(current.slice(0, 4)) - (Number(current.slice(5, 7)) < 7 ? 1 : 0);
+  return state.home?.trade_deadline?.date || `${startYear + 1}-02-05`;
+}
+
+function tradeDeadlineAcknowledgmentKey(deadline) {
+  const save = String(state.currentSave || "active-save");
+  return `nbaGmTradeDeadlineAcknowledged:${encodeURIComponent(save)}:${deadline}`;
+}
+
+function hasAcknowledgedTradeDeadline(deadline) {
+  if (state.tradeDeadlineAcknowledgedSave === state.currentSave
+      && state.tradeDeadlineAcknowledgedDate === deadline) return true;
+  try { return localStorage.getItem(tradeDeadlineAcknowledgmentKey(deadline)) === "1"; }
+  catch { return false; }
+}
+
+function acknowledgeTradeDeadline(deadline) {
+  if (!deadline) return;
+  state.tradeDeadlineAcknowledgedSave = state.currentSave;
+  state.tradeDeadlineAcknowledgedDate = deadline;
+  try { localStorage.setItem(tradeDeadlineAcknowledgmentKey(deadline), "1"); }
+  catch { /* Keep this session's confirmation if browser storage is unavailable. */ }
+}
+
+function tradeDeadlineCalendarNotice(month) {
+  const deadline = tradeDeadlineDate();
+  if (deadline.slice(0, 7) !== month) return "";
+  const today = state.home?.save?.current_date === deadline;
+  return `<div class="trade-deadline-calendar-notice"${today ? ' role="status"' : ""}><strong>Trade deadline${today ? " · Today" : ""}</strong><span>${escapeHtml(formatWrittenDate(deadline))}</span></div>`;
+}
+
+function showTradeDeadlinePrompt(checkpoint = {}, payload = {}) {
+  if (!checkpoint.date && state.modal?.kind === "tradeDeadline") return;
+  const deadline = checkpoint.date || tradeDeadlineDate();
+  if (hasAcknowledgedTradeDeadline(deadline)) return;
+  const followingDay = new Date(`${deadline}T00:00:00Z`);
+  followingDay.setUTCDate(followingDay.getUTCDate() + 1);
+  const target = checkpoint.requested_to_date > deadline ? checkpoint.requested_to_date : followingDay.toISOString().slice(0, 10);
+  const resume = {...payload, to_date:target, next_event:false, checkpoint_days:payload.checkpoint_days || 31, trade_deadline_confirmed:deadline};
+  delete resume.days;
+  state.modal = {
+    kind:"tradeDeadline", title:"Trade Deadline", subtitle:"", deadlineResume:resume,
+    body:`<section class="trade-deadline-prompt"><strong class="trade-deadline-prompt-date">${escapeHtml(formatWrittenDate(deadline))}</strong><p>The sim is paused. This is the last day to trade before the deadline closes.</p><p>Enter the deadline to make deals, or continue simming to ${escapeHtml(formatWrittenDate(target))}.</p><div class="trade-deadline-prompt-actions"><button type="button" class="ui-command" data-enter-trade-deadline>Enter Trade Deadline</button><button type="button" class="ui-command" data-sim-through-deadline>Sim Through Deadline</button></div></section>`,
+  };
+  renderModal();
+}
+
+function postseasonBoundaryDate() {
+  const season = String(state.home?.save?.season || "");
+  const current = String(state.home?.save?.current_date || "");
+  const start = Number(season.slice(0, 4)) || (Number(current.slice(0, 4)) - (Number(current.slice(5, 7)) < 7 ? 1 : 0));
+  return `${start + 1}-04-13`;
+}
+
+function postseasonReviewKey(date) {
+  return `nbaGmPostseasonReviewed:${encodeURIComponent(state.currentSave || "active-save")}:${date}`;
+}
+
+function hasReviewedPostseason(date) {
+  if (state.postseasonReviewedSave === state.currentSave && state.postseasonReviewedDate === date) return true;
+  try { return localStorage.getItem(postseasonReviewKey(date)) === "1"; } catch { return false; }
+}
+
+function showPostseasonPrompt(checkpoint) {
+  state.modal = {
+    kind:"postseason", title:"Regular Season Complete", subtitle:"", postseasonBoundary:checkpoint.date,
+    body:`<section class="trade-deadline-prompt"><strong class="trade-deadline-prompt-date">${escapeHtml(formatWrittenDate(state.home?.save?.current_date || checkpoint.date))}</strong><p>The regular season is over. The sim is paused before postseason games begin.</p><p>Review the bracket, including the play-in, then choose a sim command to continue.</p><div class="trade-deadline-prompt-actions"><button type="button" class="ui-command" data-review-postseason>Review Bracket</button></div></section>`,
+  };
+  renderModal();
 }
 
 async function ensureStartingFiveReadyForAdvance() {
@@ -854,6 +2328,8 @@ function savePayload() {
 }
 
 function returnToSaveSelection() {
+  state.lotteryRunId = (state.lotteryRunId || 0) + 1;
+  state.lotteryRevealRunning = false;
   if (state.multiplayer.session) leaveMultiplayerSession(false);
   localStorage.removeItem(LAST_SAVE_KEY);
   state.currentSave = "";
@@ -872,10 +2348,13 @@ function render() {
   document.body.dataset.view = state.currentSave ? state.view : "startup";
   els.startupScreen.hidden = Boolean(state.currentSave);
   if (!state.currentSave) {
+    window.AssistantGMPhone?.hide();
     renderStartup();
+    window.StartupVideoBackdrop?.sync();
     return;
   }
   els.startupScreen.hidden = true;
+  window.StartupVideoBackdrop?.sync();
   document.getElementById("roomNavigation")?.remove();
   if (state.view !== "dashboard") {
     const navigation = document.createElement("nav");
@@ -904,13 +2383,14 @@ function render() {
   if (state.view === "social") renderSocial();
   if (state.view === "settings") renderSettings();
   renderModal();
+  syncAssistantGMPhone();
 }
 
 function renderStartup() {
   document.getElementById("roomNavigation")?.remove();
   els.content.innerHTML = "";
   els.startupScreen.hidden = false;
-  els.startupLoadSave.disabled = !els.startupSaveSelect.value;
+  updateStartupSaveControls();
   const grid = els.startupScreen.querySelector(".startup-grid");
   const league = state.multiplayer.league;
   if (!league) {
@@ -1098,11 +2578,13 @@ function renderMultiplayerBar() {
   els.multiplayerBar.innerHTML = `
     <span class="multiplayer-live"><i></i>${escapeHtml(league.code)}</span>
     <span>${escapeHtml(manager?.display_name || "GM")} · ${escapeHtml(multiplayerTeamAbbrev() || "")}</span>
-    <strong>${formatClock(seconds)}</strong>
+    <strong>${league.clock?.pause_reason === "trade_deadline" ? "Trade deadline · Paused" : formatClock(seconds)}</strong>
     <button data-human-trade-inbox>GM Offers ${state.multiplayer.humanTradeOffers.filter((offer) => offer.direction === "incoming").length}</button>
     <button data-multiplayer-ready>${manager?.ready ? "Ready ✓" : "Ready Up"}</button>`;
   els.multiplayerBar.querySelector("[data-human-trade-inbox]")?.addEventListener("click", openHumanTradeInbox);
   els.multiplayerBar.querySelector("[data-multiplayer-ready]")?.addEventListener("click", async () => {
+    if (!state.multiplayer.manager?.ready && state.home?.save?.current_date === tradeDeadlineDate()
+        && !hasAcknowledgedTradeDeadline(tradeDeadlineDate())) return showTradeDeadlinePrompt();
     try {
       const result = await multiplayerRequest("set_ready", {
         ready: !state.multiplayer.manager?.ready,
@@ -1112,7 +2594,10 @@ function renderMultiplayerBar() {
       state.multiplayer.manager = state.multiplayer.league.managers.find(
         (row) => row.id === state.multiplayer.session.manager_id,
       );
-      if (result.status === "advanced") await refreshHome();
+      if (result.status === "advanced") {
+        await refreshHome();
+        if (result.result?.trade_deadline_checkpoint) showTradeDeadlinePrompt(result.result.trade_deadline_checkpoint);
+      }
       renderMultiplayerBar();
     } catch (error) {
       showToast(error.message || String(error), true);
@@ -1179,19 +2664,37 @@ function applyPhaseRouting() {
   // Seasonal command rooms now live inside the dashboard. Keep the legacy
   // routes callable, but never strand a save on a separate full-page screen.
   const phase = dashboardPhaseKind();
+  if ((!phase || isClipboardPhase(phase)) && ["draft", "playoffs", "freeagents", "freeagency", "staff", "calendar"].includes(state.view)) {
+    state.clipboardRequestedView = state.view;
+    state.view = "dashboard";
+    return;
+  }
   if ((state.view === "draft" && phase === "draft") ||
       (state.view === "playoffs" && phase === "playoffs") ||
       (["freeagents", "freeagency"].includes(state.view) && phase === "free_agency")) state.view = "dashboard";
 }
 
+function requiredClipboardDecision() {
+  if (Number(state.home?.save?.pending_counts?.staff || 0) > 0) return "staff_retention";
+  if (Number(state.home?.save?.pending_counts?.cutdowns || 0) > 0) return "cutdown";
+  return "";
+}
+
+function revealRequiredClipboardDecision() {
+  const kind = requiredClipboardDecision();
+  window.CardBoard?.open(`phase-${kind}-decision`);
+  showToast(kind === "staff_retention" ? "Resolve staff retention before advancing." : "Complete the roster cutdown before advancing.", true);
+}
+
 function dashboardPhaseKind() {
+  const required = requiredClipboardDecision();
+  if (required) return required;
+  if (state.home?.save?.postseason_exit_required) return "playoffs";
   const phase = String(state.home?.save?.phase || "");
   if (phase === "fantasy_draft") return "fantasy_draft";
   if (phase === "play_in" || phase === "playoffs") return "playoffs";
   if (phase === "draft_lottery" || phase === "draft") return "draft";
   if (phase === "re_signing" || phase === "free_agency") return "free_agency";
-  if (Number(state.home?.save?.pending_counts?.staff || 0) > 0) return "staff_retention";
-  if (Number(state.home?.save?.pending_counts?.cutdowns || 0) > 0) return "cutdown";
   return "";
 }
 
@@ -1245,11 +2748,22 @@ function renderDashboardTab(rows) {
     document.body.dataset.dashboardExperience = "unified";
     target.innerHTML = unifiedDashboardMarkup(rows, dash, editable, readonlyClass, phaseKind, viewedTeam);
     wireDashboardOverview(editable);
-    if (!phaseKind && typeof mountDashboardCardBoard === "function") mountDashboardCardBoard(target);
-    if (phaseKind) {
-      wireDashboardPhaseWorkspace(phaseKind);
+    if ((!phaseKind || isClipboardPhase(phaseKind)) && typeof mountDashboardCardBoard === "function") {
+      mountDashboardCardBoard(target);
+      wireRotationResetAllControl(target);
     }
+    wireSeasonOpponentSorting(target);
+    wireSeasonOpponentInjuryTicker(target);
+    if (phaseKind) {
+      wireDashboardPhaseWorkspace(phaseKind, target);
+    }
+    if (!phaseKind && state.data.freeagency) wireFreeAgencyMarket(target);
     if (phaseKind === "fantasy_draft") restoreFantasyBoardScroll();
+    if (state.clipboardRequestedView) {
+      const view = state.clipboardRequestedView;
+      state.clipboardRequestedView = null;
+      openClipboardWindow(view).catch(error => showToast(error.message || String(error), true));
+    }
     if (!phaseKind) {
       startLeagueEventRotator();
       startSummaryLeaderRotator();
@@ -1262,7 +2776,7 @@ function renderDashboardTab(rows) {
 }
 
 function unifiedDashboardMarkup(rows, dash, editable, readonlyClass, phaseKind, viewedTeam) {
-  if (phaseKind) {
+  if (phaseKind && !isClipboardPhase(phaseKind)) {
     return `<div class="unified-phase-dashboard" data-phase="${escapeAttr(phaseKind)}" ${teamBrandStyle(viewedTeam)}>
       ${dashboardPhaseWorkspace(phaseKind)}
       ${phaseKind === 'staff_retention' ? '' : '<button type="button" class="unified-phase-settings" data-dashboard-settings aria-label="Settings" title="Settings">⚙</button>'}
@@ -1274,22 +2788,25 @@ function unifiedDashboardMarkup(rows, dash, editable, readonlyClass, phaseKind, 
 function seasonCommandDashboardMarkup(rows, dash, editable, viewedTeam) {
   const save = state.home?.save || {};
   const logo = teamLogoSrc(viewedTeam);
-  const offerCount = Number(state.data.dashboardOffers?.offers?.length || 0);
-  const legalActions = new Set(dash.legal_actions || []);
-  const tradesOpen = legalActions.has("trades") || legalActions.has("draft_trades");
+  const shortDate = formatDashboardShortDate(save.current_date);
+  const dateLabel = shortDate
+    ? `${shortDate}, ${String(save.current_date).slice(0, 4)}`
+    : formatWrittenDate(save.current_date) || save.current_date || "";
   const disabled = editable ? "" : "disabled";
   return `<div class="season-command-dashboard" ${teamBrandStyle(viewedTeam)}>
     <header class="season-command-header">
       <div class="season-command-club">
         ${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(viewedTeam)} logo" />` : ""}
         <span>${escapeHtml(dashboardTeamName(viewedTeam))}</span>
+        <div class="season-command-date">
+          <time datetime="${escapeAttr(save.current_date || "")}">${escapeHtml(dateLabel)}</time>
+          <span>${escapeHtml(rowLabel(save.phase || "season"))}</span>
+        </div>
         ${viewedTeam !== userTeam() ? `<button type="button" data-dashboard-team-reset>My Team</button>` : ""}
       </div>
-      <div class="season-command-date">
-        <span>${escapeHtml(formatWrittenDate(save.current_date) || save.current_date || "")}</span>
-        <span>${escapeHtml(rowLabel(save.phase || "season"))}</span>
-      </div>
       <div class="season-command-actions">
+        ${save.current_date === tradeDeadlineDate() ? '<button type="button" class="trade-deadline-today ui-command" data-trade-deadline-open>Trade deadline · Today</button>' : ""}
+        <button type="button" data-dashboard-player-finder ${disabled}>Player Finder</button>
         <button type="button" data-dashboard-settings>Settings</button>
       </div>
     </header>
@@ -1297,21 +2814,22 @@ function seasonCommandDashboardMarkup(rows, dash, editable, viewedTeam) {
       <div class="season-diagnostics-row">
         <section class="season-command-panel season-identity-panel">${seasonIdentityCard(rows, dash)}</section>
         <div class="season-signals-panel">${seasonTeamSignalsCard(dash)}</div>
-        <div class="season-radars-panel">${seasonTeamRadarsCard(rows, dash)}</div>
+        <div class="season-radars-panel">${seasonTeamRadarsCard(dash)}</div>
         <section class="season-command-panel season-standings-panel standings-card">${seasonStandingsCard(viewedTeam)}</section>
         <div class="season-matchup-stack">
-          <section class="season-command-panel season-week-panel">${seasonWeekCard(dash, viewedTeam, editable)}</section>
+          <section class="season-command-panel season-week-panel">${seasonWeekCard(dash, viewedTeam)}</section>
           <section class="season-command-panel season-opponent-panel">${seasonOpponentCard(dash, viewedTeam)}</section>
         </div>
       </div>
       <div class="season-operations-row">
         <section class="season-command-panel season-minutes-panel">${seasonMinutesCard(rows, editable)}</section>
+        <section class="season-command-panel season-development-panel">${seasonDevelopmentCard(rows)}</section>
         <div class="season-intelligence-grid">
           <section class="season-command-panel season-efficiency-panel">${seasonEfficiencyCard(dash)}</section>
           <section class="season-command-panel season-prospects-panel">${seasonProspectsCard()}</section>
           <div class="season-intelligence-lower">
             <div class="season-awards-panel">${seasonAwardsCard(editable)}</div>
-            <section class="season-command-panel season-staff-panel">${seasonStaffCard(dash, editable)}</section>
+            <section class="season-command-panel season-staff-panel">${seasonStaffCard(dash)}</section>
           </div>
         </div>
       </div>
@@ -1335,10 +2853,9 @@ function seasonTeamSignalsCard(dash) {
   const ranks = identity.ranks || {};
   const count = Number(identity.league_team_count || identity.team_count || 30);
   const broad = [
-    ["Overall", metrics.overall, ranks.overall],
-    ["Offense", metrics.offense, ranks.offense],
-    ["Defense", metrics.defense, ranks.defense],
-    ["Depth", metrics.depth, ranks.depth],
+    ["Overall", "overall", metrics.overall, ranks.overall],
+    ["Offense", "offense", metrics.offense, ranks.offense],
+    ["Defense", "defense", metrics.defense, ranks.defense],
   ];
   const morale = state.data.dashboardMorale || {};
   const moraleRows = [
@@ -1349,43 +2866,43 @@ function seasonTeamSignalsCard(dash) {
   ];
   const factors = state.data.dashboardTrends?.four_factors || [];
   return [
-    ["Team Signals", broad.map(([label, value, rank]) => seasonIdentityBar(label, value, rank, count)).join("")],
+    ["Team Signals", broad.map(([label, key, value, rank]) => seasonIdentityBar(label, key, value, rank, count)).join("")],
     ["Morale", moraleRows.map(([label, value]) => seasonMoraleBar(label, value)).join("")],
     ["Four Factors", factors.map((factor) => seasonFactorBar(factor)).join("")],
   ].map(([title, body]) => `<section class="season-command-panel season-signal-card">${seasonPanelHeader(title)}<div class="season-identity-signals">${body}</div></section>`).join("");
 }
 
-function seasonTeamRadarsCard(rows, dash) {
+function seasonTeamRadarsCard(dash) {
   const identity = dash.team_identity || {};
   const ranks = identity.ranks || {};
   const count = Number(identity.league_team_count || identity.team_count || 30);
   const offenseAxes = [
-    ["Shooting", "shooting", "spacing"],
-    ["Range", "range", "spacing"],
-    ["Creation", "creation", "creation"],
-    ["Passing", "passing", "creation"],
-    ["Rim pressure", "rim_pressure", "offense"],
-    ["Off. rebounding", "rebounding", "depth"],
+    ["Shooting", "spacing"],
+    ["Range", "spacing"],
+    ["Creation", "creation"],
+    ["Passing", "creation"],
+    ["Rim pressure", "offense"],
+    ["Off. rebounding", "depth"],
   ];
   const defenseAxes = [
-    ["Defense", "defense", "defense"],
-    ["Effort", "def_effort", "defense"],
-    ["Screen nav", "screen_nav", "defense"],
-    ["Rim deterrence", "rim_deterrence", "rim_protection"],
-    ["Rebounding", "rebounding", "depth"],
-    ["Athleticism", "athleticism", "defense"],
+    ["Defense", "defense"],
+    ["Effort", "defense"],
+    ["Screen nav", "defense"],
+    ["Rim deterrence", "rim_protection"],
+    ["Rebounding", "depth"],
+    ["Athleticism", "defense"],
   ];
   return `<div class="season-radars-stack">
-      ${seasonIdentityRadar("Offense", offenseAxes, rows, ranks, count)}
-      ${seasonIdentityRadar("Defense", defenseAxes, rows, ranks, count)}
+      ${seasonIdentityRadar("Offense", offenseAxes, ranks, count)}
+      ${seasonIdentityRadar("Defense", defenseAxes, ranks, count)}
     </div>`;
 }
 
-function seasonIdentityBar(label, value, rank, count) {
+function seasonIdentityBar(label, key, value, rank, count) {
   const numericRank = Number(rank || count);
   const width = clampNumber(((count - numericRank + 1) / Math.max(1, count)) * 100, 3, 100);
-  return `<div class="season-signal-row">
-    <span>${escapeHtml(label)}</span><i><b style="${performanceBarStyle(width)}"></b></i><strong>#${numericRank}/${count}</strong>
+  return `<div class="season-signal-row" data-team-signal-key="${escapeAttr(key)}" title="${Number(value || 0).toFixed(1)} team rating · ranked ${numericRank} of ${count}">
+    <span>${escapeHtml(label)}</span><i><b style="${performanceBarStyle(width)};background-color:${performanceBarColor(width)} !important"></b></i><strong data-team-signal-rank>#${numericRank}/${count}</strong>
   </div>`;
 }
 
@@ -1399,7 +2916,7 @@ function seasonFactorBar(factor) {
   const value = Number(factor.value || 0);
   const average = Number(factor.league_average || 0);
   return `<div class="season-signal-row season-factor-row" title="League average ${average.toFixed(1)}">
-    <span>${escapeHtml(factor.label || "Factor")}</span><i><b style="${performanceBarStyle(score)}"></b><u style="left:50%"></u></i><strong>${value.toFixed(1)}</strong>
+    <span>${escapeHtml(factor.label || "Factor")}</span><i><b style="--fill:${clampNumber(value, 0, 100)}%;--bar-color:${performanceBarColor(score)}"></b><u style="left:${clampNumber(average, 0, 100)}%"></u></i><strong>${value.toFixed(1)}</strong>
   </div>`;
 }
 
@@ -1426,8 +2943,12 @@ function performanceBarStyle(value) {
 }
 
 function spatialEfficiencyColor(value) {
-  const delta = Number(value || 0);
-  return delta < -8 ? "#bd4b58" : delta < -3 ? "#db9199" : delta <= 3 ? "#a8b3bd" : delta <= 8 ? "#71a8d4" : "#347deb";
+  const delta = Number.isFinite(Number(value)) ? Math.max(-8, Math.min(8, Number(value))) : 0;
+  const stops = [[-8,[189,75,88]],[-3,[219,145,153]],[0,[168,179,189]],[3,[113,168,212]],[8,[52,125,235]]];
+  const index = Math.max(1, stops.findIndex(([point]) => delta <= point));
+  const [low, a] = stops[index - 1], [high, b] = stops[index];
+  const fraction = (delta - low) / (high - low);
+  return `#${a.map((channel, i) => Math.round(channel + (b[i] - channel) * fraction).toString(16).padStart(2, "0")).join("")}`;
 }
 
 function spatialHexPoints(centerX, centerY, radius) {
@@ -1437,141 +2958,175 @@ function spatialHexPoints(centerX, centerY, radius) {
   }).join(" ");
 }
 
-function spatialHexCells(profile, side) {
+function spatialHexRadius(density, leagueMeanDensity) {
+  const ratio = Math.max(0, Number(density) || 0) / Math.max(Number(leagueMeanDensity) || 0, 0.000025);
+  // Hex area, rather than its radius, is proportional to relative density.
+  return Math.max(1.8, Math.min(12, 7 * Math.sqrt(ratio)));
+}
+
+function spatialHeatmapRegions(profile, side) {
   const chart = profile?.shot_chart;
-  if (!chart?.cells?.length) return "";
-  const regions = new Map(chart.regions.map(region => [Number(region.id), region]));
+  if (!chart?.cells?.length || !chart.regions?.length || chart.basis === "unavailable") return "";
+  const cellsByRegion = new Map(chart.regions.map(region => [Number(region.id), []]));
   const leagueMeanDensity = chart.cells.reduce((total, cell) => total + Number(cell[5]), 0) / chart.cells.length;
-  return chart.cells.map(([localX, y, regionId, offenseDensity, defenseDensity, leagueDensity]) => {
-    const region = regions.get(Number(regionId));
-    if (!region) return "";
-    const density = Number(side === "offense" ? offenseDensity : defenseDensity);
-    if (density < 0.000025) return "";
-    const ratio = density / Math.max(leagueMeanDensity, 0.000025);
-    const localRatio = density / Math.max(Number(leagueDensity), 0.000025);
-    // Quantized area encodes relative attempts. Every mark remains a regular
-    // hexagon on the same lattice, with no per-cell random size or color.
-    const radius = ratio < 0.25 ? 2.5 : ratio < 0.6 ? 4.5 : ratio < 1.3 ? 7 : ratio < 2.2 ? 10 : 12;
-    const delta = Number(side === "offense" ? region.delta_pp : region.suppression_delta_pp);
-    const displayX = side === "defense" ? 940 - localX : localX;
+  chart.cells.forEach(cell => cellsByRegion.get(Number(cell[2]))?.push(cell));
+  const densityIndex = side === "offense" ? 3 : 4;
+  return chart.regions.map(region => {
+    const cells = cellsByRegion.get(Number(region.id)) || [];
+    if (!cells.length) return "";
+    const teamDensity = cells.reduce((total, cell) => total + Number(cell[densityIndex]), 0);
+    const leagueDensity = cells.reduce((total, cell) => total + Number(cell[5]), 0);
+    const meanCellDensity = teamDensity / cells.length;
+    const ratio = meanCellDensity / Math.max(leagueMeanDensity, 0.000025);
+    const localRatio = teamDensity / Math.max(leagueDensity, 0.000025);
+    const rawDelta = side === "offense" ? region.delta_pp : region.suppression_delta_pp;
+    const delta = rawDelta == null ? null : Number(rawDelta);
+    const known = delta != null && Number.isFinite(delta);
+    const color = known ? spatialEfficiencyColor(delta) : "#d4dce2";
+    const hexes = cells.map(([x, y, , offenseDensity, defenseDensity]) => {
+      const density = Number(side === "offense" ? offenseDensity : defenseDensity);
+      if (density < 0.000025) return "";
+      const ratio = density / Math.max(leagueMeanDensity, 0.000025);
+      const radius = spatialHexRadius(density, leagueMeanDensity);
+      return `<polygon class="spatial-court-hex" data-side="${side}" data-region="${Number(region.id)}" data-density-ratio="${ratio.toFixed(3)}" points="${spatialHexPoints(x, y, radius)}" fill="${color}" pointer-events="none"/>`;
+    }).join("");
     const value = side === "offense" && region.fg_pct != null
       ? `Projected FG ${Number(region.fg_pct).toFixed(1)}%, league ${Number(region.league_fg_pct).toFixed(1)}%`
       : side === "defense" ? "Modeled defensive suppression" : "Reference unavailable";
-    const title = `${region.label}: ${value}; ${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pp vs league; ${ratio.toFixed(2)}x league mean cell density; ${localRatio.toFixed(2)}x estimated league density at this location`;
-    return `<polygon class="spatial-court-hex" data-side="${side}" data-region="${regionId}" data-density-ratio="${ratio.toFixed(3)}" points="${spatialHexPoints(displayX, y, radius)}" fill="${spatialEfficiencyColor(delta)}"><title>${escapeHtml(title)}</title></polygon>`;
+    const comparison = known ? `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pp vs league` : "Comparison unavailable";
+    const title = `${region.label}: ${value}; ${comparison}; ${ratio.toFixed(2)}x league mean cell density; ${localRatio.toFixed(2)}x estimated league density in this region`;
+    const hit = spatialRegionGeometry(cells);
+    return `<g class="spatial-court-hex-region" data-region="${Number(region.id)}">
+      ${hexes}
+      <path class="spatial-region-hit" d="${hit}" fill="transparent" fill-rule="nonzero" pointer-events="all" tabindex="0" role="img" aria-label="${escapeAttr(title)}"><title>${escapeHtml(title)}</title></path>
+    </g>`;
   }).join("");
+}
+
+function spatialRegionGeometry(cells) {
+  const hit = [];
+  cells.forEach(([x, y]) => {
+    const points = spatialHexPoints(x, y, 12.5).split(" ");
+    hit.push(`M${points[0]}L${points.slice(1).join("L")}Z`);
+  });
+  return hit.join("");
+}
+
+function spatialHeatmapLegend(label, side) {
+  const meaning = side === "offense" ? "Projected FG% minus league FG%" : "Modeled reduction in opponent FG% versus league; blue is better defense, not observed opponent shooting";
+  const detail = `${meaning}. Fixed continuous color scale: -8 to +8 percentage points, neutral at zero; endpoints saturate. Hex area: attempt/contest density relative to league mean cell density, capped at 2.94x. Offense volume follows observed current-season 3PA/FGA when the sample is reliable; efficiency remains projected. Defense volume remains modeled.`;
+  return `<div class="spatial-legend" title="${escapeAttr(detail)}"><span>${label}</span><i class="spatial-discrete-key spatial-numeric-key" role="img" aria-label="${escapeAttr(detail)}">${[-8,-3,0,3,8].map(delta => `<span class="spatial-key-stop"><b style="background:${spatialEfficiencyColor(delta)}"></b><em>${delta > 0 ? "+" : ""}${delta}</em></span>`).join("")}</i></div>`;
 }
 
 function spatialHeatmapMarkup(profile, options = {}) {
   if (!profile?.zones?.length) return `<div class="spatial-heatmap-empty">Spatial profile unavailable</div>`;
+  if (!profile.shot_chart?.cells?.length || profile.shot_chart.basis === "unavailable") return `<div class="spatial-heatmap-empty" role="status">Shot reference unavailable</div>`;
   const seed = String(profile.seed || profile.entity_id || "spatial").replace(/[^a-zA-Z0-9_-]/g, "");
-  const offenseHexes = spatialHexCells(profile, "offense");
-  const defenseHexes = spatialHexCells(profile, "defense");
+  const offenseRegions = spatialHeatmapRegions(profile, "offense");
+  const defenseRegions = spatialHeatmapRegions(profile, "defense");
+  const legends = `<div class="spatial-legends">${spatialHeatmapLegend("Projected FG (pp)", "offense")}${spatialHeatmapLegend("Suppression (pp)", "defense")}</div>`;
   return `<div class="spatial-heatmap${options.compact ? " compact" : ""}">
     <div class="spatial-court-head"><h4>Offense</h4><h4>Defense</h4></div>
-    <svg class="spatial-court" viewBox="0 0 940 500" role="img" aria-label="Projected shooting efficiency and modeled defensive suppression versus league average">
-      <defs><clipPath id="spatial-court-clip-${seed}"><rect x="2" y="2" width="936" height="496"/></clipPath></defs>
-      <rect class="spatial-court-floor" x="2" y="2" width="936" height="496"/>
-      <g clip-path="url(#spatial-court-clip-${seed})">${offenseHexes}${defenseHexes}</g>
+    <div class="spatial-half-courts">${["offense", "defense"].map(side => `<svg class="spatial-court" viewBox="0 0 500 470" role="img" aria-label="${side === "offense" ? "Projected shooting efficiency" : "Modeled defensive suppression"} versus league average">
+      <defs><clipPath id="spatial-court-clip-${seed}-${side}"><rect x="2" y="2" width="468" height="496"/></clipPath></defs>
+      <g transform="matrix(0 -1 1 0 0 470)">
+      <rect class="spatial-court-floor" x="2" y="2" width="468" height="496"/>
+      <g clip-path="url(#spatial-court-clip-${seed}-${side})">${side === "offense" ? offenseRegions : defenseRegions}</g>
       <g class="spatial-court-markings">
-        <rect class="spatial-court-line" x="2" y="2" width="936" height="496"/>
-        <line class="spatial-court-line" x1="470" y1="2" x2="470" y2="498"/><circle class="spatial-court-line" cx="470" cy="250" r="60"/>
-        <rect class="spatial-court-line" x="2" y="170" width="188" height="160"/><rect class="spatial-court-line" x="750" y="170" width="188" height="160"/>
+        <rect class="spatial-court-line" x="2" y="2" width="468" height="496"/>
+        <path class="spatial-court-line" d="M470 190 A60 60 0 0 0 470 310"/>
+        <rect class="spatial-court-line" x="2" y="170" width="188" height="160"/>
         <path class="spatial-court-line" d="M190 190 A60 60 0 0 1 190 310"/><path class="spatial-court-line dashed" d="M190 190 A60 60 0 0 0 190 310"/>
-        <path class="spatial-court-line" d="M750 190 A60 60 0 0 0 750 310"/><path class="spatial-court-line dashed" d="M750 190 A60 60 0 0 1 750 310"/>
         <line class="spatial-court-line" x1="40" y1="220" x2="40" y2="280"/><circle class="spatial-court-rim" cx="52.5" cy="250" r="7.5"/>
-        <line class="spatial-court-line" x1="900" y1="220" x2="900" y2="280"/><circle class="spatial-court-rim" cx="887.5" cy="250" r="7.5"/>
-        <path class="spatial-court-line" d="M52.5 210 A40 40 0 0 1 52.5 290"/><path class="spatial-court-line" d="M887.5 210 A40 40 0 0 0 887.5 290"/>
+        <path class="spatial-court-line" d="M52.5 210 A40 40 0 0 1 52.5 290"/>
         <path class="spatial-court-line three-point" d="M2 30 H142 A237.5 237.5 0 0 1 142 470 H2"/>
-        <path class="spatial-court-line three-point" d="M938 30 H798 A237.5 237.5 0 0 0 798 470 H938"/>
       </g>
-    </svg>
-    <div class="spatial-legends">${["Projected FG", "Suppression"].map(label => `<div class="spatial-legend" title="${label} versus league average: below -8, -8 to -3, -3 to +3, +3 to +8, above +8 percentage points. Hex size: attempt/contest share relative to league mean cell density."><span>${label} −</span><i class="spatial-discrete-key">${[-10, -5, 0, 5, 10].map(delta => `<b style="background:${spatialEfficiencyColor(delta)}"></b>`).join("")}</i><span>+</span></div>`).join("")}</div>
+      </g>
+    </svg>`).join("")}</div>
+    ${legends}
   </div>`;
 }
 
-function seasonIdentityRadar(title, axes, rows, ranks, count) {
-  const current = seasonRadarProfile(rows, axes, false);
-  const healthy = seasonRadarProfile(rows, axes, true);
-  const width = 250;
-  const height = 174;
-  const cx = 125;
-  const cy = 86;
-  const radius = 54;
+function seasonIdentityRadar(title, axes, ranks, count) {
+  const current = axes.map(([_label, rankKey]) => seasonRadarRankScore(ranks[rankKey], count));
+  const width = 360;
+  const height = 280;
+  const cx = 180;
+  const cy = 140;
+  const radius = 74;
   const point = (index, value, extra = 0) => {
     const angle = -Math.PI / 2 + (index * Math.PI * 2) / axes.length;
-    const distance = radius * clampNumber(Number(value || 0) / 99, 0.08, 1) + extra;
+    const distance = radius * clampNumber(Number(value || 0) / 100, 0, 1) + extra;
     return [cx + Math.cos(angle) * distance, cy + Math.sin(angle) * distance];
   };
   const polygon = (values) => values.map((value, index) => point(index, value).map((part) => part.toFixed(1)).join(",")).join(" ");
-  const ring = (level) => axes.map((_axis, index) => point(index, 99 * level).map((part) => part.toFixed(1)).join(",")).join(" ");
+  const ring = (level) => axes.map((_axis, index) => point(index, 100 * level).map((part) => part.toFixed(1)).join(",")).join(" ");
   return `<div class="season-command-panel season-radar-card">
-    ${seasonPanelHeader(title)}
-    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeAttr(title)}">
+    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeAttr(title)} league rank profile">
       ${[0.25, 0.5, 0.75, 1].map((level) => `<polygon class="season-radar-grid" points="${ring(level)}"></polygon>`).join("")}
       ${axes.map((_axis, index) => { const [x, y] = point(index, 99); return `<line class="season-radar-axis" x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"></line>`; }).join("")}
-      <polygon class="season-radar-healthy" points="${polygon(healthy)}"></polygon>
-      <polygon class="season-radar-current" points="${polygon(current)}"></polygon>
-      ${axes.map(([label, _ratingKey, rankKey], index) => {
-        const [px, y] = point(index, 99, 17);
-        const x = Math.abs(px - cx) < 5 ? cx : px < cx ? 40 : width - 40;
+      <polygon class="season-radar-rank" points="${polygon(current)}"></polygon>
+      ${axes.map(([label, rankKey], index) => {
+        const [px, y] = point(index, 100, 34);
+        const x = Math.abs(px - cx) < 5 ? cx : px < cx ? 66 : width - 66;
         const rank = Number(ranks[rankKey] || count);
-        return `<text x="${x.toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="middle"><tspan x="${x.toFixed(1)}">${escapeHtml(label)}</tspan><tspan x="${x.toFixed(1)}" dy="10">#${rank}/${count}</tspan></text>`;
+        return `<text x="${x.toFixed(1)}" y="${(y - 6).toFixed(1)}" text-anchor="middle"><tspan x="${x.toFixed(1)}">${escapeHtml(label)}</tspan><tspan x="${x.toFixed(1)}" dy="16">#${rank}/${count}</tspan></text>`;
       }).join("")}
     </svg>
-    <div class="season-radar-legend"><span class="current">Current rotation</span><span class="healthy">Full-health auto</span></div>
   </div>`;
 }
 
-function seasonRadarProfile(rows, axes, includeInjured) {
-  const eligible = rows.filter((row) => row?.id && (includeInjured || !isPlayerInjured(row.health)));
-  return axes.map(([_label, key]) => {
-    let total = 0;
-    let weightTotal = 0;
-    for (const row of eligible) {
-      let value = Number(rating(row, key));
-      if (!Number.isFinite(value) && key === "range") value = Number(rating(row, "spacing"));
-      if (!Number.isFinite(value) && ["defensive_effort", "scheme_iq", "screen_navigation"].includes(key)) value = Number(rating(row, "defense"));
-      if (!Number.isFinite(value)) continue;
-      const planned = Number(row.rotation_target_minutes ?? row.coach_minutes_projection ?? row.minutes_projection ?? mpgFromRow(row) ?? 0);
-      const talentFloor = clampNumber((Number(rating(row, "overall") || 45) - 35) * 0.6, 4, 28);
-      const weight = Math.max(planned, includeInjured ? talentFloor : 1);
-      total += value * weight;
-      weightTotal += weight;
-    }
-    return weightTotal ? clampNumber(total / weightTotal, 8, 99) : 50;
-  });
+function seasonRadarRankScore(rank, count) {
+  const leagueSize = Math.max(1, Number(count) || 30);
+  const position = clampNumber(Number(rank) || leagueSize, 1, leagueSize);
+  return ((leagueSize - position + 0.5) / leagueSize) * 100;
 }
 
-function seasonStandingsCard(viewedTeam) {
+function seasonStandingsCard(viewedTeam, expanded = false) {
   const standings = standingsRows(state.data.dashboardStandings);
   const viewedRow = standings.find((row) => teamLabel(row.team) === viewedTeam);
   const conference = viewedRow?.team?.conference || "East";
-  const rows = standings.filter((row) => row.team?.conference === conference).slice(0, 10);
-  const leader = rows[0] || {};
-  return `${seasonPanelHeader("Standings")}
-    <div class="season-standings-table">
+  const conferences = expanded ? ["West", "East"] : [conference];
+  const tableMarkup = (rows, isExpanded) => {
+    const leader = rows[0] || {};
+    const items = rows.map((row, index) => {
+      const team = teamLabel(row.team);
+      const logo = teamLogoSrc(team);
+      const gamesBack = ((Number(leader.wins || 0) - Number(row.wins || 0)) + (Number(row.losses || 0) - Number(leader.losses || 0))) / 2;
+      const gamesBackLabel = gamesBack <= 0 ? "—" : Number.isInteger(gamesBack) ? String(gamesBack) : gamesBack.toFixed(1).replace(/^0/, "");
+      return `<button type="button" class="season-standing-row${team === viewedTeam ? " active" : ""}${index === 5 ? " playoff-line" : ""}${index === 9 ? " play-in-line" : ""}" data-dashboard-team-jump="${escapeAttr(team)}">
+        <span>${index + 1}</span><span class="season-standing-team-cell" data-standing-team-id="${escapeAttr(row.team?.id || row.team_id || "")}">${logo ? `<img src="${escapeAttr(logo)}" alt="" />` : ""}<span class="season-standing-team-name">${escapeHtml(team)}</span><i class="season-row-motion" aria-hidden="true" hidden></i></span><span>${Number(row.wins || 0)}-${Number(row.losses || 0)}</span><span>${escapeHtml(winPct(row.win_pct))}</span><span>${escapeHtml(gamesBackLabel)}</span>
+      </button>`;
+    }).join("");
+    return `<div class="season-standings-table${isExpanded ? " season-standings-table-expanded" : ""}"${isExpanded ? ` style="--standings-count:${Math.max(1, rows.length)}"` : ""}>
       <div class="season-standings-head"><span>#</span><span>Team</span><span>W-L</span><span>Win%</span><span>GB</span></div>
-      ${rows.map((row, index) => {
-        const team = teamLabel(row.team);
-        const logo = teamLogoSrc(team);
-        const gamesBack = ((Number(leader.wins || 0) - Number(row.wins || 0)) + (Number(row.losses || 0) - Number(leader.losses || 0))) / 2;
-        const gamesBackLabel = gamesBack <= 0 ? "—" : Number.isInteger(gamesBack) ? String(gamesBack) : gamesBack.toFixed(1).replace(/^0/, "");
-        return `<button type="button" class="season-standing-row${team === viewedTeam ? " active" : ""}${index === 5 ? " playoff-line" : ""}" data-dashboard-team-jump="${escapeAttr(team)}">
-          <span>${index + 1}</span><span>${logo ? `<img src="${escapeAttr(logo)}" alt="" />` : ""}${escapeHtml(team)}</span><span>${Number(row.wins || 0)}-${Number(row.losses || 0)}</span><span>${escapeHtml(winPct(row.win_pct))}</span><span>${escapeHtml(gamesBackLabel)}</span>
-        </button>`;
-      }).join("") || `<div class="empty">No standings yet.</div>`}
+      ${items || `<div class="empty">No standings yet.</div>`}
     </div>`;
+  };
+  if (!expanded) return tableMarkup(standings.filter((row) => row.team?.conference === conference).slice(0, 10), false);
+  return `<div class="season-standings-expanded">${conferences.map((name) => {
+    const rows = standings.filter((row) => row.team?.conference === name).slice(0, 15);
+    return `<section class="season-standings-conference"><h3>${name === "East" ? "Eastern" : "Western"} Conference</h3>${tableMarkup(rows, true)}</section>`;
+  }).join("")}</div>`;
 }
 
-function seasonWeekCard(dash, viewedTeam, editable) {
+function setStandingsCardExpanded(expanded, card) {
+  const panel = card || els.content.querySelector(".season-standings-panel");
+  if (!panel) return false;
+  const viewedTeam = teamLabel(state.data.dashboard?.team || state.dashboardTeam || userTeam());
+  panel.classList.toggle("is-expanded", Boolean(expanded));
+  panel.innerHTML = seasonStandingsCard(viewedTeam, Boolean(expanded));
+  wireDashboardTeamJumps(panel);
+  return true;
+}
+
+function seasonWeekCard(dash, viewedTeam) {
   const currentText = String(state.home?.save?.current_date || "").slice(0, 10);
-  const current = new Date(`${currentText || "2026-10-01"}T00:00:00Z`);
-  const monday = new Date(current);
-  monday.setUTCDate(current.getUTCDate() - ((current.getUTCDay() + 6) % 7));
-  const calendarGames = (state.data.dashboardCalendar?.games || []).filter((game) => {
-    const home = teamLabel(game.home_team || game.home);
-    const away = teamLabel(game.away_team || game.away);
+  const {from_date} = dashboardWeekRange(currentText);
+  const monday = new Date(`${from_date}T00:00:00Z`);
+  const calendarGames = (state.data.dashboardCalendar?.games || state.data.dashboardCalendar?.calendar || []).filter((game) => {
+    const home = seasonGameTeamLabel(game, "home");
+    const away = seasonGameTeamLabel(game, "away");
     return home === viewedTeam || away === viewedTeam;
   });
   const games = [...(dash.last_games || []), ...(dash.next_games || []), ...calendarGames];
@@ -1590,27 +3145,68 @@ function seasonWeekCard(dash, viewedTeam, editable) {
     const opponent = game ? seasonGameOpponent(game, viewedTeam) : "";
     const logo = opponent ? teamLogoSrc(opponent) : "";
     const score = game ? seasonGameScore(game, viewedTeam) : "";
-    return `<div class="season-week-day${iso === currentText ? " today" : ""}">
+    return `<div class="season-week-day${iso === currentText ? " today" : ""}${iso === tradeDeadlineDate() ? " trade-deadline-day" : ""}">
       <span>${date.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" })} ${date.getUTCDate()}</span>
       ${game?.__completed && (game.game_id || game.id) ? `<button type="button" class="season-week-node" data-box-score="${escapeAttr(game.game_id || game.id)}" aria-label="Box score: ${escapeAttr(opponent)} ${escapeAttr(iso)}"><img src="${escapeAttr(logo)}" alt="${escapeAttr(opponent)}" /></button>` : `<div class="season-week-node">${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(opponent)}" />` : "<i></i>"}</div>`}
       ${score ? `<em>${escapeHtml(score)}</em>` : `<em aria-hidden="true"></em>`}
-      ${iso === currentText ? `<small>Today</small>` : `<small aria-hidden="true"></small>`}
+      ${iso === tradeDeadlineDate() ? `<small class="trade-deadline-day-label">Trade deadline${iso === currentText ? " · Today" : ""}</small>` : iso === currentText ? `<small>Today</small>` : `<small aria-hidden="true"></small>`}
     </div>`;
   }).join("");
-  return `<div class="season-week-days" aria-label="This week">${days}</div>
-    <div class="season-sim-actions">
-      <button type="button" data-dashboard-view="calendar">Full calendar</button>
-      <button type="button" data-advance="next-event" ${editable ? "" : "disabled"}>Next Event</button>
-      <button type="button" data-advance="week" ${editable ? "" : "disabled"}>Sim Week</button>
-      <button type="button" data-advance="month" ${editable ? "" : "disabled"}>Sim Month</button>
-    </div>`;
+  return `<div class="season-week-days" aria-label="This week">${days}</div>`;
+}
+
+function wireWeekCardBoxScores(panel) {
+  panel?.querySelectorAll("[data-box-score]").forEach((button) => {
+    if (button.dataset.weekBoxScoreWired) return;
+    button.dataset.weekBoxScoreWired = "true";
+    button.addEventListener("click", () => openBoxScore(button.dataset.boxScore));
+  });
+}
+
+async function setWeekCardExpanded(expanded, card) {
+  const panel = card || els.content.querySelector(".season-week-panel");
+  if (!panel) return false;
+  const dash = state.data.dashboard || {};
+  const viewedTeam = teamLabel(dash.team || state.dashboardTeam || userTeam());
+  panel.classList.toggle("is-expanded", Boolean(expanded));
+  if (expanded) {
+    const month = state.calendarMonth || String(state.home?.save?.current_date || "").slice(0, 7);
+    const monthStart = `${month}-01`;
+    const monthEnd = monthEndDate(monthStart);
+    const calendar = state.data.dashboardCalendar || {};
+    if (month && (!calendar.from_date || !calendar.through_date || calendar.from_date > monthStart || calendar.through_date < monthEnd)) {
+      try {
+        await loadDashboardCalendar(viewedTeam);
+      } catch (error) {
+        showToast(error.message || String(error), true);
+      }
+    }
+    if (!panel.isConnected || !panel.classList.contains("is-expanded")) return false;
+    renderCalendar(panel, {team:viewedTeam,dataKey:"dashboardCalendar"});
+    GameInterface.enhance(panel);
+  } else {
+    panel.innerHTML = seasonWeekCard(dash, viewedTeam);
+    wireWeekCardBoxScores(panel);
+  }
+  return true;
 }
 
 function seasonGameOpponent(game, team) {
-  if (game.opponent_team_id) return teamLabel(game.opponent_team_id);
-  const home = teamLabel(game.home || game.home_team);
-  const away = teamLabel(game.away || game.away_team);
+  if (game.opponent_team_id) {
+    const opponent = state.teams.find((row) => String(row.id || row.team_id || "") === String(game.opponent_team_id));
+    return teamLabel(opponent || game.opponent_team_id);
+  }
+  const home = seasonGameTeamLabel(game, "home");
+  const away = seasonGameTeamLabel(game, "away");
   return home === team ? away : home;
+}
+
+function seasonGameTeamLabel(game, side) {
+  const candidate = game?.[`${side}_team`] ?? game?.[side] ?? game?.[`${side}_team_id`];
+  if (!candidate) return "";
+  const id = typeof candidate === "object" ? candidate.id || candidate.team_id : candidate;
+  const resolved = state.teams.find((team) => String(team.id || team.team_id || "") === String(id || ""));
+  return teamLabel(resolved || candidate);
 }
 
 function seasonGameScore(game, team) {
@@ -1618,7 +3214,7 @@ function seasonGameScore(game, team) {
   const teamPoints = Number(game.points ?? game.team_points);
   const opponentPoints = Number(game.opponent_points);
   if (Number.isFinite(teamPoints) && Number.isFinite(opponentPoints)) return `${result || (teamPoints > opponentPoints ? "W" : "L")} ${teamPoints}–${opponentPoints}`;
-  const home = teamLabel(game.home || game.home_team);
+  const home = seasonGameTeamLabel(game, "home");
   const homeScore = Number(game.home_score ?? game.home_points);
   const awayScore = Number(game.away_score ?? game.away_points);
   if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore)) return "";
@@ -1647,29 +3243,245 @@ function seasonOpponentCard(dash, viewedTeam) {
   const lastTenWins = lastTen.filter((item) => String(item.result || "").toUpperCase() === "W").length;
   const identity = opponent.team_identity || {};
   const rankings = identity.ranks || {};
-  const leaders = [...(opponent.rotation || [])]
+  const selectedLeaders = [...(opponent.rotation || [])]
     .sort((left, right) => Number(right.minutes_projection || 0) - Number(left.minutes_projection || 0))
     .slice(0, 6);
+  const leaders = seasonOpponentOrderedRows(selectedLeaders, state.dashboardOpponentSort);
   const logo = teamLogoSrc(opponentTeam);
   const homeAway = game.is_home === true ? "Home" : game.is_home === false ? "Away" : "";
   const injuries = (opponent.rotation || [])
     .filter((row) => isPlayerInjured(row.health))
-    .map((row) => `${row.name} — ${row.health?.label || row.health?.status || "out"}`);
+    .map((row) => {
+      const remaining = injuryGamesRemaining(row);
+      const fallback = String(row.health?.label || row.health?.status || "out")
+        .replace(/\binjured\b/ig, "")
+        .replace(/~\s*(\d+)\s*g\b/ig, "$1 G")
+        .replace(/^\s*[—–·-]+|[—–·-]+\s*$/g, "")
+        .trim();
+      return [row.name || "Unknown", remaining === null ? fallback : `${remaining} G`].filter(Boolean).join(" — ");
+    });
   const headerRatings = [
     ["OVR", rankings.overall], ["OFF", rankings.offense], ["DEF", rankings.defense],
   ];
   return `<header class="season-panel-header season-opponent-header">
-      <div class="season-opponent-title"><h2>Next Opponent</h2>${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(opponentTeam)} logo" />` : ""}<span>${escapeHtml(opponentTeam || "—")}</span><span>${Number(record.wins || 0)}-${Number(record.losses || 0)}</span><span>L10 ${lastTenWins}-${Math.max(0, lastTen.length - lastTenWins)}</span>${headerRatings.map(([label, rank]) => {
+      <div class="season-opponent-title">${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(opponentTeam)} logo" />` : ""}<span>${escapeHtml(opponentTeam || "—")}</span><span>${Number(record.wins || 0)}-${Number(record.losses || 0)}</span><span>L10 ${lastTenWins}-${Math.max(0, lastTen.length - lastTenWins)}</span>${headerRatings.map(([label, rank]) => {
         const score = clampNumber(((30 - Number(rank || 30) + 1) / 30) * 100, 3, 100);
-        return `<span class="season-opponent-header-rating"><i><b style="${performanceBarStyle(score)}"></b></i>#${Number(rank || 30)} ${label}</span>`;
+        return `<span class="season-opponent-header-rating">#${Number(rank || 30)} ${label}<i><b style="${performanceBarStyle(score)}"></b></i></span>`;
       }).join("")}</div>
       <span class="season-opponent-date">${escapeHtml(formatDashboardShortDate(game.date) || game.date || "")}${homeAway ? ` · ${homeAway}` : ""}</span>
     </header>
-    <div class="season-opponent-table">
-      <div class="season-opponent-head"><span>Player</span><span>OVR</span><span>OFF</span><span>DEF</span><span>PTS</span><span>REB</span><span>AST</span></div>
-      ${leaders.map((row, index) => `<div class="season-opponent-row${isPlayerInjured(row.health) ? " injured" : ""}"><span>${index + 1}. ${escapeHtml(row.name)}</span>${seasonMiniRating(rating(row, "overall"))}${seasonMiniRating(rating(row, "offense"))}${seasonMiniRating(rating(row, "defense"))}${["points", "rebounds", "assists"].map((key) => `<span>${escapeHtml(statNumber(row, key))}</span>`).join("")}</div>`).join("") || `<div class="empty">Opponent rotation unavailable.</div>`}
+    <div class="season-opponent-table" role="table" aria-label="Next Opponent rotation">
+      <span class="season-opponent-sort-band" aria-hidden="true"></span>
+      <div class="season-opponent-head" role="row">${[
+        ["player", "Player"], ["overall", "OVR"], ["offense", "OFF"], ["defense", "DEF"],
+        ["points", "PTS"], ["rebounds", "REB"], ["assists", "AST"],
+      ].map(([key, label]) => seasonOpponentSortHeader(key, label)).join("")}</div>
+      ${leaders.map(({ row, originalIndex }, displayIndex) => {
+        const playerName = row.name || "Unknown";
+        const playerMarkup = playerNameWithInjuryMarkup(row, `${displayIndex + 1}. ${playerName}`)
+          .replace('class="player-name-text"', 'class="player-name-text" data-opponent-player-text');
+        return `<div class="season-opponent-row${isPlayerInjured(row.health) ? " injured" : ""}" role="row" data-opponent-index="${originalIndex}"${seasonOpponentSortData(row)}><span class="season-opponent-player-cell" role="rowheader" data-opponent-column="player"><button type="button" class="season-opponent-player-link" data-dashboard-player-card="${escapeAttr(row.id || row.player_id || "")}" aria-label="Open ${escapeAttr(playerName)} player card">${playerMarkup}</button></span>${seasonOpponentRatingCell(rating(row, "overall"), "overall")}${seasonOpponentRatingCell(rating(row, "offense"), "offense")}${seasonOpponentRatingCell(rating(row, "defense"), "defense")}${["points", "rebounds", "assists"].map((key) => `<span role="cell" data-opponent-column="${key}">${escapeHtml(statNumber(row, key))}</span>`).join("")}</div>`;
+      }).join("") || `<div class="empty">Opponent rotation unavailable.</div>`}
     </div>
-    <div class="season-opponent-injuries"><span>Current injuries:</span><div>${escapeHtml(injuries.join(" · ") || "No active injuries")}</div></div>`;
+    <div class="season-opponent-injuries"><span>Current injuries:</span><div class="season-opponent-injury-ticker" data-injury-ticker title="${escapeAttr(injuries.join(" · ") || "No active injuries")}"><div class="season-opponent-injury-track"><span data-injury-ticker-text>${escapeHtml(injuries.join(" · ") || "No active injuries")}</span><span data-injury-ticker-copy aria-hidden="true"></span></div></div></div>`;
+}
+
+const SEASON_OPPONENT_SORT_KEYS = new Set(["player", "overall", "offense", "defense", "points", "rebounds", "assists"]);
+
+function seasonOpponentSortHeader(key, label) {
+  const active = state.dashboardOpponentSort?.key === key;
+  const direction = active ? state.dashboardOpponentSort.direction : "none";
+  return `<span role="columnheader" aria-sort="${direction}" data-opponent-column="${key}"${active ? " data-opponent-sorted" : ""}><button type="button" class="season-opponent-sort-button" data-opponent-sort="${key}">${label}</button></span>`;
+}
+
+function seasonOpponentRatingCell(value, key) {
+  const score = clampNumber(Number(value || 0), 0, 99);
+  return `<span class="season-mini-rating" role="cell" data-opponent-column="${key}"><em>${score.toFixed(0)}</em><i><b style="${performanceBarStyle(score)}"></b></i></span>`;
+}
+
+function seasonOpponentSortData(row) {
+  const displayedRating = (key) => {
+    const score = clampNumber(Number(rating(row, key) || 0), 0, 99);
+    return score.toFixed(0);
+  };
+  const attributes = {
+    player: row.name || "Unknown",
+    overall: displayedRating("overall"),
+    offense: displayedRating("offense"),
+    defense: displayedRating("defense"),
+    points: statNumber(row, "points"),
+    rebounds: statNumber(row, "rebounds"),
+    assists: statNumber(row, "assists"),
+  };
+  return Object.entries(attributes).map(([key, value]) => ` data-sort-${key}="${escapeAttr(value)}"`).join("");
+}
+
+function seasonOpponentOrderedRows(rows, sortState) {
+  const stateToUse = SEASON_OPPONENT_SORT_KEYS.has(sortState?.key) && ["asc", "desc"].includes(sortState?.direction)
+    ? sortState
+    : { key: "overall", direction: "desc" };
+  return rows.map((row, originalIndex) => ({ row, originalIndex })).sort((left, right) => {
+    const leftValue = seasonOpponentSortValue(left.row, stateToUse.key);
+    const rightValue = seasonOpponentSortValue(right.row, stateToUse.key);
+    if (leftValue.missing !== rightValue.missing) return leftValue.missing ? 1 : -1;
+    let comparison = 0;
+    if (leftValue.missing) return left.originalIndex - right.originalIndex;
+    if (leftValue.numeric && rightValue.numeric) {
+      comparison = leftValue.value - rightValue.value;
+    } else {
+      comparison = leftValue.value < rightValue.value ? -1 : leftValue.value > rightValue.value ? 1 : 0;
+    }
+    if (comparison && stateToUse.direction === "desc") comparison *= -1;
+    return comparison || left.originalIndex - right.originalIndex;
+  });
+}
+
+function seasonOpponentSortValue(row, key) {
+  if (key === "player") {
+    const name = String(row.name || "Unknown").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    return { value: name, numeric: false, missing: !name };
+  }
+  const raw = key === "overall" ? rating(row, "overall")
+    : key === "offense" ? rating(row, "offense")
+      : key === "defense" ? rating(row, "defense")
+        : statNumber(row, key);
+  if (key === "overall" || key === "offense" || key === "defense") {
+    return { value: Number(clampNumber(Number(raw || 0), 0, 99).toFixed(0)), numeric: true, missing: false };
+  }
+  const number = Number(raw);
+  return { value: number, numeric: true, missing: raw === "" || !Number.isFinite(number) };
+}
+
+function seasonOpponentSortValueFromRow(row, key) {
+  if (key === "player") {
+    const name = String(row.dataset.sortPlayer || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    return { value: name, numeric: false, missing: !name };
+  }
+  const raw = row.dataset[`sort${key[0].toUpperCase()}${key.slice(1)}`] || "";
+  const number = Number(raw);
+  return { value: number, numeric: true, missing: raw === "" || !Number.isFinite(number) };
+}
+
+function applySeasonOpponentSort(panel) {
+  const table = panel.querySelector(".season-opponent-table");
+  if (!table) return;
+  const sortState = state.dashboardOpponentSort;
+  const headerCells = [...table.querySelectorAll(".season-opponent-head [role='columnheader']")];
+  headerCells.forEach((cell) => {
+    const active = cell.dataset.opponentColumn === sortState.key;
+    cell.toggleAttribute("data-opponent-sorted", active);
+    cell.setAttribute("aria-sort", active ? (sortState.direction === "desc" ? "descending" : "ascending") : "none");
+  });
+  table.querySelectorAll("[data-opponent-column]").forEach((cell) => {
+    cell.toggleAttribute("data-opponent-sorted", cell.dataset.opponentColumn === sortState.key);
+  });
+  const rows = [...table.querySelectorAll(":scope > .season-opponent-row")];
+  rows.sort((left, right) => {
+    const leftValue = seasonOpponentSortValueFromRow(left, sortState.key);
+    const rightValue = seasonOpponentSortValueFromRow(right, sortState.key);
+    if (leftValue.missing !== rightValue.missing) return leftValue.missing ? 1 : -1;
+    let comparison = 0;
+    if (leftValue.missing) return Number(left.dataset.opponentIndex) - Number(right.dataset.opponentIndex);
+    if (leftValue.numeric && rightValue.numeric) {
+      comparison = leftValue.value - rightValue.value;
+    } else {
+      comparison = leftValue.value < rightValue.value ? -1 : leftValue.value > rightValue.value ? 1 : 0;
+    }
+    if (comparison && sortState.direction === "desc") comparison *= -1;
+    return comparison || Number(left.dataset.opponentIndex) - Number(right.dataset.opponentIndex);
+  });
+  table.append(...rows);
+  rows.forEach((row, index) => {
+    const playerLabel = row.querySelector("[data-opponent-player-text]");
+    if (playerLabel) playerLabel.textContent = `${index + 1}. ${row.dataset.sortPlayer || "Unknown"}`;
+  });
+  updateSeasonOpponentSortBand(table);
+}
+
+function updateSeasonOpponentSortBand(table) {
+  const band = table.querySelector(":scope > .season-opponent-sort-band");
+  const header = table.querySelector(":scope > .season-opponent-head");
+  const activeCell = header?.querySelector(":scope > [data-opponent-sorted]");
+  const firstRow = table.querySelector(":scope > .season-opponent-row");
+  const lastRow = table.querySelector(":scope > .season-opponent-row:last-of-type");
+  if (!band || !header || !activeCell || !firstRow || !lastRow) {
+    if (band) band.hidden = true;
+    return;
+  }
+
+  const tableRect = table.getBoundingClientRect();
+  const activeRect = activeCell.getBoundingClientRect();
+  const sectionHeader = table.previousElementSibling;
+  const sectionHeaderRect = sectionHeader?.getBoundingClientRect();
+  const lastRowRect = lastRow.getBoundingClientRect();
+  const scaleX = table.offsetWidth > 0 ? tableRect.width / table.offsetWidth : 1;
+  const scaleY = table.offsetHeight > 0 ? tableRect.height / table.offsetHeight : 1;
+  const bandTop = sectionHeaderRect ? sectionHeaderRect.bottom : tableRect.top;
+  const bandBottom = lastRowRect.bottom;
+  band.style.left = `${(activeRect.left - tableRect.left) / scaleX}px`;
+  band.style.top = `${(bandTop - tableRect.top) / scaleY}px`;
+  band.style.width = `${activeRect.width / scaleX}px`;
+  band.style.height = `${(bandBottom - bandTop) / scaleY}px`;
+  band.hidden = false;
+}
+
+const seasonOpponentSortBandResizeObservers = new WeakMap();
+
+function wireSeasonOpponentSorting(root = document) {
+  root.querySelectorAll(".season-opponent-panel").forEach((panel) => {
+    if (!seasonOpponentSortBandResizeObservers.has(panel) && typeof ResizeObserver === "function") {
+      const observer = new ResizeObserver(() => updateSeasonOpponentSortBand(panel.querySelector(".season-opponent-table")));
+      observer.observe(panel);
+      seasonOpponentSortBandResizeObservers.set(panel, observer);
+    }
+    panel.querySelectorAll("[data-opponent-sort]").forEach((button) => {
+      if (button.dataset.opponentSortWired) return;
+      button.dataset.opponentSortWired = "true";
+      button.addEventListener("click", () => {
+        const key = button.dataset.opponentSort;
+        if (!SEASON_OPPONENT_SORT_KEYS.has(key)) return;
+        const current = state.dashboardOpponentSort;
+        state.dashboardOpponentSort = current.key === key
+          ? { key, direction: current.direction === "desc" ? "asc" : "desc" }
+          : { key, direction: key === "player" ? "asc" : "desc" };
+        applySeasonOpponentSort(panel);
+      });
+    });
+    applySeasonOpponentSort(panel);
+  });
+}
+
+const seasonOpponentInjuryTickerObservers = new WeakMap();
+
+function wireSeasonOpponentInjuryTicker(root = document) {
+  root.querySelectorAll("[data-injury-ticker]").forEach((ticker) => {
+    const text = ticker.querySelector("[data-injury-ticker-text]");
+    const copy = ticker.querySelector("[data-injury-ticker-copy]");
+    const track = ticker.querySelector(".season-opponent-injury-track");
+    if (!text || !copy || !track) return;
+    const measure = () => {
+      if (!ticker.isConnected || ticker.clientWidth < 1) return;
+      ticker.classList.remove("is-overflowing");
+      copy.textContent = "";
+      const padding = Number.parseFloat(getComputedStyle(text).paddingRight) || 0;
+      const textWidth = Math.max(0, text.getBoundingClientRect().width - padding);
+      if (textWidth <= ticker.clientWidth + 1) {
+        track.style.removeProperty("--season-injury-ticker-duration");
+        return;
+      }
+      copy.textContent = text.textContent;
+      const loopWidth = Math.max(1, text.getBoundingClientRect().width);
+      track.style.setProperty("--season-injury-ticker-duration", `${Math.max(12, loopWidth / 24)}s`);
+      ticker.classList.add("is-overflowing");
+    };
+    let observer = seasonOpponentInjuryTickerObservers.get(ticker);
+    if (!observer && typeof ResizeObserver === "function") {
+      observer = new ResizeObserver(measure);
+      observer.observe(ticker);
+      seasonOpponentInjuryTickerObservers.set(ticker, observer);
+    }
+    measure();
+  });
 }
 
 function seasonPreviousGamesCard(dash, viewedTeam) {
@@ -1706,11 +3518,25 @@ function seasonEfficiencyCard(dash, chartWidth = 420, chartHeight = 220, chartOn
   const defenseDiff = defense.map((value) => leagueAverage - value);
   const net = offense.map((value, index) => value - Number(defense[index] || value));
   const maximum = Math.max(40, Math.ceil(Math.max(0, ...[...offenseDiff, ...defenseDiff, ...net].map((value) => Math.abs(value))) / 10) * 10);
-  const left = 28, right = chartWidth - 7, top = 7, bottom = chartHeight - 28;
+  const left = 28, right = chartWidth - 7, top = 7, bottom = chartHeight - 42;
   const plotWidth = right - left, plotHeight = bottom - top;
   const zeroY = top + plotHeight / 2;
-  const seasonSlots = Math.max(26, source.length);
-  const xFor = (index) => left + index / (seasonSlots - 1) * plotWidth;
+  const firstDate = Date.parse(`${source[0]?.date || ""}T00:00:00Z`);
+  const weekMs = 7 * 86400000;
+  const lastDate = Date.parse(`${source.at(-1)?.date || ""}T00:00:00Z`);
+  const seasonSlots = Math.max(26, source.length, Number.isFinite(lastDate - firstDate) ? (lastDate - firstDate) / weekMs + 1 : 0);
+  const xFor = (index) => {
+    const day = Date.parse(`${source[index]?.date || ""}T00:00:00Z`);
+    const slot = Number.isFinite(firstDate) && Number.isFinite(day) ? (day - firstDate) / weekMs : index;
+    return left + slot / (seasonSlots - 1) * plotWidth;
+  };
+  const events = state.data.dashboardTrends?.efficiency?.events || [];
+  const eventMarks = events.map((event, index) => {
+    const day = Date.parse(`${event.date}T00:00:00Z`);
+    const x = left + (day - firstDate) / weekMs / (seasonSlots - 1) * plotWidth;
+    if (!Number.isFinite(x) || x < left || x > right) return "";
+    return `<g class="efficiency-event ${escapeAttr(event.color)}" data-efficiency-event="${index}" tabindex="0" role="button" aria-label="${escapeAttr(`${event.date}: ${event.title}`)}"><title>${escapeHtml(`${event.date}: ${event.title}`)}</title><line class="efficiency-event-line" x1="${x}" x2="${x}" y1="${top}" y2="${bottom}"/><line class="efficiency-event-hit" x1="${x}" x2="${x}" y1="${top}" y2="${bottom}"/><circle cx="${x}" cy="${top + 3}" r="3"/></g>`;
+  }).join("");
   const yFor = (value) => clampNumber(zeroY - value / maximum * plotHeight / 2, top, bottom);
   const chartPoints = (series) => series.map((value, index) => {
     return `${xFor(index).toFixed(1)},${yFor(value).toFixed(1)}`;
@@ -1726,7 +3552,14 @@ function seasonEfficiencyCard(dash, chartWidth = 420, chartHeight = 220, chartOn
   const latestDefense = defense.at(-1) || 0;
   const latestNet = net.at(-1) || 0;
   const tone = (value) => value > 0.05 ? "positive" : value < -0.05 ? "negative" : "neutral";
-  const netTone = tone(latestNet);
+  const seasonMean = (series) => {
+    const weights = source.map(point => Number(point.possessions || point.games || 1));
+    const total = weights.reduce((sum, weight) => sum + weight, 0);
+    return total ? series.reduce((sum, value, index) => sum + value * weights[index], 0) / total : 0;
+  };
+  const offenseTone = tone(seasonMean(offenseDiff));
+  const defenseTone = tone(seasonMean(defenseDiff));
+  const netTone = tone(seasonMean(net));
   const gridRows = Math.max(2, 2 * Math.round(plotHeight / (plotWidth / (seasonSlots - 1) / 2) / 2));
   const labelStep = Math.max(1, Math.ceil(12 / (plotHeight / gridRows)));
   const chart = `
@@ -1735,13 +3568,20 @@ function seasonEfficiencyCard(dash, chartWidth = 420, chartHeight = 220, chartOn
       ${Array.from({length: gridRows + 1}, (_unused, index) => { const y = top + index / gridRows * plotHeight; const value = maximum - index / gridRows * maximum * 2; const labeled = index === 0 || index === gridRows || (index >= labelStep && index <= gridRows - labelStep && (index - gridRows / 2) % labelStep === 0); return `<line class="grid horizontal" x1="${left}" y1="${y}" x2="${right}" y2="${y}"></line>${labeled ? `<line class="axis-notch" x1="${left - 3}" y1="${y}" x2="${left}" y2="${y}"></line><text class="axis-label" x="${left - 5}" y="${y}">${value.toFixed(0)}</text>` : ""}`; }).join("")}
       <line class="zero" x1="${left}" y1="${zeroY}" x2="${right}" y2="${zeroY}"></line>
       <path class="net-area ${netTone}" d="${areaPath(net)}"></path>
-      <polyline class="offense secondary ${tone(offenseDiff.at(-1) || 0)}" points="${chartPoints(offenseDiff)}"></polyline>
-      <polyline class="defense secondary ${tone(defenseDiff.at(-1) || 0)}" points="${chartPoints(defenseDiff)}"></polyline>
+      <polyline class="offense secondary ${offenseTone}" points="${chartPoints(offenseDiff)}"></polyline>
+      <polyline class="defense secondary ${defenseTone}" points="${chartPoints(defenseDiff)}"></polyline>
       <polyline class="net ${netTone}" points="${chartPoints(net)}"></polyline>
-      ${[offenseDiff, defenseDiff, net].map((series, seriesIndex) => series.map((value, index) => `<circle class="chart-node ${tone(series.at(-1) || 0)}" cx="${xFor(index)}" cy="${yFor(value)}" r="1.8"><title>${escapeHtml(source[index]?.label || `W${index + 1}`)} ${["OFF vs league", "DEF vs league", "NET"][seriesIndex]}: ${signedNumber(value)}</title></circle>`).join("")).join("")}
-      <text class="axis-caption" x="${left}" y="${chartHeight - 2}">Week</text><text class="axis-caption" x="${right}" y="${chartHeight - 2}" text-anchor="end">Rating +/- league</text>
+      ${[offenseDiff, defenseDiff, net].map((series, seriesIndex) => series.map((value, index) => `<circle class="chart-node ${[offenseTone, defenseTone, netTone][seriesIndex]}" cx="${xFor(index)}" cy="${yFor(value)}" r="1.8"><title>${escapeHtml(source[index]?.label || `W${index + 1}`)} ${["OFF vs league", "DEF vs league", "NET"][seriesIndex]}: ${signedNumber(value)}</title></circle>`).join("")).join("")}
+      ${eventMarks}
     </svg>`;
-  return chartOnly ? chart : `${seasonPanelHeader("Weekly Efficiency", `<div class="season-efficiency-summary"><span class="${tone(offenseDiff.at(-1) || 0)}">OFF ${latestOffense.toFixed(1)}</span><span class="${tone(defenseDiff.at(-1) || 0)}">DEF ${latestDefense.toFixed(1)}</span><span class="${netTone}">NET ${latestNet.toFixed(1)}</span></div>`)}<div class="season-efficiency-plot">${chart}</div>`;
+  return chartOnly ? chart : `${seasonPanelHeader("Weekly Efficiency")}<div class="season-efficiency-plot">${chart}</div><div class="season-efficiency-legend" role="group" aria-label="Latest weekly efficiency"><span class="${offenseTone}"><i class="offense" aria-hidden="true"></i><span class="legend-label">OFF</span><strong>${latestOffense.toFixed(1)}</strong></span><span class="${defenseTone}"><i class="defense" aria-hidden="true"></i><span class="legend-label">DEF</span><strong>${latestDefense.toFixed(1)}</strong></span><span class="${netTone}"><i class="net" aria-hidden="true"></i><span class="legend-label">NET</span><strong>${latestNet.toFixed(1)}</strong></span></div>`;
+}
+
+function efficiencyEventDetail(event) {
+  const heading = `<strong>${escapeHtml(event.title)}</strong><small>${escapeHtml(event.date)}</small>`;
+  if (event.coaches) return heading + event.coaches.map(coach => `<div class="efficiency-event-coach"><span>${escapeHtml(coach.label)} · ${escapeHtml(coach.role)}</span><b>${escapeHtml(coach.name)}</b>${compactRatingBar(coach.grade)}</div>`).join("");
+  const risk = event.health_risk == null ? '<p>Health risk unavailable</p>' : playerEvidenceRing(event.risk_label || "Health risk", Number(event.health_risk), 10, "#b34d49", "/10");
+  return heading + `<p>${escapeHtml(event.body_area)} · Expected absence: ${event.expected_games_missed == null ? "unknown" : escapeHtml(event.expected_games_missed) + (Number(event.expected_games_missed) === 1 ? " game" : " games")}</p>${risk}<p>${Number(event.minutes_lost || 0).toFixed(1)} minutes per night lost</p><small>${escapeHtml(event.distribution_note)}</small>${(event.distribution || []).map(row => `<div class="efficiency-event-minute"><span>${escapeHtml(row.name)}</span><b>+${Number(row.minutes).toFixed(1)} min</b></div>`).join("")}`;
 }
 
 let seasonEfficiencyResizeObserver;
@@ -1749,25 +3589,121 @@ function wireSeasonEfficiencyChart() {
   seasonEfficiencyResizeObserver?.disconnect();
   const plot = els.content.querySelector(".season-efficiency-plot");
   if (!plot) return;
-  const redraw = () => { if (plot.clientWidth > 40 && plot.clientHeight > 40) plot.innerHTML = seasonEfficiencyCard(state.data.dashboard || {}, plot.clientWidth, plot.clientHeight, true); };
+  let popup = document.getElementById("efficiencyEventDetail");
+  if (!popup) {
+    popup = document.createElement("div");
+    popup.id = "efficiencyEventDetail";
+    popup.className = "efficiency-event-detail";
+    popup.setAttribute("role", "tooltip");
+    document.body.append(popup);
+    document.addEventListener("pointerdown", (event) => { if (!event.target.closest("[data-efficiency-event]")) popup.hidden = true; });
+  }
+  popup.hidden = true;
+  let pinnedEvent = false;
+  const show = (target) => {
+    const event = state.data.dashboardTrends?.efficiency?.events?.[Number(target.dataset.efficiencyEvent)];
+    if (!event) return;
+    popup.innerHTML = efficiencyEventDetail(event);
+    popup.hidden = false;
+    const bounds = target.getBoundingClientRect();
+    popup.style.left = `${Math.max(8, Math.min(window.innerWidth - popup.offsetWidth - 8, bounds.right + 10))}px`;
+    popup.style.top = `${Math.max(8, Math.min(window.innerHeight - popup.offsetHeight - 8, bounds.top + 8))}px`;
+  };
+  plot.onpointerover = (event) => { const target = event.target.closest("[data-efficiency-event]"); if (target && !pinnedEvent) show(target); };
+  plot.onpointerout = (event) => { if (!pinnedEvent && event.target.closest("[data-efficiency-event]") && !event.relatedTarget?.closest?.("[data-efficiency-event]")) popup.hidden = true; };
+  plot.onfocusin = (event) => { const target = event.target.closest("[data-efficiency-event]"); if (target) show(target); };
+  plot.onfocusout = () => { popup.hidden = true; pinnedEvent = false; };
+  plot.onclick = (event) => { const target = event.target.closest("[data-efficiency-event]"); if (target) { show(target); pinnedEvent = true; } };
+  plot.onkeydown = (event) => { if (event.key === "Escape") { popup.hidden = true; pinnedEvent = false; } if (["Enter", " "].includes(event.key)) { const target = event.target.closest("[data-efficiency-event]"); if (target) { event.preventDefault(); show(target); } } };
+  let lastSize = "";
+  const redraw = () => {
+    const width = plot.clientWidth, height = plot.clientHeight;
+    const size = `${width},${height}`;
+    if (width <= 40 || height <= 40 || size === lastSize) return;
+    lastSize = size;
+    popup.hidden = true;
+    pinnedEvent = false;
+    plot.innerHTML = seasonEfficiencyCard(state.data.dashboard || {}, width, height, true);
+  };
   seasonEfficiencyResizeObserver = new ResizeObserver(redraw);
   seasonEfficiencyResizeObserver.observe(plot);
   redraw();
 }
 
-function seasonProspectsCard() {
-  const sort = state.dashboardProspectSort;
-  const value = (row) => ({rank:Number(row.rank), name:row.name, position:row.position, now:Number(row.now), range:Number(row.ceiling) - Number(row.floor), stock:Number(row.rankChange || 0), scouted:Number(row.scoutedPct ?? Number(row.confidence || 0) * 100)})[sort.key];
-  const rows = draftBoardRows(state.data.dashboardProspects || {}).sort((a, b) => {
+const PROSPECT_COLLEGE_LOGOS = Object.freeze({
+  alabama:"alabama", arizona:"arizona", arkansas:"arkansas", auburn:"auburn", baylor:"baylor", byu:"byu",
+  cincinnati:"cincinnati", creighton:"creighton", duke:"duke", florida:"florida", "florida-state":"florida-state",
+  gonzaga:"gonzaga", houston:"houston", illinois:"illinois", indiana:"indiana", iowa:"iowa", "iowa-state":"iowa-state",
+  kansas:"kansas", kentucky:"kentucky", louisville:"louisville", marquette:"marquette", memphis:"memphis", michigan:"michigan",
+  "michigan-state":"michigan-state", "north-carolina":"north-carolina", northwestern:"northwestern", "ohio-state":"ohio-state",
+  oregon:"oregon", purdue:"purdue", "san-diego-state":"san-diego-state", "santa-clara":"santa-clara", "south-florida":"south-florida",
+  "st-johns":"st-johns", stanford:"stanford", tennessee:"tennessee", texas:"texas", "texas-tech":"texas-tech", uconn:"uconn",
+  usc:"usc", ucla:"ucla", vanderbilt:"vanderbilt", villanova:"villanova", virginia:"virginia", washington:"washington",
+});
+const PROSPECT_COUNTRY_FLAGS = Object.freeze({
+  australia:"AU", brazil:"BR", canada:"CA", china:"CN", croatia:"HR", france:"FR", germany:"DE", greece:"GR",
+  italy:"IT", japan:"JP", latvia:"LV", lithuania:"LT", nigeria:"NG", "new-zealand":"NZ", "south-sudan":"SS",
+  serbia:"RS", slovenia:"SI", spain:"ES", turkey:"TR", "united-states":"US", usa:"US", "g-league":"US", "overtime-elite":"US",
+});
+const PROSPECT_CLUB_COUNTRIES = Object.freeze({
+  "kk-mega-basket":"RS", valencia:"ES", "real-madrid":"ES", barcelona:"ES", "fc-barcelona":"ES", "ratiopharm-ulm":"DE",
+  "partizan-belgrade":"RS", "crvena-zvezda":"RS", "red-star-belgrade":"RS", "olympiacos":"GR", "panathinaikos":"GR",
+});
+
+function prospectOriginKey(value) {
+  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function prospectFlagEmoji(countryCode) {
+  return String.fromCodePoint(...Array.from(countryCode.toUpperCase(), (letter) => letter.charCodeAt(0) + 127397));
+}
+
+function prospectOriginMarkup(origin) {
+  const label = String(origin || "").trim() || "Source unavailable";
+  const key = prospectOriginKey(label);
+  const countryCode = PROSPECT_COUNTRY_FLAGS[key] || PROSPECT_CLUB_COUNTRIES[key];
+  if (countryCode) {
+    return `<span class="season-prospect-origin season-prospect-flag" role="img" aria-label="${escapeAttr(`${label} flag`)}" title="${escapeAttr(label)}">${escapeHtml(prospectFlagEmoji(countryCode))}</span>`;
+  }
+  const collegeLogo = PROSPECT_COLLEGE_LOGOS[key];
+  if (collegeLogo) {
+    return `<img class="season-prospect-origin season-prospect-college-logo" src="/assets/team_logos/colleges/${escapeAttr(collegeLogo)}.png" alt="${escapeAttr(`${label} logo`)}" title="${escapeAttr(label)}" loading="lazy" decoding="async" />`;
+  }
+  const initials = label.split(/\s+/).filter(Boolean).map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "?";
+  return `<span class="season-prospect-origin season-prospect-source-fallback" role="img" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}">${escapeHtml(initials)}</span>`;
+}
+
+function seasonProspectsCard(options = {}) {
+  const sort = state.dashboardProspectSort.key === "stock" ? {key:"rank", direction:"asc"} : state.dashboardProspectSort;
+  const value = (row) => ({rank:Number(row.rank), name:row.name, position:row.position, age:Number(row.age), height:row.height, now:Number(row.now), range:row.draftRangeLow ?? Infinity, scouted:Number(row.scoutedPct ?? Number(row.confidence || 0) * 100)})[sort.key];
+  const sourceRows = [...(options.rows || draftBoardRows(state.data.dashboardProspects || {}))];
+  const sortedRows = sourceRows.sort((a, b) => {
+    if (sort.key === "range" && (a.draftRangeLow == null || b.draftRangeLow == null)) {
+      return Number(a.draftRangeLow == null) - Number(b.draftRangeLow == null) || Number(a.rank) - Number(b.rank);
+    }
     const av = value(a), bv = value(b);
-    return (typeof av === "string" ? av.localeCompare(String(bv)) : av - bv) * (sort.direction === "asc" ? 1 : -1) || Number(a.rank) - Number(b.rank);
-  }).slice(0, 6);
-  return `${seasonPanelHeader("Upcoming Prospects", `<button type="button" data-dashboard-view="draft">Open board</button>`, "prospects")}
-    <div class="season-prospects-table">
-      <div class="season-prospects-head">${[["rank", "#"], ["name", "Prospect"], ["position", "Pos"], ["now", "Now/Pot"], ["range", "Range"], ["stock", "Stock"], ["scouted", "Scouted"]].map(([key, label]) => `<button type="button" data-season-prospect-sort="${key}" title="Sort by ${label}" aria-label="Sort by ${label}${sort.key === key ? `, ${sort.direction === "asc" ? "ascending" : "descending"}` : ""}">${label}${sort.key === key ? (sort.direction === "asc" ? " ↑" : " ↓") : ""}</button>`).join("")}</div>
+    return (typeof av === "string" ? av.localeCompare(String(bv)) : av - bv) * (sort.direction === "asc" ? 1 : -1)
+      || (sort.key === "range" ? (Number(a.draftRangeHigh) - Number(b.draftRangeHigh)) * (sort.direction === "asc" ? 1 : -1) : 0)
+      || Number(a.rank) - Number(b.rank);
+  });
+  const rows = options.expanded ? sortedRows : sortedRows.slice(0, 6);
+  return `<div class="season-prospects-table${options.expanded ? " season-prospects-table-expanded" : ""}">
+      <div class="season-prospects-head">${[["rank", "#"], ["name", "Prospect"], ["position", "Pos"], ["age", "Age"], ["height", "Height"], ["now", "Now/Pot"], ["range", "Range"], ["scouted", "Scouted"]].map(([key, label]) => `<button type="button" data-season-prospect-sort="${key}" aria-pressed="${sort.key === key}" title="${key === "range" ? "Sort by projected draft pick range" : `Sort by ${label}`}" aria-label="Sort by ${label}${sort.key === key ? `, ${sort.direction === "asc" ? "ascending" : "descending"}` : ""}">${label}${sort.key === key ? (sort.direction === "asc" ? " ↑" : " ↓") : ""}</button>`).join("")}</div>
       ${rows.map((row) => {
         const confidence = clampNumber(Number(row.scoutedPct ?? Number(row.confidence || 0) * 100), 0, 100);
-        return `<button type="button" class="season-prospect-row" data-draft-prospect-card="${escapeAttr(row.id)}"><span>${escapeHtml(row.rank)}</span><span>${escapeHtml(row.name)}</span><span>${escapeHtml(row.position)}</span><span>${Number(row.now || 0).toFixed(0)}/${Number(row.potential || 0).toFixed(0)}</span><span>${escapeHtml(row.floor && row.ceiling ? `${Number(row.floor).toFixed(0)}–${Number(row.ceiling).toFixed(0)}` : "—")}</span>${seasonRankChange(row.rankChange, row.seasonStartRank)}<span class="season-scouted"><i><b style="${performanceBarStyle(confidence)}"></b></i><strong>${confidence.toFixed(0)}%</strong></span></button>`;
+        const hasRange = row.draftRangeLow != null && row.draftRangeHigh != null;
+        const draftRange = hasRange ? `${row.draftRangeLow}–${row.draftRangeHigh}` : "—";
+        const now = Number(row.now), potential = Number(row.potential);
+        return `<button type="button" class="season-prospect-row" data-draft-prospect-card="${escapeAttr(row.id)}" title="Open scouting report for ${escapeAttr(row.name)}">
+          <span class="season-prospect-rank">${String(row.rank).padStart(2, "0")}</span>
+          <span class="season-prospect-name"><span class="season-prospect-name-main">${prospectOriginMarkup(row.sourceTeam)}<strong>${escapeHtml(row.name)}</strong></span></span>
+          <span class="season-prospect-position">${escapeHtml(row.position)}</span>
+          <span>${escapeHtml(row.age ?? "—")}</span>
+          <span>${escapeHtml(row.height || "—")}</span>
+          <span class="season-prospect-nowpot"><strong>${Number.isFinite(now) ? now.toFixed(0) : "—"}</strong><i aria-hidden="true">→</i><b>${Number.isFinite(potential) ? potential.toFixed(0) : "—"}</b></span>
+          <span class="season-prospect-range" title="${hasRange ? `Projected draft picks ${row.draftRangeLow} to ${row.draftRangeHigh}` : "Projected draft range unavailable"}">${draftRange}</span>
+          <span class="season-scouted" aria-label="Scouted ${confidence.toFixed(0)} percent"><i><b style="${performanceBarStyle(confidence)}"></b></i><strong>${confidence.toFixed(0)}%</strong></span>
+        </button>`;
       }).join("") || `<div class="empty">Prospect board unavailable.</div>`}
     </div>`;
 }
@@ -1792,74 +3728,177 @@ function seasonAwardsCard(editable) {
     ["ROTY", state.data.dashboardSummaryLeaders?.award_races?.ROTY || state.data.dashboardSummaryLeaders?.rookies || []],
   ];
   return `<div class="season-awards-grid">${races.map(([label, leaders]) => `<section class="season-command-panel season-award-card">
-      <header class="season-award-head"><h3>${label}</h3><div class="season-award-actions"><button type="button" data-dashboard-player-finder ${editable ? "" : "disabled"}>Player Finder</button><button type="button" data-award-view-all>View all</button></div></header>
+      <header class="season-award-head"><h3>${label}</h3></header>
       <div class="season-award-rows">${leaders.slice(0, 4).map((row, index) => {
       const team = row.team_abbrev || teamLabel(row.team_id);
       const logo = teamLogoSrc(team);
-      return `<button type="button" data-dashboard-player-card="${escapeAttr(row.player_id)}"><span>${row.rank || index + 1}</span>${logo ? `<img src="${escapeAttr(logo)}" alt="" />` : ""}<strong>${escapeHtml(row.player_name)}</strong>${seasonRankChange(row.rank_change, row.season_start_rank)}</button>`;
+      const portrait = row.headshot_url || logo;
+      return `<button type="button" data-dashboard-player-card="${escapeAttr(row.player_id)}"><span class="award-player-rank">${row.rank || index + 1}</span>${portrait ? `<img class="${row.headshot_url ? "award-player-headshot" : "award-team-fallback"}" src="${escapeAttr(portrait)}" alt="" aria-hidden="true" loading="lazy" decoding="async" referrerpolicy="no-referrer" />` : ""}<strong>${escapeHtml(row.player_name)}</strong>${seasonRankChange(row.rank_change, row.previous_week_rank ?? row.season_start_rank)}</button>`;
       }).join("") || `<div class="empty">No candidates yet.</div>`}</div>
     </section>`).join("")}</div>`;
 }
 
-function seasonRankChange(change, baselineRank) {
-  if (change == null || !Number.isFinite(Number(change))) return `<span class="season-rank-change neutral" title="Season-start rank unavailable">—</span>`;
+function seasonRankChange(change, previousRank) {
+  if (change == null || !Number.isFinite(Number(change))) return `<span class="season-rank-change neutral" title="Previous week's rank unavailable">—</span>`;
   const delta = Number(change);
   const label = delta > 0 ? `Up ${delta}` : delta < 0 ? `Down ${Math.abs(delta)}` : "Unchanged";
-  return `<span class="season-rank-change ${delta > 0 ? "positive" : delta < 0 ? "negative" : "neutral"}" title="${label} from season-start rank ${baselineRank}" aria-label="${label} places since season start">${delta > 0 ? "↑" : delta < 0 ? "↓" : ""} ${Math.abs(delta)}</span>`;
+  return `<span class="season-rank-change ${delta > 0 ? "positive" : delta < 0 ? "negative" : "neutral"}" title="${label} from previous week's rank ${previousRank}" aria-label="${label} places since the previous week">${delta > 0 ? "↑" : delta < 0 ? "↓" : ""} ${Math.abs(delta)}</span>`;
 }
 
-function seasonStaffCard(dash, editable) {
-  const roles = ["HC", "OC", "DC", "PERF", "DEV", "SCOUT"];
-  const rows = [...staffRows(dash)].sort((a, b) => {
-    const order = (row) => { const index = roles.indexOf(compactStaffRole(row.slot || row.role)); return index < 0 ? roles.length : index; };
+const COACH_PORTRAIT_IDS = Array.from({length:6}, (_, index) => `coach-${String(index + 1).padStart(2, "0")}`);
+
+function staffIdentity(row, index = 0) {
+  return String(row.id || row.slot || row.role || index);
+}
+
+function coachPortraitAssignments(rows) {
+  const roles = ["Head Coach", "Offensive Coordinator", "Defensive Coordinator", "Performance Lead", "Development Lead", "Scouting Lead"];
+  const ordered = [...rows].sort((a, b) => {
+    const order = (row) => { const index = roles.indexOf(staffRoleLabel(row.slot || row.role)); return index < 0 ? roles.length : index; };
     return order(a) - order(b);
   });
-  return `${seasonPanelHeader("Coaching Staff", `<button type="button" data-dashboard-view="staff" ${editable ? "" : "disabled"}>Manage</button>`, "staff")}
+  const used = new Set();
+  return new Map(ordered.map((row, index) => {
+    const identity = staffIdentity(row, index);
+    const start = [...identity].reduce((hash, character) => ((hash * 31) + character.charCodeAt(0)) >>> 0, 7) % COACH_PORTRAIT_IDS.length;
+    let portraitIndex = start;
+    if (used.size === COACH_PORTRAIT_IDS.length) used.clear();
+    while (used.has(portraitIndex)) portraitIndex = (portraitIndex + 1) % COACH_PORTRAIT_IDS.length;
+    used.add(portraitIndex);
+    return [identity, COACH_PORTRAIT_IDS[portraitIndex]];
+  }));
+}
+
+function coachPortraitMarkup(portraitId, extraClass = "") {
+  if (!COACH_PORTRAIT_IDS.includes(portraitId)) return "";
+  const path = `/assets/game-art/coaches/${portraitId}`;
+  return `<span class="coach-portrait-art ${escapeAttr(extraClass)}" aria-hidden="true"><img class="coach-portrait-silver" src="${path}-silver.webp" alt="" decoding="async" draggable="false"><img class="coach-portrait-ink" src="${path}-ink.webp" alt="" decoding="async" draggable="false"></span>`;
+}
+
+function staffActionPermission(slot, permissions = state.data.staff?.team_report?.staff_action_permissions || state.data.dashboard?.staff_action_permissions || {}) {
+  return permissions[slot] || {};
+}
+
+function staffActionAttributes(slot, action, permissions) {
+  const permission = staffActionPermission(slot, permissions);
+  return permission[`can_${action}`] === false ? `disabled title="${escapeAttr(permission[`${action}_reason`] || "Available next season.")}"` : "";
+}
+
+function seasonStaffRowMarkup(row, portraitId, {actions = false, candidate = false, permissions} = {}) {
+  const name = staffName(row);
+  const role = staffRoleLabel(row.slot || row.role);
+  const grade = Number(staffGrade(row) || 0);
+  const salary = staffAav(row);
+  const years = candidate ? row.asking_years || 2 : staffYears(row);
+  const contract = `${salary ? money(salary) : "—"} x ${years || "—"}`;
+  const personAction = candidate ? `data-staff-id="${escapeAttr(row.id)}"` : `data-dashboard-staff-card="${escapeAttr(staffIdentity(row))}"`;
+  const actionAttributes = staffActionAttributes(row.slot || row.role, candidate ? "negotiate" : "fire", permissions);
+  return `<div class="season-staff-row${candidate ? " season-staff-candidate-row" : ""}">
+    <button type="button" class="season-staff-person" ${personAction} ${candidate && actionAttributes ? actionAttributes : `title="${escapeAttr(name)}"`} aria-label="${candidate ? "Negotiate with" : "Open coach card for"} ${escapeAttr(name)}">${coachPortraitMarkup(portraitId, "season-staff-portrait")}<span><strong title="${escapeAttr(name)}">${escapeHtml(name)}</strong><small title="${escapeAttr(role)}">${escapeHtml(role)}</small></span></button>
+    <span class="season-staff-grade" aria-label="Grade ${grade.toFixed(0)}"><em>${grade.toFixed(0)}</em><i><b style="${performanceBarStyle(grade)}"></b></i></span>
+    <span class="season-staff-contract"><strong>${escapeHtml(contract)}</strong></span>
+    ${actions ? `<button type="button" class="season-staff-action" ${actionAttributes} ${candidate ? `data-staff-id="${escapeAttr(row.id)}"` : `data-fire-slot="${escapeAttr(row.slot || row.role)}"`}>${candidate ? "Negotiate" : "Fire"}</button>` : ""}
+  </div>`;
+}
+
+function seasonStaffCard(dash, includeHeader = true, {actions = false, available = null} = {}) {
+  const roles = ["Head Coach", "Offensive Coordinator", "Defensive Coordinator", "Performance Lead", "Development Lead", "Scouting Lead"];
+  const rows = [...staffRows(dash)].sort((a, b) => {
+    const order = (row) => { const index = roles.indexOf(staffRoleLabel(row.slot || row.role)); return index < 0 ? roles.length : index; };
+    return order(a) - order(b);
+  });
+  const portraits = coachPortraitAssignments(rows);
+  const payroll = staffBudgetSummary(rows, dash);
+  const payrollLabel = payroll.max > 0 ? `${money(payroll.used)}/${money(payroll.max)}` : money(payroll.used);
+  return `${includeHeader ? seasonPanelHeader("Coaching Staff") : ""}
+    <div class="season-staff-summary" aria-label="Coaching staff overview">
+      <span><strong>STAFF PAYROLL: ${escapeHtml(payrollLabel)}${available === null ? "" : ` · ${signedMoney(available)} available`}</strong></span>
+    </div>
     <div class="season-staff-table">
-      <div class="season-staff-head"><span>Name</span><span>Role</span><span>Grade</span><span>Contract</span></div>
-      ${rows.map((row) => {
-        const grade = Number(staffGrade(row) || 0);
-        return `<div class="season-staff-row"><span>${escapeHtml(staffName(row))}</span><span title="${escapeAttr(rowLabel(row.slot || row.role || "Staff"))}">${escapeHtml(compactStaffRole(row.slot || row.role))}</span><span class="season-staff-grade"><em>${grade.toFixed(0)}</em><i><b style="${performanceBarStyle(grade)}"></b></i></span><span>${staffAav(row) ? `${money(staffAav(row))}×${escapeHtml(staffYears(row) || 1)}` : "—"}</span></div>`;
-      }).join("") || `<div class="empty">No staff loaded.</div>`}
+      <div class="season-staff-head"><span>Staff Member</span><span>Grade</span><span>Contract</span>${actions ? '<span aria-hidden="true"></span>' : ""}</div>
+      ${rows.map(row => seasonStaffRowMarkup(row, portraits.get(staffIdentity(row)), {actions, permissions:dash.staff_action_permissions})).join("") || `<div class="empty">No staff loaded.</div>`}
     </div>`;
 }
 
-function compactStaffRole(role) {
+function coachRatingRow(label, value, key, info = {}) {
+  const average = info.averages?.[key];
+  const display = value == null ? "—" : draftMetric(value);
+  const description = info.descriptions?.[key] || "Impacts overall staff grade.";
+  const difference = value == null || average == null ? null : Math.round((Number(value) - Number(average)) * 10) / 10;
+  const comparison = difference == null ? "League average unavailable." : difference === 0
+    ? "Equal to the league average for this role."
+    : `${Math.abs(difference).toFixed(1)} rating points ${difference > 0 ? "above" : "below"} the league average for this role.`;
+  const tooltip = `${label} — ${display} / 100\n${description}\n${comparison}${average == null ? "" : `\nLeague average: ${draftMetric(average)} · ${info.peer_count} active staff in this role.`}`;
+  return `<div class="coach-trait-row" tabindex="0" data-draft-asset-tooltip="${escapeAttr(tooltip)}" aria-label="${escapeAttr(`${label}: ${display}`)}"><span>${escapeHtml(label)}</span><i aria-hidden="true"><b style="${performanceBarStyle(Number(value))}"></b>${average == null ? "" : `<em class="coach-league-average" style="left:${clampNumber(Number(average),0,100)}%"></em>`}</i><strong>${value == null ? "—" : draftMetric(value)}</strong></div>`;
+}
+
+function coachTraitRows(traits = {}, info = {}) {
+  const entries = Object.entries(traits).filter(([, value]) => value != null && Number.isFinite(Number(value)));
+  if (!entries.length) return `<div class="empty">No trait data.</div>`;
+  return entries.map(([key, value]) => coachRatingRow(rowLabel(key), value, key, info)).join("");
+}
+
+function coachProfileCardMarkup(staff, portraitId, info = {}, options = {}) {
+  const role = staffRoleLabel(staff.slot || staff.role);
+  const salary = options.candidate ? Number(staff.asking_salary_millions || staffAav(staff)) : staffAav(staff);
+  const years = options.candidate ? Number(staff.asking_years || staffYears(staff)) : staffYears(staff);
+  return `<div class="coach-profile-card">
+    <section class="coach-profile-identity">
+      ${coachPortraitMarkup(portraitId, "coach-profile-portrait")}
+      <div class="coach-profile-bio">${options.context ? `<p class="coach-profile-context">${escapeHtml(options.context)}</p>` : ""}<h2>${escapeHtml(staffName(staff))}</h2><p>${escapeHtml(role)}</p></div>
+      <dl class="coach-profile-contract" aria-label="${options.candidate ? "Candidate asking contract" : "Coach contract"}"><dt>${options.candidate ? "Asking contract" : "Contract"}</dt><dd>${salary ? `${money(salary)} x ${years || "—"}` : "—"}</dd></dl>
+      <div class="coach-profile-overview" aria-label="Coach overview ratings">${coachRatingRow("Grade", staffGrade(staff), "grade", info)}${options.candidate ? (options.gradeChange == null ? "" : `<p class="coach-profile-grade-change"><strong>${options.gradeChange > 0 ? "+" : ""}${options.gradeChange.toFixed(1)}</strong> rating points vs current coach</p>`) : `${coachRatingRow("Morale", staff.morale, "morale", info)}${coachRatingRow("Job security", staff.job_security, "job_security", info)}`}</div>
+    </section>
+    <div class="coach-profile-panels">
+      <section class="coach-profile-traits"><header>Coaching Traits</header><div>${coachTraitRows(staff.skill_traits || {}, info)}</div></section>
+      <section class="coach-profile-traits"><header>Working Style</header><div>${coachTraitRows(staff.personality_traits || {}, info)}</div></section>
+    </div>
+  </div>`;
+}
+
+async function dashboardCoachCard(staffId) {
+  const rows = staffRows(state.data.dashboard || {});
+  const staff = rows.find((row, index) => staffIdentity(row, index) === String(staffId || ""));
+  if (!staff) return showToast("That coach is no longer available.", true);
+  const info = await action("coach_card", {...savePayload(), staff_id:staff.id});
+  if (!info) return;
+  const portraitId = coachPortraitAssignments(rows).get(staffIdentity(staff));
+  await openPlayerCardOnClipboard({key:`coach:${staff.id}`, title:`${staffName(info.staff)} · Coach Card`, kind:"coach", body:coachProfileCardMarkup(info.staff, portraitId, info)});
+}
+
+function staffRoleLabel(role) {
   return ({
-    head_coach: "HC",
-    offensive_coordinator: "OC",
-    defensive_coordinator: "DC",
-    development_lead: "DEV",
-    performance_lead: "PERF",
-    scouting_lead: "SCOUT",
-  })[String(role || "").toLowerCase()] || "STAFF";
+    head_coach: "Head Coach",
+    offensive_coordinator: "Offensive Coordinator",
+    defensive_coordinator: "Defensive Coordinator",
+    development_lead: "Development Lead",
+    performance_lead: "Performance Lead",
+    scouting_lead: "Scouting Lead",
+  })[String(role || "").toLowerCase()] || rowLabel(role || "Staff");
 }
 
 function seasonMinutesCard(rows, editable) {
-  const assigned = (row) => Number(state.rotationDraft[row.id] ?? row.minutes_projection ?? row.rotation_target_minutes ?? 0);
+  if (editable) ensureRotationDraft(rows);
+  const assigned = (row) => isPlayerInjured(row.health)
+    ? 0
+    : Number(state.rotationDraft[row.id] ?? row.rotation_target_minutes ?? row.minutes_projection ?? 0);
   const sortedRows = [...rows].sort((left, right) => assigned(right) - assigned(left));
-  const development = new Map(developmentPlayerCandidates(rows).map((item) => [String(item.player_id), item]));
   return `${seasonPanelHeader("Minutes + Availability", "", "availability")}
     <div class="season-minutes-table" style="--roster-count:${Math.max(1, rows.length)}">
-      <div class="season-minutes-head"><span>Player</span><span>Age</span><span>Pos</span><span>Height</span><span>OVR</span><span>OFF</span><span>DEF</span><span>MPG</span><span>PTS</span><span>REB</span><span>AST</span><span>Minutes</span><span>Fatigue</span><span>Development</span></div>
+      <div class="season-minutes-head"><span>Player</span><span>Pos</span><span>Height</span><span>Minutes</span><span>Fatigue</span></div>
       ${sortedRows.map((row) => {
         const injured = isPlayerInjured(row.health);
-        const games = injuryGamesRemaining(row);
-        const status = injured ? `${compactPos(row.position)} · out${games !== null ? ` — ${games} gms` : ""}` : compactPos(row.position);
-        const trend = development.get(String(row.id));
-        const values = (trend?.points || []).map((point) => Number(point.value)).filter(Number.isFinite);
-        const delta = values.length > 1 ? values.at(-1) - values[0] : 0;
-        const minuteValue = clampNumber(Number(state.rotationDraft[row.id] ?? row.minutes_projection ?? row.rotation_target_minutes ?? 0), 0, 48);
-        return `<div class="season-minute-row${injured ? " injured" : ""}">
-          <button type="button" data-dashboard-player-card="${escapeAttr(row.id)}">${escapeHtml(row.name || "Unknown")}</button>
-          <span>${Number.isFinite(Number(row.age)) ? Math.floor(Number(row.age)) : "—"}</span>
-          <span>${escapeHtml(status || "—")}</span>
-          <span>${escapeHtml(heightFromRow(row) || "—")}</span>
-          ${seasonMiniRating(rating(row, "overall"))}${seasonMiniRating(rating(row, "offense"))}${seasonMiniRating(rating(row, "defense"))}
-          <span>${Number(mpgFromRow(row) || 0).toFixed(1)}</span><span>${statNumber(row, "points")}</span><span>${statNumber(row, "rebounds")}</span><span>${statNumber(row, "assists")}</span>
-          <div class="season-minute-control"><label class="season-minute-slider${state.rotationLockedPlayerIds.has(row.id) || row.rotation_user_set ? " user-locked" : ""}"><i><b class="season-minute-fill" style="width:${(minuteValue / 48 * 100).toFixed(2)}%"></b></i><input type="range" min="0" max="48" step="1" value="${minuteValue}" data-minute-player="${escapeAttr(row.id)}" aria-label="Minutes for ${escapeAttr(row.name || "player")}" ${editable ? "" : "disabled"} /></label><output data-minute-output="${escapeAttr(row.id)}">${minuteValue}</output></div>
+        const injuryStatus = playerInjuryStatusMarkup(row);
+        const minuteValue = injured ? 0 : clampNumber(assigned(row), 0, 48);
+        const rotationLocked = !injured && (state.rotationLockedPlayerIds.has(row.id) || row.rotation_user_set);
+        const position = String(row.position || "—").trim() || "—";
+        const height = heightFromRow(row) || "—";
+        return `<div class="season-minute-row${injured ? " injured" : ""}" data-minute-row="${escapeAttr(row.id)}">
+          <button type="button" data-dashboard-player-card="${escapeAttr(row.id)}">${playerHeadshotMarkup(row, "roster-player-headshot")}<span class="season-minute-player-name">${escapeHtml(row.name || "Unknown")}</span>${injuryStatus}<i class="season-row-motion" aria-hidden="true" hidden></i></button>
+          <span class="season-minute-position" title="${escapeAttr(row.position || "Position unavailable")}">${escapeHtml(position)}</span>
+          <span class="season-minute-height">${escapeHtml(height)}</span>
+          <div class="season-minute-control"><label class="season-minute-slider${rotationLocked ? " user-locked" : ""}"><i><b class="season-minute-fill" style="width:${(minuteValue / 48 * 100).toFixed(2)}%"></b></i><input type="range" min="0" max="48" step="1" value="${minuteValue}" data-minute-player="${escapeAttr(row.id)}" aria-label="Minutes for ${escapeAttr(row.name || "player")}" ${editable && !injured ? "" : "disabled"} /></label><output class="is-sorted-value" data-minute-output="${escapeAttr(row.id)}">${minuteValue}</output><button type="button" class="season-minute-reset" data-minute-reset-player="${escapeAttr(row.id)}" aria-label="Reset ${escapeAttr(row.name || "player")} to automatic minutes" title="Reset to automatic minutes" ${rotationLocked && editable && !injured ? "" : "hidden"} ${editable && !injured ? "" : "disabled"}>×</button></div>
           ${seasonFatigueCell(row)}
-          <span class="season-minute-development"><strong class="${delta > 0 ? "positive" : delta < 0 ? "negative" : ""}">${signedNumber(delta)}</strong><i class="season-development-diverging" role="img" aria-label="Development ${signedNumber(delta)} rating points, scale minus 5 to plus 5" title="${signedNumber(delta)} rating points"><b class="${delta < 0 ? "negative" : "positive"}" style="left:${delta < 0 ? 50 - Math.min(50, Math.abs(delta) * 10) : 50}%;width:${Math.min(50, Math.abs(delta) * 10)}%"></b></i></span>
         </div>`;
       }).join("") || `<div class="empty">No roster loaded.</div>`}
     </div>`;
@@ -1871,76 +3910,110 @@ function seasonMiniRating(value) {
 }
 
 function seasonFatigueCell(row) {
-  const risk = clampNumber(Number(row.health_risk || 0), 0, 12);
-  const workload = clampNumber(Number(state.rotationDraft[row.id] ?? row.minutes_projection ?? mpgFromRow(row) ?? 0), 0, 48);
-  const level = clampNumber(Math.round((risk / 12) * 4 + (workload / 48) * 2), 0, 6);
+  const fatigue = clampNumber(Number(row.health?.fatigue || 0), 0, 100);
+  const level = clampNumber(Math.round((fatigue / 100) * 6), 0, 6);
   const tone = level <= 2 ? "low" : level <= 4 ? "medium" : "high";
-  return `<span class="season-fatigue ${tone}" title="Workload and health-risk signal">${Array.from({ length: 6 }, (_unused, index) => `<i class="${index < level ? "filled" : ""}"></i>`).join("")}</span>`;
+  return `<span class="season-fatigue ${tone}" title="Simulated fatigue: ${fatigue.toFixed(1)} / 100. Game minutes build fatigue; rest days reduce it.">${Array.from({ length: 6 }, (_unused, index) => `<i class="${index < level ? "filled" : ""}"></i>`).join("")}</span>`;
 }
 
 function seasonDevelopmentCard(rows) {
   const rosterIds = new Set(rows.map((row) => String(row.id || "")));
   const candidates = developmentPlayerCandidates(rows)
     .filter((candidate) => rosterIds.has(String(candidate.player_id)))
-    .sort((left, right) => developmentMovementScore(right) - developmentMovementScore(left))
-    .slice(0, 9);
-  return `${seasonPanelHeader("Player Development", `<button type="button" data-team-development>Team growth</button>`)}
-    <div class="season-development-list">
+    .sort((left, right) => developmentMovementScore(right) - developmentMovementScore(left));
+  const monthLabel = seasonDevelopmentMonthLabel(
+    state.data?.dashboardTrends?.development?.latest_month || candidates[0]?.points?.at(-1)?.label,
+  );
+  return `<div class="season-development-list" style="--development-count:${Math.max(1, Math.min(9, candidates.length))};--development-total:${Math.max(1, candidates.length)}">
+      <div class="season-development-head"><span>Player</span><span>Age</span><span>Upside Remaining</span><span>Net growth</span></div>
       ${candidates.map((player) => {
-        const values = (player.points || []).map((point) => Number(point.value)).filter(Number.isFinite);
-        const delta = values.length > 1 ? values[values.length - 1] - values[0] : 0;
-        const width = clampNumber((Math.abs(delta) / 5) * 50, 0, 50);
-        return `<button type="button" class="season-development-row" data-dashboard-player-card="${escapeAttr(player.player_id)}">
-          <span>${escapeHtml(player.name)}</span>
-          ${seasonDevelopmentSparkline(player.points || [])}
-          <i class="season-development-diverge"><b class="${delta < 0 ? "negative" : "positive"}" style="width:${width}%;${delta < 0 ? "right:50%" : "left:50%"}"></b></i>
-          <strong class="${delta > 0 ? "positive" : delta < 0 ? "negative" : ""}">${signedNumber(delta)}</strong>
+        const points = player.points || [];
+        const values = points.map((point) => Number(point.value)).filter(Number.isFinite);
+        const seasonDelta = values.length > 1 ? values.at(-1) - values[0] : 0;
+        const monthDelta = values.length > 1 ? values.at(-1) - values.at(-2) : 0;
+        const upside = clampNumber(Number(player.upside_remaining || 0), 0, 5);
+        const age = Number.isFinite(Number(player.age)) ? Number(player.age).toFixed(0) : "—";
+        const summary = `${player.name}, age ${age}: ${upside.toFixed(1)} OVR remaining, season ${signedNumber(seasonDelta)}, ${monthLabel} ${signedNumber(monthDelta)}`;
+        return `<button type="button" class="season-development-row" data-dashboard-player-card="${escapeAttr(player.player_id)}" aria-label="${escapeAttr(summary)}">
+          <span class="season-development-player">${playerHeadshotMarkup(player, "roster-player-headshot")}<span class="season-development-name">${escapeHtml(player.name)}</span></span>
+          <span class="season-development-age">${escapeHtml(age)}</span>
+          ${seasonDevelopmentUpside(upside)}
+          <span class="season-development-metrics">
+            ${seasonDevelopmentMetric("Season", seasonDelta)}
+            ${seasonDevelopmentMetric(monthLabel, monthDelta)}
+          </span>
         </button>`;
       }).join("") || `<div class="empty">Development history will appear after the first monthly update.</div>`}
     </div>`;
 }
 
-function seasonDevelopmentSparkline(points) {
-  const source = points
-    .map((point, index) => ({ value: Number(point.value), slot: Number(point.season_slot ?? index) }))
-    .filter((point) => Number.isFinite(point.value) && Number.isFinite(point.slot));
-  const plotted = source.length ? source : [{ value: 0, slot: 0 }];
-  const base = plotted[0].value;
-  const width = 76;
-  const height = 20;
-  const seasonSlots = developmentSeasonMonths().length;
-  const coords = plotted.map((point) => {
-    const x = (clampNumber(point.slot, 0, seasonSlots) / seasonSlots) * width;
-    const y = height / 2 - clampNumber(point.value - base, -5, 5) * (height / 10);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(" ");
-  const delta = plotted.at(-1).value - plotted[0].value;
-  const tone = delta > 0.01 ? "positive" : delta < -0.01 ? "negative" : "neutral";
-  return `<svg class="season-development-spark ${tone}" viewBox="0 0 ${width} ${height}" aria-hidden="true"><line class="season-horizon-guide" x1="0" y1="${height / 2}" x2="${width}" y2="${height / 2}"></line><polyline points="${coords}"></polyline></svg>`;
+function setDevelopmentCardExpanded(expanded, card) {
+  const panel = card?.matches?.('.season-development-panel') ? card : card?.querySelector?.('.season-development-panel');
+  if (!panel) return;
+  if (expanded && !panel.classList.contains('is-expanded')) {
+    const row = panel.querySelector('.season-development-row');
+    panel.style.setProperty('--development-row-height', `${row?.offsetHeight || 48}px`);
+  }
+  panel.classList.toggle('is-expanded', Boolean(expanded));
+  if (!expanded) panel.querySelector('.season-development-list')?.scrollTo(0, 0);
 }
 
-function openTeamDevelopmentModal() {
-  const rows = rosterRows(state.data.dashboard || {});
-  const rosterIds = new Set(rows.map((row) => String(row.id || "")));
-  const lines = developmentPlayerCandidates(rows)
-    .filter((candidate) => rosterIds.has(String(candidate.player_id)))
-    .sort((left, right) => developmentMovementScore(right) - developmentMovementScore(left));
-  const colors = developmentLineColors();
-  const viewedTeam = teamLabel(state.data.dashboard?.team || state.dashboardTeam || userTeam());
-  state.modal = {
-    kind: "teamDevelopment",
-    title: `${viewedTeam} Player Development`,
-    subtitle: "",
-    body: `<div class="team-development-modal">
-      <div class="team-development-chart">${developmentLineChart(lines, { empty: "Development history will appear after the first monthly update." })}</div>
-      <div class="team-development-legend">${lines.map((line, index) => `<span><i style="background:${colors[index % colors.length]}"></i>${escapeHtml(line.name || "Player")}</span>`).join("")}</div>
-    </div>`,
-  };
-  renderModal();
+function seasonDevelopmentUpside(value) {
+  const upside = clampNumber(Number(value || 0), 0, 5);
+  const circumference = 56.55;
+  const color = playerUpsideColor(upside);
+  const label = `${upside.toFixed(1)} OVR remaining`;
+  return `<span class="season-development-upside" role="img" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="9" style="stroke:${color};stroke-dasharray:${circumference};stroke-dashoffset:${circumference * (1 - upside / 5)}"></circle></svg>
+    <strong>${upside.toFixed(1)}</strong>
+  </span>`;
 }
 
-function seasonLeagueWire() {
+function seasonDevelopmentMonthLabel(value) {
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const match = String(value || "").trim().match(/(?:^|[-/])(\d{1,2})$/);
+  const month = Number(match?.[1]);
+  return month >= 1 && month <= 12 ? months[month - 1] : "Month";
+}
+
+function seasonDevelopmentMetric(label, delta) {
+  const amount = Number.isFinite(Number(delta)) ? Number(delta) : 0;
+  const rounded = Number(amount.toFixed(1));
+  const tone = rounded > 0 ? "positive" : rounded < 0 ? "negative" : "neutral";
+  const width = clampNumber((Math.abs(amount) / 5) * 50, 0, 50);
+  const direction = amount < 0 ? `right:50%` : `left:50%`;
+  return `<span class="season-development-metric">
+    <span class="season-development-period">${escapeHtml(label)}</span>
+    <i class="season-development-diverging" aria-hidden="true"><b class="${tone}" style="width:${width}%;${direction}"></b></i>
+    <strong class="${tone}">${signedNumber(amount)}</strong>
+  </span>`;
+}
+
+function leagueActivitySubject(subject) {
+  const portrait = subject.kind === "staff" ? coachPortraitMarkup(coachPortraitAssignments([subject]).get(staffIdentity(subject)), "wire-staff-portrait") : playerHeadshotMarkup(subject, "wire-player-headshot");
+  return `<div class="wire-subject ${subject.kind === "pick" ? "is-pick" : ""}"><div class="wire-subject-art">${portrait}${subject.kind === "pick" ? `<strong class="wire-pick-label">${escapeHtml(subject.season || "Draft")}<small>${subject.round ? `ROUND ${escapeHtml(subject.round)}` : "PICK"}</small></strong>` : ""}</div><span>${escapeHtml(subject.name || "")}</span></div>`;
+}
+
+function leagueActivityComment(event) {
+  const paragraphs = event.activity_comments || [];
+  return `<details class="wire-comments"><summary>Details <span>1 comment</span></summary><div class="wire-comment"><div class="wire-comment-author">League Insider <span>@leagueinsider</span></div>${paragraphs.map(text => `<p>${escapeHtml(text)}</p>`).join("") || `<p>${escapeHtml(event.headline || "No additional details available.")}</p>`}${(event.activity_groups || []).some(group => (group.subjects || []).some(subject => subject.kind === "player")) ? `<small class="wire-profile-note">Player profiles reflect the current season.</small>` : ""}</div></details>`;
+}
+
+function seasonLeagueWire(expanded = false) {
   const events = state.home?.league_events?.events || [];
+  if (expanded) {
+    const items = events.map((event) => {
+      const normalized = normalizeLeagueEvent(event);
+      const groups = event.activity_groups || [];
+      const media = groups.some(group => group.subjects?.length) ? groups.map(group => {
+        const subjects = group.subjects || [];
+        const columns = subjects.length > 1 ? 2 : 1;
+        return `<section class="wire-asset-group" style="--asset-columns:${columns};--asset-rows:${Math.max(1, Math.ceil(subjects.length / columns))}">${groups.length > 1 ? `<div class="wire-asset-team"><strong>${escapeHtml(group.team)}</strong><span>receives</span></div>` : ""}${teamLogoSrc(group.team) ? `<img class="wire-group-logo" src="${escapeAttr(teamLogoSrc(group.team))}" alt="${escapeAttr(group.team)}">` : ""}<div class="wire-subjects">${subjects.map(leagueActivitySubject).join("")}</div></section>`;
+      }).join("") : normalized.teams.map(team => `<img class="wire-fallback-logo" src="${escapeAttr(teamLogoSrc(team))}" alt="${escapeAttr(team)}">`).join("");
+      return `<article class="season-wire-post" data-league-event-id="${escapeAttr(event.id || "")}"><header class="wire-post-author"><span class="wire-reporter-avatar">LI</span><div><strong>League Insider</strong><span>@leagueinsider · <time>${escapeHtml(normalized.date)}</time></span></div></header><div class="wire-post-type">${escapeHtml(rowLabel(normalized.kind))}</div><div class="wire-post-media ${groups.length > 1 ? "is-trade" : ""}">${media}</div><h3 class="wire-post-headline">${escapeHtml(event.activity_headline || normalized.text)}</h3>${leagueActivityComment(event)}</article>`;
+    }).join("");
+    return `<footer class="season-league-wire season-league-wire-expanded" aria-label="League activity"><div class="season-wire-activity-list">${items || `<div class="season-wire-activity-empty">No league activity to show.</div>`}</div></footer>`;
+  }
   const items = events.slice(0, 12).map((event) => {
     const normalized = normalizeLeagueEvent(event);
     const marks = normalized.teams.map((team) => {
@@ -1949,7 +4022,18 @@ function seasonLeagueWire() {
     }).join("");
     return `<span class="season-wire-item">${marks}<em>${escapeHtml(normalized.date)}</em><strong>${escapeHtml(normalized.text)}</strong></span>`;
   }).join("");
-  return `<footer class="season-league-wire"><span class="season-wire-label">League Wire</span><div class="season-wire-window"><div class="season-wire-track">${items || `<span class="season-wire-item"><strong>No recent league events.</strong></span>`}</div></div><button type="button" data-league-panel-view-all>View all</button></footer>`;
+  return `<footer class="season-league-wire"><div class="season-wire-window"><div class="season-wire-track">${items || `<span class="season-wire-item"><strong>No recent league events.</strong></span>`}</div></div></footer>`;
+}
+
+function setLeagueWireCardExpanded(expanded, card) {
+  if (!card) return false;
+  const template = document.createElement("template");
+  template.innerHTML = seasonLeagueWire(Boolean(expanded)).trim();
+  const updated = template.content.firstElementChild;
+  if (!updated) return false;
+  card.className = updated.className;
+  card.innerHTML = updated.innerHTML;
+  return true;
 }
 
 function unifiedDashboardWorkspace(rows, dash, editable, readonlyClass) {
@@ -2351,7 +4435,7 @@ function fantasyDraftDashboardWorkspace() {
     </div>`;
 }
 
-function fantasyPlayerCard(playerId) {
+async function fantasyPlayerCard(playerId) {
   const room = state.data.fantasyDraft || {};
   const player = [
     ...(room.available_players || []),
@@ -2378,7 +4462,7 @@ function fantasyPlayerCard(playerId) {
     ["Athleticism", ratings.athleticism],
   ];
   const ratingRows = [
-    ["Overall", ratings.overall || player.ratings_prior_overall],
+    ["OVR", ratings.overall || player.ratings_prior_overall],
     ["Shooting", ratings.shooting], ["Release", ratings.release], ["Range", ratings.range],
     ["Shot versatility", ratings.versatility], ["Creation", ratings.creation], ["Handle", ratings.handle],
     ["Passing", ratings.passing], ["Rim pressure", ratings.rim_pressure], ["Defense", ratings.defense],
@@ -2389,12 +4473,7 @@ function fantasyPlayerCard(playerId) {
     ["Playoff translation", ratings.playoff],
   ].filter(([, value]) => value !== undefined && value !== null);
   const available = (room.available_players || []).some((row) => row.player_id === playerId);
-  state.modal = {
-    kind: "fantasyPlayer",
-    title: player.name || "Player Card",
-    subtitle: `${player.position || "—"} · age ${decimalNumber(player.age)} · ${heightFromRow(player) || "height unavailable"}`,
-    playerId,
-    body: `<div class="fantasy-player-card">
+  const body = `<div class="fantasy-player-card">
       <section class="fantasy-card-hero">
         <div class="fantasy-card-number">
           <span>OVR</span>
@@ -2433,9 +4512,13 @@ function fantasyPlayerCard(playerId) {
         <div class="fantasy-card-section-head"><span>Contract runway</span><small>red is this player's salary against each season's hard cap</small></div>
         ${fantasyPlayerContractChart(player.contract_seasons || [])}
       </section>
-    </div>`,
-  };
-  renderModal();
+    </div>`;
+  await openPlayerCardOnClipboard({
+    key:`fantasy:${playerId}`,
+    title:`${player.name || "Player"} · Player Card`,
+    kind:"fantasy",
+    body,
+  });
 }
 
 function dashboardPlayerCard(playerId) {
@@ -2468,7 +4551,7 @@ function dashboardPlayerCard(playerId) {
     ["Athleticism", ratings.athleticism],
   ];
   const ratingRows = [
-    ["Overall", ratings.overall], ["Shooting", ratings.shooting], ["Release", ratings.release],
+    ["OVR", ratings.overall], ["Shooting", ratings.shooting], ["Release", ratings.release],
     ["Range", ratings.range], ["Shot versatility", ratings.versatility], ["Creation", ratings.creation],
     ["Handle", ratings.handle], ["Passing", ratings.passing], ["Rim pressure", ratings.rim_pressure],
     ["Defense", ratings.defense], ["Defensive effort", ratings.def_effort],
@@ -2534,96 +4617,23 @@ function dashboardPlayerCard(playerId) {
   renderModal();
 }
 
-function draftProspectCard(prospectId) {
-  const rows = draftBoardRows(state.data.draft?.draft_board || {});
-  const row = rows.find((item) => String(item.id) === String(prospectId));
+async function draftProspectCard(prospectId) {
+  const rows = [...draftBoardRows(state.data.draft?.draft_board || {}), ...draftBoardRows(state.data.dashboardProspects || {})];
+  const row = rows.find(item => String(item.id) === String(prospectId));
   if (!row) return;
-  const prospect = row.prospect || {};
-  const scout = row.scout || {};
-  const projectionAxes = [
-    ["Now", row.now],
-    ["Potential", row.potential],
-    ["Floor", row.floor],
-    ["Ceiling", row.ceiling],
-    ["Team fit", row.fit],
-    ["Scouted", row.scoutedPct],
-  ];
-  const ledger = [
-    ["Current ability", row.now],
-    ["Potential", row.potential],
-    ["Downside floor", row.floor],
-    ["High-end ceiling", row.ceiling],
-    ["Team fit", row.fit],
-    ["Scouted", row.scoutedPct],
-    ["Volatility", row.volatility],
-    ["Rookie contract value", row.rookieContractValue],
-  ].filter(([, value]) => value !== undefined && value !== null && value !== "");
-  const range = Math.max(0, Number(row.ceiling || 0) - Number(row.floor || 0));
-  state.modal = {
-    kind: "draftProspect",
-    title: row.name || "Prospect Card",
-    subtitle: `${row.position || "—"} · age ${row.age || "—"} · ${row.height || "height unavailable"} · scout rank ${row.rank || "—"}`,
-    body: `<div class="fantasy-player-card draft-scout-card">
-      <section class="fantasy-card-hero">
-        <div class="fantasy-card-number">
-          <span>NOW</span>
-          <strong>${plainNumber(row.now)}</strong>
-          <small>${escapeHtml(prospect.source_team || "Draft class")}</small>
-        </div>
-        <div class="fantasy-card-outlook">
-          <p class="eyebrow">Scouting projection</p>
-          <h4>${escapeHtml(rowLabel(prospect.archetype || "development prospect"))}</h4>
-          <div>
-            <span><small>Potential</small><strong>${plainNumber(row.potential)}</strong></span>
-            <span><small>Floor</small><strong>${plainNumber(row.floor)}</strong></span>
-            <span><small>Ceiling</small><strong>${plainNumber(row.ceiling)}</strong></span>
-          </div>
-          <p>${escapeHtml(range >= 22 ? "Wide outcome band: the tools are meaningful, but development carries real variance." : range >= 13 ? "Moderate projection range with both rotation value and upside in play." : "Relatively stable projection with a narrower range of likely outcomes.")}</p>
-        </div>
-        <div class="fantasy-card-actions">
-          <span><small>Team fit</small><strong>${draftMetric(row.fit)}</strong></span>
-          <span><small>Scouted</small><strong>${draftMetric(row.scoutedPct)}%</strong></span>
-          <span><small>Volatility</small><strong>${draftMetric(row.volatility)}</strong></span>
-          <small>${row.status === "drafted" ? `Selected #${escapeHtml(row.selectedPick)} by ${escapeHtml(teamLabel(row.selectedTeam))}` : "Available on the board"}</small>
-        </div>
-      </section>
-      <section class="fantasy-card-radars draft-scout-radar">
-        ${fantasyPlayerRadar("Projection shape", projectionAxes, "offense")}
-        <div class="draft-scout-notes">
-          <div class="fantasy-card-section-head"><span>Profile</span><small>scout-facing context</small></div>
-          <dl>
-            <div><dt>Position</dt><dd>${escapeHtml(row.position || "—")}</dd></div>
-            <div><dt>Build</dt><dd>${escapeHtml(row.height || "—")}${prospect.weight_lbs ? ` · ${escapeHtml(prospect.weight_lbs)} lb` : ""}</dd></div>
-            <div><dt>Development curve</dt><dd>${escapeHtml(rowLabel(row.developmentCurve || "standard"))}</dd></div>
-            <div><dt>Source</dt><dd>${escapeHtml(prospect.source_team || "Generated class")}</dd></div>
-          </dl>
-        </div>
-      </section>
-      <section class="fantasy-card-ratings">
-        <div class="fantasy-card-section-head"><span>Scouting ledger</span><small>same read used throughout draft night</small></div>
-        <div class="fantasy-rating-grid">
-          ${ledger.map(([label, value]) => `<div class="${ratingTone(value)}"><span>${escapeHtml(label)}</span><strong>${draftMetric(value)}</strong><i style="--rating:${clampNumber(Number(value || 0), 0, 99)}%"></i></div>`).join("")}
-        </div>
-      </section>
-      <section class="fantasy-card-contract draft-rookie-scale">
-        <div class="fantasy-card-section-head"><span>Draft outlook</span><small>evaluation, not a guaranteed outcome</small></div>
-        <div class="draft-outlook-strip">
-          <span><small>Board status</small><strong>${row.status === "drafted" ? "Selected" : "Available"}</strong></span>
-          <span><small>Scout rank</small><strong>#${escapeHtml(row.rank || "—")}</strong></span>
-          <span><small>Fit grade</small><strong>${draftMetric(row.fit)}</strong></span>
-          <span><small>Rookie value</small><strong>${draftMetric(row.rookieContractValue)}</strong></span>
-        </div>
-      </section>
-    </div>`,
-  };
-  renderModal();
+  const detail = await action("prospect_card", {...savePayload(), prospect_id:prospectId, year:row.prospect?.draft_year});
+  if (!detail) return;
+  await openPlayerCardOnClipboard({
+    key:`prospect:${prospectId}`, title:`${detail.name || row.name || "Prospect"} · Prospect Card`, kind:"prospect",
+    body:approvedPlayerCardBody({...detail, board_rank:row.rank || detail.board_rank}),
+  });
 }
 
-function fantasyPlayerRadar(title, axes, className) {
-  const width = 300;
-  const height = 220;
+function fantasyPlayerRadar(title, axes, className, showTitle = true) {
+  const width = 360;
+  const height = 240;
   const centerX = width / 2;
-  const centerY = 106;
+  const centerY = 112;
   const radius = 72;
   const point = (index, proportion, extra = 0) => {
     const angle = -Math.PI / 2 + (index * Math.PI * 2) / axes.length;
@@ -2641,15 +4651,15 @@ function fantasyPlayerRadar(title, axes, className) {
     return `${position.x.toFixed(1)},${position.y.toFixed(1)}`;
   }).join(" ");
   return `<div class="fantasy-player-radar ${escapeAttr(className)}">
-    <h5>${escapeHtml(title)}</h5>
+    ${showTitle ? `<h5>${escapeHtml(title)}</h5>` : ''}
     <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeAttr(title)} radar chart">
       ${[0.25, 0.5, 0.75, 1].map((level) => `<polygon class="player-radar-grid" points="${polygon(level)}"></polygon>`).join("")}
       ${axes.map((_, index) => { const edge = point(index, 1); return `<line class="player-radar-axis" x1="${centerX}" y1="${centerY}" x2="${edge.x.toFixed(1)}" y2="${edge.y.toFixed(1)}"></line>`; }).join("")}
-      <polygon class="player-radar-shape" points="${shape}"><title>${escapeHtml(axes.map(([label, value]) => `${label}: ${decimalNumber(value)}`).join(" | "))}</title></polygon>
+      ${axes.every(([,value])=>value != null) ? `<polygon class="player-radar-shape" points="${shape}"><title>${escapeHtml(axes.map(([label, value]) => `${label}: ${decimalNumber(value)}`).join(" | "))}</title></polygon>` : `<text x="${centerX}" y="${centerY}" text-anchor="middle" class="prospect-radar-locked">Scouting incomplete</text>`}
       ${axes.map(([label, value], index) => {
-        const labelPoint = point(index, 1, 22);
+        const labelPoint = point(index, 1, 28);
         const anchor = Math.abs(labelPoint.x - centerX) < 8 ? "middle" : labelPoint.x < centerX ? "end" : "start";
-        return `<text class="player-radar-label" text-anchor="${anchor}" x="${labelPoint.x.toFixed(1)}" y="${labelPoint.y.toFixed(1)}">${escapeHtml(label)}</text>`;
+        return `<text class="player-radar-label" text-anchor="middle" x="${labelPoint.x.toFixed(1)}" y="${labelPoint.y.toFixed(1)}"><tspan x="${labelPoint.x.toFixed(1)}">${escapeHtml(label)}</tspan><tspan class="player-radar-value" x="${labelPoint.x.toFixed(1)}" dy="15">${value == null ? "Locked" : decimalNumber(value)}</tspan></text>`;
       }).join("")}
     </svg>
   </div>`;
@@ -2693,7 +4703,6 @@ function averageNumber(values, fallback = 0) {
 function playoffDashboardWorkspace() {
   const room = state.data.playoffs || {};
   const series = room.series || [];
-  const canSim = ["play_in", "playoffs"].includes(String(room.phase || "")) && room.status !== "completed";
   const leaders = state.data.playoffLeaders?.leaders || [];
   const leaderStat = state.playoffLeaderStat || "points";
   const leaderOptions = [
@@ -2706,23 +4715,9 @@ function playoffDashboardWorkspace() {
   ];
   return `
     <div class="playoff-command-center">
-      <header class="playoff-command-header">
-        <div class="playoff-command-title">
-          <h3>Playoffs</h3>
-          <p>${escapeHtml(room.current_date || state.home?.save?.current_date || "")} · ${escapeHtml(rowLabel(room.round || "picture"))} · ${escapeHtml(rowLabel(room.status || "live"))}</p>
-        </div>
-        <div class="toolbar playoff-command-controls">
-          ${canSim ? `
-            <button data-playoff-sim="game" title="Simulate one game in every active series">1 Game / Series</button>
-            <button data-playoff-sim="round" title="Simulate the rest of the current round">Finish Round</button>
-            <button data-playoff-sim="all" title="Simulate the remaining playoffs">Finish Playoffs</button>` : ""}
-          ${room.status === "completed" ? `<button id="playoffAdvanceStage">Advance To Next Stage</button>` : ""}
-        </div>
-      </header>
-      ${room.champion ? `<div class="phase-champion">Champion <strong>${escapeHtml(teamLabel(room.champion))}</strong></div>` : ""}
       <div class="phase-playoff-layout">
         <div class="phase-bracket-shell">
-          ${series.length ? playoffBracket(series, room.champion) : `<div class="empty">The bracket will populate when playoff play begins.</div>`}
+          ${playoffBracket(series, room.champion, room.play_in)}
         </div>
         <aside class="phase-leaders-panel">
           <div class="playoff-leaders-head">
@@ -2751,7 +4746,7 @@ function draftDashboardWorkspace() {
   const prospect = current.prospect || {};
   const status = draft.state?.status || "in_progress";
   const locked = status === "locked_until_draft";
-  const completedDraft = status === "completed" || (!current.selection && (draft.draft_timeline || []).length > 0);
+  const completedDraft = !state.draftPlaybackRunning && (status === "completed" || (!current.selection && (draft.draft_timeline || []).length > 0));
   const presentationKey = `${state.currentSave}:${draft.year || "draft"}`;
   if (state.draftPresentationKey !== presentationKey) {
     state.draftPresentationKey = presentationKey;
@@ -2759,6 +4754,7 @@ function draftDashboardWorkspace() {
   } else if (draft.presentation_stage === "draft" && state.draftPresentationStage === "odds") {
     state.draftPresentationStage = "draft";
   }
+  if (locked && !["odds","reveal"].includes(state.draftPresentationStage)) state.draftPresentationStage = draft.presentation_stage || "odds";
   if (state.draftPresentationStage === "odds") return draftLotteryOddsWorkspace(draft);
   if (state.draftPresentationStage === "reveal") return draftLotteryRevealWorkspace(draft);
   const boardRows = draftBoardRows(draft.draft_board);
@@ -2788,14 +4784,8 @@ function draftDashboardWorkspace() {
           </div>
         </div>
         ${current.selection ? `<div class="draft-clock-context"><span>${userOnClock ? "Your decision" : "AI selection"}</span><strong>${userOnClock ? (selectedProspect ? escapeHtml(selectedProspect.name) : "Select a prospect from the board") : `Simulate pick #${escapeHtml(currentPick)}`}</strong></div>` : `<p class="muted">All ${escapeHtml(draft.state?.total_picks || "")} selections are in.</p>`}
-        <div class="toolbar draft-clock-actions">
-          ${current.selection ? `${userOnClock
-            ? `<button id="draftApply" ${selectedProspect ? "" : "disabled"}>${selectedProspect ? `Draft ${escapeHtml(selectedProspect.name)} at #${escapeHtml(currentPick)}` : "Choose A Prospect"}</button>`
-            : `<button id="draftSimCurrent">Sim Current Pick: ${escapeHtml(currentPick)}</button>`}
-            ${canSimToUser ? `<button id="draftToUser">Sim To My Pick: ${escapeHtml(nextUserPick)}</button>` : ""}
-            <button id="draftAll">Finish Draft</button>` : `<button id="draftAdvanceStage">Advance To Next Stage</button>`}
-        </div>
       </header>
+      ${state.draftPlaybackRunning ? `<div class="draft-pick-reveal" role="status" aria-live="polite">${state.draftPlaybackReveal?.type === "pick" ? `${draftTeamLogo(state.draftPlaybackReveal.team)}<span>Pick #${escapeHtml(state.draftPlaybackReveal.overall_pick)}</span><strong>${escapeHtml(teamLabel(state.draftPlaybackReveal.team))} selects ${escapeHtml(state.draftPlaybackReveal.prospect?.name || "Unknown prospect")}</strong>` : `<span>Draft selections underway</span><strong>Revealing picks in order</strong>`}</div>` : ""}
       ${!completedDraft && (draft.trade_news || []).length ? `<div class="draft-news-strip"><strong>Breaking:</strong> ${escapeHtml((draft.trade_news || []).map((item) => item.headline || textValue(item)).join(" · "))}</div>` : ""}
       <div class="draft-night-grid">
         ${completedDraft ? `<section class="draft-prospect-panel draft-summary-panel">
@@ -2829,27 +4819,100 @@ function draftDashboardWorkspace() {
 
 function draftLotteryOddsWorkspace(draft) {
   const lottery = draft.lottery || {};
-  return `<div class="draft-lottery-shell">
-    <header class="draft-ceremony-head"><div><p class="eyebrow">${escapeHtml(draft.year || "")} Draft</p><h3>Lottery Odds</h3><p>The order has not been revealed. Odds reflect the completed season and pick ownership is shown separately.</p></div><button id="draftRevealLottery">Reveal Lottery Order</button></header>
+  return `<div class="draft-lottery-card">
+    <header class="draft-lottery-summary"><strong>${escapeHtml(draft.year || "")} Draft Lottery</strong><span>No. 1 Odds</span></header>
     <div class="draft-odds-grid">${(lottery.odds || []).map((row) => `<article class="draft-odds-row"><span class="draft-seed">${escapeHtml(row.seed)}</span>${draftTeamLogo(row.team)}<strong>${escapeHtml(teamLabel(row.team))}</strong><em>${(Number(row.odds || 0) * (Number(row.odds || 0) <= 1 ? 100 : 1)).toFixed(1)}%</em>${row.context ? `<small>${escapeHtml(row.context)}</small>` : ""}</article>`).join("") || `<div class="empty">Lottery odds are not available for this fixed draft order.</div>`}</div>
-    <footer class="draft-ceremony-note">${escapeHtml(lottery.notes || "Lottery odds are based on this save's standings.")}</footer>
+    <footer class="draft-lottery-note">Four picks drawn · Remaining teams follow record order.</footer>
   </div>`;
 }
 
 function draftLotteryRevealWorkspace(draft) {
   const lottery = draft.lottery || {};
-  return `<div class="draft-lottery-shell draft-reveal-shell">
-    <header class="draft-ceremony-head"><div><p class="eyebrow">Lottery complete</p><h3>${escapeHtml(draft.year || "")} Draft Order</h3><p>The first fourteen picks are set. Ownership shown here is the final team making the selection.</p></div><button id="draftEnterNight">Enter Draft Night</button></header>
-    <div class="draft-reveal-grid">${(lottery.reveal || []).map((row) => `<article class="draft-reveal-row"><span class="draft-pick-number">${escapeHtml(row.pick)}</span>${draftTeamLogo(row.owner_team)}<div><strong>${escapeHtml(teamLabel(row.owner_team))}</strong><small>${row.ownership_changed ? `via ${escapeHtml(teamLabel(row.original_team))}` : `Seed ${escapeHtml(row.starting_seed || row.pick)}`}</small></div><em class="${Number(row.movement) > 0 ? "up" : Number(row.movement) < 0 ? "down" : ""}">${Number(row.movement) > 0 ? `↑${row.movement}` : Number(row.movement) < 0 ? `↓${Math.abs(row.movement)}` : "—"}</em></article>`).join("")}</div>
+  const count = lotteryRevealCount(draft);
+  const reveal = GameSimulation.lotteryRevealState(lottery,count);
+  const visible = new Map(reveal.revealed.map(row=>[Number(row.pick),row]));
+  const jumping = (lottery.odds || []).filter(row=>reveal.promoted.includes(row.team.id) && !reveal.revealed.some(p=>p.original_team?.id===row.team.id));
+  return `<div class="draft-lottery-card draft-reveal-shell" aria-label="Draft lottery reveal">
+    <header class="draft-lottery-summary"><strong>${escapeHtml(draft.year || "")} Draft Lottery</strong><span>${reveal.complete ? 'Order Complete' : `Next: #${reveal.nextPick}`}</span></header>
+    <div class="draft-reveal-grid">${Array.from({length:reveal.total},(_,i)=>reveal.total-i).map(pick=>{
+      const row = visible.get(pick);
+      if (!row) return `<article class="draft-reveal-row is-unrevealed" data-lottery-pick="${pick}"><span class="draft-pick-number">${pick}</span><div class="lottery-envelope" aria-hidden="true"></div><strong>Unrevealed</strong><span>—</span></article>`;
+      return `<article class="draft-reveal-row${row === reveal.revealed.at(-1) ? ' is-latest' : ''}" data-lottery-pick="${pick}" data-revealed="true"><span class="draft-pick-number">${pick}</span>${draftTeamLogo(row.original_team)}<div><strong>${escapeHtml(teamLabel(row.original_team))}</strong><small>Seed ${escapeHtml(row.starting_seed || pick)}${row.ownership_changed ? ` · Pick → ${escapeHtml(teamLabel(row.owner_team))}` : ''}</small></div><em class="${Number(row.movement)>0?'up':Number(row.movement)<0?'down':''}">${Number(row.movement)>0?`↑${row.movement}`:Number(row.movement)<0?`↓${Math.abs(row.movement)}`:'—'}</em></article>`;
+    }).join('')}</div>
+    <footer class="draft-lottery-note${jumping.length ? ' lottery-jump-notice' : ''}" role="status">${jumping.length ? `${jumping.map(row=>escapeHtml(teamLabel(row.team))).join(', ')} jumped into the top four` : reveal.complete ? 'Lottery complete' : '14 → 1'}</footer>
   </div>`;
+}
+
+function lotteryRevealKey(draft = state.data.draft || {}) { return `nbaGmLotteryReveal:${state.currentSave}:${draft.year}`; }
+function lotteryRevealCount(draft = state.data.draft || {}) {
+  if (state.lotteryRevealKey !== lotteryRevealKey(draft)) {
+    state.lotteryRevealKey = lotteryRevealKey(draft);
+    try { state.lotteryRevealCount = Math.max(0,Number(localStorage.getItem(state.lotteryRevealKey) || 0)) || 0; }
+    catch { state.lotteryRevealCount = 0; }
+  }
+  return state.lotteryRevealCount || 0;
+}
+
+function clipboardPhaseCommands() {
+  const button = (id,command,label,disabled=false)=>`<button type="button" class="ui-command" id="${id}" data-phase-command="${command}"${disabled?' disabled':''}>${label}</button>`;
+  if (state.home?.save?.postseason_exit_required) return button('postseasonAdvance','postseason-exit','Advance To Draft Lottery');
+  if (dashboardPhaseKind() !== 'draft') return '';
+  const draft = state.data.draft || {};
+  if (state.draftPresentationStage === 'odds') return button('draftRevealLottery','lottery-reveal','Reveal Lottery');
+  if (state.draftPresentationStage === 'reveal') {
+    if (state.lotteryRevealRunning) return button('draftSkipReveal','lottery-skip','Skip Reveal');
+    if (lotteryRevealCount(draft) < (draft.lottery?.reveal || []).length) return button('draftRevealLottery','lottery-reveal','Continue Reveal');
+    return button('draftEnterNight','draft-enter','Enter Draft Night');
+  }
+  const current = draft.current_selection?.selection;
+  if (!current) return button('draftAdvanceStage','draft-next','Advance To Next Stage');
+  const picked = draftBoardRows(draft.draft_board).find(row=>row.id===state.selectedDraftProspect);
+  return (draft.current_pick_is_user_owned
+    ? button('draftApply','draft-apply',picked?`Draft ${escapeHtml(picked.name)}`:'Choose A Prospect',!picked)
+    : button('draftSimCurrent','draft-one',`Sim Pick #${Number(current.overall_pick)}`))
+    + (!draft.current_pick_is_user_owned && draft.next_user_selection ? button('draftToUser','draft-user','Sim To My Pick'):'')
+    + button('draftAll','draft-all','Finish Draft');
+}
+
+async function runLotteryReveal() {
+  if (state.lotteryRevealRunning) return;
+  const draft = state.data.draft, key = lotteryRevealKey(draft), save = state.currentSave;
+  lotteryRevealCount(draft);
+  const runId = (state.lotteryRunId || 0) + 1;
+  state.lotteryRunId = runId;
+  state.lotteryRevealRunning = true;
+  renderDashboard();
+  try {
+    while (state.currentSave === save && state.lotteryRunId === runId && state.lotteryRevealKey === key && state.lotteryRevealCount < (draft.lottery?.reveal || []).length) {
+      await GameSimulation.wait(1100);
+      if (!state.lotteryRevealRunning || state.currentSave !== save || state.lotteryRunId !== runId) break;
+      state.lotteryRevealCount += 1;
+      try { localStorage.setItem(key,String(state.lotteryRevealCount)); } catch {}
+      const panel = document.querySelector('[data-board-window="phase-draft-lottery"] .draft-lottery-card');
+      if (panel) panel.outerHTML = draftLotteryRevealWorkspace(draft);
+    }
+  } finally {
+    if (state.lotteryRunId === runId) {
+      state.lotteryRevealRunning = false;
+      if (state.currentSave === save && !state.simulationRunning) renderDashboard();
+    }
+  }
+}
+
+function finishLotteryReveal() {
+  state.lotteryRunId = (state.lotteryRunId || 0) + 1;
+  state.lotteryRevealRunning = false;
+  state.lotteryRevealCount = (state.data.draft?.lottery?.reveal || []).length;
+  try { localStorage.setItem(lotteryRevealKey(),String(state.lotteryRevealCount)); } catch {}
+  renderDashboard();
 }
 
 function draftProspectBoard(rows, selectable = false, selectedId = "") {
   const headings = [
-    ["rank", "Scouts ranking"], ["name", "Prospect"], ["position", "Pos"], ["age", "Age"],
+    ["rank", "Rank"], ["name", "Prospect"], ["position", "Pos"], ["age", "Age"],
     ["height", "Ht"], ["now", "Now"], ["potential", "Pot"], ["fit", "Fit"], ["status", "Status"],
   ];
-  return `<div class="draft-prospect-scroll"><table class="draft-prospect-table"><thead><tr>${headings.map(([key, label]) => `<th><button class="draft-sort-button" data-draft-sort="${escapeAttr(key)}">${escapeHtml(label)}${draftSortMark(key)}</button></th>`).join("")}</tr></thead><tbody>${rows.map((row) => {
+  return `<div class="draft-prospect-scroll"><table class="draft-prospect-table"><thead><tr>${headings.map(([key, label]) => {const sort=state.draftBoardSort||{};const active=sort.key===key;return `<th aria-sort="${active?(sort.direction==='desc'?'descending':'ascending'):'none'}"><button class="draft-sort-button" data-draft-sort="${escapeAttr(key)}">${escapeHtml(label)}${draftSortMark(key)}</button></th>`;}).join("")}</tr></thead><tbody>${rows.map((row) => {
     const available = row.status !== "drafted";
     const selected = available && String(row.id) === String(selectedId || "");
     return `<tr class="${row.status === "drafted" ? "is-drafted" : ""}${selected ? " is-selected" : ""}${selectable && available ? " is-selectable" : ""}" ${selectable && available ? `data-draft-prospect="${escapeAttr(row.id)}" tabindex="0"` : ""}><td>${escapeHtml(row.rank)}</td><td><button type="button" class="draft-prospect-name" data-draft-prospect-card="${escapeAttr(row.id)}">${escapeHtml(row.name || "Unknown")}</button></td><td>${escapeHtml(row.position || "—")}</td><td>${escapeHtml(row.age ?? "—")}</td><td>${escapeHtml(row.height || "—")}</td><td>${draftMetric(row.now)}</td><td>${draftMetric(row.potential)}</td><td>${draftMetric(row.fit || row.grade)}</td><td>${row.status === "drafted" ? `<span class="drafted-badge">#${escapeHtml(row.selectedPick)} ${escapeHtml(teamLabel(row.selectedTeam))}</span>` : selected ? `<span class="available-badge selected-badge">Selected</span>` : `<span class="available-badge">Available</span>`}</td></tr>`;
@@ -2861,7 +4924,8 @@ function draftPickTimeline(rows) {
     const status = row.draft_status || "upcoming";
     const completed = status === "selected";
     const current = status === "current";
-    return `<div class="draft-ledger-row ${current ? "is-current" : completed ? "is-complete" : "is-upcoming"}" ${current ? "data-current-draft-pick" : ""}><span class="draft-pick-number">${escapeHtml(row.selection?.overall_pick || "—")}</span>${draftTeamLogo(row.team)}<div><strong>${completed ? escapeHtml(row.prospect?.name || "Unknown prospect") : escapeHtml(teamLabel(row.team))}</strong><small>${completed ? `${escapeHtml(teamLabel(row.team))} · ${escapeHtml(row.prospect?.position || "")}` : current ? "On the clock" : "Upcoming pick"}</small></div>${current ? `<em>NOW</em>` : ""}</div>`;
+    const revealing = state.draftPlaybackRunning && Number(state.draftPlaybackReveal?.overall_pick) === Number(row.selection?.overall_pick);
+    return `<div class="draft-ledger-row ${current ? "is-current" : completed ? "is-complete" : "is-upcoming"}${revealing ? " is-revealing" : ""}" data-draft-pick="${escapeAttr(row.selection?.overall_pick || "")}" ${current ? "data-current-draft-pick" : ""}><span class="draft-pick-number">${escapeHtml(row.selection?.overall_pick || "—")}</span>${draftTeamLogo(row.team)}<div><strong>${completed ? escapeHtml(row.prospect?.name || "Unknown prospect") : escapeHtml(teamLabel(row.team))}</strong><small>${completed ? `${escapeHtml(teamLabel(row.team))} · ${escapeHtml(row.prospect?.position || "")}` : current ? "On the clock" : "Upcoming pick"}</small></div>${current ? `<em>NOW</em>` : ""}</div>`;
   }).join("") || `<div class="empty">No draft order is available.</div>`}</div>`;
 }
 
@@ -2904,6 +4968,7 @@ function freeAgencyDashboardWorkspace() {
       <div class="toolbar phase-workspace-controls">
         <button type="button" data-fa-open-trade>Trade Room</button>
         <button type="button" data-fa-open-roster>My Roster</button>
+        <button type="button" class="ui-command" data-open-waivers>Waivers</button>
         ${exclusive
           ? `<button id="reSignAdvanceDay">Advance Exclusive Day</button><button id="reSignOpenMarket">Open Free Agency</button>`
           : status !== "completed" ? `<button id="faAdvanceDay">Sim FA Day</button><button id="faAdvanceEnd">Sim To End</button>` : `<button id="faAdvanceStage">Advance To Next Phase</button>`}
@@ -2978,7 +5043,7 @@ function scopedFreeAgencyCandidates(room) {
 function freeAgencyMarketTable(candidates, exclusive = false) {
   const identity=[
     ...(state.freeAgentCompareMode?[{key:'compare',label:'',width:18,value:p=>0,cell:p=>`<input class="free-agency-compare-checkbox" type="checkbox" data-fa-compare="${escapeAttr(p.id)}" aria-label="Compare ${escapeAttr(p.name)}" ${state.freeAgentCompareIds.includes(p.id)?'checked':''}>`}]:[]),
-    {key:'name',label:'Player',width:130,value:p=>p.name,cell:p=>`<button type="button" data-fa-player-card="${escapeAttr(p.id)}">${escapeHtml(p.name)}</button>`},
+    {key:'name',label:'Player',width:130,value:p=>p.name,cell:p=>`<button type="button" data-fa-player-card="${escapeAttr(p.id)}">${playerNameWithInjuryMarkup(p)}</button>`},
     {key:'age',label:'Age',width:25,value:p=>p.age},
     {key:'position',label:'Pos',width:25,value:p=>p.position},
   ];
@@ -2988,7 +5053,7 @@ function freeAgencyMarketTable(candidates, exclusive = false) {
     {key:'team_fit_score',label:'Fit',value:p=>Number(p.team_fit_score||0),cell:p=>draftMetric(p.team_fit_score)},
     {key:'ask_millions',label:'Ask',value:p=>Number(p.ask_millions||0),cell:p=>compactMarketMoney(p.ask_millions)},
     {key:'ask_change_millions',label:'Move',value:p=>Number(p.ask_change_millions||0),cell:p=>freeAgencyAskChange(p.ask_change_millions)||'—'},
-    {key:'highest_offer',label:exclusive?'Rights':'Leading bid',width:80,value:p=>Number(p.highest_offer?.aav_millions||0),cell:p=>p.highest_offer?`<span class="linked-leading-bid"><img src="${escapeAttr(teamLogoSrc(p.highest_offer.team_abbrev))}" alt="${escapeAttr(p.highest_offer.team_abbrev||'')}">${money(p.highest_offer.aav_millions)} × ${p.highest_offer.years||1}</span>`:(exclusive?'Exclusive':'—')},
+    {key:'highest_offer',label:exclusive?'Rights':'Leading bid',width:80,value:p=>Number(p.highest_offer?.aav_millions||0),cell:p=>p.highest_offer?`<span class="linked-leading-bid"><img src="${escapeAttr(teamLogoSrc(p.highest_offer.team_abbrev))}" alt="${escapeAttr(p.highest_offer.team_abbrev||'')}">${money(p.highest_offer.aav_millions)} x ${p.highest_offer.years||1}</span>`:(exclusive?'Exclusive':'—')},
     {key:'interest',label:'Interest',width:54,value:p=>Number(p.highest_offer?.interest_score||0),cell:p=>p.highest_offer?compactRatingBar(p.highest_offer.interest_score):'—'},
   ];
   return linkedRosterTables(candidates,[{title:'Ratings',className:'linked-ratings',fields:[...identity,...ratings]},{title:'Previous season',className:'linked-stats',fields:stats},{title:'Offers',className:'linked-contracts',fields:contracts}],'market',state.freeAgentMarketSort||{key:'overall',direction:'desc'});
@@ -3070,7 +5135,7 @@ function freeAgencyIntelligenceRail(room, exclusive = false) {
       <div class="market-live-offer-scroll">${selectedOffers.length ? selectedOffers.map((offer) => {
         const team = teamLabel(offer.team_id || offer.team_abbrev || "");
         const interest = clampNumber(Number(offer.interest_score || 0), 0, 100);
-        return `<div class="market-live-offer">${teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="${escapeAttr(team)} logo" />` : ""}<strong>${money(offer.aav_millions)} × ${escapeHtml(offer.years || 1)}</strong><span class="market-offer-interest"><i><b style="width:${interest}%"></b></i><em>${Math.round(interest)}</em></span></div>`;
+        return `<div class="market-live-offer">${teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="${escapeAttr(team)} logo" />` : ""}<strong>${money(offer.aav_millions)} x ${escapeHtml(offer.years || 1)}</strong><span class="market-offer-interest"><i><b style="width:${interest}%"></b></i><em>${Math.round(interest)}</em></span></div>`;
       }).join("") : `<div class="market-no-offers">${exclusive ? "Exclusive rights. No outside bids." : "No active offers for this player."}</div>`}</div>
     </section>
     <section class="market-intelligence-panel signing-wire-intelligence">
@@ -3146,10 +5211,10 @@ function rosterCutdownDashboardWorkspace() {
       <section class="phase-focus-panel cutdown-brief">
         <p class="eyebrow">Before opening night</p>
         <h3>${escapeHtml(pending.cut_required || Math.max(0, Number(room.current_count || 0) - Number(room.target_count || 15)))} move(s) required</h3>
-        <p class="muted">Choose which contracts leave the roster. Recent draft picks remain protected from this cutdown.</p>
+        <p class="muted">Choose which contracts leave the roster.</p>
       </section>
       <section class="phase-board-panel">
-        ${table(["Player", "Pos", "Age", "Ht", "MPG", "OVR", "Contract", ""], room.players || [], (row) => [
+        ${table(["Player", "Pos", "Age", "Ht", "MPG", "OVR", "Contract", "Waiver cost", ""], room.players || [], (row) => [
           row.name,
           compactPos(row.position),
           row.age,
@@ -3157,8 +5222,9 @@ function rosterCutdownDashboardWorkspace() {
           Number(row.minutes || 0).toFixed(1),
           gradeNumber(row.overall),
           compactSalaryYears(row.salary_by_year),
+          row.waiver?.unquantified ? 'Unknown' : `${money(row.waiver?.remaining_cost_millions || 0)}${row.waiver?.unverified ? " · unverified reserve" : ""}`,
           row.can_waive
-            ? html(`<button data-waive-player="${escapeAttr(row.player_id)}">Waive</button>`)
+            ? html(`<button class="ui-command" data-waive-player="${escapeAttr(row.player_id)}">Waive</button> <button class="ui-command" data-buyout-player="${escapeAttr(row.player_id)}">Buyout</button>`)
             : html(`<span class="muted">Protected</span>`),
         ])}
       </section>
@@ -3192,7 +5258,7 @@ function staffRetentionDashboardWorkspace() {
         </div>
       </section>
       <section class="phase-offer-panel staff-retention-offer">
-        ${sectionHead("Re-sign", `${money(room.ask_millions)} × ${room.ask_years || 2}`)}
+        ${sectionHead("Re-sign", `${money(room.ask_millions)} x ${room.ask_years || 2}`)}
         <label>Annual salary<input id="staffRetentionSalary" type="number" min="0.1" max="${escapeAttr(room.max_offer_millions || 0)}" step="0.1" value="${escapeAttr(Math.min(Number(room.ask_millions || 0), Number(room.max_offer_millions || 0)).toFixed(2))}"></label>
         <label>Years<input id="staffRetentionYears" type="number" min="1" max="5" step="1" value="${escapeAttr(room.ask_years || 2)}"></label>
         <div class="toolbar">
@@ -3205,59 +5271,59 @@ function staffRetentionDashboardWorkspace() {
         ${candidates.length ? table(["Name","Grade","Contract"],candidates,candidate=>[
           html(`<button type="button" data-retention-candidate="${escapeAttr(candidate.id)}">${escapeHtml(candidate.name || "Candidate")}</button>`),
           html(`<span class="staff-grade-cell"><i><b style="${performanceBarStyle(Number(candidate.grade||0))}"></b></i>${draftMetric(candidate.grade)}</span>`),
-          `${money(candidate.asking_salary_millions)} × ${candidate.asking_years || 1}`
+          `${money(candidate.asking_salary_millions)} x ${candidate.asking_years || 1}`
         ],"retention-market") : `<div class="empty">No replacements are currently available.</div>`}
       </section>
     </div>`;
 }
 
-function wireDashboardPhaseWorkspace(kind) {
+function wireDashboardPhaseWorkspace(kind, root = els.content) {
   if (kind === "fantasy_draft") {
-    document.querySelector(".fantasy-player-table")?.addEventListener("scroll", (event) => {
+    root.querySelector(".fantasy-player-table")?.addEventListener("scroll", (event) => {
       state.fantasyBoardScrollTop = event.currentTarget.scrollTop;
     }, { passive: true });
-    document.querySelectorAll("[data-fantasy-card]").forEach((button) => {
+    root.querySelectorAll("[data-fantasy-card]").forEach((button) => {
       button.addEventListener("click", (event) => {
         event.stopPropagation();
         rememberFantasyBoardScroll();
         fantasyPlayerCard(button.dataset.fantasyCard || "");
       });
     });
-    document.querySelectorAll("[data-fantasy-player]").forEach((row) => {
+    root.querySelectorAll("[data-fantasy-player]").forEach((row) => {
       row.addEventListener("click", () => {
         rememberFantasyBoardScroll();
         state.selectedFantasyPlayer = row.dataset.fantasyPlayer || "";
         renderDashboard();
       });
     });
-    document.querySelectorAll("[data-fantasy-watch]").forEach((button) => {
+    root.querySelectorAll("[data-fantasy-watch]").forEach((button) => {
       button.addEventListener("click", (event) => {
         event.stopPropagation();
         fantasyDraftToggleWatchlist(button.dataset.fantasyWatch || "");
       });
     });
-    document.getElementById("fantasySearch")?.addEventListener("change", (event) => {
+    root.querySelector("#fantasySearch")?.addEventListener("change", (event) => {
       state.fantasySearch = event.target.value || "";
       state.fantasyBoardScrollTop = 0;
       renderDashboard();
     });
-    document.getElementById("fantasyPosition")?.addEventListener("change", (event) => {
+    root.querySelector("#fantasyPosition")?.addEventListener("change", (event) => {
       state.fantasyPosition = event.target.value || "all";
       state.fantasyBoardScrollTop = 0;
       renderDashboard();
     });
-    document.getElementById("fantasyPick")?.addEventListener("click", fantasyDraftPick);
-    document.getElementById("fantasyExitSaves")?.addEventListener("click", returnToSaveSelection);
-    document.getElementById("fantasySimOne")?.addEventListener("click", () => fantasyDraftSim("fantasy_draft_sim_one"));
-    document.getElementById("fantasyToUser")?.addEventListener("click", () => fantasyDraftSim("fantasy_draft_sim_to_user"));
-    document.getElementById("fantasyClockExtension")?.addEventListener("click", fantasyDraftClockExtension);
+    root.querySelector("#fantasyPick")?.addEventListener("click", fantasyDraftPick);
+    root.querySelector("#fantasyExitSaves")?.addEventListener("click", returnToSaveSelection);
+    root.querySelector("#fantasySimOne")?.addEventListener("click", () => fantasyDraftSim("fantasy_draft_sim_one"));
+    root.querySelector("#fantasyToUser")?.addEventListener("click", () => fantasyDraftSim("fantasy_draft_sim_to_user"));
+    root.querySelector("#fantasyClockExtension")?.addEventListener("click", fantasyDraftClockExtension);
   }
   if (kind === "playoffs") {
-    document.querySelectorAll("[data-playoff-sim]").forEach((button) => button.addEventListener("click", () => playoffSim(button.dataset.playoffSim || "game")));
-    document.querySelectorAll("[data-playoff-series]").forEach((button) => {
+    root.querySelectorAll("[data-game-box]").forEach((button) => button.addEventListener("click", () => openBoxScore(button.dataset.gameBox)));
+    root.querySelectorAll("[data-playoff-series]").forEach((button) => {
       button.addEventListener("click", () => openPlayoffSeriesBoxScore(button.dataset.playoffSeries || ""));
     });
-    document.querySelector("[data-playoff-leader-stat]")?.addEventListener("change", async (event) => {
+    root.querySelector("[data-playoff-leader-stat]")?.addEventListener("change", async (event) => {
       state.playoffLeaderStat = event.currentTarget.value || "points";
       state.data.playoffLeaders = await action("playoff_leaders", {
         ...savePayload(),
@@ -3266,16 +5332,13 @@ function wireDashboardPhaseWorkspace(kind) {
       });
       renderDashboard();
     });
-    document.getElementById("playoffAdvanceStage")?.addEventListener("click", playoffAdvanceStage);
   }
   if (kind === "draft") {
-    document.getElementById("draftRevealLottery")?.addEventListener("click", draftRevealLottery);
-    document.getElementById("draftEnterNight")?.addEventListener("click", draftEnterNight);
-    document.getElementById("draftBoardFilter")?.addEventListener("change", (event) => {
+    root.querySelector("#draftBoardFilter")?.addEventListener("change", (event) => {
       state.draftBoardFilter = event.currentTarget.value || "available";
       renderDashboard();
     });
-    document.querySelectorAll("[data-draft-sort]").forEach((button) => button.addEventListener("click", () => {
+    root.querySelectorAll("[data-draft-sort]").forEach((button) => button.addEventListener("click", () => {
       const key = button.dataset.draftSort || "rank";
       const current = state.draftBoardSort || { key: "rank", direction: "asc" };
       state.draftBoardSort = {
@@ -3284,7 +5347,7 @@ function wireDashboardPhaseWorkspace(kind) {
       };
       renderDashboard();
     }));
-    document.querySelectorAll("[data-draft-prospect]").forEach((row) => {
+    root.querySelectorAll("[data-draft-prospect]").forEach((row) => {
       const select = () => {
         state.selectedDraftProspect = row.dataset.draftProspect || "";
         renderDashboard();
@@ -3297,18 +5360,13 @@ function wireDashboardPhaseWorkspace(kind) {
         }
       });
     });
-    document.querySelectorAll("[data-draft-prospect-card]").forEach((button) => {
+    root.querySelectorAll("[data-draft-prospect-card]").forEach((button) => {
       button.addEventListener("click", (event) => {
         event.stopPropagation();
         draftProspectCard(button.dataset.draftProspectCard || "");
       });
     });
-    document.getElementById("draftApply")?.addEventListener("click", draftApplyCurrent);
-    document.getElementById("draftSimCurrent")?.addEventListener("click", () => draftSim("draft_sim_current"));
-    document.getElementById("draftToUser")?.addEventListener("click", () => draftSim("draft_sim_to_user"));
-    document.getElementById("draftAll")?.addEventListener("click", () => draftSim("draft_sim_all"));
-    document.getElementById("draftAdvanceStage")?.addEventListener("click", draftAdvanceStage);
-    const ledger = document.querySelector("[data-draft-ledger]");
+    const ledger = root.querySelector("[data-draft-ledger]");
     const currentRow = ledger?.querySelector("[data-current-draft-pick]");
     const currentKey = state.draftSelectionPickKey || "";
     if (ledger && currentRow && state.draftLedgerCenteredKey !== currentKey) {
@@ -3324,27 +5382,38 @@ function wireDashboardPhaseWorkspace(kind) {
     }
   }
   if (kind === "free_agency") {
-    wireFreeAgencyMarket();
-    document.getElementById("faAdvanceDay")?.addEventListener("click", () => advanceFreeAgency("day"));
-    document.getElementById("faAdvanceEnd")?.addEventListener("click", () => advanceFreeAgency("end"));
-    document.getElementById("faAdvanceStage")?.addEventListener("click", freeAgencyAdvanceStage);
-    document.getElementById("reSignAdvanceDay")?.addEventListener("click", () => advanceReSigning("day"));
-    document.getElementById("reSignOpenMarket")?.addEventListener("click", () => advanceReSigning("open_market"));
+    wireFreeAgencyMarket(root);
+    root.querySelector("#faAdvanceDay")?.addEventListener("click", () => advanceFreeAgency("day"));
+    root.querySelector("#faAdvanceEnd")?.addEventListener("click", () => advanceFreeAgency("end"));
+    root.querySelector("#faAdvanceStage")?.addEventListener("click", freeAgencyAdvanceStage);
+    root.querySelector("#reSignAdvanceDay")?.addEventListener("click", () => advanceReSigning("day"));
+    root.querySelector("#reSignOpenMarket")?.addEventListener("click", () => advanceReSigning("open_market"));
   }
   if (kind === "cutdown") {
-    document.querySelectorAll("[data-waive-player]").forEach((button) => button.addEventListener("click", async () => {
+    root.querySelectorAll("[data-buyout-player]").forEach((button) => button.addEventListener("click", async () => {
+      const playerId = button.dataset.buyoutPlayer;
+      const player = (state.data.cutdown?.players || []).find((row) => row.player_id === playerId);
+      const quote = player?.buyout;
+      if (!quote) return;
+      const charges = quote.cap_charges.map((r) => `${r.season}: ${r.salary == null ? "unknown (reserved)" : money(r.salary / 1000000)}`).join("\n");
+      if (!window.confirm(`Buy out ${player.name}?\n${quote.policy}\nRemaining payout: ${quote.unquantified ? 'Unknown' : money(quote.payout_millions)}\nCap charges if unclaimed:\n${charges}\nThe player enters waivers until ${quote.clearance_date}. A claim transfers the original contract instead.`)) return;
+      const result = await action("buyout_player", { ...savePayload(), player_id: playerId });
+      showToast(`${result.player_name} placed on waivers`);
+      await refreshHome();
+    }));
+    root.querySelectorAll("[data-waive-player]").forEach((button) => button.addEventListener("click", async () => {
       const playerId = button.dataset.waivePlayer;
       const player = (state.data.cutdown?.players || []).find((row) => row.player_id === playerId);
-      if (!window.confirm(`Waive ${player?.name || "this player"}?`)) return;
+      if (!window.confirm(`Waive ${player?.name || "this player"}? Remaining obligation: ${player?.waiver?.unquantified ? 'unknown' : money(player?.waiver?.remaining_cost_millions || 0)}${player?.waiver?.unverified ? " (includes unverified salary reserves)" : ""}. This salary stays on your books.`)) return;
       const result = await action("waive_player", { ...savePayload(), player_id: playerId });
       showToast(result.status === "waived" ? `${result.player_name} waived` : (result.reason || result.status), result.status !== "waived");
       await refreshHome();
     }));
   }
   if (kind === "staff_retention") {
-    document.getElementById("staffRetentionResign")?.addEventListener("click", () => resolveStaffRetention("re_sign"));
-    document.getElementById("staffRetentionInterim")?.addEventListener("click", () => resolveStaffRetention("interim"));
-    document.querySelectorAll("[data-retention-candidate]").forEach((button) => {
+    root.querySelector("#staffRetentionResign")?.addEventListener("click", () => resolveStaffRetention("re_sign"));
+    root.querySelector("#staffRetentionInterim")?.addEventListener("click", () => resolveStaffRetention("interim"));
+    root.querySelectorAll("[data-retention-candidate]").forEach((button) => {
       button.addEventListener("click", () => replaceExpiringStaff(button.dataset.retentionCandidate));
     });
   }
@@ -3512,6 +5581,7 @@ function stopDashboardRotatorClock() {
 
 function startDashboardRotatorClock() {
   stopDashboardRotatorClock();
+  if (!document.querySelector('[data-event-rotator], [data-summary-leader-rotator], [data-market-rotator]')) return;
   wireDashboardRotatorPauseCards();
   resetDashboardRotatorProgress();
   dashboardRotatorState.lastFrame = performance.now();
@@ -3629,37 +5699,69 @@ function setMarketRotatorActive(rotator, value) {
 function tradeRoomModalBody() {
   const user = userTeam();
   const finder = state.tradeTab === "finder";
+  const acquiring = Boolean(state.tradeFinderTargetTeam);
+  const scope = acquiring ? state.tradeFinderTargetTeam : state.tradeFinderScope || "";
   const partnerOptions = state.teams
-    .filter((team) => team.abbrev !== user)
-    .map((team) => `<option value="${escapeAttr(team.abbrev)}" ${team.abbrev === state.tradePartner ? "selected" : ""}>${escapeHtml(team.abbrev)} ${escapeHtml(team.name || "")}</option>`)
+    .filter((team) => team.abbrev !== user && (finder || !(state.tradeAdditionalTeams || []).includes(team.abbrev)))
+    .map((team) => `<option value="${escapeAttr(team.abbrev)}" ${team.abbrev === (finder ? scope : state.tradePartner) ? "selected" : ""}>${escapeHtml(team.abbrev)} ${escapeHtml(team.name || "")}</option>`)
     .join("");
   return `
     <div class="trade-room-toolbar">
       <div class="trade-room-mode">
-        <span class="trade-room-kicker">Deal desk</span>
         <div class="tabs" aria-label="Trade tools">
-          <button data-trade-tab="builder" class="${state.tradeTab === "builder" ? "active" : ""}">Trade Builder</button>
-          <button data-trade-tab="finder" class="${state.tradeTab === "finder" ? "active" : ""}">Trade Finder</button>
+          <button data-trade-tab="builder" aria-pressed="${!finder}" class="${!finder ? "active" : ""}">Trade Builder</button>
+          <button data-trade-tab="finder" aria-pressed="${finder}" class="${finder ? "active" : ""}">Trade Finder</button>
         </div>
+        ${!finder && state.tradeWorkspaceDrafts?.finder ? '<button type="button" data-back-finder>Back to results</button>' : ""}
       </div>
       ${finder ? `
-        <div class="trade-market-scope">
-          <span>Market scope</span>
-          <strong>All 29 teams</strong>
+        <label class="trade-finder-mode"><span>Find a deal to</span><select id="tradeFinderMode" aria-label="Trade Finder mode"><option value="shop" ${!acquiring ? "selected" : ""}>Shop my assets</option><option value="acquire" ${acquiring ? "selected" : ""}>Acquire another team's assets</option></select></label>
+        <div class="trade-partner-navigation">
+          ${scope && teamLogoSrc(scope) ? `<img src="${escapeAttr(teamLogoSrc(scope))}" alt="${escapeAttr(scope)} logo" />` : ""}
+          <button type="button" data-trade-team-step="-1" aria-label="Previous Trade Finder team">‹</button>
+          <label class="trade-partner-field" for="tradeFinderTeam"><span>${acquiring ? "Target team" : "Search teams"}</span><select id="tradeFinderTeam">${!acquiring ? `<option value="" ${!scope ? "selected" : ""}>All ${state.teams.length - 1} teams</option>` : ""}${partnerOptions}</select></label>
+          <button type="button" data-trade-team-step="1" aria-label="Next Trade Finder team">›</button>
         </div>` : `
+        <div class="trade-partner-navigation">
+          ${teamLogoSrc(state.tradePartner) ? `<img src="${escapeAttr(teamLogoSrc(state.tradePartner))}" alt="${escapeAttr(state.tradePartner)} logo" />` : ""}
+          <button type="button" data-trade-team-step="-1" aria-label="Previous trade partner">‹</button>
         <label class="trade-partner-field" for="tradePartner">
           <span>Trade partner</span>
           <select id="tradePartner">${partnerOptions}</select>
-        </label>`}
+        </label><button type="button" data-trade-team-step="1" aria-label="Next trade partner">›</button></div>
+        <div class="trade-add-participant"><select id="tradeAddTeam" aria-label="Additional trade team"><option value="">Add team</option>${state.teams.filter(team => team.abbrev !== user && team.abbrev !== state.tradePartner && !(state.tradeAdditionalTeams || []).includes(team.abbrev)).map(team => `<option value="${escapeAttr(team.abbrev)}">${escapeHtml(team.abbrev)} ${escapeHtml(team.name || "")}</option>`).join("")}</select><button type="button" class="ui-command trade-icon-button" data-trade-add-team aria-label="Add team to trade" title="Add team" ${(state.tradeAdditionalTeams || []).length >= 4 ? "disabled" : ""}><img src="/assets/window-icons/plus.svg" alt=""></button></div>`}
     </div>
     <div id="tradeBody"></div>`;
 }
 
 async function openTradeRoomModal(tab = state.tradeTab || "builder", options = {}) {
+  if (state.tradeAdditionalSave !== state.currentSave) {
+    state.tradeAdditionalSave = state.currentSave;
+    state.tradeAdditionalTeams = [];
+    state.tradeExtraSelections = {};
+    state.tradeAssetRoutes = {};
+    state.tradePickRules = [];
+    state.data.tradeAdditionalAssets = {};
+  }
+  if (!["trades", "draft_trades"].some(action => clipboardLegalActions().has(action))) {
+    showToast("Trading is unavailable during this phase.", true);
+    return;
+  }
+  if (state.tradeTab !== tab) {
+    rememberTradeWorkspace();
+    restoreTradeWorkspace(tab);
+  }
   state.tradeTab = tab;
-  state.tradeFinderTargetTeam = options.targetTeam && teamLabel(options.targetTeam) !== userTeam() ? teamLabel(options.targetTeam) : null;
+  if (options.targetTeam || options.targetPlayerId || options.targetPickId) {
+    state.tradeFinderTargetTeam = options.targetTeam && teamLabel(options.targetTeam) !== userTeam() ? teamLabel(options.targetTeam) : null;
+    if (state.tradeFinderTargetTeam) state.tradePartner = state.tradeFinderTargetTeam;
+    state.tradeResults = [];
+    state.tradeSearchCompleted = false;
+    state.selectedFrom = [];
+    state.selectedTo = [];
+  }
   syncDefaultPartner();
-  await loadTradeAssets();
+  if (!(await loadTradeRoomAssets())) return;
   if (options.targetPlayerId || options.targetPickId) {
     const side = state.tradeFinderTargetTeam ? "To" : "From";
     state[`selected${side}`] = hydrateTradeSelection([{kind:options.targetPickId ? "pick" : "player",id:options.targetPickId || options.targetPlayerId}], state.data[side === "From" ? "tradeUser" : "tradePartner"]);
@@ -3673,30 +5775,198 @@ async function openTradeRoomModal(tab = state.tradeTab || "builder", options = {
   renderModal();
 }
 
+function rememberTradeWorkspace() {
+  state.tradeWorkspaceDrafts ||= {};
+  state.tradeWorkspaceDrafts[state.tradeTab] = {
+    save: state.currentSave,
+    partner: state.tradePartner,
+    selectedFrom: [...state.selectedFrom], selectedTo: [...state.selectedTo],
+    additionalTeams:[...(state.tradeAdditionalTeams || [])],
+    extraSelections:Object.fromEntries(Object.entries(state.tradeExtraSelections || {}).map(([team,items]) => [team,[...items]])),
+    assetRoutes:{...(state.tradeAssetRoutes || {})}, rosterSide:state.tradeRosterSide,
+    candidate: state.tradeCandidate,
+    pickRules:(state.tradePickRules || []).map(rule=>({...rule,fallback_pick_ids:[...(rule.fallback_pick_ids || [])]})),
+    targetTeam: state.tradeFinderTargetTeam || null,
+    scope: state.tradeFinderScope || "",
+    results: state.tradeResults, searchCompleted: state.tradeSearchCompleted,
+    resultScroll: els.modalRoot?.querySelector("#tradeResults")?.scrollTop || 0,
+  };
+}
+
+function restoreTradeWorkspace(tab) {
+  const stored = state.tradeWorkspaceDrafts?.[tab];
+  const draft = stored?.save === state.currentSave ? stored : null;
+  state.tradeAdditionalTeams = tab === "builder" ? [...(draft?.additionalTeams || [])] : [];
+  state.tradeExtraSelections = tab === "builder" ? Object.fromEntries(Object.entries(draft?.extraSelections || {}).map(([team,items]) => [team,[...items]])) : {};
+  state.tradeAssetRoutes = tab === "builder" ? {...(draft?.assetRoutes || {})} : {};
+  state.tradeRosterSide = tab === "builder" ? draft?.rosterSide || "from" : "from";
+  state.tradePickRules = (draft?.pickRules || state.tradePickRules || []).map(rule=>({...rule,fallback_pick_ids:[...(rule.fallback_pick_ids || [])]}));
+  if (!draft) {
+    state.tradeCandidate = null;
+    if (tab === "finder") {
+      state.tradeFinderTargetTeam = null;
+      state.tradeFinderScope = "";
+      if (state.selectedFrom.length > 2) {
+        state.selectedFrom = state.selectedFrom.slice(0, 2);
+        showToast("Trade Finder starts with the first two selected assets. Your full builder package is saved.");
+      }
+      state.selectedTo = [];
+      state.tradeResults = [];
+      state.tradeSearchCompleted = false;
+    }
+    return;
+  }
+  state.tradePartner = draft.partner;
+  state.selectedFrom = [...draft.selectedFrom];
+  state.selectedTo = [...draft.selectedTo];
+  state.tradeCandidate = draft.candidate;
+  if (tab === "finder") {
+    state.tradeFinderTargetTeam = draft.targetTeam;
+    state.tradeFinderScope = draft.scope;
+    state.tradeResults = draft.results;
+    state.tradeSearchCompleted = draft.searchCompleted;
+  }
+}
+
+async function loadTradeRoomAssets() {
+  const save = state.currentSave;
+  const partner = state.tradePartner;
+  const payload = savePayload();
+  const [userAssets, partnerAssets] = await Promise.all([
+    action("team_assets", { ...payload, team: userTeam() }),
+    action("team_assets", { ...payload, team: partner }),
+  ]);
+  if (save !== state.currentSave || partner !== state.tradePartner) return false;
+  state.data.tradeUser = userAssets;
+  state.data.tradePartner = partnerAssets;
+  const currentAssets = (items, payload) => items.map(item => (payload.assets || []).find(asset => asset.kind === item.kind && asset.id === item.id)).filter(Boolean);
+  state.selectedFrom = currentAssets(state.selectedFrom, userAssets);
+  state.selectedTo = currentAssets(state.selectedTo, partnerAssets);
+  for (const team of state.tradeAdditionalTeams || []) {
+    const extra = await action("team_assets", {...payload,team});
+    if (save !== state.currentSave || partner !== state.tradePartner) return false;
+    state.data.tradeAdditionalAssets ||= {};
+    state.data.tradeAdditionalAssets[team] = extra;
+    state.tradeExtraSelections ||= {};
+    state.tradeExtraSelections[team] = currentAssets(state.tradeExtraSelections[team] || [],extra);
+  }
+  pruneTradePickRules();
+  return true;
+}
+
+async function switchTradeWorkspace(tab) {
+  if (tab === state.tradeTab) return;
+  const loadedPartner = state.tradePartner;
+  rememberTradeWorkspace();
+  restoreTradeWorkspace(tab);
+  state.tradeTab = tab;
+  if (loadedPartner !== state.tradePartner || !state.data.tradeUser || !state.data.tradePartner) {
+    state.data.tradePartner = {};
+    renderTradeRoom();
+    if (!(await loadTradeRoomAssets())) return;
+  }
+  renderTradeRoom();
+  if (tab === "finder") {
+    const results = els.modalRoot?.querySelector("#tradeResults");
+    if (results) results.scrollTop = state.tradeWorkspaceDrafts?.finder?.resultScroll || 0;
+  }
+}
+
+async function setTradeWorkspaceTeam(team) {
+  if (state.tradeTab === "builder" && (state.tradeAdditionalTeams || []).includes(team)) return showToast("That team is already in this trade.",true);
+  if (state.tradeTab === "finder" && !state.tradeFinderTargetTeam) {
+    const searched = state.tradeSearchCompleted;
+    state.tradeFinderScope = team;
+    state.tradeResults = [];
+    state.tradeSearchCompleted = false;
+    if (team && (state.tradePickRules || []).length) {
+      const save = state.currentSave;
+      const payload = await action('team_assets',{...savePayload(),team});
+      if (save !== state.currentSave || team !== state.tradeFinderScope) return;
+      state.data.tradeRuleCounterparty = {team,payload};
+    }
+    renderTradeRoom();
+    if (searched && state.selectedFrom.length) await runTradeSearch();
+    return;
+  }
+  state.tradePartner = team;
+  if (state.tradeTab === "finder") {
+    state.tradeFinderTargetTeam = team;
+    state.tradeResults = [];
+    state.tradeSearchCompleted = false;
+  }
+  state.selectedTo = [];
+  state.tradeCandidate = null;
+  state.data.tradePartner = {};
+  renderTradeRoom();
+  if (!(await loadTradeRoomAssets())) return;
+  renderTradeRoom();
+}
+
+async function stepTradeWorkspaceTeam(direction) {
+  const finderShop = state.tradeTab === "finder" && !state.tradeFinderTargetTeam;
+  const teams = state.teams.filter(team => team.abbrev !== userTeam() && (state.tradeTab !== "builder" || !(state.tradeAdditionalTeams || []).includes(team.abbrev))).map(team => team.abbrev);
+  const choices = finderShop ? ["", ...teams] : teams;
+  if (!choices.length) return;
+  const current = finderShop ? state.tradeFinderScope || "" : state.tradePartner;
+  const index = Math.max(0, choices.indexOf(current));
+  await setTradeWorkspaceTeam(choices[(index + direction + choices.length) % choices.length]);
+}
+
 function renderTradeRoom() {
   if (state.modal?.kind !== "tradeRoom") return;
+  const scroll = [...(els.modalRoot?.querySelectorAll?.("[data-trade-scroll], .modal-body") || [])].map(node => [node.dataset.tradeScroll || "modal", node.scrollTop, node.scrollLeft]);
+  const focused = typeof document !== "undefined" ? document.activeElement : null;
+  const focusAsset = focused?.dataset?.assetId;
+  const focusSide = focused?.dataset?.assetSide;
+  const focusRule = focused?.dataset?.pickKey;
+  const focusRuleField = focused?.dataset?.pickField;
   state.modal = {
     ...state.modal,
     body: tradeRoomModalBody(),
   };
   renderModal();
+  for (const [key, top, left] of scroll) {
+    const node = [...(els.modalRoot?.querySelectorAll?.("[data-trade-scroll], .modal-body") || [])].find(item => (item.dataset.tradeScroll || "modal") === key);
+    if (node) { node.scrollTop = top; node.scrollLeft = left; }
+  }
+  if (focusAsset && focusSide) [...(els.modalRoot?.querySelectorAll?.("[data-asset-side]") || [])].find(node => node.dataset.assetId === focusAsset && node.dataset.assetSide === focusSide)?.focus({preventScroll:true});
+  if (focusRule && focusRuleField) [...(els.modalRoot?.querySelectorAll?.('[data-pick-key]') || [])].find(node=>node.dataset.pickKey===focusRule && node.dataset.pickField===focusRuleField)?.focus({preventScroll:true});
 }
 
 function wireTradeRoom() {
   const root = els.modalRoot;
   const partner = root.querySelector("#tradePartner");
-  partner?.addEventListener("change", async (event) => {
-    state.tradePartner = event.target.value;
-    state.selectedTo = [];
-    state.tradeCandidate = null;
-    await loadTradeAssets();
+  const handle = task => Promise.resolve(task).catch(error => showToast(error.message || String(error), true));
+  root.querySelector("[data-trade-add-team]")?.addEventListener("click", () => handle(addTradeParticipant(root.querySelector("#tradeAddTeam")?.value)));
+  partner?.addEventListener("change", event => handle(setTradeWorkspaceTeam(event.target.value)));
+  root.querySelector("#tradeFinderTeam")?.addEventListener("change", event => handle(setTradeWorkspaceTeam(event.target.value)));
+  root.querySelectorAll("[data-trade-team-step]").forEach(button => button.addEventListener("click", () => handle(stepTradeWorkspaceTeam(Number(button.dataset.tradeTeamStep)))));
+  root.querySelectorAll("[data-trade-roster-side]").forEach(button => button.addEventListener("click", () => {
+    state.tradeRosterSide = button.dataset.tradeRosterSide;
     renderTradeRoom();
-  });
+  }));
+  root.querySelector("[data-back-finder]")?.addEventListener("click", () => handle(switchTradeWorkspace("finder")));
+  root.querySelector("#tradeFinderMode")?.addEventListener("change", event => handle((async () => {
+    if (event.target.value === "acquire") {
+      state.tradeFinderShopSelection = [...state.selectedFrom];
+      state.tradeFinderTargetTeam = state.tradePartner;
+      state.selectedTo = [];
+      await loadTradeRoomAssets();
+    } else {
+      state.tradeFinderTargetTeam = null;
+      state.selectedFrom = [...(state.tradeFinderShopSelection || state.selectedFrom)];
+      state.selectedTo = [];
+    }
+    state.tradeResults = [];
+    state.tradeSearchCompleted = false;
+    pruneTradePickRules();
+    renderTradeRoom();
+  })()));
   root.querySelector(".tabs")?.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-trade-tab]");
     if (!button) return;
-    state.tradeTab = button.dataset.tradeTab;
-    renderTradeRoom();
+    handle(switchTradeWorkspace(button.dataset.tradeTab));
   });
   if (state.tradeTab === "finder") renderTradeFinder(root);
   else renderTradeBuilder(root);
@@ -3707,38 +5977,152 @@ function renderTradeBuilder(root) {
   if (!body) return;
   const userAssets = state.data.tradeUser || {};
   const partnerAssets = state.data.tradePartner || {};
+  const participants = tradeWorkspaceParticipants();
+  const multi = participants.length > 2;
+  const current = participants.find(team => team.side === state.tradeRosterSide) || participants[0];
+  const side = current.side;
+  const page = Math.max(0, Math.min(3, Number(state.tradeInsightPage || 0)));
   body.innerHTML = `
     <div class="trade-builder-layout">
-      ${assetColumn(`${userTeam()} assets`, userAssets, "from", userTeam())}
+      ${page === 0 ? `<div class="trade-roster-switch" aria-label="Team asset lists">
+        ${participants.map(({side:key,team,selected:items}) => `<span class="trade-participant-tab"><button type="button" data-trade-roster-side="${escapeAttr(key)}" aria-pressed="${side === key}">${teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : ""}<strong>${escapeHtml(team)}</strong><span>${items.length} selected</span></button>${key.startsWith("extra:") ? `<button type="button" class="trade-icon-button" data-trade-remove-team="${escapeAttr(team)}" aria-label="Remove ${escapeAttr(team)} from trade" title="Remove team"><img src="/assets/window-icons/x.svg" alt=""></button>` : ""}</span>`).join("")}
+      </div>
+      ${assetColumn(`${current.team} assets`,current.payload,side,current.team)}` : `<div class="trade-package-brief">${participants.map(({team,selected:items}) => `<section><strong>${escapeHtml(team)} sends</strong><span>${items.length ? items.slice(0,3).map(item => escapeHtml(item.name || item.label)).join(", ") + (items.length > 3 ? ` + ${items.length-3} assets` : "") : "No assets selected"}</span></section>`).join("")}<button type="button" class="ui-command" data-trade-edit-package>Edit package</button></div>`}
       <section class="trade-deal-desk approved-trade-desk">
-        <div class="approved-trade-teams">
-          ${tradeTeamHeading(userTeam(), userAssets)}
-          <span>⇄</span>
-          ${tradeTeamHeading(state.tradePartner, partnerAssets)}
-          <button id="clearTrade" class="trade-clear-button">Clear</button>
+        ${tradeInsightPager(["Package", "Value", "Payroll", "Team identity"], page, "builder")}
+        <div class="trade-insight-page" data-trade-page="${page}">
+        ${page === 0 ? `<div class="trade-selected-packages">
+          ${participants.map(({team,side,selected,payload}) => selectedPackage(`${team} sends`,selected,side,team,payload)).join("")}
+        </div>${tradePickTermsMarkup()}` : page === 1 ? multi ? tradeMultiValuePreview(participants) : `<div class="trade-team-decisions">${(state.tradeCandidate?.evaluations || []).map(tradeEvaluationPanel).join("")}</div>${tradeSegmentedValueBoard(state.tradeCandidate, state.selectedFrom, state.selectedTo, userTeam(), state.tradePartner)}` : page === 2 ? tradeFourYearImplications(userAssets, partnerAssets, state.selectedFrom, state.selectedTo,participants) : tradeIdentityPage()}
         </div>
-        <div class="trade-selected-packages">
-          ${selectedPackage(`${userTeam()} sends`, state.selectedFrom, "from", userTeam())}
-          ${selectedPackage(`${state.tradePartner} sends`, state.selectedTo, "to", state.tradePartner)}
-        </div>
-        ${tradeSegmentedValueBoard(state.tradeCandidate, state.selectedFrom, state.selectedTo, userTeam(), state.tradePartner)}
-        ${tradeFourYearImplications(userAssets, partnerAssets, state.selectedFrom, state.selectedTo)}
-        <button id="evaluateTrade" class="trade-evaluate-button" ${!state.selectedFrom.length && !state.selectedTo.length ? "disabled" : ""}>Evaluate Package</button>
-        <div id="tradeRead">${tradeReadout(state.tradeCandidate)}</div>
+        <div class="trade-decision-dock"><div id="tradeRead">${tradeReadout(state.tradeCandidate)}</div><button id="evaluateTrade" class="trade-evaluate-button ui-command" ${tradePickRuleErrors().length || !participants.some(row => row.selected.length) ? "disabled" : ""}>Evaluate package</button></div>
       </section>
-      ${assetColumn(`${state.tradePartner} assets`, partnerAssets, "to", state.tradePartner)}
     </div>`;
+  body.querySelectorAll("[data-trade-roster-side]").forEach(button => button.addEventListener("click", () => { state.tradeRosterSide = button.dataset.tradeRosterSide; renderTradeRoom(); }));
+  body.querySelectorAll("[data-trade-remove-team]").forEach(button => button.addEventListener("click", () => removeTradeParticipant(button.dataset.tradeRemoveTeam)));
+  wireTradeInsightPagers(body);
+  body.querySelector("[data-trade-edit-package]")?.addEventListener("click", () => { state.tradeInsightPage = 0; renderTradeRoom(); });
+  body.querySelectorAll("[data-trade-identity-team]").forEach(button => button.addEventListener("click", () => { state.tradeIdentityTeam = button.dataset.tradeIdentityTeam; renderTradeRoom(); }));
+  body.querySelector("[data-trade-identity-retry]")?.addEventListener("click", () => loadTradeIdentity(true));
+  if (page === 3) loadTradeIdentity().catch(error => showToast(error.message, true));
   wireTradeAssetControls(body);
-  body.querySelector("#clearTrade").addEventListener("click", () => {
-    state.selectedFrom = [];
-    state.selectedTo = [];
-    state.tradeCandidate = null;
-    renderTradeRoom();
-  });
-  body.querySelector("#evaluateTrade").addEventListener("click", evaluateBuiltTrade);
+  body.querySelector("#evaluateTrade").addEventListener("click", () => evaluateBuiltTrade().catch(error => showToast(error.message || String(error), true)));
   const applyButton = body.querySelector("#applyBuiltTrade");
-  if (applyButton) applyButton.addEventListener("click", () => applyCandidate(state.tradeCandidate, "builder"));
+  if (applyButton) applyButton.addEventListener("click", () => applyCandidate(state.tradeCandidate, "builder").catch(error => showToast(error.message || String(error), true)));
   body.querySelectorAll("[data-trade-team-roster]").forEach((button) => button.addEventListener("click", () => openTeamRosterCard(button.dataset.tradeTeamRoster)));
+  wireDashboardPlayerCards(body);
+}
+
+function tradePickParticipants() {
+  if (state.tradeTab !== 'finder') return tradeWorkspaceParticipants().map(row=>({...row,receiverFor:asset=>tradeAssetDestination(row.team,asset)}));
+  const target=state.tradeFinderTargetTeam, owner=target || userTeam(), other=target?userTeam():state.tradeFinderScope;
+  const payload=state.data[target?'tradePartner':'tradeUser'] || {};
+  const otherPayload=target?state.data.tradeUser:state.data.tradeRuleCounterparty?.team===other?state.data.tradeRuleCounterparty?.payload:other===state.tradePartner?state.data.tradePartner:{};
+  return [{team:owner,payload,selected:target?state.selectedTo:state.selectedFrom,recipient:other},
+    ...(other?[{team:other,payload:otherPayload || {},selected:[],recipient:owner}]:[])];
+}
+
+function tradePickTermsMarkup() { return globalThis.TradePickTerms?.markup(tradePickParticipants(),state.tradePickRules || []) || ''; }
+function tradePickRuleErrors() { return globalThis.TradePickTerms?.errors(state.tradePickRules || [],tradePickParticipants()) || []; }
+function tradePickRulesRequest() { return globalThis.TradePickTerms?.request(state.tradePickRules || []) || []; }
+function pruneTradePickRules() {
+  if (globalThis.TradePickTerms) state.tradePickRules=TradePickTerms.prune(state.tradePickRules || [],tradePickParticipants());
+}
+function wireTradePickTerms(root) {
+  globalThis.TradePickTerms?.wire(root,tradePickParticipants(),state.tradePickRules || [],(rules,focus)=>{
+    state.tradePickRules=rules;
+    state.tradeCandidate=null;
+    state.tradeResults=[];
+    state.tradeSearchCompleted=false;
+    renderTradeRoom();
+    if (focus) {
+      const control=focus.add?els.modalRoot.querySelector('[data-pick-add]'):[...els.modalRoot.querySelectorAll('[data-pick-key]')].find(n=>n.dataset.pickKey===focus.key && n.dataset.pickField===focus.field);
+      control?.focus({preventScroll:true});
+    }
+    loadTradeRuleCounterparty().catch(error=>showToast(error.message,true));
+  });
+}
+
+async function loadTradeRuleCounterparty() {
+  const team=state.tradeFinderScope, save=state.currentSave;
+  if (state.tradeTab!=='finder' || state.tradeFinderTargetTeam || !team || state.data.tradeRuleCounterparty?.team===team) return;
+  const payload=await action('team_assets',{...savePayload(),team});
+  if (save!==state.currentSave || team!==state.tradeFinderScope || state.tradeTab!=='finder') return;
+  state.data.tradeRuleCounterparty={team,payload};
+  renderTradeRoom();
+}
+
+function tradeWorkspaceParticipants() {
+  return [
+    {team:userTeam(),side:"from",payload:state.data.tradeUser || {},selected:state.selectedFrom},
+    {team:state.tradePartner,side:"to",payload:state.data.tradePartner || {},selected:state.selectedTo},
+    ...(state.tradeAdditionalTeams || []).map(team => ({team,side:`extra:${team}`,payload:state.data.tradeAdditionalAssets?.[team] || {},selected:state.tradeExtraSelections?.[team] || []})),
+  ];
+}
+
+function tradeRouteKey(owner, asset) { return `${owner}:${asset.kind}:${asset.id}`; }
+
+function tradeAssetDestination(owner, asset, participants = tradeWorkspaceParticipants()) {
+  const destination = state.tradeAssetRoutes?.[tradeRouteKey(owner,asset)];
+  const others = participants.filter(row => row.team !== owner);
+  if (others.some(row => row.team === destination)) return destination;
+  const normal = owner === userTeam() ? state.tradePartner : userTeam();
+  return others.find(row => row.team === normal)?.team || others[0]?.team || "";
+}
+
+function tradeReceivedAssets(team, participants = tradeWorkspaceParticipants()) {
+  return participants.flatMap(sender => sender.team === team ? [] : sender.selected.filter(asset => tradeAssetDestination(sender.team,asset,participants) === team));
+}
+
+function tradeSidePayload(side) {
+  if (side === "from") return state.data.tradeUser || {};
+  if (side === "to") return state.data.tradePartner || {};
+  return state.data.tradeAdditionalAssets?.[String(side).replace(/^extra:/,"")] || {};
+}
+
+async function addTradeParticipant(team) {
+  if (!team || !state.teams.some(row => row.abbrev === team)) return;
+  if (tradeWorkspaceParticipants().some(row => row.team === team)) return showToast("That team is already in this trade.",true);
+  if ((state.tradeAdditionalTeams || []).length >= 4) return;
+  const save = state.currentSave;
+  const payload = await action("team_assets", {...savePayload(),team});
+  if (save !== state.currentSave || state.tradeTab !== "builder" || (state.tradeAdditionalTeams || []).length >= 4 || tradeWorkspaceParticipants().some(row => row.team === team)) return;
+  state.tradeAdditionalTeams ||= [];
+  state.tradeAdditionalTeams.push(team);
+  state.tradeExtraSelections ||= {};
+  state.tradeExtraSelections[team] = [];
+  state.data.tradeAdditionalAssets ||= {};
+  state.data.tradeAdditionalAssets[team] = payload;
+  state.tradeRosterSide = `extra:${team}`;
+  state.tradeCandidate = null;
+  state.tradeIdentityPreview = null;
+  renderTradeRoom();
+}
+
+function removeTradeParticipant(team) {
+  if (!(state.tradeAdditionalTeams || []).includes(team)) return;
+  let resetDestination = false;
+  state.tradeAdditionalTeams = (state.tradeAdditionalTeams || []).filter(item => item !== team);
+  if (state.tradeExtraSelections) delete state.tradeExtraSelections[team];
+  for (const [key,destination] of Object.entries(state.tradeAssetRoutes || {})) {
+    if (destination === team) resetDestination = true;
+    if (key.startsWith(`${team}:`) || destination === team) delete state.tradeAssetRoutes[key];
+  }
+  if (state.tradeRosterSide === `extra:${team}`) state.tradeRosterSide = "from";
+  pruneTradePickRules();
+  state.tradeCandidate = null;
+  state.tradeIdentityPreview = null;
+  renderTradeRoom();
+  if (resetDestination) showToast(`${team} removed; affected destinations reset.`);
+}
+
+function tradeMultiValuePreview(participants) {
+  const totals = participants.map(row => ({...row,receives:tradeReceivedAssets(row.team,participants)}));
+  const maximum = Math.max(1,...totals.flatMap(row => [selectedTradeValue(row.selected),selectedTradeValue(row.receives)]));
+  return `<div class="trade-team-decisions">${(state.tradeCandidate?.evaluations || []).map(tradeEvaluationPanel).join("")}</div><section class="trade-multi-value"><header>Listed asset values</header>${totals.map(row => {
+    const sent=selectedTradeValue(row.selected),received=selectedTradeValue(row.receives),delta=received-sent;
+    return `<section><h4>${escapeHtml(row.team)}</h4><div class="trade-multi-value-flow"><span>Sends ${sent.toFixed(1)}</span><i aria-label="Outgoing listed value"><b style="width:${sent/maximum*100}%"></b></i><span>Receives ${received.toFixed(1)}</span><i class="receives" aria-label="Incoming listed value"><b style="width:${received/maximum*100}%"></b></i><strong>${delta>=0?"+":""}${delta.toFixed(1)} listed value change</strong></div></section>`;
+  }).join("")}</section>`;
 }
 
 function tradeTeamHeading(team, payload) {
@@ -3750,6 +6134,7 @@ function tradeTeamHeading(team, payload) {
 
 function tradeSegmentedValueBoard(candidate, outgoing, incoming, outgoingTeam, incomingTeam) {
   const breakdown = candidate?.value_breakdown || {};
+  const archived = Object.keys(breakdown).length && breakdown.version !== 2;
   const normalized = (row, fallback) => row?.asset_details?.length
     ? row.asset_details
     : fallback.map((asset) => ({
@@ -3759,15 +6144,16 @@ function tradeSegmentedValueBoard(candidate, outgoing, incoming, outgoingTeam, i
         components: { asset_value: Number(asset.trade_value || 0) },
       }));
   const rows = [
-    [outgoingTeam, normalized(breakdown.to_team_receives, outgoing)],
-    [incomingTeam, normalized(breakdown.from_team_receives, incoming)],
+    [outgoingTeam, normalized(breakdown.to_team_receives, outgoing), incomingTeam, breakdown.to_team_receives],
+    [incomingTeam, normalized(breakdown.from_team_receives, incoming), outgoingTeam, breakdown.from_team_receives],
   ];
   const all = rows.flatMap(([, details]) => details);
   const maximum = Math.max(1, ...all.map((asset) => Math.max(
     Object.values(asset.components || {}).filter((value) => Number(value) > 0).reduce((sum, value) => sum + Number(value), 0),
     Object.values(asset.components || {}).filter((value) => Number(value) < 0).reduce((sum, value) => sum + Math.abs(Number(value)), 0),
   )), ...rows.map(([, details]) => Math.abs(details.reduce((sum, asset) => sum + Number(asset.adjusted_value || 0), 0))));
-  const labels = { quality: "Quality", age_upside: "Age + upside", contract: "Contract", scarcity: "Scarcity", playoffs: "Playoffs", health: "Health", fit: "Fit", role: "Role", draft_capital: "Draft capital", swap_value: "Swap value", asset_value: "Asset value" };
+  const labels = { quality: "Quality", age_upside: "Age + upside", contract: "Contract", scarcity: "Scarcity", playoffs: "Playoffs", health: "Health", fit: "Fit", role: "Projected role", retention: "Recent acquisition", draft_capital: "Draft capital", swap_value: "Swap value", asset_value: "Asset value" };
+  const explanations = {quality:"Current on-court contribution.",age_upside:"Age curve and remaining development; older players can have a negative age adjustment even with no upside remaining.",contract:"Salary value relative to contribution, not salary in dollars.",scarcity:"How difficult this skill set is to replace.",playoffs:"Contribution expected to translate to playoff basketball.",health:"Injury risk reduces value.",fit:"Fit with this team's needs.",role:"Change from the listed value for the projected role after outgoing players leave. Fewer usable minutes can mean a large reduction; this is not a ratings penalty.",retention:"Extra cost of moving a recently acquired player.",draft_capital:"Pick value including year, projected position and protections.",swap_value:"Value of the swap right, not ownership of an extra pick."};
   const bar = (components) => {
     const entries = Object.entries(components || {}).filter(([, value]) => Math.abs(Number(value)) >= 0.005);
     const positive = entries.filter(([, value]) => Number(value) > 0);
@@ -3775,24 +6161,27 @@ function tradeSegmentedValueBoard(candidate, outgoing, incoming, outgoingTeam, i
     return `<div class="trade-value-diverging"><span class="negative-side">${negative.map(([key, value]) => `<i class="value-${escapeAttr(key)}" style="width:${clampNumber(Math.abs(Number(value)) / maximum * 100, 0, 100)}%" title="${escapeAttr(`${labels[key] || rowLabel(key)} ${Number(value).toFixed(1)}`)}"></i>`).join("")}</span><b></b><span class="positive-side">${positive.map(([key, value]) => `<i class="value-${escapeAttr(key)}" style="width:${clampNumber(Number(value) / maximum * 100, 0, 100)}%" title="${escapeAttr(`${labels[key] || rowLabel(key)} +${Number(value).toFixed(1)}`)}"></i>`).join("")}</span></div>`;
   };
   const componentKeys = [...new Set(all.flatMap((asset) => Object.keys(asset.components || {})))];
-  return `<section class="approved-trade-values"><header>Asset Value Breakdown</header>${rows.map(([team, details]) => {
-    const net = details.reduce((sum, asset) => sum + Number(asset.adjusted_value || 0), 0);
-    return `<div class="trade-value-team"><strong>${escapeHtml(team)} sends</strong>${details.length ? details.map((asset) => `<div class="approved-value-row"><span>${escapeHtml(asset.label || asset.id)}</span>${bar(asset.components)}<em>${Number(asset.adjusted_value || 0).toFixed(1)}</em></div>`).join("") : `<div class="trade-value-empty">No assets selected</div>`}<div class="approved-value-row net"><span>NET</span>${bar({ asset_value: net })}<em>${net.toFixed(1)}</em></div></div>`;
-  }).join("")}<footer>${componentKeys.map((key) => `<span class="value-${escapeAttr(key)}">${escapeHtml(labels[key] || rowLabel(key))}</span>`).join("")}</footer></section>`;
+  return `<section class="approved-trade-values"><header>${archived ? 'Archived asset estimates' : 'Receiving-team asset values'}</header>${archived ? '<p class="trade-value-help">This saved offer uses the older chart calculation. Review it in the builder and evaluate again for corrected totals; these archived bars are not the decision ledger.</p>' : ''}<details class="trade-value-help"><summary>What changes the listed value?</summary><p>Listed value is a market reference, not OVR or dollars. These bars show value to the receiving team: right adds value, left subtracts it. Age, upside, contract and health are already included in the reference value; the colored segments explain that value, not extra bonuses. Projected role and fit depend on the destination roster. Package adjustment discounts a bundle of depth relative to a concentrated return. Strategy is separate, so this total is not an acceptance score.</p></details>${rows.map(([team, details, destination, pack]) => {
+    const subtotal = details.reduce((sum, asset) => sum + Number(asset.adjusted_value || 0), 0);
+    const net = pack?.total == null ? subtotal : Number(pack.total);
+    const adjustment = net-subtotal;
+    return `<div class="trade-value-team"><strong>${escapeHtml(team)} sends · valued by ${escapeHtml(destination)}</strong>${details.length ? details.map((asset) => `<div class="approved-value-row" title="${escapeAttr(`${asset.listed_value == null ? '' : `Listed ${Number(asset.listed_value).toFixed(1)} · `}${asset.expected_role || ''}`)}"><span>${escapeHtml(asset.label || asset.id)}</span>${bar(asset.components)}<em>${Number(asset.adjusted_value || 0).toFixed(1)}</em></div>`).join("") : `<div class="trade-value-empty">No assets selected</div>`}${Math.abs(adjustment)>.05 ? `<div class="approved-value-row"><span>Package adjustment</span>${bar({asset_value:adjustment})}<em>${adjustment.toFixed(1)}</em></div>` : ''}<div class="approved-value-row net"><span>Roster value</span>${bar({ asset_value: net })}<em>${net.toFixed(1)}</em></div></div>`;
+  }).join("")}<footer>${componentKeys.map((key) => `<span class="value-${escapeAttr(key)}" title="${escapeAttr(explanations[key] || labels[key] || rowLabel(key))}">${escapeHtml(labels[key] || rowLabel(key))}</span>`).join("")}</footer><details class="trade-value-help"><summary>Value components</summary><dl>${componentKeys.filter(key=>explanations[key]).map(key=>`<div><dt>${escapeHtml(labels[key])}</dt><dd>${escapeHtml(explanations[key])}</dd></div>`).join('')}</dl></details></section>`;
 }
 
 function tradeCapImpactRows(payload, receives, sends, seasons) {
   const salaryDelta = (season) => receives.reduce((sum, item) => sum + Number(item.salary_by_year?.[season] || 0), 0) - sends.reduce((sum, item) => sum + Number(item.salary_by_year?.[season] || 0), 0);
+  const knownSalaries = [...receives,...sends].every(item => item.kind !== "player" || Object.keys(item.salary_by_year || {}).length > 0);
   return seasons.map((season) => {
     const cap = payload.cap_by_year?.[season] || {};
-    const delta = salaryDelta(season);
+    const delta = knownSalaries ? salaryDelta(season) : null;
     return {
       season,
       delta,
-      payroll: Number(cap.salary_total_millions || 0) + delta,
-      players: (payload.players || []).length + receives.filter((item) => item.kind === "player").length - sends.filter((item) => item.kind === "player").length,
-      tax: Number(cap.tax_space_millions || 0) - delta,
-      hard: Number(cap.hard_cap_space_millions || 0) - delta,
+      payroll: cap.salary_total_millions == null || delta === null ? null : Number(cap.salary_total_millions) + delta,
+      players: !payload.players ? null : payload.players.length + receives.filter((item) => item.kind === "player").length - sends.filter((item) => item.kind === "player").length,
+      tax: cap.tax_space_millions == null || delta === null ? null : Number(cap.tax_space_millions) - delta,
+      hard: cap.hard_cap_space_millions == null || delta === null ? null : Number(cap.hard_cap_space_millions) - delta,
     };
   });
 }
@@ -3807,16 +6196,30 @@ function tradeCapDeltaChart(rows) {
 }
 
 function tradeCapImpactTeam(team, payload, rows) {
-  return `<div class="approved-trade-cap-team"><strong>${escapeHtml(team)}</strong>${tradeCapDeltaChart(rows)}<table><thead><tr><th>Year</th><th>Payroll</th><th>Players</th><th>Tax room</th><th>Hard-cap room</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${escapeHtml(shortSeasonLabel(row.season))}</td><td>${money(row.payroll)} <small class="${row.delta > 0 ? "negative" : row.delta < 0 ? "positive" : ""}">${row.delta ? `${row.delta > 0 ? "+" : "−"}${money(Math.abs(row.delta))}` : ""}</small></td><td>${row.players}</td><td class="${row.tax < 0 ? "negative" : "positive"}">${signedMoney(row.tax)}</td><td class="${row.hard < 0 ? "negative" : "positive"}">${signedMoney(row.hard)}</td></tr>`).join("")}</tbody></table></div>`;
+  return `<div class="approved-trade-cap-team"><strong>${escapeHtml(team)}</strong>${tradeCapDeltaChart(rows)}<table><thead><tr><th>Year</th><th>Payroll</th><th>Players</th><th>Tax room</th><th>Hard-cap room</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${escapeHtml(shortSeasonLabel(row.season))}</td><td>${row.payroll === null ? "—" : money(row.payroll)} <small class="${row.delta > 0 ? "negative" : row.delta < 0 ? "positive" : ""}">${row.delta ? `${row.delta > 0 ? "+" : "−"}${money(Math.abs(row.delta))}` : ""}</small></td><td>${row.players ?? "—"}</td><td class="${row.tax < 0 ? "negative" : "positive"}">${row.tax === null ? "—" : signedMoney(row.tax)}</td><td class="${row.hard < 0 ? "negative" : "positive"}">${row.hard === null ? "—" : signedMoney(row.hard)}</td></tr>`).join("")}</tbody></table></div>`;
 }
 
-function tradeFourYearImplications(userPayload, partnerPayload, outgoing, incoming) {
-  const seasons = [...new Set([...Object.keys(userPayload.cap_by_year || {}), ...Object.keys(partnerPayload.cap_by_year || {})])].sort().slice(0, 4);
-  const teams = [
-    [userTeam(), userPayload, tradeCapImpactRows(userPayload, incoming, outgoing, seasons)],
-    [state.tradePartner, partnerPayload, tradeCapImpactRows(partnerPayload, outgoing, incoming, seasons)],
+function tradeFourYearImplications(userPayload, partnerPayload, outgoing, incoming, participants = null) {
+  const seasons = [...new Set((participants || [{payload:userPayload},{payload:partnerPayload}]).flatMap(row => Object.keys(row.payload.cap_by_year || {})))].sort().slice(0, 4);
+  const teams = participants ? participants.map(row => ({team:row.team,payload:row.payload,sends:row.selected,receives:tradeReceivedAssets(row.team,participants)})) : [
+    {team:userTeam(),payload:userPayload,receives:incoming,sends:outgoing},
+    {team:state.tradePartner,payload:partnerPayload,receives:outgoing,sends:incoming},
   ];
-  return `<section class="approved-trade-cap"><header>Four-Year Cap Implications</header><div class="approved-trade-cap-teams">${teams.map(([team, payload, rows]) => tradeCapImpactTeam(team, payload, rows)).join("")}</div></section>`;
+  teams.forEach(team => { team.after = tradeCapImpactRows(team.payload, team.receives, team.sends, seasons); });
+  const colorPlayerIds = [...new Set(teams.flatMap(team => [...(team.payload.players || []),...team.receives.filter(asset => asset.kind === "player")].map(player => player.id)))].sort();
+  const scaleMaximum = Math.max(1,...teams.flatMap(team => seasons.flatMap((season,index) => {
+    const cap = team.payload.cap_by_year?.[season] || {};
+    return [Number(cap.salary_total_millions || 0), Number(cap.tax_line_millions || 0), Number(cap.hard_cap_millions || 0), team.after[index].payroll || 0];
+  }))) * 1.06;
+  const charts = teams.map(({team,payload,receives,sends,after}) => [false,true].map(changed => {
+    const removed = new Set(sends.filter(asset => asset.kind === "player").map(asset => asset.id));
+    const roster = changed ? [...(payload.players || []).filter(player => !removed.has(player.id)), ...receives.filter(asset => asset.kind === "player")] : payload.players || [];
+    const payroll = Object.fromEntries(seasons.map((season,index) => [season,changed ? after[index].payroll : payload.cap_by_year?.[season]?.salary_total_millions]));
+    const known = seasons.length === 4 && Object.values(payroll).every(value => tradeKnownNumber(value) !== null);
+    return `<section class="trade-payroll-frame"><header>${escapeHtml(team)} · ${changed ? "After" : "Before"}</header>${known ? salaryHorizonChart({seasons,rows:roster,capByYear:payload.cap_by_year || {},payrollByYear:payroll,scaleMaximum,colorPlayerIds}) : '<div class="trade-package-empty">Scheduled payroll unavailable</div>'}</section>`;
+  }).join("")).join("");
+  const ledger = teams.map(({team,after}) => `<section><h4>${escapeHtml(team)} after trade</h4><table><thead><tr><th>Year</th><th>Payroll</th><th>Change</th><th>Tax room</th><th>Hard-cap room</th></tr></thead><tbody>${after.map(row => `<tr><th>${escapeHtml(shortSeasonLabel(row.season))}</th><td>${row.payroll === null ? "—" : money(row.payroll)}</td><td class="${row.delta > 0 ? "negative" : "positive"}">${row.delta === null ? "—" : signedMoney(row.delta)}</td><td class="${row.tax < 0 ? "negative" : "positive"}">${row.tax === null ? "—" : signedMoney(row.tax)}</td><td class="${row.hard < 0 ? "negative" : "positive"}">${row.hard === null ? "—" : signedMoney(row.hard)}</td></tr>`).join("")}</tbody></table></section>`).join("");
+  return `<section class="approved-trade-cap"><div class="trade-payroll-plots" tabindex="0" aria-label="Four-year payroll before and after trade">${charts}</div><div class="trade-payroll-ledgers">${ledger}</div></section>`;
 }
 
 function assetColumn(title, payload, side, team) {
@@ -3829,45 +6232,27 @@ function assetColumn(title, payload, side, team) {
     if (filter === "picks") return asset.kind === "pick";
     return asset.kind === "pick_swap";
   });
-  const maxValue = Math.max(1, ...allAssets.map((asset) => Number(asset.trade_value || 0)));
   return `
     <section class="trade-asset-column" ${teamBrandStyle(team)}>
       <div class="trade-asset-head">
         <div class="trade-team-lockup">
           ${teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : ""}
-          <div><span>${escapeHtml(title)}</span><strong>${allAssets.length} tradeable</strong></div>
+          <div><strong>${escapeHtml(title)}</strong><span>${allAssets.length} available assets</span></div>
         </div>
         <select data-asset-filter-side="${escapeAttr(side)}" aria-label="${escapeAttr(title)} filter">
           ${[["all", "All"], ["players", "Players"], ["picks", "Picks"], ["swaps", "Swaps"]].map(([value, label]) => `<option value="${value}" ${filter === value ? "selected" : ""}>${label}</option>`).join("")}
         </select>
       </div>
       ${tradeCapStrip(cap)}
-      <div class="trade-asset-list scroll-list">
-        ${assets.slice(0, 70).map((asset) => assetButton(asset, side, maxValue, team)).join("") || `<div class="empty">No tradeable assets in this group.</div>`}
+      ${typeof tradeWantsStrip==='function'?tradeWantsStrip(payload):''}
+      <div class="trade-asset-list scroll-list" data-trade-scroll="catalog-${escapeAttr(side)}" tabindex="0" aria-label="${escapeAttr(title)}">
+        ${assets.length ? tradeAssetTable(assets, {side, label:title}) : `<div class="trade-list-empty">No ${filter === "all" ? "tradeable assets" : escapeHtml(filter)} available for ${escapeHtml(team)}.</div>`}
       </div>
     </section>`;
 }
 
 function assetButton(asset, side, maxValue = 100, team = "") {
-  const selected = selectedList(side).some((item) => item.id === asset.id);
-  const tradeValue = Number(asset.trade_value || 0);
-  const valueWidth = clampNumber((tradeValue / Math.max(1, maxValue)) * 100, 3, 100);
-  const meta = asset.kind === "player"
-    ? `${asset.position || ""} · age ${asset.age || ""} · ${asset.height || ""}`
-    : `${asset.season || ""} · R${asset.round || ""}`;
-  const detail = asset.kind === "player"
-    ? `${Number(asset.mpg || 0).toFixed(1)} MPG · ${Number(asset.ppg || 0).toFixed(1)} PPG · OVR ${Number(asset.ratings?.overall || 0).toFixed(1)}`
-    : asset.label || `${asset.season || ""} R${asset.round || ""}`;
-  return `
-    <button class="trade-asset-card ${selected ? "selected" : ""}" data-asset-side="${side}" data-asset-kind="${escapeAttr(asset.kind)}" data-asset-id="${escapeAttr(asset.id)}">
-      <span class="trade-asset-main">
-        <span class="trade-asset-mark">${asset.kind==='player'?(teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : ""):draftAssetGlyph(asset,true,true)}</span>
-        <span class="trade-asset-copy"><strong>${escapeHtml(asset.label || asset.name || asset.id)}</strong><small>${escapeHtml(meta)}</small></span>
-        <span class="trade-asset-value"><small>VALUE</small><strong>${tradeValue.toFixed(1)}</strong></span>
-      </span>
-      <span class="trade-asset-detail">${escapeHtml(detail)}</span>
-      <span class="trade-asset-meter"><i style="width:${valueWidth.toFixed(1)}%"></i></span>
-    </button>`;
+  return tradeAssetRow(asset, {side});
 }
 
 function renderTradeFinder(root) {
@@ -3879,36 +6264,43 @@ function renderTradeFinder(root) {
   const side = targetMode ? "to" : "from";
   const userAssets = state.data[targetMode ? "tradePartner" : "tradeUser"] || {};
   const seasons = Object.keys(userAssets.cap_by_year || {}).sort().slice(0, 4);
-  const capRows = tradeCapImpactRows(userAssets, [], selection, seasons);
+  const capRows = targetMode
+    ? tradeCapImpactRows(state.data.tradeUser || {}, selection, [], Object.keys(state.data.tradeUser?.cap_by_year || {}).sort().slice(0, 4))
+    : tradeCapImpactRows(userAssets, [], selection, seasons);
   body.innerHTML = `
     <div class="trade-finder-layout">
-      ${assetColumn(`${finderTeam} market assets`, userAssets, side, finderTeam)}
+      ${assetColumn(`${finderTeam} ${targetMode ? "target" : "available"} assets`, userAssets, side, finderTeam)}
       <div class="trade-finder-workspace">
         <section class="trade-finder-brief" ${teamBrandStyle(userTeam())}>
-          <div class="trade-desk-head"><h3>Trade Finder</h3><strong class="trade-selection-count">${selection.length}/2 selected</strong></div>
+          <div class="trade-desk-head"><h3>${targetMode ? `Acquire from ${finderTeam}` : "Shop your assets"}</h3><span class="trade-selection-count">${selection.length}/2 selected</span></div>
           <div class="trade-finder-control-grid">
             ${selectedPackage(targetMode ? "Target Assets" : "Assets To Shop", selection, side, finderTeam)}
-            <div class="trade-finder-cap"><header>Cap Impact If Moved</header>${tradeCapDeltaChart(capRows)}</div>
+            <div class="trade-finder-cap"><header>${escapeHtml(userTeam())} salary ${targetMode ? "added if acquired" : "removed if moved"}</header>${tradeCapDeltaChart(capRows)}</div>
           </div>
-          <div class="trade-finder-actions"><button id="runTrade" class="trade-evaluate-button" ${selection.length ? "" : "disabled"}>Find Trades For Selected Assets</button><button id="clearTradeMarket" class="trade-clear-button" ${selection.length || state.tradeResults.length ? "" : "disabled"}>Clear</button></div>
+          ${tradePickTermsMarkup()}
+          <div class="trade-finder-actions"><span class="trade-finder-hint">${targetMode ? "Choose up to two targets; your GM will find a legal package." : `Choose up to two assets to shop to ${state.tradeFinderScope || "the league"}.`}</span><button id="runTrade" class="trade-evaluate-button ui-command" ${selection.length && !tradePickRuleErrors().length ? "" : "disabled"}>Find trades</button><button id="clearTradeMarket" class="trade-clear-button ui-command" ${selection.length || state.tradeResults.length ? "" : "disabled"}>Clear</button></div>
         </section>
         <section class="trade-finder-results">
-          <div class="trade-results-head"><h3>Found Trades</h3><strong>${state.tradeResults.length}</strong></div>
-          <div id="tradeResults" class="trade-results-list scroll-list">${tradeResultCards(state.tradeResults)}</div>
+          <div class="trade-results-head"><h3>Found trades ${!targetMode && state.tradeFinderScope ? `· ${escapeHtml(state.tradeFinderScope)}` : ""}</h3><span>${state.tradeResults.length} results</span></div>
+          <div id="tradeResults" class="trade-results-list scroll-list" aria-live="polite">${tradeResultCards(state.tradeResults)}</div>
         </section>
       </div>
     </div>`;
   wireTradeAssetControls(body);
-  body.querySelector("#runTrade").addEventListener("click", runTradeSearch);
+  wireTradeInsightPagers(body);
+  body.querySelector("#runTrade").addEventListener("click", () => runTradeSearch().catch(error => showToast(error.message || String(error), true)));
   body.querySelector("#clearTradeMarket").addEventListener("click", () => {
+    state.tradePickRules = [];
     state.selectedFrom = [];
     state.selectedTo = [];
     state.tradeResults = [];
+    state.tradeSearchCompleted = false;
     renderTradeRoom();
   });
   body.querySelectorAll("[data-inspect-finder]").forEach((button) => {
-    button.addEventListener("click", () => inspectFinderTrade(Number(button.dataset.inspectFinder)));
+    button.addEventListener("click", () => inspectFinderTrade(Number(button.dataset.inspectFinder)).catch(error => showToast(error.message || String(error), true)));
   });
+  wireDashboardPlayerCards(body);
 }
 
 function hydrateTradeSelection(specs, payload) {
@@ -3929,28 +6321,49 @@ async function inspectFinderTrade(index) {
   const candidate = state.tradeResults[index];
   const proposal = candidate?.proposal || {};
   if (!candidate) return;
+  rememberTradeWorkspace();
   const fromTeam = teamLabel(proposal.from_team_id || proposal.from_team || "");
   const toTeam = teamLabel(proposal.to_team_id || proposal.to_team || "");
   const userIsFrom = fromTeam === userTeam();
+  const previousPartner = state.tradePartner;
   state.tradePartner = userIsFrom ? toTeam : fromTeam;
-  await loadTradeAssets();
-  state.selectedFrom = hydrateTradeSelection(userIsFrom ? proposal.from_assets : proposal.to_assets, state.data.tradeUser);
-  state.selectedTo = hydrateTradeSelection(userIsFrom ? proposal.to_assets : proposal.from_assets, state.data.tradePartner);
+  if (previousPartner !== state.tradePartner || !state.data.tradePartner?.assets) await loadTradeRoomAssets();
+  const originals = specs => (specs || []).map(spec=>{
+    const term=(candidate.pick_obligation_terms || []).find(t=>t.id===(spec.id || spec.value) && t.pending_asset_grant);
+    return term ? {kind:'pick',id:term.primary_pick_id || term.team_a_pick_id} : spec;
+  });
+  state.selectedFrom = hydrateTradeSelection(originals(userIsFrom ? proposal.from_assets : proposal.to_assets), state.data.tradeUser);
+  state.selectedTo = hydrateTradeSelection(originals(userIsFrom ? proposal.to_assets : proposal.from_assets), state.data.tradePartner);
+  state.tradePickRules = (candidate.ui_pick_rules || []).map((rule,i)=>({...rule,key:`condition-${i+1}`,enabled:true,fallback_pick_ids:[...(rule.fallback_pick_ids || [])]}));
   state.tradeCandidate = candidate;
   state.tradeTab = "builder";
   renderTradeRoom();
 }
 
 async function evaluateBuiltTrade() {
-  if (!state.selectedFrom.length && !state.selectedTo.length) return showToast("Select at least one asset.", true);
+  if (!tradeWorkspaceParticipants().some(row => row.selected.length)) return showToast("Select at least one asset.", true);
+  if (tradePickRuleErrors().length) return showToast(tradePickRuleErrors()[0].message,true);
+  const save = state.currentSave, partner = state.tradePartner;
+  const request = () => {
+    if (!(state.tradeAdditionalTeams || []).length) return {from_team:userTeam(),to_team:state.tradePartner,
+      from_assets:state.selectedFrom.map(assetSpec),to_assets:state.selectedTo.map(assetSpec),pick_rules:tradePickRulesRequest()};
+    const transfers = [];
+    for (const row of tradeWorkspaceParticipants()) for (const asset of row.selected) {
+      const to = tradeAssetDestination(row.team,asset);
+      let leg = transfers.find(leg => leg.from_team_id === row.team && leg.to_team_id === to);
+      if (!leg) { leg = {from_team_id:row.team,to_team_id:to,assets:[]}; transfers.push(leg); }
+      leg.assets.push(assetSpec(asset));
+    }
+    return {transfers,pick_rules:tradePickRulesRequest()};
+  };
+  const selectionKey = JSON.stringify(request());
   const result = await action("evaluate_trade", {
     ...savePayload(),
-    from_team: userTeam(),
-    to_team: state.tradePartner,
-    from_assets: state.selectedFrom.map(assetSpec),
-    to_assets: state.selectedTo.map(assetSpec),
+    ...request(),
     seed: 7,
   });
+  if (save !== state.currentSave || partner !== state.tradePartner) return;
+  if (selectionKey !== JSON.stringify(request())) return;
   result.headline = tradeHeadline(result);
   state.tradeCandidate = result;
   renderTradeRoom();
@@ -3959,26 +6372,51 @@ async function evaluateBuiltTrade() {
 async function runTradeSearch() {
   const selection = state.tradeFinderTargetTeam ? state.selectedTo : state.selectedFrom;
   if (!selection.length) return showToast("Select at least one asset.", true);
+  if (tradePickRuleErrors().length) return showToast(tradePickRuleErrors()[0].message,true);
+  const save = state.currentSave, target = state.tradeFinderTargetTeam || null, scope = state.tradeFinderScope || "";
+  const selectionKey = JSON.stringify([selection.map(asset => `${asset.kind}:${asset.id}`).sort(),tradePickRulesRequest()]);
   const data = await action("find_trade_for_assets", {
     ...savePayload(),
     seller_team: state.tradeFinderTargetTeam || userTeam(),
     for_team: userTeam(),
+    buyer_team: state.tradeFinderTargetTeam ? undefined : state.tradeFinderScope || undefined,
     assets: selection.map(assetSpec),
-    limit: 8,
+    pick_rules:tradePickRulesRequest(),
+    limit: 12,
     seed: 7,
   });
+  if (save !== state.currentSave || target !== (state.tradeFinderTargetTeam || null) || scope !== (state.tradeFinderScope || "")) return;
+  const currentSelection = state.tradeFinderTargetTeam ? state.selectedTo : state.selectedFrom;
+  if (selectionKey !== JSON.stringify([currentSelection.map(asset => `${asset.kind}:${asset.id}`).sort(),tradePickRulesRequest()])) return;
   state.tradeResults = data.candidates || data.offers || [];
+  state.tradeSearchCompleted = true;
   renderTradeRoom();
 }
 
 async function applyCandidate(candidate, source) {
   if (!candidate) return;
+  if (state.tradeTab === 'builder' && (state.tradeAdditionalTeams || []).length && !candidate.proposal?.transfers) {
+    return showToast('Evaluate the complete multi-team package before submitting.',true);
+  }
+  const save = state.currentSave;
   const result = await action("apply_trade_candidate", { ...savePayload(), candidate, source });
-  showToast(`Trade result: ${result.status}`);
+  if (save !== state.currentSave) return;
+  if (result.status !== "applied") {
+    showToast(result.notes || result.result?.notes || `Trade not completed: ${rowLabel(result.status)}`, true);
+    return;
+  }
+  showToast("Trade completed");
+  tradeResponseEffect("accepted");
   state.selectedFrom = [];
   state.selectedTo = [];
+  state.tradeExtraSelections = {};
+  state.tradeAssetRoutes = {};
   state.tradeCandidate = null;
+  state.tradeIdentityPreview = null;
   state.tradeResults = [];
+  state.tradeSearchCompleted = false;
+  state.tradeWorkspaceDrafts = {};
+  state.tradePickRules = [];
   await refreshHome();
   if (state.modal?.kind === "tradeRoom") {
     await loadTradeAssets();
@@ -3990,10 +6428,6 @@ function renderOffers() {
   const offers = state.data.offers?.offers || [];
   els.content.innerHTML = `
     <section class="section featured">
-      <div class="section-head">
-        <div><h3>AI Trade Offers To You</h3><p class="muted">Only active incoming offers remain here. Deadline-expired offers are cleared by the engine.</p></div>
-        <span class="pill">${offers.length} active</span>
-      </div>
       ${tradeOffersList(offers)}
     </section>`;
   wireOfferButtons(els.content, offers);
@@ -4004,14 +6438,7 @@ function tradeOffersList(offers) {
 }
 
 function tradeOffersModalBody(offers) {
-  const legal = offers.filter((offer) => (offer.legality?.status || "legal") === "legal").length;
-  return `
-    <div class="trade-inbox-summary">
-      <div><span>Active</span><strong>${offers.length}</strong></div>
-      <div><span>Legal now</span><strong>${legal}</strong></div>
-      <p>Incoming offers expire with the trade window. Compare value and acceptance before committing.</p>
-    </div>
-    ${tradeOffersList(offers)}`;
+  return tradeOffersList(offers);
 }
 
 async function openTradeOffersModal() {
@@ -4019,6 +6446,7 @@ async function openTradeOffersModal() {
     state.data.dashboardOffers = await action("user_trade_offers", savePayload());
   }
   const offers = state.data.dashboardOffers?.offers || [];
+  window.CardBoard?.updateOfferCount(offers.length);
   state.modal = {
     kind: "tradeOffers",
     title: "AI Trade Offers To You",
@@ -4029,21 +6457,72 @@ async function openTradeOffersModal() {
   renderModal();
 }
 
+function returnToPlayerTradeContext(context) {
+  if (!context) return;
+  if (context.kind === "tradeOffers") return openTradeOffersModal();
+  if (context.kind !== "tradeRoom") return;
+  state.tradeTab = context.activeTab || state.tradeTab || "builder";
+  state.modal = {...context, body:tradeRoomModalBody()};
+  renderModal();
+}
+
 function wireOfferButtons(root, offers) {
+  wireDashboardPlayerCards(root);
+  wireTradeInsightPagers(root);
   root.querySelectorAll("[data-offer-accept]").forEach((button) => {
-    button.addEventListener("click", () => respondOffer(offers[Number(button.dataset.offerAccept)], "accept"));
+    button.addEventListener("click", () => respondOffer(offers[Number(button.dataset.offerAccept)], "accept").catch(error => showToast(error.message, true)));
   });
   root.querySelectorAll("[data-offer-reject]").forEach((button) => {
-    button.addEventListener("click", () => respondOffer(offers[Number(button.dataset.offerReject)], "reject"));
+    button.addEventListener("click", () => respondOffer(offers[Number(button.dataset.offerReject)], "reject").catch(error => showToast(error.message, true)));
   });
 }
 
 async function respondOffer(offer, decision) {
   const proposalId = offer?.proposal?.id || offer?.id;
-  const result = await action("respond_user_trade_offer", { ...savePayload(), proposal_id: proposalId, decision });
+  const currentSave = state.currentSave, inboxModal = state.modal;
+  const result = await action("respond_user_trade_offer", { ...savePayload(), proposal_id: proposalId, decision, ...(decision === "reject" ? {summary_only:true} : {}) });
+  if (state.currentSave !== currentSave) return;
+  if (decision === "accept" && result.status !== "applied") {
+    showToast(result.result?.notes || `Trade not completed: ${rowLabel(result.status)}`, true);
+    return;
+  }
+  if (decision === "reject") {
+    let remaining = result.offers;
+    if (!remaining && Array.isArray(result.pending_offer_ids)) {
+      const pendingIds = new Set(result.pending_offer_ids);
+      const known = (inboxModal?.kind === "tradeOffers" ? inboxModal.offers : state.data.offers?.offers) || state.data.dashboardOffers?.offers || [];
+      const offers = known.filter(item => pendingIds.has(item.proposal?.id || item.id));
+      remaining = {offer_count:result.offer_count, offers};
+      // Another manager may have added an offer since this inbox was opened.
+      if (offers.length !== pendingIds.size) remaining = await action("user_trade_offers", savePayload());
+      if (state.currentSave !== currentSave) return;
+    }
+    if (!remaining) throw new Error("The offer inbox could not be updated. Please reopen it.");
+    state.data.offers = remaining;
+    state.data.dashboardOffers = remaining;
+    const count = Number(remaining.offer_count ?? remaining.offers.length);
+    for (const counts of [state.home?.save?.pending_counts, state.home?.pending?.pending_counts]) {
+      if (counts) counts.user_trade_offers = count;
+    }
+    window.CardBoard?.updateOfferCount(count);
+    showToast(result.status === "rejected" ? "Offer declined" : `Offer ${rowLabel(result.status)}`);
+    if (result.status === "rejected") tradeResponseEffect("declined");
+    if (state.modal === inboxModal && state.modal?.kind === "tradeOffers") {
+      const scrollTop = els.modalRoot?.querySelector(".modal-shell")?.scrollTop || 0;
+      state.modal.offers = remaining.offers;
+      state.modal.subtitle = `${count} active incoming offer${count === 1 ? "" : "s"}`;
+      state.modal.body = tradeOffersModalBody(remaining.offers);
+      renderModal();
+      const shell = els.modalRoot?.querySelector(".modal-shell");
+      if (shell) shell.scrollTop = scrollTop;
+    } else if (state.view === "offers") renderOffers();
+    return;
+  }
   state.data.offers = result.offers;
   state.data.dashboardOffers = result.offers;
-  showToast(`Offer ${result.status}`);
+  window.CardBoard?.updateOfferCount(Number(result.offers?.offers?.length || 0));
+  showToast(result.status === "applied" ? "Trade completed" : `Offer ${rowLabel(result.status)}`, result.status !== "applied");
+  if (result.status === "applied") tradeResponseEffect("accepted");
   if (state.modal?.kind === "tradeOffers") {
     await refreshHome();
     const offers = state.data.dashboardOffers?.offers || [];
@@ -4060,19 +6539,220 @@ async function respondOffer(offer, decision) {
   await refreshHome();
 }
 
-function renderDraft() {
-  if (dashboardPhaseKind() !== "draft") {
-    const draft = state.data.draft || {};
-    const rows = sortDraftBoardRows(draftBoardRows(draft.draft_board), state.draftBoardSort);
-    els.content.innerHTML = `<section class="section prospect-preview">${sectionHead("Upcoming Prospects", draft.year || "")}${draftProspectBoard(rows)}</section>`;
-    els.content.querySelectorAll("[data-draft-sort]").forEach(button => button.addEventListener("click", () => {
-      const key = button.dataset.draftSort;
-      state.draftBoardSort = {key, direction: state.draftBoardSort.key === key && state.draftBoardSort.direction === "asc" ? "desc" : "asc"};
-      renderDraft();
-    }));
-    els.content.querySelectorAll("[data-draft-prospect-card]").forEach(button => button.addEventListener("click", () => draftProspectCard(button.dataset.draftProspectCard)));
+function isClipboardPhase(kind) {
+  return ["playoffs", "draft", "free_agency", "fantasy_draft", "staff_retention", "cutdown"].includes(kind);
+}
+
+function clipboardLegalActions() {
+  return new Set(state.home?.save?.legal_actions || state.data.dashboard?.legal_actions || []);
+}
+
+function seasonalClipboardCards(dashboard) {
+  const kind = dashboardPhaseKind();
+  const sections = {
+    staff_retention: [["decision", ".required-decision-workspace", "Staff Retention - Required"]],
+    cutdown: [["decision", ".required-decision-workspace", "Roster Cutdown - Required"]],
+    playoffs: [
+      ["bracket", ".phase-bracket-shell", "Playoff Bracket"],
+      ["leaders", ".phase-leaders-panel", "Playoff Leaders"],
+    ],
+    draft: [
+      ["lottery", ".draft-lottery-card", "Draft Lottery"],
+      ["board", ".draft-prospect-panel:not(.draft-summary-panel)", "Draft Prospect Board"],
+      ["order", ".draft-order-ledger-panel", "Draft Order"],
+      ["summary", ".draft-summary-panel", "Draft Summary"],
+      ["trades", ".draft-trade-recap-panel", "Draft-Night Trades"],
+    ],
+    free_agency: [
+      ["control", ".phase-workspace-head", "Free Agency Controls"],
+      ["market", "[data-free-agency-market-card]", "Free-Agent Market"],
+      ["selected", ".selected-player-intelligence", "Selected Free Agent"],
+      ["offers", ".live-offer-intelligence", "Live Offers"],
+      ["wire", ".signing-wire-intelligence", "Signing Wire"],
+      ["payroll", ".cap-intelligence", "Free Agency Payroll"],
+      ["cap", ".market-cap-totals", "Free Agency Cap Position"],
+    ],
+    fantasy_draft: [
+      ["control", ".fantasy-draft-head", "Fantasy Draft Controls"],
+      ["board", ".fantasy-player-board", "Fantasy Player Board"],
+      ["roster", ".fantasy-roster-board", "Fantasy Draft Roster"],
+      ["ticker", ".fantasy-draft-ticker", "Fantasy Draft Ticker"],
+    ],
+  };
+  const legal = clipboardLegalActions();
+  const cards = [];
+  for (const [phase, definitions] of Object.entries(sections)) {
+    const seed = document.createElement("div");
+    seed.className = "unified-phase-dashboard seasonal-card-seed";
+    seed.dataset.phase = phase;
+    const active = phase === kind;
+    const required = active && ["staff_retention", "cutdown"].includes(phase);
+    const roomKey = {playoffs:"playoffs", draft:"draft", free_agency:"freeagency", fantasy_draft:"fantasyDraft", staff_retention:"staffRetention", cutdown:"cutdown"}[phase];
+    if (!state.hydrating && state.data[roomKey] && (active || phase === "free_agency" || phase === 'playoffs' && state.home?.save?.playoff_status === 'completed')) {
+      seed.innerHTML = phase === "free_agency" && !active
+        ? `<div class="phase-free-agency-layout free-agency-single-market">${phaseFreeAgencyMarketCard(state.data.freeagency)}${freeAgencyIntelligenceRail(state.data.freeagency)}</div>`
+        : dashboardPhaseWorkspace(phase);
+      if (required) {
+        const workspace = document.createElement("div");
+        workspace.className = "required-decision-workspace";
+        workspace.append(...seed.childNodes);
+        seed.append(workspace);
+      }
+    }
+    dashboard.append(seed);
+    // Measure the existing phase layout before detaching any of its sections.
+    const measurements = definitions.map(([name, selector, title]) => {
+      const panel = seed.querySelector(selector);
+      const rect = panel?.getBoundingClientRect();
+      return {name, title, panel, width:Math.max(100, rect?.width || 320), height:Math.max(40, rect?.height || 240)};
+    });
+    for (const {name, title, panel, width, height} of measurements) {
+      const card = document.createElement("div");
+      card.className = required ? "required-clipboard-card" : "seasonal-clipboard-card";
+      const phaseContext = document.createElement("div");
+      phaseContext.className = "unified-phase-dashboard";
+      phaseContext.dataset.seasonalContext = "";
+      card.append(phaseContext);
+      let parent = phaseContext;
+      const ancestors = [];
+      for (let node = panel?.parentElement; node && node !== seed; node = node.parentElement) ancestors.unshift(node);
+      for (const ancestor of ancestors) {
+        const context = ancestor.cloneNode(false);
+        context.removeAttribute("id");
+        context.dataset.seasonalContext = "";
+        parent.append(context);
+        parent = context;
+      }
+      if (panel) {
+        parent.append(panel);
+        if (name === "control") panel.querySelectorAll("button").forEach(button => button.dataset.windowCommand = "");
+        if (phase === "draft" && name === "control") {
+          const news = seed.querySelector(".draft-news-strip, .draft-ceremony-note");
+          if (news) parent.append(news);
+        }
+      } else card.innerHTML = `<div class="empty">Available during ${escapeHtml(rowLabel(phase))}.</div>`;
+      const archiveBracket = phase === 'playoffs' && name === 'bracket' && state.home?.save?.playoff_status === 'completed';
+      const available = Boolean(panel) && (active || archiveBracket || phase === "free_agency" && name !== "control");
+      const signingClosed = phase === "free_agency" && ["market", "selected"].includes(name)
+        && state.data.freeagency?.state?.status === "completed";
+      const locked = !available || (phase === "free_agency" && !legal.has("free_agent_signings")) || signingClosed;
+      const bracket = phase === "playoffs" && name === "bracket";
+      const lottery = phase === 'draft' && name === 'lottery';
+      cards.push({id:`phase-${phase}-${name}`, title, card, width:bracket ? Math.min(1420, Math.max(320, window.innerWidth - 60)) : lottery ? Math.min(700,Math.max(320,window.innerWidth-60)) : width, height:bracket ? 480 : lottery ? (state.draftPresentationStage==='odds'?344:454) : height, sizingKey:lottery?`lottery-v2:${state.draftPresentationStage}`:null, locked, galleryVisible:(active || archiveBracket) && Boolean(panel), mandatory:["staff_retention", "cutdown"].includes(phase), required:required && Boolean(panel), measured:Boolean(panel), phaseActive:active && Boolean(panel)});
+    }
+    seed.remove();
+  }
+  return cards;
+}
+
+function clipboardLockedCards() {
+  const legal = clipboardLegalActions();
+  const locks = {};
+  if (!legal.has("trades") && !legal.has("draft_trades")) {
+    for (const id of ["trade-builder", "trade-finder", "league-block", "team-block", "team-wants"]) locks[id] = true;
+  }
+  if (!legal.has("advance") || isClipboardPhase(dashboardPhaseKind())) locks.week = true;
+  if (!legal.has("staff_changes")) locks.staff = true;
+  if (dashboardPhaseKind() === "fantasy_draft") locks.minutes = true;
+  return locks;
+}
+
+async function openClipboardWindow(view) {
+  if (state.view !== "dashboard") {
+    state.view = "dashboard";
+    await ensureViewData();
+    render();
+  }
+  if (view === "calendar") {
+    window.CardBoard?.open("week");
     return;
   }
+  const phase = dashboardPhaseKind();
+  const phaseCard = view === "draft" && ["draft", "fantasy_draft"].includes(phase)
+    ? phase === 'draft' ? (['odds','reveal'].includes(state.draftPresentationStage) ? 'phase-draft-lottery' : 'phase-draft-board') : 'phase-fantasy_draft-control'
+    : view === "playoffs" ? "phase-playoffs-bracket"
+    : ["freeagents", "freeagency"].includes(view) ? "phase-free_agency-market" : null;
+  if (phaseCard && ["freeagents", "freeagency"].includes(view) && !state.data.freeagency) {
+    state.data.freeagency = await action("free_agency_room", {...savePayload(), team:userTeam(), seed:7});
+    renderDashboard();
+  }
+  if (phaseCard) {
+    window.CardBoard?.open(phaseCard);
+    return;
+  }
+  const cardId = {"staff":"staff", "draft":"prospects"}[view];
+  if (cardId) {
+    window.CardBoard?.open(cardId);
+    window.CardBoard?.expand(cardId);
+  }
+}
+
+function renderProspectBoard(target = els.content, options = {}) {
+  const draft = state.data.draft || {};
+  const rows = draftBoardRows(draft.draft_board);
+  target.classList.toggle("season-prospects-expanded", Boolean(options.clipboard));
+  target.innerHTML = options.clipboard
+    ? `<div class="season-prospects-expanded-body">${seasonProspectsCard({rows, expanded:true})}</div>`
+    : `<section class="section prospect-preview">${sectionHead("Upcoming Prospects", draft.year || "")}${draftProspectBoard(sortDraftBoardRows(rows, state.draftBoardSort))}</section>`;
+  if (options.clipboard) {
+    wireSeasonProspectSort(target);
+    wireDashboardProspectCards(target);
+    return;
+  }
+  target.querySelectorAll("[data-draft-sort]").forEach(button => button.addEventListener("click", () => {
+    const key = button.dataset.draftSort;
+    state.draftBoardSort = {key, direction: state.draftBoardSort.key === key && state.draftBoardSort.direction === "asc" ? "desc" : "asc"};
+    renderProspectBoard(target, options);
+  }));
+  target.querySelectorAll("[data-draft-prospect-card]").forEach(button => button.addEventListener("click", () => draftProspectCard(button.dataset.draftProspectCard)));
+}
+
+async function setProspectsCardExpanded(expanded, card) {
+  if (!card) return;
+  card.classList.toggle("season-prospects-expanded", expanded);
+  if (!expanded) {
+    card.innerHTML = seasonProspectsCard();
+    wireSeasonProspectSort(card);
+    wireDashboardPlayerCards(card);
+    return;
+  }
+  if (!state.data.draft) {
+    card.innerHTML = `<div class="season-prospects-expanded-loading">Loading prospect board...</div>`;
+    try {
+      const currentSave = state.currentSave;
+      state.data.draft = await action("draft_room", {...savePayload(), team:userTeam(), seed:7});
+      if (state.currentSave !== currentSave || !card.isConnected || !card.classList.contains("season-prospects-expanded")) return;
+    } catch (error) {
+      if (card.isConnected && card.classList.contains("season-prospects-expanded")) {
+        card.innerHTML = `<div class="season-prospects-expanded-loading">Prospect board unavailable.</div>`;
+      }
+      showToast(error.message || String(error), true);
+      return;
+    }
+  }
+  if (card.isConnected && card.classList.contains("season-prospects-expanded")) renderProspectBoard(card, {clipboard:true});
+}
+
+function wireSeasonProspectSort(root) {
+  wireDashboardProspectCards(root);
+  root.querySelectorAll("[data-season-prospect-sort]").forEach(button => button.addEventListener("click", () => {
+    const key = button.dataset.seasonProspectSort;
+    const prior = state.dashboardProspectSort;
+    state.dashboardProspectSort = {key, direction:prior.key === key && prior.direction === "asc" ? "desc" : "asc"};
+    const panel = button.closest(".season-prospects-panel");
+    if (panel) {
+      panel.innerHTML = seasonProspectsCard();
+      wireSeasonProspectSort(panel);
+      wireDashboardPlayerCards(panel);
+      return;
+    }
+    const card = button.closest('[data-board-window="prospects"]');
+    if (card?.classList.contains("season-prospects-expanded")) renderProspectBoard(card, {clipboard:true});
+  }));
+}
+
+function renderDraft() {
+  if (dashboardPhaseKind() !== "draft") return renderProspectBoard();
   els.content.innerHTML = `
     <section class="section draft-standalone-shell">${draftDashboardWorkspace()}</section>`;
   wireDashboardPhaseWorkspace("draft");
@@ -4098,22 +6778,89 @@ async function draftRevealLottery() {
   }
   state.data.draft = result.room;
   state.draftPresentationStage = "reveal";
-  showToast(`${result.room.year || "Draft"} lottery order revealed.`);
-  renderDashboard();
+  await runLotteryReveal();
 }
 
 async function draftEnterNight() {
-  const room = await action("draft_room", { ...savePayload(), team: userTeam(), seed: 7 });
-  state.data.draft = room;
+  if (state.lotteryRevealRunning) return;
   state.draftPresentationStage = "draft";
-  renderDashboard();
+  await advance({draft_enter:true});
 }
 
 async function draftSim(actionName) {
   const result = await action(actionName, { ...savePayload(), team: userTeam(), seed: 7 });
   const appliedCount = Number(result.result?.applied_count ?? (result.status === "applied" ? 1 : 0));
+  const events = result.result?.presentation_events || [];
+  if (events.length) {
+    await playDraftSimulation(result.room, events, appliedCount);
+    return;
+  }
   showToast(`Draft sim: ${appliedCount} pick${appliedCount === 1 ? "" : "s"}`);
   await refreshDashboardAfterPhaseMutation("draft", result.room);
+}
+
+async function playDraftSimulation(finalRoom, events, appliedCount) {
+  state.draftPlaybackRunning = true;
+  state.draftPlaybackReveal = null;
+  window.AssistantGMPhone?.setDraftPlaybackActive?.(true);
+  state.busyDepth += 1;
+  setBusy(true);
+  let revealedPicks = 0;
+  let tradeNotificationsShown = false;
+  const draftTradeNotices = events.filter(event => event.type === "trade");
+  try {
+    state.data.draft = GameSimulation.draftPlaybackFrame(finalRoom, events, 0);
+    await refreshDashboardAfterPhaseMutation("draft", state.data.draft);
+    setBusy(true);
+    for (const event of events) {
+      if (event.type === "trade") {
+        if (!tradeNotificationsShown) {
+          tradeNotificationsShown = true;
+          const showAlerts = window.AssistantGMPhone?.presentDraftTrades;
+          if (showAlerts) await showAlerts(draftTradeNotices);
+          else await GameSimulation.wait(1800);
+        }
+        continue;
+      }
+      if (event.type !== "pick") continue;
+      revealedPicks += 1;
+      state.draftPlaybackReveal = event;
+      state.data.draft = GameSimulation.draftPlaybackFrame(finalRoom, events, revealedPicks);
+      updateDraftPlaybackCard();
+      await GameSimulation.wait(GameSimulation.reducedMotion() ? 160 : 430);
+    }
+    showToast(`Draft sim: ${appliedCount} pick${appliedCount === 1 ? "" : "s"}`);
+  } finally {
+    state.data.draft = finalRoom;
+    state.draftPlaybackRunning = false;
+    state.draftPlaybackReveal = null;
+    updateDraftPlaybackCard();
+    state.busyDepth = Math.max(0, state.busyDepth - 1);
+    setBusy(state.busyDepth > 0 || state.hydrating);
+    window.AssistantGMPhone?.setDraftPlaybackActive?.(false);
+    if(typeof maybeShowWantReminder==='function')maybeShowWantReminder();
+  }
+}
+
+function updateDraftPlaybackCard() {
+  const frame = document.querySelector('[data-board-window="phase-draft-board"]');
+  const shell = frame?.querySelector(".draft-night-shell");
+  if (!shell) {
+    renderDashboard();
+    setBusy(true);
+    return;
+  }
+  const template = document.createElement("template");
+  template.innerHTML = draftDashboardWorkspace().trim();
+  const nextShell = template.content.querySelector(".draft-night-shell");
+  if (!nextShell) {
+    renderDashboard();
+    setBusy(true);
+    return;
+  }
+  shell.replaceWith(nextShell);
+  wireDashboardPhaseWorkspace("draft", frame.querySelector(".card-board-body") || frame);
+  setBusy(true);
 }
 
 async function draftAdvanceStage() {
@@ -4138,7 +6885,7 @@ function renderFreeAgency() {
     <section class="section standalone-phase-shell standalone-free-agency-shell">
       ${freeAgencyOpen || freeAgencyCompleted
         ? freeAgencyDashboardWorkspace()
-        : `<div class="phase-workspace-head unified-free-agency-head"><div class="unified-phase-brand"><h3>Current Free Agents</h3></div><strong class="unified-phase-day">${escapeHtml(rowLabel(room.phase || "regular_season"))}</strong></div><div class="phase-free-agency-layout free-agency-single-market">${phaseFreeAgencyMarketCard(room, exclusive)}${freeAgencyIntelligenceRail(room, exclusive)}</div>`}
+        : `<div class="phase-workspace-head unified-free-agency-head"><div class="unified-phase-brand"><h3>Current Free Agents</h3></div><strong class="unified-phase-day">${escapeHtml(rowLabel(room.phase || "regular_season"))}</strong><button class="ui-command" data-open-waivers>Waivers</button></div><div class="phase-free-agency-layout free-agency-single-market">${phaseFreeAgencyMarketCard(room, exclusive)}${freeAgencyIntelligenceRail(room, exclusive)}</div>`}
     </section>`;
   wireFreeAgencyMarket(els.content, renderFreeAgency);
   wireFreeAgencyIntelligence();
@@ -4153,6 +6900,7 @@ function renderFreeAgency() {
 }
 
 function wireFreeAgencyMarket(root = els.content, rerender = renderDashboard) {
+  root.querySelectorAll('[data-open-waivers]').forEach((button) => button.addEventListener('click', openWaiverRoom));
   wireLinkedRoster(root.querySelector('[data-linked-scope="market"]'), key=>{
     const current=state.freeAgentMarketSort||{};
     state.freeAgentMarketSort={key,direction:current.key===key&&current.direction==='desc'?'asc':'desc'};
@@ -4250,6 +6998,38 @@ function wireFreeAgencyMarket(root = els.content, rerender = renderDashboard) {
   });
 }
 
+async function openWaiverRoom() {
+  const room = await action('waiver_room', savePayload());
+  const roster = new Map(room.roster.map((p) => [p.id, p.name]));
+  state.modal = {kind: 'waivers', title: 'Waiver Wire', body: table(['Player', 'Clears', 'Existing contract', 'Roster move', ''], room.players, (row) => [
+    row.player_name, row.clearance_date,
+    row.contract.map((r) => `${r.season}: ${r.salary == null ? 'Unknown' : money(r.salary / 1000000)}`).join(' / '),
+    row.options.length ? html(`<select data-waiver-cut="${escapeAttr(row.id)}" aria-label="Player to waive for ${escapeAttr(row.player_name)}">${row.options.map((o) => `<option value="${escapeAttr(o.cut_player_id || '')}">${escapeHtml(o.cut_player_id ? `Waive ${roster.get(o.cut_player_id)} (${money(o.cut_cost_millions)} owed)` : 'Open roster spot')}</option>`).join('')}</select>`) : 'No legal claim',
+    html(`<button class="ui-command" data-claim-waiver="${escapeAttr(row.id)}" ${row.claimed || !row.options.length ? 'disabled' : ''}>${row.claimed ? 'Claim submitted' : 'Claim'}</button>`),
+  ]) + `<details><summary>Release a player</summary>${table(['Player', 'Remaining buyout', ''], room.roster, (p) => [p.name,
+    p.buyout.unquantified ? 'Unknown' : money(p.buyout.payout_millions),
+    html(`<button class="ui-command" data-wire-release="${escapeAttr(p.id)}" data-buyout="false">Waive</button> <button class="ui-command" data-wire-release="${escapeAttr(p.id)}" data-buyout="true">Buyout</button>`),
+  ])}</details>`};
+  renderModal();
+  els.modalRoot.querySelectorAll('[data-wire-release]').forEach((button) => button.addEventListener('click', async () => {
+    const p = room.roster.find((r) => r.id === button.dataset.wireRelease);
+    const quote = p.buyout;
+    const buyout = button.dataset.buyout === 'true';
+    const charges = (buyout ? quote.cap_charges : quote.seasons).map((r) => `${r.season}: ${r.salary == null ? 'Unknown' : money(r.salary / 1000000)}`).join('\n');
+    if (!window.confirm(`${buyout ? 'Buy out' : 'Waive'} ${p.name}?\n${buyout ? quote.policy : 'Guaranteed obligations remain unless another team claims the contract.'}\nCap charges if unclaimed:\n${charges}\nWaivers clear ${quote.clearance_date}.`)) return;
+    await action(buyout ? 'buyout_player' : 'waive_player', {...savePayload(), player_id: p.id});
+    await refreshHome();
+    await openWaiverRoom();
+  }));
+  els.modalRoot.querySelectorAll('[data-claim-waiver]').forEach((button) => button.addEventListener('click', async () => {
+    const id = button.dataset.claimWaiver;
+    const select = Array.from(els.modalRoot.querySelectorAll('[data-waiver-cut]')).find((s) => s.dataset.waiverCut === id);
+    if (!window.confirm('Submit this waiver claim? If awarded, you assume the existing contract and the selected roster move is applied. Claims cannot be withdrawn.')) return;
+    await action('claim_waiver', { ...savePayload(), waiver_id: id, cut_player_id: select?.value || null });
+    await openWaiverRoom();
+  }));
+}
+
 function wireFreeAgencyIntelligence(root = els.content) {
   root.querySelectorAll("[data-fa-intel-card]").forEach((button) => {
     button.addEventListener("click", () => freeAgentPlayerCard(button.dataset.faIntelCard || ""));
@@ -4266,12 +7046,17 @@ function wireFreeAgencyIntelligence(root = els.content) {
         state.freeAgentShortlistIds = [...state.freeAgentShortlistIds, id];
       }
       refreshFreeAgencyIntelligence();
+      if (els.content.querySelector('.seasonal-clipboard-card')) return;
       refreshFreeAgencyMarketCard(els.content.querySelector("[data-free-agency-market-card]"), renderDashboard);
     });
   });
 }
 
 function refreshFreeAgencyIntelligence() {
+  if (els.content.querySelector('.seasonal-clipboard-card [data-free-agency-intelligence]')) {
+    renderDashboard();
+    return;
+  }
   const current = els.content.querySelector("[data-free-agency-intelligence]");
   if (!current) return;
   const room = state.data.freeagency || {};
@@ -4280,6 +7065,10 @@ function refreshFreeAgencyIntelligence() {
 }
 
 function refreshFreeAgencyMarketCard(card, rerender = renderDashboard) {
+  if (card?.closest('.seasonal-clipboard-card')) {
+    rerender();
+    return;
+  }
   const room = state.data.freeagency || {};
   if (!card) {
     rerender();
@@ -4329,7 +7118,7 @@ function freeAgentNegotiationBody(player, detail, exclusive = false) {
     <section class="approved-card-panel approved-negotiation-season"><header>Latest Season</header><div>${[["GP", player.games], ["MPG", player.previous_mpg], ["PTS", player.ppg], ["REB", player.rpg], ["AST", player.apg], ["STL", player.spg], ["BLK", player.bpg], ["TO", player.topg], ["FTA", player.fta_per_game], ["FT%", player.ft_pct]].map(([label, value]) => `<span><small>${label}</small><strong>${draftMetric(value)}</strong></span>`).join("")}</div></section>
     <section class="approved-card-panel approved-negotiation-ratings"><header>Complete Ratings</header>${negotiationEvidence(detail)}<div class="approved-rating-rail">${playerCardRatingRows(ratings).map(([label, value, key]) => `<div class="${ratingQuartileTone(value, key, detail?.rating_quartiles)}"><span>${escapeHtml(label)}</span><i><b style="${performanceBarStyle(value)}"></b></i><strong>${draftMetric(value)}</strong></div>`).join("")}</div></section>
     <div class="approved-negotiation-work">
-      <section class="approved-card-panel approved-ask-offer"><header>Ask / Offer</header><div class="approved-ask-grid"><span><small>Asking price</small><strong>${money(player.ask_millions)} × 4</strong></span><label><small>Your offer · max ${money(maximum)}</small><span class="money-input"><b>$</b><input id="faAav" type="number" min="1.9" max="${maximum.toFixed(1)}" step="0.1" value="${initial.toFixed(1)}"><b>M</b></span></label><label><small>Years</small><input id="faYears" type="number" min="1" max="5" step="1" value="4"></label></div></section>
+      <section class="approved-card-panel approved-ask-offer"><header>Ask / Offer</header><div class="approved-ask-grid"><span><small>Asking price</small><strong>${money(player.ask_millions)} x 4</strong><label class="contract-security"><input id="faGuaranteed" type="checkbox" checked> Guaranteed</label></span><label><small>Your offer · max ${money(maximum)}</small><span class="money-input"><b>$</b><input id="faAav" type="number" min="1.9" max="${maximum.toFixed(1)}" step="0.1" value="${initial.toFixed(1)}"><b>M</b></span></label><label><small>Years</small><input id="faYears" type="number" min="1" max="5" step="1" value="4"></label></div></section>
       <section class="approved-card-panel approved-interest-factors"><header>Interest Breakdown</header><div>${[["Offer vs ask", initial / Math.max(1, Number(player.ask_millions || 1)) * 100], ["Team fit", player.team_fit_score], ["Market position", player.highest_offer?.interest_score || 50], ["Financial room", maximum / Math.max(1, Number(player.ask_millions || 1)) * 70]].map(([label, value]) => `<span><small>${escapeHtml(label)}</small><i><b style="width:${clampNumber(Number(value || 0), 0, 100)}%"></b></i><strong>${Math.round(clampNumber(Number(value || 0), 0, 100))}</strong></span>`).join("")}</div></section>
       <section class="approved-card-panel approved-offer-decision"><header>Player Interest</header><div><i><b data-fa-live-interest style="width:${clampNumber(initial / Math.max(1, Number(player.ask_millions || 1)) * 70, 0, 100)}%"></b></i><strong data-fa-live-interest-value>${Math.round(clampNumber(initial / Math.max(1, Number(player.ask_millions || 1)) * 70, 0, 100))} / 100</strong><button id="submitFaOffer" class="primary-action">${exclusive ? "Offer Re-Signing" : "Submit Offer"}</button></div></section>
       <section class="approved-card-panel approved-offer-cap"><header>Four-Year Cap Impact</header>${approvedOfferCapChart(capRows.slice(0, 4), initial)}</section>
@@ -4340,17 +7129,21 @@ function freeAgentNegotiationBody(player, detail, exclusive = false) {
 
 function approvedOfferCapChart(capRows, offer) {
   const maximum = Math.max(1, ...capRows.map(([, cap]) => Number(cap.hard_cap_millions || 230))) * 1.05;
-  return `<div class="approved-offer-cap-chart">${capRows.map(([season, cap]) => {
+  return `<div class="approved-offer-cap-chart">${capRows.map(([season, cap], index) => {
+    const annual = Number((Array.isArray(offer) ? offer[index] : offer) || 0);
     const payroll = Number(cap.salary_total_millions || 0);
-    const after = payroll + Number(offer || 0);
-    return `<div><span>${escapeHtml(shortSeasonLabel(season))}</span><i><b style="height:${clampNumber(payroll / maximum * 100, 0, 100)}%"></b><strong data-offer-highlight data-cap-maximum="${maximum}" style="height:${clampNumber(Number(offer || 0) / maximum * 100, 0, 100)}%;bottom:${clampNumber(payroll / maximum * 100, 0, 100)}%"></strong><em class="tax-line" style="bottom:${clampNumber(Number(cap.tax_line_millions || 0) / maximum * 100, 0, 100)}%"></em><em class="hard-line" style="bottom:${clampNumber(Number(cap.hard_cap_millions || 0) / maximum * 100, 0, 100)}%"></em></i><small data-offer-payroll data-base-payroll="${payroll}">${money(after)}</small></div>`;
+    const after = payroll + annual;
+    return `<div><span>${escapeHtml(shortSeasonLabel(season))}</span><i><b style="height:${clampNumber(payroll / maximum * 100, 0, 100)}%"></b><strong data-offer-highlight data-cap-maximum="${maximum}" style="height:${clampNumber(annual / maximum * 100, 0, 100)}%;bottom:${clampNumber(payroll / maximum * 100, 0, 100)}%"></strong><em class="tax-line" style="bottom:${clampNumber(Number(cap.tax_line_millions || 0) / maximum * 100, 0, 100)}%"></em><em class="hard-line" style="bottom:${clampNumber(Number(cap.hard_cap_millions || 0) / maximum * 100, 0, 100)}%"></em></i><small data-offer-payroll data-base-payroll="${payroll}">${money(after)}</small></div>`;
   }).join("")}</div>`;
 }
 
 function approvedOfferSalaryTable(capRows, offer) {
   const rows = [...capRows];
   while (rows.length < 6) rows.push([`Year ${rows.length + 1}`, {}]);
-  return `<table class="approved-offer-salary-table"><thead><tr><th>Season</th><th>Salary</th><th>Payroll</th><th>Tax room</th><th>Hard-cap room</th></tr></thead><tbody>${rows.slice(0, 6).map(([season, cap]) => `<tr><td>${escapeHtml(shortSeasonLabel(season))}</td><td data-offer-salary>${money(offer)}</td><td data-offer-table-payroll data-base="${Number(cap.salary_total_millions || 0)}">${money(Number(cap.salary_total_millions || 0) + Number(offer || 0))}</td><td data-offer-table-tax data-base="${Number(cap.tax_space_millions || 0)}">${signedMoney(Number(cap.tax_space_millions || 0) - Number(offer || 0))}</td><td data-offer-table-hard data-base="${Number(cap.hard_cap_space_millions || 0)}">${signedMoney(Number(cap.hard_cap_space_millions || 0) - Number(offer || 0))}</td></tr>`).join("")}</tbody></table>`;
+  return `<table class="approved-offer-salary-table"><thead><tr><th>Season</th><th>Salary</th><th>Payroll</th><th>Tax room</th><th>Hard-cap room</th></tr></thead><tbody>${rows.slice(0, 6).map(([season, cap], index) => {
+    const annual = Number((Array.isArray(offer) ? offer[index] : offer) || 0);
+    return `<tr><td>${escapeHtml(shortSeasonLabel(season))}</td><td data-offer-salary>${money(annual)}</td><td data-offer-table-payroll data-base="${Number(cap.salary_total_millions || 0)}">${money(Number(cap.salary_total_millions || 0) + annual)}</td><td data-offer-table-tax data-base="${Number(cap.tax_space_millions || 0)}">${signedMoney(Number(cap.tax_space_millions || 0) - annual)}</td><td data-offer-table-hard data-base="${Number(cap.hard_cap_space_millions || 0)}">${signedMoney(Number(cap.hard_cap_space_millions || 0) - annual)}</td></tr>`;
+  }).join("")}</tbody></table>`;
 }
 
 function freeAgentOfferSummary(player) {
@@ -4372,7 +7165,7 @@ function freeAgentPlayerCard(playerId) {
     ["Rim protect", ratings.rim_deterrence], ["Rebound", ratings.rebounding], ["Athleticism", ratings.athleticism],
   ];
   const ratingRows = [
-    ["Overall", ratings.overall], ["Shooting", ratings.shooting], ["Release", ratings.release],
+    ["OVR", ratings.overall], ["Shooting", ratings.shooting], ["Release", ratings.release],
     ["Range", ratings.range], ["Shot versatility", ratings.versatility], ["Spacing", ratings.spacing],
     ["Creation", ratings.creation], ["Handle", ratings.handle], ["Passing", ratings.passing],
     ["Rim pressure", ratings.rim_pressure], ["Defense", ratings.defense], ["Defensive effort", ratings.def_effort],
@@ -4424,30 +7217,40 @@ async function loadPlayerCardDetail(playerId) {
   return state.playerCardDetails[playerId];
 }
 
-function playerCardRatingGroups(ratings = {}, includeOverall = true) {
-  const group = (label, rows) => ({label, rows: rows.filter(([, value]) => value !== undefined && value !== null)});
+function playerCardRatingGroups(ratings = {}, includeOverall = true, includeLocked = false) {
+  const group = (label, rows) => ({label, rows: rows.filter(([, value]) => includeLocked || (value !== undefined && value !== null))});
+  const hasInterior = ["post_creation", "assisted_finishing", "screening"].some(key => Object.prototype.hasOwnProperty.call(ratings, key));
   return [
     group("Offense", [
-      ...(includeOverall ? [["Overall", ratings.overall, "overall"]] : []), ["Shooting", ratings.shooting, "shooting"], ["Release", ratings.release, "release"],
+      ...(includeOverall ? [["OVR", ratings.overall, "overall"]] : []), ["Shooting", ratings.shooting, "shooting"], ["Release", ratings.release, "release"],
       ["Range", ratings.range, "range"], ["Shot versatility", ratings.versatility, "versatility"], ["Spacing", ratings.spacing, "spacing"],
       ["Creation", ratings.creation, "creation"], ["Handle", ratings.handle, "handle"], ["Passing", ratings.passing, "passing"],
-      ["Rim pressure", ratings.rim_pressure, "rim_pressure"],
+      ...(!hasInterior ? [["Rim pressure", ratings.rim_pressure, "rim_pressure"]] : []),
     ]),
+    ...(hasInterior ? [group("Interior & Rebounding", [
+      ["Rim pressure", ratings.rim_pressure, "rim_pressure"], ["Post creation", ratings.post_creation, "post_creation"],
+      ["Assisted finishing", ratings.assisted_finishing, "assisted_finishing"], ["Screening", ratings.screening, "screening"],
+      ["Rebounding", ratings.rebounding, "rebounding"],
+      ["Offensive rebounding", ratings.offensive_rebounding ?? ratings.oreb, ratings.offensive_rebounding != null ? "offensive_rebounding" : "oreb"],
+    ])] : []),
     group("Defense", [
       ["Defense", ratings.defense, "defense"], ["Defensive effort", ratings.def_effort, "def_effort"],
       ["Screen navigation", ratings.screen_nav, "screen_nav"], ["Steal", ratings.steal, "steal"],
       ["Block", ratings.block, "block"], ["Rim deterrence", ratings.rim_deterrence, "rim_deterrence"],
+      ...(hasInterior ? [["Athleticism", ratings.athleticism, "athleticism"], ["Lateral agility", ratings.lateral_agility, "lateral_agility"]] : []),
     ]),
-    group("Rebounding", [
-      ["Rebounding", ratings.rebounding, "rebounding"], ["Offensive rebounding", ratings.oreb, "oreb"],
-    ]),
-    group("Mental and Physical", [
-      ["Athleticism", ratings.athleticism, "athleticism"], ["Lateral agility", ratings.lateral_agility, "lateral_agility"],
+    ...(!hasInterior ? [group("Rebounding", [
+      ["Rebounding", ratings.rebounding, "rebounding"],
+      ["Offensive rebounding", ratings.offensive_rebounding ?? ratings.oreb, ratings.offensive_rebounding != null ? "offensive_rebounding" : "oreb"],
+    ])] : []),
+    group(hasInterior ? "Mind, Body & Coach" : "Mental and Physical", [
+      ...(!hasInterior ? [["Athleticism", ratings.athleticism, "athleticism"], ["Lateral agility", ratings.lateral_agility, "lateral_agility"]] : []),
       ["Stamina", ratings.stamina, "stamina"], ["Basketball IQ", ratings.iq, "iq"], ["Scheme IQ", ratings.scheme_iq, "scheme_iq"],
+      ...(hasInterior ? [["Portability", ratings.portability, "portability"], ["Playoff translation", ratings.playoff, "playoff"]] : []),
     ]),
-    group("Coach Perspective", [
+    ...(!hasInterior ? [group("Coach Perspective", [
       ["Portability", ratings.portability, "portability"], ["Playoff translation", ratings.playoff, "playoff"],
-    ]),
+    ])] : []),
   ].filter(item => item.rows.length);
 }
 
@@ -4456,6 +7259,7 @@ function playerCardRatingRows(ratings = {}) {
 }
 
 function playerCardRatingBar(label, value, key, detail = {}) {
+  if (detail.is_prospect && value == null) return `<div class="prospect-rating-locked" aria-label="${escapeAttr(label)}: not unlocked yet"><span>${escapeHtml(label)}</span><i aria-hidden="true"></i><strong title="Unlock through scouting">Locked</strong></div>`;
   const score = clampNumber(Number(value || 0), 0, 99);
   const average = clampNumber(Number(detail.rating_league_averages?.[key] ?? 50), 0, 99);
   return `<div class="${ratingQuartileTone(value, key, detail.rating_quartiles)}"><span>${escapeHtml(label)}</span><i><b style="${performanceBarStyle(score)}"></b><em class="rating-average-marker" style="left:${average}%" title="League average: ${average.toFixed(1)}" aria-label="League average ${average.toFixed(1)}"></em></i><strong>${draftMetric(value)}</strong></div>`;
@@ -4480,12 +7284,29 @@ function playerEvidenceRing(label, value, maximum, color, suffix = "") {
   </div>`;
 }
 
+function prospectLockIcon() {
+  return `<svg class="prospect-lock-icon" viewBox="0 0 48 56" aria-hidden="true"><path d="M12 24v-9a12 12 0 0 1 24 0v9" fill="none" stroke="currentColor" stroke-width="5"/><rect x="4" y="22" width="40" height="31" rx="5" fill="currentColor"/><circle cx="24" cy="35" r="4" fill="var(--ui-panel)"/><path d="M24 35v8" stroke="var(--ui-panel)" stroke-width="4"/></svg>`;
+}
+
 function playerCardEvidence(detail) {
+  if (detail.is_prospect) {
+    const low = detail.rank_range?.low ?? detail.board_rank;
+    const high = detail.rank_range?.high ?? detail.board_rank;
+    const range = low == null ? '—' : low === high ? `#${low}` : `#${low}–${high}`;
+    const upside = detail.upside_unlocked
+      ? playerEvidenceRing("Upside", detail.upside_remaining, 5, playerUpsideColor(detail.upside_remaining), "OVR remaining")
+      : `<div class="player-evidence-ring prospect-upside-locked" aria-label="Upside locked: unlock at 100% scouting"><span>${prospectLockIcon()}</span><div><b>Upside</b><small>Locked · 100% scouting</small></div></div>`;
+    return `<div class="approved-player-evidence"><div class="player-evidence-rings">${playerEvidenceRing("Scouted", detail.scouting_coverage, 100, "#668ea7", "%")}${upside}<div class="prospect-rank-range" aria-label="Projected ranking range ${escapeAttr(range)}"><b>Projected rank</b><strong>${escapeHtml(range)}</strong><small>Draft range</small></div></div></div>`;
+  }
   const health = clampNumber(Number(detail.health_risk || 0), 0, 10);
   const upside = clampNumber(Number(detail.upside_remaining || 0), 0, 5);
   const healthColor = health >= 7 ? "#e04d55" : health >= 4 ? "#bd5b5d" : "#8e6263";
-  const upsideColor = upside >= 3.5 ? "#2fc77a" : upside >= 1.5 ? "#4e9c70" : "#687c70";
+  const upsideColor = playerUpsideColor(upside);
   return `<div class="approved-player-evidence"><div class="player-evidence-rings">${playerEvidenceRing("Health risk", health, 10, healthColor, "/10")}${playerEvidenceRing("Upside", upside, 5, upsideColor, "OVR remaining")}${playerEvidenceRing("Trade Value", detail.trade_value, 100, "#668ea7")}</div></div>`;
+}
+
+function playerUpsideColor(upside) {
+  return upside >= 3.5 ? "#2fc77a" : upside >= 1.5 ? "#4e9c70" : "#687c70";
 }
 
 function gameArtwork(category, extraClass = "") {
@@ -4498,14 +7319,37 @@ function gameArtworkTitle(title, category) {
   return `<span class="illustrated-panel-title">${gameArtwork(category, "panel-heading-art")}<span>${escapeHtml(title)}</span></span>`;
 }
 
-function playerCardGroupedRatings(ratings, detail) {
-  const groups = playerCardRatingGroups(ratings, false);
-  const columns = [
-    [groups.find(group => group.label === "Offense"), groups.find(group => group.label === "Rebounding")],
-    [groups.find(group => group.label === "Defense"), groups.find(group => group.label === "Mental and Physical"), groups.find(group => group.label === "Coach Perspective")],
+function playerSeasonTeamLogos(season) {
+  if (season.college_team) return `<span class="player-season-teams">${prospectOriginMarkup(season.college_team)}</span>`;
+  return `<span class="player-season-teams">${(season.team_abbrevs || []).map(team => {
+    const logo = teamLogoSrc(team);
+    return logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(team)}" title="${escapeAttr(team)}" width="24" height="24">` : '';
+  }).join('')}</span>`;
+}
+
+function playerSeasonStrip(season, career = []) {
+  season = career.find(row => row.season === season.season) || season;
+  const fields=[['GP/All',`${season.games ?? 0}/${season.team_games ?? '—'}`,'Games played / team games played'],['MPG',season.mpg],['PTS',season.ppg],['REB',season.rpg],['AST',season.apg],['STL',season.spg],['BLK',season.bpg],['TO',season.topg],['FGA',season.fga_per_game],['FG%',season.fg_pct,'Field-goal percentage'],['3PM',season.fg3m_per_game],['3PA',season.fg3a_per_game],['3P%',season.fg3_pct,'Three-point percentage'],['FTA',season.fta_per_game],['FT%',season.ft_pct,'Free-throw percentage']];
+  return `<section class="approved-card-panel approved-season-line" data-player-career-options="${escapeAttr(JSON.stringify(career.length?career:[season]))}"><header><span>${season.college_team ? "College Season" : "Season"}</span><details class="player-career-picker"><summary aria-label="Select player career season">${playerSeasonTeamLogos(season)}<span>${escapeHtml(season.season || 'Current season')}</span><span aria-hidden="true">▾</span></summary><div class="player-career-menu" aria-label="Career seasons">${(career.length?career:[season]).map(row=>`<button type="button" data-player-career-season="${escapeAttr(row.season || '')}" aria-pressed="${row.season===season.season}">${playerSeasonTeamLogos(row)}<span>${escapeHtml(row.season || 'Current season')}</span></button>`).join('')}</div></details></header><div style="--season-field-count:${fields.length}">${fields.map(([label,value,hint])=>`<span title="${escapeAttr(hint || `${label} per game`)}"><small>${label}</small><strong>${escapeHtml(typeof value==='string'?value:value==null?'—':draftMetric(value))}</strong></span>`).join('')}</div></section>`;
+}
+
+function playerCardGroupedRatings(ratings, detail, profiles = {}) {
+  const groups = playerCardRatingGroups(ratings, false, detail.is_prospect);
+  const interior = groups.find(group => group.label === "Interior & Rebounding");
+  const columns = interior ? [
+    [groups.find(group => group.label === "Offense")],
+    [groups.find(group => group.label === "Defense")],
+    [interior, groups.find(group => group.label === "Mind, Body & Coach")],
+  ] : [
+    [groups.find(group => group.label === "Offense")],
+    [groups.find(group => group.label === "Defense")],
+    [groups.find(group => group.label === "Rebounding"), groups.find(group => group.label === "Mental and Physical"), groups.find(group => group.label === "Coach Perspective")],
   ];
-  const categoryArt = {Offense: "shooting", Rebounding: "rebounding", Defense: "defense", "Mental and Physical": "mentality", "Coach Perspective": "coach"};
-  return `<div class="approved-rating-groups">${columns.map(column => `<div class="approved-rating-column">${column.filter(Boolean).map(group => `<section style="--rating-rows:${group.rows.length}"><h4 class="illustrated-rating-heading"><span>${escapeHtml(group.label)}</span>${gameArtwork(categoryArt[group.label], "rating-category-art")}</h4><div class="approved-rating-rail">${group.rows.map(([label, value, key]) => playerCardRatingBar(label, value, key, detail)).join("")}</div></section>`).join("")}</div>`).join("")}</div>`;
+  const categoryArt = {Offense: "shooting", Rebounding: "rebounding", "Interior & Rebounding": "rebounding", Defense: "defense", "Mental and Physical": "mentality", "Coach Perspective": "coach"};
+  const headingArt = label => label === "Mind, Body & Coach"
+    ? gameArtwork("mentality", "rating-category-art") + gameArtwork("coach", "rating-category-art")
+    : gameArtwork(categoryArt[label], "rating-category-art");
+  return `<div class="approved-rating-groups">${columns.map(column => `<div class="approved-rating-column">${column.filter(Boolean).map(group => `<section class="${profiles[group.label] ? 'rating-group-with-radar' : ''}" style="--rating-rows:${group.rows.length}"><h4 class="illustrated-rating-heading"><span>${escapeHtml(group.label)}</span>${headingArt(group.label)}</h4>${profiles[group.label] || ''}<div class="approved-rating-rail">${group.rows.map(([label, value, key]) => playerCardRatingBar(label, value, key, detail)).join("")}</div></section>`).join("")}</div>`).join("")}</div>`;
 }
 
 function approvedCapShareChart(detail, options = {}) {
@@ -4525,88 +7369,315 @@ function approvedSalaryLedger(detail) {
 function approvedRecentGames(detail) {
   const rows = [...(detail.recent_games || [])].slice(-5).reverse();
   while (rows.length < 5) rows.push(null);
-  return `<div class="approved-recent-games">${rows.map((row) => row ? `<div><span>${escapeHtml(String(row.date || "").slice(5))}</span><strong>${escapeHtml(row.points ?? 0)} PTS</strong><span>${escapeHtml(row.rebounds ?? 0)} REB</span><span>${escapeHtml(row.assists ?? 0)} AST</span><em>${draftMetric(row.game_score)} GS</em></div>` : `<div class="is-empty"><span>—</span><strong>—</strong><span>—</span><span>—</span><em>—</em></div>`).join("")}</div>`;
+  return `<div class="approved-recent-games">${rows.map(row => {
+    if (!row) return `<div class="is-empty"><span>—</span><span class="approved-recent-opponent">—</span><strong>—</strong><span>—</span><span>—</span><em>—</em></div>`;
+    const opponent = row.opponent_abbrev || "";
+    const logo = teamLogoSrc(opponent);
+    return `<div><span>${escapeHtml(String(row.date || "").slice(5))}</span><span class="approved-recent-opponent" title="${escapeAttr(opponent || 'Opponent unavailable')}">${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(opponent)} logo" decoding="async">` : "—"}</span><strong>${escapeHtml(row.points ?? 0)} PTS</strong><span>${escapeHtml(row.rebounds ?? 0)} REB</span><span>${escapeHtml(row.assists ?? 0)} AST</span><em>${draftMetric(row.game_score)} GS</em></div>`;
+  }).join("")}</div>`;
 }
 
 function approvedGameScoreChart(detail) {
-  const rows = detail.recent_games || [];
+  const rows = (detail.recent_games || []).filter(row=>Number(row.minutes || 0)>0);
   const gamesPlayed = Math.max(0, Number(detail.season?.games ?? rows.length) || 0);
-  const pointCount = Math.min(30, gamesPlayed);
-  const points = (pointCount ? rows.slice(-pointCount) : []).map((row) => ({ label: String(row.date || "").slice(5), value: Number(row.game_score || 0) }));
-  if (!points.length) return `<div class="approved-game-score-chart"><div class="empty">No game-score history yet.</div></div>`;
-  const width = 420;
-  const height = 150;
-  const padX = 34;
-  const padY = 12;
-  // Keep a single league-wide reference scale so a player's chart is comparable to every other card.
-  const min = -10;
-  const max = 60;
-  const values = points.map((point) => point.value);
-  const span = max - min;
-  const coords = points.map((point, index) => ({
-    ...point,
-    x: padX + (index / 29) * (width - padX * 2),
-    y: height - padY - ((Math.max(min, Math.min(max, point.value)) - min) / span) * (height - padY * 2),
-  }));
-  const trend = values[values.length - 1] - values[0];
-  const tone = trend > 0.15 ? "positive" : trend < -0.15 ? "negative" : "neutral";
-  const verticalGrid = Array.from({ length: 13 }, (_, index) => {
-    const x = padX + index / 12 * (width - padX - 8);
-    return `<line class="grid" x1="${x.toFixed(1)}" y1="${padY}" x2="${x.toFixed(1)}" y2="${height - padY}"></line><line class="axis-notch" x1="${x.toFixed(1)}" y1="${height - padY}" x2="${x.toFixed(1)}" y2="${height - padY + 4}"></line>`;
+  const points = (gamesPlayed ? rows.slice(-Math.min(15, gamesPlayed)) : []).map(row => ({label:String(row.date || "").slice(5), value:Number(row.game_score || 0)}));
+
+  return `<div class="approved-game-score-chart" data-game-score-points="${escapeAttr(JSON.stringify(points))}">${playerGameScoreSvg(points, 420, 220)}</div>`;
+}
+
+function playerGameScoreSvg(points, width, height) {
+  const left = 28, right = width - 7, top = 7, bottom = height - 42;
+  const plotWidth = right - left, plotHeight = bottom - top;
+  const min = -5, max = 60;
+  const xFor = index => left + index / 14 * plotWidth;
+  const yFor = value => top + (max - clampNumber(value, min, max)) / (max - min) * plotHeight;
+  const plottedY = value => yFor(value);
+  // One column per game; five-point score intervals keep the cells readable.
+  const columns = 14;
+  const gridRows = (max - min) / 2.5;
+  const labelStep = 2;
+  const verticalGrid = Array.from({length:columns + 1}, (_, index) => {
+    const x = left + index / columns * plotWidth;
+    return `<line class="grid vertical" x1="${x}" y1="${top}" x2="${x}" y2="${bottom}"></line>`;
   }).join("");
-  const horizontalGrid = Array.from({ length: 8 }, (_, index) => {
-    const value = max - index * 10;
-    const y = padY + index / 7 * (height - padY * 2);
-    return `<line class="grid${value === 0 ? ' zero' : ''}" x1="${padX}" y1="${y.toFixed(1)}" x2="${width - 8}" y2="${y.toFixed(1)}"></line><line class="axis-notch" x1="${padX - 3}" y1="${y.toFixed(1)}" x2="${padX}" y2="${y.toFixed(1)}"></line><text class="axis-label" x="${padX - 5}" y="${y.toFixed(1)}">${value}</text>`;
+  const horizontalGrid = Array.from({length:gridRows + 1}, (_, index) => {
+    const y = top + index / gridRows * plotHeight;
+    const value = max - index / gridRows * (max - min);
+    const labeled = index === 0 || index === gridRows || index % labelStep === 0;
+    return `<line class="grid horizontal" x1="${left}" y1="${y}" x2="${right}" y2="${y}"></line>${labeled ? `<line class="axis-notch" x1="${left - 3}" y1="${y}" x2="${left}" y2="${y}"></line><text class="axis-label" x="${left - 5}" y="${y}">${value.toFixed(0)}</text>` : ""}`;
   }).join("");
-  return `<div class="approved-game-score-chart"><svg class="player-game-score-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Game score over the last 30 games on a shared league-wide scale from minus 10 to 60">${verticalGrid}${horizontalGrid}<polyline class="${tone}" points="${coords.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ")}"><title>${escapeHtml(`Game score from ${points[0].label} to ${points[points.length - 1].label}`)}</title></polyline>${coords.map((point) => `<circle class="chart-node ${tone}" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="1.8"><title>${escapeHtml(point.label)}: ${point.value.toFixed(1)}</title></circle>`).join("")}</svg></div>`;
+  const dates = points.map((point,index) => `<line class="axis-notch" x1="${xFor(index)}" y1="${bottom}" x2="${xFor(index)}" y2="${bottom + 3}"></line><text class="axis-label x-label" transform="translate(${xFor(index)},${bottom + 8}) rotate(-60)">${escapeHtml(point.label)}</text>`).join("");
+  const mean = points.length ? points.reduce((sum,point)=>sum+point.value,0)/points.length : 0;
+  const tone = mean > .15 ? "positive" : mean < -.15 ? "negative" : "neutral";
+  return `<svg class="player-game-score-chart season-efficiency-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Game score over the last 15 games on a shared league-wide scale from minus 5 to 60">${verticalGrid}${horizontalGrid}${dates}<line class="zero" x1="${left}" y1="${yFor(0)}" x2="${right}" y2="${yFor(0)}"></line><polyline class="net ${tone}" points="${points.map((point,index) => `${xFor(index)},${plottedY(point.value)}`).join(" ")}"><title>${escapeHtml(points.length ? `Game score from ${points[0].label} to ${points.at(-1).label}` : "No game-score history yet")}</title></polyline>${points.map((point,index) => `<circle class="chart-node ${tone}" cx="${xFor(index)}" cy="${plottedY(point.value)}" r="1.8"><title>${escapeHtml(point.label)}: ${point.value.toFixed(1)}</title></circle>`).join("")}</svg>`;
+}
+
+let playerGameScoreResizeObserver, playerGameScoreFrame = 0;
+function wirePlayerGameScoreCharts() {
+  playerGameScoreResizeObserver?.disconnect();
+  cancelAnimationFrame(playerGameScoreFrame);
+  const charts = [...document.querySelectorAll('[data-game-score-points]')];
+  if (!charts.length) return;
+  const redraw = () => {
+    for (const chart of charts) {
+      if (!chart.isConnected) continue;
+      const svg = chart.querySelector('svg');
+      if (!svg || svg.clientWidth < 40 || svg.clientHeight < 50) continue;
+      const signature = `${svg.clientWidth},${svg.clientHeight}`;
+      if (chart.dataset.chartSize === signature) continue;
+      chart.dataset.chartSize = signature;
+      chart.innerHTML = playerGameScoreSvg(JSON.parse(chart.dataset.gameScorePoints), svg.clientWidth, svg.clientHeight);
+    }
+  };
+  const schedule = () => { cancelAnimationFrame(playerGameScoreFrame); playerGameScoreFrame = requestAnimationFrame(redraw); };
+  playerGameScoreResizeObserver = new ResizeObserver(schedule);
+  charts.forEach(chart => playerGameScoreResizeObserver.observe(chart));
+  schedule();
 }
 
 function approvedPlayerCardBody(detail, options = {}) {
+  const extension = options.extension || null;
+  const pageOffset = extension ? 1 : 0;
   const ratings = detail.ratings || options.ratings || {};
   const season = detail.season || {};
-  return `<div class="approved-player-card">
-    <section class="approved-player-identity"><div class="approved-player-profile-head"><div><h3>${escapeHtml(detail.name || options.name || "Player")}</h3><p>${escapeHtml([detail.position, detail.age ? `${detail.age} years` : "", detail.height].filter(Boolean).join(" · "))}</p></div><div class="approved-player-overall"><span>Overall</span><strong>${draftMetric(ratings.overall)}</strong></div></div>${playerCardEvidence(detail)}${options.actions || ""}<div class="approved-player-identity-ratings" aria-label="Complete ratings">${playerCardGroupedRatings(ratings, detail)}</div></section>
-    <div class="approved-player-middle">
-      <section class="approved-card-panel approved-player-spatial"><header>Court Influence</header>${spatialHeatmapMarkup(detail.spatial_profile)}</section>
-      <section class="approved-card-panel approved-season-line"><header>Most Recent Season</header><div>${[["GP", season.games], ["MPG", season.mpg], ["PTS", season.ppg], ["REB", season.rpg], ["AST", season.apg], ["STL", season.spg], ["BLK", season.bpg], ["TO", season.topg], ["FTA", season.fta_per_game], ["FT%", season.ft_pct]].map(([label, value]) => `<span><small>${label}</small><strong>${draftMetric(value)}</strong></span>`).join("")}</div></section>
-      <section class="approved-card-panel approved-game-score"><header>Last 30 Games · Game Score</header>${approvedGameScoreChart(detail)}</section>
-    </div>
-    <div class="approved-player-right">
-      <section class="approved-card-panel approved-cap-panel"><header>${gameArtworkTitle("Four-Year Payroll Share", "payroll")}</header>${approvedCapShareChart(detail)}</section>
-      <section class="approved-card-panel approved-recent-panel"><header>Last Five Games</header>${approvedRecentGames(detail)}</section>
-    </div>
+  const offenseAxes = [["Shooting", ratings.shooting], ["Spacing", ratings.spacing], ["Creation", ratings.creation], ["Passing", ratings.passing], ["Rim pressure", ratings.rim_pressure], ["Portability", ratings.portability]].filter(([, value]) => detail.is_prospect || value != null);
+  const defenseAxes = [["Defense", ratings.defense], ["Effort", ratings.def_effort], ["Navigation", ratings.screen_nav], ["Rim protect", ratings.rim_deterrence], ["Rebound", ratings.rebounding], ["Athleticism", ratings.athleticism]].filter(([, value]) => detail.is_prospect || value != null);
+  const radar = (title, axes, tone) => {
+    if (detail.is_prospect && axes.some(([,value]) => value == null)) return `<div class="player-rating-radar prospect-radar-placeholder" role="img" aria-label="${escapeAttr(title)} locked until its ratings are scouted">${prospectLockIcon()}<span>Profile locked</span><small>Scout all profile ratings to unlock</small></div>`;
+    return axes.length >= 3 ? fantasyPlayerRadar(title, axes, `${tone} player-rating-radar`, false) : `<div class="player-page-empty">${escapeHtml(title)} profile unavailable.</div>`;
+  };
+  const recentGames = [...(detail.recent_game_table || detail.recent_games || [])].slice(-5).reverse();
+  while (recentGames.length < 5) recentGames.push(null);
+  const gameFields = [["Date", "date"], ["Opponent", "opponent_abbrev"], ["MIN", "minutes"], ["PTS", "points"], ["REB", "rebounds"], ["AST", "assists"], ["STL", "steals"], ["BLK", "blocks"], ["TO", "turnovers"], ["GS", "game_score"]];
+  const gameRows = recentGames.map(row => `<tr>${gameFields.map(([, key]) => {
+    if (!row) return '<td>—</td>';
+    if (key === "date") return `<td>${escapeHtml(String(row.date || "").slice(5) || "—")}</td>`;
+    if (key === "opponent_abbrev") {
+      if (row.college_opponent) return `<td><span class="player-page-college-opponent" title="${escapeAttr(row.college_opponent)}">${prospectOriginMarkup(row.college_opponent)}</span></td>`;
+      const opponent = row.opponent_abbrev || "";
+      const logo = teamLogoSrc(opponent);
+      return `<td><span class="player-page-opponent" title="${escapeAttr(opponent || "Opponent unavailable")}">${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(opponent)} logo" decoding="async">` : escapeHtml(opponent || "—")}</span></td>`;
+    }
+    return `<td>${["minutes", "game_score"].includes(key) ? draftMetric(row[key]) : escapeHtml(row[key] ?? "—")}</td>`;
+  }).join("")}</tr>`).join("");
+  return `<div class="approved-player-card approved-player-pages${detail.is_prospect ? " approved-prospect-pages" : ""}" data-player-pages>
+    <div class="player-page-bar"><span data-player-page-title>${extension ? "Contract Extension" : detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}</span><div class="player-page-nav"><button type="button" class="ui-command" data-player-page-step="-1" aria-label="Previous player card page" title="Previous page">‹</button><button type="button" class="ui-command" data-player-page-step="1" aria-label="Next player card page" title="Next page">›</button><span data-player-page-count aria-live="polite" aria-atomic="true">1/${extension ? 3 : 2}</span></div></div>
+    <section class="approved-player-identity player-page-identity"><div class="approved-player-profile-head">${playerHeadshotMarkup(detail, "approved-profile-headshot")}<div class="approved-profile-name"><h3>${escapeHtml(detail.name || options.name || "Player")}</h3><p>${escapeHtml([detail.position, detail.age != null ? `${detail.age} years` : "", detail.height].filter(Boolean).join(" · "))}</p><p class="player-draft-details">${escapeHtml(detail.is_prospect ? [detail.source_team, `${detail.draft_year} draft class`].filter(Boolean).join(" · ") : detail.draft_position ? `${detail.draft_year || 'Draft'} · Pick #${detail.draft_position}` : detail.draft_status==='undrafted' ? `Undrafted${detail.draft_year?` · ${detail.draft_year}`:''}` : detail.draft_year ? `Draft year ${detail.draft_year}` : 'Draft details unavailable')}</p></div>${playerSummaryRatings(detail)}</div>${playerCardEvidence(detail)}${options.actions || ""}</section>
+    ${extension ? extensionNegotiationPage(extension.room, extension.selectedPlayerId, extension.response, detail) : ""}
+    <section class="player-card-page player-card-page--overview" data-player-page="${pageOffset}" data-page-title="${detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}" aria-label="Season statistics, recent games, game score and contract">
+      ${playerSeasonStrip(season, detail.career_seasons || [])}
+      <section class="approved-card-panel player-page-game-log"><header>Recent Games · Last 5</header><div class="player-page-table-scroll"><table><thead><tr>${gameFields.map(([label]) => `<th scope="col">${label}</th>`).join("")}</tr></thead><tbody>${gameRows || `<tr><td class="player-page-empty" colspan="${gameFields.length}">No recent games yet.</td></tr>`}</tbody></table></div></section>
+      <section class="approved-card-panel player-page-score-panel"><header>Game Score · Last 15 Games</header>${approvedGameScoreChart(detail)}</section>
+      ${detail.is_prospect ? "" : `<div class="player-page-contract"><section class="approved-card-panel approved-cap-panel"><header>${gameArtworkTitle("Four-Year Payroll Share", "payroll")}</header>${approvedCapShareChart(detail)}</section></div>`}
+      <section class="approved-card-panel approved-player-spatial player-overview-court"><header>Court Influence</header>${spatialHeatmapMarkup(detail.spatial_profile, { compact: true })}</section>
+    </section>
+    <section class="player-card-page player-card-page--details" data-player-page="${pageOffset + 1}" data-page-title="Ratings & Profiles" aria-label="Complete ratings and radar profiles" hidden>
+      <div class="approved-player-identity-ratings" aria-label="Complete ratings">${playerCardGroupedRatings(ratings, detail, {
+        Offense: radar("Offensive shape", offenseAxes, "offense"),
+        Defense: radar("Defense / physical", defenseAxes, "defense")
+      })}</div>
+    </section>
   </div>`;
 }
 
+function wirePlayerCardPages(card, entry) {
+  const root = card.querySelector('[data-player-pages]');
+  if (!root) return;
+  const pages = [...root.querySelectorAll('[data-player-page]')];
+  if (!pages.length) return;
+  const showPage = index => {
+    entry.page = ((index % pages.length) + pages.length) % pages.length;
+    pages.forEach((page, pageIndex) => { page.hidden = pageIndex !== entry.page; });
+    root.dataset.page = String(entry.page);
+    root.querySelector('[data-player-page-title]').textContent = pages[entry.page].dataset.pageTitle;
+    root.querySelector('[data-player-page-count]').textContent = `${entry.page + 1}/${pages.length}`;
+  };
+  card._showPlayerCardPage = showPage;
+  card._playerCardPageRoot = root;
+  showPage(Number.isInteger(entry.page) ? entry.page : 0);
+  const updateSeason = (strip, selected) => {
+    const career = JSON.parse(strip.dataset.playerCareerOptions || '[]');
+    const season = career.find(row=>row.season===selected);
+    if (season) strip.outerHTML=playerSeasonStrip(season,career);
+  };
+  const strip=root.querySelector('[data-player-career-options]');
+  if (strip && entry.careerSeason) updateSeason(strip,entry.careerSeason);
+  root.addEventListener('click',event=>{
+    const choice=event.target.closest('[data-player-career-season]');
+    if (!choice) return;
+    event.preventDefault();
+    entry.careerSeason=choice.dataset.playerCareerSeason;
+    updateSeason(choice.closest('[data-player-career-options]'),entry.careerSeason);
+    root.querySelector('.player-career-picker summary')?.focus();
+  });
+  root.addEventListener('keydown',event=>{
+    if (event.key==='Escape') {
+      const picker=root.querySelector('.player-career-picker[open]');
+      if (picker) { picker.open=false; picker.querySelector('summary').focus(); event.preventDefault(); }
+    }
+  });
+  if (!card._playerCardPageClickHandler) {
+    card._playerCardPageClickHandler = event => {
+      const button = event.target.closest('[data-player-page-step]');
+      const activeRoot = card._playerCardPageRoot;
+      if (!button || !activeRoot?.contains(button)) return;
+      event.preventDefault();
+      card._showPlayerCardPage?.(entry.page + Number(button.dataset.playerPageStep));
+      // Keep the same card DOM, size, scroll position, and selection when paging.
+      wirePlayerGameScoreCharts();
+    };
+    card.addEventListener('click', card._playerCardPageClickHandler);
+  }
+}
+
+document.addEventListener('click',event=>{
+  document.querySelectorAll('.player-career-picker[open]').forEach(picker=>{
+    if (!picker.contains(event.target)) picker.open=false;
+  });
+});
+
+function clipboardPlayerCardWindows(cardId = null) {
+  const saveId = String(state.currentSave || "");
+  return (state.clipboardPlayerCards || []).filter(entry => entry.saveId === saveId && (!cardId || entry.id === cardId)).map(entry => {
+    const card = document.createElement("div");
+    card.className = `clipboard-player-card${entry.kind === "fantasy" ? " clipboard-player-card--fantasy" : entry.kind === "extension" ? " clipboard-player-card--extension" : entry.kind === "coach" ? " clipboard-player-card--coach" : ""}`;
+    if(entry.kind==="extension") card.dataset.extensionEntryId=entry.id;
+    card.innerHTML = entry.body;
+    wirePlayerCardPages(card, entry);
+    if (entry.context?.tradeReturn) {
+      card.addEventListener("click", event => {
+        if (event.target.closest('[data-player-return-trade]')) returnToPlayerTradeContext(entry.context.tradeReturn);
+      });
+    }
+    if (entry.kind === "extension") {
+      const redraw=()=>{ entry.body=extensionNegotiationBody(entry.context.room,entry.context.selectedPlayerId,entry.context.response,entry.context.detail); card.innerHTML=entry.body; card.classList.remove("has-extension-result"); wirePlayerCardPages(card,entry); wireExtensionNegotiationModal(card,entry.context,redraw,close); if(entry.context.outcome) mountPlayerExtensionOutcome(card,entry.context,close); };
+      const close=async()=>{ const applied=Boolean(entry.context?.extensionApplied); if(applied) entry.context.extensionApplied=false; card.closest('.card-board-window')?.querySelector('[data-board-close]')?.click(); state.clipboardPlayerCards=state.clipboardPlayerCards.filter(item=>item.id!==entry.id); if(applied){ showToast(`${entry.context.outcome?.message||"Player signed an extension."}`); await refreshHome(); } };
+      wireExtensionNegotiationModal(card,entry.context,redraw,close);
+      if(entry.context?.outcome) mountPlayerExtensionOutcome(card,entry.context,close);
+    } else if (entry.kind === "freeAgent") {
+      card.addEventListener("click", event => {
+        const button = event.target.closest("[data-fa-card-negotiate]");
+        if (button) openFreeAgentNegotiation(button.dataset.faCardNegotiate || "");
+      });
+    } else if (entry.kind === "fantasy") {
+      card.addEventListener("click", async event => {
+        const select = event.target.closest("[data-fantasy-card-select]");
+        if (select) {
+          state.selectedFantasyPlayer = select.dataset.fantasyCardSelect || "";
+          rememberFantasyBoardScroll();
+          renderDashboard();
+          showToast("Player selected for the draft.");
+          return;
+        }
+        const watch = event.target.closest("[data-fantasy-card-watch]");
+        if (watch) {
+          const playerId = watch.dataset.fantasyCardWatch || "";
+          await fantasyDraftToggleWatchlist(playerId);
+          await fantasyPlayerCard(playerId);
+        }
+      });
+    }
+    const isFantasyCard = entry.kind === "fantasy";
+    const isExtensionCard = entry.kind === "extension";
+    const sizeRevision = Number(entry.sizeRevision) || 0;
+    return {
+      id:entry.id,
+      title:entry.title,
+      card,
+      width:isExtensionCard ? (sizeRevision >= 8 && entry.width ? entry.width : 1530) : sizeRevision >= 4 && entry.width ? entry.width : isFantasyCard ? 1120 : 1530,
+      height:sizeRevision >= 4 && entry.height ? entry.height : isFantasyCard ? 700 : 900,
+      initialScale:isExtensionCard ? .626166 : isFantasyCard || entry.kind === "coach" ? 1 : .7,
+      minScale:isExtensionCard ? .5 : undefined,
+      sizeRevision:isExtensionCard ? 9 : 4,
+      galleryVisible:false,
+    };
+  });
+}
+
+async function focusOpenExtensionCard(playerId) {
+  const entry = state.clipboardPlayerCards.find(item => item.saveId === String(state.currentSave || "") && item.key === `extension:${playerId}` && (window.CardBoard?.isOpen(item.id) ?? item.windowOpen));
+  if (!entry) return false;
+  closeAllModals();
+  if (state.view !== "dashboard") {
+    state.view = "dashboard";
+    state.dashboardTeam = userTeam();
+    state.dashboardTab = "overview";
+    await ensureViewData(true);
+    render();
+  }
+  return Boolean(window.CardBoard?.open(entry.id));
+}
+
+async function openPlayerCardOnClipboard({key, title, body, kind = "player", context = null}) {
+  const playerId = /^(?:dashboard|free-agent|extension):(.+)$/.exec(key)?.[1];
+  if (playerId && await focusOpenExtensionCard(playerId)) return;
+  closeAllModals();
+  const saveId = String(state.currentSave || "");
+  if (!saveId) return;
+  let entry = state.clipboardPlayerCards.find(item => item.saveId === saveId && item.key === key);
+  if (!entry && kind === "extension") entry = state.clipboardPlayerCards.find(item => item.saveId === saveId && item.key === `dashboard:${context?.selectedPlayerId}`);
+  if (!entry) {
+    state.clipboardPlayerCardSequence += 1;
+    entry = {id:`player-card-${state.clipboardPlayerCardSequence}`, saveId, key, title, body, kind, width:kind === "coach" ? 900 : kind === "fantasy" ? 1120 : 1530, height:kind === "coach" ? 252 : kind === "fantasy" ? 700 : 900, sizeRevision:kind === "extension" ? 9 : 4};
+    state.clipboardPlayerCards.push(entry);
+  } else {
+    const extensionSizeUpdate = kind === "extension" && (Number(entry.sizeRevision) || 0) < 9
+      ? {sizeRevision:9}
+      : {};
+    Object.assign(entry, {key, title, body, kind, ...extensionSizeUpdate});
+  }
+  entry.context=context;
+  if(kind==="extension") entry.page=0;
+
+  if (state.view !== "dashboard") {
+    state.view = "dashboard";
+    state.dashboardTeam = userTeam();
+    state.dashboardTab = "overview";
+    await ensureViewData(true);
+    render();
+  }
+  let descriptor = clipboardPlayerCardWindows(entry.id)[0];
+  let opened = descriptor && window.CardBoard?.addCard(descriptor);
+  if (!opened) {
+    render();
+    descriptor = clipboardPlayerCardWindows(entry.id)[0];
+    opened = descriptor && window.CardBoard?.addCard(descriptor);
+  }
+  if (!opened) showToast("Player cards are available on the season card workspace.", true);
+  wirePlayerGameScoreCharts();
+}
+
 async function dashboardPlayerCard(playerId) {
+  if (await focusOpenExtensionCard(playerId)) return;
+  const tradeReturn = ["tradeRoom", "tradeOffers"].includes(state.modal?.kind) ? {...state.modal, activeTab:state.tradeTab} : null;
   const player = rosterRows(state.data.dashboard || {}).find((row) => String(row.id) === String(playerId));
   const detail = await loadPlayerCardDetail(playerId);
   if (!detail) return;
-  state.modal = {
-    kind: "dashboardPlayer",
-    title: "Player Card",
-    subtitle: "",
-    body: approvedPlayerCardBody(detail, { name: player?.name, ratings: player?.display_ratings || player?.ratings }),
-  };
-  renderModal();
+  const returnLabel = tradeReturn?.kind === "tradeOffers" ? "Back to Offers" : tradeReturn?.activeTab === "finder" ? "Back to Trade Finder" : "Back to Trade Builder";
+  await openPlayerCardOnClipboard({
+    key:`dashboard:${playerId}`,
+    title:`${detail.name || player?.name || "Player"} · Player Card`,
+    body:approvedPlayerCardBody(detail, {name:player?.name, ratings:player?.display_ratings || player?.ratings,
+      actions:tradeReturn ? `<button type="button" class="ui-command player-page-return" data-player-return-trade>${returnLabel}</button>` : ""}),
+    context:tradeReturn ? {tradeReturn} : null,
+  });
 }
 
 async function freeAgentPlayerCard(playerId) {
+  if (await focusOpenExtensionCard(playerId)) return;
   const player = freeAgencyCandidate(playerId);
   if (!player) return;
   const detail = await loadPlayerCardDetail(playerId);
   if (!detail) return;
-  state.modal = {
-    kind: "freeAgentPlayer",
-    title: "Player Card",
-    subtitle: "",
-    body: approvedPlayerCardBody(
+  await openPlayerCardOnClipboard({
+    key:`free-agent:${playerId}`,
+    title:`${player.name || "Free Agent"} · Player Card`,
+    kind:"freeAgent",
+    body:approvedPlayerCardBody(
       { ...detail, ratings: player.ratings || detail.ratings, name: player.name },
       { actions: `<button type="button" class="approved-player-primary-action" data-fa-card-negotiate="${escapeAttr(player.id)}">Build Offer</button>` },
     ),
-  };
-  renderModal();
+  });
 }
 
 function openFreeAgentComparison() {
@@ -4626,7 +7697,7 @@ function openFreeAgentComparison() {
     subtitle: `${players.length} players · previous-season production and live market context`,
     body: `<div class="free-agent-comparison" style="--comparison-count:${players.length}">${players.map((player) => `<article class="free-agent-comparison-column">
       <header><button type="button" data-fa-comparison-card="${escapeAttr(player.id)}">${escapeHtml(player.name)}</button><span>${escapeHtml(player.position || "—")} · age ${escapeHtml(player.age ?? "—")} · ${escapeHtml(player.height || "—")}</span></header>
-      <div class="free-agent-comparison-overview"><strong>${draftMetric(player.ratings?.overall)}</strong><span>OVR</span><b>${money(player.ask_millions)} ask</b></div>
+      <div class="free-agent-comparison-overview">${playerSummaryRatings(player)}<b>${money(player.ask_millions)} ask</b></div>
       <div class="free-agent-comparison-market"><span>${escapeHtml(player.offer_count || 0)} active offer${Number(player.offer_count || 0) === 1 ? "" : "s"}</span>${freeAgentOfferSummary(player)}</div>
       <div class="free-agent-comparison-stats"><span><small>GP</small><b>${escapeHtml(player.games || 0)}</b></span><span><small>MPG</small><b>${draftMetric(player.previous_mpg)}</b></span><span><small>PTS</small><b>${draftMetric(player.ppg)}</b></span><span><small>REB</small><b>${draftMetric(player.rpg)}</b></span><span><small>AST</small><b>${draftMetric(player.apg)}</b></span><span><small>STL</small><b>${draftMetric(player.spg)}</b></span><span><small>BLK</small><b>${draftMetric(player.bpg)}</b></span><span><small>TO</small><b>${draftMetric(player.topg)}</b></span></div>
       <div class="free-agent-comparison-ratings">${ratingFields.map(([label, key]) => `<div><span>${escapeHtml(label)}</span><i><b style="width:${clampNumber(Number(player.ratings?.[key] || 0), 0, 99)}%"></b></i><strong>${draftMetric(player.ratings?.[key])}</strong></div>`).join("")}</div>
@@ -4648,7 +7719,8 @@ async function submitFreeAgentOffer() {
     return;
   }
   const exclusive = state.data.freeagency?.phase === "re_signing";
-  const result = await action("submit_free_agent_offer", { ...savePayload(), player_id: player, team: userTeam(), years, aav_millions: aav, allow_tax_exceed: exclusive, auto_apply: true, seed: 7 });
+  const guaranteed = document.getElementById("faGuaranteed")?.checked !== false;
+  const result = await action("submit_free_agent_offer", { ...savePayload(), player_id: player, team: userTeam(), years, guaranteed, aav_millions: aav, allow_tax_exceed: exclusive, auto_apply: true, seed: 7 });
   showToast(result.apply_result ? `${exclusive ? "Re-signing" : "Signing"} ${result.apply_result.status}` : (result.reason || `Offer ${result.status}`), result.status === "blocked");
   if (result.status === "blocked") return;
   closeModal();
@@ -4679,16 +7751,47 @@ async function freeAgencyAdvanceStage() {
   showToast(`Advanced to ${state.home?.save?.current_date || "next phase"}`);
 }
 
-function renderStaff() {
+function expandedStaffMarkup(report, slots, market) {
+  const portraits = coachPortraitAssignments(market);
+  // Use the dashboard's raw slots, not the room's separate derived grades.
+  const currentSlots = report.dashboard_staff_slots || slots.map(({grade, ...slot}) => slot);
+  const dash = {...(state.data.dashboard || {}), staff:currentSlots, staff_slots:currentSlots, staff_budget:report.budget, staff_action_permissions:report.staff_action_permissions};
+  state.data.dashboard = dash;
+  return `<div class="season-staff-management">
+    <section class="season-staff-current" aria-label="Current coaching staff">${seasonStaffCard(dash, false, {actions:true, available:report.budget?.available_millions ?? null})}</section>
+    <section class="season-staff-market" aria-label="Available coaching staff">
+      <header class="season-staff-market-head"><h3>Available Staff</h3><select id="staffSlot" aria-label="Filter available staff by role"><option value="">All roles</option>${["head_coach", "offensive_coordinator", "defensive_coordinator", "performance_lead", "development_lead", "scouting_lead"].map(slot => `<option value="${slot}" ${slot === state.staffSlot ? "selected" : ""}>${staffRoleLabel(slot)}</option>`).join("")}</select></header>
+      <div class="season-staff-market-list"><div class="season-staff-head"><span>Staff Member</span><span>Grade</span><span>Asking Contract</span><span aria-hidden="true"></span></div>${market.map(row => seasonStaffRowMarkup(row, portraits.get(staffIdentity(row)), {actions:true, candidate:true, permissions:report.staff_action_permissions})).join("") || '<div class="empty">No available staff for this role.</div>'}</div>
+    </section>
+  </div>`;
+}
+
+let staffRoomRefreshId = 0;
+async function refreshFilteredStaffRoom(target) {
+  const requestId = ++staffRoomRefreshId;
+  const currentSave = state.currentSave;
+  const slot = state.staffSlot;
+  const wasExpanded = target.classList.contains("season-staff-expanded");
+  try {
+    const room = await action("staff_room", {...savePayload(), team:userTeam(), slot:slot || undefined, limit:30});
+    if (requestId !== staffRoomRefreshId || currentSave !== state.currentSave || slot !== state.staffSlot) return;
+    state.data.staff = room;
+    if (target.isConnected && wasExpanded === target.classList.contains("season-staff-expanded")) renderStaff(target);
+  } catch (error) {
+    if (requestId === staffRoomRefreshId && currentSave === state.currentSave) showToast(error.message || "Available staff could not be refreshed.", true);
+  }
+}
+
+function renderStaff(target = els.content) {
   const room = state.data.staff || {};
   const report = room.team_report || {};
   const slots = report.gameplay_staff_slots || [];
   const market = [...(room.market?.candidates || [])].sort((a,b)=>Number(b.grade||0)-Number(a.grade||0));
-  els.content.innerHTML = `
+  target.innerHTML = target.classList.contains("season-staff-expanded") ? expandedStaffMarkup(report, slots, market) : `
     <div class="staff-workspace">
       <section class="section featured">
         <div class="section-head"><h3>Coaching Staff</h3><span>${money(report.budget?.annual_spend_millions)} / ${money(report.budget?.annual_budget_millions)}</span><span class="pill">${signedMoney(report.budget?.available_millions)} available</span></div>
-        ${table(["Role", "Name", "Grade", "Contract", ""], slots, (row) => [rowLabel(row.slot || row.role), row.name, row.grade, `${money(row.contract?.annual_salary_millions)} x ${row.contract?.years_remaining || 0}`, `<button data-fire-slot="${escapeAttr(row.slot)}">Fire</button>`])}
+        ${table(["Role", "Name", "Grade", "Contract", ""], slots, (row) => [rowLabel(row.slot || row.role), row.name, row.grade, `${money(row.contract?.annual_salary_millions)} x ${row.contract?.years_remaining || 0}`, `<button data-fire-slot="${escapeAttr(row.slot)}" ${staffActionAttributes(row.slot, "fire", report.staff_action_permissions)}>Fire</button>`])}
       </section>
       <section class="section">
         <div class="section-head">
@@ -4698,20 +7801,48 @@ function renderStaff() {
             ${["head_coach", "offensive_coordinator", "defensive_coordinator", "development_lead", "scouting_lead", "performance_lead"].map((slot) => `<option value="${slot}" ${slot === state.staffSlot ? "selected" : ""}>${rowLabel(slot)}</option>`).join("")}
           </select>
         </div>
-        ${table(["Name", "Role", "Grade", "Specialty", "Asking salary", "Years", ""], market, (candidate) => [candidate.name, rowLabel(candidate.slot), html(`<span class="staff-grade-cell"><i><b style="${performanceBarStyle(Number(candidate.grade||0))}"></b></i>${draftMetric(candidate.grade)}</span>`), candidate.archetype || "—", money(candidate.asking_salary_millions), candidate.asking_years || 2, html(`<button type="button" data-staff-id="${escapeAttr(candidate.id)}">Negotiate</button>`)], "staff-market")}
+        ${table(["Name", "Role", "Grade", "Specialty", "Asking salary", "Years", ""], market, (candidate) => [candidate.name, rowLabel(candidate.slot), html(`<span class="staff-grade-cell"><i><b style="${performanceBarStyle(Number(candidate.grade||0))}"></b></i>${draftMetric(candidate.grade)}</span>`), candidate.archetype || "—", money(candidate.asking_salary_millions), candidate.asking_years || 2, html(`<button type="button" data-staff-id="${escapeAttr(candidate.id)}" ${staffActionAttributes(candidate.slot, "negotiate", report.staff_action_permissions)}>Negotiate</button>`)], "staff-market")}
       </section>
     </div>`;
-  document.getElementById("staffSlot").addEventListener("change", async (event) => {
+  wireDashboardStaffCards(target);
+  target.querySelector("#staffSlot").addEventListener("change", async (event) => {
     state.staffSlot = event.target.value;
-    state.data.staff = await action("staff_room", { ...savePayload(), team: userTeam(), slot: state.staffSlot || undefined, limit: 30 });
-    renderStaff();
+    await refreshFilteredStaffRoom(target);
   });
-  els.content.querySelectorAll("[data-staff-id]").forEach((button) => {
+  target.querySelectorAll("[data-staff-id]").forEach((button) => {
     button.addEventListener("click", () => openDashboardStaffNegotiation(button.dataset.staffId));
   });
-  els.content.querySelectorAll("[data-fire-slot]").forEach((button) => {
-    button.addEventListener("click", () => fireStaff(button.dataset.fireSlot));
+  target.querySelectorAll("[data-fire-slot]").forEach((button) => {
+    button.addEventListener("click", () => fireStaff(button.dataset.fireSlot, target));
   });
+}
+
+async function setStaffCardExpanded(expanded, card) {
+  if (!card) return;
+  card.classList.toggle("season-staff-expanded", expanded);
+  if (!expanded) {
+    card.innerHTML = seasonStaffCard(state.data.dashboard || {}, false);
+    wireDashboardStaffCards(card);
+    return;
+  }
+  if (!state.data.staff || String(state.data.staff.market?.slot || "") !== state.staffSlot) {
+    card.innerHTML = `<div class="season-staff-expanded-loading">Loading staff room...</div>`;
+    try {
+      const currentSave = state.currentSave;
+      state.data.staff = await action("staff_room", {...savePayload(), team:userTeam(), slot:state.staffSlot || undefined, limit:30});
+      if (state.currentSave !== currentSave || !card.isConnected || !card.classList.contains("season-staff-expanded")) return;
+    } catch (error) {
+      if (card.isConnected && card.classList.contains("season-staff-expanded")) {
+        card.innerHTML = `<div class="season-staff-expanded-loading">Staff room unavailable.</div>`;
+      }
+      showToast(error.message || String(error), true);
+      return;
+    }
+  }
+  if (card.isConnected && card.classList.contains("season-staff-expanded")) {
+    renderStaff(card);
+    GameInterface.enhance(card);
+  }
 }
 
 async function negotiateStaff(staffId, slot, ask, years) {
@@ -4722,17 +7853,21 @@ async function negotiateStaff(staffId, slot, ask, years) {
     showToast(`Staff hire: ${hired.status}`);
     state.data.staff = hired.room;
   } else {
-    showToast(`Staff declined: ${negotiation.decision}`, true);
+    showToast(negotiation.decision === "reject_season_limit" ? negotiation.notes : `Staff declined: ${negotiation.decision}`, true);
     state.data.staff = result.room;
   }
   renderStaff();
 }
 
-async function fireStaff(slot) {
+async function fireStaff(slot, target = els.content) {
+  const currentSave = state.currentSave;
   const result = await action("fire_staff", { ...savePayload(), team: userTeam(), slot });
-  state.data.staff = result.room;
-  showToast(`Staff move: ${result.status}`);
-  renderStaff();
+  if (currentSave !== state.currentSave) return;
+  // A mutation response contains an unfiltered market. Keep the visible
+  // filtered candidates until a matching room refresh has completed.
+  state.data.staff = {...state.data.staff, team_report:result.room?.team_report || state.data.staff?.team_report};
+  showToast(result.result?.notes || `Staff move: ${result.status}`, result.status !== "applied");
+  await refreshFilteredStaffRoom(target);
 }
 
 function dashboardStaffCandidate(staffId) {
@@ -4745,56 +7880,97 @@ function dashboardCurrentStaff(slot) {
   return [...roomStaff, ...dashStaff].find((staff) => String(staff.slot || staff.role || "") === String(slot || "")) || null;
 }
 
-function openDashboardStaffNegotiation(staffId) {
+function staffOfferInterestScore(salary, years, askingSalary, askingYears) {
+  const salaryPart = 52 * Math.min(1.3, Math.max(0, Number(salary) || 0) / Math.max(Number(askingSalary) || 0, 0.1));
+  const yearsPart = 16 * Math.min(1, Math.max(1, Number(years) || 1) / Math.max(1, Number(askingYears) || 1));
+  return Math.round(clampNumber(salaryPart + yearsPart, 0, 100));
+}
+
+function staffOfferInterestBand(score) {
+  return score < 40 ? "low" : score < 70 ? "medium" : "high";
+}
+
+function updateStaffOfferInterest(modal = state.modal) {
+  if (!modal || modal.kind !== "staffNegotiation") return;
+  const root = els.modalRoot.querySelector("[data-staff-offer-interest]");
+  const salaryInput = els.modalRoot.querySelector("[data-staff-offer-salary]");
+  const yearsInput = els.modalRoot.querySelector("[data-staff-offer-years]");
+  const meter = root?.querySelector("[role='progressbar']");
+  const bar = root?.querySelector("[data-staff-interest-bar]");
+  const value = root?.querySelector("[data-staff-interest-value]");
+  if (!root || !salaryInput || !yearsInput || !meter || !bar || !value) return;
+  const salary = Math.min(Number(modal.maxOffer || 0), Math.max(0, Number(salaryInput.value) || 0));
+  const years = clampNumber(Number(yearsInput.value) || 1, 1, 5);
+  const score = staffOfferInterestScore(salary, years, modal.askingSalary, modal.askingYears);
+  const band = staffOfferInterestBand(score);
+  root.classList.remove("is-low", "is-medium", "is-high");
+  root.classList.add(`is-${band}`);
+  bar.style.width = `${score}%`;
+  value.textContent = `${score}%`;
+  meter.setAttribute("aria-valuenow", String(score));
+  meter.setAttribute("aria-valuetext", `${score}% estimated interest`);
+}
+
+async function openDashboardStaffNegotiation(staffId) {
   const candidate = dashboardStaffCandidate(staffId);
   if (!candidate) return showToast("That staff candidate is no longer available.", true);
   const slot = String(candidate.slot || candidate.role_preference || "");
+  const permission = staffActionPermission(slot);
+  if (permission.can_negotiate === false) return showToast(permission.negotiate_reason, true);
   const current = dashboardCurrentStaff(slot);
+  const currentSave = state.currentSave;
+  const info = current?.id ? await action("coach_card", {...savePayload(), staff_id:current.id}) : {};
+  if (state.currentSave !== currentSave || (current?.id && !info)) return;
+  const currentCoach = info.staff || current;
   const budget = state.data.staff?.team_report?.budget || state.data.dashboard?.staff_budget || {};
   const currentSalary = staffAav(current || {});
   const spend = Number(budget.annual_spend_millions ?? staffBudgetSummary(staffRows(state.data.dashboard || {})).used ?? 0);
   const maxBudget = Number(budget.annual_budget_millions ?? staffBudgetSummary(staffRows(state.data.dashboard || {})).max ?? 0);
-  const maxOffer = Math.max(0, maxBudget - Math.max(0, spend - currentSalary));
+  const maxOffer = Math.max(0, Math.floor((maxBudget - Math.max(0, spend - currentSalary) + 0.000001) * 10) / 10);
   const askingSalary = Number(candidate.asking_salary_millions || staffAav(candidate) || 0);
   const askingYears = Number(candidate.asking_years || staffYears(candidate) || 1);
-  const initialOffer = Math.min(askingSalary, maxOffer);
-  const upgrade = Number(staffGrade(candidate) || 0) - Number(staffGrade(current || {}) || 0);
+  const initialOffer = Math.min(Math.round(askingSalary * 10) / 10, maxOffer);
+  const initialYears = Math.max(1, Math.min(5, askingYears));
+  const initialInterest = staffOfferInterestScore(initialOffer, initialYears, askingSalary, askingYears);
+  const initialInterestBand = staffOfferInterestBand(initialInterest);
+  const upgrade = Number(staffGrade(candidate) || 0) - Number(staffGrade(currentCoach || {}) || 0);
+  const currentPortraits = coachPortraitAssignments(staffRows(state.data.dashboard || {}));
+  const candidatePortraits = coachPortraitAssignments(marketCandidates(state.data.staff?.market));
 
   state.modal = {
     kind: "staffNegotiation",
-    title: `Negotiate with ${staffName(candidate)}`,
-    subtitle: rowLabel(slot),
+    title: "Staff Negotiation",
     staffId: String(candidate.id || ""),
     slot,
     maxOffer,
-    body: `<div class="staff-negotiation-grid">
-      <section class="staff-negotiation-person current">
-        <p class="eyebrow">Current ${escapeHtml(rowLabel(slot))}</p>
-        <strong>${escapeHtml(staffName(current || {}))}</strong>
-        <dl><div><dt>Grade</dt><dd>${Number(staffGrade(current || {}) || 0).toFixed(1)}</dd></div><div><dt>Salary</dt><dd>${money(currentSalary)}</dd></div></dl>
-      </section>
-      <div class="staff-replacement-arrow" aria-hidden="true">→</div>
-      <section class="staff-negotiation-person candidate">
-        <p class="eyebrow">Available candidate</p>
-        <strong>${escapeHtml(staffName(candidate))}</strong>
-        <dl><div><dt>Grade</dt><dd>${Number(staffGrade(candidate) || 0).toFixed(1)}</dd></div><div><dt>Change</dt><dd class="${upgrade >= 0 ? "positive" : "negative"}">${upgrade >= 0 ? "+" : ""}${upgrade.toFixed(1)}</dd></div></dl>
-      </section>
+    askingSalary,
+    askingYears,
+    body: `<div class="staff-negotiation-profiles">
+      <section aria-label="Candidate staff card">${coachProfileCardMarkup(candidate, candidatePortraits.get(staffIdentity(candidate)), {...info, staff:candidate}, {candidate:true, context:"Candidate", gradeChange:current ? upgrade : null})}</section>
+      ${currentCoach ? `<div class="staff-negotiation-swap" role="img" aria-label="Hire ${escapeAttr(staffName(candidate))} to replace ${escapeAttr(staffName(currentCoach))}" title="Staff replacement"><svg viewBox="0 0 32 28" aria-hidden="true"><path d="M10 24V4m-6 6 6-6 6 6M22 4v20m-6-6 6 6 6-6"/></svg></div><section aria-label="Current staff card">${coachProfileCardMarkup(currentCoach, currentPortraits.get(staffIdentity(currentCoach)), info, {context:"Current coach"})}</section>` : `<p class="staff-negotiation-vacancy">This staff position is vacant.</p>`}
     </div>
-    <section class="staff-budget-check">
-      <div><span>Current staff spend</span><strong>${money(spend)}</strong></div>
+    <section class="staff-negotiation-budget" aria-label="Staff budget">
+      <div><span>Current payroll</span><strong>${money(spend)}</strong></div>
       <div><span>Staff budget</span><strong>${money(maxBudget)}</strong></div>
-      <div><span>Maximum legal offer</span><strong>${money(maxOffer)}</strong></div>
+      <div><span>Maximum offer</span><strong>${money(maxOffer)}</strong></div>
     </section>
-    <form class="staff-negotiation-form" data-staff-negotiation-form>
+    <form class="staff-contract-offer" data-staff-negotiation-form>
+      <header>Contract Offer</header>
+      <div class="staff-contract-controls">
       <label>Annual salary
         <div class="money-input"><span>$</span><input type="number" min="0.1" max="${maxOffer.toFixed(1)}" step="0.1" value="${initialOffer.toFixed(1)}" data-staff-offer-salary required><span>M</span></div>
       </label>
+      <span class="staff-contract-times" aria-hidden="true">×</span>
       <label>Years
-        <input type="number" min="1" max="5" step="1" value="${Math.max(1, Math.min(5, askingYears))}" data-staff-offer-years required>
+        <input type="number" min="1" max="5" step="1" value="${initialYears}" data-staff-offer-years required>
       </label>
-      <div class="staff-ask-read"><span>Candidate ask</span><strong>${money(askingSalary)} x ${askingYears}</strong></div>
-      ${askingSalary > maxOffer + 0.001 ? `<p class="staff-budget-warning">This candidate's ask exceeds your maximum legal offer. You may negotiate below the ask, but the candidate can decline.</p>` : ""}
-      <button type="submit" class="staff-hire-confirm" ${maxOffer < 0.1 ? "disabled" : ""}>Offer &amp; Replace ${escapeHtml(staffName(current || {}))}</button>
+      <div class="staff-offer-interest is-${initialInterestBand}" data-staff-offer-interest>
+        <div><span>Coach interest</span><strong data-staff-interest-value>${initialInterest}%</strong></div>
+        <i role="progressbar" aria-label="Estimated coach signing interest" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${initialInterest}" aria-valuetext="${initialInterest}% estimated interest"><b data-staff-interest-bar style="width:${initialInterest}%"></b></i>
+      </div>
+      <button type="submit" ${maxOffer < 0.1 ? "disabled" : ""}>${current ? `Offer &amp; Replace ${escapeHtml(staffName(current))}` : "Offer &amp; Hire"}</button>
+      </div>
+      ${askingSalary > maxOffer + 0.001 ? `<p class="staff-budget-warning">Asking salary exceeds your budget. A lower offer may be declined.</p>` : ""}
     </form>`,
   };
   renderModal();
@@ -4802,13 +7978,15 @@ function openDashboardStaffNegotiation(staffId) {
 
 async function submitDashboardStaffNegotiation() {
   const modal = state.modal;
-  if (!modal || modal.kind !== "staffNegotiation") return;
+  if (!modal || modal.kind !== "staffNegotiation" || modal.submitting || modal.outcome) return;
   const salaryInput = els.modalRoot.querySelector("[data-staff-offer-salary]");
   const yearsInput = els.modalRoot.querySelector("[data-staff-offer-years]");
   const maxOffer = Number(modal.maxOffer || 0);
   const salary = Math.min(maxOffer, Math.max(0.1, Number(salaryInput?.value || 0)));
   const years = Math.max(1, Math.min(5, Number(yearsInput?.value || 1)));
   if (salary > maxOffer + 0.001 || maxOffer < 0.1) return showToast("That offer exceeds the available staff budget.", true);
+  modal.submitting = true;
+  showStaffNegotiationOutcome(modal, {kind:"pending", title:"Sending offer…", message:"Waiting for the staff member’s decision."});
   try {
     const result = await action("negotiate_staff", {
       ...savePayload(),
@@ -4821,24 +7999,103 @@ async function submitDashboardStaffNegotiation() {
     });
     const negotiation = result.negotiation || {};
     if (!negotiation.accepted) {
-      showToast(negotiation.decision === "reject_budget" ? "Offer blocked by the staff budget." : "The candidate declined the offer.", true);
+      state.data.staff = result.room;
+      const blocked = negotiation.decision === "reject_season_limit";
+      modal.staffNeedsRefresh = blocked;
+      modal.submitting = false;
+      showStaffNegotiationOutcome(modal, {
+        kind:"declined", title:blocked || negotiation.decision === "reject_budget" ? "Offer blocked" : "Offer declined",
+        message:blocked ? negotiation.notes : negotiation.decision === "reject_budget" ? "This offer exceeds the available staff budget." : "The staff member declined this contract. Adjust the salary or years to make another offer.",
+        allowRetry:!blocked,
+      });
       return;
     }
     const hired = await action("hire_staff", { ...savePayload(), negotiation_id: negotiation.id });
-    if (hired.status !== "applied") return showToast("The staff replacement could not be completed.", true);
-    closeModal();
-    showToast(`${staffName(negotiation.candidate || {})} hired as ${rowLabel(modal.slot)}.`);
-    await refreshHome();
+    if (hired.status !== "applied") {
+      state.data.staff = hired.room;
+      modal.staffNeedsRefresh = true;
+      modal.submitting = false;
+      showStaffNegotiationOutcome(modal, {kind:"declined", title:"Replacement not completed", message:hired.result?.notes || "The staff replacement could not be completed. Close this result to refresh the staff list.", allowRetry:false});
+      return;
+    }
+    state.data.staff = hired.room;
+    modal.staffNeedsRefresh = true;
+    modal.submitting = false;
+    showStaffNegotiationOutcome(modal, {kind:"accepted", title:"Offer accepted", message:`${staffName(negotiation.candidate || {})} is now your ${staffRoleLabel(modal.slot)}.`});
   } catch (error) {
-    showToast(error.message || "Staff negotiation failed.", true);
+    modal.staffNeedsRefresh = true;
+    modal.submitting = false;
+    showStaffNegotiationOutcome(modal, {kind:"declined", title:"Offer not confirmed", message:error.message || "The offer could not be confirmed. Close this result to refresh the staff list.", allowRetry:false});
   }
 }
 
+function staffNegotiationOutcomeMarkup(outcome) {
+  const accepted = outcome.kind === "accepted";
+  const pending = outcome.kind === "pending";
+  const handshake = `<svg class="staff-result-handshake" viewBox="0 0 400 240" aria-hidden="true">
+    <g class="staff-handshake-shake" stroke="#495968" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+      <g class="staff-hand staff-hand-left">
+        <path class="staff-hand-sleeve" d="M24 113 86 79 121 140 59 175Z"/><path class="staff-hand-cuff" d="m86 79 21-11 35 61-21 11Z"/>
+        <path class="staff-hand-skin" d="m110 77 30-16q15-8 29 0l42 23 38 44q6 8 0 15l-8 7q-1 11-13 15l-8 9q-8 8-17 1l-10 6q-9 5-17-2l-43-40-8-4Z"/>
+        <path class="staff-hand-detail" d="m177 128 43 46m-28-62 47 49m-78-19 36 36"/>
+      </g>
+      <g class="staff-hand staff-hand-right">
+        <path class="staff-hand-sleeve" d="m376 113-62-34-35 61 62 35Z"/><path class="staff-hand-cuff" d="m314 79-21-11-35 61 21 11Z"/>
+        <path class="staff-hand-skin" d="m290 77-26-15q-12-6-25 0l-23 13h-17q-9 0-15 6l-24 24q-7 8 0 15 7 7 15 0l24-20 23 10 33 31 20-7Z"/>
+        <path class="staff-hand-detail" d="m199 100 12-9m42 41 11-9"/>
+      </g>
+    </g>
+  </svg>`;
+  const mark = `<svg class="staff-result-mark" viewBox="0 0 240 240" aria-hidden="true">${accepted
+    ? '<circle class="staff-result-halo" cx="120" cy="120" r="101"/><path class="staff-result-check" pathLength="1" d="m56 121 43 43 86-91"/>'
+    : '<path class="staff-result-cross staff-result-cross-first" pathLength="1" d="m32 32 176 176"/><path class="staff-result-cross staff-result-cross-second" pathLength="1" d="m208 32-176 176"/>'}</svg>`;
+  return `<div class="staff-result-art" aria-hidden="true">${pending ? '<span class="staff-result-pending"></span>' : `${accepted ? handshake : ""}${mark}`}</div>
+    <div class="staff-result-copy" role="status" aria-live="polite" aria-atomic="true"><h2>${escapeHtml(outcome.title)}</h2><p>${escapeHtml(outcome.message || "")}</p></div>
+    ${pending ? "" : `<button type="button" data-staff-result-dismiss>${accepted ? "Continue" : outcome.allowRetry ? "Revise offer" : "Close"}</button>`}`;
+}
+
+function showStaffNegotiationOutcome(modal, outcome) {
+  modal.outcome = outcome;
+  if (state.modal !== modal) return;
+  mountStaffNegotiationOutcome(modal);
+}
+
+function mountStaffNegotiationOutcome(modal) {
+  const body = els.modalRoot.querySelector(".modal-staff-negotiation > .modal-body");
+  const content = body?.querySelector(".staff-negotiation-content");
+  if (!body || !content || !modal.outcome) return;
+  body.querySelector(".staff-negotiation-result")?.remove();
+  body.classList.add("has-staff-result");
+  content.inert = true;
+  const close = els.modalRoot.querySelector("[data-close-modal]");
+  if (close) close.disabled = Boolean(modal.submitting);
+  const overlay = document.createElement("div");
+  overlay.className = `staff-negotiation-result staff-outcome--${modal.outcome.kind}`;
+  overlay.setAttribute("role", "region");
+  overlay.setAttribute("aria-label", "Staff contract result");
+  overlay.tabIndex = -1;
+  overlay.innerHTML = staffNegotiationOutcomeMarkup(modal.outcome);
+  body.append(overlay);
+  const dismiss = overlay.querySelector("[data-staff-result-dismiss]");
+  dismiss?.addEventListener("click", () => {
+    if (state.modal !== modal || modal.submitting) return;
+    if (modal.outcome.kind === "accepted" || !modal.outcome.allowRetry) return closeModal();
+    delete modal.outcome;
+    overlay.remove();
+    body.classList.remove("has-staff-result");
+    content.inert = false;
+    body.querySelector("[data-staff-offer-salary]")?.focus({preventScroll:true});
+  });
+  (dismiss || overlay).focus({preventScroll:true});
+}
+
 async function fireDashboardStaff(slot, name) {
+  const permission = staffActionPermission(slot);
+  if (permission.can_fire === false) return showToast(permission.fire_reason, true);
   if (!window.confirm(`Fire ${name}? An interim ${rowLabel(slot)} will take over immediately.`)) return;
   try {
     const result = await action("fire_staff", { ...savePayload(), team: userTeam(), slot, reason: "user decision" });
-    showToast(result.status === "applied" ? `${name} fired. An interim has been appointed.` : `Staff move: ${result.status}`);
+    showToast(result.status === "applied" ? `${name} fired. An interim has been appointed.` : result.result?.notes || `Staff move: ${result.status}`, result.status !== "applied");
     await refreshHome();
   } catch (error) {
     showToast(error.message || "Staff firing failed.", true);
@@ -4878,7 +8135,7 @@ function staffRoleButton(row, editable = true) {
   const aav = staffAav(row);
   const years = staffYears(row);
 
-  return `<button class="staff-role-button" data-staff-role="${escapeAttr(role)}" data-staff-name="${escapeAttr(name)}" ${editable ? "" : "disabled"}>
+  return `<button class="staff-role-button" data-staff-role="${escapeAttr(role)}" data-staff-name="${escapeAttr(name)}" ${editable ? staffActionAttributes(role, "fire") : "disabled"}>
     <span class="staff-role">${escapeHtml(rowLabel(role))}</span>
     <span class="staff-name-row">
       <strong>${escapeHtml(name)}</strong>
@@ -4914,7 +8171,7 @@ function staffMarketPopover() {
     <div class="staff-market-popover-list">
       ${candidates.map((candidate) => {
         const role = String(candidate.slot || candidate.role_preference || "");
-        return `<button type="button" class="staff-market-candidate" data-staff-candidate="${escapeAttr(candidate.id || "")}" data-staff-candidate-slot="${escapeAttr(role)}">
+        return `<button type="button" class="staff-market-candidate" data-staff-candidate="${escapeAttr(candidate.id || "")}" data-staff-candidate-slot="${escapeAttr(role)}" ${staffActionAttributes(role, "negotiate")}>
           <span class="staff-market-candidate-main"><strong>${escapeHtml(staffName(candidate))}</strong><small>${escapeHtml(rowLabel(role))}</small></span>
           <span class="staff-market-candidate-grade">${Number(staffGrade(candidate) || 0).toFixed(1)}</span>
           <span class="staff-market-candidate-ask">${money(candidate.asking_salary_millions || staffAav(candidate))} x ${escapeHtml(candidate.asking_years || staffYears(candidate) || 1)}</span>
@@ -5076,12 +8333,68 @@ function renderLeague() {
   });
 }
 
-function renderCalendar() {
-  const games = state.data.calendar?.games || state.data.calendar?.calendar || [];
-  els.content.innerHTML = `<section class="section">${sectionHead("Calendar")}${table(["Date", "Away", "Home", "Score", "Status", ""], games.slice(0, 120), (game) => [game.date, game.away || game.away_team, game.home || game.home_team, game.score || scoreLine(game), game.status || game.result || "", game.status === "simulated" ? html(`<button data-box-score="${escapeAttr(game.game_id)}">Box Score</button>`) : ""])}</section>`;
-  els.content.querySelectorAll("[data-box-score]").forEach((button) => {
+function renderCalendar(target = els.content, options = {}) {
+  const current = String(state.home?.save?.current_date || "").slice(0,10);
+  const month = state.calendarMonth || current.slice(0,7);
+  const team = teamLabel(options.team || userTeam());
+  const dataKey = options.dataKey || "calendar";
+  const calendar = state.data[dataKey] || {};
+  const games = calendar.games || calendar.calendar || [];
+  const cells = monthCalendarCells(month);
+  const label = new Date(`${month}-01T00:00:00Z`).toLocaleDateString("en-US",{month:"long",year:"numeric",timeZone:"UTC"});
+  target.innerHTML = `<section class="clipboard-calendar" aria-label="${escapeAttr(team)} calendar">
+    <header class="clipboard-calendar-head"><h2>${escapeHtml(label)}</h2><div>
+      <button type="button" data-clipboard-calendar-step="-1" aria-label="Previous month" title="Previous month">&lt;</button>
+      <button type="button" data-clipboard-calendar-today>Today</button>
+      <button type="button" data-clipboard-calendar-step="1" aria-label="Next month" title="Next month">&gt;</button>
+    </div></header>
+    ${tradeDeadlineCalendarNotice(month)}
+    <div class="clipboard-calendar-weekdays">${["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(day=>`<span>${day}</span>`).join("")}</div>
+    <div class="clipboard-calendar-grid" style="--calendar-weeks:${cells.length/7}">${cells.map(cell=>clipboardCalendarDay(cell,games,current,team)).join("")}</div>
+  </section>`;
+  target.querySelectorAll("[data-box-score]").forEach((button) => {
     button.addEventListener("click", () => openBoxScore(button.dataset.boxScore));
   });
+  target.querySelectorAll("[data-clipboard-calendar-step], [data-clipboard-calendar-today]").forEach(button=>button.addEventListener("click",async()=>{
+    const date = new Date(`${month}-01T00:00:00Z`);
+    date.setUTCMonth(date.getUTCMonth()+Number(button.dataset.clipboardCalendarStep || 0));
+    const nextMonth = button.hasAttribute("data-clipboard-calendar-today") ? current.slice(0,7) : date.toISOString().slice(0,7);
+    const save = state.currentSave;
+    target.querySelectorAll(".clipboard-calendar-head button").forEach(control=>control.disabled=true);
+    try {
+      const result = await action("calendar",{...savePayload(),from_date:`${nextMonth}-01`,through_date:monthEndDate(`${nextMonth}-01`)});
+      if (!target.isConnected || save !== state.currentSave) return;
+      state.calendarMonth = nextMonth;
+      state.data[dataKey] = result;
+      renderCalendar(target, options);
+      GameInterface.enhance(target);
+    } catch(error) {
+      showToast(error.message || String(error),true);
+    } finally {
+      if (target.isConnected) target.querySelectorAll(".clipboard-calendar-head button").forEach(control=>control.disabled=false);
+    }
+  }));
+}
+
+function clipboardCalendarDay(cell, games, current, team) {
+  if (!cell.date) return `<div class="clipboard-calendar-day blank" aria-hidden="true"></div>`;
+  const game = games.filter(game=>String(game.date || "").slice(0,10) === cell.date && [teamLabel(game.home || game.home_team),teamLabel(game.away || game.away_team)].includes(team))
+    .sort((a,b)=>Number(Boolean(scoreLine(b)))-Number(Boolean(scoreLine(a))))[0];
+  const past = cell.date < current;
+  const completed = Boolean(game && scoreLine(game));
+  const gameId = game?.game_id || game?.id;
+  const opponent = game ? seasonGameOpponent(game,team) : "";
+  const logo = opponent ? teamLogoSrc(opponent) : "";
+  const home = game && teamLabel(game.home || game.home_team) === team;
+  const score = completed ? seasonGameScore(game,team) : "";
+  const displayScore = score || (past ? "Not played" : "");
+  const clickable = completed && gameId;
+  const tag = clickable ? "button" : "div";
+  return `<${tag} class="clipboard-calendar-day${past ? " past" : ""}${cell.date === current ? " today" : ""}${completed ? " completed" : ""}${cell.date === tradeDeadlineDate() ? " trade-deadline-day" : ""}" ${clickable ? `type="button" data-box-score="${escapeAttr(gameId)}" aria-label="Box score: ${escapeAttr(opponent)} ${cell.date} ${escapeAttr(score)}"` : ""}>
+    <span class="clipboard-calendar-date">${Number(cell.date.slice(-2))}${cell.date === current ? `<small>Today</small>` : ""}</span>
+    ${cell.date === tradeDeadlineDate() ? '<strong class="trade-deadline-day-label">Trade deadline</strong>' : ""}
+    ${game ? `<div class="clipboard-calendar-matchup">${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(opponent)}" />` : ""}<span>${home ? "vs" : "@"} ${escapeHtml(opponent)}</span>${displayScore ? `<strong class="${score.startsWith("W") ? "win" : score.startsWith("L") ? "loss" : ""}">${escapeHtml(displayScore)}</strong>` : ""}</div>` : ""}
+  </${tag}>`;
 }
 
 function renderSocial() {
@@ -5100,10 +8413,16 @@ function renderSettings() {
         <div class="item"><strong>Narrative</strong><span class="muted">${escapeHtml(narrative.status || "")} | ${escapeHtml(narrative.provider || "")} ${escapeHtml(narrative.model || "")}</span></div>
       </div>
       <div class="toolbar">
+        <button id="replayGameTutorial">Replay Tutorial</button>
         <button id="togglePress">${gameSettings.press_conferences_enabled ? "Disable" : "Enable"} Press Conferences</button>
         <button id="leaveGame">Leave Game</button>
       </div>
     </section>`;
+  document.getElementById("replayGameTutorial").addEventListener("click", async () => {
+    state.view = "dashboard";
+    await refreshHome();
+    startGameTutorial(true);
+  });
   document.getElementById("togglePress").addEventListener("click", async () => {
     await action("update_game_settings", { ...savePayload(), settings: { press_conferences_enabled: !gameSettings.press_conferences_enabled } });
     await refreshHome();
@@ -5122,9 +8441,6 @@ function renderSettings() {
 function renderPlayoffs() {
   const room = state.data.playoffs || {};
   const series = room.series || [];
-  const playoffPhase = ["play_in", "playoffs"].includes(String(room.phase || ""));
-  const canSim = playoffPhase && room.status !== "completed";
-  const canAdvanceStage = room.status === "completed";
   els.content.innerHTML = `
     <section class="moment-screen playoff-moment">
       <div class="moment-topline">
@@ -5140,55 +8456,14 @@ function renderPlayoffs() {
         </div>
       </div>
       ${room.champion ? `<div class="headline-block champion-line">Champion: ${escapeHtml(teamLabel(room.champion))}</div>` : ""}
-      ${canSim ? `<div class="toolbar playoff-controls">
-        <button data-playoff-sim="game">Sim 1 Game Per Series</button>
-        <button data-playoff-sim="round">Sim Rest Of Series</button>
-        <button data-playoff-sim="all">Sim Remaining Playoffs</button>
-      </div>` : ""}
-      ${canAdvanceStage ? `<div class="toolbar playoff-controls">
-        <button id="playoffAdvanceStage">Advance To Next Stage</button>
-      </div>` : ""}
       <div class="playoff-grid">
         <section class="section wide panel-rail">
           ${sectionHead("Bracket")}
-          ${series.length ? playoffBracket(series, room.champion) : `<div class="empty">Bracket will generate when the save reaches play-in/playoffs. Until then, this is the live playoff picture.</div>`}
+          ${playoffBracket(series, room.champion, room.play_in)}
         </section>
       </div>
     </section>`;
   wireViewJumpButtons();
-  els.content.querySelectorAll("[data-playoff-sim]").forEach((button) => {
-    button.addEventListener("click", () => playoffSim(button.dataset.playoffSim || "game"));
-  });
-  const advanceStage = document.getElementById("playoffAdvanceStage");
-  if (advanceStage) advanceStage.addEventListener("click", playoffAdvanceStage);
-}
-
-async function playoffSim(mode) {
-  const actions = {
-    game: "simulate_playoff_game",
-    round: "simulate_playoff_round",
-    all: "simulate_playoff_all",
-  };
-  let result;
-  let games = 0;
-  let completed = 0;
-  if (mode === "all") {
-    showToast("Simulating the remaining playoffs...");
-    for (let round = 0; round < 8; round += 1) {
-      result = await action(actions.round, { ...savePayload(), seed: 7 });
-      games += result.result?.games?.length || (result.result?.game ? 1 : 0);
-      completed += result.result?.completed_series?.length || result.result?.completed_play_in?.length || 0;
-      const room = result.room || {};
-      if (room.status === "completed" || room.round === "champion" || !["play_in", "playoffs"].includes(room.phase)) break;
-    }
-  } else {
-    result = await action(actions[mode] || actions.game, { ...savePayload(), seed: 7 });
-    games = result.result?.games?.length || (result.result?.game ? 1 : 0);
-    completed = result.result?.completed_series?.length || result.result?.completed_play_in?.length || 0;
-  }
-  if (!result) throw new Error("The playoff simulation did not return a result.");
-  showToast(`Playoff sim: ${games ? `${games} game(s)` : result.status}${completed ? `, ${completed} series done` : ""}`);
-  await refreshDashboardAfterPhaseMutation("playoffs", result.room);
 }
 
 async function refreshDashboardAfterPhaseMutation(roomKey, room) {
@@ -5217,161 +8492,176 @@ async function refreshDashboardAfterPhaseMutation(roomKey, room) {
   renderDashboard();
 }
 
-async function playoffAdvanceStage() {
-  const result = await action("advance_save", { ...savePayload(), next_event: true, seed: 7 });
-  state.home = result.home;
-  clearViewCaches();
-  applyPhaseRouting();
-  await ensureViewData(true);
-  render();
-  showToast(`Advanced to ${state.home?.save?.current_date || "next stage"}`);
-}
-
 async function openPlayerFinderModal() {
   const payload = await action("player_finder", savePayload());
-  state.playerFinder = {
-    payload,
-    sortField: payload.default_sort || "overall",
-    filterField: "player",
-    filterValue: "",
-  };
-  state.modal = {
-    kind: "playerFinder",
-    title: "Player Finder",
-    subtitle: `${payload.rows?.length || 0} league players | ${payload.as_of_date || ""}`,
-    body: playerFinderModalBody(),
-  };
+  const previous = state.playerFinder?.saveId === state.currentSave ? state.playerFinder : {};
+  state.playerFinder = {payload, saveId:state.currentSave, name:previous.name || "", filters:previous.filters || [], sortField:previous.sortField || "overall", sortDirection:previous.sortDirection || "desc"};
+  state.modal = {kind:"playerFinder", title:"Player Finder", body:playerFinderModalBody()};
   renderModal();
 }
 
 function playerFinderModalBody() {
-  const finder = state.playerFinder || {};
-  const payload = finder.payload || {};
-  const fields = playerFinderFields(payload.seasons || []);
-  const sortField = finder.sortField || "overall";
-  const filterField = finder.filterField || "player";
-  const filterValue = finder.filterValue || "";
-  const rows = filteredPlayerFinderRows(payload.rows || [], filterField, filterValue, sortField);
-  return `
-    <div class="player-finder-controls">
-      <label>Sort
-        <select id="playerFinderSort">
-          ${fields.map((field) => `<option value="${escapeAttr(field.key)}" ${field.key === sortField ? "selected" : ""}>${escapeHtml(field.label)}</option>`).join("")}
-        </select>
-      </label>
-      <label>Filter
-        <select id="playerFinderFilterField">
-          ${fields.map((field) => `<option value="${escapeAttr(field.key)}" ${field.key === filterField ? "selected" : ""}>${escapeHtml(field.label)}</option>`).join("")}
-        </select>
-      </label>
-      <label>Value
-        <input id="playerFinderFilterValue" value="${escapeAttr(filterValue)}" placeholder="Text contains or numeric minimum" />
-      </label>
-      <span class="pill" id="playerFinderCount">${rows.length} shown</span>
-    </div>
-    <div class="player-finder-table-wrap" id="playerFinderTableWrap">
-      ${playerFinderTable(rows, payload.seasons || [])}
-    </div>`;
+  const finder = state.playerFinder || {}, payload = finder.payload || {};
+  return `<div class="player-finder-search"><label>Player name<input type="search" data-player-finder-name value="${escapeAttr(finder.name || "")}" placeholder="Search all players…" autocomplete="off"></label><button type="button" class="ui-command" data-player-finder-add>+ Filter</button><span id="playerFinderCount" role="status" aria-live="polite"></span></div><div class="player-finder-filters" data-player-finder-filters>${playerFinderFiltersMarkup()}</div><div class="player-finder-table-wrap" id="playerFinderTableWrap">${playerFinderTable(filteredPlayerFinderRows(payload.rows || []))}</div>`;
 }
 
 function playerFinderFields(seasons = []) {
   return [
-    { key: "player", label: "Player", type: "text" },
-    { key: "team", label: "Team", type: "text" },
-    { key: "position", label: "Pos", type: "text" },
-    { key: "height", label: "Height", type: "text" },
-    { key: "age", label: "Age", type: "number" },
-    { key: "overall", label: "OVR", type: "number" },
-    { key: "shooting", label: "Shot", type: "number" },
-    { key: "creation", label: "Create", type: "number" },
-    { key: "defense", label: "Def", type: "number" },
-    { key: "spacing", label: "Space", type: "number" },
-    { key: "passing", label: "Pass", type: "number" },
-    { key: "rebounding", label: "Reb", type: "number" },
-    { key: "rim_deterrence", label: "Rim", type: "number" },
-    { key: "athleticism", label: "Ath", type: "number" },
-    { key: "games_missed", label: "GM", type: "number" },
-    { key: "display_mpg", label: "MPG", type: "number" },
-    { key: "points_per_game", label: "PTS", type: "number" },
-    { key: "rebounds_per_game", label: "REB", type: "number" },
-    { key: "assists_per_game", label: "AST", type: "number" },
-    { key: "steals_per_game", label: "STL", type: "number" },
-    { key: "blocks_per_game", label: "BLK", type: "number" },
-    { key: "turnovers_per_game", label: "TO", type: "number" },
-    ...seasons.map((season) => ({ key: season, label: season, type: "number" })),
+    ...[["overall","OVR"],["offense","OFF"],["defense","DEF"],["age","Age"],["height_inches","Height (inches)"],["health_risk","Injury risk"],["upside_remaining","Upside"],["shooting","Shooting"],["creation","Creation"],["spacing","Spacing"],["passing","Passing"],["rebounding","Rebounding"],["rim_deterrence","Rim protection"],["athleticism","Athleticism"],["release","Release"],["range","Range"],["handle","Handle"],["rim_pressure","Rim pressure"],["def_effort","Defensive effort"],["screen_nav","Screen navigation"],["lateral_agility","Lateral agility"],["stamina","Stamina"],["iq","IQ"],["games","Games played"],["games_missed","Games missed"],["display_mpg","MPG"],["points_per_game","PTS"],["rebounds_per_game","REB"],["assists_per_game","AST"],["steals_per_game","STL"],["blocks_per_game","BLK"],["turnovers_per_game","TO"]].map(([key,label])=>({key,label,type:"number"})),
+    ...[["player","Player name"],["team","Team"],["position","Position"]].map(([key,label])=>({key,label,type:"text"})),
+    ...seasons.map(season=>({key:season,label:`${shortSeasonLabel(season)} salary ($M)`,type:"number"})),
   ];
 }
 
-function filteredPlayerFinderRows(rows, filterField, filterValue, sortField) {
-  const query = String(filterValue || "").trim().toLowerCase();
-  const numericQuery = Number(query);
-  const filtered = query
-    ? rows.filter((row) => {
-      const value = playerFinderValue(row, filterField);
-      const numericValue = Number(value);
-      if (Number.isFinite(numericQuery) && Number.isFinite(numericValue)) return numericValue >= numericQuery;
-      return String(value ?? "").toLowerCase().includes(query);
-    })
-    : [...rows];
-  filtered.sort((a, b) => {
-    const av = playerFinderValue(a, sortField);
-    const bv = playerFinderValue(b, sortField);
-    const an = Number(av);
-    const bn = Number(bv);
-    if (Number.isFinite(an) && Number.isFinite(bn)) return bn - an || String(a.name || "").localeCompare(String(b.name || ""));
-    return String(av ?? "").localeCompare(String(bv ?? ""), undefined, { numeric: true, sensitivity: "base" });
+function playerFinderOperators(field) {
+  return ["player","team","position"].includes(field) ? ["contains","=","≠"] : [">","≥","<","≤","=","≠"];
+}
+
+function playerFinderFiltersMarkup() {
+  const finder=state.playerFinder || {}, fields=playerFinderFields(finder.payload?.seasons || []);
+  return (finder.filters || []).map((filter,index)=>`<div class="player-finder-filter" data-finder-filter="${index}"><select data-finder-field aria-label="Filter ${index+1} field">${fields.map(field=>`<option value="${escapeAttr(field.key)}" ${field.key===filter.field?"selected":""}>${escapeHtml(field.label)}</option>`).join("")}</select><button type="button" class="ui-command player-finder-operator" data-finder-operator aria-label="Filter ${index+1} comparison ${escapeAttr(filter.operator)}; click to change" title="Click to change comparison">${escapeHtml(filter.operator)}</button><input data-finder-value aria-label="Filter ${index+1} value" value="${escapeAttr(filter.value)}" inputmode="${["player","team","position"].includes(filter.field)?"text":"decimal"}" placeholder="Value"><button type="button" class="ui-command player-finder-remove" data-finder-remove aria-label="Remove filter ${index+1}" title="Remove filter">×</button></div>`).join("");
+}
+
+function filteredPlayerFinderRows(rows) {
+  const finder=state.playerFinder || {};
+  const normalize=value=>String(value ?? "").normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const query=normalize(finder.name || "").trim();
+  const filtered=rows.filter(row=>normalize(row.name).includes(query) && (finder.filters || []).every(filter=>{
+    if(!String(filter.value ?? "").trim()) return true;
+    const actual=playerFinderValue(row,filter.field);
+    if(actual == null || actual === "") return false;
+    if(["player","team","position"].includes(filter.field)) {
+      const left=normalize(actual),right=normalize(filter.value).trim();
+      return filter.operator==="="?left===right:filter.operator==="≠"?left!==right:left.includes(right);
+    }
+    const left=Number(actual), right=Number(filter.value);
+    if(!Number.isFinite(left)||!Number.isFinite(right)) return false;
+    return filter.operator===">"?left>right:filter.operator==="≥"?left>=right:filter.operator==="<"?left<right:filter.operator==="≤"?left<=right:filter.operator==="≠"?left!==right:left===right;
+  }));
+  const key=finder.sortField || "overall", direction=finder.sortDirection==="asc"?1:-1;
+  return filtered.sort((a,b)=>{
+    const av=playerFinderValue(a,key), bv=playerFinderValue(b,key);
+    if(av==null||av==="") return bv==null||bv===""?String(a.name).localeCompare(String(b.name)):1;
+    if(bv==null||bv==="") return -1;
+    const comparison=typeof av==='number'&&typeof bv==='number'?av-bv:String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
+    return comparison*direction || String(a.name).localeCompare(String(b.name));
   });
-  return filtered;
 }
 
-function playerFinderValue(row, key) {
-  if (key === "player") return row.name || "";
-  if (key === "team") return row.team_abbrev || "";
-  if (key === "height") return row.height || "";
-  if (row.salary_by_year && Object.prototype.hasOwnProperty.call(row.salary_by_year, key)) return row.salary_by_year[key] ?? "";
-  if (["overall", "shooting", "creation", "defense", "spacing", "passing", "rebounding", "rim_deterrence", "athleticism"].includes(key)) return rating(row, key);
-  return row[key] ?? row.ratings?.[key] ?? "";
+function playerFinderValue(row,key) {
+  if(key==='player') return row.name;
+  if(key==='team') return row.team_abbrev;
+  if(/^[0-9]{4}-/.test(key)) return row.salary_by_year?.[key];
+  if(key==='offense') return Math.round(Number(rating(row,'offense'))*10)/10;
+  return row[key] ?? row.ratings?.[key];
 }
 
-function playerFinderTable(rows, seasons) {
-  return table(["Player", "Team", "Pos", "Height", "Age", "OVR", "Shot", "Create", "Def", "Space", "Pass", "Reb", "Rim", "Ath", "GM", "MPG", "PTS", "REB", "AST", "STL", "BLK", "TO", ...seasons], rows, (row) => [
-    summaryPlayerNameCell(row, true),
-    row.team_abbrev || "FA",
-    compactPos(row.position),
-    heightFromRow(row) || "—",
-    row.age ?? "—",
-    plainNumber(rating(row, "overall")),
-    plainNumber(rating(row, "shooting")),
-    plainNumber(rating(row, "creation")),
-    plainNumber(rating(row, "defense")),
-    plainNumber(rating(row, "spacing") || rating(row, "range")),
-    plainNumber(rating(row, "passing")),
-    plainNumber(rating(row, "rebounding")),
-    plainNumber(rating(row, "rim_deterrence")),
-    plainNumber(rating(row, "athleticism")),
-    gamesMissedFromRow(row),
-    Number(mpgFromRow(row) || 0).toFixed(1),
-    statNumber(row, "points"),
-    statNumber(row, "rebounds"),
-    statNumber(row, "assists"),
-    statNumber(row, "steals"),
-    statNumber(row, "blocks"),
-    statNumber(row, "turnovers"),
-    ...seasons.map((season) => money(row.salary_by_year?.[season]) || "—"),
-  ], "player-finder-table");
+function playerFinderTable(rows) {
+  const finder=state.playerFinder || {};
+  const fields=[["player","Player",260],["team","Team",48],["position","Pos",40],["age","Age",36],["height_inches","Height",54],["overall","OVR",104],["offense","OFF",104],["defense","DEF",104],["health_risk","Risk",56],["upside_remaining","Upside",60],["find","Find",58]];
+  const head=fields.map(([key,label])=>`<th scope="col" ${key!=="find"?`aria-sort="${finder.sortField===key?(finder.sortDirection==='asc'?'ascending':'descending'):'none'}"`:""}>${key==='find'?label:`<button type="button" data-finder-sort="${key}">${label}${finder.sortField===key?(finder.sortDirection==='asc'?' ↑':' ↓'):''}</button>`}</th>`).join('');
+  const body=rows.map(row=>`<tr data-finder-player="${escapeAttr(row.id)}" tabindex="0" aria-label="Open player card for ${escapeAttr(row.name)}"><td><span class="player-finder-identity">${playerHeadshotMarkup(row,'roster-player-headshot') || playerHeadshotMarkup({is_prospect:true},'roster-player-headshot')}${playerNameWithInjuryMarkup(row)}</span></td><td>${teamLogoSrc(row.team_abbrev)?`<span class="player-finder-team-logo" title="${escapeAttr(row.team_abbrev)}"><img src="${escapeAttr(teamLogoSrc(row.team_abbrev))}" alt="${escapeAttr(row.team_abbrev)} logo" loading="lazy" decoding="async"></span>`:escapeHtml(row.team_abbrev || "FA")}</td><td>${escapeHtml(compactPos(row.position))}</td><td>${escapeHtml(row.age == null ? "—" : Math.floor(row.age))}</td><td>${escapeHtml(heightFromRow(row) || "—")}</td>${['overall','offense','defense'].map(key=>`<td>${compactRatingBar(playerFinderValue(row,key))}</td>`).join('')}<td>${row.health_risk==null?'—':playerEvidenceRing('Injury risk',row.health_risk,10,Number(row.health_risk)>=7?'#e04d55':Number(row.health_risk)>=4?'#bd5b5d':'#8e6263','/10')}</td><td>${row.upside_remaining==null?'—':playerEvidenceRing('Upside',row.upside_remaining,5,playerUpsideColor(row.upside_remaining),' OVR')}</td><td><button type="button" class="ui-command" data-finder-trade="${escapeAttr(row.id)}" aria-label="Find trades for ${escapeAttr(row.name)}" ${!row.team_id || row.team_abbrev==='FA'?'disabled title="Free agents cannot be traded"':'title="Open Trade Finder with this player selected"'}>Find</button></td></tr>`).join('');
+  return `<table class="player-finder-table"><colgroup>${fields.map(([, ,width])=>`<col style="width:${width}px">`).join('')}</colgroup><thead><tr>${head}</tr></thead><tbody>${body || '<tr><td colspan="11" class="player-finder-empty">No players match these filters.</td></tr>'}</tbody></table>`;
 }
 
 function boxScoreModalBody(box) {
   const away = teamLabel(box.away_team);
   const home = teamLabel(box.home_team);
-  return `<div class="box-score-matchup-grid">
-    ${boxScoreTeamSheet(box, away, box.away_score, "Away")}
-    ${boxScoreTeamSheet(box, home, box.home_score, "Home")}
+  return `<div class="box-score-pages" data-box-score-pages>
+    <div class="box-score-page-bar player-page-bar"><span data-box-score-page-title>Team Stats</span><nav class="player-page-nav" aria-label="Box score pages">
+      <button type="button" class="ui-command" data-box-score-page-step="-1" aria-label="Previous box score page" title="Previous page">‹</button>
+      <button type="button" class="ui-command" data-box-score-page-step="1" aria-label="Next box score page" title="Next page">›</button>
+      <span data-box-score-page-count aria-live="polite" aria-atomic="true">1/2</span>
+    </nav></div>
+    <section class="box-score-page" data-box-score-page="0" data-page-title="Team Stats" aria-label="Team statistics comparison">
+      ${boxScoreTeamComparison(box, away, home)}
+    </section>
+    <section class="box-score-page" data-box-score-page="1" data-page-title="Player Box Score" aria-label="Player box score" hidden>
+      <div class="box-score-matchup-grid">
+        ${boxScoreTeamSheet(box, away, box.away_score, "Away")}
+        ${boxScoreTeamSheet(box, home, box.home_score, "Home")}
+      </div>
+    </section>
   </div>`;
 }
 
+function boxScoreTeamLine(box, team) {
+  return (box.team_lines || []).find(row => (row.team_abbrev || teamLabel(row.team_id)) === team) || {};
+}
+
+function boxScoreComparisonMetric(line, key, attemptsKey = null) {
+  const read = field => line[field] !== null && line[field] !== undefined && line[field] !== "" && Number.isFinite(Number(line[field])) ? Math.max(0, Number(line[field])) : null;
+  const value = read(key);
+  if (!attemptsKey) return { value, count:value, attempts:null, text: value === null ? "—" : String(value), detail: "" };
+  const attempts = read(attemptsKey);
+  if (value === null || attempts === null) return { value:null, count:null, attempts:null, text:"—", detail:"" };
+  const percent = attempts > 0 ? Math.min(100, value / attempts * 100) : 0;
+  return { value:percent, count:value, attempts, text:`${Math.round(percent)}%`, detail:`${value}/${attempts}` };
+}
+
+function boxScoreTeamComparison(box, away, home) {
+  const awayLine = boxScoreTeamLine(box, away);
+  const homeLine = boxScoreTeamLine(box, home);
+  // Black and silver logos need their dark color against the light card surface.
+  const color = team => ["BKN", "SAS"].includes(team) ? "#000000" : TEAM_BRAND_COLORS[team]?.[0] || "#65737D";
+  const awayColor = color(away);
+  const homeColor = color(home);
+  const team = (abbrev, score, venue) => {
+    const name = dashboardTeamName(abbrev);
+    const logo = teamLogoSrc(abbrev);
+    const scoreMarkup = `<strong class="box-score-team-score">${escapeHtml(score ?? "—")}</strong>`;
+    const logoMarkup = logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(`${name} logo`)}" />` : "";
+    const nameMarkup = `<div><span>${venue}</span><h4>${escapeHtml(name)}</h4></div>`;
+    const identity = `<div class="box-score-team-identity">${venue === "Home" ? logoMarkup + nameMarkup : nameMarkup + logoMarkup}</div>`;
+    return `<div class="box-score-comparison-team${venue === "Home" ? " is-home" : ""}">
+      ${venue === "Home" ? identity + scoreMarkup : scoreMarkup + identity}
+    </div>`;
+  };
+  const metrics = [
+    ["Field Goal %", "fgm", "fga", 160, 40], ["Three Point %", "fg3m", "fg3a", 80, 20], ["Free Throw %", "ftm", "fta", 80, 20],
+    ["Turnovers", "turnovers", null, 40, 10], ["Rebounds", "rebounds", null, 100, 25], ["Assists", "assists", null, 60, 15], ["Steals", "steals", null, 30, 5], ["Blocks", "blocks", null, 30, 5],
+  ];
+  const rows = metrics.map(([label, key, attemptsKey, maximum, step]) => {
+    const a = boxScoreComparisonMetric(awayLine, key, attemptsKey);
+    const h = boxScoreComparisonMetric(homeLine, key, attemptsKey);
+    // Each fixed axis uses 90% of its half, reserving space beyond its last tick.
+    const width = value => (clampNumber(Number(value || 0) / maximum, 0, 1) * 90).toFixed(3);
+    const track = (metric, side) => {
+      const overflow = Number(attemptsKey ? metric.attempts : metric.count) > maximum;
+      const attemptBar = attemptsKey ? `<span class="box-score-comparison-undertone" style="width:${width(metric.attempts)}%"></span>` : '';
+      return `<i class="box-score-comparison-track is-${side}" title="${attemptsKey ? `${metric.count ?? '—'} made / ${metric.attempts ?? '—'} attempted` : `${metric.count ?? '—'} ${label.toLowerCase()}`} · fixed scale 0–${maximum}${overflow ? ' · exceeds scale' : ''}">${attemptBar}<b style="width:${width(metric.count)}%"></b>${overflow ? `<em class="box-score-comparison-overflow" aria-hidden="true">${side === 'away' ? '‹' : '›'}</em>` : ''}</i>`;
+    };
+    const tick = position => `<span class="box-score-scale-tick" style="left:${position}%"></span>`;
+    const ticks = [tick(50), ...Array.from({length:maximum / step},(_item,index) => {const value=(index + 1)*step;return tick(50-value / maximum*45) + tick(50+value / maximum*45);})].join('');
+    const scaleDescription = attemptsKey ? `Shooting counts: made / attempted; fixed scale 0–${maximum} per team` : `Fixed scale 0–${maximum} per team`;
+    return `<div class="box-score-comparison-row" aria-label="${escapeAttr(`${label}: ${away} ${a.text}${a.detail ? ` (${a.detail})` : ""}, ${home} ${h.text}${h.detail ? ` (${h.detail})` : ""}; ${scaleDescription}`)}">
+      <div class="box-score-comparison-value">${a.detail ? `<small>(${escapeHtml(a.detail)})</small>` : ""}<strong>${escapeHtml(a.text)}</strong></div>
+      <h4 title="${escapeAttr(scaleDescription)}">${label}</h4>
+      <div class="box-score-comparison-value is-home">${h.detail ? `<small>(${escapeHtml(h.detail)})</small>` : ""}<strong>${escapeHtml(h.text)}</strong></div>
+      <div class="box-score-comparison-bars" aria-hidden="true">${track(a,'away')}${track(h,'home')}</div>
+      <div class="box-score-comparison-scale" aria-hidden="true">${ticks}</div>
+    </div>`;
+  }).join("");
+  return `<div class="box-score-team-comparison" style="--box-away-color:${awayColor};--box-home-color:${homeColor}"><header class="box-score-comparison-head"><div class="box-score-comparison-head-teams">${team(away, box.away_score, "Away")}${team(home, box.home_score, "Home")}</div></header>${rows}</div>`;
+}
+
+function wireBoxScorePages(root, modal) {
+  const pages = [...root.querySelectorAll('[data-box-score-page]')];
+  const showPage = index => {
+    modal.boxScorePage = ((index % pages.length) + pages.length) % pages.length;
+    pages.forEach((page, pageIndex) => { page.hidden = pageIndex !== modal.boxScorePage; });
+    root.querySelector('[data-box-score-page-title]').textContent = pages[modal.boxScorePage].dataset.pageTitle;
+    root.querySelector('[data-box-score-page-count]').textContent = `${modal.boxScorePage + 1}/${pages.length}`;
+  };
+  showPage(modal.boxScorePage || 0);
+  root.querySelectorAll('[data-box-score-page-step]').forEach(button => button.addEventListener('click', () => {
+    showPage(modal.boxScorePage + Number(button.dataset.boxScorePageStep));
+    root.querySelector('.modal-body').scrollTop = 0;
+  }));
+}
+
 function boxScoreTeamSheet(box, team, score, venueLabel) {
-  const line = (box.team_lines || []).find((row) => (row.team_abbrev || teamLabel(row.team_id)) === team) || {};
+  const line = boxScoreTeamLine(box, team);
   const players = (box.player_lines || []).filter((row) => row.team_abbrev === team);
   const logo = teamLogoSrc(team);
   const teamName = dashboardTeamName(team);
@@ -5379,7 +8669,7 @@ function boxScoreTeamSheet(box, team, score, venueLabel) {
     <header class="box-score-team-head">
       <div class="box-score-team-identity">
         ${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(`${teamName} logo`)}" />` : ""}
-        <div><span>${escapeHtml(venueLabel)}</span><h4>${escapeHtml(teamName)}</h4><small>${escapeHtml(team)}</small></div>
+        <div><span>${escapeHtml(venueLabel)}</span><h4>${escapeHtml(teamName)}</h4></div>
       </div>
       <strong class="box-score-team-score">${escapeHtml(score ?? "—")}</strong>
     </header>
@@ -5395,10 +8685,12 @@ function boxScoreTeamSheet(box, team, score, venueLabel) {
 }
 
 function boxScorePlayerTable(players) {
-  const headers = ["Player", "MIN", "PTS", "REB", "AST", "STL", "BLK", "FG", "3PT", "+/-"];
+  const headers = ["Player", "MIN", "PTS", "REB", "AST", "STL", "BLK", "TO", "FG", "3PT", "FTM/FTA", "PF", "+/-"];
   return `<div class="box-score-player-table-wrap"><table class="box-score-player-table">
     <thead><tr>${headers.map((header) => `<th>${header}</th>`).join("")}</tr></thead>
-    <tbody>${players.map((row) => `<tr>
+    <tbody>${players.map((row) => row.minutes !== null && row.minutes !== undefined && Number(row.minutes) === 0
+      ? `<tr class="box-score-dnp"><td>${escapeHtml(row.player_name || "Unknown")}</td><td class="box-score-dnp-cell" colspan="${headers.length - 1}"><span class="box-score-dnp-label">DNP</span></td></tr>`
+      : `<tr>
       <td>${escapeHtml(row.player_name || "Unknown")}</td>
       <td>${escapeHtml(decimalNumber(row.minutes))}</td>
       <td>${escapeHtml(row.points ?? 0)}</td>
@@ -5406,9 +8698,12 @@ function boxScorePlayerTable(players) {
       <td>${escapeHtml(row.assists ?? 0)}</td>
       <td>${escapeHtml(row.steals ?? 0)}</td>
       <td>${escapeHtml(row.blocks ?? 0)}</td>
+      <td>${escapeHtml(row.turnovers ?? 0)}</td>
       <td>${row.fgm !== undefined ? `${escapeHtml(row.fgm)}/${escapeHtml(row.fga)}` : "—"}</td>
       <td>${row.fg3m !== undefined ? `${escapeHtml(row.fg3m)}/${escapeHtml(row.fg3a)}` : "—"}</td>
-      <td>${escapeHtml(signedNumber(row.plus_minus || 0, 0))}</td>
+      <td>${row.ftm !== undefined && row.fta !== undefined ? `${escapeHtml(row.ftm)}/${escapeHtml(row.fta)}` : Number(row.minutes) === 0 ? "0/0" : "—"}</td>
+      <td>${escapeHtml(row.personal_fouls ?? row.pf ?? (Number(row.minutes) === 0 ? 0 : "—"))}</td>
+      <td title="${row.plus_minus === null || row.plus_minus === undefined ? 'Not tracked for this game' : 'Plus-minus from modeled five-player scoring stints'}">${row.plus_minus === null || row.plus_minus === undefined ? "—" : escapeHtml(signedNumber(row.plus_minus, 0))}</td>
     </tr>`).join("")}</tbody>
   </table></div>`;
 }
@@ -5422,13 +8717,12 @@ async function openBoxScore(gameId, options = {}) {
     const resolvedIndex = gameIds.length
       ? (Number.isInteger(requestedIndex) && requestedIndex >= 0 ? requestedIndex : Math.max(0, gameIds.indexOf(String(gameId))))
       : -1;
-    const seriesPrefix = gameIds.length ? `Game ${resolvedIndex + 1} of ${gameIds.length} · ` : "";
-    const datePrefix = box.game_date ? `${formatWrittenDate(box.game_date)} · ` : "";
     state.modal = {
       kind: gameIds.length ? "playoffBoxScore" : "boxScore",
       title: `${teamLabel(box.away_team)} ${box.away_score} @ ${teamLabel(box.home_team)} ${box.home_score}`,
-      subtitle: `${seriesPrefix}${datePrefix}${box.mode || "game"} · possessions ${box.possessions || "-"} · OT ${box.overtime_periods || 0}`,
+      subtitle: "",
       body: boxScoreModalBody(box),
+      boxScorePage: Number(options.page) === 1 ? 1 : 0,
       gameIds,
       gameIndex: resolvedIndex,
       seriesId: options.seriesId || "",
@@ -5456,13 +8750,26 @@ async function navigatePlayoffSeriesBoxScore(step) {
     gameIds,
     gameIndex,
     seriesId: state.modal.seriesId || "",
+    page: state.modal.boxScorePage || 0,
   });
 }
 
 function closeModal() {
+  if(typeof acknowledgeClosedWantReminder==='function')acknowledgeClosedWantReminder();
+  if (state.modal?.kind === "staffNegotiation" && state.modal.submitting) return;
+  const postseasonBoundary = state.modal?.kind === "postseason" ? state.modal.postseasonBoundary : "";
+  if (postseasonBoundary) {
+    state.postseasonReviewedSave = state.currentSave;
+    state.postseasonReviewedDate = postseasonBoundary;
+    try { localStorage.setItem(postseasonReviewKey(postseasonBoundary), "1"); } catch {}
+  }
+  const refreshStaff = state.modal?.kind === "staffNegotiation" && state.modal.staffNeedsRefresh;
   if (state.modal?.kind === "freeAgentComparison") state.freeAgentCompareMode = true;
   state.modal = GameInterface.previousModal();
   renderModal();
+  if (postseasonBoundary) window.CardBoard?.open("phase-playoffs-bracket");
+  if(!state.modal && typeof maybeShowWantReminder==='function')maybeShowWantReminder();
+  if (refreshStaff) refreshHome().catch(error => showToast(error.message || "Could not refresh coaching staff.", true));
 }
 
 function openSettingsModal() {
@@ -5472,9 +8779,9 @@ function openSettingsModal() {
     subtitle: "",
     body: `
       <section class="settings-modal-section settings-save-section">
-        <button type="button" data-interface-shortcuts>Keyboard shortcuts <kbd>?</kbd></button>
-        <button type="button" data-interface-gallery>Screen gallery</button>
-        <button type="button" data-design-studies>Design studies</button>
+        <button type="button" data-interface-shortcuts>Keyboard shortcuts</button>
+        <button type="button" data-replay-tutorial>Replay Tutorial</button>
+        <button type="button" class="ui-command" data-report-issue>Report an Issue</button>
         <a class="artwork-credits-link" href="/assets/game-art/CREDITS.md" target="_blank" rel="noopener">Artwork credits</a>
         <button class="settings-return-button" data-return-save-selection>Back to Save Selection</button>
       </section>`,
@@ -5482,7 +8789,53 @@ function openSettingsModal() {
   renderModal();
 }
 
+async function openIssueReport() {
+  if (state.tutorial || state.busy) return;
+  const report = GameFeedback.snapshot(state);
+  state.modal = {
+    kind: "issueReport", title: "Report an Issue", subtitle: "",
+    report,
+    body: `<form class="issue-report-form" data-issue-report-form>
+      <label>Summary<input name="summary" maxlength="200" required /></label>
+      <label>Steps to reproduce<textarea name="steps" maxlength="3000" rows="3"></textarea></label>
+      <label>Expected result<textarea name="expected" maxlength="3000" rows="2"></textarea></label>
+      <label>Actual result<textarea name="actual" maxlength="3000" rows="2"></textarea></label>
+      <p class="issue-report-privacy">Nothing is uploaded. The download includes your notes, build and screen information, video status and recent action names. No saves, file paths, tokens or raw logs. Notes are included as written; avoid personal information.</p>
+      <details><summary>Included diagnostics</summary><pre data-issue-diagnostics>${escapeHtml(JSON.stringify(report, null, 2))}</pre></details>
+      <p data-issue-report-status role="status" aria-live="polite"></p>
+      <button type="submit" class="ui-command">Download Issue Report</button>
+    </form>`,
+  };
+  renderModal();
+  els.modalRoot.querySelector('[name="summary"]')?.focus();
+  const modal = state.modal;
+  const runtime = await GameFeedback.runtime(apiHeaders);
+  // Preserve typed notes and never reopen a dialog after a late response.
+  if (state.modal !== modal) return;
+  const metadata = GameFeedback.snapshot(state, runtime);
+  modal.report.runtime = metadata.runtime;
+  modal.report.runtime_available = metadata.runtime_available;
+  els.modalRoot.querySelector("[data-issue-diagnostics]").textContent = JSON.stringify(modal.report, null, 2);
+}
+
+function downloadIssueReport(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const report = {...state.modal.report, notes: Object.fromEntries(["summary", "steps", "expected", "actual"].map(key => [key, form.elements.namedItem(key).value.slice(0, 3000)]))};
+  const blob = new Blob([JSON.stringify(report, null, 2) + "\n"], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `nba-gm-issue-${report.created_at.replace(/[:.]/g, "-")}.json`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  form.querySelector("[data-issue-report-status]").textContent = "Report download requested. Share the JSON file with the game's creator. A save backup is separate and optional.";
+}
+
 async function openExtensionNegotiation(playerId = "") {
+  if (playerId && await focusOpenExtensionCard(playerId)) return;
   try {
     const room = await action("extension_room", {
       ...savePayload(),
@@ -5502,84 +8855,316 @@ async function openExtensionNegotiation(playerId = "") {
       response: null,
       body: extensionNegotiationBody(room, selectedId, null, detail),
     };
-    renderModal();
+    const context=state.modal;
+    context.outcome=null;
+    context.extensionApplied=false;
+    await openPlayerCardOnClipboard({key:`extension:${selectedId}`, title:`${detail?.name || "Player"} · Contract Extension`,body:context.body,kind:"extension",context});
   } catch (error) {
     showToast(error.message || "Extension room could not be opened.", true);
   }
 }
 
 function extensionNegotiationBody(room, selectedPlayerId, response = null, detail = null) {
-  const candidates = room.candidates || [];
-  const candidate = candidates.find((item) => item.player_id === selectedPlayerId) || candidates[0];
-  if (!candidate) {
-    return `<div class="extension-empty"><strong>No extension candidates</strong><p>No contracted player on this roster is available for extension review right now.</p></div>`;
-  }
+  const candidate=(room.candidates||[]).find(item=>item.player_id===selectedPlayerId)||(room.candidates||[])[0];
+  const player=detail||{name:candidate?.name||"Player",position:candidate?.position||"",age:candidate?.age,height:candidate?.height,ratings:candidate?.ratings||{},season:{},recent_games:[],career_seasons:[],is_prospect:false};
+  return approvedPlayerCardBody(player,{extension:{room,selectedPlayerId,response}});
+}
+
+function extensionNegotiationPage(room, selectedPlayerId, response = null, detail = null) {
+  const candidates=room?.candidates||[];
+  const candidate=candidates.find(item=>item.player_id===selectedPlayerId)||candidates[0];
+  if (!candidate) return `<section class="player-card-page player-card-page--extension" data-player-page="0" data-page-title="Contract Extension" aria-label="Contract extension"><div class="extension-page-empty"><strong>No extension candidates</strong><p>No contracted player on this roster is available for extension review right now.</p></div></section>`;
   const years = Math.max(1, Math.min(Number(candidate.safe_years || 1), Number(candidate.preferred_years || 1)));
   const maximum = Number(candidate.max_aav_by_years?.[String(years)] || 0);
   const ask = Number(candidate.projected_aav_millions || 0);
   const initialOffer = Math.min(maximum, ask);
-  const ratings = detail?.ratings || {};
-  const season = detail?.season || {};
-  const capRows = (candidate.cap_projection || []).map((row) => [row.season, row]);
-  return `<div class="approved-negotiation approved-extension-negotiation">
-    <section class="approved-card-panel approved-negotiation-season"><header><select data-extension-player-select>${candidates.map((item) => `<option value="${escapeAttr(item.player_id)}" ${item.player_id === candidate.player_id ? "selected" : ""} ${item.eligible ? "" : "disabled"}>${escapeHtml(item.name || "Player")}</option>`).join("")}</select><span>Latest Season</span></header><div>${[["GP", season.games], ["MPG", season.mpg], ["PTS", season.ppg], ["REB", season.rpg], ["AST", season.apg], ["STL", season.spg], ["BLK", season.bpg], ["TO", season.topg], ["FTA", season.fta_per_game], ["FT%", season.ft_pct]].map(([label, value]) => `<span><small>${label}</small><strong>${draftMetric(value)}</strong></span>`).join("")}</div></section>
-    <section class="approved-card-panel approved-negotiation-ratings"><header>Complete Ratings</header>${detail ? negotiationEvidence(detail) : ""}<div class="approved-rating-rail">${playerCardRatingRows(ratings).map(([label, value, key]) => `<div class="${ratingQuartileTone(value, key, detail?.rating_quartiles)}"><span>${escapeHtml(label)}</span><i><b style="${performanceBarStyle(value)}"></b></i><strong>${draftMetric(value)}</strong></div>`).join("")}</div></section>
-    <div class="approved-negotiation-work">
-      <section class="approved-card-panel approved-ask-offer"><header>Ask / Offer</header><form data-extension-offer-form><div class="approved-ask-grid"><span><small>Ask</small><strong>${money(ask)} × ${candidate.preferred_years || years}</strong></span><label><small>Offer · max <b data-extension-maximum>${money(maximum)}</b></small><span class="money-input"><b>$</b><input type="number" min="1.8" max="${maximum.toFixed(2)}" step="0.1" value="${initialOffer.toFixed(1)}" data-extension-aav required><b>M</b></span></label><label><small>Years</small><select data-extension-years>${Array.from({ length: Number(candidate.safe_years || 1) }, (_item, index) => index + 1).map((value) => `<option value="${value}" ${value === years ? "selected" : ""}>${value}</option>`).join("")}</select></label></div><button type="submit" class="extension-submit primary-action" ${maximum < 1.8 ? "disabled" : ""}>Submit Offer</button></form></section>
-      <section class="approved-card-panel approved-interest-factors"><header>Interest Breakdown</header><div>${[["Offer vs ask", initialOffer / Math.max(1, ask) * 100], ["Player timeline", Math.max(20, 100 - Number(candidate.age || 27) * 1.4)], ["Team direction", 64], ["Contract length", years / Math.max(1, Number(candidate.preferred_years || years)) * 100]].map(([label, value]) => `<span><small>${escapeHtml(label)}</small><i><b style="width:${clampNumber(value, 0, 100)}%"></b></i><strong>${Math.round(clampNumber(value, 0, 100))}</strong></span>`).join("")}</div></section>
-      <section class="approved-card-panel approved-offer-cap"><header>Four-Year Cap Impact</header>${approvedOfferCapChart(capRows.slice(0, 4), initialOffer)}</section>
-      <section class="approved-card-panel approved-offer-salary"><header>Six-Season Salary + Team Position</header>${approvedOfferSalaryTable(capRows, initialOffer)}</section>
-      ${response ? `<section class="extension-response ${response.status === "rejected" ? "rejected" : ""}"><strong>${escapeHtml(response.status === "rejected" ? "Offer declined" : rowLabel(response.status || "update"))}</strong><span>${escapeHtml(response.reason || "")}${response.interest !== undefined ? ` Interest: ${Number(response.interest).toFixed(1)}/100.` : ""}</span></section>` : ""}
+  const capRows = extensionCapRows(candidate);
+  const schedule = extensionOfferSchedule(candidate, years, Number(initialOffer.toFixed(1)), capRows);
+  const status=response?`<section class="extension-response extension-page-response ${response.status === "rejected" ? "rejected" : ""}"><strong>${escapeHtml(response.status === "rejected" ? "Offer declined" : rowLabel(response.status || "update"))}</strong><span>${escapeHtml(response.reason || "")}${response.interest !== undefined ? ` Interest: ${Number(response.interest).toFixed(1)}/100.` : ""}</span></section>`:"";
+  return `<section class="player-card-page player-card-page--extension" data-player-page="0" data-page-title="Contract Extension" aria-label="Contract extension">
+    <div class="extension-page-layout">
+      <div class="extension-page-controls">
+        <section class="approved-card-panel approved-ask-offer"><header><span>Extension Offer</span><strong class="extension-player-name">${escapeHtml(candidate.name||"Player")}</strong></header><form data-extension-offer-form><div class="approved-ask-grid"><span><small>Player Ask</small><strong>${money(ask)} × ${candidate.preferred_years||years}</strong></span><label><small>Annual Offer · max <b data-extension-maximum>${money(maximum)}</b></small><span class="money-input"><b>$</b><input type="number" min="1.8" max="${maximum.toFixed(2)}" step="0.1" value="${initialOffer.toFixed(1)}" data-extension-aav aria-label="Annual extension offer in millions" required><b>M</b></span></label><label><small>Years</small><span class="extension-years-stepper"><button type="button" data-extension-years-step="-1" aria-label="Decrease contract years">−</button><input type="number" min="1" max="${Number(candidate.safe_years||1)}" step="1" value="${years}" data-extension-years aria-label="Contract years"><button type="button" data-extension-years-step="1" aria-label="Increase contract years">+</button></span></label><span><small>Salary protection</small><label class="contract-security"><input type="checkbox" data-extension-guaranteed checked> Guaranteed</label></span></div><button type="submit" class="extension-submit primary-action" ${maximum<1.8?"disabled":""}>Submit Offer</button></form></section>
+        <div class="extension-page-middle"><section class="approved-card-panel approved-interest-factors"><header>Interest Breakdown</header><div>${[["Offer vs ask",initialOffer/Math.max(1,ask)*100],["Player timeline",Math.max(20,100-Number(candidate.age||27)*1.4)],["Team direction",64],["Contract length",years/Math.max(1,Number(candidate.preferred_years||years))*100]].map(([label,value],index)=>`<span data-extension-factor="${index}"><small>${escapeHtml(label)}</small><i><b style="width:${clampNumber(value,0,100)}%"></b></i><strong>${Math.round(clampNumber(value,0,100))}</strong></span>`).join("")}</div></section>${extensionDeparturePanel(candidate)}</div>
+        <div data-extension-analysis-slot>${extensionAnalysisPanel(candidate,years,initialOffer)}</div>
+      </div>
+      <div class="extension-page-impact">
+        <section class="approved-card-panel approved-offer-cap"><header>Four-Year Cap Impact</header>${extensionCapChart(capRows,schedule,candidate.current_contract_seasons)}</section>
+      </div>
+      ${status}
     </div>
-  </div>`;
+  </section>`;
 }
 
-function wireExtensionNegotiationModal() {
-  const modal = state.modal;
-  if (!modal || modal.kind !== "contractExtension") return;
-  els.modalRoot.querySelector("[data-extension-player-select]")?.addEventListener("change", async (event) => {
-    modal.selectedPlayerId = event.target.value || "";
-    modal.detail = modal.selectedPlayerId ? await loadPlayerCardDetail(modal.selectedPlayerId) : null;
-    modal.response = null;
-    modal.body = extensionNegotiationBody(modal.room, modal.selectedPlayerId, null, modal.detail);
-    renderModal();
+function extensionDeparturePanel(candidate) {
+  const analysis = candidate.analysis || {}, player = analysis.player || {}, replacement = analysis.replacement;
+  const gap = replacement ? Number(replacement.overall) - Number(player.overall) : null;
+  return `<section class="approved-card-panel extension-departure"><header>If ${escapeHtml(candidate.name || "This Player")} Leaves</header><div class="extension-departure-facts"><div><span>Minutes to replace</span><strong>${player.minutes != null ? `${Number(player.minutes).toFixed(1)} MPG` : "—"}</strong></div><div><span>Internal alternative</span><span>${replacement ? escapeHtml(replacement.name) : "No reserve in this position group"}</span></div><div><span>Current ability gap</span><span>${gap != null ? `${gap > 0 ? "+" : ""}${gap.toFixed(1)} OVR · ${Number(replacement.overall).toFixed(1)} vs ${Number(player.overall).toFixed(1)}` : "—"}</span></div></div></section>`;
+}
+
+function extensionAbilityView(candidate, years) {
+  const analysis = candidate.analysis || {};
+  const finalYear = Number.parseInt(candidate.start_season, 10) + years - 1;
+  const points = (analysis.projection || []).filter(point => Number.parseInt(point.season, 10) <= finalYear);
+  if (!points.length) return '<div class="extension-analysis-empty">Development projection unavailable for this player.</div>';
+  const left = 54, right = 928, top = 30, bottom = 230;
+  const minimum = Math.max(0, Math.floor((Math.min(...points.map(p => p.low)) - 3) / 2) * 2);
+  const maximum = Math.min(100, Math.max(minimum + 8, Math.ceil((Math.max(...points.map(p => p.high)) + 2) / 2) * 2));
+  const x = index => left + (right - left) * index / Math.max(1, points.length - 1);
+  const y = value => bottom - (value - minimum) / (maximum - minimum) * (bottom - top);
+  const grids = Array.from({length:5}, (_,index) => { const value = minimum + (maximum - minimum) * index / 4; return `<line class="extension-chart-grid" x1="${left}" x2="${right}" y1="${y(value)}" y2="${y(value)}"/><text x="${left - 12}" y="${y(value)+5}" text-anchor="end">${value.toFixed(0)}</text>`; }).join("");
+  const range = points.map((p,i) => `${x(i)},${y(p.high)}`).concat(points.map((p,i) => `${x(i)},${y(p.low)}`).reverse()).join(" ");
+  return `<div class="extension-analysis-plot"><svg viewBox="0 0 960 280" preserveAspectRatio="none" role="img" aria-label="Projected overall ability through the contract"><title>${escapeHtml(analysis.projection_note || "Estimated development")}</title>${grids}<polygon class="extension-projection-range" points="${range}"/><polyline class="extension-projection-line" points="${points.map((p,i) => `${x(i)},${y(p.overall)}`).join(" ")}"/>${points.map((p,i) => `<circle class="extension-projection-node" cx="${x(i)}" cy="${y(p.overall)}" r="4"><title>${escapeHtml(p.season)} · age ${p.age}: OVR ${p.overall.toFixed(1)}, scenario range ${p.low.toFixed(1)}–${p.high.toFixed(1)}</title></circle><text class="extension-chart-value" x="${x(i)}" y="${y(p.high)-12}" text-anchor="middle">${p.overall.toFixed(1)}</text><text x="${x(i)}" y="${bottom+23}" text-anchor="middle">${escapeHtml(shortSeasonLabel(p.season))}</text><text class="extension-chart-muted" x="${x(i)}" y="${bottom+43}" text-anchor="middle">Age ${p.age}</text>`).join("")}</svg></div><footer class="extension-analysis-footer"><span class="extension-chart-key" title="${escapeAttr(analysis.projection_note || "")}"><i class="extension-range-key"></i>Scenario range <i class="extension-line-key"></i>Projected OVR</span><span>Current <b>${points[0].overall.toFixed(1)}</b> → final year <b>${points.at(-1).overall.toFixed(1)}</b></span></footer>`;
+}
+
+function extensionContractsView(candidate, aav) {
+  const analysis = candidate.analysis || {}, peers = analysis.peers || [], player = analysis.player || {};
+  if (!peers.length) return `<div class="extension-analysis-empty">No comparable contracts meet this player's peer criteria.</div><footer class="extension-analysis-footer"><span>Current age, ability and position group</span><button type="button" class="ui-command" data-extension-peer-criteria aria-expanded="false">Peer criteria</button></footer>${extensionPeerCriteria(analysis, false)}`;
+  const left=62, right=918, top=32, bottom=225;
+  const overalls = peers.map(p=>p.overall).concat(player.overall || 50);
+  const minX = Math.floor(Math.min(...overalls)-2), maxX=Math.ceil(Math.max(...overalls)+2);
+  const maxY = Math.max(10,Math.ceil(Math.max(aav,...peers.map(p=>p.annual_salary))/10)*10);
+  const x=value=>left+(value-minX)/(maxX-minX)*(right-left), y=value=>bottom-value/maxY*(bottom-top);
+  const median = Number(analysis.peer_median || 0);
+  const difference = median ? Math.round((aav/median-1)*100) : 0;
+  const svg=`<svg viewBox="0 0 960 280" preserveAspectRatio="none" role="img" aria-label="Comparable contracts: current ability versus cap-adjusted annual salary">${Array.from({length:5},(_,i)=>{const v=maxY*i/4;return `<line class="extension-chart-grid" x1="${left}" x2="${right}" y1="${y(v)}" y2="${y(v)}"/><text x="${left-10}" y="${y(v)+5}" text-anchor="end">$${v.toFixed(0)}M</text>`}).join("")}<line class="extension-market-median" x1="${left}" x2="${right}" y1="${y(median)}" y2="${y(median)}"/><text x="${right}" y="${y(median)-8}" text-anchor="end">Median ${money(median)}</text>${Array.from({length:5},(_,i)=>{const v=minX+(maxX-minX)*i/4;return `<text x="${x(v)}" y="${bottom+24}" text-anchor="middle">${v.toFixed(0)}</text>`}).join("")}<text x="490" y="274" text-anchor="middle">Current OVR</text>${peers.map((p,i)=>`<circle class="extension-peer-point" tabindex="0" data-extension-peer="${i}" cx="${x(p.overall)}" cy="${y(p.annual_salary)}" r="7" aria-label="${escapeAttr(`${p.name}: ${p.overall.toFixed(1)} OVR, ${money(p.annual_salary)} annual salary`)}"><title>${escapeHtml(p.name)} · ${p.overall.toFixed(1)} OVR · ${money(p.annual_salary)}</title></circle>`).join("")}<path class="extension-offer-point" d="M ${x(player.overall)} ${y(aav)-9} l 9 9 l -9 9 l -9 -9 Z"><title>Your offer: ${money(aav)}</title></path></svg>`;
+  return `<div class="extension-analysis-plot">${svg}</div><footer class="extension-analysis-footer"><span class="extension-chart-key"><i class="extension-peer-key"></i>Peers <i class="extension-offer-key"></i>Your offer</span><span data-extension-peer-detail>${peers.length} peers · offer ${Math.abs(difference)}% ${difference>0?"above":difference<0?"below":"from"} median</span><button type="button" class="ui-command" data-extension-peer-criteria aria-expanded="false">Peer criteria</button></footer>${extensionPeerCriteria(analysis, false)}`;
+}
+
+function extensionPeerCriteria(analysis, visible = true) {
+  return `<div class="extension-peer-criteria" ${visible ? "" : "hidden"}><header>Comparison group<button type="button" class="ui-command" data-extension-peer-close aria-label="Close peer criteria">×</button></header><ul>${(analysis.peer_criteria || []).map(text=>`<li>${escapeHtml(text)}</li>`).join("")}</ul></div>`;
+}
+
+function extensionSuccessionView(candidate, years) {
+  const analysis=candidate.analysis||{}, rows=analysis.succession||[], start=Number.parseInt(candidate.start_season,10);
+  const current=Number.parseInt(extensionCapRows(candidate)[0]?.[0],10), end=Math.max(current+3,start+years-1);
+  const seasons=Array.from({length:end-current+1},(_,i)=>`${current+i}-${String(current+i+1).slice(-2)}`);
+  if(!rows.length) return '<div class="extension-analysis-empty">No position-group contract data available.</div>';
+  const covered = rows.slice(1).filter(p=>p.seasons.some(s=>Number.parseInt(s.season,10)===end && Number(s.salary)>0)).length;
+  return `<div class="extension-succession" role="table" aria-label="${escapeAttr(analysis.position_group || "Position group")} contract coverage" style="--extension-seasons:${seasons.length}"><div class="extension-succession-row extension-succession-head" role="row"><span role="columnheader">${escapeHtml(analysis.position_group || "Players")}</span>${seasons.map(s=>`<span role="columnheader">${escapeHtml(shortSeasonLabel(s))}</span>`).join("")}</div>${rows.map((p,index)=>`<div class="extension-succession-row" role="row"><span role="rowheader">${escapeHtml(p.name)}<small>${p.age} years · OVR ${p.overall.toFixed(1)}</small></span>${seasons.map(s=>{const year=Number.parseInt(s,10),signed=p.seasons.some(row=>row.season===s && Number(row.salary)>0), proposed=index===0 && year>=start && year<start+years; const type=proposed?"offer":signed?(index===0?"current":"signed"):"open";return `<span role="cell" class="extension-tenure is-${type}">${proposed?"Extension":signed?(index===0?"Current":"Signed"):"No deal"}</span>`}).join("")}</div>`).join("")}</div><footer class="extension-analysis-footer"><span>${escapeHtml(shortSeasonLabel(seasons.at(-1)))}: <b>${covered} other ${covered===1?"player":"players"} shown under contract</b></span><span>Based on current roster</span></footer>`;
+}
+
+function extensionAnalysisPanel(candidate, years, aav) {
+  return `<section class="approved-card-panel extension-analysis"><header><span data-extension-analysis-title>Projected Ability Through the Contract</span><div class="extension-analysis-tabs" role="tablist" aria-label="Contract analysis">${["Ability","Contracts","Succession"].map((label,i)=>`<button type="button" role="tab" data-extension-analysis-tab="${label.toLowerCase()}" aria-selected="${i===0}" tabindex="${i===0?0:-1}">${label}</button>`).join("")}</div></header><div class="extension-analysis-view" role="tabpanel" aria-label="Ability" data-extension-analysis-view="ability">${extensionAbilityView(candidate,years)}</div><div class="extension-analysis-view" role="tabpanel" aria-label="Contracts" data-extension-analysis-view="contracts" hidden>${extensionContractsView(candidate,aav)}</div><div class="extension-analysis-view" role="tabpanel" aria-label="Succession" data-extension-analysis-view="succession" hidden>${extensionSuccessionView(candidate,years)}</div></section>`;
+}
+
+function wireExtensionAnalysis(root, modal, candidate) {
+  const tabs=[...root.querySelectorAll('[data-extension-analysis-tab]')];
+  const titles={ability:"Projected Ability Through the Contract",contracts:"Comparable Contracts",succession:`${candidate.analysis?.position_group || "Position Group"} · Succession Timeline`};
+  const show=(key)=>{
+    modal.analysisTab=key;
+    tabs.forEach(tab=>{ const selected=tab.dataset.extensionAnalysisTab===key;tab.setAttribute('aria-selected',String(selected));tab.tabIndex=selected?0:-1; });
+    root.querySelectorAll('[data-extension-analysis-view]').forEach(view=>view.hidden=view.dataset.extensionAnalysisView!==key);
+    const title=root.querySelector('[data-extension-analysis-title]'); if(title) title.textContent=titles[key];
+  };
+  tabs.forEach((tab,index)=>{
+    tab.addEventListener('click',()=>show(tab.dataset.extensionAnalysisTab));
+    tab.addEventListener('keydown',event=>{
+      if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+      event.preventDefault();event.stopPropagation();
+      const next=event.key==='Home'?0:event.key==='End'?tabs.length-1:(index+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+      tabs[next].focus();show(tabs[next].dataset.extensionAnalysisTab);
+    });
   });
-  const yearsInput = els.modalRoot.querySelector("[data-extension-years]");
-  const aavInput = els.modalRoot.querySelector("[data-extension-aav]");
-  yearsInput?.addEventListener("change", () => {
+  const criteria=root.querySelector('.extension-peer-criteria'), criteriaButton=root.querySelector('[data-extension-peer-criteria]');
+  criteriaButton?.addEventListener('click',()=>{criteria.hidden=!criteria.hidden;criteriaButton.setAttribute('aria-expanded',String(!criteria.hidden));});
+  root.querySelector('[data-extension-peer-close]')?.addEventListener('click',()=>{criteria.hidden=true;criteriaButton?.setAttribute('aria-expanded','false');criteriaButton?.focus();});
+  const detail=root.querySelector('[data-extension-peer-detail]'), defaultText=detail?.textContent;
+  root.querySelectorAll('[data-extension-peer]').forEach(point=>{
+    const peer=candidate.analysis.peers[Number(point.dataset.extensionPeer)];
+    const reveal=()=>{if(detail) detail.textContent=`${peer.name} · ${money(peer.annual_salary)} · ${peer.overall.toFixed(1)} OVR`;};
+    const reset=()=>{if(detail) detail.textContent=defaultText;};
+    point.addEventListener('mouseenter',reveal);point.addEventListener('focus',reveal);
+    point.addEventListener('mouseleave',reset);point.addEventListener('blur',reset);
+  });
+  show(titles[modal.analysisTab]?modal.analysisTab:'ability');
+}
+
+function extensionCapRows(candidate) {
+  const dashboardCaps = state.data.dashboard?.cap_by_year || {};
+  const dashboardSeason = Object.keys(dashboardCaps).sort((left, right) => left.localeCompare(right))[0] || "";
+  const saveSeason = String(state.home?.save?.current_season || "");
+  const currentDate = String(state.home?.save?.current_date || "");
+  const currentStart = Number((dashboardSeason.match(/\d{4}/) || saveSeason.match(/\d{4}/) || currentDate.match(/^\d{4}/) || [])[0])
+    || Number.parseInt(candidate.start_season, 10) - 1;
+  const projection = new Map((candidate.cap_projection || []).map((row) => [String(row.season), row]));
+  return Array.from({ length: 4 }, (_, offset) => {
+    const start = currentStart + offset;
+    const season = `${start}-${String(start + 1).slice(-2)}`;
+    return [season, projection.get(season) || dashboardCaps[season] || {}];
+  });
+}
+
+function extensionOfferSchedule(candidate, years, aav, capRows = extensionCapRows(candidate)) {
+  const start = Number.parseInt(candidate.start_season, 10);
+  return capRows.map(([season]) => {
+    const offset = Number.parseInt(season, 10) - start;
+    return offset >= 0 && offset < Number(years) ? Math.max(0, Number(aav) || 0) : 0;
+  });
+}
+
+function extensionCapChart(capRows, offer, currentContractSeasons = []) {
+  const maximum = Math.max(1, ...capRows.flatMap(([, cap], index) => [
+    Number(cap.salary_total_millions || 0) + Number(offer[index] || 0),
+    Number(cap.tax_line_millions || 0),
+    Number(cap.hard_cap_millions || 0),
+  ])) * 1.06;
+  const pct = (value) => clampNumber(Number(value || 0) / maximum * 100, 0, 100);
+  return `<div class="approved-offer-cap-chart salary-horizon-chart is-extension">${capRows.map(([season, cap], index) => {
+    const payroll = Number(cap.salary_total_millions || 0);
+    const annual = Number(offer[index] || 0);
+    const total = payroll + annual;
+    const extensionPct = pct(annual);
+    const currentSalary = index === 0
+      ? Math.min(payroll, Math.max(0, Number(currentContractSeasons.find((row) => String(row.season) === String(season))?.salary || 0) / 1_000_000))
+      : 0;
+    const currentSalaryPct = pct(currentSalary);
+    const otherPayrollPct = pct(Math.max(0, payroll - currentSalary));
+    const tax = Number(cap.tax_line_millions || 0);
+    const hard = Number(cap.hard_cap_millions || 0);
+    return `<div class="salary-horizon-year"><span>${escapeHtml(shortSeasonLabel(season))}</span><div class="salary-horizon-column" role="img" aria-label="${escapeAttr(`${season}: payroll ${money(payroll)}, current player contract ${money(currentSalary)}, extension ${money(annual)}, tax line ${money(tax)}, hard cap ${money(hard)}`)}"><div class="salary-horizon-stack" style="height:100%"><i class="salary-segment salary-segment-other" style="height:${otherPayrollPct}%" title="Other team payroll ${money(Math.max(0, payroll - currentSalary))}"></i>${currentSalary > 0 ? `<i class="salary-segment salary-segment-current-contract is-highlighted" style="height:${currentSalaryPct}%" title="Current player contract ${money(currentSalary)}"></i>` : ""}${annual > 0 ? `<i class="salary-segment salary-segment-extension is-highlighted" style="height:${extensionPct}%" title="Proposed extension ${money(annual)}"></i>` : ""}</div>${tax > 0 ? `<b class="salary-tax-line" style="bottom:${pct(tax)}%"></b>` : ""}${hard > 0 ? `<b class="salary-hard-line" style="bottom:${pct(hard)}%"></b>` : ""}</div><strong>${money(total)}</strong></div>`;
+  }).join("")}<div class="salary-horizon-legend extension-cap-legend"><span>Payroll</span><span>Current contract</span><span>Extension</span><span>Tax line</span><span>Hard cap</span></div></div>`;
+}
+
+function updateExtensionPreview(modal = state.modal, root = els.modalRoot) {
+  if (modal?.kind !== "contractExtension") return;
+  const candidate = modal.room?.candidates?.find(item => item.player_id === modal.selectedPlayerId);
+  if (!candidate) return;
+  const years = Number(root.querySelector('[data-extension-years]')?.value || 1);
+  const aavInput = root.querySelector('[data-extension-aav]');
+  const aav = Number(aavInput?.value || 0);
+  modal.draft = {years, aav, guaranteed: root.querySelector('[data-extension-guaranteed]')?.checked !== false};
+  const analysisSlot = root.querySelector('[data-extension-analysis-slot]');
+  const signature = `${years}:${aav}`;
+  if (analysisSlot && analysisSlot.dataset.signature !== signature) {
+    analysisSlot.dataset.signature = signature;
+    analysisSlot.innerHTML = extensionAnalysisPanel(candidate, years, aav);
+    wireExtensionAnalysis(analysisSlot, modal, candidate);
+  }
+  const maximum = Number(candidate.max_aav_by_years?.[String(years)] || 0);
+  if (aavInput) aavInput.max = maximum.toFixed(2);
+  const maximumLabel = root.querySelector('[data-extension-maximum]');
+  if (maximumLabel) maximumLabel.textContent = money(maximum);
+  const capRows = extensionCapRows(candidate);
+  const schedule = extensionOfferSchedule(candidate, years, aav, capRows);
+  root.querySelector('.approved-offer-cap').innerHTML = `<header>Four-Year Cap Impact</header>${extensionCapChart(capRows, schedule, candidate.current_contract_seasons)}`;
+  root.querySelectorAll('[data-extension-years-step]').forEach((button) => {
+    const step = Number(button.dataset.extensionYearsStep || 0);
+    button.disabled = step < 0 ? years <= 1 : years >= Number(candidate.safe_years || 1);
+  });
+  for (const [index, value] of [[0, aav / Math.max(1, candidate.projected_aav_millions) * 100], [3, years / Math.max(1, candidate.preferred_years) * 100]]) {
+    const factor = root.querySelector(`[data-extension-factor="${index}"]`);
+    const score = clampNumber(value, 0, 100);
+    if (factor) {
+      factor.querySelector('i b').style.width = `${score}%`;
+      factor.querySelector('strong').textContent = Math.round(score);
+    }
+  }
+}
+
+function mountPlayerExtensionOutcome(card, modal, close) {
+  const content=card.querySelector('[data-player-pages]');
+  if(!content||!modal?.outcome) return;
+  card.querySelector('.staff-negotiation-result')?.remove();
+  card.classList.add('has-extension-result');
+  content.inert=true;
+  const overlay=document.createElement('div');
+  overlay.className=`staff-negotiation-result staff-outcome--${modal.outcome.kind}`;
+  overlay.setAttribute('role','region');
+  overlay.setAttribute('aria-label','Player extension offer result');
+  overlay.tabIndex=-1;
+  overlay.innerHTML=staffNegotiationOutcomeMarkup(modal.outcome);
+  card.append(overlay);
+  const dismiss=overlay.querySelector('[data-staff-result-dismiss]');
+  dismiss?.addEventListener('click',()=>{
+    if(modal.submitting) return;
+    if(modal.outcome.kind==='accepted'||!modal.outcome.allowRetry){ close(); return; }
+    delete modal.outcome;
+    overlay.remove();
+    card.classList.remove('has-extension-result');
+    content.inert=false;
+    card.querySelector('[data-extension-aav]')?.focus({preventScroll:true});
+  });
+  const windowClose=card.closest('.card-board-window')?.querySelector('[data-board-close]');
+  if(windowClose&&modal.extensionApplied){
+    windowClose.addEventListener('click',()=>{
+      if(!modal.extensionApplied) return;
+      modal.extensionApplied=false;
+      const entryId=card.dataset.extensionEntryId;
+      state.clipboardPlayerCards=state.clipboardPlayerCards.filter(item=>item.id!==entryId);
+      showToast(modal.outcome?.message||"Player signed an extension.");
+      void refreshHome();
+    },{once:true});
+  }
+  (dismiss||overlay).focus({preventScroll:true});
+}
+
+function wireExtensionNegotiationModal(root = els.modalRoot, modal = state.modal, redraw = renderModal, close = closeModal) {
+  if (!modal || modal.kind !== "contractExtension") return;
+  const yearsInput = root.querySelector("[data-extension-years]");
+  const aavInput = root.querySelector("[data-extension-aav]");
+  const guaranteedInput = root.querySelector('[data-extension-guaranteed]');
+  if (modal.draft) {
+    if (yearsInput) yearsInput.value = String(modal.draft.years);
+    if (aavInput) aavInput.value = String(modal.draft.aav);
+    if (guaranteedInput) guaranteedInput.checked = modal.draft.guaranteed !== false;
+  }
+  const syncYears = () => {
     const candidate = (modal.room?.candidates || []).find((item) => item.player_id === modal.selectedPlayerId);
-    const maximum = Number(candidate?.max_aav_by_years?.[String(yearsInput.value)] || 0);
+    if (!candidate || !yearsInput) return;
+    const years = clampNumber(Number(yearsInput.value || 1), 1, Number(candidate.safe_years || 1));
+    yearsInput.value = String(years);
+    const maximum = Number(candidate.max_aav_by_years?.[String(years)] || 0);
     if (aavInput) {
       aavInput.max = maximum.toFixed(2);
       aavInput.value = Math.min(Number(aavInput.value || 0), maximum).toFixed(1);
     }
-    const read = els.modalRoot.querySelector("[data-extension-maximum]");
-    if (read) read.textContent = money(maximum);
-  });
-  els.modalRoot.querySelector("[data-extension-offer-form]")?.addEventListener("submit", async (event) => {
+    updateExtensionPreview(modal,root);
+  };
+  yearsInput?.addEventListener("change", syncYears);
+  root.querySelectorAll("[data-extension-years-step]").forEach((button) => button.addEventListener("click", () => {
+    if (!yearsInput) return;
+    yearsInput.value = String(clampNumber(Number(yearsInput.value || 1) + Number(button.dataset.extensionYearsStep || 0), 1, Number(yearsInput.max || 1)));
+    syncYears();
+  }));
+  aavInput?.addEventListener("input", () => updateExtensionPreview(modal,root));
+  guaranteedInput?.addEventListener('change', () => updateExtensionPreview(modal,root));
+  updateExtensionPreview(modal,root);
+  root.querySelector("[data-extension-offer-form]")?.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if(modal.submitting) return;
     const playerId = modal.selectedPlayerId;
-    const years = Number(els.modalRoot.querySelector("[data-extension-years]")?.value || 1);
-    const aav = Number(els.modalRoot.querySelector("[data-extension-aav]")?.value || 0);
+    const years = Number(root.querySelector("[data-extension-years]")?.value || 1);
+    const aav = Number(root.querySelector("[data-extension-aav]")?.value || 0);
+    modal.submitting=true;
+    const submit=root.querySelector('[data-extension-offer-form] button[type="submit"]');
+    if(submit){ submit.disabled=true; submit.textContent="Waiting for response…"; }
     try {
       const result = await action("submit_extension_offer", {
         ...savePayload(),
         player_id: playerId,
         years,
         aav_millions: aav,
+        guaranteed: guaranteedInput?.checked !== false,
       });
       if (result.status === "applied") {
-        closeModal();
-        showToast(`${result.player_name || "Player"} signed a ${years}-year extension.`);
-        await refreshHome();
+        modal.submitting=false;
+        modal.extensionApplied=true;
+        modal.outcome={kind:"accepted",title:"Extension accepted",message:`${result.player_name||modal.detail?.name||"Player"} signed a ${years}-year extension.`};
+        mountPlayerExtensionOutcome(root,modal,close);
         return;
       }
       modal.response = result;
       modal.room = result.room || modal.room;
+      modal.submitting=false;
+      if(result.status==="rejected") modal.outcome={kind:"declined",title:"Offer declined",message:result.reason||"The player declined this extension. Adjust the offer to try again.",allowRetry:true};
       modal.body = extensionNegotiationBody(modal.room, modal.selectedPlayerId, result, modal.detail);
-      renderModal();
+      redraw();
     } catch (error) {
+      modal.submitting=false;
       showToast(error.message || "Extension offer could not be submitted.", true);
+      const currentSubmit=root.querySelector('[data-extension-offer-form] button[type="submit"]');
+      if(currentSubmit){ currentSubmit.disabled=false; currentSubmit.textContent="Submit Offer"; }
     }
   });
 }
@@ -5592,16 +9177,23 @@ function renderModal() {
     els.modalRoot.innerHTML = "";
     return;
   }
+  if (["playerFinder", "leagueLeaders"].includes(state.modal.kind)) {
+    state.modal.body = playerFinderModalBody();
+  }
   els.modalRoot.hidden = false;
-  const modalClass = ["playerFinder", "leagueLeaders", "freeAgentComparison", "teamDevelopment"].includes(state.modal.kind)
-    ? " modal-wide"
-    : ["fantasyPlayer", "dashboardPlayer", "draftProspect", "freeAgentPlayer"].includes(state.modal.kind)
+  const modalClass = state.modal.kind === 'teamWants' ? ' modal-team-wants' : state.modal.kind === 'waivers' ? ' modal-waivers' : ["playerFinder", "leagueLeaders", "freeAgentComparison"].includes(state.modal.kind)
+    ? (["playerFinder", "leagueLeaders"].includes(state.modal.kind) ? " modal-wide modal-player-finder" : " modal-wide")
+    : state.modal.kind === "draftProspect"
+      ? " modal-fantasy-player modal-prospect-card"
+    : ["fantasyPlayer", "dashboardPlayer", "freeAgentPlayer"].includes(state.modal.kind)
       ? " modal-fantasy-player"
+    : state.modal.kind === "dashboardStaff"
+      ? " modal-coach-card"
     : state.modal.kind === "tradeRoom"
       ? " modal-trade-room"
       : ["tradeOffers", "humanTradeOffers"].includes(state.modal.kind)
         ? " modal-trade-offers"
-      : state.modal.kind === "dashboardSettings"
+      : ["dashboardSettings", "issueReport"].includes(state.modal.kind)
         ? " modal-settings"
       : state.modal.kind === "staffNegotiation"
         ? " modal-staff-negotiation"
@@ -5611,21 +9203,31 @@ function renderModal() {
         ? " modal-free-agent-negotiation"
       : ["boxScore", "playoffBoxScore"].includes(state.modal.kind)
         ? " modal-box-score"
+      : state.modal.kind === "champion"
+        ? " modal-champion"
+      : ["tradeDeadline","postseason"].includes(state.modal.kind)
+        ? " modal-box-score modal-trade-deadline"
         : "";
-  const closeLabel = state.modal.kind === "tradeRoom"
+  const closeLabel = ["teamWants", "waivers", "playerFinder", "leagueLeaders", "dashboardSettings", "issueReport"].includes(state.modal.kind) ? state.modal.title : state.modal.kind === "tradeDeadline" ? "Trade Deadline" : state.modal.kind === "tradeRoom"
     ? "Trade Room"
+    : state.modal.kind === "dashboardStaff"
+      ? "Coach Card"
     : state.modal.kind === "staffNegotiation"
       ? "Staff Negotiation"
-    : ["fantasyPlayer", "dashboardPlayer", "draftProspect", "freeAgentPlayer"].includes(state.modal.kind)
+    : state.modal.kind === "draftProspect"
+      ? "Prospect Card"
+    : ["fantasyPlayer", "dashboardPlayer", "freeAgentPlayer"].includes(state.modal.kind)
       ? "Player Card"
     : ["freeAgentNegotiation", "freeAgentComparison"].includes(state.modal.kind)
       ? "Free Agency"
-    : state.modal.kind === "teamDevelopment"
-      ? "Team Development"
     : ["boxScore", "playoffBoxScore"].includes(state.modal.kind)
       ? "Box Score"
       : "Trade Offers";
-  const closeControl = ["tradeRoom", "tradeOffers", "humanTradeOffers", "fantasyPlayer", "dashboardPlayer", "draftProspect", "freeAgentPlayer", "freeAgentNegotiation", "freeAgentComparison", "teamDevelopment", "staffNegotiation", "contractExtension", "boxScore", "playoffBoxScore"].includes(state.modal.kind)
+  const isBoxScore = ["boxScore", "playoffBoxScore"].includes(state.modal.kind);
+  const hasClipboardTitlebar = isBoxScore || ["teamWants", "waivers", "playerFinder", "leagueLeaders", "tradeRoom", "tradeDeadline", "postseason", "champion", "staffNegotiation", "dashboardSettings", "issueReport", "tradeOffers", "humanTradeOffers"].includes(state.modal.kind);
+  const closeControl = hasClipboardTitlebar
+    ? `<button type="button" class="modal-close-icon card-board-control card-board-close" data-close-modal aria-label="Close ${closeLabel}" title="Close"><img src="/assets/window-icons/x.svg" alt="" aria-hidden="true"></button>`
+    : ["tradeRoom", "tradeOffers", "humanTradeOffers", "fantasyPlayer", "dashboardPlayer", "dashboardStaff", "draftProspect", "freeAgentPlayer", "freeAgentNegotiation", "freeAgentComparison", "staffNegotiation", "contractExtension"].includes(state.modal.kind)
     ? `<button class="modal-close-icon" data-close-modal aria-label="Close ${closeLabel}" title="Close">×</button>`
     : `<button data-close-modal>Close</button>`;
   const seriesNavigation = state.modal.kind === "playoffBoxScore"
@@ -5636,17 +9238,19 @@ function renderModal() {
       </nav>`
     : "";
   els.modalRoot.innerHTML = `
-    <div class="modal-shell${modalClass}" role="dialog" aria-modal="true">
-      <header class="modal-head">
+    <div class="modal-shell${modalClass}" role="dialog" aria-modal="true" aria-label="${escapeAttr(state.modal.title || "Detail")}">
+      <header class="modal-head${hasClipboardTitlebar ? " card-board-titlebar" : ""}">
         <div>
+          ${hasClipboardTitlebar ? `<span class="card-board-window-mark" aria-hidden="true"></span>` : ""}
           ${state.modal.subtitle ? `<p class="eyebrow">${escapeHtml(state.modal.subtitle)}</p>` : ""}
           <h3>${escapeHtml(state.modal.title || "Detail")}</h3>
         </div>
         ${seriesNavigation}
         ${closeControl}
       </header>
-      <div class="modal-body">${state.modal.body || ""}</div>
+      <div class="modal-body">${state.modal.kind === "staffNegotiation" ? `<div class="staff-negotiation-content">${state.modal.body || ""}</div>` : state.modal.body || ""}</div>
     </div>`;
+  if(typeof wireWantModal==='function')wireWantModal(els.modalRoot);
   if (state.modal.kind === "tradeOffers") {
     wireOfferButtons(els.modalRoot, state.modal.offers || []);
   }
@@ -5678,7 +9282,16 @@ function renderModal() {
     wireTradeRoom();
   }
   if (state.modal.kind === "dashboardSettings") {
+    els.modalRoot.querySelector("[data-report-issue]")?.addEventListener("click", openIssueReport);
     els.modalRoot.querySelector("[data-return-save-selection]")?.addEventListener("click", returnToSaveSelection);
+    els.modalRoot.querySelector("[data-replay-tutorial]")?.addEventListener("click", () => {
+      state.modal = null;
+      renderModal();
+      startGameTutorial(true);
+    });
+  }
+  if (state.modal.kind === "issueReport") {
+    els.modalRoot.querySelector("[data-issue-report-form]")?.addEventListener("submit", downloadIssueReport);
   }
   if (state.modal.kind === "staffNegotiation") {
     els.modalRoot.querySelector("[data-staff-negotiation-form]")?.addEventListener("submit", async (event) => {
@@ -5686,12 +9299,35 @@ function renderModal() {
       await submitDashboardStaffNegotiation();
     });
     const salary = els.modalRoot.querySelector("[data-staff-offer-salary]");
-    if (salary) salary.addEventListener("input", () => {
+    salary?.addEventListener("input", () => {
       const maximum = Number(state.modal?.maxOffer || 0);
-      salary.setCustomValidity(Number(salary.value || 0) > maximum + 0.001 ? `Maximum legal offer is ${money(maximum)}.` : "");
+      const amount = Number(salary?.value || 0);
+      salary?.setCustomValidity(amount > maximum + 0.001 ? `Maximum legal offer is ${money(maximum)}.` : "");
+      updateStaffOfferInterest();
     });
+    els.modalRoot.querySelector("[data-staff-offer-years]")?.addEventListener("input", () => updateStaffOfferInterest());
   }
   if (state.modal.kind === "contractExtension") wireExtensionNegotiationModal();
+  if (isBoxScore) wireBoxScorePages(els.modalRoot, state.modal);
+  if (state.modal.kind === "tradeDeadline") {
+    const resume = state.modal.deadlineResume;
+    els.modalRoot.querySelector('[data-enter-trade-deadline]')?.addEventListener('click', async () => {
+      acknowledgeTradeDeadline(resume?.trade_deadline_confirmed || tradeDeadlineDate());
+      closeAllModals();
+      try { await openTradeRoomModal("builder"); } catch (error) { showToast(error.message || "Could not open trade tools.", true); }
+    });
+    els.modalRoot.querySelector('[data-sim-through-deadline]')?.addEventListener('click', async () => {
+      acknowledgeTradeDeadline(resume?.trade_deadline_confirmed || tradeDeadlineDate());
+      closeAllModals();
+      try { await advance(resume); } catch (error) { showToast(error.message || "Could not continue the sim.", true); }
+    });
+  }
+  if (state.modal.kind === "postseason") {
+    els.modalRoot.querySelector('[data-review-postseason]')?.addEventListener('click', () => {
+      closeAllModals();
+    });
+  }
+  if (state.modal.kind === 'champion') els.modalRoot.querySelector('[data-champion-bracket]')?.addEventListener('click',()=>window.CardBoard?.open('phase-playoffs-bracket'));
   if (state.modal.kind === "freeAgentNegotiation") {
     els.modalRoot.querySelector("#submitFaOffer")?.addEventListener("click", submitFreeAgentOffer);
     els.modalRoot.querySelector("[data-fa-modal-player-card]")?.addEventListener("click", (event) => freeAgentPlayerCard(event.currentTarget.dataset.faModalPlayerCard || ""));
@@ -5706,10 +9342,14 @@ function renderModal() {
       const offer = Number(aavInput.value || 0);
       const ask = Number(freeAgencyCandidate(state.selectedFreeAgent)?.ask_millions || 1);
       const interest = Math.round(clampNumber(offer / Math.max(1, ask) * 70, 0, 100));
+      const secure = els.modalRoot.querySelector('#faGuaranteed')?.checked !== false;
+      const minutes = Number(freeAgencyCandidate(state.selectedFreeAgent)?.previous_mpg || 0);
+      const securityPenalty = secure ? 0 : 8 + Math.min(12, minutes * .4) + Math.max(0, 16-minutes) * .3;
+      const displayedInterest = Math.max(0, Math.round(interest-securityPenalty));
       const interestBar = els.modalRoot.querySelector("[data-fa-live-interest]");
-      if (interestBar) interestBar.style.width = `${interest}%`;
+      if (interestBar) interestBar.style.width = `${displayedInterest}%`;
       const interestValue = els.modalRoot.querySelector("[data-fa-live-interest-value]");
-      if (interestValue) interestValue.textContent = `${interest} / 100`;
+      if (interestValue) interestValue.textContent = `${displayedInterest} / 100`;
       els.modalRoot.querySelectorAll("[data-offer-highlight]").forEach((bar) => {
         const capMaximum = Number(bar.dataset.capMaximum || 1);
         bar.style.height = `${clampNumber(offer / capMaximum * 100, 0, 100)}%`;
@@ -5722,6 +9362,7 @@ function renderModal() {
     aavInput?.addEventListener("input", clampOffer);
     aavInput?.addEventListener("blur", clampOffer);
     aavInput?.addEventListener("change", clampOffer);
+    els.modalRoot.querySelector('#faGuaranteed')?.addEventListener('change', clampOffer);
   }
   if (state.modal.kind === "freeAgentPlayer") {
     els.modalRoot.querySelector("[data-fa-card-negotiate]")?.addEventListener("click", (event) => openFreeAgentNegotiation(event.currentTarget.dataset.faCardNegotiate || ""));
@@ -5730,8 +9371,9 @@ function renderModal() {
     els.modalRoot.querySelectorAll("[data-fa-comparison-card]").forEach((button) => button.addEventListener("click", () => freeAgentPlayerCard(button.dataset.faComparisonCard || "")));
     els.modalRoot.querySelectorAll("[data-fa-comparison-negotiate]").forEach((button) => button.addEventListener("click", () => openFreeAgentNegotiation(button.dataset.faComparisonNegotiate || "")));
   }
-  els.modalRoot.querySelectorAll("[data-dashboard-player-card]").forEach(button => {
-    button.addEventListener("click", () => dashboardPlayerCard(button.dataset.dashboardPlayerCard));
+  wireDashboardPlayerCards(els.modalRoot);
+  els.modalRoot.querySelectorAll("[data-dashboard-staff-card]").forEach(button => {
+    button.addEventListener("click", () => dashboardCoachCard(button.dataset.dashboardStaffCard));
   });
   if (state.modal.kind === "playoffBoxScore") {
     els.modalRoot.querySelectorAll("[data-playoff-box-step]").forEach((button) => {
@@ -5745,35 +9387,67 @@ function renderModal() {
     });
   });
   GameInterface.modalDidRender();
+  if (state.modal?.kind === "staffNegotiation" && state.modal.outcome) mountStaffNegotiationOutcome(state.modal);
 }
 
 function wirePlayerFinderModal() {
-  const sort = document.getElementById("playerFinderSort");
-  if (sort) sort.addEventListener("change", () => {
-    state.playerFinder.sortField = sort.value || "overall";
+  const root=els.modalRoot;
+  const finder=state.playerFinder;
+  finder.filters ||= [];
+  const redrawFilters=()=>{root.querySelector('[data-player-finder-filters]').innerHTML=playerFinderFiltersMarkup(); refreshPlayerFinderTable();};
+  root.querySelector('[data-player-finder-name]')?.addEventListener('input',event=>{finder.name=event.target.value;refreshPlayerFinderTable();});
+  root.querySelector('[data-player-finder-add]')?.addEventListener('click',()=>{
+    finder.filters.push({field:'overall',operator:'>',value:''});redrawFilters();
+    root.querySelector('.player-finder-filter:last-child [data-finder-field]')?.focus();
+  });
+  const filters=root.querySelector('[data-player-finder-filters]');
+  filters?.addEventListener('change',event=>{
+    if(!event.target.matches('[data-finder-field]')) return;
+    const index=Number(event.target.closest('[data-finder-filter]').dataset.finderFilter), filter=finder.filters[index];
+    filter.field=event.target.value;
+    if(!playerFinderOperators(filter.field).includes(filter.operator)) filter.operator=playerFinderOperators(filter.field)[0];
+    redrawFilters();root.querySelector(`[data-finder-filter="${index}"] [data-finder-field]`)?.focus();
+  });
+  filters?.addEventListener('input',event=>{
+    if(!event.target.matches('[data-finder-value]')) return;
+    finder.filters[Number(event.target.closest('[data-finder-filter]').dataset.finderFilter)].value=event.target.value;
     refreshPlayerFinderTable();
   });
-  const filterField = document.getElementById("playerFinderFilterField");
-  if (filterField) filterField.addEventListener("change", () => {
-    state.playerFinder.filterField = filterField.value || "player";
-    refreshPlayerFinderTable();
+  filters?.addEventListener('click',event=>{
+    const row=event.target.closest('[data-finder-filter]');if(!row) return;
+    const index=Number(row.dataset.finderFilter), filter=finder.filters[index];
+    if(event.target.closest('[data-finder-remove]')) {
+      finder.filters.splice(index,1);redrawFilters();
+      (root.querySelector(`[data-finder-filter="${Math.min(index,finder.filters.length-1)}"] [data-finder-remove]`) || root.querySelector('[data-player-finder-add]'))?.focus();
+    } else if(event.target.closest('[data-finder-operator]')) {
+      const operators=playerFinderOperators(filter.field);filter.operator=operators[(operators.indexOf(filter.operator)+1)%operators.length];
+      redrawFilters();root.querySelector(`[data-finder-filter="${index}"] [data-finder-operator]`)?.focus();
+    }
   });
-  const filterValue = document.getElementById("playerFinderFilterValue");
-  if (filterValue) filterValue.addEventListener("input", () => {
-    state.playerFinder.filterValue = filterValue.value || "";
-    refreshPlayerFinderTable();
+  const wrap=root.querySelector('#playerFinderTableWrap');
+  wrap?.addEventListener('click',async event=>{
+    const sort=event.target.closest('[data-finder-sort]');
+    if(sort){const key=sort.dataset.finderSort;finder.sortDirection=finder.sortField===key?(finder.sortDirection==='asc'?'desc':'asc'):['player','team','position','height'].includes(key)?'asc':'desc';finder.sortField=key;refreshPlayerFinderTable();root.querySelector(`[data-finder-sort="${key}"]`)?.focus();return;}
+    const row=event.target.closest('[data-finder-player]');if(!row) return;
+    const player=finder.payload.rows.find(player=>player.id===row.dataset.finderPlayer);if(!player) return;
+    if(event.target.closest('[data-finder-trade]')) {
+      if(!player.team_id || player.team_abbrev==='FA') return;
+      try {await openTradeRoomModal('finder',{targetTeam:player.team_abbrev,targetPlayerId:player.id});} catch(error){showToast(error.message || 'Could not open Trade Finder.',true);}
+    } else await dashboardPlayerCard(player.id);
   });
+  wrap?.addEventListener('keydown',event=>{
+    if(event.target.matches('[data-finder-player]') && ['Enter',' '].includes(event.key)){event.preventDefault();void dashboardPlayerCard(event.target.dataset.finderPlayer);}
+  });
+  refreshPlayerFinderTable();
 }
 
 function refreshPlayerFinderTable() {
-  const finder = state.playerFinder || {};
-  const payload = finder.payload || {};
-  const rows = filteredPlayerFinderRows(payload.rows || [], finder.filterField || "player", finder.filterValue || "", finder.sortField || "overall");
-  const count = document.getElementById("playerFinderCount");
-  if (count) count.textContent = `${rows.length} shown`;
-  const wrap = document.getElementById("playerFinderTableWrap");
-  if (wrap) wrap.innerHTML = playerFinderTable(rows, payload.seasons || []);
-  wrap?.querySelectorAll("[data-dashboard-player-card]").forEach(button => button.addEventListener("click", () => dashboardPlayerCard(button.dataset.dashboardPlayerCard)));
+  const finder=state.playerFinder || {}, payload=finder.payload || {};
+  const rows=filteredPlayerFinderRows(payload.rows || []);
+  const count=document.getElementById('playerFinderCount');
+  if(count) count.textContent=`${rows.length} / ${payload.rows?.length || 0} players`;
+  const wrap=document.getElementById('playerFinderTableWrap');
+  if(wrap){wrap.innerHTML=playerFinderTable(rows);wrap.scrollTop=0;}
 }
 
 function wireViewJumpButtons() {
@@ -6034,6 +9708,19 @@ function startingMapSignature(map) {
 }
 
 function ensureRotationDraft(rows) {
+  const currentDate = state.data?.dashboard?.current_date;
+  if (currentDate && state.rotationDraftDate !== currentDate) {
+    state.rotationDraft = {};
+    state.rotationLockedPlayerIds.clear();
+    state.rotationDraftDate = currentDate;
+  }
+  const rosterIds = new Set(rows.map(row => row.id));
+  for (const id of Object.keys(state.rotationDraft)) {
+    if (!rosterIds.has(id)) delete state.rotationDraft[id];
+  }
+  for (const id of state.rotationLockedPlayerIds) {
+    if (!rosterIds.has(id)) state.rotationLockedPlayerIds.delete(id);
+  }
   if (!Object.keys(state.rotationDraft).length) {
     rows.filter((row) => row.rotation_user_set).forEach((row) => state.rotationLockedPlayerIds.add(row.id));
     state.rotationDraft = Object.fromEntries(
@@ -6051,6 +9738,43 @@ function ensureRotationDraft(rows) {
       }
     }
   }
+  rebalanceInjuredRotationDraft(rows);
+}
+
+function rebalanceInjuredRotationDraft(rows) {
+  const roster = rows.filter((row) => row?.id && !row.__summaryEmpty);
+  const injured = roster.filter((row) => isPlayerInjured(row.health));
+  if (!injured.length) return;
+  for (const row of injured) {
+    state.rotationDraft[row.id] = 0;
+    state.rotationLockedPlayerIds.delete(row.id);
+  }
+  const healthy = roster.filter((row) => !isPlayerInjured(row.health));
+  for (const row of healthy) {
+    state.rotationDraft[row.id] = clampNumber(Math.round(Number(state.rotationDraft[row.id] || 0)), 0, 48);
+  }
+  let remaining = Math.max(0, 240 - healthy.reduce((sum, row) => sum + Number(state.rotationDraft[row.id] || 0), 0));
+  const weights = new Map(healthy.map((row) => [
+    row.id,
+    Math.max(
+      0.25,
+      Number(state.rotationDraft[row.id] || 0),
+      Number(row.rotation_target_minutes ?? row.coach_minutes_projection ?? row.minutes_projection ?? 0),
+      Number(rating(row, "overall") || 0) / 12,
+    ),
+  ]));
+  while (remaining > 0 && healthy.some((row) => Number(state.rotationDraft[row.id] || 0) < 48)) {
+    const candidate = healthy
+      .filter((row) => Number(state.rotationDraft[row.id] || 0) < 48)
+      .sort((left, right) => {
+        const leftScore = Number(weights.get(left.id) || 0) / (Number(state.rotationDraft[left.id] || 0) + 1);
+        const rightScore = Number(weights.get(right.id) || 0) / (Number(state.rotationDraft[right.id] || 0) + 1);
+        return rightScore - leftScore || String(left.name || "").localeCompare(String(right.name || ""));
+      })[0];
+    if (!candidate) break;
+    state.rotationDraft[candidate.id] = Number(state.rotationDraft[candidate.id] || 0) + 1;
+    remaining -= 1;
+  }
 }
 
 function autofillRotationDraft(rows) {
@@ -6059,20 +9783,36 @@ function autofillRotationDraft(rows) {
   for (const playerId of [...state.rotationLockedPlayerIds]) {
     if (!rosterIds.has(playerId)) state.rotationLockedPlayerIds.delete(playerId);
   }
+  for (const row of roster) {
+    if (isPlayerInjured(row.health)) {
+      state.rotationDraft[row.id] = 0;
+      state.rotationLockedPlayerIds.delete(row.id);
+    }
+  }
 
-  const locked = roster.filter((row) => state.rotationLockedPlayerIds.has(row.id));
-  const unlocked = roster.filter((row) => !state.rotationLockedPlayerIds.has(row.id));
+  const available = roster.filter((row) => !isPlayerInjured(row.health));
+  const locked = available.filter((row) => state.rotationLockedPlayerIds.has(row.id));
+  const unlocked = available.filter((row) => !state.rotationLockedPlayerIds.has(row.id));
   const lockedTotal = locked.reduce((sum, row) => sum + Number(state.rotationDraft[row.id] || 0), 0);
   let remaining = Math.max(0, 240 - lockedTotal);
+
+  const automaticMinutes = new Map(unlocked.map((row) => [
+    row.id,
+    Math.max(0, Number(row.automatic_minutes_projection ?? row.rotation_target_minutes ?? row.coach_minutes_projection ?? row.minutes_projection ?? 0)),
+  ]));
+  const automaticTotal = [...automaticMinutes.values()].reduce((sum, value) => sum + value, 0);
+  if (locked.length === 0 && Math.round(automaticTotal) === 240) {
+    for (const row of available) {
+      state.rotationDraft[row.id] = Math.round(automaticMinutes.get(row.id) || 0);
+    }
+    return;
+  }
+
   for (const row of unlocked) state.rotationDraft[row.id] = 0;
 
   const weights = new Map(unlocked.map((row) => [
     row.id,
-    Math.max(
-      0.25,
-      Number(row.rotation_target_minutes ?? row.coach_minutes_projection ?? row.minutes_projection ?? 0),
-      Number(rating(row, "overall") || 0) / 12
-    ),
+    Math.max(0.25, Number(automaticMinutes.get(row.id) || 0)),
   ]));
   while (remaining > 0 && unlocked.some((row) => Number(state.rotationDraft[row.id] || 0) < 48)) {
     const candidate = unlocked
@@ -6095,12 +9835,16 @@ function syncRotationInputs(root = els.content) {
     input.value = String(value);
     input.classList.toggle("user-locked", state.rotationLockedPlayerIds.has(playerId));
     input.closest(".season-minute-slider")?.classList.toggle("user-locked", state.rotationLockedPlayerIds.has(playerId));
+    const reset = input.closest(".season-minute-control")?.querySelector("[data-minute-reset-player]");
+    if (reset) reset.hidden = !state.rotationLockedPlayerIds.has(playerId);
     const fill = input.closest(".season-minute-slider")?.querySelector(".season-minute-fill");
     if (fill) fill.style.width = `${(value / 48 * 100).toFixed(2)}%`;
     const output = Array.from(root.querySelectorAll("[data-minute-output]")).find((node) => node.dataset.minuteOutput === playerId)
       || input.closest(".rotation-row")?.querySelector("output");
     if (output) output.textContent = String(value);
   });
+  if (root.matches?.(".season-minutes-table")) reorderMinutesTable(root);
+  root.querySelectorAll(".season-minutes-table").forEach(reorderMinutesTable);
 }
 
 function summaryLeaderRotator(limit = 5, expanded = false, options = {}) {
@@ -6170,16 +9914,17 @@ function dashboardPlayerSummaryTable(rows) {
 function dashboardPlayerSummaryTableInner(summaryRows, seasons, editable, options = {}) {
   const includeContracts = options.includeContracts !== false;
   const extensionWindowOpen = Boolean(state.data.dashboard?.extension_window_open);
-  const headers = ["Player", "Pos", "Height", "Age", "OVR", "Shot", "Create", "Def", "Space", "Pass", "Reb", "Rim", "Ath", "GP", "Set", "MPG", "PTS", "REB", "AST", "STL", "BLK", "TO", ...(includeContracts ? seasons : [])];
+  const headers = ["Player", "Pos", "Height", "Age", "OVR", "OFF", "DEF", "Shot", "Create", "Space", "Pass", "Reb", "Rim", "Ath", "GP", "Set", "MPG", "PTS", "REB", "AST", "STL", "BLK", "TO", ...(includeContracts ? seasons : [])];
   return table(headers, summaryRows, (row) => [
         summaryPlayerNameCell(row, true),
         compactPos(row.position),
         heightFromRow(row) || "—",
         row.age ?? "—",
-        tieredRating(rating(row, "overall"), "overall", state.data.dashboard?.rating_tertiles),
+        html(compactRatingBar(rating(row, "overall"))),
+        html(compactRatingBar(row.offense ?? row.ratings?.offense ?? averageNumber([row.ratings?.shooting,row.ratings?.creation,row.ratings?.passing].filter(value=>value!=null),0))),
+        html(compactRatingBar(rating(row, "defense"))),
         tieredRating(rating(row, "shooting"), "shooting", state.data.dashboard?.rating_tertiles),
         tieredRating(rating(row, "creation"), "creation", state.data.dashboard?.rating_tertiles),
-        tieredRating(rating(row, "defense"), "defense", state.data.dashboard?.rating_tertiles),
         tieredRating(rating(row, "spacing") || rating(row, "range"), "range", state.data.dashboard?.rating_tertiles),
         tieredRating(rating(row, "passing"), "passing", state.data.dashboard?.rating_tertiles),
         tieredRating(rating(row, "rebounding"), "rebounding", state.data.dashboard?.rating_tertiles),
@@ -6215,18 +9960,18 @@ function summaryContractChart(rows, seasons, dash) {
   return salaryHorizonChart({seasons, rows, capByYear});
 }
 
-function salaryHorizonChart({seasons=[],rows=[],capByYear={},highlightPlayerId='',payrollByYear={},offer=false,className=''}={}) {
+function salaryHorizonChart({seasons=[],rows=[],capByYear={},highlightPlayerId='',payrollByYear={},offer=false,className='',scaleMaximum=null,colorPlayerIds=[]}={}) {
   const horizon=[...seasons].slice(0,4);
   while(horizon.length<4) horizon.push(`Year ${horizon.length+1}`);
-  const colorIds = [...new Set(rows.map((row,index)=>String(row.id||row.player_id||index)))].sort();
+  const colorIds = [...new Set([...colorPlayerIds,...rows.map((row,index)=>String(row.id||row.player_id||index))])].sort();
   const values=horizon.map(season=>{
     const cap=capByYear?.[season]||{};
-    const salaries=rows.map((row,index)=>{const id=String(row.id||row.player_id||index);return {id,name:row.name||'',salary:Number(row.salary_by_year?.[season]||0),index:colorIds.indexOf(id)};}).filter(item=>item.salary>0).sort((a,b)=>b.salary-a.salary||a.id.localeCompare(b.id));
+    const salaries=rows.map((row,index)=>{const id=String(row.id||row.player_id||index);return {id,name:row.name||row.player_name||row.full_name||'',salary:Number(row.salary_by_year?.[season]||0),index:colorIds.indexOf(id)};}).filter(item=>item.salary>0).sort((a,b)=>b.salary-a.salary||a.id.localeCompare(b.id));
     const known=salaries.reduce((sum,item)=>sum+item.salary,0);
     const payroll=Number(payrollByYear?.[season] ?? cap.salary_total_millions ?? known);
     return {season,cap,salaries,payroll:Math.max(payroll,known),remainder:Math.max(0,payroll-known)};
   });
-  const maximum=Math.max(1,...values.flatMap(({cap,payroll})=>[payroll,Number(cap.tax_line_millions||0),Number(cap.hard_cap_millions||0)]))*1.06;
+  const maximum=Number(scaleMaximum)>0 ? Number(scaleMaximum) : Math.max(1,...values.flatMap(({cap,payroll})=>[payroll,Number(cap.tax_line_millions||0),Number(cap.hard_cap_millions||0)]))*1.06;
   const pct=value=>clampNumber(Number(value||0)/maximum*100,0,100);
   return `<div class="salary-horizon-chart${className?` ${escapeAttr(className)}`:''}${highlightPlayerId?' is-player-focus':''}${offer?' is-offer':''}">${values.map(({season,cap,salaries,payroll,remainder})=>{
     let segments=salaries;
@@ -6234,32 +9979,52 @@ function salaryHorizonChart({seasons=[],rows=[],capByYear={},highlightPlayerId='
       const focus=salaries.filter(item=>item.id===String(highlightPlayerId));
       const other=salaries.filter(item=>item.id!==String(highlightPlayerId)).reduce((sum,item)=>sum+item.salary,0)+remainder;
       segments=[...(other>0?[{id:'other',salary:other,index:-1}]:[]),...focus];
-    } else if(remainder>0) segments=[{id:'other',salary:remainder,index:-1},...segments];
+    } else if(remainder>0) {
+      const waived = Math.min(remainder, Number(cap.waived_salary_millions || 0));
+      segments=[...(remainder>waived?[{id:'other',salary:remainder-waived,index:-1}]:[]),
+        ...(waived>0?[{id:'waived',name:`Waived salary${Number(cap.unverified_waived_reserve_millions)>0?' (includes unverified reserves)':''}`,salary:waived,index:-1}]:[]),...segments];
+    }
     const tax=Number(cap.tax_line_millions||0),hard=Number(cap.hard_cap_millions||0);
     const focusedSalary=salaries.find(item=>item.id===String(highlightPlayerId))?.salary||0;
     const displaySalary=highlightPlayerId?focusedSalary:payroll;
-    return `<div class="salary-horizon-year"><span>${escapeHtml(shortSeasonLabel(season))}</span><div class="salary-horizon-column" role="img" aria-label="${escapeAttr(`${season} payroll ${money(payroll)}, tax ${money(tax)}, hard cap ${money(hard)}`)}"><div class="salary-horizon-stack" style="height:${pct(payroll)}%">${segments.map(item=>`<i class="salary-segment salary-segment-${item.index<0?'other':item.index%8}${item.id===String(highlightPlayerId)?' is-highlighted':''}" style="height:${payroll?clampNumber(item.salary/payroll*100,0,100):0}%" title="${escapeAttr(item.id==='other'?`Other payroll ${money(item.salary)}`:`${money(item.salary)}`)}"></i>`).join('')}</div>${tax?`<b class="salary-tax-line" style="bottom:${pct(tax)}%"></b>`:''}${hard?`<b class="salary-hard-line" style="bottom:${pct(hard)}%"></b>`:''}</div><strong>${displaySalary?money(displaySalary):'—'}</strong></div>`;
+    return `<div class="salary-horizon-year"><span>${escapeHtml(shortSeasonLabel(season))}</span><div class="salary-horizon-column" role="img" aria-label="${escapeAttr(`${season} payroll ${money(payroll)}, tax ${money(tax)}, hard cap ${money(hard)}`)}"><div class="salary-horizon-stack" style="height:${pct(payroll)}%">${segments.map(item=>`<i class="salary-segment salary-segment-${item.index<0?'other':item.index%8}${item.id===String(highlightPlayerId)?' is-highlighted':''}" style="height:${payroll?clampNumber(item.salary/payroll*100,0,100):0}%" title="${escapeAttr(item.id==='other'?`Other payroll: ${money(item.salary)}`:`${money(item.salary)} · ${item.name || 'Unknown player'}`)}"></i>`).join('')}</div>${tax?`<b class="salary-tax-line" style="bottom:${pct(tax)}%"></b>`:''}${hard?`<b class="salary-hard-line" style="bottom:${pct(hard)}%"></b>`:''}</div><strong>${displaySalary?money(displaySalary):'—'}</strong></div>`;
   }).join('')}<div class="salary-horizon-legend"><span>Tax</span><span>Hard cap</span></div></div>`;
 }
 
-function summaryPlayerNameCell(row, interactive = false) {
+function playerHeadshotMarkup(row, className = "player-headshot") {
+  if (row.is_prospect) return `<span class="player-headshot-frame prospect-profile-placeholder" aria-label="Blank profile portrait"><svg class="${escapeAttr(className)}" viewBox="0 0 220 160" role="img" aria-label="Blank profile portrait"><rect width="220" height="160" fill="#e4e8eb"/><circle cx="110" cy="57" r="32" fill="#a9b3bc"/><path d="M43 160v-10c0-39 30-61 67-61s67 22 67 61v10" fill="#a9b3bc"/></svg></span>`;
+  const source = String(row.headshot_url || "").trim();
+  if (!source) return "";
+  return `<span class="player-headshot-frame" aria-hidden="true"><img class="${escapeAttr(className)}" src="${escapeAttr(source)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" /></span>`;
+}
+
+function summaryPlayerNameCell(row, interactive = false, includePortrait = false) {
   const name = row.name || "";
-  const injured = isPlayerInjured(row.health);
-  const returnGames = injuryGamesRemaining(row);
-  const returnLabel = injured && returnGames !== null
-    ? `<span class="injury-return-games" title="Estimated games until healthy"> - ${returnGames}</span>`
-    : "";
   if (!interactive) {
-    return injured ? html(`<span class="injured-player-name">${escapeHtml(name)}${returnLabel}</span>`) : name;
+    return isPlayerInjured(row.health) ? html(playerNameWithInjuryMarkup(row, name)) : name;
   }
-  return html(`<button class="summary-player-card-button${injured ? " injured-player-name" : ""}" data-dashboard-player-card="${escapeAttr(row.id)}" aria-label="Open player card for ${escapeAttr(name)}">${escapeHtml(name)}${returnLabel}</button>`);
+  const portrait = includePortrait ? playerHeadshotMarkup(row, "roster-player-headshot") : "";
+  return html(`<button class="summary-player-card-button${includePortrait ? " roster-player-card-button" : ""}" data-dashboard-player-card="${escapeAttr(row.id)}" aria-label="Open player card for ${escapeAttr(name)}">${portrait}${playerNameWithInjuryMarkup(row, name)}</button>`);
+}
+
+function playerInjuryStatusMarkup(row) {
+  if (!isPlayerInjured(row.health)) return "";
+  const games = injuryGamesRemaining(row);
+  const description = games === null ? "Injured" : `Injured, ${games} game${games === 1 ? "" : "s"} remaining`;
+  return `<span class="season-injury-status" role="img" aria-label="${escapeAttr(description)}" title="${escapeAttr(description)}"><span aria-hidden="true">✚</span>${games === null ? "" : `<span>${games}</span>`}</span>`;
+}
+
+function playerNameWithInjuryMarkup(row, name = row.name || row.player_name || "Unknown") {
+  return `<span class="summary-player-name-label player-name-with-injury"><span class="player-name-text">${escapeHtml(name)}</span>${playerInjuryStatusMarkup(row)}</span>`;
 }
 
 function injuryGamesRemaining(row) {
   if (!isPlayerInjured(row.health)) return null;
   const labelMatch = String(row.health?.label || "").match(/~\s*(\d+)\s*g/i);
   if (labelMatch) return Number(labelMatch[1]);
-  const daysLeft = Number(row.health?.days_left);
+  const remaining = row.health?.days_left;
+  if (remaining == null || remaining === "") return null;
+  const daysLeft = Number(remaining);
   return Number.isFinite(daysLeft) ? Math.max(1, Math.round(daysLeft / 2.4)) : null;
 }
 
@@ -6277,10 +10042,11 @@ function summaryContractSalaryCell(row, season, editable = false, extensionWindo
 }
 
 function rotationSliderCell(row, editable) {
-  const value = clampNumber(Number(state.rotationDraft[row.id] ?? row.minutes_projection ?? 0), 0, 48);
+  const injured = isPlayerInjured(row.health);
+  const value = injured ? 0 : clampNumber(Number(state.rotationDraft[row.id] ?? row.minutes_projection ?? 0), 0, 48);
   return html(`
     <div class="summary-minute-control">
-      <input type="range" min="0" max="48" step="1" value="${value}" data-minute-player="${escapeAttr(row.id)}" ${editable ? "" : "disabled"} />
+      <input type="range" min="0" max="48" step="1" value="${value}" data-minute-player="${escapeAttr(row.id)}" ${editable && !injured ? "" : "disabled"} />
       <output data-minute-output="${escapeAttr(row.id)}">${value}</output>
     </div>`);
 }
@@ -6402,6 +10168,7 @@ function dashboardMonthCalendar() {
         </div>
       </div>
     </div>
+    ${tradeDeadlineCalendarNotice(month)}
     <div class="calendar-grid" style="grid-template-rows: 12px repeat(${weekRows}, minmax(0, 1fr))">
       ${["M", "T", "W", "T", "F", "S", "S"].map((day) => `<div class="calendar-label">${day}</div>`).join("")}
       ${cells.map((cell) => calendarCell(cell, games, current, team)).join("")}
@@ -6591,8 +10358,11 @@ function developmentPlayerCandidates(rows = []) {
     byId.set(id, {
       player_id: id,
       name: row.name || existing?.name || "Unknown",
+      headshot_url: row.headshot_url || existing?.headshot_url || "",
       position: compactPos(row.position || existing?.position || ""),
+      age: row.age ?? existing?.age ?? null,
       current: Number.isFinite(current) && current > 0 ? current : Number(existing?.current || 0),
+      upside_remaining: Number(row.upside_remaining ?? existing?.upside_remaining ?? 0),
       points: existing?.points?.length ? existing.points : [],
       minutes: Number(mpgFromRow(row) || 0),
     });
@@ -6978,8 +10748,9 @@ function calendarCell(cell, games, current, team) {
     return true;
   }).sort((a, b) => Number(Boolean(scoreLine(b))) - Number(Boolean(scoreLine(a)))).slice(0, 1);
   const past = cell.date < String(current).slice(0, 10);
-  return `<div class="calendar-cell ${past ? "past" : ""}">
+  return `<div class="calendar-cell ${past ? "past" : ""}${cell.date === tradeDeadlineDate() ? " trade-deadline-day" : ""}">
     <strong>${Number(cell.date.slice(-2))}</strong>
+    ${cell.date === tradeDeadlineDate() ? '<strong class="trade-deadline-day-label">Trade deadline</strong>' : ""}
     <div class="calendar-game-stack">
       ${dayGames.map((game) => calendarGamePill(game, team, past)).join("")}
     </div>
@@ -7105,9 +10876,25 @@ function wireDashboardTeamJumps(root = els.content) {
 
 function wireDashboardPlayerCards(root = els.content) {
   root.querySelectorAll("[data-dashboard-player-card]").forEach((button) => {
+    if (button.dataset.playerCardWired) return;
+    button.dataset.playerCardWired = "true";
     button.addEventListener("click", () => {
       dashboardPlayerCard(button.dataset.dashboardPlayerCard || "");
     });
+  });
+}
+
+function wireDashboardProspectCards(root = els.content) {
+  root.querySelectorAll("[data-draft-prospect-card]").forEach((button) => {
+    if (button.dataset.prospectCardWired) return;
+    button.dataset.prospectCardWired = "true";
+    button.addEventListener("click", () => draftProspectCard(button.dataset.draftProspectCard));
+  });
+}
+
+function wireDashboardStaffCards(root = els.content) {
+  root.querySelectorAll("[data-dashboard-staff-card]").forEach((button) => {
+    button.addEventListener("click", () => dashboardCoachCard(button.dataset.dashboardStaffCard || ""));
   });
 }
 
@@ -7175,7 +10962,7 @@ function wireLeaguePanelControls(root = els.content) {
   root.querySelectorAll("[data-league-panel-view-all]").forEach((button) => {
     button.addEventListener("click", async () => {
       if (state.dashboardLeaguePanel === "leaders") await openLeagueLeadersModal();
-      else openLeagueEventsModal();
+      else openLeagueActivityCard();
     });
   });
 }
@@ -7193,8 +10980,54 @@ function wireRotationMinuteInputs(root = els.content) {
       autofillRotationDraft(rosterRows(state.data.dashboard || {}));
       syncRotationInputs(root);
     });
-    input.addEventListener("change", () => saveRotationMinutes({ quiet: true }));
+    input.addEventListener("change", async () => {
+      try {
+        await saveRotationMinutes({ quiet: true });
+        normalizeMinutesDomOrder(input.closest(".season-minutes-table"));
+      } catch (error) {
+        state.rotationDraft = {};
+        state.rotationLockedPlayerIds.clear();
+        if (state.view === "dashboard") renderDashboard();
+        showToast(`Minutes were not saved. ${error.message || String(error)}`, true);
+      }
+    });
   });
+  root.querySelectorAll("[data-minute-reset-player]").forEach((button) => {
+    button.addEventListener("click", () => resetRotationMinutes(button.dataset.minuteResetPlayer));
+  });
+}
+
+function wireRotationResetAllControl(root = document) {
+  const button = root.querySelector('[data-board-window="minutes"] [data-minute-reset-all]');
+  if (!button || button.dataset.rotationResetWired) return;
+  button.dataset.rotationResetWired = "true";
+  button.disabled = state.hydrating || teamLabel(state.data.dashboard?.team || state.dashboardTeam || userTeam()) !== userTeam();
+  button.addEventListener("click", () => resetRotationMinutes());
+}
+
+async function resetRotationMinutes(playerId = "") {
+  if (state.simulationRunning || state.hydrating || state.busy) return;
+  const rows = rosterRows(state.data.dashboard || {});
+  if (!rows.length) return;
+  ensureRotationDraft(rows);
+  if (playerId) {
+    const row = rows.find((item) => String(item.id) === String(playerId));
+    if (!row || isPlayerInjured(row.health) || !state.rotationLockedPlayerIds.has(String(playerId))) return;
+    state.rotationLockedPlayerIds.delete(String(playerId));
+  } else {
+    state.rotationLockedPlayerIds.clear();
+  }
+  autofillRotationDraft(rows);
+  const table = document.querySelector('[data-board-window="minutes"] .season-minutes-table');
+  syncRotationInputs(table || els.content);
+  try {
+    await saveRotationMinutes({quiet:true});
+  } catch (error) {
+    state.rotationDraft = {};
+    state.rotationLockedPlayerIds.clear();
+    if (state.view === "dashboard") renderDashboard();
+    showToast(`Minutes were not reset. ${error.message || String(error)}`, true);
+  }
 }
 
 function wireDashboardStaffControls(editable) {
@@ -7225,6 +11058,7 @@ function wireDashboardStaffControls(editable) {
 
 function wireDashboardOverview(editable) {
   wireSeasonEfficiencyChart();
+  wirePlayerGameScoreCharts();
   els.content.querySelectorAll("[data-season-prospect-sort]").forEach((button) => button.addEventListener("click", () => {
     const key = button.dataset.seasonProspectSort;
     const prior = state.dashboardProspectSort;
@@ -7257,9 +11091,6 @@ function wireDashboardOverview(editable) {
     button.addEventListener("click", async () => {
       await switchDashboardTeam(userTeam());
     });
-  });
-  els.content.querySelectorAll("[data-team-development]").forEach((button) => {
-    button.addEventListener("click", openTeamDevelopmentModal);
   });
   wireDashboardTeamJumps();
   els.content.querySelectorAll("[data-front-office-toggle]").forEach((button) => {
@@ -7308,6 +11139,8 @@ function wireDashboardOverview(editable) {
   });
   wireDashboardStandingsControls();
   wireDashboardPlayerCards();
+  wireDashboardProspectCards();
+  wireDashboardStaffCards();
   wireSummaryContractToggle();
   wireLeaguePanelControls();
   wireFreeAgentModeToggles();
@@ -7315,6 +11148,7 @@ function wireDashboardOverview(editable) {
   wireDashboardStaffControls(editable);
   els.content.querySelectorAll("[data-dashboard-view]").forEach((button) => {
     button.addEventListener("click", async () => {
+      if (["staff", "calendar", "draft", "playoffs", "freeagents", "freeagency"].includes(button.dataset.dashboardView)) return openClipboardWindow(button.dataset.dashboardView);
       state.view = button.dataset.dashboardView || "dashboard";
       syncNavActive();
       await ensureViewData(true);
@@ -7557,22 +11391,32 @@ async function saveStartingFive(slots, options = {}) {
 async function saveRotationMinutes(options = {}) {
   const minutes = { ...state.rotationDraft };
   const lockedPlayerIds = [...state.rotationLockedPlayerIds];
+  const previousSignals = state.view === "dashboard" ? captureTeamSignalBars() : null;
   const result = await action("set_rotation_minutes", {
     ...savePayload(),
     team: userTeam(),
     minutes,
     locked_player_ids: lockedPlayerIds,
   });
-  if (result.status === "blocked") return showToast(result.reason || "Rotation update blocked.", true);
+  if (result.status === "blocked") {
+    if (options.quiet) throw new Error(result.reason || "Rotation update blocked.");
+    return showToast(result.reason || "Rotation update blocked.", true);
+  }
   state.data.dashboard = result.dashboard;
   state.data.statusDashboard = result.dashboard;
+  if (JSON.stringify(state.rotationDraft) === JSON.stringify(minutes)) {
+    state.rotationDraft = {};
+    state.rotationLockedPlayerIds.clear();
+  }
   if (options.quiet) {
-    if (state.view === "dashboard") renderDashboard();
+    if (state.view === "dashboard") {
+      renderDashboard();
+      animateTeamSignalsFrom(previousSignals);
+    }
     return;
   }
-  state.rotationDraft = {};
-  state.rotationLockedPlayerIds.clear();
   renderDashboard();
+  animateTeamSignalsFrom(previousSignals);
   showToast("Rotation saved");
 }
 
@@ -7580,6 +11424,8 @@ function seriesCard(series) {
   const teams = series.teams || [];
   const scores = series.score || [];
   const winner = teamLabel(series.winner);
+  const winnerId = series.winner_team_id || series.winner?.id;
+  const completed = series.status === "completed";
   const status = rowLabel(series.status || "");
   const gameCount = (series.game_ids || []).length;
   const tag = gameCount ? "button" : "div";
@@ -7589,53 +11435,170 @@ function seriesCard(series) {
   const title = gameCount
     ? `Open latest box score · ${gameCount} game${gameCount === 1 ? "" : "s"} played`
     : `${rowLabel(series.round || "Series")} · ${status}`;
-  const firstTeam = teamLabel(teams[0]);
-  const secondTeam = teamLabel(teams[1]);
+  const teamRow = (team, score) => {
+    const label = teamLabel(team);
+    const id = team?.id || team?.team_id || (typeof team === "string" && team.startsWith("team_") ? team : "");
+    const isWinner = winnerId ? id === winnerId : Boolean(winner && winner === label);
+    const isLoser = completed && winnerId && id && id !== winnerId;
+    const outcome = isWinner ? "series-team-winner" : isLoser ? "series-team-loser" : "";
+    return `<div class="series-team ${outcome}"${id ? ` data-team-id="${escapeAttr(id)}"` : ""}>${teamLogoSrc(label) ? `<img src="${escapeAttr(teamLogoSrc(label))}" alt="" />` : ""}<strong>${escapeHtml(label || "TBD")}</strong><span>${score ?? 0}</span></div>`;
+  };
+  const firstTeam = teams[0];
+  const secondTeam = teams[1] || (series.pending_seed ? `Play-in #${series.pending_seed}` : "");
   return `
     <${tag} class="series-card ${gameCount ? "series-card-button" : "series-card-empty"}" ${interaction} title="${escapeAttr(title)}">
-      <div class="series-team ${winner && winner === firstTeam ? "series-team-winner" : ""}">${teamLogoSrc(firstTeam) ? `<img src="${escapeAttr(teamLogoSrc(firstTeam))}" alt="" />` : ""}<strong>${escapeHtml(firstTeam || "TBD")}</strong><span>${scores[0] ?? 0}</span></div>
-      <div class="series-team ${winner && winner === secondTeam ? "series-team-winner" : ""}">${teamLogoSrc(secondTeam) ? `<img src="${escapeAttr(teamLogoSrc(secondTeam))}" alt="" />` : ""}<strong>${escapeHtml(secondTeam || "TBD")}</strong><span>${scores[1] ?? 0}</span></div>
+      ${teamRow(firstTeam, scores[0])}
+      ${teamRow(secondTeam, scores[1])}
     </${tag}>`;
 }
 
-function playoffBracket(series, champion) {
-  const finals = series.filter((item) => item.round === "finals");
+function playoffBracket(series, champion, playIn = {}) {
+  const west = bracketConferenceRounds("West", series);
+  const east = bracketConferenceRounds("East", series);
+  const final = bracketSeriesFromFeeders(series.find(item => item.round === "finals"), [west[2][0], east[2][0]], "finals-preview", "finals");
   return `
     <div class="tournament-bracket">
-      ${bracketConference("East", series)}
+      ${bracketConference("West", series, playIn.West, west)}
       <div class="bracket-finals">
         <div class="bracket-conference-title">Finals</div>
-        ${finals.length ? finals.map((item) => `<div class="bracket-node final-node">${seriesCard(item)}</div>`).join("") : `<div class="bracket-node empty-final">TBD</div>`}
+      <div class="bracket-node final-node" data-bracket-series="finals">${seriesCard(final)}</div>
         ${champion ? `<div class="bracket-champion">Champion: ${escapeHtml(teamLabel(champion))}</div>` : ""}
       </div>
-      ${bracketConference("West", series)}
+      ${bracketConference("East", series, playIn.East, east)}
     </div>`;
 }
 
-function bracketConference(conference, series) {
+function bracketSeriesFromFeeders(actual, feeders, id, round) {
+  const sourceIds = feeders.map(s => s.id);
+  const winners = feeders.map(s => s.winner || s.teams?.find(t => t?.id === s.winner_team_id));
+  if (!actual) return {id, round, teams:winners, score:[0, 0], source_series_ids:sourceIds};
+  const indices = winners.map(winner => winner ? (actual.teams || []).findIndex(team => team?.id === winner.id) : -1);
+  if (indices.every(i => i >= 0) && new Set(indices).size === 2) {
+    return {...actual, source_series_ids:sourceIds, teams:indices.map(i => actual.teams[i]), score:indices.map(i => actual.score?.[i] ?? 0)};
+  }
+  return {...actual, source_series_ids:sourceIds};
+}
+
+function bracketConferenceRounds(conference, series) {
+  let first = series.filter(s => s.conference === conference && s.round === "first_round");
+  const originalOrder = new Map(first.map((s, i) => [s.id, s.bracket_slot ?? i]));
+  first.sort((a, b) => originalOrder.get(a.id) - originalOrder.get(b.id));
+  const actualSemis = series.filter(s => s.conference === conference && s.round === "conference_semifinals");
+  const feeders = parent => {
+    const explicit = parent.source_series_ids || [];
+    return first.filter(child => explicit.length ? explicit.includes(child.id) :
+      (parent.team_ids || (parent.teams || []).map(t => t?.id)).some(id => id &&
+        (id === child.winner_team_id || id === child.winner?.id || (child.team_ids || (child.teams || []).map(t => t?.id)).includes(id))));
+  };
+  // Old careers may contain alphabetically paired semifinals. Display their
+  // actual branches together without altering matchups or played results.
+  actualSemis.sort((a, b) => Math.min(...feeders(a).map(s => originalOrder.get(s.id))) - Math.min(...feeders(b).map(s => originalOrder.get(s.id))));
+  const grouped = actualSemis.flatMap(feeders);
+  first = [...new Map([...grouped, ...first].map(s => [s.id, s])).values()];
+  const semis = [0, 1].map(i => {
+    const children = first.slice(i * 2, i * 2 + 2);
+    return bracketSeriesFromFeeders(actualSemis[i], children, `${conference}:semi:${i}`, "conference_semifinals");
+  });
+  const final = bracketSeriesFromFeeders(series.find(s => s.conference === conference && s.round === "conference_finals"), semis, `${conference}:final`, "conference_finals");
+  return [first, semis, [final]];
+}
+
+function bracketConference(conference, series, playIn, rounds = bracketConferenceRounds(conference, series)) {
   const roundOrder = ["first_round", "conference_semifinals", "conference_finals"];
   return `
     <div class="bracket-conference ${conference.toLowerCase()}">
       <div class="bracket-conference-title">${escapeHtml(conference)}</div>
       <div class="bracket-rounds">
-        ${roundOrder.map((round) => bracketRound(round, series.filter((item) => item.conference === conference && item.round === round))).join("")}
+        ${playIn ? bracketPlayIn(conference, playIn, rounds[0]) : `<div class="bracket-round"><div class="bracket-round-title">Play-In</div><div class="bracket-placeholder">Not recorded</div></div>`}
+        ${roundOrder.map((round, i) => bracketRound(round, rounds[i], rounds[i + 1], conference)).join("")}
       </div>
     </div>`;
 }
 
-function bracketRound(round, roundSeries) {
+function playoffGameOutcome(game) {
+  if (!game || game.home_score == null || game.away_score == null) return null;
+  const homeScore = Number(game.home_score), awayScore = Number(game.away_score);
+  if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore) || homeScore === awayScore) return null;
+  const homeId = game.home_team_id || game.home_team?.id;
+  const awayId = game.away_team_id || game.away_team?.id;
+  const homeTeam = game.home_team || homeId;
+  const awayTeam = game.away_team || awayId;
+  return homeScore > awayScore
+    ? {winnerId:homeId,loserId:awayId,winner:homeTeam,loser:awayTeam}
+    : {winnerId:awayId,loserId:homeId,winner:awayTeam,loser:homeTeam};
+}
+
+function bracketPlayIn(conference, playIn, firstRound = []) {
+  const teams = playIn.teams || {};
+  const games = playIn.games || [];
+  const toward = conference === "West" ? "→" : "←";
+  const teamRow = (team, score, outcome = "") => {
+    const label = teamLabel(team);
+    const logo = teamLogoSrc(label);
+    const id = team?.id || team?.team_id || (typeof team === "string" && team.startsWith("team_") ? team : "");
+    return `<div class="series-team ${outcome}"${id ? ` data-team-id="${escapeAttr(id)}"` : ""}>${logo ? `<img src="${escapeAttr(logo)}" alt="" />` : ""}<strong>${escapeHtml(label || "TBD")}</strong><span>${score}</span></div>`;
+  };
+  const match = (index, label, away, home) => {
+    const game = games[index];
+    if (!game) return `<div class="bracket-node" data-play-in-stage="${index}" style="grid-row:${index === 2 ? '1 / 3' : index === 1 ? '4 / 6' : '7 / 9'}"><div class="bracket-round-title">${label}</div><div class="series-card series-card-empty">${teamRow(away, "—")}${teamRow(home, "—")}</div></div>`;
+    const outcome = playoffGameOutcome(game);
+    const rowOutcome = team => {
+      const id = team?.id || team?.team_id;
+      if (!outcome || !id) return "";
+      if (id === outcome.winnerId) return "series-team-winner";
+      return index === 0 ? "series-team-advancing" : "series-team-loser";
+    };
+    return `<div class="bracket-node" data-play-in-stage="${index}" style="grid-row:${index === 2 ? '1 / 3' : index === 1 ? '4 / 6' : '7 / 9'}"><div class="bracket-round-title">${label}</div><button type="button" class="series-card series-card-button" data-game-box="${escapeAttr(game.game_id)}">${teamRow(game.away_team, game.away_score ?? 0, rowOutcome(game.away_team))}${teamRow(game.home_team, game.home_score ?? 0, rowOutcome(game.home_team))}</button></div>`;
+  };
+  const finalNineTen = playoffGameOutcome(games[1])?.winner || "9/10 winner";
+  const finalSevenEight = playoffGameOutcome(games[0])?.loser || "7/8 loser";
+  const qualifiers = [[8, playIn.seed_8_team_id || teams["8"]?.id, 50], [7, playIn.seed_7_team_id || teams["7"]?.id, 350]];
+  const conferenceKey = conference.toLowerCase();
+  const flowMarker = `bracket-play-in-flow-${conferenceKey}`;
+  const qualifierMarker = `bracket-play-in-qualifier-${conferenceKey}`;
+  const paths = qualifiers.map(([seed, teamId, y]) => {
+    const slot = firstRound.findIndex(s => String(s.pending_seed) === String(seed) || teamId && (s.team_ids || (s.teams || []).map(t => t?.id)).includes(teamId));
+    return slot < 0 ? "" : `<path data-qualifier-seed="${seed}" data-to-series="${escapeAttr(firstRound[slot].id)}" marker-end="url(#${qualifierMarker})" d="M0 ${y} H9 V${50 + slot * 100} H18"/>`;
+  }).join("");
+  return `<div class="bracket-round bracket-play-in">
+    <div class="bracket-round-title"${playIn.status === "not_recorded" ? ' title="This career has no recorded play-in results."' : ""}>Play-In${playIn.status === "not_recorded" ? " · Unrecorded" : ""}</div>
+    <div class="bracket-node-stack">
+      ${match(2, `Final · Winner ${toward} #8`, finalNineTen, finalSevenEight)}
+      ${match(1, "9 vs 10 · Winner ↑", teamLabel(teams["10"]), teamLabel(teams["9"]))}
+      ${match(0, `7 vs 8 · Winner ${toward} #7`, teamLabel(teams["8"]), teamLabel(teams["7"]))}
+      <svg class="play-in-feeder-links" viewBox="0 0 30 400" preserveAspectRatio="none" aria-hidden="true"><defs>${bracketArrowMarker(flowMarker)}</defs><path data-playin-flow="9-10-winner" marker-end="url(#${flowMarker})" d="M30 200 H18 V34 H30"/><path data-playin-flow="7-8-loser" marker-end="url(#${flowMarker})" d="M30 350 H6 V62 H30"/></svg>
+      <span class="play-in-feeder-label winner">Winner</span>
+      <span class="play-in-feeder-label loser">Loser</span>
+      <svg class="bracket-round-links" viewBox="0 0 18 400" preserveAspectRatio="none" aria-hidden="true"><defs>${bracketArrowMarker(qualifierMarker)}</defs>${paths}</svg>
+    </div>
+  </div>`;
+}
+
+function bracketArrowMarker(id) {
+  return `<marker id="${escapeAttr(id)}" viewBox="0 0 5 5" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L5 2.5 L0 5 Z" fill="var(--season-line)" stroke="none"/></marker>`;
+}
+
+function bracketRound(round, roundSeries, nextSeries, conference = "") {
   const label = {
     first_round: "First Round",
     conference_semifinals: "Semifinals",
     conference_finals: "Conference Final",
   }[round] || rowLabel(round);
+  const markerId = `bracket-link-${conference.toLowerCase()}-${round}`;
   return `
     <div class="bracket-round bracket-${escapeAttr(round)}">
       <div class="bracket-round-title">${escapeHtml(label)}</div>
       <div class="bracket-node-stack">
         ${roundSeries.length
-          ? roundSeries.map((item) => `<div class="bracket-node">${seriesCard(item)}</div>`).join("")
+          ? roundSeries.map((item, i) => `<div class="bracket-node" data-bracket-series="${escapeAttr(item.id || '')}" style="grid-row:${round === 'first_round' ? `${1 + i * 2} / ${3 + i * 2}` : round === 'conference_semifinals' ? `${2 + i * 4} / ${4 + i * 4}` : '4 / 6'}">${seriesCard(item)}</div>`).join("")
           : `<div class="bracket-node bracket-placeholder">TBD</div>`}
+        ${nextSeries ? `<svg class="bracket-round-links" viewBox="0 0 18 400" preserveAspectRatio="none" aria-hidden="true"><defs>${bracketArrowMarker(markerId)}</defs>${roundSeries.map((item, i) => {
+          const target = nextSeries.findIndex(s => s.source_series_ids?.includes(item.id));
+          if (target < 0) return "";
+          const startY = round === 'first_round' ? 50 + i * 100 : 100 + i * 200;
+          const endY = round === 'first_round' ? 100 + target * 200 : 200;
+          return `<path data-from-series="${escapeAttr(item.id)}" data-to-series="${escapeAttr(nextSeries[target].id)}" marker-end="url(#${markerId})" d="M0 ${startY} H9 V${endY} H18"/>`;
+        }).join('')}</svg>` : round === "conference_finals" ? `<svg class="bracket-round-links" viewBox="0 0 18 400" preserveAspectRatio="none" aria-hidden="true"><defs>${bracketArrowMarker(markerId)}</defs><path data-from-series="${escapeAttr(roundSeries[0]?.id || "")}" data-to-series="finals" marker-end="url(#${markerId})" d="M0 200 H18"/></svg>` : ""}
       </div>
     </div>`;
 }
@@ -7774,6 +11737,7 @@ function monthCalendarCells(month) {
 }
 
 function wireTradeAssetControls(root) {
+  wireTradePickTerms(root);
   root.querySelectorAll("[data-asset-side]").forEach((button) => {
     button.addEventListener("click", () => toggleAsset(button.dataset.assetSide, button.dataset.assetKind, button.dataset.assetId));
   });
@@ -7786,6 +11750,13 @@ function wireTradeAssetControls(root) {
       renderTradeRoom();
     });
   });
+  root.querySelectorAll("[data-trade-destination]").forEach(select => select.addEventListener("change", () => {
+    state.tradeAssetRoutes ||= {};
+    state.tradeAssetRoutes[select.dataset.tradeDestination] = select.value;
+    state.tradeCandidate = null;
+    state.tradeIdentityPreview = null;
+    renderTradeRoom();
+  }));
 }
 
 function tradeCapStrip(cap) {
@@ -7807,20 +11778,19 @@ function selectedTradeValue(items) {
   return items.reduce((sum, item) => sum + Number(item.trade_value || 0), 0);
 }
 
-function selectedPackage(title, items, side, team) {
+function selectedPackage(title, items, side, team, teamPayload = null) {
   const total = selectedTradeValue(items);
   return `
-    <section class="trade-selected-package" ${teamBrandStyle(team)}>
-      <header>
+    <section class="trade-selected-package ${teamPayload ? "trade-builder-package" : ""}" ${teamBrandStyle(team)}>
+      ${teamPayload ? `<header class="trade-package-builder-header">
+        ${tradeTeamHeading(team, teamPayload)}
+        <div class="trade-package-total"><span>${escapeHtml(title)}</span><strong>${total.toFixed(1)}</strong></div>
+      </header>` : `<header>
         <div>${teamLogoSrc(team) ? `<img src="${escapeAttr(teamLogoSrc(team))}" alt="" />` : ""}<span>${escapeHtml(title)}</span></div>
         <strong>${total.toFixed(1)}</strong>
-      </header>
-      <div class="trade-selected-list">
-        ${items.length ? items.map((item) => `
-          <div class="trade-selected-row">
-            ${item.kind==='player'?'':draftAssetGlyph(item,true,true)}<span><b>${escapeHtml(item.label || item.id)}</b><small>${escapeHtml(item.kind === "player" ? item.position || "Player" : item.kind === "pick_swap" ? "Pick swap" : "Draft pick")}</small></span>${item.kind === "player" ? `<em class="trade-selected-overall"><small>OVR</small>${draftMetric(item.ratings?.overall ?? item.overall)}</em>` : ""}
-            <button data-remove-side="${escapeAttr(side)}" data-asset-id="${escapeAttr(item.id)}" aria-label="Remove ${escapeAttr(item.label || item.id)}">×</button>
-          </div>`).join("") : `<div class="trade-package-empty"><span>+</span><p>Select assets from the roster board</p></div>`}
+      </header>`}
+      <div class="trade-selected-list" data-trade-scroll="selected-${escapeAttr(side)}" tabindex="0" aria-label="${escapeAttr(title)}">
+        ${items.length ? tradeAssetTable(items, {removeSide:side, label:title, routeFrom:(state.tradeAdditionalTeams || []).length ? team : null}) : `<div class="trade-package-empty"><p>No assets selected</p></div>`}
       </div>
     </section>`;
 }
@@ -7839,15 +11809,16 @@ function tradePackageBalance(outgoing, incoming, outgoingTeam, incomingTeam) {
 }
 
 function toggleAsset(side, kind, id) {
-  const source = side === "from" ? state.data.tradeUser : state.data.tradePartner;
+  const source = tradeSidePayload(side);
   const asset = (source.assets || []).find((item) => item.id === id && item.kind === kind);
   if (!asset) return;
   const list = selectedList(side);
   const existing = list.findIndex((item) => item.id === id);
   if (existing >= 0) list.splice(existing, 1);
   else {
-    if (state.tradeTab === "finder" && side === "from" && list.length >= 2) return showToast("Trade Finder can shop up to two assets at once.", true);
+    if (state.tradeTab === "finder" && list.length >= 2) return showToast("Trade Finder can search up to two assets at once.", true);
     list.push({
+      ...asset,
       kind: asset.kind,
       id: asset.id,
       value: asset.value || asset.id,
@@ -7868,11 +11839,19 @@ function toggleAsset(side, kind, id) {
     });
   }
   state.tradeCandidate = null;
-  if (state.tradeTab === "finder") state.tradeResults = [];
+  pruneTradePickRules();
+  if (state.tradeTab === "finder") {
+    state.tradeResults = [];
+    state.tradeSearchCompleted = false;
+  }
   renderTradeRoom();
 }
 
 function selectedList(side) {
+  if (String(side).startsWith("extra:")) {
+    state.tradeExtraSelections ||= {};
+    return state.tradeExtraSelections[String(side).slice(6)] ||= [];
+  }
   return side === "from" ? state.selectedFrom : state.selectedTo;
 }
 
@@ -7880,7 +11859,12 @@ function removeAsset(side, id) {
   const list = selectedList(side);
   const idx = list.findIndex((item) => item.id === id);
   if (idx >= 0) list.splice(idx, 1);
+  pruneTradePickRules();
   state.tradeCandidate = null;
+  if (state.tradeTab === "finder") {
+    state.tradeResults = [];
+    state.tradeSearchCompleted = false;
+  }
   renderTradeRoom();
 }
 
@@ -7889,51 +11873,238 @@ function assetSpec(asset) {
 }
 
 function tradeReadout(candidate) {
-  if (!candidate) return `<div class="trade-evaluation-empty"><span>GM</span><strong>Awaiting evaluation</strong><p>Package legality and each team's decision model will appear here.</p></div>`;
+  if (!candidate) return `<div class="trade-evaluation-empty"><strong>Not evaluated</strong><span>Salary matching · Roster limits · Team decisions</span></div>`;
   const legal = candidate.legality?.status || "unknown";
-  const canApply = legal === "legal" && (candidate.accepted_by_all || (candidate.evaluations || []).some((row) => row.perspective_team_id !== state.home?.save?.user_team?.id && row.accepted));
+  const userId = state.home?.save?.user_team?.id;
+  const partners = (candidate.evaluations || []).filter(row => row.perspective_team_id !== userId && teamLabel(row.perspective_team_id) !== userTeam());
+  const canApply = legal === "legal" && partners.length > 0 && partners.every(row => row.accepted);
   return `
-    <div class="trade-evaluation-board">
-      <div class="trade-evaluation-title"><span>Engine decision</span><strong>${escapeHtml(tradeHeadline(candidate).replace(/^Trade completed:\s*/i, ""))}</strong><b class="${legal === "legal" ? "legal" : "illegal"}">${escapeHtml(legal)}</b></div>
-      <div class="trade-evaluation-grid">${(candidate.evaluations || []).map(tradeEvaluationPanel).join("")}</div>
-      ${(candidate.legality?.issues || []).length ? `<div class="trade-legality-issues">${candidate.legality.issues.map((issue) => `<span>${escapeHtml(textValue(issue))}</span>`).join("")}</div>` : ""}
-      <button id="applyBuiltTrade" class="trade-execute-button" ${canApply ? "" : "disabled"}>${canApply ? "Accept And Execute" : "Partner Rejects"}</button>
+    <div class="trade-evaluation-board" aria-live="polite">
+      <div class="trade-evaluation-title">${tradeLegalityBadge(candidate)}<strong>${canApply ? "All partners accept" : legal === "legal" ? "Partner declines" : "Trade cannot proceed"}</strong></div>
+      ${tradeLegalityIssues(candidate)}
+      <button id="applyBuiltTrade" class="trade-execute-button ui-command" ${canApply ? "" : "disabled"}>${canApply ? "Accept Trade" : legal !== "legal" ? "Trade unavailable" : "Partner declines"}</button>
     </div>`;
 }
 
 function tradeResultCards(results) {
-  if (!results.length) return `<div class="trade-results-empty"><span>↗</span><strong>No market scan yet</strong><p>Select an asset and ask the league. Returned offers are already approved by the AI counterparty.</p></div>`;
+  if (!results.length) return state.tradeSearchCompleted
+    ? `<div class="trade-results-empty"><strong>No matching offers</strong><p>No legal, approved trades matched this package and team. Try another team or adjust the selected assets.</p></div>`
+    : `<div class="trade-results-empty"><strong>Select assets to find trades</strong><p>Choose up to two players or draft assets, then search. You can review each returned offer in the builder.</p></div>`;
   return results.map((result, index) => tradeCandidateCard(result, index, "finder")).join("");
 }
 
+function playerSummaryRatings(player) {
+  const ratings = player.ratings || {};
+  const offenseParts = [ratings.shooting, ratings.creation, ratings.passing].filter(value => value != null && Number.isFinite(Number(value))).map(Number);
+  const values = [
+    ["OVR", player.overall ?? ratings.overall],
+    ["OFF", player.offense ?? ratings.offense ?? (offenseParts.length ? offenseParts.reduce((sum,value) => sum + value, 0) / offenseParts.length : null)],
+    ["DEF", player.defense ?? ratings.defense],
+  ];
+  return `<span class="player-summary-ratings">${values.map(([label,value]) => `<span class="player-summary-rating"><small>${label}</small><span class="linked-rating assets-rating-bar"><span>${value == null ? "—" : draftMetric(value)}</span><i>${value == null ? "" : `<b style="${performanceBarStyle(Number(value))}"></b>`}</i></span></span>`).join("")}</span>`;
+}
+
+function tradeAssetContract(asset) {
+  const salaries = Object.entries(asset.salary_by_year || {}).filter(([, value]) => Number(value) > 0).sort(([a], [b]) => a.localeCompare(b));
+  if (!salaries.length && !asset.contract_terms?.length) return escapeHtml(asset.contract || "—");
+  const schedule = salaries.map(([season, amount]) => `${shortSeasonLabel(season)} ${money(amount)}`).join(" · ");
+  const terms = asset.contract_terms?.length ? asset.contract_terms : [{salary:Number(salaries[0][1])*1_000_000, years:salaries.length}];
+  const label = terms.map(term => `${money(Number(term.salary)/1_000_000)} x ${term.years}`).join(", ");
+  return `<span title="${escapeAttr(schedule)}">${escapeHtml(label)}</span>`;
+}
+
+function tradeKnownNumber(value) {
+  return value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value)) ? Number(value) : null;
+}
+
+function tradeInsightPager(labels, page, key) {
+  return `<nav class="trade-insight-pager" aria-label="Trade detail pages"><strong>${escapeHtml(labels[page])}</strong><span>${page + 1} / ${labels.length}</span><button type="button" class="ui-command trade-icon-button" data-trade-insight-step="-1" data-trade-insight-key="${escapeAttr(key)}" data-trade-insight-count="${labels.length}" aria-label="Previous trade detail page" title="Previous page" ${page === 0 ? "disabled" : ""}>&larr;</button><button type="button" class="ui-command trade-icon-button" data-trade-insight-step="1" data-trade-insight-key="${escapeAttr(key)}" data-trade-insight-count="${labels.length}" aria-label="Next trade detail page" title="Next page" ${page === labels.length - 1 ? "disabled" : ""}>&rarr;</button></nav>`;
+}
+
+function wireTradeInsightPagers(root) {
+  root.querySelectorAll("[data-trade-insight-step]").forEach(button => button.addEventListener("click", () => {
+    const key = button.dataset.tradeInsightKey;
+    const current = key === "builder" ? state.tradeInsightPage || 0 : state.tradeOfferPages?.[key] || 0;
+    const page = Math.max(0, Math.min(Number(button.dataset.tradeInsightCount) - 1, current + Number(button.dataset.tradeInsightStep)));
+    if (key === "builder") state.tradeInsightPage = page;
+    else { state.tradeOfferPages ||= {}; state.tradeOfferPages[key] = page; }
+    if (state.modal?.kind === "tradeOffers") {
+      state.modal.body = tradeOffersModalBody(state.modal.offers || []);
+      renderModal();
+    } else if (state.modal?.kind === "tradeRoom") renderTradeRoom();
+    else renderOffers();
+    const selector = `[data-trade-insight-key="${CSS.escape(key)}"][data-trade-insight-step="${button.dataset.tradeInsightStep}"]`;
+    const target = els.modalRoot?.querySelector(selector) || els.content?.querySelector(selector);
+    (target?.disabled ? target.parentElement.querySelector("button:not(:disabled)") : target)?.focus({preventScroll:true});
+  }));
+}
+
+function tradeResponseEffect(result) {
+  const toast = typeof document !== "undefined" ? document.getElementById("toast") : null;
+  if (!toast) return;
+  toast.classList.remove("trade-response-accepted", "trade-response-declined");
+  void toast.offsetWidth;
+  toast.classList.add(`trade-response-${result}`);
+}
+
+function tradeIdentityContext() {
+  const participants = tradeWorkspaceParticipants();
+  const wanted = state.tradeIdentityTeam === "partner" ? "to" : state.tradeIdentityTeam === "user" ? "from" : state.tradeIdentityTeam || "from";
+  const participant = participants.find(row => row.side === wanted) || participants[0];
+  const players = participant.payload.players || [];
+  const outgoing = participant.selected;
+  const incoming = tradeReceivedAssets(participant.team,participants);
+  const team = participant.team;
+  const after = window.TradeProjection.afterRoster(players, outgoing, incoming);
+  const key = JSON.stringify([state.currentSave, state.home?.save?.current_date, team, players.map(row => [row.id,row.mpg,row.ratings,row.health]), outgoing.map(row => [row.kind,row.id]), incoming.map(row => [row.kind,row.id,row.mpg,row.ratings,row.health])]);
+  return {key,team,side:participant.side,players,after,changed:outgoing.some(row => row.kind === "player") || incoming.some(row => row.kind === "player")};
+}
+
+function tradeIdentityPage() {
+  const context = tradeIdentityContext();
+  const preview = state.tradeIdentityPreview;
+  const toolbar = `<div class="trade-identity-toolbar"><div>${tradeWorkspaceParticipants().map(({side,team}) => `<button type="button" class="ui-command" data-trade-identity-team="${escapeAttr(side)}" aria-pressed="${context.side === side}">${escapeHtml(team)}</button>`).join("")}</div><span>Rotation-weighted projection · 240 minutes</span></div>`;
+  if (preview?.key !== context.key || preview.status === "loading") return `${toolbar}<div class="trade-identity-empty" role="status">Loading player spatial profiles${preview?.loaded != null ? ` · ${preview.loaded}/${preview.total}` : ""}</div>`;
+  if (preview.error) return `${toolbar}<div class="trade-identity-empty" role="status">${escapeHtml(preview.error)} <button type="button" class="ui-command" data-trade-identity-retry>Retry</button></div>`;
+  const before = window.TradeProjection.rotation(context.players);
+  const after = context.changed ? window.TradeProjection.rotation(context.after, true) : before;
+  if (!before || !after) return `${toolbar}<div class="trade-identity-empty">At least five available players are required for a 240-minute projection.</div>`;
+  const a = window.TradeProjection.combine(before, preview.profiles, `trade-${context.team}-before`);
+  const b = window.TradeProjection.combine(after, preview.profiles, `trade-${context.team}-after`);
+  if (!a || !b) return `${toolbar}<div class="trade-identity-empty">Complete spatial reference data is unavailable for this rotation.</div>`;
+  const beforeById = new Map(before.map(row => [row.id,row.minutes]));
+  return `${toolbar}<div class="trade-identity-comparison"><section><h4>Before trade</h4>${spatialHeatmapMarkup(a,{compact:true})}</section><section><h4>After trade</h4>${spatialHeatmapMarkup(b,{compact:true})}</section></div><details class="trade-inferred-minutes"><summary>Inferred minutes</summary><table><thead><tr><th>Player</th><th>Before</th><th>After</th><th>Change</th></tr></thead><tbody>${[...new Map([...before,...after].map(row => [row.id,row])).values()].map(row => { const old = beforeById.get(row.id) || 0; const next = after.find(item => item.id === row.id)?.minutes || 0; return `<tr><th>${escapeHtml(row.name || row.label)}</th><td>${old}</td><td>${next}</td><td>${next-old > 0 ? "+" : ""}${next-old}</td></tr>`; }).join("")}</tbody></table></details><p class="trade-projection-note">Illustrative minutes, not a saved rotation. Current injuries excluded. Coaching, chemistry and lineup interactions are not re-simulated.</p>`;
+}
+
+async function loadTradeIdentity(force = false) {
+  const context = tradeIdentityContext();
+  if (!force && state.tradeIdentityPreview?.key === context.key && state.tradeIdentityPreview.status !== "cancelled") return;
+  const players = [...new Map([...context.players,...context.after].map(row => [row.id,row])).values()];
+  const preview = {key:context.key,status:"loading",profiles:{},loaded:0,total:players.length};
+  state.tradeIdentityPreview = preview;
+  const save = state.currentSave;
+  try {
+    for (let index=0; index<players.length; index+=2) {
+      if (state.tradeIdentityPreview !== preview || save !== state.currentSave || state.modal?.kind !== "tradeRoom" || state.tradeInsightPage !== 3) { preview.status = "cancelled"; return; }
+      const results = await Promise.all(players.slice(index,index+2).map(row => action("player_card", {...savePayload(),player_id:row.id})));
+      if (state.tradeIdentityPreview !== preview || save !== state.currentSave) return;
+      results.forEach((result,offset) => { preview.profiles[players[index+offset].id] = result.spatial_profile; preview.loaded++; });
+      const progress = els.modalRoot?.querySelector(".trade-identity-empty");
+      if (progress && state.tradeIdentityPreview === preview) progress.textContent = `Loading player spatial profiles · ${preview.loaded}/${preview.total}`;
+    }
+    preview.status = "ready";
+  } catch (error) { preview.status = "error"; preview.error = error.message || "Spatial preview could not be loaded."; }
+  if (state.tradeIdentityPreview === preview && state.modal?.kind === "tradeRoom" && state.tradeInsightPage === 3) renderTradeRoom();
+}
+
+function tradeAssetTable(assets, options = {}) {
+  const control = options.side || options.removeSide;
+  return `<table class="trade-ledger${options.routeFrom ? " is-routed" : ""}" aria-label="${escapeAttr(options.label || "Trade assets")}"><thead><tr>${control ? '<th class="trade-ledger-control"><span class="sr-only">Select or remove</span></th>' : ""}${options.routeFrom ? '<th class="trade-ledger-route">Destination</th>' : ""}<th class="trade-ledger-portrait" aria-label="Portrait"></th><th>Player / Asset</th><th>Age</th><th>Height</th><th>Pos</th><th>OVR</th><th>OFF</th><th>DEF</th><th title="Remaining upside on a 0-5 scouting scale">Upside</th><th title="Model injury-risk index, not a probability. Standard player scores range from 0 to 34.">Injury risk</th><th>Contract</th><th title="Owner-context asset value; final evaluation includes destination fit and role">Value</th></tr></thead><tbody>${assets.map(asset => tradeAssetRow(asset, options)).join("")}</tbody></table>`;
+}
+
+function tradeAssetRow(asset, {side, removeSide, routeFrom} = {}) {
+  const id = asset.id || asset.value || "";
+  const name = asset.name || asset.label || id || "Unknown";
+  const selected = side ? selectedList(side).some(item => item.id === id && item.kind === asset.kind) : false;
+  const control = side ? `<td><input type="checkbox" data-asset-side="${escapeAttr(side)}" data-asset-kind="${escapeAttr(asset.kind)}" data-asset-id="${escapeAttr(id)}" aria-label="${selected ? "Remove" : "Add"} ${escapeAttr(name)} ${selected ? "from" : "to"} package" ${selected ? "checked" : ""}></td>` : removeSide ? `<td><button type="button" class="trade-row-remove trade-icon-button" data-remove-side="${escapeAttr(removeSide)}" data-asset-id="${escapeAttr(id)}" aria-label="Remove ${escapeAttr(name)}" title="Remove ${escapeAttr(name)}"><img src="/assets/window-icons/x.svg" alt="" /></button></td>` : "";
+  const route = routeFrom ? `<td class="trade-ledger-route"><select data-trade-destination="${escapeAttr(tradeRouteKey(routeFrom,asset))}" aria-label="Destination for ${escapeAttr(name)}">${tradeWorkspaceParticipants().filter(row => row.team !== routeFrom).map(row => `<option value="${escapeAttr(row.team)}" ${tradeAssetDestination(routeFrom,asset) === row.team ? "selected" : ""}>${escapeHtml(row.team)}</option>`).join("")}</select></td>` : "";
+  if (asset.kind !== "player") {
+    const condition = String(asset.condition_summary || asset.protection_summary || "").trim();
+    const label = asset.label || asset.name || id || "Draft asset";
+    const extra = condition && !/^unprotected[.\s]*$/i.test(condition) && !label.toLowerCase().includes(condition.toLowerCase()) ? condition : "";
+    const rule=(side || removeSide) ? (state.tradePickRules || []).find(r=>r.pick_id===id && r.enabled!==false) : null;
+    const authored = rule ? rule.type==='pick_swap' ? `${rule.benefit==='worse'?'Less':'More'} favorable swap right` : `Picks ${rule.from}–${rule.through} protected` : '';
+    return `<tr class="trade-ledger-pick${selected ? " is-selected" : ""}">${control}${route}<td>${draftAssetGlyph(asset, true, true)}</td><td colspan="10"><strong>${escapeHtml(label)}</strong>${extra || authored ? `<span class="trade-pick-condition">${escapeHtml(authored || extra)}</span>` : ""}<small>${asset.kind === "pick_swap" || rule?.type==='pick_swap' ? "Swap right" : "Draft pick"}</small></td><td class="trade-ledger-value">${draftMetric(tradeKnownNumber(asset.trade_value))}</td></tr>`;
+  }
+  const ratings = asset.ratings || {};
+  const offense = [ratings.shooting, ratings.creation, ratings.passing].map(tradeKnownNumber).filter(value => value !== null);
+  const values = [asset.overall ?? ratings.overall, asset.offense ?? ratings.offense ?? (offense.length ? offense.reduce((a,b) => a+b,0) / offense.length : null), asset.defense ?? ratings.defense];
+  const injury = typeof isPlayerInjured === "function" && isPlayerInjured(asset.health);
+  const ratingCell = value => { const n = tradeKnownNumber(value); return `<td class="trade-ledger-rating">${draftMetric(n)}<i aria-hidden="true">${n === null ? "" : `<b style="width:${clampNumber(n,0,100)}%"></b>`}</i></td>`; };
+  const meter = (label, value, max) => { const n = tradeKnownNumber(value); return `<td class="trade-ledger-meter" title="${escapeAttr(label)}${n === null ? " unavailable" : ` ${n.toFixed(1)}${label === "Upside" ? `/${max}` : " model index"}`}"><span>${draftMetric(n)}${n === null || label !== "Upside" ? "" : `<small>/${max}</small>`}</span><i aria-hidden="true">${n === null ? "" : `<b style="width:${clampNumber(n/max*100,0,100)}%"></b>`}</i></td>`; };
+  const evidence = [asset.potential != null ? `Potential ${draftMetric(asset.potential)}` : "", asset.mpg != null ? `${draftMetric(asset.mpg)} MPG` : "", asset.ppg != null ? `${draftMetric(asset.ppg)} PPG` : ""].filter(Boolean).join(" · ");
+  const salaries = Object.entries(asset.salary_by_year || {}).filter(([,value]) => Number(value) > 0).sort(([a],[b]) => a.localeCompare(b));
+  return `<tr class="trade-ledger-player${selected ? " is-selected" : ""}${injury ? " is-injured" : ""}">${control}${route}<td>${playerHeadshotMarkup(asset, "trade-player-headshot") || '<span class="trade-portrait-empty" aria-hidden="true">&mdash;</span>'}</td><th scope="row"><button type="button" class="trade-player-link" data-dashboard-player-card="${escapeAttr(id)}" title="${escapeAttr(evidence || name)}">${playerNameWithInjuryMarkup(asset, name)}</button></th><td>${asset.age == null ? "—" : escapeHtml(asset.age)}</td><td>${escapeHtml(asset.height || "—")}</td><td>${escapeHtml(asset.position || "—")}</td>${values.map(ratingCell).join("")}${meter("Upside",asset.upside_remaining,5)}${meter("Injury risk",asset.health_risk,34)}<td class="trade-ledger-contract">${salaries.length ? `<details><summary>${tradeAssetContract(asset)}</summary><div>${salaries.map(([season, amount]) => `<span>${escapeHtml(shortSeasonLabel(season))} <b>${money(Number(amount))}</b></span>`).join("")}${asset.contract ? `<span>${escapeHtml(asset.contract)}</span>` : ""}</div></details>` : tradeAssetContract(asset)}</td><td class="trade-ledger-value">${draftMetric(tradeKnownNumber(asset.trade_value))}</td></tr>`;
+}
+
+function tradeLegalityBadge(candidate) {
+  const status = candidate?.legality?.status || "unknown";
+  const labels = {legal:"Legal", illegal:"Illegal", manual_review_required:"Review required", unknown:"Not verified"};
+  return `<span class="trade-legal-badge ${status === "legal" ? "legal" : status === "illegal" ? "illegal" : "review"}">${escapeHtml(labels[status] || rowLabel(status))}</span>`;
+}
+
+function tradeLegalityIssues(candidate) {
+  const issues = [...(candidate?.legality?.issues || []), ...(candidate?.legality?.manual_review || [])];
+  return issues.length ? `<ul class="trade-legality-issues">${issues.map(issue => `<li>${escapeHtml(textValue(issue))}</li>`).join("")}</ul>` : "";
+}
+
+function tradeCandidateInsights(candidate, key) {
+  const page = Math.max(0, Math.min(1, state.tradeOfferPages?.[key] || 0));
+  const proposal = candidate.proposal || {};
+  if (proposal.transfers && page === 0) return `<details class="incoming-offer-evaluation" ${state.tradeOfferPages?.[key] != null ? 'open' : ''}><summary>Trade analysis</summary>${tradeInsightPager(['Team value','Payroll impact'],page,key)}<div class="trade-team-decisions">${(candidate.evaluations || []).map(tradeEvaluationPanel).join('')}</div></details>`;
+  return `<details class="incoming-offer-evaluation" ${state.tradeOfferPages?.[key] != null ? "open" : ""}><summary>Trade analysis</summary>${tradeInsightPager(["Team value", "Payroll impact"], page, key)}${page === 0 ? `<div class="trade-team-decisions">${(candidate.evaluations || []).map(tradeEvaluationPanel).join("")}</div>${tradeSegmentedValueBoard(candidate, proposal.from_assets || [], proposal.to_assets || [], teamLabel(proposal.from_team_id || proposal.from_team), teamLabel(proposal.to_team_id || proposal.to_team))}` : `<div class="trade-candidate-finances">${Object.entries(candidate.team_finances || {}).map(([team, row]) => `<section><h4>${escapeHtml(teamLabel(team))}</h4><dl><div><dt>Current payroll</dt><dd>${row.cap?.salary_total_millions == null ? "—" : money(row.cap.salary_total_millions)}</dd></div><div><dt>Outgoing salary</dt><dd>${row.outgoing_salary_millions == null ? "—" : money(row.outgoing_salary_millions)}</dd></div><div><dt>Incoming salary</dt><dd>${row.incoming_salary_millions == null ? "—" : money(row.incoming_salary_millions)}</dd></div><div><dt>After trade</dt><dd>${row.payroll_after_millions == null ? "—" : money(row.payroll_after_millions)}</dd></div></dl></section>`).join("") || '<div class="trade-package-empty">Payroll details unavailable</div>'}</div>`}</details>`;
+}
+
+function incomingOfferAsset(asset) {
+  return `<div class="trade-ledger-scroll">${tradeAssetTable([asset])}</div>`;
+}
+
+function incomingOfferSide(team, assets, { compact = false } = {}) {
+  return `<section class="incoming-offer-side"><header>${teamLogoSrc(team)?`<img src="${escapeAttr(teamLogoSrc(team))}" alt="${escapeAttr(team)} logo">`:""}<strong>${escapeHtml(team)} receives</strong><span>${assets.length} asset${assets.length === 1 ? "" : "s"}</span></header><div class="trade-ledger-scroll" tabindex="0" aria-label="${escapeAttr(team)} incoming assets">${assets.length ? tradeAssetTable(assets, {label:`${team} receives`}) : '<div class="offer-pick offer-pick-empty">No assets in this package</div>'}</div></section>`;
+}
+
+function incomingOfferPackage(receipts) {
+  return `<div class="incoming-offer-package">${receipts.map(({team,assets}) => incomingOfferSide(team,assets || [])).join("")}</div>`;
+}
+
+function tradeReceipts(proposal) {
+  if (!proposal.transfers) return [{team:teamLabel(proposal.to_team_id || proposal.to_team),assets:proposal.from_assets},
+    {team:teamLabel(proposal.from_team_id || proposal.from_team),assets:proposal.to_assets}];
+  return [...new Set(proposal.transfers.flatMap(leg => [leg.from_team_id,leg.to_team_id]))].map(id => ({
+    team:teamLabel(id),assets:proposal.transfers.filter(leg => leg.to_team_id === id).flatMap(leg => leg.assets)}));
+}
+
 function offerCard(offer, index) {
-  return tradeCandidateCard(offer, index, "offer");
+  const proposal = offer.proposal || {};
+  const from = teamLabel(proposal.from_team_id || proposal.from_team);
+  const to = teamLabel(proposal.to_team_id || proposal.to_team);
+  const legal = offer.legality?.status || "unknown";
+  const repeatCount = Math.max(1, Number(offer.repeat_count) || 1);
+  const lastProposed = offer.repeat_dates?.at?.(-1) || offer.offer_context?.last_proposed_date || offer.offer_context?.created_date;
+  const repeatedLabel = repeatCount > 1 ? `<small class="incoming-offer-repeat" title="This identical trade has been proposed ${repeatCount} times">Sent ${repeatCount}×${lastProposed ? ` · latest ${escapeHtml(lastProposed)}` : ""}</small>` : "";
+  return `<article class="incoming-offer${repeatCount > 1 ? " incoming-offer--repeated" : ""}">
+    <header class="incoming-offer-heading"><div><span>Offer ${index + 1}</span>${repeatedLabel}<strong>${escapeHtml(proposal.transfers ? tradeReceipts(proposal).map(row=>row.team).join(' ↔ ') : `${from} ↔ ${to}`)}</strong></div>${tradeLegalityBadge(offer)}</header>
+    ${incomingOfferPackage(tradeReceipts(proposal))}
+    ${typeof tradeWantsOfferSummary==='function'?tradeWantsOfferSummary(offer):''}
+    ${tradeLegalityIssues(offer)}
+    <div class="incoming-offer-analysis-row">
+      ${tradeCandidateInsights(offer, proposal.id || `offer-${index}`)}
+      <div class="incoming-offer-analysis-actions"><button class="ui-command" data-offer-reject="${index}">Decline</button><button class="ui-command" data-offer-accept="${index}" ${legal !== "legal" ? "disabled" : ""}>Accept Trade</button></div>
+    </div>
+  </article>`;
 }
 
 function tradeCandidateCard(candidate, index, mode) {
   const proposal = candidate?.proposal || {};
   const fromTeam = teamLabel(proposal.from_team_id || proposal.from_team || "");
   const toTeam = teamLabel(proposal.to_team_id || proposal.to_team || "");
-  const legal = candidate?.legality?.status || "legal";
+  const legal = candidate?.legality?.status || "unknown";
   const evaluations = candidate?.evaluations || [];
   return `
     <article class="trade-candidate-card ${mode === "offer" ? "incoming" : "market"}">
       <header class="trade-candidate-head">
-        <div><span>${mode === "offer" ? "Incoming proposal" : `Market offer ${index + 1}`}</span><strong>${escapeHtml(fromTeam)} <b>↔</b> ${escapeHtml(toTeam)}</strong></div>
-        <span class="trade-legal-badge ${legal === "legal" ? "legal" : "illegal"}">${escapeHtml(legal)}</span>
+        <div><span>${mode === "offer" ? "Incoming proposal" : `Market offer ${index + 1}`}</span><strong>${escapeHtml(proposal.transfers ? tradeReceipts(proposal).map(row=>row.team).join(' ↔ ') : `${fromTeam} ↔ ${toTeam}`)}</strong></div>
+        ${tradeLegalityBadge(candidate)}${mode !== "offer" ? `<button data-inspect-finder="${index}" class="ui-command">Review In Builder</button>` : ""}
       </header>
-      <div class="trade-candidate-matchup">
-        ${tradeOfferSide(fromTeam, proposal.from_assets || [], evaluations.find((row) => teamLabel(row.team_abbrev || row.perspective_team_id) === fromTeam))}
-        <div class="trade-swap-mark"><span>TRADE</span><b>⇄</b></div>
-        ${tradeOfferSide(toTeam, proposal.to_assets || [], evaluations.find((row) => teamLabel(row.team_abbrev || row.perspective_team_id) === toTeam))}
-      </div>
-      ${mode === "finder" ? tradeSegmentedValueBoard(candidate, proposal.from_assets || [], proposal.to_assets || [], fromTeam, toTeam) : ""}
-      <div class="trade-candidate-evals">${evaluations.map(tradeEvaluationPanel).join("")}</div>
+      ${incomingOfferPackage(tradeReceipts(proposal))}
+      ${typeof tradeWantsOfferSummary==='function'?tradeWantsOfferSummary(candidate):''}
+      ${tradeLegalityIssues(candidate)}
+      ${tradeCandidateInsights(candidate, proposal.id || `finder-${index}`)}
       <footer>
-        <p>${escapeHtml(tradeHeadline(candidate).replace(/^Trade completed:\s*/i, ""))}</p>
+        <p>${tradeReceipts(proposal).reduce((sum,row)=>sum+(row.assets?.length || 0),0)} assets · Review the package before accepting.</p>
         ${mode === "offer"
-          ? `<div><button data-offer-reject="${index}" class="trade-reject-button">Reject</button><button data-offer-accept="${index}" class="trade-accept-button">Accept Trade</button></div>`
-          : `<button data-inspect-finder="${index}" class="trade-accept-button">Inspect In Trade Builder</button>`}
+          ? `<div><button data-offer-reject="${index}" class="trade-reject-button">Reject</button><button data-offer-accept="${index}" class="trade-accept-button" ${legal === "legal" ? "" : "disabled"}>Accept Trade</button></div>`
+          : `<button data-inspect-finder="${index}" class="trade-accept-button ui-command">Review In Builder</button>`}
       </footer>
     </article>`;
 }
@@ -7948,14 +12119,46 @@ function tradeOfferSide(team, assets, evaluation) {
 }
 
 function tradeEvaluationPanel(row) {
-  const score = clampNumber(Number(row.acceptance_score || 0), 0, 100);
-  const net = Number(row.net_value || 0);
-  const accepted = Boolean(row.accepted) || String(row.decision || "").toLowerCase() === "accept";
+  const net = tradeKnownNumber(row.net_value);
+  const decision = String(row.decision || "").toLowerCase();
+  const legality = String(row.legality_status || "legal").toLowerCase();
+  const accepted = Boolean(row.accepted) || decision === "accept" || decision.startsWith("accept_");
+  const outcome = legality === "manual_review_required" ? "Needs review" : legality === "illegal" ? "Cannot accept" : accepted ? decision === 'accept_bounded_ai_discretion' ? 'Accepts limited value loss' : "Would accept" : "Would decline";
+  const outcomeClass = accepted && legality === "legal" ? "accepted" : "rejected";
+  const notes = textValue(row.notes || "");
+  const noteValue = (pattern) => {
+    const match = notes.match(pattern);
+    return match ? tradeKnownNumber(match[1]) : null;
+  };
+  const threshold = row.incoming_asset_value == null
+    ? noteValue(/threshold\s+([+-]?\d+(?:\.\d+)?)/i) ?? tradeKnownNumber(row.acceptance_threshold)
+    : tradeKnownNumber(row.acceptance_threshold);
+  const rawScore = net !== null && threshold !== null ? 50 + (net-threshold)*4.5 : tradeKnownNumber(row.acceptance_score);
+  const score = rawScore === null ? null : clampNumber(rawScore, 0, 100);
+  const margin = net !== null && threshold !== null ? net-threshold : null;
+  const strategic = noteValue(/strategic fit\s+([+-]?\d+(?:\.\d+)?)/i);
+  const personality = tradeKnownNumber(row.personality_adjustments?.total) ?? noteValue(/personality adjustment\s+([+-]?\d+(?:\.\d+)?)/i);
+  const phaseKey = row.window_phase || notes.match(/\bPhase=([^;.]+)/i)?.[1]?.trim() || '';
+  const phase = ({peak:'Peak window',entering:'Entering peak window',exiting:'Exiting peak window',rebuilding:'Rebuilding',contending:'Peak window',contending_with_future_upside:'Peak window',developing:'Entering peak window',retooling:'Exiting peak window'})[phaseKey] || '';
+  const signed = (value) => value == null ? "—" : `${value > 0 ? "+" : value < 0 ? "−" : ""}${Math.abs(value).toFixed(1)}`;
+  const details = [
+    ["Receives · roster value", row.incoming_asset_value == null ? '—' : Number(row.incoming_asset_value).toFixed(1)],
+    ["Sends · roster value", row.outgoing_value == null ? '—' : Number(row.outgoing_value).toFixed(1)],
+    ["Strategy + roster plan", signed(tradeKnownNumber(row.strategic_adjustment) ?? strategic)],
+    ["Manager lean", signed(personality)],
+    ["Net benefit", signed(net)],
+    ["Required benefit", signed(threshold)],
+    ["Team direction", phase],
+  ].filter(([, value]) => value !== "—" && value !== "");
+  const noteHasBreakdown = /\bPhase=/i.test(notes);
   return `
-    <div class="trade-evaluation-panel ${accepted ? "accepted" : "rejected"}">
-      <header><strong>${escapeHtml(row.team_abbrev || teamLabel(row.perspective_team_id))}</strong><span>${accepted ? "ACCEPTS" : "DECLINES"}</span></header>
-      <div><i style="width:${score.toFixed(1)}%"></i></div>
-      <footer><span>Acceptance ${score.toFixed(0)}</span><b class="${net >= 0 ? "positive" : "negative"}">${net >= 0 ? "+" : ""}${net.toFixed(1)} net</b></footer>
+    <div class="trade-evaluation-panel ${outcomeClass}">
+      <header><strong>${escapeHtml(row.team_abbrev || teamLabel(row.perspective_team_id))}</strong><span>${outcome}</span></header>
+      ${margin === null ? "" : `<div class="trade-evaluation-score" title="Net benefit minus required benefit. A positive margin passes the value test; core, premium-return, roster and legality safeguards can still block a trade. Not an acceptance probability."><span>Value margin</span><strong>${signed(margin)} ${margin >= 0 ? 'above' : 'below'} line</strong></div><div class="trade-evaluation-meter"><i style="width:${score.toFixed(1)}%"></i></div>`}
+      ${details.length ? `<dl class="trade-evaluation-details">${details.map(([label, value]) => `<div><dt>${label}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>` : ""}
+      ${notes && !noteHasBreakdown ? `<p>${escapeHtml(notes)}</p>` : ""}
+      ${(row.decision_reasons || []).length ? `<ul class="trade-decision-reasons">${row.decision_reasons.map(reason=>`<li>${escapeHtml(reason)}</li>`).join('')}</ul>` : ''}
+      <details class="trade-value-help"><summary>Why this decision?</summary><p>Receives − sends + strategy and roster plan + manager lean = net benefit. The required benefit is specific to this deal. Meeting it is necessary for ordinary approval, but does not override core commitments, premium-player returns, roster planning or trade rules.${decision === 'accept_bounded_ai_discretion' ? ' This GM accepted a limited value loss through bounded negotiation discretion.' : ''}</p>${notes && noteHasBreakdown ? `<p>${escapeHtml(notes)}</p>` : ''}</details>
     </div>`;
 }
 
@@ -7967,7 +12170,7 @@ function freeAgentOfferPanel(player, exclusive = false) {
     <div class="section-head"><div><h3>${escapeHtml(player.name)}</h3><p class="muted">${escapeHtml(player.position)} age ${escapeHtml(player.age)} ${escapeHtml(player.height)}</p></div><span class="pill">${money(player.ask_millions)} ask</span></div>
     <div class="grid-3">
       <div class="item"><strong>Role</strong><span>${player.mpg} MPG | ${player.ppg} PPG</span></div>
-      <div class="item"><strong>Ratings</strong><span>OVR ${player.ratings?.overall || ""} | DEF ${player.ratings?.defense || ""}</span></div>
+      <div class="item"><strong>Ratings</strong>${playerSummaryRatings(player)}</div>
       <div class="item"><strong>Fit</strong><span>${player.team_fit_score ?? "n/a"}</span></div>
     </div>
     <div class="form-grid">
@@ -7983,7 +12186,7 @@ function staffCandidateCard(candidate) {
     <div class="item">
       <strong>${escapeHtml(candidate.name)} <span class="pill">${Number(candidate.grade || 0).toFixed(1)}</span></strong>
       <div class="asset-meta">${escapeHtml(rowLabel(candidate.slot))} | ${escapeHtml(candidate.archetype || "")} | ask ${money(candidate.asking_salary_millions)} x ${candidate.asking_years || 2}</div>
-      <div class="toolbar"><button data-staff-id="${escapeAttr(candidate.id)}" data-staff-slot="${escapeAttr(candidate.slot)}" data-staff-ask="${escapeAttr(candidate.asking_salary_millions)}" data-staff-years="${escapeAttr(candidate.asking_years || 2)}">Offer And Hire</button></div>
+      <div class="toolbar"><button ${staffActionAttributes(candidate.slot, "negotiate")} data-staff-id="${escapeAttr(candidate.id)}" data-staff-slot="${escapeAttr(candidate.slot)}" data-staff-ask="${escapeAttr(candidate.asking_salary_millions)}" data-staff-years="${escapeAttr(candidate.asking_years || 2)}">Offer And Hire</button></div>
     </div>`;
 }
 
@@ -7991,13 +12194,18 @@ function draftBoardRows(board) {
   return (board?.entries || []).map((entry) => {
     const prospect = entry.prospect || entry;
     const scout = entry.scout_display || prospect.scout_display || {};
+    const draftLow = Number(prospect.rank_range?.low), draftHigh = Number(prospect.rank_range?.high);
+    const hasDraftRange = Number.isInteger(draftLow) && Number.isInteger(draftHigh) && draftLow >= 1 && draftHigh >= draftLow;
     return {
       id: prospect.id || prospect.prospect_id || entry.prospect_id,
       rank: entry.board_rank || prospect.rank || "",
       seasonStartRank: entry.season_start_rank ?? prospect.preseason_rank ?? prospect.rank,
       rankChange: entry.rank_change ?? (entry.season_start_rank != null ? Number(entry.season_start_rank) - Number(entry.board_rank || prospect.rank) : null),
+      draftRangeLow: hasDraftRange ? draftLow : null,
+      draftRangeHigh: hasDraftRange ? draftHigh : null,
       name: prospect.name,
       position: prospect.position,
+      sourceTeam: prospect.source_team || "",
       age: Number.isFinite(Number(prospect.age)) ? Math.round(Number(prospect.age)) : "",
       height: heightFromRow(prospect),
       now: scout.now ?? prospect.now ?? prospect.current_rating ?? prospect.current_ability,
@@ -8083,7 +12291,7 @@ function table(headers, rows, mapper, tableId = "table") {
   if (sort) {
     mapped.sort((a, b) => compareCell(a.cells[sort.index], b.cells[sort.index], sort.direction));
   }
-  return `<div class="table-wrap"><table class="data-table ${escapeAttr(tableId)}"><thead><tr>${headers.map((header, index) => `<th><button class="sort-head" data-sort-table="${escapeAttr(tableId)}" data-sort-index="${index}">${escapeHtml(header)}${sort?.index === index ? (sort.direction === "asc" ? " ↑" : " ↓") : ""}</button></th>`).join("")}</tr></thead><tbody>${mapped.map(({ cells }) => `<tr>${cells.map((cell) => `<td>${formatCell(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  return `<div class="table-wrap"><table class="data-table ${escapeAttr(tableId)}"><thead><tr>${headers.map((header, index) => `<th aria-sort="${sort?.index === index ? (sort.direction === "asc" ? "ascending" : "descending") : "none"}"><button class="sort-head" data-sort-table="${escapeAttr(tableId)}" data-sort-index="${index}">${escapeHtml(header)}${sort?.index === index ? (sort.direction === "asc" ? " ↑" : " ↓") : ""}</button></th>`).join("")}</tr></thead><tbody>${mapped.map(({ cells }) => `<tr>${cells.map((cell) => `<td>${formatCell(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 
 function compareCell(a, b, direction) {
@@ -8126,7 +12334,7 @@ function leagueEventRotator(expanded = false) {
     <h3><button type="button" class="league-panel-toggle" data-league-panel-toggle title="Switch to ${leadersMode ? "League Wire" : "League Leaders"}">${leadersMode ? "League Leaders" : "League Wire"}</button></h3>
     <div class="league-panel-head-actions">
       ${leadersMode ? `<select id="summaryLeaderSelect" aria-label="League leader category">${fields.map((field, index) => `<option value="${index}">${escapeHtml(field.label || field.key || "Field")}</option>`).join("")}</select>` : ""}
-      <button data-league-panel-view-all>View All</button>
+      <button data-league-panel-view-all>${leadersMode ? "View All" : "Expand Wire"}</button>
     </div>
   </div>`;
 
@@ -8174,23 +12382,44 @@ async function openLeagueLeadersModal() {
   renderModal();
 }
 
-function openLeagueEventsModal() {
-  const events = state.home?.league_events?.events || [];
-  state.modal = {
-    kind: "leagueEvents",
-    title: "League Wire",
-    subtitle: `${events.length} recent events · ${state.home?.save?.current_date || ""}`,
-    body: `<div class="league-events-modal-list">
-      ${events.map((event) => {
-        const normalized = normalizeLeagueEvent(event);
-        return `<article class="league-event-modal-row">
-          <div><strong>${escapeHtml(normalized.date)}</strong><span>${escapeHtml(normalized.kind || "league")}</span></div>
-          <p>${escapeHtml(normalized.text)}</p>
-        </article>`;
-      }).join("") || `<div class="empty">No league events available.</div>`}
-    </div>`,
-  };
-  renderModal();
+function syncAssistantGMPhone() {
+  window.AssistantGMPhone?.sync({
+    saveKey: String(state.currentSave || ""),
+    enabled: Boolean(state.currentSave && state.home && !state.hydrating && state.view === "dashboard"),
+    messages: state.home?.league_events?.assistant_messages || [],
+    onOpen: async (message) => {
+      if (message.target === "trade-deadline") {
+        showTradeDeadlinePrompt();
+      } else if (message.target === "league-wire") {
+        await openLeagueActivityCard();
+        const post = [...document.querySelectorAll("[data-league-event-id]")].find(el => el.dataset.leagueEventId === message.event_id);
+        const feed = post?.closest(".season-league-wire-expanded");
+        if (post && feed) feed.scrollTo({top:feed.scrollTop + post.getBoundingClientRect().top - feed.getBoundingClientRect().top, behavior:"smooth"});
+        if (post) post.classList.add("is-assistant-highlight");
+      } else {
+        state.dashboardTeam = userTeam();
+        state.view = "dashboard";
+        await loadDashboardSnapshot(userTeam());
+        render();
+        window.CardBoard?.open("contracts");
+        const row = [...document.querySelectorAll('[data-board-window="contracts"] [data-dashboard-player-card]')].find(el => el.dataset.dashboardPlayerCard === message.player_id);
+        row?.closest("tr")?.classList.add("is-assistant-highlight");
+        const table = row?.closest(".linked-roster-scroll");
+        if (row && table) table.scrollTo({top:Math.max(0, table.scrollTop + row.getBoundingClientRect().top - table.getBoundingClientRect().top - 30), behavior:"smooth"});
+      }
+    },
+  });
+}
+
+async function openLeagueActivityCard() {
+  closeAllModals();
+  if (state.view !== "dashboard") {
+    state.view = "dashboard";
+    await ensureViewData();
+    render();
+  }
+  window.CardBoard?.open("league-wire");
+  return Boolean(window.CardBoard?.expand("league-wire"));
 }
 
 function leagueEventSlide(event) {
@@ -8294,12 +12523,21 @@ function scoreLine(game) {
 }
 
 function rating(row, key) {
-  const ratings = row.display_ratings || row.ratings || row.attributes || row.traits || {};
+  const displayRatings = row.display_ratings || {};
+  if (key === "rebound") key = "rebounding";
   if (key === "offense") {
+    if (displayRatings.offense != null) return displayRatings.offense;
+    const displayParts = [displayRatings.shooting, displayRatings.creation, displayRatings.passing].map(Number).filter(Number.isFinite);
+    if (displayParts.length) return displayParts.reduce((sum, item) => sum + item, 0) / displayParts.length;
+  } else if (displayRatings[key] != null || displayRatings[key.toUpperCase()] != null) {
+    return displayRatings[key] ?? displayRatings[key.toUpperCase()];
+  }
+  const ratings = row.ratings || row.attributes || row.traits || {};
+  if (key === "offense") {
+    if (row.offense != null || ratings.offense != null) return row.offense ?? ratings.offense;
     const parts = [ratings.shooting, ratings.creation, ratings.passing].map(Number).filter(Number.isFinite);
     if (parts.length) return parts.reduce((sum, item) => sum + item, 0) / parts.length;
   }
-  if (key === "rebound") key = "rebounding";
   return row[key] ?? ratings[key] ?? ratings[key.toUpperCase()] ?? "";
 }
 
@@ -8390,9 +12628,20 @@ function userTeam() {
 }
 
 function setBusy(isBusy) {
+  isBusy = isBusy || Boolean(state.simulationRunning);
   state.busy = isBusy;
   document.body.classList.toggle("busy", isBusy);
   for (const control of document.querySelectorAll("button, select, input, textarea")) {
+    if (control.matches('[data-simulation-stop]')) {
+      control.disabled = Boolean(state.simulationStopRequested);
+      delete control.dataset.busyDisabled;
+      continue;
+    }
+    if (control.matches('[data-phase-command="lottery-skip"]')) {
+      control.disabled = false;
+      delete control.dataset.busyDisabled;
+      continue;
+    }
     if (isBusy) {
       if (!control.disabled) {
         control.dataset.busyDisabled = "true";

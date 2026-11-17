@@ -1,0 +1,79 @@
+name: Private Windows Beta (Manual)
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Private beta version
+        default: 0.1.0-beta.8
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  build-and-verify:
+    runs-on: windows-2025
+    timeout-minutes: 45
+    env:
+      PYTHONPATH: src;tests
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          lfs: true
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13.16'
+          architecture: x64
+      - name: Required local media and league data (no remote substitutes)
+        run: python packaging/windows/build.py --check-inputs
+      - name: Install pinned build tools
+        run: python -m pip install -r packaging/windows/build-requirements.txt
+      - name: Packaging and local API regressions
+        run: python -B -m unittest test_windows_packaging test_diagnostics test_api_security test_static_media test_save_recovery
+      - name: Build private ZIP
+        env:
+          BETA_VERSION: ${{ inputs.version }}
+        run: python packaging/windows/build.py --version "$env:BETA_VERSION"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Browser acceptance tools (not shipped)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force .cache/windows-browser | Out-Null
+          npm install --prefix .cache/windows-browser --no-save --package-lock=false playwright@1.55.1
+          if ($LASTEXITCODE -ne 0) { throw 'Playwright installation failed' }
+          node .cache/windows-browser/node_modules/playwright/cli.js install chromium
+          if ($LASTEXITCODE -ne 0) { throw 'Browser installation failed' }
+          $modules = Join-Path $pwd '.cache/windows-browser/node_modules'
+          "NODE_PATH=$modules" >> $env:GITHUB_ENV
+          $env:NODE_PATH = $modules
+          $chrome = node -e "process.stdout.write(require('playwright').chromium.executablePath())"
+          "NBA_GM_TEST_CHROME=$chrome" >> $env:GITHUB_ENV
+      - name: Verify extracted EXE, browser, video, native window, saves and recovery
+        env:
+          BETA_VERSION: ${{ inputs.version }}
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
+        run: python scripts/verify_windows_beta.py "dist/windows/NBA-GM-Sandbox-${env:BETA_VERSION}-Windows-x86_64.zip" --report dist/windows/verification.json
+      - name: Private download (only after acceptance passes)
+        uses: actions/upload-artifact@v4
+        with:
+          name: private-windows-beta
+          path: |
+            dist/windows/*.zip
+            dist/windows/*.sha256
+            dist/windows/verification.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Verification evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-verification-evidence
+          path: |
+            dist/windows/verification.json
+            ${{ runner.temp }}/NBA GM Windows verification */**
+          if-no-files-found: warn
+          retention-days: 7

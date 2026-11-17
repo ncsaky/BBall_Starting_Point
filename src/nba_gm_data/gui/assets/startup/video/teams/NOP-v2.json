@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/NOP-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/NOP-v2-1.jpg",
+      "kind": "basketball",
+      "team": "NOP",
+      "clips": [
+        {
+          "source_start": 8,
+          "frames": 270,
+          "team": "NOP",
+          "opponent": "DEN",
+          "action": "Williamson basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 29,
+          "frames": 300,
+          "team": "NOP",
+          "opponent": "CHI",
+          "action": "Williamson driving finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 606
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/NOP-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/NOP-v2-2.jpg",
+      "kind": "basketball",
+      "team": "NOP",
+      "clips": [
+        {
+          "source_start": 57,
+          "frames": 330,
+          "team": "NOP",
+          "opponent": "DAL",
+          "action": "Williamson attack and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 74,
+          "frames": 360,
+          "team": "NOP",
+          "opponent": "TOR",
+          "action": "Williamson late jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 726
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/NOP-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/NOP-v2-3.jpg",
+      "kind": "basketball",
+      "team": "NOP",
+      "clips": [
+        {
+          "source_start": 89,
+          "frames": 390,
+          "team": "NOP",
+          "opponent": "UTA",
+          "action": "Williamson attacking finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 143,
+          "frames": 270,
+          "team": "NOP",
+          "opponent": "ATL",
+          "action": "Williamson drive and dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 696
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "jpUlLlbhAX0",
+    "url": "https://www.youtube.com/watch?v=jpUlLlbhAX0",
+    "title": "Zion Williamson 2025-26 NBA Season Highlights | New Orleans Pelicans",
+    "channel": "New Orleans Pelicans",
+    "path": ".cache/startup-team-correction/NOP.mp4",
+    "query": "2025-26 New Orleans Pelicans Zion Williamson best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 8,
+      "frames": 270,
+      "team": "NOP",
+      "opponent": "DEN",
+      "action": "Williamson basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 29,
+      "frames": 300,
+      "team": "NOP",
+      "opponent": "CHI",
+      "action": "Williamson driving finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 57,
+      "frames": 330,
+      "team": "NOP",
+      "opponent": "DAL",
+      "action": "Williamson attack and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 74,
+      "frames": 360,
+      "team": "NOP",
+      "opponent": "TOR",
+      "action": "Williamson late jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 89,
+      "frames": 390,
+      "team": "NOP",
+      "opponent": "UTA",
+      "action": "Williamson attacking finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 143,
+      "frames": 270,
+      "team": "NOP",
+      "opponent": "ATL",
+      "action": "Williamson drive and dunk",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 91.13333333333334
+}

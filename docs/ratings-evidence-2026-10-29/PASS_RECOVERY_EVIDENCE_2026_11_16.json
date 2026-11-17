@@ -1,0 +1,579 @@
+{
+  "ledger_version": "pass_recovery_evidence_v1_2026_11_16",
+  "production_import_authorized": false,
+  "date_policy": "October2026 pre-opener target; historical observations labeled, current undated glossary is a retrieved definition reference, not a new player-performance sample.",
+  "sources": {
+    "CE": {
+      "path": "transcripts/episode4_transcript.txt",
+      "date": "2026-09-02",
+      "date_precision": "day",
+      "kind": "retained timestamped user transcript",
+      "reviewed": "01:00:07–01:00:35;01:03:46–01:04:23",
+      "correlation_group": "nerd_sesh_retained"
+    },
+    "PG": {
+      "path": "transcripts/episode8_transcript.txt",
+      "date": "2026-08-05",
+      "date_precision": "day",
+      "kind": "retained timestamped user transcript",
+      "reviewed": "01:27:45–01:29:35",
+      "correlation_group": "nerd_sesh_retained"
+    },
+    "VICE": {
+      "url": "https://www.vice.com/en/article/the-outlet-pass-dirk-back-ads-childs-play-and-denvers-enjoyable-mess/",
+      "date": "2018-01-11",
+      "date_precision": "day",
+      "author": "Michael Pina",
+      "kind": "original written basketball analysis",
+      "reviewed": "sections11/12; written descriptions only, not embedded media",
+      "summary": "Booker–Warren bobble loses Chriss opening; Mitchell finishes an awkward backward-reaching lob.",
+      "correlation_group": "pina_selected_2018_examples",
+      "limit": "Two selected historical plays, not event frequencies or current player measurements."
+    },
+    "NBA2023": {
+      "url": "https://www.nba.com/news/finals-film-study-nuggets-heat-game-3",
+      "date": "2023-06-08",
+      "date_precision": "day",
+      "author": "John Schuhmann",
+      "kind": "original NBA written analysis, inherited source reused",
+      "reviewed": "Playing big on the roll; pump-and-go sections; text only",
+      "summary": "Jokic receives on rolls; his drive draws help before a lob to Gordon.",
+      "correlation_group": "jokic_historical_actions",
+      "limit": "Same source as inherited records; not fresh independent receiving validation."
+    },
+    "GLOSSARY": {
+      "url": "https://www.nba.com/stats/help/glossary",
+      "date": null,
+      "retrieved_on": "2026-11-16",
+      "date_precision": "undated current definitions",
+      "kind": "NBA official metric definitions",
+      "reviewed": "Potential AST; Deflections; Passes Made/Received; TOV; AST",
+      "summary": "Potential assists: shots within one dribble. Deflections: non-shot contacts. Passing dashboard counts may be per game.",
+      "correlation_group": "nba_metric_definitions",
+      "limit": "Definitions are not observed rates or a guarantee of endpoint counting units/filter coverage."
+    },
+    "BOOK2025": {
+      "url": "https://statsdmz.nba.com/pdfs/20250605/20250605_INDOKC_book.pdf",
+      "date": "2025-06-05",
+      "date_precision": "day",
+      "kind": "NBA official final box and play-by-play",
+      "reviewed": "PDF page1 final box and selected PBP events; web text extraction and page1 screenshot requested, no complete PBP/audiovisual review",
+      "population": "IND at OKC, Finals Game1, regulation48 minutes",
+      "correlation_group": "nba_20250605_game",
+      "local_copy_status": "One direct source-copy request timed out; no local PDF or original-file hash claimed. Reviewed facts retained separately."
+    },
+    "STUDY2018": {
+      "url": "https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2018.02315/full",
+      "date": "2018",
+      "date_precision": "year; DOI publication year",
+      "doi": "10.3389/fpsyg.2018.02315",
+      "kind": "original experimental research",
+      "reviewed": "Participants; Table1 decision categories; Table2 denominator limitations",
+      "summary": "The study codes deflected/inaccurate-pass bobbles separately from passing and dribbling turnovers in youth small-sided games.",
+      "population": "18 analyzed Australian elite youth players; not NBA",
+      "correlation_group": "immersive_youth_study_2018",
+      "limit": "Classification precedent only; reward weights and mean event scores are not NBA probabilities or calibrated engine coefficients."
+    },
+    "LOCAL_EXPOSURE": {
+      "path": "CREATION_PASSING_DEFENSE_INPUTS_2026_11_13.json",
+      "date": "2026-11-13",
+      "date_precision": "artifact date",
+      "kind": "retained research exposure ledger",
+      "reviewed": "Luka2025–26 regular totals and mixed partial/provider window fields",
+      "correlation_group": "espn_luka_and_mixed_provider",
+      "limit": "Source windows deliberately separate; estimates and provider labels cannot be joined into pass-error rates."
+    },
+    "ESPN_RAW": {
+      "repo_path": "data/research/espn_career_raw/3945274.json",
+      "date": null,
+      "date_precision": "retained snapshot; exact fetch date not asserted",
+      "kind": "retained ESPN career response",
+      "reviewed": "averages and totals statistics rows, season.year2026, team13",
+      "population": "Luka Doncic2025–26 regular season,64 games",
+      "correlation_group": "espn_luka_and_mixed_provider"
+    },
+    "TRACKING_REGISTRY": {
+      "repo_path": "data/research/tracking_sources_2025_26.json",
+      "date": "2026-05-22",
+      "date_precision": "registry fetched_at",
+      "kind": "tracking source catalogue, not actual tracking measurements",
+      "reviewed": "categories/notes/source",
+      "correlation_group": "local_tracking_catalogue",
+      "limit": "No actual pass, touch, potential-assist or recovery observations stored here."
+    }
+  },
+  "claims": [
+    {
+      "id": "PR01",
+      "source_id": "PG",
+      "source_date": "2026-08-05",
+      "locator": "01:28:18–01:28:40",
+      "context": "general passer skill",
+      "support_kind": "qualitative",
+      "supports": "Trusted commentary credits Luka with broad passing repertoire.",
+      "cannot_establish": "Not a conditional pass-success, placement-error or receiver-catch rate.",
+      "candidate_engine_implication": "Keep recognition and delivery separate, then condition reception on the actual delivered ball, not passer fame.",
+      "input_ids": [
+        "F03.recognition",
+        "F03.execution",
+        "F04.recognition",
+        "F04.execution",
+        "F06.recognition",
+        "F06.execution"
+      ],
+      "uncertainty": "qualitative direction; magnitude and conditional frequency unmeasured",
+      "denominator": null,
+      "correlation_group": "nerd_sesh_retained"
+    },
+    {
+      "id": "PR02",
+      "source_id": "CE",
+      "source_date": "2026-09-02",
+      "locator": "01:00:07–01:00:35",
+      "context": "moving interior receiver",
+      "support_kind": "qualitative",
+      "supports": "Holmgren effective rolling/catch radius described.",
+      "cannot_establish": "Radius alone does not establish securing technique, late-pass quality or preparation speed.",
+      "candidate_engine_implication": "Check physical availability and actual receiving technique separately; do not duplicate length into hands.",
+      "input_ids": [
+        "S14",
+        "P02",
+        "P03",
+        "S26"
+      ],
+      "uncertainty": "qualitative direction; magnitude and conditional frequency unmeasured",
+      "denominator": null,
+      "correlation_group": "nerd_sesh_retained"
+    },
+    {
+      "id": "PR03",
+      "source_id": "CE",
+      "source_date": "2026-09-02",
+      "locator": "01:03:46–01:04:23",
+      "context": "perimeter shot access",
+      "support_kind": "qualitative",
+      "supports": "Good open shooting distinguished from difficulty getting the shot off.",
+      "cannot_establish": "No timed catch, preparation or recovery distribution, and no inference that every slow release misses.",
+      "candidate_engine_implication": "Retained possession does not guarantee usable shot time. Recovery can change whether a shot can be attempted before closure.",
+      "input_ids": [
+        "S01",
+        "S08",
+        "S14"
+      ],
+      "uncertainty": "qualitative direction; magnitude and conditional frequency unmeasured",
+      "denominator": null,
+      "correlation_group": "nerd_sesh_retained"
+    },
+    {
+      "id": "PR04",
+      "source_id": "VICE",
+      "source_date": "2018-01-11",
+      "locator": "section12, Booker/Warren sequence",
+      "context": "perimeter outlet / continuation",
+      "support_kind": "qualitative",
+      "supports": "See the compact source card for the described counterexample.",
+      "cannot_establish": "No measured delay, spatial displacement or event frequency.",
+      "candidate_engine_implication": "Represent a possession-retaining bad delivery that disrupts the next opening; allow reset rather than forcing a clean shot or turnover.",
+      "input_ids": [
+        "F06.execution",
+        "S14",
+        "S08"
+      ],
+      "uncertainty": "qualitative direction; magnitude and conditional frequency unmeasured",
+      "denominator": null,
+      "correlation_group": "pina_selected_2018_examples"
+    },
+    {
+      "id": "PR05",
+      "source_id": "VICE",
+      "source_date": "2018-01-11",
+      "locator": "section11, Mitchell lob",
+      "context": "aerial reception",
+      "support_kind": "qualitative",
+      "supports": "See the compact source card for the described difficult-receipt example.",
+      "cannot_establish": "No proof that all reachable lobs preserve finish quality, and no measured catch probability.",
+      "candidate_engine_implication": "Reachable but awkward need not be loss; keep securing, airborne adjustment and finish execution distinct.",
+      "input_ids": [
+        "F04.execution",
+        "S14",
+        "P02",
+        "P03",
+        "P10",
+        "S12",
+        "S13"
+      ],
+      "uncertainty": "qualitative direction; magnitude and conditional frequency unmeasured",
+      "denominator": null,
+      "correlation_group": "pina_selected_2018_examples"
+    },
+    {
+      "id": "PR06",
+      "source_id": "NBA2023",
+      "source_date": "2023-06-08",
+      "locator": "roll and pump-and-go sections",
+      "context": "roll feed and help-created lob",
+      "support_kind": "qualitative",
+      "supports": "See source card; specific existing passing/reception contexts.",
+      "cannot_establish": "No denominator of all attempts, bad deliveries or failed catches; highlight selection is strong.",
+      "candidate_engine_implication": "Roll receipt can lead to a short-touch finish rather than dunk. Help timing governs the lob window independently of delivery execution.",
+      "input_ids": [
+        "F03.execution",
+        "F04.recognition",
+        "F04.execution",
+        "S14",
+        "S10",
+        "S11"
+      ],
+      "uncertainty": "qualitative direction; magnitude and conditional frequency unmeasured",
+      "denominator": null,
+      "correlation_group": "jokic_historical_actions"
+    },
+    {
+      "id": "PR07",
+      "source_id": "GLOSSARY",
+      "source_date": null,
+      "locator": "Potential AST; Deflections; Passes Made/Received",
+      "context": "metric boundary",
+      "support_kind": "qualitative",
+      "supports": "See compact source card.",
+      "cannot_establish": "No clean/awkward classification; excluded no-shot receptions and reset sequences are not losses by definition.",
+      "candidate_engine_implication": "Track all released passes as the local event denominator; report potential-assist/deflection outputs separately from pass outcomes.",
+      "input_ids": [
+        "S14",
+        "F03.execution",
+        "F04.execution",
+        "F06.execution"
+      ],
+      "uncertainty": "qualitative direction; magnitude and conditional frequency unmeasured",
+      "denominator": null,
+      "correlation_group": "nba_metric_definitions"
+    },
+    {
+      "id": "PR08",
+      "source_id": "BOOK2025",
+      "source_date": "2025-06-05",
+      "locator": "PDF p1 final box; PBP Q1 08:14,08:12,06:02; Q2 08:50; Q4 10:00,09:58",
+      "context": "genuine losses and attribution",
+      "support_kind": "observed_aggregate",
+      "supports": "Official event labels distinguish bad-pass and lost-ball events; Q2 08:50 follows a Turner rebound; Q4 contains two successive opposite-team losses.",
+      "cannot_establish": "No continuous reception trace. A lost-ball label is not automatically an incoming-pass failure; net later possession does not erase an intervening turnover.",
+      "candidate_engine_implication": "Count actual possession changes once each; separate event classification and scorer credit from a causal delivery/receiver model.",
+      "input_ids": [
+        "S14",
+        "S17",
+        "F03.execution",
+        "F04.execution",
+        "F06.execution"
+      ],
+      "uncertainty": "qualitative direction; magnitude and conditional frequency unmeasured",
+      "denominator": "see linked constraint",
+      "correlation_group": "nba_20250605_game"
+    },
+    {
+      "id": "PR09",
+      "source_id": "STUDY2018",
+      "source_date": "2018",
+      "locator": "Table1; Participants; Table2",
+      "context": "research coding precedent",
+      "support_kind": "qualitative",
+      "supports": "See compact source card.",
+      "cannot_establish": "Non-NBA scoring taxonomy, no all-pass denominators; published scoring weights are not response coefficients.",
+      "candidate_engine_implication": "A separate retained-disruption observation category is defensible; adopt definitions deliberately, not the study rewards.",
+      "input_ids": [
+        "S14"
+      ],
+      "uncertainty": "historical youth coding precedent, not NBA calibration",
+      "denominator": null,
+      "correlation_group": "immersive_youth_study_2018"
+    },
+    {
+      "id": "PR10",
+      "source_id": "LOCAL_EXPOSURE",
+      "source_date": "2026-11-13",
+      "locator": "observed_exposure: Luka mixed partial/provider windows",
+      "context": "unit/window audit",
+      "support_kind": "aggregate_audit",
+      "supports": "Raw count-like fields and completed season totals have different scope.",
+      "cannot_establish": "No verified common games/filter for passes, touches and total turnovers.",
+      "candidate_engine_implication": "Reject cross-window divisions; missing field coverage must remain explicit.",
+      "input_ids": [
+        "F03.execution",
+        "F04.execution",
+        "F06.execution"
+      ],
+      "uncertainty": "qualitative direction; magnitude and conditional frequency unmeasured",
+      "denominator": null,
+      "correlation_group": "espn_luka_and_mixed_provider"
+    }
+  ],
+  "constraints": [
+    {
+      "id": "PC01",
+      "source_ids": [
+        "BOOK2025"
+      ],
+      "kind": "observed_numeric_accounting",
+      "population": "Indiana at Oklahoma City, one regulation NBA game",
+      "dates": [
+        "2025-06-05"
+      ],
+      "numerator": {
+        "IND": 25,
+        "OKC": 7
+      },
+      "numerator_definition": "all team turnovers, including team events",
+      "denominator": {
+        "value": 1,
+        "unit": "complete regulation game per team"
+      },
+      "derived": {
+        "summed_individual_IND": 24,
+        "summed_individual_OKC": 6,
+        "unassigned_team_difference_each": 1
+      },
+      "derivation": "Sum final-box player TO column; subtract from final-box TOT TO. Do not add team events twice.",
+      "per_pass_denominator": null,
+      "calibration_use": "Historical one-game bookkeeping check only; not a league target, average, micro-action mixture or loss probability.",
+      "limits": "All kinds of turnovers, unknown released-pass counts and route mix; selected unusually turnover-heavy Finals game.",
+      "applicable_to_clean_awkward_loss_probabilities": false
+    },
+    {
+      "id": "PC02",
+      "source_ids": [
+        "ESPN_RAW",
+        "LOCAL_EXPOSURE"
+      ],
+      "kind": "observed_numeric_aggregate_ceiling",
+      "population": "Luka Doncic,2025–26 regular season,team13 LAL",
+      "dates": [
+        "2025-26 regular season"
+      ],
+      "numerator": 255,
+      "numerator_definition": "all individual turnovers charged to this player, not just passes or catches",
+      "denominator": {
+        "value": 64,
+        "unit": "games played"
+      },
+      "derived": {
+        "turnovers_per_game": 3.984375
+      },
+      "derivation": "255/64 from retained raw totals and games, not rounded per-game4.0×64. Disjoint scorer-charged loss subtypes cannot sum above255 for the identical season/player attribution scope.",
+      "per_pass_denominator": null,
+      "calibration_use": "Aggregate budget/consistency ceiling for matched full-season exposure and scorer attribution only; no recovery calibration.",
+      "limits": "Causal responsibility may differ from scorer credit. No bad-pass/lost-ball/foul split, route counts or conditional catch observations. A repeated controlled-action probe is not this season mixture.",
+      "applicable_to_clean_awkward_loss_probabilities": false
+    },
+    {
+      "id": "PC03",
+      "source_ids": [
+        "LOCAL_EXPOSURE"
+      ],
+      "kind": "rejected_cross_window_rate",
+      "population": "Luka mixed provider fields, generated2026-03-11; full-season totals are a separate window",
+      "dates": [
+        "2026-03-11",
+        "2025-26 completed season separately"
+      ],
+      "numerator": null,
+      "numerator_definition": "no matched outcome count",
+      "denominator": null,
+      "raw_fields_as_retained": {
+        "touches": 3249,
+        "PASSES_MADE": 2753,
+        "PASSES_RECEIVED": 3454
+      },
+      "derivation": null,
+      "calibration_use": "Reject255/2753 and any equivalent per-pass inference. Count-like magnitude is not verified unit/window.",
+      "limits": "Per-field provider filters/coverage unknown; touches may include non-receptions; received passes exclude some failed deliveries.",
+      "applicable_to_clean_awkward_loss_probabilities": false
+    },
+    {
+      "id": "PC04",
+      "source_ids": [
+        "TRACKING_REGISTRY"
+      ],
+      "kind": "unavailable_observed_denominator",
+      "population": "local tracking source registry",
+      "dates": [
+        "2026-05-22"
+      ],
+      "numerator": null,
+      "numerator_definition": null,
+      "denominator": null,
+      "derivation": null,
+      "calibration_use": "No usable pass/touch/outcome totals here.",
+      "limits": "It lists intended dashboards, not observations. No extra API campaign attempted.",
+      "applicable_to_clean_awkward_loss_probabilities": false
+    },
+    {
+      "id": "PC05",
+      "source_ids": [
+        "STUDY2018"
+      ],
+      "kind": "non_NBA_statistics_not_transferred",
+      "population": "18 analyzed elite youth players, small-sided-game study",
+      "dates": [
+        "2018 publication year"
+      ],
+      "numerator": null,
+      "numerator_definition": "published mean event scores are not total attempts in our target population",
+      "denominator": null,
+      "derivation": null,
+      "calibration_use": "Classification precedent only; no published rewards/mean values treated as NBA coefficients or probabilities.",
+      "limits": "Age, format, experimental task and outcome definitions differ.",
+      "applicable_to_clean_awkward_loss_probabilities": false
+    },
+    {
+      "id": "PC06",
+      "source_ids": [],
+      "kind": "structural_not_measured",
+      "population": "one declared cohort of released pass attempts",
+      "dates": [],
+      "numerator": null,
+      "numerator_definition": "exclusive end states below",
+      "denominator": {
+        "value": null,
+        "unit": "released pass attempts, not possessions or shots"
+      },
+      "derivation": "Counts of exhaustive terminal outcomes plus unresolved observations must sum to released attempts; nonnegative categories.",
+      "calibration_use": "Accounting identity only, not measured probabilities or a proposed percentage range.",
+      "limits": "Require explicit observation horizon, last-touch/control resolution and distinct subsequent possession events.",
+      "applicable_to_clean_awkward_loss_probabilities": false
+    }
+  ],
+  "proposed_observation_states": [
+    {
+      "id": "clean_retained",
+      "definition": "Intended receiver secures the pass within the declared ready-to-act tolerance; no material delivery-caused correction under the declared coding protocol."
+    },
+    {
+      "id": "awkward_retained",
+      "definition": "Offense retains live control after reach, bobble, gather, relocation or teammate recovery; record who secures it and consequences rather than implying a clean intended catch."
+    },
+    {
+      "id": "retained_stoppage",
+      "definition": "No live clean catch, but offense retains an inbound/other stoppage; disruption can remain without a turnover."
+    },
+    {
+      "id": "live_loss",
+      "definition": "Defense obtains control, even if the offense steals it back in a later distinct event."
+    },
+    {
+      "id": "dead_loss",
+      "definition": "Offense loses possession by applicable out-of-bounds/violation/event; scorer attribution stored separately."
+    },
+    {
+      "id": "unresolved",
+      "definition": "Loose-ball or possession-control decision not yet observed at the horizon; censor/resolve explicitly, never quietly count as a clean catch."
+    }
+  ],
+  "controlled_comparisons": [
+    {
+      "id": "PRC01",
+      "factor": "delivery placement/timing",
+      "hold": "same route, passer/receiver abilities, initial defense, flight/release context",
+      "change": "on-target versus low/high/behind/late but reachable, then beyond reachable envelope",
+      "direction": "Worse placement can first increase retained corrections, then losses; a reachable ball need not preserve the original shot. No forced monotonic loss from every tiny offset."
+    },
+    {
+      "id": "PRC02",
+      "factor": "receiver technique versus physical reach",
+      "hold": "identical delivered trajectory and pressure",
+      "change": "receiving technique at fixed geometry, then geometry at fixed technique separately",
+      "direction": "Better technique should help securing/use where physically feasible; extra reach can expand access without guaranteeing clean control or finish."
+    },
+    {
+      "id": "PRC03",
+      "factor": "defensive pressure and flight window",
+      "hold": "same intended endpoint, receiver/handler skills and route",
+      "change": "interception access or recovery timing, one at a time",
+      "direction": "Deflection/loose-ball recovery may preserve offense. Do not count a deflection and resulting loss as two turnovers."
+    },
+    {
+      "id": "PRC04",
+      "factor": "downstream cost conditional on retained receipt",
+      "hold": "delivered error and current receiver position/release skill",
+      "change": "remaining shot clock or defender closure opportunity separately",
+      "direction": "Record control time, extra movement, release-ready time, next action and contest at actual release; allow reset/no shot, not just an accuracy multiplier."
+    },
+    {
+      "id": "PRC05",
+      "factor": "route context",
+      "hold": "declared matched pressure/geometry and separate ability fields",
+      "change": "ground roll, aerial lob, perimeter drive outlet/pop strata",
+      "direction": "Keep denominators by stratum and terminal type. Different required height, velocity, timing and landing/preparation cannot be collapsed into one universal reception rate."
+    }
+  ],
+  "observation_fields": [
+    "released_attempt_id",
+    "route_context",
+    "passer_id",
+    "intended_receiver_id",
+    "actual_recoverer_id",
+    "delivered_trajectory_or_error",
+    "time_at_receiver_interaction",
+    "defensive_contacts",
+    "first_control_time",
+    "ready_to_act_time",
+    "correction_displacement",
+    "clock_remaining",
+    "defender_geometry_at_control_and_release",
+    "next_action_or_reset",
+    "terminal_control_state",
+    "official_scorer_credit_separate",
+    "observation_horizon_or_censoring"
+  ],
+  "player_updates": [],
+  "conditional_probability_estimates": [],
+  "speculative_numeric_ranges": [],
+  "operational_completions": [],
+  "human_questions_required": [],
+  "calibration_finding": {
+    "observed_numeric_aggregate_constraints_found": true,
+    "conditional_clean_awkward_loss_rate_found": false,
+    "response_coefficients_supported": false,
+    "meaning": "Historical aggregate bookkeeping/budget checks only; no empirical conditional calibration for release/placement-to-catch outcomes."
+  },
+  "source_hashes": {
+    "docs/ratings-evidence-2026-10-29/MIXED_POP_INPUT_UPDATES_2026_11_16.json": "dbabcc349525b440d703e96f24af9ae562633ff904574bc88efd7abb8b060eba",
+    "docs/ratings-evidence-2026-10-29/CREATION_PASSING_DEFENSE_INPUTS_2026_11_13.json": "b973bc8b5c786cb22884af7f17ec34faf4abcac88c4ca87560a3aecfbd82eb58",
+    "data/research/espn_career_raw/3945274.json": "7aea0440379961c61c443ae1c492a2c189352d7829d643686c9562decb259e29",
+    "data/research/tracking_sources_2025_26.json": "572a330c1387ef3a5b5be198183e7d78b9c868315856688fc699812fb7ac3e7c",
+    "docs/PLAYER_OBJECT_THREE_COLUMN_MAP_2026_11_12.md": "208d51f643d78eae2d5ee23db6771522723a1c92fe9d4de5366fa1afa59cda00",
+    "src/nba_gm_data/player_model_registry.py": "9cc7c51792a202ebdfa83105c92b5ce1dcbe2496844341ec758c68e246255e94",
+    "docs/ratings-evidence-2026-10-29/MIXED_POP_INPUT_UPDATES_2026_11_16.md": "51e8f8ab06b70af8b40cc32a9fedd333c45d1473d1b527f9f5fff4e63801cade",
+    "docs/ratings-evidence-2026-10-29/diagnostics/mixed_pop_20261116/source_ledger.json": "48dc246e9a0e4e131ad03c80f1109ddf7496220a423adc92edba7b6438d15d5d",
+    "docs/ratings-evidence-2026-10-29/diagnostics/screen_pop_20261115/source_ledger.json": "a71a992da275771de8fd3a96281951d9f4fbd140f3a333ad38e6deb6f94e79d5",
+    "docs/ratings-evidence-2026-10-29/transcripts/episode4_transcript.txt": "c9d69a637cab914c078fcdbff1fb411d7792ea0bcbbdbac9432d3e08d3af694b",
+    "docs/ratings-evidence-2026-10-29/transcripts/episode8_transcript.txt": "437c8c236940cccd8d17995e50750d9b72d38b957613a566cde7f8fa3fae9d1c"
+  },
+  "preserved_catalogue": {
+    "registry_version": "player_performance_registry_v1",
+    "input_count": 94,
+    "passing_fields": 18,
+    "prior_packet": "docs/ratings-evidence-2026-10-29/MIXED_POP_INPUT_UPDATES_2026_11_16.json",
+    "prior_sha256": "dbabcc349525b440d703e96f24af9ae562633ff904574bc88efd7abb8b060eba",
+    "all_prior_player_records_unchanged": true
+  },
+  "independence": {
+    "new_backend_outcomes_inspected": false,
+    "backend_implementation_inspected": false,
+    "simulations": 0,
+    "production_or_save_writes": 0
+  },
+  "retrieval_limits": [
+    {
+      "url": "https://assets.fiba.basketball/image/upload/documents-corporate-wabc-coaching-level-manuals-level-1-eng.pdf",
+      "result": "400 too large; not reviewed; no retry"
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6277468/",
+      "result": "anti-bot page, not article review; publisher full text accessed separately without subscription"
+    },
+    {
+      "url": "https://statsdmz.nba.com/pdfs/20250605/20250605_INDOKC_book.pdf",
+      "result": "web text accessible; one local source-copy request timed out30s; no retry or local original hash"
+    }
+  ],
+  "coverage": "Selected retained passages and public written sections/PDF tables only; no full new video review and no complete play-by-play subtype reconstruction."
+}

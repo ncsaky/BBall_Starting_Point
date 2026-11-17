@@ -1,0 +1,447 @@
+{
+  "scope": "retained career raw totals; no historical game cache or network",
+  "records": [
+    {
+      "name": "Luka Don\u010di\u0107",
+      "player_id": "player_lal-luka-doncic",
+      "season": "2025-26",
+      "source_file": "data/research/espn_career_raw/3945274.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 530.0,
+        "turnovers": 255.0,
+        "fouls": 153.0,
+        "points": 2143.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Luka Don\u010di\u0107",
+      "player_id": "player_lal-luka-doncic",
+      "season": "2024-25",
+      "source_file": "data/research/espn_career_raw/3945274.json",
+      "row_selection": "combined_total_once",
+      "raw_totals": {
+        "assists": 383.0,
+        "turnovers": 179.0,
+        "fouls": 126.0,
+        "points": 1408.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Shai Gilgeous-Alexander",
+      "player_id": "player_okc-shai-gilgeous-alexander",
+      "season": "2025-26",
+      "source_file": "data/research/espn_career_raw/4278073.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 448.0,
+        "turnovers": 151.0,
+        "fouls": 139.0,
+        "points": 2117.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Shai Gilgeous-Alexander",
+      "player_id": "player_okc-shai-gilgeous-alexander",
+      "season": "2024-25",
+      "source_file": "data/research/espn_career_raw/4278073.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 486.0,
+        "turnovers": 183.0,
+        "fouls": 164.0,
+        "points": 2484.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Jalen Brunson",
+      "player_id": "player_nyk-jalen-brunson",
+      "season": "2025-26",
+      "source_file": "data/research/espn_career_raw/3934672.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 503.0,
+        "turnovers": 175.0,
+        "fouls": 170.0,
+        "points": 1927.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Jalen Brunson",
+      "player_id": "player_nyk-jalen-brunson",
+      "season": "2024-25",
+      "source_file": "data/research/espn_career_raw/3934672.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 475.0,
+        "turnovers": 164.0,
+        "fouls": 138.0,
+        "points": 1690.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Cade Cunningham",
+      "player_id": "player_det-cade-cunningham",
+      "season": "2025-26",
+      "source_file": "data/research/espn_career_raw/4432166.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 634.0,
+        "turnovers": 236.0,
+        "fouls": 196.0,
+        "points": 1531.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Cade Cunningham",
+      "player_id": "player_det-cade-cunningham",
+      "season": "2024-25",
+      "source_file": "data/research/espn_career_raw/4432166.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 638.0,
+        "turnovers": 309.0,
+        "fouls": 195.0,
+        "points": 1830.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Darius Garland",
+      "player_id": "player_lac-darius-garland",
+      "season": "2025-26",
+      "source_file": "data/research/espn_career_raw/4396907.json",
+      "row_selection": "combined_total_once",
+      "raw_totals": {
+        "assists": 301.0,
+        "turnovers": 130.0,
+        "fouls": 84.0,
+        "points": 845.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Darius Garland",
+      "player_id": "player_lac-darius-garland",
+      "season": "2024-25",
+      "source_file": "data/research/espn_career_raw/4396907.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 506.0,
+        "turnovers": 189.0,
+        "fouls": 143.0,
+        "points": 1544.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Dylan Harper",
+      "player_id": "player_sas-dylan-harper",
+      "season": "2025-26",
+      "source_file": "data/research/espn_career_raw/5037871.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 266.0,
+        "turnovers": 99.0,
+        "fouls": 139.0,
+        "points": 813.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "player": "Dylan Harper",
+      "season": "2024-25",
+      "status": "no_prior_NBA_season_expected_not_zero"
+    },
+    {
+      "name": "Desmond Bane",
+      "player_id": "player_orl-desmond-bane",
+      "season": "2025-26",
+      "source_file": "data/research/espn_career_raw/4066320.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 338.0,
+        "turnovers": 164.0,
+        "fouls": 252.0,
+        "points": 1647.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Desmond Bane",
+      "player_id": "player_orl-desmond-bane",
+      "season": "2024-25",
+      "source_file": "data/research/espn_career_raw/4066320.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 369.0,
+        "turnovers": 169.0,
+        "fouls": 164.0,
+        "points": 1327.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Stephon Castle",
+      "player_id": "player_sas-stephon-castle",
+      "season": "2025-26",
+      "source_file": "data/research/espn_career_raw/4845367.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 502.0,
+        "turnovers": 217.0,
+        "fouls": 222.0,
+        "points": 1133.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Stephon Castle",
+      "player_id": "player_sas-stephon-castle",
+      "season": "2024-25",
+      "source_file": "data/research/espn_career_raw/4845367.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 332.0,
+        "turnovers": 177.0,
+        "fouls": 164.0,
+        "points": 1190.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Derrick White",
+      "player_id": "player_bos-derrick-white",
+      "season": "2025-26",
+      "source_file": "data/research/espn_career_raw/3078576.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 414.0,
+        "turnovers": 134.0,
+        "fouls": 119.0,
+        "points": 1267.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Derrick White",
+      "player_id": "player_bos-derrick-white",
+      "season": "2024-25",
+      "source_file": "data/research/espn_career_raw/3078576.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 361.0,
+        "turnovers": 131.0,
+        "fouls": 138.0,
+        "points": 1248.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Scottie Barnes",
+      "player_id": "player_tor-scottie-barnes",
+      "season": "2025-26",
+      "source_file": "data/research/espn_career_raw/4433134.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 474.0,
+        "turnovers": 210.0,
+        "fouls": 211.0,
+        "points": 1448.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Scottie Barnes",
+      "player_id": "player_tor-scottie-barnes",
+      "season": "2024-25",
+      "source_file": "data/research/espn_career_raw/4433134.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 378.0,
+        "turnovers": 184.0,
+        "fouls": 113.0,
+        "points": 1252.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Rudy Gobert",
+      "player_id": "player_min-rudy-gobert",
+      "season": "2025-26",
+      "source_file": "data/research/espn_career_raw/3032976.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 128.0,
+        "turnovers": 106.0,
+        "fouls": 199.0,
+        "points": 829.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Rudy Gobert",
+      "player_id": "player_min-rudy-gobert",
+      "season": "2024-25",
+      "source_file": "data/research/espn_career_raw/3032976.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 127.0,
+        "turnovers": 89.0,
+        "fouls": 182.0,
+        "points": 866.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Bam Adebayo",
+      "player_id": "player_mia-bam-adebayo",
+      "season": "2025-26",
+      "source_file": "data/research/espn_career_raw/4066261.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 232.0,
+        "turnovers": 120.0,
+        "fouls": 122.0,
+        "points": 1468.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    },
+    {
+      "name": "Bam Adebayo",
+      "player_id": "player_mia-bam-adebayo",
+      "season": "2024-25",
+      "source_file": "data/research/espn_career_raw/4066261.json",
+      "row_selection": "stints_once",
+      "raw_totals": {
+        "assists": 337.0,
+        "turnovers": 161.0,
+        "fouls": 162.0,
+        "points": 1410.0
+      },
+      "checks_vs_career_store": {
+        "assists": true,
+        "turnovers": true,
+        "points": true
+      },
+      "fouls_status": "raw aggregate all personal fouls, not offensive fouls or intent classification"
+    }
+  ]
+}

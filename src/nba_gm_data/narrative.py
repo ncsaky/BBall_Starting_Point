@@ -21,8 +21,8 @@ from .utils import clamp, stable_id
 
 NARRATIVE_PROMPT_VERSION = "narrative_v11"
 SOCIAL_TEXT_MAX_CHARS = 760
-TAX_LINE = 187_895_000
-SECOND_APRON = 207_824_000
+TAX_LINE = 200_428_000
+SECOND_APRON = 221_686_000
 ANNUAL_CAP_GROWTH_RATE = 0.035
 ALLOWED_PRESS_TONES = {"accountable", "optimistic", "deflect", "challenge"}
 ALLOWED_PRESS_QUALITIES = {"good", "mixed", "bad"}
@@ -913,6 +913,13 @@ def trade_social_analysis(
         for asset in details.get("to_assets", []) or []
     ]
     all_assets = [*from_assets, *to_assets]
+    flows = None
+    if details.get('transfers'):
+        from .transactions import trade_team_flows
+        def compact(assets):
+            return [compact_asset_context(a, canonical, save, players_by_id, traits_by_player, active_season) for a in assets]
+        flows = [(tid, compact(outgoing), compact(incoming)) for tid, outgoing, incoming in trade_team_flows(details)]
+        all_assets = [a for _, outgoing, _ in flows for a in outgoing]
     picks = [asset for asset in all_assets if asset.get("kind") == "pick"]
     protected_picks = [asset for asset in picks if asset.get("protected")]
     r1_count = sum(1 for asset in picks if asset.get("is_first_round"))
@@ -920,6 +927,8 @@ def trade_social_analysis(
     from_subject = ", ".join(social_subject_asset_label(asset) for asset in from_assets) or "future considerations"
     to_subject = ", ".join(social_subject_asset_label(asset) for asset in to_assets) or "future considerations"
     display_label = f"Trade: {abbrev_by_id.get(from_team_id, from_team_id)} sends {from_subject}; {abbrev_by_id.get(to_team_id, to_team_id)} sends {to_subject}."
+    if flows:
+        display_label = 'Trade: ' + '; '.join(f"{abbrev_by_id.get(tid, tid)} sends {', '.join(social_subject_asset_label(a) for a in outgoing) or 'no assets'}" for tid, outgoing, _ in flows) + '.'
     hooks = []
     if picks:
         if r1_count:
@@ -934,6 +943,8 @@ def trade_social_analysis(
         trade_side_analysis(to_team_id, from_assets, to_assets, abbrev_by_id, teams_by_id),
         trade_side_analysis(from_team_id, to_assets, from_assets, abbrev_by_id, teams_by_id),
     ]
+    if flows:
+        sides = [trade_side_analysis(tid, incoming, outgoing, abbrev_by_id, teams_by_id) for tid, outgoing, incoming in flows]
     direction_facts = [
         f"{side.get('team')} receives {', '.join(str(asset.get('label') or asset.get('name')) for asset in side.get('incoming_players', [])[:3]) or 'no players'}; "
         f"sends {', '.join(str(asset.get('label') or asset.get('name')) for asset in side.get('outgoing_players', [])[:3]) or 'no players'}"
@@ -958,6 +969,7 @@ def trade_social_analysis(
             "from": abbrev_by_id.get(from_team_id or "", from_team_id),
             "to": abbrev_by_id.get(to_team_id or "", to_team_id),
         },
+        **({'participant_teams': [abbrev_by_id.get(tid, tid) for tid, _, _ in flows]} if flows else {}),
         "sides": sides,
         "asset_mix": {
             "players": sum(1 for asset in all_assets if asset.get("kind") == "player"),

@@ -1,0 +1,2056 @@
+{
+  "Desmond Bane": {
+    "deltas": {
+      "shot_versatility": 5
+    },
+    "targets": {
+      "shot_versatility": 59.93
+    },
+    "engine": {
+      "post_creation": 31.5,
+      "assisted_finishing": 55.5,
+      "screening": 61.3,
+      "offensive_rebounding": 38.0,
+      "offense": 69.2,
+      "overall": 71.3,
+      "shooting": 70.6,
+      "spacing": 70.6,
+      "creation": 66.9,
+      "defense": 73.1,
+      "athleticism": 67.5,
+      "iq": 79.0,
+      "release": 77.7,
+      "range": 74.2,
+      "versatility": 59.9,
+      "handle": 67.1,
+      "rim_pressure": 66.8,
+      "passing": 73.6,
+      "stamina": 56.0,
+      "rebounding": 42.7,
+      "def_effort": 83.8,
+      "screen_nav": 80.0,
+      "steal": 81.0,
+      "block": 70.4,
+      "rim_deterrence": 48.0,
+      "oreb": 38.0,
+      "lateral_agility": 79.5,
+      "scheme_iq": 80.7,
+      "portability": 85.8,
+      "playoff": 76.0
+    },
+    "display": {
+      "post_creation": 49.8,
+      "assisted_finishing": 75.5,
+      "screening": 81.0,
+      "offensive_rebounding": 57.6,
+      "offense": 87.4,
+      "overall": 88.9,
+      "shooting": 88.4,
+      "spacing": 88.4,
+      "creation": 85.5,
+      "defense": 90.2,
+      "athleticism": 86.0,
+      "iq": 94.3,
+      "release": 93.4,
+      "range": 90.9,
+      "versatility": 79.9,
+      "handle": 85.7,
+      "rim_pressure": 85.4,
+      "passing": 90.5,
+      "stamina": 76.0,
+      "rebounding": 62.7,
+      "def_effort": 96.1,
+      "screen_nav": 95.0,
+      "steal": 95.3,
+      "block": 88.3,
+      "rim_deterrence": 68.0,
+      "oreb": 57.6,
+      "lateral_agility": 94.7,
+      "scheme_iq": 95.2,
+      "portability": 96.7,
+      "playoff": 92.2
+    },
+    "changed_features": {
+      "impact": {
+        "before": 73.119,
+        "after": 73.598
+      },
+      "usage": {
+        "before": 77.356,
+        "after": 79.183
+      },
+      "shot_creation": {
+        "before": 54.93,
+        "after": 59.93
+      },
+      "scoring_usage": {
+        "before": 62.43,
+        "after": 63.787
+      },
+      "offense_value": {
+        "before": 68.25,
+        "after": 69.226
+      },
+      "post_creation": {
+        "before": 30.817,
+        "after": 31.547
+      },
+      "assisted_finishing": {
+        "before": 55.378,
+        "after": 55.497
+      },
+      "two_pct": {
+        "before": 0.539,
+        "after": 0.541
+      },
+      "sp_off_restricted_area_frequency": {
+        "before": 0.173,
+        "after": 0.169
+      },
+      "sp_off_restricted_area_efficiency": {
+        "before": 62.44,
+        "after": 62.5
+      },
+      "sp_off_restricted_area_gravity": {
+        "before": 83.18,
+        "after": 83.56
+      },
+      "sp_off_restricted_area_intensity": {
+        "before": 76.49,
+        "after": 76.65
+      },
+      "sp_off_paint_non_ra_frequency": {
+        "before": 0.107,
+        "after": 0.105
+      },
+      "sp_off_paint_non_ra_efficiency": {
+        "before": 49.86,
+        "after": 50.18
+      },
+      "sp_off_paint_non_ra_gravity": {
+        "before": 82.42,
+        "after": 82.8
+      },
+      "sp_off_short_mid_left_frequency": {
+        "before": 0.075,
+        "after": 0.076
+      },
+      "sp_off_short_mid_left_efficiency": {
+        "before": 61.86,
+        "after": 64.52
+      },
+      "sp_off_short_mid_left_gravity": {
+        "before": 66.88,
+        "after": 69.14
+      },
+      "sp_off_short_mid_left_intensity": {
+        "before": 62.0,
+        "after": 64.21
+      },
+      "sp_off_short_mid_right_frequency": {
+        "before": 0.078,
+        "after": 0.08
+      },
+      "sp_off_short_mid_right_efficiency": {
+        "before": 63.02,
+        "after": 65.68
+      },
+      "sp_off_short_mid_right_gravity": {
+        "before": 67.29,
+        "after": 69.55
+      },
+      "sp_off_short_mid_right_intensity": {
+        "before": 63.07,
+        "after": 65.27
+      },
+      "sp_off_long_mid_left_frequency": {
+        "before": 0.064,
+        "after": 0.066
+      },
+      "sp_off_long_mid_left_efficiency": {
+        "before": 64.07,
+        "after": 66.73
+      },
+      "sp_off_long_mid_left_gravity": {
+        "before": 67.65,
+        "after": 69.92
+      },
+      "sp_off_long_mid_left_intensity": {
+        "before": 61.93,
+        "after": 64.14
+      },
+      "sp_off_long_mid_center_frequency": {
+        "before": 0.066,
+        "after": 0.067
+      },
+      "sp_off_long_mid_center_efficiency": {
+        "before": 60.54,
+        "after": 63.2
+      },
+      "sp_off_long_mid_center_gravity": {
+        "before": 66.42,
+        "after": 68.68
+      },
+      "sp_off_long_mid_center_intensity": {
+        "before": 60.09,
+        "after": 62.29
+      },
+      "sp_off_long_mid_right_frequency": {
+        "before": 0.063,
+        "after": 0.065
+      },
+      "sp_off_long_mid_right_efficiency": {
+        "before": 62.43,
+        "after": 65.1
+      },
+      "sp_off_long_mid_right_gravity": {
+        "before": 67.08,
+        "after": 69.35
+      },
+      "sp_off_long_mid_right_intensity": {
+        "before": 60.87,
+        "after": 63.07
+      },
+      "sp_off_corner_three_left_efficiency": {
+        "before": 68.16,
+        "after": 69.72
+      },
+      "sp_off_corner_three_left_gravity": {
+        "before": 76.31,
+        "after": 77.58
+      },
+      "sp_off_corner_three_left_intensity": {
+        "before": 67.14,
+        "after": 68.28
+      },
+      "sp_off_above_break_left_efficiency": {
+        "before": 71.55,
+        "after": 73.11
+      },
+      "sp_off_above_break_left_gravity": {
+        "before": 77.5,
+        "after": 78.77
+      },
+      "sp_off_above_break_left_intensity": {
+        "before": 70.99,
+        "after": 72.19
+      },
+      "sp_off_above_break_center_efficiency": {
+        "before": 71.08,
+        "after": 72.64
+      },
+      "sp_off_above_break_center_gravity": {
+        "before": 77.33,
+        "after": 78.61
+      },
+      "sp_off_above_break_center_intensity": {
+        "before": 69.95,
+        "after": 71.16
+      },
+      "sp_off_above_break_right_efficiency": {
+        "before": 70.41,
+        "after": 71.96
+      },
+      "sp_off_above_break_right_gravity": {
+        "before": 77.1,
+        "after": 78.37
+      },
+      "sp_off_above_break_right_intensity": {
+        "before": 70.36,
+        "after": 71.56
+      },
+      "sp_off_corner_three_right_efficiency": {
+        "before": 68.04,
+        "after": 69.6
+      },
+      "sp_off_corner_three_right_gravity": {
+        "before": 76.27,
+        "after": 77.54
+      },
+      "sp_off_corner_three_right_intensity": {
+        "before": 67.59,
+        "after": 68.71
+      }
+    }
+  },
+  "Austin Reaves": {
+    "deltas": {
+      "shot_versatility": 6
+    },
+    "targets": {
+      "shot_versatility": 57.28
+    },
+    "engine": {
+      "post_creation": 29.3,
+      "assisted_finishing": 60.8,
+      "screening": 58.7,
+      "offensive_rebounding": 28.4,
+      "offense": 71.3,
+      "overall": 68.8,
+      "shooting": 67.5,
+      "spacing": 67.5,
+      "creation": 70.7,
+      "defense": 63.3,
+      "athleticism": 65.5,
+      "iq": 77.2,
+      "release": 73.8,
+      "range": 71.4,
+      "versatility": 57.3,
+      "handle": 75.2,
+      "rim_pressure": 65.9,
+      "passing": 84.4,
+      "stamina": 60.9,
+      "rebounding": 36.8,
+      "def_effort": 66.5,
+      "screen_nav": 61.9,
+      "steal": 69.1,
+      "block": 60.7,
+      "rim_deterrence": 46.1,
+      "oreb": 28.4,
+      "lateral_agility": 69.5,
+      "scheme_iq": 78.5,
+      "portability": 76.2,
+      "playoff": 69.5
+    },
+    "display": {
+      "post_creation": 47.2,
+      "assisted_finishing": 80.6,
+      "screening": 78.7,
+      "offensive_rebounding": 46.1,
+      "offense": 88.9,
+      "overall": 87.0,
+      "shooting": 86.0,
+      "spacing": 86.0,
+      "creation": 88.5,
+      "defense": 82.6,
+      "athleticism": 84.4,
+      "iq": 93.0,
+      "release": 90.7,
+      "range": 89.0,
+      "versatility": 77.3,
+      "handle": 91.6,
+      "rim_pressure": 84.7,
+      "passing": 96.3,
+      "stamina": 80.7,
+      "rebounding": 56.2,
+      "def_effort": 85.2,
+      "screen_nav": 81.5,
+      "steal": 87.3,
+      "block": 80.6,
+      "rim_deterrence": 66.1,
+      "oreb": 46.1,
+      "lateral_agility": 87.6,
+      "scheme_iq": 94.0,
+      "portability": 92.3,
+      "playoff": 87.6
+    },
+    "changed_features": {
+      "impact": {
+        "before": 69.947,
+        "after": 70.589
+      },
+      "usage": {
+        "before": 76.684,
+        "after": 78.887
+      },
+      "shot_creation": {
+        "before": 51.28,
+        "after": 57.28
+      },
+      "scoring_usage": {
+        "before": 61.862,
+        "after": 63.797
+      },
+      "offense_value": {
+        "before": 70.154,
+        "after": 71.334
+      },
+      "post_creation": {
+        "before": 28.52,
+        "after": 29.33
+      },
+      "assisted_finishing": {
+        "before": 60.654,
+        "after": 60.797
+      },
+      "two_pct": {
+        "before": 0.566,
+        "after": 0.569
+      },
+      "sp_off_restricted_area_frequency": {
+        "before": 0.162,
+        "after": 0.157
+      },
+      "sp_off_restricted_area_efficiency": {
+        "before": 63.22,
+        "after": 63.3
+      },
+      "sp_off_restricted_area_gravity": {
+        "before": 82.79,
+        "after": 83.25
+      },
+      "sp_off_restricted_area_intensity": {
+        "before": 76.71,
+        "after": 76.91
+      },
+      "sp_off_paint_non_ra_frequency": {
+        "before": 0.097,
+        "after": 0.094
+      },
+      "sp_off_paint_non_ra_efficiency": {
+        "before": 51.62,
+        "after": 51.97
+      },
+      "sp_off_paint_non_ra_gravity": {
+        "before": 83.28,
+        "after": 83.74
+      },
+      "sp_off_short_mid_left_frequency": {
+        "before": 0.061,
+        "after": 0.063
+      },
+      "sp_off_short_mid_left_efficiency": {
+        "before": 59.67,
+        "after": 62.87
+      },
+      "sp_off_short_mid_left_gravity": {
+        "before": 66.29,
+        "after": 69.01
+      },
+      "sp_off_short_mid_left_intensity": {
+        "before": 59.03,
+        "after": 61.69
+      },
+      "sp_off_short_mid_right_frequency": {
+        "before": 0.062,
+        "after": 0.063
+      },
+      "sp_off_short_mid_right_efficiency": {
+        "before": 58.57,
+        "after": 61.77
+      },
+      "sp_off_short_mid_right_gravity": {
+        "before": 65.91,
+        "after": 68.62
+      },
+      "sp_off_short_mid_right_intensity": {
+        "before": 58.44,
+        "after": 61.09
+      },
+      "sp_off_long_mid_left_frequency": {
+        "before": 0.06,
+        "after": 0.061
+      },
+      "sp_off_long_mid_left_efficiency": {
+        "before": 62.32,
+        "after": 65.52
+      },
+      "sp_off_long_mid_left_gravity": {
+        "before": 67.22,
+        "after": 69.94
+      },
+      "sp_off_long_mid_left_intensity": {
+        "before": 60.42,
+        "after": 63.05
+      },
+      "sp_off_long_mid_center_frequency": {
+        "before": 0.056,
+        "after": 0.058
+      },
+      "sp_off_long_mid_center_efficiency": {
+        "before": 61.22,
+        "after": 64.41
+      },
+      "sp_off_long_mid_center_gravity": {
+        "before": 66.83,
+        "after": 69.55
+      },
+      "sp_off_long_mid_center_intensity": {
+        "before": 59.31,
+        "after": 61.94
+      },
+      "sp_off_long_mid_right_frequency": {
+        "before": 0.062,
+        "after": 0.063
+      },
+      "sp_off_long_mid_right_efficiency": {
+        "before": 62.45,
+        "after": 65.65
+      },
+      "sp_off_long_mid_right_gravity": {
+        "before": 67.27,
+        "after": 69.98
+      },
+      "sp_off_long_mid_right_intensity": {
+        "before": 60.75,
+        "after": 63.37
+      },
+      "sp_off_corner_three_left_efficiency": {
+        "before": 68.03,
+        "after": 69.89
+      },
+      "sp_off_corner_three_left_gravity": {
+        "before": 74.63,
+        "after": 76.16
+      },
+      "sp_off_corner_three_left_intensity": {
+        "before": 68.8,
+        "after": 70.14
+      },
+      "sp_off_above_break_left_efficiency": {
+        "before": 68.64,
+        "after": 70.5
+      },
+      "sp_off_above_break_left_gravity": {
+        "before": 74.85,
+        "after": 76.37
+      },
+      "sp_off_above_break_left_intensity": {
+        "before": 69.86,
+        "after": 71.31
+      },
+      "sp_off_above_break_center_efficiency": {
+        "before": 66.89,
+        "after": 68.76
+      },
+      "sp_off_above_break_center_gravity": {
+        "before": 74.23,
+        "after": 75.76
+      },
+      "sp_off_above_break_center_intensity": {
+        "before": 69.05,
+        "after": 70.5
+      },
+      "sp_off_above_break_right_efficiency": {
+        "before": 67.86,
+        "after": 69.73
+      },
+      "sp_off_above_break_right_gravity": {
+        "before": 74.57,
+        "after": 76.1
+      },
+      "sp_off_above_break_right_intensity": {
+        "before": 70.38,
+        "after": 71.81
+      },
+      "sp_off_corner_three_right_efficiency": {
+        "before": 64.88,
+        "after": 66.74
+      },
+      "sp_off_corner_three_right_gravity": {
+        "before": 73.53,
+        "after": 75.06
+      },
+      "sp_off_corner_three_right_intensity": {
+        "before": 65.88,
+        "after": 67.24
+      }
+    }
+  },
+  "Tyler Herro": {
+    "deltas": {
+      "rim_pressure": -12,
+      "handle_pressure": -5
+    },
+    "targets": {
+      "rim_pressure": 73.95,
+      "handle_pressure": 79.47
+    },
+    "engine": {
+      "post_creation": 32.3,
+      "assisted_finishing": 63.6,
+      "screening": 56.6,
+      "offensive_rebounding": 63.5,
+      "offense": 75.8,
+      "overall": 72.9,
+      "shooting": 77.7,
+      "spacing": 77.7,
+      "creation": 73.6,
+      "defense": 68.0,
+      "athleticism": 70.2,
+      "iq": 73.0,
+      "release": 89.9,
+      "range": 80.2,
+      "versatility": 63.1,
+      "handle": 79.5,
+      "rim_pressure": 74.0,
+      "passing": 77.7,
+      "stamina": 59.3,
+      "rebounding": 63.0,
+      "def_effort": 68.0,
+      "screen_nav": 66.2,
+      "steal": 71.3,
+      "block": 69.9,
+      "rim_deterrence": 64.3,
+      "oreb": 63.5,
+      "lateral_agility": 77.3,
+      "scheme_iq": 73.6,
+      "portability": 70.1,
+      "playoff": 70.6
+    },
+    "display": {
+      "post_creation": 50.8,
+      "assisted_finishing": 82.9,
+      "screening": 76.6,
+      "offensive_rebounding": 82.8,
+      "offense": 92.1,
+      "overall": 90.0,
+      "shooting": 93.4,
+      "spacing": 93.4,
+      "creation": 90.5,
+      "defense": 86.4,
+      "athleticism": 88.1,
+      "iq": 90.1,
+      "release": 98.0,
+      "range": 95.1,
+      "versatility": 82.5,
+      "handle": 94.7,
+      "rim_pressure": 90.8,
+      "passing": 93.4,
+      "stamina": 79.3,
+      "rebounding": 82.4,
+      "def_effort": 86.4,
+      "screen_nav": 85.0,
+      "steal": 88.9,
+      "block": 87.9,
+      "rim_deterrence": 83.4,
+      "oreb": 82.8,
+      "lateral_agility": 93.1,
+      "scheme_iq": 90.5,
+      "portability": 88.1,
+      "playoff": 88.4
+    },
+    "changed_features": {
+      "impact": {
+        "before": 75.881,
+        "after": 73.743
+      },
+      "usage": {
+        "before": 82.851,
+        "after": 80.469
+      },
+      "scoring_usage": {
+        "before": 70.03,
+        "after": 66.953
+      },
+      "rim_pressure": {
+        "before": 92.839,
+        "after": 76.658
+      },
+      "offense_value": {
+        "before": 78.982,
+        "after": 75.822
+      },
+      "post_creation": {
+        "before": 35.457,
+        "after": 32.307
+      },
+      "assisted_finishing": {
+        "before": 70.07,
+        "after": 63.562
+      },
+      "two_pct": {
+        "before": 0.562,
+        "after": 0.54
+      },
+      "sp_off_restricted_area_frequency": {
+        "before": 0.14,
+        "after": 0.131
+      },
+      "sp_off_restricted_area_efficiency": {
+        "before": 67.93,
+        "after": 64.68
+      },
+      "sp_off_restricted_area_gravity": {
+        "before": 95.63,
+        "after": 88.17
+      },
+      "sp_off_restricted_area_intensity": {
+        "before": 83.31,
+        "after": 77.96
+      },
+      "sp_off_paint_non_ra_frequency": {
+        "before": 0.088,
+        "after": 0.086
+      },
+      "sp_off_paint_non_ra_efficiency": {
+        "before": 56.5,
+        "after": 54.07
+      },
+      "sp_off_paint_non_ra_gravity": {
+        "before": 96.26,
+        "after": 88.8
+      },
+      "sp_off_paint_non_ra_intensity": {
+        "before": 71.77,
+        "after": 67.7
+      },
+      "sp_off_short_mid_left_frequency": {
+        "before": 0.055,
+        "after": 0.058
+      },
+      "sp_off_short_mid_left_efficiency": {
+        "before": 66.37,
+        "after": 65.96
+      },
+      "sp_off_short_mid_left_gravity": {
+        "before": 72.27,
+        "after": 71.6
+      },
+      "sp_off_short_mid_left_intensity": {
+        "before": 63.52,
+        "after": 63.43
+      },
+      "sp_off_short_mid_right_frequency": {
+        "before": 0.053,
+        "after": 0.056
+      },
+      "sp_off_short_mid_right_efficiency": {
+        "before": 68.57,
+        "after": 68.17
+      },
+      "sp_off_short_mid_right_gravity": {
+        "before": 73.04,
+        "after": 72.38
+      },
+      "sp_off_short_mid_right_intensity": {
+        "before": 64.54,
+        "after": 64.43
+      },
+      "sp_off_long_mid_left_frequency": {
+        "before": 0.048,
+        "after": 0.05
+      },
+      "sp_off_long_mid_left_efficiency": {
+        "before": 68.71,
+        "after": 68.3
+      },
+      "sp_off_long_mid_left_gravity": {
+        "before": 73.09,
+        "after": 72.42
+      },
+      "sp_off_long_mid_left_intensity": {
+        "before": 63.94,
+        "after": 63.78
+      },
+      "sp_off_long_mid_center_frequency": {
+        "before": 0.045,
+        "after": 0.047
+      },
+      "sp_off_long_mid_center_efficiency": {
+        "before": 65.2,
+        "after": 64.79
+      },
+      "sp_off_long_mid_center_gravity": {
+        "before": 71.86,
+        "after": 71.19
+      },
+      "sp_off_long_mid_center_intensity": {
+        "before": 61.52,
+        "after": 61.34
+      },
+      "sp_off_long_mid_right_frequency": {
+        "before": 0.046,
+        "after": 0.049
+      },
+      "sp_off_long_mid_right_efficiency": {
+        "before": 66.84,
+        "after": 66.43
+      },
+      "sp_off_long_mid_right_gravity": {
+        "before": 72.43,
+        "after": 71.77
+      },
+      "sp_off_long_mid_right_intensity": {
+        "before": 62.68,
+        "after": 62.51
+      },
+      "sp_off_corner_three_left_gravity": {
+        "before": 81.07,
+        "after": 80.74
+      },
+      "sp_off_corner_three_left_intensity": {
+        "before": 75.9,
+        "after": 75.86
+      },
+      "sp_off_above_break_left_gravity": {
+        "before": 80.34,
+        "after": 80.0
+      },
+      "sp_off_above_break_left_intensity": {
+        "before": 76.24,
+        "after": 76.06
+      },
+      "sp_off_above_break_center_frequency": {
+        "before": 0.112,
+        "after": 0.111
+      },
+      "sp_off_above_break_center_gravity": {
+        "before": 80.45,
+        "after": 80.11
+      },
+      "sp_off_above_break_center_intensity": {
+        "before": 76.74,
+        "after": 76.56
+      },
+      "sp_off_above_break_right_gravity": {
+        "before": 81.07,
+        "after": 80.73
+      },
+      "sp_off_above_break_right_intensity": {
+        "before": 77.48,
+        "after": 77.3
+      },
+      "sp_off_corner_three_right_gravity": {
+        "before": 80.94,
+        "after": 80.6
+      },
+      "sp_off_corner_three_right_intensity": {
+        "before": 75.8,
+        "after": 75.77
+      }
+    }
+  },
+  "Paolo Banchero": {
+    "deltas": {
+      "rim_deterrence": -12,
+      "passing_reads": -4
+    },
+    "targets": {
+      "passing_reads": 72.26,
+      "rim_deterrence": 72.14
+    },
+    "engine": {
+      "post_creation": 62.7,
+      "assisted_finishing": 57.5,
+      "screening": 68.2,
+      "offensive_rebounding": 75.5,
+      "offense": 67.8,
+      "overall": 68.9,
+      "shooting": 61.1,
+      "spacing": 61.1,
+      "creation": 69.9,
+      "defense": 69.0,
+      "athleticism": 68.6,
+      "iq": 69.6,
+      "release": 60.3,
+      "range": 63.3,
+      "versatility": 59.8,
+      "handle": 70.7,
+      "rim_pressure": 76.7,
+      "passing": 72.3,
+      "stamina": 59.5,
+      "rebounding": 72.3,
+      "def_effort": 68.0,
+      "screen_nav": 63.2,
+      "steal": 68.4,
+      "block": 69.9,
+      "rim_deterrence": 72.1,
+      "oreb": 75.5,
+      "lateral_agility": 69.8,
+      "scheme_iq": 72.5,
+      "portability": 67.7,
+      "playoff": 65.8
+    },
+    "display": {
+      "post_creation": 82.2,
+      "assisted_finishing": 77.5,
+      "screening": 86.6,
+      "offensive_rebounding": 91.8,
+      "offense": 86.2,
+      "overall": 87.1,
+      "shooting": 80.9,
+      "spacing": 80.9,
+      "creation": 87.9,
+      "defense": 87.2,
+      "athleticism": 86.9,
+      "iq": 87.7,
+      "release": 80.2,
+      "range": 82.6,
+      "versatility": 79.8,
+      "handle": 88.5,
+      "rim_pressure": 92.7,
+      "passing": 89.6,
+      "stamina": 79.5,
+      "rebounding": 89.6,
+      "def_effort": 86.4,
+      "screen_nav": 82.6,
+      "steal": 86.7,
+      "block": 87.9,
+      "rim_deterrence": 89.5,
+      "oreb": 91.8,
+      "lateral_agility": 87.8,
+      "scheme_iq": 89.8,
+      "portability": 86.2,
+      "playoff": 84.6
+    },
+    "changed_features": {
+      "impact": {
+        "before": 71.58,
+        "after": 69.479
+      },
+      "usage": {
+        "before": 81.046,
+        "after": 80.39
+      },
+      "scoring_usage": {
+        "before": 64.909,
+        "after": 64.912
+      },
+      "rim_deterrence": {
+        "before": 88.933,
+        "after": 73.102
+      },
+      "passing": {
+        "before": 74.38,
+        "after": 72.38
+      },
+      "offense_value": {
+        "before": 68.683,
+        "after": 67.796
+      },
+      "offensive_passing": {
+        "before": 76.26,
+        "after": 72.26
+      },
+      "sp_off_restricted_area_gravity": {
+        "before": 90.52,
+        "after": 90.39
+      },
+      "sp_off_restricted_area_intensity": {
+        "before": 81.49,
+        "after": 81.45
+      },
+      "sp_def_restricted_area_frequency_influence": {
+        "before": 38.73,
+        "after": 41.09
+      },
+      "sp_def_restricted_area_contest": {
+        "before": 78.99,
+        "after": 72.39
+      },
+      "sp_def_restricted_area_suppression": {
+        "before": 83.16,
+        "after": 76.2
+      },
+      "sp_def_restricted_area_intensity": {
+        "before": 81.58,
+        "after": 74.75
+      },
+      "sp_off_paint_non_ra_gravity": {
+        "before": 89.34,
+        "after": 89.22
+      },
+      "sp_off_paint_non_ra_intensity": {
+        "before": 79.36,
+        "after": 79.33
+      },
+      "sp_def_paint_non_ra_frequency_influence": {
+        "before": 39.01,
+        "after": 41.38
+      },
+      "sp_def_paint_non_ra_contest": {
+        "before": 78.99,
+        "after": 72.39
+      },
+      "sp_def_paint_non_ra_suppression": {
+        "before": 82.32,
+        "after": 75.36
+      },
+      "sp_def_paint_non_ra_intensity": {
+        "before": 81.05,
+        "after": 74.23
+      },
+      "sp_off_short_mid_left_efficiency": {
+        "before": 65.5,
+        "after": 65.4
+      },
+      "sp_off_short_mid_left_gravity": {
+        "before": 69.97,
+        "after": 69.8
+      },
+      "sp_off_short_mid_left_intensity": {
+        "before": 64.75,
+        "after": 64.64
+      },
+      "sp_off_short_mid_right_efficiency": {
+        "before": 66.66,
+        "after": 66.56
+      },
+      "sp_off_short_mid_right_gravity": {
+        "before": 70.38,
+        "after": 70.21
+      },
+      "sp_off_short_mid_right_intensity": {
+        "before": 66.42,
+        "after": 66.3
+      },
+      "sp_off_long_mid_left_efficiency": {
+        "before": 64.33,
+        "after": 64.23
+      },
+      "sp_off_long_mid_left_gravity": {
+        "before": 69.56,
+        "after": 69.4
+      },
+      "sp_off_long_mid_left_intensity": {
+        "before": 64.01,
+        "after": 63.89
+      },
+      "sp_off_long_mid_center_efficiency": {
+        "before": 63.55,
+        "after": 63.45
+      },
+      "sp_off_long_mid_center_gravity": {
+        "before": 69.29,
+        "after": 69.12
+      },
+      "sp_off_long_mid_center_intensity": {
+        "before": 61.96,
+        "after": 61.84
+      },
+      "sp_off_long_mid_right_efficiency": {
+        "before": 64.53,
+        "after": 64.43
+      },
+      "sp_off_long_mid_right_gravity": {
+        "before": 69.63,
+        "after": 69.47
+      },
+      "sp_off_long_mid_right_intensity": {
+        "before": 62.48,
+        "after": 62.35
+      },
+      "sp_off_corner_three_left_gravity": {
+        "before": 71.39,
+        "after": 71.31
+      },
+      "sp_off_corner_three_left_intensity": {
+        "before": 62.22,
+        "after": 62.2
+      },
+      "sp_off_above_break_left_gravity": {
+        "before": 71.16,
+        "after": 71.08
+      },
+      "sp_off_above_break_left_intensity": {
+        "before": 63.77,
+        "after": 63.73
+      },
+      "sp_off_above_break_center_gravity": {
+        "before": 70.8,
+        "after": 70.71
+      },
+      "sp_off_above_break_center_intensity": {
+        "before": 62.26,
+        "after": 62.22
+      },
+      "sp_off_above_break_right_gravity": {
+        "before": 70.41,
+        "after": 70.32
+      },
+      "sp_off_above_break_right_intensity": {
+        "before": 61.44,
+        "after": 61.4
+      },
+      "sp_off_corner_three_right_gravity": {
+        "before": 71.52,
+        "after": 71.43
+      },
+      "sp_off_corner_three_right_intensity": {
+        "before": 62.73,
+        "after": 62.71
+      }
+    }
+  },
+  "Jaylen Brown": {
+    "deltas": {
+      "passing_reads": -6
+    },
+    "targets": {
+      "passing_reads": 68.74
+    },
+    "engine": {
+      "post_creation": 40.1,
+      "assisted_finishing": 58.2,
+      "screening": 60.6,
+      "offensive_rebounding": 68.3,
+      "offense": 70.8,
+      "overall": 73.1,
+      "shooting": 73.7,
+      "spacing": 73.7,
+      "creation": 68.6,
+      "defense": 75.8,
+      "athleticism": 72.7,
+      "iq": 71.5,
+      "release": 83.5,
+      "range": 75.3,
+      "versatility": 62.1,
+      "handle": 71.8,
+      "rim_pressure": 71.7,
+      "passing": 68.7,
+      "stamina": 62.2,
+      "rebounding": 67.8,
+      "def_effort": 82.0,
+      "screen_nav": 76.7,
+      "steal": 79.1,
+      "block": 79.0,
+      "rim_deterrence": 70.8,
+      "oreb": 68.3,
+      "lateral_agility": 84.2,
+      "scheme_iq": 73.7,
+      "portability": 72.8,
+      "playoff": 70.6
+    },
+    "display": {
+      "post_creation": 60.1,
+      "assisted_finishing": 78.2,
+      "screening": 80.5,
+      "offensive_rebounding": 86.6,
+      "offense": 88.6,
+      "overall": 90.2,
+      "shooting": 90.6,
+      "spacing": 90.6,
+      "creation": 86.9,
+      "defense": 92.1,
+      "athleticism": 89.9,
+      "iq": 89.0,
+      "release": 96.0,
+      "range": 91.7,
+      "versatility": 81.7,
+      "handle": 89.3,
+      "rim_pressure": 89.2,
+      "passing": 87.0,
+      "stamina": 81.8,
+      "rebounding": 86.2,
+      "def_effort": 95.6,
+      "screen_nav": 92.7,
+      "steal": 94.4,
+      "block": 94.3,
+      "rim_deterrence": 88.6,
+      "oreb": 86.6,
+      "lateral_agility": 96.3,
+      "scheme_iq": 90.6,
+      "portability": 90.0,
+      "playoff": 88.4
+    },
+    "changed_features": {
+      "impact": {
+        "before": 73.629,
+        "after": 73.195
+      },
+      "usage": {
+        "before": 81.189,
+        "after": 80.64
+      },
+      "scoring_usage": {
+        "before": 66.055,
+        "after": 66.003
+      },
+      "passing": {
+        "before": 74.24,
+        "after": 71.24
+      },
+      "offense_value": {
+        "before": 72.309,
+        "after": 70.763
+      },
+      "offensive_passing": {
+        "before": 74.74,
+        "after": 68.74
+      },
+      "sp_off_restricted_area_frequency": {
+        "before": 0.172,
+        "after": 0.173
+      },
+      "sp_off_restricted_area_gravity": {
+        "before": 87.05,
+        "after": 86.86
+      },
+      "sp_off_restricted_area_intensity": {
+        "before": 78.53,
+        "after": 78.46
+      },
+      "sp_off_paint_non_ra_frequency": {
+        "before": 0.115,
+        "after": 0.116
+      },
+      "sp_off_paint_non_ra_gravity": {
+        "before": 87.29,
+        "after": 87.11
+      },
+      "sp_off_paint_non_ra_intensity": {
+        "before": 72.17,
+        "after": 72.13
+      },
+      "sp_off_short_mid_left_efficiency": {
+        "before": 66.33,
+        "after": 66.18
+      },
+      "sp_off_short_mid_left_gravity": {
+        "before": 70.88,
+        "after": 70.63
+      },
+      "sp_off_short_mid_left_intensity": {
+        "before": 65.69,
+        "after": 65.52
+      },
+      "sp_off_short_mid_right_efficiency": {
+        "before": 67.92,
+        "after": 67.77
+      },
+      "sp_off_short_mid_right_gravity": {
+        "before": 71.43,
+        "after": 71.18
+      },
+      "sp_off_short_mid_right_intensity": {
+        "before": 66.55,
+        "after": 66.38
+      },
+      "sp_off_long_mid_left_efficiency": {
+        "before": 67.19,
+        "after": 67.03
+      },
+      "sp_off_long_mid_left_gravity": {
+        "before": 71.18,
+        "after": 70.93
+      },
+      "sp_off_long_mid_left_intensity": {
+        "before": 63.98,
+        "after": 63.8
+      },
+      "sp_off_long_mid_center_efficiency": {
+        "before": 65.61,
+        "after": 65.46
+      },
+      "sp_off_long_mid_center_gravity": {
+        "before": 70.62,
+        "after": 70.37
+      },
+      "sp_off_long_mid_center_intensity": {
+        "before": 63.73,
+        "after": 63.55
+      },
+      "sp_off_long_mid_right_efficiency": {
+        "before": 63.49,
+        "after": 63.34
+      },
+      "sp_off_long_mid_right_gravity": {
+        "before": 69.88,
+        "after": 69.63
+      },
+      "sp_off_long_mid_right_intensity": {
+        "before": 62.1,
+        "after": 61.92
+      },
+      "sp_off_corner_three_left_frequency": {
+        "before": 0.067,
+        "after": 0.068
+      },
+      "sp_off_corner_three_left_gravity": {
+        "before": 78.01,
+        "after": 77.88
+      },
+      "sp_off_corner_three_left_intensity": {
+        "before": 69.64,
+        "after": 69.61
+      },
+      "sp_off_above_break_left_gravity": {
+        "before": 79.0,
+        "after": 78.87
+      },
+      "sp_off_above_break_left_intensity": {
+        "before": 72.79,
+        "after": 72.73
+      },
+      "sp_off_above_break_center_gravity": {
+        "before": 77.66,
+        "after": 77.53
+      },
+      "sp_off_above_break_center_intensity": {
+        "before": 70.79,
+        "after": 70.73
+      },
+      "sp_off_above_break_right_gravity": {
+        "before": 78.01,
+        "after": 77.88
+      },
+      "sp_off_above_break_right_intensity": {
+        "before": 71.32,
+        "after": 71.27
+      },
+      "sp_off_corner_three_right_gravity": {
+        "before": 78.3,
+        "after": 78.17
+      },
+      "sp_off_corner_three_right_intensity": {
+        "before": 69.89,
+        "after": 69.87
+      }
+    }
+  },
+  "Kevin Durant": {
+    "deltas": {
+      "handle_pressure": -6
+    },
+    "targets": {
+      "handle_pressure": 72.6
+    },
+    "engine": {
+      "post_creation": 63.6,
+      "assisted_finishing": 59.3,
+      "screening": 71.5,
+      "offensive_rebounding": 65.8,
+      "offense": 74.8,
+      "overall": 73.8,
+      "shooting": 81.7,
+      "spacing": 81.7,
+      "creation": 72.3,
+      "defense": 65.0,
+      "athleticism": 62.9,
+      "iq": 82.1,
+      "release": 90.3,
+      "range": 86.4,
+      "versatility": 68.3,
+      "handle": 72.6,
+      "rim_pressure": 67.4,
+      "passing": 80.9,
+      "stamina": 63.2,
+      "rebounding": 64.7,
+      "def_effort": 66.0,
+      "screen_nav": 56.0,
+      "steal": 64.0,
+      "block": 62.0,
+      "rim_deterrence": 62.0,
+      "oreb": 65.8,
+      "lateral_agility": 58.0,
+      "scheme_iq": 76.0,
+      "portability": 91.5,
+      "playoff": 80.0
+    },
+    "display": {
+      "post_creation": 82.9,
+      "assisted_finishing": 79.3,
+      "screening": 89.0,
+      "offensive_rebounding": 84.6,
+      "offense": 91.4,
+      "overall": 90.7,
+      "shooting": 95.5,
+      "spacing": 95.5,
+      "creation": 89.6,
+      "defense": 84.0,
+      "athleticism": 82.3,
+      "iq": 95.6,
+      "release": 98.0,
+      "range": 96.9,
+      "versatility": 86.6,
+      "handle": 89.8,
+      "rim_pressure": 85.9,
+      "passing": 95.3,
+      "stamina": 82.6,
+      "rebounding": 83.8,
+      "def_effort": 84.8,
+      "screen_nav": 76.0,
+      "steal": 83.2,
+      "block": 81.6,
+      "rim_deterrence": 81.6,
+      "oreb": 84.6,
+      "lateral_agility": 78.0,
+      "scheme_iq": 92.2,
+      "portability": 98.2,
+      "playoff": 95.0
+    },
+    "changed_features": {
+      "impact": {
+        "before": 76.962,
+        "after": 76.677
+      },
+      "usage": {
+        "before": 87.773,
+        "after": 87.007
+      },
+      "scoring_usage": {
+        "before": 71.216,
+        "after": 70.101
+      },
+      "offense_value": {
+        "before": 75.232,
+        "after": 74.79
+      },
+      "post_creation": {
+        "before": 64.792,
+        "after": 63.592
+      },
+      "post_share": {
+        "before": 0.092,
+        "after": 0.09
+      },
+      "sp_off_restricted_area_frequency": {
+        "before": 0.176,
+        "after": 0.177
+      },
+      "sp_off_restricted_area_gravity": {
+        "before": 85.61,
+        "after": 85.01
+      },
+      "sp_off_restricted_area_intensity": {
+        "before": 78.59,
+        "after": 78.38
+      },
+      "sp_off_paint_non_ra_frequency": {
+        "before": 0.115,
+        "after": 0.116
+      },
+      "sp_off_paint_non_ra_efficiency": {
+        "before": 68.28,
+        "after": 67.8
+      },
+      "sp_off_paint_non_ra_gravity": {
+        "before": 86.92,
+        "after": 86.32
+      },
+      "sp_off_paint_non_ra_intensity": {
+        "before": 77.21,
+        "after": 76.86
+      },
+      "sp_off_short_mid_left_frequency": {
+        "before": 0.073,
+        "after": 0.072
+      },
+      "sp_off_short_mid_left_efficiency": {
+        "before": 68.28,
+        "after": 67.79
+      },
+      "sp_off_short_mid_left_gravity": {
+        "before": 74.34,
+        "after": 73.54
+      },
+      "sp_off_short_mid_left_intensity": {
+        "before": 67.32,
+        "after": 66.78
+      },
+      "sp_off_short_mid_right_efficiency": {
+        "before": 71.67,
+        "after": 71.18
+      },
+      "sp_off_short_mid_right_gravity": {
+        "before": 75.53,
+        "after": 74.73
+      },
+      "sp_off_short_mid_right_intensity": {
+        "before": 70.41,
+        "after": 69.88
+      },
+      "sp_off_long_mid_left_frequency": {
+        "before": 0.063,
+        "after": 0.062
+      },
+      "sp_off_long_mid_left_efficiency": {
+        "before": 71.76,
+        "after": 71.27
+      },
+      "sp_off_long_mid_left_gravity": {
+        "before": 75.56,
+        "after": 74.76
+      },
+      "sp_off_long_mid_left_intensity": {
+        "before": 68.1,
+        "after": 67.53
+      },
+      "sp_off_long_mid_center_efficiency": {
+        "before": 72.19,
+        "after": 71.7
+      },
+      "sp_off_long_mid_center_gravity": {
+        "before": 75.71,
+        "after": 74.91
+      },
+      "sp_off_long_mid_center_intensity": {
+        "before": 68.29,
+        "after": 67.71
+      },
+      "sp_off_long_mid_right_frequency": {
+        "before": 0.064,
+        "after": 0.063
+      },
+      "sp_off_long_mid_right_efficiency": {
+        "before": 69.07,
+        "after": 68.58
+      },
+      "sp_off_long_mid_right_gravity": {
+        "before": 74.62,
+        "after": 73.82
+      },
+      "sp_off_long_mid_right_intensity": {
+        "before": 66.64,
+        "after": 66.07
+      },
+      "sp_off_corner_three_left_frequency": {
+        "before": 0.068,
+        "after": 0.069
+      },
+      "sp_off_corner_three_left_gravity": {
+        "before": 85.81,
+        "after": 85.4
+      },
+      "sp_off_corner_three_left_intensity": {
+        "before": 75.0,
+        "after": 74.92
+      },
+      "sp_off_above_break_left_gravity": {
+        "before": 87.25,
+        "after": 86.84
+      },
+      "sp_off_above_break_left_intensity": {
+        "before": 78.89,
+        "after": 78.7
+      },
+      "sp_off_above_break_center_gravity": {
+        "before": 87.1,
+        "after": 86.7
+      },
+      "sp_off_above_break_center_intensity": {
+        "before": 78.18,
+        "after": 77.99
+      },
+      "sp_off_above_break_right_gravity": {
+        "before": 86.58,
+        "after": 86.17
+      },
+      "sp_off_above_break_right_intensity": {
+        "before": 76.9,
+        "after": 76.7
+      },
+      "sp_off_corner_three_right_gravity": {
+        "before": 85.95,
+        "after": 85.54
+      },
+      "sp_off_corner_three_right_intensity": {
+        "before": 75.3,
+        "after": 75.22
+      }
+    }
+  },
+  "Stephon Castle": {
+    "deltas": {
+      "rim_deterrence": -15,
+      "defensive_effort": 6
+    },
+    "targets": {
+      "defensive_effort": 85.44,
+      "rim_deterrence": 61.96
+    },
+    "engine": {
+      "post_creation": 29.8,
+      "assisted_finishing": 60.2,
+      "screening": 58.5,
+      "offensive_rebounding": 70.9,
+      "offense": 63.9,
+      "overall": 67.2,
+      "shooting": 58.2,
+      "spacing": 58.2,
+      "creation": 63.7,
+      "defense": 74.8,
+      "athleticism": 66.2,
+      "iq": 73.5,
+      "release": 61.9,
+      "range": 61.9,
+      "versatility": 50.9,
+      "handle": 63.7,
+      "rim_pressure": 66.5,
+      "passing": 73.5,
+      "stamina": 54.9,
+      "rebounding": 66.7,
+      "def_effort": 85.4,
+      "screen_nav": 78.4,
+      "steal": 78.6,
+      "block": 74.8,
+      "rim_deterrence": 62.0,
+      "oreb": 70.9,
+      "lateral_agility": 77.1,
+      "scheme_iq": 73.4,
+      "portability": 79.1,
+      "playoff": 67.8
+    },
+    "display": {
+      "post_creation": 47.8,
+      "assisted_finishing": 80.2,
+      "screening": 78.5,
+      "offensive_rebounding": 88.6,
+      "offense": 83.1,
+      "overall": 85.8,
+      "shooting": 78.2,
+      "spacing": 78.2,
+      "creation": 83.0,
+      "defense": 91.4,
+      "athleticism": 85.0,
+      "iq": 90.5,
+      "release": 81.5,
+      "range": 81.5,
+      "versatility": 70.9,
+      "handle": 83.0,
+      "rim_pressure": 85.2,
+      "passing": 90.5,
+      "stamina": 74.9,
+      "rebounding": 85.4,
+      "def_effort": 96.6,
+      "screen_nav": 93.9,
+      "steal": 94.0,
+      "block": 91.4,
+      "rim_deterrence": 81.6,
+      "oreb": 88.6,
+      "lateral_agility": 93.0,
+      "scheme_iq": 90.4,
+      "portability": 94.4,
+      "playoff": 86.2
+    },
+    "changed_features": {
+      "impact": {
+        "before": 70.387,
+        "after": 69.97
+      },
+      "usage": {
+        "before": 71.12,
+        "after": 71.054
+      },
+      "defensive_events": {
+        "before": 78.368,
+        "after": 80.888
+      },
+      "rim_deterrence": {
+        "before": 79.353,
+        "after": 61.96
+      },
+      "sp_def_restricted_area_frequency_influence": {
+        "before": 41.18,
+        "after": 44.14
+      },
+      "sp_def_restricted_area_contest": {
+        "before": 73.45,
+        "after": 66.04
+      },
+      "sp_def_restricted_area_suppression": {
+        "before": 75.94,
+        "after": 67.24
+      },
+      "sp_def_restricted_area_intensity": {
+        "before": 74.99,
+        "after": 66.78
+      },
+      "sp_def_paint_non_ra_frequency_influence": {
+        "before": 41.4,
+        "after": 44.36
+      },
+      "sp_def_paint_non_ra_contest": {
+        "before": 73.45,
+        "after": 66.04
+      },
+      "sp_def_paint_non_ra_suppression": {
+        "before": 75.3,
+        "after": 66.6
+      },
+      "sp_def_paint_non_ra_intensity": {
+        "before": 74.59,
+        "after": 66.39
+      },
+      "sp_def_short_mid_left_frequency_influence": {
+        "before": 42.71,
+        "after": 42.43
+      },
+      "sp_def_short_mid_left_contest": {
+        "before": 70.68,
+        "after": 71.52
+      },
+      "sp_def_short_mid_left_suppression": {
+        "before": 71.44,
+        "after": 72.28
+      },
+      "sp_def_short_mid_left_intensity": {
+        "before": 71.15,
+        "after": 71.99
+      },
+      "sp_def_short_mid_right_frequency_influence": {
+        "before": 42.81,
+        "after": 42.52
+      },
+      "sp_def_short_mid_right_contest": {
+        "before": 70.68,
+        "after": 71.52
+      },
+      "sp_def_short_mid_right_suppression": {
+        "before": 71.15,
+        "after": 71.99
+      },
+      "sp_def_short_mid_right_intensity": {
+        "before": 70.97,
+        "after": 71.81
+      },
+      "sp_def_long_mid_left_frequency_influence": {
+        "before": 43.04,
+        "after": 42.75
+      },
+      "sp_def_long_mid_left_contest": {
+        "before": 70.68,
+        "after": 71.52
+      },
+      "sp_def_long_mid_left_suppression": {
+        "before": 70.48,
+        "after": 71.32
+      },
+      "sp_def_long_mid_left_intensity": {
+        "before": 70.56,
+        "after": 71.4
+      },
+      "sp_def_long_mid_center_frequency_influence": {
+        "before": 42.73,
+        "after": 42.44
+      },
+      "sp_def_long_mid_center_contest": {
+        "before": 70.68,
+        "after": 71.52
+      },
+      "sp_def_long_mid_center_suppression": {
+        "before": 71.39,
+        "after": 72.23
+      },
+      "sp_def_long_mid_center_intensity": {
+        "before": 71.12,
+        "after": 71.96
+      },
+      "sp_def_long_mid_right_frequency_influence": {
+        "before": 42.77,
+        "after": 42.48
+      },
+      "sp_def_long_mid_right_contest": {
+        "before": 70.68,
+        "after": 71.52
+      },
+      "sp_def_long_mid_right_suppression": {
+        "before": 71.27,
+        "after": 72.11
+      },
+      "sp_def_long_mid_right_intensity": {
+        "before": 71.04,
+        "after": 71.88
+      },
+      "sp_def_corner_three_left_frequency_influence": {
+        "before": 40.05,
+        "after": 39.74
+      },
+      "sp_def_corner_three_left_contest": {
+        "before": 74.28,
+        "after": 75.18
+      },
+      "sp_def_corner_three_left_suppression": {
+        "before": 79.27,
+        "after": 80.17
+      },
+      "sp_def_corner_three_left_intensity": {
+        "before": 77.37,
+        "after": 78.27
+      },
+      "sp_def_above_break_left_frequency_influence": {
+        "before": 40.07,
+        "after": 39.76
+      },
+      "sp_def_above_break_left_contest": {
+        "before": 74.28,
+        "after": 75.18
+      },
+      "sp_def_above_break_left_suppression": {
+        "before": 79.21,
+        "after": 80.11
+      },
+      "sp_def_above_break_left_intensity": {
+        "before": 77.34,
+        "after": 78.24
+      },
+      "sp_def_above_break_center_frequency_influence": {
+        "before": 40.09,
+        "after": 39.78
+      },
+      "sp_def_above_break_center_contest": {
+        "before": 74.28,
+        "after": 75.18
+      },
+      "sp_def_above_break_center_suppression": {
+        "before": 79.16,
+        "after": 80.06
+      },
+      "sp_def_above_break_center_intensity": {
+        "before": 77.3,
+        "after": 78.2
+      },
+      "sp_def_above_break_right_frequency_influence": {
+        "before": 40.24,
+        "after": 39.93
+      },
+      "sp_def_above_break_right_contest": {
+        "before": 74.28,
+        "after": 75.18
+      },
+      "sp_def_above_break_right_suppression": {
+        "before": 78.71,
+        "after": 79.61
+      },
+      "sp_def_above_break_right_intensity": {
+        "before": 77.02,
+        "after": 77.92
+      },
+      "sp_def_corner_three_right_frequency_influence": {
+        "before": 40.24,
+        "after": 39.93
+      },
+      "sp_def_corner_three_right_contest": {
+        "before": 74.28,
+        "after": 75.18
+      },
+      "sp_def_corner_three_right_suppression": {
+        "before": 78.72,
+        "after": 79.62
+      },
+      "sp_def_corner_three_right_intensity": {
+        "before": 77.03,
+        "after": 77.93
+      }
+    }
+  },
+  "Darius Garland": {
+    "deltas": {
+      "handle_pressure": 6
+    },
+    "targets": {
+      "handle_pressure": 78.91
+    },
+    "engine": {
+      "post_creation": 28.8,
+      "assisted_finishing": 54.7,
+      "screening": 48.4,
+      "offensive_rebounding": 6.3,
+      "offense": 72.6,
+      "overall": 65.9,
+      "shooting": 73.6,
+      "spacing": 73.6,
+      "creation": 69.8,
+      "defense": 50.1,
+      "athleticism": 63.2,
+      "iq": 71.7,
+      "release": 85.7,
+      "range": 81.2,
+      "versatility": 53.8,
+      "handle": 78.9,
+      "rim_pressure": 64.0,
+      "passing": 82.6,
+      "stamina": 61.3,
+      "rebounding": 18.5,
+      "def_effort": 51.0,
+      "screen_nav": 54.1,
+      "steal": 59.8,
+      "block": 46.8,
+      "rim_deterrence": 25.3,
+      "oreb": 6.3,
+      "lateral_agility": 64.2,
+      "scheme_iq": 69.9,
+      "portability": 71.7,
+      "playoff": 62.5
+    },
+    "display": {
+      "post_creation": 46.6,
+      "assisted_finishing": 74.7,
+      "screening": 68.4,
+      "offensive_rebounding": 28.1,
+      "offense": 89.8,
+      "overall": 84.7,
+      "shooting": 90.5,
+      "spacing": 90.5,
+      "creation": 87.8,
+      "defense": 70.1,
+      "athleticism": 82.6,
+      "iq": 89.2,
+      "release": 96.7,
+      "range": 95.4,
+      "versatility": 73.8,
+      "handle": 94.2,
+      "rim_pressure": 83.2,
+      "passing": 95.8,
+      "stamina": 81.0,
+      "rebounding": 35.1,
+      "def_effort": 71.0,
+      "screen_nav": 74.1,
+      "steal": 79.8,
+      "block": 66.8,
+      "rim_deterrence": 42.4,
+      "oreb": 28.1,
+      "lateral_agility": 83.4,
+      "scheme_iq": 87.9,
+      "portability": 89.2,
+      "playoff": 82.0
+    },
+    "changed_features": {
+      "impact": {
+        "before": 67.1,
+        "after": 67.873
+      },
+      "usage": {
+        "before": 73.965,
+        "after": 74.809
+      },
+      "scoring_usage": {
+        "before": 61.044,
+        "after": 62.124
+      },
+      "offense_value": {
+        "before": 72.089,
+        "after": 72.569
+      },
+      "post_creation": {
+        "before": 28.231,
+        "after": 28.771
+      },
+      "sp_off_restricted_area_frequency": {
+        "before": 0.136,
+        "after": 0.135
+      },
+      "sp_off_restricted_area_gravity": {
+        "before": 82.31,
+        "after": 82.9
+      },
+      "sp_off_restricted_area_intensity": {
+        "before": 76.02,
+        "after": 76.12
+      },
+      "sp_off_paint_non_ra_frequency": {
+        "before": 0.077,
+        "after": 0.076
+      },
+      "sp_off_paint_non_ra_efficiency": {
+        "before": 53.1,
+        "after": 53.32
+      },
+      "sp_off_paint_non_ra_gravity": {
+        "before": 82.54,
+        "after": 83.13
+      },
+      "sp_off_paint_non_ra_intensity": {
+        "before": 63.8,
+        "after": 64.05
+      },
+      "sp_off_short_mid_left_efficiency": {
+        "before": 61.17,
+        "after": 61.66
+      },
+      "sp_off_short_mid_left_gravity": {
+        "before": 66.85,
+        "after": 67.65
+      },
+      "sp_off_short_mid_left_intensity": {
+        "before": 60.34,
+        "after": 60.87
+      },
+      "sp_off_short_mid_right_efficiency": {
+        "before": 60.25,
+        "after": 60.74
+      },
+      "sp_off_short_mid_right_gravity": {
+        "before": 66.53,
+        "after": 67.33
+      },
+      "sp_off_short_mid_right_intensity": {
+        "before": 59.84,
+        "after": 60.37
+      },
+      "sp_off_long_mid_left_efficiency": {
+        "before": 59.7,
+        "after": 60.19
+      },
+      "sp_off_long_mid_left_gravity": {
+        "before": 66.34,
+        "after": 67.14
+      },
+      "sp_off_long_mid_left_intensity": {
+        "before": 57.13,
+        "after": 57.7
+      },
+      "sp_off_long_mid_center_efficiency": {
+        "before": 60.29,
+        "after": 60.78
+      },
+      "sp_off_long_mid_center_gravity": {
+        "before": 66.54,
+        "after": 67.34
+      },
+      "sp_off_long_mid_center_intensity": {
+        "before": 57.44,
+        "after": 58.0
+      },
+      "sp_off_long_mid_right_frequency": {
+        "before": 0.049,
+        "after": 0.05
+      },
+      "sp_off_long_mid_right_efficiency": {
+        "before": 61.86,
+        "after": 62.35
+      },
+      "sp_off_long_mid_right_gravity": {
+        "before": 67.1,
+        "after": 67.9
+      },
+      "sp_off_long_mid_right_intensity": {
+        "before": 58.81,
+        "after": 59.37
+      },
+      "sp_off_corner_three_left_frequency": {
+        "before": 0.098,
+        "after": 0.097
+      },
+      "sp_off_corner_three_left_gravity": {
+        "before": 77.5,
+        "after": 77.9
+      },
+      "sp_off_corner_three_left_intensity": {
+        "before": 72.62,
+        "after": 72.69
+      },
+      "sp_off_above_break_left_frequency": {
+        "before": 0.11,
+        "after": 0.111
+      },
+      "sp_off_above_break_left_gravity": {
+        "before": 78.65,
+        "after": 79.05
+      },
+      "sp_off_above_break_left_intensity": {
+        "before": 76.17,
+        "after": 76.37
+      },
+      "sp_off_above_break_center_gravity": {
+        "before": 78.9,
+        "after": 79.3
+      },
+      "sp_off_above_break_center_intensity": {
+        "before": 76.89,
+        "after": 77.08
+      },
+      "sp_off_above_break_right_gravity": {
+        "before": 78.9,
+        "after": 79.3
+      },
+      "sp_off_above_break_right_intensity": {
+        "before": 76.52,
+        "after": 76.72
+      },
+      "sp_off_corner_three_right_frequency": {
+        "before": 0.087,
+        "after": 0.086
+      },
+      "sp_off_corner_three_right_gravity": {
+        "before": 77.63,
+        "after": 78.03
+      },
+      "sp_off_corner_three_right_intensity": {
+        "before": 71.47,
+        "after": 71.54
+      }
+    }
+  }
+}

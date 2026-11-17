@@ -1,0 +1,787 @@
+{
+  "version": "expanded_cohort_expectations_v1_2026_11_15",
+  "as_of": "2026-11-15",
+  "frozen_packet": {
+    "path": "docs/ratings-evidence-2026-10-29/EXPANDED_ACTION_COHORT_2026_11_14.json",
+    "version": "expanded_action_cohort_research_v1_2026_11_14",
+    "sha256": "e61a71e7b1225f83c0e357386b98a08ce2a449c310e99f5846b80b00a32755d2"
+  },
+  "principle": "Player evidence first. Diagnose assumptions/mechanism/response before revising a grade; never revise a grade to force a ranking.",
+  "independence": {
+    "milestone9_engine_outcomes_inspected": false,
+    "simulations_run": 0,
+    "current_backend_code_inspected": false,
+    "new_public_requests": 0,
+    "basis": "delivered frozen packet, approved catalogue and retained targeted source passages only"
+  },
+  "classification_definitions": {
+    "evidence_supported": "direction within declared matched action, not a precise numerical target or full player rank",
+    "unknown_control_dependent": "source direction exists but named comparison depends materially on explicit unmeasured controls/role",
+    "missing_mechanism_not_testable": "full basketball contribution omitted; related narrower action may still be tested"
+  },
+  "sources": {
+    "PG": {
+      "path": "transcripts/episode8_transcript.txt",
+      "published_on": "2026-08-05",
+      "kind": "retained user-supplied transcript",
+      "coverage": "targeted cues only in this pass; unidentified/local turns"
+    },
+    "CE": {
+      "path": "transcripts/episode4_transcript.txt",
+      "published_on": "2026-09-02",
+      "kind": "retained user-supplied transcript",
+      "coverage": "targeted cues only; no audiovisual review"
+    },
+    "PF": {
+      "path": "transcripts/episode5_transcript.txt",
+      "published_on": "2026-08-28",
+      "kind": "retained user-supplied transcript",
+      "coverage": "targeted cues only"
+    },
+    "TEAM": {
+      "path": "captions/J6STkjbVuUg.en.vtt",
+      "published_on": "2026-10-07",
+      "kind": "retained automatic captions",
+      "coverage": "03:17:30\u201303:20:00 targeted clauses; rolling captions not a new full extraction"
+    },
+    "TEAMS20": {
+      "path": "TEAMS_20_TO_11_FULL_EXTRACTION.md",
+      "published_on": "2026-10-02",
+      "kind": "retained extraction",
+      "coverage": "02:02:00\u201302:08:00 spacing context"
+    },
+    "JOKIC_HISTORY": {
+      "url": "https://www.nba.com/news/finals-film-study-nuggets-heat-game-3",
+      "published_on": "2023-06-08",
+      "kind": "historical written action examples already captured in frozen packet",
+      "coverage": "inherited evidence only; no fresh public request or video review this pass"
+    }
+  },
+  "claims": [
+    {
+      "id": "E01",
+      "players": [
+        {
+          "name": "Stephen Curry",
+          "player_id": "player_gsw-stephen-curry"
+        },
+        {
+          "name": "Scottie Barnes",
+          "player_id": "player_tor-scottie-barnes"
+        }
+      ],
+      "classification": "evidence_supported",
+      "input_ids": [
+        "S01",
+        "S02",
+        "S03",
+        "S08",
+        "T01",
+        "T02",
+        "T03"
+      ],
+      "evidence": [
+        {
+          "source_id": "PG",
+          "window": "01:14:13\u201301:14:38"
+        },
+        {
+          "source_id": "PF",
+          "window": "01:16:12\u201301:16:23"
+        }
+      ],
+      "expected_direction": "Curry has a substantially stronger supplied-shooting case; Barnes can have useful short touch without comparable perimeter execution.",
+      "required_conditions": "Compare same available shot/mode, distance, pressure and preparation; keep opportunity share distinct.",
+      "counterevidence_and_uncertainty": "Curry S08 is inferred, Barnes catch split mixed-mode; role/health/sample and uncertainty prevent a precise margin or universal points ordering.",
+      "missing_engine_context": null,
+      "exact_outcome_target": null,
+      "player_ranking_claim": false
+    },
+    {
+      "id": "E02",
+      "players": [
+        {
+          "name": "Jalen Brunson",
+          "player_id": "player_nyk-jalen-brunson"
+        }
+      ],
+      "classification": "evidence_supported",
+      "input_ids": [
+        "S16",
+        "S17",
+        "S18",
+        "S19",
+        "S20",
+        "F03.recognition",
+        "F03.execution"
+      ],
+      "evidence": [
+        {
+          "source_id": "PG",
+          "window": "01:09:58\u201301:10:17"
+        },
+        {
+          "source_id": "PG",
+          "window": "01:06:18\u201301:17:50"
+        }
+      ],
+      "expected_direction": "Support strong on-ball craft and possession protection at matched exposure without requiring elite ability in every pass family.",
+      "required_conditions": "Fix pressure/time, creator role and available targets; separate handling losses from other turnovers.",
+      "counterevidence_and_uncertainty": "Team infrastructure and defensive liability limit broader value; aggregate suppression does not prove each loss mechanism. Curry source-unknown S17 control cannot establish a named security ranking.",
+      "missing_engine_context": null,
+      "exact_outcome_target": null,
+      "player_ranking_claim": false
+    },
+    {
+      "id": "E03",
+      "players": [
+        {
+          "name": "Victor Wembanyama",
+          "player_id": "player_sas-victor-wembanyama"
+        }
+      ],
+      "classification": "unknown_control_dependent",
+      "input_ids": [
+        "P02",
+        "P03",
+        "P05",
+        "P07",
+        "P10",
+        "S33",
+        "S36",
+        "S37",
+        "S38",
+        "S39",
+        "S45"
+      ],
+      "evidence": [
+        {
+          "source_id": "CE",
+          "window": "01:35:07\u201301:36:25"
+        }
+      ],
+      "expected_direction": "Express exceptional reachable rim coverage and contest capacity when positioned/available; preserve more limited space-switching and unfinished offense.",
+      "required_conditions": "Declare start, responsibility, approach/release geometry, arrival, health and legal-control assumptions; inspect access versus execution.",
+      "counterevidence_and_uncertainty": "H1/jump/motion and S45 controls are not measured; late/away/unreachable cases need not yield a contest. Do not require him to dominate every switch or finish.",
+      "missing_engine_context": null,
+      "exact_outcome_target": null,
+      "player_ranking_claim": false
+    },
+    {
+      "id": "E04",
+      "players": [
+        {
+          "name": "Nikola Joki\u0107",
+          "player_id": "player_den-nikola-jokic"
+        }
+      ],
+      "classification": "evidence_supported",
+      "input_ids": [
+        "S10",
+        "S11",
+        "S14",
+        "S20",
+        "S27",
+        "S28",
+        "F04.recognition",
+        "F04.execution",
+        "F08.recognition",
+        "F08.execution"
+      ],
+      "evidence": [
+        {
+          "source_id": "CE",
+          "window": "01:32:23\u201301:35:07;01:36:54\u201301:38:45"
+        },
+        {
+          "source_id": "JOKIC_HISTORY",
+          "window": "selected contexts inherited from packet"
+        }
+      ],
+      "expected_direction": "Support skilled receiving/short touch and useful lob decisions/delivery when the option exists, without requiring fast unencumbered motion.",
+      "required_conditions": "Supply relevant possession/window and receiver; select actual short-touch finish for that question, not only a dunk.",
+      "counterevidence_and_uncertainty": "Historical examples selected, bad-series/support debate retained, pairs share evidence. Equal grades do not prove isolated read/placement equality. Broad passing rankings omit post/hub contexts.",
+      "missing_engine_context": null,
+      "exact_outcome_target": null,
+      "player_ranking_claim": false
+    },
+    {
+      "id": "E05",
+      "players": [
+        {
+          "name": "Myles Turner",
+          "player_id": "player_mil-myles-turner"
+        }
+      ],
+      "classification": "unknown_control_dependent",
+      "input_ids": [
+        "S01",
+        "S36",
+        "S37",
+        "P05",
+        "P06",
+        "P07",
+        "S27",
+        "S28",
+        "T11"
+      ],
+      "evidence": [
+        {
+          "source_id": "TEAMS20",
+          "window": "02:02:00\u201302:08:00"
+        },
+        {
+          "source_id": "TEAM",
+          "window": "03:19:07\u201303:19:26"
+        }
+      ],
+      "expected_direction": "Preserve a credible supplied perimeter outlet and rim-protection contribution alongside the source drop-coverage concern.",
+      "required_conditions": "Separate open catch, contest and drop-role tasks; hold unsupported release/movement/positioning attribution explicit.",
+      "counterevidence_and_uncertainty": "Catch split and wide S36 are hypotheses; same source credits more speed than Zubac, not an absolute test or specific lateral measure. Do not penalize technique and physical speed independently from poor-drop label.",
+      "missing_engine_context": null,
+      "exact_outcome_target": null,
+      "player_ranking_claim": false
+    },
+    {
+      "id": "E06",
+      "players": [
+        {
+          "name": "Scottie Barnes",
+          "player_id": "player_tor-scottie-barnes"
+        }
+      ],
+      "classification": "unknown_control_dependent",
+      "input_ids": [
+        "S10",
+        "S11",
+        "S16",
+        "S33",
+        "S34",
+        "S37",
+        "S38",
+        "S39",
+        "S41",
+        "S44",
+        "S35"
+      ],
+      "evidence": [
+        {
+          "source_id": "PF",
+          "window": "01:11:22\u201301:12:16;01:14:39\u201301:14:49"
+        },
+        {
+          "source_id": "PF",
+          "window": "01:16:12\u201301:16:23"
+        }
+      ],
+      "expected_direction": "Support guard/wing containment, assigned secondary help and short scoring without demanding elite perimeter shooting.",
+      "required_conditions": "Compare matched noncenter/helper responsibilities, starting positions and opportunities before changing role.",
+      "counterevidence_and_uncertainty": "Attention/navigation/motion and full-time-center requirements are not established by versatility; weak jumper and lead-scoring ceiling retained.",
+      "missing_engine_context": null,
+      "exact_outcome_target": null,
+      "player_ranking_claim": false
+    },
+    {
+      "id": "E07",
+      "players": [
+        {
+          "name": "Stephen Curry",
+          "player_id": "player_gsw-stephen-curry"
+        }
+      ],
+      "classification": "missing_mechanism_not_testable",
+      "input_ids": [
+        "S26",
+        "S03",
+        "T10"
+      ],
+      "evidence": [
+        {
+          "source_id": "PG",
+          "window": "01:14:20\u201301:14:28"
+        }
+      ],
+      "expected_direction": "Full movement-created offense cannot be inferred from supplied movement-shot accuracy alone.",
+      "required_conditions": "A future route/relocation/handoff opportunity mechanism is needed for full value; current conditional shot remains testable.",
+      "counterevidence_and_uncertainty": "An overall comparison favoring another actor is not reason to lower Curry shooting.",
+      "missing_engine_context": "Off-ball route creation/repeated relocation and teammate motion incomplete.",
+      "exact_outcome_target": null,
+      "player_ranking_claim": false
+    },
+    {
+      "id": "E08",
+      "players": [
+        {
+          "name": "Nikola Joki\u0107",
+          "player_id": "player_den-nikola-jokic"
+        }
+      ],
+      "classification": "missing_mechanism_not_testable",
+      "input_ids": [
+        "S21",
+        "S22",
+        "S23",
+        "F01.recognition",
+        "F01.execution",
+        "F05.recognition",
+        "F05.execution",
+        "F08.recognition",
+        "F08.execution"
+      ],
+      "evidence": [
+        {
+          "source_id": "CE",
+          "window": "01:32:23\u201301:35:07;01:36:54\u201301:38:45"
+        },
+        {
+          "source_id": "JOKIC_HISTORY",
+          "window": "retained post/hub action context"
+        }
+      ],
+      "expected_direction": "Full post/hub offense cannot be measured by only guard-style drive/lob routes.",
+      "required_conditions": "Need post establishment/counters and continuation/short-roll/post pass contexts before whole creator interpretation.",
+      "counterevidence_and_uncertainty": "A poor narrow-probe ranking does not refute historic offense or justify lowering supported abilities.",
+      "missing_engine_context": "Post/hub and additional pass-family mechanism coverage incomplete.",
+      "exact_outcome_target": null,
+      "player_ranking_claim": false
+    },
+    {
+      "id": "E09",
+      "players": [
+        {
+          "name": "Myles Turner",
+          "player_id": "player_mil-myles-turner"
+        }
+      ],
+      "classification": "missing_mechanism_not_testable",
+      "input_ids": [
+        "S01",
+        "S27",
+        "S28",
+        "T11"
+      ],
+      "evidence": [
+        {
+          "source_id": "TEAMS20",
+          "window": "02:02:00\u201302:08:00"
+        }
+      ],
+      "expected_direction": "A roll-only screen probe cannot represent pick-and-pop spacing value.",
+      "required_conditions": "Stationary catch is testable; pop route must exist before screen-pop contribution can be compared.",
+      "counterevidence_and_uncertainty": "Pop=0 in a supported-context control is not evidence Turner never pops or is a bad roller.",
+      "missing_engine_context": "Pick-and-pop excluded from frozen mechanism; never rename pop F03.",
+      "exact_outcome_target": null,
+      "player_ranking_claim": false
+    }
+  ],
+  "semantic_audits": [
+    {
+      "id": "M01",
+      "input_ids": [
+        "S01",
+        "S02",
+        "S03",
+        "S08"
+      ],
+      "finding": "Curry preparation and some mode decompositions are labeled implications, not timed/split observations.",
+      "rule": "Keep range uncertainty; do not add complete catch and movement accuracy bonuses or infer release milliseconds.",
+      "error_established": false
+    },
+    {
+      "id": "M02",
+      "input_ids": [
+        "S33",
+        "S36",
+        "S37",
+        "S38",
+        "P03",
+        "P05",
+        "P07",
+        "P10"
+      ],
+      "finding": "Coverage/drop judgments mix technique, geometry, timing and deployment. Turner cue also credits speed versus Zubac.",
+      "rule": "One effective claim is correlated evidence; avoid independent maximum technique AND physical rewards/penalties.",
+      "error_established": false
+    },
+    {
+      "id": "M03",
+      "input_ids": [
+        "S01",
+        "S02",
+        "S03",
+        "T01",
+        "T02",
+        "T03"
+      ],
+      "finding": "Mixed-mode percentage is not a catch-only table; realized attempts and normalized policies are not intrinsic preferences.",
+      "rule": "Hold opportunity/mode first; vary usage context separately. Zero attempts mean no observation, not zero talent.",
+      "error_established": false
+    },
+    {
+      "id": "M04",
+      "input_ids": [
+        "S20",
+        "F03.recognition",
+        "F03.execution",
+        "F04.recognition",
+        "F04.execution",
+        "F06.recognition",
+        "F06.execution",
+        "F08.recognition",
+        "F08.execution"
+      ],
+      "finding": "Distinct read/delivery fields may share a reference value and evidence; they remain different mechanisms.",
+      "rule": "Observe opportunity, read and intended placement separately; context/route overlap receives one passing contribution.",
+      "error_established": false
+    },
+    {
+      "id": "M05",
+      "input_ids": [
+        "S10",
+        "S11",
+        "S12",
+        "S13",
+        "S14",
+        "S23"
+      ],
+      "finding": "Receiving, aerial coordination, finish selection and post-hook technique differ.",
+      "rule": "A dunk-only roll task cannot test all Jokic short touch. Do not stack full lob/catch/dunk/layup bonuses.",
+      "error_established": false
+    },
+    {
+      "id": "M06",
+      "input_ids": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "P07",
+        "P08",
+        "P09",
+        "P10"
+      ],
+      "finding": "Reported converted cm/kg, H1 geometry, unmeasured motion and dimensionless capacities have different meanings.",
+      "rule": "No second unit conversion, no H1 as actual reach or shot-release height, and no grade-to-SI test inference.",
+      "error_established": false
+    },
+    {
+      "id": "M07",
+      "input_ids": [
+        "S07",
+        "S08",
+        "S09"
+      ],
+      "finding": "FT conversion proxy is probability semantics, not generic technique response.",
+      "rule": "Preserve source scale/interpretation. No FT improvement from release/range; this is an existing boundary, not a new bug.",
+      "error_established": false
+    },
+    {
+      "id": "M08",
+      "input_ids": [
+        "S17",
+        "S18",
+        "S20",
+        "S37",
+        "S38"
+      ],
+      "finding": "October pre-opener target is settled; old examples, availability and growth remain dated. Brunson suppression referent confirmed.",
+      "rule": "Healthy skill first; no ceiling-as-current ability or rank-to-OVR conversion. No fresh material-event audit claimed.",
+      "error_established": false
+    }
+  ],
+  "prespecified_alternatives": [
+    {
+      "id": "A01",
+      "claims": [
+        "E01",
+        "E05"
+      ],
+      "input_ids": [
+        "S01",
+        "S02",
+        "S03",
+        "S08",
+        "S09",
+        "T01",
+        "T02",
+        "T03"
+      ],
+      "design": "Matched supplied mode/opportunity first; source endpoint changes one execution field/actor at a time.",
+      "controls": {
+        "common_S08": 80,
+        "common_S09": 60
+      },
+      "source_range_refs": [
+        {
+          "player_id": "player_gsw-stephen-curry",
+          "design_id": "S02",
+          "source_range": [
+            86,
+            96
+          ]
+        },
+        {
+          "player_id": "player_nyk-jalen-brunson",
+          "design_id": "S02",
+          "source_range": [
+            76,
+            92
+          ]
+        },
+        {
+          "player_id": "player_mil-myles-turner",
+          "design_id": "S01",
+          "source_range": [
+            65,
+            84
+          ]
+        }
+      ],
+      "hold_fixed": "distance, pressure, location/shot probability and mode; then source preparation alternatives separately",
+      "improving_observation": "matched mode/opening/preparation attempts; no total shooting-stat replication",
+      "rating_policy": "Diagnostic/context alternatives only; frozen player records unchanged. No alternative chosen after inspecting milestone9 outcomes."
+    },
+    {
+      "id": "A02",
+      "claims": [
+        "E03",
+        "E06"
+      ],
+      "input_ids": [
+        "P03",
+        "P05",
+        "P06",
+        "P07",
+        "P10",
+        "S36",
+        "S37",
+        "S38",
+        "S39",
+        "S44"
+      ],
+      "design": "Matched helper/anchor task first; common coherent motion regimes, then shared geometry error, never opposite all-extreme players.",
+      "motion_controls": [
+        {
+          "P05": 2.5,
+          "P06": 5.5,
+          "P07": 2.2
+        },
+        {
+          "P05": 3,
+          "P06": 6,
+          "P07": 2.5
+        },
+        {
+          "P05": 3.5,
+          "P06": 6.5,
+          "P07": 2.8
+        }
+      ],
+      "units": {
+        "P05": "m/s2",
+        "P06": "m/s",
+        "P07": "m/s"
+      },
+      "geometry_alternative": "correlated H1\u00b110cm with common jump40cm; separate common jump25/40/55cm later",
+      "hold_fixed": "same responsibility, origin/destination, attack window, technique and attention in motion stage",
+      "improving_observation": "responsibility-tagged recognition/travel/arrival and same-protocol reach/jump",
+      "rating_policy": "Diagnostic/context alternatives only; frozen player records unchanged. No alternative chosen after inspecting milestone9 outcomes."
+    },
+    {
+      "id": "A03",
+      "claims": [
+        "E04"
+      ],
+      "input_ids": [
+        "F04.recognition",
+        "F04.execution",
+        "S14",
+        "S10",
+        "S11",
+        "S12",
+        "S13"
+      ],
+      "design": "Jokic source-range read axis with delivery fixed, then delivery axis with read fixed; common receiver reliability separate.",
+      "source_range_refs": [
+        {
+          "player_id": "player_den-nikola-jokic",
+          "design_id": "F04.recognition",
+          "source_range": [
+            86,
+            98
+          ]
+        },
+        {
+          "player_id": "player_den-nikola-jokic",
+          "design_id": "F04.execution",
+          "source_range": [
+            86,
+            98
+          ]
+        }
+      ],
+      "receiver_control_levels": [
+        70,
+        85
+      ],
+      "hold_fixed": "available target/window, pressure, pass distance, risk, catch/finish type; do not change every stage together",
+      "improving_observation": "available-read/intended-placement/reception/finish tags rather than catch totals alone",
+      "rating_policy": "Diagnostic/context alternatives only; frozen player records unchanged. No alternative chosen after inspecting milestone9 outcomes.",
+      "receiver_control_scope": "Synthetic reference receiver; do not silently relabel a named source receiver as70."
+    },
+    {
+      "id": "A04",
+      "claims": [
+        "E04",
+        "E09"
+      ],
+      "input_ids": [
+        "S27",
+        "S28",
+        "S35",
+        "S41",
+        "S44",
+        "P01",
+        "P04",
+        "P08",
+        "P09",
+        "T11"
+      ],
+      "design": "Jokic source screen axis at fixed read/motion; reported-body versus clearly normalized-body condition separately.",
+      "source_range_refs": [
+        {
+          "player_id": "player_den-nikola-jokic",
+          "design_id": "S27",
+          "source_range": [
+            76,
+            92
+          ]
+        },
+        {
+          "player_id": "player_den-nikola-jokic",
+          "design_id": "S28",
+          "source_range": [
+            80,
+            95
+          ]
+        }
+      ],
+      "condition": "on_ball_screen",
+      "policies": [
+        {
+          "screen": 0,
+          "roll": 1,
+          "pop": 0,
+          "slip": 0
+        },
+        {
+          "screen": 1,
+          "roll": 0,
+          "pop": 0,
+          "slip": 0
+        },
+        {
+          "screen": 0,
+          "roll": 0,
+          "pop": 0,
+          "slip": 1
+        }
+      ],
+      "hold_fixed": "coverage, approach/contact geometry, movement and source read in technique stage; identical called stratum across actors",
+      "improving_observation": "legal/contact/follow-up samples, not screen assists alone",
+      "rating_policy": "Diagnostic/context alternatives only; frozen player records unchanged. No alternative chosen after inspecting milestone9 outcomes.",
+      "body_control_scope": "Explicit counterfactual body normalization, not reported athlete measurements."
+    },
+    {
+      "id": "A05",
+      "claims": [
+        "E01",
+        "E05",
+        "E06"
+      ],
+      "input_ids": [
+        "T01",
+        "T02",
+        "T03",
+        "S01",
+        "S02",
+        "S03"
+      ],
+      "design": "Normalized opportunity versus completed-season realized3PA/FGA context diagnostic; NEVER a new intrinsic preference estimate.",
+      "contexts": [
+        "frozen normalized two-bin0.4 perimeter opportunity",
+        "season_realized_shot_share_context_only"
+      ],
+      "season_context": [
+        {
+          "player_id": "player_gsw-stephen-curry",
+          "season": "2025-26",
+          "three_attempt_share": 0.6057571964956195,
+          "numerator": 484.0,
+          "denominator": 799.0
+        },
+        {
+          "player_id": "player_nyk-jalen-brunson",
+          "season": "2025-26",
+          "three_attempt_share": 0.3579661016949153,
+          "numerator": 528.0,
+          "denominator": 1475.0
+        },
+        {
+          "player_id": "player_sas-victor-wembanyama",
+          "season": "2025-26",
+          "three_attempt_share": 0.32407407407407407,
+          "numerator": 350.0,
+          "denominator": 1080.0
+        },
+        {
+          "player_id": "player_den-nikola-jokic",
+          "season": "2025-26",
+          "three_attempt_share": 0.26060070671378094,
+          "numerator": 295.0,
+          "denominator": 1132.0
+        },
+        {
+          "player_id": "player_mil-myles-turner",
+          "season": "2025-26",
+          "three_attempt_share": 0.5944272445820433,
+          "numerator": 384.0,
+          "denominator": 646.0
+        },
+        {
+          "player_id": "player_tor-scottie-barnes",
+          "season": "2025-26",
+          "three_attempt_share": 0.19946571682991987,
+          "numerator": 224.0,
+          "denominator": 1123.0
+        }
+      ],
+      "hold_fixed": "T01 shoot choice, mode execution and preparation; do not multiply three favorable usage changes",
+      "improving_observation": "actual available opportunities, assignment and coach instructions in comparable role",
+      "rating_policy": "Diagnostic/context alternatives only; frozen player records unchanged. No alternative chosen after inspecting milestone9 outcomes."
+    }
+  ],
+  "source_error_check": {
+    "scope": "targeted source/date/name/unit checks, not recertification of entire corpus",
+    "demonstrable_error_found": false,
+    "additional_source_detail": "Oct7 03:19:07\u201303:19:26 credits Turner speed versus Zubac while criticizing drop coverage; no absolute motion or new trait inferred."
+  },
+  "proposed_corrections": [],
+  "numerical_player_updates": [],
+  "human_questions_required": [],
+  "source_hashes": {
+    "docs/ratings-evidence-2026-10-29/EXPANDED_ACTION_COHORT_2026_11_14.json": "e61a71e7b1225f83c0e357386b98a08ce2a449c310e99f5846b80b00a32755d2",
+    "docs/ratings-evidence-2026-10-29/EXPANDED_ACTION_COHORT_2026_11_14.md": "5e6072730a8e15cd3d342ebfc1cb7fb07ded57b3cbdecf40be50335dc9535223",
+    "docs/ratings-evidence-2026-10-29/EXPANDED_ACTION_COHORT_READINESS_2026_11_14.md": "b9f5433d43909862a9142a70ba8d91f3a052cf5d37642ed9d3eca5b451c63629",
+    "docs/ratings-evidence-2026-10-29/diagnostics/expanded_cohort_20261114/source_readiness_ledger.json": "e3f7f3bfa44af0a733ac0432221024a1841f745d7e76cc93695770dd536c3af6",
+    "docs/PLAYER_OBJECT_THREE_COLUMN_MAP_2026_11_12.md": "208d51f643d78eae2d5ee23db6771522723a1c92fe9d4de5366fa1afa59cda00",
+    "docs/ratings-evidence-2026-10-29/transcripts/episode8_transcript.txt": "437c8c236940cccd8d17995e50750d9b72d38b957613a566cde7f8fa3fae9d1c",
+    "docs/ratings-evidence-2026-10-29/transcripts/episode4_transcript.txt": "c9d69a637cab914c078fcdbff1fb411d7792ea0bcbbdbac9432d3e08d3af694b",
+    "docs/ratings-evidence-2026-10-29/transcripts/episode5_transcript.txt": "adc94fce68a903c753d11f4c535dd3f95a51d6db875a6442ffcdd090d26b6f9c",
+    "docs/ratings-evidence-2026-10-29/captions/J6STkjbVuUg.en.vtt": "a7362bc6c2d88db8da80d589d183d5aa06c905d1d21035929167a68375173095",
+    "docs/ratings-evidence-2026-10-29/TEAMS_20_TO_11_FULL_EXTRACTION.md": "d599e61d246b1e7dd04b8d484c07dad807448a80ca8a08fa02184b996ae0e54c"
+  },
+  "validation_scope": "IDs/source links/frozen source preservation and declarative alternatives only; not compiled or simulated."
+}

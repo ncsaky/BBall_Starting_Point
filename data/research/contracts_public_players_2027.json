@@ -1,0 +1,7825 @@
+{
+  "contract_count": 453,
+  "contracts": [
+    {
+      "normalized_name": "stephen curry",
+      "player_name": "Stephen Curry",
+      "remaining_guaranteed": 62587158,
+      "seasons": [
+        {
+          "salary": 62587158,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "GSW"
+    },
+    {
+      "normalized_name": "nikola jokic",
+      "player_name": "Nikola Jokić",
+      "remaining_guaranteed": 59033114,
+      "seasons": [
+        {
+          "salary": 59033114,
+          "season": "2026-27"
+        },
+        {
+          "salary": 62841702,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "DEN"
+    },
+    {
+      "normalized_name": "jayson tatum",
+      "player_name": "Jayson Tatum",
+      "remaining_guaranteed": 188360046,
+      "seasons": [
+        {
+          "salary": 58456566,
+          "season": "2026-27"
+        },
+        {
+          "salary": 62786682,
+          "season": "2027-28"
+        },
+        {
+          "salary": 67116798,
+          "season": "2028-29"
+        },
+        {
+          "salary": 71446914,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "BOS"
+    },
+    {
+      "normalized_name": "anthony davis",
+      "player_name": "Anthony Davis",
+      "remaining_guaranteed": 58456566,
+      "seasons": [
+        {
+          "salary": 58456566,
+          "season": "2026-27"
+        },
+        {
+          "salary": 62786682,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "WAS"
+    },
+    {
+      "normalized_name": "giannis antetokounmpo",
+      "player_name": "Giannis Antetokounmpo",
+      "remaining_guaranteed": 58456566,
+      "seasons": [
+        {
+          "salary": 58456566,
+          "season": "2026-27"
+        },
+        {
+          "salary": 62786682,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MIA"
+    },
+    {
+      "normalized_name": "joel embiid",
+      "player_name": "Joel Embiid",
+      "remaining_guaranteed": 120848000,
+      "seasons": [
+        {
+          "salary": 58100000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 62748000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 67396000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "PHI"
+    },
+    {
+      "normalized_name": "jaylen brown",
+      "player_name": "Jaylen Brown",
+      "remaining_guaranteed": 183045576,
+      "seasons": [
+        {
+          "salary": 57078728,
+          "season": "2026-27"
+        },
+        {
+          "salary": 61015192,
+          "season": "2027-28"
+        },
+        {
+          "salary": 64951656,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "PHI"
+    },
+    {
+      "normalized_name": "devin booker",
+      "player_name": "Devin Booker",
+      "remaining_guaranteed": 182159872,
+      "seasons": [
+        {
+          "salary": 57078728,
+          "season": "2026-27"
+        },
+        {
+          "salary": 61015192,
+          "season": "2027-28"
+        },
+        {
+          "salary": 64065952,
+          "season": "2028-29"
+        },
+        {
+          "salary": 69191228,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "karl anthony towns",
+      "player_name": "Karl-Anthony Towns",
+      "remaining_guaranteed": 57078728,
+      "seasons": [
+        {
+          "salary": 57078728,
+          "season": "2026-27"
+        },
+        {
+          "salary": 61015192,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "NYK"
+    },
+    {
+      "normalized_name": "jimmy butler",
+      "player_name": "Jimmy Butler",
+      "remaining_guaranteed": 56832773,
+      "seasons": [
+        {
+          "salary": 56832773,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "GSW"
+    },
+    {
+      "normalized_name": "paul george",
+      "player_name": "Paul George",
+      "remaining_guaranteed": 54126380,
+      "seasons": [
+        {
+          "salary": 54126380,
+          "season": "2026-27"
+        },
+        {
+          "salary": 56586670,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "BOS"
+    },
+    {
+      "normalized_name": "kawhi leonard",
+      "player_name": "Kawhi Leonard",
+      "remaining_guaranteed": 50300000,
+      "seasons": [
+        {
+          "salary": 50300000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "LAC"
+    },
+    {
+      "normalized_name": "donovan mitchell",
+      "player_name": "Donovan Mitchell",
+      "remaining_guaranteed": 247460184,
+      "seasons": [
+        {
+          "salary": 50105628,
+          "season": "2026-27"
+        },
+        {
+          "salary": 60911900,
+          "season": "2027-28"
+        },
+        {
+          "salary": 65784852,
+          "season": "2028-29"
+        },
+        {
+          "salary": 70657804,
+          "season": "2029-30"
+        },
+        {
+          "salary": 75530756,
+          "season": "2030-31"
+        }
+      ],
+      "team_abbrev": "CLE"
+    },
+    {
+      "normalized_name": "cade cunningham",
+      "player_name": "Cade Cunningham",
+      "remaining_guaranteed": 222691680,
+      "seasons": [
+        {
+          "salary": 50105628,
+          "season": "2026-27"
+        },
+        {
+          "salary": 53817156,
+          "season": "2027-28"
+        },
+        {
+          "salary": 57528684,
+          "season": "2028-29"
+        },
+        {
+          "salary": 61240212,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "DET"
+    },
+    {
+      "normalized_name": "evan mobley",
+      "player_name": "Evan Mobley",
+      "remaining_guaranteed": 222691680,
+      "seasons": [
+        {
+          "salary": 50105628,
+          "season": "2026-27"
+        },
+        {
+          "salary": 53817156,
+          "season": "2027-28"
+        },
+        {
+          "salary": 57528684,
+          "season": "2028-29"
+        },
+        {
+          "salary": 61240212,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "CLE"
+    },
+    {
+      "normalized_name": "jamal murray",
+      "player_name": "Jamal Murray",
+      "remaining_guaranteed": 161451468,
+      "seasons": [
+        {
+          "salary": 50105628,
+          "season": "2026-27"
+        },
+        {
+          "salary": 53817156,
+          "season": "2027-28"
+        },
+        {
+          "salary": 57528684,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "DEN"
+    },
+    {
+      "normalized_name": "de'aaron fox",
+      "player_name": "De'Aaron Fox",
+      "remaining_guaranteed": 223104000,
+      "seasons": [
+        {
+          "salary": 49800000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 53784000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 57768000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 61752000,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "SAS"
+    },
+    {
+      "normalized_name": "bam adebayo",
+      "player_name": "Bam Adebayo",
+      "remaining_guaranteed": 103584000,
+      "seasons": [
+        {
+          "salary": 49800000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 53784000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 57768000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "MIA"
+    },
+    {
+      "normalized_name": "luka doncic",
+      "player_name": "Luka Dončić",
+      "remaining_guaranteed": 103584000,
+      "seasons": [
+        {
+          "salary": 49800000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 53784000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 57768000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "LAL"
+    },
+    {
+      "normalized_name": "trae young",
+      "player_name": "Trae Young",
+      "remaining_guaranteed": 154403496,
+      "seasons": [
+        {
+          "salary": 49488300,
+          "season": "2026-27"
+        },
+        {
+          "salary": 50478066,
+          "season": "2027-28"
+        },
+        {
+          "salary": 54437130,
+          "season": "2028-29"
+        },
+        {
+          "salary": 58396194,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "WAS"
+    },
+    {
+      "normalized_name": "jaren jackson jr",
+      "player_name": "Jaren Jackson Jr.",
+      "remaining_guaranteed": 151500000,
+      "seasons": [
+        {
+          "salary": 49000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 50500000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 52000000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 53500000,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "UTA"
+    },
+    {
+      "normalized_name": "zach lavine",
+      "player_name": "Zach LaVine",
+      "remaining_guaranteed": 48967380,
+      "seasons": [
+        {
+          "salary": 48967380,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "SAC"
+    },
+    {
+      "normalized_name": "anthony edwards",
+      "player_name": "Anthony Edwards",
+      "remaining_guaranteed": 156896208,
+      "seasons": [
+        {
+          "salary": 48924624,
+          "season": "2026-27"
+        },
+        {
+          "salary": 52298736,
+          "season": "2027-28"
+        },
+        {
+          "salary": 55672848,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "MIN"
+    },
+    {
+      "normalized_name": "tyrese haliburton",
+      "player_name": "Tyrese Haliburton",
+      "remaining_guaranteed": 156896208,
+      "seasons": [
+        {
+          "salary": 48924624,
+          "season": "2026-27"
+        },
+        {
+          "salary": 52298736,
+          "season": "2027-28"
+        },
+        {
+          "salary": 55672848,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "IND"
+    },
+    {
+      "normalized_name": "pascal siakam",
+      "player_name": "Pascal Siakam",
+      "remaining_guaranteed": 101223360,
+      "seasons": [
+        {
+          "salary": 48924624,
+          "season": "2026-27"
+        },
+        {
+          "salary": 52298736,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "IND"
+    },
+    {
+      "normalized_name": "lauri markkanen",
+      "player_name": "Lauri Markkanen",
+      "remaining_guaranteed": 149474044,
+      "seasons": [
+        {
+          "salary": 46113154,
+          "season": "2026-27"
+        },
+        {
+          "salary": 49824681,
+          "season": "2027-28"
+        },
+        {
+          "salary": 53536209,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "UTA"
+    },
+    {
+      "normalized_name": "domantas sabonis",
+      "player_name": "Domantas Sabonis",
+      "remaining_guaranteed": 94080000,
+      "seasons": [
+        {
+          "salary": 45472000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 48608000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "SAC"
+    },
+    {
+      "normalized_name": "kevin durant",
+      "player_name": "Kevin Durant",
+      "remaining_guaranteed": 43902439,
+      "seasons": [
+        {
+          "salary": 43902439,
+          "season": "2026-27"
+        },
+        {
+          "salary": 46097561,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "HOU"
+    },
+    {
+      "normalized_name": "og anunoby",
+      "player_name": "OG Anunoby",
+      "remaining_guaranteed": 87931034,
+      "seasons": [
+        {
+          "salary": 42500000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 45431034,
+          "season": "2027-28"
+        },
+        {
+          "salary": 48362068,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "NYK"
+    },
+    {
+      "normalized_name": "james harden",
+      "player_name": "James Harden",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 42317307,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "CLE"
+    },
+    {
+      "normalized_name": "ja morant",
+      "player_name": "Ja Morant",
+      "remaining_guaranteed": 87053440,
+      "seasons": [
+        {
+          "salary": 42166510,
+          "season": "2026-27"
+        },
+        {
+          "salary": 44886930,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "POR"
+    },
+    {
+      "normalized_name": "zion williamson",
+      "player_name": "Zion Williamson",
+      "remaining_guaranteed": 87053440,
+      "seasons": [
+        {
+          "salary": 42166510,
+          "season": "2026-27"
+        },
+        {
+          "salary": 44886930,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "NOP"
+    },
+    {
+      "normalized_name": "darius garland",
+      "player_name": "Darius Garland",
+      "remaining_guaranteed": 87053440,
+      "seasons": [
+        {
+          "salary": 42166510,
+          "season": "2026-27"
+        },
+        {
+          "salary": 44886930,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "LAC"
+    },
+    {
+      "normalized_name": "scottie barnes",
+      "player_name": "Scottie Barnes",
+      "remaining_guaranteed": 185576400,
+      "seasons": [
+        {
+          "salary": 41754690,
+          "season": "2026-27"
+        },
+        {
+          "salary": 44847630,
+          "season": "2027-28"
+        },
+        {
+          "salary": 47940570,
+          "season": "2028-29"
+        },
+        {
+          "salary": 51033510,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "TOR"
+    },
+    {
+      "normalized_name": "franz wagner",
+      "player_name": "Franz Wagner",
+      "remaining_guaranteed": 185576400,
+      "seasons": [
+        {
+          "salary": 41754690,
+          "season": "2026-27"
+        },
+        {
+          "salary": 44847630,
+          "season": "2027-28"
+        },
+        {
+          "salary": 47940570,
+          "season": "2028-29"
+        },
+        {
+          "salary": 51033510,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "ORL"
+    },
+    {
+      "normalized_name": "jalen williams",
+      "player_name": "Jalen Williams",
+      "remaining_guaranteed": 240700000,
+      "seasons": [
+        {
+          "salary": 41500000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 44820000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 48140000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 51460000,
+          "season": "2029-30"
+        },
+        {
+          "salary": 54780000,
+          "season": "2030-31"
+        }
+      ],
+      "team_abbrev": "OKC"
+    },
+    {
+      "normalized_name": "chet holmgren",
+      "player_name": "Chet Holmgren",
+      "remaining_guaranteed": 240700000,
+      "seasons": [
+        {
+          "salary": 41500000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 44820000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 48140000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 51460000,
+          "season": "2029-30"
+        },
+        {
+          "salary": 54780000,
+          "season": "2030-31"
+        }
+      ],
+      "team_abbrev": "OKC"
+    },
+    {
+      "normalized_name": "paolo banchero",
+      "player_name": "Paolo Banchero",
+      "remaining_guaranteed": 185920000,
+      "seasons": [
+        {
+          "salary": 41500000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 44820000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 48140000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 51460000,
+          "season": "2029-30"
+        },
+        {
+          "salary": 54780000,
+          "season": "2030-31"
+        }
+      ],
+      "team_abbrev": "ORL"
+    },
+    {
+      "normalized_name": "austin reaves",
+      "player_name": "Austin Reaves",
+      "remaining_guaranteed": 133618410,
+      "seasons": [
+        {
+          "salary": 41240250,
+          "season": "2026-27"
+        },
+        {
+          "salary": 44539470,
+          "season": "2027-28"
+        },
+        {
+          "salary": 47838690,
+          "season": "2028-29"
+        },
+        {
+          "salary": 51137910,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "LAL"
+    },
+    {
+      "normalized_name": "shai gilgeous alexander",
+      "player_name": "Shai Gilgeous-Alexander",
+      "remaining_guaranteed": 238462350,
+      "seasons": [
+        {
+          "salary": 40806150,
+          "season": "2026-27"
+        },
+        {
+          "salary": 61005000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 65885400,
+          "season": "2028-29"
+        },
+        {
+          "salary": 70765800,
+          "season": "2029-30"
+        },
+        {
+          "salary": 75646200,
+          "season": "2030-31"
+        }
+      ],
+      "team_abbrev": "OKC"
+    },
+    {
+      "normalized_name": "michael porter jr",
+      "player_name": "Michael Porter Jr.",
+      "remaining_guaranteed": 12000000,
+      "seasons": [
+        {
+          "salary": 40806150,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "BKN"
+    },
+    {
+      "normalized_name": "tyrese maxey",
+      "player_name": "Tyrese Maxey",
+      "remaining_guaranteed": 130746840,
+      "seasons": [
+        {
+          "salary": 40770520,
+          "season": "2026-27"
+        },
+        {
+          "salary": 43582280,
+          "season": "2027-28"
+        },
+        {
+          "salary": 46394040,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "PHI"
+    },
+    {
+      "normalized_name": "lamelo ball",
+      "player_name": "LaMelo Ball",
+      "remaining_guaranteed": 130746840,
+      "seasons": [
+        {
+          "salary": 40770520,
+          "season": "2026-27"
+        },
+        {
+          "salary": 43582280,
+          "season": "2027-28"
+        },
+        {
+          "salary": 46394040,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "MIN"
+    },
+    {
+      "normalized_name": "brandon ingram",
+      "player_name": "Brandon Ingram",
+      "remaining_guaranteed": 40000000,
+      "seasons": [
+        {
+          "salary": 40000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 41904762,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "TOR"
+    },
+    {
+      "normalized_name": "kyrie irving",
+      "player_name": "Kyrie Irving",
+      "remaining_guaranteed": 39491282,
+      "seasons": [
+        {
+          "salary": 39491282,
+          "season": "2026-27"
+        },
+        {
+          "salary": 42416562,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "desmond bane",
+      "player_name": "Desmond Bane",
+      "remaining_guaranteed": 126499530,
+      "seasons": [
+        {
+          "salary": 39446090,
+          "season": "2026-27"
+        },
+        {
+          "salary": 42166510,
+          "season": "2027-28"
+        },
+        {
+          "salary": 44886930,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "ORL"
+    },
+    {
+      "normalized_name": "jalen brunson",
+      "player_name": "Jalen Brunson",
+      "remaining_guaranteed": 78274562,
+      "seasons": [
+        {
+          "salary": 37739521,
+          "season": "2026-27"
+        },
+        {
+          "salary": 40535041,
+          "season": "2027-28"
+        },
+        {
+          "salary": 43330561,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "NYK"
+    },
+    {
+      "normalized_name": "rudy gobert",
+      "player_name": "Rudy Gobert",
+      "remaining_guaranteed": 36500000,
+      "seasons": [
+        {
+          "salary": 36500000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 38000000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MIN"
+    },
+    {
+      "normalized_name": "jalen green",
+      "player_name": "Jalen Green",
+      "remaining_guaranteed": 36251166,
+      "seasons": [
+        {
+          "salary": 36251166,
+          "season": "2026-27"
+        },
+        {
+          "salary": 36000000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "alperen sengun",
+      "player_name": "Alperen Şengün",
+      "remaining_guaranteed": 112018349,
+      "seasons": [
+        {
+          "salary": 35642202,
+          "season": "2026-27"
+        },
+        {
+          "salary": 37339450,
+          "season": "2027-28"
+        },
+        {
+          "salary": 39036697,
+          "season": "2028-29"
+        },
+        {
+          "salary": 39036697,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "HOU"
+    },
+    {
+      "normalized_name": "jrue holiday",
+      "player_name": "Jrue Holiday",
+      "remaining_guaranteed": 34800000,
+      "seasons": [
+        {
+          "salary": 34800000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 37200000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "POR"
+    },
+    {
+      "normalized_name": "jerami grant",
+      "player_name": "Jerami Grant",
+      "remaining_guaranteed": 34206898,
+      "seasons": [
+        {
+          "salary": 34206898,
+          "season": "2026-27"
+        },
+        {
+          "salary": 36413790,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "jordan poole",
+      "player_name": "Jordan Poole",
+      "remaining_guaranteed": 34044642,
+      "seasons": [
+        {
+          "salary": 34044642,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "NOP"
+    },
+    {
+      "normalized_name": "aaron gordon",
+      "player_name": "Aaron Gordon",
+      "remaining_guaranteed": 70008717,
+      "seasons": [
+        {
+          "salary": 33658037,
+          "season": "2026-27"
+        },
+        {
+          "salary": 36350680,
+          "season": "2027-28"
+        },
+        {
+          "salary": 39043323,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "DEN"
+    },
+    {
+      "normalized_name": "mikal bridges",
+      "player_name": "Mikal Bridges",
+      "remaining_guaranteed": 108482144,
+      "seasons": [
+        {
+          "salary": 33482145,
+          "season": "2026-27"
+        },
+        {
+          "salary": 36160714,
+          "season": "2027-28"
+        },
+        {
+          "salary": 38839285,
+          "season": "2028-29"
+        },
+        {
+          "salary": 41517856,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "NYK"
+    },
+    {
+      "normalized_name": "julius randle",
+      "player_name": "Julius Randle",
+      "remaining_guaranteed": 33333334,
+      "seasons": [
+        {
+          "salary": 33333334,
+          "season": "2026-27"
+        },
+        {
+          "salary": 35802468,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "BKN"
+    },
+    {
+      "normalized_name": "tyler herro",
+      "player_name": "Tyler Herro",
+      "remaining_guaranteed": 33000000,
+      "seasons": [
+        {
+          "salary": 33000000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "dejounte murray",
+      "player_name": "Dejounte Murray",
+      "remaining_guaranteed": 32785071,
+      "seasons": [
+        {
+          "salary": 32785071,
+          "season": "2026-27"
+        },
+        {
+          "salary": 30751504,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "NOP"
+    },
+    {
+      "normalized_name": "immanuel quickley",
+      "player_name": "Immanuel Quickley",
+      "remaining_guaranteed": 97500000,
+      "seasons": [
+        {
+          "salary": 32500000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 32500000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 32500000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "TOR"
+    },
+    {
+      "normalized_name": "jalen suggs",
+      "player_name": "Jalen Suggs",
+      "remaining_guaranteed": 88800000,
+      "seasons": [
+        {
+          "salary": 32400000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 29600000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 26800000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 26700000,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "ORL"
+    },
+    {
+      "normalized_name": "derrick white",
+      "player_name": "Derrick White",
+      "remaining_guaranteed": 62944000,
+      "seasons": [
+        {
+          "salary": 30348000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 32596000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 34844000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "BOS"
+    },
+    {
+      "normalized_name": "walker kessler",
+      "player_name": "Walker Kessler",
+      "remaining_guaranteed": 95232558,
+      "seasons": [
+        {
+          "salary": 30232558,
+          "season": "2026-27"
+        },
+        {
+          "salary": 31744186,
+          "season": "2027-28"
+        },
+        {
+          "salary": 33255814,
+          "season": "2028-29"
+        },
+        {
+          "salary": 34767442,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "LAL"
+    },
+    {
+      "normalized_name": "andrew wiggins",
+      "player_name": "Andrew Wiggins",
+      "remaining_guaranteed": 46515798,
+      "seasons": [
+        {
+          "salary": 30169644,
+          "season": "2026-27"
+        },
+        {
+          "salary": 16346154,
+          "season": "2027-28"
+        },
+        {
+          "salary": 17653846,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "MIA"
+    },
+    {
+      "normalized_name": "jalen johnson",
+      "player_name": "Jalen Johnson",
+      "remaining_guaranteed": 120000000,
+      "seasons": [
+        {
+          "salary": 30000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 30000000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 30000000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 30000000,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "rj barrett",
+      "player_name": "RJ Barrett",
+      "remaining_guaranteed": 29616071,
+      "seasons": [
+        {
+          "salary": 29616071,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "TOR"
+    },
+    {
+      "normalized_name": "jarrett allen",
+      "player_name": "Jarrett Allen",
+      "remaining_guaranteed": 90720000,
+      "seasons": [
+        {
+          "salary": 28000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 30240000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 32480000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "CLE"
+    },
+    {
+      "normalized_name": "draymond green",
+      "player_name": "Draymond Green",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 27678571,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "GSW"
+    },
+    {
+      "normalized_name": "trey murphy iii",
+      "player_name": "Trey Murphy III",
+      "remaining_guaranteed": 87000000,
+      "seasons": [
+        {
+          "salary": 27000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 29000000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 31000000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "NOP"
+    },
+    {
+      "normalized_name": "devin vassell",
+      "player_name": "Devin Vassell",
+      "remaining_guaranteed": 78652174,
+      "seasons": [
+        {
+          "salary": 27000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 24652174,
+          "season": "2027-28"
+        },
+        {
+          "salary": 27000000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "SAS"
+    },
+    {
+      "normalized_name": "myles turner",
+      "player_name": "Myles Turner",
+      "remaining_guaranteed": 54434241,
+      "seasons": [
+        {
+          "salary": 26584164,
+          "season": "2026-27"
+        },
+        {
+          "salary": 27850077,
+          "season": "2027-28"
+        },
+        {
+          "salary": 29115990,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "jaden mcdaniels",
+      "player_name": "Jaden McDaniels",
+      "remaining_guaranteed": 84020689,
+      "seasons": [
+        {
+          "salary": 26200001,
+          "season": "2026-27"
+        },
+        {
+          "salary": 28006898,
+          "season": "2027-28"
+        },
+        {
+          "salary": 29813790,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "MIN"
+    },
+    {
+      "normalized_name": "dyson daniels",
+      "player_name": "Dyson Daniels",
+      "remaining_guaranteed": 100000000,
+      "seasons": [
+        {
+          "salary": 25000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 25000000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 25000000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 25000000,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "josh giddey",
+      "player_name": "Josh Giddey",
+      "remaining_guaranteed": 75000000,
+      "seasons": [
+        {
+          "salary": 25000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 25000000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 25000000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "CHI"
+    },
+    {
+      "normalized_name": "fred vanvleet",
+      "player_name": "Fred VanVleet",
+      "remaining_guaranteed": 25000000,
+      "seasons": [
+        {
+          "salary": 25000000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "HOU"
+    },
+    {
+      "normalized_name": "de'andre hunter",
+      "player_name": "De'Andre Hunter",
+      "remaining_guaranteed": 24910714,
+      "seasons": [
+        {
+          "salary": 24910714,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "SAC"
+    },
+    {
+      "normalized_name": "jonathan kuminga",
+      "player_name": "Jonathan Kuminga",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 24300000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "keegan murray",
+      "player_name": "Keegan Murray",
+      "remaining_guaranteed": 140000000,
+      "seasons": [
+        {
+          "salary": 24137936,
+          "season": "2026-27"
+        },
+        {
+          "salary": 26068965,
+          "season": "2027-28"
+        },
+        {
+          "salary": 27999999,
+          "season": "2028-29"
+        },
+        {
+          "salary": 29931033,
+          "season": "2029-30"
+        },
+        {
+          "salary": 31862067,
+          "season": "2030-31"
+        }
+      ],
+      "team_abbrev": "SAC"
+    },
+    {
+      "normalized_name": "jabari smith jr",
+      "player_name": "Jabari Smith Jr.",
+      "remaining_guaranteed": 122000000,
+      "seasons": [
+        {
+          "salary": 23643411,
+          "season": "2026-27"
+        },
+        {
+          "salary": 21751940,
+          "season": "2027-28"
+        },
+        {
+          "salary": 23643411,
+          "season": "2028-29"
+        },
+        {
+          "salary": 25534883,
+          "season": "2029-30"
+        },
+        {
+          "salary": 27426355,
+          "season": "2030-31"
+        }
+      ],
+      "team_abbrev": "HOU"
+    },
+    {
+      "normalized_name": "naz reid",
+      "player_name": "Naz Reid",
+      "remaining_guaranteed": 75000000,
+      "seasons": [
+        {
+          "salary": 23275862,
+          "season": "2026-27"
+        },
+        {
+          "salary": 25000000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 26724138,
+          "season": "2028-29"
+        },
+        {
+          "salary": 28448276,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "isaiah hartenstein",
+      "player_name": "Isaiah Hartenstein",
+      "remaining_guaranteed": 48148148,
+      "seasons": [
+        {
+          "salary": 23148148,
+          "season": "2026-27"
+        },
+        {
+          "salary": 25000000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 26851852,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "OKC"
+    },
+    {
+      "normalized_name": "nic claxton",
+      "player_name": "Nic Claxton",
+      "remaining_guaranteed": 44090911,
+      "seasons": [
+        {
+          "salary": 23147727,
+          "season": "2026-27"
+        },
+        {
+          "salary": 20943184,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "CHI"
+    },
+    {
+      "normalized_name": "cameron johnson",
+      "player_name": "Cameron Johnson",
+      "remaining_guaranteed": 23062500,
+      "seasons": [
+        {
+          "salary": 23062500,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "DEN"
+    },
+    {
+      "normalized_name": "coby white",
+      "player_name": "Coby White",
+      "remaining_guaranteed": 74000000,
+      "seasons": [
+        {
+          "salary": 22839506,
+          "season": "2026-27"
+        },
+        {
+          "salary": 24666667,
+          "season": "2027-28"
+        },
+        {
+          "salary": 26493827,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "miles bridges",
+      "player_name": "Miles Bridges",
+      "remaining_guaranteed": 22826087,
+      "seasons": [
+        {
+          "salary": 22826087,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "damian lillard",
+      "player_name": "Damian Lillard",
+      "remaining_guaranteed": 90066412,
+      "seasons": [
+        {
+          "salary": 35915403,
+          "season": "2026-27"
+        },
+        {
+          "salary": 36620603,
+          "season": "2027-28"
+        },
+        {
+          "salary": 22516603,
+          "season": "2028-29"
+        },
+        {
+          "salary": 22516603,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "kentavious caldwell pope",
+      "player_name": "Kentavious Caldwell-Pope",
+      "remaining_guaranteed": 21621500,
+      "seasons": [
+        {
+          "salary": 21621500,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "christian braun",
+      "player_name": "Christian Braun",
+      "remaining_guaranteed": 125000000,
+      "seasons": [
+        {
+          "salary": 21551726,
+          "season": "2026-27"
+        },
+        {
+          "salary": 23275863,
+          "season": "2027-28"
+        },
+        {
+          "salary": 25000000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 26724137,
+          "season": "2029-30"
+        },
+        {
+          "salary": 28448274,
+          "season": "2030-31"
+        }
+      ],
+      "team_abbrev": "DEN"
+    },
+    {
+      "normalized_name": "norman powell",
+      "player_name": "Norman Powell",
+      "remaining_guaranteed": 21500000,
+      "seasons": [
+        {
+          "salary": 21500000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 22575000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "CHI"
+    },
+    {
+      "normalized_name": "cj mccollum",
+      "player_name": "CJ McCollum",
+      "remaining_guaranteed": 21000000,
+      "seasons": [
+        {
+          "salary": 21000000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "josh hart",
+      "player_name": "Josh Hart",
+      "remaining_guaranteed": 20923760,
+      "seasons": [
+        {
+          "salary": 20923760,
+          "season": "2026-27"
+        },
+        {
+          "salary": 22375280,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "NYK"
+    },
+    {
+      "normalized_name": "kyle kuzma",
+      "player_name": "Kyle Kuzma",
+      "remaining_guaranteed": 20345152,
+      "seasons": [
+        {
+          "salary": 20345152,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "ivica zubac",
+      "player_name": "Ivica Zubac",
+      "remaining_guaranteed": 42132440,
+      "seasons": [
+        {
+          "salary": 20342140,
+          "season": "2026-27"
+        },
+        {
+          "salary": 21790300,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "IND"
+    },
+    {
+      "normalized_name": "malik monk",
+      "player_name": "Malik Monk",
+      "remaining_guaranteed": 20190035,
+      "seasons": [
+        {
+          "salary": 20190035,
+          "season": "2026-27"
+        },
+        {
+          "salary": 21582451,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "SAC"
+    },
+    {
+      "normalized_name": "shaedon sharpe",
+      "player_name": "Shaedon Sharpe",
+      "remaining_guaranteed": 90000000,
+      "seasons": [
+        {
+          "salary": 20089287,
+          "season": "2026-27"
+        },
+        {
+          "salary": 21696429,
+          "season": "2027-28"
+        },
+        {
+          "salary": 23303571,
+          "season": "2028-29"
+        },
+        {
+          "salary": 24910713,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "POR"
+    },
+    {
+      "normalized_name": "dillon brooks",
+      "player_name": "Dillon Brooks",
+      "remaining_guaranteed": 19992727,
+      "seasons": [
+        {
+          "salary": 19992727,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "pj washington",
+      "player_name": "P.J. Washington",
+      "remaining_guaranteed": 88762440,
+      "seasons": [
+        {
+          "salary": 19813044,
+          "season": "2026-27"
+        },
+        {
+          "salary": 21398088,
+          "season": "2027-28"
+        },
+        {
+          "salary": 22983132,
+          "season": "2028-29"
+        },
+        {
+          "salary": 24568176,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "alex caruso",
+      "player_name": "Alex Caruso",
+      "remaining_guaranteed": 62994960,
+      "seasons": [
+        {
+          "salary": 19550160,
+          "season": "2026-27"
+        },
+        {
+          "salary": 20998320,
+          "season": "2027-28"
+        },
+        {
+          "salary": 22446480,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "OKC"
+    },
+    {
+      "normalized_name": "andrew nembhard",
+      "player_name": "Andrew Nembhard",
+      "remaining_guaranteed": 40548480,
+      "seasons": [
+        {
+          "salary": 19550160,
+          "season": "2026-27"
+        },
+        {
+          "salary": 20998320,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "IND"
+    },
+    {
+      "normalized_name": "kristaps porzingis",
+      "player_name": "Kristaps Porziņģis",
+      "remaining_guaranteed": 19512195,
+      "seasons": [
+        {
+          "salary": 19512195,
+          "season": "2026-27"
+        },
+        {
+          "salary": 20487805,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "GSW"
+    },
+    {
+      "normalized_name": "jakob poeltl",
+      "player_name": "Jakob Poeltl",
+      "remaining_guaranteed": 76284000,
+      "seasons": [
+        {
+          "salary": 19500000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 27300000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 29484000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 27300000,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "TOR"
+    },
+    {
+      "normalized_name": "bradley beal",
+      "player_name": "Bradley Beal",
+      "remaining_guaranteed": 77532040,
+      "seasons": [
+        {
+          "salary": 25004710,
+          "season": "2026-27"
+        },
+        {
+          "salary": 19383010,
+          "season": "2027-28"
+        },
+        {
+          "salary": 19383010,
+          "season": "2028-29"
+        },
+        {
+          "salary": 19383010,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "ayo dosunmu",
+      "player_name": "Ayo Dosunmu",
+      "remaining_guaranteed": 86510348,
+      "seasons": [
+        {
+          "salary": 19310345,
+          "season": "2026-27"
+        },
+        {
+          "salary": 20855173,
+          "season": "2027-28"
+        },
+        {
+          "salary": 22400001,
+          "season": "2028-29"
+        },
+        {
+          "salary": 23944829,
+          "season": "2029-30"
+        },
+        {
+          "salary": 25489652,
+          "season": "2030-31"
+        }
+      ],
+      "team_abbrev": "MIN"
+    },
+    {
+      "normalized_name": "luguentz dort",
+      "player_name": "Luguentz Dort",
+      "remaining_guaranteed": 18222222,
+      "seasons": [
+        {
+          "salary": 18222222,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "grayson allen",
+      "player_name": "Grayson Allen",
+      "remaining_guaranteed": 18125000,
+      "seasons": [
+        {
+          "salary": 18125000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 19375000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "wendell carter jr",
+      "player_name": "Wendell Carter Jr.",
+      "remaining_guaranteed": 37652160,
+      "seasons": [
+        {
+          "salary": 18102000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 19550160,
+          "season": "2027-28"
+        },
+        {
+          "salary": 20998320,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "ORL"
+    },
+    {
+      "normalized_name": "toumani camara",
+      "player_name": "Toumani Camara",
+      "remaining_guaranteed": 81000000,
+      "seasons": [
+        {
+          "salary": 18080358,
+          "season": "2026-27"
+        },
+        {
+          "salary": 19526786,
+          "season": "2027-28"
+        },
+        {
+          "salary": 20973214,
+          "season": "2028-29"
+        },
+        {
+          "salary": 22419642,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "POR"
+    },
+    {
+      "normalized_name": "patrick williams",
+      "player_name": "Patrick Williams",
+      "remaining_guaranteed": 36000000,
+      "seasons": [
+        {
+          "salary": 18000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 18000000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 18000000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "CHI"
+    },
+    {
+      "normalized_name": "keldon johnson",
+      "player_name": "Keldon Johnson",
+      "remaining_guaranteed": 17500000,
+      "seasons": [
+        {
+          "salary": 17500000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "SAS"
+    },
+    {
+      "normalized_name": "klay thompson",
+      "player_name": "Klay Thompson",
+      "remaining_guaranteed": 17460317,
+      "seasons": [
+        {
+          "salary": 17460317,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "daniel gafford",
+      "player_name": "Daniel Gafford",
+      "remaining_guaranteed": 54380289,
+      "seasons": [
+        {
+          "salary": 17263584,
+          "season": "2026-27"
+        },
+        {
+          "salary": 18126763,
+          "season": "2027-28"
+        },
+        {
+          "salary": 18989942,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "santi aldama",
+      "player_name": "Santi Aldama",
+      "remaining_guaranteed": 17007043,
+      "seasons": [
+        {
+          "salary": 17007043,
+          "season": "2026-27"
+        },
+        {
+          "salary": 17007043,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "john collins",
+      "player_name": "John Collins",
+      "remaining_guaranteed": 17000000,
+      "seasons": [
+        {
+          "salary": 17000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 17000000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 17000000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "DET"
+    },
+    {
+      "normalized_name": "victor wembanyama",
+      "player_name": "Victor Wembanyama",
+      "remaining_guaranteed": 211748246,
+      "seasons": [
+        {
+          "salary": 16868246,
+          "season": "2026-27"
+        },
+        {
+          "salary": 43500000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 46980000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 50460000,
+          "season": "2029-30"
+        },
+        {
+          "salary": 53940000,
+          "season": "2030-31"
+        },
+        {
+          "salary": 57420000,
+          "season": "2031-32"
+        }
+      ],
+      "team_abbrev": "SAS"
+    },
+    {
+      "normalized_name": "max strus",
+      "player_name": "Max Strus",
+      "remaining_guaranteed": 16660836,
+      "seasons": [
+        {
+          "salary": 16660836,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "CLE"
+    },
+    {
+      "normalized_name": "nikola jovic",
+      "player_name": "Nikola Jović",
+      "remaining_guaranteed": 62400000,
+      "seasons": [
+        {
+          "salary": 16200000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 14904000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 15096000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 16200000,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "MIA"
+    },
+    {
+      "normalized_name": "onyeka okongwu",
+      "player_name": "Onyeka Okongwu",
+      "remaining_guaranteed": 33000000,
+      "seasons": [
+        {
+          "salary": 16120000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 16880000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "duncan robinson",
+      "player_name": "Duncan Robinson",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 15992957,
+          "season": "2026-27"
+        },
+        {
+          "salary": 15151222,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "DET"
+    },
+    {
+      "normalized_name": "terance mann",
+      "player_name": "Terance Mann",
+      "remaining_guaranteed": 31500000,
+      "seasons": [
+        {
+          "salary": 15500000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 16000000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "BKN"
+    },
+    {
+      "normalized_name": "gary trent jr",
+      "player_name": "Gary Trent Jr.",
+      "remaining_guaranteed": 64000000,
+      "seasons": [
+        {
+          "salary": 15200000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 16400000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 16400000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 16000000,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "brandon miller",
+      "player_name": "Brandon Miller",
+      "remaining_guaranteed": 15104626,
+      "seasons": [
+        {
+          "salary": 15104626,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "mitchell robinson",
+      "player_name": "Mitchell Robinson",
+      "remaining_guaranteed": 47388600,
+      "seasons": [
+        {
+          "salary": 15044000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 15796200,
+          "season": "2027-28"
+        },
+        {
+          "salary": 16548400,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "BOS"
+    },
+    {
+      "normalized_name": "tobias harris",
+      "player_name": "Tobias Harris",
+      "remaining_guaranteed": 30840200,
+      "seasons": [
+        {
+          "salary": 15044000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 15796200,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "SAS"
+    },
+    {
+      "normalized_name": "obi toppin",
+      "player_name": "Obi Toppin",
+      "remaining_guaranteed": 31025000,
+      "seasons": [
+        {
+          "salary": 15000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 16025000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "IND"
+    },
+    {
+      "normalized_name": "isaiah stewart",
+      "player_name": "Isaiah Stewart",
+      "remaining_guaranteed": 15000000,
+      "seasons": [
+        {
+          "salary": 15000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 15000000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "herbert jones",
+      "player_name": "Herbert Jones",
+      "remaining_guaranteed": 58284050,
+      "seasons": [
+        {
+          "salary": 14898786,
+          "season": "2026-27"
+        },
+        {
+          "salary": 20858300,
+          "season": "2027-28"
+        },
+        {
+          "salary": 22526964,
+          "season": "2028-29"
+        },
+        {
+          "salary": 24195628,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "NOP"
+    },
+    {
+      "normalized_name": "caris levert",
+      "player_name": "Caris LeVert",
+      "remaining_guaranteed": 14809200,
+      "seasons": [
+        {
+          "salary": 14809200,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "dennis schroder",
+      "player_name": "Dennis Schröder",
+      "remaining_guaranteed": 14809200,
+      "seasons": [
+        {
+          "salary": 14809200,
+          "season": "2026-27"
+        },
+        {
+          "salary": 15514400,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "CLE"
+    },
+    {
+      "normalized_name": "aj dybantsa",
+      "player_name": "AJ Dybantsa",
+      "remaining_guaranteed": 30233760,
+      "seasons": [
+        {
+          "salary": 14748000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 15485760,
+          "season": "2027-28"
+        },
+        {
+          "salary": 16223040,
+          "season": "2028-29"
+        },
+        {
+          "salary": 20457254,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "WAS"
+    },
+    {
+      "normalized_name": "josh green",
+      "player_name": "Josh Green",
+      "remaining_guaranteed": 14679012,
+      "seasons": [
+        {
+          "salary": 14679012,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MIN"
+    },
+    {
+      "normalized_name": "bobby portis",
+      "player_name": "Bobby Portis",
+      "remaining_guaranteed": 14521414,
+      "seasons": [
+        {
+          "salary": 14521414,
+          "season": "2026-27"
+        },
+        {
+          "salary": 15597074,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MIA"
+    },
+    {
+      "normalized_name": "cooper flagg",
+      "player_name": "Cooper Flagg",
+      "remaining_guaranteed": 14517480,
+      "seasons": [
+        {
+          "salary": 14517480,
+          "season": "2026-27"
+        },
+        {
+          "salary": 15208680,
+          "season": "2027-28"
+        },
+        {
+          "salary": 19178146,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "nickeil alexander walker",
+      "player_name": "Nickeil Alexander-Walker",
+      "remaining_guaranteed": 29565510,
+      "seasons": [
+        {
+          "salary": 14403710,
+          "season": "2026-27"
+        },
+        {
+          "salary": 15161800,
+          "season": "2027-28"
+        },
+        {
+          "salary": 15919890,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "grant williams",
+      "player_name": "Grant Williams",
+      "remaining_guaranteed": 14265750,
+      "seasons": [
+        {
+          "salary": 14265750,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "jock landale",
+      "player_name": "Jock Landale",
+      "remaining_guaranteed": 14100000,
+      "seasons": [
+        {
+          "salary": 14100000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "tari eason",
+      "player_name": "Tari Eason",
+      "remaining_guaranteed": 62951724,
+      "seasons": [
+        {
+          "salary": 14051724,
+          "season": "2026-27"
+        },
+        {
+          "salary": 15175862,
+          "season": "2027-28"
+        },
+        {
+          "salary": 16300000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 17424138,
+          "season": "2029-30"
+        },
+        {
+          "salary": 18548276,
+          "season": "2030-31"
+        }
+      ],
+      "team_abbrev": "HOU"
+    },
+    {
+      "normalized_name": "rui hachimura",
+      "player_name": "Rui Hachimura",
+      "remaining_guaranteed": 14000000,
+      "seasons": [
+        {
+          "salary": 14000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 14000000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "LAC"
+    },
+    {
+      "normalized_name": "corey kispert",
+      "player_name": "Corey Kispert",
+      "remaining_guaranteed": 27025000,
+      "seasons": [
+        {
+          "salary": 13975000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 13050000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 13050000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "robert williams",
+      "player_name": "Robert Williams",
+      "remaining_guaranteed": 18968254,
+      "seasons": [
+        {
+          "salary": 13968254,
+          "season": "2026-27"
+        },
+        {
+          "salary": 14666667,
+          "season": "2027-28"
+        },
+        {
+          "salary": 15365079,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "POR"
+    },
+    {
+      "normalized_name": "quentin grimes",
+      "player_name": "Quentin Grimes",
+      "remaining_guaranteed": 43953489,
+      "seasons": [
+        {
+          "salary": 13953489,
+          "season": "2026-27"
+        },
+        {
+          "salary": 14651163,
+          "season": "2027-28"
+        },
+        {
+          "salary": 15348837,
+          "season": "2028-29"
+        },
+        {
+          "salary": 16046511,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "LAL"
+    },
+    {
+      "normalized_name": "julian champagnie",
+      "player_name": "Julian Champagnie",
+      "remaining_guaranteed": 45000000,
+      "seasons": [
+        {
+          "salary": 13888889,
+          "season": "2026-27"
+        },
+        {
+          "salary": 15000000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 16111111,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "SAS"
+    },
+    {
+      "normalized_name": "zaccharie risacher",
+      "player_name": "Zaccharie Risacher",
+      "remaining_guaranteed": 13826040,
+      "seasons": [
+        {
+          "salary": 13826040,
+          "season": "2026-27"
+        },
+        {
+          "salary": 17434637,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "scoot henderson",
+      "player_name": "Scoot Henderson",
+      "remaining_guaranteed": 13585523,
+      "seasons": [
+        {
+          "salary": 13585523,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "POR"
+    },
+    {
+      "normalized_name": "damian lillard",
+      "player_name": "Damian Lillard",
+      "remaining_guaranteed": 13398800,
+      "seasons": [
+        {
+          "salary": 35915403,
+          "season": "2026-27"
+        },
+        {
+          "salary": 36620603,
+          "season": "2027-28"
+        },
+        {
+          "salary": 22516603,
+          "season": "2028-29"
+        },
+        {
+          "salary": 22516603,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "POR"
+    },
+    {
+      "normalized_name": "dorian finney smith",
+      "player_name": "Dorian Finney-Smith",
+      "remaining_guaranteed": 26670000,
+      "seasons": [
+        {
+          "salary": 13335000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 13335000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 13335000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "darryn peterson",
+      "player_name": "Darryn Peterson",
+      "remaining_guaranteed": 27050640,
+      "seasons": [
+        {
+          "salary": 13195320,
+          "season": "2026-27"
+        },
+        {
+          "salary": 13855320,
+          "season": "2027-28"
+        },
+        {
+          "salary": 14515320,
+          "season": "2028-29"
+        },
+        {
+          "salary": 18318335,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "UTA"
+    },
+    {
+      "normalized_name": "deni avdija",
+      "player_name": "Deni Avdija",
+      "remaining_guaranteed": 25000000,
+      "seasons": [
+        {
+          "salary": 13125000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 11875000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "POR"
+    },
+    {
+      "normalized_name": "sandro mamukelashvili",
+      "player_name": "Sandro Mamukelashvili",
+      "remaining_guaranteed": 38350000,
+      "seasons": [
+        {
+          "salary": 13000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 12350000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 13000000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 13650000,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "LAL"
+    },
+    {
+      "normalized_name": "steven adams",
+      "player_name": "Steven Adams",
+      "remaining_guaranteed": 24869566,
+      "seasons": [
+        {
+          "salary": 13000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 11869566,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "HOU"
+    },
+    {
+      "normalized_name": "dylan harper",
+      "player_name": "Dylan Harper",
+      "remaining_guaranteed": 12989040,
+      "seasons": [
+        {
+          "salary": 12989040,
+          "season": "2026-27"
+        },
+        {
+          "salary": 13607760,
+          "season": "2027-28"
+        },
+        {
+          "salary": 17172994,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "SAS"
+    },
+    {
+      "normalized_name": "donte divincenzo",
+      "player_name": "Donte DiVincenzo",
+      "remaining_guaranteed": 12535000,
+      "seasons": [
+        {
+          "salary": 12535000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MIN"
+    },
+    {
+      "normalized_name": "moses moody",
+      "player_name": "Moses Moody",
+      "remaining_guaranteed": 25925925,
+      "seasons": [
+        {
+          "salary": 12500000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 13425925,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "GSW"
+    },
+    {
+      "normalized_name": "brandon clarke",
+      "player_name": "Brandon Clarke",
+      "remaining_guaranteed": 12500000,
+      "seasons": [
+        {
+          "salary": 12500000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "jarred vanderbilt",
+      "player_name": "Jarred Vanderbilt",
+      "remaining_guaranteed": 12428571,
+      "seasons": [
+        {
+          "salary": 12428571,
+          "season": "2026-27"
+        },
+        {
+          "salary": 13285714,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "LAL"
+    },
+    {
+      "normalized_name": "davion mitchell",
+      "player_name": "Davion Mitchell",
+      "remaining_guaranteed": 12400000,
+      "seasons": [
+        {
+          "salary": 12400000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MIA"
+    },
+    {
+      "normalized_name": "alex sarr",
+      "player_name": "Alex Sarr",
+      "remaining_guaranteed": 12370680,
+      "seasons": [
+        {
+          "salary": 12370680,
+          "season": "2026-27"
+        },
+        {
+          "salary": 15611798,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "WAS"
+    },
+    {
+      "normalized_name": "amen thompson",
+      "player_name": "Amen Thompson",
+      "remaining_guaranteed": 12258609,
+      "seasons": [
+        {
+          "salary": 12258609,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "HOU"
+    },
+    {
+      "normalized_name": "cameron boozer",
+      "player_name": "Cameron Boozer",
+      "remaining_guaranteed": 24291600,
+      "seasons": [
+        {
+          "salary": 11849760,
+          "season": "2026-27"
+        },
+        {
+          "salary": 12441840,
+          "season": "2027-28"
+        },
+        {
+          "salary": 13034880,
+          "season": "2028-29"
+        },
+        {
+          "salary": 16476089,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "isaac okoro",
+      "player_name": "Isaac Okoro",
+      "remaining_guaranteed": 11814814,
+      "seasons": [
+        {
+          "salary": 11814814,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "CHI"
+    },
+    {
+      "normalized_name": "mark williams",
+      "player_name": "Mark Williams",
+      "remaining_guaranteed": 38000000,
+      "seasons": [
+        {
+          "salary": 11728395,
+          "season": "2026-27"
+        },
+        {
+          "salary": 12666667,
+          "season": "2027-28"
+        },
+        {
+          "salary": 13604938,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "vj edgecombe",
+      "player_name": "VJ Edgecombe",
+      "remaining_guaranteed": 11663880,
+      "seasons": [
+        {
+          "salary": 11663880,
+          "season": "2026-27"
+        },
+        {
+          "salary": 12219720,
+          "season": "2027-28"
+        },
+        {
+          "salary": 15445727,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "PHI"
+    },
+    {
+      "normalized_name": "isaiah joe",
+      "player_name": "Isaiah Joe",
+      "remaining_guaranteed": 11323006,
+      "seasons": [
+        {
+          "salary": 11323006,
+          "season": "2026-27"
+        },
+        {
+          "salary": 11323006,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "DET"
+    },
+    {
+      "normalized_name": "ausar thompson",
+      "player_name": "Ausar Thompson",
+      "remaining_guaranteed": 11117925,
+      "seasons": [
+        {
+          "salary": 11117925,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "DET"
+    },
+    {
+      "normalized_name": "reed sheppard",
+      "player_name": "Reed Sheppard",
+      "remaining_guaranteed": 11108880,
+      "seasons": [
+        {
+          "salary": 11108880,
+          "season": "2026-27"
+        },
+        {
+          "salary": 14041625,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "HOU"
+    },
+    {
+      "normalized_name": "aaron nesmith",
+      "player_name": "Aaron Nesmith",
+      "remaining_guaranteed": 51389440,
+      "seasons": [
+        {
+          "salary": 11000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 19418000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 20971440,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "IND"
+    },
+    {
+      "normalized_name": "tj mcconnell",
+      "player_name": "T.J. McConnell",
+      "remaining_guaranteed": 22800000,
+      "seasons": [
+        {
+          "salary": 11000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 11800000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 11800000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "IND"
+    },
+    {
+      "normalized_name": "royce o'neale",
+      "player_name": "Royce O'Neale",
+      "remaining_guaranteed": 22500000,
+      "seasons": [
+        {
+          "salary": 10875000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 11625000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "sam hauser",
+      "player_name": "Sam Hauser",
+      "remaining_guaranteed": 34955356,
+      "seasons": [
+        {
+          "salary": 10848215,
+          "season": "2026-27"
+        },
+        {
+          "salary": 11651785,
+          "season": "2027-28"
+        },
+        {
+          "salary": 12455356,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "BOS"
+    },
+    {
+      "normalized_name": "collin gillespie",
+      "player_name": "Collin Gillespie",
+      "remaining_guaranteed": 48000000,
+      "seasons": [
+        {
+          "salary": 10714286,
+          "season": "2026-27"
+        },
+        {
+          "salary": 11571429,
+          "season": "2027-28"
+        },
+        {
+          "salary": 12428571,
+          "season": "2028-29"
+        },
+        {
+          "salary": 13285714,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "caleb wilson",
+      "player_name": "Caleb Wilson",
+      "remaining_guaranteed": 21901680,
+      "seasons": [
+        {
+          "salary": 10683720,
+          "season": "2026-27"
+        },
+        {
+          "salary": 11217960,
+          "season": "2027-28"
+        },
+        {
+          "salary": 11752320,
+          "season": "2028-29"
+        },
+        {
+          "salary": 14866685,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "CHI"
+    },
+    {
+      "normalized_name": "jusuf nurkic",
+      "player_name": "Jusuf Nurkić",
+      "remaining_guaranteed": 22000000,
+      "seasons": [
+        {
+          "salary": 10576923,
+          "season": "2026-27"
+        },
+        {
+          "salary": 11423077,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "UTA"
+    },
+    {
+      "normalized_name": "kon knueppel",
+      "player_name": "Kon Knueppel",
+      "remaining_guaranteed": 10516560,
+      "seasons": [
+        {
+          "salary": 10516560,
+          "season": "2026-27"
+        },
+        {
+          "salary": 11017560,
+          "season": "2027-28"
+        },
+        {
+          "salary": 13937214,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "derrick jones jr",
+      "player_name": "Derrick Jones Jr.",
+      "remaining_guaranteed": 10476190,
+      "seasons": [
+        {
+          "salary": 10476190,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "LAC"
+    },
+    {
+      "normalized_name": "luke kornet",
+      "player_name": "Luke Kornet",
+      "remaining_guaranteed": 13000000,
+      "seasons": [
+        {
+          "salary": 10450000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 9900000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 9350000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "SAS"
+    },
+    {
+      "normalized_name": "anthony black",
+      "player_name": "Anthony Black",
+      "remaining_guaranteed": 10106316,
+      "seasons": [
+        {
+          "salary": 10106316,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "ORL"
+    },
+    {
+      "normalized_name": "aj green",
+      "player_name": "A.J. Green",
+      "remaining_guaranteed": 45000000,
+      "seasons": [
+        {
+          "salary": 10044644,
+          "season": "2026-27"
+        },
+        {
+          "salary": 10848215,
+          "season": "2027-28"
+        },
+        {
+          "salary": 11651786,
+          "season": "2028-29"
+        },
+        {
+          "salary": 12455355,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "stephon castle",
+      "player_name": "Stephon Castle",
+      "remaining_guaranteed": 10015920,
+      "seasons": [
+        {
+          "salary": 10015920,
+          "season": "2026-27"
+        },
+        {
+          "salary": 12670139,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "SAS"
+    },
+    {
+      "normalized_name": "caleb martin",
+      "player_name": "Caleb Martin",
+      "remaining_guaranteed": 10001493,
+      "seasons": [
+        {
+          "salary": 10001493,
+          "season": "2026-27"
+        },
+        {
+          "salary": 9371351,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "day'ron sharpe",
+      "player_name": "Day'Ron Sharpe",
+      "remaining_guaranteed": 10000000,
+      "seasons": [
+        {
+          "salary": 10000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 10000000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "BKN"
+    },
+    {
+      "normalized_name": "keaton wagler",
+      "player_name": "Keaton Wagler",
+      "remaining_guaranteed": 19833000,
+      "seasons": [
+        {
+          "salary": 9674760,
+          "season": "2026-27"
+        },
+        {
+          "salary": 10158240,
+          "season": "2027-28"
+        },
+        {
+          "salary": 10641960,
+          "season": "2028-29"
+        },
+        {
+          "salary": 13483364,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "LAC"
+    },
+    {
+      "normalized_name": "buddy hield",
+      "player_name": "Buddy Hield",
+      "remaining_guaranteed": 9658536,
+      "seasons": [
+        {
+          "salary": 9658536,
+          "season": "2026-27"
+        },
+        {
+          "salary": 10097560,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "ace bailey",
+      "player_name": "Ace Bailey",
+      "remaining_guaranteed": 9523080,
+      "seasons": [
+        {
+          "salary": 9523080,
+          "season": "2026-27"
+        },
+        {
+          "salary": 9976560,
+          "season": "2027-28"
+        },
+        {
+          "salary": 12640302,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "UTA"
+    },
+    {
+      "normalized_name": "naji marshall",
+      "player_name": "Naji Marshall",
+      "remaining_guaranteed": 9428571,
+      "seasons": [
+        {
+          "salary": 9428571,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "jalen smith",
+      "player_name": "Jalen Smith",
+      "remaining_guaranteed": 9428571,
+      "seasons": [
+        {
+          "salary": 9428571,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "CHI"
+    },
+    {
+      "normalized_name": "collin sexton",
+      "player_name": "Collin Sexton",
+      "remaining_guaranteed": 19200300,
+      "seasons": [
+        {
+          "salary": 9366000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 9834300,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "LAL"
+    },
+    {
+      "normalized_name": "bilal coulibaly",
+      "player_name": "Bilal Coulibaly",
+      "remaining_guaranteed": 9240012,
+      "seasons": [
+        {
+          "salary": 9240012,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "WAS"
+    },
+    {
+      "normalized_name": "aaron wiggins",
+      "player_name": "Aaron Wiggins",
+      "remaining_guaranteed": 17570097,
+      "seasons": [
+        {
+          "salary": 9224300,
+          "season": "2026-27"
+        },
+        {
+          "salary": 8345797,
+          "season": "2027-28"
+        },
+        {
+          "salary": 8345797,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "ty jerome",
+      "player_name": "Ty Jerome",
+      "remaining_guaranteed": 9220050,
+      "seasons": [
+        {
+          "salary": 9220050,
+          "season": "2026-27"
+        },
+        {
+          "salary": 9659100,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "brook lopez",
+      "player_name": "Brook Lopez",
+      "remaining_guaranteed": 9187500,
+      "seasons": [
+        {
+          "salary": 9187500,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "LAC"
+    },
+    {
+      "normalized_name": "sam merrill",
+      "player_name": "Sam Merrill",
+      "remaining_guaranteed": 29517856,
+      "seasons": [
+        {
+          "salary": 9160715,
+          "season": "2026-27"
+        },
+        {
+          "salary": 9839285,
+          "season": "2027-28"
+        },
+        {
+          "salary": 10517856,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "CLE"
+    },
+    {
+      "normalized_name": "ron holland",
+      "player_name": "Ron Holland",
+      "remaining_guaranteed": 9069600,
+      "seasons": [
+        {
+          "salary": 9069600,
+          "season": "2026-27"
+        },
+        {
+          "salary": 11491183,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "DET"
+    },
+    {
+      "normalized_name": "dean wade",
+      "player_name": "Dean Wade",
+      "remaining_guaranteed": 30000000,
+      "seasons": [
+        {
+          "salary": 9000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 9450000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 9900000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 10350000,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "PHI"
+    },
+    {
+      "normalized_name": "mikel brown jr",
+      "player_name": "Mikel Brown Jr.",
+      "remaining_guaranteed": 18013440,
+      "seasons": [
+        {
+          "salary": 8787000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 9226440,
+          "season": "2027-28"
+        },
+        {
+          "salary": 9666000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 12256488,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "BKN"
+    },
+    {
+      "normalized_name": "keon ellis",
+      "player_name": "Keon Ellis",
+      "remaining_guaranteed": 8780488,
+      "seasons": [
+        {
+          "salary": 8780488,
+          "season": "2026-27"
+        },
+        {
+          "salary": 9219512,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "BKN"
+    },
+    {
+      "normalized_name": "tre johnson",
+      "player_name": "Tre Johnson",
+      "remaining_guaranteed": 8649600,
+      "seasons": [
+        {
+          "salary": 8649600,
+          "season": "2026-27"
+        },
+        {
+          "salary": 9061680,
+          "season": "2027-28"
+        },
+        {
+          "salary": 11490211,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "WAS"
+    },
+    {
+      "normalized_name": "jarace walker",
+      "player_name": "Jarace Walker",
+      "remaining_guaranteed": 8478542,
+      "seasons": [
+        {
+          "salary": 8478542,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "IND"
+    },
+    {
+      "normalized_name": "kevin huerter",
+      "player_name": "Kevin Huerter",
+      "remaining_guaranteed": 27000000,
+      "seasons": [
+        {
+          "salary": 8333333,
+          "season": "2026-27"
+        },
+        {
+          "salary": 9000000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 9666667,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "DET"
+    },
+    {
+      "normalized_name": "zach collins",
+      "player_name": "Zach Collins",
+      "remaining_guaranteed": 17000000,
+      "seasons": [
+        {
+          "salary": 8292683,
+          "season": "2026-27"
+        },
+        {
+          "salary": 8707317,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "CHI"
+    },
+    {
+      "normalized_name": "quinten post",
+      "player_name": "Quinten Post",
+      "remaining_guaranteed": 8285714,
+      "seasons": [
+        {
+          "salary": 8285714,
+          "season": "2026-27"
+        },
+        {
+          "salary": 8700000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 9114286,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "max christie",
+      "player_name": "Max Christie",
+      "remaining_guaranteed": 8285714,
+      "seasons": [
+        {
+          "salary": 8285714,
+          "season": "2026-27"
+        },
+        {
+          "salary": 8857143,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "tidjane salaun",
+      "player_name": "Tidjane Salaün",
+      "remaining_guaranteed": 8237880,
+      "seasons": [
+        {
+          "salary": 8237880,
+          "season": "2026-27"
+        },
+        {
+          "salary": 10445633,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "deandre ayton",
+      "player_name": "Deandre Ayton",
+      "remaining_guaranteed": 8104000,
+      "seasons": [
+        {
+          "salary": 8104000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "WAS"
+    },
+    {
+      "normalized_name": "kelly oubre jr",
+      "player_name": "Kelly Oubre Jr.",
+      "remaining_guaranteed": 16500000,
+      "seasons": [
+        {
+          "salary": 8050000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 8450000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "IND"
+    },
+    {
+      "normalized_name": "darius acuff jr",
+      "player_name": "Darius Acuff Jr.",
+      "remaining_guaranteed": 16444560,
+      "seasons": [
+        {
+          "salary": 8021640,
+          "season": "2026-27"
+        },
+        {
+          "salary": 8422920,
+          "season": "2027-28"
+        },
+        {
+          "salary": 8823600,
+          "season": "2028-29"
+        },
+        {
+          "salary": 11205972,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "SAC"
+    },
+    {
+      "normalized_name": "jonathan isaac",
+      "player_name": "Jonathan Isaac",
+      "remaining_guaranteed": 10449421,
+      "seasons": [
+        {
+          "salary": 10449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "ORL"
+    },
+    {
+      "normalized_name": "harrison barnes",
+      "player_name": "Harrison Barnes",
+      "remaining_guaranteed": 8000000,
+      "seasons": [
+        {
+          "salary": 8000000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "SAS"
+    },
+    {
+      "normalized_name": "tre mann",
+      "player_name": "Tre Mann",
+      "remaining_guaranteed": 8000000,
+      "seasons": [
+        {
+          "salary": 8000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 8000000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "tre jones",
+      "player_name": "Tre Jones",
+      "remaining_guaranteed": 8000000,
+      "seasons": [
+        {
+          "salary": 8000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 8000000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "CHI"
+    },
+    {
+      "normalized_name": "jeremiah fears",
+      "player_name": "Jeremiah Fears",
+      "remaining_guaranteed": 7896240,
+      "seasons": [
+        {
+          "salary": 7896240,
+          "season": "2026-27"
+        },
+        {
+          "salary": 8271960,
+          "season": "2027-28"
+        },
+        {
+          "salary": 10505389,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "NOP"
+    },
+    {
+      "normalized_name": "taylor hendricks",
+      "player_name": "Taylor Hendricks",
+      "remaining_guaranteed": 7805900,
+      "seasons": [
+        {
+          "salary": 7805900,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "jaylin williams",
+      "player_name": "Jaylin Williams",
+      "remaining_guaranteed": 7774648,
+      "seasons": [
+        {
+          "salary": 7774648,
+          "season": "2026-27"
+        },
+        {
+          "salary": 7774648,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "OKC"
+    },
+    {
+      "normalized_name": "payton pritchard",
+      "player_name": "Payton Pritchard",
+      "remaining_guaranteed": 16071428,
+      "seasons": [
+        {
+          "salary": 7767857,
+          "season": "2026-27"
+        },
+        {
+          "salary": 8303571,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "BOS"
+    },
+    {
+      "normalized_name": "goga bitadze",
+      "player_name": "Goga Bitadze",
+      "remaining_guaranteed": 7608696,
+      "seasons": [
+        {
+          "salary": 7608696,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "ORL"
+    },
+    {
+      "normalized_name": "donovan clingan",
+      "player_name": "Donovan Clingan",
+      "remaining_guaranteed": 7519920,
+      "seasons": [
+        {
+          "salary": 7519920,
+          "season": "2026-27"
+        },
+        {
+          "salary": 9550298,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "POR"
+    },
+    {
+      "normalized_name": "zeke nnaji",
+      "player_name": "Zeke Nnaji",
+      "remaining_guaranteed": 7466667,
+      "seasons": [
+        {
+          "salary": 7466667,
+          "season": "2026-27"
+        },
+        {
+          "salary": 7466667,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "DEN"
+    },
+    {
+      "normalized_name": "cason wallace",
+      "player_name": "Cason Wallace",
+      "remaining_guaranteed": 7420806,
+      "seasons": [
+        {
+          "salary": 7420806,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "OKC"
+    },
+    {
+      "normalized_name": "kingston flemings",
+      "player_name": "Kingston Flemings",
+      "remaining_guaranteed": 15064800,
+      "seasons": [
+        {
+          "salary": 7348680,
+          "season": "2026-27"
+        },
+        {
+          "salary": 7716120,
+          "season": "2027-28"
+        },
+        {
+          "salary": 8083680,
+          "season": "2028-29"
+        },
+        {
+          "salary": 10282441,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "dereck lively ii",
+      "player_name": "Dereck Lively II",
+      "remaining_guaranteed": 7239131,
+      "seasons": [
+        {
+          "salary": 7239131,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "egor d min",
+      "player_name": "Egor Dёmin",
+      "remaining_guaranteed": 7233720,
+      "seasons": [
+        {
+          "salary": 7233720,
+          "season": "2026-27"
+        },
+        {
+          "salary": 7578240,
+          "season": "2027-28"
+        },
+        {
+          "salary": 9639522,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "BKN"
+    },
+    {
+      "normalized_name": "gradey dick",
+      "player_name": "Gradey Dick",
+      "remaining_guaranteed": 7131511,
+      "seasons": [
+        {
+          "salary": 7131511,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "TOR"
+    },
+    {
+      "normalized_name": "clint capela",
+      "player_name": "Clint Capela",
+      "remaining_guaranteed": 14405000,
+      "seasons": [
+        {
+          "salary": 7035000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 7370000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "HOU"
+    },
+    {
+      "normalized_name": "jordan hawkins",
+      "player_name": "Jordan Hawkins",
+      "remaining_guaranteed": 7021895,
+      "seasons": [
+        {
+          "salary": 7021895,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "NOP"
+    },
+    {
+      "normalized_name": "isaiah jackson",
+      "player_name": "Isaiah Jackson",
+      "remaining_guaranteed": 13400000,
+      "seasons": [
+        {
+          "salary": 7000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6400000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "LAC"
+    },
+    {
+      "normalized_name": "rob dillingham",
+      "player_name": "Rob Dillingham",
+      "remaining_guaranteed": 6889320,
+      "seasons": [
+        {
+          "salary": 6889320,
+          "season": "2026-27"
+        },
+        {
+          "salary": 8763216,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "CHI"
+    },
+    {
+      "normalized_name": "al horford",
+      "player_name": "Al Horford",
+      "remaining_guaranteed": 13985100,
+      "seasons": [
+        {
+          "salary": 6822000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 7163100,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "GSW"
+    },
+    {
+      "normalized_name": "morez johnson jr",
+      "player_name": "Morez Johnson Jr.",
+      "remaining_guaranteed": 13847880,
+      "seasons": [
+        {
+          "salary": 6754800,
+          "season": "2026-27"
+        },
+        {
+          "salary": 7093080,
+          "season": "2027-28"
+        },
+        {
+          "salary": 7430640,
+          "season": "2028-29"
+        },
+        {
+          "salary": 9466636,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "collin murray boyles",
+      "player_name": "Collin Murray-Boyles",
+      "remaining_guaranteed": 6649560,
+      "seasons": [
+        {
+          "salary": 6649560,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6966000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 8874684,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "TOR"
+    },
+    {
+      "normalized_name": "keyonte george",
+      "player_name": "Keyonte George",
+      "remaining_guaranteed": 6563925,
+      "seasons": [
+        {
+          "salary": 6563925,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "UTA"
+    },
+    {
+      "normalized_name": "tim hardaway jr",
+      "player_name": "Tim Hardaway Jr.",
+      "remaining_guaranteed": 6500000,
+      "seasons": [
+        {
+          "salary": 6500000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MIA"
+    },
+    {
+      "normalized_name": "saddiq bey",
+      "player_name": "Saddiq Bey",
+      "remaining_guaranteed": 6440678,
+      "seasons": [
+        {
+          "salary": 6440678,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "NOP"
+    },
+    {
+      "normalized_name": "brayden burries",
+      "player_name": "Brayden Burries",
+      "remaining_guaranteed": 13155360,
+      "seasons": [
+        {
+          "salary": 6417360,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6738000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 7058520,
+          "season": "2028-29"
+        },
+        {
+          "salary": 8999614,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "zach edey",
+      "player_name": "Zach Edey",
+      "remaining_guaranteed": 6332760,
+      "seasons": [
+        {
+          "salary": 6332760,
+          "season": "2026-27"
+        },
+        {
+          "salary": 8067937,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "khaman maluach",
+      "player_name": "Khaman Maluach",
+      "remaining_guaranteed": 6316680,
+      "seasons": [
+        {
+          "salary": 6316680,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6617160,
+          "season": "2027-28"
+        },
+        {
+          "salary": 8436880,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "john konchar",
+      "player_name": "John Konchar",
+      "remaining_guaranteed": 6165000,
+      "seasons": [
+        {
+          "salary": 6165000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "UTA"
+    },
+    {
+      "normalized_name": "yaxel lendeborg",
+      "player_name": "Yaxel Lendeborg",
+      "remaining_guaranteed": 12497520,
+      "seasons": [
+        {
+          "salary": 6096240,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6401280,
+          "season": "2027-28"
+        },
+        {
+          "salary": 6706200,
+          "season": "2028-29"
+        },
+        {
+          "salary": 8899128,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "GSW"
+    },
+    {
+      "normalized_name": "luke kennard",
+      "player_name": "Luke Kennard",
+      "remaining_guaranteed": 6064000,
+      "seasons": [
+        {
+          "salary": 6064000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6367200,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "marcus smart",
+      "player_name": "Marcus Smart",
+      "remaining_guaranteed": 6064000,
+      "seasons": [
+        {
+          "salary": 6064000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6367200,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "HOU"
+    },
+    {
+      "normalized_name": "cody williams",
+      "player_name": "Cody Williams",
+      "remaining_guaranteed": 6015600,
+      "seasons": [
+        {
+          "salary": 6015600,
+          "season": "2026-27"
+        },
+        {
+          "salary": 7669890,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "UTA"
+    },
+    {
+      "normalized_name": "cedric coward",
+      "player_name": "Cedric Coward",
+      "remaining_guaranteed": 6001080,
+      "seasons": [
+        {
+          "salary": 6001080,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6286920,
+          "season": "2027-28"
+        },
+        {
+          "salary": 8342743,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "jaxson hayes",
+      "player_name": "Jaxson Hayes",
+      "remaining_guaranteed": 6000000,
+      "seasons": [
+        {
+          "salary": 6000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6000000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "UTA"
+    },
+    {
+      "normalized_name": "josh okogie",
+      "player_name": "Josh Okogie",
+      "remaining_guaranteed": 6000000,
+      "seasons": [
+        {
+          "salary": 6000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6000000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "UTA"
+    },
+    {
+      "normalized_name": "anfernee simons",
+      "player_name": "Anfernee Simons",
+      "remaining_guaranteed": 6000000,
+      "seasons": [
+        {
+          "salary": 6000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6300000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "PHI"
+    },
+    {
+      "normalized_name": "jake laravia",
+      "player_name": "Jake LaRavia",
+      "remaining_guaranteed": 6000000,
+      "seasons": [
+        {
+          "salary": 6000000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "LAL"
+    },
+    {
+      "normalized_name": "jaden hardy",
+      "player_name": "Jaden Hardy",
+      "remaining_guaranteed": 6000000,
+      "seasons": [
+        {
+          "salary": 6000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6000000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "LAL"
+    },
+    {
+      "normalized_name": "d'angelo russell",
+      "player_name": "D'Angelo Russell",
+      "remaining_guaranteed": 5969250,
+      "seasons": [
+        {
+          "salary": 5969250,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "jaime jaquez jr",
+      "player_name": "Jaime Jaquez Jr.",
+      "remaining_guaranteed": 5939141,
+      "seasons": [
+        {
+          "salary": 5939141,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "nicolas batum",
+      "player_name": "Nicolas Batum",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 5881680,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "LAC"
+    },
+    {
+      "normalized_name": "jordan goodwin",
+      "player_name": "Jordan Goodwin",
+      "remaining_guaranteed": 12197531,
+      "seasons": [
+        {
+          "salary": 5864198,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6333333,
+          "season": "2027-28"
+        },
+        {
+          "salary": 6802469,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "spencer jones",
+      "player_name": "Spencer Jones",
+      "remaining_guaranteed": 12000000,
+      "seasons": [
+        {
+          "salary": 5853659,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6146341,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "DEN"
+    },
+    {
+      "normalized_name": "aday mara",
+      "player_name": "Aday Mara",
+      "remaining_guaranteed": 11873160,
+      "seasons": [
+        {
+          "salary": 5791680,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6081480,
+          "season": "2027-28"
+        },
+        {
+          "salary": 6371160,
+          "season": "2028-29"
+        },
+        {
+          "salary": 8779459,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "OKC"
+    },
+    {
+      "normalized_name": "ousmane dieng",
+      "player_name": "Ousmane Dieng",
+      "remaining_guaranteed": 11500000,
+      "seasons": [
+        {
+          "salary": 5750000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5750000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 5750000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "matas buzelis",
+      "player_name": "Matas Buzelis",
+      "remaining_guaranteed": 5715360,
+      "seasons": [
+        {
+          "salary": 5715360,
+          "season": "2026-27"
+        },
+        {
+          "salary": 7584283,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "CHI"
+    },
+    {
+      "normalized_name": "noa essengue",
+      "player_name": "Noa Essengue",
+      "remaining_guaranteed": 5701200,
+      "seasons": [
+        {
+          "salary": 5701200,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5972760,
+          "season": "2027-28"
+        },
+        {
+          "salary": 8230464,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "CHI"
+    },
+    {
+      "normalized_name": "kris dunn",
+      "player_name": "Kris Dunn",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 5684800,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "LAC"
+    },
+    {
+      "normalized_name": "brandin podziemski",
+      "player_name": "Brandin Podziemski",
+      "remaining_guaranteed": 5679459,
+      "seasons": [
+        {
+          "salary": 5679459,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "GSW"
+    },
+    {
+      "normalized_name": "bradley beal",
+      "player_name": "Bradley Beal",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 25004710,
+          "season": "2026-27"
+        },
+        {
+          "salary": 19383010,
+          "season": "2027-28"
+        },
+        {
+          "salary": 19383010,
+          "season": "2028-29"
+        },
+        {
+          "salary": 19383010,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "LAC"
+    },
+    {
+      "normalized_name": "paul reed",
+      "player_name": "Paul Reed",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 5602689,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "DET"
+    },
+    {
+      "normalized_name": "khris middleton",
+      "player_name": "Khris Middleton",
+      "remaining_guaranteed": 6499000,
+      "seasons": [
+        {
+          "salary": 5591122,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5870678,
+          "season": "2027-28"
+        },
+        {
+          "salary": 6150234,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "WAS"
+    },
+    {
+      "normalized_name": "nate ament",
+      "player_name": "Nate Ament",
+      "remaining_guaranteed": 11279280,
+      "seasons": [
+        {
+          "salary": 5502000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5777280,
+          "season": "2027-28"
+        },
+        {
+          "salary": 6052200,
+          "season": "2028-29"
+        },
+        {
+          "salary": 8648594,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "precious achiuwa",
+      "player_name": "Precious Achiuwa",
+      "remaining_guaranteed": 11227850,
+      "seasons": [
+        {
+          "salary": 5477000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5750850,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "SAC"
+    },
+    {
+      "normalized_name": "cam whitmore",
+      "player_name": "Cam Whitmore",
+      "remaining_guaranteed": 5458310,
+      "seasons": [
+        {
+          "salary": 5458310,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "WAS"
+    },
+    {
+      "normalized_name": "nikola topic",
+      "player_name": "Nikola Topić",
+      "remaining_guaranteed": 5429760,
+      "seasons": [
+        {
+          "salary": 5429760,
+          "season": "2026-27"
+        },
+        {
+          "salary": 7482210,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "OKC"
+    },
+    {
+      "normalized_name": "derik queen",
+      "player_name": "Derik Queen",
+      "remaining_guaranteed": 5416080,
+      "seasons": [
+        {
+          "salary": 5416080,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5673840,
+          "season": "2027-28"
+        },
+        {
+          "salary": 8107918,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "NOP"
+    },
+    {
+      "normalized_name": "noah clowney",
+      "player_name": "Noah Clowney",
+      "remaining_guaranteed": 5414034,
+      "seasons": [
+        {
+          "salary": 5414034,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "BKN"
+    },
+    {
+      "normalized_name": "kevin porter jr",
+      "player_name": "Kevin Porter Jr.",
+      "remaining_guaranteed": 5390700,
+      "seasons": [
+        {
+          "salary": 5390700,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "landry shamet",
+      "player_name": "Landry Shamet",
+      "remaining_guaranteed": 24000000,
+      "seasons": [
+        {
+          "salary": 5357143,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5785714,
+          "season": "2027-28"
+        },
+        {
+          "salary": 6214286,
+          "season": "2028-29"
+        },
+        {
+          "salary": 6642857,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "NYK"
+    },
+    {
+      "normalized_name": "kris murray",
+      "player_name": "Kris Murray",
+      "remaining_guaranteed": 5315004,
+      "seasons": [
+        {
+          "salary": 5315004,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "jordan miller",
+      "player_name": "Jordan Miller",
+      "remaining_guaranteed": 5300000,
+      "seasons": [
+        {
+          "salary": 5300000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5000000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 5000000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "LAC"
+    },
+    {
+      "normalized_name": "hannes steinbach",
+      "player_name": "Hannes Steinbach",
+      "remaining_guaranteed": 10715760,
+      "seasons": [
+        {
+          "salary": 5227200,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5488560,
+          "season": "2027-28"
+        },
+        {
+          "salary": 5750160,
+          "season": "2028-29"
+        },
+        {
+          "salary": 8515987,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "marcus sasser",
+      "player_name": "Marcus Sasser",
+      "remaining_guaranteed": 5198983,
+      "seasons": [
+        {
+          "salary": 5198983,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "devin carter",
+      "player_name": "Devin Carter",
+      "remaining_guaranteed": 5158080,
+      "seasons": [
+        {
+          "salary": 5158080,
+          "season": "2026-27"
+        },
+        {
+          "salary": 7370897,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "carter bryant",
+      "player_name": "Carter Bryant",
+      "remaining_guaranteed": 5145360,
+      "seasons": [
+        {
+          "salary": 5145360,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5390640,
+          "season": "2027-28"
+        },
+        {
+          "salary": 7983539,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "SAS"
+    },
+    {
+      "normalized_name": "ben sheppard",
+      "player_name": "Ben Sheppard",
+      "remaining_guaranteed": 5031669,
+      "seasons": [
+        {
+          "salary": 5031669,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "IND"
+    },
+    {
+      "normalized_name": "kenrich williams",
+      "player_name": "Kenrich Williams",
+      "remaining_guaranteed": 5000000,
+      "seasons": [
+        {
+          "salary": 5000000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "OKC"
+    },
+    {
+      "normalized_name": "dailyn swain",
+      "player_name": "Dailyn Swain",
+      "remaining_guaranteed": 10179240,
+      "seasons": [
+        {
+          "salary": 4965480,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5213760,
+          "season": "2027-28"
+        },
+        {
+          "salary": 5461920,
+          "season": "2028-29"
+        },
+        {
+          "salary": 8373124,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "CHI"
+    },
+    {
+      "normalized_name": "bub carrington",
+      "player_name": "Bub Carrington",
+      "remaining_guaranteed": 4900560,
+      "seasons": [
+        {
+          "salary": 4900560,
+          "season": "2026-27"
+        },
+        {
+          "salary": 7257730,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "WAS"
+    },
+    {
+      "normalized_name": "thomas sorber",
+      "player_name": "Thomas Sorber",
+      "remaining_guaranteed": 4887720,
+      "seasons": [
+        {
+          "salary": 4887720,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5120400,
+          "season": "2027-28"
+        },
+        {
+          "salary": 7849573,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "OKC"
+    },
+    {
+      "normalized_name": "brice sensabaugh",
+      "player_name": "Brice Sensabaugh",
+      "remaining_guaranteed": 4862237,
+      "seasons": [
+        {
+          "salary": 4862237,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "UTA"
+    },
+    {
+      "normalized_name": "julian strawther",
+      "player_name": "Julian Strawther",
+      "remaining_guaranteed": 4826931,
+      "seasons": [
+        {
+          "salary": 4826931,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "DEN"
+    },
+    {
+      "normalized_name": "bennett stirtz",
+      "player_name": "Bennett Stirtz",
+      "remaining_guaranteed": 9670560,
+      "seasons": [
+        {
+          "salary": 4717320,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4953240,
+          "season": "2027-28"
+        },
+        {
+          "salary": 5189400,
+          "season": "2028-29"
+        },
+        {
+          "salary": 7960540,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "OKC"
+    },
+    {
+      "normalized_name": "kel'el ware",
+      "player_name": "Kel'el Ware",
+      "remaining_guaranteed": 4654920,
+      "seasons": [
+        {
+          "salary": 4654920,
+          "season": "2026-27"
+        },
+        {
+          "salary": 7135992,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "yang hansen",
+      "player_name": "Yang Hansen",
+      "remaining_guaranteed": 4643520,
+      "seasons": [
+        {
+          "salary": 4643520,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4864920,
+          "season": "2027-28"
+        },
+        {
+          "salary": 7462788,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "POR"
+    },
+    {
+      "normalized_name": "gui santos",
+      "player_name": "Gui Santos",
+      "remaining_guaranteed": 9629630,
+      "seasons": [
+        {
+          "salary": 4629630,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5000000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 5370370,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "GSW"
+    },
+    {
+      "normalized_name": "jose alvarado",
+      "player_name": "Jose Alvarado",
+      "remaining_guaranteed": 14580000,
+      "seasons": [
+        {
+          "salary": 4500000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4860000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 5220000,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "NYK"
+    },
+    {
+      "normalized_name": "josh minott",
+      "player_name": "Josh Minott",
+      "remaining_guaranteed": 4500000,
+      "seasons": [
+        {
+          "salary": 4500000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4500000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "BKN"
+    },
+    {
+      "normalized_name": "ebuka okorie",
+      "player_name": "Ebuka Okorie",
+      "remaining_guaranteed": 9186720,
+      "seasons": [
+        {
+          "salary": 4481280,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4705440,
+          "season": "2027-28"
+        },
+        {
+          "salary": 4929360,
+          "season": "2028-29"
+        },
+        {
+          "salary": 7571497,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "DET"
+    },
+    {
+      "normalized_name": "jared mccain",
+      "player_name": "Jared McCain",
+      "remaining_guaranteed": 4422600,
+      "seasons": [
+        {
+          "salary": 4422600,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6784268,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "OKC"
+    },
+    {
+      "normalized_name": "joan beringer",
+      "player_name": "Joan Beringer",
+      "remaining_guaranteed": 4411200,
+      "seasons": [
+        {
+          "salary": 4411200,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4621200,
+          "season": "2027-28"
+        },
+        {
+          "salary": 7098163,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "MIN"
+    },
+    {
+      "normalized_name": "christian anderson jr",
+      "player_name": "Christian Anderson Jr.",
+      "remaining_guaranteed": 8727480,
+      "seasons": [
+        {
+          "salary": 4257480,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4470000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 4683120,
+          "season": "2028-29"
+        },
+        {
+          "salary": 7202639,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "dalton knecht",
+      "player_name": "Dalton Knecht",
+      "remaining_guaranteed": 4201080,
+      "seasons": [
+        {
+          "salary": 4201080,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6452860,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "LAL"
+    },
+    {
+      "normalized_name": "walter clayton",
+      "player_name": "Walter Clayton",
+      "remaining_guaranteed": 4190520,
+      "seasons": [
+        {
+          "salary": 4190520,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4390320,
+          "season": "2027-28"
+        },
+        {
+          "salary": 6752312,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "allen graves",
+      "player_name": "Allen Graves",
+      "remaining_guaranteed": 8334600,
+      "seasons": [
+        {
+          "salary": 4065720,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4268880,
+          "season": "2027-28"
+        },
+        {
+          "salary": 4472640,
+          "season": "2028-29"
+        },
+        {
+          "salary": 6887866,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "TOR"
+    },
+    {
+      "normalized_name": "nolan traore",
+      "player_name": "Nolan Traoré",
+      "remaining_guaranteed": 4002000,
+      "seasons": [
+        {
+          "salary": 4002000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4193040,
+          "season": "2027-28"
+        },
+        {
+          "salary": 6457282,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "BKN"
+    },
+    {
+      "normalized_name": "ryan rollins",
+      "player_name": "Ryan Rollins",
+      "remaining_guaranteed": 4000000,
+      "seasons": [
+        {
+          "salary": 4000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4000000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "daniss jenkins",
+      "player_name": "Daniss Jenkins",
+      "remaining_guaranteed": 4000000,
+      "seasons": [
+        {
+          "salary": 4000000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "DET"
+    },
+    {
+      "normalized_name": "tristan da silva",
+      "player_name": "Tristan Da Silva",
+      "remaining_guaranteed": 3991200,
+      "seasons": [
+        {
+          "salary": 3991200,
+          "season": "2026-27"
+        },
+        {
+          "salary": 6138466,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "ORL"
+    },
+    {
+      "normalized_name": "miles mcbride",
+      "player_name": "Miles McBride",
+      "remaining_guaranteed": 3956523,
+      "seasons": [
+        {
+          "salary": 3956523,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "NYK"
+    },
+    {
+      "normalized_name": "javonte green",
+      "player_name": "Javonte Green",
+      "remaining_guaranteed": 3943679,
+      "seasons": [
+        {
+          "salary": 3943679,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "DET"
+    },
+    {
+      "normalized_name": "jayden quaintance",
+      "player_name": "Jayden Quaintance",
+      "remaining_guaranteed": 8000640,
+      "seasons": [
+        {
+          "salary": 3902760,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4097880,
+          "season": "2027-28"
+        },
+        {
+          "salary": 4292880,
+          "season": "2028-29"
+        },
+        {
+          "salary": 6619621,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "SAS"
+    },
+    {
+      "normalized_name": "deandre jordan",
+      "player_name": "DeAndre Jordan",
+      "remaining_guaranteed": 7946884,
+      "seasons": [
+        {
+          "salary": 3876529,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4070355,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "NOP"
+    },
+    {
+      "normalized_name": "lebron james",
+      "player_name": "LeBron James",
+      "remaining_guaranteed": 3876529,
+      "seasons": [
+        {
+          "salary": 3876529,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4070355,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "PHI"
+    },
+    {
+      "normalized_name": "svi mykhailiuk",
+      "player_name": "Svi Mykhailiuk",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 3850000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4025000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "UTA"
+    },
+    {
+      "normalized_name": "kasparas jakucionis",
+      "player_name": "Kasparas Jakučionis",
+      "remaining_guaranteed": 3841680,
+      "seasons": [
+        {
+          "salary": 3841680,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4024440,
+          "season": "2027-28"
+        },
+        {
+          "salary": 6205687,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "taurean prince",
+      "player_name": "Taurean Prince",
+      "remaining_guaranteed": 3815861,
+      "seasons": [
+        {
+          "salary": 3815861,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "DET"
+    },
+    {
+      "normalized_name": "gary harris",
+      "player_name": "Gary Harris",
+      "remaining_guaranteed": 3815861,
+      "seasons": [
+        {
+          "salary": 3815861,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "DET"
+    },
+    {
+      "normalized_name": "pat connaughton",
+      "player_name": "Pat Connaughton",
+      "remaining_guaranteed": 3815861,
+      "seasons": [
+        {
+          "salary": 3815861,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "ja'kobe walter",
+      "player_name": "Ja'Kobe Walter",
+      "remaining_guaranteed": 3811800,
+      "seasons": [
+        {
+          "salary": 3811800,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5870172,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "TOR"
+    },
+    {
+      "normalized_name": "cole anthony",
+      "player_name": "Cole Anthony",
+      "remaining_guaranteed": 7400000,
+      "seasons": [
+        {
+          "salary": 3700000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3700000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "will riley",
+      "player_name": "Will Riley",
+      "remaining_guaranteed": 3688320,
+      "seasons": [
+        {
+          "salary": 3688320,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3864000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 6155352,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "WAS"
+    },
+    {
+      "normalized_name": "jaylon tyson",
+      "player_name": "Jaylon Tyson",
+      "remaining_guaranteed": 3658560,
+      "seasons": [
+        {
+          "salary": 3658560,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5641500,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "CLE"
+    },
+    {
+      "normalized_name": "labaron philon jr",
+      "player_name": "Labaron Philon Jr.",
+      "remaining_guaranteed": 7373880,
+      "seasons": [
+        {
+          "salary": 3597120,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3776760,
+          "season": "2027-28"
+        },
+        {
+          "salary": 3956760,
+          "season": "2028-29"
+        },
+        {
+          "salary": 6508871,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "PHI"
+    },
+    {
+      "normalized_name": "drake powell",
+      "player_name": "Drake Powell",
+      "remaining_guaranteed": 3540600,
+      "seasons": [
+        {
+          "salary": 3540600,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3709320,
+          "season": "2027-28"
+        },
+        {
+          "salary": 6101832,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "BKN"
+    },
+    {
+      "normalized_name": "yves missi",
+      "player_name": "Yves Missi",
+      "remaining_guaranteed": 3512760,
+      "seasons": [
+        {
+          "salary": 3512760,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5595827,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "NOP"
+    },
+    {
+      "normalized_name": "zuby ejiofor",
+      "player_name": "Zuby Ejiofor",
+      "remaining_guaranteed": 7079520,
+      "seasons": [
+        {
+          "salary": 3453360,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3626160,
+          "season": "2027-28"
+        },
+        {
+          "salary": 3798360,
+          "season": "2028-29"
+        },
+        {
+          "salary": 6445818,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "de'anthony melton",
+      "player_name": "De'Anthony Melton",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 3451779,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "GSW"
+    },
+    {
+      "normalized_name": "dominick barlow",
+      "player_name": "Dominick Barlow",
+      "remaining_guaranteed": 3415000,
+      "seasons": [
+        {
+          "salary": 3415000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "PHI"
+    },
+    {
+      "normalized_name": "ariel hukporti",
+      "player_name": "Ariel Hukporti",
+      "remaining_guaranteed": 3400000,
+      "seasons": [
+        {
+          "salary": 3400000,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "PHI"
+    },
+    {
+      "normalized_name": "asa newell",
+      "player_name": "Asa Newell",
+      "remaining_guaranteed": 3399480,
+      "seasons": [
+        {
+          "salary": 3399480,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3560880,
+          "season": "2027-28"
+        },
+        {
+          "salary": 6042814,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "daron holmes",
+      "player_name": "DaRon Holmes",
+      "remaining_guaranteed": 3372120,
+      "seasons": [
+        {
+          "salary": 3372120,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5547138,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "DEN"
+    },
+    {
+      "normalized_name": "cameron carr",
+      "player_name": "Cameron Carr",
+      "remaining_guaranteed": 6796440,
+      "seasons": [
+        {
+          "salary": 3315360,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3481080,
+          "season": "2027-28"
+        },
+        {
+          "salary": 3646800,
+          "season": "2028-29"
+        },
+        {
+          "salary": 6378253,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "LAL"
+    },
+    {
+      "normalized_name": "mo bamba",
+      "player_name": "Mo Bamba",
+      "remaining_guaranteed": 6968390,
+      "seasons": [
+        {
+          "salary": 3286399,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3681991,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "UTA"
+    },
+    {
+      "normalized_name": "nique clifford",
+      "player_name": "Nique Clifford",
+      "remaining_guaranteed": 3263400,
+      "seasons": [
+        {
+          "salary": 3263400,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3418800,
+          "season": "2027-28"
+        },
+        {
+          "salary": 5979481,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "SAC"
+    },
+    {
+      "normalized_name": "aj johnson",
+      "player_name": "AJ Johnson",
+      "remaining_guaranteed": 3237120,
+      "seasons": [
+        {
+          "salary": 3237120,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5493394,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "sergio de larrea",
+      "player_name": "Sergio de Larrea",
+      "remaining_guaranteed": 6523560,
+      "seasons": [
+        {
+          "salary": 3182280,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3341280,
+          "season": "2027-28"
+        },
+        {
+          "salary": 3500880,
+          "season": "2028-29"
+        },
+        {
+          "salary": 6305086,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "ron harper jr",
+      "player_name": "Ron Harper Jr.",
+      "remaining_guaranteed": 6459042,
+      "seasons": [
+        {
+          "salary": 3150752,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3308290,
+          "season": "2027-28"
+        },
+        {
+          "salary": 3465828,
+          "season": "2028-29"
+        },
+        {
+          "salary": 3779359,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "BOS"
+    },
+    {
+      "normalized_name": "jase richardson",
+      "player_name": "Jase Richardson",
+      "remaining_guaranteed": 3132360,
+      "seasons": [
+        {
+          "salary": 3132360,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3282000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 5910882,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "ORL"
+    },
+    {
+      "normalized_name": "kyshawn george",
+      "player_name": "Kyshawn George",
+      "remaining_guaranteed": 3108000,
+      "seasons": [
+        {
+          "salary": 3108000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5435892,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "WAS"
+    },
+    {
+      "normalized_name": "nassir little",
+      "player_name": "Nassir Little",
+      "remaining_guaranteed": 9321429,
+      "seasons": [
+        {
+          "salary": 3107143,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3107143,
+          "season": "2027-28"
+        },
+        {
+          "salary": 3107143,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "jaylen clark",
+      "player_name": "Jaylen Clark",
+      "remaining_guaranteed": 10000000,
+      "seasons": [
+        {
+          "salary": 3086420,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3333334,
+          "season": "2027-28"
+        },
+        {
+          "salary": 3580246,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "MIN"
+    },
+    {
+      "normalized_name": "tarris reed jr",
+      "player_name": "Tarris Reed Jr.",
+      "remaining_guaranteed": 6307440,
+      "seasons": [
+        {
+          "salary": 3076920,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3230520,
+          "season": "2027-28"
+        },
+        {
+          "salary": 3384480,
+          "season": "2028-29"
+        },
+        {
+          "salary": 6102218,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "SAS"
+    },
+    {
+      "normalized_name": "ben saraf",
+      "player_name": "Ben Saraf",
+      "remaining_guaranteed": 3028560,
+      "seasons": [
+        {
+          "salary": 3028560,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3172920,
+          "season": "2027-28"
+        },
+        {
+          "salary": 5720776,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "BKN"
+    },
+    {
+      "normalized_name": "haywood highsmith",
+      "player_name": "Haywood Highsmith",
+      "remaining_guaranteed": 1000000,
+      "seasons": [
+        {
+          "salary": 3018158,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "tarik biberovic",
+      "player_name": "Tarik Biberovic",
+      "remaining_guaranteed": 3000000,
+      "seasons": [
+        {
+          "salary": 3000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3000000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "kyle filipowski",
+      "player_name": "Kyle Filipowski",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 3000000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3000000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "UTA"
+    },
+    {
+      "normalized_name": "chris cenac jr",
+      "player_name": "Chris Cenac Jr.",
+      "remaining_guaranteed": 6125760,
+      "seasons": [
+        {
+          "salary": 2988120,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3137640,
+          "season": "2027-28"
+        },
+        {
+          "salary": 3287400,
+          "season": "2028-29"
+        },
+        {
+          "salary": 5930470,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "BOS"
+    },
+    {
+      "normalized_name": "pacome dadiet",
+      "player_name": "Pacôme Dadiet",
+      "remaining_guaranteed": 2983680,
+      "seasons": [
+        {
+          "salary": 2983680,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5373608,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "NYK"
+    },
+    {
+      "normalized_name": "joshua jefferson",
+      "player_name": "Joshua Jefferson",
+      "remaining_guaranteed": 6088080,
+      "seasons": [
+        {
+          "salary": 2969520,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3118560,
+          "season": "2027-28"
+        },
+        {
+          "salary": 3266880,
+          "season": "2028-29"
+        },
+        {
+          "salary": 5896718,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "BKN"
+    },
+    {
+      "normalized_name": "alex karaban",
+      "player_name": "Alex Karaban",
+      "remaining_guaranteed": 6043920,
+      "seasons": [
+        {
+          "salary": 2948280,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3095640,
+          "season": "2027-28"
+        },
+        {
+          "salary": 3243120,
+          "season": "2028-29"
+        },
+        {
+          "salary": 5853832,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "SAC"
+    },
+    {
+      "normalized_name": "danny wolf",
+      "player_name": "Danny Wolf",
+      "remaining_guaranteed": 2941440,
+      "seasons": [
+        {
+          "salary": 2941440,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3081840,
+          "season": "2027-28"
+        },
+        {
+          "salary": 5559640,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "BKN"
+    },
+    {
+      "normalized_name": "koa peat",
+      "player_name": "Koa Peat",
+      "remaining_guaranteed": 5999880,
+      "seasons": [
+        {
+          "salary": 2926800,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3073080,
+          "season": "2027-28"
+        },
+        {
+          "salary": 3219840,
+          "season": "2028-29"
+        },
+        {
+          "salary": 5811811,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "hugo gonzalez",
+      "player_name": "Hugo González",
+      "remaining_guaranteed": 2923560,
+      "seasons": [
+        {
+          "salary": 2923560,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3062640,
+          "season": "2027-28"
+        },
+        {
+          "salary": 5528065,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "BOS"
+    },
+    {
+      "normalized_name": "liam mcneeley",
+      "player_name": "Liam McNeeley",
+      "remaining_guaranteed": 2902080,
+      "seasons": [
+        {
+          "salary": 2902080,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3040320,
+          "season": "2027-28"
+        },
+        {
+          "salary": 5487778,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "yanic konan niederhauser",
+      "player_name": "Yanic Konan Niederhäuser",
+      "remaining_guaranteed": 2880960,
+      "seasons": [
+        {
+          "salary": 2880960,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3018480,
+          "season": "2027-28"
+        },
+        {
+          "salary": 5448356,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "LAC"
+    },
+    {
+      "normalized_name": "ajay mitchell",
+      "player_name": "Ajay Mitchell",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2850000,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2850000,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "OKC"
+    },
+    {
+      "normalized_name": "bones hyland",
+      "player_name": "Bones Hyland",
+      "remaining_guaranteed": 2845883,
+      "seasons": [
+        {
+          "salary": 2845883,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MIN"
+    },
+    {
+      "normalized_name": "terrence shannon jr",
+      "player_name": "Terrence Shannon Jr.",
+      "remaining_guaranteed": 2801640,
+      "seasons": [
+        {
+          "salary": 2801640,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5054159,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MIN"
+    },
+    {
+      "normalized_name": "micah potter",
+      "player_name": "Micah Potter",
+      "remaining_guaranteed": 2801346,
+      "seasons": [
+        {
+          "salary": 2801346,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "POR"
+    },
+    {
+      "normalized_name": "jericho sims",
+      "player_name": "Jericho Sims",
+      "remaining_guaranteed": 2801346,
+      "seasons": [
+        {
+          "salary": 2801346,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "luka garza",
+      "player_name": "Luka Garza",
+      "remaining_guaranteed": 2801346,
+      "seasons": [
+        {
+          "salary": 2801346,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "BOS"
+    },
+    {
+      "normalized_name": "trendon watford",
+      "player_name": "Trendon Watford",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2801346,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "PHI"
+    },
+    {
+      "normalized_name": "ryan dunn",
+      "player_name": "Ryan Dunn",
+      "remaining_guaranteed": 2784240,
+      "seasons": [
+        {
+          "salary": 2784240,
+          "season": "2026-27"
+        },
+        {
+          "salary": 5025553,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "isaiah collier",
+      "player_name": "Isaiah Collier",
+      "remaining_guaranteed": 2763960,
+      "seasons": [
+        {
+          "salary": 2763960,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4988948,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "UTA"
+    },
+    {
+      "normalized_name": "baylor scheierman",
+      "player_name": "Baylor Scheierman",
+      "remaining_guaranteed": 2744040,
+      "seasons": [
+        {
+          "salary": 2744040,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4952993,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "BOS"
+    },
+    {
+      "normalized_name": "neemias queta",
+      "player_name": "Neemias Queta",
+      "remaining_guaranteed": 58667944,
+      "seasons": [
+        {
+          "salary": 2667944,
+          "season": "2026-27"
+        },
+        {
+          "salary": 12500000,
+          "season": "2027-28"
+        },
+        {
+          "salary": 13500000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 14500000,
+          "season": "2029-30"
+        },
+        {
+          "salary": 15500000,
+          "season": "2030-31"
+        }
+      ],
+      "team_abbrev": "BOS"
+    },
+    {
+      "normalized_name": "justin champagnie",
+      "player_name": "Justin Champagnie",
+      "remaining_guaranteed": 2667944,
+      "seasons": [
+        {
+          "salary": 2667944,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3005085,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "WAS"
+    },
+    {
+      "normalized_name": "vit krejci",
+      "player_name": "Vít Krejčí",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2667944,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3005085,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "POR"
+    },
+    {
+      "normalized_name": "jay huff",
+      "player_name": "Jay Huff",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2667944,
+          "season": "2026-27"
+        },
+        {
+          "salary": 3005085,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "IND"
+    },
+    {
+      "normalized_name": "kobe sanders",
+      "player_name": "Kobe Sanders",
+      "remaining_guaranteed": 5375385,
+      "seasons": [
+        {
+          "salary": 2622139,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2753246,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2884353,
+          "season": "2028-29"
+        },
+        {
+          "salary": 3019474,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "LAC"
+    },
+    {
+      "normalized_name": "jamaree bouyea",
+      "player_name": "Jamaree Bouyea",
+      "remaining_guaranteed": 2584539,
+      "seasons": [
+        {
+          "salary": 2584539,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "jamal cain",
+      "player_name": "Jamal Cain",
+      "remaining_guaranteed": 2584539,
+      "seasons": [
+        {
+          "salary": 2584539,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "ORL"
+    },
+    {
+      "normalized_name": "bryce mcgowens",
+      "player_name": "Bryce McGowens",
+      "remaining_guaranteed": 2584539,
+      "seasons": [
+        {
+          "salary": 2584539,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2934742,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "NOP"
+    },
+    {
+      "normalized_name": "jd davison",
+      "player_name": "JD Davison",
+      "remaining_guaranteed": 2584539,
+      "seasons": [
+        {
+          "salary": 2584539,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "HOU"
+    },
+    {
+      "normalized_name": "jabari walker",
+      "player_name": "Jabari Walker",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2584539,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "PHI"
+    },
+    {
+      "normalized_name": "dru smith",
+      "player_name": "Dru Smith",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2584539,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2934742,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MIA"
+    },
+    {
+      "normalized_name": "pete nance",
+      "player_name": "Pete Nance",
+      "remaining_guaranteed": 2537526,
+      "seasons": [
+        {
+          "salary": 2537526,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2756912,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "oscar tshiebwe",
+      "player_name": "Oscar Tshiebwe",
+      "remaining_guaranteed": 2537526,
+      "seasons": [
+        {
+          "salary": 2537526,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "HOU"
+    },
+    {
+      "normalized_name": "julian phillips",
+      "player_name": "Julian Phillips",
+      "remaining_guaranteed": 2537526,
+      "seasons": [
+        {
+          "salary": 2537526,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "HOU"
+    },
+    {
+      "normalized_name": "olivier maxence prosper",
+      "player_name": "Olivier-Maxence Prosper",
+      "remaining_guaranteed": 2497812,
+      "seasons": [
+        {
+          "salary": 3500172,
+          "season": "2026-27"
+        },
+        {
+          "salary": 1002360,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "sidy cissoko",
+      "player_name": "Sidy Cissoko",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2497812,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "POR"
+    },
+    {
+      "normalized_name": "scotty pippen jr",
+      "player_name": "Scotty Pippen Jr.",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2461462,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2789215,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "moussa diabate",
+      "player_name": "Moussa Diabaté",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2461462,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "jonathan isaac",
+      "player_name": "Jonathan Isaac",
+      "remaining_guaranteed": 10449421,
+      "seasons": [
+        {
+          "salary": 10449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "ORL"
+    },
+    {
+      "normalized_name": "daeqwon plowden",
+      "player_name": "Daeqwon Plowden",
+      "remaining_guaranteed": 5113822,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2664401,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "SAC"
+    },
+    {
+      "normalized_name": "isaiah crawford",
+      "player_name": "Isaiah Crawford",
+      "remaining_guaranteed": 5113822,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2664401,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "HOU"
+    },
+    {
+      "normalized_name": "harrison ingram",
+      "player_name": "Harrison Ingram",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "UTA"
+    },
+    {
+      "normalized_name": "kyle anderson",
+      "player_name": "Kyle Anderson",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "TOR"
+    },
+    {
+      "normalized_name": "jordan mclaughlin",
+      "player_name": "Jordan McLaughlin",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "SAS"
+    },
+    {
+      "normalized_name": "branden carlson",
+      "player_name": "Branden Carlson",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "POR"
+    },
+    {
+      "normalized_name": "jevon carter",
+      "player_name": "Jevon Carter",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "ORL"
+    },
+    {
+      "normalized_name": "nikola vucevic",
+      "player_name": "Nikola Vučević",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "ORL"
+    },
+    {
+      "normalized_name": "jordan clarkson",
+      "player_name": "Jordan Clarkson",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "NYK"
+    },
+    {
+      "normalized_name": "andre drummond",
+      "player_name": "Andre Drummond",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "NYK"
+    },
+    {
+      "normalized_name": "kobe bufkin",
+      "player_name": "Kobe Bufkin",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "NOP"
+    },
+    {
+      "normalized_name": "trey lyles",
+      "player_name": "Trey Lyles",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MIN"
+    },
+    {
+      "normalized_name": "simone fontecchio",
+      "player_name": "Simone Fontecchio",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MIA"
+    },
+    {
+      "normalized_name": "ziaire williams",
+      "player_name": "Ziaire Williams",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "LAL"
+    },
+    {
+      "normalized_name": "kevon looney",
+      "player_name": "Kevon Looney",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "LAL"
+    },
+    {
+      "normalized_name": "larry nance jr",
+      "player_name": "Larry Nance Jr.",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "IND"
+    },
+    {
+      "normalized_name": "jae'sean tate",
+      "player_name": "Jae'Sean Tate",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "HOU"
+    },
+    {
+      "normalized_name": "bogdan bogdanovic",
+      "player_name": "Bogdan Bogdanović",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "HOU"
+    },
+    {
+      "normalized_name": "charles bassey",
+      "player_name": "Charles Bassey",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "GSW"
+    },
+    {
+      "normalized_name": "marvin bagley iii",
+      "player_name": "Marvin Bagley III",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "DEN"
+    },
+    {
+      "normalized_name": "tyus jones",
+      "player_name": "Tyus Jones",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "DEN"
+    },
+    {
+      "normalized_name": "thomas bryant",
+      "player_name": "Thomas Bryant",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "CLE"
+    },
+    {
+      "normalized_name": "mike conley",
+      "player_name": "Mike Conley",
+      "remaining_guaranteed": 2449421,
+      "seasons": [
+        {
+          "salary": 2449421,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "BOS"
+    },
+    {
+      "normalized_name": "cam spencer",
+      "player_name": "Cam Spencer",
+      "remaining_guaranteed": 5027844,
+      "seasons": [
+        {
+          "salary": 2411090,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2616754,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2830685,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "justin edwards",
+      "player_name": "Justin Edwards",
+      "remaining_guaranteed": 2411090,
+      "seasons": [
+        {
+          "salary": 2411090,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2616754,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "PHI"
+    },
+    {
+      "normalized_name": "tolu smith",
+      "player_name": "Tolu Smith",
+      "remaining_guaranteed": 2411090,
+      "seasons": [
+        {
+          "salary": 2411090,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "DET"
+    },
+    {
+      "normalized_name": "nae'qwan tomlin",
+      "player_name": "Nae'Qwan Tomlin",
+      "remaining_guaranteed": 2411090,
+      "seasons": [
+        {
+          "salary": 2411090,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "CLE"
+    },
+    {
+      "normalized_name": "ryan kalkbrenner",
+      "player_name": "Ryan Kalkbrenner",
+      "remaining_guaranteed": 2411090,
+      "seasons": [
+        {
+          "salary": 2411090,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2525901,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2735698,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "mouhamadou gueye",
+      "player_name": "Mouhamadou Gueye",
+      "remaining_guaranteed": 2411090,
+      "seasons": [
+        {
+          "salary": 2411090,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "sion james",
+      "player_name": "Sion James",
+      "remaining_guaranteed": 2411090,
+      "seasons": [
+        {
+          "salary": 2411090,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2525901,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2735698,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "CHA"
+    },
+    {
+      "normalized_name": "jordan walsh",
+      "player_name": "Jordan Walsh",
+      "remaining_guaranteed": 17406205,
+      "seasons": [
+        {
+          "salary": 2406205,
+          "season": "2026-27"
+        },
+        {
+          "salary": 4629630,
+          "season": "2027-28"
+        },
+        {
+          "salary": 5000000,
+          "season": "2028-29"
+        },
+        {
+          "salary": 5370370,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "BOS"
+    },
+    {
+      "normalized_name": "trayce jackson davis",
+      "player_name": "Trayce Jackson-Davis",
+      "remaining_guaranteed": 2406205,
+      "seasons": [
+        {
+          "salary": 2406205,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "TOR"
+    },
+    {
+      "normalized_name": "gg jackson ii",
+      "player_name": "GG Jackson II",
+      "remaining_guaranteed": 2406205,
+      "seasons": [
+        {
+          "salary": 2406205,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "craig porter jr",
+      "player_name": "Craig Porter Jr.",
+      "remaining_guaranteed": 2406205,
+      "seasons": [
+        {
+          "salary": 2406205,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "CLE"
+    },
+    {
+      "normalized_name": "leonard miller",
+      "player_name": "Leonard Miller",
+      "remaining_guaranteed": 2406205,
+      "seasons": [
+        {
+          "salary": 2406205,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "CHI"
+    },
+    {
+      "normalized_name": "mouhamed gueye",
+      "player_name": "Mouhamed Gueye",
+      "remaining_guaranteed": 2406205,
+      "seasons": [
+        {
+          "salary": 2406205,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "andre jackson jr",
+      "player_name": "Andre Jackson Jr.",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2406205,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "jalen pickett",
+      "player_name": "Jalen Pickett",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2406205,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "DEN"
+    },
+    {
+      "normalized_name": "jamal shead",
+      "player_name": "Jamal Shead",
+      "remaining_guaranteed": 2296271,
+      "seasons": [
+        {
+          "salary": 2296271,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "TOR"
+    },
+    {
+      "normalized_name": "tyler kolek",
+      "player_name": "Tyler Kolek",
+      "remaining_guaranteed": 2296271,
+      "seasons": [
+        {
+          "salary": 2296271,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2486995,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "NYK"
+    },
+    {
+      "normalized_name": "karlo matkovic",
+      "player_name": "Karlo Matković",
+      "remaining_guaranteed": 2296271,
+      "seasons": [
+        {
+          "salary": 2296271,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "NOP"
+    },
+    {
+      "normalized_name": "pelle larsson",
+      "player_name": "Pelle Larsson",
+      "remaining_guaranteed": 2296271,
+      "seasons": [
+        {
+          "salary": 2296271,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MIA"
+    },
+    {
+      "normalized_name": "johnny furphy",
+      "player_name": "Johnny Furphy",
+      "remaining_guaranteed": 2296271,
+      "seasons": [
+        {
+          "salary": 2296271,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2486995,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "IND"
+    },
+    {
+      "normalized_name": "jamison battle",
+      "player_name": "Jamison Battle",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2296271,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "TOR"
+    },
+    {
+      "normalized_name": "oso ighodaro",
+      "player_name": "Oso Ighodaro",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2296271,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2486995,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "adem bona",
+      "player_name": "Adem Bona",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2296271,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2486995,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "PHI"
+    },
+    {
+      "normalized_name": "jaylen wells",
+      "player_name": "Jaylen Wells",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2296271,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2486995,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "bronny james",
+      "player_name": "Bronny James",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2296271,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2486995,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "LAL"
+    },
+    {
+      "normalized_name": "cam christie",
+      "player_name": "Cam Christie",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2296271,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2486995,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "LAC"
+    },
+    {
+      "normalized_name": "mohamed diawara",
+      "player_name": "Mohamed Diawara",
+      "remaining_guaranteed": 10000000,
+      "seasons": [
+        {
+          "salary": 2232143,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2410714,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2589286,
+          "season": "2028-29"
+        },
+        {
+          "salary": 2767857,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "NYK"
+    },
+    {
+      "normalized_name": "javale mcgee",
+      "player_name": "JaVale McGee",
+      "remaining_guaranteed": 4417712,
+      "seasons": [
+        {
+          "salary": 2208856,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2208856,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "alijah martin",
+      "player_name": "Alijah Martin",
+      "remaining_guaranteed": 2185116,
+      "seasons": [
+        {
+          "salary": 2185116,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2571895,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "TOR"
+    },
+    {
+      "normalized_name": "moussa cisse",
+      "player_name": "Moussa Cisse",
+      "remaining_guaranteed": 2185116,
+      "seasons": [
+        {
+          "salary": 2185116,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2571895,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "rasheer fleming",
+      "player_name": "Rasheer Fleming",
+      "remaining_guaranteed": 4676818,
+      "seasons": [
+        {
+          "salary": 2150917,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2525901,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2735698,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "maxime raynaud",
+      "player_name": "Maxime Raynaud",
+      "remaining_guaranteed": 2150917,
+      "seasons": [
+        {
+          "salary": 2150917,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2525901,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "SAC"
+    },
+    {
+      "normalized_name": "johni broome",
+      "player_name": "Johni Broome",
+      "remaining_guaranteed": 2150917,
+      "seasons": [
+        {
+          "salary": 2150917,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2525901,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2735698,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "PHI"
+    },
+    {
+      "normalized_name": "noah penda",
+      "player_name": "Noah Penda",
+      "remaining_guaranteed": 2150917,
+      "seasons": [
+        {
+          "salary": 2150917,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2525901,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2735698,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "ORL"
+    },
+    {
+      "normalized_name": "micah peavy",
+      "player_name": "Micah Peavy",
+      "remaining_guaranteed": 2150917,
+      "seasons": [
+        {
+          "salary": 2150917,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2525901,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2735698,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "NOP"
+    },
+    {
+      "normalized_name": "adou thiero",
+      "player_name": "Adou Thiero",
+      "remaining_guaranteed": 2150917,
+      "seasons": [
+        {
+          "salary": 2150917,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2525901,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "LAL"
+    },
+    {
+      "normalized_name": "will richard",
+      "player_name": "Will Richard",
+      "remaining_guaranteed": 2150917,
+      "seasons": [
+        {
+          "salary": 2150917,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2525901,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2735698,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "GSW"
+    },
+    {
+      "normalized_name": "chaz lanier",
+      "player_name": "Chaz Lanier",
+      "remaining_guaranteed": 2150917,
+      "seasons": [
+        {
+          "salary": 2150917,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2525901,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2735698,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "DET"
+    },
+    {
+      "normalized_name": "tyrese proctor",
+      "player_name": "Tyrese Proctor",
+      "remaining_guaranteed": 2150917,
+      "seasons": [
+        {
+          "salary": 2150917,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2525901,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2735698,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "CLE"
+    },
+    {
+      "normalized_name": "ryan nembhard",
+      "player_name": "Ryan Nembhard",
+      "remaining_guaranteed": 2150917,
+      "seasons": [
+        {
+          "salary": 2150917,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "myron gardner",
+      "player_name": "Myron Gardner",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 2150917,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2525901,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MIA"
+    },
+    {
+      "normalized_name": "baba miller",
+      "player_name": "Baba Miller",
+      "remaining_guaranteed": 4000000,
+      "seasons": [
+        {
+          "salary": 1705630,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2294370,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2694363,
+          "season": "2028-29"
+        },
+        {
+          "salary": 2918152,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "LAC"
+    },
+    {
+      "normalized_name": "isaiah evans",
+      "player_name": "Isaiah Evans",
+      "remaining_guaranteed": 6346496,
+      "seasons": [
+        {
+          "salary": 1357763,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2294370,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2694363,
+          "season": "2028-29"
+        },
+        {
+          "salary": 2918152,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "MIN"
+    },
+    {
+      "normalized_name": "bogoljub markovic",
+      "player_name": "Bogoljub Markovic",
+      "remaining_guaranteed": 6346496,
+      "seasons": [
+        {
+          "salary": 1357763,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2294370,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2694363,
+          "season": "2028-29"
+        },
+        {
+          "salary": 2918152,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "meleek thomas",
+      "player_name": "Meleek Thomas",
+      "remaining_guaranteed": 6346496,
+      "seasons": [
+        {
+          "salary": 1357763,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2294370,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2694363,
+          "season": "2028-29"
+        },
+        {
+          "salary": 2918152,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "CLE"
+    },
+    {
+      "normalized_name": "emanuel sharp",
+      "player_name": "Emanuel Sharp",
+      "remaining_guaranteed": 3652133,
+      "seasons": [
+        {
+          "salary": 1357763,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2294370,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2694363,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "SAC"
+    },
+    {
+      "normalized_name": "ryan conwell",
+      "player_name": "Ryan Conwell",
+      "remaining_guaranteed": 3652133,
+      "seasons": [
+        {
+          "salary": 1357763,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2294370,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2694363,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "MIA"
+    },
+    {
+      "normalized_name": "henri veesaar",
+      "player_name": "Henri Veesaar",
+      "remaining_guaranteed": 3652133,
+      "seasons": [
+        {
+          "salary": 1357763,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2294370,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2694363,
+          "season": "2028-29"
+        },
+        {
+          "salary": 2918152,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "ATL"
+    },
+    {
+      "normalized_name": "bruce thornton",
+      "player_name": "Bruce Thornton",
+      "remaining_guaranteed": 1357763,
+      "seasons": [
+        {
+          "salary": 1357763,
+          "season": "2026-27"
+        },
+        {
+          "salary": 2294370,
+          "season": "2027-28"
+        },
+        {
+          "salary": 2694363,
+          "season": "2028-29"
+        },
+        {
+          "salary": 2918152,
+          "season": "2029-30"
+        }
+      ],
+      "team_abbrev": "HOU"
+    },
+    {
+      "normalized_name": "trevon brazile",
+      "player_name": "Trevon Brazile",
+      "remaining_guaranteed": 1357763,
+      "seasons": [
+        {
+          "salary": 1357763,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "DEN"
+    },
+    {
+      "normalized_name": "nate bittle",
+      "player_name": "Nate Bittle",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 1357763,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "TOR"
+    },
+    {
+      "normalized_name": "tucker devries",
+      "player_name": "Tucker DeVries",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 1357763,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "BOS"
+    },
+    {
+      "normalized_name": "milos uzan",
+      "player_name": "Milos Uzan",
+      "remaining_guaranteed": null,
+      "seasons": [
+        {
+          "salary": 1357763,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "BOS"
+    },
+    {
+      "normalized_name": "olivier maxence prosper",
+      "player_name": "Olivier-Maxence Prosper",
+      "remaining_guaranteed": 2004720,
+      "seasons": [
+        {
+          "salary": 3500172,
+          "season": "2026-27"
+        },
+        {
+          "salary": 1002360,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "DAL"
+    },
+    {
+      "normalized_name": "ej liddell",
+      "player_name": "E.J. Liddell",
+      "remaining_guaranteed": 706898,
+      "seasons": [
+        {
+          "salary": 706898,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "PHX"
+    },
+    {
+      "normalized_name": "vasilije micic",
+      "player_name": "Vasilije Micić",
+      "remaining_guaranteed": 1333334,
+      "seasons": [
+        {
+          "salary": 666667,
+          "season": "2026-27"
+        },
+        {
+          "salary": 666667,
+          "season": "2027-28"
+        }
+      ],
+      "team_abbrev": "MIL"
+    },
+    {
+      "normalized_name": "mamadi diakite",
+      "player_name": "Mamadi Diakite",
+      "remaining_guaranteed": 464050,
+      "seasons": [
+        {
+          "salary": 464050,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "MEM"
+    },
+    {
+      "normalized_name": "ricky rubio",
+      "player_name": "Ricky Rubio",
+      "remaining_guaranteed": 424672,
+      "seasons": [
+        {
+          "salary": 424672,
+          "season": "2026-27"
+        }
+      ],
+      "team_abbrev": "CLE"
+    },
+    {
+      "normalized_name": "didi louzada",
+      "player_name": "Didi Louzada",
+      "remaining_guaranteed": 804096,
+      "seasons": [
+        {
+          "salary": 268032,
+          "season": "2026-27"
+        },
+        {
+          "salary": 268032,
+          "season": "2027-28"
+        },
+        {
+          "salary": 268032,
+          "season": "2028-29"
+        }
+      ],
+      "team_abbrev": "POR"
+    }
+  ],
+  "season": "2026-27",
+  "source": {
+    "id": "src_bref_contracts_players_2027",
+    "notes": "Public salary ledger used because NBA/team transaction releases do not consistently disclose annual salary.",
+    "retrieved_at": "2026-07-29T00:36:48+00:00",
+    "title": "2026-27 NBA Player Contracts",
+    "url": "https://www.basketball-reference.com/contracts/players.html"
+  }
+}

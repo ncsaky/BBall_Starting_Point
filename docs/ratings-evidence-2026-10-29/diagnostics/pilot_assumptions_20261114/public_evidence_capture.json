@@ -1,0 +1,48 @@
+{
+  "bounded_lookup": "five targeted query strings; primary article/PDF/glossary inspected, no blocked-source retries or broad download",
+  "not_used": [
+    "search hits for current2026-27 game results; post-start evidence not added",
+    "unopened secondary combine summaries for White/Castle; no verified primary rows acquired",
+    "2013 Jazz signing page body not retrievable beyond wrapper; source not used for numeric validation"
+  ],
+  "public_evidence": [
+    {
+      "id": "PUB01",
+      "url": "https://www.thehrr.com/PDF/nba/mediacentral.nba.com_media_mediacentral_051713-2013-NBA-Draft-Combine-Anthropometric-Results.pdf",
+      "source_kind": "primary NBA combine document on third-party mirror",
+      "publication_or_measurement_date": "2013-05",
+      "accessed_on": "2026-11-14",
+      "scope": "page2 Gobert row, extracted table and screenshot request; not entire player-history audit",
+      "observations": {
+        "standing_reach_inches": 115,
+        "standing_reach_cm": 292.1
+      },
+      "current_measurement": false
+    },
+    {
+      "id": "PUB02",
+      "url": "https://www.nba.com/news/rudy-gobert-10-things-to-know",
+      "source_kind": "NBA.com article",
+      "published_on": "2021-06-07",
+      "accessed_on": "2026-11-14",
+      "observations": {
+        "Gobert_reported_reach_inches": 117,
+        "screen_assist_lead_seasons": [
+          "2018-19",
+          "2019-20",
+          "2020-21"
+        ]
+      },
+      "current_measurement": false,
+      "limits": "Dated report; no current protocol or screening-attempt denominator."
+    },
+    {
+      "id": "PUB03",
+      "url": "https://www.nba.com/stats/help/glossary",
+      "source_kind": "NBA statistical definition",
+      "accessed_on": "2026-11-14",
+      "observation": "Screen assists depend on a teammate made field goal.",
+      "limits": "No screen-attempt or navigation-success denominator acquired."
+    }
+  ]
+}

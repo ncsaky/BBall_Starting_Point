@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title description">
+  <title id="title">NBA GM Sandbox</title>
+  <desc id="description">An original basketball-and-tailored-suit mark inside a beveled blue-gray application tile.</desc>
+  <defs>
+    <linearGradient id="tile" x2="0" y2="1">
+      <stop stop-color="#d6e3eb"/>
+      <stop offset="1" stop-color="#9bb2c2"/>
+    </linearGradient>
+    <linearGradient id="leather" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#e8b571"/>
+      <stop offset="0.54" stop-color="#d99548"/>
+      <stop offset="1" stop-color="#bc7235"/>
+    </linearGradient>
+    <linearGradient id="jacket" x2="0" y2="1">
+      <stop stop-color="#35434c"/>
+      <stop offset="1" stop-color="#18242d"/>
+    </linearGradient>
+    <pattern id="dots" width="9" height="9" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.2" fill="#18242d"/>
+    </pattern>
+    <clipPath id="ball"><circle cx="512" cy="386" r="232"/></clipPath>
+    <clipPath id="jacketClip"><path d="M88 928v-134c0-78 37-121 111-150l142-58h342l142 58c74 29 111 72 111 150v134z"/></clipPath>
+  </defs>
+  <rect x="36" y="44" width="952" height="952" rx="204" fill="#18242d" opacity="0.16"/>
+  <rect x="32" y="28" width="960" height="960" rx="204" fill="#647c8d"/>
+  <rect x="38" y="34" width="948" height="948" rx="198" fill="url(#tile)" stroke="#f3f6f8" stroke-width="6"/>
+  <path d="M98 928v-134c0-74 36-115 105-143l142-58h334l142 58c69 28 105 69 105 143v134z" fill="#829aab"/>
+  <path d="M88 928v-134c0-78 37-121 111-150l142-58h342l142 58c74 29 111 72 111 150v134z" fill="url(#jacket)"/>
+  <g clip-path="url(#jacketClip)">
+    <rect x="80" y="576" width="864" height="352" fill="url(#dots)" opacity="0.16"/>
+  </g>
+  <path d="m341 586 171 51 171-51-171 342z" fill="#f3f5f6"/>
+  <path d="m458 665 54-28 54 28-29 46h-50z" fill="#5d819b"/>
+  <path d="m487 711-29 165 54 52 54-52-29-165z" fill="#416880"/>
+  <path d="m341 586 171 342-173-123 38-65-85-36z" fill="#42535f" stroke="#1b2831" stroke-width="9" stroke-linejoin="round"/>
+  <path d="m683 586-171 342 173-123-38-65 85-36z" fill="#42535f" stroke="#1b2831" stroke-width="9" stroke-linejoin="round"/>
+  <path d="m344 599 66 135m270-135-66 135" fill="none" stroke="#768794" stroke-width="5"/>
+  <path d="M753 816h91" stroke="#111c24" stroke-width="12"/>
+  <path d="m764 810 17-35 23 18 27-24 2 41" fill="#e9eef1"/>
+  <circle cx="512" cy="397" r="238" fill="#17252e" opacity="0.22"/>
+  <circle cx="512" cy="386" r="232" fill="url(#leather)" stroke="#24313a" stroke-width="16"/>
+  <g clip-path="url(#ball)">
+    <rect x="272" y="146" width="480" height="480" fill="url(#dots)" opacity="0.24"/>
+    <g fill="none" stroke="#28343a" stroke-width="13" stroke-linecap="round">
+      <path d="M264 386h496"/>
+      <path d="M512 138v496"/>
+      <path d="M353 160c152 113 152 339 0 452"/>
+      <path d="M671 160c-152 113-152 339 0 452"/>
+    </g>
+  </g>
+  <path d="M343 284c29-46 69-78 123-93" fill="none" stroke="#f4d29a" stroke-width="8" stroke-linecap="round" opacity="0.72"/>
+</svg>

@@ -1,0 +1,44 @@
+{
+  "date": "2026-11-16",
+  "status": "DELIVERED",
+  "ledger_version": "perimeter_contest_evidence_v1_2026_11_16",
+  "files": [
+    {
+      "path": "docs/ratings-evidence-2026-10-29/PERIMETER_CONTEST_EVIDENCE_2026_11_16.md",
+      "sha256": "2ee6356e82232ec988f3ccf1b719e74df2c898768857dbd2cc9c47f1d6d9b1f1"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/PERIMETER_CONTEST_EVIDENCE_2026_11_16.json",
+      "sha256": "da09a3922bd62bfb6dd331ce170403da544c88d9aa7cec809da544e65af5130e"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/PERIMETER_CONTEST_EVIDENCE_ACTIVE_TASK.md",
+      "sha256": "e27246b1488f47f4ad5ad3d1f5b841bf90a70cc1b842e226cfb9c4f5d185e79e"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/perimeter_contest_20261116/inherited_source_snapshot.json",
+      "sha256": "eeab9f559933759015915216bf8790b9ada18fd77493b292800f7511ae22612a"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/perimeter_contest_20261116/readiness_ledger.json",
+      "sha256": "9ef81bc9ddc03a8453e9b76b2de4e7ae666f5ef542c7414e561fad432c232240"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/perimeter_contest_20261116/validation.json",
+      "sha256": "728df90510e299b2198a177f2f8cc4494234af02ce5ff92175c6f6162ff11e9a"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/perimeter_contest_20261116/build_ledger.py",
+      "sha256": "79e1f9156c3f08c6770f5068e6c7ef22ad7e8409d2391357e824321149b75a63"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/perimeter_contest_20261116/validate_delivery.py",
+      "sha256": "02897d52bee25c6e48bf6189bc0846b8215e247b8beb50e35355eca376c24a7a"
+    }
+  ],
+  "production_or_save_writes": 0,
+  "profile_compilations": 0,
+  "simulations": 0,
+  "new_backend_outcomes_inspected": false,
+  "causal_effect_coefficients_proposed": 0
+}

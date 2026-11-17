@@ -1,0 +1,263 @@
+[
+  {
+    "game_id": "401810150",
+    "date": "2025-11-29",
+    "team": "CHI",
+    "players": 12,
+    "source_team_FG": "39-87",
+    "derived_sum": 38.0,
+    "valid_individual_algebra": true,
+    "team_FG3": "14-34",
+    "player_team_labels": [
+      "CHI",
+      "IND"
+    ]
+  },
+  {
+    "game_id": "401810372",
+    "date": "2026-01-07",
+    "team": "CHI",
+    "players": 12,
+    "source_team_FG": "37-87",
+    "derived_sum": 36.0,
+    "valid_individual_algebra": true,
+    "team_FG3": "13-34",
+    "player_team_labels": [
+      "CHI",
+      "DET"
+    ]
+  },
+  {
+    "game_id": "401810384",
+    "date": "2026-01-08",
+    "team": "MIA",
+    "players": 13,
+    "source_team_FG": null,
+    "derived_sum": 0.0,
+    "valid_individual_algebra": true,
+    "team_FG3": null,
+    "player_team_labels": [
+      "CHI",
+      "MIA"
+    ]
+  },
+  {
+    "game_id": "401810384",
+    "date": "2026-01-08",
+    "team": "CHI",
+    "players": 12,
+    "source_team_FG": null,
+    "derived_sum": 0.0,
+    "valid_individual_algebra": true,
+    "team_FG3": null,
+    "player_team_labels": [
+      "CHI",
+      "MIA"
+    ]
+  },
+  {
+    "game_id": "401810499",
+    "date": "2026-01-24",
+    "team": "GS",
+    "players": 0,
+    "source_team_FG": null,
+    "derived_sum": 0,
+    "valid_individual_algebra": true,
+    "team_FG3": null,
+    "player_team_labels": [
+      "GS"
+    ]
+  },
+  {
+    "game_id": "401810499",
+    "date": "2026-01-24",
+    "team": "MIN",
+    "players": 0,
+    "source_team_FG": null,
+    "derived_sum": 0,
+    "valid_individual_algebra": true,
+    "team_FG3": null,
+    "player_team_labels": [
+      "GS",
+      "MIN"
+    ]
+  },
+  {
+    "game_id": "401810506",
+    "date": "2026-01-25",
+    "team": "DEN",
+    "players": 0,
+    "source_team_FG": null,
+    "derived_sum": 0,
+    "valid_individual_algebra": true,
+    "team_FG3": null,
+    "player_team_labels": [
+      "DEN"
+    ]
+  },
+  {
+    "game_id": "401810506",
+    "date": "2026-01-25",
+    "team": "MEM",
+    "players": 0,
+    "source_team_FG": null,
+    "derived_sum": 0,
+    "valid_individual_algebra": true,
+    "team_FG3": null,
+    "player_team_labels": [
+      "DEN",
+      "MEM"
+    ]
+  },
+  {
+    "game_id": "401810507",
+    "date": "2026-01-25",
+    "team": "DAL",
+    "players": 0,
+    "source_team_FG": null,
+    "derived_sum": 0,
+    "valid_individual_algebra": true,
+    "team_FG3": null,
+    "player_team_labels": [
+      "DAL"
+    ]
+  },
+  {
+    "game_id": "401810507",
+    "date": "2026-01-25",
+    "team": "MIL",
+    "players": 0,
+    "source_team_FG": null,
+    "derived_sum": 0,
+    "valid_individual_algebra": true,
+    "team_FG3": null,
+    "player_team_labels": [
+      "DAL",
+      "MIL"
+    ]
+  },
+  {
+    "game_id": "401810547",
+    "date": "2026-01-31",
+    "team": "CHI",
+    "players": 12,
+    "source_team_FG": "46-88",
+    "derived_sum": 45.0,
+    "valid_individual_algebra": true,
+    "team_FG3": "20-40",
+    "player_team_labels": [
+      "CHI",
+      "MIA"
+    ]
+  },
+  {
+    "game_id": "401810560",
+    "date": "2026-02-01",
+    "team": "CHI",
+    "players": 12,
+    "source_team_FG": "28-87",
+    "derived_sum": 26.0,
+    "valid_individual_algebra": true,
+    "team_FG3": "6-41",
+    "player_team_labels": [
+      "CHI",
+      "MIA"
+    ]
+  },
+  {
+    "game_id": "401810577",
+    "date": "2026-02-03",
+    "team": "CHI",
+    "players": 12,
+    "source_team_FG": "40-91",
+    "derived_sum": 39.0,
+    "valid_individual_algebra": true,
+    "team_FG3": "19-51",
+    "player_team_labels": [
+      "CHI",
+      "MIL"
+    ]
+  },
+  {
+    "game_id": "401810633",
+    "date": "2026-02-11",
+    "team": "CHI",
+    "players": 12,
+    "source_team_FG": "41-89",
+    "derived_sum": 38.0,
+    "valid_individual_algebra": true,
+    "team_FG3": "12-36",
+    "player_team_labels": [
+      "BOS",
+      "CHI"
+    ]
+  },
+  {
+    "game_id": "401810760",
+    "date": "2026-03-05",
+    "team": "CHI",
+    "players": 12,
+    "source_team_FG": "41-86",
+    "derived_sum": 39.0,
+    "valid_individual_algebra": true,
+    "team_FG3": "7-28",
+    "player_team_labels": [
+      "CHI",
+      "PHX"
+    ]
+  },
+  {
+    "game_id": "401873199",
+    "date": "2026-05-23",
+    "team": "OKC",
+    "players": 0,
+    "source_team_FG": null,
+    "derived_sum": 0,
+    "valid_individual_algebra": true,
+    "team_FG3": null,
+    "player_team_labels": [
+      "OKC"
+    ]
+  },
+  {
+    "game_id": "401873199",
+    "date": "2026-05-23",
+    "team": "SA",
+    "players": 0,
+    "source_team_FG": null,
+    "derived_sum": 0,
+    "valid_individual_algebra": true,
+    "team_FG3": null,
+    "player_team_labels": [
+      "OKC",
+      "SA"
+    ]
+  },
+  {
+    "game_id": "401873343",
+    "date": "2026-05-24",
+    "team": "NY",
+    "players": 0,
+    "source_team_FG": null,
+    "derived_sum": 0,
+    "valid_individual_algebra": true,
+    "team_FG3": null,
+    "player_team_labels": [
+      "NY"
+    ]
+  },
+  {
+    "game_id": "401873343",
+    "date": "2026-05-24",
+    "team": "CLE",
+    "players": 0,
+    "source_team_FG": null,
+    "derived_sum": 0,
+    "valid_individual_algebra": true,
+    "team_FG3": null,
+    "player_team_labels": [
+      "CLE",
+      "NY"
+    ]
+  }
+]

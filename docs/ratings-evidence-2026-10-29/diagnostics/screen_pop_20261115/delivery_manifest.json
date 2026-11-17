@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-15",
+  "status": "DELIVERED",
+  "packet_version": "screen_pop_research_v1_2026_11_15",
+  "files": [
+    {
+      "path": "docs/ratings-evidence-2026-10-29/SCREEN_POP_INPUTS_2026_11_15.md",
+      "sha256": "e7daef96e0db83078c5b0522bf1b76fa983d09b9d05f450dddcff4428d4bae4e"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/SCREEN_POP_INPUTS_2026_11_15.json",
+      "sha256": "161b9d9e0761699e9f2358a0a020494b62aca0580639926ae40c42ad86ba7ee2"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/SCREEN_POP_READINESS_2026_11_15.md",
+      "sha256": "e9fb403a55ef61620e24a7369b6f40ee70029da2c49376c57ca9d1683aca0222"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/SCREEN_POP_INPUTS_ACTIVE_TASK.md",
+      "sha256": "c9cef291e5abef3387bf6aeeb42db283c54cd6b760d342fd294705eb6bf479e7"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/screen_pop_20261115/source_ledger.json",
+      "sha256": "a71a992da275771de8fd3a96281951d9f4fbd140f3a333ad38e6deb6f94e79d5"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/screen_pop_20261115/readiness_ledger.json",
+      "sha256": "d6a37cd38b8a20edd311e9010467d2a49095f0e0356fb6ab554fb26b06b2b4de"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/screen_pop_20261115/validation.json",
+      "sha256": "2c84df8e019f16aa6ea12554d1feca7c0d7294e91a4f8ffd0a69452492613ebc"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/screen_pop_20261115/build_packet.py",
+      "sha256": "a7358cd86d4ca0c902adcf7e6a6df9beeb1666e6f820166b1944cdd305d7f1fa"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/screen_pop_20261115/validate_delivery.py",
+      "sha256": "36a70e2c2066798cf4159b724b01a76cfd121753a162421020437b64530c2be7"
+    }
+  ],
+  "production_writes": 0,
+  "save_writes": 0,
+  "profile_compilations": 0,
+  "simulations": 0,
+  "milestone10_outcomes_inspected": false
+}

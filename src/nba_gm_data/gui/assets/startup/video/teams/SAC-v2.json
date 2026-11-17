@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/SAC-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/SAC-v2-1.jpg",
+      "kind": "basketball",
+      "team": "SAC",
+      "clips": [
+        {
+          "source_start": 24,
+          "frames": 390,
+          "team": "SAC",
+          "opponent": "PHX",
+          "action": "DeRozan jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 75,
+          "frames": 120,
+          "team": "SAC",
+          "opponent": "UTA",
+          "action": "DeRozan drive",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 546
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/SAC-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/SAC-v2-2.jpg",
+      "kind": "basketball",
+      "team": "SAC",
+      "clips": [
+        {
+          "source_start": 80,
+          "frames": 225,
+          "team": "SAC",
+          "opponent": "OKC",
+          "action": "DeRozan jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 105.5,
+          "frames": 165,
+          "team": "SAC",
+          "opponent": "MIL",
+          "action": "DeRozan basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 426
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/SAC-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/SAC-v2-3.jpg",
+      "kind": "basketball",
+      "team": "SAC",
+      "clips": [
+        {
+          "source_start": 123,
+          "frames": 240,
+          "team": "SAC",
+          "opponent": "DEN",
+          "action": "DeRozan jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 169,
+          "frames": 225,
+          "team": "SAC",
+          "opponent": "SAS",
+          "action": "DeRozan jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 501
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "svfDl8gpUDE",
+    "url": "https://www.youtube.com/watch?v=svfDl8gpUDE",
+    "title": "DeMar DeRozan BEST HIGHLIGHTS 25-26 Season",
+    "channel": "Hoops Galaxy",
+    "path": ".cache/startup-team-correction/SAC.mp4",
+    "query": "2025-26 Sacramento Kings DeMar DeRozan best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 24,
+      "frames": 390,
+      "team": "SAC",
+      "opponent": "PHX",
+      "action": "DeRozan jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 75,
+      "frames": 120,
+      "team": "SAC",
+      "opponent": "UTA",
+      "action": "DeRozan drive",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 80,
+      "frames": 225,
+      "team": "SAC",
+      "opponent": "OKC",
+      "action": "DeRozan jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 105.5,
+      "frames": 165,
+      "team": "SAC",
+      "opponent": "MIL",
+      "action": "DeRozan basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 123,
+      "frames": 240,
+      "team": "SAC",
+      "opponent": "DEN",
+      "action": "DeRozan jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 169,
+      "frames": 225,
+      "team": "SAC",
+      "opponent": "SAS",
+      "action": "DeRozan jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 72.63333333333334
+}

@@ -1,0 +1,188 @@
+{
+  "checks": [
+    "Visible shortcut hints are present, unique, and separate from accessible button names",
+    "Roster shortcut, player card, nested Escape, focus restoration and background isolation",
+    "Searchable command menu, keyboard-only room navigation and shortcut reference",
+    "Arrow-key table traversal and in-place sorting",
+    "Simulation shortcut invokes current control once; typing, busy state and disabled controls suppress actions",
+    "Arrow-key market tabs retain focus; preview cannot reach live APIs"
+  ],
+  "viewports": [
+    {
+      "id": "dashboard",
+      "width": 1280,
+      "height": 720,
+      "horizontal": false
+    },
+    {
+      "id": "roster",
+      "width": 1280,
+      "height": 720,
+      "horizontal": false,
+      "modalRight": 1260.796875,
+      "modalBottom": 698.390625,
+      "rosterBottom": 688.390625,
+      "rosterVisibleBottom": 688.390625
+    },
+    {
+      "id": "player",
+      "width": 1280,
+      "height": 720,
+      "horizontal": false,
+      "modalRight": 1260,
+      "modalBottom": 690
+    },
+    {
+      "id": "trade-builder",
+      "width": 1280,
+      "height": 720,
+      "horizontal": false,
+      "modalRight": 1264,
+      "modalBottom": 704
+    },
+    {
+      "id": "negotiation",
+      "width": 1280,
+      "height": 720,
+      "horizontal": false,
+      "modalRight": 1264,
+      "modalBottom": 704
+    },
+    {
+      "id": "free-agency",
+      "width": 1280,
+      "height": 720,
+      "horizontal": false
+    },
+    {
+      "id": "playoffs",
+      "width": 1280,
+      "height": 720,
+      "horizontal": false
+    },
+    {
+      "id": "draft",
+      "width": 1280,
+      "height": 720,
+      "horizontal": false
+    },
+    {
+      "id": "dashboard",
+      "width": 1440,
+      "height": 900,
+      "horizontal": false
+    },
+    {
+      "id": "roster",
+      "width": 1440,
+      "height": 900,
+      "horizontal": false,
+      "modalRight": 1418.390625,
+      "modalBottom": 873,
+      "rosterBottom": 863,
+      "rosterVisibleBottom": 863
+    },
+    {
+      "id": "player",
+      "width": 1440,
+      "height": 900,
+      "horizontal": false,
+      "modalRight": 1340,
+      "modalBottom": 780
+    },
+    {
+      "id": "trade-builder",
+      "width": 1440,
+      "height": 900,
+      "horizontal": false,
+      "modalRight": 1424,
+      "modalBottom": 884
+    },
+    {
+      "id": "negotiation",
+      "width": 1440,
+      "height": 900,
+      "horizontal": false,
+      "modalRight": 1424,
+      "modalBottom": 884
+    },
+    {
+      "id": "free-agency",
+      "width": 1440,
+      "height": 900,
+      "horizontal": false
+    },
+    {
+      "id": "playoffs",
+      "width": 1440,
+      "height": 900,
+      "horizontal": false
+    },
+    {
+      "id": "draft",
+      "width": 1440,
+      "height": 900,
+      "horizontal": false
+    },
+    {
+      "id": "dashboard",
+      "width": 1920,
+      "height": 1080,
+      "horizontal": false
+    },
+    {
+      "id": "roster",
+      "width": 1920,
+      "height": 1080,
+      "horizontal": false,
+      "modalRight": 1840,
+      "modalBottom": 965,
+      "rosterBottom": 955,
+      "rosterVisibleBottom": 955
+    },
+    {
+      "id": "player",
+      "width": 1920,
+      "height": 1080,
+      "horizontal": false,
+      "modalRight": 1580,
+      "modalBottom": 870
+    },
+    {
+      "id": "trade-builder",
+      "width": 1920,
+      "height": 1080,
+      "horizontal": false,
+      "modalRight": 1880,
+      "modalBottom": 1064
+    },
+    {
+      "id": "negotiation",
+      "width": 1920,
+      "height": 1080,
+      "horizontal": false,
+      "modalRight": 1880,
+      "modalBottom": 1064
+    },
+    {
+      "id": "free-agency",
+      "width": 1920,
+      "height": 1080,
+      "horizontal": false
+    },
+    {
+      "id": "playoffs",
+      "width": 1920,
+      "height": 1080,
+      "horizontal": false
+    },
+    {
+      "id": "draft",
+      "width": 1920,
+      "height": 1080,
+      "horizontal": false
+    }
+  ],
+  "errors": [],
+  "mutations": []
+}

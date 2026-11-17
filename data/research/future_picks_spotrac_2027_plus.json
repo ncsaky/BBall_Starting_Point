@@ -1,6 +1,6 @@
 {
-  "coverage_note": "Machine-ingested owner-side first-round future-pick assets from Spotrac's public future picks page. Second-round ownership remains scaffolded unless separately researched.",
-  "pick_count": 268,
+  "coverage_note": "Machine-ingested owner-side first- and second-round future-pick assets from Spotrac's public future picks page.",
+  "pick_count": 583,
   "picks": [
     {
       "asset_index": 1,
@@ -67,6 +67,87 @@
     },
     {
       "asset_index": 1,
+      "description": "ATL",
+      "original_team_abbrev": "ATL",
+      "owner_team_abbrev": "ATL",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "ATL (via BOS to MEM to POR)",
+      "original_team_abbrev": "ATL",
+      "owner_team_abbrev": "ATL",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BKN (via GSW)",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "ATL",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHA More favorable of ATL and MIA the other to OKC (via OKC)",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "ATL",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "ATL",
+      "original_team_abbrev": "ATL",
+      "owner_team_abbrev": "ATL",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "OKC",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "ATL",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "ATL (via POR)",
+      "original_team_abbrev": "ATL",
+      "owner_team_abbrev": "ATL",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "OKC Most favorable of ATL and HOU 31-55 (or just ATL if HOU 56-60) (via ATL)",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "ATL",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "ATL Least favorable of ATL and LAL then other to OKC (via ATL)",
+      "original_team_abbrev": "ATL",
+      "owner_team_abbrev": "ATL",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
       "description": "BOS",
       "original_team_abbrev": "BOS",
       "owner_team_abbrev": "BOS",
@@ -76,7 +157,7 @@
     },
     {
       "asset_index": 1,
-      "description": "BOS If 1",
+      "description": "BOS SAS Or swap 2-30 with SAS (via SAS swap for BOS)",
       "original_team_abbrev": "BOS",
       "owner_team_abbrev": "BOS",
       "round": 1,
@@ -85,8 +166,8 @@
     },
     {
       "asset_index": 2,
-      "description": "SAS BOS Or swap 2-30 with SAS (via SAS swap for BOS)",
-      "original_team_abbrev": "SAS",
+      "description": "BOS (via PHI)",
+      "original_team_abbrev": "BOS",
       "owner_team_abbrev": "BOS",
       "round": 1,
       "season": "2028",
@@ -129,11 +210,119 @@
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
+      "asset_index": 2,
+      "description": "BOS",
+      "original_team_abbrev": "BOS",
+      "owner_team_abbrev": "BOS",
+      "round": 1,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
       "asset_index": 1,
       "description": "BOS FROZEN PICK",
       "original_team_abbrev": "BOS",
       "owner_team_abbrev": "BOS",
       "round": 1,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BOS",
+      "original_team_abbrev": "BOS",
+      "owner_team_abbrev": "BOS",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "WAS More favorable of BKN and DAL to WAS then other to DET",
+      "original_team_abbrev": "WAS",
+      "owner_team_abbrev": "BOS",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "NYK If 46-60 (via ORL to PHX)",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "BOS",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "BOS Most favorable of GSW, MIL and OKC (via BKN to HOU to OKC to PHI)",
+      "original_team_abbrev": "BOS",
+      "owner_team_abbrev": "BOS",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "OKC",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "BOS",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BKN (via HOU)",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BOS",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "CHA If 30-55 BOS If 56-60",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "BOS",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "BOS Most favorable of PHX, POR and WAS then others to PHI and WAS (via PHI)",
+      "original_team_abbrev": "BOS",
+      "owner_team_abbrev": "BOS",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BOS Less favorable of BOS and CLE then other to UTA (via CLE to ATL to BOS)",
+      "original_team_abbrev": "BOS",
+      "owner_team_abbrev": "BOS",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "HOU Least favorable of HOU 31-55 and ATL (via ATL swap for HOU) BOS If 56-60",
+      "original_team_abbrev": "HOU",
+      "owner_team_abbrev": "BOS",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BOS",
+      "original_team_abbrev": "BOS",
+      "owner_team_abbrev": "BOS",
+      "round": 2,
       "season": "2032",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
@@ -166,7 +355,7 @@
     },
     {
       "asset_index": 1,
-      "description": "BKN Two most favorable of BKN, PHI 9-30 (if PHI conveys 1st to OKC by 2026) and PHX (via BKN swap for PHX) Or swap with NYK",
+      "description": "BKN Two most favorable of BKN, PHI 9-30 and PHX (via BKN swap for PHX) Or swap with NYK",
       "original_team_abbrev": "BKN",
       "owner_team_abbrev": "BKN",
       "round": 1,
@@ -184,17 +373,8 @@
     },
     {
       "asset_index": 3,
-      "description": "PHI If 1-8 and if PHI conveys 1st to OKC by 2026",
+      "description": "PHI If 1-8 or LAC or BOS (via BOS swap for LAC or PHI 1-8) BKN If 9-30",
       "original_team_abbrev": "PHI",
-      "owner_team_abbrev": "BKN",
-      "round": 1,
-      "season": "2028",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 4,
-      "description": "BKN If 9-30 and if PHI conveys 1st to OKC by 2026",
-      "original_team_abbrev": "BKN",
       "owner_team_abbrev": "BKN",
       "round": 1,
       "season": "2028",
@@ -274,6 +454,186 @@
     },
     {
       "asset_index": 1,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "WAS More favorable of BKN and DAL to WAS then other to DET",
+      "original_team_abbrev": "WAS",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BKN (via GSW)",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "BKN (via PHX)",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 4,
+      "description": "PHI BKN PHI pick if PHI conveys second 1st to BKN by 2028; BKN pick if PHI does not convey second 1st to BKN by 2028",
+      "original_team_abbrev": "PHI",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 4,
+      "description": "BKN (via PHX)",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BKN (via HOU)",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "BKN (via BOS to MEM)",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 4,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 4,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "BKN",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
       "description": "CHA",
       "original_team_abbrev": "CHA",
       "owner_team_abbrev": "CHA",
@@ -283,7 +643,7 @@
     },
     {
       "asset_index": 2,
-      "description": "DAL If 1-2",
+      "description": "DAL If 1-2 CHA If 3-30",
       "original_team_abbrev": "DAL",
       "owner_team_abbrev": "CHA",
       "round": 1,
@@ -292,16 +652,7 @@
     },
     {
       "asset_index": 3,
-      "description": "CHA If 3-30",
-      "original_team_abbrev": "CHA",
-      "owner_team_abbrev": "CHA",
-      "round": 1,
-      "season": "2027",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 4,
-      "description": "MIA If 1-14",
+      "description": "MIA If 1-14 CHA If 15-30",
       "original_team_abbrev": "MIA",
       "owner_team_abbrev": "CHA",
       "round": 1,
@@ -309,17 +660,8 @@
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
-      "asset_index": 5,
-      "description": "CHA If 15-30",
-      "original_team_abbrev": "CHA",
-      "owner_team_abbrev": "CHA",
-      "round": 1,
-      "season": "2027",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
       "asset_index": 1,
-      "description": "CHA",
+      "description": "CHA MIN Or swap for MIN (via CHA swap for MIN)",
       "original_team_abbrev": "CHA",
       "owner_team_abbrev": "CHA",
       "round": 1,
@@ -328,7 +670,7 @@
     },
     {
       "asset_index": 2,
-      "description": "MIA CHA If MIA conveys 1st to CHA in 2027 or If MIA does not convey 1st to OKC in 2025",
+      "description": "MIA CHA If MIA does not convey 1st to CHA in 2027",
       "original_team_abbrev": "MIA",
       "owner_team_abbrev": "CHA",
       "round": 1,
@@ -336,9 +678,18 @@
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
+      "asset_index": 3,
+      "description": "MIN CHA Or swap with CHA (via CHA swap for MIN)",
+      "original_team_abbrev": "MIN",
+      "owner_team_abbrev": "CHA",
+      "round": 1,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
       "asset_index": 1,
-      "description": "CHA",
-      "original_team_abbrev": "CHA",
+      "description": "PHX Least favorable of CHA or CLE, MIN 6-30 and UTA (via CHA swap to PHX)",
+      "original_team_abbrev": "PHX",
       "owner_team_abbrev": "CHA",
       "round": 1,
       "season": "2029",
@@ -355,7 +706,7 @@
     },
     {
       "asset_index": 1,
-      "description": "CHA",
+      "description": "CHA Or swap for least favorable of DAL, MIN 2-30 and SAS (via CHA swap for MIN)",
       "original_team_abbrev": "CHA",
       "owner_team_abbrev": "CHA",
       "round": 1,
@@ -382,25 +733,196 @@
     },
     {
       "asset_index": 1,
-      "description": "CHI",
-      "original_team_abbrev": "CHI",
-      "owner_team_abbrev": "CHI",
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
       "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "OKC SAC OKC If SAS is 1-16, SAC If SAS is 17-30",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
       "season": "2027",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
       "asset_index": 2,
-      "description": "POR If 1-14 if not already settled with CHI",
-      "original_team_abbrev": "POR",
-      "owner_team_abbrev": "CHI",
-      "round": 1,
+      "description": "CHA (via LAC to HOU)",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
       "season": "2027",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
       "asset_index": 3,
-      "description": "CHI If 15-30 if not already settled",
+      "description": "CHA More favorable of NOP and POR to CHA then other to POR (via POR)",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHA More favorable of CHA and LAC then other to DET (via LAC to CHA to DAL)",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "CHA (via HOU to ATL to HOU)",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHA More favorable of ATL and MIA the other to OKC (via OKC)",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "CHA If DEN conveys 1st to OKC by 2029",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 4,
+      "description": "CHA MIN pick if MIN conveys 1st to UTA in 2029; UTA pick if MIN does not convey 1st to UTA in 2029 or CHA if does not convery",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHA If 30-55 BOS If 56-60",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "CHA More favorable of LAC and UTA (via UTA)",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "CHA",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHI",
       "original_team_abbrev": "CHI",
       "owner_team_abbrev": "CHI",
       "round": 1,
@@ -418,17 +940,8 @@
     },
     {
       "asset_index": 2,
-      "description": "POR If 1-14 if not already settled with CHI or swap with MIL",
+      "description": "POR MIL or swap with MIL CHI MIL or swap with MIL",
       "original_team_abbrev": "POR",
-      "owner_team_abbrev": "CHI",
-      "round": 1,
-      "season": "2028",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 3,
-      "description": "CHI If 15-30 if not already settled",
-      "original_team_abbrev": "CHI",
       "owner_team_abbrev": "CHI",
       "round": 1,
       "season": "2028",
@@ -472,7 +985,142 @@
     },
     {
       "asset_index": 1,
-      "description": "PHX Least favorable of CLE, MIN and UTA to PHX then others to UTA (via UTA)",
+      "description": "CHI",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "CHI",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "OKC (via WAS to NOP to WAS to DAL)",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "CHI",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "CHI (via ATL to MIN)",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "CHI",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHI Most favorable of CHI, IND and PHX then others to IND and NYK",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "CHI",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "POR CHI (via CHI to SAC to MEM)",
+      "original_team_abbrev": "POR",
+      "owner_team_abbrev": "CHI",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHI",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "CHI",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "CHI (via NYK to DET to SAC)",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "CHI",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHI More favorable of CHI and IND then other to IND",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "CHI",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "CHI Less favorable of CHI and IND then other to CHI",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "CHI",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHI",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "CHI",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "CHI (via PHX to CHA)",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "CHI",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "CHI Most favorable of GSW and MIN then other to DET (via MIN swap for GSW (via MIN))",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "CHI",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 4,
+      "description": "CHI (via DET to CHA)",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "CHI",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHI",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "CHI",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "CHI More favorable of HOU and PHX then other to PHX (via PHX to MIN)",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "CHI",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "PHX Least favorable of CLE, MIN and UTA then others to MEM and UTA (via UTA)",
       "original_team_abbrev": "PHX",
       "owner_team_abbrev": "CLE",
       "round": 1,
@@ -489,15 +1137,6 @@
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
-      "asset_index": 2,
-      "description": "UTA CLE Or swap with CLE",
-      "original_team_abbrev": "UTA",
-      "owner_team_abbrev": "CLE",
-      "round": 1,
-      "season": "2028",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
       "asset_index": 1,
       "description": "CHA Least favorable of CLE, MIN 6-30 and UTA to PHX then others to UTA (via UTA to PHX)",
       "original_team_abbrev": "CHA",
@@ -535,17 +1174,80 @@
     },
     {
       "asset_index": 1,
-      "description": "DAL If 1-2",
-      "original_team_abbrev": "DAL",
-      "owner_team_abbrev": "DAL",
+      "description": "CLE FROZEN PICK",
+      "original_team_abbrev": "CLE",
+      "owner_team_abbrev": "CLE",
       "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHI (via ATL to MIN)",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "CLE",
+      "round": 2,
       "season": "2027",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
+      "asset_index": 1,
+      "description": "UTA",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "CLE",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "ATL",
+      "original_team_abbrev": "ATL",
+      "owner_team_abbrev": "CLE",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "SAS",
+      "original_team_abbrev": "SAS",
+      "owner_team_abbrev": "CLE",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "UTA More favorable of BOS and CLE then other to BOS (via CLE to ATL to BOS)",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "CLE",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "UTA",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "CLE",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
       "asset_index": 2,
-      "description": "CHA If 3-30",
-      "original_team_abbrev": "CHA",
+      "description": "CLE",
+      "original_team_abbrev": "CLE",
+      "owner_team_abbrev": "CLE",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DAL If 1-2 CHA If 3-30",
+      "original_team_abbrev": "DAL",
       "owner_team_abbrev": "DAL",
       "round": 1,
       "season": "2027",
@@ -589,25 +1291,7 @@
     },
     {
       "asset_index": 1,
-      "description": "DAL SAS Least favorable of DAL and SAS (via SAN swap for DAL)",
-      "original_team_abbrev": "DAL",
-      "owner_team_abbrev": "DAL",
-      "round": 1,
-      "season": "2030",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 2,
-      "description": "GSW If 1-20",
-      "original_team_abbrev": "GSW",
-      "owner_team_abbrev": "DAL",
-      "round": 1,
-      "season": "2030",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 3,
-      "description": "DAL If 21-30 (via WAS)",
+      "description": "DAL Least favorable of DAL and SAS (via SAN swap for DAL)",
       "original_team_abbrev": "DAL",
       "owner_team_abbrev": "DAL",
       "round": 1,
@@ -634,71 +1318,107 @@
     },
     {
       "asset_index": 1,
-      "description": "DEN If 1-5",
-      "original_team_abbrev": "DEN",
-      "owner_team_abbrev": "DEN",
+      "description": "DAL",
+      "original_team_abbrev": "DAL",
+      "owner_team_abbrev": "DAL",
       "round": 1,
-      "season": "2027",
+      "season": "2033",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
-      "asset_index": 2,
-      "description": "OKC If 6-30",
-      "original_team_abbrev": "OKC",
-      "owner_team_abbrev": "DEN",
-      "round": 1,
+      "asset_index": 1,
+      "description": "MIL Less favorable of BKN and DAL to MIL then other to WAS (via DET)",
+      "original_team_abbrev": "MIL",
+      "owner_team_abbrev": "DAL",
+      "round": 2,
       "season": "2027",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
       "asset_index": 1,
-      "description": "DEN If 1-5 if not already settled with OKC",
-      "original_team_abbrev": "DEN",
-      "owner_team_abbrev": "DEN",
-      "round": 1,
-      "season": "2028",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 2,
-      "description": "OKC If 6-30 if not already settled",
-      "original_team_abbrev": "OKC",
-      "owner_team_abbrev": "DEN",
-      "round": 1,
+      "description": "LAC (via SAC to IND)",
+      "original_team_abbrev": "LAC",
+      "owner_team_abbrev": "DAL",
+      "round": 2,
       "season": "2028",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
       "asset_index": 1,
-      "description": "DEN If 1-5 if not already settled with OKC or 1-5 if DEN conveys 1st to OKC by 2027",
-      "original_team_abbrev": "DEN",
-      "owner_team_abbrev": "DEN",
-      "round": 1,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "DAL",
+      "round": 2,
       "season": "2029",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
       "asset_index": 2,
-      "description": "OKC If 6-30 if not already settled or 6-30 if DEN conveys 1st to OKC by 2027",
-      "original_team_abbrev": "OKC",
-      "owner_team_abbrev": "DEN",
-      "round": 1,
+      "description": "DAL (via OKC to WAS)",
+      "original_team_abbrev": "DAL",
+      "owner_team_abbrev": "DAL",
+      "round": 2,
       "season": "2029",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
       "asset_index": 1,
-      "description": "DEN If 1-5 if not already settled with OKC or 1-5 if DEN conveys 1st to OKC by 2028",
-      "original_team_abbrev": "DEN",
-      "owner_team_abbrev": "DEN",
-      "round": 1,
+      "description": "BKN (via BOS to MEM)",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "DAL",
+      "round": 2,
       "season": "2030",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
-      "asset_index": 2,
-      "description": "OKC If 6-30 if not already settled or 6-30 if DEN conveys 1st to OKC by 2028",
-      "original_team_abbrev": "OKC",
+      "asset_index": 1,
+      "description": "DET (via PHI)",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "DAL",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "NYK",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "DAL",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DEN If 1-5 OKC If 6-30",
+      "original_team_abbrev": "DEN",
+      "owner_team_abbrev": "DEN",
+      "round": 1,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DEN If 1-5 if not already settled with OKC OKC If 6-30 if not already settled",
+      "original_team_abbrev": "DEN",
+      "owner_team_abbrev": "DEN",
+      "round": 1,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DEN If 1-5 if not already settled with OKC or 1-5 if DEN conveys 1st to OKC by 2027 OKC If 6-30 if not already settled or 6-30 if DEN conveys 1st to OKC by 2027",
+      "original_team_abbrev": "DEN",
+      "owner_team_abbrev": "DEN",
+      "round": 1,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DEN If 1-5 if not already settled with OKC or 1-5 if DEN conveys 1st to OKC by 2028 OKC If 6-30 if not already settled or 6-30 if DEN conveys 1st to OKC by 2028",
+      "original_team_abbrev": "DEN",
       "owner_team_abbrev": "DEN",
       "round": 1,
       "season": "2030",
@@ -724,6 +1444,87 @@
     },
     {
       "asset_index": 1,
+      "description": "DEN",
+      "original_team_abbrev": "DEN",
+      "owner_team_abbrev": "DEN",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "UTA (via CLE to CHI to BOS)",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "DEN",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DEN If 31-33 WAS If 34-60 (via SAS to SAC)",
+      "original_team_abbrev": "DEN",
+      "owner_team_abbrev": "DEN",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "DEN (via SAS)",
+      "original_team_abbrev": "DEN",
+      "owner_team_abbrev": "DEN",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHA If DEN conveys 1st to OKC by 2029",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "DEN",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "OKC Two least favorable picks of DEN, HOU and MIA then other to MEM (via CHA)",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "DEN",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHI (via PHX to CHA)",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "DEN",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "DEN (via SAS)",
+      "original_team_abbrev": "DEN",
+      "owner_team_abbrev": "DEN",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "DEN",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
       "description": "DET",
       "original_team_abbrev": "DET",
       "owner_team_abbrev": "DET",
@@ -778,6 +1579,114 @@
     },
     {
       "asset_index": 1,
+      "description": "DET",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "DET",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DET",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "DET",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DET Least favorable of DET 31-55, CHA, LAC, MIA and NYK to UTA then others to DET PHI If 56-60",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "DET",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "DET Least favorable of CHA and LAC then other to CHA (via LAC to CHA to DAL)",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "DET",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "DET If DAL conveys 1st to CHA in 2027(via SAS to DAL to DET) or to CHA if DAL does not convey 1st to CHA in 2027",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "DET",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DET Two most favorable of DET, MIL and NYK then other to SAC (via MIL to BRK to DET; via NYK to DET)",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "DET",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "DET Two most favorable of DET, MIL and NYK then other to SAC (via MIL to BRK to DET; via NYK to DET)",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "DET",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DET",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "DET",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DET (via PHI)",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "DET",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "DET",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "DET",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "DET Least favorable of GSW and MIN then other to MIN (via MIN swap for GSW (via GSW))",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "DET",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DET (via MEM)",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "DET",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
       "description": "GSW",
       "original_team_abbrev": "GSW",
       "owner_team_abbrev": "GSW",
@@ -805,17 +1714,8 @@
     },
     {
       "asset_index": 1,
-      "description": "GSW If 1-20",
+      "description": "GSW If 1-20 MEM If 21-30 (via WAS to DAL)",
       "original_team_abbrev": "GSW",
-      "owner_team_abbrev": "GSW",
-      "round": 1,
-      "season": "2030",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 2,
-      "description": "DAL If 21-30 (via WAS)",
-      "original_team_abbrev": "DAL",
       "owner_team_abbrev": "GSW",
       "round": 1,
       "season": "2030",
@@ -836,6 +1736,69 @@
       "original_team_abbrev": "GSW",
       "owner_team_abbrev": "GSW",
       "round": 1,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "GSW",
+      "original_team_abbrev": "GSW",
+      "owner_team_abbrev": "GSW",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "WAS Least favorable of GSW and PHX to WAS then other to PHI (via WAS to PHI)",
+      "original_team_abbrev": "WAS",
+      "owner_team_abbrev": "GSW",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "PHI Two least favorable of GSW, MIL and OKC to PHI then other to BOS (via POR to WAS)",
+      "original_team_abbrev": "PHI",
+      "owner_team_abbrev": "GSW",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "GSW",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "GSW WAS GSW pick if GSW conveys 1st to WAS in 2030; WAS pick if GSW does not convey 1st to WAS in 2030",
+      "original_team_abbrev": "GSW",
+      "owner_team_abbrev": "GSW",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DET Least favorable of GSW and MIN then other to MIN (via MIN swap for GSW (via GSW))",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "GSW",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "GSW If 31-50 MEM If 51-60",
+      "original_team_abbrev": "GSW",
+      "owner_team_abbrev": "GSW",
+      "round": 2,
       "season": "2032",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
@@ -931,6 +1894,78 @@
     },
     {
       "asset_index": 1,
+      "description": "HOU",
+      "original_team_abbrev": "HOU",
+      "owner_team_abbrev": "HOU",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "NOP Second most favorable of HOU, IND, MIA and OKC to NYK; then others to PHI and SAS (via HOU to DET to UTA to OKC)",
+      "original_team_abbrev": "NOP",
+      "owner_team_abbrev": "HOU",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "HOU If POR 56-60 then less favorable of NOP and POR 56-60 (via POR to BOS)",
+      "original_team_abbrev": "HOU",
+      "owner_team_abbrev": "HOU",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHA (via HOU to ATL to HOU)",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "HOU",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DAL (via OKC to WAS)",
+      "original_team_abbrev": "DAL",
+      "owner_team_abbrev": "HOU",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "MEM Most favorable pick of DEN, HOU and MIA then others to OKC (via OKC)",
+      "original_team_abbrev": "MEM",
+      "owner_team_abbrev": "HOU",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "HOU Least favorable of HOU 31-55 and ATL (via ATL swap for HOU) BOS If 56-60",
+      "original_team_abbrev": "HOU",
+      "owner_team_abbrev": "HOU",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHI More favorable of HOU and PHX then other to PHX (via PHX to MIN)",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "HOU",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
       "description": "IND",
       "original_team_abbrev": "IND",
       "owner_team_abbrev": "IND",
@@ -985,6 +2020,87 @@
     },
     {
       "asset_index": 1,
+      "description": "IND",
+      "original_team_abbrev": "IND",
+      "owner_team_abbrev": "IND",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "NYK Third most favorable of HOU, IND, MIA and OKC to NYK; then others to PHI and SAS (via HOU to DET to UTA to OKC)",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "IND",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "IND (via CLE) or to NOP if IND does not convey 1st to NOP by 2027",
+      "original_team_abbrev": "IND",
+      "owner_team_abbrev": "IND",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "IND Middle Pick of CHI, IND and PHX then others to CHI and NYK",
+      "original_team_abbrev": "IND",
+      "owner_team_abbrev": "IND",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "POR Less favorable of IND and WAS to POR then other to IND (via NYK)",
+      "original_team_abbrev": "POR",
+      "owner_team_abbrev": "IND",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "IND More favorable of IND and WAS to IND then other to POR (via NYK)",
+      "original_team_abbrev": "IND",
+      "owner_team_abbrev": "IND",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHI Less favorable of CHI and IND then other to CHI",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "IND",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "IND Least favorable of IND, MEM and MIA then others to MEM and WAS (via MIA swap for IND; via UTH to WAS; via MEM swap for IND or MIA)",
+      "original_team_abbrev": "IND",
+      "owner_team_abbrev": "IND",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "IND",
+      "original_team_abbrev": "IND",
+      "owner_team_abbrev": "IND",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
       "description": "OKC Two most favorable of DEN 6-30, LAC and OKC (via OKC swap for LAC)",
       "original_team_abbrev": "OKC",
       "owner_team_abbrev": "LAC",
@@ -1003,8 +2119,8 @@
     },
     {
       "asset_index": 1,
-      "description": "PHI",
-      "original_team_abbrev": "PHI",
+      "description": "BOS (via PHI)",
+      "original_team_abbrev": "BOS",
       "owner_team_abbrev": "LAC",
       "round": 1,
       "season": "2028",
@@ -1066,7 +2182,79 @@
     },
     {
       "asset_index": 1,
-      "description": "LAL If 1-4",
+      "description": "LAC",
+      "original_team_abbrev": "LAC",
+      "owner_team_abbrev": "LAC",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "UTA (via ATL to LAC)",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "LAC",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "LAC (via SAC to IND)",
+      "original_team_abbrev": "LAC",
+      "owner_team_abbrev": "LAC",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "DET Least favorable of CHA and LAC then other to CHA (via LAC to CHA to DAL)",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "LAC",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "SAS (via PHI)",
+      "original_team_abbrev": "SAS",
+      "owner_team_abbrev": "LAC",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "UTA Less favorable of LAC and UTA then other to CHA (via LAC to UTA)",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "LAC",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "LAC",
+      "original_team_abbrev": "LAC",
+      "owner_team_abbrev": "LAC",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "LAC",
+      "original_team_abbrev": "LAC",
+      "owner_team_abbrev": "LAC",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "LAL If 1-4 MEM If 5-30 (via UTA)",
       "original_team_abbrev": "LAL",
       "owner_team_abbrev": "LAL",
       "round": 1,
@@ -1074,17 +2262,8 @@
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
-      "asset_index": 2,
-      "description": "MEM If 5-30 (via UTA)",
-      "original_team_abbrev": "MEM",
-      "owner_team_abbrev": "LAL",
-      "round": 1,
-      "season": "2027",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
       "asset_index": 1,
-      "description": "LAL",
+      "description": "LAL Least favorable of LAL and more favorable or CLE and UTA then other to UTA (via UTA swap for CLE and LAL)",
       "original_team_abbrev": "LAL",
       "owner_team_abbrev": "LAL",
       "round": 1,
@@ -1102,7 +2281,7 @@
     },
     {
       "asset_index": 1,
-      "description": "LAL",
+      "description": "LAL UTA Or swap with UTA (via UTA swap for LAL)",
       "original_team_abbrev": "LAL",
       "owner_team_abbrev": "LAL",
       "round": 1,
@@ -1110,9 +2289,18 @@
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
+      "asset_index": 2,
+      "description": "UTA LAL Or swap for LAL (via UTA swap for LAL)",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "LAL",
+      "round": 1,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
       "asset_index": 1,
-      "description": "LAL",
-      "original_team_abbrev": "LAL",
+      "description": "UTA",
+      "original_team_abbrev": "UTA",
       "owner_team_abbrev": "LAL",
       "round": 1,
       "season": "2031",
@@ -1129,7 +2317,88 @@
     },
     {
       "asset_index": 1,
-      "description": "LAL If 1-4",
+      "description": "UTA",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "LAL",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "UTA If LAL does not convey 1st to UTA in 2027 or to BKN",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "LAL",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "WAS Less favorable of LAL and WAS then other to ORL (via LAL to WAS)",
+      "original_team_abbrev": "WAS",
+      "owner_team_abbrev": "LAL",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "WAS",
+      "original_team_abbrev": "WAS",
+      "owner_team_abbrev": "LAL",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "LAL",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "LAL",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "LAL",
+      "original_team_abbrev": "LAL",
+      "owner_team_abbrev": "LAL",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "OKC More favorable of ATL and LAL then other to ATL (via ATL)",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "LAL",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "LAL",
+      "original_team_abbrev": "LAL",
+      "owner_team_abbrev": "LAL",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "LAL If 1-4 MEM If 5-30 (via UTA)",
       "original_team_abbrev": "LAL",
       "owner_team_abbrev": "MEM",
       "round": 1,
@@ -1138,15 +2407,6 @@
     },
     {
       "asset_index": 2,
-      "description": "MEM If 5-30 (via UTA)",
-      "original_team_abbrev": "MEM",
-      "owner_team_abbrev": "MEM",
-      "round": 1,
-      "season": "2027",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 3,
       "description": "MEM",
       "original_team_abbrev": "MEM",
       "owner_team_abbrev": "MEM",
@@ -1155,7 +2415,7 @@
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
-      "asset_index": 4,
+      "asset_index": 3,
       "description": "MEM Most favorable of CLE, MIN and UTA then others to PHX and UTA (via UTA)",
       "original_team_abbrev": "MEM",
       "owner_team_abbrev": "MEM",
@@ -1183,7 +2443,7 @@
     },
     {
       "asset_index": 2,
-      "description": "ORL MEM If 1-2 or swap 3-30 with MEM (via MEM swap for ORL",
+      "description": "ORL If 1-2 or swap 3-30 with MEM (via MEM swap for ORL MEM If 1-2 or swap 3-30 with MEM (via MEM swap for ORL",
       "original_team_abbrev": "ORL",
       "owner_team_abbrev": "MEM",
       "round": 1,
@@ -1192,6 +2452,15 @@
     },
     {
       "asset_index": 1,
+      "description": "GSW If 1-20 MEM If 21-30 (via WAS to DAL)",
+      "original_team_abbrev": "GSW",
+      "owner_team_abbrev": "MEM",
+      "round": 1,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
       "description": "MEM More favorable of MEM and less favorable of PHX and WAS",
       "original_team_abbrev": "MEM",
       "owner_team_abbrev": "MEM",
@@ -1200,7 +2469,7 @@
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
-      "asset_index": 2,
+      "asset_index": 3,
       "description": "MEM",
       "original_team_abbrev": "MEM",
       "owner_team_abbrev": "MEM",
@@ -1237,7 +2506,115 @@
     },
     {
       "asset_index": 1,
-      "description": "MIA If 1-14",
+      "description": "MEM",
+      "original_team_abbrev": "MEM",
+      "owner_team_abbrev": "MEM",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHA (via LAC to HOU)",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "MEM",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BKN (via PHX)",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "MEM",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BKN (via PHX)",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "MEM",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "ORL If ORL 3-30 in 2029",
+      "original_team_abbrev": "ORL",
+      "owner_team_abbrev": "MEM",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "MEM (via PHI to IND)",
+      "original_team_abbrev": "MEM",
+      "owner_team_abbrev": "MEM",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "MEM Most favorable pick of DEN, HOU and MIA then others to OKC (via OKC)",
+      "original_team_abbrev": "MEM",
+      "owner_team_abbrev": "MEM",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "MEM 31-50 MIN 51-60",
+      "original_team_abbrev": "MEM",
+      "owner_team_abbrev": "MEM",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "MEM Most favorable of MEM, IND and MIA then others to IND and UTA (via MIA swap for IND; via MEM swap for IND or MIA)",
+      "original_team_abbrev": "MEM",
+      "owner_team_abbrev": "MEM",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "GSW If 31-50 MEM If 51-60",
+      "original_team_abbrev": "GSW",
+      "owner_team_abbrev": "MEM",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "MEM Most favorable of MEM, PHI and UTA (via MEM swap for PHI or UTA)",
+      "original_team_abbrev": "MEM",
+      "owner_team_abbrev": "MEM",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "MEM PHI Or MEM via MEM swap for PHI",
+      "original_team_abbrev": "MEM",
+      "owner_team_abbrev": "MEM",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "MIA If 1-14 CHA If 15-30",
       "original_team_abbrev": "MIA",
       "owner_team_abbrev": "MIA",
       "round": 1,
@@ -1245,17 +2622,8 @@
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
-      "asset_index": 2,
-      "description": "CHA If 15-30",
-      "original_team_abbrev": "CHA",
-      "owner_team_abbrev": "MIA",
-      "round": 1,
-      "season": "2027",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
       "asset_index": 1,
-      "description": "MIA CHA If MIA conveys 1st to CHA in 2027 or If MIA does not convey 1st to OKC in 2025",
+      "description": "MIA CHA If MIA does not convey 1st to CHA in 2027",
       "original_team_abbrev": "MIA",
       "owner_team_abbrev": "MIA",
       "round": 1,
@@ -1273,7 +2641,7 @@
     },
     {
       "asset_index": 1,
-      "description": "MIA",
+      "description": "MIA Or swap for least favorable of MIL and POR (via MIL swap for MIA)",
       "original_team_abbrev": "MIA",
       "owner_team_abbrev": "MIA",
       "round": 1,
@@ -1282,8 +2650,8 @@
     },
     {
       "asset_index": 1,
-      "description": "MIA",
-      "original_team_abbrev": "MIA",
+      "description": "MIL",
+      "original_team_abbrev": "MIL",
       "owner_team_abbrev": "MIA",
       "round": 1,
       "season": "2031",
@@ -1295,6 +2663,78 @@
       "original_team_abbrev": "MIA",
       "owner_team_abbrev": "MIA",
       "round": 1,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "MIL",
+      "original_team_abbrev": "MIL",
+      "owner_team_abbrev": "MIA",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "PHI Most favorable of HOU, IND, MIA and OKC to PHI; then others to NYK and SAS (via HOU to DET to UTA to OKC)",
+      "original_team_abbrev": "PHI",
+      "owner_team_abbrev": "MIA",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "MIA Least favorable of HOU, IND, MIA and OKC then others to NYK, PHI and SAS (via HOU to DET to OKC; via UTA to SAS)",
+      "original_team_abbrev": "MIA",
+      "owner_team_abbrev": "MIA",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DET If DAL conveys 1st to CHA in 2027(via SAS to DAL to DET) or to CHA if DAL does not convey 1st to CHA in 2027",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "MIA",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "OKC Less favorable of ATL and MIA the other to CHA (via OKC)",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "MIA",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "OKC Two least favorable picks of DEN, HOU and MIA then other to MEM",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "MIA",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "WAS More favorable of MIA and IND (via MIA swap for IND; via UTH)",
+      "original_team_abbrev": "WAS",
+      "owner_team_abbrev": "MIA",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "MIA",
+      "round": 2,
       "season": "2032",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
@@ -1317,6 +2757,15 @@
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
+      "asset_index": 2,
+      "description": "POR MIL or swap with MIL CHI MIL or swap with MIL",
+      "original_team_abbrev": "POR",
+      "owner_team_abbrev": "MIL",
+      "round": 1,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
       "asset_index": 1,
       "description": "POR Most and least favorable of BOS, MIL and POR to POR then other to WAS (via BOS to POR; via MIL to POR; via POR to WAS)",
       "original_team_abbrev": "POR",
@@ -1327,7 +2776,7 @@
     },
     {
       "asset_index": 1,
-      "description": "MIL POR Or swap with POR (via POR swap for MIL)",
+      "description": "MIL Or swap with POR (via POR swap for MIL) or swap for most favorable of MIL and POR (via MIL swap for MIA)",
       "original_team_abbrev": "MIL",
       "owner_team_abbrev": "MIL",
       "round": 1,
@@ -1353,6 +2802,15 @@
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
+      "asset_index": 2,
+      "description": "MIL",
+      "original_team_abbrev": "MIL",
+      "owner_team_abbrev": "MIL",
+      "round": 1,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
       "asset_index": 1,
       "description": "MIL",
       "original_team_abbrev": "MIL",
@@ -1363,7 +2821,88 @@
     },
     {
       "asset_index": 1,
-      "description": "UTA Two most favorable of CLE, MIN and UTA then other to PHX",
+      "description": "MIL",
+      "original_team_abbrev": "MIL",
+      "owner_team_abbrev": "MIL",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "MIL",
+      "original_team_abbrev": "MIL",
+      "owner_team_abbrev": "MIL",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "MIL Less favorable of BKN and DAL to MIL then other to WAS (via DET)",
+      "original_team_abbrev": "MIL",
+      "owner_team_abbrev": "MIL",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "MIL (via PHI to DET)",
+      "original_team_abbrev": "MIL",
+      "owner_team_abbrev": "MIL",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BOS Most favorable of GSW, MIL and OKC (via BKN to HOU to OKC to PHI)",
+      "original_team_abbrev": "BOS",
+      "owner_team_abbrev": "MIL",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DET Two most favorable of DET, MIL and NYK then other to SAC (via MIL to BRK to DET; via NYK to DET)",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "MIL",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "ORL",
+      "original_team_abbrev": "ORL",
+      "owner_team_abbrev": "MIL",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "MIL",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "MIL",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "UTA Second most favorable of CLE, MIN and UTA then others to MEM and PHX",
       "original_team_abbrev": "UTA",
       "owner_team_abbrev": "MIN",
       "round": 1,
@@ -1372,7 +2911,16 @@
     },
     {
       "asset_index": 1,
-      "description": "MIN",
+      "description": "CHA MIN Or swap for MIN (via CHA swap for MIN)",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "MIN",
+      "round": 1,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "MIN CHA Or swap with CHA (via CHA swap for MIN)",
       "original_team_abbrev": "MIN",
       "owner_team_abbrev": "MIN",
       "round": 1,
@@ -1381,7 +2929,7 @@
     },
     {
       "asset_index": 1,
-      "description": "MIN If 1-5",
+      "description": "MIN If 1-5 UTA If 6-30 then two most favorable of CLE, MIN 6-30 and UTA then other to PHX",
       "original_team_abbrev": "MIN",
       "owner_team_abbrev": "MIN",
       "round": 1,
@@ -1389,17 +2937,8 @@
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
-      "asset_index": 2,
-      "description": "UTA If 6-30 then two most favorable of CLE, MIN 6-30 and UTA then other to PHX",
-      "original_team_abbrev": "UTA",
-      "owner_team_abbrev": "MIN",
-      "round": 1,
-      "season": "2029",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
       "asset_index": 1,
-      "description": "MIN Least favorable of MIN 2-30, DAL and SAS (via SAN swap for DAL; via SAN swap of SAN or DAL for MIN)",
+      "description": "MIN Least favorable of MIN 2-30, CHA, DAL and SAS (via SAN swap for DAL; via SAN swap of SAN or DAL for MIN; via CHA swap for MIN)",
       "original_team_abbrev": "MIN",
       "owner_team_abbrev": "MIN",
       "round": 1,
@@ -1421,6 +2960,78 @@
       "original_team_abbrev": "MIN",
       "owner_team_abbrev": "MIN",
       "round": 1,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "MIN",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "POR (via HOU to OKC to NYK)",
+      "original_team_abbrev": "POR",
+      "owner_team_abbrev": "MIN",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DEN (via SAS)",
+      "original_team_abbrev": "DEN",
+      "owner_team_abbrev": "MIN",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHA MIN pick if MIN conveys 1st to UTA in 2029; UTA pick if MIN does not convey 1st to UTA in 2029 or CHA if does not convery",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "MIN",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "MEM 31-50 MIN 51-60",
+      "original_team_abbrev": "MEM",
+      "owner_team_abbrev": "MIN",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "OKC (via DET)",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "MIN",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHI Most favorable of GSW and MIN then other to DET (via MIN swap for GSW (via MIN))",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "MIN",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "MIN",
+      "round": 2,
       "season": "2032",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
@@ -1480,6 +3091,96 @@
     },
     {
       "asset_index": 1,
+      "description": "NOP",
+      "original_team_abbrev": "NOP",
+      "owner_team_abbrev": "NOP",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "NOP Second most favorable of HOU, IND, MIA and OKC to NYK; then others to PHI and SAS (via HOU to DET to UTA to OKC)",
+      "original_team_abbrev": "NOP",
+      "owner_team_abbrev": "NOP",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "CHA More favorable of NOP and POR to CHA then other to POR (via POR)",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "NOP",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "SAS",
+      "original_team_abbrev": "SAS",
+      "owner_team_abbrev": "NOP",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "SAS",
+      "original_team_abbrev": "SAS",
+      "owner_team_abbrev": "NOP",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "NOP ORL Or swap with ORL (via ORL swap for NOP)",
+      "original_team_abbrev": "NOP",
+      "owner_team_abbrev": "NOP",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "ORL NOP Or swap with NOP",
+      "original_team_abbrev": "ORL",
+      "owner_team_abbrev": "NOP",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "ORL Least favorable of ORL and NOP (via ORL swap for NOP (via NOP))",
+      "original_team_abbrev": "ORL",
+      "owner_team_abbrev": "NOP",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "NOP",
+      "original_team_abbrev": "NOP",
+      "owner_team_abbrev": "NOP",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "NOP",
+      "original_team_abbrev": "NOP",
+      "owner_team_abbrev": "NOP",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
       "description": "BKN",
       "original_team_abbrev": "BKN",
       "owner_team_abbrev": "NYK",
@@ -1534,7 +3235,142 @@
     },
     {
       "asset_index": 1,
-      "description": "DEN If 1-5",
+      "description": "NYK",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "NYK",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "NYK Third most favorable of HOU, IND, MIA and OKC to NYK; then others to PHI and SAS (via HOU to DET to UTA to OKC)",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "NYK",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "NYK",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "NYK",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "NYK (via HOU to OKC)",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "NYK",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "NYK If 46-60 (via ORL to PHX)",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "NYK",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "UTA",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "NYK",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "NYK Less favorable of CHI, IND and PHX then others to CHI and IND (via IND)",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "NYK",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHI (via NYK to DET to SAC)",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "NYK",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "NYK",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "NYK",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "NYK (via WAS to HOU)",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "NYK",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "ATL (via POR)",
+      "original_team_abbrev": "ATL",
+      "owner_team_abbrev": "NYK",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "NYK (via DAL)",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "NYK",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHI (via DET to CHA)",
+      "original_team_abbrev": "CHI",
+      "owner_team_abbrev": "NYK",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "NYK",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "NYK",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "NYK",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "NYK",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DEN If 1-5 OKC If 6-30",
       "original_team_abbrev": "DEN",
       "owner_team_abbrev": "OKC",
       "round": 1,
@@ -1543,15 +3379,6 @@
     },
     {
       "asset_index": 2,
-      "description": "OKC If 6-30",
-      "original_team_abbrev": "OKC",
-      "owner_team_abbrev": "OKC",
-      "round": 1,
-      "season": "2027",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 3,
       "description": "OKC Two most favorable of DEN 6-30, LAC and OKC (via OKC swap for LAC)",
       "original_team_abbrev": "OKC",
       "owner_team_abbrev": "OKC",
@@ -1560,7 +3387,7 @@
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
-      "asset_index": 4,
+      "asset_index": 3,
       "description": "LAC Two most favorable of DEN 6-30, LAC and OKC (via OKC swap for LAC)",
       "original_team_abbrev": "LAC",
       "owner_team_abbrev": "OKC",
@@ -1569,25 +3396,7 @@
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
-      "asset_index": 5,
-      "description": "PHI If 1-4 if not already settled with OKC",
-      "original_team_abbrev": "PHI",
-      "owner_team_abbrev": "OKC",
-      "round": 1,
-      "season": "2027",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 6,
-      "description": "OKC If 5-30 if not already settled",
-      "original_team_abbrev": "OKC",
-      "owner_team_abbrev": "OKC",
-      "round": 1,
-      "season": "2027",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 7,
+      "asset_index": 4,
       "description": "OKC If 17-30 (via SAC)",
       "original_team_abbrev": "OKC",
       "owner_team_abbrev": "OKC",
@@ -1606,7 +3415,7 @@
     },
     {
       "asset_index": 2,
-      "description": "DEN If 1-5 if not already settled with OKC",
+      "description": "DEN If 1-5 if not already settled with OKC OKC If 6-30 if not already settled",
       "original_team_abbrev": "DEN",
       "owner_team_abbrev": "OKC",
       "round": 1,
@@ -1615,15 +3424,6 @@
     },
     {
       "asset_index": 3,
-      "description": "OKC If 6-30 if not already settled",
-      "original_team_abbrev": "OKC",
-      "owner_team_abbrev": "OKC",
-      "round": 1,
-      "season": "2028",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 4,
       "description": "OKC DAL Or swap with DAL (via OKC swap for DAL)",
       "original_team_abbrev": "OKC",
       "owner_team_abbrev": "OKC",
@@ -1633,7 +3433,7 @@
     },
     {
       "asset_index": 1,
-      "description": "DEN If 1-5 if not already settled with OKC or 1-5 if DEN conveys 1st to OKC by 2027",
+      "description": "DEN If 1-5 if not already settled with OKC or 1-5 if DEN conveys 1st to OKC by 2027 OKC If 6-30 if not already settled or 6-30 if DEN conveys 1st to OKC by 2027",
       "original_team_abbrev": "DEN",
       "owner_team_abbrev": "OKC",
       "round": 1,
@@ -1642,15 +3442,6 @@
     },
     {
       "asset_index": 2,
-      "description": "OKC If 6-30 if not already settled or 6-30 if DEN conveys 1st to OKC by 2027",
-      "original_team_abbrev": "OKC",
-      "owner_team_abbrev": "OKC",
-      "round": 1,
-      "season": "2029",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 3,
       "description": "OKC",
       "original_team_abbrev": "OKC",
       "owner_team_abbrev": "OKC",
@@ -1660,7 +3451,7 @@
     },
     {
       "asset_index": 1,
-      "description": "DEN If 1-5 if not already settled with OKC or 1-5 if DEN conveys 1st to OKC by 2028",
+      "description": "DEN If 1-5 if not already settled with OKC or 1-5 if DEN conveys 1st to OKC by 2028 OKC If 6-30 if not already settled or 6-30 if DEN conveys 1st to OKC by 2028",
       "original_team_abbrev": "DEN",
       "owner_team_abbrev": "OKC",
       "round": 1,
@@ -1669,15 +3460,6 @@
     },
     {
       "asset_index": 2,
-      "description": "OKC If 6-30 if not already settled or 6-30 if DEN conveys 1st to OKC by 2028",
-      "original_team_abbrev": "OKC",
-      "owner_team_abbrev": "OKC",
-      "round": 1,
-      "season": "2030",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 3,
       "description": "OKC",
       "original_team_abbrev": "OKC",
       "owner_team_abbrev": "OKC",
@@ -1700,6 +3482,186 @@
       "original_team_abbrev": "OKC",
       "owner_team_abbrev": "OKC",
       "round": 1,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "OKC",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "OKC SAC OKC If SAS is 1-16, SAC If SAS is 17-30",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "OKC (via WAS to NOP to WAS to DAL)",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "MIA Least favorable of HOU, IND, MIA and OKC then others to NYK, PHI and SAS (via HOU to DET to OKC; via UTA to SAS)",
+      "original_team_abbrev": "MIA",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 4,
+      "description": "OKC SAC OKC If SAS is 1-16, SAC If SAS is 17-30",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "PHI Two least favorable of GSW, MIL and OKC to PHI then other to BOS",
+      "original_team_abbrev": "PHI",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "OKC",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "OKC",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "OKC Less favorable of ATL and MIA the other to CHA (via OKC)",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "OKC",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "OKC",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "OKC Two least favorable picks of DEN, HOU and MIA then other to MEM (via CHA)",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "OKC Two least favorable picks of DEN, HOU and MIA then other to MEM",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 4,
+      "description": "OKC (via DET)",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 5,
+      "description": "OKC",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "OKC Most favorable of ATL and HOU 31-55 (or just ATL if HOU 56-60) (via ATL)",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "OKC",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "OKC Least favorable of ORL and NOP (via ORL swap for NOP (via NOP))",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "OKC More favorable of ATL and LAL then other to ATL (via ATL)",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "OKC",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "OKC",
+      "round": 2,
       "season": "2032",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
@@ -1732,7 +3694,7 @@
     },
     {
       "asset_index": 2,
-      "description": "ORL MEM If 1-2 or swap 3-30 with MEM (via MEM swap for ORL",
+      "description": "ORL If 1-2 or swap 3-30 with MEM (via MEM swap for ORL MEM If 1-2 or swap 3-30 with MEM (via MEM swap for ORL",
       "original_team_abbrev": "ORL",
       "owner_team_abbrev": "ORL",
       "round": 1,
@@ -1768,20 +3730,101 @@
     },
     {
       "asset_index": 1,
-      "description": "PHI If 1-4 if not already settled with OKC",
-      "original_team_abbrev": "PHI",
-      "owner_team_abbrev": "PHI",
+      "description": "ORL",
+      "original_team_abbrev": "ORL",
+      "owner_team_abbrev": "ORL",
       "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "UTA More favorable of BOS and UTA then other to CHA (via BOS to ORL to BOS to ORL)",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "ORL",
+      "round": 2,
       "season": "2027",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
+      "asset_index": 1,
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "ORL",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
       "asset_index": 2,
-      "description": "OKC If 5-30 if not already settled",
+      "description": "ORL More favorable of LAL and WAS to ORL then other to WAS",
+      "original_team_abbrev": "ORL",
+      "owner_team_abbrev": "ORL",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "ORL If ORL 3-30 in 2029",
+      "original_team_abbrev": "ORL",
+      "owner_team_abbrev": "ORL",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "ORL",
+      "original_team_abbrev": "ORL",
+      "owner_team_abbrev": "ORL",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "NOP ORL Or swap with ORL (via ORL swap for NOP)",
+      "original_team_abbrev": "NOP",
+      "owner_team_abbrev": "ORL",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "ORL NOP Or swap with NOP",
+      "original_team_abbrev": "ORL",
+      "owner_team_abbrev": "ORL",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "ORL Least favorable of ORL and NOP (via ORL swap for NOP (via NOP))",
+      "original_team_abbrev": "ORL",
+      "owner_team_abbrev": "ORL",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "OKC Least favorable of ORL and NOP (via ORL swap for NOP (via NOP))",
       "original_team_abbrev": "OKC",
-      "owner_team_abbrev": "PHI",
-      "round": 1,
-      "season": "2027",
+      "owner_team_abbrev": "ORL",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "ORL",
+      "original_team_abbrev": "ORL",
+      "owner_team_abbrev": "ORL",
+      "round": 2,
+      "season": "2032",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
@@ -1790,22 +3833,13 @@
       "original_team_abbrev": "PHI",
       "owner_team_abbrev": "PHI",
       "round": 1,
-      "season": "2028",
+      "season": "2027",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
-      "asset_index": 2,
-      "description": "PHI If 1-8 and if PHI conveys 1st to OKC by 2026",
+      "asset_index": 1,
+      "description": "PHI If 1-8 or LAC or BOS (via BOS swap for LAC or PHI 1-8) BKN If 9-30",
       "original_team_abbrev": "PHI",
-      "owner_team_abbrev": "PHI",
-      "round": 1,
-      "season": "2028",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 3,
-      "description": "BKN If 9-30 and if PHI conveys 1st to OKC by 2026",
-      "original_team_abbrev": "BKN",
       "owner_team_abbrev": "PHI",
       "round": 1,
       "season": "2028",
@@ -1840,8 +3874,8 @@
     },
     {
       "asset_index": 1,
-      "description": "PHI",
-      "original_team_abbrev": "PHI",
+      "description": "BOS",
+      "original_team_abbrev": "BOS",
       "owner_team_abbrev": "PHI",
       "round": 1,
       "season": "2031",
@@ -1858,7 +3892,124 @@
     },
     {
       "asset_index": 1,
-      "description": "PHX Least favorable of CLE, MIN and UTA to PHX then others to UTA (via UTA)",
+      "description": "PHI",
+      "original_team_abbrev": "PHI",
+      "owner_team_abbrev": "PHI",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "PHI Most favorable of HOU, IND, MIA and OKC to PHI; then others to NYK and SAS (via HOU to DET to UTA to OKC)",
+      "original_team_abbrev": "PHI",
+      "owner_team_abbrev": "PHI",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "PHI",
+      "original_team_abbrev": "PHI",
+      "owner_team_abbrev": "PHI",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "PHI Most favorable of GSW and PHX to PHI then other to WAS (via WAS)",
+      "original_team_abbrev": "PHI",
+      "owner_team_abbrev": "PHI",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DET Least favorable of DET 31-55, CHA, LAC, MIA and NYK to UTA then others to DET PHI If 56-60",
+      "original_team_abbrev": "DET",
+      "owner_team_abbrev": "PHI",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "PHI Two least favorable of GSW, MIL and OKC to PHI then other to BOS (via POR to WAS)",
+      "original_team_abbrev": "PHI",
+      "owner_team_abbrev": "PHI",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "PHI Two least favorable of GSW, MIL and OKC to PHI then other to BOS",
+      "original_team_abbrev": "PHI",
+      "owner_team_abbrev": "PHI",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 4,
+      "description": "PHI BKN PHI pick if PHI conveys second 1st to BKN by 2028; BKN pick if PHI does not convey second 1st to BKN by 2028",
+      "original_team_abbrev": "PHI",
+      "owner_team_abbrev": "PHI",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "PHI",
+      "original_team_abbrev": "PHI",
+      "owner_team_abbrev": "PHI",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "NYK (via DAL)",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "PHI",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "PHI Second most favorable of PHX, POR and WAS then others to BOS and WAS (via WAS to PHI)",
+      "original_team_abbrev": "PHI",
+      "owner_team_abbrev": "PHI",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "PHI",
+      "original_team_abbrev": "PHI",
+      "owner_team_abbrev": "PHI",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "MEM PHI Or MEM via MEM swap for PHI",
+      "original_team_abbrev": "MEM",
+      "owner_team_abbrev": "PHI",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "PHX Least favorable of CLE, MIN and UTA then others to MEM and UTA (via UTA)",
       "original_team_abbrev": "PHX",
       "owner_team_abbrev": "PHX",
       "round": 1,
@@ -1876,7 +4027,7 @@
     },
     {
       "asset_index": 1,
-      "description": "PHX Least Favorable of WAS and BKN, PHI 9-30 if not already settled and if PHI conveys 1st to OKC by 2026 and PHX (via BKN and WAS swap for PHX)",
+      "description": "PHX Least Favorable of WAS and BKN, PHI 9-30 and PHX (via BKN and WAS swap for PHX)",
       "original_team_abbrev": "PHX",
       "owner_team_abbrev": "PHX",
       "round": 1,
@@ -1885,6 +4036,15 @@
     },
     {
       "asset_index": 1,
+      "description": "PHX Least favorable of CHA or CLE, MIN 6-30 and UTA (via CHA swap to PHX)",
+      "original_team_abbrev": "PHX",
+      "owner_team_abbrev": "PHX",
+      "round": 1,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
       "description": "HOU Two most favorable of BKN, DAL and PHX to HOU then other to BKN",
       "original_team_abbrev": "HOU",
       "owner_team_abbrev": "PHX",
@@ -1921,17 +4081,71 @@
     },
     {
       "asset_index": 1,
-      "description": "POR If 1-14 if not already settled with CHI",
-      "original_team_abbrev": "POR",
-      "owner_team_abbrev": "POR",
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "PHX",
       "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "PHI Most favorable of GSW and PHX to PHI then other to WAS (via WAS)",
+      "original_team_abbrev": "PHI",
+      "owner_team_abbrev": "PHX",
+      "round": 2,
       "season": "2027",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
     {
-      "asset_index": 2,
-      "description": "CHI If 15-30 if not already settled",
-      "original_team_abbrev": "CHI",
+      "asset_index": 1,
+      "description": "NYK Less favorable of CHI, IND and PHX then others to CHI and IND (via IND)",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "PHX",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "NYK",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "PHX",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "WAS Least favor of PHX, POR and WAS then others to BOS and PHI (via PHI)",
+      "original_team_abbrev": "WAS",
+      "owner_team_abbrev": "PHX",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CHA",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "PHX",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "PHX Least favorable of HOU and PHX then other to CHI (via PHX)",
+      "original_team_abbrev": "PHX",
+      "owner_team_abbrev": "PHX",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "POR",
+      "original_team_abbrev": "POR",
       "owner_team_abbrev": "POR",
       "round": 1,
       "season": "2027",
@@ -1957,17 +4171,8 @@
     },
     {
       "asset_index": 3,
-      "description": "POR If 1-14 if not already settled with CHI or swap with MIL",
+      "description": "POR MIL or swap with MIL CHI MIL or swap with MIL",
       "original_team_abbrev": "POR",
-      "owner_team_abbrev": "POR",
-      "round": 1,
-      "season": "2028",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 4,
-      "description": "CHI If 15-30 if not already settled",
-      "original_team_abbrev": "CHI",
       "owner_team_abbrev": "POR",
       "round": 1,
       "season": "2028",
@@ -1993,7 +4198,7 @@
     },
     {
       "asset_index": 3,
-      "description": "WAS Two most favorable of BKN, DAL and PHX to HOU then other to BKN",
+      "description": "WAS Second most favorable of BOS, POR and MIL then others to POR (via BOS to POR; via MIL to POR; via POR to WAS)",
       "original_team_abbrev": "WAS",
       "owner_team_abbrev": "POR",
       "round": 1,
@@ -2002,15 +4207,6 @@
     },
     {
       "asset_index": 1,
-      "description": "MIL POR Or swap with POR (via POR swap for MIL)",
-      "original_team_abbrev": "MIL",
-      "owner_team_abbrev": "POR",
-      "round": 1,
-      "season": "2030",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 2,
       "description": "POR MIL Or swap with MIL",
       "original_team_abbrev": "POR",
       "owner_team_abbrev": "POR",
@@ -2033,6 +4229,96 @@
       "original_team_abbrev": "POR",
       "owner_team_abbrev": "POR",
       "round": 1,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "POR",
+      "original_team_abbrev": "POR",
+      "owner_team_abbrev": "POR",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "POR (via HOU to OKC to NYK)",
+      "original_team_abbrev": "POR",
+      "owner_team_abbrev": "POR",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "HOU If POR 56-60 then less favorable of NOP and POR 56-60 (via POR to BOS)",
+      "original_team_abbrev": "HOU",
+      "owner_team_abbrev": "POR",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "POR CHI (via CHI to SAC to MEM)",
+      "original_team_abbrev": "POR",
+      "owner_team_abbrev": "POR",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "POR (via CHI to SAC to MEM)",
+      "original_team_abbrev": "POR",
+      "owner_team_abbrev": "POR",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "POR Less favorable of IND and WAS to POR then other to IND (via NYK)",
+      "original_team_abbrev": "POR",
+      "owner_team_abbrev": "POR",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "MEM (via PHI to IND)",
+      "original_team_abbrev": "MEM",
+      "owner_team_abbrev": "POR",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "PHI Second most favorable of PHX, POR and WAS then others to BOS and WAS (via WAS to PHI)",
+      "original_team_abbrev": "PHI",
+      "owner_team_abbrev": "POR",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "POR",
+      "original_team_abbrev": "POR",
+      "owner_team_abbrev": "POR",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "POR",
+      "original_team_abbrev": "POR",
+      "owner_team_abbrev": "POR",
+      "round": 2,
       "season": "2032",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
     },
@@ -2119,6 +4405,78 @@
     },
     {
       "asset_index": 1,
+      "description": "SAC",
+      "original_team_abbrev": "SAC",
+      "owner_team_abbrev": "SAC",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "OKC SAC OKC If SAS is 1-16, SAC If SAS is 17-30",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "SAC",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "OKC SAC OKC If SAS is 1-16, SAC If SAS is 17-30",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "SAC",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "POR (via CHI to SAC to MEM)",
+      "original_team_abbrev": "POR",
+      "owner_team_abbrev": "SAC",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "NYK (via WAS to HOU)",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "SAC",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "SAS (via IND)",
+      "original_team_abbrev": "SAS",
+      "owner_team_abbrev": "SAC",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DEN (via SAS)",
+      "original_team_abbrev": "DEN",
+      "owner_team_abbrev": "SAC",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "CLE",
+      "original_team_abbrev": "CLE",
+      "owner_team_abbrev": "SAC",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
       "description": "SAS",
       "original_team_abbrev": "SAS",
       "owner_team_abbrev": "SAS",
@@ -2137,7 +4495,7 @@
     },
     {
       "asset_index": 1,
-      "description": "BOS If 1",
+      "description": "BOS SAS Or swap 2-30 with SAS (via SAS swap for BOS)",
       "original_team_abbrev": "BOS",
       "owner_team_abbrev": "SAS",
       "round": 1,
@@ -2146,15 +4504,6 @@
     },
     {
       "asset_index": 2,
-      "description": "SAS BOS Or swap 2-30 with SAS (via SAS swap for BOS)",
-      "original_team_abbrev": "SAS",
-      "owner_team_abbrev": "SAS",
-      "round": 1,
-      "season": "2028",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 3,
       "description": "SAS BOS Or swap with BOS 2-30 (via SAS swap for BOS)",
       "original_team_abbrev": "SAS",
       "owner_team_abbrev": "SAS",
@@ -2173,15 +4522,6 @@
     },
     {
       "asset_index": 1,
-      "description": "DAL SAS Least favorable of DAL and SAS (via SAN swap for DAL)",
-      "original_team_abbrev": "DAL",
-      "owner_team_abbrev": "SAS",
-      "round": 1,
-      "season": "2030",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 2,
       "description": "SAS Most favorable of SAS, DAL and MIN 2-30 (via SAN swap for DAL; via SAN swap of SAN or DAL for MIN)",
       "original_team_abbrev": "SAS",
       "owner_team_abbrev": "SAS",
@@ -2218,6 +4558,123 @@
     },
     {
       "asset_index": 1,
+      "description": "SAS",
+      "original_team_abbrev": "SAS",
+      "owner_team_abbrev": "SAS",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "SAS More favorable SAS and least favorable of HOU, IND, MIA and OKC then others to NYK and PHI (via HOU to DET to OKC; via UTA to SAS)",
+      "original_team_abbrev": "SAS",
+      "owner_team_abbrev": "SAS",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "NYK If 46-60 (via ORL to PHX)",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "SAS",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "SAS",
+      "original_team_abbrev": "SAS",
+      "owner_team_abbrev": "SAS",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "SAS",
+      "original_team_abbrev": "SAS",
+      "owner_team_abbrev": "SAS",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "SAS (via PHI)",
+      "original_team_abbrev": "SAS",
+      "owner_team_abbrev": "SAS",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "SAS",
+      "original_team_abbrev": "SAS",
+      "owner_team_abbrev": "SAS",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "SAS",
+      "original_team_abbrev": "SAS",
+      "owner_team_abbrev": "SAS",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "SAS",
+      "original_team_abbrev": "SAS",
+      "owner_team_abbrev": "SAS",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "SAS (via IND)",
+      "original_team_abbrev": "SAS",
+      "owner_team_abbrev": "SAS",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "SAS",
+      "original_team_abbrev": "SAS",
+      "owner_team_abbrev": "SAS",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "SAS",
+      "original_team_abbrev": "SAS",
+      "owner_team_abbrev": "SAS",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "SAS",
+      "original_team_abbrev": "SAS",
+      "owner_team_abbrev": "SAS",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
       "description": "TOR",
       "original_team_abbrev": "TOR",
       "owner_team_abbrev": "TOR",
@@ -2272,7 +4729,70 @@
     },
     {
       "asset_index": 1,
-      "description": "UTA Two most favorable of CLE, MIN and UTA then other to PHX",
+      "description": "TOR",
+      "original_team_abbrev": "TOR",
+      "owner_team_abbrev": "TOR",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "TOR",
+      "original_team_abbrev": "TOR",
+      "owner_team_abbrev": "TOR",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "TOR",
+      "original_team_abbrev": "TOR",
+      "owner_team_abbrev": "TOR",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "TOR",
+      "original_team_abbrev": "TOR",
+      "owner_team_abbrev": "TOR",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "TOR",
+      "original_team_abbrev": "TOR",
+      "owner_team_abbrev": "TOR",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "NOP",
+      "original_team_abbrev": "NOP",
+      "owner_team_abbrev": "TOR",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "BKN",
+      "original_team_abbrev": "BKN",
+      "owner_team_abbrev": "TOR",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "UTA Second most favorable of CLE, MIN and UTA then others to MEM and PHX",
       "original_team_abbrev": "UTA",
       "owner_team_abbrev": "UTA",
       "round": 1,
@@ -2290,7 +4810,7 @@
     },
     {
       "asset_index": 1,
-      "description": "UTA CLE Or swap with CLE",
+      "description": "UTA Most favorable of LAL and more favorable or CLE and UTA then other to LAL (via UTA swap for CLE and LAL)",
       "original_team_abbrev": "UTA",
       "owner_team_abbrev": "UTA",
       "round": 1,
@@ -2299,7 +4819,7 @@
     },
     {
       "asset_index": 1,
-      "description": "MIN If 1-5",
+      "description": "MIN If 1-5 UTA If 6-30 then two most favorable of CLE, MIN 6-30 and UTA then other to PHX",
       "original_team_abbrev": "MIN",
       "owner_team_abbrev": "UTA",
       "round": 1,
@@ -2308,15 +4828,6 @@
     },
     {
       "asset_index": 2,
-      "description": "UTA If 6-30 then two most favorable of CLE, MIN 6-30 and UTA then other to PHX",
-      "original_team_abbrev": "UTA",
-      "owner_team_abbrev": "UTA",
-      "round": 1,
-      "season": "2029",
-      "source_url": "https://www.spotrac.com/nba/draft/future/"
-    },
-    {
-      "asset_index": 3,
       "description": "UTA Two most favorable of CLE, MIN 6-30 and UTA then other to CHA",
       "original_team_abbrev": "UTA",
       "owner_team_abbrev": "UTA",
@@ -2326,7 +4837,16 @@
     },
     {
       "asset_index": 1,
-      "description": "UTA",
+      "description": "LAL UTA Or swap with UTA (via UTA swap for LAL)",
+      "original_team_abbrev": "LAL",
+      "owner_team_abbrev": "UTA",
+      "round": 1,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "UTA LAL Or swap for LAL (via UTA swap for LAL)",
       "original_team_abbrev": "UTA",
       "owner_team_abbrev": "UTA",
       "round": 1,
@@ -2335,6 +4855,15 @@
     },
     {
       "asset_index": 1,
+      "description": "UTA",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "UTA",
+      "round": 1,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
       "description": "UTA",
       "original_team_abbrev": "UTA",
       "owner_team_abbrev": "UTA",
@@ -2353,6 +4882,159 @@
     },
     {
       "asset_index": 1,
+      "description": "UTA",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "UTA",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "UTA",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "UTA",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "UTA (via CLE to CHI to BOS)",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "UTA",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "UTA (via ATL to LAC)",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "UTA",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "UTA If LAL does not convey 1st to UTA in 2027 or to BKN",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "UTA",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 4,
+      "description": "UTA More favorable of BOS and UTA then other to CHA (via BOS to ORL to BOS to ORL)",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "UTA",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 5,
+      "description": "IND (via CLE) or to NOP if IND does not convey 1st to NOP by 2027",
+      "original_team_abbrev": "IND",
+      "owner_team_abbrev": "UTA",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "UTA",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "UTA",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "UTA",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "UTA",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "OKC",
+      "original_team_abbrev": "OKC",
+      "owner_team_abbrev": "UTA",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "UTA",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "UTA",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "UTA Less favorable of LAC and UTA then other to CHA (via LAC to UTA)",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "UTA",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "CHA More favorable of LAC and UTA (via UTA)",
+      "original_team_abbrev": "CHA",
+      "owner_team_abbrev": "UTA",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "UTA More favorable of BOS and CLE then other to BOS (via CLE to ATL to BOS)",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "UTA",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "UTA",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "UTA",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "UTA",
+      "original_team_abbrev": "UTA",
+      "owner_team_abbrev": "UTA",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "WAS",
+      "original_team_abbrev": "WAS",
+      "owner_team_abbrev": "UTA",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
       "description": "WAS",
       "original_team_abbrev": "WAS",
       "owner_team_abbrev": "WAS",
@@ -2362,7 +5044,7 @@
     },
     {
       "asset_index": 1,
-      "description": "WAS Most Favorable of WAS and BKN, PHI 9-30 and if PHI conveys 1st to OKC by 2026 and PHX (via BKN and WAS swap for PHX) or swap for MIL or POR",
+      "description": "WAS Most Favorable of WAS and BKN, PHI 9-30 and PHX (via BKN and WAS swap for PHX) or swap for MIL or POR",
       "original_team_abbrev": "WAS",
       "owner_team_abbrev": "WAS",
       "round": 1,
@@ -2371,7 +5053,7 @@
     },
     {
       "asset_index": 1,
-      "description": "WAS Two most favorable of BKN, DAL and PHX to HOU then other to BKN",
+      "description": "WAS Second most favorable of BOS, POR and MIL then others to POR (via BOS to POR; via MIL to POR; via POR to WAS)",
       "original_team_abbrev": "WAS",
       "owner_team_abbrev": "WAS",
       "round": 1,
@@ -2413,12 +5095,165 @@
       "round": 1,
       "season": "2032",
       "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "WAS",
+      "original_team_abbrev": "WAS",
+      "owner_team_abbrev": "WAS",
+      "round": 1,
+      "season": "2033",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "WAS More favorable of BKN and DAL to WAS then other to DET",
+      "original_team_abbrev": "WAS",
+      "owner_team_abbrev": "WAS",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "WAS More favorable of BKN and DAL to WAS then other to DET",
+      "original_team_abbrev": "WAS",
+      "owner_team_abbrev": "WAS",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "WAS Least favorable of GSW and PHX to WAS then other to PHI (via WAS to PHI)",
+      "original_team_abbrev": "WAS",
+      "owner_team_abbrev": "WAS",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 4,
+      "description": "NYK (via HOU to OKC)",
+      "original_team_abbrev": "NYK",
+      "owner_team_abbrev": "WAS",
+      "round": 2,
+      "season": "2027",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "DEN If 31-33 WAS If 34-60 (via SAS to SAC)",
+      "original_team_abbrev": "DEN",
+      "owner_team_abbrev": "WAS",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "WAS Less favorable of LAL and WAS then other to ORL (via LAL to WAS)",
+      "original_team_abbrev": "WAS",
+      "owner_team_abbrev": "WAS",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "ORL More favorable of LAL and WAS to ORL then other to WAS",
+      "original_team_abbrev": "ORL",
+      "owner_team_abbrev": "WAS",
+      "round": 2,
+      "season": "2028",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "WAS",
+      "original_team_abbrev": "WAS",
+      "owner_team_abbrev": "WAS",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "IND More favorable of IND and WAS to IND then other to POR (via NYK)",
+      "original_team_abbrev": "IND",
+      "owner_team_abbrev": "WAS",
+      "round": 2,
+      "season": "2029",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "GSW WAS GSW pick if GSW conveys 1st to WAS in 2030; WAS pick if GSW does not convey 1st to WAS in 2030",
+      "original_team_abbrev": "GSW",
+      "owner_team_abbrev": "WAS",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "WAS Least favor of PHX, POR and WAS then others to BOS and PHI (via PHI)",
+      "original_team_abbrev": "WAS",
+      "owner_team_abbrev": "WAS",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 3,
+      "description": "BOS Most favorable of PHX, POR and WAS then others to PHI and WAS (via PHI)",
+      "original_team_abbrev": "BOS",
+      "owner_team_abbrev": "WAS",
+      "round": 2,
+      "season": "2030",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "WAS More favorable of MIA and IND (via MIA swap for IND; via UTH)",
+      "original_team_abbrev": "WAS",
+      "owner_team_abbrev": "WAS",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "LAL",
+      "original_team_abbrev": "LAL",
+      "owner_team_abbrev": "WAS",
+      "round": 2,
+      "season": "2031",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 1,
+      "description": "WAS",
+      "original_team_abbrev": "WAS",
+      "owner_team_abbrev": "WAS",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
+    },
+    {
+      "asset_index": 2,
+      "description": "LAL",
+      "original_team_abbrev": "LAL",
+      "owner_team_abbrev": "WAS",
+      "round": 2,
+      "season": "2032",
+      "source_url": "https://www.spotrac.com/nba/draft/future/"
     }
   ],
   "source": {
-    "fetched_at": "2026-05-22T06:11:36+00:00",
-    "fetched_via": "https://r.jina.ai/http://r.jina.ai/http://www.spotrac.com/nba/draft/future/",
+    "fetched_via": "https://www.spotrac.com/nba/draft/future/",
     "id": "src_spotrac_future_picks",
+    "retrieved_at": "2026-07-29T00:36:48+00:00",
     "title": "Spotrac NBA Future Draft Picks",
     "url": "https://www.spotrac.com/nba/draft/future/"
   }

@@ -19,7 +19,7 @@ const GameInterface = (() => {
   const esc = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const root = () => document.querySelector('#modalRoot:not([hidden])') || document.querySelector('#startupScreen:not([hidden])') || document.getElementById('content');
   const activeControls = scope => [...scope.querySelectorAll(focusable)].filter(visible);
-  const findControl = selector => [...(root()?.querySelectorAll(selector) || [])].find(el => visible(el) && !el.disabled);
+  const findControl = (selector, {includeHidden = false} = {}) => [...(root()?.querySelectorAll(selector) || [])].find(el => (includeHidden || visible(el)) && !el.disabled && !el.closest('.is-phase-locked'));
   const label = el => el.getAttribute('aria-label') || el.textContent.trim().replace(/\s+/g, ' ') || el.title;
   function captureDialogView() {
     const dialog = document.querySelector('#modalRoot [role="dialog"]');
@@ -86,7 +86,7 @@ const GameInterface = (() => {
     selected = 0;
     overlay = document.createElement('div');
     overlay.className = 'command-overlay';
-    overlay.innerHTML = `<section class="command-menu" role="dialog" aria-modal="true" aria-label="${help ? 'Keyboard shortcuts' : 'Commands'}"><header><span>${help ? 'Keyboard shortcuts' : 'Commands'}</span><button type="button" aria-label="Close commands">×</button></header><input type="search" role="combobox" aria-expanded="true" aria-controls="command-list" aria-autocomplete="list" aria-label="Search commands" placeholder="${help ? 'Find a shortcut' : 'Go to a screen or run an action'}" autocomplete="off"><div id="command-list" role="listbox" aria-label="Commands"></div></section>`;
+    overlay.innerHTML = `<section class="command-menu" role="dialog" aria-modal="true" aria-label="${help ? 'Keyboard shortcuts' : 'Commands'}"><header class="command-menu-titlebar"><div class="command-menu-title"><span class="card-board-window-mark" aria-hidden="true"></span><span>${help ? 'Keyboard shortcuts' : 'Commands'}</span></div><button type="button" class="command-menu-close" aria-label="Close commands">×</button></header><input type="search" role="combobox" aria-expanded="true" aria-controls="command-list" aria-autocomplete="list" aria-label="Search commands" placeholder="${help ? 'Find a shortcut' : 'Go to a screen or run an action'}" autocomplete="off"><div id="command-list" role="listbox" aria-label="Commands"></div></section>`;
     document.body.append(overlay);
     overlay.querySelector('header button').onclick = () => closePalette();
     overlay.addEventListener('click', e => {
@@ -156,7 +156,13 @@ const GameInterface = (() => {
       return;
     }
     if (event.key === 'Escape') {
-      event.preventDefault(); if (prefix) clearPrefix(); else if (config.modal()) config.closeModal(); return;
+      event.preventDefault();
+      if (event.repeat) return;
+      if (prefix) clearPrefix();
+      else if (config.modal()) config.closeModal();
+      else if (event.shiftKey) window.CardBoard?.toggleActiveMinimize();
+      else window.CardBoard?.closeActive();
+      return;
     }
     if (event.key === 'Tab' && config.modal()) { trapTab(event, root()); return; }
     if (['ArrowLeft','ArrowRight','Home','End'].includes(event.key) && event.target.matches('[role="tab"]')) {
@@ -179,15 +185,42 @@ const GameInterface = (() => {
     }
     if (config.busy()) return;
     if (prefix) {
+      const previousPrefix = prefix;
       const sequence = `${prefix} ${key}`; clearPrefix();
       const command = config.commands().find(c => c.keys === sequence && (!c.available || c.available()));
-      if (command) {event.preventDefault(); execute(command);} return;
+      if (command) {
+        event.preventDefault();
+        if (previousPrefix === 's' || previousPrefix === 'g') {
+          const trigger = document.querySelector(previousPrefix === 's' ? '[data-sim-menu-trigger]' : '[data-trade-menu-trigger]');
+          if (trigger?.getAttribute('aria-expanded') === 'true') trigger.click();
+        }
+        execute(command);
+      }
+      return;
+    }
+    if (!config.modal() && ['m', 'p', ' '].includes(key)) {
+      const handled = key === 'm'
+        ? window.CardBoard?.toggleActiveMinimize()
+        : key === 'p'
+          ? window.CardBoard?.toggleActivePin()
+          : window.CardBoard?.toggleActiveExpansion();
+      if (handled) event.preventDefault();
+      if (handled) return;
+    }
+    if (key === 't' && !config.modal()) {
+      const trigger = document.querySelector('[data-trade-menu-trigger]');
+      if (trigger && !trigger.disabled) { event.preventDefault(); trigger.click(); }
+      return;
     }
     if (['g','s'].includes(key)) {
       event.preventDefault(); prefix = key;
       const indicator = document.createElement('div'); indicator.id = 'keySequence'; indicator.setAttribute('role','status');
       indicator.innerHTML = `<kbd>${key.toUpperCase()}</kbd> ${key === 'g' ? 'Go to' : 'Simulate'}`;
       document.body.append(indicator); prefixTimer = setTimeout(clearPrefix, 1500);
+      if (key === 's' && !config.modal()) {
+        const trigger = document.querySelector('[data-sim-menu-trigger]');
+        if (trigger && !trigger.disabled && trigger.getAttribute('aria-expanded') !== 'true') trigger.click();
+      }
     }
   }
 
@@ -230,6 +263,28 @@ const GameInterface = (() => {
 
   function previousModal() { const entry=history.pop(); restoring = true; restoreView=entry?.view; return entry?.modal || null; }
 
+  function syncSortedTable(table) {
+    const headerCells = table.tHead?.rows[0]?.cells || [];
+    const activeIndex = [...headerCells].findIndex(th => ['ascending','descending'].includes(th.getAttribute('aria-sort')));
+    [...table.tBodies].forEach(body => [...body.rows].forEach(row => [...row.cells].forEach((cell, index) => {
+      cell.classList.toggle('is-sorted-value', activeIndex >= 0 && index === activeIndex);
+    })));
+  }
+
+  function syncSortedValues(scope = document) {
+    const tables = [...(scope.matches?.('table') ? [scope] : []), ...scope.querySelectorAll('table')];
+    tables.forEach(syncSortedTable);
+    const prospectTables = [...(scope.matches?.('.season-prospects-table') ? [scope] : []), ...scope.querySelectorAll('.season-prospects-table')];
+    prospectTables.forEach(table => {
+      const headers = table.querySelector('.season-prospects-head');
+      const rows = table.querySelectorAll('.season-prospect-row');
+      const activeIndex = [...(headers?.children || [])].findIndex(button => button.getAttribute('aria-pressed') === 'true');
+      rows.forEach(row => [...row.children].forEach((cell, index) => {
+        cell.classList.toggle('is-sorted-value', activeIndex >= 0 && index === activeIndex);
+      }));
+    });
+  }
+
   function sortLocalTable(button) {
     const th = button.closest('th'); const table = th.closest('table');
     const index = [...th.parentElement.children].indexOf(th);
@@ -244,6 +299,7 @@ const GameInterface = (() => {
     const rows = [...table.tBodies[0].rows];
     rows.sort((a,b) => {const av=parse(a),bv=parse(b);return (typeof av==='number' && typeof bv==='number' ? av-bv : String(av).localeCompare(String(bv),undefined,{numeric:true}))*(asc?1:-1);});
     table.tBodies[0].append(...rows);
+    syncSortedTable(table);
   }
 
   function enhance(scope = document) {
@@ -272,24 +328,30 @@ const GameInterface = (() => {
       ['[data-dashboard-trade="finder"]', 'G B'],
       ['[data-assets-trade="builder"]','G T'], ['[data-assets-trade="finder"]','G B'],
       ['[data-dashboard-offers], [data-assets-offers]', 'G O'], ['[data-dashboard-player-finder]', 'G F'],
-      ['[data-dashboard-view="draft"], [data-dashboard-prospects], [data-season-prospects]', 'G P'],
-      ['[data-dashboard-view="calendar"]', 'G C'], ['[data-dashboard-view="staff"]', 'G S'],
-      ['[data-team-development]', 'G D'],
       ['[data-dashboard-settings], [data-assets-settings]', 'G ,'],
       ['[data-interface-home]', 'G H'],
-      ['[data-advance="next-event"], [data-playoff-sim="game"], #fantasySimOne, #draftSimCurrent, #faAdvanceDay, #reSignAdvanceDay', 'S E'],
+      ['.card-board-gallery-toggle', 'G C'],
+      ['[data-window-switcher-open]', 'G W'],
+      ['[data-league-activity-view-all]', 'G V'],
+      ['[data-board-snap]', 'G R'],
+      ['[data-trade-menu-trigger]', 'T'],
+      ['[data-trade-menu-item="finder"]', 'G B'], ['[data-trade-menu-item="builder"]', 'G T'], ['[data-trade-menu-item="offers"]', 'G O'],
+      ['[data-sim-menu-trigger]', 'S'],
+      ['[data-sim-menu-item="next-event"]', 'E'], ['[data-sim-menu-item="week"]', 'W'], ['[data-sim-menu-item="month"]', 'M'],
+      ['[data-advance="next-event"], #fantasySimOne, #draftSimCurrent, #faAdvanceDay, #reSignAdvanceDay', 'S E'],
       ['[data-advance="week"]', 'S W'], ['[data-advance="month"]', 'S M'],
-      ['#draftToUser, #fantasyToUser', 'S P'], ['[data-playoff-sim="round"]', 'S R'],
-      ['#playoffAdvanceStage, #draftAdvanceStage, #faAdvanceStage, [data-advance="next-season"]', 'S N'],
+      ['#draftToUser, #fantasyToUser', 'S P'],
+      ['#postseasonAdvance, #draftRevealLottery, #draftEnterNight, #draftAdvanceStage, #faAdvanceStage, [data-advance="next-season"]', 'S N'],
       ['[data-close-modal]', 'Esc'],
     ];
     hints.forEach(([selector,keys])=>scope.querySelectorAll(selector).forEach(button=>{
       if (button.querySelector('[data-key-hint]')) return;
       const name=label(button);button.setAttribute('aria-label',name);
-      button.title=`${name} (${keys})`;
+      button.title=button.matches('[data-window-switcher-open]') ? `${name} (${keys}; Option/Alt+Tab forward, Option/Alt+${String.fromCharCode(96)} backward)` : `${name} (${keys})`;
       const hint=document.createElement('span');hint.dataset.keyHint=keys;hint.className='shortcut-hint';hint.setAttribute('aria-hidden','true');hint.textContent=keys;
       button.append(hint);
     }));
+    syncSortedValues(scope);
   }
 
   function init(options) {

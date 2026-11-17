@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/OKC-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/OKC-v2-1.jpg",
+      "kind": "basketball",
+      "team": "OKC",
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 480,
+          "team": "OKC",
+          "opponent": "DEN",
+          "action": "Gilgeous-Alexander game-winning three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 49,
+          "frames": 300,
+          "team": "OKC",
+          "opponent": "WAS",
+          "action": "Gilgeous-Alexander drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 816
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/OKC-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/OKC-v2-2.jpg",
+      "kind": "basketball",
+      "team": "OKC",
+      "clips": [
+        {
+          "source_start": 65,
+          "frames": 510,
+          "team": "OKC",
+          "opponent": "SAS",
+          "action": "Gilgeous-Alexander basket",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 88,
+          "frames": 600,
+          "team": "OKC",
+          "opponent": "MEM",
+          "action": "Gilgeous-Alexander paint finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 1146
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/OKC-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/OKC-v2-3.jpg",
+      "kind": "basketball",
+      "team": "OKC",
+      "clips": [
+        {
+          "source_start": 110,
+          "frames": 420,
+          "team": "OKC",
+          "opponent": "HOU",
+          "action": "Gilgeous-Alexander jumper",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 161,
+          "frames": 390,
+          "team": "OKC",
+          "opponent": "LAL",
+          "action": "Gilgeous-Alexander late three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 846
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "BzKf9haIml0",
+    "url": "https://www.youtube.com/watch?v=BzKf9haIml0",
+    "title": "Shai Gilgeous-Alexander Is The 2025-26 @kia NBA Most Valuable Player!",
+    "channel": "NBA and Oklahoma City Thunder",
+    "path": ".cache/startup-team-correction/OKC.mp4",
+    "query": "2025-26 Oklahoma City Thunder Shai Gilgeous Alexander best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 0,
+      "frames": 480,
+      "team": "OKC",
+      "opponent": "DEN",
+      "action": "Gilgeous-Alexander game-winning three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 49,
+      "frames": 300,
+      "team": "OKC",
+      "opponent": "WAS",
+      "action": "Gilgeous-Alexander drive and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 65,
+      "frames": 510,
+      "team": "OKC",
+      "opponent": "SAS",
+      "action": "Gilgeous-Alexander basket",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 88,
+      "frames": 600,
+      "team": "OKC",
+      "opponent": "MEM",
+      "action": "Gilgeous-Alexander paint finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 110,
+      "frames": 420,
+      "team": "OKC",
+      "opponent": "HOU",
+      "action": "Gilgeous-Alexander jumper",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 161,
+      "frames": 390,
+      "team": "OKC",
+      "opponent": "LAL",
+      "action": "Gilgeous-Alexander late three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 117.13333333333334
+}

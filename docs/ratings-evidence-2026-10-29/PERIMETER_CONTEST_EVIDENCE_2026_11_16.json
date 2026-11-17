@@ -1,0 +1,1310 @@
+{
+  "ledger_version": "perimeter_contest_evidence_v1_2026_11_16",
+  "production_import_authorized": false,
+  "date_policy": "October2026 pre-opener; pre-start scouting and explicitly historical tables eligible. Undated current rules/definition pages retrievedNov16 are normative references, not fresh player performance. No opening-week results or projections converted to current skill.",
+  "counts": {
+    "actors": 9,
+    "declared_defenders": 7,
+    "declared_shooters": 4,
+    "records_preserved": 846,
+    "dimensions_each": 94,
+    "passing_dimensions_each": 18,
+    "all_source_known": 119,
+    "C37_direct_ids": 10,
+    "defender_direct_cells": 70,
+    "defender_direct_supported": 12,
+    "claims": 13,
+    "dependency_stages": 7,
+    "controlled_comparisons": 7,
+    "defender_direct_unknown": 58,
+    "all_source_unknown": 727
+  },
+  "approved_C37_definition": {
+    "id": "C37",
+    "name": "Perimeter shot-contest response",
+    "meaning": "S37, S40, S45, P02, P03, P05-P07, P09, P10 -> reachable and controlled jump-shot contests given arrival time and angle. Distinct spatial/task response from C27, using the same contest-technique input where appropriate.",
+    "dependencies": [
+      "S37",
+      "S40",
+      "S45",
+      "P02",
+      "P03",
+      "P05",
+      "P06",
+      "P07",
+      "P09",
+      "P10"
+    ],
+    "trainable": false,
+    "gameplay_active": false,
+    "formula_status": "unimplemented_unapproved_coefficients",
+    "summary_only": false,
+    "dependency_status": "catalogue_transcription"
+  },
+  "definition_status": "Fixed catalogue dependency transcription; no claim about current runtime implementation or actual compile contract.",
+  "sources": {
+    "SG": {
+      "path": "captions/Ckufse6eWsM.en.vtt",
+      "date": "2026-08-14",
+      "video_id": "Ckufse6eWsM",
+      "reviewed": "01:37:09–01:37:34;01:39:41–01:39:58",
+      "kind": "retained auto-captions, selected White clauses only",
+      "correlation_group": "nerd_sesh_commentary"
+    },
+    "PG": {
+      "path": "transcripts/episode8_transcript.txt",
+      "date": "2026-08-05",
+      "reviewed": "Castle00:16:24–00:16:53;00:20:59–00:21:46; Brunson01:08:43–01:09:31; Curry01:14:13–01:14:38",
+      "kind": "user-retained timestamped transcript, selected passages",
+      "correlation_group": "nerd_sesh_commentary"
+    },
+    "PF": {
+      "path": "transcripts/episode5_transcript.txt",
+      "date": "2026-08-28",
+      "reviewed": "Barnes01:11:45–01:12:16",
+      "kind": "user-retained timestamped transcript, selected passage",
+      "correlation_group": "nerd_sesh_commentary"
+    },
+    "CE": {
+      "path": "transcripts/episode4_transcript.txt",
+      "date": "2026-09-02",
+      "reviewed": "Gobert00:52:59–00:53:25; Wembanyama01:35:07–01:35:38; Holmgren01:03:46–01:04:23; Towns01:21:18–01:22:06",
+      "kind": "retained original transcript; selected clauses and prior retained shooting contexts",
+      "correlation_group": "nerd_sesh_commentary"
+    },
+    "GLOSSARY": {
+      "url": "https://www.nba.com/stats/help/glossary",
+      "date": null,
+      "retrieved_on": "2026-11-16",
+      "kind": "official metric definitions, undated",
+      "locator": "Contested Shot (Tracking) versus Contested Shots (Hustle)",
+      "summary": "Tracking uses nearest defender within3.5feet; hustle counts hand-up closeouts before release.",
+      "correlation_group": "nba_definitions",
+      "limit": "Different definitions, not causal quality or detailed hand/ball geometry measurements."
+    },
+    "SHOT_BINS": {
+      "url": "https://www.nba.com/news/open-shots-key-entering-game-6-of-bucks-celtics-and-warriors-grizzlies",
+      "date": "2022-05-13",
+      "author": "Brian Martin",
+      "kind": "NBA original historical shot analysis/table",
+      "locator": "first BOS/MIL closest-defender table and accompanying outside10feet description",
+      "summary": "BOS open39/100, wide-open44/102; firstfive2022MIL-series games, shots beyond10feet.",
+      "correlation_group": "nba_2022_selected_shots",
+      "limit": "Selected attempted jumpers, shooter/shot/location mix and bin protocols; not2026 skill or isolated defender effects."
+    },
+    "RULE12": {
+      "url": "https://official.nba.com/rule-no-12-fouls-and-penalties/",
+      "date": null,
+      "retrieved_on": "2026-11-16",
+      "kind": "official rules reference, undated current page",
+      "locator": "B.Personal Foul, SectionI.Types and SectionIV.Flagrant",
+      "summary": "Illegal contact and unnecessary/excessive contact have distinct consequences.",
+      "correlation_group": "nba_rules",
+      "limit": "No probability or actor foul grade measured."
+    },
+    "LEGAL_COMMON": {
+      "url": "https://videorulebook.nba.com/archive/defensive-foul-defender-makes-lower-body-contact-with-shooter/",
+      "date": null,
+      "retrieved_on": "2026-11-16",
+      "kind": "official written case narration only; video not reviewed",
+      "locator": "Kevin Durant/Kyle Kuzma landing-space narration,25_Other_505",
+      "summary": "The described leg-to-leg landing-space contact is a defensive foul, not flagrant.",
+      "correlation_group": "nba_rules",
+      "limit": "One interpreted example; do not infer foul frequency or re-rate its participants."
+    },
+    "LEGAL_FLAGRANT": {
+      "url": "https://videorulebook.nba.com/archive/flagrant-foul-penalty-1-defender-reckless-contest-into-landing-space-shooter-turns-ankle/",
+      "date": null,
+      "retrieved_on": "2026-11-16",
+      "kind": "official written case narration only; video not reviewed",
+      "locator": "Jaylen Brown/Jalen Brunson reckless landing-space narration,25_Other_895",
+      "summary": "The described reckless foot intrusion is Flagrant1, including when unintentional.",
+      "correlation_group": "nba_rules",
+      "limit": "Case distinction, not an always-flagrant rule for all closeout contact or an injury model."
+    }
+  },
+  "claims": [
+    {
+      "id": "CC01",
+      "source_id": "SG",
+      "date": "2026-08-14",
+      "locator": "01:37:09–01:37:34;01:39:41–01:39:58",
+      "support": "White positioning, anticipation, timely help, POA and guard shot-blocking praised.",
+      "cannot_establish": "Not a timed closeout/landing sample; existing S40 is a tentative transfer. Adjacent01:34 passage is Reaves, not White.",
+      "approved_input_ids": [
+        "S38",
+        "S39",
+        "S40",
+        "S41",
+        "S37"
+      ],
+      "mechanism_implication": "Contrast early help/arrival with established on-ball assignments; no automatic perimeter timing grade from guard blocks.",
+      "numeric_effect": null,
+      "confidence": "qualitative direction or definition; isolated magnitude not established",
+      "correlation_group": "nerd_sesh_commentary"
+    },
+    {
+      "id": "CC02",
+      "source_id": "PG",
+      "date": "2026-08-05",
+      "locator": "00:16:24–00:16:53;00:20:59–00:21:46",
+      "support": "Castle strong star-guard POA defense, with high fouls/weaker off-ball contribution and Wembanyama context.",
+      "cannot_establish": "No specific closeout violation rate; do not turn one critique into independent recognition/attention/positioning/foul penalties.",
+      "approved_input_ids": [
+        "S33",
+        "S38",
+        "S39",
+        "S44",
+        "S45"
+      ],
+      "mechanism_implication": "Strong containment need not imply early rotational closeouts. Separate arrival and legal contest from total defense.",
+      "numeric_effect": null,
+      "confidence": "qualitative direction or definition; isolated magnitude not established",
+      "correlation_group": "nerd_sesh_commentary"
+    },
+    {
+      "id": "CC03",
+      "source_id": "PF",
+      "date": "2026-08-28",
+      "locator": "01:11:45–01:12:16",
+      "support": "Barnes covers noncenter assignments and ground, with defensive hands/secondary rim contribution.",
+      "cannot_establish": "Broad effective coverage, not measured acceleration/braking or full-time-anchor/perimeter-contest equivalence.",
+      "approved_input_ids": [
+        "S33",
+        "S37",
+        "S38",
+        "S39",
+        "S40",
+        "P05",
+        "P07"
+      ],
+      "mechanism_implication": "Use role-matched off-ball versus on-ball tests; preserve the possibility that tools and starting position explain observed effectiveness.",
+      "numeric_effect": null,
+      "confidence": "qualitative direction or definition; isolated magnitude not established",
+      "correlation_group": "nerd_sesh_commentary"
+    },
+    {
+      "id": "CC04",
+      "source_id": "CE",
+      "date": "2026-09-02",
+      "locator": "01:35:07–01:35:38",
+      "support": "Wembanyama extraordinary interior range/deterrence with some space-switching problems.",
+      "cannot_establish": "Reach does not teleport an out-of-position defender; interior S37 support transfers imperfectly to C37.",
+      "approved_input_ids": [
+        "S37",
+        "S40",
+        "S45",
+        "P02",
+        "P03",
+        "P05",
+        "P07",
+        "P10"
+      ],
+      "mechanism_implication": "Resolve reachable geometry at actual arrival/release and approach control separately.",
+      "numeric_effect": null,
+      "confidence": "qualitative direction or definition; isolated magnitude not established",
+      "correlation_group": "nerd_sesh_commentary"
+    },
+    {
+      "id": "CC05",
+      "source_id": "CE",
+      "date": "2026-09-02",
+      "locator": "00:52:59–00:53:25",
+      "support": "Gobert anchor coverage plus successful switching/space contexts described.",
+      "cannot_establish": "Not proof of universally poor or elite perimeter closeouts; exact P07/S40/S37 task decomposition unknown.",
+      "approved_input_ids": [
+        "S37",
+        "S38",
+        "S39",
+        "S40",
+        "P07"
+      ],
+      "mechanism_implication": "Use big-versus-guard task context rather than declaring all centers incapable or all anchors excellent at C37.",
+      "numeric_effect": null,
+      "confidence": "qualitative direction or definition; isolated magnitude not established",
+      "correlation_group": "nerd_sesh_commentary"
+    },
+    {
+      "id": "CC06",
+      "source_id": "PG",
+      "date": "2026-08-05",
+      "locator": "01:14:13–01:14:38",
+      "support": "Curry constant movement/shooting threat changes defensive demands.",
+      "cannot_establish": "No stopwatch release measurement or independent defensive closeout evidence for Curry.",
+      "approved_input_ids": [
+        "S01",
+        "S03",
+        "S08",
+        "S26",
+        "S35",
+        "S41"
+      ],
+      "mechanism_implication": "Movement changes arrival opportunities; route execution and navigation precede one shot response, not an extra gravity/movement bonus.",
+      "numeric_effect": null,
+      "confidence": "qualitative direction or definition; isolated magnitude not established",
+      "correlation_group": "nerd_sesh_commentary"
+    },
+    {
+      "id": "CC07",
+      "source_id": "PG",
+      "date": "2026-08-05",
+      "locator": "01:08:43–01:09:31",
+      "support": "Brunson defensive limitations/infrastructure support discussed.",
+      "cannot_establish": "No specific hand timing, controlled-closeout or causal fouling magnitude. Offensive craft cannot fill defensive unknowns.",
+      "approved_input_ids": [
+        "S33",
+        "S37",
+        "S40",
+        "S45"
+      ],
+      "mechanism_implication": "A sheltered assignment can change exposure without changing underlying closeout or contest ability.",
+      "numeric_effect": null,
+      "confidence": "qualitative direction or definition; isolated magnitude not established",
+      "correlation_group": "nerd_sesh_commentary"
+    },
+    {
+      "id": "CC08",
+      "source_id": "CE",
+      "date": "2026-09-02",
+      "locator": "01:03:46–01:04:23",
+      "support": "Holmgren good open shooter but slow-release access; speakers dispute historical mechanics.",
+      "cannot_establish": "No milliseconds/height measurement; do not independently lower S01 and preparation for one same contest-access issue.",
+      "approved_input_ids": [
+        "S01",
+        "S08",
+        "S37",
+        "S40"
+      ],
+      "mechanism_implication": "At identical defender trajectory, release preparation can decide whether the contest arrives before the shot.",
+      "numeric_effect": null,
+      "confidence": "qualitative direction or definition; isolated magnitude not established",
+      "correlation_group": "nerd_sesh_commentary"
+    },
+    {
+      "id": "CC09",
+      "source_id": "CE",
+      "date": "2026-09-02",
+      "locator": "01:21:18–01:22:06",
+      "support": "Towns catch/deep contested shooting praised; peak-repeatability questioned.",
+      "cannot_establish": "No universal immunity to contests, exact release speed or independent range-plus-accuracy-plus-contest-resistance bonuses.",
+      "approved_input_ids": [
+        "S01",
+        "S08",
+        "S09",
+        "S37"
+      ],
+      "mechanism_implication": "Separate shot type/distance and available preparation; retain same underlying source record.",
+      "numeric_effect": null,
+      "confidence": "qualitative direction or definition; isolated magnitude not established",
+      "correlation_group": "nerd_sesh_commentary"
+    },
+    {
+      "id": "CC10",
+      "source_id": "GLOSSARY",
+      "date": null,
+      "locator": "Contested Shot / Contested Shots",
+      "support": "See source summary: metric definitions differ.",
+      "cannot_establish": "No proof nearest distance measures hand location, readiness or legal contest timing.",
+      "approved_input_ids": [
+        "S37",
+        "S40",
+        "P02",
+        "P03"
+      ],
+      "mechanism_implication": "Label distance-at-release separately from active pre-release contest; do not use them as identical training targets.",
+      "numeric_effect": null,
+      "confidence": "qualitative direction or definition; isolated magnitude not established",
+      "correlation_group": "nba_definitions"
+    },
+    {
+      "id": "CC11",
+      "source_id": "SHOT_BINS",
+      "date": "2022-05-13",
+      "locator": "first BOS/MIL closest-defender table",
+      "support": "See compact historical count card.",
+      "cannot_establish": "Not a controlled monotonic law or2026 coefficient. Actual attempts exclude opportunities passed up and can vary by shooter/type/clock.",
+      "approved_input_ids": [
+        "S01",
+        "S08",
+        "S09",
+        "S37"
+      ],
+      "mechanism_implication": "Use explicit attempt denominators for descriptive checks; do not fit C37 from pooled opponentFG%.",
+      "numeric_effect": null,
+      "confidence": "qualitative direction or definition; isolated magnitude not established",
+      "correlation_group": "nba_2022_selected_shots"
+    },
+    {
+      "id": "CC12",
+      "source_id": "LEGAL_COMMON",
+      "date": null,
+      "locator": "written landing-space case narration",
+      "support": "See source summary.",
+      "cannot_establish": "No video review or probability; not a legal high-quality contest merely because the shooter releases.",
+      "approved_input_ids": [
+        "S40",
+        "S45",
+        "S37"
+      ],
+      "mechanism_implication": "Arrival quality must include post-release landing/contact consequences, not only make suppression.",
+      "numeric_effect": null,
+      "confidence": "qualitative direction or definition; isolated magnitude not established",
+      "correlation_group": "nba_rules"
+    },
+    {
+      "id": "CC13",
+      "source_id": "LEGAL_FLAGRANT",
+      "date": null,
+      "locator": "written reckless landing-space case narration",
+      "support": "See source summary; RULE12 supplies the broader contact framework.",
+      "cannot_establish": "Do not treat every contact as this category or reward reckless hand proximity.",
+      "approved_input_ids": [
+        "S40",
+        "S45"
+      ],
+      "mechanism_implication": "Record legal state jointly with contest outcome; contest aggression is not automatically better.",
+      "numeric_effect": null,
+      "confidence": "qualitative direction or definition; isolated magnitude not established",
+      "correlation_group": "nba_rules"
+    }
+  ],
+  "dependency_stages": [
+    {
+      "id": "recognize",
+      "derived_ids": [
+        "C26",
+        "C29"
+      ],
+      "inputs": [
+        "S38",
+        "S41",
+        "S44",
+        "S46"
+      ],
+      "state": [
+        "assignment",
+        "ball/receiver threat",
+        "communication already delivered",
+        "decision time"
+      ],
+      "support_claims": [
+        "CC01",
+        "CC02",
+        "CC03"
+      ],
+      "gap": "No isolated recognition latency/communication timing; choose one recognition process, not four full speed bonuses. S46 only when team calls are actually modeled."
+    },
+    {
+      "id": "start_and_path",
+      "derived_ids": [
+        "C26",
+        "C25",
+        "C23"
+      ],
+      "inputs": [
+        "S39",
+        "S35",
+        "S33",
+        "P05",
+        "P06",
+        "P07",
+        "P09"
+      ],
+      "state": [
+        "initial position/velocity",
+        "screen/route obstruction",
+        "intended approach angle"
+      ],
+      "support_claims": [
+        "CC01",
+        "CC02",
+        "CC03",
+        "CC06"
+      ],
+      "gap": "Navigation applies with an actual obstacle; containment applies to the live drive threat, not an automatic additional closeout grade. Starting geometry belongs in state."
+    },
+    {
+      "id": "approach_control",
+      "derived_ids": [
+        "C26",
+        "C37"
+      ],
+      "inputs": [
+        "S40",
+        "P05",
+        "P06",
+        "P07",
+        "P09"
+      ],
+      "state": [
+        "distance remaining",
+        "approach velocity/angle",
+        "braking/control state"
+      ],
+      "support_claims": [
+        "CC01",
+        "CC03",
+        "CC04"
+      ],
+      "gap": "S40 technique and measured braking capacity are not interchangeable. No source actor has complete measured motion/balance here."
+    },
+    {
+      "id": "contest_at_release",
+      "derived_ids": [
+        "C37"
+      ],
+      "inputs": [
+        "S37",
+        "S40",
+        "S45",
+        "P02",
+        "P03",
+        "P05",
+        "P06",
+        "P07",
+        "P09",
+        "P10"
+      ],
+      "state": [
+        "actual release time and ball position",
+        "hand/reach pose",
+        "jump/grounded state",
+        "line of approach"
+      ],
+      "support_claims": [
+        "CC04",
+        "CC05",
+        "CC08",
+        "CC10"
+      ],
+      "gap": "C37 shares S37 with C27 but not a second full interior response. No height+span+standing-reach+rim-summary stack."
+    },
+    {
+      "id": "shooter_response",
+      "derived_ids": [
+        "C01",
+        "C02",
+        "C03",
+        "C05",
+        "C07",
+        "C13",
+        "C17"
+      ],
+      "inputs": [
+        "S01",
+        "S02",
+        "S03",
+        "S04",
+        "S05",
+        "S06",
+        "S08",
+        "S09",
+        "S14",
+        "S16",
+        "S18",
+        "S20",
+        "S26",
+        "P09"
+      ],
+      "state": [
+        "shot type/distance",
+        "catch readiness",
+        "pump/pass/drive choice",
+        "shot clock",
+        "preparation and balance"
+      ],
+      "support_claims": [
+        "CC06",
+        "CC08",
+        "CC09"
+      ],
+      "gap": "Use only the relevant mode/branch, not the union as a compulsory full-profile requirement. FT skill is excluded. A delayed/abandoned shot is not necessarily a miss."
+    },
+    {
+      "id": "legal_resolution",
+      "derived_ids": [
+        "C37",
+        "C29",
+        "C15"
+      ],
+      "inputs": [
+        "S37",
+        "S40",
+        "S45",
+        "S24"
+      ],
+      "state": [
+        "contact timing/location",
+        "landing space",
+        "attacker movement",
+        "rule outcome"
+      ],
+      "support_claims": [
+        "CC12",
+        "CC13"
+      ],
+      "gap": "S24 only when shooter contact craft is modeled. S45 is legal execution, not T16 willingness. Joint make/block/foul result must be coherent, including made-and-fouled cases."
+    },
+    {
+      "id": "recover",
+      "derived_ids": [
+        "C26",
+        "C23",
+        "C30"
+      ],
+      "inputs": [
+        "S38",
+        "S39",
+        "S40",
+        "S33",
+        "P05",
+        "P06",
+        "P07",
+        "P09",
+        "P11",
+        "P12",
+        "T17"
+      ],
+      "state": [
+        "post-contest position/velocity",
+        "landing/control state",
+        "continuing assignment",
+        "fatigue",
+        "new offensive action"
+      ],
+      "support_claims": [
+        "CC02",
+        "CC03",
+        "CC06"
+      ],
+      "gap": "Immediate spatial recovery uses movement/control; P12 is between-effort physiological recovery, not instantaneous teleporting or a second foot-speed bonus. Workload branch only when state is modeled."
+    }
+  ],
+  "constraints": [
+    {
+      "id": "CN01",
+      "kind": "definition_only",
+      "source_id": "GLOSSARY",
+      "population": "metric definitions, not a shot sample",
+      "window": "undated current page retrieved2026-11-16",
+      "denominator": null,
+      "value": 3.5,
+      "unit": "feet, tracking Contested Shot definition",
+      "meaning": "A metric threshold only; not C37 physical reach radius or a make-probability discontinuity.",
+      "causal_response_calibration": false
+    },
+    {
+      "id": "CN02",
+      "kind": "observed_descriptive_counts",
+      "source_id": "SHOT_BINS",
+      "population": "BOS attempted shots beyond10ft, firstfive2022 Eastern semifinals games versusMIL",
+      "window": "through Game5; article2022-05-13",
+      "denominator_definition": "actual FGA in each nearest-defender bin, not all closeout opportunities or all possessions",
+      "rows": [
+        {
+          "label": "4-6 Feet - Open",
+          "made": 39,
+          "attempted": 100,
+          "derived_FG_pct": 39.0
+        },
+        {
+          "label": "6+ Feet - Wide Open",
+          "made": 44,
+          "attempted": 102,
+          "derived_FG_pct": 43.13725490196079
+        }
+      ],
+      "derivation": "100*FGM/FGA; no rounding per-game counts reconstructed",
+      "unit": "percent made, pooled2/3point attempts",
+      "limits": "Historical selected attempts; shooter quality, shot mix, distance, clock, approach direction and passes/shots avoided unconditioned. No causal defender coefficient.",
+      "causal_response_calibration": false
+    },
+    {
+      "id": "CN03",
+      "kind": "provider_bin_labels",
+      "source_id": "SHOT_BINS",
+      "population": "the same published nearest-defender categorization",
+      "window": "2022 article",
+      "denominator": null,
+      "labels": [
+        "0-2 Feet - Very Tight",
+        "2-4 Feet - Tight",
+        "4-6 Feet - Open",
+        "6+ Feet - Wide Open"
+      ],
+      "meaning": "Retain labels exactly; do not invent boundary-inclusion protocol, hand-to-ball distance, behind/in-front equivalence or a hard gameplay step function.",
+      "causal_response_calibration": false
+    }
+  ],
+  "source_profile_lineage": [
+    {
+      "name": "Derrick White",
+      "player_id": "player_bos-derrick-white",
+      "roles_in_this_review": [
+        "defender"
+      ],
+      "packet": "docs/ratings-evidence-2026-10-29/SCREEN_NAVIGATION_INPUTS_2026_11_13.json",
+      "packet_version": "screen_navigation_research_v1_2026_11_13",
+      "section": "player_input_section",
+      "profile_sha256": "5fc1400d95b7221d676997db1db741d634e166e4ebcf2d3bd050d24bc7573787",
+      "policy": "One complete inherited source profile, copied exactly; no merge/relabel/operational-control imports."
+    },
+    {
+      "name": "Stephon Castle",
+      "player_id": "player_sas-stephon-castle",
+      "roles_in_this_review": [
+        "defender"
+      ],
+      "packet": "docs/ratings-evidence-2026-10-29/SCREEN_NAVIGATION_INPUTS_2026_11_13.json",
+      "packet_version": "screen_navigation_research_v1_2026_11_13",
+      "section": "player_input_section",
+      "profile_sha256": "7a805e465824d2f89b8fbe948569d576d0ce6789ae2bb8c1a9653c53be0883e0",
+      "policy": "One complete inherited source profile, copied exactly; no merge/relabel/operational-control imports."
+    },
+    {
+      "name": "Scottie Barnes",
+      "player_id": "player_tor-scottie-barnes",
+      "roles_in_this_review": [
+        "defender"
+      ],
+      "packet": "docs/ratings-evidence-2026-10-29/EXPANDED_ACTION_COHORT_2026_11_14.json",
+      "packet_version": "expanded_action_cohort_research_v1_2026_11_14",
+      "section": "proposed_source_input_section",
+      "profile_sha256": "f9c6200d80f3d1bcd0f4ce572caa395653252ad5380c1b4ed7ec36a586561290",
+      "policy": "One complete inherited source profile, copied exactly; no merge/relabel/operational-control imports."
+    },
+    {
+      "name": "Victor Wembanyama",
+      "player_id": "player_sas-victor-wembanyama",
+      "roles_in_this_review": [
+        "defender"
+      ],
+      "packet": "docs/ratings-evidence-2026-10-29/EXPANDED_ACTION_COHORT_2026_11_14.json",
+      "packet_version": "expanded_action_cohort_research_v1_2026_11_14",
+      "section": "proposed_source_input_section",
+      "profile_sha256": "45c466325651a3c1ae8196afcd53c10bda1fd7395370ee54634e039d13578885",
+      "policy": "One complete inherited source profile, copied exactly; no merge/relabel/operational-control imports."
+    },
+    {
+      "name": "Rudy Gobert",
+      "player_id": "player_min-rudy-gobert",
+      "roles_in_this_review": [
+        "defender"
+      ],
+      "packet": "docs/ratings-evidence-2026-10-29/SCREEN_NAVIGATION_INPUTS_2026_11_13.json",
+      "packet_version": "screen_navigation_research_v1_2026_11_13",
+      "section": "player_input_section",
+      "profile_sha256": "2dcd3c15953520c3bf0c0a091db62f4d053ab1d425f42436f672fd4a1949113e",
+      "policy": "One complete inherited source profile, copied exactly; no merge/relabel/operational-control imports."
+    },
+    {
+      "name": "Stephen Curry",
+      "player_id": "player_gsw-stephen-curry",
+      "roles_in_this_review": [
+        "defender",
+        "shooter"
+      ],
+      "packet": "docs/ratings-evidence-2026-10-29/EXPANDED_ACTION_COHORT_2026_11_14.json",
+      "packet_version": "expanded_action_cohort_research_v1_2026_11_14",
+      "section": "proposed_source_input_section",
+      "profile_sha256": "a0bb11cf8c16ebc45375bc824d67d2aeb9928e6fecb45fb72cb9c0143f06db72",
+      "policy": "One complete inherited source profile, copied exactly; no merge/relabel/operational-control imports."
+    },
+    {
+      "name": "Jalen Brunson",
+      "player_id": "player_nyk-jalen-brunson",
+      "roles_in_this_review": [
+        "defender",
+        "shooter"
+      ],
+      "packet": "docs/ratings-evidence-2026-10-29/EXPANDED_ACTION_COHORT_2026_11_14.json",
+      "packet_version": "expanded_action_cohort_research_v1_2026_11_14",
+      "section": "proposed_source_input_section",
+      "profile_sha256": "2cfb46bf1a3d45f18f965a0ecfe34468a37ae61ee25d2f37308df0b270b97b42",
+      "policy": "One complete inherited source profile, copied exactly; no merge/relabel/operational-control imports."
+    },
+    {
+      "name": "Chet Holmgren",
+      "player_id": "player_okc-chet-holmgren",
+      "roles_in_this_review": [
+        "shooter"
+      ],
+      "packet": "docs/ratings-evidence-2026-10-29/MIXED_POP_INPUT_UPDATES_2026_11_16.json",
+      "packet_version": "mixed_pop_input_updates_v1_2026_11_16",
+      "section": "proposed_source_input_section",
+      "profile_sha256": "cd4406f470fa37ad2be3a8664535a82883118f7cc586d31bee85a4958d7474df",
+      "policy": "One complete inherited source profile, copied exactly; no merge/relabel/operational-control imports."
+    },
+    {
+      "name": "Karl-Anthony Towns",
+      "player_id": "player_nyk-karl-anthony-towns",
+      "roles_in_this_review": [
+        "shooter"
+      ],
+      "packet": "docs/ratings-evidence-2026-10-29/MIXED_POP_INPUT_UPDATES_2026_11_16.json",
+      "packet_version": "mixed_pop_input_updates_v1_2026_11_16",
+      "section": "proposed_source_input_section",
+      "profile_sha256": "ad7c36320fc404a15b4bf80db64d43783aa615cb172a51db0c841600ad1fb054",
+      "policy": "One complete inherited source profile, copied exactly; no merge/relabel/operational-control imports."
+    }
+  ],
+  "readiness": [
+    {
+      "name": "Derrick White",
+      "player_id": "player_bos-derrick-white",
+      "roles": [
+        "defender"
+      ],
+      "known_all94": 19,
+      "defender_C37": {
+        "direct_ids": [
+          "S37",
+          "S40",
+          "S45",
+          "P02",
+          "P03",
+          "P05",
+          "P06",
+          "P07",
+          "P09",
+          "P10"
+        ],
+        "supported": [
+          "S37",
+          "S40",
+          "P02"
+        ],
+        "unknown": [
+          "S45",
+          "P03",
+          "P05",
+          "P06",
+          "P07",
+          "P09",
+          "P10"
+        ],
+        "upstream_supported": [
+          "S38",
+          "S39",
+          "S41",
+          "S44",
+          "S35"
+        ],
+        "upstream_unknown": [
+          "S46",
+          "T15",
+          "T16",
+          "T17"
+        ],
+        "status": "partial source only; no complete named direct projection claimed"
+      },
+      "shooter_branch": null
+    },
+    {
+      "name": "Stephon Castle",
+      "player_id": "player_sas-stephon-castle",
+      "roles": [
+        "defender"
+      ],
+      "known_all94": 17,
+      "defender_C37": {
+        "direct_ids": [
+          "S37",
+          "S40",
+          "S45",
+          "P02",
+          "P03",
+          "P05",
+          "P06",
+          "P07",
+          "P09",
+          "P10"
+        ],
+        "supported": [
+          "S45",
+          "P02"
+        ],
+        "unknown": [
+          "S37",
+          "S40",
+          "P03",
+          "P05",
+          "P06",
+          "P07",
+          "P09",
+          "P10"
+        ],
+        "upstream_supported": [
+          "S38",
+          "S39",
+          "S41",
+          "S44",
+          "S35"
+        ],
+        "upstream_unknown": [
+          "S46",
+          "T15",
+          "T16",
+          "T17"
+        ],
+        "status": "partial source only; no complete named direct projection claimed"
+      },
+      "shooter_branch": null
+    },
+    {
+      "name": "Scottie Barnes",
+      "player_id": "player_tor-scottie-barnes",
+      "roles": [
+        "defender"
+      ],
+      "known_all94": 20,
+      "defender_C37": {
+        "direct_ids": [
+          "S37",
+          "S40",
+          "S45",
+          "P02",
+          "P03",
+          "P05",
+          "P06",
+          "P07",
+          "P09",
+          "P10"
+        ],
+        "supported": [
+          "S37",
+          "P02"
+        ],
+        "unknown": [
+          "S40",
+          "S45",
+          "P03",
+          "P05",
+          "P06",
+          "P07",
+          "P09",
+          "P10"
+        ],
+        "upstream_supported": [
+          "S38",
+          "S39",
+          "S41"
+        ],
+        "upstream_unknown": [
+          "S44",
+          "S46",
+          "S35",
+          "T15",
+          "T16",
+          "T17"
+        ],
+        "status": "partial source only; no complete named direct projection claimed"
+      },
+      "shooter_branch": null
+    },
+    {
+      "name": "Victor Wembanyama",
+      "player_id": "player_sas-victor-wembanyama",
+      "roles": [
+        "defender"
+      ],
+      "known_all94": 11,
+      "defender_C37": {
+        "direct_ids": [
+          "S37",
+          "S40",
+          "S45",
+          "P02",
+          "P03",
+          "P05",
+          "P06",
+          "P07",
+          "P09",
+          "P10"
+        ],
+        "supported": [
+          "S37",
+          "P02"
+        ],
+        "unknown": [
+          "S40",
+          "S45",
+          "P03",
+          "P05",
+          "P06",
+          "P07",
+          "P09",
+          "P10"
+        ],
+        "upstream_supported": [
+          "S38",
+          "S39"
+        ],
+        "upstream_unknown": [
+          "S41",
+          "S44",
+          "S46",
+          "S35",
+          "T15",
+          "T16",
+          "T17"
+        ],
+        "status": "partial source only; no complete named direct projection claimed"
+      },
+      "shooter_branch": null
+    },
+    {
+      "name": "Rudy Gobert",
+      "player_id": "player_min-rudy-gobert",
+      "roles": [
+        "defender"
+      ],
+      "known_all94": 7,
+      "defender_C37": {
+        "direct_ids": [
+          "S37",
+          "S40",
+          "S45",
+          "P02",
+          "P03",
+          "P05",
+          "P06",
+          "P07",
+          "P09",
+          "P10"
+        ],
+        "supported": [
+          "P02"
+        ],
+        "unknown": [
+          "S37",
+          "S40",
+          "S45",
+          "P03",
+          "P05",
+          "P06",
+          "P07",
+          "P09",
+          "P10"
+        ],
+        "upstream_supported": [
+          "S38",
+          "S39"
+        ],
+        "upstream_unknown": [
+          "S41",
+          "S44",
+          "S46",
+          "S35",
+          "T15",
+          "T16",
+          "T17"
+        ],
+        "status": "partial source only; no complete named direct projection claimed"
+      },
+      "shooter_branch": null
+    },
+    {
+      "name": "Stephen Curry",
+      "player_id": "player_gsw-stephen-curry",
+      "roles": [
+        "defender",
+        "shooter"
+      ],
+      "known_all94": 14,
+      "defender_C37": {
+        "direct_ids": [
+          "S37",
+          "S40",
+          "S45",
+          "P02",
+          "P03",
+          "P05",
+          "P06",
+          "P07",
+          "P09",
+          "P10"
+        ],
+        "supported": [
+          "P02"
+        ],
+        "unknown": [
+          "S37",
+          "S40",
+          "S45",
+          "P03",
+          "P05",
+          "P06",
+          "P07",
+          "P09",
+          "P10"
+        ],
+        "upstream_supported": [],
+        "upstream_unknown": [
+          "S38",
+          "S39",
+          "S41",
+          "S44",
+          "S46",
+          "S35",
+          "T15",
+          "T16",
+          "T17"
+        ],
+        "status": "partial source only; no complete named direct projection claimed"
+      },
+      "shooter_branch": {
+        "mode": "catch / optional movement",
+        "ids": [
+          "S01",
+          "S08",
+          "S09",
+          "P09"
+        ],
+        "optional_branch_ids": [
+          "S03",
+          "S26"
+        ],
+        "supported": [
+          "S01",
+          "S08"
+        ],
+        "unknown": [
+          "S09",
+          "P09"
+        ],
+        "status": "partial mode-specific source; readiness/geometry still require declared context"
+      }
+    },
+    {
+      "name": "Jalen Brunson",
+      "player_id": "player_nyk-jalen-brunson",
+      "roles": [
+        "defender",
+        "shooter"
+      ],
+      "known_all94": 16,
+      "defender_C37": {
+        "direct_ids": [
+          "S37",
+          "S40",
+          "S45",
+          "P02",
+          "P03",
+          "P05",
+          "P06",
+          "P07",
+          "P09",
+          "P10"
+        ],
+        "supported": [
+          "P02"
+        ],
+        "unknown": [
+          "S37",
+          "S40",
+          "S45",
+          "P03",
+          "P05",
+          "P06",
+          "P07",
+          "P09",
+          "P10"
+        ],
+        "upstream_supported": [],
+        "upstream_unknown": [
+          "S38",
+          "S39",
+          "S41",
+          "S44",
+          "S46",
+          "S35",
+          "T15",
+          "T16",
+          "T17"
+        ],
+        "status": "partial source only; no complete named direct projection claimed"
+      },
+      "shooter_branch": {
+        "mode": "pull-up",
+        "ids": [
+          "S02",
+          "S08",
+          "S09",
+          "P09"
+        ],
+        "optional_branch_ids": [
+          "S16",
+          "S18",
+          "S20"
+        ],
+        "supported": [
+          "S02"
+        ],
+        "unknown": [
+          "S08",
+          "S09",
+          "P09"
+        ],
+        "status": "partial mode-specific source; readiness/geometry still require declared context"
+      }
+    },
+    {
+      "name": "Chet Holmgren",
+      "player_id": "player_okc-chet-holmgren",
+      "roles": [
+        "shooter"
+      ],
+      "known_all94": 8,
+      "defender_C37": null,
+      "shooter_branch": {
+        "mode": "catch",
+        "ids": [
+          "S01",
+          "S08",
+          "S09",
+          "P09"
+        ],
+        "optional_branch_ids": [],
+        "supported": [
+          "S01",
+          "S08"
+        ],
+        "unknown": [
+          "S09",
+          "P09"
+        ],
+        "status": "partial mode-specific source; readiness/geometry still require declared context"
+      }
+    },
+    {
+      "name": "Karl-Anthony Towns",
+      "player_id": "player_nyk-karl-anthony-towns",
+      "roles": [
+        "shooter"
+      ],
+      "known_all94": 7,
+      "defender_C37": null,
+      "shooter_branch": {
+        "mode": "catch",
+        "ids": [
+          "S01",
+          "S08",
+          "S09",
+          "P09"
+        ],
+        "optional_branch_ids": [],
+        "supported": [
+          "S01",
+          "S09"
+        ],
+        "unknown": [
+          "S08",
+          "P09"
+        ],
+        "status": "partial mode-specific source; readiness/geometry still require declared context"
+      }
+    }
+  ],
+  "controlled_comparisons": [
+    {
+      "id": "CT01",
+      "focus": "recognition versus travel",
+      "hold": "same start/velocity, capacity, shooter release process and responsibility",
+      "vary": "earlier/later decision, then movement capacity separately",
+      "expectation": "Earlier recognition can permit earlier controlled arrival; do not attribute all delay to speed. No fixed millisecond target."
+    },
+    {
+      "id": "CT02",
+      "focus": "proximity versus active geometry",
+      "hold": "same closest body distance and release time",
+      "vary": "hand up/down, front/side/behind approach, contest timing and reach separately",
+      "expectation": "Near does not guarantee useful pre-release contest. A late hand cannot retroactively suppress an already released shot; later contact may still matter legally."
+    },
+    {
+      "id": "CT03",
+      "focus": "arrival/braking tradeoff",
+      "hold": "same recognition/start and shooter options",
+      "vary": "controlled approach versus excessive momentum at declared physical capacity",
+      "expectation": "Closer arrival may cost blow-by exposure or foul/recovery control; better S40 need not maximize blocks. Do not fit a universal all-out sprint advantage."
+    },
+    {
+      "id": "CT04",
+      "focus": "shooter preparation/mode",
+      "hold": "same defender trajectory and delivery readiness",
+      "vary": "S08, then catch/pull-up/movement branch and shot distance separately",
+      "expectation": "Available release window and contest can change; do not double-charge inherited accuracy for the same access problem. Midpoints are not measured release times."
+    },
+    {
+      "id": "CT05",
+      "focus": "reach and timing",
+      "hold": "same arrival/control and technique",
+      "vary": "standing reach, jump state, then timing separately",
+      "expectation": "Physical access must be feasible; no triple height/span/reach bonus, no C36 extra multiplier, no automatic big-over-guard contest order."
+    },
+    {
+      "id": "CT06",
+      "focus": "legal contest and attacker reaction",
+      "hold": "same start/skill and initial threat",
+      "vary": "shot, pump/drive, pass and landing/contact context",
+      "expectation": "Report selection, legal/illegal contact, attempt/make/block and post-action recovery consistently. No mandatory shot or independent contradictory block/make/foul draws."
+    },
+    {
+      "id": "CT07",
+      "focus": "evidence comparisons and selection",
+      "hold": "matched responsibility, start, shooter mix and exposure definition",
+      "vary": "White/Castle help versus attached POA; Barnes secondary help versus big anchor; source shooter alternatives",
+      "expectation": "A broad scouting rank is not the target. Include all threats, declined shots and later recovery costs alongside per-attemptFG%; identify unknown controls when order reverses."
+    }
+  ],
+  "snapshot_path": "diagnostics/perimeter_contest_20261116/inherited_source_snapshot.json",
+  "readiness_ledger_path": "diagnostics/perimeter_contest_20261116/readiness_ledger.json",
+  "minimum_additional_inputs": {
+    "for_direct_C37": "Missing source geometry/motion/balance/jump and relevant S37/S40/S45 per declared defender, or explicit isolated controls; never generic hidden completions.",
+    "for_rotation": "Threat/assignment, recognition/start state, path and approach velocity, with uncertain C26 ingredients; communication only if modeled.",
+    "for_shot": "Actual shooter readiness, release/mode/distance, trajectory; source-unknown preparation/range/balance controlled openly.",
+    "for_legal_recovery": "Contact/landing geometry, continuing assignment, post-contest velocity/control; workload only if fatigue state modeled.",
+    "physical_recovery_warning": "P12 is physiological recovery between efforts, not spatial recovery movement."
+  },
+  "player_input_additions": [],
+  "proposed_corrections": [],
+  "operational_completions": [],
+  "numeric_effect_coefficients": [],
+  "human_questions_required": [],
+  "source_hashes": {
+    "docs/PLAYER_OBJECT_THREE_COLUMN_MAP_2026_11_12.md": "208d51f643d78eae2d5ee23db6771522723a1c92fe9d4de5366fa1afa59cda00",
+    "docs/PLAYER_SKILL_DEPENDENCY_MAP_2026_11_11.md": "9ead732679da3b3a63d5374b89a3055f67cfa008ec202cfe6c503e604ed3192e",
+    "src/nba_gm_data/player_model_registry.py": "9cc7c51792a202ebdfa83105c92b5ce1dcbe2496844341ec758c68e246255e94",
+    "src/nba_gm_data/player_model.py": "af55fbe292a0b86d601a1530e5be231a02c05593ac6405b31ae7df40e0cb52ba",
+    "docs/ratings-evidence-2026-10-29/SCREEN_NAVIGATION_INPUTS_2026_11_13.json": "4e49eb36104bbbdfa8f8fab2d6c8f6dd8cbcb32b11723338e3696c0f67cf842d",
+    "docs/ratings-evidence-2026-10-29/EXPANDED_ACTION_COHORT_2026_11_14.json": "e61a71e7b1225f83c0e357386b98a08ce2a449c310e99f5846b80b00a32755d2",
+    "docs/ratings-evidence-2026-10-29/MIXED_POP_INPUT_UPDATES_2026_11_16.json": "dbabcc349525b440d703e96f24af9ae562633ff904574bc88efd7abb8b060eba",
+    "docs/ratings-evidence-2026-10-29/DEFENSIVE_ROLE_PLAYER_INPUT_REVIEW_2026_11_11.md": "4335e9e2fa35d3eecd5cad9de44d7c0c0ac7833835ce5c757dbc7a28c57843e6",
+    "docs/ratings-evidence-2026-10-29/PILOT_PROFILE_READINESS_2026_11_13.md": "ba1204e7a0dc98cf701a5cf9c81eb713d7b11b23904127fa382ca6681b6d7fd6",
+    "docs/ratings-evidence-2026-10-29/CREATION_PASSING_DEFENSE_INPUTS_2026_11_13.md": "79054694ce97b97674b286a41c275765d60f3ee2ddff5c16d57a40831bebc919",
+    "docs/ratings-evidence-2026-10-29/EXPANDED_ACTION_COHORT_2026_11_14.md": "5e6072730a8e15cd3d342ebfc1cb7fb07ded57b3cbdecf40be50335dc9535223",
+    "docs/ratings-evidence-2026-10-29/PASS_RECOVERY_EVIDENCE_2026_11_16.json": "f9f7cc1cf3fcb4b7d49d5162ea40fad52aac6ac912415492add3c022353d2bcf",
+    "docs/ratings-evidence-2026-10-29/captions/Ckufse6eWsM.en.vtt": "8c08e055dccb3e47385036f7bd2cec4960e1f6cb08b68b9174ca15667d8e50ea",
+    "docs/ratings-evidence-2026-10-29/transcripts/episode8_transcript.txt": "437c8c236940cccd8d17995e50750d9b72d38b957613a566cde7f8fa3fae9d1c",
+    "docs/ratings-evidence-2026-10-29/transcripts/episode5_transcript.txt": "adc94fce68a903c753d11f4c535dd3f95a51d6db875a6442ffcdd090d26b6f9c",
+    "docs/ratings-evidence-2026-10-29/transcripts/episode4_transcript.txt": "c9d69a637cab914c078fcdbff1fb411d7792ea0bcbbdbac9432d3e08d3af694b"
+  },
+  "independence": {
+    "new_backend_outcomes_inspected": false,
+    "backend_implementation_inspected": false,
+    "profile_compilations": 0,
+    "simulations": 0,
+    "production_or_save_writes": 0
+  },
+  "retrieval_limits": [
+    {
+      "url": "https://api-hub-dev.nba.com/news/which-teams-are-creating-and-converting-open-looks-in-the-conference-semifinals",
+      "result": "461 on open; no retry or numeric use from inaccessible body; a different historical article supplied verified counts."
+    },
+    {
+      "source": "current player shot-dashboard search rows",
+      "result": "Not adopted for numeric effects: rounded per-game values and incomplete verified filter/window context; no denominator reconstruction or endpoint campaign."
+    }
+  ],
+  "coverage": "Selected retained clauses and public written definitions/case narrations/tables; no full episode, full video or new experimental outcome review."
+}

@@ -1,0 +1,87 @@
+{
+  "version": "2026-11-10-five-player-scouting-v11",
+  "decision_date": "2026-11-10",
+  "evidence": "docs/ratings-evidence-2026-10-29/FIVE_PLAYER_CALIBRATION_REVIEW.md",
+  "review_sha256": "dd9d5c9db56e6882fd4e9af832dcd2a86313ee528a0def120e031e50be11afc6",
+  "players": [
+    {
+      "name": "Anthony Edwards",
+      "player_id": "player_min-anthony-edwards",
+      "confidence": 0.55,
+      "traits": {
+        "defensive_effort": {
+          "expected": 83.89,
+          "target": 73.89
+        }
+      }
+    },
+    {
+      "name": "Devin Vassell",
+      "player_id": "player_sas-devin-vassell",
+      "confidence": 0.55,
+      "traits": {
+        "shot_versatility": {
+          "expected": 48.36,
+          "target": 52.36
+        },
+        "defensive_effort": {
+          "expected": 81.8,
+          "target": 75.8
+        },
+        "rim_deterrence": {
+          "expected": 68.94,
+          "target": 60.94
+        }
+      }
+    },
+    {
+      "name": "Jalen Duren",
+      "player_id": "player_det-jalen-duren",
+      "confidence": 0.55,
+      "traits": {
+        "rim_deterrence": {
+          "expected": 98.99,
+          "target": 90
+        }
+      }
+    },
+    {
+      "name": "Cedric Coward",
+      "player_id": "player_mem-cedric-coward",
+      "confidence": 0.55,
+      "traits": {
+        "defensive_effort": {
+          "expected": 58.99,
+          "target": 63.99
+        },
+        "rim_deterrence": {
+          "expected": 54.89,
+          "target": 60.89
+        },
+        "scheme_iq": {
+          "expected": 53.25,
+          "target": 56.25
+        }
+      }
+    },
+    {
+      "name": "Kawhi Leonard",
+      "player_id": "player_tor-kawhi-leonard",
+      "confidence": 0.55,
+      "traits": {
+        "shot_versatility": {
+          "expected": 63.89,
+          "target": 67.89
+        },
+        "handle_pressure": {
+          "expected": 74.44,
+          "target": 76.44
+        },
+        "rim_deterrence": {
+          "expected": 89.25,
+          "target": 74.25
+        }
+      }
+    }
+  ]
+}

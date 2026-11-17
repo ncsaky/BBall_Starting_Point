@@ -1,0 +1,183 @@
+{
+  "packet_version": "screen_pop_research_v1_2026_11_15",
+  "sources": {
+    "CE": {
+      "path": "transcripts/episode4_transcript.txt",
+      "published_on": "2026-09-02",
+      "video_id": "CbartUy6cMY",
+      "kind": "user-retained timestamped transcript; targeted passages only this pass"
+    },
+    "T30": {
+      "path": "transcripts/episode3_transcript.txt",
+      "published_on": "2026-09-30",
+      "kind": "user-retained timestamped transcript; targeted passages only this pass"
+    },
+    "T20": {
+      "path": "captions/ZaA4usLpBWI.en.vtt",
+      "published_on": "2026-10-02",
+      "video_id": "ZaA4usLpBWI",
+      "kind": "retained auto-captions; targeted passages only this pass"
+    },
+    "T10": {
+      "path": "captions/J6STkjbVuUg.en.vtt",
+      "published_on": "2026-10-07",
+      "video_id": "J6STkjbVuUg",
+      "kind": "retained auto-captions; targeted passages only this pass"
+    },
+    "TURNER_HISTORY": {
+      "url": "https://www.si.com/nba/2016/12/07/myles-turner-indiana-pacers-nate-mcmillan-the-craft",
+      "published_on": "2016-12-07",
+      "author": "Rob Mahoney",
+      "kind": "original reporting with player/coach explanations; written text reviewed, embedded media not reviewed",
+      "locator": "offense section: screen precision, vision window, passing-lane adjustment",
+      "temporal_limit": "Ten-year-old developmental evidence, not proof of unchanged current execution or body/conditioning."
+    },
+    "HORFORD_HISTORY": {
+      "url": "https://www.celticsblog.com/2023/3/30/23657210/diversify-your-bigs-how-rob-williams-and-al-horford-dictate-boston-celtics-offense",
+      "published_on": "2023-03-30",
+      "author": "Michael Spooner",
+      "kind": "original analyst interpretation of selected actions; written text reviewed, embedded media not reviewed",
+      "locator": "Al on without Rob; Both Rob and Al on",
+      "temporal_limit": "Historical Boston role; older current player and changed team. No 2026 timed release/route measurement."
+    },
+    "JOKIC_HISTORY": {
+      "url": "https://www.nba.com/news/finals-film-study-nuggets-heat-game-3",
+      "published_on": "2023-06-08",
+      "kind": "inherited selected historical written analysis; inherited records preserved",
+      "temporal_limit": "Not a current screening/receiving rate; no new estimates from this lookup."
+    }
+  },
+  "claims": [
+    {
+      "id": "SP01",
+      "player_id": "player_mil-myles-turner",
+      "source": "T10",
+      "window": "03:15:00–03:20:00",
+      "present_evidence": "Indiana loses Turner shooting; he supplied rim protection but poor drop coverage. The same passage credits more speed than Zubac.",
+      "limits": "Spacing does not establish screen contact, release speed, hands or pop choice. Poor drop is not a measured slow-physicals grade.",
+      "shared_group": "turner_2026_spacing"
+    },
+    {
+      "id": "SP02",
+      "player_id": "player_mil-myles-turner",
+      "source": "TURNER_HISTORY",
+      "window": "offense section, paragraphs beginning Change came / In the meantime",
+      "present_evidence": "Historical reporting separates screen angle/legal stop, reading help and relocating into a changing passing window; missed contact and endurance caveats remain.",
+      "limits": "Historical development, not measured 2026 execution; modern spacing supports role continuity only. Current S27, strength and release remain unknown.",
+      "shared_group": "turner_historical_screen_route"
+    },
+    {
+      "id": "SP03",
+      "player_id": "player_nyk-karl-anthony-towns",
+      "source": "CE",
+      "window": "01:20:36–01:22:06;01:24:35–01:25:00",
+      "present_evidence": "Towns praised as elite shooter, specifically catch-and-shoot and deep contested makes, with hub/passing growth.",
+      "limits": "Run sustainability disputed; playoff peak may regress. No isolated reference-mode denominator, preparation time, pop read or legal-screen sample.",
+      "shared_group": "towns_center_shooting"
+    },
+    {
+      "id": "SP04",
+      "player_id": "player_nyk-karl-anthony-towns",
+      "source": "T10",
+      "window": "03:25:17–03:32:25",
+      "present_evidence": "Hub offense credited, but regular-to-playoff jumper and team catch-shoot improvement flagged as regression risk.",
+      "limits": "Speaker statistics unverified; team catch-shoot change is not Towns individual mode accuracy. Weight-loss concern is not measured force.",
+      "shared_group": "towns_team_regression"
+    },
+    {
+      "id": "SP05",
+      "player_id": "player_okc-chet-holmgren",
+      "source": "CE",
+      "window": "01:00:07–01:00:35;01:01:20–01:02:25;01:03:46–01:05:05",
+      "present_evidence": "Holmgren a fluid roller and useful three-point big; slow/low release and contested-shot access criticized in Spurs matchup, despite earlier effective rounds.",
+      "limits": "Catch radius is geometry, not independent hands technique. Neither wing physicality nor offensive collapse diagnoses screen quality. Low release is not a new release-height measurement.",
+      "shared_group": "holmgren_shooting_access"
+    },
+    {
+      "id": "SP06",
+      "player_id": "player_cha-naz-reid",
+      "source": "T30",
+      "window": "00:41:08–00:42:10 (named shooter list 00:41:42–00:41:55)",
+      "present_evidence": "Captioned Nas Reed appears among Charlotte shooters in an expected three-heavy offense.",
+      "limits": "Resolved to canonical Naz Reid by name and team context; broad role evidence only. No catch split, speed, range-extension, route or screening observation; weak team creation may limit opportunities.",
+      "shared_group": "reid_team_spacing"
+    },
+    {
+      "id": "SP07",
+      "player_id": "player_lac-brook-lopez",
+      "source": "T30",
+      "window": "00:16:10–00:16:16;00:19:06–00:19:32;00:26:44–00:26:55",
+      "present_evidence": "Lopez explicitly included in available shooting, with a perimeter-heavy diet and sharply criticized mobility/rim-pressure context.",
+      "limits": "Volume is deployment, not accuracy; rhetorical immobility is not m/s. Size and one historical screen example cannot establish current S27.",
+      "shared_group": "lopez_team_spacing"
+    },
+    {
+      "id": "SP08",
+      "player_id": "player_gsw-al-horford",
+      "source": "T20",
+      "window": "01:28:34–01:29:24;01:34:50–01:35:00",
+      "present_evidence": "Horford described as solid/serviceable with shooting and offensive feel, permitting several frontcourt combinations.",
+      "limits": "Rotational and older-player context. No timed release or named pop observation in this window; team strength praise cannot become measured strength.",
+      "shared_group": "horford_current_fit"
+    },
+    {
+      "id": "SP09",
+      "player_id": "player_gsw-al-horford",
+      "source": "T10",
+      "window": "00:39:25–00:39:37",
+      "present_evidence": "Historical Boston comparison credits Horford catch-and-go decision making rather than an ignorable stationary nonshooter.",
+      "limits": "Historical referent within a 2026 discussion, not a fresh 2026 possession sample. Normal catch/use does not certify difficult-pass reception.",
+      "shared_group": "horford_catch_go"
+    },
+    {
+      "id": "SP10",
+      "player_id": "player_gsw-al-horford",
+      "source": "HORFORD_HISTORY",
+      "window": "Al on without Rob; Both Rob and Al on",
+      "present_evidence": "Analyst distinguishes shooting routes, popping after screens, occasional trap-punishing short rolls and post-catch choices.",
+      "limits": "2023 selected actions; observed Boston preference is not invariant T11. Age/team change prevent a precise 2026 release or contact grade.",
+      "shared_group": "horford_historical_route"
+    },
+    {
+      "id": "SP11",
+      "player_id": "player_den-nikola-jokic",
+      "source": "CE",
+      "window": "01:32:23–01:35:07;01:36:54–01:38:45",
+      "present_evidence": "Historic offense and weak-support carrying argument, countered by a poor Minnesota series and Gobert matchup.",
+      "limits": "Does not isolate reference catch three, range extension or pop route; preserve existing historical screen/receiving estimates without inventing current shooting.",
+      "shared_group": "jokic_inherited_context"
+    },
+    {
+      "id": "SP12",
+      "player_id": "player_sas-victor-wembanyama",
+      "source": "CE",
+      "window": "01:35:07–01:36:54;01:38:45–01:45:37",
+      "present_evidence": "Strong offense and extraordinary rim threat, but finishing/polish and space-switching limitations; substantial further-growth language.",
+      "limits": "Paint gravity is not proof of pop threat. Preserve tentative inherited S01; projection and height do not establish hands, screening or route reads.",
+      "shared_group": "wembanyama_inherited_context"
+    }
+  ],
+  "coverage": "Targeted source windows only this pass; prior full-extraction coverage is inherited, not claimed as new audiovisual review.",
+  "speaker_policy": "unidentified/local turns; no persistent cross-episode identity assignment",
+  "lookup_log": {
+    "search_rounds": 2,
+    "broad_acquisition": false,
+    "failed": [
+      {
+        "url": "https://api-hub.nba.com/news/film-study-damian-lillard-bucks-2023",
+        "status": "461 on open; no retry; snippet example not used for numerical screening grade"
+      }
+    ],
+    "limited": [
+      {
+        "url": "https://www.nba.com/pacers/news/turner-shooting-at-both-record-volume-and-efficiency",
+        "status": "search snippet only; body no readable lines; exact publication date not established; no new estimate depends on it"
+      },
+      {
+        "url": "https://www.nba.com/warriors/videos/horford-pick-and-pop-three-film-study",
+        "status": "title only, no audiovisual content reviewed; no grade or event date taken from title"
+      }
+    ],
+    "rejected": "Paywalled Patreon/current post-start content, unrelated defensive-screen results and social comments not used. No subscriptions, repeated blocked requests or video downloads."
+  }
+}

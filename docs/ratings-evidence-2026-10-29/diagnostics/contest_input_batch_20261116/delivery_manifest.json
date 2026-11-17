@@ -1,0 +1,41 @@
+{
+  "date": "2026-11-16",
+  "status": "DELIVERED",
+  "packet_version": "contest_input_batch_v1_2026_11_16",
+  "files": [
+    {
+      "path": "docs/ratings-evidence-2026-10-29/CONTEST_INPUT_BATCH_2026_11_16.md",
+      "sha256": "a1fd5345bfeb7b47b11dac761d237010f26c519b0705518d9a6c519a8a60d2b3"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/CONTEST_INPUT_BATCH_2026_11_16.json",
+      "sha256": "ec42a198c091c59e3b07f7e836a732b519c82331486048de8fe52fab01315233"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/CONTEST_INPUT_BATCH_ACTIVE_TASK.md",
+      "sha256": "4cc3d98febbcb0a685db6b4df1c87a873cf673214e1c3527692516839e9e5d87"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/contest_input_batch_20261116/lineage_ledger.json",
+      "sha256": "3f6f2be2fdbea8f087ebacecd96104fed5d80765504609e9764b8555a24aae8e"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/contest_input_batch_20261116/validation.json",
+      "sha256": "0c61430b87524094a109df24f3614ba5db222d30366bbd18959c622efb92a5b4"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/contest_input_batch_20261116/build_packet.py",
+      "sha256": "d57b84d2b8562593d1e1df7bd7e9d6b6e779569f9a3a45516bce3659687b6427"
+    },
+    {
+      "path": "docs/ratings-evidence-2026-10-29/diagnostics/contest_input_batch_20261116/validate_delivery.py",
+      "sha256": "bbdb8c24622dc8b86fa47bbc6fa1a1f3a1d8f20cc66fed9170b07fb2764ab8fc"
+    }
+  ],
+  "new_unknown_cell_proposals": 9,
+  "inherited_supported_records_unchanged": 104,
+  "production_or_save_writes": 0,
+  "simulations": 0,
+  "profile_compilations": 0,
+  "new_backend_outcomes_inspected": false
+}

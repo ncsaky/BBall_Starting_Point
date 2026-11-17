@@ -1,0 +1,33 @@
+NBA GM Sandbox @VERSION@ - private friends-and-family beta
+Windows 11, Intel/AMD x64. Windows ARM64 and Windows 10 are not verified.
+
+1. Right-click the ZIP and choose Extract All. Keep the entire extracted folder,
+   including _internal. Do not run inside the ZIP or move only the EXE.
+2. Open NBA GM Sandbox, then double-click NBA GM Sandbox.exe.
+3. The control window opens your default browser to a local address. Keep the
+   control window open while playing. Open Browser reopens the game.
+4. Use Stop Server & Quit (or close the control window) when finished. Let any
+   active save operation finish; do not force-stop the process.
+
+No Python, Git, Node, ffmpeg, administrator access or internet connection is
+required to play. Optional external services may not be available offline.
+The save-screen video, artwork and league data are bundled with this download.
+
+This private beta is unsigned. Windows may warn about an unrecognized app.
+Only launch a download received directly from the developer whose SHA-256
+matches the supplied checksum. Do not disable antivirus or security settings.
+If your PC blocks it, send the exact warning to the developer.
+
+Your saves are outside the application folder:
+  %LOCALAPPDATA%\NBA GM Sandbox\saves
+Startup logs:
+  %LOCALAPPDATA%\NBA GM Sandbox\logs\launcher.log
+Show Saves opens the save folder. Replacing the extracted application folder
+does not delete these saves. Back up through Settings > Save Recovery before
+upgrading. Backups include the game history; copying only JSON is incomplete.
+
+Report Issue in the save screen or Settings exports a local report for sharing
+with the developer. Nothing is uploaded automatically. Include the game
+version, what you clicked, what happened, and what you expected.
+
+Hosted public multiplayer and broad public release are not included here.

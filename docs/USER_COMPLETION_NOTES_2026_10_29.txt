@@ -1,0 +1,75 @@
+Issues not addressed
+
+Table consistency: 
+* Tables that need to allow sorting: 
+* Tables that need to highlight which row under mouse hover when the user mouse hovers:
+* Tables that need alternating white vs slightly more grey white in rows:
+* Tables that need the column sorted by to be slightly more greyed in:
+* Tables that need unified bar widths and unified unfilled under-bar grey darkness selected:
+
+Minutes + Availability table
+Player development table
+Coaching Staff tables
+Standings table
+Next opponent table
+
+Card gallery card preview fixing
+
+Tab switcher icons
+
+Make player active injury impact on OVR more clear that it is not the players usual overall. Inserting small red text number + a down arrow next to impacted ratings in my mind would do the trick if done right in the correct locations, like all the tables that player and those ratings appear in
+
+Yearly recap/pre-season projection and breakdown slideshow. Stat leaders, award winners, standings at close, user team stats/awards (like MVP of the team), biggest trade of the season, biggest coaching change of the season, top 5 or 10 upcoming free agents. Pre season can have continuity graph showing: Bar segmented by minutes played total in the past season, and those cells filled in green if that player is returning or red if they are not returning. We can show all teams at the same time on one slide. At a glance users can see which team has the highest retention from the previous season. Also a pre-season power rankings. Maybe show the previous seasons stat leaders, upcoming prospect card, the contract card maybe? Idk come up with a few ideas. This is a fun space for presenting interesting, relevant graphics. We could even call these like Assistant GM Briefs Slideshows. 
+
+During the playoffs maybe another card to have popup could be active injuries, that could be good. Just another table type card sorted by ovr and including OVR and OFF and DEF bars. 
+
+Fix next opponent cards animation - after the L or W animation occurs, we need to switch to the next opponent after that, we can’t stay there. 
+
+Make valuation breakdowns clearer 
+Make player development net growth and potential vs upside clearer
+- Maybe for these two we introduce a second set of tutorial that begins when you open the trading cards to explain all this, and maybe opens the development card as well to show more in the tutorial. 
+
+Player adjustments: 
+* Do broad NerdSesh transcript analysis and roster tuning based on that input
+* Fix Dame’s contract
+* Improve Dylan Harper’s OVR
+* Sochan overrated
+* Luka underrated
+My best idea for a systematic broad sweep to establish final ratings: Have you read the transcripts of Nerdsesh podcasts on rankings of players, prospects, and teams. Have you listen to the multiple voices debate or agree on different rankings, and hear their reasons why, and extrapolate their player rankings and rating best estimates, and derive the rest of the league around those and our engine/system, as well as listen in for queues as to how our system may be lacking/what we are doing well. Account for their style of language and content when doing this. Ensure to compare against our league system and calibration and everything, this should be more of a large player ratings pass than a massive system rework, but we keep our eyes open for nuggets of golden wisdom/glaring inconsistencies. Here are the minimum required readings for this:  https://youtu.be/J6STkjbVuUg?si=qgUBq12e0nHk7pBj
+https://youtu.be/ZaA4usLpBWI?si=QpnPYkd-BTKC2CIh
+https://youtu.be/vVDXaHsdGg0?si=hU1m1Cchml7dNjAt
+https://youtu.be/CbartUy6cMY?si=ZA5cZt1R-gI2F8Zt
+https://youtu.be/gPMNkhjEt6I?si=0UtYeA0HMIep8IXJ
+https://youtu.be/HM0tNscRN4k?si=C8e-k-WEHyOboQsB
+https://youtu.be/Ckufse6eWsM?si=FKi41m6jD23vr0ny
+https://youtu.be/RUElsf_z3uw?si=zjCvccfYYWJRgctO
+https://youtu.be/1lrrgBJ_Am0?si=LgTuL9XRjiVWMzFa
+https://youtu.be/80HR9WEQLGY?si=1FPEa01ujJl3Khve
+https://youtu.be/xZMVSPmcQKE?si=WVlsAYb_YicOVmuH 
+
+
+Bars should use positional average marker, not league average marker, for rating bars. Seen in: 
+- Player cards for prospects during the draft. 
+
+Free agency must be redone UI/UX design wise and card wise and everything, currently it’s awful. 
+
+Fix Playoff league leaders card. Should become “Playoff Stats” card that is just a table sorted by playoff league leaders in points, but has sorting capabilities for whichever field. Important to have our table styling preferences: Double border header separation, header in small bold text, alternating rows in background color, highlighting entire row when mouse hover (not just individual cell or text), highlighting cell of the column being sorted by, headshots in rows with bottom of headshot at the bottom of the row, top of the headshot extending to the top of the row. Look at our many other tables for very close inspiration. This table should also appear automatically when the playoffs start, alongside the minutes + availability table
+
+Fix button activation: any length of time pause between s + [m or e or w] should still work the same, until something else is clicked
+
+Reverse the ordering of the draft lottery: the 1: should be in the top left while the 14: should be in the bottom right
+
+Prospect board card during draft night needs rework to match game style and exactly match the extended upcoming prospects card from the regular season, just enlarged. Draft night cards also need to be centered and layed out nicely together on popup.
+
+The “fit” metric needs to be investigated and thought about 
+
+The draft should have a little animation for every player that gets picked. 
+
+The AI drafting logic is way too random too early. Maybe AI GMs aren’t accounting for the players that are still available and how good a dropping player is? I remember we put in a lot of work to make the draft more random ages ago, so I don’t want to lose all that, but it seems too random and unpredictable now. Maybe it just feels random because AI GMs seem to mostly pick off Potential, but the prospect rankings are not mainly potential based? This leads back to needing to understand upside and potential better and if these concepts overlap too much. Maybe its actually not too random at all, im looking at it and it sorted out to the top 7/8 were picked from the top 8 ranked, only one team went insane. Okay yeah this draft was nuts the one im playing right now. The 2nd ranked prospect with 96 POT and 80 NOW just fell to 15th…, so much falling, so much confusion on where these decisions are even coming from. After more examination, it might be the case that the GMs are actually making great selections, our rankings are just absurd. Are our rankings based on just our scouts knowledge or like a big board ranking? I feel like both should exist. 
+
+Did you make injury history for prospects in the draft? I believe you did. That should be visible in the draft prospect board as well. 
+
+Mandatory roster cutdown card needs to be redone UI wise design wise
+
+
+

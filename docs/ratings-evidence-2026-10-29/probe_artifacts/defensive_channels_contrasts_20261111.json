@@ -1,0 +1,3185 @@
+{
+  "capture_date": "2026-11-11",
+  "canonical_version": "2026-11-10-five-player-scouting-v11",
+  "canonical_sha256": "dd993731ab5411066ea1f8d7e7053e9718deefa08758f5f51a274a3aef1a8e31",
+  "uses_prior_14_player_snapshot": "defensive_role_input_snapshot_20261111.json",
+  "contrasts": [
+    {
+      "player": {
+        "id": "player_nyk-jalen-brunson",
+        "name": "Jalen Brunson",
+        "normalized_name": "jalen brunson",
+        "slug": "jalen-brunson",
+        "team_id": "team_nyk",
+        "team_abbrev": "NYK",
+        "position": "PG",
+        "age": 30.0,
+        "birthdate": "1996-08-31",
+        "height_inches": 74.0,
+        "weight_lbs": 190.0,
+        "wingspan_inches": 76.0,
+        "minutes_projection": 34.9,
+        "prior_minutes": 2301.0,
+        "primary_off_role": "Primary Ball Handler",
+        "secondary_off_role": "Movement Ball Handler",
+        "primary_def_role": "Hidden",
+        "sim_eligible_raw": true,
+        "missing_critical_fields": [],
+        "critical_field_fallbacks": {},
+        "rotation_priority": "core_rotation",
+        "source_ids": [
+          "src_player_skill_input_2025_26",
+          "src_nba_official_rosters_2026_10_13",
+          "src_espn_nba_player_profiles"
+        ],
+        "espn_player_id": "3934672",
+        "espn_profile_url": "https://www.espn.com/nba/player/_/id/3934672/jalen-brunson",
+        "headshot_url": "https://a.espncdn.com/i/headshots/nba/players/full/3934672.png",
+        "headshot_url_source": "espn_core_athlete_profile",
+        "headshot_rights_status": "reference_only_not_cleared",
+        "headshot_asset_path": null,
+        "draft_year": 2018,
+        "draft_round": 2,
+        "draft_position": 33,
+        "draft_status": "drafted",
+        "current_ability": null,
+        "potential": null
+      },
+      "defensive_traits": [
+        {
+          "id": "trait_player-nyk-jalen-brunson-foot-speed-lateral-agility",
+          "player_id": "player_nyk-jalen-brunson",
+          "trait_key": "foot_speed_lateral_agility",
+          "label": "Foot Speed / Lateral Agility",
+          "value": 68.79,
+          "confidence": 0.732,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Low-confidence proxy from defensive playmaking, defensive impact, versatility rating, and defensive role. Manual calibration is preferred for known foot-speed outliers. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "VersatilityRating",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              14.484126984126984,
+              35.17786561264822,
+              45.6953642384106,
+              30.828516377649326
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Jalen Brunson",
+              "csv_team": "NYK",
+              "csv_rank": 13,
+              "csv_column": "FootSpeed",
+              "csv_value": 65.0,
+              "previous_value": 31.22,
+              "engine_target": 78.36,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 51.0,
+                  "engine_target": 67.03,
+                  "previous_composite": 60.55,
+                  "applied_delta": 1.94
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 89.0,
+                  "engine_target": 67.99,
+                  "previous_composite": 75.3,
+                  "applied_delta": -1.17
+                }
+              ],
+              "final_value": 68.76,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_nyk-jalen-brunson",
+              "pre_refresh_inferred_value": 68.76,
+              "preserved_value": 68.79
+            }
+          }
+        },
+        {
+          "id": "trait_player-nyk-jalen-brunson-stamina-cardio",
+          "player_id": "player_nyk-jalen-brunson",
+          "trait_key": "stamina_cardio",
+          "label": "Stamina / Cardio",
+          "value": 66.14,
+          "confidence": 0.732,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from projected minutes, prior minutes, and movement-heavy offensive role. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "minutes",
+              "2025minutes",
+              "primaryOffRole"
+            ],
+            "components": [
+              96.0,
+              92.73422562141491,
+              0.0
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Jalen Brunson",
+              "csv_team": "NYK",
+              "csv_rank": 13,
+              "csv_column": "Stamina",
+              "csv_value": 90.0,
+              "previous_value": 62.91,
+              "engine_target": 65.68,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "REB",
+                  "csv_value": 33.0,
+                  "engine_target": 53.39,
+                  "previous_composite": 40.51,
+                  "applied_delta": 2.24
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 89.0,
+                  "engine_target": 67.99,
+                  "previous_composite": 75.3,
+                  "applied_delta": -1.17
+                }
+              ],
+              "final_value": 66.14,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_nyk-jalen-brunson",
+              "pre_refresh_inferred_value": 66.14,
+              "preserved_value": 66.14
+            }
+          }
+        },
+        {
+          "id": "trait_player-nyk-jalen-brunson-defensive-effort",
+          "player_id": "player_nyk-jalen-brunson",
+          "trait_key": "defensive_effort",
+          "label": "Defensive Effort",
+          "value": 65.2,
+          "confidence": 0.74,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from event creation, defensive impact, and defensive role. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              14.484126984126984,
+              35.17786561264822,
+              30.828516377649326
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Jalen Brunson",
+              "csv_team": "NYK",
+              "csv_rank": 13,
+              "csv_column": "DefensiveEffort",
+              "csv_value": 55.0,
+              "previous_value": 26.83,
+              "engine_target": 74.99,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 51.0,
+                  "engine_target": 67.03,
+                  "previous_composite": 60.55,
+                  "applied_delta": 1.94
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 89.0,
+                  "engine_target": 67.99,
+                  "previous_composite": 75.3,
+                  "applied_delta": -1.17
+                }
+              ],
+              "final_value": 65.17,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_nyk-jalen-brunson",
+              "pre_refresh_inferred_value": 65.17,
+              "preserved_value": 65.2
+            }
+          }
+        },
+        {
+          "id": "trait_player-nyk-jalen-brunson-scheme-iq",
+          "player_id": "player_nyk-jalen-brunson",
+          "trait_key": "scheme_iq",
+          "label": "Scheme IQ",
+          "value": 78.05,
+          "confidence": 0.732,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from existing basketball-IQ input, passing reads, defensive impact, and role responsibility. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "BBallIQ",
+              "passerRating",
+              "CraftedDPM",
+              "role"
+            ],
+            "components": [
+              70.0,
+              74.33264887063655,
+              30.828516377649326
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Jalen Brunson",
+              "csv_team": "NYK",
+              "csv_rank": 13,
+              "csv_column": "SchemeIQ",
+              "csv_value": 75.0,
+              "previous_value": 66.39,
+              "engine_target": 80.31,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 51.0,
+                  "engine_target": 67.03,
+                  "previous_composite": 60.55,
+                  "applied_delta": 1.94
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 89.0,
+                  "engine_target": 67.99,
+                  "previous_composite": 75.3,
+                  "applied_delta": -1.17
+                }
+              ],
+              "final_value": 78.02,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_nyk-jalen-brunson",
+              "pre_refresh_inferred_value": 78.02,
+              "preserved_value": 78.05
+            }
+          }
+        },
+        {
+          "id": "trait_player-nyk-jalen-brunson-rim-deterrence",
+          "player_id": "player_nyk-jalen-brunson",
+          "trait_key": "rim_deterrence",
+          "label": "Rim Deterrence",
+          "value": 42.86,
+          "confidence": 0.82,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred primarily from block rate and height, with smaller defensive-impact support. This intentionally separates rim deterrence from broad all-in-one defensive value. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "BLKpct",
+              "CraftedDPM",
+              "DARKO",
+              "HeightSocks",
+              "primaryDefRole"
+            ],
+            "components": [
+              14.82213438735178,
+              8.8,
+              30.828516377649326,
+              95.91439688715953
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Jalen Brunson",
+              "csv_team": "NYK",
+              "csv_rank": 13,
+              "csv_column": "RimDeterrence",
+              "csv_value": 25.0,
+              "previous_value": 20.64,
+              "engine_target": 45.52,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 51.0,
+                  "engine_target": 67.03,
+                  "previous_composite": 60.55,
+                  "applied_delta": 1.94
+                },
+                {
+                  "column": "REB",
+                  "csv_value": 33.0,
+                  "engine_target": 53.39,
+                  "previous_composite": 40.51,
+                  "applied_delta": 2.24
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 89.0,
+                  "engine_target": 67.99,
+                  "previous_composite": 75.3,
+                  "applied_delta": -1.17
+                }
+              ],
+              "final_value": 43.05,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_nyk-jalen-brunson",
+              "pre_refresh_inferred_value": 43.05,
+              "preserved_value": 42.86
+            }
+          }
+        },
+        {
+          "id": "trait_player-nyk-jalen-brunson-screen-navigation",
+          "player_id": "player_nyk-jalen-brunson",
+          "trait_key": "screen_navigation",
+          "label": "Screen Navigation",
+          "value": 61.33,
+          "confidence": 0.732,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Low-confidence proxy from guard/wing defensive role, activity, and versatility. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "VersatilityRating",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              14.484126984126984,
+              35.17786561264822,
+              45.6953642384106,
+              30.828516377649326
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Jalen Brunson",
+              "csv_team": "NYK",
+              "csv_rank": 13,
+              "csv_column": "ScreenNavigation",
+              "csv_value": 50.0,
+              "previous_value": 30.92,
+              "engine_target": 68.89,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 51.0,
+                  "engine_target": 67.03,
+                  "previous_composite": 60.55,
+                  "applied_delta": 1.94
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 89.0,
+                  "engine_target": 67.99,
+                  "previous_composite": 75.3,
+                  "applied_delta": -1.17
+                }
+              ],
+              "final_value": 61.3,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_nyk-jalen-brunson",
+              "pre_refresh_inferred_value": 61.3,
+              "preserved_value": 61.33
+            }
+          }
+        }
+      ],
+      "raw_selected": {
+        "GP": "57.0",
+        "minutes": 34.9,
+        "primaryDefRole": "Hidden",
+        "primaryOffRole": "Primary Ball Handler",
+        "roleSource": "role_workbook",
+        "defRoleFeaturesUsed": 0,
+        "BLKpct": "0.3",
+        "DEFLECTIONS": "1.4",
+        "STLpct": "1.3",
+        "CraftedDPM": "-0.2 46%",
+        "DARKO": "2.6",
+        "HeightSocks": 73,
+        "MatchupDifficulty": "34.7",
+        "VersatilityRating": "46.6"
+      }
+    },
+    {
+      "player": {
+        "id": "player_okc-cason-wallace",
+        "name": "Cason Wallace",
+        "normalized_name": "cason wallace",
+        "slug": "cason-wallace",
+        "team_id": "team_okc",
+        "team_abbrev": "OKC",
+        "position": "PG",
+        "age": 22.0,
+        "birthdate": "2003-11-07",
+        "height_inches": 75.0,
+        "weight_lbs": 195.0,
+        "wingspan_inches": 80.5,
+        "minutes_projection": 27.3,
+        "prior_minutes": 1876.0,
+        "primary_off_role": "Secondary Ball Handler",
+        "secondary_off_role": "Movement Ball Handler",
+        "primary_def_role": "Disruptor",
+        "sim_eligible_raw": false,
+        "missing_critical_fields": [
+          "touches"
+        ],
+        "critical_field_fallbacks": {
+          "touches": {
+            "value": 1350.5,
+            "confidence": 0.42,
+            "method": "role_minutes_touch_proxy",
+            "notes": "Estimated from projected minutes, offensive role, and offensive-load proxy when available.",
+            "source_ids": [
+              "src_player_skill_input_2025_26",
+              "src_critical_field_fallback_method_v1"
+            ]
+          }
+        },
+        "rotation_priority": "rotation",
+        "source_ids": [
+          "src_player_skill_input_2025_26",
+          "src_nba_official_rosters_2026_10_13",
+          "src_espn_nba_player_profiles"
+        ],
+        "espn_player_id": "4683692",
+        "espn_profile_url": "https://www.espn.com/nba/player/_/id/4683692/cason-wallace",
+        "headshot_url": "https://a.espncdn.com/i/headshots/nba/players/full/4683692.png",
+        "headshot_url_source": "espn_core_athlete_profile",
+        "headshot_rights_status": "reference_only_not_cleared",
+        "headshot_asset_path": null,
+        "draft_year": 2023,
+        "draft_round": 1,
+        "draft_position": 10,
+        "draft_status": "drafted",
+        "current_ability": 62.23,
+        "potential": 73.48
+      },
+      "defensive_traits": [
+        {
+          "id": "trait_player-okc-cason-wallace-foot-speed-lateral-agility",
+          "player_id": "player_okc-cason-wallace",
+          "trait_key": "foot_speed_lateral_agility",
+          "label": "Foot Speed / Lateral Agility",
+          "value": 96.13,
+          "confidence": 0.71,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Low-confidence proxy from defensive playmaking, defensive impact, versatility rating, and defensive role. Manual calibration is preferred for known foot-speed outliers. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "VersatilityRating",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              88.69047619047619,
+              91.50197628458498,
+              66.4459161147903,
+              96.91714836223507
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Cason Wallace",
+              "csv_team": "OKC",
+              "csv_rank": 51,
+              "csv_column": "FootSpeed",
+              "csv_value": 90.0,
+              "previous_value": 96.94,
+              "engine_target": 100.0,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 75.0,
+                  "engine_target": 79.46,
+                  "previous_composite": 85.74,
+                  "applied_delta": -1.88
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 77.0,
+                  "engine_target": 61.83,
+                  "previous_composite": 68.59,
+                  "applied_delta": -1.08
+                }
+              ],
+              "final_value": 96.06,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_okc-cason-wallace",
+              "pre_refresh_inferred_value": 96.06,
+              "preserved_value": 96.13
+            }
+          }
+        },
+        {
+          "id": "trait_player-okc-cason-wallace-stamina-cardio",
+          "player_id": "player_okc-cason-wallace",
+          "trait_key": "stamina_cardio",
+          "label": "Stamina / Cardio",
+          "value": 60.41,
+          "confidence": 0.71,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from projected minutes, prior minutes, and movement-heavy offensive role. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "minutes",
+              "2025minutes",
+              "primaryOffRole"
+            ],
+            "components": [
+              72.38095238095238,
+              79.54110898661568,
+              0.0
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Cason Wallace",
+              "csv_team": "OKC",
+              "csv_rank": 51,
+              "csv_column": "Stamina",
+              "csv_value": 85.0,
+              "previous_value": 50.64,
+              "engine_target": 63.31,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "REB",
+                  "csv_value": 34.0,
+                  "engine_target": 55.95,
+                  "previous_composite": 45.92,
+                  "applied_delta": 2.24
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 77.0,
+                  "engine_target": 61.83,
+                  "previous_composite": 68.59,
+                  "applied_delta": -1.08
+                }
+              ],
+              "final_value": 60.41,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_okc-cason-wallace",
+              "pre_refresh_inferred_value": 60.41,
+              "preserved_value": 60.41
+            }
+          }
+        },
+        {
+          "id": "trait_player-okc-cason-wallace-defensive-effort",
+          "player_id": "player_okc-cason-wallace",
+          "trait_key": "defensive_effort",
+          "label": "Defensive Effort",
+          "value": 97.11,
+          "confidence": 0.74,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from event creation, defensive impact, and defensive role. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              88.69047619047619,
+              91.50197628458498,
+              96.91714836223507
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Cason Wallace",
+              "csv_team": "OKC",
+              "csv_rank": 51,
+              "csv_column": "DefensiveEffort",
+              "csv_value": 92.0,
+              "previous_value": 100.0,
+              "engine_target": 100.0,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 75.0,
+                  "engine_target": 79.46,
+                  "previous_composite": 85.74,
+                  "applied_delta": -1.88
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 77.0,
+                  "engine_target": 61.83,
+                  "previous_composite": 68.59,
+                  "applied_delta": -1.08
+                }
+              ],
+              "final_value": 97.04,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_okc-cason-wallace",
+              "pre_refresh_inferred_value": 97.04,
+              "preserved_value": 97.11
+            }
+          }
+        },
+        {
+          "id": "trait_player-okc-cason-wallace-scheme-iq",
+          "player_id": "player_okc-cason-wallace",
+          "trait_key": "scheme_iq",
+          "label": "Scheme IQ",
+          "value": 79.72,
+          "confidence": 0.71,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from existing basketball-IQ input, passing reads, defensive impact, and role responsibility. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "BBallIQ",
+              "passerRating",
+              "CraftedDPM",
+              "role"
+            ],
+            "components": [
+              64.0,
+              60.57494866529774,
+              96.91714836223507
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Cason Wallace",
+              "csv_team": "OKC",
+              "csv_rank": 51,
+              "csv_column": "SchemeIQ",
+              "csv_value": 82.0,
+              "previous_value": 73.83,
+              "engine_target": 86.74,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 75.0,
+                  "engine_target": 79.46,
+                  "previous_composite": 85.74,
+                  "applied_delta": -1.88
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 77.0,
+                  "engine_target": 61.83,
+                  "previous_composite": 68.59,
+                  "applied_delta": -1.08
+                }
+              ],
+              "final_value": 79.65,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_okc-cason-wallace",
+              "pre_refresh_inferred_value": 79.65,
+              "preserved_value": 79.72
+            }
+          }
+        },
+        {
+          "id": "trait_player-okc-cason-wallace-rim-deterrence",
+          "player_id": "player_okc-cason-wallace",
+          "trait_key": "rim_deterrence",
+          "label": "Rim Deterrence",
+          "value": 61.12,
+          "confidence": 0.82,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred primarily from block rate and height, with smaller defensive-impact support. This intentionally separates rim deterrence from broad all-in-one defensive value. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "BLKpct",
+              "CraftedDPM",
+              "DARKO",
+              "HeightSocks",
+              "primaryDefRole"
+            ],
+            "components": [
+              67.58893280632411,
+              14.6,
+              96.91714836223507,
+              85.60311284046692
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Cason Wallace",
+              "csv_team": "OKC",
+              "csv_rank": 51,
+              "csv_column": "RimDeterrence",
+              "csv_value": 35.0,
+              "previous_value": 60.35,
+              "engine_target": 61.98,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 75.0,
+                  "engine_target": 79.46,
+                  "previous_composite": 85.74,
+                  "applied_delta": -1.88
+                },
+                {
+                  "column": "REB",
+                  "csv_value": 34.0,
+                  "engine_target": 55.95,
+                  "previous_composite": 45.92,
+                  "applied_delta": 2.24
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 77.0,
+                  "engine_target": 61.83,
+                  "previous_composite": 68.59,
+                  "applied_delta": -1.08
+                }
+              ],
+              "final_value": 60.74,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_okc-cason-wallace",
+              "pre_refresh_inferred_value": 60.74,
+              "preserved_value": 61.12
+            }
+          }
+        },
+        {
+          "id": "trait_player-okc-cason-wallace-screen-navigation",
+          "player_id": "player_okc-cason-wallace",
+          "trait_key": "screen_navigation",
+          "label": "Screen Navigation",
+          "value": 96.01,
+          "confidence": 0.71,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Low-confidence proxy from guard/wing defensive role, activity, and versatility. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "VersatilityRating",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              88.69047619047619,
+              91.50197628458498,
+              66.4459161147903,
+              96.91714836223507
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Cason Wallace",
+              "csv_team": "OKC",
+              "csv_rank": 51,
+              "csv_column": "ScreenNavigation",
+              "csv_value": 92.0,
+              "previous_value": 96.55,
+              "engine_target": 100.0,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 75.0,
+                  "engine_target": 79.46,
+                  "previous_composite": 85.74,
+                  "applied_delta": -1.88
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 77.0,
+                  "engine_target": 61.83,
+                  "previous_composite": 68.59,
+                  "applied_delta": -1.08
+                }
+              ],
+              "final_value": 95.94,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_okc-cason-wallace",
+              "pre_refresh_inferred_value": 95.94,
+              "preserved_value": 96.01
+            }
+          }
+        }
+      ],
+      "raw_selected": {
+        "GP": "60.0",
+        "minutes": 27.3,
+        "primaryDefRole": "Disruptor",
+        "primaryOffRole": "Secondary Ball Handler",
+        "roleSource": "role_workbook",
+        "defRoleFeaturesUsed": 0,
+        "BLKpct": "2.0",
+        "DEFLECTIONS": "4.7",
+        "STLpct": "3.1",
+        "CraftedDPM": "2.5 97%",
+        "DARKO": "1.2",
+        "HeightSocks": 74.5,
+        "MatchupDifficulty": "77.7",
+        "VersatilityRating": "66.5"
+      }
+    },
+    {
+      "player": {
+        "id": "player_mia-davion-mitchell",
+        "name": "Davion Mitchell",
+        "normalized_name": "davion mitchell",
+        "slug": "davion-mitchell",
+        "team_id": "team_mia",
+        "team_abbrev": "MIA",
+        "position": "PG",
+        "age": 28.0,
+        "birthdate": "1998-09-05",
+        "height_inches": 72.0,
+        "weight_lbs": 200.0,
+        "wingspan_inches": 76.25,
+        "minutes_projection": 28.3,
+        "prior_minutes": 2027.0,
+        "primary_off_role": "Primary Ball Handler",
+        "secondary_off_role": "Secondary Ball Handler",
+        "primary_def_role": "On-Ball Guard",
+        "sim_eligible_raw": true,
+        "missing_critical_fields": [],
+        "critical_field_fallbacks": {},
+        "rotation_priority": "core_rotation",
+        "source_ids": [
+          "src_player_skill_input_2025_26",
+          "src_nba_official_rosters_2026_10_13",
+          "src_espn_nba_player_profiles"
+        ],
+        "espn_player_id": "4278053",
+        "espn_profile_url": "https://www.espn.com/nba/player/_/id/4278053/davion-mitchell",
+        "headshot_url": "https://a.espncdn.com/i/headshots/nba/players/full/4278053.png",
+        "headshot_url_source": "espn_core_athlete_profile",
+        "headshot_rights_status": "reference_only_not_cleared",
+        "headshot_asset_path": null,
+        "draft_year": 2021,
+        "draft_round": 1,
+        "draft_position": 9,
+        "draft_status": "drafted",
+        "current_ability": null,
+        "potential": null
+      },
+      "defensive_traits": [
+        {
+          "id": "trait_player-mia-davion-mitchell-foot-speed-lateral-agility",
+          "player_id": "player_mia-davion-mitchell",
+          "trait_key": "foot_speed_lateral_agility",
+          "label": "Foot Speed / Lateral Agility",
+          "value": 70.14,
+          "confidence": 0.732,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Low-confidence proxy from defensive playmaking, defensive impact, versatility rating, and defensive role. Manual calibration is preferred for known foot-speed outliers. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "VersatilityRating",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              41.86507936507937,
+              50.59288537549407,
+              27.373068432671083,
+              42.19653179190752
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Davion Mitchell",
+              "csv_team": "MIA",
+              "csv_rank": 137,
+              "csv_column": "FootSpeed",
+              "csv_value": 63.0,
+              "previous_value": 50.87,
+              "engine_target": 76.14,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 58.0,
+                  "engine_target": 70.41,
+                  "previous_composite": 70.69,
+                  "applied_delta": -0.09
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 58.0,
+                  "engine_target": 55.13,
+                  "previous_composite": 57.97,
+                  "applied_delta": -0.45
+                }
+              ],
+              "final_value": 70.04,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_mia-davion-mitchell",
+              "pre_refresh_inferred_value": 70.04,
+              "preserved_value": 70.14
+            }
+          }
+        },
+        {
+          "id": "trait_player-mia-davion-mitchell-stamina-cardio",
+          "player_id": "player_mia-davion-mitchell",
+          "trait_key": "stamina_cardio",
+          "label": "Stamina / Cardio",
+          "value": 51.74,
+          "confidence": 0.732,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from projected minutes, prior minutes, and movement-heavy offensive role. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "minutes",
+              "2025minutes",
+              "primaryOffRole"
+            ],
+            "components": [
+              76.57142857142857,
+              83.74760994263862,
+              0.0
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Davion Mitchell",
+              "csv_team": "MIA",
+              "csv_rank": 137,
+              "csv_column": "Stamina",
+              "csv_value": 55.0,
+              "previous_value": 53.44,
+              "engine_target": 49.57,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "REB",
+                  "csv_value": 35.0,
+                  "engine_target": 57.05,
+                  "previous_composite": 50.58,
+                  "applied_delta": 1.81
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 58.0,
+                  "engine_target": 55.13,
+                  "previous_composite": 57.97,
+                  "applied_delta": -0.45
+                }
+              ],
+              "final_value": 51.78,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_mia-davion-mitchell",
+              "pre_refresh_inferred_value": 51.78,
+              "preserved_value": 51.74
+            }
+          }
+        },
+        {
+          "id": "trait_player-mia-davion-mitchell-defensive-effort",
+          "player_id": "player_mia-davion-mitchell",
+          "trait_key": "defensive_effort",
+          "label": "Defensive Effort",
+          "value": 80.08,
+          "confidence": 0.74,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from event creation, defensive impact, and defensive role. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              41.86507936507937,
+              50.59288537549407,
+              42.19653179190752
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Davion Mitchell",
+              "csv_team": "MIA",
+              "csv_rank": 137,
+              "csv_column": "DefensiveEffort",
+              "csv_value": 71.0,
+              "previous_value": 56.88,
+              "engine_target": 87.19,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 58.0,
+                  "engine_target": 70.41,
+                  "previous_composite": 70.69,
+                  "applied_delta": -0.09
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 58.0,
+                  "engine_target": 55.13,
+                  "previous_composite": 57.97,
+                  "applied_delta": -0.45
+                }
+              ],
+              "final_value": 79.98,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_mia-davion-mitchell",
+              "pre_refresh_inferred_value": 79.98,
+              "preserved_value": 80.08
+            }
+          }
+        },
+        {
+          "id": "trait_player-mia-davion-mitchell-scheme-iq",
+          "player_id": "player_mia-davion-mitchell",
+          "trait_key": "scheme_iq",
+          "label": "Scheme IQ",
+          "value": 70.0,
+          "confidence": 0.732,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from existing basketball-IQ input, passing reads, defensive impact, and role responsibility. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "BBallIQ",
+              "passerRating",
+              "CraftedDPM",
+              "role"
+            ],
+            "components": [
+              51.0,
+              99.38398357289527,
+              42.19653179190752
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Davion Mitchell",
+              "csv_team": "MIA",
+              "csv_rank": 137,
+              "csv_column": "SchemeIQ",
+              "csv_value": 58.0,
+              "previous_value": 72.19,
+              "engine_target": 69.95,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 58.0,
+                  "engine_target": 70.41,
+                  "previous_composite": 70.69,
+                  "applied_delta": -0.09
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 58.0,
+                  "engine_target": 55.13,
+                  "previous_composite": 57.97,
+                  "applied_delta": -0.45
+                }
+              ],
+              "final_value": 69.9,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_mia-davion-mitchell",
+              "pre_refresh_inferred_value": 69.9,
+              "preserved_value": 70.0
+            }
+          }
+        },
+        {
+          "id": "trait_player-mia-davion-mitchell-rim-deterrence",
+          "player_id": "player_mia-davion-mitchell",
+          "trait_key": "rim_deterrence",
+          "label": "Rim Deterrence",
+          "value": 60.92,
+          "confidence": 0.82,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred primarily from block rate and height, with smaller defensive-impact support. This intentionally separates rim deterrence from broad all-in-one defensive value. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "BLKpct",
+              "CraftedDPM",
+              "DARKO",
+              "HeightSocks",
+              "primaryDefRole"
+            ],
+            "components": [
+              28.85375494071146,
+              1.8,
+              42.19653179190752,
+              71.98443579766537
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Davion Mitchell",
+              "csv_team": "MIA",
+              "csv_rank": 137,
+              "csv_column": "RimDeterrence",
+              "csv_value": 39.0,
+              "previous_value": 26.95,
+              "engine_target": 67.68,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 58.0,
+                  "engine_target": 70.41,
+                  "previous_composite": 70.69,
+                  "applied_delta": -0.09
+                },
+                {
+                  "column": "REB",
+                  "csv_value": 35.0,
+                  "engine_target": 57.05,
+                  "previous_composite": 50.58,
+                  "applied_delta": 1.81
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 58.0,
+                  "engine_target": 55.13,
+                  "previous_composite": 57.97,
+                  "applied_delta": -0.45
+                }
+              ],
+              "final_value": 59.99,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_mia-davion-mitchell",
+              "pre_refresh_inferred_value": 59.99,
+              "preserved_value": 60.92
+            }
+          }
+        },
+        {
+          "id": "trait_player-mia-davion-mitchell-screen-navigation",
+          "player_id": "player_mia-davion-mitchell",
+          "trait_key": "screen_navigation",
+          "label": "Screen Navigation",
+          "value": 72.66,
+          "confidence": 0.732,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Low-confidence proxy from guard/wing defensive role, activity, and versatility. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "VersatilityRating",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              41.86507936507937,
+              50.59288537549407,
+              27.373068432671083,
+              42.19653179190752
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Davion Mitchell",
+              "csv_team": "MIA",
+              "csv_rank": 137,
+              "csv_column": "ScreenNavigation",
+              "csv_value": 65.0,
+              "previous_value": 50.17,
+              "engine_target": 79.57,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 58.0,
+                  "engine_target": 70.41,
+                  "previous_composite": 70.69,
+                  "applied_delta": -0.09
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 58.0,
+                  "engine_target": 55.13,
+                  "previous_composite": 57.97,
+                  "applied_delta": -0.45
+                }
+              ],
+              "final_value": 72.56,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_mia-davion-mitchell",
+              "pre_refresh_inferred_value": 72.56,
+              "preserved_value": 72.66
+            }
+          }
+        }
+      ],
+      "raw_selected": {
+        "GP": "51.0",
+        "minutes": 28.3,
+        "primaryDefRole": "On-Ball Guard",
+        "primaryOffRole": "Primary Ball Handler",
+        "roleSource": "role_workbook",
+        "defRoleFeaturesUsed": 0,
+        "BLKpct": "0.7",
+        "DEFLECTIONS": "2.3",
+        "STLpct": "1.6",
+        "CraftedDPM": "0 55%",
+        "DARKO": "0.2",
+        "HeightSocks": 72,
+        "MatchupDifficulty": "87.0",
+        "VersatilityRating": "27.6"
+      }
+    },
+    {
+      "player": {
+        "id": "player_okc-alex-caruso",
+        "name": "Alex Caruso",
+        "normalized_name": "alex caruso",
+        "slug": "alex-caruso",
+        "team_id": "team_okc",
+        "team_abbrev": "OKC",
+        "position": "PG",
+        "age": 32.0,
+        "birthdate": "1994-02-28",
+        "height_inches": 77.0,
+        "weight_lbs": 186.0,
+        "wingspan_inches": 78.0,
+        "minutes_projection": 18.5,
+        "prior_minutes": 1041.0,
+        "primary_off_role": "Spot Up Shooter",
+        "secondary_off_role": "Secondary Ball Handler",
+        "primary_def_role": "Disruptor",
+        "sim_eligible_raw": true,
+        "missing_critical_fields": [],
+        "critical_field_fallbacks": {},
+        "rotation_priority": "rotation",
+        "source_ids": [
+          "src_player_skill_input_2025_26",
+          "src_nba_official_rosters_2026_10_13",
+          "src_espn_nba_player_profiles"
+        ],
+        "espn_player_id": "2991350",
+        "espn_profile_url": "https://www.espn.com/nba/player/_/id/2991350/alex-caruso",
+        "headshot_url": "https://a.espncdn.com/i/headshots/nba/players/full/2991350.png",
+        "headshot_url_source": "espn_core_athlete_profile",
+        "headshot_rights_status": "reference_only_not_cleared",
+        "headshot_asset_path": null,
+        "draft_year": null,
+        "draft_round": null,
+        "draft_position": null,
+        "draft_status": "undrafted",
+        "current_ability": null,
+        "potential": null
+      },
+      "defensive_traits": [
+        {
+          "id": "trait_player-okc-alex-caruso-foot-speed-lateral-agility",
+          "player_id": "player_okc-alex-caruso",
+          "trait_key": "foot_speed_lateral_agility",
+          "label": "Foot Speed / Lateral Agility",
+          "value": 92.0,
+          "confidence": 0.8,
+          "source_kind": "inferred_trait_model_v1_with_manual_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved",
+            "src_manual_overrides_2025_26"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Point-of-attack and chase defense should remain elite.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "VersatilityRating",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              96.23015873015873,
+              98.02371541501977,
+              99.55849889624724,
+              73.41040462427746
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Alex Caruso",
+              "csv_team": "OKC",
+              "csv_rank": 124,
+              "csv_column": "FootSpeed",
+              "csv_value": 69.0,
+              "previous_value": 100.0,
+              "engine_target": 81.31,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 61.0,
+                  "engine_target": 73.11,
+                  "previous_composite": 80.08,
+                  "applied_delta": -2.09
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 60.0,
+                  "engine_target": 56.57,
+                  "previous_composite": 60.48,
+                  "applied_delta": -0.63
+                }
+              ],
+              "final_value": 84.57,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_okc-alex-caruso",
+              "pre_refresh_inferred_value": 84.57,
+              "preserved_value": 92.0
+            },
+            "manual_calibration": {
+              "player_name": "Alex Caruso",
+              "previous_value": 92.0,
+              "override_value": 92.0,
+              "notes": "Point-of-attack and chase defense should remain elite."
+            }
+          }
+        },
+        {
+          "id": "trait_player-okc-alex-caruso-stamina-cardio",
+          "player_id": "player_okc-alex-caruso",
+          "trait_key": "stamina_cardio",
+          "label": "Stamina / Cardio",
+          "value": 45.08,
+          "confidence": 0.71,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from projected minutes, prior minutes, and movement-heavy offensive role. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "minutes",
+              "2025minutes",
+              "primaryOffRole"
+            ],
+            "components": [
+              44.95238095238095,
+              51.62523900573614,
+              0.0
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Alex Caruso",
+              "csv_team": "OKC",
+              "csv_rank": 124,
+              "csv_column": "Stamina",
+              "csv_value": 55.0,
+              "previous_value": 32.19,
+              "engine_target": 49.57,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "REB",
+                  "csv_value": 36.0,
+                  "engine_target": 59.75,
+                  "previous_composite": 53.73,
+                  "applied_delta": 1.69
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 60.0,
+                  "engine_target": 56.57,
+                  "previous_composite": 60.48,
+                  "applied_delta": -0.63
+                }
+              ],
+              "final_value": 45.07,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_okc-alex-caruso",
+              "pre_refresh_inferred_value": 45.07,
+              "preserved_value": 45.08
+            }
+          }
+        },
+        {
+          "id": "trait_player-okc-alex-caruso-defensive-effort",
+          "player_id": "player_okc-alex-caruso",
+          "trait_key": "defensive_effort",
+          "label": "Defensive Effort",
+          "value": 95.0,
+          "confidence": 0.84,
+          "source_kind": "inferred_trait_model_v1_with_manual_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved",
+            "src_manual_overrides_2025_26"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Elite disruption, effort, and possession-value defender.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              96.23015873015873,
+              98.02371541501977,
+              73.41040462427746
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Alex Caruso",
+              "csv_team": "OKC",
+              "csv_rank": 124,
+              "csv_column": "DefensiveEffort",
+              "csv_value": 72.0,
+              "previous_value": 100.0,
+              "engine_target": 88.54,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 61.0,
+                  "engine_target": 73.11,
+                  "previous_composite": 80.08,
+                  "applied_delta": -2.09
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 60.0,
+                  "engine_target": 56.57,
+                  "previous_composite": 60.48,
+                  "applied_delta": -0.63
+                }
+              ],
+              "final_value": 89.49,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_okc-alex-caruso",
+              "pre_refresh_inferred_value": 89.49,
+              "preserved_value": 95.0
+            },
+            "manual_calibration": {
+              "player_name": "Alex Caruso",
+              "previous_value": 95.0,
+              "override_value": 95.0,
+              "notes": "Elite disruption, effort, and possession-value defender."
+            }
+          }
+        },
+        {
+          "id": "trait_player-okc-alex-caruso-scheme-iq",
+          "player_id": "player_okc-alex-caruso",
+          "trait_key": "scheme_iq",
+          "label": "Scheme IQ",
+          "value": 88.0,
+          "confidence": 0.78,
+          "source_kind": "inferred_trait_model_v1_with_manual_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved",
+            "src_manual_overrides_2025_26"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "High processing speed and team-defense awareness.",
+          "components": {
+            "fields": [
+              "BBallIQ",
+              "passerRating",
+              "CraftedDPM",
+              "role"
+            ],
+            "components": [
+              94.0,
+              67.14579055441479,
+              73.41040462427746
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Alex Caruso",
+              "csv_team": "OKC",
+              "csv_rank": 124,
+              "csv_column": "SchemeIQ",
+              "csv_value": 61.0,
+              "previous_value": 78.19,
+              "engine_target": 73.83,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 61.0,
+                  "engine_target": 73.11,
+                  "previous_composite": 80.08,
+                  "applied_delta": -2.09
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 60.0,
+                  "engine_target": 56.57,
+                  "previous_composite": 60.48,
+                  "applied_delta": -0.63
+                }
+              ],
+              "final_value": 72.5,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_okc-alex-caruso",
+              "pre_refresh_inferred_value": 72.5,
+              "preserved_value": 88.0
+            },
+            "manual_calibration": {
+              "player_name": "Alex Caruso",
+              "previous_value": 88.0,
+              "override_value": 88.0,
+              "notes": "High processing speed and team-defense awareness."
+            }
+          }
+        },
+        {
+          "id": "trait_player-okc-alex-caruso-rim-deterrence",
+          "player_id": "player_okc-alex-caruso",
+          "trait_key": "rim_deterrence",
+          "label": "Rim Deterrence",
+          "value": 61.84,
+          "confidence": 0.82,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred primarily from block rate and height, with smaller defensive-impact support. This intentionally separates rim deterrence from broad all-in-one defensive value. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "BLKpct",
+              "CraftedDPM",
+              "DARKO",
+              "HeightSocks",
+              "primaryDefRole"
+            ],
+            "components": [
+              58.89328063241107,
+              35.6,
+              73.41040462427746,
+              94.74708171206225
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Alex Caruso",
+              "csv_team": "OKC",
+              "csv_rank": 124,
+              "csv_column": "RimDeterrence",
+              "csv_value": 38.0,
+              "previous_value": 57.63,
+              "engine_target": 65.85,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 61.0,
+                  "engine_target": 73.11,
+                  "previous_composite": 80.08,
+                  "applied_delta": -2.09
+                },
+                {
+                  "column": "REB",
+                  "csv_value": 36.0,
+                  "engine_target": 59.75,
+                  "previous_composite": 53.73,
+                  "applied_delta": 1.69
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 60.0,
+                  "engine_target": 56.57,
+                  "previous_composite": 60.48,
+                  "applied_delta": -0.63
+                }
+              ],
+              "final_value": 62.19,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_okc-alex-caruso",
+              "pre_refresh_inferred_value": 62.19,
+              "preserved_value": 61.84
+            }
+          }
+        },
+        {
+          "id": "trait_player-okc-alex-caruso-screen-navigation",
+          "player_id": "player_okc-alex-caruso",
+          "trait_key": "screen_navigation",
+          "label": "Screen Navigation",
+          "value": 94.0,
+          "confidence": 0.82,
+          "source_kind": "inferred_trait_model_v1_with_manual_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved",
+            "src_manual_overrides_2025_26"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "One of the league's best screen navigators and action disruptors.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "VersatilityRating",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              96.23015873015873,
+              98.02371541501977,
+              99.55849889624724,
+              73.41040462427746
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Alex Caruso",
+              "csv_team": "OKC",
+              "csv_rank": 124,
+              "csv_column": "ScreenNavigation",
+              "csv_value": 72.0,
+              "previous_value": 99.02,
+              "engine_target": 85.3,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 61.0,
+                  "engine_target": 73.11,
+                  "previous_composite": 80.08,
+                  "applied_delta": -2.09
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 60.0,
+                  "engine_target": 56.57,
+                  "previous_composite": 60.48,
+                  "applied_delta": -0.63
+                }
+              ],
+              "final_value": 86.97,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_okc-alex-caruso",
+              "pre_refresh_inferred_value": 86.97,
+              "preserved_value": 94.0
+            },
+            "manual_calibration": {
+              "player_name": "Alex Caruso",
+              "previous_value": 94.0,
+              "override_value": 94.0,
+              "notes": "One of the league's best screen navigators and action disruptors."
+            }
+          }
+        }
+      ],
+      "raw_selected": {
+        "GP": "42.0",
+        "minutes": 18.5,
+        "primaryDefRole": "Disruptor",
+        "primaryOffRole": "Spot Up Shooter",
+        "roleSource": "role_workbook",
+        "defRoleFeaturesUsed": 0,
+        "BLKpct": "1.7",
+        "DEFLECTIONS": "5.9",
+        "STLpct": "4.5",
+        "CraftedDPM": "0.9 77%",
+        "DARKO": "2.4",
+        "HeightSocks": 76,
+        "MatchupDifficulty": "75.2",
+        "VersatilityRating": "99.5"
+      }
+    },
+    {
+      "player": {
+        "id": "player_cle-jarrett-allen",
+        "name": "Jarrett Allen",
+        "normalized_name": "jarrett allen",
+        "slug": "jarrett-allen",
+        "team_id": "team_cle",
+        "team_abbrev": "CLE",
+        "position": "C",
+        "age": 28.0,
+        "birthdate": "1998-04-21",
+        "height_inches": 81.0,
+        "weight_lbs": 243.0,
+        "wingspan_inches": 89.25,
+        "minutes_projection": 27.5,
+        "prior_minutes": 2296.0,
+        "primary_off_role": "Rollman",
+        "secondary_off_role": "Versatile Big",
+        "primary_def_role": "Rim Protector",
+        "sim_eligible_raw": true,
+        "missing_critical_fields": [],
+        "critical_field_fallbacks": {},
+        "rotation_priority": "rotation",
+        "source_ids": [
+          "src_player_skill_input_2025_26",
+          "src_nba_official_rosters_2026_10_13",
+          "src_espn_nba_player_profiles"
+        ],
+        "espn_player_id": "4066328",
+        "espn_profile_url": "https://www.espn.com/nba/player/_/id/4066328/jarrett-allen",
+        "headshot_url": "https://a.espncdn.com/i/headshots/nba/players/full/4066328.png",
+        "headshot_url_source": "espn_core_athlete_profile",
+        "headshot_rights_status": "reference_only_not_cleared",
+        "headshot_asset_path": null,
+        "draft_year": 2017,
+        "draft_round": 1,
+        "draft_position": 22,
+        "draft_status": "drafted",
+        "current_ability": null,
+        "potential": null
+      },
+      "defensive_traits": [
+        {
+          "id": "trait_player-cle-jarrett-allen-foot-speed-lateral-agility",
+          "player_id": "player_cle-jarrett-allen",
+          "trait_key": "foot_speed_lateral_agility",
+          "label": "Foot Speed / Lateral Agility",
+          "value": 59.36,
+          "confidence": 0.71,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Low-confidence proxy from defensive playmaking, defensive impact, versatility rating, and defensive role. Manual calibration is preferred for known foot-speed outliers. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "VersatilityRating",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              92.85714285714286,
+              87.35177865612648,
+              2.4282560706401766,
+              19.653179190751445
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Jarrett Allen",
+              "csv_team": "CLE",
+              "csv_rank": 60,
+              "csv_column": "FootSpeed",
+              "csv_value": 46.0,
+              "previous_value": 49.68,
+              "engine_target": 63.59,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 81.0,
+                  "engine_target": 82.72,
+                  "previous_composite": 83.11,
+                  "applied_delta": -0.12
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 76.0,
+                  "engine_target": 61.68,
+                  "previous_composite": 60.19,
+                  "applied_delta": 0.24
+                }
+              ],
+              "final_value": 59.26,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_cle-jarrett-allen",
+              "pre_refresh_inferred_value": 59.26,
+              "preserved_value": 59.36
+            }
+          }
+        },
+        {
+          "id": "trait_player-cle-jarrett-allen-stamina-cardio",
+          "player_id": "player_cle-jarrett-allen",
+          "trait_key": "stamina_cardio",
+          "label": "Stamina / Cardio",
+          "value": 57.65,
+          "confidence": 0.71,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from projected minutes, prior minutes, and movement-heavy offensive role. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "minutes",
+              "2025minutes",
+              "primaryOffRole"
+            ],
+            "components": [
+              72.95238095238095,
+              92.35181644359464,
+              0.0
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Jarrett Allen",
+              "csv_team": "CLE",
+              "csv_rank": 60,
+              "csv_column": "Stamina",
+              "csv_value": 72.0,
+              "previous_value": 55.1,
+              "engine_target": 58.53,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "OVR",
+                  "csv_value": 76.0,
+                  "engine_target": 61.68,
+                  "previous_composite": 60.19,
+                  "applied_delta": 0.24
+                }
+              ],
+              "final_value": 57.67,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_cle-jarrett-allen",
+              "pre_refresh_inferred_value": 57.67,
+              "preserved_value": 57.65
+            }
+          }
+        },
+        {
+          "id": "trait_player-cle-jarrett-allen-defensive-effort",
+          "player_id": "player_cle-jarrett-allen",
+          "trait_key": "defensive_effort",
+          "label": "Defensive Effort",
+          "value": 89.54,
+          "confidence": 0.74,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from event creation, defensive impact, and defensive role. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              92.85714285714286,
+              87.35177865612648,
+              19.653179190751445
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Jarrett Allen",
+              "csv_team": "CLE",
+              "csv_rank": 60,
+              "csv_column": "DefensiveEffort",
+              "csv_value": 85.0,
+              "previous_value": 66.62,
+              "engine_target": 100.0,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 81.0,
+                  "engine_target": 82.72,
+                  "previous_composite": 83.11,
+                  "applied_delta": -0.12
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 76.0,
+                  "engine_target": 61.68,
+                  "previous_composite": 60.19,
+                  "applied_delta": 0.24
+                }
+              ],
+              "final_value": 89.44,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_cle-jarrett-allen",
+              "pre_refresh_inferred_value": 89.44,
+              "preserved_value": 89.54
+            }
+          }
+        },
+        {
+          "id": "trait_player-cle-jarrett-allen-scheme-iq",
+          "player_id": "player_cle-jarrett-allen",
+          "trait_key": "scheme_iq",
+          "label": "Scheme IQ",
+          "value": 78.15,
+          "confidence": 0.71,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from existing basketball-IQ input, passing reads, defensive impact, and role responsibility. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "BBallIQ",
+              "passerRating",
+              "CraftedDPM",
+              "role"
+            ],
+            "components": [
+              87.0,
+              27.104722792607802,
+              19.653179190751445
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Jarrett Allen",
+              "csv_team": "CLE",
+              "csv_rank": 60,
+              "csv_column": "SchemeIQ",
+              "csv_value": 87.0,
+              "previous_value": 52.59,
+              "engine_target": 89.85,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 81.0,
+                  "engine_target": 82.72,
+                  "previous_composite": 83.11,
+                  "applied_delta": -0.12
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 76.0,
+                  "engine_target": 61.68,
+                  "previous_composite": 60.19,
+                  "applied_delta": 0.24
+                }
+              ],
+              "final_value": 78.05,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_cle-jarrett-allen",
+              "pre_refresh_inferred_value": 78.05,
+              "preserved_value": 78.15
+            }
+          }
+        },
+        {
+          "id": "trait_player-cle-jarrett-allen-rim-deterrence",
+          "player_id": "player_cle-jarrett-allen",
+          "trait_key": "rim_deterrence",
+          "label": "Rim Deterrence",
+          "value": 96.82,
+          "confidence": 0.82,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred primarily from block rate and height, with smaller defensive-impact support. This intentionally separates rim deterrence from broad all-in-one defensive value. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "BLKpct",
+              "CraftedDPM",
+              "DARKO",
+              "HeightSocks",
+              "primaryDefRole"
+            ],
+            "components": [
+              83.39920948616601,
+              73.0,
+              19.653179190751445,
+              96.3035019455253
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Jarrett Allen",
+              "csv_team": "CLE",
+              "csv_rank": 60,
+              "csv_column": "RimDeterrence",
+              "csv_value": 91.0,
+              "previous_value": 88.12,
+              "engine_target": 100.0,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 81.0,
+                  "engine_target": 82.72,
+                  "previous_composite": 83.11,
+                  "applied_delta": -0.12
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 76.0,
+                  "engine_target": 61.68,
+                  "previous_composite": 60.19,
+                  "applied_delta": 0.24
+                }
+              ],
+              "final_value": 96.32,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_cle-jarrett-allen",
+              "pre_refresh_inferred_value": 96.32,
+              "preserved_value": 96.82
+            }
+          }
+        },
+        {
+          "id": "trait_player-cle-jarrett-allen-screen-navigation",
+          "player_id": "player_cle-jarrett-allen",
+          "trait_key": "screen_navigation",
+          "label": "Screen Navigation",
+          "value": 69.21,
+          "confidence": 0.71,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Low-confidence proxy from guard/wing defensive role, activity, and versatility. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "VersatilityRating",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              92.85714285714286,
+              87.35177865612648,
+              2.4282560706401766,
+              19.653179190751445
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Jarrett Allen",
+              "csv_team": "CLE",
+              "csv_rank": 60,
+              "csv_column": "ScreenNavigation",
+              "csv_value": 62.0,
+              "previous_value": 50.02,
+              "engine_target": 77.91,
+              "blend_weight": 0.68,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 81.0,
+                  "engine_target": 82.72,
+                  "previous_composite": 83.11,
+                  "applied_delta": -0.12
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 76.0,
+                  "engine_target": 61.68,
+                  "previous_composite": 60.19,
+                  "applied_delta": 0.24
+                }
+              ],
+              "final_value": 69.11,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_cle-jarrett-allen",
+              "pre_refresh_inferred_value": 69.11,
+              "preserved_value": 69.21
+            }
+          }
+        }
+      ],
+      "raw_selected": {
+        "GP": "51.0",
+        "minutes": 27.5,
+        "primaryDefRole": "Rim Protector",
+        "primaryOffRole": "Rollman",
+        "roleSource": "role_workbook",
+        "defRoleFeaturesUsed": 0,
+        "BLKpct": "3.5",
+        "DEFLECTIONS": "5.3",
+        "STLpct": "2.8",
+        "CraftedDPM": "-0.4 37%",
+        "DARKO": "2.7",
+        "HeightSocks": 81,
+        "MatchupDifficulty": "39.5",
+        "VersatilityRating": "2.7"
+      }
+    },
+    {
+      "player": {
+        "id": "player_lal-walker-kessler",
+        "name": "Walker Kessler",
+        "normalized_name": "walker kessler",
+        "slug": "walker-kessler",
+        "team_id": "team_lal",
+        "team_abbrev": "LAL",
+        "position": "C",
+        "age": 25.0,
+        "birthdate": "2001-07-26",
+        "height_inches": 86.0,
+        "weight_lbs": 245.0,
+        "wingspan_inches": 88.25,
+        "minutes_projection": 30.8,
+        "prior_minutes": 1740.0,
+        "primary_off_role": "Connector",
+        "secondary_off_role": null,
+        "primary_def_role": "Rim Protector",
+        "sim_eligible_raw": true,
+        "missing_critical_fields": [],
+        "critical_field_fallbacks": {},
+        "rotation_priority": "core_rotation",
+        "source_ids": [
+          "src_player_skill_input_2025_26",
+          "src_nba_official_rosters_2026_10_13",
+          "src_espn_nba_player_profiles"
+        ],
+        "espn_player_id": "4433136",
+        "espn_profile_url": "https://www.espn.com/nba/player/_/id/4433136/walker-kessler",
+        "headshot_url": "https://a.espncdn.com/i/headshots/nba/players/full/4433136.png",
+        "headshot_url_source": "espn_core_athlete_profile",
+        "headshot_rights_status": "reference_only_not_cleared",
+        "headshot_asset_path": null,
+        "draft_year": 2022,
+        "draft_round": 1,
+        "draft_position": 22,
+        "draft_status": "drafted",
+        "current_ability": 57.53,
+        "potential": 61.03
+      },
+      "defensive_traits": [
+        {
+          "id": "trait_player-lal-walker-kessler-foot-speed-lateral-agility",
+          "player_id": "player_lal-walker-kessler",
+          "trait_key": "foot_speed_lateral_agility",
+          "label": "Foot Speed / Lateral Agility",
+          "value": 60.15,
+          "confidence": 0.732,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Low-confidence proxy from defensive playmaking, defensive impact, versatility rating, and defensive role. Manual calibration is preferred for known foot-speed outliers. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "VersatilityRating",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              78.57142857142857,
+              73.51778656126483,
+              9.713024282560706,
+              58.959537572254334
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Walker Kessler",
+              "csv_team": "UTA",
+              "csv_rank": 86,
+              "csv_column": "FootSpeed",
+              "csv_value": 45.0,
+              "previous_value": 56.33,
+              "engine_target": 63.15,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 72.0,
+                  "engine_target": 78.27,
+                  "previous_composite": 83.27,
+                  "applied_delta": -1.5
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 66.0,
+                  "engine_target": 59.2,
+                  "previous_composite": 60.06,
+                  "applied_delta": -0.14
+                }
+              ],
+              "final_value": 60.01,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_lal-walker-kessler",
+              "pre_refresh_inferred_value": 60.01,
+              "preserved_value": 60.15
+            }
+          }
+        },
+        {
+          "id": "trait_player-lal-walker-kessler-stamina-cardio",
+          "player_id": "player_lal-walker-kessler",
+          "trait_key": "stamina_cardio",
+          "label": "Stamina / Cardio",
+          "value": 53.32,
+          "confidence": 0.732,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from projected minutes, prior minutes, and movement-heavy offensive role. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "minutes",
+              "2025minutes",
+              "primaryOffRole"
+            ],
+            "components": [
+              85.14285714285714,
+              73.9961759082218,
+              0.0
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Walker Kessler",
+              "csv_team": "UTA",
+              "csv_rank": 86,
+              "csv_column": "Stamina",
+              "csv_value": 62.0,
+              "previous_value": 53.05,
+              "engine_target": 54.95,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "REB",
+                  "csv_value": 72.0,
+                  "engine_target": 88.15,
+                  "previous_composite": 91.81,
+                  "applied_delta": -1.02
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 66.0,
+                  "engine_target": 59.2,
+                  "previous_composite": 60.06,
+                  "applied_delta": -0.14
+                }
+              ],
+              "final_value": 53.37,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_lal-walker-kessler",
+              "pre_refresh_inferred_value": 53.37,
+              "preserved_value": 53.32
+            }
+          }
+        },
+        {
+          "id": "trait_player-lal-walker-kessler-defensive-effort",
+          "player_id": "player_lal-walker-kessler",
+          "trait_key": "defensive_effort",
+          "label": "Defensive Effort",
+          "value": 85.78,
+          "confidence": 0.74,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from event creation, defensive impact, and defensive role. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              78.57142857142857,
+              73.51778656126483,
+              58.959537572254334
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Walker Kessler",
+              "csv_team": "UTA",
+              "csv_rank": 86,
+              "csv_column": "DefensiveEffort",
+              "csv_value": 77.0,
+              "previous_value": 70.35,
+              "engine_target": 92.06,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 72.0,
+                  "engine_target": 78.27,
+                  "previous_composite": 83.27,
+                  "applied_delta": -1.5
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 66.0,
+                  "engine_target": 59.2,
+                  "previous_composite": 60.06,
+                  "applied_delta": -0.14
+                }
+              ],
+              "final_value": 85.64,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_lal-walker-kessler",
+              "pre_refresh_inferred_value": 85.64,
+              "preserved_value": 85.78
+            }
+          }
+        },
+        {
+          "id": "trait_player-lal-walker-kessler-scheme-iq",
+          "player_id": "player_lal-walker-kessler",
+          "trait_key": "scheme_iq",
+          "label": "Scheme IQ",
+          "value": 74.67,
+          "confidence": 0.732,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from existing basketball-IQ input, passing reads, defensive impact, and role responsibility. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "BBallIQ",
+              "passerRating",
+              "CraftedDPM",
+              "role"
+            ],
+            "components": [
+              58.0,
+              49.89733059548254,
+              58.959537572254334
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Walker Kessler",
+              "csv_team": "UTA",
+              "csv_rank": 86,
+              "csv_column": "SchemeIQ",
+              "csv_value": 74.0,
+              "previous_value": 63.62,
+              "engine_target": 79.71,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 72.0,
+                  "engine_target": 78.27,
+                  "previous_composite": 83.27,
+                  "applied_delta": -1.5
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 66.0,
+                  "engine_target": 59.2,
+                  "previous_composite": 60.06,
+                  "applied_delta": -0.14
+                }
+              ],
+              "final_value": 74.53,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_lal-walker-kessler",
+              "pre_refresh_inferred_value": 74.53,
+              "preserved_value": 74.67
+            }
+          }
+        },
+        {
+          "id": "trait_player-lal-walker-kessler-rim-deterrence",
+          "player_id": "player_lal-walker-kessler",
+          "trait_key": "rim_deterrence",
+          "label": "Rim Deterrence",
+          "value": 97.43,
+          "confidence": 0.82,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred primarily from block rate and height, with smaller defensive-impact support. This intentionally separates rim deterrence from broad all-in-one defensive value. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "BLKpct",
+              "CraftedDPM",
+              "DARKO",
+              "HeightSocks",
+              "primaryDefRole"
+            ],
+            "components": [
+              95.25691699604744,
+              99.4,
+              58.959537572254334,
+              79.1828793774319
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Walker Kessler",
+              "csv_team": "UTA",
+              "csv_rank": 86,
+              "csv_column": "RimDeterrence",
+              "csv_value": 81.0,
+              "previous_value": 100.0,
+              "engine_target": 100.0,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 72.0,
+                  "engine_target": 78.27,
+                  "previous_composite": 83.27,
+                  "applied_delta": -1.5
+                },
+                {
+                  "column": "REB",
+                  "csv_value": 72.0,
+                  "engine_target": 88.15,
+                  "previous_composite": 91.81,
+                  "applied_delta": -1.02
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 66.0,
+                  "engine_target": 59.2,
+                  "previous_composite": 60.06,
+                  "applied_delta": -0.14
+                }
+              ],
+              "final_value": 97.34,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_lal-walker-kessler",
+              "pre_refresh_inferred_value": 97.34,
+              "preserved_value": 97.43
+            }
+          }
+        },
+        {
+          "id": "trait_player-lal-walker-kessler-screen-navigation",
+          "player_id": "player_lal-walker-kessler",
+          "trait_key": "screen_navigation",
+          "label": "Screen Navigation",
+          "value": 68.12,
+          "confidence": 0.732,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Low-confidence proxy from guard/wing defensive role, activity, and versatility. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "VersatilityRating",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              78.57142857142857,
+              73.51778656126483,
+              9.713024282560706,
+              58.959537572254334
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Walker Kessler",
+              "csv_team": "UTA",
+              "csv_rank": 86,
+              "csv_column": "ScreenNavigation",
+              "csv_value": 55.0,
+              "previous_value": 57.31,
+              "engine_target": 73.09,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 72.0,
+                  "engine_target": 78.27,
+                  "previous_composite": 83.27,
+                  "applied_delta": -1.5
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 66.0,
+                  "engine_target": 59.2,
+                  "previous_composite": 60.06,
+                  "applied_delta": -0.14
+                }
+              ],
+              "final_value": 67.98,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_lal-walker-kessler",
+              "pre_refresh_inferred_value": 67.98,
+              "preserved_value": 68.12
+            }
+          }
+        }
+      ],
+      "raw_selected": {
+        "GP": "5.0",
+        "minutes": 30.8,
+        "primaryDefRole": "Rim Protector",
+        "primaryOffRole": "Connector",
+        "roleSource": "centroid_assignment",
+        "defRoleFeaturesUsed": 7,
+        "BLKpct": "5.7",
+        "DEFLECTIONS": "3.7",
+        "STLpct": "2.1",
+        "CraftedDPM": "0.4 66%",
+        "DARKO": "0.6",
+        "HeightSocks": 84.25,
+        "MatchupDifficulty": "61.0",
+        "VersatilityRating": "10.0"
+      }
+    },
+    {
+      "player": {
+        "id": "player_orl-paolo-banchero",
+        "name": "Paolo Banchero",
+        "normalized_name": "paolo banchero",
+        "slug": "paolo-banchero",
+        "team_id": "team_orl",
+        "team_abbrev": "ORL",
+        "position": "PF",
+        "age": 23.0,
+        "birthdate": "2002-11-12",
+        "height_inches": 82.0,
+        "weight_lbs": 250.0,
+        "wingspan_inches": 84.5,
+        "minutes_projection": 34.8,
+        "prior_minutes": 1582.0,
+        "primary_off_role": "Primary Ball Handler",
+        "secondary_off_role": "Secondary Ball Handler",
+        "primary_def_role": "Mobile Forward",
+        "sim_eligible_raw": true,
+        "missing_critical_fields": [],
+        "critical_field_fallbacks": {},
+        "rotation_priority": "core_rotation",
+        "source_ids": [
+          "src_player_skill_input_2025_26",
+          "src_nba_official_rosters_2026_10_13",
+          "src_espn_nba_player_profiles"
+        ],
+        "espn_player_id": "4432573",
+        "espn_profile_url": "https://www.espn.com/nba/player/_/id/4432573/paolo-banchero",
+        "headshot_url": "https://a.espncdn.com/i/headshots/nba/players/full/4432573.png",
+        "headshot_url_source": "espn_core_athlete_profile",
+        "headshot_rights_status": "reference_only_not_cleared",
+        "headshot_asset_path": null,
+        "draft_year": 2022,
+        "draft_round": 1,
+        "draft_position": 1,
+        "draft_status": "drafted",
+        "current_ability": 61.87,
+        "potential": 72.87
+      },
+      "defensive_traits": [
+        {
+          "id": "trait_player-orl-paolo-banchero-foot-speed-lateral-agility",
+          "player_id": "player_orl-paolo-banchero",
+          "trait_key": "foot_speed_lateral_agility",
+          "label": "Foot Speed / Lateral Agility",
+          "value": 69.75,
+          "confidence": 0.732,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Low-confidence proxy from defensive playmaking, defensive impact, versatility rating, and defensive role. Manual calibration is preferred for known foot-speed outliers. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "VersatilityRating",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              14.880952380952381,
+              31.027667984189723,
+              28.2560706401766,
+              14.45086705202312
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Paolo Banchero",
+              "csv_team": "ORL",
+              "csv_rank": 29,
+              "csv_column": "FootSpeed",
+              "csv_value": 70.0,
+              "previous_value": 25.57,
+              "engine_target": 82.85,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 62.0,
+                  "engine_target": 73.24,
+                  "previous_composite": 72.46,
+                  "applied_delta": 0.23
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 83.0,
+                  "engine_target": 64.8,
+                  "previous_composite": 70.17,
+                  "applied_delta": -0.86
+                }
+              ],
+              "final_value": 69.62,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_orl-paolo-banchero",
+              "pre_refresh_inferred_value": 69.62,
+              "preserved_value": 69.75
+            }
+          }
+        },
+        {
+          "id": "trait_player-orl-paolo-banchero-stamina-cardio",
+          "player_id": "player_orl-paolo-banchero",
+          "trait_key": "stamina_cardio",
+          "label": "Stamina / Cardio",
+          "value": 59.5,
+          "confidence": 0.732,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from projected minutes, prior minutes, and movement-heavy offensive role. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "minutes",
+              "2025minutes",
+              "primaryOffRole"
+            ],
+            "components": [
+              95.61904761904762,
+              69.21606118546845,
+              0.0
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Paolo Banchero",
+              "csv_team": "ORL",
+              "csv_rank": 29,
+              "csv_column": "Stamina",
+              "csv_value": 78.0,
+              "previous_value": 54.95,
+              "engine_target": 60.75,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "REB",
+                  "csv_value": 52.0,
+                  "engine_target": 77.4,
+                  "previous_composite": 74.63,
+                  "applied_delta": 0.78
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 83.0,
+                  "engine_target": 64.8,
+                  "previous_composite": 70.17,
+                  "applied_delta": -0.86
+                }
+              ],
+              "final_value": 59.4,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_orl-paolo-banchero",
+              "pre_refresh_inferred_value": 59.4,
+              "preserved_value": 59.5
+            }
+          }
+        },
+        {
+          "id": "trait_player-orl-paolo-banchero-defensive-effort",
+          "player_id": "player_orl-paolo-banchero",
+          "trait_key": "defensive_effort",
+          "label": "Defensive Effort",
+          "value": 67.95,
+          "confidence": 0.74,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from event creation, defensive impact, and defensive role. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              14.880952380952381,
+              31.027667984189723,
+              14.45086705202312
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Paolo Banchero",
+              "csv_team": "ORL",
+              "csv_rank": 29,
+              "csv_column": "DefensiveEffort",
+              "csv_value": 65.0,
+              "previous_value": 20.12,
+              "engine_target": 82.08,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 62.0,
+                  "engine_target": 73.24,
+                  "previous_composite": 72.46,
+                  "applied_delta": 0.23
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 83.0,
+                  "engine_target": 64.8,
+                  "previous_composite": 70.17,
+                  "applied_delta": -0.86
+                }
+              ],
+              "final_value": 67.82,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_orl-paolo-banchero",
+              "pre_refresh_inferred_value": 67.82,
+              "preserved_value": 67.95
+            }
+          }
+        },
+        {
+          "id": "trait_player-orl-paolo-banchero-scheme-iq",
+          "player_id": "player_orl-paolo-banchero",
+          "trait_key": "scheme_iq",
+          "label": "Scheme IQ",
+          "value": 72.5,
+          "confidence": 0.732,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred from existing basketball-IQ input, passing reads, defensive impact, and role responsibility. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "BBallIQ",
+              "passerRating",
+              "CraftedDPM",
+              "role"
+            ],
+            "components": [
+              54.0,
+              70.63655030800821,
+              14.45086705202312
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Paolo Banchero",
+              "csv_team": "ORL",
+              "csv_rank": 29,
+              "csv_column": "SchemeIQ",
+              "csv_value": 68.0,
+              "previous_value": 54.36,
+              "engine_target": 78.26,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 62.0,
+                  "engine_target": 73.24,
+                  "previous_composite": 72.46,
+                  "applied_delta": 0.23
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 83.0,
+                  "engine_target": 64.8,
+                  "previous_composite": 70.17,
+                  "applied_delta": -0.86
+                }
+              ],
+              "final_value": 72.37,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_orl-paolo-banchero",
+              "pre_refresh_inferred_value": 72.37,
+              "preserved_value": 72.5
+            }
+          }
+        },
+        {
+          "id": "trait_player-orl-paolo-banchero-rim-deterrence",
+          "player_id": "player_orl-paolo-banchero",
+          "trait_key": "rim_deterrence",
+          "label": "Rim Deterrence",
+          "value": 84.14,
+          "confidence": 0.82,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Inferred primarily from block rate and height, with smaller defensive-impact support. This intentionally separates rim deterrence from broad all-in-one defensive value. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "BLKpct",
+              "CraftedDPM",
+              "DARKO",
+              "HeightSocks",
+              "primaryDefRole"
+            ],
+            "components": [
+              59.09090909090909,
+              85.4,
+              14.45086705202312,
+              73.73540856031128
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Paolo Banchero",
+              "csv_team": "ORL",
+              "csv_rank": 29,
+              "csv_column": "RimDeterrence",
+              "csv_value": 55.0,
+              "previous_value": 59.59,
+              "engine_target": 91.75,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 62.0,
+                  "engine_target": 73.24,
+                  "previous_composite": 72.46,
+                  "applied_delta": 0.23
+                },
+                {
+                  "column": "REB",
+                  "csv_value": 52.0,
+                  "engine_target": 77.4,
+                  "previous_composite": 74.63,
+                  "applied_delta": 0.78
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 83.0,
+                  "engine_target": 64.8,
+                  "previous_composite": 70.17,
+                  "applied_delta": -0.86
+                }
+              ],
+              "final_value": 84.82,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_orl-paolo-banchero",
+              "pre_refresh_inferred_value": 84.82,
+              "preserved_value": 84.14
+            }
+          }
+        },
+        {
+          "id": "trait_player-orl-paolo-banchero-screen-navigation",
+          "player_id": "player_orl-paolo-banchero",
+          "trait_key": "screen_navigation",
+          "label": "Screen Navigation",
+          "value": 63.22,
+          "confidence": 0.732,
+          "source_kind": "inferred_trait_model_v1_with_league_rating_calibration",
+          "source_ids": [
+            "src_player_skill_input_2025_26",
+            "src_trait_method_v1",
+            "src_league_trait_ratings_2026_06_20",
+            "src_2025_26_rating_baseline_preserved"
+          ],
+          "last_verified": "2026-07-28",
+          "notes": "Low-confidence proxy from guard/wing defensive role, activity, and versatility. Calibrated with a subjective full-health 2026-06-20 league ratings prior before manual overrides. Engine value preserved from the prior released canonical rating snapshot during this roster refresh.",
+          "components": {
+            "fields": [
+              "DEFLECTIONS",
+              "STLpct",
+              "VersatilityRating",
+              "CraftedDPM",
+              "primaryDefRole"
+            ],
+            "components": [
+              14.880952380952381,
+              31.027667984189723,
+              28.2560706401766,
+              14.45086705202312
+            ],
+            "league_trait_rating_calibration": {
+              "player_name": "Paolo Banchero",
+              "csv_team": "ORL",
+              "csv_rank": 29,
+              "csv_column": "ScreenNavigation",
+              "csv_value": 60.0,
+              "previous_value": 21.29,
+              "engine_target": 75.68,
+              "blend_weight": 0.78,
+              "composite_nudges": [
+                {
+                  "column": "DEF",
+                  "csv_value": 62.0,
+                  "engine_target": 73.24,
+                  "previous_composite": 72.46,
+                  "applied_delta": 0.23
+                },
+                {
+                  "column": "OVR",
+                  "csv_value": 83.0,
+                  "engine_target": 64.8,
+                  "previous_composite": 70.17,
+                  "applied_delta": -0.86
+                }
+              ],
+              "final_value": 63.09,
+              "source": "subjective full-health ratings prior dated 2026-06-20"
+            },
+            "2026_roster_refresh": {
+              "previous_player_id": "player_orl-paolo-banchero",
+              "pre_refresh_inferred_value": 63.09,
+              "preserved_value": 63.22
+            }
+          }
+        }
+      ],
+      "raw_selected": {
+        "GP": "50.0",
+        "minutes": 34.8,
+        "primaryDefRole": "Mobile Forward",
+        "primaryOffRole": "Primary Ball Handler",
+        "roleSource": "role_workbook",
+        "defRoleFeaturesUsed": 0,
+        "BLKpct": "1.7",
+        "DEFLECTIONS": "1.4",
+        "STLpct": "1.2",
+        "CraftedDPM": "-0.6 29%",
+        "DARKO": "0.3",
+        "HeightSocks": 81,
+        "MatchupDifficulty": "50.7",
+        "VersatilityRating": "28.6"
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "schema_accepted": true,
+  "utility": "PlayerInputs / validate_input_section",
+  "input_version": "player_performance_inputs_v1",
+  "registry_version": "player_performance_registry_v1",
+  "source_roundtrip_exact": true,
+  "sections_accepted": 12,
+  "counts": {
+    "players": 12,
+    "explicit_inputs_per_player": 35,
+    "source_records": 420,
+    "reported_physical_estimates": 36,
+    "scouting_technique_estimates": 20,
+    "FT_conversion_proxy_estimates": 12,
+    "unknown_source_records": 352,
+    "validated_career_player_seasons": 23,
+    "missing_expected_prior_NBA_rows": 1,
+    "scenario_sections": 11,
+    "all_other_approved_ids_unknown_by_omission": 59
+  },
+  "registry_sha256": "9cc7c51792a202ebdfa83105c92b5ce1dcbe2496844341ec758c68e246255e94",
+  "validator_sha256": "af55fbe292a0b86d601a1530e5be231a02c05593ac6405b31ae7df40e0cb52ba",
+  "no_save_or_game_calls": true,
+  "scope": "storage/source arithmetic acceptance, not formula/physics/calibration validation"
+}

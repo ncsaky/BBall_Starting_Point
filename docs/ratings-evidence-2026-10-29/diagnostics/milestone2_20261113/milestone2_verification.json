@@ -1,0 +1,70 @@
+{
+  "date": "2026-11-13",
+  "input_counts": {
+    "players": 12,
+    "explicit_inputs_per_player": 31,
+    "explicit_records": 372,
+    "reported_physical_estimates": 36,
+    "scouting_technique_estimates": 8,
+    "unknown_records": 328,
+    "other_approved_inputs_omitted_as_unknown_per_player": 63,
+    "scenario_sections": 8,
+    "context_conditions": 7
+  },
+  "schema_sections_accepted": 9,
+  "source_section_has_no_observed_protocol_claims": true,
+  "source_and_architecture_hashes_unchanged": {
+    "docs/PLAYER_OBJECT_THREE_COLUMN_MAP_2026_11_12.md": {
+      "sha256": "208d51f643d78eae2d5ee23db6771522723a1c92fe9d4de5366fa1afa59cda00",
+      "matches_prior": true
+    },
+    "data/canonical/universe_2026_27_offseason.json": {
+      "sha256": "dd993731ab5411066ea1f8d7e7053e9718deefa08758f5f51a274a3aef1a8e31",
+      "matches_prior": true
+    },
+    "Player Stats/player_skill_input_2025_26.json": {
+      "sha256": "44a53443687cc9af61737362baa9d925b1a0f5a6e9798f3fe1d612e28ef56335",
+      "matches_prior": true
+    },
+    "Player Stats/player_stats.json": {
+      "sha256": "a7bcb4792e347c681b733c89c493e938371741f977ae65b4bce799459eb9bb74",
+      "matches_prior": true
+    },
+    "data/research/player_career_stats.json": {
+      "sha256": "a489be0581ab49c46513eae197f62232d75e042ca0e88c5b1ee28f70f9e85a1e",
+      "matches_prior": true
+    },
+    "data/research/game_boxscores_2025_26.json": {
+      "sha256": "9a4cf3b1bfcc4b9b605a09d4d744e5a7779a7b031ad35fc97337245a5d66339f",
+      "matches_prior": true
+    },
+    "data/research/player_shot_zones_2025_26.json": {
+      "sha256": "689865ef188959f1e63358b4c50f85f98fc4aa6698b8784317d4abe2a011b507",
+      "matches_prior": true
+    },
+    "data/research/shot_chart_reference.json": {
+      "sha256": "918b93dc67ee36aea4e31a934ab81605d014efc8929c2036787ee801aa7914be",
+      "matches_prior": true
+    },
+    "data/research/shot_chart_model.json": {
+      "sha256": "10896e20f3be5dc8ddc29b99c6078186ef227316654aa93601025afe43cc70af",
+      "matches_prior": true
+    },
+    "data/research/tracking_sources_2025_26.json": {
+      "sha256": "572a330c1387ef3a5b5be198183e7d78b9c868315856688fc699812fb7ac3e7c",
+      "matches_prior": true
+    }
+  },
+  "schema_utility_hashes_match_validation": true,
+  "historical_source_rows_checked": 70,
+  "no_simulations_or_save_calls": true,
+  "production_import_fix_implemented": false,
+  "final_league_calibration_claimed": false,
+  "delivered_hashes": {
+    "docs/ratings-evidence-2026-10-29/INTERIOR_DEFENSE_EXPERIMENT_INPUTS_2026_11_13.json": "92446f0feda179381d6804ce18b9f6cdece370f61a29604c1c2e26e2516c4ba7",
+    "docs/ratings-evidence-2026-10-29/INTERIOR_DEFENSE_EXPERIMENT_INPUTS_2026_11_13.md": "a234ee70f6f784192235c62015d26a174119857f0d7e74d082431b781e082f6f",
+    "docs/ratings-evidence-2026-10-29/HISTORICAL_SHOOTING_DATA_QA_2026_11_13.md": "463ac1204663705cecf12f6995308d9713d2bc696e90b2d5c41ef1d04478a0b7",
+    "docs/ratings-evidence-2026-10-29/diagnostics/milestone2_20261113/input_validation.json": "32b38243055cdbf59373c006001e5584fabc26744dd6a2ac3a53962bc0611db9",
+    "docs/ratings-evidence-2026-10-29/diagnostics/milestone2_20261113/historical_shooting_qa_results.json": "18470d8219db508bd7ef6db0fe631157f6b8414749646228d5111e72a9c7a846"
+  }
+}

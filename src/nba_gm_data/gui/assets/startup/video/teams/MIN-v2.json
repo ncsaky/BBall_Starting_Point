@@ -1,0 +1,159 @@
+{
+  "playlist": [
+    {
+      "src": "/assets/startup/video/teams/MIN-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/MIN-v2-1.jpg",
+      "kind": "basketball",
+      "team": "MIN",
+      "clips": [
+        {
+          "source_start": 0,
+          "frames": 300,
+          "team": "MIN",
+          "opponent": "LAC",
+          "action": "Edwards dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 24,
+          "frames": 510,
+          "team": "MIN",
+          "opponent": "LAC",
+          "action": "Edwards drive and finish",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 846
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-1.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-1.jpg",
+      "kind": "front-office",
+      "action": "kings-draft-room-applause",
+      "frames": 255
+    },
+    {
+      "src": "/assets/startup/video/teams/MIN-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/MIN-v2-2.jpg",
+      "kind": "basketball",
+      "team": "MIN",
+      "clips": [
+        {
+          "source_start": 44,
+          "frames": 390,
+          "team": "MIN",
+          "opponent": "OKC",
+          "action": "Edwards late three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 69,
+          "frames": 270,
+          "team": "MIN",
+          "opponent": "SAC",
+          "action": "Edwards drive and dunk",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 696
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-2.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-2.jpg",
+      "kind": "front-office",
+      "action": "nuggets-scout-interview",
+      "frames": 120
+    },
+    {
+      "src": "/assets/startup/video/teams/MIN-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/MIN-v2-3.jpg",
+      "kind": "basketball",
+      "team": "MIN",
+      "clips": [
+        {
+          "source_start": 110,
+          "frames": 360,
+          "team": "MIN",
+          "opponent": "DEN",
+          "action": "Edwards three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        },
+        {
+          "source_start": 140,
+          "frames": 360,
+          "team": "MIN",
+          "opponent": "HOU",
+          "action": "Edwards late three",
+          "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+        }
+      ],
+      "frames": 756
+    },
+    {
+      "src": "/assets/startup/video/teams/office-v2-3.mp4",
+      "poster": "/assets/startup/video/teams/office-v2-3.jpg",
+      "kind": "front-office",
+      "action": "nuggets-draft-room",
+      "frames": 331
+    }
+  ],
+  "source": {
+    "id": "T5I70wkGVLI",
+    "url": "https://www.youtube.com/watch?v=T5I70wkGVLI",
+    "title": "Anthony Edwards Was a PROBLEM All Season \ud83d\ude24 | Top Plays | 2025-26 NBA Season",
+    "channel": "NBA",
+    "path": ".cache/startup-team-video/MIN.mp4",
+    "query": "2025-26 Minnesota Timberwolves Anthony Edwards best plays NBA"
+  },
+  "clips": [
+    {
+      "source_start": 0,
+      "frames": 300,
+      "team": "MIN",
+      "opponent": "LAC",
+      "action": "Edwards dunk",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 24,
+      "frames": 510,
+      "team": "MIN",
+      "opponent": "LAC",
+      "action": "Edwards drive and finish",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 44,
+      "frames": 390,
+      "team": "MIN",
+      "opponent": "OKC",
+      "action": "Edwards late three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 69,
+      "frames": 270,
+      "team": "MIN",
+      "opponent": "SAC",
+      "action": "Edwards drive and dunk",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 110,
+      "frames": 360,
+      "team": "MIN",
+      "opponent": "DEN",
+      "action": "Edwards three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    },
+    {
+      "source_start": 140,
+      "frames": 360,
+      "team": "MIN",
+      "opponent": "HOU",
+      "action": "Edwards late three",
+      "review": "Manual source-frame review: selected-team uniform and action; interval refined from start, buildup, payoff and end frames."
+    }
+  ],
+  "duration_seconds": 100.13333333333334
+}

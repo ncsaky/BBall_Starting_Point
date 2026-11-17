@@ -1,0 +1,397 @@
+{
+  "kobe johnson": {
+    "espn_player_id": "4683857",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "cameron corhen": {
+    "espn_player_id": "4712902",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "isaac mckneely": {
+    "espn_player_id": "4712845",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "gabe mcglothan": {
+    "espn_player_id": "4398356",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "grant nelson": {
+    "espn_player_id": "4702670",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "jarkel joiner": {
+    "espn_player_id": "4278729",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "wyatt fricks": {
+    "espn_player_id": "4897504",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "brandon boston": {
+    "espn_player_id": "4432162",
+    "identity_source": "https://www.espn.com/nba/player/_/id/4432162/brandon-boston"
+  },
+  "jalen bridges": {
+    "espn_player_id": "4432946",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "jaxson robinson": {
+    "espn_player_id": "4702528",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "noam yaacov": {
+    "espn_player_id": "5457832",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "zack austin": {
+    "espn_player_id": "4702099",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "rashaun agee": {
+    "espn_player_id": "4593815",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "khalifa diop": {
+    "espn_player_id": "4997530",
+    "draft_year": 2022,
+    "draft_position": 39,
+    "draft_status": "drafted"
+  },
+  "mario hezonja": {
+    "espn_player_id": "2995706",
+    "draft_year": 2015,
+    "draft_position": 5,
+    "draft_status": "drafted"
+  },
+  "matt cross": {
+    "espn_player_id": "4433563",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "seth lundy": {
+    "espn_player_id": "4431775",
+    "draft_year": 2023,
+    "draft_position": 46,
+    "draft_status": "drafted"
+  },
+  "coleman hawkins": {
+    "espn_player_id": "4432976",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "dane goodwin": {
+    "espn_player_id": "4395667",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "brice williams": {
+    "espn_player_id": "4592843",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "tyler burton": {
+    "espn_player_id": "4431914",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "alex toohey": {
+    "espn_player_id": "5170949",
+    "draft_year": 2025,
+    "draft_position": 52,
+    "draft_status": "drafted"
+  },
+  "graham ike": {
+    "espn_player_id": "4703396",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "keba keita": {
+    "espn_player_id": "5105647",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "rienk mast": {
+    "espn_player_id": "4592677",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "james johnson": {
+    "espn_player_id": "3999",
+    "draft_year": 2009,
+    "draft_position": 16,
+    "draft_status": "drafted"
+  },
+  "jahmyl telfort": {
+    "espn_player_id": "4702785",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "rafael castro": {
+    "espn_player_id": "4684443",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "cole swider": {
+    "espn_player_id": "4397134",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "carson cooper": {
+    "espn_player_id": "5105817",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "gabe madsen": {
+    "espn_player_id": "4432753",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "ian schieffelin": {
+    "espn_player_id": "4693954",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "kylor kelley": {
+    "espn_player_id": "3950760",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "jake stephens": {
+    "espn_player_id": "4398257",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "jalon moore": {
+    "espn_player_id": "4701819"
+  },
+  "malik dia": {
+    "espn_player_id": "4712862",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "jaden akins": {
+    "espn_player_id": "4683730",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "james wiseman": {
+    "espn_player_id": "4432808",
+    "draft_year": 2020,
+    "draft_position": 2,
+    "draft_status": "drafted"
+  },
+  "anthony pritchard": {
+    "espn_player_id": "4897155",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "christoph tilly": {
+    "espn_player_id": "5109790",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "andrew holifield": {
+    "espn_player_id": "5116468",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "zhaire smith": {
+    "espn_player_id": "4277923",
+    "draft_year": 2018,
+    "draft_position": 16,
+    "draft_status": "drafted"
+  },
+  "kevin knox ii": {
+    "espn_player_id": "4278075",
+    "draft_year": 2018,
+    "draft_position": 9,
+    "draft_status": "drafted"
+  },
+  "jameer nelson jr": {
+    "espn_player_id": "4592444",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "saint thomas": {
+    "espn_player_id": "4897471",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "tacko fall": {
+    "espn_player_id": "3904625",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": "undrafted"
+  },
+  "phillip wheeler": {
+    "espn_player_id": "4909710",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "kennedy chandler": {
+    "espn_player_id": "4432646",
+    "draft_year": 2022,
+    "draft_position": 38,
+    "draft_status": "drafted"
+  },
+  "damari monsanto": {
+    "espn_player_id": "4432916",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "aaron nkrumah": {
+    "espn_player_id": "5182573",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "elfrid payton": {
+    "espn_player_id": "2583639",
+    "draft_year": 2014,
+    "draft_position": 10,
+    "draft_status": "drafted"
+  },
+  "leaky black": {
+    "espn_player_id": "4395650",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "ben simmons": {
+    "espn_player_id": "3907387",
+    "draft_year": 2016,
+    "draft_position": 1,
+    "draft_status": "drafted"
+  },
+  "jon elmore": {
+    "espn_player_id": "3155937",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "malik williams": {
+    "espn_player_id": "4277880",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "rj davis": {
+    "espn_player_id": "4433176",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "tyreke key": {
+    "espn_player_id": "4279143",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "tyson degenhart": {
+    "espn_player_id": "4898260",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "nimari burnett": {
+    "espn_player_id": "4433138",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "malachi smith": {
+    "espn_player_id": "4397784",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "jamarion sharp": {
+    "espn_player_id": "4897696",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "taylor funk": {
+    "espn_player_id": "4278395",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "jonas aidoo": {
+    "espn_player_id": "4684682",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "mohamed wague": {
+    "espn_player_id": "5106293",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "reece beekman": {
+    "espn_player_id": "4432187",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "alondes williams": {
+    "espn_player_id": "4592216",
+    "draft_year": null,
+    "draft_position": null,
+    "draft_status": null
+  },
+  "kj martin": {
+    "espn_player_id": "4431828",
+    "identity_source": "https://www.espn.com/nba/player/_/id/4431828/kj-martin"
+  }
+}

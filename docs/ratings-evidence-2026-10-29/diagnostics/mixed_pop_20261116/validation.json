@@ -1,0 +1,62 @@
+{
+  "packet_version": "mixed_pop_input_updates_v1_2026_11_16",
+  "status": "PASS",
+  "counts": {
+    "players": 4,
+    "dimensions_per_player": 94,
+    "passing_dimensions_per_player": 18,
+    "records_per_layer": 376,
+    "inherited_supported": 35,
+    "new_estimates": 9,
+    "known_after": 44,
+    "source_claims": 11,
+    "numeric_tendency_additions": 0,
+    "operational_completions": 0,
+    "unknown_after": 332
+  },
+  "schema_layers": [
+    "base_source_input_section",
+    "proposed_source_input_section"
+  ],
+  "immutable_roundtrips": 4,
+  "canonical_ids_unique": true,
+  "all94_and18_passing_fields_retained": true,
+  "all376_base_records_exact": true,
+  "all35_supported_records_unchanged": true,
+  "passing_and_T11_records_exact": true,
+  "grades_fill_unknowns_only": true,
+  "range_scale_type_unit_checks": true,
+  "source_hash_checks": {
+    "docs/ratings-evidence-2026-10-29/SCREEN_POP_INPUTS_2026_11_15.json": true,
+    "docs/ratings-evidence-2026-10-29/EXPANDED_ACTION_COHORT_2026_11_14.json": true,
+    "data/canonical/universe_2026_27_offseason.json": true,
+    "docs/PLAYER_OBJECT_THREE_COLUMN_MAP_2026_11_12.md": true,
+    "src/nba_gm_data/player_model.py": true,
+    "src/nba_gm_data/player_model_registry.py": true,
+    "docs/ratings-evidence-2026-10-29/SCREEN_POP_INPUTS_2026_11_15.md": true,
+    "docs/ratings-evidence-2026-10-29/SCREEN_POP_READINESS_2026_11_15.md": true,
+    "docs/ratings-evidence-2026-10-29/diagnostics/screen_pop_20261115/source_ledger.json": true,
+    "docs/ratings-evidence-2026-10-29/diagnostics/screen_pop_20261115/readiness_ledger.json": true,
+    "docs/ratings-evidence-2026-10-29/transcripts/episode4_transcript.txt": true,
+    "docs/ratings-evidence-2026-10-29/transcripts/episode3_transcript.txt": true,
+    "docs/ratings-evidence-2026-10-29/captions/ZaA4usLpBWI.en.vtt": true,
+    "docs/ratings-evidence-2026-10-29/captions/J6STkjbVuUg.en.vtt": true
+  },
+  "profile_compilations": 0,
+  "simulations": 0,
+  "actual_consumer_interface_verified": false,
+  "scope": "Source-schema and research-artifact checks only.",
+  "independent_delivery_check": {
+    "status": "PASS",
+    "changed_cells_exactly_match_nine_proposals": true,
+    "all_supported_physical_passing_T11_records_preserved": true,
+    "source_dates_pre_start": true,
+    "retained_source_starting_minutes_present": true,
+    "approved_priority_ID_rows_present": true,
+    "new_evidence_paths_resolve": true,
+    "local_markdown_links_resolved": 11,
+    "all_source_hashes_unchanged": true,
+    "new_range_midpoints_recomputed": true,
+    "scope": "Artifact validation, not basketball recertification or runtime testing."
+  }
+}
