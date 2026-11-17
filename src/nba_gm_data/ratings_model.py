@@ -170,6 +170,9 @@ def install_inputs_model(canonical: dict[str, Any], root: Path | None = None) ->
     generated = _install_generated_players(canonical, baseline, league_inputs)
     derived_baseline = _rederive(canonical, [*league_inputs.keys(), *generated])
     _rebase_offensive_profile_anchors(canonical, derived_baseline)
+    # Player value (overall / offense / defense) from the hidden ratings fitted to real impact; see impact_value.
+    from .impact_value import install_summary_tables
+    install_summary_tables(canonical, root)
 
 
 def _install_generated_players(canonical: dict[str, Any], baseline: Mapping[str, Mapping[str, float]],

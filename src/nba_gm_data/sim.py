@@ -265,6 +265,12 @@ def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any], *, 
         "playoff_translation": get("playoff_translation"),
         "defensive_weak_link": nonlinear_low(defensive_mobility, 48),
     }
+    from .ratings_model import effective_inputs, uses_inputs_model
+    if uses_inputs_model(canonical):
+        player_inputs = effective_inputs(canonical, player["id"])
+        playmaking = playmaking_assists_per36(player_inputs) if player_inputs else None
+        if playmaking is not None:
+            features["playmaking_ast36"] = playmaking
     from .offense import enabled as offense_enabled, offensive_profile
     if offense_enabled(canonical):
         profile = offensive_profile(canonical, player, {key: float(row['value']) for key, row in traits.items()})
@@ -1356,7 +1362,36 @@ def rebound_rate_per_minute(player: dict[str, Any], feat: dict[str, float]) -> f
     return per36 / 36.0
 
 
+PASS_RECOGNITION_INPUTS = tuple(f"F0{i}.recognition" for i in range(1, 10))
+
+
+def playmaking_assists_per36(inputs: dict[str, Any]) -> float | None:
+    """Assists per 36 minutes implied by a player's playmaking inputs (new-ratings mode only).
+
+    Log-linear fit (2026-11-17) to real 2025-26 assists per 36 for 150 rotation players, out-of-fold
+    correlation 0.87 (the trait-based formula: 0.62): pass-reading grade, how often the player chooses to pass
+    (T01 pass share) and how involved he is (T08). Box-score allocation only; game scores do not use it.
+    """
+    try:
+        recognition = sum(float(inputs[i]["value"]["grade"]) for i in PASS_RECOGNITION_INPUTS) / len(PASS_RECOGNITION_INPUTS)
+        pass_share = float(inputs["T01"]["value"]["rows"][0]["probabilities"]["pass"])
+        involvement = float(inputs["T08"]["value"]["probability"])
+    except (KeyError, TypeError, ValueError, IndexError, ZeroDivisionError):
+        return None
+    if pass_share <= 0 or involvement <= 0:
+        return None
+    log_rate = 3.5137 + 0.6818 * recognition / 100.0 + 1.3056 * math.log(pass_share) + 1.1691 * math.log(involvement)
+    return round(clamp(math.exp(log_rate), 0.5, 14.0), 3)
+
+
+def _ramp(value: float, low: float, high: float) -> float:
+    return clamp((value - low) / (high - low), 0.0, 1.0)
+
+
 def assist_rate_for_player(player: dict[str, Any], feat: dict[str, float]) -> float:
+    if feat.get("playmaking_ast36") is not None:
+        # New ratings: read the playmaking inputs directly (no hand-set cutoffs or player-specific lines).
+        return clamp(float(feat["playmaking_ast36"]) / 36.0, 0.012, 0.40)
     rate = assist_rate_from_features(feat)
     position = str(player.get("position") or "").upper()
     passing = float(feat.get("passing") or 50.0)
@@ -1364,16 +1399,18 @@ def assist_rate_for_player(player: dict[str, Any], feat: dict[str, float]) -> fl
     creation = float(feat.get("shot_creation") or usage)
     is_guard = "PG" in position or "SG" in position
     is_big = "C" in position or "PF" in position
-    if is_guard and passing >= 72.0:
-        rate += 0.010 + max(0.0, passing - 78.0) * 0.0018
-    if "PG" in position and usage >= 66.0:
-        rate += 0.012 + max(0.0, creation - 72.0) * 0.0012
+    # Old-ratings formula with its former step cutoffs smoothed into short ramps that END at the old cutoff
+    # (2026-11-17): anyone who qualified before gets exactly the old rate; players just short now get part of
+    # the bonus instead of none, so one rating point no longer halves or doubles assists.
+    if is_guard:
+        rate += (0.010 + max(0.0, passing - 78.0) * 0.0018) * _ramp(passing, 68.0, 72.0)
+    if "PG" in position:
+        rate += (0.012 + max(0.0, creation - 72.0) * 0.0012) * _ramp(usage, 62.0, 66.0)
     if normalize_name(player.get("name")) == normalize_name("Luka Doncic"):
         rate += 0.032 + max(0.0, passing - 84.0) * 0.0026 + max(0.0, usage - 78.0) * 0.0018
-    if is_big and passing < 88.0:
-        rate = min(rate, 0.175)
-    if is_big and passing >= 94.0 and usage >= 70.0:
-        rate += 0.020
+    if is_big:
+        rate = min(rate, 0.175 + (0.36 - 0.175) * _ramp(passing, 84.0, 88.0))
+        rate += 0.020 * _ramp(passing, 90.0, 94.0) * _ramp(usage, 66.0, 70.0)
     if curry_off_ball_veteran_profile(player):
         rate *= 0.58
     return clamp(rate, 0.035, 0.36)
@@ -1389,12 +1426,9 @@ def assist_rate_from_features(feat: dict[str, float]) -> float:
     rate += max(0.0, passing - 74.0) * 0.0032
     rate += max(0.0, passing - 88.0) * 0.0042
     rate += max(0.0, creation - 80.0) * 0.0012
-    if passing >= 88.0 and usage >= 70.0:
-        rate += 0.018 + max(0.0, passing - 90.0) * 0.003 + max(0.0, usage - 76.0) * 0.0015
-    if passing >= 80.0 and usage >= 86.0 and creation >= 78.0:
-        rate += 0.095 + max(0.0, passing - 80.0) * 0.004 + max(0.0, usage - 86.0) * 0.002
-    if passing < 58 and usage < 62:
-        rate -= 0.012
+    rate += (0.018 + max(0.0, passing - 90.0) * 0.003 + max(0.0, usage - 76.0) * 0.0015) * _ramp(passing, 84.0, 88.0) * _ramp(usage, 66.0, 70.0)
+    rate += (0.095 + max(0.0, passing - 80.0) * 0.004 + max(0.0, usage - 86.0) * 0.002) * _ramp(passing, 76.0, 80.0) * _ramp(usage, 82.0, 86.0) * _ramp(creation, 74.0, 78.0)
+    rate -= 0.012 * (1.0 - _ramp(passing, 54.0, 58.0)) * (1.0 - _ramp(usage, 58.0, 62.0))
     return clamp(rate, 0.035, 0.36)
 
 

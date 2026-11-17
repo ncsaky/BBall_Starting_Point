@@ -7161,6 +7161,14 @@ def _uncached_player_attribute_summary(canonical: dict[str, Any], player_id: str
         profile = offensive_profile(canonical, player, traits)
         offensive_attrs = {key: round(profile[key], 1) for key in FACETS}
         offensive_attrs['offense'] = round(profile['offense_value'], 1)
+    from .impact_value import summary_override
+    fitted = summary_override(canonical, player, traits, profile if offense_enabled(canonical) else None)
+    if fitted:
+        # New ratings: value comes from the hidden ratings fitted to real impact, placed on this same scale.
+        overall = fitted.get("overall", overall)
+        defense = fitted.get("defense", defense)
+        if "offense" in offensive_attrs and "offense" in fitted:
+            offensive_attrs["offense"] = fitted["offense"]
     return {
         **offensive_attrs,
         "overall": round(clamp(overall, 1, 99), 1),

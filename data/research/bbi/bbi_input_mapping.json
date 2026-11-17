@@ -1999,9 +1999,9 @@
     {
      "metric": "Drive Passout Rate",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "weak",
      "outcome": "pass",
-     "why": "Share of drives ending in a pass."
+     "why": "Share of drives ending in a pass. Weak 2026-11-17: a per-drive rate says little about hubs who rarely drive (it held Jokić's pass share down)."
     },
     {
      "metric": "Quick Decision Making Pass %",
@@ -2013,16 +2013,16 @@
     {
      "metric": "Passing Creation Volume",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "primary",
      "outcome": "pass",
-     "why": "Shots created for teammates; pass-first volume."
+     "why": "Shots created for teammates; pass-first volume. Primary 2026-11-17: the most direct frequency of passing that creates shots, for every role."
     },
     {
      "metric": "Potential Assists Per 75 Possessions",
      "direction": 1,
-     "strength": "weak",
+     "strength": "supporting",
      "outcome": "pass",
-     "why": "Passes leading to a teammate shot."
+     "why": "Passes leading to a teammate shot. Supporting 2026-11-17 (a passing frequency)."
     },
     {
      "metric": "Paint Touches Per 75 Possessions",

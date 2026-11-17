@@ -101,7 +101,7 @@ Complete and ready for coordinator review: all four adapter requests, including 
 - Method: `e2b_hierarchical_family_priors_v1`. Built **691 × 94 = 64,954** complete records.
 - **28,891 player-evidence estimates; 36,063 explicit priors.**
 - Local joins: 526 unique skill names, 528 unique later Crafted names, 616 ESPN IDs. Sources are overlapping, never additive player counts.
-- Build, validation, comparison without packet experts, serialization and write: **128.366 seconds**; canonical JSON 123.32 MB.
+- Build, validation, comparison without packet experts, serialization and write: **285.270 seconds**; canonical JSON 123.32 MB.
 - Skill-grade range 11.492–95.142; exactly 100: 0; at least 99.9: 0. No scale-max clipping.
 
 | Input family | Player-evidence estimates | Priors | Total |
@@ -370,7 +370,7 @@ Population standard deviation across the audit cohort, in native units. Distribu
 | F08.execution | Post playmaking — execution | 279 | grade: 8.1189 | — |
 | F09.recognition | Transition / outlet / advance — recognition | 279 | grade: 13.4798 | — |
 | F09.execution | Transition / outlet / advance — execution | 279 | grade: 6.7593 | — |
-| T01 | Shoot / drive / pass / post / reset choices | 279 | drive: 0.0470; pass: 0.0267; post: 0.0385; reset: 0.0306; shoot: 0.0344 | — |
+| T01 | Shoot / drive / pass / post / reset choices | 279 | drive: 0.0462; pass: 0.0251; post: 0.0384; reset: 0.0314; shoot: 0.0343 | — |
 | T02 | Shot-location preferences | 279 | midrange: 0.0419; rim: 0.1090; short_paint: 0.0592; three: 0.1764 | — |
 | T03 | Shooting-mode preferences | 279 | catch: 0.0959; movement: 0.0504; pull_up: 0.0950 | — |
 | T04 | Shot difficulty tolerance | 279 | probability: 0.0308 | — |

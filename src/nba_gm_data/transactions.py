@@ -338,6 +338,19 @@ def build_player_asset_valuations(canonical: dict[str, Any] | Any, config: dict[
     health_profiles = {profile["player_id"]: profile for profile in canonical.get("player_health_profiles", [])}
     health_states = {state["player_id"]: state for state in canonical.get("player_health_states", [])}
     output: list[PlayerAssetValuation] = []
+    fitted_on_court: dict[str, float] = {}
+    from .impact_value import remap_on_court
+    from .ratings_model import uses_inputs_model
+    if uses_inputs_model(canonical):
+        # New ratings: the market's on-court values are re-ordered by impact fitted from the hidden ratings
+        # (impact_value), keeping the market's own scale so every value cutoff still means the same thing.
+        legacy = {}
+        for player in canonical.get("players", []):
+            features = player_feature_vector(canonical, player, include_spatial=_full_features).features
+            portability = float(traits.get(player["id"], {}).get("portability", {}).get("value", features.get("impact", 50)))
+            legacy[player["id"]] = player_on_court_value(features, portability)
+        plain_traits = {pid: {k: float(v.get("value", 50)) for k, v in rows.items()} for pid, rows in traits.items()}
+        fitted_on_court = remap_on_court(canonical, canonical.get("players", []), plain_traits, legacy)
     for player in canonical.get("players", []):
         # Valuation consumes scalar basketball/offensive-role features only.
         # Keep minutes and role calculations fresh; zone grids are unused here.
@@ -348,7 +361,7 @@ def build_player_asset_valuations(canonical: dict[str, Any] | Any, config: dict[
         age = maybe_float(player.get("age")) or 27.0
         portability = float(traits.get(player["id"], {}).get("portability", {}).get("value", features.get("impact", 50)))
         playoff = features.get("playoff_translation", 50.0)
-        on_court = player_on_court_value(features, portability)
+        on_court = fitted_on_court.get(player["id"]) or player_on_court_value(features, portability)
         age_curve = player_age_curve(age)
         development = player_development_upside(player, age, features)
         health_risk = player_health_risk(health_profiles.get(player["id"], {}), health_states.get(player["id"], {}))
