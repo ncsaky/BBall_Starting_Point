@@ -38,7 +38,7 @@ Everything below is committed and pushed to both branches. No save dialogs were 
 
 ## 3. Bugs fixed
 
-- **Too many free throws (every save).** Box scores gave every player about one extra free-throw attempt per game no matter how they play (a biased rounding step), so the league shot 34 free throws per 100 possessions against the NBA's 23. Fixed without changing any game score. The real-stats scorecard now has **17 of 18 league stats in the realistic range** (new ratings) and 16 of 18 (old ratings), up from 12 at the start of the night.
+- **Too many free throws (every save).** Box scores gave every player about one extra free-throw attempt per game no matter how they play (a biased rounding step), so the league shot 34 free throws per 100 possessions against the NBA's 23. Fixed without changing any game score. After this and a small personal-foul calibration, the real-stats scorecard has **all 18 of 18 league stats in the realistic range** with the new ratings (17 of 18 with the old ones; only true shooting % is slightly high). It was 12 of 18 at the start of the night.
 
 - **Steals and blocks went to the wrong players (every save).** After each game the sim rescales steals, blocks, assists and rebounds to realistic team totals. Leftover units always went to the same players, decided by a fixed alphabetical-ish ID order. Seventeen players, all with first names A–D (Sengun, Podziemski, Gillespie, Bruce Brown, Sexton…), simulated zero steals all season. Fixed. Real-stat error for steals fell by more than half (0.65 → 0.30 per 36 min) and blocks by half (0.59 → 0.28), in both rating modes.
 

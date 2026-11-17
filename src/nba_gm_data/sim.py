@@ -1200,8 +1200,9 @@ def assign_personal_fouls(lines: list[dict[str, Any]], rng: random.Random) -> No
     """
     for line in lines:
         minutes = max(0.0, float(line.get("minutes") or 0.0))
-        # Poisson event count, averaging 2.7 personal fouls per 36 minutes.
-        threshold = math.exp(-minutes * 2.7 / 36.0)
+        # Poisson event count, averaging 2.95 personal fouls per 36 minutes: the 2025-26 NBA rate (19.4 per
+        # 100 possessions) at the sim's pace, allowing for the six-foul cap. Was 2.7 (17.8 per 100).
+        threshold = math.exp(-minutes * 2.95 / 36.0)
         probability = 1.0
         fouls = 0
         while fouls < 6 and probability > threshold:
