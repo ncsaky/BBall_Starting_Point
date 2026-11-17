@@ -2026,12 +2026,22 @@ def advance_save_day(
     if save["state"]["phase"] in {"re_signing", "free_agency"}:
         prepare_free_agency_pool(canonical, save)
     elif save["state"]["phase"] in {"preseason", "regular_season", "training_camp"}:
-        ensure_roster_minimums(canonical, save, effective_seed)
+        # The day's lifecycle state already reflects every roster move so far (games, health and development
+        # do not move players), so it can answer "is any roster short?" without a full rebuild.
+        ensure_roster_minimums(canonical, save, effective_seed, active=runtime_canonical)
     if save["state"]["phase"] in {"preseason", "regular_season"}:
         refresh_roster_cutdowns(canonical, save)
         from .release_planning import review_ai_releases
         review_ai_releases(canonical, save, target, effective_seed)
-    inseason_fa_signings = process_inseason_released_free_agent_signings(canonical, save, effective_seed, target)
+
+    def unchanged_since_lifecycle() -> bool:
+        # Same reuse rule as ai_canonical below: no roster, contract or free-agent change and no new development.
+        return (runtime_canonical is not None and not new_development_events
+                and roster_overrides_before == (save.get("roster_overrides") or {})
+                and contract_overrides_before == (save.get("contract_overrides") or {})
+                and free_agents_before == tuple(save.get("free_agent_player_ids") or []))
+    inseason_fa_signings = process_inseason_released_free_agent_signings(
+        canonical, save, effective_seed, target, active=runtime_canonical if unchanged_since_lifecycle() else None)
     roster_changed = (
         roster_overrides_before != (save.get("roster_overrides") or {})
         or contract_overrides_before != (save.get("contract_overrides") or {})
@@ -8951,7 +8961,8 @@ def maybe_add_major_free_agent_news(save: dict[str, Any], team: dict[str, Any], 
     save["major_free_agent_news_ids"] = sorted(posted)
 
 
-def process_inseason_released_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any], seed: int, date_value: str) -> set[str]:
+def process_inseason_released_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any], seed: int, date_value: str,
+                                                  active: dict[str, Any] | None = None) -> set[str]:
     phase = save.get("state", {}).get("phase") or phase_for_date(date_value)
     if phase not in {"preseason", "regular_season"}:
         return set()
@@ -8964,7 +8975,7 @@ def process_inseason_released_free_agent_signings(canonical: dict[str, Any], sav
     if not any(release.get("status") == "available" and player_id in pool and player_id not in retired
                for player_id, release in released.items()):
         return set()
-    active = canonical_with_save(canonical, save)
+    active = active if active is not None else canonical_with_save(canonical, save)
     players = {player.get("id"): player for player in active.get("players", []) if player.get("id")}
     profiles = {profile.get("player_id"): profile for profile in active.get("player_contract_market_profiles", [])}
     candidates: list[tuple[float, dict[str, Any], dict[str, Any]]] = []
@@ -9332,9 +9343,11 @@ def auto_fill_rosters(canonical: dict[str, Any], save: dict[str, Any], free_agen
     return signed
 
 
-def ensure_roster_minimums(canonical: dict[str, Any], save: dict[str, Any], seed: int) -> set[str]:
+def ensure_roster_minimums(canonical: dict[str, Any], save: dict[str, Any], seed: int,
+                           active: dict[str, Any] | None = None) -> set[str]:
+    """Repair rosters below the minimum. `active` may be a current active state for the same save (read only)."""
     season = str(save.get("meta", {}).get("season") or CANONICAL_SEASON)
-    active = canonical_with_save(canonical, save)
+    active = active if active is not None else canonical_with_save(canonical, save)
     needs_repair = False
     for team in active.get("teams", []):
         count = sum(1 for player in active.get("players", []) if player.get("team_id") == team.get("id"))

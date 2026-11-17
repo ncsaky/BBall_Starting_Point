@@ -63,6 +63,7 @@ Scorecards (new ratings are still opt-in; normal new saves use the old ratings):
 - **Development chart:** "Net growth" showed about 4x the real change (+2.6 shown vs +0.6 real). Now it shows the engine's real change, and the axis fits the data.
 - **Prospect rating bars:** prospect cards drew a made-up "league average 50" marker; now they show the average for the prospect's position (e.g. SF/PF).
 - **Draft boards** now show prospect injury history, current injury and projected risk (from existing engine data; nothing invented).
+- **Speed:** a mid-season month of sim dropped from about 31.5 to 20.6 seconds (headless, AI on), with identical results. The day loop now reuses its league state instead of rebuilding it for two routine checks. Early-season months, with more roster moves, gain less (60 → 55 s). Your 10–20 s target still needs more work there.
 - **Tests:** two lost test fixtures were rebuilt as small tracked files (skipped tests 9 → 3).
 
 Checked in the running game: the development card (real ±0.1 changes) and the prospect card's position markers.
