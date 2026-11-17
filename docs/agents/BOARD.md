@@ -71,7 +71,11 @@ GUI wishlist work is parked.
     - `player_value` clips at 99, so a dozen players tie: Flagg, Ausar Thompson, Clingan and Castle sit level with SGA and Wembanyama.
     - Giannis 85.1 (rank 85) and Luka 82.8 (rank 107) fall below Herro 91.3.
     - Causes: the superstar floor needs on_court >= 79 (`transactions.py:2849-2878`), which Giannis (78.6) and Luka (72.5) miss; and contract surplus (+34 cap, `transactions.py:354-360`) lifts cheap players above stars.
-    - Fix belongs in S1-E (front office on the new ratings).
+    - **Partly fixed 2026-11-16** (formula side): surplus scaled by player quality, soft ceilings instead of hard caps (top ties 15 to 1), stronger superstar-floor age discount.
+    - Market top 5 is now Wembanyama, Jaren Jackson Jr., Jokić, SGA, then LeBron (hard-coded GOAT exception; user to decide).
+    - Remaining Giannis/Luka underrating is on the ratings side: on-court values 78.6 and 72.5. That is what the fantasy-draft test failure reflects.
+    - Tool: `scripts/market_sanity_report.py`.
+  - **Inputs mode is NOT ready for the front office:** stars are compressed. On-court values are Jokić 73.9, Wembanyama 72.4, Giannis 68.8, giving market ranks #28/#40/#66. Prior-heavy technique inputs average away elite distinctions. Next: estimator follow-up for elite players (E2b) and Basketball Index data.
 - **Previously suspected real bugs, superseded by the T3 diagnosis above:**
   - AI trades applied count is 0, with `not_applied_stale_assets`.
   - AI roster cutdown frees nobody.

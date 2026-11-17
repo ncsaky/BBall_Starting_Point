@@ -7,6 +7,8 @@ display, transfer, lockout, and eventual lottery/draft resolution.
 
 from __future__ import annotations
 
+import math
+
 import json
 import random
 import re
@@ -357,7 +359,7 @@ def build_player_asset_valuations(canonical: dict[str, Any] | Any, config: dict[
             on_court
             + age_curve * float(weights.get("age_curve", 0.9))
             + development * float(weights.get("development_upside", 0.75))
-            + surplus * float(weights.get("contract_surplus", 0.42))
+            + surplus * float(weights.get("contract_surplus", 0.42)) * (surplus_quality_factor(on_court) if surplus > 0 else 1.0)
             + scarcity * float(weights.get("role_scarcity", 0.55))
             + (playoff - 50) * float(weights.get("playoff_value", 0.16))
             - health_risk * float(weights.get("health_risk", 0.42))
@@ -376,7 +378,7 @@ def build_player_asset_valuations(canonical: dict[str, Any] | Any, config: dict[
                 id=stable_id("player_asset_value", player["id"]),
                 player_id=player["id"],
                 team_id=player["team_id"],
-                player_value=round(clamp(value, 1, 99), 2),
+                player_value=round(soft_value_ceiling(value), 2),
                 on_court_value=round(on_court, 2),
                 contract_surplus=round(surplus, 2),
                 age_curve=round(age_curve, 2),
@@ -2826,9 +2828,9 @@ def market_trade_target_value(player: dict[str, Any], valuation: dict[str, Any])
         raw = min(raw, 19.0 + max(0.0, ability - 52.0) * 0.5 + upside * 0.32)
     cap = market_trade_value_cap(player, valuation, raw)
     if rookie_floor:
-        return round(clamp(max(raw, rookie_floor), 1.0, min(cap, 99.0)), 2)
+        return round(soft_value_ceiling(max(raw, rookie_floor), ceiling=min(cap, 99.0), knee=6.0), 2)
     if raw < 62 or minutes >= 28:
-        return round(clamp(raw, 1.0, cap), 2)
+        return round(soft_value_ceiling(raw, ceiling=cap, knee=6.0), 2)
     role_scale = clamp((max(4.0, minutes) / 30.0) ** 1.22, 0.36, 1.0)
     overall_proxy = float(ability)
     compressed = raw * role_scale
@@ -2837,6 +2839,28 @@ def market_trade_target_value(player: dict[str, Any], valuation: dict[str, Any])
     if minutes < 24:
         compressed = min(compressed, 32.0 + max(0.0, overall_proxy - 55.0) * 0.68 + minutes * 0.43)
     return round(clamp(compressed, 1.0, raw), 2)
+
+
+def surplus_quality_factor(on_court: float) -> float:
+    """How much a cheap contract adds to asset value, by player quality.
+
+    A bargain deal on a great player is a huge asset; the same bargain on a fringe rotation player is worth
+    far less. Without this, the capped +34 surplus lifted many ~70 on-court young players to the value
+    ceiling alongside MVP-level players (2026-11-16 market review).
+    """
+    return clamp((on_court - 60.0) / 22.0, 0.3, 1.0)
+
+
+def soft_value_ceiling(value: float, ceiling: float = 99.0, knee: float = 11.0) -> float:
+    """Order-preserving ceiling: values above ceiling-knee are compressed toward the ceiling, never clipped.
+
+    Replaces a hard clamp that made many players tie exactly at the ceiling.
+    """
+    value = max(1.0, value)
+    start = ceiling - knee
+    if value <= start:
+        return value
+    return start + knee * (1.0 - math.exp(-(value - start) / knee))
 
 
 def market_value_after_star_and_surplus_shape(player: dict[str, Any], valuation: dict[str, Any], raw: float) -> float:
@@ -2857,11 +2881,13 @@ def market_value_after_star_and_surplus_shape(player: dict[str, Any], valuation:
             superstar_floor += 7.5 + max(0.0, on_court - 88.0) * 0.55
         if raw >= 84.0 and playoff >= 82.0:
             superstar_floor += 8.0 + max(0.0, raw - 85.0) * 0.82
-        superstar_floor -= max(0.0, age - 32.0) * 0.16
+        # Aging superstars keep a floor, but trade markets discount age steeply (was 0.16/yr past 32,
+        # which kept 38-year-olds above prime All-NBA players; 2026-11-16 market review).
+        superstar_floor -= max(0.0, age - 30.0) * 2.0
         raw = max(raw, superstar_floor)
     elif minutes >= 28.0 and on_court >= 76.5 and playoff >= 76.0 and surplus < 18.0:
         raw = max(raw, 84.0 + max(0.0, on_court - 76.5) * 0.68 + max(0.0, playoff - 76.0) * 0.18)
-    return clamp(raw, 1.0, market_trade_value_cap(player, valuation, raw))
+    return soft_value_ceiling(raw, ceiling=market_trade_value_cap(player, valuation, raw), knee=6.0)
 
 
 def market_trade_value_cap(player: dict[str, Any], valuation: dict[str, Any], raw: float | None = None) -> float:
