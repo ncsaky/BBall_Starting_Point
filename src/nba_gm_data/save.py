@@ -2705,16 +2705,27 @@ def playoff_leaders(canonical: dict[str, Any] | Any, save_path: str | Path, stat
     rows = []
     for player_id, totals in save.get("playoff_player_stats", {}).items():
         games = max(1, int(totals.get("games") or 1))
-        rows.append(
-            {
-                "player": players.get(player_id, {"id": player_id, "name": totals.get("player_name")}),
-                "team_id": totals.get("team_id"),
-                "team_abbrev": totals.get("team_abbrev"),
-                "games": totals.get("games", 0),
-                stat_key: round(float(totals.get(stat_key, 0)), 2),
-                f"{stat_key}_per_game": round(float(totals.get(stat_key, 0)) / games, 2),
-            }
-        )
+        player = players.get(player_id, {"id": player_id, "name": totals.get("player_name")})
+        row = {
+            "player": player,
+            "player_id": player_id,
+            "player_name": player.get("name") or totals.get("player_name"),
+            "headshot_url": player.get("headshot_url"),
+            "team_id": totals.get("team_id"),
+            "team_abbrev": totals.get("team_abbrev"),
+            "games": totals.get("games", 0),
+        }
+        # Every box-score field as a playoff total and a per-playoff-game average.
+        # Denominators are playoff games only; regular-season games never enter.
+        for field in STAT_FIELDS:
+            row[field] = round(float(totals.get(field) or 0), 2)
+            row[f"{field}_per_game"] = round(float(totals.get(field) or 0) / games, 2)
+        row["fg_pct"] = percentage_stat(totals, "fgm", "fga")
+        row["fg3_pct"] = percentage_stat(totals, "fg3m", "fg3a")
+        row["ft_pct"] = percentage_stat(totals, "ftm", "fta")
+        row[stat_key] = round(float(totals.get(stat_key, 0)), 2)
+        row[f"{stat_key}_per_game"] = round(float(totals.get(stat_key, 0)) / games, 2)
+        rows.append(row)
     rows.sort(key=lambda item: (-float(item.get(f"{stat_key}_per_game", 0)), -float(item.get(stat_key, 0)), item["player"].get("name") or ""))
     return {
         "stat": stat_key,

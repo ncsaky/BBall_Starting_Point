@@ -4995,3 +4995,62 @@ body.unified-terminal-ui .has-card-board .season-minute-row > button .season-row
 @media (prefers-reduced-motion:reduce) {
   body.unified-terminal-ui .has-card-board .season-row-motion { animation:none !important; }
 }
+
+/* Playoff Stats card: shared table style (double header rule, small bold headings, stripes,
+   whole-row hover, sorted-column shading, full-height bottom-aligned portraits). */
+body.unified-terminal-ui .playoff-command-center .phase-leaders-panel.playoff-stats-panel {
+  display:flex; flex-direction:column; min-width:0; min-height:0; padding:0; overflow:hidden;
+  background:#fff; border:1px solid var(--season-line);
+}
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-scroll { flex:1 1 auto; min-height:0; overflow:auto; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table {
+  table-layout:fixed; width:100%; min-width:600px; margin:0; border:0;
+  border-collapse:separate; border-spacing:0; background:#fff; color:var(--season-text);
+}
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table :is(th,td) {
+  box-sizing:border-box; height:26px; padding:0 4px; border:0; text-align:right; white-space:nowrap;
+  vertical-align:middle; color:var(--season-text); font:400 10px Tahoma,"Trebuchet MS",Arial,sans-serif;
+  overflow:hidden; text-overflow:ellipsis; background-clip:padding-box;
+}
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table :is(.playoff-stats-col-player,.playoff-stats-col-team) { text-align:left; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table thead th {
+  position:sticky; top:0; z-index:2; height:20px; background:#fff;
+  border-bottom:1px solid var(--season-line); font-size:8px; font-weight:700;
+}
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table tbody tr:first-child > :is(th,td) { border-top:1px solid var(--season-soft-line); }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table tbody tr > :is(th,td) { border-bottom:1px solid var(--season-soft-line); }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table tbody tr:last-child > :is(th,td) { border-bottom:0; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table thead th button {
+  appearance:none; display:block; width:100%; height:100%; min-height:0 !important; margin:0; padding:0 !important;
+  border:0 !important; border-radius:0; background:transparent !important; box-shadow:none !important;
+  color:inherit !important; cursor:pointer; font:inherit; font-size:8px !important; font-weight:700 !important;
+  text-align:inherit; text-transform:none; transform:none !important;
+}
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table thead th button:focus-visible { outline:1px solid #42667a; outline-offset:-1px; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table tbody tr { background-color:#fff; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table tbody tr:nth-child(even) { background-color:#eef1f3; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table tbody tr:is(:hover,:focus-within) { background-color:#dce8f2; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table tbody :is(th,td) { background-color:transparent; }
+/* The sorted column is shaded down its full height, including the heading. */
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table thead th.is-sorted { background-color:#d1dde8; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table tbody :is(th,td).is-sorted { background-color:rgba(118,156,190,.28); font-weight:700; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table tbody .is-sorted * { font-weight:700; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-col-player { position:relative; padding:0 !important; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-table thead .playoff-stats-col-player { padding-left:30px !important; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-player-link {
+  appearance:none; box-sizing:border-box; display:flex; align-items:center; gap:3px; width:100%; height:26px; min-height:0 !important;
+  margin:0; padding:0 4px 0 30px !important; border:0 !important; border-radius:0; background:transparent !important;
+  box-shadow:none !important; color:var(--season-text) !important; cursor:pointer; font:inherit; text-align:left; transform:none !important;
+}
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-player-link:is(:hover,:focus-visible) { text-decoration:underline; outline-offset:-1px; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-player-link .player-headshot-frame {
+  position:absolute; left:2px; bottom:0; display:block; width:24px; height:100%; max-height:none; overflow:hidden;
+}
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-player-link .roster-player-headshot {
+  display:block; width:100%; height:100%; object-fit:cover; object-position:center bottom;
+}
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-rank { flex:0 0 auto; color:var(--season-muted); }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-player-link .player-name-text { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-team { display:inline-flex; align-items:center; gap:3px; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-team img { width:16px; height:16px; object-fit:contain; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-stats-empty td { height:48px; text-align:center; color:var(--season-muted); }

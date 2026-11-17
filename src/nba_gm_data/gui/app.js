@@ -21,7 +21,7 @@ const state = {
   leagueTab: "standings",
   leagueStat: "points",
   leagueTrait: "overall",
-  playoffLeaderStat: "points",
+  playoffStatsSort: { key: "points_per_game", direction: "desc" },
   draftPresentationStage: "",
   draftPresentationKey: "",
   draftBoardFilter: "available",
@@ -1252,7 +1252,7 @@ async function ensureViewData(force = false) {
     }
     if (phase === "playoffs") {
       state.data.playoffs = await action("playoff_room", savePayload());
-      state.data.playoffLeaders = await action("playoff_leaders", { ...savePayload(), stat: state.playoffLeaderStat, limit: 9 });
+      state.data.playoffLeaders = await action("playoff_leaders", { ...savePayload(), stat: "points", limit: PLAYOFF_STATS_LIMIT });
     }
     if (phase === "draft") {
       state.data.draft = await action("draft_room", { ...savePayload(), team: userTeam(), seed: 7 });
@@ -4792,40 +4792,149 @@ function averageNumber(values, fallback = 0) {
 function playoffDashboardWorkspace() {
   const room = state.data.playoffs || {};
   const series = room.series || [];
-  const leaders = state.data.playoffLeaders?.leaders || [];
-  const leaderStat = state.playoffLeaderStat || "points";
-  const leaderOptions = [
-    ["points", "PPG"],
-    ["rebounds", "RPG"],
-    ["assists", "APG"],
-    ["steals", "SPG"],
-    ["blocks", "BPG"],
-    ["fg3m", "3PM"],
-  ];
   return `
     <div class="playoff-command-center">
       <div class="phase-playoff-layout">
         <div class="phase-bracket-shell">
           ${playoffBracket(series, room.champion, room.play_in)}
         </div>
-        <aside class="phase-leaders-panel">
-          <div class="playoff-leaders-head">
-            <h4>Playoff Leaders</h4>
-            <select data-playoff-leader-stat aria-label="Playoff leader category">
-              ${leaderOptions.map(([value, label]) => `<option value="${value}" ${value === leaderStat ? "selected" : ""}>${label}</option>`).join("")}
-            </select>
-          </div>
-          <ol class="phase-leader-list">
-            ${leaders.slice(0, 9).map((row, index) => `<li>
-              <span>${index + 1}</span>
-              <strong>${escapeHtml(row.player?.name || row.player_name || "Unknown")}</strong>
-              <small>${escapeHtml(row.team_abbrev || "")}</small>
-              <em>${Number(row[`${leaderStat}_per_game`] || 0).toFixed(1)}</em>
-            </li>`).join("") || `<li class="empty">Leaders appear after playoff games.</li>`}
-          </ol>
+        <aside class="phase-leaders-panel playoff-stats-panel" data-playoff-stats>
+          ${playoffStatsTable(state.data.playoffLeaders?.leaders || [], state.playoffStatsSort)}
         </aside>
       </div>
     </div>`;
+}
+
+// Playoff Stats card: every player's playoff line (playoff games only), sortable by any column.
+const PLAYOFF_STATS_LIMIT = 500;
+const PLAYOFF_STATS_DEFAULT_SORT = { key: "points_per_game", direction: "desc" };
+const PLAYOFF_STATS_COLUMNS = [
+  { key: "player", label: "Player", title: "Player", text: true, width: 150 },
+  { key: "team", label: "Team", title: "Team", text: true, width: 52 },
+  { key: "games", label: "GP", title: "Playoff games played", digits: 0, width: 30 },
+  { key: "minutes_per_game", label: "MIN", title: "Minutes per playoff game", width: 38 },
+  { key: "points_per_game", label: "PTS", title: "Points per playoff game", width: 38 },
+  { key: "rebounds_per_game", label: "REB", title: "Rebounds per playoff game", width: 38 },
+  { key: "assists_per_game", label: "AST", title: "Assists per playoff game", width: 38 },
+  { key: "steals_per_game", label: "STL", title: "Steals per playoff game", width: 34 },
+  { key: "blocks_per_game", label: "BLK", title: "Blocks per playoff game", width: 34 },
+  { key: "fg3m_per_game", label: "3PM", title: "Threes made per playoff game", width: 36 },
+  { key: "fg_pct", label: "FG%", title: "Playoff field-goal percentage", width: 40 },
+  { key: "fg3_pct", label: "3P%", title: "Playoff three-point percentage", width: 40 },
+  { key: "ft_pct", label: "FT%", title: "Playoff free-throw percentage", width: 40 },
+];
+
+function playoffStatsColumn(key) {
+  return PLAYOFF_STATS_COLUMNS.find((column) => column.key === key) || null;
+}
+
+function playoffStatsSortState(sort) {
+  return playoffStatsColumn(sort?.key) && ["asc", "desc"].includes(sort?.direction) ? sort : PLAYOFF_STATS_DEFAULT_SORT;
+}
+
+// Clicking the sorted column flips direction; a new column starts high-to-low (names and teams A-Z).
+function nextPlayoffStatsSort(current, key) {
+  const column = playoffStatsColumn(key);
+  if (!column) return playoffStatsSortState(current);
+  const active = playoffStatsSortState(current);
+  if (active.key === key) return { key, direction: active.direction === "desc" ? "asc" : "desc" };
+  return { key, direction: column.text ? "asc" : "desc" };
+}
+
+function playoffStatsName(row) {
+  return String(row.player_name || row.player?.name || "Unknown");
+}
+
+function playoffStatsValue(row, key) {
+  if (key === "player" || key === "team") {
+    const raw = key === "player" ? playoffStatsName(row) : String(row.team_abbrev || "");
+    const text = raw.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    return { value: text, numeric: false, missing: !text };
+  }
+  const raw = row[key];
+  const number = Number(raw);
+  return { value: number, numeric: true, missing: raw === null || raw === undefined || raw === "" || !Number.isFinite(number) };
+}
+
+// Rows without a value (e.g. no three-point attempts) stay at the bottom in either direction.
+function playoffStatsOrderedRows(rows, sort) {
+  const active = playoffStatsSortState(sort);
+  const tiebreak = (left, right) => {
+    const points = Number(right.row.points_per_game || 0) - Number(left.row.points_per_game || 0);
+    if (points) return points;
+    const name = playoffStatsName(left.row).localeCompare(playoffStatsName(right.row));
+    return name || left.index - right.index;
+  };
+  return (rows || []).map((row, index) => ({ row, index })).sort((left, right) => {
+    const a = playoffStatsValue(left.row, active.key);
+    const b = playoffStatsValue(right.row, active.key);
+    if (a.missing !== b.missing) return a.missing ? 1 : -1;
+    if (a.missing) return tiebreak(left, right);
+    let comparison = a.numeric && b.numeric ? a.value - b.value : a.value < b.value ? -1 : a.value > b.value ? 1 : 0;
+    if (active.direction === "desc") comparison *= -1;
+    return comparison || tiebreak(left, right);
+  }).map(({ row }) => row);
+}
+
+function playoffStatsCellText(row, column) {
+  const { value, missing } = playoffStatsValue(row, column.key);
+  if (missing) return "—";
+  return value.toFixed(column.digits ?? 1);
+}
+
+function playoffStatsTable(rows, sort) {
+  const active = playoffStatsSortState(sort);
+  const ordered = playoffStatsOrderedRows(rows, active);
+  const head = PLAYOFF_STATS_COLUMNS.map((column) => {
+    const sorted = column.key === active.key;
+    const ariaSort = sorted ? (active.direction === "desc" ? "descending" : "ascending") : "none";
+    const mark = sorted ? (active.direction === "desc" ? " ↓" : " ↑") : "";
+    return `<th scope="col" class="playoff-stats-col-${column.key}${sorted ? " is-sorted" : ""}" aria-sort="${ariaSort}"><button type="button" data-playoff-stats-sort="${column.key}" title="Sort by ${escapeHtml(column.title)}">${escapeHtml(column.label)}${mark}</button></th>`;
+  }).join("");
+  const body = ordered.map((row, index) => {
+    const id = String(row.player_id || row.player?.id || "");
+    const name = playoffStatsName(row);
+    const portraitRow = { headshot_url: row.headshot_url || row.player?.headshot_url || "" };
+    const portrait = playerHeadshotMarkup(portraitRow, "roster-player-headshot") || playerHeadshotMarkup({ is_prospect: true }, "roster-player-headshot");
+    const team = String(row.team_abbrev || "");
+    const logo = team ? teamLogoSrc(team) : "";
+    const cells = PLAYOFF_STATS_COLUMNS.map((column) => {
+      const sortedClass = column.key === active.key ? " is-sorted" : "";
+      if (column.key === "player") {
+        return `<th scope="row" class="playoff-stats-col-player${sortedClass}"><button type="button" class="playoff-stats-player-link" data-dashboard-player-card="${escapeAttr(id)}" aria-label="Open ${escapeAttr(name)} player card">${portrait}<span class="playoff-stats-rank">${index + 1}.</span><span class="player-name-text">${escapeHtml(name)}</span></button></th>`;
+      }
+      if (column.key === "team") {
+        return `<td class="playoff-stats-col-team${sortedClass}"><span class="playoff-stats-team">${logo ? `<img src="${escapeAttr(logo)}" alt="" aria-hidden="true" loading="lazy" decoding="async">` : ""}<span>${escapeHtml(team || "—")}</span></span></td>`;
+      }
+      return `<td class="playoff-stats-col-${column.key}${sortedClass}">${playoffStatsCellText(row, column)}</td>`;
+    }).join("");
+    return `<tr data-playoff-stats-player="${escapeAttr(id)}">${cells}</tr>`;
+  }).join("");
+  const empty = `<tr class="playoff-stats-empty"><td colspan="${PLAYOFF_STATS_COLUMNS.length}">Playoff stats appear after the first playoff game.</td></tr>`;
+  return `<div class="playoff-stats-scroll"><table class="playoff-stats-table" aria-label="Playoff stats, per playoff game"><colgroup>${PLAYOFF_STATS_COLUMNS.map((column) => `<col style="width:${column.width}px">`).join("")}</colgroup><thead><tr>${head}</tr></thead><tbody>${body || empty}</tbody></table></div>`;
+}
+
+// Re-sorts in place so the card keeps its window, scroll position and keyboard focus.
+function wirePlayoffStatsTable(root = document) {
+  root.querySelectorAll("[data-playoff-stats]").forEach((panel) => {
+    wireDashboardPlayerCards(panel);
+    panel.querySelectorAll("[data-playoff-stats-sort]").forEach((button) => {
+      if (button.dataset.playoffStatsSortWired) return;
+      button.dataset.playoffStatsSortWired = "true";
+      button.addEventListener("click", () => {
+        const key = button.dataset.playoffStatsSort;
+        state.playoffStatsSort = nextPlayoffStatsSort(state.playoffStatsSort, key);
+        const scroll = panel.querySelector(".playoff-stats-scroll");
+        const top = scroll?.scrollTop || 0;
+        const left = scroll?.scrollLeft || 0;
+        panel.innerHTML = playoffStatsTable(state.data.playoffLeaders?.leaders || [], state.playoffStatsSort);
+        const next = panel.querySelector(".playoff-stats-scroll");
+        if (next) { next.scrollTop = top; next.scrollLeft = left; }
+        wirePlayoffStatsTable(panel.parentElement || panel);
+        panel.querySelector(`[data-playoff-stats-sort="${key}"]`)?.focus();
+      });
+    });
+  });
 }
 
 function draftDashboardWorkspace() {
@@ -5418,15 +5527,7 @@ function wireDashboardPhaseWorkspace(kind, root = els.content) {
     root.querySelectorAll("[data-playoff-series]").forEach((button) => {
       button.addEventListener("click", () => openPlayoffSeriesBoxScore(button.dataset.playoffSeries || ""));
     });
-    root.querySelector("[data-playoff-leader-stat]")?.addEventListener("change", async (event) => {
-      state.playoffLeaderStat = event.currentTarget.value || "points";
-      state.data.playoffLeaders = await action("playoff_leaders", {
-        ...savePayload(),
-        stat: state.playoffLeaderStat,
-        limit: 9,
-      });
-      renderDashboard();
-    });
+    wirePlayoffStatsTable(root);
   }
   if (kind === "draft") {
     root.querySelector("#draftBoardFilter")?.addEventListener("change", (event) => {
@@ -6649,7 +6750,7 @@ function seasonalClipboardCards(dashboard) {
     cutdown: [["decision", ".required-decision-workspace", "Roster Cutdown - Required"]],
     playoffs: [
       ["bracket", ".phase-bracket-shell", "Playoff Bracket"],
-      ["leaders", ".phase-leaders-panel", "Playoff Leaders"],
+      ["leaders", ".phase-leaders-panel", "Playoff Stats"],
     ],
     draft: [
       ["lottery", ".draft-lottery-card", "Draft Lottery"],
@@ -6733,7 +6834,8 @@ function seasonalClipboardCards(dashboard) {
       const locked = !available || (phase === "free_agency" && !legal.has("free_agent_signings")) || signingClosed;
       const bracket = phase === "playoffs" && name === "bracket";
       const lottery = phase === 'draft' && name === 'lottery';
-      cards.push({id:`phase-${phase}-${name}`, title, card, width:bracket ? Math.min(1420, Math.max(320, window.innerWidth - 60)) : lottery ? Math.min(700,Math.max(320,window.innerWidth-60)) : width, height:bracket ? 480 : lottery ? (state.draftPresentationStage==='odds'?344:454) : height, sizingKey:lottery?`lottery-v2:${state.draftPresentationStage}`:null, locked, galleryVisible:(active || archiveBracket) && Boolean(panel), mandatory:["staff_retention", "cutdown"].includes(phase), required:required && Boolean(panel), measured:Boolean(panel), phaseActive:active && Boolean(panel)});
+      const playoffStats = phase === "playoffs" && name === "leaders";
+      cards.push({id:`phase-${phase}-${name}`, title, card, width:bracket ? Math.min(1420, Math.max(320, window.innerWidth - 60)) : lottery ? Math.min(700,Math.max(320,window.innerWidth-60)) : playoffStats ? Math.min(660, Math.max(320, window.innerWidth - 60)) : width, height:bracket ? 480 : lottery ? (state.draftPresentationStage==='odds'?344:454) : playoffStats ? 430 : height, sizingKey:lottery?`lottery-v2:${state.draftPresentationStage}`:playoffStats?"playoff-stats-v1":null, locked, galleryVisible:(active || archiveBracket) && Boolean(panel), mandatory:["staff_retention", "cutdown"].includes(phase), required:required && Boolean(panel), measured:Boolean(panel), phaseActive:active && Boolean(panel)});
     }
     seed.remove();
   }
@@ -8707,7 +8809,7 @@ async function refreshDashboardAfterPhaseMutation(roomKey, room) {
   state.data.dashboard = dash;
   if (team === userTeam()) state.data.statusDashboard = dash;
   if (roomKey === "playoffs") {
-    state.data.playoffLeaders = await action("playoff_leaders", { ...savePayload(), stat: state.playoffLeaderStat, limit: 9 });
+    state.data.playoffLeaders = await action("playoff_leaders", { ...savePayload(), stat: "points", limit: PLAYOFF_STATS_LIMIT });
   }
   renderDashboard();
 }
