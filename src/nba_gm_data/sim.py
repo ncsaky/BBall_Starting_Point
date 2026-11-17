@@ -1402,7 +1402,7 @@ def playmaking_assists_per36(inputs: dict[str, Any]) -> float | None:
 
     Log-linear fit (2026-11-17) to real 2025-26 assists per 36 for 150 rotation players, out-of-fold
     correlation 0.91 (the trait-based formula: 0.62): pass-reading grade, how often the player chooses to pass
-    (T01 pass share, measured shot-creating passes per touch) and how involved he is (T08). Box-score allocation only; game scores do not use it.
+    (T01 pass share: measured shot-creating passes per touch) and how involved he is (T08: measured true usage). Box-score allocation only; game scores do not use it.
     """
     try:
         recognition = sum(float(inputs[i]["value"]["grade"]) for i in PASS_RECOGNITION_INPUTS) / len(PASS_RECOGNITION_INPUTS)
@@ -1412,7 +1412,7 @@ def playmaking_assists_per36(inputs: dict[str, Any]) -> float | None:
         return None
     if pass_share <= 0 or involvement <= 0:
         return None
-    log_rate = 4.0004 + 0.2898 * recognition / 100.0 + 1.0878 * math.log(pass_share) + 0.8603 * math.log(involvement)
+    log_rate = 4.2367 + 0.1333 * recognition / 100.0 + 0.9888 * math.log(pass_share) + 0.5675 * math.log(involvement)
     return round(clamp(math.exp(log_rate), 0.5, 14.0), 3)
 
 

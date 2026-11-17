@@ -48,7 +48,8 @@ GRADE_SLOPE = 1.31
 VERSION = "bbi_evidence_overlay_v2_2026_11_17"
 OVERLAY_KINDS = ("grade", "propensity", "physical")
 # Shot-region mix is already built from observed shot locations; BBI would only repeat that data.
-SKIP_DISTRIBUTIONS = {"T02", "T01"}  # T01 is set from measured per-touch rates (apply_measured_action_mix)
+SKIP_DISTRIBUTIONS = {"T02", "T01"}  # T01 is set from measured per-touch rates (apply_measured_tendencies)
+MEASURED_INPUTS = {"T01", "T08"}      # measured on their own scale, not re-ranked (apply_measured_tendencies)
 _ND = NormalDist()
 
 
@@ -335,7 +336,7 @@ def apply_overlay(section: dict[str, Any], root: Path, mapping: Mapping[str, Any
                 continue
             record = doc["inputs"].get(iid)
             slot = _value_slot(record) if record else None
-            if not slot:
+            if not slot or iid in MEASURED_INPUTS:
                 continue
             mode, key = slot
             old = _read(record, key)
@@ -405,36 +406,148 @@ def measured_action_mix(root: Path) -> dict[str, dict[str, Any]]:
     return out
 
 
-def apply_measured_action_mix(section: dict[str, Any], root: Path) -> dict[str, Any]:
-    """Blend measured per-touch rates into T01 by evidence weight; the post share keeps its estimate."""
-    measured = measured_action_mix(root)
-    changed = 0
-    for pid, doc in section["players"].items():
-        ev = measured.get(pid)
-        record = doc["inputs"].get("T01")
+SCALE_MAP_FILE = "data/canonical/tendency_scale_map.json"
+MEASURED_T01 = ("shoot", "drive", "pass", "reset")
+MIN_MAP_WEIGHT = 0.5   # players whose measured value defines the measured scale (about a season of real minutes)
+
+
+def measured_involvement(root: Path) -> dict[str, dict[str, Any]]:
+    """canonical_id -> {"value": true usage share (0-1, season-weighted), "weight": evidence weight}.
+
+    True usage counts the possessions a player finishes and the ones he creates for teammates, the closest
+    measure of offensive involvement for hub bigs and lead guards alike."""
+    table = collect_values(root, {"Stable True Usage%"})
+    acc: dict[str, list[float]] = defaultdict(lambda: [0.0, 0.0])
+    for season, season_weight in SEASON_WEIGHTS.items():
+        for key, (value, minutes, cid) in table.get((season, "Stable True Usage%"), {}).items():
+            if cid and value > 0:
+                w = season_weight * minutes / (minutes + MINUTES_HALF)
+                acc[cid][0] += w * value / 100.0
+                acc[cid][1] += w
+    return {cid: {"value": v / w, "weight": w} for cid, (v, w) in acc.items() if w > 0}
+
+
+def _quantile_points(values: list[float], n: int = 201) -> list[float]:
+    ordered = sorted(values)
+    if not ordered:
+        return []
+    return [ordered[min(len(ordered) - 1, round(i * (len(ordered) - 1) / (n - 1)))] for i in range(n)]
+
+
+def map_to_measured(table: Mapping[str, list[float]], x: float) -> float:
+    """Place an estimated value on the measured scale by its rank among all estimates (monotone, interpolated)."""
+    import bisect
+    source, target = table["source"], table["target"]
+    if not source or not target:
+        return x
+    if x <= source[0]:
+        return target[0]
+    if x >= source[-1]:
+        return target[-1]
+    i = bisect.bisect_left(source, x)
+    lo = max(0, i - 1)
+    span = source[i] - source[lo]
+    frac = 0.0 if span <= 0 else (x - source[lo]) / span
+    pos = lo + frac
+    j = min(len(target) - 1, int(pos))
+    k = min(len(target) - 1, j + 1)
+    return target[j] + (target[k] - target[j]) * (pos - j)
+
+
+def map_tendency_inputs(inputs: dict[str, Any], scale_map: Mapping[str, Any]) -> dict[str, Any]:
+    """Translate estimator-scale T01 (shoot/drive/pass/reset) and T08 onto the measured scales, in place.
+    Used for players without measurements, including generated rookies at install time."""
+    record = inputs.get("T01")
+    mix = _mix(record) if record else None
+    if mix and "post" in mix and all(c in mix for c in MEASURED_T01) and all(f"T01:{c}" in scale_map for c in MEASURED_T01):
+        mapped = {c: max(1e-4, map_to_measured(scale_map[f"T01:{c}"], float(mix[c]))) for c in MEASURED_T01}
+        rest = 1.0 - float(mix["post"])
+        total = sum(mapped.values())
+        new_mix = {**{c: rest * v / total for c, v in mapped.items()}, "post": float(mix["post"])}
+        record["value"] = {**record["value"], "rows": [dict(record["value"]["rows"][0],
+                                                              probabilities={k: round(v, 6) for k, v in new_mix.items()})]}
+    involvement = inputs.get("T08")
+    if involvement and isinstance(involvement.get("value"), dict) and "probability" in involvement["value"] and "T08" in scale_map:
+        involvement["value"] = {**involvement["value"], "probability": round(
+            map_to_measured(scale_map["T08"], float(involvement["value"]["probability"])), 6)}
+    return inputs
+
+
+def load_scale_map(root: Path) -> dict[str, Any] | None:
+    path = Path(root) / SCALE_MAP_FILE
+    return json.loads(path.read_text()) if path.exists() else None
+
+
+def apply_measured_tendencies(section: dict[str, Any], root: Path) -> dict[str, Any]:
+    """Measured scales for the action mix (T01) and involvement (T08).
+
+    1. Measure per-touch action rates and true usage from BBI (season-weighted, evidence weight by minutes).
+    2. Build a rank translation from the estimator's scale to the measured scale (players with >= about a
+       season of minutes define the measured scale) and save it for generated players (SCALE_MAP_FILE).
+    3. Every player's estimate is translated onto the measured scale; players with measurements then blend in
+       their own values by evidence weight. T01's post share keeps its estimate (no per-touch measure)."""
+    mix_measured = measured_action_mix(root)
+    inv_measured = measured_involvement(root)
+    players = section["players"]
+    scale_map: dict[str, Any] = {}
+    for c in MEASURED_T01:
+        source = [float(_mix(d["inputs"].get("T01"))[c]) for d in players.values() if _mix(d["inputs"].get("T01"))]
+        target = []
+        for ev in mix_measured.values():
+            if ev["weight"] >= MIN_MAP_WEIGHT and sum(ev["mix"].values()) > 0:
+                target.append(ev["mix"][c] / sum(ev["mix"].values()))
+        scale_map[f"T01:{c}"] = {"source": _quantile_points(source), "target": _quantile_points(target)}
+    source = [float(d["inputs"]["T08"]["value"]["probability"]) for d in players.values()
+              if isinstance((d["inputs"].get("T08") or {}).get("value"), dict)]
+    target = [ev["value"] for ev in inv_measured.values() if ev["weight"] >= MIN_MAP_WEIGHT]
+    scale_map["T08"] = {"source": _quantile_points(source), "target": _quantile_points(target)}
+    counts = {"t01_measured": 0, "t08_measured": 0, "mapped_only": 0}
+    for pid, doc in players.items():
+        inputs = doc["inputs"]
+        map_tendency_inputs(inputs, scale_map)
+        measured_any = False
+        ev = mix_measured.get(pid)
+        record = inputs.get("T01")
         mix = _mix(record) if record else None
-        if not ev or not mix or "post" not in mix:
-            continue
-        post = float(mix["post"])
-        rates = ev["mix"]
-        total = sum(rates.values())
-        if total <= 0:
-            continue
-        observed = {k: (1.0 - post) * v / total for k, v in rates.items()}
-        share = ev["weight"] / (ev["weight"] + PRIOR_WEIGHT)
-        new_mix = {k: (share * observed[k] + (1 - share) * float(mix[k])) if k in observed else float(mix[k]) for k in mix}
-        norm = sum(new_mix.values())
-        new_mix = {k: round(v / norm, 6) for k, v in new_mix.items()}
-        record["value"] = {**record["value"], "rows": [dict(record["value"]["rows"][0], probabilities=new_mix)]}
-        record["evidence"] = [*(record.get("evidence") or []), {
-            "source": f"{CACHE_DIR}/normalized.json (Leaderboards Values)",
-            "method": (f"{VERSION}: measured per-touch rates (shots, drives, shot-creating passes, other passes) "
-                       f"blended at share {share:.2f}; post share kept from the estimate"),
-            "shared_evidence_id": f"bbi:{pid}:T01",
-            "notes": "per touch: " + ", ".join(f"{k} {v:.3f}" for k, v in rates.items()),
-        }]
-        if share >= 0.5:
-            record["status"] = "estimated"
-            record["reason"] = "estimated"
-        changed += 1
-    return {"t01_measured": changed}
+        if ev and mix and "post" in mix and sum(ev["mix"].values()) > 0:
+            post = float(mix["post"])
+            total = sum(ev["mix"].values())
+            observed = {k: (1.0 - post) * v / total for k, v in ev["mix"].items()}
+            share = ev["weight"] / (ev["weight"] + PRIOR_WEIGHT)
+            new_mix = {k: (share * observed[k] + (1 - share) * float(mix[k])) if k in observed else float(mix[k]) for k in mix}
+            norm = sum(new_mix.values())
+            record["value"] = {**record["value"], "rows": [dict(record["value"]["rows"][0],
+                                                                  probabilities={k: round(v / norm, 6) for k, v in new_mix.items()})]}
+            record["evidence"] = [*(record.get("evidence") or []), {
+                "source": f"{CACHE_DIR}/normalized.json (Leaderboards Values)",
+                "method": (f"{VERSION}: estimate placed on the measured per-touch scale by rank, then measured rates "
+                           f"(shots, drives, shot-creating passes, other passes per touch) blended at share {share:.2f}; "
+                           "post share kept from the estimate"),
+                "shared_evidence_id": f"bbi:{pid}:T01",
+                "notes": "per touch: " + ", ".join(f"{k} {v:.3f}" for k, v in ev["mix"].items()),
+            }]
+            if share >= 0.5:
+                record["status"], record["reason"] = "estimated", "estimated"
+            counts["t01_measured"] += 1
+            measured_any = True
+        ev = inv_measured.get(pid)
+        involvement = inputs.get("T08")
+        if ev and involvement and isinstance(involvement.get("value"), dict):
+            share = ev["weight"] / (ev["weight"] + PRIOR_WEIGHT)
+            old = float(involvement["value"]["probability"])
+            involvement["value"] = {**involvement["value"], "probability": round(share * ev["value"] + (1 - share) * old, 6)}
+            involvement["evidence"] = [*(involvement.get("evidence") or []), {
+                "source": f"{CACHE_DIR}/normalized.json (Leaderboards Values)",
+                "method": (f"{VERSION}: estimate placed on the measured true-usage scale by rank, then measured true "
+                           f"usage {ev['value']:.3f} blended at share {share:.2f}"),
+                "shared_evidence_id": f"bbi:{pid}:T08",
+                "notes": "true usage = possessions finished plus created for teammates, share of team possessions",
+            }]
+            if share >= 0.5:
+                involvement["status"], involvement["reason"] = "estimated", "estimated"
+            counts["t08_measured"] += 1
+            measured_any = True
+        if not measured_any:
+            counts["mapped_only"] += 1
+    (Path(root) / SCALE_MAP_FILE).write_text(json.dumps({"version": VERSION, **scale_map}, indent=0) + "\n")
+    return counts

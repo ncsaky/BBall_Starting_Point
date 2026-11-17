@@ -164,9 +164,9 @@ def main() -> None:
     bbi_summary=None
     if not args.no_bbi and (root/'data/research/bbi/normalized.json').exists() and (root/'data/research/bbi/bbi_input_mapping.json').exists():
         # Player-specific Basketball Index evidence (Leaderboards Values captures) blended over the estimate.
-        from nba_gm_data.bbi_evidence import apply_overlay, apply_measured_action_mix
+        from nba_gm_data.bbi_evidence import apply_overlay, apply_measured_tendencies
         bbi_summary=apply_overlay(section,root)
-        bbi_summary.update(apply_measured_action_mix(section,root))
+        bbi_summary.update(apply_measured_tendencies(section,root))
     baseline=InputEstimator.from_local(root,use_expert=False).estimate_universe(universe)
     comparison=validation_comparison(section,load_reference_cells(root),baseline)
     payload=canonical_json(section)

@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 import unittest
 from pathlib import Path
 
@@ -47,7 +48,7 @@ class OverlayTests(unittest.TestCase):
         for i in range(60):
             players[f"p{i}"] = {"inputs": {
                 "S01": {"status": "estimated", "reason": "prior", "value": {"grade": 50.0}},
-                "T08": {"status": "estimated", "reason": "prior", "value": {"probability": 0.2 + i * 0.005}},
+                "T06": {"status": "estimated", "reason": "prior", "value": {"probability": 0.2 + i * 0.005}},
                 "P06": {"status": "estimated", "reason": "prior", "value": {"display_grade": {"grade": 40.0 + i * 0.3}, "measurements": []}},
                 "P01": {"status": "measured", "reason": "measured", "value": {"display_grade": {"grade": 50.0}, "measurements": [{"inches": 80}]}},
             }}
@@ -55,8 +56,8 @@ class OverlayTests(unittest.TestCase):
 
     def test_tendencies_keep_their_scale_and_follow_bbi_rank(self):
         section = self._section()
-        before = sorted(d["inputs"]["T08"]["value"]["probability"] for d in section["players"].values())
-        fake = {"p0": {"T08": {"grade": 95.0, "z": 2.5, "weight": 5.0, "seasons": {}, "metrics_used": ["m"]},
+        before = sorted(d["inputs"]["T06"]["value"]["probability"] for d in section["players"].values())
+        fake = {"p0": {"T06": {"grade": 95.0, "z": 2.5, "weight": 5.0, "seasons": {}, "metrics_used": ["m"]},
                        "P06": {"grade": 95.0, "z": 2.5, "weight": 5.0, "seasons": {}, "metrics_used": ["m"]},
                        "P01": {"grade": 95.0, "z": 2.5, "weight": 5.0, "seasons": {}, "metrics_used": ["m"]},
                        "S01": {"grade": 80.0, "z": 1.0, "weight": 0.35, "seasons": {}, "metrics_used": ["m"]}}}
@@ -68,15 +69,15 @@ class OverlayTests(unittest.TestCase):
             be.player_input_scores = original
         p0 = section["players"]["p0"]["inputs"]
         # Lowest-ranked usage becomes near the top, but stays inside the existing range (no new scale).
-        self.assertGreater(p0["T08"]["value"]["probability"], before[50])
-        self.assertLessEqual(p0["T08"]["value"]["probability"], before[-1])
-        self.assertEqual(p0["T08"]["reason"], "estimated")
+        self.assertGreater(p0["T06"]["value"]["probability"], before[50])
+        self.assertLessEqual(p0["T06"]["value"]["probability"], before[-1])
+        self.assertEqual(p0["T06"]["reason"], "estimated")
         self.assertGreater(p0["P06"]["value"]["display_grade"]["grade"], 50.0)
         self.assertEqual(p0["P01"]["value"]["display_grade"]["grade"], 50.0)  # measured physicals untouched
         self.assertAlmostEqual(p0["S01"]["value"]["grade"], 65.0)            # equal weights -> halfway
         self.assertEqual(p0["S01"]["reason"], "estimated")
         self.assertEqual(summary["cells_changed"], 3)
-        self.assertAlmostEqual(section["players"]["p1"]["inputs"]["T08"]["value"]["probability"], 0.205)  # others untouched
+        self.assertAlmostEqual(section["players"]["p1"]["inputs"]["T06"]["value"]["probability"], 0.205)  # others untouched
 
     def test_mix_choice_is_reranked_and_mix_still_sums_to_one(self):
         section = {"players": {}}
@@ -104,25 +105,43 @@ class OverlayTests(unittest.TestCase):
             self.assertAlmostEqual(be._quantile(pool, be._ND.cdf(be._rank_z(pool, x))), x)
 
 
-class MeasuredActionMixTests(unittest.TestCase):
-    def test_measured_rates_blend_in_and_post_share_is_kept(self):
-        section = {"players": {"hub": {"inputs": {"T01": {"status": "estimated", "reason": "prior", "value": {"rows": [
-            {"condition": "reference_opportunity",
-             "probabilities": {"drive": 0.2, "pass": 0.3, "post": 0.18, "reset": 0.12, "shoot": 0.2}}]}}}}}}
-        fake = {"hub": {"mix": {"shoot": 0.17, "drive": 0.04, "pass": 0.18, "reset": 0.55}, "weight": 5.0}}
-        original = be.measured_action_mix
-        be.measured_action_mix = lambda root: fake
+class MeasuredTendencyTests(unittest.TestCase):
+    def test_estimates_move_onto_measured_scales_and_measurements_blend_in(self):
+        import tempfile
+        section = {"players": {}}
+        for i in range(40):
+            pass_share = 0.25 + i * 0.003            # estimator scale: narrow
+            section["players"][f"p{i}"] = {"inputs": {
+                "T01": {"status": "estimated", "reason": "prior", "value": {"rows": [{"condition": "reference_opportunity",
+                        "probabilities": {"drive": 0.2, "pass": pass_share, "post": 0.05, "reset": 0.2, "shoot": 0.55 - pass_share}}]}},
+                "T08": {"status": "estimated", "reason": "prior", "value": {"probability": 0.30 + i * 0.008}}}}
+        mix = {f"p{i}": {"mix": {"shoot": 0.2, "drive": 0.1, "pass": 0.04 + i * 0.005, "reset": 0.6}, "weight": 2.0}
+               for i in range(1, 40)}             # p0 has no measurement
+        inv = {f"p{i}": {"value": 0.15 + i * 0.009, "weight": 2.0} for i in range(1, 40)}
+        originals = be.measured_action_mix, be.measured_involvement
+        be.measured_action_mix, be.measured_involvement = (lambda root: mix), (lambda root: inv)
         try:
-            summary = be.apply_measured_action_mix(section, ROOT)
+            with tempfile.TemporaryDirectory() as root:
+                (Path(root) / "data/canonical").mkdir(parents=True)
+                counts = be.apply_measured_tendencies(section, Path(root))
+                saved = be.load_scale_map(Path(root))
         finally:
-            be.measured_action_mix = original
-        mix = section["players"]["hub"]["inputs"]["T01"]["value"]["rows"][0]["probabilities"]
-        self.assertEqual(summary["t01_measured"], 1)
-        self.assertAlmostEqual(sum(mix.values()), 1.0, places=5)
-        self.assertAlmostEqual(mix["post"], 0.18, places=2)          # no per-touch measure: estimate kept
-        self.assertLess(mix["drive"], 0.1)                            # measured: a hub who rarely drives
-        self.assertGreater(mix["reset"], 0.35)
-        self.assertEqual(section["players"]["hub"]["inputs"]["T01"]["reason"], "estimated")
+            be.measured_action_mix, be.measured_involvement = originals
+        self.assertEqual(counts["mapped_only"], 1)
+        unmeasured = section["players"]["p0"]["inputs"]
+        p0_mix = unmeasured["T01"]["value"]["rows"][0]["probabilities"]
+        self.assertLess(p0_mix["pass"], 0.15)                  # translated off the old 0.25 scale
+        self.assertAlmostEqual(sum(p0_mix.values()), 1.0, places=5)
+        self.assertAlmostEqual(p0_mix["post"], 0.05, places=3)
+        self.assertLess(unmeasured["T08"]["value"]["probability"], 0.25)   # lowest estimate -> low measured usage
+        top = section["players"]["p39"]["inputs"]
+        self.assertGreater(top["T08"]["value"]["probability"], 0.45)
+        self.assertEqual(top["T08"]["reason"], "estimated")
+        self.assertIn("T08", saved)
+        rookie = {"T01": deepcopy(section["players"]["p0"]["inputs"]["T01"]), "T08": {"value": {"probability": 0.30}}}
+        rookie["T01"]["value"]["rows"][0]["probabilities"] = {"drive": 0.2, "pass": 0.37, "post": 0.05, "reset": 0.2, "shoot": 0.18}
+        be.map_tendency_inputs(rookie, saved)
+        self.assertLess(rookie["T01"]["value"]["rows"][0]["probabilities"]["pass"], 0.30)  # same translation for rookies
 
 
 @unittest.skipUnless(MAPPING.exists(), "BBI mapping not present")

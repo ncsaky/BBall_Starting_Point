@@ -101,7 +101,7 @@ Complete and ready for coordinator review: all four adapter requests, including 
 - Method: `e2b_hierarchical_family_priors_v1`. Built **691 × 94 = 64,954** complete records.
 - **28,904 player-evidence estimates; 36,050 explicit priors.**
 - Local joins: 526 unique skill names, 528 unique later Crafted names, 616 ESPN IDs. Sources are overlapping, never additive player counts.
-- Build, validation, comparison without packet experts, serialization and write: **114.723 seconds**; canonical JSON 123.11 MB.
+- Build, validation, comparison without packet experts, serialization and write: **189.412 seconds**; canonical JSON 123.06 MB.
 - Skill-grade range 11.492–95.142; exactly 100: 0; at least 99.9: 0. No scale-max clipping.
 
 | Input family | Player-evidence estimates | Priors | Total |
@@ -370,14 +370,14 @@ Population standard deviation across the audit cohort, in native units. Distribu
 | F08.execution | Post playmaking — execution | 279 | grade: 8.1189 | — |
 | F09.recognition | Transition / outlet / advance — recognition | 279 | grade: 13.4798 | — |
 | F09.execution | Transition / outlet / advance — execution | 279 | grade: 6.7593 | — |
-| T01 | Shoot / drive / pass / post / reset choices | 279 | drive: 0.0468; pass: 0.0322; post: 0.0514; reset: 0.0547; shoot: 0.0455 | — |
+| T01 | Shoot / drive / pass / post / reset choices | 279 | drive: 0.0473; pass: 0.0292; post: 0.0514; reset: 0.0588; shoot: 0.0438 | — |
 | T02 | Shot-location preferences | 279 | midrange: 0.0419; rim: 0.1090; short_paint: 0.0592; three: 0.1764 | — |
 | T03 | Shooting-mode preferences | 279 | catch: 0.0959; movement: 0.0504; pull_up: 0.0950 | — |
 | T04 | Shot difficulty tolerance | 279 | probability: 0.0308 | — |
 | T05 | Pace / early-attack preference | 279 | probability: 0.0525 | — |
 | T06 | Dribble / possession persistence | 279 | probability: 0.1404 | — |
 | T07 | Passing risk appetite | 279 | probability: 0.0490 | — |
-| T08 | Offensive involvement preference | 279 | probability: 0.0984 | — |
+| T08 | Offensive involvement preference | 279 | probability: 0.0819 | — |
 | T09 | Cutting frequency | 279 | probability: 0.0637 | — |
 | T10 | Relocation / off-ball movement frequency | 279 | probability: 0.0668 | — |
 | T11 | Screen / roll / pop / slip preferences | 279 | pop: 0.1101; roll: 0.0517; screen: 0.0611; slip: 0.0353 | — |

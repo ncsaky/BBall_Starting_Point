@@ -167,7 +167,7 @@ def install_inputs_model(canonical: dict[str, Any], root: Path | None = None) ->
         _FITTED_CACHE[fitted_key] = fit_adapter({pid: league_inputs[pid] for pid in fit_traits}, fit_traits)
     canonical[MODEL_KEY] = {"mode": INPUTS_V1, "inputs_key": inputs_key, "fitted_key": list(fitted_key),
                             "input_deltas": {}, "generated": {}}
-    generated = _install_generated_players(canonical, baseline, league_inputs)
+    generated = _install_generated_players(canonical, baseline, league_inputs, root)
     derived_baseline = _rederive(canonical, [*league_inputs.keys(), *generated])
     _rebase_offensive_profile_anchors(canonical, derived_baseline)
     # Player value (overall / offense / defense) from the hidden ratings fitted to real impact; see impact_value.
@@ -175,8 +175,20 @@ def install_inputs_model(canonical: dict[str, Any], root: Path | None = None) ->
     install_summary_tables(canonical, root)
 
 
+_SCALE_MAP_CACHE: dict[str, Any] = {}
+
+
+def _scale_map(root: Path | None) -> dict[str, Any] | None:
+    from .bbi_evidence import load_scale_map
+    base = Path(root) if root is not None else Path(__file__).resolve().parents[2]
+    key = str(base)
+    if key not in _SCALE_MAP_CACHE:
+        _SCALE_MAP_CACHE[key] = load_scale_map(base)
+    return _SCALE_MAP_CACHE[key]
+
+
 def _install_generated_players(canonical: dict[str, Any], baseline: Mapping[str, Mapping[str, float]],
-                               league_inputs: Mapping[str, Any]) -> list[str]:
+                               league_inputs: Mapping[str, Any], root: Path | None = None) -> list[str]:
     """Estimate inputs for players missing from the canonical inputs file (e.g. drafted rookies)."""
     from .input_estimator import InputEstimator
 
@@ -191,7 +203,13 @@ def _install_generated_players(canonical: dict[str, Any], baseline: Mapping[str,
         key = hashlib.sha256(json.dumps([player, traits], sort_keys=True, default=str).encode()).hexdigest()
         if (pid, key) not in _GENERATED_CACHE:
             estimator = estimator or InputEstimator()
-            _GENERATED_CACHE[(pid, key)] = estimator.estimate_player_inputs(player, traits, prospect=True).to_dict()["inputs"]
+            estimated = estimator.estimate_player_inputs(player, traits, prospect=True).to_dict()["inputs"]
+            # League inputs carry measured scales for the action mix and involvement; put rookies on the same scales.
+            scale_map = _scale_map(root)
+            if scale_map:
+                from .bbi_evidence import map_tendency_inputs
+                map_tendency_inputs(estimated, scale_map)
+            _GENERATED_CACHE[(pid, key)] = estimated
         model["generated"][pid] = key
         added.append(pid)
     return added
