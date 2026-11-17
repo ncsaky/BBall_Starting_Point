@@ -22,6 +22,9 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--targets", default=str(ROOT / "data/calibration/nba_2025_26_targets.json"))
     ap.add_argument("--json-out", default=None)
+    ap.add_argument("--mode", default="sandbox-sim", choices=["sandbox-sim", "replay-real-minutes"],
+                    help="sandbox-sim: projected rotations, every team healthy (default). replay-real-minutes: each "
+                         "game's real availability and minutes (injuries and absences included), like the odds test.")
     args = ap.parse_args()
     targets = load_targets(args.targets)
     context = load_sim_context(ROOT)
@@ -31,11 +34,11 @@ def main() -> int:
     step = max(1, len(games) // args.games)
     picked = games[::step][: args.games]
     t0 = time.time()
-    results = [to_plain(sim_game_with_context(context, str(g["externalGameId"]), mode="sandbox-sim", seed=args.seed)) for g in picked]
+    results = [to_plain(sim_game_with_context(context, str(g["externalGameId"]), mode=args.mode, seed=args.seed)) for g in picked]
     elapsed = time.time() - t0
     agg = aggregate_from_results(results)
     report = compare(agg["league_totals"], agg["player_lines"], targets, min_sim_games=3)
-    print(f"{len(results)} games in {elapsed:.1f}s (seed {args.seed})")
+    print(f"{len(results)} games in {elapsed:.1f}s (seed {args.seed}, mode {args.mode})")
     print(format_report(report))
     if args.json_out:
         Path(args.json_out).write_text(json.dumps(report, indent=1, default=str))

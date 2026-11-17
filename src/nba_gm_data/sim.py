@@ -1006,6 +1006,18 @@ def defensive_feature_summary_from_values(features: dict[str, float]) -> dict[st
     }
 
 
+# New-ratings mode league scoring level (points per 100 possessions), 2026-11-17. The base constants were
+# tuned on fully healthy projected rotations; with real availability and minutes (replaying the 2025-26 season,
+# real absences included) new-ratings mode scored 113.2 points per team vs the NBA's 115.6, and a new-ratings
+# save averaged 113.7 through Dec 15. Both teams get the same offset, so margins are unchanged.
+INPUTS_OFFENSE_CALIBRATION = 2.45
+
+
+def league_offense_calibration(canonical: dict[str, Any]) -> float:
+    from .ratings_model import uses_inputs_model
+    return INPUTS_OFFENSE_CALIBRATION if uses_inputs_model(canonical) else 0.0
+
+
 def simulate_team_line(
     canonical: dict[str, Any],
     team: dict[str, Any],
@@ -1051,6 +1063,7 @@ def simulate_team_line(
     )
     off_rating = (
         110.5
+        + league_offense_calibration(canonical)
         + lineup_quality_effect(team_features, opp_features)
         + unsupported_creation_effect(team_features)
         + (team_features["offense_creation"] - 50) * 0.16

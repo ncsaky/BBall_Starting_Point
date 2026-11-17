@@ -47,3 +47,12 @@ class ReboundRateTests(unittest.TestCase):
         self.assertLess(center, crasher)
         self.assertGreater(guard * 36, 1.4)          # bounded, never zero
         self.assertLess(rebound_rate_per_minute({"height_inches": 92}, {"offensive_rebounding": 99}) * 36, 16.01)
+
+
+class LeagueOffenseCalibrationTests(unittest.TestCase):
+    def test_only_new_ratings_mode_gets_the_scoring_calibration(self):
+        from nba_gm_data.sim import INPUTS_OFFENSE_CALIBRATION, league_offense_calibration
+        from nba_gm_data.ratings_model import MODEL_KEY, INPUTS_V1
+        self.assertEqual(league_offense_calibration({}), 0.0)
+        self.assertEqual(league_offense_calibration({MODEL_KEY: {"mode": INPUTS_V1}}), INPUTS_OFFENSE_CALIBRATION)
+        self.assertGreater(INPUTS_OFFENSE_CALIBRATION, 0)
