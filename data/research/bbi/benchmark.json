@@ -1,0 +1,10 @@
+{
+  "synthetic": true,
+  "rows": 10000,
+  "normalized_cells": 10000,
+  "import_seconds": 0.257,
+  "read_seconds": 0.052,
+  "raw_bytes": 557872,
+  "index_bytes": 5380,
+  "compressed_normalized_bytes": 105220
+}

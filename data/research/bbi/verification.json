@@ -1,0 +1,15 @@
+{
+  "baseline_bytes": 91984807,
+  "sha256": "70fc7d01a4ad3c4024674b2eb28505214881dc8e546c4fb8fe9149efa9765ea5",
+  "post_change_demo_cache_identical": true,
+  "post_change_absent_cache_identical": true,
+  "players": 691,
+  "inputs_per_player": 94,
+  "final_sharded_cache_identical": true,
+  "focused_test_modules": [
+    "tests.test_bbi_import",
+    "tests.test_input_estimator"
+  ],
+  "focused_tests": 75,
+  "final_sha256": "70fc7d01a4ad3c4024674b2eb28505214881dc8e546c4fb8fe9149efa9765ea5"
+}

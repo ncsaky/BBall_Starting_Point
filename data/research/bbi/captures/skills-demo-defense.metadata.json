@@ -1,0 +1,29 @@
+{
+  "source_url": "https://bball-index.shinyapps.io/SkillsDemo/",
+  "retrieved_at_utc": "2026-11-17T02:54:00Z",
+  "provider_as_of": "2026-11-16 (table caption); interface label November 17, 2026",
+  "season_type": "regular",
+  "dataset_kind": "historical_demo",
+  "filters": {
+    "seasons": [
+      2019,
+      2020
+    ],
+    "scope": "2018-19/2019-20 Lakers public demo",
+    "display": "Values",
+    "page_length": "All"
+  },
+  "capture_method": "visible rendered table HTML through public browser UI",
+  "displayed_rows": 40,
+  "row_scope": "season_total",
+  "metrics": {
+    "Ball Screen Navigation": {
+      "evidence_kind": "provider_model",
+      "units": "unknown (display Values; no standardization inferred)"
+    },
+    "Off-Ball Chaser Defense": {
+      "evidence_kind": "provider_model",
+      "units": "unknown (display Values; no standardization inferred)"
+    }
+  }
+}

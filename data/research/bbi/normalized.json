@@ -1,0 +1,866 @@
+{
+  "batches": {
+    "fae797f57bf312cba69ea0d9cfaf2c43cc2fe4daf5e071f473652c816a412a43": {
+      "captured_rows": 40,
+      "completeness": "complete",
+      "coverage": [
+        {
+          "grades_present": 0,
+          "matched_records": 10,
+          "metric": "Ball Screen Navigation",
+          "missing_values": 0,
+          "percentiles_present": 0,
+          "raw_values_present": 20,
+          "records": 20,
+          "sample_sizes_present": 0,
+          "sample_units_known": 0,
+          "season": "2018-19"
+        },
+        {
+          "grades_present": 0,
+          "matched_records": 10,
+          "metric": "D-LEBRON",
+          "missing_values": 0,
+          "percentiles_present": 0,
+          "raw_values_present": 20,
+          "records": 20,
+          "sample_sizes_present": 0,
+          "sample_units_known": 0,
+          "season": "2018-19"
+        },
+        {
+          "grades_present": 0,
+          "matched_records": 10,
+          "metric": "Defensive Role",
+          "missing_values": 0,
+          "percentiles_present": 0,
+          "raw_values_present": 20,
+          "records": 20,
+          "sample_sizes_present": 0,
+          "sample_units_known": 0,
+          "season": "2018-19"
+        },
+        {
+          "grades_present": 0,
+          "matched_records": 10,
+          "metric": "Off-Ball Chaser Defense",
+          "missing_values": 0,
+          "percentiles_present": 0,
+          "raw_values_present": 20,
+          "records": 20,
+          "sample_sizes_present": 0,
+          "sample_units_known": 0,
+          "season": "2018-19"
+        },
+        {
+          "grades_present": 0,
+          "matched_records": 10,
+          "metric": "Offensive Role",
+          "missing_values": 0,
+          "percentiles_present": 0,
+          "raw_values_present": 20,
+          "records": 20,
+          "sample_sizes_present": 0,
+          "sample_units_known": 0,
+          "season": "2018-19"
+        },
+        {
+          "grades_present": 0,
+          "matched_records": 10,
+          "metric": "Rim dFG% vs Expected",
+          "missing_values": 0,
+          "percentiles_present": 0,
+          "raw_values_present": 20,
+          "records": 20,
+          "sample_sizes_present": 0,
+          "sample_units_known": 0,
+          "season": "2018-19"
+        },
+        {
+          "grades_present": 0,
+          "matched_records": 10,
+          "metric": "Rotation Role",
+          "missing_values": 0,
+          "percentiles_present": 0,
+          "raw_values_present": 20,
+          "records": 20,
+          "sample_sizes_present": 0,
+          "sample_units_known": 0,
+          "season": "2018-19"
+        },
+        {
+          "grades_present": 0,
+          "matched_records": 5,
+          "metric": "Ball Screen Navigation",
+          "missing_values": 2,
+          "percentiles_present": 0,
+          "raw_values_present": 18,
+          "records": 20,
+          "sample_sizes_present": 0,
+          "sample_units_known": 0,
+          "season": "2019-20"
+        },
+        {
+          "grades_present": 0,
+          "matched_records": 5,
+          "metric": "D-LEBRON",
+          "missing_values": 0,
+          "percentiles_present": 0,
+          "raw_values_present": 20,
+          "records": 20,
+          "sample_sizes_present": 0,
+          "sample_units_known": 0,
+          "season": "2019-20"
+        },
+        {
+          "grades_present": 0,
+          "matched_records": 5,
+          "metric": "Defensive Role",
+          "missing_values": 0,
+          "percentiles_present": 0,
+          "raw_values_present": 20,
+          "records": 20,
+          "sample_sizes_present": 0,
+          "sample_units_known": 0,
+          "season": "2019-20"
+        },
+        {
+          "grades_present": 0,
+          "matched_records": 5,
+          "metric": "Off-Ball Chaser Defense",
+          "missing_values": 0,
+          "percentiles_present": 0,
+          "raw_values_present": 20,
+          "records": 20,
+          "sample_sizes_present": 0,
+          "sample_units_known": 0,
+          "season": "2019-20"
+        },
+        {
+          "grades_present": 0,
+          "matched_records": 5,
+          "metric": "Offensive Role",
+          "missing_values": 0,
+          "percentiles_present": 0,
+          "raw_values_present": 20,
+          "records": 20,
+          "sample_sizes_present": 0,
+          "sample_units_known": 0,
+          "season": "2019-20"
+        },
+        {
+          "grades_present": 0,
+          "matched_records": 5,
+          "metric": "Rim dFG% vs Expected",
+          "missing_values": 0,
+          "percentiles_present": 0,
+          "raw_values_present": 20,
+          "records": 20,
+          "sample_sizes_present": 0,
+          "sample_units_known": 0,
+          "season": "2019-20"
+        },
+        {
+          "grades_present": 0,
+          "matched_records": 5,
+          "metric": "Rotation Role",
+          "missing_values": 0,
+          "percentiles_present": 0,
+          "raw_values_present": 20,
+          "records": 20,
+          "sample_sizes_present": 0,
+          "sample_units_known": 0,
+          "season": "2019-20"
+        }
+      ],
+      "duplicate_row_groups": [],
+      "join_counts": {
+        "unique_exact_normalized_name": 15,
+        "unmatched_name": 25
+      },
+      "metadata": {
+        "capture_method": "visible rendered table HTML through public browser UI",
+        "dataset_kind": "historical_demo",
+        "displayed_rows": 40,
+        "filters": {
+          "display": "Values",
+          "page_length": "All",
+          "scope": "2018-19/2019-20 Lakers public demo",
+          "seasons": [
+            2019,
+            2020
+          ]
+        },
+        "metrics": {
+          "Ball Screen Navigation": {
+            "evidence_kind": "provider_model",
+            "units": "unknown (display Values; no standardization inferred)"
+          },
+          "Off-Ball Chaser Defense": {
+            "evidence_kind": "provider_model",
+            "units": "unknown (display Values; no standardization inferred)"
+          }
+        },
+        "provider_as_of": "2026-11-16 (table caption); interface label November 17, 2026",
+        "retrieved_at_utc": "2026-11-17T02:54:00Z",
+        "row_scope": "season_total",
+        "season_type": "regular",
+        "source_url": "https://bball-index.shinyapps.io/SkillsDemo/"
+      },
+      "normalized_file": "normalized/fae797f57bf312cba69ea0d9cfaf2c43cc2fe4daf5e071f473652c816a412a43.json.gz",
+      "raw_file": "raw/69009811b0747013bd39f8857b743f21448dc6e065c0ee2eaf978808cc9032ba.html",
+      "record_count": 280,
+      "sha256": "69009811b0747013bd39f8857b743f21448dc6e065c0ee2eaf978808cc9032ba",
+      "source_filename": "skills-demo-defense.html",
+      "unmatched_rows": [
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "1",
+            "Age": "34",
+            "Ball Screen Navigation": "-0.98",
+            "D-LEBRON": "2.59",
+            "Defensive Role": "Mobile Big",
+            "Minutes": "1306",
+            "Off-Ball Chaser Defense": "-1.74",
+            "Offensive Role": "Roll + Cut Big",
+            "Player": "Dwight Howard",
+            "Rim dFG% vs Expected": "0.80",
+            "Rotation Role": "Rotation",
+            "Season": "2019-20",
+            "Team(s)": "LAL"
+          },
+          "source_row": 1
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "3",
+            "Age": "32",
+            "Ball Screen Navigation": "-0.96",
+            "D-LEBRON": "2.13",
+            "Defensive Role": "Anchor Big",
+            "Minutes": "1130",
+            "Off-Ball Chaser Defense": "-1.29",
+            "Offensive Role": "Roll + Cut Big",
+            "Player": "JaVale McGee",
+            "Rim dFG% vs Expected": "-9.30",
+            "Rotation Role": "Rotation",
+            "Season": "2019-20",
+            "Team(s)": "LAL"
+          },
+          "source_row": 3
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "4",
+            "Age": "31",
+            "Ball Screen Navigation": "-0.81",
+            "D-LEBRON": "1.25",
+            "Defensive Role": "Anchor Big",
+            "Minutes": "1671",
+            "Off-Ball Chaser Defense": "-1.25",
+            "Offensive Role": "Roll + Cut Big",
+            "Player": "JaVale McGee",
+            "Rim dFG% vs Expected": "-9.20",
+            "Rotation Role": "Key Rotation",
+            "Season": "2018-19",
+            "Team(s)": "LAL"
+          },
+          "source_row": 4
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "5",
+            "Age": "36",
+            "Ball Screen Navigation": "-1.00",
+            "D-LEBRON": "1.24",
+            "Defensive Role": "Anchor Big",
+            "Minutes": "875",
+            "Off-Ball Chaser Defense": "-1.69",
+            "Offensive Role": "Roll + Cut Big",
+            "Player": "Tyson Chandler",
+            "Rim dFG% vs Expected": "-3.00",
+            "Rotation Role": "Rotation",
+            "Season": "2018-19",
+            "Team(s)": "PHO/LAL"
+          },
+          "source_row": 5
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "9",
+            "Age": "32",
+            "Ball Screen Navigation": "0.84",
+            "D-LEBRON": "0.66",
+            "Defensive Role": "Wing Stopper",
+            "Minutes": "1687",
+            "Off-Ball Chaser Defense": "0.94",
+            "Offensive Role": "Movement Shooter",
+            "Player": "Danny Green",
+            "Rim dFG% vs Expected": "-0.40",
+            "Rotation Role": "Starter",
+            "Season": "2019-20",
+            "Team(s)": "LAL"
+          },
+          "source_row": 9
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "12",
+            "Age": "34",
+            "Ball Screen Navigation": "-0.67",
+            "D-LEBRON": "0.44",
+            "Defensive Role": "Helper",
+            "Minutes": "364",
+            "Off-Ball Chaser Defense": "-0.13",
+            "Offensive Role": "Stationary Shooter",
+            "Player": "Jared Dudley",
+            "Rim dFG% vs Expected": "-13.00",
+            "Rotation Role": "Garbage Time",
+            "Season": "2019-20",
+            "Team(s)": "LAL"
+          },
+          "source_row": 12
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "13",
+            "Age": "23",
+            "Ball Screen Navigation": "1.25",
+            "D-LEBRON": "0.35",
+            "Defensive Role": "Chaser",
+            "Minutes": "143",
+            "Off-Ball Chaser Defense": "2.18",
+            "Offensive Role": "Stretch Big",
+            "Player": "Jemerrio Jones",
+            "Rim dFG% vs Expected": "-3.10",
+            "Rotation Role": "Too Few Games",
+            "Season": "2018-19",
+            "Team(s)": "LAL"
+          },
+          "source_row": 13
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "16",
+            "Age": "27",
+            "Ball Screen Navigation": "-0.53",
+            "D-LEBRON": "0.19",
+            "Defensive Role": "Helper",
+            "Minutes": "1306",
+            "Off-Ball Chaser Defense": "-1.24",
+            "Offensive Role": "Movement Shooter",
+            "Player": "Mike Muscala",
+            "Rim dFG% vs Expected": "-5.20",
+            "Rotation Role": "Key Rotation",
+            "Season": "2018-19",
+            "Team(s)": "PHI/LAL"
+          },
+          "source_row": 16
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "17",
+            "Age": "19",
+            "Ball Screen Navigation": "0.57",
+            "D-LEBRON": "0.13",
+            "Defensive Role": "Chaser",
+            "Minutes": "120",
+            "Off-Ball Chaser Defense": "-0.13",
+            "Offensive Role": "Shot Creator",
+            "Player": "Isaac Bonga",
+            "Rim dFG% vs Expected": "9.20",
+            "Rotation Role": "Garbage Time",
+            "Season": "2018-19",
+            "Team(s)": "LAL"
+          },
+          "source_row": 17
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "18",
+            "Age": "22",
+            "Ball Screen Navigation": "-0.28",
+            "D-LEBRON": "0.06",
+            "Defensive Role": "Chaser",
+            "Minutes": "41",
+            "Off-Ball Chaser Defense": "0.08",
+            "Offensive Role": "Low Minute",
+            "Player": "Zach Norvell Jr.",
+            "Rim dFG% vs Expected": "37.60",
+            "Rotation Role": "Too Few Games",
+            "Season": "2019-20",
+            "Team(s)": "LAL/GSW"
+          },
+          "source_row": 18
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "19",
+            "Age": "33",
+            "Ball Screen Navigation": "0.35",
+            "D-LEBRON": "-0.14",
+            "Defensive Role": "Chaser",
+            "Minutes": "15",
+            "Off-Ball Chaser Defense": "-0.68",
+            "Offensive Role": "Low Minute",
+            "Player": "Andre Ingram",
+            "Rim dFG% vs Expected": "-58.00",
+            "Rotation Role": "Too Few Games",
+            "Season": "2018-19",
+            "Team(s)": "LAL"
+          },
+          "source_row": 19
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "20",
+            "Age": "28",
+            "Ball Screen Navigation": "0.50",
+            "D-LEBRON": "-0.19",
+            "Defensive Role": "Point of Attack",
+            "Minutes": "19",
+            "Off-Ball Chaser Defense": "-0.40",
+            "Offensive Role": "Low Minute",
+            "Player": "Scott Machado",
+            "Rim dFG% vs Expected": "-54.30",
+            "Rotation Role": "Too Few Games",
+            "Season": "2018-19",
+            "Team(s)": "LAL"
+          },
+          "source_row": 20
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "22",
+            "Age": "29",
+            "Ball Screen Navigation": "2.03",
+            "D-LEBRON": "-0.42",
+            "Defensive Role": "Point of Attack",
+            "Minutes": "1186",
+            "Off-Ball Chaser Defense": "0.79",
+            "Offensive Role": "Movement Shooter",
+            "Player": "Avery Bradley",
+            "Rim dFG% vs Expected": "-4.80",
+            "Rotation Role": "Key Rotation",
+            "Season": "2019-20",
+            "Team(s)": "LAL"
+          },
+          "source_row": 22
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "23",
+            "Age": "27",
+            "Ball Screen Navigation": "0.86",
+            "D-LEBRON": "-0.52",
+            "Defensive Role": "Wing Stopper",
+            "Minutes": "1879",
+            "Off-Ball Chaser Defense": "0.02",
+            "Offensive Role": "Off Screen Shooter",
+            "Player": "Reggie Bullock Jr.",
+            "Rim dFG% vs Expected": "6.40",
+            "Rotation Role": "Starter",
+            "Season": "2018-19",
+            "Team(s)": "DET/LAL"
+          },
+          "source_row": 23
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "25",
+            "Age": "28",
+            "Ball Screen Navigation": "-0.25",
+            "D-LEBRON": "-0.64",
+            "Defensive Role": "Chaser",
+            "Minutes": "207",
+            "Off-Ball Chaser Defense": "0.88",
+            "Offensive Role": "Primary Ball Handler",
+            "Player": "Dion Waiters",
+            "Rim dFG% vs Expected": "11.60",
+            "Rotation Role": "Too Few Games",
+            "Season": "2019-20",
+            "Team(s)": "MIA/LAL"
+          },
+          "source_row": 25
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "26",
+            "Age": "22",
+            "Ball Screen Navigation": "",
+            "D-LEBRON": "-0.67",
+            "Defensive Role": "Mobile Big",
+            "Minutes": "20",
+            "Off-Ball Chaser Defense": "-1.14",
+            "Offensive Role": "Low Minute",
+            "Player": "Kostas Antetokounmpo",
+            "Rim dFG% vs Expected": "37.40",
+            "Rotation Role": "Too Few Games",
+            "Season": "2019-20",
+            "Team(s)": "LAL"
+          },
+          "source_row": 26
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "27",
+            "Age": "19",
+            "Ball Screen Navigation": "0.76",
+            "D-LEBRON": "-0.72",
+            "Defensive Role": "Wing Stopper",
+            "Minutes": "81",
+            "Off-Ball Chaser Defense": "0.47",
+            "Offensive Role": "Low Minute",
+            "Player": "Talen Horton-Tucker",
+            "Rim dFG% vs Expected": "-14.70",
+            "Rotation Role": "Too Few Games",
+            "Season": "2019-20",
+            "Team(s)": "LAL"
+          },
+          "source_row": 27
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "29",
+            "Age": "23",
+            "Ball Screen Navigation": "",
+            "D-LEBRON": "-0.75",
+            "Defensive Role": "Helper",
+            "Minutes": "9",
+            "Off-Ball Chaser Defense": "-1.22",
+            "Offensive Role": "Low Minute",
+            "Player": "Devontae Cacok",
+            "Rim dFG% vs Expected": "12.10",
+            "Rotation Role": "Too Few Games",
+            "Season": "2019-20",
+            "Team(s)": "LAL"
+          },
+          "source_row": 29
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "30",
+            "Age": "33",
+            "Ball Screen Navigation": "0.79",
+            "D-LEBRON": "-0.77",
+            "Defensive Role": "Chaser",
+            "Minutes": "984",
+            "Off-Ball Chaser Defense": "1.04",
+            "Offensive Role": "Primary Ball Handler",
+            "Player": "Rajon Rondo",
+            "Rim dFG% vs Expected": "1.20",
+            "Rotation Role": "Key Rotation",
+            "Season": "2019-20",
+            "Team(s)": "LAL"
+          },
+          "source_row": 30
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "31",
+            "Age": "34",
+            "Ball Screen Navigation": "-0.30",
+            "D-LEBRON": "-0.77",
+            "Defensive Role": "Helper",
+            "Minutes": "79",
+            "Off-Ball Chaser Defense": "1.01",
+            "Offensive Role": "Low Minute",
+            "Player": "JR Smith",
+            "Rim dFG% vs Expected": "-25.60",
+            "Rotation Role": "Too Few Games",
+            "Season": "2019-20",
+            "Team(s)": "LAL"
+          },
+          "source_row": 31
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "32",
+            "Age": "32",
+            "Ball Screen Navigation": "0.08",
+            "D-LEBRON": "-0.80",
+            "Defensive Role": "Chaser",
+            "Minutes": "1369",
+            "Off-Ball Chaser Defense": "-0.25",
+            "Offensive Role": "Primary Ball Handler",
+            "Player": "Rajon Rondo",
+            "Rim dFG% vs Expected": "6.80",
+            "Rotation Role": "Starter",
+            "Season": "2018-19",
+            "Team(s)": "LAL"
+          },
+          "source_row": 32
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "33",
+            "Age": "30",
+            "Ball Screen Navigation": "-0.69",
+            "D-LEBRON": "-0.93",
+            "Defensive Role": "Helper",
+            "Minutes": "1188",
+            "Off-Ball Chaser Defense": "-1.39",
+            "Offensive Role": "Versatile Big",
+            "Player": "Markieff Morris",
+            "Rim dFG% vs Expected": "5.30",
+            "Rotation Role": "Key Rotation",
+            "Season": "2019-20",
+            "Team(s)": "DET/LAL"
+          },
+          "source_row": 33
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "37",
+            "Age": "28",
+            "Ball Screen Navigation": "-0.50",
+            "D-LEBRON": "-1.25",
+            "Defensive Role": "Low Activity",
+            "Minutes": "1123",
+            "Off-Ball Chaser Defense": "-0.19",
+            "Offensive Role": "Shot Creator",
+            "Player": "Lance Stephenson",
+            "Rim dFG% vs Expected": "3.40",
+            "Rotation Role": "Rotation",
+            "Season": "2018-19",
+            "Team(s)": "LAL"
+          },
+          "source_row": 37
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "39",
+            "Age": "28",
+            "Ball Screen Navigation": "0.48",
+            "D-LEBRON": "-1.93",
+            "Defensive Role": "Low Activity",
+            "Minutes": "532",
+            "Off-Ball Chaser Defense": "1.17",
+            "Offensive Role": "Off Screen Shooter",
+            "Player": "Troy Daniels",
+            "Rim dFG% vs Expected": "-3.10",
+            "Rotation Role": "Rotation",
+            "Season": "2019-20",
+            "Team(s)": "LAL/DEN"
+          },
+          "source_row": 39
+        },
+        {
+          "reason": "unmatched_name",
+          "row": {
+            "": "40",
+            "Age": "26",
+            "Ball Screen Navigation": "0.27",
+            "D-LEBRON": "-1.94",
+            "Defensive Role": "Point of Attack",
+            "Minutes": "508",
+            "Off-Ball Chaser Defense": "0.20",
+            "Offensive Role": "Secondary Ball Handler",
+            "Player": "Quinn Cook",
+            "Rim dFG% vs Expected": "4.70",
+            "Rotation Role": "Rotation",
+            "Season": "2019-20",
+            "Team(s)": "LAL"
+          },
+          "source_row": 40
+        }
+      ]
+    }
+  },
+  "coverage": [
+    {
+      "grades_present": 0,
+      "matched_records": 10,
+      "metric": "Ball Screen Navigation",
+      "missing_values": 0,
+      "percentiles_present": 0,
+      "raw_values_present": 20,
+      "records": 20,
+      "sample_sizes_present": 0,
+      "sample_units_known": 0,
+      "season": "2018-19"
+    },
+    {
+      "grades_present": 0,
+      "matched_records": 10,
+      "metric": "D-LEBRON",
+      "missing_values": 0,
+      "percentiles_present": 0,
+      "raw_values_present": 20,
+      "records": 20,
+      "sample_sizes_present": 0,
+      "sample_units_known": 0,
+      "season": "2018-19"
+    },
+    {
+      "grades_present": 0,
+      "matched_records": 10,
+      "metric": "Defensive Role",
+      "missing_values": 0,
+      "percentiles_present": 0,
+      "raw_values_present": 20,
+      "records": 20,
+      "sample_sizes_present": 0,
+      "sample_units_known": 0,
+      "season": "2018-19"
+    },
+    {
+      "grades_present": 0,
+      "matched_records": 10,
+      "metric": "Off-Ball Chaser Defense",
+      "missing_values": 0,
+      "percentiles_present": 0,
+      "raw_values_present": 20,
+      "records": 20,
+      "sample_sizes_present": 0,
+      "sample_units_known": 0,
+      "season": "2018-19"
+    },
+    {
+      "grades_present": 0,
+      "matched_records": 10,
+      "metric": "Offensive Role",
+      "missing_values": 0,
+      "percentiles_present": 0,
+      "raw_values_present": 20,
+      "records": 20,
+      "sample_sizes_present": 0,
+      "sample_units_known": 0,
+      "season": "2018-19"
+    },
+    {
+      "grades_present": 0,
+      "matched_records": 10,
+      "metric": "Rim dFG% vs Expected",
+      "missing_values": 0,
+      "percentiles_present": 0,
+      "raw_values_present": 20,
+      "records": 20,
+      "sample_sizes_present": 0,
+      "sample_units_known": 0,
+      "season": "2018-19"
+    },
+    {
+      "grades_present": 0,
+      "matched_records": 10,
+      "metric": "Rotation Role",
+      "missing_values": 0,
+      "percentiles_present": 0,
+      "raw_values_present": 20,
+      "records": 20,
+      "sample_sizes_present": 0,
+      "sample_units_known": 0,
+      "season": "2018-19"
+    },
+    {
+      "grades_present": 0,
+      "matched_records": 5,
+      "metric": "Ball Screen Navigation",
+      "missing_values": 2,
+      "percentiles_present": 0,
+      "raw_values_present": 18,
+      "records": 20,
+      "sample_sizes_present": 0,
+      "sample_units_known": 0,
+      "season": "2019-20"
+    },
+    {
+      "grades_present": 0,
+      "matched_records": 5,
+      "metric": "D-LEBRON",
+      "missing_values": 0,
+      "percentiles_present": 0,
+      "raw_values_present": 20,
+      "records": 20,
+      "sample_sizes_present": 0,
+      "sample_units_known": 0,
+      "season": "2019-20"
+    },
+    {
+      "grades_present": 0,
+      "matched_records": 5,
+      "metric": "Defensive Role",
+      "missing_values": 0,
+      "percentiles_present": 0,
+      "raw_values_present": 20,
+      "records": 20,
+      "sample_sizes_present": 0,
+      "sample_units_known": 0,
+      "season": "2019-20"
+    },
+    {
+      "grades_present": 0,
+      "matched_records": 5,
+      "metric": "Off-Ball Chaser Defense",
+      "missing_values": 0,
+      "percentiles_present": 0,
+      "raw_values_present": 20,
+      "records": 20,
+      "sample_sizes_present": 0,
+      "sample_units_known": 0,
+      "season": "2019-20"
+    },
+    {
+      "grades_present": 0,
+      "matched_records": 5,
+      "metric": "Offensive Role",
+      "missing_values": 0,
+      "percentiles_present": 0,
+      "raw_values_present": 20,
+      "records": 20,
+      "sample_sizes_present": 0,
+      "sample_units_known": 0,
+      "season": "2019-20"
+    },
+    {
+      "grades_present": 0,
+      "matched_records": 5,
+      "metric": "Rim dFG% vs Expected",
+      "missing_values": 0,
+      "percentiles_present": 0,
+      "raw_values_present": 20,
+      "records": 20,
+      "sample_sizes_present": 0,
+      "sample_units_known": 0,
+      "season": "2019-20"
+    },
+    {
+      "grades_present": 0,
+      "matched_records": 5,
+      "metric": "Rotation Role",
+      "missing_values": 0,
+      "percentiles_present": 0,
+      "raw_values_present": 20,
+      "records": 20,
+      "sample_sizes_present": 0,
+      "sample_units_known": 0,
+      "season": "2019-20"
+    }
+  ],
+  "duplicate_groups": [],
+  "schema_version": "bbi_capture_v1"
+}

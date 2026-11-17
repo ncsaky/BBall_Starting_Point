@@ -1,0 +1,39 @@
+{
+  "source_url": "https://www.bball-index.com/leaderboards-tool/",
+  "retrieved_at_utc": "REPLACE_WITH_UTC_TIMESTAMP",
+  "provider_as_of": null,
+  "season": "2025-26",
+  "season_type": "regular",
+  "dataset_kind": "observed",
+  "row_scope": "season_total",
+  "representation": "raw_value",
+  "percentile_scale": null,
+  "percentile_population": "unknown",
+  "filters": {
+    "minimum_minutes": 0,
+    "minimum_mpg": 0,
+    "team": "all",
+    "roles": "all",
+    "players": "all",
+    "metrics": "REPLACE_WITH_EXACT_SELECTED_NAMES",
+    "display": "REPLACE_WITH_DISPLAY_MODE"
+  },
+  "capture_method": "REPLACE_WITH_EXPOSED_EXPORT_OR_PERMITTED_TABLE_COPY",
+  "displayed_rows": null,
+  "pagination": {
+    "page": null,
+    "page_size": null,
+    "total_pages": null,
+    "export_includes_all_pages": "unverified"
+  },
+  "metrics": {
+    "Ball Screen Navigation": {
+      "evidence_kind": "provider_model",
+      "units": "unknown",
+      "sample_unit": null,
+      "percentile_higher_is_better": null
+    }
+  },
+  "column_map": {},
+  "aliases": {}
+}

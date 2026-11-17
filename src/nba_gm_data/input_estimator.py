@@ -447,6 +447,133 @@ def _mean(values) -> float:
 
 
 
+# BBI mappings follow the acquisition manifest's distinct channels. These are
+# deliberately weak proxy constraints, never measurements of isolated technique.
+# No physical tests, effort, conditional tendencies, typed passing reads, box-out
+# technique or pressure-specific handling can be identified from these summaries.
+BBI_METRIC_INPUTS = {
+    'C&S 3PT Shot Making': ('S01',),
+    'C&S 3PT FG%': ('S01',),
+    'Stable C&S 3PT_pct': ('S01',),
+    '3PT Pull Up Shot Making': ('S02',),
+    '3PT Pull Up FG%': ('S02',),
+    'Stable Pull Up 3PT_pct': ('S02',),
+    'Midrange Pull Up FG%': ('S05',),
+    'Deep 3PT Shot Making': ('S09',),
+    'Rim Shot Making': ('S10',),
+    'Rim FG%': ('S10',),
+    'Floater Shot Making': ('S11',),
+    'Floater FG%': ('S11',),
+    'Contact Finish Rate': ('S15',),
+    'Rim Shot Creation': ('S19',),
+    'Stable Post Up PPP': ('S23',),
+    'Drive Foul Drawn Rate': ('S24',),
+    'Post Up Draw Foul Rate': ('S24',),
+    'Screening Talent': ('S27',),
+    'Offensive Rebounding Crashing Skill': ('S29',),
+    'Defensive Rebounding Crashing Skill': ('S30',),
+    'Offensive Rebounding Conversion Skill': ('S32',),
+    'Defensive Rebounding Conversion Skill': ('S32',),
+    'Adjusted Offensive Rebounding Success Rate': ('S32',),
+    'Adjusted Defensive Rebounding Success Rate': ('S32',),
+    'Perimeter Isolation Defense': ('S33',),
+    'Ball Screen Navigation': ('S35',),
+    'Off-Ball Chaser Defense': ('S35',),
+    'Rim dFG% vs Expected': ('S37',),
+    'Stable Rim dFG% vs. Expected': ('S37',),
+    'Help Effectiveness Rating': ('S38',),
+    'Pickpocket Rating': ('S42',),
+    'Passing Lane Defense': ('S43',),
+}
+# Sign applies to the *displayed percentile*, which can already be ordered by
+# desirability. Do not guess direction from a raw metric name. A capture must
+# explicitly confirm higher_is_better for that representation.
+BBI_SAMPLE_PRIORS = {'shots': 200, 'contests': 200, 'screens': 300,
+                     'drives': 300, 'rebound_chances': 300, 'possessions': 1000}
+
+
+def load_bbi_evidence(root: str | Path) -> dict[str, list[InputEvidence]]:
+    """Load a local cache automatically, without network or absent-cache changes.
+
+    Only completed pre-opening regular seasons, confirmed full-season population
+    percentiles, season-total rows and observed (not demo/synthetic/forecast)
+    batches enter. Raw values/letter grades remain in the cache without invented
+    unit conversions. Newest available season wins per player/input; all related
+    BBI metrics share one correlation group so duplicates cannot increase weight.
+    """
+    from .bbi_import import CACHE_PATH, SCHEMA_VERSION, iter_records, number
+    path = Path(root) / CACHE_PATH
+    if not path.exists():
+        return {}
+    cache = json.loads(path.read_text())
+    if cache.get('schema_version') != SCHEMA_VERSION:
+        raise ValueError('Unsupported BBI cache schema')
+    candidates = {}
+    for row in iter_records(cache, path.parent):
+        metric = row['metric_name']
+        pid = row.get('canonical_player_id')
+        season = row.get('season')
+        if (not pid or metric not in BBI_METRIC_INPUTS or
+            row.get('dataset_kind') != 'observed' or
+            row.get('season_type') != 'regular' or
+            season not in ('2023-24', '2024-25', '2025-26') or
+            row.get('row_scope') != 'season_total' or
+            row.get('percentile_population') != 'season_all_players'):
+            continue
+        batch = cache['batches'][row['batch_id']]
+        if batch.get('completeness') != 'complete':
+            continue
+        spec = batch['metadata'].get('metrics', {}).get(metric, {})
+        direction = spec.get('percentile_higher_is_better')
+        if not isinstance(direction, bool):
+            continue
+        percentile = number(row.get('percentile'))
+        if percentile is None or row.get('percentile_scale') not in ('0_1', '0_100'):
+            continue
+        p = percentile / (100 if row['percentile_scale'] == '0_100' else 1)
+        if not 0 <= p <= 1:
+            raise ValueError('Invalid BBI percentile')
+        if not direction:
+            p = 1 - p
+        # A transparent provisional calibration judgment, not provider raw skill:
+        # smoothly map reference-population standing to a conservative proxy band.
+        # Endpoints stay finite; no rating is clipped at 100.
+        proxy = 50 + 25 * math.tanh(2 * (p - .5))
+        n = number(row.get('sample_size')); unit = row.get('sample_unit')
+        if n is not None and n <= 0:
+            continue  # an explicit zero opportunity sample is not missing exposure
+        if n is not None and n > 0 and unit in BBI_SAMPLE_PRIORS:
+            prior, reliability = BBI_SAMPLE_PRIORS[unit], .35
+        elif number(row.get('minutes')) is not None and row['minutes'] <= 0:
+            continue
+        elif number(row.get('minutes')) is not None and row['minutes'] > 0:
+            n, prior, reliability, unit = row['minutes'], 1000, .20, 'minutes'
+        else:
+            n, prior, reliability, unit = 1, 4, .15, 'qualitative_assessment'
+        age_weight = {'2025-26': 1, '2024-25': .7, '2023-24': .45}[season]
+        reliability *= age_weight
+        method = (f'BBI provider proxy ({metric}); not measured raw technique; '
+                  f'50+25*tanh(2*(desirability_percentile-.5)); '
+                  f'kind={row["evidence_kind"]}; season={season}; '
+                  f'retrieved={row["retrieved_at_utc"]}; raw cell row={row["source_row"]}; '
+                  f'sample reliability is a declared judgment; missing event counts are not fabricated')
+        for iid in BBI_METRIC_INPUTS[metric]:
+            obs = InputEvidence(iid, dict(grade=proxy, scale=TECHNIQUE_SCALE),
+                (max(0, proxy-30), min(100, proxy+30)),
+                f'{CACHE_PATH}#batch={row["batch_id"]}&row={row["source_row"]}&metric={metric}',
+                method, f'bbi:provider_overlap:{pid}', n=n, prior_exposure=prior,
+                reliability=reliability, exposure_unit=unit)
+            # Season first; strongest exposure within it; stable tie break.
+            rank = (season, reliability*n/(n+prior), row['retrieved_at_utc'], canonical_json(asdict(obs)))
+            key = (pid, iid)
+            if key not in candidates or rank > candidates[key][0]:
+                candidates[key] = (rank, obs)
+    result = {}
+    for (pid, _), (_, obs) in sorted(candidates.items()):
+        result.setdefault(pid, []).append(obs)
+    return result
+
+
 class InputEstimator:
     """Reusable local-source estimator. Construct once for a complete universe."""
 
@@ -468,8 +595,10 @@ class InputEstimator:
         def read(path):
             with (root / path).open() as stream:
                 return json.load(stream)
+        bbi = load_bbi_evidence(root)
         return cls(read(SKILL_PATH)['players'], read(CAREER_PATH)['players'],
                    read(STATS_PATH)['rows'], load_reference_cells(root) if use_expert else {},
+                   additional_evidence=bbi,
                    legacy_traits=read(UNIVERSE_PATH).get('traits', []),
                    shot_zones=read(SHOT_ZONE_PATH).get('profiles', []))
 

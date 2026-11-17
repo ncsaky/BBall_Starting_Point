@@ -1,0 +1,146 @@
+{
+  "checked_on": "2026-11-16",
+  "method": "public page GET once per URL; no login; no retries",
+  "pages": [
+    {
+      "url": "https://www.bball-index.com/team-leaderboards/",
+      "text": "NBA Team Leaderboards Team level analysis built on the same graded data we use for players: rankings across the league, depth comparisons, strength and weakness breakdowns, and performance tracked from one year to the next. Useful for the questions a player leaderboard cannot answer. Where is a roster actually thin? Which teams improved in the areas that matter, and which ones only look better because of schedule or shooting variance? How does a team\u2019s profile now compare to last season? If you want the reasoning behind the impact metrics underneath these rankings, start with the LEBRON introduction . Have a look around first. The demo below is free to explore and gives you a feel for the team leaderboard data on a limited set of metrics. A membership unlocks the full database, every metric, and every season, from $5 a month. See membership options \u2192",
+      "frames": [
+        "https://bball-index.shinyapps.io/LeaderboardTeamDemo/"
+      ]
+    },
+    {
+      "url": "https://www.bball-index.com/player-trend/",
+      "text": "Read the introduction to LEBRON (Luck-adjusted player Estimate using a Box prior Regularized ON-off) here .",
+      "frames": [
+        "https://fanspo.com/bbi-role-explorer/player_trends"
+      ]
+    },
+    {
+      "url": "https://www.bball-index.com/lebron-trends/",
+      "text": "Read the introduction to LEBRON (Luck-adjusted player Estimate using a Box prior Regularized ON-off) here .",
+      "frames": [
+        "https://fanspo.com/bbi-role-explorer/value_trends"
+      ]
+    },
+    {
+      "url": "https://www.bball-index.com/lineups/",
+      "text": "NBA Custom Lineup Creator Select any five NBA players since the 2013-14 season and see how that lineup would be expected to perform, plus how it stacks up against real NBA lineups in key skill areas. The data shown is expected performance, modeled for Offensive Rating and Defensive Rating against roughly 200,000 actual lineups using player talent data. Skill fit and synergy are accounted for, so the same player contributes differently depending on who he is next to. That matters because raw lineup data misleads. Lineups take around 550 possessions together to stabilize on offense and around 850 on defense, as outlined here , and most real lineups never reach that. The Ringer covered five reasons raw lineup data lies to you here . Our free Lineups App lets you explore stabilized lineup data that is more predictive of future results than raw data, and compares lineups of different sample sizes without arbitrary minute cutoffs. More on data stabilization here . This tool is part of a membership. For $5 a month you get every premium tool, all 700+ metrics, and every season we cover. The free Lineups App above is open to everyone if you want a look at the data first. See membership options \u2192",
+      "frames": []
+    },
+    {
+      "url": "https://www.bball-index.com/5th-man/",
+      "text": "NBA 5th Man Finder Choose four players and the tool finds the fifth who best completes the lineup. It is the roster question coaches and front offices actually face: the core is settled, one spot is open, and the right answer depends entirely on what the other four already give you. A shooter, a rim protector, and a secondary creator all rate differently depending on the gaps in front of them. Fit and synergy are modeled against roughly 200,000 real NBA lineups, so the recommendation reflects how players actually perform together rather than how their individual numbers add up. This tool is part of a membership. For $5 a month you get every premium tool, all 700+ metrics, and every season we cover. See membership options \u2192",
+      "frames": []
+    },
+    {
+      "url": "https://www.bball-index.com/roster-optimizer/",
+      "text": "NBA Roster Optimizer Set custom goals and any must have players, then let the tool formulate the best fits around the core you set. Rather than asking who the best available players are, this asks who the best available players are for this specific group . Fit and synergy are modeled, so a player who raises one roster can lower another, and the tool searches for the combination that actually serves the goals you defined. Built on the same talent and impact data as the rest of the site, so the recommendations trace back to metrics you can inspect yourself. This tool is part of a membership. For $5 a month you get every premium tool, all 700+ metrics, and every season we cover. See membership options \u2192",
+      "frames": []
+    },
+    {
+      "url": "https://www.bball-index.com/similarities-tool/",
+      "text": "NBA Play Style Similarity Tool Select any NBA player and get a ranked list of the players whose play style most closely resembles his, based on 85 key variables measuring style and usage. Similarity scores are calculated using cosine similarity . This is a comparison of how players play, not how good they are. Two players can score identically and play nothing alike, and this tool separates those things: shot selection, where they operate, how they create, what they do off the ball. Useful for scouting a replacement with a similar role, finding historical comparables for a young player, or working out why a fit looks wrong on paper. This tool is part of a membership. For $5 a month you get every premium tool, all 700+ metrics, and every season we cover. See membership options \u2192",
+      "frames": []
+    },
+    {
+      "url": "https://www.bball-index.com/playoff-talent/",
+      "text": "NBA Playoff Talent Grades Talent grades built specifically for the postseason, rather than regular season numbers carried over and hoped for the best. Playoff basketball is a different game. Rotations shorten, defenses game plan for individuals, role players get hunted, and shot profiles change. Grading playoff performance on its own terms shows which players hold up when the sample is small and the defense is prepared. Same graded database as the rest of the site, so playoff grades sit alongside regular season grades for the same player and the comparison is like for like. This tool is part of a membership. For $5 a month you get every premium tool, all 700+ metrics, and every season we cover. See membership options \u2192",
+      "frames": []
+    },
+    {
+      "url": "https://www.bball-index.com/defensive-role-lab/",
+      "text": "NBA Defensive Role Lab Explore the estimated impact of shifting a player\u2019s Defensive Role, and identify which players and which coaches get the most out of role optimization, based on how a player\u2019s physical tools and skills match the estimated requirements of the new job. Positions are a relic of the past. What actually determines defensive value is the job a player is asked to do: who he guards, how much ground he covers, whether he is protecting the rim or chasing shooters. Put the wrong player in the wrong role and good defenders look bad. This lab lets you move a player into a different defensive role and see what the model expects to happen, across 5,813 player seasons from 2015-16 to 2025-26. This is the free preview. It runs on the 2019-20 season. A membership opens every season we cover, plus the 2026-27 projections and the career blend. This tool is part of a membership. For $5 a month you get every premium tool, all 700+ metrics, and every season we cover. See membership options \u2192",
+      "frames": [
+        "/wp-content/uploads/2026/09/drl-lite-v3-index.html"
+      ]
+    },
+    {
+      "url": "https://www.bball-index.com/offensive-role-lab/",
+      "text": "NBA Offensive Role Lab Explore the estimated impact of shifting a player\u2019s Offensive Role, and identify which players and which coaches get the most out of role optimization, based on how a player\u2019s physical tools and skills match the estimated requirements of the new job. What a player is worth on offense depends less on his position than on the job he is given: creating off the dribble, running off screens, spotting up, attacking closeouts, rolling to the rim or working from the post. The role rewrites which play types he runs almost entirely. Give the same skills a different job and the results look nothing alike. This lab lets you move a player into any of twelve offensive roles and see what the model expects to happen, across 5,589 player seasons from 2014-15 to 2025-26. This is the free preview. It runs on the 2019-20 season. A membership opens every season we cover, plus the 2026-27 projections and the career blend. This tool is part of a membership. For $5 a month you get every premium tool, all 700+ metrics, and every season we cover. See membership options \u2192",
+      "frames": [
+        "/wp-content/uploads/2026/09/orl-lite-v2-index.html"
+      ]
+    },
+    {
+      "url": "https://www.bball-index.com/growth-curve/",
+      "text": "NBA Talent Age Growth Curve Model How a player\u2019s skills are likely to develop from here, and how that tracks against typical development for players at the same age. Aging curves are usually presented as one league wide line, which is not much use for any individual. This model is built within player, corrected for survivorship, and fitted across 1,505 players, so it answers a more specific question: given who this player is now, what does the next five years plausibly look like? It also covers which coaches develop players best, what the league\u2019s talent landscape looks like one to five years out, and how teams compare on key skill metrics. This tool is part of a membership. For $5 a month you get every premium tool, all 700+ metrics, and every season we cover. See membership options \u2192",
+      "frames": []
+    },
+    {
+      "url": "https://www.bball-index.com/minutes-projections-talent-grid/",
+      "text": "2026-27 Minutes Projections & Talent Grid How many games each player is projected to miss, what he plays when the roster is whole, and what a season of teammates\u2019 injuries and decided games adds or takes away. Built across 30 teams, 559 players and 1,000 simulated seasons per team. The talent behind it comes from projected skill growth in the Talent Age Growth Curve Model , which is then used to project the role each player fills, constrained by realistic roster construction parameters and by what coaches actually do. Minutes are adjusted for projected games missed and injury risk from the Injuries Tool . This tool is part of a membership. For $5 a month you get every premium tool, all 700+ metrics, and every season we cover. See membership options \u2192",
+      "frames": []
+    },
+    {
+      "url": "https://www.bball-index.com/injuries/",
+      "text": "NBA Injuries Tool What to expect from any injury: typical days missed, the range most players land in, and how long the slow recoveries actually take, built from thousands of logged absences rather than anecdote. Alongside that, player durability and expected injury data across the league, and in depth injury histories and probabilities for any individual player. The estimates use survival analysis, which handles the awkward part of injury data properly: absences where the player has not returned yet still count toward the days they are known to have covered, so the curve is not distorted by missing return dates. This is the free preview. Detail, All injuries and Aftermath cover the whole league. Durability and Players are limited to the 2025-26 Atlanta Hawks; a membership opens all 589 projected players and the team-by-team roll-up. This tool is part of a membership. For $5 a month you get every premium tool, all 700+ metrics, and every season we cover. See membership options \u2192",
+      "frames": [
+        "/wp-content/uploads/2026/10/injury-tool-v4-lite.html"
+      ]
+    },
+    {
+      "url": "https://www.bball-index.com/xpoints-pbp-games/",
+      "text": "xPoints Game Database All 1,230 games of the 2025-26 season, each with a play-by-play breakdown and expected points alongside the final score. Every game shows what the scoreboard said and what the shot quality says it should have said, so you can see which results were earned and which were borrowed. Filter by team or by month, and sort newest, oldest or by matchup. This tool is part of a membership. For $5 a month you get every premium tool, all 700+ metrics, and every season we cover. See membership options \u2192",
+      "frames": []
+    },
+    {
+      "url": "https://www.bball-index.com/xpoints-pbp-wowy/",
+      "text": "xPoints WOWY Combos Pick up to four players from a team and see every on-court combination they form: each one alone, each pairing, the full group, and a baseline with all of them off the floor. With-or-without-you splits are the cleanest read on whether a player\u2019s value actually shows up in team results, and seeing every combination at once separates the players who carry a group from the ones who are carried by it. Garbage time is excluded automatically. This tool is part of a membership. For $5 a month you get every premium tool, all 700+ metrics, and every season we cover. See membership options \u2192",
+      "frames": []
+    },
+    {
+      "url": "https://www.bball-index.com/xpoints-pbp-standings/",
+      "text": "xPoints Standings Actual results against expected outcomes, derived from shot quality and possession data across all 1,230 games of the season. Every team gets a record and an expected record, a net rating and an expected net rating, and the gap between them expressed as win luck. Narrow to the last five, ten, fifteen, twenty or thirty games, or any date range, and switch between the table and a scatter view. This tool is part of a membership. For $5 a month you get every premium tool, all 700+ metrics, and every season we cover. See membership options \u2192",
+      "frames": []
+    },
+    {
+      "url": "https://www.bball-index.com/xpoints-pbp-trends/",
+      "text": "xPoints Team Trends Rolling performance curves showing how teams move through a season, plotted on actual results, expected results, or both at once. Choose a window of three, five, ten or fifteen games and track net rating, offensive and defensive rating, effective field goal percentage on either end, turnover rate, rebounding, free throw rate, true shooting or pace. Compare as many teams as you like on the same axes. This tool is part of a membership. For $5 a month you get every premium tool, all 700+ metrics, and every season we cover. See membership options \u2192",
+      "frames": []
+    },
+    {
+      "url": "https://www.bball-index.com/xpoints-pbp-lineups/",
+      "text": "xPoints Lineups Every five-man combination a team has actually used, with exact possession counts rather than estimates, plus expected points and xRatings for each. Set a minimum minutes threshold to cut the noise, restrict to a date range or a single quarter, require particular players on or off the floor, and sort by any column. This tool is part of a membership. For $5 a month you get every premium tool, all 700+ metrics, and every season we cover. See membership options \u2192",
+      "frames": []
+    },
+    {
+      "url": "https://www.bball-index.com/xpoints-pbp-referees/",
+      "text": "xPoints Referee Trends Game-level officiating data for the regular season, merged with advanced box scores, for every official who has worked a game this year. Compare crews on total points, pace, margin, free throw attempts and rate, foul counts and technicals, with disparity columns showing how evenly the whistles fall between the two benches. Officiating is one of the few inputs a team cannot control, which makes it worth measuring rather than arguing about. This tool is part of a membership. For $5 a month you get every premium tool, all 700+ metrics, and every season we cover. See membership options \u2192",
+      "frames": []
+    },
+    {
+      "url": "https://www.bball-index.com/daily-lebron/",
+      "text": "Read the introduction to LEBRON (Luck-adjusted player Estimate using a Box prior Regularized ON-off) here .",
+      "frames": [
+        "https://fanspo.com/bbi-role-explorer/game-lebron"
+      ]
+    },
+    {
+      "url": "https://www.bball-index.com/headshots-scatter-plot-tool/",
+      "text": "NBA Headshots & Scatterplot Tool Plot any two of our metrics against each other and see the whole league at once, with player headshots as the data points. It turns a table of numbers into a picture you can actually read: who is an outlier, who clusters together, and where a player sits relative to everyone else. Choose your axes from the 700+ metrics we track, filter by season, team, role, or minutes played, and the chart redraws around the players you care about. Useful for spotting the shooter who is also a defender, the high usage player who is not efficient, or whatever two way relationship you are trying to see. Every value is drawn from the same graded database behind the rest of the site. Our tutorial video walks through the controls, and the LEBRON introduction explains the impact metrics you can plot. Have a look around first. The demo below is this same tool running on a limited set of players and metrics, free to explore. A membership unlocks the full database, every metric, and every season, from $5 a month. See membership options \u2192",
+      "frames": [
+        "https://bball-index.shinyapps.io/headshotDemo/"
+      ]
+    },
+    {
+      "url": "https://www.bball-index.com/career-trends-tool/",
+      "text": "NBA Career Trends Tool Track how a player\u2019s performance has moved over time, with visualizations you control. Compare up to five players at once, plot by game number, date, or age, and find the closest statistical comparables to any player you are looking at. Plotting by age rather than by season is the useful trick here: it lines players up at the same stage of their career instead of the same calendar year, which is how you tell a late bloomer from a player who peaked early. Every metric comes from the same graded database behind the rest of the site. We continue to add stats to this tool over time. If you want the reasoning behind the impact numbers you can plot, start with the LEBRON introduction . Have a look around first. The demo below is this same tool running on a limited set of players and metrics, free to explore. A membership unlocks the full database, every metric, and every season, from $5 a month. See membership options \u2192",
+      "frames": [
+        "https://bball-index.shinyapps.io/CareerTrendsDemo/"
+      ]
+    },
+    {
+      "url": "https://www.bball-index.com/player-progression-analysis/",
+      "text": "NBA Player Progression Analysis Analyze how players have progressed from one season to the next, across our full metric library rather than just the box score. The useful part is separating real development from noise. A jump in scoring can be a genuine leap in shot making, or it can be a bigger role, better teammates, or a hot shooting stretch that will not repeat. Looking at progression metric by metric shows you which skills actually moved. Built on the same talent and impact data as the rest of the site, so a player\u2019s progression here is consistent with their grades and impact numbers elsewhere. If you want to see how development typically unfolds by age, the Skill Growth Model covers that ground. This tool is part of a membership. For $5 a month you get every premium tool, all 700+ metrics, and every season we cover. See membership options \u2192",
+      "frames": []
+    },
+    {
+      "url": "https://www.bball-index.com/glossary/",
+      "text": "This page of our site will include act as an evergreen glossary of statistics used on BBall Index.",
+      "frames": [
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqxPLTuFQwWBFof7XlhHBYidVupesU81LllfS1G8uBTeHfpbByEbh1bM0Ih1aUU4XDCcHTKKLSuITT/pubhtml?widget=true&amp;headers=false"
+      ]
+    }
+  ]
+}
