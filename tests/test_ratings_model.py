@@ -78,6 +78,34 @@ class InputsModelIntegrationTests(unittest.TestCase):
         fitted = rm._FITTED_CACHE[tuple(canonical[rm.MODEL_KEY]["fitted_key"])]
         self.assertEqual(self.trait(canonical, "passing_reads"), derive_traits(after_inputs, fitted)["passing_reads"])
 
+    def test_generated_rookie_gets_inputs_and_derived_traits_without_moving_others(self):
+        canonical = deepcopy(self.base)
+        template = next(p for p in canonical["players"] if p["name"] == "Cooper Flagg")
+        rookie = {**template, "id": "rookie_player_test_2027", "name": "Test Rookie", "source_kind": "generated_rookie"}
+        canonical["players"].append(rookie)
+        legacy = [dict(t, player_id=rookie["id"]) for t in canonical["traits"] if t["player_id"] == template["id"]]
+        canonical["traits"].extend(legacy)
+        rm.install_inputs_model(canonical, ROOT)
+        inputs = rm.effective_inputs(canonical, rookie["id"])
+        self.assertIsNotNone(inputs)
+        self.assertEqual(len(inputs), 94)
+        self.assertTrue(all(record.get("reason") in ("prior", "estimated") for record in inputs.values()))
+        # The same adapter tables are used: adding a rookie must not change veterans' derived traits.
+        curry = lambda c: {t["trait_key"]: t["value"] for t in c["traits"] if t["player_id"] == self.pid}
+        self.assertEqual(curry(canonical), curry(self.canonical))
+        # Development of a generated player flows through inputs like everyone else's.
+        before = next(t["value"] for t in canonical["traits"] if t["player_id"] == rookie["id"] and t["trait_key"] == "passing_reads")
+        apply_development_events(canonical, [{"player_id": rookie["id"], "trait_deltas": {"passing_reads": 5.0}}])
+        after = next(t["value"] for t in canonical["traits"] if t["player_id"] == rookie["id"] and t["trait_key"] == "passing_reads")
+        self.assertGreaterEqual(after, before)
+
+    def test_development_is_stored_as_small_deltas_not_full_input_copies(self):
+        canonical = deepcopy(self.canonical)
+        apply_development_events(canonical, [{"player_id": self.pid, "trait_deltas": {"release_speed": 3.0}}])
+        stored = canonical[rm.MODEL_KEY]["input_deltas"][self.pid]
+        self.assertLessEqual(len(stored), 6)
+        self.assertTrue(all(isinstance(v, float) for v in stored.values()))
+
     def test_legacy_universe_still_uses_the_legacy_development_path(self):
         canonical = deepcopy(self.base)
         before = self.trait(canonical, "passing_reads")

@@ -33,6 +33,7 @@ GRADE_POINTS_PER_TRAIT_POINT = 1.0
 # the active universe; the canonical only carries small cache keys plus developed players' inputs.
 _INPUT_CACHE: dict[str, dict[str, dict[str, Any]]] = {}
 _FITTED_CACHE: dict[tuple[str, str], FittedAdapter] = {}
+_GENERATED_CACHE: dict[tuple[str, str], dict[str, Any]] = {}
 
 
 def ratings_model_for(save: Mapping[str, Any] | None = None) -> str:
@@ -132,21 +133,48 @@ def _sum_trait_deltas(totals: Mapping[str, Mapping[str, float]] | None,
 
 
 def install_inputs_model(canonical: dict[str, Any], root: Path | None = None) -> None:
-    """Fit the adapter on the baseline league and derive every input-backed player's traits.
+    """Fit the adapter on the baseline league and derive every player's traits from inputs.
 
-    Must run on the baseline (pre-development) traits: the fitted league tables then stay fixed for the
-    whole save, so a player's ratings never drift because other players developed.
+    Must run on the baseline (pre-development) traits. The adapter is fitted only on players in the
+    canonical inputs file, so its league tables stay fixed for the whole save (rookies joining or players
+    developing never shift anyone else's ratings). Players without canonical inputs (drafted rookies,
+    generated players) get inputs from the estimator's prospect path, using their current legacy traits only
+    as weak prior evidence; their traits are then derived from those inputs like everyone else's.
     """
     inputs_key, league_inputs = _load_inputs_keyed(root)
     baseline = _trait_values(canonical)
-    signature = hashlib.sha256(json.dumps(baseline, sort_keys=True).encode()).hexdigest()
+    fit_traits = {pid: values for pid, values in baseline.items() if pid in league_inputs}
+    signature = hashlib.sha256(json.dumps(fit_traits, sort_keys=True).encode()).hexdigest()
     fitted_key = (inputs_key, signature)
     if fitted_key not in _FITTED_CACHE:
-        _FITTED_CACHE[fitted_key] = fit_adapter({pid: ins for pid, ins in league_inputs.items() if pid in baseline}, baseline)
+        _FITTED_CACHE[fitted_key] = fit_adapter({pid: league_inputs[pid] for pid in fit_traits}, fit_traits)
     canonical[MODEL_KEY] = {"mode": INPUTS_V1, "inputs_key": inputs_key, "fitted_key": list(fitted_key),
-                            "effective_inputs": {}}
-    derived_baseline = _rederive(canonical, league_inputs.keys())
+                            "input_deltas": {}, "generated": {}}
+    generated = _install_generated_players(canonical, baseline, league_inputs)
+    derived_baseline = _rederive(canonical, [*league_inputs.keys(), *generated])
     _rebase_offensive_profile_anchors(canonical, derived_baseline)
+
+
+def _install_generated_players(canonical: dict[str, Any], baseline: Mapping[str, Mapping[str, float]],
+                               league_inputs: Mapping[str, Any]) -> list[str]:
+    """Estimate inputs for players missing from the canonical inputs file (e.g. drafted rookies)."""
+    from .input_estimator import InputEstimator
+
+    model = canonical[MODEL_KEY]
+    estimator = None
+    added = []
+    for player in canonical.get("players", []):
+        pid = str(player.get("id") or "")
+        if not pid or pid in league_inputs or pid not in baseline:
+            continue
+        traits = dict(baseline[pid])
+        key = hashlib.sha256(json.dumps([player, traits], sort_keys=True, default=str).encode()).hexdigest()
+        if (pid, key) not in _GENERATED_CACHE:
+            estimator = estimator or InputEstimator()
+            _GENERATED_CACHE[(pid, key)] = estimator.estimate_player_inputs(player, traits, prospect=True).to_dict()["inputs"]
+        model["generated"][pid] = key
+        added.append(pid)
+    return added
 
 
 def _rebase_offensive_profile_anchors(canonical: dict[str, Any], derived: Mapping[str, Mapping[str, float]]) -> None:
@@ -176,14 +204,32 @@ def _base_inputs(model: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
     return _INPUT_CACHE[model["inputs_key"]]
 
 
+def _player_base_inputs(model: Mapping[str, Any], player_id: str) -> dict[str, Any] | None:
+    base = _base_inputs(model).get(player_id)
+    if base is not None:
+        return base
+    key = (model.get("generated") or {}).get(player_id)
+    return _GENERATED_CACHE.get((player_id, key)) if key else None
+
+
+def _effective(model: Mapping[str, Any], player_id: str) -> dict[str, Any] | None:
+    """Base (or generated) inputs plus this save's accumulated development, computed on demand.
+
+    Only the small per-input deltas live in the active universe, which gets deep-copied by parts of the game.
+    """
+    base = _player_base_inputs(model, player_id)
+    if base is None:
+        return None
+    deltas = (model.get("input_deltas") or {}).get(player_id)
+    return apply_input_deltas(base, deltas) if deltas else base
+
+
 def _rederive(canonical: dict[str, Any], player_ids: Iterable[str]) -> dict[str, dict[str, float]]:
     model = canonical[MODEL_KEY]
     fitted = _FITTED_CACHE[tuple(model["fitted_key"])]
-    base = _base_inputs(model)
-    wanted = {str(p) for p in player_ids}
     derived: dict[str, dict[str, float]] = {}
-    for pid in wanted:
-        inputs = model["effective_inputs"].get(pid) or base.get(pid)
+    for pid in {str(p) for p in player_ids}:
+        inputs = _effective(model, pid)
         if inputs is not None:
             derived[pid] = derive_traits(inputs, fitted)
     for trait in canonical.get("traits", []):
@@ -198,14 +244,14 @@ def apply_development(canonical: dict[str, Any], totals: Mapping[str, Mapping[st
                       events: Iterable[Mapping[str, Any]] | None) -> None:
     """Inputs-model replacement for the legacy development-to-traits helpers."""
     model = canonical[MODEL_KEY]
-    combined = _sum_trait_deltas(totals, events)
     touched = []
-    base = _base_inputs(model)
-    for pid, trait_deltas in combined.items():
-        current = model["effective_inputs"].get(pid) or base.get(pid)
-        if current is None:
+    for pid, trait_deltas in _sum_trait_deltas(totals, events).items():
+        base = _player_base_inputs(model, pid)
+        if base is None:
             continue
-        model["effective_inputs"][pid] = apply_input_deltas(current, route_trait_deltas(current, trait_deltas))
+        accumulated = model["input_deltas"].setdefault(pid, {})
+        for input_id, delta in route_trait_deltas(base, trait_deltas).items():
+            accumulated[input_id] = round(accumulated.get(input_id, 0.0) + delta, 6)
         touched.append(pid)
     _rederive(canonical, touched)
 
@@ -217,6 +263,4 @@ def uses_inputs_model(canonical: Mapping[str, Any]) -> bool:
 def effective_inputs(canonical: Mapping[str, Any], player_id: str) -> dict[str, Any] | None:
     """The inputs the engine is currently using for a player (for the new player card)."""
     model = canonical.get(MODEL_KEY) or {}
-    if not model:
-        return None
-    return (model.get("effective_inputs") or {}).get(player_id) or _base_inputs(model).get(player_id)
+    return _effective(model, player_id) if model else None
