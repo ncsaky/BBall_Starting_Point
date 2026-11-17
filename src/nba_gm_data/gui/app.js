@@ -3785,7 +3785,7 @@ function seasonProspectsCard(options = {}) {
         const now = Number(row.now), potential = Number(row.potential);
         return `<button type="button" class="season-prospect-row" data-draft-prospect-card="${escapeAttr(row.id)}" title="Open scouting report for ${escapeAttr(row.name)}">
           <span class="season-prospect-rank">${String(row.rank).padStart(2, "0")}</span>
-          <span class="season-prospect-name"><span class="season-prospect-name-main">${prospectOriginMarkup(row.sourceTeam)}<strong>${escapeHtml(row.name)}</strong>${prospectInjuryMarkup(row.injuryReport)}</span></span>
+          <span class="season-prospect-name"><span class="season-prospect-name-main">${prospectOriginMarkup(row.sourceTeam)}<strong>${escapeHtml(row.name)}</strong>${prospectInjuryMarkup(row.injuryReport, { compact: true })}</span></span>
           <span class="season-prospect-position">${escapeHtml(row.position)}</span>
           <span>${escapeHtml(row.age ?? "—")}</span>
           <span>${escapeHtml(row.height || "—")}</span>
@@ -7458,8 +7458,13 @@ function playerCardRatingRows(ratings = {}) {
 function playerCardRatingBar(label, value, key, detail = {}) {
   if (detail.is_prospect && value == null) return `<div class="prospect-rating-locked" aria-label="${escapeAttr(label)}: not unlocked yet"><span>${escapeHtml(label)}</span><i aria-hidden="true"></i><strong title="Unlock through scouting">Locked</strong></div>`;
   const score = clampNumber(Number(value || 0), 0, 99);
-  const average = clampNumber(Number(detail.rating_league_averages?.[key] ?? 50), 0, 99);
-  return `<div class="${ratingQuartileTone(value, key, detail.rating_quartiles)}"><span>${escapeHtml(label)}</span><i><b style="${performanceBarStyle(score)}"></b><em class="rating-average-marker" style="left:${average}%" title="League average: ${average.toFixed(1)}" aria-label="League average ${average.toFixed(1)}"></em></i><strong>${draftMetric(value)}</strong></div>`;
+  const reference = Number(detail.rating_league_averages?.[key]);
+  const referenceLabel = detail.rating_average_label || "League average";
+  // No marker when there is no real reference value (never a made-up midpoint).
+  const marker = Number.isFinite(reference)
+    ? (() => { const average = clampNumber(reference, 0, 99); return `<em class="rating-average-marker" style="left:${average}%" title="${escapeAttr(referenceLabel)}: ${average.toFixed(1)}" aria-label="${escapeAttr(referenceLabel)} ${average.toFixed(1)}"></em>`; })()
+    : "";
+  return `<div class="${ratingQuartileTone(value, key, detail.rating_quartiles)}"><span>${escapeHtml(label)}</span><i><b style="${performanceBarStyle(score)}"></b>${marker}</i><strong>${draftMetric(value)}</strong></div>`;
 }
 
 function ratingQuartileTone(value, key, thresholds = {}) {
@@ -12525,9 +12530,11 @@ function prospectInjuryTitle(report) {
 }
 
 // Compact marker: current injury cross, past-injury count, projected-risk word. Empty when the engine has no medical data.
-function prospectInjuryMarkup(report) {
+// compact: only show something notable (current injury, history, or above-low risk), for dense cards.
+function prospectInjuryMarkup(report, { compact = false } = {}) {
   if (!report?.available) return "";
   const history = (report.history || []).length;
+  if (compact && !history && !report.current && String(report.risk_label || "Low") === "Low") return "";
   const current = report.current ? `<span class="season-injury-status prospect-injury-current" aria-hidden="true">✚</span>` : "";
   const past = history ? `<span class="prospect-injury-history">${history} past</span>` : "";
   const risk = `<span class="prospect-injury-risk prospect-injury-risk-${escapeAttr(String(report.risk_label || "low").toLowerCase())}">${escapeHtml(report.risk_label || "Low")}</span>`;

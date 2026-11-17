@@ -1670,7 +1670,10 @@ def prospect_card_payload(canonical: dict[str, Any], save_path: Path, prospect_i
     visible = prospect_card_ratings(prospect, scout, report)
     season, logs = college_production(prospect)
     upside_unlocked = float(scout.get('scouted_pct') or 0) >= 100
+    from .save import positional_rating_reference
+    reference, reference_label = positional_rating_reference(active, prospect.get('position'))
     return {
+        'rating_league_averages': reference, 'rating_average_label': reference_label,
         'is_prospect': True, 'player_id': prospect_id, 'name': prospect.get('name'),
         'position': compact_position(prospect.get('position')), 'age': whole_prospect_age(prospect.get('age')),
         'height': height_label(prospect), 'draft_year': prospect.get('draft_year'),

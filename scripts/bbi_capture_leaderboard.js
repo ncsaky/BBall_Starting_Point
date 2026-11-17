@@ -43,7 +43,7 @@
     run();
     // Re-click Run if nothing new renders (checked on Shiny/DataTables events plus a slow fallback timer).
     let clicks = 1;
-    const nudge = setInterval(() => { if (!rendered() && clicks < 4) { clicks += 1; run(); } }, 60000);
+    const nudge = setInterval(() => { if (!rendered() && clicks < 10) { clicks += 1; run(); } }, 60000);
     let dt;
     try { dt = await waitFor(rendered, 600000); } finally { clearInterval(nudge); }
     dt.page.len(-1).draw(false);

@@ -7055,6 +7055,55 @@ def display_rating_averages(canonical: dict[str, Any]) -> dict[str, float]:
     return averages
 
 
+POSITION_AVERAGE_MIN_SAMPLE = 20
+
+
+def display_rating_averages_by_position(canonical: dict[str, Any]) -> dict[str, dict[str, float]]:
+    """Mean display ratings of current league players at each primary position (PG/SG/SF/PF/C).
+
+    Positions with fewer than POSITION_AVERAGE_MIN_SAMPLE players are left out (callers fall back to the
+    league mean)."""
+    cached = canonical.get("_display_rating_averages_by_position")
+    if isinstance(cached, dict):
+        return cached
+    retired_ids = set(canonical.get("retired_player_ids") or [])
+    from .offense import FACETS, enabled as offense_enabled
+    keys = (*DISPLAY_RATING_TERTILE_KEYS, 'offense', *FACETS) if offense_enabled(canonical) else DISPLAY_RATING_TERTILE_KEYS
+    groups: dict[str, dict[str, list[float]]] = {}
+    for player in canonical.get("players", []):
+        player_id = player.get("id")
+        position = str(player.get("position") or "").upper().split("/")[0].strip()
+        if not player_id or player_id in retired_ids or position not in {"PG", "SG", "SF", "PF", "C"}:
+            continue
+        ratings = player_display_attribute_summary(canonical, player_id)
+        bucket = groups.setdefault(position, {key: [] for key in keys})
+        for key in keys:
+            bucket[key].append(float(ratings.get(key) or 0.0))
+    averages = {
+        position: {key: round(sum(rows) / len(rows), 1) for key, rows in bucket.items() if rows}
+        for position, bucket in groups.items()
+        if len(next(iter(bucket.values()), [])) >= POSITION_AVERAGE_MIN_SAMPLE
+    }
+    if canonical.get("_allow_internal_caches"):
+        canonical["_display_rating_averages_by_position"] = averages
+    return averages
+
+
+def positional_rating_reference(canonical: dict[str, Any], position: Any) -> tuple[dict[str, float], str]:
+    """Reference averages for a (possibly multi-position, e.g. "SF/PF") player and a label for them.
+
+    Multi-position players get the mean of their listed positions' averages. Unknown or thin positions fall back
+    to the league mean, labelled as such."""
+    by_position = display_rating_averages_by_position(canonical)
+    listed = [part.strip() for part in str(position or "").upper().replace(",", "/").replace("-", "/").split("/")]
+    usable = [part for part in dict.fromkeys(listed) if part in by_position]
+    if not usable:
+        return display_rating_averages(canonical), "League average"
+    keys = set.intersection(*(set(by_position[part]) for part in usable))
+    averages = {key: round(sum(by_position[part][key] for part in usable) / len(usable), 1) for key in keys}
+    return averages, f"{'/'.join(usable)} average"
+
+
 def player_attribute_summary(canonical: dict[str, Any], player_id: str) -> dict[str, float]:
     # This memo is attached only to immutable hypothetical forecast views.
     # Actual/user rotations keep the existing fresh calculation path.

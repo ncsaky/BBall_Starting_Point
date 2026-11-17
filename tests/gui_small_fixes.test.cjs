@@ -288,4 +288,24 @@ test('prospect injury marker separates history, current injury and risk without 
   assert.match(html, /prospect-injury-current/);
   assert.match(html, /prospect-injury-risk-high/);
   assert.match(html, /Knee \(medium, 2025, recovered\)/);
+  const healthy = {available: true, history: [], current: null, risk_label: 'Low'};
+  assert.match(ctx.prospectInjuryMarkup(healthy), /Low/);                 // full table shows the risk word
+  assert.equal(ctx.prospectInjuryMarkup(healthy, {compact: true}), '');    // dense card stays quiet
+  assert.match(ctx.prospectInjuryMarkup({...healthy, risk_label: 'Moderate'}, {compact: true}), /Moderate/);
+});
+
+test('rating bars use the provided reference (e.g. positional) and never a made-up midpoint', () => {
+  const grab = (name) => app.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n}\\n`))[0];
+  const ctx = {
+    escapeHtml: (v) => String(v), escapeAttr: (v) => String(v), draftMetric: (v) => String(v),
+    clampNumber: (v, lo, hi) => Math.min(hi, Math.max(lo, v)), performanceBarStyle: () => '', ratingTone: () => 'average',
+  };
+  vm.createContext(ctx);
+  vm.runInContext(`${grab('ratingQuartileTone')}\n${grab('playerCardRatingBar')}`, ctx);
+  const none = ctx.playerCardRatingBar('Shooting', 60, 'shooting', {is_prospect: true});
+  assert.doesNotMatch(none, /rating-average-marker/);
+  const pos = ctx.playerCardRatingBar('Shooting', 60, 'shooting', {is_prospect: true, rating_league_averages: {shooting: 47.5}, rating_average_label: 'SF/PF average'});
+  assert.match(pos, /title="SF\/PF average: 47\.5"/);
+  const league = ctx.playerCardRatingBar('Shooting', 60, 'shooting', {rating_league_averages: {shooting: 52}});
+  assert.match(league, /League average: 52\.0/);
 });
