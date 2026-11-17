@@ -1405,6 +1405,9 @@ async function advance(payload) {
     state.simulationStopRequested = false;
     state.simulationGameCache = null;
     state.simulationPlayerRatingsById = null;
+    state.simulationOpponentResult = null;
+    state.simulationPendingOpponent = null;
+    state.simulationUpcomingGames = null;
     document.body.classList.remove("simulation-live");
     document.querySelector('[data-simulation-status]')?.remove();
     document.querySelectorAll('[data-minute-player]').forEach((input) => {
@@ -1463,6 +1466,10 @@ async function advanceSave(payload, simulationId) {
   state.simulationGameCache = new Map();
   state.simulationLastDate = state.home?.save?.current_date;
   state.simulationOpponentSignature = "";
+  state.simulationCompletedGameIds = new Set();
+  state.simulationPendingOpponent = null;
+  state.simulationOpponentResult = null;
+  state.simulationUpcomingGames = [...(state.data.dashboard?.next_games || [])];
   const initialOffers=state.data.dashboardOffers?.offers||[];
   state.simulationOfferIds=new Set(initialOffers.map(simulationOfferKey));
   state.simulationOfferCount=Math.max(initialOffers.length,Number(state.home?.save?.pending_counts?.user_trade_offers||0));
@@ -1481,6 +1488,10 @@ async function advanceSave(payload, simulationId) {
     showToast(error.message || "Simulation failed. Your save has been refreshed.", true);
     throw error;
   }
+  // A W/L banner still playing (sim finished or was stopped mid-animation)
+  // finishes on the completed game; then the final snapshot shows the real next opponent.
+  const resultHold = state.simulationOpponentResult;
+  if (resultHold) { resultHold.final = true; await resultHold.done; }
   state.home = result.home;
   clearViewCaches();
   applyPhaseRouting();
@@ -1997,6 +2008,11 @@ function updateOpponentDuringSimulation(opponent) {
   if (teamLabel(state.data.dashboard?.team || state.dashboardTeam || userTeam()) !== userTeam()) return;
   const game = opponent?.next_game;
   if (!opponent?.team || !game) return;
+  // Never move the card back to a game this sim already finished.
+  if (state.simulationCompletedGameIds?.has(String(game.game_id))) return;
+  // While a W/L banner plays, the card stays on the finished game; the newest
+  // opponent is applied when the banner ends.
+  if (state.simulationOpponentResult) { state.simulationPendingOpponent = opponent; return; }
   opponent = simulationOpponentForDisplay(opponent);
   const signature = JSON.stringify([
     game.game_id, opponent.team?.id, opponent.record?.wins, opponent.record?.losses,
@@ -2008,15 +2024,71 @@ function updateOpponentDuringSimulation(opponent) {
   state.data.dashboardOpponent = opponent;
   state.data.dashboard ||= {};
   state.data.dashboard.next_games = [game];
+  renderSimulationOpponentPanel();
+}
+
+function renderSimulationOpponentPanel() {
   const panel = document.querySelector('[data-board-window="opponent"] .season-opponent-panel');
   if (!panel) return;
-  const resultBanner = panel.querySelector('.season-simulation-result-banner');
   panel.innerHTML = seasonOpponentCard(state.data.dashboard, userTeam());
-  const table = panel.querySelector('.season-opponent-table');
-  if (resultBanner && table) table.append(resultBanner);
   wireDashboardPlayerCards(panel);
   wireSeasonOpponentSorting(panel);
   wireSeasonOpponentInjuryTicker(panel);
+}
+
+// Earliest unplayed game for a team, skipping games finished during this sim.
+function nextScheduledTeamGame(games, {completedIds = new Set(), afterDate = "", involvesTeam = () => true} = {}) {
+  return [...(games || [])]
+    .filter((game) => {
+      const date = String(game?.date || "").slice(0, 10);
+      if (!date || date < String(afterDate || "").slice(0, 10)) return false;
+      if (completedIds.has(String(game.game_id || ""))) return false;
+      if (game.status === "simulated" || game.result || (game.home_score != null && game.away_score != null)) return false;
+      return involvesTeam(game);
+    })
+    .sort((left, right) => String(left.date).localeCompare(String(right.date)))[0] || null;
+}
+
+// Called when a W/L banner ends and the sim has not yet streamed the next
+// opponent's full card: show the next scheduled game from the schedule data
+// already loaded, or a waiting state. The next live update fills in the rest.
+function showSimulationNextOpponentPreview(afterDate) {
+  const viewed = userTeam();
+  if (teamLabel(state.data.dashboard?.team || state.dashboardTeam || viewed) !== viewed) return;
+  const calendar = state.data.dashboardCalendar || {};
+  const next = nextScheduledTeamGame([...(state.simulationUpcomingGames || []), ...(calendar.games || calendar.calendar || [])], {
+    completedIds: state.simulationCompletedGameIds || new Set(),
+    afterDate,
+    involvesTeam: (game) => [seasonGameTeamLabel(game, "home"), seasonGameTeamLabel(game, "away")].includes(viewed),
+  });
+  const opponentLabel = next ? seasonGameOpponent(next, viewed) : "";
+  const standing = opponentLabel ? standingsRows(state.data.dashboardStandings).find((row) => teamLabel(row.team) === opponentLabel) : null;
+  state.simulationOpponentSignature = "";
+  state.data.dashboard ||= {};
+  state.data.dashboard.next_games = next ? [{...next, is_home: next.is_home ?? seasonGameTeamLabel(next, "home") === viewed}] : [];
+  state.data.dashboardOpponent = {
+    pending: true,
+    team: opponentLabel ? (standing?.team || state.teams.find((team) => teamLabel(team) === opponentLabel) || opponentLabel) : null,
+    record: standing ? {wins: standing.wins, losses: standing.losses} : {},
+    rotation: [],
+    last_games: [],
+  };
+  renderSimulationOpponentPanel();
+}
+
+function finishSimulationOpponentResult(hold) {
+  hold.banner?.remove();
+  if (state.simulationOpponentResult === hold) {
+    state.simulationOpponentResult = null;
+    const pending = state.simulationPendingOpponent;
+    state.simulationPendingOpponent = null;
+    // After the sim ends, the final dashboard snapshot is the authority.
+    if (state.simulationRunning && !hold.final) {
+      if (pending) updateOpponentDuringSimulation(pending);
+      else showSimulationNextOpponentPreview(hold.date);
+    }
+  }
+  hold.resolve?.();
 }
 
 const DISPLAY_RATING_ANCHORS = [
@@ -2074,11 +2146,18 @@ function simulationOpponentResult(event, userTeamId) {
 }
 
 function showSimulationOpponentResult(event) {
+  const outcome = simulationOpponentResult(event, state.home?.save?.user_team?.id);
+  if (!outcome) return false;
+  // A banner still playing for an earlier game ends now, so this result lands
+  // on its own opponent rather than the previous one.
+  if (state.simulationOpponentResult && state.simulationOpponentResult.gameId !== String(event.game.game_id)) {
+    finishSimulationOpponentResult(state.simulationOpponentResult);
+  }
+  state.simulationCompletedGameIds?.add(String(event.game.game_id));
   const frame = document.querySelector('[data-board-window="opponent"]');
   const panel = frame?.querySelector(".season-opponent-panel");
   const table = panel?.querySelector(".season-opponent-table");
-  const outcome = simulationOpponentResult(event, state.home?.save?.user_team?.id);
-  if (!table || !outcome || frame.dataset.resultGameId === String(event.game.game_id)) return false;
+  if (!table || frame.dataset.resultGameId === String(event.game.game_id)) return false;
   frame.dataset.resultGameId = String(event.game.game_id);
   const userLabel = teamLabel(state.home?.save?.user_team || userTeam());
   const opponent = teamLabel(state.teams.find((team) => team.id === outcome.opponentId) || outcome.opponentId);
@@ -2089,7 +2168,11 @@ function showSimulationOpponentResult(event) {
   banner.setAttribute("aria-live", "polite");
   banner.innerHTML = `<strong>${outcome.result}</strong><span>${escapeHtml(userLabel)} ${outcome.score} <i>·</i> ${escapeHtml(opponent)} ${outcome.opponentScore}</span><small>FINAL</small>`;
   table.append(banner);
-  window.setTimeout(() => banner.remove(), 1500);
+  const hold = {gameId:String(event.game.game_id), date:String(event.date || ""), banner, final:false};
+  hold.done = new Promise((resolve) => { hold.resolve = resolve; });
+  state.simulationOpponentResult = hold;
+  // Matches the 1500ms banner animation in card-board.css.
+  window.setTimeout(() => finishSimulationOpponentResult(hold), 1500);
   return true;
 }
 
@@ -3236,6 +3319,12 @@ function dashboardProspectYear() {
 function seasonOpponentCard(dash, viewedTeam) {
   const game = (dash.next_games || [])[0] || {};
   const opponent = state.data.dashboardOpponent || {};
+  if (!game.game_id && !game.opponent_team_id && !opponent.team) {
+    // No next game: season over, eliminated, or (mid-sim) not yet known.
+    const message = opponent.pending ? "Waiting for the next game on the schedule." : "No upcoming game on the schedule.";
+    return `<header class="season-panel-header season-opponent-header"><div class="season-opponent-title"><span>Next Opponent</span></div></header>
+    <div class="season-opponent-table" role="table" aria-label="Next Opponent rotation"><div class="empty">${message}</div></div>`;
+  }
   const opponentTeam = teamLabel(opponent.team || game.opponent_team_id || seasonGameOpponent(game, viewedTeam));
   const record = opponent.record || {};
   const games = Number(record.wins || 0) + Number(record.losses || 0);
@@ -3264,10 +3353,10 @@ function seasonOpponentCard(dash, viewedTeam) {
     ["OVR", rankings.overall], ["OFF", rankings.offense], ["DEF", rankings.defense],
   ];
   return `<header class="season-panel-header season-opponent-header">
-      <div class="season-opponent-title">${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(opponentTeam)} logo" />` : ""}<span>${escapeHtml(opponentTeam || "—")}</span><span>${Number(record.wins || 0)}-${Number(record.losses || 0)}</span><span>L10 ${lastTenWins}-${Math.max(0, lastTen.length - lastTenWins)}</span>${headerRatings.map(([label, rank]) => {
+      <div class="season-opponent-title">${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(opponentTeam)} logo" />` : ""}<span>${escapeHtml(opponentTeam || "—")}</span><span>${Number(record.wins || 0)}-${Number(record.losses || 0)}</span>${opponent.pending ? "" : `<span>L10 ${lastTenWins}-${Math.max(0, lastTen.length - lastTenWins)}</span>${headerRatings.map(([label, rank]) => {
         const score = clampNumber(((30 - Number(rank || 30) + 1) / 30) * 100, 3, 100);
         return `<span class="season-opponent-header-rating">#${Number(rank || 30)} ${label}<i><b style="${performanceBarStyle(score)}"></b></i></span>`;
-      }).join("")}</div>
+      }).join("")}`}</div>
       <span class="season-opponent-date">${escapeHtml(formatDashboardShortDate(game.date) || game.date || "")}${homeAway ? ` · ${homeAway}` : ""}</span>
     </header>
     <div class="season-opponent-table" role="table" aria-label="Next Opponent rotation">
@@ -3281,9 +3370,9 @@ function seasonOpponentCard(dash, viewedTeam) {
         const playerMarkup = playerNameWithInjuryMarkup(row, `${displayIndex + 1}. ${playerName}`)
           .replace('class="player-name-text"', 'class="player-name-text" data-opponent-player-text');
         return `<div class="season-opponent-row${isPlayerInjured(row.health) ? " injured" : ""}" role="row" data-opponent-index="${originalIndex}"${seasonOpponentSortData(row)}><span class="season-opponent-player-cell" role="rowheader" data-opponent-column="player"><button type="button" class="season-opponent-player-link" data-dashboard-player-card="${escapeAttr(row.id || row.player_id || "")}" aria-label="Open ${escapeAttr(playerName)} player card">${playerMarkup}</button></span>${seasonOpponentRatingCell(rating(row, "overall"), "overall")}${seasonOpponentRatingCell(rating(row, "offense"), "offense")}${seasonOpponentRatingCell(rating(row, "defense"), "defense")}${["points", "rebounds", "assists"].map((key) => `<span role="cell" data-opponent-column="${key}">${escapeHtml(statNumber(row, key))}</span>`).join("")}</div>`;
-      }).join("") || `<div class="empty">Opponent rotation unavailable.</div>`}
+      }).join("") || `<div class="empty">${opponent.pending ? "Rotation updates as the sim reaches this game." : "Opponent rotation unavailable."}</div>`}
     </div>
-    <div class="season-opponent-injuries"><span>Current injuries:</span><div class="season-opponent-injury-ticker" data-injury-ticker title="${escapeAttr(injuries.join(" · ") || "No active injuries")}"><div class="season-opponent-injury-track"><span data-injury-ticker-text>${escapeHtml(injuries.join(" · ") || "No active injuries")}</span><span data-injury-ticker-copy aria-hidden="true"></span></div></div></div>`;
+    <div class="season-opponent-injuries"><span>Current injuries:</span><div class="season-opponent-injury-ticker" data-injury-ticker title="${escapeAttr(injuries.join(" · ") || (opponent.pending ? "—" : "No active injuries"))}"><div class="season-opponent-injury-track"><span data-injury-ticker-text>${escapeHtml(injuries.join(" · ") || (opponent.pending ? "—" : "No active injuries"))}</span><span data-injury-ticker-copy aria-hidden="true"></span></div></div></div>`;
 }
 
 const SEASON_OPPONENT_SORT_KEYS = new Set(["player", "overall", "offense", "defense", "points", "rebounds", "assists"]);
@@ -4826,6 +4915,12 @@ function draftLotteryOddsWorkspace(draft) {
   </div>`;
 }
 
+// Grid placement only: pick 1 sits top-left and the last pick bottom-right.
+// Reveal order (last pick first) comes from GameSimulation.lotteryRevealState.
+function draftLotteryGridPicks(total) {
+  return Array.from({length:Math.max(0, Number(total) || 0)},(_,i)=>i+1);
+}
+
 function draftLotteryRevealWorkspace(draft) {
   const lottery = draft.lottery || {};
   const count = lotteryRevealCount(draft);
@@ -4834,7 +4929,7 @@ function draftLotteryRevealWorkspace(draft) {
   const jumping = (lottery.odds || []).filter(row=>reveal.promoted.includes(row.team.id) && !reveal.revealed.some(p=>p.original_team?.id===row.team.id));
   return `<div class="draft-lottery-card draft-reveal-shell" aria-label="Draft lottery reveal">
     <header class="draft-lottery-summary"><strong>${escapeHtml(draft.year || "")} Draft Lottery</strong><span>${reveal.complete ? 'Order Complete' : `Next: #${reveal.nextPick}`}</span></header>
-    <div class="draft-reveal-grid">${Array.from({length:reveal.total},(_,i)=>reveal.total-i).map(pick=>{
+    <div class="draft-reveal-grid">${draftLotteryGridPicks(reveal.total).map(pick=>{
       const row = visible.get(pick);
       if (!row) return `<article class="draft-reveal-row is-unrevealed" data-lottery-pick="${pick}"><span class="draft-pick-number">${pick}</span><div class="lottery-envelope" aria-hidden="true"></div><strong>Unrevealed</strong><span>—</span></article>`;
       return `<article class="draft-reveal-row${row === reveal.revealed.at(-1) ? ' is-latest' : ''}" data-lottery-pick="${pick}" data-revealed="true"><span class="draft-pick-number">${pick}</span>${draftTeamLogo(row.original_team)}<div><strong>${escapeHtml(teamLabel(row.original_team))}</strong><small>Seed ${escapeHtml(row.starting_seed || pick)}${row.ownership_changed ? ` · Pick → ${escapeHtml(teamLabel(row.owner_team))}` : ''}</small></div><em class="${Number(row.movement)>0?'up':Number(row.movement)<0?'down':''}">${Number(row.movement)>0?`↑${row.movement}`:Number(row.movement)<0?`↓${Math.abs(row.movement)}`:'—'}</em></article>`;

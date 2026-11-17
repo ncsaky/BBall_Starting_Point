@@ -40,3 +40,9 @@ data/canonical/player_inputs_2026_27.json
 data/research/bbi/captures/fanspo_profiles/
 data/research/bbi/captures/tools/
 data/research/bbi/captures/leaderboard/
+data/research/bbi/captures/fanspo_tools/
+
+# Basketball Index import cache (personal-use data, large). Demo files already tracked stay tracked.
+data/research/bbi/normalized.json
+data/research/bbi/normalized/
+data/research/bbi/raw/

@@ -66,11 +66,21 @@ class PlayerProfileTests(unittest.TestCase):
         for entry in all_entries(self.profile):
             self.assertEqual(entry["evidence"] == "prior", records[entry["id"]]["reason"] == "prior", entry["id"])
 
-    def test_baseline_header_matches_league_table(self):
-        ref = pp.league_reference(self.active[rm.MODEL_KEY]["inputs_key"])
-        table = ref["display"][self.pid]
-        for key in ("ovr", "off", "def"):
-            self.assertAlmostEqual(self.profile["header"][key], table[key], delta=0.06)
+    def test_header_shows_the_ai_ratings_on_the_display_scale(self):
+        """The card header is the front office's own OVR/OFF/DEF, so card and AI always agree on order."""
+        from nba_gm_data.save import player_attribute_summary
+        header = self.profile["header"]
+        self.assertEqual(header["source"], "engine")
+        summary = player_attribute_summary(self.active, self.pid)
+        self.assertAlmostEqual(header["engine_raw"]["ovr"], summary["overall"])
+        ids = [p["id"] for p in self.active["players"] if rm.effective_inputs(self.active, p["id"]) is not None][:40]
+        raw = {i: player_attribute_summary(self.active, i)["overall"] for i in ids}
+        shown = {i: pp.engine_header(self.active, i)["ovr"] for i in ids}
+        for a in ids:
+            for b in ids:
+                if raw[a] > raw[b] + 1e-9:
+                    self.assertGreaterEqual(shown[a], shown[b] - 1e-9, (a, b))
+        self.assertTrue(all(0 < v < 100 for v in shown.values()))
 
     def test_development_changes_technique_values_and_header(self):
         ref = pp.league_reference(self.active[rm.MODEL_KEY]["inputs_key"])

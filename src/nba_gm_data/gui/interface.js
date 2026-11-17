@@ -1,8 +1,8 @@
 /* Shared interaction layer. Commands invoke the same controls as pointer input. */
 const GameInterface = (() => {
   let config;
+  // An armed S/G prefix has no time limit; a click elsewhere, Escape, or focus entering a text field disarms it.
   let prefix = "";
-  let prefixTimer;
   let overlay;
   let origin;
   let modalOrigin;
@@ -15,6 +15,7 @@ const GameInterface = (() => {
   let selected = 0;
   const focusable = 'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]';
   const visible = el => Boolean(el?.isConnected && !el.closest('[hidden], [inert]') && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
+  const MODIFIER_KEYS = new Set(['Shift','Control','Alt','Meta','CapsLock','OS','Fn']);
   const editable = el => Boolean(el?.closest('input, textarea, select, [contenteditable="true"]'));
   const esc = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const root = () => document.querySelector('#modalRoot:not([hidden])') || document.querySelector('#startupScreen:not([hidden])') || document.getElementById('content');
@@ -32,7 +33,6 @@ const GameInterface = (() => {
 
   function clearPrefix() {
     prefix = "";
-    clearTimeout(prefixTimer);
     document.getElementById('keySequence')?.remove();
   }
 
@@ -174,7 +174,9 @@ const GameInterface = (() => {
       return;
     }
     if (moveInTable(event)) return;
-    if (editable(event.target) || event.metaKey || event.ctrlKey || event.altKey || event.repeat) { clearPrefix(); return; }
+    if (editable(event.target)) { clearPrefix(); return; }
+    // Browser shortcuts, held-key repeats and bare modifier presses pass through and leave the prefix armed.
+    if (event.metaKey || event.ctrlKey || event.altKey || event.repeat || MODIFIER_KEYS.has(event.key)) return;
     if (!config.modal() && ['ArrowLeft','ArrowRight'].includes(event.key) && config.desktop?.(event.key === 'ArrowRight' ? 1 : -1)) {
       event.preventDefault();clearPrefix();return;
     }
@@ -216,7 +218,7 @@ const GameInterface = (() => {
       event.preventDefault(); prefix = key;
       const indicator = document.createElement('div'); indicator.id = 'keySequence'; indicator.setAttribute('role','status');
       indicator.innerHTML = `<kbd>${key.toUpperCase()}</kbd> ${key === 'g' ? 'Go to' : 'Simulate'}`;
-      document.body.append(indicator); prefixTimer = setTimeout(clearPrefix, 1500);
+      document.body.append(indicator);
       if (key === 's' && !config.modal()) {
         const trigger = document.querySelector('[data-sim-menu-trigger]');
         if (trigger && !trigger.disabled && trigger.getAttribute('aria-expanded') !== 'true') trigger.click();
@@ -357,6 +359,12 @@ const GameInterface = (() => {
   function init(options) {
     config=options;
     document.addEventListener('keydown',keydown);
+    // Capture phase: open toolbar menus stop Escape before it bubbles to the document.
+    document.addEventListener('keydown',event=>{
+      if (event.key === 'Escape' && prefix && !overlay && !event.isComposing) { event.preventDefault(); clearPrefix(); }
+    },true);
+    document.addEventListener('pointerdown',()=>{ if (prefix) clearPrefix(); },true);
+    document.addEventListener('focusin',event=>{ if (prefix && editable(event.target)) clearPrefix(); });
     document.addEventListener('click',e=>{
       const sort=e.target.closest('[data-sort-table]');
       if (!sort || !sort.closest('table')?.tBodies.length) return;

@@ -60,7 +60,7 @@ GROUP_OF.update({f"{f}.{k}": "Passing" for f in PASS_FAMILIES for k in ("recogni
 DEF_PHYS = ["P01", "P02", "P03", "P07", "P08", "P10"]
 DIST_IDS = ["T01", "T02", "T03", "T11", "T13", "T16", "T17"]
 LEFT_GROUPS = ("Shooting", "Finishing", "Creation & handle", "Post", "Off-ball & screens")
-SCALE_NOTE = "Provisional: computed from the inputs below, scaled against the whole league with no cap at 100."
+SCALE_NOTE = "The same overall, offense and defense the game's AI uses, shown against the whole league with no cap at 100."
 
 
 def layer_of(input_id: str) -> int:
@@ -246,6 +246,43 @@ def header_for(ref: Mapping[str, Any], current: Mapping[str, Mapping[str, Any]])
     return {"ovr": c["ovr"](ovr), "off": c["off"](off), "def": c["def"](dfn)}
 
 
+_ENGINE_CURVES: dict[tuple, dict[str, "_Curve"]] = {}
+
+
+def _engine_triplet(summary: Mapping[str, float]) -> tuple[float, float, float]:
+    offense = summary.get("offense", summary.get("creation", 50.0))
+    return float(summary.get("overall", 50.0)), float(offense), float(summary.get("defense", 50.0))
+
+
+def engine_header(active: Mapping[str, Any], player_id: str) -> dict[str, float] | None:
+    """OVR/OFF/DEF exactly as the game's own AI computes them, shown on the unclipped display scale.
+
+    The front office (trades, contracts, rotations, free agency) reads save.player_attribute_summary, which is
+    computed from the traits the adapter derives from the 94 inputs. The card shows that same number, mapped
+    through the league's distribution onto 50 + 15z (no clipping at 100, elite players spread apart), so the
+    card and the AI can never disagree about who is better. The league curve is built once per baseline league.
+    """
+    from .save import player_attribute_summary
+
+    model = active.get(ratings_model.MODEL_KEY) or {}
+    if not model:
+        return None
+    key = (model.get("inputs_key"), tuple(model.get("fitted_key") or ()))
+    if key not in _ENGINE_CURVES:
+        triplets = []
+        for p in active.get("players", []):
+            pid = str(p.get("id") or "")
+            if pid and ratings_model.effective_inputs(active, pid) is not None:
+                triplets.append(_engine_triplet(player_attribute_summary(active, pid)))
+        if len(triplets) < 50:
+            return None
+        _ENGINE_CURVES[key] = {name: _Curve([t[i] for t in triplets]) for i, name in enumerate(("ovr", "off", "def"))}
+    curves = _ENGINE_CURVES[key]
+    ovr, off, dfn = _engine_triplet(player_attribute_summary(active, player_id))
+    return {"ovr": curves["ovr"](ovr), "off": curves["off"](off), "def": curves["def"](dfn),
+            "engine_raw": {"ovr": ovr, "off": off, "def": dfn}}
+
+
 def _shift(interval, delta, lo=0.0, hi=100.0):
     return [round(max(lo, min(hi, x + delta)), 2) for x in interval]
 
@@ -336,11 +373,13 @@ def player_profile(active: Mapping[str, Any], player_id: str) -> dict[str, Any] 
         total, from_player = count(glist)
         layers.append({"key": key, "title": title, "subtitle": sub, "groups": glist,
                        "total": total, "from_player_data": from_player})
-    head = header_for(ref, current)
+    head = engine_header(active, player_id) or header_for(ref, current)
     return {
         "player_id": player_id,
         "position": position,
         "header": {"ovr": round(head["ovr"], 1), "off": round(head["off"], 1), "def": round(head["def"], 1),
+                   "source": "engine" if "engine_raw" in head else "inputs_composite",
+                   "engine_raw": head.get("engine_raw"),
                    "scale_note": SCALE_NOTE, "league_players": ref["league"]["players"]},
         "layers": layers,
         "coach": {
