@@ -46,3 +46,4 @@ data/research/bbi/captures/fanspo_tools/
 data/research/bbi/normalized.json
 data/research/bbi/normalized/
 data/research/bbi/raw/
+data/research/bbi/captures/bbi_metric_catalog*.json

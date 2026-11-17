@@ -13,6 +13,16 @@
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
   };
+  // Event-driven waiting: re-check a condition whenever DataTables or Shiny fire events, so hidden-tab timer
+  // throttling (browsers slow short timers in background tabs) cannot stall the capture. One long fallback timer.
+  const waitFor = (cond, timeoutMs = 600000) => new Promise((resolve, reject) => {
+    const check = () => { let v; try { v = cond(); } catch (e) { v = null; } if (v) { cleanup(); resolve(v); } };
+    const handler = () => check();
+    const cleanup = () => { $(document).off('draw.dt init.dt xhr.dt shiny:value shiny:idle', handler); clearTimeout(timer); };
+    const timer = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeoutMs);
+    $(document).on('draw.dt init.dt xhr.dt shiny:value shiny:idle', handler);
+    check();
+  });
   const visibleTable = () => $('.dataTables_wrapper table.dataTable').filter(':visible').first();
 
   async function runChunk(metrics, display) {
@@ -20,21 +30,15 @@
     $('#Display')[0].selectize.setValue(display);
     const want = metrics[0].replace(/ \*$/, '');
     [...document.querySelectorAll('button')].find(b => /^Run\s*Query$/.test(b.innerText.trim())).click();
-    let dt = null;
-    for (let t = 0; t < 120; t++) { // wait for the table to show the new metrics (up to 60 s)
-      await sleep(500);
-      const tbl = visibleTable();
-      if (!tbl.length) continue;
-      const head = tbl.DataTable().columns().header().toArray().map(h => h.innerText.trim());
-      if (head.includes(want)) { dt = tbl.DataTable(); break; }
-    }
-    if (!dt) throw new Error('query_did_not_render');
+    const dt = await waitFor(() => {
+      const t = visibleTable(); if (!t.length) return null;
+      const d = t.DataTable(); const head = d.columns().header().toArray().map(h => h.innerText.trim());
+      return head.includes(want) ? d : null;
+    });
     dt.page.len(-1).draw(false);
-    let n = 0;
-    for (let t = 0; t < 120; t++) { await sleep(500); n = dt.rows({ page: 'current' }).count(); if (n >= dt.page.info().recordsTotal && n > 0) break; }
+    await waitFor(() => { const n = dt.rows({ page: 'current' }).count(); return n > 0 && n >= dt.page.info().recordsTotal; });
     const columns = dt.columns().header().toArray().map(h => h.innerText.trim());
     const rows = dt.rows({ page: 'current' }).data().toArray();
-    if (rows.length < dt.page.info().recordsTotal) throw new Error('incomplete_rows_' + rows.length);
     return { metrics, display, columns, rows, recordsTotal: dt.page.info().recordsTotal };
   }
 
