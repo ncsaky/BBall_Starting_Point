@@ -1,0 +1,35 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "gui-preview",
+      "runtimeExecutable": "/Users/noahtyler/Documents/BBall_data/BBall_Starting_Point/.venv/bin/python",
+      "runtimeArgs": [
+        "-m",
+        "nba_gm_data.app_server",
+        "--root",
+        ".",
+        "--save-dir",
+        "/private/tmp/claude-501/-Users-noahtyler--claude-spares-spare-kEIEMb/aa8ffa3d-9829-4c0d-b448-e9409427c53d/scratchpad/gui_saves",
+        "--port",
+        "8765"
+      ],
+      "env": {
+        "PYTHONPATH": "src"
+      },
+      "port": 8765
+    },
+    {
+      "name": "card-mockup",
+      "runtimeExecutable": "/Users/noahtyler/Documents/BBall_data/BBall_Starting_Point/.venv/bin/python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8790",
+        "--directory",
+        "design_concepts/new_player_card"
+      ],
+      "port": 8790
+    }
+  ]
+}
