@@ -76,7 +76,9 @@ class RatingScaleConsistencyTests(unittest.TestCase):
                          {key:(99.0,100.0)})
         self.assertEqual(a[key]['confidence'],b[key]['confidence'])
         for k in a.keys()-{key}:self.assertEqual(a[k],b[k])
-        for k in ('players','contracts','draft_prospects','draft_prospect_traits','scouting_reports','development_events'):
+        from test_five_player_calibration import filled_measurements
+        self.assertEqual(filled_measurements(before['players'],current['players']),current['players'])
+        for k in ('contracts','draft_prospects','draft_prospect_traits','scouting_reports','development_events'):
             self.assertEqual(before[k],current[k])
         f=sim.player_feature_vector(current,next(p for p in current['players'] if p['id']==key[0])).features
         gobert=sim.player_feature_vector(current,next(p for p in current['players'] if p['name']=='Rudy Gobert')).features

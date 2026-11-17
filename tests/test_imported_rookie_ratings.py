@@ -145,13 +145,19 @@ class ImportedRookieRatingTests(unittest.TestCase):
             contract = next(c for c in active["contracts"] if c["player_id"] == self.aj.id)
             self.assertEqual(contract["seasons"][0]["salary"], 1234567)
 
-    @unittest.skip('needs review: current version loads no pick protections versus 85 archived obligations; verify version gating before changing expectation')
     def test_pick_protections_are_unchanged_for_both_starting_versions(self):
         old = load_pick_obligation_overrides(ROOT, self.previous)
         new = load_pick_obligation_overrides(ROOT, self.canonical)
         self.assertTrue(old)
         self.assertEqual(old, new)
         self.assertEqual(load_pick_obligation_overrides(ROOT, {"meta": {"starting_data_version": "unrelated"}}), [])
+
+    def test_reviewed_pick_terms_cover_the_current_starting_version(self):
+        # Every starting-data update must re-confirm the reviewed pick terms, or new saves silently lose all of
+        # them (v6-v11 were missed until 2026-11-17: new careers had 0 of 85 protections and swaps).
+        payload = json.loads((ROOT / "data/overrides/pick_obligations_overrides.json").read_text())
+        covered = [payload["starting_data_version"], *payload.get("compatible_starting_data_versions", [])]
+        self.assertIn(self.canonical["meta"]["starting_data_version"], covered)
 
     def test_previous_preview_contract_correction_survives_version_pin(self):
         save = {"version": "league_save_v1", "meta": {"season": "2026-27", "starting_data_version": "2026-10-13"},

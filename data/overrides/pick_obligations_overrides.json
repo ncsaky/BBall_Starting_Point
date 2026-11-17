@@ -1,7 +1,7 @@
 {
   "version": "realgm_2026_10_13_native_terms",
   "starting_data_version": "2026-10-13",
-  "compatible_starting_data_versions": ["2026-10-20-rookies-v1", "2026-10-23-roster-v2", "2026-10-23-player-tuning-v3", "2026-10-23-talent-v4", "2026-10-23-forward-tuning-v5"],
+  "compatible_starting_data_versions": ["2026-10-20-rookies-v1", "2026-10-23-roster-v2", "2026-10-23-player-tuning-v3", "2026-10-23-talent-v4", "2026-10-23-forward-tuning-v5", "2026-10-26-imported-tail-v6", "2026-10-26-imported-skills-v7", "2026-10-26-rotation-profiles-v8", "2026-10-27-interior-offense-v9", "2026-10-30-contract-separation-v10", "2026-11-10-five-player-scouting-v11"],
   "notes": "Reviewed league snapshot. Native protected_pick and pick_swap terms; see normalization_audit in research ledger.",
   "pick_obligations": [
     {

@@ -2,6 +2,81 @@
   "notes": "Manual player/team assignment corrections for the intended 2025-26 universe snapshot.",
   "players": [
     {
+      "height_inches": 79,
+      "notes": "Public measurements. See docs/agents/tasks/bug-b-data-staff.md for field sources.",
+      "player_name": "Tucker DeVries",
+      "weight_lbs": 215,
+      "wingspan_inches": 81
+    },
+    {
+      "height_inches": 81,
+      "notes": "Public measurements. See docs/agents/tasks/bug-b-data-staff.md for field sources.",
+      "player_name": "Wyatt Fricks",
+      "weight_lbs": 216,
+      "wingspan_inches": 81.5
+    },
+    {
+      "height_inches": 76,
+      "notes": "Public measurements. See docs/agents/tasks/bug-b-data-staff.md for field sources.",
+      "player_name": "Jaylin Sellers",
+      "weight_lbs": 205,
+      "wingspan_inches": 80.5
+    },
+    {
+      "height_inches": 79,
+      "notes": "Public measurements. See docs/agents/tasks/bug-b-data-staff.md for field sources.",
+      "player_name": "Rashaun Agee",
+      "weight_lbs": 210,
+      "wingspan_inches": 85.5
+    },
+    {
+      "height_inches": 82,
+      "notes": "Public measurements. See docs/agents/tasks/bug-b-data-staff.md for field sources.",
+      "player_name": "Carson Cooper",
+      "weight_lbs": 245,
+      "wingspan_inches": 85
+    },
+    {
+      "height_inches": 77,
+      "notes": "Public measurements. See docs/agents/tasks/bug-b-data-staff.md for field sources.",
+      "player_name": "Josh Dix",
+      "weight_lbs": 210,
+      "wingspan_inches": 78.5
+    },
+    {
+      "height_inches": 84,
+      "notes": "Public measurements. See docs/agents/tasks/bug-b-data-staff.md for field sources.",
+      "player_name": "Christoph Tilly",
+      "weight_lbs": 242
+    },
+    {
+      "height_inches": 80,
+      "notes": "Public measurements. See docs/agents/tasks/bug-b-data-staff.md for field sources.",
+      "player_name": "Andrew Holifield",
+      "weight_lbs": 195
+    },
+    {
+      "height_inches": 77,
+      "notes": "Public measurements. See docs/agents/tasks/bug-b-data-staff.md for field sources.",
+      "player_name": "Aaron Nkrumah",
+      "weight_lbs": 188.8,
+      "wingspan_inches": 82.25
+    },
+    {
+      "height_inches": 77,
+      "notes": "Public measurements. See docs/agents/tasks/bug-b-data-staff.md for field sources.",
+      "player_name": "Nimari Burnett",
+      "weight_lbs": 202,
+      "wingspan_inches": 81.5
+    },
+    {
+      "height_inches": 82,
+      "notes": "Public measurements. See docs/agents/tasks/bug-b-data-staff.md for field sources.",
+      "player_name": "Mohamed Wague",
+      "weight_lbs": 225,
+      "wingspan_inches": 88
+    },
+    {
       "confidence": 0.9,
       "height_inches": 77,
       "notes": "User playtest data correction: Trey Alexander listed height should be 6'5\".",

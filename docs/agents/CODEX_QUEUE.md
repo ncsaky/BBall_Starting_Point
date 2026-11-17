@@ -6,7 +6,31 @@ Current priority (2026-11-17): the three "Ready now" tasks below. GUI tasks are 
 
 ---
 
-## Ready now (2026-11-17 afternoon): two bug tasks from the test triage, one fresh chat each
+## Ready now (2026-11-17 evening)
+
+### PLY: Real playoff performance data (evidence for the "playoff translation" rating)
+
+Suggested settings: GPT-6.2 Sol, Medium, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task PLY; add a board row "in progress (Codex)".
+
+WHY: the new ratings' hidden "playoff translation" rating is built only from shooting, self-creation and perimeter-defense inputs. It ranks Derrick White 1st, Jokic 101st and Giannis 217th. It feeds the sim's impact number and the AI's superstar trade tier. Claude will refit it to real evidence (ratings-first rule). Your job is ONLY to collect that evidence; do not change ratings, inputs or engine code.
+
+DATA: per-player, per-season regular-season AND playoff box totals for every player in data/research/player_career_stats.json, seasons 2013-14 through 2025-26.
+- Reuse scripts/import_player_career_stats.py, which already fetches ESPN's public athlete stats endpoint with seasontype=2 (regular season). Postseason is seasontype=3 on the same endpoint. Write a new script scripts/import_player_playoff_stats.py (standard library only; reuse helpers by import, don't copy-paste large blocks), polite rate limiting (<= 2 requests/second), resumable cache under output/ply/.
+- Fields per player-season and season type: games, minutes, points, rebounds (off/def if available), assists, steals, blocks, turnovers, fgm/fga, fg3m/fg3a, ftm/fta, personal fouls if available, team.
+- Output: data/research/player_playoff_stats.json (same player keys and style as player_career_stats.json; include source URLs, retrieved_at and coverage counts). Keep it compact: no raw API payloads in data/.
+
+CHECKS: spot-check 5 players against Basketball Reference playoff totals (e.g. Jokic 2023, Giannis 2021, Jamal Murray 2023, Jalen Brunson 2024, SGA 2025) and record the comparison in the report. Report coverage (players with any playoff minutes; player-seasons).
+
+BOUNDARIES: new script, new data file, output/ply/, your report. No other files.
+REPORT: docs/agents/tasks/ply-playoff-data.md, plain language first. Board row to "review". Do not commit. Don't poll long runs more than every 20-30 minutes.
+```
+
+---
+
+## Done (2026-11-17 afternoon): two bug tasks from the test triage, (BUG-A and BUG-B reviewed)
 
 Suggested settings for both: **GPT-6.2 Sol, Medium**, fresh chat. Do not resume the old TST or T2b chats (TST is committed; Claude finishes T2b).
 Rules for both: don't babysit long runs by polling every few minutes (it burns usage). Start long runs in the background, do other work, and check at most every 20-30 minutes. If you can't fix something, say so plainly in the report; never weaken a test to make it pass.

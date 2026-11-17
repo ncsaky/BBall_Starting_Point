@@ -172,6 +172,8 @@ def build_draft_context(canonical: dict[str, Any] | Any, draft_research: dict[st
 
 def with_draft_context(canonical: dict[str, Any] | Any, config: dict[str, Any] | None = None) -> dict[str, Any]:
     canonical = with_transaction_context(canonical)
+    # Keep generated classes shared across the temporary draft contexts.
+    canonical.setdefault("_generated_draft_records_cache", {})
     if not (canonical.get("draft_classes") and canonical.get("draft_prospects") and canonical.get("draft_board_entries")):
         canonical = {**canonical, **build_draft_context(canonical, None, config)}
     seeds = {str(c["season"]): c.get("seed") or 0 for c in canonical.get("draft_classes", [])}
@@ -2308,6 +2310,8 @@ def generated_board_report(canonical: dict[str, Any], team_query: str, year: str
         grade = prospect_evaluation_value(prospect, "potential") * 0.65 + float(prospect["current_ability"]) * 0.25 + fit * 0.06 + cap * 0.04
         entries.append({"prospect": prospect, "risk_adjusted_grade": round(grade, 2), "fit_grade": round(fit, 2), "cap_value": round(cap, 2)})
     entries = sorted(entries, key=lambda item: item["risk_adjusted_grade"], reverse=True)[: limit or len(entries)]
+    for entry in entries:
+        entry["prospect"] = to_plain(entry["prospect"])
     return {"team": team, "year": str(year), "entry_count": len(entries), "entries": entries}
 
 

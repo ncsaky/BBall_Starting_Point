@@ -6,6 +6,16 @@ from nba_gm_data.five_player_calibration import apply_calibration,MARKER
 from nba_gm_data.ingest import build_universe
 from nba_gm_data import save as sv
 ROOT=Path(__file__).resolve().parents[1]
+
+MEASUREMENTS=('height_inches','weight_lbs','wingspan_inches')
+
+
+def filled_measurements(old_players,new_players):
+ """Old player rows with only previously-missing body measurements filled from the new rows (BUG-B, 2026-11-17:
+ 11 players' sourced heights/weights/wingspans). Any other player change still fails the comparison."""
+ new={p['id']:p for p in new_players}
+ return [{**p,**{k:new[p['id']][k] for k in MEASUREMENTS if p.get(k) is None and p['id'] in new}} for p in old_players]
+
 class FivePlayerCalibrationTests(unittest.TestCase):
  @classmethod
  def setUpClass(cls):
@@ -17,7 +27,7 @@ class FivePlayerCalibrationTests(unittest.TestCase):
   expected={(r['player_id'],k):(v['expected'],v['target']) for r in self.payload['players'] for k,v in r['traits'].items()}
   expected[('player_sas-victor-wembanyama','rim_deterrence')]=(99.0,100.0)
   self.assertEqual({k:(v,new[k]) for k,v in old.items() if new[k]!=v},expected)
-  self.assertEqual(self.old['players'],self.current['players']);self.assertEqual(self.old['contracts'],self.current['contracts'])
+  self.assertEqual(filled_measurements(self.old['players'],self.current['players']),self.current['players']);self.assertEqual(self.old['contracts'],self.current['contracts'])
  def test_absolute_idempotent_and_stale_identity_or_baseline_rejected(self):
   ps=[Player(**p) for p in self.old['players']];ts=[TraitValue(**t) for t in self.old['traits']];once=apply_calibration(ps,ts,self.payload);self.assertEqual(once,apply_calibration(ps,once,self.payload))
   # The later single rim-anchor review is independent of this eleven-target

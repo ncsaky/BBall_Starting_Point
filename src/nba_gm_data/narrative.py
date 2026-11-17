@@ -2080,11 +2080,11 @@ def violates_extension_context_claims(text: str, context: dict[str, Any], canoni
             return True
     health_terms = ["injury", "injured", "health", "healthy", "durability", "availability", "full season", "stay on the floor", "stay healthy"]
     if any(term in low for term in health_terms):
-        health_snippets = [
-            snippet for snippet in snippets
-            if "injury risk" in str(snippet).lower() or " gp" in f" {str(snippet).lower()}" or "/82 gp" in str(snippet).lower() or "availability" in str(snippet).lower()
-        ]
-        if not health.get("evidence") or not text_has_exact_snippet(text, health_snippets):
+        evidence = health.get("evidence")
+        if not evidence or evidence not in snippets or not text_has_exact_snippet(text, [evidence]):
+            return True
+        # Games missed show absence, but do not establish a durability concern.
+        if "durability" in low and float(health.get("injury_risk") or 0.0) < 5.0 and health.get("availability_status") in {None, "active"}:
             return True
     missed_games = int(health.get("missed_games") or 0)
     misleading_low_missed_phrases = [
