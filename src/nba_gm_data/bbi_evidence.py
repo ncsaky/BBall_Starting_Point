@@ -12,7 +12,8 @@ Method (declared, not fitted to simulation outcomes):
 2. Per player, season and input: weighted mean of the mapped metrics' percentiles (primary 1.0, supporting 0.5,
    weak 0.25), converted to a normal score.
 3. Across seasons: weights 2025-26 1.0, 2024-25 0.6, 2023-24 0.35, each times minutes/(minutes+800), times the
-   strength of the strongest mapped metric available (1 primary, 0.5 supporting, 0.25 weak).
+   strength of the strongest mapped metric available (1 primary, 0.5 supporting, 0.25 weak). A metric with
+   "per" in the mapping (per-75 counts such as turnovers) is first divided by that exposure metric (touches).
 4. The combined score becomes a grade on the model's anchors (50 functional, 75 strong ~80th pct, 90 exceptional
    ~97th pct): grade = 100 * logistic(1.31 * z). Smooth, bounded, never clipped.
 5. The grade is blended with the estimator's existing value by evidence weight: w_bbi / (w_bbi + PRIOR_WEIGHT).
@@ -89,6 +90,20 @@ def collect_values(root: Path, metrics: set[str]) -> dict[tuple[str, str], dict[
     return table
 
 
+def _per_exposure(values: dict[str, tuple[float, float, str | None]],
+                  exposure: dict[str, tuple[float, float, str | None]]) -> dict[str, tuple[float, float, str | None]]:
+    """A per-75 count divided by the player's exposure per 75 (e.g. turnovers per touch), same season.
+
+    The mapping marks such metrics with "per": counts per 75 possessions mostly measure how often a player has
+    the ball, so without this a high-usage creator looks careless. Players without exposure data are dropped."""
+    out = {}
+    for key, (value, minutes, cid) in values.items():
+        den = exposure.get(key)
+        if den and den[0] > 0:
+            out[key] = (value / den[0], minutes, cid)
+    return out
+
+
 def _percentiles(values: dict[str, tuple[float, float, str | None]], direction: int) -> dict[str, float]:
     pool = sorted(v * direction for v, m, _ in values.values() if m >= MIN_POOL_MINUTES)
     if len(pool) < 30:
@@ -121,6 +136,7 @@ def player_input_scores(root: Path, mapping: Mapping[str, Any] | None = None) ->
             for outcome, items in by_outcome.items():
                 specs[f"{iid}:{outcome}"] = {"metrics": items}
     metrics = {m["metric"] for spec in specs.values() for m in spec["metrics"]}
+    metrics |= {m["per"] for spec in specs.values() for m in spec["metrics"] if m.get("per")}
     table = collect_values(root, metrics)
     pct_cache: dict[tuple[str, str, int], dict[str, float]] = {}
     out: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
@@ -135,9 +151,12 @@ def player_input_scores(root: Path, mapping: Mapping[str, Any] | None = None) ->
                 num = den = top = 0.0
                 used = []
                 for m in spec["metrics"]:
-                    key = (season, m["metric"], int(m.get("direction", 1)))
+                    key = (season, m["metric"], int(m.get("direction", 1)), m.get("per"))
                     if key not in pct_cache:
-                        pct_cache[key] = _percentiles(table.get((season, m["metric"]), {}), int(m.get("direction", 1)))
+                        values = table.get((season, m["metric"]), {})
+                        if m.get("per"):
+                            values = _per_exposure(values, table.get((season, m["per"]), {}))
+                        pct_cache[key] = _percentiles(values, int(m.get("direction", 1)))
                     p = pct_cache[key].get(cid)
                     if p is None:
                         continue

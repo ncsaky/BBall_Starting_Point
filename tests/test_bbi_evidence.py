@@ -29,6 +29,14 @@ class GradeScaleTests(unittest.TestCase):
         self.assertGreater(up["bench"], up["p39"])  # ranked against the pool, not part of it
         self.assertLess(up["bench"], 1.0)
 
+    def test_per_exposure_turns_counts_into_rates(self):
+        counts = {"creator": (4.0, 2000.0, "creator"), "big": (1.0, 2000.0, "big"), "nodata": (2.0, 2000.0, "nodata")}
+        touches = {"creator": (100.0, 2000.0, "creator"), "big": (20.0, 2000.0, "big")}
+        rates = be._per_exposure(counts, touches)
+        self.assertAlmostEqual(rates["creator"][0], 0.04)
+        self.assertAlmostEqual(rates["big"][0], 0.05)   # fewer turnovers, but more per touch
+        self.assertNotIn("nodata", rates)
+
     def test_small_pools_are_ignored(self):
         self.assertEqual(be._percentiles({"a": (1.0, 900.0, "a")}, 1), {})
 

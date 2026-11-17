@@ -59,7 +59,12 @@ ADAPTER_SPEC: dict[str, list[Term]] = {
     "defensive_effort": [
         ("T17:defense", 0.25), ("S44", 0.25), ("T15", 0.15), ("S40", 0.15), ("S41", 0.10), ("S46", 0.10),
     ],
-    "scheme_iq": [("S38", 0.25), ("S39", 0.20), ("S44", 0.15), ("S46", 0.15), ("S28", 0.10), (PASS_RECOGNITION, 0.15)],
+    # Legacy scheme_iq mixed general/offensive IQ (BBallIQ, passer rating) with defensive impact (CraftedDPM),
+    # and the engine's passing feature blends it with passing_reads. Half offensive recognition, half defensive.
+    "scheme_iq": [
+        ("S38", 0.15), ("S39", 0.12), ("S44", 0.12), ("S46", 0.11),
+        (PASS_RECOGNITION, 0.25), ("S20", 0.15), ("S28", 0.10),
+    ],
     "rim_deterrence": [
         ("S37", 0.20), ("S36", 0.20), ("S38", 0.15), ("P03", 0.15), ("P10", 0.10), ("P02", 0.10), ("S45", 0.10),
     ],

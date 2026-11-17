@@ -594,35 +594,40 @@
      "direction": -1,
      "strength": "supporting",
      "outcome": null,
-     "why": "Lost-ball turnovers; divide by touches or dribbles before use."
+     "why": "Lost-ball turnovers; divide by touches or dribbles before use. Normalized per touch (2026-11-17): per-75 counts mostly measure how often a player has the ball, so high-usage creators looked careless.",
+     "per": "Touches Per 75"
     },
     {
      "metric": "Stable Live Lost Ball Turnovers Per 75",
      "direction": -1,
      "strength": "supporting",
      "outcome": null,
-     "why": "Stripped (live-ball) losses; divide by touches."
+     "why": "Stripped (live-ball) losses; divide by touches. Normalized per touch (2026-11-17): per-75 counts mostly measure how often a player has the ball, so high-usage creators looked careless.",
+     "per": "Touches Per 75"
     },
     {
      "metric": "Stable Non Bad Pass Turnovers Per 75",
      "direction": -1,
      "strength": "weak",
      "outcome": null,
-     "why": "All non-passing turnovers; divide by touches."
+     "why": "All non-passing turnovers; divide by touches. Normalized per touch (2026-11-17): per-75 counts mostly measure how often a player has the ball, so high-usage creators looked careless.",
+     "per": "Touches Per 75"
     },
     {
      "metric": "Stable Lost Ball Out Of Bounds Turnovers Per 75",
      "direction": -1,
      "strength": "weak",
      "outcome": null,
-     "why": "Ball lost out of bounds; divide by touches."
+     "why": "Ball lost out of bounds; divide by touches. Normalized per touch (2026-11-17): per-75 counts mostly measure how often a player has the ball, so high-usage creators looked careless.",
+     "per": "Touches Per 75"
     },
     {
      "metric": "Stable Step Out Of Bounds Turnovers Per 75",
      "direction": -1,
      "strength": "weak",
      "outcome": null,
-     "why": "Stepping out of bounds with the ball; body/ball control error."
+     "why": "Stepping out of bounds with the ball; body/ball control error. Normalized per touch (2026-11-17): per-75 counts mostly measure how often a player has the ball, so high-usage creators looked careless.",
+     "per": "Touches Per 75"
     }
    ],
    "coverage": "good",
@@ -719,13 +724,6 @@
    "kind": "grade",
    "metrics": [
     {
-     "metric": "Half Court Shot Quality",
-     "direction": 1,
-     "strength": "weak",
-     "outcome": null,
-     "why": "Quality of half-court shots taken; partly decision quality, partly shot-difficulty appetite."
-    },
-    {
      "metric": "PnR Ball Handler Shot Quality",
      "direction": 1,
      "strength": "weak",
@@ -734,7 +732,7 @@
     }
    ],
    "coverage": "partial",
-   "gap_note": "No measure of reads against available options. Mostly scouting-led."
+   "gap_note": "No measure of reads against available options. Mostly scouting-led. Half Court Shot Quality removed 2026-11-17: it mostly reflects shot location (bigs' dunks), not attack reads."
   },
   "S21": {
    "name": "Post establishment / sealing",
@@ -903,16 +901,16 @@
     {
      "metric": "Stable P&R Roll Man PPP",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "weak",
      "outcome": null,
-     "why": "Roll/pop man points per possession; good roll/pop/slip choices raise it."
+     "why": "Roll/pop man points per possession; good roll/pop/slip choices raise it. Weak 2026-11-17: tiny roll/screener samples for non-bigs make this noisy."
     },
     {
      "metric": "PnR Screener Shot Quality",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "weak",
      "outcome": null,
-     "why": "Quality of shots the screener gets out of pick-and-roll."
+     "why": "Quality of shots the screener gets out of pick-and-roll. Weak 2026-11-17: tiny roll/screener samples for non-bigs make this noisy."
     }
    ],
    "coverage": "partial",
@@ -1420,24 +1418,33 @@
   "F01.execution": {
    "name": "Connector / swing / reversal — execution",
    "kind": "grade",
-   "metrics": [
+   "coverage": "none",
+   "gap_note": "Only generic passing accuracy; nothing swing-pass specific. Not overlaid (2026-11-17): every available signal (bad-pass turnovers per 75 or per touch, Passing Efficiency) mostly measures how risky and how frequent a player's passes are, so it ranked Trae Young, Chris Paul and James Harden below Rudy Gobert. Kept as context only; the estimator's value stands.",
+   "context_metrics": [
     {
      "metric": "Passing Efficiency",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types). Demoted to weak 2026-11-17: ranks high-volume creators (Chris Paul 10th pct, Giddey 9th) as risk-takers, not as poor passers."
     },
     {
      "metric": "Stable Bad Pass Turnovers Per 75",
      "direction": -1,
      "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types). Normalized per touch (2026-11-17): per-75 counts mostly measure how often a player has the ball, so high-usage creators looked careless.",
+     "per": "Touches Per 75"
+    },
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Expected efficiency of shots created for teammates; delivery timing and accuracy are part of it (shared with recognition, so weak). Added 2026-11-17."
     }
    ],
-   "coverage": "partial",
-   "gap_note": "Only generic passing accuracy; nothing swing-pass specific."
+   "metrics": []
   },
   "F02.recognition": {
    "name": "Post entry — recognition",
@@ -1471,24 +1478,33 @@
   "F02.execution": {
    "name": "Post entry — execution",
    "kind": "grade",
-   "metrics": [
+   "coverage": "none",
+   "gap_note": "Generic passing signals only. Nothing post-entry specific in BBI. Not overlaid (2026-11-17): every available signal (bad-pass turnovers per 75 or per touch, Passing Efficiency) mostly measures how risky and how frequent a player's passes are, so it ranked Trae Young, Chris Paul and James Harden below Rudy Gobert. Kept as context only; the estimator's value stands.",
+   "context_metrics": [
     {
      "metric": "Passing Efficiency",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types). Demoted to weak 2026-11-17: ranks high-volume creators (Chris Paul 10th pct, Giddey 9th) as risk-takers, not as poor passers."
     },
     {
      "metric": "Stable Bad Pass Turnovers Per 75",
      "direction": -1,
      "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types). Normalized per touch (2026-11-17): per-75 counts mostly measure how often a player has the ball, so high-usage creators looked careless.",
+     "per": "Touches Per 75"
+    },
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Expected efficiency of shots created for teammates; delivery timing and accuracy are part of it (shared with recognition, so weak). Added 2026-11-17."
     }
    ],
-   "coverage": "partial",
-   "gap_note": "Generic passing signals only. Nothing post-entry specific in BBI."
+   "metrics": []
   },
   "F03.recognition": {
    "name": "Pocket / roll feed — recognition",
@@ -1522,24 +1538,33 @@
   "F03.execution": {
    "name": "Pocket / roll feed — execution",
    "kind": "grade",
-   "metrics": [
+   "coverage": "none",
+   "gap_note": "Generic passing signals only. Nothing pocket/roll-pass specific (the P&R creation rate has no definition and looks like volume). Not overlaid (2026-11-17): every available signal (bad-pass turnovers per 75 or per touch, Passing Efficiency) mostly measures how risky and how frequent a player's passes are, so it ranked Trae Young, Chris Paul and James Harden below Rudy Gobert. Kept as context only; the estimator's value stands.",
+   "context_metrics": [
     {
      "metric": "Passing Efficiency",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types). Demoted to weak 2026-11-17: ranks high-volume creators (Chris Paul 10th pct, Giddey 9th) as risk-takers, not as poor passers."
     },
     {
      "metric": "Stable Bad Pass Turnovers Per 75",
      "direction": -1,
      "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types). Normalized per touch (2026-11-17): per-75 counts mostly measure how often a player has the ball, so high-usage creators looked careless.",
+     "per": "Touches Per 75"
+    },
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Expected efficiency of shots created for teammates; delivery timing and accuracy are part of it (shared with recognition, so weak). Added 2026-11-17."
     }
    ],
-   "coverage": "partial",
-   "gap_note": "Generic passing signals only. Nothing pocket/roll-pass specific (the P&R creation rate has no definition and looks like volume)."
+   "metrics": []
   },
   "F04.recognition": {
    "name": "Lob — recognition",
@@ -1573,24 +1598,33 @@
   "F04.execution": {
    "name": "Lob — execution",
    "kind": "grade",
-   "metrics": [
+   "coverage": "none",
+   "gap_note": "Generic passing signals only. Lob attempts are only available as a frequency (used for passing risk appetite), not success. Not overlaid (2026-11-17): every available signal (bad-pass turnovers per 75 or per touch, Passing Efficiency) mostly measures how risky and how frequent a player's passes are, so it ranked Trae Young, Chris Paul and James Harden below Rudy Gobert. Kept as context only; the estimator's value stands.",
+   "context_metrics": [
     {
      "metric": "Passing Efficiency",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types). Demoted to weak 2026-11-17: ranks high-volume creators (Chris Paul 10th pct, Giddey 9th) as risk-takers, not as poor passers."
     },
     {
      "metric": "Stable Bad Pass Turnovers Per 75",
      "direction": -1,
      "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types). Normalized per touch (2026-11-17): per-75 counts mostly measure how often a player has the ball, so high-usage creators looked careless.",
+     "per": "Touches Per 75"
+    },
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Expected efficiency of shots created for teammates; delivery timing and accuracy are part of it (shared with recognition, so weak). Added 2026-11-17."
     }
    ],
-   "coverage": "partial",
-   "gap_note": "Generic passing signals only. Lob attempts are only available as a frequency (used for passing risk appetite), not success."
+   "metrics": []
   },
   "F05.recognition": {
    "name": "Short-roll playmaking — recognition",
@@ -1624,24 +1658,33 @@
   "F05.execution": {
    "name": "Short-roll playmaking — execution",
    "kind": "grade",
-   "metrics": [
+   "coverage": "none",
+   "gap_note": "Generic passing signals only. Nothing short-roll specific. Not overlaid (2026-11-17): every available signal (bad-pass turnovers per 75 or per touch, Passing Efficiency) mostly measures how risky and how frequent a player's passes are, so it ranked Trae Young, Chris Paul and James Harden below Rudy Gobert. Kept as context only; the estimator's value stands.",
+   "context_metrics": [
     {
      "metric": "Passing Efficiency",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types). Demoted to weak 2026-11-17: ranks high-volume creators (Chris Paul 10th pct, Giddey 9th) as risk-takers, not as poor passers."
     },
     {
      "metric": "Stable Bad Pass Turnovers Per 75",
      "direction": -1,
      "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types). Normalized per touch (2026-11-17): per-75 counts mostly measure how often a player has the ball, so high-usage creators looked careless.",
+     "per": "Touches Per 75"
+    },
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Expected efficiency of shots created for teammates; delivery timing and accuracy are part of it (shared with recognition, so weak). Added 2026-11-17."
     }
    ],
-   "coverage": "partial",
-   "gap_note": "Generic passing signals only. Nothing short-roll specific."
+   "metrics": []
   },
   "F06.recognition": {
    "name": "Drive-and-kick — recognition",
@@ -1689,7 +1732,9 @@
   "F06.execution": {
    "name": "Drive-and-kick — execution",
    "kind": "grade",
-   "metrics": [
+   "coverage": "none",
+   "gap_note": "No drive-specific turnover rate. Not overlaid (2026-11-17): every available signal (bad-pass turnovers per 75 or per touch, Passing Efficiency) mostly measures how risky and how frequent a player's passes are, so it ranked Trae Young, Chris Paul and James Harden below Rudy Gobert. Kept as context only; the estimator's value stands.",
+   "context_metrics": [
     {
      "metric": "Drive Assist Per Pass Rate",
      "direction": 1,
@@ -1700,20 +1745,27 @@
     {
      "metric": "Passing Efficiency",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types). Demoted to weak 2026-11-17: ranks high-volume creators (Chris Paul 10th pct, Giddey 9th) as risk-takers, not as poor passers."
     },
     {
      "metric": "Stable Bad Pass Turnovers Per 75",
      "direction": -1,
      "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types). Normalized per touch (2026-11-17): per-75 counts mostly measure how often a player has the ball, so high-usage creators looked careless.",
+     "per": "Touches Per 75"
+    },
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Expected efficiency of shots created for teammates; delivery timing and accuracy are part of it (shared with recognition, so weak). Added 2026-11-17."
     }
    ],
-   "coverage": "partial",
-   "gap_note": "No drive-specific turnover rate."
+   "metrics": []
   },
   "F07.recognition": {
    "name": "Skip / cross-court — recognition",
@@ -1747,38 +1799,49 @@
   "F07.execution": {
    "name": "Skip / cross-court — execution",
    "kind": "grade",
-   "metrics": [
+   "coverage": "none",
+   "gap_note": "No skip-pass data. Not overlaid (2026-11-17): every available signal (bad-pass turnovers per 75 or per touch, Passing Efficiency) mostly measures how risky and how frequent a player's passes are, so it ranked Trae Young, Chris Paul and James Harden below Rudy Gobert. Kept as context only; the estimator's value stands.",
+   "context_metrics": [
     {
      "metric": "Stable Live Ball Bad Pass Turnovers Per 75",
      "direction": -1,
      "strength": "weak",
      "outcome": null,
-     "why": "Intercepted (live-ball) bad passes; long cross-court passes are often picked off."
+     "why": "Intercepted (live-ball) bad passes; long cross-court passes are often picked off. Normalized per touch (2026-11-17): per-75 counts mostly measure how often a player has the ball, so high-usage creators looked careless.",
+     "per": "Touches Per 75"
     },
     {
      "metric": "Pick 6s Thrown Per 75 Poss",
      "direction": -1,
      "strength": "weak",
      "outcome": null,
-     "why": "Interceptions returned for scores."
+     "why": "Interceptions returned for scores. Normalized per touch (2026-11-17): per-75 counts mostly measure how often a player has the ball, so high-usage creators looked careless.",
+     "per": "Touches Per 75"
     },
     {
      "metric": "Passing Efficiency",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types). Demoted to weak 2026-11-17: ranks high-volume creators (Chris Paul 10th pct, Giddey 9th) as risk-takers, not as poor passers."
     },
     {
      "metric": "Stable Bad Pass Turnovers Per 75",
      "direction": -1,
      "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types). Normalized per touch (2026-11-17): per-75 counts mostly measure how often a player has the ball, so high-usage creators looked careless.",
+     "per": "Touches Per 75"
+    },
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Expected efficiency of shots created for teammates; delivery timing and accuracy are part of it (shared with recognition, so weak). Added 2026-11-17."
     }
    ],
-   "coverage": "partial",
-   "gap_note": "No skip-pass data."
+   "metrics": []
   },
   "F08.recognition": {
    "name": "Post playmaking — recognition",
@@ -1812,24 +1875,33 @@
   "F08.execution": {
    "name": "Post playmaking — execution",
    "kind": "grade",
-   "metrics": [
+   "coverage": "none",
+   "gap_note": "Generic passing signals only. Nothing post-passing specific. Not overlaid (2026-11-17): every available signal (bad-pass turnovers per 75 or per touch, Passing Efficiency) mostly measures how risky and how frequent a player's passes are, so it ranked Trae Young, Chris Paul and James Harden below Rudy Gobert. Kept as context only; the estimator's value stands.",
+   "context_metrics": [
     {
      "metric": "Passing Efficiency",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types). Demoted to weak 2026-11-17: ranks high-volume creators (Chris Paul 10th pct, Giddey 9th) as risk-takers, not as poor passers."
     },
     {
      "metric": "Stable Bad Pass Turnovers Per 75",
      "direction": -1,
      "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types). Normalized per touch (2026-11-17): per-75 counts mostly measure how often a player has the ball, so high-usage creators looked careless.",
+     "per": "Touches Per 75"
+    },
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Expected efficiency of shots created for teammates; delivery timing and accuracy are part of it (shared with recognition, so weak). Added 2026-11-17."
     }
    ],
-   "coverage": "partial",
-   "gap_note": "Generic passing signals only. Nothing post-passing specific."
+   "metrics": []
   },
   "F09.recognition": {
    "name": "Transition / outlet / advance — recognition",
@@ -1863,31 +1935,41 @@
   "F09.execution": {
    "name": "Transition / outlet / advance — execution",
    "kind": "grade",
-   "metrics": [
+   "coverage": "none",
+   "gap_note": "No outlet/advance pass data. Not overlaid (2026-11-17): every available signal (bad-pass turnovers per 75 or per touch, Passing Efficiency) mostly measures how risky and how frequent a player's passes are, so it ranked Trae Young, Chris Paul and James Harden below Rudy Gobert. Kept as context only; the estimator's value stands.",
+   "context_metrics": [
     {
      "metric": "Stable Bad Pass Out Of Bounds Turnovers Per 75",
      "direction": -1,
      "strength": "weak",
      "outcome": null,
-     "why": "Passes thrown out of bounds; common on long advance passes."
+     "why": "Passes thrown out of bounds; common on long advance passes. Normalized per touch (2026-11-17): per-75 counts mostly measure how often a player has the ball, so high-usage creators looked careless.",
+     "per": "Touches Per 75"
     },
     {
      "metric": "Passing Efficiency",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types)."
+     "why": "Bad-pass turnovers against expectation given the shots created; the best available delivery-accuracy signal (shared across all pass types). Demoted to weak 2026-11-17: ranks high-volume creators (Chris Paul 10th pct, Giddey 9th) as risk-takers, not as poor passers."
     },
     {
      "metric": "Stable Bad Pass Turnovers Per 75",
      "direction": -1,
      "strength": "weak",
      "outcome": null,
-     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types)."
+     "why": "Bad-pass turnovers; divide by passing volume before use (shared across all pass types). Normalized per touch (2026-11-17): per-75 counts mostly measure how often a player has the ball, so high-usage creators looked careless.",
+     "per": "Touches Per 75"
+    },
+    {
+     "metric": "Passing Creation Quality",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Expected efficiency of shots created for teammates; delivery timing and accuracy are part of it (shared with recognition, so weak). Added 2026-11-17."
     }
    ],
-   "coverage": "partial",
-   "gap_note": "No outlet/advance pass data."
+   "metrics": []
   },
   "T01": {
    "name": "Shoot / drive / pass / post / reset choices",
