@@ -7435,6 +7435,129 @@ function wirePlayerGameScoreCharts() {
   schedule();
 }
 
+// New "Ratings & Profiles" page for inputs-model universes (payload key inputs_profile).
+const PC4_SEG = ["--pc4-seg1", "--pc4-seg2", "--pc4-seg3", "--pc4-seg4", "--pc4-seg5"];
+const PC4_TIER = { core_rotation: "Core rotation", rotation: "Rotation player", deep_rotation: "Deep rotation", fringe: "Fringe roster spot", development_priority: "Development player" };
+const pc4Pct = value => `${Math.round(value * 100)}%`;
+const pc4Pretty = key => String(key).replace(/_/g, " ").replace(/^./, c => c.toUpperCase());
+const pc4Evidence = row => row.evidence === "player" ? "Based on this player's stats" : "Estimate from similar players";
+const pc4FtIn = inches => `${Math.floor(inches / 12)}'${Math.round(inches % 12)}"`;
+
+function pc4Track(fill, prior, avg, band, tall) {
+  const lo = band ? clampNumber(band[0], 0, 100) : 0, hi = band ? clampNumber(band[1], 0, 100) : 0;
+  const bandHtml = band ? `<i class="pc4-band" style="left:${lo}%;width:${Math.max(0.5, hi - lo)}%"></i>` : "";
+  const avgHtml = avg == null ? "" : `<i class="pc4-avg" style="left:${clampNumber(avg, 0, 100)}%"></i>`;
+  return `<div class="pc4-track${tall ? " tall" : ""}">${bandHtml}<i class="pc4-fill${prior ? " prior" : ""}" style="width:${clampNumber(fill, 0, 100)}%"></i>${avgHtml}</div>`;
+}
+
+function pc4Range(row) {
+  if (!row.interval) return "";
+  const [lo, hi] = row.interval;
+  return ` | likely range ${row.kind === "propensity" ? `${pc4Pct(lo)}-${pc4Pct(hi)}` : `${Math.round(lo)}-${Math.round(hi)}`}`;
+}
+
+function pc4Tip(row, valueText) {
+  const pct = row.pct != null ? ` | league percentile ${Math.round(row.pct)}` : "";
+  return escapeAttr(`${row.id} · ${row.name} · ${valueText}${pc4Range(row)}${pct} | ${pc4Evidence(row)}`);
+}
+
+function pc4GradeRow(row) {
+  const value = Math.round(row.value);
+  return `<div class="pc4-r" title="${pc4Tip(row, value)}"><span class="pc4-l">${escapeHtml(row.name)}</span>${pc4Track(row.value, row.evidence === "prior", row.pos_avg, row.interval)}<strong>${value}</strong></div>`;
+}
+
+function pc4PassingRows(pairs) {
+  const cell = row => `${pc4Track(row.value, row.evidence === "prior", row.pos_avg, row.interval)}<strong title="${pc4Tip(row, Math.round(row.value))}">${Math.round(row.value)}</strong>`;
+  return `<div class="pc4-pass-head"><span></span><b>Read</b><span></span><b>Delivery</b><span></span></div>`
+    + pairs.map(pair => `<div class="pc4-r pass" title="${escapeAttr(`${pair.id} · ${pair.name}`)}"><span class="pc4-l">${escapeHtml(pair.name)}</span>${cell(pair.read)}${cell(pair.delivery)}</div>`).join("");
+}
+
+function pc4MeasureText(row, coach) {
+  const cm = row.value, inch = cm / 2.54;
+  if (row.id === "P04") return `${Math.round(coach.weight_lbs || cm * 2.2046)} lb <small>${Math.round(cm)} kg</small>`;
+  if (row.id === "P10") return `${Math.round(inch)} in <small>${Math.round(cm)} cm</small>`;
+  return `${pc4FtIn(inch)} <small>${Math.round(cm)} cm</small>`;
+}
+
+function pc4MeasureRow(row, coach) {
+  return `<div class="pc4-r measure" title="${pc4Tip(row, `${Number(row.value).toFixed(1)} ${row.unit || ""}`)}"><span class="pc4-l">${escapeHtml(row.name)}</span>${pc4Track(row.pct, row.evidence === "prior", row.pos_avg_pct, row.interval_pct)}<strong>${pc4MeasureText(row, coach)}</strong></div>`;
+}
+
+function pc4PropensityRow(row) {
+  const band = row.interval ? row.interval.map(x => x * 100) : null;
+  return `<div class="pc4-r" title="${pc4Tip(row, pc4Pct(row.value))}"><span class="pc4-l">${escapeHtml(row.name)}</span>${pc4Track(row.value * 100, row.evidence === "prior", row.pos_avg * 100, band)}<strong>${pc4Pct(row.value)}</strong></div>`;
+}
+
+function pc4DistributionRow(row) {
+  const keys = (row.outcomes && row.outcomes.length ? row.outcomes : Object.keys(row.value)).filter(key => key in row.value);
+  const segments = keys.map((key, index) => {
+    const range = row.intervals && row.intervals[key] ? ` (range ${pc4Pct(row.intervals[key][0])}-${pc4Pct(row.intervals[key][1])})` : "";
+    const avg = row.pos_avg && row.pos_avg[key] != null ? `, position average ${pc4Pct(row.pos_avg[key])}` : "";
+    return `<i style="width:${row.value[key] * 100}%;background:var(${PC4_SEG[index % 5]})" title="${escapeAttr(`${pc4Pretty(key)} ${pc4Pct(row.value[key])}${range}${avg}`)}"></i>`;
+  }).join("");
+  const legend = keys.map((key, index) => `<span><em style="background:var(${PC4_SEG[index % 5]})"></em>${escapeHtml(pc4Pretty(key))} <b>${pc4Pct(row.value[key])}</b></span>`).join("");
+  const prior = row.evidence === "prior";
+  return `<div class="pc4-dist" title="${escapeAttr(`${row.id} · ${row.name} | ${pc4Evidence(row)}`)}"><div class="pc4-t">${escapeHtml(row.name)}<span class="pc4-badge">${prior ? "similar players" : "player stats"}</span></div><div class="pc4-stackbar${prior ? " prior" : ""}">${segments}</div><div class="pc4-dleg">${legend}</div></div>`;
+}
+
+function pc4Entry(row, coach) {
+  if (row.kind === "measure") return pc4MeasureRow(row, coach);
+  if (row.kind === "propensity") return pc4PropensityRow(row);
+  if (row.kind === "distribution") return pc4DistributionRow(row);
+  return pc4GradeRow(row);
+}
+
+function pc4Group(group, coach) {
+  const count = group.pairs ? "9 types, read and delivery" : group.entries.length;
+  const rows = group.pairs ? pc4PassingRows(group.pairs) : group.entries.map(row => pc4Entry(row, coach)).join("");
+  return `<h4>${escapeHtml(group.name)}<small>${escapeHtml(group.note || count)}</small></h4>${rows}`;
+}
+
+function pc4LayerHeader(index, layer) {
+  return `<header><h2>${index} · ${escapeHtml(layer.title)}</h2><span class="pc4-count">${layer.from_player_data} of ${layer.total} from player data</span><span class="pc4-sub">${escapeHtml(layer.subtitle)}</span></header>`;
+}
+
+function pc4CoachLayer(profile) {
+  const coach = profile.coach || {};
+  const minutes = Number(coach.minutes_projection);
+  const tags = [coach.primary_off_role || "None", coach.secondary_off_role].filter(Boolean).map(role => `<span class="pc4-tag">${escapeHtml(role)}</span>`).join("");
+  const defRole = coach.primary_def_role === "Hidden" ? "Not yet revealed" : coach.primary_def_role || "None";
+  const minutesRow = Number.isFinite(minutes)
+    ? `<div class="pc4-minbar"><div class="pc4-track tall"><i class="pc4-fill" style="width:${clampNumber(minutes / 40 * 100, 0, 100)}%"></i></div><strong>${minutes.toFixed(1)} per game</strong></div>`
+    : "<strong>—</strong>";
+  return `<section class="pc4-layer pc4-coach"><header><h2>4 · Coach Usage &amp; Deployment</h2><span class="pc4-count">Not player talent</span><span class="pc4-sub">Decided by the coach, not player talent. Changes with team, lineup and game.</span></header>
+    <div class="pc4-body">
+      <div class="pc4-kv"><span>Position</span><strong>${escapeHtml(coach.position || "—")}</strong></div>
+      <div class="pc4-kv"><span>Offensive role</span><strong>${tags}</strong></div>
+      <div class="pc4-kv"><span>Defensive role</span><strong><span class="pc4-tag">${escapeHtml(defRole)}</span></strong></div>
+      <div class="pc4-kv"><span>Projected minutes</span>${minutesRow}</div>
+      <div class="pc4-kv"><span>Usage share</span><strong class="pc4-ph">Set by the coach during games</strong></div>
+      <div class="pc4-kv"><span>Rotation spot</span><strong>${escapeHtml(PC4_TIER[coach.rotation_priority] || coach.rotation_priority || "—")}</strong></div>
+      <p class="pc4-foot">You set rough minutes for your own team; the coach adjusts game by game (foul trouble, fatigue, hot hands, blowouts, matchups).</p>
+    </div></section>`;
+}
+
+function inputsProfilePage(profile) {
+  const coach = profile.coach || {};
+  const [technique, physical, tendencies] = profile.layers;
+  const left = technique.groups.filter(group => group.column === 0).map(group => pc4Group(group, coach)).join("");
+  const right = technique.groups.filter(group => group.column === 1).map(group => pc4Group(group, coach)).join("");
+  return `<div class="pc4" data-inputs-profile>
+    <div class="pc4-legend">
+      <span><i class="pc4-sw solid"></i>Based on this player's stats</span>
+      <span><i class="pc4-sw hatch"></i>Estimate from similar players</span>
+      <span><i class="pc4-sw band"></i>Likely range</span>
+      <span><i class="pc4-sw tick"></i>Average at his position (${escapeHtml(profile.position || "")})</span>
+      <span style="margin-left:auto">Grades: 50 is a functional NBA level, 75 strong, 90 exceptional. Hover any row for details.</span>
+    </div>
+    <p class="pc4-note">${escapeHtml(profile.header?.scale_note || "")}</p>
+    <div class="pc4-layers">
+      <section class="pc4-layer">${pc4LayerHeader(1, technique)}<div class="pc4-body"><div class="pc4-cols"><div>${left}</div><div>${right}</div></div></div></section>
+      <div class="pc4-stack"><section class="pc4-layer">${pc4LayerHeader(2, physical)}<div class="pc4-body">${physical.groups.map(group => pc4Group({ ...group, note: "" }, coach).replace(/^<h4>.*?<\/h4>/, "")).join("")}<p class="pc4-foot">Measured rows are drawn against the league spread (bar = percentile). Grade rows use the 0-100 scale.</p></div></section>${pc4CoachLayer(profile)}</div>
+      <section class="pc4-layer">${pc4LayerHeader(3, tendencies)}<div class="pc4-body">${tendencies.groups.map(group => pc4Group(group, coach)).join("")}</div></section>
+    </div></div>`;
+}
+
 function approvedPlayerCardBody(detail, options = {}) {
   const extension = options.extension || null;
   const pageOffset = extension ? 1 : 0;
@@ -7471,11 +7594,11 @@ function approvedPlayerCardBody(detail, options = {}) {
       ${detail.is_prospect ? "" : `<div class="player-page-contract"><section class="approved-card-panel approved-cap-panel"><header>${gameArtworkTitle("Four-Year Payroll Share", "payroll")}</header>${approvedCapShareChart(detail)}</section></div>`}
       <section class="approved-card-panel approved-player-spatial player-overview-court"><header>Court Influence</header>${spatialHeatmapMarkup(detail.spatial_profile, { compact: true })}</section>
     </section>
-    <section class="player-card-page player-card-page--details" data-player-page="${pageOffset + 1}" data-page-title="Ratings & Profiles" aria-label="Complete ratings and radar profiles" hidden>
-      <div class="approved-player-identity-ratings" aria-label="Complete ratings">${playerCardGroupedRatings(ratings, detail, {
+    <section class="player-card-page player-card-page--details${detail.inputs_profile ? " player-card-page--layers" : ""}" data-player-page="${pageOffset + 1}" data-page-title="Ratings & Profiles" aria-label="Complete ratings and radar profiles" hidden>
+      ${detail.inputs_profile ? inputsProfilePage(detail.inputs_profile) : `<div class="approved-player-identity-ratings" aria-label="Complete ratings">${playerCardGroupedRatings(ratings, detail, {
         Offense: radar("Offensive shape", offenseAxes, "offense"),
         Defense: radar("Defense / physical", defenseAxes, "defense")
-      })}</div>
+      })}</div>`}
     </section>
   </div>`;
 }
@@ -11896,7 +12019,8 @@ function tradeResultCards(results) {
 function playerSummaryRatings(player) {
   const ratings = player.ratings || {};
   const offenseParts = [ratings.shooting, ratings.creation, ratings.passing].filter(value => value != null && Number.isFinite(Number(value))).map(Number);
-  const values = [
+  const header = player.inputs_profile?.header;
+  const values = header ? [["OVR", header.ovr], ["OFF", header.off], ["DEF", header.def]] : [
     ["OVR", player.overall ?? ratings.overall],
     ["OFF", player.offense ?? ratings.offense ?? (offenseParts.length ? offenseParts.reduce((sum,value) => sum + value, 0) / offenseParts.length : null)],
     ["DEF", player.defense ?? ratings.defense],

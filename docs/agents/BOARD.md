@@ -24,7 +24,7 @@ GUI wishlist work is parked.
 | Task | Owner | Status | Files it may touch |
 |---|---|---|---|
 | E3 Calibration targets and comparison tool | Claude (subagent) | **done** (5/5 tests verified). Report: `docs/agents/tasks/e3-calibration-targets.md` | `data/calibration/*`, `src/nba_gm_data/calibration_targets.py`, `scripts/build_calibration_targets.py`, `scripts/calibration_report.py`, `tests/test_calibration_targets.py` |
-| E2 League-wide input estimator | Codex | **in progress (Codex)** — folding in adapter feedback | | `src/nba_gm_data/input_estimator.py`, `scripts/build_player_inputs.py`, `data/canonical/player_inputs_2026_27.json`, `tests/test_input_estimator.py` |
+| E2 League-wide input estimator | Codex | **review** — adapter feedback 1–4 addressed; 691 × 94 inputs; 76 focused tests pass. Report: `docs/agents/tasks/e2-input-estimator.md` | `src/nba_gm_data/input_estimator.py`, `scripts/build_player_inputs.py`, `data/canonical/player_inputs_2026_27.json`, `tests/test_input_estimator.py` |
 | T1 Make tests trustworthy | Claude (subagent) | **review**. Core suite `scripts/run_core_tests.sh`: 329 tests in about 160 s, passing. Full-suite leftovers listed below. | `tests/`, `scripts/run_core_tests.sh` |
 | S1-B Adapter: inputs to the 15 hidden ratings | Claude | **done** (9 tests) | `src/nba_gm_data/trait_adapter.py`, `tests/test_trait_adapter.py` |
 | S1-C Opt-in inputs model; development writes inputs | Claude | **done** (8 tests). Saves opt in with `meta.ratings_model = "inputs_v1"`; save-less tools with `NBA_GM_RATINGS_MODEL=inputs_v1`. Default stays legacy. | `src/nba_gm_data/ratings_model.py`, hooks in `save.py` and `sim.py`, `tests/test_ratings_model.py` |
@@ -43,10 +43,10 @@ GUI wishlist work is parked.
 
 | ID | Task | Owner |
 |---|---|---|
-| E2 / S1-A | Input estimator: all 691 players plus prospects | Codex (in progress) |
+| E2 / S1-A | Input estimator: all 691 players plus prospects | Codex (review) |
 | S1-B | Adapter: inputs to the 15 hidden ratings | Claude |
 | S1-C | Development writes to inputs | Claude |
-| S1-D | New player card (four layers) plus derived OVR/OFF/DEF without clipping; rewrite rating-pin tests | Claude |
+| S1-D | New player card (four layers) plus derived OVR/OFF/DEF without clipping; rewrite rating-pin tests | Claude. **Card done**: mockup approved by user; live in inputs-model saves (`player_profile.py`, `gui/player-card-layers.css`). New saves via `new-save --ratings-model inputs_v1`. Open: rating-pin test rewrite; injured players show 0.0 projected minutes. |
 | S1-E | Front-office AI (trades, contracts, FA, draft) reads new ratings | Claude, Codex for bounded parts |
 | S1-F | Prospects generated with inputs | Claude or Codex |
 | BBI | Basketball Index capture plan and importer (free pages first, then subscribe) | after E2 |

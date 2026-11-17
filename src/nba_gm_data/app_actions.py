@@ -507,6 +507,7 @@ def _create_save_action_at_path(root: Path, canonical: dict[str, Any], save_path
         seed=seed_int,
         ai_difficulty=str(payload.get("ai_difficulty") or "normal"),
         game_mode=str(payload.get("game_mode") or "standard"),
+        ratings_model=str(payload.get("ratings_model") or "legacy_traits"),
     )
     ensure_game_settings(save)
     if (save.get("fantasy_draft_state") or {}).get("status") == "in_progress":
@@ -1850,6 +1851,13 @@ def player_card_payload(canonical: dict[str, Any], save_path: Path, player_id: s
             for key, label in (('post_creation', 'Post creation'), ('assisted_finishing', 'Assisted finishing'),
                                ('screening', 'Screening'), ('offensive_rebounding', 'Offensive rebounding'))
         ]
+    from . import ratings_model
+    if ratings_model.uses_inputs_model(active):
+        from .player_profile import player_profile
+        inputs_profile = player_profile(active, player_id)
+        if inputs_profile:
+            inputs_profile["coach"]["minutes_projection"] = display_minutes_projection(player)
+            result["inputs_profile"] = inputs_profile
     context["player_cards"][player_id] = result
     return result
 

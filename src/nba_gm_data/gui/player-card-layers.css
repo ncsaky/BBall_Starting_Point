@@ -1,0 +1,63 @@
+/* New "Ratings & Profiles" page for universes that use the inputs ratings model.
+   Every class here starts with pc4- so nothing else on the card changes. */
+.pc4 {
+  --pc4-bar:#4f86bd; --pc4-bar-prior:#8fb3d6; --pc4-band:rgba(23,87,136,.20); --pc4-tick:#17212a;
+  --pc4-seg1:#4f86bd; --pc4-seg2:#7a8fa3; --pc4-seg3:#c9a24a; --pc4-seg4:#5aa17f; --pc4-seg5:#b8696b;
+  --pc4-line:#89949f; --pc4-soft:#cbd2d8; --pc4-head:#e4e8ec; --pc4-panel:#f4f5f6; --pc4-muted:#495968; --pc4-text:#17212a;
+  color:var(--pc4-text); font-family:Arial,Helvetica,sans-serif; font-size:13px; min-width:980px;
+}
+.pc4 * { box-sizing:border-box; }
+.pc4-note { color:var(--pc4-muted); font-size:.82em; font-style:italic; margin:2px 0 6px; }
+.pc4-legend { align-items:center; background:var(--pc4-head); border:1px solid var(--pc4-line); color:var(--pc4-muted); display:flex; flex-wrap:wrap; font-size:.88em; gap:6px 18px; padding:5px 10px; }
+.pc4-legend span { align-items:center; display:inline-flex; gap:6px; }
+.pc4-sw { background:var(--pc4-soft); display:inline-block; height:7px; position:relative; width:26px; }
+.pc4-sw.solid { background:var(--pc4-bar); }
+.pc4-sw.hatch { background:repeating-linear-gradient(135deg,var(--pc4-bar-prior) 0 3px,#c3d6e9 3px 6px); }
+.pc4-sw.band { background:var(--pc4-band); border-left:1px solid rgba(23,87,136,.45); border-right:1px solid rgba(23,87,136,.45); }
+.pc4-sw.tick { background:transparent; border-left:1px solid var(--pc4-tick); height:11px; margin:0 12px; width:1px; }
+.pc4-layers { align-items:start; display:grid; gap:10px; grid-template-columns:minmax(0,1.55fr) minmax(0,1fr) minmax(0,1.05fr); padding:10px 0 14px; }
+.pc4-stack { display:grid; gap:10px; }
+.pc4-layer { background:var(--pc4-panel); border:1px solid var(--pc4-line); }
+.pc4-layer > header { align-items:baseline; background:var(--pc4-head); border-bottom:1px solid var(--pc4-line); display:flex; flex-wrap:wrap; gap:3px 10px; justify-content:space-between; padding:5px 8px; }
+.pc4-layer > header h2 { font-size:1.1em; margin:0; }
+.pc4-count { color:var(--pc4-muted); font-size:.9em; }
+.pc4-sub { color:var(--pc4-muted); flex-basis:100%; font-size:.85em; }
+.pc4-body { padding:4px 8px 8px; }
+.pc4-layer.pc4-coach { background:#eef0f2; border-style:dashed; }
+.pc4-layer.pc4-coach > header { background:#e1e5e9; }
+.pc4-cols { display:grid; gap:0 16px; grid-template-columns:1fr 1fr; }
+.pc4 h4 { border-bottom:1px solid var(--pc4-line); display:flex; font-size:.95em; font-weight:700; justify-content:space-between; margin:8px 0 2px; padding:2px 0; }
+.pc4 h4 small { color:var(--pc4-muted); font-size:.9em; font-weight:400; }
+.pc4-track { background:var(--pc4-soft); height:7px; position:relative; }
+.pc4-track.tall { height:9px; }
+.pc4-band { background:var(--pc4-band); border-left:1px solid rgba(23,87,136,.45); border-right:1px solid rgba(23,87,136,.45); bottom:-2px; position:absolute; top:-2px; }
+.pc4-fill { background:var(--pc4-bar); bottom:0; left:0; position:absolute; top:0; }
+.pc4-fill.prior { background:repeating-linear-gradient(135deg,var(--pc4-bar-prior) 0 3px,#c3d6e9 3px 6px); }
+.pc4-avg { background:var(--pc4-tick); bottom:-3px; position:absolute; top:-3px; transform:translateX(-.5px); width:1px; z-index:2; }
+.pc4-r { align-items:center; border-bottom:1px solid var(--pc4-soft); display:grid; gap:7px; grid-template-columns:minmax(96px,1.15fr) minmax(50px,1fr) 32px; min-height:22px; padding:2px 0; }
+.pc4-r:nth-child(even) { background:rgba(228,232,236,.45); }
+.pc4-r .pc4-l { font-size:.95em; line-height:1.15; }
+.pc4-r strong { font-size:.95em; text-align:right; }
+.pc4-r.pass { grid-template-columns:minmax(96px,1.15fr) minmax(40px,1fr) 28px minmax(40px,1fr) 28px; }
+.pc4-pass-head { color:var(--pc4-muted); display:grid; font-size:.85em; gap:7px; grid-template-columns:minmax(96px,1.15fr) minmax(40px,1fr) 28px minmax(40px,1fr) 28px; padding-top:2px; }
+.pc4-pass-head b { font-weight:400; }
+.pc4-r.measure { grid-template-columns:minmax(80px,.9fr) minmax(60px,1fr) minmax(96px,.9fr); }
+.pc4-r.measure strong { white-space:nowrap; }
+.pc4-r.measure small { color:var(--pc4-muted); font-size:.9em; font-weight:400; }
+.pc4-dist { border-bottom:1px solid var(--pc4-soft); padding:3px 0 4px; }
+.pc4-dist .pc4-t { font-size:.95em; margin-bottom:3px; }
+.pc4-stackbar { background:var(--pc4-soft); display:flex; height:9px; }
+.pc4-stackbar i { display:block; height:100%; }
+.pc4-stackbar i + i { border-left:1px solid var(--pc4-panel); }
+.pc4-stackbar.prior i { background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.55) 0 2px,transparent 2px 5px); }
+.pc4-dleg { color:var(--pc4-muted); display:flex; flex-wrap:wrap; font-size:.85em; gap:1px 9px; margin-top:2px; }
+.pc4-dleg span { align-items:center; display:inline-flex; gap:3px; }
+.pc4-dleg em { display:inline-block; height:6px; width:6px; }
+.pc4-dleg b { color:var(--pc4-text); }
+.pc4-badge { color:var(--pc4-muted); float:right; font-size:.8em; }
+.pc4-kv { align-items:center; border-bottom:1px solid var(--pc4-soft); display:grid; gap:8px; grid-template-columns:120px 1fr; padding:4px 0; }
+.pc4-kv > span { color:var(--pc4-muted); font-size:.95em; }
+.pc4-minbar { align-items:center; display:grid; gap:7px; grid-template-columns:1fr 90px; }
+.pc4-tag { background:var(--pc4-head); border:1px solid var(--pc4-line); font-size:.85em; margin-right:3px; padding:1px 5px; }
+.pc4-ph { color:var(--pc4-muted); font-style:italic; font-weight:400; }
+.pc4-foot { color:var(--pc4-muted); font-size:.85em; line-height:1.4; margin:7px 0 0; }

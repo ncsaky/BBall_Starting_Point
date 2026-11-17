@@ -108,12 +108,13 @@ def create_league_save(
     seed: int = 1,
     ai_difficulty: str = "normal",
     game_mode: str = "standard",
+    ratings_model: str = "legacy_traits",
 ) -> dict[str, Any]:
     from .save_recovery import ensure_new_save_path
 
     with save_lock(save_path):
         ensure_new_save_path(save_path)
-        return _create_league_save(root, canonical, team_query, save_path, seed, ai_difficulty, game_mode)
+        return _create_league_save(root, canonical, team_query, save_path, seed, ai_difficulty, game_mode, ratings_model)
 
 
 def _create_league_save(
@@ -124,8 +125,18 @@ def _create_league_save(
     seed: int,
     ai_difficulty: str,
     game_mode: str,
+    ratings_model: str = "legacy_traits",
 ) -> dict[str, Any]:
     canonical = canonical if isinstance(canonical, dict) else to_plain(canonical)
+    from .ratings_model import INPUTS_V1, install_inputs_model, ratings_model_for
+
+    ratings_model = ratings_model_for({"meta": {"ratings_model": ratings_model}})
+    canonical_hash_value = canonical_hash(canonical)
+    if ratings_model == INPUTS_V1:
+        # Opening AI plans, valuations and rosters must already see input-derived traits. Work on a copy so
+        # the caller's shared canonical universe keeps its baseline traits.
+        canonical = {**canonical, "traits": [dict(trait) for trait in canonical.get("traits", [])]}
+        install_inputs_model(canonical, Path(root))
     team = resolve_team(canonical, team_query)
     from .fantasy_draft import normalize_game_mode
 
@@ -143,13 +154,14 @@ def _create_league_save(
             "id": stable_id("save", CANONICAL_SEASON, team["abbrev"], seed),
             "season": CANONICAL_SEASON,
             "canonical_universe_id": canonical.get("meta", {}).get("id"),
-            "canonical_hash": canonical_hash(canonical),
+            "canonical_hash": canonical_hash_value,
             "starting_data_version": canonical.get("meta", {}).get("starting_data_version"),
             "user_team_id": team["id"],
             "user_team_abbrev": team["abbrev"],
             "seed": seed,
             "ai_difficulty": normalize_ai_difficulty(ai_difficulty),
             "game_mode": normalized_game_mode,
+            "ratings_model": ratings_model,
             "created_at": start_date,
             "gameplay_start_date": start_date,
             "source_snapshot_date": CANONICAL_START_DATE,

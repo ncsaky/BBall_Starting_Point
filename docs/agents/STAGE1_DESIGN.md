@@ -41,6 +41,14 @@ development ──► changes inputs (never the hidden ratings directly)
 - Old rating-pin tests (`test_imported_rookie_ratings`, `test_player_tuning`, `test_roster_alignment` and others) get rewritten with relative expectations for the new scale.
 
 ### E. Front-office AI on the new ratings (Claude, with Codex for bounded pieces)
+
+**Finding (2026-11-16):** in inputs mode the AI already reads input-derived traits. But its OVR/OFF/DEF comes from `save.py:_uncached_player_attribute_summary`, a separate formula over the 15 traits. That formula clamps to 1–99 and adds a minutes bonus, and it is called about 75 times across `play.py`, `save.py`, `app_actions.py`, fantasy draft, extensions, release planning, prospect cards, waivers, transactions and trade wants. The new card header uses the profile's 50+15z scale instead, so card and AI would show different OVRs.
+
+**Plan:**
+1. In inputs mode, `player_attribute_summary` returns overall/offense/defense from `player_profile`, on the single unclipped display scale. Subratings follow the same approach.
+2. Inventory every threshold that reads these values (superstar cutoffs, max-contract and extension triggers, trade-value breakpoints, draft and fantasy boards, waivers).
+3. Re-express each threshold as a league percentile, so it carries over to the new scale.
+4. Re-check the market: no collapse in superstar value, sensible contracts, trades still happen, and five-season activity distributions look comparable to legacy.
 - Trade value, contract value, extensions, free agency and draft boards switch from the old summary values to the new derived OVR/OFF/DEF, role fit and age/upside.
 - Re-check the market afterward: no superstar-value collapses, sensible contracts, trades still happen.
 
