@@ -3785,7 +3785,7 @@ function seasonProspectsCard(options = {}) {
         const now = Number(row.now), potential = Number(row.potential);
         return `<button type="button" class="season-prospect-row" data-draft-prospect-card="${escapeAttr(row.id)}" title="Open scouting report for ${escapeAttr(row.name)}">
           <span class="season-prospect-rank">${String(row.rank).padStart(2, "0")}</span>
-          <span class="season-prospect-name"><span class="season-prospect-name-main">${prospectOriginMarkup(row.sourceTeam)}<strong>${escapeHtml(row.name)}</strong></span></span>
+          <span class="season-prospect-name"><span class="season-prospect-name-main">${prospectOriginMarkup(row.sourceTeam)}<strong>${escapeHtml(row.name)}</strong>${prospectInjuryMarkup(row.injuryReport)}</span></span>
           <span class="season-prospect-position">${escapeHtml(row.position)}</span>
           <span>${escapeHtml(row.age ?? "—")}</span>
           <span>${escapeHtml(row.height || "—")}</span>
@@ -5114,13 +5114,13 @@ function finishLotteryReveal() {
 function draftProspectBoard(rows, selectable = false, selectedId = "") {
   const headings = [
     ["rank", "Rank"], ["name", "Prospect"], ["position", "Pos"], ["age", "Age"],
-    ["height", "Ht"], ["now", "Now"], ["potential", "Pot"], ["fit", "Fit"], ["status", "Status"],
+    ["height", "Ht"], ["now", "Now"], ["potential", "Pot"], ["fit", "Fit"], ["injury", "Injury"], ["status", "Status"],
   ];
   return `<div class="draft-prospect-scroll"><table class="draft-prospect-table"><thead><tr>${headings.map(([key, label]) => {const sort=state.draftBoardSort||{};const active=sort.key===key;return `<th aria-sort="${active?(sort.direction==='desc'?'descending':'ascending'):'none'}"><button class="draft-sort-button" data-draft-sort="${escapeAttr(key)}">${escapeHtml(label)}${draftSortMark(key)}</button></th>`;}).join("")}</tr></thead><tbody>${rows.map((row) => {
     const available = row.status !== "drafted";
     const selected = available && String(row.id) === String(selectedId || "");
-    return `<tr class="${row.status === "drafted" ? "is-drafted" : ""}${selected ? " is-selected" : ""}${selectable && available ? " is-selectable" : ""}" ${selectable && available ? `data-draft-prospect="${escapeAttr(row.id)}" tabindex="0"` : ""}><td>${escapeHtml(row.rank)}</td><td><button type="button" class="draft-prospect-name" data-draft-prospect-card="${escapeAttr(row.id)}">${escapeHtml(row.name || "Unknown")}</button></td><td>${escapeHtml(row.position || "—")}</td><td>${escapeHtml(row.age ?? "—")}</td><td>${escapeHtml(row.height || "—")}</td><td>${draftMetric(row.now)}</td><td>${draftMetric(row.potential)}</td><td>${draftMetric(row.fit || row.grade)}</td><td>${row.status === "drafted" ? `<span class="drafted-badge">#${escapeHtml(row.selectedPick)} ${escapeHtml(teamLabel(row.selectedTeam))}</span>` : selected ? `<span class="available-badge selected-badge">Selected</span>` : `<span class="available-badge">Available</span>`}</td></tr>`;
-  }).join("") || `<tr><td colspan="9" class="empty">No prospects match this view.</td></tr>`}</tbody></table></div>`;
+    return `<tr class="${row.status === "drafted" ? "is-drafted" : ""}${selected ? " is-selected" : ""}${selectable && available ? " is-selectable" : ""}" ${selectable && available ? `data-draft-prospect="${escapeAttr(row.id)}" tabindex="0"` : ""}><td>${escapeHtml(row.rank)}</td><td><button type="button" class="draft-prospect-name" data-draft-prospect-card="${escapeAttr(row.id)}">${escapeHtml(row.name || "Unknown")}</button></td><td>${escapeHtml(row.position || "—")}</td><td>${escapeHtml(row.age ?? "—")}</td><td>${escapeHtml(row.height || "—")}</td><td>${draftMetric(row.now)}</td><td>${draftMetric(row.potential)}</td><td>${draftMetric(row.fit || row.grade)}</td><td class="draft-prospect-injury">${prospectInjuryMarkup(row.injuryReport) || "—"}</td><td>${row.status === "drafted" ? `<span class="drafted-badge">#${escapeHtml(row.selectedPick)} ${escapeHtml(teamLabel(row.selectedTeam))}</span>` : selected ? `<span class="available-badge selected-badge">Selected</span>` : `<span class="available-badge">Available</span>`}</td></tr>`;
+  }).join("") || `<tr><td colspan="10" class="empty">No prospects match this view.</td></tr>`}</tbody></table></div>`;
 }
 
 function draftPickTimeline(rows) {
@@ -12513,6 +12513,28 @@ function staffCandidateCard(candidate) {
     </div>`;
 }
 
+function prospectInjuryTitle(report) {
+  if (!report?.available) return "No injury information on file";
+  const history = report.history || [];
+  const lines = [history.length
+    ? `History: ${history.map((row) => `${row.body_area} (${row.severity}${row.season ? `, ${row.season}` : ""}${row.status ? `, ${row.status}` : ""})`).join("; ")}`
+    : "History: none on file"];
+  lines.push(report.current ? `Current: ${report.current.body_area} (${report.current.severity}), expected back ${report.current.return_date || "unknown"}` : "Current: healthy");
+  lines.push(`Projected risk: ${report.risk_label || "unknown"}${report.injury_prone ? " (injury prone)" : ""}`);
+  return lines.join("\n");
+}
+
+// Compact marker: current injury cross, past-injury count, projected-risk word. Empty when the engine has no medical data.
+function prospectInjuryMarkup(report) {
+  if (!report?.available) return "";
+  const history = (report.history || []).length;
+  const current = report.current ? `<span class="season-injury-status prospect-injury-current" aria-hidden="true">✚</span>` : "";
+  const past = history ? `<span class="prospect-injury-history">${history} past</span>` : "";
+  const risk = `<span class="prospect-injury-risk prospect-injury-risk-${escapeAttr(String(report.risk_label || "low").toLowerCase())}">${escapeHtml(report.risk_label || "Low")}</span>`;
+  const title = prospectInjuryTitle(report);
+  return `<span class="prospect-injury-marker" role="img" aria-label="${escapeAttr(title.replace(/\n/g, ". "))}" title="${escapeAttr(title)}">${current}${past}${risk}</span>`;
+}
+
 function draftBoardRows(board) {
   return (board?.entries || []).map((entry) => {
     const prospect = entry.prospect || entry;
@@ -12541,6 +12563,7 @@ function draftBoardRows(board) {
       developmentCurve: prospect.development_curve,
       rookieContractValue: prospect.rookie_contract_value,
       confidence: prospect.confidence,
+      injuryReport: prospect.injury_report || entry.injury_report || null,
       prospect,
       scout,
       status: entry.draft_status || "available",
@@ -12567,6 +12590,9 @@ function sortDraftBoardRows(rows, sort) {
       comparison = (Number.isFinite(leftValue) ? leftValue : -Infinity) - (Number.isFinite(rightValue) ? rightValue : -Infinity);
     } else if (key === "height") {
       comparison = heightToInches(left.height) - heightToInches(right.height);
+    } else if (key === "injury") {
+      const risk = (row) => (row.injuryReport?.available ? Number(row.injuryReport.risk_penalty) || 0 : -1);
+      comparison = risk(left) - risk(right);
     } else {
       comparison = String(left[key] || "").localeCompare(String(right[key] || ""), undefined, { sensitivity: "base" });
     }

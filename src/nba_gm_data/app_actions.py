@@ -3503,6 +3503,62 @@ def completed_draft_trade_recap(save: dict[str, Any], state: dict[str, Any]) -> 
     return recap
 
 
+PROSPECT_INJURY_AREA_LABELS = {
+    "ankle_foot": "Ankle/foot", "knee": "Knee", "back_core": "Back/core", "shoulder_arm_hand": "Shoulder/arm/hand",
+}
+
+
+def prospect_medical_lookup(active: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Existing medical profiles keyed by prospect id (generated ones are rebuilt the same way the draft engine does)."""
+    from .health import generated_prospect_medical_profile
+
+    seeds = {str(c.get("season")): c.get("seed") or 0 for c in active.get("draft_classes", [])}
+    lookup: dict[str, dict[str, Any]] = {}
+    for prospect in active.get("draft_prospects", []):
+        medical = prospect.get("medical_profile")
+        if not medical and prospect.get("league") == "generated":
+            medical = generated_prospect_medical_profile(prospect["id"], prospect["draft_year"], seeds.get(prospect["draft_year"], 0))
+        if medical:
+            lookup[str(prospect["id"])] = {**medical, "_prospect": prospect}
+    return lookup
+
+
+def prospect_injury_report(medical: dict[str, Any] | None, today: str | None = None) -> dict[str, Any]:
+    """Split a prospect's medical profile into history, current injury and projected risk.
+
+    Prospects without a medical profile (imported real prospects) report no data; nothing is invented.
+    An injury whose return date is before `today` (ISO date) is no longer current; it is listed in history."""
+    from .health import prospect_medical_penalty
+
+    if not medical:
+        return {"available": False}
+    prospect = medical.get("_prospect") or {}
+    profile = {key: value for key, value in medical.items() if key != "_prospect"}
+    penalty = prospect_medical_penalty({"medical_profile": profile})
+    label = "High" if penalty >= 4 else "Moderate" if penalty >= 1.5 else "Low"
+
+    def area(row: dict[str, Any]) -> str:
+        return PROSPECT_INJURY_AREA_LABELS.get(str(row.get("body_area") or ""), str(row.get("body_area") or "Unknown").replace("_", " ").title())
+
+    history = [
+        {"body_area": area(row), "severity": str(row.get("severity") or ""), "season": str(row.get("season") or ""), "status": str(row.get("status") or "")}
+        for row in profile.get("major_prior_injuries") or []
+    ]
+    current = profile.get("current_injury")
+    if current and today and str(current.get("return_date") or "9999") < str(today):
+        history.append({"body_area": area(current), "severity": str(current.get("severity") or ""),
+                        "season": str(current.get("start_date") or "")[:4], "status": f"returned {current.get('return_date')}"})
+        current = None
+    return {
+        "available": True,
+        "history": history,
+        "current": ({"body_area": area(current), "severity": str(current.get("severity") or ""), "return_date": str(current.get("return_date") or "")} if current else None),
+        "risk_label": label,
+        "risk_penalty": penalty,
+        "injury_prone": bool(profile.get("injury_prone")),
+    }
+
+
 def enrich_draft_board_scouting(
     active: dict[str, Any],
     save: dict[str, Any],
@@ -3512,8 +3568,11 @@ def enrich_draft_board_scouting(
     """Attach the same save-aware scouting read to every draft UI surface."""
     from .play import prospect_scout_display, scouting_report_for
 
+    medical_by_id = prospect_medical_lookup(active)
+    today = (save.get("state") or {}).get("current_date")
     for entry in board.get("entries") or []:
         prospect = entry.get("prospect") or entry
+        prospect["injury_report"] = prospect_injury_report(medical_by_id.get(str(prospect.get("id") or prospect.get("prospect_id"))), today)
         scout = prospect_scout_display(active, prospect, team_id, save)
         report = scouting_report_for(active, prospect.get("id") or prospect.get("prospect_id"), team_id)
         entry["scout_display"] = {**scout, **prospect_card_ratings(prospect, scout, report)}

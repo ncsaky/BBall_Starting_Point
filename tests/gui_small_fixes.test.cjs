@@ -273,3 +273,19 @@ test('opponent card has an explicit no-next-game state', () => {
   scope.state.data.dashboardOpponent = {pending: true};
   assert.match(scope.seasonOpponentCard({next_games: []}, 'GSW'), /Waiting for the next game on the schedule\./);
 });
+
+test('prospect injury marker separates history, current injury and risk without inventing data', () => {
+  const grab = (name) => app.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n}\\n`))[0];
+  const escapeHtml = (v) => String(v);
+  const escapeAttr = (v) => String(v);
+  const ctx = {escapeHtml, escapeAttr};
+  vm.createContext(ctx);
+  vm.runInContext(`${grab('prospectInjuryTitle')}\n${grab('prospectInjuryMarkup')}`, ctx);
+  assert.equal(ctx.prospectInjuryMarkup(null), '');
+  assert.equal(ctx.prospectInjuryMarkup({available: false}), '');
+  const html = ctx.prospectInjuryMarkup({available: true, history: [{body_area: 'Knee', severity: 'medium', season: '2025', status: 'recovered'}], current: {body_area: 'Knee', severity: 'medium', return_date: '2026-08-01'}, risk_label: 'High', injury_prone: true});
+  assert.match(html, /1 past/);
+  assert.match(html, /prospect-injury-current/);
+  assert.match(html, /prospect-injury-risk-high/);
+  assert.match(html, /Knee \(medium, 2025, recovered\)/);
+});

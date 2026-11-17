@@ -5054,3 +5054,11 @@ body.unified-terminal-ui .playoff-stats-panel .playoff-stats-player-link .player
 body.unified-terminal-ui .playoff-stats-panel .playoff-stats-team { display:inline-flex; align-items:center; gap:3px; }
 body.unified-terminal-ui .playoff-stats-panel .playoff-stats-team img { width:16px; height:16px; object-fit:contain; }
 body.unified-terminal-ui .playoff-stats-panel .playoff-stats-empty td { height:48px; text-align:center; color:var(--season-muted); }
+
+/* Prospect injury marker: past history count, current injury cross, projected risk word. */
+.prospect-injury-marker { display:inline-flex; align-items:center; gap:4px; margin-left:6px; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; vertical-align:middle; }
+.prospect-injury-marker .prospect-injury-history { opacity:.75; }
+.prospect-injury-risk-moderate { color:#b7791f; }
+.prospect-injury-risk-high { color:#c0392b; }
+.prospect-injury-risk-low { opacity:.6; }
+.draft-prospect-table td.draft-prospect-injury .prospect-injury-marker { margin-left:0; }

@@ -74,12 +74,27 @@ def load_league_inputs(root: Path | None = None) -> dict[str, dict[str, Any]]:
     return _load_inputs_keyed(root)[1]
 
 
-def _trait_values(canonical: Mapping[str, Any]) -> dict[str, dict[str, float]]:
+def _trait_values(canonical: Mapping[str, Any], *, skip_placeholders: bool = False) -> dict[str, dict[str, float]]:
     out: dict[str, dict[str, float]] = {}
     for trait in canonical.get("traits", []):
-        if trait.get("value") is not None:
-            out.setdefault(trait["player_id"], {})[trait["trait_key"]] = float(trait["value"])
+        if trait.get("value") is None or (skip_placeholders and is_placeholder_trait(trait)):
+            continue
+        out.setdefault(trait["player_id"], {})[trait["trait_key"]] = float(trait["value"])
     return out
+
+
+def is_placeholder_trait(trait: Mapping[str, Any]) -> bool:
+    """A legacy trait filled with the flat 50.0 default because its source stats were all missing.
+
+    About 1,100 legacy cells (mostly two-way and deep-bench players) are exactly 50.0 with every source
+    component empty. They carry no evidence; if they shaped the adapter's target distribution, everyone whose
+    inputs rank between roughly the 20th and 36th percentile would collapse onto the same 50.0 value.
+    """
+    if trait.get("value") != 50.0:
+        return False
+    detail = trait.get("components")
+    parts = detail.get("components") if isinstance(detail, dict) else None
+    return isinstance(parts, list) and bool(parts) and all(part is None for part in parts)
 
 
 def route_trait_deltas(inputs: Mapping[str, Any], trait_deltas: Mapping[str, float]) -> dict[str, float]:
@@ -143,7 +158,9 @@ def install_inputs_model(canonical: dict[str, Any], root: Path | None = None) ->
     """
     inputs_key, league_inputs = _load_inputs_keyed(root)
     baseline = _trait_values(canonical)
-    fit_traits = {pid: values for pid, values in baseline.items() if pid in league_inputs}
+    # The adapter's target distributions come from evidence-backed legacy values only (placeholders excluded).
+    evidence_traits = _trait_values(canonical, skip_placeholders=True)
+    fit_traits = {pid: values for pid, values in evidence_traits.items() if pid in league_inputs}
     signature = hashlib.sha256(json.dumps(fit_traits, sort_keys=True).encode()).hexdigest()
     fitted_key = (inputs_key, signature)
     if fitted_key not in _FITTED_CACHE:

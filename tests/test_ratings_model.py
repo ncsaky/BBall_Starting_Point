@@ -19,6 +19,23 @@ def grade(v):
             "uncertainty": {"confidence": "low", "notes": "{}"}}
 
 
+class PlaceholderTraitTests(unittest.TestCase):
+    def test_flat_default_with_no_source_data_is_a_placeholder(self):
+        empty = {"components": {"fields": ["3PAp75", "3P%"], "components": [None, None]}}
+        self.assertTrue(rm.is_placeholder_trait({"value": 50.0, **empty}))
+        self.assertFalse(rm.is_placeholder_trait({"value": 51.2, **empty}))   # a real value without notes stays
+        self.assertFalse(rm.is_placeholder_trait({"value": 50.0, "components": {"components": [0.4, None]}}))
+        self.assertFalse(rm.is_placeholder_trait({"value": 50.0}))
+
+    def test_placeholders_are_left_out_of_the_fit_only(self):
+        canonical = {"traits": [
+            {"player_id": "a", "trait_key": "t", "value": 50.0, "components": {"components": [None]}},
+            {"player_id": "b", "trait_key": "t", "value": 61.0, "components": {"components": [0.3]}},
+        ]}
+        self.assertEqual(rm._trait_values(canonical), {"a": {"t": 50.0}, "b": {"t": 61.0}})
+        self.assertEqual(rm._trait_values(canonical, skip_placeholders=True), {"b": {"t": 61.0}})
+
+
 class RoutingTests(unittest.TestCase):
     def test_trait_delta_spreads_over_grade_inputs_by_weight(self):
         inputs = {"S08": grade(50), "S03": grade(50), "S02": grade(50), "S01": grade(50)}
