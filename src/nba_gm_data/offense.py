@@ -211,8 +211,15 @@ def shooting_line(points, feat, minutes, rng):
     """Preserve assigned points; sample distinct 2PT/3PT/FT shot profiles."""
     rate = clamp(.13+max(0, feat.get('rim_pressure', 50)-55)*.0028
                  +max(0, feat.get('shot_creation', 50)-70)*.0015, .08, .34)
-    fta = max(0, round(points*rate+rng.random()*1.8))
-    ftm = min(points, sum(rng.random() < feat['ft_pct'] for _ in range(fta)))
+    # Unbiased stochastic rounding. The previous round(x + U(0, 1.8)) added ~0.9 free throws to every player
+    # line regardless of profile (~34 FTA per 100 possessions vs the NBA's ~23). The old count is still used for
+    # the number of RNG draws (it is never smaller), so the game's random stream, and therefore every score,
+    # is unchanged; only the first `fta` draws count as attempts.
+    u = rng.random()
+    draws = max(0, round(points*rate+u*1.8))
+    fta = min(draws, max(0, math.floor(points*rate+u)))
+    makes = [rng.random() < feat['ft_pct'] for _ in range(draws)]
+    ftm = min(points, sum(makes[:fta]))
     attempts = minutes*feat['three_per36']/36*rng.uniform(.85, 1.15)
     fg3a = int(attempts)+(rng.random() < attempts-int(attempts))
     sampled = sum(rng.random() < feat['three_pct'] for _ in range(fg3a))

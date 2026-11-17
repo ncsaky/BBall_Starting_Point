@@ -38,6 +38,8 @@ Everything below is committed and pushed to both branches. No save dialogs were 
 
 ## 3. Bugs fixed
 
+- **Too many free throws (every save).** Box scores gave every player about one extra free-throw attempt per game no matter how they play (a biased rounding step), so the league shot 34 free throws per 100 possessions against the NBA's 23. Fixed without changing any game score. The real-stats scorecard now has **17 of 18 league stats in the realistic range** (new ratings) and 16 of 18 (old ratings), up from 12 at the start of the night.
+
 - **Steals and blocks went to the wrong players (every save).** After each game the sim rescales steals, blocks, assists and rebounds to realistic team totals. Leftover units always went to the same players, decided by a fixed alphabetical-ish ID order. Seventeen players, all with first names A–D (Sengun, Podziemski, Gillespie, Bruce Brown, Sexton…), simulated zero steals all season. Fixed. Real-stat error for steals fell by more than half (0.65 → 0.30 per 36 min) and blocks by half (0.59 → 0.28), in both rating modes.
 
 - **Season crash:** an AI three-team trade carrying a pick swap could crash a whole sim day ("Every draft condition must refer to one selected pick"). Reproduced on a real season and fixed. That season now runs through the trade deadline.
