@@ -23,6 +23,23 @@ def missed_attempts(rng, makes, probability):
     return sum(int(math.log(max(1e-12, rng.random())) / math.log(1 - probability)) for _ in range(makes))
 
 
+MISS_FILL = 0.7
+PLAYER_REBOUND_SHARE = 0.92  # fitted 2026-11-17: player rebounds per 36 bias +0.67 -> +0.13 (real-minutes replay)
+
+
+def increased_counts(weights, extra, identities):
+    """Largest-remainder split of `extra` new events in proportion to `weights` (deterministic)."""
+    total = sum(weights)
+    if extra <= 0 or total <= 0:
+        return [0] * len(weights)
+    quotas = [w * extra / total for w in weights]
+    assigned = [math.floor(q) for q in quotas]
+    order = sorted(range(len(weights)), key=lambda i: (-(quotas[i] - assigned[i]), str(identities[i])))
+    for i in order[:extra - sum(assigned)]:
+        assigned[i] += 1
+    return assigned
+
+
 def vary_box_score(canonical, groups, team_lines, feature_groups, seed):
     from .sim import player_feature_vector, redistribute_integer_stat
     from .box_score import reduced_counts
@@ -69,9 +86,21 @@ def vary_box_score(canonical, groups, team_lines, feature_groups, seed):
         for line, count in zip(lines, assigned):
             line['turnovers'] = count
         turnovers = sum(assigned)
-        allowed_fga = max(mandatory, int((budget - turnovers - .44 * free_throws - rate * makes) / (1 - rate)))
+        # Missed twos move toward the game's actual possessions in BOTH directions. The old one-sided cap
+        # (possessions + 8) only removed misses in high-scoring games and never added them in low-scoring ones,
+        # which pushed league 2P% to ~59% vs players' own ~54% (2026-11-17).
+        target_fga = max(mandatory, round((float(team['possessions']) - turnovers - .44 * free_throws - rate * makes) / (1 - rate)))
         misses = [p['fga'] - p['fg3a'] - (p['fgm'] - p['fg3m']) for p in lines]
-        misses = reduced_counts(misses, max(0, allowed_fga - mandatory), [p['player_id'] for p in lines])
+        ids = [p['player_id'] for p in lines]
+        # Fill MISS_FILL of the gap: the engine's whole game-to-game scoring luck would otherwise land on two-point
+        # misses alone (team FG% spread ~.074 vs the NBA's ~.05).
+        wanted = max(0, round(sum(misses) + MISS_FILL * (target_fga - mandatory - sum(misses))))
+        if sum(misses) > wanted:
+            misses = reduced_counts(misses, wanted, ids)
+        elif sum(misses) < wanted:
+            # Spread the extra misses like the player's own two-point volume (makes plus generated misses).
+            weights = [(p['fgm'] - p['fg3m']) + m + (.5 if float(p.get('minutes') or 0) > 0 else 0) for p, m in zip(lines, misses)]
+            misses = [m + extra for m, extra in zip(misses, increased_counts(weights, wanted - sum(misses), ids))]
         for line, count in zip(lines, misses):
             line['fga'] = line['fg3a'] + line['fgm'] - line['fg3m'] + count
         for key in ('fga', 'fgm', 'turnovers'):
@@ -86,11 +115,13 @@ def vary_box_score(canonical, groups, team_lines, feature_groups, seed):
         own_miss, opp_miss = misses[index], misses[1-index]
         oreb_rate = min(.38, max(.16, .24 + (own.get('offensive_rebounding', 50) - 50) * .0022))
         opp_oreb_rate = min(.38, max(.16, .24 + (opp.get('offensive_rebounding', 50) - 50) * .0022))
-        rebounds = round(max(20, min(70, own_miss * oreb_rate + opp_miss * (1 - opp_oreb_rate) + rng.gauss(0, 3.5))))
+        # Some missed shots end as team rebounds (out of bounds, end of period) credited to no player.
+        player_share = PLAYER_REBOUND_SHARE
+        rebounds = round(max(20, min(70, (own_miss * oreb_rate + opp_miss * (1 - opp_oreb_rate)) * player_share + rng.gauss(0, 3.5))))
         redistribute_integer_stat(lines, 'rebounds', rebounds, 1.)
         for key, sigma in (('steals', 2.0), ('blocks', 1.7)):
             target = max(0, round(float(team.get(key) or 0) + rng.gauss(0, sigma)))
             redistribute_integer_stat(lines, key, target, 1.)
-        team['offensive_rebounds'] = min(rebounds, round(own_miss * oreb_rate))
+        team['offensive_rebounds'] = min(rebounds, round(own_miss * oreb_rate * player_share))
         team['defensive_rebounds'] = max(0, rebounds - team['offensive_rebounds'])
 

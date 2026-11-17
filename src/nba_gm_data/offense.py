@@ -228,7 +228,15 @@ def shooting_line(points, feat, minutes, rng):
         fg3a = max(fg3m, fg3a-round((sampled-fg3m)/feat['three_pct']))
     remainder = points-ftm-3*fg3m
     if remainder % 2:
-        ftm += 1
+        # Two-point makes need an even remainder. This used to add a made free throw with no attempt, on about
+        # half of all lines (league FT% ~90% vs the NBA's ~78%). Flip one free-throw outcome instead: with the
+        # shooter's FT% chance a made attempt is added, otherwise a make becomes a miss, so FT% keeps its real
+        # expectation. The choice reuses `u` (no extra RNG draw), leaving the random stream and scores unchanged.
+        if (u * 1000.0) % 1.0 < feat['ft_pct'] or ftm == 0:
+            ftm += 1
+            fta += 1
+        else:
+            ftm -= 1
     fg2m = (points-ftm-3*fg3m)//2
     fg2a = max(fg2m, round(fg2m/feat['two_pct']+rng.gauss(0, .6)))
     return {'fgm': fg2m+fg3m, 'fga': fg2a+fg3a, 'fg3m': fg3m, 'fg3a': fg3a,

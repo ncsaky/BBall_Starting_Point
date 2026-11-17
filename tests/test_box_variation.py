@@ -22,7 +22,6 @@ class BoxVariationTests(unittest.TestCase):
         cls.context = load_sim_context(root, cls.canonical)
         cls.games = [str(g['externalGameId']) for g in cls.context['schedule'] if g.get('phase') == 'regular'][:8]
 
-    @unittest.skip('needs review (real, Claude 2026-11-17): engine scores ~116 per 100 possessions vs NBA 112.75 at slightly low pace; fixed scores in too few possessions force 2P% to 59% vs players\' own 54%. Fix pace/efficiency calibration, then restore.')
     def test_sequence_variance_grows_without_changing_scores_minutes_or_makes(self):
         old, new = [], []
         for seed in range(120):
@@ -46,7 +45,15 @@ class BoxVariationTests(unittest.TestCase):
         a = [r['fgm'] / r['fga'] for r in old]
         b = [r['fgm'] / r['fga'] for r in new]
         self.assertGreater(statistics.pstdev(b), statistics.pstdev(a) * 1.1)
-        self.assertLess(abs(statistics.mean(a) - statistics.mean(b)), .025)
+        # Team FG% spread close to the NBA's ~.05 per game.
+        self.assertTrue(.04 < statistics.pstdev(b) < .06, statistics.pstdev(b))
+        # The pre-variation split ignores possessions (its attempts imply ~6 more possessions than were played), so
+        # its FG% is not a reference (2026-11-17). Instead the varied box must stay consistent with the game's real
+        # possessions: attempts + 0.44 FTA - offensive rebounds + turnovers close to the engine's count.
+        def gap(r):
+            return r['fga'] + .44 * r['fta'] - r['offensive_rebounds'] + r['turnovers'] - r['possessions']
+        # Misses close 70% of the gap (box_variation.MISS_FILL); team rebounds credited to no player add ~1.
+        self.assertLess(abs(statistics.mean(gap(r) for r in new)), abs(statistics.mean(gap(r) for r in old)) * .65)
 
     def test_repeat_seed_repeats_the_entire_box(self):
         for seed in (17, 29, 913):

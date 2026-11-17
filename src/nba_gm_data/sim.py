@@ -1030,6 +1030,12 @@ def defensive_feature_summary_from_values(features: dict[str, float]) -> dict[st
 # real absences included) new-ratings mode scored 113.2 points per team vs the NBA's 115.6, and a new-ratings
 # save averaged 113.7 through Dec 15. Both teams get the same offset, so margins are unchanged.
 INPUTS_OFFENSE_CALIBRATION = 2.45
+# League-average possessions and points per 100 before matchup/rest/coach adjustments. Were 99.5 / 110.5, which gave
+# 116 points per 100 possessions (NBA 112.75) at low pace once box scores were split by real shooting rates. With the
+# box now tied to the engine's possessions (box_variation MISS_FILL), 101.3 / 107.9 give pace ~102.5, ~112 per 100 and
+# TS ~.58 in real-minutes replay for both rating sets (2026-11-17).
+BASE_POSSESSIONS = 101.3
+BASE_OFF_RATING = 107.9
 
 
 def league_offense_calibration(canonical: dict[str, Any]) -> float:
@@ -1066,7 +1072,7 @@ def simulate_team_line(
     creator_mod = creator_advantage(team_features, opp_features)
     spacing_mod = spacing_creation_interaction(team_features)
     possessions = clamp(
-        99.5
+        BASE_POSSESSIONS
         + (team_features["stamina"] - 50) * 0.05
         + (team_features["offensive_rebounding"] - 50) * 0.025
         + coach_mod["tempo"]
@@ -1081,7 +1087,7 @@ def simulate_team_line(
         120,
     )
     off_rating = (
-        110.5
+        BASE_OFF_RATING
         + league_offense_calibration(canonical)
         + lineup_quality_effect(team_features, opp_features)
         + unsupported_creation_effect(team_features)
