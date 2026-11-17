@@ -24,9 +24,10 @@ GUI wishlist work is parked.
 | Task | Owner | Status | Files it may touch |
 |---|---|---|---|
 | E3 Calibration targets and comparison tool | Claude (subagent) | **done** (5/5 tests verified). Report: `docs/agents/tasks/e3-calibration-targets.md` | `data/calibration/*`, `src/nba_gm_data/calibration_targets.py`, `scripts/build_calibration_targets.py`, `scripts/calibration_report.py`, `tests/test_calibration_targets.py` |
-| E2 League-wide input estimator | Codex | **in progress (Codex)** | `src/nba_gm_data/input_estimator.py`, `scripts/build_player_inputs.py`, `data/canonical/player_inputs_2026_27.json`, `tests/test_input_estimator.py` |
+| E2 League-wide input estimator | Codex | **in progress (Codex)** — folding in adapter feedback | | `src/nba_gm_data/input_estimator.py`, `scripts/build_player_inputs.py`, `data/canonical/player_inputs_2026_27.json`, `tests/test_input_estimator.py` |
 | T1 Make tests trustworthy | Claude (subagent) | **review**. Core suite `scripts/run_core_tests.sh`: 329 tests in about 160 s, passing. Full-suite leftovers listed below. | `tests/`, `scripts/run_core_tests.sh` |
-| S1-B Adapter: inputs to the 15 hidden ratings | Claude | next (builds against E2's output format) | `src/nba_gm_data/trait_adapter.py`, `tests/test_trait_adapter.py` |
+| S1-B Adapter: inputs to the 15 hidden ratings | Claude | **done** (9 tests) | `src/nba_gm_data/trait_adapter.py`, `tests/test_trait_adapter.py` |
+| S1-C Opt-in inputs model; development writes inputs | Claude | **done** (8 tests). Saves opt in with `meta.ratings_model = "inputs_v1"`; save-less tools with `NBA_GM_RATINGS_MODEL=inputs_v1`. Default stays legacy. | `src/nba_gm_data/ratings_model.py`, hooks in `save.py` and `sim.py`, `tests/test_ratings_model.py` |
 
 ## Decided (2026-11-16)
 
@@ -112,6 +113,21 @@ The full suite (`PYTHONPATH=src .venv/bin/python -m unittest discover -s tests`)
   - 2 failures: a new `staff_season_changes` save field.
   - Unclear singles: `test_api_security` stream (400 vs 200), `test_completed_market_review`, `test_fantasy_draft`.
 - **Before Stage 1 changes ratings:** get the suite green, or explicitly quarantined, plus a fast core subset.
+
+## Stage 1 scorecard: new inputs vs old traits (real-stats targets, 1,230 games, seed 1)
+
+| | Old traits | New inputs (E2 draft output, adapter v1) |
+|---|---|---|
+| League metrics in band | 12/18 | **14/18** |
+| Points per 36, avg error | 2.9 | 4.1 |
+| 3PA per 36, avg error | 0.52 | 1.79 |
+| Assists per 36, avg error | 1.11 | 0.98 |
+
+Player-level accuracy is held back by flat priors (86% of input values), including shot location (T02), which is a prior for every player. Feedback: `docs/agents/tasks/e2-feedback-from-adapter.md`. Rerun the scorecard with:
+
+```
+NBA_GM_RATINGS_MODEL=inputs_v1 PYTHONPATH=src .venv/bin/python scripts/calibration_report.py --games 1230
+```
 
 ## Speed baseline: old engine, headless CLI, fresh BOS save, seed 7 (2026-11-16)
 

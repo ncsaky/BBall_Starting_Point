@@ -1561,13 +1561,21 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
         canonical["player_health_states"] = deepcopy(save["health_states"])
     if save.get("injury_events"):
         canonical["injury_events"] = deepcopy(save["injury_events"])
+    from .ratings_model import INPUTS_V1, apply_development, install_inputs_model, ratings_model_for
+    inputs_model = ratings_model_for(save) == INPUTS_V1
+    if inputs_model:
+        # Stage 1: traits are derived from the 94 inputs, fitted on these baseline (pre-development) traits.
+        install_inputs_model(canonical)
     if save.get("development_trait_totals") or save.get("development_events"):
         canonical["development_events"] = deepcopy(save["development_events"])
-        apply_materialized_development_to_traits(
-            canonical,
-            save.get("development_trait_totals") or {},
-            save.get("development_events") or [],
-        )
+        if inputs_model:
+            apply_development(canonical, save.get("development_trait_totals") or {}, save.get("development_events") or [])
+        else:
+            apply_materialized_development_to_traits(
+                canonical,
+                save.get("development_trait_totals") or {},
+                save.get("development_events") or [],
+            )
     apply_save_rotation_projection(canonical, save)
     for key in [
         "team_strategic_states",
@@ -1613,7 +1621,7 @@ def refresh_active_runtime_state(
         if stats:
             player["_save_stats"] = deepcopy(stats)
     if development_events:
-        apply_development_events_to_traits(active, development_events)
+        apply_development_events(active, development_events)
     apply_save_rotation_projection(active, save)
     for key in [
         "team_strategic_states",
@@ -1787,7 +1795,7 @@ def process_development_months(active: dict[str, Any], save: dict[str, Any], cur
             "kind": "development", "headline": f"Monthly player development processed for {month}.", "status": "unread",
         })
         add_notable_development_social(save, active, month_events, month)
-        apply_development_events_to_traits(active, month_events)
+        apply_development_events(active, month_events)
     return events
 
 
@@ -6254,6 +6262,15 @@ def empty_team_record(team: dict[str, Any]) -> dict[str, Any]:
         "points_against": 0.0,
         "last_game_id": None,
     }
+
+
+def apply_development_events(canonical: dict[str, Any], events: list[dict[str, Any]]) -> None:
+    """Apply development events through whichever ratings model the active universe uses."""
+    from .ratings_model import apply_development, uses_inputs_model
+    if uses_inputs_model(canonical):
+        apply_development(canonical, None, events)
+    else:
+        apply_development_events_to_traits(canonical, events)
 
 
 def apply_development_events_to_traits(canonical: dict[str, Any], events: list[dict[str, Any]]) -> None:

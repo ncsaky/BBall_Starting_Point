@@ -35,15 +35,17 @@ Term = tuple[str | list[str], float]
 
 ADAPTER_SPEC: dict[str, list[Term]] = {
     "release_speed": [("S08", 0.45), ("S03", 0.20), ("S02", 0.20), ("S01", 0.15)],
-    "shooting_range": [("S09", 0.35), ("S01", 0.25), ("S02", 0.20), ("S03", 0.10), ("S07", 0.10)],
+    # Legacy shooting_range also sets three-point VOLUME in the engine, so it includes the share of shots a
+    # player takes from three (T02 tendency) alongside shooting skill.
+    "shooting_range": [("S09", 0.25), ("S01", 0.15), ("S02", 0.15), ("S03", 0.05), ("S07", 0.05), ("T02:three", 0.35)],
     "shot_versatility": [
         ("S01", 0.10), ("S02", 0.20), ("S03", 0.10), ("S04", 0.10), ("S05", 0.20),
         ("S06", 0.10), ("S10", 0.10), ("S11", 0.10),
     ],
     # Legacy rim pressure drives rim attempts and free throws: self-created drives AND rolls/lobs/dunks.
     "rim_pressure": [
-        ("S19", 0.20), ("S10", 0.10), ("S12", 0.10), ("S13", 0.10), ("S15", 0.10), ("S24", 0.15),
-        ("P05", 0.10), ("T01:drive", 0.15),
+        ("S19", 0.15), ("S10", 0.10), ("S12", 0.10), ("S13", 0.05), ("S15", 0.10), ("S24", 0.15),
+        ("P05", 0.05), ("T01:drive", 0.10), ("T02:rim", 0.20),
     ],
     "handle_pressure": [("S17", 0.35), ("S16", 0.25), ("S18", 0.15), ("S20", 0.15), ("P09", 0.10)],
     "passing_reads": [(PASS_RECOGNITION, 0.45), (PASS_EXECUTION, 0.30), ("S20", 0.15), ("S28", 0.10)],

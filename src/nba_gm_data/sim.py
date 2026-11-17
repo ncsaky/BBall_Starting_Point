@@ -95,6 +95,10 @@ def load_sim_context(root: str | Path, canonical: dict[str, Any] | None = None) 
     root = Path(root)
     if canonical is None:
         canonical = load_json(root / "data/canonical/universe_2026_27_offseason.json")
+        from .ratings_model import INPUTS_V1, install_inputs_model, ratings_model_for
+        if ratings_model_for() == INPUTS_V1:
+            # Save-less tools (calibration report, betting-odds validation) opt in via NBA_GM_RATINGS_MODEL.
+            install_inputs_model(canonical, root)
     schedule = load_reference_json(root / SCHEDULE_FILE)["games"]
     boxscores = load_optional_research(root, GAME_BOXSCORES_FILE, "games")
     context = {
