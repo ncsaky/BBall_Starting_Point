@@ -21,6 +21,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+# Reviewed name aliases (provider spelling -> canonical player id). Only verified same-person pairs.
+REVIEWED_ALIASES = {"Jimmy Butler": "player_gsw-jimmy-butler-iii"}
 ARCHIVE = ROOT / "data/research/bbi/captures/fanspo_profiles"
 DOWNLOADS = Path.home() / "Downloads"
 
@@ -61,7 +63,7 @@ def convert(batch: dict) -> tuple[dict, dict]:
         "pagination": {"page": None, "page_size": None, "total_pages": None, "export_includes_all_pages": "not_applicable"},
         "metrics": metrics,
         "column_map": {},
-        "aliases": {},
+        "aliases": REVIEWED_ALIASES,
         "notes": "Locked (members-only) cells are null with the row retained; see the original batch archive.",
     }
     return table, metadata
