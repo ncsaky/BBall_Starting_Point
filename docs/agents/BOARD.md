@@ -34,6 +34,15 @@ GUI wishlist work is parked.
 | S1-B Adapter: inputs to the 15 hidden ratings | Claude | **done** (9 tests) | `src/nba_gm_data/trait_adapter.py`, `tests/test_trait_adapter.py` |
 | S1-C Opt-in inputs model; development writes inputs | Claude | **done** (8 tests). Saves opt in with `meta.ratings_model = "inputs_v1"`; save-less tools with `NBA_GM_RATINGS_MODEL=inputs_v1`. Default stays legacy. | `src/nba_gm_data/ratings_model.py`, hooks in `save.py` and `sim.py`, `tests/test_ratings_model.py` |
 
+## Overnight plan (2026-11-17, user asleep; nothing may require the user)
+
+- **Rule learned:** never click Fanspo "Export CSV/Download" buttons. They open macOS save dialogs. Save only via page-generated Blob downloads, which land silently in ~/Downloads.
+- Leaderboards: Values pass, then Season Percentile, Season Grade, Season Value+ and Database Value+ (pane tab-1, chained).
+- Auto-importer (7 h background loop): moves `bbi_leaderboard_*.json` from ~/Downloads, archives, imports. Log: `data/research/bbi/captures/leaderboard/auto_import.log`.
+- Subagent: remaining Fanspo BBI tables via DOM read (pane tab "seed").
+- Subagent: GUI Q1 small fixes (code and tests only; visual check by Claude later).
+- Claude: S1-E front office on the new scale; rebuild inputs with BBI evidence once Values are imported, then rerun scorecards.
+
 ## Decided (2026-11-16)
 
 - Two-stage plan approved: Stage 1 puts the new ratings into the current engine, with a new player card and new trade/contract valuations. Stage 2 is the new engine.
