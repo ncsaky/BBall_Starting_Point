@@ -31,9 +31,8 @@ _Last updated: 2026-11-16 by Claude Code (handover from Codex)._
 
 ## Waiting on the user
 
-1. **Disk emergency.** 6.6 GB free (99% full). iCloud has offloaded 7,953 repo files, including 7,212 inside `.git`.
-   - Approve deleting about 32 GB of regenerable data: 16 GB of old `output/` run folders untouched since Nov 10, and 16 GB of old beta build folders in `~/Library/Caches/NBA GM Sandbox Builds`.
-   - Then turn off iCloud "Optimize Mac Storage", or move the repo out of iCloud-synced Documents. Only the user can change those settings.
+1. Turn off iCloud "Optimize Mac Storage", or move the repo out of iCloud-synced Documents. Otherwise files get offloaded again when the disk fills.
+2. Should GitHub's `main` be fast-forwarded to the pushed branch?
 
 ## Engine queue
 
@@ -106,6 +105,11 @@ The full suite (`PYTHONPATH=src .venv/bin/python -m unittest discover -s tests`)
 User target: **10–20 s per month** in the GUI. Game simulation is only about 2–3 s of a month (about 220 games at about 0.01 s each). The rest is AI front office (trade market), daily lifecycle and saving. Meeting the target is mostly a front-office speed project. It also leaves the new engine about 0.02 s per game, roughly 75x faster than its current per-possession cost.
 
 ## Done log
+
+- 2026-11-16: Disk freed from 6.6 GB to 38 GB free. Deleted 100 old untracked `output/` run folders and the old beta build cache. Re-downloaded 7,602 iCloud-offloaded repo files.
+- 2026-11-16: Checkpoint commit `5e40fef` pushed to `origin/codex/immersive-franchise-journey`.
+  - Unpushed history was cleaned of 10-season soak saves over 100 MB that had blocked every push since September.
+  - Pre-cleanup refs are kept locally as `backup/pre-history-cleanup-2026-11-16` and `backup/main-pre-history-cleanup-2026-11-16`.
 
 - 2026-11-16: E3 calibration targets built: 18 league metrics, 386 players matched (100%). Old-engine baseline recorded above.
 
