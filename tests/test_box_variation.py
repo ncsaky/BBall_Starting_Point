@@ -22,7 +22,7 @@ class BoxVariationTests(unittest.TestCase):
         cls.context = load_sim_context(root, cls.canonical)
         cls.games = [str(g['externalGameId']) for g in cls.context['schedule'] if g.get('phase') == 'regular'][:8]
 
-    @unittest.skip('needs review: FG percentage mean drift 0.03084 exceeds unchanged 0.025 limit; unbiased FT split may expose variation bias')
+    @unittest.skip('needs review (real, Claude 2026-11-17): engine scores ~116 per 100 possessions vs NBA 112.75 at slightly low pace; fixed scores in too few possessions force 2P% to 59% vs players\' own 54%. Fix pace/efficiency calibration, then restore.')
     def test_sequence_variance_grows_without_changing_scores_minutes_or_makes(self):
         old, new = [], []
         for seed in range(120):

@@ -88,7 +88,7 @@ class FantasyDraftTests(unittest.TestCase):
             self.assertGreater(len(fit_scores), 3)
             self.assertTrue(all(1.0 <= score <= 99.0 for score in fit_scores))
 
-    @unittest.skip('needs review: star valuation/ranking misses benchmark; board T3 documents Giannis/Luka underrating; do not lower benchmark')
+    @unittest.skip('needs review (real, Claude 2026-11-17): superstar trade tier uses fixed cutoffs on on-court and playoff value; legacy ratings put Giannis 0.4 under the on-court cutoff and Luka well under, and the new ratings playoff translation (shooting/creation/perimeter D only) ranks Jokic 101st and Giannis 217th. Pending user decision')
     def test_full_fantasy_draft_replaces_rosters_and_preserves_contracts(self):
         with TemporaryDirectory() as tmp:
             save = create_league_save(
