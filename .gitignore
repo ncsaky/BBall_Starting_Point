@@ -38,3 +38,5 @@ data/canonical/player_inputs_2026_27.json
 
 # Basketball Index report-card captures (personal-use archive, large; back up separately)
 data/research/bbi/captures/fanspo_profiles/
+data/research/bbi/captures/tools/
+data/research/bbi/captures/leaderboard/
