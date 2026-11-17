@@ -1857,6 +1857,15 @@ def player_card_payload(canonical: dict[str, Any], save_path: Path, player_id: s
         inputs_profile = player_profile(active, player_id)
         if inputs_profile:
             inputs_profile["coach"]["minutes_projection"] = display_minutes_projection(player)
+            today = str((save.get("state") or {}).get("current_date") or "")
+            active_injury = next((
+                event for event in save.get("injury_events", [])
+                if str(event.get("player_id")) == player_id
+                and str(event.get("start_date") or "")[:10] <= today < str(event.get("return_date") or "9999")[:10]
+            ), None)
+            if active_injury:
+                returns = str(active_injury.get("return_date") or "")[:10]
+                inputs_profile["coach"]["availability_note"] = f"Out (injured){f' · expected back {returns}' if returns else ''}"
             result["inputs_profile"] = inputs_profile
     context["player_cards"][player_id] = result
     return result

@@ -7522,7 +7522,9 @@ function pc4CoachLayer(profile) {
   const minutes = Number(coach.minutes_projection);
   const tags = [coach.primary_off_role || "None", coach.secondary_off_role].filter(Boolean).map(role => `<span class="pc4-tag">${escapeHtml(role)}</span>`).join("");
   const defRole = coach.primary_def_role === "Hidden" ? "Not yet revealed" : coach.primary_def_role || "None";
-  const minutesRow = Number.isFinite(minutes)
+  const minutesRow = coach.availability_note && !(minutes > 0)
+    ? `<strong>${escapeHtml(coach.availability_note)}</strong>`
+    : Number.isFinite(minutes)
     ? `<div class="pc4-minbar"><div class="pc4-track tall"><i class="pc4-fill" style="width:${clampNumber(minutes / 40 * 100, 0, 100)}%"></i></div><strong>${minutes.toFixed(1)} per game</strong></div>`
     : "<strong>—</strong>";
   return `<section class="pc4-layer pc4-coach"><header><h2>4 · Coach Usage &amp; Deployment</h2><span class="pc4-count">Not player talent</span><span class="pc4-sub">Decided by the coach, not player talent. Changes with team, lineup and game.</span></header>

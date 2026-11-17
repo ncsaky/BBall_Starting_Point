@@ -2,11 +2,66 @@
 
 Paste one prompt into a **fresh** Codex chat. One task per chat keeps it from drifting after context compaction. Each prompt is self-contained. Claude reviews the result and updates `BOARD.md`.
 
-Current priority: the new engine (`docs/agents/ENGINE_ROADMAP.md`). GUI tasks are parked at the bottom.
+Current priority: Stage 1 (`docs/agents/STAGE1_DESIGN.md`). GUI tasks are parked at the bottom.
 
 ---
 
-## E2: League-wide player input estimator v1 (TOP PRIORITY)
+## BBI: Basketball Index capture pipeline, built and tested on free pages (NEXT, do first)
+
+Suggested settings: GPT-6.1 Sol, High, in a fresh chat.
+
+```
+Read AGENTS.md, docs/agents/BOARD.md, docs/agents/STAGE1_DESIGN.md and docs/ratings-evidence-2026-10-29/BBI_ACQUISITION_PLAN_2026_11_11.md (plus its manifest JSON) first. You own task BBI. Mark it "in progress (Codex)" on the board.
+
+GOAL
+The user will buy ONE month of Basketball Index (BBI, $5) and wants to extract every penny of value. That means capturing everything the paid membership legitimately exposes for personal use: all seasons, all metric families, all players, both raw values and percentiles or grades, plus sample sizes where shown. It must stay within the site's terms; no circumventing protections. The subscription has NOT been purchased yet. Your job is to build and test everything BEFORE purchase, so the paid month is spent purely collecting.
+
+DELIVERABLES
+1. A capture plan in docs/agents/tasks/bbi-capture-plan.md:
+   - Every BBI tool, page and leaderboard that exposes player data (Skills, Leaderboards, LEBRON, Lineups, Rotations, Playtype, Matchup, Shooting, and any others you find).
+   - For each: what fields it shows, seasons available, filters, whether it has a CSV/export button, and how many page views or exports a full-league capture needs.
+   - Prioritize by value to our 94 inputs, using the existing manifest and docs/PLAYER_OBJECT_THREE_COLUMN_MAP_2026_11_12.md.
+   - Estimate total capture time.
+   - Identify what can only be done through the user's signed-in browser and give the user a step-by-step day-1 checklist. The user (or Claude driving the user's browser) does the signed-in capture; you do not log in or pay.
+   Use only public information (free pages, the public glossary, free demo tools).
+2. An importer, src/nba_gm_data/bbi_import.py, that ingests captured exports (CSV and/or saved page HTML/JSON) into a normalized local cache: data/research/bbi/ with raw files preserved plus a normalized JSON. It must:
+   - Match players to our canonical ids (ESPN id where available, careful name matching otherwise; report unmatched rows).
+   - Keep season, metric name, raw value, percentile or grade, sample size and retrieval date separate.
+   - Never relabel provider composites as raw technique.
+   Test it end-to-end on whatever free BBI data you can legitimately download now (free leaderboards, LEBRON CSV, demo pages), plus small synthetic fixtures shaped like the paid exports.
+3. An evidence source plug-in for the estimator. In src/nba_gm_data/input_estimator.py, add BBI as a source that maps specific BBI metrics to specific inputs (follow the manifest's intended mappings), with shared-evidence ids and sample-size weighting, so that once the cache exists, `scripts/build_player_inputs.py` uses it automatically. When the cache is absent, output must be unchanged (byte-identical); test that.
+4. Tests in tests/test_bbi_import.py.
+
+FILES YOU MAY TOUCH: the files above, data/research/bbi/ and docs/agents/tasks/bbi-*.md. Do not edit trait_adapter.py, ratings_model.py, player_profile.py, save.py, sim.py or GUI files.
+
+DELIVER: a plain-language report (TL;DR first) in docs/agents/tasks/bbi-capture-plan.md, including the day-1 checklist. Set the board row to "review". Do not commit.
+```
+
+---
+
+## S1-E-inv: Front-office threshold inventory (read-only)
+
+Suggested settings: a mid-tier model, medium effort.
+
+```
+Read AGENTS.md, docs/agents/BOARD.md and docs/agents/STAGE1_DESIGN.md section E first. You own task S1-E-inv. This task is READ-ONLY for code. You may only create docs/agents/tasks/s1e-threshold-inventory.md (and scratch files under output/s1e/).
+
+CONTEXT: The AI front office (trades, contracts, extensions, free agency, draft, fantasy draft, waivers, release planning, trade wants) reads player ratings through save.player_attribute_summary / player_display_attribute_summary. That is an OVR/OFF/DEF/subrating formula over the 15 legacy traits, clamped to 1–99, with about 75 call sites. Stage 1 will switch those readers to the new unclipped 50+15z display scale (src/nba_gm_data/player_profile.py). Every hard-coded threshold on the old scale must then be re-expressed, ideally as a league percentile.
+
+PRODUCE a table of EVERY place a rating value from those summaries (or a value computed directly from it) is compared to a constant, or used in a formula with a constant breakpoint. For each row give:
+- file:line and function;
+- which field (overall, offense, defense, shooting, ...);
+- the constant(s) and what decision they drive, in plain language;
+- the league percentile that constant corresponds to on the CURRENT old scale. Compute it from data/canonical/universe_2026_27_offseason.json using save.player_display_attribute_summary over all players; report the percentile among rotation players (minutes_projection >= 15) too;
+- a suggested replacement expression (e.g. `percentile >= 0.97`).
+Also list call sites that only display values (no thresholds), separately.
+
+Group by system (trade valuation, contract/extension, free agency, draft/fantasy, roster/waivers, narrative/UI). End with the 10 thresholds most likely to change AI behavior if mis-converted. Set the board row to "review". Do not commit.
+```
+
+---
+
+## E2: League-wide player input estimator v1 (DONE, accepted 2026-11-16)
 
 Suggested settings: your strongest model, high effort. This is the most important task Codex has this month. If usage runs out mid-task, keep the resume state current so a fresh chat can continue.
 

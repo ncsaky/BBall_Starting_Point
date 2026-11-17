@@ -23,7 +23,9 @@ GUI wishlist work is parked.
 
 | Task | Owner | Status | Files it may touch |
 |---|---|---|---|
+| S1-E-inv Old-scale rating threshold inventory | Codex | **in progress** | `docs/agents/tasks/s1e-threshold-inventory.md`, `output/s1e/` |
 | E3 Calibration targets and comparison tool | Claude (subagent) | **done** (5/5 tests verified). Report: `docs/agents/tasks/e3-calibration-targets.md` | `data/calibration/*`, `src/nba_gm_data/calibration_targets.py`, `scripts/build_calibration_targets.py`, `scripts/calibration_report.py`, `tests/test_calibration_targets.py` |
+| BBI Basketball Index capture plan and importer | Codex | **in progress (Codex)** | `src/nba_gm_data/bbi_import.py`, `src/nba_gm_data/input_estimator.py`, `tests/test_bbi_import.py`, `data/research/bbi/`, `docs/agents/tasks/bbi-*.md` |
 | E2 League-wide input estimator | Codex | **accepted 2026-11-16** by Claude (91 tests rerun OK; output tracked as `player_inputs_2026_27.json.gz`). Report: `docs/agents/tasks/e2-input-estimator.md` | `src/nba_gm_data/input_estimator.py`, `scripts/build_player_inputs.py`, `data/canonical/player_inputs_2026_27.json`, `tests/test_input_estimator.py` |
 | T1 Make tests trustworthy | Claude (subagent) | **review**. Core suite `scripts/run_core_tests.sh`: 329 tests in about 160 s, passing. Full-suite leftovers listed below. | `tests/`, `scripts/run_core_tests.sh` |
 | S1-B Adapter: inputs to the 15 hidden ratings | Claude | **done** (9 tests) | `src/nba_gm_data/trait_adapter.py`, `tests/test_trait_adapter.py` |
@@ -46,7 +48,7 @@ GUI wishlist work is parked.
 | E2 / S1-A | Input estimator: all 691 players plus prospects | Codex (**accepted**) |
 | S1-B | Adapter: inputs to the 15 hidden ratings | Claude |
 | S1-C | Development writes to inputs | Claude |
-| S1-D | New player card (four layers) plus derived OVR/OFF/DEF without clipping; rewrite rating-pin tests | Claude. **Card done**: mockup approved by user; live in inputs-model saves (`player_profile.py`, `gui/player-card-layers.css`). New saves via `new-save --ratings-model inputs_v1`. Open: rating-pin test rewrite; injured players show 0.0 projected minutes. |
+| S1-D | New player card (four layers) plus derived OVR/OFF/DEF without clipping; rewrite rating-pin tests | Claude. **Card done**: mockup approved by user; live in inputs-model saves (`player_profile.py`, `gui/player-card-layers.css`). New saves via `new-save --ratings-model inputs_v1`. Open: rating-pin test rewrite. (Injured players now show 'Out (injured) · expected back DATE'.) |
 | S1-E | Front-office AI (trades, contracts, FA, draft) reads new ratings | Claude, Codex for bounded parts |
 | S1-F | Prospects generated with inputs | Claude or Codex |
 | BBI | Basketball Index capture plan and importer (free pages first, then subscribe) | after E2 |
@@ -67,6 +69,7 @@ GUI wishlist work is parked.
   - Free-agency day market; team strategy phase pressure.
 - **Stale (fix with current data):** the Curry extension tests (his contract now runs through 2028-29) and several others listed in the T1 report.
 - **Data gap:** 11 rostered players have no height (DeVries, Fricks, Sellers, Agee, Cooper, Dix, Tilly, Holifield, Nkrumah, Burnett, Wague).
+- **Pre-existing JS failure:** `tests/player_pages.test.cjs` fails all 5 tests on HEAD too (a `document` reference in its function slice). Not in the core suite.
 - **Borderline:** `test_box_variation` FG% shift 0.0264 vs a 0.025 limit. A possible timing flake in the atomic-save test.
 
 ## Parked GUI queue (prompts in `CODEX_QUEUE.md`)
