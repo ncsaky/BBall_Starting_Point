@@ -53,7 +53,13 @@ ADAPTER_SPEC: dict[str, list[Term]] = {
         ("P05", 0.05), ("T01:drive", 0.15), ("T02:rim", 0.20), ("T08", 0.15),
     ],
     "handle_pressure": [("S17", 0.25), ("S16", 0.20), ("S18", 0.10), ("S20", 0.10), ("P09", 0.05), ("T08", 0.20), ("T06", 0.10)],
-    "passing_reads": [(PASS_RECOGNITION, 0.45), (PASS_EXECUTION, 0.30), ("S20", 0.15), ("S28", 0.10)],
+    # Legacy passing_reads came from passer rating, assists per 75, box creation and IQ, so it carried passing
+    # VOLUME as well as skill (the engine's assist rates read it). Pair the skill inputs with how often a player
+    # chooses to pass and how involved he is, as shooting_range pairs skill with three-point share.
+    "passing_reads": [
+        (PASS_RECOGNITION, 0.35), (PASS_EXECUTION, 0.20), ("S20", 0.10), ("S28", 0.05),
+        ("T01:pass", 0.15), ("T08", 0.15),
+    ],
     "foot_speed_lateral_agility": [("P07", 0.45), ("P05", 0.25), ("P06", 0.15), ("S33", 0.15)],
     "stamina_cardio": [("P11", 0.60), ("P12", 0.40)],
     "defensive_effort": [
