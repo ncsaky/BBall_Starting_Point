@@ -16,6 +16,7 @@ import re
 import tempfile
 import uuid
 from collections import Counter
+from contextvars import ContextVar
 from copy import deepcopy
 from datetime import date, timedelta
 from itertools import permutations
@@ -1654,6 +1655,80 @@ def refresh_active_runtime_state(
     return active
 
 
+_ADVANCE_RUNTIME_STATE: ContextVar[_AdvanceRuntimeState | None] = ContextVar("advance_runtime_state", default=None)
+
+
+class _AdvanceRuntimeState:
+    """One advance call's disposable league, isolated from subsequent AI work."""
+
+    # Inputs materialized by canonical_with_save rather than refreshed by
+    # refresh_active_runtime_state. Compare values, including nested edits.
+    _INPUT_KEYS = (
+        "version", "meta", "roster_overrides", "contract_overrides",
+        "free_agent_player_ids", "generated_players", "generated_traits",
+        "incoming_rookies", "generated_health_profiles", "retired_player_ids",
+        "generated_draft_picks", "draft_pick_overrides", "draft_orders",
+        "draft_state", "pending_draft_selections", "pick_obligations",
+        "locked_pick_assets", "contract_protection", "development_trait_totals",
+        "development_events", "rotation_recommendations",
+    )
+
+    def __init__(self) -> None:
+        self.active: dict[str, Any] | None = None
+        self.inputs: Any = None
+        self.attribute_summaries: dict[bytes, dict[str, float]] = {}
+
+    def advance_day(self, *args: Any) -> dict[str, Any]:
+        # Preserve the day API and isolate concurrent/reentrant advances.
+        token = _ADVANCE_RUNTIME_STATE.set(self)
+        try:
+            return advance_save_day(*args)
+        finally:
+            _ADVANCE_RUNTIME_STATE.reset(token)
+
+    @classmethod
+    def _inputs(cls, save: dict[str, Any]) -> tuple[Any, ...]:
+        state = save.get("state") or {}
+        stamp = str(state.get("current_date") or "")
+        evidence_date = (save.get("contract_protection") or {}).get("evidence_as_of")
+        return (state.get("phase"), save_active_contract_season(save),
+                bool(evidence_date and stamp >= evidence_date),
+                {key: save.get(key) for key in cls._INPUT_KEYS})
+
+    def take(self, save: dict[str, Any], target: str | None = None) -> dict[str, Any] | None:
+        comparison = save
+        if target is not None:
+            comparison = {**save, "state": {**(save.get("state") or {}),
+                                           "current_date": target, "phase": phase_for_date(target)}}
+        active = self.active if self.inputs == self._inputs(comparison) else None
+        self.active = None
+        self.inputs = None
+        return active
+
+    def remember(self, active: dict[str, Any], save: dict[str, Any], *, isolate: bool = True) -> None:
+        if save.get("state", {}).get("phase") not in {"preseason", "regular_season"}:
+            self.active = None
+            self.inputs = None
+            return
+        # Drop derived indexes, and isolate the mutable tables before any AI
+        # review can normalize them. Never carry those mutations (or cached
+        # approvals) into tomorrow's league.
+        carried = {
+            key: value for key, value in active.items()
+            if not str(key).startswith("_") or key in {"_allow_internal_caches", "_ratings_model"}
+        }
+        # The remaining baseline tables are read-only. Isolate the mutable
+        # league graph, rather than copying historical box scores and draft
+        # research that neither the daily lifecycle nor AI edits.
+        owned_keys = {"meta", "players", "traits", "contracts", "roster_slots",
+                      "draft_picks", "pick_obligations", "locked_pick_assets",
+                      "player_health_profiles", "_ratings_model"}
+        if isolate:
+            carried.update(_copy_runtime_tree({key: value for key, value in carried.items() if key in owned_keys}))
+        self.active = carried
+        self.inputs = _copy_runtime_tree(self._inputs(save))
+
+
 def advance_save(
     root: str | Path,
     canonical: dict[str, Any] | Any,
@@ -1744,6 +1819,7 @@ def advance_save(
             stopped = True
     # Button/checkpoint boundaries must never change the simulation calendar.
     # Each day sees the mutations committed by the previous day's decisions.
+    runtime_state = _AdvanceRuntimeState()
     while current < target and not stopped:
         if simulation_stop_requested():
             target = current
@@ -1768,7 +1844,7 @@ def advance_save(
             set_save_date_phase(save, through_date)
             day_result = {"ai_applied_count": 0, "inseason_free_agent_signings": 0}
         else:
-            day_result = advance_save_day(root, canonical, save_path, save, current, through_date, effective_seed)
+            day_result = runtime_state.advance_day(root, canonical, save_path, save, current, through_date, effective_seed)
         applied_count += day_result["ai_applied_count"]
         signing_count += day_result["inseason_free_agent_signings"]
         current = through_date
@@ -1815,6 +1891,7 @@ def advance_lifecycle_to(
     canonical: dict[str, Any], save: dict[str, Any], target: str, seed: int,
     root: str | Path | None = None, *, games: list[dict[str, Any]] | None = None,
     from_date: str | None = None, development: bool = True,
+    active: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Advance player time without resolving phase decisions or running regular AI.
 
@@ -1826,7 +1903,7 @@ def advance_lifecycle_to(
     cursor = clock.setdefault("through_date", from_date or save.get("state", {}).get("current_date") or target)
     processed = set(clock.get("health_game_ids") or [])
     pending_games = [g for g in games or [] if str(g["externalGameId"]) not in processed]
-    active = None
+    carried_active = active is not None
     events: list[dict[str, Any]] = []
     while cursor < target or (cursor == target and pending_games):
         day = min(next_date_str(cursor, 1), target)
@@ -1835,6 +1912,16 @@ def advance_lifecycle_to(
         if process_waivers(canonical, save, day):
             active = None
         active = canonical_with_save(canonical, save) if active is None else refresh_active_runtime_state(active, save)
+        if carried_active:
+            # Match the planning view a fresh rebuild would create today.
+            active["_trade_planning_save"] = {
+                "meta": {"season": save_active_contract_season(save)},
+                "state": dict(save.get("state") or {}),
+                "season_schedules": save.get("season_schedules") or {},
+                "team_plans": active["team_plans"],
+                "health_states": save.get("health_states") or [],
+            }
+            carried_active = False
         todays_games = [g for g in pending_games if g["gameDate"] == day]
         health = simulate_health(root, active, cursor, day, seed=seed, schedule=todays_games)
         merge_health_results(save, health, active)
@@ -1996,12 +2083,14 @@ def advance_save_day(
 ) -> dict[str, Any]:
     """Run one calendar day's causal work without publishing a partial save."""
     simulated_before = len(save.get("schedule_state", {}).get("simulated_game_ids", []))
+    runtime_state = _ADVANCE_RUNTIME_STATE.get()
     runtime_canonical: dict[str, Any] | None = None
     new_development_events: list[dict[str, Any]] = []
     if target > current:
         runtime_canonical = advance_lifecycle_to(
             canonical, save, target, effective_seed, root,
             games=scheduled_games_between(root, save, current, target), from_date=current, development=False,
+            active=runtime_state.take(save, target) if runtime_state is not None else None,
         )["active"]
         context = load_sim_context(root, runtime_canonical)
         context["schedule"] = schedule_for_save(root, save)
@@ -2055,6 +2144,23 @@ def advance_save_day(
             save,
             development_events=new_development_events,
         )
+    if runtime_state is not None:
+        from .trade_calendar import market_day
+        start_year = season_start_year_from_date(target)
+        queued_keys = {action.get("id") for key in ("pending_ai_actions", "processed_hidden_ai_actions")
+                       for action in save.get(key, [])}
+        # Only skip isolation when every AI review window is closed and no
+        # queued decision can run. On review days, isolate even rejected work.
+        isolate = (
+            (target <= extension_deadline_date(start_year)
+             and stable_id("ai_action", "extensions", target[:7], effective_seed) not in queued_keys)
+            or market_day(target, effective_seed, start_year, trade_deadline_date(start_year))["review"]
+            or current[:7] != target[:7] or target.endswith("-02-05")
+            or any(action.get("status") not in {"processed", "executed", "rejected", "draft_attention_required"}
+                   and str(action.get("date") or "") <= target
+                   for action in save.get("pending_ai_actions", []))
+        )
+        runtime_state.remember(ai_canonical, save, isolate=isolate)
     queue_ai_recommendations(
         ai_canonical,
         save,
@@ -6428,6 +6534,9 @@ def reassess_ai_roles(active: dict[str, Any], save: dict[str, Any], stamp: str, 
     # Workload is part of headline OVR; do not let the old role grade itself.
     neutral = {key: value for key, value in active.items() if not str(key).startswith("_")}
     neutral["players"] = [{**p, "minutes_projection": 24} for p in active["players"]]
+    # This local, read-only view can own its indexes. Otherwise every player
+    # summary rescans the whole league's traits during a role reassessment.
+    neutral["_allow_internal_caches"] = True
     baselines = save.setdefault("rotation_baselines", {})
     clocks = save.setdefault("ai_role_state", {})
     for team, roster, signature in due:
@@ -7125,6 +7234,30 @@ def player_attribute_summary(canonical: dict[str, Any], player_id: str) -> dict[
         cached = memo.get(key)
         if cached is not None:
             return dict(cached)
+    runtime = _ADVANCE_RUNTIME_STATE.get()
+    if memo is None and runtime is not None and canonical.get("_allow_internal_caches"):
+        # Repeated health/minutes refreshes often request exactly the same
+        # summary. Key every input read by the summary/offense/impact formulas;
+        # workload and development changes must never reuse an old grade.
+        player = players_by_id_index(canonical).get(player_id, {})
+        meta = canonical.get("meta") or {}
+        model = canonical.get("_ratings_model") or {}
+        signature = pickle.dumps((
+            player_id, trait_values_by_player(canonical).get(player_id, {}),
+            tuple(player.get(field) for field in ("position", "height_inches", "weight_lbs")),
+            display_minutes_projection(player), meta.get("talent_model_version"), meta.get("offense_model_version"),
+            (meta.get("offensive_profiles") or {}).get(player_id),
+            tuple(model.get(field) for field in ("mode", "inputs_key", "fitted_key", "impact_tables_key")),
+            (model.get("input_deltas") or {}).get(player_id), (model.get("generated") or {}).get(player_id),
+        ), protocol=pickle.HIGHEST_PROTOCOL)
+        cached = runtime.attribute_summaries.get(signature)
+        if cached is not None:
+            return dict(cached)
+        result = _uncached_player_attribute_summary(canonical, player_id)
+        if len(runtime.attribute_summaries) >= 8192:
+            runtime.attribute_summaries.clear()
+        runtime.attribute_summaries[signature] = dict(result)
+        return result
     result = _uncached_player_attribute_summary(canonical, player_id)
     if memo is not None:
         memo[key] = dict(result)
