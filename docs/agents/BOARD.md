@@ -44,6 +44,9 @@ GUI wishlist work is parked.
 - Subagent: remaining Fanspo BBI tables via DOM read (pane tab "seed").
 - Subagent: GUI Q1 small fixes (code and tests only; visual check by Claude later).
 - Claude: S1-E front office on the new scale; rebuild inputs with BBI evidence once Values are imported, then rerun scorecards.
+- 06:15 Leaderboard stall fixed: the Run Query click sometimes re-ran the previous query. The script now waits for Shiny to register the new metrics, matches every metric in the header, and re-clicks Run once a minute if nothing renders. Restarted at Values chunk 15.
+- BBI overlay v2 (`bbi_evidence.py`): it now also covers single-number tendencies and unmeasured physical grades, kept on the estimator's own scale (BBI re-ranks; units and spread stay). Evidence weight is scaled by the strongest metric available, so weak-proxy inputs move less. `build_player_inputs.py` applies the overlay by default (`--no-bbi` to skip). Multi-way tendencies (shot-region mix, action mix, catch/pull-up mix) are not overlaid yet. The current estimates look wrong for some players (Gobert shows a 34% pull-up share, Jokić a 19% post share), so this is the next ratings item.
+- **M01 finding (injury rating display):** injuries do NOT lower any stored or displayed rating today. OVR/OFF/DEF everywhere are full-health values. The only temporary effect is an in-game penalty from rust (after a return) and fatigue, applied to per-game features inside the sim (`sim.health_adjusted_player_features`). An "injury-adjusted OVR" would therefore need a new, defined derivation of that penalty. **User decision for the morning:** show a small red "rust" marker (games or percentage penalty) on returning players, versus deriving an effective OVR.
 
 ## Decided (2026-11-16)
 

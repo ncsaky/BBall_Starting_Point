@@ -33,6 +33,69 @@ class GradeScaleTests(unittest.TestCase):
         self.assertEqual(be._percentiles({"a": (1.0, 900.0, "a")}, 1), {})
 
 
+class OverlayTests(unittest.TestCase):
+    def _section(self):
+        players = {}
+        for i in range(60):
+            players[f"p{i}"] = {"inputs": {
+                "S01": {"status": "estimated", "reason": "prior", "value": {"grade": 50.0}},
+                "T08": {"status": "estimated", "reason": "prior", "value": {"probability": 0.2 + i * 0.005}},
+                "P06": {"status": "estimated", "reason": "prior", "value": {"display_grade": {"grade": 40.0 + i * 0.3}, "measurements": []}},
+                "P01": {"status": "measured", "reason": "measured", "value": {"display_grade": {"grade": 50.0}, "measurements": [{"inches": 80}]}},
+            }}
+        return {"players": players}
+
+    def test_tendencies_keep_their_scale_and_follow_bbi_rank(self):
+        section = self._section()
+        before = sorted(d["inputs"]["T08"]["value"]["probability"] for d in section["players"].values())
+        fake = {"p0": {"T08": {"grade": 95.0, "z": 2.5, "weight": 5.0, "seasons": {}, "metrics_used": ["m"]},
+                       "P06": {"grade": 95.0, "z": 2.5, "weight": 5.0, "seasons": {}, "metrics_used": ["m"]},
+                       "P01": {"grade": 95.0, "z": 2.5, "weight": 5.0, "seasons": {}, "metrics_used": ["m"]},
+                       "S01": {"grade": 80.0, "z": 1.0, "weight": 0.35, "seasons": {}, "metrics_used": ["m"]}}}
+        original = be.player_input_scores
+        be.player_input_scores = lambda root, mapping=None: fake
+        try:
+            summary = be.apply_overlay(section, ROOT)
+        finally:
+            be.player_input_scores = original
+        p0 = section["players"]["p0"]["inputs"]
+        # Lowest-ranked usage becomes near the top, but stays inside the existing range (no new scale).
+        self.assertGreater(p0["T08"]["value"]["probability"], before[50])
+        self.assertLessEqual(p0["T08"]["value"]["probability"], before[-1])
+        self.assertEqual(p0["T08"]["reason"], "estimated")
+        self.assertGreater(p0["P06"]["value"]["display_grade"]["grade"], 50.0)
+        self.assertEqual(p0["P01"]["value"]["display_grade"]["grade"], 50.0)  # measured physicals untouched
+        self.assertAlmostEqual(p0["S01"]["value"]["grade"], 65.0)            # equal weights -> halfway
+        self.assertEqual(p0["S01"]["reason"], "estimated")
+        self.assertEqual(summary["cells_changed"], 3)
+        self.assertAlmostEqual(section["players"]["p1"]["inputs"]["T08"]["value"]["probability"], 0.205)  # others untouched
+
+    def test_mix_choice_is_reranked_and_mix_still_sums_to_one(self):
+        section = {"players": {}}
+        for i in range(60):
+            drive = 0.05 + i * 0.002
+            section["players"][f"p{i}"] = {"inputs": {"T01": {"status": "estimated", "reason": "prior", "value": {
+                "rows": [{"condition": "reference_opportunity",
+                          "probabilities": {"drive": drive, "shoot": 0.5 - drive, "pass": 0.5}}]}}}}
+        fake = {"p59": {"T01:drive": {"grade": 5.0, "z": -2.5, "weight": 5.0, "seasons": {}, "metrics_used": ["Drives"]}}}
+        original = be.player_input_scores
+        be.player_input_scores = lambda root, mapping=None: fake
+        try:
+            be.apply_overlay(section, ROOT)
+        finally:
+            be.player_input_scores = original
+        mix = section["players"]["p59"]["inputs"]["T01"]["value"]["rows"][0]["probabilities"]
+        self.assertLess(mix["drive"], 0.08)                       # top driver by estimate, bottom by BBI
+        self.assertAlmostEqual(sum(mix.values()), 1.0, places=5)
+        self.assertGreater(mix["pass"], 0.5)                      # untouched choices keep relative size
+        self.assertEqual(section["players"]["p59"]["inputs"]["T01"]["reason"], "estimated")
+
+    def test_rank_and_quantile_round_trip(self):
+        pool = [float(x) for x in range(100)]
+        for x in (0.0, 13.0, 50.0, 99.0):
+            self.assertAlmostEqual(be._quantile(pool, be._ND.cdf(be._rank_z(pool, x))), x)
+
+
 @unittest.skipUnless(MAPPING.exists(), "BBI mapping not present")
 class MappingFileTests(unittest.TestCase):
     def test_mapping_covers_all_inputs_with_valid_entries(self):

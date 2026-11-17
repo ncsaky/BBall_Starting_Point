@@ -25,21 +25,32 @@
   });
   const visibleTable = () => $('.dataTables_wrapper table.dataTable').filter(':visible').first();
 
+  const norm = s => String(s || '').replace(/ \*$/, '').replace(/\s+/g, ' ').trim().toLowerCase();
+
   async function runChunk(metrics, display) {
+    const wanted = metrics.map(norm);
+    const rendered = () => {
+      const t = visibleTable(); if (!t.length) return null;
+      const d = t.DataTable(); const head = new Set(d.columns().header().toArray().map(h => norm(h.innerText)));
+      return wanted.every(m => head.has(m)) ? d : null;
+    };
     $('#Metric')[0].selectize.setValue(metrics);
     $('#Display')[0].selectize.setValue(display);
-    const want = metrics[0].replace(/ \*$/, '');
-    [...document.querySelectorAll('button')].find(b => /^Run\s*Query$/.test(b.innerText.trim())).click();
-    const dt = await waitFor(() => {
-      const t = visibleTable(); if (!t.length) return null;
-      const d = t.DataTable(); const head = d.columns().header().toArray().map(h => h.innerText.trim());
-      return head.includes(want) ? d : null;
-    });
+    // Let Shiny register the new inputs before running (clicking at once can re-run the previous query).
+    await waitFor(() => (window.Shiny && Shiny.shinyapp && Shiny.shinyapp.$inputValues &&
+      JSON.stringify(Shiny.shinyapp.$inputValues.Metric || []) === JSON.stringify(metrics)) ? true : null, 30000).catch(() => null);
+    const run = () => [...document.querySelectorAll('button')].find(b => /^Run\s*Query$/.test(b.innerText.trim())).click();
+    run();
+    // Re-click Run if nothing new renders (checked on Shiny/DataTables events plus a slow fallback timer).
+    let clicks = 1;
+    const nudge = setInterval(() => { if (!rendered() && clicks < 4) { clicks += 1; run(); } }, 60000);
+    let dt;
+    try { dt = await waitFor(rendered, 600000); } finally { clearInterval(nudge); }
     dt.page.len(-1).draw(false);
     await waitFor(() => { const n = dt.rows({ page: 'current' }).count(); return n > 0 && n >= dt.page.info().recordsTotal; });
     const columns = dt.columns().header().toArray().map(h => h.innerText.trim());
     const rows = dt.rows({ page: 'current' }).data().toArray();
-    return { metrics, display, columns, rows, recordsTotal: dt.page.info().recordsTotal };
+    return { metrics, display, columns, rows, recordsTotal: dt.page.info().recordsTotal, runClicks: clicks };
   }
 
   window.__lbRun = async function ({ display = 'Values', chunkSize = 10, chunksPerFile = 10, pauseMs = 15000, startChunk = 0, maxConsecutiveFails = 3 } = {}) {
