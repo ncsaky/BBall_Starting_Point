@@ -3,6 +3,8 @@ from contextlib import ExitStack, contextmanager
 from copy import deepcopy
 import gc
 import json
+import shutil
+import tempfile
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -12,6 +14,7 @@ from nba_gm_data import transactions as tx, trade_roster as tr, save, sim
 from nba_gm_data import contract_protection as protection
 from nba_gm_data.app_actions import load_app_canonical
 from nba_gm_data.roster_forecast import ForecastSnapshot
+from nba_gm_data.save_recovery import restore_export
 from nba_gm_data.trade_review import MarketReview
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -52,16 +55,22 @@ class RosterForecastPerformanceTests(unittest.TestCase):
     def setUpClass(cls):
         cls.base = load_app_canonical(ROOT)
         cls.starting = tx.with_transaction_context(deepcopy(cls.base))
-        path = ROOT / 'output/pick-investment-2026-10-28/stable17/saves/trade_year.json'
-        # The mature save is a captured output artifact (removed by disk cleanup on 2026-11-16). Tests that need it
-        # skip explicitly instead of failing; starting-roster tests do not depend on it.
-        cls.saved = save.load_save(path) if path.exists() else None
+        fixture = ROOT / 'tests/fixtures/trade_year_seed17.nbagm.zip'
+        # Tests that need the deadline-day save skip explicitly if the tracked fixture is absent;
+        # starting-roster tests do not depend on it.
+        cls.saved = None
+        if fixture.exists():
+            folder = tempfile.mkdtemp()
+            cls.addClassCleanup(shutil.rmtree, folder, True)
+            path = Path(folder) / 'trade_year.json'
+            restore_export(path, fixture.read_bytes())
+            cls.saved = save.load_save(path)
         cls.mature = (tx.with_transaction_context(save.canonical_with_save(cls.base, deepcopy(cls.saved)))
                       if cls.saved is not None else None)
 
     def require_mature(self):
         if self.mature is None:
-            self.skipTest('output/pick-investment-2026-10-28/stable17/saves/trade_year.json is missing; regenerate it')
+            self.skipTest('tests/fixtures/trade_year_seed17.nbagm.zip is missing; regenerate it')
 
     def assert_projections(self, source, team_ids, variant_limit=4):
         public = {k: v for k, v in source.items() if not k.startswith('_')}

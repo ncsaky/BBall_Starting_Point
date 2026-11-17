@@ -109,8 +109,10 @@ class NewCareerStartTests(unittest.TestCase):
 
     def test_existing_checkpoint_and_legacy_fantasy_dates_are_not_migrated(self):
         from verify_simulation_consistency import business_state
-        source=ROOT/'output/pick-investment-2026-10-28/stable17/saves/trade_year.json'
-        if not source.exists():self.skipTest(f'{source} is missing (removed by the 2026-11-16 disk cleanup); regenerate it')
+        fixture=ROOT/'tests/fixtures/trade_year_seed17.nbagm.zip'
+        if not fixture.exists():self.skipTest(f'{fixture} is missing; regenerate it')
+        holder=tempfile.TemporaryDirectory();self.addCleanup(holder.cleanup)
+        source=Path(holder.name)/'trade_year.json';restore_export(source,fixture.read_bytes())
         sha=hashlib.sha256(source.read_bytes()).hexdigest()
         with tempfile.TemporaryDirectory() as folder:
             path=Path(folder)/'old.json';restore_export(path,create_export(source));before=sv.load_save(path,include_history=True)

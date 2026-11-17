@@ -1,9 +1,10 @@
 """Demanded strategy outputs and bounded read-context ownership are exact."""
 from copy import deepcopy
 import gc
-import gzip
 import json
+import lzma
 from pathlib import Path
+import shutil
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -11,6 +12,7 @@ import weakref
 
 from nba_gm_data import app_actions as aa, transactions as tx, team_planning as planning
 from nba_gm_data.save import canonical_with_save, load_save
+from nba_gm_data.save_recovery import restore_export
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -19,9 +21,13 @@ class ContextDemandPerformanceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.base = aa.load_app_canonical(ROOT)
-        path = ROOT / 'output/pick-investment-2026-10-28/stable17/saves/trade_year.json'
-        if not path.exists():  # captured output artifact removed by the 2026-11-16 disk cleanup
-            raise unittest.SkipTest(f'{path} is missing; regenerate it')
+        fixture = ROOT / 'tests/fixtures/trade_year_seed17.nbagm.zip'
+        if not fixture.exists():
+            raise unittest.SkipTest(f'{fixture} is missing; regenerate it (seed 17 save at 2027-02-03)')
+        folder = tempfile.mkdtemp()
+        cls.addClassCleanup(shutil.rmtree, folder, True)
+        path = Path(folder) / 'trade_year.json'
+        restore_export(path, fixture.read_bytes())
         cls.saved = load_save(path)
 
     def assert_full_equal(self, source):
@@ -31,15 +37,16 @@ class ContextDemandPerformanceTests(unittest.TestCase):
         self.assertEqual(source, original)
 
     def test_all_recorded_real_build_inputs_match_the_full_fresh_fallback(self):
-        path = ROOT / 'output/context-demand-pass/attribution-before/context-builds.json'
+        path = ROOT / 'tests/fixtures/context_builds_seed17.json.xz'
         if not path.exists():
-            self.skipTest('Run diagnose_context_builds.py to replay the bounded real caller inputs')
-        records = json.loads(path.read_text())['builds']
+            self.skipTest(f'{path} is missing; run scripts/diagnose_context_builds.py to capture real caller inputs')
+        with lzma.open(path, 'rt') as stream:
+            captured = json.load(stream)
+        records = captured['builds']
         self.assertEqual(len(records), 9)
-        for record in records:
+        for record, payload in zip(records, captured['inputs']):
             with self.subTest(build=record['number']):
-                with gzip.open(ROOT / record['input_path'], 'rt') as stream:
-                    source = json.load(stream)
+                source = json.loads(payload)
                 source['_allow_internal_caches'] = True
                 self.assert_full_equal(source)
 
