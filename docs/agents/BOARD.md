@@ -165,6 +165,19 @@ Rerun with:
 NBA_GM_RATINGS_MODEL=inputs_v1 PYTHONPATH=src .venv/bin/python scripts/calibration_report.py --games 1230
 ```
 
+## Betting-odds scorecard, full season (2026-11-16)
+
+`validate-season-probabilities --runs 100`: 1,018 games with market odds, replay with real minutes.
+
+| | Old traits | New inputs | Market |
+|---|---|---|---|
+| Brier | 0.2144 | **0.2114** | 0.1962 |
+| Log loss | 0.6324 | **0.6177** | 0.5740 |
+| Spread error vs market | 6.63 | **5.25** | — |
+| Total error vs market | 6.45 | **6.21** | — |
+
+New inputs win on all four. Weakness: heavy favorites are under-confident. The heavy-away-favorite bucket is sim 0.167 against market 0.140 and actual 0.096, consistent with star compression (E2b).
+
 ## Speed baseline: old engine, headless CLI, fresh BOS save, seed 7 (2026-11-16)
 
 | Advance | Time |
