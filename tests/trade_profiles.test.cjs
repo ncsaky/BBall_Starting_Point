@@ -40,7 +40,7 @@ test('missing player evidence remains unknown rather than inventing zero meters'
   const markup=fixture().incomingOfferAsset({kind:'player',id:'unknown',name:'Unknown'});
   assert.doesNotMatch(markup,/data-ring/);
   assert.match(markup,/Injury risk unavailable/);
-  assert.match(markup,/Upside unavailable/);
+  assert.match(markup,/Runway unavailable/); // "Upside" renamed "Growth runway" (M03, 2026-11-17)
   assert.doesNotMatch(markup,/NaN|width:0%/);
 });
 

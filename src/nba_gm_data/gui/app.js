@@ -4014,7 +4014,7 @@ function seasonDevelopmentCard(rows) {
     state.data?.dashboardTrends?.development?.latest_month || candidates[0]?.points?.at(-1)?.label,
   );
   return `<div class="season-development-list" style="--development-count:${Math.max(1, Math.min(9, candidates.length))};--development-total:${Math.max(1, candidates.length)}">
-      <div class="season-development-head"><span>Player</span><span>Age</span><span>Upside Remaining</span><span>Net growth</span></div>
+      <div class="season-development-head"><span>Player</span><span>Age</span><span title="Growth runway: room this player has left to improve, from age, role and current level, on a 0-5 scale. Not a prediction of a future rating; 0 for most players 27 and older.">Growth runway</span><span title="Change in overall rating this season (October to June) and in the latest month, from the game's actual rating changes.">Rating change</span></div>
       ${candidates.map((player) => {
         const points = player.points || [];
         const values = points.map((point) => Number(point.value)).filter(Number.isFinite);
@@ -4022,7 +4022,7 @@ function seasonDevelopmentCard(rows) {
         const monthDelta = values.length > 1 ? values.at(-1) - values.at(-2) : 0;
         const upside = clampNumber(Number(player.upside_remaining || 0), 0, 5);
         const age = Number.isFinite(Number(player.age)) ? Number(player.age).toFixed(0) : "—";
-        const summary = `${player.name}, age ${age}: ${upside.toFixed(1)} OVR remaining, season ${signedNumber(seasonDelta)}, ${monthLabel} ${signedNumber(monthDelta)}`;
+        const summary = `${player.name}, age ${age}: growth runway ${upside.toFixed(1)} of 5, rating change this season ${signedNumber(seasonDelta)}, ${monthLabel} ${signedNumber(monthDelta)}`;
         return `<button type="button" class="season-development-row" data-dashboard-player-card="${escapeAttr(player.player_id)}" aria-label="${escapeAttr(summary)}">
           <span class="season-development-player">${playerHeadshotMarkup(player, "roster-player-headshot")}<span class="season-development-name">${escapeHtml(player.name)}</span></span>
           <span class="season-development-age">${escapeHtml(age)}</span>
@@ -4051,7 +4051,7 @@ function seasonDevelopmentUpside(value) {
   const upside = clampNumber(Number(value || 0), 0, 5);
   const circumference = 56.55;
   const color = playerUpsideColor(upside);
-  const label = `${upside.toFixed(1)} OVR remaining`;
+  const label = `Growth runway ${upside.toFixed(1)} of 5. Room this player has left to improve, from age, role and current level, on a 0-5 scale. Not a prediction of a future rating; 0 for most players 27 and older.`;
   return `<span class="season-development-upside" role="img" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="9" style="stroke:${color};stroke-dasharray:${circumference};stroke-dashoffset:${circumference * (1 - upside / 5)}"></circle></svg>
     <strong>${upside.toFixed(1)}</strong>
@@ -5117,7 +5117,8 @@ function draftProspectBoard(rows, selectable = false, selectedId = "") {
     ["rank", "Rank"], ["name", "Prospect"], ["position", "Pos"], ["age", "Age"],
     ["height", "Ht"], ["now", "Now"], ["potential", "Pot"], ["fit", "Fit"], ["injury", "Injury"], ["status", "Status"],
   ];
-  return `<div class="draft-prospect-scroll"><table class="draft-prospect-table"><thead><tr>${headings.map(([key, label]) => {const sort=state.draftBoardSort||{};const active=sort.key===key;return `<th aria-sort="${active?(sort.direction==='desc'?'descending':'ascending'):'none'}"><button class="draft-sort-button" data-draft-sort="${escapeAttr(key)}">${escapeHtml(label)}${draftSortMark(key)}</button></th>`;}).join("")}</tr></thead><tbody>${rows.map((row) => {
+  const headingTips = {potential: "Scouted potential: your scouts' best guess at this prospect's realistic peak. Not his hidden true rating.", now: "Scouted current level on the overall scale."};
+  return `<div class="draft-prospect-scroll"><table class="draft-prospect-table"><thead><tr>${headings.map(([key, label]) => {const sort=state.draftBoardSort||{};const active=sort.key===key;return `<th aria-sort="${active?(sort.direction==='desc'?'descending':'ascending'):'none'}"${headingTips[key] ? ` title="${escapeAttr(headingTips[key])}"` : ""}><button class="draft-sort-button" data-draft-sort="${escapeAttr(key)}">${escapeHtml(label)}${draftSortMark(key)}</button></th>`;}).join("")}</tr></thead><tbody>${rows.map((row) => {
     const available = row.status !== "drafted";
     const selected = available && String(row.id) === String(selectedId || "");
     return `<tr class="${row.status === "drafted" ? "is-drafted" : ""}${selected ? " is-selected" : ""}${selectable && available ? " is-selectable" : ""}" ${selectable && available ? `data-draft-prospect="${escapeAttr(row.id)}" tabindex="0"` : ""}><td>${escapeHtml(row.rank)}</td><td><button type="button" class="draft-prospect-name" data-draft-prospect-card="${escapeAttr(row.id)}">${escapeHtml(row.name || "Unknown")}</button></td><td>${escapeHtml(row.position || "—")}</td><td>${escapeHtml(row.age ?? "—")}</td><td>${escapeHtml(row.height || "—")}</td><td>${draftMetric(row.now)}</td><td>${draftMetric(row.potential)}</td><td>${draftMetric(row.fit || row.grade)}</td><td class="draft-prospect-injury">${prospectInjuryMarkup(row.injuryReport) || "—"}</td><td>${row.status === "drafted" ? `<span class="drafted-badge">#${escapeHtml(row.selectedPick)} ${escapeHtml(teamLabel(row.selectedTeam))}</span>` : selected ? `<span class="available-badge selected-badge">Selected</span>` : `<span class="available-badge">Available</span>`}</td></tr>`;
@@ -6349,7 +6350,7 @@ function tradeSegmentedValueBoard(candidate, outgoing, incoming, outgoingTeam, i
     Object.values(asset.components || {}).filter((value) => Number(value) > 0).reduce((sum, value) => sum + Number(value), 0),
     Object.values(asset.components || {}).filter((value) => Number(value) < 0).reduce((sum, value) => sum + Math.abs(Number(value)), 0),
   )), ...rows.map(([, details]) => Math.abs(details.reduce((sum, asset) => sum + Number(asset.adjusted_value || 0), 0))));
-  const labels = { quality: "Quality", age_upside: "Age + upside", contract: "Contract", scarcity: "Scarcity", playoffs: "Playoffs", health: "Health", fit: "Fit", role: "Projected role", retention: "Recent acquisition", draft_capital: "Draft capital", swap_value: "Swap value", asset_value: "Asset value" };
+  const labels = { quality: "Quality", age_upside: "Age and growth value", contract: "Contract", scarcity: "Scarcity", playoffs: "Playoffs", health: "Health", fit: "Fit", role: "Projected role", retention: "Recent acquisition", draft_capital: "Draft capital", swap_value: "Swap value", asset_value: "Asset value" };
   const explanations = {quality:"Current on-court contribution.",age_upside:"Age curve and remaining development; older players can have a negative age adjustment even with no upside remaining.",contract:"Salary value relative to contribution, not salary in dollars.",scarcity:"How difficult this skill set is to replace.",playoffs:"Contribution expected to translate to playoff basketball.",health:"Injury risk reduces value.",fit:"Fit with this team's needs.",role:"Change from the listed value for the projected role after outgoing players leave. Fewer usable minutes can mean a large reduction; this is not a ratings penalty.",retention:"Extra cost of moving a recently acquired player.",draft_capital:"Pick value including year, projected position and protections.",swap_value:"Value of the swap right, not ownership of an extra pick."};
   const bar = (components) => {
     const entries = Object.entries(components || {}).filter(([, value]) => Math.abs(Number(value)) >= 0.005);
@@ -7301,9 +7302,9 @@ async function openFreeAgentNegotiation(playerId) {
 }
 
 function negotiationEvidence(detail) {
-  return `<div class="approved-negotiation-evidence">${[["Health risk", detail?.health_risk, true], ["Upside remaining", detail?.upside_remaining, false], ["Trade value", detail?.trade_value, false]].map(([label, value, inverse]) => {
-    const score = inverse ? 100 - Number(value || 0) * 10 : label === "Upside remaining" ? Number(value || 0) * 20 : Number(value || 0);
-    return `<div class="${ratingTone(score)}"><span>${escapeHtml(label)}</span><i><b style="${performanceBarStyle(score)}"></b></i><strong>${label === "Upside remaining" ? "+" : ""}${draftMetric(value)}${label === "Upside remaining" ? " OVR" : label === "Health risk" ? " / 10" : ""}</strong></div>`;
+  return `<div class="approved-negotiation-evidence">${[["Health risk", detail?.health_risk, true], ["Growth runway", detail?.upside_remaining, false], ["Trade value", detail?.trade_value, false]].map(([label, value, inverse]) => {
+    const score = inverse ? 100 - Number(value || 0) * 10 : label === "Growth runway" ? Number(value || 0) * 20 : Number(value || 0);
+    return `<div class="${ratingTone(score)}"><span>${escapeHtml(label)}</span><i><b style="${performanceBarStyle(score)}"></b></i><strong>${draftMetric(value)}${label === "Growth runway" ? " / 5" : label === "Health risk" ? " / 10" : ""}</strong></div>`;
   }).join("")}</div>`;
 }
 
@@ -7497,15 +7498,15 @@ function playerCardEvidence(detail) {
     const high = detail.rank_range?.high ?? detail.board_rank;
     const range = low == null ? '—' : low === high ? `#${low}` : `#${low}–${high}`;
     const upside = detail.upside_unlocked
-      ? playerEvidenceRing("Upside", detail.upside_remaining, 5, playerUpsideColor(detail.upside_remaining), "OVR remaining")
-      : `<div class="player-evidence-ring prospect-upside-locked" aria-label="Upside locked: unlock at 100% scouting"><span>${prospectLockIcon()}</span><div><b>Upside</b><small>Locked · 100% scouting</small></div></div>`;
+      ? playerEvidenceRing("Prospect upside", detail.upside_remaining, 5, playerUpsideColor(detail.upside_remaining), " / 5")
+      : `<div class="player-evidence-ring prospect-upside-locked" aria-label="Prospect upside locked: unlock at 100% scouting" title="Prospect upside: the gap between your scouts' estimate of this prospect's potential and his current level, on a 0-5 scale. Unlocks at 100% scouting."><span>${prospectLockIcon()}</span><div><b>Prospect upside</b><small>Locked · 100% scouting</small></div></div>`;
     return `<div class="approved-player-evidence"><div class="player-evidence-rings">${playerEvidenceRing("Scouted", detail.scouting_coverage, 100, "#668ea7", "%")}${upside}<div class="prospect-rank-range" aria-label="Projected ranking range ${escapeAttr(range)}"><b>Projected rank</b><strong>${escapeHtml(range)}</strong><small>Draft range</small></div></div></div>`;
   }
   const health = clampNumber(Number(detail.health_risk || 0), 0, 10);
   const upside = clampNumber(Number(detail.upside_remaining || 0), 0, 5);
   const healthColor = health >= 7 ? "#e04d55" : health >= 4 ? "#bd5b5d" : "#8e6263";
   const upsideColor = playerUpsideColor(upside);
-  return `<div class="approved-player-evidence"><div class="player-evidence-rings">${playerEvidenceRing("Health risk", health, 10, healthColor, "/10")}${playerEvidenceRing("Upside", upside, 5, upsideColor, "OVR remaining")}${playerEvidenceRing("Trade Value", detail.trade_value, 100, "#668ea7")}</div></div>`;
+  return `<div class="approved-player-evidence"><div class="player-evidence-rings">${playerEvidenceRing("Health risk", health, 10, healthColor, "/10")}${playerEvidenceRing("Growth runway", upside, 5, upsideColor, " / 5")}${playerEvidenceRing("Trade Value", detail.trade_value, 100, "#668ea7")}</div></div>`;
 }
 
 function playerUpsideColor(upside) {
@@ -8835,7 +8836,7 @@ function playerFinderModalBody() {
 
 function playerFinderFields(seasons = []) {
   return [
-    ...[["overall","OVR"],["offense","OFF"],["defense","DEF"],["age","Age"],["height_inches","Height (inches)"],["health_risk","Injury risk"],["upside_remaining","Upside"],["shooting","Shooting"],["creation","Creation"],["spacing","Spacing"],["passing","Passing"],["rebounding","Rebounding"],["rim_deterrence","Rim protection"],["athleticism","Athleticism"],["release","Release"],["range","Range"],["handle","Handle"],["rim_pressure","Rim pressure"],["def_effort","Defensive effort"],["screen_nav","Screen navigation"],["lateral_agility","Lateral agility"],["stamina","Stamina"],["iq","IQ"],["games","Games played"],["games_missed","Games missed"],["display_mpg","MPG"],["points_per_game","PTS"],["rebounds_per_game","REB"],["assists_per_game","AST"],["steals_per_game","STL"],["blocks_per_game","BLK"],["turnovers_per_game","TO"]].map(([key,label])=>({key,label,type:"number"})),
+    ...[["overall","OVR"],["offense","OFF"],["defense","DEF"],["age","Age"],["height_inches","Height (inches)"],["health_risk","Injury risk"],["upside_remaining","Growth runway"],["shooting","Shooting"],["creation","Creation"],["spacing","Spacing"],["passing","Passing"],["rebounding","Rebounding"],["rim_deterrence","Rim protection"],["athleticism","Athleticism"],["release","Release"],["range","Range"],["handle","Handle"],["rim_pressure","Rim pressure"],["def_effort","Defensive effort"],["screen_nav","Screen navigation"],["lateral_agility","Lateral agility"],["stamina","Stamina"],["iq","IQ"],["games","Games played"],["games_missed","Games missed"],["display_mpg","MPG"],["points_per_game","PTS"],["rebounds_per_game","REB"],["assists_per_game","AST"],["steals_per_game","STL"],["blocks_per_game","BLK"],["turnovers_per_game","TO"]].map(([key,label])=>({key,label,type:"number"})),
     ...[["player","Player name"],["team","Team"],["position","Position"]].map(([key,label])=>({key,label,type:"text"})),
     ...seasons.map(season=>({key:season,label:`${shortSeasonLabel(season)} salary ($M)`,type:"number"})),
   ];
@@ -8886,9 +8887,9 @@ function playerFinderValue(row,key) {
 
 function playerFinderTable(rows) {
   const finder=state.playerFinder || {};
-  const fields=[["player","Player",260],["team","Team",48],["position","Pos",40],["age","Age",36],["height_inches","Height",54],["overall","OVR",104],["offense","OFF",104],["defense","DEF",104],["health_risk","Risk",56],["upside_remaining","Upside",60],["find","Find",58]];
+  const fields=[["player","Player",260],["team","Team",48],["position","Pos",40],["age","Age",36],["height_inches","Height",54],["overall","OVR",104],["offense","OFF",104],["defense","DEF",104],["health_risk","Risk",56],["upside_remaining","Runway",60],["find","Find",58]];
   const head=fields.map(([key,label])=>`<th scope="col" ${key!=="find"?`aria-sort="${finder.sortField===key?(finder.sortDirection==='asc'?'ascending':'descending'):'none'}"`:""}>${key==='find'?label:`<button type="button" data-finder-sort="${key}">${label}${finder.sortField===key?(finder.sortDirection==='asc'?' ↑':' ↓'):''}</button>`}</th>`).join('');
-  const body=rows.map(row=>`<tr data-finder-player="${escapeAttr(row.id)}" tabindex="0" aria-label="Open player card for ${escapeAttr(row.name)}"><td><span class="player-finder-identity">${playerHeadshotMarkup(row,'roster-player-headshot') || playerHeadshotMarkup({is_prospect:true},'roster-player-headshot')}${playerNameWithInjuryMarkup(row)}</span></td><td>${teamLogoSrc(row.team_abbrev)?`<span class="player-finder-team-logo" title="${escapeAttr(row.team_abbrev)}"><img src="${escapeAttr(teamLogoSrc(row.team_abbrev))}" alt="${escapeAttr(row.team_abbrev)} logo" loading="lazy" decoding="async"></span>`:escapeHtml(row.team_abbrev || "FA")}</td><td>${escapeHtml(compactPos(row.position))}</td><td>${escapeHtml(row.age == null ? "—" : Math.floor(row.age))}</td><td>${escapeHtml(heightFromRow(row) || "—")}</td>${['overall','offense','defense'].map(key=>`<td>${compactRatingBar(playerFinderValue(row,key))}</td>`).join('')}<td>${row.health_risk==null?'—':playerEvidenceRing('Injury risk',row.health_risk,10,Number(row.health_risk)>=7?'#e04d55':Number(row.health_risk)>=4?'#bd5b5d':'#8e6263','/10')}</td><td>${row.upside_remaining==null?'—':playerEvidenceRing('Upside',row.upside_remaining,5,playerUpsideColor(row.upside_remaining),' OVR')}</td><td><button type="button" class="ui-command" data-finder-trade="${escapeAttr(row.id)}" aria-label="Find trades for ${escapeAttr(row.name)}" ${!row.team_id || row.team_abbrev==='FA'?'disabled title="Free agents cannot be traded"':'title="Open Trade Finder with this player selected"'}>Find</button></td></tr>`).join('');
+  const body=rows.map(row=>`<tr data-finder-player="${escapeAttr(row.id)}" tabindex="0" aria-label="Open player card for ${escapeAttr(row.name)}"><td><span class="player-finder-identity">${playerHeadshotMarkup(row,'roster-player-headshot') || playerHeadshotMarkup({is_prospect:true},'roster-player-headshot')}${playerNameWithInjuryMarkup(row)}</span></td><td>${teamLogoSrc(row.team_abbrev)?`<span class="player-finder-team-logo" title="${escapeAttr(row.team_abbrev)}"><img src="${escapeAttr(teamLogoSrc(row.team_abbrev))}" alt="${escapeAttr(row.team_abbrev)} logo" loading="lazy" decoding="async"></span>`:escapeHtml(row.team_abbrev || "FA")}</td><td>${escapeHtml(compactPos(row.position))}</td><td>${escapeHtml(row.age == null ? "—" : Math.floor(row.age))}</td><td>${escapeHtml(heightFromRow(row) || "—")}</td>${['overall','offense','defense'].map(key=>`<td>${compactRatingBar(playerFinderValue(row,key))}</td>`).join('')}<td>${row.health_risk==null?'—':playerEvidenceRing('Injury risk',row.health_risk,10,Number(row.health_risk)>=7?'#e04d55':Number(row.health_risk)>=4?'#bd5b5d':'#8e6263','/10')}</td><td>${row.upside_remaining==null?'—':playerEvidenceRing('Growth runway',row.upside_remaining,5,playerUpsideColor(row.upside_remaining),' / 5')}</td><td><button type="button" class="ui-command" data-finder-trade="${escapeAttr(row.id)}" aria-label="Find trades for ${escapeAttr(row.name)}" ${!row.team_id || row.team_abbrev==='FA'?'disabled title="Free agents cannot be traded"':'title="Open Trade Finder with this player selected"'}>Find</button></td></tr>`).join('');
   return `<table class="player-finder-table"><colgroup>${fields.map(([, ,width])=>`<col style="width:${width}px">`).join('')}</colgroup><thead><tr>${head}</tr></thead><tbody>${body || '<tr><td colspan="11" class="player-finder-empty">No players match these filters.</td></tr>'}</tbody></table>`;
 }
 
@@ -10668,7 +10669,7 @@ function developmentTrendCard(rows = []) {
   const selectedLines = selectedIds.map((id) => candidates.find((candidate) => candidate.player_id === id)).filter(Boolean);
   const isNew = state.developmentNewSignature && state.developmentNewSignature === developmentTrendSignature();
   return `
-    ${sectionHead("Player Development", "", isNew ? `<span class="development-new-badge">NEW</span>` : "")}
+    ${sectionHead("Player Development", "Overall change this season (Oct-Jun)", isNew ? `<span class="development-new-badge">NEW</span>` : "")}
     <div class="development-trend-body">
       <div class="development-chart-panel">
         ${developmentLineChart(selectedLines, { empty: "No development players selected." })}
@@ -12350,7 +12351,7 @@ async function loadTradeIdentity(force = false) {
 
 function tradeAssetTable(assets, options = {}) {
   const control = options.side || options.removeSide;
-  return `<table class="trade-ledger${options.routeFrom ? " is-routed" : ""}" aria-label="${escapeAttr(options.label || "Trade assets")}"><thead><tr>${control ? '<th class="trade-ledger-control"><span class="sr-only">Select or remove</span></th>' : ""}${options.routeFrom ? '<th class="trade-ledger-route">Destination</th>' : ""}<th class="trade-ledger-portrait" aria-label="Portrait"></th><th>Player / Asset</th><th>Age</th><th>Height</th><th>Pos</th><th>OVR</th><th>OFF</th><th>DEF</th><th title="Remaining upside on a 0-5 scouting scale">Upside</th><th title="Model injury-risk index, not a probability. Standard player scores range from 0 to 34.">Injury risk</th><th>Contract</th><th title="Owner-context asset value; final evaluation includes destination fit and role">Value</th></tr></thead><tbody>${assets.map(asset => tradeAssetRow(asset, options)).join("")}</tbody></table>`;
+  return `<table class="trade-ledger${options.routeFrom ? " is-routed" : ""}" aria-label="${escapeAttr(options.label || "Trade assets")}"><thead><tr>${control ? '<th class="trade-ledger-control"><span class="sr-only">Select or remove</span></th>' : ""}${options.routeFrom ? '<th class="trade-ledger-route">Destination</th>' : ""}<th class="trade-ledger-portrait" aria-label="Portrait"></th><th>Player / Asset</th><th>Age</th><th>Height</th><th>Pos</th><th>OVR</th><th>OFF</th><th>DEF</th><th title="Growth runway: room this player has left to improve, from age, role and current level, on a 0-5 scale. Not a prediction of a future rating; 0 for most players 27 and older.">Runway</th><th title="Model injury-risk index, not a probability. Standard player scores range from 0 to 34.">Injury risk</th><th>Contract</th><th title="Owner-context asset value; final evaluation includes destination fit and role">Value</th></tr></thead><tbody>${assets.map(asset => tradeAssetRow(asset, options)).join("")}</tbody></table>`;
 }
 
 function tradeAssetRow(asset, {side, removeSide, routeFrom} = {}) {
@@ -12372,10 +12373,10 @@ function tradeAssetRow(asset, {side, removeSide, routeFrom} = {}) {
   const values = [asset.overall ?? ratings.overall, asset.offense ?? ratings.offense ?? (offense.length ? offense.reduce((a,b) => a+b,0) / offense.length : null), asset.defense ?? ratings.defense];
   const injury = typeof isPlayerInjured === "function" && isPlayerInjured(asset.health);
   const ratingCell = value => { const n = tradeKnownNumber(value); return `<td class="trade-ledger-rating">${draftMetric(n)}<i aria-hidden="true">${n === null ? "" : `<b style="width:${clampNumber(n,0,100)}%"></b>`}</i></td>`; };
-  const meter = (label, value, max) => { const n = tradeKnownNumber(value); return `<td class="trade-ledger-meter" title="${escapeAttr(label)}${n === null ? " unavailable" : ` ${n.toFixed(1)}${label === "Upside" ? `/${max}` : " model index"}`}"><span>${draftMetric(n)}${n === null || label !== "Upside" ? "" : `<small>/${max}</small>`}</span><i aria-hidden="true">${n === null ? "" : `<b style="width:${clampNumber(n/max*100,0,100)}%"></b>`}</i></td>`; };
+  const meter = (label, value, max) => { const n = tradeKnownNumber(value); return `<td class="trade-ledger-meter" title="${escapeAttr(label)}${n === null ? " unavailable" : ` ${n.toFixed(1)}${label === "Runway" ? `/${max}` : " model index"}`}"><span>${draftMetric(n)}${n === null || label !== "Runway" ? "" : `<small>/${max}</small>`}</span><i aria-hidden="true">${n === null ? "" : `<b style="width:${clampNumber(n/max*100,0,100)}%"></b>`}</i></td>`; };
   const evidence = [asset.potential != null ? `Potential ${draftMetric(asset.potential)}` : "", asset.mpg != null ? `${draftMetric(asset.mpg)} MPG` : "", asset.ppg != null ? `${draftMetric(asset.ppg)} PPG` : ""].filter(Boolean).join(" · ");
   const salaries = Object.entries(asset.salary_by_year || {}).filter(([,value]) => Number(value) > 0).sort(([a],[b]) => a.localeCompare(b));
-  return `<tr class="trade-ledger-player${selected ? " is-selected" : ""}${injury ? " is-injured" : ""}">${control}${route}<td>${playerHeadshotMarkup(asset, "trade-player-headshot") || '<span class="trade-portrait-empty" aria-hidden="true">&mdash;</span>'}</td><th scope="row"><button type="button" class="trade-player-link" data-dashboard-player-card="${escapeAttr(id)}" title="${escapeAttr(evidence || name)}">${playerNameWithInjuryMarkup(asset, name)}</button></th><td>${asset.age == null ? "—" : escapeHtml(asset.age)}</td><td>${escapeHtml(asset.height || "—")}</td><td>${escapeHtml(asset.position || "—")}</td>${values.map(ratingCell).join("")}${meter("Upside",asset.upside_remaining,5)}${meter("Injury risk",asset.health_risk,34)}<td class="trade-ledger-contract">${salaries.length ? `<details><summary>${tradeAssetContract(asset)}</summary><div>${salaries.map(([season, amount]) => `<span>${escapeHtml(shortSeasonLabel(season))} <b>${money(Number(amount))}</b></span>`).join("")}${asset.contract ? `<span>${escapeHtml(asset.contract)}</span>` : ""}</div></details>` : tradeAssetContract(asset)}</td><td class="trade-ledger-value">${draftMetric(tradeKnownNumber(asset.trade_value))}</td></tr>`;
+  return `<tr class="trade-ledger-player${selected ? " is-selected" : ""}${injury ? " is-injured" : ""}">${control}${route}<td>${playerHeadshotMarkup(asset, "trade-player-headshot") || '<span class="trade-portrait-empty" aria-hidden="true">&mdash;</span>'}</td><th scope="row"><button type="button" class="trade-player-link" data-dashboard-player-card="${escapeAttr(id)}" title="${escapeAttr(evidence || name)}">${playerNameWithInjuryMarkup(asset, name)}</button></th><td>${asset.age == null ? "—" : escapeHtml(asset.age)}</td><td>${escapeHtml(asset.height || "—")}</td><td>${escapeHtml(asset.position || "—")}</td>${values.map(ratingCell).join("")}${meter("Runway",asset.upside_remaining,5)}${meter("Injury risk",asset.health_risk,34)}<td class="trade-ledger-contract">${salaries.length ? `<details><summary>${tradeAssetContract(asset)}</summary><div>${salaries.map(([season, amount]) => `<span>${escapeHtml(shortSeasonLabel(season))} <b>${money(Number(amount))}</b></span>`).join("")}${asset.contract ? `<span>${escapeHtml(asset.contract)}</span>` : ""}</div></details>` : tradeAssetContract(asset)}</td><td class="trade-ledger-value">${draftMetric(tradeKnownNumber(asset.trade_value))}</td></tr>`;
 }
 
 function tradeLegalityBadge(candidate) {

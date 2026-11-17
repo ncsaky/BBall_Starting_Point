@@ -154,7 +154,7 @@ test('empty and crowded lists retain all assets; player marks are headshots and 
   const assets=Array.from({length:110},(_,index)=>player(`asset${index}`,'BKN'));
   const crowded=f.context.assetColumn('BKN assets',{assets},'from','BKN');
   assert.equal((crowded.match(/data-asset-side=/g)||[]).length,110);
-  assert.match(crowded,/\/asset109.png/);assert.match(crowded,/Upside 3.1/);assert.match(crowded,/Injury risk 2.2 model index/);assert.match(crowded,/Contract/);
+  assert.match(crowded,/\/asset109.png/);assert.match(crowded,/Runway 3.1/); /* "Upside" renamed "Growth runway" (M03, 2026-11-17) */assert.match(crowded,/Injury risk 2.2 model index/);assert.match(crowded,/Contract/);
   const single=f.context.assetButton(assets[0],'from',100,'BKN');
   assert.doesNotMatch(single,/BKN.svg/);
 });
