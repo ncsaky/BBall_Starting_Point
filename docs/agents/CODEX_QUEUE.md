@@ -6,7 +6,50 @@ Current priority (2026-11-17): the three "Ready now" tasks below. GUI tasks are 
 
 ---
 
-## Ready now (2026-11-17): three independent tasks, one fresh chat each
+## Ready now (2026-11-17 afternoon): two bug tasks from the test triage, one fresh chat each
+
+Suggested settings for both: **GPT-6.2 Sol, Medium**, fresh chat. Do not resume the old TST or T2b chats (TST is committed; Claude finishes T2b).
+Rules for both: don't babysit long runs by polling every few minutes (it burns usage). Start long runs in the background, do other work, and check at most every 20-30 minutes. If you can't fix something, say so plainly in the report; never weaken a test to make it pass.
+Claude owns: `impact_value.py`, `bbi_evidence.py`, `trait_adapter.py`, `ratings_model.py`, `sim.py`, `offense.py`, trade *valuation* in `transactions.py`, `data/canonical/impact_value_fit.json`, and `scripts/build_mature_fixture.py` / `output/t2b/` (a builder is running; don't touch it). Don't edit those.
+
+### BUG-A: Pick protections and pick-swap trades
+
+```
+Read AGENTS.md, docs/agents/BOARD.md and docs/agents/tasks/tst-suite-triage.md first. You own task BUG-A; add a board row "in progress (Codex)".
+
+The test triage quarantined three tests that look like real bugs in draft-pick handling. Each has a unittest.skip("needs review: ...") marker; the report lists the failing check.
+1. tests/test_imported_rookie_ratings.py test_pick_protections_are_unchanged_for_both_starting_versions: the current starting version loads ZERO pick protections where the archived data had 85 (e.g. protected first-round picks owed between teams). Find where pick obligations are loaded for a new save (storage/import path) and why they're empty. If real protections are being dropped from new saves, that is the most important fix here.
+2. tests/test_foundation.py test_ai_offer_packages_can_create_pick_swap_sweeteners: AI offer packages never include a pick swap. Find which eligibility rule excludes them.
+3. tests/test_foundation.py test_trade_evaluation_uses_team_context_and_legality: the decision comes back as something other than accept/reject. Decide whether the test is stale (a newer counteroffer outcome is intended; cite the commit) or the engine is wrong.
+
+For each: find the cause, fix it in src/ if it's an engine bug (smallest change; keep seeded results unchanged unless the fix requires it, and say so), remove the skip marker, and make the test pass with its original assertion. If the test is stale, update it with a one-line comment citing the evidence.
+
+ALLOWED FILES: pick/draft-pick modules (pick_rules.py, pick_presentation.py, pick-related functions in transactions.py and storage.py), trade offer package generation in transactions.py (NOT player valuation), the three tests above.
+CHECKS: the three tests, PYTHONPATH=src .venv/bin/python -m unittest tests.test_foundation tests.test_imported_rookie_ratings, and bash scripts/run_core_tests.sh.
+REPORT: docs/agents/tasks/bug-a-picks.md, plain language first (what was wrong, what it meant in the game, what changed). Board row to "review". Do not commit.
+```
+
+### BUG-B: Missing heights, staff budget, duplicate draft-class work, social-post evidence
+
+```
+Read AGENTS.md, docs/agents/BOARD.md and docs/agents/tasks/tst-suite-triage.md first. You own task BUG-B; add a board row "in progress (Codex)".
+
+Four quarantined tests in tests/test_foundation.py look like real bugs (each has a unittest.skip("needs review: ...") marker; the report lists the failing check):
+1. test_rostered_players_have_dashboard_core_data: 11 rostered players have no height (e.g. Tucker DeVries, BOS). Fill the real heights (and weight/wingspan if also missing) from a public source (NBA.com, Basketball Reference, team rosters, combine data). Record each value's source in your report. Put them where the game's other player measurements live; find that path first. Don't invent values.
+2. test_staff_queue_keeps_live_strategy_from_raising_budget: the AI's live strategy raises a team's staff budget when the test says it must not. Find the guard and fix it, or show the test is stale (cite a commit).
+3. test_future_draft_pick_recommendations_use_generated_class: the generated draft class is built twice instead of once (wasted work). Remove the duplicate computation without changing results.
+4. test_extension_social_requires_sim_evidence_for_health_money_position_and_conference_claims: a fan post claiming "durability bet" is accepted when the test expects it to be rejected (injury risk 0.0 with 64 missed games). Fix the evidence check so health claims need matching sim evidence.
+
+For each: fix the cause (smallest change), remove the skip marker, and make the test pass with its original assertion; or, if the test is stale, update it with a one-line comment citing evidence.
+
+ALLOWED FILES: player measurement data for the 11 players, staff budget code, the draft recommendation code path, the social-post validator, and tests/test_foundation.py (these four tests only). If a fix needs a file in Claude's list above, stop and describe it instead.
+CHECKS: PYTHONPATH=src .venv/bin/python -m unittest tests.test_foundation, bash scripts/run_core_tests.sh.
+REPORT: docs/agents/tasks/bug-b-data-staff.md, plain language first. Board row to "review". Do not commit.
+```
+
+---
+
+## Earlier (2026-11-17 morning; SPD and TST done, T2b finishing under Claude)
 
 Run them in separate chats; they touch different files. Claude is meanwhile working on ratings/value files (`bbi_evidence.py`, `impact_value.py`, `trait_adapter.py`, `ratings_model.py`, `sim.py` assist/rebound functions, `transactions.py` valuation, the BBI mapping and `data/canonical/*`). **Do not edit those.**
 

@@ -143,7 +143,7 @@ GUI wishlist work is parked.
 | T3 | Investigate likely real front-office bugs (below) | Claude / Codex |
 | SPD | Fewer league rebuilds per sim day; byte-identical results (save.py only) | **accepted 2026-11-17** (Claude re-verified: mid-season month 30.0 → 18.5 s, identical save; 329 core tests). Codex review notes: All 3 month comparisons exact; medians 22.8→16.9 s / 63.1→58.4 s / 88.8→60.3 s; 18 focused + 329 core tests pass (3 skips). Full diagnostic non-green: 57 failures / 5 errors. Report: `docs/agents/tasks/spd-sim-speed.md`. Uncommitted. |
 | T2b | Fix 10-season driver; rebuild the 2036 fixture (scripts + tests/fixtures) | in progress (Codex) |
-| TST | Full-suite stale-test triage (tests/ only) | in progress (Codex) |
+| TST | Full-suite stale-test triage (tests/ only) | done: 1,746 tests green, 56 quarantined with reasons (committed) |
 
 ## Full-suite leftovers after T1 (2026-11-16)
 

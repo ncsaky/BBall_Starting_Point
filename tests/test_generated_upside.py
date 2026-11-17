@@ -15,6 +15,8 @@ def legacy_traits(prospect, rng):
 
 
 class GeneratedUpsideTests(unittest.TestCase):
+    # 689933a makes public ranks depend on upside/medicals; isolate the underlying generator here.
+    @patch("nba_gm_data.draft.apply_public_ranks", new=lambda prospects: prospects)
     def test_tail_preserves_identity_readiness_medicals_and_ordinary_traits(self):
         for seed in (17, 29, 47, 83):
             actual = to_plain(draft.generate_draft_class_records("2032", seed))
