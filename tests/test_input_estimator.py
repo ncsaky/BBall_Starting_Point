@@ -5,10 +5,12 @@ from dataclasses import asdict
 import hashlib
 import json
 import os
+import random
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from nba_gm_data.input_estimator import (
     CAREER_PATH, DEFINITIONS, FT_SCALE, InputEstimator, InputEvidence,
@@ -319,6 +321,99 @@ class EstimationMethodTests(unittest.TestCase):
             self.assertEqual(80,load_reference_cells(tmp)[('p','S20')]['record']['value']['grade'])
 
 
+class HierarchicalPriorTests(unittest.TestCase):
+    def observation(self, iid='S16', grade=85, n=2000, group='shared_sample'):
+        return InputEvidence(iid, dict(grade=grade, scale=TECHNIQUE_SCALE), (5, 95),
+                             'local:technique', 'defined technique assessment', group,
+                             n=n, prior_exposure=250, reliability=.9,
+                             exposure_unit='tagged_opportunities')
+
+    def test_observed_skill_transfers_both_directions_only_within_family(self):
+        p = player('p')
+        base = InputEstimator().estimate_player_inputs(p)
+        high = InputEstimator(additional_evidence={'p': [self.observation()]}).estimate_player_inputs(p)
+        low = InputEstimator(additional_evidence={'p': [self.observation(grade=15)]}).estimate_player_inputs(p)
+        for iid in ('S17', 'S19', 'S20'):
+            self.assertGreater(scalar_value(high.input(iid)), scalar_value(base.input(iid)))
+            self.assertLess(scalar_value(low.input(iid)), scalar_value(base.input(iid)))
+            self.assertEqual('prior', estimation_status(high.input(iid)))
+            self.assertEqual('low', high.input(iid)['uncertainty']['confidence'])
+            band = uncertainty_details(high.input(iid))['interval']
+            self.assertLessEqual(band[0], scalar_value(base.input(iid)))
+            self.assertGreater(band[1] - band[0], 60)
+        for iid in ('S08', 'S35', 'P05', 'T08', 'F01.execution'):
+            self.assertEqual(base.input(iid), high.input(iid))
+
+    def test_small_or_missing_samples_shrink_impact_context(self):
+        def skill(mp):
+            row = dict(name='p', CraftedDPM=4, DLEBRON=4)
+            if mp is not None:
+                row['MP'] = mp
+            return estimate(InputEstimator(stats_rows=[row]), player('p'), 'S36')
+        base = estimate(InputEstimator(), player('p'), 'S36')
+        self.assertEqual(base, skill(None))
+        self.assertEqual(base, skill(0))
+        self.assertLess(scalar_value(base), scalar_value(skill(10)))
+        self.assertLess(scalar_value(skill(10)), scalar_value(skill(2000)))
+        self.assertEqual('prior', estimation_status(skill(2000)))
+
+    def test_impact_channels_and_iq_do_not_become_universal_talent(self):
+        p = player('p')
+        base = InputEstimator().estimate_player_inputs(p)
+        offense = InputEstimator(stats_rows=[dict(name='p', MP=2000, CraftedOPM=4)]).estimate_player_inputs(p)
+        defense = InputEstimator(stats_rows=[dict(name='p', MP=2000, CraftedDPM=-4)]).estimate_player_inputs(p)
+        iq = InputEstimator(stats_rows=[dict(name='p', MP=2000, BBallIQ=90)]).estimate_player_inputs(p)
+        self.assertGreater(scalar_value(offense.input('S19')), scalar_value(base.input('S19')))
+        self.assertLess(scalar_value(defense.input('S35')), scalar_value(base.input('S35')))
+        self.assertGreater(scalar_value(iq.input('S44')), scalar_value(base.input('S44')))
+        for iid in ('S35', 'P05', 'T04'):
+            self.assertEqual(base.input(iid), offense.input(iid))
+        for iid in ('S01', 'P07', 'T15'):
+            self.assertEqual(base.input(iid), iq.input(iid))
+
+    def test_correlated_impact_models_do_not_multiply_precision(self):
+        a = InputEstimator(stats_rows=[dict(name='p', MP=2000, CraftedDPM=3)])
+        b = InputEstimator(stats_rows=[dict(name='p', MP=2000, CraftedDPM=3, DLEBRON=3)])
+        self.assertEqual(estimate(a, player('p'), 'S35')['value'],
+                         estimate(b, player('p'), 'S35')['value'])
+
+    def test_qualitative_assessment_is_not_given_a_shot_denominator(self):
+        obs = InputEvidence('S16', dict(grade=85, scale=TECHNIQUE_SCALE), (60, 95),
+                            'scout:technique', 'defined technique assessment', 'scout:p',
+                            n=1, prior_exposure=1, exposure_unit='qualitative_assessment')
+        record = estimate(InputEstimator(additional_evidence={'p': [obs]}), player('p'), 'S19')
+        evidence = next(e for e in record['evidence']
+                        if e['shared_evidence_id'].startswith('family_talent:'))
+        detail = json.loads(evidence['notes'])
+        self.assertGreater(detail['observations'][0]['precision'], .01)
+        self.assertEqual('prior', estimation_status(record))
+
+    def test_repeated_family_source_is_one_vote_and_never_recursive(self):
+        once = InputEstimator(additional_evidence={'p': [self.observation('S16')]}).estimate_player_inputs(player('p'))
+        twice = InputEstimator(additional_evidence={'p': [self.observation('S16'), self.observation('S17')]}).estimate_player_inputs(player('p'))
+        self.assertEqual(once.input('S19')['value'], twice.input('S19')['value'])
+        self.assertEqual(once.input('S20')['value'], twice.input('S20')['value'])
+        small = InputEstimator(additional_evidence={'p': [self.observation(n=5)]}).estimate_player_inputs(player('p'))
+        self.assertLess(scalar_value(small.input('S19')), scalar_value(once.input('S19')))
+
+    def test_direct_estimates_are_unchanged_and_provider_context_not_double_counted(self):
+        row = dict(name='p', MP=2000, passerRating=70, ASTp75=8, CraftedOPM=4,
+                   CraftedDPM=3, BBallIQ=90, LT_06_PCT=.7)
+        model = InputEstimator(stats_rows=[row])
+        before = InputEstimator(stats_rows=[row])
+        before._hierarchical_priors = lambda player, records: None
+        a, b = model.estimate_player_inputs(player('p')), before.estimate_player_inputs(player('p'))
+        for iid in DEFINITIONS:
+            if estimation_status(b.input(iid)) != 'prior':
+                self.assertEqual(a.input(iid), b.input(iid), iid)
+        hierarchy = next(e for e in a.input('F02.recognition')['evidence']
+                         if e['shared_evidence_id'].startswith('family_talent:'))
+        details = json.loads(hierarchy['notes'])
+        self.assertEqual(1, len(details['observations']))
+        self.assertEqual('direct_family', details['observations'][0]['group'])
+        self.assertTrue(details['observations'][0]['superseded_context'])
+
+
 class AdditionalSourceTests(unittest.TestCase):
     def test_new_per_input_source_and_correlated_duplicate_handling(self):
         source=InputEvidence('S20',dict(grade=80,scale=TECHNIQUE_SCALE),(60,90),
@@ -377,7 +472,7 @@ class AdditionalSourceTests(unittest.TestCase):
 
 
 class ProspectTests(unittest.TestCase):
-    def test_generated_dataclass_matches_dict_and_uses_wide_uncertainty(self):
+    def test_generated_dataclass_matches_dict_and_has_generator_provenance(self):
         from nba_gm_data.draft import generate_draft_class_records
         generated=generate_draft_class_records('2029',seed=7)
         p=generated['draft_prospects'][0]
@@ -386,8 +481,15 @@ class ProspectTests(unittest.TestCase):
         b=estimate_prospect_inputs(asdict(p),[asdict(t) for t in traits],{})
         self.assertEqual(a.to_dict(),b.to_dict())
         self.assertEqual(94,len(a.to_dict()['inputs']))
-        self.assertEqual('prior',estimation_status(a.input('S01')))
-        self.assertGreater(uncertainty_details(a.input('S01'))['interval'][1]-uncertainty_details(a.input('S01'))['interval'][0],60)
+        for record in a.to_dict()['inputs'].values():
+            self.assertEqual('generated',record['reason'])
+            self.assertEqual('estimated',record['status'])
+            self.assertEqual('draft_model',record['evidence'][0]['source'])
+            self.assertTrue(record['evidence'][0]['method'].startswith('generated_real_input_'))
+            scalar=scalar_value(record)
+            if scalar is not None:
+                self.assertLessEqual(uncertainty_details(record)['interval'][0],scalar)
+                self.assertGreaterEqual(uncertainty_details(record)['interval'][1],scalar)
 
     def test_real_cached_prospects_work_with_existing_draft_records(self):
         from nba_gm_data.draft import build_2026_draft_records,default_draft_model_config
@@ -438,6 +540,153 @@ class ProspectTests(unittest.TestCase):
         r=estimate_prospect_inputs(player('p'),{},[obs]).input('S20')
         self.assertEqual('estimated',estimation_status(r))
         self.assertTrue(any(e['source']=='scout:tagged' for e in r['evidence']))
+
+
+class GeneratedInputTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        from nba_gm_data import player_profile, ratings_model
+        cls.rm=ratings_model
+        cls.pp=player_profile
+        cls.base=json.loads((ROOT/UNIVERSE_PATH).read_text())
+        cls.legacy_keys=sorted({t['trait_key'] for t in cls.base['traits']})
+        key,inputs=ratings_model._load_inputs_keyed(ROOT)
+        cls.reference=player_profile.league_reference(key,inputs)
+
+    def fictional(self, **kwargs):
+        return player('generated_test', source_kind='generated_rookie', draft_year='2027',
+                      current_ability=kwargs.pop('current_ability',55),
+                      potential=kwargs.pop('potential',80),
+                      primary_off_role=kwargs.pop('primary_off_role','lead_creator'),
+                      height_inches=kwargs.pop('height_inches',77),
+                      weight_lbs=kwargs.pop('weight_lbs',205), **kwargs)
+
+    def header(self,p,traits=None):
+        inputs=InputEstimator().estimate_player_inputs(p,traits,prospect=True).to_dict()['inputs']
+        return self.pp.header_for(self.reference,inputs)
+
+    def test_current_ability_tracks_real_input_distribution_without_potential_bonus(self):
+        ratings=[]
+        for ability in (35,45,55,65,75):
+            p=self.fictional(current_ability=ability)
+            traits={k:ability+7 for k in self.legacy_keys}
+            ratings.append(self.header(p,traits)['ovr'])
+        self.assertEqual(sorted(ratings),ratings)
+        self.assertGreater(ratings[-1]-ratings[0],30)
+        traits={k:62 for k in self.legacy_keys}
+        a=InputEstimator().estimate_player_inputs(self.fictional(potential=65),traits)
+        b=InputEstimator().estimate_player_inputs(self.fictional(potential=95),traits)
+        self.assertEqual({i:r['value'] for i,r in a.to_dict()['inputs'].items()},
+                         {i:r['value'] for i,r in b.to_dict()['inputs'].items()})
+
+    def test_draft_traits_and_archetype_define_skill_shape(self):
+        p=self.fictional()
+        low=InputEstimator().estimate_player_inputs(p,dict(shooting=25))
+        high=InputEstimator().estimate_player_inputs(p,dict(shooting=90))
+        self.assertGreater(scalar_value(high.input('S01')),scalar_value(low.input('S01'))+5)
+        shooter=InputEstimator().estimate_player_inputs(self.fictional(primary_off_role='movement_shooter'))
+        creator=InputEstimator().estimate_player_inputs(self.fictional(primary_off_role='lead_creator'))
+        self.assertGreater(scalar_value(shooter.input('S01')),scalar_value(creator.input('S01')))
+        self.assertGreater(scalar_value(creator.input('F01.recognition')),scalar_value(shooter.input('F01.recognition')))
+
+    def test_legacy_profile_preserves_distinct_specialists_at_same_ability(self):
+        traits={k:60 for k in self.legacy_keys}
+        shooter=dict(traits,shooting_range=90,release_speed=85,rim_deterrence=25)
+        rim=dict(traits,shooting_range=25,release_speed=30,rim_deterrence=90)
+        a=InputEstimator().estimate_player_inputs(self.fictional(),shooter)
+        b=InputEstimator().estimate_player_inputs(self.fictional(),rim)
+        self.assertGreater(scalar_value(a.input('S01')),scalar_value(b.input('S01')))
+        self.assertGreater(scalar_value(b.input('S37')),scalar_value(a.input('S37')))
+
+    def test_real_reference_values_supply_generated_grades(self):
+        import nba_gm_data.input_estimator as module
+        table=module._generated_reference(str(ROOT))
+        # Constant real input reference => that same generated value, whatever
+        # the old trait scale. This catches bypassing the empirical calibration.
+        controlled={iid:tuple((pid,ca,pos,shape,61 if iid.startswith(('S','F')) else v)
+                              for pid,ca,pos,shape,v in rows)
+                    for iid,rows in table.items()}
+        module._generated_definition_inputs.cache_clear()
+        with patch.object(module,'_generated_reference',return_value=controlled):
+            result=InputEstimator().estimate_player_inputs(self.fictional())
+        module._generated_definition_inputs.cache_clear()
+        self.assertEqual(61,result.input('S01')['value']['grade'])
+        self.assertEqual(61,result.input('F09.execution')['value']['grade'])
+        detail=json.loads(result.input('S01')['evidence'][0]['notes'])
+        self.assertEqual(24,len(detail['neighbors']))
+        self.assertAlmostEqual(1,sum(r['weight'] for r in detail['neighbors']),places=6)
+
+    def test_routine_save_fields_reuse_definition_without_changing_inputs(self):
+        import nba_gm_data.input_estimator as module
+        module._generated_definition_inputs.cache_clear()
+        p=self.fictional()
+        a=InputEstimator().estimate_player_inputs(p)
+        stats=dict(p,_save_stats=dict(points=500,assists=99),team_id='other',minutes_projection=40)
+        b=InputEstimator().estimate_player_inputs(stats)
+        self.assertEqual(a.to_dict(),b.to_dict())
+        self.assertEqual(1,module._generated_definition_inputs.cache_info().hits)
+
+    def test_body_definition_native_units_and_replacement_identity(self):
+        from nba_gm_data.save import create_replacement_player,generated_replacement_traits
+        replacement=create_replacement_player(self.base['teams'][0],'2028-29',7,0)
+        records=generated_replacement_traits(replacement,7)
+        result=InputEstimator().estimate_player_inputs(replacement,records,prospect=True)
+        self.assertEqual('generated',result.input('S01')['reason'])
+        self.assertEqual(94,len(result.to_dict()['inputs']))
+        self.assertAlmostEqual(replacement['height_inches']*2.54,scalar_value(result.input('P01')),places=5)
+        self.assertAlmostEqual(replacement['weight_lbs']*.45359237,scalar_value(result.input('P04')),places=5)
+
+    def test_real_signed_2026_class_stays_on_evidence_path(self):
+        p=self.fictional()
+        p.update(draft_year='2026')
+        a=InputEstimator().estimate_player_inputs(p,prospect=True)
+        b=InputEstimator().estimate_player_inputs(dict(p,current_ability=90,potential=99),prospect=True)
+        self.assertEqual(a.to_dict(),b.to_dict())
+        self.assertTrue(all(r['reason']!='generated' for r in a.to_dict()['inputs'].values()))
+
+    def test_explicit_generated_kinds_keep_definition_when_stats_are_attached(self):
+        for kind in ('generated_rookie','generated_prospect','generated_replacement_depth'):
+            p=dict(self.fictional(),source_kind=kind)
+            plain=InputEstimator().estimate_player_inputs(p)
+            with_stats=InputEstimator().estimate_player_inputs(dict(p,public_stats={'games':30}))
+            self.assertEqual(plain.to_dict(),with_stats.to_dict())
+            self.assertEqual('generated',plain.input('S01')['reason'])
+
+    def test_generated_class_has_no_lottery_floor_and_does_not_use_global_rng(self):
+        from nba_gm_data.draft import generate_draft_class_records
+        generated=generate_draft_class_records('2029',seed=7)
+        by_id={p.id:p for p in generated['draft_prospects']}
+        grouped={pid:[] for pid in by_id}
+        for t in generated['draft_prospect_traits']:
+            grouped[t.prospect_id].append(t)
+        state=random.getstate()
+        inputs={pid:estimate_prospect_inputs(p,grouped[pid]).to_dict()['inputs'] for pid,p in by_id.items()}
+        self.assertEqual(state,random.getstate())
+        for pid,p in by_id.items():
+            self.assertEqual(94,len(inputs[pid]))
+            if p.rank<=14:
+                self.assertGreater(self.pp.header_for(self.reference,inputs[pid])['ovr'],15)
+        # Traversal and source-row order cannot perturb the generated detail.
+        pid=next(iter(by_id))
+        self.assertEqual(inputs[pid],estimate_prospect_inputs(by_id[pid],list(reversed(grouped[pid]))).to_dict()['inputs'])
+
+    def test_generated_detail_is_byte_identical_across_process_hash_seeds(self):
+        code='''from nba_gm_data.draft import generate_draft_class_records
+from nba_gm_data.input_estimator import estimate_prospect_inputs,canonical_json
+import hashlib
+c=generate_draft_class_records('2029',seed=7)
+p=c['draft_prospects'][0]
+t=[t for t in c['draft_prospect_traits'] if t.prospect_id==p.id]
+print(hashlib.sha256(canonical_json(estimate_prospect_inputs(p,t).to_dict()).encode()).hexdigest())
+'''
+        digests=[]
+        for seed in ('1','29'):
+            run=subprocess.run([str(ROOT/'.venv/bin/python'),'-c',code],cwd=ROOT,
+                               env=dict(os.environ,PYTHONPATH=str(ROOT/'src'),PYTHONHASHSEED=seed),
+                               capture_output=True,text=True,timeout=30)
+            self.assertEqual(0,run.returncode,run.stderr)
+            digests.append(run.stdout)
+        self.assertEqual(digests[0],digests[1])
 
 
 class ObservableTendencyTests(unittest.TestCase):
@@ -552,6 +801,7 @@ class ProcessDeterminismTests(unittest.TestCase):
     def test_byte_identical_build_across_hash_seeds(self):
         with tempfile.TemporaryDirectory() as tmp:
             digests=[]
+            compressed_digests=[]
             for seed in ('1','29'):
                 path=Path(tmp)/('inputs'+seed+'.json')
                 env=dict(os.environ,PYTHONPATH=str(ROOT/'src'),PYTHONHASHSEED=seed)
@@ -560,7 +810,9 @@ class ProcessDeterminismTests(unittest.TestCase):
                                       capture_output=True,text=True,timeout=45)
                 self.assertEqual(0,result.returncode,result.stderr)
                 digests.append(hashlib.sha256(path.read_bytes()).hexdigest())
+                compressed_digests.append(hashlib.sha256(Path(str(path)+'.gz').read_bytes()).hexdigest())
             self.assertEqual(digests[0],digests[1])
+            self.assertEqual(compressed_digests[0],compressed_digests[1])
 
 
 if __name__=='__main__':

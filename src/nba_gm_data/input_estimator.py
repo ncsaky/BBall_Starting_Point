@@ -4,6 +4,8 @@ Wire contract: a normal player_model input section, containing normal PlayerInpu
 records. Until the coordinator approves native status='prior', status='estimated'
 plus reason='prior' means a usable prior, NOT direct evidence of this input. Use
 estimation_status(), never status alone, when displaying evidence coverage.
+Fictional generator definitions use reason='generated' and source='draft_model';
+they define a fictional player rather than claim observations of a real person.
 Uncertainty.notes contains JSON plausibility intervals, not calibrated CIs.
 
 Fixed anchors and shrinkage constants below are basketball judgments, not fits to
@@ -15,6 +17,9 @@ on import; no random numbers or wall-clock dates are used.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, is_dataclass
+from functools import lru_cache
+import gzip
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -26,7 +31,7 @@ from typing import Any, Mapping
 from .player_model import INPUT_VERSION, PlayerInputs, validate_input_section
 from .player_model_registry import REGISTRY_VERSION, definition_registry
 
-METHOD_VERSION = 'e2_evidence_estimator_v3_conditioned_priors_observed_tendencies'
+METHOD_VERSION = 'e2b_hierarchical_family_priors_v1'
 TECHNIQUE_SCALE = 'e2_technique_reference_v1_50_functional_75_strong_90_exceptional'
 FT_SCALE = 'research_FT_conversion_percent_proxy_v1'
 DEFINITIONS = {r['id']: r for r in definition_registry()['inputs']}
@@ -446,6 +451,49 @@ def _mean(values) -> float:
     return sum(values)/len(values) if values else 0.0
 
 
+# Hierarchical assumptions, declared before running the engine diagnostics:
+# a unit-normal family talent has a .8 log-odds skill scale (~20 grade points
+# at 50), and related unobserved techniques have correlation .65 with it.
+# These are provisional basketball judgments, NOT empirical fitted correlations.
+# Positive AND negative evidence transfers; offense is only weak evidence for
+# shooting/rebounding, and never conditions defense, tools or choice tendencies.
+# Impact models share data: average them as ONE observation with precision at
+# most 2, discounted by MP/(MP+750). IQ precision <= .5; workload/usage <=
+# .15. Context from a snapshot shares one precision budget (the maximum, not
+# the sum). Legacy remains the existing weak local residual, not another
+# observation here. A unit prior precision prevents extrapolating small samples.
+# Direct inputs share precision by evidence lineage, not skill count.
+FAMILY_CORRELATION = .65
+FAMILY_LOG_ODDS_SCALE = .8
+FAMILY_TECHNIQUES = {
+    'shooting': tuple(f'S{i:02d}' for i in (1, 2, 3, 4, 5, 6, 8, 9)),
+    'finishing': tuple(f'S{i:02d}' for i in (10, 11, 12, 13, 14, 15, 24)),
+    'creation': tuple(f'S{i:02d}' for i in range(16, 21)),
+    'post': ('S21', 'S22', 'S23'),
+    'routes_screening': ('S25', 'S26', 'S27', 'S28'),
+    'rebounding': ('S29', 'S30', 'S31', 'S32'),
+    'perimeter_defense': ('S33', 'S34', 'S35', 'S40'),
+    'interior_defense': ('S36', 'S37', 'S45'),
+    'defensive_recognition': ('S38', 'S39', 'S41', 'S42', 'S43', 'S44', 'S46'),
+    'passing_recognition': tuple(f'F{i:02d}.recognition' for i in range(1, 10)),
+    'passing_execution': tuple(f'F{i:02d}.execution' for i in range(1, 10)),
+}
+# channel, impact loading, IQ loading, workload/usage loading.
+FAMILY_CONTEXT = {
+    'shooting': ('offense', .25, 0, 0),
+    'finishing': ('offense', 1, 0, 1),
+    'creation': ('offense', 1, .5, 1),
+    'post': ('offense', 1, 0, 1),
+    'routes_screening': ('offense', .5, .5, 0),
+    'rebounding': ('defense', .35, 0, 0),
+    'perimeter_defense': ('defense', 1, 0, 0),
+    'interior_defense': ('defense', 1, .5, 0),
+    'defensive_recognition': ('defense', 1, 1, 0),
+    'passing_recognition': ('offense', .5, 1, 0),
+    'passing_execution': ('offense', .5, .5, 0),
+}
+
+
 
 # BBI mappings follow the acquisition manifest's distinct channels. These are
 # deliberately weak proxy constraints, never measurements of isolated technique.
@@ -604,6 +652,8 @@ class InputEstimator:
 
     def estimate_player_inputs(self, player: Any, traits: Any = None, *, prospect: bool = False) -> PlayerInputs:
         player = _plain(player)
+        if _fictional_player(player):
+            return _generated_player_inputs(player, traits)
         # Effective legacy summaries may condition priors, never become measurements.
         player_id = str(player['id'])
         pos = _position(player)
@@ -626,10 +676,160 @@ class InputEstimator:
         if not prospect:
             self._observed_tendencies(player, records)
             self._expert_adjustments(player_id, records)
-        self._apply_additional(records, self.additional.get(player_id, []))
+        observations = self.additional.get(player_id, [])
+        # BBI's existing contract is dimension-specific weak proxy evidence.
+        # Apply it after pooling: a screen-navigation proxy is not a measurement
+        # of neighboring containment/contact skills. Other explicitly defined
+        # technique observations can inform their declared related family.
+        bbi = [o for o in observations if o.group_id.startswith('bbi:')]
+        self._apply_additional(records, [o for o in observations if not o.group_id.startswith('bbi:')])
+        if not prospect:
+            self._hierarchical_priors(player, records)
+        self._apply_additional(records, bbi)
         document = dict(version=INPUT_VERSION, registry_version=REGISTRY_VERSION,
                         player_id=player_id, inputs=records)
         return PlayerInputs(document)
+
+    def _family_context(self, player: dict, family: str) -> list[dict]:
+        """One correlated provider observation, using the newest usable window.
+
+        Fixed unit anchors: 2 offensive / 1.5 defensive points per 100, 20 IQ
+        points, 12 minutes/game or usage percentage points. No totals, projected
+        impact, percentiles or imputed IQ are added as independent observations.
+        Missing MP means zero precision, not an invented sample size.
+        """
+        name = _normalize(player.get('name', ''))
+        channel, impact_loading, iq_loading, work_loading = FAMILY_CONTEXT[family]
+        aliases = (('CraftedOPM', 'COPM'), ('OLEBRON',)) if channel == 'offense' else (
+                   ('CraftedDPM', 'CDPM'), ('DLEBRON',))
+        for row, source in ((self.stats.get(name, {}), STATS_PATH),
+                            (self.skills.get(name, {}), SKILL_PATH)):
+            mp = _get(row, 'MP')
+            if mp is None or mp <= 0:
+                continue
+            reliability = mp / (mp + 750)
+            parts = []
+            impact = {next(k for k in keys if _get(row, k) is not None): value
+                      for keys in aliases if (value := _get(row, *keys)) is not None}
+            if impact:
+                signal = _mean(impact.values()) / (2 if channel == 'offense' else 1.5)
+                parts.append((impact_loading * signal, 2 * reliability, impact))
+            iq = _get(row, 'BBallIQ')
+            if iq is not None and iq_loading:
+                parts.append((iq_loading * (iq - 50) / 20, .5 * reliability, {'BBallIQ': iq}))
+            work = {k: v for k, keys in [('MIN', ('MIN', 'MPG')), ('USGpct', ('USGpct', 'USG%'))]
+                    if (v := _get(row, *keys)) is not None}
+            if work and work_loading:
+                signal = _mean((v - (24 if k == 'MIN' else 20)) / 12 for k, v in work.items())
+                parts.append((work_loading * signal, .15 * reliability, work))
+            if parts:
+                # These summaries can share both games and model ingredients.
+                # Average their votes and retain only the largest precision.
+                return [dict(signal=sum(z * p for z, p, _ in parts) / sum(p for _, p, _ in parts),
+                             precision=max(p for _, p, _ in parts), source=source,
+                             group='provider_context', minutes=mp,
+                             fields={k: v for _, _, fields in parts for k, v in fields.items()})]
+        return []
+
+    def _hierarchical_priors(self, player: dict, records: dict) -> None:
+        """Partial pooling of missing technique, with no recursive prior learning.
+
+        Snapshot direct records before updating any prior. Shared source/group
+        lineage forms connected components: copied mode/passing estimates or
+        overlapping expert+provider blends cannot multiply the same evidence.
+        Their already-shrunk grades are conservative clues, never deconvolved
+        into fictional raw observations. FT has a different scale and is excluded.
+        The old local residual retains role/body/legacy distinctions; it supplies
+        no likelihood precision and is not recycled through the family factor.
+        """
+        observed = {iid: r for iid, r in records.items() if estimation_status(r) != 'prior'}
+        for family, ids in FAMILY_TECHNIQUES.items():
+            samples = []
+            for iid in ids:
+                if iid not in observed:
+                    continue
+                record = observed[iid]
+                sources = [e for e in record['evidence'] if not (
+                    e['source'].startswith(METHOD_VERSION) or e['source'] == 'legacy_trait_prior'
+                    or e.get('shared_evidence_id', '').startswith(('related_prior:', 'body_prior:', 'role_prior:')))]
+                if not sources:
+                    continue
+                lineage = {key for e in sources for key in (e['source'], e.get('shared_evidence_id', e['source']))}
+                exposure = []
+                for e in sources:
+                    n = _get(e.get('exposure', {}), 'value')
+                    if n is not None and n > 0:
+                        unit = e['exposure'].get('unit', '')
+                        if 'qualitative' in unit or 'assessment' in unit:
+                            exposure.append(.25)  # one assessment is not one shot
+                        else:
+                            k = 750 if 'minute' in unit else 250
+                            exposure.append(n / (n + k))
+                # A qualitative assessment is one weak vote, not N possessions.
+                reliability = max(exposure, default=.25)
+                low, high = uncertainty_details(record)['interval']
+                grade = record['value']['grade']
+                radius = max(grade - low, high - grade)
+                precision = reliability / (1 + (radius / 20) ** 2)
+                samples.append(dict(inputs=[iid], lineage=lineage, precision=precision,
+                                    signal=(grade - _prior_grade(iid, player, False)) / 20))
+            # Merge overlapping lineage, including transitive overlap. Sorting
+            # and averaging make the update independent of source/input order.
+            groups = []
+            while samples:
+                component = [samples.pop(0)]
+                lineage = set(component[0]['lineage'])
+                while True:
+                    matches = [s for s in samples if lineage & s['lineage']]
+                    if not matches:
+                        break
+                    for s in matches:
+                        samples.remove(s)
+                        component.append(s)
+                        lineage.update(s['lineage'])
+                groups.append(dict(signal=_mean(s['signal'] for s in component),
+                                   precision=max(s['precision'] for s in component),
+                                   inputs=sorted(i for s in component for i in s['inputs']),
+                                   sources=sorted(lineage), group='direct_family'))
+            context = self._family_context(player, family)
+            observations = []
+            for summary in context:
+                overlap = [g for g in groups if summary['source'] in g['sources']]
+                if overlap:
+                    # More specific family evidence supersedes broad impact
+                    # from the SAME data source. Averaging them would let an
+                    # ambiguous global model overwhelm its own skill evidence.
+                    observations.extend(dict(g, superseded_context=summary) for g in overlap)
+                else:
+                    observations.append(summary)
+                groups = [g for g in groups if g not in overlap]
+            observations.extend(groups)
+            if not observations:
+                continue
+            precision = sum(o['precision'] for o in observations)
+            latent = sum(o['precision'] * o['signal'] for o in observations) / (1 + precision)
+            delta = FAMILY_LOG_ODDS_SCALE * FAMILY_CORRELATION * latent
+            metadata = dict(family=family, latent_mean=latent, latent_variance=1 / (1 + precision),
+                            correlation=FAMILY_CORRELATION, log_odds_scale=FAMILY_LOG_ODDS_SCALE,
+                            observations=observations)
+            for iid in ids:
+                old = records[iid]
+                if estimation_status(old) != 'prior':
+                    continue
+                base = old['value']['grade']
+                mean = 100 * _probability(_logit(base / 100) + delta)
+                # Retain broad uncertainty and any disagreement with the old
+                # prior even when the family talent is well supported. This is
+                # a plausibility envelope, never a calibrated confidence band.
+                band = uncertainty_details(old)['interval']
+                radius = max(40, mean - band[0], band[1] - mean)
+                evidence = [*old['evidence'], _evidence(
+                    METHOD_VERSION + ':family_talent',
+                    'hierarchical related-family inference; unobserved skill remains a prior',
+                    'family_talent:' + str(player['id']) + ':' + family,
+                    notes=json.dumps(metadata, sort_keys=True, separators=(',', ':')))]
+                records[iid] = _grade_record(mean, radius, evidence, prior=True,
+                    basis='position/role plus weak local context and partially pooled family talent; no direct observation')
 
     def _prior_features(self, player: dict) -> dict[str, tuple[float, dict]]:
         """Related evidence, not observations of isolated talents or willingness."""
@@ -1294,6 +1494,196 @@ def _plain(value: Any) -> dict:
     return asdict(value) if is_dataclass(value) else dict(value)
 
 
+GENERATED_METHOD = 'generated_real_input_neighbors_v1'
+GENERATED_INPUTS_PATH = 'data/canonical/player_inputs_2026_27.json'
+
+
+def _fictional_player(player: dict) -> bool:
+    """Use explicit generator identities, never a low evidence count or rank.
+
+    rookie_player_record also labels the *real* 2026 class generated_rookie.
+    That class must retain the evidence path, including after signing.
+    """
+    if player.get('league') == 'generated':
+        return True
+    kind = str(player.get('source_kind') or '')
+    if kind == 'generated_rookie' and str(player.get('draft_year')) == '2026':
+        return False
+    return kind.startswith('generated_') or str(player.get('id', '')).startswith('generated_player_')
+
+
+def _generated_detail(player: dict, key: str) -> float:
+    """Stable [-1, 1] detail; independent of traversal, Python hash and engine RNG."""
+    seed = [GENERATED_METHOD, str(player['id']), player.get('seed'), key]
+    digest = hashlib.sha256(canonical_json(seed).encode()).digest()
+    return 2 * int.from_bytes(digest[:8], 'big') / (2**64 - 1) - 1
+
+
+@lru_cache(maxsize=1)
+def _generated_reference(root: str) -> dict[str, tuple]:
+    """Small numeric calibration table, loaded lazily from existing real inputs.
+
+    No draft, adapter, display-rating or simulation outcomes are fitted here.
+    current_ability is the canonical real-player ability coordinate; the linked
+    legacy summaries only select the shape *within* that ability/position.
+    """
+    root = Path(root)
+    universe = json.loads((root / UNIVERSE_PATH).read_text())
+    path = root / GENERATED_INPUTS_PATH
+    if path.exists():
+        with path.open() as stream:
+            documents = json.load(stream)['players']
+    else:
+        with gzip.open(str(path) + '.gz', 'rt') as stream:
+            documents = json.load(stream)['players']
+    traits = _trait_index(universe['traits'])
+    reference = {iid: [] for iid in DEFINITIONS}
+    for player in sorted(universe['players'], key=lambda p: p['id']):
+        pid = player['id']
+        ability = _get(player, 'current_ability')
+        if _fictional_player(player) or pid not in documents or ability is None or not traits.get(pid):
+            continue
+        inputs = documents[pid]['inputs']
+        for iid, record in inputs.items():
+            scalar = scalar_value(record)
+            if scalar is None:
+                continue
+            links = _LEGACY_PRIOR_LINKS.get(iid, ('passing_reads', 'scheme_iq'))
+            shape = _mean(traits[pid].get(k, ability+7) for k in links)
+            reference[iid].append((pid, ability, _position(player), shape, scalar))
+    if not reference['S01']:
+        raise ValueError('Generated players require real-player input calibration records')
+    return {iid: tuple(rows) for iid, rows in reference.items()}
+
+
+def _generated_player_inputs(player: dict, traits: Any) -> PlayerInputs:
+    # Save stats, team changes and coach minutes are not generator definitions.
+    # ratings_model's outer cache includes those fields; keep this bounded cache
+    # on just the actual definition so routine save rebuilds do not refit skills.
+    rows = traits
+    pid = str(player['id'])
+    if traits is not None and not isinstance(traits, Mapping):
+        rows = [_plain(t) for t in traits]
+        rows = [t for t in rows if t.get('prospect_id', pid) == pid]
+    values = _trait_values(rows, pid)
+    keys = ('id', 'seed', 'source_kind', 'source_ids', 'position', 'archetype',
+            'primary_off_role', 'secondary_off_role', 'current_ability', 'potential',
+            'height_inches', 'weight_lbs', 'wingspan_inches')
+    definition = {k: player[k] for k in keys if k in player}
+    return _generated_definition_inputs(canonical_json(definition), canonical_json(values))
+
+
+@lru_cache(maxsize=256)
+def _generated_definition_inputs(player_json: str, traits_json: str) -> PlayerInputs:
+    """Generator definitions are truth for fictional people, not weak evidence.
+
+    For each scalar skill, interpolate the 24 nearest real input records in
+    current ability (8-point bandwidth), linked trait shape (10 points), and
+    position family (squared-distance penalty 2). Weights are exp(-distance/2).
+    Unspecified detail is 12% of local SD times stable per-input variation.
+    Body dimensions stay in native units; tendencies describe generated choices,
+    separately from ability. Potential remains part of the generator definition;
+    there is no extra potential bonus in this mapping. Constants specify
+    smoothing, not display OVR targets.
+    """
+    from .resource_paths import game_resource_root
+
+    player = json.loads(player_json)
+    values = json.loads(traits_json)
+    pid = str(player['id'])
+    archetype = str(player.get('archetype') or player.get('primary_off_role') or '')
+    ability = _get(player, 'current_ability')
+    if ability is None:
+        # Replacement generator omits ability; the supplied legacy definition
+        # uses the same mean-minus-seven coordinate as real canonical players.
+        ability = _mean(values.values()) - 7 if values else 40.0
+    potential = _get(player, 'potential')
+    potential = ability if potential is None else potential
+    if 'shooting_range' not in values:
+        from .draft import infer_trait_values, nba_trait_values_from_prospect
+
+        broad = infer_trait_values(str(player.get('position') or ''), archetype, {},
+                                   _get(player, 'height_inches'))
+        broad = {k: values.get(k, v + 4 * _generated_detail(player, k)) for k, v in broad.items()}
+        values = nba_trait_values_from_prospect(broad, ability, potential,
+                    str(player.get('position') or ''), archetype,
+                    talent_model='src_talent_balance_v2' in player.get('source_ids', []))
+    reference = _generated_reference(str(game_resource_root()))
+    physicals = _physical_inputs(player, False)
+    tendencies = _tendency_inputs(player, False)
+    position = _position(player)
+    records = {}
+    definition = dict(player_id=pid, current_ability=ability, potential=potential,
+                      archetype=archetype, traits=values, height_inches=player.get('height_inches'),
+                      weight_lbs=player.get('weight_lbs'), source_kind=player.get('source_kind'),
+                      source_ids=player.get('source_ids', []))
+    for iid, spec in DEFINITIONS.items():
+        selected = []
+        if spec['kind'] == 'grade' or iid in ('P05', 'P06', 'P07', 'P08', 'P09', 'P10', 'P11', 'P12'):
+            links = _LEGACY_PRIOR_LINKS.get(iid, ('passing_reads', 'scheme_iq'))
+            target = _mean(values.get(k, ability + 7) for k in links)
+            candidates = []
+            for rid, ca, pos, shape, scalar in reference[iid]:
+                distance = ((ca - ability) / 8)**2 + ((shape - target) / 10)**2 + 2 * (pos != position)
+                candidates.append((distance, rid, scalar))
+            nearest = sorted(candidates)[:24]
+            # Subtract minimum for stable weights even for out-of-support talent.
+            weighted = [(math.exp(-(d - nearest[0][0]) / 2), rid, v) for d, rid, v in nearest]
+            total = sum(w for w, _, _ in weighted)
+            center = sum(w * v for w, _, v in weighted) / total
+            sd = math.sqrt(sum(w * (v - center)**2 for w, _, v in weighted) / total)
+            detail = .12 * sd * _generated_detail(player, iid)
+            # Smooth grade rescaling keeps generated detail inside the scale;
+            # there is no clipping or mass at the upper endpoint.
+            scalar = (100 * _probability(_logit(center / 100) + detail / 25)
+                      if iid != 'P10' and 0 < center < 100 else center + detail)
+            selected = [dict(player_id=rid, weight=round(w / total, 8)) for w, rid, _ in weighted]
+            if spec['kind'] == 'grade':
+                record = _grade_record(scalar, max(8, sd), [], scale=FT_SCALE if iid == 'S07' else TECHNIQUE_SCALE)
+            else:
+                record = physicals[iid]
+                if iid == 'P10':
+                    m = record['value']['measurements'][0]
+                    m.update(value=round(scalar, 6), interval=[round(max(.001, scalar-20), 6), round(scalar+20, 6)],
+                             protocol='fictional generator; real-input calibrated jump definition')
+                    record['uncertainty']['notes'] = canonical_json(dict(interval=m['interval'])).strip()
+                else:
+                    record['value']['display_grade']['grade'] = round(scalar, 6)
+                    record['uncertainty']['notes'] = canonical_json(dict(interval=_bounded_band(scalar, 15))).strip()
+        elif iid.startswith('P'):
+            record = physicals[iid]
+        else:
+            record = tendencies[iid]
+            # These are fictional choices, so no observed opportunity count is
+            # required. Link *relative* profile, not overall talent, to choices.
+            links = _LEGACY_PRIOR_LINKS.get(iid)
+            if links:
+                residual = (_mean(values.get(k, ability+7) for k in links) - _mean(values.values())) / 20
+                old = record['value']['probability']
+                probability = _probability(_logit(old) + .5 * residual + .10 * _generated_detail(player, iid))
+                record['value']['probability'] = round(probability, 8)
+                record['uncertainty']['notes'] = canonical_json(dict(interval=_bounded_band(probability, .25, 1))).strip()
+            else:
+                probs = record['value']['rows'][0]['probabilities']
+                for outcome, (keys, _) in _DISTRIBUTION_PRIOR_LINKS[iid].items():
+                    residual = (_mean(values.get(k, ability+7) for k in keys) - _mean(values.values())) / 20
+                    probs[outcome] *= math.exp(.5 * residual + .10 * _generated_detail(player, iid+outcome))
+                total = sum(probs.values())
+                record['value']['rows'][0]['probabilities'] = {k: v/total for k, v in probs.items()}
+                record['uncertainty']['notes'] = canonical_json(dict(intervals={k: _bounded_band(v/total, .25, 1) for k,v in probs.items()})).strip()
+        notes = uncertainty_details(record)
+        notes.update(basis='fictional generator definition; not an observation of a real person',
+                     limitations='real-input interpolation and unspecified detail are modeling assumptions',
+                     potential_use='generator conversion and future ceiling; no extra mapping bonus')
+        record.update(reason='generated', evidence=[_evidence('draft_model', GENERATED_METHOD, 'generated:'+pid,
+            notes=canonical_json(dict(definition=definition, reference=GENERATED_INPUTS_PATH,
+                                      neighbors=selected)).strip())])
+        record['uncertainty'].update(confidence='medium', notes=canonical_json(notes).strip())
+        records[iid] = record
+    return PlayerInputs(dict(version=INPUT_VERSION, registry_version=REGISTRY_VERSION,
+                             player_id=pid, inputs=records))
+
+
 def _blend_value(old: dict, new: dict, weight: float) -> dict:
     if 'grade' in old:
         return dict(grade=round((1-weight)*old['grade']+weight*new['grade'],6),scale=old['scale'])
@@ -1384,8 +1774,8 @@ def _prospect_trait_priors(records: dict, prospect: dict, traits: Any, scouting:
 def estimate_prospect_inputs(prospect: Any, traits: Any = None, scouting: Any = None) -> PlayerInputs:
     """Generated dataclass/dict or real prospect → full validated PlayerInputs.
 
-    Current ranks, potential and legacy broad traits are NOT technique evidence.
-    Generated players without observations receive explicit broad role priors.
+    Fictional definitions use the generated path, including their broad traits.
+    For real prospects, ranks, potential and broad traits are NOT technique evidence.
     Real `public_stats.per_game` FT/3P attempts and percentages support weak,
     competition-uncertain current shooting estimates. `scouting` may provide a
     list of InputEvidence in approved definitions. Existing broad scouting reports
@@ -1393,6 +1783,8 @@ def estimate_prospect_inputs(prospect: Any, traits: Any = None, scouting: Any = 
     or become independent technique observations. This function never wires draft.py.
     """
     p=_plain(prospect)
+    if _fictional_player(p):
+        return _generated_player_inputs(p, traits)
     extra=list(scouting) if isinstance(scouting,(list,tuple)) and all(isinstance(r,InputEvidence) for r in scouting) else []
     model=InputEstimator()
     result=model.estimate_player_inputs(p,traits,prospect=True).to_dict()

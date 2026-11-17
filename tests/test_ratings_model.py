@@ -89,7 +89,7 @@ class InputsModelIntegrationTests(unittest.TestCase):
         inputs = rm.effective_inputs(canonical, rookie["id"])
         self.assertIsNotNone(inputs)
         self.assertEqual(len(inputs), 94)
-        self.assertTrue(all(record.get("reason") in ("prior", "estimated") for record in inputs.values()))
+        self.assertTrue(all(record.get("reason") in ("prior", "estimated", "generated") for record in inputs.values()))
         # The same adapter tables are used: adding a rookie must not change veterans' derived traits.
         curry = lambda c: {t["trait_key"]: t["value"] for t in c["traits"] if t["player_id"] == self.pid}
         self.assertEqual(curry(canonical), curry(self.canonical))
