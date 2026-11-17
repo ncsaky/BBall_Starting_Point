@@ -27,6 +27,7 @@ GUI wishlist work is parked.
 | E3 Calibration targets and comparison tool | Claude (subagent) | **done** (5/5 tests verified). Report: `docs/agents/tasks/e3-calibration-targets.md` | `data/calibration/*`, `src/nba_gm_data/calibration_targets.py`, `scripts/build_calibration_targets.py`, `scripts/calibration_report.py`, `tests/test_calibration_targets.py` |
 | BBI Basketball Index capture plan and importer | Codex | **accepted 2026-11-16** (75 tests rerun OK) — 75 focused tests pass; absent/demo cache byte parity verified; report: `docs/agents/tasks/bbi-capture-plan.md` | `src/nba_gm_data/bbi_import.py`, `src/nba_gm_data/input_estimator.py`, `tests/test_bbi_import.py`, `data/research/bbi/`, `docs/agents/tasks/bbi-*.md` |
 | E2 League-wide input estimator | Codex | **accepted 2026-11-16** by Claude (91 tests rerun OK; output tracked as `player_inputs_2026_27.json.gz`). Report: `docs/agents/tasks/e2-input-estimator.md` | `src/nba_gm_data/input_estimator.py`, `scripts/build_player_inputs.py`, `data/canonical/player_inputs_2026_27.json`, `tests/test_input_estimator.py` |
+| E2b Hierarchical family priors | Codex | **in progress (Codex)**. Report: `docs/agents/tasks/e2b-elite-priors.md` | `src/nba_gm_data/input_estimator.py`, `tests/test_input_estimator.py`, `data/canonical/player_inputs_2026_27.json`, `data/canonical/player_inputs_2026_27.json.gz`, `docs/agents/tasks/e2b-elite-priors.md` |
 | T1 Make tests trustworthy | Claude (subagent) | **review**. Core suite `scripts/run_core_tests.sh`: 329 tests in about 160 s, passing. Full-suite leftovers listed below. | `tests/`, `scripts/run_core_tests.sh` |
 | S1-B Adapter: inputs to the 15 hidden ratings | Claude | **done** (9 tests) | `src/nba_gm_data/trait_adapter.py`, `tests/test_trait_adapter.py` |
 | S1-C Opt-in inputs model; development writes inputs | Claude | **done** (8 tests). Saves opt in with `meta.ratings_model = "inputs_v1"`; save-less tools with `NBA_GM_RATINGS_MODEL=inputs_v1`. Default stays legacy. | `src/nba_gm_data/ratings_model.py`, hooks in `save.py` and `sim.py`, `tests/test_ratings_model.py` |
@@ -35,7 +36,7 @@ GUI wishlist work is parked.
 
 - Two-stage plan approved: Stage 1 puts the new ratings into the current engine, with a new player card and new trade/contract valuations. Stage 2 is the new engine.
 - Commit and push approved.
-- Basketball Index: buy when Claude says the importer is ready.
+- **Basketball Index subscribed 2026-11-16** ($5/month, auto-renews **Dec 16, 2026**; whether to cancel is the user's decision). The capture window runs through Dec 16. Per BBI's order email, Player Profiles have full access at bball-index.com/player-profiles/ during their site transition; other premium tools are on the site's normal pages.
 
 ## Waiting on the user
 
@@ -72,7 +73,7 @@ GUI wishlist work is parked.
     - Giannis 85.1 (rank 85) and Luka 82.8 (rank 107) fall below Herro 91.3.
     - Causes: the superstar floor needs on_court >= 79 (`transactions.py:2849-2878`), which Giannis (78.6) and Luka (72.5) miss; and contract surplus (+34 cap, `transactions.py:354-360`) lifts cheap players above stars.
     - **Partly fixed 2026-11-16** (formula side): surplus scaled by player quality, soft ceilings instead of hard caps (top ties 15 to 1), stronger superstar-floor age discount.
-    - Market top 5 is now Wembanyama, Jaren Jackson Jr., Jokić, SGA, then LeBron (hard-coded GOAT exception; user to decide).
+    - Market top 5 is now Wembanyama, Jaren Jackson Jr., Jokić, SGA, then LeBron (GOAT exception, **kept by user decision 2026-11-16**: never traded in regular sims).
     - Remaining Giannis/Luka underrating is on the ratings side: on-court values 78.6 and 72.5. That is what the fantasy-draft test failure reflects.
     - Tool: `scripts/market_sanity_report.py`.
   - **Inputs mode is NOT ready for the front office:** stars are compressed. On-court values are Jokić 73.9, Wembanyama 72.4, Giannis 68.8, giving market ranks #28/#40/#66. Prior-heavy technique inputs average away elite distinctions. Next: estimator follow-up for elite players (E2b) and Basketball Index data.

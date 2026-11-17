@@ -26,7 +26,8 @@ Three work tracks exist. Know which one your task belongs to:
 8. **Minutes:** the user sets rough minutes for their team; the modeled coach decides actual playing time game by game and in-game (foul trouble, fatigue, hot or cold hands, blowouts, matchups), so minutes vary realistically around those targets.
 9. **Two scorecards judge any engine change:** the betting-odds probability test (`validate-season-probabilities`; no-vig market odds, Brier score and log loss, player props) and the real-stat targets (`scripts/calibration_report.py`, weighted by sample size, usage and role). Don't regress either one silently.
 10. **Speed budget:** simulating one month in the GUI, including AI front-office activity, should take about 10–20 seconds.
-11. **Table style** (all GUI tables): double-border header separation, small bold header text, alternating row shading, whole-row hover highlight, sorted-column shading, headshots bottom-aligned filling row height. Match existing tables.
+11. **LeBron James is a deliberate one-of-one exception** (`transactions.py` `goat_exception_player`). He must never be traded in regular sims, and his fixed trade value stays. Don't "fix" it.
+12. **Table style** (all GUI tables): double-border header separation, small bold header text, alternating row shading, whole-row hover highlight, sorted-column shading, headshots bottom-aligned filling row height. Match existing tables.
 
 ## 3. Writing for the user
 
