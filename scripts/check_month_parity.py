@@ -21,6 +21,7 @@ Outputs live in output/month-speed/ (git-ignored).
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import json
 import os
@@ -182,7 +183,8 @@ def run(names: list[str], label: str, profile: bool) -> None:
 
 def normalized_save(path: Path) -> dict:
     """The save with only per-write random ids and the history file name removed."""
-    save = json.loads(path.read_text())
+    packed = path.with_name(path.name + ".gz")
+    save = json.loads(gzip.decompress(packed.read_bytes()) if not path.exists() and packed.exists() else path.read_text())
     save.get("meta", {}).pop("save_snapshot_id", None)
     for key in ("snapshot_id", "path"):
         (save.get("history_store") or {}).pop(key, None)
@@ -250,6 +252,166 @@ def _code_tree(ref: str) -> Path:
     return target
 
 
+# ---------------------------------------------------------------------------------------------------------------
+# Whole season, phase by phase. ``season-prepare`` plays one full season (preseason -> regular season -> playoffs
+# -> draft -> re-signing -> free agency -> training camp -> next November) through the same GUI actions the
+# fixture builder uses, and keeps a copy of the save right before every action. ``season-run`` replays each
+# action from its copy (each in a fresh process, optionally in parallel) so a phase can be timed and compared on
+# its own; results go to runs/<label>-season-<model>-<NN>, which ``compare`` understands.
+SEASON_MODELS = {"legacy": "legacy_traits", "inputs": "inputs_v1"}
+SEASON_TEAM, SEASON_SEED, SEASON_END = "GSW", 17, "2027-11-01"
+
+
+def _season_dir(model: str) -> Path:
+    return OUT / "season" / model
+
+
+def season_steps(model: str) -> list[dict]:
+    seeds = _season_dir(model) / "seeds"
+    return [json.loads((d / "action.json").read_text()) for d in sorted(seeds.glob("[0-9]*"))]
+
+
+def season_prepare(model: str, until: str) -> None:
+    """Play one season with this checkout's code, keeping the save before every action."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from overnight_market_health import marker, select_action
+    from ten_season_soak import SoakRunner
+    base = _season_dir(model)
+    if base.exists():
+        shutil.rmtree(base)
+    live_dir = base / "live"
+    runner = SoakRunner(argparse.Namespace(root=str(ROOT), output_dir=str(live_dir), seed=SEASON_SEED, team=SEASON_TEAM))
+    created = runner.action("create_save", team=SEASON_TEAM, seed=SEASON_SEED, save_name="month",
+                            ratings_model=SEASON_MODELS[model])
+    runner.payload["save_path"] = created["save_path"]
+    live = Path(created["save_path"])
+    saved = runner.load()
+    index = 0
+    while saved["state"]["current_date"] < until:
+        runner.resolve_user_staff_retention()
+        runner.resolve_user_roster_cutdown()
+        before = runner.load()
+        action, payload = select_action(before, until)
+        payload = {**payload, "seed": SEASON_SEED}
+        if "team" in payload:
+            payload["team"] = SEASON_TEAM
+        step = {"index": index, "name": f"season-{model}-{index:02d}", "action": action, "payload": payload,
+                "from": before["state"]["current_date"], "phase": before["state"]["phase"]}
+        seed_dir = base / "seeds" / f"{index:02d}"
+        seed_dir.mkdir(parents=True)
+        for path in _save_files(live.parent):
+            if path.name == "month.history.sqlite3":
+                # Seeds are kept compressed (a season of them is ~2.5 GB raw); season_step expands them.
+                with path.open("rb") as src, gzip.open(seed_dir / (path.name + ".gz"), "wb", compresslevel=3) as dst:
+                    shutil.copyfileobj(src, dst, 1 << 20)
+            elif path.name in {"month.json", "month.history.sqlite3-shm", "month.history.sqlite3-wal"}:
+                shutil.copy2(path, seed_dir / path.name)
+        (seed_dir / "action.json").write_text(json.dumps(step, indent=2) + "\n")
+        t0 = time.perf_counter()
+        _dispatch(action, live.parent, runner.canonical, save_path=str(live), **payload)
+        saved = runner.load()
+        if marker(before) == marker(saved):
+            raise RuntimeError(f"No calendar/phase progress: {action}")
+        step.update(to=saved["state"]["current_date"], next_phase=saved["state"]["phase"],
+                    seconds=round(time.perf_counter() - t0, 2))
+        with (base / "prepare.jsonl").open("a") as handle:
+            handle.write(json.dumps(step) + "\n")
+        print(json.dumps(step), flush=True)
+        index += 1
+
+
+def _copy_seed(seed_dir: Path, work: Path) -> None:
+    for path in _save_files(seed_dir):
+        if path.suffix == ".gz":
+            with gzip.open(path, "rb") as src, (work / path.stem).open("wb") as dst:
+                shutil.copyfileobj(src, dst, 1 << 20)
+        else:
+            shutil.copy2(path, work / path.name)
+
+
+def season_step(model: str, index: int, label: str, profile: bool) -> None:
+    """Replay one season action from its seed copy and store the result like a month run."""
+    seed_dir = _season_dir(model) / "seeds" / f"{index:02d}"
+    step = json.loads((seed_dir / "action.json").read_text())
+    name = step["name"]
+    work = OUT / "work" / label / name
+    if work.exists():
+        shutil.rmtree(work)
+    work.mkdir(parents=True)
+    _copy_seed(seed_dir, work)
+    save_path = work / "month.json"
+    canonical = _canonical()
+    # The GUI's lottery reveal draws from system randomness on purpose (seed=None); pin it so the step can be
+    # compared between engines. Harness only.
+    from nba_gm_data import save as save_module
+    save_module.lottery_seed = lambda seed=None: int(seed) if seed is not None else 20270622
+    profiler = None
+    if profile:
+        import cProfile
+        profiler = cProfile.Profile()
+    started, cpu_started = time.perf_counter(), time.process_time()
+    if profiler:
+        profiler.enable()
+    result = _dispatch(step["action"], work, canonical, save_path=str(save_path), **step["payload"])
+    if profiler:
+        profiler.disable()
+    seconds, cpu_seconds = time.perf_counter() - started, time.process_time() - cpu_started
+    results = [result]
+    dest = OUT / "runs" / f"{label}-{name}"
+    if dest.exists():
+        shutil.rmtree(dest)
+    dest.mkdir(parents=True)
+    saved = json.loads(save_path.read_text())
+    db = work / ((saved.get("history_store") or {}).get("path") or "month.history.sqlite3")
+    with save_path.open("rb") as src, gzip.open(dest / "month.json.gz", "wb", compresslevel=3) as dst:
+        shutil.copyfileobj(src, dst, 1 << 20)
+    if profiler:
+        profiler.dump_stats(str(dest / "profile.prof"))
+    info = {"scenario": name, "label": label, "action": step["action"], "phase": step["phase"], "from": step["from"],
+            "seconds": round(seconds, 2), "cpu_seconds": round(cpu_seconds, 2), "step_seconds": [round(seconds, 2)],
+            "through": saved["state"]["current_date"], "history": _history_digest(db),
+            "results_sha256": hashlib.sha256(json.dumps(_scrub(results), sort_keys=True, default=str).encode()).hexdigest()}
+    (dest / "result.json").write_text(json.dumps(info, indent=2) + "\n")
+    (dest / "results.json").write_text(json.dumps(_scrub(results), indent=1, sort_keys=True, default=str) + "\n")
+    shutil.rmtree(work)
+    print(json.dumps({k: info[k] for k in ("scenario", "label", "action", "phase", "from", "seconds", "cpu_seconds", "through")}),
+          flush=True)
+
+
+def season_run(model: str, label: str, indexes: list[int] | None, jobs: int, ref: str | None, profile: bool) -> int:
+    steps = season_steps(model)
+    chosen = [s["index"] for s in steps if indexes is None or s["index"] in indexes]
+    env = dict(os.environ)
+    if ref:
+        tree = _code_tree(ref)
+        env["PYTHONPATH"] = os.pathsep.join([str(tree / "src"), str(ROOT / "scripts")])
+    script = str(Path(__file__).resolve())
+    pending = list(chosen)
+    running: list[subprocess.Popen] = []
+    failures = 0
+    while pending or running:
+        while pending and len(running) < max(1, jobs):
+            index = pending.pop(0)
+            command = [sys.executable, script, "season-step", "--model", model, "--index", str(index), "--label", label]
+            running.append(subprocess.Popen(command + (["--profile"] if profile else []), env=env))
+        time.sleep(0.5)
+        for proc in list(running):
+            if proc.poll() is not None:
+                running.remove(proc)
+                failures += proc.returncode != 0
+    return 1 if failures else 0
+
+
+def _parse_indexes(text: str | None) -> list[int] | None:
+    if not text:
+        return None
+    out: list[int] = []
+    for part in text.split(","):
+        lo, _, hi = part.partition("-")
+        out.extend(range(int(lo), int(hi or lo) + 1))
+    return out
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -263,7 +425,38 @@ def main() -> int:
     p_compare.add_argument("second")
     for p in (p_prepare, p_run, p_compare):
         p.add_argument("--scenario", action="append", choices=sorted(SCENARIOS))
+    p_compare.add_argument("--season", choices=sorted(SEASON_MODELS), action="append",
+                           help="compare every season step of this ratings model instead of month scenarios")
+    p_compare.add_argument("--steps", help="season step indexes, e.g. 0-5,9")
+    s_prepare = sub.add_parser("season-prepare")
+    s_prepare.add_argument("--model", choices=sorted(SEASON_MODELS), required=True)
+    s_prepare.add_argument("--until", default=SEASON_END)
+    s_run = sub.add_parser("season-run")
+    s_run.add_argument("--model", choices=sorted(SEASON_MODELS), required=True)
+    s_run.add_argument("--label", required=True)
+    s_run.add_argument("--steps", help="step indexes, e.g. 0-5,9 (default: all)")
+    s_run.add_argument("--jobs", type=int, default=1)
+    s_run.add_argument("--ref")
+    s_run.add_argument("--profile", action="store_true")
+    s_step = sub.add_parser("season-step")
+    s_step.add_argument("--model", choices=sorted(SEASON_MODELS), required=True)
+    s_step.add_argument("--index", type=int, required=True)
+    s_step.add_argument("--label", required=True)
+    s_step.add_argument("--profile", action="store_true")
     args = parser.parse_args()
+    if args.command == "season-prepare":
+        season_prepare(args.model, args.until)
+        return 0
+    if args.command == "season-run":
+        return season_run(args.model, args.label, _parse_indexes(args.steps), args.jobs, args.ref, args.profile)
+    if args.command == "season-step":
+        season_step(args.model, args.index, args.label, args.profile)
+        return 0
+    if args.command == "compare" and args.season:
+        wanted = _parse_indexes(args.steps)
+        names = [s["name"] for model in args.season for s in season_steps(model)
+                 if wanted is None or s["index"] in wanted]
+        return compare(args.first, args.second, names)
     names = args.scenario or DEFAULT_SCENARIOS
     if args.command == "prepare":
         prepare(names)

@@ -17,12 +17,13 @@ import re
 import tempfile
 import uuid
 from collections import Counter
+from contextlib import contextmanager
 from contextvars import ContextVar
 from copy import deepcopy
 from datetime import date, timedelta
 from itertools import permutations
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Iterator
 
 from .health import advance_development, simulate_health
 from .simulation_progress import emit_progress, progress_listener_active, simulation_stop_requested
@@ -347,10 +348,40 @@ def validate_save_document(save: Any) -> None:
             raise SaveValidationError(f"Invalid player performance inputs: {exc}") from exc
 
 
+# Parsed save files by path: (file stamp, pickled parse). One GUI action reads the same manifest many times (7-34
+# for an offseason or playoff action, ~0.2 s of JSON parsing each). A save is only ever replaced by a rename, so
+# a new version always has a new inode and modification time; the stamp is taken before and after the read.
+_PARSED_SAVES: dict[str, tuple[tuple[int, ...], bytes]] = {}
+
+
+def _file_stamp(path: str) -> tuple[int, ...]:
+    st = os.stat(path)
+    return (st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+
+
+def _parse_save_file(path: str | Path) -> Any:
+    key = os.path.abspath(os.fspath(path))
+    before = _file_stamp(key)
+    cached = _PARSED_SAVES.get(key)
+    if cached is not None and cached[0] == before:
+        return pickle.loads(cached[1])
+    with open(key, "r", encoding="utf-8") as handle:
+        save = json.load(handle)
+    if _file_stamp(key) == before:
+        try:
+            blob = pickle.dumps(save, protocol=pickle.HIGHEST_PROTOCOL)
+        except (pickle.PicklingError, TypeError, AttributeError, RecursionError):
+            return save
+        _PARSED_SAVES.pop(key, None)
+        while len(_PARSED_SAVES) >= 4:
+            _PARSED_SAVES.pop(next(iter(_PARSED_SAVES)))
+        _PARSED_SAVES[key] = (before, blob)
+    return save
+
+
 def load_save(path: str | Path, *, include_history: bool = False) -> dict[str, Any]:
     try:
-        with Path(path).open("r", encoding="utf-8") as handle:
-            save = json.load(handle)
+        save = _parse_save_file(path)
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise SaveValidationError(f"Cannot read save '{Path(path).name}': {exc}. Restore a complete save export.") from exc
     validate_save_document(save)
@@ -401,7 +432,7 @@ def write_save(path: str | Path, save: dict[str, Any]) -> None:
         if current is not None:
             from .save_recovery import preserve_previous_save
 
-            preserve_previous_save(target)
+            preserve_previous_save(target, loaded=current)
         working = copy_plain(save)
         working.setdefault("meta", {})["save_snapshot_id"] = uuid.uuid4().hex
         dedupe_save_event_lists(working)
@@ -413,7 +444,7 @@ def write_save(path: str | Path, save: dict[str, Any]) -> None:
                 prefix=f".{target.name}.", suffix=".tmp", delete=False,
             ) as handle:
                 temp_path = Path(handle.name)
-                json.dump(working, handle, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+                handle.write(encode_save_json(working))
                 handle.write("\n")
                 handle.flush()
                 os.fsync(handle.fileno())
@@ -425,6 +456,12 @@ def write_save(path: str | Path, save: dict[str, Any]) -> None:
         finally:
             if temp_path is not None and temp_path.exists():
                 temp_path.unlink()
+
+
+def encode_save_json(save: dict[str, Any]) -> str:
+    """The save file's text. json.dumps runs the C encoder; json.dump streams the same text through the much
+    slower pure-Python encoder (2-3 s for a mature save)."""
+    return json.dumps(save, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
 
 
 def dedupe_save_event_lists(save: dict[str, Any]) -> None:
@@ -1664,6 +1701,27 @@ def refresh_active_runtime_state(
 
 
 _ADVANCE_RUNTIME_STATE: ContextVar[_AdvanceRuntimeState | None] = ContextVar("advance_runtime_state", default=None)
+_RUNTIME_AUDIT = os.environ.get("NBA_GM_RUNTIME_AUDIT") == "1"
+
+
+@contextmanager
+def action_runtime_scope() -> Iterator[_AdvanceRuntimeState]:
+    """Share one action's read-only caches across everything it does.
+
+    Advances already shared these within one call. Playoff, draft, re-signing and free-agency actions rebuild the
+    league many times too; inside this scope each rebuild reuses the serialized starting universe, the simulation's
+    reference tables and the attribute-summary memo (keyed by every input it reads). Nothing save-dependent is kept.
+    """
+    existing = _ADVANCE_RUNTIME_STATE.get()
+    if existing is not None:
+        yield existing
+        return
+    state = _AdvanceRuntimeState()
+    token = _ADVANCE_RUNTIME_STATE.set(state)
+    try:
+        yield state
+    finally:
+        _ADVANCE_RUNTIME_STATE.reset(token)
 
 
 class _AdvanceRuntimeState:
@@ -1681,12 +1739,33 @@ class _AdvanceRuntimeState:
         "development_events", "rotation_recommendations",
     )
 
-    def __init__(self) -> None:
+    def __init__(self, parent: _AdvanceRuntimeState | None = None) -> None:
         self.active: dict[str, Any] | None = None
         self.inputs: Any = None
-        self.attribute_summaries: dict[bytes, dict[str, float]] = {}
-        self.sim_reference: dict[str, Any] | None = None
-        self.baseline: tuple[dict[str, Any], bytes] | None = None
+        # Read-only caches, shared with an enclosing action scope (see action_runtime_scope): the league
+        # reuse above stays private to one advance call, these do not depend on the save.
+        self._shared: dict[str, Any] = parent._shared if parent is not None else {
+            "attribute_summaries": {}, "sim_reference": None, "baseline": None}
+
+    @property
+    def attribute_summaries(self) -> dict[bytes, dict[str, float]]:
+        return self._shared["attribute_summaries"]
+
+    @property
+    def sim_reference(self) -> dict[str, Any] | None:
+        return self._shared["sim_reference"]
+
+    @sim_reference.setter
+    def sim_reference(self, value: dict[str, Any] | None) -> None:
+        self._shared["sim_reference"] = value
+
+    def reference_tables(self, root: str | Path) -> dict[str, Any]:
+        """The simulation's read-only reference tables (schedule, box scores, odds), loaded once per scope."""
+        cached = self._shared.get("sim_reference_root")
+        if self.sim_reference is None or cached != str(Path(root).resolve()):
+            self.sim_reference = load_sim_reference(root)
+            self._shared["sim_reference_root"] = str(Path(root).resolve())
+        return self.sim_reference
 
     def baseline_copy(self, source: dict[str, Any]) -> dict[str, Any]:
         """canonical_with_save's private copy of the (read-only) starting universe.
@@ -1694,13 +1773,19 @@ class _AdvanceRuntimeState:
         The pickled form is made once per advance call and unpickled for each rebuild, the same result
         as _copy_runtime_tree without serializing the unchanged universe again every time.
         """
-        if self.baseline is None or self.baseline[0] is not source:
+        baseline = self._shared["baseline"]
+        if baseline is None or baseline[0] is not source:
             public = {key: value for key, value in source.items() if not str(key).startswith("_")}
             try:
-                self.baseline = (source, pickle.dumps(public, protocol=pickle.HIGHEST_PROTOCOL))
+                baseline = self._shared["baseline"] = (source, pickle.dumps(public, protocol=pickle.HIGHEST_PROTOCOL))
             except (pickle.PicklingError, TypeError, AttributeError):
                 return deepcopy(public)
-        return pickle.loads(self.baseline[1])
+        elif _RUNTIME_AUDIT:
+            # Debug check (NBA_GM_RUNTIME_AUDIT=1): the starting universe must not change while it is cached.
+            public = {key: value for key, value in source.items() if not str(key).startswith("_")}
+            if pickle.dumps(public, protocol=pickle.HIGHEST_PROTOCOL) != baseline[1]:
+                raise AssertionError("The starting universe changed during one action; the cached copy is stale.")
+        return pickle.loads(baseline[1])
 
     def advance_day(self, *args: Any) -> dict[str, Any]:
         # Preserve the day API and isolate concurrent/reentrant advances.
@@ -1843,7 +1928,7 @@ def advance_save(
             stopped = True
     # Button/checkpoint boundaries must never change the simulation calendar.
     # Each day sees the mutations committed by the previous day's decisions.
-    runtime_state = _AdvanceRuntimeState()
+    runtime_state = _AdvanceRuntimeState(parent=_ADVANCE_RUNTIME_STATE.get())
     while current < target and not stopped:
         if simulation_stop_requested():
             target = current
@@ -2118,9 +2203,7 @@ def advance_save_day(
         )["active"]
         if runtime_state is not None:
             # The reference tables are only read by the simulation, so one copy serves every day of this advance.
-            if runtime_state.sim_reference is None:
-                runtime_state.sim_reference = load_sim_reference(root)
-            context = load_sim_context(root, runtime_canonical, reference=runtime_state.sim_reference, indices=False)
+            context = load_sim_context(root, runtime_canonical, reference=runtime_state.reference_tables(root), indices=False)
         else:
             context = load_sim_context(root, runtime_canonical, indices=False)
         context["schedule"] = schedule_for_save(root, save)
@@ -3335,7 +3418,8 @@ def stat_line_event_is_major(details: dict[str, Any]) -> bool:
 
 
 def playoff_picture(canonical: dict[str, Any] | Any, save_path: str | Path, *, prepared_save: dict[str, Any] | None = None) -> dict[str, Any]:
-    canonical = to_plain(canonical)
+    # Read-only here; deep-copying the whole league each round also defeated the action's cached copy.
+    canonical = canonical if isinstance(canonical, dict) else to_plain(canonical)
     save = prepared_save if prepared_save is not None else ensure_league_save_defaults(load_save(save_path), canonical)
     rows = league_standings(canonical, save_path, prepared_save=save)["standings"]
     by_conference: dict[str, list[dict[str, Any]]] = {"East": [], "West": []}
@@ -3354,7 +3438,8 @@ def playoff_picture(canonical: dict[str, Any] | Any, save_path: str | Path, *, p
 
 
 def start_playoffs(canonical: dict[str, Any] | Any, save_path: str | Path, seed: int = 1, include_play_in: bool = False) -> dict[str, Any]:
-    canonical = to_plain(canonical)
+    # Read-only here; deep-copying the whole league each round also defeated the action's cached copy.
+    canonical = canonical if isinstance(canonical, dict) else to_plain(canonical)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     state = initialize_postseason(canonical, save, save_path, seed, include_play_in=include_play_in)
     write_save(save_path, save)
@@ -3420,7 +3505,8 @@ def legacy_first_round_series(canonical: dict[str, Any], picture: dict[str, Any]
 
 
 def simulate_playoff_round(canonical: dict[str, Any] | Any, save_path: str | Path, seed: int = 1, root: str | Path | None = None, *, advance_to_offseason: bool = True) -> dict[str, Any]:
-    canonical = to_plain(canonical)
+    # Read-only here; deep-copying the whole league each round also defeated the action's cached copy.
+    canonical = canonical if isinstance(canonical, dict) else to_plain(canonical)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     state = save.get("playoff_state") or start_playoffs(canonical, save_path, seed=seed)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
@@ -3471,7 +3557,8 @@ def complete_playoff_champion(canonical: dict[str, Any], save: dict[str, Any], s
 
 
 def simulate_next_playoff_game(canonical: dict[str, Any] | Any, save_path: str | Path, seed: int = 1, root: str | Path | None = None, *, advance_to_offseason: bool = True) -> dict[str, Any]:
-    canonical = to_plain(canonical)
+    # Read-only here; deep-copying the whole league each round also defeated the action's cached copy.
+    canonical = canonical if isinstance(canonical, dict) else to_plain(canonical)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     state = save.get("playoff_state") or start_playoffs(canonical, save_path, seed=seed)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
@@ -4114,7 +4201,11 @@ def simulate_playoff_game(
     active = advance_lifecycle_to(canonical, save, game_date, seed, root, games=[game])["active"]
     if root is None:
         return deterministic_playoff_game_result(canonical, save, away_team_id, home_team_id, game_id, game_date, seed)
-    context = load_sim_context(root, active)
+    runtime = _ADVANCE_RUNTIME_STATE.get()
+    # Inside an action scope the reference tables are loaded once; the indexes are built once, after the
+    # playoff game joins the schedule (the first build in load_sim_context was discarded anyway).
+    context = (load_sim_context(root, active, reference=runtime.reference_tables(root), indices=False)
+               if runtime is not None else load_sim_context(root, active))
     context["schedule"] = list(context.get("schedule") or []) + [game]
     context["indices"] = build_sim_indices(context)
     context["indices"]["coach_by_team"] = save_coach_ratings(active, save)

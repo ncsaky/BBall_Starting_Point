@@ -240,11 +240,22 @@ def roster_signing_plan(canonical, save, player, team_id, annual_millions, years
     trial['players'] = roster+[newcomer]
     trial['contracts'] = list(contracts.values())
     trial['_allow_internal_caches'] = True
+    # The trial shares the league's trait rows (the same list), so it shares their value index too, as roster
+    # forecast views do. Rebuilding it per counterfactual scanned every trait in the league each time.
+    from .save import trait_values_by_player
+    trial['_trait_values_by_player'] = trait_values_by_player(canonical)
     targets, _ = ai_role_targets(trial, trial['players'], {})
     for p in trial['players']:
         p['minutes_projection'] = targets.get(p['id'], 0)
+    # Nothing below changes the trial, the save or a player, so each player's score is computed once
+    # (the two rankings and the gain used to score the same players again).
+    scores = {}
+
     def value(p):
-        return ai_roster_retention_score(trial, save, p)
+        key = id(p)
+        if key not in scores:
+            scores[key] = (p, ai_roster_retention_score(trial, save, p))
+        return scores[key][1]
     ranked = sorted(trial['players'], key=lambda p: (-value(p), p['id']))
     cut = ranked[15:]
     if any(p['id'] == player['id'] for p in cut):

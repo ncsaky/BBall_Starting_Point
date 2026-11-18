@@ -277,7 +277,9 @@ def dispatch_app_action(
             # snapshot itself. Clear the old revision before dispatch so that
             # fresh snapshot remains available to follow-up modal reads.
             invalidate_read_cache(save_path)
-            result = dispatch_save_action(action, payload, root_path, data, save_path)
+            from .save import action_runtime_scope
+            with action_runtime_scope():
+                result = dispatch_save_action(action, payload, root_path, data, save_path)
             return result
     if action in {"dashboard_snapshot", "team_assets", "player_card", "prospect_card", "coach_card", "free_agency_room", "team_wants"}:
         with save_lock(save_path):

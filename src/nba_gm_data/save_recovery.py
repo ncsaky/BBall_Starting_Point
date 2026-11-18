@@ -82,7 +82,9 @@ def atomic_copy_file(path: Path, source: Path) -> None:
             temporary.unlink(missing_ok=True)
 
 
-def _write_archive(path: Path, output: BinaryIO, *, local: bool = False, restore_snapshot_id: str | None = None) -> None:
+def _write_archive(path: Path, output: BinaryIO, *, local: bool = False, restore_snapshot_id: str | None = None,
+                   loaded: dict | None = None) -> None:
+    """``loaded``: the caller's own load_save of ``path``, read under the same lock (spares a second parse)."""
     from .history_store import history_sidecar_path
     from .save import load_save
 
@@ -90,7 +92,7 @@ def _write_archive(path: Path, output: BinaryIO, *, local: bool = False, restore
     expanded_limit = MAX_LOCAL_EXPANDED_BYTES if local else MAX_EXPANDED_BYTES
     archive_limit = MAX_LOCAL_ARCHIVE_BYTES if local else MAX_ARCHIVE_BYTES
     with save_lock(target), tempfile.TemporaryDirectory(prefix="nba-history-export-") as temporary:
-        save = load_save(target)
+        save = loaded if loaded is not None else load_save(target)
         members = {"save.json": target}
         if target.stat().st_size > MAX_MANIFEST_BYTES:
             raise SaveRecoveryError("The save manifest exceeds the recovery manifest size limit.")
@@ -128,7 +130,10 @@ def _write_archive(path: Path, output: BinaryIO, *, local: bool = False, restore
         if sum(row["size"] for row in descriptions.values()) + len(encoded) > expanded_limit:
             kind = "local recovery" if local else "portable export"
             raise SaveRecoveryError(f"This save exceeds the {kind} expanded size limit. Automatic local backups use a separate, larger limit.")
-        with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        # The automatic previous-save backup is rewritten on every save write; fast deflate (level 1) takes about
+        # a third of the default's time for a ~40% larger file. Portable exports keep the default level.
+        level = 1 if local else None
+        with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=level) as archive:
             for name, member in members.items():
                 archive.write(member, name)
                 if output.tell() > archive_limit:
@@ -145,12 +150,13 @@ def create_export(path: str | Path, *, _restore_snapshot_id: str | None = None) 
     return output.getvalue()
 
 
-def _publish_local_archive(target: Path, archive: Path, *, restore_snapshot_id: str | None = None) -> None:
+def _publish_local_archive(target: Path, archive: Path, *, restore_snapshot_id: str | None = None,
+                           loaded: dict | None = None) -> None:
     temporary = None
     try:
         with tempfile.NamedTemporaryFile(dir=archive.parent, prefix=f".{archive.name}.", suffix=".tmp", delete=False) as handle:
             temporary = Path(handle.name)
-            _write_archive(target, handle, local=True, restore_snapshot_id=restore_snapshot_id)
+            _write_archive(target, handle, local=True, restore_snapshot_id=restore_snapshot_id, loaded=loaded)
             handle.flush()
             os.fsync(handle.fileno())
         temporary.replace(archive)
@@ -160,11 +166,13 @@ def _publish_local_archive(target: Path, archive: Path, *, restore_snapshot_id: 
             temporary.unlink(missing_ok=True)
 
 
-def preserve_previous_save(path: str | Path) -> None:
-    """Called under the writer's reentrant lock, before touching either component."""
+def preserve_previous_save(path: str | Path, loaded: dict | None = None) -> None:
+    """Called under the writer's reentrant lock, before touching either component.
+
+    ``loaded`` is the writer's load_save of the same file under that lock; it is only read here."""
     target = Path(path)
     if target.exists():
-        _publish_local_archive(target, previous_backup_path(target))
+        _publish_local_archive(target, previous_backup_path(target), loaded=loaded)
 
 
 def _extract_archive(source: Path | BinaryIO, directory: Path, *, local: bool = False) -> dict[str, Any]:

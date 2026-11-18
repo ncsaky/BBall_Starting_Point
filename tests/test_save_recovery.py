@@ -172,7 +172,7 @@ class SaveRecoveryTests(unittest.TestCase):
         save = load_save(self.path)
         save["marker"] = "new revision"
         save["player_game_logs"] = [{"id": "concurrent", "points": 99}]
-        dump = save_module.json.dump
+        dump = save_module.encode_save_json
 
         def blocked_dump(*args, **kwargs):
             entered.set()
@@ -186,7 +186,7 @@ class SaveRecoveryTests(unittest.TestCase):
             export_done.set()
             return data
 
-        with ThreadPoolExecutor(max_workers=2) as pool, patch.object(save_module.json, "dump", side_effect=blocked_dump):
+        with ThreadPoolExecutor(max_workers=2) as pool, patch.object(save_module, "encode_save_json", side_effect=blocked_dump):
             writer = pool.submit(write_save, self.path, save)
             try:
                 self.assertTrue(entered.wait(10))
@@ -457,7 +457,7 @@ recover_previous_save(target)
         changed = load_save(self.path)
         revision = changed["meta"]["save_revision"]
         changed["player_game_logs"] = [{"id": "never_committed", "points": 999}]
-        with patch.object(save_module.json, "dump", side_effect=OSError("interrupted")):
+        with patch.object(save_module, "encode_save_json", side_effect=OSError("interrupted")):
             with self.assertRaises(OSError):
                 write_save(self.path, changed)
         snapshot = self.directory / "checked_export.sqlite3"
