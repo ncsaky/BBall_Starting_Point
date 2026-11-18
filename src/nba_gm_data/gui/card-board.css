@@ -4112,6 +4112,8 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .player-card-pag
   grid-column:1 / -1; grid-row:1;
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-card-page--overview > .player-page-game-log { grid-column:1; grid-row:2; }
+/* Real college prospects: the college profile strip takes the game log's place (no real game logs are kept). */
+body.unified-terminal-ui .has-card-board .clipboard-player-card .player-card-page--overview > .approved-season-line.college-profile-line { grid-column:1; grid-row:2; align-self:start; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-card-page--overview > .player-page-score-panel { grid-column:1; grid-row:3; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-card-page--overview > .player-page-contract { grid-column:2; grid-row:2 / 4; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-card-page--details {

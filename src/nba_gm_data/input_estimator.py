@@ -1503,6 +1503,9 @@ def _fictional_player(player: dict) -> bool:
 
     rookie_player_record also labels the *real* 2026 class generated_rookie.
     That class must retain the evidence path, including after signing.
+    Real college prospects in the 2027-2029 classes deliberately take the generated
+    path (same slot-anchored scale as their generated classmates); their college
+    profile then informs the inputs it speaks to (college_profile.inputs).
     """
     if player.get('league') == 'generated':
         return True
@@ -1568,7 +1571,7 @@ def _generated_player_inputs(player: dict, traits: Any) -> PlayerInputs:
     values = _trait_values(rows, pid)
     keys = ('id', 'seed', 'source_kind', 'source_ids', 'position', 'archetype',
             'primary_off_role', 'secondary_off_role', 'current_ability', 'potential',
-            'height_inches', 'weight_lbs', 'wingspan_inches')
+            'height_inches', 'weight_lbs', 'wingspan_inches', 'college_profile')
     definition = {k: player[k] for k in keys if k in player}
     return _generated_definition_inputs(canonical_json(definition), canonical_json(values))
 
@@ -1609,6 +1612,9 @@ def _generated_definition_inputs(player_json: str, traits_json: str) -> PlayerIn
                     str(player.get('position') or ''), archetype,
                     talent_model='src_talent_balance_v2' in player.get('source_ids', []))
     reference = _generated_reference(str(game_resource_root()))
+    # Real college prospects (draft classes 2027-2029): fitted college -> NBA estimates for the inputs college
+    # production speaks to, {input_id: [entry value, weight]} (see real_prospects.input_targets).
+    college = ((player.get('college_profile') or {}).get('inputs')) or {}
     physicals = _physical_inputs(player, False)
     tendencies = _tendency_inputs(player, False)
     position = _position(player)
@@ -1637,6 +1643,9 @@ def _generated_definition_inputs(player_json: str, traits_json: str) -> PlayerIn
             # there is no clipping or mass at the upper endpoint.
             scalar = (100 * _probability(_logit(center / 100) + detail / 25)
                       if iid != 'P10' and 0 < center < 100 else center + detail)
+            if iid in college:
+                target, weight = college[iid]
+                scalar = _soft_grade_bounds((1 - weight) * scalar + weight * float(target))
             selected = [dict(player_id=rid, weight=round(w / total, 8)) for w, rid, _ in weighted]
             if spec['kind'] == 'grade':
                 record = _grade_record(scalar, max(8, sd), [], scale=FT_SCALE if iid == 'S07' else TECHNIQUE_SCALE)
@@ -1666,6 +1675,9 @@ def _generated_definition_inputs(player_json: str, traits_json: str) -> PlayerIn
                 residual = (_mean(values.get(k, ability+7) for k in links) - _mean(values.values())) / 20
                 old = record['value']['probability']
                 probability = _probability(_logit(old) + .5 * residual + .10 * _generated_detail(player, iid))
+                if iid in college:
+                    target, weight = college[iid]
+                    probability = (1 - weight) * probability + weight * _estimator_involvement(float(target))
                 record['value']['probability'] = round(probability, 8)
                 record['uncertainty']['notes'] = canonical_json(dict(interval=_bounded_band(probability, .25, 1))).strip()
             else:
@@ -1711,6 +1723,25 @@ def _generated_involvement(reference: tuple, ability: float, shape: float, posit
         return round(measured, 8)
     inverse = {'source': scale['target'], 'target': scale['source']}
     return round(map_to_measured(inverse, measured), 8)
+
+
+def _soft_grade_bounds(value: float, margin: float = 5.0) -> float:
+    """Keep a blended grade inside (0, 100) smoothly: unchanged between 5 and 95, eased (never clipped) beyond."""
+    if value > 100 - margin:
+        return 100 - margin + margin * math.tanh((value - (100 - margin)) / margin)
+    if value < margin:
+        return margin - margin * math.tanh((margin - value) / margin)
+    return value
+
+
+def _estimator_involvement(measured: float) -> float:
+    """A measured-scale involvement (real players' inputs) placed on the estimator's scale, like the neighbours'."""
+    from .bbi_evidence import map_to_measured
+    from .resource_paths import game_resource_root
+    scale = _involvement_scale(str(game_resource_root()))
+    if not scale:
+        return measured
+    return map_to_measured({'source': scale['target'], 'target': scale['source']}, measured)
 
 
 def _blend_value(old: dict, new: dict, weight: float) -> dict:

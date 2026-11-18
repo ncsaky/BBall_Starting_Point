@@ -1670,7 +1670,15 @@ def prospect_card_payload(canonical: dict[str, Any], save_path: Path, prospect_i
     scout = prospect_scout_display(active, prospect, team['id'], save)
     report = scouting_report_for(active, prospect_id, team['id'])
     visible = prospect_card_ratings(prospect, scout, report)
-    season, logs = college_production(prospect)
+    from .real_prospects import college_card, college_entry_for
+    college = college_entry_for({**prospect, 'draft_year': prospect.get('draft_year') or year or current_draft_year(save)})
+    if college:
+        # Real college player: his actual college seasons (no game logs are kept for real players).
+        career, logs = college_card(college)['seasons'], []
+        season = career[0] if career else {}
+    else:
+        season, logs = college_production(prospect)
+        career = [season]
     upside_unlocked = float(scout.get('scouted_pct') or 0) >= 100
     from .save import positional_rating_reference
     reference, reference_label = positional_rating_reference(active, prospect.get('position'))
@@ -1684,8 +1692,9 @@ def prospect_card_payload(canonical: dict[str, Any], save_path: Path, prospect_i
         'upside_unlocked': upside_unlocked,
         'upside_remaining': round(max(0, min(5, (scout.get('potential', 0) - scout.get('now', 0)) / 5)), 1) if upside_unlocked else None,
         'board_rank': prospect.get('rank'), 'rank_range': prospect.get('rank_range') or {},
-        'season': season, 'career_seasons': [season],
+        'season': season, 'career_seasons': career,
         'recent_games': logs, 'recent_game_table': logs[-5:],
+        'college_profile': college_card(college) if college else None,
         'spatial_profile': prospect_spatial_profile(active, prospect, include_chart=True),
     }
 

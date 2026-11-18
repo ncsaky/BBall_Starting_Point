@@ -27,6 +27,7 @@ from .schema import (
 )
 from .spatial import invalidate_spatial_cache, prospect_spatial_fit_delta
 from .health import generated_prospect_medical_profile, prospect_medical_penalty
+from . import real_prospects as real_prospect_data
 from .talent import SOURCE_ID as TALENT_SOURCE_ID, enabled as talent_enabled, modeled as talent_modeled, diverse_prospect_skills, career_trait_profile
 from .transactions import (
     compact_player,
@@ -83,6 +84,8 @@ def default_draft_model_config() -> dict[str, Any]:
     return {
         "version": "draft_model_v1",
         "generated_class_size": 60,
+        # Real college players (data/canonical/real_prospects.json) in the first future classes of a new save.
+        "real_prospects": {"enabled": True},
         "bpa_gap_threshold": 6.5,
         "need_override_threshold": 10.0,
         "scouting": {
@@ -152,7 +155,8 @@ def build_draft_context(canonical: dict[str, Any] | Any, draft_research: dict[st
         )
     else:
         generated = generate_draft_class_records(
-            draft_year, seed=int(draft_year), config=config, talent_model=talent_enabled(canonical)
+            draft_year, seed=int(draft_year), config=config, talent_model=talent_enabled(canonical),
+            real_prospects=real_prospect_data.enabled(config),
         )
         draft_classes = generated["draft_classes"]
         prospects = generated["draft_prospects"]
@@ -305,8 +309,19 @@ def prospect_traits_from_row(prospect: DraftProspect, row: dict[str, Any]) -> li
     ]
 
 
-def generate_draft_class_records(year: str, seed: int = 1, config: dict[str, Any] | None = None, *, talent_model: bool = False) -> dict[str, Any]:
+def generate_draft_class_records(year: str, seed: int = 1, config: dict[str, Any] | None = None, *, talent_model: bool = False,
+                                 real_prospects: bool = False) -> dict[str, Any]:
+    """A deterministic future class. With real_prospects, years covered by the real-prospect bundle (2027-2029)
+    place real college players at their projected picks and keep the generated prospects of every other slot;
+    other years are identical either way."""
     config = config or default_draft_model_config()
+    generated = _generated_class_records(str(year), seed, config, talent_model=talent_model)
+    if real_prospects and str(year) in real_prospect_data.draft_years():
+        return assemble_real_prospect_class(str(year), seed, generated, talent_model=talent_model)
+    return generated
+
+
+def _generated_class_records(year: str, seed: int, config: dict[str, Any], *, talent_model: bool) -> dict[str, Any]:
     rng = random.Random(f"{year}:{seed}:draft_class")
     size = int(config.get("generated_class_size", 60))
     strength_mean = float(config["class_strength"]["mean"])
@@ -420,6 +435,149 @@ def generate_draft_class_records(year: str, seed: int = 1, config: dict[str, Any
     return {"draft_classes": [draft_class], "draft_prospects": prospects, "draft_prospect_traits": traits}
 
 
+# Real prospects' level comes from their projected slot like a generated prospect's, then production and recruiting:
+# a standard score of college readiness (box plus-minus, offensive rating, minutes) moves current ability up to about
+# the generator's own random spread; elite recruits carry a little more public upside.
+REAL_PRODUCTION_CURRENT = 1.2
+REAL_RECRUIT_POTENTIAL_PER_POINT = 0.15
+REAL_UNRANKED_POTENTIAL = -1.0
+REAL_PUBLIC_POTENTIAL_SPREAD = 3.0
+
+
+def assemble_real_prospect_class(year: str, seed: int, generated: dict[str, Any], *, talent_model: bool) -> dict[str, Any]:
+    """Real college prospects at their projected picks; every other slot keeps the generated prospect made for it.
+
+    Generated prospects are created slot by slot (list order = slot), so keeping the ones at free slots preserves
+    the generator's level-by-slot profile, class strength draws, upside spread and position mix for the slots the
+    college data cannot fill (international, high-school and G League prospects)."""
+    entries = real_prospect_data.prospects_for_year(year)
+    gen_prospects = list(generated["draft_prospects"])
+    size = len(gen_prospects)
+    if not entries or not size:
+        return generated
+    draft_class = generated["draft_classes"][0]
+    real_by_slot: dict[int, dict[str, Any]] = {}
+    for entry in entries:
+        slot = max(1, int(entry.get("projected_pick") or size))
+        while slot in real_by_slot:
+            slot += 1
+        if slot <= size:
+            real_by_slot[slot] = entry
+    traits_by_prospect: dict[str, list[DraftProspectTrait]] = {}
+    for trait in generated["draft_prospect_traits"]:
+        traits_by_prospect.setdefault(trait.prospect_id, []).append(trait)
+    prospects: list[DraftProspect] = []
+    traits: list[DraftProspectTrait] = []
+    for slot in range(1, size + 1):
+        if slot in real_by_slot:
+            prospect, prospect_traits = real_prospect_record(real_by_slot[slot], slot, size, year, seed,
+                                                             draft_class.top_end_strength, draft_class.depth_strength,
+                                                             talent_model=talent_model)
+        else:
+            prospect = gen_prospects[slot - 1]
+            prospect_traits = traits_by_prospect.get(prospect.id, [])
+        prospects.append(prospect)
+        traits.extend(prospect_traits)
+    draft_class = replace(
+        draft_class,
+        class_type="real_college_plus_generated",
+        source_ids=[*draft_class.source_ids, real_prospect_data.SOURCE_ID],
+        notes=(f"{len(real_by_slot)} real college players at their projected picks (college projection model, "
+               "data/canonical/real_prospects.json); other slots generated deterministically from year and seed."),
+    )
+    return {"draft_classes": [draft_class], "draft_prospects": apply_public_ranks(prospects), "draft_prospect_traits": traits}
+
+
+def real_prospect_record(entry: dict[str, Any], slot: int, size: int, year: str, seed: int, top_strength: float,
+                         depth_strength: float, *, talent_model: bool) -> tuple[DraftProspect, list[DraftProspectTrait]]:
+    """One real college player as a draft prospect on the generator's scale for his projected slot.
+
+    What every save shares (the public board: level, public upside, body, college profile) uses a stream keyed by
+    the player; what scouts cannot see (the hidden upside tail and scouting miss) uses the save's seed."""
+    name = str(entry["name"])
+    prospect_id = real_prospect_data.prospect_id(year, name)
+    public_rng = random.Random(f"{year}:{entry.get('id')}:real_prospect_v1")
+    slot60 = max(1, round(slot * 60 / max(1, size)))
+    position = real_prospect_data.position_for(entry)
+    archetype = real_prospect_data.archetype_for(entry, position)
+    typical_age = _slot_value(PROFILE_AGE, slot60)
+    raw_age = maybe_float(entry.get("age_at_draft")) or typical_age
+    age = whole_prospect_age(raw_age)
+    age_gap = age - typical_age
+    # The class-strength draw (top_strength / depth_strength) is a save-seed coin flip; it shapes only the generated
+    # slots. Real players are who they are in every save: slot profile, age, production and recruiting only.
+    readiness = float((entry.get("skill_scores") or {}).get("nba_readiness", 0.0))
+    current = (_slot_value(PROFILE_CURRENT, slot60) + AGE_CURRENT_PER_YEAR * age_gap
+               + REAL_PRODUCTION_CURRENT * 2 * math.tanh(readiness / 2))
+    recruit = maybe_float(entry.get("recruit_rating"))
+    recruit_term = (REAL_RECRUIT_POTENTIAL_PER_POINT * (clamp(recruit, 80, 100) - 90) if recruit is not None
+                    else REAL_UNRANKED_POTENTIAL)
+    public_potential = (_slot_value(PROFILE_POTENTIAL, slot60) - AGE_POTENTIAL_PER_YEAR * age_gap + recruit_term
+                        + public_rng.gauss(0.0, REAL_PUBLIC_POTENTIAL_SPREAD))
+    current = clamp(current, 30.0, 70.0)
+    public_potential = clamp(public_potential, current + 1.0, 96.0)
+    potential = generated_prospect_upside(public_potential, slot, top_strength, year, seed, talent_model)
+    if talent_model:
+        miss = random.Random(f"{year}:{seed}:{entry.get('id')}:real_scouting_miss_v1").gauss(0.0, SCOUTING_MISS_SPREAD)
+        potential = clamp(potential + miss, current + 1.0, 97.0)
+    floor = clamp(current - public_rng.uniform(5, 13), 20, current)
+    ceiling_room = public_rng.uniform(2, 9)
+    ceiling = clamp(potential + ceiling_room, potential, 99)
+    volatility = clamp(12 + public_rng.random() * 17 + max(0, 20 - age) * 1.3, 5, 36)
+    height = maybe_float(entry.get("height_inches")) or generated_height(position, public_rng)
+    college = real_prospect_data.college_block(entry)
+    source_ids = [real_prospect_data.SOURCE_ID, "src_draft_model_config_v1", *([TALENT_SOURCE_ID] if talent_model else [])]
+    prospect = DraftProspect(
+        id=prospect_id,
+        draft_year=year,
+        name=name,
+        normalized_name=normalize_name(name),
+        rank=slot,
+        rank_range={"low": max(1, slot - 3), "high": min(size, slot + 5)},
+        position=position,
+        source_team=entry.get("college_team"),
+        league="NCAA",
+        class_year=real_prospect_data.class_year_label(entry),
+        age=age,
+        height_inches=height,
+        weight_lbs=generated_weight(position, public_rng),
+        archetype=archetype,
+        current_ability=round(current, 2),
+        potential=round(potential, 2),
+        floor=round(floor, 2),
+        ceiling=round(ceiling, 2),
+        development_curve=development_curve(age, real_prospect_data.class_year_label(entry), archetype),
+        volatility=round(volatility, 2),
+        rookie_contract_value=round(rookie_contract_value(slot, current, potential), 2),
+        public_stats={"college": college},
+        confidence=0.6,
+        source_ids=source_ids,
+        notes="Real college player projected into this draft by the college projection model (Barttorvik data). "
+              "Skills follow his college profile; level follows his projected slot, age and production.",
+        medical_profile=real_prospect_data.neutral_medical_profile(),
+        scouting_prior=({
+            "potential": round(public_potential, 2),
+            "ceiling": round(clamp(public_potential + ceiling_room, public_potential, 99), 2),
+            "rookie_contract_value": round(rookie_contract_value(slot, current, public_potential), 2),
+        } if round(potential, 2) != round(public_potential, 2) else {}),
+    )
+    tools = 0.0 if talent_model else clamp((potential - 80.0) / 12.0, 0.0, 1.0) * 4.0
+    values = real_prospect_data.draft_trait_values(entry, current)
+    traits = [
+        DraftProspectTrait(
+            id=stable_id("draft_trait", prospect_id, key),
+            prospect_id=prospect_id,
+            trait_key=key,
+            value=round(real_prospect_data.soft_bounded(values.get(key, current) + tools), 2),
+            confidence=0.6,
+            source_ids=list(source_ids),
+            notes="Real prospect trait from his college profile (standard score against drafted college players).",
+        )
+        for key in DRAFT_TRAITS
+    ]
+    return prospect, traits
+
+
 def draft_class_payload(canonical: dict[str, Any] | Any, year: str, seed: int = 1, scouted_for: str | None = None, config: dict[str, Any] | None = None) -> dict[str, Any]:
     canonical = with_draft_context(canonical, config)
     year = str(year)
@@ -436,7 +594,8 @@ def draft_class_payload(canonical: dict[str, Any] | Any, year: str, seed: int = 
                 if report["team_id"] == team["id"] and report.get("prospect_id") in prospect_ids
             ]
     else:
-        generated = generate_draft_class_records(year, seed=seed, config=config, talent_model=talent_enabled(canonical))
+        generated = generate_draft_class_records(year, seed=seed, config=config, talent_model=talent_enabled(canonical),
+                                                 real_prospects=real_prospect_data.enabled(config))
         prospects = to_plain(generated["draft_prospects"])
         draft_classes = to_plain(generated["draft_classes"])
         reports = []
@@ -1468,6 +1627,16 @@ def rookie_player_record(onboarding: dict[str, Any], prospect: dict[str, Any], t
     }
     if new_model:
         player["source_ids"].append(TALENT_SOURCE_ID)
+    college = real_prospect_data.college_entry_for(prospect)
+    if college:
+        # Real college player: his college profile informs his entry skills in the 94-input ratings
+        # (input_estimator blends these estimates with the real-player neighbours generated rookies use).
+        player["source_ids"].append(real_prospect_data.SOURCE_ID)
+        player["college_profile"] = {
+            "team": college.get("team"), "conference": college.get("conference"), "coach": college.get("coach"),
+            "class_year": college.get("class_year_at_draft"), "projected_pick": college.get("projected_pick"),
+            "inputs": real_prospect_data.input_targets(college, overall),
+        }
     return player
 
 
@@ -1915,8 +2084,11 @@ def apply_public_ranks(prospects: list[Any]) -> list[Any]:
     plain = lambda p: p if isinstance(p, dict) else to_plain(p)
     replaced: dict[int, Any] = {}
     by_year: dict[str, list[Any]] = {}
+    generated_years = {str(plain(p).get("draft_year")) for p in prospects if plain(p).get("league") == "generated"}
     for prospect in prospects:
-        if plain(prospect).get("league") == "generated":
+        # A class with generated members is ranked as a whole (real college prospects mixed into a future class
+        # share its board); fully imported classes keep their own ranks.
+        if str(plain(prospect).get("draft_year")) in generated_years:
             by_year.setdefault(str(plain(prospect).get("draft_year")), []).append(prospect)
     for members in by_year.values():
         size = len(members)
@@ -2374,7 +2546,8 @@ def generated_class_for_context(canonical: dict[str, Any], year: str, seed: int 
     key = (str(year), class_seed, talent_enabled(canonical), json.dumps(config, sort_keys=True))
     cache = canonical.setdefault("_generated_draft_records_cache", {}) if canonical.get("_allow_internal_caches") else {}
     if key not in cache:
-        cache[key] = to_plain(generate_draft_class_records(str(year), class_seed, config, talent_model=talent_enabled(canonical)))
+        cache[key] = to_plain(generate_draft_class_records(str(year), class_seed, config, talent_model=talent_enabled(canonical),
+                                                           real_prospects=real_prospect_data.enabled(config)))
     return cache[key]
 
 
