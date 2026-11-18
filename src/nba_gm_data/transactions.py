@@ -2908,15 +2908,21 @@ def market_value_after_star_and_surplus_shape(player: dict[str, Any], valuation:
     development = float(valuation.get("development_upside") or 0.0)
     minutes = trade_value_role_minutes(player, valuation)
     age = maybe_float(player.get("age")) or 27.0
-    if surplus > 16.0 and on_court < 80.0 and development < 13.5:
-        penalty_rate = 0.82 if on_court >= 74.0 else 1.12
-        raw -= max(0.0, surplus - 16.0) * penalty_rate
+    # The cheap-contract penalty (surplus on a good-not-great player counts for less) used to stop dead at on-court
+    # 80 and step its rate at 74. After the 2026-11-19 value refit Wembanyama (80.3 -> 77.6) fell under the cutoff
+    # and his rookie deal cost him ~15 points (4th -> 10th in the market). It now fades out over on-court 76-80 and
+    # its rate eases from 1.12 to 0.82 over 72-76; players at or below 72, and at or above 80, are valued as before.
+    penalty_weight = clamp((80.0 - on_court) / 4.0, 0.0, 1.0)
+    if surplus > 16.0 and penalty_weight > 0.0 and development < 13.5:
+        penalty_rate = 1.12 - 0.30 * clamp((on_court - 72.0) / 4.0, 0.0, 1.0)
+        raw -= penalty_weight * max(0.0, surplus - 16.0) * penalty_rate
         if age >= 31.0:
-            raw -= min(7.5, (age - 30.0) * 1.05)
+            raw -= penalty_weight * min(7.5, (age - 30.0) * 1.05)
     # The superstar floor used to switch on at hard cutoffs (on-court 79, playoff 80): Giannis at 78.2 sat ~25
-    # value points below Luka at 79.6 (2026-11-17). It now ramps in over on-court 76-79 and playoff 77-80;
-    # players at or above the old cutoffs are valued exactly as before.
-    star_share = clamp((on_court - 76.0) / 3.0, 0.0, 1.0) * clamp((playoff - 77.0) / 3.0, 0.0, 1.0)
+    # value points below Luka at 79.6 (2026-11-17). It then ramped in over on-court 76-79 and playoff 77-80, but that
+    # was still steep: a sub-point rating move swung Giannis ~5 points (2026-11-19). It now ramps in over on-court
+    # 73-79 and playoff 74-80; players at or above the old cutoffs are valued exactly as before.
+    star_share = clamp((on_court - 73.0) / 6.0, 0.0, 1.0) * clamp((playoff - 74.0) / 6.0, 0.0, 1.0)
     if minutes >= 28.0 and star_share > 0.0:
         superstar_floor = 94.0 + max(0.0, on_court - 79.0) * 1.55 + max(0.0, playoff - 80.0) * 0.66
         if on_court >= 86.0 and playoff >= 84.0:
