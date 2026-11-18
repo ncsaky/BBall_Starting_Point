@@ -1066,7 +1066,10 @@ def defensive_feature_summary_from_values(features: dict[str, float]) -> dict[st
 # tuned on fully healthy projected rotations; with real availability and minutes (replaying the 2025-26 season,
 # real absences included) new-ratings mode scored 113.2 points per team vs the NBA's 115.6, and a new-ratings
 # save averaged 113.7 through Dec 15. Both teams get the same offset, so margins are unchanged.
-INPUTS_OFFENSE_CALIBRATION = 2.45
+# 2026-11-18 (ratings audit): 2.45 -> 1.60. The evidence-fitted rim recipe moved rim protection from high-minute
+# guards to bigs and the evidence-shaped response lowered good-not-elite bigs, so league rim protection fell and the
+# replay scored 116.8 per team (was 115.95; NBA 115.6). Re-centred by the same 0.85 points per 100; margins unchanged.
+INPUTS_OFFENSE_CALIBRATION = 1.60
 # League-average possessions and points per 100 before matchup/rest/coach adjustments. Were 99.5 / 110.5, which gave
 # 116 points per 100 possessions (NBA 112.75) at low pace once box scores were split by real shooting rates. With the
 # box now tied to the engine's possessions (box_variation MISS_FILL), 101.3 / 107.9 give pace ~102.5, ~112 per 100 and
