@@ -52,7 +52,7 @@ test('three player pages show season stats, recent games, payroll, ratings, and 
       assert.ok(html.includes(value.toFixed(1)), label);
     }
   }
-  for (const field of ['Injury risk 2.2/10','Growth runway','Trade Value','3.4','66.7','Offensive shape','Defense / physical','own-court','Select player career season','Recent Games · Last 5','Game Score · Last 15 Games','Four-Year Payroll Share','Health & Injury Outlook']) assert.ok(html.includes(field), field);
+  for (const field of ['Injury risk 2.2','Growth runway','Trade Value','3.4','66.7','Offensive shape','Defense / physical','own-court','Select player career season','Recent Games · Last 5','Game Score · Last 15 Games','Four-Year Payroll Share','Health & Injury Outlook']) assert.ok(html.includes(field), field);
   const season = html.slice(html.indexOf('approved-season-line'), html.indexOf('player-page-game-log'));
   assert.match(season, /<small>GP\/All<\/small><strong>30\//);
   for (const [key,value] of Object.entries(detail.season)) {

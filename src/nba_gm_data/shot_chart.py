@@ -245,6 +245,8 @@ def fallback_chart(profile):
 def combine_team_charts(weighted):
     total = sum(weight for _, weight in weighted) or 1
     charts = [(profile["shot_chart"], weight / total) for profile, weight in weighted]
+    from .court_influence import TEAMMATE_SHOT_SHARE
+    extended = all("playmaking" in (chart.get("views") or []) and len(chart["cells"][0]) >= 9 for chart, _ in charts)
     regions = []
     for index, (region, label, _) in enumerate(REGIONS):
         base = charts[0][0]["regions"][index]
@@ -253,11 +255,28 @@ def combine_team_charts(weighted):
         # minutes; a center's rare threes shouldn't dominate a team zone.
         delta = sum(chart["regions"][index]["delta_pp"] * chart["regions"][index]["frequency"] * weight for chart, weight in charts) / max(share, 1e-9)
         suppression = sum(chart["regions"][index]["suppression_delta_pp"] * weight for chart, weight in charts)
-        regions.append({**base, "frequency": round(share, 6), "delta_pp": round(delta, 2),
-                        "fg_pct": round(clamp(base["league_fg_pct"] + delta, 0, 100), 2) if base["league_fg_pct"] is not None else None,
-                        "suppression_delta_pp": round(suppression, 2)})
-    cells = [[*cell, round(sum(chart["cells"][index][3] * weight for chart, weight in charts), 7),
-              round(sum(chart["cells"][index][4] * weight for chart, weight in charts), 7), charts[0][0]["cells"][index][5]] for index, cell in enumerate(court_grid())]
+        row = {**base, "frequency": round(share, 6), "delta_pp": round(delta, 2),
+               "fg_pct": round(clamp(base["league_fg_pct"] + delta, 0, 100), 2) if base["league_fg_pct"] is not None else None,
+               "suppression_delta_pp": round(suppression, 2)}
+        if extended:
+            # Team playmaking is what the sim adds to team shooting (court_influence.team_playmaking_grade, in FG
+            # points): 5 x the minutes-weighted lift x teammates' share of shots. On-ball and help average like the
+            # overall defense they split.
+            row["playmaking_delta_pp"] = round(5.0 * TEAMMATE_SHOT_SHARE * sum(chart["regions"][index]["playmaking_delta_pp"] * weight for chart, weight in charts), 2)
+            row["onball_delta_pp"] = round(sum(chart["regions"][index]["onball_delta_pp"] * weight for chart, weight in charts), 2)
+            row["help_delta_pp"] = round(sum(chart["regions"][index]["help_delta_pp"] * weight for chart, weight in charts), 2)
+        regions.append(row)
+    layers = (3, 4, 6, 7, 8) if extended else (3, 4)
+    cells = []
+    for index, cell in enumerate(court_grid()):
+        values = {layer: round(sum(chart["cells"][index][layer] * weight for chart, weight in charts), 7) for layer in layers}
+        row = [*cell, values[3], values[4], charts[0][0]["cells"][index][5]]
+        if extended:
+            row += [values[6], values[7], values[8]]
+        cells.append(row)
     basis = "projected" if any(chart.get("basis") == "projected" for chart, _ in charts) else "unavailable"
-    return {"version": charts[0][0]["version"], "basis": basis, "regions": regions, "cells": cells,
-            "reference_season": charts[0][0].get("reference_season"), "density_basis": "sample-conditioned league estimate"}
+    result = {"version": charts[0][0]["version"], "basis": basis, "regions": regions, "cells": cells,
+              "reference_season": charts[0][0].get("reference_season"), "density_basis": "sample-conditioned league estimate"}
+    if extended:
+        result["views"] = ["scoring", "playmaking", "defense", "onball", "help"]
+    return result

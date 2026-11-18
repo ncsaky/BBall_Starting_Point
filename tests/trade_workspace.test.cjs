@@ -32,6 +32,7 @@ function fixture() {
     action:async(name,payload)=>{calls.push({name,payload});return name==='team_assets'?assets[payload.team]:{candidates:[]};},
   };
   vm.createContext(context);
+  vm.runInContext(source.slice(source.indexOf('// ---- Injury body map (2026-11-19)'),source.indexOf('function injuryBodyMini(')),context);
   vm.runInContext(workspaceCode + '\n' + selectionCode + '\n' + ledgerCode,context);
   return {context,calls,messages,assets,resultsElement};
 }

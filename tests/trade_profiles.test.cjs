@@ -23,6 +23,7 @@ function fixture() {
     tradeHeadline:()=> 'Trade completed: player for player',
   };
   vm.createContext(scope);
+  vm.runInContext(source.slice(source.indexOf('// ---- Injury body map (2026-11-19)'),source.indexOf('function injuryBodyMini(')),scope);
   vm.runInContext(source.slice(source.indexOf('function tradeResultCards('),source.indexOf('function tradeOfferSide(')),scope);
   return scope;
 }
