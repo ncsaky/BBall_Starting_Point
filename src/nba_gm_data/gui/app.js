@@ -3047,13 +3047,22 @@ function spatialHexRadius(density, leagueMeanDensity) {
   return Math.max(1.8, Math.min(12, 7 * Math.sqrt(ratio)));
 }
 
+const SPATIAL_COURT_VIEWS = {
+  offense: { density: 3, delta: "delta_pp", tab: "Scoring", legend: "His FG vs league (pp)", caption: "His own shots: where he shoots, and his projected FG% against league average." },
+  playmaking: { density: 6, delta: "playmaking_delta_pp", tab: "Playmaking", legend: "Teammates' FG change (pp)", caption: "His teammates' shots while he plays (his own shots left out): where they shoot, and how much better or worse they shoot because of his passing, driving and gravity." },
+  defense: { density: 4, delta: "suppression_delta_pp", tab: "Overall", legend: "Suppression (pp)", caption: "All of his defense: how much he lowers opponents' FG% by zone. Blue is better defense." },
+  onball: { density: 7, delta: "onball_delta_pp", tab: "On his man", legend: "His man held below league (pp)", caption: "The man he guards: where players his size shoot, and how much he holds them below league FG%." },
+  help: { density: 8, delta: "help_delta_pp", tab: "Help", legend: "Others held below league (pp)", caption: "Everyone else while he plays (his own man left out): how much his rim protection and rotations lower their FG%." },
+};
+
 function spatialHeatmapRegions(profile, side) {
   const chart = profile?.shot_chart;
   if (!chart?.cells?.length || !chart.regions?.length || chart.basis === "unavailable") return "";
+  const view = SPATIAL_COURT_VIEWS[side] || SPATIAL_COURT_VIEWS.defense;
   const cellsByRegion = new Map(chart.regions.map(region => [Number(region.id), []]));
   const leagueMeanDensity = chart.cells.reduce((total, cell) => total + Number(cell[5]), 0) / chart.cells.length;
   chart.cells.forEach(cell => cellsByRegion.get(Number(cell[2]))?.push(cell));
-  const densityIndex = side === "offense" ? 3 : 4;
+  const densityIndex = view.density;
   return chart.regions.map(region => {
     const cells = cellsByRegion.get(Number(region.id)) || [];
     if (!cells.length) return "";
@@ -3062,12 +3071,13 @@ function spatialHeatmapRegions(profile, side) {
     const meanCellDensity = teamDensity / cells.length;
     const ratio = meanCellDensity / Math.max(leagueMeanDensity, 0.000025);
     const localRatio = teamDensity / Math.max(leagueDensity, 0.000025);
-    const rawDelta = side === "offense" ? region.delta_pp : region.suppression_delta_pp;
+    const rawDelta = region[view.delta];
     const delta = rawDelta == null ? null : Number(rawDelta);
     const known = delta != null && Number.isFinite(delta);
     const color = known ? spatialEfficiencyColor(delta) : "#d4dce2";
-    const hexes = cells.map(([x, y, , offenseDensity, defenseDensity]) => {
-      const density = Number(side === "offense" ? offenseDensity : defenseDensity);
+    const hexes = cells.map(cell => {
+      const [x, y] = cell;
+      const density = Number(cell[densityIndex] || 0);
       if (density < 0.000025) return "";
       const ratio = density / Math.max(leagueMeanDensity, 0.000025);
       const radius = spatialHexRadius(density, leagueMeanDensity);
@@ -3075,7 +3085,10 @@ function spatialHeatmapRegions(profile, side) {
     }).join("");
     const value = side === "offense" && region.fg_pct != null
       ? `Projected FG ${Number(region.fg_pct).toFixed(1)}%, league ${Number(region.league_fg_pct).toFixed(1)}%`
-      : side === "defense" ? "Modeled defensive suppression" : "Reference unavailable";
+      : side === "defense" ? "Modeled defensive suppression"
+      : side === "playmaking" ? "Teammates' FG change with him on court"
+      : side === "onball" ? "His man's FG held below league"
+      : side === "help" ? "Other opponents' FG held below league" : "Reference unavailable";
     const comparison = known ? `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} pp vs league` : "Comparison unavailable";
     const title = `${region.label}: ${value}; ${comparison}; ${ratio.toFixed(2)}x league mean cell density; ${localRatio.toFixed(2)}x estimated league density in this region`;
     const hit = spatialRegionGeometry(cells);
@@ -3101,20 +3114,14 @@ function spatialHeatmapLegend(label, side) {
   return `<div class="spatial-legend" title="${escapeAttr(detail)}"><span>${label}</span><i class="spatial-discrete-key spatial-numeric-key" role="img" aria-label="${escapeAttr(detail)}">${[-8,-3,0,3,8].map(delta => `<span class="spatial-key-stop"><b style="background:${spatialEfficiencyColor(delta)}"></b><em>${delta > 0 ? "+" : ""}${delta}</em></span>`).join("")}</i></div>`;
 }
 
-function spatialHeatmapMarkup(profile, options = {}) {
-  if (!profile?.zones?.length) return `<div class="spatial-heatmap-empty">Spatial profile unavailable</div>`;
-  if (!profile.shot_chart?.cells?.length || profile.shot_chart.basis === "unavailable") return `<div class="spatial-heatmap-empty" role="status">Shot reference unavailable</div>`;
-  const seed = String(profile.seed || profile.entity_id || "spatial").replace(/[^a-zA-Z0-9_-]/g, "");
-  const offenseRegions = spatialHeatmapRegions(profile, "offense");
-  const defenseRegions = spatialHeatmapRegions(profile, "defense");
-  const legends = `<div class="spatial-legends">${spatialHeatmapLegend("Projected FG (pp)", "offense")}${spatialHeatmapLegend("Suppression (pp)", "defense")}</div>`;
-  return `<div class="spatial-heatmap${options.compact ? " compact" : ""}">
-    <div class="spatial-court-head"><h4>Offense</h4><h4>Defense</h4></div>
-    <div class="spatial-half-courts">${["offense", "defense"].map(side => `<svg class="spatial-court" viewBox="0 0 500 470" role="img" aria-label="${side === "offense" ? "Projected shooting efficiency" : "Modeled defensive suppression"} versus league average">
+function spatialCourtSvg(seed, side, regions, hidden) {
+  const label = { offense: "Projected shooting efficiency", playmaking: "Teammates' shooting change with him on court", defense: "Modeled defensive suppression", onball: "Shooting of the man he guards", help: "Other opponents' shooting with him on court" }[side];
+  const group = side === "offense" || side === "playmaking" ? "offense" : "defense";
+  return `<svg class="spatial-court" viewBox="0 0 500 470" role="img" aria-label="${label} versus league average" data-court-view="${side}" data-court-group="${group}"${hidden ? " hidden" : ""}>
       <defs><clipPath id="spatial-court-clip-${seed}-${side}"><rect x="2" y="2" width="468" height="496"/></clipPath></defs>
       <g transform="matrix(0 -1 1 0 0 470)">
       <rect class="spatial-court-floor" x="2" y="2" width="468" height="496"/>
-      <g clip-path="url(#spatial-court-clip-${seed}-${side})">${side === "offense" ? offenseRegions : defenseRegions}</g>
+      <g clip-path="url(#spatial-court-clip-${seed}-${side})">${regions}</g>
       <g class="spatial-court-markings">
         <rect class="spatial-court-line" x="2" y="2" width="468" height="496"/>
         <path class="spatial-court-line" d="M470 190 A60 60 0 0 0 470 310"/>
@@ -3125,8 +3132,27 @@ function spatialHeatmapMarkup(profile, options = {}) {
         <path class="spatial-court-line three-point" d="M2 30 H142 A237.5 237.5 0 0 1 142 470 H2"/>
       </g>
       </g>
-    </svg>`).join("")}</div>
-    ${legends}
+    </svg>`;
+}
+
+function spatialHeatmapMarkup(profile, options = {}) {
+  if (!profile?.zones?.length) return `<div class="spatial-heatmap-empty">Spatial profile unavailable</div>`;
+  if (!profile.shot_chart?.cells?.length || profile.shot_chart.basis === "unavailable") return `<div class="spatial-heatmap-empty" role="status">Shot reference unavailable</div>`;
+  const seed = String(profile.seed || profile.entity_id || "spatial").replace(/[^a-zA-Z0-9_-]/g, "");
+  const extended = (profile.shot_chart.views || []).includes("playmaking") && (profile.shot_chart.cells[0] || []).length >= 9;
+  const groups = extended ? { offense: ["offense", "playmaking"], defense: ["defense", "onball", "help"] } : { offense: ["offense"], defense: ["defense"] };
+  const legends = `<div class="spatial-legends">${spatialHeatmapLegend("Projected FG (pp)", "offense")}${spatialHeatmapLegend("Suppression (pp)", "defense")}</div>`;
+  const head = group => {
+    const title = group === "offense" ? "Offense" : "Defense";
+    if (groups[group].length === 1) return `<h4>${title}</h4>`;
+    return `<h4 class="spatial-court-tabs" role="group" aria-label="${title} chart">${groups[group].map((view, index) => `<button type="button" class="spatial-court-tab" data-court-tab="${view}" data-court-group="${group}" aria-pressed="${index === 0}" title="${escapeAttr(SPATIAL_COURT_VIEWS[view].caption)}">${escapeHtml(SPATIAL_COURT_VIEWS[view].tab)}</button>`).join("")}</h4>`;
+  };
+  const courts = ["offense", "defense"].flatMap(group => groups[group].map((view, index) => spatialCourtSvg(seed, view, spatialHeatmapRegions(profile, view), index > 0))).join("");
+  const captions = extended ? `<p class="spatial-court-caption" data-court-caption="offense">${escapeHtml(SPATIAL_COURT_VIEWS.offense.caption)}</p><p class="spatial-court-caption" data-court-caption="defense">${escapeHtml(SPATIAL_COURT_VIEWS.defense.caption)}</p>` : "";
+  return `<div class="spatial-heatmap${options.compact ? " compact" : ""}${extended ? " has-court-views" : ""}">
+    <div class="spatial-court-head">${head("offense")}${head("defense")}</div>
+    <div class="spatial-half-courts">${courts}</div>
+    ${legends}${captions}
   </div>`;
 }
 
@@ -7626,6 +7652,26 @@ function injuryBodyMapPanel(detail) {
         <p class="injury-body-note">From the same per-body-part injury model the season simulation uses: age, size, workload, playing style and this player's injury history. Recent injuries to a body part raise its risk; the effect fades over about two years.</p>
       </div>
     </div></section>`;
+}
+
+function selectSpatialCourtView(button) {
+  const root = button.closest(".spatial-heatmap");
+  const group = button.dataset.courtGroup;
+  const view = button.dataset.courtTab;
+  if (!root || !SPATIAL_COURT_VIEWS[view]) return;
+  root.querySelectorAll(`.spatial-court[data-court-group="${group}"]`).forEach(svg => svg.toggleAttribute("hidden", svg.dataset.courtView !== view));
+  root.querySelectorAll(`.spatial-court-tab[data-court-group="${group}"]`).forEach(tab => tab.setAttribute("aria-pressed", String(tab === button)));
+  const legend = root.querySelectorAll(".spatial-legend > span")[group === "offense" ? 0 : 1];
+  if (legend) legend.textContent = SPATIAL_COURT_VIEWS[view].legend;
+  const caption = root.querySelector(`[data-court-caption="${group}"]`);
+  if (caption) caption.textContent = SPATIAL_COURT_VIEWS[view].caption;
+}
+
+if (typeof document !== "undefined") {
+  document.addEventListener("click", event => {
+    const button = event.target.closest?.(".spatial-court-tab");
+    if (button) { event.preventDefault(); selectSpatialCourtView(button); }
+  });
 }
 
 function playerUpsideColor(upside) {

@@ -1,0 +1,47 @@
+{
+ "version": "court_influence_fit_v1",
+ "target": "Offensive eFG% Impact on Teammates",
+ "seasons": [
+  "2023-24",
+  "2024-25",
+  "2025-26"
+ ],
+ "min_minutes": 500,
+ "players": 455,
+ "intercept": 0.2263,
+ "features": {
+  "passing_reads": {
+   "mean": 55.458,
+   "sd": 17.413,
+   "pp_per_sd": 0.3598
+  },
+  "rim_pressure": {
+   "mean": 52.483,
+   "sd": 14.379,
+   "pp_per_sd": 0.0796
+  },
+  "shooting_range": {
+   "mean": 56.258,
+   "sd": 20.882,
+   "pp_per_sd": 0.1457
+  },
+  "handle_pressure": {
+   "mean": 51.512,
+   "sd": 14.791,
+   "pp_per_sd": 0.0976
+  },
+  "shot_versatility": {
+   "mean": 45.122,
+   "sd": 12.794,
+   "pp_per_sd": 0.0668
+  },
+  "height": {
+   "mean": 78.561,
+   "sd": 3.2,
+   "pp_per_sd": -0.0033
+  }
+ },
+ "r_in_sample": 0.609,
+ "r_out_of_fold": 0.594,
+ "note": "Teammates' effective FG% change (percentage points) with the player on the court; derived coefficients only."
+}

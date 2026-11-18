@@ -16,6 +16,7 @@ from typing import Any, Iterable
 from .utils import clamp, normalize_name
 from .defense import COMPONENT_VERSION, zone_defense
 from .shot_chart import combine_team_charts, fallback_chart, project_player_chart
+from .court_influence import GROUPS as PLAYMAKING_GROUPS, playmaking_by_group, team_playmaking_grade, zone_group as playmaking_group
 
 
 SPATIAL_PROFILE_VERSION = "spatial_profile_v1"
@@ -143,6 +144,36 @@ def _trait_index(canonical: dict[str, Any]) -> dict[str, dict[str, float]]:
     return output
 
 
+_PLAYMAKING_MEAN_CACHE: dict[tuple, dict[str, float]] = {}
+
+
+def league_playmaking_mean(canonical: dict[str, Any]) -> dict[str, float]:
+    """Minutes-weighted playmaking of every rostered player (weighted the way team profiles weight them): the zero
+    point, so the playmaking term moves teams relative to each other without shifting league scoring."""
+    traits = _trait_index(canonical)
+    players = canonical.get("players", [])
+    key = (id(traits), len(players), str((canonical.get("meta") or {}).get("current_date")))
+    cached = _PLAYMAKING_MEAN_CACHE.get(key)
+    if cached is not None:
+        return cached
+    totals = {group: 0.0 for group in PLAYMAKING_GROUPS}
+    weight_total = 0.0
+    for player in players:
+        minutes = float(player.get("minutes_projection") or 0.0)
+        if not player.get("team_id") or minutes <= 0:
+            continue
+        row = traits.get(str(player.get("id")), {})
+        lifts = playmaking_by_group(lambda name, row=row: float(row.get(name, 50.0)), float(player.get("height_inches") or 78.0))
+        for group in PLAYMAKING_GROUPS:
+            totals[group] += lifts[group] * minutes
+        weight_total += minutes
+    mean = {group: round(totals[group] / weight_total, 3) if weight_total else 0.0 for group in PLAYMAKING_GROUPS}
+    if len(_PLAYMAKING_MEAN_CACHE) >= 8:
+        _PLAYMAKING_MEAN_CACHE.clear()
+    _PLAYMAKING_MEAN_CACHE[key] = mean
+    return mean
+
+
 @lru_cache(maxsize=1)
 def official_spatial_priors() -> dict[str, dict[str, Any]]:
     # The current research artifact documents sources but contains no matched
@@ -178,9 +209,11 @@ def player_spatial_profile(canonical: dict[str, Any], player: dict[str, Any] | s
     }
     from .offense import enabled as offense_enabled, offensive_profile
     offensive = offensive_profile(canonical, player, traits) if offense_enabled(canonical) else None
+    playmaking_zero = league_playmaking_mean(canonical)
     signature = hashlib.sha256(json.dumps({
         "version": SPATIAL_PROFILE_VERSION,
         "defensive_components": COMPONENT_VERSION,
+        "playmaking_zero": playmaking_zero,
         "player_id": player_id,
         "position": position,
         "height": height,
@@ -307,6 +340,7 @@ def player_spatial_profile(canonical: dict[str, Any], player: dict[str, Any] | s
         "creation_volume": round(creation_volume, 2),
         "defensive_activity": round(defensive_activity, 2),
         "visual_pockets": visual_pockets,
+        "playmaking": {group: round(value - playmaking_zero[group], 3) for group, value in playmaking_by_group(get, height).items()},
         "confidence": confidence,
         "source_ids": sorted(dict.fromkeys(source_ids)),
     }
@@ -419,6 +453,9 @@ def team_spatial_profile(
     # semantic zone values consumed by simulation and AI fit.
     creation_volume = clamp(20 + (creation_volume - 40) * 2.5, 10, 99)
     defensive_activity = clamp(20 + (defensive_activity - 40) * 2.5, 10, 99)
+    # Playmaking: each player's effect on his teammates' shooting by zone (court_influence) while he plays.
+    playmaking_lifts = [(profile.get("playmaking") or {}, weight) for profile, weight in weighted]
+    playmaking_grade = {group: team_playmaking_grade(playmaking_lifts, total_weight, group) for group in PLAYMAKING_GROUPS}
     for key in ZONE_KEYS:
         frequency = sum(profile["offense"][key]["frequency"] * weight for profile, weight in weighted) / total_weight
         efficiency = sum(profile["offense"][key]["efficiency"] * weight for profile, weight in weighted) / total_weight
@@ -426,6 +463,7 @@ def team_spatial_profile(
         suppression = sum(profile["defense"][key]["suppression"] * weight for profile, weight in weighted) / total_weight
         contest = sum(profile["defense"][key]["contest"] * weight for profile, weight in weighted) / total_weight
         group = ZONE_BY_KEY[key]["group"]
+        efficiency += playmaking_grade[playmaking_group(key)]
         if group == "rim":
             efficiency -= clamp((non_shooter_share - 0.38) * 12.0, 0, 5.0)
             gravity -= clamp((non_shooter_share - 0.42) * 10.0, 0, 4.0)

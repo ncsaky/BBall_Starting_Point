@@ -126,13 +126,47 @@ def project_player_chart(player, traits, profile):
         contest_ratio = profile["defense"][key]["contest"] / max(1, model["league_contest_grades"][key])
         defense_density.append(model["league_density"][index] * contest_ratio)
     defense_total = sum(defense_density) or 1
+    extra = _influence_layers(player, traits, profile, model, regions, region_keys)
     return {
         "version": model["version"], "regions": regions,
-        "cells": [[*cell, round(cells[index], 7), round(defense_density[index] / defense_total, 7), model["league_density"][index]] for index, cell in enumerate(court_grid())],
+        "cells": [[*cell, round(cells[index], 7), round(defense_density[index] / defense_total, 7), model["league_density"][index],
+                   *(round(layer[index], 7) for layer in extra)] for index, cell in enumerate(court_grid())],
+        "views": ["scoring", "playmaking", "defense", "onball", "help"] if extra else ["scoring", "defense"],
         "basis": "projected", "reference_season": model["season"],
         "density_basis": "sample-conditioned league estimate",
         "comparables": [{"name": row["name"], "weight": round(weight, 3)} for row, weight in neighbors if weight >= 0.03],
     }
+
+
+def _influence_layers(player, traits, profile, model, regions, region_keys):
+    """Playmaking, on-ball and help-defense layers (court_influence). Adds per-region deltas in place and returns
+    three cell-density layers: teammates' shots with him on court, his man's shots, other opponents' shots."""
+    from .court_influence import damped, defense_group, help_suppression_delta, reweight, zone_group
+    lifts = profile.get("playmaking")
+    if not lifts:
+        return []
+    get = lambda key: float(traits.get(key, 50.0))
+    help_delta = help_suppression_delta(get)
+    by_region = {}
+    for region in regions:
+        key = region_keys[region["id"]]
+        total = float(region.get("suppression_delta_pp") or 0.0)
+        helping = help_delta[defense_group(key)]
+        region["playmaking_delta_pp"] = round(float(lifts.get(zone_group(key), 0.0)), 2)
+        region["help_delta_pp"] = round(helping, 2)
+        region["onball_delta_pp"] = round(total - helping, 2)
+        by_region[region["id"]] = region
+    grid = court_grid()
+    league = model["league_density"]
+    playmaking = reweight(league, [damped(by_region[cell[2]]["playmaking_delta_pp"], 0.06) for cell in grid])
+    # The man he guards: players his size shoot like players his size (height-neighbour comparables).
+    height = float(player.get("height_inches") or 78)
+    weights = [math.exp(-((height - row["ratings"][-1]) / 2.5) ** 2) for row in model["profiles"]]
+    total_weight = sum(weights) or 1.0
+    assignment = [sum(row["density"][index] * w for row, w in zip(model["profiles"], weights)) / total_weight for index in range(len(grid))]
+    onball = reweight(assignment, [damped(by_region[cell[2]]["onball_delta_pp"], -0.05) for cell in grid])
+    helping = reweight(league, [damped(by_region[cell[2]]["help_delta_pp"], -0.05) for cell in grid])
+    return [playmaking, onball, helping]
 
 
 def condition_chart_on_season_shot_mix(player, cells, regions):

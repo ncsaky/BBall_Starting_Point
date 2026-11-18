@@ -47,8 +47,11 @@ class Concept71GuiTests(unittest.TestCase):
         self.assertIn("function spatialHeatmapRegions", APP)
         self.assertIn("function spatialEfficiencyColor", APP)
         self.assertIn("profile?.shot_chart", APP)
-        self.assertIn("region.delta_pp", APP)
-        self.assertIn("region.suppression_delta_pp", APP)
+        # Colors come straight from each region's stored delta, chosen per court view (2026-11-19 views).
+        self.assertIn("region[view.delta]", APP)
+        for field in ('delta: "delta_pp"', 'delta: "suppression_delta_pp"', 'delta: "playmaking_delta_pp"',
+                      'delta: "onball_delta_pp"', 'delta: "help_delta_pp"'):
+            self.assertIn(field, APP)
         self.assertIn("data-density-ratio", APP)
         self.assertNotIn("spatialInterpolatedSample", APP)
         self.assertNotIn("stableSpatialUnit", APP)

@@ -1,4 +1,32 @@
-# New court heat maps: playmaking, on-ball defense, help defense (design, 2026-11-19)
+# New court heat maps: playmaking, on-ball defense, help defense (built 2026-11-19)
+
+**Status: built (route A, user-approved).** Player card → Court Influence panel. The offense court toggles between
+Scoring and Playmaking. The defense court toggles between Overall, On his man and Help.
+
+- **Playmaking.** `src/nba_gm_data/court_influence.py`.
+  - **Fit:** `scripts/fit_court_influence.py` writes `data/canonical/court_influence_fit.json`. It is fitted to Basketball
+    Index's "Offensive eFG% Impact on Teammates", 2023-26, 455 players, out-of-fold r 0.59.
+  - **What moves it:** passing reads (+0.36 points per standard deviation) > shooting gravity (+0.15) > handle (+0.10) >
+    rim pressure (+0.08) > shot versatility (+0.07). Height adds nothing.
+  - **Zero point:** each player is measured against the league's own minutes-weighted players, so league scoring
+    doesn't shift.
+  - **In the sim:** `spatial.team_spatial_profile` adds 5 x the minutes-weighted mean x 0.8 (teammates' share of shots)
+    to each zone's team shooting grade. Teams range from about −0.6 to +0.9 points of team FG%.
+- **On-ball and help.** A split of the engine's existing zone defense (no new effect).
+  - **Help gets:** 70% of the rim-protection and scheme terms, 40% of effort, 15% of lateral quickness and 10% of
+    screen navigation.
+  - **Sum:** on-ball + help = Overall exactly.
+  - **Check:** the engine's overall defense correlates 0.42 with Basketball Index's "Defensive Impact on Opponent Shot
+    Quality" and 0.40 with "Help Effectiveness Rating".
+- **Shot volumes.**
+  - **Playmaking:** league shot map, nudged toward the zones he improves.
+  - **On his man:** the shot map of players his size, from height-matched comparables.
+  - **Help:** the league shot map, nudged away from zones he protects.
+- **Noticed along the way:** the engine rates Jokić and Gobert identical at rim suppression (+10.8 points). The rim
+  term seems to saturate. Worth a ratings and evidence check (not changed).
+
+---
+
 
 User request (night of Nov 18–19): add spatial heat maps beyond the scoring shot chart:
 1. **Playmaking chart.** How this player's presence changes his *teammates'* shots, by court zone: volume and
