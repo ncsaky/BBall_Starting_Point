@@ -1,0 +1,3067 @@
+{
+ "retrieved": "2026-11-19",
+ "sources": [
+  {
+   "id": "247_composite_2027",
+   "outlet": "247Sports",
+   "title": "2027 Top Basketball Recruits (Composite), ranks 1-50 reachable",
+   "url": "https://247sports.com/season/2027-basketball/compositerecruitrankings/",
+   "published": null,
+   "kind": "recruiting_ranking"
+  },
+  {
+   "id": "247_composite_2028",
+   "outlet": "247Sports",
+   "title": "2028 Top Basketball Recruits (Composite), top 40",
+   "url": "https://247sports.com/season/2028-basketball/compositerecruitrankings/",
+   "published": null,
+   "kind": "recruiting_ranking"
+  },
+  {
+   "id": "espn_scnext100_2027",
+   "outlet": "ESPN (Jeff Borzello)",
+   "title": "Men's 2027 commit fits (cites SC Next 100 ranks, Nov 17 2026 state)",
+   "url": "https://africa.espn.com/mens-college-basketball/story/_/id/50022117/mens-college-basketball-2027-sc-next-100-top-commits-fit-new-school",
+   "published": "2026-11-17",
+   "kind": "recruiting_ranking"
+  },
+  {
+   "id": "espn_scnext_2027_jul",
+   "outlet": "ESPN (Paul Biancardi)",
+   "title": "NBA comparisons, recruiting buzz for best 2027 prospects (top 10, July 2026 ranks)",
+   "url": "https://africa.espn.com/mens-college-basketball/story/_/id/49277838/mens-college-basketball-recruiting-class-2027-comparisons-nba-players-trae-young-kawhi-leonard",
+   "published": "2026-07-06",
+   "kind": "recruiting_ranking"
+  },
+  {
+   "id": "espn_race_no1_2026_05",
+   "outlet": "ESPN",
+   "title": "The 2027, 2028, 2029 race for No. 1 (via ABC11)",
+   "url": "https://abc11.com/post/boys-basketball-recruiting-2027-2028-2029-race-no-1/19180477/",
+   "published": "2026-05-27",
+   "kind": "recruiting_ranking"
+  },
+  {
+   "id": "espn_early_watch_2026_08",
+   "outlet": "ESPN (Jeremy Woo)",
+   "title": "NBA draft: Early players to watch from the 2027, 2028 classes (via ABC11/TSN)",
+   "url": "https://abc11.com/post/nba-draft-early-players-watch-2027-2028-classes/19707444/",
+   "published": "2026-08-20",
+   "kind": "big_board"
+  },
+  {
+   "id": "noceilings_u17wc",
+   "outlet": "No Ceilings",
+   "title": "FIBA U17 World Cup Recap",
+   "url": "https://www.noceilingsnba.com/p/fiba-u17-world-cup-recap-601",
+   "published": "2026-07-30",
+   "kind": "tournament_coverage"
+  },
+  {
+   "id": "fiba_u18_eurobasket_2026",
+   "outlet": "FIBA",
+   "title": "Which players impressed most at FIBA U18 EuroBasket 2026",
+   "url": "https://www.fiba.basketball/en/news/which-players-impressed-most-at-fiba-u18-eurobasket-2026",
+   "published": null,
+   "kind": "tournament_coverage"
+  },
+  {
+   "id": "fiba_u17wc_awards",
+   "outlet": "FIBA",
+   "title": "U17 World Cup 2026 All-Second Team, Best Defensive Player",
+   "url": "https://www.fiba.basketball/en/news/u17-world-cup-2026-all-second-team-best-coach-and-best-defensive-player-awards",
+   "published": null,
+   "kind": "tournament_coverage"
+  },
+  {
+   "id": "fansided_2027_board",
+   "outlet": "FanSided",
+   "title": "2027 NBA Draft big board top 60 (context: 2027 class, not 2028)",
+   "url": "https://fansided.com/nba/2027-nba-draft-big-board-top-60-prospects-for-the-new-cycle",
+   "published": "2026-07-09",
+   "kind": "big_board"
+  },
+  {
+   "id": "si_kamagate",
+   "outlet": "SI Duke",
+   "title": "Why Yann Kamagate is an interesting prospect to monitor",
+   "url": "https://www.si.com/college/duke/blue-devils-why-yann-kamagate-interesting-prospect-monitor-basketball",
+   "published": "2026-09-03",
+   "kind": "tournament_coverage"
+  },
+  {
+   "id": "si_hiller",
+   "outlet": "SI Duke",
+   "title": "Colton Hiller: how young for college",
+   "url": "https://www.si.com/college/duke/blue-devils-basketball-target-colton-hiller-how-young-college",
+   "published": "2026-10-14",
+   "kind": "tournament_coverage"
+  },
+  {
+   "id": "reclass_spears",
+   "outlet": "CBS/ESPN/Texas Athletics",
+   "title": "Marcus Spears Jr. reclassifies to 2026, signs with Texas",
+   "url": "https://texaslonghorns.com/news/2026/7/10/mens-basketball-mens-basketball-signs-marcus-spears-jr",
+   "published": "2026-07-10",
+   "kind": "tournament_coverage"
+  },
+  {
+   "id": "reclass_williams",
+   "outlet": "ESPN/SI/Deadspin",
+   "title": "A.J. Williams reclassifies from 2028 to 2027",
+   "url": "https://deadspin.com/georgia-hs-shooting-guard-top-ranked-in-2028-class-reclassifies-to-27/",
+   "published": "2026-08-04",
+   "kind": "tournament_coverage"
+  }
+ ],
+ "players": [
+  {
+   "name": "Beckham Black",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 1,
+    "espn_scnext100_2027": 1
+   },
+   "position": "PG",
+   "height": "6-3",
+   "weight_lbs": 190,
+   "birth_date": null,
+   "age_note": "Born Jan 2009 per a nbadraft.net snippet (day not verified); ESPN SC Next No.1 Aug 27 2026",
+   "current_team": "Southeastern Prep (Orlando, FL)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "floor general",
+    "deep range",
+    "transition pace",
+    "passing vision"
+   ],
+   "weaknesses": [
+    "not elite athlete",
+    "size/ceiling questions",
+    "ball security"
+   ],
+   "scouting_sources": [
+    "espn_scnext_2027_jul",
+    "espn_early_watch_2026_08",
+    "noceilings_u17wc"
+   ],
+   "notes": "Uncommitted; All-Tournament top five at FIBA U17 World Cup 2026. ESPN July list had Black No.2 behind Spears."
+  },
+  {
+   "name": "CJ Rosser",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 2,
+    "espn_scnext100_2027": 3
+   },
+   "position": "PF",
+   "height": "6-10",
+   "weight_lbs": 200,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Southeastern Prep (Orlando, FL)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "size plus finishing",
+    "movement shooting",
+    "ball-screen scoring",
+    "rebounding"
+   ],
+   "weaknesses": [
+    "three-point inconsistency",
+    "needs strength",
+    "handle tightness"
+   ],
+   "scouting_sources": [
+    "espn_scnext_2027_jul",
+    "espn_early_watch_2026_08",
+    "noceilings_u17wc"
+   ],
+   "notes": ""
+  },
+  {
+   "name": "DeMarcus Henry",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 3,
+    "espn_scnext100_2027": 2
+   },
+   "position": "SF",
+   "height": "6-7",
+   "weight_lbs": 190,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Compass Prep (Chandler, AZ)",
+   "committed_to": "North Carolina",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "versatile forward",
+    "three-level scoring",
+    "passing and decisions",
+    "rebounding"
+   ],
+   "weaknesses": [
+    "nightly consistency"
+   ],
+   "scouting_sources": [
+    "espn_scnext_2027_jul",
+    "espn_race_no1_2026_05"
+   ],
+   "notes": "Committed to North Carolina Oct 30 2026 (ESPN)."
+  },
+  {
+   "name": "Cayden Daughtry",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 4,
+    "espn_scnext100_2027": 4
+   },
+   "position": "PG",
+   "height": "6-0",
+   "weight_lbs": 165,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Calvary Christian Academy (Fort Lauderdale, FL)",
+   "committed_to": "Arkansas",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "shooting off the dribble",
+    "fast pace playmaking",
+    "quick release",
+    "efficient scorer"
+   ],
+   "weaknesses": [
+    "small for a guard",
+    "defense",
+    "half-court organization"
+   ],
+   "scouting_sources": [
+    "espn_scnext_2027_jul",
+    "espn_early_watch_2026_08",
+    "noceilings_u17wc"
+   ],
+   "notes": "Committed to Arkansas Nov 16 2026 (ESPN)."
+  },
+  {
+   "name": "AJ Williams",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 5,
+    "espn_scnext100_2027": 5
+   },
+   "position": "SF",
+   "height": "6-7",
+   "weight_lbs": 220,
+   "birth_date": null,
+   "age_note": "Born June 2009 per nbadraft.net snippet (day not verified)",
+   "current_team": "Eagle's Landing Christian Academy (McDonough, GA)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "three-level scoring",
+    "shot-making",
+    "rebounding wing",
+    "perimeter defense"
+   ],
+   "weaknesses": [
+    "not stated in sources"
+   ],
+   "scouting_sources": [
+    "espn_race_no1_2026_05",
+    "reclass_williams"
+   ],
+   "notes": "Reclassified from 2028 to 2027 in early Aug 2026 (was 2028 No.1); 247 height 6-7, some reports 6-8; uncommitted; visiting BYU, Illinois in top 10."
+  },
+  {
+   "name": "Adan Diggs",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 6,
+    "espn_scnext100_2027": 10
+   },
+   "position": "CG",
+   "height": "6-4",
+   "weight_lbs": 180,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Millennium (Goodyear, AZ)",
+   "committed_to": "Arizona",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "explosive downhill guard",
+    "stepback midrange",
+    "perimeter defense",
+    "playmaking"
+   ],
+   "weaknesses": [
+    "balancing aggression with passing",
+    "rounding out defense"
+   ],
+   "scouting_sources": [
+    "espn_scnext_2027_jul",
+    "espn_race_no1_2026_05"
+   ],
+   "notes": "ESPN's Aug 2026 update says he moved up from 2028 into 2027 (reclass). Source mismatch: one article labels him 2027 already in May."
+  },
+  {
+   "name": "Lewis Uvwo",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 7,
+    "espn_scnext100_2027": 6
+   },
+   "position": "C",
+   "height": "6-11",
+   "weight_lbs": 225,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Prolific Prep (Fort Lauderdale, FL)",
+   "committed_to": "Providence",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "elite shot blocking",
+    "rebounding",
+    "transition finishing",
+    "dirty-work big"
+   ],
+   "weaknesses": [
+    "raw back-to-basket game",
+    "late to the sport"
+   ],
+   "scouting_sources": [
+    "espn_scnext_2027_jul",
+    "espn_scnext100_2027"
+   ],
+   "notes": ""
+  },
+  {
+   "name": "Asa Montgomery",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 8,
+    "espn_scnext100_2027": 7
+   },
+   "position": "SF",
+   "height": "6-7",
+   "weight_lbs": 215,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Hillgrove (Powder Springs, GA)",
+   "committed_to": "Duke",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "scoring versatility",
+    "rebounding",
+    "physical defense",
+    "off-ball impact"
+   ],
+   "weaknesses": [
+    "limited on-ball creation",
+    "unclear star vs glue role"
+   ],
+   "scouting_sources": [
+    "espn_scnext100_2027",
+    "noceilings_u17wc"
+   ],
+   "notes": ""
+  },
+  {
+   "name": "Reese Alston",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 9,
+    "espn_scnext100_2027": 13
+   },
+   "position": "PG",
+   "height": "6-2",
+   "weight_lbs": 175,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Houston Second Baptist (Houston, TX)",
+   "committed_to": "LSU",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "downhill attacker",
+    "elusive off the bounce"
+   ],
+   "weaknesses": [
+    "not stated in sources"
+   ],
+   "scouting_sources": [
+    "espn_scnext100_2027"
+   ],
+   "notes": ""
+  },
+  {
+   "name": "NaVorro Bowman Jr.",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 10,
+    "espn_scnext100_2027": 9
+   },
+   "position": "CG",
+   "height": "6-3",
+   "weight_lbs": 185,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Notre Dame (Sherman Oaks, CA)",
+   "committed_to": "UConn",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "explosive scoring",
+    "on-ball defense",
+    "open-court play",
+    "off-ball movement"
+   ],
+   "weaknesses": [
+    "ball security",
+    "on-ball shooting"
+   ],
+   "scouting_sources": [
+    "espn_scnext100_2027",
+    "noceilings_u17wc"
+   ],
+   "notes": ""
+  },
+  {
+   "name": "Jordan Page",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 11,
+    "espn_scnext100_2027": 11
+   },
+   "position": "SF",
+   "height": "6-5",
+   "weight_lbs": 210,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "IMG Academy (Bradenton, FL)",
+   "committed_to": "UConn",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "two-way wing with length",
+    "passing",
+    "scoring versatility",
+    "all-around defense"
+   ],
+   "weaknesses": [
+    "none noted"
+   ],
+   "scouting_sources": [
+    "espn_scnext100_2027",
+    "noceilings_u17wc"
+   ],
+   "notes": "ESPN Nov 17 lists UConn commit (Oct 4)."
+  },
+  {
+   "name": "Nasir Anderson",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 12
+   },
+   "position": "PG",
+   "height": "6-3",
+   "weight_lbs": 215,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Prolific Prep (Fort Lauderdale, FL)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "lefty pace pusher",
+    "elite on-ball defense",
+    "vision",
+    "finishes through contact"
+   ],
+   "weaknesses": [
+    "three-point shot improving"
+   ],
+   "scouting_sources": [
+    "espn_scnext_2027_jul"
+   ],
+   "notes": ""
+  },
+  {
+   "name": "Darius Wabbington",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 13,
+    "espn_scnext100_2027": 12
+   },
+   "position": "C",
+   "height": "6-11",
+   "weight_lbs": 255,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Sunnyslope (Phoenix, AZ)",
+   "committed_to": "Indiana",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "skilled passing big",
+    "face-up shooting",
+    "half-court hub"
+   ],
+   "weaknesses": [
+    "not stated in sources"
+   ],
+   "scouting_sources": [
+    "espn_scnext100_2027"
+   ],
+   "notes": ""
+  },
+  {
+   "name": "King Gibson",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 14,
+    "espn_scnext100_2027": 14
+   },
+   "position": "CG",
+   "height": "6-4",
+   "weight_lbs": 185,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "SPIRE Academy (Geneva, OH)",
+   "committed_to": "LSU",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "ball-pressure defense",
+    "rebounding guard",
+    "transition",
+    "straight-line driver"
+   ],
+   "weaknesses": [
+    "needs strength",
+    "shooting developing"
+   ],
+   "scouting_sources": [
+    "espn_scnext_2027_jul",
+    "espn_scnext100_2027"
+   ],
+   "notes": ""
+  },
+  {
+   "name": "Moussa Kamissoko",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 15,
+    "espn_scnext100_2027": 19
+   },
+   "position": "SF",
+   "height": "6-7",
+   "weight_lbs": 180,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "SPIRE Academy (Geneva, OH)",
+   "committed_to": "Syracuse",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "long rangy defender",
+    "rebounding"
+   ],
+   "weaknesses": [
+    "offense developing"
+   ],
+   "scouting_sources": [
+    "espn_scnext100_2027"
+   ],
+   "notes": ""
+  },
+  {
+   "name": "Kager Knueppel",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 16,
+    "espn_scnext100_2027": 20
+   },
+   "position": "PF",
+   "height": "6-9",
+   "weight_lbs": 215,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Wisconsin Lutheran (Milwaukee, WI)",
+   "committed_to": "Duke",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "elite shooting volume",
+    "off-ball movement"
+   ],
+   "weaknesses": [
+    "not stated in sources"
+   ],
+   "scouting_sources": [
+    "espn_scnext100_2027"
+   ],
+   "notes": ""
+  },
+  {
+   "name": "Cherif Millogo",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 17,
+    "espn_scnext100_2027": 8
+   },
+   "position": "C",
+   "height": "7-4",
+   "weight_lbs": 250,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "St. Francis (La Canada Flintridge, CA)",
+   "committed_to": "Kentucky",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "7-4 size, 7-9 wingspan",
+    "rim protection",
+    "rebounding",
+    "face-up shooting flashes"
+   ],
+   "weaknesses": [
+    "shooting developing",
+    "torn ACL history"
+   ],
+   "scouting_sources": [
+    "espn_scnext100_2027"
+   ],
+   "notes": "Torn ACL as a sophomore."
+  },
+  {
+   "name": "Jalen Davis",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 18
+   },
+   "position": "CG",
+   "height": "6-4",
+   "weight_lbs": 175,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Bremerton (Bremerton, WA)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Zion Green",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 19,
+    "espn_scnext100_2027": 16
+   },
+   "position": "PF",
+   "height": "6-9",
+   "weight_lbs": 190,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Compass Prep (Chandler, AZ)",
+   "committed_to": "Alabama",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "transition play",
+    "up-tempo fit"
+   ],
+   "weaknesses": [
+    "not stated in sources"
+   ],
+   "scouting_sources": [
+    "espn_scnext100_2027"
+   ],
+   "notes": ""
+  },
+  {
+   "name": "Xavier Young",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 20,
+    "espn_scnext100_2027": 18
+   },
+   "position": "C",
+   "height": "6-10",
+   "weight_lbs": 250,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Faith Family Academy of Oak Cliff (Dallas, TX)",
+   "committed_to": "LSU",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "USA U17 impact big"
+   ],
+   "weaknesses": [
+    "thin scouting detail"
+   ],
+   "scouting_sources": [
+    "espn_scnext100_2027"
+   ],
+   "notes": "ESPN notes he must spend at least two years in college before the draft."
+  },
+  {
+   "name": "Dooney Johnson",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 21,
+    "espn_scnext100_2027": 27
+   },
+   "position": "CG",
+   "height": "6-5",
+   "weight_lbs": 185,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "East River (Orlando, FL)",
+   "committed_to": "Gonzaga",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "physical playmaker",
+    "slashing",
+    "transition",
+    "defense"
+   ],
+   "weaknesses": [
+    "consistency as primary handler"
+   ],
+   "scouting_sources": [
+    "espn_scnext100_2027"
+   ],
+   "notes": ""
+  },
+  {
+   "name": "Malachi Jordan",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 22
+   },
+   "position": "SF",
+   "height": "6-7",
+   "weight_lbs": 225,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Prolific Prep (Fort Lauderdale, FL)",
+   "committed_to": "St. John's",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "three-level scoring",
+    "rebounding",
+    "ball handling",
+    "polished mechanics"
+   ],
+   "weaknesses": [
+    "three-point shot less developed"
+   ],
+   "scouting_sources": [
+    "espn_scnext_2027_jul"
+   ],
+   "notes": ""
+  },
+  {
+   "name": "Isaiah Hill",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 23,
+    "espn_scnext100_2027": 17
+   },
+   "position": "C",
+   "height": "7-0",
+   "weight_lbs": 220,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Pike (Indianapolis, IN)",
+   "committed_to": "Purdue",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "shot blocking",
+    "above-the-rim finishing",
+    "face-up flashes"
+   ],
+   "weaknesses": [
+    "very young",
+    "college adjustment"
+   ],
+   "scouting_sources": [
+    "espn_scnext100_2027"
+   ],
+   "notes": "Age 17 per ESPN; committed to Purdue May 2026."
+  },
+  {
+   "name": "Antonio Pemberton",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 24
+   },
+   "position": "PG",
+   "height": "6-1",
+   "weight_lbs": 165,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Masters Academy International (Stow, MA)",
+   "committed_to": "Michigan State",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Paul Osaruyi",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 25
+   },
+   "position": "C",
+   "height": "6-10",
+   "weight_lbs": 225,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Bella Vista Prep (Scottsdale, AZ)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Chase Lumpkin",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 26
+   },
+   "position": "CG",
+   "height": "6-3",
+   "weight_lbs": 190,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "McEachern (Powder Springs, GA)",
+   "committed_to": "Alabama",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Ryan Hampton",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 27
+   },
+   "position": "SF",
+   "height": "6-6",
+   "weight_lbs": 190,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Rockwall-Heath (Rockwall, TX)",
+   "committed_to": "Kentucky",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Dawson Battie",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 28
+   },
+   "position": "PF",
+   "height": "6-8",
+   "weight_lbs": 230,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "St. Mark's (Dallas, TX)",
+   "committed_to": "Nebraska",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Ahmad Hudson",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 29
+   },
+   "position": "PF",
+   "height": "6-6.5",
+   "weight_lbs": 239,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Ruston (Ruston, LA)",
+   "committed_to": "LSU",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Chase Branham",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 30
+   },
+   "position": "CG",
+   "height": "6-4",
+   "weight_lbs": 185,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "La Lumiere School (La Porte, IN)",
+   "committed_to": "Indiana",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Devin Cleveland",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 31
+   },
+   "position": "CG",
+   "height": "6-3",
+   "weight_lbs": 165,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "La Lumiere School (La Porte, IN)",
+   "committed_to": "Missouri",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Micah Gordon",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 32
+   },
+   "position": "PG",
+   "height": "5-10",
+   "weight_lbs": 180,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "SPIRE Academy (Geneva, OH)",
+   "committed_to": "Creighton",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Scottie Adkinson",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 33
+   },
+   "position": "CG",
+   "height": "6-2",
+   "weight_lbs": 190,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Webster Groves (St. Louis, MO)",
+   "committed_to": "Missouri",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Ahmed Nur",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 34
+   },
+   "position": "PF",
+   "height": "6-9",
+   "weight_lbs": 190,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Bella Vista Prep (Scottsdale, AZ)",
+   "committed_to": "Ole Miss",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Kevin Savage",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 35
+   },
+   "position": "PG",
+   "height": "5-11",
+   "weight_lbs": 165,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Wheeler (Marietta, GA)",
+   "committed_to": "Purdue",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Dylan Jones",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 36
+   },
+   "position": "SF",
+   "height": "6-6",
+   "weight_lbs": 210,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Bartlett (Bartlett, TN)",
+   "committed_to": "Texas A&M",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Kamsi Awaka",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 37
+   },
+   "position": "C",
+   "height": "6-10",
+   "weight_lbs": 250,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Blair Academy (Blairstown, NJ)",
+   "committed_to": "Florida",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Oneal Delancy",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 38
+   },
+   "position": "CG",
+   "height": "6-2",
+   "weight_lbs": 165,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Montverde Academy (Montverde, FL)",
+   "committed_to": "Houston",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Jarvis Hayes Jr.",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 39
+   },
+   "position": "SG",
+   "height": "6-5",
+   "weight_lbs": 175,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Woodward Academy (Atlanta, GA)",
+   "committed_to": "Georgia",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Jakyi Miles",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 40
+   },
+   "position": "CG",
+   "height": "6-4",
+   "weight_lbs": 175,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Compass Prep (Chandler, AZ)",
+   "committed_to": "Arizona State",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Darrell Davis",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 41
+   },
+   "position": "PG",
+   "height": "6-1",
+   "weight_lbs": 160,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "SPIRE Academy (Geneva, OH)",
+   "committed_to": "Houston",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "J'Lon Lyons",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 42
+   },
+   "position": "PG",
+   "height": "6-2",
+   "weight_lbs": 174,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Clinton Grace Christian (Clinton, MD)",
+   "committed_to": "Butler",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Josh Leonard",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 43
+   },
+   "position": "PF",
+   "height": "6-6",
+   "weight_lbs": 205,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Wilson (Florence, SC)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Tyrone Jamison Jr.",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 44
+   },
+   "position": "PG",
+   "height": "6-1",
+   "weight_lbs": 165,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Calvary Baptist Academy (Shreveport, LA)",
+   "committed_to": "Baylor",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Josiah Harrington",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 45
+   },
+   "position": "SF",
+   "height": "6-6",
+   "weight_lbs": 190,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "North Scott (Eldridge, IA)",
+   "committed_to": "Iowa State",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Jaxson Davis",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 46
+   },
+   "position": "PG",
+   "height": "6-0",
+   "weight_lbs": 180,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Monarch Academy (Kansas City, KS)",
+   "committed_to": "Ohio State",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "RJ Moore",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 47
+   },
+   "position": "SF",
+   "height": "6-6",
+   "weight_lbs": 190,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Ambassador Christian (Huntersville, NC)",
+   "committed_to": "Rutgers",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "King Rachal",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 48
+   },
+   "position": "SF",
+   "height": "6-7",
+   "weight_lbs": 185,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Notre Dame (Sherman Oaks, CA)",
+   "committed_to": "Utah State",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Howard Williams",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 49
+   },
+   "position": "PF",
+   "height": "6-7",
+   "weight_lbs": 215,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Dynamic Prep (Dallas, TX)",
+   "committed_to": "Arizona State",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Gene Roebuck",
+   "hs_class": 2027,
+   "projected_draft_year": 2028,
+   "ranks": {
+    "247_composite_2027": 50
+   },
+   "position": "SF",
+   "height": "6-4",
+   "weight_lbs": 215,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "La Mirada (La Mirada, CA)",
+   "committed_to": "California",
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Yann Kamagate",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 1
+   },
+   "position": "C",
+   "height": "7-0",
+   "weight_lbs": 230,
+   "birth_date": "2008-09-30",
+   "age_note": "Turns 18 on Sept 30 2026 per SI (so born 2008-09-30, derived)",
+   "current_team": "St. Francis (La Canada Flintridge, CA)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "elite rebounding",
+    "shot blocking",
+    "athleticism",
+    "floor-spacing flashes"
+   ],
+   "weaknesses": [
+    "interior scoring",
+    "free throw shooting"
+   ],
+   "scouting_sources": [
+    "espn_race_no1_2026_05",
+    "si_kamagate"
+   ],
+   "notes": "Potential reclass to 2027 (SI thinks likely); would still be 2028 draft-eligible if so. ESPN had him No.5 in May, No.1 Aug 27. Projected draft year is 2029 only if he stays in class 2028."
+  },
+  {
+   "name": "Colton Hiller",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 2
+   },
+   "position": "SF",
+   "height": "6-6",
+   "weight_lbs": 210,
+   "birth_date": "2010-06-11",
+   "age_note": "Born June 11 2010 per SI",
+   "current_team": "Coatesville (Coatesville, PA)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "movement shooting",
+    "deep range",
+    "decision-making",
+    "passing"
+   ],
+   "weaknesses": [
+    "other areas need work (not specified)"
+   ],
+   "scouting_sources": [
+    "espn_race_no1_2026_05",
+    "si_hiller"
+   ],
+   "notes": "247 table shows 'Duke (100%)' which is a prediction, not a commitment; SI Oct 14 says uncommitted, down to Duke and Florida; considering reclass to 2027."
+  },
+  {
+   "name": "Bamba Touray",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 3
+   },
+   "position": "C",
+   "height": "7-0",
+   "weight_lbs": 205,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Prolific Prep (Fort Lauderdale, FL)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "two-way impact",
+    "defensive center"
+   ],
+   "weaknesses": [
+    "not stated in sources"
+   ],
+   "scouting_sources": [
+    "247_composite_2028"
+   ],
+   "notes": "ESPN SC Next 60 rank 3 (Aug 2026); uncommitted."
+  },
+  {
+   "name": "Benjamin Berrouet",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 4
+   },
+   "position": "PF",
+   "height": "6-7",
+   "weight_lbs": 240,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Dynamic Prep (Dallas, TX)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Erick Dampier Jr.",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 5
+   },
+   "position": "C",
+   "height": "6-10",
+   "weight_lbs": 230,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Madison-Ridgeland Academy (Madison, MS)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [
+    "passing reads",
+    "feel for the game"
+   ],
+   "weaknesses": [
+    "scoring consistency",
+    "defense",
+    "foot speed"
+   ],
+   "scouting_sources": [
+    "noceilings_u17wc"
+   ],
+   "notes": "Played in FIBA U17 World Cup coverage as 2028-class US center."
+  },
+  {
+   "name": "Josiah Rose",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 6
+   },
+   "position": "PG",
+   "height": "6-4",
+   "weight_lbs": 205,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Faith Family Academy of Oak Cliff (Dallas, TX)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Evan Willis",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 7
+   },
+   "position": "SF",
+   "height": "6-7",
+   "weight_lbs": 180,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Utah Prep (Hurricane, UT)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Mason Collins",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 8
+   },
+   "position": "SF",
+   "height": "6-6",
+   "weight_lbs": 195,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "The Tatnall School (Wilmington, DE)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Isaiah Hamilton",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 9
+   },
+   "position": "SF",
+   "height": "6-7",
+   "weight_lbs": 200,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Montverde Academy (Montverde, FL)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Bentley Lusakueno",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 10
+   },
+   "position": "PF",
+   "height": "6-10",
+   "weight_lbs": 205,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "IMG Academy (Bradenton, FL)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Myles Hayes",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 11
+   },
+   "position": "SG",
+   "height": "6-5",
+   "weight_lbs": 175,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Woodward Academy (Atlanta, GA)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Brady Pettigrew",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 12
+   },
+   "position": "CG",
+   "height": "6-3",
+   "weight_lbs": 185,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Bolingbrook (Bolingbrook, IL)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Dylan Betts",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 13
+   },
+   "position": "C",
+   "height": "7-3",
+   "weight_lbs": 230,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "IMG Academy (Bradenton, FL)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Jordan Mize",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 14
+   },
+   "position": "SG",
+   "height": "6-5",
+   "weight_lbs": 190,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Sierra Canyon (Chatsworth, CA)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Logan Chwastyk",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 15
+   },
+   "position": "C",
+   "height": "6-10",
+   "weight_lbs": 215,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Malvern Prep (Malvern, PA)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Xavier Skipworth",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 16
+   },
+   "position": "SG",
+   "height": "6-6",
+   "weight_lbs": 180,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Montverde Academy (Montverde, FL)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Tai Bell",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 17
+   },
+   "position": "PG",
+   "height": "6-3",
+   "weight_lbs": 200,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Miami Columbus (Miami, FL)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "DJ Okoth",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 18
+   },
+   "position": "SF",
+   "height": "6-6",
+   "weight_lbs": 180,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Bartlett (Bartlett, TN)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Blaze Johnson",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 19
+   },
+   "position": "CG",
+   "height": "6-5",
+   "weight_lbs": 195,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Dynamic Prep (Dallas, TX)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Shalen Sheppard",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 20
+   },
+   "position": "PF",
+   "height": "6-8",
+   "weight_lbs": 215,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Crossroads School (Santa Monica, CA)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Martin Sibal",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 21
+   },
+   "position": "PF",
+   "height": "7-2",
+   "weight_lbs": 210,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Miami Columbus (Miami, FL)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Michai White",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 22
+   },
+   "position": "PG",
+   "height": "6-0",
+   "weight_lbs": 175,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Prolific Prep (Fort Lauderdale, FL)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Kevin Wheatley Jr.",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 23
+   },
+   "position": "SF",
+   "height": "6-6",
+   "weight_lbs": 200,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Iowa United Prep (Norwalk, IA)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Liam Mitakaro",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 24
+   },
+   "position": "CG",
+   "height": "6-4",
+   "weight_lbs": 175,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Bella Vista Prep (Scottsdale, AZ)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Will Brunson",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 25
+   },
+   "position": "SF",
+   "height": "6-5",
+   "weight_lbs": 205,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "IMG Academy (Bradenton, FL)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Anthony Spratt Jr.",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 26
+   },
+   "position": "SF",
+   "height": "6-6",
+   "weight_lbs": 195,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Benton (Benton, AR)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Josh Lowery",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 27
+   },
+   "position": "CG",
+   "height": "6-4",
+   "weight_lbs": 180,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Sierra Canyon (Chatsworth, CA)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Mateen Cleaves Jr.",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 28
+   },
+   "position": "PG",
+   "height": "6-4",
+   "weight_lbs": 200,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Dream City Christian (Glendale, AZ)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Landon Lampley",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 29
+   },
+   "position": "SF",
+   "height": "6-6",
+   "weight_lbs": 180,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Pike (Indianapolis, IN)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Rowan Phillips",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 30
+   },
+   "position": "SF",
+   "height": "6-7",
+   "weight_lbs": 185,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Archbishop Wood (Warminster, PA)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Leartist Williams Jr.",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 31
+   },
+   "position": "PF",
+   "height": "6-7",
+   "weight_lbs": 210,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Saraland (Saraland, AL)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Isaac Smith",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 32
+   },
+   "position": "SF",
+   "height": "6-6",
+   "weight_lbs": 175,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Monarch Academy (Kansas City, KS)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Yahya Basaran",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 33
+   },
+   "position": "C",
+   "height": "7-2",
+   "weight_lbs": 223,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "IMG Academy (Bradenton, FL)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Joshua Lindsay",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 34
+   },
+   "position": "CG",
+   "height": "6-0",
+   "weight_lbs": 200,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "St. Xavier (Louisville, KY)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Darren Ford",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 35
+   },
+   "position": "CG",
+   "height": "6-2",
+   "weight_lbs": 180,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Compass Prep (Chandler, AZ)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Braxton Bogard",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 36
+   },
+   "position": "PF",
+   "height": "6-9",
+   "weight_lbs": 210,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Masters Academy International (Stow, MA)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Martin Simko",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 37
+   },
+   "position": "C",
+   "height": "7-1",
+   "weight_lbs": 220,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Miami Columbus (Miami, FL)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Kaharri Coleman",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 38
+   },
+   "position": "PG",
+   "height": "6-3",
+   "weight_lbs": 190,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "West Charlotte (Charlotte, NC)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Nash Avery",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 39
+   },
+   "position": "PF",
+   "height": "6-8",
+   "weight_lbs": 200,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "Archbishop Spalding (Severn, MD)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Isaiah Carter",
+   "hs_class": 2028,
+   "projected_draft_year": 2029,
+   "ranks": {
+    "247_composite_2028": 40
+   },
+   "position": "SF",
+   "height": "6-6",
+   "weight_lbs": 180,
+   "birth_date": null,
+   "age_note": null,
+   "current_team": "The St. James (Springfield, VA)",
+   "committed_to": null,
+   "league": "HS",
+   "country": "USA",
+   "stars": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": [],
+   "notes": ""
+  },
+  {
+   "name": "Joaquim Boumtje Boumtje",
+   "hs_class": 2026,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "PF/C",
+   "height": "7-2",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Born 2009 (TSN)",
+   "current_team": "Duke (freshman)",
+   "committed_to": null,
+   "league": "College (reclass)",
+   "country": "USA (ex-Barcelona youth)",
+   "stars": null,
+   "strengths": [
+    "7-2 with perimeter skill",
+    "defensive instincts",
+    "rim protection",
+    "productive all-around"
+   ],
+   "weaknesses": [
+    "few clear holes",
+    "adjusting at age 17"
+   ],
+   "scouting_sources": [
+    "espn_early_watch_2026_08",
+    "noceilings_u17wc"
+   ],
+   "notes": "Class of 2027 prospect who reclassified to 2026 and is a Duke freshman; early No.1 2028 favorite per ESPN. U17 World Cup MVP; sources disagree on his tournament stats (TSN 19.6 ppg; a search summary said 28.4 ppg). Draft year 2028 per mocks."
+  },
+  {
+   "name": "Nikola Kusturica",
+   "hs_class": 2026,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "SF",
+   "height": "6-7",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Entering college at 17; birth date not stated",
+   "current_team": "UCLA (freshman)",
+   "committed_to": null,
+   "league": "College (reclass)",
+   "country": "Serbia",
+   "stars": null,
+   "strengths": [
+    "three-level scoring",
+    "rim attacks",
+    "competitive motor",
+    "defense (U17 best defender)"
+   ],
+   "weaknesses": [
+    "jumper efficiency",
+    "handle",
+    "defensive fundamentals"
+   ],
+   "scouting_sources": [
+    "espn_early_watch_2026_08",
+    "noceilings_u17wc",
+    "fiba_u17wc_awards"
+   ],
+   "notes": "Former Barcelona youth. Reclassified to 2026, UCLA freshman. 37 points in U17 World Cup final. Draft year 2028 per ESPN."
+  },
+  {
+   "name": "Stefan Joksimovic",
+   "hs_class": null,
+   "projected_draft_year": 2027,
+   "ranks": {},
+   "position": "PG/SG",
+   "height": "6-7 (FIBA lists 6-8)",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Born 2008 (age 17 in July 2026 per FIBA)",
+   "current_team": "Baskonia",
+   "committed_to": null,
+   "league": "International",
+   "country": "Slovenia",
+   "stars": null,
+   "strengths": [
+    "jumbo playmaker",
+    "ball-screen handling",
+    "left-handed scoring",
+    "vision"
+   ],
+   "weaknesses": [
+    "not explosive",
+    "shooting",
+    "finishing craft",
+    "uncertain pro role"
+   ],
+   "scouting_sources": [
+    "espn_early_watch_2026_08",
+    "fiba_u18_eurobasket_2026"
+   ],
+   "notes": "U18 EuroBasket MVP (23.1 ppg). Mocks place him in the 2027 draft, one year before the target window; if he stays overseas he could also appear in 2028."
+  },
+  {
+   "name": "Hugo Yimga Moukouri",
+   "hs_class": null,
+   "projected_draft_year": 2027,
+   "ranks": {},
+   "position": "SF",
+   "height": "6-8",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Born 2008 (age 18 per FIBA)",
+   "current_team": "Nanterre",
+   "committed_to": null,
+   "league": "International",
+   "country": "France",
+   "stars": null,
+   "strengths": [
+    "size and strength",
+    "ball handling",
+    "improving shot"
+   ],
+   "weaknesses": [
+    "not stated"
+   ],
+   "scouting_sources": [
+    "fansided_2027_board",
+    "fiba_u18_eurobasket_2026"
+   ],
+   "notes": "FanSided July 2026 lists him 28th on a 2027 board (draft age 18). Outside the 2028-29 window unless he waits."
+  },
+  {
+   "name": "Nathan Soliman",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "F",
+   "height": "not stated",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Born 2009 cohort",
+   "current_team": null,
+   "committed_to": null,
+   "league": "International",
+   "country": "France",
+   "stars": null,
+   "strengths": [
+    "rim attacks",
+    "finishing",
+    "rebounding",
+    "flashes of defense"
+   ],
+   "weaknesses": [
+    "inconsistent effort",
+    "limited creation"
+   ],
+   "scouting_sources": [
+    "noceilings_u17wc",
+    "fiba_u17wc_awards"
+   ],
+   "notes": "U17 World Cup All-Second Team (17.6 ppg, 42.3% 3P). Turns 19 in 2028 by age rule."
+  },
+  {
+   "name": "Matija Lukic",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "F",
+   "height": "not stated",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Not stated",
+   "current_team": null,
+   "committed_to": null,
+   "league": "International",
+   "country": "Serbia",
+   "stars": null,
+   "strengths": [
+    "spot-up shooting",
+    "off-ball movement",
+    "closeout attacks",
+    "team defense"
+   ],
+   "weaknesses": [
+    "on-ball creation",
+    "handle",
+    "burst"
+   ],
+   "scouting_sources": [
+    "noceilings_u17wc",
+    "fiba_u17wc_awards"
+   ],
+   "notes": "U17 All-Second Team (41.8% 3P). Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  },
+  {
+   "name": "Darius Karutasu",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "SG/F",
+   "height": "6-7",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Born 2009 (age 17); played up a year",
+   "current_team": null,
+   "committed_to": null,
+   "league": "International",
+   "country": "Turkey",
+   "stars": null,
+   "strengths": [
+    "off-ball scoring",
+    "rebounding",
+    "active steals"
+   ],
+   "weaknesses": [
+    "possible athletic limits"
+   ],
+   "scouting_sources": [
+    "noceilings_u17wc",
+    "fiba_u18_eurobasket_2026",
+    "fiba_u17wc_awards"
+   ],
+   "notes": "U17 All-Second Team (23.3 ppg, 9.7 rpg). Turns 19 in 2028."
+  },
+  {
+   "name": "Omer Kutluay",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "G",
+   "height": "not stated",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Not stated",
+   "current_team": null,
+   "committed_to": null,
+   "league": "International",
+   "country": "Turkey",
+   "stars": null,
+   "strengths": [
+    "on-ball creation",
+    "handle",
+    "passing lanes"
+   ],
+   "weaknesses": [
+    "overdribbling",
+    "physicality",
+    "screen navigation"
+   ],
+   "scouting_sources": [
+    "noceilings_u17wc"
+   ],
+   "notes": "Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  },
+  {
+   "name": "Messi Yangala",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "F",
+   "height": "6-7",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Not stated",
+   "current_team": null,
+   "committed_to": null,
+   "league": "International",
+   "country": "France",
+   "stars": null,
+   "strengths": [
+    "cutting",
+    "finishing",
+    "rebounding",
+    "defensive versatility"
+   ],
+   "weaknesses": [
+    "no shooting",
+    "ball skills",
+    "size for position"
+   ],
+   "scouting_sources": [
+    "noceilings_u17wc"
+   ],
+   "notes": "Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  },
+  {
+   "name": "Cheickh Niang",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "F",
+   "height": "6-5",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Born 2008 (age 17)",
+   "current_team": null,
+   "committed_to": null,
+   "league": "International",
+   "country": "Italy",
+   "stars": null,
+   "strengths": [
+    "athletic",
+    "active both ends"
+   ],
+   "weaknesses": [
+    "not stated"
+   ],
+   "scouting_sources": [
+    "fiba_u18_eurobasket_2026"
+   ],
+   "notes": "U18 EuroBasket All-Star Five (16.1 ppg). Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  },
+  {
+   "name": "Diego Niebla",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "F",
+   "height": "6-8",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Born 2008 (age 18)",
+   "current_team": "Joventut",
+   "committed_to": null,
+   "league": "International",
+   "country": "Spain",
+   "stars": null,
+   "strengths": [
+    "versatile scoring",
+    "smooth handle"
+   ],
+   "weaknesses": [
+    "not stated"
+   ],
+   "scouting_sources": [
+    "fiba_u18_eurobasket_2026"
+   ],
+   "notes": "U18 All-Star Five. Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  },
+  {
+   "name": "Leonard Kroger",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "C",
+   "height": "6-9",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Born 2008 (age 17)",
+   "current_team": null,
+   "committed_to": null,
+   "league": "International",
+   "country": "Germany",
+   "stars": null,
+   "strengths": [
+    "efficient inside",
+    "rebounding"
+   ],
+   "weaknesses": [
+    "not stated"
+   ],
+   "scouting_sources": [
+    "fiba_u18_eurobasket_2026"
+   ],
+   "notes": "U18 All-Star Five (71.7% FG). Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  },
+  {
+   "name": "David Musis",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "C",
+   "height": "6-11",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Born 2008 (age 18)",
+   "current_team": "Florida Atlantic commit",
+   "committed_to": null,
+   "league": "International (NCAA commit)",
+   "country": "Israel",
+   "stars": null,
+   "strengths": [
+    "rebounding",
+    "rim protection",
+    "three-point shooting"
+   ],
+   "weaknesses": [
+    "not stated"
+   ],
+   "scouting_sources": [
+    "fiba_u18_eurobasket_2026"
+   ],
+   "notes": "NCAA-bound; 22.7 ppg U18. Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  },
+  {
+   "name": "Ignas Stombergas",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "C",
+   "height": "6-10",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Born 2008 (age 18)",
+   "current_team": "Zalgiris",
+   "committed_to": null,
+   "league": "International",
+   "country": "Lithuania",
+   "stars": null,
+   "strengths": [
+    "two-way big",
+    "rim protection",
+    "efficient finisher"
+   ],
+   "weaknesses": [
+    "not stated"
+   ],
+   "scouting_sources": [
+    "fiba_u18_eurobasket_2026"
+   ],
+   "notes": "Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  },
+  {
+   "name": "Chrysostomos Chatzilamprou",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "F",
+   "height": "6-7",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Born 2008 (age 18)",
+   "current_team": null,
+   "committed_to": null,
+   "league": "International",
+   "country": "Greece",
+   "stars": null,
+   "strengths": [
+    "perimeter shooting",
+    "rebounding"
+   ],
+   "weaknesses": [
+    "not stated"
+   ],
+   "scouting_sources": [
+    "fiba_u18_eurobasket_2026"
+   ],
+   "notes": "Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  },
+  {
+   "name": "Roman Avdejev",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "C",
+   "height": "6-8",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Born 2008 (age 18)",
+   "current_team": "DME Academy (US prep) next season",
+   "committed_to": null,
+   "league": "International",
+   "country": "Estonia",
+   "stars": null,
+   "strengths": [
+    "size",
+    "rim protection"
+   ],
+   "weaknesses": [
+    "not stated"
+   ],
+   "scouting_sources": [
+    "fiba_u18_eurobasket_2026"
+   ],
+   "notes": "Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  },
+  {
+   "name": "Luke Paul",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "G",
+   "height": "not stated",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Not stated",
+   "current_team": null,
+   "committed_to": null,
+   "league": "International",
+   "country": "Australia",
+   "stars": null,
+   "strengths": [
+    "passing vision",
+    "shooting touch"
+   ],
+   "weaknesses": [
+    "low volume",
+    "slow release"
+   ],
+   "scouting_sources": [
+    "noceilings_u17wc"
+   ],
+   "notes": "U17 World Cup scouting note; lower tier. Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  },
+  {
+   "name": "Nathan Djako",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "G",
+   "height": "not stated",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Not stated",
+   "current_team": null,
+   "committed_to": null,
+   "league": "International",
+   "country": "Cote d'Ivoire",
+   "stars": null,
+   "strengths": [
+    "defensive activity",
+    "rebounding"
+   ],
+   "weaknesses": [
+    "offense"
+   ],
+   "scouting_sources": [
+    "noceilings_u17wc"
+   ],
+   "notes": "U17 World Cup scouting note; lower tier. Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  },
+  {
+   "name": "Antonio Browne",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "G",
+   "height": "not stated",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Not stated",
+   "current_team": null,
+   "committed_to": null,
+   "league": "International",
+   "country": "Australia",
+   "stars": null,
+   "strengths": [
+    "shifty handle",
+    "creative passing"
+   ],
+   "weaknesses": [
+    "turnovers",
+    "shot selection"
+   ],
+   "scouting_sources": [
+    "noceilings_u17wc"
+   ],
+   "notes": "U17 World Cup scouting note; lower tier. Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  },
+  {
+   "name": "John Aryang",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "F",
+   "height": "not stated",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Not stated",
+   "current_team": null,
+   "committed_to": null,
+   "league": "International",
+   "country": "Australia",
+   "stars": null,
+   "strengths": [
+    "transition rim attacks"
+   ],
+   "weaknesses": [
+    "handle",
+    "shooting mechanics"
+   ],
+   "scouting_sources": [
+    "noceilings_u17wc"
+   ],
+   "notes": "U17 World Cup scouting note; lower tier. Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  },
+  {
+   "name": "Lun Jarc",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "F",
+   "height": "not stated",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Not stated",
+   "current_team": null,
+   "committed_to": null,
+   "league": "International",
+   "country": "Slovenia",
+   "stars": null,
+   "strengths": [
+    "connective skills",
+    "stretch-four potential"
+   ],
+   "weaknesses": [
+    "on-ball creation",
+    "fouls"
+   ],
+   "scouting_sources": [
+    "noceilings_u17wc"
+   ],
+   "notes": "U17 World Cup scouting note; lower tier. Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  },
+  {
+   "name": "Jakob Siftar",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "G",
+   "height": "not stated",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Not stated",
+   "current_team": null,
+   "committed_to": null,
+   "league": "International",
+   "country": "Slovenia",
+   "stars": null,
+   "strengths": [
+    "off-ball cutting"
+   ],
+   "weaknesses": [
+    "scoring consistency"
+   ],
+   "scouting_sources": [
+    "noceilings_u17wc"
+   ],
+   "notes": "U17 World Cup scouting note; lower tier. Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  },
+  {
+   "name": "Jayden Cecil",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "G",
+   "height": "not stated",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Not stated",
+   "current_team": null,
+   "committed_to": null,
+   "league": "International",
+   "country": "New Zealand",
+   "stars": null,
+   "strengths": [
+    "scoring volume (29.9 ppg)"
+   ],
+   "weaknesses": [
+    "ball security",
+    "defense"
+   ],
+   "scouting_sources": [
+    "noceilings_u17wc"
+   ],
+   "notes": "U17 World Cup scouting note; lower tier. Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  },
+  {
+   "name": "Gabrielius Buivydas",
+   "hs_class": null,
+   "projected_draft_year": 2028,
+   "ranks": {},
+   "position": "G",
+   "height": "not stated",
+   "weight_lbs": null,
+   "birth_date": null,
+   "age_note": "Not stated",
+   "current_team": null,
+   "committed_to": null,
+   "league": "International",
+   "country": "Lithuania",
+   "stars": null,
+   "strengths": [
+    "rim attacks",
+    "creative playmaking"
+   ],
+   "weaknesses": [
+    "shooting",
+    "ball security"
+   ],
+   "scouting_sources": [
+    "noceilings_u17wc"
+   ],
+   "notes": "U17 World Cup scouting note; lower tier. Draft year not stated by any mock for this player: set from NBA age rule (born 2008 turns 19 in 2027, 20 in 2028; set to 2028 because it falls in the target window)."
+  }
+ ],
+ "reclassifications": [
+  "Marcus Spears Jr. (was 2027 No.1 ESPN): reclassed to 2026, signed with Texas Jul 10 2026; 2027 draft candidate, not 2028.",
+  "Joaquim Boumtje Boumtje and Nikola Kusturica: reclassed 2027 to 2026, now Duke and UCLA freshmen; 2028 draft candidates.",
+  "A.J. Williams: 2028 to 2027 (Aug 2026).",
+  "Adan Diggs: ESPN says moved up from 2028 into 2027.",
+  "Colton Hiller and Yann Kamagate (2028 class): both reportedly considering reclass to 2027 (not final)."
+ ],
+ "mock_drafts": "No 2028 or 2029 full mock draft was reachable. Only ESPN's Aug 20 2026 early-watch piece (Boumtje first, then Kusturica as the 2028 names) and a 2027 FanSided board exist in sources.",
+ "unreachable": "ESPN SC Next 100 full pages (404), On3/Rivals rankings (403), nbadraft.net (403), 247 2027 ranks 51-60 (needs Load More)."
+}

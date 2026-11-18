@@ -47,16 +47,47 @@ def entry_inputs(year: str, seed: int):
     return out
 
 
+def coverage(seeds: int) -> None:
+    """How many real players each class holds across save seeds (top 10 / 30 / 60 of the public board)."""
+    from nba_gm_data import real_prospects as rp
+    print(f"Coverage across seeds 1-{seeds} (median, min-max):")
+    for year in sorted(rp.draft_years()):
+        counts = {10: [], 30: [], 60: []}
+        kinds = []
+        for seed in range(1, seeds + 1):
+            cls = to_plain(draft.generate_draft_class_records(year, seed, talent_model=True, real_prospects=True))
+            real = [p for p in cls["draft_prospects"] if p["league"] != "generated"]
+            for n in counts:
+                counts[n].append(sum(1 for p in real if p["rank"] <= n))
+            kinds.append(len(real))
+        print(f"  {year}: " + ", ".join(f"top {n}: {statistics.median(v):.0f} ({min(v)}-{max(v)})" for n, v in counts.items()))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--year", default="2027")
     parser.add_argument("--seed", type=int, default=2027)
     parser.add_argument("--top", type=int, default=15)
+    parser.add_argument("--coverage", type=int, default=0, help="summarize real players per class across this many seeds")
     args = parser.parse_args()
+    if args.coverage:
+        coverage(args.coverage)
+        return
     rows = entry_inputs(args.year, args.seed)
-    real = [(p, v) for p, v in rows if p["league"] == "NCAA"]
+    real = [(p, v) for p, v in rows if (p.get("public_stats") or {}).get("college")]
     gen = [(p, v) for p, v in rows if p["league"] == "generated"]
-    print(f"{args.year} class: {len(real)} real, {len(gen)} generated\n")
+    others = [(p, v) for p, v in rows if p["league"] != "generated" and (p, v) not in real]
+    print(f"{args.year} class (seed {args.seed}): {len(real)} real college, {len(others)} real high-school / international /"
+          f" no-stats, {len(gen)} generated\n")
+    print("Board (rank, name, where, age, now / public upside, scouting rank)")
+    for prospect, _ in rows[: args.top]:
+        scouting = (prospect.get("public_stats") or {}).get("scouting") or {}
+        rank = (f"consensus #{scouting['consensus_rank']}" if scouting.get("consensus_rank") else
+                f"247 #{min(scouting['recruit_ranks'].values())}" if scouting.get("recruit_ranks") else "")
+        print(f"  #{prospect['rank']:>2} {prospect['name'][:24]:<24} {prospect['league'][:13]:<13} {str(prospect.get('source_team'))[:20]:<20}"
+              f" age {prospect['age']} | now {prospect['current_ability']:.0f} pot "
+              f"{(prospect.get('scouting_prior') or {}).get('potential', prospect['potential']):.0f} | {rank}")
+    print()
     print("Real top of the board (entry 94-input grades; college numbers from the projected final season)")
     for prospect, v in real[: args.top]:
         college = prospect["public_stats"]["college"]

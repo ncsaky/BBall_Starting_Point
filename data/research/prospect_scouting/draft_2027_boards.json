@@ -1,0 +1,3296 @@
+{
+ "draft_year": 2027,
+ "retrieved": "2026-11-19",
+ "notes": "Heights: ESPN (ranks 1-25) else Tankathon; ages are as of the outlet publication (no outlet gave birth dates). Country is only filled when a source states it (Slovenia, France, Australia, Italy club); otherwise null. Mock-draft pick numbers are used as ranks. Tankathon is an undated live board retrieved 2026-11-19. SI is a June snapshot, B/R board is August: older than the November sources.",
+ "sources": [
+  {
+   "id": "espn_2027_bigboard",
+   "outlet": "ESPN",
+   "author": "Jeremy Woo",
+   "title": "2027 NBA draft big board rankings: Top 100 prospects (read via ABC7 republication)",
+   "url": "https://abc7.com/post/2027-nba-draft-big-board-rankings-top-100-prospects/20017483/",
+   "published": "2026-11-05",
+   "kind": "big_board",
+   "ranked_count": 100
+  },
+  {
+   "id": "fansided_2027_bigboard",
+   "outlet": "FanSided",
+   "author": "Christopher Kline",
+   "title": "2027 NBA Draft Big Board: Top 60 prospects as college basketball gets underway",
+   "url": "https://fansided.com/nba/2027-nba-draft-big-board-top-60-prospects-as-college-basketball-gets-underway",
+   "published": "2026-11-04",
+   "kind": "big_board",
+   "ranked_count": 60
+  },
+  {
+   "id": "br_2027_bigboard",
+   "outlet": "Bleacher Report",
+   "author": "Jonathan Wasserman",
+   "title": "2027 NBA Draft Big Board with Top 100 Player Rankings",
+   "url": "https://bleacherreport.com/articles/25474454-2027-nba-draft-big-board-top-100-player-rankings",
+   "published": "2026-08-25",
+   "kind": "big_board",
+   "ranked_count": 100
+  },
+  {
+   "id": "br_2027_mock_nov",
+   "outlet": "Bleacher Report",
+   "author": "Jonathan Wasserman",
+   "title": "New 2027 NBA Mock Draft As College Basketball Season Tips Off (pick number used as rank)",
+   "url": "https://bleacherreport.com/articles/25520687-new-2027-nba-mock-draft-college-basketball-season-tips",
+   "published": "2026-11-03",
+   "kind": "mock_draft",
+   "ranked_count": 49
+  },
+  {
+   "id": "cbs_2027_mock",
+   "outlet": "CBS Sports",
+   "author": "Adam Finkelstein",
+   "title": "2027 NBA Mock Draft (updated 10/19/26; first 30 picks read; pick number used as rank)",
+   "url": "https://www.cbssports.com/nba/draft/mock-draft/",
+   "published": "2026-10-19",
+   "kind": "mock_draft",
+   "ranked_count": 30
+  },
+  {
+   "id": "clutchpoints_2027_mock",
+   "outlet": "ClutchPoints",
+   "author": "Bailey Bassett",
+   "title": "2027 NBA Mock Draft: 1st Round predictions after one week of college hoops (pick number used as rank)",
+   "url": "https://clutchpoints.com/nba/nba-stories/2027-nba-mock-draft-1st-round-predictions-after-one-week-college-hoops",
+   "published": "2026-11-09",
+   "kind": "mock_draft",
+   "ranked_count": 30
+  },
+  {
+   "id": "si_2027_bigboard_june",
+   "outlet": "Sports Illustrated",
+   "author": "Kevin Sweeney",
+   "title": "Way-Too-Early 2027 NBA Draft Big Board: Top 30 Prospects (older, June; offseason snapshot)",
+   "url": "https://www.si.com/nba/nba-draft/way-too-early-2027-nba-draft-big-board-top-30-prospects",
+   "published": "2026-06-25",
+   "kind": "big_board",
+   "ranked_count": 30
+  },
+  {
+   "id": "tankathon_2027_bigboard",
+   "outlet": "Tankathon",
+   "author": "Tankathon staff (undated live board)",
+   "title": "2027 NBA Draft Big Board",
+   "url": "https://www.tankathon.com/big_board",
+   "published": null,
+   "kind": "big_board",
+   "ranked_count": 76
+  }
+ ],
+ "players": [
+  {
+   "name": "Tyran Stokes",
+   "ranks": {
+    "espn_2027_bigboard": 1,
+    "fansided_2027_bigboard": 1,
+    "br_2027_bigboard": 1,
+    "br_2027_mock_nov": 1,
+    "cbs_2027_mock": 1,
+    "clutchpoints_2027_mock": 1,
+    "si_2027_bigboard_june": 1,
+    "tankathon_2027_bigboard": 1
+   },
+   "position": "SF/PG",
+   "height": "6-8",
+   "birth_date": null,
+   "age_note": "19.1 (ESPN, Nov 5)",
+   "team": "Kansas",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "versatile playmaker",
+    "passing",
+    "physicality and strength",
+    "rebounding",
+    "two-way potential"
+   ],
+   "weaknesses": [
+    "decision-making",
+    "jump shooting consistency",
+    "turnovers",
+    "maturity/consistency"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Stefan Joksimovic",
+   "ranks": {
+    "espn_2027_bigboard": 2,
+    "fansided_2027_bigboard": 2,
+    "br_2027_bigboard": 4,
+    "br_2027_mock_nov": 6,
+    "cbs_2027_mock": 3,
+    "clutchpoints_2027_mock": 2,
+    "si_2027_bigboard_june": 3,
+    "tankathon_2027_bigboard": 5
+   },
+   "position": "PG",
+   "height": "6-8",
+   "birth_date": null,
+   "age_note": "18.0 (ESPN); 17 in summer sources",
+   "team": "Baskonia",
+   "league": "International",
+   "country": "Slovenia",
+   "strengths": [
+    "size for a guard",
+    "ball-screen pick-and-roll feel",
+    "creative passing",
+    "pull-up shotmaking",
+    "very young"
+   ],
+   "weaknesses": [
+    "perimeter shooting consistency",
+    "scoring without a screen",
+    "absorbing contact/defense",
+    "limited minutes at Baskonia"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Jordan Smith Jr.",
+   "ranks": {
+    "espn_2027_bigboard": 4,
+    "fansided_2027_bigboard": 3,
+    "br_2027_bigboard": 2,
+    "br_2027_mock_nov": 2,
+    "cbs_2027_mock": 2,
+    "clutchpoints_2027_mock": 4,
+    "si_2027_bigboard_june": 6,
+    "tankathon_2027_bigboard": 4
+   },
+   "position": "SG/PG",
+   "height": "6-2",
+   "birth_date": null,
+   "age_note": "19.1",
+   "team": "Arkansas",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "perimeter defense",
+    "speed and strength",
+    "transition and downhill scoring",
+    "perimeter rebounding",
+    "competitiveness"
+   ],
+   "weaknesses": [
+    "jump shot consistency",
+    "not a natural point guard",
+    "half-court shot creation",
+    "3-point and free-throw shooting"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Caleb Holt",
+   "ranks": {
+    "espn_2027_bigboard": 5,
+    "fansided_2027_bigboard": 4,
+    "br_2027_bigboard": 3,
+    "br_2027_mock_nov": 3,
+    "cbs_2027_mock": 4,
+    "clutchpoints_2027_mock": 6,
+    "si_2027_bigboard_june": 2,
+    "tankathon_2027_bigboard": 2
+   },
+   "position": "SG/PG",
+   "height": "6-5",
+   "birth_date": null,
+   "age_note": "18.9",
+   "team": "Arizona",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "slashing",
+    "disruptive on-ball defense",
+    "motor",
+    "multi-lineup fit",
+    "improved shooting"
+   ],
+   "weaknesses": [
+    "inconsistent shooting",
+    "off-dribble creation",
+    "no single standout skill"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Bruce Branch III",
+   "ranks": {
+    "espn_2027_bigboard": 3,
+    "fansided_2027_bigboard": 11,
+    "br_2027_bigboard": 8,
+    "br_2027_mock_nov": 4,
+    "cbs_2027_mock": 5,
+    "clutchpoints_2027_mock": 3,
+    "si_2027_bigboard_june": 4,
+    "tankathon_2027_bigboard": 6
+   },
+   "position": "SG/SF",
+   "height": "6-7",
+   "birth_date": null,
+   "age_note": "18.0",
+   "team": "BYU",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "7-1 wingspan",
+    "catch-and-shoot threes",
+    "wing defense",
+    "unselfish passing",
+    "very young"
+   ],
+   "weaknesses": [
+    "creating off the dribble",
+    "passivity",
+    "not a go-to scorer yet"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Patrick Ngongba II",
+   "ranks": {
+    "espn_2027_bigboard": 10,
+    "fansided_2027_bigboard": 6,
+    "br_2027_bigboard": 13,
+    "br_2027_mock_nov": 7,
+    "cbs_2027_mock": 9,
+    "clutchpoints_2027_mock": 10,
+    "tankathon_2027_bigboard": 10
+   },
+   "position": "C",
+   "height": "6-11",
+   "birth_date": null,
+   "age_note": "20.7",
+   "team": "Duke",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "frontcourt passing",
+    "ball-screen play",
+    "shot blocking",
+    "perimeter comfort for a big"
+   ],
+   "weaknesses": [
+    "foot injury history",
+    "not as big as listed",
+    "limited perimeter defense in space"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Quentin Coleman",
+   "ranks": {
+    "espn_2027_bigboard": 6,
+    "fansided_2027_bigboard": 8,
+    "br_2027_bigboard": 19,
+    "br_2027_mock_nov": 8,
+    "cbs_2027_mock": 15,
+    "clutchpoints_2027_mock": 7,
+    "si_2027_bigboard_june": 14,
+    "tankathon_2027_bigboard": 3
+   },
+   "position": "SG/PG",
+   "height": "6-4",
+   "birth_date": null,
+   "age_note": "18.3",
+   "team": "Illinois",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "disruptive defense",
+    "rebounding for a guard",
+    "movement shooting",
+    "playmaking feel"
+   ],
+   "weaknesses": [
+    "handle and shot creation",
+    "not a true point guard",
+    "thin frame"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Motiejus Krivas",
+   "ranks": {
+    "espn_2027_bigboard": 7,
+    "fansided_2027_bigboard": 9,
+    "br_2027_bigboard": 9,
+    "br_2027_mock_nov": 19,
+    "cbs_2027_mock": 7,
+    "clutchpoints_2027_mock": 5,
+    "si_2027_bigboard_june": 18,
+    "tankathon_2027_bigboard": 11
+   },
+   "position": "C",
+   "height": "7-2",
+   "birth_date": null,
+   "age_note": "21.9",
+   "team": "Arizona",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "rim protection",
+    "offensive rebounding",
+    "mobility for size",
+    "free-throw shooting",
+    "NBA-ready"
+   ],
+   "weaknesses": [
+    "limited offensive creation",
+    "finishing/processing speed",
+    "unproven shooting"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Colben Landrew",
+   "ranks": {
+    "espn_2027_bigboard": 26,
+    "fansided_2027_bigboard": 7,
+    "br_2027_bigboard": 11,
+    "br_2027_mock_nov": 5,
+    "si_2027_bigboard_june": 8,
+    "tankathon_2027_bigboard": 13
+   },
+   "position": "SG/SF",
+   "height": "6-6",
+   "birth_date": null,
+   "age_note": "18.7",
+   "team": "UConn",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "spot-up shooting",
+    "physical build",
+    "defends multiple positions",
+    "offensive rebounding",
+    "scoring from three levels"
+   ],
+   "weaknesses": [
+    "lateral quickness",
+    "off-dribble shooting consistency",
+    "playmaking ceiling"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Ivan Kharchenkov",
+   "ranks": {
+    "espn_2027_bigboard": 11,
+    "fansided_2027_bigboard": 10,
+    "br_2027_bigboard": 16,
+    "br_2027_mock_nov": 14,
+    "cbs_2027_mock": 11,
+    "clutchpoints_2027_mock": 12,
+    "si_2027_bigboard_june": 21,
+    "tankathon_2027_bigboard": 8
+   },
+   "position": "SF",
+   "height": "6-7",
+   "birth_date": null,
+   "age_note": "20.1",
+   "team": "Arizona",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "top perimeter defender",
+    "physicality",
+    "connective passing",
+    "multi-position guarding"
+   ],
+   "weaknesses": [
+    "3-point shooting",
+    "efficiency at higher usage",
+    "ball security"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Braylon Mullins",
+   "ranks": {
+    "espn_2027_bigboard": 8,
+    "fansided_2027_bigboard": 33,
+    "br_2027_bigboard": 7,
+    "br_2027_mock_nov": 12,
+    "cbs_2027_mock": 8,
+    "clutchpoints_2027_mock": 9,
+    "si_2027_bigboard_june": 10,
+    "tankathon_2027_bigboard": 17
+   },
+   "position": "SG",
+   "height": "6-6",
+   "birth_date": null,
+   "age_note": "20.5",
+   "team": "UConn",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "off-movement shooting",
+    "size for a 2-guard",
+    "competitive defense"
+   ],
+   "weaknesses": [
+    "injury history",
+    "efficiency",
+    "secondary playmaking"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Amari Allen",
+   "ranks": {
+    "espn_2027_bigboard": 19,
+    "fansided_2027_bigboard": 24,
+    "br_2027_bigboard": 12,
+    "br_2027_mock_nov": 13,
+    "cbs_2027_mock": 6,
+    "clutchpoints_2027_mock": 14,
+    "si_2027_bigboard_june": 15,
+    "tankathon_2027_bigboard": 7
+   },
+   "position": "SF",
+   "height": "6-6",
+   "birth_date": null,
+   "age_note": "20.8",
+   "team": "Alabama",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "versatility",
+    "passing feel",
+    "rebounding for position",
+    "multi-position defense",
+    "ball-screen play"
+   ],
+   "weaknesses": [
+    "not an elite creator",
+    "average shooter",
+    "size (6-5 barefoot per one outlet)"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Anthony Thompson",
+   "ranks": {
+    "espn_2027_bigboard": 16,
+    "fansided_2027_bigboard": 13,
+    "br_2027_bigboard": 6,
+    "br_2027_mock_nov": 18,
+    "cbs_2027_mock": 23,
+    "clutchpoints_2027_mock": 15,
+    "si_2027_bigboard_june": 5,
+    "tankathon_2027_bigboard": 23
+   },
+   "position": "SF/PF",
+   "height": "6-9",
+   "birth_date": null,
+   "age_note": "18.2",
+   "team": "Ohio State",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "size and length",
+    "long-range shooting potential",
+    "tough shot-making",
+    "weak-side defensive disruption"
+   ],
+   "weaknesses": [
+    "creating own shot",
+    "absorbing contact",
+    "inconsistent motor/production"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Obinna Ekezie Jr.",
+   "ranks": {
+    "espn_2027_bigboard": 12,
+    "fansided_2027_bigboard": 22,
+    "br_2027_mock_nov": 15,
+    "clutchpoints_2027_mock": 17,
+    "si_2027_bigboard_june": 17,
+    "tankathon_2027_bigboard": 9
+   },
+   "position": "C",
+   "height": "6-11",
+   "birth_date": null,
+   "age_note": "18.5 (reclassified)",
+   "team": "Louisville",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "shot blocking",
+    "rim protection",
+    "shooting touch",
+    "long arms",
+    "lob threat"
+   ],
+   "weaknesses": [
+    "lateral quickness",
+    "consistency",
+    "raw",
+    "shoulder surgery"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "JJ Andrews",
+   "ranks": {
+    "espn_2027_bigboard": 15,
+    "fansided_2027_bigboard": 17,
+    "br_2027_bigboard": 5,
+    "br_2027_mock_nov": 9,
+    "cbs_2027_mock": 27,
+    "clutchpoints_2027_mock": 20,
+    "si_2027_bigboard_june": 11,
+    "tankathon_2027_bigboard": 33
+   },
+   "position": "SG/SF",
+   "height": "6-6",
+   "birth_date": null,
+   "age_note": "18.7",
+   "team": "Arkansas",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "power athleticism",
+    "positional rebounding",
+    "multi-position defense",
+    "winning background",
+    "physical finishing"
+   ],
+   "weaknesses": [
+    "decision-making",
+    "handle",
+    "jump shooting",
+    "straight-line driving"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Thomas Haugh",
+   "ranks": {
+    "espn_2027_bigboard": 9,
+    "fansided_2027_bigboard": 41,
+    "br_2027_bigboard": 27,
+    "br_2027_mock_nov": 21,
+    "cbs_2027_mock": 10,
+    "clutchpoints_2027_mock": 11,
+    "si_2027_bigboard_june": 12,
+    "tankathon_2027_bigboard": 15
+   },
+   "position": "SF/PF",
+   "height": "6-9",
+   "birth_date": null,
+   "age_note": "23.3",
+   "team": "Florida",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "NBA-ready",
+    "high-energy defense",
+    "rebounding",
+    "off-ball cutting",
+    "multi-position play"
+   ],
+   "weaknesses": [
+    "age",
+    "limited ceiling",
+    "3-point shooting"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Dylan Mingo",
+   "ranks": {
+    "fansided_2027_bigboard": 18,
+    "br_2027_bigboard": 15,
+    "si_2027_bigboard_june": 19,
+    "tankathon_2027_bigboard": 24
+   },
+   "position": "PG",
+   "height": "6-5",
+   "birth_date": null,
+   "age_note": "18 (FanSided)",
+   "team": "Baylor",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "ball-handling craft",
+    "playmaking",
+    "active defense"
+   ],
+   "weaknesses": [
+    "ankle injury history",
+    "shooting",
+    "turnovers"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Jason Crowe Jr.",
+   "ranks": {
+    "espn_2027_bigboard": 21,
+    "fansided_2027_bigboard": 28,
+    "br_2027_bigboard": 14,
+    "br_2027_mock_nov": 23,
+    "cbs_2027_mock": 20,
+    "clutchpoints_2027_mock": 26,
+    "si_2027_bigboard_june": 7,
+    "tankathon_2027_bigboard": 16
+   },
+   "position": "SG/PG",
+   "height": "6-4",
+   "birth_date": null,
+   "age_note": "18.3",
+   "team": "Missouri",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "scoring volume",
+    "3-point shooting",
+    "shot creation off the dribble",
+    "microwave scorer"
+   ],
+   "weaknesses": [
+    "defense",
+    "playmaking for others",
+    "frame/measurables"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Brandon McCoy Jr.",
+   "ranks": {
+    "espn_2027_bigboard": 24,
+    "fansided_2027_bigboard": 12,
+    "br_2027_bigboard": 20,
+    "br_2027_mock_nov": 22,
+    "clutchpoints_2027_mock": 24
+   },
+   "position": "SG",
+   "height": "6-4",
+   "birth_date": null,
+   "age_note": "19.0",
+   "team": "Michigan",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "explosiveness",
+    "tenacious defense",
+    "rim pressure",
+    "secondary playmaking"
+   ],
+   "weaknesses": [
+    "shooting",
+    "ball handling",
+    "torn ACL; expected to miss 2026-27"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Austin Goosby",
+   "ranks": {
+    "espn_2027_bigboard": 13,
+    "fansided_2027_bigboard": 32,
+    "clutchpoints_2027_mock": 25,
+    "si_2027_bigboard_june": 9,
+    "tankathon_2027_bigboard": 26
+   },
+   "position": "SG/PG",
+   "height": "6-5",
+   "birth_date": null,
+   "age_note": "19.0",
+   "team": "Texas",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "feel and vision",
+    "unselfish play",
+    "defensive playmaking",
+    "size/versatility"
+   ],
+   "weaknesses": [
+    "primary ball handling",
+    "3-point shooting"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Arafan Diane",
+   "ranks": {
+    "fansided_2027_bigboard": 15,
+    "br_2027_bigboard": 34,
+    "cbs_2027_mock": 14
+   },
+   "position": "C",
+   "height": "7-1",
+   "birth_date": null,
+   "age_note": "19",
+   "team": "Houston",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "post power and finesse",
+    "rim protection",
+    "rebounding",
+    "soft hands"
+   ],
+   "weaknesses": [
+    "conditioning",
+    "defending in space"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Tyler Tanner",
+   "ranks": {
+    "espn_2027_bigboard": 30,
+    "fansided_2027_bigboard": 5,
+    "br_2027_bigboard": 31,
+    "clutchpoints_2027_mock": 21,
+    "tankathon_2027_bigboard": 22
+   },
+   "position": "PG",
+   "height": "6-0",
+   "birth_date": null,
+   "age_note": "20.8",
+   "team": "Vanderbilt",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "anticipatory defense/steals",
+    "quickness",
+    "reliable distribution",
+    "touch"
+   ],
+   "weaknesses": [
+    "slight frame",
+    "limited pull-up game",
+    "3-point volume"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Abdou Toure",
+   "ranks": {
+    "espn_2027_bigboard": 33,
+    "fansided_2027_bigboard": 16,
+    "br_2027_bigboard": 25,
+    "br_2027_mock_nov": 16
+   },
+   "position": "SG/SF",
+   "height": "6-5",
+   "birth_date": null,
+   "age_note": "19.2",
+   "team": "Arkansas",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "downhill force",
+    "motor",
+    "defensive pressure",
+    "transition athleticism"
+   ],
+   "weaknesses": [
+    "inconsistent shooting",
+    "developing ball skills"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Alijah Arenas",
+   "ranks": {
+    "espn_2027_bigboard": 20,
+    "fansided_2027_bigboard": 58,
+    "br_2027_bigboard": 28,
+    "br_2027_mock_nov": 10,
+    "cbs_2027_mock": 12,
+    "clutchpoints_2027_mock": 8,
+    "si_2027_bigboard_june": 29,
+    "tankathon_2027_bigboard": 18
+   },
+   "position": "SG",
+   "height": "6-7",
+   "birth_date": null,
+   "age_note": "19.6",
+   "team": "USC",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "size for a guard",
+    "shot-creation skill",
+    "handle",
+    "scoring ability"
+   ],
+   "weaknesses": [
+    "efficiency (34% FG)",
+    "shot selection",
+    "decision-making",
+    "injury history (knee/meniscus)"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Cameron Williams",
+   "ranks": {
+    "espn_2027_bigboard": 31,
+    "fansided_2027_bigboard": 45,
+    "br_2027_bigboard": 23,
+    "cbs_2027_mock": 17,
+    "clutchpoints_2027_mock": 16,
+    "si_2027_bigboard_june": 16,
+    "tankathon_2027_bigboard": 14
+   },
+   "position": "PF/C",
+   "height": "7-0",
+   "birth_date": null,
+   "age_note": "19.0",
+   "team": "Duke",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "size and fluidity",
+    "runs and jumps",
+    "floor-stretching flashes"
+   ],
+   "weaknesses": [
+    "needs weight/toughness",
+    "consistency vs top competition",
+    "may not play right away"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Miikka Muurinen",
+   "ranks": {
+    "espn_2027_bigboard": 25,
+    "br_2027_bigboard": 22,
+    "br_2027_mock_nov": 11,
+    "si_2027_bigboard_june": 30,
+    "tankathon_2027_bigboard": 29
+   },
+   "position": "PF/C",
+   "height": "7-0",
+   "birth_date": null,
+   "age_note": "19.7",
+   "team": "Arkansas",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "fluid bouncy 7-footer",
+    "perimeter shooting flashes",
+    "explosive finishing",
+    "motor"
+   ],
+   "weaknesses": [
+    "inconsistent production",
+    "decision-making",
+    "maturity/coachability"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Hugo Yimga-Moukouri",
+   "ranks": {
+    "espn_2027_bigboard": 28,
+    "fansided_2027_bigboard": 30,
+    "br_2027_bigboard": 21,
+    "br_2027_mock_nov": 27,
+    "clutchpoints_2027_mock": 18,
+    "tankathon_2027_bigboard": 19
+   },
+   "position": "SF/PF",
+   "height": "6-9",
+   "birth_date": null,
+   "age_note": "18.3",
+   "team": "Nanterre 92",
+   "league": "International",
+   "country": "France",
+   "strengths": [
+    "3-and-D profile",
+    "athletic traits",
+    "three-point stroke",
+    "slashing"
+   ],
+   "weaknesses": [
+    "unproven on-ball skills",
+    "likely role player"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Najai Hines",
+   "ranks": {
+    "espn_2027_bigboard": 40,
+    "fansided_2027_bigboard": 14,
+    "br_2027_bigboard": 24,
+    "br_2027_mock_nov": 20,
+    "si_2027_bigboard_june": 22
+   },
+   "position": "C",
+   "height": "6-10",
+   "birth_date": null,
+   "age_note": "19.6",
+   "team": "UConn",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "elite shot blocking",
+    "offensive rebounding",
+    "screening",
+    "paint presence"
+   ],
+   "weaknesses": [
+    "foul-prone",
+    "free-throw/touch",
+    "little creation"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Luigi Suigo",
+   "ranks": {
+    "espn_2027_bigboard": 29,
+    "fansided_2027_bigboard": 40,
+    "br_2027_bigboard": 17,
+    "br_2027_mock_nov": 32,
+    "cbs_2027_mock": 16,
+    "si_2027_bigboard_june": 24,
+    "tankathon_2027_bigboard": 12
+   },
+   "position": "C",
+   "height": "7-4",
+   "birth_date": null,
+   "age_note": "19.8",
+   "team": "Villanova",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "near-7-3 size",
+    "rim protection",
+    "offensive rebounding",
+    "floor-spacing flashes"
+   ],
+   "weaknesses": [
+    "raw project",
+    "ball-screen/perimeter defense"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Malachi Moreno",
+   "ranks": {
+    "espn_2027_bigboard": 14,
+    "fansided_2027_bigboard": 19,
+    "br_2027_bigboard": 33,
+    "br_2027_mock_nov": 34,
+    "cbs_2027_mock": 22,
+    "clutchpoints_2027_mock": 19,
+    "si_2027_bigboard_june": 27,
+    "tankathon_2027_bigboard": 27
+   },
+   "position": "C",
+   "height": "7-0",
+   "birth_date": null,
+   "age_note": "20.0",
+   "team": "Kentucky",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "soft touch at the rim",
+    "passing for a big",
+    "rebounding",
+    "screening",
+    "defensive instincts"
+   ],
+   "weaknesses": [
+    "no floor spacing",
+    "not explosive",
+    "needs strength"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Dame Sarr",
+   "ranks": {
+    "espn_2027_bigboard": 18,
+    "br_2027_bigboard": 40,
+    "cbs_2027_mock": 13,
+    "clutchpoints_2027_mock": 13,
+    "tankathon_2027_bigboard": 39
+   },
+   "position": "SG/SF",
+   "height": "6-8",
+   "birth_date": null,
+   "age_note": "20.4",
+   "team": "Duke",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "disruptive perimeter defense",
+    "length and athleticism",
+    "NBA-ready frame"
+   ],
+   "weaknesses": [
+    "3-point shooting (32%)",
+    "free-throw shooting",
+    "limited offensive role"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Caleb Gaskins",
+   "ranks": {
+    "espn_2027_bigboard": 23,
+    "fansided_2027_bigboard": 31,
+    "br_2027_bigboard": 26,
+    "br_2027_mock_nov": 25,
+    "clutchpoints_2027_mock": 27
+   },
+   "position": "PF/SF",
+   "height": "6-8",
+   "birth_date": null,
+   "age_note": "18.2",
+   "team": "Miami (FL)",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "NBA-level tools",
+    "length",
+    "versatile forward defense",
+    "stretch-4 shooting"
+   ],
+   "weaknesses": [
+    "perimeter game/spacing",
+    "slightly undersized for the 4",
+    "raw"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "David Mirkovic",
+   "ranks": {
+    "espn_2027_bigboard": 32,
+    "fansided_2027_bigboard": 21,
+    "br_2027_bigboard": 42,
+    "br_2027_mock_nov": 30,
+    "cbs_2027_mock": 19,
+    "si_2027_bigboard_june": 25,
+    "tankathon_2027_bigboard": 31
+   },
+   "position": "PF/SF",
+   "height": "6-9",
+   "birth_date": null,
+   "age_note": "20.8",
+   "team": "Illinois",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "shoot-dribble-pass skill",
+    "ball-screen playmaking",
+    "cerebral/feel",
+    "toughness"
+   ],
+   "weaknesses": [
+    "athleticism",
+    "heavy feet/defense",
+    "summer foot surgery"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Baba Oladotun",
+   "ranks": {
+    "espn_2027_bigboard": 37,
+    "br_2027_bigboard": 18,
+    "clutchpoints_2027_mock": 29,
+    "tankathon_2027_bigboard": 35
+   },
+   "position": "SF/PF",
+   "height": "6-10",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Maryland",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Davis Fogle",
+   "ranks": {
+    "espn_2027_bigboard": 45,
+    "fansided_2027_bigboard": 53,
+    "br_2027_bigboard": 29,
+    "br_2027_mock_nov": 17,
+    "cbs_2027_mock": 18,
+    "tankathon_2027_bigboard": 21
+   },
+   "position": "SG",
+   "height": "6-7",
+   "birth_date": null,
+   "age_note": "20.4",
+   "team": "Gonzaga",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "shooting",
+    "defense",
+    "passing IQ"
+   ],
+   "weaknesses": [
+    "unproven in a larger role"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Alex Condon",
+   "ranks": {
+    "espn_2027_bigboard": 22,
+    "br_2027_bigboard": 36,
+    "br_2027_mock_nov": 41,
+    "clutchpoints_2027_mock": 30,
+    "si_2027_bigboard_june": 23,
+    "tankathon_2027_bigboard": 34
+   },
+   "position": "PF/C",
+   "height": "6-11",
+   "birth_date": null,
+   "age_note": "22.3",
+   "team": "Florida",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "mobility",
+    "passing",
+    "motor",
+    "rebounding",
+    "4/5 switchability"
+   ],
+   "weaknesses": [
+    "3-point shooting (17%)",
+    "age"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Matt Able",
+   "ranks": {
+    "espn_2027_bigboard": 38,
+    "fansided_2027_bigboard": 29,
+    "br_2027_bigboard": 45,
+    "cbs_2027_mock": 24,
+    "si_2027_bigboard_june": 13,
+    "tankathon_2027_bigboard": 42
+   },
+   "position": "SG",
+   "height": "6-5",
+   "birth_date": null,
+   "age_note": "20.3",
+   "team": "North Carolina",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "size and length",
+    "scoring upside"
+   ],
+   "weaknesses": [
+    "inconsistent freshman year at NC State"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Tounde Yessoufou",
+   "ranks": {
+    "espn_2027_bigboard": 44,
+    "fansided_2027_bigboard": 57,
+    "br_2027_bigboard": 32,
+    "br_2027_mock_nov": 31,
+    "cbs_2027_mock": 30,
+    "clutchpoints_2027_mock": 23,
+    "si_2027_bigboard_june": 20,
+    "tankathon_2027_bigboard": 20
+   },
+   "position": "SG/SF",
+   "height": "6-5.5",
+   "birth_date": null,
+   "age_note": "20.5",
+   "team": "St. John's",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "power wing",
+    "athletic driving/transition",
+    "defense"
+   ],
+   "weaknesses": [
+    "playmaking",
+    "ball handling",
+    "3-point shooting"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Sayon Keita",
+   "ranks": {
+    "espn_2027_bigboard": 17,
+    "br_2027_bigboard": 46,
+    "clutchpoints_2027_mock": 28,
+    "tankathon_2027_bigboard": 40
+   },
+   "position": "C",
+   "height": "6-11",
+   "birth_date": null,
+   "age_note": "18.7",
+   "team": "North Carolina",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "7-7 wingspan",
+    "rim protection",
+    "mobility",
+    "lob finishing"
+   ],
+   "weaknesses": [
+    "raw ball skills",
+    "thin frame",
+    "rebounding/physicality"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Christian Collins",
+   "ranks": {
+    "espn_2027_bigboard": 27,
+    "fansided_2027_bigboard": 46,
+    "tankathon_2027_bigboard": 30
+   },
+   "position": "SF/PF",
+   "height": "6-9",
+   "birth_date": null,
+   "age_note": "19.1",
+   "team": "USC",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Dash Daniels",
+   "ranks": {
+    "espn_2027_bigboard": 35,
+    "fansided_2027_bigboard": 44,
+    "br_2027_bigboard": 62,
+    "br_2027_mock_nov": 29,
+    "cbs_2027_mock": 25,
+    "tankathon_2027_bigboard": 37
+   },
+   "position": "PG/SG",
+   "height": "6-6",
+   "birth_date": null,
+   "age_note": "18.9",
+   "team": "South East Melbourne",
+   "league": "International",
+   "country": "Australia",
+   "strengths": [
+    "defensive impact",
+    "backcourt versatility",
+    "improved touch"
+   ],
+   "weaknesses": [
+    "handle/athleticism",
+    "offensive creation"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Billy Richmond III",
+   "ranks": {
+    "espn_2027_bigboard": 36,
+    "fansided_2027_bigboard": 51,
+    "br_2027_bigboard": 54,
+    "br_2027_mock_nov": 46,
+    "cbs_2027_mock": 21,
+    "tankathon_2027_bigboard": 28
+   },
+   "position": "SG/SF",
+   "height": "6-7",
+   "birth_date": null,
+   "age_note": "20.6",
+   "team": "Arkansas",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "explosive athleticism",
+    "defensive motor",
+    "competitiveness"
+   ],
+   "weaknesses": [
+    "3-point shooting"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Rueben Chinyelu",
+   "ranks": {
+    "espn_2027_bigboard": 47,
+    "fansided_2027_bigboard": 37,
+    "br_2027_bigboard": 52,
+    "br_2027_mock_nov": 45,
+    "cbs_2027_mock": 29,
+    "tankathon_2027_bigboard": 41
+   },
+   "position": "C",
+   "height": "6-10.5",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Florida",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Trey McKenney",
+   "ranks": {
+    "espn_2027_bigboard": 39,
+    "fansided_2027_bigboard": 59,
+    "br_2027_bigboard": 44,
+    "br_2027_mock_nov": 38,
+    "tankathon_2027_bigboard": 32
+   },
+   "position": "SG",
+   "height": "6-4",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Michigan",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Juke Harris",
+   "ranks": {
+    "espn_2027_bigboard": 42,
+    "fansided_2027_bigboard": 56,
+    "br_2027_bigboard": 39,
+    "tankathon_2027_bigboard": 36
+   },
+   "position": "SG",
+   "height": "6-7",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Tennessee",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Milan Momcilovic",
+   "ranks": {
+    "espn_2027_bigboard": 41,
+    "br_2027_bigboard": 47,
+    "br_2027_mock_nov": 43,
+    "tankathon_2027_bigboard": 43
+   },
+   "position": "SF/PF",
+   "height": "6-9.25",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Kentucky",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Stefan Vaaks",
+   "ranks": {
+    "espn_2027_bigboard": 57,
+    "fansided_2027_bigboard": 60,
+    "br_2027_bigboard": 43,
+    "br_2027_mock_nov": 28,
+    "si_2027_bigboard_june": 28,
+    "tankathon_2027_bigboard": 46
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Illinois",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Pryce Sandfort",
+   "ranks": {
+    "espn_2027_bigboard": 58,
+    "fansided_2027_bigboard": 38,
+    "br_2027_bigboard": 41,
+    "tankathon_2027_bigboard": 45
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Nebraska",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Cameron Houindo",
+   "ranks": {
+    "espn_2027_bigboard": 55,
+    "br_2027_bigboard": 37,
+    "tankathon_2027_bigboard": 47
+   },
+   "position": "PF",
+   "height": "6-9",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Cedevita Olimpija",
+   "league": "International",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Shelton Henderson",
+   "ranks": {
+    "espn_2027_bigboard": 48,
+    "fansided_2027_bigboard": 34,
+    "br_2027_bigboard": 56,
+    "tankathon_2027_bigboard": 48
+   },
+   "position": "SF",
+   "height": "6-6",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Miami (FL)",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Jeremy Fears Jr.",
+   "ranks": {
+    "espn_2027_bigboard": 43,
+    "fansided_2027_bigboard": 43,
+    "br_2027_bigboard": 73,
+    "br_2027_mock_nov": 39,
+    "tankathon_2027_bigboard": 38
+   },
+   "position": "PG",
+   "height": "6-1.25",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Michigan State",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Massamba Diop",
+   "ranks": {
+    "espn_2027_bigboard": 69,
+    "fansided_2027_bigboard": 39,
+    "br_2027_bigboard": 35
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Gonzaga",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Matas Vokietaitis",
+   "ranks": {
+    "espn_2027_bigboard": 62,
+    "fansided_2027_bigboard": 36,
+    "br_2027_bigboard": 68,
+    "cbs_2027_mock": 28,
+    "tankathon_2027_bigboard": 51
+   },
+   "position": "C",
+   "height": "7-0",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Texas",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Neo Avdalas",
+   "ranks": {
+    "espn_2027_bigboard": 67,
+    "br_2027_bigboard": 53,
+    "cbs_2027_mock": 26,
+    "tankathon_2027_bigboard": 56
+   },
+   "position": "SG/SF",
+   "height": "6-8.75",
+   "birth_date": null,
+   "age_note": null,
+   "team": "North Carolina",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Flory Bidunga",
+   "ranks": {
+    "espn_2027_bigboard": 65,
+    "fansided_2027_bigboard": 42,
+    "br_2027_bigboard": 48,
+    "tankathon_2027_bigboard": 50
+   },
+   "position": "C",
+   "height": "6-9",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Louisville",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Andrej Stojakovic",
+   "ranks": {
+    "espn_2027_bigboard": 59,
+    "br_2027_bigboard": 75,
+    "tankathon_2027_bigboard": 25
+   },
+   "position": "SG",
+   "height": "6-6.75",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Illinois",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "JoJo Tugler",
+   "ranks": {
+    "espn_2027_bigboard": 52,
+    "fansided_2027_bigboard": 49,
+    "br_2027_bigboard": 64,
+    "tankathon_2027_bigboard": 49
+   },
+   "position": "PF",
+   "height": "6-8",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Houston",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Moustapha Thiam",
+   "ranks": {
+    "espn_2027_bigboard": 53,
+    "br_2027_bigboard": 55,
+    "tankathon_2027_bigboard": 53
+   },
+   "position": "C",
+   "height": "7-2",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Michigan",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Kayden Mingo",
+   "ranks": {
+    "espn_2027_bigboard": 91,
+    "fansided_2027_bigboard": 26,
+    "br_2027_mock_nov": 44
+   },
+   "position": "PG/SG",
+   "height": "6-1",
+   "birth_date": null,
+   "age_note": "19.7",
+   "team": "Baylor",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "floater touch",
+    "downhill driving",
+    "playmaking"
+   ],
+   "weaknesses": [
+    "shooting",
+    "small size"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Daniel Jacobsen",
+   "ranks": {
+    "espn_2027_bigboard": 68,
+    "fansided_2027_bigboard": 35,
+    "br_2027_bigboard": 60,
+    "tankathon_2027_bigboard": 55
+   },
+   "position": "C",
+   "height": "7-4",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Purdue",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Nik Khamenia",
+   "ranks": {
+    "espn_2027_bigboard": 50,
+    "br_2027_bigboard": 66,
+    "tankathon_2027_bigboard": 52
+   },
+   "position": "SF",
+   "height": "6-8",
+   "birth_date": null,
+   "age_note": null,
+   "team": "UConn",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Alvaro Folgueiras",
+   "ranks": {
+    "fansided_2027_bigboard": 48,
+    "br_2027_bigboard": 80,
+    "br_2027_mock_nov": 40
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Louisville",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Jordan Scott",
+   "ranks": {
+    "fansided_2027_bigboard": 52,
+    "br_2027_bigboard": 83,
+    "br_2027_mock_nov": 36
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Michigan State",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Paul McNeil Jr.",
+   "ranks": {
+    "espn_2027_bigboard": 60,
+    "br_2027_bigboard": 57,
+    "tankathon_2027_bigboard": 57
+   },
+   "position": "SG",
+   "height": "6-6",
+   "birth_date": null,
+   "age_note": null,
+   "team": "NC State",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Nigel James Jr.",
+   "ranks": {
+    "espn_2027_bigboard": 89,
+    "br_2027_bigboard": 51,
+    "br_2027_mock_nov": 37
+   },
+   "position": "PG",
+   "height": "6-0",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Marquette",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Johann Grunloh",
+   "ranks": {
+    "espn_2027_bigboard": 63,
+    "fansided_2027_bigboard": 54,
+    "br_2027_bigboard": 58,
+    "tankathon_2027_bigboard": 62
+   },
+   "position": "C",
+   "height": "7-0",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Virginia",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "John Blackwell",
+   "ranks": {
+    "espn_2027_bigboard": 66,
+    "br_2027_bigboard": 77,
+    "br_2027_mock_nov": 42
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Duke",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Miles Byrd",
+   "ranks": {
+    "espn_2027_bigboard": 51,
+    "fansided_2027_bigboard": 55,
+    "br_2027_bigboard": 84,
+    "tankathon_2027_bigboard": 58
+   },
+   "position": "SG",
+   "height": "6-6",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Providence",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Kanon Catchings",
+   "ranks": {
+    "espn_2027_bigboard": 90,
+    "br_2027_bigboard": 99,
+    "clutchpoints_2027_mock": 22
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Georgia",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Zvonimir Ivisic",
+   "ranks": {
+    "espn_2027_bigboard": 81,
+    "fansided_2027_bigboard": 50,
+    "br_2027_bigboard": 89,
+    "tankathon_2027_bigboard": 63
+   },
+   "position": "C",
+   "height": "7-2",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Illinois",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "JT Toppin",
+   "ranks": {
+    "espn_2027_bigboard": 96,
+    "br_2027_bigboard": 63,
+    "tankathon_2027_bigboard": 60
+   },
+   "position": "PF",
+   "height": "6-9",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Texas Tech",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Tomislav Ivisic",
+   "ranks": {
+    "espn_2027_bigboard": 80,
+    "br_2027_bigboard": 92,
+    "tankathon_2027_bigboard": 59
+   },
+   "position": "C",
+   "height": "7-1",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Illinois",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Tahaad Pettiford",
+   "ranks": {
+    "espn_2027_bigboard": 86,
+    "br_2027_bigboard": 87,
+    "tankathon_2027_bigboard": 73
+   },
+   "position": "PG",
+   "height": "6-1.5",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Auburn",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Bryson Howard",
+   "ranks": {
+    "fansided_2027_bigboard": 20,
+    "br_2027_bigboard": 10
+   },
+   "position": "SG/SF",
+   "height": "6-4",
+   "birth_date": null,
+   "age_note": "18",
+   "team": "Duke",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "disruptive defense",
+    "off-catch shooting",
+    "transition threat"
+   ],
+   "weaknesses": [
+    "turnover-prone",
+    "overextends defensively"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Deron Rippey Jr.",
+   "ranks": {
+    "fansided_2027_bigboard": 27,
+    "br_2027_mock_nov": 24
+   },
+   "position": "PG",
+   "height": "6-3",
+   "birth_date": null,
+   "age_note": "19",
+   "team": "Duke",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [
+    "quickness",
+    "defensive toughness"
+   ],
+   "weaknesses": [
+    "shooting",
+    "decision-making"
+   ],
+   "scouting_sources": [
+    "espn_2027_bigboard",
+    "fansided_2027_bigboard",
+    "br_2027_bigboard",
+    "br_2027_mock_nov",
+    "cbs_2027_mock",
+    "tankathon_2027_bigboard"
+   ]
+  },
+  {
+   "name": "Cole Cloer",
+   "ranks": {
+    "br_2027_mock_nov": 26
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Alabama",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "DaKari Spear",
+   "ranks": {
+    "si_2027_bigboard_june": 26
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Texas Tech",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Maximo Adams",
+   "ranks": {
+    "fansided_2027_bigboard": 23,
+    "br_2027_bigboard": 30
+   },
+   "position": "SG/SF",
+   "height": "n/a",
+   "birth_date": null,
+   "age_note": "18-19",
+   "team": "North Carolina",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Miles Sadler",
+   "ranks": {
+    "espn_2027_bigboard": 34,
+    "fansided_2027_bigboard": 25
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "West Virginia",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Cheickh Niang",
+   "ranks": {
+    "espn_2027_bigboard": 46,
+    "br_2027_mock_nov": 33
+   },
+   "position": "SG",
+   "height": null,
+   "birth_date": null,
+   "age_note": "18.1 (ESPN)",
+   "team": "Trento",
+   "league": "International",
+   "country": "Italy (club)",
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Klark Riethauser",
+   "ranks": {
+    "br_2027_bigboard": 38,
+    "tankathon_2027_bigboard": 44
+   },
+   "position": "SG",
+   "height": "6-8",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Elan Chalon",
+   "league": "International",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Amare Bynum",
+   "ranks": {
+    "espn_2027_bigboard": 49,
+    "br_2027_mock_nov": 35
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Ohio State",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Jaxon Richardson",
+   "ranks": {
+    "fansided_2027_bigboard": 47
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Alabama",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Bastien Grasshoff",
+   "ranks": {
+    "br_2027_mock_nov": 47
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Le Mans",
+   "league": "International",
+   "country": "France",
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Adam Atamna",
+   "ranks": {
+    "br_2027_bigboard": 49
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Ratiopharm Ulm",
+   "league": "International",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Roman Domon",
+   "ranks": {
+    "br_2027_bigboard": 50
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Murray State",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Eric Reibe",
+   "ranks": {
+    "espn_2027_bigboard": 54
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "USC",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Michael Ruzic",
+   "ranks": {
+    "espn_2027_bigboard": 56
+   },
+   "position": "PF",
+   "height": "7-0.25",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Joventut (ESPN lists LSU; Tankathon lists Joventut)",
+   "league": "International",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Cayden Boozer",
+   "ranks": {
+    "espn_2027_bigboard": 64,
+    "tankathon_2027_bigboard": 54
+   },
+   "position": "PG",
+   "height": "6-4",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Duke",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Kellen Thames",
+   "ranks": {
+    "br_2027_bigboard": 69,
+    "br_2027_mock_nov": 49
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Saint Louis",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "David Punch",
+   "ranks": {
+    "espn_2027_bigboard": 61
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Texas",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Lucas Morillo",
+   "ranks": {
+    "br_2027_bigboard": 61
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Illinois",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Karter Knox",
+   "ranks": {
+    "tankathon_2027_bigboard": 64
+   },
+   "position": "SF",
+   "height": "6-6.25",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Louisville",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Thijs De Ridder",
+   "ranks": {
+    "br_2027_bigboard": 65
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Virginia",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Xavier Booker",
+   "ranks": {
+    "tankathon_2027_bigboard": 66
+   },
+   "position": "PF",
+   "height": "6-11",
+   "birth_date": null,
+   "age_note": null,
+   "team": "UCLA",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Arrinten Page",
+   "ranks": {
+    "br_2027_bigboard": 67
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Providence",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Ian Jackson",
+   "ranks": {
+    "tankathon_2027_bigboard": 67
+   },
+   "position": "SG",
+   "height": "6-5",
+   "birth_date": null,
+   "age_note": null,
+   "team": "St. John's",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Magoon Gwath",
+   "ranks": {
+    "tankathon_2027_bigboard": 68
+   },
+   "position": "C",
+   "height": "7-0",
+   "birth_date": null,
+   "age_note": null,
+   "team": "DePaul",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Solo Ball",
+   "ranks": {
+    "tankathon_2027_bigboard": 69
+   },
+   "position": "SG",
+   "height": "6-4",
+   "birth_date": null,
+   "age_note": null,
+   "team": "UConn",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Elyjah Freeman",
+   "ranks": {
+    "br_2027_bigboard": 70
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Texas",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Mackenzie Mgbako",
+   "ranks": {
+    "tankathon_2027_bigboard": 71
+   },
+   "position": "SF",
+   "height": "6-8.75",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Texas A&M",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Nolan Winter",
+   "ranks": {
+    "espn_2027_bigboard": 72,
+    "br_2027_bigboard": 71
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Wisconsin",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Marc-Owen Fodzo Dada",
+   "ranks": {
+    "espn_2027_bigboard": 95,
+    "br_2027_mock_nov": 48
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "ASVEL",
+   "league": "International",
+   "country": "France",
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Jacob Cofie",
+   "ranks": {
+    "espn_2027_bigboard": 70,
+    "br_2027_bigboard": 74
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "USC",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Braden Frager",
+   "ranks": {
+    "br_2027_bigboard": 72
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Nebraska",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Jaden Toombs",
+   "ranks": {
+    "espn_2027_bigboard": 73
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "SMU",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Sam Lewis",
+   "ranks": {
+    "espn_2027_bigboard": 74
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Virginia",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Kanaan Carlyle",
+   "ranks": {
+    "tankathon_2027_bigboard": 74
+   },
+   "position": "PG/SG",
+   "height": "6-3",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Florida Atlantic",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "KJ Lewis",
+   "ranks": {
+    "espn_2027_bigboard": 79,
+    "tankathon_2027_bigboard": 70
+   },
+   "position": "SG",
+   "height": "6-4",
+   "birth_date": null,
+   "age_note": null,
+   "team": "USC",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Elliot Cadeau",
+   "ranks": {
+    "espn_2027_bigboard": 85,
+    "tankathon_2027_bigboard": 65
+   },
+   "position": "PG",
+   "height": "6-1",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Michigan",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Jayden Ross",
+   "ranks": {
+    "espn_2027_bigboard": 76
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "UConn",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Zoom Diallo",
+   "ranks": {
+    "br_2027_bigboard": 78
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Kentucky",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Mason Falslev",
+   "ranks": {
+    "espn_2027_bigboard": 98,
+    "br_2027_bigboard": 59
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Utah State",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Finley Bizjack",
+   "ranks": {
+    "br_2027_bigboard": 79
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "West Virginia",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Coen Carr",
+   "ranks": {
+    "br_2027_bigboard": 98,
+    "tankathon_2027_bigboard": 61
+   },
+   "position": "SF/PF",
+   "height": "6-6",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Michigan State",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Rueben Prey",
+   "ranks": {
+    "br_2027_bigboard": 81
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "St. John's",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Collin Chandler",
+   "ranks": {
+    "espn_2027_bigboard": 75,
+    "br_2027_bigboard": 88
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "BYU",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Amani Hansberry",
+   "ranks": {
+    "espn_2027_bigboard": 87,
+    "br_2027_bigboard": 76
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Virginia Tech",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Xavier Edmonds",
+   "ranks": {
+    "espn_2027_bigboard": 71,
+    "br_2027_bigboard": 93
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "TCU",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Pharrel Payne",
+   "ranks": {
+    "espn_2027_bigboard": 82
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Maryland",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Tre Singleton",
+   "ranks": {
+    "espn_2027_bigboard": 83
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Iowa State",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Pavle Backo",
+   "ranks": {
+    "espn_2027_bigboard": 94,
+    "tankathon_2027_bigboard": 72
+   },
+   "position": "C",
+   "height": "6-11",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Mega Basket / OKK Beograd",
+   "league": "International",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Mouhamed Faye",
+   "ranks": {
+    "espn_2027_bigboard": 93,
+    "tankathon_2027_bigboard": 75
+   },
+   "position": "C",
+   "height": "6-10",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Paris Basketball",
+   "league": "International",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Amael L'Etang",
+   "ranks": {
+    "br_2027_bigboard": 85
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Dayton",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Dillan Shaw",
+   "ranks": {
+    "espn_2027_bigboard": 77,
+    "br_2027_bigboard": 94
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Arizona State",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Killyan Toure",
+   "ranks": {
+    "br_2027_bigboard": 86
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Iowa State",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Bryson Tiller",
+   "ranks": {
+    "espn_2027_bigboard": 78,
+    "br_2027_bigboard": 95
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Missouri",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Jalen Haralson",
+   "ranks": {
+    "espn_2027_bigboard": 84,
+    "br_2027_bigboard": 90
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Tennessee",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Kwame Evans Jr.",
+   "ranks": {
+    "espn_2027_bigboard": 99,
+    "tankathon_2027_bigboard": 76
+   },
+   "position": "PF",
+   "height": "6-10",
+   "birth_date": null,
+   "age_note": null,
+   "team": "Villanova",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Robert Wright III",
+   "ranks": {
+    "espn_2027_bigboard": 88
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "BYU",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Paulius Murauskas",
+   "ranks": {
+    "espn_2027_bigboard": 100,
+    "br_2027_bigboard": 82
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Arizona State",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Aiden Sherrell",
+   "ranks": {
+    "br_2027_bigboard": 91
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Indiana",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Braden Huff",
+   "ranks": {
+    "espn_2027_bigboard": 92
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Gonzaga",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Blue Cain",
+   "ranks": {
+    "br_2027_bigboard": 96
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Georgia",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Aiden Tobiason",
+   "ranks": {
+    "espn_2027_bigboard": 97
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Syracuse",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Trent Pierce",
+   "ranks": {
+    "br_2027_bigboard": 97
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Missouri",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  },
+  {
+   "name": "Teagan Moore",
+   "ranks": {
+    "br_2027_bigboard": 100
+   },
+   "position": null,
+   "height": null,
+   "birth_date": null,
+   "age_note": null,
+   "team": "Western Kentucky",
+   "league": "NCAA",
+   "country": null,
+   "strengths": [],
+   "weaknesses": [],
+   "scouting_sources": []
+  }
+ ]
+}

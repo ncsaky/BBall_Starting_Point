@@ -1426,6 +1426,10 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
     """
     if isinstance(canonical, dict):
         canonical = baseline_for_save(canonical, save)
+        if is_league_save(save):
+            # Which real prospects declare for the next draft differs by save (cached per seed, same object).
+            from .draft import draft_class_for_save
+            canonical = draft_class_for_save(canonical, (save.get("meta") or {}).get("seed"))
         # Derived indexes belong to the source object. Copying them bloats the
         # active universe and can omit save-generated players or contracts.
         runtime = _ADVANCE_RUNTIME_STATE.get()

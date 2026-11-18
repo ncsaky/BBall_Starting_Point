@@ -628,9 +628,21 @@ def spatial_fit_delta(canonical: dict[str, Any], team_id: str, player: dict[str,
     return round(clamp(value, -cap, cap), 3)
 
 
-def prospect_spatial_fit_delta(canonical: dict[str, Any], team_id: str, prospect: dict[str, Any], cap: float = 6.0) -> float:
-    profile = prospect_spatial_profile(canonical, prospect)
-    team = team_spatial_profile(canonical, team_id)
+def prospect_spatial_fit_delta(canonical: dict[str, Any], team_id: str, prospect: dict[str, Any], cap: float = 6.0,
+                               cache: dict[Any, Any] | None = None) -> float:
+    """cache: optional dict shared across one board build (the universe must not change while it is used), so each
+    team's and each prospect's spatial profile is computed once instead of once per prospect-team pair."""
+    if cache is None:
+        profile = prospect_spatial_profile(canonical, prospect)
+        team = team_spatial_profile(canonical, team_id)
+    else:
+        prospect_key = ("prospect", str(prospect.get("id") or prospect.get("name")))
+        if prospect_key not in cache:
+            cache[prospect_key] = prospect_spatial_profile(canonical, prospect)
+        team_key = ("team", str(team_id))
+        if team_key not in cache:
+            cache[team_key] = team_spatial_profile(canonical, team_id)
+        profile, team = cache[prospect_key], cache[team_key]
     perimeter_need = max(0.0, 58 - _perimeter_average(team, "offense", "gravity"))
     rim_need = max(0.0, 58 - _group_average(team, "defense", "suppression", "rim"))
     value = perimeter_need * (_perimeter_average(profile, "offense", "gravity") - 50) * 0.009
