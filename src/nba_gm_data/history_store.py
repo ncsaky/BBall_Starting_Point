@@ -27,6 +27,12 @@ COLD_ARCHIVED = {
     "team_game_logs",
 }
 HISTORY_KEYS = tuple(sorted(ALWAYS_ARCHIVED | COLD_ARCHIVED))
+# Game detail that no screen can show after the season it belongs to (user decision 2026-11-18): box scores and
+# team game logs are kept for the current season only; player game logs also keep the previous season, because a
+# player card's last-30-games chart reaches back for players with few recent games. Season totals, awards,
+# standings and every other history kind are kept. Removal happens when a new season begins (the season label
+# changes at the October 1 rollover); see _prune_finished_seasons.
+SEASONS_KEPT = {"game_results": 1, "team_game_logs": 1, "player_game_logs": 2}
 HOT_TAIL_LIMITS = {
     # A handful of recent full box scores keeps common post-game reads cheap
     # without allowing the multi-season manifest to grow without bound.
@@ -77,11 +83,20 @@ def _versioned(connection: sqlite3.Connection) -> bool:
     return "revision" in primary
 
 
-def _visible_sql(versioned: bool, alias: str = "h") -> str:
+def _has_tombstones(connection: sqlite3.Connection) -> bool:
+    return bool(connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='history_tombstones'").fetchone())
+
+
+def _visible_sql(versioned: bool, alias: str = "h", tombstones: bool = False) -> str:
+    """Visibility clause; each `?` takes the manifest revision (one, or two with tombstones)."""
     if not versioned:
         return ""
-    return f""" AND {alias}.revision = (SELECT MAX(v.revision) FROM history_records v
+    sql = f""" AND {alias}.revision = (SELECT MAX(v.revision) FROM history_records v
         WHERE v.kind={alias}.kind AND v.record_id={alias}.record_id AND v.revision<=?)"""
+    if tombstones:
+        sql += f""" AND NOT EXISTS (SELECT 1 FROM history_tombstones t WHERE t.kind={alias}.kind
+        AND t.record_id={alias}.record_id AND t.revision<=? AND t.revision>={alias}.revision)"""
+    return sql
 
 
 def _visible_counts(connection: sqlite3.Connection, revision: int, versioned: bool = True) -> dict[str, int]:
@@ -96,7 +111,19 @@ def _visible_counts(connection: sqlite3.Connection, revision: int, versioned: bo
         ) GROUP BY kind"""
     else:
         sql = "SELECT kind, COUNT(*) FROM history_records WHERE revision<=? GROUP BY kind"
-    return dict(connection.execute(sql, [revision]).fetchall())
+    counts = dict(connection.execute(sql, [revision]).fetchall())
+    if versioned and _has_tombstones(connection):
+        hidden = connection.execute("""SELECT t.kind, COUNT(*) FROM history_tombstones t
+            WHERE t.revision<=? AND EXISTS (SELECT 1 FROM history_records h WHERE h.kind=t.kind AND h.record_id=t.record_id
+                AND h.revision<=t.revision)
+            AND NOT EXISTS (SELECT 1 FROM history_records h WHERE h.kind=t.kind AND h.record_id=t.record_id
+                AND h.revision>t.revision AND h.revision<=?)
+            GROUP BY t.kind""", (revision, revision)).fetchall()
+        for kind, count in hidden:
+            counts[kind] = counts.get(kind, 0) - count
+            if counts[kind] <= 0:
+                counts.pop(kind)
+    return counts
 
 
 # History files that passed the full check, keyed by path, with the file state and the JSON metadata they
@@ -200,6 +227,9 @@ def connect_history(path: Path) -> sqlite3.Connection:
             connection.execute("INSERT INTO history_records SELECT kind, record_id, event_date, season, revision, game_id, player_id, team_id, payload_json FROM history_records_legacy")
             connection.execute("DROP TABLE history_records_legacy")
         connection.execute("CREATE TABLE IF NOT EXISTS history_commits (revision INTEGER PRIMARY KEY, snapshot_id TEXT NOT NULL, counts_json TEXT NOT NULL)")
+        # A removal is staged like an insert: hidden from manifests at or after its revision, still visible to the
+        # previous manifest, and physically deleted only after a newer manifest is published.
+        connection.execute("CREATE TABLE IF NOT EXISTS history_tombstones (kind TEXT NOT NULL, record_id TEXT NOT NULL, revision INTEGER NOT NULL, PRIMARY KEY (kind, record_id))")
         connection.execute("CREATE INDEX IF NOT EXISTS idx_history_kind_date ON history_records(kind, event_date)")
         connection.execute("CREATE INDEX IF NOT EXISTS idx_history_player_date ON history_records(kind, player_id, event_date)")
         connection.execute("CREATE INDEX IF NOT EXISTS idx_history_game ON history_records(kind, game_id)")
@@ -255,10 +285,14 @@ def archive_save_history(save_path: str | Path, save: dict[str, Any], revision: 
         # interrupted first migration. Never adopt its rows into this manifest.
         database = path.with_name(f"{path.stem}.{uuid.uuid4().hex}.history.sqlite3")
     snapshot_id = uuid.uuid4().hex
+    published = int((save.get("history_store") or {}).get("revision") or 0)
+    purged = 0
     with closing(connect_history(database)) as connection, connection:
         # `revision` is allocated from the on-disk manifest while holding lock.
         connection.execute("DELETE FROM history_records WHERE revision>=?", (revision,))
         connection.execute("DELETE FROM history_commits WHERE revision>=?", (revision,))
+        connection.execute("DELETE FROM history_tombstones WHERE revision>=?", (revision,))
+        purged = _purge_published_tombstones(connection, published)
         for kind, rows in moved.items():
             for row in rows:
                 connection.execute("""
@@ -271,8 +305,18 @@ def archive_save_history(save_path: str | Path, save: dict[str, Any], revision: 
                     string_or_none(row.get("player_id")), string_or_none(row.get("team_id")),
                     json.dumps(row, ensure_ascii=False, separators=(",", ":"), sort_keys=True),
                 ))
+        pruned = _stage_finished_season_removals(connection, save, revision)
         archived_counts = _visible_counts(connection, revision)
         connection.execute("INSERT INTO history_commits VALUES (?, ?, ?)", (revision, snapshot_id, json.dumps(archived_counts, sort_keys=True)))
+    if purged >= VACUUM_AFTER_PURGED:
+        # Once a season: give the freed pages back so the file (and every backup/export of it) shrinks.
+        with closing(sqlite3.connect(database, timeout=30.0)) as connection:
+            connection.execute("VACUUM")
+            connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    for kind in SEASONS_KEPT:
+        if pruned.get(kind):
+            hidden = pruned[kind]
+            save[kind] = [row for row in save.get(kind, []) if not (isinstance(row, dict) and record_id(kind, row) in hidden)]
 
     for kind, rows in retained.items():
         save[kind] = rows
@@ -327,6 +371,59 @@ def materialize_development_totals(save: dict[str, Any], rows: list[dict[str, An
             player_totals[str(key)] = round(float(player_totals.get(str(key)) or 0.0) + float(delta or 0.0), 6)
 
 
+VACUUM_AFTER_PURGED = 5000
+
+
+def season_cutoff(save: dict[str, Any], seasons_kept: int) -> str:
+    """First date kept: the start (July 1) of the oldest season still kept."""
+    floor = active_season_floor(save)
+    return f"{int(floor[:4]) - (seasons_kept - 1)}{floor[4:]}"
+
+
+def _purge_published_tombstones(connection: sqlite3.Connection, published: int) -> int:
+    """Physically delete records whose removal a published manifest already reflects."""
+    if published <= 0:
+        return 0
+    if not connection.execute("SELECT 1 FROM history_tombstones WHERE revision<=? LIMIT 1", (published,)).fetchone():
+        return 0
+    cursor = connection.execute("""DELETE FROM history_records WHERE rowid IN (SELECT h.rowid FROM history_tombstones t
+        JOIN history_records h ON h.kind=t.kind AND h.record_id=t.record_id AND h.revision<=t.revision
+        WHERE t.revision<=?)""", (published,))
+    connection.execute("DELETE FROM history_tombstones WHERE revision<=?", (published,))
+    return max(0, cursor.rowcount or 0)
+
+
+def _stage_finished_season_removals(connection: sqlite3.Connection, save: dict[str, Any], revision: int) -> dict[str, set[str]]:
+    """Tombstone game detail from finished seasons (SEASONS_KEPT); returns the record ids per kind.
+
+    Box scores carry no date, so a finished game is identified by its team game logs (or its score summary).
+    Tombstones are bulk-inserted in SQL: the first rollover of a long career stages ~200,000 removals."""
+    staged: dict[str, set[str]] = {}
+    insert = "INSERT OR REPLACE INTO history_tombstones (kind, record_id, revision) "
+    for kind in ("team_game_logs", "player_game_logs"):
+        cutoff = season_cutoff(save, SEASONS_KEPT[kind])
+        connection.execute(insert + """SELECT DISTINCT kind, record_id, ? FROM history_records
+            WHERE kind=? AND event_date<? AND event_date!=''""", (int(revision), kind, cutoff))
+        staged[kind] = {record_id(kind, row) for row in save.get(kind, [])
+                        if isinstance(row, dict) and record_date(row) and record_date(row) < cutoff}
+    cutoff = season_cutoff(save, SEASONS_KEPT["game_results"])
+    old_games_sql = """SELECT game_id FROM history_records WHERE kind='team_game_logs' AND event_date<?
+        AND event_date!='' AND game_id IS NOT NULL"""
+    connection.execute(insert + f"""SELECT DISTINCT kind, record_id, ? FROM history_records
+        WHERE kind='game_results' AND game_id IN ({old_games_sql})""", (int(revision), cutoff))
+    # Recent boxes kept in the save itself: date them from their team logs or score summary (summaries are kept).
+    hot = [row for row in save.get("game_results", []) if isinstance(row, dict) and row.get("game_id")]
+    if hot:
+        old_games = {row[0] for row in connection.execute(old_games_sql, (cutoff,))}
+        summary_dates = {str(row.get("game_id")): str(row.get("date") or "")[:10]
+                         for row in save.get("game_result_summaries", []) if row.get("game_id")}
+        staged["game_results"] = {record_id("game_results", row) for row in hot
+                                  if str(row["game_id"]) in old_games or "" < summary_dates.get(str(row["game_id"]), "") < cutoff}
+    for kind, ids in staged.items():
+        connection.executemany(insert + "VALUES (?, ?, ?)", [(kind, rid, int(revision)) for rid in ids])
+    return staged
+
+
 def load_history_records(
     save_path: str | Path,
     save: dict[str, Any],
@@ -348,6 +445,7 @@ def load_history_records(
     try:
         with closing(_read_connection(database)) as connection:
             versioned = _versioned(connection)
+            tombstones = versioned and _has_tombstones(connection)
             clauses = ["h.kind = ?", "h.revision <= ?"]
             values: list[Any] = [kind, manifest_revision]
             if player_id is not None:
@@ -359,8 +457,10 @@ def load_history_records(
             if event_date_from is not None:
                 clauses.append("h.event_date >= ?")
                 values.append(str(event_date_from))
-            sql = f"SELECT h.payload_json FROM history_records h WHERE {' AND '.join(clauses)}" + _visible_sql(versioned)
+            sql = f"SELECT h.payload_json FROM history_records h WHERE {' AND '.join(clauses)}" + _visible_sql(versioned, tombstones=tombstones)
             if versioned:
+                values.append(manifest_revision)
+            if tombstones:
                 values.append(manifest_revision)
             if limit is None:
                 # Decode as rows arrive rather than retaining a second full

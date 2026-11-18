@@ -64,8 +64,24 @@ class RolloverHistoryTests(unittest.TestCase):
                 directory, {}, path, prepared_save=prepared,
             )
 
+    @staticmethod
+    def kept_after_rollover(expected, season_start):
+        """Finished-season game detail is not kept (user decision 2026-11-18, history_store.SEASONS_KEPT): box scores
+        and team logs only for the current season, player logs for the current and previous season."""
+        kept = deepcopy(expected)
+        cutoffs = {kind: f"{season_start - (seasons - 1)}-07-01" for kind, seasons in
+                   (("game_results", 1), ("team_game_logs", 1), ("player_game_logs", 2))}
+        dates = {row["game_id"]: row["date"] for row in expected["team_game_logs"]}
+        kept["game_results"] = [row for row in expected["game_results"] if dates[row["game_id"]] >= cutoffs["game_results"]]
+        for kind in ("team_game_logs", "player_game_logs"):
+            kept[kind] = [row for row in expected[kind] if row["date"] >= cutoffs[kind]]
+        return kept
+
     def assert_history_matches(self, path, expected):
         complete = save_module.load_save(path, include_history=True)
+        season_start = int(complete["meta"]["season"][:4])
+        all_dates = {row["game_id"]: row["date"] for row in expected["team_game_logs"]}
+        expected = self.kept_after_rollover(expected, season_start)
         for kind in ("game_results", "team_game_logs", "player_game_logs"):
             key = "game_id" if kind == "game_results" else "id"
             self.assertEqual(
@@ -79,12 +95,10 @@ class RolloverHistoryTests(unittest.TestCase):
         self.assertEqual(current["team_game_logs"], [])
         self.assertEqual(current["player_game_logs"], [])
         self.assertNotIn("_history_to_archive", current)
-        self.assertEqual(
-            {row["game_id"]: row["date"] for row in current["game_result_summaries"]},
-            {row["game_id"]: row["date"] for row in expected["team_game_logs"]},
-        )
+        # Score summaries (date and final score) are kept for every game, including finished seasons.
+        self.assertEqual({row["game_id"]: row["date"] for row in current["game_result_summaries"]}, all_dates)
 
-    def test_final_ten_box_scores_and_all_logs_survive_rollover(self):
+    def test_rollover_keeps_current_detail_and_drops_finished_season_boxes(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "league.json"
             fixture = self.fixture()
@@ -108,7 +122,7 @@ class RolloverHistoryTests(unittest.TestCase):
             self.rollover(tmp, path, prepared)
             self.assert_history_matches(path, expected)
 
-    def test_history_survives_multiple_rollovers(self):
+    def test_history_follows_retention_across_multiple_rollovers(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "league.json"
             fixture = self.fixture()
@@ -147,6 +161,26 @@ class RolloverHistoryTests(unittest.TestCase):
             self.assertEqual(len(prepared["_history_to_archive"]["game_results"]), 11)
             save_module.write_save(path, prepared)
             self.assert_history_matches(path, expected)
+
+    def test_removed_detail_is_physically_deleted_after_the_next_save(self):
+        import sqlite3
+        from nba_gm_data.history_store import history_sidecar_path
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "league.json"
+            save_module.write_save(path, self.fixture())
+            self.rollover(tmp, path, save_module.load_save(path))
+            database = history_sidecar_path(path, save_module.load_save(path))
+
+            def stored(kind):
+                with sqlite3.connect(database) as connection:
+                    return connection.execute("SELECT COUNT(*) FROM history_records WHERE kind=?", (kind,)).fetchone()[0]
+
+            self.assertGreater(stored("game_results"), 0)        # hidden, but the previous manifest could still need it
+            save_module.write_save(path, save_module.load_save(path))
+            self.assertEqual(stored("game_results"), 0)           # published removal is reclaimed on the next save
+            self.assertEqual(stored("team_game_logs"), 0)
+            self.assertEqual(stored("player_game_logs"), 25)      # previous season's player logs stay
+            self.assert_history_matches(path, self.fixture())
 
 
 if __name__ == "__main__":

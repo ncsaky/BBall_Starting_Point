@@ -6,7 +6,98 @@ Current priority (2026-11-17): the three "Ready now" tasks below. GUI tasks are 
 
 ---
 
-## Ready now (2026-11-17 evening)
+## Ready now (2026-11-18): PRO-2, implement the rookie input fix
+
+### PRO-2: Start real 2026 rookies on the estimator's rookie setting
+
+Suggested settings: GPT-6.2 Sol, Medium, fresh chat (or continue the PRO chat if it still has context).
+
+```
+Read AGENTS.md, docs/agents/BOARD.md and your own report docs/agents/tasks/pro-prospect-inputs.md first. You own PRO-2;
+add a board row "in progress (Codex)". Claude approved section 3's first step ("rookie technique only").
+
+DO:
+1. In scripts/build_player_inputs.py, estimate the real 2026 entrants with no completed NBA season (the 53 players your
+   audit identified; derive the set from data, don't hard-code names) with the estimator's existing prospect=True setting.
+   Keep eligible evidence overlays and the measured-tendency step exactly as they are. Do NOT apply the involvement
+   (usage) shift yet; that needs held-out validation first (separate task).
+2. Rebuild data/canonical/player_inputs_2026_27.json (+ .gz) with the script. Confirm only those players' technique inputs
+   changed (diff summary: players changed, inputs changed, everything else identical).
+3. Run, with NBA_GM_RATINGS_MODEL=inputs_v1:
+   - PYTHONPATH=src .venv/bin/python scripts/ratings_sniff_report.py  (report Peterson, Boozer, Flagg, Harper ranks)
+   - PYTHONPATH=src .venv/bin/python scripts/calibration_report.py --games 1230 --mode replay-real-minutes
+   - PYTHONPATH=src .venv/bin/python -m nba_gm_data.cli validate-season-probabilities --runs 100  (~20 min; run in the
+     background and check back at most every 20-30 min)
+   Compare with the current baseline: replay 18/18 in band, points per-36 mean abs 2.595; odds Brier 0.1950, log loss
+   0.5775, spread error 5.223, total error 5.421. Don't regress either scorecard silently; report the numbers.
+4. bash scripts/run_core_tests.sh
+
+BOUNDARIES: scripts/build_player_inputs.py, data/canonical/player_inputs_2026_27.json(.gz), new tests, your report.
+Claude is editing src/nba_gm_data/history_store.py and save.py (save size) — don't touch src/.
+REPORT: append "PRO-2 results" to docs/agents/tasks/pro-prospect-inputs.md, plain language first. Board row to "review". Do not commit.
+```
+
+---
+
+## Done: (2026-11-17 night): two read-only research tasks, one fresh chat each
+
+Suggested settings: GPT-6.2 Sol, Medium. Both are READ-ONLY for src/ and data/ (Claude is editing transactions.py,
+trait_adapter.py, impact_value fit, sim/box files, and tests). New scripts go in scripts/research/, outputs in output/<task>/.
+Don't poll long runs more than every 20-30 minutes.
+
+### PRO: Are draft prospects' estimated inputs inflated? (diagnosis + proposal)
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task PRO; add a board row "in progress (Codex)".
+
+SYMPTOM: under the new ratings (NBA_GM_RATINGS_MODEL=inputs_v1), incoming rookies and generated draftees rank too high.
+2026 rookie Darryn Peterson (19) is 15th in the league by overall (scripts/ratings_sniff_report.py), and Cameron Boozer,
+Dylan Harper, Aday Mara and Caleb Wilson show up near the top of several input-based ratings. Earlier notes also say
+the prospect path's estimated involvement (usage) runs high.
+
+Players without measured input records get inputs from the estimator's prospect path (src/nba_gm_data/input_estimator.py,
+called from ratings_model._install_generated_players; tendency inputs are mapped with data/canonical/tendency_scale_map.json).
+
+QUESTIONS:
+1. How do prospects' estimated inputs compare with REAL first-season inputs of recent rookies who have measured data
+   (e.g. 2023, 2024 and 2025 draftees: their inputs come from Basketball Index evidence)? Compare by draft slot band
+   (top 5, 6-14, 15-30, second round) for the skill groups, physical inputs and involvement (T08). Use league percentiles.
+2. Which part of the pipeline causes any gap (the estimator's anchors, the scale map, the trait adapter's percentile step,
+   or the legacy traits it starts from)? Show the evidence.
+3. Propose the smallest fix, with expected effect on where Peterson / Boozer / Flagg (2025 #1, measured) would rank.
+   Do NOT implement it in src/ (Claude will); a prototype in scripts/research/ that prints before/after ranks is welcome.
+
+REPORT: docs/agents/tasks/pro-prospect-inputs.md, plain language first, tables for the comparison. Board row to "review". Do not commit.
+```
+
+### SAV: Save size after many seasons (analysis + options)
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first ("Save size (open, needs user decision)"). You own task SAV; add a board row.
+
+PROBLEM: a career's history database grows ~60 MB per season. At ~8 seasons the save passes the 512 MB portable-export cap
+(src/nba_gm_data/save_recovery.py, MAX_EXPANDED_BYTES); local autosaves allow 16 GB, so play continues, but players
+can't export/share a long career, and every save step gets slower (validation and backups scale with size).
+
+A real 8-season save exists: output/t2b/checkpoint/current/ (copy it to output/sav/ before reading; a builder is still
+writing to output/t2b — never modify anything there).
+
+QUESTIONS:
+1. What is stored: break the history SQLite (src/nba_gm_data/history_store.py) and the save JSON down by record kind and
+   by season (MB per kind per season). What dominates (box scores? play-by-play? events?)
+2. What actually reads each kind: GUI screens, AI, stats pages, awards, records. Which old data is never read after a
+   season ends, or only read in summarized form?
+3. Options with measured sizes, e.g. compress payloads, store old seasons' box scores as season totals, drop
+   play-by-play after N seasons, separate an optional "full archive" from the portable export. For each: projected size at
+   10 and 20 seasons, what the player loses, implementation size.
+Prototype measurements in scripts/research/ on the copied save are welcome; do not change src/.
+
+REPORT: docs/agents/tasks/sav-save-size.md, plain language first, a short options table for the user. Board row to "review". Do not commit.
+```
+
+---
+
+## Done: (2026-11-17 evening)
 
 ### PLY: Real playoff performance data (evidence for the "playoff translation" rating)
 
