@@ -28,11 +28,23 @@ def digest(path):
     return hashlib.file_digest(path.open("rb"), "sha256").hexdigest()
 
 
+# Private research captures used only to build ratings ahead of time (Basketball Index, Barttorvik): never shipped.
+PRIVATE_DATA = ("data/research/bbi/captures", "data/research/bbi/normalized", "data/research/bbi/raw",
+                "data/research/bbi/tools", "data/research/bbi/normalized.json", "data/research/bbi/values_recent.json.gz",
+                "data/research/barttorvik")
+
+
+def is_private_data(path, repo):
+    relative = Path(path).resolve().relative_to(Path(repo).resolve()).as_posix()
+    return any(relative == item or relative.startswith(item + "/") for item in PRIVATE_DATA)
+
+
 def inventory():
     files = list((REPO / "src/nba_gm_data").rglob("*.py"))
     files += list((REPO / "src/nba_gm_data/gui").rglob("*"))
     for folder in ("data", "NBA Schedule", "Pre-Season manifestos"):
-        files += [p for p in (REPO / folder).rglob("*") if p.suffix in {".json", ".csv", ".txt", ".gz"}]
+        files += [p for p in (REPO / folder).rglob("*")
+                  if p.suffix in {".json", ".csv", ".txt", ".gz"} and not is_private_data(p, REPO)]
     files += [REPO / "pyproject.toml", REPO / "packaging/macos/launcher.py",
               REPO / "packaging/macos/NBA GM Sandbox.spec", REPO / "packaging/macos/build-requirements.txt",
               REPO / "packaging/assets/app-icon.icns"]

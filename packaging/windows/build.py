@@ -33,6 +33,17 @@ def digest(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+# Private research captures used only to build ratings ahead of time (Basketball Index, Barttorvik): never shipped.
+PRIVATE_DATA = ("data/research/bbi/captures", "data/research/bbi/normalized", "data/research/bbi/raw",
+                "data/research/bbi/tools", "data/research/bbi/normalized.json", "data/research/bbi/values_recent.json.gz",
+                "data/research/barttorvik")
+
+
+def is_private_data(path, repo):
+    relative = Path(path).resolve().relative_to(Path(repo).resolve()).as_posix()
+    return any(relative == item or relative.startswith(item + "/") for item in PRIVATE_DATA)
+
+
 def inventory(repo=REPO):
     missing = [name for name in REQUIRED if not (repo / name).is_file() or not (repo / name).stat().st_size]
     if missing:
@@ -40,7 +51,8 @@ def inventory(repo=REPO):
     files = list((repo / "src/nba_gm_data").rglob("*.py"))
     files += list((repo / "src/nba_gm_data/gui").rglob("*"))
     for folder in ("data", "NBA Schedule", "Pre-Season manifestos"):
-        files += [p for p in (repo / folder).rglob("*") if p.suffix in {".json", ".csv", ".txt", ".gz"}]
+        files += [p for p in (repo / folder).rglob("*")
+                  if p.suffix in {".json", ".csv", ".txt", ".gz"} and not is_private_data(p, repo)]
     files += list((repo / "packaging/windows").glob("*"))
     files += [repo / "pyproject.toml", repo / "packaging/assets/app-icon.ico", repo / "packaging/assets/app-icon.png"]
     files = sorted({p for p in files if p.is_file() and "__pycache__" not in p.parts and p.name != ".DS_Store"})
