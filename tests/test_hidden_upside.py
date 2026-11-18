@@ -63,7 +63,10 @@ class HiddenUpsideTests(unittest.TestCase):
                     unchanged.add(left["id"])
                 else:
                     affected += 1
-                    self.assertGreaterEqual(right["potential"], 80)
+                    # The hidden tail only ever raises a prospect's true potential. (It used to be checked as
+                    # ">= 80"; since the prospect-realism generator, a scouting miss either way applies on top of
+                    # the tail, so a lifted prospect can still land in the high 70s.)
+                    self.assertGreater(right["potential"], left["potential"])
             ids = {p["id"] for p, prospect in zip(context["players"], after["draft_prospects"], strict=True)
                    if prospect["id"] in unchanged}
             for left, right in zip(original["traits"], context["traits"], strict=True):

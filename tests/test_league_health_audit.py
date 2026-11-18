@@ -155,10 +155,12 @@ class LeagueHealthAuditTests(unittest.TestCase):
             for p in generated["draft_prospects"]]
         _, converted = audit.converted_class(2028, 17, {"id": "a", "abbrev": "A"}, drafted=generated,
                                              teams=[{"id": "a", "abbrev": "A"}, {"id": "b", "abbrev": "B"}])
-        player = converted["players"][0]
+        # The board's top prospect (public rank 1; list order no longer follows rank since public ranks are
+        # re-derived from the scouted board) goes 60th: the actual slot and team win over the prospect rank.
+        metadata = converted["_audit_draft_metadata"]
+        player = next(p for p in converted["players"] if metadata[p["id"]]["prospect_rank"] == 1)
         self.assertEqual(player["team_id"], "b")
         self.assertEqual(player["overall_pick"], 60)
-        self.assertEqual(converted["_audit_draft_metadata"][player["id"]]["prospect_rank"], 1)
         generated["selections"].pop()
         _, converted = audit.converted_class(2028, 17, {"id": "b", "abbrev": "B"}, drafted=generated)
         self.assertEqual(len(converted["players"]), 59)
