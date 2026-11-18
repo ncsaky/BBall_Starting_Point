@@ -55,7 +55,10 @@ EXPERIENCE_TRAITS = frozenset({"scheme_iq", "passing_reads", "portability"})
 # route compresses rating changes when it re-derives traits, so the older trait set needs a smaller draw to land in
 # the same place (Codex DEV-TUNE measured 0.60 at -42%..+36% inputs and -54%..+49% legacy of the starting spread,
 # 500+ minutes; target about -40%..+30%).
-DEVELOPMENT_SEASON_VOLATILITY = 0.47          # 94-input ratings (default)
+# Re-measured 2026-11-19 after the level-keeping 94-input routing (ratings_model) removed most of that compression:
+# 0.47 gave -52%..+46% (500+) and -62%..+52% (1,500+); 0.28 gives -32%..+28% and -39%..+32%, the same bands main
+# had at 0.47 before the routing change (output/prospect-realism/measure_spread.py).
+DEVELOPMENT_SEASON_VOLATILITY = 0.28          # 94-input ratings (default)
 LEGACY_DEVELOPMENT_SEASON_VOLATILITY = 0.36   # older trait-only ratings
 SEASON_FORM_TRAIT_WEIGHTS = {
     "foot_speed_lateral_agility": 0.35,
