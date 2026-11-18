@@ -735,3 +735,12 @@ body.unified-terminal-ui .unified-phase-dashboard:is([data-phase="cutdown"],[dat
 .spatial-heatmap.has-court-views { display:grid; grid-template-columns:1fr 1fr; column-gap:10px; }
 .spatial-heatmap.has-court-views > .spatial-court-head, .spatial-heatmap.has-court-views > .spatial-half-courts, .spatial-heatmap.has-court-views > .spatial-legends { grid-column:1 / -1; }
 .spatial-court-caption { color:var(--ui-muted); font-size:9px; line-height:1.3; margin:2px 0 0; }
+
+/* Injury risk in tables: mini body figure + number (2026-11-19) */
+.injury-risk-body { align-items:center; display:inline-flex; gap:4px; white-space:nowrap; }
+.injury-risk-body svg.injury-body-figure.mini { height:26px; transform:none !important; width:auto; }
+.injury-risk-body b { font-size:inherit; font-weight:400; }
+.injury-event-body { align-items:center; display:flex; gap:6px; margin:6px 0; }
+.injury-event-body .injury-risk-body svg.injury-body-figure.mini { height:44px; }
+.injury-negotiation-body { align-items:center; display:flex; gap:6px; }
+.injury-negotiation-body .injury-risk-body b { display:none; }

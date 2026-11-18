@@ -69,6 +69,7 @@ test('minutes initialize from saved targets and locks, not newer coaching projec
   };
   vm.createContext(scope);
   vm.runInContext(functionSource('ensureRotationDraft', 'autofillRotationDraft'), scope);
+  vm.runInContext(functionSource('playerHasRust', 'injuryGamesRemaining'), scope);
   vm.runInContext(functionSource('seasonMinutesCard', 'seasonMiniRating'), scope);
   const rows = [
     {id: 'curry', name: 'Stephen Curry', rotation_target_minutes: 31, minutes_projection: 33, rotation_user_set: true},
@@ -101,6 +102,8 @@ test('quiet minute saves rebuild sliders from the confirmed server rotation', as
   vm.runInContext(functionSource('ensureRotationDraft', 'rebalanceInjuredRotationDraft'), scope);
   scope.rebalanceInjuredRotationDraft = () => {};
   scope.renderDashboard = () => scope.ensureRotationDraft(scope.state.data.dashboard.rotation);
+  scope.document = {querySelector: () => null};
+  vm.runInContext(functionSource('captureTeamSignalBars', 'reorderMinutesTable'), scope);
   vm.runInContext(app.slice(app.indexOf('async function saveRotationMinutes('), app.indexOf('function seriesCard(')), scope);
   await scope.saveRotationMinutes({quiet: true});
   assert.equal(scope.state.rotationDraft.traded, 36);
@@ -118,6 +121,8 @@ test('quiet minute saves retain a newer pending edit and surface blocked saves a
     savePayload: () => ({}), userTeam: () => 'MEM', renderDashboard() {}, showToast() {},
   };
   vm.createContext(scope);
+  scope.document = {querySelector: () => null};
+  vm.runInContext(functionSource('captureTeamSignalBars', 'reorderMinutesTable'), scope);
   vm.runInContext(app.slice(app.indexOf('async function saveRotationMinutes('), app.indexOf('function seriesCard(')), scope);
   await scope.saveRotationMinutes({quiet: true});
   assert.equal(scope.state.rotationDraft.traded, 35);

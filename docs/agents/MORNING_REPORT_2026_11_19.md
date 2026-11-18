@@ -4,7 +4,7 @@
 - Coaches now matter rating by rating, players ease back after injuries, and AI teams judge injury risk with the new body-part model. All of it is committed and pushed, and the full test suite passes (1,764 tests).
 - Box scores now swing game to game like real NBA box scores. "Playoff performers" are now judged half on real playoff box scores and half on Basketball Index's playoff talent grades.
 - New, from your late message: injury risk is now a body map with hotspots (new Health page on the player card). The playmaking and defense heat maps are designed and waiting on your OK.
-- Things that need you are listed at the bottom: NCAA sign-in, old Basketball Index files in git history, Codex's aging work and the heat-map plan.
+- Later (you were up): playmaking and defense court charts are built; Codex's aging work is reviewed and set to two-thirds of Basketball Index's year-to-year spread, as you chose. Remaining items for you are at the bottom: NCAA sign-in and old Basketball Index files in git history.
 
 ## What changed in the game
 
@@ -36,14 +36,18 @@
   - **Normal-role minutes:** a benched or injured player is judged at his normal minutes, so his map describes his
     body rather than this week's rotation.
   - **Checked** in the game on Mike Conley (current knee injury) and Jayson Tatum.
-- **Playmaking and defense heat maps (design only).** See `docs/agents/tasks/court-heatmaps-design.md`.
-  - **The catch:** the season sim doesn't play out individual shots, lineups or defensive assignments. It adjusts team
-    shot quality by zone. A true on/off chart would show numbers the game never uses.
-  - **Recommendation:** modeled "projected" charts (Playmaking, On-ball D, Help D) sized against Basketball Index's
-    real "impact on teammate shot quality" and "impact on opponent shot quality" numbers. The same terms get wired
-    into the sim so the charts are honest.
-  - **Your question about help defense:** yes, leave out his own matchup's shots, mirroring the playmaking chart.
-  - **Needs your OK** because it includes a small engine change.
+- **Playmaking and defense court charts (built after your OK).** On the player card's Court Influence panel:
+  - **Offense court:** switches between Scoring and Playmaking. Playmaking shows how much better or worse his
+    teammates shoot, by zone, while he plays (his own shots left out).
+  - **Defense court:** switches between Overall, On his man and Help. Help leaves out his own man, as you suggested.
+  - **Playmaking's size** is fitted from the game's ratings to Basketball Index's "impact on teammates' shooting"
+    (accuracy on unseen players r 0.59; passing reads matter most, then shooting gravity, handle and drives).
+  - **The sim uses it:** it is added to each team's zone shooting and measured against the league's own players, so
+    league scoring is unchanged. Teams range from about −0.6 to +0.9 points of team FG% from playmaking.
+  - **On his man + Help** split the engine's existing zone defense and add up to Overall exactly.
+  - **Scorecards unchanged:** 18/18 stat targets; Brier 0.1955, log loss 0.5786.
+  - **Noticed:** the engine rates Jokić and Gobert identical at rim protection (+10.8 points each). The rim term seems
+    to saturate. Worth an evidence check (not changed).
 
 ## Scorecards (after tonight's changes)
 - **Real-stat targets:** all 18 league numbers in range, on both rating sets. Pace 102.2, offensive rating 113.2, true shooting .586. One player outlier remains: Jokić averages about 6.5 assists per 36 minutes in the sim against 11.1 in real life.
@@ -96,11 +100,13 @@ A month of game time takes about 60–90 seconds in the test builder, which matc
    - Before you chose "local only", a few commits pushed Basketball Index-derived tables to GitHub: the normalized leaderboard files, the first tool extraction, and early injury-model files with per-player history.
    - Removing them from GitHub's history means a force-push rewrite, which is destructive.
    - Decide whether to leave them (is the repo private?) or rewrite the history.
-3. **Codex's aging work (still running).**
-   - Its findings so far: the game starts aging players too late. Basketball Index shows declines starting around 27 and the game around 31.
-   - Young rotation players also grow too little, and development years are too similar from player to player.
-   - Look over its proposed tuning before I commit it.
-4. **Approve the heat-map plan** (route A in `docs/agents/tasks/court-heatmaps-design.md`).
+3. **Codex's aging work (reviewed; done).**
+   - Young players now improve faster, decline starts in the mid-to-late twenties as in Basketball Index, and each
+     player gets a good-or-bad-year draw, now at two-thirds of Basketball Index's spread as you chose.
+   - My mistake: its code reached GitHub early, inside my coaching commit. Reviewed now; nothing lost.
+   - Review found and fixed a real bug: head coaches' ratings drifted a little every time a save loaded, so a playoff
+     round simulated in one go and day by day came out slightly different.
+4. **Heat maps:** approved and built (see above).
 5. **Eight browser-interface tests were already failing** before tonight (stale style-version strings and helpers
    that were renamed). They aren't part of the main test suite. This is a good small Codex cleanup task.
 6. **A two-season test game with all of tonight's changes.** Results are in `output/night1118/two_season.log`; I'll report anything it turned up. (The longer test script stops at the draft lottery. That is a known limit of the script, not a game bug.)

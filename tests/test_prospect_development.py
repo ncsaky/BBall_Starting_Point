@@ -90,9 +90,15 @@ class ProspectDevelopmentTests(unittest.TestCase):
                 self.assertLessEqual(injured, normal)
                 self.assertGreaterEqual(supported, normal)
                 self.assertLessEqual(fringe, normal)
+                # The steady part (aging, learning, injury drag; no season draw) stays within the aging-curve
+                # bounds; the season draw moves a month by at most the draw's own limit.
+                steady = health.monthly_trait_delta(*args, 24, {}, 0, 17, "2027-01", expected=True)
+                self.assertGreaterEqual(steady, -0.45)
+                self.assertLessEqual(steady, 0.36)
+                draw_limit = health.DEVELOPMENT_SEASON_VOLATILITY * 5.0 + 0.1
                 for value in (normal, injured, supported, fringe):
-                    self.assertGreaterEqual(value, -0.12)
-                    self.assertLessEqual(value, 0.36)
+                    self.assertGreaterEqual(value, -0.45 - 0.08 - draw_limit)
+                    self.assertLessEqual(value, 0.36 + draw_limit)
 
     def test_divergent_careers_survive_serialized_reload(self):
         players = [self.find(r) for r in (0.55, 0.80, 1.0, 1.12, 1.28)]

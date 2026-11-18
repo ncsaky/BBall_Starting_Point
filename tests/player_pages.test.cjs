@@ -5,10 +5,14 @@ const test = require('node:test');
 const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, '../src/nba_gm_data/gui/app.js'), 'utf8');
-const playerCode = source.slice(source.indexOf('function playerCardRatingGroups('), source.indexOf('function clipboardPlayerCardWindows('));
+const playerStart = source.indexOf('function playerCardRatingGroups(');
+const playerEnd = source.indexOf("\ndocument.addEventListener(", source.indexOf('function wirePlayerCardPages('));
+assert.ok(playerStart >= 0 && playerEnd > playerStart);
+const playerCode = source.slice(playerStart, playerEnd);
 const escape = value => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;');
 function runtime() {
   const context = {
+    declineWatchApplies:() => false,
     escapeHtml:escape, escapeAttr:escape,
     clampNumber:(value, min, max) => Math.min(max, Math.max(min, value)),
     draftMetric:value => value == null ? '—' : Number(value).toFixed(1),
@@ -27,12 +31,14 @@ function runtime() {
   return context;
 }
 
-test('three player pages retain ratings, evidence, season, chart, payroll, and all available games', () => {
+test('three player pages show season stats, recent games, payroll, ratings, and injury outlook', () => {
   const c = runtime();
   const ratings = Object.fromEntries(['overall','shooting','release','range','versatility','spacing','creation','handle','passing','rim_pressure','defense','def_effort','screen_nav','steal','block','rim_deterrence','rebounding','oreb','athleticism','lateral_agility','stamina','iq','scheme_iq','portability','playoff'].map((key,index) => [key, 60 + index]));
   const detail = {
     player_id:'p1', name:'Player One', position:'SF', age:22, height:'6\'8"', ratings,
-    health_risk:2.2, upside_remaining:3.4, trade_value:66.7, spatial_profile:{id:'own-court'},
+    health_risk:2.2, injury_body_map:{expected_games_total:8,typical_games_total:6,
+      parts:[{part:'knee',label:'Knee',expected_games:4,typical_games:2,relative:2}]},
+    upside_remaining:3.4, trade_value:66.7, spatial_profile:{id:'own-court'},
     season:{games:30,mpg:31.4,ppg:22.1,rpg:6.2,apg:4.3,spg:1.4,bpg:.8,topg:2.1,fta_per_game:5.5,ft_pct:81.2},
     salary_seasons:Array.from({length:6}, (_,index) => ({season:`202${index}-2${index + 1}`,salary_millions:10 + index})),
     recent_games:Array.from({length:30}, (_,index) => ({date:`2027-01-${String(index + 1).padStart(2,'0')}`,opponent_abbrev:'BOS',minutes:32,points:index + 10,rebounds:6,assists:4,steals:1,blocks:2,turnovers:3,game_score:index + 9.7})),
@@ -46,19 +52,32 @@ test('three player pages retain ratings, evidence, season, chart, payroll, and a
       assert.ok(html.includes(value.toFixed(1)), label);
     }
   }
-  for (const field of ['Health risk','Upside','Trade Value','3.4','66.7','Offensive shape','Defense / physical','own-court','Most Recent Season','Last 30 Games · Game Score','Four-Year Payroll Share','Contract by Season']) assert.ok(html.includes(field), field);
-  for (const value of Object.values(detail.season)) assert.ok(html.includes(value.toFixed(1)), `Season ${value}`);
-  assert.equal((html.match(/<span class="player-page-opponent"/g) || []).length,30);
-  const log = html.slice(html.indexOf('player-page-game-log'));
-  assert.ok(log.indexOf('01-30') < log.indexOf('01-01'), 'Latest game appears first');
-  assert.ok(html.includes('2025-26'), 'Sixth contract year remains available');
-  assert.ok(html.includes('2027-01-30') === false, 'Game dates use the existing short label');
+  for (const field of ['Injury risk 2.2','Growth runway','Trade Value','3.4','66.7','Offensive shape','Defense / physical','own-court','Select player career season','Recent Games · Last 5','Game Score · Last 15 Games','Four-Year Payroll Share','Health & Injury Outlook']) assert.ok(html.includes(field), field);
+  const season = html.slice(html.indexOf('approved-season-line'), html.indexOf('player-page-game-log'));
+  assert.match(season, /<small>GP\/All<\/small><strong>30\//);
+  for (const [key,value] of Object.entries(detail.season)) {
+    if (key !== 'games') assert.ok(season.includes(`>${value.toFixed(1)}<`), `Season ${key}`);
+  }
+  assert.equal((html.match(/<span class="player-page-opponent"/g) || []).length,5);
+  const log = html.slice(html.indexOf('player-page-game-log'), html.indexOf('player-page-score-panel'));
+  assert.deepEqual([...log.matchAll(/<td>(01-\d{2})<\/td>/g)].map(match => match[1]),
+    ['01-30','01-29','01-28','01-27','01-26']);
+  const points = JSON.parse(html.match(/data-game-score-points="([^"]+)"/)[1].replaceAll('&quot;', '"'));
+  assert.deepEqual(points, detail.recent_games.slice(-15).map(row => ({label:row.date.slice(5), value:row.game_score})));
+  const payroll = html.match(/class="salary-horizon-chart">([^<]+)/)[1];
+  assert.equal(payroll, detail.salary_seasons.slice(0,4).map(row => `${row.season}:${row.salary_millions}`).join('|'));
+  assert.match(html, /injury-body-figure mini/);
+  assert.match(html, /Watch: Knee/);
+  for (const view of ['Front','Back']) assert.ok(html.includes(`${view} body map of injury risk`));
+  assert.match(html, /data-injury-part="knee"/);
 });
 
 test('empty history and incomplete ratings have explicit empty states and never invent radar values', () => {
-  const html = runtime().approvedPlayerCardBody({name:'New Player',ratings:{overall:60},season:{games:0}});
-  assert.ok(html.includes('No recent games yet.'));
-  assert.ok(html.includes('No game-score history yet.'));
+  const html = runtime().approvedPlayerCardBody({name:'New Player',ratings:{overall:60,shooting:55,defense:52},season:{games:0}});
+  assert.equal((html.match(/<tr>(?:<td>—<\/td>){10}<\/tr>/g) || []).length, 5);
+  assert.match(html, /Body map unavailable for this player/);
+  assert.match(html, /points=""><title>No game-score history yet<\/title>/);
+  assert.doesNotMatch(html, /class="chart-node/);
   assert.ok(html.includes('Offensive shape profile unavailable.'));
   assert.ok(html.includes('Defense / physical profile unavailable.'));
   assert.equal((html.match(/class="player-radar-shape"/g) || []).length,0);
@@ -69,10 +88,11 @@ function pageFixture(page) {
   const c = runtime();
   let redraws = 0;
   c.wirePlayerGameScoreCharts = () => redraws++;
-  const pages = ['Ratings & Court','Season & Game Score','Games & Contract'].map(pageTitle => ({dataset:{pageTitle},hidden:false,scrollTop:80}));
+  const pages = ['Season, Games & Contract','Ratings & Profiles','Health & Injury Outlook'].map(pageTitle => ({dataset:{pageTitle},hidden:false,scrollTop:80}));
   const title = {}, count = {}, root = {
     dataset:{}, querySelectorAll:() => pages,
-    querySelector:selector => selector.includes('title') ? title : count,
+    querySelector:selector => ({'[data-player-page-title]':title,'[data-player-page-count]':count})[selector] || null,
+    addEventListener() {},
     contains:button => button.belongsToCard !== false,
   };
   let listener;
@@ -87,9 +107,10 @@ function pageFixture(page) {
 test('page arrows wrap and update only the current card, preserving DOM, scroll, and window size', () => {
   const f = pageFixture();
   assert.deepEqual(f.pages.map(page => page.hidden), [false,true,true]);
+  assert.equal(f.count.textContent,'1/3');
   f.click(-1);
   assert.equal(f.entry.page,2);
-  assert.equal(f.title.textContent,'Games & Contract');
+  assert.equal(f.title.textContent,'Health & Injury Outlook');
   assert.equal(f.count.textContent,'3/3');
   assert.deepEqual(f.pages.map(page => page.hidden), [true,true,false]);
   f.click(1);
@@ -104,8 +125,8 @@ test('page arrows wrap and update only the current card, preserving DOM, scroll,
 
 test('each player remembers its own page after rebuilding workspace windows', () => {
   const first = pageFixture(2), second = pageFixture(1);
-  assert.equal(first.title.textContent,'Games & Contract');
-  assert.equal(second.title.textContent,'Season & Game Score');
+  assert.equal(first.title.textContent,'Health & Injury Outlook');
+  assert.equal(second.title.textContent,'Ratings & Profiles');
   first.click(1);
   assert.equal(first.entry.page,0);
   assert.equal(second.entry.page,1);
@@ -119,6 +140,7 @@ test('opening a player from a trade retains a return context while ordinary play
   Object.assign(c, {
     state:{tradeTab:'finder',modal:{kind:'tradeRoom',body:'Current trade'},data:{dashboard:{}}},
     rosterRows:() => [],
+    focusOpenExtensionCard:async () => false,
     loadPlayerCardDetail:async () => ({player_id:'p1',name:'Player One',ratings:{overall:75}}),
     openPlayerCardOnClipboard:async options => {opened = options;},
   });

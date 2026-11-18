@@ -9,7 +9,7 @@ import unittest
 
 from nba_gm_data.app_actions import load_app_canonical
 from nba_gm_data.ratings_model import install_inputs_model
-from nba_gm_data.transactions import market_trade_target_value, market_value_after_star_and_surplus_shape, with_transaction_context
+from nba_gm_data.transactions import goat_exception_player, market_trade_target_value, market_value_after_star_and_surplus_shape, with_transaction_context
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -23,13 +23,17 @@ class StarMarketValueTests(unittest.TestCase):
         values = {v["player_id"]: v for v in cls.active["player_asset_valuations"]}
         cls.market = {p["name"]: market_trade_target_value(p, values[p["id"]])
                       for p in cls.active["players"] if p["id"] in values}
-        cls.rank = {name: n + 1 for n, name in enumerate(sorted(cls.market, key=lambda n: -cls.market[n]))}
+        # LeBron's fixed one-of-one value (AGENTS.md rule 11) is a deliberate exception, so rank the rest of the market.
+        regular = [name for name in cls.market if not goat_exception_player({"name": name})]
+        cls.rank = {name: n + 1 for n, name in enumerate(sorted(regular, key=lambda n: -cls.market[n]))}
 
     def test_consensus_superstars_lead_the_market(self):
         for name in ("Nikola Jokić", "Luka Dončić", "Shai Gilgeous-Alexander", "Giannis Antetokounmpo"):
             self.assertLessEqual(self.rank[name], 6, (name, self.rank[name], self.market[name]))
         giannis = self.market["Giannis Antetokounmpo"]
-        self.assertGreater(giannis - self.market["LaMelo Ball"], 25)
+        # 2026-11-19: the playoff blend (half Basketball Index playoff grades) moved Giannis 94.0 -> 90.4; still far
+        # above good starters.
+        self.assertGreater(giannis - self.market["LaMelo Ball"], 20)
         self.assertGreater(giannis, self.market["Tyler Herro"] + 6)
         self.assertGreater(giannis, self.market["Jrue Holiday"] + 10)
 

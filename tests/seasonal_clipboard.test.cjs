@@ -13,7 +13,7 @@ const {defaultLayout, enterPhase, restoreLayout, migrateDefaultCalendar, toggleW
 test('prospect origins use bundled college marks or country flags', () => {
   const appSource = fs.readFileSync(path.join(gui,'app.js'),'utf8');
   const originStart = appSource.indexOf('const PROSPECT_COLLEGE_LOGOS =');
-  const originEnd = appSource.indexOf('\nfunction seasonProspectsCard()',originStart);
+  const originEnd = appSource.indexOf('\nfunction seasonProspectsCard(',originStart);
   assert.ok(originStart >= 0 && originEnd > originStart);
   const originContext = {
     escapeHtml:value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'),
@@ -87,7 +87,7 @@ test('Escape closes and Shift+Escape toggles the active card without bypassing l
   assert.match(interfaceSource,/if \(event\.key === 'Escape'\)[\s\S]*?if \(event\.repeat\) return;[\s\S]*?else if \(config\.modal\(\)\) config\.closeModal\(\);[\s\S]*?else if \(event\.shiftKey\) window\.CardBoard\?\.toggleActiveMinimize\(\);[\s\S]*?else window\.CardBoard\?\.closeActive\(\);/);
   assert.match(source,/const closeWindow = \(id, focusNext = false\) => \{[\s\S]*?nodes\.get\(id\)\?\.required\) return false;/);
   assert.match(source,/const toggleWindowMinimized = \(id, focusControl = false\) => \{[\s\S]*?locked\(id\) \|\| nodes\.get\(id\)\?\.required\) return false;/);
-  assert.match(source,/aria-keyshortcuts="Escape Shift\+Escape M P Space" title="Move \$\{title\}; Esc closes, Shift\+Esc minimizes or restores; M minimizes or restores, P pins, Space expands or collapses"/);
+  assert.match(source,/aria-keyshortcuts="Escape Shift\+Escape M P Space" title="Move \$\{safeTitle\}; Esc closes, Shift\+Esc minimizes or restores; M minimizes or restores, P pins, Space expands or collapses"/);
 });
 
 test('M, P, and Space operate on the selected card', () => {
@@ -139,7 +139,10 @@ test('prospect and staff extensions do not retain navigation keybinds and card t
 
 test('window titles replace only redundant headings, preserving informative headers', () => {
   const source = fs.readFileSync(path.join(gui,'card-board.js'),'utf8');
-  const code = source.slice(source.indexOf('const redundantHeader ='),source.indexOf('const frame = document.createElement'));
+  const start = source.indexOf('const redundantHeader =');
+  const end = source.indexOf('createWindowFrame(id, {card, title, assets});', start);
+  assert.ok(start >= 0 && end > start);
+  const code = source.slice(start,end);
   for (const id of ['signals','morale','factors','standings','offense','defense','award-mvp','award-dpoy','award-roty','opponent','efficiency','minutes']) {
     const removed = [];
     const classes = [];
@@ -189,12 +192,11 @@ test('gallery groups cards by workflow and omits irrelevant seasonal cards', () 
     dataset:{},
     attributes:{},
     children:[],
-    classList:{add(){}},
+    classList:{add(){},toggle(){}},
     setAttribute(name,value){this.attributes[name]=value;},
     append(...items){this.children.push(...items);},
     querySelector(selector){
-      if (selector !== '.card-board-thumb-frame') return null;
-      return this.frame ||= {append(){}};
+      return ['.card-board-thumb-frame','.card-board-thumbnail'].includes(selector) ? makeElement('span') : null;
     },
   });
   const scope = {
@@ -208,15 +210,15 @@ test('gallery groups cards by workflow and omits irrelevant seasonal cards', () 
     gallery:{id:'seasonCardGallery'},
     galleryList:{...children(),replaceChildren(){this.items=[];}},
     document:{createElement:makeElement},
-    preview:()=>({}),icon:()=>'',
+    window:{CardVisuals:{icon:()=>'<svg></svg>',description:()=>''}}, escapeHtml:String, icon:()=>'',
   };
   vm.createContext(scope);
   vm.runInContext(categories,scope);
-  vm.runInContext(source.slice(source.indexOf('const refreshGallery ='),source.indexOf('const showGallery ='))+'refreshGallery();',scope);
+  vm.runInContext(source.slice(source.indexOf('const galleryIcon ='),source.indexOf('const showGallery ='))+'refreshGallery();',scope);
   const groups = scope.galleryList.items;
   assert.deepEqual(groups.map(group=>group.dataset.boardGalleryGroup),['free-agency','team']);
-  assert.deepEqual(groups[0].children[1].children.map(entry=>entry.dataset.boardGalleryCard),['phase-free_agency-market']);
-  assert.deepEqual(groups[1].children[1].children.map(entry=>entry.dataset.boardGalleryCard),['identity']);
+  assert.deepEqual(groups[0].children[1].children[0].children.map(entry=>entry.dataset.boardGalleryCard),['phase-free_agency-market']);
+  assert.deepEqual(groups[1].children[1].children[0].children.map(entry=>entry.dataset.boardGalleryCard),['identity']);
   assert.equal(groups[0].children[0].attributes['aria-expanded'],'true');
   assert.equal(groups[1].children[0].attributes['aria-expanded'],'false');
   assert.deepEqual(scope.layout['phase-draft-board'],{visible:true,minimized:true});
@@ -229,19 +231,21 @@ test('gallery groups cards by workflow and omits irrelevant seasonal cards', () 
   assert.equal(galleryCategoryFor('team-block'),'front-office');
 });
 
-test('gallery previews use static category art instead of cloned card layouts', () => {
+test('gallery thumbnails use static card icons without cloning card layouts', () => {
   const source = fs.readFileSync(path.join(gui,'card-board.js'),'utf8');
-  const code = source.slice(source.indexOf('const preview ='),source.indexOf('const refreshGallery ='));
+  const code = source.slice(source.indexOf('const galleryIcon ='),source.indexOf('const refreshGallery ='));
   const scope = {
-    galleryCategoryFor,
+    window:{},
     document:{createElement:()=>({setAttribute(name,value){this[name]=value;}})},
   };
   vm.createContext(scope);
+  vm.runInContext(fs.readFileSync(path.join(gui,'card-visuals.js'),'utf8'),scope);
   vm.runInContext(code,scope);
-  const art = vm.runInContext('preview("phase-draft-board")',scope);
-  assert.equal(art.className,'card-board-preview card-board-preview--scouting');
+  const art = vm.runInContext('galleryIcon("phase-draft-board")',scope);
+  assert.equal(art.className,'card-board-gallery-icon');
   assert.equal(art['aria-hidden'],'true');
-  assert.equal((art.innerHTML.match(/<i>/g) || []).length,16);
+  assert.match(art.innerHTML,/<svg\b/);
+  assert.notEqual(art.innerHTML, vm.runInContext('galleryIcon("week")',scope).innerHTML);
   assert.doesNotMatch(code,/cloneNode|querySelectorAll|layout\[/);
 });
 
@@ -293,7 +297,14 @@ test('new draft presentation sections open once and next season reopens saved ca
 });
 
 const app = fs.readFileSync(path.join(gui, 'app.js'), 'utf8');
-test('minutes table keeps only player, minutes and fatigue', () => {
+function loadPlayerRowMarkup(scope) {
+  const start = app.indexOf('function playerHeadshotMarkup(');
+  const end = app.indexOf('function injuryGamesRemaining(', start);
+  assert.ok(start >= 0 && end > start);
+  vm.runInContext(app.slice(start, end), scope);
+}
+
+test('minutes table keeps identity, minutes and fatigue without ratings or box stats', () => {
   const calls = {mpg:0,stats:0};
   const scope = {
     state:{rotationDraft:{p1:24},rotationLockedPlayerIds:new Set()},
@@ -307,11 +318,14 @@ test('minutes table keeps only player, minutes and fatigue', () => {
   };
   vm.createContext(scope);
   vm.runInContext(app.slice(app.indexOf('function ensureRotationDraft('),app.indexOf('\nfunction autofillRotationDraft')),scope);
+  loadPlayerRowMarkup(scope);
   vm.runInContext(app.slice(app.indexOf('function seasonMinutesCard('),app.indexOf('\nfunction seasonMiniRating')),scope);
   const markup = scope.seasonMinutesCard([{id:'p1',name:'Test Player',age:25,position:'PG'}],true);
-  for (const field of ['Player','Minutes','Fatigue']) assert.ok(markup.includes(`<span>${field}</span>`));
+  assert.match(markup, /class="season-minute-position"[^>]*>PG</);
+  assert.match(markup, /class="season-minute-height">6'5"</);
+  for (const field of ['Player','Pos','Height','Minutes','Fatigue']) assert.ok(markup.includes(`<span>${field}</span>`));
   assert.ok(!markup.includes('Development'));
-  for (const field of ['Age','Pos','Height','OVR','OFF','DEF','MPG','PTS','REB','AST']) assert.ok(!markup.includes(`<span>${field}</span>`));
+  for (const field of ['Age','OVR','OFF','DEF','MPG','PTS','REB','AST']) assert.ok(!markup.includes(`<span>${field}</span>`));
   assert.match(markup,/class="season-minute-control"/);
   assert.match(markup,/class="season-fatigue /);
   assert.deepEqual(calls,{mpg:0,stats:0});
@@ -319,13 +333,14 @@ test('minutes table keeps only player, minutes and fatigue', () => {
 test('injured minutes rows keep black player text and show a red cross with the return count', () => {
   const scope = {
     state:{rotationDraft:{},rotationLockedPlayerIds:new Set()},
-    seasonPanelHeader:()=>'', isPlayerInjured:()=>true, injuryGamesRemaining:()=>4,
+    seasonPanelHeader:()=>'', isPlayerInjured:()=>true, injuryGamesRemaining:()=>4, heightFromRow:()=>'',
     escapeHtml:value=>String(value), escapeAttr:value=>String(value),
     clampNumber:(value,min,max)=>Math.min(max,Math.max(min,value)),
     seasonFatigueCell:()=>'<span class="season-fatigue low"></span>',
   };
   vm.createContext(scope);
   vm.runInContext(app.slice(app.indexOf('function ensureRotationDraft('),app.indexOf('\nfunction autofillRotationDraft')),scope);
+  loadPlayerRowMarkup(scope);
   vm.runInContext(app.slice(app.indexOf('function seasonMinutesCard('),app.indexOf('\nfunction seasonMiniRating')),scope);
   const markup = scope.seasonMinutesCard([{id:'p1',name:'Injured Player',health:{}}],true);
   assert.match(markup,/<span class="season-minute-player-name">Injured Player<\/span>/);
@@ -347,9 +362,10 @@ test('next opponent injury list shows remaining games without repeating injured 
     rating:()=>80, seasonMiniRating:()=>'<span>80</span>', statNumber:()=>0,
   };
   vm.createContext(scope);
+  loadPlayerRowMarkup(scope);
   vm.runInContext(source,scope);
   const markup = scope.seasonOpponentCard({next_games:[{date:'2030-11-05',opponent_team_id:'NYK',is_home:false}]},'BOS');
-  assert.match(markup,/Current injuries:<\/span><div>Test Player — 4 G<\/div>/);
+  assert.match(markup,/Current injuries:<\/span>[\s\S]*?data-injury-ticker-text>Test Player — 4 G<\/span>/);
   assert.doesNotMatch(markup,/Test Player — injured/);
   const fidelity = fs.readFileSync(path.join(gui,'paper-fidelity.css'),'utf8');
   assert.match(fidelity,/season-efficiency-legend span\.negative \{ color:#b44f48; \}[\s\S]*?season-opponent-injuries > span \{ color:#b44f48; \}/);
@@ -364,12 +380,14 @@ test('player development stays as a separate clipboard card without team growth 
     state:{data:{dashboardTrends:{development:{latest_month:'2030-11'}}}},
   };
   vm.createContext(scope);
+  loadPlayerRowMarkup(scope);
+  vm.runInContext(app.slice(app.indexOf('function playerUpsideColor('),app.indexOf('function gameArtwork(')),scope);
   vm.runInContext(app.slice(app.indexOf('function seasonDevelopmentCard('),app.indexOf('\nfunction seasonLeagueWire')),scope);
   const markup = scope.seasonDevelopmentCard([{id:'p1'}]);
   assert.doesNotMatch(markup,/data-team-development|Team growth|season-panel-header/);
   assert.match(markup,/<span class="season-development-name">Test Player<\/span>/);
   assert.match(markup,/class="season-development-row"/);
-  assert.match(markup,/aria-label="Test Player: season \+3\.5, Nov \+1\.5"/);
+  assert.match(markup,/aria-label="Test Player, age —: growth runway 0\.0 of 5, rating change this season \+3\.5, Nov \+1\.5"/);
   assert.match(markup,/class="season-development-period">Season<\/span>/);
   assert.match(markup,/class="season-development-period">Nov<\/span>/);
   assert.match(markup,/class="season-development-diverging"/);
@@ -385,9 +403,9 @@ test('player development stays as a separate clipboard card without team growth 
 test('focused minutes rows retain the readable panel background', () => {
   const css = fs.readFileSync(path.join(gui,'card-board.css'),'utf8');
   assert.match(css,/\.season-minute-row:focus-within\s*\{\s*background:var\(--season-panel\) !important;/);
-  assert.match(css,/column-gap:4px;\s*grid-template-columns:minmax\(88px,\.9fr\) minmax\(88px,1fr\) minmax\(52px,\.7fr\);/);
-  assert.match(css,/\.season-minutes-head > span:nth-child\(3\) \{ margin-left:12px; \}/);
-  assert.match(css,/\.season-fatigue \{ margin-left:12px; min-width:52px; \}/);
+  assert.match(css,/:is\(\.season-minutes-head,\.season-minute-row\)\s*\{\s*grid-template-columns:(?:minmax\([^)]*\) ){4}minmax\([^)]*\);/);
+  assert.match(css,/\.season-minutes-head > span:nth-child\(5\)\s*\{[^}]*justify-self:end;[^}]*text-align:center;/);
+  assert.match(css,/\.season-fatigue\s*\{[^}]*justify-self:end;[^}]*width:100%;/);
 });
 test('minutes typography matches standings labels and row text', () => {
   const css = fs.readFileSync(path.join(gui,'card-board.css'),'utf8');
@@ -405,6 +423,7 @@ test('coaching staff card keeps payroll only and displays compact single-line co
   const source = fs.readFileSync(path.join(gui,'app.js'),'utf8');
   const cardSource = source.slice(source.indexOf('const COACH_PORTRAIT_IDS'),source.indexOf('\nfunction staffRoleLabel('));
   const scope = {
+    state:{data:{}},
     staffRows:()=>[
       {id:'hc',name:'Coach One',slot:'head_coach',grade:85,aav:12000000,years:1},
       {id:'oc',name:'Coach Two',slot:'offensive_coordinator',grade:72,aav:5000000,years:3},
@@ -422,14 +441,14 @@ test('coaching staff card keeps payroll only and displays compact single-line co
   const markup = scope.seasonStaffCard({});
   assert.match(markup,/STAFF PAYROLL/);
   assert.doesNotMatch(markup,/FILLED ROLES|AVERAGE GRADE|>01<|>02</);
-  assert.match(markup,/<strong>\$12\.0M × 1 yr<\/strong>/);
-  assert.match(markup,/<strong>\$5\.0M × 3 yrs<\/strong>/);
+  assert.match(markup,/<strong>\$12\.0M x 1<\/strong>/);
+  assert.match(markup,/<strong>\$5\.0M x 3<\/strong>/);
   assert.doesNotMatch(markup,/<small>1 yr<\/small>|<small>3 yrs<\/small>/);
   const css = fs.readFileSync(path.join(gui,'card-board.css'),'utf8');
   assert.match(css,/grid-template-columns:minmax\(150px,1\.55fr\) minmax\(64px,\.7fr\) minmax\(116px,1fr\)/);
   assert.match(css,/\.season-staff-contract strong\s*\{[^}]*white-space:nowrap/s);
 });
-test('staff rows and coach cards share six distinct transparent coach portraits', () => {
+test('staff rows and coach cards share six distinct transparent coach portraits', async () => {
   const app = fs.readFileSync(path.join(gui,'app.js'),'utf8');
   const source = app.slice(app.indexOf('const COACH_PORTRAIT_IDS'),app.indexOf('\nfunction staffRoleLabel('));
   const roles = ['head_coach','offensive_coordinator','defensive_coordinator','performance_lead','development_lead','scouting_lead'];
@@ -438,8 +457,8 @@ test('staff rows and coach cards share six distinct transparent coach portraits'
     aav:2+index,years:2,archetype:`Archetype ${index}`,morale:60+index,job_security:70+index,
     skill_traits:{scheme_balance:70+index,communication:65+index},personality_traits:{adaptability:68+index},
   }));
+  let opened;
   const scope = {
-    COACH_PORTRAIT_IDS:Array.from({length:6},(_,index)=>`coach-${String(index+1).padStart(2,'0')}`),
     staffRoleLabel:slot=>({head_coach:'Head Coach',offensive_coordinator:'Offensive Coordinator',defensive_coordinator:'Defensive Coordinator',performance_lead:'Performance Lead',development_lead:'Development Lead',scouting_lead:'Scouting Lead'})[slot] || slot,
     staffRows:dash=>dash.staff_slots, staffGrade:row=>row.grade, staffAav:row=>row.aav,
     staffYears:row=>row.years, staffName:row=>row.name,
@@ -448,6 +467,13 @@ test('staff rows and coach cards share six distinct transparent coach portraits'
     performanceBarStyle:value=>`--fill:${value}%`, escapeAttr:value=>String(value), escapeHtml:value=>String(value),
     seasonPanelHeader:title=>`<header>${title}</header>`, showToast:()=>{}, renderModal:()=>{},
     state:{data:{dashboard:{staff_slots:rows}}},
+    savePayload:()=>({}),
+    action:async (name,payload) => {
+      assert.equal(name,'coach_card');
+      assert.equal(payload.staff_id,'coach-0');
+      return {staff:rows[0]};
+    },
+    openPlayerCardOnClipboard:async card => {opened=card;},
   };
   vm.createContext(scope);
   vm.runInContext(source,scope);
@@ -456,20 +482,21 @@ test('staff rows and coach cards share six distinct transparent coach portraits'
   const markup = scope.seasonStaffCard({staff_slots:rows});
   assert.equal((markup.match(/data-dashboard-staff-card=/g)||[]).length,6);
   assert.equal((markup.match(/coach-portrait-art/g)||[]).length,6);
-  scope.dashboardCoachCard('coach-0');
-  assert.equal(scope.state.modal.kind,'dashboardStaff');
-  assert.match(scope.state.modal.body,/Coach 0/);
-  assert.match(scope.state.modal.body,/Coaching Traits/);
-  assert.match(scope.state.modal.body,/Working Style/);
-  assert.match(scope.state.modal.body,/\/assets\/game-art\/coaches\/coach-\d\d-silver\.webp/);
+  await scope.dashboardCoachCard('coach-0');
+  assert.equal(opened.kind,'coach');
+  assert.equal(opened.key,'coach:coach-0');
+  assert.match(opened.body,/Coach 0/);
+  assert.match(opened.body,/Coaching Traits/);
+  assert.match(opened.body,/Working Style/);
+  assert.ok(opened.body.includes(`/assets/game-art/coaches/${portraits[0]}-silver.webp`));
   const portraitDir = path.join(gui,'assets/game-art/coaches');
-  for (const portrait of scope.COACH_PORTRAIT_IDS) {
+  for (const portrait of portraits) {
     assert.ok(fs.existsSync(path.join(portraitDir,`${portrait}-silver.webp`)));
     assert.ok(fs.existsSync(path.join(portraitDir,`${portrait}-ink.webp`)));
   }
   const board = fs.readFileSync(path.join(gui,'card-board.js'),'utf8');
-  assert.match(board,/staff: \[1\.42, 1\.5\]/);
-  assert.match(board,/staff:2/);
+  assert.match(board,/staff: \[1\.58, 1\.12\]/);
+  assert.match(board,/staff:7/);
 });
 test('standings typography matches the larger team-block type without scaling the card', () => {
   const css = fs.readFileSync(path.join(gui,'styles.css'),'utf8');
@@ -515,8 +542,8 @@ test('standings expansion toggles the existing window size and restores its comp
   assert.deepEqual([restored.width,restored.height,restored.scale,restored.expanded],[360,260,1.1,false]);
   assert.equal(restored.compactSize,undefined);
   const source = fs.readFileSync(path.join(gui,'card-board.js'),'utf8');
-  assert.match(source,/EXPANDABLE_CARDS = new Set\(\["standings", "week", "prospects", "staff"\]\)/);
-  assert.match(source,/data-board-expand="\$\{id\}"/);
+  assert.match(source,/EXPANDABLE_CARDS = new Set\(\[[^\]\n]*"standings"/);
+  assert.match(source,/data-board-expand="\$\{safeId\}"/);
 });
 test('prospects and staff expand inside their existing cards, with wider prospect fields', () => {
   const board = fs.readFileSync(path.join(gui,'card-board.js'),'utf8');
@@ -525,38 +552,48 @@ test('prospects and staff expand inside their existing cards, with wider prospec
   const css = fs.readFileSync(path.join(gui,'card-board.css'),'utf8');
   assert.match(board,/prospects:\s*\[1\.92, 1\.22\]/);
   assert.match(board,/offense:\s*\[1\.4, 1\.55\]/);
-  assert.match(board,/prospects:\[1000,650\],staff:\[1000,650\]/);
+  for (const [id,width,height] of [['prospects',1000,650],['staff',496,600]]) {
+    const item = {width:400,height:300,scale:1};
+    assert.equal(toggleWindowExpansion(item,id),true);
+    assert.deepEqual([item.width,item.height],[width,height]);
+    assert.equal(toggleWindowExpansion(item,id),false);
+    assert.deepEqual([item.width,item.height],[400,300]);
+  }
   assert.match(desktop,/setProspectsCardExpanded\(expanded,card\)/);
   assert.match(desktop,/setStaffCardExpanded\(expanded,card\)/);
   assert.match(appSource,/\[\["rank", "#"\][\s\S]*?\["age", "Age"\], \["height", "Height"\]/);
-  assert.match(appSource,/gameArtwork\("prospects", "season-prospects-background-art"\)/);
+  assert.match(appSource,/season-prospects-expanded-body[\s\S]*?seasonProspectsCard\(\{rows, expanded:true\}\)/);
   assert.doesNotMatch(desktop,/clipboardWindowCards\(\)|loadClipboardWindow/);
   assert.doesNotMatch(board,/data-dashboard-view="draft"|data-dashboard-view="staff"/);
-  assert.match(css,/season-prospects-background-art/);
-  assert.match(css,/grid-template-columns:minmax\(0,1fr\) auto/);
-  assert.match(css,/season-prospects-backdrop\s*\{[\s\S]*?aspect-ratio:444 \/ 512;[\s\S]*?opacity:1;[\s\S]*?position:relative;/);
-  assert.match(css,/season-prospects-background-art\s*\{\s*aspect-ratio:444 \/ 1024;\s*flex:none;\s*height:200%;/);
+  assert.match(css,/\.season-prospects-table\s*\{[^}]*grid-template-rows:24px repeat\(6,/);
+  assert.match(css,/\.season-prospects-expanded-body \.season-prospects-table\s*\{[^}]*grid-auto-rows:[^;]+;[^}]*overflow:auto;/);
+  assert.match(css,/\.season-prospects-expanded-body \.season-prospects-head\s*\{[^}]*position:sticky;/);
   assert.match(css,/season-staff-expanded/);
 });
-test('Calendar is the default expanded window and legacy weekly layouts migrate once', () => {
+test('Calendar opens compact and unmarked legacy weekly layouts migrate once', () => {
   const defaults = defaultLayout([{id:'week',x:24,y:40,width:360,height:150}]);
-  assert.equal(defaults.week.expanded,true);
-  assert.deepEqual([defaults.week.width,defaults.week.height],[960,560]);
-  assert.deepEqual(JSON.stringify(defaults.week.compactSize),JSON.stringify({width:360,height:150,scale:1}));
+  assert.equal(defaults.week.expanded,false);
+  assert.deepEqual([defaults.week.width,defaults.week.height],[360,150]);
+  assert.equal(defaults.week.compactSize,undefined);
 
-  const legacy = {version:1,cards:{week:{x:24,y:40,width:390,height:170,scale:1,expanded:false}}};
+  const legacy = {version:1,cards:{week:{x:24,y:40,width:390,height:170,scale:1}}};
   const restored = migrateDefaultCalendar(restoreLayout(JSON.stringify(legacy),defaults),legacy);
   assert.equal(restored.week.expanded,true);
   assert.deepEqual([restored.week.width,restored.week.height],[960,560]);
   assert.deepEqual(JSON.stringify(restored.week.compactSize),JSON.stringify({width:390,height:170,scale:1}));
   assert.ok(restored.week.z > defaults.week.z);
+  const migrated = {version:1,cards:restored};
+  const migratedAgain = migrateDefaultCalendar(restoreLayout(JSON.stringify(migrated),defaults),migrated);
+  assert.deepEqual(migratedAgain.week,restored.week);
   assert.equal(toggleWindowExpansion(restored.week,'week'),false);
   assert.deepEqual([restored.week.width,restored.week.height],[390,170]);
+  const compact = {version:1,cards:restored};
+  assert.deepEqual(migrateDefaultCalendar(restoreLayout(JSON.stringify(compact),defaults),compact).week,restored.week);
 
   const appSource = fs.readFileSync(path.join(gui,'app.js'),'utf8');
   const boardSource = fs.readFileSync(path.join(gui,'card-board.js'),'utf8');
   assert.match(boardSource,/\["week", "\.season-week-panel", "Calendar"\]/);
-  assert.doesNotMatch(appSource.slice(appSource.indexOf('function clipboardWindowCards()'),appSource.indexOf('\nfunction renderClipboardWindow')),/\["calendar", "Full Calendar"\]/);
+  assert.doesNotMatch(boardSource,/\["calendar", "Full Calendar"\]/);
   assert.match(appSource,/renderCalendar\(panel, \{team:viewedTeam,dataKey:"dashboardCalendar"\}\)/);
   assert.match(appSource,/window\.CardBoard\?\.open\("week"\)/);
 });
@@ -668,7 +705,7 @@ test('payroll segment hover text includes the contract amount and escaped player
   assert.match(markup,/title="\$20M · A&amp;B Player"/);
   assert.match(markup,/title="Other payroll: \$5M"/);
 });
-const calendar = {teamLabel:value=>value,teamLogoSrc:team=>`/logos/${team}.svg`,escapeHtml:value=>String(value),escapeAttr:value=>String(value),resultForTeam:()=>'',tradeDeadlineDate:()=> '2027-02-05'};
+const calendar = {state:{teams:[]},teamLabel:value=>value,teamLogoSrc:team=>`/logos/${team}.svg`,escapeHtml:value=>String(value),escapeAttr:value=>String(value),resultForTeam:()=>'',tradeDeadlineDate:()=> '2027-02-05'};
 vm.createContext(calendar);
 for (const [start,end] of [
   ['function clipboardCalendarDay(', 'function renderSocial('],
@@ -922,21 +959,15 @@ test('prospect card widens for the side portrait without changing its height', (
   assert.deepEqual([layout.prospects.width,layout.prospects.height],[714,219]);
 });
 
-test('minutes card migration narrows saved width once and preserves height', () => {
-  const layout = {minutes:{width:1680,height:720,sizeRevision:1}};
-  migrateCardSizes(layout,{cards:{minutes:{sizeRevision:1}}});
-  assert.equal(layout.minutes.width,824);
-  assert.equal(layout.minutes.height,720);
-  assert.equal(layout.minutes.sizeRevision,4);
-  migrateCardSizes(layout,{cards:{minutes:{sizeRevision:4}}});
-  assert.equal(layout.minutes.width,824);
-  assert.equal(layout.minutes.height,720);
-
-  const previous = {minutes:{width:1360,height:720,sizeRevision:2}};
-  migrateCardSizes(previous,{cards:{minutes:{sizeRevision:2}}});
-  assert.equal(previous.minutes.width,824);
-  assert.equal(previous.minutes.height,720);
-  assert.equal(previous.minutes.sizeRevision,4);
+test('minutes card migration narrows older windows once, making room for the current columns', () => {
+  for (const [revision,width,height] of [[1,1680,720],[2,1360,720],[5,577,504]]) {
+    const layout = {minutes:{width,height,sizeRevision:revision}};
+    migrateCardSizes(layout,{cards:{minutes:{sizeRevision:revision}}});
+    assert.deepEqual(layout.minutes,{width:669,height:504,sizeRevision:6});
+    const saved = {cards:structuredClone(layout)};
+    migrateCardSizes(layout,saved);
+    assert.deepEqual(layout,saved.cards);
+  }
 });
 
 test('team identity card migration removes excess saved height without changing width', () => {

@@ -3054,6 +3054,16 @@ const SPATIAL_COURT_VIEWS = {
   onball: { density: 7, delta: "onball_delta_pp", tab: "On his man", legend: "His man held below league (pp)", caption: "The man he guards: where players his size shoot, and how much he holds them below league FG%." },
   help: { density: 8, delta: "help_delta_pp", tab: "Help", legend: "Others held below league (pp)", caption: "Everyone else while he plays (his own man left out): how much his rim protection and rotations lower their FG%." },
 };
+const SPATIAL_TEAM_CAPTIONS = {
+  offense: "The team's shots: where its rotation shoots, and projected FG% against league average.",
+  playmaking: "How much the team's passing, driving and gravity raise its shooting by zone, as the sim applies it.",
+  defense: "The team's defense: how much its rotation lowers opponents' FG% by zone. Blue is better defense.",
+  onball: "Defense on the ball: how much the rotation holds the men it guards below league FG%.",
+  help: "Help defense: how much rim protection and rotations lower everyone else's FG%.",
+};
+function spatialCourtCaption(view, team) {
+  return team ? SPATIAL_TEAM_CAPTIONS[view] : SPATIAL_COURT_VIEWS[view].caption;
+}
 
 function spatialHeatmapRegions(profile, side) {
   const chart = profile?.shot_chart;
@@ -3145,11 +3155,12 @@ function spatialHeatmapMarkup(profile, options = {}) {
   const head = group => {
     const title = group === "offense" ? "Offense" : "Defense";
     if (groups[group].length === 1) return `<h4>${title}</h4>`;
-    return `<h4 class="spatial-court-tabs" role="group" aria-label="${title} chart">${groups[group].map((view, index) => `<button type="button" class="spatial-court-tab" data-court-tab="${view}" data-court-group="${group}" aria-pressed="${index === 0}" title="${escapeAttr(SPATIAL_COURT_VIEWS[view].caption)}">${escapeHtml(SPATIAL_COURT_VIEWS[view].tab)}</button>`).join("")}</h4>`;
+    return `<h4 class="spatial-court-tabs" role="group" aria-label="${title} chart">${groups[group].map((view, index) => `<button type="button" class="spatial-court-tab" data-court-tab="${view}" data-court-group="${group}" aria-pressed="${index === 0}" title="${escapeAttr(spatialCourtCaption(view, profile.entity_type === "team"))}">${escapeHtml(profile.entity_type === "team" && view === "onball" ? "On the ball" : SPATIAL_COURT_VIEWS[view].tab)}</button>`).join("")}</h4>`;
   };
   const courts = ["offense", "defense"].flatMap(group => groups[group].map((view, index) => spatialCourtSvg(seed, view, spatialHeatmapRegions(profile, view), index > 0))).join("");
-  const captions = extended ? `<p class="spatial-court-caption" data-court-caption="offense">${escapeHtml(SPATIAL_COURT_VIEWS.offense.caption)}</p><p class="spatial-court-caption" data-court-caption="defense">${escapeHtml(SPATIAL_COURT_VIEWS.defense.caption)}</p>` : "";
-  return `<div class="spatial-heatmap${options.compact ? " compact" : ""}${extended ? " has-court-views" : ""}">
+  const team = profile.entity_type === "team";
+  const captions = extended ? `<p class="spatial-court-caption" data-court-caption="offense">${escapeHtml(spatialCourtCaption("offense", team))}</p><p class="spatial-court-caption" data-court-caption="defense">${escapeHtml(spatialCourtCaption("defense", team))}</p>` : "";
+  return `<div class="spatial-heatmap${options.compact ? " compact" : ""}${extended ? " has-court-views" : ""}"${team ? ' data-court-entity="team"' : ""}>
     <div class="spatial-court-head">${head("offense")}${head("defense")}</div>
     <div class="spatial-half-courts">${courts}</div>
     ${legends}${captions}
@@ -3695,7 +3706,8 @@ function seasonEfficiencyCard(dash, chartWidth = 420, chartHeight = 220, chartOn
 function efficiencyEventDetail(event) {
   const heading = `<strong>${escapeHtml(event.title)}</strong><small>${escapeHtml(event.date)}</small>`;
   if (event.coaches) return heading + event.coaches.map(coach => `<div class="efficiency-event-coach"><span>${escapeHtml(coach.label)} · ${escapeHtml(coach.role)}</span><b>${escapeHtml(coach.name)}</b>${compactRatingBar(coach.grade)}</div>`).join("");
-  const risk = event.health_risk == null ? '<p>Health risk unavailable</p>' : playerEvidenceRing(event.risk_label || "Health risk", Number(event.health_risk), 10, "#b34d49", "/10");
+  const risk = event.injury_body ? `<div class="injury-event-body">${injuryRiskBody(event.health_risk, event.injury_body, event.risk_label || "Health risk")}<small>${escapeHtml(event.risk_label || "Health risk")}</small></div>`
+    : event.health_risk == null ? '<p>Health risk unavailable</p>' : playerEvidenceRing(event.risk_label || "Health risk", Number(event.health_risk), 10, "#b34d49", "/10");
   return heading + `<p>${escapeHtml(event.body_area)} · Expected absence: ${event.expected_games_missed == null ? "unknown" : escapeHtml(event.expected_games_missed) + (Number(event.expected_games_missed) === 1 ? " game" : " games")}</p>${risk}<p>${Number(event.minutes_lost || 0).toFixed(1)} minutes per night lost</p><small>${escapeHtml(event.distribution_note)}</small>${(event.distribution || []).map(row => `<div class="efficiency-event-minute"><span>${escapeHtml(row.name)}</span><b>+${Number(row.minutes).toFixed(1)} min</b></div>`).join("")}`;
 }
 
@@ -7348,6 +7360,9 @@ async function openFreeAgentNegotiation(playerId) {
 
 function negotiationEvidence(detail) {
   return `<div class="approved-negotiation-evidence">${[["Health risk", detail?.health_risk, true], ["Growth runway", detail?.upside_remaining, false], ["Trade value", detail?.trade_value, false]].map(([label, value, inverse]) => {
+    if (label === "Health risk" && detail?.injury_body_map?.parts?.length) {
+      return `<div class="injury-negotiation-body"><span>Injury risk</span>${injuryRiskBody(value, detail.injury_body_map)}<strong>${draftMetric(value)}</strong></div>`;
+    }
     const score = inverse ? 100 - Number(value || 0) * 10 : label === "Growth runway" ? Number(value || 0) * 20 : Number(value || 0);
     return `<div class="${ratingTone(score)}"><span>${escapeHtml(label)}</span><i><b style="${performanceBarStyle(score)}"></b></i><strong>${draftMetric(value)}${label === "Growth runway" ? " / 5" : label === "Health risk" ? " / 10" : ""}</strong></div>`;
   }).join("")}</div>`;
@@ -7620,14 +7635,42 @@ function injuryBodyFigure(map, view, options = {}) {
     ${silhouette}<g class="injury-spots">${spots}</g>${label}</svg>`;
 }
 
+const INJURY_PART_LABELS = {ankle: "Ankle", knee: "Knee", back: "Back", hamstring: "Hamstring", hip: "Hip", foot: "Foot", calf: "Calf",
+  shoulder: "Shoulder", groin: "Groin", quadriceps: "Quad", toe: "Toe", head: "Head", wrist: "Wrist", hand: "Hand", achilles: "Achilles",
+  thumb: "Thumb", illness: "Illness"};
+
+function injuryBodyFromCompact(body) {
+  if (body?.parts) return body;
+  if (!body?.p?.length) return null;
+  const parts = body.p.map(([part, games, relative]) => ({
+    part, label: INJURY_PART_LABELS[part] || part, expected_games: Number(games), relative: relative == null ? null : Number(relative),
+    typical_games: relative ? Number(games) / Number(relative) : Number(games), recent_injuries: 0, current: part === body.c,
+  }));
+  return {parts, current_part: body.c || null, current_label: body.c ? (INJURY_PART_LABELS[body.c] || body.c) : null,
+    expected_games_total: body.t, typical_games_total: body.y};
+}
+
+function injuryRiskBody(risk, body, label = "Injury risk") {
+  const map = injuryBodyFromCompact(body);
+  const value = risk == null || !Number.isFinite(Number(risk)) ? null : Number(risk);
+  const index = value == null ? "" : ` ${draftMetric(value)} model index`;
+  if (!map) return value == null ? `<span class="injury-risk-body" title="${escapeAttr(`${label} unavailable`)}">—</span>`
+    : `<span class="injury-risk-body" title="${escapeAttr(`${label}${index}`)}"><b>${draftMetric(value)}</b></span>`;
+  const hottest = map.current_part ? map.parts.find(part => part.current)
+    : [...map.parts].sort((a, b) => (b.expected_games - b.typical_games) - (a.expected_games - a.typical_games))[0];
+  const note = map.current_part ? `Injured: ${map.current_label}` : hottest && hottest.relative > 1.15 ? `Watch: ${hottest.label}` : "No hotspot";
+  const title = `${label}${index} (the front office's injury-risk score; most players 1–4). Body map: about ${map.expected_games_total} games a season expected to be missed to injury (typical rotation player ${map.typical_games_total}). ${note}.`;
+  return `<span class="injury-risk-body" title="${escapeAttr(title)}" aria-label="${escapeAttr(title)}">${injuryBodyFigure(map, "front", { mini: true })}${value == null ? "" : `<b>${draftMetric(value)}</b>`}</span>`;
+}
+
 function injuryBodyMini(detail) {
-  const risk = clampNumber(Number(detail.health_risk || 0), 0, 10);
+  const risk = Number(detail.health_risk || 0);
   const map = detail.injury_body_map;
   if (!map?.parts?.length) return playerEvidenceRing("Health risk", risk, 10, risk >= 7 ? "#e04d55" : risk >= 4 ? "#bd5b5d" : "#8e6263", "/10");
   const top = map.current_part ? map.parts.find(part => part.current) : [...map.parts].sort((a, b) => (b.expected_games - b.typical_games) - (a.expected_games - a.typical_games))[0];
   const note = map.current_part ? `Injured: ${map.current_label || top?.label || "out"}` : top && top.relative > 1.15 ? `Watch: ${top.label}` : "No hotspot";
-  const summary = `Injury risk ${draftMetric(risk)} out of 10 (the front office's estimate). Body map: about ${map.expected_games_total} games a season expected to be missed to injury, against ${map.typical_games_total} for a typical rotation player. ${note}. See the Health page for the full map.`;
-  return `<div class="player-evidence-ring injury-body-evidence" title="${escapeAttr(summary)}" aria-label="${escapeAttr(summary)}"><span>${injuryBodyFigure(map, "front", { mini: true })}</span><div><b>Injury risk ${draftMetric(risk)}/10</b><small>${escapeHtml(note)}</small></div></div>`;
+  const summary = `Injury risk ${draftMetric(risk)} model index (the front office's injury-risk score; most players 1–4). Body map: about ${map.expected_games_total} games a season expected to be missed to injury, against ${map.typical_games_total} for a typical rotation player. ${note}. See the Health page for the full map.`;
+  return `<div class="player-evidence-ring injury-body-evidence" title="${escapeAttr(summary)}" aria-label="${escapeAttr(summary)}"><span>${injuryBodyFigure(map, "front", { mini: true })}</span><div><b>Injury risk ${draftMetric(risk)}</b><small>${escapeHtml(note)}</small></div></div>`;
 }
 
 function injuryBodyMapPanel(detail) {
@@ -7664,7 +7707,7 @@ function selectSpatialCourtView(button) {
   const legend = root.querySelectorAll(".spatial-legend > span")[group === "offense" ? 0 : 1];
   if (legend) legend.textContent = SPATIAL_COURT_VIEWS[view].legend;
   const caption = root.querySelector(`[data-court-caption="${group}"]`);
-  if (caption) caption.textContent = SPATIAL_COURT_VIEWS[view].caption;
+  if (caption) caption.textContent = spatialCourtCaption(view, root.dataset.courtEntity === "team");
 }
 
 if (typeof document !== "undefined") {
@@ -7955,7 +7998,7 @@ function approvedPlayerCardBody(detail, options = {}) {
     return `<td>${["minutes", "game_score"].includes(key) ? draftMetric(row[key]) : escapeHtml(row[key] ?? "—")}</td>`;
   }).join("")}</tr>`).join("");
   return `<div class="approved-player-card approved-player-pages${detail.is_prospect ? " approved-prospect-pages" : ""}" data-player-pages>
-    <div class="player-page-bar"><span data-player-page-title>${extension ? "Contract Extension" : detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}</span><div class="player-page-nav"><button type="button" class="ui-command" data-player-page-step="-1" aria-label="Previous player card page" title="Previous page">‹</button><button type="button" class="ui-command" data-player-page-step="1" aria-label="Next player card page" title="Next page">›</button><span data-player-page-count aria-live="polite" aria-atomic="true">1/${extension ? 3 : 2}</span></div></div>
+    <div class="player-page-bar"><span data-player-page-title>${extension ? "Contract Extension" : detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}</span><div class="player-page-nav"><button type="button" class="ui-command" data-player-page-step="-1" aria-label="Previous player card page" title="Previous page">‹</button><button type="button" class="ui-command" data-player-page-step="1" aria-label="Next player card page" title="Next page">›</button><span data-player-page-count aria-live="polite" aria-atomic="true">1/${(extension ? 1 : 0) + 2 + (detail.is_prospect ? 0 : 1)}</span></div></div>
     <section class="approved-player-identity player-page-identity"><div class="approved-player-profile-head">${playerHeadshotMarkup(detail, "approved-profile-headshot")}<div class="approved-profile-name"><h3>${escapeHtml(detail.name || options.name || "Player")}</h3><p>${escapeHtml([detail.position, detail.age != null ? `${detail.age} years` : "", detail.height].filter(Boolean).join(" · "))}</p><p class="player-draft-details">${escapeHtml(detail.is_prospect ? [detail.source_team, `${detail.draft_year} draft class`].filter(Boolean).join(" · ") : detail.draft_position ? `${detail.draft_year || 'Draft'} · Pick #${detail.draft_position}` : detail.draft_status==='undrafted' ? `Undrafted${detail.draft_year?` · ${detail.draft_year}`:''}` : detail.draft_year ? `Draft year ${detail.draft_year}` : 'Draft details unavailable')}</p></div>${playerSummaryRatings(detail)}</div>${playerCardEvidence(detail)}${options.actions || ""}</section>
     ${extension ? extensionNegotiationPage(extension.room, extension.selectedPlayerId, extension.response, detail) : ""}
     <section class="player-card-page player-card-page--overview" data-player-page="${pageOffset}" data-page-title="${detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}" aria-label="Season statistics, recent games, game score and contract">
@@ -9055,7 +9098,7 @@ function playerFinderTable(rows) {
   const finder=state.playerFinder || {};
   const fields=[["player","Player",260],["team","Team",48],["position","Pos",40],["age","Age",36],["height_inches","Height",54],["overall","OVR",104],["offense","OFF",104],["defense","DEF",104],["health_risk","Risk",56],["upside_remaining","Runway",60],["find","Find",58]];
   const head=fields.map(([key,label])=>`<th scope="col" ${key!=="find"?`aria-sort="${finder.sortField===key?(finder.sortDirection==='asc'?'ascending':'descending'):'none'}"`:""}>${key==='find'?label:`<button type="button" data-finder-sort="${key}">${label}${finder.sortField===key?(finder.sortDirection==='asc'?' ↑':' ↓'):''}</button>`}</th>`).join('');
-  const body=rows.map(row=>`<tr data-finder-player="${escapeAttr(row.id)}" tabindex="0" aria-label="Open player card for ${escapeAttr(row.name)}"><td><span class="player-finder-identity">${playerHeadshotMarkup(row,'roster-player-headshot') || playerHeadshotMarkup({is_prospect:true},'roster-player-headshot')}${playerNameWithInjuryMarkup(row)}</span></td><td>${teamLogoSrc(row.team_abbrev)?`<span class="player-finder-team-logo" title="${escapeAttr(row.team_abbrev)}"><img src="${escapeAttr(teamLogoSrc(row.team_abbrev))}" alt="${escapeAttr(row.team_abbrev)} logo" loading="lazy" decoding="async"></span>`:escapeHtml(row.team_abbrev || "FA")}</td><td>${escapeHtml(compactPos(row.position))}</td><td>${escapeHtml(row.age == null ? "—" : Math.floor(row.age))}</td><td>${escapeHtml(heightFromRow(row) || "—")}</td>${['overall','offense','defense'].map(key=>`<td>${compactRatingBar(playerFinderValue(row,key))}</td>`).join('')}<td>${row.health_risk==null?'—':playerEvidenceRing('Injury risk',row.health_risk,10,Number(row.health_risk)>=7?'#e04d55':Number(row.health_risk)>=4?'#bd5b5d':'#8e6263','/10')}</td><td>${row.upside_remaining==null?'—':playerEvidenceRing('Growth runway',row.upside_remaining,5,playerUpsideColor(row.upside_remaining),' / 5')}</td><td><button type="button" class="ui-command" data-finder-trade="${escapeAttr(row.id)}" aria-label="Find trades for ${escapeAttr(row.name)}" ${!row.team_id || row.team_abbrev==='FA'?'disabled title="Free agents cannot be traded"':'title="Open Trade Finder with this player selected"'}>Find</button></td></tr>`).join('');
+  const body=rows.map(row=>`<tr data-finder-player="${escapeAttr(row.id)}" tabindex="0" aria-label="Open player card for ${escapeAttr(row.name)}"><td><span class="player-finder-identity">${playerHeadshotMarkup(row,'roster-player-headshot') || playerHeadshotMarkup({is_prospect:true},'roster-player-headshot')}${playerNameWithInjuryMarkup(row)}</span></td><td>${teamLogoSrc(row.team_abbrev)?`<span class="player-finder-team-logo" title="${escapeAttr(row.team_abbrev)}"><img src="${escapeAttr(teamLogoSrc(row.team_abbrev))}" alt="${escapeAttr(row.team_abbrev)} logo" loading="lazy" decoding="async"></span>`:escapeHtml(row.team_abbrev || "FA")}</td><td>${escapeHtml(compactPos(row.position))}</td><td>${escapeHtml(row.age == null ? "—" : Math.floor(row.age))}</td><td>${escapeHtml(heightFromRow(row) || "—")}</td>${['overall','offense','defense'].map(key=>`<td>${compactRatingBar(playerFinderValue(row,key))}</td>`).join('')}<td>${injuryRiskBody(row.health_risk,row.injury_body)}</td><td>${row.upside_remaining==null?'—':playerEvidenceRing('Growth runway',row.upside_remaining,5,playerUpsideColor(row.upside_remaining),' / 5')}</td><td><button type="button" class="ui-command" data-finder-trade="${escapeAttr(row.id)}" aria-label="Find trades for ${escapeAttr(row.name)}" ${!row.team_id || row.team_abbrev==='FA'?'disabled title="Free agents cannot be traded"':'title="Open Trade Finder with this player selected"'}>Find</button></td></tr>`).join('');
   return `<table class="player-finder-table"><colgroup>${fields.map(([, ,width])=>`<col style="width:${width}px">`).join('')}</colgroup><thead><tr>${head}</tr></thead><tbody>${body || '<tr><td colspan="11" class="player-finder-empty">No players match these filters.</td></tr>'}</tbody></table>`;
 }
 
@@ -12543,7 +12586,7 @@ function tradeAssetRow(asset, {side, removeSide, routeFrom} = {}) {
   const meter = (label, value, max) => { const n = tradeKnownNumber(value); return `<td class="trade-ledger-meter" title="${escapeAttr(label)}${n === null ? " unavailable" : ` ${n.toFixed(1)}${label === "Runway" ? `/${max}` : " model index"}`}"><span>${draftMetric(n)}${n === null || label !== "Runway" ? "" : `<small>/${max}</small>`}</span><i aria-hidden="true">${n === null ? "" : `<b style="width:${clampNumber(n/max*100,0,100)}%"></b>`}</i></td>`; };
   const evidence = [asset.potential != null ? `Potential ${draftMetric(asset.potential)}` : "", asset.mpg != null ? `${draftMetric(asset.mpg)} MPG` : "", asset.ppg != null ? `${draftMetric(asset.ppg)} PPG` : ""].filter(Boolean).join(" · ");
   const salaries = Object.entries(asset.salary_by_year || {}).filter(([,value]) => Number(value) > 0).sort(([a],[b]) => a.localeCompare(b));
-  return `<tr class="trade-ledger-player${selected ? " is-selected" : ""}${injury ? " is-injured" : ""}">${control}${route}<td>${playerHeadshotMarkup(asset, "trade-player-headshot") || '<span class="trade-portrait-empty" aria-hidden="true">&mdash;</span>'}</td><th scope="row"><button type="button" class="trade-player-link" data-dashboard-player-card="${escapeAttr(id)}" title="${escapeAttr(evidence || name)}">${playerNameWithInjuryMarkup(asset, name)}</button></th><td>${asset.age == null ? "—" : escapeHtml(asset.age)}</td><td>${escapeHtml(asset.height || "—")}</td><td>${escapeHtml(asset.position || "—")}</td>${values.map(ratingCell).join("")}${meter("Runway",asset.upside_remaining,5)}${meter("Injury risk",asset.health_risk,34)}<td class="trade-ledger-contract">${salaries.length ? `<details><summary>${tradeAssetContract(asset)}</summary><div>${salaries.map(([season, amount]) => `<span>${escapeHtml(shortSeasonLabel(season))} <b>${money(Number(amount))}</b></span>`).join("")}${asset.contract ? `<span>${escapeHtml(asset.contract)}</span>` : ""}</div></details>` : tradeAssetContract(asset)}</td><td class="trade-ledger-value">${draftMetric(tradeKnownNumber(asset.trade_value))}</td></tr>`;
+  return `<tr class="trade-ledger-player${selected ? " is-selected" : ""}${injury ? " is-injured" : ""}">${control}${route}<td>${playerHeadshotMarkup(asset, "trade-player-headshot") || '<span class="trade-portrait-empty" aria-hidden="true">&mdash;</span>'}</td><th scope="row"><button type="button" class="trade-player-link" data-dashboard-player-card="${escapeAttr(id)}" title="${escapeAttr(evidence || name)}">${playerNameWithInjuryMarkup(asset, name)}</button></th><td>${asset.age == null ? "—" : escapeHtml(asset.age)}</td><td>${escapeHtml(asset.height || "—")}</td><td>${escapeHtml(asset.position || "—")}</td>${values.map(ratingCell).join("")}${meter("Runway",asset.upside_remaining,5)}<td class="trade-ledger-meter trade-ledger-injury">${injuryRiskBody(asset.health_risk, asset.injury_body)}</td><td class="trade-ledger-contract">${salaries.length ? `<details><summary>${tradeAssetContract(asset)}</summary><div>${salaries.map(([season, amount]) => `<span>${escapeHtml(shortSeasonLabel(season))} <b>${money(Number(amount))}</b></span>`).join("")}${asset.contract ? `<span>${escapeHtml(asset.contract)}</span>` : ""}</div></details>` : tradeAssetContract(asset)}</td><td class="trade-ledger-value">${draftMetric(tradeKnownNumber(asset.trade_value))}</td></tr>`;
 }
 
 function tradeLegalityBadge(candidate) {

@@ -42,8 +42,8 @@ test('rewiring and replacement rows open the selected player once',()=>{
 
 test('extension preview applies the offer only from its backend start season for the selected term',()=>{
   const app=fs.readFileSync(path.join(__dirname,'../src/nba_gm_data/gui/app.js'),'utf8');
-  const scope={};vm.createContext(scope);
-  vm.runInContext(app.slice(app.indexOf('function extensionOfferSchedule('),app.indexOf('function updateExtensionPreview(')),scope);
+  const scope={state:{data:{dashboard:{cap_by_year:{'2026-27':{}}}}}};vm.createContext(scope);
+  vm.runInContext(app.slice(app.indexOf('function extensionCapRows('),app.indexOf('function updateExtensionPreview(')),scope);
   const candidate={start_season:'2027-28',cap_projection:['2026-27','2027-28','2028-29','2029-30'].map(season=>({season}))};
   assert.deepEqual(Array.from(scope.extensionOfferSchedule(candidate,1,45.2)),[0,45.2,0,0]);
   assert.deepEqual(Array.from(scope.extensionOfferSchedule(candidate,2,50)),[0,50,50,0]);

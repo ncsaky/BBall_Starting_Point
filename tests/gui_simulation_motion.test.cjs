@@ -53,10 +53,10 @@ test('team signal and opponent cards consume live progress and expose animated s
   assert.match(app, /if \(event\.team_signals\) updateTeamSignalsDuringSimulation\(event\.team_signals\)/);
   assert.match(app, /if \(event\.opponent\) updateOpponentDuringSimulation\(event\.opponent\)/);
   assert.match(app, /data-team-signal-key/);
-  assert.match(app, /season-opponent-result-header/);
+  assert.match(app, /season-simulation-result-banner[\s\S]*?setAttribute\("role", "status"\)[\s\S]*?<strong>\$\{outcome.result\}<\/strong>[\s\S]*?table\.append\(banner\)/);
   const css = fs.readFileSync(path.join(gui, 'card-board.css'), 'utf8');
   assert.match(css, /transition:width 420ms ease,background-color 420ms ease/);
-  assert.match(css, /season-simulation-result > b/);
+  assert.match(css, /\.season-simulation-result-banner\s*\{[^}]*animation:[^}]+\}/);
 
   const start = app.indexOf('function simulationOpponentResult(');
   const end = app.indexOf('\nfunction showSimulationOpponentResult', start);
@@ -75,9 +75,23 @@ test('team signal and opponent cards consume live progress and expose animated s
   assert.equal(context.simulationOpponentResult({game:{game_id:'other',home_team_id:'x',away_team_id:'y',home_score:99,away_score:98}}, 'team_user'), null);
 });
 
-test('month-boundary progress replaces the stale calendar snapshot before rendering the new month', () => {
-  const assign = app.indexOf('if (event.calendar) state.data.dashboardCalendar = event.calendar;');
+test('month-boundary progress updates existing calendar games and keeps the loaded dates before rendering', () => {
+  const assign = app.indexOf('if (event.calendar) state.data.dashboardCalendar = mergeSimulationCalendar(state.data.dashboardCalendar, event.calendar);');
   const render = app.indexOf('renderCalendar(week, {team:userTeam(),dataKey:\'dashboardCalendar\'})', assign);
   assert.ok(assign >= 0 && render > assign);
   assert.match(app, /if \(dateChanged\) state\.calendarMonth = event\.date\.slice\(0,7\)/);
+  const start = app.indexOf('function mergeSimulationCalendar(');
+  const end = app.indexOf('function dashboardWeekRange(', start);
+  assert.ok(start >= 0 && end > start);
+  const context = vm.createContext({});
+  vm.runInContext(app.slice(start, end), context);
+  const completed = {game_id:'feb-1',home_score:112,away_score:100};
+  const january = {game_id:'jan-31'};
+  const merged = context.mergeSimulationCalendar(
+    {from_date:'2027-01-25',through_date:'2027-02-01',games:[january,{game_id:'feb-1'}]},
+    {from_date:'2027-02-01',through_date:'2027-02-07',games:[completed]},
+  );
+  assert.deepEqual(Array.from(merged.games), [january,completed]);
+  assert.equal(merged.from_date,'2027-01-25');
+  assert.equal(merged.through_date,'2027-02-07');
 });

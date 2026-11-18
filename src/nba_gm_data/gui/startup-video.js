@@ -91,6 +91,9 @@
     clearTimeout(intentTimer);
     if (!eligible()) return;
     const team = wantedKey();
+    // A default movie that failed to play stays on its poster until the next visit (failures clear on hide);
+    // retrying on every click just repeated the failed load.
+    if (team === "random" && failures.has("random")) return;
     const changed = team !== currentTeam;
     if (changed) { currentTeam = team; sceneIndex = 0; }
     const key = `${team}:${sceneIndex}`;

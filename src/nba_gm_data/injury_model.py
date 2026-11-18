@@ -319,12 +319,28 @@ BODY_MAP_BASELINE_MPG = 20.0       # "typical rotation player" baseline: league 
 _BASELINE_CACHE: dict[tuple, dict[str, float]] = {}
 
 
-def _trait_lookup(canonical: Mapping[str, Any]) -> dict[str, dict[str, float]]:
+_LOOKUP_CACHE: dict[tuple, tuple[dict[str, dict[str, float]], dict[str, list]]] = {}
+
+
+def _league_lookups(canonical: Mapping[str, Any]) -> tuple[dict[str, dict[str, float]], dict[str, list]]:
+    """Body-map traits and injury events by player, built once per league state (tables call this per row)."""
+    rows, events = canonical.get("traits", []), canonical.get("injury_events", [])
+    key = (id(rows), len(rows), id(events), len(events))
+    cached = _LOOKUP_CACHE.get(key)
+    if cached is not None:
+        return cached
     traits: dict[str, dict[str, float]] = {}
-    for row in canonical.get("traits", []):
+    for row in rows:
         if row.get("trait_key") in BODY_MAP_TRAITS:
             traits.setdefault(str(row["player_id"]), {})[row["trait_key"]] = float(row.get("value") or 50.0)
-    return traits
+    by_player: dict[str, list] = {}
+    for event in events:
+        if event.get("player_id"):
+            by_player.setdefault(str(event["player_id"]), []).append(event)
+    if len(_LOOKUP_CACHE) >= 4:
+        _LOOKUP_CACHE.clear()
+    _LOOKUP_CACHE[key] = (traits, by_player)
+    return traits, by_player
 
 
 def _games_by_part(model, path, player, traits, minutes, history, on) -> dict[str, float]:
@@ -354,14 +370,11 @@ def body_risk_map(canonical: Mapping[str, Any], player: Mapping[str, Any], healt
     path = str(root / MODEL_FILE)
     on = _parse((canonical.get("meta") or {}).get("current_date")) or date(2026, 10, 20)
     events = canonical.get("injury_events", [])
-    traits = _trait_lookup(canonical)
+    traits, events_by_player = _league_lookups(canonical)
     key = (path, on.isoformat(), len(canonical.get("players", [])), len(events))
     baseline = _BASELINE_CACHE.get(key)
     if baseline is None:
-        by_player: dict[str, list] = {}
-        for event in events:
-            if event.get("player_id"):
-                by_player.setdefault(event["player_id"], []).append(event)
+        by_player = events_by_player
         totals: dict[str, float] = {}
         count = 0
         for other in canonical.get("players", []):
@@ -380,14 +393,14 @@ def body_risk_map(canonical: Mapping[str, Any], player: Mapping[str, Any], healt
         _BASELINE_CACHE[key] = baseline
     pid = str(player.get("id"))
     minutes = role_minutes(player)
-    history = player_history(model, pid, [e for e in events if e.get("player_id") == pid])
+    history = player_history(model, pid, events_by_player.get(pid, []))
     games = _games_by_part(model, path, player, traits.get(pid, {}), minutes, history, on)
     state = health_state or {}
     current = ""
     if state.get("current_injury_id"):
         current = str(state.get("current_injury_part") or "")
         if not current:   # injuries seeded from real data carry an area on the event, not a part on the state
-            event = next((e for e in events if e.get("id") == state.get("current_injury_id")), None)
+            event = next((e for e in events_by_player.get(pid, []) if e.get("id") == state.get("current_injury_id")), None)
             current = event_part(event) if event else ""
     recent = {}
     for d, part in history:
@@ -403,3 +416,11 @@ def body_risk_map(canonical: Mapping[str, Any], player: Mapping[str, Any], healt
             "typical_games_total": round(sum(baseline.values()), 1), "minutes_basis": round(minutes, 1),
             "current_part": current or None,
             "current_label": (state.get("current_injury_label") or PART_LABELS.get(current, current)) if current else None}
+
+
+def compact_body_map(body: Mapping[str, Any] | None, highlight: str | None = None) -> dict[str, Any] | None:
+    """Small form of body_risk_map for tables: [part, expected games, vs typical] per part, plus the injured part."""
+    if not body:
+        return None
+    return {"p": [[row["part"], row["expected_games"], row["relative"]] for row in body["parts"]],
+            "c": highlight or body.get("current_part"), "t": body["expected_games_total"], "y": body["typical_games_total"]}

@@ -256,3 +256,103 @@ PYTHONPATH=src .venv/bin/python output/dev-growth-vs-bbi/pilot.py inputs
 The local research files are `data/research/bbi/tools/growth_history.csv.gz`, `growth_forward.csv.gz`, `growth_composite_baselines.json`, `growth_coach_development.json` and `growth_methodology.txt`. The extraction handoff is [Basketball Index saved tool extraction](bbx-tool-extract.md). The analysis scripts and row-level comparison outputs are in the ignored `output/dev-growth-vs-bbi/` directory. The age-by-minutes results for the middle half of starting level are in `level_matched_by_age.csv` there, including the retrospective forecast and actual-minus-forecast bands. The installed 94-input file matched the tracked compressed copy byte for byte after decompression.
 
 The 15 focused development outlook and rating model tests passed. Implementation is pending coordinator review. This task changed the report and board only, with local research outputs in the ignored directory.
+
+## DEV-TUNE results
+
+Young rotation players improve faster in both rating sets. The broad peak is around ages 23–26. By 27–30, offense has started to slip while defense holds closer to flat. Decline accelerates in the thirties. Players can have meaningfully different years, with most of the spread coming from a draw that lasts the season.
+
+### Healthy age curve
+
+These are median annual changes for players with 500+ minutes. Each cell gives offense / defense / overall. Basketball Index columns use its own talent points. The game columns use rating points. Both game runs started from identical card ratings and used the same coaches and staff.
+
+| Starting age | Basketball Index | Legacy before | Legacy after | 94 inputs before | 94 inputs after |
+| --- | --- | --- | --- | --- | --- |
+| 19–22 | +0.30 / +0.09 / +0.40 | +1.10 / +0.90 / +1.00 | +1.95 / +1.45 / +1.65 | +0.50 / +0.50 / +0.60 | +0.80 / +0.80 / +0.90 |
+| 23–26 | +0.01 / -0.04 / +0.03 | +0.30 / +0.20 / +0.20 | +0.30 / +0.20 / +0.20 | +0.10 / +0.10 / +0.10 | +0.10 / +0.10 / +0.10 |
+| 27–30 | -0.14 / -0.06 / -0.15 | +0.10 / +0.00 / +0.10 | -0.80 / +0.00 / -0.50 | +0.10 / +0.10 / +0.10 | -0.40 / -0.10 / -0.30 |
+| 31–33 | -0.17 / -0.07 / -0.16 | -0.50 / -0.90 / -0.60 | -2.20 / -1.00 / -1.70 | -0.20 / -0.30 / -0.40 | -1.00 / -0.60 / -1.00 |
+| 34–36 | -0.18 / -0.09 / -0.30 | -0.70 / -1.10 / -0.90 | -3.50 / -2.30 / -3.20 | -0.40 / -0.60 / -0.40 | -1.30 / -1.10 / -1.50 |
+
+The matched 500+ minute sample also shows the earlier downturn when the game applies each month in order. These replays use the normal event eligibility and minimum change threshold, with random rating changes off.
+
+| Starting age | Legacy before | Legacy after | 94 inputs before | 94 inputs after |
+| --- | --- | --- | --- | --- |
+| 19–22 | +1.30 / +1.10 / +1.20 | +2.20 / +1.75 / +2.00 | +0.50 / +0.60 / +0.50 | +0.80 / +1.00 / +1.00 |
+| 23–26 | +0.30 / +0.30 / +0.30 | +0.30 / +0.40 / +0.30 | +0.20 / +0.10 / +0.20 | +0.20 / +0.10 / +0.20 |
+| 27–30 | +0.00 / +0.00 / +0.00 | -0.40 / +0.00 / -0.20 | +0.00 / +0.00 / +0.00 | -0.15 / +0.00 / -0.10 |
+| 31–33 | -0.40 / -0.70 / -0.50 | -1.90 / -0.70 / -1.40 | -0.20 / -0.30 / -0.20 | -1.00 / -0.50 / -0.90 |
+| 34–36 | -0.70 / -1.00 / -0.80 | -3.30 / -2.30 / -2.90 | -0.40 / -0.60 / -0.30 | -1.20 / -1.20 / -1.30 |
+
+Low-minute players ages 27–30 can still be skipped by the existing eligibility rules. The detailed tables include separate 0–499, 500–1,499 and 1,500+ minute cohorts and single-year age cells. See `output/dev-growth-vs-bbi/after/comparison.md` and the age tables in each run folder.
+
+### Variation around each player's expected year
+
+The original comparison replays 12 seeded years for the same 182 players, including 136 with 500+ projected minutes. Each player's realized yearly change is measured against their own replay with the random rating changes turned off. The last column divides the endpoints by the distance between the 25th and 75th percentiles of starting overall ratings within the same group.
+
+| Source | Side | N | Median | Middle 50% | Middle 80% | Middle 90% | Starting spread | Middle 80% relative to start |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Basketball Index | overall | 1796 | -0.09 | -0.62 to +0.38 | -1.11 to +0.84 | -1.47 to +1.14 | 1.81 | -61% to +46% |
+| legacy before | overall | 1632 | +0.00 | +0.00 to +0.00 | +0.00 to +0.10 | +0.00 to +0.10 | 12.90 | +0% to +1% |
+| legacy after | overall | 1632 | +0.00 | -2.10 to +1.90 | -4.60 to +4.10 | -6.45 to +5.70 | 12.90 | -36% to +32% |
+| inputs before | overall | 1632 | +0.00 | +0.00 to +0.00 | +0.00 to +0.10 | +0.00 to +0.10 | 11.02 | +0% to +1% |
+| inputs after | overall | 1632 | +0.00 | -1.20 to +1.10 | -2.80 to +2.80 | -4.10 to +3.85 | 11.02 | -25% to +25% |
+
+Among 1,500+ minute players, the original replay's middle 80% moved from **0% to +1%** of starting spread to **−42% to +37%** in legacy and from **0% to 0%** to **−29% to +28%** in inputs. Basketball Index's reference is **−54% to +44%** in that group. This replay runs from November through October and crosses a season boundary.
+
+
+Across complete July–June seasons, the same draw applies to all 12 monthly updates. The higher-minute groups are close to the Basketball Index overall band on the relative scale, with legacy somewhat wider and the 94-input set somewhat narrower.
+
+| Minutes | Source | Overall middle 80%, before | Overall middle 80%, after | After as share of starting spread |
+| --- | --- | --- | --- | --- |
+| 500+ | Basketball Index reference | — | −1.11 to +0.84 | −61% to +46% |
+| 500+ | Legacy | 0.00 to +0.10 | −7.00 to +6.30 | −54% to +49% |
+| 500+ | 94 inputs | 0.00 to +0.09 | −4.60 to +4.00 | −42% to +36% |
+| 1,500+ | Basketball Index reference | — | −1.07 to +0.86 | −54% to +44% |
+| 1,500+ | Legacy | 0.00 to +0.10 | −8.50 to +7.67 | −65% to +59% |
+| 1,500+ | 94 inputs | 0.00 to 0.00 | −5.30 to +4.90 | −45% to +42% |
+
+In the original November–October replay with season draws on, median overall movement at ages 27–30 was **−0.65 legacy** and **−0.20 inputs** for the 1,500+ minute sample. The pooled 500+ minute sample was flat in both, reflecting the eligibility gap and the spread around the healthy forecast. The historical Basketball Index scores also reflect role, health and measurement changes.
+
+### What changed in the game
+
+- The learning boost is strongest through age 22 and tapers by age 24. Prospects with recorded skill ceilings keep their separate learning runway.
+- Aging phases in for offensive execution after 25½, athletic ratings mostly after 28½ and other defensive ratings after 29½. The decline steepens after 32. Passing reads and scheme knowledge retain their age protection.
+- One draw per player and July–June season affects several ratings together. It has less influence on conditioning, certain reads, weaker roles and prospects with defined skill ceilings. The effects of previous draws fade over two seasons to contain long-term drift. The monthly noise is smaller for players without defined skill ceilings. The healthy outlook uses the same aging and learning curves and excludes both sources of random change.
+- Gains taper as a hidden rating approaches the upper end. Starting card scores matched for all 671 players in both rating sets. A three-year fixed-roster replay reproduced the same final traits and scores in both modes, and the 94-input development deltas also matched. Across the 182-player test, no final trait or input grade newly ended at 100.
+- A fixed-roster health replay through the current injury model produced similar age medians to the healthy replay at seed 17. It held roles and minutes fixed.
+
+### Validation
+
+- The 1,230-game real-stat scorecard, run with starting ratings and real minutes, was byte-for-byte identical before and after in each rating set. Both met 18 of 18 league targets. Ratings can already differ by opening night in a live save if offseason development ran.
+- Core suite passed with 330 tests run and 2 skipped. The separate ratings model, outlook and coverage check passed all 20 tests.
+- The requested three development modules ran 15 tests. One prospect assertion still expects the old −0.12 monthly loss floor. It passes on the baseline. A separate check of all 75 combinations in that test preserved the staff, injury and minutes ordering with the tuned model.
+- The additional prospect learning and talent balance check ran 14 tests. The old monthly loss floor and eight exact outputs from the old development formula failed. Both affected learning tests passed when replayed with the baseline formula.
+- Event generation plus rating writeback on the full roster took a median of 0.25 → 0.33 seconds in legacy and 0.82 → 0.86 seconds in inputs. This measures the monthly development step.
+
+**Resume state.** Waiting on the full suite and the frozen-rating betting-odds check. Comparison detail, replay scripts and logs are in `output/dev-growth-vs-bbi/`. The paired scripts substitute only the old monthly formula in the same process to keep concurrent staff and simulation work out of the comparison.
+
+## Coordinator review (Claude, 2026-11-19)
+
+- **Accepted.** The aging curve, youth learning boost, top-of-scale taper and fading season draw are all accepted.
+- **Process slip (Claude's).** The health.py part of this work was swept into Claude's coaching commit 5b6812c
+  (23:18, Nov 17) while it was still in progress, so it reached main before review. Reviewed now; nothing lost.
+- **User decision: about two-thirds of Basketball Index's year-to-year spread.** Part of the real spread is
+  measurement noise and role change, not ability. The season draw is now 0.47 for the 94-input ratings and 0.36 for
+  the older trait set. The older set needs a smaller draw because the 94-input route compresses changes when it
+  re-derives traits.
+- **Measured** with one July–June season, draw on vs off, 182-player sample, 6 seeds. The middle 80% of the draw's
+  effect on overall, as a share of the starting spread:
+
+  | Minutes | Target (two-thirds of Basketball Index) | Older ratings (0.36) | 94-input ratings (0.47) |
+  | --- | --- | --- | --- |
+  | 500+ | −41% to +31% | −35% to +32% | −34% to +29% |
+  | 1,500+ | −36% to +29% | −37% to +33% | −41% to +34% |
+
+- **Bug found and fixed in review.** Simulating a playoff round in one call and day by day gave slightly different
+  development. Cause: the head-coach reputation calibration (`staff.apply_head_coach_reputation`) re-ran on every
+  save load and kept nudging the coach's ratings. Development now reads the save's head coach (coaching overhaul),
+  so that drift mattered. It now calibrates once.
+- **Stale tests updated.**
+  - The old 0.12 monthly cap was replaced by aging-curve and draw bounds in test_foundation,
+    test_prospect_development and test_prospect_learning.
+  - The pinned monthly references were recaptured from the new formula.

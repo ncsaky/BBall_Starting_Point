@@ -1510,6 +1510,7 @@ def team_assets_payload(canonical: dict[str, Any], save_path: Path, team_query: 
                 "ratings": attrs,
                 "trade_value": round(market_trade_target_value(player, valuation), 2),
                 "health_risk": round(float(valuation.get("health_risk") or 0), 1),
+                "injury_body": injury_body_compact(active, player, health.get(player["id"])),
                 "upside_remaining": round(max(0.0, min(5.0, float(valuation.get("development_upside") or 0) / 22.0 * 5.0)), 1),
             }
         )
@@ -1696,6 +1697,13 @@ def injury_body_map(active: dict[str, Any], player: dict[str, Any], state: dict[
         return body_risk_map(active, player, state)
     except (KeyError, TypeError, ValueError):
         return None
+
+
+def injury_body_compact(active: dict[str, Any], player: dict[str, Any], state: dict[str, Any] | None = None,
+                        highlight: str | None = None) -> dict[str, Any] | None:
+    """Table-sized body map (injury risk shown as a figure, not a ring)."""
+    from .injury_model import compact_body_map
+    return compact_body_map(injury_body_map(active, player, state), highlight)
 
 
 def player_card_payload(canonical: dict[str, Any], save_path: Path, player_id: str) -> dict[str, Any]:
@@ -1923,6 +1931,7 @@ def player_finder_payload(canonical: dict[str, Any], save_path: Path) -> dict[st
             "name": player.get("name"),
             "headshot_url": player.get("headshot_url"),
             "health_risk": round(float(valuation["health_risk"]), 1) if valuation.get("health_risk") is not None else None,
+            "injury_body": injury_body_compact(active, player, health.get(player["id"])),
             "upside_remaining": round(max(0.0, min(5.0, float(valuation["development_upside"]) / 22.0 * 5.0)), 1) if valuation.get("development_upside") is not None else None,
             "team_id": team_id,
             "team_abbrev": teams.get(team_id, {}).get("abbrev", "FA") if team_id else "FA",
@@ -2347,7 +2356,9 @@ def weekly_efficiency_events(active: dict[str, Any], save: dict[str, Any], save_
         if risk is None:
             risk = values.get(pid, {}).get("health_risk")
             risk_source = "Current health risk"
-        common = {"player_name": players.get(pid, {}).get("name", pid), "body_area": str(injury.get("body_area") or "injury").replace("_", " "), "expected_games_missed": injury.get("expected_games_missed"), "health_risk": risk, "risk_label": risk_source, "minutes_lost": round(minutes, 1), "distribution": sorted(distribution, key=lambda r: -r["minutes"]), "distribution_note": "Observed average minutes gained in the first games during the absence" if before_days and during_days else "Minute redistribution is not yet available", "injury_date": start}
+        from .injury_model import event_part
+        common = {"player_name": players.get(pid, {}).get("name", pid), "body_area": str(injury.get("body_area") or "injury").replace("_", " "), "expected_games_missed": injury.get("expected_games_missed"), "health_risk": risk, "risk_label": risk_source,
+                  "injury_body": injury_body_compact(active, players[pid], None, event_part(injury)) if pid in players else None, "minutes_lost": round(minutes, 1), "distribution": sorted(distribution, key=lambda r: -r["minutes"]), "distribution_note": "Observed average minutes gained in the first games during the absence" if before_days and during_days else "Minute redistribution is not yet available", "injury_date": start}
         events.append({**common, "id": injury["id"], "date": start, "kind": "injury", "color": "red", "title": f"{common['player_name']} injured"})
         if returned and returned <= today:
             events.append({**common, "id": injury["id"] + "-return", "date": returned, "kind": "injury_return", "color": "green", "title": f"{common['player_name']} returned to the lineup"})
@@ -3178,6 +3189,7 @@ def free_agency_room_payload(
                 "fta_per_game": round(float(totals.get("fta") or 0.0) / divisor, 1) if totals else 0.0,
                 "ft_pct": round(float(totals.get("ftm") or 0.0) / max(1.0, float(totals.get("fta") or 0.0)) * 100.0, 1) if totals else 0.0,
                 "health_risk": round(float(valuation.get("health_risk") or 0.0), 1),
+                "injury_body": injury_body_compact(active, player),
                 "upside_remaining": round(max(0.0, min(5.0, float(valuation.get("development_upside") or 0.0) / 22.0 * 5.0)), 1),
                 "trade_value": round(market_trade_target_value(player, valuation), 1),
                 "ask_millions": ask,
@@ -4116,6 +4128,7 @@ def enhance_trade_candidate(
                         "overall": attrs.get("overall"), "ratings": attrs,
                         "upside_remaining": round(max(0.0, min(5.0, float(valuation.get("development_upside") or 0) / 22.0 * 5.0)), 1),
                         "health_risk": round(float(valuation.get("health_risk") or 0), 1),
+                        "injury_body": injury_body_compact(canonical, player, context["health"].get(asset_id)),
                         "health": health_label(context["health"].get(asset_id), save.get("state", {}).get("current_date")),
                         "contract": contract_summary(contract, active_season),
                         "contract_terms": block_contract_terms(contract, active_season),
