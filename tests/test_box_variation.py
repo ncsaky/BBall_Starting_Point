@@ -45,8 +45,8 @@ class BoxVariationTests(unittest.TestCase):
         a = [r['fgm'] / r['fga'] for r in old]
         b = [r['fgm'] / r['fga'] for r in new]
         self.assertGreater(statistics.pstdev(b), statistics.pstdev(a) * 1.1)
-        # Team FG% spread close to the NBA's ~.05 per game.
-        self.assertTrue(.04 < statistics.pstdev(b) < .06, statistics.pstdev(b))
+        # Team FG% spread close to the NBA's .059 per game (2025-26 xPoints game database, 2,460 team-games).
+        self.assertTrue(.050 < statistics.pstdev(b) < .068, statistics.pstdev(b))
         # The pre-variation split ignores possessions (its attempts imply ~6 more possessions than were played), so
         # its FG% is not a reference (2026-11-17). Instead the varied box must stay consistent with the game's real
         # possessions: attempts + 0.44 FTA - offensive rebounds + turnovers close to the engine's count.

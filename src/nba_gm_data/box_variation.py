@@ -23,7 +23,7 @@ def missed_attempts(rng, makes, probability):
     return sum(int(math.log(max(1e-12, rng.random())) / math.log(1 - probability)) for _ in range(makes))
 
 
-MISS_FILL = 0.7
+MISS_FILL = 0.82  # team FG% game-to-game sd ~.059, the 2025-26 NBA's (xPoints game database, 2,460 team-games)
 PLAYER_REBOUND_SHARE = 0.92  # fitted 2026-11-17: player rebounds per 36 bias +0.67 -> +0.13 (real-minutes replay)
 
 
@@ -93,8 +93,11 @@ def vary_box_score(canonical, groups, team_lines, feature_groups, seed):
         misses = [p['fga'] - p['fg3a'] - (p['fgm'] - p['fg3m']) for p in lines]
         ids = [p['player_id'] for p in lines]
         # Fill MISS_FILL of the gap: the engine's whole game-to-game scoring luck would otherwise land on two-point
-        # misses alone (team FG% spread ~.074 vs the NBA's ~.05).
+        # misses alone (team FG% spread ~.074 vs the NBA's .059).
         wanted = max(0, round(sum(misses) + MISS_FILL * (target_fga - mandatory - sum(misses))))
+        # The opponent's rim protection still shows in the box after the fill: about +1.5 two-point misses against an elite
+        # rim protector, about -1.2 against a weak one (within the possession budget's slack).
+        wanted = max(0, wanted + round(rim * 2.0))
         if sum(misses) > wanted:
             misses = reduced_counts(misses, wanted, ids)
         elif sum(misses) < wanted:
