@@ -108,21 +108,20 @@ class FittedLineupChemistry(unittest.TestCase):
             else:
                 self.assertNotIn(term, self.fit[side])
 
-    def test_five_non_shooters_are_penalized_by_the_evidence_amount(self):
-        """Five non-shooters vs two: beyond what each player brings, the lineup gives up about the fitted amount more
-        per 100 possessions at the defensive end (three extra non-shooters x the per-player target)."""
-        row = self.decisions["defense:non_shooters_beyond_2"]
+    def test_five_non_shooters_are_penalized_within_the_evidence(self):
+        """Five non-shooters vs two: what the game charges beyond the players' own ratings (its built-in curvature plus
+        this fit) sits inside the real-lineup evidence's 95% range, at both ends of the floor."""
         five = lineup_fit_effect(lineup(*[NON_SHOOTER] * 5))
         two = lineup_fit_effect(lineup(*[NON_SHOOTER] * 2, *[SHOOTER] * 3))
-        added = five["defense"] - two["defense"]
-        self.assertAlmostEqual(added, 3 * self.fit["defense"].get("non_shooters_beyond_2", 0.0), places=3)
-        if row["adopted"]:
-            # With the game's own (near-zero) curvature, the total lands on the evidence target: ~1 point per extra
-            # non-shooter, i.e. ~3 points per 100 possessions for a five-non-shooter lineup.
-            total_per_extra = added / 3 + row["game_before"]
-            self.assertAlmostEqual(total_per_extra, row["target_per_100"], places=2)
-            self.assertGreater(row["target_per_100"], 0.3)
-            self.assertLess(row["target_per_100"], 3.0)
+        for side in ("offense", "defense"):
+            row = self.decisions[f"{side}:non_shooters_beyond_2"]
+            added = (five[side] - two[side]) / 3  # per extra non-shooter, from the fit term
+            self.assertAlmostEqual(added, self.fit[side].get("non_shooters_beyond_2", 0.0), places=3)
+            game_total = row["game_before"] + added  # points per 100 per extra non-shooter, game after the change
+            share = self.fit["rule"]["possession_share"]
+            low = (row["evidence"] - 2 * row["se"]) * share
+            high = (row["evidence"] + 2 * row["se"]) * share
+            self.assertTrue(low <= game_total <= high, f"{side}: game {game_total:+.2f} outside evidence {low:+.2f}..{high:+.2f}")
 
     def test_shooters_matter_more_next_to_a_creator(self):
         row = self.decisions["offense:creator_x_shooters"]
@@ -144,7 +143,10 @@ class FittedLineupChemistry(unittest.TestCase):
             ({"id": f"s{i}", "position": "SF"}, {"spacing": 80.0, "usage": 60.0}, 48.0) for i in range(4)]
         bad, good = lineup_fit_features(bigs), lineup_fit_features(spaced)
         self.assertGreater(bad["lineup_fit_defense"], good["lineup_fit_defense"])  # five non-shooters give up more
-        self.assertGreater(good["lineup_fit_offense"], 0.0)  # a creator with four shooters around him
+        # The all-shooter unit: its fifth shooter adds less than the sum of the players says.
+        expected = sum(self.fit["offense"].get(t, 0.0) * ((1.0 if t == "five_shooters" else 5 - self.fit["creator_shooters_mean"])
+                                                          - self.fit["league_mean"].get(t, 0.0)) for t in ("five_shooters", "creator_x_shooters"))
+        self.assertAlmostEqual(good["lineup_fit_offense"], expected, places=3)
 
     def test_rotation_ratios_are_measured(self):
         for term, ratio in self.fit["rotation_ratio"].items():

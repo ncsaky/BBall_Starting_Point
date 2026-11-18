@@ -408,9 +408,12 @@ def per100(field: str, side: str) -> Callable[[dict[str, Any]], float | None]:
 
 
 # ----------------------------------------------------------------------------------------------- engine comparison
-def engine_lineup_ratings(lineups: list[dict[str, Any]], cache: Path | None) -> dict[str, list[float]]:
-    """The game's expected offensive/defensive rating (neutral floor, league-average opponent) for each real lineup."""
+def engine_lineup_ratings(lineups: list[dict[str, Any]], cache: Path | None, with_fit: bool = False) -> dict[str, list[float]]:
+    """The game's expected offensive/defensive rating (neutral floor, league-average opponent) for each real lineup.
+    with_fit=False measures the game without the lineup fit (the "before" the fit is calibrated against)."""
     os.environ.setdefault("NBA_GM_RATINGS_MODEL", "inputs_v1")
+    if not with_fit:
+        os.environ["NBA_GM_LINEUP_FIT"] = "off"
     from nba_gm_data.sim import lineup_feature_vector, load_sim_context, neutral_off_rating
     canonical = load_sim_context(ROOT)["canonical"]
     players = {p["id"]: p for p in canonical["players"]}
@@ -433,6 +436,7 @@ def engine_lineup_ratings(lineups: list[dict[str, Any]], cache: Path | None) -> 
             average["offense_model_version"] = v["offense_model_version"]
             break
     ratings = {key: [neutral_off_rating(canonical, v, average), neutral_off_rating(canonical, average, v)] for key, v in features.items()}
+    os.environ.pop("NBA_GM_LINEUP_FIT", None)
     if cache:
         cache.parent.mkdir(parents=True, exist_ok=True)
         cache.write_text(json.dumps(ratings))
@@ -475,6 +479,108 @@ def team_expectation_check(lineups: list[dict[str, Any]]) -> list[dict[str, floa
     return rows
 
 
+# ------------------------------------------------------------------------------------------------- market check
+MARKET_TOLERANCE = 0.02  # points: the adopted terms together may not widen the game's average gap to the market by more
+
+
+def market_rows() -> list[dict[str, Any]]:
+    """Every 2025-26 regular-season game with a market line: the game's expected offensive ratings with the fit off
+    (real minutes, real availability), each rotation's fit flags, and the market's spread and total."""
+    os.environ["NBA_GM_LINEUP_FIT"] = "off"
+    os.environ.setdefault("NBA_GM_RATINGS_MODEL", "inputs_v1")
+    from nba_gm_data import sim
+    from nba_gm_data.lineup_fit import player_fit_flags
+    ctx = sim.load_sim_context(ROOT)
+    canonical = ctx["canonical"]
+    coaches = {r.team_id: r for r in sim.coach_ratings(canonical)}
+    teams = ctx["indices"]["teams_by_espn_id"]
+    rows = []
+    for game in ctx["schedule"]:
+        if str(game.get("phase", "regular")) not in ("regular", "None", ""):
+            continue
+        gid = str(game["externalGameId"])
+        odds = ctx["odds"].get(gid) or {}
+        line = (odds.get("spread") or {}).get("home_line")
+        total = (odds.get("total") or {}).get("line") or (odds.get("total") or {}).get("points")
+        if line is None:
+            continue
+        home, away = teams[str(game["homeTeamId"])], teams[str(game["awayTeamId"])]
+        side = {}
+        for team in (home, away):
+            pool = sim.game_player_pool(ctx, gid, team, "replay-real-minutes", game_date=game.get("gameDate"))
+            features = sim.game_team_features(ctx, canonical, team, pool, "replay-real-minutes")
+            entries = [(player_fit_flags(sim.health_adjusted_player_features(sim.player_feature_vector(canonical, item["player"]).features, item),
+                                         item["player"]), float(item.get("minutes") or 0.0)) for item in pool]
+            side[team["id"]] = (features, entries)
+        (hf, he), (af, ae) = side[home["id"]], side[away["id"]]
+        ch, ca = coaches.get(home["id"]), coaches.get(away["id"])
+        rows.append({"off_h": sim.neutral_off_rating(canonical, hf, af, ch, ca), "off_a": sim.neutral_off_rating(canonical, af, hf, ca, ch),
+                     "home_entries": he, "away_entries": ae, "market_margin": -float(line),
+                     "market_total": float(total) if total else None})
+    os.environ.pop("NBA_GM_LINEUP_FIT", None)
+    return rows
+
+
+def market_gaps(rows: list[dict[str, Any]], fit: dict[str, Any] | None) -> dict[str, float]:
+    """Mean absolute gap between the game's expected spread/total and the market's (constant offsets removed: the
+    game's home edge and scoring level are calibrated elsewhere), and how the fit's margin moves with the gap."""
+    from nba_gm_data.lineup_fit import lineup_fit_effect
+    poss = 101.5
+    margins, totals, deltas, gaps = [], [], [], []
+    for r in rows:
+        dh = lineup_fit_effect(r["home_entries"], coefficients=fit) if fit else {"offense": 0.0, "defense": 0.0}
+        da = lineup_fit_effect(r["away_entries"], coefficients=fit) if fit else {"offense": 0.0, "defense": 0.0}
+        oh = r["off_h"] + dh["offense"] + da["defense"]
+        oa = r["off_a"] + da["offense"] + dh["defense"]
+        base = (r["off_h"] - r["off_a"]) * poss / 100
+        margins.append(((oh - oa) * poss / 100, r["market_margin"]))
+        deltas.append((oh - oa) * poss / 100 - base)
+        gaps.append(r["market_margin"] - base)
+        if r["market_total"]:
+            totals.append(((oh + oa) * poss / 100, r["market_total"]))
+    m_off = statistics.fmean(m - k for m, k in margins)
+    t_off = statistics.fmean(t - k for t, k in totals)
+    return {"spread_gap": statistics.fmean(abs(m - k - m_off) for m, k in margins),
+            "total_gap": statistics.fmean(abs(t - k - t_off) for t, k in totals),
+            "corr_with_market_gap": statistics.correlation(deltas, gaps) if fit and statistics.pstdev(deltas) > 0 else 0.0}
+
+
+def market_gate(fit: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Keep the evidence-adopted terms only as a set that does not move the game away from the 2025-26 betting market:
+    while the set widens the spread or total gap by more than MARKET_TOLERANCE, drop the term whose removal narrows the
+    spread gap most. (The full odds test confirms the final set.)"""
+    rows = market_rows()
+    base = market_gaps(rows, None)
+    report = {"games": len(rows), "fit_off": base, "steps": []}
+    current = {**fit, "offense": dict(fit["offense"]), "defense": dict(fit["defense"])}
+    print(f"== market check on {len(rows)} games: fit off spread gap {base['spread_gap']:.3f}, total gap {base['total_gap']:.3f}")
+    for side in ("offense", "defense"):
+        for term in list(current[side]):
+            alone = {**current, "offense": {}, "defense": {}}
+            alone[side] = {term: current[side][term]}
+            g = market_gaps(rows, alone)
+            report[f"only {side}:{term}"] = g
+            print(f"   only {side}:{term:28s} spread {g['spread_gap'] - base['spread_gap']:+.3f}  total {g['total_gap'] - base['total_gap']:+.3f}"
+                  f"  correlation with the market gap {g['corr_with_market_gap']:+.3f}")
+    while current["offense"] or current["defense"]:
+        g = market_gaps(rows, current)
+        terms = [(s, t) for s in ("offense", "defense") for t in current[s]]
+        report["steps"].append({"terms": [f"{s}:{t}" for s, t in terms], **g})
+        print(f"   set {', '.join(t for _, t in terms):60s} spread {g['spread_gap'] - base['spread_gap']:+.3f}  total {g['total_gap'] - base['total_gap']:+.3f}")
+        if g["spread_gap"] - base["spread_gap"] <= MARKET_TOLERANCE and g["total_gap"] - base["total_gap"] <= MARKET_TOLERANCE:
+            break
+        best = None
+        for s, t in terms:
+            trial = {**current, "offense": dict(current["offense"]), "defense": dict(current["defense"])}
+            del trial[s][t]
+            spread = market_gaps(rows, trial)["spread_gap"] if trial["offense"] or trial["defense"] else base["spread_gap"]
+            if best is None or spread < best[0]:
+                best = (spread, s, t)
+        print(f"   -> drop {best[1]}:{best[2]}")
+        del current[best[1]][best[2]]
+    return current, report
+
+
 # ------------------------------------------------------------------------------------------------ adoption + write
 PRIOR_SD = 2.0  # prior spread of true non-additive effects, points per 100 xPoints possessions (shrinks noisy estimates)
 MIN_Z = 1.5     # an effect must stand at least this many standard errors from zero (actual or expected points)
@@ -488,8 +594,9 @@ def term_row(table: list[dict[str, Any]], name: str) -> dict[str, Any] | None:
 def write_fit(results: dict[str, Any], engine: dict[str, Any], team_check: dict[str, Any], league_mean: dict[str, float],
               creator_shooters_mean: float) -> None:
     """Adopt a term only if (1) it has the same sign when players are described by Basketball Index instead of by the
-    game's ratings, (2) it is at least MIN_Z standard errors from zero on actual or expected points, and (3) the
-    shrunk evidence differs from the game's current behaviour by MIN_GAP. The game adds the difference."""
+    game's ratings, (2) it is at least MIN_Z standard errors from zero on actual or expected points, (3) the shrunk
+    evidence differs from the game's current behaviour by MIN_GAP, and (4) the adopted set passes market_gate (it must not
+    move the game's 2025-26 team strengths away from the betting market). The game adds the difference."""
     bbi_path = REPORT_DIR / f"fit_report_bbi_players_{SHOOTER_Z:+.3f}.json"
     if not bbi_path.exists():
         raise SystemExit(f"run the Basketball Index description first: --flags bbi --boot 100 (expects {bbi_path.name})")
@@ -536,9 +643,20 @@ def write_fit(results: dict[str, Any], engine: dict[str, Any], team_check: dict[
         # Rotations: coaches stagger non-shooters and avoid all-shooter units less than chance would; the creator
         # slope term is centered within each team's creator minutes, so it carries no ratio.
         "rotation_ratio": {k: round(team_check[k]["ratio"], 4) for k in ENGINE_TERMS if k != "creator_x_shooters"},
-        "rule": {"prior_sd": PRIOR_SD, "min_z": MIN_Z, "min_gap": MIN_GAP, "possession_share": XPOINTS_POSSESSION_SHARE},
+        "rule": {"prior_sd": PRIOR_SD, "min_z": MIN_Z, "min_gap": MIN_GAP, "possession_share": XPOINTS_POSSESSION_SHARE,
+                 "market_tolerance": MARKET_TOLERANCE},
         "decisions": decisions,
     }
+    kept, market = market_gate(payload)
+    for key, row in decisions.items():
+        side, term = key.split(":")
+        row["evidence_adopted"] = row.pop("adopted")
+        row["kept_by_market_check"] = term in kept[side] if row["evidence_adopted"] else None
+        row["adopted"] = bool(row["evidence_adopted"] and row["kept_by_market_check"])
+        if not row["adopted"]:
+            row["added"] = 0.0
+    payload["offense"], payload["defense"] = kept["offense"], kept["defense"]
+    payload["market_check"] = market
     OUT.write_text(json.dumps(payload, indent=1) + "\n")
     print(f"wrote {OUT.relative_to(ROOT)}")
 
@@ -561,6 +679,7 @@ def main() -> int:
     ap.add_argument("--boot", type=int, default=100)
     ap.add_argument("--engine", action="store_true", help="also fit the game's own lineup ratings (loads the engine)")
     ap.add_argument("--engine-cache", default=None, help="reuse/write engine lineup ratings JSON")
+    ap.add_argument("--engine-with-fit", action="store_true", help="measure the game with the lineup fit on (after check)")
     ap.add_argument("--explorer", action="store_true", help="also fit the Lineup Explorer (stabilized) ratings")
     ap.add_argument("--cv", action="store_true", help="5-fold out-of-sample check")
     ap.add_argument("--sensitivity", action="store_true")
@@ -680,7 +799,7 @@ def main() -> int:
         if cache and cache.exists():
             ratings = json.loads(cache.read_text())
         else:
-            ratings = engine_lineup_ratings(lineups, cache)
+            ratings = engine_lineup_ratings(lineups, cache, with_fit=args.engine_with_fit)
         engine_lineups = []
         for l in lineups:
             key = "|".join(sorted(l["sim_ids"]))

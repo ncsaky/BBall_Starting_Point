@@ -2,16 +2,15 @@
 
 Fitted to real lineups by scripts/fit_lineup_fit.py (Basketball Index xPoints lineups, 2025-26, every player's own
 effect held fixed) and stored in data/canonical/lineup_fit.json. Only the *non-additive* part lives here. What each
-player adds on his own (his shooting, his defense) stays in the regular team features. Three effects passed the
-fit script's adoption rule (same sign whichever way players are described, clear of noise, and different from what the
-game already did):
+player adds on his own (his shooting, his defense) stays in the regular team features. Implemented terms (the fit file
+says which are switched on; see docs/agents/tasks/lineup-fit.md for the adoption rule and the market check):
 
-* creator_x_shooters (offense): each shooter on the floor is worth more when a ball-dominant creator is with him.
-  Measured as a change of slope: with a creator on the floor, each shooter above the league's usual number next to a
-  creator adds the coefficient and each one below it takes it away. A lineup without a creator gets nothing from this
-  term (what a creator is worth on his own belongs to his player ratings, which already carry it).
-* five_shooters (offense): the fifth shooter adds less than the fourth (all-shooter lineups get less than the sum).
-* non_shooters_beyond_2 (defense): every non-shooter beyond two costs points at the other end too.
+* five_shooters (offense, on): the fifth shooter adds less than the fourth (all-shooter lineups get less than the sum).
+* non_shooters_beyond_2 (defense, on): every non-shooter beyond two costs points at the other end too.
+* creator_x_shooters (offense, off: passed the lineup evidence but moved team strengths away from the betting market):
+  each shooter is worth more when a ball-dominant creator is with him. Counted as a change of slope: with a creator
+  on the floor, each shooter above the league's usual number beside a creator adds the coefficient and each one below
+  takes it away. A lineup without a creator gets nothing from it (a creator's own worth is in his player ratings).
 
 The game simulates a team-game from its whole rotation (minutes-weighted), not lineup by lineup. The terms are
 therefore *expected* values over the lineups the rotation produces: each player is on the floor for his share of the
