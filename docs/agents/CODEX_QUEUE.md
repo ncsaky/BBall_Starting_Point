@@ -6,7 +6,66 @@ Current priority (2026-11-17): the three "Ready now" tasks below. GUI tasks are 
 
 ---
 
-## Ready now (2026-11-18, evening): two read-only engine-vs-evidence comparisons, one fresh chat each
+## Ready now (2026-11-18, night): STAFF-LIFE and BBX-2, one fresh chat each
+
+Suggested settings: GPT-6.2 Sol, Medium. Claude is rebuilding the injury engine: do NOT edit src/nba_gm_data/health.py,
+sim.py, schema.py, or the health/injury functions in save.py, app_actions.py and gui/app.js. Don't poll long runs more
+than every 20-30 minutes.
+
+### STAFF-LIFE: staff age, change over time, retire, and a refilled coach pool
+
+```
+Read AGENTS.md, docs/agents/BOARD.md and docs/agents/tasks/coaching-overhaul.md (audit + user decisions) first. You own
+STAFF-LIFE; add a board row "in progress (Codex)". This is the lifecycle part of the coaching overhaul; Claude will later
+rewire the rating EFFECTS, so do not change how ratings affect games, development, injuries or scouting.
+
+BUILD (new module src/nba_gm_data/staff_lifecycle.py; edits to staff.py; one call from the season rollover):
+1. Every staff member gets an age and years of experience. Real staff: use experience/records from the existing sources
+   (data/research/coaches_espn_2026.json, staff_*_team_pages_2026.json) where present; otherwise seeded plausible values
+   by role (deterministic from save seed + person id). Generated staff likewise.
+2. Yearly change at season rollover: each skill and personality rating drifts by age and experience (younger staff tend
+   to improve, older staff decline; experience grows game-management-type skills), with seeded noise. Keep the 20-96
+   scale; no clipping at 100 issues (rule 3). Write the change log per person (season, rating deltas) so the GUI can
+   show it later.
+3. Retirement: probability rising with age (and after being fired late in a career). Retired staff leave the market.
+4. Pool refill each offseason: new generated candidates enter (young assistants, promoted coordinators becoming head
+   coach candidates), so the free-agent pool never runs dry and its quality distribution stays realistic (include some
+   strong candidates; today's best generated head coach is grade 76 vs top real coaches ~93).
+5. Reputation: a stored reputation that moves with results vs expectations (team wins vs pre-season expectation, playoff
+   success); job security follows reputation and results instead of staying static.
+6. Determinism: all randomness seeded from the save seed + season + person id; same save + seed = same result.
+
+HOOK: call your rollover function from save.age_staff_contracts (the season rollover step that already ages contracts).
+Keep that edit to a single call; do not touch other save.py functions.
+TESTS: new tests/test_staff_lifecycle.py (aging direction by age, retirement, pool refill keeps a healthy distribution,
+determinism, reputation moves with results). Run bash scripts/run_core_tests.sh and the staff tests in tests/test_foundation.py.
+REPORT: docs/agents/tasks/staff-life.md, plain language first. Board row to "review". Do not commit.
+```
+
+### BBX-2: tidy tables from the new raw Basketball Index captures
+
+```
+Read AGENTS.md, docs/agents/BOARD.md, docs/agents/tasks/bbx-tool-extract.md and docs/agents/tasks/bbi-full-capture.md.
+You own BBX-2; add a board row. Data only: do not edit src/ or tests/.
+
+Extend scripts/bbi_extract_tools.py (or add scripts/bbi_extract_captures.py) to turn these raw captures (git-ignored,
+under data/research/bbi/captures/) into documented, reproducible tables in data/research/bbi/tools/ (each <= ~5 MB,
+gzip larger CSVs), matching players to our ids (report match rates; never guess):
+- fanspo_tools/progression/bbi_progression_all.json.gz: per player-season x 164 measures (impact metrics EPM/RAPM/DRIP/
+  DPM/RAPTOR/BPM, talent grades, usage...) plus roles, age, minutes; keep the league distributions as a separate file.
+- fanspo_tools/playoff_talent/bbi_playoff_talent_3yr.json.gz: 3-year playoff windows x 386 measures.
+- fanspo_tools/lineup_explorer/bbi_lineup_explorer_2013_2026.json.gz: 61,037 lineups (players, minutes, ratings, role
+  mix, 24 talent grades).
+- fanspo_tools/xpoints/bbi_xpoints_lineups_2025_26.json.gz: per-team lineups with exact possessions and expected points.
+- tools/role_labs/bbi_role_labs.json.gz: per-player role entries and the model coefficients (document what fields mean
+  from the data and the saved Role Lab pages in captures/tools/).
+REPORT: append a "BBX-2" section to docs/agents/tasks/bbx-tool-extract.md, plain language first. Board row to "review".
+Do not commit.
+```
+
+---
+
+## Done: (2026-11-18, evening): two read-only engine-vs-evidence comparisons, one fresh chat each
 
 Suggested settings: GPT-6.2 Sol, Medium. Both READ-ONLY for src/ and data/canonical (Claude is working there). Scripts in
 scripts/research/, outputs in output/<task>/. Don't poll long runs more than every 20-30 minutes.
