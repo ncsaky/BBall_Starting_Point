@@ -84,5 +84,39 @@ class ReturnRampTests(unittest.TestCase):
         self.assertAlmostEqual(sum(item["minutes"] for item in out), 240.0, places=3)
 
 
+class BodyMapTests(unittest.TestCase):
+    """Player-card body map: per-part outlook straight from the sim's injury model (2026-11-19)."""
+
+    def league(self, history_events=()):
+        players = [{"id": f"p{i}", "team_id": "t", "age": 26, "height_inches": 79, "weight_lbs": 215, "position": "SF",
+                    "minutes_projection": 28.0} for i in range(40)]
+        return {"meta": {"current_date": "2027-01-15"}, "players": players, "traits": [],
+                "injury_events": list(history_events)}
+
+    def test_parts_compare_with_a_typical_rotation_player(self):
+        league = self.league()
+        heavy = im.body_risk_map(league, league["players"][0] | {"minutes_projection": 36.0})
+        light = im.body_risk_map(league, league["players"][0] | {"minutes_projection": 12.0, "prior_minutes": 0})
+        self.assertEqual({row["part"] for row in heavy["parts"]}, set(MODEL["parts"]))
+        self.assertGreater(heavy["expected_games_total"], light["expected_games_total"])
+        knee = next(row for row in heavy["parts"] if row["part"] == "knee")
+        self.assertGreater(knee["relative"], 1.0)   # more minutes than the 28-minute league -> above typical
+
+    def test_recent_injury_heats_that_part_and_current_injury_is_flagged(self):
+        event = {"id": "e1", "player_id": "p0", "start_date": "2026-12-20", "body_area": "knee"}
+        league = self.league([event])
+        body = im.body_risk_map(league, league["players"][0], {"current_injury_id": "e1"})
+        knee = next(row for row in body["parts"] if row["part"] == "knee")
+        self.assertTrue(knee["current"])          # older saves: part comes from the event's area
+        self.assertEqual(body["current_part"], "knee")
+        self.assertEqual(knee["recent_injuries"], 1)
+        self.assertGreater(knee["relative"], 1.1)
+
+    def test_benched_player_is_judged_at_his_normal_role(self):
+        self.assertEqual(im.role_minutes({"minutes_projection": 0.0, "prior_minutes": 2624.0}), 32.0)
+        self.assertEqual(im.role_minutes({"minutes_projection": 30.0, "prior_minutes": 820.0}), 30.0)
+        self.assertEqual(im.role_minutes({}), im.MIN_MINUTES_FOR_EXPOSURE)
+
+
 if __name__ == "__main__":
     unittest.main()

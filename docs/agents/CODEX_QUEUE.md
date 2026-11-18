@@ -606,6 +606,38 @@ Run: PYTHONPATH=src .venv/bin/python scripts/build_player_inputs.py, then the ne
 
 ---
 
+## ROT-SHAPE: AI coach rotation shape vs Basketball Index minutes projections (queued 2026-11-19)
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task ROT-SHAPE. Add a board row and mark it "in progress (Codex)".
+
+Goal: the AI coach's rotations are too flat. Compared with Basketball Index's 2026-27 healthy-rotation minutes
+(data/research/bbi/tools/minutes_players.json, local only: never commit it), the game's starting minutes targets
+(players' minutes_projection) give stars about 2 fewer minutes per game and back-of-rotation players about 7 more.
+Several deep-bench players get about 20 minutes against about 5 (Bruce Brown NYK, Mitchell Robinson BOS, Luke
+Kennard PHX, Jordan Poole NOP). Overall correlation is 0.81 over 329 matched players.
+
+Step 1 (measure, read-only): sim one regular season headlessly (canonical 2026-27 rosters, AI coaches for all 30 teams,
+2-3 seeds) and compare actual minutes per game played with healthy_rotation_mpg by Basketball Index rotation_role
+(Star / Key / Starter / Rot). Find where the flatness comes from: the starting minutes_projection, the coach's
+game-by-game minutes model, fatigue or foul handling, or blowout rest. Give file:line references.
+Step 2 (fix): tune the rotation shape where the cause lives so the role-group means land within about 1.5 minutes per
+game of Basketball Index. Keep the team total at 240 and keep realistic game-to-game variation (project rule 8: the
+user's rough targets still drive their own team). Do not change any player ratings. Do not copy Basketball Index
+minutes into the game as data; the shape must come from the coach model.
+
+Files you may touch: the minutes and rotation code you identify (likely sim.py and coach/rotation helpers), tests, and
+docs/agents/tasks/rot-shape.md. Do not touch health.py's monthly development code or injury_model.py.
+Acceptance: focused tests, both scorecards (calibration_report.py replay-real-minutes in inputs mode: 18/18 in range;
+validate-season-probabilities --runs 100: Brier and log loss not worse than 0.1960 / 0.5790), and the core tests
+(bash scripts/run_core_tests.sh). Report the before/after role-group table.
+
+When done: plain-language summary (TL;DR first) in docs/agents/tasks/rot-shape.md. Set the board row to "review". Do
+not commit.
+```
+
+---
+
 ## Parked (GUI, after the engine month or if Codex has spare usage)
 
 ### Q1: Three small GUI behavior fixes

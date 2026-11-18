@@ -311,3 +311,95 @@ def health_risk_scores(canonical: Mapping[str, Any], legacy_scores: Mapping[str,
     target = sorted(legacy_scores[pid] for pid in expected)
     n = len(target)
     return {pid: round(target[min(n - 1, max(0, int(round(r * (n - 1)))))], 3) for pid, r in final_rank.items()}
+
+
+# ---- Body map for the player card (2026-11-19) --------------------------------------------------------------------
+BODY_MAP_TRAITS = ("rim_pressure", "offensive_rebounding", "stamina_cardio")
+BODY_MAP_BASELINE_MPG = 20.0       # "typical rotation player" baseline: league players projected for 20+ minutes
+_BASELINE_CACHE: dict[tuple, dict[str, float]] = {}
+
+
+def _trait_lookup(canonical: Mapping[str, Any]) -> dict[str, dict[str, float]]:
+    traits: dict[str, dict[str, float]] = {}
+    for row in canonical.get("traits", []):
+        if row.get("trait_key") in BODY_MAP_TRAITS:
+            traits.setdefault(str(row["player_id"]), {})[row["trait_key"]] = float(row.get("value") or 50.0)
+    return traits
+
+
+def _games_by_part(model, path, player, traits, minutes, history, on) -> dict[str, float]:
+    hazards = part_hazards(model, player, traits, minutes, history, on)
+    return {part: 82.0 * LEAGUE_RATE_SCALE * h * _mean_games_out(path, part) for part, h in hazards.items()}
+
+
+def role_minutes(player: Mapping[str, Any]) -> float:
+    """Minutes a game the outlook assumes: the player's current role, or his normal role when the current target is
+    low (benched or injured), so the map describes his body rather than this week's rotation."""
+    current = float(player.get("minutes_projection") or 0.0)
+    normal = min(36.0, float(player.get("prior_minutes") or 0.0) / 82.0)
+    return round(max(MIN_MINUTES_FOR_EXPOSURE, current, normal), 1)
+
+
+def body_risk_map(canonical: Mapping[str, Any], player: Mapping[str, Any], health_state: Mapping[str, Any] | None = None,
+                  root: str | Path | None = None) -> dict[str, Any] | None:
+    """Per-body-part injury outlook for the player card, straight from the injury model the sim uses.
+
+    For each part: games this player is expected to miss per 82 team games from injuries there (the sim's own
+    per-game chance at his projected minutes x the real recovery-time distribution), and how that compares with a
+    typical rotation player. A current injury is flagged on its part."""
+    model = load_model(root)
+    if not model:
+        return None
+    root = Path(root) if root is not None else Path(__file__).resolve().parents[2]
+    path = str(root / MODEL_FILE)
+    on = _parse((canonical.get("meta") or {}).get("current_date")) or date(2026, 10, 20)
+    events = canonical.get("injury_events", [])
+    traits = _trait_lookup(canonical)
+    key = (path, on.isoformat(), len(canonical.get("players", [])), len(events))
+    baseline = _BASELINE_CACHE.get(key)
+    if baseline is None:
+        by_player: dict[str, list] = {}
+        for event in events:
+            if event.get("player_id"):
+                by_player.setdefault(event["player_id"], []).append(event)
+        totals: dict[str, float] = {}
+        count = 0
+        for other in canonical.get("players", []):
+            minutes = float(other.get("minutes_projection") or 0.0)
+            if not other.get("team_id") or minutes < BODY_MAP_BASELINE_MPG:
+                continue
+            pid = str(other.get("id"))
+            games = _games_by_part(model, path, other, traits.get(pid, {}), minutes,
+                                   player_history(model, pid, by_player.get(pid, [])), on)
+            for part, value in games.items():
+                totals[part] = totals.get(part, 0.0) + value
+            count += 1
+        baseline = {part: value / max(1, count) for part, value in totals.items()}
+        if len(_BASELINE_CACHE) > 8:
+            _BASELINE_CACHE.clear()
+        _BASELINE_CACHE[key] = baseline
+    pid = str(player.get("id"))
+    minutes = role_minutes(player)
+    history = player_history(model, pid, [e for e in events if e.get("player_id") == pid])
+    games = _games_by_part(model, path, player, traits.get(pid, {}), minutes, history, on)
+    state = health_state or {}
+    current = ""
+    if state.get("current_injury_id"):
+        current = str(state.get("current_injury_part") or "")
+        if not current:   # injuries seeded from real data carry an area on the event, not a part on the state
+            event = next((e for e in events if e.get("id") == state.get("current_injury_id")), None)
+            current = event_part(event) if event else ""
+    recent = {}
+    for d, part in history:
+        if d <= on and (on - d).days <= 3 * 365:
+            recent[part] = recent.get(part, 0) + 1
+    parts = []
+    for part, value in sorted(games.items(), key=lambda kv: -kv[1]):
+        base = baseline.get(part) or 0.0
+        parts.append({"part": part, "label": PART_LABELS.get(part, part.title()), "expected_games": round(value, 2),
+                      "typical_games": round(base, 2), "relative": round(value / base, 2) if base > 0 else None,
+                      "recent_injuries": recent.get(part, 0), "current": part == current})
+    return {"parts": parts, "expected_games_total": round(sum(games.values()), 1),
+            "typical_games_total": round(sum(baseline.values()), 1), "minutes_basis": round(minutes, 1),
+            "current_part": current or None,
+            "current_label": (state.get("current_injury_label") or PART_LABELS.get(current, current)) if current else None}

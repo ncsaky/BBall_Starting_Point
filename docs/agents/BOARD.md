@@ -2,7 +2,7 @@
 
 Single source of truth for who is doing what. Rules are in `/AGENTS.md`. Coordinator: **Claude Code**. Worker: **Codex** (limited usage). Update your row when you start, finish, or get blocked.
 
-_Last updated: 2026-11-16 by Claude Code (handover from Codex)._
+_Last updated: 2026-11-19 by Claude Code (overnight session)._
 
 ## Where things stand (handover snapshot, 2026-11-16)
 
@@ -23,9 +23,14 @@ GUI wishlist work is parked.
 
 | Task | Owner | Status | Files it may touch |
 |---|---|---|---|
+| BODYMAP Injury body map on the player card | Claude | **done** (2026-11-19): mini figure in the evidence row; new "Health & Injury Outlook" card page with front/back hotspots from the sim's per-body-part model; current injury flagged (older saves via the event's area). | `src/nba_gm_data/injury_model.py`, `app_actions.py`, `gui/app.js`, `gui/interface.css`, `tests/test_injury_model.py` |
+| HEATMAPS Playmaking / on-ball D / help D court charts | Claude | **awaiting user decision** (route A, with a small engine change). Design: `docs/agents/tasks/court-heatmaps-design.md` | (not started) |
+| ROT-SHAPE AI coach rotation shape vs Basketball Index minutes | Codex | **queued** (prompt in CODEX_QUEUE.md). Stars about 2 minutes a game low, back-of-rotation players about 7 high. | see queue |
+| JS-TESTS Eight stale browser-interface tests | unassigned | **open**: these fail on the committed code too (stale style versions, renamed helpers); not in the Python suite. | `tests/*.test.cjs` |
 | STAFF-LIFE Staff lifecycle | Codex | **done** (reviewed and committed 2026-11-18): staff age, experience, rating drift, retirement, reputation, refilled pool. Rating effects unchanged (coaching overhaul next). | `src/nba_gm_data/staff_lifecycle.py`, `src/nba_gm_data/staff.py`, `src/nba_gm_data/save.py` (`age_staff_contracts` hook only), `tests/test_staff_lifecycle.py`, `docs/agents/tasks/staff-life.md` |
 | INJ Injuries and return to play vs Basketball Index | Codex | **review**. Two complete 82-game runs hit 565 injuries by early February. Median absence was 3 days vs 6, and 95.7% returned with zero rust. Report includes role and age comparisons, repeat injuries, and parameter trials. Research only. | `docs/agents/tasks/inj-injuries-vs-bbi.md`, `output/inj-injuries-vs-bbi/` |
 | DEV Player growth, aging and staff effects vs Basketball Index | Codex | **review**. Both rating sets decline later and vary less than Basketball Index. Report includes age-by-minutes tables, coach comparisons and in-memory tuning trials. 15 focused tests passed. Research only. | `docs/agents/tasks/dev-growth-vs-bbi.md`, `output/dev-growth-vs-bbi/` |
+| DEV-TUNE Development curve and season-to-season spread | Codex | **in progress (Codex)** | `src/nba_gm_data/health.py` (monthly rating delta and tuning only), `src/nba_gm_data/development_outlook.py` (if needed), `docs/agents/tasks/dev-growth-vs-bbi.md`, `output/dev-growth-vs-bbi/` |
 | BBX Basketball Index saved tool extraction | Codex | **done** (reviewed and committed 2026-11-18). Growth Curve, Injury Tracker and 2026-27 Minutes/Talent extracted to data/research/bbi/tools/ (25 MB, reproducible); Role Labs pages held no player rows. | `scripts/bbi_extract_tools.py`, `data/research/bbi/tools/`, `docs/agents/tasks/bbx-tool-extract.md` |
 | BBX-2 Basketball Index captured tables | Codex | **done** (reviewed and committed 2026-11-18). | `scripts/bbi_extract_captures.py`, `data/research/bbi/tools/`, `docs/agents/tasks/bbx-tool-extract.md` |
 | PRO-2 Rookie technique for real 2026 entrants | Codex | **done** (reviewed and committed 2026-11-18). Peterson 15th -> 83rd, Boozer 64th -> 255th; replay 18/18; odds mixed (spread error 5.22 -> 5.03, Brier 0.1950 -> 0.1954). Involvement shift still open. | `scripts/build_player_inputs.py`, `data/canonical/player_inputs_2026_27.json(.gz)`, `tests/test_build_player_inputs.py`, `docs/agents/tasks/pro-prospect-inputs.md` |

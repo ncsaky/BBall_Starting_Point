@@ -1689,6 +1689,15 @@ def prospect_card_payload(canonical: dict[str, Any], save_path: Path, prospect_i
     }
 
 
+def injury_body_map(active: dict[str, Any], player: dict[str, Any], state: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Per-body-part injury outlook (player card body map); never blocks the card."""
+    from .injury_model import body_risk_map
+    try:
+        return body_risk_map(active, player, state)
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
 def player_card_payload(canonical: dict[str, Any], save_path: Path, player_id: str) -> dict[str, Any]:
     """Return presentation evidence for a player without creating a second rules path."""
     context = dashboard_read_context(canonical, save_path)
@@ -1815,6 +1824,7 @@ def player_card_payload(canonical: dict[str, Any], save_path: Path, player_id: s
         "rating_league_averages": display_rating_averages(active),
         "spatial_profile": player_spatial_profile(active, player, include_chart=True),
         "health_risk": round(float(valuation.get("health_risk") or 0.0), 1),
+        "injury_body_map": injury_body_map(active, player, next((row for row in save.get("health_states", []) if str(row.get("player_id")) == player_id), None)),
         "upside_remaining": round(display_upside, 1),
         "decline_watch": decline_watch_value(active, player, development_signal),
         "trade_value": round(market_trade_target_value(player, valuation), 1),

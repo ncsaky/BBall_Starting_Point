@@ -7521,11 +7521,111 @@ function playerCardEvidence(detail) {
       : `<div class="player-evidence-ring prospect-upside-locked" aria-label="Prospect upside locked: unlock at 100% scouting" title="Prospect upside: the gap between your scouts' estimate of this prospect's potential and his current level, on a 0-5 scale. Unlocks at 100% scouting."><span>${prospectLockIcon()}</span><div><b>Prospect upside</b><small>Locked · 100% scouting</small></div></div>`;
     return `<div class="approved-player-evidence"><div class="player-evidence-rings">${playerEvidenceRing("Scouted", detail.scouting_coverage, 100, "#668ea7", "%")}${upside}<div class="prospect-rank-range" aria-label="Projected ranking range ${escapeAttr(range)}"><b>Projected rank</b><strong>${escapeHtml(range)}</strong><small>Draft range</small></div></div></div>`;
   }
-  const health = clampNumber(Number(detail.health_risk || 0), 0, 10);
   const upside = clampNumber(Number(detail.upside_remaining || 0), 0, 5);
-  const healthColor = health >= 7 ? "#e04d55" : health >= 4 ? "#bd5b5d" : "#8e6263";
   const upsideColor = playerUpsideColor(upside);
-  return `<div class="approved-player-evidence"><div class="player-evidence-rings">${playerEvidenceRing("Health risk", health, 10, healthColor, "/10")}${declineWatchApplies(detail) ? `<div class="player-evidence-ring player-decline-watch" title="${escapeAttr(declineWatchDetail(detail.decline_watch))}" aria-label="${escapeAttr(declineWatchDetail(detail.decline_watch))}"><span><strong>${Number(detail.decline_watch.per_year).toFixed(1)}</strong></span><div><b>Decline watch</b><small>per rating, next year</small></div></div>` : playerEvidenceRing("Growth runway", upside, 5, upsideColor, " / 5")}${playerEvidenceRing("Trade Value", detail.trade_value, 100, "#668ea7")}</div></div>`;
+  return `<div class="approved-player-evidence"><div class="player-evidence-rings">${injuryBodyMini(detail)}${declineWatchApplies(detail) ? `<div class="player-evidence-ring player-decline-watch" title="${escapeAttr(declineWatchDetail(detail.decline_watch))}" aria-label="${escapeAttr(declineWatchDetail(detail.decline_watch))}"><span><strong>${Number(detail.decline_watch.per_year).toFixed(1)}</strong></span><div><b>Decline watch</b><small>per rating, next year</small></div></div>` : playerEvidenceRing("Growth runway", upside, 5, upsideColor, " / 5")}${playerEvidenceRing("Trade Value", detail.trade_value, 100, "#668ea7")}</div></div>`;
+}
+
+// ---- Injury body map (2026-11-19): per-body-part outlook from the injury model the sim uses ----
+const INJURY_BODY_SPOTS = {
+  front: {
+    head: [[60, 20]], shoulder: [[33, 50], [87, 50]], wrist: [[19, 148], [101, 148]], hand: [[16, 165], [104, 165]],
+    thumb: [[22, 163], [98, 163]], hip: [[40, 136], [80, 136]], groin: [[60, 146]], quadriceps: [[48, 172], [72, 172]],
+    knee: [[47, 203], [73, 203]], ankle: [[47, 243], [73, 243]], foot: [[46, 252], [74, 252]], toe: [[39, 255], [81, 255]],
+  },
+  back: {
+    shoulder: [[33, 50], [87, 50]], back: [[60, 108]], hamstring: [[48, 176], [72, 176]], calf: [[47, 220], [73, 220]],
+    achilles: [[47, 240], [73, 240]],
+  },
+};
+const INJURY_RISK_STOPS = [[0.6, [79, 191, 134]], [1.0, [222, 220, 204]], [1.3, [242, 193, 78]], [1.7, [239, 138, 58]], [2.3, [216, 67, 75]]];
+
+function injuryRiskColor(relative) {
+  const value = Number.isFinite(relative) ? relative : 1;
+  if (value <= INJURY_RISK_STOPS[0][0]) return `rgb(${INJURY_RISK_STOPS[0][1].join(",")})`;
+  for (let index = 1; index < INJURY_RISK_STOPS.length; index += 1) {
+    const [high, highColor] = INJURY_RISK_STOPS[index];
+    const [low, lowColor] = INJURY_RISK_STOPS[index - 1];
+    if (value <= high) {
+      const t = (value - low) / (high - low);
+      return `rgb(${lowColor.map((c, i) => Math.round(c + (highColor[i] - c) * t)).join(",")})`;
+    }
+  }
+  return `rgb(${INJURY_RISK_STOPS[INJURY_RISK_STOPS.length - 1][1].join(",")})`;
+}
+
+function injuryPartTitle(part, map) {
+  const typical = Number(part.typical_games || 0);
+  const relative = part.relative == null ? "" : ` (${Math.round(part.relative * 100)}% of a typical rotation player's ${typical.toFixed(1)})`;
+  const history = part.recent_injuries ? ` · ${part.recent_injuries} injur${part.recent_injuries === 1 ? "y" : "ies"} here in the last 3 years` : "";
+  const current = part.current ? ` · CURRENT INJURY${map.current_label ? `: ${map.current_label}` : ""}` : "";
+  return `${part.label}: about ${Number(part.expected_games).toFixed(1)} games a season expected to be missed${relative}${history}${current}`;
+}
+
+function injuryBodyFigure(map, view, options = {}) {
+  const parts = Object.fromEntries((map?.parts || []).map(part => [part.part, part]));
+  const overall = map && map.typical_games_total ? map.expected_games_total / map.typical_games_total : 1;
+  const tone = injuryRiskColor(overall);
+  const limb = (x1, y1, x2, y2, w) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="${w}"/>`;
+  const silhouette = `<g class="injury-body-shape" style="--injury-body-tone:${tone}">
+    <circle cx="60" cy="20" r="13"/><rect x="54" y="31" width="12" height="11" rx="3"/>
+    <path d="M35 45 Q60 38 85 45 L87 92 Q83 116 81 128 L83 146 L37 146 L39 128 Q37 116 33 92 Z"/>
+    <g class="injury-body-limbs">${limb(33, 51, 24, 106, 12)}${limb(87, 51, 96, 106, 12)}${limb(24, 106, 18, 152, 10)}${limb(96, 106, 102, 152, 10)}
+    ${limb(48, 144, 47, 205, 18)}${limb(72, 144, 73, 205, 18)}${limb(47, 205, 47, 243, 13)}${limb(73, 205, 73, 243, 13)}</g>
+    <circle cx="16" cy="163" r="6"/><circle cx="104" cy="163" r="6"/>
+    <ellipse cx="44" cy="251" rx="9" ry="5"/><ellipse cx="76" cy="251" rx="9" ry="5"/>
+    ${view === "back" ? `<path class="injury-body-spine" d="M60 46 L60 140"/>` : ""}
+  </g>`;
+  const spots = Object.entries(INJURY_BODY_SPOTS[view]).flatMap(([key, points]) => {
+    const part = parts[key];
+    if (!part) return [];
+    const games = Math.max(0, Number(part.expected_games || 0));
+    const relative = Number(part.relative ?? 1);
+    const radius = Math.max(options.mini ? 6 : 4, Math.min(options.mini ? 20 : 16, 4 + 4.2 * Math.sqrt(games))) * (options.mini ? 1.2 : 1);
+    const color = part.current ? "rgb(155,16,48)" : injuryRiskColor(relative);
+    const strength = part.current ? 0.95 : Math.min(0.9, 0.3 + 0.55 * Math.min(1, Math.abs(relative - 1) / 0.8));
+    const title = escapeHtml(injuryPartTitle(part, map));
+    return points.map(([x, y]) => `<g class="injury-spot${part.current ? " is-current" : ""}" data-injury-part="${escapeAttr(key)}"><title>${title}</title>
+      <g style="opacity:${strength.toFixed(2)}">${[[1, 0.28], [0.68, 0.5], [0.38, 0.95]].map(([scale, alpha]) => `<circle cx="${x}" cy="${y}" r="${(radius * scale).toFixed(1)}" fill="${color}" fill-opacity="${alpha}"/>`).join("")}</g>
+      ${part.current ? `<circle class="injury-current-ring" cx="${x}" cy="${y}" r="${(radius * 0.7).toFixed(1)}"/>` : ""}</g>`);
+  }).join("");
+  const label = options.mini ? "" : `<text class="injury-body-view-label" x="60" y="274">${view === "front" ? "Front" : "Back"}</text>`;
+  return `<svg class="injury-body-figure${options.mini ? " mini" : ""}" viewBox="0 ${options.mini ? 0 : 0} 120 ${options.mini ? 262 : 280}" role="img" aria-label="${escapeAttr(`${view === "front" ? "Front" : "Back"} body map of injury risk`)}">
+    ${silhouette}<g class="injury-spots">${spots}</g>${label}</svg>`;
+}
+
+function injuryBodyMini(detail) {
+  const risk = clampNumber(Number(detail.health_risk || 0), 0, 10);
+  const map = detail.injury_body_map;
+  if (!map?.parts?.length) return playerEvidenceRing("Health risk", risk, 10, risk >= 7 ? "#e04d55" : risk >= 4 ? "#bd5b5d" : "#8e6263", "/10");
+  const top = map.current_part ? map.parts.find(part => part.current) : [...map.parts].sort((a, b) => (b.expected_games - b.typical_games) - (a.expected_games - a.typical_games))[0];
+  const note = map.current_part ? `Injured: ${map.current_label || top?.label || "out"}` : top && top.relative > 1.15 ? `Watch: ${top.label}` : "No hotspot";
+  const summary = `Injury risk ${draftMetric(risk)} out of 10 (the front office's estimate). Body map: about ${map.expected_games_total} games a season expected to be missed to injury, against ${map.typical_games_total} for a typical rotation player. ${note}. See the Health page for the full map.`;
+  return `<div class="player-evidence-ring injury-body-evidence" title="${escapeAttr(summary)}" aria-label="${escapeAttr(summary)}"><span>${injuryBodyFigure(map, "front", { mini: true })}</span><div><b>Injury risk ${draftMetric(risk)}/10</b><small>${escapeHtml(note)}</small></div></div>`;
+}
+
+function injuryBodyMapPanel(detail) {
+  const map = detail.injury_body_map;
+  if (!map?.parts?.length) return `<section class="approved-card-panel injury-body-panel"><header>Injury Outlook</header><p class="player-page-empty">Body map unavailable for this player.</p></section>`;
+  const ranked = [...map.parts].filter(part => part.part !== "illness").sort((a, b) => b.expected_games - a.expected_games).slice(0, 8);
+  const scale = Math.max(...ranked.map(part => Math.max(part.expected_games, part.typical_games)), 1);
+  const illness = map.parts.find(part => part.part === "illness");
+  const rows = ranked.map(part => `<tr class="${part.current ? "is-current" : ""}" title="${escapeAttr(injuryPartTitle(part, map))}"><th scope="row"><i style="background:${part.current ? "rgb(155,16,48)" : injuryRiskColor(Number(part.relative ?? 1))}"></i>${escapeHtml(part.label)}${part.current ? " <b>now</b>" : ""}</th>
+    <td><span class="injury-bar"><span style="width:${(part.expected_games / scale * 100).toFixed(1)}%;background:${injuryRiskColor(Number(part.relative ?? 1))}"></span><em style="left:${(part.typical_games / scale * 100).toFixed(1)}%" title="Typical rotation player"></em></span></td>
+    <td>${Number(part.expected_games).toFixed(1)}</td><td>${part.relative == null ? "—" : `${Math.round(part.relative * 100)}%`}</td><td>${part.recent_injuries || "—"}</td></tr>`).join("");
+  const current = map.current_part ? `<p class="injury-body-current">Currently injured: <b>${escapeHtml(map.current_label || map.current_part)}</b></p>` : "";
+  return `<section class="approved-card-panel injury-body-panel"><header>Injury Outlook · Body Map</header>
+    <div class="injury-body-layout">
+      <div class="injury-body-figures">${injuryBodyFigure(map, "front")}${injuryBodyFigure(map, "back")}</div>
+      <div class="injury-body-detail">
+        <p class="injury-body-summary">About <b>${map.expected_games_total}</b> games a season expected to be missed to injury, assuming about ${map.minutes_basis} minutes a game. A typical rotation player: ${map.typical_games_total}.</p>
+        ${current}
+        <table class="injury-body-table"><thead><tr><th scope="col">Body part</th><th scope="col">Games a season vs typical</th><th scope="col">Games</th><th scope="col">vs typical</th><th scope="col">Last 3 yrs</th></tr></thead><tbody>${rows}</tbody></table>
+        ${illness ? `<p class="injury-body-note">Illness: about ${Number(illness.expected_games).toFixed(1)} games a season.</p>` : ""}
+        <div class="injury-body-key" aria-label="Color key"><span><i style="background:${injuryRiskColor(0.6)}"></i>Lower than typical</span><span><i style="background:${injuryRiskColor(1)}"></i>Typical</span><span><i style="background:${injuryRiskColor(1.5)}"></i>Higher</span><span><i style="background:${injuryRiskColor(2.3)}"></i>Much higher</span><span><i style="background:rgb(155,16,48)"></i>Current injury</span><span class="injury-key-size">Bigger spot = more games at stake</span></div>
+        <p class="injury-body-note">From the same per-body-part injury model the season simulation uses: age, size, workload, playing style and this player's injury history. Recent injuries to a body part raise its risk; the effect fades over about two years.</p>
+      </div>
+    </div></section>`;
 }
 
 function playerUpsideColor(upside) {
@@ -7825,6 +7925,7 @@ function approvedPlayerCardBody(detail, options = {}) {
         Defense: radar("Defense / physical", defenseAxes, "defense")
       })}</div>`}
     </section>
+    ${detail.is_prospect ? "" : `<section class="player-card-page player-card-page--health" data-player-page="${pageOffset + 2}" data-page-title="Health & Injury Outlook" aria-label="Injury body map and outlook" hidden>${injuryBodyMapPanel(detail)}</section>`}
   </div>`;
 }
 

@@ -25,7 +25,7 @@ Raw captures go to `data/research/bbi/captures/` (git-ignored); tidy extracts go
 | Rotation Minutes | minutes-app | TODO |
 | Custom Lineup Creator / 5th Man / Roster Optimizer | fanspo bbi-lineups | scenario tools: underlying data only (lineup explorer + progression) |
 | Player Skills Tool | shinyapps Skills | TODO (check overlap with Leaderboards) |
-| Play Style Similarity | shinyapps similarity | TODO |
+| Play Style Similarity | shinyapps similarity | SKIPPED 2026-11-19: 1,510 players, one query per player; app hung on the server's loading screen. It is a play-type-mix comparison we can compute from the play-type frequencies already in the leaderboard capture. |
 | Playoff Talent Grades | fanspo bbi-pbp-tool | done (4,344 player-windows x 386) |
 | Defensive / Offensive Role Lab | static html + 4 data files each | done: `captures/tools/role_labs/bbi_role_labs.json.gz` (5,589 offensive, 5,813 defensive player entries + model coefficients) |
 | Talent Age Growth Curve | static html | done (extracted by Codex BBX) |
