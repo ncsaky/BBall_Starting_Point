@@ -341,6 +341,10 @@ def season_step(model: str, index: int, label: str, profile: bool) -> None:
     _copy_seed(seed_dir, work)
     save_path = work / "month.json"
     canonical = _canonical()
+    # The GUI's lottery reveal draws from system randomness on purpose (seed=None); pin it so the step can be
+    # compared between engines. Harness only.
+    from nba_gm_data import save as save_module
+    save_module.lottery_seed = lambda seed=None: int(seed) if seed is not None else 20270622
     profiler = None
     if profile:
         import cProfile

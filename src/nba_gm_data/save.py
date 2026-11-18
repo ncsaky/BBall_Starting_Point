@@ -3414,7 +3414,8 @@ def stat_line_event_is_major(details: dict[str, Any]) -> bool:
 
 
 def playoff_picture(canonical: dict[str, Any] | Any, save_path: str | Path, *, prepared_save: dict[str, Any] | None = None) -> dict[str, Any]:
-    canonical = to_plain(canonical)
+    # Read-only here; deep-copying the whole league each round also defeated the action's cached copy.
+    canonical = canonical if isinstance(canonical, dict) else to_plain(canonical)
     save = prepared_save if prepared_save is not None else ensure_league_save_defaults(load_save(save_path), canonical)
     rows = league_standings(canonical, save_path, prepared_save=save)["standings"]
     by_conference: dict[str, list[dict[str, Any]]] = {"East": [], "West": []}
@@ -3433,7 +3434,8 @@ def playoff_picture(canonical: dict[str, Any] | Any, save_path: str | Path, *, p
 
 
 def start_playoffs(canonical: dict[str, Any] | Any, save_path: str | Path, seed: int = 1, include_play_in: bool = False) -> dict[str, Any]:
-    canonical = to_plain(canonical)
+    # Read-only here; deep-copying the whole league each round also defeated the action's cached copy.
+    canonical = canonical if isinstance(canonical, dict) else to_plain(canonical)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     state = initialize_postseason(canonical, save, save_path, seed, include_play_in=include_play_in)
     write_save(save_path, save)
@@ -3499,7 +3501,8 @@ def legacy_first_round_series(canonical: dict[str, Any], picture: dict[str, Any]
 
 
 def simulate_playoff_round(canonical: dict[str, Any] | Any, save_path: str | Path, seed: int = 1, root: str | Path | None = None, *, advance_to_offseason: bool = True) -> dict[str, Any]:
-    canonical = to_plain(canonical)
+    # Read-only here; deep-copying the whole league each round also defeated the action's cached copy.
+    canonical = canonical if isinstance(canonical, dict) else to_plain(canonical)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     state = save.get("playoff_state") or start_playoffs(canonical, save_path, seed=seed)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
@@ -3550,7 +3553,8 @@ def complete_playoff_champion(canonical: dict[str, Any], save: dict[str, Any], s
 
 
 def simulate_next_playoff_game(canonical: dict[str, Any] | Any, save_path: str | Path, seed: int = 1, root: str | Path | None = None, *, advance_to_offseason: bool = True) -> dict[str, Any]:
-    canonical = to_plain(canonical)
+    # Read-only here; deep-copying the whole league each round also defeated the action's cached copy.
+    canonical = canonical if isinstance(canonical, dict) else to_plain(canonical)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     state = save.get("playoff_state") or start_playoffs(canonical, save_path, seed=seed)
     save = ensure_league_save_defaults(load_save(save_path), canonical)
