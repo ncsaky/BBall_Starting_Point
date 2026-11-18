@@ -78,11 +78,16 @@ class RatingScaleConsistencyTests(unittest.TestCase):
         for k in a.keys()-{key}:self.assertEqual(a[k],b[k])
         from test_five_player_calibration import filled_measurements
         self.assertEqual(filled_measurements(before['players'],current['players']),current['players'])
-        for k in ('contracts','draft_prospects','draft_prospect_traits','scouting_reports','development_events'):
+        # The stored 2027 draft class (draft_prospects, its traits and scouting reports) was deliberately replaced on
+        # 2026-11-19 by real college/high-school/international prospects (docs/agents/tasks/real-prospects.md), so it is
+        # no longer part of this rim-anchor comparison; everything else must still be untouched.
+        for k in ('contracts','development_events'):
             self.assertEqual(before[k],current[k])
         f=sim.player_feature_vector(current,next(p for p in current['players'] if p['id']==key[0])).features
         gobert=sim.player_feature_vector(current,next(p for p in current['players'] if p['name']=='Rudy Gobert')).features
-        self.assertEqual(f['rim_deterrence'],99)
+        # Since the 2026-11-19 ratings audit the rim response is evidence-shaped and no longer clipped at 99, so the
+        # best rim protector sits above 99 (rule 3: rescale, never clip).
+        self.assertGreater(f['rim_deterrence'],99)
         self.assertGreater(f['rim_deterrence'],gobert['rim_deterrence'])
 
     def test_extension_projection_starts_at_the_same_grade_as_the_card(self):

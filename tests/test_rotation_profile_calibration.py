@@ -126,13 +126,13 @@ class RotationProfileBaselineTests(unittest.TestCase):
         self.assertEqual(old_players,self.new['players'],'players')
         lillard = 'player_por-damian-lillard'
         self.assertEqual([c for c in self.old['contracts'] if c['player_id']!=lillard],[c for c in self.new['contracts'] if c['player_id']!=lillard],'contracts')
-        ranking = {'rank','rank_range','rookie_contract_value'}
-        self.assertEqual([{k:v for k,v in r.items() if k not in ranking} for r in self.old['draft_prospects']],
-                         [{k:v for k,v in r.items() if k not in ranking} for r in self.new['draft_prospects']],'draft_prospects')
+        # The stored 2027 draft class (draft_classes, draft_prospects and their traits) was deliberately replaced on
+        # 2026-11-19 by real college/high-school/international prospects (docs/agents/tasks/real-prospects.md); it is
+        # checked by tests/test_real_prospects.py instead of this rotation baseline.
         # BUG-B: the filled measurements let two filled players (Cooper, Tilly) receive body-area risk tags.
         strip = lambda rows:[{k:v for k,v in r.items() if not (k=='body_area_risk_tags' and r['player_id'] in filled)} for r in rows]
         self.assertEqual(strip(self.old['player_health_profiles']),strip(self.new['player_health_profiles']),'player_health_profiles')
-        for key in ('draft_picks','player_health_states','injury_events','draft_classes','draft_prospect_traits'):
+        for key in ('draft_picks','player_health_states','injury_events'):
             self.assertEqual(self.old[key],self.new[key],key)
 
     def test_all_changes_are_reported_or_researched_and_prior_reviews_are_preserved(self):
