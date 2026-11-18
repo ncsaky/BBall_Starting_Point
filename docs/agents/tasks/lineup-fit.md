@@ -7,7 +7,7 @@
   - A second ball-dominant creator adds less than the first.
   - Shooters seem worth more beside a creator.
 - **What the game already did.** It was mostly about right. It already had the creator overlap and the lead-playmaker effect. It lacked the other three. Its built-in "spacing × creation" bonus almost never fires.
-- **What changed.** A small evidence-fitted lineup-fit term now covers the fifth shooter and non-shooter pile-ups on defense. Shooters-beside-a-creator was held back: it pushed team strengths away from the betting market. For whole teams the change is within ±0.25 points per 100. Extreme lineups move more: five non-shooters give up about +3 points per 100. Both scorecards hold (see Scorecards).
+- **What changed.** A small evidence-fitted lineup-fit term now covers the fifth shooter and non-shooter pile-ups on defense. Shooters-beside-a-creator was held back: it pushed team strengths away from the betting market. For whole teams the change is within ±0.25 points per 100. Extreme lineups move more: five non-shooters give up about +3 points per 100. Both scorecards hold. Replay: 18/18. Odds: Brier 0.1955 → 0.1954, log loss 0.5786 → 0.5783, spread error 5.036 → 5.040, totals error 5.511 → 5.432.
 
 Branch `claude/lineup-fit`. Status: **review** (coordinator).
 
@@ -128,7 +128,7 @@ Defense, + = more points allowed:
 | | Before (fit off) | After (final fit) |
 |---|---|---|
 | Real-stat replay, 1,230 games | 18/18; off. rating 113.23; pts/game 115.95; player pts/36 error 2.595 | 18/18; 113.22; 115.91; 2.602 |
-| Betting odds, 100 runs | Brier 0.1955, log loss 0.5786, spread error 5.036, totals error 5.511 | ODDS_AFTER |
+| Betting odds, 100 runs | Brier 0.1955, log loss 0.5786, spread error 5.036, totals error 5.511 | Brier 0.1954, log loss 0.5783, spread 5.040, totals 5.432 |
 | (first attempt, all three effects) | | Brier 0.1954, log loss 0.5790, spread 5.154, totals 5.615: regressed, hence the market check |
 
 ## Tests
