@@ -5571,10 +5571,13 @@ def queue_ai_recommendations(
 
             from .trade_review import MarketReview
             review = MarketReview()
+            # With no AI-AI trade slot today nothing from this search can be chosen below, so only the
+            # inbound (user offer) search runs. That search then starts from a fresh review context
+            # instead of one warmed by this search's caches.
             payload = simulate_ai_trades(canonical, through_date, through_date, seed=seed, review=review,
-                                         limit=35 if market['slots'] else 12,
+                                         limit=35,
                                          reserve_assets=True,
-                                         search_depth=2 if (date.fromisoformat(trade_deadline)-date.fromisoformat(through_date)).days <= 6 else 1)
+                                         search_depth=2 if (date.fromisoformat(trade_deadline)-date.fromisoformat(through_date)).days <= 6 else 1) if market['slots'] else {'proposals': []}
             human_team_ids = human_controlled_team_ids(save)
             legal_accepted = [
                 proposal for proposal in payload.get("proposals", [])
