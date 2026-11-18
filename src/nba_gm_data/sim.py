@@ -252,6 +252,10 @@ def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any], *, 
     impact = player_impact_score(get, player.get("position"), role_aware=talent_enabled(canonical))
     usage = synthetic_actual_usage(player) if synthetic_actual else projected_usage(player, get, impact)
     scoring_usage = synthetic_actual_usage(player) if synthetic_actual else projected_scoring_usage(player, get, impact)
+    from .impact_value import sim_impact
+    fitted_impact = sim_impact(canonical, player, {key: float(row["value"]) for key, row in traits.items()})
+    if fitted_impact is not None:
+        impact = fitted_impact   # new ratings: team strength reads the evidence-fitted value (usage keeps the blend)
     features = {
         "impact": impact,
         "usage": usage,
