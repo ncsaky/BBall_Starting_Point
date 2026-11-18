@@ -348,10 +348,40 @@ def validate_save_document(save: Any) -> None:
             raise SaveValidationError(f"Invalid player performance inputs: {exc}") from exc
 
 
+# Parsed save files by path: (file stamp, pickled parse). One GUI action reads the same manifest many times (7-34
+# for an offseason or playoff action, ~0.2 s of JSON parsing each). A save is only ever replaced by a rename, so
+# a new version always has a new inode and modification time; the stamp is taken before and after the read.
+_PARSED_SAVES: dict[str, tuple[tuple[int, ...], bytes]] = {}
+
+
+def _file_stamp(path: str) -> tuple[int, ...]:
+    st = os.stat(path)
+    return (st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+
+
+def _parse_save_file(path: str | Path) -> Any:
+    key = os.path.abspath(os.fspath(path))
+    before = _file_stamp(key)
+    cached = _PARSED_SAVES.get(key)
+    if cached is not None and cached[0] == before:
+        return pickle.loads(cached[1])
+    with open(key, "r", encoding="utf-8") as handle:
+        save = json.load(handle)
+    if _file_stamp(key) == before:
+        try:
+            blob = pickle.dumps(save, protocol=pickle.HIGHEST_PROTOCOL)
+        except (pickle.PicklingError, TypeError, AttributeError, RecursionError):
+            return save
+        _PARSED_SAVES.pop(key, None)
+        while len(_PARSED_SAVES) >= 4:
+            _PARSED_SAVES.pop(next(iter(_PARSED_SAVES)))
+        _PARSED_SAVES[key] = (before, blob)
+    return save
+
+
 def load_save(path: str | Path, *, include_history: bool = False) -> dict[str, Any]:
     try:
-        with Path(path).open("r", encoding="utf-8") as handle:
-            save = json.load(handle)
+        save = _parse_save_file(path)
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise SaveValidationError(f"Cannot read save '{Path(path).name}': {exc}. Restore a complete save export.") from exc
     validate_save_document(save)

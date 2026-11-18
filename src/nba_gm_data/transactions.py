@@ -4387,8 +4387,55 @@ def contract_expired_without_rights(contract: dict[str, Any] | None) -> bool:
 def contention_ceiling(canonical: dict[str, Any], team: dict[str, Any], team_values: list[PlayerAssetValuation]) -> float:
     from .sim import team_feature_vector
 
+    key = _contention_memo_key(canonical, team)
+    if key is not None and key in _CONTENTION_MEMO and not _CONTENTION_AUDIT:
+        return _CONTENTION_MEMO[key]
     team_features = team_feature_vector(strategic_rotation_view(canonical, team['id']), team, include_spatial=False).features
-    return contention_from_features(team_features)
+    value = contention_from_features(team_features)
+    if key is not None:
+        if _CONTENTION_AUDIT and key in _CONTENTION_MEMO and _CONTENTION_MEMO[key] != value:
+            raise AssertionError(f"contention memo disagrees for {team['id']}: {_CONTENTION_MEMO[key]} != {value}")
+        if len(_CONTENTION_MEMO) >= 4096:
+            _CONTENTION_MEMO.pop(next(iter(_CONTENTION_MEMO)))
+        _CONTENTION_MEMO[key] = value
+    return value
+
+
+# A team's healthy two-deep contention strength (strategic_rotation_view + non-spatial team features) depends only on
+# its roster's player records, their trait values, the league meta it reads (model versions, offensive profiles) and
+# the team record. Every transaction context rebuilt it for all 30 teams although most rosters had not changed. The memo is
+# keyed by those inputs in full; it is only used with a forecast snapshot (whose views drop every other league key).
+# These player fields are written for other readers and never read on this path: season stat lines (spatial and
+# trade-value code), the coach note, injured-player trade-value minutes and the role prior (role reassessment).
+# The forecast roster replaces minutes_projection with 24. NBA_GM_RUNTIME_AUDIT=1 recomputes every hit and compares.
+_CONTENTION_MEMO: dict[bytes, float] = {}
+_CONTENTION_AUDIT = __import__("os").environ.get("NBA_GM_RUNTIME_AUDIT") == "1"
+_CONTENTION_IGNORED_FIELDS = frozenset({"_save_stats", "rotation_note", "_trade_value_unavailable",
+                                        "_trade_value_minutes_projection", "_rotation_role_prior", "minutes_projection"})
+
+
+def _contention_memo_key(canonical: dict[str, Any], team: dict[str, Any]) -> bytes | None:
+    forecast = canonical.get('_roster_forecast_snapshot')
+    if forecast is None or canonical.get('players') is not forecast.players_source:
+        return None
+    roster = [p for _, p in forecast.teams.get(team['id'], ()) if not p.get('_inactive_player')]
+    full_meta = canonical.get('meta') or {}
+    # League meta read on this path: the two model switches and this roster's offensive profiles (talent.enabled,
+    # offense.enabled, offense.offensive_profile). The season labels are added only as a guard.
+    profiles = full_meta.get('offensive_profiles') or {}
+    meta = [full_meta.get(k) for k in ('talent_model_version', 'offense_model_version', 'season', 'active_season')]
+    meta.append([(p['id'], profiles.get(p['id'])) for p in roster] if 'offensive_profiles' in full_meta else None)
+    try:
+        return pickle.dumps((
+            "contention_v1", team,
+            [{k: v for k, v in p.items() if k not in _CONTENTION_IGNORED_FIELDS} for p in roster],
+            # The path reads only each trait row's value (sim features) and the derived float values.
+            [[(k, row.get('value')) for k, row in (forecast.trait_rows.get(p['id']) or {}).items()] for p in roster],
+            [list((forecast.trait_values.get(p['id']) or {}).items()) for p in roster],
+            meta,
+        ), protocol=pickle.HIGHEST_PROTOCOL)
+    except (pickle.PicklingError, TypeError, AttributeError):
+        return None
 
 
 def contention_from_features(team_features: dict[str, float]) -> float:
