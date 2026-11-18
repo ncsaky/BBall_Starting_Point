@@ -328,16 +328,20 @@ def generate_draft_class_records(year: str, seed: int = 1, config: dict[str, Any
     available_source_teams = [*GENERATED_SOURCE_TEAMS, *GENERATED_SOURCE_TEAMS]
     for rank in range(1, size + 1):
         archetype = rng.choices([item[0] for item in archetypes], weights=[item[1] for item in archetypes], k=1)[0]
-        position = position_for_archetype(archetype)
-        age = whole_prospect_age(clamp(rng.gauss(19.8 if rank <= 35 else 20.8, 1.15), 18.0, 24.0))
-        readiness = top_strength if rank <= 14 else depth_strength
-        current_cap = 69 if rank <= 3 else 65 if rank <= 14 else 60 if rank <= 30 else 56
-        current = clamp(43 + (readiness - 55) * 0.46 + max(0, 18 - rank) * 0.36 + rng.gauss(0, 3.6), 28, current_cap)
-        current_floor = 55.0 if rank == 1 else 53.0 if rank <= 3 else 51.0 if rank <= 5 else 44.0 if rank <= 14 else 28.0
-        current = max(current, current_floor)
-        potential = clamp(current + 11 + max(0, 22 - rank) * 0.5 + rng.gauss(0, 5.6), current + 2, 97)
-        public_potential = generated_prospect_upside(potential, rank, top_strength, year, seed)
-        potential = generated_prospect_upside(potential, rank, top_strength, year, seed, talent_model)
+        position = generated_position(archetype, random.Random(f"{year}:{seed}:{rank}:position_v2"))
+        # Keep the main stream's draw count (age, current, potential) so names and the rest of the class keep
+        # their own random numbers; the profile below has its own stream.
+        rng.gauss(0, 1), rng.gauss(0, 1), rng.gauss(0, 1)
+        profile = generated_prospect_profile(rank, size, top_strength, depth_strength,
+                                             random.Random(f"{year}:{seed}:{rank}:prospect_profile_v2"))
+        age = whole_prospect_age(profile["age"])
+        current = profile["current"]
+        public_potential = generated_prospect_upside(profile["public_potential"], rank, top_strength, year, seed)
+        # The true potential carries what scouts cannot see: the hidden upside tail and (in the career-capacity
+        # model, where potential shapes growth rather than today's ratings) a scouting miss either way.
+        potential = generated_prospect_upside(profile["public_potential"], rank, top_strength, year, seed, talent_model)
+        if talent_model:
+            potential = clamp(potential + profile["scouting_miss"], current + 1.0, 97.0)
         floor = clamp(current - rng.uniform(5, 13), 20, current)
         ceiling_room = rng.uniform(2, 9)
         ceiling = clamp(potential + ceiling_room, potential, 99)
@@ -1956,6 +1960,78 @@ def position_for_archetype(archetype: str) -> str:
     }[archetype]
 
 
+# Primary/secondary position by archetype. Weighted with the archetype mix this gives about 19% PG, 22% SG,
+# 24% SF, 18% PF and 17% C primaries, close to real draftees 2022-26 still in the league (18 / 22 / 26 / 18 / 16%).
+ARCHETYPE_POSITIONS: dict[str, tuple[tuple[str, float], ...]] = {
+    "lead_creator": (("PG", 1.0),),
+    "connector_guard": (("PG/SG", 0.5), ("SG/PG", 0.5)),
+    "rim_pressure_guard": (("PG/SG", 0.4), ("SG/PG", 0.6)),
+    "movement_shooter": (("SG", 0.75), ("SF/SG", 0.25)),
+    "scoring_wing": (("SG/SF", 0.4), ("SF/SG", 0.6)),
+    "two_way_wing": (("SF", 0.7), ("SG/SF", 0.15), ("PF/SF", 0.15)),
+    "versatile_forward": (("SF/PF", 0.4), ("PF/SF", 0.6)),
+    "stretch_big": (("PF/C", 0.6), ("C/PF", 0.4)),
+    "rim_protecting_big": (("C", 1.0),),
+    "energy_big": (("PF/C", 0.45), ("C/PF", 0.55)),
+}
+
+
+def generated_position(archetype: str, rng: random.Random) -> str:
+    options = ARCHETYPE_POSITIONS.get(archetype) or ((position_for_archetype(archetype), 1.0),)
+    return rng.choices([o[0] for o in options], weights=[o[1] for o in options], k=1)[0]
+
+
+# Prospect profile by draft slot, on the game's own prospect scale (current ability and potential). Anchored to the
+# real 2026 class as the game rates it (53 drafted players): pick 1-3 current ~58 / potential ~88, picks 6-10 ~54 / 80,
+# 11-20 ~52.5 / 73, 21-30 ~51 / 69, second round ~46 / 50. Ages follow real rookie-season ages of the 2015-2022
+# classes (Basketball Index): 19 for picks 1-3, 20 for 4-20, 21 for 21-30, 22 in the second round.
+PROFILE_CURRENT = ((1, 62.0), (3, 60.0), (5, 56.5), (10, 54.0), (20, 52.0), (30, 50.8), (40, 47.5), (50, 45.5), (60, 43.5))
+PROFILE_POTENTIAL = ((1, 88.0), (4, 85.0), (8, 80.5), (12, 77.0), (18, 72.0), (24, 69.5), (30, 65.0), (36, 56.5),
+                     (45, 51.0), (60, 46.5))
+PROFILE_AGE = ((1, 19.2), (3, 19.35), (10, 19.9), (20, 20.3), (30, 20.9), (40, 21.8), (60, 22.4))
+# Each year younger than the slot's typical age means a little less now and more upside later (real 2026 class:
+# older picks at a slot carry lower potential).
+AGE_CURRENT_PER_YEAR = 0.8
+AGE_POTENTIAL_PER_YEAR = 2.5
+# Spread around the slot profile (the real 2026 class's residual spread is about 2.5 current and 5-7 potential).
+CURRENT_SPREAD = 2.4
+PUBLIC_POTENTIAL_SPREAD = 4.5
+# What scouting misses about a prospect's true upside, either way. Sized so that year-4 outcomes by pick range
+# (stars, starters, busts) match real classes; see docs/agents/tasks/prospect-realism.md.
+SCOUTING_MISS_SPREAD = 6.0
+# Strong and weak drafts: a class's top-end / depth strength shifts its prospects' level and upside.
+CLASS_CURRENT_PER_POINT = 0.30
+CLASS_POTENTIAL_PER_POINT = 0.55
+
+
+def _slot_value(table: tuple[tuple[int, float], ...], rank: int) -> float:
+    rank = max(table[0][0], min(table[-1][0], rank))
+    for (r0, v0), (r1, v1) in zip(table, table[1:]):
+        if r0 <= rank <= r1:
+            return v0 + (v1 - v0) * (rank - r0) / (r1 - r0)
+    return table[-1][1]
+
+
+def generated_prospect_profile(rank: int, size: int, top_strength: float, depth_strength: float,
+                               rng: random.Random) -> dict[str, float]:
+    """Age, current ability, public potential and the scouting miss for the prospect expected at this slot."""
+    slot = max(1, round(rank * 60 / max(1, size)))
+    typical_age = _slot_value(PROFILE_AGE, slot)
+    age = clamp(rng.gauss(typical_age, 0.55 if slot <= 10 else 0.9 if slot <= 30 else 1.0), 18.6, 24.4)
+    age_gap = whole_prospect_age(age) - typical_age
+    # Top-end strength (mean ~61) drives the lottery, depth (mean ~56.5) the rest; blend across picks 10-20.
+    blend = clamp((slot - 10) / 10, 0.0, 1.0)
+    strength = (1 - blend) * (top_strength - 61.0) + blend * (depth_strength - 56.5)
+    current = (_slot_value(PROFILE_CURRENT, slot) + CLASS_CURRENT_PER_POINT * strength
+               + AGE_CURRENT_PER_YEAR * age_gap + rng.gauss(0.0, CURRENT_SPREAD))
+    public_potential = (_slot_value(PROFILE_POTENTIAL, slot) + CLASS_POTENTIAL_PER_POINT * strength
+                        - AGE_POTENTIAL_PER_YEAR * age_gap + rng.gauss(0.0, PUBLIC_POTENTIAL_SPREAD))
+    current = clamp(current, 30.0, 70.0)
+    public_potential = clamp(public_potential, current + 1.0, 96.0)
+    return {"age": age, "current": current, "public_potential": public_potential,
+            "scouting_miss": rng.gauss(0.0, SCOUTING_MISS_SPREAD)}
+
+
 def generated_prospect_name(rng: random.Random, rank: int) -> str:
     first = [
         "Malik", "Jalen", "Cameron", "Darius", "Noah", "Elijah", "Isaiah", "Milan", "Andre", "Kobe",
@@ -2055,6 +2131,7 @@ def generated_class_year(age: float) -> str:
 
 
 def generated_height(position: str, rng: random.Random) -> float:
+    position = primary_position_label(position)
     if "C" in position:
         return round(rng.gauss(82, 1.8), 1)
     if "PF" in position:
@@ -2067,6 +2144,7 @@ def generated_height(position: str, rng: random.Random) -> float:
 
 
 def generated_weight(position: str, rng: random.Random) -> float:
+    position = primary_position_label(position)
     if "C" in position:
         return round(rng.gauss(245, 18), 0)
     if "PF" in position:

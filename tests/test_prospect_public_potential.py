@@ -28,7 +28,9 @@ class PublicPotentialTests(unittest.TestCase):
                 shown = prospect_rating_projection(canonical, {"id": prospect["id"], "league": "generated",
                                                                "draft_year": year}, {}, 0)
                 self.assertEqual(shown["potential"], presentation_rating_value(prospect_evaluation_value(prospect, "potential")))
-                self.assertLess(shown["potential"], presentation_rating_value(prospect["potential"]))
+                # The true potential can sit above (hidden upside tail) or below (scouting miss) the public number.
+                if abs(prospect["potential"] - prior["potential"]) >= 1.0:
+                    self.assertNotEqual(shown["potential"], presentation_rating_value(prospect["potential"]))
                 checked += 1
         self.assertGreater(checked, 0, "expected at least one hidden-tail prospect across four classes")
 

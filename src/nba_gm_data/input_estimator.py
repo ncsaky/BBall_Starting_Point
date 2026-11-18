@@ -1657,6 +1657,11 @@ def _generated_definition_inputs(player_json: str, traits_json: str) -> PlayerIn
             # These are fictional choices, so no observed opportunity count is
             # required. Link *relative* profile, not overall talent, to choices.
             links = _LEGACY_PRIOR_LINKS.get(iid)
+            if iid == 'T08':
+                # Involvement tracks ability in the real league (better players finish and create more
+                # possessions): start from the same real neighbors as the skills, then let the profile tilt it.
+                record['value']['probability'] = _generated_involvement(
+                    reference['T08'], ability, _mean(values.get(k, ability+7) for k in links), position)
             if links:
                 residual = (_mean(values.get(k, ability+7) for k in links) - _mean(values.values())) / 20
                 old = record['value']['probability']
@@ -1682,6 +1687,30 @@ def _generated_definition_inputs(player_json: str, traits_json: str) -> PlayerIn
         records[iid] = record
     return PlayerInputs(dict(version=INPUT_VERSION, registry_version=REGISTRY_VERSION,
                              player_id=pid, inputs=records))
+
+
+@lru_cache(maxsize=4)
+def _involvement_scale(root: str) -> dict | None:
+    from .bbi_evidence import load_scale_map
+    return (load_scale_map(Path(root)) or {}).get('T08')
+
+
+def _generated_involvement(reference: tuple, ability: float, shape: float, position: str) -> float:
+    """Involvement (T08) for a fictional player from the 24 nearest real players (same distance as the skills).
+
+    Real inputs hold measured true usage; generated players are later placed on that measured scale by rank
+    (bbi_evidence.map_tendency_inputs), so the neighbor value is returned on the estimator's scale."""
+    candidates = sorted((((ca - ability) / 8)**2 + ((s - shape) / 10)**2 + 2 * (pos != position), v)
+                        for _, ca, pos, s, v in reference)[:24]
+    weights = [(math.exp(-(d - candidates[0][0]) / 2), v) for d, v in candidates]
+    measured = sum(w * v for w, v in weights) / sum(w for w, _ in weights)
+    from .bbi_evidence import map_to_measured
+    from .resource_paths import game_resource_root
+    scale = _involvement_scale(str(game_resource_root()))
+    if not scale:
+        return round(measured, 8)
+    inverse = {'source': scale['target'], 'target': scale['source']}
+    return round(map_to_measured(inverse, measured), 8)
 
 
 def _blend_value(old: dict, new: dict, weight: float) -> dict:

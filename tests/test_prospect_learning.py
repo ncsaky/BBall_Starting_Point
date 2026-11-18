@@ -22,15 +22,17 @@ class ProspectLearningTests(unittest.TestCase):
         # Pinned outputs (seeded noise and season draw included) for busts, late bloomers and veteran decline.
         # Recaptured 2026-11-19 after the DEV-TUNE aging curve and season draw (two-thirds of Basketball Index's
         # year-to-year spread). A deliberate change to the development formula must update these on purpose.
+        # Recaptured again on claude/prospect-realism: drafted prospects get the full season draw once they play
+        # (was x0.16) and youth growth with minutes; the 94-input draw is 0.28 after the level-keeping routing.
         cases = [
-            (65,52,.9,1.12,24,8,"release_speed",2,-0.05268998407811121),
-            (90,40,.9,.55,22,24,"release_speed",2,-0.20430386156804337),
-            (90,40,.9,.8,26,8,"release_speed",2,-0.06662279322096835),
-            (90,40,.9,1.28,31,24,"release_speed",2,-0.3713142289149821),
-            (90,40,.9,1.28,36,24,"foot_speed_lateral_agility",2,-0.33304518659022797),
-            (90,40,.2,1.28,25,32,"release_speed",2,0.003241281289099507),
-            (90,40,.9,1.28,24,24,"release_speed",None,-0.8285984080760114),
-            (90,40,.9,1.28,24,24,"release_speed",1,-0.8285984080760114),
+            (65,52,.9,1.12,24,8,"release_speed",2,-0.11319356606340969),
+            (90,40,.9,.55,22,24,"release_speed",2,-0.6278289354651327),
+            (90,40,.9,.8,26,8,"release_speed",2,-0.12712637520626685),
+            (90,40,.9,1.28,31,24,"release_speed",2,-0.7948393028120715),
+            (90,40,.9,1.28,36,24,"foot_speed_lateral_agility",2,-0.48127896245420926),
+            (90,40,.2,1.28,25,32,"release_speed",2,-0.4202837926079899),
+            (90,40,.9,1.28,24,24,"release_speed",None,-0.43567963834726653),
+            (90,40,.9,1.28,24,24,"release_speed",1,-0.43567963834726653),
         ]
         for potential, ability, aptitude, realization, age, minutes, key, version, expected in cases:
             with self.subTest(potential=potential, realization=realization, age=age, version=version):
@@ -52,8 +54,8 @@ class ProspectLearningTests(unittest.TestCase):
                     for key in health.DEVELOPMENT_TRAITS:
                         delta = health.monthly_trait_delta(player,key,40,age,minutes,staff,0,17,"2030-01",1.45,profile)
                         injured = health.monthly_trait_delta(player,key,40,age,minutes,staff,2,17,"2030-01",1.45,profile)
-                        # Prospects with skill capacities get only a small share of the season draw (x0.16).
-                        draw = .16 * health.DEVELOPMENT_SEASON_VOLATILITY * 5
+                        # Prospects with skill capacities get the full season draw once they play real minutes.
+                        draw = health.DEVELOPMENT_SEASON_VOLATILITY * 5
                         self.assertGreaterEqual(delta,-.45 - draw)
                         self.assertLessEqual(delta,.81 + draw)
                         self.assertLessEqual(injured,delta)
@@ -65,10 +67,12 @@ class ProspectLearningTests(unittest.TestCase):
 
     def test_practice_does_not_replace_minutes_staff_or_individual_capacity(self):
         player, profile = self.player(), self.profile()
+        # Expected (no season form or monthly noise): prospects who play now get full good and bad years,
+        # which would swamp a one-month comparison of the learning runway itself.
         with patch.object(health,"prospect_development_realization",return_value=1.12):
-            fringe = health.monthly_trait_delta({**player,"rotation_priority":"fringe"},"release_speed",55,26,8,{},0,17,"2030-01",.2,profile)
-            rotation = health.monthly_trait_delta(player,"release_speed",55,26,24,{},0,17,"2030-01",.2,profile)
-            supported = health.monthly_trait_delta(player,"release_speed",55,26,24,{"development_multiplier":1.2},0,17,"2030-01",.2,profile)
+            fringe = health.monthly_trait_delta({**player,"rotation_priority":"fringe"},"release_speed",55,26,8,{},0,17,"2030-01",.2,profile,expected=True)
+            rotation = health.monthly_trait_delta(player,"release_speed",55,26,24,{},0,17,"2030-01",.2,profile,expected=True)
+            supported = health.monthly_trait_delta(player,"release_speed",55,26,24,{"development_multiplier":1.2},0,17,"2030-01",.2,profile,expected=True)
             ceiling = trait_ceiling(player,"release_speed",profile,1.12,17)
             at_capacity = health.monthly_trait_delta(player,"release_speed",ceiling,26,24,{},0,17,"2030-01",1,profile)
         self.assertGreater(fringe,0)
@@ -81,8 +85,8 @@ class ProspectLearningTests(unittest.TestCase):
         player = self.player(potential=95,current_ability=30)
         profile = self.profile(potential=95,ability=30,entry_value=40,aptitude=1.15)
         with patch.object(health,"prospect_development_realization",return_value=1.28):
-            bench = health.monthly_trait_delta({**player,"rotation_priority":"fringe"},"release_speed",55,24,0,{},0,17,"2030-01",.2,profile)
-            rotation = health.monthly_trait_delta(player,"release_speed",55,24,24,{},0,17,"2030-01",.2,profile)
+            bench = health.monthly_trait_delta({**player,"rotation_priority":"fringe"},"release_speed",55,24,0,{},0,17,"2030-01",.2,profile,expected=True)
+            rotation = health.monthly_trait_delta(player,"release_speed",55,24,24,{},0,17,"2030-01",.2,profile,expected=True)
         self.assertGreater(rotation,bench)
 
     def test_new_profile_survives_real_development_events_and_serialized_reload(self):
