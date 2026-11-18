@@ -405,6 +405,7 @@ def team_feature_vector(canonical: dict[str, Any], team: dict[str, Any], *, incl
     if include_spatial:
         spatial_weights = {player["id"]: max(0.0, projected_game_minutes(player)) for player in players}
         features.update(flatten_spatial_profile(team_spatial_profile(canonical, team["id"], spatial_weights)))
+    features.update(lineup_fit_features([(player, player_features[player["id"]], projected_game_minutes(player)) for player in players]))
     from .offense import extend_lineup_features
     extend_lineup_features(features, player_features, weights)
     features.update(offensive_feature_summary_from_values(features))
@@ -946,6 +947,7 @@ def lineup_feature_vector(canonical: dict[str, Any], pool: list[dict[str, Any]])
             )
         )
     )
+    features.update(lineup_fit_features([(item["player"], player_features[item["player"]["id"]], float(item.get("minutes") or 0.0)) for item in pool]))
     from .offense import extend_lineup_features
     extend_lineup_features(features, player_features, weights)
     features.update(offensive_feature_summary_from_values(features))
@@ -1125,7 +1127,16 @@ def mean_off_rating(
         - opp_coach_mod["defense"]
         - opponent_targeting_penalty(team_features, opp_features, opp_coach_mod)
         + shot_diet["shot_quality_delta"]
+        + team_features.get("lineup_fit_offense", 0.0)
+        + opp_features.get("lineup_fit_defense", 0.0)
     )
+
+
+def lineup_fit_features(entries: list[tuple[dict[str, Any], dict[str, float], float]]) -> dict[str, float]:
+    """Expected non-additive lineup fit (points per 100) for (player, features, minutes); see lineup_fit.py."""
+    from .lineup_fit import lineup_fit_effect, player_fit_flags
+    effect = lineup_fit_effect([(player_fit_flags(features, player), minutes) for player, features, minutes in entries])
+    return {"lineup_fit_offense": effect["offense"], "lineup_fit_defense": effect["defense"]}
 
 
 def neutral_off_rating(canonical: dict[str, Any], team_features: dict[str, float], opp_features: dict[str, float],
@@ -1204,6 +1215,8 @@ def simulate_team_line(
         "shot_quality_delta": round(shot_diet["shot_quality_delta"], 3),
         "feature_context": {
             "lineup_weighted": True,
+            "lineup_fit_offense_delta": round(float(team_features.get("lineup_fit_offense", 0.0)), 3),
+            "opponent_lineup_fit_defense_delta": round(float(opp_features.get("lineup_fit_defense", 0.0)), 3),
             "home_court_delta": round(home_mod, 3),
             "availability_offense_delta": round(availability_mod["offense"], 3),
             "availability_pace_delta": round(availability_mod["pace"], 3),
