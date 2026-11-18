@@ -1,8 +1,50 @@
-# Box scores: stars' turnovers, assists, steals and free throws
+# Box scores: stars' points, turnovers, assists, steals and free throws
 
-TL;DR: Ball handlers now turn it over ~3.5-4.3 times per 36 (was ~2), Jokic averages ~10 assists per 36 (was 6.5), steal specialists stand out, and rim attackers get more of their free throws.
-Each player's share now comes from his own evidence-based inputs, fitted to real 2025-26 per-36 rates and checked on players the fit did not see. Game scores are unchanged, to the point.
-Still open: points themselves are flattened (stars score too little, role players too much), and that drags free throws for stars like Wembanyama and Avdija. Not touched here.
+TL;DR: Stars now score like stars in new-ratings saves (Wembanyama 29.7 points per 36, was 20.5; real 30.8) and role players like role players (Dort 12.9, was 18.8; real 11.2). Ball handlers turn it over ~3.5-4.3 times per 36 (was ~2), and Jokic averages ~10 assists (was 6.5).
+Each player's share comes from his own evidence-based inputs, fitted to real 2025-26 per-36 rates and checked on players the fit did not see. Team scoring is untouched; the betting-odds check is equal or slightly better, and points props improved a lot.
+Old-ratings saves get the turnover/assist/steal/free-throw changes but keep their old scoring split (the legacy traits carry no better scoring signal).
+
+Part 2 (points, below) was added on 2026-11-18 at the coordinator's request; part 1 is the original four stats.
+
+## Part 2: who scores (new ratings only)
+
+**What changed.** In new-ratings saves each player's expected share of his team's points is now his fitted points per 36 (`box_rates.POINTS_INPUTS`) times his minutes. The fit uses involvement (T08), shoot-first vs pass-first choices (T01 shoot up, T01 pass down), close-range touch (S10 layup execution) and contact seeking (T18); out-of-fold correlation 0.93 with real points per 36 (377 players), mean error 1.44. This replaces the hand-tuned scoring weights and the per-player scoring caps (`plausible_point_cap` as a soft expectation) in that mode. Those caps were the main cause: at their real minutes they allowed Porter Jr. 18 points (real 24.2 a game), Wembanyama 17 (25.0), Avdija 19 (24.2), Siakam 19 (24.0), because their trait-based scoring usage was only ~58-63. The game-to-game hot/cold draws, the statistical ceiling and team point totals are unchanged. Rust and fatigue still cut a player's share (~1.2% per penalty point). Players without inputs use a fallback fit on the legacy traits.
+
+Old-ratings saves keep the old scoring split: a fit on the 15 legacy traits reached only r 0.78 out of fold, no better than the current split (0.78), so changing it would add risk for nothing. Their scores are bit-identical to before.
+
+Also: when a line's points cannot hold all the threes it sampled, half of the excess makes now stay as missed attempts (a cold night) instead of all being removed with their attempts (`offense.THREE_TRIM_SHARE` 0.5). Without this, correctly lower points for spot-up shooters took their threes away (Hauser 7.1 three-point attempts per 36 vs 9.4 real). Applies to both ratings modes (no random numbers involved; old-ratings scores unchanged).
+
+**Real-stat scorecard, new ratings (150 players, mean abs error per 36; before = end of part 1 → after)**
+
+| Stat | Before | After | Correlation | Spread vs real |
+|---|---|---|---|---|
+| Points | 2.595 | **1.269** | 0.79 → 0.96 | 0.70 → 0.96 |
+| Field-goal attempts | 2.083 (1.922 originally) | **1.105** | | |
+| Three-point attempts | 0.412 | **0.369** | | |
+| Free-throw attempts | 0.688 | **0.567** | 0.90 → 0.93 | 0.78 → 0.90 |
+| TS% | 0.024 | 0.027 (slightly worse: trimmed shooters' cold nights) | | |
+| Turnovers / assists / steals / rebounds | 0.340 / 0.454 / 0.177 / 1.170 | 0.343 / 0.465 / 0.187 / 1.174 (noise) | | |
+
+Points per 36, sim before → after (real): Wembanyama 20.5 → 29.7 (30.8); Porter Jr. 18.6 → 24.2 (26.8); Avdija 19.4 → 22.3 (26.2); Siakam 20.5 → 25.5 (26.0); Jaylen Brown 23.8 → 29.6 (30.0); Gilgeous-Alexander 34.5 → 33.4 (33.8); Luka 32.5 → 31.4 (33.7); Jokic 27.4 → 26.5 (28.6); Sion James 16.6 → 9.9 (8.6); Dort 18.8 → 12.9 (11.2); Davion Mitchell 18.5 → 12.2 (11.8); O'Neale 18.5 → 12.0 (12.4). Wembanyama's free throws 6.0 → 8.8 (8.7 real) now that his points are right.
+
+Rotation players run 0.45 points per 36 below real on average (deep-bench players the fit never saw take slightly too much); largest remaining misses: Duren 19.5 vs 24.9, Avdija 22.3 vs 26.2 (his involvement input is modest), Myles Turner 19.8 vs 15.9.
+
+**League metrics:** 18/18 in band in both modes. New ratings: points per game 115.95 → 115.93, 3PA per 100 32.9 → 33.8 (NBA 36.1), eFG .546 → .544, TS .584 → .583, FTA per 100 23.0 → 23.4, pace 102.0 → 102.1. Old ratings: 3PA per 100 32.4 → 33.3, eFG .536 → .535, everything else unchanged.
+
+**Betting-odds check** (`validate-season-probabilities --runs 100`, new ratings, 1,231 games). This change does move scores (the split changes how many random numbers each line uses), so it was rerun:
+
+| | Before | After |
+|---|---|---|
+| Brier score | 0.1955 | **0.1949** |
+| Log loss | 0.5786 | **0.5772** |
+| Spread error vs market | 5.036 | **4.926** |
+| Total error vs market | 5.511 | 5.519 |
+
+No regression; the small gains are within what a reshuffled random stream can produce, except perhaps the spread. **Points props** (all 381 props in the odds data, 376 decided, 100 sims each, real minutes): Brier 0.2730 → **0.2204** (0.25 is a coin flip, so the old split was worse than guessing), log loss 0.844 → 0.636; the sim's average points vs the betting line: off by 3.16 → 2.31 per prop.
+
+**Tests:** new `test_scorers_and_role_players_are_far_apart` (fitted points: Wembanyama, Gilgeous-Alexander, Porter Jr., Siakam > 24 per 36; Dort, Sion James < 13.5) and points added to the all-player bounds check. Core suite 330 pass; focused box/accounting/offensive-roles tests pass. `scoring_weight` and `plausible_point_cap` are kept (old-ratings path; their existing tests unchanged).
+
+# Part 1: turnovers, assists, steals and free throws
 
 Task BOX-STAR (Claude subagent, overnight 2026-11-18), branch `claude/box-star-stats`. Blocks and the rim-deterrence mapping were left alone (another agent owns them).
 
@@ -89,7 +131,7 @@ Game scores are bit-identical to before (checked directly: 206 games × 2 sim mo
 
 ## Caveats and open questions
 
-1. **Points are the biggest remaining flattening** (new ratings: spread 0.70 of real). Wembanyama 20.5 vs 30.8 per 36, Porter Jr. 18.6 vs 26.8, Avdija 19.4 vs 26.2, Jaylen Brown 23.8 vs 30.0; role players like Sion James 16.6 vs 8.6, Dort 18.8 vs 11.2, Davion Mitchell 18.5 vs 11.8. The main cause looks like the scoring caps: `plausible_point_cap` (used as a soft expectation by `scoring_expectations_with_caps`) gives Porter Jr. 18 points at his real 32.5 minutes (real 24.2 a game), Wembanyama 17 (real 25.0), Avdija 19 (24.2), Siakam 19 (24.0), LaMelo 16 (20.1), because their trait-based `scoring_usage` is only ~58-63. Gilgeous-Alexander (scoring usage 77) is capped at 33 and lands right. Replacing the hand-tuned scoring weights and caps with a fit to real points per 36 (like the four stats here) is the natural next task. It changes the random stream and therefore scores, so it needs the odds check.
+1. **(Resolved for new ratings in part 2.)** **Points were the biggest remaining flattening** (new ratings: spread 0.70 of real). Wembanyama 20.5 vs 30.8 per 36, Porter Jr. 18.6 vs 26.8, Avdija 19.4 vs 26.2, Jaylen Brown 23.8 vs 30.0; role players like Sion James 16.6 vs 8.6, Dort 18.8 vs 11.2, Davion Mitchell 18.5 vs 11.8. The main cause looks like the scoring caps: `plausible_point_cap` (used as a soft expectation by `scoring_expectations_with_caps`) gives Porter Jr. 18 points at his real 32.5 minutes (real 24.2 a game), Wembanyama 17 (real 25.0), Avdija 19 (24.2), Siakam 19 (24.0), LaMelo 16 (20.1), because their trait-based `scoring_usage` is only ~58-63. Gilgeous-Alexander (scoring usage 77) is capped at 33 and lands right. Replacing the hand-tuned scoring weights and caps with a fit to real points per 36 (like the four stats here) is the natural next task. It changes the random stream and therefore scores, so it needs the odds check.
    - Knock-on effect, a small **regression in this task**: field-goal attempts per 36 error rose 1.92 → 2.08 (new ratings; old ratings 1.86 → 1.87). Stars now take more of their (too few) points at the line, so their shot attempts fall further below real (Wembanyama FGA 14.9 → 13.4 vs 20.8 real), while low-free-throw role players with too many points take more shots. Fixing points fixes this too. 3PA error 0.40 → 0.41; TS% error 0.025 → 0.024.
 2. Fits shrink extremes a little (that is what makes them accurate on unseen players): Giddey 3.05 turnovers vs 4.07 real, Wembanyama 4.28 vs 2.99. No player's ratings were changed.
 3. Some inputs used here were themselves estimated from related box-score evidence (e.g. contact seeking from foul exposure, involvement from usage). That is how the approved inputs are built; it means these fits mostly confirm the inputs carry the signal rather than adding new evidence.
