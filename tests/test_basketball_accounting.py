@@ -50,6 +50,25 @@ class BasketballAccountingTests(unittest.TestCase):
             assert_shooting(self, lines[0])
             self.assertEqual(lines[0]["points"], points)
 
+    def test_game_day_rotation_varies_targets_without_adding_players_or_minutes(self):
+        targets = [40, 37, 34, 30, 29, 25, 21, 15, 8, 1, 0]
+        self.assertEqual(sum(targets), 240)
+        pool = [{"minutes": minutes} for minutes in targets]
+        games = [sim.game_day_rotation(pool, "home", f"game-{i}", 17) for i in range(100)]
+        for players in games:
+            self.assertEqual(sum(round(item["minutes"] * 100) for item in players), 24000)
+            self.assertEqual(players[-1]["minutes"], 0)
+            self.assertTrue(all(0 <= item["minutes"] <= 48 for item in players))
+        self.assertEqual([item["minutes"] for item in pool], targets)
+        self.assertEqual(games[0], sim.game_day_rotation(pool, "home", "game-0", 17))
+        lead_minutes = [players[0]["minutes"] for players in games]
+        self.assertGreater(max(lead_minutes) - min(lead_minutes), 6)
+        self.assertAlmostEqual(sum(lead_minutes) / len(games), 40, delta=.75)
+
+    def test_short_handed_rotation_keeps_five_full_game_players(self):
+        pool = [{"minutes": 48}] * 5
+        self.assertEqual(sim.game_day_rotation(pool, "home", "game-1", 17), pool)
+
     def test_overtime_updates_minutes_team_shooting_and_efficiency(self):
         for seed in range(50):
             home, home_team = self.fixture()

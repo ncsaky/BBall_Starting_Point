@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import patch
 
 from nba_gm_data import health, save as sv
+from nba_gm_data.ratings_model import MODEL_KEY
 
 
 class AiRoleTests(unittest.TestCase):
@@ -61,6 +62,26 @@ class AiRoleTests(unittest.TestCase):
         canonical["players"] = [p for p in canonical["players"] if p["id"] != "ai14"]
         self.assertEqual(sv.reassess_ai_roles(canonical, saved, "2036-10-03", calendar=False), ["ai"])
         self.assertEqual(saved["ai_role_state"]["ai"]["through_date"], "2036-10-03")
+
+    def test_coach_gives_rotation_regulars_and_deep_reserves_different_workloads(self):
+        canonical, saved = self.fixture()
+        sv.reassess_ai_roles(canonical, saved, "2036-10-02")
+        projection = sv.team_rotation_projection(canonical, saved, "ai")
+        workloads = sorted(projection.values(), reverse=True)
+        self.assertAlmostEqual(sum(workloads), 240, delta=.01)
+        self.assertGreaterEqual(workloads[0], 34)
+        self.assertGreaterEqual(workloads[5], 21)
+        self.assertLessEqual(workloads[9], 6)
+        self.assertEqual(workloads[-1], 0)
+
+    def test_role_reassessment_uses_the_active_model_with_neutral_minutes(self):
+        canonical, saved = self.fixture()
+        canonical[MODEL_KEY] = {"mode": "inputs_v1"}
+        with patch.object(sv, "ai_role_targets", wraps=sv.ai_role_targets) as targets:
+            sv.reassess_ai_roles(canonical, saved, "2036-10-02")
+        neutral = targets.call_args.args[0]
+        self.assertIs(neutral[MODEL_KEY], canonical[MODEL_KEY])
+        self.assertTrue(all(player["minutes_projection"] == 24 for player in neutral["players"]))
 
     def test_all_human_teams_and_explicit_overrides_are_protected(self):
         canonical, saved = self.fixture()

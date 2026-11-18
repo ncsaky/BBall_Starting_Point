@@ -535,6 +535,9 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
     if mode == "sandbox-sim":
         home_players = return_ramped_player_pool(home_players, coach_by_team.get(home_team["id"]))
         away_players = return_ramped_player_pool(away_players, coach_by_team.get(away_team["id"]))
+        if "_human_team_ids" in canonical:
+            home_players = game_day_rotation(home_players, home_team["id"], game_id, seed)
+            away_players = game_day_rotation(away_players, away_team["id"], game_id, seed)
     home_features = game_team_features(context, canonical, home_team, home_players, mode)
     away_features = game_team_features(context, canonical, away_team, away_players, mode)
     home_game_context = game_context_for_team(context, game, home_team)
@@ -662,6 +665,21 @@ def return_ramped_player_pool(pool: list[dict[str, Any]], coach: CoachRating | N
     return normalize_minutes(adjusted)
 
 
+def game_day_rotation(
+    pool: list[dict[str, Any]], team_id: str, game_id: str, seed: int,
+) -> list[dict[str, Any]]:
+    """Vary stint lengths around the coach's or GM's targets."""
+    if sum(item["minutes"] > 0 for item in pool) < 5:
+        return pool
+    rng = random.Random(f"{seed}:{game_id}:{team_id}:stint_length")
+    adjusted = []
+    for item in pool:
+        minutes = item["minutes"]
+        swing = min(5.0, minutes * .75)
+        adjusted.append({**item, "minutes": minutes + rng.uniform(-swing, swing)})
+    return normalize_minutes(adjusted, exact=True)
+
+
 def matchup_adjusted_player_pool(
     canonical: dict[str, Any],
     pool: list[dict[str, Any]],
@@ -764,7 +782,7 @@ def normalize_game_team_abbrev(abbrev: str | None) -> str | None:
     }.get(abbrev, abbrev)
 
 
-def normalize_minutes(pool: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def normalize_minutes(pool: list[dict[str, Any]], *, exact: bool = False) -> list[dict[str, Any]]:
     cap = 48.0
     raw_minutes = [max(0.0, float(item.get("minutes") or 0.0)) for item in pool]
     total = sum(raw_minutes)
@@ -791,6 +809,19 @@ def normalize_minutes(pool: list[dict[str, Any]]) -> list[dict[str, Any]]:
             break
     for idx in capped:
         minutes[idx] = cap
+    if exact:
+        # Assign the leftover hundredths to the largest fractional remainders.
+        # A full-game player or a DNP cannot receive a rounding minute.
+        hundredths = [math.floor(value * 100) for value in minutes]
+        remainders = sorted(
+            (idx for idx, value in enumerate(minutes) if 0 < value < cap),
+            key=lambda idx: minutes[idx] * 100 - hundredths[idx],
+            reverse=True,
+        )
+        left = 24000 - sum(hundredths)
+        for idx in remainders[:left]:
+            hundredths[idx] += 1
+        return [{**item, "minutes": value / 100} for item, value in zip(pool, hundredths)]
     return [{**item, "minutes": round(min(cap, max(0.0, minutes[idx])), 2)} for idx, item in enumerate(pool)]
 
 
