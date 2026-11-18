@@ -2,11 +2,78 @@
 
 Paste one prompt into a **fresh** Codex chat. One task per chat keeps it from drifting after context compaction. Each prompt is self-contained. Claude reviews the result and updates `BOARD.md`.
 
-Current priority (2026-11-17): the three "Ready now" tasks below. GUI tasks are parked at the bottom.
+Current priority (2026-11-19): the two "Ready now" tasks below. GUI tasks are parked at the bottom.
 
 ---
 
-## Ready now (2026-11-18, late night): DEV-TUNE
+## Ready now (2026-11-19): ROT-SHAPE and JS-TESTS, one fresh chat each
+
+### ROT-SHAPE: AI coach rotation shape vs Basketball Index minutes projections
+
+Suggested settings: GPT-6.2 Sol, Medium, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task ROT-SHAPE. Add a board row and mark it "in progress (Codex)".
+
+Goal: the AI coach's rotations are too flat. Compared with Basketball Index's 2026-27 healthy-rotation minutes
+(data/research/bbi/tools/minutes_players.json, local only: never commit it), the game's starting minutes targets
+(players' minutes_projection) give stars about 2 fewer minutes per game and back-of-rotation players about 7 more.
+Several deep-bench players get about 20 minutes against about 5 (Bruce Brown NYK, Mitchell Robinson BOS, Luke
+Kennard PHX, Jordan Poole NOP). Overall correlation is 0.81 over 329 matched players.
+
+Step 1 (measure, read-only): sim one regular season headlessly (canonical 2026-27 rosters, AI coaches for all 30 teams,
+2-3 seeds) and compare actual minutes per game played with healthy_rotation_mpg by Basketball Index rotation_role
+(Star / Key / Starter / Rot). Find where the flatness comes from: the starting minutes_projection, the coach's
+game-by-game minutes model, fatigue or foul handling, or blowout rest. Give file:line references.
+Step 2 (fix): tune the rotation shape where the cause lives so the role-group means land within about 1.5 minutes per
+game of Basketball Index. Keep the team total at 240 and keep realistic game-to-game variation (project rule 8: the
+user's rough targets still drive their own team). Do not change any player ratings. Do not copy Basketball Index
+minutes into the game as data; the shape must come from the coach model.
+
+Files you may touch: the minutes and rotation code you identify (likely sim.py and coach/rotation helpers), tests, and
+docs/agents/tasks/rot-shape.md. Do not touch health.py, staff.py, injury_model.py, court_influence.py or spatial.py:
+the coordinator has uncommitted, under-test changes in health.py, staff.py and three development tests
+(test_foundation, test_prospect_development, test_prospect_learning). Leave those files alone.
+Acceptance: focused tests, both scorecards (calibration_report.py replay-real-minutes in inputs mode: 18/18 in range;
+validate-season-probabilities --runs 100: Brier and log loss not worse than 0.1960 / 0.5790), and the core tests
+(bash scripts/run_core_tests.sh). Report the before/after role-group table.
+
+When done: plain-language summary (TL;DR first) in docs/agents/tasks/rot-shape.md. Set the board row to "review". Do
+not commit.
+```
+
+### JS-TESTS: repair the eight stale browser-interface tests
+
+Suggested settings: GPT-6.2 Sol, Medium, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task JS-TESTS. Mark its board row "in progress (Codex)".
+
+Goal: eight Node tests under tests/*.test.cjs fail on the committed code. They are not part of the Python suite, so
+nobody noticed. They fail for stale reasons, not because the game is broken:
+  first_hour_ui (playerRustMarkup / captureTeamSignalBars not defined), gui_simulation_motion (expects
+  season-opponent-result-header), player_pages (document is not defined; also expects the text "Health risk", which
+  the player card now shows as "Injury risk" plus a body map), postseason_ui (expects an old
+  card-board.css?v=... version string in index.html), seasonal_clipboard (origin markers not found; async
+  "action is not defined"), starter_workspace (two boolean expectations), startup_video (cloneNode not a function in
+  the test's fake DOM), ui_product_audit (extensionCapRows not defined).
+Run each with: node tests/<name>.test.cjs
+
+For each test: find why it fails (renamed helper, moved markup, stale version string, incomplete fake DOM, or a real
+bug). Update the test so it checks the same user-facing behavior against today's code. Don't delete checks to make
+them pass. Don't pin cache-busting version strings; match the pattern instead. If a failure is a real bug in
+src/nba_gm_data/gui/app.js, do not fix it: describe it in your report.
+
+Files you may touch: tests/*.test.cjs only (and test helper files they load). No changes to src/.
+Acceptance: all tests/*.test.cjs pass (for f in tests/*.test.cjs; do node "$f" || echo FAIL $f; done), and the
+Python GUI guards still pass (PYTHONPATH=src .venv/bin/python -m unittest tests.test_gui_concept71).
+Report: docs/agents/tasks/js-tests.md, plain language first: one line per test (cause, fix, any real bug found). Set
+the board row to "review". Do not commit.
+```
+
+---
+
+## Done: (2026-11-18, late night): DEV-TUNE (reviewed 2026-11-19)
 
 ### DEV-TUNE: player aging and development curves to match Basketball Index
 
@@ -602,38 +669,6 @@ REQUIREMENTS
 
 DELIVER
 Run: PYTHONPATH=src .venv/bin/python scripts/build_player_inputs.py, then the new tests. Write the final report (plain language, TL;DR first) in docs/agents/tasks/e2-input-estimator.md. Include coverage counts (estimated vs prior, per input family), the validation table, known weak spots, and runtime. Keep a "Resume state" section updated while you work. Set the board row to "review". Do not commit.
-```
-
----
-
-## ROT-SHAPE: AI coach rotation shape vs Basketball Index minutes projections (queued 2026-11-19)
-
-```
-Read AGENTS.md and docs/agents/BOARD.md first. You own task ROT-SHAPE. Add a board row and mark it "in progress (Codex)".
-
-Goal: the AI coach's rotations are too flat. Compared with Basketball Index's 2026-27 healthy-rotation minutes
-(data/research/bbi/tools/minutes_players.json, local only: never commit it), the game's starting minutes targets
-(players' minutes_projection) give stars about 2 fewer minutes per game and back-of-rotation players about 7 more.
-Several deep-bench players get about 20 minutes against about 5 (Bruce Brown NYK, Mitchell Robinson BOS, Luke
-Kennard PHX, Jordan Poole NOP). Overall correlation is 0.81 over 329 matched players.
-
-Step 1 (measure, read-only): sim one regular season headlessly (canonical 2026-27 rosters, AI coaches for all 30 teams,
-2-3 seeds) and compare actual minutes per game played with healthy_rotation_mpg by Basketball Index rotation_role
-(Star / Key / Starter / Rot). Find where the flatness comes from: the starting minutes_projection, the coach's
-game-by-game minutes model, fatigue or foul handling, or blowout rest. Give file:line references.
-Step 2 (fix): tune the rotation shape where the cause lives so the role-group means land within about 1.5 minutes per
-game of Basketball Index. Keep the team total at 240 and keep realistic game-to-game variation (project rule 8: the
-user's rough targets still drive their own team). Do not change any player ratings. Do not copy Basketball Index
-minutes into the game as data; the shape must come from the coach model.
-
-Files you may touch: the minutes and rotation code you identify (likely sim.py and coach/rotation helpers), tests, and
-docs/agents/tasks/rot-shape.md. Do not touch health.py's monthly development code or injury_model.py.
-Acceptance: focused tests, both scorecards (calibration_report.py replay-real-minutes in inputs mode: 18/18 in range;
-validate-season-probabilities --runs 100: Brier and log loss not worse than 0.1960 / 0.5790), and the core tests
-(bash scripts/run_core_tests.sh). Report the before/after role-group table.
-
-When done: plain-language summary (TL;DR first) in docs/agents/tasks/rot-shape.md. Set the board row to "review". Do
-not commit.
 ```
 
 ---

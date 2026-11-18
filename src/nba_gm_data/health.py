@@ -50,7 +50,13 @@ OFFENSIVE_AGING_TRAITS = frozenset({
     "rim_pressure", "offensive_rebounding",
 })
 EXPERIENCE_TRAITS = frozenset({"scheme_iq", "passing_reads", "portability"})
-DEVELOPMENT_SEASON_VOLATILITY = 0.60
+# Size of each player's good-or-bad-year draw. User decision 2026-11-19: about two-thirds of Basketball Index's
+# year-to-year spread (part of the real spread is measurement noise and role change, not ability). The 94-input
+# route compresses rating changes when it re-derives traits, so the older trait set needs a smaller draw to land in
+# the same place (Codex DEV-TUNE measured 0.60 at -42%..+36% inputs and -54%..+49% legacy of the starting spread,
+# 500+ minutes; target about -40%..+30%).
+DEVELOPMENT_SEASON_VOLATILITY = 0.47          # 94-input ratings (default)
+LEGACY_DEVELOPMENT_SEASON_VOLATILITY = 0.36   # older trait-only ratings
 SEASON_FORM_TRAIT_WEIGHTS = {
     "foot_speed_lateral_agility": 0.35,
     "passing_reads": 0.55,
@@ -484,6 +490,8 @@ def advance_development(canonical: dict[str, Any] | Any, month: str, seed: int =
     traits = traits_by_player(canonical)
     states = {state["player_id"]: state for state in canonical.get("player_health_states", [])}
     coaches = coach_development_by_team(canonical)
+    from .ratings_model import uses_inputs_model
+    volatility = DEVELOPMENT_SEASON_VOLATILITY if uses_inputs_model(canonical) else LEGACY_DEVELOPMENT_SEASON_VOLATILITY
     events: list[dict[str, Any]] = []
     for player in canonical.get("players", []):
         if player.get("_inactive_player"):
@@ -500,7 +508,8 @@ def advance_development(canonical: dict[str, Any] | Any, month: str, seed: int =
         for trait_key in DEVELOPMENT_TRAITS:
             current = float(traits.get(player["id"], {}).get(trait_key, {}).get("value", 50.0))
             trait_context = (traits.get(player["id"], {}).get(trait_key, {}).get("components") or {}).get("career_capacity")
-            delta = monthly_trait_delta(player, trait_key, current, age, minutes, staff, health_drag, seed, month, float(focus.get(trait_key, 0.32)), trait_context)
+            delta = monthly_trait_delta(player, trait_key, current, age, minutes, staff, health_drag, seed, month, float(focus.get(trait_key, 0.32)), trait_context,
+                                        season_volatility=volatility)
             if abs(delta) >= 0.015:
                 deltas[trait_key] = round(delta, 3)
         # An evaluated plateau is still a processed player-month. Keep the
@@ -859,6 +868,7 @@ def monthly_trait_delta(
     focus_multiplier: float = 1.0,
     trait_context: dict[str, Any] | None = None,
     expected: bool = False,
+    season_volatility: float | None = None,
 ) -> float:
     """Change in one hidden rating over a month. Expected changes omit season form and monthly noise."""
     age = 27.0 if age is None else age
@@ -933,7 +943,8 @@ def monthly_trait_delta(
         earlier_form = _development_season_form(seed, player["id"], season - 2)
         # Fade past form over two years. The three weights sum to zero, so
         # the draws themselves do not accumulate without bound.
-        season_change = DEVELOPMENT_SEASON_VOLATILITY * (form - 0.65 * last_form - 0.35 * earlier_form)
+        volatility = DEVELOPMENT_SEASON_VOLATILITY if season_volatility is None else season_volatility
+        season_change = volatility * (form - 0.65 * last_form - 0.35 * earlier_form)
         # Role and form move game execution more than conditioning or reads.
         season_change *= SEASON_FORM_TRAIT_WEIGHTS.get(trait_key, 1.0)
         if ceiling is not None:

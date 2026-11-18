@@ -1,8 +1,8 @@
 """Expected change in a player's overall rating over the coming months, from the engine's own development model.
 
 Used for the "decline watch" (veterans whose growth runway is 0). It runs the same monthly development function
-the season uses (health.monthly_trait_delta) with the same staff, focus and skill-ceiling inputs, but without the
-month's random noise and assuming the player stays healthy. In new-ratings mode the changes route through the 94
+the season uses (health.monthly_trait_delta) with the same staff, focus and skill-ceiling inputs. It assumes the
+player stays healthy and omits season form and monthly noise. In new-ratings mode the changes route through the 94
 inputs and the hidden ratings are re-derived, exactly as real development does. The overall rating is then
 evaluated with the same formula the player card uses, holding minutes fixed. An expectation, not a guarantee.
 """
@@ -39,8 +39,7 @@ def _overall(active: dict[str, Any], player: dict[str, Any], traits: dict[str, f
 
 def expected_rating_changes(active: dict[str, Any], player: dict[str, Any], months: int = 12,
                             start_month: str | None = None, seed: int = 1) -> dict[str, float] | None:
-    """Expected change of each hidden rating over `months` if healthy: the season's own monthly development
-    function without its random noise, same staff, focus and skill ceilings, minutes held at today's projection."""
+    """Forecast healthy rating changes at current minutes, without season form or monthly noise."""
     pid = player.get("id")
     rows = (active.get("_transaction_traits_by_player") or {}).get(pid)
     if rows is None:

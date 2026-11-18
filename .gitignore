@@ -53,3 +53,6 @@ data/research/bbi/values_recent.json.gz
 # Files committed before that decision remain tracked.
 data/research/bbi/tools/
 data/canonical/injury_player_evidence_v2.json
+
+# Claude agent worktrees (local only)
+.claude/worktrees/

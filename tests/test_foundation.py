@@ -4966,7 +4966,10 @@ class DataFoundationTests(unittest.TestCase):
         kon_event = next(event for event in first["events"] if event["player_id"] == kon["id"])
         lebron_event = next(event for event in first["events"] if event["player_id"] == lebron["id"])
         self.assertGreater(sum(kon_event["trait_deltas"].values()), 0)
-        self.assertTrue(all(abs(delta) <= 0.12 for delta in lebron_event["trait_deltas"].values()))
+        # A 21-year-old's month beats a 41-year-old's; single months stay bounded. (The old 0.12 monthly cap was
+        # removed by the 2026-11-19 aging curve, and a season draw can give a veteran a good year.)
+        self.assertGreater(sum(kon_event["trait_deltas"].values()), sum(lebron_event["trait_deltas"].values()))
+        self.assertTrue(all(abs(delta) <= 1.0 for delta in lebron_event["trait_deltas"].values()))
         self.assertIn("stamina_cardio", kon_event["trait_deltas"])
 
     def test_development_dashboard_shows_the_engines_real_ovr_path(self):

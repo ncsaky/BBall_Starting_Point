@@ -982,8 +982,9 @@ def apply_head_coach_reputation(slot: dict[str, Any], coach_name: str) -> None:
     target = HEAD_COACH_REPUTATION_GRADES.get(normalize_name(coach_name))
     if target is None or slot.get("slot") != "head_coach" or slot.get("rating_change_log"):
         return
-    current = staff_grade(slot)
-    if abs(current - target) < 0.75 and slot.get("coach_reputation_source") == "bleacher_report_2026_soft_rank":
+    # Calibrate once. Reapplying on every save load kept nudging the ratings, so the same season simulated in one
+    # call or day by day drifted apart once development started reading the save's head coach (2026-11-19).
+    if slot.get("coach_reputation_source") == "bleacher_report_2026_soft_rank":
         return
     skill_target = clamp(60.0 + (target - 60.0) / 1.75, 25.0, 92.0)
     traits = slot.setdefault("skill_traits", {})
