@@ -6,7 +6,7 @@ Owner: Claude (overnight worker session, 2026-11-18), branch `claude/ratings-aud
 
 - **Rim protection no longer flattens at the top, and blocks go to real shot-blockers.** The top 25 rim protectors used to sit within 1–1.6 points of each other on the card; now they spread like the real evidence (Wembanyama +17.0, Holmgren +15.1, Gobert +14.7, about +11 for the 25th). Sim blocks: Jokić 2.33 → 0.66 per 36 (real 0.84), Huff 1.13 → 2.91 (real 3.20); average miss 0.32 → 0.21.
 - **Player values track real impact better.** Usage now pays off only with the skill behind it, and one input (attack recognition) dropped a misleading shot-location measure, so stars' offense is no longer under-credited (Brunson 102nd → 42nd overall among 278 compared players; the evidence says 60th). No input was moved to hit a target; the 30 biggest remaining disagreements are mostly rookies, role players the impact metrics disagree on, and three energy bigs the value model cannot read (listed, left alone).
-- **Scorecards:** real-stat targets 18/18 in band with blocks much better; betting odds slightly worse on win probabilities (Brier 0.1955 → 0.1968, log loss 0.5786 → 0.5808) but closer to the market's spreads (error 5.04 → 4.74). That trade-off needs a decision (see "Scorecards").
+- **Scorecards (final, combined with box-star-stats):** real-stat targets 18/18 in band for both rating sets, blocks much better; betting odds better than before this branch (Brier 0.1955 → 0.1942, log loss 0.5786 → 0.5745, spread error 5.04 → 4.65) except totals (5.51 → 5.63). An interim odds regression was diagnosed and fixed; see "Follow-up after coordinator review". The "Scorecards" section below is the interim state before that fix.
 
 ## Task 1: rim protection saturated at the top
 
@@ -247,7 +247,7 @@ as rim protectors and good-not-elite bigs came down a little), which had raised 
 Legacy scoring rose 0.3 per team and needed no change (it is still below the real level). Steals and turnovers moved
 by about 0.01 per 36 (rotation and score changes, not their allocation code, which another agent owns).
 
-### Betting-odds test (`validate-season-probabilities --runs 100`, new ratings)
+### Betting-odds test (`validate-season-probabilities --runs 100`, new ratings) — interim, superseded by the follow-up
 
 | | Brier | Log loss | Spread error vs market | Totals error vs market |
 |---|---:|---:|---:|---:|
@@ -295,22 +295,111 @@ suppression, shot-quality term, defensive anchor), which were set on the old, co
   `scripts/research/consensus_impact_audit.py`, `scripts/research/transplant_inputs.py`.
 - Output (git-ignored): `output/ratings-audit/consensus_vs_game.json` (full 278-player comparison).
 
+## Follow-up after coordinator review (2026-11-18, later the same night)
+
+**TL;DR.** The betting-odds regression was real, and it came from the sim's hand-made player-impact blend losing
+its hidden "general defense" signal once rim deterrence became a true rim rating. The sim's impact now reads the
+evidence-fitted value the card already shows. Combined branch: Brier **0.1942**, log loss **0.5745**, spread error
+**4.65** (all better than before this branch); totals error **5.63** is still above 5.51 (target 5.55); that is the
+remaining cost.
+
+### 1. Diagnosis
+
+- **Not noise.** Re-running both the base and the branch with a second seed gave the same numbers to 0.0001
+  (base 0.1955 / 0.5787, branch 0.1969 / 0.5811). The game probabilities are smooth enough that the season mean barely
+  moves between seeds. (A first estimate from per-game spreads suggested noise of ±0.0012; the seed test shows that
+  was far too pessimistic.)
+- **What got worse was the order of teams, not the spread of probabilities.** Sim vs market win-probability
+  correlation 0.898 → 0.893; the sim actually got less overconfident (calibration slope 0.764 → 0.789; 1 is perfect).
+- **Which teams moved and why.** With every game report kept (local change only), each team's average margin shift
+  tracked the change in its rim deterrence (r 0.78) and in the sim's player impact (r 0.77); shot creation 0.28,
+  usage 0.02. The sim's impact (`sim.player_impact_score`) is a hand blend of nine skills that includes rim
+  deterrence. While the rim rating mixed in general defensive grades, it also carried perimeter and help defense.
+  Fitted to real rim evidence, it no longer does, so the biggest sim-impact losers were elite non-rim defenders:
+  Anunoby −3.6, Achiuwa −3.5, Draymond Green −3.5, Eason −3.3, Adebayo −3.1, Gordon −2.7.
+- **The team-level rim coefficients were not the problem.** The new team rim value matches real team rim evidence
+  better (minutes-weighted team rim vs Basketball Index rim points saved, 2025-26: r 0.51 → 0.65). The engine's
+  overall rim sensitivity (0.21 points per 100 per rim point, measured by shifting everyone's rim protection +10) is
+  of the same order as the evidence slope (0.15 per 100 from rim points saved alone, which leaves out deterrence).
+  Re-fitting them would not have touched the cause. The scoring offset only moves both teams equally, so margins
+  are unaffected.
+- **Totals.** The average totals error grew because team scoring environments moved (teams that lost "guard rim
+  protection" allow more; teams with elite bigs allow less). Against the real 2025-26 team results in the
+  real-minutes replay, team totals actually matched better after Task 1 (team-total correlation 0.51 → 0.56). The
+  per-game gap to the market's totals grew, though: the average miss after removing each run's overall bias went
+  from 5.37 to 5.61.
+
+### 2. Fix (evidence-based, nothing fitted to the odds test)
+
+In new-ratings mode the sim's player impact feature is the fitted value: Basketball Index multi-year O+D LEBRON
+predicted from the hidden ratings and grouped inputs (`impact_value.sim_impact`, the same model the card shows). It is
+placed by league rank onto the blend's own distribution, so every team-strength formula keeps its scale. Usage
+projections keep the blend. This also makes the engine match what the user sees (rule 4). Examples (blend → fitted):
+Gobert 61.1 → 68.6, Diabaté 50.4 → 56.4, Gilgeous-Alexander 84.3 → 80.0, Draymond Green 69.1 → 64.9, Jokić 81.1 → 82.1.
+
+| Betting odds, new ratings, 100 runs | Brier | Log loss | Spread error | Totals error | Sim vs market corr |
+|---|---:|---:|---:|---:|---:|
+| Base (main before this branch) | 0.1955 | 0.5786 | 5.04 | 5.51 | 0.898 |
+| This branch before the fix | 0.1968 | 0.5808 | 4.74 | 5.70 | 0.893 |
+| box-star-stats alone (its own report) | 0.1949 | 0.5772 | 4.93 | n/a | n/a |
+| Combined, without the fix | 0.1957 | 0.5778 | 4.68 | 5.64 | 0.893 |
+| **Combined, with the fix (final)** | **0.1942** | **0.5745** | **4.65** | 5.63 | **0.903** |
+| Coordinator's targets | ≤ 0.1958 | ≤ 0.5792 | ≤ 5.04 | ≤ 5.55 | |
+
+Totals stay 0.12 above the base. I found no principled lever for them: the remaining gap is the market's view of team
+scoring environments. Pulling the sim's average toward the market's totals would be fitting to the test. Holding
+league scoring at the real level (115.55 per team in the replay vs real 115.6) is the principled anchor.
+
+### 3. Card ratings above 99 (rules 3 and 4)
+
+The attribute summary keeps the engine's value (rim deterrence, range, offensive rebounding, block, rebounding,
+defense skill and team rim protection no longer cap at 99). `save.presentation_rating_value` shows everything at or
+below 99 unchanged; above 99 it approaches 100 smoothly and keeps rising (100 → 99.3, 102.1 → 99.6, 104.3 → 99.8,
+106.6 → 99.9), so elite players stay distinguishable. `defensive_components.skill` no longer clips at 99 either.
+
+### 4. Merge with box-star-stats
+
+Merged `claude/box-star-stats`. The conflict in `normalize_secondary_box_score_totals` and the box-line block was
+resolved by keeping its Poisson assists/turnovers/steals, input-driven rates and team levels, plus this branch's block
+rate, contest-jump feature and blocks-out-of-the-rescale. Both helper styles remain (`poisson_quantile` there,
+`defense.poisson_count` here; they could be unified later).
+
+| Real-minutes replay, 1,230 games | Before this branch (new) | Combined final (new) | Before (legacy) | Combined final (legacy) |
+|---|---:|---:|---:|---:|
+| League metrics in band | 18/18 | 18/18 | 18/18 | 18/18 |
+| Points per game (real 115.6) | 115.95 | 115.55 | 114.19 | 114.51 |
+| Points per 36, average miss | 2.595 | **1.260** | 2.653 | 2.665 |
+| Field-goal attempts | 1.922 | **1.114** | 1.864 | 1.875 |
+| Threes attempted | 0.403 | **0.367** | 0.400 | **0.338** |
+| Free throws attempted | 1.145 | **0.576** | 1.222 | **1.172** |
+| Rebounds | 1.160 | 1.206 | 1.134 | 1.131 |
+| Assists | 0.697 | **0.465** | 1.091 | 1.105 |
+| Turnovers | 0.583 | **0.339** | 0.602 | **0.436** |
+| Steals | 0.280 | **0.189** | 0.313 | 0.295 |
+| Blocks | 0.320 | **0.218** | 0.280 | **0.264** |
+
+Most of the points, attempts, assists, turnovers and steals gain is box-star-stats' work; blocks are this branch's.
+Rebounds moved +0.05 per 36 in the new ratings (rotation shifts from the impact change; rebound allocation is
+untouched).
+
+Tests: `tests.test_box_star_stats`, box variation, defensive alignment, box stat tiebreak, basketball accounting, box
+score reconciliation, trait adapter, impact value, ratings model, fantasy draft: all pass. Core suite: 320 run, all pass except `test_settlement_materialization` (its fixture is missing in this worktree, as before).
+
 ## Open questions for the user
 
+Left for you (coordinator: not done tonight on purpose):
 1. **Legacy ties at 100.** Seven legacy players share rim_deterrence 100 (clipped when the legacy set was built), so
    the legacy card cannot order its top rim protectors. Leave legacy as it is (it is being replaced), or rebuild that
    one legacy trait unclipped from its stored components?
 2. **Energy bigs** (Diabaté, Queta, Kornet): both families of impact metrics rate them top-50, the game 110th–210th.
-   Nothing tested tonight (offensive-rebounding, screening, cutting, lob-finishing terms) helped the fit. Worth a
-   dedicated look at how the sim credits screening and offensive rebounding, or accept?
-3. **Blocks now use the contest-jump tendency (T16).** It explains blocks well (correlation 0.87 with real), but its
-   own evidence is weak (a role prior plus rim-contest volume). Should Basketball Index "Block Rate on Contests" feed
-   T16 directly, or is that mixing skill into a choice?
-4. **Attack recognition (S20) has no Basketball Index measure now.** It rests on the estimator prior and the expert
-   scouting ranges (nine players). Accept, or look for a decision-quality measure (turnovers per touch, quick
-   decision rates)?
-5. **Display clamps.** The card's rim attribute and the legacy card DEF still clamp at 99 (`save.py` display
-   summaries) while the engine's rim values can now exceed 99 for a handful of players. The court chart shows the true
-   value. Change the attribute display too (GUI-side, small)?
-6. **Ingram and Vučević** rate far above every impact measure. The game credits their shot-making and post grades.
-   Is that the taste you want (skills shown, impact separate), or should the value model lean harder on impact?
+   Nothing tested (offensive-rebounding, screening, cutting, lob-finishing terms) helped the fit. Look at how the sim
+   credits screening and offensive rebounding, or accept?
+3. **Blocks use the contest-jump tendency (T16).** It explains blocks well (0.87 correlation with real), but its own
+   evidence is weak (role prior plus rim-contest volume). Should Basketball Index "Block Rate on Contests" feed T16
+   directly, or is that mixing skill into a choice?
+4. **Attack recognition (S20) has no Basketball Index measure now.** It rests on the estimator prior and nine expert
+   scouting ranges. Accept, or look for a decision-quality measure (turnovers per touch, quick-decision rates)?
+5. **Totals error** stays 5.63 vs 5.51 before. Accept, or should someone study how the sim sets each team's scoring
+   environment (a separate task)?
+6. **Ingram and Vučević** rate far above every impact measure on the card. Keep (skills shown, impact separate), or
+   lean the value model harder on impact?
