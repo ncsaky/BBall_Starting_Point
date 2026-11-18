@@ -4703,7 +4703,8 @@ def team_identity_report(canonical: dict[str, Any], save: dict[str, Any]) -> dic
             offense = weighted('offense')
         defense = weighted("defense") * 0.46 + weighted("def_effort") * 0.18 + weighted("screen_nav") * 0.12 + weighted("rim_deterrence") * 0.16 + weighted("portability") * 0.08
         creation = weighted("creation") * 0.48 + weighted("handle") * 0.22 + weighted("passing") * 0.20 + weighted("versatility") * 0.10
-        spacing = weighted("shooting") * 0.40 + weighted("range") * 0.36 + weighted("release") * 0.12 + weighted("versatility") * 0.12
+        # Minutes-weighted engine spacing, the same aggregation the sim's team features use (rule 4, 2026-11-19).
+        spacing = weighted("spacing")
         depth = weighted("overall", subset=depth_pool) * 0.82 + min(14.0, len([row for row in rows if row[2] >= 8.0])) * 1.2
         young_rows = [
             (player, attrs, weight)
@@ -7372,7 +7373,10 @@ def _uncached_player_attribute_summary(canonical: dict[str, Any], player_id: str
     athleticism = avg(["foot_speed_lateral_agility", "stamina_cardio", "rim_pressure"])
     iq = avg(["scheme_iq", "passing_reads", "portability", "playoff_translation"])
     rebounding = traits.get("offensive_rebounding", 50.0) * 0.66 + traits.get("rim_deterrence", 50.0) * 0.18 + traits.get("stamina_cardio", 50.0) * 0.16
-    spacing = avg(["shooting_range", "release_speed", "shot_versatility"])
+    # The engine's own spacing (sim.player_feature_vector): shooting range with extra credit for elite range. It used
+    # to repeat the shooting composite, which the sim never uses for spacing (rule 4, 2026-11-19).
+    from .sim import nonlinear_high
+    spacing = nonlinear_high(traits.get("shooting_range", 50.0), 65)
     steal = avg(["defensive_effort", "screen_navigation", "foot_speed_lateral_agility", "scheme_iq"])
     block = avg(["rim_deterrence", "foot_speed_lateral_agility", "defensive_effort"])
     overall = shooting * 0.22 + creation * 0.25 + defense * 0.22 + athleticism * 0.13 + iq * 0.12 + min(6.0, minutes / 7.0)
