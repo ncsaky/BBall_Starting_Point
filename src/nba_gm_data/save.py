@@ -4676,7 +4676,8 @@ def team_identity_report(canonical: dict[str, Any], save: dict[str, Any]) -> dic
             offense = weighted('offense')
         defense = weighted("defense") * 0.46 + weighted("def_effort") * 0.18 + weighted("screen_nav") * 0.12 + weighted("rim_deterrence") * 0.16 + weighted("portability") * 0.08
         creation = weighted("creation") * 0.48 + weighted("handle") * 0.22 + weighted("passing") * 0.20 + weighted("versatility") * 0.10
-        spacing = weighted("shooting") * 0.40 + weighted("range") * 0.36 + weighted("release") * 0.12 + weighted("versatility") * 0.12
+        # Minutes-weighted engine spacing, the same aggregation the sim's team features use (rule 4, 2026-11-19).
+        spacing = weighted("spacing")
         depth = weighted("overall", subset=depth_pool) * 0.82 + min(14.0, len([row for row in rows if row[2] >= 8.0])) * 1.2
         young_rows = [
             (player, attrs, weight)
@@ -6518,7 +6519,10 @@ def apply_materialized_development_to_traits(
     apply_development_trait_totals_to_traits(canonical, combined)
 
 
-def ai_role_targets(canonical: dict[str, Any], roster: list[dict[str, Any]], priors: dict[str, float]) -> tuple[dict[str, float], list[str]]:
+def ai_role_targets(
+    canonical: dict[str, Any], roster: list[dict[str, Any]], priors: dict[str, float],
+    *, opening_workloads: dict[str, float] | None = None,
+) -> tuple[dict[str, float], list[str]]:
     """Build a healthy two-deep rotation from current, workload-neutral skills."""
     attrs = {p["id"]: player_attribute_summary(canonical, p["id"]) for p in roster}
     quality = {p["id"]: attrs[p["id"]]["overall"] + min(32, max(0, float(priors.get(p["id"], 0)))) * .05 for p in roster}
@@ -6548,6 +6552,9 @@ def ai_role_targets(canonical: dict[str, Any], roster: list[dict[str, Any]], pri
         groups.append(assignment)
         chosen = set(assignment) - {""}
         remaining = [p for p in remaining if p["id"] not in chosen]
+    selected = [pid for group in groups for pid in group if pid]
+    if opening_workloads is not None:
+        return ai_coach_workloads(attrs, groups[0], opening_workloads), selected
     desired = {p["id"]: 0.0 for p in roster}
     for first, second in zip(*groups):
         if first and second:
@@ -6555,12 +6562,33 @@ def ai_role_targets(canonical: dict[str, Any], roster: list[dict[str, Any]], pri
             desired[first], desired[second] = lead, 48 - lead
         elif first or second:
             desired[first or second] = 42
-    selected = [pid for group in groups for pid in group if pid]
     targets = bounded_minutes_allocation([
         {"player_id": pid, "desired": desired[pid], "minimum": 0, "maximum": 42 if pid in selected else 0}
         for pid in desired
     ], 240)
     return targets, selected
+
+
+def ai_coach_workloads(
+    attrs: dict[str, dict[str, float]], starters: tuple[str, ...], opening_workloads: dict[str, float],
+) -> dict[str, float]:
+    """Plan a team's minutes across positions, with short stints for the tail."""
+    # Workload history supplies role context alongside current quality, creation
+    # and stamina. The depth chart supplies positional coverage without setting
+    # aside a large block of minutes for a dedicated backup at each position.
+    def priority(pid: str) -> float:
+        player = attrs[pid]
+        return (opening_workloads[pid] + .35 * player["overall"] + .26 * player["creation"]
+                + .48 * player["stamina"])
+
+    order = sorted(attrs, key=lambda pid: (-priority(pid), pid))
+    curve = (37, 34, 32, 30, 28, 25, 20, 16, 10, 5, 2, 1)
+    desired = dict.fromkeys(order, 0.0)
+    desired.update(zip(order, curve))
+    for pid in starters:
+        if pid:
+            desired[pid] = max(4, desired[pid])
+    return desired
 
 
 def reassess_ai_roles(active: dict[str, Any], save: dict[str, Any], stamp: str, *, calendar: bool = True) -> list[str]:
@@ -6586,22 +6614,35 @@ def reassess_ai_roles(active: dict[str, Any], save: dict[str, Any], stamp: str, 
             due.append((team, roster, signature))
     if not due:
         return []
+    from .ratings_model import MODEL_KEY
+
     # Workload is part of headline OVR; do not let the old role grade itself.
-    neutral = {key: value for key, value in active.items() if not str(key).startswith("_")}
+    # Keep the active ratings model while rebuilding indexes for the neutral view.
+    neutral = {key: value for key, value in active.items() if key == MODEL_KEY or not str(key).startswith("_")}
     neutral["players"] = [{**p, "minutes_projection": 24} for p in active["players"]]
     # This local, read-only view can own its indexes. Otherwise every player
     # summary rescans the whole league's traits during a role reassessment.
     neutral["_allow_internal_caches"] = True
     baselines = save.setdefault("rotation_baselines", {})
     clocks = save.setdefault("ai_role_state", {})
+    season_year = int(stamp[:4]) - (stamp[5:7] < "07")
+    canonical_year = season_start_year(CANONICAL_SEASON)
     for team, roster, signature in due:
         priors = {p["id"]: max(0, float(baselines.get(p["id"], display_minutes_projection(p)) or 0)) for p in roster}
-        targets, selected = ai_role_targets(neutral, roster, priors)
+        workloads = {
+            p["id"]: clamp(float(p.get("_rotation_role_prior", display_minutes_projection(p))), 0, 42)
+            * clamp(1 - .25 * (season_year - int(p.get("age_base_start_year") or canonical_year)), 0.0, 1.0)
+            for p in roster
+        }
+        targets, selected = ai_role_targets(neutral, roster, priors, opening_workloads=workloads)
         total = sum(priors.values())
-        blended = {pid: targets[pid] * .8 + (priors[pid] * 240 / total if total else targets[pid]) * .2 for pid in targets}
+        blended = {
+            pid: target * .8 + (priors[pid] * 240 / total if total else target) * .2
+            for pid, target in targets.items() if target > 0
+        }
         allocation = bounded_minutes_allocation([
-            {"player_id": pid, "desired": value, "minimum": 0, "maximum": 42}
-            for pid, value in blended.items()
+            {"player_id": pid, "desired": blended.get(pid, 0), "minimum": 0, "maximum": 42 if pid in blended else 0}
+            for pid in targets
         ], 240)
         baselines.update(round_minutes_to_total(allocation, 240))
         clocks[team] = {"version": 1, "through_date": stamp, "period": stamp[:7],
@@ -6617,7 +6658,9 @@ def apply_save_rotation_projection(canonical: dict[str, Any], save: dict[str, An
     # OVR includes a workload bonus. Feeding the last projection back into
     # that bonus makes repeated refreshes drift even without a simulated day.
     for player in canonical.get("players", []):
-        baseline = baselines.setdefault(player["id"], display_minutes_projection(player))
+        opening_workload = display_minutes_projection(player)
+        player.setdefault("_rotation_role_prior", opening_workload)
+        baseline = baselines.setdefault(player["id"], opening_workload)
         player["minutes_projection"] = float(baseline or 0.0)
     for team_id in sorted(teams):
         projection = team_rotation_projection(canonical, save, team_id, integer=False)
@@ -6704,7 +6747,7 @@ def team_rotation_projection(canonical: dict[str, Any], save: dict[str, Any], te
     desired_count = min(len(available), max(9, min(11, sum(1 for row in available if row["baseline"] >= 8.0))))
     selected_ids = {row["player"]["id"] for row in available[:desired_count]}
     if ai_role:
-        selected_ids.update(row["player"]["id"] for row in available if row["player"]["id"] in ai_role.get("rotation_player_ids", []))
+        selected_ids.update(row["player"]["id"] for row in available if row["baseline"] > 0)
     for row in available:
         rec = row.get("recommendation") or {}
         if float(rec.get("target_minutes") or 0.0) > 0 or (row.get("first_season_rookie") and 0 < int(row.get("rookie_pick") or 0) <= 10):
@@ -6727,7 +6770,7 @@ def team_rotation_projection(canonical: dict[str, Any], save: dict[str, Any], te
         maximum = rotation_rank_cap(rank, row["overall"], bool(rec))
         minimum = rotation_rank_floor(rank, row["baseline"], row["overall"])
         if ai_role and not rec:
-            desired = row["baseline"]
+            desired = row["baseline"] or (6.0 if len(selected_ids) <= 9 else 0.0)
             maximum = max(maximum, desired)
             minimum = min(minimum, desired)
             if len(available) <= 7:
@@ -7336,7 +7379,10 @@ def _uncached_player_attribute_summary(canonical: dict[str, Any], player_id: str
     athleticism = avg(["foot_speed_lateral_agility", "stamina_cardio", "rim_pressure"])
     iq = avg(["scheme_iq", "passing_reads", "portability", "playoff_translation"])
     rebounding = traits.get("offensive_rebounding", 50.0) * 0.66 + traits.get("rim_deterrence", 50.0) * 0.18 + traits.get("stamina_cardio", 50.0) * 0.16
-    spacing = avg(["shooting_range", "release_speed", "shot_versatility"])
+    # The engine's own spacing (sim.player_feature_vector): shooting range with extra credit for elite range. It used
+    # to repeat the shooting composite, which the sim never uses for spacing (rule 4, 2026-11-19).
+    from .sim import nonlinear_high
+    spacing = nonlinear_high(traits.get("shooting_range", 50.0), 65)
     steal = avg(["defensive_effort", "screen_navigation", "foot_speed_lateral_agility", "scheme_iq"])
     block = avg(["rim_deterrence", "foot_speed_lateral_agility", "defensive_effort"])
     overall = shooting * 0.22 + creation * 0.25 + defense * 0.22 + athleticism * 0.13 + iq * 0.12 + min(6.0, minutes / 7.0)

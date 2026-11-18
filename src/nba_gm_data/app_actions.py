@@ -2004,7 +2004,7 @@ def league_traits_payload(canonical: dict[str, Any], save_path: Path, trait: str
             "overall": attrs.get("overall"),
             "offense": attrs.get('offense', composite_rating(attrs, ["shooting", "creation", "passing", "rim_pressure"], [0.3, 0.3, 0.2, 0.2])),
             "defense": attrs.get("defense"),
-            "spacing": composite_rating(attrs, ["shooting", "range", "release", "versatility"], [0.36, 0.36, 0.14, 0.14]),
+            "spacing": attrs.get("spacing") or composite_rating(attrs, ["shooting", "range", "release", "versatility"], [0.36, 0.36, 0.14, 0.14]),
             "creation": attrs.get("creation"),
             "rim_pressure": attrs.get("rim_pressure"),
             "rebounding": attrs.get("rebounding"),
@@ -3154,12 +3154,8 @@ def free_agency_room_payload(
             default=None,
         )
         ratings = dict(attrs)
-        ratings["spacing"] = round(
-            float(attrs.get("range") or attrs.get("shooting") or 50.0) * 0.55
-            + float(attrs.get("versatility") or attrs.get("shooting") or 50.0) * 0.30
-            + float(attrs.get("release") or attrs.get("shooting") or 50.0) * 0.15,
-            1,
-        )
+        # Spacing is the engine's own value (player_attribute_summary), not a separate composite (rule 4).
+        ratings["spacing"] = round(float(attrs.get("spacing") or attrs.get("range") or attrs.get("shooting") or 50.0), 1)
         valuation = valuations_by_id.get(str(player_id)) or fallback_asset_valuation(player)
         position = compact_position(player.get("position"))
         overall = float(ratings.get("overall") or 50.0)
