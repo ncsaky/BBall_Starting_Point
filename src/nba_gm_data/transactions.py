@@ -2738,9 +2738,18 @@ def find_selling_candidates(
     for buyer in buyer_teams_for_player(canonical, target):
         if buyer["id"] == user_team["id"]:
             continue
-        for buyer_assets in buyer_offer_packages(canonical, buyer, user_team, target, seed, max_results=package_result_limit, max_player_options=package_player_options)[:per_buyer_limit]:
+        # Keep looking past illegal packages until this buyer has per_buyer_limit legal ones (it used to cut to the
+        # first per_buyer_limit packages before legality, so a user could see "no offers" while legal ones existed).
+        legal = 0
+        for buyer_assets in buyer_offer_packages(canonical, buyer, user_team, target, seed, max_results=package_result_limit, max_player_options=package_player_options):
             report = evaluate_trade_decision(canonical, user_team["abbrev"], buyer["abbrev"], [{"kind": "player", "value": target["name"]}], buyer_assets, seed=seed, context_ready=True)
-            candidates.append(candidate_from_decision(report))
+            candidate = candidate_from_decision(report)
+            if candidate.get("legality", {}).get("status") != "legal":
+                continue
+            candidates.append(candidate)
+            legal += 1
+            if legal >= per_buyer_limit:
+                break
     return candidates
 
 
@@ -2908,16 +2917,10 @@ def market_value_after_star_and_surplus_shape(player: dict[str, Any], valuation:
     development = float(valuation.get("development_upside") or 0.0)
     minutes = trade_value_role_minutes(player, valuation)
     age = maybe_float(player.get("age")) or 27.0
-    # The cheap-contract penalty (surplus on a good-not-great player counts for less) used to stop dead at on-court
-    # 80 and step its rate at 74. After the 2026-11-19 value refit Wembanyama (80.3 -> 77.6) fell under the cutoff
-    # and his rookie deal cost him ~15 points (4th -> 10th in the market). It now fades out over on-court 76-80 and
-    # its rate eases from 1.12 to 0.82 over 72-76; players at or below 72, and at or above 80, are valued as before.
-    penalty_weight = clamp((80.0 - on_court) / 4.0, 0.0, 1.0)
-    if surplus > 16.0 and penalty_weight > 0.0 and development < 13.5:
-        penalty_rate = 1.12 - 0.30 * clamp((on_court - 72.0) / 4.0, 0.0, 1.0)
-        raw -= penalty_weight * max(0.0, surplus - 16.0) * penalty_rate
-        if age >= 31.0:
-            raw -= penalty_weight * min(7.5, (age - 30.0) * 1.05)
+    # A cheap contract never lowers a player's value. The surplus credit is already scaled by player quality in the
+    # asset value (surplus_quality_factor). An older correction here also subtracted (surplus - 16) at 0.82-1.12 per
+    # point for anyone below on-court 80, about twice the credit itself, so a rookie deal counted *against* 202
+    # players (Harper, Clingan, Ausar Thompson ~ -15; Wembanyama fell 4th -> 10th). Removed 2026-11-19.
     # The superstar floor used to switch on at hard cutoffs (on-court 79, playoff 80): Giannis at 78.2 sat ~25
     # value points below Luka at 79.6 (2026-11-17). It then ramped in over on-court 76-79 and playoff 77-80, but that
     # was still steep: a sub-point rating move swung Giannis ~5 points (2026-11-19). It now ramps in over on-court
@@ -2933,7 +2936,8 @@ def market_value_after_star_and_surplus_shape(player: dict[str, Any], valuation:
         # which kept 38-year-olds above prime All-NBA players; 2026-11-16 market review).
         superstar_floor -= max(0.0, age - 30.0) * 2.0
         raw = raw + star_share * max(0.0, superstar_floor - raw)
-    if minutes >= 28.0 and star_share < 1.0 and on_court >= 76.5 and playoff >= 76.0 and surplus < 18.0:
+    # (This near-star floor used to be withheld when surplus >= 18, which made a bargain contract cost value.)
+    if minutes >= 28.0 and star_share < 1.0 and on_court >= 76.5 and playoff >= 76.0:
         raw = max(raw, 84.0 + max(0.0, on_court - 76.5) * 0.68 + max(0.0, playoff - 76.0) * 0.18)
     return soft_value_ceiling(raw, ceiling=market_trade_value_cap(player, valuation, raw), knee=6.0)
 
@@ -5125,12 +5129,15 @@ def roster_count_issues(canonical: dict[str, Any], proposal: TradeProposal, conf
     minimum = int(salary_config.get("minimum_roster", 12))
     temporary_hard_maximum = int(salary_config.get("temporary_hard_maximum", 24))
     issues = []
+    # Human-controlled teams may take on more players than the roster limit: the roster cut-down pop-up makes them
+    # trim afterwards (user decision, 2026-11-19). AI teams keep the guardrail.
+    human_teams = set(canonical.get("_human_team_ids") or [])
     for team_id, outgoing, incoming in trade_team_flows(proposal):
         from .trade_finance_search import financial_fact
         current = financial_fact(canonical, ('roster',team_id),
             lambda: sum(1 for player in canonical['players'] if player['team_id']==team_id))
         after = current - sum(1 for asset in outgoing if asset["kind"] == "player") + sum(1 for asset in incoming if asset["kind"] == "player")
-        if after > temporary_hard_maximum and after > current:
+        if after > temporary_hard_maximum and after > current and team_id not in human_teams:
             issues.append(f"{team_by_id(canonical, team_id)['abbrev']} would exceed temporary roster hard maximum {temporary_hard_maximum}.")
         if after < minimum and after < current:
             issues.append(f"{team_by_id(canonical, team_id)['abbrev']} would fall below roster minimum {minimum}.")

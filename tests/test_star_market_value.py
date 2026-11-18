@@ -30,9 +30,10 @@ class StarMarketValueTests(unittest.TestCase):
     def test_consensus_superstars_lead_the_market(self):
         for name in ("Nikola Jokić", "Luka Dončić", "Shai Gilgeous-Alexander"):
             self.assertLessEqual(self.rank[name], 6, (name, self.rank[name], self.market[name]))
-        # 2026-11-19: with the Wembanyama rookie-deal cliff removed he (age 22, cheap deal) sits about a point above
-        # Giannis (31, discounted for age and a 29-minute role), so Giannis is 7th; still clearly in the star tier.
-        self.assertLessEqual(self.rank["Giannis Antetokounmpo"], 7, self.rank["Giannis Antetokounmpo"])
+        # 2026-11-19: cheap contracts no longer count against sub-star players, so young stars on rookie deals
+        # (Wembanyama 22, Amen Thompson 23) sit just above Giannis (31, discounted for age and a 29-minute role).
+        # Giannis is 8th (Amen Thompson +0.6); still clearly in the star tier.
+        self.assertLessEqual(self.rank["Giannis Antetokounmpo"], 8, self.rank["Giannis Antetokounmpo"])
         self.assertLessEqual(self.rank["Victor Wembanyama"], 7, self.rank["Victor Wembanyama"])
         giannis = self.market["Giannis Antetokounmpo"]
         # 2026-11-19: the playoff blend (half Basketball Index playoff grades) moved Giannis 94.0 -> 90.4; still far
@@ -54,6 +55,25 @@ class StarMarketValueTests(unittest.TestCase):
         steps = [b - a for a, b in zip(values, values[1:])]
         self.assertTrue(all(step >= -1e-9 for step in steps))   # never lower for a better player
         self.assertLess(max(steps), 1.5)                         # no jump between neighbouring 0.1 steps
+
+
+    def test_cheaper_contract_never_lowers_market_value(self):
+        # 2026-11-19: an old correction subtracted contract surplus a second time for sub-star players, so a rookie
+        # deal counted against 202 players. Less money on the books must never make the same player worth less.
+        from nba_gm_data.transactions import surplus_quality_factor
+        for age in (21, 27, 33):
+            player = {"id": "probe", "age": age, "minutes_projection": 32}
+            for on_court in (58.0, 64.0, 70.0, 74.0, 76.0, 77.5, 79.0, 81.0):
+                for playoff in (70.0, 77.0, 82.0):
+                    base = on_court + 4.0
+                    values = []
+                    for surplus in range(0, 35, 2):
+                        credit = surplus * 0.42 * surplus_quality_factor(on_court)
+                        values.append(market_value_after_star_and_surplus_shape(player, {
+                            "on_court_value": on_court, "playoff_value": playoff, "contract_surplus": float(surplus),
+                            "player_value": base + credit, "development_upside": 2.0}, base + credit))
+                    self.assertTrue(all(b >= a - 1e-9 for a, b in zip(values, values[1:])),
+                                    (age, on_court, playoff, values))
 
 
 if __name__ == "__main__":
