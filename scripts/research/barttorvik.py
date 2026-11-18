@@ -13,7 +13,7 @@ import csv
 from pathlib import Path
 
 RAW_DIR = Path(__file__).resolve().parents[2] / "data" / "research" / "barttorvik" / "raw"
-SEASONS = range(2008, 2027)
+SEASONS = range(2008, 2028)
 
 COLUMNS = [
     "name", "team", "conf", "games", "min_pct", "ortg", "usg", "efg", "ts", "orb_pct",              # 0-9
