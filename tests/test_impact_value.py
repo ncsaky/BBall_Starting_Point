@@ -37,6 +37,25 @@ class FitFileTests(unittest.TestCase):
         self.assertGreater(iv.predict(fit, big, {"height_inches": 85})["defense"],
                            iv.predict(fit, guard, {"height_inches": 74})["defense"])
 
+    def test_involvement_pays_off_with_skill_and_better_skill_never_lowers_value(self):
+        fit = iv.load_fit(ROOT)
+        traits = {t: 50.0 for t in iv.LEGACY_TRAITS}
+
+        def inputs(grade, involvement):
+            ids = [i for group in ("in_shooting", "in_creation", "in_finishing") for i in iv.INPUT_GROUPS[group]]
+            out = {i: {"value": {"grade": grade}} for i in ids}
+            out["T08"] = {"value": {"probability": involvement}}
+            return out
+
+        def offense(grade, involvement):
+            return iv.predict(fit, traits, {"height_inches": 78}, {}, inputs(grade, involvement))["offense"]
+
+        for involvement in (0.12, 0.30, 0.50):
+            values = [offense(g, involvement) for g in (30, 45, 60, 75, 90)]
+            self.assertEqual(values, sorted(values), involvement)            # monotone in skill at every usage level
+        # Taking on more of the offense is worth more to a skilled creator than to an unskilled one.
+        self.assertGreater(offense(80, 0.45) - offense(80, 0.20), offense(40, 0.45) - offense(40, 0.20))
+
 
 if __name__ == "__main__":
     unittest.main()

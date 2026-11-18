@@ -722,17 +722,9 @@
   "S20": {
    "name": "Attack recognition",
    "kind": "grade",
-   "metrics": [
-    {
-     "metric": "PnR Ball Handler Shot Quality",
-     "direction": 1,
-     "strength": "weak",
-     "outcome": null,
-     "why": "Quality of shots the handler takes out of pick-and-roll."
-    }
-   ],
-   "coverage": "partial",
-   "gap_note": "No measure of reads against available options. Mostly scouting-led. Half Court Shot Quality removed 2026-11-17: it mostly reflects shot location (bigs' dunks), not attack reads."
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "No measure of reads against available options. Scouting-led (expert ranges in docs/ratings-evidence-2026-10-29) plus the estimator's related-skill prior. Half Court Shot Quality removed 2026-11-17: it mostly reflects shot location (bigs' dunks), not attack reads. PnR Ball Handler Shot Quality removed 2026-11-18 (ratings audit) for the same reason: it is the expected value of the handler's own shot locations and contests, not his decisions. It ranked rim-heavy handlers at the top (Westbrook, Edwards 99th percentile, Coby White 98th) and elite pull-up shot-makers at the bottom (DeRozan 3rd, Cunningham 45th, Brunson 55th), and pulled Brunson (51.6), Cunningham (50.5), Barnes (48.9), Doncic (63.2) and Garland (68.7) below the lower end of their reviewed scouting ranges (78, 75, 80, 85, 77)."
   },
   "S21": {
    "name": "Post establishment / sealing",

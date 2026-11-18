@@ -364,7 +364,12 @@ class FantasyDraftTests(unittest.TestCase):
         displayed = player_display_attribute_summary(self.canonical, wemby["id"])
         after = player_attribute_summary(self.canonical, wemby["id"])
         self.assertEqual(before, after)
-        self.assertEqual(displayed, before)
+        # Shown unchanged up to 99; above it (Wembanyama's rim value is 100) rescaled into (99, 100), never clipped.
+        for key, value in before.items():
+            if value <= 99:
+                self.assertEqual(displayed[key], value, key)
+            else:
+                self.assertTrue(99 < displayed[key] < 100, (key, value, displayed[key]))
 
     def test_ja_morant_is_a_star_without_an_elite_two_way_profile(self):
         ja = next(player for player in self.canonical["players"] if player["name"] == "Ja Morant")

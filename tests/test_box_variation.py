@@ -40,7 +40,11 @@ class BoxVariationTests(unittest.TestCase):
             a, b = [r[key] for r in old], [r[key] for r in new]
             report[key] = {'before_mean': statistics.mean(a), 'after_mean': statistics.mean(b),
                            'before_sd': statistics.pstdev(a), 'after_sd': statistics.pstdev(b)}
-            if key == 'turnovers':
+            if key == 'blocks':
+                # Blocks are drawn per player (Poisson) before variation, so the team total already varies; the
+                # varied box should land near the real 2025-26 team-game spread (sd 2.46 around 4.8 a game).
+                self.assertTrue(2.2 < statistics.pstdev(b) < 2.8, report)
+            elif key == 'turnovers':
                 # The engine's turnovers are already Poisson counts around each player's own rate before this
                 # step (2026-11-18), so their game-to-game spread is realistic up front: a team's turnovers vary
                 # by about 3.7-4 a game in the NBA (Poisson around ~14 plus matchup).

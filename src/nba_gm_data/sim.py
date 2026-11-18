@@ -18,6 +18,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from .defense import block_rate_per36, poisson_count
 from .research import BETTING_ODDS_FILE, COACH_REPUTATION_FILE, GAME_BOXSCORES_FILE, TRACKING_SOURCES_FILE
 from .schema import CoachRating, SimFeatureVector, SimGameResult, ValidationReport, to_plain
 from .spatial import (
@@ -266,6 +267,10 @@ def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any], *, 
     impact = player_impact_score(get, player.get("position"), role_aware=talent_enabled(canonical))
     usage = synthetic_actual_usage(player) if synthetic_actual else projected_usage(player, get, impact)
     scoring_usage = synthetic_actual_usage(player) if synthetic_actual else projected_scoring_usage(player, get, impact)
+    from .impact_value import sim_impact
+    fitted_impact = sim_impact(canonical, player, {key: float(row["value"]) for key, row in traits.items()})
+    if fitted_impact is not None:
+        impact = fitted_impact   # new ratings: team strength reads the evidence-fitted value (usage keeps the blend)
     features = {
         "impact": impact,
         "usage": usage,
@@ -306,6 +311,10 @@ def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any], *, 
                               ("fta_per_point", box_rates.fta_per_point_from_inputs(player_inputs))):
                 if rate is not None:
                     features[key] = rate
+            from .defense import contest_jump_share
+            jump = contest_jump_share(player_inputs)
+            if jump is not None:
+                features["contest_jump"] = jump
     from .offense import enabled as offense_enabled, offensive_profile
     if offense_enabled(canonical):
         profile = offensive_profile(canonical, player, {key: float(row['value']) for key, row in traits.items()})
@@ -1070,7 +1079,8 @@ def health_adjusted_player_features(features: dict[str, float], item: dict[str, 
         if key not in adjusted:
             continue
         if weight >= 0:
-            adjusted[key] = clamp(float(adjusted[key]) - penalty * weight, 1, 99)
+            # Upper bound is the player's own value: a fatigue penalty must never clip an elite (>99) rim protector.
+            adjusted[key] = clamp(float(adjusted[key]) - penalty * weight, 1, max(99.0, float(adjusted[key])))
         else:
             adjusted[key] = clamp(float(adjusted[key]) + penalty * abs(weight), 1, 99)
     if adjusted.get("points_per36") is not None:
@@ -1132,7 +1142,10 @@ def defensive_feature_summary_from_values(features: dict[str, float]) -> dict[st
 # tuned on fully healthy projected rotations; with real availability and minutes (replaying the 2025-26 season,
 # real absences included) new-ratings mode scored 113.2 points per team vs the NBA's 115.6, and a new-ratings
 # save averaged 113.7 through Dec 15. Both teams get the same offset, so margins are unchanged.
-INPUTS_OFFENSE_CALIBRATION = 2.45
+# 2026-11-18 (ratings audit): 2.45 -> 1.60. The evidence-fitted rim recipe moved rim protection from high-minute
+# guards to bigs and the evidence-shaped response lowered good-not-elite bigs, so league rim protection fell and the
+# replay scored 116.8 per team (was 115.95; NBA 115.6). Re-centred by the same 0.85 points per 100; margins unchanged.
+INPUTS_OFFENSE_CALIBRATION = 1.60
 # League-average possessions and points per 100 before matchup/rest/coach adjustments. Were 99.5 / 110.5, which gave
 # 116 points per 100 possessions (NBA 112.75) at low pace once box scores were split by real shooting rates. With the
 # box now tied to the engine's possessions (box_variation MISS_FILL), 101.3 / 107.9 give pace ~102.5, ~112 per 100 and
@@ -1409,7 +1422,8 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
                 "assists": poisson_quantile(item["minutes"] * assist_rate_for_player(player, feat), normal_to_uniform(rng.gauss(0.0, 1.0))),
                 "turnovers": poisson_quantile(item["minutes"] * turnover_rate_per_minute(feat), rng.random()),
                 "steals": poisson_quantile(item["minutes"] * steal_rate_per_minute(feat), rng.random()),
-                "blocks": max(0, int(round(item["minutes"] * (feat["rim_deterrence"] / 2200 + max(0.0, feat["rim_deterrence"] - 88) * 0.0034) + rng.random() * 0.95))),
+                # Fitted per-36 rate (defense.block_rate_per36), one Poisson draw from the same single random number.
+                "blocks": poisson_count(rng.random(), item["minutes"] / 36.0 * block_rate_per36(feat["rim_deterrence"], feat.get("contest_jump"))),
             }
         )
     normalize_secondary_box_score_totals(lines, features, team_points, possessions, expected=expected)
@@ -1534,16 +1548,17 @@ def normalize_secondary_box_score_totals(
             for line in lines
         ) / total_minutes
 
-    raw = {key: sum(max(0, int(line.get(key) or 0)) for line in lines) for key in ("rebounds", "assists", "steals", "blocks")}
+    # Blocks are not rescaled: each player's count is already drawn from a rate fitted to real blocks per 36, so the
+    # team total is realistic and a power-weighted rescale would only re-concentrate blocks on whoever drew two.
+    raw = {key: sum(max(0, int(line.get(key) or 0)) for line in lines) for key in ("rebounds", "assists", "steals")}
     targets = {
         "rebounds": round(clamp(43.8 + (weighted_feature("offensive_rebounding") - 60.0) * 0.055 + (possessions - 99.0) * 0.11 + (raw["rebounds"] - 66.0) * 0.16, 35, 54)),
         # Assists and steals: the formulas below are only the fallback when no expected sums are given; see
         # `expected` further down.
         "assists": round(clamp(26.2 + (weighted_feature("passing") - 60.0) * 0.075 + (team_points - 114.0) * 0.045 + (raw["assists"] - 32.0) * 0.18, 18, 36)),
         "steals": round(clamp(7.7 + (weighted_feature("defensive_events") - 60.0) * 0.045 + (possessions - 99.0) * 0.035 + (raw["steals"] - 11.5) * 0.16, 3, 14)),
-        "blocks": round(clamp(5.0 + (weighted_feature("rim_deterrence") - 60.0) * 0.055 + (raw["blocks"] - 12.5) * 0.12, 1, 12)),
     }
-    powers = {"rebounds": 1.32, "assists": 1.20, "steals": 1.55, "blocks": 2.0}
+    powers = {"rebounds": 1.32, "assists": 1.20, "steals": 1.55}
     if expected is not None:
         powers["steals"] = STEAL_SHARE_POWER
         # The players' own expected assists/steals set the team level (a share of each game's lucky or unlucky

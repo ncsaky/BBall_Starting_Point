@@ -32,7 +32,14 @@ INPUT_GROUPS = {
     "in_pass_reading": [f"F{n:02d}.recognition" for n in range(1, 10)],
 }
 BODY_PREDICTORS = ("height_inches", "weight_lbs", "wingspan_inches")   # fixed body measures (sign-free in the fit)
-PREDICTORS = [*LEGACY_TRAITS, *BODY_PREDICTORS, *PROFILE_PREDICTORS, *INPUT_GROUPS, "in_involvement"]
+# Involvement pays off in proportion to the skill and efficiency behind it. A purely additive fit gave every heavy-usage
+# player the same credit for usage, so it under-predicted the stars' offense (Brunson O-LEBRON +4.97 predicted +3.14,
+# Gilgeous-Alexander +6.06 -> +4.98) and over-credited heavy-usage scorers whose real impact is modest. Each term is
+# involvement (T08 share) times the skill's distance from a fixed centre, so with non-negative weights a better skill
+# never lowers value, while more involvement with below-average skill can (2026-11-18 ratings audit).
+INTERACTIONS = {"in_shooting": (50.0, 10.0), "in_creation": (50.0, 10.0), "in_finishing": (50.0, 10.0), "two_pct": (0.52, 0.04)}
+PREDICTORS = [*LEGACY_TRAITS, *BODY_PREDICTORS, *PROFILE_PREDICTORS, *INPUT_GROUPS, "in_involvement",
+              *(f"involvement_x_{name}" for name in INTERACTIONS)]
 TABLE_KEY = "_impact_value_tables"
 _FIT_CACHE: dict[str, Any] = {}
 _DEFAULT_ROOT: Path | None = None
@@ -67,6 +74,9 @@ def predictor_row(traits: Mapping[str, float], player: Mapping[str, Any],
     profile = profile or {}
     row.extend(float(profile.get(key, default)) for key, default in _PROFILE_DEFAULTS.items())
     row.extend(input_features(inputs))
+    named = dict(zip(PREDICTORS, row))
+    involvement = named["in_involvement"]
+    row.extend(involvement * (named[name] - centre) / scale for name, (centre, scale) in INTERACTIONS.items())
     return row
 
 
@@ -112,7 +122,7 @@ def build_tables(predictions: Mapping[str, Mapping[str, float]], scale_values: M
     """Source (predicted impact) and target (existing scale) distributions per key, fixed at the baseline."""
     tables = {}
     for key, target in scale_values.items():
-        side = "overall" if key in ("overall", "on_court") else key
+        side = "overall" if key in ("overall", "on_court", "sim_impact") else key
         source = sorted(p[side] for p in predictions.values())
         tables[key] = {"side": side, "source": source, "target": sorted(target)}
     return tables
@@ -167,6 +177,13 @@ def install_summary_tables(canonical: dict[str, Any], root: Path | None = None) 
         predictions = {p["id"]: predict(fit, traits[p["id"]], p, _profile(canonical, p, traits[p["id"]]), _inputs(canonical, p))
                        for p in players}
         scales = {k: [s[k] for s in summaries.values() if k in s] for k in ("overall", "offense", "defense")}
+        # The game sim's own player impact feature (sim.player_impact_score), same baseline players: its league
+        # distribution is the target scale for sim_impact, so team-strength calibrations keep their meaning.
+        from .sim import player_impact_score
+        from .talent import enabled as talent_enabled
+        role_aware = talent_enabled(canonical)
+        scales["sim_impact"] = [player_impact_score(lambda k, t=traits[p["id"]]: float(t.get(k, 50.0)), p.get("position"),
+                                                    role_aware=role_aware) for p in players]
         _TABLE_CACHE[key] = build_tables(predictions, {k: v for k, v in scales.items() if v})
     model["impact_tables_key"] = list(key[0]) + [key[1]]
     canonical.pop("_trait_values_by_player", None)
@@ -188,6 +205,32 @@ def summary_override(canonical: Mapping[str, Any], player: Mapping[str, Any], tr
     prediction = predict(fit, traits, player, profile if profile is not None else _profile(canonical, player, traits),
                          _inputs(canonical, player))
     return {key: round(mapped(tables, prediction, key), 1) for key in tables}
+
+
+def sim_impact(canonical: Mapping[str, Any], player: Mapping[str, Any], traits: Mapping[str, float],
+               profile: Mapping[str, float] | None = None) -> float | None:
+    """The game sim's player impact in new-ratings mode: fitted real impact placed on the sim's impact scale by rank.
+
+    The hand-weighted impact blend (sim.player_impact_score) averages nine skills, rim deterrence among them. While the
+    rim rating mixed in general defensive grades, it also carried perimeter and help defense; once rim deterrence was
+    fitted to real rim evidence (2026-11-18), elite non-rim defenders (Anunoby, Draymond Green, Adebayo) lost sim
+    impact and team strength followed. The fitted value (offense + defense, Basketball Index multi-year LEBRON, the same
+    model the card shows) reads every defensive input directly. Same league distribution as the blend; only the order
+    comes from the fit. None outside new-ratings mode.
+    """
+    if _BUILDING:
+        return None
+    model = _model(canonical)
+    if model is None or not model.get("impact_tables_key") or not traits:
+        return None
+    key_list = model["impact_tables_key"]
+    tables = _TABLE_CACHE.get((tuple(key_list[:-1]), key_list[-1]))
+    fit = load_fit()
+    if not tables or "sim_impact" not in tables or fit is None:
+        return None
+    prediction = predict(fit, traits, player, profile if profile is not None else _profile(canonical, player, traits),
+                         _inputs(canonical, player))
+    return mapped(tables, prediction, "sim_impact")
 
 
 def remap_on_court(canonical: Mapping[str, Any], players: list[Mapping[str, Any]], traits_by_id: Mapping[str, Mapping[str, float]],
