@@ -1427,7 +1427,9 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
         canonical = baseline_for_save(canonical, save)
         # Derived indexes belong to the source object. Copying them bloats the
         # active universe and can omit save-generated players or contracts.
-        canonical = _copy_runtime_tree({key: value for key, value in canonical.items() if not str(key).startswith("_")})
+        runtime = _ADVANCE_RUNTIME_STATE.get()
+        canonical = (runtime.baseline_copy(canonical) if runtime is not None else
+                     _copy_runtime_tree({key: value for key, value in canonical.items() if not str(key).startswith("_")}))
     else:
         canonical = _copy_runtime_tree(baseline_for_save(to_plain(canonical), save))
     canonical["_allow_internal_caches"] = True
@@ -1679,6 +1681,21 @@ class _AdvanceRuntimeState:
         self.inputs: Any = None
         self.attribute_summaries: dict[bytes, dict[str, float]] = {}
         self.sim_reference: dict[str, Any] | None = None
+        self.baseline: tuple[dict[str, Any], bytes] | None = None
+
+    def baseline_copy(self, source: dict[str, Any]) -> dict[str, Any]:
+        """canonical_with_save's private copy of the (read-only) starting universe.
+
+        The pickled form is made once per advance call and unpickled for each rebuild, the same result
+        as _copy_runtime_tree without serializing the unchanged universe again every time.
+        """
+        if self.baseline is None or self.baseline[0] is not source:
+            public = {key: value for key, value in source.items() if not str(key).startswith("_")}
+            try:
+                self.baseline = (source, pickle.dumps(public, protocol=pickle.HIGHEST_PROTOCOL))
+            except (pickle.PicklingError, TypeError, AttributeError):
+                return deepcopy(public)
+        return pickle.loads(self.baseline[1])
 
     def advance_day(self, *args: Any) -> dict[str, Any]:
         # Preserve the day API and isolate concurrent/reentrant advances.
