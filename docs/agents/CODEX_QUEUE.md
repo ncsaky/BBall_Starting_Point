@@ -6,7 +6,40 @@ Current priority (2026-11-17): the three "Ready now" tasks below. GUI tasks are 
 
 ---
 
-## Ready now (2026-11-18): PRO-2, implement the rookie input fix
+## Ready now (2026-11-18, afternoon): BBX, extract the saved Basketball Index tool pages
+
+### BBX: Turn the saved Growth Curve, Injury Tracker and Minutes/Talent pages into clean tables
+
+Suggested settings: GPT-6.2 Sol, Medium, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task BBX; add a board row "in progress (Codex)".
+
+Basketball Index tool pages were saved (signed-in, personal-use subscription) as self-contained HTML in
+data/research/bbi/captures/tools/ (git-ignored): bbi_tool_growth_curve.html (~7 MB), bbi_tool_injuries.html (~5.5 MB),
+bbi_tool_minutes_talent_2026_27.html, bbi_tool_offensive_role_lab.html, bbi_tool_defensive_role_lab.html.
+Their data is embedded in the pages (JSON/JS arrays inside <script>). Do NOT fetch anything from the web.
+
+GOAL: extract every embedded table into tidy, documented files under data/research/bbi/tools/ (tracked, compact JSON or
+CSV; keep each under ~5 MB, gzip if larger), plus a parser script scripts/bbi_extract_tools.py (standard library only,
+reproducible: rerunning gives identical files).
+1. Growth Curve (priority): per player x season x talent metric: actual value, the model's 1-year-ahead projection, and
+   the 50/80/90% intervals; forward projections; the "development vs expectations" per player; the per-coach table
+   (players' actual minus projected under each head coach). Also save the methodology text verbatim (it is short).
+2. Injury Tracker: per injury type/body part: typical days missed, the range, recurrence/aftermath and durability fields,
+   and any per-player injury history tables it embeds.
+3. Minutes/Talent 2026-27: per player projected games missed, MPG, role/talent grid fields; per-team tables.
+4. Role Labs: whatever per-player tables they embed (role, estimated impact of role changes).
+For each output, document fields, units, row counts and the player identifier used (name/team/ids) in
+docs/agents/tasks/bbx-tool-extract.md, and match players to our ids where you can (report the match rate; never guess).
+
+BOUNDARIES: new script, data/research/bbi/tools/, your report. Do not edit src/ or tests/ (Claude is working there).
+REPORT: plain language first. Board row to "review". Do not commit. Don't poll long runs more than every 20-30 minutes.
+```
+
+---
+
+## Done: (2026-11-18): PRO-2, implement the rookie input fix
 
 ### PRO-2: Start real 2026 rookies on the estimator's rookie setting
 
