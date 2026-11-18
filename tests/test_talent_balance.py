@@ -46,7 +46,10 @@ class TalentBalanceTests(unittest.TestCase):
                 allowed = {"source_ids", "potential", "ceiling", "rookie_contract_value", "scouting_prior"}
                 self.assertEqual({k: v for k, v in before.items() if k not in allowed},
                                  {k: v for k, v in after.items() if k not in allowed})
-                self.assertGreaterEqual(after["potential"], before["potential"])
+                # The public board is unchanged; the true potential adds the hidden tail and a scouting miss
+                # either way (prospect realism), so it can sit below the board.
+                self.assertEqual(draft.prospect_evaluation_value(after, "potential"),
+                                 draft.prospect_evaluation_value(before, "potential"))
                 self.assertIn(SOURCE_ID, after["source_ids"])
             self.assertEqual(new, to_plain(draft.generate_draft_class_records("2030", seed, talent_model=True)))
 
