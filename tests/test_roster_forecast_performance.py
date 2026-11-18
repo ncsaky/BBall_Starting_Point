@@ -3,6 +3,7 @@ from contextlib import ExitStack, contextmanager
 from copy import deepcopy
 import gc
 import json
+import lzma
 import shutil
 import tempfile
 from pathlib import Path
@@ -243,10 +244,11 @@ class RosterForecastPerformanceTests(unittest.TestCase):
             self.assertEqual(saved, original)
 
     def test_archived_2036_generated_and_injured_rosters_without_advancing_the_career(self):
-        path = ROOT / 'output/roster-forecast-pass/fixtures/mature2036.json'
+        path = ROOT / 'tests/fixtures/mature2036_seed17.json.xz'
         if not path.exists():
-            self.skipTest('Run scripts/prepare_roster_forecast_fixture.py for the archived 2036 probe')
-        saved = json.loads(path.read_text())
+            self.skipTest('Missing tests/fixtures/mature2036_seed17.json.xz; run scripts/build_mature_fixture.py')
+        with lzma.open(path, 'rt') as stream:
+            saved = json.load(stream)
         self.assertEqual(saved['state']['current_date'], '2036-11-01')
         source = tx.with_transaction_context(save.canonical_with_save(self.base, saved))
         self.assertGreater(len(source['players']), len(self.starting['players']))
