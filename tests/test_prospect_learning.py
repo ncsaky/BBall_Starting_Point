@@ -62,10 +62,12 @@ class ProspectLearningTests(unittest.TestCase):
 
     def test_practice_does_not_replace_minutes_staff_or_individual_capacity(self):
         player, profile = self.player(), self.profile()
+        # Expected (no season form or monthly noise): prospects who play now get full good and bad years,
+        # which would swamp a one-month comparison of the learning runway itself.
         with patch.object(health,"prospect_development_realization",return_value=1.12):
-            fringe = health.monthly_trait_delta({**player,"rotation_priority":"fringe"},"release_speed",55,26,8,{},0,17,"2030-01",.2,profile)
-            rotation = health.monthly_trait_delta(player,"release_speed",55,26,24,{},0,17,"2030-01",.2,profile)
-            supported = health.monthly_trait_delta(player,"release_speed",55,26,24,{"development_multiplier":1.2},0,17,"2030-01",.2,profile)
+            fringe = health.monthly_trait_delta({**player,"rotation_priority":"fringe"},"release_speed",55,26,8,{},0,17,"2030-01",.2,profile,expected=True)
+            rotation = health.monthly_trait_delta(player,"release_speed",55,26,24,{},0,17,"2030-01",.2,profile,expected=True)
+            supported = health.monthly_trait_delta(player,"release_speed",55,26,24,{"development_multiplier":1.2},0,17,"2030-01",.2,profile,expected=True)
             ceiling = trait_ceiling(player,"release_speed",profile,1.12,17)
             at_capacity = health.monthly_trait_delta(player,"release_speed",ceiling,26,24,{},0,17,"2030-01",1,profile)
         self.assertGreater(fringe,0)
@@ -78,8 +80,8 @@ class ProspectLearningTests(unittest.TestCase):
         player = self.player(potential=95,current_ability=30)
         profile = self.profile(potential=95,ability=30,entry_value=40,aptitude=1.15)
         with patch.object(health,"prospect_development_realization",return_value=1.28):
-            bench = health.monthly_trait_delta({**player,"rotation_priority":"fringe"},"release_speed",55,24,0,{},0,17,"2030-01",.2,profile)
-            rotation = health.monthly_trait_delta(player,"release_speed",55,24,24,{},0,17,"2030-01",.2,profile)
+            bench = health.monthly_trait_delta({**player,"rotation_priority":"fringe"},"release_speed",55,24,0,{},0,17,"2030-01",.2,profile,expected=True)
+            rotation = health.monthly_trait_delta(player,"release_speed",55,24,24,{},0,17,"2030-01",.2,profile,expected=True)
         self.assertGreater(rotation,bench)
 
     def test_new_profile_survives_real_development_events_and_serialized_reload(self):

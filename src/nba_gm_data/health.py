@@ -891,10 +891,14 @@ def monthly_trait_delta(
         if learning:
             role_factor = max(role_factor, min(.55, .18 + .5 * learning + .4 * raw_learning))
     growth_rate = 0.20
-    # Capacity-rated prospects already have a separate learning runway below.
-    if ceiling is None:
-        youth_boost = 0.24 if trait_key in OFFENSIVE_AGING_TRAITS else 0.14
-        growth_rate += youth_boost * clamp((24.0 - age) / 2.0, 0.0, 1.0)
+    youth_boost = 0.24 if trait_key in OFFENSIVE_AGING_TRAITS else 0.14
+    if ceiling is not None:
+        # A drafted prospect's career capacity adds its own ceiling and practice runway below. It used to replace
+        # the youth curve entirely, so generated rookies grew more slowly than real rookies of the same age once
+        # they played. Now the youth growth arrives with real minutes (Basketball Index: early gains are tied to
+        # opportunity; low-minute young players gain less and less consistently).
+        youth_boost *= clamp((minutes - 6.0) / 14.0, 0.0, 1.0)
+    growth_rate += youth_boost * clamp((24.0 - age) / 2.0, 0.0, 1.0)
     growth = growth_rate * age_factor * role_factor * cap_room * float(staff.get("development_multiplier", 1.0)) * float(staff.get("patience_multiplier", 1.0)) * focus_multiplier * upside_multiplier
     if ceiling is not None:
         entry = float(trait_context["entry_value"])
@@ -937,8 +941,10 @@ def monthly_trait_delta(
         # Role and form move game execution more than conditioning or reads.
         season_change *= SEASON_FORM_TRAIT_WEIGHTS.get(trait_key, 1.0)
         if ceiling is not None:
-            # Keep the player's own learning runway dominant for drafted prospects.
-            season_change *= 0.16 * clamp((minutes - 6.0) / 14.0, 0.0, 1.0)
+            # Drafted prospects get full good and bad years once they play real minutes (it was 16% of the
+            # league's swing): real draftees' three-year changes run from clear regressions to huge jumps.
+            # A prospect who barely plays has no form to show.
+            season_change *= clamp((minutes - 6.0) / 14.0, 0.0, 1.0)
         elif player.get("rotation_priority") in {"fringe", "rookie_depth", "deep_rotation"}:
             season_change *= 0.45
     growth_cap = .36 + .45 * raw_learning if upside_multiplier > 1.0 else .24
