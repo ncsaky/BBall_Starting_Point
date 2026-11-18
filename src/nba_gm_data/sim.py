@@ -29,6 +29,7 @@ from .spatial import (
 )
 from .teams import TEAM_INFO
 from .talent import enabled as talent_enabled, role_skill_value
+from .box_rates import normal_to_uniform, poisson_quantile
 from .utils import normalize_name, stable_id
 
 
@@ -265,12 +266,25 @@ def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any], *, 
         "playoff_translation": get("playoff_translation"),
         "defensive_weak_link": nonlinear_low(defensive_mobility, 48),
     }
+    # Box-score allocation rates (who gets the turnovers, steals and free throws; box_rates.py). Game scores do
+    # not use them. Old-ratings fits on the legacy traits are the fallback for players without inputs.
+    from . import box_rates
+    trait_values = {key: get(key) for key in traits}
+    features["turnovers_per36"] = box_rates.turnovers_per36_from_traits(trait_values)
+    features["steals_per36"] = box_rates.steals_per36_from_traits(trait_values)
+    features["fta_per_point"] = box_rates.fta_per_point_from_traits(trait_values)
     from .ratings_model import effective_inputs, uses_inputs_model
     if uses_inputs_model(canonical):
         player_inputs = effective_inputs(canonical, player["id"])
-        playmaking = playmaking_assists_per36(player_inputs) if player_inputs else None
-        if playmaking is not None:
-            features["playmaking_ast36"] = playmaking
+        if player_inputs:
+            playmaking = playmaking_assists_per36(player_inputs)
+            if playmaking is not None:
+                features["playmaking_ast36"] = playmaking
+            for key, rate in (("turnovers_per36", box_rates.turnovers_per36_from_inputs(player_inputs)),
+                              ("steals_per36", box_rates.steals_per36_from_inputs(player_inputs)),
+                              ("fta_per_point", box_rates.fta_per_point_from_inputs(player_inputs))):
+                if rate is not None:
+                    features[key] = rate
     from .offense import enabled as offense_enabled, offensive_profile
     if offense_enabled(canonical):
         profile = offensive_profile(canonical, player, {key: float(row['value']) for key, row in traits.items()})
@@ -1242,10 +1256,14 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
         scoring_expectations,
     )
     lines = []
+    from .ratings_model import uses_inputs_model
+    expected = {"assists": 0.0, "steals": 0.0, "assist_model": "inputs" if uses_inputs_model(canonical) else "legacy"}
     for index, item in enumerate(pool):
         player = item["player"]
         points = point_values[index]
         feat = features[player["id"]]
+        expected["assists"] += item["minutes"] * assist_rate_for_player(player, feat)
+        expected["steals"] += item["minutes"] * steal_rate_per_minute(feat)
         lines.append(
             {
                 "player_id": player["id"],
@@ -1260,13 +1278,18 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
                 **shooting_line(points, feat, item["minutes"], rng),
                 "rim_attempts": max(0, int(round(item["minutes"] * feat["rim_pressure"] / 1150 + rng.random()))),
                 "rebounds": max(0, int(round(item["minutes"] * rebound_rate_per_minute(player, feat) + rng.gauss(0.45, 1.55 + item["minutes"] * 0.018)))),
-                "assists": max(0, int(round(item["minutes"] * assist_rate_for_player(player, feat) + rng.gauss(0.2, 1.22 + item["minutes"] * 0.018 + max(0.0, feat["passing"] - 78.0) * 0.012)))),
-                "turnovers": max(0, int(round(item["minutes"] * (0.015 + feat["usage"] / 2200) + rng.random() * 0.6))),
-                "steals": max(0, int(round(item["minutes"] * feat["defensive_events"] / 1850 + rng.random() * 0.62))),
+                # Assists, turnovers and steals: a Poisson count around the player's own expected rate, drawn from
+                # the same single random number the old rounded-noise formulas used (the random stream, and so
+                # every score, is unchanged). The old noise (a floor at zero on Gaussian noise for assists, and
+                # +U(0, 0.6) rounding for turnovers and steals) gave every bench player a near-fixed extra event,
+                # which compressed stars toward the middle once team totals were rescaled (2026-11-18).
+                "assists": poisson_quantile(item["minutes"] * assist_rate_for_player(player, feat), normal_to_uniform(rng.gauss(0.0, 1.0))),
+                "turnovers": poisson_quantile(item["minutes"] * turnover_rate_per_minute(feat), rng.random()),
+                "steals": poisson_quantile(item["minutes"] * steal_rate_per_minute(feat), rng.random()),
                 "blocks": max(0, int(round(item["minutes"] * (feat["rim_deterrence"] / 2200 + max(0.0, feat["rim_deterrence"] - 88) * 0.0034) + rng.random() * 0.95))),
             }
         )
-    normalize_secondary_box_score_totals(lines, features, team_points, possessions)
+    normalize_secondary_box_score_totals(lines, features, team_points, possessions, expected=expected)
     return lines
 
 
@@ -1362,6 +1385,7 @@ def normalize_secondary_box_score_totals(
     features: dict[str, dict[str, float]],
     team_points: int,
     possessions: float,
+    expected: dict[str, float] | None = None,
 ) -> None:
     """Keep generated player texture while restoring NBA-scale team totals.
 
@@ -1370,6 +1394,10 @@ def normalize_secondary_box_score_totals(
     category as roster depth grows. Rescaling after all draws preserves who
     produced the events and consumes no extra RNG, so scores, winners, and the
     opposing team's simulation remain bit-for-bit unaffected.
+
+    ``expected`` holds the team's summed expected assists and steals (players' own rates x minutes). When
+    given, the team total follows it, so a team of good passers keeps its extra assists instead of having them
+    pulled back to the league average (that pull cost Jokic ~12% of his assists, 2026-11-18).
     """
     if not lines:
         return
@@ -1386,11 +1414,28 @@ def normalize_secondary_box_score_totals(
     raw = {key: sum(max(0, int(line.get(key) or 0)) for line in lines) for key in ("rebounds", "assists", "steals", "blocks")}
     targets = {
         "rebounds": round(clamp(43.8 + (weighted_feature("offensive_rebounding") - 60.0) * 0.055 + (possessions - 99.0) * 0.11 + (raw["rebounds"] - 66.0) * 0.16, 35, 54)),
+        # Assists and steals: the formulas below are only the fallback when no expected sums are given; see
+        # `expected` further down.
         "assists": round(clamp(26.2 + (weighted_feature("passing") - 60.0) * 0.075 + (team_points - 114.0) * 0.045 + (raw["assists"] - 32.0) * 0.18, 18, 36)),
         "steals": round(clamp(7.7 + (weighted_feature("defensive_events") - 60.0) * 0.045 + (possessions - 99.0) * 0.035 + (raw["steals"] - 11.5) * 0.16, 3, 14)),
         "blocks": round(clamp(5.0 + (weighted_feature("rim_deterrence") - 60.0) * 0.055 + (raw["blocks"] - 12.5) * 0.12, 1, 12)),
     }
     powers = {"rebounds": 1.32, "assists": 1.20, "steals": 1.55, "blocks": 2.0}
+    if expected is not None:
+        powers["steals"] = STEAL_SHARE_POWER
+        # The players' own expected assists/steals set the team level (a share of each game's lucky or unlucky
+        # draws is kept as texture); made baskets add assist chances and possessions add steal chances. Raw
+        # counts are unbiased Poisson draws around each player's own rate (2026-11-18), so they are shared out in
+        # plain proportion (power 1). The old powers (assists 1.20, steals 1.55) partly offset the old
+        # flattening noise; on unbiased draws they would reward a lucky night rather than the player's rate.
+        model = ASSIST_TEAM_MODEL[expected.get("assist_model", "inputs")]
+        targets["assists"] = round(clamp(
+            ASSIST_TEAM_BASE + (expected["assists"] - model["reference"]) * model["slope"]
+            + (team_points - 114.0) * 0.10 + (raw["assists"] - expected["assists"]) * 0.18, 16, 40))
+        targets["steals"] = round(clamp(
+            STEAL_TEAM_BASE + (expected["steals"] - STEAL_RAW_REFERENCE) * STEAL_TEAM_SLOPE
+            + (possessions - 99.0) * 0.035 + (raw["steals"] - expected["steals"]) * 0.16, 2, 15))
+        powers["assists"] = model["power"]
     for key, target in targets.items():
         redistribute_integer_stat(lines, key, int(target), powers[key])
 
@@ -1422,6 +1467,45 @@ def redistribute_integer_stat(lines: list[dict[str, Any]], key: str, target: int
         line[key] = assigned[index]
 
 
+# League-level scale on the fitted per-player turnover rates (box_rates). 1.0 keeps players at their real
+# per-36 level; the league total then runs ~0.5 per 100 possessions under the NBA's because real totals include
+# team turnovers (shot-clock and 5-second violations) that are credited to no player.
+TURNOVER_LEVEL = 1.0
+STEAL_LEVEL = 1.0
+# Team assist/steal totals before box variation (normalize_secondary_box_score_totals): base + slope x (the
+# team's summed expected events - reference). Players' events are then shared in proportion (power 1).
+ASSIST_TEAM_BASE = 26.6
+# reference: a league-average team's summed expected assists (the old-ratings formula runs ~10% higher than the
+# fitted new-ratings one, so each is centred on its own average). slope: how much of a team's passing talent
+# above that average shows in its total. power: how players share the total (1 = in proportion to their draws).
+# The old-ratings assist formula is hand-tuned (r 0.64 with real assists vs 0.95 for the inputs fit), so its team
+# totals lean less on it, and it keeps the 1.2 sharing power it was tuned with.
+ASSIST_TEAM_MODEL = {
+    "inputs": {"reference": 26.5, "slope": 0.6, "power": 1.0},
+    "legacy": {"reference": 29.3, "slope": 0.25, "power": 1.2},
+}
+STEAL_TEAM_BASE = 8.4
+STEAL_RAW_REFERENCE = 8.2
+STEAL_TEAM_SLOPE = 0.6
+STEAL_SHARE_POWER = 1.0
+
+
+def turnover_rate_per_minute(feat: dict[str, float]) -> float:
+    """Expected turnovers per minute: the player's fitted rate (box_rates), or the old usage formula."""
+    per36 = feat.get("turnovers_per36")
+    if per36 is None:
+        return 0.015 + float(feat.get("usage") or 50.0) / 2200
+    return float(per36) * TURNOVER_LEVEL / 36.0
+
+
+def steal_rate_per_minute(feat: dict[str, float]) -> float:
+    """Expected steals per minute before the team total is set: the fitted rate, or the old activity formula."""
+    per36 = feat.get("steals_per36")
+    if per36 is None:
+        return float(feat.get("defensive_events") or 50.0) / 1850
+    return float(per36) * STEAL_LEVEL / 36.0
+
+
 def rebound_rate_per_minute(player: dict[str, Any], feat: dict[str, float]) -> float:
     """Raw rebound chances per minute before the team total is rescaled to a realistic game total.
 
@@ -1433,26 +1517,21 @@ def rebound_rate_per_minute(player: dict[str, Any], feat: dict[str, float]) -> f
     return per36 / 36.0
 
 
-PASS_RECOGNITION_INPUTS = tuple(f"F0{i}.recognition" for i in range(1, 10))
 
 
 def playmaking_assists_per36(inputs: dict[str, Any]) -> float | None:
     """Assists per 36 minutes implied by a player's playmaking inputs (new-ratings mode only).
 
-    Log-linear fit (2026-11-17) to real 2025-26 assists per 36 for 150 rotation players, out-of-fold
-    correlation 0.91 (the trait-based formula: 0.62): pass-reading grade, how often the player chooses to pass
-    (T01 pass share: measured shot-creating passes per touch) and how involved he is (T08: measured true usage). Box-score allocation only; game scores do not use it.
+    Log-linear fit (refitted 2026-11-18, box_rates.ASSISTS_INPUTS) to real 2025-26 assists per 36 for 377
+    rotation players, out-of-fold correlation 0.95 (the 2026-11-17 fit: 0.91; the trait-based formula: 0.62):
+    how often the player chooses to pass (T01 pass share), how involved he is (T08), passing delivery (the
+    passing families' execution grades), passing risk appetite (T07) and post-hub decisions (T01 post). The
+    post term is what the old fit lacked: it predicted Jokic at 7.1 assists per 36 (real 11.1); now ~10.7.
+    Box-score allocation only; game scores do not use it.
     """
-    try:
-        recognition = sum(float(inputs[i]["value"]["grade"]) for i in PASS_RECOGNITION_INPUTS) / len(PASS_RECOGNITION_INPUTS)
-        pass_share = float(inputs["T01"]["value"]["rows"][0]["probabilities"]["pass"])
-        involvement = float(inputs["T08"]["value"]["probability"])
-    except (KeyError, TypeError, ValueError, IndexError, ZeroDivisionError):
-        return None
-    if pass_share <= 0 or involvement <= 0:
-        return None
-    log_rate = 4.2367 + 0.1333 * recognition / 100.0 + 0.9888 * math.log(pass_share) + 0.5675 * math.log(involvement)
-    return round(clamp(math.exp(log_rate), 0.5, 14.0), 3)
+    from .box_rates import assists_per36_from_inputs
+    rate = assists_per36_from_inputs(inputs)
+    return None if rate is None else round(rate, 3)
 
 
 def _ramp(value: float, low: float, high: float) -> float:

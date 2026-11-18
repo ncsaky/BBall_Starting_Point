@@ -1,9 +1,11 @@
 """Versioned offensive roles and shot diets; estimates, not additional potential."""
 import math
+import random
 from typing import Any
 
 from .utils import clamp, normalize_name
 
+FT_LEVEL = 0.98  # league-level scale on the fitted free throws per point (sim features 'fta_per_point')
 MODEL_VERSION = 1
 SOURCE_ID = 'src_offensive_roles_v1'
 VERSION = '2026-10-27-interior-offense-v9'
@@ -217,8 +219,20 @@ def shooting_line(points, feat, minutes, rng):
     # is unchanged; only the first `fta` draws count as attempts.
     u = rng.random()
     draws = max(0, round(points*rate+u*1.8))
-    fta = min(draws, max(0, math.floor(points*rate+u)))
     makes = [rng.random() < feat['ft_pct'] for _ in range(draws)]
+    per_point = feat.get('fta_per_point')
+    side = None
+    if per_point is None:
+        fta = min(draws, max(0, math.floor(points*rate+u)))
+    else:
+        # Fitted free throws per point scored (box_rates, 2026-11-18): the old rate (.13-.34 per point from rim
+        # pressure and creation) gave rim attackers about half their real attempts. Attempts beyond the old draw
+        # count get their makes from a side generator seeded by this line, so the game's random stream (and every
+        # score) is unchanged.
+        fta = max(0, math.floor(points*float(per_point)*FT_LEVEL+u))
+        if fta > draws:
+            side = random.Random(f'ft:{u!r}:{points}')
+            makes += [side.random() < feat['ft_pct'] for _ in range(fta-draws)]
     ftm = min(points, sum(makes[:fta]))
     attempts = minutes*feat['three_per36']/36*rng.uniform(.85, 1.15)
     fg3a = int(attempts)+(rng.random() < attempts-int(attempts))
@@ -227,7 +241,20 @@ def shooting_line(points, feat, minutes, rng):
     if sampled > fg3m:
         fg3a = max(fg3m, fg3a-round((sampled-fg3m)/feat['three_pct']))
     remainder = points-ftm-3*fg3m
-    if remainder % 2:
+    if remainder % 2 and per_point is not None:
+        # Two-point makes need an even remainder. Adding a made attempt every time handed every odd line an extra
+        # ~0.4 attempts whatever the player's profile. Instead add one made attempt or remove one, half the time
+        # each, so attempts and makes keep their expected values (2026-11-18).
+        side = side or random.Random(f'ft:{u!r}:{points}')
+        if ftm >= 1 and side.random() < .5:
+            ftm -= 1
+            fta -= 1
+        elif ftm == 0 and fta >= 1:
+            ftm += 1  # an all-miss line: one miss becomes a make
+        else:
+            ftm += 1
+            fta += 1
+    elif remainder % 2:
         # Two-point makes need an even remainder. This used to add a made free throw with no attempt, on about
         # half of all lines (league FT% ~90% vs the NBA's ~78%). Flip one free-throw outcome instead: with the
         # shooter's FT% chance a made attempt is added, otherwise a make becomes a miss, so FT% keeps its real
