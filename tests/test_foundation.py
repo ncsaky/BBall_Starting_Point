@@ -397,7 +397,7 @@ class DataFoundationTests(unittest.TestCase):
             entered = threading.Event()
             release = threading.Event()
             failures: list[BaseException] = []
-            original_dump = save_module.json.dump
+            original_dump = save_module.encode_save_json
 
             def blocked_dump(*args, **kwargs):
                 entered.set()
@@ -410,7 +410,7 @@ class DataFoundationTests(unittest.TestCase):
                 except BaseException as exc:  # surfaced in the test thread below
                     failures.append(exc)
 
-            with patch.object(save_module.json, "dump", side_effect=blocked_dump):
+            with patch.object(save_module, "encode_save_json", side_effect=blocked_dump):
                 thread = threading.Thread(target=writer)
                 thread.start()
                 try:

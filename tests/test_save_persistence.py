@@ -121,7 +121,7 @@ class SavePersistenceTests(unittest.TestCase):
             {"id": "failed_only", "player_id": "p2", "points": 50, "date": "2025-11-02"},
         ]
         input_before = copy.deepcopy(changed)
-        with patch.object(save_module.json, "dump", side_effect=OSError("injected manifest failure")):
+        with patch.object(save_module, "encode_save_json", side_effect=OSError("injected manifest failure")):
             with self.assertRaisesRegex(OSError, "injected"):
                 write_save(self.path, changed)
         self.assertEqual(changed, input_before)
@@ -142,7 +142,7 @@ from nba_gm_data import save as module
 path = sys.argv[1]
 save = module.load_save(path)
 save['player_game_logs'] = [{'id': 'crashed', 'points': 88}]
-module.json.dump = lambda *args, **kwargs: os._exit(71)
+module.encode_save_json = lambda *args, **kwargs: os._exit(71)
 module.write_save(path, save)
 '''
         environment = os.environ.copy()
@@ -185,7 +185,7 @@ module.write_save(path, save)
         save = {"version": "league_save_v1", "meta": {"save_revision": 1}, "history_store": {"version": 1, "path": database.name, "revision": 1, "archived_counts": {"player_game_logs": 1}}}
         self.path.write_text(json.dumps(save))
         self.assertEqual(load_save(self.path, include_history=True)["player_game_logs"][0]["points"], 17)
-        with patch.object(save_module.json, "dump", side_effect=OSError("migration interrupted")):
+        with patch.object(save_module, "encode_save_json", side_effect=OSError("migration interrupted")):
             with self.assertRaises(OSError):
                 write_save(self.path, save)
         self.assertEqual(load_save(self.path, include_history=True)["player_game_logs"][0]["points"], 17)
