@@ -440,6 +440,7 @@ def team_feature_vector(canonical: dict[str, Any], team: dict[str, Any], *, incl
     if include_spatial:
         spatial_weights = {player["id"]: max(0.0, projected_game_minutes(player)) for player in players}
         features.update(flatten_spatial_profile(team_spatial_profile(canonical, team["id"], spatial_weights)))
+    features.update(lineup_fit_features([(player, player_features[player["id"]], projected_game_minutes(player)) for player in players]))
     from .offense import extend_lineup_features
     extend_lineup_features(features, player_features, weights)
     features.update(offensive_feature_summary_from_values(features))
@@ -981,6 +982,7 @@ def lineup_feature_vector(canonical: dict[str, Any], pool: list[dict[str, Any]])
             )
         )
     )
+    features.update(lineup_fit_features([(item["player"], player_features[item["player"]["id"]], float(item.get("minutes") or 0.0)) for item in pool]))
     from .offense import extend_lineup_features
     extend_lineup_features(features, player_features, weights)
     features.update(offensive_feature_summary_from_values(features))
@@ -1113,50 +1115,29 @@ def league_offense_calibration(canonical: dict[str, Any]) -> float:
     return INPUTS_OFFENSE_CALIBRATION if uses_inputs_model(canonical) else 0.0
 
 
-def simulate_team_line(
+def mean_off_rating(
     canonical: dict[str, Any],
-    team: dict[str, Any],
-    opponent: dict[str, Any],
-    pool: list[dict[str, Any]],
     team_features: dict[str, float],
     opp_features: dict[str, float],
-    coach: CoachRating | None,
-    opp_coach: CoachRating | None,
-    rng: random.Random,
-    is_home: bool = False,
-    rest_context: dict[str, Any] | None = None,
-    opp_rest_context: dict[str, Any] | None = None,
-) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    coach_mod: dict[str, float],
+    opp_coach_mod: dict[str, float],
+    shot_diet: dict[str, float],
+    *,
+    home_mod: float,
+    rest_mod: dict[str, float],
+    age_mod: dict[str, float],
+    opp_age_mod: dict[str, float],
+    availability_mod: dict[str, float],
+    opp_availability_mod: dict[str, float],
+    game_env_mod: dict[str, float],
+    matchup_total_mod: dict[str, float],
+    creator_mod: float,
+    spacing_mod: float,
+    rest_context: dict[str, Any] | None,
+) -> float:
+    """Expected points per 100 possessions before game-to-game noise (the terms are summed in a fixed order)."""
     from .offense import team_contribution
-    coach_mod = scaled_coach_effect(coach, team_features)
-    opp_coach_mod = scaled_coach_effect(opp_coach, opp_features)
-    availability_mod = availability_gap_effect(team_features)
-    opp_availability_mod = availability_gap_effect(opp_features)
-    age_mod = age_fatigue_effect(team_features, rest_context)
-    opp_age_mod = age_fatigue_effect(opp_features, opp_rest_context)
-    shot_diet = team_shot_diet(team_features, opp_features, coach)
-    home_mod = 1.9 if is_home else -0.4
-    rest_mod = rest_effect(rest_context)
-    game_env_mod = game_environment_effect(rest_context, opp_rest_context)
-    matchup_total_mod = matchup_total_environment_effect(team_features, opp_features)
-    creator_mod = creator_advantage(team_features, opp_features)
-    spacing_mod = spacing_creation_interaction(team_features)
-    possessions = clamp(
-        BASE_POSSESSIONS
-        + (team_features["stamina"] - 50) * 0.05
-        + (team_features["offensive_rebounding"] - 50) * 0.025
-        + coach_mod["tempo"]
-        + availability_mod["pace"]
-        + rest_mod["pace"]
-        + age_mod["pace"]
-        + game_env_mod["pace"]
-        + matchup_total_mod["pace"]
-        - opp_coach_mod["tempo_control"] * 0.25
-        + rng.gauss(0, 4.2),
-        84,
-        120,
-    )
-    off_rating = (
+    return (
         BASE_OFF_RATING
         + league_offense_calibration(canonical)
         + lineup_quality_effect(team_features, opp_features)
@@ -1185,8 +1166,82 @@ def simulate_team_line(
         - opp_coach_mod["defense"]
         - opponent_targeting_penalty(team_features, opp_features, opp_coach_mod)
         + shot_diet["shot_quality_delta"]
-        + rng.gauss(0, 9.2)
+        + team_features.get("lineup_fit_offense", 0.0)
+        + opp_features.get("lineup_fit_defense", 0.0)
     )
+
+
+def lineup_fit_features(entries: list[tuple[dict[str, Any], dict[str, float], float]]) -> dict[str, float]:
+    """Expected non-additive lineup fit (points per 100) for (player, features, minutes); see lineup_fit.py."""
+    from .lineup_fit import lineup_fit_effect, player_fit_flags
+    effect = lineup_fit_effect([(player_fit_flags(features, player), minutes) for player, features, minutes in entries])
+    return {"lineup_fit_offense": effect["offense"], "lineup_fit_defense": effect["defense"]}
+
+
+def neutral_off_rating(canonical: dict[str, Any], team_features: dict[str, float], opp_features: dict[str, float],
+                       coach: CoachRating | None = None, opp_coach: CoachRating | None = None) -> float:
+    """Expected offensive rating on a neutral floor with no rest, age or availability context (lineup analysis)."""
+    coach_mod = scaled_coach_effect(coach, team_features)
+    opp_coach_mod = scaled_coach_effect(opp_coach, opp_features)
+    return mean_off_rating(
+        canonical, team_features, opp_features, coach_mod, opp_coach_mod, team_shot_diet(team_features, opp_features, coach),
+        home_mod=0.75, rest_mod=rest_effect(None), age_mod=age_fatigue_effect(team_features, None),
+        opp_age_mod=age_fatigue_effect(opp_features, None), availability_mod=availability_gap_effect(team_features),
+        opp_availability_mod=availability_gap_effect(opp_features), game_env_mod=game_environment_effect(None, None),
+        matchup_total_mod=matchup_total_environment_effect(team_features, opp_features),
+        creator_mod=creator_advantage(team_features, opp_features), spacing_mod=spacing_creation_interaction(team_features),
+        rest_context=None,
+    )
+
+
+def simulate_team_line(
+    canonical: dict[str, Any],
+    team: dict[str, Any],
+    opponent: dict[str, Any],
+    pool: list[dict[str, Any]],
+    team_features: dict[str, float],
+    opp_features: dict[str, float],
+    coach: CoachRating | None,
+    opp_coach: CoachRating | None,
+    rng: random.Random,
+    is_home: bool = False,
+    rest_context: dict[str, Any] | None = None,
+    opp_rest_context: dict[str, Any] | None = None,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    coach_mod = scaled_coach_effect(coach, team_features)
+    opp_coach_mod = scaled_coach_effect(opp_coach, opp_features)
+    availability_mod = availability_gap_effect(team_features)
+    opp_availability_mod = availability_gap_effect(opp_features)
+    age_mod = age_fatigue_effect(team_features, rest_context)
+    opp_age_mod = age_fatigue_effect(opp_features, opp_rest_context)
+    shot_diet = team_shot_diet(team_features, opp_features, coach)
+    home_mod = 1.9 if is_home else -0.4
+    rest_mod = rest_effect(rest_context)
+    game_env_mod = game_environment_effect(rest_context, opp_rest_context)
+    matchup_total_mod = matchup_total_environment_effect(team_features, opp_features)
+    creator_mod = creator_advantage(team_features, opp_features)
+    spacing_mod = spacing_creation_interaction(team_features)
+    possessions = clamp(
+        BASE_POSSESSIONS
+        + (team_features["stamina"] - 50) * 0.05
+        + (team_features["offensive_rebounding"] - 50) * 0.025
+        + coach_mod["tempo"]
+        + availability_mod["pace"]
+        + rest_mod["pace"]
+        + age_mod["pace"]
+        + game_env_mod["pace"]
+        + matchup_total_mod["pace"]
+        - opp_coach_mod["tempo_control"] * 0.25
+        + rng.gauss(0, 4.2),
+        84,
+        120,
+    )
+    off_rating = mean_off_rating(
+        canonical, team_features, opp_features, coach_mod, opp_coach_mod, shot_diet,
+        home_mod=home_mod, rest_mod=rest_mod, age_mod=age_mod, opp_age_mod=opp_age_mod,
+        availability_mod=availability_mod, opp_availability_mod=opp_availability_mod, game_env_mod=game_env_mod,
+        matchup_total_mod=matchup_total_mod, creator_mod=creator_mod, spacing_mod=spacing_mod, rest_context=rest_context,
+    ) + rng.gauss(0, 9.2)
     points = max(70, round(possessions * off_rating / 100))
     player_lines = distribute_player_lines(canonical, team, pool, points, possessions, rng)
     team_line = {
@@ -1199,6 +1254,8 @@ def simulate_team_line(
         "shot_quality_delta": round(shot_diet["shot_quality_delta"], 3),
         "feature_context": {
             "lineup_weighted": True,
+            "lineup_fit_offense_delta": round(float(team_features.get("lineup_fit_offense", 0.0)), 3),
+            "opponent_lineup_fit_defense_delta": round(float(opp_features.get("lineup_fit_defense", 0.0)), 3),
             "home_court_delta": round(home_mod, 3),
             "availability_offense_delta": round(availability_mod["offense"], 3),
             "availability_pace_delta": round(availability_mod["pace"], 3),
