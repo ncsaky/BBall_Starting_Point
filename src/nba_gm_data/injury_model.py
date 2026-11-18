@@ -18,6 +18,9 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+# The source checkout root (data/ lives here); resolved once instead of on every lookup.
+_PACKAGE_ROOT = Path(__file__).resolve().parents[2]
+
 MODEL_FILE = "data/canonical/injury_model_v2.json"
 POSSESSIONS_PER_MINUTE = 2.1      # a player's on-court possessions per minute at a ~101-possession pace
 MIN_MINUTES_FOR_EXPOSURE = 4.0    # deep reserves who barely play still get hurt occasionally (Codex INJ)
@@ -63,7 +66,7 @@ def _load_with_evidence(path: str, evidence_path: str) -> dict[str, Any] | None:
 
 def load_model(root: str | Path | None = None) -> dict[str, Any] | None:
     """The fitted model, plus real players' injury history/forecasts/recovery speed when the local evidence file exists."""
-    root = Path(root) if root is not None else Path(__file__).resolve().parents[2]
+    root = Path(root) if root is not None else _PACKAGE_ROOT
     return _load_with_evidence(str(root / MODEL_FILE), str(root / EVIDENCE_FILE))
 
 
@@ -257,7 +260,7 @@ def _mean_games_out(path: str, part: str) -> float:
 def expected_injury_games_82(model: Mapping[str, Any], player: Mapping[str, Any], traits: Mapping[str, float], minutes: float,
                              history: list[tuple[date, str]], on: date, root: str | Path | None = None) -> float:
     """Games a player is expected to miss to injury over 82 team games under the v2 model (before staff effects)."""
-    root = Path(root) if root is not None else Path(__file__).resolve().parents[2]
+    root = Path(root) if root is not None else _PACKAGE_ROOT
     hazards = part_hazards(model, player, traits, minutes, history, on)
     path = str(root / MODEL_FILE)
     return 82.0 * LEAGUE_RATE_SCALE * sum(h * _mean_games_out(path, part) for part, h in hazards.items())
@@ -350,7 +353,7 @@ def body_risk_map(canonical: Mapping[str, Any], player: Mapping[str, Any], healt
     model = load_model(root)
     if not model:
         return None
-    root = Path(root) if root is not None else Path(__file__).resolve().parents[2]
+    root = Path(root) if root is not None else _PACKAGE_ROOT
     path = str(root / MODEL_FILE)
     on = _parse((canonical.get("meta") or {}).get("current_date")) or date(2026, 10, 20)
     events = canonical.get("injury_events", [])

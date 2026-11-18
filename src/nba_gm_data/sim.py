@@ -91,7 +91,22 @@ def load_reference_json(path: Path) -> Any:
     return pickle.loads(_reference_json_bytes(str(path.resolve()), stamp))
 
 
-def load_sim_context(root: str | Path, canonical: dict[str, Any] | None = None) -> dict[str, Any]:
+def load_sim_reference(root: str | Path) -> dict[str, Any]:
+    """The read-only reference tables a sim context starts from (schedule, box scores, minutes, odds, manifestos)."""
+    root = Path(root)
+    return {
+        "schedule": load_reference_json(root / SCHEDULE_FILE)["games"],
+        "boxscores": load_optional_research(root, GAME_BOXSCORES_FILE, "games"),
+        "real_minutes": load_reference_json(root / REAL_MINUTES_FILE) if (root / REAL_MINUTES_FILE).exists() else {},
+        "odds": load_odds(root),
+        "manifestos": load_manifestos(root),
+    }
+
+
+def load_sim_context(root: str | Path, canonical: dict[str, Any] | None = None, *,
+                     reference: dict[str, Any] | None = None, indices: bool = True) -> dict[str, Any]:
+    """A sim context. ``reference`` reuses tables from load_sim_reference (the simulation only reads them);
+    ``indices=False`` leaves the lookup indexes to a caller that replaces the schedule first."""
     root = Path(root)
     if canonical is None:
         canonical = load_json(root / "data/canonical/universe_2026_27_offseason.json")
@@ -99,19 +114,19 @@ def load_sim_context(root: str | Path, canonical: dict[str, Any] | None = None) 
         if ratings_model_for() == INPUTS_V1:
             # Save-less tools (calibration report, betting-odds validation) opt in via NBA_GM_RATINGS_MODEL.
             install_inputs_model(canonical, root)
-    schedule = load_reference_json(root / SCHEDULE_FILE)["games"]
-    boxscores = load_optional_research(root, GAME_BOXSCORES_FILE, "games")
+    tables = reference if reference is not None else load_sim_reference(root)
     context = {
         "root": root,
         "canonical": canonical,
-        "schedule": schedule,
-        "real_minutes": load_reference_json(root / REAL_MINUTES_FILE) if (root / REAL_MINUTES_FILE).exists() else {},
-        "boxscores": boxscores,
-        "odds": load_odds(root),
-        "manifestos": load_manifestos(root),
+        "schedule": tables["schedule"],
+        "real_minutes": tables["real_minutes"],
+        "boxscores": tables["boxscores"],
+        "odds": tables["odds"],
+        "manifestos": tables["manifestos"],
         "sim_cache": {"player_pools": {}, "team_features": {}, "game_contexts": {}},
     }
-    context["indices"] = build_sim_indices(context)
+    if indices:
+        context["indices"] = build_sim_indices(context)
     return context
 
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 import math
 
 import json
+import pickle
 import random
 import re
 import hashlib
@@ -1110,12 +1111,12 @@ class _BilateralSettlementMaterialization:
     def active(self):
         if self._active is None:
             from .save import canonical_with_save
-            private_save = deepcopy(self._saved)
+            private_save = copy_plain(self._saved)
             active = canonical_with_save(self._source, private_save)
             # Freeze the save effects before any derived validation view can
             # annotate its owned data. Do not retain the whole copied career.
             self._normalization = {
-                key: deepcopy(private_save[key]) for key in self._NORMALIZATION_FIELDS
+                key: copy_plain(private_save[key]) for key in self._NORMALIZATION_FIELDS
                 if key in private_save and (key not in self._saved or private_save[key] != self._saved[key])
             }
             self._active = active
@@ -1124,7 +1125,7 @@ class _BilateralSettlementMaterialization:
     def entitlement_active(self):
         active = self.active()
         for key, value in self._normalization.items():
-            self._saved[key] = deepcopy(value)
+            self._saved[key] = copy_plain(value)
         return active
 
 
@@ -1324,7 +1325,7 @@ def saved_trade_salary_legality(
     # validation must not refresh the caller's state when the trade is rejected.
     try:
         active = (_materialization.active() if _materialization is not None
-                  else canonical_with_save(canonical, deepcopy(save)))
+                  else canonical_with_save(canonical, copy_plain(save)))
     except (OSError, ValueError):
         return {"status": "manual_review_required", "issues": [],
                 "manual_review": ["Current payroll data is unavailable for this save's starting roster."]}
@@ -1879,7 +1880,7 @@ def canonical_with_pending_pick_terms(canonical: dict[str, Any], terms: list[dic
     if cache is not None and key in cache:
         if stats is not None:
             stats['pick_preview_hits'] += 1
-        changes, entitlements = copy_plain(cache[key])
+        changes, entitlements = pickle.loads(cache[key])
         for index, (updates, removed) in changes.items():
             pick = working['draft_picks'][index]
             for field in removed:
@@ -1909,7 +1910,8 @@ def canonical_with_pending_pick_terms(canonical: dict[str, Any], terms: list[dic
             del cache[next(iter(cache))]
             if stats is not None:
                 stats['pick_preview_evictions'] += 1
-        cache[key] = copy_plain((changes, working.get('_nested_entitlements', {})))
+        # Stored as pickle bytes (produced here, read only here): every hit unpickles a private copy.
+        cache[key] = pickle.dumps((changes, working.get('_nested_entitlements', {})), protocol=pickle.HIGHEST_PROTOCOL)
         if stats is not None:
             stats['pick_preview_peak_entries'] = max(stats['pick_preview_peak_entries'], len(cache))
     return working

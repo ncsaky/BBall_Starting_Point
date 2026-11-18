@@ -299,7 +299,7 @@ def live_roster_issues(canonical, saved, proposal, *, candidate=None, config=Non
         return []
     active = tx.with_transaction_context(
         _materialization.active() if _materialization is not None
-        else canonical_with_save(canonical, deepcopy(saved)))
+        else canonical_with_save(canonical, copy_plain(saved)))
     candidate = candidate or {}
     active = tx.canonical_with_pending_pick_terms(active, candidate.get('pick_obligation_terms'))
     # Fresh league-wide valuations/ranks/pick context above remain mandatory.

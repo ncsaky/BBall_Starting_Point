@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from contextvars import ContextVar
 from operator import methodcaller
 import pickle
 from typing import Any
@@ -646,6 +647,7 @@ def draft_assets_display(canonical: dict[str, Any], assets: list[dict[str, Any]]
 # key (saves, dashboards, settlement) compute fresh results exactly as before.
 
 _MEMO_LIMIT = 16
+_TRUSTED: ContextVar[tuple[Any, ...] | None] = ContextVar("pick_presentation_trusted_entry", default=None)
 _PICK_OWNER = methodcaller("get", "current_owner_team_id")
 _TERM_STATUS = methodcaller("get", "status")
 _TERM_HOLDER = methodcaller("get", "current_rights_holder_team_id")
@@ -659,20 +661,25 @@ def _memo_entry(canonical: dict[str, Any]) -> dict[str, Any] | None:
     picks = canonical.get("draft_picks", [])
     terms = canonical.get("pick_obligations", [])
     teams = canonical.get("teams", [])
+    key = (id(picks), id(terms), id(teams))
+    trusted = _TRUSTED.get()
+    if trusted is not None and trusted[0] is memo and trusted[1] == key:
+        # A nested call made while computing a result for this very entry: these functions only read
+        # the league lists, so the guard taken a moment ago still holds.
+        return trusted[2]
     guard = (
         list(map(id, picks)), list(map(_PICK_OWNER, picks)),
         list(map(id, terms)), list(map(len, terms)), list(map(_TERM_STATUS, terms)),
         list(map(_TERM_HOLDER, terms)), list(map(_TERM_ANCHOR, terms)), list(map(id, teams)),
     )
-    key = (id(picks), id(terms), id(teams))
-    entry = memo.get(key)
+    entry = memo.pop(key, None)  # re-inserted below: least recently used entries are evicted first
     if (entry is None or entry["sources"][0] is not picks or entry["sources"][1] is not terms
             or entry["sources"][2] is not teams or entry["guard"] != guard):
-        memo.pop(key, None)
         while len(memo) >= _MEMO_LIMIT:
             memo.pop(next(iter(memo)))
         # The entry keeps its source lists alive, so their ids cannot be reused while it exists.
-        entry = memo[key] = {"sources": (picks, terms, teams), "guard": guard, "results": {}}
+        entry = {"key": key, "sources": (picks, terms, teams), "guard": guard, "results": {}}
+    memo[key] = entry
     return entry
 
 
@@ -683,7 +690,11 @@ def _memoized(canonical: dict[str, Any], key: tuple[Any, ...], compute, *args: A
     results = entry["results"]
     stored = results.get(key)
     if stored is None:
-        value = compute(canonical, *args)
+        token = _TRUSTED.set((canonical["_pick_presentation_memo"], entry["key"], entry))
+        try:
+            value = compute(canonical, *args)
+        finally:
+            _TRUSTED.reset(token)
         # Plain JSON-like data built here; the bytes never leave this process.
         results[key] = (args, pickle.dumps(value, protocol=pickle.HIGHEST_PROTOCOL))
         return value

@@ -39,7 +39,7 @@ from .narrative import (
     reset_narrative_cache,
 )
 from .schema import CANONICAL_SEASON, CANONICAL_START_DATE, CoachRating, DevelopmentEvent, to_plain
-from .sim import build_sim_indices, espn_team_id_map, invalidate_sim_cache, load_sim_context, sim_game_with_context
+from .sim import build_sim_indices, espn_team_id_map, invalidate_sim_cache, load_sim_context, load_sim_reference, sim_game_with_context
 from .spatial import invalidate_spatial_cache, team_spatial_profile
 from .staff import ROLE_LABELS, STAFF_SLOTS, apply_head_coach_reputation, fire_staff_from_save, hire_staff_from_save, initialize_staff_season_changes, initialize_save_staff_slots, interim_staff, is_interim_staff, negotiate_staff_hire, simulate_ai_staff_changes, staff_action_permissions, staff_budget_for_team, staff_budget_salary, staff_contract, staff_grade
 from .staff_lifecycle import roll_staff_lifecycle
@@ -1678,6 +1678,7 @@ class _AdvanceRuntimeState:
         self.active: dict[str, Any] | None = None
         self.inputs: Any = None
         self.attribute_summaries: dict[bytes, dict[str, float]] = {}
+        self.sim_reference: dict[str, Any] | None = None
 
     def advance_day(self, *args: Any) -> dict[str, Any]:
         # Preserve the day API and isolate concurrent/reentrant advances.
@@ -2093,7 +2094,13 @@ def advance_save_day(
             games=scheduled_games_between(root, save, current, target), from_date=current, development=False,
             active=runtime_state.take(save, target) if runtime_state is not None else None,
         )["active"]
-        context = load_sim_context(root, runtime_canonical)
+        if runtime_state is not None:
+            # The reference tables are only read by the simulation, so one copy serves every day of this advance.
+            if runtime_state.sim_reference is None:
+                runtime_state.sim_reference = load_sim_reference(root)
+            context = load_sim_context(root, runtime_canonical, reference=runtime_state.sim_reference, indices=False)
+        else:
+            context = load_sim_context(root, runtime_canonical, indices=False)
         context["schedule"] = schedule_for_save(root, save)
         context["indices"] = build_sim_indices(context)
         context["indices"]["coach_by_team"] = save_coach_ratings(runtime_canonical, save)
@@ -2152,10 +2159,13 @@ def advance_save_day(
                        for action in save.get(key, [])}
         # Only skip isolation when every AI review window is closed and no
         # queued decision can run. On review days, isolate even rejected work.
+        # A listening day with no trade or offer slots runs no market search
+        # (see queue_ai_recommendations), so it needs no isolation either.
+        market = market_day(target, effective_seed, start_year, trade_deadline_date(start_year))
         isolate = (
             (target <= extension_deadline_date(start_year)
              and stable_id("ai_action", "extensions", target[:7], effective_seed) not in queued_keys)
-            or market_day(target, effective_seed, start_year, trade_deadline_date(start_year))["review"]
+            or (market["review"] and bool(market["slots"] or (market["offer_slots"] and human_controlled_team_ids(save))))
             or current[:7] != target[:7] or target.endswith("-02-05")
             or any(action.get("status") not in {"processed", "executed", "rejected", "draft_attention_required"}
                    and str(action.get("date") or "") <= target
@@ -5532,6 +5542,13 @@ def queue_ai_recommendations(
     trade_window_open = phase in {'preseason', 'regular_season'} and market['review']
     if "trades" in legal_actions_for_date(through_date) and trade_window_open:
         action_id = stable_id("ai_action", "trades", through_date, seed)
+        if action_id not in queued_keys and not market['slots'] and not (market['offer_slots'] and human_controlled_team_ids(save)):
+            # A listening day with no trade slots and no inbound offer slots: the searches below could only
+            # end in this same empty review (zero slots admit no AI-AI deal and no user offer), so skip them.
+            save.setdefault('processed_hidden_ai_actions', []).append({
+                'id': action_id, 'date': through_date, 'action_type': 'trade_market_review',
+                'status': 'reviewed', 'market_slots': market['slots'], 'user_offers_generated': 0})
+            return
         if action_id not in queued_keys:
             from .transactions import simulate_ai_trades, proposal_asset_identity_keys, trade_team_ids
 
@@ -6537,12 +6554,11 @@ def ai_role_targets(canonical: dict[str, Any], roster: list[dict[str, Any]], pri
                 for slot in range(5):
                     if mask & (1 << slot):
                         continue
-                    candidate = list(assignment)
-                    candidate[slot] = pid
                     new_mask = mask | (1 << slot)
                     total = score + scores[slot]
-                    if new_mask not in states or total > states[new_mask][0]:
-                        states[new_mask] = (total, tuple(candidate))
+                    previous = states.get(new_mask)
+                    if previous is None or total > previous[0]:
+                        states[new_mask] = (total, assignment[:slot] + (pid,) + assignment[slot + 1:])
         full_mask = max(states, key=lambda mask: (mask.bit_count(), states[mask][0]))
         assignment = states[full_mask][1]
         groups.append(assignment)
