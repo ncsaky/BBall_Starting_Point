@@ -48,7 +48,9 @@ def _response_fit(path: str) -> tuple[tuple[float, float], ...] | None:
     return tuple((float(x), float(y)) for x, y in knots) if len(knots) >= 2 else None
 
 
+@lru_cache(maxsize=1)
 def response_knots() -> tuple[tuple[float, float], ...] | None:
+    # Cached: resolving the resource root touches the filesystem, and this runs for every rim lookup.
     from .resource_paths import game_resource_root
     return _response_fit(str(game_resource_root() / RESPONSE_FIT_FILE))
 
