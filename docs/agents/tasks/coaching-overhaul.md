@@ -47,9 +47,10 @@ Each role gets 3 ratings that each drive one distinct, testable effect (plus per
   (assistants promoted, coordinators become head-coach candidates); job security moves with results (hot seat).
 - Every displayed rating is used by the engine (rule 4); GUI text rewritten to match.
 
-## Open decisions for the user
-- Size of coaching effects (keep current +/-3 per 100 scale, or evidence-calibrated).
-- Morale/chemistry system: in scope now or later.
+## User decisions (2026-11-18)
+- Morale/chemistry system: **later**; player relations starts with minutes acceptance and buy-in/playoff effects.
+- Built after the injury overhaul.
+- Still open: size of coaching effects (keep current +/-3 per 100 scale, or evidence-calibrated).
 
 ## Resume state
 Design drafted; awaiting user review.

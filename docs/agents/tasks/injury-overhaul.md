@@ -40,9 +40,39 @@ role, usage/workload and ratings change which injuries happen and how often. Evi
    working; GUI shows diagnosis + body part (fixes the severity label bug); player card can show an injury history by region.
 8. Perf: precompute per-player region hazards once per day (or when ratings/profile change).
 
-## Open decisions for the user
-- Permanent rating loss after major injuries (evidence-based) — yes/no.
-- Playing through minor injuries (with a penalty) now or later.
+## User decisions (2026-11-18)
+- Permanent rating loss after major injuries: **yes, evidence-based only** (only injury types where BBI long-term data shows a real lasting drop).
+- Playing through minor injuries: **later** (follow-up).
+- Order: **injuries first**, coaching right after.
+
+## Build plan (2026-11-18)
+Body parts = Basketball Index's 16: knee, back, ankle, hamstring, calf, achilles, foot, hip, groin, shoulder, quadriceps,
+head, wrist, toe, thumb, hand (+ illness/other, no compounding).
+Evidence files: data/research/bbi/tools/injury_player_history.json (6,945 absences with part/diagnosis/days/games),
+injury_player_seasons.json (gp/gm per player-season), injury_players.json (height, position, experience, recovery band),
+injury_time_out.json (return-day percentiles by diagnosis/part), injury_recurrence.json (same-part risk ratios),
+injury_long_term.json (1-2 year impact change by diagnosis), injury_short_term.json (minutes/TS ramp after return),
+injury_player_risk.json (per real player x part next-season probability vs peers), injury_model_reference.json (aging,
+recovery bands, durability validation).
+
+Phase 1 - `scripts/build_injury_model.py` -> `data/canonical/injury_model_v2.json` (reproducible):
+ a. base hazard per player-game per part = spells / games played (2015-16..2025-26 matched players);
+ b. diagnosis mix per part + return-day percentiles per diagnosis (fallback: part level) -> lognormal duration params;
+ c. age/experience multipliers (overall from BBI aging bands; per part where samples allow);
+ d. body and play-style multipliers per part, fitted (Poisson) on matched players: height, weight, position, and style
+    inputs (rim pressure/drives, post, rebounding, usage) from our player inputs;
+ e. recurrence: same-part risk ratios with time decay; f. long-term permanent effects only where the CI excludes 0;
+ g. return ramp by absence length; h. real-player part multipliers from injury_player_risk (shrunk to peers).
+Phase 2 - engine (health.py and the consumers listed above): per-player part history/vulnerability state; per-game
+part hazards precomputed daily; multiple active injuries; diagnosis + duration draw; aftermath; permanent loss;
+derived health_risk summary for AI; GUI diagnosis/part labels (fixes severity label bug); remove quotas from the draw.
+Phase 3 - validate: multi-season sims vs BBI totals (games missed per 82 by age/role, days-out distribution, recurrence),
+both scorecards, tests (new tests for hazard inputs, compounding, durations).
 
 ## Resume state
-Design drafted; awaiting user review. Codex INJ (engine output vs BBI) running in parallel.
+- Phase 1 DONE (2026-11-18): `scripts/build_injury_model.py --write` -> `data/canonical/injury_model_v2.json`: per-part
+  Poisson models (16 parts + illness) on 2,9xx real player-seasons 2015-16..2025-26 (features: age, age^2, height, weight,
+  possessions per game, rim pressure, offensive rebounding, stamina, center, guard, decayed same-part and other-part
+  priors), recovery pools of real absences per part, recurrence reference, lasting effects (CI below zero: Achilles
+  rupture -0.42 RAPM, ACL -0.33, disc -0.27, back strain -0.20, ...), return ramp table.
+- Phase 2 NEXT: engine in health.py (see build plan). Codex INJ report pending (engine output vs BBI) for calibration.
