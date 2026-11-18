@@ -301,8 +301,8 @@ def player_spatial_profile(canonical: dict[str, Any], player: dict[str, Any] | s
         }
         defense[key] = {
             "frequency_influence": round(clamp(50 + (suppression - 50) * -0.34, 1, 99), 2),
-            "contest": round(clamp(contest, 1, 99), 2),
-            "suppression": round(clamp(suppression, 1, 99), 2),
+            "contest": round(max(1.0, contest), 2),  # no top clip: elite rim protection exceeds 99 (defense.rim_response)
+            "suppression": round(max(1.0, suppression), 2),
             "intensity": round(clamp(suppression * 0.62 + contest * 0.38, 1, 99), 2),
         }
     creation_volume = clamp(
@@ -477,8 +477,8 @@ def team_spatial_profile(
         }
         defense[key] = {
             "frequency_influence": round(clamp(50 + (suppression - 50) * -0.34, 1, 99), 2),
-            "contest": round(clamp(contest, 1, 99), 2),
-            "suppression": round(clamp(suppression, 1, 99), 2),
+            "contest": round(max(1.0, contest), 2),  # no top clip: elite rim protection exceeds 99 (defense.rim_response)
+            "suppression": round(max(1.0, suppression), 2),
             "intensity": round(clamp(suppression * 0.62 + contest * 0.38, 1, 99), 2),
         }
     frequency_total = sum(row["frequency"] for row in offense.values()) or 1.0

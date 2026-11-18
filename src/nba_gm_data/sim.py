@@ -18,6 +18,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from .defense import block_rate_per36, poisson_count
 from .research import BETTING_ODDS_FILE, COACH_REPUTATION_FILE, GAME_BOXSCORES_FILE, TRACKING_SOURCES_FILE
 from .schema import CoachRating, SimFeatureVector, SimGameResult, ValidationReport, to_plain
 from .spatial import (
@@ -271,6 +272,10 @@ def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any], *, 
         playmaking = playmaking_assists_per36(player_inputs) if player_inputs else None
         if playmaking is not None:
             features["playmaking_ast36"] = playmaking
+        from .defense import contest_jump_share
+        jump = contest_jump_share(player_inputs) if player_inputs else None
+        if jump is not None:
+            features["contest_jump"] = jump
     from .offense import enabled as offense_enabled, offensive_profile
     if offense_enabled(canonical):
         profile = offensive_profile(canonical, player, {key: float(row['value']) for key, row in traits.items()})
@@ -1002,7 +1007,8 @@ def health_adjusted_player_features(features: dict[str, float], item: dict[str, 
         if key not in adjusted:
             continue
         if weight >= 0:
-            adjusted[key] = clamp(float(adjusted[key]) - penalty * weight, 1, 99)
+            # Upper bound is the player's own value: a fatigue penalty must never clip an elite (>99) rim protector.
+            adjusted[key] = clamp(float(adjusted[key]) - penalty * weight, 1, max(99.0, float(adjusted[key])))
         else:
             adjusted[key] = clamp(float(adjusted[key]) + penalty * abs(weight), 1, 99)
     if features.get('offense_model_version'):
@@ -1263,7 +1269,8 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
                 "assists": max(0, int(round(item["minutes"] * assist_rate_for_player(player, feat) + rng.gauss(0.2, 1.22 + item["minutes"] * 0.018 + max(0.0, feat["passing"] - 78.0) * 0.012)))),
                 "turnovers": max(0, int(round(item["minutes"] * (0.015 + feat["usage"] / 2200) + rng.random() * 0.6))),
                 "steals": max(0, int(round(item["minutes"] * feat["defensive_events"] / 1850 + rng.random() * 0.62))),
-                "blocks": max(0, int(round(item["minutes"] * (feat["rim_deterrence"] / 2200 + max(0.0, feat["rim_deterrence"] - 88) * 0.0034) + rng.random() * 0.95))),
+                # Fitted per-36 rate (defense.block_rate_per36), one Poisson draw from the same single random number.
+                "blocks": poisson_count(rng.random(), item["minutes"] / 36.0 * block_rate_per36(feat["rim_deterrence"], feat.get("contest_jump"))),
             }
         )
     normalize_secondary_box_score_totals(lines, features, team_points, possessions)
@@ -1383,14 +1390,15 @@ def normalize_secondary_box_score_totals(
             for line in lines
         ) / total_minutes
 
-    raw = {key: sum(max(0, int(line.get(key) or 0)) for line in lines) for key in ("rebounds", "assists", "steals", "blocks")}
+    # Blocks are not rescaled: each player's count is already drawn from a rate fitted to real blocks per 36, so the
+    # team total is realistic and a power-weighted rescale would only re-concentrate blocks on whoever drew two.
+    raw = {key: sum(max(0, int(line.get(key) or 0)) for line in lines) for key in ("rebounds", "assists", "steals")}
     targets = {
         "rebounds": round(clamp(43.8 + (weighted_feature("offensive_rebounding") - 60.0) * 0.055 + (possessions - 99.0) * 0.11 + (raw["rebounds"] - 66.0) * 0.16, 35, 54)),
         "assists": round(clamp(26.2 + (weighted_feature("passing") - 60.0) * 0.075 + (team_points - 114.0) * 0.045 + (raw["assists"] - 32.0) * 0.18, 18, 36)),
         "steals": round(clamp(7.7 + (weighted_feature("defensive_events") - 60.0) * 0.045 + (possessions - 99.0) * 0.035 + (raw["steals"] - 11.5) * 0.16, 3, 14)),
-        "blocks": round(clamp(5.0 + (weighted_feature("rim_deterrence") - 60.0) * 0.055 + (raw["blocks"] - 12.5) * 0.12, 1, 12)),
     }
-    powers = {"rebounds": 1.32, "assists": 1.20, "steals": 1.55, "blocks": 2.0}
+    powers = {"rebounds": 1.32, "assists": 1.20, "steals": 1.55}
     for key, target in targets.items():
         redistribute_integer_stat(lines, key, int(target), powers[key])
 

@@ -122,7 +122,9 @@ def vary_box_score(canonical, groups, team_lines, feature_groups, seed):
         player_share = PLAYER_REBOUND_SHARE
         rebounds = round(max(20, min(70, (own_miss * oreb_rate + opp_miss * (1 - opp_oreb_rate)) * player_share + rng.gauss(0, 3.5))))
         redistribute_integer_stat(lines, 'rebounds', rebounds, 1.)
-        for key, sigma in (('steals', 2.0), ('blocks', 1.7)):
+        # Blocks already arrive as per-player Poisson draws (team sd ~2.2); the real 2025-26 team-game sd is 2.46, so
+        # only the remaining sqrt(2.46^2 - 2.2^2) ~ 1.1 is added here (was 1.7 on a near-fixed team total).
+        for key, sigma in (('steals', 2.0), ('blocks', 1.1)):
             target = max(0, round(float(team.get(key) or 0) + rng.gauss(0, sigma)))
             redistribute_integer_stat(lines, key, target, 1.)
         team['offensive_rebounds'] = min(rebounds, round(own_miss * oreb_rate * player_share))

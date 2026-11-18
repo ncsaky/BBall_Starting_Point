@@ -100,7 +100,7 @@ def main() -> None:
     weights = [m / (m + 800.0) for *_, m in rows]
     X = [[1.0, *r[2]] for r in rows]
     FREE = {1 + PREDICTORS.index(name) for name in (*BODY_PREDICTORS, "in_involvement")}  # not changed by development
-    fit = {"version": "impact_value_fit_v2_monotone_2026_11_17", "season": SEASON, "targets": TARGETS, "predictors": PREDICTORS,
+    fit = {"version": "impact_value_fit_v3_rim_recipe_2026_11_18", "season": SEASON, "targets": TARGETS, "predictors": PREDICTORS,
            "ridge": RIDGE, "players": len(rows), "coefficients": {}, "cv_weighted_corr": {}}
     idx = list(range(len(rows)))
     random.Random(11).shuffle(idx)

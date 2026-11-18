@@ -19,30 +19,49 @@ def fixture(height=77, rim=80, position='PG', minutes=30, **values):
 
 
 class DefensiveAlignmentTests(unittest.TestCase):
-    def test_rim_bounds_strict_monotonicity_and_distinct_elite_peers(self):
-        xs=[defense.rim_response(i/10) for i in range(10,1001)]
-        self.assertTrue(all(1 <= x <= 99 for x in xs))
+    def test_rim_strict_monotonicity_no_top_clip_and_distinct_elite_peers(self):
+        xs=[defense.rim_response(i/10) for i in range(10,1101)]
+        self.assertTrue(all(x >= 1 for x in xs))
         self.assertTrue(all(b>a for a,b in zip(xs,xs[1:])))
-        self.assertEqual(defense.rim_response(100),99)
         self.assertEqual(defense.rim_response(-5),1)
-        self.assertEqual(defense.rim_response(105),99)
-        self.assertLess(defense.rim_response(96.82),defense.rim_response(97.43))
-        self.assertLess(defense.rim_response(97.43),defense.rim_response(99.01))
+        # Rescale, don't clip: values past the old 100 ceiling keep rising (inputs-model traits can exceed 100).
+        self.assertGreater(defense.rim_response(100),99)
+        self.assertGreater(defense.rim_response(105),defense.rim_response(100)+5)
+        self.assertGreater(defense.rim_response(110),defense.rim_response(105))
+        # The old shoulder put 96.8, 97.4 and 99.0 within 0.8 points; elite peers are now clearly apart.
+        self.assertGreater(defense.rim_response(99.01)-defense.rim_response(96.82),5)
 
     def test_low_mid_response_and_scarcity_meaning_preserved(self):
-        for i in range(10,801):
+        start=defense.response_knots()[0][0]
+        self.assertGreater(start,60)
+        for i in range(10,int(start*10)+1):
             x=i/10
             self.assertEqual(defense.rim_response(x),sim.nonlinear_high(x,68))
-        for i in range(10,1001):
-            x=i/10
-            self.assertEqual(defense.rim_response(x)>=78,sim.nonlinear_high(x,68)>=78)
+            self.assertEqual(defense.rim_response(x),defense.legacy_rim_response(x))
 
-    def test_shoulder_matches_value_and_derivative_without_jump(self):
+    def test_evidence_tail_joins_without_jump(self):
         eps=.00001
-        left=(defense.rim_response(80)-defense.rim_response(80-eps))/eps
-        right=(defense.rim_response(80+eps)-defense.rim_response(80))/eps
-        self.assertAlmostEqual(left,right,places=5)
-        self.assertAlmostEqual((defense.rim_response(100)-defense.rim_response(100-eps))/eps,.25,places=5)
+        start=defense.response_knots()[0][0]
+        self.assertAlmostEqual(defense.rim_response(start-eps),defense.rim_response(start+eps),places=3)
+
+    def test_old_shoulder_flattened_the_top(self):
+        # The pre-2026-11-18 response squeezed every value above ~90 into 95-99 and ended at slope .25.
+        self.assertEqual(defense.legacy_rim_response(105),99)
+        self.assertLess(defense.legacy_rim_response(99.01)-defense.legacy_rim_response(96.82),1)
+
+    def test_block_rate_rises_with_rim_and_with_choosing_to_jump(self):
+        self.assertLess(defense.block_rate_per36(60),defense.block_rate_per36(90))
+        self.assertLess(defense.block_rate_per36(90),defense.block_rate_per36(115))
+        # Same rim protection, different contest choice: the jumper blocks more shots than the stay-down defender.
+        self.assertLess(defense.block_rate_per36(80,.22),defense.block_rate_per36(80,.38))
+        self.assertGreater(defense.block_rate_per36(1),0)
+
+    def test_poisson_count_is_a_deterministic_one_draw_count(self):
+        self.assertEqual(defense.poisson_count(.5,0),0)
+        self.assertEqual(defense.poisson_count(.01,2.0),0)
+        draws=[defense.poisson_count(i/2000+.00025,2.5) for i in range(2000)]
+        self.assertAlmostEqual(sum(draws)/len(draws),2.5,delta=.05)
+        self.assertTrue(all(b>=a for a,b in zip(draws,draws[1:])))
 
     def test_activity_normalized_and_skill_uses_existing_matchup_mix(self):
         c,p,t=fixture()

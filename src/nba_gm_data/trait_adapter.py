@@ -25,7 +25,7 @@ from typing import Any, Iterable, Mapping
 
 from .player_model_registry import definition_registry
 
-ADAPTER_VERSION = "trait_adapter_v2_2026_11_17"
+ADAPTER_VERSION = "trait_adapter_v3_2026_11_18"
 
 PASS_FAMILIES = [f"F0{i}" for i in range(1, 10)]
 PASS_RECOGNITION = [f"{f}.recognition" for f in PASS_FAMILIES]
@@ -72,9 +72,12 @@ ADAPTER_SPEC: dict[str, list[Term]] = {
         ("S38", 0.15), ("S39", 0.12), ("S44", 0.12), ("S46", 0.11),
         (PASS_RECOGNITION, 0.25), ("S20", 0.15), ("S28", 0.10),
     ],
-    "rim_deterrence": [
-        ("S37", 0.20), ("S36", 0.20), ("S38", 0.15), ("P03", 0.15), ("P10", 0.10), ("P02", 0.10), ("S45", 0.10),
-    ],
+    # Fitted to Basketball Index rim evidence (scripts/fit_rim_protection.py, 2026-11-18): the mean z-score of Rim Points
+    # Saved, Stable Rim dFG% vs. Expected, Rim Deterrence, Rim Protection, Rim Contests and Block Rate on Contests over
+    # 2023-24..2025-26, 491 players, non-negative ridge, out-of-fold r = 0.90. The earlier written recipe averaged
+    # league percentiles of generic defensive grades with jump height (P10, where guards out-jump centers) and foul
+    # control, so Gilgeous-Alexander and Cunningham rated above Kessler (82.8) and Huff (80.3) and blocks went to wings.
+    "rim_deterrence": [("S37", 0.52), ("S36", 0.23), ("P01", 0.14), ("S38", 0.07), ("P02", 0.04)],
     "screen_navigation": [("S35", 0.55), ("P07", 0.15), ("S34", 0.15), ("P05", 0.15)],
     "offensive_rebounding": [("S29", 0.40), ("T12", 0.20), ("P10", 0.10), ("P03", 0.10), ("S32", 0.10), ("P08", 0.10)],
     "portability": [
@@ -160,6 +163,42 @@ def _percentile(sorted_values: list[float], value: float) -> float:
     return ((lo + hi) / 2) / len(sorted_values)
 
 
+def uncensor_top(sorted_values: list[float], ceiling: float = 99.5, tail: float = 0.05) -> list[float]:
+    """Replace a clipped top plateau with the distribution's own extrapolated tail (rescale, don't clip).
+
+    Several legacy traits were clipped at 100 when they were built (seven players share rim_deterrence 100.0).
+    Quantile-mapping onto such a table ties every player whose inputs rank in the top ~1% at exactly 100, so the
+    best rim protectors become indistinguishable. When at least two values share a maximum at or above `ceiling`,
+    those values are treated as censored: the uncensored upper tail (top `tail` share, at least 10 values) is fitted
+    as value = a + b * z on the normal-quantile scale, and the censored ranks continue that line (never below the
+    old ceiling, strictly increasing). Tables without a clipped plateau are returned unchanged.
+    """
+    values = list(sorted_values)
+    n = len(values)
+    if n < 20:
+        return values
+    top = values[-1]
+    k = n - bisect_left(values, top)
+    if k < 2 or top < ceiling:
+        return values
+    from statistics import NormalDist
+    nd = NormalDist()
+    lo = max(0, n - k - max(int(n * tail), 2 * k, 10))
+    idx = range(lo, n - k)
+    zs = [nd.inv_cdf((i + 0.5) / n) for i in idx]
+    xs = [values[i] for i in idx]
+    mz, mx = sum(zs) / len(zs), sum(xs) / len(xs)
+    var = sum((z - mz) ** 2 for z in zs)
+    slope = sum((z - mz) * (x - mx) for z, x in zip(zs, xs)) / var if var else 0.0
+    out = values[: n - k]
+    for i in range(n - k, n):
+        value = max(mx + slope * (nd.inv_cdf((i + 0.5) / n) - mz), top)
+        if out and value <= out[-1]:
+            value = out[-1] + 0.01
+        out.append(round(value, 3))
+    return out
+
+
 def _value_at(sorted_values: list[float], pct: float) -> float:
     if not sorted_values:
         raise ValueError("Empty target distribution")
@@ -228,7 +267,7 @@ def fit_adapter(league_inputs: Mapping[str, Mapping[str, Any]], league_traits: M
         targets = [float(t[trait]) for t in league_traits.values() if t.get(trait) is not None]
         if not targets:
             raise ValueError(f"No current league values for legacy trait {trait}")
-        target_tables[trait] = sorted(targets)
+        target_tables[trait] = uncensor_top(sorted(targets))
     return FittedAdapter(input_tables, composite_tables, target_tables)
 
 

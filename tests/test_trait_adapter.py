@@ -3,7 +3,7 @@ import unittest
 from nba_gm_data.player_model_registry import definition_registry
 from nba_gm_data.trait_adapter import (
     ADAPTER_SPEC, LEGACY_TRAITS, derive_traits, fit_adapter, scalar_value, spec_input_ids,
-    trait_input_weights, validate_spec,
+    trait_input_weights, uncensor_top, validate_spec,
 )
 
 DEFS = {row["id"]: row for row in definition_registry()["inputs"]}
@@ -107,6 +107,28 @@ class TraitAdapterTests(unittest.TestCase):
         self.assertAlmostEqual(scalar_value(DEFS["T01"], record, first), 0.5)
         with self.assertRaises(ValueError):
             scalar_value(DEFS["T01"], record)
+
+    def test_clipped_top_plateau_is_rescaled_not_tied(self):
+        # Seven values clipped at 100 (like the legacy rim_deterrence table) become a rising tail above 100.
+        values = sorted([i * 0.15 for i in range(500)] + [74.0 + i * 0.3 for i in range(80)] + [100.0] * 7)
+        out = uncensor_top(values)
+        self.assertEqual(out[:-7], values[:-7])
+        top = out[-7:]
+        self.assertTrue(all(b > a for a, b in zip(top, top[1:])))
+        self.assertGreaterEqual(top[0], 100.0)
+        self.assertGreater(top[-1], 101.0)
+        # No plateau, or one below the ceiling: unchanged.
+        self.assertEqual(uncensor_top([float(i) for i in range(100)]), [float(i) for i in range(100)])
+        self.assertEqual(uncensor_top([float(i) for i in range(90)] + [90.0] * 5), [float(i) for i in range(90)] + [90.0] * 5)
+
+    def test_rim_deterrence_recipe_is_rim_technique_and_size_not_jump_height(self):
+        weights = trait_input_weights("rim_deterrence")
+        # Contest technique and interior positioning lead; standing height and length carry size; jump height (P10),
+        # where guards out-jump centers, and generic foul control are no longer in the recipe.
+        self.assertGreater(weights["S37"], 0.4)
+        self.assertIn("P01", weights)
+        self.assertNotIn("P10", weights)
+        self.assertNotIn("S45", weights)
 
     def test_spec_only_names_real_inputs(self):
         self.assertTrue(spec_input_ids() <= set(DEFS))

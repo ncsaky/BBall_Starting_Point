@@ -50,7 +50,7 @@ DEFENSE_TERMS = {
     "perimeter": {"navigation": 0.30, "lateral": 0.23, "effort": 0.15, "scheme": 0.08},
 }
 # Typical rotation player's defensive terms (2026-27 rosters, inputs ratings), the zero point of the split.
-LEAGUE_DEFENSE_MEANS = {"rim": 59.0, "scheme": 61.8, "effort": 64.2, "lateral": 63.3, "navigation": 61.6}   # minutes-weighted, both rating sets averaged
+LEAGUE_DEFENSE_MEANS = {"rim": 56.2, "scheme": 61.8, "effort": 64.2, "lateral": 63.3, "navigation": 61.6}   # minutes-weighted, both rating sets averaged (rim re-measured 2026-11-18 after the evidence-shaped rim response)
 
 
 @lru_cache(maxsize=2)

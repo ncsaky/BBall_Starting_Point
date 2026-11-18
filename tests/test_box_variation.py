@@ -40,7 +40,12 @@ class BoxVariationTests(unittest.TestCase):
             a, b = [r[key] for r in old], [r[key] for r in new]
             report[key] = {'before_mean': statistics.mean(a), 'after_mean': statistics.mean(b),
                            'before_sd': statistics.pstdev(a), 'after_sd': statistics.pstdev(b)}
-            self.assertGreater(statistics.pstdev(b), statistics.pstdev(a) * 1.25, report)
+            if key == 'blocks':
+                # Blocks are drawn per player (Poisson) before variation, so the team total already varies; the
+                # varied box should land near the real 2025-26 team-game spread (sd 2.46 around 4.8 a game).
+                self.assertTrue(2.2 < statistics.pstdev(b) < 2.8, report)
+            else:
+                self.assertGreater(statistics.pstdev(b), statistics.pstdev(a) * 1.25, report)
             self.assertLess(abs(statistics.mean(a) - statistics.mean(b)), 3, report)
         a = [r['fgm'] / r['fga'] for r in old]
         b = [r['fgm'] / r['fga'] for r in new]
