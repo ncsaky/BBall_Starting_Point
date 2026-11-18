@@ -56,3 +56,6 @@ data/canonical/injury_player_evidence_v2.json
 
 # Claude agent worktrees (local only)
 .claude/worktrees/
+
+# Barttorvik (T-Rank) college player tables: local only
+data/research/barttorvik/raw/
