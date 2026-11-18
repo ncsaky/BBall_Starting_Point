@@ -32,6 +32,9 @@ from .draft import (
 )
 from .health import build_health_records, load_injury_model_config
 from .real_prospects import (
+    SCOUTING_SOURCE_ID as REAL_PROSPECT_SCOUTING_SOURCE_ID,
+    SCOUTING_SOURCE_NOTES as REAL_PROSPECT_SCOUTING_SOURCE_NOTES,
+    SCOUTING_SOURCE_TITLE as REAL_PROSPECT_SCOUTING_SOURCE_TITLE,
     SOURCE_ID as REAL_PROSPECT_SOURCE_ID,
     SOURCE_NOTES as REAL_PROSPECT_SOURCE_NOTES,
     SOURCE_TITLE as REAL_PROSPECT_SOURCE_TITLE,
@@ -764,6 +767,15 @@ def build_source_registry(
             url="https://barttorvik.com",
             retrieved_at="2026-11-19",
             notes=REAL_PROSPECT_SOURCE_NOTES,
+        ),
+        SourceEvidence(
+            id=REAL_PROSPECT_SCOUTING_SOURCE_ID,
+            title=REAL_PROSPECT_SCOUTING_SOURCE_TITLE,
+            kind="public_scouting_rankings",
+            trust_level="public_consensus",
+            path="data/research/prospect_scouting/",
+            retrieved_at="2026-11-19",
+            notes=REAL_PROSPECT_SCOUTING_SOURCE_NOTES,
         ),
         SourceEvidence(
             id="src_spotrac_future_picks",

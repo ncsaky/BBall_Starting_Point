@@ -32,8 +32,10 @@ import datetime as dt
 import hashlib
 import json
 import math
+import re
 import statistics
 import sys
+import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -56,9 +58,6 @@ TEST_DRAFTS = tuple(range(2022, 2027))  # ... score the 2022-2026 drafts
 DRAFT_DAY = (6, 25)
 PAIR_DRAFTS = range(2019, 2026)
 NEGATIVE_SHARE = 0.15
-# A real player joins a class only if he has at least this chance of being drafted that year; fewer but likelier
-# names beat a long list of long shots (the rest of the class is generated).
-MIN_PROBABILITY = 0.15
 
 # ----------------------------------------------------------------------------------------------- small numerics
 
@@ -245,9 +244,8 @@ THREE_PRIOR, THREE_PRIOR_N = 0.335, 100.0
 RIM_PRIOR, RIM_PRIOR_N = 0.60, 40.0
 MID_PRIOR, MID_PRIOR_N = 0.37, 50.0
 
-PROFILE_RATES = ("min_pct", "usg", "ortg", "ts", "orb_pct", "drb_pct", "ast_pct", "tov_pct", "blk_pct", "stl_pct",
-                 "ftr", "gbpm", "ogbpm", "dgbpm", "three_rate", "three_per40", "rim_per40", "dunk_per40",
-                 "unast_per40", "unast_three", "ast_to", "fouls40")
+from nba_gm_data.real_prospects import (  # noqa: E402  (shared with the game: one definition of the skill scale)
+    PROFILE_RATES, SKILL_COMPOSITES, composite, input_parts, pair_features, size_score, skill_scores)
 
 
 def season_rates(row) -> dict[str, float]:
@@ -693,70 +691,647 @@ def rounded(values: dict, digits: int = 4) -> dict:
     return {k: round(v, digits) for k, v in values.items()}
 
 
-def assign_current(by_player, ctx, models, slot_table, counts, priors, deltas, returns, coaches) -> tuple[list[dict], dict]:
+# ----------------------------------------------------------------------------------------------- scouting inputs
+# Public draft boards (2027) and recruiting ranks (2028-2029), read by hand into data/research/prospect_scouting/.
+SCOUTING = ROOT / "data" / "research" / "prospect_scouting"
+BOARDS_FILE = SCOUTING / "draft_2027_boards.json"
+RECRUITS_FILE = SCOUTING / "recruits_2028_2029.json"
+DRAFT_YEARS = tuple(CURRENT_SEASON + h for h in HORIZONS)
+SCOUT_AS_OF = dt.date(2026, 11, 19)  # when the boards were read
+BOARD_AGE_DATE = dt.date(2026, 11, 5)  # board ages are "as of publication" (mostly ESPN, 5 November)
+BOARD_HALF_LIFE_DAYS = 90.0  # a board loses half its weight every 90 days (SI's June list ~0.3, B/R's August ~0.5)
+MOCK_WEIGHT = 0.75  # mocks mix in team fit and need, so they count a little less than big boards
+UNDATED_WEIGHT = 0.8  # Tankathon's live board carries no date
+# 2027: weight of the college model against the scouts = games / (games + 20). With 3-6 games played the scouts carry
+# about 85%; by mid-season (20 games) it is even; the model's same-spring accuracy (rank vs pick 0.62) is measured
+# on full seasons, and the boards already fold in high-school, summer and last-season evaluation.
+MODEL_GAMES_HALF = 20.0
+UNLISTED_RANK = 150  # a college player on no board sits past the deepest boards (ESPN and B/R list 100)
+INJURY_SEASON_OUT_FACTOR = 0.5  # announced season-ending injury: half the chance of going this spring (judgement)
+POOL_MIN_CHANCE = 0.03  # unlisted college players join the pool with at least a 3% chance in one of the drafts
+# International youth-tournament standouts with no board rank: no local history to fit, so a stated judgement prior
+# (chance in the first draft he is eligible for, in the next one, expected pick if drafted). Tier A: all-tournament
+# teams / award winners; tier B: the rest of the scouting notes.
+INTL_UNRANKED = {"A": (0.25, 0.10, 40.0), "B": (0.10, 0.05, 50.0)}
+NAME_ALIASES = {"jojo tugler": "joseph tugler", "rueben prey": "ruben prey"}
+TEAM_ALIASES = {"uconn": "connecticut", "miami (fl)": "miami fl", "nc state": "n.c. state", "ole miss": "mississippi"}
+RANK_BANDS = (5, 10, 20, 30, 45, 60, 80, 100, 150, 250)
+RETURN_BANDS = (10, 30, 60, 100, 250)
+RECRUIT_BANDS = ((1, 5), (6, 10), (11, 20), (21, 30), (31, 50), (51, 100))
+RECRUIT_COHORTS = range(2008, 2023)  # freshmen whose first four college years are all observed (drafts to 2026)
+SUFFIXES = {"jr", "sr", "ii", "iii", "iv", "v"}
+MONTHS = {m: i for i, m in enumerate(("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"), 1)}
+
+
+def name_key(name) -> str:
+    """Name for matching across sources: no accents, punctuation or Jr./II/III, plus a small alias map."""
+    text = unicodedata.normalize("NFKD", str(name or "")).encode("ascii", "ignore").decode().lower()
+    text = re.sub(r"[.'`]", "", text)
+    text = re.sub(r"[-_,]", " ", text)
+    key = " ".join(part for part in text.split() if part not in SUFFIXES)
+    return NAME_ALIASES.get(key, key)
+
+
+def team_key(team) -> str:
+    text = str(team or "").lower().strip()
+    text = TEAM_ALIASES.get(text, text)
+    return re.sub(r"\bstate\b", "st.", text)
+
+
+def source_weight(source) -> float:
+    weight = MOCK_WEIGHT if source.get("kind") == "mock_draft" else 1.0
+    if source.get("published"):
+        age = (SCOUT_AS_OF - dt.date.fromisoformat(source["published"])).days
+        return weight * 0.5 ** (max(0, age) / BOARD_HALF_LIFE_DAYS)
+    return weight * UNDATED_WEIGHT
+
+
+def imputed_rank(source) -> float:
+    """A player missing from a list of length L sits somewhere past its end."""
+    length = float(source.get("ranked_count") or 30)
+    return length + max(5.0, 0.3 * length)
+
+
+def consensus_board(boards) -> tuple[list[dict], dict[str, float]]:
+    """Weighted geometric mean of each player's ranks across the boards (missing ranks imputed past the list)."""
+    sources = {s["id"]: s for s in boards["sources"]}
+    weights = {sid: round(source_weight(s), 4) for sid, s in sources.items()}
+    total = sum(weights.values())
+    rows = []
+    for player in boards["players"]:
+        ranks = {sid: int(r) for sid, r in (player.get("ranks") or {}).items() if sid in sources and r}
+        if not ranks:
+            continue
+        log_rank = sum(w * math.log(ranks.get(sid) or imputed_rank(sources[sid])) for sid, w in weights.items()) / total
+        rows.append({**player, "consensus_score": round(math.exp(log_rank), 3), "source_ranks": ranks})
+    rows.sort(key=lambda r: (r["consensus_score"], r["name"]))
+    for k, row in enumerate(rows, start=1):
+        row["consensus_rank"] = k
+    return rows, weights
+
+
+def birth_from_note(note, as_of: dt.date = BOARD_AGE_DATE) -> dt.date | None:
+    """Birth date from a scouting age note: 'Born June 11 2010', 'Born Jan 2009', 'Born 2008', 'born 2008-09-30',
+    or a decimal age as of the board ('19.1 (ESPN, Nov 5)', '18-19')."""
+    text = str(note or "").lower()
+    if m := re.search(r"born (\d{4})-(\d{2})-(\d{2})", text):
+        return dt.date(int(m[1]), int(m[2]), int(m[3]))
+    if m := re.search(r"born ([a-z]{3})[a-z]* (\d{1,2}),? (\d{4})", text):
+        if m[1] in MONTHS:
+            return dt.date(int(m[3]), MONTHS[m[1]], int(m[2]))
+    if m := re.search(r"born ([a-z]{3})[a-z]* (\d{4})", text):
+        if m[1] in MONTHS:
+            return dt.date(int(m[2]), MONTHS[m[1]], 15)
+    if m := re.search(r"born (\d{4})", text):
+        return dt.date(int(m[1]), 7, 1)
+    if m := re.match(r"\s*(\d{2})-(\d{2})\b", text):
+        age = (int(m[1]) + int(m[2])) / 2 + 0.5
+    elif m := re.match(r"\s*(\d{2}(?:\.\d+)?)", text):
+        age = float(m[1]) + (0.5 if "." not in m[1] else 0.0)
+    else:
+        return None
+    return as_of - dt.timedelta(days=round(age * 365.25))
+
+
+def age_on_draft_day(born: dt.date, year: int) -> float:
+    return round((dt.date(year, *DRAFT_DAY) - born).days / 365.25, 2)
+
+
+def height_from_text(text) -> float | None:
+    m = re.search(r"(\d)-(\d{1,2}(?:\.\d+)?)", str(text or ""))
+    return round(12 * int(m[1]) + float(m[2]), 1) if m else None
+
+
+def position_from_text(text, height: float | None) -> str | None:
+    """Scouting position strings in the generator's vocabulary ('CG' combo guard, 'F' forward, 'G' guard)."""
+    tokens = [t.strip().upper() for t in re.split(r"[/,]", str(text or "")) if t.strip()]
+    out = []
+    for token in tokens:
+        if token in {"PG", "SG", "SF", "PF", "C"}:
+            out.append(token)
+        elif token == "CG":
+            out += ["SG", "PG"]
+        elif token == "G":
+            out += ["PG", "SG"]
+        elif token == "F":
+            out += ["PF", "SF"] if (height or 80) >= 81 else ["SF", "PF"]
+    out = list(dict.fromkeys(out))[:2]
+    return "/".join(out) or None
+
+
+# ----------------------------------------------------------------------------------------------- scouting tags
+# A strength tag is about +1 standard deviation on the skill(s) it names, a concern about -1 (game: real_prospects.
+# TAG_WEIGHT_*). Rules are read in this order and a tag counts for at most two skills (split 1/sqrt(n)).
+TAG_MAX_SD = 1.5
+RECRUIT_SCOUT_SHARE = 0.5
+TAG_SKIP = ("very young", "injur", "acl", "surgery", "not stated", "none noted", "thin scouting", "winning",
+            "multi-lineup", "uncertain pro role", "unclear star", "likely role player", "few clear holes",
+            "no single standout", "other areas", "may not play", "limited minutes", "versatil", "multi-position play",
+            "limited ceiling")
+TAG_RULES = (
+    ("rim_protection", ("rim protect", "shot block", "blocking", "defensive center", "rim deterr")),
+    ("rebounding", ("rebound", "glass")),
+    ("rim_pressure", ("rim attack", "rim pressure", "downhill", "slashing", "driv", "finish", "transition", "attack",
+                      "lob", "above-the-rim", "dunk", "contact", "cutting", "paint", "interior", "post ",
+                      "back-to-basket", "inside", "open-court", "at the rim")),
+    ("shooting", ("shoot", "three", "3-point", "range", "free throw", "free-throw", "jump shot", "jumper", "release",
+                  "stroke", "spacing", "floor-stretch", "stretch", "shooter", "touch", "mechanics", "face-up")),
+    ("shot_creation", ("creat", "shot-making", "shotmaking", "pull-up", "off the dribble", "off-dribble", "handle",
+                       "ball handling", "ball-handling", "ball skills", "scoring", "scorer", "stepback", "go-to",
+                       "elusive", "shifty", "microwave", "shoot-dribble-pass", "overdribbl", "ball-screen")),
+    ("passing", ("pass", "playmak", "vision", "distribution", "floor general", "hub", "connective", "unselfish",
+                 "point guard", "half-court organization")),
+    ("defense", ("defens", "defend", "steal", "switch", "guarding", "ball-pressure", "lateral", "foot speed",
+                 "screen navigation", "two-way", "3-and-d", "disrupt", "foul")),
+    ("feel", ("feel", "iq", "cerebral", "decision", "processing", "turnover", "ball security", "shot selection",
+              "maturity", "coachab")),
+    ("athleticism", ("athlet", "explos", "bouncy", "burst", "quick", "speed", "runs and jumps", "mobility", "fluid",
+                     "power", "pace", "heavy feet", "tools")),
+    ("size", ("size", "length", "wingspan", "frame", "long", "height", "undersized", "small", "thin", "slight",
+              "strength", "physical", "7-", "weight", "measurables")),
+    ("motor", ("motor", "energy", "competitive", "tough", "effort", "dirty-work", "tenacious", "activ", "passivity",
+               "conditioning")),
+    ("nba_readiness", ("nba-ready", "ready", "productive", "production", "efficient", "efficiency", "polish", "raw",
+                       "project", "unproven", "adjust", "late to the sport", "developing", "consistency")),
+)
+
+
+def tag_skills(tag: str) -> list[str]:
+    text = str(tag or "").lower().replace("long-range", "deep range")
+    if text.strip() == "age" or any(skip in text for skip in TAG_SKIP):
+        return []
+    hits = [skill for skill, keys in TAG_RULES if any(key in text for key in keys)]
+    return hits[:2]
+
+
+def tag_scores(strengths, weaknesses) -> dict[str, float]:
+    out: dict[str, float] = defaultdict(float)
+    for sign, tags in ((1.0, strengths), (-1.0, weaknesses)):
+        for tag in tags or []:
+            hits = tag_skills(tag)
+            for skill in hits:
+                out[skill] += sign / math.sqrt(len(hits))
+    # Several outlets often say the same thing: the total per skill is eased to at most about 1.5 standard deviations.
+    return {k: round(TAG_MAX_SD * math.tanh(v / TAG_MAX_SD), 3) for k, v in sorted(out.items()) if v}
+
+
+# ----------------------------------------------------------------------------------------------- timing evidence
+
+
+def curve_value(points: list[list[float]], rank: float) -> float:
+    """Piecewise-linear read of a [[rank, value], ...] curve (flat beyond its ends)."""
+    if rank <= points[0][0]:
+        return points[0][1]
+    for (r0, v0), (r1, v1) in zip(points, points[1:]):
+        if r0 <= rank <= r1:
+            return v0 + (v1 - v0) * (rank - r0) / (r1 - r0)
+    return points[-1][1]
+
+
+def band_centers(bands) -> list[float]:
+    lows = (0, *bands[:-1])
+    return [(lo + 1 + hi) / 2 for lo, hi in zip(lows, bands)]
+
+
+def scout_curves(states, models) -> dict:
+    """What a preseason rank has meant, from history (drafts 2010-2026, college players ranked by the same-spring
+    model's draft value): the chance the k-th ranked player is drafted that June (hit), and for a ranked player who
+    is not drafted that June but has eligibility left, the chance he is drafted the next June and, if not, the one
+    after (back). Scouts rank better than the model, so these read as a floor for a board rank."""
+    outcome = {item["pid"]: (item["pick"], item["last"]) for item in states}
+    per_draft = defaultdict(list)
+    for e in horizon_examples(states, 0):
+        if e["draft"] < 2010:
+            continue
+        p, pick = predict(models[0], e["x"])
+        if not eligible(e["state"], e["draft"]):
+            p = 0.0
+        per_draft[e["draft"]].append((draft_score(p, pick), e))
+    hit = defaultdict(lambda: [0, 0])
+    back = defaultdict(lambda: [0, 0, 0, 0])
+    for draft, scored in per_draft.items():
+        scored.sort(key=lambda s: (-s[0], s[1]["pid"]))
+        for rank, (_, e) in enumerate(scored[:RANK_BANDS[-1]], start=1):
+            band = next(b for b in RANK_BANDS if rank <= b)
+            hit[band][0] += e["y"]
+            hit[band][1] += 1
+            cls = e["state"]["cls"]
+            if e["y"] or cls >= 3 or draft + 1 > CURRENT_SEASON - 1:
+                continue
+            pick, last = outcome[e["pid"]]
+            rb = next(b for b in RETURN_BANDS if rank <= b)
+            drafted_next = bool(pick) and last == draft + 1
+            back[rb][0] += drafted_next
+            back[rb][1] += 1
+            if not drafted_next and cls <= 1 and draft + 2 <= CURRENT_SEASON - 1:
+                back[rb][2] += bool(pick) and last == draft + 2
+                back[rb][3] += 1
+    rates, low = [], 1.0
+    for center, band in zip(band_centers(RANK_BANDS), RANK_BANDS):
+        low = min(low, hit[band][0] / max(1, hit[band][1]))  # a better rank never has a lower chance
+        rates.append([center, round(low, 3)])
+    back_rows = []
+    for center, band in zip(band_centers(RETURN_BANDS), RETURN_BANDS):
+        a, n1, b, n2 = back[band]
+        back_rows.append([center, round(a / max(1, n1), 3), round(b / max(1, n2), 3), n1, n2])
+    return {"hit_by_rank": rates, "back_by_rank": back_rows,
+            "hit_counts": {str(b): hit[b] for b in RANK_BANDS}}
+
+
+def freshman_ranks(by_player) -> dict[int, list[tuple[float, str]]]:
+    """Each season's freshmen with a recruiting rating, best first (rank k ~ the k-th recruit of his class)."""
+    out = defaultdict(list)
+    for pid, seasons in by_player.items():
+        for season, row in seasons.items():
+            rr = row.get("recruit_rating")
+            if class_index(row) == 0 and isinstance(rr, float) and rr > 0:
+                out[season].append((rr, pid))
+    for rows in out.values():
+        rows.sort(key=lambda r: (-r[0], r[1]))
+    return out
+
+
+def recruit_timing(by_player, fresh) -> dict:
+    """By recruiting rank within his class: chance of being drafted after 1, 2, 3 or 4 college years (freshmen
+    2008-2022, whose four years are all observed) and the typical pick each time (all observed cohorts; geometric
+    mean shrunk toward the band's overall mean with 3 pseudo-picks)."""
+    rows = []
+    for lo, hi in RECRUIT_BANDS:
+        share, n = Counter(), 0
+        picks = defaultdict(list)
+        for season, ranked in fresh.items():
+            if season >= CURRENT_SEASON:
+                continue
+            for k, (_, pid) in enumerate(ranked[:hi], start=1):
+                if k < lo:
+                    continue
+                seasons = by_player[pid]
+                pick = next((r["nba_pick"] for r in seasons.values() if r.get("nba_pick")), None)
+                years = max(seasons) - season + 1
+                if season in RECRUIT_COHORTS:
+                    n += 1
+                    if pick and years <= 4:
+                        share[years] += 1
+                if pick and season + years - 1 <= CURRENT_SEASON - 1 and years <= 4:
+                    picks[years].append(pick)
+        all_logs = [math.log(p) for v in picks.values() for p in v]
+        prior = statistics.fmean(all_logs) if all_logs else math.log(30)
+        typical = {str(y): round(math.exp((sum(math.log(p) for p in picks.get(y, [])) + 3 * prior)
+                                          / (len(picks.get(y, [])) + 3)), 1) for y in (1, 2, 3, 4)}
+        rows.append({"ranks": [lo, hi], "players": n,
+                     "drafted_after_years": {str(y): round(share[y] / max(1, n), 3) for y in (1, 2, 3, 4)},
+                     "not_drafted_within_4": round(1 - sum(share.values()) / max(1, n), 3),
+                     "typical_pick": typical,
+                     "median_pick": {str(y): statistics.median(picks[y]) for y in (1, 2, 3, 4) if picks.get(y)},
+                     "picks_seen": {str(y): len(picks.get(y, [])) for y in (1, 2, 3, 4)}})
+    rating_by_rank = []
+    for k in range(1, 101):
+        values = [ranked[k - 1][0] for season, ranked in fresh.items() if 2015 <= season < CURRENT_SEASON and len(ranked) >= k]
+        rating_by_rank.append(round(statistics.median(values), 2))
+    return {"bands": rows, "rating_by_rank": rating_by_rank, "cohorts": [RECRUIT_COHORTS[0], RECRUIT_COHORTS[-1]]}
+
+
+def recruit_band_row(timing, rank: int) -> dict:
+    for row in timing["bands"]:
+        if row["ranks"][0] <= rank <= row["ranks"][1]:
+            return row
+    return timing["bands"][-1]
+
+
+def visible_slot_tables(by_player, fresh) -> dict[int, list[float]]:
+    """Order statistics for the later drafts: the k-th best draftee among players visible h years before the draft
+    (college players then, plus that many top recruits of the high-school classes still to arrive: top 50 of the
+    class entering the next season, top 40 of the one after), averaged over drafts 2012-2026 -> his pick."""
+    rank_of = {}
+    for season, ranked in fresh.items():
+        for k, (_, pid) in enumerate(ranked, start=1):
+            rank_of[pid] = (season, k)
+    drafted = [(pid, max(seasons), seasons[max(seasons)]["nba_pick"]) for pid, seasons in by_player.items()
+               if seasons[max(seasons)].get("nba_pick")]
+    tables = {}
+    for h in (1, 2):
+        per_rank = defaultdict(list)
+        for draft in range(2012, CURRENT_SEASON):
+            picks = []
+            for pid, last, pick in drafted:
+                if last != draft:
+                    continue
+                visible = (draft - h) in by_player[pid]
+                if not visible and pid in rank_of:
+                    season, k = rank_of[pid]
+                    visible = (season == draft - h + 1 and k <= 50) or (h == 2 and season == draft and k <= 40)
+                if visible:
+                    picks.append(pick)
+            for k, pick in enumerate(sorted(picks), start=1):
+                per_rank[k].append(pick)
+        means = []
+        for k in sorted(per_rank):
+            if len(per_rank[k]) < 5:
+                break
+            means.append(round(statistics.fmean(per_rank[k]), 2))
+        tables[h] = means
+    return tables
+
+
+def position_priors(by_player, norms) -> dict[str, dict[str, float]]:
+    """Typical broad-skill scores of drafted college players by primary position (for prospects without college
+    numbers: a centre starts from the typical drafted centre's rim protection, a point guard from his passing)."""
+    from nba_gm_data import real_prospects as rp
+    groups = defaultdict(list)
+    for seasons in by_player.values():
+        last = max(seasons)
+        row = seasons[last]
+        if not row.get("nba_pick") or last >= CURRENT_SEASON:
+            continue
+        x = pair_features(season_rates(row), shooting(career_totals(list(seasons.values()))), row.get("height_in"))
+        position = rp.position_for({"role": row.get("role"), "height_inches": row.get("height_in")})
+        groups[position.split("/")[0]].append(skill_scores(x, norms))
+    return {pos: {k: round(statistics.fmean(r[k] for r in rows), 3) for k in SKILL_COMPOSITES} for pos, rows in groups.items()}
+
+
+# ----------------------------------------------------------------------------------------------- the pool
+
+
+def last_season_state(seasons, deltas, ctx):
+    """A player with no games yet this season (injured, or not yet in the current table): last season moved
+    forward one class, as a projected full season."""
+    row = seasons[max(seasons)]
+    shift = deltas.get(class_index(row), {})
+    rates = {k: v + shift.get(k, 0.0) for k, v in season_rates(row).items()}
+    rates["min_pct"] = max(0.0, min(95.0, rates["min_pct"]))
+    shoot = shooting(career_totals(list(seasons.values())))
+    state = make_state(row, rates, shoot, rates["min_pct"] / 100 * 40 * 31, row, team_strength(ctx, CURRENT_SEASON - 1, row["team"]))
+    state.update({"season": CURRENT_SEASON, "cls": class_index(row) + 1,
+                  "prev": (season_rates(row)["gbpm"], season_minutes(row))})
+    return state
+
+
+def timing_from_scouts_and_model(rank, p_model, e_model, weight, curves, cls_now, *, injured=False, young_2027=False):
+    """Chance of being drafted in 2027, 2028 and 2029, and the expected pick each year.
+
+    2027: scouts' chance for his board rank (history: hit by rank) blended with the model's by `weight`; a player
+    on no board gets at most the chance past the boards' depth. Later years: once he has not gone in 2027, the
+    model's own split of what is left (or the history of returning ranked players for a board rank), blended the
+    same way. Expected pick: log-blend of the board rank and the model's expected pick."""
+    listed = rank is not None
+    scout_rank = rank if listed else UNLISTED_RANK
+    hit = curve_value(curves["hit_by_rank"], scout_rank)
+    back = [[r[0], r[1]] for r in curves["back_by_rank"]], [[r[0], r[2]] for r in curves["back_by_rank"]]
+    if p_model is None:
+        p_model, e_model, weight = [0.0, 0.0, 0.0], [scout_rank] * 3, 0.0
+    scout0 = hit if listed else min(p_model[0], hit)
+    p0 = 0.0 if young_2027 else weight * p_model[0] + (1 - weight) * scout0
+    if injured:
+        p0 *= INJURY_SEASON_OUT_FACTOR
+    left = 1.0 - p_model[0]
+    q_model = [min(1.0, p_model[1] / left) if left > 1e-6 else 0.0,
+               min(1.0, p_model[2] / (left - p_model[1])) if left - p_model[1] > 1e-6 else 0.0]
+    q = []
+    for h in (1, 2):
+        if listed:
+            # A returner who keeps his board rank faces the same choice next spring: at least this year's chance.
+            scout_q = 0.0 if cls_now + h > 3 else max(hit, curve_value(back[h - 1], scout_rank))
+            if young_2027 and h == 1:
+                scout_q = hit  # too young for 2027: his first draft is 2028
+            q.append(weight * q_model[h - 1] + (1 - weight) * scout_q)
+        else:
+            q.append(q_model[h - 1])
+    chances = [p0, (1 - p0) * q[0], (1 - p0) * (1 - q[0]) * q[1]]
+    if listed:
+        picks = [math.exp(weight * math.log(max(1.0, e)) + (1 - weight) * math.log(rank)) for e in e_model]
+    else:
+        picks = [math.exp(weight * math.log(max(1.0, e_model[0])) + (1 - weight) * math.log(UNLISTED_RANK)), *e_model[1:]]
+    return [round(c, 4) for c in chances], [round(p, 1) for p in picks]
+
+
+def scouting_record(board=None, recruit=None, college_team=None) -> dict:
+    """What the card shows about the scouts' view (ranks, sources, tags, where he plays)."""
+    out = {"strengths": [], "weaknesses": []}
+    for source in (recruit, board):  # board last: its ranks, team and tags lead
+        if not source:
+            continue
+        out["strengths"] = list(dict.fromkeys([*out["strengths"], *(source.get("strengths") or [])]))
+        out["weaknesses"] = list(dict.fromkeys([*out["weaknesses"], *(source.get("weaknesses") or [])]))
+        out["country"] = source.get("country") or out.get("country")
+        out["league"] = source.get("league")
+    if recruit:
+        out["team"] = recruit.get("current_team")
+        out["committed_to"] = recruit.get("committed_to")
+        out["hs_class"] = recruit.get("hs_class")
+        out["recruit_ranks"] = dict(recruit.get("ranks") or {})
+    if board:
+        out["team"] = board.get("team")
+        out["consensus_rank"] = board["consensus_rank"]
+        out["consensus_score"] = board["consensus_score"]
+        out["board_count"] = len(board["source_ranks"])
+        out["source_ranks"] = board["source_ranks"]
+    if college_team:
+        out["team"] = college_team
+    for key in ("strengths", "weaknesses"):
+        out[key] = [t for t in out[key] if str(t).lower() not in {"not stated", "not stated in sources", "none noted"}]
+    return {k: v for k, v in out.items() if v not in (None, [], {})}
+
+
+def build_pool(by_player, ctx, models, priors, deltas, returns, coaches, curves, timing, norms, pos_priors):
+    """Every real player who could be drafted in 2027-2029, with his chance per year and what he looks like then."""
+    from nba_gm_data import real_prospects as rp
     from nba_gm_data.utils import normalize_name
     excluded = universe_exclusions()
-    candidates = []
+    boards = json.loads(BOARDS_FILE.read_text(encoding="utf-8"))
+    recruits = json.loads(RECRUITS_FILE.read_text(encoding="utf-8"))
+    board_rows, board_weights = consensus_board(boards)
+
+    current_by_key, last_by_key = defaultdict(list), defaultdict(list)
     for pid, seasons in by_player.items():
+        if CURRENT_SEASON in seasons:
+            current_by_key[name_key(seasons[CURRENT_SEASON]["name"])].append(pid)
+        elif CURRENT_SEASON - 1 in seasons:
+            last_by_key[name_key(seasons[CURRENT_SEASON - 1]["name"])].append(pid)
+
+    def match(name, team):
+        key = name_key(name)
+        for table in (current_by_key, last_by_key):
+            pids = table.get(key) or []
+            if len(pids) > 1 and team:
+                pids = [pid for pid in pids if team_key(by_player[pid][max(by_player[pid])]["team"]) == team_key(team)] or pids
+            if len(pids) == 1:
+                return pids[0]
+        return None
+
+    linked = defaultdict(dict)  # college pid -> {"board": row, "recruit": row}
+    others = {}  # name key -> {"board": row, "recruit": row} for players without college data
+    for row in board_rows:
+        pid = match(row["name"], row.get("team")) if row.get("league") == "NCAA" else None
+        if pid:
+            linked[pid]["board"] = row
+        else:
+            others.setdefault(name_key(row["name"]), {})["board"] = row
+    for row in recruits["players"]:
+        pid = match(row["name"], None) if row.get("league", "").startswith(("College", "International (NCAA")) else None
+        if pid:
+            linked[pid]["recruit"] = row
+        elif row.get("league") == "HS" or name_key(row["name"]) in others or row.get("league", "").startswith("International"):
+            others.setdefault(name_key(row["name"]), {})["recruit"] = row
+
+    pool, report = [], {"matched_board": 0, "board_without_college_data": [], "recruit_college_links": []}
+    for pid, seasons in by_player.items():
+        link = linked.get(pid, {})
         row = seasons.get(CURRENT_SEASON)
-        if not row or row.get("nba_pick") or num(row.get("games")) < 1:
+        if row is None and not link:
             continue
-        if normalize_name(row["name"]) in excluded:
+        if row is not None and (row.get("nba_pick") or num(row.get("games")) < 1):
+            if not link:
+                continue
+        name = (row or seasons[max(seasons)])["name"]
+        if normalize_name(name) in excluded:
             continue
-        rates, shoot, minutes = current_profile(seasons, priors, deltas)
-        state = make_state(row, rates, shoot, minutes, seasons.get(CURRENT_SEASON - 1),
-                           team_strength(ctx, CURRENT_SEASON, row["team"]))
+        if row is not None and num(row.get("games")) >= 1:
+            rates, shoot, minutes = current_profile(seasons, priors, deltas)
+            state = make_state(row, rates, shoot, minutes, seasons.get(CURRENT_SEASON - 1),
+                               team_strength(ctx, CURRENT_SEASON, row["team"]))
+            games = int(num(row.get("games")))
+        else:
+            state = last_season_state(seasons, deltas, ctx)
+            row, games = seasons[max(seasons)], 0
+        board, recruit = link.get("board"), link.get("recruit")
+        if state["born"] is None:  # Barttorvik's placeholder birthday: use the scouts' age when they give one
+            note_born = birth_from_note((board or {}).get("age_note")) or birth_from_note((recruit or {}).get("age_note"))
+            if note_born is None and recruit and recruit.get("projected_draft_year"):
+                note_born = dt.date(int(recruit["projected_draft_year"]) - 19, 7, 1)
+            if note_born is not None:
+                state["born"] = note_born
         per_h = horizon_predict(models, state, returns)
-        h_best = max(per_h, key=lambda h: (per_h[h][0], -h))
-        p, pick = per_h[h_best]
-        if p < 0.01:
+        p_model = [per_h[h][0] for h in HORIZONS]
+        e_model = [per_h[h][1] for h in HORIZONS]
+        weight = games / (games + MODEL_GAMES_HALF)
+        injured = any("expected to miss 2026-27" in str(t).lower() for t in (board or {}).get("weaknesses", []))
+        chances, picks = timing_from_scouts_and_model((board or {}).get("consensus_rank"), p_model, e_model, weight,
+                                                       curves, state["cls"], injured=injured,
+                                                       young_2027=not eligible(state, CURRENT_SEASON))
+        if not link and max(chances) < POOL_MIN_CHANCE:
             continue
-        candidates.append({"pid": pid, "row": row, "seasons": seasons, "h": h_best, "p": p, "pick": pick,
-                           "per_h": per_h, "score": draft_score(p, pick), "state": state})
-    classes = {}
-    out = []
-    for h in HORIZONS:
-        pool = sorted((c for c in candidates if c["h"] == h), key=lambda c: (-c["score"], c["pid"]))
-        expected = sum(c["p"] for c in pool)
-        pool = [c for c in pool if c["p"] >= MIN_PROBABILITY]
-        n = int(min(len(pool), len(slot_table[h]), round(counts[h]), round(expected)))
-        used_slots = set()
-        for k, cand in enumerate(pool[:n], start=1):
-            slot = int(round(slot_table[h][k - 1]))
-            while slot in used_slots:
-                slot += 1
-            used_slots.add(slot)
-            row = cand["row"]
-            year = CURRENT_SEASON + h
-            state = cand["state"]
-            for _ in range(h):
-                state = project_state(state, deltas)
-            seasons = cand["seasons"]
-            born = known_birth_date(row)
-            out.append({
-                "id": f"college_{cand['pid']}", "barttorvik_id": cand["pid"], "name": row["name"],
-                "draft_year": str(year), "class_rank": k, "projected_pick": slot,
-                "draft_probability": round(cand["p"], 3), "expected_pick_if_drafted": round(cand["pick"], 1),
-                "draft_chance_by_year": {str(CURRENT_SEASON + hh): round(v[0], 3) for hh, v in cand["per_h"].items()},
-                "draft_score": round(cand["score"], 4),
-                "college_team": row.get("team"), "conference": row.get("conf"),
-                "coach": coaches.get((CURRENT_SEASON, row.get("team"))),
-                "class_year_now": row.get("class_year"),
-                "class_year_at_draft": ["Fr", "So", "Jr", "Sr"][min(3, class_index(row) + h)],
-                "birth_date": born.isoformat() if born else None,
-                "age_at_draft": round(state_age(cand["state"], year), 2), "age_estimated": born is None,
-                "height_inches": row.get("height_in"), "role": row.get("role") or None,
-                "recruit_rating": row.get("recruit_rating"), "hometown": row.get("hometown") or None,
-                "games_this_season": int(num(row.get("games"))),
-                "effective_minutes": round(cand["state"]["minutes"], 0),
-                "projected_profile": {**rounded(state["rates"]),
-                                      **rounded({k: state["shoot"][k] for k in ("ft_pct", "three_pct", "rim_pct", "mid_pct")}),
-                                      "fta": state["shoot"]["fta"], "three_a": state["shoot"]["three_a"]},
-                "seasons": [season_card(seasons[s]) for s in sorted(seasons, reverse=True)[:4]],
-            })
-        classes[str(CURRENT_SEASON + h)] = {"real_players": n, "expected_from_model": round(expected, 1),
-                                            "historical_college_draftees": counts[h]}
-    return out, classes
+        if board:
+            report["matched_board"] += 1
+        if recruit:
+            report["recruit_college_links"].append(name)
+        views = {}
+        projected = state
+        for h, year in enumerate(DRAFT_YEARS):
+            if h:
+                projected = project_state(projected, deltas)
+            if chances[h] < 0.001:
+                continue
+            views[str(year)] = {
+                "expected_pick": picks[h], "age_at_draft": round(state_age(state, year), 2),
+                "class_year_at_draft": ["Fr", "So", "Jr", "Sr"][min(3, state["cls"] + h)],
+                "effective_minutes": round(projected["minutes"], 0),
+                "projected_profile": {**rounded(projected["rates"]),
+                                      **rounded({k: projected["shoot"][k] for k in ("ft_pct", "three_pct", "rim_pct", "mid_pct")}),
+                                      "fta": projected["shoot"]["fta"], "three_a": projected["shoot"]["three_a"]},
+            }
+        if not views:
+            continue
+        born = state["born"]
+        scouting = scouting_record(board, recruit, row.get("team")) if (board or recruit) else {}
+        pool.append({
+            "id": f"college_{pid}", "kind": "college",
+            "barttorvik_id": pid, "name": board["name"] if board else name,
+            "college_team": row.get("team"), "conference": row.get("conf"),
+            "coach": coaches.get((CURRENT_SEASON, row.get("team"))), "class_year_now": ["Fr", "So", "Jr", "Sr"][min(3, state["cls"])],
+            "birth_date": born.isoformat() if born else None, "age_estimated": known_birth_date(row) is None,
+            "height_inches": row.get("height_in"), "role": row.get("role") or None,
+            "recruit_rating": row.get("recruit_rating"), "hometown": row.get("hometown") or None,
+            "games_this_season": games, "model_weight": round(weight, 3),
+            "scout_share": round(1 - weight, 3) if board else 0.0,
+            "seasons": [season_card(seasons[s]) for s in sorted(seasons, reverse=True)[:4]],
+            "scouting": scouting, "tag_scores": tag_scores(scouting.get("strengths"), scouting.get("weaknesses")),
+            "chance_by_year": {str(y): c for y, c in zip(DRAFT_YEARS, chances) if str(y) in views},
+            "model": {"chance_by_year": {str(y): round(p, 4) for y, p in zip(DRAFT_YEARS, p_model)},
+                      "expected_pick_by_year": {str(y): round(e, 1) for y, e in zip(DRAFT_YEARS, e_model)}},
+            "years": views,
+        })
+
+    rating_by_rank = timing["rating_by_rank"]
+    for key, link in sorted(others.items()):
+        board, recruit = link.get("board"), link.get("recruit")
+        source = board or recruit
+        league = str(source.get("league") or "")
+        if league == "HS":
+            kind = "high_school"
+        elif league.startswith("International"):
+            kind = "international"
+        else:
+            kind = "college_no_stats"
+            report["board_without_college_data"].append(source["name"])
+        height = height_from_text((board or {}).get("height")) or height_from_text((recruit or {}).get("height"))
+        position = (position_from_text((board or {}).get("position"), height)
+                    or position_from_text((recruit or {}).get("position"), height) or ("SF" if kind != "high_school" else "SG"))
+        born = birth_from_note((board or {}).get("age_note")) or birth_from_note((recruit or {}).get("age_note"))
+        hs_class = (recruit or {}).get("hs_class") if kind == "high_school" else None
+        first_year = int((recruit or {}).get("projected_draft_year") or CURRENT_SEASON) if not board else CURRENT_SEASON
+        if hs_class:
+            first_year = int(hs_class) + 1  # one year out of high school
+        if born is None:
+            born = dt.date(first_year - 19, 4, 1) if kind == "high_school" else dt.date(first_year - 19, 7, 1)
+        while born.year > first_year - 19:  # the age rule: 19 during the draft's calendar year
+            first_year += 1
+        recruit_rating, chances, picks = None, [0.0, 0.0, 0.0], [60.0, 60.0, 60.0]
+        if board:
+            chances, picks = timing_from_scouts_and_model(
+                board["consensus_rank"], None, None, 0.0, curves, 0,
+                injured=any("expected to miss 2026-27" in str(t).lower() for t in board.get("weaknesses", [])),
+                young_2027=first_year > CURRENT_SEASON)
+        elif kind == "high_school":
+            k = int((recruit.get("ranks") or {}).get(f"247_composite_{hs_class}") or min((recruit.get("ranks") or {"x": 75}).values()))
+            band = recruit_band_row(timing, k)
+            recruit_rating = rating_by_rank[min(len(rating_by_rank), k) - 1]
+            for n in (1, 2, 3):
+                year = first_year + n - 1
+                if year in DRAFT_YEARS:
+                    chances[DRAFT_YEARS.index(year)] = band["drafted_after_years"][str(n)]
+                    # within a band the better-ranked recruit goes first (0.05 of a pick per rank place)
+                    picks[DRAFT_YEARS.index(year)] = round(band["typical_pick"][str(n)] + 0.05 * k, 2)
+        else:  # international without a board rank
+            notes = " ".join(str(recruit.get(k) or "") for k in ("notes", "age_note")).lower()
+            tier = "B" if "lower tier" in notes else "A"
+            first, second, pick = INTL_UNRANKED[tier]
+            for n, chance in ((0, first), (1, second)):
+                year = first_year + n
+                if year in DRAFT_YEARS:
+                    chances[DRAFT_YEARS.index(year)] = chance
+                    picks[DRAFT_YEARS.index(year)] = pick
+        views = {}
+        for h, year in enumerate(DRAFT_YEARS):
+            if chances[h] < 0.001 or year < first_year:
+                continue
+            views[str(year)] = {
+                "expected_pick": picks[h], "age_at_draft": age_on_draft_day(born, year),
+                "class_year_at_draft": ["Fr", "So", "Jr", "Sr"][min(3, year - first_year)] if kind == "high_school" else None,
+            }
+        if not views:
+            continue
+        scouting = scouting_record(board, recruit)
+        base = dict(pos_priors.get(position.split("/")[0]) or pos_priors.get("SF"))
+        if height:
+            base["size"] = size_score(height, norms)
+        pool.append({
+            "id": f"{kind}_{re.sub(r'[^a-z0-9]+', '_', key).strip('_')}", "kind": kind, "name": source["name"],
+            "position": position, "height_inches": height, "weight_lbs": (recruit or {}).get("weight_lbs"),
+            "birth_date": born.isoformat(), "age_estimated": True,
+            "recruit_rating": recruit_rating, "recruit_rating_estimated": recruit_rating is not None,
+            # A draft board rank fixes his place; a recruiting rank (or a tournament note) is a looser signal
+            # (top-5 recruits went anywhere from pick 1 to 30), so half of his level keeps the usual spread.
+            "scout_share": 1.0 if board else RECRUIT_SCOUT_SHARE,
+            "scouting": scouting, "skill_base": base,
+            "tag_scores": tag_scores(scouting.get("strengths"), scouting.get("weaknesses")),
+            "chance_by_year": {y: chances[DRAFT_YEARS.index(int(y))] for y in views},
+            "years": views,
+        })
+    pool.sort(key=lambda e: (min(v["expected_pick"] for v in e["years"].values()), e["id"]))
+    report["sources"] = board_weights
+    report["expected_drafted_by_year"] = {str(y): round(sum(e["chance_by_year"].get(str(y), 0.0) for e in pool), 1) for y in DRAFT_YEARS}
+    report["pool_by_kind"] = dict(Counter(e["kind"] for e in pool))
+    return pool, report
 
 
 # ----------------------------------------------------------------------------------------------- college -> pro skills
@@ -793,11 +1368,6 @@ INPUT_TARGETS = {
     **{f"F0{i}.{part}": ("ast_pct", "ast_to") for i in range(1, 10) for part in ("recognition", "execution")},
     "T08": ("usg",),                  # offensive involvement preference (measured-usage scale)
 }
-
-
-def pair_features(rates: dict, shoot: dict, height: float | None) -> dict[str, float]:
-    return {**{k: rates[k] for k in PROFILE_RATES}, **{k: shoot[k] for k in ("ft_pct", "three_pct", "rim_pct", "mid_pct")},
-            "height_c": (height or 78) - 78}
 
 
 def fit_input_mapping(by_player) -> dict:
@@ -878,24 +1448,6 @@ def fit_input_mapping(by_player) -> dict:
                      "+ log_pick_coef * (ln(pick) - 3); entry uses years = 0."}
 
 
-# Broad draft traits from college rates: weights on standardized rates (against drafted players' final seasons);
-# each composite is then rescaled to unit spread over that same drafted pool.
-SKILL_COMPOSITES = {
-    "shooting": {"ft_pct": 0.4, "three_pct": 0.3, "three_rate": 0.2, "three_per40": 0.1},
-    "shot_creation": {"usg": 0.45, "unast_per40": 0.35, "unast_three": 0.2},
-    "rim_pressure": {"rim_per40": 0.4, "ftr": 0.35, "dunk_per40": 0.25},
-    "passing": {"ast_pct": 0.65, "ast_to": 0.35},
-    "defense": {"stl_pct": 0.45, "dgbpm": 0.35, "blk_pct": 0.2},
-    "rim_protection": {"blk_pct": 0.75, "height_c": 0.25},
-    "rebounding": {"drb_pct": 0.5, "orb_pct": 0.5},
-    "feel": {"ast_to": 0.3, "gbpm": 0.4, "tov_pct": -0.3},
-    "athleticism": {"dunk_per40": 0.35, "stl_pct": 0.2, "blk_pct": 0.15, "rim_per40": 0.15, "orb_pct": 0.15},
-    "size": {"height_c": 1.0},
-    "motor": {"orb_pct": 0.4, "stl_pct": 0.3, "min_pct": 0.3},
-    "nba_readiness": {"gbpm": 0.5, "ortg": 0.25, "min_pct": 0.25},
-}
-
-
 def drafted_final_profiles(by_player) -> list[dict]:
     out = []
     for seasons in by_player.values():
@@ -907,10 +1459,6 @@ def drafted_final_profiles(by_player) -> list[dict]:
     return out
 
 
-def composite(x: dict, weights: dict, rates: dict) -> float:
-    return sum(w * (x[k] - rates[k][0]) / rates[k][1] for k, w in weights.items())
-
-
 def college_norms(by_player) -> dict:
     """Mean and spread of each college rate, and of each broad-skill composite, among drafted players' final seasons."""
     rows = drafted_final_profiles(by_player)
@@ -919,20 +1467,6 @@ def college_norms(by_player) -> dict:
     raw = {skill: [composite(r, weights, rates) for r in rows] for skill, weights in SKILL_COMPOSITES.items()}
     return {"rates": rates, "composite_sd": {k: round(statistics.pstdev(v) or 1.0, 5) for k, v in raw.items()},
             "drafted_seasons": len(rows)}
-
-
-def skill_scores(x: dict, norms: dict) -> dict[str, float]:
-    """Standard scores of each broad skill against drafted college players (0 = typical draftee)."""
-    return {skill: round(composite(x, weights, norms["rates"]) / norms["composite_sd"][skill], 3)
-            for skill, weights in SKILL_COMPOSITES.items()}
-
-
-def input_parts(x: dict, mapping: dict) -> dict[str, float]:
-    """College part of each fitted 94-input target (the game adds the intercept, years and draft-slot terms)."""
-    out = {}
-    for iid, fit in mapping["targets"].items():
-        out[iid] = round(sum(c * (x[k] - m) / sd for k, c, m, sd in zip(fit["features"], fit["coef"], fit["means"], fit["sds"])), 3)
-    return out
 
 
 # ----------------------------------------------------------------------------------------------- main
@@ -950,24 +1484,39 @@ def build(write: bool = True) -> dict:
     tables = slot_tables(by_player)
     counts = college_counts(by_player)
     priors = freshman_priors(by_player)
-    prospects, classes = assign_current(by_player, ctx, models, tables, counts, priors, deltas, returns, coaches)
     mapping = fit_input_mapping(by_player)
     norms = college_norms(by_player)
-    for prospect in prospects:
-        profile = prospect["projected_profile"]
-        x = pair_features(profile, profile, prospect["height_inches"])
-        prospect["skill_scores"] = skill_scores(x, norms)
-        prospect["input_parts"] = input_parts(x, mapping)
-    for year, info in classes.items():
-        members = [p for p in prospects if p["draft_year"] == year]
-        info.update({f"top_{n}": sum(1 for p in members if p["projected_pick"] <= n) for n in (10, 30, 60)})
+    curves = scout_curves(states, models)
+    fresh = freshman_ranks(by_player)
+    timing = recruit_timing(by_player, fresh)
+    visible = visible_slot_tables(by_player, fresh)
+    pos_priors = position_priors(by_player, norms)
+    pool, pool_report = build_pool(by_player, ctx, models, priors, deltas, returns, coaches, curves, timing, norms, pos_priors)
     bundle = {
-        "version": "real_prospects_v1",
+        "version": "real_prospects_v2",
         "built": dt.date.today().isoformat(),
-        "source": "Barttorvik (T-Rank) college player and team tables, seasons 2008-2027; derived values only.",
+        "source": ("Barttorvik (T-Rank) college player and team tables, seasons 2008-2027 (derived values only); "
+                   "public 2027 draft boards and mocks; 247Sports Composite recruit ranks (classes of 2027-2028)."),
         "current_college_season": f"{CURRENT_SEASON - 1}-{str(CURRENT_SEASON)[-2:]}",
-        "draft_years": sorted(classes),
-        "classes": classes,
+        "draft_years": [str(y) for y in DRAFT_YEARS],
+        "class_size": 60,
+        # Declared real players are ordered by expected pick. 2027: the boards rank the whole draft, so the k-th
+        # declared player is anchored to slot k. 2028-2029: the k-th goes to the average pick of the k-th draftee
+        # among players visible that far ahead (college players plus the top recruits still to arrive).
+        "slot_tables": {str(DRAFT_YEARS[0]): "rank", **{str(DRAFT_YEARS[h]): visible[h] for h in (1, 2)}},
+        "declaration": {
+            "method": ("One draw per save and player against his chance by year (real_prospects.declaration_year). "
+                       "2027: board consensus blended with the college model, model weight = games / (games + 20). "
+                       "Later years: the model's split of what is left, or for ranked players the history of "
+                       "returning ranked players. Recruits: history by recruiting rank. Internationals: board rank, "
+                       "else a stated prior."),
+            "model_weight_games_half": MODEL_GAMES_HALF, "unlisted_rank": UNLISTED_RANK,
+            "injury_season_out_factor": INJURY_SEASON_OUT_FACTOR, "international_unranked_prior": INTL_UNRANKED,
+            "rank_curves": curves, "recruit_timing": timing, "expected_drafted_by_year": pool_report["expected_drafted_by_year"],
+        },
+        "scouting_sources": {"boards": pool_report["sources"], "board_half_life_days": BOARD_HALF_LIFE_DAYS,
+                             "mock_weight": MOCK_WEIGHT, "undated_weight": UNDATED_WEIGHT,
+                             "as_of": SCOUT_AS_OF.isoformat()},
         "projection": {
             "features": list(FEATURES),
             "models_by_horizon": {str(h): {k: models[h][k] for k in ("means", "sds", "draft_beta", "pick_beta", "pick_log_sd", "n", "n_drafted")}
@@ -979,16 +1528,26 @@ def build(write: bool = True) -> dict:
         },
         "development_per_year": {str(k): rounded(v) for k, v in sorted(deltas.items())},
         "college_norms": norms,
+        "position_skill_priors": pos_priors,
         "input_mapping": mapping,
         "coaches_available": bool(coaches),
-        "prospects": prospects,
+        "pool_summary": {k: v for k, v in pool_report.items() if k != "sources"},
+        "prospects": pool,
     }
     if write:
-        BUNDLE.write_text(json.dumps(bundle, indent=1, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+        write_bundle(bundle)
         REPORT.parent.mkdir(parents=True, exist_ok=True)
-        REPORT.write_text(json.dumps({"evaluation": evaluation, "classes": classes, "input_mapping": mapping},
+        REPORT.write_text(json.dumps({"evaluation": evaluation, "input_mapping": mapping, "pool": pool_report},
                                      indent=1, sort_keys=True), encoding="utf-8")
     return bundle
+
+
+def write_bundle(bundle: dict) -> None:
+    """Pretty top level, one line per prospect (the pool is large; one line each keeps diffs readable)."""
+    head = {k: v for k, v in bundle.items() if k != "prospects"}
+    text = json.dumps(head, indent=1, sort_keys=True, ensure_ascii=False)
+    rows = ",\n".join("  " + json.dumps(p, sort_keys=True, ensure_ascii=False, separators=(",", ":")) for p in bundle["prospects"])
+    BUNDLE.write_text(text[:-2] + ',\n "prospects": [\n' + rows + "\n ]\n}\n", encoding="utf-8")
 
 
 def apply_universe() -> None:
@@ -999,7 +1558,7 @@ def apply_universe() -> None:
     from nba_gm_data import real_prospects as rp
     from nba_gm_data.storage import load_universe_json
     path = ROOT / "data/canonical/universe_2026_27_offseason.json"
-    rp._load.cache_clear()
+    rp.clear_caches()
     universe = load_universe_json(path)
     context = draft.build_draft_context(universe, None)
     raw = json.loads(path.read_text(encoding="utf-8"))
@@ -1010,6 +1569,14 @@ def apply_universe() -> None:
             "id": rp.SOURCE_ID, "title": rp.SOURCE_TITLE, "kind": "derived_public_college_statistics",
             "trust_level": "derived_model", "path": "data/canonical/real_prospects.json", "url": "https://barttorvik.com",
             "retrieved_at": "2026-11-19", "notes": rp.SOURCE_NOTES})
+    if not any(source.get("id") == rp.SCOUTING_SOURCE_ID for source in raw.get("sources", [])):
+        raw.setdefault("sources", []).append({
+            "id": rp.SCOUTING_SOURCE_ID, "title": rp.SCOUTING_SOURCE_TITLE, "kind": "public_scouting_rankings",
+            "trust_level": "public_consensus", "path": "data/research/prospect_scouting/",
+            "retrieved_at": "2026-11-19", "notes": rp.SCOUTING_SOURCE_NOTES})
+    for source in raw.get("sources", []):
+        if source.get("id") == rp.SOURCE_ID:
+            source["notes"] = rp.SOURCE_NOTES
     counts = (raw.get("meta") or {}).get("counts")
     if isinstance(counts, dict):
         for key in (*context, "sources"):
@@ -1023,19 +1590,24 @@ def apply_universe() -> None:
 def print_summary(bundle: dict) -> None:
     print("Out of sample (fit on drafts <= 2021, scored on 2022-2026):")
     for h, by_kind in bundle["projection"]["out_of_sample"].items():
-        for kind, summary in by_kind.items():
-            print(f"  horizon {h} {kind}: {summary}")
-    print("Classes:", json.dumps(bundle["classes"], indent=1))
+        print(f"  horizon {h} direct: {by_kind['direct']}")
+    dec = bundle["declaration"]
+    print("Rank curves (history):", json.dumps(dec["rank_curves"]["hit_by_rank"]), json.dumps(dec["rank_curves"]["back_by_rank"]))
+    print("Recruit timing:")
+    for row in dec["recruit_timing"]["bands"]:
+        print(f"  ranks {row['ranks']}: n={row['players']} after years {row['drafted_after_years']} "
+              f"none {row['not_drafted_within_4']} typical pick {row['typical_pick']} seen {row['picks_seen']}")
+    print("Slot tables:", {k: (v if isinstance(v, str) else v[:12]) for k, v in bundle["slot_tables"].items()})
+    print("Pool:", json.dumps(bundle["pool_summary"]))
     for year in bundle["draft_years"]:
-        print(f"\n{year} real prospects (top 15):")
-        for p in [p for p in bundle["prospects"] if p["draft_year"] == year][:15]:
-            prof = p["projected_profile"]
-            print(f"  #{p['projected_pick']:>2} {p['name']:<24} {p['college_team']:<16} {p['class_year_now']} age {p['age_at_draft']}"
-                  f" p={p['draft_probability']:.2f} usg {prof['usg']:.0f} 3P {prof['three_pct']:.3f} FT {prof['ft_pct']:.3f}"
-                  f" ast {prof['ast_pct']:.0f} blk {prof['blk_pct']:.1f} bpm {prof['gbpm']:.1f}")
-    print("\nCollege -> pro skill fits (correlation of the college part, n):")
-    for target, fit in bundle["input_mapping"]["targets"].items():
-        print(f"  {target}: r={fit['r_college']:+.2f} all={fit['r_all']:.2f} n={fit['n']} coef={fit['coef']}")
+        rows = sorted((p for p in bundle["prospects"] if year in p["years"]),
+                      key=lambda p: p["years"][year]["expected_pick"])[:15]
+        print(f"\n{year}: best expected picks among players who may declare")
+        for p in rows:
+            v = p["years"][year]
+            rank = (p.get("scouting") or {}).get("consensus_rank") or (p.get("scouting") or {}).get("recruit_ranks")
+            print(f"  E{v['expected_pick']:>6} {p['name']:<26} {p['kind']:<16} {str(p.get('college_team') or (p.get('scouting') or {}).get('team'))[:18]:<18}"
+                  f" age {v['age_at_draft']} chance {p['chance_by_year']} rank {rank}")
 
 
 def main() -> None:

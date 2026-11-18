@@ -1670,12 +1670,16 @@ def prospect_card_payload(canonical: dict[str, Any], save_path: Path, prospect_i
     scout = prospect_scout_display(active, prospect, team['id'], save)
     report = scouting_report_for(active, prospect_id, team['id'])
     visible = prospect_card_ratings(prospect, scout, report)
-    from .real_prospects import college_card, college_entry_for
-    college = college_entry_for({**prospect, 'draft_year': prospect.get('draft_year') or year or current_draft_year(save)})
+    from .real_prospects import college_card, real_entry_for, scouting_card
+    real = real_entry_for({**prospect, 'draft_year': prospect.get('draft_year') or year or current_draft_year(save)}) or {}
+    college = real.get('college')
     if college:
         # Real college player: his actual college seasons (no game logs are kept for real players).
         career, logs = college_card(college)['seasons'], []
         season = career[0] if career else {}
+    elif real:
+        # Real high-school or international prospect: no college games to show (none are invented).
+        season, logs, career = {'college_team': prospect.get('source_team')}, [], []
     else:
         season, logs = college_production(prospect)
         career = [season]
@@ -1695,6 +1699,7 @@ def prospect_card_payload(canonical: dict[str, Any], save_path: Path, prospect_i
         'season': season, 'career_seasons': career,
         'recent_games': logs, 'recent_game_table': logs[-5:],
         'college_profile': college_card(college) if college else None,
+        'scouting_profile': scouting_card(real.get('scouting')),
         'spatial_profile': prospect_spatial_profile(active, prospect, include_chart=True),
     }
 

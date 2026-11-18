@@ -4114,6 +4114,27 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .player-card-pag
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-card-page--overview > .player-page-game-log { grid-column:1; grid-row:2; }
 /* Real college prospects: the college profile strip takes the game log's place (no real game logs are kept). */
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-card-page--overview > .approved-season-line.college-profile-line { grid-column:1; grid-row:2; align-self:start; }
+/* Real prospects: the scouts' strengths and concerns under the college profile, or (high-school and international
+   prospects, who have no college games) as the card's first strip. */
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-player-pages .approved-season-line.college-profile-line { grid-template-rows:26px auto auto; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-season-line .scouting-notes {
+  margin:0; padding:6px 10px; list-style:none; display:grid; gap:4px; align-content:center;
+  font:14px/1.3 Tahoma,Arial,sans-serif; color:var(--ui-text); border-top:1px solid var(--terminal-line-soft, #89949f);
+}
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-season-line .scouting-notes .scouting-label { font-weight:700; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-season-line .scouting-notes .scouting-declare-note { font-size:12px; opacity:.8; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-season-line.scouting-profile-line .scouting-notes { border-top:0; overflow:auto; }
+/* In the prospect card the courts fill the lower left, so the college profile takes the game log's place on the
+   right (two rows of six numbers, then the scouts' notes) instead of covering the courts. */
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .player-card-page--overview > .approved-season-line.college-profile-line {
+  grid-column:2 / 4; grid-row:2 / 4; align-self:start; grid-template-rows:auto auto auto;
+}
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .approved-season-line.college-profile-line > header {
+  height:auto; min-height:26px; flex-wrap:wrap; row-gap:0;
+}
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .approved-season-line.college-profile-line > div {
+  grid-template-columns:repeat(6,minmax(0,1fr)); height:auto;
+}
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-card-page--overview > .player-page-score-panel { grid-column:1; grid-row:3; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-card-page--overview > .player-page-contract { grid-column:2; grid-row:2 / 4; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .player-card-page--details {

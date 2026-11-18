@@ -1,200 +1,210 @@
-# Real college prospects in the first future drafts (2027-2029)
+# Real prospects in the first future drafts (2027-2029)
 
-_Branch: agent worktree `worktree-agent-a422154b21942215f` (Claude subagent, 2026-11-18). Status: **review**. Not pushed._
+_Second pass (REAL-PROSPECTS-2), Claude Opus agent, 2026-11-18, own worktree branch. Status: **review**. Not pushed._
 
 **TL;DR**
-- A new save's 2027 draft now has 47 real college players (8 of the top 10, 25 of the top 30), placed where a model of
-  past drafts says they will go. The 2028 class has 11 real players and the 2029 class 6; every other slot is a
-  generated prospect, so class size, levels by pick and the position mix stay as before. Drafts after 2029 are unchanged.
-- Each real prospect's skills come from his college numbers: free-throw and three-point shooting, usage and
-  unassisted scoring, assists, turnovers, blocks, steals and rebounding all point the right way in the new ratings
-  (correlation 0.6-0.9 between the college number and the entry skill, except ball security at -0.34 as expected).
-- The prospect card shows his college team, conference, class and recruiting grade, his real college seasons and a
-  "College Profile" strip (usage, assist and turnover rates, shooting, rebounding, blocks, steals, plus-minus).
+- **2027 now follows the scouts.** Eight public big boards and mocks (ESPN, FanSided, Bleacher Report, CBS, ClutchPoints,
+  SI, Tankathon) set the order; the college stats model only gets a say as games pile up (about 15% now, half by
+  20 games). Stokes, Joksimovic (Baskonia), Smith Jr., Holt and Branch III head every save's 2027 board when they declare.
+- **2028 and 2029 now start with real names**: the 247Sports top 50 (class of 2027) and top 40 (class of 2028)
+  high-school recruits, about 25 international prospects, and the college players likely to wait a year or two.
+  Across 20 save seeds real players hold the whole 2027 top 10, about 8 of 2028's top 10 and 7 of 2029's.
+- **Players declare at different times, and each save is different.** Every real player has a chance of going in
+  2027, 2028, 2029 (or later). Each save draws once per player from its seed: top prospects nearly always go at once,
+  borderline ones often go back to school and reappear a year older and a year more developed. Same seed, same
+  classes; drafts from 2030 on are unchanged.
 
 ## 1. What changed for the player
 
-1. **Real names on the board.** The 2027 class (stored in the starting universe, the same in every save) holds the
-   current college players most likely to be drafted in June 2027, e.g. Bruce Branch III (BYU), Tyran Stokes
-   (Kansas), Cameron Williams (Duke), Caleb Holt (Arizona), Jason Crowe Jr. (Missouri), Patrick Ngongba (Duke).
-   The 2028 and 2029 classes (built per save from its seed) start with players who are too young for 2027 or
-   likely to stay in school (Marcus Spears Jr., Joaquim Boumtje Boumtje, Nikola Kusturica; Na'jai Hines in 2029).
-2. **Gaps are filled by generated players.** College data cannot see next year's high-school recruits or
-   international and G League prospects, so those slots keep the generated prospect made for that slot. That is why
-   the 2028 and 2029 top fives are generated.
-3. **Same scale as generated prospects.** A real prospect's level and upside come from his projected pick (the
-   generator's slot profile), his age (younger = less now, more upside), his college production (box plus-minus,
-   offensive rating and minutes move current ability up to about the generator's own spread) and his recruiting
-   grade (elite recruits get a little more public upside). The board, AI teams and the card see the same public
-   numbers in every save; the hidden upside tail and the scouting miss still differ by save seed, so a real
-   prospect can still boom or bust.
-4. **No invented medical history** for real players (neutral durability, no injuries).
-5. **Card.** Identity line: college team, coach (once coach data lands), draft class. Season line: his real college
-   seasons (pick a season from the menu). The invented game logs are replaced by the College Profile strip; the
-   strip's tooltip says these are the projected draft-season numbers the game reads his skills from (rule 4).
+1. **Scout-led 2027 board.** The order follows the consensus of the boards (Stokes, Joksimovic, Jordan Smith Jr.,
+   Holt, Branch III, Coleman, Krivas, Ngongba II, Kharchenkov, Mullins, ...). Players on the boards without games
+   this season are real prospects too: internationals (Joksimovic, Yimga Moukouri, Dash Daniels, Niang, ...),
+   Brandon McCoy Jr. (Michigan, out for the season with a torn ACL; half the usual chance of going in 2027), and
+   players whose only college numbers are from last season (David Mirkovic, JT Toppin, Solo Ball, ...).
+2. **Recruits and internationals in 2028 and 2029.** Beckham Black, CJ Rosser, DeMarcus Henry, Cayden Daughtry,
+   AJ Williams and the rest of the 247Sports top 50 (class of 2027) can enter the 2028 draft after a college year;
+   the class of 2028 (Kamagate, Hiller, Touray, ...) the 2029 draft. Reclassified freshmen already in college
+   (Boumtje Boumtje at Duke, Kusturica at UCLA, Musis at Florida Atlantic) take the college path with their scouting
+   notes added. Internationals follow the age rule (19 during the draft year).
+3. **Declaration timing.** A returner shows up in a later class one year older, with his college profile projected
+   one more season (minutes, rates and shooting move by the typical one-year change for his class), so his skills and
+   level change with him.
+4. **Card.** Every real prospect shows the scouting view: "Consensus #6 · 8 draft boards" (hover: each outlet's rank)
+   or "Recruit · class of 2027: 247Sports #1 · ESPN #1", the scouts' strengths and concerns ("Scouts like: ... ·
+   Concerns: ..."), and his chance of being drafted in each year ("each save draws when he declares"). High-school and
+   international players show school or club, country and commitment instead of a college season (no games are
+   invented for them). College players keep the College Profile strip; in the prospect card it now sits on the right
+   instead of covering the Court Influence charts (a layout bug from the first pass).
 
 ## 2. Method
 
-**Draft projection** (`scripts/research/real_prospects.py`). College player-seasons 2008-2026 (Barttorvik), one model
-per horizon (drafted in this spring's draft, next year's, the year after): a logistic regression for the chance of
-being drafted that year and a regression on log pick if drafted. Features: recruit rating (and elite / freshman
-interactions), age on draft day (Barttorvik's placeholder 15-October birthdays treated as unknown), class year,
-offensive and defensive box plus-minus shrunk by minutes, minutes share, usage, height, team strength (Barthag),
-last season's plus-minus and the gain since, block / assist / steal rates, three-point rate, free-throw percentage,
-true shooting. The NBA age rule is applied (19 in the draft's calendar year); a draft a player is too young for
-passes its chance to the next one.
+### 2027: consensus board blended with the college model
+- **Consensus rank** (`consensus_board`): weighted geometric mean of each player's ranks. A board's weight halves every
+  90 days before 19 November (ESPN 5 Nov 0.90, B/R August board 0.52, SI June list 0.32); mocks count 0.75 of a big
+  board (they mix in team need); Tankathon's undated live board 0.8. A player missing from a list of length L is
+  placed at L + max(5, 0.3 L) (130 for a 100-deep board, 39 for a 30-pick mock).
+- **Chance of going in 2027** = w x model chance + (1 - w) x scouts' chance for his rank, with **w = games / (games +
+  20)**. With 3-6 games played w is 0.13-0.23. Reasoning: the model's same-spring accuracy (rank vs pick 0.62, AUC
+  0.99) is measured on full seasons, and early-season samples are noise; boards already fold in high-school, summer
+  and last-season evaluation. At 20 games (mid-January) the two count equally. A college player on no board gets at
+  most the scouts' chance for rank 150 (never more than the model says).
+- **Scouts' chance by rank** comes from history (drafts 2010-2026): the share of the k-th ranked college player
+  (ranked by the model's draft value) drafted that June: ranks 1-10 84%, 11-20 57%, 21-30 52%, 31-45 40%,
+  46-60 25%, 61-100 14-22%, 101-150 8%. The misses at the top are real returns (Sullinger, Barnes, Smart, Zeller,
+  Bridges, Edey, Clingan, Filipowski). Scouts rank better than the model, so these are a floor for a board rank.
+- **Expected pick** = log-blend of the consensus rank and the model's expected pick with the same w. The k-th declared
+  player is anchored to slot k (the boards cover the whole draft); level, upside and age then follow the slot exactly
+  as for generated prospects. For the scouts' share of a player's order, age only splits "now" versus "upside" without
+  moving his overall grade, and production, recruiting grade and the public random spread do not move it again (the
+  scouts' rank already prices them in).
+- **Later years** for a player who does not go in 2027: the model's own split of what is left, blended (same w) with
+  the history of ranked players who returned (ranked 1-10 and not drafted: 61% drafted the next year, 44% of the rest
+  the year after; ranks 11-30: 41% / 15%; 31-60: 30% / 18%; 61-100: 19% / 16%), never below this year's chance for
+  his rank (a returner who keeps his board rank faces the same choice next spring; without this floor a consensus
+  top-3 player went undrafted through 2029 in about 1 save in 20). Seniors cannot return.
+- Names are matched by a normalized key (accents, punctuation, Jr./II/III removed) plus a small alias map (JoJo ->
+  Joseph Tugler, Rueben -> Ruben Prey) and the team when two players share a name (Cameron Williams of Duke, not
+  Kent State). 124 board players matched the college tables; Dylan and Kayden Mingo stay separate.
 
-**Current players.** 2026-27 is 3-6 games old, so each player's level is this season's games blended with last
-season (moved forward by the typical one-year change for his class, weighted 0.6 x last season's minutes) or, for
-freshmen, the average freshman of his recruiting band (worth about 8 games). Shooting uses career makes and attempts,
-shrunk toward typical college shooting (60 free throws, 100 threes). Each player joins the class he is most likely to
-be drafted in, only if that chance is at least 15%. Within a class players are ranked by chance x value of the
-expected pick; the k-th real player gets the pick the k-th college draftee visible that many years ahead has
-historically gone at (2010-2026). The number of real players per class is the model's expected count of drafted
-college players for that year, capped by the historical count.
+### High-school recruits: timing and pick from history
+Freshmen 2008-2022 with a Barttorvik recruiting rating, ranked within their season (the k-th highest rating ~ the
+k-th recruit of his class), and when they were drafted:
 
-**College to skills.** Final college seasons (plus half the season before) of 230 players drafted 2019-2025 paired
-with their current 94 inputs, one small regression per input adjusted for years in the league and draft slot:
+| Recruit rank in class | Players | Drafted after 1 year | 2 years | 3 years | 4 years | Not drafted within 4 | Typical pick after 1 year |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1-5 | 75 | **88%** | 7% | 1% | 0% | 4% | **5** (median 4) |
+| 6-10 | 75 | 52% | 17% | 4% | 1% | 25% | 18 (median 20) |
+| 11-20 | 150 | 26% | 21% | 7% | 5% | 41% | 18 (median 21) |
+| 21-30 | 150 | 10% | 11% | 8% | 9% | 61% | 16 |
+| 31-50 | 300 | 6% | 7% | 7% | 4% | 77% | 18 |
+| 51-100 | 750 | 1% | 4% | 3% | 4% | 88% | 19 |
 
-| Input (examples) | College numbers | Correlation of the college part |
-| --- | --- | ---: |
-| Free throws | career FT% | 0.64 |
-| Catch-and-shoot / movement threes | 3P%, three rate, threes per 40, FT% | 0.52 / 0.40 |
-| Release, range | FT%, 3P%, volume | 0.67 / 0.46 |
-| Dribble moves, separation, drives | usage, unassisted rim+mid makes, assists, FT rate | 0.44 / 0.40 / 0.49 |
-| Handle security | turnover rate (negative), usage, assists | 0.45 |
-| Passing reads and delivery (18 inputs) | assist rate, assist-to-turnover | 0.49-0.64 |
-| Offensive / defensive rebounding technique | OREB%, DREB% | 0.62 / 0.21-0.78 |
-| Interior positioning, contests | block rate, height | 0.62 / 0.72 |
-| Anticipation, on-ball steals, interceptions | steal rate | 0.52-0.60 |
-| Dunks, layups, contact finishing, foul drawing | dunks/rim attempts per 40, rim %, FT rate | 0.67 / 0.43 / 0.29 / 0.20 |
-| Offensive involvement | usage | 0.28 |
+(Typical pick: geometric mean shrunk toward the band's overall mean with three pseudo-picks; medians in the bundle.)
+So a top-5 recruit is one-and-done 88% of the time and typically goes around pick 4-5; a 6-10 recruit about half the
+time. A 247 rank k maps onto the k-th row; within a band the better-ranked recruit goes first. Caveat: recruits who
+skipped college (G League Ignite, Overtime Elite, NBL) are not freshmen in these tables, so in 2021-2023 the k-th
+freshman was slightly lower ranked than the k-th recruit.
 
-(In-sample fits with 1-4 college terms on 230 players; read them as direction and size, not precision.)
+### 2028-2029 slots
+Declared players are ordered by expected pick; the k-th goes to the average pick of the k-th draftee among players
+visible that far ahead in history (drafts 2012-2026: college players in the season h years before plus the top 50 /
+40 recruits of the classes still to arrive). E.g. 2028: 1.2, 2.5, 3.8, 5.1, 6.4, 7.5, 9.0, 10.3, ...; 2029: 1.2,
+2.5, 3.9, 5.8, 7.3, 8.6, 10.5, ... The gaps belong to generated prospects (players nobody can see yet).
 
-In the game, a drafted real prospect takes the same route into the 94 inputs as generated rookies (the 24 nearest
-real players at his level and trait shape), then each college-informed input is blended with its fitted entry value:
-weight = 0.2 + 0.5 x the correlation above (at most 0.6) x sample reliability (minutes / (minutes + 300)), so
-roughly 30-55%. Blends are eased into 0-100 without clipping. The broad draft traits (shooting, creation, rim
-pressure, passing, defense, rim protection, rebounding, feel, athleticism, size, motor, readiness) are standard scores
-of weighted college rates against drafted players' final seasons, 16 trait points per standard score (so a real
-prospect's traits spread about as much as a generated prospect's: 10 vs 12 points within a player), softly bounded
-to 5-95. The older trait ratings use these draft traits through the existing conversion, so both rating sets work.
+### Internationals without a board rank
+No local history exists for them, so a stated judgement prior: all-tournament / award players 25% in their first
+eligible draft and 10% the next, expected pick 40; others 10% / 5%, pick 50. Ages from FIBA birth years; first
+eligible draft by the age rule.
 
-## 3. Out-of-sample results (fit on drafts up to 2021, scored on 2022-2026)
+### Skills without college numbers
+Start from the typical drafted college player at his position (e.g. a centre's rim protection and rebounding, a point
+guard's passing), size from his listed height, then the scouts' tags: a strength about +1 standard deviation on the
+skill(s) it names, a concern about -1 (a tag naming two skills splits it), totals eased to at most about 1.5. College
+players get half a standard deviation per tag on top of their college numbers. Level: a board rank fixes a player's place (no extra spread, age only splits now vs
+upside); a recruiting rank or tournament note is a looser signal, so half of the usual age, pedigree and public-spread
+terms still apply. The keyword map is in
+`TAG_RULES` (builder). The draft traits, older trait ratings and 94 inputs then follow the same route as every other
+prospect (no college input estimates for these players).
 
-| Draft | Ranks drafted vs not (AUC) | Rank vs actual pick (Spearman) | Actual top 10 in model's top 10 | Model top 30 drafted / first-rounders | Lottery picks in model's top 20 |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Same spring | 0.986 | 0.62 | 5.8 of 10 | 17.6 / 14.8 | 7.8 of 11 |
-| One year ahead | 0.92 | 0.31 | 0.8 | 4.4 / 2.8 | 1.0 of 3 |
-| Two years ahead | 0.90 | 0.21 | 0.2 | 2.4 / 1.0 | 0.2 of 1.4 |
+## 3. How declaration timing works in the game
+- `real_prospects.declaration_year(entry, seed)`: one uniform draw per save and player (`Random(f"{seed}:{id}:declare_v1")`)
+  against his chances 2027 -> 2029; the rest of the probability means later or never.
+- `real_prospects.class_entries(year, seed)`: the players whose draw is that year, ordered by expected pick, with
+  their slot; at most 60 (any extra go undrafted that year). `draft.generate_draft_class_records(..., real_prospects=True)`
+  builds the class around them; generated prospects keep every other slot.
+- **The stored 2027 class** in `universe_2026_27_offseason.json` is the draw for seed 2027 (the draft-year seed it
+  always used). A save with another seed gets its own 2027 class, scouting reports and team boards:
+  `draft.draft_class_for_save` (hooked into `save.canonical_with_save`) builds them once per process and seed from the
+  untouched starting universe (about 1.1-1.7 s the first time, then cached as the same object, so the per-advance
+  baseline copy stays cached). To make that affordable, a team board build now computes each team's and each
+  prospect's court profile once instead of once per pair (5.7 s -> 1.6 s, identical output). 2028 and 2029 are built
+  per save seed as before.
 
-Per draft (same spring): 2022 Spearman 0.42, 2023 0.58, 2024 0.56, 2025 0.74, 2026 0.79; expected vs actual count of
-drafted college players 41/43, 39/46, 41/43, 48/45, 56/53. A "chained" alternative (apply this-spring model to a
-projected next season) was worse a year or two ahead (AUC 0.84 / 0.83) and is not used. Who will be drafted two
-years from now is genuinely hard to name (many leave early, transfer or stay); that is why the 2028/2029 lists are
-short and require a 15% chance.
+## 4. Coverage across 20 save seeds (real players on the public board)
 
-## 4. Coverage per class
+| Class | in top 10 | in top 30 | in top 60 | Expected real draftees (pool) |
+| --- | --- | --- | --- | ---: |
+| 2027 | 10 (10-10) | 30 (30-30) | 50 (42-60) | 53.5 |
+| 2028 | 8 (6-9) | 24 (22-26) | 48 (39-48) | 51.9 |
+| 2029 | 7 (4-8) | 21 (19-22) | 44 (31-45) | 40.8 |
 
-| Class | Real players | in top 10 | top 30 | top 60 | Expected drafted college players (model) | Historical |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 2027 | 47 | 8 | 25 | 47 | 47.2 | 47.6 |
-| 2028 | 11 | 2 | 11 | 11 | 12.1 (among players assigned to 2028) | 31.4 |
-| 2029 | 6 | 1 | 6 | 6 | 17.4 (mostly long shots under 15%) | 21.9 |
+(median, min-max; `scripts/research/real_prospects_check.py --coverage 20`.) Pool: 534 college players, 90
+high-school recruits, 30 internationals, 1 board player without college data.
 
 ## 5. Checks
-
-- `tests/test_real_prospects.py` (18 tests): bundle shape and one class per player; out-of-sample and fit directions
-  recorded; soft bounds; real players at projected picks with every other slot identical to the generated class;
-  same seed same class, real board shared across saves; **2030, 2031, 2036 identical with and without real
-  prospects** (both rating sets); prospect-realism shape on mixed classes (ages by pick, position mix, level and
-  upside by pick, real and generated at the same scale, scouting misses); college profile shapes draft traits and
-  entry 94 inputs (shooters, rim protectors, creators, passers, rebounders, steals; turnovers lower handle security);
-  college estimates move inputs toward the fitted value and leave other inputs alone; card payload uses real seasons;
-  stored 2027 class and source registration.
-- Runs: `tests.test_real_prospects` 18/18; draft, prospect, development, talent, estimator and lifecycle modules
-  (19 modules, 178 tests) all pass (`test_draft_year_gate` needs `scripts:tests` on the path); core suite
-  `scripts/run_core_tests.sh` 334 OK; draft/prospect/universe tests in `test_foundation` + `test_league_health_audit`:
-  one failure, `test_actual_selection_slot_and_team_are_used_instead_of_prospect_rank`, which fails the same way on
-  the base commit. `test_hidden_upside` has one failure that also fails on the base commit. Both scorecards not run
-  (opening-day ratings unchanged).
-- GUI checked in the browser: new save, Upcoming Prospects card lists Branch III / Stokes / Ekezie with college
-  logos; his card shows "BYU · 2027 draft class", the real 4-game college season and the College Profile strip.
-- Sanity read: `PYTHONPATH=src .venv/bin/python scripts/research/real_prospects_check.py [--year 2028 --seed 1]`.
-- Sample, 2027 board (entry 94-input grades; college numbers in the projected draft season):
-
-  | Board | Player | Team | Age | Now / upside | FT% -> FT | 3P% -> C&S 3 | Usage -> creation | AST% -> passing | BLK% -> contests |
-  | ---: | --- | --- | ---: | --- | --- | --- | --- | --- | --- |
-  | 1 | Bruce Branch III (PF) | BYU | 19 | 61 / 91 | .67 -> 55 | .338 -> 41 | 24 -> 51 | 13 -> 52 | 3.5 -> 52 |
-  | 3 | Tyran Stokes (PF/SF) | Kansas | 20 | 61 / 85 | .70 -> 58 | .350 -> 46 | 25 -> 51 | 14 -> 52 | 3.5 -> 50 |
-  | 4 | Toni Bryant (C) | Missouri | 19 | 53 / 86 | .72 -> 58 | .362 -> 42 | 19 -> 43 | 12 -> 50 | 4.8 -> 58 |
-  | 5 | Jason Crowe Jr (PG/SG) | Missouri | 19 | 53 / 86 | .76 -> 66 | .340 -> 51 | 26 -> 58 | 18 -> 56 | 2.6 -> 42 |
-  | 6 | Caleb Holt (SG) | Arizona | 20 | 56 / 83 | .73 -> 64 | .329 -> 47 | 24 -> 57 | 12 -> 55 | 2.8 -> 45 |
-  | 8 | Obinna Ekezie Jr. (C/PF) | Louisville | 19 | 54 / 84 | .69 -> 52 | .341 -> 40 | 20 -> 43 | 11 -> 47 | 3.6 -> 59 |
-  | 9 | Cameron Williams (C) | Duke | 20 | 58 / 82 | .68 -> 51 | .335 -> 39 | 23 -> 46 | 13 -> 49 | 5.7 -> 67 |
-  | 10 | Baba Oladotun (SF/PF) | Maryland | 19 | 51 / 82 | .65 -> 50 | .319 -> 40 | 22 -> 48 | 14 -> 50 | 3.6 -> 51 |
-  | 11 | Quentin Coleman (SG/PG) | Illinois | 19 | 55 / 79 | .70 -> 63 | .343 -> 48 | 23 -> 58 | 16 -> 57 | 1.7 -> 40 |
-  | 12 | Anthony Thompson (SF/PF) | Ohio St. | 19 | 52 / 78 | .72 -> 56 | .321 -> 43 | 23 -> 46 | 12 -> 49 | 2.9 -> 49 |
-  | 13 | Christian Collins (PF) | USC | 20 | 53 / 75 | .70 -> 55 | .332 -> 43 | 23 -> 48 | 14 -> 50 | 4.2 -> 51 |
-  | 14 | Patrick Ngongba (C) | Duke | 21 | 55 / 72 | .68 -> 44 | .306 -> 35 | 24 -> 45 | 19 -> 53 | 7.6 -> 69 |
-  | 15 | Dylan Mingo (PG/SG) | Baylor | 19 | 51 / 76 | .67 -> 57 | .325 -> 42 | 23 -> 57 | 17 -> 55 | 2.6 -> 41 |
-  | 16 | Flory Bidunga (C) | Louisville | 22 | 54 / 73 | .64 -> 41 | .325 -> 32 | 20 -> 45 | 10 -> 49 | 8.4 -> 67 |
-  | 17 | Jeremy Fears Jr. (PG) | Michigan St. | 22 | 54 / 73 | .80 -> 69 | .329 -> 54 | 28 -> 57 | 54 -> 69 | 0.2 -> 38 |
-
-  Sanity read: the shot-blocking bigs (Ngongba, Bidunga, Williams) are the best contest grades and the worst
-  shooters; the passers (Fears 54% assist rate, Crowe) lead passing; the high-usage guards (Crowe, Holt, Coleman,
-  Mingo) lead creation; the best free-throw shooters (Fears, Crowe, Holt) lead shooting. Freshmen with only 4-5
-  games still lean on their recruiting band, so their profiles are flatter than seniors' until more games are in.
+- `tests/test_real_prospects.py` (33 tests): pool shape and chances; consensus leads 2027 and source weights; model
+  weight = games / (games + 20); board players without college data; name and team matching; consensus imputation;
+  tag-to-skill map; age notes and the age rule; recruit timing table; recruits enter after a college year; reclassed
+  freshmen take the college path; declaration draws deterministic per seed, different across seeds, one class per
+  save; returners a year older with a developed profile; slots and generated fill; 2027 order follows the scouts;
+  2030/2031/2036 identical with and without real prospects (both rating sets); prospect-realism shape on mixed classes;
+  college numbers and tags shape traits; drafted real prospects' 94 inputs (college estimates for college players
+  only); card blocks and payloads (college, high school, generated); stored class = seed-2027 draw with both sources;
+  a save's own 2027 class (same object per seed, boards complete).
+- Related modules and core suite: see the final report of this pass.
+- GUI: fresh save in the browser: Upcoming Prospects shows that save's draw; Joksimovic's card shows "Baskonia ·
+  Slovenia", "Consensus #2 · 8 draft boards" and the tags; Coleman's card shows the college strip with the consensus
+  rank and tags beside the courts.
 
 ## 6. Known gaps and open decisions
-
-- **Next year's high-school class and international / G League prospects are not in college data**, so the 2028 and
-  2029 top ends are generated. A hand-entered list of top recruits would fill this (no download done here).
-- **Coaches**: `data/research/barttorvik/raw/coaches.json` was not there yet. The builder reads it when present
-  (fields team, year, coach_name); re-run the builder and `--apply-universe` and the card shows the coach.
-- **Stored 2027 class rebuilt.** The 2027 class lives in `data/canonical/universe_2026_27_offseason.json`. It was
-  still the pre-prospect-realism generated class; `--apply-universe` rebuilt it with the current generator plus real
-  players (only the five draft collections and the new source record change; ~200k-line diff). Existing saves pick
-  it up unless they are mid-draft.
-- **Class strength for real years**: real players ignore the save's random strong/weak-class draw (they are who they
-  are in every save); the draw still shapes the generated slots and the hidden upside tail. An evidence-based
-  strength for the real pool (how good this college crop looks vs past ones) is a possible follow-up.
-- **Order quirks**: the model ranks partly on four games of 2026-27 data (Branch III ahead of Stokes; Jordan Smith Jr.
-  at 31, a 6-2 guard with a slow start). Refreshing later in the season will settle this.
-- **Development not re-measured for real rookies.** They enter on the generated scale at their slot, so the
-  prospect-realism year-4 bands should hold, but that four-season run was not repeated with real classes.
-- `tests/test_hidden_upside.py::test_future_generation_preserves_every_current_trait_and_unaffected_capacity` fails
-  on the base commit too (scouting miss vs the old upside check); not touched here.
-- Windows packaging copies every `.csv` under `data/`; if `data/research/barttorvik/raw` exists locally on the build
-  machine, the raw tables would be bundled (same as other local research data today).
+- **An unseen (generated) prospect is the public No. 1 of 2028 in 12 of 40 saves and of 2029 in 17 of 40.** Generated
+  prospects in the gap slots keep the generator's wide upside spread, while real recruits follow their rank (half of
+  the usual spread, `RECRUIT_SCOUT_SHARE = 0.5`). History says the best visible player went about pick 1.2, i.e. the
+  No. 1 pick was visible in most drafts. Option: narrow the generated prospects' public spread in the real years.
+- **Return rate for ranks 11-40 may be high.** The 2027 chances come from how often the model's k-th ranked player was
+  drafted that June (57% for 11-20). Scouts rank better, so the real rate for a November board rank is probably
+  higher; in some seeds 5-7 of the board's top 17 go back to school. A knob: raise the scouts' curve (for example
+  to 75% for 11-30) if that looks wrong in play.
+- **No 2028/2029 boards.** ESPN's early note calls Boumtje Boumtje the early 2028 favourite; the model has him around
+  pick 14. Only the top recruits' history and the college model speak to 2028/2029.
+- **Internationals without a board rank use a judgement prior** (25% / 10%, pick 40-50): no local evidence.
+- **Recruit ratings in the level formula are the typical rating of the k-th freshman**, not the recruit's own grade.
+- **McCoy's injury factor (0.5)** is a judgement; no medical record is attached (real players keep a neutral medical
+  profile).
+- **New saves with a non-2027 seed spend about 1.5 s once** (per process and seed) building their own 2027 boards.
+- `scripts/research/real_prospects.py` still evaluates the chained model (unused) for the record.
+- Strengths/weaknesses are paraphrased from the outlets; ranks are facts.
 
 ## 7. How to refresh (later in the college season)
-
 ```bash
-PYTHONPATH=src .venv/bin/python scripts/research/real_prospects.py                    # refit, rewrite the bundle
-PYTHONPATH=src .venv/bin/python scripts/research/real_prospects.py --apply-universe   # also rebuild the stored 2027 class
-PYTHONPATH=src .venv/bin/python scripts/research/real_prospects_check.py              # sanity read
+# 1. re-download the current season's Barttorvik players_2027.csv and teams/team_results_2027.csv (local only)
+# 2. update data/research/prospect_scouting/draft_2027_boards.json with newer boards (ranks per source, dates)
+#    and recruits_2028_2029.json with new recruiting ranks
+PYTHONPATH=src .venv/bin/python scripts/research/real_prospects.py --apply-universe   # refit, rewrite bundle + stored 2027 class
+PYTHONPATH=src .venv/bin/python scripts/research/real_prospects_check.py --coverage 20
+PYTHONPATH=src .venv/bin/python scripts/research/real_prospects_check.py --year 2027 --seed 7
 PYTHONPATH=src .venv/bin/python -m unittest tests.test_real_prospects
 ```
-Needs the local Barttorvik tables (re-download the current season's `players_2027.csv` and
-`teams/team_results_2027.csv` first). The bundle carries only derived values. Changing `CURRENT_SEASON` in the
-builder rolls the window forward a year.
+As games accumulate the model weight rises automatically (games / (games + 20)). Changing `CURRENT_SEASON` in the
+builder rolls the window forward a year (the board file names and `SCOUT_AS_OF` then need updating too).
 
 ## Files
-
-- `scripts/research/real_prospects.py` (builder), `scripts/research/real_prospects_check.py` (sanity read)
-- `data/canonical/real_prospects.json` (derived bundle, committed)
-- `src/nba_gm_data/real_prospects.py` (bundle reader, positions/archetypes, draft traits, 94-input estimates, card)
-- `src/nba_gm_data/draft.py` (`generate_draft_class_records(..., real_prospects=True)`, class assembly, real
-  prospect records, rookie `college_profile`; mixed classes ranked as a whole; config `real_prospects.enabled`)
-- `src/nba_gm_data/input_estimator.py` (college blend for drafted real prospects; involvement on the estimator scale)
+- `data/research/prospect_scouting/draft_2027_boards.json`, `recruits_2028_2029.json` (scouting inputs, committed)
+- `scripts/research/real_prospects.py` (builder: projection, consensus, curves, recruit timing, pool),
+  `scripts/research/real_prospects_check.py` (sanity read, `--coverage`)
+- `data/canonical/real_prospects.json` (derived bundle v2: pool with chances by year and per-year views; one line per player)
+- `src/nba_gm_data/real_prospects.py` (declaration draws, class entries, skills, scouting and card blocks)
+- `src/nba_gm_data/draft.py` (class assembly, real prospect records for all kinds, `draft_class_for_save`, seed in
+  `build_draft_context`, faster board build), `src/nba_gm_data/spatial.py` (optional per-build cache),
+  `src/nba_gm_data/save.py` (one hook), `src/nba_gm_data/ingest.py` (scouting source)
 - `src/nba_gm_data/app_actions.py`, `prospect_cards.py`, `gui/app.js`, `gui/card-board.css` (card)
-- `src/nba_gm_data/ingest.py` (source record), `data/canonical/universe_2026_27_offseason.json` (2027 class)
+- `data/canonical/universe_2026_27_offseason.json` (stored 2027 class = seed-2027 draw; scouting source registered)
 - `tests/test_real_prospects.py`
 
 ## Resume state
+Done: scouting data, builder, bundle v2, per-save declaration draws, stored class, save hook, card, tests, this note.
+Remaining for the coordinator: review, decide the open items above, run the scorecards if wanted (opening-day ratings
+are unchanged; only future draftees differ).
 
-Done: builder, bundle, assembly, college-shaped traits and inputs, card, stored 2027 class, tests, this note.
-Remaining for the coordinator: review, run both scorecards if wanted (opening-day ratings are unchanged; only
-future draftees differ), decide on the open items above.
+---
+
+## First pass (2026-11-18, summary)
+The first pass put real college players into the 2027-2029 drafts from the Barttorvik college tables: one model per
+horizon (chance of being drafted, expected pick; out of sample on 2022-2026: same-spring AUC 0.986, rank vs pick
+0.62; one year ahead 0.92 / 0.31; two years ahead 0.90 / 0.21), a current-player blend (this season's games with last
+season or the freshman recruiting band), and fitted college -> 94-input relationships on 230 players drafted
+2019-2025 (free throws 0.64, threes 0.40-0.52, passing 0.49-0.64, rebounding 0.62-0.78, contests 0.72, steals
+0.52-0.60, ball security -0.34). Drafted real college prospects blend those estimates into their entry inputs
+(weight 0.2 + 0.5 x correlation, at most 0.6, times minutes / (minutes + 300)). Draft traits are standard scores of
+college rates against drafted players' final seasons, 16 trait points per standard score, softly bounded to 5-95.
+All of that is unchanged here.
