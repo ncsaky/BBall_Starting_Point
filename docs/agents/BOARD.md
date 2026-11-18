@@ -23,7 +23,7 @@ GUI wishlist work is parked.
 
 | Task | Owner | Status | Files it may touch |
 |---|---|---|---|
-| PRO-2 Rookie technique for real 2026 entrants | Codex | **in progress (Codex)**. Apply the approved rookie technique estimate and run both scorecards. | `scripts/build_player_inputs.py`, `data/canonical/player_inputs_2026_27.json(.gz)`, new tests, `docs/agents/tasks/pro-prospect-inputs.md` |
+| PRO-2 Rookie technique for real 2026 entrants | Codex | **done** (reviewed and committed 2026-11-18). Peterson 15th -> 83rd, Boozer 64th -> 255th; replay 18/18; odds mixed (spread error 5.22 -> 5.03, Brier 0.1950 -> 0.1954). Involvement shift still open. | `scripts/build_player_inputs.py`, `data/canonical/player_inputs_2026_27.json(.gz)`, `tests/test_build_player_inputs.py`, `docs/agents/tasks/pro-prospect-inputs.md` |
 | SAV Career save size | Codex + Claude | **done** (2026-11-18): user chose not to keep box scores past their season; Claude implemented retention in history_store (623 -> 215 MB at 10 seasons). | `docs/agents/tasks/sav-save-size.md`, `scripts/research/save_size_audit.py` |
 | PRO Prospect input calibration | Codex | **done** (reviewed 2026-11-18); fix approved as PRO-2. | `docs/agents/tasks/pro-prospect-inputs.md`, `scripts/research/prospect_input_audit.py` |
 | PLY Playoff translation evidence | Codex | **review**. Collected 2,963 regular-season and 1,401 playoff player-seasons across the 679-player career cohort. 398 played playoff minutes. Five Basketball Reference checks matched. | `scripts/import_player_playoff_stats.py`, `data/research/player_playoff_stats.json`, `output/ply/`, `docs/agents/tasks/ply-playoff-data.md` |

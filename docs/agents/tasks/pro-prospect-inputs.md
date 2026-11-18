@@ -106,7 +106,7 @@ The `--save` argument supplies the copied career for the fictional-class compari
 
 The startup builder now uses the rookie technique estimates for real 2026 draftees without a completed NBA season. The change is limited to technique. The existing Basketball Index overlay and measured-tendency steps still run in their original order. The proposed involvement shift is a separate task.
 
-Peterson fell from No. 15 to No. 83 overall and Boozer from No. 64 to No. 255. The replay stayed at 18 of 18 league measures within range. The average scoring error increased by 0.002 points per 36 minutes.
+Peterson fell from No. 15 to No. 83 overall and Boozer from No. 64 to No. 255. The replay stayed at 18 of 18 league measures within range. The average scoring error increased by 0.002 points per 36 minutes. The odds test improved its spread error by 0.194 points, while win-probability errors and total error rose.
 
 ### Rebuilt input files
 
@@ -138,6 +138,17 @@ The before run reproduced the supplied baseline. Both runs used `inputs_v1`, 1,2
 
 Average rebounds error per 36 minutes rose from 1.158 to 1.169. Field-goal attempt error fell from 1.931 to 1.916, assist error from 0.698 to 0.693 and block error from 0.335 to 0.323. The full replay reports are in `output/pro-2/`.
 
-### Tests and resume state
+### Betting-odds scorecard
 
-The focused builder test passed. `bash scripts/run_core_tests.sh` ran 330 tests successfully, with 2 skipped. The exact data diff, ratings report and replay are complete. The before and after odds runs are in progress, with logs under `output/pro-2/`. Record those results and move PRO-2 to review once they finish.
+Both runs used `inputs_v1`, 100 simulations per game and seed 1. Each covered 1,231 regular-season games, with market lines for 1,018. The before run reproduced all four supplied baseline numbers. Lower is better on all four measures.
+
+| Metric | Before | After | Change |
+|---|---:|---:|---:|
+| Brier score | 0.1950 | 0.1954 | +0.0004 |
+| Log loss | 0.5775 | 0.5785 | +0.0010 |
+| Average absolute spread error vs. market, points | 5.223 | 5.029 | −0.194 |
+| Average absolute total error vs. market, points | 5.421 | 5.485 | +0.064 |
+
+### Tests and handoff
+
+The focused builder test passed. `bash scripts/run_core_tests.sh` ran 330 tests, with 328 passes and 2 skips. Both ratings reports, replays, odds JSON files and the artifact diff are in `output/pro-2/`. Both artifacts are published locally and the board is at review.

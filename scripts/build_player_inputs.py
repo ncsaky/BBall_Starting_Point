@@ -22,6 +22,24 @@ from nba_gm_data.input_estimator import (
 ROOT = Path(__file__).resolve().parents[1]
 BEGIN = '<!-- E2 generated evidence report -->'
 END = '<!-- E2 end generated evidence report -->'
+TECHNIQUE_INPUTS = tuple(iid for iid, definition in DEFINITIONS.items()
+                         if definition["kind"] == "grade")
+
+
+def estimate_startup_inputs(estimator: InputEstimator, universe: dict) -> dict:
+    section = estimator.estimate_universe(universe)
+    for player in universe["players"]:
+        if player.get("draft_year") != 2026 or player.get("draft_status") != "drafted":
+            continue
+        career = estimator.careers.get(str(player.get("espn_player_id") or ""), {})
+        if any(row.get("season") and row["season"] < "2026-27" and (row.get("games") or 0) > 0
+               for row in career.get("seasons", [])):
+            continue
+        rookie_inputs = estimator.estimate_player_inputs(player, prospect=True).to_dict()["inputs"]
+        inputs = section["players"][player["id"]]["inputs"]
+        # Keep the original physical and tendency estimates before the evidence overlays.
+        inputs.update({iid: rookie_inputs[iid] for iid in TECHNIQUE_INPUTS})
+    return section
 
 
 def report_tables(universe: dict, section: dict, comparison: dict, elapsed: float,
@@ -160,14 +178,14 @@ def main() -> None:
     started=time.perf_counter()
     universe=json.loads((root/UNIVERSE_PATH).read_text())
     estimator=InputEstimator.from_local(root)
-    section=estimator.estimate_universe(universe)
+    section=estimate_startup_inputs(estimator,universe)
     bbi_summary=None
     if not args.no_bbi and (root/'data/research/bbi/normalized.json').exists() and (root/'data/research/bbi/bbi_input_mapping.json').exists():
         # Player-specific Basketball Index evidence (Leaderboards Values captures) blended over the estimate.
         from nba_gm_data.bbi_evidence import apply_overlay, apply_measured_tendencies
         bbi_summary=apply_overlay(section,root)
         bbi_summary.update(apply_measured_tendencies(section,root))
-    baseline=InputEstimator.from_local(root,use_expert=False).estimate_universe(universe)
+    baseline=estimate_startup_inputs(InputEstimator.from_local(root,use_expert=False),universe)
     comparison=validation_comparison(section,load_reference_cells(root),baseline)
     payload=canonical_json(section)
     output.parent.mkdir(parents=True,exist_ok=True)
