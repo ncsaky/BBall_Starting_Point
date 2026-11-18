@@ -31,6 +31,11 @@ from .draft import (
     prospect_from_research_row, prospect_traits_from_row, rookie_trait_records,
 )
 from .health import build_health_records, load_injury_model_config
+from .real_prospects import (
+    SOURCE_ID as REAL_PROSPECT_SOURCE_ID,
+    SOURCE_NOTES as REAL_PROSPECT_SOURCE_NOTES,
+    SOURCE_TITLE as REAL_PROSPECT_SOURCE_TITLE,
+)
 from .roster_alignment import SOURCE_ID as ROSTER_ALIGNMENT_SOURCE_ID, STARTING_DATA_VERSION, align_imported_roster
 from .traits import repair_preserved_stamina, STAMINA_SOURCE_ID
 from .research import (
@@ -749,6 +754,16 @@ def build_source_registry(
             trust_level="inferred_defaulted",
             path=str((root / DRAFT_MODEL_CONFIG_FILE).resolve()) if (root / DRAFT_MODEL_CONFIG_FILE).exists() else None,
             notes="Deterministic future-class generation, scouting fog, team draft-board, BPA/need, rookie-contract value, and draft-night trade tuning constants.",
+        ),
+        SourceEvidence(
+            id=REAL_PROSPECT_SOURCE_ID,
+            title=REAL_PROSPECT_SOURCE_TITLE,
+            kind="derived_public_college_statistics",
+            trust_level="derived_model",
+            path="data/canonical/real_prospects.json",
+            url="https://barttorvik.com",
+            retrieved_at="2026-11-19",
+            notes=REAL_PROSPECT_SOURCE_NOTES,
         ),
         SourceEvidence(
             id="src_spotrac_future_picks",

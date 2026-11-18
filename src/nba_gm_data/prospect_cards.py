@@ -9,6 +9,7 @@ from .career_stats import season_summary
 def prospect_rating_projection(canonical, prospect, report, coverage, save=None):
     from .draft import draft_traits_for_prospect, generated_class_for_context, primary_position_label, rookie_rotation_projection, rookie_trait_records
     from .save import player_display_attribute_summary, presentation_rating_value
+    from .real_prospects import college_entry_for
     from .talent import modeled
 
     save = save or {}
@@ -19,7 +20,8 @@ def prospect_rating_projection(canonical, prospect, report, coverage, save=None)
     pending = pending or next((p.get('prospect') or {} for p in save.get('pending_draft_selections', [])
                     if (p.get('prospect') or {}).get('id') == identity), {})
     generated = {}
-    if not full and not pending and prospect.get('league') == 'generated':
+    if not full and not pending and prospect.get('draft_year') and (
+            prospect.get('league') == 'generated' or college_entry_for(prospect)):
         generated = generated_class_for_context(canonical, str(prospect['draft_year']))
         full = next((p for p in generated['draft_prospects'] if p['id'] == identity), {})
     # Board payloads omit model markers and public-stat priors; recover the
