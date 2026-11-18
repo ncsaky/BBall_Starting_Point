@@ -4,11 +4,9 @@ Owner: Claude (overnight worker session, 2026-11-18), branch `claude/ratings-aud
 
 ## TL;DR
 
-- **Rim protection no longer flattens at the top.** The old response squeezed every big above ~90 into 95–99, so the top ~25 rim protectors sat within about 1 point of each other on the card. Now the top of the scale spreads the way real rim evidence does (Wembanyama +17.0, Holmgren +15.1, Gobert +14.7, down to about +11 for the 25th big), and blocks go to the real shot-blockers (Jokić 2.33 → 0.66 blocks per 36, real 0.84; Huff 1.13 → 2.91, real 3.20).
-- **Player values agree better with real impact.** The new ratings' overall now tracks a six-metric consensus of real impact more closely (rank correlation 0.79 → 0.81 after both tasks; legacy ratings 0.52). Stars' offense is no longer under-credited: Brunson's card overall goes from 122nd to 50th (the evidence says about 60th).
-- **Most remaining big disagreements are role players and rookies** where the impact metrics themselves disagree (box-score metrics vs pure on/off). Those are listed and left alone. No player's inputs were moved to hit a target.
-
-(Filled in below; see "Scorecards" for the betting-odds and real-stat results.)
+- **Rim protection no longer flattens at the top, and blocks go to real shot-blockers.** The top 25 rim protectors used to sit within 1–1.6 points of each other on the card; now they spread like the real evidence (Wembanyama +17.0, Holmgren +15.1, Gobert +14.7, about +11 for the 25th). Sim blocks: Jokić 2.33 → 0.66 per 36 (real 0.84), Huff 1.13 → 2.91 (real 3.20); average miss 0.32 → 0.21.
+- **Player values track real impact better.** Usage now pays off only with the skill behind it, and one input (attack recognition) dropped a misleading shot-location measure, so stars' offense is no longer under-credited (Brunson 102nd → 42nd overall among 278 compared players; the evidence says 60th). No input was moved to hit a target; the 30 biggest remaining disagreements are mostly rookies, role players the impact metrics disagree on, and three energy bigs the value model cannot read (listed, left alone).
+- **Scorecards:** real-stat targets 18/18 in band with blocks much better; betting odds slightly worse on win probabilities (Brier 0.1955 → 0.1968, log loss 0.5786 → 0.5808) but closer to the market's spreads (error 5.04 → 4.74). That trade-off needs a decision (see "Scorecards").
 
 ## Task 1: rim protection saturated at the top
 
@@ -173,7 +171,7 @@ jump choice predict. Matas Buzelis too (1.11 vs 1.86).
    the local evidence did not ride along). Now: Brunson 78.3, Cunningham 78.4, Dončić 80.6, Garland 76.9, Barnes
    73.7 (still below his range), DeRozan 35.9 → 64.0, Westbrook 80.4 → 70.8. The value fit (refitted on the new
    inputs) improved slightly on its own target (offense r 0.900 → 0.902), an independent sign the fix is right.
-3. **Jalen Brunson** (the known example): card overall 122nd → 50th (consensus 60th), offense 20th → 10th,
+3. **Jalen Brunson** (the known example): among the 278 compared players his card overall goes 102nd → 42nd (consensus 60th: 15 points too low before, 6.5 too high now). Among all 365 rotation players: overall 122nd → 50th, offense 20th → 10th,
    playoff translation 65th → 54th. His real playoff record is strong; the playoff recipe is fitted to playoff
    box production and playoff talent grades, and still ranks him 54th (see open questions).
 
@@ -253,12 +251,24 @@ by about 0.01 per 36 (rotation and score changes, not their allocation code, whi
 
 | | Brier | Log loss | Spread error vs market | Totals error vs market |
 |---|---:|---:|---:|---:|
-| Before (coordinator's run, this morning's main) | 0.1955 | 0.5786 | 5.04 | 5.51 |
+| Before (base commit bba9a83, re-run tonight; matches the coordinator's numbers exactly) | 0.1955 | 0.5786 | 5.04 | 5.51 |
 | After Task 1 only (no scoring re-centre) | 0.1964 | 0.5801 | 4.77 | 5.91 |
-| After both tasks (final) | FINAL_BRIER | FINAL_LL | FINAL_SPREAD | FINAL_TOTAL |
+| After both tasks (final) | 0.1968 | 0.5808 | **4.74** | 5.70 |
 | Market | 0.1962 | 0.5740 | | |
 
-FINAL_NOTE
+**Read this before merging: the probability scorecard got slightly worse.** Brier 0.1955 → 0.1968 (+0.0013) and
+log loss 0.5786 → 0.5808 (+0.0022): the sim went from slightly beating the market's Brier (0.1962) to slightly
+trailing it. At the same time the predicted margins moved clearly closer to the market's spreads (average spread
+error 5.04 → 4.74), and totals error rose 5.51 → 5.70 (it was 5.91 before the scoring re-centre). Most of the change
+came with Task 1 (Brier 0.1964 after Task 1 alone); the attack-recognition fix added the rest. The bucket view is
+mixed rather than one-directional: heavy favorites are less overconfident (0.889 → 0.881 vs 0.841 actual) and away
+favorites closer (0.282 → 0.299 vs 0.328), while plain home favorites moved away (0.716 → 0.706 vs 0.728). The
+league-wide spread of team rim protection actually narrowed (team standard deviation 6.6 → 5.6), because guard-heavy
+teams lost rim protection they never had, so this is not "rim effects got too big". The test only keeps 20 game
+reports, so the change could not be traced game by game tonight, and the three-run budget for this test is used up.
+The coordinator should decide whether the rim realism, the much better blocks and the closer spreads are worth
++0.0013 Brier, or ask for a follow-up that re-tunes the team-level rim coefficients in `sim.py` (shot-diet rim
+suppression, shot-quality term, defensive anchor), which were set on the old, compressed scale.
 
 ## Tests
 
