@@ -2,11 +2,75 @@
 
 Paste one prompt into a **fresh** Codex chat. One task per chat keeps it from drifting after context compaction. Each prompt is self-contained. Claude reviews the result and updates `BOARD.md`.
 
-Current priority (2026-11-19): the two "Ready now" tasks below. GUI tasks are parked at the bottom.
+Current priority (2026-11-19, evening): ROT-OUTLIERS first, then BLOWOUT-MINUTES. GUI tasks are parked at the bottom.
 
 ---
 
-## Ready now (2026-11-19): ROT-SHAPE and JS-TESTS, one fresh chat each
+## Ready now (2026-11-19, evening): ROT-OUTLIERS, then BLOWOUT-MINUTES, one fresh chat each
+
+ROT-SHAPE and JS-TESTS are done and merged. These two build on ROT-SHAPE (`docs/agents/tasks/rot-shape.md`).
+
+### ROT-OUTLIERS: deep-bench players still get starter-like minutes
+
+Suggested settings: GPT-6.2 Sol, Medium, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task ROT-OUTLIERS. Add a board row and mark it "in progress (Codex)".
+
+Context: ROT-SHAPE (docs/agents/tasks/rot-shape.md, merged 2026-11-19) fixed the league-wide rotation shape: role-group
+minutes now land within about 1 mpg of Basketball Index healthy-rotation minutes. Individual outliers remain because
+their starting minutes_projection is far too high: Bruce Brown NYK (game target 25.1, plays ~19.9, Basketball Index 4.5)
+and Luke Kennard PHX (21.1, plays 17.4, BBI 5.0); Jordan Poole NOP (24.5 -> 10.2 after ROT-SHAPE, BBI 8.2) shows the
+coach can correct when the inputs allow it.
+
+Step 1 (measure, read-only): over 2 seeds of one headless regular season (AI coaches, canonical 2026-27 rosters), list
+the 25 players whose played minutes exceed Basketball Index healthy_rotation_mpg the most, and the 25 who fall shortest
+(data/research/bbi/tools/minutes_players.json, local only, never commit). For each, find why: the starting
+minutes_projection, the depth/role builder (save.py around the role builder ROT-SHAPE changed), position slotting (a
+backup slot forced onto a weak player), or the coach's game model. Give file:line references.
+Step 2 (fix): make the depth chart follow each team's real talent order and positional needs, so a clearly weaker
+player is not handed rotation minutes because he fills a position slot. Do not copy Basketball Index minutes into the
+game and do not change any player ratings; the coach model must produce the minutes. Keep the user's rough minutes
+targets driving their own team (AGENTS.md rule 8) and keep ROT-SHAPE's role-group results.
+
+Files you may touch: save.py rotation/depth/role code, the coach minutes helpers in sim.py (another agent may edit
+sim.py for player value; keep your edits contained to minutes/rotation functions), tests, docs/agents/tasks/rot-outliers.md.
+Do not touch transactions.py, trade_*.py, draft.py, real_prospects.py, impact_value.py.
+Acceptance: the outlier lists before/after (Brown and Kennard within about 5 mpg of their reference unless you show the
+coach has a sound reason), ROT-SHAPE's role-group table still within 1.5 mpg, focused tests, both scorecards
+(calibration_report.py replay-real-minutes in inputs mode 18/18; validate-season-probabilities --runs 100 with
+NBA_GM_RATINGS_MODEL=inputs_v1: Brier and log loss not worse than 0.1945 / 0.5750) and bash scripts/run_core_tests.sh.
+Leave changes uncommitted; write the report and set the board row to review.
+```
+
+### BLOWOUT-MINUTES: the coach should rest players in blowouts and react to foul trouble
+
+Suggested settings: GPT-6.2 Sol, Medium, fresh chat. Start only after ROT-OUTLIERS is reviewed.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task BLOWOUT-MINUTES. Add a board row and mark it "in progress (Codex)".
+
+Goal (AGENTS.md rule 8): the modeled coach decides actual playing time game by game and in-game: foul trouble, fatigue,
+hot or cold hands, blowouts, matchups. ROT-SHAPE found that the current game path has no blowout substitution step and
+that personal fouls are assigned after minutes and scoring are decided (docs/agents/tasks/rot-shape.md, "Where the
+flatness came from": sim.py:550, sim.py:616, sim.py:1006).
+
+Step 1 (measure): from real 2025-26 data the repo already has (box scores under data/research, see
+docs/obsidian-vault or grep for boxscore loaders), measure how starters' minutes fall with the final margin (e.g. by
+margin buckets 0-5, 6-10, 11-20, 21+) and how foul counts relate to minutes. Report the real curves.
+Step 2 (fix): add a blowout-rest effect and a foul-trouble effect to the coach's in-game minutes, fitted to those real
+curves, keeping each team's total at 240 (overtime aside) and keeping game-to-game variation realistic. Bench players
+gain the minutes starters lose. Keep it deterministic under the seed and cheap (speed budget AGENTS.md rule 10).
+
+Files you may touch: the coach/minutes code in sim.py (keep edits contained; another agent may edit sim.py for player
+value), tests, docs/agents/tasks/blowout-minutes.md. Do not change player ratings.
+Acceptance: before/after starter-minutes-by-margin table vs real, both scorecards (as in ROT-OUTLIERS: 18/18;
+Brier/log loss not worse than 0.1945 / 0.5750), bash scripts/run_core_tests.sh. Leave changes uncommitted; report; board row to review.
+```
+
+---
+
+## Done (2026-11-19): ROT-SHAPE and JS-TESTS (merged; kept for reference)
 
 ### ROT-SHAPE: AI coach rotation shape vs Basketball Index minutes projections
 
