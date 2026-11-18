@@ -15,34 +15,34 @@ Raw captures go to `data/research/bbi/captures/` (git-ignored); tidy extracts go
 | Tool | Host | Status |
 |---|---|---|
 | Leaderboards Tool (664 metrics, 2013-14..2025-26, Values) | shinyapps | done (2026-11-17). Percentile/grade/Value+ views skipped (derivable) |
-| Team Leaderboards | shinyapps | TODO |
+| Team Leaderboards | fanspo bbi-lineups/team-stats | done: `captures/fanspo_tools/team_stats/` (30 teams x 321 measures x 13 seasons) |
 | NBA LEBRON Dashboard / LEBRON history 2010-2026 | fanspo | done |
-| LEBRON Player Trends | fanspo role-explorer | TODO (check vs value trends) |
+| LEBRON Player Trends | fanspo bbi-role-explorer/player_trends | TODO (check vs value trends) |
 | LEBRON Trends Dashboard (value trends) | fanspo | done |
 | Daily LEBRON (game LEBRON) | fanspo | done |
 | Shooting talent projections | fanspo | done (2/3 of players) |
 | Stable Lineup Data | shinyapps lineup-free / fanspo bbi-lineups explorer | done via Lineup Explorer (61,037 lineups) |
 | Rotation Minutes | minutes-app | TODO |
 | Custom Lineup Creator / 5th Man / Roster Optimizer | fanspo bbi-lineups | scenario tools: underlying data only (lineup explorer + progression) |
-| Player Skills Tool | shinyapps | TODO (check overlap with Leaderboards) |
-| Play Style Similarity | ? | TODO |
+| Player Skills Tool | shinyapps Skills | TODO (check overlap with Leaderboards) |
+| Play Style Similarity | shinyapps similarity | TODO |
 | Playoff Talent Grades | fanspo bbi-pbp-tool | done (4,344 player-windows x 386) |
 | Defensive / Offensive Role Lab | static html + 4 data files each | done: `captures/tools/role_labs/bbi_role_labs.json.gz` (5,589 offensive, 5,813 defensive player entries + model coefficients) |
 | Talent Age Growth Curve | static html | done (extracted by Codex BBX) |
 | Minutes Projections & Talent Grid | static html | done (BBX) |
 | Injuries Tool | static html | done (BBX) |
 | xPoints Analyzer | fanspo bbi-pbp-tool | TODO |
-| xPoints Game Database (1,230 games, play-by-play) | fanspo bbi-pbp-tool | TODO |
-| xPoints WOWY Combos | fanspo bbi-pbp-tool | TODO (base tables only) |
-| xPoints Standings | fanspo bbi-pbp-tool | TODO |
-| xPoints Team Trends | fanspo bbi-pbp-tool | TODO |
+| xPoints Game Database | fanspo bbi-pbp-tool/api/games | done: `captures/fanspo_tools/xpoints/bbi_xpoints_games_2025_26.json.gz` (1,230 team box scores incl. FGA, fouls by type, expected points) |
+| xPoints WOWY Combos | fanspo bbi-pbp-tool/wowy-combos | TODO (base tables only) |
+| xPoints Standings | fanspo (uses api/games) | done via the game database |
+| xPoints Team Trends | fanspo (uses api/games) | done via the game database |
 | xPoints Lineups | fanspo bbi-pbp-tool | done: `captures/fanspo_tools/xpoints/bbi_xpoints_lineups_2025_26.json.gz` (30 teams, exact possessions, expected points) |
-| xPoints Referee Trends | fanspo bbi-pbp-tool | TODO |
-| Shot Charts | ? | TODO |
+| xPoints Referee Trends | fanspo bbi-pbp-tool/api/refs | done: 84 officials + their game logs |
+| Shot Charts | fanspo bbi-role-explorer/shot-onoff | TODO |
 | Headshots & Scatter Plots | shinyapps | skip (re-plots captured metrics) |
 | Career Trends | shinyapps | check for fields not in Leaderboards |
 | Player Progression Analysis | fanspo bbi-lineups | done: `captures/fanspo_tools/progression/bbi_progression_all.json.gz` (1,706 players, 6,942 player-seasons, 164 measures incl. EPM/RAPM/DRIP/DPM/RAPTOR/BPM + league distributions) |
-| Player Profiles | site | TODO (check for unique fields) |
+| Player Profiles | fanspo bball-index/player-profiles | TODO (check for unique fields) |
 | Skill Badges | site | TODO |
 | Glossary | google sheet | TODO (definitions) |
 | NCAA section | site | TODO: check membership coverage (prospect evidence) |

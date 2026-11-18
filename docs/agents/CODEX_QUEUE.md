@@ -6,7 +6,39 @@ Current priority (2026-11-17): the three "Ready now" tasks below. GUI tasks are 
 
 ---
 
-## Ready now (2026-11-18, night): STAFF-LIFE and BBX-2, one fresh chat each
+## Ready now (2026-11-18, late night): DEV-TUNE
+
+### DEV-TUNE: player aging and development curves to match Basketball Index
+
+Suggested settings: GPT-6.2 Sol, Medium (High if it stalls), fresh chat or the DEV chat.
+
+```
+Read AGENTS.md, docs/agents/BOARD.md and your own report docs/agents/tasks/dev-growth-vs-bbi.md first. You own DEV-TUNE;
+add a board row "in progress (Codex)".
+
+GOAL: retune development so the game's age curve and year-to-year spread match Basketball Index (your report):
+growth strongest at 19-22, broad peak ~23-26, decline starting by 27-30 (offense earlier than defense), steeper late
+decline; and realistic spread around each player's expected change (BBI overall 80% band ~ -1.1..+0.8 of its scale,
+measured relative to starting spread as in your report).
+
+SCOPE: src/nba_gm_data/health.py monthly_trait_delta and its aging/growth/noise constants (and the development config
+values they read), plus development_outlook.py if its expected-change helper needs the same constants. Do NOT edit
+health.development_staff_modifiers or health.coach_development_by_team (Claude is rewiring coach/staff effects), the
+injury functions in health.py (injury model v2 just landed), sim.py, staff.py or staff_lifecycle.py.
+RULES: ratings-first (do not change any player's starting ratings); keep both rating sets working (legacy and
+inputs_v1); determinism (seeded); no clipping at 100. Spread should come mostly from season-level shocks (role, health,
+breakouts), not month-to-month noise that averages out.
+CHECKS: re-run your DEV comparison (age-by-band medians and spread bands, both rating sets) and show before/after
+tables; tests/test_development_outlook.py, tests/test_prospect_development.py, tests/test_development_coverage.py,
+bash scripts/run_core_tests.sh; and the real-stat scorecard is unaffected at season start (development only changes
+ratings over time) — say so if you confirm it.
+REPORT: append "DEV-TUNE results" to docs/agents/tasks/dev-growth-vs-bbi.md, plain language first. Board row to
+"review". Do not commit. Don't poll long runs more than every 20-30 minutes.
+```
+
+---
+
+## Done: (2026-11-18, night): STAFF-LIFE and BBX-2, one fresh chat each
 
 Suggested settings: GPT-6.2 Sol, Medium. Claude is rebuilding the injury engine: do NOT edit src/nba_gm_data/health.py,
 sim.py, schema.py, or the health/injury functions in save.py, app_actions.py and gui/app.js. Don't poll long runs more

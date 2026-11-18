@@ -100,3 +100,75 @@ These role mixes and talent scores are the Minutes/Talent tool's chosen-role pro
 - Compared all 249 injury bucket counts and return-day percentiles with the saved page's local JavaScript formula. Compared the 6,945 detailed absence records and both aftermath/recurrence tables with the source payload.
 - Checked methodology text against the source tab, all JSON for valid finite values, and every file against the 5 MB size cap. Ran the extractor in two directories and compared the outputs byte for byte.
 - BBX is ready for coordinator review. Only the parser, report, board row and research exports changed. No commit was made.
+
+## BBX-2
+
+All five captures are now in reusable research tables. They cover 6,942 player-seasons, 4,344 playoff player-windows, 61,037 historical lineups, and 12,481 lineups with exact possession counts and expected points.
+
+The later Role Lab capture supplies 11,402 player-season entries and the model settings behind the saved pages.
+The tables keep every source row, including players without a verified game ID. The largest file is 4.55 MB.
+
+### Reproduce the tables
+
+From the repository root, run `.venv/bin/python scripts/bbi_extract_captures.py`. It reads the five gzip captures listed in `data/research/bbi/tools/bbx2_inventory.json` and uses the existing canonical player index and two saved NBA roster snapshots. It writes alongside the original BBX extracts. Use `--output` to build in a fresh directory. Use `--captures`, `--canonical` or `--rosters` to override the inputs. The inventory records the capture paths, retrieval times, file sizes, row counts and player match rates.
+
+CSV blanks represent missing values. JSON uses `null` for missing values and preserves absent optional source fields. Files whose uncompressed representation is at least 5 MB are gzipped with a fixed timestamp. The Lineup Explorer uses two files with identical headers so each compressed file stays under 5 MB.
+
+### Player matches
+
+`nba_player_id` is the NBA ID. `player_id` is the simulator's ID. The link uses the July 28 and October 13, 2026 NBA.com roster snapshots. A player must have the same normalized name and birthdate in the official roster and canonical index. Name normalization folds accents, case, spaces and punctuation and uses the three existing reviewed aliases. The resulting link must be unique in both directions. No team or similarity fallback is used.
+
+Role Lab rows first recover the NBA ID from a unique normalized name and season in Progression and Lineup Explorer. Three defensive entries, for Nigel Hayes and Ruben Nembhard Jr., lack a verified NBA ID under that rule. Both IDs remain blank for those entries. The historical data span many players outside the current universe, and the roster bridge can also miss players in the current universe when official identity details are absent or disagree.
+
+| Dataset | Distinct NBA IDs matched to the game | Player references matched to the game |
+|---|---:|---:|
+| Progression | 534 / 1,706 (31.3%) | 2,758 / 6,942 (39.7%) |
+| Playoff Talent | 378 / 961 (39.3%) | 1,809 / 4,344 (41.6%) |
+| Lineup Explorer | 515 / 1,606 (32.1%) | 150,858 / 305,185 (49.4%) |
+| xPoints Lineups | 509 / 576 (88.4%) | 59,881 / 62,405 (96.0%) |
+| Offensive Role Lab | 502 / 1,347 (37.3%) | 2,568 / 5,589 (45.9%) |
+| Defensive Role Lab | 520 / 1,481 (35.1%) | 2,637 / 5,813 (45.4%) |
+
+A reference is one player-season, one player-window or one lineup slot. The distinct-ID denominator includes resolved NBA IDs even when they lack a game ID. The reference denominator includes all entries, including the three Role Lab rows without resolved NBA IDs.
+
+### Progression, playoffs and lineups
+
+| File | Rows | Fields and units |
+|---|---:|---|
+| `progression_player_seasons.csv.gz` | 6,942 | One row per NBA ID and season, 2013–14 through 2025–26. Includes team, age in years, season minutes, position, advanced position, offensive/defensive/rotation roles and all 164 reported values in their source units. Includes impact measures such as EPM, RAPM, DRIP, DPM, RAPTOR and BPM, plus talent and usage measures. |
+| `progression_percentiles.csv.gz`, `progression_ranks.csv` | 6,942 each | Source percentiles on a 0–100 scale and integer ranks. Join on NBA ID and season. Missing values stay blank. |
+| `progression_players.json`, `progression_metrics.json` | 1,706 players, 164 metric definitions | Player names, IDs, headshot URLs, seasons, active filters and peer population sizes. The metric file defines each column's display name and category. |
+| `progression_league_distributions.json` | 8 season blocks | Source arrays keyed by season and measure code, in source order and units. Contains 2013–14 through 2019–20 and 2021–22. Empty arrays and seasons absent from the capture are preserved as supplied. |
+| `playoff_talent_windows.csv.gz`, `playoff_talent_reference.json` | 4,344 windows plus reference | One row per NBA ID and three-season playoff window, from 2013–14 to 2015–16 through 2023–24 to 2025–26. The 386 source fields include 381 numeric columns and five identity, window and role fields. The reference preserves display labels, percentage/integer flags, tabs and scatterplot groups. Values remain in the source scale. CSV renames `Season` to `window`, `player_name` to `player`, and source `player_id` to `nba_player_id`. |
+| `lineup_explorer_2013_2019.csv.gz`, `lineup_explorer_2019_2026.csv.gz` | 27,483 and 33,554 | One row per season, team and set of five players, split at 2019–20. Slots 1–5 preserve the input order and carry the source name and both IDs. Includes minutes, offensive/defensive/net ratings per 100 possessions, source league-relative ratings, 55 `role_*` lineup counts and 24 `grade_*` talent columns in their original scale. Counts overlap across role, position, rotation and handedness categories. |
+| `lineup_explorer_reference.json` | 13 season blocks | Source league-average offensive and defensive ratings. |
+| `xpoints_lineups.csv`, `xpoints_lineups_reference.json` | 12,481 lineups, 30 teams | The 2025–26 request uses a zero-minute minimum and includes garbage time. Player slots preserve the capture order. `possessions` and `def_possessions` are exact offensive and defensive counts, and `possessions_total` is their sum. `pts_for`/`pts_against` and `xpts_for`/`xpts_against` are actual and expected point totals. Ratings are per 100 possessions, percentages use 0–100, and minutes can be fractional. The reference gives row counts by team and request group. Every row is from `select`. The `opponent` groups were empty. |
+
+### Role Labs field guide
+
+The player-season files are `role_lab_offensive_player_seasons.json.gz` (5,589 rows, 2014–15 through 2025–26) and `role_lab_defensive_player_seasons.json.gz` (5,813 rows, 2015–16 through 2025–26). The matching `role_lab_*_reference.json` files retain the source coefficient values and the keys needed to interpret the arrays. Definitions come from the saved pages `captures/tools/bbi_tool_offensive_role_lab.html` and `captures/tools/bbi_tool_defensive_role_lab.html`.
+
+| Fields | Meaning |
+|---|---|
+| `n`, `s`, `t`, `tm`, `m`, `a`, `h`, `w`, `r`, `lo` | Source name, season, team label, teams in that season, minutes, age in years, height in inches, weight in pounds, observed role and flag for the source's low-minutes band below 500. `player` repeats `n` for joins. |
+| `p`, `pc`/`rk`, `pf`/`rf`, `vo` | One value per reference `roles` entry. Projected talent in each role, percentile/rank against players who held the role, percentile/rank against its eligible rotation pool, and projected talent minus the 25th-percentile incumbent. Percentiles use 0–100. |
+| `sh` | Optional history-blended version of the supplied scores and inputs. On offense it is embedded in each row. The defensive page reads it by row index from a parallel array, which is attached to each exported row. `sh.w` is the history blend weight. |
+| `t27`, `mv`, `qtm`, `qag` | Source 2026–27 team and moved flag, plus projection team and age where supplied. Projection fields sit on the 2025–26 input row. |
+| Offense `ol`, `lb`, `dl`, `u`, `dr` | Observed Offensive Talent, overall and defensive LEBRON, usage percent and defensive role. |
+| Offense `ev`, `op`, `bf`, `cp`, `sw`, `pp` | Per-role envelope, opportunity, body-fit and ceiling adjustments in talent units, size warning index into `swlab`, and role precedent probability as a fraction. |
+| Offense `im`, `tv`, `t3` | Play-type impact inputs and play-type talent inputs in `plays` order. `t3` orders the source shooting talent inputs as three-point, midrange and finishing. |
+| Offense `qol`, `qd`, `q*` | The projected 2026–27 base and growth-model change. The role arrays `q/qc/qf/qv/qr/qrf` mirror `p/pc/pf/vo/rk/rf`. The remaining `qev/qop/qbf/qcp/qsw` store projected adjustments and size warning. |
+| Defense `dt`, `np_`, `gp`, `im` | Observed Defensive Talent, body-implied position and average position guarded on a guard-to-center scale, plus the per-role exposure-weighted talent score. `gp` refers to guarded position. |
+| Defense `dc`, `pe`, `ob`, `obd`, `fl`, `ex`, `md`, `sw`, `pr` | Per-role skill-transfer, size, on-ball and foul-risk terms plus the size and precedent fields. The page moves `obd` from `dc` to `ob` for display. `ex` is the maximum envelope breach and `md` lists the four possible breaches in order (too short, too light, too heavy, too tall), in position units. `sw` is a size warning index and `pr` a precedent probability. |
+| Defense `skz`, `fz`, `obz`, `cf` | The 12 standardized inputs ordered by `skills`, the standard-deviation scores for fouling and on-ball skill, and the deployment matrix. The deployment matrix uses `roles` for rows and `keys` for columns. The observed-role row is the baseline shown by the page. The other rows are projected deployment in each role. |
+| Defense `qol`, `qdc`, `qob`, `qfl`, `qz` | Projected defensive talent base, skill-transfer, on-ball and foul-risk adjustments, and standardized projected skill ratings. The page uses these with the existing size term to build the projected ladder. The capture also contains `qth`, `qsh`, `qsf` and `cfl` under their original names. The page's player view does not define them. |
+
+The reference files retain the following model components:
+
+- **Offense.** `theta` gives role effects. The player view subtracts the current role effect from the proposed one, then adds the four stored adjustments to the talent base. `base` and `coef` describe the talent breakdown, with one coefficient per entry in `plays`. `pcoef[play]` aligns with `pterms` and predicts play possessions per 75 using role indicators, shooting inputs and their interactions. `amean` gives role-specific typical values for the play contributions. `ceil` carries 95th-percentile and maximum talent, `env` carries height/weight bounds, and `body` carries penalty parameters. `prop` carries the precedent model's centers, scales, classes, intercepts and weights. `pools`, `nfit`, `span` and `target` describe comparison pools and borrowing across seasons.
+- **Defense.** `theta` gives role effects. `W`, `LO` and `HI` carry skill weights and transfer bounds in `skills` order for each role. `wW`, `wbase`, `wmu` and `wrsd` support the grade breakdown and its league or role-centered views. `xW`, `xLO`, `xHI`, `xRAT` and `lamo` are the more precise transfer and opportunity parameters used by that breakdown. `exp[role]` holds the volume, stakes and combined exposure multipliers. `env` holds median, 10th and 90th percentiles of body-implied position. `body` carries the height/weight envelopes, penalties and natural-position equation, and `prop` carries the precedent model's standardization and fit. `fe` supplies tracked-stat role shifts, `lg` supplies league means and standard deviations, and `surv` and `pairs` describe retained skill opportunities when roles change. The seven inline height coefficients remain in the original BBX file `defensive_role_height_coefficients.json`.
+- **Both.** The reference files preserve the source's team, coach, role-pool, fit and lineup-optimization data as supplied, including ancillary names. Matched IDs belong to the separate player-season tables. These role-change projections are observational estimates. The saved pages mark moves with limited precedent and distinguish model assumptions from measured history.
+
+### Verification and handoff
+
+Compared the exported values with all five raw captures, including the lineup member order, both sides of the xPoints possession totals, the Role Lab vectors and the defensive history-blend alignment. Checked unique row keys and consistent one-to-one player joins. A second extraction reproduced all 18 files byte for byte. BBX-2 is ready for coordinator review. No commit was made.

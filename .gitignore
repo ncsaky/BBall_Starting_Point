@@ -48,3 +48,7 @@ data/research/bbi/normalized/
 data/research/bbi/raw/
 data/research/bbi/captures/bbi_metric_catalog*.json
 data/research/bbi/values_recent.json.gz
+
+# Basketball Index tables extracted from the paid subscription stay on this machine (user decision 2026-11-18).
+# Files committed before that decision remain tracked.
+data/research/bbi/tools/
