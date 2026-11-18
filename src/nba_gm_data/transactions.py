@@ -2684,6 +2684,15 @@ def _fallback_asset_valuation_cached(key: tuple[Any, ...]) -> tuple[tuple[str, f
     return tuple(sorted(payload.items()))
 
 
+_MISSING = object()
+
+
+def valuation_or_fallback(values: dict[str, Any], player_id: Any, player: dict[str, Any] | None) -> Any:
+    """values.get(player_id, fallback_asset_valuation(player)), building the (pure) fallback only when needed."""
+    value = values.get(player_id, _MISSING)
+    return fallback_asset_valuation(player) if value is _MISSING else value
+
+
 def fallback_asset_valuation(player: dict[str, Any] | None) -> dict[str, float]:
     if not player:
         return {
@@ -2771,7 +2780,7 @@ def buyer_offer_package_options(
     config=None,
 ) -> list[dict[str, Any]]:
     valuations = player_asset_values_by_id(canonical)
-    target_valuation = valuations.get(target["id"], fallback_asset_valuation(target))
+    target_valuation = valuation_or_fallback(valuations, target["id"], target)
     target_value = market_trade_target_value(target, target_valuation)
     target_salary = current_salary(contract_for_player(canonical, target["id"]))
     from .trade_wants import package_preference
@@ -2807,7 +2816,7 @@ def buyer_offer_packages(
     max_player_options: int = 9,
 ) -> list[list[dict[str, Any]]]:
     valuations = player_asset_values_by_id(canonical)
-    target_valuation = valuations.get(target["id"], fallback_asset_valuation(target))
+    target_valuation = valuation_or_fallback(valuations, target["id"], target)
     target_value = market_trade_target_value(target, target_valuation)
     from .trade_wants import package_preference
     target_value += package_preference(canonical, buyer['id'], [{'kind': 'player', 'id': target['id']}])['adjustment']*.5
@@ -3018,7 +3027,7 @@ def buyer_offer_packages_for_value(
         [player for player in buyer_players if player["id"] not in excluded_player_ids],
         key=lambda player: (
             block.get(player["id"], {}).get("block_score", 0) + 8*search_priority(canonical, seller['id'], {'kind': 'player', 'id': player['id']}),
-            -abs(valuations.get(player["id"], fallback_asset_valuation(player))["player_value"] - target_value * 0.72),
+            -abs(valuation_or_fallback(valuations, player["id"], player)["player_value"] - target_value * 0.72),
             -abs(salary_by_player.get(player["id"], 0.0) - (target_salary or 0)) / 1_000_000,
             player["name"],
         ),
@@ -3036,7 +3045,7 @@ def buyer_offer_packages_for_value(
         if player["id"] in unavailable:
             if work is not None:work["filtered_player_options.terminal"] += 1
             continue
-        valuation = valuations.get(player["id"], fallback_asset_valuation(player))
+        valuation = valuation_or_fallback(valuations, player["id"], player)
         value = float(valuation["player_value"])
         block_score = float(block.get(player["id"], {}).get("block_score") or 0.0)
         if value >= 72 and target_value < 70:
@@ -3311,7 +3320,7 @@ def offer_player_rough_value(
     target_salary: float | None,
     valuations: dict[str, dict[str, Any]],
 ) -> float:
-    valuation = valuations.get(player["id"], fallback_asset_valuation(player))
+    valuation = valuation_or_fallback(valuations, player["id"], player)
     value = market_trade_target_value(player, valuation)
     salary = current_salary(contract_for_player(canonical, player["id"])) or 0.0
     filler = target_salary is not None and target_salary >= 8_000_000 and salary >= 5_000_000 and value < target_value * 0.55
@@ -3569,7 +3578,7 @@ def package_variants(assets: list[dict[str, Any]]) -> list[list[dict[str, Any]]]
 def buyer_teams_for_player(canonical: dict[str, Any], player: dict[str, Any]) -> list[dict[str, Any]]:
     from .trade_wants import search_priority
     valuations = player_asset_values_by_id(canonical)
-    value = valuations.get(player["id"], fallback_asset_valuation(player))
+    value = valuation_or_fallback(valuations, player["id"], player)
     teams = []
     for team in canonical["teams"]:
         if team["id"] == player["team_id"]:
@@ -4693,7 +4702,7 @@ def package_value_components(
     for asset in assets:
         if asset["kind"] == "player":
             player = player_by_id(canonical, asset["id"])
-            value = values.get(asset["id"], fallback_asset_valuation(player))
+            value = valuation_or_fallback(values, asset["id"], player)
             multiplier = multipliers.get(asset["id"], 1.0)
             player_value = market_trade_target_value(player, value)
             adjusted = (player_value + team_fit_for_player(player, value, state, canonical, include_spatial=False)) * multiplier
@@ -4780,16 +4789,17 @@ def destination_role_multipliers(
     if not incoming_players:
         return {}
     incoming_ids = {player['id'] for player in incoming_players}
+    moving_ids = outgoing_ids | incoming_ids
     roster_values = []
     for player in canonical.get("players", []):
-        if player.get("team_id") != perspective_team_id or player.get("id") in outgoing_ids | incoming_ids:
+        if player.get("team_id") != perspective_team_id or player.get("id") in moving_ids:
             continue
-        valuation = values.get(player["id"], fallback_asset_valuation(player))
+        valuation = valuation_or_fallback(values, player["id"], player)
         quality = valuation.get('on_court_value')
         roster_values.append((player["id"], float(quality if quality is not None else valuation.get("player_value") or 0.0)))
     incoming_values = []
     for player in incoming_players:
-        valuation = values.get(player["id"], fallback_asset_valuation(player))
+        valuation = valuation_or_fallback(values, player["id"], player)
         # Salary bargains and future potential affect price, not who can play
         # the strongest current minutes. Owned package members appear once.
         quality = valuation.get('on_court_value')
@@ -4933,7 +4943,7 @@ def contextual_acceptance_threshold(
             player = player_by_id(canonical, asset.get("id"))
             if not player:
                 continue
-            value = values.get(player["id"], fallback_asset_valuation(player))
+            value = valuation_or_fallback(values, player["id"], player)
             best = max(best, float(value.get("player_value") or 0.0))
         return best
 
