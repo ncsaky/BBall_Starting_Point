@@ -26,7 +26,7 @@
    "top_60": 6
   }
  },
- "coaches_available": false,
+ "coaches_available": true,
  "college_norms": {
   "composite_sd": {
    "athleticism": 0.65165,
@@ -1995,7 +1995,7 @@
    "class_rank": 1,
    "class_year_at_draft": "Fr",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Kevin Young",
    "college_team": "BYU",
    "conference": "B12",
    "draft_chance_by_year": {
@@ -2145,7 +2145,7 @@
    "class_rank": 2,
    "class_year_at_draft": "Fr",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Bill Self",
    "college_team": "Kansas",
    "conference": "B12",
    "draft_chance_by_year": {
@@ -2295,7 +2295,7 @@
    "class_rank": 3,
    "class_year_at_draft": "Fr",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Jon Scheyer",
    "college_team": "Duke",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -2445,7 +2445,7 @@
    "class_rank": 4,
    "class_year_at_draft": "Fr",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Tommy Lloyd",
    "college_team": "Arizona",
    "conference": "B12",
    "draft_chance_by_year": {
@@ -2595,7 +2595,7 @@
    "class_rank": 5,
    "class_year_at_draft": "Fr",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Brad Underwood",
    "college_team": "Illinois",
    "conference": "B10",
    "draft_chance_by_year": {
@@ -2745,7 +2745,7 @@
    "class_rank": 6,
    "class_year_at_draft": "Fr",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Pat Kelsey",
    "college_team": "Louisville",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -2895,7 +2895,7 @@
    "class_rank": 7,
    "class_year_at_draft": "Fr",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Dennis Gates",
    "college_team": "Missouri",
    "conference": "SEC",
    "draft_chance_by_year": {
@@ -3045,7 +3045,7 @@
    "class_rank": 8,
    "class_year_at_draft": "Fr",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Dennis Gates",
    "college_team": "Missouri",
    "conference": "SEC",
    "draft_chance_by_year": {
@@ -3195,7 +3195,7 @@
    "class_rank": 9,
    "class_year_at_draft": "Fr",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Jake Diebler",
    "college_team": "Ohio St.",
    "conference": "B10",
    "draft_chance_by_year": {
@@ -3345,7 +3345,7 @@
    "class_rank": 10,
    "class_year_at_draft": "Jr",
    "class_year_now": "Jr",
-   "coach": null,
+   "coach": "Jon Scheyer",
    "college_team": "Duke",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -3549,7 +3549,7 @@
    "class_rank": 11,
    "class_year_at_draft": "Fr",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Eric Musselman",
    "college_team": "USC",
    "conference": "B10",
    "draft_chance_by_year": {
@@ -3699,7 +3699,7 @@
    "class_rank": 12,
    "class_year_at_draft": "Fr",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Buzz Williams",
    "college_team": "Maryland",
    "conference": "B10",
    "draft_chance_by_year": {
@@ -3849,7 +3849,7 @@
    "class_rank": 13,
    "class_year_at_draft": "So",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Rick Pitino",
    "college_team": "St. John's",
    "conference": "BE",
    "draft_chance_by_year": {
@@ -4026,7 +4026,7 @@
    "class_rank": 14,
    "class_year_at_draft": "Fr",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Scott Drew",
    "college_team": "Baylor",
    "conference": "B12",
    "draft_chance_by_year": {
@@ -4176,7 +4176,7 @@
    "class_rank": 15,
    "class_year_at_draft": "So",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Ryan Odom",
    "college_team": "Virginia",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -4353,7 +4353,7 @@
    "class_rank": 16,
    "class_year_at_draft": "So",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Rick Barnes",
    "college_team": "Tennessee",
    "conference": "SEC",
    "draft_chance_by_year": {
@@ -4530,7 +4530,7 @@
    "class_rank": 17,
    "class_year_at_draft": "So",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Mark Pope",
    "college_team": "Kentucky",
    "conference": "SEC",
    "draft_chance_by_year": {
@@ -4707,7 +4707,7 @@
    "class_rank": 18,
    "class_year_at_draft": "Jr",
    "class_year_now": "Jr",
-   "coach": null,
+   "coach": "Pat Kelsey",
    "college_team": "Louisville",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -4911,7 +4911,7 @@
    "class_rank": 19,
    "class_year_at_draft": "Sr",
    "class_year_now": "Sr",
-   "coach": null,
+   "coach": "Tom Izzo",
    "college_team": "Michigan St.",
    "conference": "B10",
    "draft_chance_by_year": {
@@ -5142,7 +5142,7 @@
    "class_rank": 20,
    "class_year_at_draft": "Fr",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Kevin Willard",
    "college_team": "Villanova",
    "conference": "BE",
    "draft_chance_by_year": {
@@ -5292,7 +5292,7 @@
    "class_rank": 21,
    "class_year_at_draft": "Jr",
    "class_year_now": "Jr",
-   "coach": null,
+   "coach": "Mark Byington",
    "college_team": "Vanderbilt",
    "conference": "SEC",
    "draft_chance_by_year": {
@@ -5496,7 +5496,7 @@
    "class_rank": 22,
    "class_year_at_draft": "Fr",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Eric Musselman",
    "college_team": "USC",
    "conference": "B10",
    "draft_chance_by_year": {
@@ -5646,7 +5646,7 @@
    "class_rank": 23,
    "class_year_at_draft": "So",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Ryan Odom",
    "college_team": "Virginia",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -5823,7 +5823,7 @@
    "class_rank": 24,
    "class_year_at_draft": "Jr",
    "class_year_now": "Jr",
-   "coach": null,
+   "coach": "Fred Hoiberg",
    "college_team": "Nebraska",
    "conference": "B10",
    "draft_chance_by_year": {
@@ -6054,7 +6054,7 @@
    "class_rank": 25,
    "class_year_at_draft": "Sr",
    "class_year_now": "Sr",
-   "coach": null,
+   "coach": "Todd Golden",
    "college_team": "Florida",
    "conference": "SEC",
    "draft_chance_by_year": {
@@ -6285,7 +6285,7 @@
    "class_rank": 26,
    "class_year_at_draft": "Fr",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "John Calipari",
    "college_team": "Arkansas",
    "conference": "SEC",
    "draft_chance_by_year": {
@@ -6435,7 +6435,7 @@
    "class_rank": 27,
    "class_year_at_draft": "Sr",
    "class_year_now": "Sr",
-   "coach": null,
+   "coach": "Tommy Lloyd",
    "college_team": "Arizona",
    "conference": "B12",
    "draft_chance_by_year": {
@@ -6666,7 +6666,7 @@
    "class_rank": 28,
    "class_year_at_draft": "Fr",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Jai Lucas",
    "college_team": "Miami FL",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -6816,7 +6816,7 @@
    "class_rank": 29,
    "class_year_at_draft": "So",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Tommy Lloyd",
    "college_team": "Arizona",
    "conference": "B12",
    "draft_chance_by_year": {
@@ -6993,7 +6993,7 @@
    "class_rank": 30,
    "class_year_at_draft": "So",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Mark Few",
    "college_team": "Gonzaga",
    "conference": "P12",
    "draft_chance_by_year": {
@@ -7170,7 +7170,7 @@
    "class_rank": 31,
    "class_year_at_draft": "Jr",
    "class_year_now": "Jr",
-   "coach": null,
+   "coach": "Matt Painter",
    "college_team": "Purdue",
    "conference": "B10",
    "draft_chance_by_year": {
@@ -7374,7 +7374,7 @@
    "class_rank": 32,
    "class_year_at_draft": "So",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Jai Lucas",
    "college_team": "Miami FL",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -7551,7 +7551,7 @@
    "class_rank": 33,
    "class_year_at_draft": "So",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Sean Miller",
    "college_team": "Texas",
    "conference": "SEC",
    "draft_chance_by_year": {
@@ -7728,7 +7728,7 @@
    "class_rank": 34,
    "class_year_at_draft": "Jr",
    "class_year_now": "Jr",
-   "coach": null,
+   "coach": "Darian DeVries",
    "college_team": "Indiana",
    "conference": "B10",
    "draft_chance_by_year": {
@@ -7932,7 +7932,7 @@
    "class_rank": 35,
    "class_year_at_draft": "So",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Dan Hurley",
    "college_team": "Connecticut",
    "conference": "BE",
    "draft_chance_by_year": {
@@ -8109,7 +8109,7 @@
    "class_rank": 36,
    "class_year_at_draft": "Sr",
    "class_year_now": "Sr",
-   "coach": null,
+   "coach": "Johnny Dawkins",
    "college_team": "UCF",
    "conference": "B12",
    "draft_chance_by_year": {
@@ -8313,7 +8313,7 @@
    "class_rank": 37,
    "class_year_at_draft": "Sr",
    "class_year_now": "Sr",
-   "coach": null,
+   "coach": "Dennis Gates",
    "college_team": "Missouri",
    "conference": "SEC",
    "draft_chance_by_year": {
@@ -8544,7 +8544,7 @@
    "class_rank": 38,
    "class_year_at_draft": "Sr",
    "class_year_now": "Sr",
-   "coach": null,
+   "coach": "Todd Golden",
    "college_team": "Florida",
    "conference": "SEC",
    "draft_chance_by_year": {
@@ -8775,7 +8775,7 @@
    "class_rank": 39,
    "class_year_at_draft": "Fr",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Kelvin Sampson",
    "college_team": "Houston",
    "conference": "B12",
    "draft_chance_by_year": {
@@ -8925,7 +8925,7 @@
    "class_rank": 40,
    "class_year_at_draft": "So",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Bill Self",
    "college_team": "Kansas",
    "conference": "B12",
    "draft_chance_by_year": {
@@ -9102,7 +9102,7 @@
    "class_rank": 41,
    "class_year_at_draft": "Sr",
    "class_year_now": "Sr",
-   "coach": null,
+   "coach": "Mark Pope",
    "college_team": "Kentucky",
    "conference": "SEC",
    "draft_chance_by_year": {
@@ -9333,7 +9333,7 @@
    "class_rank": 42,
    "class_year_at_draft": "So",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Mark Few",
    "college_team": "Gonzaga",
    "conference": "P12",
    "draft_chance_by_year": {
@@ -9510,7 +9510,7 @@
    "class_rank": 43,
    "class_year_at_draft": "Sr",
    "class_year_now": "Sr",
-   "coach": null,
+   "coach": "Nate Oats",
    "college_team": "Alabama",
    "conference": "SEC",
    "draft_chance_by_year": {
@@ -9741,7 +9741,7 @@
    "class_rank": 44,
    "class_year_at_draft": "Jr",
    "class_year_now": "Jr",
-   "coach": null,
+   "coach": "Jai Lucas",
    "college_team": "Miami FL",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -9972,7 +9972,7 @@
    "class_rank": 45,
    "class_year_at_draft": "So",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Nate Oats",
    "college_team": "Alabama",
    "conference": "SEC",
    "draft_chance_by_year": {
@@ -10149,7 +10149,7 @@
    "class_rank": 46,
    "class_year_at_draft": "Sr",
    "class_year_now": "Sr",
-   "coach": null,
+   "coach": "Jon Scheyer",
    "college_team": "Duke",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -10353,7 +10353,7 @@
    "class_rank": 47,
    "class_year_at_draft": "So",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Jon Scheyer",
    "college_team": "Duke",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -10530,7 +10530,7 @@
    "class_rank": 1,
    "class_year_at_draft": "So",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Sean Miller",
    "college_team": "Texas",
    "conference": "SEC",
    "draft_chance_by_year": {
@@ -10680,7 +10680,7 @@
    "class_rank": 2,
    "class_year_at_draft": "So",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Jon Scheyer",
    "college_team": "Duke",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -10830,7 +10830,7 @@
    "class_rank": 3,
    "class_year_at_draft": "So",
    "class_year_now": "Fr",
-   "coach": null,
+   "coach": "Mick Cronin",
    "college_team": "UCLA",
    "conference": "B10",
    "draft_chance_by_year": {
@@ -10980,7 +10980,7 @@
    "class_rank": 4,
    "class_year_at_draft": "Sr",
    "class_year_now": "Jr",
-   "coach": null,
+   "coach": "Sean Miller",
    "college_team": "Texas",
    "conference": "SEC",
    "draft_chance_by_year": {
@@ -11184,7 +11184,7 @@
    "class_rank": 5,
    "class_year_at_draft": "Sr",
    "class_year_now": "Jr",
-   "coach": null,
+   "coach": "Mike Boynton",
    "college_team": "Michigan",
    "conference": "B10",
    "draft_chance_by_year": {
@@ -11388,7 +11388,7 @@
    "class_rank": 6,
    "class_year_at_draft": "Sr",
    "class_year_now": "Jr",
-   "coach": null,
+   "coach": "Jai Lucas",
    "college_team": "Miami FL",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -11592,7 +11592,7 @@
    "class_rank": 7,
    "class_year_at_draft": "Sr",
    "class_year_now": "Jr",
-   "coach": null,
+   "coach": "Jai Lucas",
    "college_team": "Miami FL",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -11796,7 +11796,7 @@
    "class_rank": 8,
    "class_year_at_draft": "Sr",
    "class_year_now": "Jr",
-   "coach": null,
+   "coach": "T.J. Otzelberger",
    "college_team": "Iowa St.",
    "conference": "B12",
    "draft_chance_by_year": {
@@ -12000,7 +12000,7 @@
    "class_rank": 9,
    "class_year_at_draft": "Sr",
    "class_year_now": "Jr",
-   "coach": null,
+   "coach": "Justin Gainey",
    "college_team": "N.C. State",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -12204,7 +12204,7 @@
    "class_rank": 10,
    "class_year_at_draft": "Sr",
    "class_year_now": "Jr",
-   "coach": null,
+   "coach": "Jai Lucas",
    "college_team": "Miami FL",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -12408,7 +12408,7 @@
    "class_rank": 11,
    "class_year_at_draft": "Sr",
    "class_year_now": "Jr",
-   "coach": null,
+   "coach": "Kyle Smith",
    "college_team": "Stanford",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -12585,7 +12585,7 @@
    "class_rank": 1,
    "class_year_at_draft": "Sr",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Dan Hurley",
    "college_team": "Connecticut",
    "conference": "BE",
    "draft_chance_by_year": {
@@ -12762,7 +12762,7 @@
    "class_rank": 2,
    "class_year_at_draft": "Sr",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Tom Izzo",
    "college_team": "Michigan St.",
    "conference": "B10",
    "draft_chance_by_year": {
@@ -12939,7 +12939,7 @@
    "class_rank": 3,
    "class_year_at_draft": "Sr",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Ed Cooley",
    "college_team": "Georgetown",
    "conference": "BE",
    "draft_chance_by_year": {
@@ -13116,7 +13116,7 @@
    "class_rank": 4,
    "class_year_at_draft": "Sr",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Ryan Odom",
    "college_team": "Virginia",
    "conference": "ACC",
    "draft_chance_by_year": {
@@ -13293,7 +13293,7 @@
    "class_rank": 5,
    "class_year_at_draft": "Sr",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Dan Hurley",
    "college_team": "Connecticut",
    "conference": "BE",
    "draft_chance_by_year": {
@@ -13470,7 +13470,7 @@
    "class_rank": 6,
    "class_year_at_draft": "Sr",
    "class_year_now": "So",
-   "coach": null,
+   "coach": "Jake Diebler",
    "college_team": "Ohio St.",
    "conference": "B10",
    "draft_chance_by_year": {
