@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import pickle
 import random
@@ -4724,7 +4725,7 @@ def team_identity_report(canonical: dict[str, Any], save: dict[str, Any]) -> dic
             "rebounding": round(clamp(weighted("oreb") * 0.58 + weighted("rim_deterrence") * 0.16 + athleticism * 0.26, 1, 99), 1),
             "athleticism": round(clamp(athleticism, 1, 99), 1),
             "defensive_disruption": round(clamp(disruption, 1, 99), 1),
-            "rim_protection": round(clamp(weighted("rim_deterrence"), 1, 99), 1),
+            "rim_protection": round(max(1.0, weighted("rim_deterrence")), 1),
             "depth": round(clamp(depth, 1, 99), 1),
             "age_timeline": round(timeline, 1),
             "average_age": round(weighted_age, 1),
@@ -7121,6 +7122,10 @@ PRESENTATION_RATING_ANCHORS = (
 RATING_SCALE = 'model_skill_1_99'
 
 
+DISPLAY_KNEE = 99.0
+DISPLAY_SCALE = 3.0
+
+
 def presentation_rating_value(value: float | int | None) -> float:
     """Display the model grade directly, with common anchors for every rating.
 
@@ -7129,7 +7134,13 @@ def presentation_rating_value(value: float | int | None) -> float:
     is not 80% success or identical impact in every role. Conversion is
     idempotent, and never changes the abilities used by simulation or pricing.
     """
-    return round(clamp(float(value or 0.0), 1.0, 99.0), 1)
+    value = float(value or 0.0)
+    if value <= DISPLAY_KNEE:
+        return round(max(1.0, value), 1)
+    # Rescale, don't clip (2026-11-18): a few engine values now exceed 99 (elite rim protection, the uncensored top of
+    # clipped legacy scales). Above 99 the display approaches 100 smoothly and strictly increases, so elite players
+    # stay distinguishable on the card; everything at or below 99 is shown unchanged (idempotent there).
+    return round(DISPLAY_KNEE + (100.0 - DISPLAY_KNEE) * (1.0 - math.exp(-(value - DISPLAY_KNEE) / DISPLAY_SCALE)), 1)
 
 
 def player_display_attribute_summary(canonical: dict[str, Any], player_id: str) -> dict[str, float]:
@@ -7363,23 +7374,23 @@ def _uncached_player_attribute_summary(canonical: dict[str, Any], player_id: str
         "shooting": round(clamp(shooting, 1, 99), 1),
         "spacing": round(clamp(spacing, 1, 99), 1),
         "creation": round(clamp(creation, 1, 99), 1),
-        "defense": round(clamp(defense, 1, 99), 1),
+        "defense": round(max(1.0, defense), 1),
         "athleticism": round(clamp(athleticism, 1, 99), 1),
         "iq": round(clamp(iq, 1, 99), 1),
         "release": round(clamp(traits.get("release_speed", 50.0), 1, 99), 1),
-        "range": round(clamp(traits.get("shooting_range", 50.0), 1, 99), 1),
+        "range": round(max(1.0, traits.get("shooting_range", 50.0)), 1),
         "versatility": round(clamp(traits.get("shot_versatility", 50.0), 1, 99), 1),
         "handle": round(clamp(traits.get("handle_pressure", 50.0), 1, 99), 1),
         "rim_pressure": round(clamp(traits.get("rim_pressure", 50.0), 1, 99), 1),
         "passing": round(clamp(traits.get("passing_reads", 50.0), 1, 99), 1),
         "stamina": round(clamp(traits.get("stamina_cardio", 50.0), 1, 99), 1),
-        "rebounding": round(clamp(rebounding, 1, 99), 1),
+        "rebounding": round(max(1.0, rebounding), 1),
         "def_effort": round(clamp(traits.get("defensive_effort", 50.0), 1, 99), 1),
         "screen_nav": round(clamp(traits.get("screen_navigation", 50.0), 1, 99), 1),
         "steal": round(clamp(steal, 1, 99), 1),
-        "block": round(clamp(block, 1, 99), 1),
-        "rim_deterrence": round(clamp(traits.get("rim_deterrence", 50.0), 1, 99), 1),
-        "oreb": round(clamp(traits.get("offensive_rebounding", 50.0), 1, 99), 1),
+        "block": round(max(1.0, block), 1),
+        "rim_deterrence": round(max(1.0, traits.get("rim_deterrence", 50.0)), 1),
+        "oreb": round(max(1.0, traits.get("offensive_rebounding", 50.0)), 1),
         "lateral_agility": round(clamp(traits.get("foot_speed_lateral_agility", 50.0), 1, 99), 1),
         "scheme_iq": round(clamp(traits.get("scheme_iq", 50.0), 1, 99), 1),
         "portability": round(clamp(traits.get("portability", 50.0), 1, 99), 1),

@@ -49,6 +49,18 @@ class DefensiveAlignmentTests(unittest.TestCase):
         self.assertEqual(defense.legacy_rim_response(105),99)
         self.assertLess(defense.legacy_rim_response(99.01)-defense.legacy_rim_response(96.82),1)
 
+    def test_card_rescales_values_above_99_instead_of_clipping(self):
+        shown=[]
+        for rim in (98.0,101.0,104.0,106.5):
+            c,p,_=fixture(rim=rim,height=84,position='C')
+            attrs=save.player_attribute_summary(c,p['id'])
+            self.assertEqual(attrs['rim_deterrence'],rim)          # the summary keeps the engine value
+            shown.append(save.player_display_attribute_summary(c,p['id'])['rim_deterrence'])
+        self.assertEqual(shown[0],98.0)                            # at or below 99: shown unchanged
+        self.assertTrue(all(b>a for a,b in zip(shown,shown[1:])),shown)
+        self.assertTrue(all(v<100 for v in shown),shown)
+        self.assertEqual(save.presentation_rating_value(99),99.0)
+
     def test_block_rate_rises_with_rim_and_with_choosing_to_jump(self):
         self.assertLess(defense.block_rate_per36(60),defense.block_rate_per36(90))
         self.assertLess(defense.block_rate_per36(90),defense.block_rate_per36(115))

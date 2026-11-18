@@ -93,7 +93,7 @@ def defensive_components(get: Callable[[str], float]) -> DefensiveComponents:
                 + get('foot_speed_lateral_agility')*.36
                 + get('screen_navigation')*.22)
     rim = rim_response(get('rim_deterrence'))
-    return DefensiveComponents(activity, rim, clamp(activity*.6 + rim*.4, 1, 99))
+    return DefensiveComponents(activity, rim, max(1.0, activity*.6 + rim*.4))   # no top clip (rescale at display)
 
 
 def zone_defense(get: Callable[[str], float]) -> dict[str, tuple[float, float]]:
