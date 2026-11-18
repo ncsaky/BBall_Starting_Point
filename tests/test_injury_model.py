@@ -65,5 +65,24 @@ class InjuryModelTests(unittest.TestCase):
         self.assertTrue(all(v < 0 for v in save["development_events"][0]["trait_deltas"].values()))
 
 
+class ReturnRampTests(unittest.TestCase):
+    def test_ramp_follows_evidence_and_the_coach(self):
+        from nba_gm_data.injury_model import return_minutes_multiplier as ramp
+        self.assertEqual(ramp(0, 0), 1.0)
+        self.assertAlmostEqual(ramp(8, 0), 1 - 0.162, places=3)           # 6-10 games missed: -16% first game back
+        self.assertGreater(ramp(8, 4), ramp(8, 0))                         # eases back
+        self.assertEqual(ramp(8, 8), 1.0)                                  # back to normal after 8 games
+        self.assertGreater(ramp(25, 0, rotation_star=1.0), ramp(25, 0))    # a poor rotation manager rushes players back
+        self.assertLess(ramp(25, 0, rotation_star=5.0), ramp(25, 0))
+
+    def test_sim_pool_applies_the_ramp_and_keeps_240_minutes(self):
+        from nba_gm_data.sim import return_ramped_player_pool
+        pool = [{"player": {"id": f"p{i}"}, "minutes": 24.0} for i in range(10)]
+        pool[0] = pool[0] | {"health_return_absence": 15, "health_games_since_return": 0}
+        out = return_ramped_player_pool(pool, None)
+        self.assertLess(out[0]["minutes"], out[1]["minutes"])
+        self.assertAlmostEqual(sum(item["minutes"] for item in out), 240.0, places=3)
+
+
 if __name__ == "__main__":
     unittest.main()

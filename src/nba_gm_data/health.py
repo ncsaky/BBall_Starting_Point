@@ -5,6 +5,7 @@ import json
 import random
 from copy import deepcopy
 from datetime import date, datetime, timedelta
+from functools import lru_cache
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -44,6 +45,21 @@ DEVELOPMENT_TRAITS = [
     "portability",
     "playoff_translation",
 ]
+OFFENSIVE_AGING_TRAITS = frozenset({
+    "release_speed", "shooting_range", "shot_versatility", "handle_pressure",
+    "rim_pressure", "offensive_rebounding",
+})
+EXPERIENCE_TRAITS = frozenset({"scheme_iq", "passing_reads", "portability"})
+DEVELOPMENT_SEASON_VOLATILITY = 0.60
+SEASON_FORM_TRAIT_WEIGHTS = {
+    "foot_speed_lateral_agility": 0.35,
+    "passing_reads": 0.55,
+    "portability": 0.55,
+    "rim_pressure": 0.70,
+    "scheme_iq": 0.55,
+    "shot_versatility": 0.75,
+    "stamina_cardio": 0.0,
+}
 
 
 def default_injury_model_config() -> dict[str, Any]:
@@ -337,6 +353,8 @@ def simulate_health(
     players_by_team = (rotation_players_by_team(canonical, im.MIN_MINUTES_FOR_EXPOSURE, 14) if model
                        else rotation_players_by_team(canonical))
     history_cache: dict[str, list] = {}
+    rotation_star = {slot["team_id"]: float((slot.get("skill_traits") or {}).get("rotation_management", 60.0)) / 20.0
+                     for slot in canonical.get("gameplay_staff_slots", []) if slot.get("slot") == "head_coach"}
     profiles = {profile["player_id"]: profile for profile in canonical.get("player_health_profiles", [])}
     states = {state["player_id"]: dict(state) for state in canonical.get("player_health_states", [])}
     selected = {p["id"] for players in players_by_team.values() for p in players}
@@ -375,7 +393,15 @@ def simulate_health(
                 advance_state_for_date(state, game_date, rest_days, config, staff)
                 if state["availability_status"] != "active":
                     state["games_missed"] = int(state.get("games_missed") or 0) + 1
+                    state["current_absence_games"] = int(state.get("current_absence_games") or 0) + 1
                     continue
+                if int(state.get("return_absence_games") or 0) > 0:
+                    # Games played since coming back (drives the coach's return-to-minutes ramp in the game sim).
+                    from .injury_model import return_ramp_length
+                    state["games_since_return"] = int(state.get("games_since_return") or 0) + 1
+                    if state["games_since_return"] >= return_ramp_length(int(state["return_absence_games"])):
+                        state.pop("return_absence_games", None)
+                        state.pop("games_since_return", None)
                 minutes = float(player.get("minutes_projection") or 0)
                 if minutes < (im.MIN_MINUTES_FOR_EXPOSURE if model else 8):
                     continue
@@ -383,8 +409,11 @@ def simulate_health(
                 add_game_fatigue(state, player, minutes, stamina, rest_days, config, staff)
                 rng = random.Random(f"{seed}:{game['externalGameId']}:{player['id']}:injury")
                 if model:
+                    # A player on a return-to-minutes ramp carries a lighter workload, so a careful coach lowers re-injury risk.
+                    ramp = im.return_minutes_multiplier(int(state.get("return_absence_games") or 0),
+                                                        int(state.get("games_since_return") or 0), rotation_star.get(team["id"], 3.0))
                     event = v2_injury_draw(root, model, canonical, player, traits, state, profiles.get(player["id"], {}),
-                                           minutes, game_date, staff, seed, rng, history_cache, events)
+                                           minutes * ramp, game_date, staff, seed, rng, history_cache, events)
                     if event:
                         events.append(event)
                         severity_counts[event["severity"]] = severity_counts.get(event["severity"], 0) + 1
@@ -528,7 +557,9 @@ def sandbox_health_adjusted_pool(canonical: dict[str, Any], game_date: str | Non
         status = "active" if has_event_history else (state or {}).get("availability_status", "active")
         fatigue = float((state or {}).get("fatigue") or 0.0)
         rust = float((state or {}).get("rust") or 0.0) if state else 0.0
-        adjusted.append({**item, "health_fatigue": round(fatigue, 2), "health_rust": round(rust, 2), "health_status": status})
+        adjusted.append({**item, "health_fatigue": round(fatigue, 2), "health_rust": round(rust, 2), "health_status": status,
+                         "health_return_absence": int((state or {}).get("return_absence_games") or 0),
+                         "health_games_since_return": int((state or {}).get("games_since_return") or 0)})
     return adjusted
 
 
@@ -721,6 +752,10 @@ def advance_state_for_date(state: dict[str, Any], game_date: date, rest_days: in
         state["return_date"] = None
         for key in ("current_injury_severity", "current_injury_part", "current_injury_label"):
             state.pop(key, None)
+        absence = int(state.pop("current_absence_games", 0) or 0)
+        if absence > 0:
+            state["return_absence_games"] = absence
+            state["games_since_return"] = 0
     if state.get("availability_status") == "active" and float(state.get("rust") or 0.0) > 0:
         state["rust"] = round(max(0.0, float(state.get("rust") or 0.0) - float(tuning.get("rust_decay_per_game", 7.5)) / max(float(staff.get("recovery_days_multiplier", 1.0)), 0.2)), 2)
 
@@ -805,6 +840,12 @@ def generated_injury_event(
     )
 
 
+@lru_cache(maxsize=8192)
+def _development_season_form(seed: int, player_id: str, season: int) -> float:
+    rng = random.Random(f"{seed}:{player_id}:{season}:development_season")
+    return clamp(rng.gauss(0.0, 1.0), -2.5, 2.5)
+
+
 def monthly_trait_delta(
     player: dict[str, Any],
     trait_key: str,
@@ -819,10 +860,8 @@ def monthly_trait_delta(
     trait_context: dict[str, Any] | None = None,
     expected: bool = False,
 ) -> float:
-    """One month of change for one hidden rating. expected=True leaves out the month's random noise (used for
-    projections such as the decline watch); everything else is identical."""
+    """Change in one hidden rating over a month. Expected changes omit season form and monthly noise."""
     age = 27.0 if age is None else age
-    rng = random.Random(f"{seed}:{month}:{player['id']}:{trait_key}:development")
     age_factor = development_age_factor(age, player=player, seed=seed)
     role_factor = clamp(minutes / 24.0, 0.18, 1.18)
     if player.get("rotation_priority") == "development_priority":
@@ -851,7 +890,12 @@ def monthly_trait_delta(
         age_factor += .75 * learning * window
         if learning:
             role_factor = max(role_factor, min(.55, .18 + .5 * learning + .4 * raw_learning))
-    growth = 0.20 * age_factor * role_factor * cap_room * float(staff.get("development_multiplier", 1.0)) * float(staff.get("patience_multiplier", 1.0)) * focus_multiplier * upside_multiplier
+    growth_rate = 0.20
+    # Capacity-rated prospects already have a separate learning runway below.
+    if ceiling is None:
+        youth_boost = 0.24 if trait_key in OFFENSIVE_AGING_TRAITS else 0.14
+        growth_rate += youth_boost * clamp((24.0 - age) / 2.0, 0.0, 1.0)
+    growth = growth_rate * age_factor * role_factor * cap_room * float(staff.get("development_multiplier", 1.0)) * float(staff.get("patience_multiplier", 1.0)) * focus_multiplier * upside_multiplier
     if ceiling is not None:
         entry = float(trait_context["entry_value"])
         growth *= clamp((ceiling - current) / max(2, (ceiling - entry) * .30), 0, 1)
@@ -871,14 +915,38 @@ def monthly_trait_delta(
         growth -= min(max(0.0, growth) * 0.88, health_penalty)
     else:
         growth -= health_penalty
-    if age >= 31 and trait_key in PHYSICAL_TRAITS:
-        growth -= min(0.16, 0.025 + (age - 30.0) * 0.025)
-    if age >= 32 and trait_key not in {"scheme_iq", "passing_reads", "portability"}:
-        growth -= min(0.09, 0.012 + (age - 31.0) * 0.013)
-    noise = 0.0 if expected else rng.gauss(0, 0.012 + 0.012 * focus_multiplier)
+    if trait_key in OFFENSIVE_AGING_TRAITS:
+        growth -= min(0.45, 0.033 * max(0.0, age - 25.5) + 0.030 * max(0.0, age - 32.0))
+    elif trait_key in PHYSICAL_TRAITS:
+        growth -= min(0.36, 0.021 * max(0.0, age - 28.5) + 0.028 * max(0.0, age - 32.0))
+    elif trait_key not in EXPERIENCE_TRAITS:
+        growth -= min(0.24, 0.019 * max(0.0, age - 29.5) + 0.022 * max(0.0, age - 32.0))
+    noise = 0.0
+    season_change = 0.0
+    if not expected:
+        rng = random.Random(f"{seed}:{month}:{player['id']}:{trait_key}:development")
+        noise_scale = 0.012 if ceiling is not None else 0.008
+        noise = rng.gauss(0.0, noise_scale * (1.0 + focus_multiplier))
+        season = int(month[:4]) - (int(month[5:7]) < 7)
+        form = _development_season_form(seed, player["id"], season)
+        last_form = _development_season_form(seed, player["id"], season - 1)
+        earlier_form = _development_season_form(seed, player["id"], season - 2)
+        # Fade past form over two years. The three weights sum to zero, so
+        # the draws themselves do not accumulate without bound.
+        season_change = DEVELOPMENT_SEASON_VOLATILITY * (form - 0.65 * last_form - 0.35 * earlier_form)
+        # Role and form move game execution more than conditioning or reads.
+        season_change *= SEASON_FORM_TRAIT_WEIGHTS.get(trait_key, 1.0)
+        if ceiling is not None:
+            # Keep the player's own learning runway dominant for drafted prospects.
+            season_change *= 0.16 * clamp((minutes - 6.0) / 14.0, 0.0, 1.0)
+        elif player.get("rotation_priority") in {"fringe", "rookie_depth", "deep_rotation"}:
+            season_change *= 0.45
     growth_cap = .36 + .45 * raw_learning if upside_multiplier > 1.0 else .24
-    delta = clamp(growth + noise, -0.12, growth_cap)
-    # Noise cannot trickle through a plateau; decline and actual health drag stay.
+    delta = min(growth + noise, growth_cap) + season_change
+    if delta <= 0.0:
+        return delta
+    # Slow gains near the top of the stored scale before the writer's bound.
+    delta *= clamp((100.0 - current) / 10.0, 0.0, 1.0)
     return min(delta, max(0.0, ceiling - current)) if ceiling is not None else delta
 
 
@@ -1026,6 +1094,19 @@ def should_generate_development_event(player: dict[str, Any], age: float | None,
 
 
 def coach_development_by_team(canonical: dict[str, Any]) -> dict[str, float]:
+    """Head coach's share of player development (stars, 3 = average).
+
+    In a save the coach is the save's own head coach (player relations: locker room + communication), so hiring and
+    firing matter (coaching overhaul 2026-11-18; this used to read a static real-name table). Save-less tools keep the
+    reputation table."""
+    heads = [slot for slot in canonical.get("gameplay_staff_slots", []) if slot.get("slot") == "head_coach" and slot.get("skill_traits")]
+    if heads:
+        out = {team["id"]: 3.0 for team in canonical.get("teams", [])}
+        for slot in heads:
+            skills, personality = slot.get("skill_traits") or {}, slot.get("personality_traits") or {}
+            relations = (float(skills.get("locker_room", 60.0)) + float(personality.get("communication", 60.0))) / 2.0
+            out[slot["team_id"]] = round(clamp(relations / 20.0, 0.0, 5.0), 3)
+        return out
     try:
         from .sim import coach_ratings
 
@@ -1154,6 +1235,9 @@ def state_from_dict(state: dict[str, Any], as_of_date: str) -> dict[str, Any]:
         # The current injury's diagnosis, body part and severity while the player is out (v2 model); empty when healthy.
         **({key: state.get(key) for key in ("current_injury_severity", "current_injury_part", "current_injury_label")
             if state.get(key)} if state.get("current_injury_id") else {}),
+        # Absence bookkeeping for the return-to-minutes ramp (kept only while it matters).
+        **{key: int(state[key]) for key in ("current_absence_games", "return_absence_games", "games_since_return")
+           if state.get(key) is not None and (key != "games_since_return" or state.get("return_absence_games"))},
     }
 
 

@@ -496,10 +496,17 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
             game_id,
             seed,
         )
+    if mode == "sandbox-sim":
+        home_players = return_ramped_player_pool(home_players, coach_by_team.get(home_team["id"]))
+        away_players = return_ramped_player_pool(away_players, coach_by_team.get(away_team["id"]))
     home_features = game_team_features(context, canonical, home_team, home_players, mode)
     away_features = game_team_features(context, canonical, away_team, away_players, mode)
     home_game_context = game_context_for_team(context, game, home_team)
     away_game_context = game_context_for_team(context, game, away_team)
+    if str(game.get("phase") or "") in ("playoffs", "playoff", "play_in"):
+        # Coaching game management and matchup scheming matter most in the postseason (head coach overhaul).
+        home_game_context = {**(home_game_context or {}), "is_playoff": True}
+        away_game_context = {**(away_game_context or {}), "is_playoff": True}
     home_line, home_team_line = simulate_team_line(
         canonical,
         home_team,
@@ -537,8 +544,11 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
     from .box_score import reconcile_box_score
     reconcile_box_score(home_line + away_line, [home_team_line, away_team_line])
     foul_rng = random.Random(f"{seed}:{game_id}:{mode}:personal-fouls")
-    for player_lines, team_line in [(home_line, home_team_line), (away_line, away_team_line)]:
-        assign_personal_fouls(player_lines, foul_rng)
+    for player_lines, team_line, team in [(home_line, home_team_line, home_team), (away_line, away_team_line, away_team)]:
+        # Defensive coordinator discipline: about 4% fewer fouls per discipline star above average (save staff only).
+        staff_rating = coach_by_team.get(team["id"])
+        discipline = float((staff_rating.ratings if staff_rating else {}).get("discipline", 3.0)) - 3.0
+        assign_personal_fouls(player_lines, foul_rng, rate_multiplier=clamp(1.0 - 0.04 * discipline, 0.9, 1.1))
         team_line["personal_fouls"] = sum(line["personal_fouls"] for line in player_lines)
     from .plus_minus import track_plus_minus
     defense = {}
@@ -600,6 +610,22 @@ def game_player_pool(context: dict[str, Any], game_id: str, team: dict[str, Any]
     return cache[cache_key]
 
 
+def return_ramped_player_pool(pool: list[dict[str, Any]], coach: CoachRating | None) -> list[dict[str, Any]]:
+    """Players back from an absence play fewer minutes for a few games (evidence ramp, head coach rotation management)."""
+    if not any(item.get("health_return_absence") for item in pool):
+        return pool
+    from .injury_model import return_minutes_multiplier
+    star = float((coach.ratings if coach else {}).get("rotation_management", 3.0))
+    adjusted = []
+    for item in pool:
+        absence = int(item.get("health_return_absence") or 0)
+        if absence:
+            factor = return_minutes_multiplier(absence, int(item.get("health_games_since_return") or 0), star)
+            item = {**item, "minutes": round(float(item.get("minutes") or 0.0) * factor, 3), "return_minutes_factor": factor}
+        adjusted.append(item)
+    return normalize_minutes(adjusted)
+
+
 def matchup_adjusted_player_pool(
     canonical: dict[str, Any],
     pool: list[dict[str, Any]],
@@ -612,10 +638,15 @@ def matchup_adjusted_player_pool(
     if not pool or not opponent_pool or coach is None:
         return pool
     ratings = coach.ratings
-    adjustment_skill = (
-        (float(ratings.get("matchup_adjustments", 3.0)) - 3.0) * 0.55
-        + (float(ratings.get("hands_on_control", 3.0)) - 3.0) * 0.22
-    )
+    if "rotation_management" in ratings:
+        # Save staff: the head coach's rotation management and the defensive coordinator's matchup scheming.
+        adjustment_skill = ((float(ratings["rotation_management"]) - 3.0) * 0.45
+                            + (float(ratings.get("matchup_scheming", 3.0)) - 3.0) * 0.32)
+    else:
+        adjustment_skill = (
+            (float(ratings.get("matchup_adjustments", 3.0)) - 3.0) * 0.55
+            + (float(ratings.get("hands_on_control", 3.0)) - 3.0) * 0.22
+        )
     if abs(adjustment_skill) < 0.05:
         return pool
 
@@ -1097,6 +1128,8 @@ def simulate_team_line(
         + (team_features["offense_possession_extension"] - 50) * 0.06
         + team_contribution(team_features)
         + coach_mod["offense"]
+        + ((float(coach_mod.get("playoff", 0.0)) - float(opp_coach_mod.get("playoff", 0.0))) * 0.5
+           if (rest_context or {}).get("is_playoff") else 0.0)
         + availability_mod["offense"]
         + home_mod
         + rest_mod["offense"]
@@ -1237,7 +1270,7 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
     return lines
 
 
-def assign_personal_fouls(lines: list[dict[str, Any]], rng: random.Random) -> None:
+def assign_personal_fouls(lines: list[dict[str, Any]], rng: random.Random, rate_multiplier: float = 1.0) -> None:
     """Record minute-weighted fouls using a separate game RNG after overtime.
 
     This box-score statistic does not consume the scoring RNG or alter rotations.
@@ -1246,7 +1279,7 @@ def assign_personal_fouls(lines: list[dict[str, Any]], rng: random.Random) -> No
         minutes = max(0.0, float(line.get("minutes") or 0.0))
         # Poisson event count, averaging 2.95 personal fouls per 36 minutes: the 2025-26 NBA rate (19.4 per
         # 100 possessions) at the sim's pace, allowing for the six-foul cap. Was 2.7 (17.8 per 100).
-        threshold = math.exp(-minutes * 2.95 / 36.0)
+        threshold = math.exp(-minutes * 2.95 * rate_multiplier / 36.0)
         probability = 1.0
         fouls = 0
         while fouls < 6 and probability > threshold:
@@ -2767,10 +2800,44 @@ def espn_team_id_map(canonical: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return {espn_id: teams_by_abbrev[abbrev] for espn_id, abbrev in espn_to_abbrev.items() if abbrev in teams_by_abbrev}
 
 
+# Save staff (coaching overhaul 2026-11-18): every head-coach and coordinator rating has its own effect.
+STAFF_EFFECT_KEYS = ("shot_quality", "spacing_design", "creator_usage", "coverage_design", "matchup_scheming", "discipline",
+                     "rotation_management", "player_relations", "game_management")
+
+
+def staff_coach_effect(ratings: dict[str, float]) -> dict[str, float]:
+    """Per-rating effects (stars, 3 = league average). Offense/defense in points per 100 possessions."""
+    def d(key: str) -> float:
+        return float(ratings.get(key, 3.0)) - 3.0
+    hands_on = (float(ratings.get("hands_on_control", 3.0)) - 3) * 0.3
+    return {
+        "offense_core": d("shot_quality") * 0.75,            # offensive coordinator: shot quality of the scheme
+        "spacing_term": d("spacing_design") * 0.55,          # offensive coordinator: pays off with shooters on the floor
+        "creator_term": d("creator_usage") * 0.55,           # offensive coordinator: pays off with a primary creator
+        "defense_core": d("coverage_design") * 0.8,          # defensive coordinator: coverage scheme
+        "matchup_term": d("matchup_scheming") * 0.5,         # defensive coordinator: hiding/targeting matchups
+        "discipline_term": d("discipline") * 0.35,           # defensive coordinator: fewer fouls and breakdowns
+        "relations": d("player_relations") * 0.25,           # head coach: player buy-in, both ends
+        "game_management": d("game_management") * 0.2,      # head coach: in-game adjustments, both ends
+        "playoff": clamp(d("game_management") * 0.8 + d("matchup_scheming") * 0.35, -2.5, 2.5),  # applied in playoff games
+        "rotation": d("rotation_management"),                # head coach: minutes decisions (matchup minutes, return ramp)
+        "discipline": d("discipline"),
+        "tempo": clamp((float(ratings.get("experimentation", 3.0)) - 3) * 0.4 - (float(ratings.get("hands_on_control", 3.0)) - 3) * 0.2, -2, 2),
+        "tempo_control": clamp(d("coverage_design") * 0.5 + (float(ratings.get("hands_on_control", 3.0)) - 3) * 0.25, -1.5, 1.5),
+        "hands_on": hands_on,
+        "staff_model": 1.0,
+    }
+
+
 def coach_effect(coach: CoachRating | None) -> dict[str, float]:
     if coach is None:
         return {"offense": 0.0, "defense": 0.0, "tempo": 0.0, "tempo_control": 0.0, "hands_on": 0.0, "playoff": 0.0}
     ratings = coach.ratings
+    if all(key in ratings for key in STAFF_EFFECT_KEYS):
+        effect = staff_coach_effect(ratings)
+        offense = effect["offense_core"] + effect["spacing_term"] + effect["creator_term"] + effect["relations"] + effect["game_management"]
+        defense = effect["defense_core"] + effect["matchup_term"] + effect["discipline_term"] + effect["relations"] + effect["game_management"]
+        return {**effect, "offense": clamp(offense, -3.0, 3.0), "defense": clamp(defense, -3.2, 3.2)}
     hands_on = (ratings["hands_on_control"] - 3) * 0.3
     offense = (ratings["offensive_structure"] - 3) * 0.85 + (ratings["matchup_adjustments"] - 3) * 0.45 + hands_on * 0.55
     defense = (ratings["defensive_structure"] - 3) * 0.9 + (ratings["matchup_adjustments"] - 3) * 0.5 + hands_on * 0.55
@@ -2782,6 +2849,15 @@ def coach_effect(coach: CoachRating | None) -> dict[str, float]:
 
 def scaled_coach_effect(coach: CoachRating | None, team_features: dict[str, float]) -> dict[str, float]:
     base = coach_effect(coach)
+    if base.get("staff_model"):
+        # Each coordinator rating pays off when the roster can use it; the scheme cores apply to every roster.
+        spacing_fit = clamp((team_features.get("spacing", 50) - 40) / 20.0, 0.25, 1.3)
+        creator_fit = clamp((team_features.get("primary_creator", 50) - 45) / 25.0, 0.25, 1.3)
+        offense = (base["offense_core"] + base["spacing_term"] * spacing_fit + base["creator_term"] * creator_fit
+                   + base["relations"] + base["game_management"])
+        defense = base["defense_core"] + base["matchup_term"] + base["discipline_term"] + base["relations"] + base["game_management"]
+        return {**base, "offense": round(clamp(offense, -3.0, 3.0), 4), "defense": round(clamp(defense, -3.2, 3.2), 4),
+                "offense_fit": round(spacing_fit, 4), "defense_fit": 1.0, "creator_fit": round(creator_fit, 4)}
     offense_fit = clamp(
         0.5
         + max(-10.0, team_features.get("offense_balance", 50) - 50) * 0.018

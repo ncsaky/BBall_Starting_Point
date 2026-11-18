@@ -204,3 +204,24 @@ def lasting_trait_deltas(event: Mapping[str, Any]) -> dict[str, float]:
             or int(event.get("expected_days_missed") or 0) >= 14):
         return {}
     return {trait: round(change * LASTING_TRAIT_POINTS_PER_RAPM, 3) for trait in LASTING_TRAITS}
+
+
+# Return-to-minutes ramp (Basketball Index short-term aftermath, 2025-26: first game back vs the five games before the
+# absence, by games missed). The head coach's rotation management decides how closely the evidence ramp is followed:
+# an average coach follows it, a poor one rushes players back, a strong one is slightly more careful.
+RETURN_FIRST_GAME_DROP = ((1, 0.009), (2, 0.072), (5, 0.099), (10, 0.162), (20, 0.212), (10_000, 0.299))
+
+
+def return_ramp_length(absence_games: int) -> int:
+    return 6 if absence_games <= 5 else 8 if absence_games <= 10 else 10
+
+
+def return_minutes_multiplier(absence_games: int, games_since_return: int, rotation_star: float = 3.0) -> float:
+    if absence_games <= 0:
+        return 1.0
+    length = return_ramp_length(absence_games)
+    if games_since_return >= length:
+        return 1.0
+    drop = next(value for limit, value in RETURN_FIRST_GAME_DROP if absence_games <= limit)
+    careful = max(0.5, min(1.3, 1.0 + 0.2 * (float(rotation_star) - 3.0)))
+    return round(1.0 - drop * careful * (1.0 - games_since_return / length), 4)

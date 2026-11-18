@@ -6228,6 +6228,16 @@ def save_coach_ratings(canonical: dict[str, Any], save: dict[str, Any]) -> dict[
             "playoff_preparation": star_rating([trait_value(head, "scheme_balance"), trait_value(defense, "matchup_adjustment"), trait_value(off, "shot_quality")]),
             "experimentation": star_rating([personality_value(head, "adaptability"), trait_value(off, "player_usage"), trait_value(scouting, "risk_modeling")]),
             "hands_on_control": star_rating([trait_value(head, "rotation_management"), personality_value(head, "ambition")]),
+            # Coaching overhaul (2026-11-18): one star per rating, each driving its own effect (sim.staff_coach_effect).
+            "shot_quality": star_rating([trait_value(off, "shot_quality")]),
+            "spacing_design": star_rating([trait_value(off, "spacing_design")]),
+            "creator_usage": star_rating([trait_value(off, "player_usage")]),
+            "coverage_design": star_rating([trait_value(defense, "coverage_design")]),
+            "matchup_scheming": star_rating([trait_value(defense, "matchup_adjustment")]),
+            "discipline": star_rating([trait_value(defense, "discipline")]),
+            "rotation_management": star_rating([trait_value(head, "rotation_management")]),
+            "player_relations": star_rating([trait_value(head, "locker_room"), personality_value(head, "communication")]),
+            "game_management": star_rating([trait_value(head, "scheme_balance"), personality_value(head, "adaptability")]),
         }
         ratings[team["id"]] = CoachRating(
             id=stable_id("save_coach_rating", team["id"], head.get("name")),

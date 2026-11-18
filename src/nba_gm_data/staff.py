@@ -30,12 +30,12 @@ ROLE_LABELS = {
 }
 
 ROLE_EFFECTS = {
-    "head_coach": "Sets rotation trust, locker-room stability, playoff preparation, and how strongly the staff identity reaches the floor.",
-    "offensive_coordinator": "Improves shot quality, spacing design, creator usage, and late-clock offensive structure.",
-    "defensive_coordinator": "Improves coverage discipline, matchup counters, point-of-attack help, and opponent targeting resistance.",
-    "development_lead": "Raises monthly trait growth odds, especially for young players with minutes and clear roles.",
-    "scouting_lead": "Narrows draft scouting fog and helps identify upside, role fit, and prospect risk.",
-    "performance_lead": "Modestly reduces injury odds, fatigue accumulation, recovery time, and return-from-injury rust.",
+    "head_coach": "Game-plan minutes and easing players back from injury (rotation management), player buy-in and development (player relations), in-game and playoff edge (game management).",
+    "offensive_coordinator": "Shot quality of the scheme, plus boosts that grow with shooters on the floor (spacing design) and with a primary creator (creator usage).",
+    "defensive_coordinator": "Coverage scheme, hiding and targeting matchups, and fewer fouls and breakdowns (discipline).",
+    "development_lead": "Monthly player growth: overall rate, young-player growth, and which skills improve fastest.",
+    "scouting_lead": "Narrows draft scouting fog: less noise on prospect grades, especially international prospects.",
+    "performance_lead": "Lower injury odds, less fatigue, shorter absences and faster return from post-injury rust.",
 }
 
 FIRST_NAMES = [
@@ -1036,30 +1036,30 @@ def staff_effect_rows(staff: dict[str, Any]) -> list[dict[str, Any]]:
     if slot == "head_coach":
         return [
             effect_row("Coach stars", grade, "Overall staff quality translated to the 0-5 coach star scale.", stars=grade / 20),
-            effect_row("Rotation trust", traits.get("rotation_management", grade), "How well this coach balances depth, stars, and GM minute requests."),
-            effect_row("Locker room", traits.get("locker_room", grade), "Morale stability, buy-in, and crisis response."),
-            effect_row("Scheme balance", traits.get("scheme_balance", grade), "How strongly the whole staff identity reaches the floor."),
+            effect_row("Rotation management", traits.get("rotation_management", grade), "Game-plan minutes for each opponent, and easing players back in after injuries."),
+            effect_row("Player relations", traits.get("locker_room", grade), "Player buy-in (a small boost at both ends) and the head coach's share of player development."),
+            effect_row("Game management", traits.get("scheme_balance", grade), "In-game adjustments at both ends, with a larger edge in the playoffs."),
         ]
     if slot == "offensive_coordinator":
         return [
             effect_row("Coach stars", grade, "Offensive staff quality translated to a 0-5 impact shorthand.", stars=grade / 20),
-            effect_row("Shot quality", traits.get("shot_quality", grade), "Creates cleaner looks and better late-clock possessions."),
-            effect_row("Spacing design", traits.get("spacing_design", grade), "Helps shooters bend help decisions and open driving lanes."),
-            effect_row("Creator usage", traits.get("player_usage", grade), "Gets high-usage players the right touches without flattening the offense."),
+            effect_row("Shot quality", traits.get("shot_quality", grade), "The main offensive coaching effect for any roster."),
+            effect_row("Spacing design", traits.get("spacing_design", grade), "An offensive boost that grows with good shooters on the floor."),
+            effect_row("Creator usage", traits.get("player_usage", grade), "An offensive boost that grows when the team has a true primary creator."),
         ]
     if slot == "defensive_coordinator":
         return [
             effect_row("Coach stars", grade, "Defensive staff quality translated to a 0-5 impact shorthand.", stars=grade / 20),
-            effect_row("Coverage design", traits.get("coverage_design", grade), "Improves coverage discipline and rim/paint problem solving."),
-            effect_row("Matchup counters", traits.get("matchup_adjustment", grade), "Adjusts to opponent strengths and pressure points."),
-            effect_row("Discipline", traits.get("discipline", grade), "Reduces blown assignments and repeated targeting."),
+            effect_row("Coverage design", traits.get("coverage_design", grade), "The main defensive coaching effect for any roster."),
+            effect_row("Matchup scheming", traits.get("matchup_adjustment", grade), "Hiding weak defenders, targeting the opponent's, game-plan minutes and playoff edge."),
+            effect_row("Discipline", traits.get("discipline", grade), "Fewer defensive breakdowns and fewer fouls."),
         ]
     if slot == "development_lead":
         return [
             effect_row("Growth boost", grade, "Monthly development odds for young and role-changing players."),
             effect_row("Skill work", traits.get("skill_development", grade), "Trait-level growth from training and role clarity."),
             effect_row("Prospect patience", traits.get("prospect_patience", grade), "Helps raw players grow without overreacting to early mistakes."),
-            effect_row("Feedback clarity", traits.get("feedback_clarity", grade), "Makes development outcomes less noisy."),
+            effect_row("Feedback clarity", traits.get("feedback_clarity", grade), "Growth rate, with extra focus on reads, decisions and team defense."),
         ]
     if slot == "scouting_lead":
         return [
@@ -1071,7 +1071,7 @@ def staff_effect_rows(staff: dict[str, Any]) -> list[dict[str, Any]]:
     if slot == "performance_lead":
         return [
             effect_row("Availability", grade, "Overall health, fatigue, recovery, and return-to-play support."),
-            effect_row("Injury prevention", traits.get("injury_prevention", grade), "Modestly lowers injury odds and severity."),
+            effect_row("Injury prevention", traits.get("injury_prevention", grade), "Modestly lowers injury odds on every body part."),
             effect_row("Conditioning", traits.get("conditioning", grade), "Slows fatigue accumulation during heavy workloads."),
             effect_row("Recovery planning", traits.get("recovery_planning", grade), "Shortens recovery and rust windows."),
         ]
