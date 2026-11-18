@@ -143,7 +143,7 @@ test('missing or corrupt movie releases the failed source and leaves the photos 
   assert.equal(f.video.classes.has('is-active'), false);
 });
 
-test('missing or corrupt movie does not retry on every click', {todo:'The default channel ignores its recorded playback failure'}, async () => {
+test('missing or corrupt movie does not retry on every click', async () => {
   const f = fixture({hidden:true});
   f.video.reject = {name:'NotSupportedError'};
   f.screen.hidden = false;
