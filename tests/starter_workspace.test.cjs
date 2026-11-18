@@ -41,8 +41,8 @@ test('fresh workspaces fit core windows without shrinking text to fit more cards
     assert.ok(cards.length>=3 && cards.length<=5);
     assert.equal(layout.minutes.visible,true);
     assert.equal(layout.week.visible,true);
-    assert.equal(layout.week.expanded,true);
-    assert.equal(layout.week.width,960);
+    assert.equal(layout.week.expanded,false);
+    assert.equal(layout.week.width,720);
     assert.equal(layout.minutes.scale,1);
     assert.equal(layout.staff.visible,false);
     assert.equal(layout.prospects.visible,false);
@@ -88,18 +88,18 @@ test('phase entry opens at most four starter panels; optional and customized car
   assert.equal(layout[ids[4]].visible,true);
 });
 
-test('small-screen starter tables have usable widths and Calendar keeps its full view when minimized', () => {
+test('small-screen starter tables have usable widths and Calendar opens compact on a fresh workspace', () => {
   const layout = fixture();
   layout.minutes.width=428;
   layout.standings.width=140;
   layout.opponent.width=309;
   const extent = clipboardExtent(1010,706);
   initializeStarterLayout(layout,{},extent.width,extent.height);
-  assert.equal(layout.minutes.width,540);
+  assert.equal(layout.minutes.width,450);
   assert.equal(layout.standings.width,240);
   assert.equal(layout.opponent.width,452);
-  assert.equal(layout.week.minimized,true);
-  assert.equal(layout.week.expanded,true);
+  assert.equal(layout.week.minimized,false);
+  assert.equal(layout.week.expanded,false);
   assertPacked(layout,extent.width,extent.height);
 });
 

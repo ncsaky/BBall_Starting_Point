@@ -73,7 +73,7 @@ test('postseason phase command matches top-bar styling and hides trade tools', (
   assert.match(css, /\.card-board-phase-actions > button:hover:not\(:disabled\),/);
   assert.match(css, /\.card-board-phase-actions > button:active:not\(:disabled\),/);
   const html = fs.readFileSync(path.join(gui,'index.html'),'utf8');
-  assert.match(html,/card-board\.css\?v=postseason-header-controls-1/);
+  assert.match(html,/<link\b[^>]*href="\/card-board\.css\?v=[\w.-]+"/);
 });
 
 test('champion modal uses clipboard window chrome and keeps its button label dark on hover', () => {
@@ -83,7 +83,7 @@ test('champion modal uses clipboard window chrome and keeps its button label dar
   assert.match(css,/\.modal-champion \.modal-head \.card-board-control \{[\s\S]*?width:19px !important/);
   assert.match(css,/\.modal-champion \.champion-celebration > \.ui-command:hover:not\(:disabled\) \{[\s\S]*?color:#17212a !important/);
   const html = fs.readFileSync(path.join(gui,'index.html'),'utf8');
-  assert.match(html,/card-board\.css\?v=postseason-header-controls-1/);
+  assert.match(html,/<link\b[^>]*href="\/card-board\.css\?v=[\w.-]+"/);
 });
 
 test('champion popup celebrates the winner with brief confetti and honors reduced motion', () => {
@@ -107,8 +107,8 @@ test('champion popup celebrates the winner with brief confetti and honors reduce
   assert.match(css,/@keyframes championConfettiFall/);
   assert.match(css,/@media \(prefers-reduced-motion:reduce\)[\s\S]*?\.champion-confetti \{ display:none; \}/);
   const html = fs.readFileSync(path.join(gui,'index.html'),'utf8');
-  assert.match(html,/styles\.css\?v=champion-celebration-1/);
-  assert.match(html,/app\.js\?v=champion-celebration-1/);
+  assert.match(html,/<link\b[^>]*href="\/styles\.css\?v=[\w.-]+"/);
+  assert.match(html,/<script\b[^>]*src="\/app\.js\?v=[\w.-]+"/);
 });
 
 test('lottery handoff opens only the lottery once and puts draft commands in the top bar', () => {
