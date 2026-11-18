@@ -135,6 +135,12 @@ def dot(beta: list[float], row: list[float]) -> float:
     return beta[0] + sum(b * v for b, v in zip(beta[1:], row))
 
 
+def odds_blend(p_model: float, p_scout: float, weight: float) -> float:
+    """weight x the model's log-odds + (1 - weight) x the scouts' log-odds (chances kept inside 0.1%-99.9%)."""
+    logit = lambda p: math.log(max(1e-3, min(1 - 1e-3, p)) / (1 - max(1e-3, min(1 - 1e-3, p))))
+    return sigmoid(weight * logit(p_model) + (1 - weight) * logit(p_scout))
+
+
 def sigmoid(z: float) -> float:
     return 1 / (1 + math.exp(-max(-35, min(35, z))))
 
@@ -716,6 +722,17 @@ INTL_UNRANKED = {"A": (0.25, 0.10, 40.0), "B": (0.10, 0.05, 50.0)}
 NAME_ALIASES = {"jojo tugler": "joseph tugler", "rueben prey": "ruben prey"}
 TEAM_ALIASES = {"uconn": "connecticut", "miami (fl)": "miami fl", "nc state": "n.c. state", "ole miss": "mississippi"}
 RANK_BANDS = (5, 10, 20, 30, 45, 60, 80, 100, 150, 250)
+CALIBER_BANDS = (5, 10, 20, 30, 45, 60)
+# Board ranks 1-30: history among NBA-caliber players (ranked by the model, then kept only if ever drafted) says 84%
+# (1-5), 94% (6-10), 77% (11-20), 69% (21-30) went that June; the top-5 misses are mostly the 2011 lockout year and
+# 2013 (Sullinger, Barnes, Jones, Smart, Zeller). Judgement per the coordinator review (2026-11-18: top-5 players almost
+# never go back; about 1-3 of a board's top 17 return): 97%, 92%, 80%, 72%. Ranks 31-60 use the history (58%, 43%).
+TOP_BOARD_HIT = {5: 0.97, 10: 0.92, 20: 0.80, 30: 0.72}
+# 2028-2029: the first six declared real players take slots 1-6 outright. History puts the best visible players at
+# picks 1.2, 2.5, 3.8, 5.1, 6.4, 7.5 (the offsets are the occasional unseen riser); with those slots the generated
+# prospect filling slot 3 out-ranked the known top recruits in 30-40% of saves. An unseen player still reaches No. 1
+# with an exceptional draw (about 4% of saves in 2028, 10% in 2029; coordinator target 5-10%).
+TOP_TIER_SLOTS = 6
 RETURN_BANDS = (10, 30, 60, 100, 250)
 RECRUIT_BANDS = ((1, 5), (6, 10), (11, 20), (21, 30), (31, 50), (51, 100))
 RECRUIT_COHORTS = range(2008, 2023)  # freshmen whose first four college years are all observed (drafts to 2026)
@@ -908,9 +925,17 @@ def scout_curves(states, models) -> dict:
             p = 0.0
         per_draft[e["draft"]].append((draft_score(p, pick), e))
     hit = defaultdict(lambda: [0, 0])
+    caliber_hit = defaultdict(lambda: [0, 0])
     back = defaultdict(lambda: [0, 0, 0, 0])
     for draft, scored in per_draft.items():
         scored.sort(key=lambda s: (-s[0], s[1]["pid"]))
+        # A board ranks NBA prospects, not productive college players who never get drafted: rank only players who
+        # are drafted this June or later (an upper bound for a board rank: it ignores prospects who fall out).
+        caliber = [item for item in scored if outcome[item[1]["pid"]][0] and outcome[item[1]["pid"]][1] >= draft]
+        for rank, (_, e) in enumerate(caliber[:CALIBER_BANDS[-1]], start=1):
+            band = next(b for b in CALIBER_BANDS if rank <= b)
+            caliber_hit[band][0] += e["y"]
+            caliber_hit[band][1] += 1
         for rank, (_, e) in enumerate(scored[:RANK_BANDS[-1]], start=1):
             band = next(b for b in RANK_BANDS if rank <= b)
             hit[band][0] += e["y"]
@@ -926,15 +951,26 @@ def scout_curves(states, models) -> dict:
             if not drafted_next and cls <= 1 and draft + 2 <= CURRENT_SEASON - 1:
                 back[rb][2] += bool(pick) and last == draft + 2
                 back[rb][3] += 1
-    rates, low = [], 1.0
+    model_rates, low = [], 1.0
     for center, band in zip(band_centers(RANK_BANDS), RANK_BANDS):
         low = min(low, hit[band][0] / max(1, hit[band][1]))  # a better rank never has a lower chance
+        model_rates.append([center, round(low, 3)])
+    # Board curve: NBA-caliber players (above) for ranks 1-60, with the stated top-10 judgement (TOP_BOARD_HIT);
+    # past 60 the model-rank history (few NBA-caliber players are ranked there).
+    caliber_rates = {band: caliber_hit[band][0] / max(1, caliber_hit[band][1]) for band in CALIBER_BANDS}
+    rates, low = [], 1.0
+    for center, band in zip(band_centers(RANK_BANDS), RANK_BANDS):
+        value = TOP_BOARD_HIT.get(band, caliber_rates.get(band))
+        if value is None:
+            value = curve_value(model_rates, center)
+        low = min(low, value)
         rates.append([center, round(low, 3)])
     back_rows = []
     for center, band in zip(band_centers(RETURN_BANDS), RETURN_BANDS):
         a, n1, b, n2 = back[band]
         back_rows.append([center, round(a / max(1, n1), 3), round(b / max(1, n2), 3), n1, n2])
-    return {"hit_by_rank": rates, "back_by_rank": back_rows,
+    return {"hit_by_rank": rates, "model_rank_hit": model_rates, "back_by_rank": back_rows,
+            "caliber_hit": {str(b): [caliber_hit[b][0], caliber_hit[b][1]] for b in CALIBER_BANDS},
             "hit_counts": {str(b): hit[b] for b in RANK_BANDS}}
 
 
@@ -1080,7 +1116,10 @@ def timing_from_scouts_and_model(rank, p_model, e_model, weight, curves, cls_now
     if p_model is None:
         p_model, e_model, weight = [0.0, 0.0, 0.0], [scout_rank] * 3, 0.0
     scout0 = hit if listed else min(p_model[0], hit)
-    p0 = 0.0 if young_2027 else weight * p_model[0] + (1 - weight) * scout0
+    # Blended on the odds scale: a near-certain board view is not diluted much by a noisy early-season model.
+    p0 = 0.0 if young_2027 else odds_blend(p_model[0], scout0, weight)
+    if not listed:
+        p0 = min(p0, p_model[0])  # no board lists him: scouts never raise his chance above the model's
     if injured:
         p0 *= INJURY_SEASON_OUT_FACTOR
     left = 1.0 - p_model[0]
@@ -1503,7 +1542,8 @@ def build(write: bool = True) -> dict:
         # Declared real players are ordered by expected pick. 2027: the boards rank the whole draft, so the k-th
         # declared player is anchored to slot k. 2028-2029: the k-th goes to the average pick of the k-th draftee
         # among players visible that far ahead (college players plus the top recruits still to arrive).
-        "slot_tables": {str(DRAFT_YEARS[0]): "rank", **{str(DRAFT_YEARS[h]): visible[h] for h in (1, 2)}},
+        "slot_tables": {str(DRAFT_YEARS[0]): "rank",
+                        **{str(DRAFT_YEARS[h]): [*range(1, TOP_TIER_SLOTS + 1), *visible[h][TOP_TIER_SLOTS:]] for h in (1, 2)}},
         "declaration": {
             "method": ("One draw per save and player against his chance by year (real_prospects.declaration_year). "
                        "2027: board consensus blended with the college model, model weight = games / (games + 20). "

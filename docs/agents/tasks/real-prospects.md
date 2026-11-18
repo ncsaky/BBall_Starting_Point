@@ -43,15 +43,24 @@ _Second pass (REAL-PROSPECTS-2), Claude Opus agent, 2026-11-18, own worktree bra
   90 days before 19 November (ESPN 5 Nov 0.90, B/R August board 0.52, SI June list 0.32); mocks count 0.75 of a big
   board (they mix in team need); Tankathon's undated live board 0.8. A player missing from a list of length L is
   placed at L + max(5, 0.3 L) (130 for a 100-deep board, 39 for a 30-pick mock).
-- **Chance of going in 2027** = w x model chance + (1 - w) x scouts' chance for his rank, with **w = games / (games +
-  20)**. With 3-6 games played w is 0.13-0.23. Reasoning: the model's same-spring accuracy (rank vs pick 0.62, AUC
+- **Chance of going in 2027** = blend of the model's chance and the scouts' chance for his rank on the odds scale
+  (w x model log-odds + (1 - w) x scouts' log-odds, so a near-certain board view is not diluted much by a noisy early
+  model), with **w = games / (games + 20)**. With 3-6 games played w is 0.13-0.23. Reasoning: the model's same-spring accuracy (rank vs pick 0.62, AUC
   0.99) is measured on full seasons, and early-season samples are noise; boards already fold in high-school, summer
   and last-season evaluation. At 20 games (mid-January) the two count equally. A college player on no board gets at
   most the scouts' chance for rank 150 (never more than the model says).
-- **Scouts' chance by rank** comes from history (drafts 2010-2026): the share of the k-th ranked college player
-  (ranked by the model's draft value) drafted that June: ranks 1-10 84%, 11-20 57%, 21-30 52%, 31-45 40%,
-  46-60 25%, 61-100 14-22%, 101-150 8%. The misses at the top are real returns (Sullinger, Barnes, Smart, Zeller,
-  Bridges, Edey, Clingan, Filipowski). Scouts rank better than the model, so these are a floor for a board rank.
+- **Scouts' chance by rank** (revised after the coordinator review). A board ranks NBA prospects, so the evidence is
+  history (drafts 2010-2026) for NBA-caliber players only: college players ranked by the model's draft value, kept
+  only if they were drafted that June or later. Share drafted that June: ranks 1-5 84%, 6-10 94%, 11-20 77%, 21-30
+  69%, 31-45 58%, 46-60 43% (an upper bound: it ignores prospects who never get drafted). The top-5 misses are mostly
+  2011 (lockout) and 2013 (Sullinger, Barnes, Jones, Smart, Zeller). Used: **97% (1-5), 92% (6-10), 80% (11-20), 72%
+  (21-30)** (judgement per the review: top-5 players almost never go back), then the history: 58% (31-45), 43%
+  (46-60); past 60 the model-rank history (21%, 14%, 8%, 4%). The first version used the model's own ranking of all
+  college players (84% / 57% / 52% / 40% / 25%), which counted productive non-prospects and sent 5-7 of the board's
+  top 17 back to school in some saves.
+- **Result across 20 seeds:** players from the board's top 17 who go back (or wait past 2029): median 3, range 1-4
+  (14 of 20 seeds 1-3); top-5 players absent from 2027: 8 player-seasons out of 100 (each has a 93-97% chance; the
+  rest is the early-season model's doubt for freshmen it does not rate yet).
 - **Expected pick** = log-blend of the consensus rank and the model's expected pick with the same w. The k-th declared
   player is anchored to slot k (the boards cover the whole draft); level, upside and age then follow the slot exactly
   as for generated prospects. For the scouts' share of a player's order, age only splits "now" versus "upside" without
@@ -88,8 +97,13 @@ freshman was slightly lower ranked than the k-th recruit.
 ### 2028-2029 slots
 Declared players are ordered by expected pick; the k-th goes to the average pick of the k-th draftee among players
 visible that far ahead in history (drafts 2012-2026: college players in the season h years before plus the top 50 /
-40 recruits of the classes still to arrive). E.g. 2028: 1.2, 2.5, 3.8, 5.1, 6.4, 7.5, 9.0, 10.3, ...; 2029: 1.2,
+40 recruits of the classes still to arrive). History: 2028 1.2, 2.5, 3.8, 5.1, 6.4, 7.5, 9.0, 10.3, ...; 2029 1.2,
 2.5, 3.9, 5.8, 7.3, 8.6, 10.5, ... The gaps belong to generated prospects (players nobody can see yet).
+**Top tier (revised after the review):** the first six declared real players take slots 1-6 outright, then the
+history table. With the raw table the generated prospect filling slot 3 had the generator's full upside spread and
+was the public No. 1 in 12 of 40 saves (2028) and 17 of 40 (2029); now an unseen player reaches No. 1 only with an
+exceptional draw: **3 of 80 saves in 2028 (4%), 8 of 80 in 2029 (10%)**. Real players in the top 5: median 4 (2028)
+and 4.5 (2029); 2027: 80 of 80 real No. 1s, top 5 always real.
 
 ### Internationals without a board rank
 No local history exists for them, so a stated judgement prior: all-tournament / award players 25% in their first
@@ -124,9 +138,9 @@ prospect (no college input estimates for these players).
 
 | Class | in top 10 | in top 30 | in top 60 | Expected real draftees (pool) |
 | --- | --- | --- | --- | ---: |
-| 2027 | 10 (10-10) | 30 (30-30) | 50 (42-60) | 53.5 |
-| 2028 | 8 (6-9) | 24 (22-26) | 48 (39-48) | 51.9 |
-| 2029 | 7 (4-8) | 21 (19-22) | 44 (31-45) | 40.8 |
+| 2027 | 10 (10-10) | 30 (30-30) | 58 (51-60) | 62 (more than 60: the last ones go undrafted) |
+| 2028 | 8 (6-9) | 24 (22-25) | 48 (39-48) | 52 |
+| 2029 | 7 (5-9) | 21 (19-22) | 43 (29-45) | 40 |
 
 (median, min-max; `scripts/research/real_prospects_check.py --coverage 20`.) Pool: 534 college players, 90
 high-school recruits, 30 internationals, 1 board player without college data.
@@ -147,14 +161,9 @@ high-school recruits, 30 internationals, 1 board player without college data.
   rank and tags beside the courts.
 
 ## 6. Known gaps and open decisions
-- **An unseen (generated) prospect is the public No. 1 of 2028 in 12 of 40 saves and of 2029 in 17 of 40.** Generated
-  prospects in the gap slots keep the generator's wide upside spread, while real recruits follow their rank (half of
-  the usual spread, `RECRUIT_SCOUT_SHARE = 0.5`). History says the best visible player went about pick 1.2, i.e. the
-  No. 1 pick was visible in most drafts. Option: narrow the generated prospects' public spread in the real years.
-- **Return rate for ranks 11-40 may be high.** The 2027 chances come from how often the model's k-th ranked player was
-  drafted that June (57% for 11-20). Scouts rank better, so the real rate for a November board rank is probably
-  higher; in some seeds 5-7 of the board's top 17 go back to school. A knob: raise the scouts' curve (for example
-  to 75% for 11-30) if that looks wrong in play.
+- **Board chances for ranks 1-30 are partly judgement** (97 / 92 / 80 / 72%), set above the history (84-94 / 77 / 69%)
+  per the review; ranks 31-60 follow history. Generated prospects still reach No. 1 in about 4% (2028) and 10% (2029)
+  of saves, by design (unseen risers).
 - **No 2028/2029 boards.** ESPN's early note calls Boumtje Boumtje the early 2028 favourite; the model has him around
   pick 14. Only the top recruits' history and the college model speak to 2028/2029.
 - **Internationals without a board rank use a judgement prior** (25% / 10%, pick 40-50): no local evidence.
