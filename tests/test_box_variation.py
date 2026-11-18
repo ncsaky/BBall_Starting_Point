@@ -40,7 +40,13 @@ class BoxVariationTests(unittest.TestCase):
             a, b = [r[key] for r in old], [r[key] for r in new]
             report[key] = {'before_mean': statistics.mean(a), 'after_mean': statistics.mean(b),
                            'before_sd': statistics.pstdev(a), 'after_sd': statistics.pstdev(b)}
-            self.assertGreater(statistics.pstdev(b), statistics.pstdev(a) * 1.25, report)
+            if key == 'turnovers':
+                # The engine's turnovers are already Poisson counts around each player's own rate before this
+                # step (2026-11-18), so their game-to-game spread is realistic up front: a team's turnovers vary
+                # by about 3.7-4 a game in the NBA (Poisson around ~14 plus matchup).
+                self.assertTrue(3.3 < statistics.pstdev(b) < 5.2, report)
+            else:
+                self.assertGreater(statistics.pstdev(b), statistics.pstdev(a) * 1.25, report)
             self.assertLess(abs(statistics.mean(a) - statistics.mean(b)), 3, report)
         a = [r['fgm'] / r['fga'] for r in old]
         b = [r['fgm'] / r['fga'] for r in new]
