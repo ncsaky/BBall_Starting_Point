@@ -865,16 +865,25 @@ class DataFoundationTests(unittest.TestCase):
         self.assertGreater(max(athleticism_values) - min(athleticism_values), 12)
 
     def test_generated_future_classes_keep_nba_ready_top_tiers_without_talent_inflation(self):
+        # Since the prospect-realism generator (2026-11-18) levels follow a slot profile anchored to the real 2026
+        # class (about 62 at pick 1, 60 at 3, 56.5 at 5, 54 at 10) with real spread (2.4) and strong/weak draft shifts,
+        # instead of the old hard floors (55 / 53 / 51 / 44, which these thresholds used to be exactly). Measured over
+        # 102 generated classes (2030-2046, six seeds): first prospect 56.2-70.0, top-3 minimum >= 54.0, top-5 minimum
+        # >= 49.5, top-14 minimum >= 45.2, class average 48.1-53.1 (real 2026 class: 50.1), and at most 3 prospects at
+        # 65+ in a class (none in 80 of the 102). The top-5 floor moves 51 -> 49 (a weak, young class can place a
+        # 5th prospect three spreads below the slot profile); the average and maximum bounds move to the real-anchored
+        # profile, while "at most 3 at 65+" keeps the no-inflation check.
         for year in range(2027, 2047):
             prospects = to_plain(generate_draft_class_records(str(year), seed=20260710))["draft_prospects"]
             abilities = [float(prospect["current_ability"]) for prospect in prospects]
             self.assertGreaterEqual(abilities[0], 55.0)
             self.assertGreaterEqual(min(abilities[:3]), 53.0)
-            self.assertGreaterEqual(min(abilities[:5]), 51.0)
+            self.assertGreaterEqual(min(abilities[:5]), 49.0)
             self.assertGreaterEqual(min(abilities[:14]), 44.0)
             self.assertGreaterEqual(sum(abilities) / len(abilities), 40.0)
-            self.assertLessEqual(sum(abilities) / len(abilities), 52.0)
-            self.assertLessEqual(max(abilities), 65.0)
+            self.assertLessEqual(sum(abilities) / len(abilities), 54.0)
+            self.assertLessEqual(sum(value >= 65.0 for value in abilities), 3)
+            self.assertLessEqual(max(abilities), 70.0)
 
     def test_rookie_trait_conversion_respects_current_ability_without_flattening_specialists(self):
         profile = {
@@ -3392,7 +3401,11 @@ class DataFoundationTests(unittest.TestCase):
         active = with_transaction_context(self.plain)
         buyer = next(team for team in active["teams"] if team["abbrev"] == "CLE")
         seller = next(team for team in active["teams"] if team["abbrev"] == "NOP")
-        target = next(player for player in active["players"] if player["normalized_name"] == "deandre jordan")
+        # The target used to be DeAndre Jordan. Since the ratings audit's value refit (2026-11-18) the 38-year-old
+        # backup is priced 34.0 (was 37.8), and Luke Travers alone (31.9) is already close enough that the AI rightly
+        # adds no sweetener. A rotation wing priced around 50 still needs one: NOP/CLE swap packages appear for most
+        # NOP rotation players (Mathurin, Murray, Queen, Missi, Jones, Murphy, Williamson).
+        target = next(player for player in active["players"] if player["normalized_name"] == "bryce mcgowens")
         self.assertEqual(target["team_id"], seller["id"])
         # 841ddf8 requires comparable picks for a swap, so set a plausible 2028 pair.
         next(pick for pick in active["draft_picks"] if pick["id"] == "pick_cle-2028-1")["projected_pick_slot"] = 24
@@ -5034,7 +5047,12 @@ class DataFoundationTests(unittest.TestCase):
         block = trade_block_report(self.plain, "PHX")
         self.assertGreater(block["entry_count"], 0)
         self.assertTrue(all(entry["reasons"] for entry in block["entries"]))
-        report = find_trade(self.plain, "Ryan Dunn", "PHX", limit=2, seed=2)
+        # This used to shop Ryan Dunn for PHX. Taking two players back for Dunn puts PHX over the 24-player offseason
+        # maximum, so 44 of the 56 offers are illegal and the check rested on one legal 1-for-1 (DET's Javonte Green),
+        # 4th in DET's list. After the ratings audit's value refit (2026-11-18) it ranks 5th, past the
+        # 4-offers-per-buyer cut. Shop a player with several legal offers instead; the explainability checks are
+        # unchanged.
+        report = find_trade(self.plain, "Dailyn Swain", "CHI", limit=2, seed=2)
         self.assertGreater(report["candidate_count"], 0)
         self.assertIn("summary", report["candidates"][0])
         self.assertEqual(len(report["candidates"][0]["evaluations"]), 2)
@@ -5707,7 +5725,10 @@ class DataFoundationTests(unittest.TestCase):
             for key, cutoffs in room["rating_tertiles"].items():
                 with self.subTest(rating=key):
                     ordered = sorted(row[key] for row in league_ratings)
-                    self.assertTrue(all(1 <= value <= 99 for value in ordered))
+                    # Shown ratings stay on the 1-100 card scale. (This used to be "<= 99"; since 2026-11-18 values the
+                    # engine carries above 99 (elite rim deterrence, range, offensive rebounding) are rescaled into
+                    # 99-100 instead of clipped, e.g. 100 -> 99.3, so the top players stay distinguishable.)
+                    self.assertTrue(all(1 <= value < 100 for value in ordered))
                     for tier, percentile in (("lower", .25), ("middle", .50), ("upper", .75)):
                         self.assertEqual(cutoffs[tier], round(ordered[round((len(ordered) - 1) * percentile)], 1))
                     self.assertLess(cutoffs["lower"], cutoffs["upper"])

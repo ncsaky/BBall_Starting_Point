@@ -26,7 +26,9 @@ class GeneratedUpsideTests(unittest.TestCase):
             self.assertEqual(actual["draft_classes"], original["draft_classes"])
             original_traits = {(t["prospect_id"], t["trait_key"]): t for t in original["draft_prospect_traits"]}
             unchanged = set()
+            lifted = 0
             for player, old in zip(actual["draft_prospects"], original["draft_prospects"], strict=True):
+                lifted += player["potential"] > old["potential"]
                 self.assertEqual({k: v for k, v in player.items() if k not in {"potential", "ceiling", "rookie_contract_value"}},
                                  {k: v for k, v in old.items() if k not in {"potential", "ceiling", "rookie_contract_value"}})
                 self.assertGreaterEqual(player["potential"], old["potential"])
@@ -36,7 +38,13 @@ class GeneratedUpsideTests(unittest.TestCase):
                 if player["potential"] <= 80:
                     unchanged.add(player["id"])
                     self.assertEqual(player, old)
-            self.assertGreater(len(unchanged), 45)
+            # The tail is sparse: it lifts only a few prospects (1-5 per class over seeds 1-8, 17, 29, 47, 83) and most
+            # of the class is untouched. The untouched count used to be checked as "> 45"; the prospect-realism slot
+            # profile (2026-11-18) puts public potential at 80+ through about pick 8 and adds a scouting miss of +-6,
+            # so 6-16 prospects per class now sit above 80 before any tail (seed 17 is a strong class: 44 untouched,
+            # 5 lifted; the other seeds 45-54 untouched).
+            self.assertLessEqual(lifted, 6)
+            self.assertGreater(len(unchanged), 40)
             for trait in actual["draft_prospect_traits"]:
                 if trait["prospect_id"] in unchanged:
                     self.assertEqual(trait, original_traits[(trait["prospect_id"], trait["trait_key"])])

@@ -7,6 +7,8 @@ import random
 import unittest
 import weakref
 
+from nba_gm_data.defense import rim_response
+
 from experiments.defensive_roles.model import (
     JOBS, KEYS, RECIPES, Context, Player, Trait, assign, deployment_scores, estimate, summarize,
 )
@@ -26,8 +28,14 @@ class DefensiveRolePrototypeTests(unittest.TestCase):
         for recipe in RECIPES.values(): self.assertAlmostEqual(sum(w for _, w in recipe), 1)
         scores = estimate(player())['roles']
         self.assertTrue(all(r['score'] == 50 for r in scores.values()))
+        # A uniform player's role score is a weighted blend of his channels, so it stays between his lowest and highest
+        # channel. (This used to be checked as 0-100; since the ratings audit (2026-11-18) the rim channel reads the
+        # evidence-shaped rim response, which keeps rising above 100 for elite rim traits instead of clipping, so an
+        # all-100 player's big-man roles now land a little above 100.)
         for value in (0, 25, 50, 75, 90, 100):
-            self.assertTrue(all(0 <= r['score'] <= 100 for r in estimate(player(value=value))['roles'].values()))
+            rim = 0.0 if value == 0 else rim_response(value)
+            lo, hi = min(value, rim), max(value, rim)
+            self.assertTrue(all(lo - 1e-6 <= r['score'] <= hi + 1e-6 for r in estimate(player(value=value))['roles'].values()))
 
     def test_missing_inputs_are_disclosed_and_never_excellent(self):
         result = estimate(Player('x', 'Unknown', ()))
