@@ -32,6 +32,22 @@ first.
 - Some front offices are less savvy than others; real trades have winners and losers.
 - This is a small, deliberate layer on top of textbook trades, added after the textbook model is solid.
 
+## How general managers actually work: targets first (user, 2026-11-19, follow-up)
+- A front office **starts from a target**. It can be specific (this player) or vague (this kind of player, or a
+  range: "a starting-level wing who can shoot", "a backup center under $10M").
+- It then looks at its **options** for getting that target: can it be had for a reasonable price, for something that
+  makes sense for the team? What are the alternatives?
+- **Targets must make sense for the team**: its phase and what it's trying to do. Getting target selection right is
+  critical to realism.
+- **Wanting a player doesn't mean getting him.** The other team doesn't just give in once the value is met. It has
+  targets of its own, possibly on the team making the offer; if it doesn't want anything that team has, it asks for
+  more raw value instead.
+- This should be both more realistic and faster than brute force: teams only search for what they're looking for.
+
+## Multi-team trades stay
+Three-team (and larger) trades must not be lost. Check real-life rates of multi-team versus two-team trades and keep
+the engine near them.
+
 ## Calibrate against real trades
 Study real trades from the 2025-26 and 2026-27 seasons, with their context and how analysts judged them. Example the
 user gave: Nique Clifford traded for two second-round picks this season. On raw value that might be close, but
@@ -40,6 +56,7 @@ people disliked it: he was a recent first-round pick and Sacramento had traded u
 ## Order of work
 1. Human-style review of the trades the AI currently makes (from simulated seasons), against real trades.
 2. Refine the textbook model (value + context), including investment and tenure.
-3. Smarter search: generate candidate trades from team needs and context instead of brute force (this is what
-   makes the deadline fast).
+3. Target-driven search: each front office picks targets (specific or vague) that fit its phase and plan, explores
+   the options and alternatives for each, and the other team answers with its own targets or a demand for more value.
+   Keep multi-team trades at real-life rates. This is what makes the deadline fast.
 4. Front-office personality layer (savvy, player opinions), small and deliberate.
