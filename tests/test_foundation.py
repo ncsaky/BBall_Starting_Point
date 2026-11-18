@@ -5018,7 +5018,10 @@ class DataFoundationTests(unittest.TestCase):
         jaren = values[players["jaren jackson jr"].id]
         self.assertGreater(caruso.portability, giddey.portability + 25)
         self.assertLess(davis.contract_surplus, 0)
-        self.assertGreater(davis.health_risk, 8)
+        # Injury risk is ranked by the v2 body-part model blended with Basketball Index's forecasts and placed on the
+        # old 0-34 scale by league rank (2026-11-18), so check rank rather than a fixed score: Davis is a top-15% risk.
+        risks = sorted(v.health_risk for v in values.values())
+        self.assertGreater(davis.health_risk, risks[int(len(risks) * 0.85)])
         self.assertGreater(kon.development_upside, 8)
         self.assertGreater(kon.contract_surplus, 20)
         self.assertGreater(jaren.player_value, 58)

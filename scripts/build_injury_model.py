@@ -31,6 +31,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 B = ROOT / "data/research/bbi/tools"
 OUT = ROOT / "data/canonical/injury_model_v2.json"
+EVIDENCE_OUT = ROOT / "data/canonical/injury_player_evidence_v2.json"   # git-ignored: per-player Basketball Index evidence
 FIRST_SEASON = "2015-16"
 RIDGE = 3.0
 HISTORY_DECAY_YEARS = 1.5
@@ -238,14 +239,46 @@ def main():
         if part and part != "illness" and h.get("player_id") and h.get("start") and h["season"] >= "2021-22":
             recent[h["player_id"]].append([h["start"][:10], part, int(h.get("days") or 0), h.get("label")])
     model["player_history"] = {pid: sorted(v) for pid, v in sorted(recent.items())}
+    # Basketball Index's 2026-27 per-player injury forecast (games missed to injury per 82): the market's view of real
+    # players' current proneness, blended into the AI's injury-risk score while it is fresh.
+    model["player_forecast_2026_27"] = {r["player_id"]: r["missed_to_injury"] for r in rows("injury_player_projections.json")
+                                        if r.get("player_id") and r.get("missed_to_injury") is not None}
     # Real players' recovery speed vs the league for the same injury (Basketball Index, shrunk percent; negative = quicker).
     model["player_recovery_pct"] = {r["player_id"]: r["recovery"]["pct"] for r in rows("injury_players.json")
                                     if r.get("player_id") and (r.get("recovery") or {}).get("pct") is not None
                                     and (r["recovery"].get("trusted") or 0)}
     print("lasting effects (CI below zero):", [(r["level"], r["bucket"], r["d_rapm_1y_shrunk"]) for r in model["lasting_effects"]])
+    # Committed model = derived numbers only (user decision 2026-11-18: raw Basketball Index data stays off GitHub).
+    # Recovery pools become weighted duration quantiles plus diagnosis shares by duration band; per-player evidence
+    # (history, forecasts, recovery speed) goes to a separate git-ignored file the engine merges when present.
+    summary = {}
+    for part, pool in model.pop("recovery_pools").items():
+        ordered = sorted(pool, key=lambda r: r["days"])
+        total = sum(float(r.get("w") or 1.0) for r in ordered)
+        quantiles, cumulative, idx = [], 0.0, 0
+        for k in range(41):
+            target = total * k / 40.0
+            while idx < len(ordered) - 1 and cumulative + float(ordered[idx].get("w") or 1.0) < target:
+                cumulative += float(ordered[idx].get("w") or 1.0)
+                idx += 1
+            quantiles.append(int(ordered[idx]["days"]))
+        bands = []
+        for limit in (3, 7, 14, 30, 60, 120, 100000):
+            shares = Counter()
+            for r in ordered:
+                if (bands[-1][0] if bands else 0) < r["days"] <= limit:
+                    shares[r["label"]] += float(r.get("w") or 1.0)
+            top = shares.most_common(12)
+            band_total = sum(v for _, v in top) or 1.0
+            bands.append([limit, {label: round(v / band_total, 4) for label, v in top}])
+        summary[part] = {"quantiles": quantiles, "labels_by_days": bands}
+    model["recovery_summary"] = summary
+    evidence = {key: model.pop(key) for key in ("player_history", "player_forecast_2026_27", "player_recovery_pct")}
+    evidence["version"] = model["version"]
     if args.write:
         OUT.write_text(json.dumps(model, separators=(",", ":")) + "\n")
-        print("wrote", OUT, f"{OUT.stat().st_size/1e6:.1f} MB")
+        EVIDENCE_OUT.write_text(json.dumps(evidence, separators=(",", ":")) + "\n")
+        print("wrote", OUT, f"{OUT.stat().st_size/1e6:.2f} MB", "and local-only", EVIDENCE_OUT.name, f"{EVIDENCE_OUT.stat().st_size/1e6:.2f} MB")
 
 
 if __name__ == "__main__":

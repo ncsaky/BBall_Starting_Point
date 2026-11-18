@@ -351,6 +351,12 @@ def build_player_asset_valuations(canonical: dict[str, Any] | Any, config: dict[
             legacy[player["id"]] = player_on_court_value(features, portability)
         plain_traits = {pid: {k: float(v.get("value", 50)) for k, v in rows.items()} for pid, rows in traits.items()}
         fitted_on_court = remap_on_court(canonical, canonical.get("players", []), plain_traits, legacy)
+    # Injury risk: the v2 per-body-part model decides who is riskier; the legacy score supplies the scale the AI's
+    # thresholds were written for (rank mapping). Current-injury and rust terms stay on top.
+    legacy_risk = {player["id"]: player_health_risk(health_profiles.get(player["id"], {}), {})
+                   for player in canonical.get("players", []) if player.get("id")}
+    from .injury_model import health_risk_scores
+    base_risk = health_risk_scores(canonical, legacy_risk)
     for player in canonical.get("players", []):
         # Valuation consumes scalar basketball/offensive-role features only.
         # Keep minutes and role calculations fresh; zone grids are unused here.
@@ -364,7 +370,10 @@ def build_player_asset_valuations(canonical: dict[str, Any] | Any, config: dict[
         on_court = fitted_on_court.get(player["id"]) or player_on_court_value(features, portability)
         age_curve = player_age_curve(age)
         development = player_development_upside(player, age, features)
-        health_risk = player_health_risk(health_profiles.get(player["id"], {}), health_states.get(player["id"], {}))
+        state = health_states.get(player["id"], {})
+        health_risk = clamp(base_risk.get(player["id"], legacy_risk.get(player["id"], 0.0))
+                            + (1.25 if state.get("availability_status") not in (None, "active") else 0.0)
+                            + float(state.get("rust") or 0) * 0.035, 0, 34)
         scarcity = role_scarcity_score(player, features, traits.get(player["id"], {}))
         surplus = contract_surplus_value(on_court, age_curve, development, salary, contract)
         weights = config.get("valuation_weights", {})

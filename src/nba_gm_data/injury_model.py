@@ -49,9 +49,22 @@ def _load(path: str) -> dict[str, Any] | None:
     return json.loads(p.read_text()) if p.exists() else None
 
 
+EVIDENCE_FILE = "data/canonical/injury_player_evidence_v2.json"   # local only (per-player Basketball Index evidence)
+
+
+@lru_cache(maxsize=4)
+def _load_with_evidence(path: str, evidence_path: str) -> dict[str, Any] | None:
+    model = _load(path)
+    if model is None:
+        return None
+    evidence = _load(evidence_path) or {}
+    return {**model, **{k: v for k, v in evidence.items() if k != "version"}}
+
+
 def load_model(root: str | Path | None = None) -> dict[str, Any] | None:
+    """The fitted model, plus real players' injury history/forecasts/recovery speed when the local evidence file exists."""
     root = Path(root) if root is not None else Path(__file__).resolve().parents[2]
-    return _load(str(root / MODEL_FILE))
+    return _load_with_evidence(str(root / MODEL_FILE), str(root / EVIDENCE_FILE))
 
 
 def _parse(value: Any) -> date | None:
@@ -128,24 +141,28 @@ def part_hazards(model: Mapping[str, Any], player: Mapping[str, Any], traits: Ma
     return out
 
 
-@lru_cache(maxsize=32)
-def _pool_index(path: str, part: str) -> tuple[list[float], list[dict[str, Any]]]:
-    model = _load(path) or {}
-    pool = (model.get("recovery_pools") or {}).get(part) or []
-    cumulative, total = [], 0.0
-    for r in pool:
-        total += float(r.get("w") or 1.0)   # Basketball Index's 6-year half-life recency weight
-        cumulative.append(total)
-    return cumulative, pool
+def _days_at(quantiles: list[int], u: float) -> float:
+    pos = max(0.0, min(1.0, u)) * (len(quantiles) - 1)
+    lo = int(pos)
+    hi = min(lo + 1, len(quantiles) - 1)
+    return quantiles[lo] + (quantiles[hi] - quantiles[lo]) * (pos - lo)
 
 
 def sample_recovery(root: str | Path | None, part: str, rng: random.Random) -> dict[str, Any]:
-    root = Path(root) if root is not None else Path(__file__).resolve().parents[2]
-    cumulative, pool = _pool_index(str(root / MODEL_FILE), part)
-    if not pool:
+    """Days out from the part's real recovery-time distribution, and a diagnosis typical for that length."""
+    model = load_model(root) or {}
+    summary = (model.get("recovery_summary") or {}).get(part)
+    if not summary:
         return {"label": f"{part} injury", "days": 3, "games": 1, "surgery": 0}
-    marker = rng.random() * cumulative[-1]
-    return pool[min(len(pool) - 1, bisect.bisect_left(cumulative, marker))]
+    days = max(1, int(round(_days_at(summary["quantiles"], rng.random()))))
+    shares = next((labels for limit, labels in summary["labels_by_days"] if days <= limit), {}) or {f"{part} injury": 1.0}
+    marker, running, label = rng.random() * sum(shares.values()), 0.0, next(iter(shares))
+    for name, share in shares.items():
+        running += share
+        if marker <= running:
+            label = name
+            break
+    return {"label": label, "days": days, "games": 0, "surgery": int("surgery" in str(label).lower())}
 
 
 def severity_for_days(days: int) -> str:
@@ -225,3 +242,72 @@ def return_minutes_multiplier(absence_games: int, games_since_return: int, rotat
     drop = next(value for limit, value in RETURN_FIRST_GAME_DROP if absence_games <= limit)
     careful = max(0.5, min(1.3, 1.0 + 0.2 * (float(rotation_star) - 3.0)))
     return round(1.0 - drop * careful * (1.0 - games_since_return / length), 4)
+
+
+@lru_cache(maxsize=32)
+def _mean_games_out(path: str, part: str) -> float:
+    model = _load(path) or {}
+    quantiles = ((model.get("recovery_summary") or {}).get(part) or {}).get("quantiles") or []
+    if not quantiles:
+        return 2.0
+    mean_days = sum(_days_at(quantiles, (k + 0.5) / 200.0) for k in range(200)) / 200.0
+    return mean_days / 2.4    # the engine's days-to-games conversion (health.expected_games_from_days)
+
+
+def expected_injury_games_82(model: Mapping[str, Any], player: Mapping[str, Any], traits: Mapping[str, float], minutes: float,
+                             history: list[tuple[date, str]], on: date, root: str | Path | None = None) -> float:
+    """Games a player is expected to miss to injury over 82 team games under the v2 model (before staff effects)."""
+    root = Path(root) if root is not None else Path(__file__).resolve().parents[2]
+    hazards = part_hazards(model, player, traits, minutes, history, on)
+    path = str(root / MODEL_FILE)
+    return 82.0 * LEAGUE_RATE_SCALE * sum(h * _mean_games_out(path, part) for part, h in hazards.items())
+
+
+def health_risk_scores(canonical: Mapping[str, Any], legacy_scores: Mapping[str, float]) -> dict[str, float]:
+    """AI injury-risk scores from the v2 model, placed on the legacy score's scale by league rank.
+
+    The AI's thresholds were written for the old 0-34 score, so each player's v2 expected injury games are ranked across
+    the league and given the legacy score at the same rank (same technique as impact_value). Only the ordering comes
+    from the new model."""
+    model = load_model()
+    if not model or len(legacy_scores) < 30:
+        return dict(legacy_scores)
+    from datetime import date as _date
+    on = _parse((canonical.get("meta") or {}).get("current_date")) or _date(2026, 10, 20)
+    by_player: dict[str, list] = {}
+    for event in canonical.get("injury_events", []):
+        if event.get("player_id"):
+            by_player.setdefault(event["player_id"], []).append(event)
+    traits: dict[str, dict[str, float]] = {}
+    for row in canonical.get("traits", []):
+        if row.get("trait_key") in ("rim_pressure", "offensive_rebounding", "stamina_cardio"):
+            traits.setdefault(row["player_id"], {})[row["trait_key"]] = float(row.get("value") or 50.0)
+    expected = {}
+    for player in canonical.get("players", []):
+        pid = player.get("id")
+        if pid not in legacy_scores:
+            continue
+        minutes = max(MIN_MINUTES_FOR_EXPOSURE, float(player.get("minutes_projection") or 0.0))
+        history = player_history(model, pid, by_player.get(pid, []))
+        expected[pid] = expected_injury_games_82(model, player, traits.get(pid, {}), minutes, history, on)
+    if not expected:
+        return dict(legacy_scores)
+
+    def ranks(values: Mapping[str, float]) -> dict[str, float]:
+        ordered = sorted(values.values())
+        n = len(ordered)
+        return {pid: (bisect.bisect_left(ordered, v) + bisect.bisect_right(ordered, v) - 1) / 2.0 / max(1, n - 1)
+                for pid, v in values.items()}
+
+    model_rank = ranks(expected)
+    # Basketball Index's 2026-27 forecast for real players (validated: rank r 0.66 vs outcomes) gets 70% weight in the
+    # first season, halving each later season; our model (r 0.52 vs those forecasts) carries the rest and all generated players.
+    forecast = {pid: float(v) for pid, v in (model.get("player_forecast_2026_27") or {}).items() if pid in expected}
+    forecast_rank = ranks(forecast) if len(forecast) >= 30 else {}
+    seasons_on = max(0, on.year - 2026 - (1 if on.month < 7 else 0))
+    weight = 0.7 * 0.5 ** seasons_on
+    blended = {pid: (1 - weight) * r + weight * forecast_rank[pid] if pid in forecast_rank else r for pid, r in model_rank.items()}
+    final_rank = ranks(blended)
+    target = sorted(legacy_scores[pid] for pid in expected)
+    n = len(target)
+    return {pid: round(target[min(n - 1, max(0, int(round(r * (n - 1)))))], 3) for pid, r in final_rank.items()}
