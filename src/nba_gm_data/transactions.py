@@ -812,7 +812,33 @@ def trade_search_context(canonical: dict[str, Any]) -> dict[str, Any]:
     forecast = ForecastSnapshot(canonical)
     return {**canonical, '_trade_search_roles': {}, '_trade_search_rosters': {},
             '_trade_financial_facts': {}, '_trade_movement_classes': {}, '_pick_presentation_memo': {},
+            '_trade_search_market_values': {},
+            '_trade_search_exact_memo': {'base_sources': (canonical.get('players'), canonical.get('draft_picks'),
+                                                          canonical.get('pick_obligations'), canonical.get('teams'))},
             '_roster_forecast_snapshot': forecast, '_roster_forecast_stats': forecast.stats}
+
+
+# Exact memos for one immutable trade search (see trade_search_context; deadline-speed.md). They are attached
+# only to search contexts, whose league objects are never edited while the search runs. Each entry keeps the
+# objects it was computed from and is used only when the caller passes those very objects again.
+def _search_market_value(canonical: dict[str, Any], player: dict[str, Any] | None, valuation: dict[str, Any]) -> float:
+    memo = canonical.get('_trade_search_market_values')
+    if memo is None or not player:
+        return market_trade_target_value(player, valuation)
+    entry = memo.get(player.get('id'))
+    if entry is not None and entry[0] is player and entry[1] is valuation:
+        return entry[2]
+    value = market_trade_target_value(player, valuation)
+    memo[player.get('id')] = (player, valuation, value)
+    return value
+
+
+def _search_team_rows(canonical: dict[str, Any], team_id: str | None) -> list[dict[str, Any]] | None:
+    """The team's player records in league order from the search's forecast index, or None outside a search."""
+    forecast = canonical.get('_roster_forecast_snapshot')
+    if forecast is None or canonical.get('players') is not forecast.players_source:
+        return None
+    return [player for _, player in forecast.teams.get(team_id, ())]
 
 
 def simulate_ai_trades(canonical: dict[str, Any] | Any, from_date: str, through_date: str, seed: int = 1, limit: int = 10, config: dict[str, Any] | None = None, *, search_depth: int = 1, reserve_assets: bool = False, include_private_targets: bool = True, involving_team_ids: set[str] | None = None, review=None) -> dict[str, Any]:
@@ -4192,6 +4218,34 @@ def trade_salary_legality(canonical: dict[str, Any], proposal: TradeProposal, co
 
 
 def normalize_assets(canonical: dict[str, Any], team: dict[str, Any], assets: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Resolve asset specs to trade assets. Inside one trade search the same specs are resolved for every package
+    (the target for every buyer, each buyer's players and picks), against the same unchanged league lists, so the
+    result is kept per (league lists, team, specs). Each caller gets its own asset dicts."""
+    memo = canonical.get('_trade_search_exact_memo')
+    if memo is None:
+        return _normalize_assets(canonical, team, assets)
+    base = memo.get('base_sources')
+    sources = (canonical.get('players'), canonical.get('draft_picks'), canonical.get('pick_obligations'),
+               canonical.get('teams'))
+    # Only the search's own league lists (the memo holds them alive); pick-term previews use their own copies.
+    if base is None or not all(a is b for a, b in zip(base, sources)):
+        return _normalize_assets(canonical, team, assets)
+    try:
+        key = (team['id'], json.dumps(assets, sort_keys=True))
+    except (TypeError, ValueError):
+        return _normalize_assets(canonical, team, assets)
+    table = memo.setdefault('normalized_assets', {})
+    cached = table.get(key)
+    if cached is not None:
+        return [dict(asset) for asset in cached]
+    result = _normalize_assets(canonical, team, assets)
+    if len(table) >= 4096:
+        table.clear()
+    table[key] = [dict(asset) for asset in result]
+    return result
+
+
+def _normalize_assets(canonical: dict[str, Any], team: dict[str, Any], assets: list[dict[str, Any]]) -> list[dict[str, Any]]:
     from .pick_presentation import pick_presentation, swap_presentation
 
     normalized = []
@@ -4400,8 +4454,11 @@ def contention_ceiling(canonical: dict[str, Any], team: dict[str, Any], team_val
     key = _contention_memo_key(canonical, team)
     if key is not None and key in _CONTENTION_MEMO and not _CONTENTION_AUDIT:
         return _CONTENTION_MEMO[key]
-    team_features = team_feature_vector(strategic_rotation_view(canonical, team['id']), team, include_spatial=False).features
-    value = contention_from_features(team_features)
+    view = strategic_rotation_view(canonical, team['id'])
+    # The view carries the strength it was chosen by (non-spatial team features read only the team id).
+    value = view.get('_strategic_contention')
+    if value is None:
+        value = contention_from_features(team_feature_vector(view, team, include_spatial=False).features)
     if key is not None:
         if _CONTENTION_AUDIT and key in _CONTENTION_MEMO and _CONTENTION_MEMO[key] != value:
             raise AssertionError(f"contention memo disagrees for {team['id']}: {_CONTENTION_MEMO[key]} != {value}")
@@ -4460,6 +4517,32 @@ def contention_from_features(team_features: dict[str, float]) -> float:
     return clamp(ceiling, 1, 99)
 
 
+def _rotation_strength(forecast: Any, view: dict[str, Any], team: dict[str, Any]) -> float:
+    """contention_from_features(team_feature_vector(view, team, include_spatial=False)) for a forecast view.
+
+    Hypothetical trades that leave a team's top rotation unchanged produce the same candidate rotations again
+    (about half of all calls at the deadline). Within one forecast snapshot the non-spatial team features depend
+    only on the rotation's player records (which carry their minutes), the team id and the league meta; the
+    snapshot's own trait and feature tables are fixed. So the strength is kept per (team id, pickled player
+    records) and league meta object. Equal pickles mean equal records."""
+    from .sim import team_feature_vector
+    memo = forecast.__dict__.setdefault('_rotation_strengths', {})
+    try:
+        key = (team['id'], pickle.dumps(view['players'], protocol=pickle.HIGHEST_PROTOCOL))
+    except (pickle.PicklingError, TypeError, AttributeError):
+        key = None
+    meta = view.get('meta')
+    entry = memo.get(key) if key is not None else None
+    if entry is not None and entry[0] is meta:
+        return entry[1]
+    score = contention_from_features(team_feature_vector(view, team, include_spatial=False).features)
+    if key is not None:
+        if len(memo) >= 20_000:
+            memo.clear()
+        memo[key] = (meta, score)  # the entry keeps the meta object alive, so the identity check stays sound
+    return score
+
+
 def strategic_rotation_view(canonical: dict[str, Any], team_id: str) -> dict[str, Any]:
     """Forecast a healthy two-deep roster, not minutes carried from old teams."""
     from .save import ai_role_targets, bounded_minutes_allocation, player_attribute_summary, round_minutes_to_total
@@ -4492,9 +4575,13 @@ def strategic_rotation_view(canonical: dict[str, Any], team_id: str) -> dict[str
         # rotations change only scalars on their own player dictionaries.
         view = forecast.view(trial, [dict(p, minutes_projection=allocation[p['id']])
                                     for p in roster if p['id'] in ids])
-        score = contention_from_features(team_feature_vector(view, team, include_spatial=False).features)
+        score = _rotation_strength(forecast, view, team)
         candidates.append((score, count, view))
-    return max(candidates, key=lambda row: (row[0], row[1]))[2]
+    score, _, chosen = max(candidates, key=lambda row: (row[0], row[1]))
+    # Its contention strength, for callers that score this exact view again (trade_roster.roster_projection).
+    # forecast.view() drops private keys, so a re-built view never carries it.
+    chosen['_strategic_contention'] = score
+    return chosen
 
 
 def youth_pipeline_score(players: list[dict[str, Any]], team_values: list[PlayerAssetValuation]) -> float:
@@ -4761,7 +4848,7 @@ def package_value_components(
             player = player_by_id(canonical, asset["id"])
             value = valuation_or_fallback(values, asset["id"], player)
             multiplier = multipliers.get(asset["id"], 1.0)
-            player_value = market_trade_target_value(player, value)
+            player_value = _search_market_value(canonical, player, value)
             adjusted = (player_value + team_fit_for_player(player, value, state, canonical, include_spatial=False)) * multiplier
             adjusted -= max(0.0, float(value.get("health_risk") or 0.0) - 12.0) * 0.25
             adjusted += recently_acquired_player_premium(canonical, player, perspective_team_id, player_value)
@@ -4848,7 +4935,8 @@ def destination_role_multipliers(
     incoming_ids = {player['id'] for player in incoming_players}
     moving_ids = outgoing_ids | incoming_ids
     roster_values = []
-    for player in canonical.get("players", []):
+    team_rows = _search_team_rows(canonical, perspective_team_id)
+    for player in (canonical.get("players", []) if team_rows is None else team_rows):
         if player.get("team_id") != perspective_team_id or player.get("id") in moving_ids:
             continue
         valuation = valuation_or_fallback(values, player["id"], player)
@@ -5521,7 +5609,8 @@ def resolve_player(canonical: dict[str, Any], query: str, team_id: str | None = 
     needle = normalize_name(query)
     players = canonical.get("players", [])
     if team_id:
-        players = [player for player in players if player["team_id"] == team_id]
+        team_rows = _search_team_rows(canonical, team_id)
+        players = [player for player in (players if team_rows is None else team_rows) if player["team_id"] == team_id]
     exact = next((p for p in players if p['id'] == query), None)
     if exact is not None:
         return exact

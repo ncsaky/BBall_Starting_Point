@@ -56,6 +56,8 @@ _GENERATED_CACHE: dict[tuple[str, str], dict[str, Any]] = {}
 # (fitted key, player id, base-inputs identity, sorted input deltas) -> (base inputs, derived traits)
 _DERIVED_CACHE: dict[tuple[Any, ...], tuple[dict[str, Any], dict[str, float]]] = {}
 _DERIVED_CACHE_LIMIT = 50_000
+_EFFECTIVE_CACHE: dict[tuple[Any, ...], tuple[dict[str, Any], dict[str, Any]]] = {}
+_EFFECTIVE_CACHE_LIMIT = 8_192
 
 
 def ratings_model_for(save: Mapping[str, Any] | None = None) -> str:
@@ -344,7 +346,19 @@ def _effective(model: Mapping[str, Any], player_id: str) -> dict[str, Any] | Non
     if base is None:
         return None
     deltas = (model.get("input_deltas") or {}).get(player_id)
-    return apply_input_deltas(base, deltas) if deltas else base
+    if not deltas:
+        return base
+    # apply_input_deltas is a pure function of (base inputs, deltas). Base and generated records are cached for the
+    # process and never edited (the result is already shared like the base when a player has no deltas), so the
+    # result is kept per (base object, delta values) and handed out again. Callers only read these records.
+    key = (player_id, tuple(deltas.items()))
+    cached = _EFFECTIVE_CACHE.get(key)
+    if cached is None or cached[0] is not base:
+        cached = (base, apply_input_deltas(base, deltas))
+        if len(_EFFECTIVE_CACHE) >= _EFFECTIVE_CACHE_LIMIT:
+            _EFFECTIVE_CACHE.pop(next(iter(_EFFECTIVE_CACHE)))
+        _EFFECTIVE_CACHE[key] = cached
+    return cached[1]
 
 
 def _rederive(canonical: dict[str, Any], player_ids: Iterable[str]) -> dict[str, dict[str, float]]:
@@ -375,6 +389,24 @@ def _rederive(canonical: dict[str, Any], player_ids: Iterable[str]) -> dict[str,
     return derived
 
 
+_ROUTED_CACHE: dict[tuple[Any, ...], tuple[Mapping[str, Any], dict[str, float]]] = {}
+
+
+def _routed_deltas(base: Mapping[str, Any], trait_deltas: Mapping[str, float]) -> dict[str, float]:
+    """route_trait_deltas for a cached (never edited) base record set, kept per (base object, trait deltas).
+
+    Every league rebuild replays the whole season's development for every player; the routing of the same totals
+    onto the same base inputs gives the same grade deltas each time."""
+    key = (id(base), tuple(trait_deltas.items()))
+    cached = _ROUTED_CACHE.get(key)
+    if cached is None or cached[0] is not base:
+        cached = (base, route_trait_deltas(base, trait_deltas))
+        if len(_ROUTED_CACHE) >= _EFFECTIVE_CACHE_LIMIT:
+            _ROUTED_CACHE.pop(next(iter(_ROUTED_CACHE)))
+        _ROUTED_CACHE[key] = cached
+    return cached[1]
+
+
 def apply_development(canonical: dict[str, Any], totals: Mapping[str, Mapping[str, float]] | None,
                       events: Iterable[Mapping[str, Any]] | None) -> None:
     """Inputs-model replacement for the legacy development-to-traits helpers."""
@@ -385,7 +417,7 @@ def apply_development(canonical: dict[str, Any], totals: Mapping[str, Mapping[st
         if base is None:
             continue
         accumulated = model["input_deltas"].setdefault(pid, {})
-        for input_id, delta in route_trait_deltas(base, trait_deltas).items():
+        for input_id, delta in _routed_deltas(base, trait_deltas).items():
             accumulated[input_id] = round(accumulated.get(input_id, 0.0) + delta, 6)
         touched.append(pid)
     _rederive(canonical, touched)

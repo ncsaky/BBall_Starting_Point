@@ -197,12 +197,29 @@ def match_want(canonical, team_id, want, asset, *, acquired=False):
             'reasons': reasons or ['Matches all requested conditions.']}
 
 
+def _entries_json(canonical, entries):
+    """json.dumps(entries, sort_keys=True), kept per wants list inside one trade search (whose league,
+    including every team's wants, is never edited while the search runs)."""
+    memo = canonical.get('_trade_search_exact_memo')
+    if memo is None:
+        return json.dumps(entries, sort_keys=True)
+    table = memo.setdefault('wants_json', {})
+    cached = table.get(id(entries))
+    if cached is not None and cached[0] is entries:
+        return cached[1]
+    text = json.dumps(entries, sort_keys=True)
+    if len(table) >= 256:
+        table.clear()
+    table[id(entries)] = (entries, text)  # the entry keeps the list alive, so its id stays unique
+    return text
+
+
 def asset_matches(canonical, team_id, asset):
     entries = wants_for_team(canonical, team_id)
     if not entries:
         return []
     cache = canonical.setdefault('_trade_wants_match_cache', {}) if canonical.get('_allow_internal_caches') else {}
-    signature = (team_id, asset.get('kind'), asset.get('id'), json.dumps(entries, sort_keys=True),
+    signature = (team_id, asset.get('kind'), asset.get('id'), _entries_json(canonical, entries),
                  (canonical.get('meta') or {}).get('current_date'))
     if signature not in cache:
         result = []

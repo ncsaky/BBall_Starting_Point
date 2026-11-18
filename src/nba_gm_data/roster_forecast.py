@@ -24,6 +24,20 @@ class ForecastMemo(dict):
         self.stats[self.name + '.peak'] = max(self.stats[self.name + '.peak'], len(self))
 
 
+_NOT_INDEXED = object()
+
+
+def first_player_row(canonical, rows, player_id):
+    """The first row of ``rows`` for this player (or None), using the forecast snapshot's index when ``rows`` is
+    one of its source lists. A snapshot's sources are never edited while it is in use."""
+    forecast = canonical.get('_roster_forecast_snapshot') if hasattr(canonical, 'get') else None
+    if forecast is not None:
+        found = forecast.first_row(rows, player_id)
+        if found is not _NOT_INDEXED:
+            return found
+    return next((row for row in rows if row.get('player_id') == player_id), None)
+
+
 class ForecastSnapshot:
     """Read-only source indexes; create anew whenever authoritative inputs change."""
     def __init__(self, canonical):
@@ -46,8 +60,11 @@ class ForecastSnapshot:
                 value = trait.get('value')
                 self.trait_values.setdefault(pid, {})[key] = float(value if value is not None else 50.0)
         self.contracts = {c['player_id']: c for c in canonical.get('contracts', [])}
+        self.contracts_source = canonical.get('contracts', [])
         self.health = {}
         saved = canonical.get('_trade_planning_save') or {'health_states': canonical.get('player_health_states') or []}
+        self.health_source = saved.get('health_states', [])
+        self._first_rows = {}
         for ordinal, health in enumerate(saved.get('health_states', [])):
             self.health.setdefault(health.get('player_id'), []).append((ordinal, health))
         self.features = ForecastMemo(8192, self.stats, 'features')
@@ -56,6 +73,23 @@ class ForecastSnapshot:
         self.stats.update(players_indexed=len(self.players_source),
                           traits_indexed=len(canonical.get('traits', [])),
                           contracts_indexed=len(canonical.get('contracts', [])))
+
+    def first_row(self, rows, player_id):
+        """next((r for r in rows if r.get('player_id') == player_id), None) for this snapshot's own contract or
+        health rows (by identity), from an index built once; _NOT_INDEXED for any other list."""
+        if rows is self.contracts_source:
+            name = 'contracts'
+        elif rows is self.health_source:
+            name = 'health'
+        else:
+            return _NOT_INDEXED
+        index = self._first_rows.get(name)
+        if index is None:
+            index = {}
+            for row in rows:
+                index.setdefault(row.get('player_id'), row)
+            self._first_rows[name] = index
+        return index.get(player_id)
 
     def roster(self, team_id, outgoing_ids=(), incoming_ids=()):
         rows = {ordinal: player for ordinal, player in self.teams.get(team_id, ())}

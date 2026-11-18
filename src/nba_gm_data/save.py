@@ -6652,6 +6652,33 @@ def apply_materialized_development_to_traits(
     apply_development_trait_totals_to_traits(canonical, combined)
 
 
+_SLOT_BITS = tuple((slot, 1 << slot) for slot in range(5))
+_SLOT_ROW_FIELDS = ("overall", "creation", "create", "passing", "spacing", "shooting", "defense", "rebounding",
+                    "rebound", "rim_protection", "rim_deterrence")
+_SLOT_ROWS: dict[tuple[Any, ...], tuple[tuple[float, ...], tuple[bool, ...]]] = {}
+
+
+def _slot_score_row(player: dict[str, Any], attrs: dict[str, Any]) -> tuple[tuple[float, ...], tuple[bool, ...]]:
+    """starting_slot_score(player, slot, 0, attrs) for slots 1-5 and whether the position fits each slot.
+
+    Remembered by every input those two read: position, height fields and the listed summary fields."""
+    key = (player.get("position"), player.get("height_inches"), player.get("height"),
+           *(attrs.get(field) for field in _SLOT_ROW_FIELDS))
+    try:
+        row = _SLOT_ROWS.get(key)
+    except TypeError:  # an unhashable input: compute without remembering
+        key, row = None, None
+    if row is None:
+        tokens = player_position_tokens(player)
+        row = (tuple(starting_slot_score(player, str(slot + 1), 0, attrs) for slot in range(5)),
+               tuple(any(token in STARTING_FIVE_SLOT_FITS[str(slot + 1)] for token in tokens) for slot in range(5)))
+        if key is not None:
+            if len(_SLOT_ROWS) >= 50_000:
+                _SLOT_ROWS.clear()
+            _SLOT_ROWS[key] = row
+    return row
+
+
 def ai_role_targets(
     canonical: dict[str, Any], roster: list[dict[str, Any]], priors: dict[str, float],
     *, opening_workloads: dict[str, float] | None = None,
@@ -6662,25 +6689,36 @@ def ai_role_targets(
     remaining = sorted(roster, key=lambda p: p["id"])
     groups = []
     for _ in range(2):
-        # Five-slot assignment is a tiny exact DP, not roster permutations.
-        states: dict[int, tuple[float, tuple[str, ...]]] = {0: (0.0, ("",) * 5)}
+        # Five-slot assignment is a tiny exact DP, not roster permutations. Masks are kept in the order they
+        # were first reached (the order a dict would iterate them), each player extends a snapshot of the
+        # states, and a state is replaced only by a strictly better total, so ties resolve as they always have.
+        order = [0]
+        best_score: list[float | None] = [None] * 32
+        best_assignment: list[tuple[str, ...] | None] = [None] * 32
+        best_score[0], best_assignment[0] = 0.0, ("",) * 5
         for player in remaining:
             pid = player["id"]
-            scores = [starting_slot_score(player, str(slot + 1), 0, attrs[pid]) + quality[pid] * .66 for slot in range(5)]
+            q = quality[pid] * .66
+            base, fits = _slot_score_row(player, attrs[pid])
+            scores = [base[slot] + q for slot in range(5)]
             for slot in range(5):
-                if not any(token in STARTING_FIVE_SLOT_FITS[str(slot + 1)] for token in player_position_tokens(player)):
+                if not fits[slot]:
                     scores[slot] -= 1_000
-            for mask, (score, assignment) in list(states.items()):
-                for slot in range(5):
-                    if mask & (1 << slot):
+            for mask, score, assignment in [(m, best_score[m], best_assignment[m]) for m in order]:
+                for slot, bit in _SLOT_BITS:
+                    if mask & bit:
                         continue
-                    new_mask = mask | (1 << slot)
+                    new_mask = mask | bit
                     total = score + scores[slot]
-                    previous = states.get(new_mask)
-                    if previous is None or total > previous[0]:
-                        states[new_mask] = (total, assignment[:slot] + (pid,) + assignment[slot + 1:])
-        full_mask = max(states, key=lambda mask: (mask.bit_count(), states[mask][0]))
-        assignment = states[full_mask][1]
+                    previous = best_score[new_mask]
+                    if previous is None:
+                        order.append(new_mask)
+                    elif not total > previous:
+                        continue
+                    best_score[new_mask] = total
+                    best_assignment[new_mask] = assignment[:slot] + (pid,) + assignment[slot + 1:]
+        full_mask = max(order, key=lambda mask: (mask.bit_count(), best_score[mask]))
+        assignment = best_assignment[full_mask]
         groups.append(assignment)
         chosen = set(assignment) - {""}
         remaining = [p for p in remaining if p["id"] not in chosen]
@@ -7576,7 +7614,8 @@ def _uncached_player_attribute_summary(canonical: dict[str, Any], player_id: str
 
 
 def player_salary_table(canonical: dict[str, Any], player_id: str) -> dict[str, float | None]:
-    contract = next((item for item in canonical.get("contracts", []) if item.get("player_id") == player_id), None)
+    from .roster_forecast import first_player_row
+    contract = first_player_row(canonical, canonical.get("contracts", []), player_id)
     if not contract:
         return {}
     output: dict[str, float | None] = {}

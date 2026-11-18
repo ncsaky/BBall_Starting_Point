@@ -135,10 +135,11 @@ def waiver_projection(canonical, save, player, team_id, stamp=None):
     today = date.fromisoformat(stamp)
     clearance = today + timedelta(days=2)
     current_start = today.year if today.month >= 7 else today.year-1
-    contract = next((c for c in canonical.get('contracts', []) if c['player_id'] == player['id']), {})
+    from .roster_forecast import first_player_row
+    contract = first_player_row(canonical, canonical.get('contracts', []), player['id']) or {}
     rows = []
     unquantified = not contract
-    health = next((h for h in save.get('health_states', []) if h.get('player_id') == player['id']), {})
+    health = first_player_row(canonical, save.get('health_states', []), player['id']) or {}
     injury_review = health.get('availability_status') == 'out' and (not health.get('return_date') or str(health['return_date']) > stamp)
     for row in contract.get('seasons', []):
         label, salary = str(row.get('season') or ''), row.get('salary')
