@@ -25,9 +25,28 @@ INPUTS_V1 = "inputs_v1"
 MODES = (LEGACY, INPUTS_V1)
 INPUTS_FILE = "data/canonical/player_inputs_2026_27.json"
 MODEL_KEY = "_ratings_model"
-# Development deltas are in trait points; one trait point maps to this many input grade points per unit of
-# that input's share of the trait. 1.0 keeps a growth event's size on the same 0-100 scale.
-GRADE_POINTS_PER_TRAIT_POINT = 1.0
+# Development deltas are in trait points. Each movable input moves by the weighted mean of the deltas of the
+# traits that use it (an unchanged trait counts as zero), times this many grade points per trait point.
+# The routing keeps LEVELS: when every trait gains a point, every input gains the same amount. (It used to split
+# each trait's delta across its inputs, so +1 on all 15 traits added ~+0.2 to a typical input and young players
+# barely grew in the new ratings.) The value makes a uniform one-point gain move the card overall by about as much
+# as in the legacy ratings (median over real players), so both rating sets develop at the size the growth model
+# was tuned for. Measured by scripts/research/prospect_realism_routing.py.
+GRADE_POINTS_PER_TRAIT_POINT = 0.41
+# Involvement (T08, true usage share) follows offensive skill as a player develops. Real draftees' true usage rises
+# a median +3 to +7 points from year 1 to year 4 (Basketball Index leaderboards, 2013-2022 classes) as their games
+# grow; veterans' usage falls as their skills fade. Slope: league cross-section of measured true usage on the mean
+# of the creation, shooting, finishing and pass-reading grade groups (567 players with measured usage, r = 0.74;
+# scripts/research/prospect_realism.py involvement-slope). Only the part explained by skill moves; the rest of a
+# player's involvement preference stays his own.
+INVOLVEMENT_PER_SKILL_GRADE = 0.0093
+INVOLVEMENT_SKILL_GROUPS = (
+    tuple(f"S{n:02d}" for n in (16, 17, 18, 19, 20, 24)),      # creation
+    tuple(f"S{n:02d}" for n in range(1, 10)),                  # shooting
+    tuple(f"S{n:02d}" for n in range(10, 16)),                 # finishing
+    tuple(f"F{n:02d}.recognition" for n in range(1, 10)),      # pass reading
+)
+INVOLVEMENT_BOUNDS = (0.05, 0.65)
 
 # Large, immutable tables live here, not inside the canonical dict, because parts of the game deep-copy
 # the active universe; the canonical only carries small cache keys plus developed players' inputs.
@@ -100,22 +119,54 @@ def is_placeholder_trait(trait: Mapping[str, Any]) -> bool:
 def route_trait_deltas(inputs: Mapping[str, Any], trait_deltas: Mapping[str, float]) -> dict[str, float]:
     """Spread trait-point deltas onto the grade inputs behind each trait, by adapter weight.
 
-    Only grade-kind inputs move: measurements (height, wingspan), propensities and tendency mixes are not
-    changed by the legacy growth model.
+    Technique grades and physical-capacity grades (speed, agility, strength, balance, vertical, conditioning,
+    recovery) move: young players get stronger and better conditioned, veterans lose speed and burst. Body
+    dimensions (height, wingspan, reach, mass), propensities and tendency mixes are not changed by growth.
     """
-    out: dict[str, float] = {}
+    weighted: dict[str, float] = {}
     for trait, delta in trait_deltas.items():
         try:
             weights = trait_input_weights(trait)
         except KeyError:
             continue
-        movable = {i: w for i, w in weights.items() if _is_grade(inputs.get(i))}
-        total = sum(movable.values())
-        if not total:
-            continue
-        for input_id, weight in movable.items():
-            out[input_id] = out.get(input_id, 0.0) + float(delta) * GRADE_POINTS_PER_TRAIT_POINT * weight / total
+        for input_id, weight in weights.items():
+            if _grade_field(input_id, inputs.get(input_id)):
+                weighted[input_id] = weighted.get(input_id, 0.0) + float(delta) * weight
+    totals = _input_trait_weight_totals()
+    out = {input_id: GRADE_POINTS_PER_TRAIT_POINT * value / totals[input_id]
+           for input_id, value in weighted.items() if value}
+    involvement = _involvement_delta(inputs, out)
+    if involvement:
+        out["T08"] = involvement
     return out
+
+
+_WEIGHT_TOTALS: dict[str, float] = {}
+
+
+def _input_trait_weight_totals() -> dict[str, float]:
+    """Sum over all 15 traits of each input's share of the trait (the denominator of the level-keeping mean)."""
+    if not _WEIGHT_TOTALS:
+        from .trait_adapter import LEGACY_TRAITS
+        for trait in LEGACY_TRAITS:
+            for input_id, weight in trait_input_weights(trait).items():
+                _WEIGHT_TOTALS[input_id] = _WEIGHT_TOTALS.get(input_id, 0.0) + weight
+    return _WEIGHT_TOTALS
+
+
+def _involvement_delta(inputs: Mapping[str, Any], grade_deltas: Mapping[str, float]) -> float:
+    """Change in involvement (T08) implied by this development's change in offensive skill (see the slope note)."""
+    record = inputs.get("T08") or {}
+    if not isinstance(record.get("value"), dict) or "probability" not in record["value"]:
+        return 0.0
+    group_changes = []
+    for group in INVOLVEMENT_SKILL_GROUPS:
+        present = [i for i in group if _is_grade(inputs.get(i))]
+        if present:
+            group_changes.append(sum(grade_deltas.get(i, 0.0) for i in present) / len(present))
+    if not group_changes:
+        return 0.0
+    return INVOLVEMENT_PER_SKILL_GRADE * sum(group_changes) / len(group_changes)
 
 
 def _is_grade(record: Mapping[str, Any] | None) -> bool:
@@ -123,15 +174,46 @@ def _is_grade(record: Mapping[str, Any] | None) -> bool:
     return isinstance(value, dict) and "grade" in value and record.get("status") != "unknown"
 
 
+# Body dimensions are fixed for development purposes; the other physical families are trainable capacities.
+BODY_DIMENSIONS = frozenset({"P01", "P02", "P03", "P04"})
+
+
+def _grade_field(input_id: str, record: Mapping[str, Any] | None) -> str | None:
+    """Which stored grade development moves for this input: a technique "grade", a physical capacity's
+    "display_grade" (the value the adapter and the player card read), or None (not moved)."""
+    if _is_grade(record):
+        return "grade"
+    value = (record or {}).get("value")
+    if (str(input_id)[:1] == "P" and input_id not in BODY_DIMENSIONS and isinstance(value, dict)
+            and isinstance(value.get("display_grade"), dict) and "grade" in value["display_grade"]
+            and record.get("status") != "unknown"):
+        return "display_grade"
+    return None
+
+
 def apply_input_deltas(inputs: Mapping[str, Any], deltas: Mapping[str, float]) -> dict[str, Any]:
-    """Return new input records with grade deltas applied. Grades stay within 0-100 (the schema range)."""
+    """Return new input records with grade deltas applied. Grades stay within 0-100 (the schema range);
+    involvement (T08) moves within INVOLVEMENT_BOUNDS."""
     out = dict(inputs)
     for input_id, delta in deltas.items():
         record = out.get(input_id)
-        if not _is_grade(record) or not delta:
+        if input_id == "T08" and delta and isinstance((record or {}).get("value"), dict) and "probability" in record["value"]:
+            low, high = INVOLVEMENT_BOUNDS
+            current = float(record["value"]["probability"])
+            # Bound the move only; a value already outside the bounds is never pushed across them.
+            moved = min(max(current + delta, min(low, current)), max(high, current))
+            out[input_id] = {**record, "value": {**record["value"], "probability": round(moved, 6)}}
             continue
-        grade = max(0.0, min(100.0, float(record["value"]["grade"]) + delta))
-        out[input_id] = {**record, "value": {**record["value"], "grade": round(grade, 3)}}
+        field = _grade_field(input_id, record)
+        if not field or not delta:
+            continue
+        if field == "grade":
+            grade = max(0.0, min(100.0, float(record["value"]["grade"]) + delta))
+            out[input_id] = {**record, "value": {**record["value"], "grade": round(grade, 3)}}
+        else:
+            display = record["value"]["display_grade"]
+            grade = max(0.0, min(100.0, float(display["grade"]) + delta))
+            out[input_id] = {**record, "value": {**record["value"], "display_grade": {**display, "grade": round(grade, 3)}}}
     return out
 
 

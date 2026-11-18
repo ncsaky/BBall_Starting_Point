@@ -37,13 +37,46 @@ class PlaceholderTraitTests(unittest.TestCase):
 
 
 class RoutingTests(unittest.TestCase):
-    def test_trait_delta_spreads_over_grade_inputs_by_weight(self):
+    def test_trait_delta_moves_each_input_by_its_share_of_all_traits_using_it(self):
         inputs = {"S08": grade(50), "S03": grade(50), "S02": grade(50), "S01": grade(50)}
         deltas = rm.route_trait_deltas(inputs, {"release_speed": 4.0})
-        self.assertAlmostEqual(sum(deltas.values()), 4.0)
         from nba_gm_data.trait_adapter import trait_input_weights
-        self.assertAlmostEqual(deltas["S08"], 4.0 * trait_input_weights("release_speed")["S08"] / sum(
-            w for i, w in trait_input_weights("release_speed").items() if i in inputs))
+        totals = rm._input_trait_weight_totals()
+        for input_id in inputs:
+            share = trait_input_weights("release_speed")[input_id] / totals[input_id]
+            self.assertAlmostEqual(deltas[input_id], 4.0 * rm.GRADE_POINTS_PER_TRAIT_POINT * share)
+        # S08 (release technique) is used only by release_speed, so it takes the full step.
+        self.assertAlmostEqual(deltas["S08"], 4.0 * rm.GRADE_POINTS_PER_TRAIT_POINT)
+
+    def test_uniform_gain_moves_every_movable_input_by_the_same_amount(self):
+        from nba_gm_data.trait_adapter import LEGACY_TRAITS
+        inputs = {i: grade(50) for i in ("S01", "S08", "S17", "S33", "S37", "F01.recognition")}
+        deltas = rm.route_trait_deltas(inputs, {t: 1.0 for t in LEGACY_TRAITS})
+        for input_id in inputs:
+            self.assertAlmostEqual(deltas[input_id], rm.GRADE_POINTS_PER_TRAIT_POINT)
+
+    def test_physical_capacities_develop_but_body_dimensions_do_not(self):
+        def physical(v):
+            return {"status": "estimated", "value": {"measurements": [], "display_grade": {"grade": v, "scale": "t"}},
+                    "evidence": [{"source": "t", "method": "t"}], "uncertainty": {"confidence": "low", "notes": "{}"}}
+        inputs = {"P11": physical(50), "P12": physical(50), "P04": physical(50)}
+        deltas = rm.route_trait_deltas(inputs, {"stamina_cardio": -2.0})
+        self.assertLess(deltas["P11"], 0)
+        self.assertNotIn("P04", rm.route_trait_deltas(inputs, {"playoff_translation": 2.0}))
+        out = rm.apply_input_deltas(inputs, deltas)
+        self.assertAlmostEqual(out["P11"]["value"]["display_grade"]["grade"], 50 + deltas["P11"], places=3)
+
+    def test_involvement_follows_offensive_skill_within_bounds(self):
+        involvement = {"status": "estimated", "value": {"probability": 0.30, "reference_conditions": "t"},
+                       "evidence": [{"source": "t", "method": "t"}], "uncertainty": {"confidence": "low", "notes": "{}"}}
+        inputs = {"S17": grade(50), "S16": grade(50), "S01": grade(50), "T08": involvement}
+        up = rm.route_trait_deltas(inputs, {"handle_pressure": 3.0})
+        self.assertGreater(up["T08"], 0)
+        down = rm.route_trait_deltas(inputs, {"handle_pressure": -3.0})
+        self.assertAlmostEqual(down["T08"], -up["T08"])
+        self.assertNotIn("T08", rm.route_trait_deltas(inputs, {"rim_deterrence": 3.0}))
+        capped = rm.apply_input_deltas(inputs, {"T08": 5.0})
+        self.assertEqual(capped["T08"]["value"]["probability"], rm.INVOLVEMENT_BOUNDS[1])
 
     def test_measurements_are_never_moved_by_development(self):
         height = {"status": "estimated", "value": {"measurements": [{"value": 200.0, "unit": "cm"}]},
