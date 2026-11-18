@@ -275,8 +275,14 @@ def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any], *, 
     features["fta_per_point"] = box_rates.fta_per_point_from_traits(trait_values)
     from .ratings_model import effective_inputs, uses_inputs_model
     if uses_inputs_model(canonical):
+        # New ratings: each player's share of his team's points follows a fit to real points per 36
+        # (box_rates.POINTS_INPUTS); see distribute_player_lines. Old ratings keep the hand-tuned scoring weights.
+        features["points_per36"] = box_rates.points_per36_from_traits(trait_values)
         player_inputs = effective_inputs(canonical, player["id"])
         if player_inputs:
+            points = box_rates.points_per36_from_inputs(player_inputs)
+            if points is not None:
+                features["points_per36"] = points
             playmaking = playmaking_assists_per36(player_inputs)
             if playmaking is not None:
                 features["playmaking_ast36"] = playmaking
@@ -1019,6 +1025,10 @@ def health_adjusted_player_features(features: dict[str, float], item: dict[str, 
             adjusted[key] = clamp(float(adjusted[key]) - penalty * weight, 1, 99)
         else:
             adjusted[key] = clamp(float(adjusted[key]) + penalty * abs(weight), 1, 99)
+    if adjusted.get("points_per36") is not None:
+        # Fitted scoring rate (new ratings): ~1.2% fewer points per penalty point, about what the scoring-usage
+        # weight above does to the old scoring weights.
+        adjusted["points_per36"] = float(adjusted["points_per36"]) * (1.0 - penalty * 0.012)
     if features.get('offense_model_version'):
         for key, weight in (('two_pct', .0018), ('three_pct', .0012), ('ft_pct', .0006)):
             adjusted[key] = clamp(float(adjusted[key])-penalty*weight, .20, .95)
@@ -1221,10 +1231,20 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
         item["player"]["id"]: health_adjusted_player_features(player_feature_vector(canonical, item["player"]).features, item)
         for item in pool
     }
-    weights = [scoring_weight(item, features[item["player"]["id"]],
-               feeder=support_passing(pool, features, item['player']['id'])
-               if features[item['player']['id']].get('offense_model_version') else 50) for item in pool]
-    scoring_expectations = scoring_expectations_with_caps(pool, features, team_points, weights)
+    if pool and all(features[item["player"]["id"]].get("points_per36") is not None for item in pool):
+        # New ratings: each player's expected share of the team's points is his fitted points per 36
+        # (box_rates.POINTS_INPUTS, out-of-fold r 0.93 with real 2025-26 scoring) times his minutes. The old
+        # hand-tuned weights and per-player caps held stars well under their real scoring (Wembanyama 20.5 per 36
+        # vs 30.8, Porter Jr. 18.6 vs 26.8) and gave low-usage starters too much (2026-11-18).
+        weights = [max(0.0, float(item.get("minutes") or 0.0)) * float(features[item["player"]["id"]]["points_per36"]) / 36.0
+                   for item in pool]
+        weight_total = sum(weights) or 1.0
+        scoring_expectations = [team_points * weight / weight_total for weight in weights]
+    else:
+        weights = [scoring_weight(item, features[item["player"]["id"]],
+                   feeder=support_passing(pool, features, item['player']['id'])
+                   if features[item['player']['id']].get('offense_model_version') else 50) for item in pool]
+        scoring_expectations = scoring_expectations_with_caps(pool, features, team_points, weights)
     point_values = []
     for index, item in enumerate(pool):
         minutes = float(item.get("minutes") or 0.0)

@@ -35,7 +35,15 @@ ASSISTS_INPUTS = {"constant": 3.05475, "log T01.pass": 0.7642, "log T08": 0.2827
 STEALS_INPUTS = {"constant": -0.76884, "S43": 0.01181, "S42": 0.00667}  # r 0.92
 FTA_PER_POINT_INPUTS = {"constant": -0.78847, "log T18": 2.35318, "S24": 0.00939, "log T08": -0.56596}  # r 0.87
 
-TURNOVERS_TRAITS = {"constant": -0.26686, "passing_reads": 0.01344, "rim_pressure": 0.01062, "scheme_iq": -0.00717}  # r 0.67
+# Points per 36: involvement (T08), shoot-first vs pass-first choices (T01 shoot +, pass -), close-range touch (S10)
+# and contact seeking (T18, free throws). Sets each player's share of the team's points (sim.distribute_player_lines).
+POINTS_INPUTS = {"constant": 3.86525, "log T08": 0.88789, "log T01.pass": -0.29853, "log T01.shoot": 0.3423,
+                 "S10": 0.00396, "log T18": 0.31019}  # r 0.93
+# Fallback for new-ratings players without inputs (generated draftees, unmatched box-score names).
+POINTS_TRAITS = {"constant": 1.71917, "handle_pressure": 0.0082, "shot_versatility": 0.00591, "rim_pressure": 0.00507,
+                 "shooting_range": 0.00155}  # r 0.78
+
+TURNOVERS_TRAITS ={"constant": -0.26686, "passing_reads": 0.01344, "rim_pressure": 0.01062, "scheme_iq": -0.00717}  # r 0.67
 # The old traits carry little steal signal (the engine's former defensive-activity formula: r 0.38). Effort and
 # screen navigation raise steals; rim protectors (rim_deterrence) stay home and get fewer.
 STEALS_TRAITS = {"constant": -0.20996, "defensive_effort": 0.00604, "screen_navigation": 0.00423, "rim_deterrence": -0.00382}  # r 0.44
@@ -91,6 +99,10 @@ def _from_inputs(model: Mapping[str, float], inputs: Mapping[str, Any] | None, l
     return None if rate is None else round(clamp(rate, low, high), 4)
 
 
+def points_per36_from_inputs(inputs: Mapping[str, Any] | None) -> float | None:
+    return _from_inputs(POINTS_INPUTS, inputs, 3.0, 40.0)
+
+
 def turnovers_per36_from_inputs(inputs: Mapping[str, Any] | None) -> float | None:
     return _from_inputs(TURNOVERS_INPUTS, inputs, 0.4, 7.0)
 
@@ -117,6 +129,10 @@ def _trait_value(traits: Mapping[str, Any], key: str) -> float:
 def _from_traits(model: Mapping[str, float], traits: Mapping[str, Any], low: float, high: float) -> float:
     values = {key: _trait_value(traits, key) for key in model if key != "constant"}
     return round(clamp(_log_linear(model, values) or low, low, high), 4)
+
+
+def points_per36_from_traits(traits: Mapping[str, Any]) -> float:
+    return _from_traits(POINTS_TRAITS, traits, 3.0, 40.0)
 
 
 def turnovers_per36_from_traits(traits: Mapping[str, Any]) -> float:

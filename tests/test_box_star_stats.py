@@ -63,9 +63,19 @@ class FittedRateTests(unittest.TestCase):
         self.assertGreater(self.rate(stl, "player_atl-dyson-daniels"), 1.8)
         self.assertGreater(self.rate(stl, "player_atl-dyson-daniels"), self.rate(stl, "player_min-rudy-gobert") + 0.6)
 
+    def test_scorers_and_role_players_are_far_apart(self):
+        pts = box_rates.points_per36_from_inputs
+        # Real 2025-26 per 36: Wembanyama 30.8, Gilgeous-Alexander 33.8, Porter Jr. 26.8, Siakam 26.0;
+        # Dort 11.2, Sion James 8.6. The old scoring weights gave ~20 vs ~17.
+        for scorer in ("player_sas-victor-wembanyama", "player_okc-shai-gilgeous-alexander",
+                       "player_bkn-michael-porter-jr", "player_ind-pascal-siakam"):
+            self.assertGreater(self.rate(pts, scorer), 24.0, scorer)
+        for role in ("player_atl-luguentz-dort", "player_cha-sion-james"):
+            self.assertLess(self.rate(pts, role), 13.5, role)
+
     def test_rates_are_bounded_for_every_player(self):
         for player_id, inputs in self.inputs.items():
-            for fn, low, high in ((box_rates.turnovers_per36_from_inputs, .4, 7.0),
+            for fn, low, high in ((box_rates.turnovers_per36_from_inputs, .4, 7.0), (box_rates.points_per36_from_inputs, 3.0, 40.0),
                                   (box_rates.assists_per36_from_inputs, .5, 16.0),
                                   (box_rates.steals_per36_from_inputs, .2, 4.0),
                                   (box_rates.fta_per_point_from_inputs, .03, .75)):

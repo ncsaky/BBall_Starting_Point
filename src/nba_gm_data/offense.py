@@ -5,6 +5,9 @@ from typing import Any
 
 from .utils import clamp, normalize_name
 
+# When a line's points cannot hold all the threes it sampled, this share of the excess makes is removed together
+# with their attempts; the rest stay as missed attempts (a cold night). 1.0 removed all of them.
+THREE_TRIM_SHARE = 0.5
 FT_LEVEL = 0.98  # league-level scale on the fitted free throws per point (sim features 'fta_per_point')
 MODEL_VERSION = 1
 SOURCE_ID = 'src_offensive_roles_v1'
@@ -239,7 +242,7 @@ def shooting_line(points, feat, minutes, rng):
     sampled = sum(rng.random() < feat['three_pct'] for _ in range(fg3a))
     fg3m = min(sampled, (points-ftm)//3)
     if sampled > fg3m:
-        fg3a = max(fg3m, fg3a-round((sampled-fg3m)/feat['three_pct']))
+        fg3a = max(fg3m, fg3a-round(THREE_TRIM_SHARE*(sampled-fg3m)/feat['three_pct']))
     remainder = points-ftm-3*fg3m
     if remainder % 2 and per_point is not None:
         # Two-point makes need an even remainder. Adding a made attempt every time handed every odd line an extra
