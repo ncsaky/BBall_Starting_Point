@@ -331,7 +331,12 @@ def simulate_health(
     config = load_injury_model_config(root)
     schedule = schedule_games_in_range(root, from_date, through_date, games=schedule)
     team_by_espn = espn_team_id_map_from_canonical(canonical)
-    players_by_team = rotation_players_by_team(canonical)
+    from . import injury_model as im
+    model = im.load_model(root)
+    # v2 (per-body-part, evidence-fitted): deep reserves can get hurt too; no league-wide quotas.
+    players_by_team = (rotation_players_by_team(canonical, im.MIN_MINUTES_FOR_EXPOSURE, 14) if model
+                       else rotation_players_by_team(canonical))
+    history_cache: dict[str, list] = {}
     profiles = {profile["player_id"]: profile for profile in canonical.get("player_health_profiles", [])}
     states = {state["player_id"]: dict(state) for state in canonical.get("player_health_states", [])}
     selected = {p["id"] for players in players_by_team.values() for p in players}
@@ -372,12 +377,29 @@ def simulate_health(
                     state["games_missed"] = int(state.get("games_missed") or 0) + 1
                     continue
                 minutes = float(player.get("minutes_projection") or 0)
-                if minutes < 8:
+                if minutes < (im.MIN_MINUTES_FOR_EXPOSURE if model else 8):
                     continue
                 stamina = traits.get((player["id"], "stamina_cardio"), 50.0)
                 add_game_fatigue(state, player, minutes, stamina, rest_days, config, staff)
-                risk = injury_risk_for_player(player, profiles.get(player["id"], {}), state, minutes, stamina, config, staff)
                 rng = random.Random(f"{seed}:{game['externalGameId']}:{player['id']}:injury")
+                if model:
+                    event = v2_injury_draw(root, model, canonical, player, traits, state, profiles.get(player["id"], {}),
+                                           minutes, game_date, staff, seed, rng, history_cache, events)
+                    if event:
+                        events.append(event)
+                        severity_counts[event["severity"]] = severity_counts.get(event["severity"], 0) + 1
+                        body_counts[event["body_area"]] = body_counts.get(event["body_area"], 0) + 1
+                        state.update({
+                            "current_injury_id": event["id"], "availability_status": "out", "return_date": event["return_date"],
+                            "current_injury_severity": event["severity"], "current_injury_part": event["body_part"],
+                            "current_injury_label": event["diagnosis"],
+                            "rust": float((config.get("severity_bands") or {}).get(event["severity"], {}).get("rust_after_return", 12)),
+                            "source_ids": list(dict.fromkeys([*(state.get("source_ids") or []), "src_injury_model_v2"])),
+                            "notes": f"{event['diagnosis']} on {date_to_str(game_date)}.",
+                            "games_missed": int(state.get("games_missed") or 0) + 1,
+                        })
+                    continue
+                risk = injury_risk_for_player(player, profiles.get(player["id"], {}), state, minutes, stamina, config, staff)
                 if rng.random() < risk:
                     severity = choose_quota_weighted(config.get("severity_bands", {}), severity_counts, rng)
                     if not severity:
@@ -564,6 +586,55 @@ def health_team_report(canonical: dict[str, Any], team_query: str) -> dict[str, 
     }
 
 
+V2_FATIGUE_SLOPE = 1.0 / 140.0   # extra risk per fatigue point above 25 (back-to-backs, heavy recent minutes)
+
+
+def v2_injury_draw(root, model, canonical, player, traits, state, profile, minutes, game_date, staff, seed, rng,
+                   history_cache, new_events) -> dict[str, Any] | None:
+    """One game's injury draw under the per-body-part model. Returns the injury event dict, or None."""
+    from . import injury_model as im
+    pid = player["id"]
+    if pid not in history_cache:
+        history_cache[pid] = im.player_history(model, pid, canonical.get("injury_events", []))
+    history = history_cache[pid] + [(parse_date(e["start_date"]), e["body_part"]) for e in new_events
+                                    if e.get("player_id") == pid and e.get("body_part") != "illness"]
+    player_traits = {key: traits.get((pid, key), 50.0) for key in ("rim_pressure", "offensive_rebounding", "stamina_cardio")}
+    hazards = im.part_hazards(model, player, player_traits, minutes, history, game_date)
+    scale = im.LEAGUE_RATE_SCALE * float(staff.get("injury_risk_multiplier", 1.0))
+    scale *= 1.0 + max(0.0, float(state.get("fatigue") or 0.0) - 25.0) * V2_FATIGUE_SLOPE
+    if profile.get("injury_prone"):
+        scale *= 1.22   # generated prospects' medical flag (real players' history is already in the model)
+    total = sum(hazards.values()) * scale
+    if rng.random() >= min(0.25, total):
+        return None
+    marker, running, part = rng.random() * sum(hazards.values()), 0.0, "ankle"
+    for name, value in sorted(hazards.items()):
+        running += value
+        if marker <= running:
+            part = name
+            break
+    case = im.sample_recovery(root, part, rng)
+    personal = 1.0 + float((model.get("player_recovery_pct") or {}).get(pid, 0.0)) / 100.0
+    days = max(1, int(round(int(case.get("days") or 1) * personal * float(staff.get("recovery_days_multiplier", 1.0)))))
+    return_day = im.basketball_return_date(game_date, days)
+    severity = im.severity_for_days(days)
+    label = str(case.get("label") or f"{part} injury")
+    area = im.PART_AREA.get(part, "head_illness")
+    lasting = im.lasting_effect(model, label, part)
+    recurrence = any(p == part and (game_date - d).days <= 548 for d, p in history)
+    event = to_plain(InjuryEvent(
+        id=stable_id("injury", "v2", pid, date_to_str(game_date), part, label, seed),
+        player_id=pid, team_id=player["team_id"], start_date=date_to_str(game_date), return_date=date_to_str(return_day),
+        body_area=area, severity=severity, expected_days_missed=days,
+        expected_games_missed=expected_games_from_days((return_day - game_date).days),
+        recurrence=recurrence, status="generated_injury_v2", source_ids=["src_injury_model_v2"],
+        notes=f"{label} ({im.PART_LABELS.get(part, part)}); duration from a real {part} absence.",
+    ))
+    event.update({"body_part": part, "diagnosis": label, "surgery": int(case.get("surgery") or 0),
+                  "lasting_rapm_change": round(lasting, 3)})
+    return event
+
+
 def injury_risk_for_player(
     player: dict[str, Any],
     profile: dict[str, Any],
@@ -648,6 +719,8 @@ def advance_state_for_date(state: dict[str, Any], game_date: date, rest_days: in
         state["current_injury_id"] = None
         state["availability_status"] = "active"
         state["return_date"] = None
+        for key in ("current_injury_severity", "current_injury_part", "current_injury_label"):
+            state.pop(key, None)
     if state.get("availability_status") == "active" and float(state.get("rust") or 0.0) > 0:
         state["rust"] = round(max(0.0, float(state.get("rust") or 0.0) - float(tuning.get("rust_decay_per_game", 7.5)) / max(float(staff.get("recovery_days_multiplier", 1.0)), 0.2)), 2)
 
@@ -981,13 +1054,13 @@ def season_start_year_for_health_date(value: str) -> int:
     return day.year if day.month >= 7 else day.year - 1
 
 
-def rotation_players_by_team(canonical: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+def rotation_players_by_team(canonical: dict[str, Any], min_minutes: float = 8.0, depth: int = 11) -> dict[str, list[dict[str, Any]]]:
     players_by_team: dict[str, list[dict[str, Any]]] = {}
     for player in canonical.get("players", []):
-        if player.get("team_id") and not player.get("_inactive_player") and float(player.get("minutes_projection") or 0.0) >= 8.0:
+        if player.get("team_id") and not player.get("_inactive_player") and float(player.get("minutes_projection") or 0.0) >= min_minutes:
             players_by_team.setdefault(player["team_id"], []).append(player)
     for team_id, players in players_by_team.items():
-        players_by_team[team_id] = sorted(players, key=lambda item: item.get("minutes_projection") or 0, reverse=True)[:11]
+        players_by_team[team_id] = sorted(players, key=lambda item: item.get("minutes_projection") or 0, reverse=True)[:depth]
     return players_by_team
 
 
@@ -1078,6 +1151,9 @@ def state_from_dict(state: dict[str, Any], as_of_date: str) -> dict[str, Any]:
         "games_missed": int(state.get("games_missed") or 0),
         "source_ids": list(state.get("source_ids") or ["src_injury_model_config_v1"]),
         "notes": state.get("notes") or "",
+        # The current injury's diagnosis, body part and severity while the player is out (v2 model); empty when healthy.
+        **({key: state.get(key) for key in ("current_injury_severity", "current_injury_part", "current_injury_label")
+            if state.get(key)} if state.get("current_injury_id") else {}),
     }
 
 

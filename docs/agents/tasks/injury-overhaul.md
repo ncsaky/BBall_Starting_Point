@@ -70,9 +70,23 @@ Phase 3 - validate: multi-season sims vs BBI totals (games missed per 82 by age/
 both scorecards, tests (new tests for hazard inputs, compounding, durations).
 
 ## Resume state
-- Phase 1 DONE (2026-11-18): `scripts/build_injury_model.py --write` -> `data/canonical/injury_model_v2.json`: per-part
-  Poisson models (16 parts + illness) on 2,9xx real player-seasons 2015-16..2025-26 (features: age, age^2, height, weight,
-  possessions per game, rim pressure, offensive rebounding, stamina, center, guard, decayed same-part and other-part
-  priors), recovery pools of real absences per part, recurrence reference, lasting effects (CI below zero: Achilles
-  rupture -0.42 RAPM, ACL -0.33, disc -0.27, back strain -0.20, ...), return ramp table.
-- Phase 2 NEXT: engine in health.py (see build plan). Codex INJ report pending (engine output vs BBI) for calibration.
+- Phase 1 DONE: `scripts/build_injury_model.py --write` -> `data/canonical/injury_model_v2.json` (per-part Poisson models,
+  recovery pools from BBI's 21,216 recorded absences with 6-year half-life weights and censored cases imputed, recent
+  real-player history 2021-22+, per-player recovery speed, lasting effects, return ramp).
+- Phase 2 DONE (2026-11-18): `src/nba_gm_data/injury_model.py` + `health.v2_injury_draw` (used whenever the model file
+  exists): per-part hazards per game for the top 14 players at 4+ projected minutes; no league quotas; HISTORY_WEIGHT
+  0.55 (BBI logs one injury as several entries; calibrated so risk vs BBI 2026-27 per-player forecasts is flat by age);
+  diagnosis + duration sampled from real absences of that part (x personal recovery speed x medical staff), return
+  date skips the July-September offseason; events carry body_part/diagnosis/surgery/lasting_rapm_change and keep the
+  legacy body_area/severity for consumers; health states carry the current diagnosis/part/severity (fixes the GUI
+  severity-label bug: labels now read e.g. "MCL sprain ~11g"); news uses the diagnosis.
+  Lasting declines: `save.record_lasting_injury_effect` adds a development event (4 physical ratings, 15.7 points per
+  impact point) for tears/ruptures/fractures/surgeries or 14+ day absences, once per diagnosis per year.
+- Season check (`scripts/research/injury_season_check.py`, fixed rosters, 2 seeds): 30-32 spells per team incl. illness
+  (BBI 30-37 + illness), days out 2/5/13-14/39-43 (BBI 2/5/14/46), regulars' games missed by age flat 13-16 (BBI
+  forecasts 14-15), expected risk vs BBI per-player forecast r = 0.52. Health sim costs ~1.2 s per simulated month.
+- Tests: new tests/test_injury_model.py; foundation quota test rewritten as an evidence-range test.
+- Follow-ups: (1) coach-led return-to-minutes ramp after absences (Codex INJ proposal; belongs with the head coach's
+  rotation rating in the coaching overhaul); (2) transactions.player_health_risk still uses the legacy profile fields -
+  move it to the v2 expected injury games; (3) playing through minor injuries (user: later); (4) GUI body-part history
+  view on the player card.

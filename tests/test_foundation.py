@@ -4915,20 +4915,26 @@ class DataFoundationTests(unittest.TestCase):
         self.assertLessEqual(modifiers["injury_risk_multiplier"], 1.08)
         self.assertGreaterEqual(modifiers["injury_risk_multiplier"], 0.88)
 
-    def test_health_simulation_is_deterministic_and_quota_guided(self):
+    def test_health_simulation_is_deterministic_and_matches_injury_evidence(self):
+        # Injury model v2 (2026-11-18): per-body-part rates fitted to Basketball Index's Injury Tracker replace the old
+        # hand-set league quotas. Checks are the evidence ranges (recent real seasons: 30-37 injuries per team-season
+        # plus illness, days out 2/5/14/46 at the 25/50/75/90th percentiles), not quotas.
+        import statistics
         first = simulate_health(ROOT, self.plain, "2025-10-21", "2026-04-12", seed=1)
         second = simulate_health(ROOT, self.plain, "2025-10-21", "2026-04-12", seed=1)
         self.assertEqual(first, second)
-        config = load_injury_model_config(ROOT)
-        self.assertGreaterEqual(config["severity_bands"]["day_to_day"]["min_per_season"], 350)
-        self.assertGreater(config["severity_bands"]["day_to_day"]["weight"], config["severity_bands"]["medium"]["weight"])
-        self.assertGreaterEqual(config["tuning"]["base_player_game_injury_rate"], 0.02)
-        for severity, band in config["severity_bands"].items():
-            self.assertGreaterEqual(first["severity_counts"][severity], band["min_per_season"])
-            self.assertLessEqual(first["severity_counts"][severity], band["max_per_season"])
-        for body_area, quota in config["body_area_quota_ranges"].items():
-            self.assertGreaterEqual(first["body_area_counts"][body_area], quota["min_per_season"])
-            self.assertLessEqual(first["body_area_counts"][body_area], quota["max_per_season"])
+        events = first["events"]
+        teams = len({p["team_id"] for p in self.plain["players"] if p.get("team_id")})
+        self.assertTrue(24 <= len(events) / teams <= 46, len(events) / teams)
+        days = sorted(e["expected_days_missed"] for e in events)
+        q = statistics.quantiles(days, n=20)
+        self.assertTrue(3 <= q[9] <= 8, q[9])        # median
+        self.assertTrue(25 <= q[17] <= 70, q[17])    # 90th percentile
+        parts = {e.get("body_part") for e in events}
+        self.assertTrue({"ankle", "knee", "back", "hamstring", "illness"} <= parts, parts)
+        # New injuries keep happening through the whole season (the old quotas ran out in late January).
+        self.assertGreaterEqual(max(e["start_date"] for e in events), "2026-03-15")
+        self.assertTrue(all(e.get("diagnosis") for e in events))
 
     def test_health_simulation_accepts_generated_future_schedule(self):
         future_game = {

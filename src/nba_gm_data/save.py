@@ -38,10 +38,11 @@ from .narrative import (
     provider_from_settings,
     reset_narrative_cache,
 )
-from .schema import CANONICAL_SEASON, CANONICAL_START_DATE, CoachRating, to_plain
+from .schema import CANONICAL_SEASON, CANONICAL_START_DATE, CoachRating, DevelopmentEvent, to_plain
 from .sim import build_sim_indices, espn_team_id_map, invalidate_sim_cache, load_sim_context, sim_game_with_context
 from .spatial import invalidate_spatial_cache, team_spatial_profile
 from .staff import ROLE_LABELS, STAFF_SLOTS, apply_head_coach_reputation, fire_staff_from_save, hire_staff_from_save, initialize_staff_season_changes, initialize_save_staff_slots, interim_staff, is_interim_staff, negotiate_staff_hire, simulate_ai_staff_changes, staff_action_permissions, staff_budget_for_team, staff_budget_salary, staff_contract, staff_grade
+from .staff_lifecycle import roll_staff_lifecycle
 from .utils import clamp, maybe_float, normalize_name, stable_id
 from .baselines import baseline_for_save
 
@@ -5285,6 +5286,31 @@ def hold_press_conference(canonical: dict[str, Any] | Any, save_path: str | Path
     return record
 
 
+def record_lasting_injury_effect(save: dict[str, Any], event: dict[str, Any]) -> None:
+    """Evidence-based permanent physical decline after a major injury (user decision 2026-11-18), stored as a development
+    event so it flows through the same rating path as normal growth and aging. At most once per diagnosis per year."""
+    from .injury_model import lasting_trait_deltas
+    deltas = lasting_trait_deltas(event)
+    if not deltas:
+        return
+    start = str(event.get("start_date") or "")[:10]
+    year_ago = f"{int(start[:4]) - 1}{start[4:7]}" if len(start) >= 7 else ""
+    for prior in save.get("development_events", []):
+        context = prior.get("health_context") or {}
+        if (prior.get("player_id") == event.get("player_id") and context.get("lasting_injury")
+                and context.get("diagnosis") == event.get("diagnosis") and str(prior.get("month") or "") > year_ago):
+            return
+    save.setdefault("development_events", []).append(to_plain(DevelopmentEvent(
+        id=stable_id("development", "lasting_injury", event.get("id")),
+        player_id=event["player_id"], team_id=event.get("team_id") or "", month=start[:7], trait_deltas=deltas,
+        age=None, minutes_context=float(event.get("player_minutes_projection") or 0.0), staff_context={},
+        health_context={"lasting_injury": True, "injury_id": event.get("id"), "diagnosis": event.get("diagnosis"),
+                        "lasting_rapm_change": event.get("lasting_rapm_change")},
+        confidence=0.6, source_ids=["src_injury_model_v2", "src_bbi_injury_long_term"],
+        notes=f"Lasting decline after {event.get('diagnosis')} (Basketball Index long-term injury evidence).",
+    )))
+
+
 def merge_health_results(save: dict[str, Any], health: dict[str, Any], canonical: dict[str, Any] | None = None) -> None:
     players = {player["id"]: player for player in (canonical or {}).get("players", [])}
     previous_states = {state.get("player_id"): state for state in save.get("health_states", [])}
@@ -5302,6 +5328,7 @@ def merge_health_results(save: dict[str, Any], health: dict[str, Any], canonical
                 event.setdefault("health_risk", valuation["health_risk"])
             save.setdefault("injury_events", []).append(event)
             seen.add(event.get("id"))
+            record_lasting_injury_effect(save, event)
         player = players.get(event.get("player_id"), {})
         player_name = player.get("name") or event.get("player_id") or "A player"
         games = event.get("expected_games_missed") or event.get("expected_days_missed") or "some"
@@ -5311,7 +5338,7 @@ def merge_health_results(save: dict[str, Any], health: dict[str, Any], canonical
             add_league_event(
                 save,
                 "injury",
-                f"{player_name} is expected to miss about {games} games with a {event.get('body_area')} issue.",
+                (f"{player_name} is expected to miss about {games} games with a {event['diagnosis']}." if event.get("diagnosis") else f"{player_name} is expected to miss about {games} games with a {event.get('body_area')} issue."),
                 date_value=event.get("start_date"),
                 team_ids=[player.get("team_id")] if player.get("team_id") else [],
                 player_ids=[event.get("player_id")] if event.get("player_id") else [],
@@ -5331,7 +5358,7 @@ def merge_health_results(save: dict[str, Any], health: dict[str, Any], canonical
             add_news(
                 save,
                 "injury",
-                f"{player_name} is expected to miss about {games} games with a {event.get('body_area')} issue.",
+                (f"{player_name} is expected to miss about {games} games with a {event['diagnosis']}." if event.get("diagnosis") else f"{player_name} is expected to miss about {games} games with a {event.get('body_area')} issue."),
                 date_value=event.get("start_date"),
             )
             socialized.add(event.get("id"))
@@ -7378,10 +7405,13 @@ def player_health_label(state: dict[str, Any] | None, current_date: str | None) 
     if return_date and current_date:
         days_left = max(0, (parse_date(return_date) - parse_date(current_date)).days)
     severity = state.get("injury_severity") or state.get("current_injury_severity") or "injured"
-    label = f"{severity}"
+    # v2 injuries carry a real diagnosis ("Ankle sprain", "ACL tear"); older saves show the severity band.
+    diagnosis = str(state.get("current_injury_label") or "").strip()
+    label = diagnosis[:1].upper() + diagnosis[1:] if diagnosis else f"{severity}"
     if days_left is not None:
         label = f"{label} ~{max(1, round(days_left / 2.4))}g"
-    return {"status": status, "label": label, "days_left": days_left, "games_missed": int(state.get("games_missed") or 0), "fatigue": fatigue}
+    return {"status": status, "label": label, "days_left": days_left, "games_missed": int(state.get("games_missed") or 0), "fatigue": fatigue,
+            "severity": severity, "body_part": state.get("current_injury_part"), "diagnosis": diagnosis or None}
 
 
 def cap_lines_for_season(season: str | None) -> dict[str, float]:
@@ -9815,6 +9845,7 @@ def age_staff_contracts(save: dict[str, Any], canonical: dict[str, Any] | None =
         updated.append(staff)
     if updated:
         save["staff_slots"] = sorted(updated, key=lambda item: (item.get("team_id") or "", item.get("slot") or "", item.get("id") or ""))
+    roll_staff_lifecycle(save, canonical, staff_active if canonical is not None else None, original_slots, seed)
 
 
 def ai_staff_retention_contract(

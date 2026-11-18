@@ -5,7 +5,8 @@ from copy import deepcopy
 from typing import Any
 
 from .schema import TransactionLog, to_plain
-from .utils import clamp, stable_id
+from .staff_lifecycle import initialize_staff_bio, staff_bio_evidence, staff_person_id
+from .utils import clamp, normalize_name as evidence_name, stable_id
 
 
 STAFF_SLOTS = [
@@ -124,6 +125,12 @@ HEAD_COACH_REPUTATION_GRADES = {
 
 def initialize_save_staff_slots(canonical: dict[str, Any], seed: int) -> list[dict[str, Any]]:
     slots: list[dict[str, Any]] = []
+    evidence = staff_bio_evidence(canonical)
+    head_names = {
+        staff["team_id"]: staff["name"]
+        for staff in canonical.get("staff_profiles", [])
+        if staff.get("role") == "head_coach" and staff.get("name")
+    }
     for slot in sorted(canonical.get("gameplay_staff_slots", []), key=lambda item: (item["team_id"], item["slot"])):
         record = deepcopy(slot)
         score = staff_grade(record)
@@ -140,6 +147,8 @@ def initialize_save_staff_slots(canonical: dict[str, Any], seed: int) -> list[di
                 "original_team_id": record["team_id"],
             }
         )
+        real_name = head_names.get(record["team_id"]) if record["slot"] == "head_coach" else None
+        initialize_staff_bio(record, seed, score, evidence.get(evidence_name(real_name or record["name"])))
         slots.append(record)
     # Seeded salaries are generated independently by role, while legality is
     # team-wide. Normalize only the handful of staffs whose rounded starting
@@ -193,7 +202,7 @@ def staff_market_report(canonical: dict[str, Any], save: dict[str, Any], slot: s
 
 
 def generate_staff_market(canonical: dict[str, Any], save: dict[str, Any], slot: str | None = None) -> list[dict[str, Any]]:
-    seed = int(save.get("meta", {}).get("seed") or 1)
+    seed = staff_save_seed(save)
     slots = [slot] if slot else STAFF_SLOTS
     candidates: list[dict[str, Any]] = []
     unavailable_sources = active_staff_market_sources(save)
@@ -202,8 +211,9 @@ def generate_staff_market(canonical: dict[str, Any], save: dict[str, Any], slot:
         if slot and preferred_slot != slot:
             continue
         market_source_id = former.get("market_source_id") or former.get("id")
-        if market_source_id in unavailable_sources:
+        if market_source_id in unavailable_sources or former.get("market_status") == "retired":
             continue
+        unavailable_sources.add(market_source_id)
         candidate = deepcopy(former)
         candidate["team_id"] = None
         candidate["slot"] = preferred_slot
@@ -219,47 +229,20 @@ def generate_staff_market(canonical: dict[str, Any], save: dict[str, Any], slot:
         candidate["asking_years"] = 2 if score < 68 else 3
         candidate["grade"] = round(score, 2)
         candidates.append(candidate)
+    pool = save.get("staff_market_pool")
     for staff_slot in slots:
         if staff_slot not in STAFF_SLOTS:
             continue
-        desired_grades = generated_market_grade_ladder(staff_slot)
-        for rank, desired_grade in enumerate(desired_grades, start=1):
-            rng = random.Random(f"{seed}:staff_market:{staff_slot}:{rank}")
-            first = FIRST_NAMES[int(rng.random() * len(FIRST_NAMES)) % len(FIRST_NAMES)]
-            last = LAST_NAMES[int(rng.random() * len(LAST_NAMES)) % len(LAST_NAMES)]
-            archetype = SLOT_ARCHETYPES[staff_slot][rank % len(SLOT_ARCHETYPES[staff_slot])]
-            base = 60.0 + (desired_grade - 60.0) / 1.75 + rng.gauss(0, 0.8)
-            traits = {
-                key: round(clamp(base + rng.gauss(0, 3.2), 20, 92), 2)
-                for key in SLOT_SKILLS[staff_slot]
-            }
-            personality = {
-                "adaptability": round(clamp(base + rng.gauss(0, 3.6), 20, 92), 2),
-                "communication": round(clamp(base + rng.gauss(0, 3.6), 20, 92), 2),
-                "ambition": round(clamp(base + rng.gauss(0, 4.4), 20, 94), 2),
-            }
-            candidate = {
-                "id": stable_id("staff_market", staff_slot, rank, first, last),
-                "team_id": None,
-                "slot": staff_slot,
-                "name": f"{first} {last}",
-                "archetype": archetype,
-                "style_tags": [archetype.replace(" ", "_"), staff_slot],
-                "skill_traits": traits,
-                "personality_traits": personality,
-                "status": "fictional_gameplay_staff_market",
-                "confidence": 0.5,
-                "source_ids": ["src_gameplay_staff_seed_v1"],
-                "notes": "Generated free-agent gameplay staff candidate for staff-management V1.",
-                "market_status": "free_agent",
-                "role_preference": staff_slot,
-            }
-            candidate["market_source_id"] = candidate["id"]
-            if candidate["market_source_id"] in unavailable_sources:
+        available = (
+            generated_staff_candidates(seed, staff_slot) if pool is None
+            else (staff for staff in pool if staff.get("slot") == staff_slot)
+        )
+        for staff in available:
+            if staff_person_id(staff) in unavailable_sources:
                 continue
+            candidate = deepcopy(staff)
             score = staff_grade(candidate)
             ask = staff_contract(staff_slot, score, seed, candidate["id"])
-            ask["years_remaining"] = 0
             candidate["asking_salary_millions"] = round(ask["annual_salary_millions"] * 1.08, 2)
             candidate["asking_years"] = 3 if staff_slot == "head_coach" or score >= 68 else 2
             candidate["grade"] = round(score, 2)
@@ -274,6 +257,58 @@ def generate_staff_market(canonical: dict[str, Any], save: dict[str, Any], slot:
             item.get("name") or "",
         ),
     )
+
+
+def generated_staff_candidates(
+    seed: int, staff_slot: str, *, season: str | None = None, grades: list[int] | None = None,
+) -> list[dict[str, Any]]:
+    candidates = []
+    desired_grades = generated_market_grade_ladder(staff_slot) if grades is None else grades
+    for rank, desired_grade in enumerate(desired_grades, start=1):
+        key = f"{staff_slot}:{rank}"
+        if season:
+            key = f"{season}:{key}"
+        rng = random.Random(f"{seed}:staff_market:{key}")
+        first = FIRST_NAMES[int(rng.random() * len(FIRST_NAMES)) % len(FIRST_NAMES)]
+        last = LAST_NAMES[int(rng.random() * len(LAST_NAMES)) % len(LAST_NAMES)]
+        archetype = SLOT_ARCHETYPES[staff_slot][rank % len(SLOT_ARCHETYPES[staff_slot])]
+        base = 60.0 + (desired_grade - 60.0) / 1.75 + rng.gauss(0, 0.8)
+        if season:
+            # New intake uses a narrower spread around its target grade while
+            # keeping different strengths within each role.
+            base = 60.0 + (desired_grade - 62.275) / 1.9775
+        traits = {
+            key: round(clamp(base + rng.gauss(0, 1.8 if season else 3.2), 20, 92), 2)
+            for key in SLOT_SKILLS[staff_slot]
+        }
+        personality = {
+            "adaptability": round(clamp(base + rng.gauss(0, 3.6), 20, 92), 2),
+            "communication": round(clamp(base + rng.gauss(0, 3.6), 20, 92), 2),
+            "ambition": round(clamp(base + rng.gauss(0, 4.4), 20, 94), 2),
+        }
+        candidate = {
+            "id": stable_id("staff_market", staff_slot, season, rank, first, last),
+            "team_id": None,
+            "slot": staff_slot,
+            "name": f"{first} {last}",
+            "archetype": archetype,
+            "style_tags": [archetype.replace(" ", "_"), staff_slot],
+            "skill_traits": traits,
+            "personality_traits": personality,
+            "status": "fictional_gameplay_staff_market",
+            "confidence": 0.5,
+            "source_ids": ["src_gameplay_staff_seed_v1"],
+            "notes": "Generated free-agent gameplay staff candidate for staff-management V1.",
+            "market_status": "free_agent",
+            "role_preference": staff_slot,
+        }
+        candidate["market_source_id"] = candidate["id"]
+        initialize_staff_bio(
+            candidate, seed, staff_grade(candidate),
+            young=bool(season) and staff_slot != "head_coach" and desired_grade < 80,
+        )
+        candidates.append(candidate)
+    return candidates
 
 
 def staff_team_report(canonical: dict[str, Any], save: dict[str, Any], team_query: str) -> dict[str, Any]:
@@ -441,12 +476,24 @@ def hire_staff_from_save(
                 "budget": budget,
                 "notes": "The staff budget changed after negotiation; this deal is no longer legal.",
             }
-    candidate = deepcopy(negotiation["candidate"])
+    offered = negotiation["candidate"]
+    source_id = staff_person_id(offered)
+    if source_id in active_staff_market_sources(save):
+        return {"status": "not_applied", "negotiation_id": negotiation_id, "notes": "This candidate is no longer available."}
+    # Use the live profile for offers carried across an offseason.
+    try:
+        candidate = staff_candidate_by_id(canonical or {}, save, offered["id"], slot=slot_name)
+    except ValueError:
+        if save.get("staff_lifecycle_season"):
+            return {"status": "not_applied", "negotiation_id": negotiation_id, "notes": "This candidate is no longer available."}
+        candidate = deepcopy(offered)
     current = current_staff_slot(save, team_id, slot_name)
     if current:
         former = deepcopy(current)
         if not is_interim_staff(former):
             former["market_status"] = "fired"
+            former["last_team_id"] = team_id
+            former["staff_left_on"] = (save.get("state") or {}).get("current_date")
             former["team_id"] = None
             save.setdefault("former_staff", []).append(former)
     candidate.update(
@@ -463,9 +510,13 @@ def hire_staff_from_save(
                 "guarantee_level": "standard",
             },
             "morale": 68.0,
-            "job_security": 62.0,
+            "job_security": round(clamp(62 + (float(candidate.get("reputation", 60)) - 60) * 0.25, 35, 85), 2),
+            "staff_hired_on": (save.get("state") or {}).get("current_date"),
         }
     )
+    initialize_staff_bio(candidate, staff_save_seed(save), staff_grade(candidate))
+    candidate.pop("grade", None)
+    candidate.pop("staff_left_on", None)
     save["staff_slots"] = [
         slot for slot in save.get("staff_slots", []) if not (slot.get("team_id") == team_id and slot.get("slot") == slot_name)
     ]
@@ -475,8 +526,13 @@ def hire_staff_from_save(
     if source_id:
         save["former_staff"] = [
             staff for staff in save.get("former_staff", [])
-            if staff.get("id") != source_id
+            if staff_person_id(staff) != source_id
         ]
+        if "staff_market_pool" in save:
+            save["staff_market_pool"] = [
+                staff for staff in save["staff_market_pool"]
+                if staff_person_id(staff) != source_id
+            ]
     save["pending_staff_negotiations"] = [item for item in pending if item.get("id") != negotiation_id]
     record_staff_season_change(save, team_id, slot_name, "hired")
     log = staff_transaction_log(save, "staff_hire", negotiation_id, [team_id], {"staff": candidate, "previous_staff": current}, [negotiation])
@@ -519,7 +575,9 @@ def fire_staff_from_save(save: dict[str, Any], team_id: str, slot: str, reason: 
         return {"status": "season_limit_blocked", "team_id": team_id, "slot": slot, "notes": permission["fire_reason"]}
     fired = deepcopy(current)
     if not is_interim_staff(fired):
-        fired["market_status"] = "fired"
+        fired["market_status"] = "expired_contract" if contract_expired else "fired"
+        fired["last_team_id"] = team_id
+        fired["staff_left_on"] = (save.get("state") or {}).get("current_date")
         fired["team_id"] = None
         save.setdefault("former_staff", []).append(fired)
     interim = interim_staff(
@@ -529,6 +587,7 @@ def fire_staff_from_save(save: dict[str, Any], team_id: str, slot: str, reason: 
         len(save.get("transaction_logs", [])),
         fired.get("id"),
         fired.get("name"),
+        seed=staff_save_seed(save),
     )
     save["staff_slots"] = [
         staff for staff in save.get("staff_slots", []) if not (staff.get("team_id") == team_id and staff.get("slot") == slot)
@@ -703,6 +762,8 @@ def interim_staff(
     nonce: int = 0,
     previous_id: str | None = None,
     previous_name: str | None = None,
+    *,
+    seed: int | None = None,
 ) -> dict[str, Any]:
     keys = SLOT_SKILLS.get(slot, ["general_management"])
     name = ""
@@ -713,7 +774,7 @@ def interim_staff(
         name = f"{first} {last}"
         if name != previous_name:
             break
-    return {
+    staff = {
         "id": stable_id("interim_staff", team_id, slot, date, nonce, previous_id),
         "team_id": team_id,
         "slot": slot,
@@ -732,6 +793,9 @@ def interim_staff(
         "market_status": "employed",
         "role_preference": slot,
     }
+    if seed is not None:
+        initialize_staff_bio(staff, seed, staff_grade(staff), young=True)
+    return staff
 
 
 def current_staff_slot(save: dict[str, Any], team_id: str, slot: str) -> dict[str, Any] | None:
@@ -868,29 +932,30 @@ def record_staff_season_change(save: dict[str, Any], team_id: str, slot: str, ac
 
 
 def staff_candidate_by_id(canonical: dict[str, Any], save: dict[str, Any], staff_id: str, slot: str | None = None) -> dict[str, Any]:
-    active_candidate_ids = {
-        staff.get("market_source_id") or staff.get("id")
-        for staff in save.get("staff_slots", [])
-        if staff.get("market_status") == "employed" and staff.get("team_id")
-    }
+    unavailable = active_staff_market_sources(save)
     for collection in [save.get("former_staff", []), generate_staff_market(canonical, save, slot=slot)]:
         for candidate in collection:
-            if candidate.get("id") == staff_id:
-                if (candidate.get("market_source_id") or candidate.get("former_staff_id") or candidate.get("id")) in active_candidate_ids:
-                    raise ValueError(f"Staff candidate {staff_id!r} is already employed.")
-                return deepcopy(candidate)
+            if candidate["id"] != staff_id:
+                continue
+            preferred_role = candidate.get("role_preference") or candidate["slot"]
+            if slot and preferred_role != slot:
+                continue
+            if candidate.get("market_status") == "retired" or staff_person_id(candidate) in unavailable:
+                raise ValueError(f"Staff candidate {staff_id!r} is no longer available.")
+            return deepcopy(candidate)
     raise ValueError(f"No staff candidate found with id {staff_id!r}")
 
 
 def active_staff_market_sources(save: dict[str, Any]) -> set[str]:
-    sources = set()
-    for staff in save.get("staff_slots", []):
-        if staff.get("market_status") != "employed" or not staff.get("team_id"):
-            continue
-        source = staff.get("market_source_id")
-        if source:
-            sources.add(source)
-    return sources
+    return {
+        staff_person_id(staff)
+        for staff in [*save.get("staff_slots", []), *save.get("retired_staff", [])]
+        if staff.get("team_id") or staff.get("market_status") == "retired"
+    }
+
+
+def staff_save_seed(save: dict[str, Any]) -> int:
+    return int((save.get("meta") or {}).get("seed", 1))
 
 
 def staff_grade(staff: dict[str, Any] | None) -> float:
@@ -915,7 +980,7 @@ def generated_market_grade_ladder(slot: str) -> list[float]:
 
 def apply_head_coach_reputation(slot: dict[str, Any], coach_name: str) -> None:
     target = HEAD_COACH_REPUTATION_GRADES.get(normalize_name(coach_name))
-    if target is None or slot.get("slot") != "head_coach":
+    if target is None or slot.get("slot") != "head_coach" or slot.get("rating_change_log"):
         return
     current = staff_grade(slot)
     if abs(current - target) < 0.75 and slot.get("coach_reputation_source") == "bleacher_report_2026_soft_rank":
@@ -933,6 +998,7 @@ def apply_head_coach_reputation(slot: dict[str, Any], coach_name: str) -> None:
     personality = slot.setdefault("personality_traits", {})
     personality["communication"] = round(clamp(float(personality.get("communication") or skill_target) * 0.35 + skill_target * 0.65, 20, 96), 2)
     personality["adaptability"] = round(clamp(float(personality.get("adaptability") or skill_target) * 0.45 + skill_target * 0.55, 20, 96), 2)
+    slot["reputation"] = round(staff_grade(slot), 2)
     slot["reputation_grade_target"] = target
     slot["coach_reputation_source"] = "bleacher_report_2026_soft_rank"
     slot["notes"] = (
@@ -1050,6 +1116,7 @@ def simulate_ai_staff_changes(
         for item in firing_history
         if item.get("slot") == "head_coach" and (not season or item.get("season") == season)
     )
+    market_by_slot = {}
     for team in teams:
         slots = {slot.get("slot"): slot for slot in save.get("staff_slots", []) if slot.get("team_id") == team["id"]}
         record = save.get("team_records", {}).get(team["id"], {})
@@ -1143,7 +1210,9 @@ def simulate_ai_staff_changes(
             if fired_this_season and is_interim_staff(current):
                 score += 9.0
                 reasons.append("interim_review_due")
-            market_sample = generate_staff_market(canonical, save, slot=slot)[:18]
+            if slot not in market_by_slot:
+                market_by_slot[slot] = generate_staff_market(canonical, save, slot=slot)[:18]
+            market_sample = market_by_slot[slot]
             current_grade = staff_grade(current)
             best_market_grade = max([staff_grade(candidate) for candidate in market_sample], default=0.0)
             if current_grade <= 68 and best_market_grade >= 82:

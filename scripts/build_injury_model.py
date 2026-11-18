@@ -182,7 +182,47 @@ def main():
             pools[part].append({"label": h.get("label"), "days": int(h["days"]), "games": int(h.get("games") or 0),
                                 "surgery": int(h.get("surgery") or 0), "season": h["season"],
                                 "censored": int(h.get("censored") or 0)})
-    model["recovery_pools"] = {k: sorted(v, key=lambda r: r["season"], reverse=True) for k, v in pools.items()}
+    # Injuries: Basketball Index's full set of recorded absences (21,216, all players 2000-2026), grouped by body part,
+    # labeled with the specific diagnosis where one exists, weighted with its 6-year half-life. An absence without a
+    # logged return lasted at least its recorded days: it takes the median of longer returned cases for that part.
+    observations = {o["observation_id"]: o for o in rows("injury_observations.json")}
+    time_out = rows("injury_time_out.json")
+    diagnosis = {}
+    for t in time_out:
+        if t["level"] == "specific":
+            for oid in t["observation_ids"]:
+                diagnosis.setdefault(oid, t["bucket"])
+    bbi_pools = defaultdict(list)
+    for t in time_out:
+        if t["level"] != "body_part":
+            continue
+        part = MERGE.get(t["bucket"], t["bucket"])
+        if part not in PARTS:
+            continue
+        for oid in t["observation_ids"]:
+            o = observations.get(oid)
+            if o and o.get("days"):
+                bbi_pools[part].append(o | {"label": diagnosis.get(oid) or f"{part} injury"})
+    recovery = {}
+    for part, obs in bbi_pools.items():
+        returned = sorted(o["days"] for o in obs if o["return_logged"])
+        entries = []
+        for o in obs:
+            days = int(o["days"])
+            if not o["return_logged"]:
+                longer = [d for d in returned if d >= days]
+                days = int(statistics.median(longer)) if longer else days
+            entries.append({"days": days, "label": o["label"], "w": round(0.5 ** (float(o["recency_years"]) / 6.0), 5),
+                            "censored": int(not o["return_logged"])})
+        recovery[part] = entries
+    recovery["illness"] = [{"days": r["days"], "label": r["label"] or "illness", "w": 1.0, "censored": r["censored"]}
+                           for r in pools.get("illness", [])]
+    model["recovery_pools"] = recovery
+    for part in PARTS:
+        days = sorted(e["days"] for e in recovery.get(part, []))
+        if days:
+            q = statistics.quantiles(days, n=10)
+            print(f"  recovery {part:11s} n={len(days):5d} median={q[4]:5.1f} p90={q[8]:6.1f}")
     model["recurrence_reference"] = {r["bucket"]: r["risk_ratio"] for r in rows("injury_recurrence.json")
                                      if r.get("level") == "body_part" and r.get("risk_ratio")}
     long_term = [r for r in rows("injury_long_term.json") if (r.get("d_rapm_1y_shrunk_ci") or [0, 0])[1] < 0]
@@ -190,6 +230,18 @@ def main():
                                                        "d_rapm_1y_shrunk_ci", "d_rapm_2y", "d_poss_1y_pct")}
                                 for r in long_term]
     model["return_ramp"] = rows("injury_short_term.json")
+    # Real players' recent injuries (start date, part, days) so a new save starts with their actual history: the same-part
+    # and other-part history terms decay over ~1.5 years, so five seasons cover everything that still matters.
+    recent = defaultdict(list)
+    for h in history:
+        part = part_of(h)
+        if part and part != "illness" and h.get("player_id") and h.get("start") and h["season"] >= "2021-22":
+            recent[h["player_id"]].append([h["start"][:10], part, int(h.get("days") or 0), h.get("label")])
+    model["player_history"] = {pid: sorted(v) for pid, v in sorted(recent.items())}
+    # Real players' recovery speed vs the league for the same injury (Basketball Index, shrunk percent; negative = quicker).
+    model["player_recovery_pct"] = {r["player_id"]: r["recovery"]["pct"] for r in rows("injury_players.json")
+                                    if r.get("player_id") and (r.get("recovery") or {}).get("pct") is not None
+                                    and (r["recovery"].get("trusted") or 0)}
     print("lasting effects (CI below zero):", [(r["level"], r["bucket"], r["d_rapm_1y_shrunk"]) for r in model["lasting_effects"]])
     if args.write:
         OUT.write_text(json.dumps(model, separators=(",", ":")) + "\n")
