@@ -10,6 +10,7 @@ from __future__ import annotations
 import math
 
 import json
+import pickle
 import random
 import re
 import hashlib
@@ -34,7 +35,7 @@ from .schema import (
     to_plain,
 )
 from .spatial import spatial_fit_delta, with_spatial_fit_context
-from .utils import clamp, maybe_float, normalize_name, stable_id
+from .utils import clamp, copy_plain, maybe_float, normalize_name, stable_id
 
 
 FRONT_OFFICE_OVERRIDES_FILE = Path("data/overrides/front_office_overrides.json")
@@ -810,7 +811,7 @@ def trade_search_context(canonical: dict[str, Any]) -> dict[str, Any]:
     from .roster_forecast import ForecastSnapshot
     forecast = ForecastSnapshot(canonical)
     return {**canonical, '_trade_search_roles': {}, '_trade_search_rosters': {},
-            '_trade_financial_facts': {}, '_trade_movement_classes': {},
+            '_trade_financial_facts': {}, '_trade_movement_classes': {}, '_pick_presentation_memo': {},
             '_roster_forecast_snapshot': forecast, '_roster_forecast_stats': forecast.stats}
 
 
@@ -1110,12 +1111,12 @@ class _BilateralSettlementMaterialization:
     def active(self):
         if self._active is None:
             from .save import canonical_with_save
-            private_save = deepcopy(self._saved)
+            private_save = copy_plain(self._saved)
             active = canonical_with_save(self._source, private_save)
             # Freeze the save effects before any derived validation view can
             # annotate its owned data. Do not retain the whole copied career.
             self._normalization = {
-                key: deepcopy(private_save[key]) for key in self._NORMALIZATION_FIELDS
+                key: copy_plain(private_save[key]) for key in self._NORMALIZATION_FIELDS
                 if key in private_save and (key not in self._saved or private_save[key] != self._saved[key])
             }
             self._active = active
@@ -1124,7 +1125,7 @@ class _BilateralSettlementMaterialization:
     def entitlement_active(self):
         active = self.active()
         for key, value in self._normalization.items():
-            self._saved[key] = deepcopy(value)
+            self._saved[key] = copy_plain(value)
         return active
 
 
@@ -1324,7 +1325,7 @@ def saved_trade_salary_legality(
     # validation must not refresh the caller's state when the trade is rejected.
     try:
         active = (_materialization.active() if _materialization is not None
-                  else canonical_with_save(canonical, deepcopy(save)))
+                  else canonical_with_save(canonical, copy_plain(save)))
     except (OSError, ValueError):
         return {"status": "manual_review_required", "issues": [],
                 "manual_review": ["Current payroll data is unavailable for this save's starting roster."]}
@@ -1879,7 +1880,7 @@ def canonical_with_pending_pick_terms(canonical: dict[str, Any], terms: list[dic
     if cache is not None and key in cache:
         if stats is not None:
             stats['pick_preview_hits'] += 1
-        changes, entitlements = deepcopy(cache[key])
+        changes, entitlements = pickle.loads(cache[key])
         for index, (updates, removed) in changes.items():
             pick = working['draft_picks'][index]
             for field in removed:
@@ -1909,7 +1910,8 @@ def canonical_with_pending_pick_terms(canonical: dict[str, Any], terms: list[dic
             del cache[next(iter(cache))]
             if stats is not None:
                 stats['pick_preview_evictions'] += 1
-        cache[key] = deepcopy((changes, working.get('_nested_entitlements', {})))
+        # Stored as pickle bytes (produced here, read only here): every hit unpickles a private copy.
+        cache[key] = pickle.dumps((changes, working.get('_nested_entitlements', {})), protocol=pickle.HIGHEST_PROTOCOL)
         if stats is not None:
             stats['pick_preview_peak_entries'] = max(stats['pick_preview_peak_entries'], len(cache))
     return working
@@ -2180,12 +2182,17 @@ def annotate_pick_obligation_context(canonical: dict[str, Any]) -> None:
         pick.pop("_nested_leaf_picks", None)
         pick.pop("_ranked_entitlement", None)
         pick.pop("_ranked_leaf_picks", None)
-    snapshots = {pick["id"]: dict(pick) for pick in canonical.get("draft_picks", [])}
+    # Ranked pools read only owners and terms, never the nested annotations written below, so they can be
+    # computed first. That lets the leaf snapshots copy just the picks an entitlement refers to.
+    ranked = ranked_pool_entitlements(canonical)
+    needed = {pid for item in entitlements.values() for pid in item["underlying_pick_ids"]}
+    needed.update(pid for item in ranked.values() for pid in item["pool_pick_ids"])
+    snapshots = {pick["id"]: dict(pick) for pick in canonical.get("draft_picks", []) if pick["id"] in needed}
     for anchor, entitlement in entitlements.items():
         pick = next(row for row in canonical["draft_picks"] if row["id"] == anchor)
         pick["_nested_entitlement"] = entitlement
         pick["_nested_leaf_picks"] = {pid: snapshots[pid] for pid in entitlement["underlying_pick_ids"]}
-    for pid, entitlement in ranked_pool_entitlements(canonical).items():
+    for pid, entitlement in ranked.items():
         pick = next(row for row in canonical["draft_picks"] if row["id"] == pid)
         pick["_ranked_entitlement"] = entitlement
         pick["_ranked_leaf_picks"] = {leaf: snapshots[leaf] for leaf in entitlement["pool_pick_ids"]}
@@ -2677,6 +2684,15 @@ def _fallback_asset_valuation_cached(key: tuple[Any, ...]) -> tuple[tuple[str, f
     return tuple(sorted(payload.items()))
 
 
+_MISSING = object()
+
+
+def valuation_or_fallback(values: dict[str, Any], player_id: Any, player: dict[str, Any] | None) -> Any:
+    """values.get(player_id, fallback_asset_valuation(player)), building the (pure) fallback only when needed."""
+    value = values.get(player_id, _MISSING)
+    return fallback_asset_valuation(player) if value is _MISSING else value
+
+
 def fallback_asset_valuation(player: dict[str, Any] | None) -> dict[str, float]:
     if not player:
         return {
@@ -2764,7 +2780,7 @@ def buyer_offer_package_options(
     config=None,
 ) -> list[dict[str, Any]]:
     valuations = player_asset_values_by_id(canonical)
-    target_valuation = valuations.get(target["id"], fallback_asset_valuation(target))
+    target_valuation = valuation_or_fallback(valuations, target["id"], target)
     target_value = market_trade_target_value(target, target_valuation)
     target_salary = current_salary(contract_for_player(canonical, target["id"]))
     from .trade_wants import package_preference
@@ -2800,7 +2816,7 @@ def buyer_offer_packages(
     max_player_options: int = 9,
 ) -> list[list[dict[str, Any]]]:
     valuations = player_asset_values_by_id(canonical)
-    target_valuation = valuations.get(target["id"], fallback_asset_valuation(target))
+    target_valuation = valuation_or_fallback(valuations, target["id"], target)
     target_value = market_trade_target_value(target, target_valuation)
     from .trade_wants import package_preference
     target_value += package_preference(canonical, buyer['id'], [{'kind': 'player', 'id': target['id']}])['adjustment']*.5
@@ -3011,7 +3027,7 @@ def buyer_offer_packages_for_value(
         [player for player in buyer_players if player["id"] not in excluded_player_ids],
         key=lambda player: (
             block.get(player["id"], {}).get("block_score", 0) + 8*search_priority(canonical, seller['id'], {'kind': 'player', 'id': player['id']}),
-            -abs(valuations.get(player["id"], fallback_asset_valuation(player))["player_value"] - target_value * 0.72),
+            -abs(valuation_or_fallback(valuations, player["id"], player)["player_value"] - target_value * 0.72),
             -abs(salary_by_player.get(player["id"], 0.0) - (target_salary or 0)) / 1_000_000,
             player["name"],
         ),
@@ -3029,7 +3045,7 @@ def buyer_offer_packages_for_value(
         if player["id"] in unavailable:
             if work is not None:work["filtered_player_options.terminal"] += 1
             continue
-        valuation = valuations.get(player["id"], fallback_asset_valuation(player))
+        valuation = valuation_or_fallback(valuations, player["id"], player)
         value = float(valuation["player_value"])
         block_score = float(block.get(player["id"], {}).get("block_score") or 0.0)
         if value >= 72 and target_value < 70:
@@ -3304,7 +3320,7 @@ def offer_player_rough_value(
     target_salary: float | None,
     valuations: dict[str, dict[str, Any]],
 ) -> float:
-    valuation = valuations.get(player["id"], fallback_asset_valuation(player))
+    valuation = valuation_or_fallback(valuations, player["id"], player)
     value = market_trade_target_value(player, valuation)
     salary = current_salary(contract_for_player(canonical, player["id"])) or 0.0
     filler = target_salary is not None and target_salary >= 8_000_000 and salary >= 5_000_000 and value < target_value * 0.55
@@ -3562,7 +3578,7 @@ def package_variants(assets: list[dict[str, Any]]) -> list[list[dict[str, Any]]]
 def buyer_teams_for_player(canonical: dict[str, Any], player: dict[str, Any]) -> list[dict[str, Any]]:
     from .trade_wants import search_priority
     valuations = player_asset_values_by_id(canonical)
-    value = valuations.get(player["id"], fallback_asset_valuation(player))
+    value = valuation_or_fallback(valuations, player["id"], player)
     teams = []
     for team in canonical["teams"]:
         if team["id"] == player["team_id"]:
@@ -4397,7 +4413,7 @@ def strategic_rotation_view(canonical: dict[str, Any], team_id: str) -> dict[str
         roster = forecast.roster(team_id)
     else:
         # A previous cut or hypothetical transfer has changed membership.
-        roster = [dict(deepcopy(p), minutes_projection=24) for p in canonical.get('players', [])
+        roster = [dict(copy_plain(p), minutes_projection=24) for p in canonical.get("players", [])
                   if p.get('team_id') == team_id and not p.get('_inactive_player')]
     trial = forecast.view(canonical, roster)
     if not roster:
@@ -4686,7 +4702,7 @@ def package_value_components(
     for asset in assets:
         if asset["kind"] == "player":
             player = player_by_id(canonical, asset["id"])
-            value = values.get(asset["id"], fallback_asset_valuation(player))
+            value = valuation_or_fallback(values, asset["id"], player)
             multiplier = multipliers.get(asset["id"], 1.0)
             player_value = market_trade_target_value(player, value)
             adjusted = (player_value + team_fit_for_player(player, value, state, canonical, include_spatial=False)) * multiplier
@@ -4773,16 +4789,17 @@ def destination_role_multipliers(
     if not incoming_players:
         return {}
     incoming_ids = {player['id'] for player in incoming_players}
+    moving_ids = outgoing_ids | incoming_ids
     roster_values = []
     for player in canonical.get("players", []):
-        if player.get("team_id") != perspective_team_id or player.get("id") in outgoing_ids | incoming_ids:
+        if player.get("team_id") != perspective_team_id or player.get("id") in moving_ids:
             continue
-        valuation = values.get(player["id"], fallback_asset_valuation(player))
+        valuation = valuation_or_fallback(values, player["id"], player)
         quality = valuation.get('on_court_value')
         roster_values.append((player["id"], float(quality if quality is not None else valuation.get("player_value") or 0.0)))
     incoming_values = []
     for player in incoming_players:
-        valuation = values.get(player["id"], fallback_asset_valuation(player))
+        valuation = valuation_or_fallback(values, player["id"], player)
         # Salary bargains and future potential affect price, not who can play
         # the strongest current minutes. Owned package members appear once.
         quality = valuation.get('on_court_value')
@@ -4926,7 +4943,7 @@ def contextual_acceptance_threshold(
             player = player_by_id(canonical, asset.get("id"))
             if not player:
                 continue
-            value = values.get(player["id"], fallback_asset_valuation(player))
+            value = valuation_or_fallback(values, player["id"], player)
             best = max(best, float(value.get("player_value") or 0.0))
         return best
 

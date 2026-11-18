@@ -239,7 +239,7 @@ def package_preference(canonical, team_id, incoming, outgoing=(), config=None):
         overlap = 0.
         if asset['kind'] == 'player':
             player = tx.player_by_id(canonical, asset['id'])
-            value = values.get(asset['id'], tx.fallback_asset_valuation(player))
+            value = tx.valuation_or_fallback(values, asset['id'], player)
             neutral = tx.market_trade_target_value(player, value)
             overlap = max(0., tx.team_fit_for_player(player, value, state, canonical, include_spatial=False)) if state else 0.
             if state.get('phase') in {'contending', 'contending_with_future_upside'} and float(value.get('playoff_value') or 0) >= 64:

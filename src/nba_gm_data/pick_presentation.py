@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from collections import Counter
+from contextvars import ContextVar
+from operator import methodcaller
+import pickle
 from typing import Any
 
 from .utils import stable_id
@@ -26,6 +29,53 @@ def _indexed_view(canonical: dict[str, Any]) -> dict[str, Any]:
     }}
 
 
+def _rebased_view(canonical: dict[str, Any], picks: list[dict[str, Any]]) -> dict[str, Any]:
+    """The indexed view with a replacement pick list; terms and teams (and their ordering) are reused."""
+    index = canonical["_pick_presentation_index"]
+    return {**canonical, "draft_picks": picks, "_pick_presentation_index": {
+        "picks_source": picks, "terms_source": index["terms_source"], "teams_source": index["teams_source"],
+        "picks": {pick["id"]: pick for pick in picks}, "teams": index["teams"], "active": index["active"],
+    }}
+
+
+def _term_table(canonical: dict[str, Any]) -> dict[str, Any]:
+    """Per-view facts about the active swap terms (subjects, prefixes, holders), computed once.
+
+    Valid for the same read-only operation as the index itself: the view's picks and terms are not
+    edited while it is in use.
+    """
+    index = canonical["_pick_presentation_index"]
+    table = index.get("term_table")
+    if table is None:
+        active = index["active"]
+        subjects = [_subjects(term) for term in active]
+        prefixes = [_prefix_from(canonical, term, ids) for term, ids in zip(active, subjects)]
+        holders = [_holder(term) for term in active]
+        buckets: dict[tuple[Any, str], list[int]] = {}
+        for position, key in enumerate(zip(holders, prefixes)):
+            buckets.setdefault(key, []).append(position)
+        positions: dict[int, int] = {}
+        for position, term in enumerate(active):
+            positions.setdefault(id(term), position)
+        protected = [term for term in canonical.get("pick_obligations", []) if term.get("type") == "protected_pick"
+                     and term.get("status", "active") in {"active", "pending_resolution"}]
+        table = index["term_table"] = {
+            "subjects": subjects, "subject_sets": [set(ids) for ids in subjects], "prefixes": prefixes,
+            "holders": holders, "buckets": buckets, "positions": positions, "protected": protected,
+        }
+    return table
+
+
+def _term_facts(canonical: dict[str, Any], term: dict[str, Any]) -> tuple[list[str], str, str | None]:
+    """(subjects, prefix, holder) of a term, read from the view's table when the term is one of its rows."""
+    table = _term_table(canonical)
+    position = table["positions"].get(id(term))
+    if position is not None and canonical["_pick_presentation_index"]["active"][position] is term:
+        return table["subjects"][position], table["prefixes"][position], table["holders"][position]
+    subjects = _subjects(term)
+    return subjects, _prefix_from(canonical, term, subjects), _holder(term)
+
+
 def _holder(term: dict[str, Any]) -> str | None:
     return term.get("current_rights_holder_team_id") or term.get("original_rights_holder_team_id") or term.get("receiver_team_id")
 
@@ -45,6 +95,8 @@ def _active(canonical: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _protections(canonical: dict[str, Any], pick_ids: list[str]) -> list[dict[str, Any]]:
+    if canonical.get("_pick_presentation_index"):
+        return [term for term in _term_table(canonical)["protected"] if term.get("primary_pick_id") in pick_ids]
     return [term for term in canonical.get("pick_obligations", []) if term.get("type") == "protected_pick" and term.get("status", "active") in {"active", "pending_resolution"} and term.get("primary_pick_id") in pick_ids]
 
 
@@ -66,7 +118,11 @@ def _names(canonical: dict[str, Any], pick_ids: list[str]) -> str:
 
 
 def _prefix(canonical: dict[str, Any], term: dict[str, Any]) -> str:
-    pick = _pick_map(canonical).get(_subjects(term)[0] if _subjects(term) else "", {})
+    return _prefix_from(canonical, term, _subjects(term))
+
+
+def _prefix_from(canonical: dict[str, Any], term: dict[str, Any], subjects: list[str]) -> str:
+    pick = _pick_map(canonical).get(subjects[0] if subjects else "", {})
     return f"{term.get('season') or pick.get('season') or '----'} R{term.get('round') or pick.get('round') or '?'}"
 
 
@@ -116,31 +172,44 @@ def swap_step_label(canonical: dict[str, Any], term: dict[str, Any]) -> str:
 def _group(canonical: dict[str, Any], term: dict[str, Any]) -> list[dict[str, Any]]:
     if term.get("allocation_comparison"):
         return [term]
+    if not canonical.get("_pick_presentation_index"):
+        canonical = _indexed_view(canonical)
+    active = _active(canonical)
+    table = _term_table(canonical)
+    subjects, prefix, holder = _term_facts(canonical, term)
+    # Rows sharing this term's holder and season/round prefix, in active order.
+    bucket = table["buckets"].get((holder, prefix), ())
     if term.get("nested_anchor_pick_id"):
-        return [row for row in _active(canonical) if row.get("nested_anchor_pick_id") == term["nested_anchor_pick_id"] and _holder(row) == _holder(term) and _prefix(canonical, row) == _prefix(canonical, term)]
-    candidates = [row for row in _active(canonical) if not row.get("allocation_comparison") and _holder(row) == _holder(term) and _prefix(canonical, row) == _prefix(canonical, term)]
-    ids = set(_subjects(term))
+        return [active[i] for i in bucket if active[i].get("nested_anchor_pick_id") == term["nested_anchor_pick_id"]]
+    candidates = [i for i in bucket if not active[i].get("allocation_comparison")]
+    subject_sets, subject_lists = table["subject_sets"], table["subjects"]
+    ids = set(subjects)
     selected = {term.get("id")}
     while True:
-        connected = [row for row in candidates if ids.intersection(_subjects(row))]
-        new_selected = {row.get("id") for row in connected} | selected
+        connected = [i for i in candidates if not ids.isdisjoint(subject_sets[i])]
+        new_selected = {active[i].get("id") for i in connected} | selected
         if new_selected == selected:
             break
         selected = new_selected
-        ids.update(pid for row in connected for pid in _subjects(row))
-    return [row for row in candidates if row.get("id") in selected] or [term]
+        ids.update(pid for i in connected for pid in subject_lists[i])
+    return [active[i] for i in candidates if active[i].get("id") in selected] or [term]
 
 
 def _dependencies(canonical: dict[str, Any], group: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if not canonical.get("_pick_presentation_index"):
+        canonical = _indexed_view(canonical)
     terms = _active(canonical)
+    table = _term_table(canonical)
     group_ids = {row.get("id") for row in group}
     last = max((index for index, row in enumerate(terms) if row.get("id") in group_ids), default=-1)
-    needed = set(pid for row in group for pid in _subjects(row))
+    needed = set(pid for row in group for pid in _term_facts(canonical, row)[0])
+    prefix = _term_facts(canonical, group[0])[1]
+    prefixes, subject_sets, subject_lists = table["prefixes"], table["subject_sets"], table["subjects"]
     rows = []
-    for row in reversed(terms[:last + 1]):
-        if _prefix(canonical, row) == _prefix(canonical, group[0]) and needed.intersection(_subjects(row)):
-            rows.append(row)
-            needed.update(_subjects(row))
+    for position in range(last, -1, -1):
+        if prefixes[position] == prefix and not needed.isdisjoint(subject_sets[position]):
+            rows.append(terms[position])
+            needed.update(subject_lists[position])
     return list(reversed(rows)) or group
 
 
@@ -176,7 +245,7 @@ def _fold_label(canonical: dict[str, Any], group: list[dict[str, Any]], dependen
     return f"{_prefix(canonical, group[0])}: {_team(canonical, holder)} receives the {outcome} favourable of {_names(canonical, all_ids)}."
 
 
-def nested_entitlements(canonical: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def _compute_nested_entitlements(canonical: dict[str, Any]) -> dict[str, dict[str, Any]]:
     """Project proven single-slot chains onto their existing pick ID.
 
     Leaves remain physical picks; every swap node selects exactly one output.
@@ -296,7 +365,7 @@ def materialize_nested_inputs(canonical: dict[str, Any]) -> dict[str, dict[str, 
     return entitlements
 
 
-def swap_presentation(canonical: dict[str, Any], term: dict[str, Any]) -> dict[str, Any]:
+def _compute_swap_presentation(canonical: dict[str, Any], term: dict[str, Any]) -> dict[str, Any]:
     canonical = _indexed_view(canonical)
     group = _group(canonical, term)
     dependencies = _dependencies(canonical, group)
@@ -362,7 +431,7 @@ def swap_presentation(canonical: dict[str, Any], term: dict[str, Any]) -> dict[s
     }
 
 
-def ranked_pool_entitlements(canonical: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def _compute_ranked_pool_entitlements(canonical: dict[str, Any]) -> dict[str, dict[str, Any]]:
     """Assign one stable rank to each existing pick asset in a proven pool.
 
     The guarantee follows that asset when traded. Original allocation owners
@@ -373,19 +442,22 @@ def ranked_pool_entitlements(canonical: dict[str, Any]) -> dict[str, dict[str, A
     result = {}
     picks = _pick_map(canonical)
     seen = set()
+    baseline = None
     for term in _active(canonical):
         pool = term.get("comparison_pool_pick_ids") or []
         key = tuple(sorted(pool))
         if not term.get("allocation_comparison") or not pool or key in seen:
             continue
         seen.add(key)
-        baseline_picks = [{**pick, "current_owner_team_id": pick.get("_allocation_initial_owner_team_id") or pick.get("current_owner_team_id")} for pick in picks.values()]
-        baseline = _indexed_view({**canonical, "draft_picks": baseline_picks})
+        if baseline is None:
+            # Built once per call: the picks are not edited while this projection runs.
+            baseline_picks = [{**pick, "current_owner_team_id": pick.get("_allocation_initial_owner_team_id") or pick.get("current_owner_team_id")} for pick in picks.values()]
+            baseline = _rebased_view(canonical, baseline_picks)
+            initial = {pick["id"]: pick for pick in baseline_picks}
         owner = term.get("comparison_holder_team_id")
         if not _ranked_allocation_label(baseline, term, owner):
             continue
         rows = [row for row in _active(canonical) if set(row.get("comparison_pool_pick_ids") or []) == set(pool)]
-        initial = {pick["id"]: pick for pick in baseline_picks}
         remaining = {initial[pid].get("current_owner_team_id") for pid in pool}
         order = []
         edges = [(row.get("comparison_holder_team_id"), row.get("comparison_counterparty_team_id")) for row in rows]
@@ -408,7 +480,11 @@ def _ranked_allocation_label(canonical: dict[str, Any], term: dict[str, Any], ow
         return None
     if _protections(canonical, pool):
         return None
-    rows = [row for row in _active(canonical) if set(_subjects(row)).intersection(pool)]
+    if canonical.get("_pick_presentation_index"):
+        active, subject_sets = _active(canonical), _term_table(canonical)["subject_sets"]
+        rows = [row for row, subjects in zip(active, subject_sets) if not subjects.isdisjoint(pool)]
+    else:
+        rows = [row for row in _active(canonical) if set(_subjects(row)).intersection(pool)]
     if any(not row.get("allocation_comparison") or row.get("subject_protected_top_n") or set(row.get("comparison_pool_pick_ids") or []) != set(pool) or not _better(row) for row in rows):
         return None
     picks = _pick_map(canonical)
@@ -446,7 +522,7 @@ def _ranked_allocation_label(canonical: dict[str, Any], term: dict[str, Any], ow
     return f"{_prefix(canonical, term)}: {_team(canonical, owner)} receives {rank} of {_names(canonical, pool)}."
 
 
-def pick_presentation(canonical: dict[str, Any], pick: dict[str, Any]) -> dict[str, Any] | None:
+def _compute_pick_presentation(canonical: dict[str, Any], pick: dict[str, Any]) -> dict[str, Any] | None:
     canonical = _indexed_view(canonical)
     terms = [row for row in _active(canonical) if pick.get("id") in _subjects(row)]
     if not terms:
@@ -558,3 +634,91 @@ def draft_assets_display(canonical: dict[str, Any], assets: list[dict[str, Any]]
         else:
             visible.append(asset)
     return [*visible, *combined]
+
+
+# --- Reuse within one immutable trade search -------------------------------------------------------------
+#
+# A trade search asks for the same pick entitlements and labels thousands of times against an unchanged
+# league (see transactions.trade_search_context). A search context carries a "_pick_presentation_memo"
+# dict; results are kept per (picks, terms, teams) list triple and every caller gets a private copy.
+# An entry is dropped whenever a list is replaced, changes length or has an item replaced, or any pick's
+# owner, or any term's status, rights holder, nested anchor or field count changes. (Pick annotations such
+# as "_obligations" are not read here; the one that is, "_ranked_entitlement", is part of the result key.) Contexts without the memo
+# key (saves, dashboards, settlement) compute fresh results exactly as before.
+
+_MEMO_LIMIT = 16
+_TRUSTED: ContextVar[tuple[Any, ...] | None] = ContextVar("pick_presentation_trusted_entry", default=None)
+_PICK_OWNER = methodcaller("get", "current_owner_team_id")
+_TERM_STATUS = methodcaller("get", "status")
+_TERM_HOLDER = methodcaller("get", "current_rights_holder_team_id")
+_TERM_ANCHOR = methodcaller("get", "nested_anchor_pick_id")
+
+
+def _memo_entry(canonical: dict[str, Any]) -> dict[str, Any] | None:
+    memo = canonical.get("_pick_presentation_memo")
+    if memo is None:
+        return None
+    picks = canonical.get("draft_picks", [])
+    terms = canonical.get("pick_obligations", [])
+    teams = canonical.get("teams", [])
+    key = (id(picks), id(terms), id(teams))
+    trusted = _TRUSTED.get()
+    if trusted is not None and trusted[0] is memo and trusted[1] == key:
+        # A nested call made while computing a result for this very entry: these functions only read
+        # the league lists, so the guard taken a moment ago still holds.
+        return trusted[2]
+    guard = (
+        list(map(id, picks)), list(map(_PICK_OWNER, picks)),
+        list(map(id, terms)), list(map(len, terms)), list(map(_TERM_STATUS, terms)),
+        list(map(_TERM_HOLDER, terms)), list(map(_TERM_ANCHOR, terms)), list(map(id, teams)),
+    )
+    entry = memo.pop(key, None)  # re-inserted below: least recently used entries are evicted first
+    if (entry is None or entry["sources"][0] is not picks or entry["sources"][1] is not terms
+            or entry["sources"][2] is not teams or entry["guard"] != guard):
+        while len(memo) >= _MEMO_LIMIT:
+            memo.pop(next(iter(memo)))
+        # The entry keeps its source lists alive, so their ids cannot be reused while it exists.
+        entry = {"key": key, "sources": (picks, terms, teams), "guard": guard, "results": {}}
+    memo[key] = entry
+    return entry
+
+
+def _memoized(canonical: dict[str, Any], key: tuple[Any, ...], compute, *args: Any) -> Any:
+    entry = _memo_entry(canonical)
+    if entry is None:
+        return compute(canonical, *args)
+    results = entry["results"]
+    stored = results.get(key)
+    if stored is None:
+        token = _TRUSTED.set((canonical["_pick_presentation_memo"], entry["key"], entry))
+        try:
+            value = compute(canonical, *args)
+        finally:
+            _TRUSTED.reset(token)
+        # Plain JSON-like data built here; the bytes never leave this process.
+        results[key] = (args, pickle.dumps(value, protocol=pickle.HIGHEST_PROTOCOL))
+        return value
+    return pickle.loads(stored[1])
+
+
+def nested_entitlements(canonical: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Project proven single-slot chains onto their existing pick ID (see _compute_nested_entitlements)."""
+    return _memoized(canonical, ("nested",), _compute_nested_entitlements)
+
+
+def ranked_pool_entitlements(canonical: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Stable ranks for assets in proven allocation pools (see _compute_ranked_pool_entitlements)."""
+    return _memoized(canonical, ("ranked",), _compute_ranked_pool_entitlements)
+
+
+def swap_presentation(canonical: dict[str, Any], term: dict[str, Any]) -> dict[str, Any]:
+    # Keyed by the term object; the entry keeps it alive, so the id stays unique.
+    return _memoized(canonical, ("swap", id(term)), _compute_swap_presentation, term)
+
+
+def pick_presentation(canonical: dict[str, Any], pick: dict[str, Any]) -> dict[str, Any] | None:
+    # The result reads only these fields of the supplied pick; everything else comes from the league lists.
+    rank = pick.get("_ranked_entitlement")
+    key = ("pick", pick.get("id"), pick.get("current_owner_team_id"),
+           (rank["rank"], rank["pool_size"]) if rank else None)
+    return _memoized(canonical, key, _compute_pick_presentation, pick)

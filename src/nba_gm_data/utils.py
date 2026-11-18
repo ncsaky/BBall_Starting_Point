@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import math
+import pickle
 import re
 import unicodedata
+from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterable
@@ -74,6 +76,18 @@ def clear_utility_caches() -> None:
     _normalize_name_cached.cache_clear()
     _slugify_cached.cache_clear()
     _stable_id_cached.cache_clear()
+
+
+def copy_plain(value: Any) -> Any:
+    """A deep copy of plain game data (dicts, lists, numbers, strings), done in C.
+
+    Same result as copy.deepcopy, including shared references inside the value. Only bytes produced here
+    are unpickled; saves on disk stay JSON/SQLite. Falls back to deepcopy for anything pickle refuses.
+    """
+    try:
+        return pickle.loads(pickle.dumps(value, protocol=pickle.HIGHEST_PROTOCOL))
+    except (pickle.PicklingError, TypeError, AttributeError):
+        return deepcopy(value)
 
 
 def maybe_float(value: Any) -> float | None:

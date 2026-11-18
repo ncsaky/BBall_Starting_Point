@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 from . import transactions as tx
 from .schema import CANONICAL_START_DATE, to_plain
-from .utils import stable_id
+from .utils import copy_plain, stable_id
 
 
 def transfers_for_revalidation(candidate):
@@ -97,7 +97,7 @@ def apply_multi_team_trade_to_state(save, candidate, date, *, canonical, config=
     if any(r.get('proposal_id') == pid for r in save.get('transaction_logs', [])):
         return {'status': 'already_applied', 'proposal_id': pid}
     # No authoritative state is touched until every participant passes.
-    working = deepcopy(save)
+    working = copy_plain(save)
     active = canonical_with_save(canonical, working)
     try:
         fresh = evaluate_multi_team_trade(active, transfers_for_revalidation(candidate), pick_rules=candidate.get('pick_rules'),

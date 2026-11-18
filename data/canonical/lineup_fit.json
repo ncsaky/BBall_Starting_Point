@@ -1,0 +1,284 @@
+{
+ "version": "lineup_fit_v1",
+ "source": "Basketball Index xPoints lineups 2025-26 (scripts/fit_lineup_fit.py); derived coefficients only",
+ "units": "points per 100 possessions per unit of the term; offense = points scored, defense = points allowed",
+ "offense": {
+  "five_shooters": -0.9151
+ },
+ "defense": {
+  "non_shooters_beyond_2": 1.0309
+ },
+ "league_mean": {
+  "non_shooters_beyond_2": 0.0692,
+  "five_shooters": 0.1895,
+  "creator_x_shooters": 0.0
+ },
+ "creator_shooters_mean": 3.8021,
+ "rotation_ratio": {
+  "non_shooters_beyond_2": 0.5493,
+  "five_shooters": 0.7774
+ },
+ "rule": {
+  "prior_sd": 2.0,
+  "min_z": 1.5,
+  "min_gap": 0.5,
+  "possession_share": 0.7,
+  "market_tolerance": 0.02
+ },
+ "decisions": {
+  "offense:non_shooters_beyond_2": {
+   "evidence": 1.385,
+   "se": 2.298,
+   "expected_points": 1.296,
+   "expected_se": 1.468,
+   "basketball_index_description": -3.651,
+   "target_per_100": 0.418,
+   "game_before": 0.535,
+   "added": 0.0,
+   "same_sign": false,
+   "clear_of_noise": false,
+   "evidence_adopted": false,
+   "kept_by_market_check": null,
+   "adopted": false
+  },
+  "offense:five_shooters": {
+   "evidence": -1.675,
+   "se": 2.168,
+   "expected_points": -1.788,
+   "expected_se": 0.814,
+   "basketball_index_description": -2.053,
+   "target_per_100": -0.539,
+   "game_before": 0.376,
+   "added": -0.915,
+   "same_sign": true,
+   "clear_of_noise": true,
+   "evidence_adopted": true,
+   "kept_by_market_check": true,
+   "adopted": true
+  },
+  "offense:creators_beyond_1": {
+   "evidence": 4.534,
+   "se": 3.823,
+   "expected_points": 2.434,
+   "expected_se": 1.878,
+   "basketball_index_description": 3.136,
+   "target_per_100": 0.682,
+   "game_before": -1.382,
+   "added": 0.0,
+   "same_sign": true,
+   "clear_of_noise": false,
+   "evidence_adopted": false,
+   "kept_by_market_check": null,
+   "adopted": false
+  },
+  "offense:has_lead_playmaker": {
+   "evidence": -0.228,
+   "se": 5.076,
+   "expected_points": 0.687,
+   "expected_se": 2.955,
+   "basketball_index_description": -4.817,
+   "target_per_100": -0.021,
+   "game_before": 1.705,
+   "added": 0.0,
+   "same_sign": true,
+   "clear_of_noise": false,
+   "evidence_adopted": false,
+   "kept_by_market_check": null,
+   "adopted": false
+  },
+  "offense:two_bigs": {
+   "evidence": -2.944,
+   "se": 2.555,
+   "expected_points": -2.259,
+   "expected_se": 1.197,
+   "basketball_index_description": -1.916,
+   "target_per_100": -0.783,
+   "game_before": -0.316,
+   "added": 0.0,
+   "same_sign": true,
+   "clear_of_noise": true,
+   "evidence_adopted": false,
+   "kept_by_market_check": null,
+   "adopted": false
+  },
+  "offense:non_shooting_big_x_other_non_shooters": {
+   "evidence": 0.847,
+   "se": 1.796,
+   "expected_points": 0.231,
+   "expected_se": 0.72,
+   "basketball_index_description": 2.354,
+   "target_per_100": 0.328,
+   "game_before": -0.256,
+   "added": 0.0,
+   "same_sign": true,
+   "clear_of_noise": false,
+   "evidence_adopted": false,
+   "kept_by_market_check": null,
+   "adopted": false
+  },
+  "offense:creator_x_shooters": {
+   "evidence": 1.632,
+   "se": 0.977,
+   "expected_points": 1.006,
+   "expected_se": 0.459,
+   "basketball_index_description": 1.386,
+   "target_per_100": 0.922,
+   "game_before": 0.022,
+   "added": 0.0,
+   "same_sign": true,
+   "clear_of_noise": true,
+   "evidence_adopted": true,
+   "kept_by_market_check": false,
+   "adopted": false
+  },
+  "offense:playmaker_x_shooters": {
+   "evidence": 0.235,
+   "se": 1.158,
+   "expected_points": 0.246,
+   "expected_se": 0.721,
+   "basketball_index_description": 1.587,
+   "target_per_100": 0.123,
+   "game_before": -0.149,
+   "added": 0.0,
+   "same_sign": true,
+   "clear_of_noise": false,
+   "evidence_adopted": false,
+   "kept_by_market_check": null,
+   "adopted": false
+  },
+  "defense:has_rim_protector": {
+   "evidence": -3.559,
+   "se": 1.938,
+   "expected_points": -0.938,
+   "expected_se": 1.318,
+   "basketball_index_description": 0.158,
+   "target_per_100": -1.285,
+   "game_before": -0.047,
+   "added": 0.0,
+   "same_sign": false,
+   "clear_of_noise": true,
+   "evidence_adopted": false,
+   "kept_by_market_check": null,
+   "adopted": false
+  },
+  "defense:weak_perimeter_beyond_1": {
+   "evidence": 2.087,
+   "se": 1.523,
+   "expected_points": -1.105,
+   "expected_se": 0.718,
+   "basketball_index_description": -0.494,
+   "target_per_100": 0.925,
+   "game_before": 0.18,
+   "added": 0.0,
+   "same_sign": false,
+   "clear_of_noise": false,
+   "evidence_adopted": false,
+   "kept_by_market_check": null,
+   "adopted": false
+  },
+  "defense:rim_protector_x_weak_perimeter": {
+   "evidence": 0.152,
+   "se": 1.071,
+   "expected_points": -0.01,
+   "expected_se": 0.664,
+   "basketball_index_description": -0.596,
+   "target_per_100": 0.083,
+   "game_before": 0.038,
+   "added": 0.0,
+   "same_sign": false,
+   "clear_of_noise": false,
+   "evidence_adopted": false,
+   "kept_by_market_check": null,
+   "adopted": false
+  },
+  "defense:low_versatility_beyond_1": {
+   "evidence": 1.437,
+   "se": 2.538,
+   "expected_points": 0.94,
+   "expected_se": 0.768,
+   "basketball_index_description": -1.099,
+   "target_per_100": 0.385,
+   "game_before": -0.055,
+   "added": 0.0,
+   "same_sign": false,
+   "clear_of_noise": false,
+   "evidence_adopted": false,
+   "kept_by_market_check": null,
+   "adopted": false
+  },
+  "defense:non_shooters_beyond_2": {
+   "evidence": 2.964,
+   "se": 1.916,
+   "expected_points": 0.955,
+   "expected_se": 0.951,
+   "basketball_index_description": 2.176,
+   "target_per_100": 1.082,
+   "game_before": 0.051,
+   "added": 1.031,
+   "same_sign": true,
+   "clear_of_noise": true,
+   "evidence_adopted": true,
+   "kept_by_market_check": true,
+   "adopted": true
+  },
+  "defense:two_bigs": {
+   "evidence": -0.579,
+   "se": 1.626,
+   "expected_points": -1.438,
+   "expected_se": 1.019,
+   "basketball_index_description": 1.372,
+   "target_per_100": -0.244,
+   "game_before": 0.534,
+   "added": 0.0,
+   "same_sign": false,
+   "clear_of_noise": false,
+   "evidence_adopted": false,
+   "kept_by_market_check": null,
+   "adopted": false
+  }
+ },
+ "market_check": {
+  "games": 1021,
+  "fit_off": {
+   "spread_gap": 4.415896650498358,
+   "total_gap": 6.781436868056721,
+   "corr_with_market_gap": 0.0
+  },
+  "steps": [
+   {
+    "terms": [
+     "offense:five_shooters",
+     "offense:creator_x_shooters",
+     "defense:non_shooters_beyond_2"
+    ],
+    "spread_gap": 4.527017407857697,
+    "total_gap": 6.832657672399971,
+    "corr_with_market_gap": -0.20830912648822086
+   },
+   {
+    "terms": [
+     "offense:five_shooters",
+     "defense:non_shooters_beyond_2"
+    ],
+    "spread_gap": 4.426541794549221,
+    "total_gap": 6.682008778086042,
+    "corr_with_market_gap": -0.029903612896039104
+   }
+  ],
+  "only offense:five_shooters": {
+   "spread_gap": 4.395260723345025,
+   "total_gap": 6.728530719862703,
+   "corr_with_market_gap": 0.1500608030902622
+  },
+  "only offense:creator_x_shooters": {
+   "spread_gap": 4.514685544981753,
+   "total_gap": 6.942933491609607,
+   "corr_with_market_gap": -0.1993897835463012
+  },
+  "only defense:non_shooters_beyond_2": {
+   "spread_gap": 4.448860819774838,
+   "total_gap": 6.735524578494767,
+   "corr_with_market_gap": -0.22684387122786784
+  }
+ }
+}

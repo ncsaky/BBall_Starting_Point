@@ -29,6 +29,7 @@ from .spatial import (
 )
 from .teams import TEAM_INFO
 from .talent import enabled as talent_enabled, role_skill_value
+from .box_rates import normal_to_uniform, poisson_quantile
 from .utils import normalize_name, stable_id
 
 
@@ -91,7 +92,22 @@ def load_reference_json(path: Path) -> Any:
     return pickle.loads(_reference_json_bytes(str(path.resolve()), stamp))
 
 
-def load_sim_context(root: str | Path, canonical: dict[str, Any] | None = None) -> dict[str, Any]:
+def load_sim_reference(root: str | Path) -> dict[str, Any]:
+    """The read-only reference tables a sim context starts from (schedule, box scores, minutes, odds, manifestos)."""
+    root = Path(root)
+    return {
+        "schedule": load_reference_json(root / SCHEDULE_FILE)["games"],
+        "boxscores": load_optional_research(root, GAME_BOXSCORES_FILE, "games"),
+        "real_minutes": load_reference_json(root / REAL_MINUTES_FILE) if (root / REAL_MINUTES_FILE).exists() else {},
+        "odds": load_odds(root),
+        "manifestos": load_manifestos(root),
+    }
+
+
+def load_sim_context(root: str | Path, canonical: dict[str, Any] | None = None, *,
+                     reference: dict[str, Any] | None = None, indices: bool = True) -> dict[str, Any]:
+    """A sim context. ``reference`` reuses tables from load_sim_reference (the simulation only reads them);
+    ``indices=False`` leaves the lookup indexes to a caller that replaces the schedule first."""
     root = Path(root)
     if canonical is None:
         canonical = load_json(root / "data/canonical/universe_2026_27_offseason.json")
@@ -99,19 +115,19 @@ def load_sim_context(root: str | Path, canonical: dict[str, Any] | None = None) 
         if ratings_model_for() == INPUTS_V1:
             # Save-less tools (calibration report, betting-odds validation) opt in via NBA_GM_RATINGS_MODEL.
             install_inputs_model(canonical, root)
-    schedule = load_reference_json(root / SCHEDULE_FILE)["games"]
-    boxscores = load_optional_research(root, GAME_BOXSCORES_FILE, "games")
+    tables = reference if reference is not None else load_sim_reference(root)
     context = {
         "root": root,
         "canonical": canonical,
-        "schedule": schedule,
-        "real_minutes": load_reference_json(root / REAL_MINUTES_FILE) if (root / REAL_MINUTES_FILE).exists() else {},
-        "boxscores": boxscores,
-        "odds": load_odds(root),
-        "manifestos": load_manifestos(root),
+        "schedule": tables["schedule"],
+        "real_minutes": tables["real_minutes"],
+        "boxscores": tables["boxscores"],
+        "odds": tables["odds"],
+        "manifestos": tables["manifestos"],
         "sim_cache": {"player_pools": {}, "team_features": {}, "game_contexts": {}},
     }
-    context["indices"] = build_sim_indices(context)
+    if indices:
+        context["indices"] = build_sim_indices(context)
     return context
 
 
@@ -265,12 +281,31 @@ def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any], *, 
         "playoff_translation": get("playoff_translation"),
         "defensive_weak_link": nonlinear_low(defensive_mobility, 48),
     }
+    # Box-score allocation rates (who gets the turnovers, steals and free throws; box_rates.py). Game scores do
+    # not use them. Old-ratings fits on the legacy traits are the fallback for players without inputs.
+    from . import box_rates
+    trait_values = {key: get(key) for key in traits}
+    features["turnovers_per36"] = box_rates.turnovers_per36_from_traits(trait_values)
+    features["steals_per36"] = box_rates.steals_per36_from_traits(trait_values)
+    features["fta_per_point"] = box_rates.fta_per_point_from_traits(trait_values)
     from .ratings_model import effective_inputs, uses_inputs_model
     if uses_inputs_model(canonical):
+        # New ratings: each player's share of his team's points follows a fit to real points per 36
+        # (box_rates.POINTS_INPUTS); see distribute_player_lines. Old ratings keep the hand-tuned scoring weights.
+        features["points_per36"] = box_rates.points_per36_from_traits(trait_values)
         player_inputs = effective_inputs(canonical, player["id"])
-        playmaking = playmaking_assists_per36(player_inputs) if player_inputs else None
-        if playmaking is not None:
-            features["playmaking_ast36"] = playmaking
+        if player_inputs:
+            points = box_rates.points_per36_from_inputs(player_inputs)
+            if points is not None:
+                features["points_per36"] = points
+            playmaking = playmaking_assists_per36(player_inputs)
+            if playmaking is not None:
+                features["playmaking_ast36"] = playmaking
+            for key, rate in (("turnovers_per36", box_rates.turnovers_per36_from_inputs(player_inputs)),
+                              ("steals_per36", box_rates.steals_per36_from_inputs(player_inputs)),
+                              ("fta_per_point", box_rates.fta_per_point_from_inputs(player_inputs))):
+                if rate is not None:
+                    features[key] = rate
     from .offense import enabled as offense_enabled, offensive_profile
     if offense_enabled(canonical):
         profile = offensive_profile(canonical, player, {key: float(row['value']) for key, row in traits.items()})
@@ -405,6 +440,7 @@ def team_feature_vector(canonical: dict[str, Any], team: dict[str, Any], *, incl
     if include_spatial:
         spatial_weights = {player["id"]: max(0.0, projected_game_minutes(player)) for player in players}
         features.update(flatten_spatial_profile(team_spatial_profile(canonical, team["id"], spatial_weights)))
+    features.update(lineup_fit_features([(player, player_features[player["id"]], projected_game_minutes(player)) for player in players]))
     from .offense import extend_lineup_features
     extend_lineup_features(features, player_features, weights)
     features.update(offensive_feature_summary_from_values(features))
@@ -499,6 +535,9 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
     if mode == "sandbox-sim":
         home_players = return_ramped_player_pool(home_players, coach_by_team.get(home_team["id"]))
         away_players = return_ramped_player_pool(away_players, coach_by_team.get(away_team["id"]))
+        if "_human_team_ids" in canonical:
+            home_players = game_day_rotation(home_players, home_team["id"], game_id, seed)
+            away_players = game_day_rotation(away_players, away_team["id"], game_id, seed)
     home_features = game_team_features(context, canonical, home_team, home_players, mode)
     away_features = game_team_features(context, canonical, away_team, away_players, mode)
     home_game_context = game_context_for_team(context, game, home_team)
@@ -626,6 +665,21 @@ def return_ramped_player_pool(pool: list[dict[str, Any]], coach: CoachRating | N
     return normalize_minutes(adjusted)
 
 
+def game_day_rotation(
+    pool: list[dict[str, Any]], team_id: str, game_id: str, seed: int,
+) -> list[dict[str, Any]]:
+    """Vary stint lengths around the coach's or GM's targets."""
+    if sum(item["minutes"] > 0 for item in pool) < 5:
+        return pool
+    rng = random.Random(f"{seed}:{game_id}:{team_id}:stint_length")
+    adjusted = []
+    for item in pool:
+        minutes = item["minutes"]
+        swing = min(5.0, minutes * .75)
+        adjusted.append({**item, "minutes": minutes + rng.uniform(-swing, swing)})
+    return normalize_minutes(adjusted, exact=True)
+
+
 def matchup_adjusted_player_pool(
     canonical: dict[str, Any],
     pool: list[dict[str, Any]],
@@ -728,7 +782,7 @@ def normalize_game_team_abbrev(abbrev: str | None) -> str | None:
     }.get(abbrev, abbrev)
 
 
-def normalize_minutes(pool: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def normalize_minutes(pool: list[dict[str, Any]], *, exact: bool = False) -> list[dict[str, Any]]:
     cap = 48.0
     raw_minutes = [max(0.0, float(item.get("minutes") or 0.0)) for item in pool]
     total = sum(raw_minutes)
@@ -755,6 +809,19 @@ def normalize_minutes(pool: list[dict[str, Any]]) -> list[dict[str, Any]]:
             break
     for idx in capped:
         minutes[idx] = cap
+    if exact:
+        # Assign the leftover hundredths to the largest fractional remainders.
+        # A full-game player or a DNP cannot receive a rounding minute.
+        hundredths = [math.floor(value * 100) for value in minutes]
+        remainders = sorted(
+            (idx for idx, value in enumerate(minutes) if 0 < value < cap),
+            key=lambda idx: minutes[idx] * 100 - hundredths[idx],
+            reverse=True,
+        )
+        left = 24000 - sum(hundredths)
+        for idx in remainders[:left]:
+            hundredths[idx] += 1
+        return [{**item, "minutes": value / 100} for item, value in zip(pool, hundredths)]
     return [{**item, "minutes": round(min(cap, max(0.0, minutes[idx])), 2)} for idx, item in enumerate(pool)]
 
 
@@ -946,6 +1013,7 @@ def lineup_feature_vector(canonical: dict[str, Any], pool: list[dict[str, Any]])
             )
         )
     )
+    features.update(lineup_fit_features([(item["player"], player_features[item["player"]["id"]], float(item.get("minutes") or 0.0)) for item in pool]))
     from .offense import extend_lineup_features
     extend_lineup_features(features, player_features, weights)
     features.update(offensive_feature_summary_from_values(features))
@@ -1005,6 +1073,10 @@ def health_adjusted_player_features(features: dict[str, float], item: dict[str, 
             adjusted[key] = clamp(float(adjusted[key]) - penalty * weight, 1, 99)
         else:
             adjusted[key] = clamp(float(adjusted[key]) + penalty * abs(weight), 1, 99)
+    if adjusted.get("points_per36") is not None:
+        # Fitted scoring rate (new ratings): ~1.2% fewer points per penalty point, about what the scoring-usage
+        # weight above does to the old scoring weights.
+        adjusted["points_per36"] = float(adjusted["points_per36"]) * (1.0 - penalty * 0.012)
     if features.get('offense_model_version'):
         for key, weight in (('two_pct', .0018), ('three_pct', .0012), ('ft_pct', .0006)):
             adjusted[key] = clamp(float(adjusted[key])-penalty*weight, .20, .95)
@@ -1074,50 +1146,29 @@ def league_offense_calibration(canonical: dict[str, Any]) -> float:
     return INPUTS_OFFENSE_CALIBRATION if uses_inputs_model(canonical) else 0.0
 
 
-def simulate_team_line(
+def mean_off_rating(
     canonical: dict[str, Any],
-    team: dict[str, Any],
-    opponent: dict[str, Any],
-    pool: list[dict[str, Any]],
     team_features: dict[str, float],
     opp_features: dict[str, float],
-    coach: CoachRating | None,
-    opp_coach: CoachRating | None,
-    rng: random.Random,
-    is_home: bool = False,
-    rest_context: dict[str, Any] | None = None,
-    opp_rest_context: dict[str, Any] | None = None,
-) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    coach_mod: dict[str, float],
+    opp_coach_mod: dict[str, float],
+    shot_diet: dict[str, float],
+    *,
+    home_mod: float,
+    rest_mod: dict[str, float],
+    age_mod: dict[str, float],
+    opp_age_mod: dict[str, float],
+    availability_mod: dict[str, float],
+    opp_availability_mod: dict[str, float],
+    game_env_mod: dict[str, float],
+    matchup_total_mod: dict[str, float],
+    creator_mod: float,
+    spacing_mod: float,
+    rest_context: dict[str, Any] | None,
+) -> float:
+    """Expected points per 100 possessions before game-to-game noise (the terms are summed in a fixed order)."""
     from .offense import team_contribution
-    coach_mod = scaled_coach_effect(coach, team_features)
-    opp_coach_mod = scaled_coach_effect(opp_coach, opp_features)
-    availability_mod = availability_gap_effect(team_features)
-    opp_availability_mod = availability_gap_effect(opp_features)
-    age_mod = age_fatigue_effect(team_features, rest_context)
-    opp_age_mod = age_fatigue_effect(opp_features, opp_rest_context)
-    shot_diet = team_shot_diet(team_features, opp_features, coach)
-    home_mod = 1.9 if is_home else -0.4
-    rest_mod = rest_effect(rest_context)
-    game_env_mod = game_environment_effect(rest_context, opp_rest_context)
-    matchup_total_mod = matchup_total_environment_effect(team_features, opp_features)
-    creator_mod = creator_advantage(team_features, opp_features)
-    spacing_mod = spacing_creation_interaction(team_features)
-    possessions = clamp(
-        BASE_POSSESSIONS
-        + (team_features["stamina"] - 50) * 0.05
-        + (team_features["offensive_rebounding"] - 50) * 0.025
-        + coach_mod["tempo"]
-        + availability_mod["pace"]
-        + rest_mod["pace"]
-        + age_mod["pace"]
-        + game_env_mod["pace"]
-        + matchup_total_mod["pace"]
-        - opp_coach_mod["tempo_control"] * 0.25
-        + rng.gauss(0, 4.2),
-        84,
-        120,
-    )
-    off_rating = (
+    return (
         BASE_OFF_RATING
         + league_offense_calibration(canonical)
         + lineup_quality_effect(team_features, opp_features)
@@ -1146,8 +1197,82 @@ def simulate_team_line(
         - opp_coach_mod["defense"]
         - opponent_targeting_penalty(team_features, opp_features, opp_coach_mod)
         + shot_diet["shot_quality_delta"]
-        + rng.gauss(0, 9.2)
+        + team_features.get("lineup_fit_offense", 0.0)
+        + opp_features.get("lineup_fit_defense", 0.0)
     )
+
+
+def lineup_fit_features(entries: list[tuple[dict[str, Any], dict[str, float], float]]) -> dict[str, float]:
+    """Expected non-additive lineup fit (points per 100) for (player, features, minutes); see lineup_fit.py."""
+    from .lineup_fit import lineup_fit_effect, player_fit_flags
+    effect = lineup_fit_effect([(player_fit_flags(features, player), minutes) for player, features, minutes in entries])
+    return {"lineup_fit_offense": effect["offense"], "lineup_fit_defense": effect["defense"]}
+
+
+def neutral_off_rating(canonical: dict[str, Any], team_features: dict[str, float], opp_features: dict[str, float],
+                       coach: CoachRating | None = None, opp_coach: CoachRating | None = None) -> float:
+    """Expected offensive rating on a neutral floor with no rest, age or availability context (lineup analysis)."""
+    coach_mod = scaled_coach_effect(coach, team_features)
+    opp_coach_mod = scaled_coach_effect(opp_coach, opp_features)
+    return mean_off_rating(
+        canonical, team_features, opp_features, coach_mod, opp_coach_mod, team_shot_diet(team_features, opp_features, coach),
+        home_mod=0.75, rest_mod=rest_effect(None), age_mod=age_fatigue_effect(team_features, None),
+        opp_age_mod=age_fatigue_effect(opp_features, None), availability_mod=availability_gap_effect(team_features),
+        opp_availability_mod=availability_gap_effect(opp_features), game_env_mod=game_environment_effect(None, None),
+        matchup_total_mod=matchup_total_environment_effect(team_features, opp_features),
+        creator_mod=creator_advantage(team_features, opp_features), spacing_mod=spacing_creation_interaction(team_features),
+        rest_context=None,
+    )
+
+
+def simulate_team_line(
+    canonical: dict[str, Any],
+    team: dict[str, Any],
+    opponent: dict[str, Any],
+    pool: list[dict[str, Any]],
+    team_features: dict[str, float],
+    opp_features: dict[str, float],
+    coach: CoachRating | None,
+    opp_coach: CoachRating | None,
+    rng: random.Random,
+    is_home: bool = False,
+    rest_context: dict[str, Any] | None = None,
+    opp_rest_context: dict[str, Any] | None = None,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    coach_mod = scaled_coach_effect(coach, team_features)
+    opp_coach_mod = scaled_coach_effect(opp_coach, opp_features)
+    availability_mod = availability_gap_effect(team_features)
+    opp_availability_mod = availability_gap_effect(opp_features)
+    age_mod = age_fatigue_effect(team_features, rest_context)
+    opp_age_mod = age_fatigue_effect(opp_features, opp_rest_context)
+    shot_diet = team_shot_diet(team_features, opp_features, coach)
+    home_mod = 1.9 if is_home else -0.4
+    rest_mod = rest_effect(rest_context)
+    game_env_mod = game_environment_effect(rest_context, opp_rest_context)
+    matchup_total_mod = matchup_total_environment_effect(team_features, opp_features)
+    creator_mod = creator_advantage(team_features, opp_features)
+    spacing_mod = spacing_creation_interaction(team_features)
+    possessions = clamp(
+        BASE_POSSESSIONS
+        + (team_features["stamina"] - 50) * 0.05
+        + (team_features["offensive_rebounding"] - 50) * 0.025
+        + coach_mod["tempo"]
+        + availability_mod["pace"]
+        + rest_mod["pace"]
+        + age_mod["pace"]
+        + game_env_mod["pace"]
+        + matchup_total_mod["pace"]
+        - opp_coach_mod["tempo_control"] * 0.25
+        + rng.gauss(0, 4.2),
+        84,
+        120,
+    )
+    off_rating = mean_off_rating(
+        canonical, team_features, opp_features, coach_mod, opp_coach_mod, shot_diet,
+        home_mod=home_mod, rest_mod=rest_mod, age_mod=age_mod, opp_age_mod=opp_age_mod,
+        availability_mod=availability_mod, opp_availability_mod=opp_availability_mod, game_env_mod=game_env_mod,
+        matchup_total_mod=matchup_total_mod, creator_mod=creator_mod, spacing_mod=spacing_mod, rest_context=rest_context,
+    ) + rng.gauss(0, 9.2)
     points = max(70, round(possessions * off_rating / 100))
     player_lines = distribute_player_lines(canonical, team, pool, points, possessions, rng)
     team_line = {
@@ -1160,6 +1285,8 @@ def simulate_team_line(
         "shot_quality_delta": round(shot_diet["shot_quality_delta"], 3),
         "feature_context": {
             "lineup_weighted": True,
+            "lineup_fit_offense_delta": round(float(team_features.get("lineup_fit_offense", 0.0)), 3),
+            "opponent_lineup_fit_defense_delta": round(float(opp_features.get("lineup_fit_defense", 0.0)), 3),
             "home_court_delta": round(home_mod, 3),
             "availability_offense_delta": round(availability_mod["offense"], 3),
             "availability_pace_delta": round(availability_mod["pace"], 3),
@@ -1207,10 +1334,20 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
         item["player"]["id"]: health_adjusted_player_features(player_feature_vector(canonical, item["player"]).features, item)
         for item in pool
     }
-    weights = [scoring_weight(item, features[item["player"]["id"]],
-               feeder=support_passing(pool, features, item['player']['id'])
-               if features[item['player']['id']].get('offense_model_version') else 50) for item in pool]
-    scoring_expectations = scoring_expectations_with_caps(pool, features, team_points, weights)
+    if pool and all(features[item["player"]["id"]].get("points_per36") is not None for item in pool):
+        # New ratings: each player's expected share of the team's points is his fitted points per 36
+        # (box_rates.POINTS_INPUTS, out-of-fold r 0.93 with real 2025-26 scoring) times his minutes. The old
+        # hand-tuned weights and per-player caps held stars well under their real scoring (Wembanyama 20.5 per 36
+        # vs 30.8, Porter Jr. 18.6 vs 26.8) and gave low-usage starters too much (2026-11-18).
+        weights = [max(0.0, float(item.get("minutes") or 0.0)) * float(features[item["player"]["id"]]["points_per36"]) / 36.0
+                   for item in pool]
+        weight_total = sum(weights) or 1.0
+        scoring_expectations = [team_points * weight / weight_total for weight in weights]
+    else:
+        weights = [scoring_weight(item, features[item["player"]["id"]],
+                   feeder=support_passing(pool, features, item['player']['id'])
+                   if features[item['player']['id']].get('offense_model_version') else 50) for item in pool]
+        scoring_expectations = scoring_expectations_with_caps(pool, features, team_points, weights)
     point_values = []
     for index, item in enumerate(pool):
         minutes = float(item.get("minutes") or 0.0)
@@ -1242,10 +1379,14 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
         scoring_expectations,
     )
     lines = []
+    from .ratings_model import uses_inputs_model
+    expected = {"assists": 0.0, "steals": 0.0, "assist_model": "inputs" if uses_inputs_model(canonical) else "legacy"}
     for index, item in enumerate(pool):
         player = item["player"]
         points = point_values[index]
         feat = features[player["id"]]
+        expected["assists"] += item["minutes"] * assist_rate_for_player(player, feat)
+        expected["steals"] += item["minutes"] * steal_rate_per_minute(feat)
         lines.append(
             {
                 "player_id": player["id"],
@@ -1260,13 +1401,18 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
                 **shooting_line(points, feat, item["minutes"], rng),
                 "rim_attempts": max(0, int(round(item["minutes"] * feat["rim_pressure"] / 1150 + rng.random()))),
                 "rebounds": max(0, int(round(item["minutes"] * rebound_rate_per_minute(player, feat) + rng.gauss(0.45, 1.55 + item["minutes"] * 0.018)))),
-                "assists": max(0, int(round(item["minutes"] * assist_rate_for_player(player, feat) + rng.gauss(0.2, 1.22 + item["minutes"] * 0.018 + max(0.0, feat["passing"] - 78.0) * 0.012)))),
-                "turnovers": max(0, int(round(item["minutes"] * (0.015 + feat["usage"] / 2200) + rng.random() * 0.6))),
-                "steals": max(0, int(round(item["minutes"] * feat["defensive_events"] / 1850 + rng.random() * 0.62))),
+                # Assists, turnovers and steals: a Poisson count around the player's own expected rate, drawn from
+                # the same single random number the old rounded-noise formulas used (the random stream, and so
+                # every score, is unchanged). The old noise (a floor at zero on Gaussian noise for assists, and
+                # +U(0, 0.6) rounding for turnovers and steals) gave every bench player a near-fixed extra event,
+                # which compressed stars toward the middle once team totals were rescaled (2026-11-18).
+                "assists": poisson_quantile(item["minutes"] * assist_rate_for_player(player, feat), normal_to_uniform(rng.gauss(0.0, 1.0))),
+                "turnovers": poisson_quantile(item["minutes"] * turnover_rate_per_minute(feat), rng.random()),
+                "steals": poisson_quantile(item["minutes"] * steal_rate_per_minute(feat), rng.random()),
                 "blocks": max(0, int(round(item["minutes"] * (feat["rim_deterrence"] / 2200 + max(0.0, feat["rim_deterrence"] - 88) * 0.0034) + rng.random() * 0.95))),
             }
         )
-    normalize_secondary_box_score_totals(lines, features, team_points, possessions)
+    normalize_secondary_box_score_totals(lines, features, team_points, possessions, expected=expected)
     return lines
 
 
@@ -1362,6 +1508,7 @@ def normalize_secondary_box_score_totals(
     features: dict[str, dict[str, float]],
     team_points: int,
     possessions: float,
+    expected: dict[str, float] | None = None,
 ) -> None:
     """Keep generated player texture while restoring NBA-scale team totals.
 
@@ -1370,6 +1517,10 @@ def normalize_secondary_box_score_totals(
     category as roster depth grows. Rescaling after all draws preserves who
     produced the events and consumes no extra RNG, so scores, winners, and the
     opposing team's simulation remain bit-for-bit unaffected.
+
+    ``expected`` holds the team's summed expected assists and steals (players' own rates x minutes). When
+    given, the team total follows it, so a team of good passers keeps its extra assists instead of having them
+    pulled back to the league average (that pull cost Jokic ~12% of his assists, 2026-11-18).
     """
     if not lines:
         return
@@ -1386,11 +1537,28 @@ def normalize_secondary_box_score_totals(
     raw = {key: sum(max(0, int(line.get(key) or 0)) for line in lines) for key in ("rebounds", "assists", "steals", "blocks")}
     targets = {
         "rebounds": round(clamp(43.8 + (weighted_feature("offensive_rebounding") - 60.0) * 0.055 + (possessions - 99.0) * 0.11 + (raw["rebounds"] - 66.0) * 0.16, 35, 54)),
+        # Assists and steals: the formulas below are only the fallback when no expected sums are given; see
+        # `expected` further down.
         "assists": round(clamp(26.2 + (weighted_feature("passing") - 60.0) * 0.075 + (team_points - 114.0) * 0.045 + (raw["assists"] - 32.0) * 0.18, 18, 36)),
         "steals": round(clamp(7.7 + (weighted_feature("defensive_events") - 60.0) * 0.045 + (possessions - 99.0) * 0.035 + (raw["steals"] - 11.5) * 0.16, 3, 14)),
         "blocks": round(clamp(5.0 + (weighted_feature("rim_deterrence") - 60.0) * 0.055 + (raw["blocks"] - 12.5) * 0.12, 1, 12)),
     }
     powers = {"rebounds": 1.32, "assists": 1.20, "steals": 1.55, "blocks": 2.0}
+    if expected is not None:
+        powers["steals"] = STEAL_SHARE_POWER
+        # The players' own expected assists/steals set the team level (a share of each game's lucky or unlucky
+        # draws is kept as texture); made baskets add assist chances and possessions add steal chances. Raw
+        # counts are unbiased Poisson draws around each player's own rate (2026-11-18), so they are shared out in
+        # plain proportion (power 1). The old powers (assists 1.20, steals 1.55) partly offset the old
+        # flattening noise; on unbiased draws they would reward a lucky night rather than the player's rate.
+        model = ASSIST_TEAM_MODEL[expected.get("assist_model", "inputs")]
+        targets["assists"] = round(clamp(
+            ASSIST_TEAM_BASE + (expected["assists"] - model["reference"]) * model["slope"]
+            + (team_points - 114.0) * 0.10 + (raw["assists"] - expected["assists"]) * 0.18, 16, 40))
+        targets["steals"] = round(clamp(
+            STEAL_TEAM_BASE + (expected["steals"] - STEAL_RAW_REFERENCE) * STEAL_TEAM_SLOPE
+            + (possessions - 99.0) * 0.035 + (raw["steals"] - expected["steals"]) * 0.16, 2, 15))
+        powers["assists"] = model["power"]
     for key, target in targets.items():
         redistribute_integer_stat(lines, key, int(target), powers[key])
 
@@ -1422,6 +1590,45 @@ def redistribute_integer_stat(lines: list[dict[str, Any]], key: str, target: int
         line[key] = assigned[index]
 
 
+# League-level scale on the fitted per-player turnover rates (box_rates). 1.0 keeps players at their real
+# per-36 level; the league total then runs ~0.5 per 100 possessions under the NBA's because real totals include
+# team turnovers (shot-clock and 5-second violations) that are credited to no player.
+TURNOVER_LEVEL = 1.0
+STEAL_LEVEL = 1.0
+# Team assist/steal totals before box variation (normalize_secondary_box_score_totals): base + slope x (the
+# team's summed expected events - reference). Players' events are then shared in proportion (power 1).
+ASSIST_TEAM_BASE = 26.6
+# reference: a league-average team's summed expected assists (the old-ratings formula runs ~10% higher than the
+# fitted new-ratings one, so each is centred on its own average). slope: how much of a team's passing talent
+# above that average shows in its total. power: how players share the total (1 = in proportion to their draws).
+# The old-ratings assist formula is hand-tuned (r 0.64 with real assists vs 0.95 for the inputs fit), so its team
+# totals lean less on it, and it keeps the 1.2 sharing power it was tuned with.
+ASSIST_TEAM_MODEL = {
+    "inputs": {"reference": 26.5, "slope": 0.6, "power": 1.0},
+    "legacy": {"reference": 29.3, "slope": 0.25, "power": 1.2},
+}
+STEAL_TEAM_BASE = 8.4
+STEAL_RAW_REFERENCE = 8.2
+STEAL_TEAM_SLOPE = 0.6
+STEAL_SHARE_POWER = 1.0
+
+
+def turnover_rate_per_minute(feat: dict[str, float]) -> float:
+    """Expected turnovers per minute: the player's fitted rate (box_rates), or the old usage formula."""
+    per36 = feat.get("turnovers_per36")
+    if per36 is None:
+        return 0.015 + float(feat.get("usage") or 50.0) / 2200
+    return float(per36) * TURNOVER_LEVEL / 36.0
+
+
+def steal_rate_per_minute(feat: dict[str, float]) -> float:
+    """Expected steals per minute before the team total is set: the fitted rate, or the old activity formula."""
+    per36 = feat.get("steals_per36")
+    if per36 is None:
+        return float(feat.get("defensive_events") or 50.0) / 1850
+    return float(per36) * STEAL_LEVEL / 36.0
+
+
 def rebound_rate_per_minute(player: dict[str, Any], feat: dict[str, float]) -> float:
     """Raw rebound chances per minute before the team total is rescaled to a realistic game total.
 
@@ -1433,26 +1640,21 @@ def rebound_rate_per_minute(player: dict[str, Any], feat: dict[str, float]) -> f
     return per36 / 36.0
 
 
-PASS_RECOGNITION_INPUTS = tuple(f"F0{i}.recognition" for i in range(1, 10))
 
 
 def playmaking_assists_per36(inputs: dict[str, Any]) -> float | None:
     """Assists per 36 minutes implied by a player's playmaking inputs (new-ratings mode only).
 
-    Log-linear fit (2026-11-17) to real 2025-26 assists per 36 for 150 rotation players, out-of-fold
-    correlation 0.91 (the trait-based formula: 0.62): pass-reading grade, how often the player chooses to pass
-    (T01 pass share: measured shot-creating passes per touch) and how involved he is (T08: measured true usage). Box-score allocation only; game scores do not use it.
+    Log-linear fit (refitted 2026-11-18, box_rates.ASSISTS_INPUTS) to real 2025-26 assists per 36 for 377
+    rotation players, out-of-fold correlation 0.95 (the 2026-11-17 fit: 0.91; the trait-based formula: 0.62):
+    how often the player chooses to pass (T01 pass share), how involved he is (T08), passing delivery (the
+    passing families' execution grades), passing risk appetite (T07) and post-hub decisions (T01 post). The
+    post term is what the old fit lacked: it predicted Jokic at 7.1 assists per 36 (real 11.1); now ~10.7.
+    Box-score allocation only; game scores do not use it.
     """
-    try:
-        recognition = sum(float(inputs[i]["value"]["grade"]) for i in PASS_RECOGNITION_INPUTS) / len(PASS_RECOGNITION_INPUTS)
-        pass_share = float(inputs["T01"]["value"]["rows"][0]["probabilities"]["pass"])
-        involvement = float(inputs["T08"]["value"]["probability"])
-    except (KeyError, TypeError, ValueError, IndexError, ZeroDivisionError):
-        return None
-    if pass_share <= 0 or involvement <= 0:
-        return None
-    log_rate = 4.2367 + 0.1333 * recognition / 100.0 + 0.9888 * math.log(pass_share) + 0.5675 * math.log(involvement)
-    return round(clamp(math.exp(log_rate), 0.5, 14.0), 3)
+    from .box_rates import assists_per36_from_inputs
+    rate = assists_per36_from_inputs(inputs)
+    return None if rate is None else round(rate, 3)
 
 
 def _ramp(value: float, low: float, high: float) -> float:

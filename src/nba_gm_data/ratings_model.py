@@ -34,6 +34,9 @@ GRADE_POINTS_PER_TRAIT_POINT = 1.0
 _INPUT_CACHE: dict[str, dict[str, dict[str, Any]]] = {}
 _FITTED_CACHE: dict[tuple[str, str], FittedAdapter] = {}
 _GENERATED_CACHE: dict[tuple[str, str], dict[str, Any]] = {}
+# (fitted key, player id, base-inputs identity, sorted input deltas) -> (base inputs, derived traits)
+_DERIVED_CACHE: dict[tuple[Any, ...], tuple[dict[str, Any], dict[str, float]]] = {}
+_DERIVED_CACHE_LIMIT = 50_000
 
 
 def ratings_model_for(save: Mapping[str, Any] | None = None) -> str:
@@ -266,10 +269,22 @@ def _rederive(canonical: dict[str, Any], player_ids: Iterable[str]) -> dict[str,
     model = canonical[MODEL_KEY]
     fitted = _FITTED_CACHE[tuple(model["fitted_key"])]
     derived: dict[str, dict[str, float]] = {}
+    fitted_key = tuple(model["fitted_key"])
     for pid in {str(p) for p in player_ids}:
-        inputs = _effective(model, pid)
-        if inputs is not None:
-            derived[pid] = derive_traits(inputs, fitted)
+        base = _player_base_inputs(model, pid)
+        if base is None:
+            continue
+        # derive_traits is a pure function of (base inputs, this save's deltas, fitted tables). Base and
+        # generated input records are cached for the process and never edited, so reuse by identity is exact.
+        deltas = (model.get("input_deltas") or {}).get(pid)
+        key = (fitted_key, pid, id(base), tuple(sorted(deltas.items())) if deltas else None)
+        cached = _DERIVED_CACHE.get(key)
+        if cached is None or cached[0] is not base:
+            cached = (base, derive_traits(apply_input_deltas(base, deltas) if deltas else base, fitted))
+            if len(_DERIVED_CACHE) >= _DERIVED_CACHE_LIMIT:
+                _DERIVED_CACHE.pop(next(iter(_DERIVED_CACHE)))
+            _DERIVED_CACHE[key] = cached
+        derived[pid] = dict(cached[1])
     for trait in canonical.get("traits", []):
         values = derived.get(trait.get("player_id"))
         if values and trait.get("trait_key") in values:
