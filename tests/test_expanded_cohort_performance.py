@@ -16,7 +16,10 @@ from experiments.expanded_cohort_performance.pool import load_pool,compile_audit
 from experiments.expanded_cohort_performance.fixtures import fixture
 from experiments.expanded_cohort_performance.probes import conditional,shooting,alternatives,LOB,SCREEN
 from experiments.expanded_cohort_performance.verification import reference_modules
+from experiments.expanded_cohort_performance import checks as cohort_checks
 from experiments.expanded_cohort_performance.checks import benchmarks,kernel_parity,candidate_parity
+from nba_gm_data.schema import to_plain
+from box_score_neutral import box_neutral
 
 
 class ExpandedCohortTests(unittest.TestCase):
@@ -127,13 +130,15 @@ class ExpandedCohortTests(unittest.TestCase):
     def test_full_result_and_rng_equal_in_all_three_benchmarks(self):
         self.assertEqual(len(kernel_parity(benchmarks(self.pool),self.old)),12)
 
-    @unittest.skip('needs review: frozen compiler predates improved box allocation (6a3c90c, c29f301); refresh authenticated reference after coordinator review')
+    @unittest.skip('needs review: frozen reference predates d7880ec scoring-efficiency change; with assists/fouls/rebounds/steals neutralized it still differs in scores, possessions, fga/fgm/fta/ftm, blocks, plus-minus, team rebounds (box-column neutralization already applied in the test, ready for a reference refresh)')
     def test_default_off_and_prior_experimental_paths_match_reference(self):
         label,c,x=benchmarks(self.pool)[0]
         legacy=replace(x,offense=replace(x.offense,creation=replace(x.offense.creation,choice_policy='legacy_scores_v1',help_response_policy='legacy_timely_v1')))
         off=replace(x,offense=replace(x.offense,creation=None))
         defense=replace(x,offense=None)
-        self.assertEqual(len(kernel_parity([('ordinary',c,None),('legacy_screen',c,legacy),('offense_only',c,off),('interior_only',c,defense)],self.old)),16)
+        # Box-score fixes 6a3c90c/114c7c1/a1e87ee/c29f301: the frozen reference differs only in per-player assists, fouls, rebounds, steals.
+        with patch.object(cohort_checks,'to_plain',lambda v:box_neutral(to_plain(v))):
+            self.assertEqual(len(kernel_parity([('ordinary',c,None),('legacy_screen',c,legacy),('offense_only',c,off),('interior_only',c,defense)],self.old)),16)
 
     def test_local_config_state_and_results_release(self):
         s,c,x=fixture(self.pool,**SCREEN);d=conditional(s)

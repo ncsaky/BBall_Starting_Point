@@ -15,6 +15,7 @@ from nba_gm_data.interior_defense import compile_profile,Coefficients
 from nba_gm_data.interior_game import validate_accounting
 from nba_gm_data.screen_navigation import compile_screen
 from nba_gm_data.schema import to_plain
+from box_score_neutral import box_neutral
 from experiments.player_input_pilot.pilot import build_pilot,variant,export_layer,named_config,prepared,IDS,ROLES,packet,READINESS
 from experiments.player_input_pilot.verification import reference_modules,reference_config,use_reference,pre_optimization_module,pre_optimization_config,traced_game
 from experiments.screen_navigation.fixtures import screen_fixture
@@ -218,7 +219,7 @@ class PilotBoundaryTests(unittest.TestCase):
         self.assertTrue(any(e.get('creation_chain',{}).get('screen_action',{}).get('kind')=='screen' for t in r.team_lines for e in t['interior_experiment']['offense_attack_ledger']))
         self.assertEqual({k:v for k,v in before.items() if not k.startswith('_')},{k:v for k,v in c['canonical'].items() if not k.startswith('_')})
 
-    @unittest.skip('needs review: frozen compiler predates improved box allocation (6a3c90c, c29f301); refresh authenticated reference after coordinator review')
+    @unittest.skip('needs review: frozen reference predates d7880ec scoring-efficiency change; with assists/fouls/rebounds/steals neutralized it still differs in scores, possessions, fga/fgm/fta/ftm, blocks, plus-minus, team rebounds (box-column neutralization already applied in the test, ready for a reference refresh)')
     def test_complete_historical_paths_use_authenticated_frozen_compilers(self):
         modules,old_kernel,old_sim=reference_modules()
         for seed in (17,29):
@@ -233,7 +234,7 @@ class PilotBoundaryTests(unittest.TestCase):
                         else:
                             a,b=c['canonical']['teams'];g=c['schedule'][0];pools=[sim.game_player_pool(c,'interior_fixture',t,mode,game_date=g['gameDate']) for t in (a,b)]
                             before=old_kernel.simulate_interior_game(c['canonical'],g,a,b,*pools,mode,seed,reference_config(config,modules))
-                    self.assertEqual(to_plain(now),to_plain(before))
+                    self.assertEqual(box_neutral(to_plain(now)),box_neutral(to_plain(before)))  # 6a3c90c/114c7c1/a1e87ee/c29f301 box fixes
 
 
 if __name__=='__main__':unittest.main()

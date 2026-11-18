@@ -17,6 +17,7 @@ from nba_gm_data.interior_game import expected_environment, validate_accounting
 from nba_gm_data.player_model import PlayerInputs, validate_input_section
 from nba_gm_data.player_model_registry import definition_registry, validate_registry
 from nba_gm_data.schema import to_plain
+from box_score_neutral import box_neutral
 from experiments.interior_defense.fixtures import game_fixture, scenario_document, scenario_profile
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -154,7 +155,7 @@ class InteriorGameTests(unittest.TestCase):
             normal=result();explicit=result(experiment=None)
         self.assertEqual(to_plain(normal),to_plain(explicit))
 
-    @unittest.skip('needs review: frozen compiler predates improved box allocation (6a3c90c, c29f301); refresh authenticated reference after coordinator review')
+    @unittest.skip('needs review: frozen reference predates d7880ec scoring-efficiency change; with assists/fouls/rebounds/steals neutralized it still differs in scores, possessions, fga/fgm/fta/ftm, blocks, plus-minus, team rebounds (box-column neutralization already applied in the test, ready for a reference refresh)')
     def test_frozen_pre_edit_default_path_matches_complete_results(self):
         spec=importlib.util.spec_from_file_location('nba_gm_data._interior_pre_edit_sim',REFERENCE)
         reference=importlib.util.module_from_spec(spec);spec.loader.exec_module(reference)
@@ -162,7 +163,7 @@ class InteriorGameTests(unittest.TestCase):
             for mode in sorted(sim.SIM_MODES):
                 a=sim.sim_game_with_context(game_fixture(),'interior_fixture',mode,seed)
                 b=reference.sim_game_with_context(game_fixture(),'interior_fixture',mode,seed)
-                self.assertEqual(to_plain(a),to_plain(b))
+                self.assertEqual(box_neutral(to_plain(a)),box_neutral(to_plain(b)))  # 6a3c90c/114c7c1/a1e87ee/c29f301 box fixes
 
     def test_legacy_rim_and_defensive_composites_do_not_leak_into_experimental_scores(self):
         a=game_fixture();b=game_fixture()

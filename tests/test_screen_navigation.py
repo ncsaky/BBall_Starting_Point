@@ -17,6 +17,7 @@ from nba_gm_data.interior_game import validate_accounting
 from nba_gm_data.offense_response import compile_offense
 from nba_gm_data.player_model import PlayerInputs,validate_input_section
 from nba_gm_data.schema import to_plain
+from box_score_neutral import box_neutral
 from nba_gm_data.screen_navigation import (compile_screen,ScreenExperiment,ScreenCall,ScreenCoefficients,resolve_screen,receiver_position,coverage_position)
 from experiments.screen_navigation.fixtures import screen_fixture
 from experiments.creation_passing.fixtures import action_state
@@ -345,7 +346,7 @@ class ScreenKernelTests(unittest.TestCase):
         refs=[weakref.ref(y),weakref.ref(creation),weakref.ref(creation.screens),weakref.ref(a)];del y,creation,a
         self.assertTrue(all(r() is None for r in refs))
 
-    @unittest.skip('needs review: frozen compiler predates improved box allocation (6a3c90c, c29f301); refresh authenticated reference after coordinator review')
+    @unittest.skip('needs review: frozen reference predates d7880ec scoring-efficiency change; with assists/fouls/rebounds/steals neutralized it still differs in scores, possessions, fga/fgm/fta/ftm, blocks, plus-minus, team rebounds (box-column neutralization already applied in the test, ready for a reference refresh)')
     def test_complete_prior_modes_match_frozen_modules_with_screens_off(self):
         modules=prior_modules()
         with patch.dict(sys.modules,modules):old_kernel=frozen('interior_game');old_sim=frozen('sim')
@@ -360,7 +361,7 @@ class ScreenKernelTests(unittest.TestCase):
                         else:
                             a,b=c['canonical']['teams'];g=c['schedule'][0];pools=[sim.game_player_pool(c,'interior_fixture',t,mode,game_date=g['gameDate']) for t in (a,b)]
                             prior=old_kernel.simulate_interior_game(c['canonical'],g,a,b,*pools,mode,seed,frozen_config(config,modules))
-                    self.assertEqual(to_plain(actual),to_plain(prior))
+                    self.assertEqual(box_neutral(to_plain(actual)),box_neutral(to_plain(prior)))  # 6a3c90c/114c7c1/a1e87ee/c29f301 box fixes
 
 
 if __name__=='__main__':unittest.main()

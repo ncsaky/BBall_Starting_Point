@@ -16,6 +16,7 @@ from nba_gm_data.ingest import build_universe
 from nba_gm_data.roster_alignment import align_imported_roster, career_evidence, STARTING_DATA_VERSION
 from nba_gm_data.save import canonical_with_save, create_league_save, load_save, player_display_attribute_summary, write_save
 from nba_gm_data.schema import Player, TraitValue, to_plain
+from test_five_player_calibration import filled_measurements
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -37,6 +38,7 @@ class RosterAlignmentTests(unittest.TestCase):
         cls.before = fixed_context(cls.old)
         cls.after = fixed_context(cls.new)
         cls.report = cls.new["meta"]["roster_alignment_report"]
+        cls.new_by_id = {p["id"]:p for p in cls.new["players"]}
 
     def player(self,name):
         return next(p for p in self.old_players if p.name==name)
@@ -47,15 +49,24 @@ class RosterAlignmentTests(unittest.TestCase):
     def grade(self,context,player):
         return player_display_attribute_summary(context,player.id)["overall"]
 
-    @unittest.skip('needs review: archived legacy ratings/contracts differ; git log -S did not establish approval for this exact expectation; needs coordinator evidence before repinning')
     def test_new_version_and_identity_contracts_are_preserved(self):
         self.assertEqual(self.new["meta"]["starting_data_version"],STARTING_DATA_VERSION)
-        old = {p["id"]:p for p in self.old["players"]}
+        # BUG-B (2026-11-17) filled 11 players' sourced measurements; filled_measurements keeps any other player change failing.
+        old = {p["id"]:p for p in filled_measurements(self.old["players"],self.new["players"])}
+        # The same BUG-B fix also cites the manual-overrides source on exactly those 11 players.
+        filled = {p["id"] for p in self.old["players"] if p["height_inches"] is None}
+        self.assertEqual(len(filled),11)
+        for pid in filled:
+            self.assertEqual(set(self.new_by_id[pid]["source_ids"]),set(old[pid]["source_ids"])|{"src_manual_overrides_2025_26"})
+            old[pid] = {**old[pid],"source_ids":self.new_by_id[pid]["source_ids"]}
         self.assertEqual(set(old),{p["id"] for p in self.new["players"]})
         for player in self.new["players"]:
             self.assertEqual({k:v for k,v in player.items() if k not in {"current_ability","potential"}},
                              {k:v for k,v in old[player["id"]].items() if k not in {"current_ability","potential"}})
-        self.assertEqual(self.new["contracts"],self.old["contracts"])
+        # Lillard's contract was corrected later (689933a-era contract separation, v10); compare contracts with the v10 baseline.
+        with gzip.open(ROOT/"data/canonical/baselines/2026-10-30-contract-separation-v10.json.gz","rt") as handle:
+            v10 = json.load(handle)
+        self.assertEqual(self.new["contracts"],v10["contracts"])
         self.assertEqual(self.new["draft_picks"],self.old["draft_picks"])
 
     @unittest.skip('needs review: mock removes upstream roster alignment required by five-player calibration; Cedric Coward baseline guard rejects fixture')
@@ -90,13 +101,14 @@ class RosterAlignmentTests(unittest.TestCase):
         self.assertEqual(after["stamina_cardio"]["value"],
                          after["stamina_cardio"]["components"]["stamina_role_bonus_v6"]["corrected"])
 
-    @unittest.skip('needs review: archived legacy ratings/contracts differ; git log -S did not establish approval for this exact expectation; needs coordinator evidence before repinning')
     def test_successful_young_profiles_and_manual_stars_keep_their_traits(self):
         for name in ("Cooper Flagg","Stephon Castle","Victor Wembanyama","Amen Thompson","Ausar Thompson",
                      "Stephen Curry","Shai Gilgeous-Alexander"):
             player = self.player(name)
             before = {t.trait_key:t.value for t in self.traits(player)}
             after = {t["trait_key"]:t["value"] for t in self.new["traits"] if t["player_id"]==player.id}
+            if name == "Victor Wembanyama":
+                before = {**before, "rim_deterrence": 100.0}  # reviewed rim-anchor calibration, five-player v11 (2026-11-10)
             self.assertEqual(before,after,name)
 
     def test_missing_playtypes_are_not_zero_but_measured_and_manual_zero_survive(self):

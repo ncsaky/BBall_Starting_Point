@@ -41,12 +41,12 @@ class LongTermHealthTests(unittest.TestCase):
             self.assertEqual(handlers[-1], "previous-handler")
             self.assertEqual(json.loads(report.read_text())["endpoint"], "2029-09-01")
 
-    @unittest.skip('needs review: archived legacy ratings/contracts differ; git log -S did not establish approval for this exact expectation; needs coordinator evidence before repinning')
     def test_star_flow_reconciles_crossings_entries_and_departures(self):
-        before = {"date": "2030-10-01", "players": [player("up", 60), player("down", 80),
-                                                            player("leave", 80), player("same", 80)]}
-        after = {"date": "2031-10-01", "players": [player("up", 80), player("down", 60),
-                                                           player("leave", 80, False), player("same", 80), player("enter", 80)]}
+        # Display scale is now direct (rule 3): the old 80 "star" fixtures become 95 so they stay above the star cutoff (TST-2 plan).
+        before = {"date": "2030-10-01", "players": [player("up", 60), player("down", 95),
+                                                            player("leave", 95), player("same", 95)]}
+        after = {"date": "2031-10-01", "players": [player("up", 95), player("down", 60),
+                                                           player("leave", 95, False), player("same", 95), player("enter", 95)]}
         result = star_flow(before, after)
         self.assertEqual((result["before"], result["after"]), (3, 3))
         for key, pid in (("crossing_up", "up"), ("crossing_down", "down"),

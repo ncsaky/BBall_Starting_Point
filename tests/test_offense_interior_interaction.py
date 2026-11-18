@@ -15,6 +15,7 @@ from nba_gm_data.interior_game import shot_probabilities,validate_accounting
 from nba_gm_data.offense_response import (compile_offense,shooting_response,free_throw_response,finishing_response,credibility,offensive_spatial_profile,prepare_coupled,plan_attack,baseline,Deployment,CombinedOffense,OffenseCoefficients)
 from nba_gm_data.player_model import PlayerInputs,validate_input_section
 from nba_gm_data.schema import to_plain
+from box_score_neutral import box_neutral
 from nba_gm_data.shot_geometry import ShotGeometry,GeometryCoefficients
 from experiments.offense_interior.fixtures import offensive_document,combined_fixture
 
@@ -182,7 +183,7 @@ class CoupledGameTests(unittest.TestCase):
         b=sim.sim_game_with_context(c,'interior_fixture',seed=17,interior_experiment=x)
         self.assertEqual(to_plain(a),to_plain(b))
 
-    @unittest.skip('needs review: frozen compiler predates improved box allocation (6a3c90c, c29f301); refresh authenticated reference after coordinator review')
+    @unittest.skip('needs review: frozen reference predates d7880ec scoring-efficiency change; with assists/fouls/rebounds/steals neutralized it still differs in scores, possessions, fga/fgm/fta/ftm, blocks, plus-minus, team rebounds (box-column neutralization already applied in the test, ready for a reference refresh)')
     def test_default_off_full_result_parity_with_stage_b_reference(self):
         spec=importlib.util.spec_from_file_location('nba_gm_data._combined_reference',ROOT/'output/offense-interior-interaction-2026-11-13/sim.py.reference')
         # .reference has no recognized Python suffix, so use an explicit loader.
@@ -192,7 +193,7 @@ class CoupledGameTests(unittest.TestCase):
         for seed in (17,29):
             for mode in sorted(sim.SIM_MODES):
                 c,_=combined_fixture();d,_=combined_fixture()
-                self.assertEqual(to_plain(sim.sim_game_with_context(c,'interior_fixture',mode,seed)),to_plain(old.sim_game_with_context(d,'interior_fixture',mode,seed)))
+                self.assertEqual(box_neutral(to_plain(sim.sim_game_with_context(c,'interior_fixture',mode,seed))),box_neutral(to_plain(old.sim_game_with_context(d,'interior_fixture',mode,seed))))  # 6a3c90c/114c7c1/a1e87ee/c29f301 box fixes
 
     def test_prior_interior_only_event_path_remains_exact(self):
         from importlib.machinery import SourceFileLoader

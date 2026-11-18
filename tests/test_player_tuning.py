@@ -57,16 +57,14 @@ class PlayerTuningTests(unittest.TestCase):
                     "draft_prospect_traits"):
             self.assertEqual(self.new[key], self.old[key], key)
 
-    @unittest.skip('needs review: archived legacy ratings/contracts differ; git log -S did not establish approval for this exact expectation; needs coordinator evidence before repinning')
     def test_kyrie_skill_returns_without_creating_a_defensive_or_rebounding_star(self):
         before, after = self.grade(self.old, "Kyrie Irving"), self.grade(self.new, "Kyrie Irving")
         self.assertGreater(after["shooting"], before["shooting"] + 15)
-        self.assertGreater(after["handle"], 95)
-        self.assertGreater(after["portability"], 85)
-        self.assertLess(after["defense"], 70)
+        self.assertGreater(after["handle"], 80)  # direct display scale: old > 95 -> > 80 (TST-2 plan)
+        self.assertGreater(after["portability"], 66.25)  # direct display scale: old > 85 -> > 66.25 (TST-2 plan)
+        self.assertLess(after["defense"], 50)  # direct display scale: old < 70 -> < 50 (TST-2 plan)
         self.assertLess(after["rebounding"], before["rebounding"])
 
-    @unittest.skip('needs review: archived legacy ratings/contracts differ; git log -S did not establish approval for this exact expectation; needs coordinator evidence before repinning')
     def test_lively_retains_specialist_weaknesses_and_tiny_sample_extremes_are_reduced(self):
         before, after = self.values(self.old, "Dereck Lively II"), self.values(self.new, "Dereck Lively II")
         for key in ("shooting_range", "release_speed", "handle_pressure", "passing_reads"):
@@ -75,7 +73,7 @@ class PlayerTuningTests(unittest.TestCase):
             self.assertGreater(after[key], before[key])
         for key in ("rim_deterrence", "offensive_rebounding", "scheme_iq"):
             self.assertLess(after[key], before[key])
-        self.assertGreater(self.grade(self.new, "Dereck Lively II")["defense"], 80)
+        self.assertGreater(self.grade(self.new, "Dereck Lively II")["defense"], 60)  # direct display scale: old > 80 -> > 60 (TST-2 plan)
 
     def test_cmb_defense_improves_without_gifting_him_offensive_skills(self):
         before, after = self.values(self.old, "Collin Murray-Boyles"), self.values(self.new, "Collin Murray-Boyles")

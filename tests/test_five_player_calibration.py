@@ -37,7 +37,7 @@ class FivePlayerCalibrationTests(unittest.TestCase):
   with self.assertRaises(ValueError):apply_calibration(ps,ts,payload)
   payload=deepcopy(self.payload);payload['players'][0]['name']='Wrong identity'
   with self.assertRaises(ValueError):apply_calibration(ps,ts,payload)
- @unittest.skip('needs review: 689933a intentionally reranks generated prospects; archived full-universe equality includes obsolete ranks')
+ @unittest.skip('needs review: data/canonical/universe_2026_27_offseason.json(+sqlite) is stale vs a fresh build_universe (BUG-B heights/source ids, 689933a prospect ranks, health tags, Lillard contract); regenerate after BUG-B, then unskip. Left skipped because regenerating shared canonical data while the output/t2b fixture builder runs is unsafe')
  def test_final_order_provenance_and_rebuild(self):
   rebuilt=to_plain(build_universe(ROOT));self.assertEqual(rebuilt,self.current)
   for row in self.payload['players']:

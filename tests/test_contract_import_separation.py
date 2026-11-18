@@ -15,6 +15,7 @@ from nba_gm_data.app_actions import dispatch_app_action
 from nba_gm_data.contract_protection import waived_total
 from nba_gm_data.ingest import build_contracts
 from nba_gm_data.schema import to_plain
+from test_five_player_calibration import filled_measurements
 
 ROOT = Path(__file__).resolve().parents[1]
 PID = "player_por-damian-lillard"
@@ -85,9 +86,17 @@ class ContractImportSeparationTests(unittest.TestCase):
         self.assertNotIn("no_trade_clause", contract)
         self.assertIsNone(sv.contract_salary_for_season(contract, "2028-29"))
 
-    @unittest.skip('needs review: archived legacy ratings/contracts differ; git log -S did not establish approval for this exact expectation; needs coordinator evidence before repinning')
     def test_other_source_collections_and_contracts_are_unchanged(self):
-        for key in ("players", "traits", "roster_slots", "player_health_profiles", "player_health_states", "injury_events", "draft_picks"):
+        # Later reviewed changes are excluded, not hidden: BUG-B filled 11 players' measurements (filled_measurements keeps every
+        # other player difference failing), and v11 five-player calibration (reviewed 2026-11-10) rewrote traits for
+        # Edwards, Coward, Vassell, Duren, Kawhi plus Wembanyama's rim anchor (TST-2 plan).
+        calibrated = {r["player_id"] for r in json.loads((ROOT / "data/overrides/five_player_calibration_v11.json").read_text())["players"]}
+        calibrated.add("player_sas-victor-wembanyama")
+        self.assertEqual(len(calibrated), 6)
+        self.assertEqual(filled_measurements(self.old["players"], self.canonical["players"]), self.canonical["players"], "players")
+        self.assertEqual([r for r in self.old["traits"] if r["player_id"] not in calibrated],
+                         [r for r in self.canonical["traits"] if r["player_id"] not in calibrated], "traits")
+        for key in ("roster_slots", "player_health_profiles", "player_health_states", "injury_events", "draft_picks"):
             self.assertEqual(self.old[key], self.canonical[key], key)
         old = {row["player_id"]: row for row in self.old["contracts"]}
         changed = [row["player_id"] for row in self.canonical["contracts"] if row != old[row["player_id"]]]

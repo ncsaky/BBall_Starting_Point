@@ -44,14 +44,14 @@ class ImportedRookieRatingTests(unittest.TestCase):
         )):
             cls.unconverted = to_plain(build_universe(ROOT))
 
-    @unittest.skip('needs review: archived legacy ratings/contracts differ; git log -S did not establish approval for this exact expectation; needs coordinator evidence before repinning')
     def test_real_imported_top_picks_are_differentiated_nba_profiles(self):
         self.assertEqual(len(self.corrected), 53)
         for name in ("AJ Dybantsa", "Darryn Peterson", "Cameron Boozer"):
             player = next(p for p in self.canonical["players"] if p["name"] == name)
             ratings = player_display_attribute_summary(self.canonical, player["id"])
-            self.assertGreaterEqual(ratings["overall"], 79)
-            self.assertLess(ratings["overall"], 88)
+            # Display scale is now direct, not percentile-anchored (rule 3, rescale don't clamp): old 79-88 -> raw 59-70 (TST-2 plan).
+            self.assertGreaterEqual(ratings["overall"], 59)
+            self.assertLess(ratings["overall"], 70)
             values = [t["value"] for t in self.canonical["traits"] if t["player_id"] == player["id"]]
             self.assertEqual(len(values), 15)
             self.assertGreater(min(values), 0)
@@ -61,7 +61,6 @@ class ImportedRookieRatingTests(unittest.TestCase):
                 self.assertGreater(trait["value"], 0)
                 self.assertIn("Not a measured NBA skill rating", trait["notes"])
 
-    @unittest.skip('needs review: archived legacy ratings/contracts differ; git log -S did not establish approval for this exact expectation; needs coordinator evidence before repinning')
     def test_existing_converter_is_used_and_identity_contracts_and_veterans_are_preserved(self):
         research = json.loads((ROOT / "data/research/draft_prospects_2026.json").read_text())
         row = next(r for r in research["prospects"] if r["player"] == self.aj.name)
@@ -71,13 +70,16 @@ class ImportedRookieRatingTests(unittest.TestCase):
         self.assertEqual(actual, {r["trait_key"]: r["value"] for r in expected})
         # The archive predates unrelated contract corrections in source inputs.
         self.assertEqual(self.canonical["contracts"], self.unconverted["contracts"])
-        before = {p["id"]: p for p in self.previous["players"]}
+        # Compare with the same build without the rookie converter: it must change only converted rookies. The old
+        # archive no longer matches (BUG-B filled 11 players' measurements; ratings and ranks were recalibrated). TST-2 plan.
+        before = {p["id"]: p for p in self.unconverted["players"]}
         self.assertEqual(set(before), {p["id"] for p in self.canonical["players"]})
         for player in self.canonical["players"]:
-            self.assertEqual({k: v for k, v in player.items() if k not in {"current_ability", "potential"}}, before[player["id"]])
-        old_values = {(t["player_id"], t["trait_key"]): t["value"] for t in self.previous["traits"]}
+            self.assertEqual({k: v for k, v in player.items() if k not in {"current_ability", "potential"}},
+                             {k: v for k, v in before[player["id"]].items() if k not in {"current_ability", "potential"}})
+        old_values = {(t["player_id"], t["trait_key"]): t["value"] for t in self.unconverted["traits"]}
         for trait in self.canonical["traits"]:
-            if trait["player_id"] not in self.corrected | self.aligned:
+            if trait["player_id"] not in self.corrected:
                 self.assertEqual(trait["value"], old_values[(trait["player_id"], trait["trait_key"])])
 
     def test_missing_research_uses_lower_confidence_actual_slot_prior_not_lottery_promotion(self):
@@ -106,7 +108,6 @@ class ImportedRookieRatingTests(unittest.TestCase):
         self.assertEqual(stamina.confidence, .99)
         self.assertIn("manual_calibration", stamina.components)
 
-    @unittest.skip('needs review: archived legacy ratings/contracts differ; git log -S did not establish approval for this exact expectation; needs coordinator evidence before repinning')
     def test_schema_json_sqlite_and_save_round_trip_keep_upside_metadata(self):
         with TemporaryDirectory() as tmp:
             paths = write_outputs(self.universe, tmp)
@@ -123,7 +124,7 @@ class ImportedRookieRatingTests(unittest.TestCase):
             active_aj = next(p for p in active["players"] if p["id"] == self.aj.id)
             self.assertEqual(active_aj["potential"], self.aj.potential)
             self.assertEqual(save["meta"]["starting_data_version"], STARTING_DATA_VERSION)
-            self.assertGreater(player_card_payload(loaded, path, self.aj.id)["ratings"]["overall"], 78)
+            self.assertGreater(player_card_payload(loaded, path, self.aj.id)["ratings"]["overall"], 58)  # direct display scale: old > 78 -> > 58 (TST-2 plan)
 
     def test_old_save_keeps_old_ratings_earned_development_roster_and_contract(self):
         with TemporaryDirectory() as tmp:
@@ -167,7 +168,6 @@ class ImportedRookieRatingTests(unittest.TestCase):
         self.assertEqual(contract["original_contract_years"], 5)
         self.assertEqual(contract["signed_season"], "2022-23")
 
-    @unittest.skip('needs review: archived legacy ratings/contracts differ; git log -S did not establish approval for this exact expectation; needs coordinator evidence before repinning')
     def test_two_seed_development_is_bounded_repeatable_and_uses_prospect_upside(self):
         player = to_plain(self.aj)
         self.assertGreater(development_upside_multiplier(player, 17), 1)
@@ -182,7 +182,7 @@ class ImportedRookieRatingTests(unittest.TestCase):
                     self.assertEqual(events, advance_development(context, label, seed=seed))
                     apply_development_events_to_traits(context, events["events"])
                 value = player_display_attribute_summary(context, self.aj.id)["overall"]
-                self.assertGreater(value, 83)
+                self.assertGreater(value, 63.75)  # direct display scale: old > 83 -> > 63.75 (TST-2 plan)
                 self.assertLess(value, 92)
 
     def test_rebuilding_is_deterministic(self):

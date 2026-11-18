@@ -2888,7 +2888,11 @@ def market_value_after_star_and_surplus_shape(player: dict[str, Any], valuation:
         raw -= max(0.0, surplus - 16.0) * penalty_rate
         if age >= 31.0:
             raw -= min(7.5, (age - 30.0) * 1.05)
-    if minutes >= 28.0 and on_court >= 79.0 and playoff >= 80.0:
+    # The superstar floor used to switch on at hard cutoffs (on-court 79, playoff 80): Giannis at 78.2 sat ~25
+    # value points below Luka at 79.6 (2026-11-17). It now ramps in over on-court 76-79 and playoff 77-80;
+    # players at or above the old cutoffs are valued exactly as before.
+    star_share = clamp((on_court - 76.0) / 3.0, 0.0, 1.0) * clamp((playoff - 77.0) / 3.0, 0.0, 1.0)
+    if minutes >= 28.0 and star_share > 0.0:
         superstar_floor = 94.0 + max(0.0, on_court - 79.0) * 1.55 + max(0.0, playoff - 80.0) * 0.66
         if on_court >= 86.0 and playoff >= 84.0:
             superstar_floor += 7.5 + max(0.0, on_court - 88.0) * 0.55
@@ -2897,8 +2901,8 @@ def market_value_after_star_and_surplus_shape(player: dict[str, Any], valuation:
         # Aging superstars keep a floor, but trade markets discount age steeply (was 0.16/yr past 32,
         # which kept 38-year-olds above prime All-NBA players; 2026-11-16 market review).
         superstar_floor -= max(0.0, age - 30.0) * 2.0
-        raw = max(raw, superstar_floor)
-    elif minutes >= 28.0 and on_court >= 76.5 and playoff >= 76.0 and surplus < 18.0:
+        raw = raw + star_share * max(0.0, superstar_floor - raw)
+    if minutes >= 28.0 and star_share < 1.0 and on_court >= 76.5 and playoff >= 76.0 and surplus < 18.0:
         raw = max(raw, 84.0 + max(0.0, on_court - 76.5) * 0.68 + max(0.0, playoff - 76.0) * 0.18)
     return soft_value_ceiling(raw, ceiling=market_trade_value_cap(player, valuation, raw), knee=6.0)
 

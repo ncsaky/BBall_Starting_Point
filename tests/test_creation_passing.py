@@ -18,6 +18,7 @@ from nba_gm_data.interior_game import validate_accounting
 from nba_gm_data.offense_response import compile_offense,CombinedOffense
 from nba_gm_data.player_model import PlayerInputs,validate_input_section
 from nba_gm_data.schema import to_plain
+from box_score_neutral import box_neutral
 from experiments.creation_passing.fixtures import creation_fixture,action_state
 from experiments.offense_interior.fixtures import combined_fixture
 
@@ -311,14 +312,14 @@ class CreationIntegrationTests(unittest.TestCase):
         self.assertEqual(a.player_lines,b.player_lines)
         self.assertEqual([t['interior_experiment']['offense_attack_ledger'] for t in a.team_lines],[t['interior_experiment']['offense_attack_ledger'] for t in b.team_lines])
 
-    @unittest.skip('needs review: frozen compiler predates improved box allocation (6a3c90c, c29f301); refresh authenticated reference after coordinator review')
+    @unittest.skip('needs review: frozen reference predates d7880ec scoring-efficiency change; with assists/fouls/rebounds/steals neutralized it still differs in scores, possessions, fga/fgm/fta/ftm, blocks, plus-minus, team rebounds (box-column neutralization already applied in the test, ready for a reference refresh)')
     def test_disabled_path_full_result_parity_and_prior_experiments(self):
         old_sim=reference('sim');old_kernel=reference('interior_game');old_offense=reference('offense_response')
         self.assertIsNone(CombinedOffense.__dataclass_fields__['creation'].default)
         for mode in sorted(sim.SIM_MODES):
             for seed in (17,29):
                 c,x=combined_fixture();d,_=combined_fixture()
-                self.assertEqual(to_plain(sim.sim_game_with_context(c,'interior_fixture',mode,seed)),to_plain(old_sim.sim_game_with_context(d,'interior_fixture',mode,seed)))
+                self.assertEqual(box_neutral(to_plain(sim.sim_game_with_context(c,'interior_fixture',mode,seed))),box_neutral(to_plain(old_sim.sim_game_with_context(d,'interior_fixture',mode,seed))))  # 6a3c90c/114c7c1/a1e87ee/c29f301 box fixes
                 for config in (replace(x,offense=None),x):
                     ctx,_=combined_fixture();a,b=ctx['canonical']['teams'];g=ctx['schedule'][0]
                     pools=[sim.game_player_pool(ctx,'interior_fixture',t,mode,game_date=g['gameDate']) for t in (a,b)]
@@ -328,7 +329,7 @@ class CreationIntegrationTests(unittest.TestCase):
                         frozen_config=replace(config,offense=old_offense.CombinedOffense(**{f.name:getattr(config.offense,f.name) for f in fields(old_offense.CombinedOffense)}))
                     with patch.dict(sys.modules,{'nba_gm_data.offense_response':old_offense}):
                         prior=old_kernel.simulate_interior_game(ctx['canonical'],g,a,b,*pools,mode,seed,frozen_config)
-                    self.assertEqual(to_plain(actual),to_plain(prior))
+                    self.assertEqual(box_neutral(to_plain(actual)),box_neutral(to_plain(prior)))  # 6a3c90c/114c7c1/a1e87ee/c29f301 box fixes
 
     def test_stale_matchups_and_split_authoritative_snapshots_rejected(self):
         _,x=creation_fixture();s=x.offense.creation

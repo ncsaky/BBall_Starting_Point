@@ -12,6 +12,7 @@ from nba_gm_data.rotation_profile_calibration import (
 )
 from nba_gm_data.save import canonical_with_save, create_league_save, load_save, write_save
 from nba_gm_data.schema import Player, TraitValue, to_plain
+from test_five_player_calibration import filled_measurements
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -110,13 +111,30 @@ class RotationProfileBaselineTests(unittest.TestCase):
             cls.old = json.load(handle)
         cls.new = to_plain(build_universe(ROOT))
 
-    @unittest.skip('needs review: archived legacy ratings/contracts differ; git log -S did not establish approval for this exact expectation; needs coordinator evidence before repinning')
     def test_medicals_finances_players_and_prospects_are_identical(self):
-        for key in ('players','contracts','draft_picks','player_health_profiles','player_health_states','injury_events',
-                    'draft_classes','draft_prospects','draft_prospect_traits'):
+        # Later reviewed changes are excluded explicitly (TST-2 plan): BUG-B filled 11 players' measurements (and cites the
+        # manual-overrides source for them); Lillard's contract was corrected (v10); 689933a reranked generated prospects.
+        new_players = {p['id']:p for p in self.new['players']}
+        filled = {p['id'] for p in self.old['players'] if p['height_inches'] is None}
+        self.assertEqual(len(filled),11)
+        old_players = []
+        for p,q in zip(filled_measurements(self.old['players'],self.new['players']),self.old['players']):
+            if p['id'] in filled:
+                self.assertEqual(set(new_players[p['id']]['source_ids']),set(p['source_ids'])|{'src_manual_overrides_2025_26'})
+                p = {**p,'source_ids':new_players[p['id']]['source_ids']}
+            old_players.append(p)
+        self.assertEqual(old_players,self.new['players'],'players')
+        lillard = 'player_por-damian-lillard'
+        self.assertEqual([c for c in self.old['contracts'] if c['player_id']!=lillard],[c for c in self.new['contracts'] if c['player_id']!=lillard],'contracts')
+        ranking = {'rank','rank_range','rookie_contract_value'}
+        self.assertEqual([{k:v for k,v in r.items() if k not in ranking} for r in self.old['draft_prospects']],
+                         [{k:v for k,v in r.items() if k not in ranking} for r in self.new['draft_prospects']],'draft_prospects')
+        # BUG-B: the filled measurements let two filled players (Cooper, Tilly) receive body-area risk tags.
+        strip = lambda rows:[{k:v for k,v in r.items() if not (k=='body_area_risk_tags' and r['player_id'] in filled)} for r in rows]
+        self.assertEqual(strip(self.old['player_health_profiles']),strip(self.new['player_health_profiles']),'player_health_profiles')
+        for key in ('draft_picks','player_health_states','injury_events','draft_classes','draft_prospect_traits'):
             self.assertEqual(self.old[key],self.new[key],key)
 
-    @unittest.skip('needs review: archived legacy ratings/contracts differ; git log -S did not establish approval for this exact expectation; needs coordinator evidence before repinning')
     def test_all_changes_are_reported_or_researched_and_prior_reviews_are_preserved(self):
         old = {(t['player_id'],t['trait_key']):t for t in self.old['traits']}
         new = {(t['player_id'],t['trait_key']):t for t in self.new['traits']}
@@ -124,11 +142,18 @@ class RotationProfileBaselineTests(unittest.TestCase):
         report = self.new['meta']['rotation_profile_report']
         changed = {k for k in old if old[k]['value']!=new[k]['value']}
         automatic = {(p['player_id'],k) for p in report['players'] for k in p['trait_changes']}
+        # Five-player calibration (v11, reviewed 2026-11-10) later changed these players; verify against its payload targets.
+        payload = json.loads((ROOT/'data/overrides/five_player_calibration_v11.json').read_text())
+        targets = {(r['player_id'],k):v['target'] for r in payload['players'] for k,v in r['traits'].items()}
+        targets[('player_sas-victor-wembanyama','rim_deterrence')] = 100.0
         for key in changed-automatic:
+            if key in targets:
+                self.assertEqual(new[key]['value'],targets[key])
+                continue
             self.assertIn(names[key[0]],{'Amir Coffey','Deandre Ayton'})
             self.assertTrue(new[key]['components']['manual_calibration']['evidence_urls'])
         for key,t in old.items():
-            if 'manual_calibration' in t['components']:
+            if 'manual_calibration' in t['components'] and key not in targets:  # v11 targets were re-reviewed above
                 self.assertEqual(t['value'],new[key]['value'],key)
         self.assertGreater(report['adjusted_player_count'],40)
         # NBA participation never implies shooting ability for a nonshooting big.
