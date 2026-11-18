@@ -1,5 +1,6 @@
 """Healthy final-roster consequences, separate from headline asset prices."""
 from copy import deepcopy
+from .utils import copy_plain
 
 
 def planning_save(canonical):
@@ -21,7 +22,7 @@ def roster_projection(canonical, team_id, outgoing_ids=(), incoming_ids=()):
     batch_cache = canonical.get('_trade_search_rosters')
     batch_key = (team_id, tuple(sorted(outgoing_ids)), tuple(sorted(incoming_ids)))
     if batch_cache is not None and batch_key in batch_cache:
-        return deepcopy(batch_cache[batch_key])
+        return copy_plain(batch_cache[batch_key])
     forecast = canonical.get('_roster_forecast_snapshot')
     if forecast is not None:
         roster = forecast.roster(team_id, outgoing_ids, incoming_ids)
@@ -49,7 +50,7 @@ def roster_projection(canonical, team_id, outgoing_ids=(), incoming_ids=()):
                   for s in contracts.get(p['id'], {}).get('seasons', []))) for p in roster)))
     cache = canonical.setdefault('_trade_roster_projection_cache', {}) if canonical.get('_allow_internal_caches') else {}
     if signature in cache:
-        return deepcopy(cache[signature])
+        return copy_plain(cache[signature])
     if forecast is None:
         from .roster_forecast import ForecastSnapshot
         forecast = ForecastSnapshot(canonical)
@@ -74,7 +75,7 @@ def roster_projection(canonical, team_id, outgoing_ids=(), incoming_ids=()):
     # A prepared context is disposable; bound speculative search memory too.
     if len(cache) >= 128:
         cache.clear()
-    cache[signature] = deepcopy(result)
+    cache[signature] = copy_plain(result)
     if batch_cache is not None:
         if len(batch_cache) >= 1024:
             # Retain the inexpensive, frequently reused baseline for each club.

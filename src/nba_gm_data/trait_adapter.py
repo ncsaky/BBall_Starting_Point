@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from bisect import bisect_left, bisect_right
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any, Iterable, Mapping
 
 from .player_model_registry import definition_registry
@@ -101,8 +102,15 @@ LEGACY_TRAITS = tuple(ADAPTER_SPEC)
 LOWER_IS_BETTER = {("P07", "s"), ("P09", "s"), ("P09", "deg"), ("P12", "s"), ("P12", "bpm")}
 
 
+_DEFINITIONS: dict[str, dict[str, Any]] | None = None
+
+
 def _definitions() -> dict[str, dict[str, Any]]:
-    return {row["id"]: row for row in definition_registry()["inputs"]}
+    """Input definitions by id, parsed once: the registry is a module constant and this module only reads it."""
+    global _DEFINITIONS
+    if _DEFINITIONS is None:
+        _DEFINITIONS = {row["id"]: row for row in definition_registry()["inputs"]}
+    return _DEFINITIONS
 
 
 def term_inputs(term: str | list[str]) -> list[str]:
@@ -249,6 +257,12 @@ def derive_traits(inputs: Mapping[str, Any], fitted: FittedAdapter) -> dict[str,
 
 def trait_input_weights(trait: str) -> dict[str, float]:
     """Each input's share of a trait (normalized). Used to route development deltas back onto inputs."""
+    return dict(_trait_input_weights(trait))
+
+
+@lru_cache(maxsize=None)
+def _trait_input_weights(trait: str) -> dict[str, float]:
+    # ADAPTER_SPEC is a module constant; an unknown trait raises KeyError on every call (not cached).
     shares: dict[str, float] = {}
     for term, weight in ADAPTER_SPEC[trait]:
         ids = term_inputs(term)

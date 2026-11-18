@@ -149,7 +149,7 @@ from .transactions import (
     with_transaction_context,
 )
 from .pick_presentation import draft_assets_display, pick_presentation, swap_presentation
-from .utils import stable_id
+from .utils import copy_plain, stable_id
 
 
 PROSPECT_SCOUT_TRAIT_ORDER = (
@@ -4418,7 +4418,7 @@ def mark_user_offer_status(save: dict[str, Any], proposal_id: str, status: str) 
 
 
 def advance_action(root: Path, canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:
-    prepared_save = deepcopy(normalized_read_save(canonical, save_path)) if save_path.exists() else None
+    prepared_save = copy_plain(normalized_read_save(canonical, save_path)) if save_path.exists() else None
     saved_seed = (prepared_save or {}).get("meta", {}).get("seed")
     seed = int(payload["seed"] if payload.get("seed") is not None else (saved_seed if saved_seed is not None else 1))
     deadline_stop = None

@@ -1,5 +1,6 @@
 """Explicit selection ranges shared by pick labels, validation and resolution."""
 
+import re
 from typing import Any
 
 
@@ -30,6 +31,9 @@ def ordinal(number: int) -> str:
     return exact[number // 10] if number % 10 == 0 else f"{tens[number // 10]}-{words[number % 10]}"
 
 
+_TRAILING_NUMBER = re.compile(r"-(\d+)$").search
+
+
 def ordered_pick_obligations(terms):
     """Restore imported allocation sequence, never alphabetical ID order.
 
@@ -37,15 +41,15 @@ def ordered_pick_obligations(terms):
     Older saves alphabetized those IDs, reversing dependent comparisons.
     Keep unrelated/custom obligations in place and preserve ownership/status.
     """
-    import re
-
     output = list(terms)
     slots = []
     imported = []
     for index, term in enumerate(output):
         identifier = str(term.get("id") or "")
-        match = re.search(r"-(\d+)$", identifier)
-        if identifier.startswith("pick_obligation_realgm-") and match:
+        if not identifier.startswith("pick_obligation_realgm-"):
+            continue
+        match = _TRAILING_NUMBER(identifier)
+        if match:
             slots.append(index)
             imported.append((term.get("type") != "protected_pick", int(match.group(1)), index, term))
     imported.sort(key=lambda item: item[:3])

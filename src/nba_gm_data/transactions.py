@@ -34,7 +34,7 @@ from .schema import (
     to_plain,
 )
 from .spatial import spatial_fit_delta, with_spatial_fit_context
-from .utils import clamp, maybe_float, normalize_name, stable_id
+from .utils import clamp, copy_plain, maybe_float, normalize_name, stable_id
 
 
 FRONT_OFFICE_OVERRIDES_FILE = Path("data/overrides/front_office_overrides.json")
@@ -810,7 +810,7 @@ def trade_search_context(canonical: dict[str, Any]) -> dict[str, Any]:
     from .roster_forecast import ForecastSnapshot
     forecast = ForecastSnapshot(canonical)
     return {**canonical, '_trade_search_roles': {}, '_trade_search_rosters': {},
-            '_trade_financial_facts': {}, '_trade_movement_classes': {},
+            '_trade_financial_facts': {}, '_trade_movement_classes': {}, '_pick_presentation_memo': {},
             '_roster_forecast_snapshot': forecast, '_roster_forecast_stats': forecast.stats}
 
 
@@ -1879,7 +1879,7 @@ def canonical_with_pending_pick_terms(canonical: dict[str, Any], terms: list[dic
     if cache is not None and key in cache:
         if stats is not None:
             stats['pick_preview_hits'] += 1
-        changes, entitlements = deepcopy(cache[key])
+        changes, entitlements = copy_plain(cache[key])
         for index, (updates, removed) in changes.items():
             pick = working['draft_picks'][index]
             for field in removed:
@@ -1909,7 +1909,7 @@ def canonical_with_pending_pick_terms(canonical: dict[str, Any], terms: list[dic
             del cache[next(iter(cache))]
             if stats is not None:
                 stats['pick_preview_evictions'] += 1
-        cache[key] = deepcopy((changes, working.get('_nested_entitlements', {})))
+        cache[key] = copy_plain((changes, working.get('_nested_entitlements', {})))
         if stats is not None:
             stats['pick_preview_peak_entries'] = max(stats['pick_preview_peak_entries'], len(cache))
     return working
@@ -2180,12 +2180,17 @@ def annotate_pick_obligation_context(canonical: dict[str, Any]) -> None:
         pick.pop("_nested_leaf_picks", None)
         pick.pop("_ranked_entitlement", None)
         pick.pop("_ranked_leaf_picks", None)
-    snapshots = {pick["id"]: dict(pick) for pick in canonical.get("draft_picks", [])}
+    # Ranked pools read only owners and terms, never the nested annotations written below, so they can be
+    # computed first. That lets the leaf snapshots copy just the picks an entitlement refers to.
+    ranked = ranked_pool_entitlements(canonical)
+    needed = {pid for item in entitlements.values() for pid in item["underlying_pick_ids"]}
+    needed.update(pid for item in ranked.values() for pid in item["pool_pick_ids"])
+    snapshots = {pick["id"]: dict(pick) for pick in canonical.get("draft_picks", []) if pick["id"] in needed}
     for anchor, entitlement in entitlements.items():
         pick = next(row for row in canonical["draft_picks"] if row["id"] == anchor)
         pick["_nested_entitlement"] = entitlement
         pick["_nested_leaf_picks"] = {pid: snapshots[pid] for pid in entitlement["underlying_pick_ids"]}
-    for pid, entitlement in ranked_pool_entitlements(canonical).items():
+    for pid, entitlement in ranked.items():
         pick = next(row for row in canonical["draft_picks"] if row["id"] == pid)
         pick["_ranked_entitlement"] = entitlement
         pick["_ranked_leaf_picks"] = {leaf: snapshots[leaf] for leaf in entitlement["pool_pick_ids"]}
@@ -4397,7 +4402,7 @@ def strategic_rotation_view(canonical: dict[str, Any], team_id: str) -> dict[str
         roster = forecast.roster(team_id)
     else:
         # A previous cut or hypothetical transfer has changed membership.
-        roster = [dict(deepcopy(p), minutes_projection=24) for p in canonical.get('players', [])
+        roster = [dict(copy_plain(p), minutes_projection=24) for p in canonical.get("players", [])
                   if p.get('team_id') == team_id and not p.get('_inactive_player')]
     trial = forecast.view(canonical, roster)
     if not roster:
