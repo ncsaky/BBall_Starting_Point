@@ -41,7 +41,7 @@ def increased_counts(weights, extra, identities):
 
 
 def vary_box_score(canonical, groups, team_lines, feature_groups, seed):
-    from .sim import player_feature_vector, redistribute_integer_stat
+    from .sim import player_feature_vector, redistribute_integer_stat, turnover_rate_per_minute
     from .box_score import reduced_counts
     rng = random.Random(seed)
     for index, lines in enumerate(groups):
@@ -67,8 +67,10 @@ def vary_box_score(canonical, groups, team_lines, feature_groups, seed):
             if two_makes == 0:
                 two_misses = poisson(rng, minutes / 36 * 1.3)
             line['fga'] = int(line['fg3a']) + two_makes + two_misses
-            usage = float(feat.get('usage') or 60)
-            baseline = max(float(line.get('turnovers') or 0), minutes * (.015 + usage / 2200))
+            # The player's own expected turnovers (box_rates fit). This used to be the larger of the engine's
+            # rounded draw and a usage formula, which handed bench players extra turnovers and flattened ball
+            # handlers to ~2 per 36 (2026-11-18).
+            baseline = minutes * turnover_rate_per_minute(feat)
             turnover_mean = baseline * max(.5, 1 + pressure * .22 - passing * .12 + disruption_day)
             line['turnovers'] = poisson(rng, turnover_mean)
         team = team_lines[index]
