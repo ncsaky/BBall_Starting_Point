@@ -32,7 +32,14 @@ INPUT_GROUPS = {
     "in_pass_reading": [f"F{n:02d}.recognition" for n in range(1, 10)],
 }
 BODY_PREDICTORS = ("height_inches", "weight_lbs", "wingspan_inches")   # fixed body measures (sign-free in the fit)
-PREDICTORS = [*LEGACY_TRAITS, *BODY_PREDICTORS, *PROFILE_PREDICTORS, *INPUT_GROUPS, "in_involvement"]
+# Involvement pays off in proportion to the skill and efficiency behind it. A purely additive fit gave every heavy-usage
+# player the same credit for usage, so it under-predicted the stars' offense (Brunson O-LEBRON +4.97 predicted +3.14,
+# Gilgeous-Alexander +6.06 -> +4.98) and over-credited heavy-usage scorers whose real impact is modest. Each term is
+# involvement (T08 share) times the skill's distance from a fixed centre, so with non-negative weights a better skill
+# never lowers value, while more involvement with below-average skill can (2026-11-18 ratings audit).
+INTERACTIONS = {"in_shooting": (50.0, 10.0), "in_creation": (50.0, 10.0), "in_finishing": (50.0, 10.0), "two_pct": (0.52, 0.04)}
+PREDICTORS = [*LEGACY_TRAITS, *BODY_PREDICTORS, *PROFILE_PREDICTORS, *INPUT_GROUPS, "in_involvement",
+              *(f"involvement_x_{name}" for name in INTERACTIONS)]
 TABLE_KEY = "_impact_value_tables"
 _FIT_CACHE: dict[str, Any] = {}
 
@@ -66,6 +73,9 @@ def predictor_row(traits: Mapping[str, float], player: Mapping[str, Any],
     profile = profile or {}
     row.extend(float(profile.get(key, default)) for key, default in _PROFILE_DEFAULTS.items())
     row.extend(input_features(inputs))
+    named = dict(zip(PREDICTORS, row))
+    involvement = named["in_involvement"]
+    row.extend(involvement * (named[name] - centre) / scale for name, (centre, scale) in INTERACTIONS.items())
     return row
 
 

@@ -2,7 +2,8 @@
 """Fit player value (offense / defense / overall) to real impact, from the engine's own hidden ratings.
 
 Target: Basketball Index multi-year O-LEBRON / D-LEBRON for 2025-26 (impact per 100 possessions on team success).
-Predictors: the 15 hidden ratings the engine uses (new-ratings mode, derived from the 94 inputs) plus height.
+Predictors: the 15 hidden ratings the engine uses (new-ratings mode, derived from the 94 inputs), body measures, the
+shooting profile, grouped input grades, involvement, and involvement x skill terms (impact_value.INTERACTIONS).
 Weighted ridge regression (weight = minutes / (minutes + 800)), 5-fold cross-validation reported.
 Writes data/canonical/impact_value_fit.json, read by nba_gm_data.impact_value.
 
@@ -100,7 +101,7 @@ def main() -> None:
     weights = [m / (m + 800.0) for *_, m in rows]
     X = [[1.0, *r[2]] for r in rows]
     FREE = {1 + PREDICTORS.index(name) for name in (*BODY_PREDICTORS, "in_involvement")}  # not changed by development
-    fit = {"version": "impact_value_fit_v3_rim_recipe_2026_11_18", "season": SEASON, "targets": TARGETS, "predictors": PREDICTORS,
+    fit = {"version": "impact_value_fit_v4_involvement_skill_2026_11_18", "season": SEASON, "targets": TARGETS, "predictors": PREDICTORS,
            "ridge": RIDGE, "players": len(rows), "coefficients": {}, "cv_weighted_corr": {}}
     idx = list(range(len(rows)))
     random.Random(11).shuffle(idx)
