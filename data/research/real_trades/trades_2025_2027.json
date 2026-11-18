@@ -1,0 +1,2743 @@
+{
+ "retrieved": "2026-11-19",
+ "sources": [
+  {
+   "id": "nba_tracker_2526",
+   "outlet": "NBA.com",
+   "title": "2025-26 NBA trade tracker",
+   "url": "https://www.nba.com/news/2025-26-nba-trade-tracker",
+   "published": "2026-02-05"
+  },
+  {
+   "id": "hr_deadline",
+   "outlet": "Hoops Rumors",
+   "title": "2026 NBA trade deadline recap",
+   "url": "https://www.hoopsrumors.com/2026/02/2026-nba-trade-deadline-recap.html",
+   "published": "2026-02-06"
+  },
+  {
+   "id": "si_deadline",
+   "outlet": "Sports Illustrated",
+   "title": "Grading every major deal at the NBA trade deadline",
+   "url": "https://www.si.com/nba/trade-deadline/grading-every-major-deal-nba-trade-deadline",
+   "published": "2026-02-06"
+  },
+  {
+   "id": "espn_deadline",
+   "outlet": "ESPN (via ABC30)",
+   "title": "NBA trade grades: Harden-Garland, McCain to OKC deals (Kevin Pelton)",
+   "url": "https://abc30.com/post/nba-trade-grades-2026-cavs-get-keon-ellis-dennis-schroder/18518694/",
+   "published": "2026-02-06"
+  },
+  {
+   "id": "nbc_winners",
+   "outlet": "NBC Sports",
+   "title": "2026 NBA trade deadline winners and losers",
+   "url": "https://www.nbcsports.com/nba/news/2026-nba-trade-deadline-winners-losers-analysis-recap-including-james-harden-anthony-davis-deals",
+   "published": "2026-02-05"
+  },
+  {
+   "id": "cbs_winners",
+   "outlet": "CBS Sports",
+   "title": "NBA trade deadline winners and losers: Celtics in strong spot, Heat join Kings as disappointments",
+   "url": "https://mauth.cbssports.com/nba/news/2026-nba-trade-deadline-winners-losers-celtics-heat-kings/",
+   "published": "2026-02-06"
+  },
+  {
+   "id": "trae_search",
+   "outlet": "Multiple (ESPN, CBS, NESPN, AJC)",
+   "title": "Hawks trade Trae Young to Wizards for McCollum, Kispert",
+   "url": "https://www.espn.ph/nba/story/_/id/47545290/sources-hawks-trading-trae-young-wizards-mccollum-kispert",
+   "published": "2026-01-07"
+  },
+  {
+   "id": "espn_tracker_off",
+   "outlet": "ESPN",
+   "title": "NBA trade tracker: details for every deal of the 2026 offseason",
+   "url": "https://www.espn.com/nba/story/_/id/48957844/nba-trade-tracker-details-every-deal-2026-offseason-draft-free-agency",
+   "published": "2026-09-22"
+  },
+  {
+   "id": "espn_off_grades",
+   "outlet": "ESPN",
+   "title": "2026 NBA offseason trade grades",
+   "url": "https://www.espn.com/nba/story/_/id/49135150",
+   "published": "2026-09-22"
+  },
+  {
+   "id": "nba_off_deals",
+   "outlet": "NBA.com",
+   "title": "2026 offseason deals",
+   "url": "https://www.nba.com/news/nba-offseason-deals-2026",
+   "published": "2026-09-27"
+  },
+  {
+   "id": "espn_giannis",
+   "outlet": "ESPN",
+   "title": "Giannis traded to Heat: grades, reaction, Bucks' next steps",
+   "url": "https://www.espn.com/story/_/id/49112635",
+   "published": "2026-06-23"
+  },
+  {
+   "id": "giannis_search",
+   "outlet": "CBS, SI, FanSided, theScore (search-result summaries)",
+   "title": "Giannis Antetokounmpo trade grades roundup",
+   "url": "https://www.si.com/nba/giannis-antetokounmpo-trade-grades-how-heat-bucks-fared-massive-six-player-deal",
+   "published": "2026-06-23"
+  },
+  {
+   "id": "br_draft",
+   "outlet": "Bleacher Report",
+   "title": "2026 NBA draft trade tracker and grades",
+   "url": "https://bleacherreport.com/articles/25444528-2026-nba-draft-trade-tracker-and-grades",
+   "published": "2026-06-24"
+  },
+  {
+   "id": "espn_brown",
+   "outlet": "ESPN",
+   "title": "Grading Brown-George trade: did 76ers or Celtics win blockbuster?",
+   "url": "https://www.espn.com/nba/story/_/id/49242086/jaylen-brown-philadelphia-76ers-boston-celtics-trade-grades-reaction",
+   "published": "2026-07-01"
+  },
+  {
+   "id": "brown_search",
+   "outlet": "CBS, The Athletic, SI, ClutchPoints (search-result summaries)",
+   "title": "Jaylen Brown-Paul George trade grades roundup",
+   "url": "https://cbssports.com/nba/news/jaylen-brown-celtics-76ers-trade-grades",
+   "published": "2026-07-02"
+  },
+  {
+   "id": "lamelo_search",
+   "outlet": "CBS, SI, Bleacher Report, FanSided, Yardbarker (search-result summaries)",
+   "title": "LaMelo Ball trade grades roundup",
+   "url": "https://cbssports.com/nba/news/lamelo-ball-trade-grades-timberwolves-hornets",
+   "published": "2026-06-25"
+  },
+  {
+   "id": "si_clifford",
+   "outlet": "Sports Illustrated (Silverman)",
+   "title": "Thunder-Kings trade grades: Nique Clifford",
+   "url": "https://www.si.com/nba/thunder-kings-trade-grades-nique-clifford",
+   "published": "2026-11-08"
+  },
+  {
+   "id": "defector",
+   "outlet": "Defector",
+   "title": "Sacramento Kings / Nique Clifford / Oklahoma City Thunder",
+   "url": "https://defector.com/sacramento-kings-nique-clifford-oklahoma-city-thunder-trade",
+   "published": "2026-11-09"
+  },
+  {
+   "id": "roundtable",
+   "outlet": "Roundtable",
+   "title": "Kings trade Clifford to Thunder, save more on luxury tax",
+   "url": "https://roundtable.io/sports/nba/kings/news/kings-trade-clifford-to-thunder-save-more-on-luxury-tax",
+   "published": "2026-11-08"
+  },
+  {
+   "id": "clutch_clifford",
+   "outlet": "ClutchPoints",
+   "title": "Nique Clifford trade grades: Thunder, Kings",
+   "url": "https://clutchpoints.com/nba/oklahoma-city-thunder/nique-clifford-trade-grades-thunder-kings",
+   "published": "2026-11-09"
+  },
+  {
+   "id": "score_clifford",
+   "outlet": "theScore",
+   "title": "Clifford trade reminds us why Kings remain losers, Thunder keep winning",
+   "url": "https://thescore.com/nba/news/3650011",
+   "published": "2026-11-09"
+  },
+  {
+   "id": "nba_clifford",
+   "outlet": "NBA.com",
+   "title": "Kings trade Nique Clifford to Thunder",
+   "url": "https://www.nba.com/news/kings-trade-nique-clifford-thunder",
+   "published": "2026-11-08"
+  },
+  {
+   "id": "hr_inseason",
+   "outlet": "Hoops Rumors",
+   "title": "2026/27 in-season NBA trades",
+   "url": "https://www.hoopsrumors.com/2026/11/2026-27-in-season-nba-trades.html",
+   "published": "2026-11-08"
+  },
+  {
+   "id": "realgm_multi",
+   "outlet": "RealGM",
+   "title": "NBA has nearly doubled frequency of multi-team trades over past four seasons",
+   "url": "https://basketball.realgm.com/wiretap-amp/273569/NBA-Has-Nearly-Doubled-Frequency-Of-Multi-Team-Trades-Over-Past-Four-Seasons",
+   "published": null
+  },
+  {
+   "id": "hr_trends",
+   "outlet": "Hoops Rumors",
+   "title": "Trends involving three-team, four-team trades",
+   "url": "https://www.hoopsrumors.com/2016/01/trends-involving-three-team-four-team-trades.html",
+   "published": "2016-01-01"
+  },
+  {
+   "id": "br_2026_tx",
+   "outlet": "Basketball-Reference",
+   "title": "2025-26 NBA transactions (only first ~half readable)",
+   "url": "https://basketball-reference.com/leagues/NBA_2026_transactions.html",
+   "published": null
+  }
+ ],
+ "trades": [
+  {
+   "date": "2026-11-08",
+   "window": "2026-27 season",
+   "teams": [
+    "SAC",
+    "OKC"
+   ],
+   "assets": [
+    {
+     "from": "SAC",
+     "to": "OKC",
+     "kind": "player",
+     "name_or_desc": "Nique Clifford",
+     "player_age": 24,
+     "contract": "rookie scale, #24 pick 2025: $3.3M 2026-27, $3.4M 2027-28, $6M 2028-29 team option",
+     "role_before": "fell to back of rotation behind rookie Emanuel Sharp and Daeqwon Plowden; double-digit minutes only twice in 8 games; rookie year 25.1 mpg, 8.6 pts, 3.8 reb, 2.4 ast on poor efficiency"
+    },
+    {
+     "from": "OKC",
+     "to": "SAC",
+     "kind": "pick",
+     "name_or_desc": "Utah 2028 second-round pick",
+     "pick_details": "2028 round 2, original team UTA, previously acquired by OKC"
+    },
+    {
+     "from": "OKC",
+     "to": "SAC",
+     "kind": "pick",
+     "name_or_desc": "Minnesota 2030 second-round pick",
+     "pick_details": "2030 round 2, original team MIN, previously acquired by OKC"
+    }
+   ],
+   "context": {
+    "SAC": "Kings were 1-9, worst start in the league, yet moved a 24-year-old first-rounder who fit a rebuild. Coach cited a logjam and competition (Sharp rookie, Monk back). Trade saved about $3M in tax (Kings now about $6M under the tax line), cleared a roster spot, created a $3.3M exception, and gave the Kings their first second-round picks in 7 years. Kings had also just traded up to #29 for Alex Karaban in June 2026.",
+    "OKC": "Contender at 8-2 with Jalen Williams and Cason Wallace badly hurt and Chet Holmgren out for significant time; lost Dort, Wiggins, Joe in the offseason. About $4.5M below the second apron. GM Presti reportedly targeted Clifford as a cheap rotation wing/rebounder."
+   },
+   "investment_notes": "Kings traded San Antonio's top-16-protected 2027 first (converts to two seconds if it does not convey) to OKC on 2025 draft night to move up to #24 and take him. About 17 months later they gave him back for two second-rounders; OKC essentially got the first-round pick for him and then re-bought him cheaply. Sunk cost ignored, and the asset value fell far below what was paid.",
+   "analyst_view": "Analysts and fans panned Sacramento: the return was weak against what was paid, a rebuilding team buried a young wing, and the front office showed no clear plan. OKC was praised for a cheap fix for injuries, and one writer argued that Presti's interest is itself a signal to keep a player.",
+   "grades": {
+    "si_clifford": "OKC A / SAC D+",
+    "clutch_clifford": "OKC A / SAC C"
+   },
+   "verdict_tags": [
+    "investment sunk-cost",
+    "head-scratcher",
+    "tax move",
+    "rebuild sell",
+    "contender opportunism",
+    "front-office loser (SAC)"
+   ],
+   "sources": [
+    "si_clifford",
+    "defector",
+    "roundtable",
+    "clutch_clifford",
+    "score_clifford",
+    "nba_clifford",
+    "hr_inseason"
+   ]
+  },
+  {
+   "date": "2025-06-25",
+   "window": "2025 draft (reference, outside window)",
+   "teams": [
+    "SAC",
+    "OKC"
+   ],
+   "assets": [
+    {
+     "from": "SAC",
+     "to": "OKC",
+     "kind": "pick",
+     "name_or_desc": "San Antonio 2027 first-round pick",
+     "pick_details": "2027 round 1 from SAS, protected 1-16; if not conveyed becomes two second-round picks"
+    },
+    {
+     "from": "OKC",
+     "to": "SAC",
+     "kind": "pick",
+     "name_or_desc": "#24 pick 2025 (used on Nique Clifford)",
+     "pick_details": "2025 round 1, pick 24"
+    }
+   ],
+   "context": {
+    "SAC": "Traded a future first to move up for a 23-year-old Colorado State wing seen as athletic with size, feel and ball skills.",
+    "OKC": "Turned #24 into a future first, a typical Presti pick-accumulation move."
+   },
+   "investment_notes": "This is the original investment later unwound in the Clifford trade.",
+   "analyst_view": "Reference only; the later reversal is the story analysts judged.",
+   "grades": {},
+   "verdict_tags": [
+    "draft trade-up",
+    "reference"
+   ],
+   "sources": [
+    "si_clifford",
+    "defector"
+   ]
+  },
+  {
+   "date": "2026-01-09",
+   "window": "2025-26 season",
+   "teams": [
+    "ATL",
+    "WAS"
+   ],
+   "assets": [
+    {
+     "from": "ATL",
+     "to": "WAS",
+     "kind": "player",
+     "name_or_desc": "Trae Young",
+     "player_age": 27,
+     "contract": "$49M player option 2026-27",
+     "role_before": "franchise guard; played only 10 games in 2025-26 due to injury"
+    },
+    {
+     "from": "WAS",
+     "to": "ATL",
+     "kind": "player",
+     "name_or_desc": "CJ McCollum",
+     "contract": "about $31M expiring",
+     "role_before": "Wizards-high 18.8 ppg"
+    },
+    {
+     "from": "WAS",
+     "to": "ATL",
+     "kind": "player",
+     "name_or_desc": "Corey Kispert",
+     "player_age": 26,
+     "contract": "just under $14M, through 2028-29",
+     "role_before": "sharpshooting wing"
+    }
+   ],
+   "context": {
+    "ATL": "Declined to extend Young, he asked out/preferred Washington; Hawks gain flexibility, move on from the player option, and were about break-even without him.",
+    "WAS": "Gets a dynamic playmaker for a young core; no immediate extension talks; style fit questioned. Washington's 2026 first is owed to NYK if outside the top eight."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Called roughly even: Atlanta flexibility vs Washington star power with fit concerns.",
+   "grades": {
+    "espn_deadline": "ATL B / WAS B"
+   },
+   "verdict_tags": [
+    "star for depth",
+    "value-neutral",
+    "fit question",
+    "cap flexibility"
+   ],
+   "sources": [
+    "trae_search",
+    "nba_tracker_2526",
+    "espn_deadline"
+   ]
+  },
+  {
+   "date": "2026-02-04",
+   "window": "2026 deadline",
+   "teams": [
+    "CLE",
+    "LAC"
+   ],
+   "assets": [
+    {
+     "from": "LAC",
+     "to": "CLE",
+     "kind": "player",
+     "name_or_desc": "James Harden",
+     "player_age": 36,
+     "contract": "owed $47M in 2026-27 but only about $13M guaranteed",
+     "role_before": "25.4 pts, 8.1 ast"
+    },
+    {
+     "from": "CLE",
+     "to": "LAC",
+     "kind": "player",
+     "name_or_desc": "Darius Garland",
+     "contract": "long-term max-level deal",
+     "role_before": "two-time All-Star; toe injuries, 36% from 3, Cavs outscored with him on court"
+    },
+    {
+     "from": "CLE",
+     "to": "LAC",
+     "kind": "pick",
+     "name_or_desc": "2026 second-round pick"
+    }
+   ],
+   "context": {
+    "CLE": "Win-now push after a 64-win 2024-25 season but only 8th in offense; Harden expiring-ish flexibility.",
+    "LAC": "Pivot away from the Kawhi/Harden era toward 2027 cap space; Garland younger but injury-prone."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Most analysts liked Cleveland for the immediate upgrade; Clippers viewed as pivoting, with some calling Garland's contract risky.",
+   "grades": {
+    "si_deadline": "CLE B / LAC C",
+    "espn_deadline": "CLE B / LAC B-"
+   },
+   "verdict_tags": [
+    "win-now",
+    "star swap",
+    "aging vs young"
+   ],
+   "sources": [
+    "hr_deadline",
+    "si_deadline",
+    "espn_deadline",
+    "nbc_winners"
+   ]
+  },
+  {
+   "date": "2026-02-03",
+   "window": "2026 deadline",
+   "teams": [
+    "UTA",
+    "MEM"
+   ],
+   "assets": [
+    {
+     "from": "MEM",
+     "to": "UTA",
+     "kind": "player",
+     "name_or_desc": "Jaren Jackson Jr.",
+     "contract": "$35M 2025-26, $49M 2026-27, through 2030"
+    },
+    {
+     "from": "MEM",
+     "to": "UTA",
+     "kind": "player",
+     "name_or_desc": "John Konchar"
+    },
+    {
+     "from": "MEM",
+     "to": "UTA",
+     "kind": "player",
+     "name_or_desc": "Vince Williams Jr."
+    },
+    {
+     "from": "MEM",
+     "to": "UTA",
+     "kind": "player",
+     "name_or_desc": "Jock Landale"
+    },
+    {
+     "from": "UTA",
+     "to": "MEM",
+     "kind": "player",
+     "name_or_desc": "Kyle Anderson"
+    },
+    {
+     "from": "UTA",
+     "to": "MEM",
+     "kind": "player",
+     "name_or_desc": "Georges Niang"
+    },
+    {
+     "from": "UTA",
+     "to": "MEM",
+     "kind": "player",
+     "name_or_desc": "Taylor Hendricks",
+     "role_before": "young forward"
+    },
+    {
+     "from": "UTA",
+     "to": "MEM",
+     "kind": "player",
+     "name_or_desc": "Walter Clayton Jr.",
+     "role_before": "rookie guard"
+    },
+    {
+     "from": "UTA",
+     "to": "MEM",
+     "kind": "pick",
+     "name_or_desc": "Lakers 2027 first",
+     "pick_details": "2027 round 1, top-4 protected, original LAL"
+    },
+    {
+     "from": "UTA",
+     "to": "MEM",
+     "kind": "pick",
+     "name_or_desc": "2027 first, most favorable of CLE/MIN/UTA",
+     "pick_details": "2027 round 1"
+    },
+    {
+     "from": "UTA",
+     "to": "MEM",
+     "kind": "pick",
+     "name_or_desc": "Suns 2031 first",
+     "pick_details": "2031 round 1, original PHX"
+    }
+   ],
+   "context": {
+    "UTA": "Using 2026-27 space early to add a top frontcourt star while Kessler was out for the season.",
+    "MEM": "Pivot to rebuild, clearing Jackson's big future salary and gathering firsts (about 12 in stock)."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Memphis seen as the clear winner for the haul and cleared salary; Utah got a good but no longer elite big at a high price in firsts.",
+   "grades": {
+    "si_deadline": "UTA B / MEM A-",
+    "espn_deadline": "UTA B- / MEM A-"
+   },
+   "verdict_tags": [
+    "rebuild sell",
+    "star for picks",
+    "win-now overpay (UTA)"
+   ],
+   "sources": [
+    "hr_deadline",
+    "si_deadline",
+    "espn_deadline",
+    "nbc_winners"
+   ]
+  },
+  {
+   "date": "2026-02-05",
+   "window": "2026 deadline",
+   "teams": [
+    "DAL",
+    "WAS",
+    "CHA"
+   ],
+   "assets": [
+    {
+     "from": "DAL",
+     "to": "WAS",
+     "kind": "player",
+     "name_or_desc": "Anthony Davis",
+     "contract": "top-7 salary in league",
+     "role_before": "injured (hand sprain), likely out for season"
+    },
+    {
+     "from": "DAL",
+     "to": "WAS",
+     "kind": "player",
+     "name_or_desc": "D'Angelo Russell"
+    },
+    {
+     "from": "DAL",
+     "to": "WAS",
+     "kind": "player",
+     "name_or_desc": "Jaden Hardy"
+    },
+    {
+     "from": "DAL",
+     "to": "WAS",
+     "kind": "player",
+     "name_or_desc": "Dante Exum"
+    },
+    {
+     "from": "WAS",
+     "to": "DAL",
+     "kind": "player",
+     "name_or_desc": "Khris Middleton"
+    },
+    {
+     "from": "WAS",
+     "to": "DAL",
+     "kind": "player",
+     "name_or_desc": "AJ Johnson"
+    },
+    {
+     "from": "WAS",
+     "to": "DAL",
+     "kind": "player",
+     "name_or_desc": "Marvin Bagley III"
+    },
+    {
+     "from": "CHA",
+     "to": "DAL",
+     "kind": "player",
+     "name_or_desc": "Tyus Jones"
+    },
+    {
+     "from": "WAS",
+     "to": "CHA",
+     "kind": "player",
+     "name_or_desc": "Malaki Branham"
+    },
+    {
+     "from": "WAS",
+     "to": "DAL",
+     "kind": "pick",
+     "name_or_desc": "2026 first (OKC/HOU/LAC variant)",
+     "pick_details": "2026 round 1, least favorable of OKC/HOU(top-4 prot.)/LAC"
+    },
+    {
+     "from": "WAS",
+     "to": "DAL",
+     "kind": "pick",
+     "name_or_desc": "Warriors 2030 first",
+     "pick_details": "2030 round 1, top-20 protected, original GSW"
+    },
+    {
+     "from": "WAS",
+     "to": "DAL",
+     "kind": "pick",
+     "name_or_desc": "three second-round picks",
+     "pick_details": "2026 PHX, 2027 CHI, 2029 HOU"
+    }
+   ],
+   "context": {
+    "DAL": "Sold a year after acquiring Davis; shed salary and got under the tax.",
+    "WAS": "Adds a star big beside Trae Young; Davis likely done for year, pushing bottom-four to keep a pick owed to NYK outside the top eight."
+   },
+   "investment_notes": "Dallas had acquired Davis the previous season in the Luka Doncic deal, widely graded very poorly.",
+   "analyst_view": "Dallas sold low on a declining, injured star, with SI calling it a poor return and ESPN calling it a decent recovery of picks; consensus was low value for Davis.",
+   "grades": {
+    "si_deadline": "WAS A / DAL D+",
+    "espn_deadline": "WAS C / DAL B"
+   },
+   "verdict_tags": [
+    "salary dump",
+    "sell low",
+    "injury discount",
+    "tax move"
+   ],
+   "sources": [
+    "hr_deadline",
+    "si_deadline",
+    "espn_deadline",
+    "nbc_winners",
+    "nba_tracker_2526"
+   ]
+  },
+  {
+   "date": "2026-02-05",
+   "window": "2026 deadline",
+   "teams": [
+    "IND",
+    "LAC"
+   ],
+   "assets": [
+    {
+     "from": "LAC",
+     "to": "IND",
+     "kind": "player",
+     "name_or_desc": "Ivica Zubac",
+     "player_age": 28,
+     "role_before": "starting center"
+    },
+    {
+     "from": "LAC",
+     "to": "IND",
+     "kind": "player",
+     "name_or_desc": "Kobe Brown"
+    },
+    {
+     "from": "IND",
+     "to": "LAC",
+     "kind": "player",
+     "name_or_desc": "Bennedict Mathurin"
+    },
+    {
+     "from": "IND",
+     "to": "LAC",
+     "kind": "player",
+     "name_or_desc": "Isaiah Jackson"
+    },
+    {
+     "from": "IND",
+     "to": "LAC",
+     "kind": "pick",
+     "name_or_desc": "Pacers 2026 first",
+     "pick_details": "2026 round 1, protected 1-4 and 10-30; if protected, becomes 2031 first"
+    },
+    {
+     "from": "IND",
+     "to": "LAC",
+     "kind": "pick",
+     "name_or_desc": "Pacers 2029 first"
+    },
+    {
+     "from": "IND",
+     "to": "LAC",
+     "kind": "pick",
+     "name_or_desc": "Mavericks 2028 second"
+    }
+   ],
+   "context": {
+    "IND": "Upgrade at center over Myles Turner for a contender-minded rebuild around a key piece.",
+    "LAC": "Collecting capital while pivoting off win-now."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Viewed as balanced; Pacers lauded for a good starting center, Clippers for draft capital and a young wing.",
+   "grades": {
+    "si_deadline": "IND B / LAC B-"
+   },
+   "verdict_tags": [
+    "value-neutral",
+    "star-center for picks"
+   ],
+   "sources": [
+    "hr_deadline",
+    "si_deadline",
+    "nbc_winners"
+   ]
+  },
+  {
+   "date": "2026-02-05",
+   "window": "2026 deadline",
+   "teams": [
+    "BOS",
+    "CHI"
+   ],
+   "assets": [
+    {
+     "from": "CHI",
+     "to": "BOS",
+     "kind": "player",
+     "name_or_desc": "Nikola Vucevic",
+     "player_age": 35,
+     "contract": "expiring",
+     "role_before": "16.9 pts, 9.0 reb; weak defender"
+    },
+    {
+     "from": "CHI",
+     "to": "BOS",
+     "kind": "pick",
+     "name_or_desc": "Nuggets 2027 second"
+    },
+    {
+     "from": "BOS",
+     "to": "CHI",
+     "kind": "player",
+     "name_or_desc": "Anfernee Simons",
+     "contract": "$27.7M expiring"
+    },
+    {
+     "from": "BOS",
+     "to": "CHI",
+     "kind": "pick",
+     "name_or_desc": "2026 second-round pick (most favorable of NOP/POR/MIN/NYK)"
+    }
+   ],
+   "context": {
+    "BOS": "Needed bigs after losing Horford, Kornet, Porzingis; saves almost $21M in tax and gets under the first apron, freeing buyout signings.",
+    "CHI": "Clears a longer contract, guard-heavy afterward."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Mixed: C- and C grades for Boston with tax savings as the main upside; Chicago modestly ahead.",
+   "grades": {
+    "si_deadline": "BOS C- / CHI C+",
+    "espn_deadline": "BOS C / CHI C+"
+   },
+   "verdict_tags": [
+    "tax move",
+    "value-neutral role swap"
+   ],
+   "sources": [
+    "hr_deadline",
+    "si_deadline",
+    "espn_deadline",
+    "cbs_winners"
+   ]
+  },
+  {
+   "date": "2026-02-04",
+   "window": "2026 deadline",
+   "teams": [
+    "OKC",
+    "PHI"
+   ],
+   "assets": [
+    {
+     "from": "PHI",
+     "to": "OKC",
+     "kind": "player",
+     "name_or_desc": "Jared McCain",
+     "player_age": 21,
+     "contract": "$4.4M in 2026-27",
+     "role_before": "6.6 ppg this season; 15.3 ppg in 23 games as 2024 rookie before knee surgery"
+    },
+    {
+     "from": "OKC",
+     "to": "PHI",
+     "kind": "pick",
+     "name_or_desc": "Houston 2026 first (OKC/HOU/LAC variant)",
+     "pick_details": "2026 round 1, projected about #26"
+    },
+    {
+     "from": "OKC",
+     "to": "PHI",
+     "kind": "pick",
+     "name_or_desc": "2027 second (most favorable of OKC/HOU/IND/MIA)"
+    },
+    {
+     "from": "OKC",
+     "to": "PHI",
+     "kind": "pick",
+     "name_or_desc": "OKC 2028 second"
+    },
+    {
+     "from": "OKC",
+     "to": "PHI",
+     "kind": "pick",
+     "name_or_desc": "Bucks 2028 second"
+    }
+   ],
+   "context": {
+    "OKC": "Used pick surplus for a ready backcourt piece; had dumped Dieng to Charlotte for Plumlee to cut tax.",
+    "PHI": "Crowded roster after adding Edgecombe and Grimes; trade gets it under the tax and opens roster spots."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Both sides rated well: OKC for a cheap upside guard, Philadelphia for pick capital and cap room.",
+   "grades": {
+    "si_deadline": "OKC A- / PHI B",
+    "espn_deadline": "OKC B+ / PHI B+"
+   },
+   "verdict_tags": [
+    "textbook",
+    "pick surplus conversion",
+    "tax move"
+   ],
+   "sources": [
+    "hr_deadline",
+    "si_deadline",
+    "espn_deadline",
+    "nba_tracker_2526"
+   ]
+  },
+  {
+   "date": "2026-02-05",
+   "window": "2026 deadline",
+   "teams": [
+    "ATL",
+    "GSW"
+   ],
+   "assets": [
+    {
+     "from": "ATL",
+     "to": "GSW",
+     "kind": "player",
+     "name_or_desc": "Kristaps Porzingis",
+     "role_before": "center, currently injured"
+    },
+    {
+     "from": "GSW",
+     "to": "ATL",
+     "kind": "player",
+     "name_or_desc": "Jonathan Kuminga",
+     "role_before": "young forward with upside"
+    },
+    {
+     "from": "GSW",
+     "to": "ATL",
+     "kind": "player",
+     "name_or_desc": "Buddy Hield"
+    }
+   ],
+   "context": {
+    "GSW": "With Jimmy Butler out for the season, needed Porzingis healthy and fit quickly.",
+    "ATL": "Moved an expiring injured big for upside."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Atlanta graded ahead for netting upside; Golden State seen as paying much for an injured center.",
+   "grades": {
+    "si_deadline": "GSW C+ / ATL B+"
+   },
+   "verdict_tags": [
+    "win-now overpay",
+    "injury risk"
+   ],
+   "sources": [
+    "hr_deadline",
+    "si_deadline"
+   ]
+  },
+  {
+   "date": "2026-02-05",
+   "window": "2026 deadline",
+   "teams": [
+    "CHI",
+    "MIN"
+   ],
+   "assets": [
+    {
+     "from": "CHI",
+     "to": "MIN",
+     "kind": "player",
+     "name_or_desc": "Ayo Dosunmu",
+     "role_before": "15.0 ppg off the bench, 45% from three; pending free agent"
+    },
+    {
+     "from": "CHI",
+     "to": "MIN",
+     "kind": "player",
+     "name_or_desc": "Julian Phillips"
+    },
+    {
+     "from": "MIN",
+     "to": "CHI",
+     "kind": "player",
+     "name_or_desc": "Rob Dillingham",
+     "player_age": 21,
+     "role_before": "former lottery pick needing minutes"
+    },
+    {
+     "from": "MIN",
+     "to": "CHI",
+     "kind": "player",
+     "name_or_desc": "Leonard Miller"
+    },
+    {
+     "from": "MIN",
+     "to": "CHI",
+     "kind": "pick",
+     "name_or_desc": "four second-round picks",
+     "pick_details": "2026 (DEN/GSW), 2027 (CLE), 2031 (MIN/GSW), 2032 (PHX/HOU)"
+    }
+   ],
+   "context": {
+    "MIN": "Win-now depth ahead of a larger move; tax saving.",
+    "CHI": "Rebuilding; takes upside and picks for a pending free agent."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Both teams seen as acceptable; Chicago got young upside and second-rounders for a rental.",
+   "grades": {
+    "si_deadline": "CHI B / MIN B-"
+   },
+   "verdict_tags": [
+    "rebuild sell",
+    "rental"
+   ],
+   "sources": [
+    "hr_deadline",
+    "si_deadline"
+   ]
+  },
+  {
+   "date": "2026-02-01",
+   "window": "2026 deadline",
+   "teams": [
+    "CLE",
+    "SAC",
+    "CHI"
+   ],
+   "assets": [
+    {
+     "from": "SAC",
+     "to": "CLE",
+     "kind": "player",
+     "name_or_desc": "Keon Ellis",
+     "contract": "minimum deal",
+     "role_before": "37% from 3; good fit with Mitchell"
+    },
+    {
+     "from": "SAC",
+     "to": "CLE",
+     "kind": "player",
+     "name_or_desc": "Dennis Schroder",
+     "contract": "$14.1M, $4.35M guaranteed 2027-28"
+    },
+    {
+     "from": "CHI",
+     "to": "CLE",
+     "kind": "player",
+     "name_or_desc": "Emanuel Miller",
+     "contract": "two-way"
+    },
+    {
+     "from": "CLE",
+     "to": "SAC",
+     "kind": "player",
+     "name_or_desc": "De'Andre Hunter",
+     "contract": "$23.3M, $24.9M in 2026-27",
+     "role_before": "career-low 31% from 3"
+    },
+    {
+     "from": "CLE",
+     "to": "CHI",
+     "kind": "player",
+     "name_or_desc": "Dario Saric"
+    },
+    {
+     "from": "SAC",
+     "to": "CHI",
+     "kind": "pick",
+     "name_or_desc": "2027 second-round pick (via Cleveland)"
+    },
+    {
+     "from": "SAC",
+     "to": "CHI",
+     "kind": "pick",
+     "name_or_desc": "2029 second-round pick, least favorable of DET/MIL/NYK"
+    }
+   ],
+   "context": {
+    "CLE": "Saves nearly $40M in tax by sending out Saric, gets rotation guards.",
+    "SAC": "Takes salary at a low point in value, loses two seconds; also pushes into the tax.",
+    "CHI": "Absorbs Saric using a trade exception and collects seconds."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Chicago and Cleveland graded as winners; CBS listed the Kings among deadline disappointments.",
+   "grades": {
+    "espn_deadline": "CLE B+ / SAC C / CHI A"
+   },
+   "verdict_tags": [
+    "tax move",
+    "salary absorption for picks",
+    "front-office loser (SAC)"
+   ],
+   "sources": [
+    "hr_deadline",
+    "espn_deadline",
+    "cbs_winners",
+    "nba_tracker_2526"
+   ]
+  },
+  {
+   "date": "2026-02-05",
+   "window": "2026 deadline",
+   "teams": [
+    "CHI",
+    "CHA"
+   ],
+   "assets": [
+    {
+     "from": "CHA",
+     "to": "CHI",
+     "kind": "player",
+     "name_or_desc": "Collin Sexton"
+    },
+    {
+     "from": "CHA",
+     "to": "CHI",
+     "kind": "player",
+     "name_or_desc": "Ousmane Dieng"
+    },
+    {
+     "from": "CHA",
+     "to": "CHI",
+     "kind": "pick",
+     "name_or_desc": "three second-round picks"
+    },
+    {
+     "from": "CHI",
+     "to": "CHA",
+     "kind": "player",
+     "name_or_desc": "Coby White",
+     "role_before": "score-first guard with upside"
+    },
+    {
+     "from": "CHI",
+     "to": "CHA",
+     "kind": "player",
+     "name_or_desc": "Mike Conley Jr.",
+     "player_age": 38,
+     "contract": "$10.8M final year"
+    }
+   ],
+   "context": {
+    "CHA": "Wanted a scoring guard.",
+    "CHI": "Reshaping toward youth and picks."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Both teams graded modestly positive.",
+   "grades": {
+    "si_deadline": "CHI B- / CHA B"
+   },
+   "verdict_tags": [
+    "value-neutral role swap"
+   ],
+   "sources": [
+    "hr_deadline",
+    "si_deadline"
+   ]
+  },
+  {
+   "date": "2026-02-05",
+   "window": "2026 deadline",
+   "teams": [
+    "NYK",
+    "NOP"
+   ],
+   "assets": [
+    {
+     "from": "NOP",
+     "to": "NYK",
+     "kind": "player",
+     "name_or_desc": "Jose Alvarado",
+     "role_before": "surplus guard behind Poole and Fears"
+    },
+    {
+     "from": "NYK",
+     "to": "NOP",
+     "kind": "player",
+     "name_or_desc": "Dalen Terry"
+    },
+    {
+     "from": "NYK",
+     "to": "NOP",
+     "kind": "pick",
+     "name_or_desc": "two second-round picks"
+    }
+   ],
+   "context": {
+    "NYK": "Replacing Miles McBride (out until at least the playoffs) with a pressure guard.",
+    "NOP": "Moves a surplus player."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Knicks winners; Pelicans less so.",
+   "grades": {
+    "si_deadline": "NYK B / NOP C"
+   },
+   "verdict_tags": [
+    "roster-fit move"
+   ],
+   "sources": [
+    "hr_deadline",
+    "si_deadline",
+    "nbc_winners"
+   ]
+  },
+  {
+   "date": "2026-02-05",
+   "window": "2026 deadline",
+   "teams": [
+    "LAL",
+    "ATL"
+   ],
+   "assets": [
+    {
+     "from": "ATL",
+     "to": "LAL",
+     "kind": "player",
+     "name_or_desc": "Luke Kennard",
+     "role_before": "49.7% from three"
+    },
+    {
+     "from": "LAL",
+     "to": "ATL",
+     "kind": "player",
+     "name_or_desc": "Gabe Vincent",
+     "contract": "expiring"
+    },
+    {
+     "from": "LAL",
+     "to": "ATL",
+     "kind": "pick",
+     "name_or_desc": "2032 second-round pick"
+    }
+   ],
+   "context": {
+    "LAL": "22nd in 3pt shooting.",
+    "ATL": "Low-impact; gets an expiring and a second."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Lakers saw the clear need-based win.",
+   "grades": {
+    "si_deadline": "LAL B+ / ATL C"
+   },
+   "verdict_tags": [
+    "fit move"
+   ],
+   "sources": [
+    "hr_deadline",
+    "si_deadline"
+   ]
+  },
+  {
+   "date": "2026-02-03",
+   "window": "2026 deadline",
+   "teams": [
+    "DET",
+    "CHI",
+    "MIN"
+   ],
+   "assets": [
+    {
+     "from": "CHI",
+     "to": "DET",
+     "kind": "player",
+     "name_or_desc": "Kevin Huerter"
+    },
+    {
+     "from": "CHI",
+     "to": "DET",
+     "kind": "player",
+     "name_or_desc": "Dario Saric"
+    },
+    {
+     "from": "MIN",
+     "to": "DET",
+     "kind": "pick",
+     "name_or_desc": "right to swap 2026 firsts (MIN pick top-19 protected)"
+    },
+    {
+     "from": "DET",
+     "to": "CHI",
+     "kind": "player",
+     "name_or_desc": "Jaden Ivey",
+     "player_age": 24,
+     "contract": "restricted free agent, $30.3M cap hold"
+    },
+    {
+     "from": "MIN",
+     "to": "CHI",
+     "kind": "player",
+     "name_or_desc": "Mike Conley Jr."
+    },
+    {
+     "from": "DET",
+     "to": "MIN",
+     "kind": "cash",
+     "name_or_desc": "$1.1M"
+    }
+   ],
+   "context": {
+    "DET": "Adds depth, upgrades pick.",
+    "CHI": "Turns Huerter into younger Ivey.",
+    "MIN": "Saves over $20M tax, possible trade-exception setup for a bigger deal."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Chicago graded highest.",
+   "grades": {
+    "espn_deadline": "DET B / MIN B / CHI B+"
+   },
+   "verdict_tags": [
+    "tax move"
+   ],
+   "sources": [
+    "hr_deadline",
+    "espn_deadline"
+   ]
+  },
+  {
+   "date": "2026-02-01",
+   "window": "2026 deadline",
+   "teams": [
+    "ATL",
+    "POR"
+   ],
+   "assets": [
+    {
+     "from": "ATL",
+     "to": "POR",
+     "kind": "player",
+     "name_or_desc": "Vit Krejci",
+     "contract": "minimum through 2027-28"
+    },
+    {
+     "from": "POR",
+     "to": "ATL",
+     "kind": "player",
+     "name_or_desc": "Duop Reath",
+     "role_before": "season-ending injury"
+    },
+    {
+     "from": "POR",
+     "to": "ATL",
+     "kind": "pick",
+     "name_or_desc": "2027 second (ATL own)"
+    },
+    {
+     "from": "POR",
+     "to": "ATL",
+     "kind": "pick",
+     "name_or_desc": "2030 second (NYK)"
+    }
+   ],
+   "context": {
+    "POR": "Shooting need; near the tax.",
+    "ATL": "Recovers its own second."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Portland winner.",
+   "grades": {
+    "espn_deadline": "ATL B / POR A-"
+   },
+   "verdict_tags": [
+    "value-neutral role swap"
+   ],
+   "sources": [
+    "nba_tracker_2526",
+    "hr_deadline",
+    "espn_deadline"
+   ]
+  },
+  {
+   "date": "2026-02-05",
+   "window": "2026 deadline (minor deals grouped)",
+   "teams": [
+    "BOS",
+    "CHA",
+    "BKN",
+    "UTA",
+    "MEM",
+    "PHI",
+    "DEN",
+    "TOR",
+    "GSW",
+    "LAC",
+    "NYK",
+    "CHI",
+    "MIL",
+    "PHX",
+    "ORL",
+    "OKC"
+   ],
+   "assets": [
+    {
+     "from": "MULTI",
+     "to": "MULTI",
+     "kind": "pick",
+     "name_or_desc": "Minor second-round, cash and fringe-player deals: Celtics-Hornets (Tillman for 2030 second), Celtics-Nets (Minott for cash), Celtics-Jazz (Boucher for John Tonje), Magic-Hornets (Tyus Jones), Nuggets-Nets (Tyson), Thunder-Hornets (Dieng for Plumlee), Raptors-Clippers-Nets (Chris Paul to TOR), Warriors-Raptors (Jackson-Davis), Sixers-Grizzlies (Eric Gordon), Suns-Bucks-Bulls (Richards, Anthony), Knicks-Bulls (Yabusele), Jazz-Cavaliers (Lonzo Ball)"
+    }
+   ],
+   "context": {
+    "ALL": "Roster crunches, tax avoidance, two-way slots."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Not individually graded.",
+   "grades": {},
+   "verdict_tags": [
+    "tax move",
+    "roster crunch",
+    "minor second-round swaps"
+   ],
+   "sources": [
+    "hr_deadline",
+    "nba_tracker_2526"
+   ]
+  },
+  {
+   "date": "2026-06-22",
+   "window": "2026 offseason",
+   "teams": [
+    "MIA",
+    "MIL"
+   ],
+   "assets": [
+    {
+     "from": "MIL",
+     "to": "MIA",
+     "kind": "player",
+     "name_or_desc": "Giannis Antetokounmpo",
+     "player_age": 31,
+     "contract": "could sign about $275M/4y max extension",
+     "role_before": "two-time MVP"
+    },
+    {
+     "from": "MIL",
+     "to": "MIA",
+     "kind": "player",
+     "name_or_desc": "Bobby Portis"
+    },
+    {
+     "from": "MIA",
+     "to": "MIL",
+     "kind": "player",
+     "name_or_desc": "Tyler Herro"
+    },
+    {
+     "from": "MIA",
+     "to": "MIL",
+     "kind": "player",
+     "name_or_desc": "Kel'el Ware"
+    },
+    {
+     "from": "MIA",
+     "to": "MIL",
+     "kind": "player",
+     "name_or_desc": "Jaime Jaquez Jr."
+    },
+    {
+     "from": "MIA",
+     "to": "MIL",
+     "kind": "player",
+     "name_or_desc": "Kasparas Jakucionis"
+    },
+    {
+     "from": "MIA",
+     "to": "MIL",
+     "kind": "pick",
+     "name_or_desc": "2026 #13 pick (used on Nate Ament)"
+    },
+    {
+     "from": "MIA",
+     "to": "MIL",
+     "kind": "pick",
+     "name_or_desc": "2031 first"
+    },
+    {
+     "from": "MIA",
+     "to": "MIL",
+     "kind": "pick",
+     "name_or_desc": "2033 first"
+    },
+    {
+     "from": "MIA",
+     "to": "MIL",
+     "kind": "swap",
+     "name_or_desc": "2030 pick swap"
+    },
+    {
+     "from": "MIA",
+     "to": "MIL",
+     "kind": "pick",
+     "name_or_desc": "2033 second"
+    }
+   ],
+   "context": {
+    "MIA": "Finally landed a top star; short window, few assets left, shooting gap.",
+    "MIL": "Rebuild, no control of own firsts 2027-2030, tight finances."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Grades spread from Heat B- to B+ and Bucks B+ to A-; common critique that Milwaukee waited too long and the Heat overpaid with unprotected picks.",
+   "grades": {
+    "espn_giannis": "MIA B- / MIL B+",
+    "br_draft": "MIA B+ / MIL A-",
+    "giannis_search": "CBS MIA B+; SI MIL A-"
+   },
+   "verdict_tags": [
+    "star for picks",
+    "rebuild sell",
+    "win-now overpay",
+    "textbook star trade"
+   ],
+   "sources": [
+    "espn_giannis",
+    "giannis_search",
+    "br_draft",
+    "espn_tracker_off"
+   ]
+  },
+  {
+   "date": "2026-06-22",
+   "window": "2026 draft",
+   "teams": [
+    "MIN",
+    "BKN",
+    "CHI"
+   ],
+   "assets": [
+    {
+     "from": "MIN",
+     "to": "BKN",
+     "kind": "player",
+     "name_or_desc": "Julius Randle"
+    },
+    {
+     "from": "MIN",
+     "to": "BKN",
+     "kind": "pick",
+     "name_or_desc": "2026 #28 pick"
+    },
+    {
+     "from": "BKN",
+     "to": "CHI",
+     "kind": "player",
+     "name_or_desc": "Nic Claxton"
+    },
+    {
+     "from": "CHI",
+     "to": "MIN",
+     "kind": "player",
+     "name_or_desc": "Mo Gueye"
+    },
+    {
+     "from": "CHI",
+     "to": "MIN",
+     "kind": "pick",
+     "name_or_desc": "2026 #33 pick"
+    }
+   ],
+   "context": {
+    "BKN": "Gets a driver beside MPJ.",
+    "MIN": "Escapes rest of Randle contract for a small pick slide.",
+    "CHI": "Adds rim protection."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Rotation bigs moved cheaply because new anti-tanking rules lowered the incentive to lose.",
+   "grades": {
+    "br_draft": "BKN A- / CHI B / MIN Inc"
+   },
+   "verdict_tags": [
+    "salary dump",
+    "tax move"
+   ],
+   "sources": [
+    "br_draft",
+    "espn_tracker_off"
+   ]
+  },
+  {
+   "date": "2026-06-21",
+   "window": "2026 offseason",
+   "teams": [
+    "OKC",
+    "ATL"
+   ],
+   "assets": [
+    {
+     "from": "OKC",
+     "to": "ATL",
+     "kind": "player",
+     "name_or_desc": "Aaron Wiggins"
+    },
+    {
+     "from": "ATL",
+     "to": "OKC",
+     "kind": "pick",
+     "name_or_desc": "2030 second"
+    },
+    {
+     "from": "ATL",
+     "to": "OKC",
+     "kind": "pick",
+     "name_or_desc": "2032 second (least favorable LAL/ATL)"
+    }
+   ],
+   "context": {
+    "OKC": "Payroll relief toward the second apron.",
+    "ATL": "Cheap rotation wing."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Not graded in retrieved text.",
+   "grades": {},
+   "verdict_tags": [
+    "salary dump",
+    "tax move"
+   ],
+   "sources": [
+    "espn_tracker_off"
+   ]
+  },
+  {
+   "date": "2026-06-23",
+   "window": "2026 draft",
+   "teams": [
+    "MEM",
+    "DET",
+    "OKC"
+   ],
+   "assets": [
+    {
+     "from": "MEM",
+     "to": "OKC",
+     "kind": "pick",
+     "name_or_desc": "#16 (Bennett Stirtz)"
+    },
+    {
+     "from": "OKC",
+     "to": "MEM",
+     "kind": "pick",
+     "name_or_desc": "#17 (Ebuka Okorie) to DET via MEM"
+    },
+    {
+     "from": "DET",
+     "to": "MEM",
+     "kind": "pick",
+     "name_or_desc": "#21 (Karim Lopez)"
+    },
+    {
+     "from": "DET",
+     "to": "MEM",
+     "kind": "pick",
+     "name_or_desc": "three second-round picks (DET)"
+    },
+    {
+     "from": "OKC",
+     "to": "MEM",
+     "kind": "pick",
+     "name_or_desc": "two second-round picks"
+    }
+   ],
+   "context": {
+    "MEM": "Slides down, collects five seconds.",
+    "OKC": "Adds a cheap rookie-contract piece.",
+    "DET": "Guard prospect beside Cade Cunningham."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Memphis seen as the big winner for five seconds on a small slide.",
+   "grades": {
+    "br_draft": "OKC B+ / DET B+ / MEM A+"
+   },
+   "verdict_tags": [
+    "trade down value",
+    "textbook draft-day"
+   ],
+   "sources": [
+    "br_draft",
+    "espn_tracker_off"
+   ]
+  },
+  {
+   "date": "2026-06-23",
+   "window": "2026 draft",
+   "teams": [
+    "LAL",
+    "NYK",
+    "DAL",
+    "PHX"
+   ],
+   "assets": [
+    {
+     "from": "NYK",
+     "to": "LAL",
+     "kind": "pick",
+     "name_or_desc": "#24 (Cameron Carr)"
+    },
+    {
+     "from": "LAL",
+     "to": "NYK",
+     "kind": "pick",
+     "name_or_desc": "#25 swap + cash"
+    },
+    {
+     "from": "NYK",
+     "to": "DAL",
+     "kind": "pick",
+     "name_or_desc": "#25 (Sergio de Larrea)"
+    },
+    {
+     "from": "NYK",
+     "to": "PHX",
+     "kind": "pick",
+     "name_or_desc": "#30 (Koa Peat)"
+    },
+    {
+     "from": "PHX",
+     "to": "NYK",
+     "kind": "pick",
+     "name_or_desc": "three second-rounders incl. #47"
+    },
+    {
+     "from": "DAL",
+     "to": "NYK",
+     "kind": "pick",
+     "name_or_desc": "two second-rounders and draft rights"
+    }
+   ],
+   "context": {
+    "NYK": "Trade down for five future seconds.",
+    "LAL": "Takes shooting/athleticism.",
+    "DAL": "Playmaker.",
+    "PHX": "Big forward."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Everyone got a fit; New York gathered chips.",
+   "grades": {
+    "br_draft": "LAL A / DAL A / PHX B / NYK B"
+   },
+   "verdict_tags": [
+    "trade down value"
+   ],
+   "sources": [
+    "br_draft",
+    "espn_tracker_off"
+   ]
+  },
+  {
+   "date": "2026-06-23",
+   "window": "2026 draft",
+   "teams": [
+    "SAC",
+    "CLE"
+   ],
+   "assets": [
+    {
+     "from": "CLE",
+     "to": "SAC",
+     "kind": "pick",
+     "name_or_desc": "#29 (Alex Karaban)"
+    },
+    {
+     "from": "SAC",
+     "to": "CLE",
+     "kind": "pick",
+     "name_or_desc": "#34 (Meleek Thomas)"
+    },
+    {
+     "from": "SAC",
+     "to": "CLE",
+     "kind": "pick",
+     "name_or_desc": "future second-round pick"
+    }
+   ],
+   "context": {
+    "SAC": "Trading up again, only 16 months after the Clifford trade-up.",
+    "CLE": "Trades out of first round with a future second."
+   },
+   "investment_notes": "Kings again paid extra for a pick; this trade-up is part of the same front-office pattern that later made Clifford expendable.",
+   "analyst_view": "Kings graded C: paid extra for a player many viewed as a second-rounder.",
+   "grades": {
+    "br_draft": "SAC C / CLE B+"
+   },
+   "verdict_tags": [
+    "draft trade-up overpay"
+   ],
+   "sources": [
+    "br_draft",
+    "espn_tracker_off"
+   ]
+  },
+  {
+   "date": "2026-06-23",
+   "window": "2026 draft",
+   "teams": [
+    "DEN",
+    "SAS"
+   ],
+   "assets": [
+    {
+     "from": "DEN",
+     "to": "SAS",
+     "kind": "pick",
+     "name_or_desc": "#26 (Tarris Reed Jr.)"
+    },
+    {
+     "from": "SAS",
+     "to": "DEN",
+     "kind": "pick",
+     "name_or_desc": "#35 (Trevon Brazile)"
+    },
+    {
+     "from": "SAS",
+     "to": "DEN",
+     "kind": "pick",
+     "name_or_desc": "two future seconds"
+    }
+   ],
+   "context": {
+    "SAS": "Roster already stocked with bigs.",
+    "DEN": "Recoups assets."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Spurs' move was questioned.",
+   "grades": {
+    "br_draft": "DEN B / SAS D"
+   },
+   "verdict_tags": [
+    "trade-up overpay"
+   ],
+   "sources": [
+    "br_draft",
+    "espn_tracker_off"
+   ]
+  },
+  {
+   "date": "2026-06-24",
+   "window": "2026 draft",
+   "teams": [
+    "DET",
+    "MEM"
+   ],
+   "assets": [
+    {
+     "from": "DET",
+     "to": "MEM",
+     "kind": "player",
+     "name_or_desc": "Isaiah Stewart"
+    },
+    {
+     "from": "MEM",
+     "to": "DET",
+     "kind": "pick",
+     "name_or_desc": "three future second-round picks"
+    }
+   ],
+   "context": {
+    "MEM": "Depth behind injury-prone Edey.",
+    "DET": "Salary dump, possible setup."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Memphis lauded.",
+   "grades": {
+    "br_draft": "MEM A / DET Inc"
+   },
+   "verdict_tags": [
+    "salary dump"
+   ],
+   "sources": [
+    "br_draft",
+    "espn_tracker_off"
+   ]
+  },
+  {
+   "date": "2026-06-24",
+   "window": "2026 draft (minor deals grouped)",
+   "teams": [
+    "multiple"
+   ],
+   "assets": [
+    {
+     "from": "MULTI",
+     "to": "MULTI",
+     "kind": "pick",
+     "name_or_desc": "Second-round pick swaps and cash buys: #38 to IND for Kam Jones + swaps, #37/#41 OKC-MIA swap, #55/#56/#53/#52/#46/#60 deals, NYK-HOU #31/#55 swap"
+    }
+   ],
+   "context": {
+    "ALL": "Late-second picks traded for cash, swaps, or a slide."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Not individually significant.",
+   "grades": {},
+   "verdict_tags": [
+    "minor second-round swaps"
+   ],
+   "sources": [
+    "espn_tracker_off"
+   ]
+  },
+  {
+   "date": "2026-06-25",
+   "window": "2026 offseason",
+   "teams": [
+    "CHA",
+    "MIN"
+   ],
+   "assets": [
+    {
+     "from": "CHA",
+     "to": "MIN",
+     "kind": "player",
+     "name_or_desc": "LaMelo Ball"
+    },
+    {
+     "from": "CHA",
+     "to": "MIN",
+     "kind": "player",
+     "name_or_desc": "Josh Green"
+    },
+    {
+     "from": "MIN",
+     "to": "CHA",
+     "kind": "player",
+     "name_or_desc": "Naz Reid",
+     "role_before": "top-5 playoff contributor, 12.6 pts in 26.9 mpg"
+    },
+    {
+     "from": "MIN",
+     "to": "CHA",
+     "kind": "pick",
+     "name_or_desc": "unprotected 2033 first"
+    },
+    {
+     "from": "MIN",
+     "to": "CHA",
+     "kind": "swap",
+     "name_or_desc": "three first-round swaps 2028-2030"
+    },
+    {
+     "from": "MIN",
+     "to": "CHA",
+     "kind": "pick",
+     "name_or_desc": "second-rounders 2029, 2032, 2033"
+    }
+   ],
+   "context": {
+    "MIN": "Win-now, partner for Edwards.",
+    "CHA": "Sold a star for a large haul."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Minnesota widely seen as winner; Charlotte graded from B+ to C- (SI called it baffling).",
+   "grades": {
+    "espn_off_grades": "MIN D+",
+    "lamelo_search": "CBS MIN B+; FanSided MIN B+/CHA C+; SI CHA C-; BR CHA B+; Yardbarker MIN A"
+   },
+   "verdict_tags": [
+    "star for picks",
+    "win-now overpay",
+    "head-scratcher"
+   ],
+   "sources": [
+    "espn_off_grades",
+    "lamelo_search",
+    "espn_tracker_off"
+   ]
+  },
+  {
+   "date": "2026-06-26",
+   "window": "2026 offseason",
+   "teams": [
+    "OKC",
+    "DET"
+   ],
+   "assets": [
+    {
+     "from": "OKC",
+     "to": "DET",
+     "kind": "player",
+     "name_or_desc": "Isaiah Joe",
+     "contract": "$11.3M 2026-27, team option 2027-28",
+     "role_before": "41% career 3pt"
+    },
+    {
+     "from": "DET",
+     "to": "OKC",
+     "kind": "pick",
+     "name_or_desc": "2030 second"
+    },
+    {
+     "from": "DET",
+     "to": "OKC",
+     "kind": "pick",
+     "name_or_desc": "2031 second"
+    }
+   ],
+   "context": {
+    "OKC": "Cuts payroll to avoid enormous tax (about $189M saved, payroll to $341M).",
+    "DET": "Needed shooting."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Detroit seen as better.",
+   "grades": {
+    "espn_off_grades": "DET A- / OKC B"
+   },
+   "verdict_tags": [
+    "salary dump",
+    "tax move"
+   ],
+   "sources": [
+    "espn_off_grades",
+    "espn_tracker_off"
+   ]
+  },
+  {
+   "date": "2026-06-28",
+   "window": "2026 offseason",
+   "teams": [
+    "CHA",
+    "PHX"
+   ],
+   "assets": [
+    {
+     "from": "CHA",
+     "to": "PHX",
+     "kind": "player",
+     "name_or_desc": "Miles Bridges",
+     "player_age": 28,
+     "contract": "$22.8M 2026-27, one year left"
+    },
+    {
+     "from": "CHA",
+     "to": "PHX",
+     "kind": "pick",
+     "name_or_desc": "2027 second (BOS/ORL)"
+    },
+    {
+     "from": "CHA",
+     "to": "PHX",
+     "kind": "pick",
+     "name_or_desc": "2029 first (CHA/UTA/CLE/MIN least favorable)"
+    },
+    {
+     "from": "PHX",
+     "to": "CHA",
+     "kind": "player",
+     "name_or_desc": "Grayson Allen"
+    },
+    {
+     "from": "PHX",
+     "to": "CHA",
+     "kind": "player",
+     "name_or_desc": "Royce O'Neale"
+    },
+    {
+     "from": "PHX",
+     "to": "CHA",
+     "kind": "pick",
+     "name_or_desc": "2033 unprotected first"
+    }
+   ],
+   "context": {
+    "CHA": "Dumps Bridges for an unprotected pick.",
+    "PHX": "Gives up best chip for average player."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Suns graded poorly.",
+   "grades": {
+    "espn_off_grades": "CHA B+ / PHX D+"
+   },
+   "verdict_tags": [
+    "overpay",
+    "head-scratcher"
+   ],
+   "sources": [
+    "espn_off_grades",
+    "espn_tracker_off"
+   ]
+  },
+  {
+   "date": "2026-06-29",
+   "window": "2026 offseason",
+   "teams": [
+    "MEM",
+    "POR"
+   ],
+   "assets": [
+    {
+     "from": "MEM",
+     "to": "POR",
+     "kind": "player",
+     "name_or_desc": "Ja Morant",
+     "player_age": 26,
+     "contract": "$42.2M 2026-27, $44.9M 2027-28",
+     "role_before": "suspensions, shoulder surgery, 31% career 3pt"
+    },
+    {
+     "from": "POR",
+     "to": "MEM",
+     "kind": "player",
+     "name_or_desc": "Jerami Grant",
+     "contract": "$34.2M 2026-27, $36.4M player option"
+    },
+    {
+     "from": "POR",
+     "to": "MEM",
+     "kind": "player",
+     "name_or_desc": "Kris Murray"
+    }
+   ],
+   "context": {
+    "POR": "Gets a talented guard, PG logjam.",
+    "MEM": "Sheds large contract."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Morant's value low; fair.",
+   "grades": {
+    "espn_off_grades": "POR B- / MEM B"
+   },
+   "verdict_tags": [
+    "value-neutral role swap",
+    "salary dump"
+   ],
+   "sources": [
+    "espn_off_grades",
+    "nba_off_deals"
+   ]
+  },
+  {
+   "date": "2026-06-30",
+   "window": "2026 offseason",
+   "teams": [
+    "TOR",
+    "LAC"
+   ],
+   "assets": [
+    {
+     "from": "LAC",
+     "to": "TOR",
+     "kind": "player",
+     "name_or_desc": "Kawhi Leonard",
+     "player_age": 34
+    },
+    {
+     "from": "TOR",
+     "to": "LAC",
+     "kind": "player",
+     "name_or_desc": "Brandon Ingram"
+    },
+    {
+     "from": "TOR",
+     "to": "LAC",
+     "kind": "player",
+     "name_or_desc": "Gradey Dick"
+    },
+    {
+     "from": "TOR",
+     "to": "LAC",
+     "kind": "pick",
+     "name_or_desc": "two unprotected firsts"
+    },
+    {
+     "from": "TOR",
+     "to": "LAC",
+     "kind": "swap",
+     "name_or_desc": "one pick swap"
+    },
+    {
+     "from": "TOR",
+     "to": "LAC",
+     "kind": "pick",
+     "name_or_desc": "two second-round picks"
+    }
+   ],
+   "context": {
+    "TOR": "Star at cost of two rotation players.",
+    "LAC": "Full rebuild around Garland and #5 Keaton Wagler."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Toronto praised for star; Clippers fine.",
+   "grades": {
+    "espn_off_grades": "TOR A- / LAC B"
+   },
+   "verdict_tags": [
+    "star for depth",
+    "rebuild sell"
+   ],
+   "sources": [
+    "espn_off_grades",
+    "nba_off_deals"
+   ]
+  },
+  {
+   "date": "2026-07-01",
+   "window": "2026 offseason",
+   "teams": [
+    "BOS",
+    "PHI"
+   ],
+   "assets": [
+    {
+     "from": "BOS",
+     "to": "PHI",
+     "kind": "player",
+     "name_or_desc": "Jaylen Brown",
+     "player_age": 30,
+     "contract": "$57.1M, $61.0M, $65.0M through 2028-29",
+     "role_before": "All-NBA player"
+    },
+    {
+     "from": "PHI",
+     "to": "BOS",
+     "kind": "player",
+     "name_or_desc": "Paul George",
+     "player_age": 36,
+     "contract": "$54.1M 2026-27, $56.6M 2027-28 player option"
+    },
+    {
+     "from": "PHI",
+     "to": "BOS",
+     "kind": "pick",
+     "name_or_desc": "2028 first (could convert to a swap)"
+    },
+    {
+     "from": "PHI",
+     "to": "BOS",
+     "kind": "pick",
+     "name_or_desc": "unprotected 2031 first"
+    },
+    {
+     "from": "PHI",
+     "to": "BOS",
+     "kind": "pick",
+     "name_or_desc": "2028 second"
+    },
+    {
+     "from": "PHI",
+     "to": "BOS",
+     "kind": "pick",
+     "name_or_desc": "2030 second"
+    }
+   ],
+   "context": {
+    "BOS": "Pivot away from contending; relationship with Brown reportedly strained.",
+    "PHI": "Gets a far better, younger scorer next to Maxey, Edgecombe, Embiid."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Nearly all outlets graded this heavily for Philadelphia; one outlet later regraded Boston up after the first months.",
+   "grades": {
+    "espn_brown": "BOS D+ / PHI A-",
+    "brown_search": "CBS BOS D- / PHI A+; Athletic BOS D+ / PHI A; SI BOS F"
+   },
+   "verdict_tags": [
+    "head-scratcher",
+    "aging star for prime star",
+    "front-office loser (BOS)"
+   ],
+   "sources": [
+    "espn_brown",
+    "brown_search",
+    "espn_off_grades"
+   ]
+  },
+  {
+   "date": "2026-07-01",
+   "window": "2026 offseason",
+   "teams": [
+    "UTA",
+    "LAL"
+   ],
+   "assets": [
+    {
+     "from": "UTA",
+     "to": "LAL",
+     "kind": "player",
+     "name_or_desc": "Walker Kessler",
+     "player_age": 24,
+     "contract": "about $32.5M/yr sign-and-trade, player option and trade kicker"
+    },
+    {
+     "from": "LAL",
+     "to": "UTA",
+     "kind": "pick",
+     "name_or_desc": "unprotected 2031 first"
+    },
+    {
+     "from": "LAL",
+     "to": "UTA",
+     "kind": "pick",
+     "name_or_desc": "unprotected 2033 first"
+    },
+    {
+     "from": "LAL",
+     "to": "UTA",
+     "kind": "swap",
+     "name_or_desc": "2028 first swap"
+    },
+    {
+     "from": "LAL",
+     "to": "UTA",
+     "kind": "swap",
+     "name_or_desc": "2030 first swap"
+    }
+   ],
+   "context": {
+    "LAL": "Rim protector next to Luka; no seconds until 2033 now.",
+    "UTA": "Huge pick haul for a non-star big."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Utah overwhelmingly won.",
+   "grades": {
+    "espn_off_grades": "UTA A+ / LAL C-"
+   },
+   "verdict_tags": [
+    "overpay",
+    "sign-and-trade"
+   ],
+   "sources": [
+    "espn_off_grades"
+   ]
+  },
+  {
+   "date": "2026-07-01",
+   "window": "2026 offseason",
+   "teams": [
+    "MEM",
+    "DAL"
+   ],
+   "assets": [
+    {
+     "from": "MEM",
+     "to": "DAL",
+     "kind": "player",
+     "name_or_desc": "Santi Aldama",
+     "contract": "$17M 2026-27, $17M team option"
+    },
+    {
+     "from": "DAL",
+     "to": "MEM",
+     "kind": "player",
+     "name_or_desc": "AJ Johnson"
+    },
+    {
+     "from": "DAL",
+     "to": "MEM",
+     "kind": "pick",
+     "name_or_desc": "2030 Warriors first (top-20 protected)"
+    },
+    {
+     "from": "DAL",
+     "to": "MEM",
+     "kind": "pick",
+     "name_or_desc": "two second-rounders"
+    }
+   ],
+   "context": {
+    "DAL": "Adds to a forward glut behind Flagg.",
+    "MEM": "Clears logjam, $17M."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Memphis ahead.",
+   "grades": {
+    "espn_off_grades": "MEM B+ / DAL C+"
+   },
+   "verdict_tags": [
+    "roster crunch"
+   ],
+   "sources": [
+    "espn_off_grades"
+   ]
+  },
+  {
+   "date": "2026-07-03",
+   "window": "2026 offseason",
+   "teams": [
+    "HOU",
+    "CHA"
+   ],
+   "assets": [
+    {
+     "from": "HOU",
+     "to": "CHA",
+     "kind": "player",
+     "name_or_desc": "Dorian Finney-Smith",
+     "player_age": 33,
+     "contract": "$13.3M one year"
+    },
+    {
+     "from": "HOU",
+     "to": "CHA",
+     "kind": "pick",
+     "name_or_desc": "three second-round picks"
+    },
+    {
+     "from": "CHA",
+     "to": "HOU",
+     "kind": "cash",
+     "name_or_desc": "$13M trade exception"
+    }
+   ],
+   "context": {
+    "HOU": "Escapes first apron and tax.",
+    "CHA": "Cheap bounce-back wing plus seconds."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Houston paid to dump.",
+   "grades": {
+    "espn_off_grades": "CHA A- / HOU C"
+   },
+   "verdict_tags": [
+    "salary dump",
+    "tax move"
+   ],
+   "sources": [
+    "espn_off_grades",
+    "espn_tracker_off"
+   ]
+  },
+  {
+   "date": "2026-07-03",
+   "window": "2026 offseason",
+   "teams": [
+    "LAL",
+    "WAS"
+   ],
+   "assets": [
+    {
+     "from": "LAL",
+     "to": "WAS",
+     "kind": "player",
+     "name_or_desc": "Deandre Ayton",
+     "contract": "$8.1M player option"
+    },
+    {
+     "from": "WAS",
+     "to": "LAL",
+     "kind": "player",
+     "name_or_desc": "Jaden Hardy"
+    },
+    {
+     "from": "WAS",
+     "to": "LAL",
+     "kind": "pick",
+     "name_or_desc": "2031 second"
+    },
+    {
+     "from": "WAS",
+     "to": "LAL",
+     "kind": "pick",
+     "name_or_desc": "2032 second"
+    }
+   ],
+   "context": {
+    "LAL": "Saves $2.1M, gets seconds.",
+    "WAS": "Adds big to a crowded group."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Lakers ahead.",
+   "grades": {
+    "espn_off_grades": "LAL B / WAS C"
+   },
+   "verdict_tags": [
+    "roster crunch"
+   ],
+   "sources": [
+    "espn_off_grades"
+   ]
+  },
+  {
+   "date": "2026-07-07",
+   "window": "2026 offseason",
+   "teams": [
+    "DET",
+    "MIL"
+   ],
+   "assets": [
+    {
+     "from": "DET",
+     "to": "MIL",
+     "kind": "player",
+     "name_or_desc": "Caris LeVert",
+     "contract": "two-year $28.9M"
+    },
+    {
+     "from": "DET",
+     "to": "MIL",
+     "kind": "pick",
+     "name_or_desc": "two second-rounders"
+    },
+    {
+     "from": "MIL",
+     "to": "DET",
+     "kind": "player",
+     "name_or_desc": "Taurean Prince"
+    },
+    {
+     "from": "MIL",
+     "to": "DET",
+     "kind": "player",
+     "name_or_desc": "Gary Harris"
+    }
+   ],
+   "context": {
+    "DET": "Dumps bust contract, saves $7.2M.",
+    "MIL": "Gains depth."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Modest.",
+   "grades": {
+    "espn_off_grades": "DET B- / MIL B+"
+   },
+   "verdict_tags": [
+    "salary dump"
+   ],
+   "sources": [
+    "espn_off_grades"
+   ]
+  },
+  {
+   "date": "2026-07-19",
+   "window": "2026 offseason",
+   "teams": [
+    "OKC",
+    "ATL",
+    "DAL"
+   ],
+   "assets": [
+    {
+     "from": "OKC",
+     "to": "ATL",
+     "kind": "player",
+     "name_or_desc": "Luguentz Dort",
+     "player_age": 27,
+     "role_before": "key playoff contributor, one year left"
+    },
+    {
+     "from": "OKC",
+     "to": "ATL",
+     "kind": "player",
+     "name_or_desc": "Ryan Nembhard"
+    },
+    {
+     "from": "ATL",
+     "to": "DAL",
+     "kind": "player",
+     "name_or_desc": "Zaccharie Risacher",
+     "player_age": 21,
+     "contract": "$13.8M, $17.4M team option 2027-28"
+    },
+    {
+     "from": "ATL",
+     "to": "OKC",
+     "kind": "pick",
+     "name_or_desc": "three future second-round picks"
+    }
+   ],
+   "context": {
+    "OKC": "Cuts salary to get under second apron.",
+    "ATL": "Adds defender.",
+    "DAL": "Young talent for forward logjam."
+   },
+   "investment_notes": "Risacher was the #1 pick in 2024.",
+   "analyst_view": "Atlanta most praised; OKC risk.",
+   "grades": {
+    "espn_off_grades": "OKC B- / ATL A- / DAL B+"
+   },
+   "verdict_tags": [
+    "tax move",
+    "buy-low former #1"
+   ],
+   "sources": [
+    "espn_off_grades"
+   ]
+  },
+  {
+   "date": "2026-08-14",
+   "window": "2026 offseason",
+   "teams": [
+    "CLE",
+    "CHA"
+   ],
+   "assets": [
+    {
+     "from": "CLE",
+     "to": "CHA",
+     "kind": "player",
+     "name_or_desc": "Dennis Schroder",
+     "player_age": 33,
+     "contract": "$14.8M, $15.5M with $4.4M guaranteed"
+    },
+    {
+     "from": "CHA",
+     "to": "CLE",
+     "kind": "player",
+     "name_or_desc": "Tre Mann",
+     "contract": "$8M"
+    }
+   ],
+   "context": {
+    "CHA": "Needs PG depth after Ball trade.",
+    "CLE": "Saves $6.8M."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Even.",
+   "grades": {
+    "espn_off_grades": "CHA B- / CLE B"
+   },
+   "verdict_tags": [
+    "value-neutral role swap"
+   ],
+   "sources": [
+    "espn_off_grades",
+    "espn_tracker_off"
+   ]
+  },
+  {
+   "date": "2026-08-19",
+   "window": "2026 offseason",
+   "teams": [
+    "CLE",
+    "DEN",
+    "LAC",
+    "WAS"
+   ],
+   "assets": [
+    {
+     "from": "DEN",
+     "to": "CLE",
+     "kind": "player",
+     "name_or_desc": "Peyton Watson",
+     "player_age": 23,
+     "contract": "sign-and-trade about $90M/4y"
+    },
+    {
+     "from": "WAS",
+     "to": "CLE",
+     "kind": "player",
+     "name_or_desc": "Cam Whitmore"
+    },
+    {
+     "from": "CLE",
+     "to": "LAC",
+     "kind": "player",
+     "name_or_desc": "Max Strus",
+     "contract": "$16.6M expiring"
+    },
+    {
+     "from": "CLE",
+     "to": "DEN",
+     "kind": "pick",
+     "name_or_desc": "unprotected 2031 first"
+    },
+    {
+     "from": "LAC",
+     "to": "DEN",
+     "kind": "player",
+     "name_or_desc": "Julian Reese"
+    },
+    {
+     "from": "CLE",
+     "to": "WAS",
+     "kind": "player",
+     "name_or_desc": "Tre Mann"
+    }
+   ],
+   "context": {
+    "DEN": "Second-apron team unable to keep Watson, took picks.",
+    "CLE": "Pay a first for RFA contract."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Clippers best; Denver graded low.",
+   "grades": {
+    "espn_off_grades": "CLE B / DEN D / LAC A- / WAS C+"
+   },
+   "verdict_tags": [
+    "restricted free agent cost"
+   ],
+   "sources": [
+    "espn_off_grades",
+    "espn_tracker_off"
+   ]
+  },
+  {
+   "date": "2026-09-22",
+   "window": "2026 offseason",
+   "teams": [
+    "ATL",
+    "CHA"
+   ],
+   "assets": [
+    {
+     "from": "ATL",
+     "to": "CHA",
+     "kind": "player",
+     "name_or_desc": "Buddy Hield"
+    },
+    {
+     "from": "ATL",
+     "to": "CHA",
+     "kind": "player",
+     "name_or_desc": "Ryan Nembhard"
+    },
+    {
+     "from": "CHA",
+     "to": "ATL",
+     "kind": "player",
+     "name_or_desc": "Dorian Finney-Smith",
+     "player_age": 33,
+     "contract": "$14.2M"
+    }
+   ],
+   "context": {
+    "ATL": "Fix roster crunch.",
+    "CHA": "Cheap 3-and-D vet."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Mild win for Atlanta.",
+   "grades": {
+    "espn_off_grades": "ATL B+ / CHA B-"
+   },
+   "verdict_tags": [
+    "roster crunch"
+   ],
+   "sources": [
+    "espn_off_grades",
+    "espn_tracker_off"
+   ]
+  },
+  {
+   "date": "2026-09-08",
+   "window": "2026 offseason (minor deals grouped)",
+   "teams": [
+    "NOP",
+    "MEM",
+    "MIN",
+    "UTA",
+    "PHI",
+    "LAC",
+    "CHI",
+    "CHA",
+    "SAC",
+    "IND"
+   ],
+   "assets": [
+    {
+     "from": "MULTI",
+     "to": "MULTI",
+     "kind": "player",
+     "name_or_desc": "Smaller trades: Hawkins/Peavy to MEM for AJ Johnson/Gibson (Sep 8), Cody Williams/Konchar for Josh Green (Aug 29), Johni Broome to LAC (Jul 28), Devin Carter SAC to ATL (Jun 29), Dillingham to CHA (Sep 27)"
+    }
+   ],
+   "context": {
+    "ALL": "Roster fits and second-round currency."
+   },
+   "investment_notes": "None.",
+   "analyst_view": "Not graded in retrieved text.",
+   "grades": {},
+   "verdict_tags": [
+    "minor second-round swaps"
+   ],
+   "sources": [
+    "espn_tracker_off",
+    "nba_off_deals"
+   ]
+  }
+ ],
+ "multi_team_rates": {
+  "note": "Complete per-season counts for 2015-16 through 2024-25 could NOT be obtained: Basketball-Reference pages truncate when fetched and no outlet publishes a per-season table. Null = not measured. Figures marked approx come from outlet summaries.",
+  "by_season": [
+   {
+    "season": "2013-14",
+    "trades": null,
+    "three_team": 7,
+    "four_plus": null,
+    "deadline_week": null,
+    "draft_night": null,
+    "source": "hr_trends"
+   },
+   {
+    "season": "2014-15",
+    "trades": null,
+    "three_team": 10,
+    "four_plus": null,
+    "deadline_week": null,
+    "draft_night": null,
+    "source": "hr_trends"
+   },
+   {
+    "season": "2015-16 to 2018-19",
+    "trades": null,
+    "three_team": null,
+    "four_plus": null,
+    "deadline_week": null,
+    "draft_night": null,
+    "note": "2009-2019 averaged about 4.5 trades per season with 3+ teams (RealGM)"
+   },
+   {
+    "season": "2019-20 to 2022-23",
+    "trades": null,
+    "three_team": null,
+    "four_plus": null,
+    "deadline_week": null,
+    "draft_night": null,
+    "note": "about 8 trades per season with 3+ teams (RealGM), roughly double the prior decade"
+   },
+   {
+    "season": "2024-25",
+    "trades": null,
+    "three_team": null,
+    "four_plus": null,
+    "deadline_week": null,
+    "draft_night": null,
+    "note": "in-season: more than a third of 25 trades (as of the report) were 3+ teams (search summary of Hoops Rumors tracker; partial season)"
+   },
+   {
+    "season": "2025-26",
+    "trades": null,
+    "three_team": null,
+    "four_plus": null,
+    "deadline_week": 23,
+    "draft_night": null,
+    "note": "Deadline week (Feb 1-5 2026) per NBA.com tracker: 23 deals listed, 6 three-team (26%), 0 four-plus. Hoops Rumors lists 28 incl. minor. Jan 9 Young trade was 2-team. Offseason 2026 (ESPN tracker, about 45 deals incl. draft pick swaps): 3-team about 4 (June 22 MIN-BKN-CHI; June 23 four-team NYK-DAL-CLE-PHX pick shuffle; July 19 OKC-ATL-DAL; Aug 19 four-team CLE-DEN-LAC-WAS). NBA.com bundles linked deals as 4 to 6-team (Randle, LaMelo, Schroder, Watson, Middleton), which conflicts with ESPN's separate-trade counts; definition matters. 2025 July: Basketball-Reference shows 18 trades through Oct 17 2025 incl. 3 three-team and one 7-team deal (Jul 6 2025).",
+    "source": "nba_tracker_2526"
+   },
+   {
+    "season": "2026-27 (to Nov 19)",
+    "trades": 1,
+    "three_team": 0,
+    "four_plus": 0,
+    "deadline_week": 0,
+    "draft_night": 0,
+    "source": "hr_inseason"
+   }
+  ],
+  "overall_share_estimate": "Roughly 20-30% of deadline-week deals and perhaps 10-15% of all trades involve 3+ teams in recent years (estimate, from the partial figures above); about 4.5 per year before 2019, about 8 per year after.",
+  "typical_shapes": [
+   "Salary routing: a third team with cap room or a trade exception absorbs a contract (Bulls absorbing Saric via exception in CLE-SAC-CHI) in return for seconds.",
+   "Pick sweetener for absorbing salary: the absorbing team collects second-round picks (Chicago repeatedly in Feb 2026).",
+   "Star moves with two other teams supplying pieces (Davis deal pulled in Charlotte for Tyus Jones/Branham; Ivey/Conley/Huerter three-way with Minnesota paying a swap and saving tax).",
+   "Tax-dodge chains: one team's tax saving needs a partner and a cash/exception holder (Clippers-Raptors-Nets Chris Paul).",
+   "Draft-night pick shuffles: three or four teams chain picks and future seconds (June 23 2026 NYK-DAL-CLE-PHX).",
+   "Sign-and-trade plus exception matching in restricted free agency (Watson to CLE with Strus to LAC and picks to DEN)."
+  ],
+  "sources": [
+   "realgm_multi",
+   "hr_trends",
+   "br_2026_tx",
+   "nba_tracker_2526",
+   "espn_tracker_off",
+   "hr_deadline"
+  ]
+ }
+}
