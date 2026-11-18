@@ -4,7 +4,7 @@ Only private hypothetical views share these tables. Players in each trial are
 owned copies; no actual coaching rotation or settlement approval is memoized.
 """
 from collections import Counter
-from copy import deepcopy
+from .utils import copy_plain
 
 
 class ForecastMemo(dict):
@@ -64,7 +64,7 @@ class ForecastSnapshot:
             if row is not None:
                 rows[row[0]] = row[1]
         # Keep the original league collection order, even for incoming players.
-        return [dict(deepcopy(p), team_id=team_id, minutes_projection=24)
+        return [dict(copy_plain(p), team_id=team_id, minutes_projection=24)
                 for _, p in sorted(rows.items()) if p['id'] not in outgoing_ids and not p.get('_inactive_player')]
 
     def selected_rows(self, index, player_ids):

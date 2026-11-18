@@ -35,6 +35,7 @@ BODY_PREDICTORS = ("height_inches", "weight_lbs", "wingspan_inches")   # fixed b
 PREDICTORS = [*LEGACY_TRAITS, *BODY_PREDICTORS, *PROFILE_PREDICTORS, *INPUT_GROUPS, "in_involvement"]
 TABLE_KEY = "_impact_value_tables"
 _FIT_CACHE: dict[str, Any] = {}
+_DEFAULT_ROOT: Path | None = None
 
 
 _PROFILE_DEFAULTS = {"three_per36": 3.0, "three_pct": 0.34, "two_pct": 0.52, "ft_pct": 0.76}
@@ -70,8 +71,12 @@ def predictor_row(traits: Mapping[str, float], player: Mapping[str, Any],
 
 
 def load_fit(root: Path | None = None) -> dict[str, Any] | None:
-    root = Path(root) if root is not None else Path(__file__).resolve().parents[2]
-    key = str(root / FIT_FILE)
+    if root is None:
+        global _DEFAULT_ROOT
+        if _DEFAULT_ROOT is None:
+            _DEFAULT_ROOT = Path(__file__).resolve().parents[2]
+        root = _DEFAULT_ROOT
+    key = str(Path(root) / FIT_FILE)
     if key not in _FIT_CACHE:
         path = Path(key)
         _FIT_CACHE[key] = json.loads(path.read_text()) if path.exists() else None

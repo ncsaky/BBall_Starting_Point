@@ -39,11 +39,11 @@ from .narrative import (
     reset_narrative_cache,
 )
 from .schema import CANONICAL_SEASON, CANONICAL_START_DATE, CoachRating, DevelopmentEvent, to_plain
-from .sim import build_sim_indices, espn_team_id_map, invalidate_sim_cache, load_sim_context, sim_game_with_context
+from .sim import build_sim_indices, espn_team_id_map, invalidate_sim_cache, load_sim_context, load_sim_reference, sim_game_with_context
 from .spatial import invalidate_spatial_cache, team_spatial_profile
 from .staff import ROLE_LABELS, STAFF_SLOTS, apply_head_coach_reputation, fire_staff_from_save, hire_staff_from_save, initialize_staff_season_changes, initialize_save_staff_slots, interim_staff, is_interim_staff, negotiate_staff_hire, simulate_ai_staff_changes, staff_action_permissions, staff_budget_for_team, staff_budget_salary, staff_contract, staff_grade
 from .staff_lifecycle import roll_staff_lifecycle
-from .utils import clamp, maybe_float, normalize_name, stable_id
+from .utils import clamp, copy_plain, maybe_float, normalize_name, stable_id
 from .baselines import baseline_for_save
 
 
@@ -401,7 +401,7 @@ def write_save(path: str | Path, save: dict[str, Any]) -> None:
             from .save_recovery import preserve_previous_save
 
             preserve_previous_save(target)
-        working = deepcopy(save)
+        working = copy_plain(save)
         working.setdefault("meta", {})["save_snapshot_id"] = uuid.uuid4().hex
         dedupe_save_event_lists(working)
         archive_save_history(target, working, committed_revision + 1)
@@ -1050,12 +1050,12 @@ def initial_rotation_baselines(canonical: dict[str, Any]) -> dict[str, float]:
 
 
 def active_players_for_roster_checks(canonical: dict[str, Any], save: dict[str, Any]) -> list[dict[str, Any]]:
-    players = deepcopy(canonical.get("players", []))
+    players = copy_plain(canonical.get("players", []))
     retired = set(save.get("retired_player_ids", []))
     existing = {player.get("id") for player in players}
     for player in save.get("generated_players", []):
         if player.get("id") not in existing:
-            players.append(deepcopy(player))
+            players.append(copy_plain(player))
             existing.add(player.get("id"))
     teams_by_id = {team.get("id"): team for team in canonical.get("teams", [])}
     overrides = save.get("roster_overrides") or {}
@@ -1427,7 +1427,9 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
         canonical = baseline_for_save(canonical, save)
         # Derived indexes belong to the source object. Copying them bloats the
         # active universe and can omit save-generated players or contracts.
-        canonical = _copy_runtime_tree({key: value for key, value in canonical.items() if not str(key).startswith("_")})
+        runtime = _ADVANCE_RUNTIME_STATE.get()
+        canonical = (runtime.baseline_copy(canonical) if runtime is not None else
+                     _copy_runtime_tree({key: value for key, value in canonical.items() if not str(key).startswith("_")}))
     else:
         canonical = _copy_runtime_tree(baseline_for_save(to_plain(canonical), save))
     canonical["_allow_internal_caches"] = True
@@ -1438,12 +1440,12 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
     canonical.setdefault("meta", {})["current_date"] = save.get("state", {}).get("current_date")
     class_seed = save.get("meta", {}).get("seed")
     canonical["meta"]["draft_class_seed"] = int(class_seed if class_seed is not None else 1)
-    canonical["save_team_records"] = deepcopy(save.get("team_records", {}))
-    canonical["transaction_logs"] = deepcopy(save.get("transaction_logs", []))
-    canonical['waived_salary_obligations'] = deepcopy(save.get('waived_salary_obligations', []))
-    canonical['waiver_wire'] = deepcopy(save.get('waiver_wire', []))
-    canonical['team_plans'] = deepcopy(save.get('team_plans', {}))
-    canonical['team_trade_wants'] = deepcopy(save.get('team_trade_wants', {}))
+    canonical["save_team_records"] = copy_plain(save.get("team_records", {}))
+    canonical["transaction_logs"] = copy_plain(save.get("transaction_logs", []))
+    canonical['waived_salary_obligations'] = copy_plain(save.get('waived_salary_obligations', []))
+    canonical['waiver_wire'] = copy_plain(save.get('waiver_wire', []))
+    canonical['team_plans'] = copy_plain(save.get('team_plans', {}))
+    canonical['team_trade_wants'] = copy_plain(save.get('team_trade_wants', {}))
     canonical['_trade_planning_save'] = {
         'meta': {'season': active_season}, 'state': dict(save.get('state') or {}),
         'season_schedules': save.get('season_schedules') or {},
@@ -1451,10 +1453,10 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
     }
     canonical['_human_team_ids'] = sorted(human_controlled_team_ids(save))
     canonical["ai_trade_pressure_player_ids"] = list(save.get("ai_trade_pressure_player_ids", []))
-    canonical["team_trade_blocks"] = deepcopy(save.get("team_trade_blocks", {}))
+    canonical["team_trade_blocks"] = copy_plain(save.get("team_trade_blocks", {}))
     existing_pick_ids = {pick.get("id") for pick in canonical.get("draft_picks", [])}
     canonical.setdefault("draft_picks", []).extend(
-        deepcopy(pick)
+        copy_plain(pick)
         for pick in save.get("generated_draft_picks", [])
         if pick.get("id") and pick.get("id") not in existing_pick_ids
     )
@@ -1474,11 +1476,11 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
         }
         for player in save.get("generated_players", []):
             if player.get("id") not in existing:
-                active_player = deepcopy(player)
+                active_player = copy_plain(player)
                 rookie = rookie_context.get(player.get("id")) or {}
                 for key in ("current_ability", "potential", "overall_pick", "draft_year"):
                     if active_player.get(key) is None and rookie.get(key) is not None:
-                        active_player[key] = deepcopy(rookie[key])
+                        active_player[key] = copy_plain(rookie[key])
                 canonical.setdefault("players", []).append(active_player)
                 existing.add(player.get("id"))
     if save.get("generated_traits"):
@@ -1489,7 +1491,7 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
         for trait in save.get("generated_traits", []):
             key = (trait.get("player_id"), trait.get("trait_key"))
             if key not in existing_traits:
-                canonical.setdefault("traits", []).append(deepcopy(trait))
+                canonical.setdefault("traits", []).append(copy_plain(trait))
                 existing_traits.add(key)
     from .health import ensure_generated_player_health
 
@@ -1506,7 +1508,7 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
     if stats_by_player:
         for player in canonical.get("players", []):
             if player.get("id") in stats_by_player:
-                player["_save_stats"] = deepcopy(stats_by_player[player["id"]])
+                player["_save_stats"] = copy_plain(stats_by_player[player["id"]])
     roster_overrides = save.get("roster_overrides", {})
     if roster_overrides:
         for player in canonical.get("players", []):
@@ -1538,7 +1540,7 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
             from .fantasy_draft import strip_fantasy_pick_conditions
 
             strip_fantasy_pick_conditions(pick)
-    canonical["pick_obligations"] = deepcopy(save.get("pick_obligations", []))
+    canonical["pick_obligations"] = copy_plain(save.get("pick_obligations", []))
     canonical["locked_pick_assets"] = sorted(set(save.get("locked_pick_assets", [])))
     contract_overrides = save.get("contract_overrides", {})
     if contract_overrides:
@@ -1568,20 +1570,20 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
             else:
                 canonical.setdefault("contracts", []).append(record)
     if save.get("staff_slots"):
-        canonical["gameplay_staff_slots"] = deepcopy(save["staff_slots"])
+        canonical["gameplay_staff_slots"] = copy_plain(save["staff_slots"])
     from .contract_protection import apply_imported_protection
     apply_imported_protection(canonical, save)
     if save.get("health_states"):
-        canonical["player_health_states"] = deepcopy(save["health_states"])
+        canonical["player_health_states"] = copy_plain(save["health_states"])
     if save.get("injury_events"):
-        canonical["injury_events"] = deepcopy(save["injury_events"])
+        canonical["injury_events"] = copy_plain(save["injury_events"])
     from .ratings_model import INPUTS_V1, apply_development, install_inputs_model, ratings_model_for
     inputs_model = ratings_model_for(save) == INPUTS_V1
     if inputs_model:
         # Stage 1: traits are derived from the 94 inputs, fitted on these baseline (pre-development) traits.
         install_inputs_model(canonical)
     if save.get("development_trait_totals") or save.get("development_events"):
-        canonical["development_events"] = deepcopy(save["development_events"])
+        canonical["development_events"] = copy_plain(save["development_events"])
         if inputs_model:
             apply_development(canonical, save.get("development_trait_totals") or {}, save.get("development_events") or [])
         else:
@@ -1614,26 +1616,26 @@ def refresh_active_runtime_state(
     active_season = save_active_contract_season(save)
     active.setdefault("meta", {})["active_season"] = active_season
     active["meta"]["current_date"] = save.get("state", {}).get("current_date")
-    active["save_team_records"] = deepcopy(save.get("team_records", {}))
-    active["transaction_logs"] = deepcopy(save.get("transaction_logs", []))
-    active['waived_salary_obligations'] = deepcopy(save.get('waived_salary_obligations', []))
-    active['waiver_wire'] = deepcopy(save.get('waiver_wire', []))
-    active['team_plans'] = deepcopy(save.get('team_plans', {}))
-    active['team_trade_wants'] = deepcopy(save.get('team_trade_wants', {}))
+    active["save_team_records"] = copy_plain(save.get("team_records", {}))
+    active["transaction_logs"] = copy_plain(save.get("transaction_logs", []))
+    active['waived_salary_obligations'] = copy_plain(save.get('waived_salary_obligations', []))
+    active['waiver_wire'] = copy_plain(save.get('waiver_wire', []))
+    active['team_plans'] = copy_plain(save.get('team_plans', {}))
+    active['team_trade_wants'] = copy_plain(save.get('team_trade_wants', {}))
     from .trade_wants import clear_wants_cache
     clear_wants_cache(active)
     active['_human_team_ids'] = sorted(human_controlled_team_ids(save))
     active["ai_trade_pressure_player_ids"] = list(save.get("ai_trade_pressure_player_ids", []))
-    active["team_trade_blocks"] = deepcopy(save.get("team_trade_blocks", {}))
-    active["player_health_states"] = deepcopy(save.get("health_states", []))
-    active["injury_events"] = deepcopy(save.get("injury_events", []))
-    active["gameplay_staff_slots"] = deepcopy(save.get("staff_slots", []))
+    active["team_trade_blocks"] = copy_plain(save.get("team_trade_blocks", {}))
+    active["player_health_states"] = copy_plain(save.get("health_states", []))
+    active["injury_events"] = copy_plain(save.get("injury_events", []))
+    active["gameplay_staff_slots"] = copy_plain(save.get("staff_slots", []))
     stats_by_player = save.get("player_season_stats") or {}
     for player in active.get("players", []):
         player.pop("_save_stats", None)
         stats = stats_by_player.get(player.get("id"))
         if stats:
-            player["_save_stats"] = deepcopy(stats)
+            player["_save_stats"] = copy_plain(stats)
     if development_events:
         apply_development_events(active, development_events)
     apply_save_rotation_projection(active, save)
@@ -1678,6 +1680,22 @@ class _AdvanceRuntimeState:
         self.active: dict[str, Any] | None = None
         self.inputs: Any = None
         self.attribute_summaries: dict[bytes, dict[str, float]] = {}
+        self.sim_reference: dict[str, Any] | None = None
+        self.baseline: tuple[dict[str, Any], bytes] | None = None
+
+    def baseline_copy(self, source: dict[str, Any]) -> dict[str, Any]:
+        """canonical_with_save's private copy of the (read-only) starting universe.
+
+        The pickled form is made once per advance call and unpickled for each rebuild, the same result
+        as _copy_runtime_tree without serializing the unchanged universe again every time.
+        """
+        if self.baseline is None or self.baseline[0] is not source:
+            public = {key: value for key, value in source.items() if not str(key).startswith("_")}
+            try:
+                self.baseline = (source, pickle.dumps(public, protocol=pickle.HIGHEST_PROTOCOL))
+            except (pickle.PicklingError, TypeError, AttributeError):
+                return deepcopy(public)
+        return pickle.loads(self.baseline[1])
 
     def advance_day(self, *args: Any) -> dict[str, Any]:
         # Preserve the day API and isolate concurrent/reentrant advances.
@@ -2093,7 +2111,13 @@ def advance_save_day(
             games=scheduled_games_between(root, save, current, target), from_date=current, development=False,
             active=runtime_state.take(save, target) if runtime_state is not None else None,
         )["active"]
-        context = load_sim_context(root, runtime_canonical)
+        if runtime_state is not None:
+            # The reference tables are only read by the simulation, so one copy serves every day of this advance.
+            if runtime_state.sim_reference is None:
+                runtime_state.sim_reference = load_sim_reference(root)
+            context = load_sim_context(root, runtime_canonical, reference=runtime_state.sim_reference, indices=False)
+        else:
+            context = load_sim_context(root, runtime_canonical, indices=False)
         context["schedule"] = schedule_for_save(root, save)
         context["indices"] = build_sim_indices(context)
         context["indices"]["coach_by_team"] = save_coach_ratings(runtime_canonical, save)
@@ -2152,10 +2176,13 @@ def advance_save_day(
                        for action in save.get(key, [])}
         # Only skip isolation when every AI review window is closed and no
         # queued decision can run. On review days, isolate even rejected work.
+        # A listening day with no trade or offer slots runs no market search
+        # (see queue_ai_recommendations), so it needs no isolation either.
+        market = market_day(target, effective_seed, start_year, trade_deadline_date(start_year))
         isolate = (
             (target <= extension_deadline_date(start_year)
              and stable_id("ai_action", "extensions", target[:7], effective_seed) not in queued_keys)
-            or market_day(target, effective_seed, start_year, trade_deadline_date(start_year))["review"]
+            or (market["review"] and bool(market["slots"] or (market["offer_slots"] and human_controlled_team_ids(save))))
             or current[:7] != target[:7] or target.endswith("-02-05")
             or any(action.get("status") not in {"processed", "executed", "rejected", "draft_attention_required"}
                    and str(action.get("date") or "") <= target
@@ -5532,15 +5559,25 @@ def queue_ai_recommendations(
     trade_window_open = phase in {'preseason', 'regular_season'} and market['review']
     if "trades" in legal_actions_for_date(through_date) and trade_window_open:
         action_id = stable_id("ai_action", "trades", through_date, seed)
+        if action_id not in queued_keys and not market['slots'] and not (market['offer_slots'] and human_controlled_team_ids(save)):
+            # A listening day with no trade slots and no inbound offer slots: the searches below could only
+            # end in this same empty review (zero slots admit no AI-AI deal and no user offer), so skip them.
+            save.setdefault('processed_hidden_ai_actions', []).append({
+                'id': action_id, 'date': through_date, 'action_type': 'trade_market_review',
+                'status': 'reviewed', 'market_slots': market['slots'], 'user_offers_generated': 0})
+            return
         if action_id not in queued_keys:
             from .transactions import simulate_ai_trades, proposal_asset_identity_keys, trade_team_ids
 
             from .trade_review import MarketReview
             review = MarketReview()
+            # With no AI-AI trade slot today nothing from this search can be chosen below, so only the
+            # inbound (user offer) search runs. That search then starts from a fresh review context
+            # instead of one warmed by this search's caches.
             payload = simulate_ai_trades(canonical, through_date, through_date, seed=seed, review=review,
-                                         limit=35 if market['slots'] else 12,
+                                         limit=35,
                                          reserve_assets=True,
-                                         search_depth=2 if (date.fromisoformat(trade_deadline)-date.fromisoformat(through_date)).days <= 6 else 1)
+                                         search_depth=2 if (date.fromisoformat(trade_deadline)-date.fromisoformat(through_date)).days <= 6 else 1) if market['slots'] else {'proposals': []}
             human_team_ids = human_controlled_team_ids(save)
             legal_accepted = [
                 proposal for proposal in payload.get("proposals", [])
@@ -6537,12 +6574,11 @@ def ai_role_targets(canonical: dict[str, Any], roster: list[dict[str, Any]], pri
                 for slot in range(5):
                     if mask & (1 << slot):
                         continue
-                    candidate = list(assignment)
-                    candidate[slot] = pid
                     new_mask = mask | (1 << slot)
                     total = score + scores[slot]
-                    if new_mask not in states or total > states[new_mask][0]:
-                        states[new_mask] = (total, tuple(candidate))
+                    previous = states.get(new_mask)
+                    if previous is None or total > previous[0]:
+                        states[new_mask] = (total, assignment[:slot] + (pid,) + assignment[slot + 1:])
         full_mask = max(states, key=lambda mask: (mask.bit_count(), states[mask][0]))
         assignment = states[full_mask][1]
         groups.append(assignment)

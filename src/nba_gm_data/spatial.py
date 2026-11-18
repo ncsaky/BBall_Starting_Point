@@ -50,6 +50,7 @@ def invalidate_spatial_cache(canonical: dict[str, Any]) -> None:
     canonical.pop("_spatial_trait_index", None)
 
 
+@lru_cache(maxsize=1 << 17, typed=True)  # pure; typed so 1 and 1.0 (different text) never share an entry
 def _stable_unit(*parts: Any) -> float:
     digest = hashlib.sha256("|".join(str(part) for part in parts).encode("utf-8")).digest()
     return int.from_bytes(digest[:8], "big") / float(2**64 - 1)
