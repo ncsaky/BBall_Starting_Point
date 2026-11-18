@@ -6,7 +6,58 @@ Current priority (2026-11-17): the three "Ready now" tasks below. GUI tasks are 
 
 ---
 
-## Ready now (2026-11-18, afternoon): BBX, extract the saved Basketball Index tool pages
+## Ready now (2026-11-18, evening): two read-only engine-vs-evidence comparisons, one fresh chat each
+
+Suggested settings: GPT-6.2 Sol, Medium. Both READ-ONLY for src/ and data/canonical (Claude is working there). Scripts in
+scripts/research/, outputs in output/<task>/. Don't poll long runs more than every 20-30 minutes.
+
+### DEV: Our development and aging vs Basketball Index's growth curve
+
+```
+Read AGENTS.md, docs/agents/BOARD.md and docs/agents/tasks/bbx-tool-extract.md first. You own DEV; add a board row.
+
+Evidence: data/research/bbi/tools/growth_*.json / .csv.gz (Basketball Index's talent age-growth model: actual vs
+1-year-ahead projection by age and role, forward projections, development vs expectation, per-coach development).
+Our engine: player development runs monthly in src/nba_gm_data/health.py (monthly_trait_delta; aging, staff/coach effects,
+ceilings); development_outlook.expected_rating_changes gives the expected 12-month change with no noise.
+
+QUESTIONS (plain-language answers with tables):
+1. Age curve: for each age 19..36, what is Basketball Index's typical one-year change in offensive, defensive and overall
+   talent (median and spread, by minutes band)? What does our engine's expected 12-month change give for the same ages,
+   for players of similar level (use expected_rating_changes on the 2026-27 league; both rating sets if practical)?
+   Where do the curves disagree (peak age, decline start, decline speed, young growth size)?
+2. Spread: how much do real players vary around the typical change (their 50/80/90% bands) vs our engine's variation
+   (simulate a season with seeds, or use the monthly noise the engine applies)?
+3. Coaches: how big are Basketball Index's per-coach development effects (players' actual minus projected), and how
+   big is our staff/coach development effect? Is ours in a realistic range?
+4. Propose concrete parameter changes (which constants, by how much) with expected effect. Don't change src/.
+
+REPORT: docs/agents/tasks/dev-growth-vs-bbi.md, plain language first. Board row to "review". Do not commit.
+```
+
+### INJ: Our injuries vs Basketball Index's injury tracker
+
+```
+Read AGENTS.md, docs/agents/BOARD.md and docs/agents/tasks/bbx-tool-extract.md first. You own INJ; add a board row.
+
+Evidence: data/research/bbi/tools/injury_*.json (time out by diagnosis/body part with return-day percentiles,
+recurrence, short- and long-term aftermath, player histories, durability, games missed per 82).
+Our engine: injuries are generated in src/nba_gm_data/health.py (injury model config, durations, recurrence, rust).
+
+QUESTIONS (plain-language answers with tables):
+1. Simulate one or more full seasons headless (an existing soak or quick-sim script; seeded) and compare our league:
+   injuries per team-season, games missed per 82 by role/age, the distribution of days out (25/50/75/90th percentiles)
+   overall and for the most common body parts, share of season-ending injuries, recurrence within a season.
+2. Short-term aftermath: Basketball Index shows minutes and shooting after return (injury_short_term.json). Compare with
+   our rust penalty (sim.rust_penalty_points; ~0.08 per rust point, capped at 4) and how long it lasts.
+3. Propose concrete parameter changes with expected effect. Don't change src/.
+
+REPORT: docs/agents/tasks/inj-injuries-vs-bbi.md, plain language first. Board row to "review". Do not commit.
+```
+
+---
+
+## Done: (2026-11-18, afternoon): BBX, extract the saved Basketball Index tool pages
 
 ### BBX: Turn the saved Growth Curve, Injury Tracker and Minutes/Talent pages into clean tables
 
