@@ -38,11 +38,41 @@ BODY_PREDICTORS = ("height_inches", "weight_lbs", "wingspan_inches")   # fixed b
 # involvement (T08 share) times the skill's distance from a fixed centre, so with non-negative weights a better skill
 # never lowers value, while more involvement with below-average skill can (2026-11-18 ratings audit).
 INTERACTIONS = {"in_shooting": (50.0, 10.0), "in_creation": (50.0, 10.0), "in_finishing": (50.0, 10.0), "two_pct": (0.52, 0.04)}
+# Offensive rebounding on its real production scale (offensive rebounds per 75 implied by the offensive_rebounding
+# rating's league rank; knots fitted by scripts/fit_offensive_rebounding.py). On the rating's own rank scale the top
+# crashers (5-8 per 75) sit a few points above good-not-elite rebounders (3 per 75), so a linear fit could not credit
+# what the extra possessions are worth: energy bigs (Diabate, Queta, Kornet) were predicted well below their own
+# O-LEBRON (2026-11-18 energy-bigs task). Offensive rebounding is offense only: the fit holds the defensive weight of
+# both the rating and its production scale at zero (the rating is mostly how often a player crashes, which is not a
+# defensive skill; left free, it picked up defensive weight as a stand-in for "plays center").
+ORB_SCALE_FILE = "data/canonical/offensive_rebound_scale.json"
+OFFENSE_ONLY = ("offensive_rebounding", "orb_per75")
 PREDICTORS = [*LEGACY_TRAITS, *BODY_PREDICTORS, *PROFILE_PREDICTORS, *INPUT_GROUPS, "in_involvement",
-              *(f"involvement_x_{name}" for name in INTERACTIONS)]
+              *(f"involvement_x_{name}" for name in INTERACTIONS), "orb_per75"]
 TABLE_KEY = "_impact_value_tables"
 _FIT_CACHE: dict[str, Any] = {}
 _DEFAULT_ROOT: Path | None = None
+_ORB_KNOTS: list[list[float]] | None = None
+
+
+def orb_per75(rating: float) -> float:
+    """Offensive rebounds per 75 implied by the offensive_rebounding rating (piecewise linear between the fitted knots;
+    beyond the ends the end segments continue, so the top keeps separating and nothing is clipped)."""
+    global _ORB_KNOTS
+    if _ORB_KNOTS is None:
+        path = Path(__file__).resolve().parents[2] / ORB_SCALE_FILE
+        # The knots ship with the repo; a straight line through the league's typical range keeps a stripped checkout
+        # working (rating 0 -> 0.3 per 75, rating 100 -> 6.5 per 75).
+        _ORB_KNOTS = json.loads(path.read_text())["knots"] if path.exists() else [[0.0, 0.3], [100.0, 6.5]]
+    knots = _ORB_KNOTS
+    if rating <= knots[0][0]:
+        (x0, y0), (x1, y1) = knots[0], knots[1]
+    elif rating >= knots[-1][0]:
+        (x0, y0), (x1, y1) = knots[-2], knots[-1]
+    else:
+        i = bisect.bisect_left([k[0] for k in knots], rating)
+        (x0, y0), (x1, y1) = knots[i - 1], knots[i]
+    return y0 + (y1 - y0) * (rating - x0) / (x1 - x0)
 
 
 _PROFILE_DEFAULTS = {"three_per36": 3.0, "three_pct": 0.34, "two_pct": 0.52, "ft_pct": 0.76}
@@ -77,6 +107,7 @@ def predictor_row(traits: Mapping[str, float], player: Mapping[str, Any],
     named = dict(zip(PREDICTORS, row))
     involvement = named["in_involvement"]
     row.extend(involvement * (named[name] - centre) / scale for name, (centre, scale) in INTERACTIONS.items())
+    row.append(orb_per75(named["offensive_rebounding"]))
     return row
 
 

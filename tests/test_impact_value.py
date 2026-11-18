@@ -56,6 +56,22 @@ class FitFileTests(unittest.TestCase):
         # Taking on more of the offense is worth more to a skilled creator than to an unskilled one.
         self.assertGreater(offense(80, 0.45) - offense(80, 0.20), offense(40, 0.45) - offense(40, 0.20))
 
+    def test_offensive_rebounding_adds_offense_only(self):
+        fit = iv.load_fit(ROOT)
+        traits = {t: 50.0 for t in iv.LEGACY_TRAITS}
+        values = []
+        for rating in (20.0, 60.0, 85.0, 95.0, 99.0):
+            values.append(iv.predict(fit, {**traits, "offensive_rebounding": rating}, {"height_inches": 83}, {}, {}))
+        offense = [v["offense"] for v in values]
+        self.assertEqual(offense, sorted(offense))                       # a better rebounder never loses value
+        self.assertGreater(offense[-1] - offense[2], 0.2)                # the top crashers separate (production scale)
+        self.assertEqual(len({round(v["defense"], 9) for v in values}), 1)   # no defensive credit for crashing
+
+    def test_rebound_production_scale_is_monotone_and_not_clipped(self):
+        points = [iv.orb_per75(x) for x in range(0, 111, 5)]
+        self.assertEqual(points, sorted(points))
+        self.assertGreater(iv.orb_per75(108.0), iv.orb_per75(103.0))  # beyond the last knot the top keeps rising
+
 
 if __name__ == "__main__":
     unittest.main()
