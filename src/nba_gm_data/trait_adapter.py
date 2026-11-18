@@ -81,17 +81,17 @@ ADAPTER_SPEC: dict[str, list[Term]] = {
         ("S01", 0.20), ("S14", 0.10), ("S25", 0.10), ("S26", 0.10), ("S33", 0.15), ("S35", 0.10),
         ("S39", 0.10), ("F01.execution", 0.15),
     ],
-    # Fitted to real playoff production (scripts/fit_playoff_translation.py, 2026-11-17): recent playoff Game Score
-    # per 36 for 227 players, skill-group averages of skill/physical inputs only, non-negative ridge, out-of-fold
-    # r = 0.72. The old written recipe (shooting, self-creation, perimeter defense) ranked Jokic 101st and Giannis
-    # 217th. Shooting groups and perimeter defense received no weight from the evidence.
+    # Fitted to real playoff evidence (scripts/fit_playoff_translation.py --groups --blend, 2026-11-19): half recent playoff
+    # Game Score per 36, half Basketball Index's playoff offensive talent grades (latest 3-year windows), 227 players,
+    # skill-group averages of skill/physical inputs only, non-negative ridge, out-of-fold r = 0.71. The original written
+    # recipe ranked Jokic 101st and Giannis 217th; the box-score-only fit ranked Curry 44th and Brunson 135th.
     "playoff_translation": [
-        (["S16", "S17", "S18", "S19", "S20", "S24"], 0.272),
-        (["S10", "S11", "S12", "S13", "S14", "S15"], 0.258),
-        (["P01", "P02", "P03", "P04"], 0.150),
-        (["S21", "S22", "S23"], 0.143),
-        (["S37", "S40", "S43", "S44", "S45", "S46"], 0.099),
-        ([f"F0{n}.recognition" for n in range(1, 10)], 0.078),
+        (["S16", "S17", "S18", "S19", "S20", "S24"], 0.307),
+        (["S10", "S11", "S12", "S13", "S14", "S15"], 0.283),
+        (["S21", "S22", "S23"], 0.162),
+        ([f"F0{n}.recognition" for n in range(1, 10)], 0.103),
+        (["P01", "P02", "P03", "P04"], 0.077),
+        (["S37", "S40", "S43", "S44", "S45", "S46"], 0.068),
     ],
 }
 

@@ -122,6 +122,32 @@ def main():
         feats = ([statistics.fmean(pct(p["id"], k) for k in g if k in keys) for g in GROUPS.values()] if grouped
                  else [pct(p["id"], k) for k in keys])
         rows.append((p["id"], p["name"], feats, rate, eff, reg))
+    if "--blend" in sys.argv:
+        # Blend with Basketball Index's playoff offensive talent grades (latest 3-year windows; local-only data):
+        # half box-score Game Score, half playoff talent (shooting + playmaking + shot creation), each standardized.
+        import csv, gzip
+        talent = {}
+        path = ROOT / "data/research/bbi/tools/playoff_talent_windows.csv.gz"
+        for r in csv.DictReader(gzip.open(path, "rt")):
+            if not r.get("player_id") or float(r.get("ss_off_minutes") or 0) < 150:
+                continue
+            if r["window"] not in ("2023-24 to 2025-26", "2022-23 to 2024-25"):
+                continue
+            try:
+                value = (float(r["Overall_Shooting_Talent"]) + float(r["playmaking_talent"]) + float(r["Overall_Shot_Creation"])) / 3.0
+            except (TypeError, ValueError):
+                continue
+            weight = 2.0 if r["window"].startswith("2023") else 1.0
+            prev = talent.get(r["player_id"], (0.0, 0.0))
+            talent[r["player_id"]] = (prev[0] + weight * value, prev[1] + weight)
+        talent = {k: v[0] / v[1] for k, v in talent.items()}
+        gm = [r[3] for r in rows]
+        gmu, gms = statistics.fmean(gm), statistics.pstdev(gm)
+        tv = [talent[r[0]] for r in rows if r[0] in talent]
+        tu, ts = statistics.fmean(tv), statistics.pstdev(tv)
+        rows = [(pid, nm, f, 0.5 * (rate - gmu) / gms + (0.5 * (talent[pid] - tu) / ts if pid in talent else 0.5 * (rate - gmu) / gms), eff, reg)
+                for pid, nm, f, rate, eff, reg in rows]
+        print(f"blend: {sum(1 for r in rows if r[0] in talent)} of {len(rows)} players have playoff talent grades")
     w = [e / (e + 400.0) for *_, e, _ in rows]
     y = [r[3] for r in rows]
     X = [r[2] for r in rows]
@@ -161,8 +187,8 @@ def main():
     for nm in WATCH:
         pid = next((p["id"] for p in players if p["name"] == nm), None)
         if pid:
-            print(f"  {nm:26s} rank {rank[pid]:4d}   real playoff GmSc/36 {real.get(pid, float('nan')):5.1f}")
-    out = ROOT / ("output/playoff-fit/recipe_groups.json" if grouped else "output/playoff-fit/recipe.json")
+            print(f"  {nm:26s} rank {rank[pid]:4d}   target {real.get(pid, float('nan')):5.2f}")
+    out = ROOT / ("output/playoff-fit/recipe_groups" + ("_blend" if "--blend" in sys.argv else "") + ".json" if grouped else "output/playoff-fit/recipe.json")
     out.write_text(json.dumps({"recipe": recipe, "players": len(rows), "keys": keys, "groups": GROUPS if grouped else None,
                                "oof_r": round(wcorr(y, oof, w), 3)}, indent=1))
 
