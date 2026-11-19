@@ -41,10 +41,11 @@ def set_contract(data, pid, seasons):
 class AbsorbCostTests(unittest.TestCase):
     def test_salary_for_a_player_outside_the_rotation_is_a_cost(self):
         data = league()
-        # On B (eleven 50s), a 40 would be 12th: about 3.5 minutes, so all $15.75M is dead money this season.
+        # On B (eleven 50s), a 40 would be 12th: about 3.5 minutes, so his $15.75M is dead money this season, less
+        # the $2M a roster spot costs anyway.
         dead = tax.dead_money(data, "b", [P("a5")], [])
-        self.assertAlmostEqual(dead["dead"], 15_750_000, delta=1)
-        expected = -tax.ABSORB_VALUE_CAP * (1 - math.exp(-15.75 * tax.ABSORB_POINTS_PER_MILLION / tax.ABSORB_VALUE_CAP))
+        self.assertAlmostEqual(dead["dead"], 13_750_000, delta=1)
+        expected = -tax.ABSORB_VALUE_CAP * (1 - math.exp(-13.75 * tax.ABSORB_POINTS_PER_MILLION / tax.ABSORB_VALUE_CAP))
         self.assertAlmostEqual(tax.absorb_cost(data, "b", [P("a5")], []), expected, places=2)
 
     def test_no_cost_when_he_would_play(self):
@@ -54,9 +55,10 @@ class AbsorbCostTests(unittest.TestCase):
 
     def test_salary_sent_out_offsets_it(self):
         data = league()
-        # b0 earns $15M, so only $0.75M of a5's $15.75M is new money.
-        self.assertAlmostEqual(tax.dead_money(data, "b", [P("a5")], [P("b0")])["dead"], 750_000, delta=1)
-        self.assertGreater(tax.absorb_cost(data, "b", [P("a5")], [P("b0")]), -5.0)
+        # b0 earns $15M, more than a5's $13.75M of dead money: nothing is new money.
+        self.assertEqual(tax.dead_money(data, "b", [P("a5")], [P("b0")])["dead"], 0.0)
+        self.assertEqual(tax.absorb_cost(data, "b", [P("a5")], [P("b0")]), 0.0)
+        self.assertLess(tax.absorb_cost(data, "b", [P("a5")], [P("b5")]), 0.0)  # b5 earns only $1M
 
     def test_human_team_is_never_charged(self):
         data = league(_human_team_ids=["b"])
@@ -209,7 +211,7 @@ class RouteTests(unittest.TestCase):
         self.assertEqual(short[0][0], "b")  # B is the team most short: it does not want a5's three years
         config = tx.default_transaction_model_config()
         quick_b = lambda inc: tt.quick_net(data, "b", inc, [P("b0")], config)
-        self.assertGreater(quick_b([P("a0")]) - quick_b([P("a0"), P("a5")]), 30.0)  # rerouting a5 fixes most of it
+        self.assertGreater(quick_b([P("a0")]) - quick_b([P("a0"), P("a5")]), 20.0)  # rerouting a5 fixes most of it
         # Both main teams also value their own player above the other's (step 1), so this small league's deal stays
         # short of the bounds; widen the quick screen to look at the route itself.
         with patch.object(tt, "PRESCREEN_TOLERANCE", 40.0):

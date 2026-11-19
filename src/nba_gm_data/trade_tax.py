@@ -39,14 +39,18 @@ Wiggins). So an AI team now prices the salary it takes on for players outside it
 - **Dead money**: for each incoming player, the share of his salary that buys nothing: all of it when he would be
   out of the receiving team's rotation (8 minutes or less by his place on its depth chart), none when he would play
   18 minutes or more, in between linearly. For a team far from contending, later seasons of a veteran's contract are
-  also partly dead (up to half, by its distance from contending and the player's age then, from 29 to 32).
+  also partly dead (up to half, by its distance from contending and the player's age then, from 29 to 32). The first
+  $2M a season of each player is free: the roster spot would cost about a minimum salary anyway.
 - **Net of what leaves**: salary the team sends out in the same trade offsets it, season by season, so ordinary
   salary-matched trades cost little; the cost bites when a team takes on net money.
-- **Seasons**: the current season at full weight until the regular season ends, later seasons at 0.75 each.
-- **Price**: ABSORB_POINTS_PER_MILLION points per $1M of dead money, scaled by the owner's spending appetite and
-  saturating at ABSORB_VALUE_CAP. With a future second worth about 18 points here, this charges about one second for
-  $5M, two for $13M, three for $25M, and about a late first (the cap) for $60M or more of dead money: close to the real
-  prices above.
+- **Seasons**: the current season at full weight until the regular season ends, later seasons at half weight (as the
+  tax counts next season).
+- **Price**: ABSORB_POINTS_PER_MILLION points per $1M of dead money, the same money rate as the tax (a dollar of
+  salary costs an owner what a dollar of tax does), scaled by the owner's spending appetite and saturating at
+  ABSORB_VALUE_CAP. With a future second worth about 18-22 points here, the absorber charges about half a second for
+  $5M of dead money, one to two seconds for $13M, two for $25M and about a late first (the cap) for $60M or more: a
+  little below the real prices above, which leaves room for the deal (the tax team saves $1.50 to $3.25 of tax per
+  dollar of salary, so the same money rate on both sides still leaves a surplus to share).
 Only AI teams get this term; the human team's own evaluations never change.
 """
 from __future__ import annotations
@@ -242,9 +246,10 @@ def tax_note(canonical: dict[str, Any], team_id: str, incoming: list[dict[str, A
 
 
 # ------------------------------------------------------------------------------------- absorbed salary (step 4)
-ABSORB_POINTS_PER_MILLION = 3.0
+ABSORB_POINTS_PER_MILLION = 3.0         # the same money rate as the tax: a dollar of salary is a dollar of tax
 ABSORB_VALUE_CAP = 60.0
-ABSORB_FUTURE_WEIGHT = 0.75
+ABSORB_FUTURE_WEIGHT = 0.5              # later seasons count like the tax's next season (rosters and plans change)
+ABSORB_FREE_SALARY = 2_000_000          # a roster spot costs about a minimum salary anyway; only the rest is dead
 ABSORB_ROTATION_MINUTES = 18.0
 ABSORB_DEAD_MINUTES = 8.0
 ABSORB_MAX_FUTURE_SEASONS = 4
@@ -254,7 +259,7 @@ REBUILD_VETERAN_AGE_FULL = 32.0
 
 
 def absorb_seasons(canonical: dict[str, Any]) -> list[tuple[str, float]]:
-    """(season, weight): the current season until its regular season ends, then later seasons at 0.75 each."""
+    """(season, weight): the current season until its regular season ends, then later seasons at half weight."""
     first, _ = tax_seasons(canonical)[0]
     start = _tx().season_start_from_label(first)
     return [(first, 1.0)] + [(season_label(start + k), ABSORB_FUTURE_WEIGHT)
@@ -327,6 +332,7 @@ def dead_money(canonical: dict[str, Any], team_id: str, incoming: list[dict[str,
                 ramp = (age + index - REBUILD_VETERAN_AGE_START) / (REBUILD_VETERAN_AGE_FULL - REBUILD_VETERAN_AGE_START)
                 share = max(share, REBUILD_VETERAN_DEAD_SHARE * distance * max(0.0, min(1.0, ramp)))
             salary = float(tx.contract_salary_for_trade_season(tx.contract_for_player(canonical, asset["id"]), season) or 0.0)
+            salary = max(0.0, salary - ABSORB_FREE_SALARY)
             if share and salary:
                 dead_in += share * salary
                 detail[asset["id"]] = detail.get(asset["id"], 0.0) + weight * share * salary
