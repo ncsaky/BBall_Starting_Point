@@ -365,7 +365,16 @@ def simulate_health(
     through_date: str,
     seed: int = 1,
     schedule: list[dict[str, Any]] | None = None,
+    *,
+    season_schedule: list[dict[str, Any]] | None = None,
+    box_score_fatigue: bool = False,
 ) -> dict[str, Any]:
+    """Injuries, fatigue recovery, returns and coach rest for the games in [from_date, through_date].
+
+    season_schedule: the whole season's games, for the rest model's schedule facts (first night of a back-to-back,
+    road trips); without it those facts come from `schedule` alone. box_score_fatigue: the caller adds each game's
+    fatigue from the minutes actually played once the box score is final (add_box_score_fatigue); otherwise this pass
+    adds it from the coach's planned minutes (standalone health runs)."""
     root = Path(root)
     canonical = canonical if isinstance(canonical, dict) else to_plain(canonical)
     config = load_injury_model_config(root)
@@ -413,6 +422,14 @@ def simulate_health(
     human_teams = set(canonical.get("_human_team_ids") or [])
     coach_rest_teams = set(canonical.get("_coach_rest_team_ids") or [])   # human teams whose GM lets the coach rest players
     rested_tonight: dict[tuple[str, str], int] = {}
+    stars_rested: dict[tuple[str, str], int] = {}
+    rest_log: list[dict[str, Any]] = []
+    schedule_facts: dict[tuple[str, str], dict[str, Any]] = {}
+    stars: set[str] = set()
+    if rest_ready and schedule:
+        from .rest_model import cached_league_schedule_context, star_ids
+        schedule_facts = cached_league_schedule_context(season_schedule or schedule)
+        stars = star_ids(canonical, through_date[:7])
     regulars_out: dict[str, int] = {}
     if rest_ready:
         for team_id, team_players in players_by_team.items():
@@ -446,6 +463,8 @@ def simulate_health(
                     if float(player.get("_trade_value_minutes_projection") or player.get("minutes_projection") or 0) >= REST_MIN_MINUTES:
                         key = (team["id"], game["externalGameId"])
                         rested_tonight[key] = rested_tonight.get(key, 0) + 1
+                        if player["id"] in stars:
+                            stars_rested[key] = stars_rested.get(key, 0) + 1
                     continue
                 minutes = float(player.get("minutes_projection") or 0)
                 stamina = traits.get((player["id"], "stamina_cardio"), 50.0)
@@ -459,27 +478,39 @@ def simulate_health(
                         state["games_rested"] = int(state.get("games_rested") or 0) + 1
                         continue
                     if (team["id"] not in human_teams or team["id"] in coach_rest_teams) and minutes >= REST_MIN_MINUTES:
-                        context = {**standings.get(team["id"], {}), "back_to_back": rest_days == 0 and bool(previous_game),
-                                   "rested_tonight": rested_tonight.get((team["id"], game["externalGameId"]), 0),
-                                   "regulars_out": regulars_out.get(team["id"], 0),
-                                   "fatigue": entering, "fatigue_normal": normal_fatigue(player, minutes, stamina, staff)}
-                        decision = coach_rest_decision(player, state, context, rest_draw(seed, game["externalGameId"], player["id"]))
+                        key = (team["id"], game["externalGameId"])
+                        opponent_espn = str(game.get("homeTeamId") if espn_id == str(game.get("awayTeamId")) else game.get("awayTeamId"))
+                        context = game_rest_context(standings, schedule_facts, game, espn_id, team["id"],
+                                                    (team_by_espn.get(opponent_espn) or {}).get("id"),
+                                                    back_to_back=rest_days == 0 and bool(previous_game))
+                        context.update({"star": player["id"] in stars, "rested_tonight": rested_tonight.get(key, 0),
+                                        "stars_rested_tonight": stars_rested.get(key, 0),
+                                        "regulars_out": regulars_out.get(team["id"], 0),
+                                        "fatigue": entering, "fatigue_normal": normal_fatigue(player, minutes, stamina, staff)})
+                        assessment = rest_assessment(player, state, context)
+                        decision = rest_decision(assessment, rest_draw(seed, game["externalGameId"], player["id"]))
                         if decision:
                             kind, reason = decision
-                            key = (team["id"], game["externalGameId"])
                             rested_tonight[key] = rested_tonight.get(key, 0) + 1
+                            if player["id"] in stars:
+                                stars_rested[key] = stars_rested.get(key, 0) + 1
                             state["games_rested"] = int(state.get("games_rested") or 0) + 1
                             state.update({"rest_game_id": str(game["externalGameId"]), "rest_date": date_to_str(game_date),
                                           "rest_reason": reason})
                             if kind == "shutdown":
                                 state["rest_shutdown"] = {"team_id": team["id"], "since": date_to_str(game_date), "reason": reason}
+                            rest_log.append({"date": date_to_str(game_date), "game_id": str(game["externalGameId"]),
+                                             "team_id": team["id"], "player_id": player["id"], "kind": kind, "reason": reason,
+                                             "chance": round(assessment["chance"], 4), "miles": context.get("miles"),
+                                             "factors": assessment.get("factors", {})})
                             continue
                 if int(state.get("return_absence_games") or 0) > 0:
                     advance_return_ramp(state, game_date, staff)
                 # The game is played on tip-off fatigue; tonight's minutes add to it afterwards (shown from tonight on).
                 state["fatigue_game"] = {"date": date_to_str(game_date), "value": round(entering, 2)}
-                add_game_fatigue(state, player, minutes, stamina, rest_days, config, staff,
-                                 away=espn_id == str(game.get("awayTeamId")))
+                if not box_score_fatigue:
+                    add_game_fatigue(state, player, minutes, stamina, rest_days, config, staff,
+                                     away=espn_id == str(game.get("awayTeamId")))
                 if minutes < (im.MIN_MINUTES_FOR_EXPOSURE if model else 8):
                     continue
                 rng = random.Random(f"{seed}:{game['externalGameId']}:{player['id']}:injury")
@@ -549,6 +580,7 @@ def simulate_health(
         "severity_counts": dict(sorted(severity_counts.items())),
         "body_area_counts": dict(sorted(body_counts.items())),
         "events": sorted(events, key=lambda item: (item["start_date"], item["team_id"], item["player_id"], item["id"])),
+        "rest_decisions": rest_log,
         "final_states": sorted(final_states, key=lambda item: item["player_id"]),
         "summary": health_sim_summary(events, final_states, config),
         "notes": "Sandbox health simulation only. Replay-real-minutes validation still uses real game availability and minutes as truth.",
@@ -964,56 +996,22 @@ def advance_return_ramp(state: dict[str, Any], game_date: date, staff: dict[str,
     state["rust"] = round(max(0.0, float(state.get("return_rust") or 0.0) - decay * played), 2)
 
 
-# ---- Coach rest and load management (INJURY-REST, 2026-11-19) ------------------------------------------------------
-# AI coaches sit healthy regulars on some nights. Fitted to real 2025-26 box scores (output/injury-rest/real_rest.py):
-# players averaging 25+ minutes missed 3.2% of their team's games as single-game absences (7.2% on the second night
-# of a back-to-back, 2.4% otherwise), rising with age (back-to-backs: 5% under 25, 7% at 25-29, 10% at 30-33, 11% at
-# 34+) and late in the season (last 15 games: 4-5% vs 3%); minutes played made no difference among regulars. The
-# chances below are those rates minus the one-game injury and illness absences the injury model already produces.
-# The box scores rarely say why (most inactive players are not listed), so the "other nights" chance also stands in
-# for one-game absences that never reach an injury report: personal reasons, minor knocks, suspensions.
-# Rules from the league's player participation policy (2023): a team rests at most one regular in a game (outside the
-# last two games), and a player stays on course for the 65 games that award eligibility needs.
-REST_MIN_MINUTES = 24.0
-# (age upper bound, chance on the second night of a back-to-back, chance on other nights)
-REST_BY_AGE = ((24.99, 0.050, 0.011), (29.99, 0.070, 0.016), (33.99, 0.095, 0.031), (99.0, 0.11, 0.032))
-REST_RETURNING_BACK_TO_BACK = 0.15   # judgment: teams often keep a player just back from injury out of back-to-backs
-REST_LATE_GAMES = 15                 # the stretch run: every team rests a little more
-REST_LATE_EXTRA = 0.03
-REST_LATE_TOP_EXTRA = 0.008          # teams with a playoff spot secured (top 8 records) a little more again
-# Last two games: regulars sit (real 2025-26: 60% of the best eight teams' regulars and 46% of the middle teams' sat at
-# least one of their final games). Winning teams rest for the playoffs; the others because little is left to play for.
-REST_FINAL_GAMES = 2
-REST_FINAL_PLAYOFF = 0.35
-REST_FINAL_OTHERS = 0.25
-REST_FINAL_MIN_WIN_PCT = 0.5
-REST_MISSED_LIMIT = 14               # no rest nights once a player has missed this many games (65-game rule)
-REST_MAX_PER_GAME = 1
-REST_SHORT_HANDED = 3                # no rest nights while this many regulars are already out injured
-# Teams out of the race shut players down: in real 2025-26 the eight worst teams' regulars sat an average of 6.8 of
-# the final games (74% sat at least one, 46% five or more) against about 1 for other teams.
-SHUTDOWN_BOTTOM_TEAMS = 8
-SHUTDOWN_GAMES_LEFT = 25
-SHUTDOWN_HAZARD = 0.03
-REGULAR_SEASON_GAMES = 82
-# Fatigue-driven rest: on a typical back-to-back a player's tip-off fatigue is 1/FATIGUE_DAILY_KEEP (about 1.6) times
-# his normal level, so the back-to-back step spans that gap.
-REST_B2B_LOAD_STEP = 1.0 / FATIGUE_DAILY_KEEP - 1.0
-REST_HEAVY_LOAD = 0.8
+# ---- Coach rest and load management (INJURY-REST, then SMART-REST 2026-11-19) -------------------------------------
+# AI coaches sit healthy regulars on some nights. The chance is an explainable model fitted to the real 2025-26 box
+# scores (rest_model.rest_assessment): back-to-back nights (either one, more on the road), age, star status, minutes,
+# opponent strength (weak teams and the very best), the date, the team's race (locked seed, out of the race), road
+# trips and returns from injury; plus the league's rules (one star a game, the 65-game award rule) and the season's
+# final games and shutdowns. Travel distance and time zones were tested and predict nothing beyond being on the road.
+from .rest_model import (REST_MAX_PER_GAME, REST_MAX_STARS_PER_GAME, REST_MIN_MINUTES, REST_MISSED_LIMIT,  # noqa: E402
+                         REST_SHORT_HANDED, REGULAR_SEASON_GAMES, SHUTDOWN_BOTTOM_TEAMS, SHUTDOWN_GAMES_LEFT,
+                         SHUTDOWN_HAZARD, league_standings, rest_assessment, rest_decision)
 
 
 def league_rest_context(canonical: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    """Per team: games left, league rank by winning percentage (1 = best) and winning percentage, from the save's
-    standings."""
+    """Per team: games left, league rank (1 = best), conference race and situation, from the save's standings."""
     records = canonical.get("save_team_records") or {}
-    rows = []
-    for team_id, record in records.items():
-        wins, losses = int(record.get("wins") or 0), int(record.get("losses") or 0)
-        played = wins + losses
-        rows.append((team_id, wins / played if played else 0.5, played))
-    order = sorted(rows, key=lambda row: (-row[1], row[0]))
-    return {team_id: {"games_left": max(0, REGULAR_SEASON_GAMES - played), "win_pct": pct, "rank": rank + 1, "teams": len(order)}
-            for rank, (team_id, pct, played) in enumerate(order)}
+    conference_of = {team["id"]: team.get("conference") for team in canonical.get("teams", []) if team.get("id")}
+    return league_standings(records, conference_of)
 
 
 def rest_draw(seed: int, game_id: Any, player_id: str) -> float:
@@ -1022,53 +1020,66 @@ def rest_draw(seed: int, game_id: Any, player_id: str) -> float:
 
 def rest_chance(player: dict[str, Any], state: dict[str, Any], context: dict[str, Any]) -> tuple[float, str, str]:
     """Chance the coach sits this healthy regular tonight, the kind ("rest" or "shutdown") and the reason in words."""
-    games_left = int(context.get("games_left") if context.get("games_left") is not None else REGULAR_SEASON_GAMES)
-    teams = int(context.get("teams") or 30)
-    rank = int(context.get("rank") or teams // 2)
-    age = float(player.get("age") or 27.0)
-    if games_left <= SHUTDOWN_GAMES_LEFT and rank > teams - SHUTDOWN_BOTTOM_TEAMS and games_left > 0:
-        return SHUTDOWN_HAZARD, "shutdown", "shut down for the rest of the season (team out of the race)"
-    if games_left <= REST_FINAL_GAMES:
-        if float(context.get("win_pct") or 0.0) >= REST_FINAL_MIN_WIN_PCT:
-            return REST_FINAL_PLAYOFF, "rest", "rest before the playoffs"
-        return REST_FINAL_OTHERS, "rest", "rest in the season's final games"
-    if int(state.get("games_missed") or 0) + int(state.get("games_rested") or 0) >= REST_MISSED_LIMIT:
-        return 0.0, "rest", ""
-    if int(context.get("rested_tonight") or 0) >= REST_MAX_PER_GAME or int(context.get("regulars_out") or 0) >= REST_SHORT_HANDED:
-        return 0.0, "rest", ""
-    b2b_chance, other_chance = next((b, o) for limit, b, o in REST_BY_AGE if age <= limit)
-    load = rest_load_share(context)
-    if load is not None:
-        # Fatigue-driven: tonight's tip-off fatigue against his normal level. A typical back-to-back gives the fitted
-        # back-to-back chance, a normal night the base chance, a heavier stretch (overtime, four games in six nights)
-        # more, up to twice the back-to-back step.
-        chance = other_chance + (b2b_chance - other_chance) * load
-        if context.get("back_to_back"):
-            reason = "second night of a back-to-back"
-        elif load >= REST_HEAVY_LOAD:
-            reason = f"heavy recent workload (fatigue {float(context.get('fatigue') or 0):.0f})"
-        else:
-            reason = "maintenance day"
-    elif context.get("back_to_back"):
-        chance, reason = b2b_chance, "second night of a back-to-back"
-    else:
-        chance, reason = other_chance, "maintenance day"
-    if context.get("back_to_back") and int(state.get("return_absence_games") or 0) > 0:
-        chance, reason = chance + REST_RETURNING_BACK_TO_BACK, "back-to-back soon after returning from injury"
-    if games_left <= REST_LATE_GAMES:
-        chance += REST_LATE_EXTRA + (REST_LATE_TOP_EXTRA if rank <= 8 else 0.0)
-        if not context.get("back_to_back"):
-            reason = "rest during the stretch run"
-    return chance, "rest", reason
+    result = rest_assessment(player, state, context)
+    return result["chance"], result["kind"], result["reason"]
 
 
-def rest_load_share(context: dict[str, Any]) -> float | None:
-    """How far tonight's fatigue is from a normal night (0) toward a typical back-to-back (1), at most 2. None when the
-    caller gave no fatigue (then the back-to-back flag decides)."""
-    if context.get("fatigue") is None or not context.get("fatigue_normal"):
-        return None
-    ratio = float(context["fatigue"]) / max(1.0, float(context["fatigue_normal"]))
-    return clamp((ratio - 1.0) / REST_B2B_LOAD_STEP, 0.0, 2.0)
+def game_rest_context(standings: dict[str, dict[str, Any]], schedule_facts: dict[tuple[str, str], dict[str, Any]],
+                      game: dict[str, Any], espn_id: str, team_id: str, opponent_id: str | None,
+                      back_to_back: bool | None = None) -> dict[str, Any]:
+    """The team-level facts the rest model reads for one team in one game: its standing and race, the opponent's
+    record, and the schedule (back-to-back nights, home or road, road trip, travel). Shared by the AI coaches' pass and
+    the user's suggestion so both see the same game the same way."""
+    facts = schedule_facts.get((str(game.get("externalGameId")), str(espn_id))) or {}
+    opponent = standings.get(opponent_id or "", {})
+    context = {**standings.get(team_id, {}),
+               "opp_wins": opponent.get("wins", 0), "opp_losses": opponent.get("losses", 0),
+               "home": str(game.get("homeTeamId")) == str(espn_id),
+               "first_of_b2b": bool(facts.get("first_of_b2b")), "road_trip": int(facts.get("road_trip") or 0),
+               "miles": facts.get("miles"), "tz_change": facts.get("tz_change")}
+    if facts.get("game_number"):
+        context.update(game_number=facts["game_number"], games_total=facts["games_total"])
+    context["back_to_back"] = bool(facts.get("back_to_back")) if back_to_back is None else bool(back_to_back)
+    return context
+
+
+def add_box_score_fatigue(canonical: dict[str, Any], states: list[dict[str, Any]], result: dict[str, Any],
+                          game_date: str, root: str | Path | None = None) -> int:
+    """Add each player's fatigue from the minutes he actually played in a finished game (overtime, blowout rest, foul
+    trouble and injury exits included). The day's health pass has already recovered fatigue to the game day and
+    recorded the tip-off value; this only adds tonight's load. Idempotent per game. Returns the players updated."""
+    game_id = str(result.get("game_id") or "")
+    game_date = str(game_date or "")[:10]
+    lines = [line for line in result.get("player_lines", []) or [] if float(line.get("minutes") or 0) > 0 and line.get("player_id")]
+    if not game_id or not lines:
+        return 0
+    config = load_injury_model_config(root or Path(__file__).resolve().parents[2])
+    players = {player["id"]: player for player in canonical.get("players", [])}
+    by_id = {state.get("player_id"): state for state in states}
+    stamina = {trait["player_id"]: float(trait.get("value") if trait.get("value") is not None else 50.0)
+               for trait in canonical.get("traits", []) if trait.get("trait_key") == "stamina_cardio"}
+    staff_by_team: dict[str, dict[str, float]] = {}
+    away_team = str(result.get("away_team_id") or "")
+    updated = 0
+    for line in lines:
+        player_id = line["player_id"]
+        state = by_id.get(player_id)
+        if state is None:
+            state = default_state_dict(player_id, game_date or "2000-01-01")
+            states.append(state)
+            by_id[player_id] = state
+        if state.get("fatigue_box_game") == game_id:
+            continue
+        team_id = str(line.get("team_id") or (players.get(player_id) or {}).get("team_id") or "")
+        staff = staff_by_team.setdefault(team_id, performance_staff_modifiers(canonical, team_id))
+        if game_date and (state.get("fatigue_date") or "") < game_date:
+            state["fatigue"] = fatigue_on_date(state, game_date, staff, config)
+            state["fatigue_date"] = game_date
+        add_game_fatigue(state, players.get(player_id) or {"age": line.get("age")}, float(line["minutes"]),
+                         stamina.get(player_id, 50.0), 0, config, staff, away=team_id == away_team)
+        state["fatigue_box_game"] = game_id
+        updated += 1
+    return updated
 
 
 def apply_user_rest(state: dict[str, Any], team_id: str, game: dict[str, Any], game_date: date) -> bool:
@@ -1094,8 +1105,7 @@ def apply_user_rest(state: dict[str, Any], team_id: str, game: dict[str, Any], g
 
 
 def coach_rest_decision(player: dict[str, Any], state: dict[str, Any], context: dict[str, Any], draw: float) -> tuple[str, str] | None:
-    chance, kind, reason = rest_chance(player, state, context)
-    return (kind, reason) if chance > 0 and draw < chance else None
+    return rest_decision(rest_assessment(player, state, context), draw)
 
 
 def choose_quota_weighted(bands: dict[str, Any], counts: dict[str, int], rng: random.Random) -> str | None:
@@ -1587,7 +1597,7 @@ def state_from_dict(state: dict[str, Any], as_of_date: str) -> dict[str, Any]:
         **({"return_rust": float(state["return_rust"])} if state.get("return_absence_games") and state.get("return_rust") is not None else {}),
         **({key: state[key] for key in ("last_team_game", "ramp_last_game", "pending_injury", "rest_game_id", "rest_date", "rest_reason",
                                          "games_rested", "rest_suggestion", "rest_shutdown", "fatigue_date", "fatigue_game",
-                                         "fatigue_next", "user_rest")
+                                         "fatigue_next", "user_rest", "fatigue_box_game")
             if state.get(key) is not None}),
     }
 
