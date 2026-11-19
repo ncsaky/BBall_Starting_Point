@@ -10,7 +10,7 @@
         "--root",
         ".",
         "--save-dir",
-        "/private/tmp/claude-501/-Users-noahtyler--claude-spares-spare-kEIEMb/aa8ffa3d-9829-4c0d-b448-e9409427c53d/scratchpad/gui_saves",
+        "/private/tmp/claude-501/-Users-noahtyler-Documents-BBall-data-BBall-Starting-Point/ed515120-bf7f-4744-ab04-e5b050bcf6a7/scratchpad/gui_saves",
         "--port",
         "8765"
       ],
