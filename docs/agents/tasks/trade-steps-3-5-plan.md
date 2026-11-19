@@ -54,6 +54,8 @@ Each AI front office gets a few **lasting** traits, set when a save starts and d
 ## Files
 `trade_targets.py`, `transactions.py`, `multi_team_trades.py`, `trade_wants.py`, the front-office data (`data/overrides/front_office_overrides.json`, `team_planning.py`), the user trade-window text in `gui/app.js` (minimal), and tests. Both scorecards should be byte-identical: trades don't change game results.
 
-## Open questions for the user (ask when starting step 5)
-1. Should real front offices start with traits based on their public reputations (e.g. "known as patient"), or should every save start them neutral and let traits come from a draw?
-2. Should you be able to see each front office's tendencies in full, or only hints (e.g. through your assistant GM)?
+## User decisions
+- 2026-11-19: real front offices start with traits based on their public reputations. Use only widely held views, with each source recorded. Generated or replacement front offices draw their traits from the measured spread.
+
+## Open question for the user (ask when starting step 5)
+1. Should you be able to see each front office's tendencies in full, or only hints (e.g. through your assistant GM)?
