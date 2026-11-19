@@ -145,6 +145,13 @@ def main() -> int:
          lambda r: box_rates.fta_per_point_from_inputs(r["inputs"])),
         ("points per 36 (new ratings)", [inp("T08", True), inp("T01.pass", True), inp("T01.shoot", True), inp("S10"), inp("T18", True)],
          lambda r: r["points_per36"], None, lambda r: box_rates.points_per36_from_inputs(r["inputs"])),
+        # Rebounds (2026-11-19, unused-ratings audit): the engine shared rebounds by height and the offensive-rebounding
+        # trait only, so the defensive-rebounding, box-out and rebound-control grades shown on the card never moved a
+        # rebound. Height (P01, cm) and wingspan (P02, cm) stay in as the body measurements they are. Jump capacity (P10) took a
+        # negative weight (its values are position priors, not measurements; guards out-jump centres there), so it is left out.
+        ("rebounds per 36 (new ratings)", [inp("S30"), inp("S31"), inp("S32"), inp("T12", True), inp("T13.pursue", True),
+                                           inp("P01"), inp("P02")],
+         lambda r: r["rebounds_per36"], None, lambda r: box_rates.rebounds_per36_from_inputs(r["inputs"])),
         ("points per 36 (old ratings)", [trait("handle_pressure"), trait("shot_versatility"), trait("rim_pressure"), trait("shooting_range")],
          lambda r: r["points_per36"], None, lambda r: box_rates.points_per36_from_traits(r["traits"])),
         ("turnovers per 36 (old ratings)", [trait("passing_reads"), trait("rim_pressure"), trait("scheme_iq")],
