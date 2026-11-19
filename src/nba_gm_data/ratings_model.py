@@ -283,6 +283,10 @@ def _scale_map(root: Path | None) -> dict[str, Any] | None:
     return _SCALE_MAP_CACHE[key]
 
 
+# Player fields input_estimator never reads (checked: no estimator path touches them).
+_ESTIMATOR_IGNORED_PLAYER_KEYS = frozenset({"_save_stats"})
+
+
 def _install_generated_players(canonical: dict[str, Any], baseline: Mapping[str, Mapping[str, float]],
                                league_inputs: Mapping[str, Any], root: Path | None = None) -> list[str]:
     """Estimate inputs for players missing from the canonical inputs file (e.g. drafted rookies)."""
@@ -296,7 +300,12 @@ def _install_generated_players(canonical: dict[str, Any], baseline: Mapping[str,
         if not pid or pid in league_inputs or pid not in baseline:
             continue
         traits = dict(baseline[pid])
-        key = hashlib.sha256(json.dumps([player, traits], sort_keys=True, default=str).encode()).hexdigest()
+        # Keyed on everything the estimator could read. The season stats the save attaches to each player
+        # (_save_stats) change after every game and are never read by the estimator; keying on them re-estimated
+        # every generated player on every league rebuild (a quarter of a month's extra time in an aged league)
+        # and grew this cache without bound.
+        definition = {k: v for k, v in player.items() if k not in _ESTIMATOR_IGNORED_PLAYER_KEYS}
+        key = hashlib.sha256(json.dumps([definition, traits], sort_keys=True, default=str).encode()).hexdigest()
         if (pid, key) not in _GENERATED_CACHE:
             estimator = estimator or InputEstimator()
             estimated = estimator.estimate_player_inputs(player, traits, prospect=True).to_dict()["inputs"]
