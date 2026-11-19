@@ -6681,7 +6681,7 @@ def _slot_score_row(player: dict[str, Any], attrs: dict[str, Any]) -> tuple[tupl
 
 def ai_role_targets(
     canonical: dict[str, Any], roster: list[dict[str, Any]], priors: dict[str, float],
-    *, opening_workloads: dict[str, float] | None = None,
+    *, opening_workloads: dict[str, float] | None = None, newcomers: frozenset[str] | set[str] = frozenset(),
 ) -> tuple[dict[str, float], list[str]]:
     """Build a healthy two-deep rotation from current, workload-neutral skills."""
     attrs = {p["id"]: player_attribute_summary(canonical, p["id"]) for p in roster}
@@ -6724,7 +6724,7 @@ def ai_role_targets(
         remaining = [p for p in remaining if p["id"] not in chosen]
     selected = [pid for group in groups for pid in group if pid]
     if opening_workloads is not None:
-        return ai_coach_workloads(attrs, groups[0], opening_workloads), selected
+        return ai_coach_workloads(attrs, groups[0], opening_workloads, newcomers), selected
     desired = {p["id"]: 0.0 for p in roster}
     for first, second in zip(*groups):
         if first and second:
@@ -6739,8 +6739,31 @@ def ai_role_targets(
     return targets, selected
 
 
+# Newcomer talent line (ROT-OUTLIERS, 2026-11-19): the ninth-best overall among the coach's thirteen leading
+# candidates, less a two-point margin; each point a newcomer falls below it costs two priority points. Measured
+# against Basketball Index healthy-rotation minutes over two healthy seasons (docs/agents/tasks/rot-outliers.md).
+ROTATION_TALENT_POOL = 13
+ROTATION_TALENT_LINE_RANK = 9
+ROTATION_TALENT_MARGIN = 2.0
+ROTATION_TALENT_PENALTY = 2.0
+
+
+def carried_workload_earned_elsewhere(player: dict[str, Any], team_abbrev: str | None) -> bool:
+    """True when a player's carried-over minutes (his season before the game's start) came with other teams."""
+    from .career_stats import career_record
+    from .research import ESPN_TEAM_ID_TO_ABBREV
+    year = season_start_year(CANONICAL_SEASON) - 1
+    label = f"{year}-{(year + 1) % 100:02d}"
+    for row in career_record(player).get("seasons") or []:
+        if row.get("season") == label:
+            teams = {ESPN_TEAM_ID_TO_ABBREV.get(str(team)) for team in row.get("team_ids") or []} - {None}
+            return bool(teams) and team_abbrev not in teams
+    return False
+
+
 def ai_coach_workloads(
     attrs: dict[str, dict[str, float]], starters: tuple[str, ...], opening_workloads: dict[str, float],
+    newcomers: frozenset[str] | set[str] = frozenset(),
 ) -> dict[str, float]:
     """Plan a team's minutes across positions, with short stints for the tail."""
     # Workload history supplies role context alongside current quality, creation
@@ -6751,7 +6774,21 @@ def ai_coach_workloads(
         return (opening_workloads[pid] + .35 * player["overall"] + .26 * player["creation"]
                 + .48 * player["stamina"])
 
-    order = sorted(attrs, key=lambda pid: (-priority(pid), pid))
+    # A newcomer's carried-over workload was earned behind another team's depth
+    # chart. It must not lift him into rotation minutes here when he is clearly
+    # weaker than this rotation. Incumbents keep their workload context: their
+    # own coach chose that role with much of the same roster.
+    candidates = sorted(attrs, key=lambda pid: (-priority(pid), pid))[:ROTATION_TALENT_POOL]
+    pool = sorted((attrs[pid]["overall"] for pid in candidates), reverse=True)
+    line = pool[min(ROTATION_TALENT_LINE_RANK, len(pool)) - 1] - ROTATION_TALENT_MARGIN if pool else 0.0
+
+    def guarded(pid: str) -> float:
+        if pid not in newcomers:
+            return priority(pid)
+        shortfall = max(0.0, line - attrs[pid]["overall"])
+        return priority(pid) - min(opening_workloads[pid], ROTATION_TALENT_PENALTY * shortfall)
+
+    order = sorted(attrs, key=lambda pid: (-guarded(pid), pid))
     curve = (37, 34, 32, 30, 28, 25, 20, 16, 10, 5, 2, 1)
     desired = dict.fromkeys(order, 0.0)
     desired.update(zip(order, curve))
@@ -6797,6 +6834,7 @@ def reassess_ai_roles(active: dict[str, Any], save: dict[str, Any], stamp: str, 
     clocks = save.setdefault("ai_role_state", {})
     season_year = int(stamp[:4]) - (stamp[5:7] < "07")
     canonical_year = season_start_year(CANONICAL_SEASON)
+    abbrevs = {team["id"]: team.get("abbrev") for team in active.get("teams", [])}
     for team, roster, signature in due:
         priors = {p["id"]: max(0, float(baselines.get(p["id"], display_minutes_projection(p)) or 0)) for p in roster}
         workloads = {
@@ -6804,7 +6842,9 @@ def reassess_ai_roles(active: dict[str, Any], save: dict[str, Any], stamp: str, 
             * clamp(1 - .25 * (season_year - int(p.get("age_base_start_year") or canonical_year)), 0.0, 1.0)
             for p in roster
         }
-        targets, selected = ai_role_targets(neutral, roster, priors, opening_workloads=workloads)
+        newcomers = {p["id"] for p in roster if workloads[p["id"]] > 0
+                     and carried_workload_earned_elsewhere(p, abbrevs.get(team))}
+        targets, selected = ai_role_targets(neutral, roster, priors, opening_workloads=workloads, newcomers=newcomers)
         total = sum(priors.values())
         blended = {
             pid: target * .8 + (priors[pid] * 240 / total if total else target) * .2
