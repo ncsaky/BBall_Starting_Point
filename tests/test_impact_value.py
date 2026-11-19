@@ -67,6 +67,29 @@ class FitFileTests(unittest.TestCase):
         self.assertGreater(offense[-1] - offense[2], 0.2)                # the top crashers separate (production scale)
         self.assertEqual(len({round(v["defense"], 9) for v in values}), 1)   # no defensive credit for crashing
 
+    def test_defense_groups_count_for_defense_only_and_elite_rim_protection_separates(self):
+        fit = iv.load_fit(ROOT)
+        traits = {t: 50.0 for t in iv.LEGACY_TRAITS}
+
+        def value(interior, rest=55.0, rim=50.0):
+            inputs = {i: {"value": {"grade": rest}} for group in iv.DEFENSE_GROUPS for i in iv.INPUT_GROUPS[group]}
+            inputs.update({i: {"value": {"grade": interior}} for i in iv.INPUT_GROUPS["in_def_interior"]})
+            return iv.predict(fit, {**traits, "rim_deterrence": rim}, {"height_inches": 84}, {}, inputs)
+
+        grades = (40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0)
+        values = [value(g) for g in grades]
+        self.assertEqual(len({round(v["offense"], 9) for v in values}), 1)      # defensive skill is not offense
+        defense = [v["defense"] for v in values]
+        self.assertEqual(defense, sorted(defense))                               # better never lowers value
+        self.assertGreater(defense[-1] - defense[-3], defense[2] - defense[0])   # elite steps are worth more (convex)
+        self.assertGreater(value(85.0, rim=105.0)["defense"], value(85.0, rim=95.0)["defense"])   # no cap at the top
+        # A specialist with elite interior skills and ordinary perimeter skills is not averaged away: he beats an
+        # all-round defender with the same average across the defensive skills.
+        n_int = len(iv.INPUT_GROUPS["in_def_interior"])
+        n_all = sum(len(iv.INPUT_GROUPS[g]) for g in iv.DEFENSE_GROUPS)
+        rest = (60.0 * n_all - 90.0 * n_int) / (n_all - n_int)
+        self.assertGreater(value(90.0, rest=rest, rim=70.0)["defense"], value(60.0, rest=60.0, rim=70.0)["defense"])
+
     def test_rebound_production_scale_is_monotone_and_not_clipped(self):
         points = [iv.orb_per75(x) for x in range(0, 111, 5)]
         self.assertEqual(points, sorted(points))

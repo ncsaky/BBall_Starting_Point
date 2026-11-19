@@ -302,7 +302,8 @@ def engine_header(active: Mapping[str, Any], player_id: str) -> dict[str, float]
     """OVR/OFF/DEF from the game's own value of the player, on an open-ended display scale.
 
     New-ratings mode: the front office (trades, contracts, rotations, free agency) orders players by the engine's
-    fitted impact per 100 possessions (impact_value.predict, fitted to Basketball Index multi-year LEBRON) and reads it
+    fitted impact per 100 possessions (impact_value.predict, fitted to Basketball Index multi-year LEBRON blended with
+    the analysts' consensus order) and reads it
     through save.player_attribute_summary. The card shows that same impact on a straight line (_ImpactLine: league
     median 50, league best ~98, no cap), so card and AI agree on order AND the gaps between players are the engine's
     real value gaps. (Until 2026-11-19 the card re-ranked the summary onto 50 + 15z, which put the top three at

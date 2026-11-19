@@ -2,8 +2,10 @@
 
 The legacy overall/offense/defense summary is a hand-weighted skill average: no rebounding, defense 60%
 perimeter mobility. Honest input-derived ratings exposed that it ranks big men far too low (Gobert ~250th).
-This module predicts offensive and defensive impact per 100 possessions (Basketball Index multi-year
-O-/D-LEBRON, fitted by scripts/fit_impact_value.py) from the same 15 hidden ratings plus height, then maps each
+This module predicts offensive and defensive impact per 100 possessions from the same 15 hidden ratings plus
+body measures and grouped inputs. The fit (scripts/fit_impact_value.py) targets Basketball Index multi-year
+O-/D-LEBRON blended with the analysts' consensus order where analysts rank a player (analysts 60%, impact 40%;
+2026-11-19 value refit). It then maps each
 prediction onto the EXISTING summary scale by league rank. Who ranks where comes from the fit; the spread of
 values is unchanged, so every AI cutoff written for the old scale keeps working. Ratings themselves are not
 changed (ratings-first rule); only how the engine values them.
@@ -28,9 +30,22 @@ INPUT_GROUPS = {
     "in_post": ["S21", "S22", "S23"],
     "in_offball": [f"S{n:02d}" for n in range(25, 29)],
     "in_rebounding": [f"S{n:02d}" for n in range(29, 33)],
-    "in_defense": [f"S{n:02d}" for n in range(33, 47)],
+    # Defense in three groups (2026-11-19 value refit). One average of all 14 defensive skills hid specialists: an elite
+    # rim protector who is ordinary at screen navigation and steals (Wembanyama, Holmgren, Gobert, Mobley) averaged out
+    # near a solid all-round wing. Grouped by the approved model's defensive capabilities:
+    "in_def_interior": ["S36", "S37", "S45"],                  # interior positioning, contest technique, foul control
+    "in_def_perimeter": ["S33", "S34", "S35", "S42"],          # containment, contact leverage, screen navigation, on-ball steals
+    "in_def_help": ["S38", "S39", "S40", "S41", "S43", "S44", "S46"],   # rotations, off-ball position, closeouts,
+                                                               # anticipation, interceptions, attention, communication
     "in_pass_reading": [f"F{n:02d}.recognition" for n in range(1, 10)],
 }
+DEFENSE_GROUPS = ("in_def_interior", "in_def_perimeter", "in_def_help")
+# Elite rim protection is worth more than a straight line gives it: the best rim protectors change which shots opponents
+# take at all. Two convex terms, each zero at or below the league middle (interior grade 50, rim deterrence 50) and
+# rising with the square of the distance above it, so a better defender never loses value and nothing is capped.
+# Out-of-fold defensive fit 0.885 -> 0.901 with them (scripts/fit_impact_value.py); without them Wembanyama's defense
+# was predicted about +2.7 against a real +4.2 per 100 possessions.
+ELITE_DEFENSE = {"interior_elite": ("in_def_interior", 50.0, 10.0), "rim_elite": ("rim_deterrence", 50.0, 50.0)}
 BODY_PREDICTORS = ("height_inches", "weight_lbs", "wingspan_inches")   # fixed body measures (sign-free in the fit)
 # Involvement pays off in proportion to the skill and efficiency behind it. A purely additive fit gave every heavy-usage
 # player the same credit for usage, so it under-predicted the stars' offense (Brunson O-LEBRON +4.97 predicted +3.14,
@@ -47,8 +62,11 @@ INTERACTIONS = {"in_shooting": (50.0, 10.0), "in_creation": (50.0, 10.0), "in_fi
 # defensive skill; left free, it picked up defensive weight as a stand-in for "plays center").
 ORB_SCALE_FILE = "data/canonical/offensive_rebound_scale.json"
 OFFENSE_ONLY = ("offensive_rebounding", "orb_per75")
+# The defensive groups and the elite rim-protection terms count for defense only (left free, the interior group picked
+# up offensive weight as a stand-in for "plays center"), so the card's OFF and DEF stay separate layers.
+DEFENSE_ONLY = (*DEFENSE_GROUPS, *ELITE_DEFENSE)
 PREDICTORS = [*LEGACY_TRAITS, *BODY_PREDICTORS, *PROFILE_PREDICTORS, *INPUT_GROUPS, "in_involvement",
-              *(f"involvement_x_{name}" for name in INTERACTIONS), "orb_per75"]
+              *(f"involvement_x_{name}" for name in INTERACTIONS), "orb_per75", *ELITE_DEFENSE]
 TABLE_KEY = "_impact_value_tables"
 _FIT_CACHE: dict[str, Any] = {}
 _DEFAULT_ROOT: Path | None = None
@@ -127,6 +145,7 @@ def predictor_row(traits: Mapping[str, float], player: Mapping[str, Any],
     involvement = named["in_involvement"]
     row.extend(involvement * (named[name] - centre) / scale for name, (centre, scale) in INTERACTIONS.items())
     row.append(orb_per75(named["offensive_rebounding"]))
+    row.extend(max(0.0, named[name] - centre) ** 2 / scale for name, centre, scale in ELITE_DEFENSE.values())
     return row
 
 
@@ -264,7 +283,7 @@ def sim_impact(canonical: Mapping[str, Any], player: Mapping[str, Any], traits: 
     The hand-weighted impact blend (sim.player_impact_score) averages nine skills, rim deterrence among them. While the
     rim rating mixed in general defensive grades, it also carried perimeter and help defense; once rim deterrence was
     fitted to real rim evidence (2026-11-18), elite non-rim defenders (Anunoby, Draymond Green, Adebayo) lost sim
-    impact and team strength followed. The fitted value (offense + defense, Basketball Index multi-year LEBRON, the same
+    impact and team strength followed. The fitted value (offense + defense, Basketball Index multi-year LEBRON blended with the analysts, the same
     model the card shows) reads every defensive input directly. Same league distribution as the blend; only the order
     comes from the fit. None outside new-ratings mode.
     """
