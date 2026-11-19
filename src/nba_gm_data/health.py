@@ -875,17 +875,22 @@ def advance_return_ramp(state: dict[str, Any], game_date: date, staff: dict[str,
 # of a back-to-back, 2.4% otherwise), rising with age (back-to-backs: 5% under 25, 7% at 25-29, 10% at 30-33, 11% at
 # 34+) and late in the season (last 15 games: 4-5% vs 3%); minutes played made no difference among regulars. The
 # chances below are those rates minus the one-game injury and illness absences the injury model already produces.
+# The box scores rarely say why (most inactive players are not listed), so the "other nights" chance also stands in
+# for one-game absences that never reach an injury report: personal reasons, minor knocks, suspensions.
 # Rules from the league's player participation policy (2023): a team rests at most one regular in a game (outside the
 # last two games), and a player stays on course for the 65 games that award eligibility needs.
 REST_MIN_MINUTES = 24.0
 # (age upper bound, chance on the second night of a back-to-back, chance on other nights)
-REST_BY_AGE = ((24.99, 0.040, 0.011), (29.99, 0.061, 0.016), (33.99, 0.082, 0.031), (99.0, 0.10, 0.032))
+REST_BY_AGE = ((24.99, 0.050, 0.011), (29.99, 0.070, 0.016), (33.99, 0.095, 0.031), (99.0, 0.11, 0.032))
 REST_RETURNING_BACK_TO_BACK = 0.15   # judgment: teams often keep a player just back from injury out of back-to-backs
 REST_LATE_GAMES = 15                 # the stretch run: every team rests a little more
 REST_LATE_EXTRA = 0.03
 REST_LATE_TOP_EXTRA = 0.008          # teams with a playoff spot secured (top 8 records) a little more again
-REST_FINAL_GAMES = 2                 # last two games: winning teams (.500+) sit regulars before the playoffs
+# Last two games: regulars sit (real 2025-26: 60% of the best eight teams' regulars and 46% of the middle teams' sat at
+# least one of their final games). Winning teams rest for the playoffs; the others because little is left to play for.
+REST_FINAL_GAMES = 2
 REST_FINAL_PLAYOFF = 0.35
+REST_FINAL_OTHERS = 0.25
 REST_FINAL_MIN_WIN_PCT = 0.5
 REST_MISSED_LIMIT = 14               # no rest nights once a player has missed this many games (65-game rule)
 REST_MAX_PER_GAME = 1
@@ -926,8 +931,10 @@ def rest_chance(player: dict[str, Any], state: dict[str, Any], context: dict[str
         return SHUTDOWN_HAZARD, "shutdown", "shut down for the rest of the season (team out of the race)"
     if int(state.get("games_missed") or 0) + int(state.get("games_rested") or 0) >= REST_MISSED_LIMIT:
         return 0.0, "rest", ""
-    if games_left <= REST_FINAL_GAMES and float(context.get("win_pct") or 0.0) >= REST_FINAL_MIN_WIN_PCT:
-        return REST_FINAL_PLAYOFF, "rest", "rest before the playoffs"
+    if games_left <= REST_FINAL_GAMES:
+        if float(context.get("win_pct") or 0.0) >= REST_FINAL_MIN_WIN_PCT:
+            return REST_FINAL_PLAYOFF, "rest", "rest before the playoffs"
+        return REST_FINAL_OTHERS, "rest", "rest in the season's final games"
     if int(context.get("rested_tonight") or 0) >= REST_MAX_PER_GAME or int(context.get("regulars_out") or 0) >= REST_SHORT_HANDED:
         return 0.0, "rest", ""
     b2b_chance, other_chance = next((b, o) for limit, b, o in REST_BY_AGE if age <= limit)

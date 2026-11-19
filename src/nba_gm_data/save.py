@@ -2046,6 +2046,7 @@ def advance_lifecycle_to(
         todays_games = [g for g in pending_games if g["gameDate"] == day]
         health = simulate_health(root, active, cursor, day, seed=seed, schedule=todays_games)
         merge_health_results(save, health, active)
+        attach_rest_suggestions(root, active, save, day, seed)
         refresh_active_runtime_state(active, save)
         if development:
             month_events = process_development_months(active, save, cursor, day, seed)
@@ -5445,6 +5446,46 @@ def record_lasting_injury_effect(save: dict[str, Any], event: dict[str, Any]) ->
         confidence=0.6, source_ids=["src_injury_model_v2", "src_bbi_injury_long_term"],
         notes=f"Lasting decline after {event.get('diagnosis')} (Basketball Index long-term injury evidence).",
     )))
+
+
+def attach_rest_suggestions(root: str | Path, active: dict[str, Any], save: dict[str, Any], day: str, seed: int) -> None:
+    """The user's coach suggests rest for the team's next game, by the same rule and seeded draw AI coaches act on
+    (health.coach_rest_decision). Stored on the health state and shown next to the player; never applied."""
+    from .health import coach_rest_decision, league_rest_context, rest_draw, REST_MIN_MINUTES
+    human = set(human_controlled_team_ids(save))
+    states = {state.get("player_id"): state for state in save.get("health_states", [])}
+    roster = {player["id"]: player for player in active.get("players", []) if player.get("team_id") in human}
+    for player_id in roster:
+        (states.get(player_id) or {}).pop("rest_suggestion", None)
+    if not human or not save.get("team_records") or (save.get("state") or {}).get("phase") not in (None, "regular_season"):
+        return
+    standings = league_rest_context({"save_team_records": save.get("team_records")})
+    espn_by_team = {team["id"]: espn for espn, team in espn_team_id_map(active).items()}
+    games = [g for g in schedule_for_save(root, save) if str(g.get("phase") or "regular") == "regular"]
+    for team_id in sorted(human):
+        espn = espn_by_team.get(team_id)
+        mine = sorted((g for g in games if espn in (str(g.get("homeTeamId")), str(g.get("awayTeamId")))),
+                      key=lambda g: (g.get("gameDate") or "", str(g.get("externalGameId"))))
+        upcoming = next((g for g in mine if (g.get("gameDate") or "") > day), None)
+        if not upcoming:
+            continue
+        previous = max((g["gameDate"] for g in mine if (g.get("gameDate") or "") <= day), default=None)
+        back_to_back = bool(previous) and (parse_date(upcoming["gameDate"]) - parse_date(previous)).days == 1
+        players = sorted((p for p in roster.values() if p.get("team_id") == team_id), key=lambda p: -float(p.get("minutes_projection") or 0))
+        out = sum(1 for p in players if player_unavailable_for_rotation(states.get(p["id"]))
+                  and float(p.get("_trade_value_minutes_projection") or 0) >= REST_MIN_MINUTES)
+        context = {**standings.get(team_id, {}), "back_to_back": back_to_back, "rested_tonight": 0, "regulars_out": out}
+        for player in players:
+            state = states.get(player["id"])
+            if (not state or float(player.get("minutes_projection") or 0) < REST_MIN_MINUTES
+                    or player_unavailable_for_rotation(state)):
+                continue
+            decision = coach_rest_decision(player, state, context, rest_draw(seed, upcoming["externalGameId"], player["id"]))
+            if decision:
+                kind, reason = decision
+                state["rest_suggestion"] = {"game_id": str(upcoming["externalGameId"]), "date": upcoming["gameDate"],
+                                            "kind": kind, "reason": reason}
+                context["rested_tonight"] += 1
 
 
 def merge_health_results(save: dict[str, Any], health: dict[str, Any], canonical: dict[str, Any] | None = None) -> None:
