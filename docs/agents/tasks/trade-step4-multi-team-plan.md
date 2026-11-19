@@ -62,5 +62,5 @@ Multi-team assembly is a second stage of the step-2 target search. When a buyer 
 ## Files
 `multi_team_trades.py`, `trade_targets.py`, `transactions.py` (search stage and evaluation), `trade_wants.py` (publishing room and exceptions), `play.py` (draft-night chains), config overrides and tests. The user's own trade finder and the human team's evaluations are unchanged.
 
-## Open questions for the user
-- None needed to start. One to confirm when reviewing: should the user ever be offered a third-team role, for example "Team X will pay you two seconds to absorb this contract"? The proposed answer is yes, as an incoming offer the user can accept or decline, never automatic.
+## User decision (2026-11-19)
+- The user's team can be offered a role as a third team, for example "Team X will pay you two seconds to absorb this contract". These arrive as **incoming offers** that the user accepts or declines in the existing offers flow. They are never executed automatically.
