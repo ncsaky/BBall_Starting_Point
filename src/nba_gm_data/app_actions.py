@@ -1699,7 +1699,7 @@ def prospect_card_payload(canonical: dict[str, Any], save_path: Path, prospect_i
         'upside_unlocked': upside_unlocked,
         'upside_remaining': round(max(0, min(5, (scout.get('potential', 0) - scout.get('now', 0)) / 5)), 1) if upside_unlocked else None,
         'board_rank': boards.get('consensus_rank') or prospect.get('rank'),
-        'rank_range': ({'low': boards['consensus_best'], 'high': boards['consensus_worst']} if boards else prospect.get('rank_range') or {}),
+        'rank_range': ({'low': boards['consensus_middle'][0], 'high': boards['consensus_middle'][1]} if boards else prospect.get('rank_range') or {}),
         'draft_boards': boards,
         'season': season, 'career_seasons': career,
         'recent_games': logs, 'recent_game_table': logs[-5:],
@@ -1736,6 +1736,7 @@ def prospect_two_boards(active: dict[str, Any], team: dict[str, Any], prospect: 
     return {
         'month_label': scouting['month_label'],
         'consensus_rank': consensus['rank'], 'consensus_best': consensus['best'], 'consensus_worst': consensus['worst'],
+        'consensus_middle': list(consensus['middle']),
         'scout_rank': report['scout_rank'], 'scout_rank_previous': previous,
         'scout_rank_change': (previous - report['scout_rank']) if previous else None,
         'development': report['development'], 'coverage': report['coverage'],

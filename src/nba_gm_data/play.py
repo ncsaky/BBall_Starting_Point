@@ -3679,7 +3679,11 @@ def ai_pick_reacts_to_board(active: dict[str, Any], save: dict[str, Any]) -> boo
     if not team_id or team_id in human_controlled_team_ids(save):
         return False
     try:
-        return rechoose_pending_draft_pick(active, state, pending, index)
+        changed = rechoose_pending_draft_pick(active, state, pending, index)
+        if not changed:  # same prospect, but say why against the board as it is now
+            explain_pending_draft_pick(active, str(state.get("year") or ""), pending, index,
+                                       int((state.get("draft") or {}).get("seed") or 1))
+        return changed
     except (KeyError, ValueError):
         return False
 
@@ -3712,6 +3716,7 @@ def draft_pick_presentation_event(current: dict[str, Any]) -> dict[str, Any]:
             "name": prospect.get("name") or selection.get("prospect_name") or "Unknown prospect",
             "position": prospect.get("position") or "",
         },
+        "explanation": (current.get("decision") or {}).get("notes"),
     }
 
 

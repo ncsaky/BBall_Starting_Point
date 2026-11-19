@@ -288,10 +288,10 @@ def development_label(current: float, potential: float, age: Any) -> dict[str, s
         years = float(age)
     except (TypeError, ValueError):
         years = 20.0
-    if room >= 28.0 or (years <= 19.0 and room >= 24.0):
-        return {"key": "raw", "label": "Raw, high upside", "timeline": "needs two or three years"}
-    if room <= 16.0 or years >= 22.0:
+    if room <= 16.0 or (years >= 22.0 and room <= 22.0):
         return {"key": "ready", "label": "Ready now, less growth", "timeline": "can help soon"}
+    if years < 22.0 and (room >= 28.0 or (years <= 19.0 and room >= 24.0)):
+        return {"key": "raw", "label": "Raw, high upside", "timeline": "needs two or three years"}
     return {"key": "balanced", "label": "Some now, some upside", "timeline": "a year or two"}
 
 
@@ -433,11 +433,11 @@ def where_scouts_differ(scouting: dict[str, Any], team_id: str, prospect_id: str
     diffs = [(report["trait_estimates"][k]["mid"] - consensus["traits"][k], k)
              for k in report["trait_estimates"] if k in consensus["traits"] and k != "nba_readiness"]
     potential_diff = report["estimated_potential"]["mid"] - consensus["potential"]
-    diffs.append((potential_diff * 1.5, "upside"))
+    diffs.append((potential_diff * 1.2, "upside"))
     if not diffs:
         return None
     diff, key = max(diffs, key=lambda item: abs(item[0]))
-    if abs(diff) < 2.0:
+    if abs(diff) < 3.0:
         return None
     word = "his upside" if key == "upside" else f"his {TRAIT_WORDS.get(key, key.replace('_', ' '))}"
     return f"{'higher' if diff > 0 else 'lower'} on {word}"

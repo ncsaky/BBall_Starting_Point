@@ -90,6 +90,8 @@ GM_PHASE_READY = 0.14  # contending: per point of current level above a typical 
 GM_TYPICAL_ROOM = 22.0
 GM_TYPICAL_CURRENT = 54.0
 GM_CONTENDER_RISK = 0.03  # contenders dislike volatile prospects a little more than the scouts do
+GM_REACH_WEIGHT = 0.25  # per point of slot value paid above the prospect's consensus slot (beyond the tolerance)
+GM_REACH_TOLERANCE = 2.0
 GM_NEUTRAL_PICK = 15  # the pick used for the GM order shown on pre-draft boards
 REBUILD_PHASES = {"rebuilding", "developing"}
 CONTEND_PHASES = {"contending", "contending_with_future_upside"}
@@ -2272,7 +2274,7 @@ def board_entry_payload(entry: dict[str, Any], prospect: dict[str, Any], consens
             "name": prospect["name"],
             "rank": (consensus or {}).get("rank") or prospect["rank"],
             "public_rank": prospect["rank"],
-            "rank_range": ({"low": consensus["best"], "high": consensus["worst"]} if consensus
+            "rank_range": ({"low": consensus["middle"][0], "high": consensus["middle"][1]} if consensus
                            else dict(prospect.get("rank_range") or {})),
             "position": prospect["position"],
             "age": whole_prospect_age(prospect.get("age")),
@@ -2573,9 +2575,15 @@ def gm_rows(canonical: dict[str, Any], scouting: dict[str, Any], team_id: str, o
             phase_term = GM_PHASE_READY * (current - GM_TYPICAL_CURRENT) - GM_CONTENDER_RISK * report["risk"]["volatility"]
         fit = gm_need_fit(canonical, team_id, prospect)
         need_term = need_weight * (fit - 50.0)
+        # Price: taking a prospect the league ranks far below this pick pays this pick's price for a later pick's
+        # player; a GM knows he could likely get him later or trade down for him.
+        consensus_rank = scouting["consensus"][pid]["rank"]
+        reach_term = -GM_REACH_WEIGHT * max(0.0, _slot_value(PROFILE_POTENTIAL, int(overall_pick))
+                                            - _slot_value(PROFILE_POTENTIAL, consensus_rank) - GM_REACH_TOLERANCE)
         rows.append({
             "prospect_id": pid,
-            "score": round(report["scouted_grade"] + phase_term + need_term, 4),
+            "score": round(report["scouted_grade"] + phase_term + need_term + reach_term, 4),
+            "reach_term": round(reach_term, 3),
             "scout_grade": report["scouted_grade"],
             "scout_rank": report["scout_rank"],
             "consensus_rank": scouting["consensus"][pid]["rank"],
