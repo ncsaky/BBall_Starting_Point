@@ -91,6 +91,21 @@ def build_priors(players, traits, careers, raw_players, year=2026):
     return priors
 
 
+# League scale of the screening facet (rotation players, 500+ minutes in 2025-26): the old recipe's mean and spread,
+# and the mean and spread of log fitted screen assists per 36 (output/unused-ratings/screen_facet_scale.py).
+SCREEN_FACET_MEAN, SCREEN_FACET_SD = 54.111, 8.45
+SCREEN_LOG_MEAN, SCREEN_LOG_SD = -0.1974, 0.8186
+
+
+def _screen_assist_rate(canonical, player):
+    from .ratings_model import effective_inputs
+    inputs = effective_inputs(canonical, player.get('id'))
+    if not inputs:
+        return None
+    from .box_rates import screen_assists_per36_from_inputs
+    return screen_assists_per36_from_inputs(inputs)
+
+
 def offensive_profile(canonical, player, traits):
     """Current, evolving facets. Frozen evidence is adjusted by actual skill deltas."""
     get = lambda key: float(traits.get(key, 50))
@@ -106,6 +121,13 @@ def offensive_profile(canonical, player, traits):
     post = (.50*rim+.30*versatility+.20*get('handle_pressure'))*(.45+.55*big)
     finishing = .65*rim+.20*size+.15*get('foot_speed_lateral_agility')
     screening = .45*size+.35*get('scheme_iq')+.20*get('stamina_cardio')
+    screen_rate = _screen_assist_rate(canonical, player)
+    if screen_rate is not None:
+        # New ratings: screening is the player's fitted screen production (box_rates.SCREEN_ASSISTS_INPUTS: screen
+        # execution, screen-action recognition, how often he screens or rolls, body mass) placed on the old facet's
+        # league scale (same mean and spread over 377 rotation players), so team offence and trade value keep their
+        # calibration. The old recipe (size, general IQ, stamina) never read the screening grades the card shows.
+        screening = SCREEN_FACET_MEAN+SCREEN_FACET_SD*(math.log(screen_rate)-SCREEN_LOG_MEAN)/SCREEN_LOG_SD
     post_share = big*(.025+max(0, post-45)*.004)
     roll_share = big*(.10+max(0, finishing-45)*.004)
     w = float(prior.get('playtype_weight', 0))

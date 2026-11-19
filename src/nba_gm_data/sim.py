@@ -308,13 +308,20 @@ def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any], *, 
                 features["playmaking_ast36"] = playmaking
             for key, rate in (("turnovers_per36", box_rates.turnovers_per36_from_inputs(player_inputs)),
                               ("steals_per36", box_rates.steals_per36_from_inputs(player_inputs)),
-                              ("fta_per_point", box_rates.fta_per_point_from_inputs(player_inputs))):
+                              ("fta_per_point", box_rates.fta_per_point_from_inputs(player_inputs)),
+                              ("rebounds_per36", box_rates.rebounds_per36_from_inputs(player_inputs)),
+                              ("screen_assists_per36", box_rates.screen_assists_per36_from_inputs(player_inputs))):
                 if rate is not None:
                     features[key] = rate
             from .defense import contest_jump_share
             jump = contest_jump_share(player_inputs)
             if jump is not None:
                 features["contest_jump"] = jump
+            # Shot difficulty tolerance (T04): how much of the team's shooting luck a player's own line absorbs
+            # (box_variation.team_context_share). Box score only.
+            difficulty = box_rates.tendency_from_inputs(player_inputs, "T04")
+            if difficulty is not None:
+                features["shot_difficulty"] = difficulty
     from .offense import enabled as offense_enabled, offensive_profile
     if offense_enabled(canonical):
         profile = offensive_profile(canonical, player, {key: float(row['value']) for key, row in traits.items()})
@@ -1837,6 +1844,9 @@ def rebound_rate_per_minute(player: dict[str, Any], feat: dict[str, float]) -> f
     Fitted (2026-11-17) to real 2025-26 rebounds per 36 for 150 rotation players: height carries most of the
     defensive-rebounding signal that the 15 hidden ratings lack (correlation with real rebounding 0.74 -> 0.82).
     """
+    if feat.get("rebounds_per36") is not None:
+        # New ratings: the fit on the rebounding inputs (box_rates.REBOUNDS_INPUTS, out-of-fold r 0.94).
+        return float(feat["rebounds_per36"]) / 36.0
     height = float(player.get("height_inches") or 78.0)
     per36 = clamp(-30.58 + 0.0411 * float(feat.get("offensive_rebounding") or 50.0) + 0.4408 * height, 1.5, 16.0)
     return per36 / 36.0
