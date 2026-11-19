@@ -25,7 +25,7 @@
   "decision": {
     "base_acceptance_threshold": 1.5,
     "contender_need_bonus": 5.5,
-    "rebuilder_pick_bonus": 7.0,
+    "rebuilder_pick_bonus_rate": 0.14,
     "manual_review_blocks_execution": true,
     "max_bad_gm_overpay": 8.0
   },

@@ -1,0 +1,604 @@
+"""Target-driven AI trade search: each front office starts from what it is looking for (trade AI step 2).
+
+Step 3 of the order of work in docs/agents/TRADE_AI_DIRECTION.md; report in docs/agents/tasks/trade-step2-targets.md.
+
+How a front office works here, in the user's words: it starts from a target, specific or a profile ("a starting-level
+wing who can shoot, under $25M"), that fits its phase and plan; it looks at its options and alternatives at a
+reasonable price; wanting a player doesn't mean getting him (the seller has its own price). So instead of offering
+packages for every listed player to every interested team (the old brute-force search), each AI team:
+
+1. sets a few **targets** from its phase and roster (``team_trade_targets``), each with a plain-language reason;
+2. every team lists who it **would move and why** (``team_sell_reasons``: step 1's move reasons plus tax, expiring
+   veterans on teams that are not contending, and players out of the rotation);
+3. the search pairs each target with the players that match it, preferring players a seller would move; players on
+   teams with no reason to sell are still possible, at that team's higher own price (step 1's own-player premium is
+   not scaled down when the team has no reason to move him);
+4. it only pursues a pairing when the buyer values the player about as much as the seller's **asking price**
+   (``asking_price``), builds packages aimed at that price, prices them quickly from both sides and sends only the
+   few best to the unchanged acceptance check (``transactions.evaluate_trade_decision``), which stays the judge.
+
+Grounding in real trades (data/research/real_trades/trades_2025_2027.json, 43 trades with context). Reading who
+bought what, by the buyer's situation:
+- Contenders (OKC, CLE, BOS, NYK, LAL, MIN, GSW, DET, MIA, PHI, TOR): mostly a rotation player at a position of need
+  or to cover an injury (Clifford, Alvarado, Porzingis, Vucevic, Kennard, Dosunmu, McCain, Huerter), a few stars
+  (Harden, Giannis, LaMelo Ball, Jaylen Brown, Kawhi Leonard), paid with picks, expiring salary and young non-core
+  players. Ages of the rotation targets ran 21 to 36; stars 26 to 34.
+- Rebuilders (MEM, CHI, LAC, MIL, CHA, ATL, UTA): young players with upside (Dillingham 21, Ivey 24, Kuminga 23,
+  Mathurin 23, Hendricks 22, Clayton 22, Ware 22, Jakucionis 20, Risacher 21) and picks; veterans only as expiring
+  salary that came with a pick (Simons + a second, Conley, Vincent + a second) or as salary absorbed for seconds
+  (Saric, Finney-Smith, LeVert). No rebuilder took a 30+ veteran on a long deal without being paid for it.
+- Middle teams (WAS, IND, POR, DAL, CHA in 2026): a fit need (a scoring guard, a center upgrade, shooting) or a young
+  starter (Morant 26, Risacher 21).
+- Sellers' stated reasons: rebuild sell (veterans for picks/youth), tax or apron savings (12 of the 43), a crowded
+  position, a player wanting out (Trae Young, Jaylen Brown), an expiring player the team would lose anyway.
+
+Everything here reads the league and never writes it, and the human team is never a buyer or seller in this search
+(its offers come from the separate user-offer search, unchanged).
+"""
+from __future__ import annotations
+
+from typing import Any
+
+
+# --------------------------------------------------------------------------------------------- plain-language words
+STANCE_WORDS = {"contend": "contending", "rise": "on the rise", "retool": "retooling", "rebuild": "rebuilding"}
+BUCKET_WORDS = {"guard": "guard", "wing": "wing", "big": "big"}
+SKILL_NEEDS = (
+    # team feature, words, player attribute used to match
+    ("spacing", "shooting", "range"),
+    ("rim_deterrence", "rim protection", "rim_deterrence"),
+    ("defensive_events", "perimeter defense", "defense"),
+    ("primary_creator", "shot creation", "creation"),
+    ("passing", "playmaking", "passing"),
+    ("offensive_rebounding", "rebounding", "rebounding"),
+    ("rim_pressure", "rim pressure", "rim_pressure"),
+)
+SELL_REASON_WORDS = {
+    "older_than_team_timeline": "a veteran older than its timeline",
+    "extension_talks_stalled": "contract talks had stalled",
+    "gm_listed": "he was on the trade block",
+    "negative_contract_value": "his contract pays more than he gives",
+    "upgradeable_expensive_rotation_slot": "an expensive role player it wanted to upgrade",
+    "position_surplus": "a surplus at his position",
+    "veteran_surplus_slot": "a veteran surplus at his position",
+    "blocked_prospect": "a young player blocked from minutes",
+    "health_risk_for_win_now_team": "a health risk for a win-now team",
+    "planned_core_retool_not_full_teardown": "retooling around a younger core",
+    "over_tax_line": "getting under the luxury tax",
+    "expiring_veteran_non_contender": "an expiring veteran it would otherwise lose for nothing",
+    "out_of_rotation": "a player out of its rotation",
+}
+# How strongly each reason makes the seller want to move the player (search order only; the price itself is
+# step 1's own-player premium, already scaled by the same move reasons).
+SELL_REASON_STRENGTH = {
+    "gm_listed": 3.0, "extension_talks_stalled": 3.0, "older_than_team_timeline": 3.0,
+    "planned_core_retool_not_full_teardown": 2.5, "negative_contract_value": 2.0, "over_tax_line": 2.0,
+    "expiring_veteran_non_contender": 2.5, "upgradeable_expensive_rotation_slot": 2.0, "veteran_surplus_slot": 1.5,
+    "position_surplus": 1.0, "blocked_prospect": 1.5, "health_risk_for_win_now_team": 1.0, "out_of_rotation": 1.0,
+}
+
+# Search sizes. Deadline-depth searches (search_depth >= 2) explore more alternatives and packages per target.
+TARGETS_PER_TEAM = 3
+ALTERNATIVES = {1: 3, 2: 5}             # players explored per target
+MATCHES_SCANNED = 24                    # best-fitting players checked for a price both sides could agree on
+PACKAGES_EVALUATED = {1: 3, 2: 6}       # packages sent to the full acceptance check per pairing
+ZONE_TOLERANCE = 4.0                    # the buyer's value plus what its spare assets are worth extra to the
+                                        # seller may sit this far below the seller's ask
+PRESCREEN_TOLERANCE = 4.0               # quick price check, before the personality, wants and roster terms
+
+
+def _tx():
+    from . import transactions
+    return transactions
+
+
+def _memo(canonical: dict[str, Any]) -> dict[str, Any]:
+    """Per-search memo: a search context's league objects are never edited while the search runs."""
+    memo = canonical.get("_trade_target_memo")
+    if memo is None or memo.get("players_source") is not canonical.get("players"):
+        memo = {"players_source": canonical.get("players")}
+        canonical["_trade_target_memo"] = memo
+    return memo
+
+
+def _state(canonical: dict[str, Any], team_id: str) -> dict[str, Any]:
+    return next((s for s in canonical.get("team_strategic_states", []) if s.get("team_id") == team_id), {}) or {}
+
+
+def team_stance(state: dict[str, Any]) -> str:
+    """Contend / rise / retool / rebuild from the league-relative window (team_planning.window_assessments)."""
+    window = state.get("window_phase")
+    phase = state.get("phase")
+    if window == "peak" or (window is None and phase in {"contending", "contending_with_future_upside"}):
+        return "contend"
+    if window == "rebuilding" or (window is None and phase == "rebuilding"):
+        return "rebuild"
+    if window == "exiting" or (window is None and phase == "retooling"):
+        return "retool"
+    return "rise"
+
+
+def _season(canonical: dict[str, Any]) -> str:
+    tx = _tx()
+    return str((canonical.get("meta") or {}).get("active_season") or tx.CANONICAL_SEASON)
+
+
+def player_rows(canonical: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Facts the targets read, one row per rostered player (memoized per search)."""
+    memo = _memo(canonical)
+    if "rows" in memo:
+        return memo["rows"]
+    tx = _tx()
+    from .save import player_display_attribute_summary
+    values = tx.player_asset_values_by_id(canonical)
+    season = _season(canonical)
+    rows = {}
+    for player in canonical.get("players", []):
+        team_id = player.get("team_id")
+        if not team_id or player.get("_inactive_player"):
+            continue
+        valuation = tx.valuation_or_fallback(values, player["id"], player)
+        contract = tx.contract_for_player(canonical, player["id"]) or {}
+        seasons = [s for s in contract.get("seasons", []) if float(s.get("salary") or 0) > 0
+                   and str(s.get("season") or "") >= season]
+        salary = tx.current_salary(contract) or 0.0
+        try:
+            attrs = player_display_attribute_summary(canonical, player["id"])
+        except Exception:  # a player without inputs still trades on value; he just matches no skill target
+            attrs = {}
+        rows[player["id"]] = {
+            "id": player["id"], "name": player.get("name"), "team_id": team_id, "player": player,
+            "age": float(player.get("display_age", player.get("age")) or 27.0),
+            "bucket": tx.player_position_bucket(player),
+            "minutes": tx.trade_value_role_minutes(player, valuation),
+            "on_court": float(valuation.get("on_court_value") or 0.0),
+            "playoff": float(valuation.get("playoff_value") or 0.0),
+            "value": float(valuation.get("player_value") or 0.0),
+            "market": tx._search_market_value(canonical, player, valuation),
+            "development": float(valuation.get("development_upside") or 0.0),
+            "surplus": float(valuation.get("contract_surplus") or 0.0),
+            "health": float(valuation.get("health_risk") or 0.0),
+            "salary": salary,
+            "years": len(seasons) or (1 if salary else 0),
+            "attrs": {key: float(attrs.get(key) or 0.0) for _, _, key in SKILL_NEEDS},
+        }
+    memo["rows"] = rows
+    return rows
+
+
+def _team_rows(canonical: dict[str, Any], team_id: str) -> list[dict[str, Any]]:
+    return [row for row in player_rows(canonical).values() if row["team_id"] == team_id]
+
+
+def _payroll(canonical: dict[str, Any], team_id: str) -> float:
+    return _tx().team_current_salary_total(canonical, team_id)
+
+
+def _tax_line(canonical: dict[str, Any]) -> float:
+    return _tx().cap_lines_for_season(_season(canonical))["tax_line"]
+
+
+SLOT_DEPTH = {"guard": 3, "wing": 3, "big": 2}
+REPLACEMENT_ON_COURT = 42.0
+
+
+def position_slots(canonical: dict[str, Any], team_id: str) -> dict[str, dict[str, Any]]:
+    """For each position group: the quality of the team's last regular slot (3rd guard, 3rd wing, 2nd big)."""
+    healthy = [row for row in _team_rows(canonical, team_id) if row["minutes"] >= 4.0]
+    out = {}
+    for bucket, depth in SLOT_DEPTH.items():
+        group = sorted((row for row in healthy if row["bucket"] == bucket), key=lambda r: -r["on_court"])
+        top = [row["on_court"] for row in group[:depth]] + [REPLACEMENT_ON_COURT] * max(0, depth - len(group))
+        out[bucket] = {"slot_quality": top[depth - 1], "average": sum(top) / depth, "count": len(group)}
+    return out
+
+
+def league_slot_averages(canonical: dict[str, Any]) -> dict[str, float]:
+    memo = _memo(canonical)
+    if "slot_averages" not in memo:
+        teams = [t["id"] for t in canonical.get("teams", [])]
+        slots = [position_slots(canonical, tid) for tid in teams]
+        memo["slot_averages"] = {bucket: sum(s[bucket]["average"] for s in slots) / max(1, len(slots))
+                                 for bucket in SLOT_DEPTH}
+    return memo["slot_averages"]
+
+
+def skill_gaps(canonical: dict[str, Any], team_id: str) -> list[tuple[float, str, str]]:
+    """The team's skills relative to the league (z-scores of its rotation features), weakest first."""
+    memo = _memo(canonical)
+    if "features" not in memo:
+        from .sim import team_feature_vector
+        memo["features"] = {team["id"]: team_feature_vector(canonical, team, include_spatial=False).features
+                            for team in canonical.get("teams", [])}
+    features = memo["features"]
+    gaps = []
+    for feature, words, attr in SKILL_NEEDS:
+        values = [float(f.get(feature) or 50.0) for f in features.values()]
+        mean = sum(values) / len(values)
+        spread = (sum((v - mean) ** 2 for v in values) / len(values)) ** 0.5 or 1.0
+        gaps.append(((float(features.get(team_id, {}).get(feature) or 50.0) - mean) / spread, words, attr))
+    return sorted(gaps)
+
+
+def _matchable_salary(canonical: dict[str, Any], team_id: str) -> float:
+    """Roughly the largest incoming salary the team can match from players outside its core."""
+    plan = (canonical.get("team_plans") or {}).get(team_id) or {}
+    core = set(plan.get("core_ids") or [])
+    salaries = sorted((row["salary"] for row in _team_rows(canonical, team_id) if row["id"] not in core), reverse=True)
+    return sum(salaries[:3]) * 1.25 + 5_000_000
+
+
+# --------------------------------------------------------------------------------------------------- targets
+def team_trade_targets(canonical: dict[str, Any], team_id: str) -> list[dict[str, Any]]:
+    """A few targets for this front office this trade window, each with its reason in plain words.
+
+    Profiles, not lists of names: the search finds the players who fit (the best fit is the specific target, the rest
+    are the alternatives). Contenders look for rotation upgrades at their weakest position or skill and, with the
+    assets for it, a playoff-level player; rebuilders look for young players with upside; teams on the rise look for
+    fit and young starters; retooling teams look for a younger successor to an aging core player.
+    """
+    memo = _memo(canonical).setdefault("targets", {})
+    if team_id in memo:
+        return memo[team_id]
+    tx = _tx()
+    state = _state(canonical, team_id)
+    stance = team_stance(state)
+    plan = (canonical.get("team_plans") or {}).get(team_id) or {}
+    roster = _team_rows(canonical, team_id)
+    if not state or not roster:
+        memo[team_id] = []
+        return []
+    slots = position_slots(canonical, team_id)
+    league = league_slot_averages(canonical)
+    weakest = max(SLOT_DEPTH, key=lambda b: (league[b] - slots[b]["average"], b))
+    weak_slot = slots[weakest]["slot_quality"]
+    gap_z, skill_words, skill_attr = skill_gaps(canonical, team_id)[0]
+    # The evaluation values an incoming player by the minutes he would play here (his on-court rank on this roster),
+    # so a target has to be good enough to take a real role: "nth(k)" is the on-court value of the team's k-th best.
+    order = sorted((r["on_court"] for r in roster if r["minutes"] >= 4.0 or r["on_court"] >= 50.0), reverse=True)
+    nth = lambda k: order[min(k, len(order)) - 1] if order else 45.0
+    second_best = nth(2)
+    matchable = _matchable_salary(canonical, team_id)
+    firsts = int((state.get("pick_inventory") or {}).get("first_round_count") or 0)
+    targets: list[dict[str, Any]] = []
+
+    def add(key, label, reason, **filters):
+        targets.append({"id": f"{team_id}:{key}", "team_id": team_id, "stance": stance, "key": key,
+                        "label": label, "reason": reason, "filters": filters})
+
+    position = BUCKET_WORDS[weakest]
+    if stance == "contend":
+        add("rotation_upgrade", f"a {position} for its top six", f"its {position} rotation is the thinnest part of "
+            f"a contending roster", buckets={weakest}, min_on_court=max(weak_slot + 3.0, nth(6) + 1.0),
+            min_playoff=56.0, age_min=21.0, age_max=35.0, max_salary=min(matchable, 32e6))
+        if gap_z < -0.3:
+            add("skill", f"a rotation player who adds {skill_words}", f"its rotation is short on {skill_words}",
+                skill=(skill_attr, 60.0), min_on_court=nth(7) + 1.0, min_playoff=54.0, age_min=21.0,
+                age_max=35.0, max_salary=min(matchable, 25e6))
+        if firsts >= 2 or float(state.get("pressure") or 55) >= 70:
+            add("star", "a playoff-level starter", "a contender pushing for a title with picks to spend",
+                min_on_court=max(68.0, second_best - 2.0), min_playoff=68.0, age_min=21.0, age_max=33.0,
+                max_salary=min(matchable, 55e6), seller_reason_required=True)
+    elif stance == "rebuild":
+        # Real rebuilders took young players from teams competing now, where they were surplus (Dillingham,
+        # Kuminga, Mathurin, Hendricks); rebuilders do not sell each other their young players.
+        add("prospect", "a young player who would play", "a rebuild collects young players to develop",
+            age_max=23.5, min_development=6.0, min_on_court=nth(8), max_salary=20e6, max_years=4,
+            no_bad_contract=True, seller_stances={"contend", "rise"})
+        add("young_starter", f"a young {position} who can start", f"a rebuild needs a young {position} to build around",
+            buckets={weakest}, age_max=25.5, min_on_court=max(56.0, weak_slot, nth(5)), max_salary=min(matchable, 28e6),
+            no_bad_contract=True, seller_stances={"contend", "rise", "retool"})
+    elif stance == "retool":
+        core = set(plan.get("core_ids") or [])
+        aging = sorted((r for r in roster if r["id"] in core and r["age"] >= 30.0), key=lambda r: -r["age"])
+        if aging:
+            old = aging[0]
+            add("successor", f"a younger {BUCKET_WORDS[old['bucket']]} to succeed {old['name']}",
+                f"{old['name']} is {old['age']:.0f} and the team is retooling around a younger core",
+                buckets={old["bucket"]}, age_max=27.0, min_on_court=max(55.0, old["on_court"] - 8.0, nth(5)),
+                max_salary=min(matchable, 32e6), no_bad_contract=True)
+        if gap_z < -0.3:
+            add("skill", f"a younger rotation player who adds {skill_words}", f"short on {skill_words} while retooling",
+                skill=(skill_attr, 58.0), min_on_court=nth(7) + 1.0, age_max=29.0, max_salary=min(matchable, 22e6),
+                no_bad_contract=True)
+        add("prospect", "a young player who would play", "restocking young talent while retooling",
+            age_max=23.5, min_development=6.0, min_on_court=nth(7), max_salary=15e6, no_bad_contract=True,
+            seller_stances={"contend", "rise"})
+    else:  # rise
+        add("rotation_upgrade", f"a {position} for its top six", f"a rising team filling its thinnest position "
+            f"({position})", buckets={weakest}, min_on_court=max(weak_slot + 3.0, nth(6) + 1.0), age_max=30.0,
+            max_salary=min(matchable, 28e6), max_years=4)
+        if gap_z < -0.3:
+            add("skill", f"a rotation player who adds {skill_words}", f"its rotation is short on {skill_words}",
+                skill=(skill_attr, 60.0), min_on_court=nth(7) + 1.0, age_max=31.0, max_salary=min(matchable, 25e6))
+        add("young_starter", "a young starter", "a rising team adding a young starter to its core",
+            age_max=25.5, min_on_court=max(60.0, nth(5)), max_salary=min(matchable, 30e6), no_bad_contract=True)
+    targets = targets[:TARGETS_PER_TEAM]
+    memo[team_id] = targets
+    return targets
+
+
+def target_match(target: dict[str, Any], row: dict[str, Any]) -> float | None:
+    """How well a player fits a target (higher is better), or None if he doesn't fit it."""
+    f = target["filters"]
+    if f.get("buckets") and row["bucket"] not in f["buckets"]:
+        return None
+    if row["age"] < f.get("age_min", 0.0) or row["age"] > f.get("age_max", 99.0):
+        return None
+    if row["on_court"] < f.get("min_on_court", 0.0) or row["playoff"] < f.get("min_playoff", 0.0):
+        return None
+    if row["development"] < f.get("min_development", -99.0):
+        return None
+    if row["salary"] > f.get("max_salary", 1e12) or row["years"] > f.get("max_years", 99):
+        return None
+    if f.get("no_bad_contract") and row["surplus"] < -8.0:
+        return None
+    if row["health"] >= 30.0:
+        return None
+    score = (row["on_court"] - f.get("min_on_court", 0.0)) * 0.5
+    if f.get("skill"):
+        attr, minimum = f["skill"]
+        if row["attrs"].get(attr, 0.0) < minimum:
+            return None
+        score += (row["attrs"][attr] - minimum) * 0.4
+    if target["key"] in {"prospect", "young_starter"}:
+        score += row["development"] * 0.3 + max(0.0, 24.0 - row["age"]) * 0.5
+    return round(score, 3)
+
+
+# ------------------------------------------------------------------------------------------------ sellers
+def team_sell_reasons(canonical: dict[str, Any], team_id: str) -> dict[str, list[str]]:
+    """Who this team would move and why: step 1's move reasons plus players out of the rotation."""
+    memo = _memo(canonical).setdefault("sellers", {})
+    if team_id in memo:
+        return memo[team_id]
+    from .trade_ownership import move_reasons
+    from .team_planning import core_commitment
+    plan = (canonical.get("team_plans") or {}).get(team_id) or {}
+    core = set(plan.get("core_ids") or [])
+    out = {}
+    for row in _team_rows(canonical, team_id):
+        if core_commitment(canonical, team_id, row["id"]):
+            continue
+        reasons = sorted(move_reasons(canonical, row["player"], team_id, core=row["id"] in core))
+        if row["minutes"] < 10.0 and row["age"] >= 24.0 and row["id"] not in core:
+            reasons.append("out_of_rotation")
+        if reasons:
+            out[row["id"]] = reasons
+    memo[team_id] = out
+    return out
+
+
+YOUNG_PIECE_AGE = 25.5
+YOUNG_STARTER_MINUTES = 24.0
+
+
+def young_piece_kept(row: dict[str, Any], seller_stance: str) -> bool:
+    """Young players a team builds around are not on the market unless the team has its own reason to move them:
+    every young player (25 or younger) on a rebuilding or retooling team, and young starters (24+ minutes) anywhere.
+    A blocked prospect on a team competing now is still available (the Dillingham / Kuminga pattern). The first
+    two-season run without this rule had rebuilders selling 21-year-old starters (Knueppel, Acuff, Flemings) to
+    teams that happened to target them, at prices the acceptance check allowed."""
+    if row["age"] > YOUNG_PIECE_AGE:
+        return False
+    return seller_stance in {"rebuild", "retool"} or row["minutes"] >= YOUNG_STARTER_MINUTES
+
+
+def sell_strength(reasons: list[str]) -> float:
+    return max((SELL_REASON_STRENGTH.get(r, 1.0) for r in reasons), default=0.0)
+
+
+def asking_price(canonical: dict[str, Any], seller_id: str, player_id: str, config: dict[str, Any]) -> dict[str, float]:
+    """The seller's own price for the player: what it loses (step 1's own value, premium scaled by its reasons to
+    sell), plus its acceptance margin and the contender's playoff-player term. In the same units as the trade
+    evaluation, so a package the seller values at least this much passes its price check."""
+    memo = _memo(canonical).setdefault("asks", {})
+    key = (seller_id, player_id)
+    if key in memo:
+        return memo[key]
+    tx = _tx()
+    asset = [{"kind": "player", "id": player_id}]
+    own = tx.package_value_for_team(canonical, asset, seller_id)
+    strategic = tx.strategic_fit_adjustment(canonical, [], asset, seller_id, config)
+    threshold = tx.acceptance_threshold(canonical, seller_id, config)
+    memo[key] = {"own": own, "ask": own - strategic + threshold, "threshold": threshold}
+    return memo[key]
+
+
+def buyer_value(canonical: dict[str, Any], buyer_id: str, player_id: str, config: dict[str, Any]) -> float:
+    tx = _tx()
+    asset = [{"kind": "player", "id": player_id}]
+    return tx.package_value_for_team(canonical, asset, buyer_id) + tx.strategic_fit_adjustment(canonical, asset, [], buyer_id, config)
+
+
+def trade_surplus(canonical: dict[str, Any], buyer_id: str, seller_id: str, player_id: str, excluded: set[str],
+                  config: dict[str, Any]) -> float:
+    """How much more the seller values the buyer's best spare assets than the buyer does (the two best players or
+    picks): a bench player who would start for the seller, or a pick a rebuilder prizes and a contender doesn't.
+    This is the room a package can add on top of the buyer's value for the target."""
+    tx = _tx()
+    from .team_planning import core_commitment
+    memo = _memo(canonical).setdefault("surplus", {})
+    key = (buyer_id, seller_id, player_id)
+    if key in memo:
+        return memo[key]
+    target_out = [{"kind": "player", "id": player_id}]
+    gains = []
+    for row in _team_rows(canonical, buyer_id):
+        if row["id"] in excluded or core_commitment(canonical, buyer_id, row["id"]):
+            continue
+        asset = [{"kind": "player", "id": row["id"]}]
+        gains.append(tx.package_value_for_team(canonical, asset, seller_id, outgoing_assets=target_out)
+                     - tx.package_value_for_team(canonical, asset, buyer_id))
+    for pick in tx.tradeable_picks_for_team(canonical, buyer_id):
+        asset = [{"kind": "pick", "id": pick["id"]}]
+        gains.append(tx.package_value_for_team(canonical, asset, seller_id)
+                     + tx.strategic_fit_adjustment(canonical, asset, [], seller_id, config)
+                     - tx.package_value_for_team(canonical, asset, buyer_id)
+                     + tx.strategic_fit_adjustment(canonical, [], asset, buyer_id, config))
+    best = sorted((g for g in gains if g > 0), reverse=True)[:2]
+    memo[key] = sum(best)
+    return memo[key]
+
+
+def quick_net(canonical: dict[str, Any], team_id: str, incoming: list[dict[str, Any]], outgoing: list[dict[str, Any]],
+              config: dict[str, Any]) -> float:
+    """The price part of the team's evaluation (incoming minus outgoing plus phase terms), without the personality,
+    wants, roster-space and final-roster terms. Used only to choose which packages to send to the real check."""
+    tx = _tx()
+    return (tx.package_value_for_team(canonical, incoming, team_id, outgoing_assets=outgoing)
+            - tx.package_value_for_team(canonical, outgoing, team_id)
+            + tx.strategic_fit_adjustment(canonical, incoming, outgoing, team_id, config))
+
+
+# ------------------------------------------------------------------------------------------------ search
+def target_pairings(canonical: dict[str, Any], buyer_ids: list[str], excluded: set[str], depth: int,
+                    config: dict[str, Any], rng) -> list[dict[str, Any]]:
+    """Each buyer's targets matched to players, best few per target, ordered for the search."""
+    tx = _tx()
+    from .team_planning import core_commitment
+    rows = player_rows(canonical)
+    human = set(canonical.get("_human_team_ids") or [])
+    alternatives = ALTERNATIVES[min(2, depth)]
+    pairings = []
+    for buyer_id in buyer_ids:
+        for rank, target in enumerate(team_trade_targets(canonical, buyer_id)):
+            matches = []
+            for row in rows.values():
+                if row["team_id"] == buyer_id or row["team_id"] in human or row["id"] in excluded:
+                    continue
+                score = target_match(target, row)
+                if score is not None and core_commitment(canonical, row["team_id"], row["id"]):
+                    continue  # the seller is committed to him for this window
+                if score is None:
+                    continue
+                reasons = team_sell_reasons(canonical, row["team_id"]).get(row["id"], [])
+                if target["filters"].get("seller_reason_required") and not reasons:
+                    continue
+                seller_stance = team_stance(_state(canonical, row["team_id"]))
+                stances = target["filters"].get("seller_stances")
+                if stances and seller_stance not in stances:
+                    continue
+                if not reasons and young_piece_kept(row, seller_stance):
+                    continue
+                matches.append((score + 4.0 * sell_strength(reasons), row, reasons))
+            matches.sort(key=lambda m: (-m[0], m[1]["id"]))
+            kept = []
+            for score, row, reasons in matches[:MATCHES_SCANNED]:
+                if tx.effectively_untouchable(canonical, row["player"]):
+                    continue
+                ask = asking_price(canonical, row["team_id"], row["id"], config)
+                value = buyer_value(canonical, buyer_id, row["id"], config)
+                zone = value - ask["ask"]
+                if zone < -ZONE_TOLERANCE - 40.0:
+                    continue  # no package of spare assets closes a gap this large
+                zone += trade_surplus(canonical, buyer_id, row["team_id"], row["id"], excluded, config)
+                if zone < -ZONE_TOLERANCE:
+                    continue
+                kept.append({"buyer_id": buyer_id, "target": target, "rank": rank, "row": row, "reasons": reasons,
+                             "ask": ask, "buyer_value": value, "zone": zone,
+                             "buyer_minutes": buyer_minutes(canonical, buyer_id, row),
+                             "priority": score + min(zone, 10.0) * 0.5})
+                if len(kept) >= alternatives:
+                    break
+            pairings.extend(kept)
+    # Interleave: every team's first target before anyone's second, best pairings first within a round, with a
+    # small seeded shuffle so the same pairing does not lead every day.
+    jitter = {id(p): rng.random() for p in pairings}
+    pairings.sort(key=lambda p: (p["rank"], -(p["priority"] + jitter[id(p)] * 4.0), p["buyer_id"], p["row"]["id"]))
+    return pairings
+
+
+def stance_words(canonical: dict[str, Any], team_id: str) -> str:
+    return STANCE_WORDS[team_stance(_state(canonical, team_id))]
+
+
+def trade_reasons(canonical: dict[str, Any], pairing: dict[str, Any]) -> dict[str, Any]:
+    """Why each side made the deal, in plain words (stored on the trade and its log)."""
+    tx = _tx()
+    buyer = tx.team_by_id(canonical, pairing["buyer_id"])
+    seller = tx.team_by_id(canonical, pairing["row"]["team_id"])
+    target = pairing["target"]
+    name = pairing["row"]["name"]
+    reasons = [SELL_REASON_WORDS.get(r, r.replace("_", " ")) for r in pairing["reasons"]]
+    buyer_text = (f"{buyer['abbrev']} ({stance_words(canonical, buyer['id'])}) targeted {target['label']}: "
+                  f"{target['reason']}, and chose {name}")
+    if reasons:
+        seller_text = f"{seller['abbrev']} ({stance_words(canonical, seller['id'])}) moved him as {reasons[0]}"
+    else:
+        seller_text = (f"{seller['abbrev']} ({stance_words(canonical, seller['id'])}) had no plan to move him "
+                       f"but took an offer at its own price")
+    return {"buyer_team_id": buyer["id"], "seller_team_id": seller["id"], "target_id": target["id"],
+            "target_key": target["key"], "target_label": target["label"], "target_reason": target["reason"],
+            "player_id": pairing["row"]["id"], "seller_reasons": list(pairing["reasons"]),
+            "asking_price": round(pairing["ask"]["ask"], 2), "buyer_value": round(pairing["buyer_value"], 2),
+            "text": f"{buyer_text}; {seller_text}."}
+
+
+def buyer_minutes(canonical: dict[str, Any], buyer_id: str, row: dict[str, Any]) -> float:
+    """Minutes the target would get on the buyer, from his on-court rank there (as the evaluation prices him)."""
+    tx = _tx()
+    better = sum(1 for other in _team_rows(canonical, buyer_id) if other["on_court"] > row["on_court"])
+    return tx.expected_minutes_for_destination_rank(better + 1)
+
+
+def package_fits_rules(canonical: dict[str, Any], pairing: dict[str, Any], assets: list[dict[str, Any]]) -> bool:
+    """Cheap versions of the acceptance check's hard rules, so packages that must fail are never sent to it:
+    a premium player needs a comparable return; a team competing now does not give up a rotation player without a
+    like-for-like player back (unless he is a costly contract it is exiting); and a buyer does not spend more than a
+    couple of seconds' worth of picks on a player who would not play starter minutes for it."""
+    tx = _tx()
+    row = pairing["row"]
+    seller_id, buyer_id = row["team_id"], pairing["buyer_id"]
+    target = [{"kind": "player", "id": row["id"]}]
+    if tx.premium_return_issue(canonical, seller_id, assets, target):
+        return False
+    rows = player_rows(canonical)
+    incoming = [rows[a["id"]] for a in assets if a.get("kind") == "player" and a.get("id") in rows]
+    seller_state = _state(canonical, seller_id)
+    competitive = (seller_state.get("window_phase") in {"peak", "entering"}
+                   or seller_state.get("phase") in {"contending", "contending_with_future_upside"})
+    if (competitive and row["minutes"] >= 20.0 and row["surplus"] > -16.0
+            and not any(p["on_court"] >= row["on_court"] - 6.0 for p in incoming)):
+        return False
+    picks = [a for a in assets if a.get("kind") in {"pick", "pick_swap"}]
+    if picks and pairing.get("buyer_minutes", 0.0) < 24.0:
+        spend = tx.package_value_for_team(canonical, picks, buyer_id)
+        if spend > 8.0:
+            return False
+    return True
+
+
+def ranked_packages(canonical: dict[str, Any], pairing: dict[str, Any], options: list[dict[str, Any]],
+                    config: dict[str, Any], keep: int) -> list[dict[str, Any]]:
+    """Price each built package quickly from both sides; keep the few that clear both prices, fairest first."""
+    tx = _tx()
+    seller_id, buyer_id = pairing["row"]["team_id"], pairing["buyer_id"]
+    target = [{"kind": "player", "id": pairing["row"]["id"]}]
+    buyer_team = tx.team_by_id(canonical, buyer_id)
+    scored = []
+    for option in options:
+        assets = []
+        for asset in option.get("assets") or []:
+            # A pick swap created for this offer (or a protected pick) is priced here as plain assets; the real
+            # check prices the terms exactly.
+            try:
+                assets.extend(tx.normalize_assets(canonical, buyer_team, [asset]))
+            except ValueError:
+                continue
+        if not assets or not package_fits_rules(canonical, pairing, assets):
+            continue
+        seller_raw = quick_net(canonical, seller_id, assets, target, config)
+        buyer_raw = quick_net(canonical, buyer_id, target, assets, config)
+        # The acceptance check lets two AI teams agree with one side up to 9 short as long as the two nets sum to
+        # at least -2 (bounded negotiation, transactions.ai_trade_candidate_accepted). Packages clearly outside
+        # that are dropped; the margin covers the terms this quick price leaves out.
+        if (min(seller_raw, buyer_raw) < -9.0 - PRESCREEN_TOLERANCE
+                or seller_raw + buyer_raw < -2.0 - PRESCREEN_TOLERANCE):
+            continue
+        seller_net = seller_raw - pairing["ask"]["threshold"]
+        buyer_net = buyer_raw - tx.acceptance_threshold(canonical, buyer_id, config)
+        # Fairest first: the deal both sides clear by the most, then the one closest to the seller's price.
+        scored.append((-min(seller_net, buyer_net), abs(seller_net), len(scored), option))
+    scored.sort(key=lambda item: item[:3])
+    return [item[3] for item in scored[:keep]]

@@ -53,6 +53,17 @@ def fixture(teams='abc'):
     return data
 
 
+def settled_fixture():
+    """The three-team fixture with a deal all three teams accept. Team A used to clear its threshold only through a
+    flat +7 for receiving C's 2029 second; that pick now adds a share of its value (trade step 2), so A's departing
+    player is made a little weaker instead (his skill inputs 74 instead of 76)."""
+    data = fixture()
+    for trait in data['traits']:
+        if trait['player_id'] == 'a0':
+            trait['value'] = 74
+    return data
+
+
 def legs():
     return [{'from_team_id': 'a', 'to_team_id': 'b', 'assets': [{'kind': 'player', 'value': 'a0'}]},
             {'from_team_id': 'b', 'to_team_id': 'a', 'assets': [{'kind': 'player', 'value': 'b0'}]},
@@ -144,7 +155,7 @@ class MultiTeamTradeTests(unittest.TestCase):
              patch.object(tx, 'evaluation_notes', side_effect=AssertionError('Narrative built for rejected offer')), \
              patch.object(tx, 'proposal_summary', side_effect=AssertionError('Summary built for rejected offer')), \
              patch.object(tx, 'candidate_from_evaluation', side_effect=AssertionError('Public candidate built for rejected offer')):
-            result = tx.simulate_ai_trades(data, '2027-01-31', '2027-01-31', seed=9, limit=1)
+            result = tx.simulate_ai_trades(data, '2027-01-31', '2027-01-31', seed=9, limit=1, target_search=False)
         self.assertEqual(result['proposal_count'], 0)
         self.assertEqual(result['search_diagnostics']['packages'], 1)
         self.assertGreaterEqual(result['search_diagnostics']['declined'], 1)
@@ -296,7 +307,7 @@ class MultiTeamTradeTests(unittest.TestCase):
         self.assertTrue(all(option['asset']['kind'] == 'player' for option in fringe))
 
     def test_all_assets_and_one_ledger_record_settle_together_and_replay_does_nothing(self):
-        data = fixture()
+        data = settled_fixture()
         candidate = evaluate_multi_team_trade(data, legs(), date='2027-01-31')
         state = saved(candidate)
         original = deepcopy(data)
@@ -394,7 +405,7 @@ class MultiTeamTradeTests(unittest.TestCase):
                 self.assertEqual(state['pick_obligations'][0]['current_rights_holder_team_id'], 'c')
 
     def test_mid_settlement_exception_does_not_leave_any_partial_player_transfers(self):
-        data = fixture(); candidate = evaluate_multi_team_trade(data, legs(), date='2027-01-31')
+        data = settled_fixture(); candidate = evaluate_multi_team_trade(data, legs(), date='2027-01-31')
         state = saved(candidate); before = deepcopy(state)
         with patch.object(tx, 'update_retraded_pick_obligation', side_effect=RuntimeError('injected failure')):
             with self.assertRaises(RuntimeError):

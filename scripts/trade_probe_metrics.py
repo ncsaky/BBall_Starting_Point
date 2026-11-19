@@ -109,6 +109,13 @@ def metrics(trades, progress):
                 f"{team}: " + ", ".join(a.get("label") for a in t["sends"][team] if a.get("kind") == "player")
                 for team in t["teams"])})
     out["both_sides_net_above_5"] = both_win
+    out["trades_with_stated_reasons"] = sum(1 for t in trades if t.get("why"))
+    out["by_target"] = dict(sorted(Counter(t.get("target_key") or "none" for t in trades).items()))
+    out["accepted_by_both_own_evaluations"] = sum(
+        1 for t in trades if t["evaluations"] and all(str(e.get("decision") or "").startswith("accept") for e in t["evaluations"]))
+    out["draft_trades_accepted_by_both"] = sum(
+        1 for t in trades if window_of(t["date"]) == "draft" and t["evaluations"]
+        and all(str(e.get("decision") or "").startswith("accept") for e in t["evaluations"]))
     out["rebuilding_buys_30plus_15m_multiyear"] = len(rebuild_vets)
     out["rebuilding_buys_detail"] = rebuild_vets
     out["star_for_star_swaps"] = len(star_swaps)

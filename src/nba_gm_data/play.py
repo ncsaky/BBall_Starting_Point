@@ -3142,6 +3142,7 @@ def maybe_run_ai_draft_trades_before_pick_state(
         if asset.get("kind") == "pick" and asset.get("id")
     }
     state["ai_draft_traded_pick_ids"] = sorted(set(state.get("ai_draft_traded_pick_ids") or []) | involved_pick_ids)
+    state["ai_draft_trade_buyers"] = sorted(set(state.get("ai_draft_trade_buyers") or []) | {proposal.get("to_team_id")})
     budget = state.setdefault("ai_draft_trade_budget", {"top_10": 0, "picks_11_25": 0, "total": 0})
     budget["total"] = int(budget.get("total") or 0) + 1
     if overall <= 10:
@@ -3205,9 +3206,12 @@ def best_ai_draft_trade_candidate(
     budget = state.get("ai_draft_trade_budget") or {}
     prior_trade_count = int(budget.get("total") or 0)
     quiet_mid_first_market = overall >= 11 and prior_trade_count < max(1, (overall - 8) // 5)
+    traded_up = set(state.get("ai_draft_trade_buyers") or [])
     for buyer in sorted(active.get("teams", []), key=lambda item: item.get("abbrev", "")):
         if buyer.get("id") == seller_team_id or buyer.get("id") in human_team_ids:
             continue
+        if buyer.get("id") in traded_up:
+            continue  # one trade-up per team per draft
         lower_pick = draft_trade_lower_pick_for_buyer(active, state, buyer["id"], overall)
         if not lower_pick and overall <= 10:
             continue
@@ -3238,27 +3242,119 @@ def best_ai_draft_trade_candidate(
         seller_floor = 8.0 if overall == 1 else 4.0 if overall <= 5 else 1.5 if overall <= 10 else -2.0
         if overall <= 8 and seller_state.get("phase") in {"rebuilding", "developing"}:
             seller_floor += 4.0
-        buyer_floor = -22.0
         if quiet_mid_first_market:
             seller_floor -= 2.5
-            buyer_floor -= 4.0
-        if seller_net < seller_floor or buyer_net < buyer_floor:
+        # Both teams must accept (trade step 2; before, the buyer's own evaluation rejected every draft-night deal
+        # and it went through anyway). The seller accepts on its own evaluation. The buyer pays over the pick's
+        # slot price because it wants a specific prospect: its evaluation adds what that prospect is worth to it
+        # (the slot value of his place on its own board, minus this pick's slot value) and must then clear its
+        # normal threshold.
+        # The target is the prospect this team would actually take here (the same choice the draft makes for a
+        # team that acquires a pick), so it never trades up for one player and drafts another.
+        target_entry = (buyer_recs[0] or {}).get("entry") or {}
+        target_prospect = draft_trade_target_prospect(active, state, buyer["id"], overall) or target_entry.get("prospect") or {}
+        board_rank = draft_target_board_rank(active, buyer["abbrev"], pick_id, target_prospect.get("id") or target_entry.get("prospect_id"), seed)
+        premium = draft_target_premium(active, buyer["id"], board_rank, overall)
+        if not draft_trade_both_accept(seller_eval, buyer_eval, premium, seller_floor):
             continue
         move_down = draft_trade_move_down_distance(state, buyer["id"], overall)
         urgency = buyer_grade - max(0.0, move_down - 5) * 0.55
-        score = seller_net * 1.6 + buyer_net * 0.45 + urgency + seller_willingness
+        score = seller_net * 1.6 + (buyer_net + premium) * 0.45 + urgency + seller_willingness
+        mark_draft_target_acceptance(candidate, buyer["id"], target_prospect.get("name") or "its target", board_rank, premium)
         candidate["accepted_by_all"] = True
         candidate["ai_draft_trade_context"] = {
             "overall_pick": overall,
             "buyer_grade": round(buyer_grade, 2),
             "seller_willingness": round(seller_willingness, 2),
             "move_down": move_down,
+            "target_prospect": target_prospect.get("name"),
+            "target_board_rank": board_rank,
+            "buyer_target_premium": round(premium, 2),
+        }
+        candidate["trade_reasons"] = {
+            "buyer_team_id": buyer["id"], "seller_team_id": seller_team_id, "target_key": "draft_prospect",
+            "target_label": f"draft prospect {target_prospect.get('name')}",
+            "text": (f"{buyer['abbrev']} traded up to pick {overall} for {target_prospect.get('name')}, "
+                     f"number {board_rank} on its draft board; {seller['abbrev']} moved down for more draft value."),
         }
         candidates.append((score, candidate))
     if not candidates:
         return None
     candidates.sort(key=lambda item: (item[0], jsonable_proposal_id(item[1])), reverse=True)
     return candidates[0][1]
+
+
+def draft_trade_both_accept(seller_eval: dict[str, Any], buyer_eval: dict[str, Any], premium: float, seller_floor: float) -> bool:
+    """A draft-night trade needs both teams: the seller's own evaluation accepts (and clears the pick's extra floor),
+    and the buyer's net plus what its target prospect is worth to it clears the buyer's threshold."""
+    seller_net = float(seller_eval.get("net_value") or -99.0)
+    buyer_net = float(buyer_eval.get("net_value") or -99.0)
+    buyer_threshold = float(buyer_eval.get("acceptance_threshold") or 0.0)
+    return bool(seller_eval.get("accepted")) and seller_net >= seller_floor and buyer_net + premium >= buyer_threshold
+
+
+def draft_trade_target_prospect(active: dict[str, Any], state: dict[str, Any], team_id: str, overall: int) -> dict[str, Any] | None:
+    """The prospect this team would take with the current pick (draft.preferred_prospect_for_pick, as when a pick
+    changes hands mid-draft), from the prospects still on the board."""
+    from .draft import preferred_prospect_for_pick
+    pending = (state.get("draft") or {}).get("pending_draft_selections") or []
+    index = int(state.get("current_index") or 0)
+    pool = [deepcopy(item.get("prospect")) for item in pending[index:] if item.get("prospect")]
+    if not pool:
+        return None
+    year = str(state.get("year") or (pending[index].get("selection") or {}).get("draft_year") or "")
+    seed = int((state.get("draft") or {}).get("seed") or 1)
+    try:
+        return preferred_prospect_for_pick(active, year, team_id, overall, pool, seed)
+    except (KeyError, ValueError):
+        return None
+
+
+def draft_target_board_rank(active: dict[str, Any], team_abbrev: str, pick_id: str, prospect_id: str | None, seed: int) -> int:
+    """Where a prospect sits on the team's whole board for this draft (taken players included), 1 = its best."""
+    if not prospect_id:
+        return 99
+    full = pick_recommendations(active, team_abbrev, pick_id, limit=120, seed=seed).get("recommendations") or []
+    for rank, rec in enumerate(full, start=1):
+        entry = rec.get("entry") or {}
+        if ((entry.get("prospect") or {}).get("id") or entry.get("prospect_id")) == prospect_id:
+            return rank
+    return 99
+
+
+def draft_slot_value(active: dict[str, Any], team_id: str, slot: int) -> float:
+    """The trade model's value of a current first-round pick at this slot, in this team's phase."""
+    state = next((item for item in active.get("team_strategic_states", []) if item.get("team_id") == team_id), {})
+    season = str(active.get("meta", {}).get("active_season") or CANONICAL_SEASON)
+    pick = {"id": f"slot-value-{slot}", "round": 1, "overall_pick": max(1, int(slot)), "current_owner_team_id": team_id,
+            "status": "slot_value_reference", "season": season, "_active_season": season}
+    return pick_asset_value(pick, state.get("phase", "neutral"))
+
+
+def draft_target_premium(active: dict[str, Any], team_id: str, board_rank: int, overall: int) -> float:
+    """What getting its target at this pick is worth to the buyer beyond the pick's slot price: half the gap between
+    the slot value of the prospect's place on its own board and this pick's slot value (0 when it ranks him at or
+    below the pick). Half, because a front office knows its board is one opinion: every team has prospects it ranks
+    well above where the league takes them, and the full gap would let every board quirk justify two future firsts."""
+    if board_rank >= overall or board_rank > 30:
+        return 0.0
+    gap = draft_slot_value(active, team_id, board_rank) - draft_slot_value(active, team_id, overall)
+    return max(0.0, DRAFT_BOARD_CONFIDENCE * gap)
+
+
+DRAFT_BOARD_CONFIDENCE = 0.5
+
+
+def mark_draft_target_acceptance(candidate: dict[str, Any], buyer_id: str, prospect_name: str, board_rank: int, premium: float) -> None:
+    for evaluation in candidate.get("evaluations", []):
+        if evaluation.get("perspective_team_id") != buyer_id:
+            continue
+        evaluation["draft_target_premium"] = round(premium, 3)
+        evaluation["accepted"] = True
+        evaluation["decision"] = "accept_draft_target"
+        evaluation["decision_reasons"] = [reason for reason in evaluation.get("decision_reasons", [])
+                                          if not str(reason).startswith("Net value ")] + [
+            f"Trades up for {prospect_name}, number {board_rank} on its board: worth {premium:.1f} more to it than this pick's slot price."]
 
 
 def taken_draft_prospect_ids(state: dict[str, Any]) -> set[str]:

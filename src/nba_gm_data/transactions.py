@@ -113,7 +113,7 @@ def default_transaction_model_config() -> dict[str, Any]:
         "decision": {
             "base_acceptance_threshold": 1.5,
             "contender_need_bonus": 5.5,
-            "rebuilder_pick_bonus": 7.0,
+            "rebuilder_pick_bonus_rate": 0.14,
             "manual_review_blocks_execution": True,
             "max_bad_gm_overpay": 8.0,
         },
@@ -887,9 +887,16 @@ def _search_team_rows(canonical: dict[str, Any], team_id: str | None) -> list[di
     return [player for _, player in forecast.teams.get(team_id, ())]
 
 
-def simulate_ai_trades(canonical: dict[str, Any] | Any, from_date: str, through_date: str, seed: int = 1, limit: int = 10, config: dict[str, Any] | None = None, *, search_depth: int = 1, reserve_assets: bool = False, include_private_targets: bool = True, involving_team_ids: set[str] | None = None, review=None) -> dict[str, Any]:
+def simulate_ai_trades(canonical: dict[str, Any] | Any, from_date: str, through_date: str, seed: int = 1, limit: int = 10, config: dict[str, Any] | None = None, *, search_depth: int = 1, reserve_assets: bool = False, include_private_targets: bool = True, involving_team_ids: set[str] | None = None, review=None, target_search: bool | None = None) -> dict[str, Any]:
     canonical = (review.prepare(canonical, config) if review is not None else
                  trade_search_context(with_spatial_fit_context(with_transaction_context(canonical, config))))
+    # AI-to-AI markets start from each front office's targets (trade step 2, trade_targets.py). The search for
+    # offers to the human team (involving_team_ids) keeps the listed-player search.
+    if target_search is None:
+        target_search = involving_team_ids is None
+    if target_search:
+        return target_driven_ai_trades(canonical, from_date, through_date, seed=seed, limit=limit, config=config,
+                                       search_depth=search_depth, reserve_assets=reserve_assets)
     rng = random.Random(f"{seed}:{from_date}:{through_date}:ai_trades")
     recent_players = recently_traded_player_ids(canonical, through_date)
     entries = sorted(canonical["trade_block_entries"], key=lambda item: item["block_score"], reverse=True)[:120]
@@ -1047,6 +1054,127 @@ def simulate_ai_trades(canonical: dict[str, Any] | Any, from_date: str, through_
         "proposals": proposals,
         "search_diagnostics": {**diagnostics, "financial_work": dict(work)},
         "notes": "Deterministic AI-AI trade candidate generation. It suggests plausible proposals; application is separate.",
+    }
+
+
+def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_date: str, *, seed: int, limit: int,
+                            config: dict[str, Any] | None, search_depth: int, reserve_assets: bool) -> dict[str, Any]:
+    """AI-to-AI trade search that starts from each front office's targets (trade step 2, trade_targets.py).
+
+    Each AI team's targets are matched to players (preferring players their teams would move), a pairing is pursued
+    only when the buyer values the player about as much as the seller's asking price, packages are built toward that
+    price and priced quickly from both sides, and only the few best go to the unchanged acceptance check
+    (evaluate_trade_decision, then ai_trade_candidate_accepted). Accepted deals carry both teams' reasons.
+    """
+    from collections import Counter
+    from . import trade_targets as tt
+    from .trade_finance_search import TradeSearchIntent, repair_record
+    config = config or default_transaction_model_config()
+    depth = 2 if search_depth > 1 else 1
+    rng = random.Random(f"{seed}:{from_date}:{through_date}:ai_trades:targets")
+    human = set(canonical.get('_human_team_ids') or [])
+    excluded = recently_traded_player_ids(canonical, through_date)
+    buyer_ids = [team['id'] for team in sorted(canonical.get('teams', []), key=lambda t: t['id']) if team['id'] not in human]
+    work = Counter({'participant_reports.'+c: 0 for c in ('legal', 'repairable', 'unresolved', 'terminal', 'presentation')})
+    canonical['_search_work_counts'] = work
+    diagnostics = {'targets': 0, 'buyers': 0, 'packages': 0, 'illegal': 0, 'declined': 0, 'asset_conflicts': 0,
+                   'facilitator_attempts': 0, 'facilitator_agreements': 0, 'pairings': 0, 'prescreened_out': 0,
+                   'team_targets': 0}
+    pairings = tt.target_pairings(canonical, buyer_ids, excluded, depth, config, rng)
+    diagnostics['team_targets'] = sum(len(tt.team_trade_targets(canonical, tid)) for tid in buyer_ids)
+    diagnostics['pairings'] = len(pairings)
+    proposals, evaluation_snapshots, reserved, blocked, satisfied = [], {}, set(), {}, set()
+    for pairing in pairings:
+        if len(proposals) >= limit:
+            break
+        row = pairing['row']
+        target_id = pairing['target']['id']
+        if target_id in satisfied or f"player:{row['id']}" in reserved:
+            continue
+        buyer = team_by_id(canonical, pairing['buyer_id'])
+        seller = team_by_id(canonical, row['team_id'])
+        player = row['player']
+        diagnostics['targets'] += 1
+        diagnostics['buyers'] += 1
+        repairs = [] if depth > 1 else None
+        intent = TradeSearchIntent(seller['id'], buyer['id'], ({'kind': 'player', 'id': player['id'], 'label': player['name']},),
+                                   through_date, config)
+        target_salary = current_salary(contract_for_player(canonical, player['id']))
+        options = buyer_offer_packages_for_value(
+            canonical, buyer, seller, max(1.0, pairing['ask']['ask']), target_salary, seed, {player['id']},
+            max_results=24 if depth > 1 else 12, max_player_options=9 if depth > 1 else 6, return_options=True,
+            allow_new_pick_swaps=True, intent=intent, repair_options=repairs,
+            seller_view_outgoing=[{'kind': 'player', 'id': player['id']}])
+        if repairs:
+            for option in repairs:
+                record = repair_record(canonical, intent, option)
+                pair = tuple(trade_team_ids(record))
+                if pair not in blocked or record['_repair_rank'] < blocked[pair]['_repair_rank']:
+                    blocked[pair] = record
+                if len(blocked) > 16:
+                    del blocked[max(blocked, key=lambda k: blocked[k]['_repair_rank'])]
+            work['repair_quotes_considered'] += len(repairs)
+        packages = tt.ranked_packages(canonical, pairing, options, config, tt.PACKAGES_EVALUATED[depth])
+        diagnostics['prescreened_out'] += len(options) - len(packages)
+        for package in packages:
+            diagnostics['packages'] += 1
+            buyer_assets = package.get('assets') or []
+            pick_terms = package.get('pick_obligation_terms') or []
+            evaluation_canonical = canonical_with_pending_pick_terms(canonical, pick_terms) if pick_terms else canonical
+            report = evaluate_trade_decision(
+                evaluation_canonical, seller['abbrev'], buyer['abbrev'], [{'kind': 'player', 'value': player['id']}],
+                buyer_assets, seed=seed, date=through_date, config=config, context_ready=True, search_only=True)
+            if pick_terms:
+                report = trade_result_with_pick_terms(report, pick_terms)
+            candidate = candidate_from_decision(report)
+            if candidate.get('legality', {}).get('status') != 'legal':
+                diagnostics['illegal'] += 1
+                continue
+            if not ai_trade_candidate_accepted(canonical, candidate):
+                diagnostics['declined'] += 1
+                continue
+            keys = proposal_asset_identity_keys(candidate)
+            if reserve_assets and keys & reserved:
+                diagnostics['asset_conflicts'] += 1
+                continue
+            candidate = mark_ai_trade_accepted(candidate)
+            candidate['target_source'] = 'front_office_target'
+            candidate['trade_reasons'] = tt.trade_reasons(canonical, pairing)
+            proposals.append(candidate)
+            evaluation_snapshots[candidate['proposal']['id']] = evaluation_canonical
+            if reserve_assets:
+                reserved |= keys
+            satisfied.add(target_id)
+            break
+    if depth > 1 and len(proposals) < limit:
+        from .multi_team_trades import facilitator_candidates
+        for failed in sorted(blocked.values(), key=lambda c: c['_repair_rank']):
+            if diagnostics['facilitator_attempts'] >= 64 or len(proposals) >= limit:
+                break
+            for candidate in facilitator_candidates(canonical, failed, seed=seed, date=through_date,
+                    limit=min(2, max(1, limit-len(proposals))), diagnostics=diagnostics, include_presentation=False):
+                keys = proposal_asset_identity_keys(candidate)
+                if reserve_assets and keys & reserved:
+                    continue
+                proposals.append(candidate)
+                evaluation_snapshots[candidate['proposal']['id']] = canonical
+                if reserve_assets:
+                    reserved |= keys
+                if len(proposals) >= limit:
+                    break
+    proposals = [
+        prepare_ai_trade_candidate(evaluation_snapshots.get(candidate['proposal']['id'], canonical), candidate,
+                                   seed=seed, date=through_date, config=config)
+        for candidate in proposals
+    ]
+    return {
+        "from_date": from_date,
+        "through_date": through_date,
+        "seed": seed,
+        "proposal_count": len(proposals),
+        "proposals": proposals,
+        "search_diagnostics": {**diagnostics, "financial_work": dict(work)},
+        "notes": "Target-driven AI-AI trade search: each front office pursues its own targets at the seller's price.",
     }
 
 
@@ -1360,14 +1488,18 @@ def apply_trade_to_state(
             details=trade_event_details_from_payload(proposal_payload),
         )
         queue_press_event_if_user_involved(save, "trade", headline, [from_team_id, to_team_id], date)
-    save.setdefault("transaction_logs", []).append(to_plain(log))
+    log_record = to_plain(log)
+    if proposal.get("trade_reasons"):
+        # Why each side made the deal, in plain words (AI target search and draft-night trades, trade step 2).
+        log_record["trade_reasons"] = deepcopy(proposal["trade_reasons"])
+    save.setdefault("transaction_logs", []).append(log_record)
     save["pending_trade_proposals"] = [
         item
         for item in save.get("pending_trade_proposals", [])
         if (item.get("proposal", {}).get("id") or item.get("id")) != proposal_id
     ]
     pruned = prune_trade_offers_touching_assets(save, proposal_asset_identity_keys(proposal), exclude_proposal_id=proposal_id)
-    return {"status": "applied", "save": save_label, "transaction_log": to_plain(log), "pruned": pruned}
+    return {"status": "applied", "save": save_label, "transaction_log": deepcopy(log_record), "pruned": pruned}
 
 
 def saved_trade_salary_legality(
@@ -3088,7 +3220,15 @@ def buyer_offer_packages_for_value(
     allow_new_pick_swaps: bool = False,
     intent=None,
     repair_options=None,
+    seller_view_outgoing: list[dict[str, Any]] | None = None,
 ) -> list[list[dict[str, Any]]] | list[dict[str, Any]]:
+    """Build the buyer's candidate packages for a target worth ``target_value``.
+
+    ``seller_view_outgoing`` (the target-driven search, trade step 2): the seller's outgoing assets. Packages are
+    then aimed at the seller's own asking price: the buyer's players are tried in order of how much more the seller
+    values them than the buyer does (a bench player who would start for the seller is the natural currency), and
+    every package is measured with the seller's own values of the players and picks it receives.
+    """
     as_of_date = ((canonical.get("meta") or {}).get("current_date")) or CANONICAL_START_DATE
     excluded_player_ids = set(excluded_player_ids or set()) | recently_traded_player_ids(canonical, as_of_date)
     valuations = player_asset_values_by_id(canonical)
@@ -3105,16 +3245,30 @@ def buyer_offer_packages_for_value(
     }
     block = {entry["player_id"]: entry for entry in canonical["trade_block_entries"] if entry["team_id"] == buyer["id"]}
     from .trade_wants import search_priority
-    candidates = sorted(
-        [player for player in buyer_players if player["id"] not in excluded_player_ids],
-        key=lambda player: (
-            block.get(player["id"], {}).get("block_score", 0) + 8*search_priority(canonical, seller['id'], {'kind': 'player', 'id': player['id']}),
-            -abs(valuation_or_fallback(valuations, player["id"], player)["player_value"] - target_value * 0.72),
-            -abs(salary_by_player.get(player["id"], 0.0) - (target_salary or 0)) / 1_000_000,
-            player["name"],
-        ),
-        reverse=True,
-    )
+    seller_view = seller_view_outgoing is not None
+    if seller_view:
+        from .team_planning import core_commitment
+        def surplus(player):
+            asset = [{'kind': 'player', 'id': player['id']}]
+            return (package_value_for_team(canonical, asset, seller['id'], outgoing_assets=seller_view_outgoing)
+                    - package_value_for_team(canonical, asset, buyer['id']))
+        candidates = sorted(
+            [player for player in buyer_players if player["id"] not in excluded_player_ids
+             and not player.get('_inactive_player') and not core_commitment(canonical, buyer['id'], player['id'])],
+            key=lambda player: (surplus(player), player["name"], player["id"]),
+            reverse=True,
+        )
+    else:
+        candidates = sorted(
+            [player for player in buyer_players if player["id"] not in excluded_player_ids],
+            key=lambda player: (
+                block.get(player["id"], {}).get("block_score", 0) + 8*search_priority(canonical, seller['id'], {'kind': 'player', 'id': player['id']}),
+                -abs(valuation_or_fallback(valuations, player["id"], player)["player_value"] - target_value * 0.72),
+                -abs(salary_by_player.get(player["id"], 0.0) - (target_salary or 0)) / 1_000_000,
+                player["name"],
+            ),
+            reverse=True,
+        )
     from .trade_finance_search import classify_movements, unavailable_players
     unavailable = unavailable_players(canonical,intent.date) if intent is not None else frozenset()
     work = canonical.get('_search_work_counts')
@@ -3193,7 +3347,7 @@ def buyer_offer_packages_for_value(
     from .trade_package_search import PackageShortlist
     metrics = canonical.get('_package_search_diagnostics')
     phase = buyer_state.get('phase', 'neutral')
-    seller_state = next(item for item in canonical['team_strategic_states'] if item['team_id'] == seller['id']) if target_value >= 70 and tradable_players else None
+    seller_state = next(item for item in canonical['team_strategic_states'] if item['team_id'] == seller['id']) if (target_value >= 70 or seller_view) and tradable_players else None
     # Keep separate buyer rough-price and seller quote values. Preserve the
     # original sum grouping and the order of every floating-point addition.
     pick_data = []
@@ -3236,7 +3390,8 @@ def buyer_offer_packages_for_value(
                 metrics['player_groups'] += 1
             if seller_state is not None:
                 normalized_players = [{'kind':'player', 'id':p['id'], 'label':p['name']} for p in player_group]
-                player_total, concentration = package_value_components(canonical, normalized_players, seller['id'])
+                player_total, concentration = package_value_components(canonical, normalized_players, seller['id'],
+                                                                       seller_view_outgoing if seller_view else None)
             for pick_group, pick_assets, pick_value, distant_risk, protections, seller_values in pick_data:
                 if metrics is not None:
                     metrics['group_variant_pairs'] += 1
@@ -3267,7 +3422,12 @@ def buyer_offer_packages_for_value(
                         )
                 for variant_assets, terms, variant_value, variant_risk in candidate_variants:
                     search_value = variant_value
-                    if target_value >= 70 and not terms:
+                    if seller_view:
+                        # Seller's own values; a protection or new swap moves it by its buyer-side price change.
+                        search_value = player_total + concentration + (variant_value - rough_value)
+                        for pick_price in seller_values:
+                            search_value += pick_price
+                    elif target_value >= 70 and not terms:
                         search_value = player_total
                         for pick_price in seller_values:
                             search_value += pick_price
@@ -3292,6 +3452,9 @@ def buyer_offer_packages_for_value(
             if movement is not None and (movement.category=='terminal' or (movement.category=='unresolved' and intent.config.get('decision',{}).get('manual_review_blocks_execution',True))):
                 continue
             pool = repairs if movement is not None and movement.category=='repairable' else packages
+            if seller_view and seller_state is not None:
+                value = sum(pick_asset_value(pick_by_id(canonical, p['id']), seller_state['phase']) if p.get('kind') != 'pick_swap'
+                            else pick_swap_asset_value(canonical, p, seller_state['phase']) for p in group)
             if target_value*.38 <= value <= target_value*1.48+14:
                 pool.append((abs(value-target_value)+risk, assets, []))
     if not packages and intent is None:
@@ -5166,12 +5329,15 @@ def trade_value_role_minutes(player: dict[str, Any] | None, valuation: dict[str,
 def strategic_fit_adjustment(canonical: dict[str, Any], incoming: list[dict[str, Any]], outgoing: list[dict[str, Any]], team_id: str, config: dict[str, Any]) -> float:
     state = next(item for item in canonical["team_strategic_states"] if item["team_id"] == team_id)
     adjustment = 0.0
+    # Rebuilding and developing teams prize draft capital. The extra is a share of the pick's own value (trade step
+    # 2; it was a flat +7 for any pick, so a 2034 second counted as much as a lottery first) and it applies both
+    # ways: a rebuilder sending a pick gives up the same extra it would get for receiving it.
+    draft_phase = state["phase"] in {"rebuilding", "developing"}
+    for sign, assets in ((1.0, incoming), (-1.0, outgoing)):
+        for asset in assets:
+            if draft_phase and asset["kind"] in {"pick", "pick_swap"}:
+                adjustment += sign * rebuilder_draft_bonus(canonical, asset, state.get("phase", "balanced"), config)
     for asset in incoming:
-        if asset["kind"] == "pick" and state["phase"] in {"rebuilding", "developing"}:
-            adjustment += float(config.get("decision", {}).get("rebuilder_pick_bonus", 7.0))
-        if asset["kind"] == "pick_swap" and state["phase"] in {"rebuilding", "developing"}:
-            swap_value = pick_swap_asset_value(canonical, pick_swap_by_id(canonical, asset.get("id")) or asset, state.get("phase", "balanced"))
-            adjustment += float(config.get("decision", {}).get("rebuilder_pick_bonus", 7.0)) * (0.38 if swap_value >= 0 else -0.22)
         if asset["kind"] == "player":
             valuation = next(item for item in canonical["player_asset_valuations"] if item["player_id"] == asset["id"])
             if state["phase"] in {"contending", "contending_with_future_upside"} and valuation["playoff_value"] >= 64:
@@ -5191,6 +5357,24 @@ def strategic_fit_adjustment(canonical: dict[str, Any], incoming: list[dict[str,
             swap_value = pick_swap_asset_value(canonical, pick_swap_by_id(canonical, asset.get("id")) or asset, state.get("phase", "balanced"))
             adjustment += -0.6 if swap_value >= 0 else 0.35
     return adjustment
+
+
+REBUILDER_PICK_BONUS_RATE = 0.14
+
+
+def rebuilder_draft_bonus(canonical: dict[str, Any], asset: dict[str, Any], phase: str, config: dict[str, Any]) -> float:
+    """A rebuilding or developing team's extra value for a pick (or pick swap): a share of the pick's own value.
+
+    The rate (14%) keeps a typical future first-round pick near the old flat +7 (a rebuilder values one at about
+    50), while a far-future second (about 8) now adds about 1 instead of 7. A swap that favours the other side has a
+    negative value, so it costs instead of adds.
+    """
+    rate = float(config.get("decision", {}).get("rebuilder_pick_bonus_rate", REBUILDER_PICK_BONUS_RATE))
+    if asset.get("kind") == "pick_swap":
+        value = pick_swap_asset_value(canonical, pick_swap_by_id(canonical, asset.get("id")) or asset, phase)
+    else:
+        value = pick_asset_value(pick_by_id(canonical, asset.get("id")), phase)
+    return round(rate * value, 3)
 
 
 def personality_trade_adjustment(canonical: dict[str, Any], team_id: str, proposal_id: str, seed: int) -> dict[str, float]:
