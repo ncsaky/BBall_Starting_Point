@@ -936,12 +936,12 @@ def rest_chance(player: dict[str, Any], state: dict[str, Any], context: dict[str
     age = float(player.get("age") or 27.0)
     if games_left <= SHUTDOWN_GAMES_LEFT and rank > teams - SHUTDOWN_BOTTOM_TEAMS and games_left > 0:
         return SHUTDOWN_HAZARD, "shutdown", "shut down for the rest of the season (team out of the race)"
-    if int(state.get("games_missed") or 0) + int(state.get("games_rested") or 0) >= REST_MISSED_LIMIT:
-        return 0.0, "rest", ""
     if games_left <= REST_FINAL_GAMES:
         if float(context.get("win_pct") or 0.0) >= REST_FINAL_MIN_WIN_PCT:
             return REST_FINAL_PLAYOFF, "rest", "rest before the playoffs"
         return REST_FINAL_OTHERS, "rest", "rest in the season's final games"
+    if int(state.get("games_missed") or 0) + int(state.get("games_rested") or 0) >= REST_MISSED_LIMIT:
+        return 0.0, "rest", ""
     if int(context.get("rested_tonight") or 0) >= REST_MAX_PER_GAME or int(context.get("regulars_out") or 0) >= REST_SHORT_HANDED:
         return 0.0, "rest", ""
     b2b_chance, other_chance = next((b, o) for limit, b, o in REST_BY_AGE if age <= limit)

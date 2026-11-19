@@ -326,14 +326,30 @@ test('rust marker shows the exact in-game penalty for players back from injury, 
   const ctx = {escapeHtml: (v) => String(v), escapeAttr: (v) => String(v)};
   vm.createContext(ctx);
   vm.runInContext(`${grab('isPlayerInjured')}\n${grab('playerHasRust')}\n${grab('playerRustMarkup')}`, ctx);
-  const rusty = {health: {status: 'ok', label: '', rust: 16, rust_penalty: 1.3, rust_days: 3}};
+  // Rust fades per game played (INJURY-REST, 2026-11-19); the coach's minutes limit is described too.
+  const rusty = {health: {status: 'ok', label: '', rust: 16, rust_penalty: 1.3, rust_games: 3, rust_days: 3,
+                          minutes_limit_pct: 75, minutes_limit_games: 8}};
   const html = ctx.playerRustMarkup(rusty);
   assert.match(html, /↓/);
   assert.match(html, />1\.3</);
-  assert.match(html, /fades in about 3 days/);
+  assert.match(html, /fades over his next 3 games/);
+  assert.match(html, /about 75% of his usual minutes next game, back to full over 8 games/);
   assert.equal(ctx.playerRustMarkup({health: {status: 'out', label: 'short ~3g', rust_penalty: 1.3}}), '');   // injured: cross only
   assert.equal(ctx.playerRustMarkup({health: {status: 'ok', label: ''}}), '');                               // healthy
   assert.equal(ctx.playerRustMarkup({health: {status: 'healthy', label: 'Healthy', rust_penalty: 0.04}}), ''); // negligible
+});
+
+test('rest suggestion note shows the coach reason for the user team and is only a suggestion', () => {
+  const grab = (name) => app.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n}\\n`))[0];
+  const ctx = {escapeHtml: (v) => String(v), escapeAttr: (v) => String(v)};
+  vm.createContext(ctx);
+  vm.runInContext(`${grab('isPlayerInjured')}\n${grab('playerRestMarkup')}`, ctx);
+  const html = ctx.playerRestMarkup({health: {status: 'ok', label: '', rest_suggestion: {date: '2026-12-03', kind: 'rest',
+    reason: 'second night of a back-to-back'}}});
+  assert.match(html, /Coach suggests resting him on 2026-12-03: second night of a back-to-back/);
+  assert.match(html, /zZ/);
+  assert.equal(ctx.playerRestMarkup({health: {status: 'ok', label: ''}}), '');
+  assert.equal(ctx.playerRestMarkup({health: {status: 'out', label: 'Ankle sprain ~3g', rest_suggestion: {kind: 'rest', reason: 'x'}}}), '');
 });
 
 test('decline watch shows for veterans without growth runway, with athletic and skill split', () => {
