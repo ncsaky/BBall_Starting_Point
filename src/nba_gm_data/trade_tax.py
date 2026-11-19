@@ -242,7 +242,7 @@ def tax_note(canonical: dict[str, Any], team_id: str, incoming: list[dict[str, A
 
 
 # ------------------------------------------------------------------------------------- absorbed salary (step 4)
-ABSORB_POINTS_PER_MILLION = 4.5
+ABSORB_POINTS_PER_MILLION = 3.0
 ABSORB_VALUE_CAP = 60.0
 ABSORB_FUTURE_WEIGHT = 0.75
 ABSORB_ROTATION_MINUTES = 18.0

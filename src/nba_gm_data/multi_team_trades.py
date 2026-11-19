@@ -829,7 +829,7 @@ def multi_team_reasons(canonical, route, base_reasons):
         flows = _flows(route['legs'])
         inc, out = flows[route['short_id']]
         saved = tax_saved(canonical, route['short_id'], inc, out)['saved']
-        cut = f" and cut its luxury tax by about ${saved / 1e6:.1f}M" if saved > 0 else ''
+        cut = f", bringing its luxury-tax saving in the whole deal to about ${saved / 1e6:.1f}M" if saved > 0 else ''
         why = (f"{ab(route['short_id'])} also moved {mover.get('name')} (${salary / 1e6:.1f}M) to close the gap{cut}; "
                f"{ab(absorber)} ({stance}) had room under the tax and took him for {paid_text}")
     text = (base_reasons or {}).get('text') or ''

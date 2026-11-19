@@ -201,6 +201,12 @@ def pick_investment_outlook(canonical, team_id, incoming, outgoing, before, afte
         cover = max(0., hurt_after['strength']-hurt_before['strength']-strength) * min(1., absence/60)
     limit = min(9., 1.5+strength*6+growth*.2+cover*6+(relief*.25 if relief >= 5 else 0))
     capital_limit = 8+strength*30+depth*.6+growth*1.5+cover*30+(relief*2 if relief >= 5 else 0)
+    # Trade step 4: picks paid to shed salary buy luxury-tax savings, not a rotation upgrade. Real tax teams paid one
+    # to three seconds for it (Finney-Smith, LeVert, Saric); the tax saved (trade_tax, AI teams only) is a purpose.
+    from .trade_tax import tax_value
+    tax_saving = max(0., tax_value(canonical, team_id, incoming, outgoing))
+    capital_limit += tax_saving
+    limit = min(9., limit+tax_saving*.25)
     return {'net_draft_value_spent': round(spend, 4), 'loss_limit': round(limit, 4),
             'rotation_gain': round(strength, 4), 'young_upside_gain': round(growth, 4),
             'injury_cover_gain': round(cover, 4), 'net_salary_relief_millions': round(relief, 4),
