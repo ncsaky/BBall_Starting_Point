@@ -92,10 +92,16 @@ class RoutingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             rm.ratings_model_for({"meta": {"ratings_model": "bogus"}})
 
-    def test_default_mode_is_legacy(self):
+    def test_default_mode_is_inputs_for_new_saves_and_save_less_tools(self):
         with patch.dict(os.environ, {}, clear=False):
             os.environ.pop("NBA_GM_RATINGS_MODEL", None)
-            self.assertEqual(rm.ratings_model_for({}), rm.LEGACY)
+            self.assertEqual(rm.ratings_model_for(), rm.INPUTS_V1)          # scorecards and fit scripts
+            self.assertEqual(rm.ratings_model_for({}), rm.LEGACY)           # a save that predates the field
+            os.environ["NBA_GM_RATINGS_MODEL"] = rm.LEGACY
+            self.assertEqual(rm.ratings_model_for(), rm.LEGACY)             # older set still selectable
+        import inspect
+        from nba_gm_data.save import create_league_save
+        self.assertEqual(inspect.signature(create_league_save).parameters["ratings_model"].default, rm.INPUTS_V1)
 
 
 @unittest.skipUnless((INPUTS.exists() or INPUTS.with_name(INPUTS.name + ".gz").exists()) and UNIVERSE.exists(), "player inputs file not built yet")

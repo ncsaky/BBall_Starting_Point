@@ -78,8 +78,27 @@ def orb_per75(rating: float) -> float:
 _PROFILE_DEFAULTS = {"three_per36": 3.0, "three_pct": 0.34, "two_pct": 0.52, "ft_pct": 0.76}
 
 
+# input_features is read for every player in every game, valuation and summary. The records handed out by
+# ratings_model are shared, read-only objects, so the features are kept per record object (by identity, holding a
+# reference so the id stays unique; bounded, oldest first). A copy is returned, so callers can never edit the cache.
+_FEATURE_CACHE: dict[int, tuple[Mapping[str, Any], tuple[float, ...]]] = {}
+_FEATURE_CACHE_LIMIT = 4096
+
+
 def input_features(inputs: Mapping[str, Any] | None) -> list[float]:
     """Mean technique grade per group plus involvement (T08); league-typical values when inputs are missing."""
+    if inputs is None:
+        return _input_features(inputs)
+    cached = _FEATURE_CACHE.get(id(inputs))
+    if cached is None or cached[0] is not inputs:
+        cached = (inputs, tuple(_input_features(inputs)))
+        if len(_FEATURE_CACHE) >= _FEATURE_CACHE_LIMIT:
+            _FEATURE_CACHE.pop(next(iter(_FEATURE_CACHE)))
+        _FEATURE_CACHE[id(inputs)] = cached
+    return list(cached[1])
+
+
+def _input_features(inputs: Mapping[str, Any] | None) -> list[float]:
     out = []
     for ids in INPUT_GROUPS.values():
         grades = [float(inputs[i]["value"]["grade"]) for i in ids

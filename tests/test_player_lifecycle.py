@@ -228,6 +228,8 @@ class PlayerLifecycleTests(unittest.TestCase):
         saved = self.fixture("2027-11-01")
         players = [{"id": f"p{i}", "name": f"Player {i}", "team_id": "ai", "minutes_projection": i, "age": 20} for i in range(18)]
         canonical = {"players": players, "teams": [{"id": "ai", "abbrev": "AI"}]}
+        # An 18-player made-up league has no rating data to fit the 94-input model on; this checks roster counting.
+        saved["meta"]["ratings_model"] = "legacy_traits"
         saved["incoming_rookies"] = [{"player_id": p["id"], "draft_year": "2027"} for p in players]
         saved["roster_cutdown_baselines"] = {"ai": 18}
         with patch.object(sv, "active_players_for_roster_checks", return_value=players):

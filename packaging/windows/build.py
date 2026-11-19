@@ -37,11 +37,23 @@ def digest(path):
 PRIVATE_DATA = ("data/research/bbi/captures", "data/research/bbi/normalized", "data/research/bbi/raw",
                 "data/research/bbi/tools", "data/research/bbi/normalized.json", "data/research/bbi/values_recent.json.gz",
                 "data/research/barttorvik")
+# Uncompressed copies left behind by local ratings builds. The game reads the tracked .gz copy when the uncompressed
+# file is absent (ratings_model._inputs_path, input_estimator), so only the .gz ships (7 MB instead of 123 MB more).
+BUILD_ONLY_DATA = ("data/canonical/player_inputs_2026_27.json",)
+
+
+def _relative(path, repo):
+    # abspath, not resolve: a symlinked data file (common in git worktrees) still belongs to this repository.
+    return Path(os.path.abspath(path)).relative_to(os.path.abspath(repo)).as_posix()
 
 
 def is_private_data(path, repo):
-    relative = Path(path).resolve().relative_to(Path(repo).resolve()).as_posix()
+    relative = _relative(path, repo)
     return any(relative == item or relative.startswith(item + "/") for item in PRIVATE_DATA)
+
+
+def is_shipped_data(path, repo):
+    return not is_private_data(path, repo) and _relative(path, repo) not in BUILD_ONLY_DATA
 
 
 def inventory(repo=REPO):
@@ -52,7 +64,7 @@ def inventory(repo=REPO):
     files += list((repo / "src/nba_gm_data/gui").rglob("*"))
     for folder in ("data", "NBA Schedule", "Pre-Season manifestos"):
         files += [p for p in (repo / folder).rglob("*")
-                  if p.suffix in {".json", ".csv", ".txt", ".gz"} and not is_private_data(p, repo)]
+                  if p.suffix in {".json", ".csv", ".txt", ".gz"} and is_shipped_data(p, repo)]
     files += list((repo / "packaging/windows").glob("*"))
     files += [repo / "pyproject.toml", repo / "packaging/assets/app-icon.ico", repo / "packaging/assets/app-icon.png"]
     files = sorted({p for p in files if p.is_file() and "__pycache__" not in p.parts and p.name != ".DS_Store"})

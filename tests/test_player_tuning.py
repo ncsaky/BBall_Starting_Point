@@ -120,7 +120,8 @@ class PlayerTuningTests(unittest.TestCase):
 
     def test_new_game_action_selects_new_baseline(self):
         with TemporaryDirectory() as directory:
-            result = dispatch_app_action("create_save", {"team": "DAL", "seed": 17, "save_name": "tuning"},
+            result = dispatch_app_action("create_save", {"team": "DAL", "seed": 17, "save_name": "tuning",
+                                                           "ratings_model": "legacy_traits"},
                                          root=ROOT, save_dir=Path(directory), canonical=deepcopy(self.new))
             saved = load_save(result["save_path"])
             self.assertEqual(saved["meta"]["starting_data_version"], "2026-10-23-player-tuning-v3")

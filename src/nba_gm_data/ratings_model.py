@@ -1,13 +1,14 @@
-"""Opt-in Stage 1 ratings model: legacy traits derived from the 94 approved inputs.
+"""Stage 1 ratings model: legacy traits derived from the 94 approved inputs.
 
 Modes:
-- "legacy_traits" (default): unchanged behavior.
-- "inputs_v1": each player's 15 legacy traits are derived from their inputs by trait_adapter. Development
-  (still produced as trait-delta events by the existing growth model) is routed onto the inputs, and the
-  traits are re-derived, so displayed inputs and engine traits always agree.
+- "inputs_v1" (default since 2026-11-19): each player's 15 legacy traits are derived from their inputs by
+  trait_adapter. Development (still produced as trait-delta events by the existing growth model) is routed onto
+  the inputs, and the traits are re-derived, so displayed inputs and engine traits always agree.
+- "legacy_traits": the older hand-built ratings, unchanged.
 
-A save opts in with save["meta"]["ratings_model"] = "inputs_v1". Save-less tools (calibration report,
-betting-odds validation) can opt in with the environment variable NBA_GM_RATINGS_MODEL=inputs_v1.
+A save records its mode in save["meta"]["ratings_model"] (new saves: the default); a save without one predates the
+94-input model and keeps the older ratings. Save-less tools (calibration report, betting-odds validation) use the
+default unless the environment variable NBA_GM_RATINGS_MODEL names a mode (e.g. NBA_GM_RATINGS_MODEL=legacy_traits).
 Players without input records (e.g. newly generated draftees, until Stage 1 F) keep their legacy traits.
 """
 from __future__ import annotations
@@ -23,6 +24,7 @@ from .trait_adapter import FittedAdapter, derive_traits, fit_adapter, trait_inpu
 LEGACY = "legacy_traits"
 INPUTS_V1 = "inputs_v1"
 MODES = (LEGACY, INPUTS_V1)
+DEFAULT = INPUTS_V1
 INPUTS_FILE = "data/canonical/player_inputs_2026_27.json"
 MODEL_KEY = "_ratings_model"
 # Development deltas are in trait points. Each movable input moves by the weighted mean of the deltas of the
@@ -61,7 +63,14 @@ _EFFECTIVE_CACHE_LIMIT = 8_192
 
 
 def ratings_model_for(save: Mapping[str, Any] | None = None) -> str:
-    mode = ((save or {}).get("meta") or {}).get("ratings_model") or os.environ.get("NBA_GM_RATINGS_MODEL") or LEGACY
+    """The rating set for a save, or for save-less tools (save=None: the scorecards, fit scripts).
+
+    Every save created since the 94-input model existed records its set, so a save without one was made on the
+    older ratings (or is a hand-built test league too small to fit the 94-input model on) and keeps them.
+    Save-less tools measure the default set unless NBA_GM_RATINGS_MODEL names one.
+    """
+    fallback = DEFAULT if save is None else LEGACY
+    mode = ((save or {}).get("meta") or {}).get("ratings_model") or os.environ.get("NBA_GM_RATINGS_MODEL") or fallback
     if mode not in MODES:
         raise ValueError(f"Unknown ratings model {mode!r}; expected one of {MODES}")
     return mode
@@ -274,6 +283,10 @@ def _scale_map(root: Path | None) -> dict[str, Any] | None:
     return _SCALE_MAP_CACHE[key]
 
 
+# Player fields input_estimator never reads (checked: no estimator path touches them).
+_ESTIMATOR_IGNORED_PLAYER_KEYS = frozenset({"_save_stats"})
+
+
 def _install_generated_players(canonical: dict[str, Any], baseline: Mapping[str, Mapping[str, float]],
                                league_inputs: Mapping[str, Any], root: Path | None = None) -> list[str]:
     """Estimate inputs for players missing from the canonical inputs file (e.g. drafted rookies)."""
@@ -287,7 +300,12 @@ def _install_generated_players(canonical: dict[str, Any], baseline: Mapping[str,
         if not pid or pid in league_inputs or pid not in baseline:
             continue
         traits = dict(baseline[pid])
-        key = hashlib.sha256(json.dumps([player, traits], sort_keys=True, default=str).encode()).hexdigest()
+        # Keyed on everything the estimator could read. The season stats the save attaches to each player
+        # (_save_stats) change after every game and are never read by the estimator; keying on them re-estimated
+        # every generated player on every league rebuild (a quarter of a month's extra time in an aged league)
+        # and grew this cache without bound.
+        definition = {k: v for k, v in player.items() if k not in _ESTIMATOR_IGNORED_PLAYER_KEYS}
+        key = hashlib.sha256(json.dumps([definition, traits], sort_keys=True, default=str).encode()).hexdigest()
         if (pid, key) not in _GENERATED_CACHE:
             estimator = estimator or InputEstimator()
             estimated = estimator.estimate_player_inputs(player, traits, prospect=True).to_dict()["inputs"]

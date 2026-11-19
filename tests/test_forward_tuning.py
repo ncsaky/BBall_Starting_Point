@@ -61,7 +61,8 @@ class ForwardTuningTests(unittest.TestCase):
     def test_v4_career_and_earned_development_survive_v5_entry_and_reload(self):
         with TemporaryDirectory() as directory:
             path = Path(directory) / "career.json"
-            saved = create_league_save(ROOT, deepcopy(self.old), "DEN", path, seed=17)
+            # Exact older-ratings trait arithmetic across starting-data versions.
+            saved = create_league_save(ROOT, deepcopy(self.old), "DEN", path, seed=17, ratings_model="legacy_traits")
             saved["development_trait_totals"] = {pid: {"passing_reads": 2.5} for pid in self.ids.values()}
             write_save(path, saved)
             fingerprint = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -80,7 +81,8 @@ class ForwardTuningTests(unittest.TestCase):
     def test_new_game_action_uses_v5_without_losing_pick_terms(self):
         from nba_gm_data.save import load_pick_obligation_overrides
         with TemporaryDirectory() as directory:
-            result = dispatch_app_action("create_save", {"team": "DEN", "seed": 17, "save_name": "forward"},
+            result = dispatch_app_action("create_save", {"team": "DEN", "seed": 17, "save_name": "forward",
+                                                           "ratings_model": "legacy_traits"},
                                          root=ROOT, save_dir=Path(directory), canonical=deepcopy(self.new))
             saved = load_save(result["save_path"])
             self.assertEqual(saved["meta"]["starting_data_version"], VERSION)

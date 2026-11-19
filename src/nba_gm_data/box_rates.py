@@ -92,28 +92,38 @@ def _log_linear(model: Mapping[str, float], values: Mapping[str, float]) -> floa
     return math.exp(total)
 
 
-# One player's input records are read by several rate models in a row (points, turnovers, steals, free throws).
-# The records handed out by ratings_model are shared, read-only objects, so the flattened numbers are kept for the
-# last eight record objects (by identity, holding a reference so the id stays unique).
-_FLAT_CACHE: dict[int, tuple[Mapping[str, Any], dict[str, float]]] = {}
+# One player's input records are read by several rate models in a row (points, turnovers, steals, free throws), for
+# every player in every game and valuation. The records handed out by ratings_model are shared, read-only objects
+# (base records, or one cached record per accumulated development), so each record object's flattened numbers and
+# rates are kept by identity, holding a reference so the id stays unique. Bounded: the oldest entry goes first.
+_FLAT_CACHE: dict[int, tuple[Mapping[str, Any], dict[str, float], dict[tuple, float | None]]] = {}
+_FLAT_CACHE_LIMIT = 4096
+
+
+def _flat_entry(inputs: Mapping[str, Any]) -> tuple[Mapping[str, Any], dict[str, float], dict[tuple, float | None]]:
+    cached = _FLAT_CACHE.get(id(inputs))
+    if cached is not None and cached[0] is inputs:
+        return cached
+    cached = (inputs, flatten_inputs(inputs), {})
+    if len(_FLAT_CACHE) >= _FLAT_CACHE_LIMIT:
+        _FLAT_CACHE.pop(next(iter(_FLAT_CACHE)))
+    _FLAT_CACHE[id(inputs)] = cached
+    return cached
 
 
 def _flat(inputs: Mapping[str, Any]) -> dict[str, float]:
-    cached = _FLAT_CACHE.get(id(inputs))
-    if cached is not None and cached[0] is inputs:
-        return cached[1]
-    flat = flatten_inputs(inputs)
-    if len(_FLAT_CACHE) >= 8:
-        _FLAT_CACHE.pop(next(iter(_FLAT_CACHE)))
-    _FLAT_CACHE[id(inputs)] = (inputs, flat)
-    return flat
+    return _flat_entry(inputs)[1]
 
 
 def _from_inputs(model: Mapping[str, float], inputs: Mapping[str, Any] | None, low: float, high: float) -> float | None:
     if not inputs:
         return None
-    rate = _log_linear(model, _flat(inputs))
-    return None if rate is None else round(clamp(rate, low, high), 4)
+    _, flat, rates = _flat_entry(inputs)
+    key = (id(model), low, high)   # the rate models are module constants
+    if key not in rates:
+        rate = _log_linear(model, flat)
+        rates[key] = None if rate is None else round(clamp(rate, low, high), 4)
+    return rates[key]
 
 
 def points_per36_from_inputs(inputs: Mapping[str, Any] | None) -> float | None:

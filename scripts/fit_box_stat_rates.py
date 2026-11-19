@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import statistics
 import sys
 from pathlib import Path
@@ -108,7 +109,8 @@ def main() -> int:
     targets = json.loads((ROOT / "data/calibration/nba_2025_26_targets.json").read_text())["players"]
     inputs = load_league_inputs()
     from nba_gm_data.sim import canonical_sim_cache, load_sim_context
-    canonical = load_sim_context(ROOT)["canonical"]  # legacy traits (no NBA_GM_RATINGS_MODEL)
+    os.environ.setdefault("NBA_GM_RATINGS_MODEL", "legacy_traits")  # this fit reads the older traits
+    canonical = load_sim_context(ROOT)["canonical"]
     traits = canonical_sim_cache(canonical)["traits_by_player"]
     rows = []
     for pid, t in targets.items():
