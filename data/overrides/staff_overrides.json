@@ -1,25 +1,47 @@
 {
-  "notes": "Manual staff corrections for the intended 2025-26 preseason snapshot. Later real-world firings do not alter this universe start date.",
+  "notes": "Manual head-coach corrections for the 2026-27 offseason start (new saves start in the 2026 offseason). Six 2026 coaching changes per NBA.com: CHI Donovan->Splitter, DAL Kidd->May, ORL Mosley->Sweeney, MIL Rivers->Jenkins, NOP Green/Borrego->Mosley, POR Splitter (interim)->Nori. MIL and NOP were already right from the official team pages; the four below override stale page captures. Updated 2026-11-19.",
   "teams": {
     "CHI": {
       "head_coach": {
-        "confidence": 0.9,
-        "name": "Billy Donovan",
-        "notes": "Manual preseason snapshot override. Chicago later changed coaching direction, but this universe starts before that end-of-season move.",
-        "status": "manual_snapshot_override",
+        "confidence": 0.95,
+        "name": "Tiago Splitter",
+        "notes": "Hired in the 2026 offseason; source: NBA.com 2026 Coaching Tracker (nba.com/news/2026-coaching-tracker) and 'Closer look at new coaches for 2026-27' (2026-07-22).",
+        "status": "manual_2026_27_override",
         "traits": {
-          "snapshot_date": "2025-10-01"
+          "snapshot_date": "2026-07-22"
         }
       }
     },
     "ORL": {
       "head_coach": {
-        "confidence": 0.9,
-        "name": "Jamahl Mosley",
-        "notes": "Manual preseason snapshot override. Orlando later changed coaching direction, but this universe starts before that end-of-season move.",
-        "status": "manual_snapshot_override",
+        "confidence": 0.95,
+        "name": "Sean Sweeney",
+        "notes": "Hired in the 2026 offseason; source: NBA.com 2026 Coaching Tracker (nba.com/news/2026-coaching-tracker) and 'Closer look at new coaches for 2026-27' (2026-07-22).",
+        "status": "manual_2026_27_override",
         "traits": {
-          "snapshot_date": "2025-10-01"
+          "snapshot_date": "2026-07-22"
+        }
+      }
+    },
+    "DAL": {
+      "head_coach": {
+        "confidence": 0.95,
+        "name": "Dusty May",
+        "notes": "Hired in the 2026 offseason; source: NBA.com 2026 Coaching Tracker (nba.com/news/2026-coaching-tracker) and 'Closer look at new coaches for 2026-27' (2026-07-22).",
+        "status": "manual_2026_27_override",
+        "traits": {
+          "snapshot_date": "2026-07-22"
+        }
+      }
+    },
+    "POR": {
+      "head_coach": {
+        "confidence": 0.95,
+        "name": "Micah Nori",
+        "notes": "Hired in the 2026 offseason; source: NBA.com 2026 Coaching Tracker (nba.com/news/2026-coaching-tracker) and 'Closer look at new coaches for 2026-27' (2026-07-22).",
+        "status": "manual_2026_27_override",
+        "traits": {
+          "snapshot_date": "2026-07-22"
         }
       }
     }

@@ -120,6 +120,15 @@ HEAD_COACH_REPUTATION_GRADES = {
     "jordi fernandez": 56.0,
     "jordi fernández": 56.0,
     "jordan ott": 55.0,
+    # 2026 offseason hires (added 2026-11-19). Placed between the graded coaches next to them in Fadeaway World's
+    # 2026-27 preseason ranking of all 30 head coaches (Eddie Bitar, 2026-08-16): Jenkins 19th (Atkinson 18th, Mosley
+    # 20th), Nori 22nd (Lee 21st, Rajakovic 23rd), Splitter 24th (Rajakovic, Christie 25th), May 29th and Sweeney 30th
+    # (below Iisalo 28th and Fernandez 27th, the lowest graded neighbors).
+    "taylor jenkins": 72.0,
+    "micah nori": 65.5,
+    "tiago splitter": 60.0,
+    "dusty may": 54.0,
+    "sean sweeney": 53.0,
 }
 
 

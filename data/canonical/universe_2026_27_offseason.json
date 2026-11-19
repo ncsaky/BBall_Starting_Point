@@ -870505,16 +870505,16 @@
       "id": "staff_chi-head-coach",
       "team_id": "team_chi",
       "role": "head_coach",
-      "name": "Billy Donovan",
-      "status": "manual_snapshot_override",
+      "name": "Tiago Splitter",
+      "status": "manual_2026_27_override",
       "traits": {
-        "snapshot_date": "2025-10-01"
+        "snapshot_date": "2026-07-22"
       },
-      "confidence": 0.9,
+      "confidence": 0.95,
       "source_ids": [
-        "src_manual_overrides_2025_26"
+        "src_manual_overrides_2026_27"
       ],
-      "notes": "Manual preseason snapshot override. Chicago later changed coaching direction, but this universe starts before that end-of-season move."
+      "notes": "Hired in the 2026 offseason; source: NBA.com 2026 Coaching Tracker (nba.com/news/2026-coaching-tracker) and 'Closer look at new coaches for 2026-27' (2026-07-22)."
     },
     {
       "id": "staff_chi-assistant-pool",
@@ -870682,45 +870682,16 @@
       "id": "staff_dal-head-coach",
       "team_id": "team_dal",
       "role": "head_coach",
-      "name": "Jason Kidd",
-      "status": "verified_official_team_page",
+      "name": "Dusty May",
+      "status": "manual_2026_27_override",
       "traits": {
-        "coaching_groups": {
-          "Assistant Coach": [
-            "Frank Vogel",
-            "Jay Triano",
-            "Popeye Jones",
-            "Phil Handy",
-            "Mike Penberthy",
-            "Eric Hughes",
-            "Josh Broghamer",
-            "Dru Anthrop",
-            "Keith Veney",
-            "Jordan Sears"
-          ],
-          "Head Coach": [
-            "Jason Kidd"
-          ],
-          "Trainer": [
-            "Jana Austin"
-          ]
-        },
-        "background": {
-          "Arena": "American Airlines Center",
-          "City": "Dallas",
-          "Founded": "1980",
-          "G-League": "Texas Legends",
-          "General Manager": "",
-          "Governor(s)": "Patrick Dumont",
-          "Head Coach": ""
-        },
-        "source_url": "https://www.nba.com/team/1610612742/franchise-leaders"
+        "snapshot_date": "2026-07-22"
       },
-      "confidence": 0.92,
+      "confidence": 0.95,
       "source_ids": [
-        "src_nba_official_team_pages_2026"
+        "src_manual_overrides_2026_27"
       ],
-      "notes": "Head coach verified from official NBA.com team page."
+      "notes": "Hired in the 2026 offseason; source: NBA.com 2026 Coaching Tracker (nba.com/news/2026-coaching-tracker) and 'Closer look at new coaches for 2026-27' (2026-07-22)."
     },
     {
       "id": "staff_dal-assistant-pool",
@@ -872302,16 +872273,16 @@
       "id": "staff_orl-head-coach",
       "team_id": "team_orl",
       "role": "head_coach",
-      "name": "Jamahl Mosley",
-      "status": "manual_snapshot_override",
+      "name": "Sean Sweeney",
+      "status": "manual_2026_27_override",
       "traits": {
-        "snapshot_date": "2025-10-01"
+        "snapshot_date": "2026-07-22"
       },
-      "confidence": 0.9,
+      "confidence": 0.95,
       "source_ids": [
-        "src_manual_overrides_2025_26"
+        "src_manual_overrides_2026_27"
       ],
-      "notes": "Manual preseason snapshot override. Orlando later changed coaching direction, but this universe starts before that end-of-season move."
+      "notes": "Hired in the 2026 offseason; source: NBA.com 2026 Coaching Tracker (nba.com/news/2026-coaching-tracker) and 'Closer look at new coaches for 2026-27' (2026-07-22)."
     },
     {
       "id": "staff_orl-assistant-pool",
@@ -872586,43 +872557,16 @@
       "id": "staff_por-head-coach",
       "team_id": "team_por",
       "role": "head_coach",
-      "name": "Chauncey Billups",
-      "status": "verified_official_team_page",
+      "name": "Micah Nori",
+      "status": "manual_2026_27_override",
       "traits": {
-        "coaching_groups": {
-          "Assistant Coach": [
-            "Tiago Splitter",
-            "Nate Bjorkgren",
-            "James Posey",
-            "Pat St. Andrews",
-            "Quinton Crawford",
-            "Ronnie Burrell"
-          ],
-          "Head Coach": [
-            "Chauncey Billups"
-          ],
-          "Trainer": [
-            "Jessica Cohen",
-            "Courtney Watson",
-            "Geoff Clark"
-          ]
-        },
-        "background": {
-          "Arena": "Moda Center",
-          "City": "Portland",
-          "Founded": "1970",
-          "G-League": "Rip City Remix",
-          "General Manager": "Joe Cronin",
-          "Governor(s)": "Tom Dundon",
-          "Head Coach": "Chauncey Billups"
-        },
-        "source_url": "https://www.nba.com/team/1610612757/franchise-leaders"
+        "snapshot_date": "2026-07-22"
       },
-      "confidence": 0.92,
+      "confidence": 0.95,
       "source_ids": [
-        "src_nba_official_team_pages_2026"
+        "src_manual_overrides_2026_27"
       ],
-      "notes": "Head coach verified from official NBA.com team page."
+      "notes": "Hired in the 2026 offseason; source: NBA.com 2026 Coaching Tracker (nba.com/news/2026-coaching-tracker) and 'Closer look at new coaches for 2026-27' (2026-07-22)."
     },
     {
       "id": "staff_por-assistant-pool",
