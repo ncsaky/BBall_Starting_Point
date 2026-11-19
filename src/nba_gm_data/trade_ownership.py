@@ -85,6 +85,10 @@ MOVE_REASON_FACTORS = {
     "position_surplus": 0.75,
     "blocked_prospect": 0.75,
     "health_risk_for_win_now_team": 0.75,
+    # Contract reasons (trade step 2, _money_reasons): an expiring veteran on a team that is not contending would
+    # leave for nothing; a team over the luxury tax saves real money moving a paid non-core player.
+    "expiring_veteran_non_contender": 0.6,
+    "over_tax_line": 0.75,
 }
 DEVELOPING_TIMELINE_FACTOR = 0.8
 # Roster-shape reasons never apply to a player in the team's core plan, and a position surplus only counts if the
@@ -473,6 +477,8 @@ def move_reasons(canonical: dict[str, Any], player: dict[str, Any], team_id: str
         after = own_departure_state(canonical, team_id, state, {player["id"]})
         if f"{player_position_bucket(player)}_depth" not in (after.get("excesses") or []):
             reasons = [r for r in reasons if r not in {"position_surplus", "veteran_surplus_slot"}]
+    if not core:
+        reasons.extend(_money_reasons(canonical, player, team_id, state))
     out = {}
     for reason in reasons:
         if reason not in MOVE_REASON_FACTORS or (core and reason in ROSTER_SHAPE_REASONS):
@@ -481,6 +487,27 @@ def move_reasons(canonical: dict[str, Any], player: dict[str, Any], team_id: str
         if reason == "older_than_team_timeline" and not _rebuilding(state):
             factor = DEVELOPING_TIMELINE_FACTOR
         out[reason] = factor
+    return out
+
+
+def _money_reasons(canonical: dict[str, Any], player: dict[str, Any], team_id: str, state: dict[str, Any]) -> list[str]:
+    """Contract reasons to move a non-core player (trade step 2): the team is over the luxury tax and he is paid
+    $5M+, or he is a veteran (28+) on an expiring deal and the team is not contending (it would lose him for
+    nothing). Real sellers cited tax savings in 12 of the 43 trades in data/research/real_trades."""
+    from .transactions import (CANONICAL_SEASON, cap_lines_for_season, contract_for_player, current_salary,
+                               maybe_float, team_current_salary_total)
+
+    season = str((canonical.get("meta") or {}).get("active_season") or CANONICAL_SEASON)
+    contract = contract_for_player(canonical, player["id"]) or {}
+    salary = current_salary(contract) or 0.0
+    out = []
+    if salary >= 5_000_000 and team_current_salary_total(canonical, team_id) > cap_lines_for_season(season)["tax_line"]:
+        out.append("over_tax_line")
+    seasons = [s for s in contract.get("seasons", []) if float(s.get("salary") or 0) > 0 and str(s.get("season") or "") >= season]
+    contending = state.get("window_phase") == "peak" or state.get("phase") in {"contending", "contending_with_future_upside"}
+    age = maybe_float(player.get("display_age", player.get("age"))) or 27.0
+    if salary > 0 and len(seasons) <= 1 and age >= 28.0 and not contending:
+        out.append("expiring_veteran_non_contender")
     return out
 
 

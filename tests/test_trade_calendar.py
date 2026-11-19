@@ -113,10 +113,11 @@ class TradeCalendarTests(unittest.TestCase):
              patch.object(tx, 'buyer_offer_package_options', return_value=packages), \
              patch.object(tx, 'evaluate_trade_decision', side_effect=evaluate), \
              patch.object(tx, 'prepare_ai_trade_candidate', side_effect=lambda c, r, **kw: r):
-            shallow = tx.simulate_ai_trades(data, '2027-02-05', '2027-02-05', seed=17)
+            # The listed-player search (trade step 2 keeps it for offers to the human team).
+            shallow = tx.simulate_ai_trades(data, '2027-02-05', '2027-02-05', seed=17, target_search=False)
             self.assertEqual(shallow['proposal_count'], 0)
             checked.clear()
-            deep = tx.simulate_ai_trades(data, '2027-02-05', '2027-02-05', seed=17, search_depth=2)
+            deep = tx.simulate_ai_trades(data, '2027-02-05', '2027-02-05', seed=17, search_depth=2, target_search=False)
             self.assertEqual(deep['proposal_count'], 1)
             self.assertEqual(checked[0][0], '0')
             self.assertEqual(deep['search_diagnostics']['packages'], 8)
@@ -140,7 +141,7 @@ class TradeCalendarTests(unittest.TestCase):
              patch.object(tx, 'buyer_offer_package_options', return_value=packages), \
              patch.object(tx, 'evaluate_trade_decision', side_effect=evaluate), \
              patch.object(tx, 'prepare_ai_trade_candidate', side_effect=lambda c, r, **kw: r):
-            result = tx.simulate_ai_trades(data, '2027-02-05', '2027-02-05', reserve_assets=True)
+            result = tx.simulate_ai_trades(data, '2027-02-05', '2027-02-05', reserve_assets=True, target_search=False)
         self.assertEqual(result['proposal_count'], 2)
         self.assertEqual(result['search_diagnostics']['asset_conflicts'], 1)
         self.assertEqual(result['proposals'][1]['proposal']['to_assets'][0]['id'], 'alternate')

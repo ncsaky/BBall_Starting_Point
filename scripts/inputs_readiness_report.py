@@ -378,6 +378,8 @@ def trade_list(save_path, save, active, base, label):
                                                    "acceptance_threshold", "strategic_adjustment", "notes", "decision_reasons")}
                             for e in t.get("evaluations", [])],
             "status": t.get("status"),
+            "why": (t.get("trade_reasons") or {}).get("text"),
+            "target_key": (t.get("trade_reasons") or {}).get("target_key"),
         })
     return out
 
@@ -438,6 +440,8 @@ def trades_markdown(label, trades):
             receiver = next((e for e in t["evaluations"] if e.get("team_abbrev") != team), {})
             lines.append(f"| {t['date']} | {team} ({ctx.get('record_at_trade')}, {ctx.get('phase')}) | {'; '.join(parts) or '-'} | "
                          f"{receiver.get('team_abbrev')}: {receiver.get('incoming_value')} / {receiver.get('outgoing_value')} / {receiver.get('net_value')} |")
+        if t.get("why"):
+            lines.append(f"| | Why | {t['why']} | |")
     return "\n".join(lines) + "\n"
 
 

@@ -273,7 +273,7 @@ def package_preference(canonical, team_id, incoming, outgoing=(), config=None):
             neutral = tx.pick_asset_value(tx.pick_by_id(canonical, asset['id']), 'neutral')
             overlap = max(0., tx.pick_asset_value(tx.pick_by_id(canonical, asset['id']), state.get('phase', 'neutral'))-neutral)
             if state.get('phase') in {'rebuilding', 'developing'}:
-                overlap += float(decision.get('rebuilder_pick_bonus', 7.0))
+                overlap += tx.rebuilder_draft_bonus(canonical, asset, state.get('phase', 'neutral'), {'decision': decision})
         else:
             continue
         credit = max(0., max(0., neutral)*.05*match['score']-overlap)
