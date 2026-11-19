@@ -266,5 +266,21 @@ class ApplyTests(unittest.TestCase):
         self.assertFalse(mt.bounded_multi_team_accept(data, fresh, set(forged["joiner_team_ids"])))
 
 
+class TaxDumpPickTests(unittest.TestCase):
+    def test_picks_paid_to_cut_the_tax_are_not_a_rotation_overpay(self):
+        from nba_gm_data import trade_roster
+        data = league()
+        outgoing = [P("a5"), {"kind": "pick", "id": "a2028r1"}]
+        incoming = [{"kind": "pick", "id": "c2029r2"}]
+        with patch.object(tax, "tax_value", return_value=0.0):
+            plain = trade_roster.trade_roster_outlook(data, "a", incoming, outgoing)["pick_investment"]
+        with patch.object(tax, "tax_value", return_value=30.0):
+            taxed = trade_roster.trade_roster_outlook(data, "a", incoming, outgoing)["pick_investment"]
+        if plain is None:
+            self.skipTest("no net pick spending in this league")
+        self.assertAlmostEqual(taxed["capital_limit"] - plain["capital_limit"], 30.0, places=3)
+        self.assertGreaterEqual(taxed["loss_limit"], plain["loss_limit"])
+
+
 if __name__ == "__main__":
     unittest.main()

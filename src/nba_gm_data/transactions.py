@@ -1081,7 +1081,7 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
     diagnostics = {'targets': 0, 'buyers': 0, 'packages': 0, 'illegal': 0, 'declined': 0, 'asset_conflicts': 0,
                    'facilitator_attempts': 0, 'facilitator_agreements': 0, 'pairings': 0, 'prescreened_out': 0,
                    'team_targets': 0}
-    from .multi_team_trades import near_miss, multi_team_repairs, user_absorber_offers
+    from .multi_team_trades import near_miss, multi_team_repairs, user_absorber_offers, enrich_agreed_deals
     pairings = tt.target_pairings(canonical, buyer_ids, excluded, depth, config, rng)
     diagnostics['team_targets'] = sum(len(tt.team_trade_targets(canonical, tid)) for tid in buyer_ids)
     diagnostics['pairings'] = len(pairings)
@@ -1211,6 +1211,13 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                                             for e in item['candidate']['evaluations']),
                                        item['candidate']['proposal']['id']))
     diagnostics['near_misses'] = len(near_misses)
+    # A team over the tax that is trading anyway may add a salary leg to a team with room (the Saric leg of the real
+    # Cleveland / Sacramento / Chicago deal); the deal is replaced only when every team still accepts.
+    for index, candidate in enrich_agreed_deals(canonical, proposals, seed=seed, date=through_date, config=config,
+                                                depth=depth, diagnostics=diagnostics,
+                                                reserved=reserved if reserve_assets else set()).items():
+        proposals[index] = candidate
+        evaluation_snapshots[candidate['proposal']['id']] = canonical
     if len(proposals) < limit and near_misses:
         for candidate in multi_team_repairs(canonical, near_misses, seed=seed, date=through_date, config=config,
                                             depth=depth, diagnostics=diagnostics,

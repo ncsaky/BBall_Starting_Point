@@ -644,9 +644,10 @@ def _absorb_route(canonical, legs, mover_id, sender_id, absorber_id, payer_id, c
             'mover_id': mover_id, 'sender_id': sender_id, 'returned': back['asset']}
 
 
-def repair_routes(canonical, candidate, config, *, human_absorber=False, joiners=None, excluded=None):
+def repair_routes(canonical, candidate, config, *, human_absorber=False, joiners=None, excluded=None, focus=None):
     """Ways a third team could fix the most-short main team, best first (quick prices only). ``joiners``: teams that
-    already joined as absorbers (they must stay above their price); ``excluded``: players that cannot move today."""
+    already joined as absorbers (they must stay above their price); ``excluded``: players that cannot move today;
+    ``focus``: improve this team instead (an agreed deal that a salary leg would make better for it)."""
     from . import trade_targets as tt
     from .team_planning import core_commitment
     human = set(canonical.get('_human_team_ids') or [])
@@ -655,10 +656,14 @@ def repair_routes(canonical, candidate, config, *, human_absorber=False, joiners
     teams = {leg[k] for leg in legs for k in ('from_team_id', 'to_team_id')}
     if len(teams) >= MAX_TEAMS:
         return []
-    shorts = _short_teams(candidate, human)
-    if not shorts:
-        return []
-    short_id, gap = shorts[0]
+    if focus is not None:
+        e = next((e for e in candidate.get('evaluations') or [] if e.get('perspective_team_id') == focus), {})
+        short_id, gap = focus, float(e.get('net_value') or 0.0) - float(e.get('acceptance_threshold') or 0.0)
+    else:
+        shorts = _short_teams(candidate, human)
+        if not shorts:
+            return []
+        short_id, gap = shorts[0]
     flows = _flows(legs)
     incoming, outgoing = flows[short_id]
     base = tt.quick_net(canonical, short_id, incoming, outgoing, config)
@@ -703,7 +708,7 @@ def repair_routes(canonical, candidate, config, *, human_absorber=False, joiners
     moves.sort(key=lambda m: (-m[0], m[1], m[2]))
     routes = []
     proposal = candidate.get('proposal') or {}
-    if not human_absorber and not proposal.get('transfers') and short_id == proposal.get('from_team_id'):
+    if focus is None and not human_absorber and not proposal.get('transfers') and short_id == proposal.get('from_team_id'):
         # The seller of a two-team deal is short: a third team may have the piece it wants.
         routes += piece_routes(canonical, legs, short_id, gap, config, excluded, joiners)
     for gain, kind, mover, sender, payer in moves[:4]:
@@ -724,6 +729,9 @@ def repair_routes(canonical, candidate, config, *, human_absorber=False, joiners
                     or any(quick.get(j, 0.0) < -tt.PRESCREEN_TOLERANCE for j in (joiners or ()))
                     or (main and (min(main) < -9.0 - tt.PRESCREEN_TOLERANCE or sum(main) < -2.0 - tt.PRESCREEN_TOLERANCE))):
                 continue
+            if focus is not None and quick.get(short_id, 0.0) + tx.acceptance_threshold(canonical, short_id, config) \
+                    < base + ENRICH_MIN_GAIN:
+                continue  # the salary leg must leave the focus team clearly better off, after paying for it
             route['quick'] = quick
             route['absorber_quick'] = quick.get(absorber_id, 0.0)
             route['score'] = min(main) if main else 0.0
@@ -830,7 +838,7 @@ def multi_team_reasons(canonical, route, base_reasons):
         inc, out = flows[route['short_id']]
         saved = tax_saved(canonical, route['short_id'], inc, out)['saved']
         cut = f", bringing its luxury-tax saving in the whole deal to about ${saved / 1e6:.1f}M" if saved > 0 else ''
-        why = (f"{ab(route['short_id'])} also moved {mover.get('name')} (${salary / 1e6:.1f}M) to close the gap{cut}; "
+        why = (f"{ab(route['short_id'])} also moved {mover.get('name')} (${salary / 1e6:.1f}M) in the same deal{cut}; "
                f"{ab(absorber)} ({stance}) had room under the tax and took him for {paid_text}")
     text = (base_reasons or {}).get('text') or ''
     text = (text.rstrip('.') + '; ' if text else '') + why + '.'
@@ -891,6 +899,67 @@ def multi_team_repairs(canonical, near_misses, *, seed, date, config, depth, dia
                         and all(e.get('accepted') for e in result['evaluations'] if e['perspective_team_id'] in joined)):
                     frontier.append((result, why, joined))
     return found
+
+
+ENRICH_MIN_GAIN = 3.0                   # a salary leg added to an agreed deal must improve its team by this much
+ENRICH_EVALUATIONS = {1: 6, 2: 16}
+
+
+def enrich_agreed_deals(canonical, proposals, *, seed, date, config, depth, diagnostics, reserved):
+    """Agreed two-team deals a salary leg makes better: a team over the tax (or taking a contract it does not want) also
+    sends a spare contract to a team with room, paid in picks, while it is making the trade anyway. The real deadline
+    pattern: Cleveland's deal with Sacramento grew a Saric leg to Chicago that saved Cleveland about $40M in tax;
+    Minnesota's deal grew a Conley leg to Chicago. The two-team deal is replaced only when every team still accepts and
+    the team that wanted the leg is clearly better off by its own full evaluation. Returns {index: new candidate}."""
+    budget = ENRICH_EVALUATIONS[2 if depth > 1 else 1]
+    used = 0
+    replaced = {}
+    human = set(canonical.get('_human_team_ids') or [])
+    season = str(canonical.get('meta', {}).get('active_season') or tx.CANONICAL_SEASON)
+    line = tx.cap_lines_for_season(season)['tax_line']
+    from .trade_tax import absorb_cost
+    for index, candidate in enumerate(proposals):
+        if used >= budget:
+            break
+        proposal = candidate.get('proposal') or {}
+        if proposal.get('transfers') or candidate.get('pick_obligation_terms') or candidate.get('pick_trade_terms'):
+            continue
+        flows = _flows(legs_from_candidate(candidate))
+        focuses = []
+        for tid, (inc, out) in sorted(flows.items()):
+            if tid in human:
+                continue
+            if _season_payroll(canonical, tid) > line - 5_000_000 or absorb_cost(canonical, tid, inc, out) < -3.0:
+                focuses.append(tid)
+        for focus in focuses:
+            if used >= budget:
+                break
+            routes = [r for r in repair_routes(canonical, candidate, config, focus=focus) if r['kind'] in {'shed', 'reroute'}]
+            for route in routes[:1]:
+                keys = tx.proposal_asset_identity_keys({'proposal': {'transfers': [
+                    {**leg, 'assets': [{'kind': a['kind'], 'id': a['value']} for a in leg['assets']]} for leg in route['legs']]}})
+                if (keys - tx.proposal_asset_identity_keys(candidate)) & reserved:
+                    continue
+                used += 1
+                diagnostics['multi_team_enrich_evaluations'] = diagnostics.get('multi_team_enrich_evaluations', 0) + 1
+                result = _evaluate(canonical, route['legs'], route['rules'], seed, date, diagnostics)
+                if result is None or not bounded_multi_team_accept(canonical, result, {route['absorber_id']}):
+                    continue
+                before = next(float(e['net_value']) for e in candidate['evaluations'] if e['perspective_team_id'] == focus)
+                after = next(float(e['net_value']) for e in result['evaluations'] if e['perspective_team_id'] == focus)
+                if after < before + ENRICH_MIN_GAIN:
+                    continue
+                accepted = mark_multi_team_accepted(result, {route['absorber_id']})
+                accepted['search_route'] = 'multi_team_' + route['kind'] + '_leg'
+                accepted['target_source'] = 'multi_team'
+                accepted['trade_reasons'] = multi_team_reasons(canonical, route, candidate.get('trade_reasons'))
+                replaced[index] = accepted
+                reserved |= keys
+                diagnostics['multi_team_enriched'] = diagnostics.get('multi_team_enriched', 0) + 1
+                break
+            if index in replaced:
+                break
+    return replaced
 
 
 def user_absorber_offers(canonical, near_misses, *, seed, date, config, limit=2, diagnostics=None):
