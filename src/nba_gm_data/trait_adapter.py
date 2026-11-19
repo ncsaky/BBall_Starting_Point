@@ -26,7 +26,7 @@ from typing import Any, Iterable, Mapping
 
 from .player_model_registry import definition_registry
 
-ADAPTER_VERSION = "trait_adapter_v3_2026_11_18"
+ADAPTER_VERSION = "trait_adapter_v4_2026_11_18"
 
 PASS_FAMILIES = [f"F0{i}" for i in range(1, 10)]
 PASS_RECOGNITION = [f"{f}.recognition" for f in PASS_FAMILIES]
@@ -80,7 +80,14 @@ ADAPTER_SPEC: dict[str, list[Term]] = {
     # control, so Gilgeous-Alexander and Cunningham rated above Kessler (82.8) and Huff (80.3) and blocks went to wings.
     "rim_deterrence": [("S37", 0.52), ("S36", 0.23), ("P01", 0.14), ("S38", 0.07), ("P02", 0.04)],
     "screen_navigation": [("S35", 0.55), ("P07", 0.15), ("S34", 0.15), ("P05", 0.15)],
-    "offensive_rebounding": [("S29", 0.40), ("T12", 0.20), ("P10", 0.10), ("P03", 0.10), ("S32", 0.10), ("P08", 0.10)],
+    # The engine reads offensive_rebounding as offensive-rebounding production (team offensive rebound rate and extra
+    # possessions, each player's rebound share, putbacks, player value). Fitted to Basketball Index offensive-rebounding
+    # evidence (scripts/fit_offensive_rebounding.py, 2026-11-18): the mean z-score of Stable Offensive Rebounds Per 75
+    # and Offensive Rebounding Talent over 2023-24..2025-26, 491 players, non-negative ridge over rebounding technique,
+    # the crash tendency and body inputs, out-of-fold r = 0.87 (the hand-written recipe S29 .40, T12 .20, P10, P03,
+    # S32, P08 .10 each: r 0.83, among bigs 0.71 -> 0.78). Production is how often a player crashes (T12) times how well
+    # he pursues (S29); the old recipe rated Diabate (97th percentile in offensive rebounds per 75) 83rd percentile.
+    "offensive_rebounding": [("T12", 0.64), ("S29", 0.32), ("P02", 0.04)],
     "portability": [
         ("S01", 0.20), ("S14", 0.10), ("S25", 0.10), ("S26", 0.10), ("S33", 0.15), ("S35", 0.10),
         ("S39", 0.10), ("F01.execution", 0.15),

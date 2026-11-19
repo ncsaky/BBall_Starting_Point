@@ -3,7 +3,8 @@
 
 Target: Basketball Index multi-year O-LEBRON / D-LEBRON for 2025-26 (impact per 100 possessions on team success).
 Predictors: the 15 hidden ratings the engine uses (new-ratings mode, derived from the 94 inputs), body measures, the
-shooting profile, grouped input grades, involvement, and involvement x skill terms (impact_value.INTERACTIONS).
+shooting profile, grouped input grades, involvement, involvement x skill terms (impact_value.INTERACTIONS) and
+offensive rebounding on its real per-75 scale (offense only; impact_value.orb_per75).
 Weighted ridge regression (weight = minutes / (minutes + 800)), 5-fold cross-validation reported.
 Writes data/canonical/impact_value_fit.json, read by nba_gm_data.impact_value.
 
@@ -19,7 +20,7 @@ from pathlib import Path
 
 from nba_gm_data import bbi_evidence as be
 from nba_gm_data.app_actions import load_app_canonical
-from nba_gm_data.impact_value import BODY_PREDICTORS, FIT_FILE, PREDICTORS, predictor_row
+from nba_gm_data.impact_value import BODY_PREDICTORS, FIT_FILE, OFFENSE_ONLY, ORB_SCALE_FILE, PREDICTORS, predictor_row
 from nba_gm_data.offense import offensive_profile
 from nba_gm_data.ratings_model import effective_inputs, install_inputs_model
 from nba_gm_data.save import trait_values_by_player
@@ -30,7 +31,8 @@ SEASON = "2025-26"
 RIDGE = 2.0
 WATCH = ["Nikola Jokić", "Shai Gilgeous-Alexander", "Victor Wembanyama", "Giannis Antetokounmpo", "Luka Dončić",
          "Rudy Gobert", "Domantas Sabonis", "Evan Mobley", "Anthony Davis", "Derrick White", "Jamal Murray",
-         "Stephen Curry", "Jayson Tatum", "Anthony Edwards", "Cade Cunningham", "Draymond Green", "Jalen Brunson"]
+         "Stephen Curry", "Jayson Tatum", "Anthony Edwards", "Cade Cunningham", "Draymond Green", "Jalen Brunson",
+         "Moussa Diabaté", "Neemias Queta", "Luke Kornet", "Brandon Ingram", "Nikola Vučević"]
 
 
 def ridge(X, y, w, lam):
@@ -101,8 +103,9 @@ def main() -> None:
     weights = [m / (m + 800.0) for *_, m in rows]
     X = [[1.0, *r[2]] for r in rows]
     FREE = {1 + PREDICTORS.index(name) for name in (*BODY_PREDICTORS, "in_involvement")}  # not changed by development
-    fit = {"version": "impact_value_fit_v4_involvement_skill_2026_11_18", "season": SEASON, "targets": TARGETS, "predictors": PREDICTORS,
-           "ridge": RIDGE, "players": len(rows), "coefficients": {}, "cv_weighted_corr": {}}
+    fit = {"version": "impact_value_fit_v5_offensive_rebound_scale_2026_11_18", "season": SEASON, "targets": TARGETS, "predictors": PREDICTORS,
+           "ridge": RIDGE, "players": len(rows), "coefficients": {}, "cv_weighted_corr": {},
+           "offense_only": list(OFFENSE_ONLY), "orb_scale": json.loads((ROOT / ORB_SCALE_FILE).read_text())["version"]}
     idx = list(range(len(rows)))
     random.Random(11).shuffle(idx)
     folds = [idx[i::5] for i in range(5)]
@@ -114,6 +117,9 @@ def main() -> None:
         mu = [statistics.fmean(c) for c in cols]
         sd = [statistics.pstdev(c) or 1.0 for c in cols]
         Z = [[1.0, *[(v - m) / s for v, m, s in zip(x[1:], mu, sd)]] for x in X]
+        if side == "defense":   # offense-only predictors (offensive rebounding production) carry no defensive weight
+            drop = {1 + PREDICTORS.index(name) for name in OFFENSE_ONLY}
+            Z = [[0.0 if k in drop else v for k, v in enumerate(z)] for z in Z]
         oof = [0.0] * len(rows)
         for f in folds:
             tr = [i for i in idx if i not in f]
