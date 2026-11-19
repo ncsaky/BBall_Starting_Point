@@ -24,7 +24,8 @@ RECORD_WEIGHT_GAMES = 15.0
 # never labelled rebuilding, and a team with a bottom-third record is never labelled contending or on the rise (it is
 # rebuilding, or retooling if its core is aging).
 RECORD_GUARD_GAMES = 25
-# From May to September the records on file are last season's: they count for at most this much.
+# From July to September the records on file are last season's and the rosters have changed: they count for at most
+# this much. Through the playoffs and the draft (to June) the finished season's record still describes the roster.
 OFFSEASON_RECORD_WEIGHT = 0.3
 # Labels do not flip on small moves: a team keeps its previous label unless the new one still holds with its
 # strength moved 1 point (and its trend 0.3) back toward the old label.
@@ -67,10 +68,10 @@ def _record_strengths(canonical, rows):
     out = {}
     for tid, (games, _, _) in facts.items():
         weight = RECORD_WEIGHT_MAX * games / (games + RECORD_WEIGHT_GAMES)
-        if 5 <= month <= 9:
+        if 7 <= month <= 9:
             weight = min(weight, OFFSEASON_RECORD_WEIGHT)
         z = 0.6 * z_margin[tid] + 0.4 * z_win[tid]
-        out[tid] = (mean_s + z * sd_s, weight, z, games if not 5 <= month <= 9 else 0.0)
+        out[tid] = (mean_s + z * sd_s, weight, z, games if not 7 <= month <= 9 else 0.0)
     return out
 
 
