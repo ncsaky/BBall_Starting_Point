@@ -462,11 +462,11 @@ def quick_net(canonical: dict[str, Any], team_id: str, incoming: list[dict[str, 
     """The price part of the team's evaluation (incoming minus outgoing plus phase and tax terms), without the personality,
     wants, roster-space and final-roster terms. Used only to choose which packages to send to the real check."""
     tx = _tx()
-    from .trade_tax import tax_value
+    from .trade_tax import money_value
     return (tx.package_value_for_team(canonical, incoming, team_id, outgoing_assets=outgoing)
             - tx.package_value_for_team(canonical, outgoing, team_id)
             + tx.strategic_fit_adjustment(canonical, incoming, outgoing, team_id, config)
-            + tax_value(canonical, team_id, incoming, outgoing))
+            + money_value(canonical, team_id, incoming, outgoing))
 
 
 # ------------------------------------------------------------------------------------------------ search
@@ -588,13 +588,16 @@ def package_fits_rules(canonical: dict[str, Any], pairing: dict[str, Any], asset
 
 
 def ranked_packages(canonical: dict[str, Any], pairing: dict[str, Any], options: list[dict[str, Any]],
-                    config: dict[str, Any], keep: int) -> list[dict[str, Any]]:
-    """Price each built package quickly from both sides; keep the few that clear both prices, fairest first."""
+                    config: dict[str, Any], keep: int, near: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    """Price each built package quickly from both sides; keep the few that clear both prices, fairest first.
+
+    ``near`` (trade step 4) collects packages that miss only on price, by at most NEAR_MISS_GAP for the short side,
+    so a third team may complete them (multi_team_trades.multi_team_repairs)."""
     tx = _tx()
     seller_id, buyer_id = pairing["row"]["team_id"], pairing["buyer_id"]
     target = [{"kind": "player", "id": pairing["row"]["id"]}]
     buyer_team = tx.team_by_id(canonical, buyer_id)
-    scored = []
+    scored, missed = [], []
     for option in options:
         assets = []
         for asset in option.get("assets") or []:
@@ -611,15 +614,40 @@ def ranked_packages(canonical: dict[str, Any], pairing: dict[str, Any], options:
         # The acceptance check lets two AI teams agree with one side up to 9 short as long as the two nets sum to
         # at least -2 (bounded negotiation, transactions.ai_trade_candidate_accepted). Packages clearly outside
         # that are dropped; the margin covers the terms this quick price leaves out.
-        if (min(seller_raw, buyer_raw) < -9.0 - PRESCREEN_TOLERANCE
-                or seller_raw + buyer_raw < -2.0 - PRESCREEN_TOLERANCE):
-            continue
         seller_net = seller_raw - pairing["ask"]["threshold"]
         buyer_net = buyer_raw - tx.acceptance_threshold(canonical, buyer_id, config)
+        if (min(seller_raw, buyer_raw) < -9.0 - PRESCREEN_TOLERANCE
+                or seller_raw + buyer_raw < -2.0 - PRESCREEN_TOLERANCE):
+            if near is not None and min(seller_net, buyer_net) >= -NEAR_MISS_GAP and max(seller_net, buyer_net) >= 0:
+                missed.append((-min(seller_net, buyer_net), len(missed), assets, seller_net, buyer_net))
+            continue
         # Fairest first: the deal both sides clear by the most, then the one closest to the seller's price.
         scored.append((-min(seller_net, buyer_net), abs(seller_net), len(scored), option))
     scored.sort(key=lambda item: item[:3])
+    if near is not None and not scored:
+        # Only pairings that found no two-team package: keep their closest misses (at most two).
+        for _, _, assets, seller_net, buyer_net in sorted(missed, key=lambda m: m[:2])[:NEAR_MISSES_PER_PAIRING]:
+            near.append({"seller_id": seller_id, "buyer_id": buyer_id, "target": target, "assets": assets,
+                         "nets": {seller_id: seller_net, buyer_id: buyer_net}, "pairing": pairing})
     return [item[3] for item in scored[:keep]]
+
+
+NEAR_MISS_GAP = 45.0  # absorbed dead salary alone can cost up to 60 (trade_tax.ABSORB_VALUE_CAP)
+NEAR_MISSES_PER_PAIRING = 2
+
+
+def near_miss_candidate(canonical: dict[str, Any], miss: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
+    """A two-team package that missed on quick price, in the candidate shape multi_team_trades.repair_routes reads."""
+    tx = _tx()
+    seller_id, buyer_id = miss["seller_id"], miss["buyer_id"]
+    proposal = {"id": f"near:{seller_id}:{buyer_id}:{miss['target'][0]['id']}", "from_team_id": seller_id,
+                "to_team_id": buyer_id, "from_assets": miss["target"], "to_assets": miss["assets"]}
+    evaluations = [{"perspective_team_id": tid, "net_value": round(net + tx.acceptance_threshold(canonical, tid, config), 3),
+                    "acceptance_threshold": tx.acceptance_threshold(canonical, tid, config), "accepted": net >= 0,
+                    "decision": "accept" if net >= 0 else "reject", "decision_reasons": []}
+                   for tid, net in miss["nets"].items()]
+    return {"proposal": proposal, "legality": {"status": "legal", "issues": []}, "evaluations": evaluations,
+            "quick_priced": True}
 
 
 # ------------------------------------------------------------------------------------------- salary dumps (2b)

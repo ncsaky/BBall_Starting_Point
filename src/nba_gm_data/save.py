@@ -1496,6 +1496,7 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
     canonical['waiver_wire'] = copy_plain(save.get('waiver_wire', []))
     canonical['team_plans'] = copy_plain(save.get('team_plans', {}))
     canonical['team_trade_wants'] = copy_plain(save.get('team_trade_wants', {}))
+    canonical['team_payroll_history'] = save.get('team_payroll_history') or {}  # read-only: repeat taxpayers (trade step 4)
     from .trade_ownership import LEDGER_KEY, tenure_ledger_view
     canonical[LEDGER_KEY] = tenure_ledger_view(save)  # read-only for trade code; never written back from here
     canonical['_trade_planning_save'] = {
@@ -3463,6 +3464,8 @@ def start_playoffs(canonical: dict[str, Any] | Any, save_path: str | Path, seed:
 def initialize_postseason(canonical: dict[str, Any], save: dict[str, Any], save_path: str | Path, seed: int, *, include_play_in: bool = True) -> dict[str, Any]:
     if save.get("playoff_state"):
         return save["playoff_state"]
+    from .trade_tax import record_season_payrolls
+    record_season_payrolls(save, canonical)  # each team's final payroll, for repeat-taxpayer rates (trade step 4)
     picture = playoff_picture(canonical, save_path, prepared_save=save)["picture"]
     if not include_play_in:
         series = legacy_first_round_series(canonical, picture)
@@ -5755,6 +5758,8 @@ def queue_ai_recommendations(
                 if proposal.get('accepted_by_all') and proposal.get('legality', {}).get('status') == 'legal'
                 if human_team_ids.intersection(trade_team_ids(proposal))
             ][:market['offer_slots']]
+            # Trade step 4: AI teams may offer the user's team picks to take salary in a deal they almost made.
+            user_offers += (payload.get('user_absorber_offers') or [])[:max(0, market['offer_slots'] - len(user_offers))]
             if user_offers:
                 queue_user_trade_offers(save, user_offers, through_date)
             eligible = [
