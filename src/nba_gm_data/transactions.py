@@ -324,7 +324,8 @@ def build_team_strategic_states(canonical: dict[str, Any] | Any, valuations: lis
                 [p for p in canonical.get('players', []) if p.get('team_id') == state.team_id], phase, _full_features=_full_features)
             revised.append(replace(state, phase=phase, timeline=phase, needs=needs, excesses=excesses,
                 window_phase=row['window_phase'], league_rank=row['league_rank'], contender_index=row['contender_index'],
-                window_trend=row['trend'], core_candidates=row['core_candidates']))
+                window_trend=row['trend'], core_candidates=row['core_candidates'],
+                contend_distance=row.get('contend_distance', 0.0)))
         return revised
     return output
 
@@ -1146,6 +1147,54 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                 reserved |= keys
             satisfied.add(target_id)
             break
+    # Salary dumps (trade 2b): teams over the luxury tax shed salary to teams with room, paying picks if needed.
+    dump_limit = max(1, -(-limit // 3))
+    dumps_done, dump_teams = 0, set()
+    if len(proposals) < limit:
+        offers = tt.salary_dump_offers(canonical, buyer_ids, excluded, config)
+        diagnostics['dump_offers'] = len(offers)
+        for offer in offers:
+            if len(proposals) >= limit or dumps_done >= dump_limit:
+                break
+            row = offer['row']
+            if (offer['seller_id'] in dump_teams or offer['buyer_id'] in dump_teams
+                    or f"player:{row['id']}" in reserved):
+                continue
+            seller = team_by_id(canonical, offer['seller_id'])
+            buyer = team_by_id(canonical, offer['buyer_id'])
+            back = offer.get('return') or []
+            for assets in offer['packages']:
+                seller_net = tt.quick_net(canonical, seller['id'], back, assets, config)
+                buyer_net = tt.quick_net(canonical, buyer['id'], assets, back, config)
+                if min(seller_net, buyer_net) < -9.0 - tt.PRESCREEN_TOLERANCE or seller_net + buyer_net < -2.0 - tt.PRESCREEN_TOLERANCE:
+                    continue  # the absorber needs a bigger sweetener (next package) or the seller gives too much
+                diagnostics['packages'] += 1
+                specs = [{'kind': a['kind'], 'value': a['id']} for a in assets]
+                report = evaluate_trade_decision(canonical, seller['abbrev'], buyer['abbrev'], specs,
+                                                 [{'kind': a['kind'], 'value': a['id']} for a in back], seed=seed,
+                                                 date=through_date, config=config, context_ready=True, search_only=True)
+                candidate = candidate_from_decision(report)
+                if candidate.get('legality', {}).get('status') != 'legal':
+                    diagnostics['illegal'] += 1
+                    continue
+                if not ai_trade_candidate_accepted(canonical, candidate):
+                    diagnostics['declined'] += 1
+                    continue
+                keys = proposal_asset_identity_keys(candidate)
+                if reserve_assets and keys & reserved:
+                    diagnostics['asset_conflicts'] += 1
+                    break
+                candidate = mark_ai_trade_accepted(candidate)
+                candidate['target_source'] = 'salary_dump'
+                candidate['trade_reasons'] = tt.dump_reasons(canonical, offer, assets)
+                proposals.append(candidate)
+                evaluation_snapshots[candidate['proposal']['id']] = canonical
+                if reserve_assets:
+                    reserved |= keys
+                dump_teams |= {seller['id'], buyer['id']}
+                dumps_done += 1
+                break
+        diagnostics['dumps'] = dumps_done
     if depth > 1 and len(proposals) < limit:
         from .multi_team_trades import facilitator_candidates
         for failed in sorted(blocked.values(), key=lambda c: c['_repair_rank']):
@@ -4078,7 +4127,11 @@ def package_value_breakdown(canonical: dict[str, Any], assets: list[dict[str, An
             fit = team_fit_for_player(player, valuation, own_state if own else state, canonical, include_spatial=False) if player and state else 0.0
             multiplier = multipliers.get(asset.get("id"), 1.0)
             health = -max(0.0, float(valuation.get("health_risk") or 0.0) - 12.0) * 0.25
-            premium = (own_player_premium(canonical, player, perspective_team_id, (player_value + fit) * multiplier + health,
+            role_value = (player_value + fit) * multiplier
+            # A team far from contending values a veteran's current production less (as package_value_components).
+            timeline = (role_value * (veteran_present_factor(state, player) - 1.0)
+                        if role_value > 0 and state and perspective_team_id not in set(canonical.get('_human_team_ids') or []) else 0.0)
+            premium = (own_player_premium(canonical, player, perspective_team_id, role_value + timeline + health,
                                           market_value=player_value) if own else {})
             retention = 0.0 if own else recently_acquired_player_premium(canonical, player, perspective_team_id, player_value)
             pieces["player_quality"] += player_value
@@ -4087,8 +4140,11 @@ def package_value_breakdown(canonical: dict[str, Any], assets: list[dict[str, An
                 pieces["lineup_fit"] += fit
             pieces["health"] += health
             pieces["cap_roster"] += retention
+            pieces["age_timeline"] += timeline
             components = player_trade_value_components(valuation, player_value, fit, multiplier)
             components["health"] = round(components.get("health", 0) + health, 2)
+            if timeline:
+                components["rebuild_timeline"] = round(timeline, 2)
             if retention:
                 components["retention"] = round(retention, 2)
             for name in ("attachment", "tenure", "investment"):
@@ -4102,7 +4158,7 @@ def package_value_breakdown(canonical: dict[str, Any], assets: list[dict[str, An
                 "raw_value": round(player_value + fit, 2),
                 "listed_value": round(player_value, 2),
                 "role_multiplier": round(multiplier, 3),
-                "adjusted_value": round((player_value + fit) * multiplier + health + retention + float(premium.get("total") or 0.0), 2),
+                "adjusted_value": round(role_value + timeline + health + retention + float(premium.get("total") or 0.0), 2),
                 "expected_role": role_label_from_multiplier(multiplier),
                 "components": components,
             }
@@ -4266,7 +4322,7 @@ def evaluate_trade_for_team(
     if _calculation_cache is not None and perspective_team_id in _calculation_cache:
         if canonical.get('_search_work_counts') is not None:
             canonical['_search_work_counts']['within_proposal_calculation_hits'] += 1
-        incoming, outgoing, strategic, wants, space_bonus, personality, net, threshold, accepted, committed, commitment_blocked, premium_issue = _calculation_cache[perspective_team_id]
+        incoming, outgoing, strategic, wants, space_bonus, tax_term, personality, net, threshold, accepted, committed, commitment_blocked, premium_issue = _calculation_cache[perspective_team_id]
     else:
         incoming = package_value_for_team(canonical, incoming_assets, perspective_team_id, outgoing_assets=outgoing_assets)
         outgoing = package_value_for_team(canonical, outgoing_assets, perspective_team_id)
@@ -4277,6 +4333,10 @@ def evaluate_trade_for_team(
         from .roster_space import sale_bonus
         space_bonus = sale_bonus(canonical, perspective_team_id, incoming_assets, outgoing_assets, outgoing)
         strategic += space_bonus
+        from .trade_tax import tax_value
+        # Luxury tax saved (or added) is value for an AI team (trade 2b); the human team's own view is unchanged.
+        tax_term = tax_value(canonical, perspective_team_id, incoming_assets, outgoing_assets)
+        strategic += tax_term
         personality = personality_trade_adjustment(canonical, perspective_team_id, proposal.id, seed)
         net = incoming - outgoing + strategic + personality["total"]
         threshold = contextual_acceptance_threshold(canonical, perspective_team_id, config, incoming_assets, outgoing_assets)
@@ -4290,7 +4350,7 @@ def evaluate_trade_for_team(
         if premium_issue:
             accepted = False
         if _calculation_cache is not None:
-            _calculation_cache[perspective_team_id] = (incoming, outgoing, strategic, wants, space_bonus, personality, net, threshold, accepted, committed, commitment_blocked, premium_issue)
+            _calculation_cache[perspective_team_id] = (incoming, outgoing, strategic, wants, space_bonus, tax_term, personality, net, threshold, accepted, committed, commitment_blocked, premium_issue)
     outlook = None
     if (plan_roster and legality['status'] == 'legal' and net >= -9 and not premium_issue and not commitment_blocked
             and perspective_team_id not in canonical.get('_human_team_ids', [])):
@@ -4327,6 +4387,7 @@ def evaluate_trade_for_team(
         reasons.append(f'Net value {net:.2f} is below the required {threshold:.2f}.')
     if legality['status'] != 'legal':
         reasons.extend(legality.get('issues', []) + legality.get('manual_review', []))
+    from .trade_tax import tax_note
     state = next((s for s in canonical.get('team_strategic_states', []) if s.get('team_id') == perspective_team_id), {})
     return TradeEvaluation(
         id=stable_id("trade_evaluation", proposal.id, perspective_team_id),
@@ -4350,6 +4411,7 @@ def evaluate_trade_for_team(
             + (' Core commitment: ordinary return does not justify breaking the current trial window.' if commitment_blocked else '')
             + (f' {premium_issue}' if premium_issue else '')
             + (f' Roster-space opportunity credit: {space_bonus:.2f}.' if space_bonus else '')
+            + (tax_note(canonical, perspective_team_id, incoming_assets, outgoing_assets, tax_term) if tax_term else '')
             + (f" Published wants: {len(wants['matches'])} matching asset(s), additional preference credit {wants['adjustment']:.2f}." if wants['matches'] else '')
             + (f" Final roster: strength {outlook['strength_delta']:+.2f}; incremental waiver cost ${outlook['waiver_cost_millions']:.2f}M. {outlook['issue'] or ''}" if outlook else '')
             + (f" Draft investment: {investment['net_draft_value_spent']:.2f} net value spent; marginal-acquisition capital limit {investment['capital_limit']:.2f}; justified value-loss limit {investment['loss_limit']:.2f}." if investment else '')
@@ -5072,6 +5134,7 @@ def package_value_components(
     multipliers = destination_role_multipliers(canonical, assets, perspective_team_id, outgoing_assets or [])
     own_ids = own_ai_player_ids(canonical, assets, perspective_team_id)
     own_state = own_departure_state(canonical, perspective_team_id, state, own_ids) if own_ids else state
+    human_view = perspective_team_id in set(canonical.get('_human_team_ids') or [])
     total = 0.0
     player_adjusted_values: list[float] = []
     for asset in assets:
@@ -5082,6 +5145,8 @@ def package_value_components(
             player_value = _search_market_value(canonical, player, value)
             own = asset["id"] in own_ids
             adjusted = (player_value + team_fit_for_player(player, value, own_state if own else state, canonical, include_spatial=False)) * multiplier
+            if adjusted > 0 and not human_view:
+                adjusted *= veteran_present_factor(state, player)
             adjusted -= max(0.0, float(value.get("health_risk") or 0.0) - 12.0) * 0.25
             if own:
                 adjusted += own_player_premium(canonical, player, perspective_team_id, adjusted, market_value=player_value)["total"]
@@ -5106,6 +5171,34 @@ def own_ai_player_ids(canonical: dict[str, Any], assets: list[dict[str, Any]], t
         return set()
     return {asset['id'] for asset in assets if asset.get('kind') == 'player'
             and (player_by_id(canonical, asset.get('id')) or {}).get('team_id') == team_id}
+
+
+# A team far from contending values a veteran's current production less (trade 2b). Every team prices a player by
+# the minutes he plays for it now, so a rebuilding team valued its 31-year-old starter above what a deeper contender
+# would pay, and the most common real trade (a rebuilder selling a veteran to a contender) rarely cleared. The
+# discount scales with the team's distance from contending (team_planning: 0 within a point of the 4th-best team, 1
+# at six points or more below it; contenders are 0) and with how old the player will be when the team expects to be
+# good again: about 3 years away for a deep rebuild, so a 29-year-old counts as a 32-year-old. It ramps in from 29 to
+# 33 at that future age. Full size: 30%, so a deep rebuilder values a 29-year-old at about x0.78 and a 30-year-old at
+# x0.70 (the step-2 suggestion was about x0.75 at 29+). Grounding: the game's own aging (team_planning counts about
+# 0.65 points of decline a year after 29), the real 2025-27 rebuild sales (data/research/real_trades: Dosunmu,
+# Vucevic, Conley, Simons, Middleton, Kawhi, LaMelo, Giannis all went from teams resetting to teams competing, for
+# younger players and picks rather than equal current production) and the real rebuilders' veteran buys, which were
+# expiring salary paid for with picks. Applied to both sides (selling and buying), never to the human team.
+VETERAN_DISCOUNT_MAX = 0.30
+VETERAN_WINDOW_YEARS = 3.0
+VETERAN_AGE_START = 29.0
+VETERAN_AGE_FULL = 33.0
+
+
+def veteran_present_factor(state: dict[str, Any], player: dict[str, Any] | None) -> float:
+    distance = float(state.get('contend_distance') or 0.0)
+    if not player or distance <= 0.0:
+        return 1.0
+    age = maybe_float(player.get('display_age', player.get('age'))) or 27.0
+    future_age = age + VETERAN_WINDOW_YEARS * distance
+    ramp = clamp((future_age - VETERAN_AGE_START) / (VETERAN_AGE_FULL - VETERAN_AGE_START), 0.0, 1.0)
+    return round(1.0 - VETERAN_DISCOUNT_MAX * distance * ramp, 4)
 
 
 _DEPTH_LIMITS = (('guard', 4, 6), ('wing', 4, 6), ('big', 3, 5))

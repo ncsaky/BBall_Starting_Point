@@ -384,6 +384,18 @@ def young_piece_kept(row: dict[str, Any], seller_stance: str) -> bool:
     return seller_stance in {"rebuild", "retool"} or row["minutes"] >= YOUNG_STARTER_MINUTES
 
 
+# Reasons that never put a young player a team builds around on the market (trade 2b, the user's direction: young
+# starters are highly valuable and are not sold for tax savings). In step 2, San Antonio sold Stephon Castle (23, 34
+# minutes) because it was over the tax. A team can still trade one in a real deal: as part of its own offer for a
+# target, or when it has a reason of its own (a listing, stalled contract talks, a blocked prospect, a bad contract).
+MONEY_ONLY_REASONS = frozenset({"over_tax_line", "expiring_veteran_non_contender", "out_of_rotation"})
+
+
+def exposing_reasons(reasons: list[str]) -> list[str]:
+    """The reasons that can put a young piece on the market (money reasons alone cannot)."""
+    return [r for r in reasons if r not in MONEY_ONLY_REASONS]
+
+
 def sell_strength(reasons: list[str]) -> float:
     return max((SELL_REASON_STRENGTH.get(r, 1.0) for r in reasons), default=0.0)
 
@@ -401,7 +413,11 @@ def asking_price(canonical: dict[str, Any], seller_id: str, player_id: str, conf
     own = tx.package_value_for_team(canonical, asset, seller_id)
     strategic = tx.strategic_fit_adjustment(canonical, [], asset, seller_id, config)
     threshold = tx.acceptance_threshold(canonical, seller_id, config)
-    memo[key] = {"own": own, "ask": own - strategic + threshold, "threshold": threshold}
+    # Tax the seller saves by moving him (trade 2b). A package usually brings some salary back, so half of the saving
+    # with nothing back is counted here; the packages are then priced exactly (quick_net, the acceptance check).
+    from .trade_tax import tax_value
+    tax = 0.5 * max(0.0, tax_value(canonical, seller_id, [], asset))
+    memo[key] = {"own": own, "ask": own - strategic - tax + threshold, "threshold": threshold, "tax": tax}
     return memo[key]
 
 
@@ -443,12 +459,14 @@ def trade_surplus(canonical: dict[str, Any], buyer_id: str, seller_id: str, play
 
 def quick_net(canonical: dict[str, Any], team_id: str, incoming: list[dict[str, Any]], outgoing: list[dict[str, Any]],
               config: dict[str, Any]) -> float:
-    """The price part of the team's evaluation (incoming minus outgoing plus phase terms), without the personality,
+    """The price part of the team's evaluation (incoming minus outgoing plus phase and tax terms), without the personality,
     wants, roster-space and final-roster terms. Used only to choose which packages to send to the real check."""
     tx = _tx()
+    from .trade_tax import tax_value
     return (tx.package_value_for_team(canonical, incoming, team_id, outgoing_assets=outgoing)
             - tx.package_value_for_team(canonical, outgoing, team_id)
-            + tx.strategic_fit_adjustment(canonical, incoming, outgoing, team_id, config))
+            + tx.strategic_fit_adjustment(canonical, incoming, outgoing, team_id, config)
+            + tax_value(canonical, team_id, incoming, outgoing))
 
 
 # ------------------------------------------------------------------------------------------------ search
@@ -479,7 +497,7 @@ def target_pairings(canonical: dict[str, Any], buyer_ids: list[str], excluded: s
                 stances = target["filters"].get("seller_stances")
                 if stances and seller_stance not in stances:
                     continue
-                if not reasons and young_piece_kept(row, seller_stance):
+                if young_piece_kept(row, seller_stance) and not exposing_reasons(reasons):
                     continue
                 matches.append((score + 4.0 * sell_strength(reasons), row, reasons))
             matches.sort(key=lambda m: (-m[0], m[1]["id"]))
@@ -602,3 +620,137 @@ def ranked_packages(canonical: dict[str, Any], pairing: dict[str, Any], options:
         scored.append((-min(seller_net, buyer_net), abs(seller_net), len(scored), option))
     scored.sort(key=lambda item: item[:3])
     return [item[3] for item in scored[:keep]]
+
+
+# ------------------------------------------------------------------------------------------- salary dumps (2b)
+DUMPS_PER_TEAM = 3              # players a tax team tries to shed per trade window
+ABSORBERS_PER_DUMP = 3          # teams with room asked to take each one
+DUMP_MIN_SALARY = 3_000_000
+# Prospects are not salary-dump material: the real dumps were veterans (Saric 31, Finney-Smith 33, LeVert 31, Randle,
+# Schroder) and established role players (Isaiah Stewart 25, Isaiah Joe 27, Aaron Wiggins 27). The game still values a
+# blocked prospect mostly by his current minutes (step 2, still wrong #6), so without this a contender over the tax
+# would give away its recent draft picks for nothing.
+DUMP_MIN_AGE = 24.0
+DUMP_FILLER_MAX_SALARY = 3_000_000
+DUMP_MAX_SECONDS = 3
+DUMP_FIRST_MIN_TAX_VALUE = 25.0  # a first-round pick is attached only when the tax saved is worth this much
+ROSTER_ROOM_LIMIT = 15
+
+
+def salary_dump_offers(canonical: dict[str, Any], team_ids: list[str], excluded: set[str],
+                       config: dict[str, Any]) -> list[dict[str, Any]]:
+    """Tax teams shedding salary to teams with room under the tax, with picks attached when needed (trade 2b).
+
+    The real pattern (12 of 43 real trades were tax moves): a team over the tax moves a paid player it can spare, and
+    pays one to three second-round picks to a team under the tax that takes the salary (Finney-Smith, LeVert, Saric,
+    Isaiah Stewart). Seller-driven, unlike the target search: each team over the tax picks the players whose tax saving
+    is worth the most against what it loses on the court; each is offered to the few teams with room that value him
+    most, with the cheapest pick package first. Never a young starter or a young core player, never the team's core
+    plan, never the human team. Each offer lists the packages to try, cheapest first; the acceptance check decides.
+    """
+    from .trade_tax import tax_value, tax_saved
+    from .team_planning import core_commitment
+    tx = _tx()
+    human = set(canonical.get("_human_team_ids") or [])
+    excluded = set(excluded) | tx.recently_signed_player_ids(canonical)
+    # A team with a full roster sends back its least valuable minimum-salary player (real absorbers waive or include
+    # one); a team with an open spot sends nothing.
+    room = {}
+    for tid in team_ids:
+        if tid in human:
+            continue
+        rows_here = _team_rows(canonical, tid)
+        if len(rows_here) < ROSTER_ROOM_LIMIT:
+            room[tid] = []
+            continue
+        plan = (canonical.get("team_plans") or {}).get(tid) or {}
+        spare = [r for r in rows_here if r["salary"] <= DUMP_FILLER_MAX_SALARY and r["id"] not in excluded
+                 and r["id"] not in set(plan.get("core_ids") or []) and r["minutes"] < 10.0
+                 and not core_commitment(canonical, tid, r["id"])]
+        if spare:
+            filler = min(spare, key=lambda r: (r["value"], r["id"]))
+            room[tid] = [{"kind": "player", "id": filler["id"]}]
+    offers = []
+    for seller_id in team_ids:
+        if seller_id in human:
+            continue
+        plan = (canonical.get("team_plans") or {}).get(seller_id) or {}
+        core = set(plan.get("core_ids") or [])
+        stance = team_stance(_state(canonical, seller_id))
+        candidates = []
+        for row in _team_rows(canonical, seller_id):
+            if (row["id"] in excluded or row["id"] in core or row["salary"] < DUMP_MIN_SALARY or row["age"] < DUMP_MIN_AGE
+                    or core_commitment(canonical, seller_id, row["id"]) or young_piece_kept(row, stance)
+                    or tx.effectively_untouchable(canonical, row["player"])):
+                continue
+            asset = [{"kind": "player", "id": row["id"]}]
+            tax = tax_value(canonical, seller_id, [], asset)
+            if tax <= 3.0:
+                continue
+            own = tx.package_value_for_team(canonical, asset, seller_id)
+            candidates.append((tax - own, tax, own, row))
+        candidates.sort(key=lambda c: (-c[0], c[3]["id"]))
+        for gain, tax, own, row in candidates[:DUMPS_PER_TEAM]:
+            if gain < -25.0:
+                continue  # more than about a first-round pick's worth to shed him: not a dump
+            asset = [{"kind": "player", "id": row["id"]}]
+            takers = []
+            for buyer_id in team_ids:
+                if buyer_id == seller_id or buyer_id in human or buyer_id not in room:
+                    continue
+                back = room[buyer_id]
+                if tax_value(canonical, buyer_id, asset, back) < -2.0:
+                    continue  # it would pay tax itself
+                takers.append((quick_net(canonical, buyer_id, asset, back, config), buyer_id))
+            takers.sort(key=lambda t: (-t[0], t[1]))
+            for _, buyer_id in takers[:ABSORBERS_PER_DUMP]:
+                back = room[buyer_id]
+                saved = tax_saved(canonical, seller_id, back, asset)["saved"]
+                offers.append({"seller_id": seller_id, "buyer_id": buyer_id, "row": row, "tax_value": tax,
+                               "own": own, "gain": gain, "saved": saved, "return": back,
+                               "packages": dump_packages(canonical, seller_id, row, tax)})
+    offers.sort(key=lambda o: (-o["gain"], o["seller_id"], o["row"]["id"], o["buyer_id"]))
+    return offers
+
+
+def dump_packages(canonical: dict[str, Any], seller_id: str, row: dict[str, Any], tax: float) -> list[list[dict[str, Any]]]:
+    """The player alone, then with the seller's cheapest one, two or three seconds, then with its cheapest first."""
+    tx = _tx()
+    picks = tx.tradeable_picks_for_team(canonical, seller_id)
+    seconds = sorted((p for p in picks if int(p.get("round") or 0) == 2),
+                     key=lambda p: (tx.pick_asset_value(p, "neutral"), str(p.get("id"))))
+    firsts = sorted((p for p in picks if int(p.get("round") or 0) == 1),
+                    key=lambda p: (tx.pick_asset_value(p, "neutral"), str(p.get("id"))))
+    player = {"kind": "player", "id": row["id"]}
+    packages = [[player]]
+    for count in range(1, min(DUMP_MAX_SECONDS, len(seconds)) + 1):
+        packages.append([player] + [{"kind": "pick", "id": p["id"]} for p in seconds[:count]])
+    if firsts and tax >= DUMP_FIRST_MIN_TAX_VALUE:
+        packages.append([player, {"kind": "pick", "id": firsts[0]["id"]}])
+    return packages
+
+
+def dump_reasons(canonical: dict[str, Any], offer: dict[str, Any], assets: list[dict[str, Any]]) -> dict[str, Any]:
+    """Why each side made a salary dump, in plain words."""
+    tx = _tx()
+    seller = tx.team_by_id(canonical, offer["seller_id"])
+    buyer = tx.team_by_id(canonical, offer["buyer_id"])
+    row = offer["row"]
+    picks = [a for a in assets if a.get("kind") == "pick"]
+    rounds = [int((tx.pick_by_id(canonical, a["id"]) or {}).get("round") or 2) for a in picks]
+    paid = ""
+    if picks:
+        words = []
+        if rounds.count(1):
+            words.append("a first-round pick")
+        if rounds.count(2):
+            words.append(f"{rounds.count(2)} second-round pick{'s' if rounds.count(2) > 1 else ''}")
+        paid = ", paying " + " and ".join(words)
+    seller_text = (f"{seller['abbrev']} ({stance_words(canonical, seller['id'])}) moved {row['name']} "
+                   f"(${row['salary'] / 1e6:.1f}M) to cut its luxury tax by about ${offer['saved'] / 1e6:.1f}M{paid}")
+    buyer_text = (f"{buyer['abbrev']} ({stance_words(canonical, buyer['id'])}) had room under the tax and took him"
+                  + (" for the picks" if picks else " as a rotation player"))
+    return {"buyer_team_id": buyer["id"], "seller_team_id": seller["id"], "target_id": f"{seller['id']}:salary_dump",
+            "target_key": "salary_dump", "target_label": "luxury-tax savings", "target_reason": "over the luxury tax",
+            "player_id": row["id"], "seller_reasons": ["over_tax_line"], "tax_saved": round(offer["saved"], 0),
+            "text": f"{seller_text}; {buyer_text}."}

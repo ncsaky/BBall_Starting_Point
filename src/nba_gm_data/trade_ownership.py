@@ -54,10 +54,16 @@ LEDGER_VERSION = 1
 ATTACHMENT_BASE = 0.04
 KEEP_REASON_RATES = {
     "planned_core": 0.03,      # in the team's current core plan
-    "young_starter": 0.02,     # 25 or younger and playing starter minutes (24+)
+    "young_starter": 0.06,     # 25 or younger and playing starter minutes (24+); 0.02 before trade 2b
     "top_of_rotation": 0.01,   # one of the team's main players (30+ minutes)
 }
 KEEP_REASON_CAP = 0.04
+# Young starters and young core players are highly valuable to their teams (the user's direction, trade 2b): their
+# keep reasons may add up to 8% instead of 4%, and money reasons (the tax, an expiring deal) never scale their premium
+# down. They can still be traded for fair value or a clear upgrade.
+YOUNG_KEEP_REASON_CAP = 0.08
+YOUNG_PIECE_AGE = 25.5
+MONEY_REASONS = frozenset({"over_tax_line", "expiring_veteran_non_contender"})
 TENURE_RATE_PER_YEAR = 0.012
 TENURE_YEARS_CAP = 8.0
 HOMEGROWN_RATE = 0.02
@@ -449,6 +455,11 @@ def _rebuilding(state: dict[str, Any]) -> bool:
     return state.get("phase") == "rebuilding" or state.get("window_phase") == "rebuilding"
 
 
+# Fields the trade-block reasons read. Every league valuation has them; a partial record (a test stand-in, or a player
+# priced before his valuation row exists) reads as neutral instead of failing.
+VALUATION_DEFAULTS = {"player_value": 0.0, "contract_surplus": 0.0, "health_risk": 0.0, "development_upside": 0.0}
+
+
 def move_reasons(canonical: dict[str, Any], player: dict[str, Any], team_id: str, *, core: bool = False) -> dict[str, float]:
     """The team's own reasons to move this player, each with how far it scales the premium down.
 
@@ -466,7 +477,7 @@ def move_reasons(canonical: dict[str, Any], player: dict[str, Any], team_id: str
         return {}
     valuation = valuation_or_fallback(player_asset_values_by_id(canonical), player["id"], player)
     _score, reasons, _preferred = trade_block_score(
-        canonical, player, SimpleNamespace(**valuation),
+        canonical, player, SimpleNamespace(**{**VALUATION_DEFAULTS, **valuation}),
         SimpleNamespace(team_id=team_id, phase=state.get("phase"), excesses=list(state.get("excesses") or [])))
     reasons = list(reasons)
     if player["id"] in set((canonical.get("team_trade_blocks") or {}).get(team_id) or []):
@@ -556,7 +567,9 @@ def _premium_rates(canonical, player, team_id, market_value, role_minutes) -> di
         keep.append("young_starter")
     if role_minutes >= 30:
         keep.append("top_of_rotation")
-    attachment = ATTACHMENT_BASE + min(KEEP_REASON_CAP, sum(KEEP_REASON_RATES[name] for name in keep))
+    young_piece = age <= YOUNG_PIECE_AGE and ("young_starter" in keep or "planned_core" in keep)
+    attachment = ATTACHMENT_BASE + min(YOUNG_KEEP_REASON_CAP if young_piece else KEEP_REASON_CAP,
+                                       sum(KEEP_REASON_RATES[name] for name in keep))
     profile = ownership_profile(canonical, player, team_id)
     quality = _clamp((market_value - 35.0) / 35.0, 0.0, 1.0)
     tenure = TENURE_RATE_PER_YEAR * min(TENURE_YEARS_CAP, profile["years"]) * quality
@@ -581,6 +594,8 @@ def _premium_rates(canonical, player, team_id, market_value, role_minutes) -> di
         shrink = TOTAL_RATE_CAP / total
         attachment, tenure, investment = attachment * shrink, tenure * shrink, investment * shrink
     reasons = move_reasons(canonical, player, team_id, core="planned_core" in keep)
+    if young_piece:
+        reasons = {name: factor for name, factor in reasons.items() if name not in MONEY_REASONS}
     return {"attachment": round(attachment, 4), "tenure": round(tenure, 4), "investment": round(investment, 4),
             "context_factor": min(reasons.values()) if reasons else 1.0, "keep_reasons": keep,
             "move_reasons": sorted(reasons),

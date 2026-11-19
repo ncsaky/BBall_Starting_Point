@@ -59,6 +59,64 @@ def is_star(asset) -> bool:
     return (asset.get("overall_end_of_run_neutral") or 0) >= STAR_OVERALL or (salary >= STAR_SALARY and (asset.get("age_at_trade") or 99) <= 33)
 
 
+def _win_share(record):
+    try:
+        wins, losses = (int(x) for x in str(record or "").split("-"))
+    except ValueError:
+        return None, 0
+    games = wins + losses
+    return (wins / games if games else None), games
+
+
+def trade_2b_metrics(trades):
+    """Measures added for trade 2b (docs/agents/tasks/trade-2b-followups.md)."""
+    out = {}
+    rebuild_sales, tax_moves, young_starters, odd_labels = [], [], [], []
+    for t in trades:
+        ctx = t.get("team_context") or {}
+        notes = " ".join(str(e.get("notes") or "") for e in t.get("evaluations") or [])
+        why = str(t.get("why") or "")
+        if (t.get("target_key") == "salary_dump" or "Luxury tax: the deal saves" in notes
+                or "luxury tax" in why.lower()):
+            tax_moves.append({"date": t["date"], "teams": t["teams"], "why": why or None,
+                              "dump": t.get("target_key") == "salary_dump"})
+        for giver, assets in t["sends"].items():
+            receivers = [team for team in t["teams"] if team != giver]
+            giver_phase = (ctx.get(giver) or {}).get("phase")
+            for a in assets:
+                if a.get("kind") != "player":
+                    continue
+                age = a.get("age_at_trade") or 0
+                mpg = ((a.get("season_before_trade") or {}).get("mpg") or 0)
+                if (len(receivers) == 1 and giver_phase in {"rebuilding", "exiting"} and age >= 28
+                        and (ctx.get(receivers[0]) or {}).get("phase") in {"peak", "entering"}):
+                    rebuild_sales.append({"date": t["date"], "seller": giver, "seller_phase": giver_phase,
+                                          "buyer": receivers[0], "player": a.get("label"), "age": age})
+                if age and age <= 25.5 and mpg >= 24:
+                    young_starters.append({"date": t["date"], "seller": giver, "seller_phase": giver_phase,
+                                           "player": a.get("label"), "age": age, "mpg": mpg, "why": why or None,
+                                           "target_key": t.get("target_key")})
+        for team, row in ctx.items():
+            share, games = _win_share(row.get("record_at_trade"))
+            phase = row.get("phase")
+            if share is None or games < 25:
+                continue
+            if (phase == "rebuilding" and share >= .55) or (phase in {"peak", "entering"} and share <= .38):
+                odd_labels.append({"date": t["date"], "team": team, "phase": phase, "record": row.get("record_at_trade")})
+    out["rebuild_sales"] = len(rebuild_sales)
+    out["rebuild_sales_detail"] = rebuild_sales
+    out["tax_moves"] = len(tax_moves)
+    out["salary_dumps"] = sum(1 for m in tax_moves if m["dump"])
+    out["tax_moves_detail"] = tax_moves
+    out["young_starters_moved"] = len(young_starters)
+    out["young_starters_moved_detail"] = young_starters
+    team_contexts = sum(1 for t in trades for row in (t.get("team_context") or {}).values()
+                        if _win_share(row.get("record_at_trade"))[1] >= 25)
+    out["odd_phase_labels"] = {"count": len(odd_labels), "of_team_contexts_25_plus_games": team_contexts}
+    out["odd_phase_labels_detail"] = odd_labels
+    return out
+
+
 def metrics(trades, progress):
     out = {"trades": len(trades)}
     out["by_season"] = dict(sorted(Counter(t["season"] for t in trades).items()))
@@ -109,6 +167,8 @@ def metrics(trades, progress):
                 f"{team}: " + ", ".join(a.get("label") for a in t["sends"][team] if a.get("kind") == "player")
                 for team in t["teams"])})
     out["both_sides_net_above_5"] = both_win
+    out["both_sides_net_above_5_share"] = round(both_win / max(1, len(trades)), 3)
+    out.update(trade_2b_metrics(trades))
     out["trades_with_stated_reasons"] = sum(1 for t in trades if t.get("why"))
     out["by_target"] = dict(sorted(Counter(t.get("target_key") or "none" for t in trades).items()))
     out["accepted_by_both_own_evaluations"] = sum(

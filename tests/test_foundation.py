@@ -4108,7 +4108,13 @@ class DataFoundationTests(unittest.TestCase):
         }
         active["draft_picks"].extend([target, lower])
         assets = draft_trade_offer_assets(active, state, buyer["id"], target["id"], lower, 12)
-        self.assertTrue(any(asset["kind"] == "pick" and int(next(pick for pick in active["draft_picks"] if pick["id"] == asset["value"]).get("round") or 0) == 1 and asset["value"] != lower["id"] for asset in assets))
+        # Trade 2b: after the top 10 a slide is priced like real draft nights (seconds unless they cannot cover the
+        # gap), but the package must still carry the pick's full value plus the seller's margin.
+        from nba_gm_data.transactions import pick_asset_value
+        picks = {pick["id"]: pick for pick in active["draft_picks"]}
+        self.assertTrue(assets and assets[0]["value"] == lower["id"] and len(assets) >= 2)
+        self.assertGreaterEqual(sum(pick_asset_value(picks[a["value"]], "neutral") for a in assets),
+                                pick_asset_value(target, "neutral") * 1.04 - 0.01)
 
         target_one = {**target, "id": "draft_pick_target_1", "overall_pick": 1}
         lower_six = {**lower, "id": "draft_pick_lower_6", "overall_pick": 6}

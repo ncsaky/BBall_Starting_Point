@@ -47,6 +47,44 @@ def _count_trade_evaluations() -> dict[str, int]:
     return counter
 
 
+_CANONICAL = {}
+
+
+def deadline_phase_snapshot(save: dict) -> list[dict]:
+    """Each team's window label at the trade deadline against its record (measurement only, trade 2b).
+
+    Also the label the pre-2b rule would give on the same rosters and records (roster rating plus at most +-3 points
+    for the record, no stability band), so labels can be compared on identical league states."""
+    from types import SimpleNamespace
+    from nba_gm_data import transactions as tx
+    from nba_gm_data import team_planning as tp
+    from nba_gm_data.app_actions import load_app_canonical
+    from nba_gm_data.save import canonical_with_save
+    if "base" not in _CANONICAL:
+        _CANONICAL["base"] = load_app_canonical(ROOT)
+    ctx = tx.with_transaction_context(canonical_with_save(_CANONICAL["base"], save))
+    records = ctx.get("save_team_records") or {}
+    states = ctx.get("team_strategic_states") or []
+    valuations = [SimpleNamespace(**v) for v in ctx.get("player_asset_valuations") or []]
+    old_states = []
+    for s in states:
+        r = records.get(s["team_id"]) or {}
+        wins, losses = float(r.get("wins") or 0), float(r.get("losses") or 0)
+        games = wins + losses
+        form = ((wins / games) - .5) * 6 * min(1, games / 40) if games >= 15 else 0
+        old_states.append(SimpleNamespace(team_id=s["team_id"], contention_ceiling=s["contention_ceiling"] + form))
+    old = tp.window_assessments({**ctx, "save_team_records": {}, "team_plans": {}}, old_states, valuations)
+    out = []
+    for s in states:
+        r = records.get(s["team_id"]) or {}
+        out.append({"team": tx.team_by_id(ctx, s["team_id"])["abbrev"], "phase": s.get("window_phase"),
+                    "old_rule_phase": old[s["team_id"]]["window_phase"], "rank": s.get("league_rank"),
+                    "contend_distance": s.get("contend_distance"), "record": f"{r.get('wins', 0)}-{r.get('losses', 0)}",
+                    "margin_per_game": round((float(r.get("points_for") or 0) - float(r.get("points_against") or 0))
+                                             / max(1.0, float(r.get("wins") or 0) + float(r.get("losses") or 0)), 2)})
+    return sorted(out, key=lambda row: row["rank"] or 99)
+
+
 def run(out: Path, model: str, target: str, seed: int, team: str, keep_checkpoint: bool) -> None:
     counter = _count_trade_evaluations()
     runner = SoakRunner(argparse.Namespace(root=str(ROOT), output_dir=str(out), seed=seed, team=team))
@@ -88,6 +126,10 @@ def run(out: Path, model: str, target: str, seed: int, team: str, keep_checkpoin
                    trade_evaluations=counter["evaluations"],
                    seasons=len(saved.get("season_history", [])),
                    generated_players=len(saved.get("generated_players", [])))
+        if row["to"][5:] == "02-05":  # the trade deadline (save.trade_deadline_date)
+            snapshot_started = _cpu_seconds()
+            fixture.write_json(out / f"deadline_phases_{row['to'][:4]}.json", deadline_phase_snapshot(saved))
+            row["snapshot_cpu_seconds"] = round(_cpu_seconds() - snapshot_started, 2)  # not part of the step's cost
         with (out / "progress.jsonl").open("a") as handle:
             handle.write(json.dumps(row) + "\n")
         fixture.write_json(out / "status.json", row)
