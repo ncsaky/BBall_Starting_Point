@@ -4,7 +4,6 @@ import unittest
 from statistics import mean
 
 from nba_gm_data import game_minutes as gm
-from nba_gm_data import save as sv
 
 TARGETS = [36, 33, 31, 29, 27, 24, 21, 16, 12, 8, 3]  # 240
 
@@ -82,27 +81,7 @@ class FoulTroubleTests(unittest.TestCase):
         self.assertGreater(mean(outs), 0.008)
 
 
-class AbsenceShareTests(unittest.TestCase):
-    def rows(self, targets):
-        return [{"player_id": f"p{i}", "desired": float(m), "minimum": 0.0, "maximum": max(40.0, float(m))}
-                for i, m in enumerate(targets)]
-
-    def test_healthy_rotation_is_untouched(self):
-        rows = self.rows(TARGETS)
-        sv.spread_vacated_minutes(rows)
-        self.assertEqual([row["desired"] for row in rows], [float(m) for m in TARGETS])
-
-    def test_missing_star_minutes_go_mostly_to_the_bench(self):
-        rows = self.rows(TARGETS[1:])  # the 36-minute star is out
-        sv.spread_vacated_minutes(rows)
-        gains = [row["desired"] - m for row, m in zip(rows, TARGETS[1:])]
-        self.assertAlmostEqual(sum(row["desired"] for row in rows), 240.0, places=6)
-        # Real 2025-26: the other starters played about 1.2 more minutes each.
-        self.assertLess(mean(gains[:3]), 2.0)
-        self.assertGreater(mean(gains[-4:]), 2 * mean(gains[:3]))
-        allocation = sv.bounded_minutes_allocation(rows, 240.0)
-        self.assertAlmostEqual(sum(allocation.values()), 240.0, places=1)
-        self.assertLess(max(allocation.values()), 35.0)
+# Who plays an absent player's minutes: tests/test_absence_fill.py (SMART-MINUTES replaced the bench-first curve).
 
 
 class SandboxGameMinutesTests(unittest.TestCase):

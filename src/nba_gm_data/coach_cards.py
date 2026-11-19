@@ -25,6 +25,7 @@ TRAIT_HELP = {
     'adaptability': 'Head coach: part of game management and matchup adjustments. All staff: part of the staff grade.',
     'communication': 'Head coach: part of player relations. All staff: part of the staff grade.',
     'ambition': 'Head coach: how hands-on the coach is with minutes and pace. No effect in other roles.',
+    'star_workload': 'Head coach: how many minutes he plans for his two best players. 50 is an average coach; every 12 points is about one more minute a game for each (measured from real coaches, 2021-22 to 2025-26). A star-riding coach also leans a little more on his other starters when someone is out.',
     'grade': 'Overall staff evaluation used for hiring, firing and contract decisions. The specific traits drive the game effects.',
     'morale': 'Tracks staff satisfaction. No game effect yet.',
     'job_security': 'Pressure to replace this staff member: moves with results versus expectations.',
@@ -42,7 +43,19 @@ def displayed_staff_grade(staff):
     return sum(series) / len(series) if series else None
 
 
+def with_star_workload(staff):
+    """A head coach's star workload sits with his working-style traits (the value the minutes engine uses)."""
+    if (staff.get('slot') or staff.get('role')) != 'head_coach':
+        return staff
+    from .staff import coach_star_workload, star_workload_score
+    traits = dict(staff.get('personality_traits') or {})
+    traits['star_workload'] = star_workload_score(coach_star_workload(staff))
+    return {**staff, 'personality_traits': traits}
+
+
 def coach_card_details(staff, league_staff):
+    staff = with_star_workload(staff)
+    league_staff = [with_star_workload(row) for row in league_staff]
     role = staff.get('slot') or staff.get('role')
     peers = [row for row in league_staff if (row.get('slot') or row.get('role')) == role
              and row.get('team_id') and row.get('market_status') not in {'fired', 'free_agent'}]
@@ -63,5 +76,7 @@ def coach_card_details(staff, league_staff):
             'communication': 'Impacts rotation trust, player buy-in, and staff grade. Higher ratings increase all three.',
             'ambition': 'Impacts hands-on control. Higher ratings increase the coach’s control; this is not a universal performance bonus.',
         })
+        from .staff import coach_star_workload, star_workload_text
+        descriptions['star_workload'] = f"{star_workload_text(coach_star_workload(staff))} {TRAIT_HELP['star_workload']}"
     return {'staff': {**staff, 'grade': round(grade, 2) if grade is not None else None},
             'averages': averages, 'peer_count': len(peers), 'descriptions': descriptions}

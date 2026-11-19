@@ -123,6 +123,94 @@ HEAD_COACH_REPUTATION_GRADES = {
 }
 
 
+# Star workload (SMART-MINUTES, 2026-11-19): how many more (or fewer) minutes a head coach plans for his two best
+# players than an average coach. Measured from real team-seasons 2021-22 to 2025-26 (the top two minute-getters'
+# minutes per game above that season's league average, for each coach's teams), each coach's average shrunk toward
+# zero by how many seasons he has (output/smart-minutes/coach_trait.py). Between coaches the true spread is about 1.7
+# minutes; one season varies about 1.25 minutes around a coach's norm. A coach not listed draws from that spread.
+HEAD_COACH_STAR_WORKLOAD = {
+    "nick nurse": 2.77,
+    "jj redick": 1.67,
+    "david adelman": 1.62,
+    "ime udoka": 1.44,
+    "quin snyder": 1.29,
+    "joe mazzulla": 1.27,
+    "mike brown": 0.83,
+    "chris finch": 0.82,
+    "jason kidd": 0.68,
+    "billy donovan": 0.5,
+    "tyronn lue": 0.48,
+    "jamahl mosley": 0.42,
+    "darko rajakovic": -0.04,
+    "darko rajaković": -0.04,
+    "erik spoelstra": -0.1,
+    "jordan ott": -0.38,
+    "chauncey billups": -0.4,
+    "will hardy": -0.42,
+    "jb bickerstaff": -0.49,
+    "charles lee": -0.85,
+    "mark daigneault": -0.97,
+    "kenny atkinson": -0.97,
+    "mitch johnson": -1.31,
+    "jordi fernandez": -1.53,
+    "jordi fernández": -1.53,
+    "doug christie": -1.55,
+    "rick carlisle": -1.56,
+    "steve kerr": -2.04,
+    "tuomas iisalo": -2.08,
+    "taylor jenkins": -2.31,
+    "brian keefe": -2.7,
+}
+STAR_WORKLOAD_SPREAD = 1.66
+STAR_WORKLOAD_LIMIT = 3.5
+# Shown on the 0-100 coach-trait scale: 50 is an average coach, each 12 points one minute a game for each star.
+STAR_WORKLOAD_POINTS = 12.0
+
+
+def star_workload_score(minutes: float) -> float:
+    return round(clamp(50.0 + STAR_WORKLOAD_POINTS * float(minutes), 0.0, 100.0), 1)
+
+
+def star_workload_minutes_from_score(score: float) -> float:
+    return (float(score) - 50.0) / STAR_WORKLOAD_POINTS
+
+
+def default_star_workload(staff: dict[str, Any]) -> float:
+    """A real coach's measured value; anyone else draws from the measured spread (fixed per person)."""
+    measured = HEAD_COACH_STAR_WORKLOAD.get(normalize_name(staff.get("name") or ""))
+    if measured is not None:
+        return measured
+    rng = random.Random(f"star-workload:{staff_person_id(staff)}")
+    return round(clamp(rng.gauss(0.0, STAR_WORKLOAD_SPREAD), -STAR_WORKLOAD_LIMIT, STAR_WORKLOAD_LIMIT), 2)
+
+
+def coach_star_workload(staff: dict[str, Any] | None) -> float:
+    """Minutes a game this head coach plans for each of his two best players, above an average coach."""
+    if not staff or (staff.get("slot") or staff.get("role")) != "head_coach":
+        return 0.0
+    stored = (staff.get("personality_traits") or {}).get("star_workload")
+    if stored is not None:
+        return star_workload_minutes_from_score(stored)
+    return default_star_workload(staff)
+
+
+def ensure_star_workload(staff: dict[str, Any]) -> None:
+    """Record a head coach's star workload with his working-style traits (shown on his card, used by the engine)."""
+    if (staff.get("slot") or staff.get("role")) != "head_coach":
+        return
+    personality = staff.setdefault("personality_traits", {})
+    if personality.get("star_workload") is None:
+        personality["star_workload"] = star_workload_score(default_star_workload(staff))
+
+
+def star_workload_text(minutes: float) -> str:
+    if abs(minutes) < 0.25:
+        return "Plays his two best players about as much as an average coach."
+    more = "more" if minutes > 0 else "fewer"
+    style = "Rides his stars" if minutes > 0 else "Limits his stars' minutes"
+    return f"{style}: plans about {abs(minutes):.1f} {more} minutes a game for each of his two best players than an average coach."
+
+
 def initialize_save_staff_slots(canonical: dict[str, Any], seed: int) -> list[dict[str, Any]]:
     slots: list[dict[str, Any]] = []
     evidence = staff_bio_evidence(canonical)
@@ -1040,6 +1128,8 @@ def staff_effect_rows(staff: dict[str, Any]) -> list[dict[str, Any]]:
             effect_row("Rotation management", traits.get("rotation_management", grade), "Game-plan minutes for each opponent, and easing players back in after injuries."),
             effect_row("Player relations", traits.get("locker_room", grade), "Player buy-in (a small boost at both ends) and the head coach's share of player development."),
             effect_row("Game management", traits.get("scheme_balance", grade), "In-game adjustments at both ends, with a larger edge in the playoffs."),
+            effect_row("Star workload", star_workload_score(coach_star_workload(staff)),
+                       star_workload_text(coach_star_workload(staff))),
         ]
     if slot == "offensive_coordinator":
         return [

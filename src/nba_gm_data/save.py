@@ -6419,6 +6419,8 @@ def align_real_head_coach_names(canonical: dict[str, Any], save: dict[str, Any])
             ).strip()
         if real_name:
             apply_head_coach_reputation(slot, real_name)
+            from .staff import ensure_star_workload
+            ensure_star_workload(slot)
 
 
 def should_align_head_coach_slot(slot: dict[str, Any]) -> bool:
@@ -6694,6 +6696,7 @@ def _slot_score_row(player: dict[str, Any], attrs: dict[str, Any]) -> tuple[tupl
 def ai_role_targets(
     canonical: dict[str, Any], roster: list[dict[str, Any]], priors: dict[str, float],
     *, opening_workloads: dict[str, float] | None = None, newcomers: frozenset[str] | set[str] = frozenset(),
+    star_workload: float = 0.0,
 ) -> tuple[dict[str, float], list[str]]:
     """Build a healthy two-deep rotation from current, workload-neutral skills."""
     attrs = {p["id"]: player_attribute_summary(canonical, p["id"]) for p in roster}
@@ -6736,7 +6739,7 @@ def ai_role_targets(
         remaining = [p for p in remaining if p["id"] not in chosen]
     selected = [pid for group in groups for pid in group if pid]
     if opening_workloads is not None:
-        return ai_coach_workloads(attrs, groups[0], opening_workloads, newcomers), selected
+        return ai_coach_workloads(attrs, groups[0], opening_workloads, newcomers, star_workload), selected
     desired = {p["id"]: 0.0 for p in roster}
     for first, second in zip(*groups):
         if first and second:
@@ -6775,9 +6778,12 @@ def carried_workload_earned_elsewhere(player: dict[str, Any], team_abbrev: str |
 
 def ai_coach_workloads(
     attrs: dict[str, dict[str, float]], starters: tuple[str, ...], opening_workloads: dict[str, float],
-    newcomers: frozenset[str] | set[str] = frozenset(),
+    newcomers: frozenset[str] | set[str] = frozenset(), star_workload: float = 0.0,
 ) -> dict[str, float]:
-    """Plan a team's minutes across positions, with short stints for the tail."""
+    """Plan a team's minutes across positions, with short stints for the tail.
+
+    The head coach's star workload (minutes, staff.coach_star_workload) moves his two best players' plan up or down
+    and his third player's by half as much; the next three rotation players give or take the difference."""
     # Workload history supplies role context alongside current quality, creation
     # and stamina. The depth chart supplies positional coverage without setting
     # aside a large block of minutes for a dedicated backup at each position.
@@ -6801,13 +6807,37 @@ def ai_coach_workloads(
         return priority(pid) - min(opening_workloads[pid], ROTATION_TALENT_PENALTY * shortfall)
 
     order = sorted(attrs, key=lambda pid: (-guarded(pid), pid))
-    curve = (37, 34, 32, 30, 28, 25, 20, 16, 10, 5, 2, 1)
+    curve = star_workload_curve(star_workload)
     desired = dict.fromkeys(order, 0.0)
     desired.update(zip(order, curve))
     for pid in starters:
         if pid:
             desired[pid] = max(4, desired[pid])
     return desired
+
+
+# An average coach's healthy plan by rotation rank. SMART-MINUTES (2026-11-19) moved 2.3 minutes from the top three to
+# ranks 6-8: the old top (37/34/32) was set while absent players' minutes went almost all to the bench; with the
+# real share now going to the other starters, the old top put 21-27 players at 34+ minutes (real 2025-26: 18).
+AI_ROTATION_CURVE = (36.0, 33.2, 31.5, 30, 28, 26.0, 21.0, 16.3, 10, 5, 2, 1)
+# The star-workload shift by rotation rank, and who gives it back (sums to zero), times the coach's star workload
+# (minutes) times STAR_WORKLOAD_GAIN. The gain is below 1 because the measured trait is season minutes, which also
+# carry the coach's fill-in lean and his players' absences.
+STAR_WORKLOAD_SHIFT = (1.0, 1.0, 0.5, 0.0, 0.0, -1.0, -0.9, -0.6)
+STAR_WORKLOAD_GAIN = 1.25
+
+
+def star_workload_curve(star_workload: float = 0.0) -> tuple[float, ...]:
+    if not star_workload:
+        return AI_ROTATION_CURVE
+    shift = STAR_WORKLOAD_SHIFT + (0.0,) * (len(AI_ROTATION_CURVE) - len(STAR_WORKLOAD_SHIFT))
+    return tuple(max(0.0, base + STAR_WORKLOAD_GAIN * float(star_workload) * s)
+                 for base, s in zip(AI_ROTATION_CURVE, shift))
+
+
+def team_head_coach(save: dict[str, Any], team_id: str | None) -> dict[str, Any] | None:
+    return next((slot for slot in save.get("staff_slots") or []
+                 if slot.get("team_id") == team_id and slot.get("slot") == "head_coach"), None)
 
 
 def reassess_ai_roles(active: dict[str, Any], save: dict[str, Any], stamp: str, *, calendar: bool = True) -> list[str]:
@@ -6856,7 +6886,9 @@ def reassess_ai_roles(active: dict[str, Any], save: dict[str, Any], stamp: str, 
         }
         newcomers = {p["id"] for p in roster if workloads[p["id"]] > 0
                      and carried_workload_earned_elsewhere(p, abbrevs.get(team))}
-        targets, selected = ai_role_targets(neutral, roster, priors, opening_workloads=workloads, newcomers=newcomers)
+        from .staff import coach_star_workload
+        targets, selected = ai_role_targets(neutral, roster, priors, opening_workloads=workloads, newcomers=newcomers,
+                                            star_workload=coach_star_workload(team_head_coach(save, team)))
         total = sum(priors.values())
         blended = {
             pid: target * .8 + (priors[pid] * 240 / total if total else target) * .2
@@ -6885,9 +6917,20 @@ def apply_save_rotation_projection(canonical: dict[str, Any], save: dict[str, An
         baseline = baselines.setdefault(player["id"], opening_workload)
         player["minutes_projection"] = float(baseline or 0.0)
     for team_id in sorted(teams):
-        projection = team_rotation_projection(canonical, save, team_id, integer=False)
+        fills: dict[str, dict[str, float]] = {}
+        projection = team_rotation_projection(canonical, save, team_id, integer=False, fill_out=fills)
         if not projection:
             continue
+        # The coach's fill-in minutes for absent teammates; a game re-points them for its opponent (absence_fill).
+        for player in canonical.get("players", []):
+            if player.get("team_id") != team_id:
+                continue
+            fill = fills.get(player["id"])
+            if fill:
+                player["_absence_fill"], player["_fill_size"] = round(fill["minutes"], 2), round(fill["size"], 3)
+            else:
+                player.pop("_absence_fill", None)
+                player.pop("_fill_size", None)
         snapshots[team_id] = {
             player_id: round(float(minutes), 2)
             for player_id, minutes in projection.items()
@@ -6912,7 +6955,8 @@ def apply_save_rotation_projection(canonical: dict[str, Any], save: dict[str, An
                 )
 
 
-def team_rotation_projection(canonical: dict[str, Any], save: dict[str, Any], team_id: str | None, integer: bool = False) -> dict[str, float]:
+def team_rotation_projection(canonical: dict[str, Any], save: dict[str, Any], team_id: str | None, integer: bool = False,
+                             fill_out: dict[str, dict[str, float]] | None = None) -> dict[str, float]:
     if not team_id:
         return {}
     roster = [player for player in canonical.get("players", []) if player.get("team_id") == team_id]
@@ -6921,7 +6965,8 @@ def team_rotation_projection(canonical: dict[str, Any], save: dict[str, Any], te
     health_by_player = {state.get("player_id"): state for state in save.get("health_states", [])}
     user_override = (save.get("rotation_overrides") or {}).get(team_id)
     if isinstance(user_override, dict) and user_override:
-        projection = user_rotation_override_projection(roster, health_by_player, user_override)
+        projection = user_rotation_override_projection(roster, health_by_player, user_override,
+                                                       canonical=canonical, save=save, team_id=team_id, fill_out=fill_out)
         return projection if integer else {player_id: float(value) for player_id, value in projection.items()}
     recommendations = save.get("rotation_recommendations") or {}
     baselines = save.get("rotation_baselines") or {}
@@ -6950,6 +6995,7 @@ def team_rotation_projection(canonical: dict[str, Any], save: dict[str, Any], te
         rows.append(
             {
                 "player": player,
+                "attrs": attrs,
                 "baseline": baseline,
                 "overall": overall,
                 "unavailable": unavailable,
@@ -7014,8 +7060,8 @@ def team_rotation_projection(canonical: dict[str, Any], save: dict[str, Any], te
                 "maximum": maximum,
             }
         )
-    if ai_role:
-        spread_vacated_minutes(allocation_rows)
+    if any(row["unavailable"] for row in rows):
+        fill_vacated_minutes(canonical, save, team_id, rows, allocation_rows, ai_role=bool(ai_role), fill_out=fill_out)
     allocation = bounded_minutes_allocation(allocation_rows, 240.0)
     row_limits = {row["player_id"]: row for row in allocation_rows}
     recommended_ids = {row["player"]["id"] for row in rows if row.get("recommendation")}
@@ -7058,61 +7104,90 @@ def team_rotation_projection(canonical: dict[str, Any], save: dict[str, Any], te
     return round_minutes_to_total(allocation, 240) if integer else allocation
 
 
-# Who absorbs an absent player's minutes (HEAVY-MINUTES, 2026-11-19). Real 2025-26 box scores: when one of a team's
-# two biggest minute-getters sat, the other three starters played only 1.2 more minutes each and the bench took the
-# rest. Spreading the gap in proportion to current minutes had pushed the remaining starters up 3.7 minutes, toward
-# 38-40. Each row's share of the vacated minutes is weighted by its healthy role: (minutes, weight) breakpoints.
-ABSENCE_SHARE_POINTS = ((14.0, 6.0), (20.0, 3.5), (24.0, 2.0), (28.0, 1.2), (34.0, 0.6))
-ABSENCE_SHARE_UNUSED = 4.0  # a selected player with no healthy minutes (the next man up off the bench)
+# Who plays an absent player's minutes (SMART-MINUTES, 2026-11-19; replaces HEAVY-MINUTES' bench-first curve). The
+# coach's decision lives in absence_fill.coach_fill: like-for-like backups first (position, height and skills),
+# the remaining starters a little, deep reserves when the rotation runs thin, weighed by the coach's value of each
+# player, the team's phase and the head coach's star workload. Fitted to real 2025-26 games with a starter out.
+def absence_fill_profile(row: dict[str, Any], healthy: float, cap: float = 42.0):
+    from .absence_fill import profile_from_attrs
+    return profile_from_attrs(row["player"], row.get("attrs") or {"overall": row.get("overall", 50.0)}, healthy,
+                              cap=max(cap, healthy))
 
 
-def absence_share_weight(minutes: float) -> float:
-    if minutes <= 0:
-        return ABSENCE_SHARE_UNUSED
-    points = ABSENCE_SHARE_POINTS
-    if minutes <= points[0][0]:
-        return points[0][1]
-    for (lo, lo_w), (hi, hi_w) in zip(points, points[1:]):
-        if minutes <= hi:
-            return lo_w + (hi_w - lo_w) * (minutes - lo) / (hi - lo)
-    return points[-1][1]
-
-
-def spread_vacated_minutes(rows: list[dict[str, Any]], total: float = 240.0) -> None:
-    """Give an AI team's missing minutes mostly to its bench, in place (healthy rosters are unchanged)."""
-    active = [row for row in rows if float(row.get("maximum") or 0.0) > 0.0]
-    vacated = total - sum(float(row.get("desired") or 0.0) for row in active)
-    if vacated <= 0.5 or not active:
+def fill_vacated_minutes(
+    canonical: dict[str, Any], save: dict[str, Any], team_id: str | None, rows: list[dict[str, Any]],
+    allocation_rows: list[dict[str, Any]], *, ai_role: bool, fill_out: dict[str, dict[str, float]] | None = None,
+) -> None:
+    """Raise the available players' desired minutes, in place, to play the minutes of the unavailable ones."""
+    from .absence_fill import coach_fill, mark_starters
+    from .staff import coach_star_workload
+    by_id = {row["player_id"]: row for row in allocation_rows}
+    available = [row for row in rows if not row["unavailable"] and row["player"]["id"] in by_id]
+    healthy = {row["player"]["id"]: float(by_id[row["player"]["id"]]["desired"] or 0.0)
+               if float(by_id[row["player"]["id"]]["maximum"] or 0.0) > 0 else 0.0 for row in available}
+    absent_rows = [row for row in rows if row["unavailable"]]
+    if ai_role:
+        absent_minutes = {row["player"]["id"]: float(row["baseline"]) for row in absent_rows}
+        vacated = 240.0 - sum(healthy.values())
+    else:
+        # The same desired-minutes scale the available players use, before the team total is set to 240.
+        absent_minutes = {}
+        for row in absent_rows:
+            rec = row.get("recommendation") or {}
+            if rec and float(rec.get("target_minutes") or 0.0) > 0:
+                absent_minutes[row["player"]["id"]] = clamp(float(rec["target_minutes"]), 0.0, 42.0)
+            elif row["baseline"] > 0:
+                absent_minutes[row["player"]["id"]] = row["baseline"] ** 1.08 * (0.74 + row["overall"] / 155.0)
+        vacated = sum(absent_minutes.values())
+    absent = [absence_fill_profile(row, absent_minutes.get(row["player"]["id"], 0.0)) for row in absent_rows
+              if absent_minutes.get(row["player"]["id"], 0.0) > 0]
+    if vacated <= 0.5 or not absent:
         return
-    weights = [absence_share_weight(float(row.get("desired") or 0.0)) for row in active]
-    desired = [float(row.get("desired") or 0.0) for row in active]
-    for _ in range(len(active)):  # nobody past 42 minutes; a short-handed team's extra goes to the others
-        open_rows = [i for i in range(len(active)) if desired[i] < 42.0 - 1e-9]
-        weight_total = sum(weights[i] for i in open_rows)
-        if vacated <= 1e-9 or weight_total <= 0:
-            break
-        placed = 0.0
-        for i in open_rows:
-            add = min(vacated * weights[i] / weight_total, 42.0 - desired[i])
-            desired[i] += add
-            placed += add
-        vacated -= placed
-    for row, value in zip(active, desired):
-        row["desired"] = value
-        row["maximum"] = max(float(row["maximum"]), value)
-        row["minimum"] = min(float(row.get("minimum") or 0.0), value)
+    candidates = [absence_fill_profile(row, healthy[row["player"]["id"]]) for row in available]
+    mark_starters(candidates, absent)
+    phase = ((save.get("team_plans") or {}).get(team_id) or {}).get("window_phase")
+    coach = next((slot for slot in save.get("staff_slots") or []
+                  if slot.get("team_id") == team_id and slot.get("slot") == "head_coach"), None)
+    adds = coach_fill(absent, candidates, vacated, phase=phase, star_workload=coach_star_workload(coach))
+    sizes = {p.pid: p.size for p in candidates}
+    for pid, add in adds.items():
+        if add <= 1e-6:
+            continue
+        row = by_id[pid]
+        row["desired"] = healthy[pid] + add
+        row["maximum"] = max(float(row["maximum"] or 0.0), row["desired"])
+        row["minimum"] = min(float(row.get("minimum") or 0.0), row["desired"])
+        if fill_out is not None and add > 0.05:
+            fill_out[pid] = {"minutes": add, "size": sizes[pid]}
+
+
+# A user who left a player at zero minutes benched him on purpose: the coach plays him only when fewer than this many
+# players with minutes are available.
+USER_FILL_MIN_ROTATION = 8
 
 
 def user_rotation_override_projection(
     roster: list[dict[str, Any]],
     health_by_player: dict[str, dict[str, Any]],
     override: dict[str, Any],
+    *,
+    canonical: dict[str, Any] | None = None,
+    save: dict[str, Any] | None = None,
+    team_id: str | None = None,
+    fill_out: dict[str, dict[str, float]] | None = None,
 ) -> dict[str, float]:
-    """Honor saved user minutes, filling only time freed by unavailable players."""
+    """Honor saved user minutes, filling only time freed by unavailable players.
+
+    A healthy player keeps the GM's minutes as his floor. The minutes of unavailable players are placed by the same
+    coach decision the AI teams use (absence_fill), among the players the GM gave minutes to."""
     available = [
         player for player in roster
         if not player_unavailable_for_rotation(health_by_player.get(player["id"]))
     ]
+    if canonical is not None:
+        filled = user_override_coach_fill(canonical, save or {}, team_id, roster, available, override, fill_out)
+        if filled is not None:
+            return filled
     available_ids = {player["id"] for player in available}
     allocation = {
         player["id"]: (
@@ -7155,6 +7230,52 @@ def user_rotation_override_projection(
         if cursor > len(ranked) * 100:
             break
     return {player_id: float(round(value)) for player_id, value in allocation.items()}
+
+
+def user_override_coach_fill(
+    canonical: dict[str, Any], save: dict[str, Any], team_id: str | None, roster: list[dict[str, Any]],
+    available: list[dict[str, Any]], override: dict[str, Any], fill_out: dict[str, dict[str, float]] | None,
+) -> dict[str, float] | None:
+    """Whole-minute plan: GM targets for the healthy players plus the coach's placement of the missing minutes.
+
+    None when nobody the GM gave minutes to is out (the plain override path then applies)."""
+    from .absence_fill import coach_fill, mark_starters, profile_from_attrs
+    from .staff import coach_star_workload
+
+    def target(player: dict[str, Any]) -> float:
+        return float(clamp(float(override.get(player["id"], 0.0) or 0.0), 0.0, 48.0))
+
+    available_ids = {player["id"] for player in available}
+    absent_players = [p for p in roster if p["id"] not in available_ids and target(p) > 0]
+    base = {p["id"]: target(p) for p in available}
+    vacated = 240.0 - sum(base.values())
+    if not absent_players or vacated <= 0.5:
+        return None
+    attrs = {p["id"]: player_attribute_summary(canonical, p["id"]) for p in roster}
+    candidates = [profile_from_attrs(p, attrs[p["id"]], base[p["id"]], cap=max(42.0, base[p["id"]])) for p in available]
+    absent = [profile_from_attrs(p, attrs[p["id"]], target(p)) for p in absent_players]
+    mark_starters(candidates, absent)
+    with_minutes = {p.pid for p in candidates if p.healthy > 0}
+    eligible = with_minutes if len(with_minutes) >= USER_FILL_MIN_ROTATION else None
+    phase = ((save.get("team_plans") or {}).get(team_id) or {}).get("window_phase")
+    adds = coach_fill(absent, candidates, vacated, phase=phase, eligible=eligible,
+                      star_workload=coach_star_workload(team_head_coach(save, team_id)))
+    minutes = {p["id"]: 0.0 for p in roster}
+    for pid, value in base.items():
+        minutes[pid] = value + adds.get(pid, 0.0)
+    if fill_out is not None:
+        sizes = {p.pid: p.size for p in candidates}
+        fill_out.update({pid: {"minutes": add, "size": sizes[pid]} for pid, add in adds.items() if add > 0.05})
+    # Whole minutes summing to 240, never below a healthy player's GM target.
+    whole = {pid: math.floor(value + 1e-9) for pid, value in minutes.items()}
+    short = 240 - sum(whole.values())
+    for pid in sorted(minutes, key=lambda pid: (-(minutes[pid] - whole[pid]), pid)):
+        if short <= 0:
+            break
+        if whole[pid] < 48 and pid in available_ids:
+            whole[pid] += 1
+            short -= 1
+    return {pid: float(value) for pid, value in whole.items()}
 
 
 def player_unavailable_for_rotation(state: dict[str, Any] | None) -> bool:
