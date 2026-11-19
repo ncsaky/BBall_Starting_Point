@@ -1043,6 +1043,28 @@ def game_rest_context(standings: dict[str, dict[str, Any]], schedule_facts: dict
     return context
 
 
+_BOX_FATIGUE_CONFIG: dict[str, dict[str, Any]] = {}
+
+
+def _box_fatigue_config(root: str) -> dict[str, Any]:
+    """The injury-model config, read once per data root (the save reads it for every game)."""
+    if root not in _BOX_FATIGUE_CONFIG:
+        _BOX_FATIGUE_CONFIG[root] = load_injury_model_config(root)
+    return _BOX_FATIGUE_CONFIG[root]
+
+
+def _stamina_lookup(canonical: dict[str, Any]) -> dict[str, float]:
+    """Stamina by player, built once per trait list (the save rebuilds that list when development changes it)."""
+    traits = canonical.get("traits", [])
+    cached = canonical.get("_stamina_lookup")
+    if isinstance(cached, dict) and cached.get("source") == id(traits) and cached.get("count") == len(traits):
+        return cached["values"]
+    values = {trait["player_id"]: float(trait.get("value") if trait.get("value") is not None else 50.0)
+              for trait in traits if trait.get("trait_key") == "stamina_cardio"}
+    canonical["_stamina_lookup"] = {"source": id(traits), "count": len(traits), "values": values}
+    return values
+
+
 def add_box_score_fatigue(canonical: dict[str, Any], states: list[dict[str, Any]], result: dict[str, Any],
                           game_date: str, root: str | Path | None = None) -> int:
     """Add each player's fatigue from the minutes he actually played in a finished game (overtime, blowout rest, foul
@@ -1053,11 +1075,11 @@ def add_box_score_fatigue(canonical: dict[str, Any], states: list[dict[str, Any]
     lines = [line for line in result.get("player_lines", []) or [] if float(line.get("minutes") or 0) > 0 and line.get("player_id")]
     if not game_id or not lines:
         return 0
-    config = load_injury_model_config(root or Path(__file__).resolve().parents[2])
-    players = {player["id"]: player for player in canonical.get("players", [])}
+    config = _box_fatigue_config(str(root or Path(__file__).resolve().parents[2]))
+    line_ids = {line["player_id"] for line in lines}
+    players = {player["id"]: player for player in canonical.get("players", []) if player["id"] in line_ids}
     by_id = {state.get("player_id"): state for state in states}
-    stamina = {trait["player_id"]: float(trait.get("value") if trait.get("value") is not None else 50.0)
-               for trait in canonical.get("traits", []) if trait.get("trait_key") == "stamina_cardio"}
+    stamina = _stamina_lookup(canonical)
     staff_by_team: dict[str, dict[str, float]] = {}
     away_team = str(result.get("away_team_id") or "")
     updated = 0

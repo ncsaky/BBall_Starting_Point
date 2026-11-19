@@ -324,20 +324,26 @@ def rest_decision(assessment: dict[str, Any], draw: float) -> tuple[str, str] | 
     return None
 
 
+_STAR_CACHE: dict[tuple[str, int], list[str]] = {}
+
+
 def star_ids(canonical: dict[str, Any], period: str = "") -> set[str]:
-    """The league's top STAR_COUNT players by overall rating, cached on the canonical per period (the save passes the
-    month, so trades and development move players in and out of the group)."""
-    cached = canonical.get("_rest_star_ids")
-    if isinstance(cached, dict) and cached.get("period") == period:
-        return set(cached.get("ids") or [])
+    """The league's top STAR_COUNT rostered players by overall rating. Kept for a period (the save passes the month,
+    so development moves players in and out of the group) and recomputed when any player changes teams."""
+    rostered = sorted((player["id"], str(player.get("team_id")))
+                      for player in canonical.get("players", []) if player.get("team_id") and not player.get("_inactive_player"))
+    key = (period, hash(tuple(rostered)))
+    if key in _STAR_CACHE:
+        return set(_STAR_CACHE[key])
     from .save import player_attribute_summary
     rated = []
-    for player in canonical.get("players", []):
-        if player.get("team_id") and not player.get("_inactive_player") and float(player.get("minutes_projection") or 0) >= 15:
-            try:
-                rated.append((float(player_attribute_summary(canonical, player["id"]).get("overall") or 0.0), player["id"]))
-            except Exception:
-                continue
+    for player_id, _ in rostered:
+        try:
+            rated.append((float(player_attribute_summary(canonical, player_id).get("overall") or 0.0), player_id))
+        except Exception:
+            continue
     stars = sorted(pid for _, pid in sorted(rated, reverse=True)[:STAR_COUNT])
-    canonical["_rest_star_ids"] = {"period": period, "ids": stars}
+    if len(_STAR_CACHE) > 16:
+        _STAR_CACHE.clear()
+    _STAR_CACHE[key] = stars
     return set(stars)
