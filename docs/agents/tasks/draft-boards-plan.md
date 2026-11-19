@@ -2,9 +2,23 @@
 
 _Plan written 2026-11-19 by Claude (coordinator). Not started. Starts once TRADE-2B (re-pricing draft picks, `draft.py` pick values) merges._
 
+## User decisions (2026-11-19, these override anything below that conflicts)
+1. **The scouts' board is purely a talent assessment.**
+   - Scouts rank who they think the best players are.
+   - They may say a prospect is raw, needs time and has more upside, or that another is better now with less growth left, whether because of age or not.
+   - They do **not** consider fit, team needs, or whether the team is rebuilding or contending. That is the **general manager's** job.
+   - So there are two separate layers: the scouts' board (talent) and the GM's draft decision (talent plus team context).
+2. **Consensus boards update monthly through the season.** They move more early in the year and less toward the draft, as scouts form firmer views.
+3. **No dice rolls at pick time.** Draft-night surprises must come from logical reasons:
+   - teams' different goals and priorities;
+   - reacting to who is still available, and at what price;
+   - trading up or down.
+
+   The gap between projected and actual draft position should still match real drafts, but as an outcome check, not something tuned by adding randomness.
+
 ## TL;DR
 - Two boards, clearly labelled. **Consensus** is what the league as a whole believes about each prospect. **Your board** is what your own scouts believe, with their uncertainty. Neither one ever shows a prospect's hidden true ratings.
-- AI teams draft from their own scouts' boards, so falls come from scouting disagreement and team needs. Stacked random rolls stop being the cause, but surprises in the middle of round one stay.
+- Scouts judge talent only. Each AI GM then picks from his scouts' board by his team's phase, needs and the value left on the board, or trades up or down. Surprises come only from those differences; there are no dice at pick time.
 - Scouting staff quality changes how accurate a team's board is. The real 2027-29 prospects keep their real scouting consensus.
 
 ## Why (the user's words and the earlier diagnosis)
@@ -27,19 +41,42 @@ _Plan written 2026-11-19 by Claude (coordinator). Not started. Starts once TRADE
 | | Consensus big board | Your scouts' board |
 |---|---|---|
 | **Meaning** | Where the league as a whole ranks the prospect | What your own scouts believe |
-| **2027-29 real players** | The real consensus from public big boards and mocks, already built in `real_prospects.consensus_board`. It then moves during the season with the 30 teams' scouting reports and college games. | Your scouting report: low/mid/high ranges plus coverage %. Your scouting lead's quality sets how wide the ranges are and how biased they are. |
+| **2027-29 real players** | The real consensus from public big boards and mocks, already built in `real_prospects.consensus_board`. It **updates monthly** through the season from the 30 teams' scouting and college games, with bigger moves early and smaller ones near the draft. | Your scouting report: low/mid/high ranges plus coverage %. Your scouting lead's quality sets how wide the ranges are and how biased they are. |
 | **Generated players (2030+)** | The median of the 30 teams' scouted grades. | Same as for real players. |
-| **Shows** | Consensus rank, plus a spread (best and worst team rank), so a divisive prospect looks divisive. | Your rank, your grade range, your coverage %, the change since preseason, and fit with your roster (need and timeline). |
+| **Shows** | Consensus rank, plus a spread (best and worst team rank), so a divisive prospect looks divisive. | Your scouts' rank, the grade range and whether he is "raw, high upside" or "ready now", coverage %, and the change since the last monthly update. **No team fit or timeline**: that belongs to the GM. A separate, clearly labelled "Fit for us" note can sit beside it for you as GM. |
 | **Never shows** | Hidden true ratings | Hidden true ratings: they appear only once the player is signed and playing |
 
 On the draft-night board, both columns sit side by side, e.g. "Consensus #2 · Your board #6". The prospect card shows both and explains the gap: "Your scouts are lower on his shooting."
 
-## How AI teams draft
-- Each AI team ranks prospects from **its own scouting report**, the same kind as yours, for every class. Generated classes get reports too, so the 2027 and 2028+ code paths become one. Each team then applies its own fit, timeline (rebuilding vs contending) and medical adjustments.
-- **Randomness becomes one realistic layer.** The noise comes from each team's scouting, sized by its scouting lead's quality and how much it has scouted the prospect. The per-pick random roll and the 0.55x–1.55x swing are removed or greatly reduced at the top of the draft. Some team-specific taste stays in the middle and late first round. The target needs to be measurable:
-  - a consensus top-3 prospect falls past pick 10 in under about 5% of drafts, unless he is injured or very volatile;
-  - a top-10 consensus prospect falls past pick 20 rarely, but not never;
-  - check both against real drafts from 2015 to 2025, comparing consensus big board rank with actual pick. Collect public mock and big-board data, and record the source.
+## How AI teams draft (scouts assess, the GM decides)
+- **Scouts' layer.** Each team has its own scouting report on every prospect, for every class; generated classes get reports too, so the 2027 and 2028+ code paths become one. The report covers talent only:
+  - current ability;
+  - upside, with its range;
+  - development time ("raw, two years away" or "ready now, limited growth");
+  - risk factors such as age, medicals and consistency.
+
+  Teams' views differ for reasons that can be explained:
+  - the quality of the scouting staff;
+  - how much each team watched the prospect (coverage);
+  - each staff's lasting taste, for example how heavily it weighs shooting or physical tools.
+
+  A staff's view is formed as it scouts during the season. It is never re-rolled at pick time.
+- **GM layer (the actual pick).** The GM turns the scouts' board into a pick using the team's context:
+  - phase, i.e. a rebuilding team values upside and a contender values readiness;
+  - positional need and roster fit;
+  - risk appetite;
+  - how much a prospect is worth against what is still on the board when the pick comes up, which is why a falling player gets snapped up;
+  - whether trading up or down is better value.
+
+  Given the scouts' board, this step is **deterministic**. The current per-pick random roll and the 0.55x–1.55x weighted draw are removed.
+- **Where draft-night surprise comes from:**
+  - different scouting views;
+  - different GM priorities;
+  - reacting to availability;
+  - trades up and down.
+
+  Front-office personality (trade step 5) can add more later.
+- **Outcome check, not a tuning knob.** Compare how far picks land from consensus rank with real drafts from 2015 to 2025 (big-board rank against actual pick, from public data with recorded sources). Measure how often a consensus top-3 prospect falls past pick 10 and a top-10 prospect past pick 20. If the result is far off, look for a missing logical reason, such as GMs that are too alike or a scouting spread that is too narrow. Never add randomness.
 - **Picks are re-chosen when traded.** When a pick changes owner, the new owner picks from its own board. The draft-night trade target from step 2 should already line up with this; verify it.
 - **Explanations** on each pick: "PHX took Smith Jr. (consensus #4, their board #2): needs a wing; their scouts rate his defense highly."
 
@@ -51,7 +88,7 @@ On the draft-night board, both columns sit side by side, e.g. "Consensus #2 · Y
 0. **Re-verify the earlier diagnosis on current code.** For each of findings 1–7: still true, partly fixed, or fixed. Run 20 seeded drafts per class type with no saves, to keep it light.
 1. **Truthful display (do first).** Board and card use only the public or scouted numbers the AI uses. Hidden true values are never shown before signing. Write tests that fail if `potential` is shown while a public or scouted value exists.
 2. **The two boards.** Consensus (with spread) and your scouts' board, in the draft-night board and the Upcoming Prospects window. Use the existing table style (rule 12) and the existing card layout.
-3. **One AI drafting path with one noise layer**, sized by scouting staff, measured against the target above and against real drafts.
+3. **One AI drafting path.** The scouts' view is formed during the season and sized by staff quality, coverage and staff taste. The GM's pick is deterministic: phase, need, risk appetite, value against what is left on the board, and trading up or down. There is no random draw at pick time. Check the outcome against real drafts.
 4. **Re-choose on traded picks,** and add pick explanations.
 5. **Checks:**
    - how often top-3 and top-10 prospects fall, before and after, compared with real drafts;
@@ -67,6 +104,5 @@ On the draft-night board, both columns sit side by side, e.g. "Consensus #2 · Y
 
 Must wait for: TRADE-2B, which edits `draft.py` pick values and `play.py` draft-night trades.
 
-## Open questions for the user (ask when starting)
-1. Should the consensus board for the real 2027-29 classes keep following the real public boards as they update (prospect refresh in Jan/Feb), or freeze at the save's start date?
-2. How much surprise on draft night? The proposed target is a top-3 consensus prospect falling past pick 10 in under 5% of drafts. Is that about right?
+## Open questions for the user
+None. Both were answered on 2026-11-19 (see "User decisions" at the top).
