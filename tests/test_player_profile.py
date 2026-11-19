@@ -111,8 +111,11 @@ class PlayerCardPayloadTests(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             new = Path(tmp) / "inputs.json"
             old = Path(tmp) / "legacy.json"
-            create_league_save(ROOT, deepcopy(base), "GSW", new, seed=3, ratings_model=rm.INPUTS_V1)
-            create_league_save(ROOT, deepcopy(base), "GSW", old, seed=3)
+            create_league_save(ROOT, deepcopy(base), "GSW", new, seed=3)   # the default rating set
+            create_league_save(ROOT, deepcopy(base), "GSW", old, seed=3, ratings_model=rm.LEGACY)
+            # New saves default to the 94-input ratings (2026-11-19); the older set stays selectable.
+            self.assertEqual(json.loads(new.read_text())["meta"]["ratings_model"], rm.INPUTS_V1)
+            self.assertEqual(json.loads(old.read_text())["meta"]["ratings_model"], rm.LEGACY)
             payload = player_card_payload(deepcopy(base), new, pid)
             self.assertIn("inputs_profile", payload)
             self.assertEqual(payload["inputs_profile"]["player_id"], pid)

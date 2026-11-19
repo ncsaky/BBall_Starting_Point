@@ -85,7 +85,7 @@ class ImportedTailBaselineTests(unittest.TestCase):
     def test_v5_earned_growth_trades_and_contracts_survive_v6_entry_and_reload(self):
         with TemporaryDirectory() as directory:
             path = Path(directory)/'career.json'
-            saved = create_league_save(self.root,deepcopy(self.old),'GSW',path,seed=17)
+            saved = create_league_save(self.root,deepcopy(self.old),'GSW',path,seed=17,ratings_model='legacy_traits')
             player = next(p for p in self.old['players'] if p['name']=='Spencer Jones')
             pid = player['id']
             saved['development_trait_totals'] = {pid:{'passing_reads':2.5}}

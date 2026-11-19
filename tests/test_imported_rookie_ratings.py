@@ -119,7 +119,7 @@ class ImportedRookieRatingTests(unittest.TestCase):
                 row = conn.execute("SELECT current_ability, potential FROM players WHERE id=?", (self.aj.id,)).fetchone()
             self.assertEqual(tuple(map(float, row)), (self.aj.current_ability, self.aj.potential))
             path = Path(tmp) / "new.json"
-            save = create_league_save(ROOT, loaded, "WAS", path, seed=17)
+            save = create_league_save(ROOT, loaded, "WAS", path, seed=17, ratings_model="legacy_traits")  # older-ratings card value
             active = canonical_with_save(loaded, load_save(path))
             active_aj = next(p for p in active["players"] if p["id"] == self.aj.id)
             self.assertEqual(active_aj["potential"], self.aj.potential)
@@ -129,7 +129,7 @@ class ImportedRookieRatingTests(unittest.TestCase):
     def test_old_save_keeps_old_ratings_earned_development_roster_and_contract(self):
         with TemporaryDirectory() as tmp:
             path = Path(tmp) / "old.json"
-            save = create_league_save(ROOT, self.previous, "WAS", path, seed=17)
+            save = create_league_save(ROOT, self.previous, "WAS", path, seed=17, ratings_model="legacy_traits")
             save["development_trait_totals"] = {self.aj.id: {"passing_reads": 2.5}}
             save["roster_overrides"][self.aj.id] = "team_det"
             save["contract_overrides"][self.aj.id] = {"team_id": "team_det", "seasons": [{"season": "2026-27", "salary": 1234567}]}

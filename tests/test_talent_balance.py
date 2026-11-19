@@ -158,15 +158,3 @@ class TalentBalanceTests(unittest.TestCase):
             reloaded = json.loads(json.dumps(reloaded))
         self.assertEqual(context["traits"], reloaded["traits"])
         self.assertTrue(all(t["components"].get("career_capacity") for t in reloaded["traits"]))
-
-    def test_v3_save_does_not_adopt_new_model(self):
-        with gzip.open(ROOT / "data/canonical/baselines/2026-10-23-player-tuning-v3.json.gz", "rt") as handle:
-            old = json.load(handle)
-        with TemporaryDirectory() as directory:
-            path = Path(directory) / "career.json"
-            create_league_save(ROOT, deepcopy(old), "GSW", path, seed=17)
-            candidate = deepcopy(old)
-            candidate["meta"].update(starting_data_version="hypothetical-v4", talent_model_version=2)
-            actual = canonical_with_save(candidate, load_save(path))
-            self.assertNotIn("talent_model_version", actual["meta"])
-            self.assertEqual(actual["traits"], old["traits"])

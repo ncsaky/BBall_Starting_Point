@@ -6,9 +6,9 @@ Modes:
   the inputs, and the traits are re-derived, so displayed inputs and engine traits always agree.
 - "legacy_traits": the older hand-built ratings, unchanged.
 
-A save records its mode in save["meta"]["ratings_model"]; a save without one uses the default. Save-less tools
-(calibration report, betting-odds validation) use the default unless the environment variable
-NBA_GM_RATINGS_MODEL names a mode (e.g. NBA_GM_RATINGS_MODEL=legacy_traits).
+A save records its mode in save["meta"]["ratings_model"] (new saves: the default); a save without one predates the
+94-input model and keeps the older ratings. Save-less tools (calibration report, betting-odds validation) use the
+default unless the environment variable NBA_GM_RATINGS_MODEL names a mode (e.g. NBA_GM_RATINGS_MODEL=legacy_traits).
 Players without input records (e.g. newly generated draftees, until Stage 1 F) keep their legacy traits.
 """
 from __future__ import annotations
@@ -63,7 +63,14 @@ _EFFECTIVE_CACHE_LIMIT = 8_192
 
 
 def ratings_model_for(save: Mapping[str, Any] | None = None) -> str:
-    mode = ((save or {}).get("meta") or {}).get("ratings_model") or os.environ.get("NBA_GM_RATINGS_MODEL") or DEFAULT
+    """The rating set for a save, or for save-less tools (save=None: the scorecards, fit scripts).
+
+    Every save created since the 94-input model existed records its set, so a save without one was made on the
+    older ratings (or is a hand-built test league too small to fit the 94-input model on) and keeps them.
+    Save-less tools measure the default set unless NBA_GM_RATINGS_MODEL names one.
+    """
+    fallback = DEFAULT if save is None else LEGACY
+    mode = ((save or {}).get("meta") or {}).get("ratings_model") or os.environ.get("NBA_GM_RATINGS_MODEL") or fallback
     if mode not in MODES:
         raise ValueError(f"Unknown ratings model {mode!r}; expected one of {MODES}")
     return mode
