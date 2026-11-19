@@ -45,6 +45,8 @@ Leave changes uncommitted; write the report and set the board row to review.
 
 ### BLOWOUT-MINUTES: the coach should rest players in blowouts and react to foul trouble
 
+**Absorbed by HEAVY-MINUTES (Claude, 2026-11-19); do not dispatch.** See `docs/agents/tasks/heavy-minutes.md`.
+
 Suggested settings: GPT-6.2 Sol, Medium, fresh chat. Start only after ROT-OUTLIERS is reviewed.
 
 ```
