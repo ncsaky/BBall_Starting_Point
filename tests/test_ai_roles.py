@@ -145,6 +145,42 @@ class AiRoleTests(unittest.TestCase):
                 self.assertGreater(max(fits.get(pos, 0) for pos in sv.player_position_tokens(by_id[pid])), 0)
                 self.assertFalse(sv.starting_slot_hard_violation(str(slot), sv.player_height_inches(by_id[pid]), sv.player_position_tokens(by_id[pid])))
 
+    def coach_attrs(self, overrides=None):
+        # Thirteen candidates: five starters (64), five regulars (55), three reserves (51).
+        attrs = {f"p{i:02}": {"overall": 64.0 if i < 5 else 55.0 if i < 10 else 51.0, "creation": 55.0, "stamina": 55.0}
+                 for i in range(13)}
+        workloads = {pid: (32.0 if i < 5 else 20.0 if i < 10 else 10.0) for i, pid in enumerate(sorted(attrs))}
+        for pid, values in (overrides or {}).items():
+            attrs[pid].update(values.get("attrs", {}))
+            workloads[pid] = values.get("workload", workloads[pid])
+        return attrs, workloads
+
+    def test_newcomer_minutes_from_another_team_do_not_lift_a_clearly_weaker_player(self):
+        # Big role on his old team, clearly below this rotation's talent line.
+        attrs, workloads = self.coach_attrs({"p12": {"attrs": {"overall": 45.0}, "workload": 25.0}})
+        starters = ("p00", "p01", "p02", "p03", "p04")
+        incumbent = sv.ai_coach_workloads(attrs, starters, workloads)
+        newcomer = sv.ai_coach_workloads(attrs, starters, workloads, {"p12"})
+        regulars = [f"p{i:02}" for i in range(5, 10)]
+        # The same role earned with this team keeps its continuity; earned elsewhere, talent decides.
+        self.assertGreater(incumbent["p12"], min(incumbent[pid] for pid in regulars))
+        self.assertLess(newcomer["p12"], min(newcomer[pid] for pid in regulars))
+        self.assertLessEqual(newcomer["p12"], 10)
+        self.assertAlmostEqual(sum(newcomer.values()), 240, delta=.01)
+
+    def test_newcomers_near_the_talent_line_keep_their_workload_context(self):
+        # Within two overall points of the line, last season's role still decides the order.
+        attrs, workloads = self.coach_attrs({"p12": {"attrs": {"overall": 53.5}, "workload": 25.0}})
+        desired = sv.ai_coach_workloads(attrs, ("p00", "p01", "p02", "p03", "p04"), workloads, {"p12"})
+        self.assertGreater(desired["p12"], min(desired[f"p{i:02}"] for i in range(5, 10)))
+        self.assertEqual(sorted(desired.values(), reverse=True)[:5], [37, 34, 32, 30, 28])
+
+    def test_newcomer_check_uses_the_team_the_carried_minutes_came_from(self):
+        brown = {"name": "Bruce Brown", "espn_player_id": "4065670"}  # Denver in 2025-26
+        self.assertTrue(sv.carried_workload_earned_elsewhere(brown, "NYK"))
+        self.assertFalse(sv.carried_workload_earned_elsewhere(brown, "DEN"))
+        self.assertFalse(sv.carried_workload_earned_elsewhere({"name": "Generated Prospect Zz"}, "NYK"))
+
     def test_shuffled_inputs_do_not_change_assignment_or_roles(self):
         canonical, saved = self.fixture()
         other, second = deepcopy(canonical), deepcopy(saved)
