@@ -608,10 +608,14 @@ def find_trade_for_assets(
     seed: int = 1,
     config: dict[str, Any] | None = None,
     buyer_team: str | None = None,
+    ai_buyer: bool = False,
 ) -> dict[str, Any]:
     canonical = with_transaction_context(canonical, config)
     user_team = resolve_team(canonical, for_team)
-    canonical = {**canonical, '_human_team_ids': sorted(set(canonical.get('_human_team_ids') or []) | {user_team['id']})}
+    if not ai_buyer:
+        # The user's finder: the user's own side is the user's call. An AI team searching for itself (ai_buyer)
+        # keeps its full AI evaluation, including its own-player price (trade step 1).
+        canonical = {**canonical, '_human_team_ids': sorted(set(canonical.get('_human_team_ids') or []) | {user_team['id']})}
     seller = resolve_team(canonical, target_team_query)
     selected_buyer = resolve_team(canonical, buyer_team) if buyer_team else None
     normalized_target = normalize_assets(canonical, seller, target_assets)
@@ -854,7 +858,7 @@ def trade_search_context(canonical: dict[str, Any]) -> dict[str, Any]:
     forecast = ForecastSnapshot(canonical)
     return {**canonical, '_trade_search_roles': {}, '_trade_search_rosters': {},
             '_trade_financial_facts': {}, '_trade_movement_classes': {}, '_pick_presentation_memo': {},
-            '_trade_search_market_values': {},
+            '_trade_search_market_values': {}, '_trade_ownership_memo': {}, '_own_departure_states': {},
             '_trade_search_exact_memo': {'base_sources': (canonical.get('players'), canonical.get('draft_picks'),
                                                           canonical.get('pick_obligations'), canonical.get('teams'))},
             '_roster_forecast_snapshot': forecast, '_roster_forecast_stats': forecast.stats}
@@ -3843,6 +3847,9 @@ def trade_value_breakdown(canonical: dict[str, Any], proposal: dict[str, Any]) -
         "version": 2,
         "from_team_receives": package_value_breakdown(canonical, proposal.get("to_assets", []), proposal.get("from_team_id"), proposal.get("from_assets", [])),
         "to_team_receives": package_value_breakdown(canonical, proposal.get("from_assets", []), proposal.get("to_team_id"), proposal.get("to_assets", [])),
+        # Each team's own price for what it gives up (own-player view: actual role, attachment, tenure, investment).
+        "from_team_sends": package_value_breakdown(canonical, proposal.get("from_assets", []), proposal.get("from_team_id")),
+        "to_team_sends": package_value_breakdown(canonical, proposal.get("to_assets", []), proposal.get("to_team_id")),
     }
 
 
@@ -3891,18 +3898,26 @@ def package_value_breakdown(canonical: dict[str, Any], assets: list[dict[str, An
         "cap_roster": 0.0,
         "concentration": 0.0,
         "gm_modifier": 0.0,
+        "attachment": 0.0,
+        "tenure": 0.0,
+        "investment": 0.0,
     }
     asset_details: list[dict[str, Any]] = []
     multipliers = destination_role_multipliers(canonical, assets, perspective_team_id, outgoing_assets or [])
+    own_ids = own_ai_player_ids(canonical, assets, perspective_team_id) if state else set()
+    own_state = own_departure_state(canonical, perspective_team_id, state, own_ids) if own_ids else state
     for asset in assets:
         if asset.get("kind") == "player":
             player = player_by_id(canonical, asset.get("id"))
             valuation = values.get(asset.get("id"), fallback_asset_valuation(player))
             player_value = market_trade_target_value(player, valuation)
-            fit = team_fit_for_player(player, valuation, state, canonical, include_spatial=False) if player and state else 0.0
+            own = asset.get("id") in own_ids
+            fit = team_fit_for_player(player, valuation, own_state if own else state, canonical, include_spatial=False) if player and state else 0.0
             multiplier = multipliers.get(asset.get("id"), 1.0)
             health = -max(0.0, float(valuation.get("health_risk") or 0.0) - 12.0) * 0.25
-            retention = recently_acquired_player_premium(canonical, player, perspective_team_id, player_value)
+            premium = (own_player_premium(canonical, player, perspective_team_id, (player_value + fit) * multiplier + health,
+                                          market_value=player_value) if own else {})
+            retention = 0.0 if own else recently_acquired_player_premium(canonical, player, perspective_team_id, player_value)
             pieces["player_quality"] += player_value
             pieces["role_value"] += (player_value + fit) * (multiplier - 1.0)
             if player and state:
@@ -3913,19 +3928,27 @@ def package_value_breakdown(canonical: dict[str, Any], assets: list[dict[str, An
             components["health"] = round(components.get("health", 0) + health, 2)
             if retention:
                 components["retention"] = round(retention, 2)
-            asset_details.append(
-                {
-                    "kind": "player",
-                    "id": asset.get("id"),
-                    "label": player.get("name") if player else asset.get("label") or asset.get("id"),
-                    "raw_value": round(player_value + fit, 2),
-                    "listed_value": round(player_value, 2),
-                    "role_multiplier": round(multiplier, 3),
-                    "adjusted_value": round((player_value + fit) * multiplier + health + retention, 2),
-                    "expected_role": role_label_from_multiplier(multiplier),
-                    "components": components,
+            for name in ("attachment", "tenure", "investment"):
+                if premium.get(name):
+                    pieces[name] += premium[name]
+                    components[name] = round(premium[name], 2)
+            detail = {
+                "kind": "player",
+                "id": asset.get("id"),
+                "label": player.get("name") if player else asset.get("label") or asset.get("id"),
+                "raw_value": round(player_value + fit, 2),
+                "listed_value": round(player_value, 2),
+                "role_multiplier": round(multiplier, 3),
+                "adjusted_value": round((player_value + fit) * multiplier + health + retention + float(premium.get("total") or 0.0), 2),
+                "expected_role": role_label_from_multiplier(multiplier),
+                "components": components,
+            }
+            if own:
+                detail["own_player_view"] = {
+                    "role_minutes": trade_value_role_minutes(player, valuation),
+                    **{k: v for k, v in (premium.get("detail") or {}).items() if k not in {"attachment", "tenure", "investment"}},
                 }
-            )
+            asset_details.append(detail)
         elif asset.get("kind") == "pick":
             pick_value = pick_asset_value(pick_by_id(canonical, asset.get("id")), state.get("phase", "balanced"))
             pieces["pick_value"] += pick_value
@@ -4167,6 +4190,7 @@ def evaluate_trade_for_team(
             + (f" Published wants: {len(wants['matches'])} matching asset(s), additional preference credit {wants['adjustment']:.2f}." if wants['matches'] else '')
             + (f" Final roster: strength {outlook['strength_delta']:+.2f}; incremental waiver cost ${outlook['waiver_cost_millions']:.2f}M. {outlook['issue'] or ''}" if outlook else '')
             + (f" Draft investment: {investment['net_draft_value_spent']:.2f} net value spent; marginal-acquisition capital limit {investment['capital_limit']:.2f}; justified value-loss limit {investment['loss_limit']:.2f}." if investment else '')
+            + own_player_value_note(canonical, perspective_team_id, outgoing_assets)
             if include_presentation else ''
         ),
     )
@@ -4883,6 +4907,8 @@ def package_value_components(
     values = player_asset_values_by_id(canonical)
     state = next(item for item in canonical["team_strategic_states"] if item["team_id"] == perspective_team_id)
     multipliers = destination_role_multipliers(canonical, assets, perspective_team_id, outgoing_assets or [])
+    own_ids = own_ai_player_ids(canonical, assets, perspective_team_id)
+    own_state = own_departure_state(canonical, perspective_team_id, state, own_ids) if own_ids else state
     total = 0.0
     player_adjusted_values: list[float] = []
     for asset in assets:
@@ -4891,9 +4917,13 @@ def package_value_components(
             value = valuation_or_fallback(values, asset["id"], player)
             multiplier = multipliers.get(asset["id"], 1.0)
             player_value = _search_market_value(canonical, player, value)
-            adjusted = (player_value + team_fit_for_player(player, value, state, canonical, include_spatial=False)) * multiplier
+            own = asset["id"] in own_ids
+            adjusted = (player_value + team_fit_for_player(player, value, own_state if own else state, canonical, include_spatial=False)) * multiplier
             adjusted -= max(0.0, float(value.get("health_risk") or 0.0) - 12.0) * 0.25
-            adjusted += recently_acquired_player_premium(canonical, player, perspective_team_id, player_value)
+            if own:
+                adjusted += own_player_premium(canonical, player, perspective_team_id, adjusted, market_value=player_value)["total"]
+            else:
+                adjusted += recently_acquired_player_premium(canonical, player, perspective_team_id, player_value)
             player_adjusted_values.append(adjusted)
             total += adjusted
         elif asset["kind"] == "pick":
@@ -4905,6 +4935,71 @@ def package_value_components(
     # targets. The final bilateral asset ledger stays value-based so opposing fit
     # preferences cannot manufacture an acceptance swing after package assembly.
     return total, package_concentration_adjustment(player_adjusted_values)
+
+
+def own_ai_player_ids(canonical: dict[str, Any], assets: list[dict[str, Any]], team_id: str | None) -> set[str]:
+    """Players in ``assets`` that an AI team already owns: valued as what it loses (trade step 1)."""
+    if not team_id or team_id in set(canonical.get('_human_team_ids') or []):
+        return set()
+    return {asset['id'] for asset in assets if asset.get('kind') == 'player'
+            and (player_by_id(canonical, asset.get('id')) or {}).get('team_id') == team_id}
+
+
+_DEPTH_LIMITS = (('guard', 4, 6), ('wing', 4, 6), ('big', 3, 5))
+
+
+def own_departure_state(canonical: dict[str, Any], team_id: str, state: dict[str, Any], departing_ids: set[str]) -> dict[str, Any]:
+    """The team's position needs after its departing players leave.
+
+    The roster's needs and surpluses are counted with the player still on it, so a team's own guard can read as
+    "guard surplus" because he is the seventh guard, and losing its fourth guard never shows the hole it leaves.
+    For its own departing players the team asks what the roster looks like without them (position depth only; the
+    skill needs stay as computed). The same thresholds as team_needs_and_excesses.
+    """
+    memo = canonical.get('_own_departure_states')
+    key = (team_id, tuple(sorted(departing_ids)))
+    if memo is not None and key in memo and memo[key][0] is state:
+        return memo[key][1]
+    rows = _search_team_rows(canonical, team_id)
+    roster = [p for p in (canonical.get('players', []) if rows is None else rows) if p.get('team_id') == team_id]
+    before = position_counts(roster)
+    after = position_counts([p for p in roster if p.get('id') not in departing_ids])
+    needs, excesses = list(state.get('needs') or []), list(state.get('excesses') or [])
+    for bucket, low, high in _DEPTH_LIMITS:
+        flag = f'{bucket}_depth'
+        if before[bucket] > high >= after[bucket] and flag in excesses:
+            excesses.remove(flag)
+        if before[bucket] >= low > after[bucket] and flag not in needs:
+            needs.append(flag)
+    result = {**state, 'needs': sorted(needs), 'excesses': sorted(excesses)}
+    if memo is not None:
+        memo[key] = (state, result)
+    return result
+
+
+def own_player_premium(canonical: dict[str, Any], player: dict[str, Any] | None, team_id: str, base_value: float, *,
+                       market_value: float | None = None) -> dict[str, Any]:
+    from .trade_ownership import own_player_premium as premium
+    return premium(canonical, player, team_id, base_value, market_value=market_value)
+
+
+def own_player_value_note(canonical: dict[str, Any], team_id: str, outgoing_assets: list[dict[str, Any]]) -> str:
+    """Plain-language explanation of an AI team's price for its own outgoing players."""
+    own_ids = own_ai_player_ids(canonical, outgoing_assets, team_id)
+    if not own_ids:
+        return ''
+    from .trade_ownership import premium_note
+    breakdown = package_value_breakdown(canonical, [a for a in outgoing_assets if a.get('id') in own_ids], team_id)
+    parts = []
+    for row in breakdown.get('asset_details') or []:
+        view = row.get('own_player_view') or {}
+        components = row.get('components') or {}
+        premium = {name: float(components.get(name) or 0.0) for name in ('attachment', 'tenure', 'investment')}
+        premium['detail'] = view
+        reasons = premium_note(premium)
+        parts.append(f"{row.get('label')} valued {float(row.get('adjusted_value') or 0):.1f} in his "
+                     f"{float(view.get('role_minutes') or 0):.0f}-minute role" + (f" ({reasons})" if reasons else ''))
+    return ' Own-player price: ' + '; '.join(parts) + '.'
 
 
 def recently_acquired_player_premium(canonical: dict[str, Any], player: dict[str, Any] | None, team_id: str, base_value: float) -> float:
@@ -4992,11 +5087,19 @@ def destination_role_multipliers(
         quality = valuation.get('on_court_value')
         incoming_values.append((player["id"], float(quality if quality is not None else valuation.get("player_value") or 0.0), display_minutes_projection(player)))
     all_values = roster_values + [(pid, value) for pid, value, _ in incoming_values]
+    # Own-player correction (trade step 1): when an AI team prices a player it already has, it knows the role he
+    # actually plays. Ranking him only by on-court value against his own teammates can call a 33-minute starter a
+    # fringe player and make him look like surplus; the team's loss is at least the role he really fills.
+    own_roles = {} if perspective_team_id in set(canonical.get('_human_team_ids') or []) else {
+        player['id']: trade_value_role_minutes(player, valuation_or_fallback(values, player['id'], player))
+        for player in incoming_players if player.get('team_id') == perspective_team_id}
     output: dict[str, float] = {}
     for player_id, value, current_minutes in incoming_values:
         rank = 1 + sum(1 for other_id, other_value in all_values if other_id != player_id and other_value > value)
         role_minutes = expected_minutes_for_destination_rank(rank)
         expected_minutes = min(36.0, max(role_minutes, min(float(current_minutes or 0.0), role_minutes + 3.0)))
+        if player_id in own_roles:
+            expected_minutes = min(36.0, max(expected_minutes, own_roles[player_id]))
         minute_weight = (max(2.0, expected_minutes) / 28.0) ** 1.8
         output[player_id] = round(clamp(minute_weight, 0.12, 1.22), 3)
     if cache is not None:
@@ -5073,9 +5176,17 @@ def strategic_fit_adjustment(canonical: dict[str, Any], incoming: list[dict[str,
             valuation = next(item for item in canonical["player_asset_valuations"] if item["player_id"] == asset["id"])
             if state["phase"] in {"contending", "contending_with_future_upside"} and valuation["playoff_value"] >= 64:
                 adjustment += float(config.get("decision", {}).get("contender_need_bonus", 5.5))
+    own_view = team_id not in set(canonical.get('_human_team_ids') or [])
     for asset in outgoing:
         if asset["kind"] == "pick" and state["phase"] in {"contending", "contending_with_future_upside"}:
             adjustment -= 1.5
+        if asset["kind"] == "player" and own_view and state["phase"] in {"contending", "contending_with_future_upside"}:
+            # Own-player correction (trade step 1): a contender values an incoming playoff-level player extra, so
+            # losing one of its own costs the same; before, only the incoming side counted and every contender
+            # swap of playoff players looked like a gain for both teams.
+            valuation = next((item for item in canonical["player_asset_valuations"] if item["player_id"] == asset["id"]), None)
+            if valuation and valuation["playoff_value"] >= 64:
+                adjustment -= float(config.get("decision", {}).get("contender_need_bonus", 5.5))
         if asset["kind"] == "pick_swap" and state["phase"] in {"contending", "contending_with_future_upside"}:
             swap_value = pick_swap_asset_value(canonical, pick_swap_by_id(canonical, asset.get("id")) or asset, state.get("phase", "balanced"))
             adjustment += -0.6 if swap_value >= 0 else 0.35

@@ -14,6 +14,7 @@ import argparse
 import gc
 import json
 from pathlib import Path
+import resource
 import shutil
 import time
 
@@ -25,7 +26,29 @@ from nba_gm_data.utils import clear_utility_caches
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def _cpu_seconds() -> float:
+    usage = resource.getrusage(resource.RUSAGE_SELF)
+    return usage.ru_utime + usage.ru_stime
+
+
+def _count_trade_evaluations() -> dict[str, int]:
+    """Count AI trade-search package evaluations per action (measurement only; behaviour is unchanged)."""
+    from nba_gm_data import transactions
+
+    counter = {"evaluations": 0}
+    original = transactions.evaluate_trade_decision
+
+    def counted(*args, **kwargs):
+        if kwargs.get("search_only"):
+            counter["evaluations"] += 1
+        return original(*args, **kwargs)
+
+    transactions.evaluate_trade_decision = counted
+    return counter
+
+
 def run(out: Path, model: str, target: str, seed: int, team: str, keep_checkpoint: bool) -> None:
+    counter = _count_trade_evaluations()
     runner = SoakRunner(argparse.Namespace(root=str(ROOT), output_dir=str(out), seed=seed, team=team))
     checkpoint = out / "checkpoint"
     live = out / "saves/league.json"
@@ -43,6 +66,8 @@ def run(out: Path, model: str, target: str, seed: int, team: str, keep_checkpoin
         raise RuntimeError(f"Save is on {saved['meta'].get('ratings_model')}, expected {model}")
     while saved["state"]["current_date"] < target:
         started = time.monotonic()
+        cpu_started = _cpu_seconds()
+        counter["evaluations"] = 0
         runner.resolve_user_staff_retention()
         runner.resolve_user_roster_cutdown()
         before = runner.load()
@@ -59,6 +84,8 @@ def run(out: Path, model: str, target: str, seed: int, team: str, keep_checkpoin
         fixture.save_checkpoint(checkpoint, live)
         row.update(to=saved["state"]["current_date"], next_phase=saved["state"]["phase"],
                    seconds=round(time.monotonic() - started, 2),
+                   cpu_seconds=round(_cpu_seconds() - cpu_started, 2),
+                   trade_evaluations=counter["evaluations"],
                    seasons=len(saved.get("season_history", [])),
                    generated_players=len(saved.get("generated_players", [])))
         with (out / "progress.jsonl").open("a") as handle:

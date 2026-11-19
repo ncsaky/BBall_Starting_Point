@@ -5867,7 +5867,8 @@ def free_agency_fallback_trade_candidates(active: dict[str, Any], save: dict[str
             continue
         seller = team_by_id(active, target.get("team_id"))
         buyer = team_by_id(active, offer.get("team_id"))
-        report = find_trade_for_assets(active, seller["abbrev"], [{"kind": "player", "value": target["name"]}], for_team=buyer["abbrev"], limit=5, seed=seed)
+        report = find_trade_for_assets(active, seller["abbrev"], [{"kind": "player", "value": target["name"]}], for_team=buyer["abbrev"], limit=5, seed=seed,
+                                       ai_buyer=True)
         accepted = next((candidate for candidate in report.get("candidates", []) if candidate.get("accepted_by_all") and candidate.get("legality", {}).get("status") == "legal"), None)
         if not accepted:
             continue
