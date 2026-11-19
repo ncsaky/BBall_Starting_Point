@@ -4,8 +4,11 @@ Used by the inputs-model player card (page 2, "Ratings & Profiles") and by
 scripts/build_card_mockup_data.py. Only valid for universes that use the inputs ratings model, so the
 card shows the same inputs the engine derives its ratings from.
 
-Provisional OVR / OFF / DEF (derived for display; the engine does not read these)
---------------------------------------------------------------------------------
+Card header: engine_header (the game's own value; see its docstring). The 94-input composite below is only the
+fallback for a universe without the engine's ratings, and the reference tables' percentiles feed the card rows.
+
+Fallback OVR / OFF / DEF composite (derived for display; the engine does not read these)
+----------------------------------------------------------------------------------------
 1. Every scalar input gets a league percentile over all baseline players (mid-rank:
    (players below + half of ties) / N). Physical inputs with a real measurement use the measured value;
    the rest use their grade.
@@ -60,7 +63,8 @@ GROUP_OF.update({f"{f}.{k}": "Passing" for f in PASS_FAMILIES for k in ("recogni
 DEF_PHYS = ["P01", "P02", "P03", "P07", "P08", "P10"]
 DIST_IDS = ["T01", "T02", "T03", "T11", "T13", "T16", "T17"]
 LEFT_GROUPS = ("Shooting", "Finishing", "Creation & handle", "Post", "Off-ball & screens")
-SCALE_NOTE = "The same overall, offense and defense the game's AI uses, shown against the whole league with no cap at 100."
+SCALE_NOTE = ("The game's own value of this player, the same one its AI uses, on a straight line: 50 is the league's "
+              "middle player and the best is about 98, with no cap. Gaps between players are real gaps in value.")
 
 
 def layer_of(input_id: str) -> int:
@@ -246,7 +250,7 @@ def header_for(ref: Mapping[str, Any], current: Mapping[str, Mapping[str, Any]])
     return {"ovr": c["ovr"](ovr), "off": c["off"](off), "def": c["def"](dfn)}
 
 
-_ENGINE_CURVES: dict[tuple, dict[str, "_Curve"]] = {}
+_ENGINE_CURVES: dict[tuple, dict[str, Any]] = {}
 
 
 def _engine_triplet(summary: Mapping[str, float]) -> tuple[float, float, float]:
@@ -254,33 +258,92 @@ def _engine_triplet(summary: Mapping[str, float]) -> tuple[float, float, float]:
     return float(summary.get("overall", 50.0)), float(offense), float(summary.get("defense", 50.0))
 
 
-def engine_header(active: Mapping[str, Any], player_id: str) -> dict[str, float] | None:
-    """OVR/OFF/DEF exactly as the game's own AI computes them, shown on the unclipped display scale.
+class _ImpactLine:
+    """Engine impact (points per 100 possessions) -> card rating on one straight line, fixed at the baseline league.
 
-    The front office (trades, contracts, rotations, free agency) reads save.player_attribute_summary, which is
-    computed from the traits the adapter derives from the 94 inputs. The card shows that same number, mapped
-    through the league's distribution onto 50 + 15z (no clipping at 100, elite players spread apart), so the
-    card and the AI can never disagree about who is better. The league curve is built once per baseline league.
+    Two anchors: the league's median player shows 50, and the league's best player shows what a rank-based
+    50 + 15z display would give the best of N players (about 97.8 for ~700). Everything else sits on the line through
+    them, so a one-point impact gap is the same number of rating points everywhere, and a player who develops past
+    the baseline best keeps rising past it (no cap, no clipping)."""
+
+    def __init__(self, values: list[float]):
+        ordered = sorted(values)
+        n = len(ordered)
+        self.median = ordered[n // 2] if n % 2 else 0.5 * (ordered[n // 2 - 1] + ordered[n // 2])
+        best_display = 50.0 + 15.0 * NormalDist().inv_cdf(1.0 - 0.5 / n)
+        self.slope = (best_display - 50.0) / max(1e-9, ordered[-1] - self.median)
+        self.max_display = best_display
+        self.min_display = self(ordered[0])
+
+    def __call__(self, x: float) -> float:
+        return 50.0 + self.slope * (x - self.median)
+
+
+def _impact_triplet(active: Mapping[str, Any], player: Mapping[str, Any]) -> tuple[float, float, float] | None:
+    """The engine's fitted impact (overall, offense, defense; Basketball Index LEBRON units) for one player, or None
+    outside the new-ratings mode. This is the value that orders players for the AI (save.player_attribute_summary
+    maps it by rank onto the older summary scale)."""
+    from . import impact_value
+    from .save import trait_values_by_player
+
+    if impact_value._model(active) is None or not (active.get(ratings_model.MODEL_KEY) or {}).get("impact_tables_key"):
+        return None
+    fit = impact_value.load_fit()
+    pid = str(player.get("id") or "")
+    traits = trait_values_by_player(active).get(pid)
+    if fit is None or not traits:
+        return None
+    prediction = impact_value.predict(fit, traits, player, impact_value._profile(active, player, traits),
+                                      ratings_model.effective_inputs(active, pid))
+    return prediction["overall"], prediction["offense"], prediction["defense"]
+
+
+def engine_header(active: Mapping[str, Any], player_id: str) -> dict[str, float] | None:
+    """OVR/OFF/DEF from the game's own value of the player, on an open-ended display scale.
+
+    New-ratings mode: the front office (trades, contracts, rotations, free agency) orders players by the engine's
+    fitted impact per 100 possessions (impact_value.predict, fitted to Basketball Index multi-year LEBRON) and reads it
+    through save.player_attribute_summary. The card shows that same impact on a straight line (_ImpactLine: league
+    median 50, league best ~98, no cap), so card and AI agree on order AND the gaps between players are the engine's
+    real value gaps. (Until 2026-11-19 the card re-ranked the summary onto 50 + 15z, which put the top three at
+    97.8 / 92.9 / 90.3 by rank alone, however close their value; ratings-consensus task.)
+    Other modes: the summary itself, re-ranked onto 50 + 15z as before.
+    The tables show the summary number itself (`engine_raw`), a different scale for the same order.
     """
     from .save import player_attribute_summary
 
     model = active.get(ratings_model.MODEL_KEY) or {}
     if not model:
         return None
-    key = (model.get("inputs_key"), tuple(model.get("fitted_key") or ()))
+    player = next((p for p in active.get("players", []) if str(p.get("id")) == player_id), None)
+    if player is None:
+        return None
+    key = (model.get("inputs_key"), tuple(model.get("fitted_key") or ()), tuple(model.get("impact_tables_key") or ()))
     if key not in _ENGINE_CURVES:
-        triplets = []
+        triplets, impacts = [], []
         for p in active.get("players", []):
             pid = str(p.get("id") or "")
             if pid and ratings_model.effective_inputs(active, pid) is not None:
                 triplets.append(_engine_triplet(player_attribute_summary(active, pid)))
+                impact = _impact_triplet(active, p)
+                if impact is not None:
+                    impacts.append(impact)
         if len(triplets) < 50:
             return None
-        _ENGINE_CURVES[key] = {name: _Curve([t[i] for t in triplets]) for i, name in enumerate(("ovr", "off", "def"))}
+        names = ("ovr", "off", "def")
+        if len(impacts) == len(triplets):
+            _ENGINE_CURVES[key] = {"kind": "impact", **{n: _ImpactLine([t[i] for t in impacts]) for i, n in enumerate(names)}}
+        else:
+            _ENGINE_CURVES[key] = {"kind": "rank", **{n: _Curve([t[i] for t in triplets]) for i, n in enumerate(names)}}
     curves = _ENGINE_CURVES[key]
     ovr, off, dfn = _engine_triplet(player_attribute_summary(active, player_id))
-    return {"ovr": curves["ovr"](ovr), "off": curves["off"](off), "def": curves["def"](dfn),
-            "engine_raw": {"ovr": ovr, "off": off, "def": dfn}}
+    shown = _impact_triplet(active, player) if curves["kind"] == "impact" else None
+    values = shown or (ovr, off, dfn)
+    out = {"ovr": curves["ovr"](values[0]), "off": curves["off"](values[1]), "def": curves["def"](values[2]),
+           "engine_raw": {"ovr": ovr, "off": off, "def": dfn}}
+    if shown:
+        out["impact"] = {"ovr": round(shown[0], 2), "off": round(shown[1], 2), "def": round(shown[2], 2)}
+    return out
 
 
 def _shift(interval, delta, lo=0.0, hi=100.0):
@@ -379,7 +442,7 @@ def player_profile(active: Mapping[str, Any], player_id: str) -> dict[str, Any] 
         "position": position,
         "header": {"ovr": round(head["ovr"], 1), "off": round(head["off"], 1), "def": round(head["def"], 1),
                    "source": "engine" if "engine_raw" in head else "inputs_composite",
-                   "engine_raw": head.get("engine_raw"),
+                   "engine_raw": head.get("engine_raw"), "impact": head.get("impact"),
                    "scale_note": SCALE_NOTE, "league_players": ref["league"]["players"]},
         "layers": layers,
         "coach": {
