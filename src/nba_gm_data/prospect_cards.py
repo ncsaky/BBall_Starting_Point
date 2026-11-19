@@ -28,24 +28,29 @@ def prospect_rating_projection(canonical, prospect, report, coverage, save=None)
     # authoritative prospect before converting it, including legacy saves.
     full = {**full, **prospect, **pending}
     projected = dict(full)
-    # Generated prospects can carry a latent upside tail that no draft evaluator can observe; the AI reads the
-    # public scouting_prior instead (draft.prospect_evaluation_value). Show the user the same public numbers.
+    # Prospects carry what scouts cannot see (the hidden upside tail and the scouting miss). Before he is signed
+    # the user sees only what the AI drafts on: the public numbers, replaced by his own team's scouting report
+    # (draft_scouting) whenever there is one - at any coverage, 100% included (draft-boards plan, step 1).
     public = full.get('scouting_prior') or {}
     for field in ('potential', 'ceiling'):
         if public.get(field) is not None:
             projected[field] = float(public[field])
-    if coverage < 100:
-        for field, estimate in (('current_ability', 'estimated_current'), ('potential', 'estimated_potential')):
-            mid = (report.get(estimate) or {}).get('mid')
-            if mid is not None:
-                projected[field] = float(mid)
+    public_room = float(projected.get('ceiling') or 0) - float(projected.get('potential') or 0)
+    for field, estimate in (('current_ability', 'estimated_current'), ('potential', 'estimated_potential')):
+        mid = (report.get(estimate) or {}).get('mid')
+        if mid is not None:
+            projected[field] = float(mid)
+    if (report.get('estimated_potential') or {}).get('mid') is not None:
+        projected['ceiling'] = float(report.get('estimated_ceiling') or projected['potential'] + max(2.0, public_room))
+    if report.get('estimated_floor') is not None:
+        projected['floor'] = float(report['estimated_floor'])
     true_traits = draft_traits_for_prospect(save, identity) or [
         row for row in [*canonical.get('draft_prospect_traits', []), *generated.get('draft_prospect_traits', [])]
         if row.get('prospect_id') == identity
     ]
     estimates = report.get('trait_estimates') or {}
     traits = true_traits
-    if coverage < 100 and estimates:
+    if estimates:
         traits = [{'trait_key': key, 'value': value['mid']} for key, value in estimates.items()
                   if isinstance(value, dict) and value.get('mid') is not None]
     selected = next((row for row in save.get('incoming_rookies', []) if row.get('prospect_id') == identity), {})
@@ -63,7 +68,7 @@ def prospect_rating_projection(canonical, prospect, report, coverage, save=None)
     potential = float(projected.get('potential') or ability)
     return {'now': ratings['overall'], 'ratings': ratings,
             'potential': presentation_rating_value(potential),
-            'floor': presentation_rating_value(full.get('floor') if full.get('floor') is not None else max(20, ability - 8)),
+            'floor': presentation_rating_value(projected.get('floor') if projected.get('floor') is not None else max(20, ability - 8)),
             'ceiling': presentation_rating_value(projected.get('ceiling') if projected.get('ceiling') is not None else potential + 7)}
 
 

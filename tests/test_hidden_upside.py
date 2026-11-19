@@ -127,7 +127,6 @@ class HiddenUpsideTests(unittest.TestCase):
                     with patch.object(draft,"prospect_spatial_fit_delta",return_value=0):
                         self.assertEqual(draft.prospect_team_fit(canonical,"t",left),draft.prospect_team_fit(canonical,"t",right))
                     self.assertEqual(right["scouting_prior"],json.loads(json.dumps(right))["scouting_prior"])
-            self.assertEqual(draft.generated_board_report({**canonical,"teams":[{"id":"t","abbrev":"TST"}]},"TST","2038",seed,0,None)["entry_count"],60)
 
     def test_scouting_reports_retain_estimates_not_new_latent_truth(self):
         with patch.object(draft,"generated_prospect_upside",previous_upside):

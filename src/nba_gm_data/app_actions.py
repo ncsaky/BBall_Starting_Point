@@ -1674,8 +1674,9 @@ def prospect_card_payload(canonical: dict[str, Any], save_path: Path, prospect_i
     if prospect is None:
         raise AppActionError(f'No prospect found with id {prospect_id!r}.')
     scout = prospect_scout_display(active, prospect, team['id'], save)
-    report = scouting_report_for(active, prospect_id, team['id'])
+    report = scouting_report_for(active, prospect_id, team['id'], prospect=prospect)
     visible = prospect_card_ratings(prospect, scout, report)
+    boards = prospect_two_boards(active, team, prospect, year or current_draft_year(save))
     from .real_prospects import college_card, real_entry_for, scouting_card
     real = real_entry_for({**prospect, 'draft_year': prospect.get('draft_year') or year or current_draft_year(save)}) or {}
     college = real.get('college')
@@ -1701,12 +1702,49 @@ def prospect_card_payload(canonical: dict[str, Any], save_path: Path, prospect_i
         'ratings': visible['ratings'], 'scouting_coverage': scout.get('scouted_pct', 0),
         'upside_unlocked': upside_unlocked,
         'upside_remaining': round(max(0, min(5, (scout.get('potential', 0) - scout.get('now', 0)) / 5)), 1) if upside_unlocked else None,
-        'board_rank': prospect.get('rank'), 'rank_range': prospect.get('rank_range') or {},
+        'board_rank': boards.get('consensus_rank') or prospect.get('rank'),
+        'rank_range': ({'low': boards['consensus_middle'][0], 'high': boards['consensus_middle'][1]} if boards else prospect.get('rank_range') or {}),
+        'draft_boards': boards,
         'season': season, 'career_seasons': career,
         'recent_games': logs, 'recent_game_table': logs[-5:],
         'college_profile': college_card(college) if college else None,
         'scouting_profile': scouting_card(real.get('scouting')),
         'spatial_profile': prospect_spatial_profile(active, prospect, include_chart=True),
+    }
+
+
+def prospect_two_boards(active: dict[str, Any], team: dict[str, Any], prospect: dict[str, Any], year: Any) -> dict[str, Any]:
+    """The prospect card's two boards: the league consensus (rank and spread) and the user's scouts' board (rank,
+    monthly change, now-vs-upside read, coverage), with a plain sentence for any gap between them."""
+    from .draft_scouting import class_scouting, previous_month_ranks, where_scouts_differ
+
+    prospect_id = str(prospect.get('id') or prospect.get('prospect_id') or '')
+    draft_year = str(prospect.get('draft_year') or year or '')
+    try:
+        scouting = class_scouting(active, draft_year)
+    except (KeyError, ValueError, TypeError):
+        return {}
+    report = (scouting['reports'].get(team['id']) or {}).get(prospect_id)
+    consensus = scouting['consensus'].get(prospect_id)
+    if not report or not consensus:
+        return {}
+    previous = previous_month_ranks(active, draft_year, team['id'], scouting['month']).get(prospect_id) if not scouting['ahead'] else None
+    differ = where_scouts_differ(scouting, team['id'], prospect_id)
+    gap = int(report['scout_rank']) - int(consensus['rank'])
+    if differ and abs(gap) >= 2:
+        note = f"Your scouts are {differ}."
+    elif abs(gap) >= 3:
+        note = f"Your scouts rank him {'lower' if gap > 0 else 'higher'} than the league does."
+    else:
+        note = "Your scouts and the league see him about the same."
+    return {
+        'month_label': scouting['month_label'],
+        'consensus_rank': consensus['rank'], 'consensus_best': consensus['best'], 'consensus_worst': consensus['worst'],
+        'consensus_middle': list(consensus['middle']),
+        'scout_rank': report['scout_rank'], 'scout_rank_previous': previous,
+        'scout_rank_change': (previous - report['scout_rank']) if previous else None,
+        'development': report['development'], 'coverage': report['coverage'],
+        'scouts_differ': differ, 'note': note,
     }
 
 
@@ -3605,6 +3643,7 @@ def clean_draft_order_item(item: dict[str, Any], teams: dict[str, dict[str, Any]
     if include_prospect:
         result["prospect"] = dict(item.get("prospect") or {})
         result["prospect"]["age"] = whole_prospect_age(result["prospect"].get("age"))
+        result["explanation"] = (item.get("decision") or {}).get("notes")
     return result
 
 
@@ -3704,21 +3743,29 @@ def enrich_draft_board_scouting(
     team_id: str,
     board: dict[str, Any],
 ) -> dict[str, Any]:
-    """Attach the same save-aware scouting read to every draft UI surface."""
+    """Attach the same save-aware scouting read to every draft UI surface.
+
+    Movement: change since the scouts' last monthly update when the board has one, else since the season's
+    first board (prospect_preseason_ranks)."""
     from .play import prospect_scout_display, scouting_report_for
 
     medical_by_id = prospect_medical_lookup(active)
     today = (save.get("state") or {}).get("current_date")
+    baselines = (save.get("prospect_preseason_ranks") or {}).get(f"{team_id}:{board.get('year')}", {})
     for entry in board.get("entries") or []:
         prospect = entry.get("prospect") or entry
         prospect["injury_report"] = prospect_injury_report(medical_by_id.get(str(prospect.get("id") or prospect.get("prospect_id"))), today)
         scout = prospect_scout_display(active, prospect, team_id, save)
-        report = scouting_report_for(active, prospect.get("id") or prospect.get("prospect_id"), team_id)
+        report = scouting_report_for(active, prospect.get("id") or prospect.get("prospect_id"), team_id, prospect=prospect)
         entry["scout_display"] = {**scout, **prospect_card_ratings(prospect, scout, report)}
-        baselines = (save.get("prospect_preseason_ranks") or {}).get(f"{team_id}:{board.get('year')}", {})
         baseline_rank = int(baselines.get(prospect.get("id")) or entry.get("season_start_rank") or entry.get("board_rank") or 999)
         entry["season_start_rank"] = baseline_rank
-        entry["rank_change"] = baseline_rank - int(entry.get("board_rank") or baseline_rank)
+        if entry.get("scout_rank_change") is not None:
+            entry["rank_change"] = int(entry["scout_rank_change"])
+            entry["rank_change_basis"] = "month"
+        else:
+            entry["rank_change"] = baseline_rank - int(entry.get("board_rank") or baseline_rank)
+            entry["rank_change_basis"] = "season"
     return board
 
 
@@ -3860,45 +3907,26 @@ def live_draft_board_report(
     year: str,
     state: dict[str, Any],
 ) -> dict[str, Any]:
-    """Build the visible board from live draft prospects without trade context."""
+    """The draft-night board: the user's scouts' final (June) board beside the league consensus, for the prospects
+    in this draft. Same rows as before the draft; no hidden ratings, and Fit is the GM's need fit only."""
+    from .draft_scouting import DRAFT_MONTH
+
     pending = ((state.get("draft") or {}).get("pending_draft_selections") or [])
-    prospects: dict[str, dict[str, Any]] = {}
-    for item in pending:
-        prospect = item.get("prospect") or {}
-        prospect_id = str(prospect.get("id") or (item.get("selection") or {}).get("prospect_id") or "")
-        if prospect_id and prospect_id not in prospects:
-            prospects[prospect_id] = {**prospect, "prospect_id": prospect_id}
-    roster_depth: dict[str, int] = {}
-    for player in active.get("players", []):
-        if player.get("team_id") != team["id"] or display_minutes_projection(player) <= 0:
-            continue
-        position = compact_position(player.get("position"))
-        roster_depth[position] = roster_depth.get(position, 0) + 1
-    entries = []
-    for prospect in prospects.values():
-        current = float(prospect.get("current_ability") or 45.0)
-        potential = float(prospect.get("potential") or current)
-        volatility = float(prospect.get("volatility") or 10.0)
-        position = compact_position(prospect.get("position"))
-        need = max(-6.0, min(8.0, (2 - roster_depth.get(position, 0)) * 3.0))
-        fit = max(1.0, min(99.0, 50.0 + need + (potential - 60.0) * 0.18))
-        grade = potential * 0.65 + current * 0.25 + fit * 0.10 - volatility * 0.04
-        entries.append(
-            {
-                "board_rank": int(prospect.get("rank") or 999),
-                "prospect_id": prospect.get("id"),
-                "prospect": prospect,
-                "risk_adjusted_grade": round(grade, 2),
-                "fit_grade": round(fit, 2),
-                "cap_value": round(float(prospect.get("rookie_contract_value") or 50.0), 2),
-            }
-        )
-    entries.sort(key=lambda item: (int(item.get("board_rank") or 999), -float(item.get("risk_adjusted_grade") or 0.0)))
+    ids = {str((item.get("prospect") or {}).get("id") or (item.get("selection") or {}).get("prospect_id") or "")
+           for item in pending}
+    ids.discard("")
+    try:
+        board = draft_board_report(active, team["abbrev"], str(year), limit=None, month=DRAFT_MONTH)
+    except (KeyError, ValueError):
+        board = {"entries": []}
+    entries = [entry for entry in board.get("entries") or [] if str((entry.get("prospect") or {}).get("id")) in ids]
+    entries.sort(key=lambda item: (int(item.get("consensus_rank") or 999), int(item.get("board_rank") or 999)))
     return enrich_draft_board_scouting(
         active,
         save,
         team["id"],
-        {"team": team, "year": year, "entry_count": len(entries), "entries": entries},
+        {"team": team, "year": year, "month": board.get("month"), "month_label": board.get("month_label"),
+         "entry_count": len(entries), "entries": entries},
     )
 
 
