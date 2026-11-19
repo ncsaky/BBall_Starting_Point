@@ -42,9 +42,9 @@ def main(args):
                 canonical["_allow_internal_caches"] = True
                 if label == "before":
                     with patch.object(draft,"generated_prospect_upside",previous_tail):
-                        payload = draft.simulate_generated_draft(canonical,str(year),seed)
+                        payload = draft.simulate_draft(canonical,str(year),seed=seed)
                 else:
-                    payload = draft.simulate_generated_draft(canonical,str(year),seed)
+                    payload = draft.simulate_draft(canonical,str(year),seed=seed)
                 assert payload["selection_count"] == 60
                 assert len({s["prospect_id"] for s in payload["selections"]}) == 60
                 prospects = {p["id"]:p for p in payload["draft_prospects"]}
