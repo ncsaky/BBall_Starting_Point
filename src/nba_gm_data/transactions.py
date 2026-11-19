@@ -1087,7 +1087,7 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
     diagnostics['pairings'] = len(pairings)
     proposals, evaluation_snapshots, reserved, blocked, satisfied = [], {}, set(), {}, set()
     near_misses = []  # two-team deals a third team might complete (trade step 4)
-    for pairing in pairings:
+    for order, pairing in enumerate(pairings):
         if len(proposals) >= limit:
             break
         row = pairing['row']
@@ -1121,7 +1121,7 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
         packages = tt.ranked_packages(canonical, pairing, options, config, tt.PACKAGES_EVALUATED[depth], near=missed)
         diagnostics['prescreened_out'] += len(options) - len(packages)
         for miss in missed:
-            near_misses.append({'candidate': tt.near_miss_candidate(canonical, miss, config),
+            near_misses.append({'candidate': tt.near_miss_candidate(canonical, miss, config), 'order': order,
                                 'trade_reasons': tt.trade_reasons(canonical, pairing)})
         for package in packages:
             diagnostics['packages'] += 1
@@ -1140,7 +1140,8 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
             if not ai_trade_candidate_accepted(canonical, candidate):
                 diagnostics['declined'] += 1
                 if not pick_terms and near_miss(canonical, candidate):
-                    near_misses.append({'candidate': candidate, 'trade_reasons': tt.trade_reasons(canonical, pairing)})
+                    near_misses.append({'candidate': candidate, 'trade_reasons': tt.trade_reasons(canonical, pairing),
+                                        'order': order})
                 continue
             keys = proposal_asset_identity_keys(candidate)
             if reserve_assets and keys & reserved:
@@ -1148,6 +1149,7 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                 continue
             candidate = mark_ai_trade_accepted(candidate)
             candidate['target_source'] = 'front_office_target'
+            candidate['_search_order'] = order
             candidate['trade_reasons'] = tt.trade_reasons(canonical, pairing)
             proposals.append(candidate)
             evaluation_snapshots[candidate['proposal']['id']] = evaluation_canonical
@@ -1188,7 +1190,8 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                 if not ai_trade_candidate_accepted(canonical, candidate):
                     diagnostics['declined'] += 1
                     if near_miss(canonical, candidate):
-                        near_misses.append({'candidate': candidate, 'trade_reasons': tt.dump_reasons(canonical, offer, assets)})
+                        near_misses.append({'candidate': candidate, 'trade_reasons': tt.dump_reasons(canonical, offer, assets),
+                                            'order': len(pairings) + dumps_done})
                     continue
                 keys = proposal_asset_identity_keys(candidate)
                 if reserve_assets and keys & reserved:
@@ -1196,6 +1199,7 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                     break
                 candidate = mark_ai_trade_accepted(candidate)
                 candidate['target_source'] = 'salary_dump'
+                candidate['_search_order'] = len(pairings) + dumps_done
                 candidate['trade_reasons'] = tt.dump_reasons(canonical, offer, assets)
                 proposals.append(candidate)
                 evaluation_snapshots[candidate['proposal']['id']] = canonical
@@ -1225,6 +1229,12 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                                             limit=limit - len(proposals)):
             proposals.append(candidate)
             evaluation_snapshots[candidate['proposal']['id']] = canonical
+    # Deals in the order the front offices pursued them: a three-team deal completed from a near-miss takes that
+    # pairing's place. The market review keeps only its slots (save.queue_ai_recommendations), so a deal appended
+    # last was always cut.
+    proposals.sort(key=lambda c: c.get('_search_order', len(pairings) + limit))
+    for candidate in proposals:
+        candidate.pop('_search_order', None)
     user_offers = []
     if human and near_misses:
         # The same routes, offered to the human team as the team taking the salary (never automatic). Deals the AI

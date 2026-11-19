@@ -889,6 +889,8 @@ def multi_team_repairs(canonical, near_misses, *, seed, date, config, depth, dia
                     accepted['search_route'] = 'multi_team_' + route['kind']
                     accepted['target_source'] = 'multi_team'
                     accepted['trade_reasons'] = why
+                    if item.get('order') is not None:
+                        accepted['_search_order'] = item['order']  # takes the place of the pairing it completes
                     found.append(accepted)
                     diagnostics['multi_team_agreements'] = diagnostics.get('multi_team_agreements', 0) + 1
                     reserved |= keys
@@ -953,6 +955,8 @@ def enrich_agreed_deals(canonical, proposals, *, seed, date, config, depth, diag
                 accepted['search_route'] = 'multi_team_' + route['kind'] + '_leg'
                 accepted['target_source'] = 'multi_team'
                 accepted['trade_reasons'] = multi_team_reasons(canonical, route, candidate.get('trade_reasons'))
+                if '_search_order' in candidate:
+                    accepted['_search_order'] = candidate['_search_order']
                 replaced[index] = accepted
                 reserved |= keys
                 diagnostics['multi_team_enriched'] = diagnostics.get('multi_team_enriched', 0) + 1
