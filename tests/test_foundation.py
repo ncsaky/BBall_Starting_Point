@@ -4390,13 +4390,15 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(okc_head.name, "Mark Daigneault")
         self.assertEqual(okc_front_office.name, "Sam Presti")
 
-    def test_manual_staff_overrides_preserve_preseason_snapshot(self):
-        chi_head = next(staff for staff in self.universe.staff_profiles if staff.team_id == "team_chi" and staff.role == "head_coach")
-        orl_head = next(staff for staff in self.universe.staff_profiles if staff.team_id == "team_orl" and staff.role == "head_coach")
-        self.assertEqual(chi_head.name, "Billy Donovan")
-        self.assertEqual(chi_head.status, "manual_snapshot_override")
-        self.assertEqual(orl_head.name, "Jamahl Mosley")
-        self.assertEqual(orl_head.status, "manual_snapshot_override")
+    def test_manual_staff_overrides_set_2026_27_head_coaches(self):
+        # New saves start in the 2026 offseason: the 2026 coaching changes (NBA.com coaching tracker) apply.
+        heads = {staff.team_id: staff for staff in self.universe.staff_profiles if staff.role == "head_coach"}
+        for team_id, name in {"team_chi": "Tiago Splitter", "team_dal": "Dusty May", "team_orl": "Sean Sweeney",
+                              "team_por": "Micah Nori"}.items():
+            self.assertEqual(heads[team_id].name, name)
+            self.assertEqual(heads[team_id].status, "manual_2026_27_override")
+        names = [staff.name for staff in heads.values()]
+        self.assertEqual(len(names), len(set(names)), "a coach is listed as head coach of two teams")
         self.assertFalse(any(staff.role == "head_scout" for staff in self.universe.staff_profiles))
         self.assertFalse(any(staff.role == "lead_offense_assistant" for staff in self.universe.staff_profiles))
 

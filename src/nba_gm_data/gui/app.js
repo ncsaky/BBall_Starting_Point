@@ -1388,6 +1388,15 @@ async function loadTradeAssets() {
   state.data.tradePartner = await action("team_assets", { ...savePayload(), team: state.tradePartner });
 }
 
+async function waitForSimulationIdle(timeoutMs = 60000) {
+  const started = Date.now();
+  while (state.simulationRunning || state.busy || state.lotteryRevealRunning) {
+    if (Date.now() - started > timeoutMs) return false;
+    await new Promise(resolve => setTimeout(resolve, 150));
+  }
+  return true;
+}
+
 async function advance(payload) {
   if (state.simulationRunning || state.busy || state.lotteryRevealRunning) return;
   state.simulationRunning = true;
@@ -4015,7 +4024,7 @@ function seasonMinutesCard(rows, editable) {
       <div class="season-minutes-head"><span>Player</span><span>Pos</span><span>Height</span><span>Minutes</span><span>Fatigue</span></div>
       ${sortedRows.map((row) => {
         const injured = isPlayerInjured(row.health);
-        const injuryStatus = playerInjuryStatusMarkup(row) + playerRustMarkup(row);
+        const injuryStatus = playerInjuryStatusMarkup(row) + playerRustMarkup(row) + playerRestMarkup(row);
         const minuteValue = injured ? 0 : clampNumber(assigned(row), 0, 48);
         const rotationLocked = !injured && (state.rotationLockedPlayerIds.has(row.id) || row.rotation_user_set);
         const position = String(row.position || "—").trim() || "—";
@@ -6894,7 +6903,7 @@ function seasonalClipboardCards(dashboard) {
       const bracket = phase === "playoffs" && name === "bracket";
       const lottery = phase === 'draft' && name === 'lottery';
       const playoffStats = phase === "playoffs" && name === "leaders";
-      cards.push({id:`phase-${phase}-${name}`, title, card, width:bracket ? Math.min(1420, Math.max(320, window.innerWidth - 60)) : lottery ? Math.min(700,Math.max(320,window.innerWidth-60)) : playoffStats ? Math.min(660, Math.max(320, window.innerWidth - 60)) : width, height:bracket ? 480 : lottery ? (state.draftPresentationStage==='odds'?344:454) : playoffStats ? 430 : height, sizingKey:lottery?`lottery-v2:${state.draftPresentationStage}`:playoffStats?"playoff-stats-v1":null, locked, galleryVisible:(active || archiveBracket) && Boolean(panel), mandatory:["staff_retention", "cutdown"].includes(phase), required:required && Boolean(panel), measured:Boolean(panel), phaseActive:active && Boolean(panel)});
+      cards.push({id:`phase-${phase}-${name}`, title, card, width:bracket ? Math.min(1420, Math.max(320, window.innerWidth - 60)) : lottery ? Math.min(700,Math.max(320,window.innerWidth-60)) : playoffStats ? Math.min(660, Math.max(320, window.innerWidth - 60)) : width, height:bracket ? 480 : lottery ? (state.draftPresentationStage==='odds'?444:454) : playoffStats ? 430 : height, sizingKey:lottery?`lottery-v3:${state.draftPresentationStage}`:playoffStats?"playoff-stats-v1":null, locked, galleryVisible:(active || archiveBracket) && Boolean(panel), mandatory:["staff_retention", "cutdown"].includes(phase), required:required && Boolean(panel), measured:Boolean(panel), phaseActive:active && Boolean(panel)});
     }
     seed.remove();
   }
@@ -9878,7 +9887,12 @@ function renderModal() {
     els.modalRoot.querySelector('[data-sim-through-deadline]')?.addEventListener('click', async () => {
       acknowledgeTradeDeadline(resume?.trade_deadline_confirmed || tradeDeadlineDate());
       closeAllModals();
-      try { await advance(resume); } catch (error) { showToast(error.message || "Could not continue the sim.", true); }
+      // The prompt opens while the sim that reached the deadline is still finishing (playback, refresh); advance()
+      // ignores a request made during that window, so wait for it to settle instead of silently doing nothing.
+      try {
+        if (!(await waitForSimulationIdle())) return showToast("The sim is still finishing. Try Sim to... again in a moment.", true);
+        await advance(resume);
+      } catch (error) { showToast(error.message || "Could not continue the sim.", true); }
     });
   }
   if (state.modal.kind === "postseason") {
@@ -10574,11 +10588,12 @@ function playerInjuryStatusMarkup(row) {
 }
 
 function playerNameWithInjuryMarkup(row, name = row.name || row.player_name || "Unknown") {
-  return `<span class="summary-player-name-label player-name-with-injury"><span class="player-name-text">${escapeHtml(name)}</span>${playerInjuryStatusMarkup(row)}${playerRustMarkup(row)}</span>`;
+  return `<span class="summary-player-name-label player-name-with-injury"><span class="player-name-text">${escapeHtml(name)}</span>${playerInjuryStatusMarkup(row)}${playerRustMarkup(row)}${playerRestMarkup(row)}</span>`;
 }
 
-// Back from injury but rusty: the engine lowers this player's in-game ratings by `rust_penalty` points until the
-// rust fades (about `rust_days` days). Shown as a small red down arrow with the exact penalty.
+// Back from injury but rusty: the engine lowers this player's in-game ratings by `rust_penalty` points for his first
+// games back (`rust_games`), and the coach eases his minutes back (`minutes_limit_pct` of normal for
+// `minutes_limit_games` more games). Shown as a small red down arrow with the exact penalty.
 function playerHasRust(health) {
   return Boolean(health) && !isPlayerInjured(health) && Number(health.rust_penalty) >= 0.1;
 }
@@ -10586,9 +10601,24 @@ function playerHasRust(health) {
 function playerRustMarkup(row) {
   if (!playerHasRust(row?.health)) return "";
   const penalty = Number(row.health.rust_penalty);
-  const days = Number(row.health.rust_days);
-  const description = `Rusty after injury: in-game ratings −${penalty.toFixed(1)}${Number.isFinite(days) ? `, fades in about ${days} day${days === 1 ? "" : "s"}` : ""}`;
+  const games = Number(row.health.rust_games ?? row.health.rust_days);
+  const limitPct = Number(row.health.minutes_limit_pct);
+  const limitGames = Number(row.health.minutes_limit_games);
+  const fades = Number.isFinite(games) ? `, fades over his next ${games} game${games === 1 ? "" : "s"}` : "";
+  const limit = Number.isFinite(limitPct) && limitPct < 100 && Number.isFinite(limitGames)
+    ? `. Minutes limit: about ${limitPct}% of his usual minutes next game, back to full over ${limitGames} game${limitGames === 1 ? "" : "s"}` : "";
+  const description = `Rusty after injury: in-game ratings −${penalty.toFixed(1)}${fades}${limit}`;
   return `<span class="season-injury-status player-rust-status" role="img" aria-label="${escapeAttr(description)}" title="${escapeAttr(description)}"><span aria-hidden="true">↓</span><span>${penalty.toFixed(1)}</span></span>`;
+}
+
+// The coach's rest suggestion for the user's own team (the same rule AI coaches follow; never applied automatically).
+function playerRestMarkup(row) {
+  const suggestion = row?.health?.rest_suggestion;
+  if (!suggestion || isPlayerInjured(row.health)) return "";
+  const when = suggestion.date ? ` on ${suggestion.date}` : "";
+  const what = suggestion.kind === "shutdown" ? "shutting him down for the rest of the season" : `resting him${when}`;
+  const description = `Coach suggests ${what}: ${suggestion.reason}. Set his minutes to 0 to follow it.`;
+  return `<span class="season-injury-status player-rest-status" role="img" aria-label="${escapeAttr(description)}" title="${escapeAttr(description)}"><span aria-hidden="true">zZ</span></span>`;
 }
 
 function injuryGamesRemaining(row) {

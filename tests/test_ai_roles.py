@@ -173,7 +173,7 @@ class AiRoleTests(unittest.TestCase):
         attrs, workloads = self.coach_attrs({"p12": {"attrs": {"overall": 53.5}, "workload": 25.0}})
         desired = sv.ai_coach_workloads(attrs, ("p00", "p01", "p02", "p03", "p04"), workloads, {"p12"})
         self.assertGreater(desired["p12"], min(desired[f"p{i:02}"] for i in range(5, 10)))
-        self.assertEqual(sorted(desired.values(), reverse=True)[:5], [37, 34, 32, 30, 28])
+        self.assertEqual(sorted(desired.values(), reverse=True)[:5], list(sv.AI_ROTATION_CURVE[:5]))
 
     def test_newcomer_check_uses_the_team_the_carried_minutes_came_from(self):
         brown = {"name": "Bruce Brown", "espn_player_id": "4065670"}  # Denver in 2025-26

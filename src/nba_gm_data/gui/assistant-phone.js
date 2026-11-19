@@ -206,5 +206,16 @@
       return wait(reducedMotion ? 0 : 410);
     }).then(() => transient.remove());
   }
+  // Escape dismisses a showing Assistant GM text before anything else handles the key (otherwise it closed the
+  // active dashboard window behind the phone). Open dialogs keep Escape for themselves.
+  window.addEventListener?.("keydown", event => {
+    if (event.key !== "Escape" || event.defaultPrevented || event.isComposing) return;
+    const close = host?.isConnected ? host.querySelector(".assistant-phone-close") : null;
+    const openDialog = [...document.querySelectorAll('[role="dialog"][aria-modal="true"]')].some(dialog => dialog.getClientRects().length > 0);
+    if (!close || openDialog) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    close.click();
+  }, true);
   window.AssistantGMPhone = Object.freeze({sync, hide, presentDraftTrade, presentDraftTrades, setDraftPlaybackActive, setSimulationPlaybackActive, presentSimulationTradeOffer});
 })();
