@@ -190,6 +190,14 @@ class PhaseLabelTests(unittest.TestCase):
         self.assertGreater(after["league_rank"], before["league_rank"])
         self.assertGreater(after["contend_distance"], before["contend_distance"])
 
+    def test_standings_guard_against_odd_labels(self):
+        data, states, values = self.league(self.records({"t1": 9}))  # a strong roster at 9-38
+        self.assertIn(tp.window_assessments(data, states, values)["t1"]["window_phase"], {"rebuilding", "exiting"})
+        data, states, values = self.league(self.records({"t17": 30}))  # a weak roster at 30-17 (top third)
+        self.assertNotEqual(tp.window_assessments(data, states, values)["t17"]["window_phase"], "rebuilding")
+        data, states, values = self.league(self.records({"t1": 9}), date="2027-07-15")  # last season's: no guard
+        self.assertIn(tp.window_assessments(data, states, values)["t1"]["window_phase"], {"peak", "entering"})
+
     def test_summer_records_count_little(self):
         data, states, values = self.league(self.records({"t19": 31}), date="2027-07-15")
         row = tp.window_assessments(data, states, values)["t19"]

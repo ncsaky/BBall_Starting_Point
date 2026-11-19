@@ -12,12 +12,18 @@ LEGACY_PHASE = {'peak': 'contending', 'entering': 'developing', 'exiting': 'reto
 # How much the season's results move a team's strength (trade 2b). A team's strength was its roster rating plus at most
 # +-3 points for its record, so a 29-18 team could stay "rebuilding" and a 15-34 team "on the rise" all season. Now the
 # record (point margin and winning percentage, as league z-scores) is blended with the roster rating. The record's
-# weight grows with games played: 0.75 * games / (games + 20), so 0.32 after 15 games, 0.5 after 40 and 0.6 at season
-# end (the roster still counts: injuries heal, trades change it). In the NBA, team point margin settles quickly
-# (game-to-game noise about 12.5 points against a true-talent spread of about 4.5, so roughly 8 games give a
-# half-reliable read); 20 is deliberately slower because the sim's roster rating is itself informative.
-RECORD_WEIGHT_MAX = 0.75
-RECORD_WEIGHT_GAMES = 20.0
+# weight grows with games played: 0.85 * games / (games + 15), so 0.42 after 15 games, 0.62 after 40, 0.69 at the
+# deadline and 0.72 at season end (the roster still counts: injuries heal, trades change it). In the NBA, team point
+# margin settles quickly (game-to-game noise about 12.5 points against a true-talent spread of about 4.5, so roughly
+# 8 games give a half-reliable read); 15 is deliberately slower because the sim's roster rating is itself informative.
+# The first two-season test with a lighter weight (at most 0.75, half at 20 games) still had Charlotte "rebuilding"
+# at 35-17 on the deadline: the game's roster rating predicts its own results only loosely.
+RECORD_WEIGHT_MAX = 0.85
+RECORD_WEIGHT_GAMES = 15.0
+# And a plain guard from the standings, after RECORD_GUARD_GAMES games in season: a team with a top-third record is
+# never labelled rebuilding, and a team with a bottom-third record is never labelled contending or on the rise (it is
+# rebuilding, or retooling if its core is aging).
+RECORD_GUARD_GAMES = 25
 # From May to September the records on file are last season's: they count for at most this much.
 OFFSEASON_RECORD_WEIGHT = 0.3
 # Labels do not flip on small moves: a team keeps its previous label unless the new one still holds with its
@@ -64,7 +70,7 @@ def _record_strengths(canonical, rows):
         if 5 <= month <= 9:
             weight = min(weight, OFFSEASON_RECORD_WEIGHT)
         z = 0.6 * z_margin[tid] + 0.4 * z_win[tid]
-        out[tid] = (mean_s + z * sd_s, weight)
+        out[tid] = (mean_s + z * sd_s, weight, z, games if not 5 <= month <= 9 else 0.0)
     return out
 
 
@@ -122,7 +128,9 @@ def window_assessments(canonical, states, valuations):
     if not rows:
         return rows
     # The season's results (trade 2b): blend the record-implied strength into the roster rating.
-    for tid, (record_strength, weight) in _record_strengths(canonical, rows).items():
+    record_facts = _record_strengths(canonical, rows)
+    standing = {tid: 1 + sum(f[2] > fact[2] for f in record_facts.values()) for tid, fact in record_facts.items()}
+    for tid, (record_strength, weight, _, _) in record_facts.items():
         row = rows[tid]
         row['strength'] = (1 - weight) * row['roster_strength'] + weight * record_strength
         row['record_weight'] = round(weight, 3)
@@ -151,6 +159,12 @@ def window_assessments(canonical, states, valuations):
             if any(classify(row, row['strength'] + s * HYSTERESIS_STRENGTH, row['trend'] + t * HYSTERESIS_TREND)[0] == previous
                    for s in (-1, 0, 1) for t in (-1, 0, 1)):
                 phase = previous
+        fact = record_facts.get(tid)
+        if fact and fact[3] >= RECORD_GUARD_GAMES:
+            if standing[tid] <= n_teams / 3 and phase == 'rebuilding':
+                phase = 'exiting' if row['trend'] < -.5 else 'entering'
+            elif standing[tid] > n_teams * 2 / 3 and phase in {'peak', 'entering'}:
+                phase = 'exiting' if row['trend'] < -.5 else 'rebuilding'
         gap = contend_line - row['strength']
         distance = 0.0 if phase == 'peak' else min(1.0, max(0.0, (gap - CONTEND_GAP_FREE) / (CONTEND_GAP_FULL - CONTEND_GAP_FREE)))
         row.update(window_phase=phase, league_rank=rank, contender_index=round(share*100, 3),

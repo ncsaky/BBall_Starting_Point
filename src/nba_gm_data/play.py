@@ -3255,6 +3255,9 @@ def best_ai_draft_trade_candidate(
         target_prospect = draft_trade_target_prospect(active, state, buyer["id"], overall) or target_entry.get("prospect") or {}
         board_rank = draft_target_board_rank(active, buyer["abbrev"], pick_id, target_prospect.get("id") or target_entry.get("prospect_id"), seed)
         premium = draft_target_premium(active, buyer["id"], board_rank, overall)
+        if board_rank >= overall:
+            continue  # a team trades up only for a prospect it rates above this pick (trade 2b: one run had a team
+            # move up to 15 for its 29th-ranked prospect because its evaluation happened to like the pick swap)
         if not draft_trade_both_accept(seller_eval, buyer_eval, premium, seller_floor):
             continue
         move_down = draft_trade_move_down_distance(state, buyer["id"], overall)
