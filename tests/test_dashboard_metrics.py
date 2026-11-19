@@ -49,8 +49,9 @@ class DashboardMetricsTests(unittest.TestCase):
         with patch("nba_gm_data.play.scouting_report_for", return_value={}):
             self.assertEqual(prospect_scout_display(canonical, prospect, "was", save)["scouted_pct"], later)
         self.assertLessEqual(later, 100)
+        # A class beyond next June is barely scouted yet.
         future = {**prospect, "draft_year": "2031"}
-        self.assertEqual(save_focused_scouted_pct(canonical, save, "generated", "was", prospect=future), start)
+        self.assertLess(save_focused_scouted_pct(canonical, save, "generated", "was", prospect=future), start)
 
     def test_prospect_movement_uses_saved_team_board_baseline(self):
         save = {"prospect_preseason_ranks": {"was:2030": {"p": 5}}}

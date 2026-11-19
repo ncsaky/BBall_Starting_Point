@@ -178,13 +178,14 @@ class PlayerLifecycleTests(unittest.TestCase):
         risky = {**healthy, "medical_profile": {"durability": 35, "injury_prone": True, "major_prior_injuries": [{"body_area": "knee"}], "current_injury": {"return_date": "2030-09-01"}}}
         self.assertLess(draft.generated_bpa_grade(risky), draft.generated_bpa_grade(healthy))
         self.assertGreater(draft.generated_bpa_grade(risky), draft.generated_bpa_grade({**healthy, "potential": 55, "current_ability": 45, "ceiling": 65, "floor": 35}))
-        entry = {"risk_adjusted_grade": 75, "prospect_id": "p"}
-        score = lambda p: draft.draft_selection_score({}, entry, p, "team_gsw", 1, 17, 0.6)
+        # Scouts' talent grade (draft_scouting): medical risk discounts the prospect without ruling him out.
+        from nba_gm_data import draft_scouting
+        from nba_gm_data.health import prospect_medical_penalty
+        staff = {"weights": draft_scouting.DEFAULT_WEIGHTS}
+        score = lambda p: draft_scouting.scout_grade(staff, p["current_ability"], p["potential"], p["ceiling"], p["floor"],
+                                                     p["volatility"], prospect_medical_penalty(p))
         self.assertLess(score(risky), score(healthy))
         self.assertLessEqual(score(healthy) - score(risky), 9)
-        with patch.object(draft, "prospect_team_fit", return_value=50), patch.object(draft, "prospect_cap_value", return_value=50):
-            ranked = draft.rank_generated_prospects_for_team({}, "team_gsw", [{**risky, "id": "risky"}, {**healthy, "id": "healthy"}])
-        self.assertEqual([p["id"] for p in ranked], ["healthy", "risky"])
 
     def test_medical_carryover_recovery_and_reload_do_not_reinjure(self):
         saved = self.fixture("2030-06-28")

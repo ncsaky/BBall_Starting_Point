@@ -73,7 +73,7 @@ from .save import (
 )
 from .narrative import hydrate_social_items, press_cache_entry
 from .staff import ROLE_LABELS, STAFF_SLOTS, fire_staff_from_save, hire_staff_from_save, negotiate_staff_hire, staff_budget_snapshot, staff_effect_summary, staff_market_report, staff_role_effect, staff_team_report
-from .schema import CANONICAL_SEASON, CANONICAL_START_DATE
+from .schema import CANONICAL_SEASON, CANONICAL_START_DATE, to_plain
 from .traits import TRAIT_LABELS
 from .transactions import apply_trade_to_save, apply_trade_to_state, canonical_with_pending_pick_terms, candidate_from_evaluation, clean_pick_protection_summary, contract_for_player, current_salary, evaluate_trade, fallback_asset_valuation, find_trade, find_trade_for_assets, market_trade_target_value, pick_asset_value, pick_by_id, pick_display_label, pick_obligation_context_note, pick_season_start, pick_swap_asset_value, pick_swap_display_label, player_by_id, player_health_risk, proposal_asset_identity_keys, protected_pick_fallback_is_distinct, prune_trade_offers_touching_assets, recently_signed_player_ids, recently_traded_player_ids, resolve_team, team_by_id, trade_apply_authorized, trade_candidate_with_current_asset_labels, trade_headline_from_payload, trade_result_with_pick_terms, tradeable_pick_swaps_for_team, tradeable_picks_for_team, with_transaction_context
 from .transactions import trade_team_ids
@@ -3642,7 +3642,46 @@ def rechoose_pending_draft_pick(active: dict[str, Any], state: dict[str, Any], p
         entry_selection["id"] = stable_id("draft_selection", entry_selection.get("pick_id"), selected_id, "rechosen")
         entry["id"] = entry_selection["id"]
         entry.pop("decision", None)
+    explain_pending_draft_pick(active, year, pending, index, seed)
     return True
+
+
+def explain_pending_draft_pick(active: dict[str, Any], year: str, pending: list[dict[str, Any]], index: int, seed: int) -> None:
+    """The GM's reason for this pick, against the prospects still on the board (draft.gm_decision)."""
+    from .draft import draft_pick_decision
+
+    item = pending[index]
+    selection = item.get("selection") or {}
+    prospect = item.get("prospect") or {}
+    team_id = selection.get("team_id")
+    team = next((t for t in active.get("teams", []) if t.get("id") == team_id), None)
+    if not team or not prospect.get("id"):
+        return
+    pick = {**(item.get("pick") or {}), "id": selection.get("pick_id") or (item.get("pick") or {}).get("id"),
+            "season": year, "overall_pick": selection.get("overall_pick")}
+    available = {str((p.get("prospect") or {}).get("id")) for p in pending[index:] if p.get("prospect")}
+    try:
+        item["decision"] = to_plain(draft_pick_decision(active, team, pick, prospect, seed=seed, available=available))
+    except (KeyError, StopIteration, ValueError):
+        return
+
+
+def ai_pick_reacts_to_board(active: dict[str, Any], save: dict[str, Any]) -> bool:
+    """An AI team on the clock picks from who is actually left. The draft is forecast when draft night opens;
+    after the user's own picks (and trades) the AI GM takes the best prospect still there for his team, the same
+    deterministic choice (draft.preferred_prospect_for_pick). No draw."""
+    state = save.get("draft_state") or {}
+    pending = (state.get("draft") or {}).get("pending_draft_selections") or []
+    index = int(state.get("current_index") or 0)
+    if index >= len(pending):
+        return False
+    team_id = (pending[index].get("selection") or {}).get("team_id")
+    if not team_id or team_id in human_controlled_team_ids(save):
+        return False
+    try:
+        return rechoose_pending_draft_pick(active, state, pending, index)
+    except (KeyError, ValueError):
+        return False
 
 
 def current_draft_selection(state: dict[str, Any]) -> dict[str, Any] | None:
@@ -3948,6 +3987,7 @@ def apply_current_draft_selection(
     if canonical is not None and user_team:
         active = with_transaction_context(canonical_with_save(canonical, save))
         maybe_run_ai_draft_trades_before_pick_state(canonical, save, active, user_team, seed)
+        ai_pick_reacts_to_board(active, save)
         refreshed = current_draft_selection(save.get("draft_state") or {})
         if refreshed:
             current = refreshed
@@ -4012,6 +4052,7 @@ def sim_to_next_user_pick(canonical: dict[str, Any], save_path: Path, user_team:
         queued_ids = {str(item.get("id") or "") for item in state.get("ai_draft_trade_news_queue") or []}
         maybe_run_ai_draft_trades_before_pick_state(canonical, save, active, user_team, seed)
         presentation_events.extend(new_draft_trade_presentation_events(save.get("draft_state") or {}, queued_ids))
+        ai_pick_reacts_to_board(active, save)
         current = current_draft_selection(save.get("draft_state") or {}) or current
         result = apply_current_draft_selection_state(save, current)
         if result.get("status") != "applied":
@@ -4053,6 +4094,7 @@ def sim_entire_draft(save_path: Path, canonical: dict[str, Any] | None = None, u
             queued_ids = {str(item.get("id") or "") for item in state.get("ai_draft_trade_news_queue") or []}
             maybe_run_ai_draft_trades_before_pick_state(canonical, save, active, user_team, seed)
             presentation_events.extend(new_draft_trade_presentation_events(save.get("draft_state") or {}, queued_ids))
+            ai_pick_reacts_to_board(active, save)
             current = current_draft_selection(save.get("draft_state") or {}) or current
         result = apply_current_draft_selection_state(save, current)
         if result.get("status") != "applied":
@@ -4189,22 +4231,19 @@ def print_prospect_inspection(canonical: dict[str, Any], save: dict[str, Any], p
         if isinstance(value, dict) and value.get("mid") is not None:
             print(f"  {clean_label(label):<16} {morale_bar(float(value['mid']), width=12)} {float(value['mid']):>5.1f}")
             printed += 1
-        elif prospect.get(key) is not None:
+        elif key == "volatility" and prospect.get(key) is not None:
             print(f"  {clean_label(label):<16} {morale_bar(float(prospect[key]), width=12)} {float(prospect[key]):>5.1f}")
             printed += 1
-    if printed == 0:
-        for key in ["current_ability", "potential", "floor", "ceiling", "volatility"]:
-            if prospect.get(key) is not None:
-                label = "downside floor" if key == "floor" else key
-                print(f"  {clean_label(label):<16} {morale_bar(float(prospect[key]), width=12)} {float(prospect[key]):>5.1f}")
 
 
 def prospect_scout_display(canonical: dict[str, Any], prospect: dict[str, Any], team_id: str | None, save: dict[str, Any] | None = None) -> dict[str, Any]:
     from .prospect_cards import prospect_rating_projection
 
-    report = scouting_report_for(canonical, prospect.get("id") or prospect.get("prospect_id"), team_id)
-    pct = prospect_scouted_pct(canonical, prospect.get("id") or prospect.get("prospect_id"), team_id, save, prospect=prospect)
-    return {**prospect_rating_projection(canonical, prospect, report, pct, save), "scouted_pct": pct}
+    prospect_id = prospect.get("id") or prospect.get("prospect_id")
+    report = scouting_report_for(canonical, prospect_id, team_id, prospect=prospect)
+    pct = float(report["coverage"]) if report.get("coverage") is not None else prospect_scouted_pct(canonical, prospect_id, team_id, save, prospect=prospect)
+    return {**prospect_rating_projection(canonical, prospect, report, pct, save), "scouted_pct": pct,
+            "development": report.get("development"), "scout_rank": report.get("scout_rank")}
 
 
 def prospect_now_pot_for_display(canonical: dict[str, Any], prospect: dict[str, Any], team_id: str) -> tuple[float, float]:
@@ -4367,100 +4406,46 @@ def print_prospect_line(prospect: dict[str, Any], prefix: str = "Prospect", team
 
 
 def prospect_scouted_pct(canonical: dict[str, Any], prospect_id: str | None, team_id: str | None, save: dict[str, Any] | None = None, *, prospect: dict[str, Any] | None = None) -> float:
+    """How much of this prospect the team's scouts have seen: the coverage of the same report the AI drafts on
+    (draft_scouting), so the % on screen is the % behind the numbers."""
     if not prospect_id or not team_id:
         return 50.0
+    report = scouting_report_for(canonical, prospect_id, team_id, prospect=prospect)
+    if report.get("coverage") is not None:
+        return float(report["coverage"])
     if save:
         return save_focused_scouted_pct(canonical, save, prospect_id, team_id, prospect=prospect)
-    report = next(
-        (
-            item for item in canonical.get("scouting_reports", [])
-            if item.get("team_id") == team_id and item.get("prospect_id") == prospect_id
-        ),
-        None,
-    )
-    if report:
-        base = float(report.get("confidence") or 0.5) * 100
-        wobble = ((sum(ord(char) for char in f"{team_id}:{prospect_id}") % 19) - 9) * 0.9
-        return max(18.0, min(100.0, base + wobble))
-    slot = next((slot for slot in canonical.get("gameplay_staff_slots", []) if slot.get("team_id") == team_id and slot.get("slot") == "scouting_lead"), {})
-    traits = slot.get("skill_traits") or {}
-    score = (
-        float(traits.get("talent_eval") or 60) * 0.58
-        + float(traits.get("risk_modeling") or 60) * 0.27
-        + float(traits.get("international_coverage") or 60) * 0.15
-    )
-    return max(38.0, min(96.0, 48.0 + (score - 50.0) * 0.95))
+    return 50.0
 
 
 def save_focused_scouted_pct(canonical: dict[str, Any], save: dict[str, Any], prospect_id: str, team_id: str, *, prospect: dict[str, Any] | None = None) -> float:
-    pending = ((save.get("draft_state") or {}).get("draft") or {}).get("pending_draft_selections") or []
-    prospect_rank = next(
-        (
-            idx
-            for idx, item in enumerate(pending, start=1)
-            if (item.get("prospect") or {}).get("id") == prospect_id
-            or (item.get("selection") or {}).get("prospect_id") == prospect_id
-        ),
-        None,
-    )
-    if prospect_rank is None:
-        prospect = prospect or next((item for item in canonical.get("draft_prospects", []) if item.get("id") == prospect_id), {})
-        prospect_rank = int(prospect.get("rank") or prospect.get("consensus_rank") or 45)
-    staff = next((slot for slot in canonical.get("gameplay_staff_slots", []) if slot.get("team_id") == team_id and slot.get("slot") == "scouting_lead"), {})
-    traits = staff.get("skill_traits") or {}
-    staff_score = (
-        float(traits.get("talent_eval") or 60) * 0.58
-        + float(traits.get("risk_modeling") or 60) * 0.27
-        + float(traits.get("international_coverage") or 60) * 0.15
-    )
-    public_base = 76.0 if prospect_rank <= 5 else 66.0 if prospect_rank <= 14 else 52.0 if prospect_rank <= 30 else 38.0
-    owned_picks = [
-        int((item.get("selection") or {}).get("overall_pick") or 99)
-        for item in pending
-        if (item.get("selection") or {}).get("team_id") == team_id
-    ]
-    if owned_picks:
-        distance = min(abs(prospect_rank - pick) for pick in owned_picks)
-    else:
-        distance = 16
-    focus = 0.0
-    staff_multiplier = max(0.65, min(1.75, staff_score / 62.0))
-    if distance <= 3:
-        focus = 27.0 * staff_multiplier
-    elif distance <= 8:
-        focus = 19.0 * staff_multiplier
-    elif distance <= 15:
-        focus = 9.0 * staff_multiplier
-    elif prospect_rank <= 8:
-        focus = 9.0
-    staff_bonus = (staff_score - 55.0) * 0.72
-    wobble = ((sum(ord(char) for char in f"{team_id}:{prospect_id}:{save.get('meta', {}).get('seed')}") % 17) - 8) * 0.8
-    full_report = (distance <= 2 and staff_score >= 68.0) or (prospect_rank <= 3 and staff_score >= 62.0)
+    """Coverage from the save's calendar and the team's scouting lead when no class report exists (same formula
+    as draft_scouting.coverage_pct, which the reports use)."""
+    from .draft_scouting import coverage_pct, scouting_month, staff_profile, years_ahead
+
+    prospect = prospect or next((item for item in canonical.get("draft_prospects", []) if item.get("id") == prospect_id), {})
     current_date = str((save.get("state") or {}).get("current_date") or "")[:10]
     season = str((save.get("meta") or {}).get("season") or "")
     try:
-        start_year = int((prospect or {}).get("draft_year")) - 1 if (prospect or {}).get("draft_year") else int(season[:4])
-        start = date(start_year, 10, 1)
-        progress = max(0.0, min(1.0, (date.fromisoformat(current_date) - start).days / 240.0))
+        draft_year = int(prospect.get("draft_year")) if prospect.get("draft_year") else int(season[:4]) + 1
     except ValueError:
-        progress = 0.0
-    # Public coverage grows during the season; stronger staffs learn faster in their pick range.
-    value = public_base + focus * (0.25 + 0.75 * progress) + staff_bonus + wobble + 18.0 * staff_multiplier * progress
-    if full_report and progress >= 0.8 and value >= 92.0:
-        return 100.0
-    return round(max(18.0, min(100.0, value)), 1)
+        draft_year = 0
+    staff = staff_profile(canonical, team_id)
+    seed = int((save.get("meta") or {}).get("seed") or 1)
+    rank = int(prospect.get("rank") or prospect.get("consensus_rank") or 45)
+    return coverage_pct(staff, rank, scouting_month(current_date, draft_year), team_id, prospect_id, seed,
+                        years_ahead(current_date, draft_year))
 
 
-def scouting_report_for(canonical: dict[str, Any], prospect_id: str | None, team_id: str | None) -> dict[str, Any]:
+def scouting_report_for(canonical: dict[str, Any], prospect_id: str | None, team_id: str | None,
+                        prospect: dict[str, Any] | None = None) -> dict[str, Any]:
+    """This team's current scouting report (draft_scouting: the month's view, talent only)."""
     if not prospect_id or not team_id:
         return {}
-    return next(
-        (
-            item for item in canonical.get("scouting_reports", [])
-            if item.get("team_id") == team_id and item.get("prospect_id") == prospect_id
-        ),
-        {},
-    )
+    from .draft_scouting import report_for
+
+    target = {**(prospect or {}), "id": prospect_id} if (prospect or {}).get("draft_year") else prospect_id
+    return report_for(canonical, target, team_id)
 
 
 def prospect_height(prospect: dict[str, Any]) -> str:
@@ -4482,10 +4467,14 @@ def prospect_age_text(prospect: dict[str, Any]) -> str:
 
 
 def prospect_trait_summary(prospect: dict[str, Any]) -> str:
+    """Public numbers only (no team view given): the class's public upside, never the hidden true potential."""
+    from .draft import prospect_evaluation_value
+
     pairs = []
-    for key, label in [("current_ability", "now"), ("potential", "pot"), ("floor", "floor"), ("ceiling", "ceil"), ("shooting", "shoot"), ("defense", "def")]:
+    for key, label in [("current_ability", "now"), ("potential", "pot"), ("floor", "floor"), ("ceiling", "ceil")]:
         if prospect.get(key) is not None:
-            pairs.append(f"{label} {float(prospect[key]):.0f}")
+            value = prospect_evaluation_value(prospect, key) if key in {"potential", "ceiling"} else float(prospect[key])
+            pairs.append(f"{label} {value:.0f}")
     return ", ".join(pairs[:5])
 
 
@@ -4683,18 +4672,13 @@ def print_generated_pick_recommendations_from_state(canonical: dict[str, Any], s
     ]
     if not prospects:
         return False
-    prospects.sort(
-        key=lambda item: (
-            float(item.get("current_ability") or 0) * 0.58
-            + float(item.get("potential") or 0) * 0.32
-            + float(item.get("rookie_contract_value") or 0) * 0.1,
-            -int(item.get("rank") or 999),
-        ),
-        reverse=True,
-    )
+    # Your scouts' board order and read (never the hidden true numbers).
+    reports = {prospect.get("id"): scouting_report_for(canonical, prospect.get("id"), team_id, prospect=prospect) for prospect in prospects}
+    prospects.sort(key=lambda item: (int(reports[item.get("id")].get("scout_rank") or 999), int(item.get("rank") or 999)))
     for idx, prospect in enumerate(prospects[:limit], start=1):
-        current = float(prospect.get("current_ability") or 0)
-        potential = float(prospect.get("potential") or 0)
+        report = reports[prospect.get("id")]
+        current = float((report.get("estimated_current") or {}).get("mid") or prospect.get("current_ability") or 0)
+        potential = float((report.get("estimated_potential") or {}).get("mid") or 0)
         print(
             f"{idx:>2}. {prospect.get('name'):<24} {compact_position(prospect.get('position')):<3} "
             f"age {prospect_age_text(prospect)} | {prospect_height(prospect)} | now {current:.0f} upside {potential:.0f} | "
@@ -4712,8 +4696,10 @@ def hydrate_prospect(canonical: dict[str, Any], prospect: dict[str, Any]) -> dic
 
 def prospect_scout_line(prospect: dict[str, Any], report: dict[str, Any]) -> str:
     traits = report.get("trait_estimates") or {}
+    from .draft import prospect_evaluation_value
+
     current = (report.get("estimated_current") or {}).get("mid", prospect.get("current_ability"))
-    potential = (report.get("estimated_potential") or {}).get("mid", prospect.get("potential"))
+    potential = (report.get("estimated_potential") or {}).get("mid", prospect_evaluation_value(prospect, "potential"))
 
     def trait_mid(*names: str) -> float | None:
         for name in names:
