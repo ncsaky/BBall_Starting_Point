@@ -90,13 +90,11 @@
   },
   "tuning": {
     "base_player_game_injury_rate": 0.021,
-    "base_game_fatigue_gain": 4.2,
-    "back_to_back_fatigue_gain": 2.8,
-    "fatigue_decay_per_rest_day": 6.5,
     "rust_decay_per_game": 7.5,
-    "fatigue_performance_penalty_per_point": 0.065,
     "rust_performance_penalty_per_point": 0.08,
-    "development_base_growth": 0.08
+    "development_base_growth": 0.08,
+    "fatigue_gain_per_36": 31.0,
+    "fatigue_daily_keep": 0.62
   },
   "notes": "Lightweight 2K-style sandbox health model. Quotas guide leaguewide injury frequency while player risk comes from age, workload, stamina, durability, history, and performance staff."
 }

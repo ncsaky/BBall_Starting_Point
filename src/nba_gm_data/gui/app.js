@@ -123,6 +123,7 @@ const MULTIPLAYER_MUTATIONS = new Set([
   "respond_user_trade_offer",
   "resolve_staff_retention",
   "set_rotation_minutes",
+  "set_player_rest",
   "set_starting_five",
   "set_team_wants",
   "acknowledge_team_wants",
@@ -1960,18 +1961,21 @@ function updateRotationDuringSimulation(rotation) {
     const row = cardRows.find((item) => item.dataset.minuteRow === id);
     if (!row) continue;
     const injured = isPlayerInjured(update.health);
+    const resting = playerIsResting({health:update.health});
     row.classList.toggle("injured", injured);
+    row.classList.toggle("resting", resting);
     const input = row.querySelector("[data-minute-player]");
-    if (input) input.disabled = injured || state.simulationRunning;
+    if (input) input.disabled = injured || resting || state.simulationRunning;
     const button = row.querySelector("button[data-dashboard-player-card]");
     if (button) {
-      button.querySelector(".season-injury-status")?.remove();
-      const statusMarkup = playerInjuryStatusMarkup({id, name:button.dataset.playerName || "Player", health:update.health});
+      button.querySelectorAll(".season-injury-status").forEach((node) => node.remove());
+      const markerRow = {id, name:button.dataset.playerName || "Player", health:update.health};
+      const statusMarkup = playerInjuryStatusMarkup(markerRow) + playerRustMarkup(markerRow) + playerRestMarkup(markerRow);
       if (statusMarkup) {
         const template = document.createElement("template");
         template.innerHTML = statusMarkup;
         const motion = button.querySelector(".season-row-motion");
-        button.insertBefore(template.content.firstElementChild, motion || null);
+        for (const node of [...template.content.children]) button.insertBefore(node, motion || null);
       }
     }
     const fatigue = row.querySelector(".season-fatigue");
@@ -4015,25 +4019,27 @@ function staffRoleLabel(role) {
 
 function seasonMinutesCard(rows, editable) {
   if (editable) ensureRotationDraft(rows);
-  const assigned = (row) => isPlayerInjured(row.health)
+  const assigned = (row) => isPlayerInjured(row.health) || playerIsResting(row)
     ? 0
     : Number(state.rotationDraft[row.id] ?? row.rotation_target_minutes ?? row.minutes_projection ?? 0);
   const sortedRows = [...rows].sort((left, right) => assigned(right) - assigned(left));
   return `${seasonPanelHeader("Minutes + Availability", "", "availability")}
     <div class="season-minutes-table" style="--roster-count:${Math.max(1, rows.length)}">
-      <div class="season-minutes-head"><span>Player</span><span>Pos</span><span>Height</span><span>Minutes</span><span>Fatigue</span></div>
+      <div class="season-minutes-head"><span class="season-minutes-player-head"><span>Player</span>${editable ? coachRestToggleMarkup("minutes-coach-rest") : ""}</span><span>Pos</span><span>Height</span><span>Minutes</span><span>Fatigue</span></div>
       ${sortedRows.map((row) => {
         const injured = isPlayerInjured(row.health);
+        const resting = playerIsResting(row);
+        const out = injured || resting;
         const injuryStatus = playerInjuryStatusMarkup(row) + playerRustMarkup(row) + playerRestMarkup(row);
-        const minuteValue = injured ? 0 : clampNumber(assigned(row), 0, 48);
-        const rotationLocked = !injured && (state.rotationLockedPlayerIds.has(row.id) || row.rotation_user_set);
+        const minuteValue = out ? 0 : clampNumber(assigned(row), 0, 48);
+        const rotationLocked = !out && (state.rotationLockedPlayerIds.has(row.id) || row.rotation_user_set);
         const position = String(row.position || "—").trim() || "—";
         const height = heightFromRow(row) || "—";
-        return `<div class="season-minute-row${injured ? " injured" : ""}" data-minute-row="${escapeAttr(row.id)}">
+        return `<div class="season-minute-row${injured ? " injured" : ""}${resting ? " resting" : ""}" data-minute-row="${escapeAttr(row.id)}">
           <button type="button" data-dashboard-player-card="${escapeAttr(row.id)}">${playerHeadshotMarkup(row, "roster-player-headshot")}<span class="season-minute-player-name">${escapeHtml(row.name || "Unknown")}</span>${injuryStatus}<i class="season-row-motion" aria-hidden="true" hidden></i></button>
           <span class="season-minute-position" title="${escapeAttr(row.position || "Position unavailable")}">${escapeHtml(position)}</span>
           <span class="season-minute-height">${escapeHtml(height)}</span>
-          <div class="season-minute-control"><label class="season-minute-slider${rotationLocked ? " user-locked" : ""}"><i><b class="season-minute-fill" style="width:${(minuteValue / 48 * 100).toFixed(2)}%"></b></i><input type="range" min="0" max="48" step="1" value="${minuteValue}" data-minute-player="${escapeAttr(row.id)}" aria-label="Minutes for ${escapeAttr(row.name || "player")}" ${editable && !injured ? "" : "disabled"} /></label><output class="is-sorted-value" data-minute-output="${escapeAttr(row.id)}">${minuteValue}</output><button type="button" class="season-minute-reset" data-minute-reset-player="${escapeAttr(row.id)}" aria-label="Reset ${escapeAttr(row.name || "player")} to automatic minutes" title="Reset to automatic minutes" ${rotationLocked && editable && !injured ? "" : "hidden"} ${editable && !injured ? "" : "disabled"}>×</button></div>
+          <div class="season-minute-control"><label class="season-minute-slider${rotationLocked ? " user-locked" : ""}"><i><b class="season-minute-fill" style="width:${(minuteValue / 48 * 100).toFixed(2)}%"></b></i><input type="range" min="0" max="48" step="1" value="${minuteValue}" data-minute-player="${escapeAttr(row.id)}" aria-label="Minutes for ${escapeAttr(row.name || "player")}" ${editable && !out ? "" : "disabled"} /></label><output class="is-sorted-value" data-minute-output="${escapeAttr(row.id)}">${minuteValue}</output><button type="button" class="season-minute-reset" data-minute-reset-player="${escapeAttr(row.id)}" aria-label="Reset ${escapeAttr(row.name || "player")} to automatic minutes" title="Reset to automatic minutes" ${rotationLocked && editable && !out ? "" : "hidden"} ${editable && !out ? "" : "disabled"}>×</button>${playerRestButtonMarkup(row, editable)}</div>
           ${seasonFatigueCell(row)}
         </div>`;
       }).join("") || `<div class="empty">No roster loaded.</div>`}
@@ -4045,11 +4051,120 @@ function seasonMiniRating(value) {
   return `<span class="season-mini-rating"><em>${score.toFixed(0)}</em><i><b style="${performanceBarStyle(score)}"></b></i></span>`;
 }
 
+// The engine's fatigue (0-100) as of today, straight from the health state; the tooltip adds the value his next game
+// will use (fatigue at that tip-off, after the days off in between).
+const FATIGUE_TIRED = 40;
+const FATIGUE_VERY_TIRED = 60;
+
+function seasonFatigueTone(fatigue) {
+  return fatigue >= FATIGUE_VERY_TIRED ? "high" : fatigue >= FATIGUE_TIRED ? "medium" : "low";
+}
+
+function seasonFatigueTooltip(health = {}) {
+  const fatigue = clampNumber(Number(health.fatigue || 0), 0, 100);
+  const next = Number(health.fatigue_next);
+  const nextText = Number.isFinite(next) && health.fatigue_next_date
+    ? ` About ${next.toFixed(0)} at his next tip-off (${health.fatigue_next_date}): the value that game uses.`
+    : "";
+  return `Fatigue ${fatigue.toFixed(0)} / 100 today.${nextText}\n`
+    + "Each game adds fatigue in proportion to his minutes (more for older players, poor stamina and road games); every day without a game clears about 40% of it.\n"
+    + "A 36-minute starter on a normal schedule is near 50 right after a game and near 20 at the next tip-off; the second night of a back-to-back starts near 30.\n"
+    + "Above the normal level at tip-off, his team tires a little and his injury risk rises a little; above 50 his own ratings drop too. Resting him for a game clears it fastest.";
+}
+
 function seasonFatigueCell(row) {
   const fatigue = clampNumber(Number(row.health?.fatigue || 0), 0, 100);
   const level = clampNumber(Math.round((fatigue / 100) * 6), 0, 6);
-  const tone = level <= 2 ? "low" : level <= 4 ? "medium" : "high";
-  return `<span class="season-fatigue ${tone}" title="Simulated fatigue: ${fatigue.toFixed(1)} / 100. Game minutes build fatigue; rest days reduce it.">${Array.from({ length: 6 }, (_unused, index) => `<i class="${index < level ? "filled" : ""}"></i>`).join("")}</span>`;
+  const tone = seasonFatigueTone(fatigue);
+  return `<span class="season-fatigue ${tone}" data-fatigue-value="${fatigue.toFixed(1)}" title="${escapeAttr(seasonFatigueTooltip(row.health || {}))}">${Array.from({ length: 6 }, (_unused, index) => `<i class="${index < level ? "filled" : ""}"></i>`).join("")}</span>`;
+}
+
+const AWARD_MIN_GAMES = 65;
+
+function closeRestMenu() {
+  document.querySelectorAll(".season-rest-menu").forEach((menu) => menu.remove());
+}
+
+function openRestMenu(button) {
+  const playerId = button.dataset.minuteRestPlayer;
+  const row = rosterRows(state.data.dashboard || {}).find((item) => item.id === playerId);
+  closeRestMenu();
+  if (!row) return;
+  const rest = row.health?.user_rest;
+  const restingLeft = Number(rest?.games_left || 0);
+  const reachable = row.award_games_max == null ? null : Number(row.award_games_max) + restingLeft;
+  const option = (games) => {
+    const after = reachable == null ? null : reachable - games;
+    const underAward = after != null && after < AWARD_MIN_GAMES && reachable >= AWARD_MIN_GAMES;
+    const note = underAward ? ` · under ${AWARD_MIN_GAMES} games` : "";
+    const title = underAward ? `He could then play at most ${after} games this season: below the ${AWARD_MIN_GAMES} needed for season awards.` : `Sits his team's next ${restGamesLabel(games)}, then returns to his minutes.`;
+    return `<button type="button" role="menuitem" data-rest-games="${games}" class="${underAward ? "award-warning" : ""}" title="${escapeAttr(title)}">${restGamesLabel(games)}${escapeHtml(note)}</button>`;
+  };
+  const awardNote = reachable == null ? "" : reachable >= AWARD_MIN_GAMES
+    ? `Can still reach ${reachable} games (awards need ${AWARD_MIN_GAMES}).`
+    : `Can reach at most ${reachable} games: already under the ${AWARD_MIN_GAMES} needed for awards.`;
+  const menu = document.createElement("div");
+  menu.className = "season-rest-menu";
+  menu.setAttribute("role", "menu");
+  menu.innerHTML = `<strong>${escapeHtml(rest ? `Resting: back in ${restGamesLabel(restingLeft)}` : `Rest ${row.name || "player"} for his team's next`)}</strong>
+    ${[1, 2, 3, 4, 5].map(option).join("")}
+    ${rest ? `<button type="button" role="menuitem" data-rest-games="0" class="cancel">Cancel rest</button>` : ""}
+    <small>${escapeHtml(`His minutes target is kept; while he sits, the coach spreads his minutes.${awardNote ? ` ${awardNote}` : ""}`)}</small>`;
+  document.body.append(menu);
+  const box = button.getBoundingClientRect();
+  menu.style.left = `${Math.max(4, Math.min(window.innerWidth - menu.offsetWidth - 4, box.right - menu.offsetWidth))}px`;
+  menu.style.top = `${Math.min(window.innerHeight - menu.offsetHeight - 4, box.bottom + 2)}px`;
+  menu.querySelectorAll("[data-rest-games]").forEach((item) => {
+    item.addEventListener("click", async () => {
+      closeRestMenu();
+      await setPlayerRest(playerId, Number(item.dataset.restGames));
+    });
+  });
+  setTimeout(() => document.addEventListener("click", function outside(event) {
+    if (!menu.contains(event.target)) {
+      closeRestMenu();
+      document.removeEventListener("click", outside);
+    }
+  }), 0);
+  menu.querySelector("[data-rest-games]")?.focus();
+}
+
+async function setPlayerRest(playerId, games) {
+  if (state.simulationRunning || state.busy) return;
+  try {
+    const result = await action("set_player_rest", { ...savePayload(), player_id: playerId, games });
+    if (result.status === "blocked") return showToast(result.reason || "Rest not set.", true);
+    state.data.dashboard = result.dashboard;
+    state.data.statusDashboard = result.dashboard;
+    state.rotationDraft = {};
+    state.rotationLockedPlayerIds.clear();
+    if (state.view === "dashboard") renderDashboard();
+    if (result.warning) showToast(result.warning, true);
+    else showToast(games ? `Resting for ${restGamesLabel(games)}` : "Rest cancelled");
+  } catch (error) {
+    showToast(`Rest not set. ${error.message || String(error)}`, true);
+  }
+}
+
+async function setCoachRestsPlayers(on) {
+  try {
+    const result = await action("update_game_settings", { ...savePayload(), settings: { coach_rests_players: Boolean(on) } });
+    if (state.home) state.home.game_settings = result.game_settings;
+    document.querySelectorAll("[data-coach-rest-toggle]").forEach((input) => { input.checked = Boolean(on); });
+    showToast(on ? "Your coach will rest players by the AI coaches' rules" : "Your coach will only suggest rest (zZ)");
+    if (state.view === "dashboard") renderDashboard();
+  } catch (error) {
+    showToast(`Setting not saved. ${error.message || String(error)}`, true);
+  }
+}
+
+function wireCoachRestToggles(root = document) {
+  root.querySelectorAll("[data-coach-rest-toggle]").forEach((input) => {
+    if (input.dataset.coachRestWired) return;
+    input.dataset.coachRestWired = "true";
+    input.addEventListener("click", (event) => event.stopPropagation());
+    input.addEventListener("change", () => setCoachRestsPlayers(input.checked));
+  });
 }
 
 function seasonDevelopmentCard(rows) {
@@ -9346,6 +9461,10 @@ function openSettingsModal() {
     title: "Settings",
     subtitle: "",
     body: `
+      ${state.currentSave ? `<section class="settings-modal-section settings-game-section">
+        ${coachRestToggleMarkup("settings-coach-rest", "Coach rests my players automatically")}
+        <p>Off (default): you set the minutes and nobody is rested automatically; the blue zZ shows when your coach would rest a player. On: your coach rests players by the same rules as the AI coaches.</p>
+      </section>` : ""}
       <section class="settings-modal-section settings-save-section">
         <button type="button" data-interface-shortcuts>Keyboard shortcuts</button>
         <button type="button" data-replay-tutorial>Replay Tutorial</button>
@@ -9850,6 +9969,7 @@ function renderModal() {
     wireTradeRoom();
   }
   if (state.modal.kind === "dashboardSettings") {
+    wireCoachRestToggles(els.modalRoot);
     els.modalRoot.querySelector("[data-report-issue]")?.addEventListener("click", openIssueReport);
     els.modalRoot.querySelector("[data-return-save-selection]")?.addEventListener("click", returnToSaveSelection);
     els.modalRoot.querySelector("[data-replay-tutorial]")?.addEventListener("click", () => {
@@ -10611,14 +10731,58 @@ function playerRustMarkup(row) {
   return `<span class="season-injury-status player-rust-status" role="img" aria-label="${escapeAttr(description)}" title="${escapeAttr(description)}"><span aria-hidden="true">↓</span><span>${penalty.toFixed(1)}</span></span>`;
 }
 
-// The coach's rest suggestion for the user's own team (the same rule AI coaches follow; never applied automatically).
+// Rest on the user's own team: the GM's rest (sits his team's next N games, then back to his minutes), or the coach's
+// suggestion for the next game (the same rule AI coaches follow; applied only with "Coach rests players" on).
 function playerRestMarkup(row) {
+  if (isPlayerInjured(row?.health)) return "";
+  const rest = row?.health?.user_rest;
+  if (rest) {
+    const left = Number(rest.games_left || 0);
+    const target = row.resting_minutes_target ? `his ${Number(row.resting_minutes_target)} minutes` : "his usual minutes";
+    const description = `Resting: sits his team's next ${restGamesLabel(left)}, then back to ${target}. Use the zZ button next to his minutes to change or cancel.`;
+    return `<span class="season-injury-status player-rest-status player-resting" role="img" aria-label="${escapeAttr(description)}" title="${escapeAttr(description)}"><span aria-hidden="true">zZ</span><span>${left}</span></span>`;
+  }
   const suggestion = row?.health?.rest_suggestion;
-  if (!suggestion || isPlayerInjured(row.health)) return "";
+  if (!suggestion) return "";
   const when = suggestion.date ? ` on ${suggestion.date}` : "";
   const what = suggestion.kind === "shutdown" ? "shutting him down for the rest of the season" : `resting him${when}`;
-  const description = `Coach suggests ${what}: ${suggestion.reason}. Set his minutes to 0 to follow it.`;
+  const plan = suggestion.kind === "shutdown" ? "to shut him down for the rest of the season" : `to rest him${when}`;
+  const description = coachRestsPlayers()
+    ? `Coach plans ${plan}: ${suggestion.reason}.`
+    : `Coach suggests ${what}: ${suggestion.reason}. Use the zZ button next to his minutes to rest him.`;
   return `<span class="season-injury-status player-rest-status" role="img" aria-label="${escapeAttr(description)}" title="${escapeAttr(description)}"><span aria-hidden="true">zZ</span></span>`;
+}
+
+// "Coach rests my players automatically" (game setting). Off by default: the GM sets the minutes and the coach only
+// suggests rest (the blue zZ next to a name).
+function coachRestsPlayers() {
+  return Boolean(state.home?.game_settings?.coach_rests_players);
+}
+
+function coachRestToggleMarkup(className, text = "Coach rests players") {
+  const on = coachRestsPlayers();
+  const help = on
+    ? "On: your coach rests players by the same rules as the AI coaches (back-to-backs, heavy fatigue, age, the stretch run, at most one regular a game, never once a player has missed 14 games)."
+    : "Off: nobody is rested automatically. The blue zZ shows when your coach would rest a player; use the zZ button next to his minutes to rest him yourself.";
+  return `<label class="${escapeAttr(className)}" title="${escapeAttr(help)}"><input type="checkbox" data-coach-rest-toggle ${on ? "checked" : ""} aria-label="Coach rests my players automatically" /><span>${escapeHtml(text)}</span></label>`;
+}
+
+function playerIsResting(row) {
+  return Boolean(row?.health?.user_rest) && !isPlayerInjured(row?.health);
+}
+
+function restGamesLabel(games) {
+  return `${games} game${games === 1 ? "" : "s"}`;
+}
+
+function playerRestButtonMarkup(row, editable) {
+  const rest = row.health?.user_rest;
+  const injured = isPlayerInjured(row.health);
+  const name = row.name || "player";
+  const label = rest
+    ? `${name} is resting: back in ${restGamesLabel(Number(rest.games_left || 0))}. Change or cancel the rest.`
+    : `Rest ${name} for his team's next 1 to 5 games`;
+  return `<button type="button" class="season-minute-rest${rest ? " active" : ""}" data-minute-rest-player="${escapeAttr(row.id)}" aria-haspopup="menu" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}" ${editable && !injured ? "" : "disabled"}>zZ</button>`;
 }
 
 function injuryGamesRemaining(row) {
@@ -11607,6 +11771,13 @@ function wireRotationMinuteInputs(root = els.content) {
   root.querySelectorAll("[data-minute-reset-player]").forEach((button) => {
     button.addEventListener("click", () => resetRotationMinutes(button.dataset.minuteResetPlayer));
   });
+  root.querySelectorAll("[data-minute-rest-player]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (!button.disabled) openRestMenu(button);
+    });
+  });
+  wireCoachRestToggles(root);
 }
 
 function wireRotationResetAllControl(root = document) {

@@ -314,6 +314,7 @@ MUTATING_ACTIONS = {
     "buyout_player",
     "claim_waiver",
     "set_rotation_minutes",
+    "set_player_rest",
     "set_team_block",
     "set_team_wants",
     "acknowledge_team_wants",
@@ -409,6 +410,7 @@ def runtime_status(root: Path, save_dir: Path) -> dict[str, Any]:
                 "claim_waiver",
                 "waiver_room",
                 "set_rotation_minutes",
+                "set_player_rest",
                 "set_team_block",
                 "set_team_wants",
                 "acknowledge_team_wants",
@@ -867,6 +869,8 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return set_starting_five_action(root, canonical, save_path, payload)
     if action == "set_rotation_minutes":
         return set_rotation_minutes_action(root, canonical, save_path, payload)
+    if action == "set_player_rest":
+        return set_player_rest_action(root, canonical, save_path, payload)
     if action == "roster_cutdown":
         return roster_cutdown_payload(canonical, save_path)
     if action == "waive_player":
@@ -2679,6 +2683,10 @@ def set_rotation_minutes_action(root: Path, canonical: dict[str, Any], save_path
         for player_id in roster
         if player_unavailable_for_rotation(health_by_player.get(player_id))
     }
+    # Players the GM is resting keep their minutes target for when they return (set_player_rest).
+    previous_override = dict((save.get("rotation_overrides") or {}).get(team["id"]) or {})
+    previous_locked = set((save.get("rotation_locked_player_ids") or {}).get(team["id"]) or [])
+    gm_rested = {player_id for player_id in roster if (health_by_player.get(player_id) or {}).get("user_rest")}
     cleaned: dict[str, int] = {}
     for player_id, value in raw_minutes.items():
         player_id = str(player_id)
@@ -2730,6 +2738,11 @@ def set_rotation_minutes_action(root: Path, canonical: dict[str, Any], save_path
         player_id: int(round(redistributed.get(player_id, 0.0)))
         for player_id in roster
     }
+    for player_id in gm_rested:
+        if previous_override.get(player_id):
+            save["rotation_overrides"][team["id"]][player_id] = int(previous_override[player_id])
+            if player_id in previous_locked and player_id not in locked_ids:
+                locked_ids.append(player_id)
     recommendations = save.setdefault("rotation_recommendations", {})
     save.setdefault("rotation_locked_player_ids", {})[team["id"]] = locked_ids
     for player_id in roster:
@@ -2740,6 +2753,66 @@ def set_rotation_minutes_action(root: Path, canonical: dict[str, Any], save_path
         "total_minutes": redistributed_total,
         "dashboard": team_dashboard(root, canonical, save_path, team["abbrev"]),
     }
+
+
+USER_REST_MAX_GAMES = 5
+
+
+def set_player_rest_action(root: Path, canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    """Rest one of the GM's players for his team's next N games (1-5), or cancel it (games 0). His minutes target is
+    kept; while he sits, the coach places his minutes (absence fill) and he recovers fatigue like any day off."""
+    from .health import default_state_dict
+    from .save import AWARD_MIN_GAMES, award_games_max
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    team_id = str(save.get("meta", {}).get("user_team_id") or "")
+    player_id = str(payload.get("player_id") or "")
+    active = canonical_with_save(canonical, save)
+    player = next((p for p in active.get("players", []) if p.get("id") == player_id), None)
+    if not player or player.get("team_id") != team_id:
+        raise AppActionError("Only players on your team can be rested.")
+    try:
+        games = int(payload.get("games") or 0)
+    except (TypeError, ValueError) as error:
+        raise AppActionError("Rest length must be a number of games.") from error
+    if games < 0 or games > USER_REST_MAX_GAMES:
+        raise AppActionError(f"Rest a player for 1 to {USER_REST_MAX_GAMES} games (0 cancels).")
+    current = str(save.get("state", {}).get("current_date") or "")
+    states = save.setdefault("health_states", [])
+    state = next((row for row in states if row.get("player_id") == player_id), None)
+    if games and state and str(state.get("availability_status") or "active") != "active":
+        return {"status": "blocked", "reason": f"{player.get('name')} is injured and already out."}
+    if state is None:
+        state = default_state_dict(player_id, current or "2026-10-01")
+        states.append(state)
+    if games:
+        state["user_rest"] = {"games_left": games, "games": games, "since": current, "team_id": team_id}
+        state.pop("rest_suggestion", None)
+    else:
+        state.pop("user_rest", None)
+    warning = ""
+    if games and save.get("state", {}).get("phase") == "regular_season":
+        record = (save.get("team_records") or {}).get(team_id, {})
+        team_games = int(record.get("wins", 0)) + int(record.get("losses", 0))
+        played = int(((save.get("player_season_stats") or {}).get(player_id) or {}).get("games") or 0)
+        reach_after = award_games_max(played, team_games, state)
+        reach_before = reach_after + games
+        if reach_after < AWARD_MIN_GAMES <= reach_before:
+            warning = (f"{player.get('name')} can now play at most {reach_after} games this season: below the "
+                       f"{AWARD_MIN_GAMES} games needed for season awards.")
+        elif reach_after < AWARD_MIN_GAMES:
+            warning = f"{player.get('name')} can no longer reach the {AWARD_MIN_GAMES} games needed for season awards."
+    write_save(save_path, save)
+    return {
+        "status": "updated",
+        "player_id": player_id,
+        "games": games,
+        "warning": warning,
+        "dashboard": team_dashboard(root, canonical, save_path, team_abbrev_for_id(active, team_id)),
+    }
+
+
+def team_abbrev_for_id(canonical: dict[str, Any], team_id: str) -> str:
+    return next((team["abbrev"] for team in canonical.get("teams", []) if team.get("id") == team_id), "")
 
 
 def extension_room_payload(
@@ -4600,6 +4673,9 @@ def update_game_settings_action(canonical: dict[str, Any], save_path: Path, sett
     game_settings = ensure_game_settings(save)
     if "press_conferences_enabled" in settings:
         game_settings["press_conferences_enabled"] = bool(settings.get("press_conferences_enabled"))
+    if "coach_rests_players" in settings:
+        # Let the head coach rest the GM's players by the AI coaches' rule (back-to-backs, fatigue, age, late season).
+        game_settings["coach_rests_players"] = bool(settings.get("coach_rests_players"))
     current = save.get("state", {}).get("current_date")
     if current:
         save["state"]["legal_actions"] = save_legal_actions_for_date(save, current)
