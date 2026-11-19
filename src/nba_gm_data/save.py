@@ -2230,6 +2230,7 @@ def advance_save_day(
             result = to_plain(sim_game_with_context(context, game_id, mode="sandbox-sim", seed=effective_seed))
             record_game_result(save, canonical, game, result)
             simulated_game_ids.add(game_id)
+        show_injuries_from_todays_games(save, target)
         new_development_events = process_development_months(runtime_canonical, save, current, target, effective_seed)
         if reassess_ai_roles(runtime_canonical, save, target):
             apply_save_rotation_projection(runtime_canonical, save)
@@ -5446,6 +5447,15 @@ def record_lasting_injury_effect(save: dict[str, Any], event: dict[str, Any]) ->
         confidence=0.6, source_ids=["src_injury_model_v2", "src_bbi_injury_long_term"],
         notes=f"Lasting decline after {event.get('diagnosis')} (Basketball Index long-term injury evidence).",
     )))
+
+
+def show_injuries_from_todays_games(save: dict[str, Any], day: str) -> None:
+    """Players hurt in (or after) today's games are listed as out as soon as the games are over."""
+    from .health import activate_pending_injury
+    for state in save.get("health_states", []):
+        pending = state.get("pending_injury")
+        if pending and str(pending.get("start_date") or "") <= day:
+            activate_pending_injury(state)
 
 
 def attach_rest_suggestions(root: str | Path, active: dict[str, Any], save: dict[str, Any], day: str, seed: int) -> None:

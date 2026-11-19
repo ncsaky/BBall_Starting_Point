@@ -30,6 +30,18 @@ class InjuryTimingTests(unittest.TestCase):
         self.assertEqual(s["current_injury_label"], "ankle sprain")
         self.assertNotIn("pending_injury", s)
 
+    def test_save_lists_him_as_out_once_the_games_are_over(self):
+        from nba_gm_data.save import show_injuries_from_todays_games
+        save = {"health_states": [self.pending()]}
+        show_injuries_from_todays_games(save, "2026-11-09")
+        self.assertEqual(save["health_states"][0]["availability_status"], "active")
+        show_injuries_from_todays_games(save, "2026-11-10")
+        self.assertEqual(save["health_states"][0]["availability_status"], "out")
+        # The next day's health pass counts his first missed game.
+        s = save["health_states"][0]
+        health.advance_state_for_date(s, date(2026, 11, 11), 0, CONFIG, STAFF)
+        self.assertEqual((s["availability_status"], s["current_absence_games"]), ("out", 0))
+
     def test_event_does_not_block_the_injury_game(self):
         event = {"start_date": "2026-11-10", "return_date": "2026-11-20", "plays_injury_game": True,
                  "in_game_exit": True, "exit_share": 0.3, "diagnosis": "ankle sprain"}

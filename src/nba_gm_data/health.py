@@ -389,7 +389,7 @@ def simulate_health(
         for body in config.get("body_area_weights", {})
     }
     events: list[dict[str, Any]] = []
-    # Coach rest (AI teams only; the user's coach suggests, see rest_suggestions_for_team). Needs league standings,
+    # Coach rest (AI teams only; the user's coach suggests, see save.attach_rest_suggestions). Needs league standings,
     # so it runs inside a save (or a harness that keeps records), not in standalone health replays.
     rest_ready = bool(model) and bool(canonical.get("save_team_records"))
     standings = league_rest_context(canonical) if rest_ready else {}
@@ -821,15 +821,7 @@ def advance_state_for_date(state: dict[str, Any], game_date: date, rest_days: in
             state.pop(key, None)
     pending = state.get("pending_injury")
     if pending and parse_date(pending["start_date"]) < game_date:
-        # The injury from his last game: the absence starts now (he played the game he was hurt in).
-        state.pop("pending_injury", None)
-        for key in ("return_absence_games", "games_since_return", "return_rust", "ramp_last_game"):
-            state.pop(key, None)
-        state.update({
-            "current_injury_id": pending["id"], "availability_status": "out", "return_date": pending["return_date"],
-            "current_injury_severity": pending["severity"], "current_injury_part": pending["body_part"],
-            "current_injury_label": pending["diagnosis"], "rust": 0.0, "current_absence_games": 0,
-        })
+        activate_pending_injury(state)
     return_date = state.get("return_date")
     if state.get("current_injury_id") and return_date and parse_date(return_date) <= game_date:
         state["current_injury_id"] = None
@@ -847,6 +839,21 @@ def advance_state_for_date(state: dict[str, Any], game_date: date, rest_days: in
     if state.get("availability_status") == "active" and float(state.get("rust") or 0.0) > 0 and state.get("return_rust") is None:
         # Older states: rust fades by the calendar. Returns from injury now fade it per game played (advance_return_ramp).
         state["rust"] = round(max(0.0, float(state.get("rust") or 0.0) - float(tuning.get("rust_decay_per_game", 7.5)) / max(float(staff.get("recovery_days_multiplier", 1.0)), 0.2)), 2)
+
+
+def activate_pending_injury(state: dict[str, Any]) -> None:
+    """The injury from his last game: the absence starts now (he played the game he was hurt in). Called on the next
+    health pass, or by the save right after the day's games so the injury shows at once."""
+    pending = state.pop("pending_injury", None)
+    if not pending:
+        return
+    for key in ("return_absence_games", "games_since_return", "return_rust", "ramp_last_game", "rest_suggestion"):
+        state.pop(key, None)
+    state.update({
+        "current_injury_id": pending["id"], "availability_status": "out", "return_date": pending["return_date"],
+        "current_injury_severity": pending["severity"], "current_injury_part": pending["body_part"],
+        "current_injury_label": pending["diagnosis"], "rust": 0.0, "current_absence_games": 0,
+    })
 
 
 def advance_return_ramp(state: dict[str, Any], game_date: date, staff: dict[str, float]) -> None:
