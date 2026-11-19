@@ -101,6 +101,32 @@ class TargetsByPhaseTests(unittest.TestCase):
         self.assertLessEqual(successor["filters"]["age_max"], 27.0)
 
 
+class YoungPieceTests(unittest.TestCase):
+    def test_rebuilding_team_keeps_its_young_players_without_a_reason(self):
+        kid = row("kid", "y", age=21.0, minutes=30.0)
+        self.assertTrue(tt.young_piece_kept(kid, "rebuild"))
+        self.assertTrue(tt.young_piece_kept(dict(kid, minutes=8.0), "retool"))
+        self.assertTrue(tt.young_piece_kept(kid, "contend"))  # a young starter anywhere
+        self.assertFalse(tt.young_piece_kept(dict(kid, minutes=8.0), "contend"))  # a blocked prospect is available
+        self.assertFalse(tt.young_piece_kept(dict(kid, age=28.0), "rebuild"))
+
+    def test_pairings_skip_a_rebuilders_young_starter(self):
+        canonical = league("peak", firsts=0)
+        canonical["team_strategic_states"][1].update(window_phase="rebuilding", phase="rebuilding")
+        kid = row("kid", "y", age=21.0, bucket="wing", on_court=80.0, playoff=80.0, minutes=32.0)
+        canonical["_trade_target_memo"]["rows"]["kid"] = kid
+        canonical["players"].append({"id": "kid", "team_id": "y"})
+        with patch.object(tt, "team_sell_reasons", return_value={}), \
+             patch.object(tx, "effectively_untouchable", return_value=False), \
+             patch("nba_gm_data.team_planning.core_commitment", return_value=False), \
+             patch.object(tt, "asking_price", return_value={"own": 1.0, "ask": 1.0, "threshold": 1.0}), \
+             patch.object(tt, "buyer_value", return_value=50.0), \
+             patch.object(tt, "trade_surplus", return_value=0.0), \
+             patch.object(tt, "buyer_minutes", return_value=30.0):
+            pairings = tt.target_pairings(canonical, ["x"], set(), 2, {}, random.Random(1))
+        self.assertNotIn("kid", {p["row"]["id"] for p in pairings})
+
+
 class WillingSellerTests(unittest.TestCase):
     def money_league(self, *, payroll, window="rebuilding", years=1, age=31):
         data = {"meta": {"active_season": "2026-27"}, "players": [{"id": "p", "team_id": "t", "age": age}],

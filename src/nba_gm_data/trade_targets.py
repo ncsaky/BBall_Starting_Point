@@ -369,6 +369,21 @@ def team_sell_reasons(canonical: dict[str, Any], team_id: str) -> dict[str, list
     return out
 
 
+YOUNG_PIECE_AGE = 25.5
+YOUNG_STARTER_MINUTES = 24.0
+
+
+def young_piece_kept(row: dict[str, Any], seller_stance: str) -> bool:
+    """Young players a team builds around are not on the market unless the team has its own reason to move them:
+    every young player (25 or younger) on a rebuilding or retooling team, and young starters (24+ minutes) anywhere.
+    A blocked prospect on a team competing now is still available (the Dillingham / Kuminga pattern). The first
+    two-season run without this rule had rebuilders selling 21-year-old starters (Knueppel, Acuff, Flemings) to
+    teams that happened to target them, at prices the acceptance check allowed."""
+    if row["age"] > YOUNG_PIECE_AGE:
+        return False
+    return seller_stance in {"rebuild", "retool"} or row["minutes"] >= YOUNG_STARTER_MINUTES
+
+
 def sell_strength(reasons: list[str]) -> float:
     return max((SELL_REASON_STRENGTH.get(r, 1.0) for r in reasons), default=0.0)
 
@@ -460,8 +475,11 @@ def target_pairings(canonical: dict[str, Any], buyer_ids: list[str], excluded: s
                 reasons = team_sell_reasons(canonical, row["team_id"]).get(row["id"], [])
                 if target["filters"].get("seller_reason_required") and not reasons:
                     continue
+                seller_stance = team_stance(_state(canonical, row["team_id"]))
                 stances = target["filters"].get("seller_stances")
-                if stances and team_stance(_state(canonical, row["team_id"])) not in stances:
+                if stances and seller_stance not in stances:
+                    continue
+                if not reasons and young_piece_kept(row, seller_stance):
                     continue
                 matches.append((score + 4.0 * sell_strength(reasons), row, reasons))
             matches.sort(key=lambda m: (-m[0], m[1]["id"]))
