@@ -3004,19 +3004,31 @@ class DataFoundationTests(unittest.TestCase):
                 "ai_draft_trade_budget": {"top_10": 0, "picks_11_25": 0, "total": 0},
                 "used_pick_ids": [],
             }
-            current = state["draft"]["pending_draft_selections"][10]
-            candidate = best_ai_draft_trade_candidate(active, save, state, current, save["meta"]["user_team_id"], seed=77)
-            self.assertIsNotNone(candidate)
-            self.assertEqual(candidate["legality"]["status"], "legal")
-            self.assertTrue(candidate["accepted_by_all"])
-            to_assets = (candidate["proposal"] or {}).get("to_assets") or []
-            self.assertTrue(
-                any(
-                    asset.get("kind") == "pick"
-                    and int((next((pick for pick in active["draft_picks"] if pick["id"] == (asset.get("id") or asset.get("value"))), {}) or {}).get("round") or 0) == 1
-                    for asset in to_assets
+            # Trade step 2: a draft-night trade needs both teams' own evaluations (the buyer's includes what its
+            # target prospect is worth to it). Before, this test required a deal at pick 11 that the buyer's own
+            # evaluation rejected; in this fresh league no mid-first buyer now clears its bar (see
+            # docs/agents/tasks/trade-step2-targets.md, "Draft night"). Every deal the market does find must be
+            # legal, accepted by both teams, and pay with a first-round pick.
+            found = []
+            for index in range(10, 25):
+                state["current_index"] = index
+                current = state["draft"]["pending_draft_selections"][index]
+                candidate = best_ai_draft_trade_candidate(active, save, state, current, save["meta"]["user_team_id"], seed=77)
+                if candidate:
+                    found.append(candidate)
+            for candidate in found:
+                self.assertEqual(candidate["legality"]["status"], "legal")
+                self.assertTrue(candidate["accepted_by_all"])
+                self.assertTrue(all(evaluation.get("accepted") for evaluation in candidate["evaluations"]))
+                self.assertTrue(candidate.get("trade_reasons", {}).get("text"))
+                to_assets = (candidate["proposal"] or {}).get("to_assets") or []
+                self.assertTrue(
+                    any(
+                        asset.get("kind") == "pick"
+                        and int((next((pick for pick in active["draft_picks"] if pick["id"] == (asset.get("id") or asset.get("value"))), {}) or {}).get("round") or 0) == 1
+                        for asset in to_assets
+                    )
                 )
-            )
 
     def test_future_draft_pick_recommendations_use_generated_class(self):
         future_pick = next(
