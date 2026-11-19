@@ -185,6 +185,9 @@ def main() -> None:
         from nba_gm_data.bbi_evidence import apply_overlay, apply_measured_tendencies
         bbi_summary=apply_overlay(section,root)
         bbi_summary.update(apply_measured_tendencies(section,root))
+    # Measured dunk rates (public Basketball-Reference shooting data) for dunk execution, net of body size.
+    from nba_gm_data.public_shot_evidence import apply_dunk_evidence
+    bbi_summary=(bbi_summary or {})|apply_dunk_evidence(section,root,universe)
     baseline=estimate_startup_inputs(InputEstimator.from_local(root,use_expert=False),universe)
     comparison=validation_comparison(section,load_reference_cells(root),baseline)
     payload=canonical_json(section)

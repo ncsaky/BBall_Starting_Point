@@ -10,7 +10,9 @@ Method (declared, not fitted to simulation outcomes):
    ranked against that season's players with at least MIN_POOL_MINUTES, in the mapped direction
    (direction -1 flips, e.g. turnover rates). Ranks are mid-rank percentiles in (0, 1).
 2. Per player, season and input: weighted mean of the mapped metrics' percentiles (primary 1.0, supporting 0.5,
-   weak 0.25), converted to a normal score.
+   weak 0.25), converted to a normal score. A metric for a secondary shot type (pull-up, off-screen, deep) carries a
+   "volume" entry: its weight is also multiplied by attempts / (attempts + half) of that shot type that season, so a
+   percentage on a dozen attempts no longer outweighs the player's shooting as a whole (2026-11-19).
 3. Across seasons: weights 2025-26 1.0, 2024-25 0.6, 2023-24 0.35, each times minutes/(minutes+800), times the
    strength of the strongest mapped metric available (1 primary, 0.5 supporting, 0.25 weak). A metric with
    "per" in the mapping (per-75 counts such as turnovers) is first divided by that exposure metric (touches).
@@ -45,11 +47,17 @@ STRENGTH = {"primary": 1.0, "supporting": 0.5, "weak": 0.25}
 PRIOR_WEIGHT = 0.35
 MINUTES_HALF = 800
 GRADE_SLOPE = 1.31
-VERSION = "bbi_evidence_overlay_v2_2026_11_17"
+VERSION = "bbi_evidence_overlay_v3_2026_11_19"
+# Team possessions per player minute (about 99 per 48 minutes): turns a per-75-possession rate into a season count.
+POSSESSIONS_PER_MINUTE = 99.0 / 48.0
 OVERLAY_KINDS = ("grade", "propensity", "physical")
 # Shot-region mix is already built from observed shot locations; BBI would only repeat that data.
 SKIP_DISTRIBUTIONS = {"T02", "T01"}  # T01 is set from measured per-touch rates (apply_measured_tendencies)
 MEASURED_INPUTS = {"T01", "T08"}      # measured on their own scale, not re-ranked (apply_measured_tendencies)
+# Free-throw execution is stored as a real free-throw percentage (the estimator's sample-weighted FT% from the same
+# box-score data BBI's "Stable FT%" uses). Blending a 0-100 percentile grade into it mixed two units: until 2026-11-19 a
+# 78% shooter (Amen Thompson, 2025-26) showed 42 and Giannis 24 (ratings-consensus task). Grades on this scale are skipped.
+NATIVE_PERCENT_SCALES = {"research_FT_conversion_percent_proxy_v1"}
 _ND = NormalDist()
 
 
@@ -167,7 +175,30 @@ def player_input_scores(root: Path, mapping: Mapping[str, Any] | None = None) ->
                 specs[f"{iid}:{outcome}"] = {"metrics": items}
     metrics = {m["metric"] for spec in specs.values() for m in spec["metrics"]}
     metrics |= {m["per"] for spec in specs.values() for m in spec["metrics"] if m.get("per")}
+    metrics |= {name for spec in specs.values() for m in spec["metrics"] if m.get("volume")
+                for name in (m["volume"]["per75"], m["volume"].get("minus")) if name}
     table = collect_values(root, metrics)
+    by_cid: dict[tuple[str, str], dict[str, float]] = {}
+
+    def volume_factor(m: Mapping[str, Any], season: str, cid: str, minutes: float) -> float:
+        """Sample-size weight for a shot-type metric: attempts of that type / (attempts + half). 1 when unknown."""
+        vol = m.get("volume")
+        if not vol:
+            return 1.0
+        values = []
+        for name in (vol["per75"], vol.get("minus")):
+            if not name:
+                continue
+            if (season, name) not in by_cid:
+                by_cid[(season, name)] = {c: v for v, _, c in table.get((season, name), {}).values() if c}
+            values.append(by_cid[(season, name)].get(cid))
+        if values[0] is None:
+            return 1.0
+        minus = (values[1] or 0.0) if len(values) > 1 else 0.0
+        per75 = max(0.0, values[0] - minus)
+        attempts = per75 / 75.0 * minutes * POSSESSIONS_PER_MINUTE
+        return attempts / (attempts + float(vol.get("half", 40)))
+
     pct_cache: dict[tuple[str, str, int], dict[str, float]] = {}
     out: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
     players_by_season: dict[str, dict[str, float]] = defaultdict(dict)
@@ -190,7 +221,9 @@ def player_input_scores(root: Path, mapping: Mapping[str, Any] | None = None) ->
                     p = pct_cache[key].get(cid)
                     if p is None:
                         continue
-                    w = STRENGTH.get(m.get("strength", "supporting"), 0.5)
+                    w = STRENGTH.get(m.get("strength", "supporting"), 0.5) * volume_factor(m, season, cid, minutes)
+                    if w <= 0:
+                        continue
                     num += w * _ND.inv_cdf(p)
                     den += w
                     top = max(top, w)
@@ -339,6 +372,8 @@ def apply_overlay(section: dict[str, Any], root: Path, mapping: Mapping[str, Any
             if not slot or iid in MEASURED_INPUTS:
                 continue
             mode, key = slot
+            if mode == "grade" and record["value"].get("scale") in NATIVE_PERCENT_SCALES:
+                continue
             old = _read(record, key)
             share = ev["weight"] / (ev["weight"] + PRIOR_WEIGHT)
             if mode == "grade":

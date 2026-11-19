@@ -1,6 +1,6 @@
 {
- "version": "bbi_input_mapping_v1_2026_11_17",
- "notes": "Reviewed map from Basketball Index (BBI) metric names to the 94 approved player-model inputs. Metric names only; BBI definition text stays in the git-ignored capture catalog. Layers are kept separate: technique inputs (S/F) use rate, per-shot or versus-expected quality metrics; tendency inputs (T) use frequencies, shares and attempt rates; physical inputs (P) use only listed height/weight and weak in-game speed; coach usage, teammates, opponents and on/off impact are context only. direction: +1 means a higher metric value means more of the input (better skill, larger tool, or more frequent choice); -1 the reverse. Direction is about the raw BBI value; check whether a capture stores a percentile already ordered by desirability before applying it. strength: primary = the most direct available measure; supporting = relevant but mixed with other factors; weak = indirect, use only as a small nudge. Every BBI result is an effective on-court observation that also contains physical tools, role and teammates. It constrains the estimate; it is not 'technique only'. Metrics named '... Per 75' must be divided by the relevant exposure (touches, drives, attempts, contests) before informing a skill. A metric listed under several inputs is one shared signal (one correlation group), never independent evidence. BBI 'Talent' grades fold in volume or self-creation, so per-shot 'Shot Making Efficiency' and 'Stable' percentages are preferred as primary. Passing families share three generic recognition metrics and two generic execution metrics; only drive-and-kick, connector, skip and outlet passes have any family-specific signal. For distribution inputs, outcome names the registry outcome the metric informs; T02 outcomes three_corner_share and three_deep_share describe detail within the three region.",
+ "version": "bbi_input_mapping_v2_2026_11_19",
+ "notes": "Reviewed map from Basketball Index (BBI) metric names to the 94 approved player-model inputs. Metric names only; BBI definition text stays in the git-ignored capture catalog. Layers are kept separate: technique inputs (S/F) use rate, per-shot or versus-expected quality metrics; tendency inputs (T) use frequencies, shares and attempt rates; physical inputs (P) use only listed height/weight and weak in-game speed; coach usage, teammates, opponents and on/off impact are context only. direction: +1 means a higher metric value means more of the input (better skill, larger tool, or more frequent choice); -1 the reverse. Direction is about the raw BBI value; check whether a capture stores a percentile already ordered by desirability before applying it. strength: primary = the most direct available measure; supporting = relevant but mixed with other factors; weak = indirect, use only as a small nudge. Every BBI result is an effective on-court observation that also contains physical tools, role and teammates. It constrains the estimate; it is not 'technique only'. Metrics named '... Per 75' must be divided by the relevant exposure (touches, drives, attempts, contests) before informing a skill. A metric listed under several inputs is one shared signal (one correlation group), never independent evidence. BBI 'Talent' grades fold in volume or self-creation, so per-shot 'Shot Making Efficiency' and 'Stable' percentages are preferred as primary. Passing families share three generic recognition metrics and two generic execution metrics; only drive-and-kick, connector, skip and outlet passes have any family-specific signal. For distribution inputs, outcome names the registry outcome the metric informs; T02 outcomes three_corner_share and three_deep_share describe detail within the three region. volume (2026-11-19): a metric for a secondary shot type (pull-up, movement, deep) may carry {\"per75\": metric, \"minus\": optional metric, \"half\": n}; its weight in a season is multiplied by attempts / (attempts + half), attempts = (per75 - minus) / 75 x minutes x 99/48. A pull-up or off-screen percentage on a handful of attempts (or one shrunk to the league mean) no longer outweighs the player's three-point or midrange shooting as a whole, which stays ungated as the fallback (talent metrics include volume, so non-shooters stay low).",
  "inputs": {
   "P01": {
    "name": "Height",
@@ -190,28 +190,44 @@
      "direction": 1,
      "strength": "primary",
      "outcome": null,
-     "why": "Per-shot pull-up three accuracy against difficulty-adjusted expectation."
+     "why": "Per-shot pull-up three accuracy against difficulty-adjusted expectation.",
+     "volume": {
+      "per75": "3PT Pull Up FGA Per 75",
+      "half": 40
+     }
     },
     {
      "metric": "Stable Pull Up 3PT%",
      "direction": 1,
      "strength": "primary",
      "outcome": null,
-     "why": "Pull-up three percentage shrunk for sample size."
+     "why": "Pull-up three percentage shrunk for sample size.",
+     "volume": {
+      "per75": "3PT Pull Up FGA Per 75",
+      "half": 40
+     }
     },
     {
      "metric": "3PT Pull Up Talent",
      "direction": 1,
      "strength": "supporting",
      "outcome": null,
-     "why": "BBI pull-up three talent grade; also includes volume and self-creation."
+     "why": "BBI pull-up three talent grade; also includes volume and self-creation.",
+     "volume": {
+      "per75": "3PT Pull Up FGA Per 75",
+      "half": 40
+     }
     },
     {
      "metric": "3PT Pull Up FG%",
      "direction": 1,
      "strength": "supporting",
      "outcome": null,
-     "why": "Raw pull-up three percentage; noisy at low volume."
+     "why": "Raw pull-up three percentage; noisy at low volume.",
+     "volume": {
+      "per75": "3PT Pull Up FGA Per 75",
+      "half": 40
+     }
     },
     {
      "metric": "3PT Shot Making Efficiency",
@@ -225,7 +241,18 @@
      "direction": 1,
      "strength": "weak",
      "outcome": null,
-     "why": "Aggregate (volume-weighted) pull-up shot-making; prefer the per-shot version."
+     "why": "Aggregate (volume-weighted) pull-up shot-making; prefer the per-shot version.",
+     "volume": {
+      "per75": "3PT Pull Up FGA Per 75",
+      "half": 40
+     }
+    },
+    {
+     "metric": "3PT Shooting Talent",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Fallback when this shot type has little volume: overall three-point talent (accuracy and volume), so a player who barely takes this shot is judged by his three-point shooting as a whole."
     }
    ],
    "coverage": "good",
@@ -240,18 +267,43 @@
      "direction": 1,
      "strength": "supporting",
      "outcome": null,
-     "why": "Points per off-screen possession (all shot types, includes turnovers and fouls)."
+     "why": "Points per off-screen possession (all shot types, includes turnovers and fouls); weighted by off-screen volume.",
+     "volume": {
+      "per75": "Off-Ball Screen Possessions Per 75 Possessions",
+      "half": 40
+     }
     },
     {
-     "metric": "Off-Ball Shot Making Efficiency",
+     "metric": "Stable C&S 3PT%",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Movement threes are caught and shot; catch-and-shoot three accuracy (shrunk for sample) is the closest three-specific measure."
+    },
+    {
+     "metric": "C&S 3PT Shot Making Efficiency",
+     "direction": 1,
+     "strength": "supporting",
+     "outcome": null,
+     "why": "Per-shot catch-and-shoot three accuracy against the difficulty-adjusted expectation; shared with S01."
+    },
+    {
+     "metric": "3PT Shot Making Efficiency",
      "direction": 1,
      "strength": "weak",
      "outcome": null,
-     "why": "Per-shot accuracy on potentially assisted shots; mixes stationary and moving catches."
+     "why": "All-three difficulty-adjusted accuracy; shared with S01 and S02."
+    },
+    {
+     "metric": "3PT Shooting Talent",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Fallback when this shot type has little volume: overall three-point talent (accuracy and volume), so a player who barely takes this shot is judged by his three-point shooting as a whole."
     }
    ],
    "coverage": "partial",
-   "gap_note": "No off-screen three-point split. Off-screen points per possession mixes threes, midrange and finishing."
+   "gap_note": "No off-screen three-point split. 2026-11-19: Off-Ball Shot Making Efficiency removed (it counts layups and dunks on assisted shots, so lob-finishing bigs looked like movement shooters); catch-and-shoot and overall three-point evidence added as the three-specific measures; off-screen points per possession weighted by off-screen volume."
   },
   "S04": {
    "name": "Catch-and-shoot midrange execution",
@@ -298,28 +350,51 @@
      "direction": 1,
      "strength": "primary",
      "outcome": null,
-     "why": "Per-shot pull-up midrange accuracy against difficulty-adjusted expectation."
+     "why": "Per-shot pull-up midrange accuracy against difficulty-adjusted expectation.",
+     "volume": {
+      "per75": "Midrange Pull Up FGA Per 75",
+      "half": 40
+     }
     },
     {
      "metric": "Midrange Pull Up Talent",
      "direction": 1,
      "strength": "supporting",
      "outcome": null,
-     "why": "BBI pull-up midrange talent grade; includes volume and self-creation."
+     "why": "BBI pull-up midrange talent grade; includes volume and self-creation.",
+     "volume": {
+      "per75": "Midrange Pull Up FGA Per 75",
+      "half": 40
+     }
     },
     {
      "metric": "Midrange Pull Up FG%",
      "direction": 1,
      "strength": "supporting",
      "outcome": null,
-     "why": "Raw pull-up midrange percentage."
+     "why": "Raw pull-up midrange percentage.",
+     "volume": {
+      "per75": "Midrange Pull Up FGA Per 75",
+      "half": 40
+     }
     },
     {
      "metric": "Midrange Pull Up Shot Making",
      "direction": 1,
      "strength": "weak",
      "outcome": null,
-     "why": "Aggregate (volume-weighted) version; prefer per-shot."
+     "why": "Aggregate (volume-weighted) version; prefer per-shot.",
+     "volume": {
+      "per75": "Midrange Pull Up FGA Per 75",
+      "half": 40
+     }
+    },
+    {
+     "metric": "Non-Paint Midrange Shooting Talent",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Fallback when this shot type has little volume: jump-shot midrange talent outside the paint (accuracy and volume). The plain midrange talent grade counts paint hooks and floaters, so it rated post bigs as shooters."
     }
    ],
    "coverage": "good",
@@ -334,7 +409,18 @@
      "direction": 1,
      "strength": "weak",
      "outcome": null,
-     "why": "Off-screen points per possession; mixes all shot types."
+     "why": "Off-screen points per possession; mixes all shot types.",
+     "volume": {
+      "per75": "Off-Ball Screen Possessions Per 75 Possessions",
+      "half": 40
+     }
+    },
+    {
+     "metric": "Non-Paint Midrange Shooting Talent",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Fallback when this shot type has little volume: jump-shot midrange talent outside the paint (accuracy and volume). The plain midrange talent grade counts paint hooks and floaters, so it rated post bigs as shooters."
     }
    ],
    "coverage": "partial",
@@ -378,21 +464,40 @@
      "direction": 1,
      "strength": "primary",
      "outcome": null,
-     "why": "Per-shot accuracy on 26+ ft threes against expectation; compare with the standard three skill to isolate range."
+     "why": "Per-shot accuracy on 26+ ft threes against expectation; compare with the standard three skill to isolate range.",
+     "volume": {
+      "per75": "3PT FGA Per 75 Possessions",
+      "half": 80
+     }
     },
     {
      "metric": "Deep 3PT Shooting Talent",
      "direction": 1,
      "strength": "supporting",
      "outcome": null,
-     "why": "BBI deep-three talent grade; includes volume and self-creation."
+     "why": "BBI deep-three talent grade; includes volume and self-creation.",
+     "volume": {
+      "per75": "3PT FGA Per 75 Possessions",
+      "half": 80
+     }
     },
     {
      "metric": "Deep 3PT Shot Making",
      "direction": 1,
      "strength": "weak",
      "outcome": null,
-     "why": "Aggregate (volume-weighted) deep-three shot-making."
+     "why": "Aggregate (volume-weighted) deep-three shot-making.",
+     "volume": {
+      "per75": "3PT FGA Per 75 Possessions",
+      "half": 80
+     }
+    },
+    {
+     "metric": "3PT Shooting Talent",
+     "direction": 1,
+     "strength": "weak",
+     "outcome": null,
+     "why": "Fallback when this shot type has little volume: overall three-point talent (accuracy and volume), so a player who barely takes this shot is judged by his three-point shooting as a whole."
     }
    ],
    "coverage": "partial",

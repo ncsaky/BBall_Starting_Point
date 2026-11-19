@@ -82,6 +82,25 @@ class PlayerProfileTests(unittest.TestCase):
                     self.assertGreaterEqual(shown[a], shown[b] - 1e-9, (a, b))
         self.assertTrue(all(0 < v < 100 for v in shown.values()))
 
+    def test_header_gaps_are_the_engines_value_gaps(self):
+        """New ratings: the card is a straight line through the engine's fitted impact (median 50, best ~98),
+        so equal value gaps show as equal rating gaps and the top players are not spread apart by rank alone."""
+        heads = {}
+        for p in self.active["players"]:
+            if rm.effective_inputs(self.active, p["id"]) is not None:
+                heads[p["id"]] = pp.engine_header(self.active, p["id"])
+        self.assertTrue(all("impact" in h for h in heads.values()))
+        pairs = sorted(((h["impact"]["ovr"], h["ovr"]) for h in heads.values()))
+        (x0, y0), (x1, y1) = pairs[0], pairs[-1]
+        slope = (y1 - y0) / (x1 - x0)
+        for x, y in pairs[:: max(1, len(pairs) // 50)]:
+            self.assertAlmostEqual(y, y0 + slope * (x - x0), delta=0.01 * slope + 1e-6)  # impact is rounded to 0.01
+        from statistics import NormalDist
+        best = 50 + 15 * NormalDist().inv_cdf(1 - 0.5 / len(heads))   # what a rank display gives the best player
+        self.assertAlmostEqual(max(h["ovr"] for h in heads.values()), best, delta=0.01)
+        shown = sorted(h["ovr"] for h in heads.values())
+        self.assertAlmostEqual(shown[len(shown) // 2], 50.0, delta=0.5)
+
     def test_development_changes_technique_values_and_header(self):
         ref = pp.league_reference(self.active[rm.MODEL_KEY]["inputs_key"])
         pid = min(ref["pids"], key=lambda p: abs(ref["display"][p]["off"] - 50))  # mid-table: no saturated percentiles
