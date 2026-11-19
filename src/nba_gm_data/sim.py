@@ -525,6 +525,11 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
                                       home_players, away_players, mode, seed, interior_experiment)
     coach_by_team = context.get("indices", {}).get("coach_by_team") or {rating.team_id: rating for rating in coach_ratings(canonical)}
     if mode == "sandbox-sim":
+        # Minutes the coach planned for absent teammates' replacements lean toward size or toward guards for tonight's
+        # opponent (absence_fill; no random draws).
+        from .absence_fill import opponent_adjusted_pool
+        home_players, away_players = (opponent_adjusted_pool(canonical, home_players, away_players),
+                                      opponent_adjusted_pool(canonical, away_players, home_players))
         home_players = matchup_adjusted_player_pool(
             canonical,
             home_players,
