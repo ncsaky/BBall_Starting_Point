@@ -329,6 +329,48 @@ def build_team_strategic_states(canonical: dict[str, Any] | Any, valuations: lis
     return output
 
 
+_VALUATION_FEATURES: dict[bytes, dict[str, float]] = {}
+
+
+def _valuation_features(canonical: dict[str, Any], player: dict[str, Any], include_spatial: bool) -> dict[str, float]:
+    """sim.player_feature_vector(...).features for a transaction context, remembered across contexts.
+
+    Every context build (each market day, each applied trade's live check) re-derives every player's features
+    although almost none of them changed. Without zone grids the features read only: the player record, the
+    player's trait rows (as the sim cache indexes them), the talent/offense model switches and the player's
+    offensive profile in the league meta, and the new-ratings model's mode, table keys and the player's input
+    deltas or generated-input key (impact fit, effective inputs). All of that is pickled into the key, so equal
+    keys mean equal inputs. Zone-grid (spatial) features are always computed fresh."""
+    from .sim import canonical_sim_cache, player_feature_vector
+    from . import impact_value
+    if include_spatial or impact_value._BUILDING:
+        return player_feature_vector(canonical, player, include_spatial=include_spatial).features
+    from .ratings_model import MODEL_KEY
+    meta = canonical.get("meta") or {}
+    model = canonical.get(MODEL_KEY) or {}
+    pid = player.get("id")
+    try:
+        key = pickle.dumps((
+            "valuation_features_v1", player, canonical_sim_cache(canonical)["traits_by_player"].get(pid, {}),
+            meta.get("talent_model_version"), meta.get("offense_model_version"),
+            (meta.get("offensive_profiles") or {}).get(pid),
+            [model.get(field) for field in ("mode", "inputs_key", "fitted_key", "impact_tables_key")],
+            (model.get("input_deltas") or {}).get(pid), (model.get("generated") or {}).get(pid),
+        ), protocol=pickle.HIGHEST_PROTOCOL)
+    except (pickle.PicklingError, TypeError, AttributeError):
+        return player_feature_vector(canonical, player, include_spatial=False).features
+    features = _VALUATION_FEATURES.get(key)
+    if features is None or _CONTENTION_AUDIT:
+        fresh = player_feature_vector(canonical, player, include_spatial=False).features
+        if _CONTENTION_AUDIT and features is not None and features != fresh:
+            raise AssertionError(f"valuation feature memo disagrees for {pid}")
+        features = fresh
+        if len(_VALUATION_FEATURES) >= 20_000:
+            _VALUATION_FEATURES.pop(next(iter(_VALUATION_FEATURES)))
+        _VALUATION_FEATURES[key] = features
+    return features
+
+
 def build_player_asset_valuations(canonical: dict[str, Any] | Any, config: dict[str, Any] | None = None, *, _full_features: bool = False) -> list[PlayerAssetValuation]:
     canonical = canonical_mapping(canonical)
     config = config or default_transaction_model_config()
@@ -347,7 +389,7 @@ def build_player_asset_valuations(canonical: dict[str, Any] | Any, config: dict[
         # (impact_value), keeping the market's own scale so every value cutoff still means the same thing.
         legacy = {}
         for player in canonical.get("players", []):
-            features = player_feature_vector(canonical, player, include_spatial=_full_features).features
+            features = _valuation_features(canonical, player, _full_features)
             portability = float(traits.get(player["id"], {}).get("portability", {}).get("value", features.get("impact", 50)))
             legacy[player["id"]] = player_on_court_value(features, portability)
         plain_traits = {pid: {k: float(v.get("value", 50)) for k, v in rows.items()} for pid, rows in traits.items()}
@@ -361,7 +403,7 @@ def build_player_asset_valuations(canonical: dict[str, Any] | Any, config: dict[
     for player in canonical.get("players", []):
         # Valuation consumes scalar basketball/offensive-role features only.
         # Keep minutes and role calculations fresh; zone grids are unused here.
-        features = player_feature_vector(canonical, player, include_spatial=_full_features).features
+        features = _valuation_features(canonical, player, _full_features)
         contract = contracts.get(player["id"], {})
         salary = current_salary(contract)
         contract_status = "salary_known" if salary is not None else "manual_review_required"

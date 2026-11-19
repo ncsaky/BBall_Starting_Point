@@ -230,6 +230,32 @@ class RotationStrengthReuseTests(unittest.TestCase):
         self.assertEqual(len(forecast._rotation_strengths), before)  # recomputed and replaced, not reused
 
 
+class ValuationFeatureMemoTests(unittest.TestCase):
+    def test_memo_matches_fresh_features_and_follows_inputs(self):
+        from nba_gm_data.sim import player_feature_vector
+        rng = random.Random(5)
+
+        def fresh(league, player):
+            league = {**league, "_allow_internal_caches": True}
+            return player_feature_vector(league, player, include_spatial=False).features
+
+        base = _random_league(rng, 4)
+        base["_allow_internal_caches"] = True
+        player = base["players"][0]
+        self.assertEqual(tx._valuation_features(base, player, False), fresh(dict(base), player))
+        variants = []
+        moved = dict(base, players=[dict(player, minutes_projection=33)] + base["players"][1:])
+        variants.append((moved, moved["players"][0]))
+        traits = [dict(t, value=t["value"] + 7) if t["player_id"] == player["id"] else t for t in base["traits"]]
+        variants.append((dict(base, traits=traits), player))
+        variants.append((dict(base, meta={**base["meta"], "talent_model_version": 1}), player))
+        for index, (league, who) in enumerate(variants):
+            league = dict(league)
+            self.assertEqual(tx._valuation_features(league, who, False), fresh(league, who))
+            if index < 2:  # minutes and trait changes move the features
+                self.assertNotEqual(tx._valuation_features(league, who, False), tx._valuation_features(base, player, False))
+
+
 class FirstRowIndexTests(unittest.TestCase):
     def test_first_row_matches_a_scan_and_only_for_snapshot_lists(self):
         from nba_gm_data.roster_forecast import first_player_row
