@@ -5700,6 +5700,7 @@ def queue_ai_recommendations(
                 through_date,
                 seed,
                 prepared_active=True,
+                baseline=authoritative_canonical,
             )
             save.setdefault("processed_hidden_ai_actions", []).append(
                 {
@@ -6033,7 +6034,10 @@ def process_ai_extensions(
     limit: int = 22,
     *,
     prepared_active: bool = False,
+    baseline: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    # baseline: the league before the save is applied. The hard-cap check rebuilds the league from it; rebuilding from
+    # an already-prepared league refits the 94-input ratings model just to read contracts (INPUTS-DEFAULT speed note).
     from .contract_ai import extension_candidates_report, merge_extension_offer_with_existing_contract, negotiate_extension, with_extension_context
 
     active = with_extension_context(canonical if prepared_active else canonical_with_save(canonical, save))
@@ -6127,7 +6131,7 @@ def process_ai_extensions(
             offer.setdefault("start_season", extension_start_season_from_date_save(through_date))
             offer = ai_adjust_extension_offer_for_current_season(save, candidate, player, offer, priority)
             offer = merge_extension_offer_with_existing_contract(offer, negotiation)
-            if not extension_offer_fits_hard_cap(canonical, save, player_id, offer):
+            if not extension_offer_fits_hard_cap(baseline if baseline is not None else canonical, save, player_id, offer):
                 continue
             save.setdefault("contract_overrides", {})[player_id] = offer
             save.setdefault("transaction_logs", []).append(
