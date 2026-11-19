@@ -555,6 +555,21 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
         # Coaching game management and matchup scheming matter most in the postseason (head coach overhaul).
         home_game_context = {**(home_game_context or {}), "is_playoff": True}
         away_game_context = {**(away_game_context or {}), "is_playoff": True}
+    home_score = away_score = None
+    in_game: dict[str, tuple[dict[str, list[float]], set[str]]] = {}
+    if mode == "sandbox-sim":
+        # Draw both scores first, so the coach's in-game minutes (foul trouble, blowout rest) can follow the game.
+        home_score = draw_team_score(canonical, home_features, away_features, coach_by_team.get(home_team["id"]),
+                                     coach_by_team.get(away_team["id"]), rng, is_home=True,
+                                     rest_context=home_game_context, opp_rest_context=away_game_context)
+        away_score = draw_team_score(canonical, away_features, home_features, coach_by_team.get(away_team["id"]),
+                                     coach_by_team.get(home_team["id"]), rng, is_home=False,
+                                     rest_context=away_game_context, opp_rest_context=home_game_context)
+        margin = home_score["points"] - away_score["points"]
+        home_players = in_game_minutes(context, home_team, home_players, margin, game_id, mode, seed, game_date,
+                                       coach_by_team.get(home_team["id"]), in_game)
+        away_players = in_game_minutes(context, away_team, away_players, margin, game_id, mode, seed, game_date,
+                                       coach_by_team.get(away_team["id"]), in_game)
     home_line, home_team_line = simulate_team_line(
         canonical,
         home_team,
@@ -568,6 +583,7 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
         is_home=True,
         rest_context=home_game_context,
         opp_rest_context=away_game_context,
+        score_state=home_score,
     )
     away_line, away_team_line = simulate_team_line(
         canonical,
@@ -582,10 +598,12 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
         is_home=False,
         rest_context=away_game_context,
         opp_rest_context=home_game_context,
+        score_state=away_score,
     )
     scoring_periods = []
+    fouled_out = set().union(*(out for _, out in in_game.values())) if in_game else set()
     overtime_periods = resolve_overtime_if_tied(home_line, away_line, home_team_line, away_team_line, rng,
-                                             tracking_periods=scoring_periods)
+                                             tracking_periods=scoring_periods, exclude_ids=fouled_out)
     from .box_variation import vary_box_score
     vary_box_score(canonical, [home_line, away_line], [home_team_line, away_team_line],
                    [home_features, away_features], f"{seed}:{game_id}:{mode}:box-variation")
@@ -593,10 +611,12 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
     reconcile_box_score(home_line + away_line, [home_team_line, away_team_line])
     foul_rng = random.Random(f"{seed}:{game_id}:{mode}:personal-fouls")
     for player_lines, team_line, team in [(home_line, home_team_line, home_team), (away_line, away_team_line, away_team)]:
-        # Defensive coordinator discipline: about 4% fewer fouls per discipline star above average (save staff only).
         staff_rating = coach_by_team.get(team["id"])
-        discipline = float((staff_rating.ratings if staff_rating else {}).get("discipline", 3.0)) - 3.0
-        assign_personal_fouls(player_lines, foul_rng, rate_multiplier=clamp(1.0 - 0.04 * discipline, 0.9, 1.1))
+        if team["id"] in in_game:
+            from .game_minutes import fouls_from_times
+            fouls_from_times(player_lines, *in_game[team["id"]])
+        else:
+            assign_personal_fouls(player_lines, foul_rng, rate_multiplier=foul_rate_multiplier(staff_rating))
         team_line["personal_fouls"] = sum(line["personal_fouls"] for line in player_lines)
     from .plus_minus import track_plus_minus
     defense = {}
@@ -627,6 +647,39 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
     )
 
 
+def foul_rate_multiplier(coach: CoachRating | None) -> float:
+    """Defensive coordinator discipline: about 4% fewer fouls per discipline star above average (save staff only)."""
+    discipline = float((coach.ratings if coach else {}).get("discipline", 3.0)) - 3.0
+    return clamp(1.0 - 0.04 * discipline, 0.9, 1.1)
+
+
+def available_reserves(context: dict[str, Any], team: dict[str, Any], game_id: str, game_date: str | None) -> list[dict[str, Any]]:
+    """Healthy players on the roster outside the planned rotation (garbage-time candidates), from the pool pass."""
+    cache = context.setdefault("sim_cache", {}).setdefault("player_pools", {})
+    key = ("reserves", str(game_id), team["id"], "sandbox-sim", game_date)
+    if key not in cache:
+        game_player_pool(context, game_id, team, "sandbox-sim", game_date=game_date)
+    return cache.get(key, [])
+
+
+def in_game_minutes(context: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]], margin: float,
+                    game_id: str, mode: str, seed: int, game_date: str | None, coach: CoachRating | None,
+                    record: dict[str, tuple[dict[str, list[float]], set[str]]]) -> list[dict[str, Any]]:
+    """The coach's in-game minutes for one team of a sandbox game (foul trouble, blowout rest)."""
+    from .game_minutes import manage_game_minutes
+    used = {item["player"]["id"] for item in pool}
+    managed, fouls, fouled_out = manage_game_minutes(
+        pool, [item for item in available_reserves(context, team, game_id, game_date) if item["player"]["id"] not in used],
+        margin,
+        random.Random(f"{seed}:{game_id}:{team['id']}:in-game-minutes"),
+        random.Random(f"{seed}:{game_id}:{mode}:{team['id']}:foul-times"),
+        foul_rate_multiplier(coach),
+    )
+    if fouls:
+        record[team["id"]] = (fouls, fouled_out)
+    return managed
+
+
 def game_player_pool(context: dict[str, Any], game_id: str, team: dict[str, Any], mode: str, game_date: str | None = None) -> list[dict[str, Any]]:
     cache = context.setdefault("sim_cache", {}).setdefault("player_pools", {})
     cache_key = (str(game_id), team["id"], mode, game_date)
@@ -652,8 +705,17 @@ def game_player_pool(context: dict[str, Any], game_id: str, team: dict[str, Any]
     pool = [{"player": player, "minutes": projected_game_minutes(player), "actual": None} for player in top]
     if mode == "sandbox-sim":
         from .health import sandbox_health_adjusted_pool
+        from .game_minutes import GARBAGE_EXTRAS_LIMIT
 
-        pool = sandbox_health_adjusted_pool(canonical, game_date, pool)
+        # One availability pass covers the rotation and the healthy players outside it (garbage-time candidates).
+        used = {player["id"] for player in top}
+        others = [{"player": player, "minutes": 0.0, "actual": None} for player in canonical["players"]
+                  if player.get("team_id") == team["id"] and player["id"] not in used and not player.get("_inactive_player")]
+        checked = sandbox_health_adjusted_pool(canonical, game_date, pool + others)
+        pool = [item for item in checked if item["player"]["id"] in used]
+        reserves = sorted((item for item in checked if item["player"]["id"] not in used),
+                          key=lambda item: (-float(item["player"].get("current_ability") or 0.0), item["player"]["id"]))
+        cache[("reserves", *cache_key)] = reserves[:GARBAGE_EXTRAS_LIMIT]
     cache[cache_key] = normalize_minutes(pool)
     return cache[cache_key]
 
@@ -1251,7 +1313,30 @@ def simulate_team_line(
     is_home: bool = False,
     rest_context: dict[str, Any] | None = None,
     opp_rest_context: dict[str, Any] | None = None,
+    *,
+    score_state: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """One team's box score. A sandbox game draws both scores first (score_state) so the coach can manage minutes."""
+    if score_state is None:
+        score_state = draw_team_score(canonical, team_features, opp_features, coach, opp_coach, rng, is_home=is_home,
+                                      rest_context=rest_context, opp_rest_context=opp_rest_context)
+    player_lines = distribute_player_lines(canonical, team, pool, score_state["points"], score_state["possessions"], rng)
+    return player_lines, _team_line(team, team_features, opp_features, score_state, player_lines)
+
+
+def draw_team_score(
+    canonical: dict[str, Any],
+    team_features: dict[str, float],
+    opp_features: dict[str, float],
+    coach: CoachRating | None,
+    opp_coach: CoachRating | None,
+    rng: random.Random,
+    *,
+    is_home: bool = False,
+    rest_context: dict[str, Any] | None = None,
+    opp_rest_context: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Possessions, offensive rating and points for one team (two draws from the game RNG)."""
     coach_mod = scaled_coach_effect(coach, team_features)
     opp_coach_mod = scaled_coach_effect(opp_coach, opp_features)
     availability_mod = availability_gap_effect(team_features)
@@ -1287,7 +1372,34 @@ def simulate_team_line(
         matchup_total_mod=matchup_total_mod, creator_mod=creator_mod, spacing_mod=spacing_mod, rest_context=rest_context,
     ) + rng.gauss(0, 9.2)
     points = max(70, round(possessions * off_rating / 100))
-    player_lines = distribute_player_lines(canonical, team, pool, points, possessions, rng)
+    return {
+        "coach_mod": coach_mod, "opp_coach_mod": opp_coach_mod, "availability_mod": availability_mod,
+        "opp_availability_mod": opp_availability_mod, "age_mod": age_mod, "opp_age_mod": opp_age_mod,
+        "shot_diet": shot_diet, "home_mod": home_mod, "rest_mod": rest_mod, "game_env_mod": game_env_mod,
+        "matchup_total_mod": matchup_total_mod, "creator_mod": creator_mod, "spacing_mod": spacing_mod,
+        "possessions": possessions, "off_rating": off_rating, "points": points, "rest_context": rest_context,
+    }
+
+
+def _team_line(team: dict[str, Any], team_features: dict[str, float], opp_features: dict[str, float],
+               score_state: dict[str, Any], player_lines: list[dict[str, Any]]) -> dict[str, Any]:
+    coach_mod = score_state["coach_mod"]
+    opp_coach_mod = score_state["opp_coach_mod"]
+    availability_mod = score_state["availability_mod"]
+    opp_availability_mod = score_state["opp_availability_mod"]
+    age_mod = score_state["age_mod"]
+    opp_age_mod = score_state["opp_age_mod"]
+    shot_diet = score_state["shot_diet"]
+    home_mod = score_state["home_mod"]
+    rest_mod = score_state["rest_mod"]
+    game_env_mod = score_state["game_env_mod"]
+    matchup_total_mod = score_state["matchup_total_mod"]
+    creator_mod = score_state["creator_mod"]
+    spacing_mod = score_state["spacing_mod"]
+    possessions = score_state["possessions"]
+    off_rating = score_state["off_rating"]
+    points = score_state["points"]
+    rest_context = score_state["rest_context"]
     team_line = {
         "team_id": team["id"],
         "team_abbrev": team["abbrev"],
@@ -1338,7 +1450,7 @@ def simulate_team_line(
     offensive_rebound_rate = clamp(0.24 + (team_features["offensive_rebounding"] - 50.0) * 0.0022, 0.16, 0.38)
     team_line["offensive_rebounds"] = min(int(team_line["rebounds"]), int(round(missed_shots * offensive_rebound_rate)))
     team_line["defensive_rebounds"] = max(0, int(team_line["rebounds"]) - int(team_line["offensive_rebounds"]))
-    return player_lines, team_line
+    return team_line
 
 
 def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]], team_points: int, possessions: float, rng: random.Random) -> list[dict[str, Any]]:
@@ -1964,7 +2076,7 @@ def resolve_overtime_if_tied(
     home_team_line: dict[str, Any],
     away_team_line: dict[str, Any],
     rng: random.Random,
-    *, tracking_periods: list | None = None,
+    *, tracking_periods: list | None = None, exclude_ids: set[str] | None = None,
 ) -> int:
     if int(home_team_line["points"]) != int(away_team_line["points"]):
         return 0
@@ -1982,8 +2094,8 @@ def resolve_overtime_if_tied(
                 away_extra += 1 + int(rng.random() * 3)
         add_overtime_points(home_line, home_extra)
         add_overtime_points(away_line, away_extra)
-        add_overtime_minutes(home_line)
-        add_overtime_minutes(away_line)
+        add_overtime_minutes(home_line, exclude_ids)
+        add_overtime_minutes(away_line, exclude_ids)
         if tracking_periods is not None:
             tracking_periods.append(scoring_snapshot(home_line+away_line))
         home_team_line["points"] = int(home_team_line["points"]) + home_extra
@@ -2018,8 +2130,12 @@ def add_overtime_points(lines: list[dict[str, Any]], extra_points: int) -> None:
         line["fga"] = int(line.get("fga") or 0) + made + (1 if points >= 5 else 0)
 
 
-def add_overtime_minutes(lines: list[dict[str, Any]]) -> None:
-    active = [line for line in lines if float(line.get("minutes") or 0) > 0]
+def add_overtime_minutes(lines: list[dict[str, Any]], exclude_ids: set[str] | None = None) -> None:
+    """Five players over five minutes; a player who has fouled out (exclude_ids) does not return."""
+    active = [line for line in lines if float(line.get("minutes") or 0) > 0
+              and not (exclude_ids and line.get("player_id") in exclude_ids)]
+    if len(active) < 5:
+        active = [line for line in lines if float(line.get("minutes") or 0) > 0]
     if not active:
         return
     # Five players over five minutes: allocate exactly 2,500 hundredths.

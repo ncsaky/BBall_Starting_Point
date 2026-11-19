@@ -7014,6 +7014,8 @@ def team_rotation_projection(canonical: dict[str, Any], save: dict[str, Any], te
                 "maximum": maximum,
             }
         )
+    if ai_role:
+        spread_vacated_minutes(allocation_rows)
     allocation = bounded_minutes_allocation(allocation_rows, 240.0)
     row_limits = {row["player_id"]: row for row in allocation_rows}
     recommended_ids = {row["player"]["id"] for row in rows if row.get("recommendation")}
@@ -7054,6 +7056,51 @@ def team_rotation_projection(canonical: dict[str, Any], save: dict[str, Any], te
         else:
             allocation.setdefault(row["player"]["id"], 0.0)
     return round_minutes_to_total(allocation, 240) if integer else allocation
+
+
+# Who absorbs an absent player's minutes (HEAVY-MINUTES, 2026-11-19). Real 2025-26 box scores: when one of a team's
+# two biggest minute-getters sat, the other three starters played only 1.2 more minutes each and the bench took the
+# rest. Spreading the gap in proportion to current minutes had pushed the remaining starters up 3.7 minutes, toward
+# 38-40. Each row's share of the vacated minutes is weighted by its healthy role: (minutes, weight) breakpoints.
+ABSENCE_SHARE_POINTS = ((14.0, 6.0), (20.0, 3.5), (24.0, 2.0), (28.0, 1.2), (34.0, 0.6))
+ABSENCE_SHARE_UNUSED = 4.0  # a selected player with no healthy minutes (the next man up off the bench)
+
+
+def absence_share_weight(minutes: float) -> float:
+    if minutes <= 0:
+        return ABSENCE_SHARE_UNUSED
+    points = ABSENCE_SHARE_POINTS
+    if minutes <= points[0][0]:
+        return points[0][1]
+    for (lo, lo_w), (hi, hi_w) in zip(points, points[1:]):
+        if minutes <= hi:
+            return lo_w + (hi_w - lo_w) * (minutes - lo) / (hi - lo)
+    return points[-1][1]
+
+
+def spread_vacated_minutes(rows: list[dict[str, Any]], total: float = 240.0) -> None:
+    """Give an AI team's missing minutes mostly to its bench, in place (healthy rosters are unchanged)."""
+    active = [row for row in rows if float(row.get("maximum") or 0.0) > 0.0]
+    vacated = total - sum(float(row.get("desired") or 0.0) for row in active)
+    if vacated <= 0.5 or not active:
+        return
+    weights = [absence_share_weight(float(row.get("desired") or 0.0)) for row in active]
+    desired = [float(row.get("desired") or 0.0) for row in active]
+    for _ in range(len(active)):  # nobody past 42 minutes; a short-handed team's extra goes to the others
+        open_rows = [i for i in range(len(active)) if desired[i] < 42.0 - 1e-9]
+        weight_total = sum(weights[i] for i in open_rows)
+        if vacated <= 1e-9 or weight_total <= 0:
+            break
+        placed = 0.0
+        for i in open_rows:
+            add = min(vacated * weights[i] / weight_total, 42.0 - desired[i])
+            desired[i] += add
+            placed += add
+        vacated -= placed
+    for row, value in zip(active, desired):
+        row["desired"] = value
+        row["maximum"] = max(float(row["maximum"]), value)
+        row["minimum"] = min(float(row.get("minimum") or 0.0), value)
 
 
 def user_rotation_override_projection(
