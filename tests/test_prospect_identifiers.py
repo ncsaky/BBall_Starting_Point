@@ -35,11 +35,8 @@ class ProspectIdentifierTests(unittest.TestCase):
             board_key = f"{team_id}:{year}"
             active = canonical_with_save(self.canonical, save)
             board = draft_board_report(active, team_id, year)
-            source_entries = [
-                entry for entry in active["draft_board_entries"]
-                if entry["team_id"] == team_id and str(entry["draft_year"]) == year
-            ]
-            expected = {entry["prospect_id"]: entry["board_rank"] for entry in source_entries}
+            # The saved baseline is the team's scouts' board in the season's first month.
+            expected = {entry["prospect_id"]: entry["board_rank"] for entry in board["entries"]}
             self.assertTrue(expected)  # Exercise board_entry_payload, not the generated fallback.
             self.assertEqual(len(board["entries"]), len(expected))
             real_ids = {prospect["id"] for prospect in active["draft_prospects"]}

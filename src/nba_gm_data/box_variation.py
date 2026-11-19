@@ -27,6 +27,56 @@ MISS_FILL = 0.82  # team FG% game-to-game sd ~.059, the 2025-26 NBA's (xPoints g
 PLAYER_REBOUND_SHARE = 0.92  # fitted 2026-11-17: player rebounds per 36 bias +0.67 -> +0.13 (real-minutes replay)
 
 
+# Shot difficulty and team context (2026-11-19, unused-ratings audit). The game's score fixes the team's points and
+# possessions, so a team that scores more efficiently than its players' own shooting percentages implies loses
+# two-point misses here (and a colder team gains them). That gap used to be shared in plain proportion to each player's
+# misses, so a team's good offence made its tough-shot creators as much more efficient as its spot-up shooters and
+# finishers: high-usage scorers ran ~4 points of two-point percentage above their own (Ingram, Brunson, Booker true
+# shooting .63-.65 vs .57-.59 real). Real team offence mostly improves the shots teammates are set up for; a player
+# who lives on difficult self-created shots keeps close to his own shot-making. Each player's share of the team's
+# miss swing is therefore scaled by exp(-k * z), z = his shot difficulty tolerance (T04, built from Basketball
+# Index shot quality and openness) in league standard deviations. k is fitted to real 2025-26 true shooting of the
+# 150 heaviest-minute players (scripts/fit_shot_difficulty_share.py). Old-ratings saves have no T04: unchanged.
+DIFFICULTY_FEATURE = 'shot_difficulty'
+DIFFICULTY_REF, DIFFICULTY_SD = 0.269, 0.033   # league mean and spread of T04 (691 players)
+SHOT_DIFFICULTY_SHARE = 0.5   # fitted: TS mean abs error .0258 -> .0246; top-15 tolerance players +.019 -> +.007
+
+
+def team_context_share(difficulty):
+    if difficulty is None or not SHOT_DIFFICULTY_SHARE:
+        return 1.0
+    return math.exp(-SHOT_DIFFICULTY_SHARE * (float(difficulty) - DIFFICULTY_REF) / DIFFICULTY_SD)
+
+
+def removed_by_weight(values, remove, weights, identities):
+    """Remove `remove` units from integer counts in proportion to weights, never below zero (deterministic)."""
+    values = list(values)
+    remove = max(0, min(int(remove), sum(values)))
+    out = [0.0] * len(values)
+    left, open_ = float(remove), [i for i in range(len(values)) if values[i] > 0 and weights[i] > 0]
+    while left > 1e-9 and open_:
+        total = sum(weights[i] for i in open_)
+        capped = [i for i in open_ if out[i] + left * weights[i] / total >= values[i]]
+        if not capped:
+            for i in open_:
+                out[i] += left * weights[i] / total
+            left = 0.0
+            break
+        for i in capped:
+            left -= values[i] - out[i]
+            out[i] = float(values[i])
+            open_.remove(i)
+    if left > 1e-9:   # every weighted count is exhausted: take the rest in plain proportion
+        rest = [v - o for v, o in zip(values, out)]
+        total = sum(rest)
+        out = [o + left * r / total for o, r in zip(out, rest)]
+    taken = [math.floor(q + 1e-9) for q in out]
+    order = sorted(range(len(values)), key=lambda i: (-(out[i] - taken[i]), str(identities[i])))
+    for i in order[:remove - sum(taken)]:
+        taken[i] += 1
+    return [v - t for v, t in zip(values, taken)]
+
+
 def increased_counts(weights, extra, identities):
     """Largest-remainder split of `extra` new events in proportion to `weights` (deterministic)."""
     total = sum(weights)
@@ -44,6 +94,7 @@ def vary_box_score(canonical, groups, team_lines, feature_groups, seed):
     from .sim import player_feature_vector, redistribute_integer_stat, turnover_rate_per_minute
     from .box_score import reduced_counts
     rng = random.Random(seed)
+    player_features = {}
     for index, lines in enumerate(groups):
         own, opp = feature_groups[index], feature_groups[1-index]
         shooting_day = rng.gauss(0, .025)
@@ -53,12 +104,16 @@ def vary_box_score(canonical, groups, team_lines, feature_groups, seed):
         # Shared game environment couples teammates without making all players
         # good or bad together. Individual draws still dominate rare outliers.
         disruption_day = rng.gauss(0, .13)
+        difficulty = {}
         for line in lines:
             minutes = float(line.get('minutes') or 0)
             if minutes <= 0:
                 continue
             player = next((p for p in canonical.get('players', []) if p['id'] == line['player_id']), None)
             feat = player_feature_vector(canonical, player).features if player else {}
+            player_features[line['player_id']] = feat
+            if feat.get(DIFFICULTY_FEATURE) is not None:
+                difficulty[line['player_id']] = float(feat[DIFFICULTY_FEATURE])
             two_makes = int(line['fgm'] - line['fg3m'])
             base = float(feat.get('two_pct') or .51)
             paint_share = float(feat.get('roll_share', .15)) + float(feat.get('post_share', .15))
@@ -100,11 +155,16 @@ def vary_box_score(canonical, groups, team_lines, feature_groups, seed):
         # The opponent's rim protection still shows in the box after the fill: about +1.5 two-point misses against an elite
         # rim protector, about -1.2 against a weak one (within the possession budget's slack).
         wanted = max(0, wanted + round(rim * 2.0))
+        context = [team_context_share(difficulty.get(p['player_id'])) for p in lines]
         if sum(misses) > wanted:
-            misses = reduced_counts(misses, wanted, ids)
+            if any(c != 1.0 for c in context):
+                misses = removed_by_weight(misses, sum(misses) - wanted, [m * c for m, c in zip(misses, context)], ids)
+            else:
+                misses = reduced_counts(misses, wanted, ids)
         elif sum(misses) < wanted:
             # Spread the extra misses like the player's own two-point volume (makes plus generated misses).
-            weights = [(p['fgm'] - p['fg3m']) + m + (.5 if float(p.get('minutes') or 0) > 0 else 0) for p, m in zip(lines, misses)]
+            weights = [((p['fgm'] - p['fg3m']) + m + (.5 if float(p.get('minutes') or 0) > 0 else 0)) * c
+                       for p, m, c in zip(lines, misses, context)]
             misses = [m + extra for m, extra in zip(misses, increased_counts(weights, wanted - sum(misses), ids))]
         for line, count in zip(lines, misses):
             line['fga'] = line['fg3a'] + line['fgm'] - line['fg3m'] + count
@@ -131,4 +191,6 @@ def vary_box_score(canonical, groups, team_lines, feature_groups, seed):
             redistribute_integer_stat(lines, key, target, 1.)
         team['offensive_rebounds'] = min(rebounds, round(own_miss * oreb_rate * player_share))
         team['defensive_rebounds'] = max(0, rebounds - team['offensive_rebounds'])
-
+    # Screen assists (new ratings): their own generator, after every other draw; see screens.py.
+    from .screens import add_screen_assists
+    add_screen_assists(groups, player_features, seed)

@@ -341,9 +341,9 @@ test('rust marker shows the exact in-game penalty for players back from injury, 
 
 test('rest suggestion note shows the coach reason for the user team and is only a suggestion', () => {
   const grab = (name) => app.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n}\\n`))[0];
-  const ctx = {escapeHtml: (v) => String(v), escapeAttr: (v) => String(v)};
+  const ctx = {escapeHtml: (v) => String(v), escapeAttr: (v) => String(v), state: {home: {game_settings: {}}}};
   vm.createContext(ctx);
-  vm.runInContext(`${grab('isPlayerInjured')}\n${grab('playerRestMarkup')}`, ctx);
+  vm.runInContext(`${grab('isPlayerInjured')}\n${grab('restGamesLabel')}\n${grab('coachRestsPlayers')}\n${grab('playerRestMarkup')}`, ctx);
   const html = ctx.playerRestMarkup({health: {status: 'ok', label: '', rest_suggestion: {date: '2026-12-03', kind: 'rest',
     reason: 'second night of a back-to-back'}}});
   assert.match(html, /Coach suggests resting him on 2026-12-03: second night of a back-to-back/);

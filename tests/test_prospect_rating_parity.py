@@ -55,11 +55,10 @@ class ProspectRatingParityTests(unittest.TestCase):
                   'estimated_potential':{'mid':prospect['potential']+2},
                   'trait_estimates':{row['trait_key']:{'mid':row['value']-3} for row in context['draft_prospect_traits']
                                      if row['prospect_id']==prospect['id']}}
-        context['scouting_reports'] = [{**report,'prospect_id':prospect['id'],'team_id':'team_test'}]
         board = {'year':'2030','entries':[draft.board_entry_payload({'board_rank':1},prospect)]}
         save = {'meta':{'season':'2029-30'},'state':{'current_date':'2030-06-25'}}
         for coverage in (0,50,100):
-            with patch.object(play,'prospect_scouted_pct',return_value=coverage):
+            with patch.object(play,'scouting_report_for',return_value={**report,'coverage':coverage}):
                 scout = play.prospect_scout_display(context,prospect,'team_test',save)
                 enriched = aa.enrich_draft_board_scouting(context,save,'team_test',deepcopy(board))
             visible = aa.prospect_card_ratings(prospect,scout,report)
@@ -71,11 +70,11 @@ class ProspectRatingParityTests(unittest.TestCase):
             if coverage==0:
                 self.assertEqual(visible['ratings'],{})
             elif coverage==100:
+                # Full coverage shows the scouts' report, never the hidden truth (draft-boards plan, step 1). The
+                # conversion is the signed rookie's: the report's numbers give the report's ratings.
                 _, actual = self.signed(context,prospect)
-                self.assertEqual(scout['ratings'],actual)
-                # Common model units remove the old presentation inflation;
-                # full scouting must still match the actual NBA projection.
-                self.assertEqual(scout['now'],actual['overall'])
+                self.assertNotEqual(scout['ratings'],actual)
+                self.assertEqual(scout['ratings'],prospect_rating_projection(context,prospect,report,100)['ratings'])
 
     def test_in_progress_legacy_class_takes_precedence_over_new_generated_previews(self):
         old = self.context(seed=7)
@@ -100,9 +99,11 @@ class ProspectRatingParityTests(unittest.TestCase):
         first = draft.generated_class_for_context(canonical,'2031',1)
         second = draft.generated_class_for_context(canonical,'2031',7)
         self.assertIs(first,second)
-        board = draft.generated_board_report(canonical,'TST','2031',1,None,None)
-        with patch.object(draft,'generate_draft_order',return_value={'draft_order':[],'lottery':{}}):
-            result = draft.simulate_generated_draft(canonical,'2031',7)
+        class_records = draft.draft_scouting.class_records(canonical,'2031')
+        board = {'entries':[{'prospect':p} for p in class_records[0]]}
+        with patch.object(draft,'generate_draft_order',return_value={'draft_order':[],'lottery':{}}), \
+             patch.object(draft,'with_draft_context',side_effect=lambda c,config=None: c):
+            result = draft.simulate_draft(canonical,'2031',7)
         self.assertEqual(result['seed'],7)
         self.assertEqual(result['draft_prospects'],first['draft_prospects'])
         self.assertEqual({row['prospect']['id'] for row in board['entries']},{p['id'] for p in result['draft_prospects']})
@@ -124,8 +125,8 @@ class ProspectRatingParityTests(unittest.TestCase):
         with patch.object(draft,'with_draft_context',return_value=context), \
              patch.object(draft,'generate_draft_order',return_value={'draft_order':[pick],'lottery':{}}), \
              patch.object(draft,'team_by_id',return_value=team), \
-             patch.object(draft,'choose_entry_with_draft_chaos',return_value={'prospect_id':prospect['id']}), \
-             patch.object(draft,'draft_pick_decision',return_value=decision):
+             patch.object(draft,'gm_rows',return_value=[{'prospect_id':prospect['id']}]), \
+             patch.object(draft,'gm_decision',return_value=decision):
             result = draft.simulate_draft(context,'2030',7)
         self.assertEqual(result['draft_prospect_traits'],context['draft_prospect_traits'])
         self.assertEqual(result['draft_prospects'],context['draft_prospects'])

@@ -314,6 +314,7 @@ MUTATING_ACTIONS = {
     "buyout_player",
     "claim_waiver",
     "set_rotation_minutes",
+    "set_player_rest",
     "set_team_block",
     "set_team_wants",
     "acknowledge_team_wants",
@@ -409,6 +410,7 @@ def runtime_status(root: Path, save_dir: Path) -> dict[str, Any]:
                 "claim_waiver",
                 "waiver_room",
                 "set_rotation_minutes",
+                "set_player_rest",
                 "set_team_block",
                 "set_team_wants",
                 "acknowledge_team_wants",
@@ -867,6 +869,8 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return set_starting_five_action(root, canonical, save_path, payload)
     if action == "set_rotation_minutes":
         return set_rotation_minutes_action(root, canonical, save_path, payload)
+    if action == "set_player_rest":
+        return set_player_rest_action(root, canonical, save_path, payload)
     if action == "roster_cutdown":
         return roster_cutdown_payload(canonical, save_path)
     if action == "waive_player":
@@ -1670,8 +1674,9 @@ def prospect_card_payload(canonical: dict[str, Any], save_path: Path, prospect_i
     if prospect is None:
         raise AppActionError(f'No prospect found with id {prospect_id!r}.')
     scout = prospect_scout_display(active, prospect, team['id'], save)
-    report = scouting_report_for(active, prospect_id, team['id'])
+    report = scouting_report_for(active, prospect_id, team['id'], prospect=prospect)
     visible = prospect_card_ratings(prospect, scout, report)
+    boards = prospect_two_boards(active, team, prospect, year or current_draft_year(save))
     from .real_prospects import college_card, real_entry_for, scouting_card
     real = real_entry_for({**prospect, 'draft_year': prospect.get('draft_year') or year or current_draft_year(save)}) or {}
     college = real.get('college')
@@ -1697,12 +1702,49 @@ def prospect_card_payload(canonical: dict[str, Any], save_path: Path, prospect_i
         'ratings': visible['ratings'], 'scouting_coverage': scout.get('scouted_pct', 0),
         'upside_unlocked': upside_unlocked,
         'upside_remaining': round(max(0, min(5, (scout.get('potential', 0) - scout.get('now', 0)) / 5)), 1) if upside_unlocked else None,
-        'board_rank': prospect.get('rank'), 'rank_range': prospect.get('rank_range') or {},
+        'board_rank': boards.get('consensus_rank') or prospect.get('rank'),
+        'rank_range': ({'low': boards['consensus_middle'][0], 'high': boards['consensus_middle'][1]} if boards else prospect.get('rank_range') or {}),
+        'draft_boards': boards,
         'season': season, 'career_seasons': career,
         'recent_games': logs, 'recent_game_table': logs[-5:],
         'college_profile': college_card(college) if college else None,
         'scouting_profile': scouting_card(real.get('scouting')),
         'spatial_profile': prospect_spatial_profile(active, prospect, include_chart=True),
+    }
+
+
+def prospect_two_boards(active: dict[str, Any], team: dict[str, Any], prospect: dict[str, Any], year: Any) -> dict[str, Any]:
+    """The prospect card's two boards: the league consensus (rank and spread) and the user's scouts' board (rank,
+    monthly change, now-vs-upside read, coverage), with a plain sentence for any gap between them."""
+    from .draft_scouting import class_scouting, previous_month_ranks, where_scouts_differ
+
+    prospect_id = str(prospect.get('id') or prospect.get('prospect_id') or '')
+    draft_year = str(prospect.get('draft_year') or year or '')
+    try:
+        scouting = class_scouting(active, draft_year)
+    except (KeyError, ValueError, TypeError):
+        return {}
+    report = (scouting['reports'].get(team['id']) or {}).get(prospect_id)
+    consensus = scouting['consensus'].get(prospect_id)
+    if not report or not consensus:
+        return {}
+    previous = previous_month_ranks(active, draft_year, team['id'], scouting['month']).get(prospect_id) if not scouting['ahead'] else None
+    differ = where_scouts_differ(scouting, team['id'], prospect_id)
+    gap = int(report['scout_rank']) - int(consensus['rank'])
+    if differ and abs(gap) >= 2:
+        note = f"Your scouts are {differ}."
+    elif abs(gap) >= 3:
+        note = f"Your scouts rank him {'lower' if gap > 0 else 'higher'} than the league does."
+    else:
+        note = "Your scouts and the league see him about the same."
+    return {
+        'month_label': scouting['month_label'],
+        'consensus_rank': consensus['rank'], 'consensus_best': consensus['best'], 'consensus_worst': consensus['worst'],
+        'consensus_middle': list(consensus['middle']),
+        'scout_rank': report['scout_rank'], 'scout_rank_previous': previous,
+        'scout_rank_change': (previous - report['scout_rank']) if previous else None,
+        'development': report['development'], 'coverage': report['coverage'],
+        'scouts_differ': differ, 'note': note,
     }
 
 
@@ -2679,6 +2721,10 @@ def set_rotation_minutes_action(root: Path, canonical: dict[str, Any], save_path
         for player_id in roster
         if player_unavailable_for_rotation(health_by_player.get(player_id))
     }
+    # Players the GM is resting keep their minutes target for when they return (set_player_rest).
+    previous_override = dict((save.get("rotation_overrides") or {}).get(team["id"]) or {})
+    previous_locked = set((save.get("rotation_locked_player_ids") or {}).get(team["id"]) or [])
+    gm_rested = {player_id for player_id in roster if (health_by_player.get(player_id) or {}).get("user_rest")}
     cleaned: dict[str, int] = {}
     for player_id, value in raw_minutes.items():
         player_id = str(player_id)
@@ -2730,6 +2776,11 @@ def set_rotation_minutes_action(root: Path, canonical: dict[str, Any], save_path
         player_id: int(round(redistributed.get(player_id, 0.0)))
         for player_id in roster
     }
+    for player_id in gm_rested:
+        if previous_override.get(player_id):
+            save["rotation_overrides"][team["id"]][player_id] = int(previous_override[player_id])
+            if player_id in previous_locked and player_id not in locked_ids:
+                locked_ids.append(player_id)
     recommendations = save.setdefault("rotation_recommendations", {})
     save.setdefault("rotation_locked_player_ids", {})[team["id"]] = locked_ids
     for player_id in roster:
@@ -2740,6 +2791,66 @@ def set_rotation_minutes_action(root: Path, canonical: dict[str, Any], save_path
         "total_minutes": redistributed_total,
         "dashboard": team_dashboard(root, canonical, save_path, team["abbrev"]),
     }
+
+
+USER_REST_MAX_GAMES = 5
+
+
+def set_player_rest_action(root: Path, canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    """Rest one of the GM's players for his team's next N games (1-5), or cancel it (games 0). His minutes target is
+    kept; while he sits, the coach places his minutes (absence fill) and he recovers fatigue like any day off."""
+    from .health import default_state_dict
+    from .save import AWARD_MIN_GAMES, award_games_max
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    team_id = str(save.get("meta", {}).get("user_team_id") or "")
+    player_id = str(payload.get("player_id") or "")
+    active = canonical_with_save(canonical, save)
+    player = next((p for p in active.get("players", []) if p.get("id") == player_id), None)
+    if not player or player.get("team_id") != team_id:
+        raise AppActionError("Only players on your team can be rested.")
+    try:
+        games = int(payload.get("games") or 0)
+    except (TypeError, ValueError) as error:
+        raise AppActionError("Rest length must be a number of games.") from error
+    if games < 0 or games > USER_REST_MAX_GAMES:
+        raise AppActionError(f"Rest a player for 1 to {USER_REST_MAX_GAMES} games (0 cancels).")
+    current = str(save.get("state", {}).get("current_date") or "")
+    states = save.setdefault("health_states", [])
+    state = next((row for row in states if row.get("player_id") == player_id), None)
+    if games and state and str(state.get("availability_status") or "active") != "active":
+        return {"status": "blocked", "reason": f"{player.get('name')} is injured and already out."}
+    if state is None:
+        state = default_state_dict(player_id, current or "2026-10-01")
+        states.append(state)
+    if games:
+        state["user_rest"] = {"games_left": games, "games": games, "since": current, "team_id": team_id}
+        state.pop("rest_suggestion", None)
+    else:
+        state.pop("user_rest", None)
+    warning = ""
+    if games and save.get("state", {}).get("phase") == "regular_season":
+        record = (save.get("team_records") or {}).get(team_id, {})
+        team_games = int(record.get("wins", 0)) + int(record.get("losses", 0))
+        played = int(((save.get("player_season_stats") or {}).get(player_id) or {}).get("games") or 0)
+        reach_after = award_games_max(played, team_games, state)
+        reach_before = reach_after + games
+        if reach_after < AWARD_MIN_GAMES <= reach_before:
+            warning = (f"{player.get('name')} can now play at most {reach_after} games this season: below the "
+                       f"{AWARD_MIN_GAMES} games needed for season awards.")
+        elif reach_after < AWARD_MIN_GAMES:
+            warning = f"{player.get('name')} can no longer reach the {AWARD_MIN_GAMES} games needed for season awards."
+    write_save(save_path, save)
+    return {
+        "status": "updated",
+        "player_id": player_id,
+        "games": games,
+        "warning": warning,
+        "dashboard": team_dashboard(root, canonical, save_path, team_abbrev_for_id(active, team_id)),
+    }
+
+
+def team_abbrev_for_id(canonical: dict[str, Any], team_id: str) -> str:
+    return next((team["abbrev"] for team in canonical.get("teams", []) if team.get("id") == team_id), "")
 
 
 def extension_room_payload(
@@ -3532,6 +3643,7 @@ def clean_draft_order_item(item: dict[str, Any], teams: dict[str, dict[str, Any]
     if include_prospect:
         result["prospect"] = dict(item.get("prospect") or {})
         result["prospect"]["age"] = whole_prospect_age(result["prospect"].get("age"))
+        result["explanation"] = (item.get("decision") or {}).get("notes")
     return result
 
 
@@ -3631,21 +3743,29 @@ def enrich_draft_board_scouting(
     team_id: str,
     board: dict[str, Any],
 ) -> dict[str, Any]:
-    """Attach the same save-aware scouting read to every draft UI surface."""
+    """Attach the same save-aware scouting read to every draft UI surface.
+
+    Movement: change since the scouts' last monthly update when the board has one, else since the season's
+    first board (prospect_preseason_ranks)."""
     from .play import prospect_scout_display, scouting_report_for
 
     medical_by_id = prospect_medical_lookup(active)
     today = (save.get("state") or {}).get("current_date")
+    baselines = (save.get("prospect_preseason_ranks") or {}).get(f"{team_id}:{board.get('year')}", {})
     for entry in board.get("entries") or []:
         prospect = entry.get("prospect") or entry
         prospect["injury_report"] = prospect_injury_report(medical_by_id.get(str(prospect.get("id") or prospect.get("prospect_id"))), today)
         scout = prospect_scout_display(active, prospect, team_id, save)
-        report = scouting_report_for(active, prospect.get("id") or prospect.get("prospect_id"), team_id)
+        report = scouting_report_for(active, prospect.get("id") or prospect.get("prospect_id"), team_id, prospect=prospect)
         entry["scout_display"] = {**scout, **prospect_card_ratings(prospect, scout, report)}
-        baselines = (save.get("prospect_preseason_ranks") or {}).get(f"{team_id}:{board.get('year')}", {})
         baseline_rank = int(baselines.get(prospect.get("id")) or entry.get("season_start_rank") or entry.get("board_rank") or 999)
         entry["season_start_rank"] = baseline_rank
-        entry["rank_change"] = baseline_rank - int(entry.get("board_rank") or baseline_rank)
+        if entry.get("scout_rank_change") is not None:
+            entry["rank_change"] = int(entry["scout_rank_change"])
+            entry["rank_change_basis"] = "month"
+        else:
+            entry["rank_change"] = baseline_rank - int(entry.get("board_rank") or baseline_rank)
+            entry["rank_change_basis"] = "season"
     return board
 
 
@@ -3787,45 +3907,26 @@ def live_draft_board_report(
     year: str,
     state: dict[str, Any],
 ) -> dict[str, Any]:
-    """Build the visible board from live draft prospects without trade context."""
+    """The draft-night board: the user's scouts' final (June) board beside the league consensus, for the prospects
+    in this draft. Same rows as before the draft; no hidden ratings, and Fit is the GM's need fit only."""
+    from .draft_scouting import DRAFT_MONTH
+
     pending = ((state.get("draft") or {}).get("pending_draft_selections") or [])
-    prospects: dict[str, dict[str, Any]] = {}
-    for item in pending:
-        prospect = item.get("prospect") or {}
-        prospect_id = str(prospect.get("id") or (item.get("selection") or {}).get("prospect_id") or "")
-        if prospect_id and prospect_id not in prospects:
-            prospects[prospect_id] = {**prospect, "prospect_id": prospect_id}
-    roster_depth: dict[str, int] = {}
-    for player in active.get("players", []):
-        if player.get("team_id") != team["id"] or display_minutes_projection(player) <= 0:
-            continue
-        position = compact_position(player.get("position"))
-        roster_depth[position] = roster_depth.get(position, 0) + 1
-    entries = []
-    for prospect in prospects.values():
-        current = float(prospect.get("current_ability") or 45.0)
-        potential = float(prospect.get("potential") or current)
-        volatility = float(prospect.get("volatility") or 10.0)
-        position = compact_position(prospect.get("position"))
-        need = max(-6.0, min(8.0, (2 - roster_depth.get(position, 0)) * 3.0))
-        fit = max(1.0, min(99.0, 50.0 + need + (potential - 60.0) * 0.18))
-        grade = potential * 0.65 + current * 0.25 + fit * 0.10 - volatility * 0.04
-        entries.append(
-            {
-                "board_rank": int(prospect.get("rank") or 999),
-                "prospect_id": prospect.get("id"),
-                "prospect": prospect,
-                "risk_adjusted_grade": round(grade, 2),
-                "fit_grade": round(fit, 2),
-                "cap_value": round(float(prospect.get("rookie_contract_value") or 50.0), 2),
-            }
-        )
-    entries.sort(key=lambda item: (int(item.get("board_rank") or 999), -float(item.get("risk_adjusted_grade") or 0.0)))
+    ids = {str((item.get("prospect") or {}).get("id") or (item.get("selection") or {}).get("prospect_id") or "")
+           for item in pending}
+    ids.discard("")
+    try:
+        board = draft_board_report(active, team["abbrev"], str(year), limit=None, month=DRAFT_MONTH)
+    except (KeyError, ValueError):
+        board = {"entries": []}
+    entries = [entry for entry in board.get("entries") or [] if str((entry.get("prospect") or {}).get("id")) in ids]
+    entries.sort(key=lambda item: (int(item.get("consensus_rank") or 999), int(item.get("board_rank") or 999)))
     return enrich_draft_board_scouting(
         active,
         save,
         team["id"],
-        {"team": team, "year": year, "entry_count": len(entries), "entries": entries},
+        {"team": team, "year": year, "month": board.get("month"), "month_label": board.get("month_label"),
+         "entry_count": len(entries), "entries": entries},
     )
 
 
@@ -4600,6 +4701,9 @@ def update_game_settings_action(canonical: dict[str, Any], save_path: Path, sett
     game_settings = ensure_game_settings(save)
     if "press_conferences_enabled" in settings:
         game_settings["press_conferences_enabled"] = bool(settings.get("press_conferences_enabled"))
+    if "coach_rests_players" in settings:
+        # Let the head coach rest the GM's players by the AI coaches' rule (back-to-backs, fatigue, age, late season).
+        game_settings["coach_rests_players"] = bool(settings.get("coach_rests_players"))
     current = save.get("state", {}).get("current_date")
     if current:
         save["state"]["legal_actions"] = save_legal_actions_for_date(save, current)

@@ -25,7 +25,7 @@ const state = {
   draftPresentationStage: "",
   draftPresentationKey: "",
   draftBoardFilter: "available",
-  draftBoardSort: { key: "rank", direction: "asc" },
+  draftBoardSort: { key: "consensus", direction: "asc" },
   dashboardProspectSort: { key: "rank", direction: "asc" },
   selectedDraftProspect: "",
   draftSelectionPickKey: "",
@@ -123,6 +123,7 @@ const MULTIPLAYER_MUTATIONS = new Set([
   "respond_user_trade_offer",
   "resolve_staff_retention",
   "set_rotation_minutes",
+  "set_player_rest",
   "set_starting_five",
   "set_team_wants",
   "acknowledge_team_wants",
@@ -1960,18 +1961,21 @@ function updateRotationDuringSimulation(rotation) {
     const row = cardRows.find((item) => item.dataset.minuteRow === id);
     if (!row) continue;
     const injured = isPlayerInjured(update.health);
+    const resting = playerIsResting({health:update.health});
     row.classList.toggle("injured", injured);
+    row.classList.toggle("resting", resting);
     const input = row.querySelector("[data-minute-player]");
-    if (input) input.disabled = injured || state.simulationRunning;
+    if (input) input.disabled = injured || resting || state.simulationRunning;
     const button = row.querySelector("button[data-dashboard-player-card]");
     if (button) {
-      button.querySelector(".season-injury-status")?.remove();
-      const statusMarkup = playerInjuryStatusMarkup({id, name:button.dataset.playerName || "Player", health:update.health});
+      button.querySelectorAll(".season-injury-status").forEach((node) => node.remove());
+      const markerRow = {id, name:button.dataset.playerName || "Player", health:update.health};
+      const statusMarkup = playerInjuryStatusMarkup(markerRow) + playerRustMarkup(markerRow) + playerRestMarkup(markerRow);
       if (statusMarkup) {
         const template = document.createElement("template");
         template.innerHTML = statusMarkup;
         const motion = button.querySelector(".season-row-motion");
-        button.insertBefore(template.content.firstElementChild, motion || null);
+        for (const node of [...template.content.children]) button.insertBefore(node, motion || null);
       }
     }
     const fatigue = row.querySelector(".season-fatigue");
@@ -3811,7 +3815,7 @@ function prospectOriginMarkup(origin) {
 
 function seasonProspectsCard(options = {}) {
   const sort = state.dashboardProspectSort.key === "stock" ? {key:"rank", direction:"asc"} : state.dashboardProspectSort;
-  const value = (row) => ({rank:Number(row.rank), name:row.name, position:row.position, age:Number(row.age), height:row.height, now:Number(row.now), range:row.draftRangeLow ?? Infinity, scouted:Number(row.scoutedPct ?? Number(row.confidence || 0) * 100)})[sort.key];
+  const value = (row) => ({rank:Number(row.consensusRank ?? row.rank), yours:Number(row.rank), name:row.name, position:row.position, age:Number(row.age), height:row.height, now:Number(row.now), range:row.draftRangeLow ?? Infinity, scouted:Number(row.scoutedPct ?? Number(row.confidence || 0) * 100)})[sort.key];
   const sourceRows = [...(options.rows || draftBoardRows(state.data.dashboardProspects || {}))];
   const sortedRows = sourceRows.sort((a, b) => {
     if (sort.key === "range" && (a.draftRangeLow == null || b.draftRangeLow == null)) {
@@ -3820,24 +3824,25 @@ function seasonProspectsCard(options = {}) {
     const av = value(a), bv = value(b);
     return (typeof av === "string" ? av.localeCompare(String(bv)) : av - bv) * (sort.direction === "asc" ? 1 : -1)
       || (sort.key === "range" ? (Number(a.draftRangeHigh) - Number(b.draftRangeHigh)) * (sort.direction === "asc" ? 1 : -1) : 0)
-      || Number(a.rank) - Number(b.rank);
+      || Number(a.consensusRank ?? a.rank) - Number(b.consensusRank ?? b.rank);
   });
   const rows = options.expanded ? sortedRows : sortedRows.slice(0, 6);
   return `<div class="season-prospects-table${options.expanded ? " season-prospects-table-expanded" : ""}">
-      <div class="season-prospects-head">${[["rank", "#"], ["name", "Prospect"], ["position", "Pos"], ["age", "Age"], ["height", "Height"], ["now", "Now/Pot"], ["range", "Range"], ["scouted", "Scouted"]].map(([key, label]) => `<button type="button" data-season-prospect-sort="${key}" aria-pressed="${sort.key === key}" title="${key === "range" ? "Sort by projected draft pick range" : `Sort by ${label}`}" aria-label="Sort by ${label}${sort.key === key ? `, ${sort.direction === "asc" ? "ascending" : "descending"}` : ""}">${label}${sort.key === key ? (sort.direction === "asc" ? " ↑" : " ↓") : ""}</button>`).join("")}</div>
+      <div class="season-prospects-head">${[["rank", "#"], ["name", "Prospect"], ["position", "Pos"], ["age", "Age"], ["height", "Height"], ["now", "Now/Pot"], ["yours", "Yours"], ["range", "Range"], ["scouted", "Scouted"]].map(([key, label]) => `<button type="button" data-season-prospect-sort="${key}" aria-pressed="${sort.key === key}" title="${{rank: "League consensus rank (median of all 30 teams' scouting)", yours: "Your scouts' board rank (talent only); arrow: change since last month", range: "Where most teams (the middle half) rank him"}[key] || `Sort by ${label}`}" aria-label="Sort by ${label}${sort.key === key ? `, ${sort.direction === "asc" ? "ascending" : "descending"}` : ""}">${label}${sort.key === key ? (sort.direction === "asc" ? " ↑" : " ↓") : ""}</button>`).join("")}</div>
       ${rows.map((row) => {
         const confidence = clampNumber(Number(row.scoutedPct ?? Number(row.confidence || 0) * 100), 0, 100);
         const hasRange = row.draftRangeLow != null && row.draftRangeHigh != null;
         const draftRange = hasRange ? `${row.draftRangeLow}–${row.draftRangeHigh}` : "—";
         const now = Number(row.now), potential = Number(row.potential);
         return `<button type="button" class="season-prospect-row" data-draft-prospect-card="${escapeAttr(row.id)}" title="Open scouting report for ${escapeAttr(row.name)}">
-          <span class="season-prospect-rank">${String(row.rank).padStart(2, "0")}</span>
+          <span class="season-prospect-rank">${String(row.consensusRank ?? row.rank).padStart(2, "0")}</span>
           <span class="season-prospect-name"><span class="season-prospect-name-main">${prospectOriginMarkup(row.sourceTeam)}<strong>${escapeHtml(row.name)}</strong>${prospectInjuryMarkup(row.injuryReport, { compact: true })}</span></span>
           <span class="season-prospect-position">${escapeHtml(row.position)}</span>
           <span>${escapeHtml(row.age ?? "—")}</span>
           <span>${escapeHtml(row.height || "—")}</span>
           <span class="season-prospect-nowpot"><strong>${Number.isFinite(now) ? now.toFixed(0) : "—"}</strong><i aria-hidden="true">→</i><b>${Number.isFinite(potential) ? potential.toFixed(0) : "—"}</b></span>
-          <span class="season-prospect-range" title="${hasRange ? `Projected draft picks ${row.draftRangeLow} to ${row.draftRangeHigh}` : "Projected draft range unavailable"}">${draftRange}</span>
+          <span class="season-prospect-yours" title="${escapeAttr(row.developmentLabel ? `Your scouts: ${row.developmentLabel}` : "Your scouts' board")}">#${escapeHtml(row.rank)}${draftRankMove(row.rankChange)}</span>
+          <span class="season-prospect-range" title="${hasRange ? `Most teams rank him #${row.draftRangeLow} to #${row.draftRangeHigh}${row.consensusBest != null ? ` (every team: #${row.consensusBest} to #${row.consensusWorst})` : ""}` : "Team ranks unavailable"}">${draftRange}</span>
           <span class="season-scouted" aria-label="Scouted ${confidence.toFixed(0)} percent"><i><b style="${performanceBarStyle(confidence)}"></b></i><strong>${confidence.toFixed(0)}%</strong></span>
         </button>`;
       }).join("") || `<div class="empty">Prospect board unavailable.</div>`}
@@ -4015,25 +4020,27 @@ function staffRoleLabel(role) {
 
 function seasonMinutesCard(rows, editable) {
   if (editable) ensureRotationDraft(rows);
-  const assigned = (row) => isPlayerInjured(row.health)
+  const assigned = (row) => isPlayerInjured(row.health) || playerIsResting(row)
     ? 0
     : Number(state.rotationDraft[row.id] ?? row.rotation_target_minutes ?? row.minutes_projection ?? 0);
   const sortedRows = [...rows].sort((left, right) => assigned(right) - assigned(left));
   return `${seasonPanelHeader("Minutes + Availability", "", "availability")}
     <div class="season-minutes-table" style="--roster-count:${Math.max(1, rows.length)}">
-      <div class="season-minutes-head"><span>Player</span><span>Pos</span><span>Height</span><span>Minutes</span><span>Fatigue</span></div>
+      <div class="season-minutes-head"><span class="season-minutes-player-head"><span>Player</span>${editable ? coachRestToggleMarkup("minutes-coach-rest") : ""}</span><span>Pos</span><span>Height</span><span>Minutes</span><span>Fatigue</span></div>
       ${sortedRows.map((row) => {
         const injured = isPlayerInjured(row.health);
+        const resting = playerIsResting(row);
+        const out = injured || resting;
         const injuryStatus = playerInjuryStatusMarkup(row) + playerRustMarkup(row) + playerRestMarkup(row);
-        const minuteValue = injured ? 0 : clampNumber(assigned(row), 0, 48);
-        const rotationLocked = !injured && (state.rotationLockedPlayerIds.has(row.id) || row.rotation_user_set);
+        const minuteValue = out ? 0 : clampNumber(assigned(row), 0, 48);
+        const rotationLocked = !out && (state.rotationLockedPlayerIds.has(row.id) || row.rotation_user_set);
         const position = String(row.position || "—").trim() || "—";
         const height = heightFromRow(row) || "—";
-        return `<div class="season-minute-row${injured ? " injured" : ""}" data-minute-row="${escapeAttr(row.id)}">
+        return `<div class="season-minute-row${injured ? " injured" : ""}${resting ? " resting" : ""}" data-minute-row="${escapeAttr(row.id)}">
           <button type="button" data-dashboard-player-card="${escapeAttr(row.id)}">${playerHeadshotMarkup(row, "roster-player-headshot")}<span class="season-minute-player-name">${escapeHtml(row.name || "Unknown")}</span>${injuryStatus}<i class="season-row-motion" aria-hidden="true" hidden></i></button>
           <span class="season-minute-position" title="${escapeAttr(row.position || "Position unavailable")}">${escapeHtml(position)}</span>
           <span class="season-minute-height">${escapeHtml(height)}</span>
-          <div class="season-minute-control"><label class="season-minute-slider${rotationLocked ? " user-locked" : ""}"><i><b class="season-minute-fill" style="width:${(minuteValue / 48 * 100).toFixed(2)}%"></b></i><input type="range" min="0" max="48" step="1" value="${minuteValue}" data-minute-player="${escapeAttr(row.id)}" aria-label="Minutes for ${escapeAttr(row.name || "player")}" ${editable && !injured ? "" : "disabled"} /></label><output class="is-sorted-value" data-minute-output="${escapeAttr(row.id)}">${minuteValue}</output><button type="button" class="season-minute-reset" data-minute-reset-player="${escapeAttr(row.id)}" aria-label="Reset ${escapeAttr(row.name || "player")} to automatic minutes" title="Reset to automatic minutes" ${rotationLocked && editable && !injured ? "" : "hidden"} ${editable && !injured ? "" : "disabled"}>×</button></div>
+          <div class="season-minute-control"><label class="season-minute-slider${rotationLocked ? " user-locked" : ""}"><i><b class="season-minute-fill" style="width:${(minuteValue / 48 * 100).toFixed(2)}%"></b></i><input type="range" min="0" max="48" step="1" value="${minuteValue}" data-minute-player="${escapeAttr(row.id)}" aria-label="Minutes for ${escapeAttr(row.name || "player")}" ${editable && !out ? "" : "disabled"} /></label><output class="is-sorted-value" data-minute-output="${escapeAttr(row.id)}">${minuteValue}</output><button type="button" class="season-minute-reset" data-minute-reset-player="${escapeAttr(row.id)}" aria-label="Reset ${escapeAttr(row.name || "player")} to automatic minutes" title="Reset to automatic minutes" ${rotationLocked && editable && !out ? "" : "hidden"} ${editable && !out ? "" : "disabled"}>×</button>${playerRestButtonMarkup(row, editable)}</div>
           ${seasonFatigueCell(row)}
         </div>`;
       }).join("") || `<div class="empty">No roster loaded.</div>`}
@@ -4045,11 +4052,120 @@ function seasonMiniRating(value) {
   return `<span class="season-mini-rating"><em>${score.toFixed(0)}</em><i><b style="${performanceBarStyle(score)}"></b></i></span>`;
 }
 
+// The engine's fatigue (0-100) as of today, straight from the health state; the tooltip adds the value his next game
+// will use (fatigue at that tip-off, after the days off in between).
+const FATIGUE_TIRED = 40;
+const FATIGUE_VERY_TIRED = 60;
+
+function seasonFatigueTone(fatigue) {
+  return fatigue >= FATIGUE_VERY_TIRED ? "high" : fatigue >= FATIGUE_TIRED ? "medium" : "low";
+}
+
+function seasonFatigueTooltip(health = {}) {
+  const fatigue = clampNumber(Number(health.fatigue || 0), 0, 100);
+  const next = Number(health.fatigue_next);
+  const nextText = Number.isFinite(next) && health.fatigue_next_date
+    ? ` About ${next.toFixed(0)} at his next tip-off (${health.fatigue_next_date}): the value that game uses.`
+    : "";
+  return `Fatigue ${fatigue.toFixed(0)} / 100 today.${nextText}\n`
+    + "Each game adds fatigue in proportion to his minutes (more for older players, poor stamina and road games); every day without a game clears about 40% of it.\n"
+    + "A 36-minute starter on a normal schedule is near 50 right after a game and near 20 at the next tip-off; the second night of a back-to-back starts near 30.\n"
+    + "Above the normal level at tip-off, his team tires a little and his injury risk rises a little; above 50 his own ratings drop too. Resting him for a game clears it fastest.";
+}
+
 function seasonFatigueCell(row) {
   const fatigue = clampNumber(Number(row.health?.fatigue || 0), 0, 100);
   const level = clampNumber(Math.round((fatigue / 100) * 6), 0, 6);
-  const tone = level <= 2 ? "low" : level <= 4 ? "medium" : "high";
-  return `<span class="season-fatigue ${tone}" title="Simulated fatigue: ${fatigue.toFixed(1)} / 100. Game minutes build fatigue; rest days reduce it.">${Array.from({ length: 6 }, (_unused, index) => `<i class="${index < level ? "filled" : ""}"></i>`).join("")}</span>`;
+  const tone = seasonFatigueTone(fatigue);
+  return `<span class="season-fatigue ${tone}" data-fatigue-value="${fatigue.toFixed(1)}" title="${escapeAttr(seasonFatigueTooltip(row.health || {}))}">${Array.from({ length: 6 }, (_unused, index) => `<i class="${index < level ? "filled" : ""}"></i>`).join("")}</span>`;
+}
+
+const AWARD_MIN_GAMES = 65;
+
+function closeRestMenu() {
+  document.querySelectorAll(".season-rest-menu").forEach((menu) => menu.remove());
+}
+
+function openRestMenu(button) {
+  const playerId = button.dataset.minuteRestPlayer;
+  const row = rosterRows(state.data.dashboard || {}).find((item) => item.id === playerId);
+  closeRestMenu();
+  if (!row) return;
+  const rest = row.health?.user_rest;
+  const restingLeft = Number(rest?.games_left || 0);
+  const reachable = row.award_games_max == null ? null : Number(row.award_games_max) + restingLeft;
+  const option = (games) => {
+    const after = reachable == null ? null : reachable - games;
+    const underAward = after != null && after < AWARD_MIN_GAMES && reachable >= AWARD_MIN_GAMES;
+    const note = underAward ? ` · under ${AWARD_MIN_GAMES} games` : "";
+    const title = underAward ? `He could then play at most ${after} games this season: below the ${AWARD_MIN_GAMES} needed for season awards.` : `Sits his team's next ${restGamesLabel(games)}, then returns to his minutes.`;
+    return `<button type="button" role="menuitem" data-rest-games="${games}" class="${underAward ? "award-warning" : ""}" title="${escapeAttr(title)}">${restGamesLabel(games)}${escapeHtml(note)}</button>`;
+  };
+  const awardNote = reachable == null ? "" : reachable >= AWARD_MIN_GAMES
+    ? `Can still reach ${reachable} games (awards need ${AWARD_MIN_GAMES}).`
+    : `Can reach at most ${reachable} games: already under the ${AWARD_MIN_GAMES} needed for awards.`;
+  const menu = document.createElement("div");
+  menu.className = "season-rest-menu";
+  menu.setAttribute("role", "menu");
+  menu.innerHTML = `<strong>${escapeHtml(rest ? `Resting: back in ${restGamesLabel(restingLeft)}` : `Rest ${row.name || "player"} for his team's next`)}</strong>
+    ${[1, 2, 3, 4, 5].map(option).join("")}
+    ${rest ? `<button type="button" role="menuitem" data-rest-games="0" class="cancel">Cancel rest</button>` : ""}
+    <small>${escapeHtml(`His minutes target is kept; while he sits, the coach spreads his minutes.${awardNote ? ` ${awardNote}` : ""}`)}</small>`;
+  document.body.append(menu);
+  const box = button.getBoundingClientRect();
+  menu.style.left = `${Math.max(4, Math.min(window.innerWidth - menu.offsetWidth - 4, box.right - menu.offsetWidth))}px`;
+  menu.style.top = `${Math.min(window.innerHeight - menu.offsetHeight - 4, box.bottom + 2)}px`;
+  menu.querySelectorAll("[data-rest-games]").forEach((item) => {
+    item.addEventListener("click", async () => {
+      closeRestMenu();
+      await setPlayerRest(playerId, Number(item.dataset.restGames));
+    });
+  });
+  setTimeout(() => document.addEventListener("click", function outside(event) {
+    if (!menu.contains(event.target)) {
+      closeRestMenu();
+      document.removeEventListener("click", outside);
+    }
+  }), 0);
+  menu.querySelector("[data-rest-games]")?.focus();
+}
+
+async function setPlayerRest(playerId, games) {
+  if (state.simulationRunning || state.busy) return;
+  try {
+    const result = await action("set_player_rest", { ...savePayload(), player_id: playerId, games });
+    if (result.status === "blocked") return showToast(result.reason || "Rest not set.", true);
+    state.data.dashboard = result.dashboard;
+    state.data.statusDashboard = result.dashboard;
+    state.rotationDraft = {};
+    state.rotationLockedPlayerIds.clear();
+    if (state.view === "dashboard") renderDashboard();
+    if (result.warning) showToast(result.warning, true);
+    else showToast(games ? `Resting for ${restGamesLabel(games)}` : "Rest cancelled");
+  } catch (error) {
+    showToast(`Rest not set. ${error.message || String(error)}`, true);
+  }
+}
+
+async function setCoachRestsPlayers(on) {
+  try {
+    const result = await action("update_game_settings", { ...savePayload(), settings: { coach_rests_players: Boolean(on) } });
+    if (state.home) state.home.game_settings = result.game_settings;
+    document.querySelectorAll("[data-coach-rest-toggle]").forEach((input) => { input.checked = Boolean(on); });
+    showToast(on ? "Your coach will rest players by the AI coaches' rules" : "Your coach will only suggest rest (zZ)");
+    if (state.view === "dashboard") renderDashboard();
+  } catch (error) {
+    showToast(`Setting not saved. ${error.message || String(error)}`, true);
+  }
+}
+
+function wireCoachRestToggles(root = document) {
+  root.querySelectorAll("[data-coach-rest-toggle]").forEach((input) => {
+    if (input.dataset.coachRestWired) return;
+    input.dataset.coachRestWired = "true";
+    input.addEventListener("click", (event) => event.stopPropagation());
+    input.addEventListener("change", () => setCoachRestsPlayers(input.checked));
+  });
 }
 
 function seasonDevelopmentCard(rows) {
@@ -4781,7 +4897,7 @@ async function draftProspectCard(prospectId) {
   if (!detail) return;
   await openPlayerCardOnClipboard({
     key:`prospect:${prospectId}`, title:`${detail.name || row.name || "Prospect"} · Prospect Card`, kind:"prospect",
-    body:approvedPlayerCardBody({...detail, board_rank:row.rank || detail.board_rank}),
+    body:approvedPlayerCardBody({...detail, board_rank:detail.board_rank ?? row.consensusRank}),
   });
 }
 
@@ -5050,7 +5166,7 @@ function draftDashboardWorkspace() {
         </div>
         ${current.selection ? `<div class="draft-clock-context"><span>${userOnClock ? "Your decision" : "AI selection"}</span><strong>${userOnClock ? (selectedProspect ? escapeHtml(selectedProspect.name) : "Select a prospect from the board") : `Simulate pick #${escapeHtml(currentPick)}`}</strong></div>` : `<p class="muted">All ${escapeHtml(draft.state?.total_picks || "")} selections are in.</p>`}
       </header>
-      ${state.draftPlaybackRunning ? `<div class="draft-pick-reveal" role="status" aria-live="polite">${state.draftPlaybackReveal?.type === "pick" ? `${draftTeamLogo(state.draftPlaybackReveal.team)}<span>Pick #${escapeHtml(state.draftPlaybackReveal.overall_pick)}</span><strong>${escapeHtml(teamLabel(state.draftPlaybackReveal.team))} selects ${escapeHtml(state.draftPlaybackReveal.prospect?.name || "Unknown prospect")}</strong>` : `<span>Draft selections underway</span><strong>Revealing picks in order</strong>`}</div>` : ""}
+      ${state.draftPlaybackRunning ? `<div class="draft-pick-reveal" role="status" aria-live="polite">${state.draftPlaybackReveal?.type === "pick" ? `${draftTeamLogo(state.draftPlaybackReveal.team)}<span>Pick #${escapeHtml(state.draftPlaybackReveal.overall_pick)}</span><strong>${escapeHtml(teamLabel(state.draftPlaybackReveal.team))} selects ${escapeHtml(state.draftPlaybackReveal.prospect?.name || "Unknown prospect")}</strong>${state.draftPlaybackReveal.explanation ? `<small class="draft-pick-why">${escapeHtml(String(state.draftPlaybackReveal.explanation).replace(/^[^:]*: /, ""))}</small>` : ""}` : `<span>Draft selections underway</span><strong>Revealing picks in order</strong>`}</div>` : ""}
       ${!completedDraft && (draft.trade_news || []).length ? `<div class="draft-news-strip"><strong>Breaking:</strong> ${escapeHtml((draft.trade_news || []).map((item) => item.headline || textValue(item)).join(" · "))}</div>` : ""}
       <div class="draft-night-grid">
         ${completedDraft ? `<section class="draft-prospect-panel draft-summary-panel">
@@ -5067,7 +5183,7 @@ function draftDashboardWorkspace() {
           </section>
         </aside>` : `<section class="draft-prospect-panel">
           <div class="draft-panel-head">
-            <div><h4>Prospect Board</h4><p>Your scouts' board for ${escapeHtml(teamLabel(draft.board_context_team || clockTeam))}. Select any available prospect when your team is on the clock.</p></div>
+            <div><h4>Prospect Board</h4><p>League consensus beside your scouts' board for ${escapeHtml(teamLabel(draft.board_context_team || clockTeam))}${draft.draft_board?.month_label ? ` (${escapeHtml(draft.draft_board.month_label)} update)` : ""}. Select any available prospect when your team is on the clock.</p></div>
             <select id="draftBoardFilter" aria-label="Prospect availability filter"><option value="available" ${state.draftBoardFilter === "available" ? "selected" : ""}>Available</option><option value="all" ${state.draftBoardFilter === "all" ? "selected" : ""}>All prospects</option></select>
           </div>
           ${draftProspectBoard(visibleBoard, userOnClock, state.selectedDraftProspect)}
@@ -5178,17 +5294,51 @@ function finishLotteryReveal() {
   renderDashboard();
 }
 
+// Two boards side by side (draft-boards plan): the league consensus (median of the 30 teams' scouting, with the
+// range of team ranks) and your scouts' board (talent only, with the change since last month). "Fit for us" is the
+// GM's need and roster fit, kept apart from the scouts' talent read. Now/Pot are your scouts' estimates.
+const DRAFT_BOARD_HEADINGS = [
+  ["consensus", "Consensus"], ["rank", "Your board"], ["name", "Prospect"], ["position", "Pos"], ["age", "Age"],
+  ["height", "Ht"], ["now", "Now"], ["potential", "Pot"], ["type", "Scouts' read"], ["scouted", "Scouted"],
+  ["fit", "Fit for us"], ["injury", "Injury"], ["status", "Status"],
+];
+const DRAFT_BOARD_TIPS = {
+  consensus: "League consensus: the median of all 30 teams' scouting reports. The small range is where most teams (the middle half) rank him.",
+  rank: "Your scouts' board: talent only (current level, upside, age, risk), no team fit. The arrow is the change since last month's update.",
+  now: "Your scouts' estimate of his current level on the overall scale.",
+  potential: "Your scouts' estimate of his realistic peak. Not his hidden true rating.",
+  type: "Your scouts' read: raw with upside, ready now, or some of both.",
+  scouted: "How much of him your scouts have seen. More coverage means tighter estimates.",
+  fit: "Fit for us: your positional need and roster fit (the GM's view). Your scouts' board ignores it.",
+};
+
+function draftRankMove(change) {
+  const value = Number(change);
+  if (change == null || !Number.isFinite(value) || value === 0) return "";
+  return `<span class="draft-rank-move ${value > 0 ? "is-up" : "is-down"}" title="${value > 0 ? "Up" : "Down"} ${Math.abs(value)} since last month">${value > 0 ? "▲" : "▼"}${Math.abs(value)}</span>`;
+}
+
 function draftProspectBoard(rows, selectable = false, selectedId = "") {
-  const headings = [
-    ["rank", "Rank"], ["name", "Prospect"], ["position", "Pos"], ["age", "Age"],
-    ["height", "Ht"], ["now", "Now"], ["potential", "Pot"], ["fit", "Fit"], ["injury", "Injury"], ["status", "Status"],
-  ];
-  const headingTips = {potential: "Scouted potential: your scouts' best guess at this prospect's realistic peak. Not his hidden true rating.", now: "Scouted current level on the overall scale."};
-  return `<div class="draft-prospect-scroll"><table class="draft-prospect-table"><thead><tr>${headings.map(([key, label]) => {const sort=state.draftBoardSort||{};const active=sort.key===key;return `<th aria-sort="${active?(sort.direction==='desc'?'descending':'ascending'):'none'}"${headingTips[key] ? ` title="${escapeAttr(headingTips[key])}"` : ""}><button class="draft-sort-button" data-draft-sort="${escapeAttr(key)}">${escapeHtml(label)}${draftSortMark(key)}</button></th>`;}).join("")}</tr></thead><tbody>${rows.map((row) => {
+  const sort = state.draftBoardSort || {};
+  const sortedClass = (key) => (sort.key === key ? " is-sorted" : "");
+  return `<div class="draft-prospect-scroll"><table class="draft-prospect-table draft-two-boards"><thead><tr>${DRAFT_BOARD_HEADINGS.map(([key, label]) => {const active=sort.key===key;return `<th class="draft-col-${escapeAttr(key)}${sortedClass(key)}" aria-sort="${active?(sort.direction==='desc'?'descending':'ascending'):'none'}"${DRAFT_BOARD_TIPS[key] ? ` title="${escapeAttr(DRAFT_BOARD_TIPS[key])}"` : ""}><button class="draft-sort-button" data-draft-sort="${escapeAttr(key)}">${escapeHtml(label)}${draftSortMark(key)}</button></th>`;}).join("")}</tr></thead><tbody>${rows.map((row) => {
     const available = row.status !== "drafted";
     const selected = available && String(row.id) === String(selectedId || "");
-    return `<tr class="${row.status === "drafted" ? "is-drafted" : ""}${selected ? " is-selected" : ""}${selectable && available ? " is-selectable" : ""}" ${selectable && available ? `data-draft-prospect="${escapeAttr(row.id)}" tabindex="0"` : ""}><td>${escapeHtml(row.rank)}</td><td><button type="button" class="draft-prospect-name" data-draft-prospect-card="${escapeAttr(row.id)}">${escapeHtml(row.name || "Unknown")}</button></td><td>${escapeHtml(row.position || "—")}</td><td>${escapeHtml(row.age ?? "—")}</td><td>${escapeHtml(row.height || "—")}</td><td>${draftMetric(row.now)}</td><td>${draftMetric(row.potential)}</td><td>${draftMetric(row.fit || row.grade)}</td><td class="draft-prospect-injury">${prospectInjuryMarkup(row.injuryReport) || "—"}</td><td>${row.status === "drafted" ? `<span class="drafted-badge">#${escapeHtml(row.selectedPick)} ${escapeHtml(teamLabel(row.selectedTeam))}</span>` : selected ? `<span class="available-badge selected-badge">Selected</span>` : `<span class="available-badge">Available</span>`}</td></tr>`;
-  }).join("") || `<tr><td colspan="10" class="empty">No prospects match this view.</td></tr>`}</tbody></table></div>`;
+    const spread = row.draftRangeLow != null && row.draftRangeHigh != null && row.draftRangeLow !== row.draftRangeHigh ? `<small class="draft-rank-spread" title="Most teams (the middle half) rank him #${escapeAttr(row.draftRangeLow)} to #${escapeAttr(row.draftRangeHigh)}; every team: #${escapeAttr(row.consensusBest ?? row.draftRangeLow)} to #${escapeAttr(row.consensusWorst ?? row.draftRangeHigh)}">${escapeHtml(row.draftRangeLow)}–${escapeHtml(row.draftRangeHigh)}</small>` : "";
+    const cells = {
+      consensus: `<strong>#${escapeHtml(row.consensusRank ?? "—")}</strong>${spread}`,
+      rank: `<strong>#${escapeHtml(row.rank ?? "—")}</strong>${draftRankMove(row.rankChange)}`,
+      name: `<button type="button" class="draft-prospect-name" data-draft-prospect-card="${escapeAttr(row.id)}"${row.scoutsDiffer ? ` title="Your scouts are ${escapeAttr(row.scoutsDiffer)} than the league."` : ""}>${escapeHtml(row.name || "Unknown")}</button>`,
+      position: escapeHtml(row.position || "—"), age: escapeHtml(row.age ?? "—"), height: escapeHtml(row.height || "—"),
+      now: draftMetric(row.now), potential: draftMetric(row.potential),
+      type: `<span class="draft-scout-read draft-scout-read-${escapeAttr(row.developmentKey || "balanced")}" title="${escapeAttr(row.developmentTimeline || "")}">${escapeHtml(row.developmentLabel || "—")}</span>`,
+      scouted: Number.isFinite(Number(row.scoutedPct)) ? `${Number(row.scoutedPct).toFixed(0)}%` : "—",
+      fit: draftMetric(row.fit),
+      injury: prospectInjuryMarkup(row.injuryReport) || "—",
+      status: row.status === "drafted" ? `<span class="drafted-badge">#${escapeHtml(row.selectedPick)} ${escapeHtml(teamLabel(row.selectedTeam))}</span>` : selected ? `<span class="available-badge selected-badge">Selected</span>` : `<span class="available-badge">Available</span>`,
+    };
+    return `<tr class="${row.status === "drafted" ? "is-drafted" : ""}${selected ? " is-selected" : ""}${selectable && available ? " is-selectable" : ""}" ${selectable && available ? `data-draft-prospect="${escapeAttr(row.id)}" tabindex="0"` : ""}>${DRAFT_BOARD_HEADINGS.map(([key]) => `<td class="draft-col-${escapeAttr(key)}${key === "injury" ? " draft-prospect-injury" : ""}${sortedClass(key)}">${cells[key]}</td>`).join("")}</tr>`;
+  }).join("") || `<tr><td colspan="${DRAFT_BOARD_HEADINGS.length}" class="empty">No prospects match this view.</td></tr>`}</tbody></table></div>`;
 }
 
 function draftPickTimeline(rows) {
@@ -5197,15 +5347,16 @@ function draftPickTimeline(rows) {
     const completed = status === "selected";
     const current = status === "current";
     const revealing = state.draftPlaybackRunning && Number(state.draftPlaybackReveal?.overall_pick) === Number(row.selection?.overall_pick);
-    return `<div class="draft-ledger-row ${current ? "is-current" : completed ? "is-complete" : "is-upcoming"}${revealing ? " is-revealing" : ""}" data-draft-pick="${escapeAttr(row.selection?.overall_pick || "")}" ${current ? "data-current-draft-pick" : ""}><span class="draft-pick-number">${escapeHtml(row.selection?.overall_pick || "—")}</span>${draftTeamLogo(row.team)}<div><strong>${completed ? escapeHtml(row.prospect?.name || "Unknown prospect") : escapeHtml(teamLabel(row.team))}</strong><small>${completed ? `${escapeHtml(teamLabel(row.team))} · ${escapeHtml(row.prospect?.position || "")}` : current ? "On the clock" : "Upcoming pick"}</small></div>${current ? `<em>NOW</em>` : ""}</div>`;
+    return `<div class="draft-ledger-row ${current ? "is-current" : completed ? "is-complete" : "is-upcoming"}${revealing ? " is-revealing" : ""}" data-draft-pick="${escapeAttr(row.selection?.overall_pick || "")}" ${current ? "data-current-draft-pick" : ""}${completed && row.explanation ? ` title="${escapeAttr(row.explanation)}"` : ""}><span class="draft-pick-number">${escapeHtml(row.selection?.overall_pick || "—")}</span>${draftTeamLogo(row.team)}<div><strong>${completed ? escapeHtml(row.prospect?.name || "Unknown prospect") : escapeHtml(teamLabel(row.team))}</strong><small>${completed ? `${escapeHtml(teamLabel(row.team))} · ${escapeHtml(row.prospect?.position || "")}` : current ? "On the clock" : "Upcoming pick"}</small></div>${current ? `<em>NOW</em>` : ""}</div>`;
   }).join("") || `<div class="empty">No draft order is available.</div>`}</div>`;
 }
 
 function completedDraftSummary(rows) {
-  return `<div class="draft-summary-scroll"><table class="draft-summary-table"><thead><tr><th>Pick</th><th>Team</th><th>Prospect</th><th>Pos</th><th>Age</th><th>Height</th></tr></thead><tbody>${rows.map((row) => {
+  return `<div class="draft-summary-scroll"><table class="draft-summary-table"><thead><tr><th>Pick</th><th>Team</th><th>Prospect</th><th>Pos</th><th>Age</th><th>Height</th><th>Why</th></tr></thead><tbody>${rows.map((row) => {
     const prospect = row.prospect || {};
-    return `<tr><td><strong>#${escapeHtml(row.selection?.overall_pick || "—")}</strong></td><td><span class="draft-summary-team">${draftTeamLogo(row.team)}<span>${escapeHtml(teamLabel(row.team))}</span></span></td><td><strong>${escapeHtml(prospect.name || "Unknown prospect")}</strong></td><td>${escapeHtml(prospect.position || "—")}</td><td>${escapeHtml(prospect.age ?? "—")}</td><td>${escapeHtml(heightFromRow(prospect) || "—")}</td></tr>`;
-  }).join("") || `<tr><td colspan="6" class="empty">No selections were recorded.</td></tr>`}</tbody></table></div>`;
+    const why = String(row.explanation || "").replace(/^[^:]*: /, "");
+    return `<tr><td><strong>#${escapeHtml(row.selection?.overall_pick || "—")}</strong></td><td><span class="draft-summary-team">${draftTeamLogo(row.team)}<span>${escapeHtml(teamLabel(row.team))}</span></span></td><td><strong>${escapeHtml(prospect.name || "Unknown prospect")}</strong></td><td>${escapeHtml(prospect.position || "—")}</td><td>${escapeHtml(prospect.age ?? "—")}</td><td>${escapeHtml(heightFromRow(prospect) || "—")}</td><td class="draft-summary-why" title="${escapeAttr(row.explanation || "")}">${escapeHtml(why || "—")}</td></tr>`;
+  }).join("") || `<tr><td colspan="7" class="empty">No selections were recorded.</td></tr>`}</tbody></table></div>`;
 }
 
 function completedDraftTradeRecap(rows) {
@@ -7569,7 +7720,11 @@ function playerCardEvidence(detail) {
     const upside = detail.upside_unlocked
       ? playerEvidenceRing("Prospect upside", detail.upside_remaining, 5, playerUpsideColor(detail.upside_remaining), " / 5")
       : `<div class="player-evidence-ring prospect-upside-locked" aria-label="Prospect upside locked: unlock at 100% scouting" title="Prospect upside: the gap between your scouts' estimate of this prospect's potential and his current level, on a 0-5 scale. Unlocks at 100% scouting."><span>${prospectLockIcon()}</span><div><b>Prospect upside</b><small>Locked · 100% scouting</small></div></div>`;
-    return `<div class="approved-player-evidence"><div class="player-evidence-rings">${playerEvidenceRing("Scouted", detail.scouting_coverage, 100, "#668ea7", "%")}${upside}<div class="prospect-rank-range" aria-label="Projected ranking range ${escapeAttr(range)}"><b>Projected rank</b><strong>${escapeHtml(range)}</strong><small>Draft range</small></div></div></div>`;
+    const boards = detail.draft_boards || {};
+    const twoBoards = boards.consensus_rank != null
+      ? `<div class="prospect-rank-range prospect-two-boards" aria-label="Consensus ${escapeAttr(boards.consensus_rank)}, your board ${escapeAttr(boards.scout_rank)}" title="${escapeAttr(`${boards.note || ""} Consensus: median of all 30 teams' scouting (most teams rank him ${range}; every team: #${boards.consensus_best}-${boards.consensus_worst}). Your board: your scouts' talent ranking${boards.month_label ? `, ${boards.month_label} update` : ""}.`)}"><b>Consensus #${escapeHtml(boards.consensus_rank)} · Your board #${escapeHtml(boards.scout_rank)}${draftRankMove(boards.scout_rank_change)}</b><strong>${escapeHtml(boards.development?.label || "")}</strong><small>${escapeHtml(boards.note || `Teams: ${range}`)}</small></div>`
+      : `<div class="prospect-rank-range" aria-label="Projected ranking range ${escapeAttr(range)}"><b>Projected rank</b><strong>${escapeHtml(range)}</strong><small>Draft range</small></div>`;
+    return `<div class="approved-player-evidence"><div class="player-evidence-rings">${playerEvidenceRing("Scouted", detail.scouting_coverage, 100, "#668ea7", "%")}${upside}${twoBoards}</div></div>`;
   }
   const upside = clampNumber(Number(detail.upside_remaining || 0), 0, 5);
   const upsideColor = playerUpsideColor(upside);
@@ -9346,6 +9501,10 @@ function openSettingsModal() {
     title: "Settings",
     subtitle: "",
     body: `
+      ${state.currentSave ? `<section class="settings-modal-section settings-game-section">
+        ${coachRestToggleMarkup("settings-coach-rest", "Coach rests my players automatically")}
+        <p>Off (default): you set the minutes and nobody is rested automatically; the blue zZ shows when your coach would rest a player. On: your coach rests players by the same rules as the AI coaches.</p>
+      </section>` : ""}
       <section class="settings-modal-section settings-save-section">
         <button type="button" data-interface-shortcuts>Keyboard shortcuts</button>
         <button type="button" data-replay-tutorial>Replay Tutorial</button>
@@ -9850,6 +10009,7 @@ function renderModal() {
     wireTradeRoom();
   }
   if (state.modal.kind === "dashboardSettings") {
+    wireCoachRestToggles(els.modalRoot);
     els.modalRoot.querySelector("[data-report-issue]")?.addEventListener("click", openIssueReport);
     els.modalRoot.querySelector("[data-return-save-selection]")?.addEventListener("click", returnToSaveSelection);
     els.modalRoot.querySelector("[data-replay-tutorial]")?.addEventListener("click", () => {
@@ -10611,14 +10771,58 @@ function playerRustMarkup(row) {
   return `<span class="season-injury-status player-rust-status" role="img" aria-label="${escapeAttr(description)}" title="${escapeAttr(description)}"><span aria-hidden="true">↓</span><span>${penalty.toFixed(1)}</span></span>`;
 }
 
-// The coach's rest suggestion for the user's own team (the same rule AI coaches follow; never applied automatically).
+// Rest on the user's own team: the GM's rest (sits his team's next N games, then back to his minutes), or the coach's
+// suggestion for the next game (the same rule AI coaches follow; applied only with "Coach rests players" on).
 function playerRestMarkup(row) {
+  if (isPlayerInjured(row?.health)) return "";
+  const rest = row?.health?.user_rest;
+  if (rest) {
+    const left = Number(rest.games_left || 0);
+    const target = row.resting_minutes_target ? `his ${Number(row.resting_minutes_target)} minutes` : "his usual minutes";
+    const description = `Resting: sits his team's next ${restGamesLabel(left)}, then back to ${target}. Use the zZ button next to his minutes to change or cancel.`;
+    return `<span class="season-injury-status player-rest-status player-resting" role="img" aria-label="${escapeAttr(description)}" title="${escapeAttr(description)}"><span aria-hidden="true">zZ</span><span>${left}</span></span>`;
+  }
   const suggestion = row?.health?.rest_suggestion;
-  if (!suggestion || isPlayerInjured(row.health)) return "";
+  if (!suggestion) return "";
   const when = suggestion.date ? ` on ${suggestion.date}` : "";
   const what = suggestion.kind === "shutdown" ? "shutting him down for the rest of the season" : `resting him${when}`;
-  const description = `Coach suggests ${what}: ${suggestion.reason}. Set his minutes to 0 to follow it.`;
+  const plan = suggestion.kind === "shutdown" ? "to shut him down for the rest of the season" : `to rest him${when}`;
+  const description = coachRestsPlayers()
+    ? `Coach plans ${plan}: ${suggestion.reason}.`
+    : `Coach suggests ${what}: ${suggestion.reason}. Use the zZ button next to his minutes to rest him.`;
   return `<span class="season-injury-status player-rest-status" role="img" aria-label="${escapeAttr(description)}" title="${escapeAttr(description)}"><span aria-hidden="true">zZ</span></span>`;
+}
+
+// "Coach rests my players automatically" (game setting). Off by default: the GM sets the minutes and the coach only
+// suggests rest (the blue zZ next to a name).
+function coachRestsPlayers() {
+  return Boolean(state.home?.game_settings?.coach_rests_players);
+}
+
+function coachRestToggleMarkup(className, text = "Coach rests players") {
+  const on = coachRestsPlayers();
+  const help = on
+    ? "On: your coach rests players by the same rules as the AI coaches (back-to-backs, heavy fatigue, age, the stretch run, at most one regular a game, never once a player has missed 14 games)."
+    : "Off: nobody is rested automatically. The blue zZ shows when your coach would rest a player; use the zZ button next to his minutes to rest him yourself.";
+  return `<label class="${escapeAttr(className)}" title="${escapeAttr(help)}"><input type="checkbox" data-coach-rest-toggle ${on ? "checked" : ""} aria-label="Coach rests my players automatically" /><span>${escapeHtml(text)}</span></label>`;
+}
+
+function playerIsResting(row) {
+  return Boolean(row?.health?.user_rest) && !isPlayerInjured(row?.health);
+}
+
+function restGamesLabel(games) {
+  return `${games} game${games === 1 ? "" : "s"}`;
+}
+
+function playerRestButtonMarkup(row, editable) {
+  const rest = row.health?.user_rest;
+  const injured = isPlayerInjured(row.health);
+  const name = row.name || "player";
+  const label = rest
+    ? `${name} is resting: back in ${restGamesLabel(Number(rest.games_left || 0))}. Change or cancel the rest.`
+    : `Rest ${name} for his team's next 1 to 5 games`;
+  return `<button type="button" class="season-minute-rest${rest ? " active" : ""}" data-minute-rest-player="${escapeAttr(row.id)}" aria-haspopup="menu" aria-label="${escapeAttr(label)}" title="${escapeAttr(label)}" ${editable && !injured ? "" : "disabled"}>zZ</button>`;
 }
 
 function injuryGamesRemaining(row) {
@@ -11607,6 +11811,13 @@ function wireRotationMinuteInputs(root = els.content) {
   root.querySelectorAll("[data-minute-reset-player]").forEach((button) => {
     button.addEventListener("click", () => resetRotationMinutes(button.dataset.minuteResetPlayer));
   });
+  root.querySelectorAll("[data-minute-rest-player]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (!button.disabled) openRestMenu(button);
+    });
+  });
+  wireCoachRestToggles(root);
 }
 
 function wireRotationResetAllControl(root = document) {
@@ -12833,9 +13044,17 @@ function draftBoardRows(board) {
     const scout = entry.scout_display || prospect.scout_display || {};
     const draftLow = Number(prospect.rank_range?.low), draftHigh = Number(prospect.rank_range?.high);
     const hasDraftRange = Number.isInteger(draftLow) && Number.isInteger(draftHigh) && draftLow >= 1 && draftHigh >= draftLow;
+    const development = entry.development || scout.development || {};
     return {
       id: prospect.id || prospect.prospect_id || entry.prospect_id,
-      rank: entry.board_rank || prospect.rank || "",
+      rank: entry.scout_rank || entry.board_rank || prospect.rank || "",
+      consensusRank: entry.consensus_rank ?? prospect.rank ?? null,
+      consensusBest: entry.consensus_best ?? null,
+      consensusWorst: entry.consensus_worst ?? null,
+      developmentKey: development.key || "",
+      developmentLabel: development.label || "",
+      developmentTimeline: development.timeline || "",
+      scoutsDiffer: entry.scouts_differ || "",
       seasonStartRank: entry.season_start_rank ?? prospect.preseason_rank ?? prospect.rank,
       rankChange: entry.rank_change ?? (entry.season_start_rank != null ? Number(entry.season_start_rank) - Number(entry.board_rank || prospect.rank) : null),
       draftRangeLow: hasDraftRange ? draftLow : null,
@@ -12847,7 +13066,7 @@ function draftBoardRows(board) {
       height: heightFromRow(prospect),
       now: scout.now ?? prospect.now ?? prospect.current_rating ?? prospect.current_ability,
       potential: scout.potential || prospect.potential || prospect.potential_rating,
-      fit: entry.fit_grade || entry.risk_adjusted_grade || entry.grade,
+      fit: entry.fit_grade ?? entry.grade,
       floor: scout.floor ?? prospect.floor,
       ceiling: scout.ceiling ?? prospect.ceiling,
       scoutedPct: scout.scouted_pct ?? prospect.scouted_pct,
@@ -12873,12 +13092,13 @@ function draftMetric(value) {
 function sortDraftBoardRows(rows, sort) {
   const key = sort?.key || "rank";
   const direction = sort?.direction === "desc" ? -1 : 1;
-  const numeric = new Set(["rank", "age", "now", "potential", "fit"]);
+  const numeric = new Set(["rank", "consensus", "age", "now", "potential", "fit", "scouted"]);
+  const field = {consensus: "consensusRank", scouted: "scoutedPct", type: "developmentLabel"};
   return [...rows].sort((left, right) => {
     let comparison = 0;
     if (numeric.has(key)) {
-      const leftValue = Number(left[key]);
-      const rightValue = Number(right[key]);
+      const leftValue = Number(left[field[key] || key]);
+      const rightValue = Number(right[field[key] || key]);
       comparison = (Number.isFinite(leftValue) ? leftValue : -Infinity) - (Number.isFinite(rightValue) ? rightValue : -Infinity);
     } else if (key === "height") {
       comparison = heightToInches(left.height) - heightToInches(right.height);
@@ -12886,9 +13106,9 @@ function sortDraftBoardRows(rows, sort) {
       const risk = (row) => (row.injuryReport?.available ? Number(row.injuryReport.risk_penalty) || 0 : -1);
       comparison = risk(left) - risk(right);
     } else {
-      comparison = String(left[key] || "").localeCompare(String(right[key] || ""), undefined, { sensitivity: "base" });
+      comparison = String(left[field[key] || key] || "").localeCompare(String(right[field[key] || key] || ""), undefined, { sensitivity: "base" });
     }
-    if (comparison === 0) comparison = Number(left.rank || 999) - Number(right.rank || 999);
+    if (comparison === 0) comparison = Number(left.consensusRank || left.rank || 999) - Number(right.consensusRank || right.rank || 999);
     return comparison * direction;
   });
 }

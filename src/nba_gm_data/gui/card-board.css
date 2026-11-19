@@ -5095,7 +5095,96 @@ body.unified-terminal-ui .player-rest-status,
 body.unified-terminal-ui .player-rest-status > span { color:#5b86b8 !important; font-size:0.85em; }
 body.unified-terminal-ui .player-name-with-injury > .player-rest-status { flex:0 0 auto; margin-left:3px; }
 
+/* Rest controls (Minutes + Availability, user's team): the zZ button after the minutes sets "rest for N games";
+   the toggle in the Player header lets the coach rest players automatically. */
+body .has-card-board [data-board-window="minutes"] .season-minute-control {
+  grid-template-columns:minmax(0,1fr) 18px 13px 16px;
+  margin-right:8px;
+}
+body .has-card-board [data-board-window="minutes"] .season-minute-reset { grid-column:3; }
+body .has-card-board [data-board-window="minutes"] .season-minutes-head > span:nth-child(4) { width:calc(100% - 44px); }
+.season-minute-rest {
+  align-items:center; background:#edf0f3; border:1px solid #8d99a5; border-radius:2px;
+  box-shadow:inset 1px 1px #fff,inset -1px -1px #c7cdd3; color:#5b86b8;
+  cursor:pointer; display:grid; font:bold 8px/1 Tahoma,"Trebuchet MS",Arial,sans-serif;
+  grid-column:4; height:14px; justify-content:center; letter-spacing:-.5px; min-height:14px; padding:0; width:16px;
+}
+.season-minute-rest:hover:not(:disabled) { background:#dce7f3; border-color:#5b86b8; }
+.season-minute-rest.active { background:#5b86b8; border-color:#3f6894; box-shadow:none; color:#fff; }
+.season-minute-rest:disabled { cursor:default; opacity:.35; }
+.season-minute-row.resting .season-minute-slider { opacity:.45; }
+body.unified-terminal-ui .player-rest-status.player-resting { background:#5b86b8; border-radius:2px; padding:0 2px; }
+body.unified-terminal-ui .player-rest-status.player-resting,
+body.unified-terminal-ui .player-rest-status.player-resting > span { color:#fff !important; }
+.season-minutes-player-head { align-items:center; display:flex; min-width:0; overflow:hidden; white-space:nowrap; }
+.minutes-coach-rest {
+  align-items:center; cursor:pointer; display:inline-flex; font-weight:normal; gap:2px; margin-left:8px; vertical-align:middle;
+}
+.minutes-coach-rest input { height:9px; margin:0; width:9px; }
+.minutes-coach-rest span { font-size:8px; text-transform:none; }
+.settings-coach-rest { align-items:center; cursor:pointer; display:flex; font-weight:bold; gap:6px; }
+.settings-coach-rest + p { color:var(--muted, #6b7680); font-size:12px; margin:0; max-width:58ch; }
+.season-rest-menu {
+  background:#f7f8fa; border:1px solid #8d99a5; box-shadow:2px 2px 0 rgba(0,0,0,.25); color:#1d2730;
+  display:grid; font:11px/1.2 Tahoma,"Trebuchet MS",Arial,sans-serif; gap:2px; max-width:220px; padding:5px; position:fixed; z-index:10050;
+}
+.season-rest-menu strong { font-size:11px; padding:1px 2px 3px; }
+.season-rest-menu button {
+  background:#edf0f3; border:1px solid #c7cdd3; border-radius:2px; color:inherit; cursor:pointer; font:inherit; padding:3px 6px; text-align:left;
+}
+.season-rest-menu button:hover, .season-rest-menu button:focus-visible { background:#dce7f3; border-color:#5b86b8; outline:none; }
+.season-rest-menu button.award-warning { color:#a8434b; }
+.season-rest-menu button.cancel { color:#a8434b; font-weight:bold; }
+.season-rest-menu small { color:#5d6872; font-size:10px; padding:3px 2px 0; }
+
 /* Decline watch (veterans): red down arrow with expected overall change per year. */
 body.unified-terminal-ui .season-development-decline { color:#c4585f; display:inline-flex; align-items:baseline; gap:2px; }
 body.unified-terminal-ui .season-development-decline small { font-size:9px; opacity:.8; }
 body.unified-terminal-ui .player-decline-watch strong { color:#c4585f; }
+
+/* Draft boards (2026-11-19): consensus beside your scouts' board. Shared table style: double header rule, small
+   bold headings, stripes, whole-row hover, sorted-column shading. */
+.draft-prospect-table.draft-two-boards thead th { border-bottom:3px double var(--season-line, var(--line-soft)); font-size:8px; font-weight:700; }
+.draft-prospect-table.draft-two-boards tbody tr:nth-child(even) td { background-color:#eef1f3; }
+.draft-prospect-table.draft-two-boards tbody tr:is(:hover,:focus-within) td { background-color:#dce8f2; }
+.draft-prospect-table.draft-two-boards thead th.is-sorted { background-color:#d1dde8; }
+.draft-prospect-table.draft-two-boards tbody td.is-sorted { background-color:rgba(118,156,190,.28); font-weight:700; }
+.draft-prospect-table.draft-two-boards tbody tr.is-selected td { background-color:color-mix(in srgb, var(--accent) 16%, transparent); }
+.draft-prospect-scroll { overflow-x:auto; }
+.draft-prospect-table.draft-two-boards { min-width:1040px; }
+.draft-prospect-table.draft-two-boards :is(th,td):first-child { width:74px; text-align:left; }
+.draft-prospect-table.draft-two-boards :is(th,td).draft-col-rank { width:78px; }
+.draft-prospect-table.draft-two-boards th.draft-col-name { width:170px; }
+.draft-prospect-table.draft-two-boards :is(th,td).draft-col-position { width:52px; }
+.draft-prospect-table.draft-two-boards :is(th,td).draft-col-age { width:38px; }
+.draft-prospect-table.draft-two-boards :is(th,td):is(.draft-col-now,.draft-col-potential,.draft-col-scouted,.draft-col-height) { width:52px; }
+.draft-prospect-table.draft-two-boards :is(th,td).draft-col-type { width:126px; }
+.draft-prospect-table.draft-two-boards :is(th,td).draft-col-fit { width:62px; }
+.draft-prospect-table.draft-two-boards :is(th,td).draft-col-status { width:96px; }
+.draft-rank-spread { display:inline-block; margin-left:5px; font-size:9px; color:var(--muted, #6b7785); font-weight:400; }
+.draft-rank-move { display:inline-block; margin-left:4px; font-size:9px; font-weight:700; }
+.draft-rank-move.is-up { color:#2f8a57; }
+.draft-rank-move.is-down { color:#c4585f; }
+.draft-scout-read { font-size:10px; white-space:nowrap; }
+.draft-scout-read-raw { color:#7b5aa6; }
+.draft-scout-read-ready { color:#2f6f8f; }
+.draft-summary-table td.draft-summary-why { font-size:10px; max-width:340px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted, #6b7785); }
+.draft-pick-reveal .draft-pick-why { display:block; font-size:11px; opacity:.8; }
+.prospect-two-boards b { white-space:nowrap; }
+.prospect-two-boards small { white-space:normal; line-height:1.2; }
+/* Upcoming-prospects card: one more column (your scouts' rank). */
+.season-prospects-head,
+.season-prospect-row {
+  grid-template-columns:
+    15px minmax(0, 1.6fr) minmax(0, .5fr) minmax(0, .5fr) minmax(0, .8fr)
+    minmax(0, .9fr) minmax(0, .8fr) minmax(0, .9fr) minmax(0, 1.1fr);
+}
+body .has-card-board [data-board-window="prospects"] :is(.season-prospects-head,.season-prospect-row) {
+  gap:6px;
+  grid-template-columns:24px minmax(110px,1.7fr) minmax(30px,.5fr) minmax(30px,.5fr) minmax(46px,.7fr) minmax(56px,.9fr) minmax(46px,.7fr) minmax(50px,.8fr) minmax(60px,1fr);
+}
+.season-prospect-yours { white-space:nowrap; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards { max-width:230px; text-align:center; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards b { font-size:13px; font-weight:600; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards strong { font-size:14px; font-weight:600; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards small { font-size:11px; }
