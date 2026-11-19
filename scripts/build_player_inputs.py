@@ -171,6 +171,7 @@ def main() -> None:
     parser.add_argument('--report',type=Path,default=None)
     parser.add_argument('--no-report',action='store_true')
     parser.add_argument('--no-bbi',action='store_true',help='Skip the Basketball Index evidence overlay')
+    parser.add_argument('--no-analysts',action='store_true',help='Skip the attributed analyst-claim evidence')
     args=parser.parse_args()
     root=args.root.resolve()
     output=args.output or root/'data/canonical/player_inputs_2026_27.json'
@@ -188,6 +189,12 @@ def main() -> None:
     # Measured dunk rates (public Basketball-Reference shooting data) for dunk execution, net of body size.
     from nba_gm_data.public_shot_evidence import apply_dunk_evidence
     bbi_summary=(bbi_summary or {})|apply_dunk_evidence(section,root,universe)
+    # Attributed analyst claims last: where analysts and the measures disagree, analysts lead (user priority, 2026-11-19).
+    if not args.no_analysts:
+        from nba_gm_data.analyst_evidence import apply_analyst_evidence
+        analyst=apply_analyst_evidence(section,root)
+        analyst.pop('analyst_changes')
+        bbi_summary|=analyst
     baseline=estimate_startup_inputs(InputEstimator.from_local(root,use_expert=False),universe)
     comparison=validation_comparison(section,load_reference_cells(root),baseline)
     payload=canonical_json(section)

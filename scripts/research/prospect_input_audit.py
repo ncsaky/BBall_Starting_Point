@@ -60,8 +60,8 @@ def season_evidence():
     mapping = bbi.load_mapping(ROOT)["inputs"]
     spec = {iid: mapping[iid]["metrics"] for iid in INPUT_IDS
             if iid in mapping and mapping[iid].get("metrics") and iid != "T08"}
-    names = {USAGE} | {term[k] for terms in spec.values() for term in terms
-                       for k in ("metric", "per") if term.get(k)}
+    names = {USAGE} | {term["metric"] for terms in spec.values() for term in terms} | {
+        name for terms in spec.values() for term in terms for name in bbi._exposure_names(term)}
     values = bbi.collect_values(ROOT, names)
     all_years = {}
     for year, season in SEASONS.items():
@@ -72,9 +72,7 @@ def season_evidence():
             total_scores = defaultdict(float)
             weights = defaultdict(float)
             for term in terms:
-                records = values.get((season, term["metric"]), {})
-                if term.get("per"):
-                    records = bbi._per_exposure(records, values.get((season, term["per"]), {}))
+                records = bbi._metric_values(values, season, term)
                 ranks = bbi._percentiles(records, int(term.get("direction", 1)))
                 weight = bbi.STRENGTH[term.get("strength", "supporting")]
                 for key, pct in ranks.items():

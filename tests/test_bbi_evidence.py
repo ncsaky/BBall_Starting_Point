@@ -38,6 +38,33 @@ class GradeScaleTests(unittest.TestCase):
         self.assertAlmostEqual(rates["big"][0], 0.05)   # fewer turnovers, but more per touch
         self.assertNotIn("nodata", rates)
 
+    def test_summed_exposure_is_plays_used_or_created(self):
+        table = {("2025-26", "TOV"): {"iso": (2.0, 2000.0, "iso"), "hub": (2.0, 2000.0, "hub")},
+                 ("2025-26", "Touches"): {"iso": (50.0, 2000.0, "iso"), "hub": (100.0, 2000.0, "hub")},
+                 ("2025-26", "TSA"): {"iso": (25.0, 2000.0, "iso"), "hub": (10.0, 2000.0, "hub")},
+                 ("2025-26", "PA"): {"iso": (3.0, 2000.0, "iso"), "hub": (8.0, 2000.0, "hub")}}
+        per_touch = be._metric_values(table, "2025-26", {"metric": "TOV", "per": "Touches"})
+        per_play = be._metric_values(table, "2025-26", {"metric": "TOV", "per_sum": ["TSA", "TOV", "PA"]})
+        self.assertAlmostEqual(per_touch["iso"][0], 0.04)            # the isolation scorer looks worse per touch
+        self.assertAlmostEqual(per_touch["hub"][0], 0.02)
+        self.assertAlmostEqual(per_play["iso"][0], 2.0 / 30.0)       # ...and better per play used or created
+        self.assertAlmostEqual(per_play["hub"][0], 2.0 / 20.0)
+
+    def test_reliability_scales_noisy_metrics_down_and_keeps_repeatable_ones(self):
+        self.assertEqual(be.reliability_factor(None), 1.0)
+        self.assertEqual(be.reliability_factor(0.9), 1.0)
+        self.assertAlmostEqual(be.reliability_factor(be.RELIABILITY_REF / 2), 0.5)
+        self.assertEqual(be.reliability_factor(-0.3), 0.0)
+        import random
+        steady, noisy = {}, {}
+        for s, season in enumerate(sorted(be.SEASON_WEIGHTS)):
+            order = list(range(60))
+            random.Random(s).shuffle(order)
+            steady[(season, "m")] = {f"p{i}": (float(i), 2000.0, f"p{i}") for i in range(60)}
+            noisy[(season, "m")] = {f"p{i}": (float(order[i]), 2000.0, f"p{i}") for i in range(60)}
+        self.assertAlmostEqual(be.metric_reliability(steady, {"metric": "m"}), 1.0)
+        self.assertLess(abs(be.metric_reliability(noisy, {"metric": "m"})), 0.5)
+
     def test_small_pools_are_ignored(self):
         self.assertEqual(be._percentiles({"a": (1.0, 900.0, "a")}, 1), {})
 
@@ -154,6 +181,16 @@ class MappingFileTests(unittest.TestCase):
             for m in spec.get("metrics", []):
                 self.assertIn(int(m["direction"]), (1, -1), (iid, m))
                 self.assertIn(m["strength"], be.STRENGTH, (iid, m))
+
+    def test_handle_security_counts_turnovers_per_play_used_or_created(self):
+        spec = json.loads(MAPPING.read_text())["inputs"]["S17"]["metrics"]
+        counts = [m for m in spec if "Per 75" in m["metric"]]
+        self.assertTrue(counts)
+        for m in counts:
+            self.assertNotIn("per", m)
+            self.assertEqual(set(m["per_sum"]), {"True Shot Attempts Per 75 Possessions", "Stable TOV Per 75",
+                                                 "Potential Assists Per 75 Possessions"})
+        self.assertNotIn("Turnovers Per 100 Touches", {m["metric"] for m in spec})
 
     def test_no_metric_feeds_both_a_skill_and_a_tendency_or_physical_input(self):
         mapping = json.loads(MAPPING.read_text())
