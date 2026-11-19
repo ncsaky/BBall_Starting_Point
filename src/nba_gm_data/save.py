@@ -274,6 +274,8 @@ def _create_league_save(
         initialize_fantasy_draft(canonical, save, seed)
     else:
         initialize_new_career_runtime(canonical, save, start_date, seed)
+    from .trade_ownership import LEDGER_KEY, seed_player_tenure
+    save[LEDGER_KEY] = seed_player_tenure(canonical, game_mode=normalized_game_mode, root=root)
     write_save(save_path, save)
     return save
 
@@ -436,6 +438,9 @@ def write_save(path: str | Path, save: dict[str, Any]) -> None:
         working = copy_plain(save)
         working.setdefault("meta", {})["save_snapshot_id"] = uuid.uuid4().hex
         dedupe_save_event_lists(working)
+        # Record team changes and investments from this write's transaction logs before old logs are archived.
+        from .trade_ownership import commit_tenure_ledger
+        commit_tenure_ledger(working)
         archive_save_history(target, working, committed_revision + 1)
         temp_path: Path | None = None
         try:
@@ -1244,6 +1249,9 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
     save.setdefault("league_events", [])
     save.setdefault("game_results", [])
     save.setdefault("game_result_summaries", [])
+    if canonical is not None and "player_tenure" not in save:
+        from .trade_ownership import LEDGER_KEY, seed_player_tenure
+        save[LEDGER_KEY] = seed_player_tenure(canonical, game_mode=str((save.get("meta") or {}).get("game_mode") or "standard"))
     if "team_morale" not in save:
         save["team_morale"] = initial_team_morale(canonical or {"teams": []})
     if "player_morale" not in save:
@@ -1488,6 +1496,8 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
     canonical['waiver_wire'] = copy_plain(save.get('waiver_wire', []))
     canonical['team_plans'] = copy_plain(save.get('team_plans', {}))
     canonical['team_trade_wants'] = copy_plain(save.get('team_trade_wants', {}))
+    from .trade_ownership import LEDGER_KEY, tenure_ledger_view
+    canonical[LEDGER_KEY] = tenure_ledger_view(save)  # read-only for trade code; never written back from here
     canonical['_trade_planning_save'] = {
         'meta': {'season': active_season}, 'state': dict(save.get('state') or {}),
         'season_schedules': save.get('season_schedules') or {},
@@ -1664,6 +1674,8 @@ def refresh_active_runtime_state(
     active['waiver_wire'] = copy_plain(save.get('waiver_wire', []))
     active['team_plans'] = copy_plain(save.get('team_plans', {}))
     active['team_trade_wants'] = copy_plain(save.get('team_trade_wants', {}))
+    from .trade_ownership import LEDGER_KEY, tenure_ledger_view
+    active[LEDGER_KEY] = tenure_ledger_view(save)
     from .trade_wants import clear_wants_cache
     clear_wants_cache(active)
     active['_human_team_ids'] = sorted(human_controlled_team_ids(save))
