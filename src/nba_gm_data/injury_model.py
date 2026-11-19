@@ -26,7 +26,11 @@ POSSESSIONS_PER_MINUTE = 2.1      # a player's on-court possessions per minute a
 MIN_MINUTES_FOR_EXPOSURE = 4.0    # deep reserves who barely play still get hurt occasionally (Codex INJ)
 # Calibration to Basketball Index's league totals (spells per team-season, games missed per 82) is applied here, once,
 # instead of inside the per-part models. 1.0 = the fitted rates as they are.
-LEAGUE_RATE_SCALE = 1.0
+# INJURY-REST (2026-11-19): in a full season with the AI coaches' rotations, rotation players got hurt 1.7-2.7 times
+# per 82 games played against Basketball Index's 3.3-4.3 at every workload (2023-24 and 2024-25), and regulars had
+# 40% fewer multi-game absences than in the real 2025-26 box scores. The fitted rates were checked with every player
+# at 4+ minutes exposed all season, which the real rotations don't do.
+LEAGUE_RATE_SCALE = 1.35
 # Basketball Index logs one real injury as several entries ("out", then "day-to-day"), so a player's recorded history
 # overstates how much it predicts new injuries. Calibrated against Basketball Index's own 2026-27 per-player forecasts.
 HISTORY_WEIGHT = 0.55
@@ -226,10 +230,14 @@ def lasting_trait_deltas(event: Mapping[str, Any]) -> dict[str, float]:
     return {trait: round(change * LASTING_TRAIT_POINTS_PER_RAPM, 3) for trait in LASTING_TRAITS}
 
 
-# Return-to-minutes ramp (Basketball Index short-term aftermath, 2025-26: first game back vs the five games before the
-# absence, by games missed). The head coach's rotation management decides how closely the evidence ramp is followed:
-# an average coach follows it, a poor one rushes players back, a strong one is slightly more careful.
-RETURN_FIRST_GAME_DROP = ((1, 0.009), (2, 0.072), (5, 0.099), (10, 0.162), (20, 0.212), (10_000, 0.299))
+# Return-to-minutes ramp: the coach's planned cut in the first game back, by games missed, fading to full minutes
+# over 6-10 games. The head coach's rotation management decides how closely it is followed: an average coach follows
+# it, a poor one rushes players back, a strong one is slightly more careful. Targets: minutes in the first game back
+# and over the first five, against the five games before the absence, in real 2025-26 box scores (players at 15+
+# minutes: -7%/-7% after 2 games out, -14%/-9% after 3-5, -19%/-15% after 6-10, -26%/-22% after 11-20, -34%/-30%
+# after 21+; Basketball Index's injury-only version is a little smaller: -7%, -10%, -16%, -21%, -30% first game).
+# The planned cut is larger than the measured one because teammates' minutes are renormalized around it.
+RETURN_FIRST_GAME_DROP = ((1, 0.02), (2, 0.10), (5, 0.16), (10, 0.25), (20, 0.32), (10_000, 0.42))
 
 
 def return_ramp_length(absence_games: int) -> int:
@@ -245,6 +253,47 @@ def return_minutes_multiplier(absence_games: int, games_since_return: int, rotat
     drop = next(value for limit, value in RETURN_FIRST_GAME_DROP if absence_games <= limit)
     careful = max(0.5, min(1.3, 1.0 + 0.2 * (float(rotation_star) - 3.0)))
     return round(1.0 - drop * careful * (1.0 - games_since_return / length), 4)
+
+
+# ---- When the injury happens, and rust after it (INJURY-REST, 2026-11-19) ------------------------------------------
+# An injury drawn from a game's minutes happens in that game or is found after it (soreness the next morning); either
+# way the player plays that game and the absence starts with the next one. Basketball Index measures days out from the
+# injury date, so the return date is the injury date plus the drawn days. The share that happen during play, by days
+# out (interpolated on log days): fitted so the minutes played in the last game before an absence, and regulars'
+# early exits (under half their usual minutes in a close game: 0.9% real), match real 2025-26 box scores
+# (output/injury-rest/). Illness is never an in-game exit.
+IN_GAME_SHARE_BY_DAYS = ((1, 0.15), (3, 0.20), (8, 0.28), (15, 0.45), (25, 0.55), (60, 0.70), (150, 0.80))
+
+
+def in_game_share(days: int, part: str) -> float:
+    if part == "illness":
+        return 0.0
+    points = IN_GAME_SHARE_BY_DAYS
+    d = max(float(days), float(points[0][0]))
+    if d >= points[-1][0]:
+        return points[-1][1]
+    for (lo, lo_v), (hi, hi_v) in zip(points, points[1:]):
+        if d <= hi:
+            t = (math.log(d) - math.log(lo)) / (math.log(hi) - math.log(lo))
+            return lo_v + (hi_v - lo_v) * t
+    return points[-1][1]
+
+
+# Rust: a small in-game rating penalty for the first games back, by games missed (rust points; 0.08 rating points
+# each, sim.RUST_PENALTY_PER_POINT). It fades by RUST_DECAY_PER_GAME with each game played (an average performance
+# staff; a better recovery planner clears it faster), not by calendar days, so a player returning after a long layoff
+# always carries it into his first game. Real 2025-26 returns score about 1-6% fewer points per minute over the first
+# three games after missing 3+ games (noisy) and Basketball Index's true-shooting change is small (-0.5 to -1.1 points
+# after 2-5 games, intervals spanning zero), so the effect is kept small: at most 1.6 rating points, gone within three
+# games. The bigger, well-measured return effect is the minutes limit below.
+RUST_BY_GAMES_MISSED = ((1, 0.0), (2, 4.0), (5, 8.0), (10, 12.0), (20, 16.0), (10_000, 20.0))
+RUST_DECAY_PER_GAME = 7.5
+
+
+def return_rust(absence_games: int) -> float:
+    if absence_games <= 0:
+        return 0.0
+    return next(value for limit, value in RUST_BY_GAMES_MISSED if absence_games <= limit)
 
 
 @lru_cache(maxsize=32)

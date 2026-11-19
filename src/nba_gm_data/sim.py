@@ -607,8 +607,15 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
     )
     scoring_periods = []
     fouled_out = set().union(*(out for _, out in in_game.values())) if in_game else set()
+    # Players hurt during the game left it: they do not return for overtime, and the box score says why.
+    left_injured = {item["player"]["id"]: item.get("health_injury_label") or "injury"
+                    for item in home_players + away_players if item.get("left_injured")}
+    if left_injured:
+        for line in home_line + away_line:
+            if line["player_id"] in left_injured:
+                line["in_game_injury"] = left_injured[line["player_id"]]
     overtime_periods = resolve_overtime_if_tied(home_line, away_line, home_team_line, away_team_line, rng,
-                                             tracking_periods=scoring_periods, exclude_ids=fouled_out)
+                                             tracking_periods=scoring_periods, exclude_ids=fouled_out | set(left_injured))
     from .box_variation import vary_box_score
     vary_box_score(canonical, [home_line, away_line], [home_team_line, away_team_line],
                    [home_features, away_features], f"{seed}:{game_id}:{mode}:box-variation")
@@ -738,7 +745,7 @@ def return_ramped_player_pool(pool: list[dict[str, Any]], coach: CoachRating | N
             factor = return_minutes_multiplier(absence, int(item.get("health_games_since_return") or 0), star)
             item = {**item, "minutes": round(float(item.get("minutes") or 0.0) * factor, 3), "return_minutes_factor": factor}
         adjusted.append(item)
-    return normalize_minutes(adjusted)
+    return normalize_minutes(adjusted, exact=True)
 
 
 def game_day_rotation(

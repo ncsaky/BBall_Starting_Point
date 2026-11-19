@@ -7281,6 +7281,8 @@ def user_override_coach_fill(
 def player_unavailable_for_rotation(state: dict[str, Any] | None) -> bool:
     if not state:
         return False
+    if state.get("rest_shutdown") or state.get("rest_game_id"):
+        return True   # the AI coach rests him tonight or has shut him down (set by the day's health pass)
     status = str(state.get("availability_status") or "active").lower()
     if status in {"", "active", "healthy"} and not state.get("current_injury_id"):
         return False
@@ -10225,6 +10227,9 @@ def randomize_future_matchups(template_games: list[dict[str, Any]], season: str)
 def refresh_health_for_new_season(save: dict[str, Any], start_date: str) -> None:
     refreshed = []
     for state in save.get("health_states", []):
+        # Rest nights, shutdowns and the counts behind them belong to the season that ended.
+        state = {key: value for key, value in state.items()
+                 if key not in ("rest_game_id", "rest_date", "rest_reason", "rest_shutdown", "games_rested", "rest_suggestion")}
         refreshed.append(
             {
                 **state,

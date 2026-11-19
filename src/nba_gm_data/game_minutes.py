@@ -16,6 +16,7 @@ counts are then shared out over the minutes actually played. Every team still pl
 """
 from __future__ import annotations
 
+import math
 import random
 from typing import Any
 
@@ -42,6 +43,19 @@ GARBAGE_SPREAD = 0.4
 GARBAGE_EXTRAS_MIN = 2.0
 GARBAGE_EXTRAS_LIMIT = 4
 MAX_GAME_MINUTES = 42.0
+# In-game injuries: the injured player's remaining minutes go to the bench first (foul_gain_weight) and to his own
+# position first; a player three or more spots away keeps this share of a same-position player's claim.
+INJURY_OTHER_POSITION = 0.35
+POSITION_NUMBERS = {"PG": 1.0, "G": 1.5, "SG": 2.0, "GF": 2.5, "SF": 3.0, "F": 3.5, "PF": 4.0, "FC": 4.5, "C": 5.0}
+
+
+def position_number(player: dict[str, Any]) -> float:
+    """Point guard 1 ... center 5 (combo labels in between)."""
+    pos = str(player.get("position") or "").upper().replace("-", "").replace("/", "")
+    if pos in POSITION_NUMBERS:
+        return POSITION_NUMBERS[pos]
+    found = [POSITION_NUMBERS[p] for p in ("PG", "SG", "SF", "PF", "C") if p in pos]
+    return sum(found) / len(found) if found else 3.0
 
 
 def garbage_minutes(margin: float) -> float:
@@ -147,19 +161,42 @@ def manage_game_minutes(
         troubled[i] = left < planned[i] - 1e-9
         if out:
             fouled_out.add(item["player"]["id"])
-    caps = [0.0 if troubled[i] else max(MAX_GAME_MINUTES, planned[i]) for i in range(len(items))]
     foul_freed = sum(planned) - sum(minutes)
+    # Hurt during the game: he leaves after his share of the minutes he would have played (health.v2 injury draw).
+    injured: set[str] = set()
+    injury_freed: list[tuple[int, float]] = []
+    for i, item in enumerate(items):
+        share = item.get("health_injury_exit")
+        if share is None or planned[i] <= 0:
+            continue
+        left = min(minutes[i], planned[i] * clamp(float(share), 0.0, 1.0))
+        injury_freed.append((i, minutes[i] - left))
+        minutes[i] = left
+        troubled[i] = True
+        injured.add(item["player"]["id"])
+    caps = [0.0 if troubled[i] else max(MAX_GAME_MINUTES, planned[i]) for i in range(len(items))]
+    for i, freed in injury_freed:
+        # The coach goes to his bench first, and to players at the injured player's position first.
+        spot = position_number(items[i]["player"])
+        weights = [foul_gain_weight(planned[j]) * (INJURY_OTHER_POSITION + (1.0 - INJURY_OTHER_POSITION)
+                   * math.exp(-abs(position_number(items[j]["player"]) - spot)))
+                   if j < in_pool and planned[j] > 0 and not troubled[j] else 0.0 for j in range(len(items))]
+        leftover = _hand_out(minutes, freed, weights, caps)
+        if leftover > 0:  # nobody else healthy with room: whoever is left plays on
+            _hand_out(minutes, leftover, [1.0 if j < in_pool and not troubled[j] else 0.0 for j in range(len(items))],
+                      [0.0 if troubled[j] else max(MAX_GAME_MINUTES, planned[j]) + 6.0 for j in range(len(items))])
     if foul_freed > 0:
         weights = [foul_gain_weight(planned[i]) if i < in_pool and planned[i] > 0 else 0.0 for i in range(len(items))]
         leftover = _hand_out(minutes, foul_freed, weights, caps)
         if leftover > 0:  # nobody healthy enough to take them: give them back
-            _hand_out(minutes, leftover, [1.0 if i < in_pool else 0.0 for i in range(len(items))],
+            _hand_out(minutes, leftover, [1.0 if i < in_pool and items[i]["player"]["id"] not in injured else 0.0
+                                          for i in range(len(items))],
                       [max(MAX_GAME_MINUTES, planned[i]) for i in range(len(items))])
     garbage = garbage_minutes(margin) * rng.uniform(1.0 - GARBAGE_SPREAD, 1.0 + GARBAGE_SPREAD)
     if garbage > 0:
         rested = 0.0
         for i, item in enumerate(items):
-            if item["player"]["id"] in fouled_out:
+            if item["player"]["id"] in fouled_out or item["player"]["id"] in injured:
                 continue
             sit = min(minutes[i], garbage * core_share(planned[i]))
             minutes[i] -= sit
@@ -167,17 +204,21 @@ def manage_game_minutes(
         extras_ok = garbage >= GARBAGE_EXTRAS_MIN
         weights = [garbage_gain_weight(planned[i]) if (i < in_pool and planned[i] > 0) or (i >= in_pool and extras_ok)
                    else 0.0 for i in range(len(items))]
-        gain_caps = [0.0 if items[i]["player"]["id"] in fouled_out else min(caps[i] or MAX_GAME_MINUTES, minutes[i] + garbage)
-                     for i in range(len(items))]
+        gain_caps = [0.0 if items[i]["player"]["id"] in fouled_out or items[i]["player"]["id"] in injured
+                     else min(caps[i] or MAX_GAME_MINUTES, minutes[i] + garbage) for i in range(len(items))]
         leftover = _hand_out(minutes, rested, weights, gain_caps)
         if leftover > 0:  # a short bench: the regulars finish the game after all
-            _hand_out(minutes, leftover, [core_share(planned[i]) if i < in_pool else 0.0 for i in range(len(items))],
+            _hand_out(minutes, leftover, [core_share(planned[i]) if i < in_pool and items[i]["player"]["id"] not in injured
+                                          else 0.0 for i in range(len(items))],
                       [max(MAX_GAME_MINUTES, planned[i]) for i in range(len(items))])
     managed = []
     for i, item in enumerate(items):
         if i >= in_pool and minutes[i] <= 0.005:
             continue
-        managed.append({**item, "minutes": minutes[i], "planned_minutes": round(planned[i], 2)})
+        row = {**item, "minutes": minutes[i], "planned_minutes": round(planned[i], 2)}
+        if item["player"]["id"] in injured:
+            row["left_injured"] = True
+        managed.append(row)
     from .sim import normalize_minutes
     return normalize_minutes(managed, exact=True), fouls, fouled_out
 
