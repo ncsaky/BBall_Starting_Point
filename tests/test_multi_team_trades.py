@@ -23,7 +23,7 @@ def fixture(teams='abc'):
             pid = tid+str(i)
             quality, price, salary, minutes = (25, 15, 1_000_000, 18) if tid == 'c' else (50, 30, 1_000_000, 18)
             if tid == 'a':
-                salary = 16_250_000
+                salary = 15_750_000  # trade 2b: payroll $199M, so the three-team leg stays under the tax line
             if pid == 'a0':
                 quality, price, salary, minutes = 76, 90, 10_000_000, 32
             if pid == 'b0':

@@ -481,6 +481,7 @@ class TeamStrategicState:
     contender_index: float = 0.0
     window_trend: float = 0.0
     core_candidates: list[str] = field(default_factory=list)
+    contend_distance: float = 0.0
 
 
 @dataclass(frozen=True)

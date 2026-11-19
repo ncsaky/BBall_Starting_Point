@@ -3104,7 +3104,7 @@ def maybe_run_ai_draft_trades_before_pick_state(
     seller_team_id = selection.get("team_id")
     pick_id = selection.get("pick_id") or (current.get("pick") or {}).get("id")
     overall = int(selection.get("overall_pick") or 999)
-    if not pick_id or seller_team_id in human_team_ids or overall > 25:
+    if not pick_id or seller_team_id in human_team_ids or overall > DRAFT_TRADE_LAST_PICK:
         return {"applied_count": 0, "trades": []}
     traded_ids = set(state.get("ai_draft_traded_pick_ids") or [])
     used_ids = set(state.get("used_pick_ids") or [])
@@ -3116,7 +3116,7 @@ def maybe_run_ai_draft_trades_before_pick_state(
             return {"applied_count": 0, "trades": []}
         if overall <= 10 and int(budget.get("top_10") or 0) >= 2:
             return {"applied_count": 0, "trades": []}
-        if 11 <= overall <= 25 and int(budget.get("picks_11_25") or 0) >= 5:
+        if 11 <= overall <= DRAFT_TRADE_LAST_PICK and int(budget.get("picks_11_25") or 0) >= 5:
             return {"applied_count": 0, "trades": []}
     candidate = best_ai_draft_trade_candidate(active, save, state, current, human_team_ids, seed)
     if not candidate:
@@ -3147,7 +3147,7 @@ def maybe_run_ai_draft_trades_before_pick_state(
     budget["total"] = int(budget.get("total") or 0) + 1
     if overall <= 10:
         budget["top_10"] = int(budget.get("top_10") or 0) + 1
-    elif overall <= 25:
+    elif overall <= DRAFT_TRADE_LAST_PICK:
         budget["picks_11_25"] = int(budget.get("picks_11_25") or 0) + 1
     headline = draft_trade_headline(active, state, proposal)
     trade_posts = [
@@ -3415,6 +3415,8 @@ def draft_trade_offer_assets(active: dict[str, Any], state: dict[str, Any], buye
         key=lambda pick: pick_asset_value(pick, "neutral"),
         reverse=True,
     )
+    if overall > 10:
+        return draft_trade_mid_first_offer(assets, target_value, current_value, firsts, seconds, bool(lower_pick))
     if overall == 1:
         required_factor = 1.34
     elif overall <= 3:
@@ -3459,6 +3461,53 @@ def draft_trade_offer_assets(active: dict[str, Any], state: dict[str, Any], buye
     if move_down >= 6 and not has_future_first and current_value < target_value:
         return []
     if current_value < target_value * required_factor:
+        return []
+    return assets[:4]
+
+
+# Draft-night trade-ups after the top 10 (trade 2b). The old builder asked for the pick's value plus 8% and always added
+# a future first for picks 11-18 or slides of five or more, so moving up from #21 to #16 cost a later first plus a
+# future first. Real draft nights price these moves in second-round picks (data/research/real_trades, June 2026):
+# #17 to #16 for two seconds (OKC), #21 to #17 for three seconds (DET), #34 to #29 for a future second (SAC), #35 to
+# #26 for two future seconds (SAS), #25 to #24 for cash (LAL); a future first bought a #24 pick outright (SAC for
+# Clifford in 2025). The game's own slot values already price those slides at one to two seconds (#17 65.3 vs #21
+# 51.8; a second is worth about 15-24), so the offer is the lower pick plus the cheapest seconds that cover the slot
+# value plus 4% (so the seller clears its own bar), and a future first only when seconds cannot cover the gap (the
+# cheapest first that does). Picks 26-30 can now be traded too (real: #26 and #29 in 2026).
+MID_FIRST_REQUIRED_FACTOR = 1.04
+DRAFT_TRADE_LAST_PICK = 30
+
+
+def draft_trade_mid_first_offer(assets: list[dict[str, Any]], target_value: float, current_value: float,
+                                firsts: list[dict[str, Any]], seconds: list[dict[str, Any]], has_lower_pick: bool) -> list[dict[str, Any]]:
+    """The buyer's offer for a pick after the top 10: its lower first plus seconds, or a future first."""
+    need = target_value * MID_FIRST_REQUIRED_FACTOR
+    value = lambda pick: pick_asset_value(pick, "neutral")
+    seconds = seconds[:3]  # most valuable first
+    gap = need - current_value
+    if has_lower_pick and gap <= sum(value(p) for p in seconds):
+        added = []
+        for pick in sorted(seconds, key=value):  # cheapest seconds that still cover the gap
+            if gap <= 0 and added:
+                break
+            added.append(pick)
+            gap -= value(pick)
+        if gap > 0:
+            return []
+        return assets + [{"kind": "pick", "value": p["id"]} for p in added]
+    if not firsts:
+        return []
+    two_seconds = sum(value(p) for p in seconds[:2])
+    covering = [p for p in firsts if value(p) >= gap - two_seconds]
+    first = min(covering, key=value) if covering else max(firsts, key=value)
+    assets = assets + [{"kind": "pick", "value": first["id"]}]
+    gap -= value(first)
+    for pick in sorted(seconds, key=value):
+        if gap <= 0:
+            break
+        assets.append({"kind": "pick", "value": pick["id"]})
+        gap -= value(pick)
+    if gap > 0:
         return []
     return assets[:4]
 

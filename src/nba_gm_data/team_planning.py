@@ -9,6 +9,79 @@ import math
 VERSION = 2
 LEGACY_PHASE = {'peak': 'contending', 'entering': 'developing', 'exiting': 'retooling', 'rebuilding': 'rebuilding'}
 
+# How much the season's results move a team's strength (trade 2b). A team's strength was its roster rating plus at most
+# +-3 points for its record, so a 29-18 team could stay "rebuilding" and a 15-34 team "on the rise" all season. Now the
+# record (point margin and winning percentage, as league z-scores) is blended with the roster rating. The record's
+# weight grows with games played: 0.75 * games / (games + 20), so 0.32 after 15 games, 0.5 after 40 and 0.6 at season
+# end (the roster still counts: injuries heal, trades change it). In the NBA, team point margin settles quickly
+# (game-to-game noise about 12.5 points against a true-talent spread of about 4.5, so roughly 8 games give a
+# half-reliable read); 20 is deliberately slower because the sim's roster rating is itself informative.
+RECORD_WEIGHT_MAX = 0.75
+RECORD_WEIGHT_GAMES = 20.0
+# From May to September the records on file are last season's: they count for at most this much.
+OFFSEASON_RECORD_WEIGHT = 0.3
+# Labels do not flip on small moves: a team keeps its previous label unless the new one still holds with its
+# strength moved 1 point (and its trend 0.3) back toward the old label.
+HYSTERESIS_STRENGTH = 1.0
+HYSTERESIS_TREND = 0.3
+# Distance from contending, 0 to 1: how far the team's strength sits below the contender tier (the 4th-best team),
+# 0 within 1 point of it and 1 at 6 points or more below. Peak teams are 0. Used to scale how much a team still values
+# a veteran's current production (transactions.veteran_present_factor).
+CONTEND_LINE_RANK = 4
+CONTEND_GAP_FREE = 1.0
+CONTEND_GAP_FULL = 6.0
+
+
+def _record_strengths(canonical, rows):
+    """Each team's strength implied by its record (league z-scores of point margin and win share mapped onto the
+    roster-strength scale) and the weight that record gets."""
+    records = canonical.get('save_team_records') or {}
+    today = str((canonical.get('meta') or {}).get('current_date') or '')
+    month = int(today[5:7]) if len(today) >= 7 and today[5:7].isdigit() else 0
+    facts = {}
+    for tid in rows:
+        record = records.get(tid) or {}
+        wins, losses = float(record.get('wins') or 0), float(record.get('losses') or 0)
+        games = wins + losses
+        if games < 1:
+            continue
+        margin = (float(record.get('points_for') or 0) - float(record.get('points_against') or 0)) / games
+        facts[tid] = (games, wins / games, margin)
+    if len(facts) < 4:
+        return {}
+    def z_scores(index, floor):
+        values = [f[index] for f in facts.values()]
+        mean = sum(values) / len(values)
+        spread = max(floor, (sum((v - mean) ** 2 for v in values) / len(values)) ** 0.5)
+        return {tid: (f[index] - mean) / spread for tid, f in facts.items()}
+    z_win, z_margin = z_scores(1, 0.08), z_scores(2, 2.5)
+    strengths = [row['strength'] for row in rows.values()]
+    mean_s = sum(strengths) / len(strengths)
+    sd_s = max(1.0, (sum((s - mean_s) ** 2 for s in strengths) / len(strengths)) ** 0.5)
+    out = {}
+    for tid, (games, _, _) in facts.items():
+        weight = RECORD_WEIGHT_MAX * games / (games + RECORD_WEIGHT_GAMES)
+        if 5 <= month <= 9:
+            weight = min(weight, OFFSEASON_RECORD_WEIGHT)
+        z = 0.6 * z_margin[tid] + 0.4 * z_win[tid]
+        out[tid] = (mean_s + z * sd_s, weight)
+    return out
+
+
+def _classify_window(row, rank, share, n_teams, best, future_best):
+    """The window label from a team's strength, rank, trend and core (unchanged rules; see window_assessments)."""
+    young_window = (rank <= 12 and len(row['ready_young_core']) >= 2
+                    and any(age <= 27 and quality >= row['_elite']-4 for age, quality in row['ready_young_core']))
+    if rank <= 6 and share >= 1.3/n_teams and best-row['strength'] <= 4.5 and row['strength'] >= 60:
+        return 'peak'
+    if young_window:
+        return 'entering'
+    if row['trend'] < -.5 and (rank <= max(12, n_teams*.65) or row['credible_anchors']):
+        return 'exiting'
+    if row['credible_anchors'] >= 2 or rank <= 12 or (row['core_candidates'] and row['trend'] > .5 and future_best-row['future_strength'] <= 7):
+        return 'entering'
+    return 'rebuilding'
+
 
 def window_assessments(canonical, states, valuations):
     players = {p['id']: p for p in canonical.get('players', [])}
@@ -41,41 +114,52 @@ def window_assessments(canonical, states, valuations):
                 future_deltas.append(growth-decline)
         # A strong ordinary starter isn't automatically a franchise foundation.
         delta = sum(future_deltas)/len(future_deltas) if future_deltas else -3
-        record = canonical.get('save_team_records', {}).get(state.team_id, {})
-        wins, losses = float(record.get('wins') or 0), float(record.get('losses') or 0)
-        games = wins+losses
-        form = ((wins/games)-.5)*6*min(1, games/40) if games >= 15 else 0
-        strength = state.contention_ceiling + form
-        rows[state.team_id] = {'strength': strength, 'future_strength': strength+delta,
+        rows[state.team_id] = {'strength': state.contention_ceiling, 'roster_strength': state.contention_ceiling,
                                'trend': delta, 'core_candidates': core,
                                'ready_young_core': ready_young_core,
-                               'credible_anchors': sum(v.on_court_value >= elite for v in values[:5])}
+                               'credible_anchors': sum(v.on_court_value >= elite for v in values[:5]),
+                               '_elite': elite}
     if not rows:
         return rows
+    # The season's results (trade 2b): blend the record-implied strength into the roster rating.
+    for tid, (record_strength, weight) in _record_strengths(canonical, rows).items():
+        row = rows[tid]
+        row['strength'] = (1 - weight) * row['roster_strength'] + weight * record_strength
+        row['record_weight'] = round(weight, 3)
+    for row in rows.values():
+        row['future_strength'] = row['strength'] + row['trend']
+    plans = canonical.get('team_plans') or {}
     best = max(r['strength'] for r in rows.values())
     future_best = max(r['future_strength'] for r in rows.values())
     mass = sum(math.exp((r['strength']-best)/3.5) for r in rows.values())
+    ordered = sorted((r['strength'] for r in rows.values()), reverse=True)
+    contend_line = ordered[min(CONTEND_LINE_RANK, len(ordered)) - 1]
+    n_teams = len(rows)
+
+    def classify(row, strength, trend):
+        trial = dict(row, strength=strength, trend=trend, future_strength=strength + trend)
+        rank = 1 + sum(r['strength'] > strength for t, r in rows.items() if r is not row)
+        share = math.exp((strength-best)/3.5)/mass
+        return _classify_window(trial, rank, share, n_teams, best, future_best), rank, share
+
     for tid, row in rows.items():
-        rank = 1 + sum(r['strength'] > row['strength'] for r in rows.values())
-        share = math.exp((row['strength']-best)/3.5)/mass
         # One aging star can make near-term strength decline while a capable
         # young foundation is still entering its window. Keep both signals.
-        young_window = (rank <= 12 and len(row['ready_young_core']) >= 2
-                        and any(age <= 27 and quality >= elite-4 for age, quality in row['ready_young_core']))
-        if rank <= 6 and share >= 1.3/len(rows) and best-row['strength'] <= 4.5 and row['strength'] >= 60:
-            phase = 'peak'
-        elif young_window:
-            phase = 'entering'
-        elif row['trend'] < -.5 and (rank <= max(12, len(rows)*.65) or row['credible_anchors']):
-            phase = 'exiting'
-        elif row['credible_anchors'] >= 2 or rank <= 12 or (row['core_candidates'] and row['trend'] > .5 and future_best-row['future_strength'] <= 7):
-            phase = 'entering'
-        else:
-            phase = 'rebuilding'
-        row.update(window_phase=phase, league_rank=rank, contender_index=round(share*100, 3))
+        phase, rank, share = classify(row, row['strength'], row['trend'])
+        previous = (plans.get(tid) or {}).get('window_phase')
+        if previous and previous != phase and previous in LEGACY_PHASE and len(rows) >= 4:
+            if any(classify(row, row['strength'] + s * HYSTERESIS_STRENGTH, row['trend'] + t * HYSTERESIS_TREND)[0] == previous
+                   for s in (-1, 0, 1) for t in (-1, 0, 1)):
+                phase = previous
+        gap = contend_line - row['strength']
+        distance = 0.0 if phase == 'peak' else min(1.0, max(0.0, (gap - CONTEND_GAP_FREE) / (CONTEND_GAP_FULL - CONTEND_GAP_FREE)))
+        row.update(window_phase=phase, league_rank=rank, contender_index=round(share*100, 3),
+                   contend_distance=round(distance, 3))
         row['strength'] = round(row['strength'], 3)
+        row['roster_strength'] = round(row['roster_strength'], 3)
         row['future_strength'] = round(row['future_strength'], 3)
         row['trend'] = round(row['trend'], 3)
+        row.pop('_elite', None)
     return rows
 
 
