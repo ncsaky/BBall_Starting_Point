@@ -1388,6 +1388,15 @@ async function loadTradeAssets() {
   state.data.tradePartner = await action("team_assets", { ...savePayload(), team: state.tradePartner });
 }
 
+async function waitForSimulationIdle(timeoutMs = 60000) {
+  const started = Date.now();
+  while (state.simulationRunning || state.busy || state.lotteryRevealRunning) {
+    if (Date.now() - started > timeoutMs) return false;
+    await new Promise(resolve => setTimeout(resolve, 150));
+  }
+  return true;
+}
+
 async function advance(payload) {
   if (state.simulationRunning || state.busy || state.lotteryRevealRunning) return;
   state.simulationRunning = true;
@@ -6894,7 +6903,7 @@ function seasonalClipboardCards(dashboard) {
       const bracket = phase === "playoffs" && name === "bracket";
       const lottery = phase === 'draft' && name === 'lottery';
       const playoffStats = phase === "playoffs" && name === "leaders";
-      cards.push({id:`phase-${phase}-${name}`, title, card, width:bracket ? Math.min(1420, Math.max(320, window.innerWidth - 60)) : lottery ? Math.min(700,Math.max(320,window.innerWidth-60)) : playoffStats ? Math.min(660, Math.max(320, window.innerWidth - 60)) : width, height:bracket ? 480 : lottery ? (state.draftPresentationStage==='odds'?344:454) : playoffStats ? 430 : height, sizingKey:lottery?`lottery-v2:${state.draftPresentationStage}`:playoffStats?"playoff-stats-v1":null, locked, galleryVisible:(active || archiveBracket) && Boolean(panel), mandatory:["staff_retention", "cutdown"].includes(phase), required:required && Boolean(panel), measured:Boolean(panel), phaseActive:active && Boolean(panel)});
+      cards.push({id:`phase-${phase}-${name}`, title, card, width:bracket ? Math.min(1420, Math.max(320, window.innerWidth - 60)) : lottery ? Math.min(700,Math.max(320,window.innerWidth-60)) : playoffStats ? Math.min(660, Math.max(320, window.innerWidth - 60)) : width, height:bracket ? 480 : lottery ? (state.draftPresentationStage==='odds'?444:454) : playoffStats ? 430 : height, sizingKey:lottery?`lottery-v3:${state.draftPresentationStage}`:playoffStats?"playoff-stats-v1":null, locked, galleryVisible:(active || archiveBracket) && Boolean(panel), mandatory:["staff_retention", "cutdown"].includes(phase), required:required && Boolean(panel), measured:Boolean(panel), phaseActive:active && Boolean(panel)});
     }
     seed.remove();
   }
@@ -9878,7 +9887,12 @@ function renderModal() {
     els.modalRoot.querySelector('[data-sim-through-deadline]')?.addEventListener('click', async () => {
       acknowledgeTradeDeadline(resume?.trade_deadline_confirmed || tradeDeadlineDate());
       closeAllModals();
-      try { await advance(resume); } catch (error) { showToast(error.message || "Could not continue the sim.", true); }
+      // The prompt opens while the sim that reached the deadline is still finishing (playback, refresh); advance()
+      // ignores a request made during that window, so wait for it to settle instead of silently doing nothing.
+      try {
+        if (!(await waitForSimulationIdle())) return showToast("The sim is still finishing. Try Sim to... again in a moment.", true);
+        await advance(resume);
+      } catch (error) { showToast(error.message || "Could not continue the sim.", true); }
     });
   }
   if (state.modal.kind === "postseason") {
