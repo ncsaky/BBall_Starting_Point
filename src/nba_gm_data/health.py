@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import random
 from copy import deepcopy
 from datetime import date, datetime, timedelta
@@ -71,6 +72,22 @@ SEASON_FORM_TRAIT_WEIGHTS = {
 }
 
 
+# Fatigue (0-100): recent playing load. Each game adds points in proportion to minutes; each day clears a share.
+# Fitted to the 2025-26 schedule so that a 36-minute player on a normal schedule (a game every other day) sits near 50
+# right after a game and near 19 at the next tip-off; the second night of a back-to-back starts near 31; three days
+# off clear about three quarters. Real evidence for the size of the effects is in the comments at each use below and
+# in docs/agents/tasks/fatigue-rest.md.
+FATIGUE_GAIN_PER_36 = 31.0
+FATIGUE_DAILY_KEEP = 0.62                # share kept after one day (38% recovered per day)
+FATIGUE_AGE_PER_YEAR = 0.03              # +3% per year over 30, another +3% per year over 35 (judgment)
+FATIGUE_STAMINA_PER_POINT = 0.004        # stamina 30 -> +8%, stamina 80 -> -12%
+FATIGUE_AWAY_MULTIPLIER = 1.05           # travel (judgment; road back-to-backs carry more injuries, Teramoto 2017)
+FATIGUE_MAX = 100.0
+# Typical tip-off fatigue of a 30-minute regular on a normal schedule (about 16): the point above which fatigue starts
+# to cost the team and to raise injury risk.
+FATIGUE_REFERENCE = FATIGUE_GAIN_PER_36 * 30.0 / 36.0 * FATIGUE_DAILY_KEEP ** 2 / (1.0 - FATIGUE_DAILY_KEEP ** 2)
+
+
 def default_injury_model_config() -> dict[str, Any]:
     return {
         "version": "injury_fatigue_development_v1",
@@ -101,11 +118,9 @@ def default_injury_model_config() -> dict[str, Any]:
         },
         "tuning": {
             "base_player_game_injury_rate": 0.021,
-            "base_game_fatigue_gain": 4.2,
-            "back_to_back_fatigue_gain": 2.8,
-            "fatigue_decay_per_rest_day": 6.5,
+            "fatigue_gain_per_36": FATIGUE_GAIN_PER_36,
+            "fatigue_daily_keep": FATIGUE_DAILY_KEEP,
             "rust_decay_per_game": 7.5,
-            "fatigue_performance_penalty_per_point": 0.065,
             "rust_performance_penalty_per_point": 0.08,
             "development_base_growth": 0.08,
         },
@@ -368,7 +383,9 @@ def simulate_health(
     states = {state["player_id"]: dict(state) for state in canonical.get("player_health_states", [])}
     selected = {p["id"] for players in players_by_team.values() for p in players}
     for player in canonical.get("players", []):
-        if player.get("team_id") and not player.get("_inactive_player") and player["id"] not in selected and states.get(player["id"], {}).get("availability_status", "active") != "active":
+        state = states.get(player["id"], {})
+        if (player.get("team_id") and not player.get("_inactive_player") and player["id"] not in selected
+                and (state.get("availability_status", "active") != "active" or state.get("user_rest"))):
             players_by_team.setdefault(player["team_id"], []).append(player)
     traits = trait_lookup(canonical)
     last_game_date: dict[str, date] = {}
@@ -394,6 +411,7 @@ def simulate_health(
     rest_ready = bool(model) and bool(canonical.get("save_team_records"))
     standings = league_rest_context(canonical) if rest_ready else {}
     human_teams = set(canonical.get("_human_team_ids") or [])
+    coach_rest_teams = set(canonical.get("_coach_rest_team_ids") or [])   # human teams whose GM lets the coach rest players
     rested_tonight: dict[tuple[str, str], int] = {}
     regulars_out: dict[str, int] = {}
     if rest_ready:
@@ -423,7 +441,15 @@ def simulate_health(
                     state["games_missed"] = int(state.get("games_missed") or 0) + 1
                     state["current_absence_games"] = int(state.get("current_absence_games") or 0) + 1
                     continue
+                if apply_user_rest(state, team["id"], game, game_date):
+                    # The GM rests him tonight (Minutes + Availability "Rest"): one of his remaining games.
+                    if float(player.get("_trade_value_minutes_projection") or player.get("minutes_projection") or 0) >= REST_MIN_MINUTES:
+                        key = (team["id"], game["externalGameId"])
+                        rested_tonight[key] = rested_tonight.get(key, 0) + 1
+                    continue
                 minutes = float(player.get("minutes_projection") or 0)
+                stamina = traits.get((player["id"], "stamina_cardio"), 50.0)
+                entering = float(state.get("fatigue") or 0.0)   # tonight's tip-off value (recovered to today)
                 if rest_on:
                     shutdown = state.get("rest_shutdown")
                     if shutdown and shutdown.get("team_id") != team["id"]:
@@ -432,10 +458,11 @@ def simulate_health(
                     if shutdown:
                         state["games_rested"] = int(state.get("games_rested") or 0) + 1
                         continue
-                    if team["id"] not in human_teams and minutes >= REST_MIN_MINUTES:
+                    if (team["id"] not in human_teams or team["id"] in coach_rest_teams) and minutes >= REST_MIN_MINUTES:
                         context = {**standings.get(team["id"], {}), "back_to_back": rest_days == 0 and bool(previous_game),
                                    "rested_tonight": rested_tonight.get((team["id"], game["externalGameId"]), 0),
-                                   "regulars_out": regulars_out.get(team["id"], 0)}
+                                   "regulars_out": regulars_out.get(team["id"], 0),
+                                   "fatigue": entering, "fatigue_normal": normal_fatigue(player, minutes, stamina, staff)}
                         decision = coach_rest_decision(player, state, context, rest_draw(seed, game["externalGameId"], player["id"]))
                         if decision:
                             kind, reason = decision
@@ -449,17 +476,19 @@ def simulate_health(
                             continue
                 if int(state.get("return_absence_games") or 0) > 0:
                     advance_return_ramp(state, game_date, staff)
+                # The game is played on tip-off fatigue; tonight's minutes add to it afterwards (shown from tonight on).
+                state["fatigue_game"] = {"date": date_to_str(game_date), "value": round(entering, 2)}
+                add_game_fatigue(state, player, minutes, stamina, rest_days, config, staff,
+                                 away=espn_id == str(game.get("awayTeamId")))
                 if minutes < (im.MIN_MINUTES_FOR_EXPOSURE if model else 8):
                     continue
-                stamina = traits.get((player["id"], "stamina_cardio"), 50.0)
-                add_game_fatigue(state, player, minutes, stamina, rest_days, config, staff)
                 rng = random.Random(f"{seed}:{game['externalGameId']}:{player['id']}:injury")
                 if model:
                     # A player on a return-to-minutes ramp carries a lighter workload, so a careful coach lowers re-injury risk.
                     ramp = im.return_minutes_multiplier(int(state.get("return_absence_games") or 0),
                                                         int(state.get("games_since_return") or 0), rotation_star.get(team["id"], 3.0))
                     event = v2_injury_draw(root, model, canonical, player, traits, state, profiles.get(player["id"], {}),
-                                           minutes * ramp, game_date, staff, seed, rng, history_cache, events)
+                                           minutes * ramp, game_date, staff, seed, rng, history_cache, events, fatigue=entering)
                     if event:
                         # He plays tonight's game (leaving partway through when the injury happens during play); the
                         # absence starts with the team's next game (activated by advance_state_for_date).
@@ -477,7 +506,7 @@ def simulate_health(
                             "notes": f"{event['diagnosis']} on {date_to_str(game_date)}.",
                         })
                     continue
-                risk = injury_risk_for_player(player, profiles.get(player["id"], {}), state, minutes, stamina, config, staff)
+                risk = injury_risk_for_player(player, profiles.get(player["id"], {}), {**state, "fatigue": entering}, minutes, stamina, config, staff)
                 if rng.random() < risk:
                     severity = choose_quota_weighted(config.get("severity_bands", {}), severity_counts, rng)
                     if not severity:
@@ -605,13 +634,14 @@ def sandbox_health_adjusted_pool(canonical: dict[str, Any], game_date: str | Non
         active_event = active_injury_event_on_date(player_events, game_day)
         if active_event:
             continue
-        if ((state or {}).get("rest_game_id") and (state or {}).get("rest_date") == game_date[:10]) or (state or {}).get("rest_shutdown"):
-            continue   # the coach rests him tonight, or has shut him down (AI teams; coach_rest_decision)
+        if (((state or {}).get("rest_game_id") and (state or {}).get("rest_date") == game_date[:10]) or (state or {}).get("rest_shutdown")
+                or (state or {}).get("user_rest")):
+            continue   # the coach (or the GM) rests him tonight, or has shut him down (coach_rest_decision, apply_user_rest)
         has_event_history = bool(player_events)
         if state and not has_event_history and not player_available_on_date(state, game_day):
             continue
         status = "active" if has_event_history else (state or {}).get("availability_status", "active")
-        fatigue = float((state or {}).get("fatigue") or 0.0)
+        fatigue = game_fatigue(state, game_day)
         rust = float((state or {}).get("rust") or 0.0) if state else 0.0
         extra = {}
         hurt = injury_game_event_on_date(player_events, game_day)
@@ -622,6 +652,15 @@ def sandbox_health_adjusted_pool(canonical: dict[str, Any], game_date: str | Non
                          "health_return_absence": int((state or {}).get("return_absence_games") or 0),
                          "health_games_since_return": int((state or {}).get("games_since_return") or 0), **extra})
     return adjusted
+
+
+def game_fatigue(state: dict[str, Any] | None, game_day: date) -> float:
+    """Tip-off fatigue for a game on `game_day`: the value the day's health pass recorded before adding the game's
+    minutes, or (no game recorded that day) the stored value recovered to that day."""
+    game = (state or {}).get("fatigue_game") or {}
+    if game.get("date") == date_to_str(game_day):
+        return float(game.get("value") or 0.0)
+    return fatigue_on_date(state, game_day)
 
 
 def active_injury_event_on_date(events: list[dict[str, Any]], game_day: date) -> dict[str, Any] | None:
@@ -688,11 +727,21 @@ def health_team_report(canonical: dict[str, Any], team_query: str) -> dict[str, 
     }
 
 
-V2_FATIGUE_SLOPE = 1.0 / 140.0   # extra risk per fatigue point above 25 (back-to-backs, heavy recent minutes)
+# Tip-off fatigue above the normal level raises the injury chance: +1.2% per point (about +15% on a typical
+# back-to-back for a 36-minute player, +40% at 45), capped at +60%; never below normal. Evidence: injury odds fall about
+# 16% per day of rest and rise about 3% per 96 minutes of recent play (Lewis 2018, J Athl Train 53:503); back-to-backs
+# alone showed no clear effect, road back-to-backs did (Teramoto et al. 2017, J Sci Med Sport 20:230). The model's
+# own minutes term already covers exposure, so this is the schedule-density part only.
+FATIGUE_INJURY_SLOPE = 0.012
+FATIGUE_INJURY_CAP = 1.6
+
+
+def fatigue_injury_multiplier(fatigue: float) -> float:
+    return min(FATIGUE_INJURY_CAP, math.exp(FATIGUE_INJURY_SLOPE * max(0.0, float(fatigue) - FATIGUE_REFERENCE)))
 
 
 def v2_injury_draw(root, model, canonical, player, traits, state, profile, minutes, game_date, staff, seed, rng,
-                   history_cache, new_events) -> dict[str, Any] | None:
+                   history_cache, new_events, fatigue: float | None = None) -> dict[str, Any] | None:
     """One game's injury draw under the per-body-part model. Returns the injury event dict, or None."""
     from . import injury_model as im
     pid = player["id"]
@@ -703,7 +752,7 @@ def v2_injury_draw(root, model, canonical, player, traits, state, profile, minut
     player_traits = {key: traits.get((pid, key), 50.0) for key in ("rim_pressure", "offensive_rebounding", "stamina_cardio")}
     hazards = im.part_hazards(model, player, player_traits, minutes, history, game_date)
     scale = im.LEAGUE_RATE_SCALE * float(staff.get("injury_risk_multiplier", 1.0))
-    scale *= 1.0 + max(0.0, float(state.get("fatigue") or 0.0) - 25.0) * V2_FATIGUE_SLOPE
+    scale *= fatigue_injury_multiplier(float(state.get("fatigue") or 0.0) if fatigue is None else fatigue)
     if profile.get("injury_prone"):
         scale *= 1.22   # generated prospects' medical flag (real players' history is already in the model)
     total = sum(hazards.values()) * scale
@@ -801,21 +850,60 @@ def development_staff_modifiers(canonical: dict[str, Any], team_id: str, coach_d
     }
 
 
-def add_game_fatigue(state: dict[str, Any], player: dict[str, Any], minutes: float, stamina: float, rest_days: int, config: dict[str, Any], staff: dict[str, float]) -> None:
-    tuning = config.get("tuning", {})
+def fatigue_gain(player: dict[str, Any], minutes: float, stamina: float, staff: dict[str, float] | None = None,
+                 away: bool = False, config: dict[str, Any] | None = None) -> float:
+    """Fatigue points from one game: proportional to minutes, more for older players and poor stamina, less with a
+    good conditioning coach, a little more on the road (travel)."""
+    tuning = (config or {}).get("tuning", {})
     age = maybe_float(player.get("age")) or 27.0
-    gain = float(tuning.get("base_game_fatigue_gain", 4.2)) * (minutes / 24.0) ** 1.12
-    if rest_days <= 0:
-        gain += float(tuning.get("back_to_back_fatigue_gain", 2.8))
-    gain += max(0.0, age - 32.0) * 0.28 + max(0.0, age - 35.0) * 0.18
-    gain += max(0.0, 53.0 - stamina) * 0.04
-    state["fatigue"] = round(clamp(float(state.get("fatigue") or 0.0) + gain * float(staff.get("fatigue_gain_multiplier", 1.0)), 0.0, 100.0), 2)
+    multiplier = 1.0 + FATIGUE_AGE_PER_YEAR * max(0.0, age - 30.0) + FATIGUE_AGE_PER_YEAR * max(0.0, age - 35.0)
+    multiplier *= clamp(1.0 - (float(stamina) - 50.0) * FATIGUE_STAMINA_PER_POINT, 0.8, 1.2)
+    multiplier *= float((staff or {}).get("fatigue_gain_multiplier", 1.0))
+    if away:
+        multiplier *= FATIGUE_AWAY_MULTIPLIER
+    return float(tuning.get("fatigue_gain_per_36", FATIGUE_GAIN_PER_36)) * max(0.0, float(minutes)) / 36.0 * multiplier
+
+
+def fatigue_daily_keep(staff: dict[str, float] | None = None, config: dict[str, Any] | None = None) -> float:
+    """Share of fatigue still there after one more day; a better recovery planner clears it a little faster."""
+    keep = float((config or {}).get("tuning", {}).get("fatigue_daily_keep", FATIGUE_DAILY_KEEP))
+    return clamp(1.0 - (1.0 - keep) / max(float((staff or {}).get("recovery_days_multiplier", 1.0)), 0.2), 0.3, 0.9)
+
+
+def fatigue_on_date(state: dict[str, Any] | None, day: date | str, staff: dict[str, float] | None = None,
+                    config: dict[str, Any] | None = None) -> float:
+    """The player's fatigue on `day` with no more games played: the stored value recovered by the days since it was
+    last updated. This is the value a game on that day uses (before that game's minutes)."""
+    if not state:
+        return 0.0
+    value = float(state.get("fatigue") or 0.0)
+    since = state.get("fatigue_date")
+    if not since or value <= 0:
+        return round(value, 2)
+    target = parse_date(day) if isinstance(day, str) else day
+    days = (target - parse_date(since)).days
+    return round(value * fatigue_daily_keep(staff, config) ** max(0, days), 2)
+
+
+def normal_fatigue(player: dict[str, Any], minutes: float, stamina: float = 50.0, staff: dict[str, float] | None = None) -> float:
+    """What this player's fatigue is at tip-off on a normal schedule (a game every other day) with these minutes:
+    the yardstick the coach's rest decision compares tonight's fatigue to."""
+    keep2 = fatigue_daily_keep(staff) ** 2
+    return fatigue_gain(player, minutes, stamina, staff) * keep2 / (1.0 - keep2)
+
+
+def add_game_fatigue(state: dict[str, Any], player: dict[str, Any], minutes: float, stamina: float, rest_days: int, config: dict[str, Any],
+                     staff: dict[str, float], away: bool = False) -> None:
+    """Add one game's fatigue. Back-to-backs need no extra term: there is simply less time to recover since the
+    last game (`rest_days` is kept for callers; recovery runs by calendar day in advance_state_for_date)."""
+    gain = fatigue_gain(player, minutes, stamina, staff, away, config)
+    state["fatigue"] = round(clamp(float(state.get("fatigue") or 0.0) + gain, 0.0, FATIGUE_MAX), 2)
 
 
 def advance_state_for_date(state: dict[str, Any], game_date: date, rest_days: int, config: dict[str, Any], staff: dict[str, float]) -> None:
-    tuning = config.get("tuning", {})
-    decay = max(0, rest_days) * float(tuning.get("fatigue_decay_per_rest_day", 6.5)) / max(float(staff.get("recovery_days_multiplier", 1.0)), 0.2)
-    state["fatigue"] = round(max(0.0, float(state.get("fatigue") or 0.0) - decay), 2)
+    # Fatigue recovers by calendar day (a share each day), so the value shown is always today's.
+    state["fatigue"] = fatigue_on_date(state, game_date, staff, config)
+    state["fatigue_date"] = date_to_str(game_date)
     if state.get("rest_date") and state["rest_date"] < date_to_str(game_date):
         for key in ("rest_game_id", "rest_date", "rest_reason"):   # last night's rest is over
             state.pop(key, None)
@@ -908,6 +996,10 @@ SHUTDOWN_BOTTOM_TEAMS = 8
 SHUTDOWN_GAMES_LEFT = 25
 SHUTDOWN_HAZARD = 0.03
 REGULAR_SEASON_GAMES = 82
+# Fatigue-driven rest: on a typical back-to-back a player's tip-off fatigue is 1/FATIGUE_DAILY_KEEP (about 1.6) times
+# his normal level, so the back-to-back step spans that gap.
+REST_B2B_LOAD_STEP = 1.0 / FATIGUE_DAILY_KEEP - 1.0
+REST_HEAVY_LOAD = 0.8
 
 
 def league_rest_context(canonical: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -945,17 +1037,60 @@ def rest_chance(player: dict[str, Any], state: dict[str, Any], context: dict[str
     if int(context.get("rested_tonight") or 0) >= REST_MAX_PER_GAME or int(context.get("regulars_out") or 0) >= REST_SHORT_HANDED:
         return 0.0, "rest", ""
     b2b_chance, other_chance = next((b, o) for limit, b, o in REST_BY_AGE if age <= limit)
-    if context.get("back_to_back"):
+    load = rest_load_share(context)
+    if load is not None:
+        # Fatigue-driven: tonight's tip-off fatigue against his normal level. A typical back-to-back gives the fitted
+        # back-to-back chance, a normal night the base chance, a heavier stretch (overtime, four games in six nights)
+        # more, up to twice the back-to-back step.
+        chance = other_chance + (b2b_chance - other_chance) * load
+        if context.get("back_to_back"):
+            reason = "second night of a back-to-back"
+        elif load >= REST_HEAVY_LOAD:
+            reason = f"heavy recent workload (fatigue {float(context.get('fatigue') or 0):.0f})"
+        else:
+            reason = "maintenance day"
+    elif context.get("back_to_back"):
         chance, reason = b2b_chance, "second night of a back-to-back"
-        if int(state.get("return_absence_games") or 0) > 0:
-            chance, reason = chance + REST_RETURNING_BACK_TO_BACK, "back-to-back soon after returning from injury"
     else:
         chance, reason = other_chance, "maintenance day"
+    if context.get("back_to_back") and int(state.get("return_absence_games") or 0) > 0:
+        chance, reason = chance + REST_RETURNING_BACK_TO_BACK, "back-to-back soon after returning from injury"
     if games_left <= REST_LATE_GAMES:
         chance += REST_LATE_EXTRA + (REST_LATE_TOP_EXTRA if rank <= 8 else 0.0)
         if not context.get("back_to_back"):
             reason = "rest during the stretch run"
     return chance, "rest", reason
+
+
+def rest_load_share(context: dict[str, Any]) -> float | None:
+    """How far tonight's fatigue is from a normal night (0) toward a typical back-to-back (1), at most 2. None when the
+    caller gave no fatigue (then the back-to-back flag decides)."""
+    if context.get("fatigue") is None or not context.get("fatigue_normal"):
+        return None
+    ratio = float(context["fatigue"]) / max(1.0, float(context["fatigue_normal"]))
+    return clamp((ratio - 1.0) / REST_B2B_LOAD_STEP, 0.0, 2.0)
+
+
+def apply_user_rest(state: dict[str, Any], team_id: str, game: dict[str, Any], game_date: date) -> bool:
+    """A game day for a player the GM chose to rest for his team's next games: he sits tonight. Returns True when he
+    does. The rest ends after the last of those games; a trade ends it."""
+    rest = state.get("user_rest")
+    if not rest:
+        return False
+    if rest.get("team_id") and rest.get("team_id") != team_id:
+        state.pop("user_rest", None)
+        return False
+    left = int(rest.get("games_left") or 0)
+    if left <= 0:
+        state.pop("user_rest", None)
+        return False
+    state["games_rested"] = int(state.get("games_rested") or 0) + 1
+    state.update({"rest_game_id": str(game["externalGameId"]), "rest_date": date_to_str(game_date), "rest_reason": "rested by the GM"})
+    if left - 1 <= 0:
+        state.pop("user_rest", None)
+    else:
+        state["user_rest"] = {**rest, "games_left": left - 1}
+    return True
 
 
 def coach_rest_decision(player: dict[str, Any], state: dict[str, Any], context: dict[str, Any], draw: float) -> tuple[str, str] | None:
@@ -1451,7 +1586,8 @@ def state_from_dict(state: dict[str, Any], as_of_date: str) -> dict[str, Any]:
            if state.get(key) is not None and (key != "games_since_return" or state.get("return_absence_games"))},
         **({"return_rust": float(state["return_rust"])} if state.get("return_absence_games") and state.get("return_rust") is not None else {}),
         **({key: state[key] for key in ("last_team_game", "ramp_last_game", "pending_injury", "rest_game_id", "rest_date", "rest_reason",
-                                         "games_rested", "rest_suggestion", "rest_shutdown")
+                                         "games_rested", "rest_suggestion", "rest_shutdown", "fatigue_date", "fatigue_game",
+                                         "fatigue_next", "user_rest")
             if state.get(key) is not None}),
     }
 

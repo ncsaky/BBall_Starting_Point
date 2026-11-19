@@ -563,6 +563,12 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
     home_score = away_score = None
     in_game: dict[str, tuple[dict[str, list[float]], set[str]]] = {}
     if mode == "sandbox-sim":
+        # Tonight's tired legs: the rotation's tip-off fatigue replaces the plain back-to-back rule (fatigue_rest_effect).
+        home_excess, away_excess = team_fatigue_excess(home_players), team_fatigue_excess(away_players)
+        if home_excess is not None:
+            home_game_context = {**(home_game_context or {}), "team_fatigue": round(home_excess, 3)}
+        if away_excess is not None:
+            away_game_context = {**(away_game_context or {}), "team_fatigue": round(away_excess, 3)}
         # Draw both scores first, so the coach's in-game minutes (foul trouble, blowout rest) can follow the game.
         home_score = draw_team_score(canonical, home_features, away_features, coach_by_team.get(home_team["id"]),
                                      coach_by_team.get(away_team["id"]), rng, is_home=True,
@@ -1143,12 +1149,49 @@ def rust_display(state: dict[str, Any] | None) -> dict[str, Any]:
     return out
 
 
+FATIGUE_PLAYER_THRESHOLD = 50.0
+FATIGUE_PLAYER_PENALTY = 0.05
+# Team cost of tip-off fatigue (generated games): offense points per 100 possessions for each point of the rotation's
+# minutes-weighted tip-off fatigue above the level of a team on one day's rest (12, measured in a full simulated
+# season: on one day's rest about 12, on the second night of a back-to-back about 18, after two or more days about 6).
+# Fitted so that a typical back-to-back costs about 1.5 points (the old schedule rule's 1.35; real 2025-26 teams on
+# the second night of a back-to-back did 1.4 points worse than expected, 1.7 worse than on one day's rest and 2.1
+# against a rested opponent: output/fatigue-rest/real_fatigue.py). A rested team gains a little, at most +0.4 (real
+# teams with two or more days' rest did only 0.1 better than on one day's rest; the old rule gave +0.35 to +0.55).
+FATIGUE_TEAM_REFERENCE = 12.0
+FATIGUE_TEAM_OFFENSE_PER_POINT = 0.25
+FATIGUE_TEAM_BONUS_CAP = 0.4
+FATIGUE_TEAM_PENALTY_CAP = 4.0
+
+
+def team_fatigue_excess(pool: list[dict[str, Any]]) -> float | None:
+    """Minutes-weighted tip-off fatigue of the players dressing tonight, above a team's level on one day's rest;
+    None without health tracking (replays and standalone games keep the schedule rule)."""
+    if not pool or not any("health_fatigue" in item for item in pool):
+        return None
+    total = sum(float(item.get("minutes") or 0.0) for item in pool)
+    if total <= 0:
+        return None
+    return sum(float(item.get("minutes") or 0.0) * (float(item.get("health_fatigue") or 0.0) - FATIGUE_TEAM_REFERENCE)
+               for item in pool) / total
+
+
+def fatigue_rest_effect(excess: float) -> dict[str, float]:
+    offense = clamp(-FATIGUE_TEAM_OFFENSE_PER_POINT * excess, -FATIGUE_TEAM_PENALTY_CAP, FATIGUE_TEAM_BONUS_CAP)
+    # Tired teams also play a little slower (the schedule rule's -0.85 pace on a back-to-back, scaled the same way).
+    pace = offense * 0.63 if offense < 0 else min(0.1, offense * 0.2)
+    return {"offense": round(offense, 4), "pace": round(pace, 4)}
+
+
 def health_adjusted_player_features(features: dict[str, float], item: dict[str, Any]) -> dict[str, float]:
     fatigue = float(item.get("health_fatigue") or 0.0)
     rust = float(item.get("health_rust") or 0.0)
     if fatigue <= 0 and rust <= 0:
         return features
-    fatigue_penalty = clamp(max(0.0, fatigue - 35.0) * 0.065, 0.0, 4.6)
+    # Only unusually high tip-off fatigue costs a player individually: real regulars' scoring and box production per
+    # minute do not drop on the second night of a back-to-back (2025-26 box scores, output/fatigue-rest/real_fatigue.py),
+    # so the normal back-to-back cost is the team-level effect (fatigue_rest_effect). Judgment: up to 2.5 rating points.
+    fatigue_penalty = clamp(max(0.0, fatigue - FATIGUE_PLAYER_THRESHOLD) * FATIGUE_PLAYER_PENALTY, 0.0, 2.5)
     rust_penalty = rust_penalty_points(rust)
     penalty = fatigue_penalty + rust_penalty
     adjusted = dict(features)
@@ -2992,6 +3035,8 @@ def rest_context_for_team(context: dict[str, Any], game: dict[str, Any], team: d
 
 
 def rest_effect(rest_context: dict[str, Any] | None) -> dict[str, float]:
+    if rest_context and rest_context.get("team_fatigue") is not None:
+        return fatigue_rest_effect(float(rest_context["team_fatigue"]))   # generated games: the players' own fatigue
     if not rest_context or rest_context.get("rest_days") is None:
         return {"offense": 0.0, "pace": 0.0}
     rest_days = int(rest_context["rest_days"])
