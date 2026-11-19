@@ -69,7 +69,7 @@ class ReturnRampTests(unittest.TestCase):
     def test_ramp_follows_evidence_and_the_coach(self):
         from nba_gm_data.injury_model import return_minutes_multiplier as ramp
         self.assertEqual(ramp(0, 0), 1.0)
-        self.assertAlmostEqual(ramp(8, 0), 1 - 0.162, places=3)           # 6-10 games missed: -16% first game back
+        self.assertAlmostEqual(ramp(8, 0), 1 - 0.25, places=3)            # 6-10 games missed: planned -25% first game back
         self.assertGreater(ramp(8, 4), ramp(8, 0))                         # eases back
         self.assertEqual(ramp(8, 8), 1.0)                                  # back to normal after 8 games
         self.assertGreater(ramp(25, 0, rotation_star=1.0), ramp(25, 0))    # a poor rotation manager rushes players back

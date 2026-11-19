@@ -389,29 +389,66 @@ def simulate_health(
         for body in config.get("body_area_weights", {})
     }
     events: list[dict[str, Any]] = []
+    # Coach rest (AI teams only; the user's coach suggests, see save.attach_rest_suggestions). Needs league standings,
+    # so it runs inside a save (or a harness that keeps records), not in standalone health replays.
+    rest_ready = bool(model) and bool(canonical.get("save_team_records"))
+    standings = league_rest_context(canonical) if rest_ready else {}
+    human_teams = set(canonical.get("_human_team_ids") or [])
+    rested_tonight: dict[tuple[str, str], int] = {}
+    regulars_out: dict[str, int] = {}
+    if rest_ready:
+        for team_id, team_players in players_by_team.items():
+            regulars_out[team_id] = sum(1 for p in team_players if states.get(p["id"], {}).get("availability_status", "active") != "active"
+                                        and float(p.get("_trade_value_minutes_projection") or p.get("minutes_projection") or 0) >= REST_MIN_MINUTES)
     for game in schedule:
         game_date = parse_date(game["gameDate"])
+        rest_on = rest_ready and str(game.get("phase") or "regular") == "regular"
         for espn_id in [str(game.get("awayTeamId")), str(game.get("homeTeamId"))]:
             team = team_by_espn.get(espn_id)
             if not team:
                 continue
-            rest_days = rest_days_since(last_game_date.get(team["id"]), game_date)
+            team_rest_days = rest_days_since(last_game_date.get(team["id"]), game_date)
             staff = performance_staff_modifiers(canonical, team["id"])
             for player in players_by_team.get(team["id"], []):
                 state = states.setdefault(player["id"], default_state_dict(player["id"], from_date))
+                # Days off since this player's team last played. The save advances health one day at a time, so the
+                # date is carried on the state (otherwise every first game of a call looked like two days' rest and
+                # back-to-backs never added fatigue).
+                previous_game = state.get("last_team_game")
+                rest_days = (rest_days_since(parse_date(previous_game), game_date) if previous_game and previous_game < date_to_str(game_date)
+                             else team_rest_days)
+                state["last_team_game"] = date_to_str(game_date)
                 advance_state_for_date(state, game_date, rest_days, config, staff)
                 if state["availability_status"] != "active":
                     state["games_missed"] = int(state.get("games_missed") or 0) + 1
                     state["current_absence_games"] = int(state.get("current_absence_games") or 0) + 1
                     continue
-                if int(state.get("return_absence_games") or 0) > 0:
-                    # Games played since coming back (drives the coach's return-to-minutes ramp in the game sim).
-                    from .injury_model import return_ramp_length
-                    state["games_since_return"] = int(state.get("games_since_return") or 0) + 1
-                    if state["games_since_return"] >= return_ramp_length(int(state["return_absence_games"])):
-                        state.pop("return_absence_games", None)
-                        state.pop("games_since_return", None)
                 minutes = float(player.get("minutes_projection") or 0)
+                if rest_on:
+                    shutdown = state.get("rest_shutdown")
+                    if shutdown and shutdown.get("team_id") != team["id"]:
+                        state.pop("rest_shutdown", None)   # traded: his new team decides
+                        shutdown = None
+                    if shutdown:
+                        state["games_rested"] = int(state.get("games_rested") or 0) + 1
+                        continue
+                    if team["id"] not in human_teams and minutes >= REST_MIN_MINUTES:
+                        context = {**standings.get(team["id"], {}), "back_to_back": rest_days == 0 and bool(previous_game),
+                                   "rested_tonight": rested_tonight.get((team["id"], game["externalGameId"]), 0),
+                                   "regulars_out": regulars_out.get(team["id"], 0)}
+                        decision = coach_rest_decision(player, state, context, rest_draw(seed, game["externalGameId"], player["id"]))
+                        if decision:
+                            kind, reason = decision
+                            key = (team["id"], game["externalGameId"])
+                            rested_tonight[key] = rested_tonight.get(key, 0) + 1
+                            state["games_rested"] = int(state.get("games_rested") or 0) + 1
+                            state.update({"rest_game_id": str(game["externalGameId"]), "rest_date": date_to_str(game_date),
+                                          "rest_reason": reason})
+                            if kind == "shutdown":
+                                state["rest_shutdown"] = {"team_id": team["id"], "since": date_to_str(game_date), "reason": reason}
+                            continue
+                if int(state.get("return_absence_games") or 0) > 0:
+                    advance_return_ramp(state, game_date, staff)
                 if minutes < (im.MIN_MINUTES_FOR_EXPOSURE if model else 8):
                     continue
                 stamina = traits.get((player["id"], "stamina_cardio"), 50.0)
@@ -424,17 +461,20 @@ def simulate_health(
                     event = v2_injury_draw(root, model, canonical, player, traits, state, profiles.get(player["id"], {}),
                                            minutes * ramp, game_date, staff, seed, rng, history_cache, events)
                     if event:
+                        # He plays tonight's game (leaving partway through when the injury happens during play); the
+                        # absence starts with the team's next game (activated by advance_state_for_date).
+                        if rng.random() < im.in_game_share(int(event["expected_days_missed"]), event["body_part"]):
+                            event["in_game_exit"] = True
+                            event["exit_share"] = round(rng.random(), 3)
+                        event["plays_injury_game"] = True
                         events.append(event)
                         severity_counts[event["severity"]] = severity_counts.get(event["severity"], 0) + 1
                         body_counts[event["body_area"]] = body_counts.get(event["body_area"], 0) + 1
+                        state["pending_injury"] = {key: event[key] for key in (
+                            "id", "start_date", "return_date", "severity", "body_part", "diagnosis")}
                         state.update({
-                            "current_injury_id": event["id"], "availability_status": "out", "return_date": event["return_date"],
-                            "current_injury_severity": event["severity"], "current_injury_part": event["body_part"],
-                            "current_injury_label": event["diagnosis"],
-                            "rust": float((config.get("severity_bands") or {}).get(event["severity"], {}).get("rust_after_return", 12)),
                             "source_ids": list(dict.fromkeys([*(state.get("source_ids") or []), "src_injury_model_v2"])),
                             "notes": f"{event['diagnosis']} on {date_to_str(game_date)}.",
-                            "games_missed": int(state.get("games_missed") or 0) + 1,
                         })
                     continue
                 risk = injury_risk_for_player(player, profiles.get(player["id"], {}), state, minutes, stamina, config, staff)
@@ -468,7 +508,8 @@ def simulate_health(
         if not player:
             continue
         staff = performance_staff_modifiers(canonical, player["team_id"])
-        advance_state_for_date(state, through_day, rest_days_since(last_game_date.get(player["team_id"]), through_day), config, staff)
+        # Fatigue recovers on the next game day (rest days are counted there); this pass only moves the calendar on.
+        advance_state_for_date(state, through_day, 0, config, staff)
     final_states = [state_from_dict(state, through_date) for state in states.values()]
     return {
         "from_date": from_date,
@@ -560,18 +601,26 @@ def sandbox_health_adjusted_pool(canonical: dict[str, Any], game_date: str | Non
     for item in pool:
         player_id = item["player"]["id"]
         state = states.get(player_id)
-        active_event = active_injury_event_on_date(events_by_player.get(player_id, []), game_day)
+        player_events = events_by_player.get(player_id, [])
+        active_event = active_injury_event_on_date(player_events, game_day)
         if active_event:
             continue
-        has_event_history = bool(events_by_player.get(player_id))
+        if ((state or {}).get("rest_game_id") and (state or {}).get("rest_date") == game_date[:10]) or (state or {}).get("rest_shutdown"):
+            continue   # the coach rests him tonight, or has shut him down (AI teams; coach_rest_decision)
+        has_event_history = bool(player_events)
         if state and not has_event_history and not player_available_on_date(state, game_day):
             continue
         status = "active" if has_event_history else (state or {}).get("availability_status", "active")
         fatigue = float((state or {}).get("fatigue") or 0.0)
         rust = float((state or {}).get("rust") or 0.0) if state else 0.0
+        extra = {}
+        hurt = injury_game_event_on_date(player_events, game_day)
+        if hurt and hurt.get("in_game_exit"):
+            # Hurt during tonight's game: he leaves after this share of his minutes (game_minutes.manage_game_minutes).
+            extra = {"health_injury_exit": float(hurt.get("exit_share") or 0.0), "health_injury_label": hurt.get("diagnosis")}
         adjusted.append({**item, "health_fatigue": round(fatigue, 2), "health_rust": round(rust, 2), "health_status": status,
                          "health_return_absence": int((state or {}).get("return_absence_games") or 0),
-                         "health_games_since_return": int((state or {}).get("games_since_return") or 0)})
+                         "health_games_since_return": int((state or {}).get("games_since_return") or 0), **extra})
     return adjusted
 
 
@@ -582,6 +631,16 @@ def active_injury_event_on_date(events: list[dict[str, Any]], game_day: date) ->
         if not start or not end:
             continue
         if parse_date(start) <= game_day < parse_date(end):
+            if event.get("plays_injury_game") and parse_date(start) == game_day:
+                continue   # hurt in (or after) tonight's game: he still plays it
+            return event
+    return None
+
+
+def injury_game_event_on_date(events: list[dict[str, Any]], game_day: date) -> dict[str, Any] | None:
+    """The injury a player suffers in tonight's game, if any."""
+    for event in events:
+        if event.get("plays_injury_game") and event.get("start_date") and parse_date(event["start_date"]) == game_day:
             return event
     return None
 
@@ -757,6 +816,12 @@ def advance_state_for_date(state: dict[str, Any], game_date: date, rest_days: in
     tuning = config.get("tuning", {})
     decay = max(0, rest_days) * float(tuning.get("fatigue_decay_per_rest_day", 6.5)) / max(float(staff.get("recovery_days_multiplier", 1.0)), 0.2)
     state["fatigue"] = round(max(0.0, float(state.get("fatigue") or 0.0) - decay), 2)
+    if state.get("rest_date") and state["rest_date"] < date_to_str(game_date):
+        for key in ("rest_game_id", "rest_date", "rest_reason"):   # last night's rest is over
+            state.pop(key, None)
+    pending = state.get("pending_injury")
+    if pending and parse_date(pending["start_date"]) < game_date:
+        activate_pending_injury(state)
     return_date = state.get("return_date")
     if state.get("current_injury_id") and return_date and parse_date(return_date) <= game_date:
         state["current_injury_id"] = None
@@ -766,10 +831,136 @@ def advance_state_for_date(state: dict[str, Any], game_date: date, rest_days: in
             state.pop(key, None)
         absence = int(state.pop("current_absence_games", 0) or 0)
         if absence > 0:
+            from .injury_model import return_rust
             state["return_absence_games"] = absence
             state["games_since_return"] = 0
-    if state.get("availability_status") == "active" and float(state.get("rust") or 0.0) > 0:
+            state["return_rust"] = return_rust(absence)
+            state["rust"] = state["return_rust"]
+    if state.get("availability_status") == "active" and float(state.get("rust") or 0.0) > 0 and state.get("return_rust") is None:
+        # Older states: rust fades by the calendar. Returns from injury now fade it per game played (advance_return_ramp).
         state["rust"] = round(max(0.0, float(state.get("rust") or 0.0) - float(tuning.get("rust_decay_per_game", 7.5)) / max(float(staff.get("recovery_days_multiplier", 1.0)), 0.2)), 2)
+
+
+def activate_pending_injury(state: dict[str, Any]) -> None:
+    """The injury from his last game: the absence starts now (he played the game he was hurt in). Called on the next
+    health pass, or by the save right after the day's games so the injury shows at once."""
+    pending = state.pop("pending_injury", None)
+    if not pending:
+        return
+    for key in ("return_absence_games", "games_since_return", "return_rust", "ramp_last_game", "rest_suggestion"):
+        state.pop(key, None)
+    state.update({
+        "current_injury_id": pending["id"], "availability_status": "out", "return_date": pending["return_date"],
+        "current_injury_severity": pending["severity"], "current_injury_part": pending["body_part"],
+        "current_injury_label": pending["diagnosis"], "rust": 0.0, "current_absence_games": 0,
+    })
+
+
+def advance_return_ramp(state: dict[str, Any], game_date: date, staff: dict[str, float]) -> None:
+    """A game day for a player back from an absence: count the games he has played since returning (not counting
+    tonight's), and set tonight's rust. Rust fades with each game played, faster with a better recovery planner; the
+    minutes limit (sim.return_ramped_player_pool) follows the same count."""
+    from .injury_model import RUST_DECAY_PER_GAME, return_ramp_length
+    today = date_to_str(game_date)
+    last = state.get("ramp_last_game")
+    if last and last < today:
+        state["games_since_return"] = int(state.get("games_since_return") or 0) + 1
+    played = int(state.get("games_since_return") or 0)
+    if played >= return_ramp_length(int(state["return_absence_games"])):
+        for key in ("return_absence_games", "games_since_return", "return_rust", "ramp_last_game"):
+            state.pop(key, None)
+        state["rust"] = 0.0
+        return
+    state["ramp_last_game"] = today
+    decay = RUST_DECAY_PER_GAME / max(float(staff.get("recovery_days_multiplier", 1.0)), 0.2)
+    state["rust"] = round(max(0.0, float(state.get("return_rust") or 0.0) - decay * played), 2)
+
+
+# ---- Coach rest and load management (INJURY-REST, 2026-11-19) ------------------------------------------------------
+# AI coaches sit healthy regulars on some nights. Fitted to real 2025-26 box scores (output/injury-rest/real_rest.py):
+# players averaging 25+ minutes missed 3.2% of their team's games as single-game absences (7.2% on the second night
+# of a back-to-back, 2.4% otherwise), rising with age (back-to-backs: 5% under 25, 7% at 25-29, 10% at 30-33, 11% at
+# 34+) and late in the season (last 15 games: 4-5% vs 3%); minutes played made no difference among regulars. The
+# chances below are those rates minus the one-game injury and illness absences the injury model already produces.
+# The box scores rarely say why (most inactive players are not listed), so the "other nights" chance also stands in
+# for one-game absences that never reach an injury report: personal reasons, minor knocks, suspensions.
+# Rules from the league's player participation policy (2023): a team rests at most one regular in a game (outside the
+# last two games), and a player stays on course for the 65 games that award eligibility needs.
+REST_MIN_MINUTES = 24.0
+# (age upper bound, chance on the second night of a back-to-back, chance on other nights)
+REST_BY_AGE = ((24.99, 0.050, 0.011), (29.99, 0.070, 0.016), (33.99, 0.095, 0.031), (99.0, 0.11, 0.032))
+REST_RETURNING_BACK_TO_BACK = 0.15   # judgment: teams often keep a player just back from injury out of back-to-backs
+REST_LATE_GAMES = 15                 # the stretch run: every team rests a little more
+REST_LATE_EXTRA = 0.03
+REST_LATE_TOP_EXTRA = 0.008          # teams with a playoff spot secured (top 8 records) a little more again
+# Last two games: regulars sit (real 2025-26: 60% of the best eight teams' regulars and 46% of the middle teams' sat at
+# least one of their final games). Winning teams rest for the playoffs; the others because little is left to play for.
+REST_FINAL_GAMES = 2
+REST_FINAL_PLAYOFF = 0.35
+REST_FINAL_OTHERS = 0.25
+REST_FINAL_MIN_WIN_PCT = 0.5
+REST_MISSED_LIMIT = 14               # no rest nights once a player has missed this many games (65-game rule)
+REST_MAX_PER_GAME = 1
+REST_SHORT_HANDED = 3                # no rest nights while this many regulars are already out injured
+# Teams out of the race shut players down: in real 2025-26 the eight worst teams' regulars sat an average of 6.8 of
+# the final games (74% sat at least one, 46% five or more) against about 1 for other teams.
+SHUTDOWN_BOTTOM_TEAMS = 8
+SHUTDOWN_GAMES_LEFT = 25
+SHUTDOWN_HAZARD = 0.03
+REGULAR_SEASON_GAMES = 82
+
+
+def league_rest_context(canonical: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Per team: games left, league rank by winning percentage (1 = best) and winning percentage, from the save's
+    standings."""
+    records = canonical.get("save_team_records") or {}
+    rows = []
+    for team_id, record in records.items():
+        wins, losses = int(record.get("wins") or 0), int(record.get("losses") or 0)
+        played = wins + losses
+        rows.append((team_id, wins / played if played else 0.5, played))
+    order = sorted(rows, key=lambda row: (-row[1], row[0]))
+    return {team_id: {"games_left": max(0, REGULAR_SEASON_GAMES - played), "win_pct": pct, "rank": rank + 1, "teams": len(order)}
+            for rank, (team_id, pct, played) in enumerate(order)}
+
+
+def rest_draw(seed: int, game_id: Any, player_id: str) -> float:
+    return random.Random(f"{seed}:{game_id}:{player_id}:coach-rest").random()
+
+
+def rest_chance(player: dict[str, Any], state: dict[str, Any], context: dict[str, Any]) -> tuple[float, str, str]:
+    """Chance the coach sits this healthy regular tonight, the kind ("rest" or "shutdown") and the reason in words."""
+    games_left = int(context.get("games_left") if context.get("games_left") is not None else REGULAR_SEASON_GAMES)
+    teams = int(context.get("teams") or 30)
+    rank = int(context.get("rank") or teams // 2)
+    age = float(player.get("age") or 27.0)
+    if games_left <= SHUTDOWN_GAMES_LEFT and rank > teams - SHUTDOWN_BOTTOM_TEAMS and games_left > 0:
+        return SHUTDOWN_HAZARD, "shutdown", "shut down for the rest of the season (team out of the race)"
+    if games_left <= REST_FINAL_GAMES:
+        if float(context.get("win_pct") or 0.0) >= REST_FINAL_MIN_WIN_PCT:
+            return REST_FINAL_PLAYOFF, "rest", "rest before the playoffs"
+        return REST_FINAL_OTHERS, "rest", "rest in the season's final games"
+    if int(state.get("games_missed") or 0) + int(state.get("games_rested") or 0) >= REST_MISSED_LIMIT:
+        return 0.0, "rest", ""
+    if int(context.get("rested_tonight") or 0) >= REST_MAX_PER_GAME or int(context.get("regulars_out") or 0) >= REST_SHORT_HANDED:
+        return 0.0, "rest", ""
+    b2b_chance, other_chance = next((b, o) for limit, b, o in REST_BY_AGE if age <= limit)
+    if context.get("back_to_back"):
+        chance, reason = b2b_chance, "second night of a back-to-back"
+        if int(state.get("return_absence_games") or 0) > 0:
+            chance, reason = chance + REST_RETURNING_BACK_TO_BACK, "back-to-back soon after returning from injury"
+    else:
+        chance, reason = other_chance, "maintenance day"
+    if games_left <= REST_LATE_GAMES:
+        chance += REST_LATE_EXTRA + (REST_LATE_TOP_EXTRA if rank <= 8 else 0.0)
+        if not context.get("back_to_back"):
+            reason = "rest during the stretch run"
+    return chance, "rest", reason
+
+
+def coach_rest_decision(player: dict[str, Any], state: dict[str, Any], context: dict[str, Any], draw: float) -> tuple[str, str] | None:
+    chance, kind, reason = rest_chance(player, state, context)
+    return (kind, reason) if chance > 0 and draw < chance else None
 
 
 def choose_quota_weighted(bands: dict[str, Any], counts: dict[str, int], rng: random.Random) -> str | None:
@@ -1258,6 +1449,10 @@ def state_from_dict(state: dict[str, Any], as_of_date: str) -> dict[str, Any]:
         # Absence bookkeeping for the return-to-minutes ramp (kept only while it matters).
         **{key: int(state[key]) for key in ("current_absence_games", "return_absence_games", "games_since_return")
            if state.get(key) is not None and (key != "games_since_return" or state.get("return_absence_games"))},
+        **({"return_rust": float(state["return_rust"])} if state.get("return_absence_games") and state.get("return_rust") is not None else {}),
+        **({key: state[key] for key in ("last_team_game", "ramp_last_game", "pending_injury", "rest_game_id", "rest_date", "rest_reason",
+                                         "games_rested", "rest_suggestion", "rest_shutdown")
+            if state.get(key) is not None}),
     }
 
 

@@ -4024,7 +4024,7 @@ function seasonMinutesCard(rows, editable) {
       <div class="season-minutes-head"><span>Player</span><span>Pos</span><span>Height</span><span>Minutes</span><span>Fatigue</span></div>
       ${sortedRows.map((row) => {
         const injured = isPlayerInjured(row.health);
-        const injuryStatus = playerInjuryStatusMarkup(row) + playerRustMarkup(row);
+        const injuryStatus = playerInjuryStatusMarkup(row) + playerRustMarkup(row) + playerRestMarkup(row);
         const minuteValue = injured ? 0 : clampNumber(assigned(row), 0, 48);
         const rotationLocked = !injured && (state.rotationLockedPlayerIds.has(row.id) || row.rotation_user_set);
         const position = String(row.position || "—").trim() || "—";
@@ -10588,11 +10588,12 @@ function playerInjuryStatusMarkup(row) {
 }
 
 function playerNameWithInjuryMarkup(row, name = row.name || row.player_name || "Unknown") {
-  return `<span class="summary-player-name-label player-name-with-injury"><span class="player-name-text">${escapeHtml(name)}</span>${playerInjuryStatusMarkup(row)}${playerRustMarkup(row)}</span>`;
+  return `<span class="summary-player-name-label player-name-with-injury"><span class="player-name-text">${escapeHtml(name)}</span>${playerInjuryStatusMarkup(row)}${playerRustMarkup(row)}${playerRestMarkup(row)}</span>`;
 }
 
-// Back from injury but rusty: the engine lowers this player's in-game ratings by `rust_penalty` points until the
-// rust fades (about `rust_days` days). Shown as a small red down arrow with the exact penalty.
+// Back from injury but rusty: the engine lowers this player's in-game ratings by `rust_penalty` points for his first
+// games back (`rust_games`), and the coach eases his minutes back (`minutes_limit_pct` of normal for
+// `minutes_limit_games` more games). Shown as a small red down arrow with the exact penalty.
 function playerHasRust(health) {
   return Boolean(health) && !isPlayerInjured(health) && Number(health.rust_penalty) >= 0.1;
 }
@@ -10600,9 +10601,24 @@ function playerHasRust(health) {
 function playerRustMarkup(row) {
   if (!playerHasRust(row?.health)) return "";
   const penalty = Number(row.health.rust_penalty);
-  const days = Number(row.health.rust_days);
-  const description = `Rusty after injury: in-game ratings −${penalty.toFixed(1)}${Number.isFinite(days) ? `, fades in about ${days} day${days === 1 ? "" : "s"}` : ""}`;
+  const games = Number(row.health.rust_games ?? row.health.rust_days);
+  const limitPct = Number(row.health.minutes_limit_pct);
+  const limitGames = Number(row.health.minutes_limit_games);
+  const fades = Number.isFinite(games) ? `, fades over his next ${games} game${games === 1 ? "" : "s"}` : "";
+  const limit = Number.isFinite(limitPct) && limitPct < 100 && Number.isFinite(limitGames)
+    ? `. Minutes limit: about ${limitPct}% of his usual minutes next game, back to full over ${limitGames} game${limitGames === 1 ? "" : "s"}` : "";
+  const description = `Rusty after injury: in-game ratings −${penalty.toFixed(1)}${fades}${limit}`;
   return `<span class="season-injury-status player-rust-status" role="img" aria-label="${escapeAttr(description)}" title="${escapeAttr(description)}"><span aria-hidden="true">↓</span><span>${penalty.toFixed(1)}</span></span>`;
+}
+
+// The coach's rest suggestion for the user's own team (the same rule AI coaches follow; never applied automatically).
+function playerRestMarkup(row) {
+  const suggestion = row?.health?.rest_suggestion;
+  if (!suggestion || isPlayerInjured(row.health)) return "";
+  const when = suggestion.date ? ` on ${suggestion.date}` : "";
+  const what = suggestion.kind === "shutdown" ? "shutting him down for the rest of the season" : `resting him${when}`;
+  const description = `Coach suggests ${what}: ${suggestion.reason}. Set his minutes to 0 to follow it.`;
+  return `<span class="season-injury-status player-rest-status" role="img" aria-label="${escapeAttr(description)}" title="${escapeAttr(description)}"><span aria-hidden="true">zZ</span></span>`;
 }
 
 function injuryGamesRemaining(row) {

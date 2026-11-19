@@ -5090,6 +5090,10 @@ body.unified-terminal-ui .playoff-stats-panel .playoff-stats-empty td { height:4
 body.unified-terminal-ui .player-rust-status,
 body.unified-terminal-ui .player-rust-status > span { color:#c4585f !important; }
 body.unified-terminal-ui .player-name-with-injury > .player-rust-status { flex:0 0 auto; margin-left:3px; }
+/* The coach's rest suggestion (user's team only): a quiet blue note, never applied automatically. */
+body.unified-terminal-ui .player-rest-status,
+body.unified-terminal-ui .player-rest-status > span { color:#5b86b8 !important; font-size:0.85em; }
+body.unified-terminal-ui .player-name-with-injury > .player-rest-status { flex:0 0 auto; margin-left:3px; }
 
 /* Decline watch (veterans): red down arrow with expected overall change per year. */
 body.unified-terminal-ui .season-development-decline { color:#c4585f; display:inline-flex; align-items:baseline; gap:2px; }

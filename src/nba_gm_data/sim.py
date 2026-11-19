@@ -607,8 +607,15 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
     )
     scoring_periods = []
     fouled_out = set().union(*(out for _, out in in_game.values())) if in_game else set()
+    # Players hurt during the game left it: they do not return for overtime, and the box score says why.
+    left_injured = {item["player"]["id"]: item.get("health_injury_label") or "injury"
+                    for item in home_players + away_players if item.get("left_injured")}
+    if left_injured:
+        for line in home_line + away_line:
+            if line["player_id"] in left_injured:
+                line["in_game_injury"] = left_injured[line["player_id"]]
     overtime_periods = resolve_overtime_if_tied(home_line, away_line, home_team_line, away_team_line, rng,
-                                             tracking_periods=scoring_periods, exclude_ids=fouled_out)
+                                             tracking_periods=scoring_periods, exclude_ids=fouled_out | set(left_injured))
     from .box_variation import vary_box_score
     vary_box_score(canonical, [home_line, away_line], [home_team_line, away_team_line],
                    [home_features, away_features], f"{seed}:{game_id}:{mode}:box-variation")
@@ -738,7 +745,7 @@ def return_ramped_player_pool(pool: list[dict[str, Any]], coach: CoachRating | N
             factor = return_minutes_multiplier(absence, int(item.get("health_games_since_return") or 0), star)
             item = {**item, "minutes": round(float(item.get("minutes") or 0.0) * factor, 3), "return_minutes_factor": factor}
         adjusted.append(item)
-    return normalize_minutes(adjusted)
+    return normalize_minutes(adjusted, exact=True)
 
 
 def game_day_rotation(
@@ -1108,12 +1115,32 @@ def rust_penalty_points(rust: float) -> float:
 
 
 def rust_display(state: dict[str, Any] | None) -> dict[str, Any]:
-    """Rust fields for the GUI: the exact current penalty and roughly how many days until it is gone."""
-    rust = float((state or {}).get("rust") or 0.0)
-    if rust <= 0 or str((state or {}).get("availability_status") or "active") != "active":
+    """Return-to-play fields for the GUI (active players): the exact current rust penalty and how many games until
+    it is gone, the coach's minutes limit for his next game (share of normal at an average rotation manager) and how
+    many games until full minutes, and the coach's rest suggestion (user's team)."""
+    state = state or {}
+    if str(state.get("availability_status") or "active") != "active":
         return {}
-    return {"rust": round(rust, 1), "rust_penalty": round(rust_penalty_points(rust), 1),
-            "rust_days": max(1, math.ceil(rust / RUST_DECAY_PER_STEP))}
+    out: dict[str, Any] = {}
+    rust = float(state.get("rust") or 0.0)
+    absence = int(state.get("return_absence_games") or 0)
+    # Games played since the return, including his last game (the state is read after the day's games).
+    played = int(state.get("games_since_return") or 0) + (1 if state.get("ramp_last_game") else 0)
+    if absence and state.get("return_rust") is not None:
+        rust = max(0.0, float(state["return_rust"]) - RUST_DECAY_PER_STEP * played)   # what his next game carries
+    if rust > 0:
+        games = max(1, math.ceil(rust / RUST_DECAY_PER_STEP))
+        out.update({"rust": round(rust, 1), "rust_penalty": round(rust_penalty_points(rust), 1), "rust_games": games,
+                    "rust_days": games})
+    if absence:
+        from .injury_model import return_minutes_multiplier, return_ramp_length
+        left = return_ramp_length(absence) - played
+        if left > 0:
+            out.update({"minutes_limit_pct": round(100 * return_minutes_multiplier(absence, played)),
+                        "minutes_limit_games": left})
+    if state.get("rest_suggestion"):
+        out["rest_suggestion"] = dict(state["rest_suggestion"])
+    return out
 
 
 def health_adjusted_player_features(features: dict[str, float], item: dict[str, Any]) -> dict[str, float]:

@@ -2046,6 +2046,7 @@ def advance_lifecycle_to(
         todays_games = [g for g in pending_games if g["gameDate"] == day]
         health = simulate_health(root, active, cursor, day, seed=seed, schedule=todays_games)
         merge_health_results(save, health, active)
+        attach_rest_suggestions(root, active, save, day, seed)
         refresh_active_runtime_state(active, save)
         if development:
             month_events = process_development_months(active, save, cursor, day, seed)
@@ -2229,6 +2230,7 @@ def advance_save_day(
             result = to_plain(sim_game_with_context(context, game_id, mode="sandbox-sim", seed=effective_seed))
             record_game_result(save, canonical, game, result)
             simulated_game_ids.add(game_id)
+        show_injuries_from_todays_games(save, target)
         new_development_events = process_development_months(runtime_canonical, save, current, target, effective_seed)
         if reassess_ai_roles(runtime_canonical, save, target):
             apply_save_rotation_projection(runtime_canonical, save)
@@ -5447,6 +5449,55 @@ def record_lasting_injury_effect(save: dict[str, Any], event: dict[str, Any]) ->
     )))
 
 
+def show_injuries_from_todays_games(save: dict[str, Any], day: str) -> None:
+    """Players hurt in (or after) today's games are listed as out as soon as the games are over."""
+    from .health import activate_pending_injury
+    for state in save.get("health_states", []):
+        pending = state.get("pending_injury")
+        if pending and str(pending.get("start_date") or "") <= day:
+            activate_pending_injury(state)
+
+
+def attach_rest_suggestions(root: str | Path, active: dict[str, Any], save: dict[str, Any], day: str, seed: int) -> None:
+    """The user's coach suggests rest for the team's next game, by the same rule and seeded draw AI coaches act on
+    (health.coach_rest_decision). Stored on the health state and shown next to the player; never applied."""
+    from .health import coach_rest_decision, league_rest_context, rest_draw, REST_MIN_MINUTES
+    human = set(human_controlled_team_ids(save))
+    states = {state.get("player_id"): state for state in save.get("health_states", [])}
+    roster = {player["id"]: player for player in active.get("players", []) if player.get("team_id") in human}
+    for player_id in roster:
+        (states.get(player_id) or {}).pop("rest_suggestion", None)
+    if not human or not save.get("team_records") or (save.get("state") or {}).get("phase") not in (None, "regular_season"):
+        return
+    standings = league_rest_context({"save_team_records": save.get("team_records")})
+    espn_by_team = {team["id"]: espn for espn, team in espn_team_id_map(active).items()}
+    games = [g for g in schedule_for_save(root, save) if str(g.get("phase") or "regular") == "regular"]
+    for team_id in sorted(human):
+        espn = espn_by_team.get(team_id)
+        mine = sorted((g for g in games if espn in (str(g.get("homeTeamId")), str(g.get("awayTeamId")))),
+                      key=lambda g: (g.get("gameDate") or "", str(g.get("externalGameId"))))
+        upcoming = next((g for g in mine if (g.get("gameDate") or "") > day), None)
+        if not upcoming:
+            continue
+        previous = max((g["gameDate"] for g in mine if (g.get("gameDate") or "") <= day), default=None)
+        back_to_back = bool(previous) and (parse_date(upcoming["gameDate"]) - parse_date(previous)).days == 1
+        players = sorted((p for p in roster.values() if p.get("team_id") == team_id), key=lambda p: -float(p.get("minutes_projection") or 0))
+        out = sum(1 for p in players if player_unavailable_for_rotation(states.get(p["id"]))
+                  and float(p.get("_trade_value_minutes_projection") or 0) >= REST_MIN_MINUTES)
+        context = {**standings.get(team_id, {}), "back_to_back": back_to_back, "rested_tonight": 0, "regulars_out": out}
+        for player in players:
+            state = states.get(player["id"])
+            if (not state or float(player.get("minutes_projection") or 0) < REST_MIN_MINUTES
+                    or player_unavailable_for_rotation(state)):
+                continue
+            decision = coach_rest_decision(player, state, context, rest_draw(seed, upcoming["externalGameId"], player["id"]))
+            if decision:
+                kind, reason = decision
+                state["rest_suggestion"] = {"game_id": str(upcoming["externalGameId"]), "date": upcoming["gameDate"],
+                                            "kind": kind, "reason": reason}
+                context["rested_tonight"] += 1
+
+
 def merge_health_results(save: dict[str, Any], health: dict[str, Any], canonical: dict[str, Any] | None = None) -> None:
     players = {player["id"]: player for player in (canonical or {}).get("players", [])}
     previous_states = {state.get("player_id"): state for state in save.get("health_states", [])}
@@ -7281,6 +7332,8 @@ def user_override_coach_fill(
 def player_unavailable_for_rotation(state: dict[str, Any] | None) -> bool:
     if not state:
         return False
+    if state.get("rest_shutdown") or state.get("rest_game_id"):
+        return True   # the AI coach rests him tonight or has shut him down (set by the day's health pass)
     status = str(state.get("availability_status") or "active").lower()
     if status in {"", "active", "healthy"} and not state.get("current_injury_id"):
         return False
@@ -10225,6 +10278,9 @@ def randomize_future_matchups(template_games: list[dict[str, Any]], season: str)
 def refresh_health_for_new_season(save: dict[str, Any], start_date: str) -> None:
     refreshed = []
     for state in save.get("health_states", []):
+        # Rest nights, shutdowns and the counts behind them belong to the season that ended.
+        state = {key: value for key, value in state.items()
+                 if key not in ("rest_game_id", "rest_date", "rest_reason", "rest_shutdown", "games_rested", "rest_suggestion")}
         refreshed.append(
             {
                 **state,
