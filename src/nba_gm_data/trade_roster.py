@@ -68,7 +68,10 @@ def roster_projection(canonical, team_id, outgoing_ids=(), incoming_ids=()):
     rotation = tx.strategic_rotation_view(trial, team_id)
     rotation = constrain_center_opportunity(canonical, rotation)
     from .sim import team_feature_vector
-    strength = tx.contention_from_features(team_feature_vector(rotation, tx.team_by_id(canonical, team_id), include_spatial=False).features)
+    # When the center constraint left the chosen view untouched, its strength was just computed (same view, same team).
+    strength = rotation.get('_strategic_contention')
+    if strength is None:
+        strength = tx.contention_from_features(team_feature_vector(rotation, tx.team_by_id(canonical, team_id), include_spatial=False).features)
     result = {'strength': round(strength, 4), 'cuts': cuts,
               'rotation': {p['id']: p['minutes_projection'] for p in rotation['players']},
               'retained_ids': [p['id'] for p in kept]}
@@ -116,6 +119,30 @@ def constrain_center_opportunity(canonical, rotation):
     return view
 
 
+def long_absences(canonical, saved):
+    """(player id, days out) for each health row that is out for at least 14 more days, in row order.
+
+    Inside one trade search the planning save never changes, so the list is kept per search (with the rows it
+    was built from) instead of re-reading every league health row for each priced package."""
+    from . import transactions as tx
+    rows = saved.get('health_states', [])
+    stamp = saved['state'].get('current_date')
+    memo = canonical.get('_trade_search_exact_memo')
+    cached = memo.get('long_absences') if memo is not None else None
+    if cached is not None and cached[0] is rows and cached[1] == stamp:
+        return cached[2]
+    today = tx.parse_iso_date(stamp)
+    found = []
+    for health in rows:
+        end = tx.parse_iso_date(health.get('return_date'))
+        days = (end-today).days if today and end else 0
+        if health.get('availability_status') == 'out' and days >= 14:
+            found.append((health.get('player_id'), days))
+    if memo is not None:
+        memo['long_absences'] = (rows, stamp, found)
+    return found
+
+
 def pick_investment_outlook(canonical, team_id, incoming, outgoing, before, after, waiver_cost=0):
     """Allow price disagreement for an actual purpose, not just a pick sweetener."""
     from . import transactions as tx
@@ -158,13 +185,9 @@ def pick_investment_outlook(canonical, team_id, incoming, outgoing, before, afte
     salary_out, salary_in = tx.package_salary(canonical, outgoing), tx.package_salary(canonical, incoming)
     relief = max(0., (salary_out-salary_in)/1e6-waiver_cost) if salary_out is not None and salary_in is not None else 0.
     saved = planning_save(canonical)
-    today = tx.parse_iso_date(saved['state'].get('current_date'))
     injured, absence = set(), 0
-    for health in saved.get('health_states', []):
-        end = tx.parse_iso_date(health.get('return_date'))
-        days = (end-today).days if today and end else 0
-        pid = health.get('player_id')
-        if health.get('availability_status') == 'out' and days >= 14 and before['rotation'].get(pid, 0) >= 12:
+    for pid, days in long_absences(canonical, saved):
+        if before['rotation'].get(pid, 0) >= 12:
             injured.add(pid)
             absence = max(absence, days)
     cover = 0.

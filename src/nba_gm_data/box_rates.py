@@ -92,10 +92,27 @@ def _log_linear(model: Mapping[str, float], values: Mapping[str, float]) -> floa
     return math.exp(total)
 
 
+# One player's input records are read by several rate models in a row (points, turnovers, steals, free throws).
+# The records handed out by ratings_model are shared, read-only objects, so the flattened numbers are kept for the
+# last eight record objects (by identity, holding a reference so the id stays unique).
+_FLAT_CACHE: dict[int, tuple[Mapping[str, Any], dict[str, float]]] = {}
+
+
+def _flat(inputs: Mapping[str, Any]) -> dict[str, float]:
+    cached = _FLAT_CACHE.get(id(inputs))
+    if cached is not None and cached[0] is inputs:
+        return cached[1]
+    flat = flatten_inputs(inputs)
+    if len(_FLAT_CACHE) >= 8:
+        _FLAT_CACHE.pop(next(iter(_FLAT_CACHE)))
+    _FLAT_CACHE[id(inputs)] = (inputs, flat)
+    return flat
+
+
 def _from_inputs(model: Mapping[str, float], inputs: Mapping[str, Any] | None, low: float, high: float) -> float | None:
     if not inputs:
         return None
-    rate = _log_linear(model, flatten_inputs(inputs))
+    rate = _log_linear(model, _flat(inputs))
     return None if rate is None else round(clamp(rate, low, high), 4)
 
 
