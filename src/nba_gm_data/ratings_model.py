@@ -148,7 +148,20 @@ def route_trait_deltas(inputs: Mapping[str, Any], trait_deltas: Mapping[str, flo
                 weighted[input_id] = weighted.get(input_id, 0.0) + float(delta) * weight
     totals = _input_trait_weight_totals()
     out = {input_id: GRADE_POINTS_PER_TRAIT_POINT * value / totals[input_id]
-           for input_id, value in weighted.items() if value}
+           for input_id, value in weighted.items() if value and input_id not in DEVELOPS_LIKE}
+    # Inputs outside the blended traits (or with only a token share in one) that the box score now reads develop
+    # like their closest skill (DEVELOPS_LIKE); strength and jump capacity follow a physical trait's own curve.
+    for input_id, like in DEVELOPS_LIKE.items():
+        if like in out and _grade_field(input_id, inputs.get(input_id)):
+            out[input_id] = out[like]
+    for input_id, trait in DEVELOPS_WITH_TRAIT.items():
+        delta = float(trait_deltas.get(trait) or 0.0)
+        if not delta:
+            continue
+        if input_id in JUMP_CM_PER_GRADE_POINT and _jump_field(inputs.get(input_id)):
+            out[input_id] = GRADE_POINTS_PER_TRAIT_POINT * delta * JUMP_CM_PER_GRADE_POINT[input_id]
+        elif _grade_field(input_id, inputs.get(input_id)):
+            out[input_id] = GRADE_POINTS_PER_TRAIT_POINT * delta
     involvement = _involvement_delta(inputs, out)
     if involvement:
         out["T08"] = involvement
@@ -188,6 +201,32 @@ def _is_grade(record: Mapping[str, Any] | None) -> bool:
     return isinstance(value, dict) and "grade" in value and record.get("status") != "unknown"
 
 
+# Development for inputs the box score reads that sit outside the 15 blended traits (they never changed over a career
+# before 2026-11-19). Each follows the skill whose real aging it matches, measured on Basketball Index's year-to-year
+# talent grades by age (output/unused-ratings-2/aging_curves.py, change per year in league standard deviations at
+# 19-22 / 23-25 / 26-28 / 29-31 / 32+):
+# - defensive rebounding (S30-S32) like offensive rebounding technique (S29): defensive rebounding talent
+#   +.11/-.01/-.07/-.11/-.20 vs offensive +.10/+.01/-.06/-.08/-.18;
+# - screen setting (S27) like screen-action reads (S28): screening talent +.05/+.03/+.08/-.03/-.02, an experience skill;
+# - steal technique (S42, S43) like defensive anticipation (S41): steals per 75 +.09/.00/.00/-.05/+.01;
+# - foul control (S45) like attention / responsibility (S44): fouls per 75 -.12/-.06/-.01/+.02/+.04 (fewer fouls while
+#   young, slightly more late).
+DEVELOPS_LIKE = {"S27": "S28", "S30": "S29", "S31": "S29", "S32": "S29", "S42": "S41", "S43": "S41", "S45": "S44"}
+# Strength and jump capacity follow a physical rating's own curve, the same curves physical_evidence uses to age the
+# NBA Draft Combine tests: jumping the athletic one (foot speed and agility, declining from about 28), strength the
+# general one (declining from about 30).
+DEVELOPS_WITH_TRAIT = {"P10": "foot_speed_lateral_agility", "P08": "rim_deterrence"}
+# Jump capacity is stored in cm: one grade point of a physical capacity is this many cm of standing jump (league spread
+# of standing jump height, 5.28 cm, over league spread of the acceleration grade P05, 4.05; 691 players).
+JUMP_CM_PER_GRADE_POINT = {"P10": 1.30}
+
+
+def _jump_field(record: Mapping[str, Any] | None) -> bool:
+    value = (record or {}).get("value")
+    return (isinstance(value, dict) and bool(value.get("measurements")) and record.get("status") != "unknown"
+            and value["measurements"][0].get("metric") == "jump_height")
+
+
 # Body dimensions are fixed for development purposes; the other physical families are trainable capacities.
 BODY_DIMENSIONS = frozenset({"P01", "P02", "P03", "P04"})
 
@@ -217,6 +256,13 @@ def apply_input_deltas(inputs: Mapping[str, Any], deltas: Mapping[str, float]) -
             # Bound the move only; a value already outside the bounds is never pushed across them.
             moved = min(max(current + delta, min(low, current)), max(high, current))
             out[input_id] = {**record, "value": {**record["value"], "probability": round(moved, 6)}}
+            continue
+        if input_id in JUMP_CM_PER_GRADE_POINT and delta and _jump_field(record):
+            first = record["value"]["measurements"][0]
+            moved = {**first, "value": round(max(0.0, float(first["value"]) + delta), 3)}
+            if isinstance(first.get("interval"), list):
+                moved["interval"] = [round(max(0.0, float(v) + delta), 3) for v in first["interval"]]
+            out[input_id] = {**record, "value": {**record["value"], "measurements": [moved, *record["value"]["measurements"][1:]]}}
             continue
         field = _grade_field(input_id, record)
         if not field or not delta:

@@ -41,8 +41,11 @@ FTA_PER_POINT_INPUTS = {"constant": -0.78847, "log T18": 2.35318, "S24": 0.00939
 
 # Points per 36: involvement (T08), shoot-first vs pass-first choices (T01 shoot +, pass -), close-range touch (S10)
 # and contact seeking (T18, free throws). Sets each player's share of the team's points (sim.distribute_player_lines).
-POINTS_INPUTS = {"constant": 3.86525, "log T08": 0.88789, "log T01.pass": -0.29853, "log T01.shoot": 0.3423,
-                 "S10": 0.00396, "log T18": 0.31019}  # r 0.93
+# 2026-11-19 (unused-ratings 2): plus three-point shooting as he shoots it (S.three_mode: the S01-S03 grades weighted by
+# his shooting-mode habit T03). Without it, pure shooters were handed fewer points than their own made threes add up
+# to (AJ Green 11.4 per 36 vs 12.8 real). Out-of-fold r 0.933 -> 0.938, mean abs error 1.45 -> 1.37.
+POINTS_INPUTS = {"constant": 3.67754, "log T08": 0.85117, "log T01.pass": -0.30457, "log T01.shoot": 0.2865,
+                 "S10": 0.00407, "log T18": 0.38402, "S.three_mode": 0.00197}  # r 0.94
 # Fallback for new-ratings players without inputs (generated draftees, unmatched box-score names).
 POINTS_TRAITS = {"constant": 1.71917, "handle_pressure": 0.0082, "shot_versatility": 0.00591, "rim_pressure": 0.00507,
                  "shooting_range": 0.00155}  # r 0.78
@@ -89,6 +92,13 @@ def flatten_inputs(inputs: Mapping[str, Any]) -> dict[str, float]:
     executions = [out[f"{family}.execution"] for family in PASS_FAMILIES if f"{family}.execution" in out]
     if len(executions) == len(PASS_FAMILIES):
         out["F.execution"] = sum(executions) / len(executions)
+    # Three-point shooting as he actually shoots it: the catch-and-shoot, pull-up and movement three grades (S01-S03)
+    # weighted by how often he takes each kind (shooting-mode habit, T03).
+    modes = (("catch", "S01"), ("pull_up", "S02"), ("movement", "S03"))
+    if all(f"T03.{mode}" in out and grade in out for mode, grade in modes):
+        total = sum(out[f"T03.{mode}"] for mode, _ in modes)
+        if total > 0:
+            out["S.three_mode"] = sum(out[f"T03.{mode}"] * out[grade] for mode, grade in modes) / total
     return out
 
 

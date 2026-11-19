@@ -1588,6 +1588,11 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
     lines = []
     from .ratings_model import uses_inputs_model
     expected = {"assists": 0.0, "steals": 0.0, "assist_model": "inputs" if uses_inputs_model(canonical) else "legacy"}
+    # Each player's normal output for tonight's minutes (new ratings: his fitted points per 36; old ratings: his share of
+    # tonight's team points). Tonight's three-point accuracy follows his points relative to it (offense.night_three_pct).
+    normal_points = [float(item.get("minutes") or 0.0) * float(features[item["player"]["id"]]["points_per36"]) / 36.0
+                     if features[item["player"]["id"]].get("points_per36") is not None else scoring_expectations[index]
+                     for index, item in enumerate(pool)]
     for index, item in enumerate(pool):
         player = item["player"]
         points = point_values[index]
@@ -1605,7 +1610,7 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
                 "health_fatigue": round(float(item.get("health_fatigue") or 0), 2),
                 "health_rust": round(float(item.get("health_rust") or 0), 2),
                 "points": points,
-                **shooting_line(points, feat, item["minutes"], rng),
+                **shooting_line(points, feat, item["minutes"], rng, normal_points[index]),
                 "rim_attempts": max(0, int(round(item["minutes"] * feat["rim_pressure"] / 1150 + rng.random()))),
                 "rebounds": max(0, int(round(item["minutes"] * rebound_rate_per_minute(player, feat) + rng.gauss(0.45, 1.55 + item["minutes"] * 0.018)))),
                 # Assists, turnovers and steals: a Poisson count around the player's own expected rate, drawn from
@@ -1917,10 +1922,11 @@ def assist_rate_from_features(feat: dict[str, float]) -> float:
     return clamp(rate, 0.035, 0.36)
 
 
-def shooting_line(points: int, feat: dict[str, float], minutes: float, rng: random.Random) -> dict[str, int]:
+def shooting_line(points: int, feat: dict[str, float], minutes: float, rng: random.Random,
+                  expected_points: float | None = None) -> dict[str, int]:
     if feat.get('offense_model_version'):
         from .offense import shooting_line as profile_shooting_line
-        return profile_shooting_line(points, feat, minutes, rng)
+        return profile_shooting_line(points, feat, minutes, rng, expected_points)
     spacing = float(feat.get("spacing") or 50)
     rim_pressure = float(feat.get("rim_pressure") or 50)
     creation = float(feat.get("shot_creation") or feat.get("usage") or 50)
