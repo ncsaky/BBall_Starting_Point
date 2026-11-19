@@ -150,7 +150,10 @@ class SalaryAwareSearchTests(unittest.TestCase):
             # Only the primary query is forced; facilitator buyers still use real fit.
             full=tx.buyer_teams_for_player._mock_wraps
             buyers.side_effect=lambda c,p:[buyer] if p['id']=='a0' else full(c,p)
-            result=tx.simulate_ai_trades(source,'2027-01-31','2027-01-31',seed=1,limit=10,search_depth=2,include_private_targets=False)
+            # The listed-player search: since trade step 2 AI-to-AI markets use the target search; this path still
+            # serves offers to the human team and keeps the salary-repair seeds tested here.
+            result=tx.simulate_ai_trades(source,'2027-01-31','2027-01-31',seed=1,limit=10,search_depth=2,include_private_targets=False,
+                                         target_search=False)
         self.assertTrue(result['proposals'],result['search_diagnostics'])
         for candidate in result['proposals']:
             self.assertTrue(candidate['proposal'].get('transfers'))

@@ -455,6 +455,11 @@ def _rebuilding(state: dict[str, Any]) -> bool:
     return state.get("phase") == "rebuilding" or state.get("window_phase") == "rebuilding"
 
 
+# Fields the trade-block reasons read. Every league valuation has them; a partial record (a test stand-in, or a player
+# priced before his valuation row exists) reads as neutral instead of failing.
+VALUATION_DEFAULTS = {"player_value": 0.0, "contract_surplus": 0.0, "health_risk": 0.0, "development_upside": 0.0}
+
+
 def move_reasons(canonical: dict[str, Any], player: dict[str, Any], team_id: str, *, core: bool = False) -> dict[str, float]:
     """The team's own reasons to move this player, each with how far it scales the premium down.
 
@@ -472,7 +477,7 @@ def move_reasons(canonical: dict[str, Any], player: dict[str, Any], team_id: str
         return {}
     valuation = valuation_or_fallback(player_asset_values_by_id(canonical), player["id"], player)
     _score, reasons, _preferred = trade_block_score(
-        canonical, player, SimpleNamespace(**valuation),
+        canonical, player, SimpleNamespace(**{**VALUATION_DEFAULTS, **valuation}),
         SimpleNamespace(team_id=team_id, phase=state.get("phase"), excesses=list(state.get("excesses") or [])))
     reasons = list(reasons)
     if player["id"] in set((canonical.get("team_trade_blocks") or {}).get(team_id) or []):
