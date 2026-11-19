@@ -5000,6 +5000,7 @@ const PLAYOFF_STATS_COLUMNS = [
   { key: "assists_per_game", label: "AST", title: "Assists per playoff game", width: 38 },
   { key: "steals_per_game", label: "STL", title: "Steals per playoff game", width: 34 },
   { key: "blocks_per_game", label: "BLK", title: "Blocks per playoff game", width: 34 },
+  { key: "screen_assists_per_game", label: "SAST", title: "Screen assists per playoff game: screens that directly led to a teammate's basket", width: 40 },
   { key: "fg3m_per_game", label: "3PM", title: "Threes made per playoff game", width: 36 },
   { key: "fg_pct", label: "FG%", title: "Playoff field-goal percentage", width: 40 },
   { key: "fg3_pct", label: "3P%", title: "Playoff three-point percentage", width: 40 },
@@ -7886,7 +7887,7 @@ function collegeProfileStrip(profile, scouting = null) {
 
 function playerSeasonStrip(season, career = []) {
   season = career.find(row => row.season === season.season) || season;
-  const fields=[['GP/All',`${season.games ?? 0}/${season.team_games ?? '—'}`,'Games played / team games played'],['MPG',season.mpg],['PTS',season.ppg],['REB',season.rpg],['AST',season.apg],['STL',season.spg],['BLK',season.bpg],['TO',season.topg],['FGA',season.fga_per_game],['FG%',season.fg_pct,'Field-goal percentage'],['3PM',season.fg3m_per_game],['3PA',season.fg3a_per_game],['3P%',season.fg3_pct,'Three-point percentage'],['FTA',season.fta_per_game],['FT%',season.ft_pct,'Free-throw percentage']];
+  const fields=[['GP/All',`${season.games ?? 0}/${season.team_games ?? '—'}`,'Games played / team games played'],['MPG',season.mpg],['PTS',season.ppg],['REB',season.rpg],['AST',season.apg],...(season.screen_assists_per_game!=null?[['SAST',season.screen_assists_per_game,"Screen assists per game: screens that directly led to a teammate's basket"]]:[]),['STL',season.spg],['BLK',season.bpg],['TO',season.topg],['FGA',season.fga_per_game],['FG%',season.fg_pct,'Field-goal percentage'],['3PM',season.fg3m_per_game],['3PA',season.fg3a_per_game],['3P%',season.fg3_pct,'Three-point percentage'],['FTA',season.fta_per_game],['FT%',season.ft_pct,'Free-throw percentage']];
   return `<section class="approved-card-panel approved-season-line" data-player-career-options="${escapeAttr(JSON.stringify(career.length?career:[season]))}"><header><span>${season.college_team ? "College Season" : "Season"}</span><details class="player-career-picker"><summary aria-label="Select player career season">${playerSeasonTeamLogos(season)}<span>${escapeHtml(season.season || 'Current season')}</span><span aria-hidden="true">▾</span></summary><div class="player-career-menu" aria-label="Career seasons">${(career.length?career:[season]).map(row=>`<button type="button" data-player-career-season="${escapeAttr(row.season || '')}" aria-pressed="${row.season===season.season}">${playerSeasonTeamLogos(row)}<span>${escapeHtml(row.season || 'Current season')}</span></button>`).join('')}</div></details></header><div style="--season-field-count:${fields.length}">${fields.map(([label,value,hint])=>`<span title="${escapeAttr(hint || `${label} per game`)}"><small>${label}</small><strong>${escapeHtml(typeof value==='string'?value:value==null?'—':draftMetric(value))}</strong></span>`).join('')}</div></section>`;
 }
 
@@ -8993,7 +8994,7 @@ function renderLeague() {
         <div class="section-head">
           <h3>League Leaders</h3>
           <div class="toolbar compact">
-            <select id="leagueStat">${["points", "rebounds", "assists", "steals", "blocks"].map((stat) => `<option value="${stat}" ${stat === state.leagueStat ? "selected" : ""}>${rowLabel(stat)}</option>`).join("")}</select>
+            <select id="leagueStat">${["points", "rebounds", "assists", "steals", "blocks", "screen_assists"].map((stat) => `<option value="${stat}" ${stat === state.leagueStat ? "selected" : ""}>${rowLabel(stat)}</option>`).join("")}</select>
             <select id="leagueTrait">${["overall", "offense", "defense", "spacing", "creation", "rim_pressure", "rebounding", "athleticism", "disruption", "rim_protection", "passing"].map((trait) => `<option value="${trait}" ${trait === state.leagueTrait ? "selected" : ""}>${rowLabel(trait)}</option>`).join("")}</select>
           </div>
         </div>
@@ -9368,7 +9369,9 @@ function boxScoreTeamSheet(box, team, score, venueLabel) {
 }
 
 function boxScorePlayerTable(players) {
-  const headers = ["Player", "MIN", "PTS", "REB", "AST", "STL", "BLK", "TO", "FG", "3PT", "FTM/FTA", "PF", "+/-"];
+  // Screen assists (screens that directly led to a teammate's basket) exist only in new-ratings games.
+  const screens = players.some((row) => row.screen_assists !== undefined && row.screen_assists !== null);
+  const headers = ["Player", "MIN", "PTS", "REB", "AST", ...(screens ? ["SAST"] : []), "STL", "BLK", "TO", "FG", "3PT", "FTM/FTA", "PF", "+/-"];
   return `<div class="box-score-player-table-wrap"><table class="box-score-player-table">
     <thead><tr>${headers.map((header) => `<th>${header}</th>`).join("")}</tr></thead>
     <tbody>${players.map((row) => row.minutes !== null && row.minutes !== undefined && Number(row.minutes) === 0
@@ -9379,6 +9382,7 @@ function boxScorePlayerTable(players) {
       <td>${escapeHtml(row.points ?? 0)}</td>
       <td>${escapeHtml(row.rebounds ?? 0)}</td>
       <td>${escapeHtml(row.assists ?? 0)}</td>
+      ${screens ? `<td title="Screen assists: screens that directly led to a teammate's basket">${escapeHtml(row.screen_assists ?? 0)}</td>` : ""}
       <td>${escapeHtml(row.steals ?? 0)}</td>
       <td>${escapeHtml(row.blocks ?? 0)}</td>
       <td>${escapeHtml(row.turnovers ?? 0)}</td>

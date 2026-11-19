@@ -144,7 +144,7 @@ def main() -> int:
          lambda r: r["fta_per36"] / r["points_per36"] if r["points_per36"] else None, "points_per36",
          lambda r: box_rates.fta_per_point_from_inputs(r["inputs"])),
         ("points per 36 (new ratings)", [inp("T08", True), inp("T01.pass", True), inp("T01.shoot", True), inp("S10"), inp("T18", True),
-                                          inp("S.three_mode")],
+                                          inp("S.three_mode"), inp("T09", True)],
          lambda r: r["points_per36"], None, lambda r: box_rates.points_per36_from_inputs(r["inputs"])),
         # Rebounds (2026-11-19, unused-ratings audit): the engine shared rebounds by height and the offensive-rebounding
         # trait only, so the defensive-rebounding, box-out and rebound-control grades shown on the card never moved a

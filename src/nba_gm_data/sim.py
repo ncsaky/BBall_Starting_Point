@@ -310,6 +310,7 @@ def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any], *, 
                               ("steals_per36", box_rates.steals_per36_from_inputs(player_inputs)),
                               ("fta_per_point", box_rates.fta_per_point_from_inputs(player_inputs)),
                               ("rebounds_per36", box_rates.rebounds_per36_from_inputs(player_inputs)),
+                              ("fouls_per36", box_rates.fouls_per36_from_inputs(player_inputs)),
                               ("screen_assists_per36", box_rates.screen_assists_per36_from_inputs(player_inputs))):
                 if rate is not None:
                     features[key] = rate
@@ -322,6 +323,11 @@ def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any], *, 
             difficulty = box_rates.tendency_from_inputs(player_inputs, "T04")
             if difficulty is not None:
                 features["shot_difficulty"] = difficulty
+            # Pace / early-attack habit (T05): how often he pushes before the defence is set; sets team pace
+            # (draw_team_score, PACE_HABIT_POSSESSIONS).
+            pace = box_rates.tendency_from_inputs(player_inputs, "T05")
+            if pace is not None:
+                features["pace_habit"] = pace
     from .offense import enabled as offense_enabled, offensive_profile
     if offense_enabled(canonical):
         profile = offensive_profile(canonical, player, {key: float(row['value']) for key, row in traits.items()})
@@ -641,7 +647,8 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
             from .game_minutes import fouls_from_times
             fouls_from_times(player_lines, *in_game[team["id"]])
         else:
-            assign_personal_fouls(player_lines, foul_rng, rate_multiplier=foul_rate_multiplier(staff_rating))
+            assign_personal_fouls(player_lines, foul_rng, rate_multiplier=foul_rate_multiplier(staff_rating),
+                                  player_rates=player_foul_multipliers(canonical, home_players + away_players))
         team_line["personal_fouls"] = sum(line["personal_fouls"] for line in player_lines)
     from .plus_minus import track_plus_minus
     defense = {}
@@ -699,6 +706,7 @@ def in_game_minutes(context: dict[str, Any], team: dict[str, Any], pool: list[di
         random.Random(f"{seed}:{game_id}:{team['id']}:in-game-minutes"),
         random.Random(f"{seed}:{game_id}:{mode}:{team['id']}:foul-times"),
         foul_rate_multiplier(coach),
+        player_foul_multipliers(context["canonical"], pool),
     )
     if fouls:
         record[team["id"]] = (fouls, fouled_out)
@@ -1091,6 +1099,9 @@ def lineup_feature_vector(canonical: dict[str, Any], pool: list[dict[str, Any]])
     for key in ["impact", "scoring_usage", "shot_creation", "spacing", "rim_pressure", "offensive_rebounding", "defensive_events", "rim_deterrence", "passing", "stamina", "playoff_translation", "defensive_weak_link"]:
         features[key] = weighted_average([player_features[item["player"]["id"]][key] for item in pool], [weights[item["player"]["id"]] for item in pool])
     features.update(age_context_features([item["player"] for item in pool], [weights[item["player"]["id"]] for item in pool]))
+    if pool and all(player_features[item["player"]["id"]].get("pace_habit") is not None for item in pool):
+        features["pace_habit"] = weighted_average([player_features[item["player"]["id"]]["pace_habit"] for item in pool],
+                                                  [weights[item["player"]["id"]] for item in pool])
     usage_values = [player_features[item["player"]["id"]]["usage"] for item in pool]
     usage_weights = [weights[item["player"]["id"]] for item in pool]
     features["depth"] = sum(1 for item in pool if float(item.get("minutes") or 0) >= 12)
@@ -1295,6 +1306,23 @@ INPUTS_OFFENSE_CALIBRATION = 1.60
 # box now tied to the engine's possessions (box_variation MISS_FILL), 101.3 / 107.9 give pace ~102.5, ~112 per 100 and
 # TS ~.58 in real-minutes replay for both rating sets (2026-11-17).
 BASE_POSSESSIONS = 101.3
+# Players' pace habit (T05, early-attack / transition frequency) and team pace (2026-11-19, unused-ratings 2). Over the
+# 30 teams of 2025-26, the real pace the engine missed (real minus a full-season replay with real minutes) rose with the
+# team's minutes-weighted habit: slope 50.6 (se 13.7) possessions per unit in Basketball Index's possession-length
+# pace, 56.6 on the engine's scale (r 0.57; output/unused-ratings-2/team_evidence.py). Pace is a game-level thing (both
+# teams play the same number of possessions), so each team's possessions move by the sum of both teams' departures
+# from the league habit. One team standard deviation of the habit (0.017) is about one possession a game.
+PACE_HABIT_POSSESSIONS = 56.6
+PACE_HABIT_REF = 0.4035   # league mean of the team habit (30 teams, real minutes)
+PACE_HABIT_LIMIT = 4.0
+
+
+def pace_habit_possessions(team_features: dict[str, float], opp_features: dict[str, float]) -> float:
+    own, opp = team_features.get("pace_habit"), opp_features.get("pace_habit")
+    if own is None or opp is None or not PACE_HABIT_POSSESSIONS:
+        return 0.0
+    return clamp(PACE_HABIT_POSSESSIONS * ((float(own) - PACE_HABIT_REF) + (float(opp) - PACE_HABIT_REF)),
+                 -PACE_HABIT_LIMIT, PACE_HABIT_LIMIT)
 BASE_OFF_RATING = 107.9
 
 
@@ -1442,6 +1470,7 @@ def draw_team_score(
         + age_mod["pace"]
         + game_env_mod["pace"]
         + matchup_total_mod["pace"]
+        + pace_habit_possessions(team_features, opp_features)
         - opp_coach_mod["tempo_control"] * 0.25
         + rng.gauss(0, 4.2),
         84,
@@ -1612,7 +1641,11 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
                 "points": points,
                 **shooting_line(points, feat, item["minutes"], rng, normal_points[index]),
                 "rim_attempts": max(0, int(round(item["minutes"] * feat["rim_pressure"] / 1150 + rng.random()))),
-                "rebounds": max(0, int(round(item["minutes"] * rebound_rate_per_minute(player, feat) + rng.gauss(0.45, 1.55 + item["minutes"] * 0.018)))),
+                # Rebounds: a Poisson count around his own rate from the same single Gaussian draw (2026-11-19). The old
+                # +0.45 plus wide Gaussian noise, floored at zero, flattened everyone toward the middle; the 1.32 sharing
+                # power that offset it then over-concentrated rebounds on the top rebounders (Claxton 12.7 per 36 vs his
+                # fitted 11.3 and real 9.0; Davis, Antetokounmpo and Duren ~1.5 over).
+                "rebounds": poisson_quantile(item["minutes"] * rebound_rate_per_minute(player, feat), normal_to_uniform(rng.gauss(0.0, 1.0))),
                 # Assists, turnovers and steals: a Poisson count around the player's own expected rate, drawn from
                 # the same single random number the old rounded-noise formulas used (the random stream, and so
                 # every score, is unchanged). The old noise (a floor at zero on Gaussian noise for assists, and
@@ -1629,23 +1662,39 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
     return lines
 
 
-def assign_personal_fouls(lines: list[dict[str, Any]], rng: random.Random, rate_multiplier: float = 1.0) -> None:
+# League scale on the replayed games' foul rate: with players fouling less once in trouble (as in generated games) the
+# league ran 18.75 fouls per 100 possessions at 1.0 vs the real 19.37.
+FOUL_LEVEL = 1.03
+LEAGUE_FOULS_PER36 = 2.95
+
+
+def player_foul_multipliers(canonical: dict[str, Any], pool: list[dict[str, Any]]) -> dict[str, float]:
+    """Each player's foul rate relative to the league rate (new ratings: his fitted fouls per 36); 1.0 without inputs."""
+    out = {}
+    for item in pool:
+        per36 = player_feature_vector(canonical, item["player"]).features.get("fouls_per36")
+        if per36 is not None:
+            out[item["player"]["id"]] = float(per36) / LEAGUE_FOULS_PER36
+    return out
+
+
+def assign_personal_fouls(lines: list[dict[str, Any]], rng: random.Random, rate_multiplier: float = 1.0,
+                          player_rates: dict[str, float] | None = None) -> None:
     """Record minute-weighted fouls using a separate game RNG after overtime.
 
-    This box-score statistic does not consume the scoring RNG or alter rotations.
+    This box-score statistic does not consume the scoring RNG or alter rotations. player_rates: each player's foul rate
+    relative to the league's (player_foul_multipliers); players not in it foul at the league rate.
     """
+    from .game_minutes import draw_foul_times
     for line in lines:
         minutes = max(0.0, float(line.get("minutes") or 0.0))
-        # Poisson event count, averaging 2.95 personal fouls per 36 minutes: the 2025-26 NBA rate (19.4 per
-        # 100 possessions) at the sim's pace, allowing for the six-foul cap. Was 2.7 (17.8 per 100).
-        threshold = math.exp(-minutes * 2.95 * rate_multiplier / 36.0)
-        probability = 1.0
-        fouls = 0
-        while fouls < 6 and probability > threshold:
-            probability *= rng.random()
-            if probability > threshold:
-                fouls += 1
-        line["personal_fouls"] = fouls
+        # Fouls arrive at the player's own rate (2.95 per 36 for the league: the 2025-26 NBA rate, 19.4 per 100
+        # possessions, at the sim's pace) and, as in a generated game (game_minutes.draw_foul_times), more slowly once
+        # he carries four or five: real players foul out in about 1.4% of their games, a plain Poisson count at the
+        # same rate gave 3.9% (2026-11-19).
+        own = (player_rates or {}).get(line.get("player_id"), 1.0)
+        times = draw_foul_times(rng, rate_multiplier * own * FOUL_LEVEL) if minutes > 0 else []
+        line["personal_fouls"] = sum(1 for t in times if t <= minutes)
 
 
 def scoring_game_volatility(item: dict[str, Any], features: dict[str, float]) -> float:
@@ -1759,6 +1808,7 @@ def normalize_secondary_box_score_totals(
     }
     powers = {"rebounds": 1.32, "assists": 1.20, "steals": 1.55}
     if expected is not None:
+        powers["rebounds"] = 1.0   # unbiased Poisson draws around each player's own rate: shared in plain proportion
         powers["steals"] = STEAL_SHARE_POWER
         # The players' own expected assists/steals set the team level (a share of each game's lucky or unlucky
         # draws is kept as texture); made baskets add assist chances and possessions add steal chances. Raw

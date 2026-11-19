@@ -71,6 +71,7 @@ STAT_FIELDS = [
     "ftm",
     "fta",
     "rim_attempts",
+    "screen_assists",   # new-ratings box scores: screens that directly led to a teammate's basket (screens.py)
 ]
 TAX_LINE = 200_428_000
 SECOND_APRON = 221_686_000

@@ -39,7 +39,7 @@ const rows = [
 
 test('columns cover the playoff line with per-game counting stats and shooting percentages', () => {
   const scope = loadTable();
-  assert.deepEqual([...scope.cols].map((column) => column.label), ['Player', 'Team', 'GP', 'MIN', 'PTS', 'REB', 'AST', 'STL', 'BLK', '3PM', 'FG%', '3P%', 'FT%']);
+  assert.deepEqual([...scope.cols].map((column) => column.label), ['Player', 'Team', 'GP', 'MIN', 'PTS', 'REB', 'AST', 'STL', 'BLK', 'SAST', '3PM', 'FG%', '3P%', 'FT%']);
   assert.ok(scope.cols.filter((column) => !column.text && column.key !== 'games' && !column.key.endsWith('_pct')).every((column) => column.key.endsWith('_per_game')));
   assert.ok(scope.limit >= 300, 'the card asks for every playoff player, not a top-nine list');
   assert.match(app, /action\("playoff_leaders", \{ \.\.\.savePayload\(\), stat: "points", limit: PLAYOFF_STATS_LIMIT \}\)/);
@@ -76,7 +76,7 @@ test('table markup: sortable buttons with aria-sort, sorted-column cells, portra
   const scope = loadTable();
   const html = scope.playoffStatsTable(rows, {key: 'rebounds_per_game', direction: 'desc'});
   const headers = [...html.matchAll(/<th scope="col"[^>]*aria-sort="(\w+)"><button type="button" data-playoff-stats-sort="([\w]+)"/g)];
-  assert.equal(headers.length, 13, 'every column header is a keyboard-reachable sort button');
+  assert.equal(headers.length, 14, 'every column header is a keyboard-reachable sort button');
   assert.deepEqual(headers.filter(([, aria]) => aria !== 'none').map(([, aria, key]) => [aria, key]), [['descending', 'rebounds_per_game']]);
   assert.equal((html.match(/playoff-stats-col-rebounds_per_game is-sorted/g) || []).length, 4, 'header plus every row cell is marked sorted');
   assert.match(html, /data-dashboard-player-card="b"[^>]*>.*?src="https:\/\/img\/b\.png"/);
