@@ -9,7 +9,7 @@ _Claude (Opus agent), 2026-11-19, branch `worktree-agent-a930b7773912140dc`. Use
 
 ## Resume state
 
-PENDING: full suite (running, `output/inputs-default/full_suite.log`). Packaged build and smoke test done. Commits on the branch: `08c94f6` checkpoint (laptop crash), `5ab65b2` merge of `codex/immersive-franchise-journey` (trade step 1 + heavy minutes, clean), `ed55142` part A, `7a2586b` part B. Scratch: `output/inputs-default/` (probe scripts, seeds, timings, profiles, logs).
+Done; ready for review. Commits on the branch: `08c94f6` checkpoint (laptop crash), `5ab65b2` merge of `codex/immersive-franchise-journey` (trade step 1 + heavy minutes, clean), `ed55142` part A, `7a2586b` part B, then report/board commits. Scratch: `output/inputs-default/` (probe scripts, seeds, timings, profiles, logs). Worktree data symlinks are untracked and were never committed.
 
 ## Part A: the default flip
 
@@ -36,7 +36,7 @@ Scripts still creating saves without a rating set now follow the default: the so
 
 - Core (`scripts/run_core_tests.sh`) + `test_ratings_model`: 352 OK (2 skips).
 - 23 save-creating modules (the readiness list plus caches, packaging, game minutes): 400 tests; all pass after the replay-band fix.
-- Full suite: see "Full suite" at the bottom.
+- Full suite: 1,756 tests, 1 failure and 18 errors, none from this task (see "Full suite").
 
 ### Scorecards (no environment variable; merged code)
 
@@ -87,4 +87,7 @@ Cold process (new Python process per month): aged 94-input 41.8 -> 40.8, aged ol
 
 ## Full suite
 
-PENDING.
+`PYTHONPATH=src:scripts:tests .venv/bin/python -m unittest discover -s tests`, run last on the final code: **1,756 tests in 60 min; 1 failure, 18 errors, 27 skips. None comes from this task:**
+
+- 16 errors: experimental possession-engine and pilot tests whose reference files live in the git-ignored `output/` folders of the main checkout (`mixed-pop-validation-2026-11-16`, `player-input-pilot-2026-11-14`, `pilot-response-calibration-2026-11-14`, `expanded-cohort-action-performance-2026-11-15`, `offense-interior-interaction-2026-11-13`, `action-choice-consistency-2026-11-14`, `defensive-scale-comparison-2026-11-10`). Missing in this worktree only.
+- 2 from trade step 1 (also fail with `NBA_GM_RATINGS_MODEL=legacy_traits`, and this branch does not touch those files): `test_team_planning ... test_commitment_rejects_ordinary_return_but_not_an_exceptional_one` (`trade_ownership._premium_rates` reads `contract_surplus` from a test stand-in that lacks it, `trade_ownership.py:556`) and `test_salary_search_stage_b ... test_within_proposal_memo_preserves_full_legacy_approval_and_explanations` (the new "Own-player price" explanation text differs between the memoized and full paths). For the trade-step owner.
