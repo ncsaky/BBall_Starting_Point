@@ -99,22 +99,22 @@ Complete and ready for coordinator review: all four adapter requests, including 
 ## Build and coverage
 
 - Method: `e2b_hierarchical_family_priors_v1`. Built **691 × 94 = 64,954** complete records.
-- **29,034 player-evidence estimates; 35,920 explicit priors.**
+- **27,275 player-evidence estimates; 37,679 explicit priors.**
 - Local joins: 526 unique skill names, 528 unique later Crafted names, 616 ESPN IDs. Sources are overlapping, never additive player counts.
-- Build, validation, comparison without packet experts, serialization and write: **150.566 seconds**; canonical JSON 123.13 MB.
-- Skill-grade range 11.231–92.536; exactly 100: 0; at least 99.9: 0. No scale-max clipping.
+- Build, validation, comparison without packet experts, serialization and write: **125.370 seconds**; canonical JSON 123.30 MB.
+- Skill-grade range 11.492–92.506; exactly 100: 0; at least 99.9: 0. No scale-max clipping.
 
 | Input family | Player-evidence estimates | Priors | Total |
 |---|---:|---:|---:|
-| Physical tools (12) | 1,839 | 6,453 | 8,292 |
-| Shooting (9) | 2,940 | 3,279 | 6,219 |
-| Finishing and receiving (6) | 1,893 | 2,253 | 4,146 |
-| Handling and attack recognition (5) | 978 | 2,477 | 3,455 |
-| Post craft (3) | 783 | 1,290 | 2,073 |
-| Foul craft, routes and screening (5) | 1,822 | 1,633 | 3,455 |
-| Rebounding technique (4) | 1,401 | 1,363 | 2,764 |
-| Defense technique and recognition (14) | 4,149 | 5,525 | 9,674 |
-| Passing recognition (9) | 3,663 | 2,556 | 6,219 |
+| Physical tools (12) | 1,849 | 6,443 | 8,292 |
+| Shooting (9) | 2,804 | 3,415 | 6,219 |
+| Finishing and receiving (6) | 1,348 | 2,798 | 4,146 |
+| Handling and attack recognition (5) | 853 | 2,602 | 3,455 |
+| Post craft (3) | 586 | 1,487 | 2,073 |
+| Foul craft, routes and screening (5) | 1,654 | 1,801 | 3,455 |
+| Rebounding technique (4) | 1,403 | 1,361 | 2,764 |
+| Defense technique and recognition (14) | 3,828 | 5,846 | 9,674 |
+| Passing recognition (9) | 3,384 | 2,835 | 6,219 |
 | Passing execution (9) | 1,881 | 4,338 | 6,219 |
 | Conditional tendencies (18) | 7,685 | 4,753 | 12,438 |
 
@@ -132,77 +132,77 @@ Differences are in each input’s native units: technique grades, FT percentage 
 | P02 | Wingspan | 436 | 255 | 32 | 0.00 | 100.0% | 0.00 | 100.0% |
 | P03 | Standing reach | 0 | 691 | 0 | — | — | — | — |
 | P04 | Body mass | 662 | 29 | 32 | 0.00 | 100.0% | 0.00 | 100.0% |
-| P05 | Acceleration / first step | 0 | 691 | 0 | — | — | — | — |
+| P05 | Acceleration / first step | 2 | 689 | 0 | — | — | — | — |
 | P06 | Straight-line speed | 50 | 641 | 0 | — | — | — | — |
-| P07 | Lateral mobility / change of direction | 0 | 691 | 0 | — | — | — | — |
-| P08 | Functional strength | 0 | 691 | 0 | — | — | — | — |
+| P07 | Lateral mobility / change of direction | 4 | 687 | 0 | — | — | — | — |
+| P08 | Functional strength | 4 | 687 | 0 | — | — | — | — |
 | P09 | Physical balance / stability | 0 | 691 | 0 | — | — | — | — |
 | P10 | Vertical / jump capacity | 0 | 691 | 0 | — | — | — | — |
 | P11 | Conditioning | 0 | 691 | 0 | — | — | — | — |
 | P12 | Recovery between efforts | 0 | 691 | 0 | — | — | — | — |
-| S01 | Catch-and-shoot three-point execution | 544 | 147 | 12 | 9.69 | 100.0% | 17.32 | 100.0% |
-| S02 | Pull-up three-point execution | 531 | 160 | 5 | 4.92 | 100.0% | 27.47 | 80.0% |
+| S01 | Catch-and-shoot three-point execution | 544 | 147 | 12 | 8.59 | 100.0% | 17.32 | 100.0% |
+| S02 | Pull-up three-point execution | 532 | 159 | 5 | 6.75 | 100.0% | 27.47 | 80.0% |
 | S03 | Movement three-point execution | 535 | 156 | 3 | 9.32 | 100.0% | 31.08 | 33.3% |
 | S04 | Catch-and-shoot midrange execution | 50 | 641 | 0 | — | — | — | — |
-| S05 | Pull-up midrange execution | 332 | 359 | 0 | — | — | — | — |
+| S05 | Pull-up midrange execution | 331 | 360 | 0 | — | — | — | — |
 | S06 | Movement midrange execution | 50 | 641 | 0 | — | — | — | — |
 | S07 | Free-throw execution | 542 | 149 | 14 | 2.15 | 100.0% | 2.15 | 100.0% |
-| S08 | Release / preparation technique | 1 | 690 | 1 | 4.88 | 100.0% | 7.98 | 100.0% |
-| S09 | Distance-extension technique | 355 | 336 | 1 | 0.89 | 100.0% | 31.22 | 100.0% |
-| S10 | Layup / close-touch execution | 523 | 168 | 5 | 9.59 | 100.0% | 29.06 | 100.0% |
-| S11 | Floater / short-paint touch | 461 | 230 | 2 | 4.05 | 100.0% | 29.30 | 100.0% |
+| S08 | Release / preparation technique | 2 | 689 | 1 | 4.88 | 100.0% | 7.98 | 100.0% |
+| S09 | Distance-extension technique | 218 | 473 | 1 | 4.01 | 100.0% | 31.22 | 100.0% |
+| S10 | Layup / close-touch execution | 524 | 167 | 5 | 9.92 | 100.0% | 29.06 | 100.0% |
+| S11 | Floater / short-paint touch | 379 | 312 | 2 | 5.66 | 100.0% | 29.30 | 100.0% |
 | S12 | Dunk execution | 390 | 301 | 0 | — | — | — | — |
-| S13 | Aerial catch-to-finish execution | 50 | 641 | 0 | — | — | — | — |
+| S13 | Aerial catch-to-finish execution | 0 | 691 | 0 | — | — | — | — |
 | S14 | Receiving / catch control | 2 | 689 | 2 | 14.91 | 100.0% | 22.94 | 100.0% |
-| S15 | Contact finishing technique | 467 | 224 | 2 | 8.03 | 100.0% | 25.85 | 100.0% |
-| S16 | Dribble manipulation | 53 | 638 | 9 | 17.12 | 100.0% | 13.53 | 100.0% |
-| S17 | Handle security | 467 | 224 | 6 | 23.16 | 100.0% | 14.69 | 100.0% |
-| S18 | Perimeter separation craft | 394 | 297 | 7 | 15.67 | 100.0% | 21.29 | 100.0% |
-| S19 | Driving craft | 53 | 638 | 10 | 13.78 | 100.0% | 15.28 | 100.0% |
-| S20 | Attack recognition | 11 | 680 | 11 | 9.88 | 100.0% | 15.24 | 100.0% |
-| S21 | Post establishment / sealing | 0 | 691 | 0 | — | — | — | — |
-| S22 | Post moves / counters | 374 | 317 | 0 | — | — | — | — |
-| S23 | Post-specific finish execution | 409 | 282 | 0 | — | — | — | — |
-| S24 | Foul-drawing craft | 467 | 224 | 0 | — | — | — | — |
-| S25 | Cutting-route execution | 467 | 224 | 0 | — | — | — | — |
-| S26 | Relocation / shooting-route execution | 365 | 326 | 2 | 9.63 | 100.0% | 17.22 | 100.0% |
-| S27 | Screen execution | 467 | 224 | 5 | 25.38 | 100.0% | 16.37 | 100.0% |
-| S28 | Screen-action recognition | 56 | 635 | 7 | 11.99 | 100.0% | 12.50 | 100.0% |
-| S29 | Offensive rebound reading / pursuit technique | 467 | 224 | 0 | — | — | — | — |
+| S15 | Contact finishing technique | 53 | 638 | 2 | 9.95 | 100.0% | 25.85 | 100.0% |
+| S16 | Dribble manipulation | 15 | 676 | 9 | 17.42 | 100.0% | 13.53 | 100.0% |
+| S17 | Handle security | 366 | 325 | 6 | 12.96 | 100.0% | 14.69 | 100.0% |
+| S18 | Perimeter separation craft | 395 | 296 | 7 | 16.16 | 100.0% | 21.29 | 100.0% |
+| S19 | Driving craft | 61 | 630 | 10 | 15.82 | 100.0% | 15.28 | 100.0% |
+| S20 | Attack recognition | 16 | 675 | 11 | 9.88 | 100.0% | 15.24 | 100.0% |
+| S21 | Post establishment / sealing | 1 | 690 | 0 | — | — | — | — |
+| S22 | Post moves / counters | 220 | 471 | 0 | — | — | — | — |
+| S23 | Post-specific finish execution | 365 | 326 | 0 | — | — | — | — |
+| S24 | Foul-drawing craft | 468 | 223 | 0 | — | — | — | — |
+| S25 | Cutting-route execution | 314 | 377 | 0 | — | — | — | — |
+| S26 | Relocation / shooting-route execution | 365 | 326 | 2 | 7.38 | 100.0% | 17.22 | 100.0% |
+| S27 | Screen execution | 467 | 224 | 5 | 23.14 | 100.0% | 16.37 | 100.0% |
+| S28 | Screen-action recognition | 40 | 651 | 7 | 13.41 | 100.0% | 12.50 | 100.0% |
+| S29 | Offensive rebound reading / pursuit technique | 468 | 223 | 0 | — | — | — | — |
 | S30 | Defensive rebound reading / positioning | 467 | 224 | 0 | — | — | — | — |
-| S31 | Box-out technique | 0 | 691 | 0 | — | — | — | — |
+| S31 | Box-out technique | 1 | 690 | 0 | — | — | — | — |
 | S32 | Rebound control | 467 | 224 | 0 | — | — | — | — |
-| S33 | On-ball containment technique | 467 | 224 | 11 | 10.66 | 100.0% | 12.46 | 100.0% |
-| S34 | Contact resistance / leverage technique | 365 | 326 | 4 | 22.85 | 100.0% | 15.59 | 100.0% |
-| S35 | Screen-navigation technique | 467 | 224 | 6 | 9.89 | 100.0% | 18.25 | 100.0% |
-| S36 | Interior positioning | 365 | 326 | 4 | 3.14 | 100.0% | 4.84 | 100.0% |
-| S37 | Contest technique | 467 | 224 | 3 | 5.26 | 100.0% | 8.84 | 100.0% |
-| S38 | Rotation recognition | 464 | 227 | 6 | 12.77 | 100.0% | 10.78 | 100.0% |
-| S39 | Off-ball coverage positioning | 47 | 644 | 6 | 12.40 | 100.0% | 10.03 | 100.0% |
+| S33 | On-ball containment technique | 468 | 223 | 11 | 11.79 | 100.0% | 12.46 | 100.0% |
+| S34 | Contact resistance / leverage technique | 324 | 367 | 4 | 23.00 | 100.0% | 15.59 | 100.0% |
+| S35 | Screen-navigation technique | 465 | 226 | 6 | 10.02 | 100.0% | 18.25 | 100.0% |
+| S36 | Interior positioning | 273 | 418 | 4 | 2.97 | 100.0% | 4.84 | 100.0% |
+| S37 | Contest technique | 467 | 224 | 3 | 5.36 | 100.0% | 8.84 | 100.0% |
+| S38 | Rotation recognition | 362 | 329 | 6 | 11.77 | 100.0% | 10.78 | 100.0% |
+| S39 | Off-ball coverage positioning | 6 | 685 | 6 | 12.34 | 100.0% | 10.03 | 100.0% |
 | S40 | Closeout / arrival control | 1 | 690 | 1 | 12.79 | 100.0% | 8.72 | 100.0% |
-| S41 | Defensive anticipation | 53 | 638 | 5 | 16.33 | 100.0% | 14.69 | 100.0% |
+| S41 | Defensive anticipation | 55 | 636 | 5 | 15.67 | 100.0% | 14.69 | 100.0% |
 | S42 | On-ball steal technique | 467 | 224 | 0 | — | — | — | — |
 | S43 | Passing-lane interception technique | 467 | 224 | 0 | — | — | — | — |
-| S44 | Attention / responsibility execution | 52 | 639 | 3 | 17.91 | 100.0% | 11.07 | 100.0% |
-| S45 | Foul-control technique | 467 | 224 | 1 | 11.34 | 100.0% | 1.61 | 100.0% |
+| S44 | Attention / responsibility execution | 6 | 685 | 3 | 17.40 | 100.0% | 11.07 | 100.0% |
+| S45 | Foul-control technique | 467 | 224 | 1 | 14.70 | 100.0% | 1.61 | 100.0% |
 | S46 | Defensive communication | 0 | 691 | 0 | — | — | — | — |
-| F01.recognition | Connector / swing / reversal — recognition | 547 | 144 | 5 | 22.46 | 100.0% | 21.30 | 80.0% |
+| F01.recognition | Connector / swing / reversal — recognition | 550 | 141 | 5 | 19.76 | 100.0% | 21.30 | 80.0% |
 | F01.execution | Connector / swing / reversal — execution | 489 | 202 | 5 | 11.94 | 100.0% | 18.37 | 100.0% |
-| F02.recognition | Post entry — recognition | 365 | 326 | 0 | — | — | — | — |
+| F02.recognition | Post entry — recognition | 312 | 379 | 0 | — | — | — | — |
 | F02.execution | Post entry — execution | 0 | 691 | 0 | — | — | — | — |
-| F03.recognition | Pocket / roll feed — recognition | 414 | 277 | 5 | 7.36 | 100.0% | 14.75 | 100.0% |
+| F03.recognition | Pocket / roll feed — recognition | 394 | 297 | 5 | 7.16 | 100.0% | 14.75 | 100.0% |
 | F03.execution | Pocket / roll feed — execution | 308 | 383 | 5 | 9.71 | 100.0% | 14.94 | 100.0% |
-| F04.recognition | Lob — recognition | 365 | 326 | 2 | 3.62 | 100.0% | 18.36 | 100.0% |
+| F04.recognition | Lob — recognition | 312 | 379 | 2 | 4.34 | 100.0% | 18.36 | 100.0% |
 | F04.execution | Lob — execution | 2 | 689 | 2 | 12.72 | 100.0% | 18.69 | 100.0% |
-| F05.recognition | Short-roll playmaking — recognition | 399 | 292 | 0 | — | — | — | — |
+| F05.recognition | Short-roll playmaking — recognition | 370 | 321 | 0 | — | — | — | — |
 | F05.execution | Short-roll playmaking — execution | 242 | 449 | 0 | — | — | — | — |
-| F06.recognition | Drive-and-kick — recognition | 414 | 277 | 8 | 10.82 | 100.0% | 16.47 | 100.0% |
+| F06.recognition | Drive-and-kick — recognition | 394 | 297 | 8 | 10.67 | 100.0% | 16.47 | 100.0% |
 | F06.execution | Drive-and-kick — execution | 308 | 383 | 8 | 10.26 | 100.0% | 15.79 | 100.0% |
-| F07.recognition | Skip / cross-court — recognition | 365 | 326 | 0 | — | — | — | — |
+| F07.recognition | Skip / cross-court — recognition | 316 | 375 | 0 | — | — | — | — |
 | F07.execution | Skip / cross-court — execution | 0 | 691 | 0 | — | — | — | — |
-| F08.recognition | Post playmaking — recognition | 374 | 317 | 1 | 9.94 | 100.0% | 29.92 | 100.0% |
+| F08.recognition | Post playmaking — recognition | 331 | 360 | 1 | 10.76 | 100.0% | 29.92 | 100.0% |
 | F08.execution | Post playmaking — execution | 135 | 556 | 1 | 20.43 | 100.0% | 31.44 | 100.0% |
-| F09.recognition | Transition / outlet / advance — recognition | 420 | 271 | 0 | — | — | — | — |
+| F09.recognition | Transition / outlet / advance — recognition | 405 | 286 | 0 | — | — | — | — |
 | F09.execution | Transition / outlet / advance — execution | 397 | 294 | 0 | — | — | — | — |
 | T01 | Shoot / drive / pass / post / reset choices | 470 | 221 | 0 | — | — | — | — |
 | T02 | Shot-location preferences | 548 | 143 | 0 | — | — | — | — |
@@ -229,16 +229,16 @@ Sorted within technique grades only; centimeter and kilogram differences are not
 
 | Player | Input | Estimator | Hand reference | Difference | Explanation |
 |---|---|---:|---:|---:|---|
-| Jalen Duren | S27 Screen execution | 40.25 | 85.00 | 44.75 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
-| Bam Adebayo | F01.recognition Connector / swing / reversal — recognition | 38.49 | 83.00 | 44.51 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
-| Cade Cunningham | S34 Contact resistance / leverage technique | 42.44 | 81.00 | 38.56 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
-| Shai Gilgeous-Alexander | S17 Handle security | 56.87 | 93.00 | 36.13 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
-| Jalen Brunson | S18 Perimeter separation craft | 60.57 | 91.50 | 30.93 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
-| Darius Garland | S16 Dribble manipulation | 61.82 | 91.50 | 29.68 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
+| Cade Cunningham | S34 Contact resistance / leverage technique | 43.53 | 81.00 | 37.47 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
+| Jalen Duren | S27 Screen execution | 51.43 | 85.00 | 33.57 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
+| Bam Adebayo | F01.recognition Connector / swing / reversal — recognition | 51.31 | 83.00 | 31.69 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
+| Nikola Jokić | S28 Screen-action recognition | 55.94 | 87.50 | 31.56 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
+| Jalen Brunson | S18 Perimeter separation craft | 60.42 | 91.50 | 31.08 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
 | Ivica Zubac | S27 Screen execution | 57.67 | 87.00 | 29.33 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
-| Scottie Barnes | S38 Rotation recognition | 56.87 | 85.00 | 28.13 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
-| Scottie Barnes | S19 Driving craft | 53.98 | 81.50 | 27.52 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
+| Scottie Barnes | S19 Driving craft | 54.25 | 81.50 | 27.25 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
 | Nikola Jokić | S27 Screen execution | 56.87 | 84.00 | 27.13 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
+| Derrick White | F01.recognition Connector / swing / reversal — recognition | 61.95 | 88.50 | 26.55 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
+| Cade Cunningham | S18 Perimeter separation craft | 54.99 | 81.00 | 26.01 | The broad baseline retains 65% weight; isolated technique observations are unavailable. |
 
 ## Observable tendencies and shot locations
 
@@ -277,13 +277,13 @@ High-minute players missing the later Crafted snapshot: none.
 
 | Requested player input | Value | Evidence label |
 |---|---:|---|
-| S01 Catch-and-shoot three-point execution | 55.992 | estimated |
-| S02 Pull-up three-point execution | 49.463 | estimated |
-| S03 Movement three-point execution | 51.044 | estimated |
+| S01 Catch-and-shoot three-point execution | 60.078 | estimated |
+| S02 Pull-up three-point execution | 49.928 | estimated |
+| S03 Movement three-point execution | 50.533 | estimated |
 | S07 Free-throw execution | 80.692 | estimated |
 | S08 Release / preparation technique | 59.790 | prior |
-| S09 Distance-extension technique | 60.170 | estimated |
-| F01.recognition Connector / swing / reversal — recognition | 54.931 | estimated |
+| S09 Distance-extension technique | 60.564 | estimated |
+| F01.recognition Connector / swing / reversal — recognition | 53.436 | estimated |
 | F01.execution Connector / swing / reversal — execution | 50.706 | estimated |
 
 ## Rotation-player spread: all 94 inputs
@@ -298,83 +298,83 @@ Population standard deviation across the audit cohort, in native units. Distribu
 | P02 | Wingspan | 279 | cm: 9.7730 | — |
 | P03 | Standing reach | 279 | cm: 10.7007 | — |
 | P04 | Body mass | 279 | kg: 10.6698 | — |
-| P05 | Acceleration / first step | 279 | grade: 4.2729 | — |
+| P05 | Acceleration / first step | 279 | grade: 4.2747 | — |
 | P06 | Straight-line speed | 279 | grade: 3.6559 | — |
-| P07 | Lateral mobility / change of direction | 279 | grade: 5.6389 | — |
-| P08 | Functional strength | 279 | grade: 5.0684 | — |
+| P07 | Lateral mobility / change of direction | 279 | grade: 5.6433 | — |
+| P08 | Functional strength | 279 | grade: 5.0815 | — |
 | P09 | Physical balance / stability | 279 | grade: 4.4777 | — |
 | P10 | Vertical / jump capacity | 279 | cm: 2.7098 | — |
 | P11 | Conditioning | 279 | grade: 4.3044 | — |
 | P12 | Recovery between efforts | 279 | grade: 2.5327 | — |
-| S01 | Catch-and-shoot three-point execution | 279 | grade: 18.9073 | — |
-| S02 | Pull-up three-point execution | 279 | grade: 17.5610 | — |
-| S03 | Movement three-point execution | 279 | grade: 17.5396 | — |
-| S04 | Catch-and-shoot midrange execution | 279 | grade: 10.2917 | — |
-| S05 | Pull-up midrange execution | 279 | grade: 14.6966 | — |
-| S06 | Movement midrange execution | 279 | grade: 12.9912 | — |
+| S01 | Catch-and-shoot three-point execution | 279 | grade: 18.9189 | — |
+| S02 | Pull-up three-point execution | 279 | grade: 16.1006 | — |
+| S03 | Movement three-point execution | 279 | grade: 17.6629 | — |
+| S04 | Catch-and-shoot midrange execution | 279 | grade: 10.6060 | — |
+| S05 | Pull-up midrange execution | 279 | grade: 14.6439 | — |
+| S06 | Movement midrange execution | 279 | grade: 13.3855 | — |
 | S07 | Free-throw execution | 279 | grade: 6.0788 | — |
 | S08 | Release / preparation technique | 279 | grade: 7.4452 | — |
-| S09 | Distance-extension technique | 279 | grade: 17.6505 | — |
-| S10 | Layup / close-touch execution | 279 | grade: 15.1930 | — |
-| S11 | Floater / short-paint touch | 279 | grade: 15.4875 | — |
-| S12 | Dunk execution | 279 | grade: 17.8293 | — |
-| S13 | Aerial catch-to-finish execution | 279 | grade: 11.1038 | — |
+| S09 | Distance-extension technique | 279 | grade: 15.9451 | — |
+| S10 | Layup / close-touch execution | 279 | grade: 14.7752 | — |
+| S11 | Floater / short-paint touch | 279 | grade: 13.4482 | — |
+| S12 | Dunk execution | 279 | grade: 17.8346 | — |
+| S13 | Aerial catch-to-finish execution | 279 | grade: 8.5089 | — |
 | S14 | Receiving / catch control | 279 | grade: 4.6336 | — |
-| S15 | Contact finishing technique | 279 | grade: 13.9218 | — |
-| S16 | Dribble manipulation | 279 | grade: 10.3413 | — |
-| S17 | Handle security | 279 | grade: 13.2036 | — |
-| S18 | Perimeter separation craft | 279 | grade: 12.5141 | — |
-| S19 | Driving craft | 279 | grade: 10.0444 | — |
-| S20 | Attack recognition | 279 | grade: 10.4235 | — |
+| S15 | Contact finishing technique | 279 | grade: 10.7151 | — |
+| S16 | Dribble manipulation | 279 | grade: 9.8685 | — |
+| S17 | Handle security | 279 | grade: 13.3719 | — |
+| S18 | Perimeter separation craft | 279 | grade: 13.3188 | — |
+| S19 | Driving craft | 279 | grade: 9.8827 | — |
+| S20 | Attack recognition | 279 | grade: 10.3972 | — |
 | S21 | Post establishment / sealing | 279 | grade: 7.9567 | — |
-| S22 | Post moves / counters | 279 | grade: 10.9512 | — |
-| S23 | Post-specific finish execution | 279 | grade: 15.1893 | — |
-| S24 | Foul-drawing craft | 279 | grade: 11.9016 | — |
-| S25 | Cutting-route execution | 279 | grade: 16.1404 | — |
-| S26 | Relocation / shooting-route execution | 279 | grade: 11.2179 | — |
-| S27 | Screen execution | 279 | grade: 15.1250 | — |
-| S28 | Screen-action recognition | 279 | grade: 9.9364 | — |
+| S22 | Post moves / counters | 279 | grade: 9.5744 | — |
+| S23 | Post-specific finish execution | 279 | grade: 13.8227 | — |
+| S24 | Foul-drawing craft | 279 | grade: 14.9580 | — |
+| S25 | Cutting-route execution | 279 | grade: 12.7357 | — |
+| S26 | Relocation / shooting-route execution | 279 | grade: 12.5830 | — |
+| S27 | Screen execution | 279 | grade: 15.0226 | — |
+| S28 | Screen-action recognition | 279 | grade: 10.2673 | — |
 | S29 | Offensive rebound reading / pursuit technique | 279 | grade: 17.8771 | — |
-| S30 | Defensive rebound reading / positioning | 279 | grade: 16.1205 | — |
-| S31 | Box-out technique | 279 | grade: 9.5202 | — |
-| S32 | Rebound control | 279 | grade: 15.8316 | — |
-| S33 | On-ball containment technique | 279 | grade: 14.7422 | — |
-| S34 | Contact resistance / leverage technique | 279 | grade: 13.1062 | — |
-| S35 | Screen-navigation technique | 279 | grade: 17.6047 | — |
-| S36 | Interior positioning | 279 | grade: 14.3939 | — |
-| S37 | Contest technique | 279 | grade: 18.9623 | — |
-| S38 | Rotation recognition | 279 | grade: 16.4861 | — |
-| S39 | Off-ball coverage positioning | 279 | grade: 11.8657 | — |
+| S30 | Defensive rebound reading / positioning | 279 | grade: 16.0928 | — |
+| S31 | Box-out technique | 279 | grade: 9.5383 | — |
+| S32 | Rebound control | 279 | grade: 15.8528 | — |
+| S33 | On-ball containment technique | 279 | grade: 15.4559 | — |
+| S34 | Contact resistance / leverage technique | 279 | grade: 12.6050 | — |
+| S35 | Screen-navigation technique | 279 | grade: 17.3919 | — |
+| S36 | Interior positioning | 279 | grade: 13.6886 | — |
+| S37 | Contest technique | 279 | grade: 19.0248 | — |
+| S38 | Rotation recognition | 279 | grade: 14.3097 | — |
+| S39 | Off-ball coverage positioning | 279 | grade: 9.2346 | — |
 | S40 | Closeout / arrival control | 279 | grade: 7.7680 | — |
-| S41 | Defensive anticipation | 279 | grade: 9.3881 | — |
-| S42 | On-ball steal technique | 279 | grade: 17.7599 | — |
-| S43 | Passing-lane interception technique | 279 | grade: 17.8406 | — |
-| S44 | Attention / responsibility execution | 279 | grade: 9.5671 | — |
-| S45 | Foul-control technique | 279 | grade: 11.7377 | — |
+| S41 | Defensive anticipation | 279 | grade: 9.9522 | — |
+| S42 | On-ball steal technique | 279 | grade: 17.8168 | — |
+| S43 | Passing-lane interception technique | 279 | grade: 18.2652 | — |
+| S44 | Attention / responsibility execution | 279 | grade: 9.0669 | — |
+| S45 | Foul-control technique | 279 | grade: 11.8606 | — |
 | S46 | Defensive communication | 279 | grade: 8.6577 | — |
-| F01.recognition | Connector / swing / reversal — recognition | 279 | grade: 10.9720 | — |
+| F01.recognition | Connector / swing / reversal — recognition | 279 | grade: 10.7593 | — |
 | F01.execution | Connector / swing / reversal — execution | 279 | grade: 6.8611 | — |
-| F02.recognition | Post entry — recognition | 279 | grade: 13.8898 | — |
+| F02.recognition | Post entry — recognition | 279 | grade: 13.3435 | — |
 | F02.execution | Post entry — execution | 279 | grade: 8.4947 | — |
-| F03.recognition | Pocket / roll feed — recognition | 279 | grade: 13.5273 | — |
+| F03.recognition | Pocket / roll feed — recognition | 279 | grade: 12.7913 | — |
 | F03.execution | Pocket / roll feed — execution | 279 | grade: 7.4482 | — |
-| F04.recognition | Lob — recognition | 279 | grade: 13.9202 | — |
+| F04.recognition | Lob — recognition | 279 | grade: 13.3777 | — |
 | F04.execution | Lob — execution | 279 | grade: 8.5721 | — |
-| F05.recognition | Short-roll playmaking — recognition | 279 | grade: 13.8181 | — |
+| F05.recognition | Short-roll playmaking — recognition | 279 | grade: 13.2251 | — |
 | F05.execution | Short-roll playmaking — execution | 279 | grade: 7.9187 | — |
-| F06.recognition | Drive-and-kick — recognition | 279 | grade: 12.3956 | — |
+| F06.recognition | Drive-and-kick — recognition | 279 | grade: 12.0747 | — |
 | F06.execution | Drive-and-kick — execution | 279 | grade: 7.5483 | — |
-| F07.recognition | Skip / cross-court — recognition | 279 | grade: 13.8898 | — |
+| F07.recognition | Skip / cross-court — recognition | 279 | grade: 13.2227 | — |
 | F07.execution | Skip / cross-court — execution | 279 | grade: 8.4947 | — |
-| F08.recognition | Post playmaking — recognition | 279 | grade: 13.7954 | — |
+| F08.recognition | Post playmaking — recognition | 279 | grade: 13.2548 | — |
 | F08.execution | Post playmaking — execution | 279 | grade: 8.1189 | — |
-| F09.recognition | Transition / outlet / advance — recognition | 279 | grade: 13.4798 | — |
+| F09.recognition | Transition / outlet / advance — recognition | 279 | grade: 12.8746 | — |
 | F09.execution | Transition / outlet / advance — execution | 279 | grade: 6.7593 | — |
 | T01 | Shoot / drive / pass / post / reset choices | 279 | drive: 0.0473; pass: 0.0292; post: 0.0514; reset: 0.0588; shoot: 0.0438 | — |
 | T02 | Shot-location preferences | 279 | midrange: 0.0419; rim: 0.1090; short_paint: 0.0592; three: 0.1764 | — |
 | T03 | Shooting-mode preferences | 279 | catch: 0.0959; movement: 0.0504; pull_up: 0.0950 | — |
 | T04 | Shot difficulty tolerance | 279 | probability: 0.0308 | — |
-| T05 | Pace / early-attack preference | 279 | probability: 0.0525 | — |
+| T05 | Pace / early-attack preference | 279 | probability: 0.0531 | — |
 | T06 | Dribble / possession persistence | 279 | probability: 0.1404 | — |
 | T07 | Passing risk appetite | 279 | probability: 0.0490 | — |
 | T08 | Offensive involvement preference | 279 | probability: 0.0819 | — |

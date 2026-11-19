@@ -77,6 +77,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--top", type=int, default=75)
     ap.add_argument("--min-minutes", type=float, default=1000.0)
+    ap.add_argument("--out", type=Path, default=OUT, help="where to write the consensus JSON")
     args = ap.parse_args()
 
     from consensus_impact_audit import consensus
@@ -143,8 +144,8 @@ def main() -> int:
     ranked = sorted((r for r in rows.values() if r["consensus_mean"] is not None), key=lambda r: (r["consensus_mean"], r["engine_rank"]))
     for i, r in enumerate(ranked):
         r["consensus_rank"] = i + 1
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps({"players": ranked, "method": __doc__}, indent=1, ensure_ascii=False))
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(json.dumps({"players": ranked, "method": __doc__}, indent=1, ensure_ascii=False))
 
     top = ranked[: args.top]
     print("| Cons | Player | ESPN | Ringer | NS redraft | NS pos | BBI impact | Real LEBRON | Engine fit | Game | Card OVR | Engine OVR | Gap |")

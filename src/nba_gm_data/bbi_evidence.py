@@ -13,9 +13,16 @@ Method (declared, not fitted to simulation outcomes):
    weak 0.25), converted to a normal score. A metric for a secondary shot type (pull-up, off-screen, deep) carries a
    "volume" entry: its weight is also multiplied by attempts / (attempts + half) of that shot type that season, so a
    percentage on a dozen attempts no longer outweighs the player's shooting as a whole (2026-11-19).
+   Each metric's weight is also multiplied by its measured repeatability (analyst-first task, 2026-11-19): the
+   season-to-season rank correlation of that metric among players with 1,000+ minutes in both seasons, divided by
+   RELIABILITY_REF and capped at 1. A metric that barely repeats from one season to the next (help effectiveness,
+   isolation turnover rate, and-one conversion: r 0.1-0.25) mostly measures small samples and context, so it can no
+   longer decide an input on its own; repeatable metrics (r >= 0.6) keep their full weight.
 3. Across seasons: weights 2025-26 1.0, 2024-25 0.6, 2023-24 0.35, each times minutes/(minutes+800), times the
    strength of the strongest mapped metric available (1 primary, 0.5 supporting, 0.25 weak). A metric with
-   "per" in the mapping (per-75 counts such as turnovers) is first divided by that exposure metric (touches).
+   "per" in the mapping (per-75 counts such as turnovers) is first divided by that exposure metric (touches); a
+   metric with "per_sum" is divided by the sum of several exposure metrics (e.g. plays used or created = true shot
+   attempts + turnovers + potential assists, the classic turnover-percentage denominator).
 4. The combined score becomes a grade on the model's anchors (50 functional, 75 strong ~80th pct, 90 exceptional
    ~97th pct): grade = 100 * logistic(1.31 * z). Smooth, bounded, never clipped.
 5. The grade is blended with the estimator's existing value by evidence weight: w_bbi / (w_bbi + PRIOR_WEIGHT).
@@ -47,7 +54,12 @@ STRENGTH = {"primary": 1.0, "supporting": 0.5, "weak": 0.25}
 PRIOR_WEIGHT = 0.35
 MINUTES_HALF = 800
 GRADE_SLOPE = 1.31
-VERSION = "bbi_evidence_overlay_v3_2026_11_19"
+VERSION = "bbi_evidence_overlay_v4_2026_11_19"
+# Metrics that repeat at least this well from season to season (rank correlation, 1,000+ minutes both seasons) keep
+# their full mapped weight; noisier metrics are scaled down in proportion. 0.6 is about the repeatability of a stable
+# per-possession rate in this data (rim FG%, role-adjusted potential assists per pass, steals per possession).
+RELIABILITY_REF = 0.6
+RELIABILITY_MINUTES = 1000
 # Team possessions per player minute (about 99 per 48 minutes): turns a per-75-possession rate into a season count.
 POSSESSIONS_PER_MINUTE = 99.0 / 48.0
 OVERLAY_KINDS = ("grade", "propensity", "physical")
@@ -142,6 +154,67 @@ def _per_exposure(values: dict[str, tuple[float, float, str | None]],
     return out
 
 
+def _exposure_names(m: Mapping[str, Any]) -> tuple[str, ...]:
+    """Exposure metric(s) a mapped metric is divided by: "per" (one metric) or "per_sum" (their sum)."""
+    if m.get("per_sum"):
+        return tuple(m["per_sum"])
+    return (m["per"],) if m.get("per") else ()
+
+
+def _summed_exposure(table: Mapping[tuple[str, str], dict[str, tuple[float, float, str | None]]], season: str,
+                     names: tuple[str, ...]) -> dict[str, tuple[float, float, str | None]]:
+    """Season exposure per player: one metric, or the sum of several (players missing any part are dropped)."""
+    parts = [table.get((season, name), {}) for name in names]
+    if len(parts) == 1:
+        return parts[0]
+    out = {}
+    for key, first in parts[0].items():
+        if all(key in part for part in parts[1:]):
+            out[key] = (sum(part[key][0] for part in parts), first[1], first[2])
+    return out
+
+
+def _metric_values(table: Mapping[tuple[str, str], dict[str, tuple[float, float, str | None]]], season: str,
+                   m: Mapping[str, Any]) -> dict[str, tuple[float, float, str | None]]:
+    values = table.get((season, m["metric"]), {})
+    names = _exposure_names(m)
+    return _per_exposure(values, _summed_exposure(table, season, names)) if names else values
+
+
+def _rank_correlation(x: Mapping[str, float], y: Mapping[str, float]) -> float | None:
+    ids = [k for k in x if k in y]
+    if len(ids) < 40:
+        return None
+    rx = {k: i for i, k in enumerate(sorted(ids, key=lambda k: x[k]))}
+    ry = {k: i for i, k in enumerate(sorted(ids, key=lambda k: y[k]))}
+    from statistics import correlation
+    try:
+        return correlation([rx[k] for k in ids], [ry[k] for k in ids])
+    except ValueError:
+        return None
+
+
+def metric_reliability(table: Mapping[tuple[str, str], dict[str, tuple[float, float, str | None]]],
+                       m: Mapping[str, Any]) -> float | None:
+    """Mean season-to-season rank correlation of a mapped metric (after any exposure division) among players with
+    RELIABILITY_MINUTES+ in both seasons, over the consecutive season pairs available. None when unmeasurable."""
+    seasons = sorted(SEASON_WEIGHTS)
+    by_season = {}
+    for season in seasons:
+        by_season[season] = {cid: v for v, minutes, cid in _metric_values(table, season, m).values()
+                             if cid and minutes >= RELIABILITY_MINUTES}
+    values = [r for a, b in zip(seasons, seasons[1:])
+              if (r := _rank_correlation(by_season[a], by_season[b])) is not None]
+    return sum(values) / len(values) if values else None
+
+
+def reliability_factor(r: float | None) -> float:
+    """Weight multiplier from repeatability: r / RELIABILITY_REF, capped at 1 (1 when unmeasurable)."""
+    if r is None:
+        return 1.0
+    return min(1.0, max(0.0, r) / RELIABILITY_REF)
+
+
 def _percentiles(values: dict[str, tuple[float, float, str | None]], direction: int) -> dict[str, float]:
     pool = sorted(v * direction for v, m, _ in values.values() if m >= MIN_POOL_MINUTES)
     if len(pool) < 30:
@@ -174,7 +247,7 @@ def player_input_scores(root: Path, mapping: Mapping[str, Any] | None = None) ->
             for outcome, items in by_outcome.items():
                 specs[f"{iid}:{outcome}"] = {"metrics": items}
     metrics = {m["metric"] for spec in specs.values() for m in spec["metrics"]}
-    metrics |= {m["per"] for spec in specs.values() for m in spec["metrics"] if m.get("per")}
+    metrics |= {name for spec in specs.values() for m in spec["metrics"] for name in _exposure_names(m)}
     metrics |= {name for spec in specs.values() for m in spec["metrics"] if m.get("volume")
                 for name in (m["volume"]["per75"], m["volume"].get("minus")) if name}
     table = collect_values(root, metrics)
@@ -200,6 +273,14 @@ def player_input_scores(root: Path, mapping: Mapping[str, Any] | None = None) ->
         return attempts / (attempts + float(vol.get("half", 40)))
 
     pct_cache: dict[tuple[str, str, int], dict[str, float]] = {}
+    reliability: dict[tuple[str, tuple[str, ...]], float] = {}
+
+    def reliability_of(m: Mapping[str, Any]) -> float:
+        key = (m["metric"], _exposure_names(m))
+        if key not in reliability:
+            reliability[key] = reliability_factor(metric_reliability(table, m))
+        return reliability[key]
+
     out: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
     players_by_season: dict[str, dict[str, float]] = defaultdict(dict)
     for (season, _), vals in table.items():
@@ -212,16 +293,14 @@ def player_input_scores(root: Path, mapping: Mapping[str, Any] | None = None) ->
                 num = den = top = 0.0
                 used = []
                 for m in spec["metrics"]:
-                    key = (season, m["metric"], int(m.get("direction", 1)), m.get("per"))
+                    key = (season, m["metric"], int(m.get("direction", 1)), _exposure_names(m))
                     if key not in pct_cache:
-                        values = table.get((season, m["metric"]), {})
-                        if m.get("per"):
-                            values = _per_exposure(values, table.get((season, m["per"]), {}))
-                        pct_cache[key] = _percentiles(values, int(m.get("direction", 1)))
+                        pct_cache[key] = _percentiles(_metric_values(table, season, m), int(m.get("direction", 1)))
                     p = pct_cache[key].get(cid)
                     if p is None:
                         continue
-                    w = STRENGTH.get(m.get("strength", "supporting"), 0.5) * volume_factor(m, season, cid, minutes)
+                    w = (STRENGTH.get(m.get("strength", "supporting"), 0.5) * volume_factor(m, season, cid, minutes)
+                         * reliability_of(m))
                     if w <= 0:
                         continue
                     num += w * _ND.inv_cdf(p)
