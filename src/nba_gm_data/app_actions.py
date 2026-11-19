@@ -510,7 +510,7 @@ def _create_save_action_at_path(root: Path, canonical: dict[str, Any], save_path
         seed=seed_int,
         ai_difficulty=str(payload.get("ai_difficulty") or "normal"),
         game_mode=str(payload.get("game_mode") or "standard"),
-        ratings_model=str(payload.get("ratings_model") or "legacy_traits"),
+        ratings_model=str(payload.get("ratings_model") or "inputs_v1"),
     )
     ensure_game_settings(save)
     if (save.get("fantasy_draft_state") or {}).get("status") == "in_progress":

@@ -112,7 +112,7 @@ def create_league_save(
     seed: int = 1,
     ai_difficulty: str = "normal",
     game_mode: str = "standard",
-    ratings_model: str = "legacy_traits",
+    ratings_model: str = "inputs_v1",
 ) -> dict[str, Any]:
     from .save_recovery import ensure_new_save_path
 
@@ -129,7 +129,7 @@ def _create_league_save(
     seed: int,
     ai_difficulty: str,
     game_mode: str,
-    ratings_model: str = "legacy_traits",
+    ratings_model: str = "inputs_v1",
 ) -> dict[str, Any]:
     canonical = canonical if isinstance(canonical, dict) else to_plain(canonical)
     from .ratings_model import INPUTS_V1, install_inputs_model, ratings_model_for

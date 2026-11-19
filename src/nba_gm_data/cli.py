@@ -129,8 +129,9 @@ def main(argv: list[str] | None = None) -> int:
     new_save_parser.add_argument("--seed", type=int, default=None)
     new_save_parser.add_argument("--ai-difficulty", choices=["easy", "normal", "hard"], default="normal")
     new_save_parser.add_argument("--game-mode", choices=["standard", "fantasy_draft"], default="standard")
-    new_save_parser.add_argument("--ratings-model", choices=["legacy_traits", "inputs_v1"], default="legacy_traits",
-                                 help="inputs_v1 derives engine ratings from the 94-input player model (Stage 1 beta).")
+    new_save_parser.add_argument("--ratings-model", choices=["legacy_traits", "inputs_v1"], default="inputs_v1",
+                                 help="inputs_v1 (default) derives engine ratings from the 94-input player model; "
+                                      "legacy_traits keeps the older ratings.")
 
     save_status_parser = subparsers.add_parser("save-status", help="Inspect current save date, phase, legal actions, and pending decisions.", parents=[common])
     save_status_parser.add_argument("--save", required=True)

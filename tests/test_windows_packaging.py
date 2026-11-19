@@ -41,6 +41,18 @@ class WindowsBuildTests(unittest.TestCase):
         self.assertTrue(set(build.REQUIRED).issubset(manifest["input_sha256"]))
         self.assertFalse(any(n.startswith(("saves/", ".cache/", "dist/")) for n in manifest["input_sha256"]))
 
+    def test_inventory_ships_compressed_inputs_but_no_private_or_uncompressed_copies(self):
+        files, _ = build.inventory()
+        shipped = {p.relative_to(ROOT).as_posix() for p in files}
+        self.assertIn("data/canonical/player_inputs_2026_27.json.gz", shipped)
+        self.assertNotIn("data/canonical/player_inputs_2026_27.json", shipped)
+        self.assertFalse([n for n in shipped
+                          if any(n == item or n.startswith(item + "/") for item in build.PRIVATE_DATA)])
+        for platform_name in ("macos", "windows"):
+            spec = (ROOT / f"packaging/{platform_name}/NBA GM Sandbox.spec").read_text()
+            for item in build.PRIVATE_DATA + build.BUILD_ONLY_DATA:
+                self.assertIn(f'"{item}"', spec, (platform_name, item))
+
     def test_missing_or_empty_media_fails_preflight(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
