@@ -24,19 +24,9 @@ _PACKAGE_ROOT = Path(__file__).resolve().parents[2]
 MODEL_FILE = "data/canonical/injury_model_v2.json"
 POSSESSIONS_PER_MINUTE = 2.1      # a player's on-court possessions per minute at a ~101-possession pace
 MIN_MINUTES_FOR_EXPOSURE = 4.0    # deep reserves who barely play still get hurt occasionally (Codex INJ)
-# Calibration to Basketball Index's league totals (spells per team-season, games missed per 82) is applied here, once,
-# instead of inside the per-part models. 1.0 = the fitted rates as they are.
-# INJURY-REST (2026-11-19): in a full season with the AI coaches' rotations, rotation players got hurt 1.7-2.7 times
-# per 82 games played against Basketball Index's 3.3-4.3 at every workload (2023-24 and 2024-25), and regulars had
-# 40% fewer multi-game absences than in the real 2025-26 box scores. The fitted rates were checked with every player
-# at 4+ minutes exposed all season, which the real rotations don't do.
-# INJURIES-2 (2026-11-20): the tracker's coverage grows four- to eightfold from 2015-16 (168 entries) to 2021-25
-# (660-1,340 a season), and the fit pools all those seasons, so its base rate is low. On the well-covered 2021-22 to
-# 2024-25 seasons the fitted model, run on those same players (their ages, bodies, minutes and histories), predicts
-# 1 recorded injury for every 1.52 the tracker logged (1.56 for players at 20+ minutes; 1.37-1.71 across minutes bands;
-# output/injuries-2/workload_check.py). 1.35 had been set from the low end of the tracker's range under the old reading
-# of its days out, when a third of simulated injuries cost no game.
-LEAGUE_RATE_SCALE = 1.52
+# The builder anchors the built-in per-part rates to 2021-22 through 2024-25 tracker coverage.
+# This multiplier defaults to neutral and remains available for the injury season research script.
+LEAGUE_RATE_SCALE = 1.0
 # Basketball Index logs one real injury as several entries ("out", then "day-to-day"), so a player's recorded history
 # overstates how much it predicts new injuries. Calibrated against Basketball Index's own 2026-27 per-player forecasts.
 HISTORY_WEIGHT = 0.55

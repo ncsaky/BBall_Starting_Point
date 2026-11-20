@@ -1103,6 +1103,29 @@ def opening_night_injuries(root: str | Path, canonical: dict[str, Any], states: 
     return events, skipped
 
 
+def remap_fantasy_opening_night_injuries(canonical: dict[str, Any], save: dict[str, Any]) -> None:
+    """Count opening-night absences on the schedule of the team that drafted the player."""
+    season = save["meta"]["season"]
+    games = (save.get("season_schedules", {}).get(season) or {}).get("games") or []
+    team_dates = _team_game_dates(games, espn_team_id_map_from_canonical(canonical))
+    drafted = {row["player_id"]: row["team_id"] for row in save["fantasy_draft_state"]["selections"]}
+    states = {state.get("current_injury_id"): state for state in save.get("health_states", [])}
+    for event in save.get("injury_events", []):
+        if event.get("season_start") != "opening_night" or event["id"] not in states:
+            continue
+        team_id = drafted.get(event["player_id"])
+        team_days = team_dates.get(team_id)
+        if not team_days:
+            continue
+        games_out = int(event.get("real_games_missed") or event["expected_games_missed"])
+        if event["severity"] != "season_ending":
+            event["return_date"] = (
+                team_days[games_out] if games_out < len(team_days) else f"{int(season[:4]) + 1}-06-30"
+            )
+        event["team_id"] = team_id
+        states[event["id"]]["return_date"] = event["return_date"]
+
+
 def injury_risk_for_player(
     player: dict[str, Any],
     profile: dict[str, Any],

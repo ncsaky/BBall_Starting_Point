@@ -17,6 +17,7 @@ import random
 import re
 import tempfile
 import uuid
+from bisect import bisect_left
 from collections import Counter
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -314,6 +315,10 @@ def initialize_new_career_runtime(canonical, save, start_date, seed):
     """Initialize opening roles and intent once, without executing AI actions."""
     from .contract_protection import initialize_protection
     from .team_planning import refresh_team_plans
+    if (save.get("fantasy_draft_state") or {}).get("status") == "completed":
+        from .health import remap_fantasy_opening_night_injuries
+
+        remap_fantasy_opening_night_injuries(canonical, save)
     initialize_protection(save, canonical)
     active = canonical_with_save(canonical, save)
     if reassess_ai_roles(active, save, start_date):
@@ -2082,7 +2087,7 @@ def advance_lifecycle_to(
         cursor = day
         clock["through_date"] = day
         clock["health_game_ids"] = sorted(processed)
-        rotation_progress = simulation_rotation_progress(active, save) if progress_listener_active() else None
+        rotation_progress = simulation_rotation_progress(active, save, root=root) if progress_listener_active() else None
         live_cards = {}
         if progress_listener_active() and save.get("state", {}).get("phase") == "regular_season":
             try:
@@ -2102,7 +2107,8 @@ def advance_lifecycle_to(
     return {"active": active if active is not None else canonical_with_save(canonical, save), "development_events": events}
 
 
-def simulation_rotation_progress(active: dict[str, Any], save: dict[str, Any]) -> list[dict[str, Any]]:
+def simulation_rotation_progress(active: dict[str, Any], save: dict[str, Any], *,
+                                 root: str | Path | None = None) -> list[dict[str, Any]]:
     """Small user-roster snapshot for live UI feedback; never persisted."""
     team_id = (save.get("meta") or {}).get("user_team_id")
     roster = [player for player in active.get("players", []) if player.get("team_id") == team_id]
@@ -2113,6 +2119,7 @@ def simulation_rotation_progress(active: dict[str, Any], save: dict[str, Any]) -
     rotation_override = (save.get("rotation_overrides") or {}).get(team_id, {})
     locked_ids = set((save.get("rotation_locked_player_ids") or {}).get(team_id, list(rotation_override)))
     current_date = save.get("state", {}).get("current_date")
+    team_days = remaining_injury_schedule(root, active, save, team_id) if root is not None else None
     return [
         {
             "id": player["id"],
@@ -2125,7 +2132,7 @@ def simulation_rotation_progress(active: dict[str, Any], save: dict[str, Any]) -
                 not player_unavailable_for_rotation(health_by_player.get(player["id"]))
                 and player["id"] in locked_ids
             ),
-            "health": player_health_label(health_by_player.get(player["id"]), current_date),
+            "health": player_health_label(health_by_player.get(player["id"]), current_date, team_days),
         }
         for player in roster
     ]
@@ -4745,6 +4752,7 @@ def team_dashboard(
         if contract.get("player_id")
     }
     current_date = str(save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
+    injury_schedule = remaining_injury_schedule(root, active, save, team["id"])
     current_legal_actions = save_legal_actions_for_date(save, current_date)
     extension_window_open = "extensions" in set(current_legal_actions)
     extension_eligible_player_ids = {
@@ -4845,7 +4853,7 @@ def team_dashboard(
                 "upside_remaining": round(max(0.0, min(5.0, float((asset_value_by_player.get(player["id"]) or {}).get("development_upside") or 0.0) / 22.0 * 5.0)), 1),
                 "decline_watch": decline_watch_value(active, player, (asset_value_by_player.get(player["id"]) or {}).get("development_upside")),
                 "trade_value": round(float((asset_value_by_player.get(player["id"]) or {}).get("player_value") or 0.0), 1),
-                "health": player_health_label(health_by_player.get(player["id"]), save.get("state", {}).get("current_date")),
+                "health": player_health_label(health_by_player.get(player["id"]), current_date, injury_schedule),
                 # Most regular-season games he can still reach (the 65-game award rule), after any rest the GM has set.
                 "award_games_max": (None if use_playoff_stats else award_games_max(
                     int(season_stats.get(player["id"], {}).get("games") or 0), team_games, health_by_player.get(player["id"]))),
@@ -8288,7 +8296,27 @@ def fatigue_display(state: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def player_health_label(state: dict[str, Any] | None, current_date: str | None) -> dict[str, Any]:
+def remaining_injury_schedule(root: str | Path, canonical: dict[str, Any], save: dict[str, Any],
+                              team_id: str) -> list[str]:
+    from .health import team_game_dates
+
+    espn_id = next((espn for espn, team in espn_team_id_map(canonical).items() if team["id"] == team_id), None)
+    games = schedule_for_save(root, save)
+    current = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+    dates = team_game_dates(games).get(espn_id, [])
+    first = bisect_left(dates, current)
+    if first < len(dates) and dates[first] == current:
+        played = set(save.get("schedule_state", {}).get("simulated_game_ids", []))
+        # Also skip a game that has already gone through the health pass in a live update.
+        played.update(save.get("lifecycle_state", {}).get("health_game_ids", []))
+        if any(game["gameDate"] == current and str(game["externalGameId"]) in played
+               and espn_id in (str(game.get("homeTeamId")), str(game.get("awayTeamId"))) for game in games):
+            first += 1
+    return dates[first:]
+
+
+def player_health_label(state: dict[str, Any] | None, current_date: str | None,
+                        team_days: list[str] | None = None) -> dict[str, Any]:
     if not state:
         return {"status": "ok", "label": "", "games_missed": 0, "fatigue": 0.0}
     status = state.get("availability_status") or "active"
@@ -8305,8 +8333,10 @@ def player_health_label(state: dict[str, Any] | None, current_date: str | None) 
     # v2 injuries carry a real diagnosis ("Ankle sprain", "ACL tear"); older saves show the severity band.
     diagnosis = str(state.get("current_injury_label") or "").strip()
     label = diagnosis[:1].upper() + diagnosis[1:] if diagnosis else f"{severity}"
-    if days_left is not None:
-        label = f"{label} ~{max(1, round(days_left / 2.4))}g"
+    if return_date and current_date and team_days is not None:
+        # As in the engine, the player can play on the return date itself.
+        games_left = sum(current_date <= day < return_date for day in team_days)
+        label = f"{label} ~{games_left}g"
     return {"status": status, "label": label, "days_left": days_left, "games_missed": int(state.get("games_missed") or 0), "fatigue": fatigue,
             "severity": severity, "body_part": state.get("current_injury_part"), "diagnosis": diagnosis or None}
 

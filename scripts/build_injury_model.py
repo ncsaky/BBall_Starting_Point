@@ -4,11 +4,13 @@
 Evidence: data/research/bbi/tools/injury_*.json (extracted by scripts/bbi_extract_tools.py from the signed-in tool page).
 For each body part, a Poisson model of injuries per game played, fitted on real player-seasons 2015-16..2025-26:
 
-    injuries(part) ~ games_played * exp(b0 + b . features)
+    injuries(part) ~ games_played * exp(season_intercept + b . features)
 
 features (standardized): age, age^2, height, weight, possessions per game (workload), rim pressure, offensive rebounding,
 conditioning (stamina), center, guard, recent same-part injuries (time-decayed) and recent other-part injuries.
-Ridge-penalized (intercept free). The same-part term is the compounding effect; age/body/style terms decide which
+Season intercepts are unpenalized so reporting coverage across seasons cannot drive the shared slopes. Gameplay uses
+one intercept per part, anchored to the 2021-22 through 2024-25 tracker totals with the engine's history discount.
+The same-part term is the compounding effect; age/body/style terms decide which
 injuries a player tends to get. Recovery times are not modeled parametrically: the engine samples a real absence for
 the drawn part (diagnosis, days, games), weighted toward recent seasons.
 
@@ -33,6 +35,7 @@ B = ROOT / "data/research/bbi/tools"
 OUT = ROOT / "data/canonical/injury_model_v2.json"
 EVIDENCE_OUT = ROOT / "data/canonical/injury_player_evidence_v2.json"   # git-ignored: per-player Basketball Index evidence
 FIRST_SEASON = "2015-16"
+RATE_ANCHOR_SEASONS = ("2021-22", "2022-23", "2023-24", "2024-25")
 # Recovery times come from absences recorded since 2015, the same seasons the injury-rate models are fitted on
 # (INJURIES-2, 2026-11-20). Older records describe a different reporting world: before 2005-06 the injured list had a
 # five-game minimum and half the records have no logged return (median return 28 days in 2000-05, 10 in 2006-14, 5 in
@@ -69,12 +72,10 @@ def part_of(h) -> str | None:
     return p if p in PARTS else None
 
 
-def poisson_ridge(X, y, exposure, lam=RIDGE, iters=60):
-    """Newton/IRLS for log-link Poisson with offset log(exposure); ridge on all but the intercept."""
+def poisson_ridge(X, y, exposure, intercepts, lam=RIDGE, iters=60):
+    """Newton/IRLS for Poisson counts with an exposure offset and unpenalized intercepts."""
     n = len(X[0])
-    b = [0.0] * n
-    rate = sum(y) / max(1e-9, sum(exposure))
-    b[0] = math.log(max(rate, 1e-7))
+    b = [*intercepts, *([0.0] * (n - len(intercepts)))]
     for _ in range(iters):
         g = [0.0] * n
         H = [[0.0] * n for _ in range(n)]
@@ -86,7 +87,7 @@ def poisson_ridge(X, y, exposure, lam=RIDGE, iters=60):
                 g[i] += r * x[i]
                 for j in range(i, n):
                     H[i][j] += mu * x[i] * x[j]
-        for i in range(1, n):
+        for i in range(len(intercepts), n):
             g[i] -= lam * b[i]
             H[i][i] += lam
         for i in range(n):
@@ -110,10 +111,34 @@ def poisson_ridge(X, y, exposure, lam=RIDGE, iters=60):
     return b
 
 
+def fit_season_rates(features, counts, exposure, seasons):
+    """Return season intercepts and common slopes. Zero-event seasons have zero fitted rate."""
+    season_totals = Counter()
+    season_exposure = Counter()
+    for season, count, games in zip(seasons, counts, exposure):
+        season_totals[season] += count
+        season_exposure[season] += games
+    fitted = sorted(season for season, count in season_totals.items() if count)
+    # Within a season that reports no events, the intercept tends to negative infinity.
+    # That season contributes no information about the slopes.
+    design, response, games = [], [], []
+    for season, x, count, gp in zip(seasons, features, counts, exposure):
+        if season_totals[season]:
+            design.append([float(season == key) for key in fitted] + x)
+            response.append(count)
+            games.append(gp)
+    initial = [math.log(season_totals[key] / season_exposure[key]) for key in fitted]
+    b = poisson_ridge(design, response, games, initial)
+    intercepts = dict(zip(fitted, b[:len(fitted)]))
+    return {key: intercepts.get(key) for key in sorted(season_totals)}, b[len(fitted):]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--write", action="store_true")
+    ap.add_argument("--model-only", action="store_true", help="leave the local player evidence file alone")
     args = ap.parse_args()
+    from nba_gm_data.injury_model import HISTORY_WEIGHT
     from nba_gm_data.app_actions import load_app_canonical
     from nba_gm_data.save import trait_values_by_player
     canonical = load_app_canonical(ROOT)
@@ -160,26 +185,47 @@ def main():
 
     def featurize(f, prior_same, prior_other):
         z = {c: (f[c] - mu[c]) / sd[c] for c in raw_cols}
-        return [1.0, z["age"], z["age"] ** 2, z["height"], z["weight"], z["poss_pg"], z["rim_pressure"],
+        return [z["age"], z["age"] ** 2, z["height"], z["weight"], z["poss_pg"], z["rim_pressure"],
                 z["offensive_rebounding"], z["stamina"], f["center"], f["guard"], prior_same, prior_other]
 
     model = {"version": "injury_model_v2_2026_11_18", "source": "Basketball Index Injury Tracker (data/research/bbi/tools)",
              "first_season": FIRST_SEASON, "player_seasons": len(data), "games": sum(d[2] for d in data),
              "features": FEATURES, "standardization": {"mean": mu, "sd": sd}, "history_decay_years": HISTORY_DECAY_YEARS,
-             "parts": {}, "merge": MERGE}
+             "parts": {}, "merge": MERGE,
+             "rate_fit": {"season_fixed_effects": True, "anchor_seasons": RATE_ANCHOR_SEASONS}}
+    fit_seasons = [row[1] for row in data]
+    exposure = [row[2] for row in data]
     for part in [*PARTS, "illness"]:
-        X, y, e = [], [], []
-        for pid, season, gp, f, in_season, prior in data:
+        features, counts = [], []
+        anchor_count = anchor_exposure = 0
+        for _, season, gp, raw, in_season, prior in data:
             same = prior.get(part, 0.0)
             other = sum(v for k, v in prior.items() if k != part)
-            X.append(featurize(f, same, other))
-            y.append(in_season.get(part, 0))
-            e.append(gp)
-        b = poisson_ridge(X, y, e)
-        model["parts"][part] = {"intercept": b[0], "coef": dict(zip(FEATURES, b[1:])),
-                                "injuries": sum(y), "per_1000_games": round(1000 * sum(y) / sum(e), 3)}
-        print(f"{part:11s} n={sum(y):5d} per1000={1000*sum(y)/sum(e):5.2f}  " +
-              " ".join(f"{k}={v:+.2f}" for k, v in zip(FEATURES, b[1:]) if abs(v) >= 0.08))
+            features.append(featurize(raw, same, other))
+            counts.append(in_season.get(part, 0))
+            if season in RATE_ANCHOR_SEASONS:
+                anchor_count += counts[-1]
+                anchor_exposure += gp
+        season_intercepts, slopes = fit_season_rates(features, counts, exposure, fit_seasons)
+        # Match the recent tracker total using the history terms the engine actually reads. The game
+        # discounts previous entries and excludes illness from its rolling injury history.
+        weighted_games = 0.0
+        for _, season, gp, raw, _, prior in data:
+            if season not in RATE_ANCHOR_SEASONS:
+                continue
+            same = prior.get(part, 0.0) if part != "illness" else 0.0
+            other = sum(v for k, v in prior.items() if k not in (part, "illness"))
+            x = featurize(raw, HISTORY_WEIGHT * same, HISTORY_WEIGHT * other)
+            weighted_games += gp * math.exp(sum(b * value for b, value in zip(slopes, x)))
+        model["parts"][part] = {
+            "intercept": math.log(anchor_count / weighted_games),
+            "coef": dict(zip(FEATURES, slopes)),
+            "season_intercepts": season_intercepts,
+            "injuries": sum(counts),
+            "per_1000_games": round(1000 * sum(counts) / sum(exposure), 3),
+        }
+        print(f"{part:11s} n={sum(counts):5d} anchor per1000={1000*anchor_count/anchor_exposure:5.2f}  " +
+              " ".join(f"{k}={v:+.2f}" for k, v in zip(FEATURES, slopes) if abs(v) >= 0.08))
 
     # Recovery pools: real absences per part (diagnosis, days, games, surgery), most recent seasons first.
     pools = defaultdict(list)
@@ -283,8 +329,10 @@ def main():
     evidence["version"] = model["version"]
     if args.write:
         OUT.write_text(json.dumps(model, separators=(",", ":")) + "\n")
-        EVIDENCE_OUT.write_text(json.dumps(evidence, separators=(",", ":")) + "\n")
-        print("wrote", OUT, f"{OUT.stat().st_size/1e6:.2f} MB", "and local-only", EVIDENCE_OUT.name, f"{EVIDENCE_OUT.stat().st_size/1e6:.2f} MB")
+        print("wrote", OUT, f"{OUT.stat().st_size/1e6:.2f} MB")
+        if not args.model_only:
+            EVIDENCE_OUT.write_text(json.dumps(evidence, separators=(",", ":")) + "\n")
+            print("wrote local-only", EVIDENCE_OUT.name, f"{EVIDENCE_OUT.stat().st_size/1e6:.2f} MB")
 
 
 if __name__ == "__main__":

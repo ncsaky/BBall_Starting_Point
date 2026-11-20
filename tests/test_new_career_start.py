@@ -143,6 +143,28 @@ class NewCareerStartTests(unittest.TestCase):
             self.assertEqual(s['state']['current_date'],'2026-10-20');self.assertEqual(s['state']['phase'],'preseason')
             self.assertEqual(s['fantasy_draft_state']['completed_date'],'2026-10-20')
             self.assertEqual(len(s['team_plans']),30);self.assertFalse(s['development_events']);self.assertFalse(s['game_results'])
+            from nba_gm_data.health import _team_game_dates, espn_team_id_map_from_canonical
+            games = s['season_schedules']['2026-27']['games']
+            team_days = _team_game_dates(games, espn_team_id_map_from_canonical(self.canonical))
+            destinations = {p['player_id']: p['team_id'] for p in s['fantasy_draft_state']['selections']}
+            states = {row['player_id']: row for row in s['health_states']}
+            original_teams = {p['id']: p.get('team_id') for p in self.canonical['players']}
+            different_dates = 0
+            for event in s['injury_events']:
+                player_id = event['player_id']
+                if event.get('season_start') != 'opening_night' or player_id not in destinations:
+                    continue
+                destination = destinations[player_id]
+                games_out = event['expected_games_missed']
+                days = team_days[destination]
+                expected = '2027-06-30' if event['severity'] == 'season_ending' else days[games_out]
+                self.assertEqual(event['team_id'], destination)
+                self.assertEqual(event['return_date'], expected)
+                self.assertEqual(states[player_id]['return_date'], expected)
+                self.assertEqual(sum(day < expected for day in days), games_out)
+                if event['severity'] != 'season_ending':
+                    different_dates += expected != team_days[original_teams[player_id]][games_out]
+            self.assertGreater(different_dates, 0)
             result=self.action('advance_save',{'save_path':str(path),'next_event':True},folder)
             self.assertEqual(result['result']['through_date'],'2026-10-21')
             from nba_gm_data.fantasy_draft import finalize_fantasy_draft
