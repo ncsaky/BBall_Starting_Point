@@ -1081,11 +1081,13 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
     diagnostics = {'targets': 0, 'buyers': 0, 'packages': 0, 'illegal': 0, 'declined': 0, 'asset_conflicts': 0,
                    'facilitator_attempts': 0, 'facilitator_agreements': 0, 'pairings': 0, 'prescreened_out': 0,
                    'team_targets': 0}
+    from .multi_team_trades import near_miss, multi_team_repairs, user_absorber_offers, enrich_agreed_deals
     pairings = tt.target_pairings(canonical, buyer_ids, excluded, depth, config, rng)
     diagnostics['team_targets'] = sum(len(tt.team_trade_targets(canonical, tid)) for tid in buyer_ids)
     diagnostics['pairings'] = len(pairings)
     proposals, evaluation_snapshots, reserved, blocked, satisfied = [], {}, set(), {}, set()
-    for pairing in pairings:
+    near_misses = []  # two-team deals a third team might complete (trade step 4)
+    for order, pairing in enumerate(pairings):
         if len(proposals) >= limit:
             break
         row = pairing['row']
@@ -1115,8 +1117,12 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                 if len(blocked) > 16:
                     del blocked[max(blocked, key=lambda k: blocked[k]['_repair_rank'])]
             work['repair_quotes_considered'] += len(repairs)
-        packages = tt.ranked_packages(canonical, pairing, options, config, tt.PACKAGES_EVALUATED[depth])
+        missed = []
+        packages = tt.ranked_packages(canonical, pairing, options, config, tt.PACKAGES_EVALUATED[depth], near=missed)
         diagnostics['prescreened_out'] += len(options) - len(packages)
+        for miss in missed:
+            near_misses.append({'candidate': tt.near_miss_candidate(canonical, miss, config), 'order': order,
+                                'trade_reasons': tt.trade_reasons(canonical, pairing)})
         for package in packages:
             diagnostics['packages'] += 1
             buyer_assets = package.get('assets') or []
@@ -1133,6 +1139,9 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                 continue
             if not ai_trade_candidate_accepted(canonical, candidate):
                 diagnostics['declined'] += 1
+                if not pick_terms and near_miss(canonical, candidate):
+                    near_misses.append({'candidate': candidate, 'trade_reasons': tt.trade_reasons(canonical, pairing),
+                                        'order': order})
                 continue
             keys = proposal_asset_identity_keys(candidate)
             if reserve_assets and keys & reserved:
@@ -1140,6 +1149,7 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                 continue
             candidate = mark_ai_trade_accepted(candidate)
             candidate['target_source'] = 'front_office_target'
+            candidate['_search_order'] = order
             candidate['trade_reasons'] = tt.trade_reasons(canonical, pairing)
             proposals.append(candidate)
             evaluation_snapshots[candidate['proposal']['id']] = evaluation_canonical
@@ -1179,6 +1189,13 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                     continue
                 if not ai_trade_candidate_accepted(canonical, candidate):
                     diagnostics['declined'] += 1
+                    if near_miss(canonical, candidate):
+                        near_misses.append({'candidate': candidate, 'trade_reasons': tt.dump_reasons(canonical, offer, assets),
+                                            'order': len(pairings) + dumps_done})
+                    seller_eval = next((e for e in candidate.get('evaluations') or []
+                                        if e.get('perspective_team_id') == seller['id']), {})
+                    if float(seller_eval.get('net_value') or 0.0) < -9.0:
+                        break  # the next package only adds picks the seller already will not pay (trade step 4)
                     continue
                 keys = proposal_asset_identity_keys(candidate)
                 if reserve_assets and keys & reserved:
@@ -1186,6 +1203,7 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                     break
                 candidate = mark_ai_trade_accepted(candidate)
                 candidate['target_source'] = 'salary_dump'
+                candidate['_search_order'] = len(pairings) + dumps_done
                 candidate['trade_reasons'] = tt.dump_reasons(canonical, offer, assets)
                 proposals.append(candidate)
                 evaluation_snapshots[candidate['proposal']['id']] = canonical
@@ -1195,6 +1213,40 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                 dumps_done += 1
                 break
         diagnostics['dumps'] = dumps_done
+    # Three- and four-team trades (trade step 4): a team with room absorbs the salary that kept a near-miss from
+    # closing, paid in picks. Most-nearly-agreed deals first.
+    near_misses.sort(key=lambda item: (-min(float(e.get('net_value') or 0) - float(e.get('acceptance_threshold') or 0)
+                                            for e in item['candidate']['evaluations']),
+                                       item['candidate']['proposal']['id']))
+    diagnostics['near_misses'] = len(near_misses)
+    # A team over the tax that is trading anyway may add a salary leg to a team with room (the Saric leg of the real
+    # Cleveland / Sacramento / Chicago deal); the deal is replaced only when every team still accepts.
+    for index, candidate in enrich_agreed_deals(canonical, proposals, seed=seed, date=through_date, config=config,
+                                                depth=depth, diagnostics=diagnostics,
+                                                reserved=reserved if reserve_assets else set()).items():
+        proposals[index] = candidate
+        evaluation_snapshots[candidate['proposal']['id']] = canonical
+    if len(proposals) < limit and near_misses:
+        for candidate in multi_team_repairs(canonical, near_misses, seed=seed, date=through_date, config=config,
+                                            depth=depth, diagnostics=diagnostics,
+                                            reserved=reserved if reserve_assets else set(),
+                                            limit=limit - len(proposals)):
+            proposals.append(candidate)
+            evaluation_snapshots[candidate['proposal']['id']] = canonical
+    # Deals in the order the front offices pursued them: a three-team deal completed from a near-miss takes that
+    # pairing's place. The market review keeps only its slots (save.queue_ai_recommendations), so a deal appended
+    # last was always cut.
+    proposals.sort(key=lambda c: c.get('_search_order', len(pairings) + limit))
+    for candidate in proposals:
+        candidate.pop('_search_order', None)
+    user_offers = []
+    if human and near_misses:
+        # The same routes, offered to the human team as the team taking the salary (never automatic). Deals the AI
+        # teams already made today are left out.
+        taken = set().union(*(proposal_asset_identity_keys(c) for c in proposals)) if proposals else set()
+        open_misses = [item for item in near_misses if not proposal_asset_identity_keys(item['candidate']) & taken]
+        user_offers = user_absorber_offers(canonical, open_misses, seed=seed, date=through_date, config=config,
+                                           diagnostics=diagnostics)
     if depth > 1 and len(proposals) < limit:
         from .multi_team_trades import facilitator_candidates
         for failed in sorted(blocked.values(), key=lambda c: c['_repair_rank']):
@@ -1216,12 +1268,15 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                                    seed=seed, date=through_date, config=config)
         for candidate in proposals
     ]
+    user_offers = [prepare_ai_trade_candidate(canonical, offer, seed=seed, date=through_date, config=config)
+                   for offer in user_offers]
     return {
         "from_date": from_date,
         "through_date": through_date,
         "seed": seed,
         "proposal_count": len(proposals),
         "proposals": proposals,
+        "user_absorber_offers": user_offers,
         "search_diagnostics": {**diagnostics, "financial_work": dict(work)},
         "notes": "Target-driven AI-AI trade search: each front office pursues its own targets at the seller's price.",
     }
@@ -4335,8 +4390,11 @@ def evaluate_trade_for_team(
         strategic += space_bonus
         from .trade_tax import tax_value
         # Luxury tax saved (or added) is value for an AI team (trade 2b); the human team's own view is unchanged.
-        tax_term = tax_value(canonical, perspective_team_id, incoming_assets, outgoing_assets)
-        strategic += tax_term
+        # Trade step 4: salary taken on for players outside the team's rotation is a cost (trade_tax.absorb_cost).
+        from .trade_tax import absorb_cost
+        tax_term = (tax_value(canonical, perspective_team_id, incoming_assets, outgoing_assets),
+                    absorb_cost(canonical, perspective_team_id, incoming_assets, outgoing_assets))
+        strategic += tax_term[0] + tax_term[1]
         personality = personality_trade_adjustment(canonical, perspective_team_id, proposal.id, seed)
         net = incoming - outgoing + strategic + personality["total"]
         threshold = contextual_acceptance_threshold(canonical, perspective_team_id, config, incoming_assets, outgoing_assets)
@@ -4387,7 +4445,7 @@ def evaluate_trade_for_team(
         reasons.append(f'Net value {net:.2f} is below the required {threshold:.2f}.')
     if legality['status'] != 'legal':
         reasons.extend(legality.get('issues', []) + legality.get('manual_review', []))
-    from .trade_tax import tax_note
+    from .trade_tax import tax_note, absorb_note
     state = next((s for s in canonical.get('team_strategic_states', []) if s.get('team_id') == perspective_team_id), {})
     return TradeEvaluation(
         id=stable_id("trade_evaluation", proposal.id, perspective_team_id),
@@ -4411,7 +4469,8 @@ def evaluate_trade_for_team(
             + (' Core commitment: ordinary return does not justify breaking the current trial window.' if commitment_blocked else '')
             + (f' {premium_issue}' if premium_issue else '')
             + (f' Roster-space opportunity credit: {space_bonus:.2f}.' if space_bonus else '')
-            + (tax_note(canonical, perspective_team_id, incoming_assets, outgoing_assets, tax_term) if tax_term else '')
+            + (tax_note(canonical, perspective_team_id, incoming_assets, outgoing_assets, tax_term[0]) if tax_term[0] else '')
+            + (absorb_note(canonical, perspective_team_id, incoming_assets, outgoing_assets, tax_term[1]) if tax_term[1] else '')
             + (f" Published wants: {len(wants['matches'])} matching asset(s), additional preference credit {wants['adjustment']:.2f}." if wants['matches'] else '')
             + (f" Final roster: strength {outlook['strength_delta']:+.2f}; incremental waiver cost ${outlook['waiver_cost_millions']:.2f}M. {outlook['issue'] or ''}" if outlook else '')
             + (f" Draft investment: {investment['net_draft_value_spent']:.2f} net value spent; marginal-acquisition capital limit {investment['capital_limit']:.2f}; justified value-loss limit {investment['loss_limit']:.2f}." if investment else '')

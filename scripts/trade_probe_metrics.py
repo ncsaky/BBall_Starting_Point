@@ -117,6 +117,48 @@ def trade_2b_metrics(trades):
     return out
 
 
+BIG_BAD_SALARY = 20.0     # $M this season, 2+ years left, on-court value under 60 at the end of the run
+
+
+def step4_metrics(trades):
+    """Measures added for trade step 4 (docs/agents/tasks/trade-step4-multi-team.md)."""
+    out = {}
+    multi = [t for t in trades if len(t["teams"]) > 2]
+    deadline = [t for t in trades if window_of(t["date"]) == "deadline_week"]
+    out["multi_team_share"] = round(len(multi) / max(1, len(trades)), 3)
+    out["multi_team_deadline"] = sum(1 for t in deadline if len(t["teams"]) > 2)
+    out["multi_team_deadline_share"] = round(out["multi_team_deadline"] / max(1, len(deadline)), 3)
+    out["four_team"] = sum(1 for t in multi if len(t["teams"]) >= 4)
+    out["multi_team_by_kind"] = dict(sorted(Counter(t.get("target_key") or "none" for t in multi).items()))
+    out["multi_team_detail"] = [{"date": t["date"], "teams": t["teams"], "why": t.get("why"),
+                                 "sends": {team: [f"{a.get('label') or a.get('id')} -> {a.get('to')}" for a in assets]
+                                           for team, assets in t["sends"].items()}} for t in multi]
+    dumps_with_picks, dumps = 0, 0
+    for t in trades:
+        if t.get("target_key") != "salary_dump":
+            continue
+        dumps += 1
+        if any(a.get("kind") != "player" for a in t["sends"].get(t["teams"][0], [])):
+            dumps_with_picks += 1
+    out["salary_dumps_with_picks"] = dumps_with_picks
+    out["salary_dumps_two_team"] = dumps
+    absorbed = [t for t in multi if str(t.get("target_key") or "").startswith(("three_team_absorber", "three_team_tax", "four"))]
+    out["absorber_trades"] = len(absorbed)
+    bad = []
+    for t in trades:
+        for giver, assets in t["sends"].items():
+            for a in assets:
+                c = a.get("contract_at_trade") or {}
+                if (a.get("kind") == "player" and (c.get("salary_millions_this_season") or 0) >= BIG_BAD_SALARY
+                        and (c.get("years_left_incl_this") or 0) >= 2 and (a.get("on_court_value_end_of_run") or 99) < 60):
+                    bad.append({"date": t["date"], "from": giver, "player": a.get("label"),
+                                "salary": c.get("salary_millions_this_season"), "years": c.get("years_left_incl_this"),
+                                "teams": t["teams"]})
+    out["big_contracts_low_value_moved"] = len(bad)
+    out["big_contracts_low_value_moved_detail"] = bad
+    return out
+
+
 def metrics(trades, progress):
     out = {"trades": len(trades)}
     out["by_season"] = dict(sorted(Counter(t["season"] for t in trades).items()))
@@ -124,6 +166,7 @@ def metrics(trades, progress):
     out["by_season_window"] = {season: dict(sorted(Counter(window_of(t["date"]) for t in trades if t["season"] == season).items()))
                                for season in out["by_season"]}
     out["multi_team"] = sum(1 for t in trades if len(t["teams"]) > 2)
+    out.update(step4_metrics(trades))
     moves = Counter(a["id"] for t in trades for assets in t["sends"].values() for a in assets if a.get("kind") == "player")
     out["players_moved"] = sum(moves.values())
     out["players_traded_2plus"] = sum(1 for n in moves.values() if n >= 2)

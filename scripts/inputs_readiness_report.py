@@ -346,11 +346,18 @@ def trade_list(save_path, save, active, base, label):
         team_ids = list(t.get("teams") or [])
         evals = {e.get("perspective_team_id"): e for e in t.get("evaluations", [])}
         sides = {}
-        # from_assets leave teams[0] for teams[1]; to_assets go the other way.
-        for side, giver in (("from_assets", 0), ("to_assets", 1)):
-            giver_id = team_ids[giver] if len(team_ids) > giver else None
+        # from_assets leave teams[0] for teams[1]; to_assets go the other way. Multi-team trades (trade step 4) list
+        # directed transfers instead; each asset then records its receiving team ("to").
+        transfers = (t.get("assets") or {}).get("transfers")
+        if transfers:
+            groups = [(tid, [{**a, "to": teams.get(leg["to_team_id"], leg["to_team_id"])} for leg in transfers
+                             if leg.get("from_team_id") == tid for a in leg.get("assets", [])]) for tid in team_ids]
+        else:
+            groups = [(team_ids[giver] if len(team_ids) > giver else None, (t.get("assets") or {}).get(side, []))
+                      for side, giver in (("from_assets", 0), ("to_assets", 1))]
+        for giver_id, side_assets in groups:
             assets = []
-            for a in (t.get("assets") or {}).get(side, []):
+            for a in side_assets:
                 row = {k: v for k, v in a.items() if v is not None}
                 if a.get("kind") == "player":
                     pid = a.get("id")
@@ -437,7 +444,11 @@ def trades_markdown(label, trades):
                     text = str(a.get("label") or a.get("id")) + (f" [{a['protection_summary']}]" if a.get("protection_summary") else "")
                     text = " ".join(text.split()).replace("|", "/")
                     parts.append(text if len(text) <= 160 else text[:157] + "...")
+                if a.get("to"):
+                    parts[-1] += f" (to {a['to']})"
             receiver = next((e for e in t["evaluations"] if e.get("team_abbrev") != team), {})
+            if len(t["teams"]) > 2:  # multi-team: show this team's own evaluation of the whole deal
+                receiver = next((e for e in t["evaluations"] if e.get("team_abbrev") == team), {})
             lines.append(f"| {t['date']} | {team} ({ctx.get('record_at_trade')}, {ctx.get('phase')}) | {'; '.join(parts) or '-'} | "
                          f"{receiver.get('team_abbrev')}: {receiver.get('incoming_value')} / {receiver.get('outgoing_value')} / {receiver.get('net_value')} |")
         if t.get("why"):
