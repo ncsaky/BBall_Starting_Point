@@ -249,6 +249,48 @@ def body_values(section: Mapping[str, Any], universe: Mapping[str, Any]) -> dict
     return out
 
 
+# Bench press and arm length (overnight ratings review, 2026-11-20). The combine bench is reps to failure at a fixed
+# 185 lb. A longer arm moves the bar further on every rep (more work per rep, a longer lever at the bottom), so a
+# long-armed player of the same strength does fewer reps: the test penalises reach, which basketball rewards.
+# Among the 74 tested players in the league, at the same body mass, log reps fall with log wingspan at an elasticity
+# of -7.4 (standard error 3.1); height adds nothing once wingspan is in (-0.3, se 3.6). Work per rep alone
+# (bar travel proportional to arm length) gives -1, the smallest effect physics allows. The fitted elasticity is
+# blended with that physics value by precision (ARM_PRIOR, ARM_PRIOR_SD: a deliberately wide prior), then each
+# tested player's reps are moved to the tested players' average wingspan before the age adjustment. Body mass keeps
+# its effect: more muscle is real strength.
+ARM_PRIOR = -1.0
+ARM_PRIOR_SD = 3.0
+
+
+def _ols(x: list[list[float]], y: list[float]) -> tuple[list[float], list[float]]:
+    k = len(x[0])
+    xtx = [[sum(r[p] * r[q] for r in x) for q in range(k)] for p in range(k)]
+    inverse = [_solve(xtx, [1.0 if i == j else 0.0 for i in range(k)]) for j in range(k)]   # columns of the inverse
+    beta = _solve(xtx, [sum(r[p] * v for r, v in zip(x, y)) for p in range(k)])
+    residual = [v - sum(b * c for b, c in zip(beta, r)) for r, v in zip(x, y)]
+    s2 = sum(e * e for e in residual) / max(1, len(y) - k)
+    return beta, [math.sqrt(s2 * inverse[p][p]) for p in range(k)]
+
+
+def arm_length_adjusted_reps(raw: Mapping[str, float], body: Mapping[str, Mapping[str, float]]
+                             ) -> tuple[dict[str, float], dict[str, Any]]:
+    """Bench reps moved to the tested players' average wingspan (same body mass); see ARM_PRIOR."""
+    tested = [pid for pid, reps in raw.items() if reps > 0 and pid in body]
+    if len(tested) < 30:
+        return dict(raw), {"skipped": f"{len(tested)} tested players"}
+    x = [[1.0, math.log(body[p]["wingspan"]), math.log(body[p]["mass"])] for p in tested]
+    beta, se = _ols(x, [math.log(raw[p]) for p in tested])
+    fitted, fitted_se = beta[1], se[1]
+    w_fit, w_prior = 1.0 / fitted_se ** 2, 1.0 / ARM_PRIOR_SD ** 2
+    elasticity = (w_fit * fitted + w_prior * ARM_PRIOR) / (w_fit + w_prior)
+    reference = math.exp(fmean(math.log(body[p]["wingspan"]) for p in tested))
+    out = {pid: (reps * (reference / body[pid]["wingspan"]) ** elasticity if pid in body and reps > 0 else reps)
+           for pid, reps in raw.items()}
+    return out, {"n": len(tested), "fitted_elasticity": round(fitted, 3), "fitted_se": round(fitted_se, 3),
+                 "physics_prior": ARM_PRIOR, "prior_sd": ARM_PRIOR_SD, "elasticity_used": round(elasticity, 3),
+                 "reference_wingspan_cm": round(reference, 2), "mass_elasticity": round(beta[2], 3)}
+
+
 def build_estimates(section: Mapping[str, Any], root: Path, universe: Mapping[str, Any]) -> dict[str, Any]:
     """Per input: the fitted models and each player's blended estimate (z in test units) with its sources."""
     players = {p["id"]: p for p in universe.get("players", [])}
@@ -268,6 +310,9 @@ def build_estimates(section: Mapping[str, Any], root: Path, universe: Mapping[st
         if len(raw) < 60:
             report[iid] = f"skipped: {len(raw)} combine results"
             continue
+        arm_report = None
+        if iid == "P08":
+            raw, arm_report = arm_length_adjusted_reps(raw, body)
         test_sd = pstdev(raw.values())
         rating_sd = trait_spread(universe, trait)
         adjusted, years = {}, {}
@@ -313,7 +358,10 @@ def build_estimates(section: Mapping[str, Any], root: Path, universe: Mapping[st
             extra = {}
             if pid in adjusted:
                 noise = test_sd * math.sqrt(TEST_NOISE_SD ** 2 + (AGING_NOISE_PER_YEAR * years[pid]) ** 2)
-                label = f"combine {combine[pid]['year']} ({raw[pid]:g}, age-adjusted {adjusted[pid]:.1f})"
+                tested = combine[pid][test]
+                label = (f"combine {combine[pid]['year']} ({tested:g}"
+                         + (f", arm-length-adjusted {raw[pid]:.1f}" if iid == "P08" else "")
+                         + f", age-adjusted {adjusted[pid]:.1f})")
                 parts.append((adjusted[pid], noise, label))
                 extra = {"combine_z": (adjusted[pid] - fmean(adjusted.values())) / test_sd, "combine_error": noise,
                          "combine_label": label}
@@ -330,6 +378,8 @@ def build_estimates(section: Mapping[str, Any], root: Path, universe: Mapping[st
         report[iid] = {"combine_results": len(raw), "test_mean": round(mean, 2), "test_sd": round(test_sd, 2),
                        "size_model": size_model.describe(),
                        "proxy_model": proxy_model.describe() if proxy_model else None}
+        if arm_report:
+            report[iid]["arm_length_adjustment"] = arm_report
     return {"report": report, "estimates": estimates}
 
 

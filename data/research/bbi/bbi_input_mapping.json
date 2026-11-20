@@ -1,5 +1,5 @@
 {
- "version": "bbi_input_mapping_v3_2026_11_19",
+ "version": "bbi_input_mapping_v4_2026_11_20",
  "notes": "Reviewed map from Basketball Index (BBI) metric names to the 94 approved player-model inputs. Metric names only; BBI definition text stays in the git-ignored capture catalog. Layers are kept separate: technique inputs (S/F) use rate, per-shot or versus-expected quality metrics; tendency inputs (T) use frequencies, shares and attempt rates; physical inputs (P) use only listed height/weight and weak in-game speed; coach usage, teammates, opponents and on/off impact are context only. direction: +1 means a higher metric value means more of the input (better skill, larger tool, or more frequent choice); -1 the reverse. Direction is about the raw BBI value; check whether a capture stores a percentile already ordered by desirability before applying it. strength: primary = the most direct available measure; supporting = relevant but mixed with other factors; weak = indirect, use only as a small nudge. Every BBI result is an effective on-court observation that also contains physical tools, role and teammates. It constrains the estimate; it is not 'technique only'. Metrics named '... Per 75' must be divided by the relevant exposure (touches, drives, attempts, contests) before informing a skill. A metric listed under several inputs is one shared signal (one correlation group), never independent evidence. BBI 'Talent' grades fold in volume or self-creation, so per-shot 'Shot Making Efficiency' and 'Stable' percentages are preferred as primary. Passing families share three generic recognition metrics and two generic execution metrics; only drive-and-kick, connector, skip and outlet passes have any family-specific signal. For distribution inputs, outcome names the registry outcome the metric informs; T02 outcomes three_corner_share and three_deep_share describe detail within the three region. volume (2026-11-19): a metric for a secondary shot type (pull-up, movement, deep) may carry {\"per75\": metric, \"minus\": optional metric, \"half\": n}; its weight in a season is multiplied by attempts / (attempts + half), attempts = (per75 - minus) / 75 x minutes x 99/48. A pull-up or off-screen percentage on a handful of attempts (or one shrunk to the league mean) no longer outweighs the player's three-point or midrange shooting as a whole, which stays ungated as the fallback (talent metrics include volume, so non-shooters stay low).",
  "inputs": {
   "P01": {
@@ -1072,22 +1072,22 @@
    "kind": "grade",
    "metrics": [
     {
-     "metric": "Defensive Rebounding Crashing Skill",
+     "metric": "Defensive Rebounding Talent",
      "direction": 1,
      "strength": "primary",
      "outcome": null,
-     "why": "BBI estimate of getting into position for defensive rebounds."
+     "why": "BBI defensive rebounding grade (chances created plus conversion); the most direct league-wide measure of getting into position for defensive boards (rank r 0.84-0.87 with defensive rebounds per 75, 1,000+ minutes)."
     },
     {
-     "metric": "Defensive Rebounding Talent",
+     "metric": "Defensive Rebounding Crashing Skill",
      "direction": 1,
-     "strength": "supporting",
+     "strength": "weak",
      "outcome": null,
-     "why": "BBI defensive rebounding grade (positioning plus conversion)."
+     "why": "Chances won beyond what the player's spot on the floor would give. Measured against a position baseline: rank r with defensive rebounds per 75 is -0.10 (2024-25) and +0.01 (2025-26), with height -0.37, centres average -1.3 and guards +0.3 (the offensive version tracks rebounds, r +0.44-0.48). Demoted from primary on 2026-11-20 (overnight ratings review): as primary it put Jokic, Gobert and Zubac in the bottom 10% and the Thompson twins in the top 3%."
     }
    ],
    "coverage": "good",
-   "gap_note": "Mixed with size and with team scheme (who is assigned to rebound)."
+   "gap_note": "Mixed with size and with team scheme (who is assigned to rebound). BBI's crashing skill is relative to a position baseline, so it is only a weak nudge here."
   },
   "S31": {
    "name": "Box-out technique",

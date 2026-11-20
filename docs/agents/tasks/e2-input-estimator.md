@@ -99,14 +99,14 @@ Complete and ready for coordinator review: all four adapter requests, including 
 ## Build and coverage
 
 - Method: `e2b_hierarchical_family_priors_v1`. Built **691 × 94 = 64,954** complete records.
-- **27,275 player-evidence estimates; 37,679 explicit priors.**
+- **27,644 player-evidence estimates; 37,310 explicit priors.**
 - Local joins: 526 unique skill names, 528 unique later Crafted names, 616 ESPN IDs. Sources are overlapping, never additive player counts.
-- Build, validation, comparison without packet experts, serialization and write: **125.370 seconds**; canonical JSON 123.30 MB.
+- Build, validation, comparison without packet experts, serialization and write: **101.154 seconds**; canonical JSON 123.50 MB.
 - Skill-grade range 11.492–92.506; exactly 100: 0; at least 99.9: 0. No scale-max clipping.
 
 | Input family | Player-evidence estimates | Priors | Total |
 |---|---:|---:|---:|
-| Physical tools (12) | 1,849 | 6,443 | 8,292 |
+| Physical tools (12) | 2,218 | 6,074 | 8,292 |
 | Shooting (9) | 2,804 | 3,415 | 6,219 |
 | Finishing and receiving (6) | 1,348 | 2,798 | 4,146 |
 | Handling and attack recognition (5) | 853 | 2,602 | 3,455 |
@@ -135,9 +135,9 @@ Differences are in each input’s native units: technique grades, FT percentage 
 | P05 | Acceleration / first step | 2 | 689 | 0 | — | — | — | — |
 | P06 | Straight-line speed | 50 | 641 | 0 | — | — | — | — |
 | P07 | Lateral mobility / change of direction | 4 | 687 | 0 | — | — | — | — |
-| P08 | Functional strength | 4 | 687 | 0 | — | — | — | — |
+| P08 | Functional strength | 78 | 613 | 0 | — | — | — | — |
 | P09 | Physical balance / stability | 0 | 691 | 0 | — | — | — | — |
-| P10 | Vertical / jump capacity | 0 | 691 | 0 | — | — | — | — |
+| P10 | Vertical / jump capacity | 295 | 396 | 0 | — | — | — | — |
 | P11 | Conditioning | 0 | 691 | 0 | — | — | — | — |
 | P12 | Recovery between efforts | 0 | 691 | 0 | — | — | — | — |
 | S01 | Catch-and-shoot three-point execution | 544 | 147 | 12 | 8.59 | 100.0% | 17.32 | 100.0% |
@@ -301,9 +301,9 @@ Population standard deviation across the audit cohort, in native units. Distribu
 | P05 | Acceleration / first step | 279 | grade: 4.2747 | — |
 | P06 | Straight-line speed | 279 | grade: 3.6559 | — |
 | P07 | Lateral mobility / change of direction | 279 | grade: 5.6433 | — |
-| P08 | Functional strength | 279 | grade: 5.0815 | — |
+| P08 | Functional strength | 279 | grade: 7.4664 | — |
 | P09 | Physical balance / stability | 279 | grade: 4.4777 | — |
-| P10 | Vertical / jump capacity | 279 | cm: 2.7098 | — |
+| P10 | Vertical / jump capacity | 279 | cm: 5.7278 | — |
 | P11 | Conditioning | 279 | grade: 4.3044 | — |
 | P12 | Recovery between efforts | 279 | grade: 2.5327 | — |
 | S01 | Catch-and-shoot three-point execution | 279 | grade: 18.9189 | — |
@@ -335,7 +335,7 @@ Population standard deviation across the audit cohort, in native units. Distribu
 | S27 | Screen execution | 279 | grade: 15.0226 | — |
 | S28 | Screen-action recognition | 279 | grade: 10.2673 | — |
 | S29 | Offensive rebound reading / pursuit technique | 279 | grade: 17.8771 | — |
-| S30 | Defensive rebound reading / positioning | 279 | grade: 16.0928 | — |
+| S30 | Defensive rebound reading / positioning | 279 | grade: 18.1435 | — |
 | S31 | Box-out technique | 279 | grade: 9.5383 | — |
 | S32 | Rebound control | 279 | grade: 15.8528 | — |
 | S33 | On-ball containment technique | 279 | grade: 15.4559 | — |

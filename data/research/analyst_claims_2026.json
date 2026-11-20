@@ -3639,6 +3639,25 @@
    "notes": "healthy value"
   },
   {
+   "id": "ns179p",
+   "player": "Kawhi Leonard",
+   "player_id": "player_tor-kawhi-leonard",
+   "source": "Nerd Sesh",
+   "episode": "Top 10 small forwards",
+   "video_id": "HM0tNscRN4k",
+   "published": "2026-08-19",
+   "timestamp": "01:30:18-01:35:48",
+   "extraction": "docs/ratings-evidence-2026-10-29/SMALL_FORWARDS_FULL_EXTRACTION.md",
+   "claim": "Physicality and bully-ball inside the arc",
+   "inputs": [
+    "P08"
+   ],
+   "level": "strong",
+   "support": "both_hosts",
+   "context": "general",
+   "notes": "healthy value; added 2026-11-20 (overnight ratings review): the hosts cite his physicality, which the 2011 combine bench (3 reps at 19) does not show"
+  },
+  {
    "id": "ns180",
    "player": "Kawhi Leonard",
    "player_id": "player_tor-kawhi-leonard",
