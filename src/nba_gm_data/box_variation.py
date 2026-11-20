@@ -16,10 +16,10 @@ def poisson(rng, mean):
     return max(0, count - 1)
 
 
-def missed_attempts(rng, makes, probability):
+def missed_attempts(rng, makes, probability, upper=.82):
     # Negative-binomial failures before a fixed number of makes. Unlike
     # makes/pct rounding, this permits genuinely inefficient individual nights.
-    probability = min(.82, max(.25, probability))
+    probability = min(upper, max(.25, probability))
     return sum(int(math.log(max(1e-12, rng.random())) / math.log(1 - probability)) for _ in range(makes))
 
 
@@ -40,6 +40,30 @@ PLAYER_REBOUND_SHARE = 0.92  # fitted 2026-11-17: player rebounds per 36 bias +0
 DIFFICULTY_FEATURE = 'shot_difficulty'
 DIFFICULTY_REF, DIFFICULTY_SD = 0.269, 0.033   # league mean and spread of T04 (691 players)
 SHOT_DIFFICULTY_SHARE = 0.5   # fitted: TS mean abs error .0258 -> .0246; top-15 tolerance players +.019 -> +.007
+
+
+# Two-point misses that add up to the player's own percentage (2026-11-19, shooters). Misses were drawn per make (so
+# they averaged makes x (1 - pct) / pct, already the player's own percentage) and, on a night with no two-point make,
+# 1.3 more per 36 whoever the player was. The second part came on top of the first: a pure shooter, who has no
+# two-point make on most nights, carried 2.5 two-point attempts per 36 at .25 (AJ Green; real 1.0 at .47) and the
+# spot-up group lost .05 of two-point percentage here. Now, if his two-point attempts arrive at his own rate and each
+# goes in at his own percentage (a Poisson process), a night with no make has misses ~ Poisson(rate x (1 - pct)), and
+# the per-make draw is thinned by P(at least one make) = 1 - exp(-expected makes), so the misses over all nights still
+# average rate x (1 - pct). His rate is what his expected points leave after his threes and free throws (correlation
+# 0.94 with real 2025-26 two-point attempts per 36), with a small floor. Old-ratings players keep the old rule.
+ZERO_MAKE_MISSES_LEGACY = 1.3
+TWO_ATTEMPTS_FLOOR = 0.25
+OWN_RATE_MISSES = True
+
+
+def two_attempts_per36(feat):
+    """The player's expected two-point attempts per 36 (new ratings), or None (old ratings)."""
+    points = feat.get('points_per36')
+    if points is None or feat.get('three_per36') is None or not feat.get('two_pct'):
+        return None
+    free = float(points) * float(feat.get('fta_per_point') or 0.0) * float(feat.get('ft_pct') or .75)
+    left = float(points) - 3 * float(feat['three_per36']) * float(feat.get('three_pct') or .35) - free
+    return max(TWO_ATTEMPTS_FLOOR, left / (2 * float(feat['two_pct'])))
 
 
 def team_context_share(difficulty):
@@ -118,9 +142,21 @@ def vary_box_score(canonical, groups, team_lines, feature_groups, seed):
             base = float(feat.get('two_pct') or .51)
             paint_share = float(feat.get('roll_share', .15)) + float(feat.get('post_share', .15))
             probability = base + shooting_day + rng.gauss(0, .045) - rim * (.020 + paint_share * .025)
-            two_misses = missed_attempts(rng, two_makes, probability)
-            if two_makes == 0:
-                two_misses = poisson(rng, minutes / 36 * 1.3)
+            rate = two_attempts_per36(feat) if OWN_RATE_MISSES else None
+            if rate is None:
+                two_misses = missed_attempts(rng, two_makes, probability)
+                if two_makes == 0:
+                    two_misses = poisson(rng, minutes / 36 * ZERO_MAKE_MISSES_LEGACY)
+            else:
+                probability = min(.82, max(.25, probability))
+                attempts = minutes / 36 * rate
+                if two_makes == 0:
+                    two_misses = poisson(rng, attempts * (1 - probability))
+                else:
+                    # Thin the per-make misses by P(at least one make): (1 - p') / p' = s (1 - p) / p.
+                    thin = 1 - math.exp(-attempts * probability)
+                    two_misses = missed_attempts(rng, two_makes, probability / (probability + thin * (1 - probability)),
+                                                 upper=.97)
             line['fga'] = int(line['fg3a']) + two_makes + two_misses
             # The player's own expected turnovers (box_rates fit). This used to be the larger of the engine's
             # rounded draw and a usage formula, which handed bench players extra turnovers and flattened ball

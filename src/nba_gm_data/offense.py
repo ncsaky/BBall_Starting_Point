@@ -281,11 +281,21 @@ def night_three_pct(three_pct, points, expected_points, attempts=None, cap=None)
     return (low+high)/2
 
 
-def shooting_line(points, feat, minutes, rng, expected_points=None):
+def draw_threes(feat, minutes, rng):
+    """Tonight's three-point attempts and makes at his own volume and percentage (drawn before his points; see
+    sim.distribute_player_lines)."""
+    attempts = minutes*feat['three_per36']/36*rng.uniform(.85, 1.15)
+    fg3a = int(attempts)+(rng.random() < attempts-int(attempts))
+    return fg3a, sum(rng.random() < feat['three_pct'] for _ in range(fg3a))
+
+
+def shooting_line(points, feat, minutes, rng, expected_points=None, threes=None):
     """Preserve assigned points; sample distinct 2PT/3PT/FT shot profiles.
 
     expected_points: the player's normal output for these minutes (new ratings: his fitted points per 36). When
-    given, tonight's three-point accuracy follows tonight's points (night_three_pct)."""
+    given, tonight's three-point accuracy follows tonight's points (night_three_pct).
+    threes: (attempts, makes) already drawn for tonight (draw_threes; new ratings), whose points already lean on them;
+    the makes are kept up to what his points hold."""
     rate = clamp(.13+max(0, feat.get('rim_pressure', 50)-55)*.0028
                  +max(0, feat.get('shot_creation', 50)-70)*.0015, .08, .34)
     # Unbiased stochastic rounding. The previous round(x + U(0, 1.8)) added ~0.9 free throws to every player
@@ -309,11 +319,21 @@ def shooting_line(points, feat, minutes, rng, expected_points=None):
             side = random.Random(f'ft:{u!r}:{points}')
             makes += [side.random() < feat['ft_pct'] for _ in range(fta-draws)]
     ftm = min(points, sum(makes[:fta]))
-    attempts = minutes*feat['three_per36']/36*rng.uniform(.85, 1.15)
-    fg3a = int(attempts)+(rng.random() < attempts-int(attempts))
     cap = max(0, (points-ftm)//3)
-    tonight = night_three_pct(feat['three_pct'], points, expected_points, fg3a, cap)
-    sampled = sum(rng.random() < tonight for _ in range(fg3a))
+    if threes is not None:
+        fg3a, sampled = threes
+        # His points were made to hold these threes (sim.make_room_for_threes); free throws give way first, so a hot
+        # shooting night is not cut short by his free-throw draw (fewer trips, same percentage).
+        drop = min(ftm, max(0, 3*sampled-(points-ftm)))
+        if drop:
+            ftm -= drop
+            fta = max(ftm, fta-drop)
+            cap = max(0, (points-ftm)//3)
+    else:
+        attempts = minutes*feat['three_per36']/36*rng.uniform(.85, 1.15)
+        fg3a = int(attempts)+(rng.random() < attempts-int(attempts))
+        tonight = night_three_pct(feat['three_pct'], points, expected_points, fg3a, cap)
+        sampled = sum(rng.random() < tonight for _ in range(fg3a))
     fg3m = min(sampled, cap)
     if sampled > fg3m and expected_points is None:
         fg3a = max(fg3m, fg3a-round(THREE_TRIM_SHARE*(sampled-fg3m)/feat['three_pct']))
