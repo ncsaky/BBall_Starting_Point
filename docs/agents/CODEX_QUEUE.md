@@ -2,7 +2,57 @@
 
 Paste one prompt into a **fresh** Codex chat. One task per chat keeps it from drifting after context compaction. Each prompt is self-contained. Claude reviews the result and updates `BOARD.md`.
 
-Current priority (2026-11-20, late night): DEFENSE-RATINGS now, ODDS-COACH after TRADE-MARKET's long runs. GUI tasks are parked at the bottom.
+Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COACH after TRADE-MARKET's long runs. GUI tasks are parked at the bottom.
+
+---
+
+## Ready now (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE (fresh chat); ODDS-COACH still waits
+
+Running now: TRADE-MARKET, FA-REAL slice 1 and TOP30-GAMES (Claude agents). This task is data research only and touches no code they own.
+
+### OFFSEASON-DECISIONS-EVIDENCE: how real players and teams decide options, qualifying offers, extensions and offer sheets
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task OFFSEASON-DECISIONS-EVIDENCE (its board row already exists; set it to "in progress (Codex)").
+Read docs/agents/tasks/fa-realism-plan.md (slices 2 and 3 need this evidence) and docs/agents/tasks/fa-realism-research.md (your earlier research; reuse its sources).
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_offseason_evidence -b codex/offseason-decisions-evidence HEAD
+Symlink .venv and data/canonical/universe_2026_27_offseason.sqlite from the main checkout if you need the game's player
+values. Commit on branch codex/offseason-decisions-evidence; never push, never commit to main.
+This is research only: no engine or GUI changes.
+
+Goal: AI teams and players in the realistic free-agency rebuild will make these decisions. Each needs a measured rule
+grounded in what really happened in the 2023, 2024, 2025 and 2026 offseasons. Build one evidence file per decision, with
+every row sourced (Spotrac/RealGM/Hoops Rumors/NBA.com/team releases; record URL and date), plus a short fit of what
+drives the decision:
+1. Player options: opt in vs opt out (or opt out and re-sign). For each: age, option salary, the player's market value
+   at the time (use the game's on-court value where the player exists in the game, or a public value measure), injury,
+   team context. What predicts opting out?
+2. Team options (veteran and rookie-scale third/fourth year): exercised vs declined, against value and salary.
+3. Qualifying offers: tendered vs not, for every eligible player, against value, the QO amount and team payroll. Then
+   the outcomes: re-signed before July, re-signed later, signed an offer sheet (matched or not), accepted the QO,
+   renounced.
+4. Rookie-scale extensions (before the October deadline): who extended, at what share of the cap, and who didn't and
+   then became restricted.
+5. Offer sheets: which teams gave them, to whom, the terms (incl. backloading), whether matched, and the bidder's cap
+   situation (room or exception).
+6. Early terminations and declined options that led to a same-team re-sign.
+For each: counts per summer, the rule a front office or player seems to follow (e.g. "opt out when the expected market
+salary exceeds the option by more than X% for players under 31"), and its accuracy on the four summers (fit on three,
+test on the fourth).
+
+Output:
+- data/research/offseason_decisions_2023_2026.json (rows plus sources)
+- scripts/research/offseason_decisions_fit.py (reproduces the fits)
+- docs/agents/tasks/offseason-decisions-evidence.md
+Report: a plain-language TL;DR first (5 lines, no jargon; define each contract term simply), then one section per
+decision with counts, the rule and its accuracy, named examples, and gaps in the evidence. Paraphrase sources; don't
+copy long passages. Set the board row to "review" and stop.
+Do NOT touch any file under src/, gui/ or tests/.
+```
 
 ---
 
