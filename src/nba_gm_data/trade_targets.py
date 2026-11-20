@@ -854,15 +854,18 @@ def recent_draft_pick(canonical: dict[str, Any], player: dict[str, Any] | None) 
     return start - int(year) < RECENT_DRAFT_SEASONS
 
 
-RECENT_LOTTERY_PICK = 14
+RECENT_LOTTERY_PICK = 30  # every first-round pick (the name is kept from the first version, lottery picks only)
 
 
 def recent_lottery_pick(canonical: dict[str, Any], player: dict[str, Any] | None) -> bool:
-    """A lottery pick (top 14) in his first three seasons (TRADE-DEADLINE). The first after-run with buyer filler had
+    """A first-round pick in his first three seasons (TRADE-DEADLINE). The first after-run with buyer filler had
     Utah, on the rise, give Darryn Peterson (the 2026 No. 2 pick, 21) to Boston for Neemias Queta and a second in his
-    second summer: the price check passed because a rookie's value follows his current role. Teams build around a
-    recent lottery pick and do not shop him; he moves only when the team has its own reason (a listing, a blocked
-    prospect, stalled talks), as with any young piece it builds around."""
+    second summer: the price check passed because a rookie's value follows his current role. The final run still had
+    contending Oklahoma City give Bennett Stirtz (its 2026 No. 16 pick, which it traded up for) and a second to
+    Milwaukee for Jericho Sims, and rising Orlando give Cameron Williams (21, 24 minutes) for a bench big: the same
+    shape as the Nique Clifford sale analysts panned. A team does not shop a first-round pick it just made; he moves
+    only when the team has its own reason (a listing, a blocked prospect, stalled talks), as with any young piece it
+    builds around."""
     player = player or {}
     try:
         slot = int(player.get("draft_position") or player.get("draft_pick") or player.get("overall_pick") or 0)

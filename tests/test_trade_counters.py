@@ -99,7 +99,8 @@ class RecentLotteryPickTests(unittest.TestCase):
         canonical = league("peak")
         with patch.object(tx, "season_start_from_label", return_value=2027):
             self.assertTrue(tt.recent_lottery_pick(canonical, {"draft_year": 2026, "draft_position": 2}))
-            self.assertFalse(tt.recent_lottery_pick(canonical, {"draft_year": 2026, "draft_position": 24}))
+            self.assertTrue(tt.recent_lottery_pick(canonical, {"draft_year": 2026, "draft_position": 24}))
+            self.assertFalse(tt.recent_lottery_pick(canonical, {"draft_year": 2026, "draft_position": 45}))
             self.assertFalse(tt.recent_lottery_pick(canonical, {"draft_year": 2022, "draft_position": 2}))
             self.assertFalse(tt.recent_lottery_pick(canonical, {}))
             # In the search: a rising team's recent No. 2 pick matches a contender's target but is not on the market.

@@ -220,6 +220,7 @@ def metrics(trades, progress):
     out["counter_by_kind"] = dict(sorted(Counter(s.get("kind") for t in countered
                                                  for s in (t["counter"].get("steps") or [])).items()))
     out["counter_two_rounds"] = sum(1 for t in countered if int(t["counter"].get("rounds") or 1) >= 2)
+    out["counter_rounds_distribution"] = dict(sorted(Counter(int(t["counter"].get("rounds") or 1) for t in countered).items()))
     out["seller_got_target_match"] = sum(1 for t in trades if t.get("seller_target_match"))
     # How far above its own price the last asking team ended in the full check (a fair ask stays close to 0).
     asking_nets = []
