@@ -3023,6 +3023,16 @@ def extension_offer_accepted(aav_millions: float, line: float) -> bool:
     return round(float(aav_millions), 2) + EXTENSION_ACCEPT_MARGIN_MILLIONS >= line
 
 
+def smallest_offer_at_or_above(value: float, step: float = 0.1) -> float:
+    """The smallest offer on the builder's $0.1M steps that is not below `value`."""
+    import math
+
+    steps = math.ceil(round(float(value) / step, 9))
+    offer = round(steps * step, 1)
+    # The engine compares the offer with the unrounded threshold, so never return an offer a hair below it.
+    return offer if offer >= float(value) else round(offer + step, 1)
+
+
 def smallest_extension_offer_accepted(line: float, step: float = 0.1) -> float:
     """The smallest offer on the builder's $0.1M steps that submit accepts for this price."""
     offer = smallest_offer_at_or_above(max(0.0, float(line) - EXTENSION_ACCEPT_MARGIN_MILLIONS), step)
