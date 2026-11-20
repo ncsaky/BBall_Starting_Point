@@ -218,6 +218,8 @@ function gameCommands() {
     {label:"Free agents", keys:"g a", run:navigate("freeagents"), available:() => ready() && dashboardPhaseKind() !== "fantasy_draft"},
     {label:"Standings", keys:"g l", run:openStandingsModal, available:() => ready() && Boolean(state.data.dashboardStandings)},
     {label:"Settings", keys:"g ,", run:openSettingsModal, available:ready},
+    {label:"Year-end recap", run:() => openLatestSeasonSlideshow("recap"), available:() => ready() && seasonSlideshowsAvailable().some(row => row.kind === "recap")},
+    {label:"Preseason outlook", run:() => openLatestSeasonSlideshow("outlook"), available:() => ready() && seasonSlideshowsAvailable().some(row => row.kind === "outlook")},
     {label:dashboardPhaseKind() === "playoffs" ? "One game per series" : "Next event / one pick", keys:"s e", run:click('[data-advance="next-event"], #fantasySimOne, #draftSimCurrent, #faAdvanceDay, #reSignAdvanceDay'), available:available('[data-advance="next-event"], #fantasySimOne, #draftSimCurrent, #faAdvanceDay, #reSignAdvanceDay')},
     {label:dashboardPhaseKind() === "playoffs" ? "One full series" : "Simulate week", keys:"s w", run:click('[data-advance="week"]'), available:available('[data-advance="week"]')},
     {label:dashboardPhaseKind() === "playoffs" ? "Finish playoffs" : "Simulate month", keys:"s m", run:click('[data-advance="month"]'), available:available('[data-advance="month"]')},
@@ -242,6 +244,14 @@ function wireEvents() {
     if (button.dataset.tutorialAction === "skip") finishGameTutorial();
   });
   document.addEventListener("keydown", handleGameTutorialKeydown, true);
+  // Settings > Season slideshows (delegated, so a re-rendered Settings window keeps working).
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest?.("[data-season-slideshow]");
+    if (!button) return;
+    state.modal = null;
+    renderModal();
+    openSeasonSlideshow(button.dataset.seasonSlideshow, button.dataset.season).catch((error) => showToast(error.message || "Could not open the slideshow.", true));
+  });
   document.addEventListener("click", blockGameTutorialBackgroundEvent, true);
   document.addEventListener("pointerdown", blockGameTutorialBackgroundEvent, true);
   document.addEventListener("submit", blockGameTutorialBackgroundEvent, true);
@@ -931,6 +941,7 @@ async function refreshHome() {
     setBusy(state.busyDepth > 0);
     render();
     maybeCelebrateChampion();
+    maybeOpenSeasonSlideshow();
     queueFirstRunTutorial();
     if(typeof maybeShowWantReminder==='function')maybeShowWantReminder();
   }
@@ -1008,6 +1019,7 @@ const GAME_TUTORIAL_STEPS = [
 
 function queueFirstRunTutorial() {
   if (state.home?.save?.postseason_exit_required) return;
+  if (state.slideshowOpening || window.SeasonSlideshow?.isOpen()) return;
   if (state.tutorial || state.view !== "dashboard" || !state.currentSave || !document.querySelector("[data-card-board-tools]") || localStorage.getItem(TUTORIAL_COMPLETED_KEY)) return;
   clearTimeout(state.tutorialStartTimer);
   state.tutorialStartTimer = window.setTimeout(() => {
@@ -1427,6 +1439,7 @@ async function advance(payload) {
     });
     setBusy(state.busyDepth > 0 || state.hydrating);
     maybeCelebrateChampion();
+    maybeOpenSeasonSlideshow();
     if(typeof maybeShowWantReminder==='function')maybeShowWantReminder();
   }
 }
@@ -2280,6 +2293,57 @@ function animateRowFromPreviousPosition(row, previousTop) {
   row.getAnimations().forEach((animation) => animation.cancel());
   row.animate([{transform:`translateY(${delta}px)`},{transform:"translateY(0)"}], {duration:320, easing:"cubic-bezier(.2,.75,.25,1)"});
 }
+
+// Season slideshows (season-slideshow.js draws them; season_slides.py builds them). Each opens by itself once:
+// the year-end recap after the champion screen, the preseason outlook at the start of a season. Settings and the
+// command palette reopen them.
+function seasonSlideshowsAvailable() {
+  return state.home?.save?.season_slideshow?.available || [];
+}
+
+async function openSeasonSlideshow(kind, season, {auto = false} = {}) {
+  if (!state.currentSave || !window.SeasonSlideshow || window.SeasonSlideshow.isOpen()) return false;
+  state.slideshowOpening = true;
+  try {
+    const response = await action("season_slideshow", {...savePayload(), kind, season});
+    if (state.home?.save) state.home.save.season_slideshow = {pending: response.pending, available: response.available};
+    if (state.tutorial || window.SeasonSlideshow.isOpen()) return false;
+    if (state.modal) {
+      // Opening by itself waits for the open window (it will try again when that closes); a requested one replaces it.
+      if (auto) { state.seasonSlideshowAutoKeys?.delete(`${state.currentSave}:${kind}:${season}`); return false; }
+      closeAllModals();
+    }
+    const shown = window.SeasonSlideshow.present(response.slideshow);
+    if (shown && auto) {
+      // Opens once: recorded as soon as it is on screen, so a reload or a later sim does not bring it back.
+      const seen = await action("season_slideshow_seen", {...savePayload(), kind, season: response.slideshow?.season || season});
+      if (state.home?.save) state.home.save.season_slideshow = {pending: seen.pending, available: seen.available};
+    }
+    return shown;
+  } finally {
+    state.slideshowOpening = false;
+  }
+}
+
+function openLatestSeasonSlideshow(kind) {
+  const row = seasonSlideshowsAvailable().find(item => item.kind === kind);
+  openSeasonSlideshow(kind, row?.season || state.home?.save?.season).catch(error => showToast(error.message || "Could not open the slideshow.", true));
+}
+
+function maybeOpenSeasonSlideshow() {
+  const pending = state.home?.save?.season_slideshow?.pending;
+  if (!pending || !state.currentSave || state.slideshowOpening || window.SeasonSlideshow?.isOpen()) return;
+  if (state.modal || state.tutorial || state.simulationRunning || state.hydrating || state.multiplayer?.session) return;
+  state.seasonSlideshowAutoKeys ||= new Set();
+  const key = `${state.currentSave}:${pending.kind}:${pending.season}`;
+  if (state.seasonSlideshowAutoKeys.has(key)) return;
+  state.seasonSlideshowAutoKeys.add(key);
+  openSeasonSlideshow(pending.kind, pending.season, {auto:true}).catch(error => showToast(error.message || "Could not open the slideshow.", true));
+}
+
+window.addEventListener("season-slideshow-closed", () => {
+  queueFirstRunTutorial();
+});
 
 function maybeCelebrateChampion() {
   if (!state.home?.save?.postseason_exit_required || state.simulationRunning || state.hydrating || state.modal || state.tutorial) return;
@@ -10003,6 +10067,7 @@ function closeModal() {
   renderModal();
   if (postseasonBoundary) window.CardBoard?.open("phase-playoffs-bracket");
   if(!state.modal && typeof maybeShowWantReminder==='function')maybeShowWantReminder();
+  if (!state.modal) maybeOpenSeasonSlideshow();
   if (refreshStaff) refreshHome().catch(error => showToast(error.message || "Could not refresh coaching staff.", true));
 }
 
@@ -10019,12 +10084,21 @@ function openSettingsModal() {
       <section class="settings-modal-section settings-save-section">
         <button type="button" data-interface-shortcuts>Keyboard shortcuts</button>
         <button type="button" data-replay-tutorial>Replay Tutorial</button>
+        ${seasonSlideshowMenuMarkup()}
         <button type="button" class="ui-command" data-report-issue>Report an Issue</button>
         <a class="artwork-credits-link" href="/assets/game-art/CREDITS.md" target="_blank" rel="noopener">Artwork credits</a>
         <button class="settings-return-button" data-return-save-selection>Back to Save Selection</button>
       </section>`,
   };
   renderModal();
+}
+
+function seasonSlideshowMenuMarkup() {
+  if (!state.currentSave) return "";
+  const rows = seasonSlideshowsAvailable();
+  if (!rows.length) return "";
+  const buttons = rows.map(row => `<button type="button" data-season-slideshow="${escapeAttr(row.kind)}" data-season="${escapeAttr(row.season)}">${escapeHtml(row.label)}</button>`);
+  return `<div class="settings-slideshows" role="group" aria-label="Season slideshows"><span>Season slideshows</span>${buttons.join("")}</div>`;
 }
 
 async function openIssueReport() {
@@ -14016,6 +14090,7 @@ function setBusy(isBusy) {
   state.busy = isBusy;
   document.body.classList.toggle("busy", isBusy);
   for (const control of document.querySelectorAll("button, select, input, textarea")) {
+    if (control.closest("#seasonSlideshow")) continue;  // the slideshow only reads; its controls stay live
     if (control.matches('[data-simulation-stop]')) {
       control.disabled = Boolean(state.simulationStopRequested);
       delete control.dataset.busyDisabled;

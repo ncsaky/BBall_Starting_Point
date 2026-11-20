@@ -324,6 +324,8 @@ MUTATING_ACTIONS = {
     "simulate_playoff_round",
     "submit_free_agent_offer",
     "update_game_settings",
+    "season_slideshow",
+    "season_slideshow_seen",
 }
 
 
@@ -894,6 +896,10 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return {'status': 'claim_submitted', 'claim': claim, 'room': waiver_room_payload(canonical, save_path)}
     if action == "narrative_settings":
         return narrative_settings_view(save_path, test_connection=bool(payload.get("test_connection", False)))
+    if action == "season_slideshow":
+        return season_slideshow_action(canonical, save_path, payload)
+    if action == "season_slideshow_seen":
+        return season_slideshow_seen_action(canonical, save_path, payload)
     if action == "advance_save":
         return advance_action(root, canonical, save_path, payload)
     if action == "process_ai_actions":
@@ -4631,6 +4637,42 @@ def mark_user_offer_status(save: dict[str, Any], proposal_id: str, status: str) 
     for offer in save.get("user_trade_offers", []):
         if ((offer.get("proposal") or {}).get("id") or offer.get("id")) == proposal_id:
             offer.setdefault("offer_context", {})["status"] = status
+
+
+def season_slideshow_action(canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    """A season slideshow (year-end recap or preseason outlook). The current season's is built on first request
+    when the season-end or season-start hook has not stored it yet (a new career's first outlook)."""
+    from .season_slides import (available_slideshows, ensure_preseason_outlook, ensure_year_end_recap, pending_slideshow,
+                                stored_outlook, stored_recap)
+
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    kind = str(payload.get("kind") or "")
+    if kind not in {"recap", "outlook"}:
+        raise AppActionError("Choose the year-end recap or the preseason outlook.")
+    current = str((save.get("meta") or {}).get("season") or "")
+    season = str(payload.get("season") or current)
+    data = stored_recap(save, season) if kind == "recap" else stored_outlook(save, season)
+    if data is None and season == current:
+        data = (ensure_year_end_recap(canonical, save, save_path) if kind == "recap"
+                else ensure_preseason_outlook(canonical, save, save_path))
+        if data is not None:
+            write_save(save_path, save)
+    if data is None:
+        raise AppActionError("That slideshow is not available yet.")
+    return {"slideshow": data, "available": available_slideshows(save), "pending": pending_slideshow(save)}
+
+
+def season_slideshow_seen_action(canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    """Record that a slideshow has opened, so it opens by itself only once."""
+    from .season_slides import available_slideshows, mark_seen, pending_slideshow
+
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    kind = str(payload.get("kind") or "")
+    if kind not in {"recap", "outlook"}:
+        raise AppActionError("Choose the year-end recap or the preseason outlook.")
+    mark_seen(save, kind, str(payload.get("season") or (save.get("meta") or {}).get("season") or ""))
+    write_save(save_path, save)
+    return {"status": "seen", "available": available_slideshows(save), "pending": pending_slideshow(save)}
 
 
 def advance_action(root: Path, canonical: dict[str, Any], save_path: Path, payload: dict[str, Any]) -> dict[str, Any]:

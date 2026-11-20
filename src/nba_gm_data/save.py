@@ -8,6 +8,7 @@ sequence is gameplay behavior rather than incidental implementation detail.
 from __future__ import annotations
 
 import hashlib
+import logging
 import json
 import math
 import os
@@ -1983,6 +1984,8 @@ def advance_save(
         if simulation_stop_requested() and current < target:
             target = current
             stopped = True
+    if (save.get("playoff_state") or {}).get("status") == "completed":
+        ensure_year_end_recap_safely(canonical, save, save_path)
     if persist and (target > from_date or save.get("state", {}).get("phase") in {"play_in", "playoffs"}):
         write_save(save_path, save)
     simulated_after = len(save.get("schedule_state", {}).get("simulated_game_ids", []))
@@ -2392,6 +2395,7 @@ def save_status(
         "playoff_round": playoff_state.get("round"),
         "playoff_champion_team_id": playoff_state.get("champion_team_id"),
         "postseason_exit_required": postseason_exit_required(save),
+        "season_slideshow": season_slideshow_status(save),
         "legal_actions": save.get("state", {}).get("legal_actions", []),
         "next_event_date": next_event_date(root, canonical, save),
         "user_team_record": record,
@@ -2401,6 +2405,11 @@ def save_status(
         "recent_social": visible_social[-5:],
         "high_importance_social": high_social,
     }
+
+
+def season_slideshow_status(save: dict[str, Any]) -> dict[str, Any]:
+    from .season_slides import available_slideshows, pending_slideshow
+    return {"pending": pending_slideshow(save), "available": available_slideshows(save)}
 
 
 def pending_actions_view(canonical: dict[str, Any] | Any, save_path: str | Path) -> dict[str, Any]:
@@ -3560,6 +3569,7 @@ def simulate_playoff_round(canonical: dict[str, Any] | Any, save_path: str | Pat
             break
     save["playoff_state"] = state
     update_save_date_to_latest_playoff_game(save)
+    ensure_year_end_recap_safely(canonical, save, save_path)
     write_save(save_path, save)
     return {"completed_series": completed, "playoff_state": state}
 
@@ -3571,6 +3581,9 @@ def complete_playoff_champion(canonical: dict[str, Any], save: dict[str, Any], s
     emit_progress(save, "postseason")
     add_news(save, "champion", f"{team_by_id(canonical, winner_team_id)['abbrev']} wins the NBA title.")
     award_finals_mvp(save, canonical)
+    # Season awards are decided when the playoffs end (the year-end recap shows them before the lottery); the
+    # rollover's call later finds them and does nothing.
+    generate_league_awards(canonical, save, save.get("meta", {}).get("season") or CANONICAL_SEASON, int(state.get("seed") or 1))
     user_team_id = save.get("meta", {}).get("user_team_id")
     if user_team_id:
         headline = f"Season complete: {team_by_id(canonical, winner_team_id)['abbrev']} wins the NBA title."
@@ -3603,6 +3616,7 @@ def simulate_next_playoff_game(canonical: dict[str, Any] | Any, save_path: str |
     result = simulate_playoff_day(canonical, save, state, seed, root, advance_to_offseason=advance_to_offseason)
     save["playoff_state"] = state
     update_save_date_to_latest_playoff_game(save)
+    ensure_year_end_recap_safely(canonical, save, save_path)
     write_save(save_path, save)
     return result
 
@@ -4332,40 +4346,51 @@ def update_playoff_player_stats(save: dict[str, Any], result: dict[str, Any], ga
             totals["finals_games"] = int(totals.get("finals_games") or 0) + 1
         for field in STAT_FIELDS:
             totals[field] = round(float(totals.get(field) or 0.0) + float(line.get(field) or 0.0), 3)
+        if (save.get("playoff_state") or {}).get("round") == "finals":
+            # The NBA Finals alone (game ids of conference finals also contain "finals"), for the Finals MVP.
+            finals = totals.setdefault("nba_finals", {"games": 0, **{field: 0.0 for field in STAT_FIELDS}})
+            finals["games"] = int(finals.get("games") or 0) + 1
+            for field in STAT_FIELDS:
+                finals[field] = round(float(finals.get(field) or 0.0) + float(line.get(field) or 0.0), 3)
 
 
 def award_finals_mvp(save: dict[str, Any], canonical: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    """Finals MVP: the champion's player with the highest total Game Score across the NBA Finals games."""
     state = save.get("playoff_state") or {}
     champion = state.get("champion_team_id")
     if not champion:
         return None
-    candidates = [
-        totals for totals in save.get("playoff_player_stats", {}).values()
-        if totals.get("team_id") == champion and int(totals.get("finals_games") or 0) > 0
-    ]
-    if not candidates:
-        candidates = [totals for totals in save.get("playoff_player_stats", {}).values() if totals.get("team_id") == champion]
-    if not candidates:
-        return None
-    def score(row: dict[str, Any]) -> float:
-        games = max(1, int(row.get("games") or 1))
-        finals_boost = 1.25 if int(row.get("finals_games") or 0) else 1.0
-        return finals_boost * (
-            float(row.get("points") or 0) / games
-            + 1.15 * float(row.get("rebounds") or 0) / games
-            + 1.35 * float(row.get("assists") or 0) / games
-            + 2.6 * float(row.get("steals") or 0) / games
-            + 2.6 * float(row.get("blocks") or 0) / games
-            - 1.1 * float(row.get("turnovers") or 0) / games
-        )
-    winner = max(candidates, key=score)
+    rows = [totals for totals in save.get("playoff_player_stats", {}).values() if totals.get("team_id") == champion]
+    finals_rows = [row for row in rows if int((row.get("nba_finals") or {}).get("games") or 0) > 0]
+    if finals_rows:
+        winner = max(finals_rows, key=lambda row: (finals_game_score(row["nba_finals"]), float(row["nba_finals"].get("points") or 0), str(row.get("player_id"))))
+        finals = winner["nba_finals"]
+        games = max(1, int(finals.get("games") or 1))
+        score = finals_game_score(finals)
+        line = {"pts": round(float(finals.get("points") or 0) / games, 1), "reb": round(float(finals.get("rebounds") or 0) / games, 1),
+                "ast": round(float(finals.get("assists") or 0) / games, 1), "stl": round(float(finals.get("steals") or 0) / games, 1),
+                "blk": round(float(finals.get("blocks") or 0) / games, 1), "gp": int(finals.get("games") or 0)}
+        source = "nba_finals_game_score"
+    else:
+        # Postseasons recorded before the Finals were kept separately: the old whole-playoff rating.
+        if not rows:
+            return None
+
+        def legacy(row: dict[str, Any]) -> float:
+            games = max(1, int(row.get("games") or 1))
+            return (float(row.get("points") or 0) + 1.15 * float(row.get("rebounds") or 0) + 1.35 * float(row.get("assists") or 0)
+                    + 2.6 * float(row.get("steals") or 0) + 2.6 * float(row.get("blocks") or 0) - 1.1 * float(row.get("turnovers") or 0)) / games
+        winner = max(rows, key=legacy)
+        score, line, source = legacy(winner), None, "save_playoff_player_stats"
     award = {
         "player_id": winner.get("player_id"),
         "player_name": winner.get("player_name"),
         "team_id": winner.get("team_id"),
         "team_abbrev": winner.get("team_abbrev"),
-        "impact_score": round(score(winner), 3),
-        "source": "save_playoff_player_stats",
+        "season": save.get("meta", {}).get("season") or CANONICAL_SEASON,
+        "impact_score": round(score, 3),
+        "finals_line": line,
+        "source": source,
     }
     save["finals_mvp"] = award
     date_value = save.get("state", {}).get("current_date") or None
@@ -4410,6 +4435,26 @@ def offseason_status(canonical: dict[str, Any] | Any, save_path: str | Path) -> 
     }
 
 
+def ensure_year_end_recap_safely(canonical: dict[str, Any], save: dict[str, Any], save_path: str | Path | None) -> dict[str, Any] | None:
+    """The year-end recap, built once the Finals are over (season_slides). A failure is logged, never raised: the
+    slideshow is a presentation of results and must not block the calendar."""
+    from .season_slides import ensure_year_end_recap
+    try:
+        return ensure_year_end_recap(canonical if isinstance(canonical, dict) else to_plain(canonical), save, save_path)
+    except Exception:  # pragma: no cover - logged
+        logging.getLogger(__name__).exception("year-end recap failed")
+        return None
+
+
+def ensure_preseason_outlook_safely(canonical: dict[str, Any], save: dict[str, Any], save_path: str | Path | None) -> dict[str, Any] | None:
+    from .season_slides import ensure_preseason_outlook
+    try:
+        return ensure_preseason_outlook(canonical if isinstance(canonical, dict) else to_plain(canonical), save, save_path)
+    except Exception:  # pragma: no cover - logged
+        logging.getLogger(__name__).exception("preseason outlook failed")
+        return None
+
+
 def complete_offseason_and_rollover(
     root: str | Path,
     canonical: dict[str, Any] | Any,
@@ -4428,6 +4473,9 @@ def complete_offseason_and_rollover(
         return {"status": "stopped", "current_date": save.get("state", {}).get("current_date")}
     draft_result = ensure_draft_processed(canonical, save, str(season_end_year(current_season)), seed)
     awards = generate_league_awards(canonical, save, current_season, seed)
+    from .season_slides import slideshow_store
+    recap = ensure_year_end_recap_safely(canonical, save, save_path)
+    slideshow_store(save)["recaps"].pop(current_season, None)
     history_entry = {
         "season": current_season,
         "completed_on": save.get("state", {}).get("current_date"),
@@ -4437,6 +4485,7 @@ def complete_offseason_and_rollover(
         "draft_order": deepcopy((save.get("draft_orders") or {}).get(str(season_end_year(current_season)), {})),
         "draft_result": deepcopy(draft_result),
         "awards": deepcopy(awards),
+        "recap": recap,
         "transaction_count": len(save.get("transaction_logs", [])),
         "development_months": sorted(save.get("applied_development_months", [])),
     }
@@ -4490,6 +4539,7 @@ def complete_offseason_and_rollover(
         "retirement_report_id": (save.get("retirement_reports") or [{}])[-1].get("id"),
     }
     add_news(save, "season_rollover", f"{next_label} season is ready for training camp.", date_value=f"{next_start}-10-01")
+    ensure_preseason_outlook_safely(canonical, save, save_path)
     write_save(save_path, save)
     return {
         "status": "rolled_over",
@@ -5119,8 +5169,9 @@ def record_game_result(save: dict[str, Any], canonical: dict[str, Any], game: di
     away_points = int(result["away_score"])
     update_team_record(save, canonical, game, home_id, away_id, home_points, away_points, is_home=True)
     update_team_record(save, canonical, game, away_id, home_id, away_points, home_points, is_home=False)
+    top_minutes_ids = team_top_minutes_ids(result.get("player_lines", []))
     for line in result.get("player_lines", []):
-        update_player_stats(save, line, game)
+        update_player_stats(save, line, game, top_minutes_ids)
         team_points = home_points if line.get("team_id") == home_id else away_points
         opp_points = away_points if line.get("team_id") == home_id else home_points
         update_player_game_morale(save, line, team_points > opp_points, abs(team_points - opp_points))
@@ -5252,7 +5303,34 @@ def update_team_record(save: dict[str, Any], canonical: dict[str, Any], game: di
     record["last_game_id"] = str(game.get("externalGameId"))
 
 
-def update_player_stats(save: dict[str, Any], line: dict[str, Any], game: dict[str, Any]) -> None:
+def team_top_minutes_ids(player_lines: list[dict[str, Any]], count: int = 5) -> set[str]:
+    """The five players with the most minutes for each team in one game. Box scores do not record who started, so
+    the season awards treat a game outside a team's top five in minutes as a game off the bench."""
+    by_team: dict[str, list[dict[str, Any]]] = {}
+    for line in player_lines or []:
+        if line.get("player_id") and float(line.get("minutes") or 0.0) > 0:
+            by_team.setdefault(str(line.get("team_id") or ""), []).append(line)
+    top: set[str] = set()
+    for lines in by_team.values():
+        ranked = sorted(lines, key=lambda row: (-float(row.get("minutes") or 0.0), -float(row.get("points") or 0.0), str(row.get("player_id"))))
+        top.update(str(row["player_id"]) for row in ranked[:count])
+    return top
+
+
+def count_award_game(totals: dict[str, Any], line: dict[str, Any], top_minutes_ids: set[str] | None) -> None:
+    """Season counters for the award rules: games of 20+ minutes and of 15-20 minutes (the league's 65-game rule
+    counts both, the second kind at most twice), and games outside the team's top five in minutes (Sixth Man)."""
+    minutes = float(line.get("minutes") or 0.0)
+    if minutes >= 20.0:
+        totals["games_20_min"] = int(totals.get("games_20_min") or 0) + 1
+    elif minutes >= 15.0:
+        totals["games_15_min"] = int(totals.get("games_15_min") or 0) + 1
+    if top_minutes_ids is not None and minutes > 0:
+        key = "games_top_minutes" if str(line.get("player_id")) in top_minutes_ids else "games_bench"
+        totals[key] = int(totals.get(key) or 0) + 1
+
+
+def update_player_stats(save: dict[str, Any], line: dict[str, Any], game: dict[str, Any], top_minutes_ids: set[str] | None = None) -> None:
     player_id = line.get("player_id")
     if not player_id:
         return
@@ -5297,6 +5375,7 @@ def update_player_stats(save: dict[str, Any], line: dict[str, Any], game: dict[s
     totals["team_abbrev"] = line.get("team_abbrev")
     for field in STAT_FIELDS:
         totals[field] = round(float(totals.get(field, 0.0)) + float(line.get(field) or 0.0), 2)
+    count_award_game(totals, line, top_minutes_ids)
 
 
 def morale_report(
@@ -9007,6 +9086,71 @@ def build_year_in_review(canonical: dict[str, Any], save: dict[str, Any], team_i
     }
 
 
+AWARD_LABELS = {
+    "MVP": "Most Valuable Player",
+    "DPOY": "Defensive Player of the Year",
+    "ROTY": "Rookie of the Year",
+    "SMOY": "Sixth Man of the Year",
+    "MIP": "Most Improved Player",
+    "FMVP": "Finals MVP",
+    "ALL_NBA_1": "All-NBA First Team",
+    "ALL_NBA_2": "All-NBA Second Team",
+    "ALL_NBA_3": "All-NBA Third Team",
+}
+AWARD_CRITERIA = {
+    "MVP": "Scoring, playmaking and rebounding per game, the player's on-court value, his team's winning percentage and games played. 65-game rule.",
+    "DPOY": "Defensive and rim-protection ratings, defensive effort and screen navigation, blocks and steals per game, team winning. 65-game rule.",
+    "ROTY": "First-season players only: points, assists and rebounds per game, on-court value and minutes. The league's 65-game rule does not apply to this award; 35 games and 650 minutes are needed.",
+    "SMOY": "Came off the bench in more games than he started (a game outside his team's five highest minutes counts as off the bench, because box scores do not record starters): bench scoring first, then playmaking, rebounding, on-court value and team winning. 65-game rule.",
+    "MIP": "The largest rise in production per game (points + 0.4 x rebounds + 0.7 x assists + steals + 0.7 x blocks) over last season, which needs 25+ games last season and 10+ production per game now. 65-game rule.",
+    "FMVP": "The champion's player with the highest total Game Score across the NBA Finals (points, shooting efficiency, rebounds, assists, steals, blocks and turnovers; fouls are not recorded).",
+    "ALL_NBA": "Fifteen players, no positions (as in the real vote since 2024), ranked by the same score as MVP: First Team 1-5, Second 6-10, Third 11-15. 65-game rule.",
+}
+
+
+def award_qualifying_games(totals: dict[str, Any]) -> int:
+    """Games that count toward the league's 65-game award rule: games of 20+ minutes, plus at most two games of
+    15-20 minutes. Season totals recorded before these counters existed fall back to games played."""
+    if "games_20_min" not in totals and "games_15_min" not in totals:
+        return int(totals.get("games") or 0)
+    return int(totals.get("games_20_min") or 0) + min(2, int(totals.get("games_15_min") or 0))
+
+
+def award_production_per_game(totals: dict[str, Any]) -> float:
+    """Production per game for Most Improved: points + 0.4 x rebounds + 0.7 x assists + steals + 0.7 x blocks."""
+    games = max(1, int(totals.get("games") or 0))
+    return (float(totals.get("points") or 0) + 0.4 * float(totals.get("rebounds") or 0) + 0.7 * float(totals.get("assists") or 0)
+            + float(totals.get("steals") or 0) + 0.7 * float(totals.get("blocks") or 0)) / games
+
+
+def finals_game_score(totals: dict[str, Any]) -> float:
+    """Hollinger's Game Score from box-score totals. Rebounds count 0.4 each (box scores do not split offensive and
+    defensive rebounds; 0.7 and 0.3 at the league's usual split) and fouls are not recorded."""
+    get = lambda key: float(totals.get(key) or 0.0)  # noqa: E731
+    return (get("points") + 0.4 * get("fgm") - 0.7 * get("fga") - 0.4 * (get("fta") - get("ftm")) + 0.4 * get("rebounds")
+            + get("steals") + 0.7 * get("assists") + 0.7 * get("blocks") - get("turnovers"))
+
+
+def previous_season_totals(canonical: dict[str, Any], save: dict[str, Any], season: str) -> dict[str, dict[str, Any]]:
+    """Each player's totals from the season before `season`: the save's own history, or for a new save's first
+    season the real 2025-26 box scores (matched by name)."""
+    previous = next((item for item in reversed(save.get("season_history", []) or [])
+                     if str(item.get("season") or "") < season and item.get("player_season_stats")), None)
+    if previous:
+        return previous.get("player_season_stats") or {}
+    if season != CANONICAL_SEASON:
+        return {}
+    from .season_slides import real_season_summary
+
+    real = real_season_summary().get("players") or {}
+    out: dict[str, dict[str, Any]] = {}
+    for player in canonical.get("players", []):
+        row = real.get(normalize_name(player.get("name") or ""))
+        if row:
+            out[player["id"]] = row
+    return out
+
+
 def generate_league_awards(canonical: dict[str, Any], save: dict[str, Any], season: str, seed: int = 1) -> list[dict[str, Any]]:
     existing = [award for award in save.get("league_awards", []) if award.get("season") == season]
     if existing:
@@ -9015,6 +9159,7 @@ def generate_league_awards(canonical: dict[str, Any], save: dict[str, Any], seas
     players = {player["id"]: player for player in active.get("players", [])}
     teams = {team["id"]: team for team in active.get("teams", [])}
     stats = save.get("player_season_stats", {})
+    previous = previous_season_totals(active, save, season)
     candidates = []
     for player_id, totals in stats.items():
         player = players.get(player_id)
@@ -9025,36 +9170,41 @@ def generate_league_awards(canonical: dict[str, Any], save: dict[str, Any], seas
         if games < 35 or minutes_total < 650:
             continue
         attrs = player_attribute_summary(active, player_id)
-        team_record = save.get("team_records", {}).get(player.get("team_id"), {})
+        team_id = totals.get("team_id") or player.get("team_id")
+        team_record = save.get("team_records", {}).get(team_id, {})
         team_games = max(1, int(team_record.get("wins", 0)) + int(team_record.get("losses", 0)))
         win_pct = float(team_record.get("wins", 0)) / team_games
-        ppg = per_game_stat(totals, "points")
-        rpg = per_game_stat(totals, "rebounds")
-        apg = per_game_stat(totals, "assists")
-        spg = per_game_stat(totals, "steals")
-        bpg = per_game_stat(totals, "blocks")
         mpg = minutes_total / max(1, games)
-        rookie = is_rookie_for_awards(player, season, save)
+        prior = previous.get(player_id) or {}
+        qualifying = award_qualifying_games(totals)
         candidates.append(
             {
                 "player_id": player_id,
                 "player_name": player.get("name"),
-                "team_id": player.get("team_id"),
-                "team_abbrev": teams.get(player.get("team_id"), {}).get("abbrev", player.get("team_abbrev")),
+                "team_id": team_id,
+                "team_abbrev": teams.get(team_id, {}).get("abbrev", totals.get("team_abbrev") or player.get("team_abbrev")),
                 "games": games,
+                "qualifying_games": qualifying,
+                "eligible": qualifying >= AWARD_MIN_GAMES,
+                "bench_games": int(totals.get("games_bench") or 0),
+                "top_minutes_games": int(totals.get("games_top_minutes") or 0),
+                "bench_known": "games_bench" in totals or "games_top_minutes" in totals,
                 "minutes_per_game": round(mpg, 1),
-                "points_per_game": ppg,
-                "rebounds_per_game": rpg,
-                "assists_per_game": apg,
-                "steals_per_game": spg,
-                "blocks_per_game": bpg,
+                "points_per_game": per_game_stat(totals, "points"),
+                "rebounds_per_game": per_game_stat(totals, "rebounds"),
+                "assists_per_game": per_game_stat(totals, "assists"),
+                "steals_per_game": per_game_stat(totals, "steals"),
+                "blocks_per_game": per_game_stat(totals, "blocks"),
+                "production": round(award_production_per_game(totals), 2),
+                "previous_games": int(prior.get("games") or 0),
+                "previous_production": round(award_production_per_game(prior), 2) if prior else None,
                 "overall": float(attrs.get("overall") or 50.0),
                 "defense": float(attrs.get("defense") or 50.0),
                 "rim_deterrence": float(attrs.get("rim_deterrence") or 50.0),
                 "def_effort": float(attrs.get("def_effort") or 50.0),
                 "screen_nav": float(attrs.get("screen_nav") or 50.0),
                 "win_pct": round(win_pct, 3),
-                "rookie": rookie,
+                "rookie": is_rookie_for_awards(player, season, save),
             }
         )
     if not candidates:
@@ -9082,25 +9232,41 @@ def generate_league_awards(canonical: dict[str, Any], save: dict[str, Any], seas
             + small_noise(row["player_id"], "DPOY")
         )
 
-    award_specs = {
-        "MVP": lambda row: row["points_per_game"] * 1.25 + row["assists_per_game"] * 1.08 + row["rebounds_per_game"] * 0.66 + row["overall"] * 0.42 + row["win_pct"] * 17.0 + min(5.0, row["games"] / 14.0) + small_noise(row["player_id"], "MVP"),
-        "ROTY": lambda row: (-999.0 if not row["rookie"] else row["points_per_game"] * 1.18 + row["assists_per_game"] * 0.92 + row["rebounds_per_game"] * 0.72 + row["overall"] * 0.48 + row["minutes_per_game"] * 0.18 + small_noise(row["player_id"], "ROTY")),
-        "DPOY": dpoy_score,
+    def mvp_score(row: dict[str, Any]) -> float:
+        return (row["points_per_game"] * 1.25 + row["assists_per_game"] * 1.08 + row["rebounds_per_game"] * 0.66 + row["overall"] * 0.42
+                + row["win_pct"] * 17.0 + min(5.0, row["games"] / 14.0) + small_noise(row["player_id"], "MVP"))
+
+    def sixth_man_score(row: dict[str, Any]) -> float:
+        return (row["points_per_game"] * 1.0 + row["assists_per_game"] * 0.5 + row["rebounds_per_game"] * 0.4 + row["overall"] * 0.25
+                + row["win_pct"] * 6.0 + small_noise(row["player_id"], "SMOY"))
+
+    def improved_score(row: dict[str, Any]) -> float:
+        return row["production"] - float(row["previous_production"] or 0.0) + small_noise(row["player_id"], "MIP") * 0.2
+
+    eligible = [row for row in candidates if row["eligible"]]
+    pools = {
+        "MVP": (eligible, mvp_score),
+        "ROTY": ([row for row in candidates if row["rookie"]],
+                 lambda row: row["points_per_game"] * 1.18 + row["assists_per_game"] * 0.92 + row["rebounds_per_game"] * 0.72 + row["overall"] * 0.48 + row["minutes_per_game"] * 0.18 + small_noise(row["player_id"], "ROTY")),
+        "DPOY": (eligible, dpoy_score),
+        "SMOY": ([row for row in eligible if row["bench_known"] and row["bench_games"] > row["top_minutes_games"]], sixth_man_score),
+        "MIP": ([row for row in eligible if row["previous_production"] is not None and row["previous_games"] >= 25 and row["production"] >= 10.0
+                 and row["production"] > float(row["previous_production"])], improved_score),
     }
-    awards: list[dict[str, Any]] = []
-    for award_name, score_fn in award_specs.items():
-        winner = max(candidates, key=score_fn)
-        if score_fn(winner) < -100:
-            continue
-        record = {
-            "id": stable_id("league_award", season, award_name),
+    end_date = save.get("state", {}).get("current_date") or f"{season_end_year(season)}-06-30"
+
+    def record(award_name: str, winner: dict[str, Any], score: float, *, record_id: str | None = None, extra: dict[str, Any] | None = None) -> dict[str, Any]:
+        base = award_name if not award_name.startswith("ALL_NBA") else "ALL_NBA"
+        return {
+            "id": record_id or stable_id("league_award", season, award_name),
             "season": season,
             "award": award_name,
+            "label": AWARD_LABELS.get(award_name, award_name),
             "player_id": winner["player_id"],
             "player_name": winner["player_name"],
             "team_id": winner["team_id"],
             "team_abbrev": winner["team_abbrev"],
-            "score": round(score_fn(winner), 3),
+            "score": round(score, 3),
             "stat_line": {
                 "pts": winner["points_per_game"],
                 "reb": winner["rebounds_per_game"],
@@ -9109,15 +9275,43 @@ def generate_league_awards(canonical: dict[str, Any], save: dict[str, Any], seas
                 "blk": winner["blocks_per_game"],
                 "gp": winner["games"],
             },
-            "notes": "V1 award voting proxy using saved season stats, team success, minutes/games played, and trait-based impact indicators.",
+            "criteria": AWARD_CRITERIA.get(base, ""),
+            **(extra or {}),
+            "notes": "Award vote proxy from saved season stats, team success, games played (65-game rule) and the player's ratings.",
         }
-        awards.append(record)
-        headline = f"{winner['player_name']} wins {award_name} for {season} ({winner['team_abbrev']})."
-        add_news(save, "award", headline, date_value=f"{season_end_year(season)}-06-30")
+
+    awards: list[dict[str, Any]] = []
+    for award_name, (pool, score_fn) in pools.items():
+        if not pool:
+            continue
+        winner = max(pool, key=score_fn)
+        extra = None
+        if award_name == "SMOY":
+            extra = {"bench_games": winner["bench_games"], "top_minutes_games": winner["top_minutes_games"]}
+        if award_name == "MIP":
+            extra = {"production": winner["production"], "previous_production": winner["previous_production"]}
+        awards.append(record(award_name, winner, score_fn(winner), extra=extra))
+        add_news(save, "award", f"{winner['player_name']} wins {AWARD_LABELS[award_name]} for {season} ({winner['team_abbrev']}).", date_value=end_date)
+    for index, row in enumerate(sorted(eligible, key=lambda row: (-mvp_score(row), row["player_id"]))[:15]):
+        team_no = index // 5 + 1
+        name = f"ALL_NBA_{team_no}"
+        awards.append(record(name, row, mvp_score(row), record_id=stable_id("league_award", season, name, row["player_id"]),
+                             extra={"vote_rank": index + 1}))
+    finals = save.get("finals_mvp") or {}
+    if finals.get("player_id") and str(finals.get("season") or season) == season:
+        totals = stats.get(finals["player_id"], {})
+        awards.append({
+            "id": stable_id("league_award", season, "FMVP"), "season": season, "award": "FMVP", "label": AWARD_LABELS["FMVP"],
+            "player_id": finals["player_id"], "player_name": finals.get("player_name"), "team_id": finals.get("team_id"),
+            "team_abbrev": finals.get("team_abbrev"), "score": finals.get("impact_score"),
+            "stat_line": finals.get("finals_line") or {"pts": per_game_stat(totals, "points"), "reb": per_game_stat(totals, "rebounds"),
+                                                         "ast": per_game_stat(totals, "assists"), "gp": int(totals.get("games") or 0)},
+            "criteria": AWARD_CRITERIA["FMVP"], "notes": "Best Game Score on the champion across the NBA Finals.",
+        })
     save.setdefault("league_awards", []).extend(awards)
     save["league_awards"] = sorted(
         {award["id"]: award for award in save["league_awards"]}.values(),
-        key=lambda item: (item.get("season", ""), item.get("award", "")),
+        key=lambda item: (item.get("season", ""), item.get("award", ""), int(item.get("vote_rank") or 0)),
     )
     return awards
 
