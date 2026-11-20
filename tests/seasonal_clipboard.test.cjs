@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
+const {loadHouseTables} = require('./house_table_helpers.cjs');
 
 const gui = path.join(__dirname, '../src/nba_gm_data/gui');
 const context = {window:{}, structuredClone};
@@ -317,13 +318,14 @@ test('minutes table keeps identity, minutes and fatigue without ratings or box s
     statNumber:()=>{calls.stats++;throw new Error('Box stats should not render in this table');},
   };
   vm.createContext(scope);
+  loadHouseTables(scope);
   vm.runInContext(app.slice(app.indexOf('function ensureRotationDraft('),app.indexOf('\nfunction autofillRotationDraft')),scope);
   loadPlayerRowMarkup(scope);
   vm.runInContext(app.slice(app.indexOf('function seasonMinutesCard('),app.indexOf('\nfunction seasonMiniRating')),scope);
   const markup = scope.seasonMinutesCard([{id:'p1',name:'Test Player',age:25,position:'PG'}],true);
   assert.match(markup, /class="season-minute-position"[^>]*>PG</);
   assert.match(markup, /class="season-minute-height">6'5"</);
-  for (const field of ['Player','Pos','Height','Minutes','Fatigue']) assert.ok(markup.includes(`<span>${field}</span>`));
+  for (const field of ['Player','Pos','Height','Minutes','Fatigue']) assert.match(markup, new RegExp(`data-house-sort="[a-z]+"[^>]*>${field}<`));
   assert.ok(!markup.includes('Development'));
   for (const field of ['Age','OVR','OFF','DEF','MPG','PTS','REB','AST']) assert.ok(!markup.includes(`<span>${field}</span>`));
   assert.match(markup,/class="season-minute-control"/);
@@ -339,6 +341,7 @@ test('injured minutes rows keep black player text and show a red cross with the 
     seasonFatigueCell:()=>'<span class="season-fatigue low"></span>',
   };
   vm.createContext(scope);
+  loadHouseTables(scope);
   vm.runInContext(app.slice(app.indexOf('function ensureRotationDraft('),app.indexOf('\nfunction autofillRotationDraft')),scope);
   loadPlayerRowMarkup(scope);
   vm.runInContext(app.slice(app.indexOf('function seasonMinutesCard('),app.indexOf('\nfunction seasonMiniRating')),scope);
@@ -362,6 +365,7 @@ test('next opponent injury list shows remaining games without repeating injured 
     rating:()=>80, seasonMiniRating:()=>'<span>80</span>', statNumber:()=>0,
   };
   vm.createContext(scope);
+  loadHouseTables(scope, {block:false});
   loadPlayerRowMarkup(scope);
   vm.runInContext(source,scope);
   const markup = scope.seasonOpponentCard({next_games:[{date:'2030-11-05',opponent_team_id:'NYK',is_home:false}]},'BOS');
@@ -380,6 +384,7 @@ test('player development stays as a separate clipboard card without team growth 
     state:{data:{dashboardTrends:{development:{latest_month:'2030-11'}}}},
   };
   vm.createContext(scope);
+  loadHouseTables(scope);
   loadPlayerRowMarkup(scope);
   vm.runInContext(app.slice(app.indexOf('function playerUpsideColor('),app.indexOf('function gameArtwork(')),scope);
   vm.runInContext(app.slice(app.indexOf('function seasonDevelopmentCard('),app.indexOf('\nfunction seasonLeagueWire')),scope);
@@ -437,6 +442,7 @@ test('coaching staff card keeps payroll only and displays compact single-line co
     performanceBarStyle:()=>'',
   };
   vm.createContext(scope);
+  loadHouseTables(scope);
   vm.runInContext(cardSource,scope);
   const markup = scope.seasonStaffCard({});
   assert.match(markup,/STAFF PAYROLL/);
@@ -476,6 +482,7 @@ test('staff rows and coach cards share six distinct transparent coach portraits'
     openPlayerCardOnClipboard:async card => {opened=card;},
   };
   vm.createContext(scope);
+  loadHouseTables(scope);
   vm.runInContext(source,scope);
   const portraits = Array.from(scope.coachPortraitAssignments(rows).values());
   assert.equal(new Set(portraits).size,6);
@@ -634,6 +641,7 @@ test('expanded standings show West left and East right with fifteen teams each',
     escapeAttr:value=>String(value), escapeHtml:value=>String(value), winPct:value=>String(value),
   };
   vm.createContext(scope);
+  loadHouseTables(scope);
   vm.runInContext(source,scope);
   const compact = scope.seasonStandingsCard('E0');
   const expanded = scope.seasonStandingsCard('E0',true);

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Window Icons</title>
+  <style>
+    body { margin:0; padding:18px 22px; background:#f4f6f8; color:#1d2a33; font:12px Tahoma,"Trebuchet MS",Arial,sans-serif; }
+    h1 { margin:0 0 4px; font-size:18px; }
+    p.lede { margin:0 0 14px; color:#5d6b77; }
+    section { margin:0 0 12px; }
+    h2 { margin:0 0 6px; padding-bottom:3px; border-bottom:3px double #b7c2cb; font-size:11px; text-transform:uppercase; letter-spacing:.04em; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px; }
+    .item { display:grid; grid-template-columns:44px 1fr; align-items:center; gap:8px; padding:6px; background:#fff; border:1px solid #d5dde3; }
+    .item .big svg { width:44px; height:44px; display:block; }
+    .item > span:last-child { min-width:0; overflow:hidden; }
+    .item strong { display:block; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tab { display:flex; align-items:center; gap:5px; margin-top:4px; padding:2px 5px; background:linear-gradient(#e8eef3,#d6e0e8); border:1px solid #9fb0bd; font:700 11px Tahoma,Arial,sans-serif; }
+    .tab svg { width:16px; height:16px; flex:0 0 16px; display:block; }
+    .tab span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  </style>
+</head>
+<body>
+  <h1>Window icons</h1>
+  <p class="lede">Each window type: switcher size (left) and the title-bar tab size (16 px). Tile colour = window group. Swap any icon in <code>window-icons.js</code>.</p>
+  <div id="sheet"></div>
+  <script src="/window-icons.js"></script>
+  <script>
+    const {all, svg, groups} = window.WindowIcons;
+    const byGroup = new Map();
+    for (const [key, name, group] of all()) {
+      if (!byGroup.has(group)) byGroup.set(group, []);
+      byGroup.get(group).push([key, name]);
+    }
+    document.getElementById("sheet").innerHTML = [...byGroup].map(([group, items]) => `<section><h2>${groups[group] || group}</h2><div class="grid">${items.map(([key, name]) => `<div class="item"><span class="big">${svg(key || "unknown-window")}</span><span><strong>${name}</strong><span class="tab">${svg(key || "unknown-window")}<span>${name}</span></span></span></div>`).join("")}</div></section>`).join("");
+  </script>
+</body>
+</html>

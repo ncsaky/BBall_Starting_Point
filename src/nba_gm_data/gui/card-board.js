@@ -674,6 +674,8 @@
     dashboard.append(windowSwitcher);
 
     const frames = new Map();
+    // The window's own icon on its title-bar tab and in the window switcher (window-icons.js; easy to swap there).
+    const windowIcon = (id, node = nodes.get(id)) => window.WindowIcons?.svg(id, {kind: node?.iconKind || "", className: "window-icon"}) || "";
     const createWindowFrame = (id, node) => {
       const {card, title, assets} = node;
       const safeId = escapeHtml(id);
@@ -682,7 +684,7 @@
       frame.className = "card-board-window";
       frame.dataset.boardWindow = id;
       frame.setAttribute("aria-label", `${title || "Card"} window`);
-      frame.innerHTML = `<header class="card-board-titlebar"><button type="button" class="card-board-move" data-board-move="${safeId}" aria-label="Move ${safeTitle}" aria-keyshortcuts="Escape Shift+Escape M P Space" title="Move ${safeTitle}; Esc closes, Shift+Esc minimizes or restores; M minimizes or restores, P pins, Space expands or collapses"><span class="card-board-window-mark" aria-hidden="true"></span><span>${safeTitle}</span></button><div class="card-board-window-controls">${EXPANDABLE_CARDS.has(id) ? `<button type="button" class="card-board-control" data-board-expand="${safeId}" aria-label="Expand ${safeTitle}" title="Expand ${safeTitle}" aria-pressed="false">${icon("plus")}</button>` : ""}${id === "minutes" ? `<button type="button" class="card-board-control card-board-minutes-reset" data-minute-reset-all aria-label="Reset all player minutes to automatic allocation" title="Reset all minutes to automatic allocation">Reset</button>` : ""}<button type="button" class="card-board-control" data-board-pin="${safeId}" aria-label="Pin ${safeTitle}" title="Pin ${safeTitle}" aria-pressed="false">${icon("pin")}</button><button type="button" class="card-board-control" data-board-minimize="${safeId}" aria-label="Minimize ${safeTitle}" title="Minimize ${safeTitle}" aria-expanded="true">${icon("minus")}</button><button type="button" class="card-board-control card-board-close" data-board-close="${safeId}" aria-label="Close ${safeTitle}" title="Close ${safeTitle}">${icon("x")}</button></div><div class="card-board-actions" hidden></div></header><button type="button" class="card-board-resize-handle card-board-resize-handle--left" data-board-resize="${safeId}" data-board-resize-edge="left" aria-label="Resize ${safeTitle} from bottom left" title="Resize ${safeTitle} from bottom left"></button><button type="button" class="card-board-resize-handle card-board-resize-handle--right" data-board-resize="${safeId}" data-board-resize-edge="right" aria-label="Resize ${safeTitle} from bottom right" title="Resize ${safeTitle} from bottom right"></button>`;
+      frame.innerHTML = `<header class="card-board-titlebar"><button type="button" class="card-board-move" data-board-move="${safeId}" aria-label="Move ${safeTitle}" aria-keyshortcuts="Escape Shift+Escape M P Space" title="Move ${safeTitle}; Esc closes, Shift+Esc minimizes or restores; M minimizes or restores, P pins, Space expands or collapses"><span class="card-board-window-mark${windowIcon(id, node) ? " has-window-icon" : ""}" aria-hidden="true">${windowIcon(id, node)}</span><span>${safeTitle}</span></button><div class="card-board-window-controls">${EXPANDABLE_CARDS.has(id) ? `<button type="button" class="card-board-control" data-board-expand="${safeId}" aria-label="Expand ${safeTitle}" title="Expand ${safeTitle}" aria-pressed="false">${icon("plus")}</button>` : ""}${id === "minutes" ? `<button type="button" class="card-board-control card-board-minutes-reset" data-minute-reset-all aria-label="Reset all player minutes to automatic allocation" title="Reset all minutes to automatic allocation">Reset</button>` : ""}<button type="button" class="card-board-control" data-board-pin="${safeId}" aria-label="Pin ${safeTitle}" title="Pin ${safeTitle}" aria-pressed="false">${icon("pin")}</button><button type="button" class="card-board-control" data-board-minimize="${safeId}" aria-label="Minimize ${safeTitle}" title="Minimize ${safeTitle}" aria-expanded="true">${icon("minus")}</button><button type="button" class="card-board-control card-board-close" data-board-close="${safeId}" aria-label="Close ${safeTitle}" title="Close ${safeTitle}">${icon("x")}</button></div><div class="card-board-actions" hidden></div></header><button type="button" class="card-board-resize-handle card-board-resize-handle--left" data-board-resize="${safeId}" data-board-resize-edge="left" aria-label="Resize ${safeTitle} from bottom left" title="Resize ${safeTitle} from bottom left"></button><button type="button" class="card-board-resize-handle card-board-resize-handle--right" data-board-resize="${safeId}" data-board-resize-edge="right" aria-label="Resize ${safeTitle} from bottom right" title="Resize ${safeTitle} from bottom right"></button>`;
       const body = document.createElement("div");
       body.className = `card-board-body${assets ? " assets-desktop" : ""}${card.matches("[data-assets-trade]") ? " assets-trade-tools" : ""}`;
       body.append(card);
@@ -837,7 +839,7 @@
         item.setAttribute("aria-label", `Switch to ${nodes.get(id).title}`);
         item.title = nodes.get(id).title;
         const cardState=locked(id)?"Unavailable":layout[id].minimized?"Minimized":layout[id].pinned?"Pinned":layout[id].expanded?"Expanded":"Open";
-        item.innerHTML = `<span class="card-board-window-switcher-icon" aria-hidden="true">${window.CardVisuals.icon(id)}</span><span class="card-board-window-switcher-name"></span><small class="card-board-window-switcher-state">${cardState}</small>`;
+        item.innerHTML = `<span class="card-board-window-switcher-icon" aria-hidden="true">${windowIcon(id) || window.CardVisuals.icon(id)}</span><span class="card-board-window-switcher-name"></span><small class="card-board-window-switcher-state">${cardState}</small>`;
         item.querySelector(".card-board-window-switcher-name").textContent = nodes.get(id).title;
         switcherItems.append(item);
       });
@@ -1097,7 +1099,7 @@
       options.onOpen?.(id, nodes.get(id).card);
     };
     const addClipboardCard = (descriptor) => {
-      const {id, title, card, width = 1040, height = 590, galleryVisible = true, initialScale = 1, minScale} = descriptor || {};
+      const {id, title, card, width = 1040, height = 590, galleryVisible = true, initialScale = 1, minScale, iconKind = ""} = descriptor || {};
       const sizeRevision = Number(descriptor?.sizeRevision) || 0;
       if (!id || !card) return false;
       const resolvedMinScale = Number.isFinite(minScale) ? minScale : minimumScaleFor(id);
@@ -1113,6 +1115,11 @@
         node.title = title || node.title;
         node.card = card;
         node.galleryVisible = galleryVisible;
+        if (iconKind && iconKind !== node.iconKind) {
+          node.iconKind = iconKind;
+          const mark = frames.get(id)?.querySelector(".card-board-window-mark");
+          if (mark) mark.innerHTML = windowIcon(id, node);
+        }
         const frame = frames.get(id);
         frame.setAttribute("aria-label", `${node.title} window`);
         frame.querySelector(".card-board-body").replaceChildren(card);
@@ -1126,7 +1133,7 @@
           control.title = `${label} ${node.title}`;
         }
       } else {
-        nodes.set(id, {card, title: title || "Player Card", galleryVisible});
+        nodes.set(id, {card, title: title || "Player Card", galleryVisible, iconKind});
         layout[id] = {x:16, y:16, width, height, scale:initialScale, minScale:resolvedMinScale, visible:false, pinned:false, minimized:false, z:Object.keys(layout).length + 1, positioned:false, sizeRevision};
         createWindowFrame(id, nodes.get(id));
       }

@@ -86,8 +86,10 @@ class Concept74GuiTests(unittest.TestCase):
         specification = CSS[CSS.rindex("Regular-season command surface") :]
         # The Age column was removed from the minutes card (and its nth-child group-gap CSS with it).
         # The Player cell also holds the "Coach rests players" toggle (FATIGUE-REST); the five columns are unchanged.
-        self.assertIn('<span class="season-minutes-player-head"><span>Player</span>', minutes)
-        self.assertIn("</span><span>Pos</span><span>Height</span><span>Minutes</span><span>Fatigue</span>", minutes)
+        # The Player header is a house-table sort button that keeps the coach-rest toggle beside it.
+        self.assertIn('houseHeader("minutes", "player", "Player", {className:"season-minutes-player-head"', minutes)
+        for label in ("Pos", "Height", "Minutes", "Fatigue"):
+            self.assertIn(f"\", \"{label}\"", minutes)
 
     def test_team_radars_are_stacked_between_signals_and_standings(self):
         dashboard = APP[
