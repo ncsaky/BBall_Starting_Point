@@ -87,7 +87,7 @@ class RecentLotteryPickTests(unittest.TestCase):
             self.assertFalse(tt.recent_lottery_pick(canonical, {"draft_year": 2022, "draft_position": 2}))
             self.assertFalse(tt.recent_lottery_pick(canonical, {}))
             # In the search: a rising team's recent No. 2 pick matches a contender's target but is not on the market.
-            star = row("peterson", "y", age=21.5, minutes=20.0, on_court=66.0, development=15.0, salary=14.5e6)
+            star = row("peterson", "y", age=21.5, minutes=20.0, on_court=62.0, development=15.0, salary=14.5e6)
             star["player"].update(draft_year=2026, draft_position=2)
             canonical = league("peak", extra_rows=[star])
             target = {"id": "x:t", "key": "rotation_upgrade", "label": "a guard", "reason": "r",
@@ -104,6 +104,23 @@ class RecentLotteryPickTests(unittest.TestCase):
                 found = [p["row"]["id"] for p in tt.target_pairings(canonical, ["x"], set(), 2, {}, random.Random(0))]
             self.assertNotIn("peterson", found)
             self.assertIn("y0", found)
+            # A player the seller acquired by trade in the last six months is not shopped again ...
+            with patch.object(tt, "team_trade_targets", return_value=[target]), \
+                    patch.object(tt, "team_sell_reasons", return_value={}), \
+                    patch.object(tx, "effectively_untouchable", return_value=False), \
+                    patch.object(tx, "re_trade_hold", return_value={"y0": "y"}), \
+                    patch.object(tt, "asking_price", return_value={"ask": 0.0, "threshold": 0.0}), \
+                    patch.object(tt, "buyer_value", return_value=50.0), \
+                    patch.object(tt, "trade_surplus", return_value=0.0), \
+                    patch.object(tt, "buyer_minutes", return_value=24.0), \
+                    patch("nba_gm_data.team_planning.core_commitment", return_value=False):
+                held = [p["row"]["id"] for p in tt.target_pairings(canonical, ["x"], set(), 2, {}, random.Random(0))]
+                canonical = league("peak", extra_rows=[star])
+                canonical["team_strategic_states"][1]["window_phase"] = "rebuilding"
+                tt.player_rows(canonical)["y0"]["age"] = 31.0
+                flipped = [p["row"]["id"] for p in tt.target_pairings(canonical, ["x"], set(), 2, {}, random.Random(0))]
+            self.assertNotIn("y0", held)
+            self.assertIn("y0", flipped)  # ... unless a rebuilding team flips a veteran it took on as salary
 
 
 class QuickScreenTests(unittest.TestCase):

@@ -486,6 +486,8 @@ def salary_filler(canonical: dict[str, Any], team_id: str) -> dict[str, str]:
 
 YOUNG_PIECE_AGE = 25.5
 YOUNG_STARTER_MINUTES = 24.0
+FLIP_AGE = 28.0  # a rebuilding team may re-trade a veteran this old within the six-month hold
+YOUNG_CORE_ON_COURT = 65.0
 
 
 def young_piece_kept(row: dict[str, Any], seller_stance: str) -> bool:
@@ -496,7 +498,12 @@ def young_piece_kept(row: dict[str, Any], seller_stance: str) -> bool:
     teams that happened to target them, at prices the acceptance check allowed."""
     if row["age"] > YOUNG_PIECE_AGE:
         return False
-    return seller_stance in {"rebuild", "retool"} or row["minutes"] >= YOUNG_STARTER_MINUTES
+    # TRADE-DEADLINE: a young player of starter quality is a core piece even when his minutes are lower (in July the
+    # projection is not the season's role). With buyer filler, the final run had rising Portland trade Donovan Clingan
+    # (23, on-court 70, 21 projected minutes) for Mitchell Robinson and a first. The bar is about the top 5% of
+    # players 25 or younger by on-court value.
+    return (seller_stance in {"rebuild", "retool"} or row["minutes"] >= YOUNG_STARTER_MINUTES
+            or row["on_court"] >= YOUNG_CORE_ON_COURT)
 
 
 # Reasons that never put a young player a team builds around on the market (trade 2b, the user's direction: young
@@ -593,6 +600,7 @@ def target_pairings(canonical: dict[str, Any], buyer_ids: list[str], excluded: s
     rows = player_rows(canonical)
     human = set(canonical.get("_human_team_ids") or [])
     alternatives = ALTERNATIVES[min(2, depth)]
+    held = tx.re_trade_hold(canonical)
     pairings = []
     for buyer_id in buyer_ids:
         for rank, target in enumerate(team_trade_targets(canonical, buyer_id)):
@@ -614,6 +622,12 @@ def target_pairings(canonical: dict[str, Any], buyer_ids: list[str], excluded: s
                     continue
                 if ((young_piece_kept(row, seller_stance) or recent_lottery_pick(canonical, row["player"]))
                         and not exposing_reasons(reasons)):
+                    continue
+                if held.get(row["id"]) == row["team_id"] and not (seller_stance == "rebuild" and row["age"] >= FLIP_AGE):
+                    # TRADE-DEADLINE: a player the team acquired by trade in the last six months is not shopped again
+                    # (the final run had Sam Hauser traded three times in eight months, Detroit selling him three
+                    # months after targeting him). A rebuilding team may still flip a veteran it took on as salary
+                    # (Atlanta moving Nurkic and Okogie to contenders), the usual real exception.
                     continue
                 matches.append((score + 4.0 * sell_strength(reasons), row, reasons))
             matches.sort(key=lambda m: (-m[0], m[1]["id"]))
