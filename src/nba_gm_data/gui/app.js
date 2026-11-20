@@ -12,6 +12,7 @@ const state = {
   dashboardTeam: "",
   dashboardStandingsConference: "",
   dashboardOpponentSort: { key: "overall", direction: "desc" },
+  tableSorts: {},
   calendarMonth: "",
   expandedContractSeason: "",
   rotationDraft: {},
@@ -1945,6 +1946,8 @@ function applyStandingsGameProgress(event) {
     if (cells[3]) cells[3].textContent = winPct(row.win_pct);
     if (cells[4]) cells[4].textContent = gamesBack <= 0 ? "—" : Number.isInteger(gamesBack) ? String(gamesBack) : gamesBack.toFixed(1).replace(/^0/, "");
   }
+  // A sort other than seed (e.g. Win%) follows the updated numbers.
+  if (typeof applyHouseSort === "function") panel.querySelectorAll("[data-house-table]").forEach(applyHouseSort);
   return false;
 }
 
@@ -2224,33 +2227,39 @@ function animateTeamSignalsFrom(previous) {
   });
 }
 
+// Minutes rows follow the table's sort (minutes by default) through the shared house-table comparator. While a
+// slider is being dragged, rows stay put (no row moves under the pointer); they settle when it is released.
+function minutesRowsInSortOrder(table, rows) {
+  const minutesRows = rows.filter((row) => row.matches?.("[data-house-row]") ?? true);
+  if (typeof HouseTable !== "object") return minutesRows;
+  return houseOrderedRows("minutes", minutesRows);
+}
+
 function reorderMinutesTable(table) {
   const rows = table ? [...table.querySelectorAll(":scope > .season-minute-row")] : [];
-  if (rows.length < 2) return;
+  if (rows.length < 2 || table.dataset.houseDragging) return;
   const previousTops = new Map(rows.map((row) => [row, row.getBoundingClientRect().top]));
   const previousOrder = new Map([...rows].sort((left, right) => previousTops.get(left) - previousTops.get(right)).map((row, index) => [row, index]));
-  const ordered = [...rows].sort((left, right) => {
-    const leftValue = left.classList.contains("injured") ? 0 : Number(state.rotationDraft[left.dataset.minuteRow] || 0);
-    const rightValue = right.classList.contains("injured") ? 0 : Number(state.rotationDraft[right.dataset.minuteRow] || 0);
-    return rightValue - leftValue || previousOrder.get(left) - previousOrder.get(right);
-  });
+  const ordered = minutesRowsInSortOrder(table, rows);
   ordered.forEach((row, index) => { row.style.gridRow = String(index + 2); });
   ordered.forEach((row, index) => {
     const previousIndex = previousOrder.get(row);
     if (previousIndex !== index) showRowMovement(row, index < previousIndex ? "up" : "down", Math.abs(previousIndex - index));
     animateRowFromPreviousPosition(row, previousTops.get(row));
   });
+  if (typeof HouseTable === "object") {
+    HouseTable.stripe(ordered);
+    houseMarkTable(table);
+  }
 }
 
 function normalizeMinutesDomOrder(table) {
   if (!table) return;
-  const rows = [...table.querySelectorAll(":scope > .season-minute-row")];
-  rows.sort((left, right) => {
-    const leftValue = left.classList.contains("injured") ? 0 : Number(state.rotationDraft[left.dataset.minuteRow] || 0);
-    const rightValue = right.classList.contains("injured") ? 0 : Number(state.rotationDraft[right.dataset.minuteRow] || 0);
-    return rightValue - leftValue || left.dataset.minuteRow.localeCompare(right.dataset.minuteRow);
-  });
-  rows.forEach((row) => { row.style.gridRow = ""; table.append(row); });
+  const rows = minutesRowsInSortOrder(table, [...table.querySelectorAll(":scope > .season-minute-row")]);
+  if (typeof HouseTable === "object") {
+    HouseTable.placeRows(table, rows);
+    houseMarkTable(table);
+  } else rows.forEach((row) => { row.style.gridRow = ""; table.append(row); });
 }
 
 function showRowMovement(row, direction, places = 1) {
@@ -2850,6 +2859,7 @@ function renderDashboardTab(rows) {
       wireRotationResetAllControl(target);
     }
     wireSeasonOpponentSorting(target);
+    wireHouseTables(target);
     wireSeasonOpponentInjuryTicker(target);
     if (phaseKind) {
       wireDashboardPhaseWorkspace(phaseKind, target);
@@ -3228,12 +3238,13 @@ function seasonStandingsCard(viewedTeam, expanded = false) {
       const logo = teamLogoSrc(team);
       const gamesBack = ((Number(leader.wins || 0) - Number(row.wins || 0)) + (Number(row.losses || 0) - Number(leader.losses || 0))) / 2;
       const gamesBackLabel = gamesBack <= 0 ? "—" : Number.isInteger(gamesBack) ? String(gamesBack) : gamesBack.toFixed(1).replace(/^0/, "");
-      return `<button type="button" class="season-standing-row${team === viewedTeam ? " active" : ""}${index === 5 ? " playoff-line" : ""}${index === 9 ? " play-in-line" : ""}" data-dashboard-team-jump="${escapeAttr(team)}">
+      return `<button type="button" class="season-standing-row${team === viewedTeam ? " active" : ""}${index === 5 ? " playoff-line" : ""}${index === 9 ? " play-in-line" : ""}" data-dashboard-team-jump="${escapeAttr(team)}" data-house-row data-house-order="${index}"${index % 2 ? " data-house-alt" : ""}>
         <span>${index + 1}</span><span class="season-standing-team-cell" data-standing-team-id="${escapeAttr(row.team?.id || row.team_id || "")}">${logo ? `<img src="${escapeAttr(logo)}" alt="" />` : ""}<span class="season-standing-team-name">${escapeHtml(team)}</span><i class="season-row-motion" aria-hidden="true" hidden></i></span><span>${Number(row.wins || 0)}-${Number(row.losses || 0)}</span><span>${escapeHtml(winPct(row.win_pct))}</span><span>${escapeHtml(gamesBackLabel)}</span>
       </button>`;
     }).join("");
-    return `<div class="season-standings-table${isExpanded ? " season-standings-table-expanded" : ""}"${isExpanded ? ` style="--standings-count:${Math.max(1, rows.length)}"` : ""}>
-      <div class="season-standings-head"><span>#</span><span>Team</span><span>W-L</span><span>Win%</span><span>GB</span></div>
+    // Sorting reorders rows only: # stays each team's real seed, and the playoff / play-in lines show in seed order.
+    return `<div class="season-standings-table${isExpanded ? " season-standings-table-expanded" : ""}"${isExpanded ? ` style="--standings-count:${Math.max(1, rows.length)}"` : ""} data-house-table="standings">
+      <div class="season-standings-head" data-house-head>${houseHeader("standings", "seed", "#", {title:"Seed (the real standings order)"})}${houseHeader("standings", "team", "Team")}${houseHeader("standings", "record", "W-L", {title:"Sort by wins"})}${houseHeader("standings", "pct", "Win%")}${houseHeader("standings", "gb", "GB", {title:"Games behind the conference leader"})}</div>
       ${items || `<div class="empty">No standings yet.</div>`}
     </div>`;
   };
@@ -3251,6 +3262,7 @@ function setStandingsCardExpanded(expanded, card) {
   panel.classList.toggle("is-expanded", Boolean(expanded));
   panel.innerHTML = seasonStandingsCard(viewedTeam, Boolean(expanded));
   wireDashboardTeamJumps(panel);
+  wireHouseTables(panel);
   return true;
 }
 
@@ -3410,9 +3422,8 @@ function seasonOpponentCard(dash, viewedTeam) {
       }).join("")}`}</div>
       <span class="season-opponent-date">${escapeHtml(formatDashboardShortDate(game.date) || game.date || "")}${homeAway ? ` · ${homeAway}` : ""}</span>
     </header>
-    <div class="season-opponent-table" role="table" aria-label="Next Opponent rotation">
-      <span class="season-opponent-sort-band" aria-hidden="true"></span>
-      <div class="season-opponent-head" role="row">${[
+    <div class="season-opponent-table" role="table" aria-label="Next Opponent rotation" data-house-table="opponent">
+      <div class="season-opponent-head" role="row" data-house-head>${[
         ["player", "Player"], ["overall", "OVR"], ["offense", "OFF"], ["defense", "DEF"],
         ["points", "PTS"], ["rebounds", "REB"], ["assists", "AST"],
       ].map(([key, label]) => seasonOpponentSortHeader(key, label)).join("")}</div>
@@ -3420,7 +3431,7 @@ function seasonOpponentCard(dash, viewedTeam) {
         const playerName = row.name || "Unknown";
         const playerMarkup = playerNameWithInjuryMarkup(row, `${displayIndex + 1}. ${playerName}`)
           .replace('class="player-name-text"', 'class="player-name-text" data-opponent-player-text');
-        return `<div class="season-opponent-row${isPlayerInjured(row.health) ? " injured" : ""}" role="row" data-opponent-index="${originalIndex}"${seasonOpponentSortData(row)}><span class="season-opponent-player-cell" role="rowheader" data-opponent-column="player"><button type="button" class="season-opponent-player-link" data-dashboard-player-card="${escapeAttr(row.id || row.player_id || "")}" aria-label="Open ${escapeAttr(playerName)} player card">${playerMarkup}</button></span>${seasonOpponentRatingCell(rating(row, "overall"), "overall")}${seasonOpponentRatingCell(rating(row, "offense"), "offense")}${seasonOpponentRatingCell(rating(row, "defense"), "defense")}${["points", "rebounds", "assists"].map((key) => `<span role="cell" data-opponent-column="${key}">${escapeHtml(statNumber(row, key))}</span>`).join("")}</div>`;
+        return `<div class="season-opponent-row${isPlayerInjured(row.health) ? " injured" : ""}" role="row" data-opponent-index="${originalIndex}" data-house-row data-house-order="${originalIndex}"${displayIndex % 2 ? " data-house-alt" : ""}${seasonOpponentSortData(row)}><span class="season-opponent-player-cell" role="rowheader" data-opponent-column="player"><button type="button" class="season-opponent-player-link" data-dashboard-player-card="${escapeAttr(row.id || row.player_id || "")}" aria-label="Open ${escapeAttr(playerName)} player card">${playerMarkup}</button></span>${seasonOpponentRatingCell(rating(row, "overall"), "overall")}${seasonOpponentRatingCell(rating(row, "offense"), "offense")}${seasonOpponentRatingCell(rating(row, "defense"), "defense")}${["points", "rebounds", "assists"].map((key) => `<span role="cell" data-opponent-column="${key}">${escapeHtml(statNumber(row, key))}</span>`).join("")}</div>`;
       }).join("") || `<div class="empty">${opponent.pending ? "Rotation updates as the sim reaches this game." : "Opponent rotation unavailable."}</div>`}
     </div>
     <div class="season-opponent-injuries"><span>Current injuries:</span><div class="season-opponent-injury-ticker" data-injury-ticker title="${escapeAttr(injuries.join(" · ") || (opponent.pending ? "—" : "No active injuries"))}"><div class="season-opponent-injury-track"><span data-injury-ticker-text>${escapeHtml(injuries.join(" · ") || (opponent.pending ? "—" : "No active injuries"))}</span><span data-injury-ticker-copy aria-hidden="true"></span></div></div></div>`;
@@ -3428,10 +3439,155 @@ function seasonOpponentCard(dash, viewedTeam) {
 
 const SEASON_OPPONENT_SORT_KEYS = new Set(["player", "overall", "offense", "defense", "points", "rebounds", "assists"]);
 
+// House tables (house-table.js / house-table.css): the sortable columns of the five season card tables.
+// type: "text" sorts A-Z (accents and case ignored), otherwise numbers. first: the first click's direction (numbers
+// start high-to-low; text, ranks, ages and positions start low-to-high). col: the 1-based column that is shaded.
+// Missing values always sort last; ties keep the table's own order. Sorting only moves rows, never values.
+const HOUSE_TABLE_COLUMNS = {
+  minutes: {
+    player: {type: "text", col: 1}, position: {first: "asc", col: 2}, height: {col: 3},
+    minutes: {col: 4}, fatigue: {col: 5},
+  },
+  development: {
+    player: {type: "text", col: 1}, age: {first: "asc", col: 2}, runway: {col: 3},
+    movement: {col: 4}, season: {col: 4}, month: {col: 4},
+  },
+  staff: {role: {first: "asc", col: 1}, grade: {col: 2}, contract: {col: 3}},
+  standings: {seed: {first: "asc", col: 1}, team: {type: "text", col: 2}, record: {col: 3}, pct: {col: 4}, gb: {first: "asc", col: 5}},
+  opponent: {
+    player: {type: "text", col: 1}, overall: {col: 2}, offense: {col: 3}, defense: {col: 4},
+    points: {col: 5}, rebounds: {col: 6}, assists: {col: 7},
+  },
+};
+const HOUSE_TABLE_DEFAULT_SORTS = {
+  minutes: {key: "minutes", direction: "desc"},
+  development: {key: "movement", direction: "desc"},
+  staff: {key: "role", direction: "asc"},
+  "staff-market": {key: "grade", direction: "desc"},
+  standings: {key: "seed", direction: "asc"},
+  opponent: {key: "overall", direction: "desc"},
+};
+const HOUSE_POSITION_ORDER = {PG: 1, G: 1.5, SG: 2, GF: 2.5, SF: 3, F: 3.5, PF: 4, FC: 4.5, C: 5};
+
+function houseColumns(id) {
+  return HOUSE_TABLE_COLUMNS[id === "staff-market" ? "staff" : id] || {};
+}
+
+function houseSort(id) {
+  const columns = houseColumns(id);
+  const valid = (sort) => Boolean(sort && columns[sort.key] && ["asc", "desc"].includes(sort.direction));
+  if (id === "opponent") {
+    if (!valid(state.dashboardOpponentSort)) state.dashboardOpponentSort = {...HOUSE_TABLE_DEFAULT_SORTS.opponent};
+    return state.dashboardOpponentSort;
+  }
+  state.tableSorts ||= {};
+  if (!valid(state.tableSorts[id])) state.tableSorts[id] = {...HOUSE_TABLE_DEFAULT_SORTS[id]};
+  return state.tableSorts[id];
+}
+
+function setHouseSort(id, sort) {
+  if (id === "opponent") state.dashboardOpponentSort = sort;
+  else (state.tableSorts ||= {})[id] = sort;
+}
+
+function houseHeader(id, key, label, options = {}) {
+  return HouseTable.headerCell({key, label, sort: houseSort(id), ...options});
+}
+
+// Position as a number from point guard (1) to center (5); combos ("G-F") sit between their parts.
+function housePositionRank(position) {
+  const ranks = String(position || "").toUpperCase().split(/[^A-Z]+/).map((token) => HOUSE_POSITION_ORDER[token]).filter(Number.isFinite);
+  return ranks.length ? ranks.reduce((sum, value) => sum + value, 0) / ranks.length : "";
+}
+
+function houseHeightInches(label) {
+  const match = String(label || "").match(/(\d+)\s*'\s*(\d+)/);
+  return match ? Number(match[1]) * 12 + Number(match[2]) : "";
+}
+
+// The value a row shows in a column. Minutes come from the live rotation draft (what the slider shows), standings
+// from the cells the live sim updates in place; everything else from the row's data-sort-* attributes.
+function houseRowValue(id, row, key) {
+  if (id === "minutes") {
+    if (key === "minutes") {
+      return row.classList.contains("injured") || row.classList.contains("resting") ? 0 : Number(state.rotationDraft[row.dataset.minuteRow] || 0);
+    }
+    if (key === "fatigue") return row.querySelector(".season-fatigue")?.dataset.fatigueValue ?? "";
+  }
+  if (id === "standings") {
+    const cells = row.querySelectorAll(":scope > span");
+    if (key === "seed") return cells[0]?.textContent ?? "";
+    if (key === "team") return row.querySelector(".season-standing-team-name")?.textContent ?? "";
+    if (key === "record") return String(cells[2]?.textContent || "").split("-")[0];
+    if (key === "pct") return cells[3]?.textContent ?? "";
+    if (key === "gb") {
+      const text = String(cells[4]?.textContent || "").trim();
+      return text === "—" ? 0 : text;
+    }
+  }
+  return row.dataset[`sort${key[0].toUpperCase()}${key.slice(1)}`] ?? "";
+}
+
+function houseOrderedRows(id, rows, sort = houseSort(id)) {
+  const column = houseColumns(id)[sort.key] || {};
+  return HouseTable.order(rows, {
+    direction: sort.direction,
+    type: column.type || "number",
+    valueOf: (row) => houseRowValue(id, row, sort.key),
+    orderOf: (row, index) => (Number.isFinite(Number(row.dataset.houseOrder)) ? Number(row.dataset.houseOrder) : index),
+  });
+}
+
+function houseMarkTable(table) {
+  const id = table?.dataset.houseTable;
+  if (!id) return;
+  HouseTable.markSort(table, houseSort(id), (key) => houseColumns(id)[key]?.col || 0);
+}
+
+// Put a table's rows in the active sort order (rows move; their values do not change).
+function applyHouseSort(table) {
+  const id = table?.dataset.houseTable;
+  if (!id) return;
+  if (id === "minutes") {
+    normalizeMinutesDomOrder(table);
+    return;
+  }
+  const rows = [...table.querySelectorAll(":scope > [data-house-row]")];
+  HouseTable.placeRows(table, houseOrderedRows(id, rows));
+  houseMarkTable(table);
+  if (id === "opponent") {
+    table.querySelectorAll(":scope > [data-house-row]").forEach((row, index) => {
+      const label = row.querySelector("[data-opponent-player-text]");
+      if (label) label.textContent = `${index + 1}. ${row.dataset.sortPlayer || "Unknown"}`;
+    });
+  }
+}
+
+function wireHouseTables(root = document) {
+  if (!root?.querySelectorAll) return;
+  if (root.matches?.("[data-house-table]")) applyHouseSort(root);
+  root.querySelectorAll("[data-house-table]").forEach(applyHouseSort);
+}
+
+// One delegated handler for every house-table header button (Enter and Space activate the native button).
+function handleHouseSortClick(event) {
+  const button = event.target?.closest?.("[data-house-sort]");
+  const table = button?.closest("[data-house-table]");
+  if (!button || !table) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const id = table.dataset.houseTable;
+  setHouseSort(id, HouseTable.nextSort(houseSort(id), button.dataset.houseSort, houseColumns(id)));
+  // Expanded standings shows one table per conference: both follow the same sort.
+  document.querySelectorAll(`[data-house-table="${id}"]`).forEach(applyHouseSort);
+}
+
+if (typeof document === "object" && typeof document?.addEventListener === "function") {
+  document.addEventListener("click", handleHouseSortClick);
+}
+
 function seasonOpponentSortHeader(key, label) {
-  const active = state.dashboardOpponentSort?.key === key;
-  const direction = active ? state.dashboardOpponentSort.direction : "none";
-  return `<span role="columnheader" aria-sort="${direction}" data-opponent-column="${key}"${active ? " data-opponent-sorted" : ""}><button type="button" class="season-opponent-sort-button" data-opponent-sort="${key}">${label}</button></span>`;
+  return houseHeader("opponent", key, label, {attributes: `data-opponent-column="${key}"`});
 }
 
 function seasonOpponentRatingCell(value, key) {
@@ -3456,139 +3612,30 @@ function seasonOpponentSortData(row) {
   return Object.entries(attributes).map(([key, value]) => ` data-sort-${key}="${escapeAttr(value)}"`).join("");
 }
 
+// The opponent's six rotation players in the active sort, through the shared comparator.
 function seasonOpponentOrderedRows(rows, sortState) {
-  const stateToUse = SEASON_OPPONENT_SORT_KEYS.has(sortState?.key) && ["asc", "desc"].includes(sortState?.direction)
+  const sort = SEASON_OPPONENT_SORT_KEYS.has(sortState?.key) && ["asc", "desc"].includes(sortState?.direction)
     ? sortState
-    : { key: "overall", direction: "desc" };
-  return rows.map((row, originalIndex) => ({ row, originalIndex })).sort((left, right) => {
-    const leftValue = seasonOpponentSortValue(left.row, stateToUse.key);
-    const rightValue = seasonOpponentSortValue(right.row, stateToUse.key);
-    if (leftValue.missing !== rightValue.missing) return leftValue.missing ? 1 : -1;
-    let comparison = 0;
-    if (leftValue.missing) return left.originalIndex - right.originalIndex;
-    if (leftValue.numeric && rightValue.numeric) {
-      comparison = leftValue.value - rightValue.value;
-    } else {
-      comparison = leftValue.value < rightValue.value ? -1 : leftValue.value > rightValue.value ? 1 : 0;
-    }
-    if (comparison && stateToUse.direction === "desc") comparison *= -1;
-    return comparison || left.originalIndex - right.originalIndex;
+    : {...HOUSE_TABLE_DEFAULT_SORTS.opponent};
+  const column = HOUSE_TABLE_COLUMNS.opponent[sort.key];
+  return HouseTable.order(rows.map((row, originalIndex) => ({row, originalIndex})), {
+    direction: sort.direction,
+    type: column.type || "number",
+    valueOf: ({row}) => seasonOpponentSortValue(row, sort.key),
+    orderOf: ({originalIndex}) => originalIndex,
   });
 }
 
 function seasonOpponentSortValue(row, key) {
-  if (key === "player") {
-    const name = String(row.name || "Unknown").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    return { value: name, numeric: false, missing: !name };
-  }
-  const raw = key === "overall" ? rating(row, "overall")
-    : key === "offense" ? rating(row, "offense")
-      : key === "defense" ? rating(row, "defense")
-        : statNumber(row, key);
+  if (key === "player") return row.name || "";
   if (key === "overall" || key === "offense" || key === "defense") {
-    return { value: Number(clampNumber(Number(raw || 0), 0, 99).toFixed(0)), numeric: true, missing: false };
+    return Number(clampNumber(Number(rating(row, key) || 0), 0, 99).toFixed(0));
   }
-  const number = Number(raw);
-  return { value: number, numeric: true, missing: raw === "" || !Number.isFinite(number) };
+  return statNumber(row, key);
 }
-
-function seasonOpponentSortValueFromRow(row, key) {
-  if (key === "player") {
-    const name = String(row.dataset.sortPlayer || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    return { value: name, numeric: false, missing: !name };
-  }
-  const raw = row.dataset[`sort${key[0].toUpperCase()}${key.slice(1)}`] || "";
-  const number = Number(raw);
-  return { value: number, numeric: true, missing: raw === "" || !Number.isFinite(number) };
-}
-
-function applySeasonOpponentSort(panel) {
-  const table = panel.querySelector(".season-opponent-table");
-  if (!table) return;
-  const sortState = state.dashboardOpponentSort;
-  const headerCells = [...table.querySelectorAll(".season-opponent-head [role='columnheader']")];
-  headerCells.forEach((cell) => {
-    const active = cell.dataset.opponentColumn === sortState.key;
-    cell.toggleAttribute("data-opponent-sorted", active);
-    cell.setAttribute("aria-sort", active ? (sortState.direction === "desc" ? "descending" : "ascending") : "none");
-  });
-  table.querySelectorAll("[data-opponent-column]").forEach((cell) => {
-    cell.toggleAttribute("data-opponent-sorted", cell.dataset.opponentColumn === sortState.key);
-  });
-  const rows = [...table.querySelectorAll(":scope > .season-opponent-row")];
-  rows.sort((left, right) => {
-    const leftValue = seasonOpponentSortValueFromRow(left, sortState.key);
-    const rightValue = seasonOpponentSortValueFromRow(right, sortState.key);
-    if (leftValue.missing !== rightValue.missing) return leftValue.missing ? 1 : -1;
-    let comparison = 0;
-    if (leftValue.missing) return Number(left.dataset.opponentIndex) - Number(right.dataset.opponentIndex);
-    if (leftValue.numeric && rightValue.numeric) {
-      comparison = leftValue.value - rightValue.value;
-    } else {
-      comparison = leftValue.value < rightValue.value ? -1 : leftValue.value > rightValue.value ? 1 : 0;
-    }
-    if (comparison && sortState.direction === "desc") comparison *= -1;
-    return comparison || Number(left.dataset.opponentIndex) - Number(right.dataset.opponentIndex);
-  });
-  table.append(...rows);
-  rows.forEach((row, index) => {
-    const playerLabel = row.querySelector("[data-opponent-player-text]");
-    if (playerLabel) playerLabel.textContent = `${index + 1}. ${row.dataset.sortPlayer || "Unknown"}`;
-  });
-  updateSeasonOpponentSortBand(table);
-}
-
-function updateSeasonOpponentSortBand(table) {
-  const band = table.querySelector(":scope > .season-opponent-sort-band");
-  const header = table.querySelector(":scope > .season-opponent-head");
-  const activeCell = header?.querySelector(":scope > [data-opponent-sorted]");
-  const firstRow = table.querySelector(":scope > .season-opponent-row");
-  const lastRow = table.querySelector(":scope > .season-opponent-row:last-of-type");
-  if (!band || !header || !activeCell || !firstRow || !lastRow) {
-    if (band) band.hidden = true;
-    return;
-  }
-
-  const tableRect = table.getBoundingClientRect();
-  const activeRect = activeCell.getBoundingClientRect();
-  const sectionHeader = table.previousElementSibling;
-  const sectionHeaderRect = sectionHeader?.getBoundingClientRect();
-  const lastRowRect = lastRow.getBoundingClientRect();
-  const scaleX = table.offsetWidth > 0 ? tableRect.width / table.offsetWidth : 1;
-  const scaleY = table.offsetHeight > 0 ? tableRect.height / table.offsetHeight : 1;
-  const bandTop = sectionHeaderRect ? sectionHeaderRect.bottom : tableRect.top;
-  const bandBottom = lastRowRect.bottom;
-  band.style.left = `${(activeRect.left - tableRect.left) / scaleX}px`;
-  band.style.top = `${(bandTop - tableRect.top) / scaleY}px`;
-  band.style.width = `${activeRect.width / scaleX}px`;
-  band.style.height = `${(bandBottom - bandTop) / scaleY}px`;
-  band.hidden = false;
-}
-
-const seasonOpponentSortBandResizeObservers = new WeakMap();
 
 function wireSeasonOpponentSorting(root = document) {
-  root.querySelectorAll(".season-opponent-panel").forEach((panel) => {
-    if (!seasonOpponentSortBandResizeObservers.has(panel) && typeof ResizeObserver === "function") {
-      const observer = new ResizeObserver(() => updateSeasonOpponentSortBand(panel.querySelector(".season-opponent-table")));
-      observer.observe(panel);
-      seasonOpponentSortBandResizeObservers.set(panel, observer);
-    }
-    panel.querySelectorAll("[data-opponent-sort]").forEach((button) => {
-      if (button.dataset.opponentSortWired) return;
-      button.dataset.opponentSortWired = "true";
-      button.addEventListener("click", () => {
-        const key = button.dataset.opponentSort;
-        if (!SEASON_OPPONENT_SORT_KEYS.has(key)) return;
-        const current = state.dashboardOpponentSort;
-        state.dashboardOpponentSort = current.key === key
-          ? { key, direction: current.direction === "desc" ? "asc" : "desc" }
-          : { key, direction: key === "player" ? "asc" : "desc" };
-        applySeasonOpponentSort(panel);
-      });
-    });
-    applySeasonOpponentSort(panel);
-  });
+  root.querySelectorAll?.(".season-opponent-panel [data-house-table]").forEach(applyHouseSort);
 }
 
 const seasonOpponentInjuryTickerObservers = new WeakMap();
@@ -3926,7 +3973,7 @@ function staffActionAttributes(slot, action, permissions) {
   return permission[`can_${action}`] === false ? `disabled title="${escapeAttr(permission[`${action}_reason`] || "Available next season.")}"` : "";
 }
 
-function seasonStaffRowMarkup(row, portraitId, {actions = false, candidate = false, permissions} = {}) {
+function seasonStaffRowMarkup(row, portraitId, {actions = false, candidate = false, permissions, order = 0} = {}) {
   const name = staffName(row);
   const role = staffRoleLabel(row.slot || row.role);
   const grade = Number(staffGrade(row) || 0);
@@ -3935,7 +3982,9 @@ function seasonStaffRowMarkup(row, portraitId, {actions = false, candidate = fal
   const contract = `${salary ? money(salary) : "—"} x ${years || "—"}`;
   const personAction = candidate ? `data-staff-id="${escapeAttr(row.id)}"` : `data-dashboard-staff-card="${escapeAttr(staffIdentity(row))}"`;
   const actionAttributes = staffActionAttributes(row.slot || row.role, candidate ? "negotiate" : "fire", permissions);
-  return `<div class="season-staff-row${candidate ? " season-staff-candidate-row" : ""}">
+  const roleRank = ["Head Coach", "Offensive Coordinator", "Defensive Coordinator", "Performance Lead", "Development Lead", "Scouting Lead"].indexOf(role);
+  const sortData = `data-house-row data-house-order="${order}"${order % 2 ? " data-house-alt" : ""} data-sort-role="${roleRank < 0 ? 6 : roleRank}" data-sort-grade="${grade.toFixed(2)}" data-sort-contract="${salary ? Number(salary).toFixed(3) : ""}"`;
+  return `<div class="season-staff-row${candidate ? " season-staff-candidate-row" : ""}" ${sortData}>
     <button type="button" class="season-staff-person" ${personAction} ${candidate && actionAttributes ? actionAttributes : `title="${escapeAttr(name)}"`} aria-label="${candidate ? "Negotiate with" : "Open coach card for"} ${escapeAttr(name)}">${coachPortraitMarkup(portraitId, "season-staff-portrait")}<span><strong title="${escapeAttr(name)}">${escapeHtml(name)}</strong><small title="${escapeAttr(role)}">${escapeHtml(role)}</small></span></button>
     <span class="season-staff-grade" aria-label="Grade ${grade.toFixed(0)}"><em>${grade.toFixed(0)}</em><i><b style="${performanceBarStyle(grade)}"></b></i></span>
     <span class="season-staff-contract"><strong>${escapeHtml(contract)}</strong></span>
@@ -3956,9 +4005,9 @@ function seasonStaffCard(dash, includeHeader = true, {actions = false, available
     <div class="season-staff-summary" aria-label="Coaching staff overview">
       <span><strong>STAFF PAYROLL: ${escapeHtml(payrollLabel)}${available === null ? "" : ` · ${signedMoney(available)} available`}</strong></span>
     </div>
-    <div class="season-staff-table">
-      <div class="season-staff-head"><span>Staff Member</span><span>Grade</span><span>Contract</span>${actions ? '<span aria-hidden="true"></span>' : ""}</div>
-      ${rows.map(row => seasonStaffRowMarkup(row, portraits.get(staffIdentity(row)), {actions, permissions:dash.staff_action_permissions})).join("") || `<div class="empty">No staff loaded.</div>`}
+    <div class="season-staff-table" data-house-table="staff">
+      <div class="season-staff-head" data-house-head>${houseHeader("staff", "role", "Staff Member", {title:"Sort by role, head coach first"})}${houseHeader("staff", "grade", "Grade")}${houseHeader("staff", "contract", "Contract", {title:"Sort by salary per season"})}${actions ? '<span aria-hidden="true"></span>' : ""}</div>
+      ${rows.map((row, order) => seasonStaffRowMarkup(row, portraits.get(staffIdentity(row)), {actions, permissions:dash.staff_action_permissions, order})).join("") || `<div class="empty">No staff loaded.</div>`}
     </div>`;
 }
 
@@ -4026,9 +4075,9 @@ function seasonMinutesCard(rows, editable) {
     : Number(state.rotationDraft[row.id] ?? row.rotation_target_minutes ?? row.minutes_projection ?? 0);
   const sortedRows = [...rows].sort((left, right) => assigned(right) - assigned(left));
   return `${seasonPanelHeader("Minutes + Availability", "", "availability")}
-    <div class="season-minutes-table" style="--roster-count:${Math.max(1, rows.length)}">
-      <div class="season-minutes-head"><span class="season-minutes-player-head"><span>Player</span>${editable ? coachRestToggleMarkup("minutes-coach-rest") : ""}</span><span>Pos</span><span>Height</span><span>Minutes</span><span>Fatigue</span></div>
-      ${sortedRows.map((row) => {
+    <div class="season-minutes-table" style="--roster-count:${Math.max(1, rows.length)}" data-house-table="minutes">
+      <div class="season-minutes-head" data-house-head>${houseHeader("minutes", "player", "Player", {className:"season-minutes-player-head", extra:editable ? coachRestToggleMarkup("minutes-coach-rest") : ""})}${houseHeader("minutes", "position", "Pos", {title:"Sort by position, point guard to center"})}${houseHeader("minutes", "height", "Height")}${houseHeader("minutes", "minutes", "Minutes", {title:"Sort by minutes. Sorting only reorders the list; it never changes anyone's minutes."})}${houseHeader("minutes", "fatigue", "Fatigue")}</div>
+      ${sortedRows.map((row, index) => {
         const injured = isPlayerInjured(row.health);
         const resting = playerIsResting(row);
         const out = injured || resting;
@@ -4037,11 +4086,11 @@ function seasonMinutesCard(rows, editable) {
         const rotationLocked = !out && (state.rotationLockedPlayerIds.has(row.id) || row.rotation_user_set);
         const position = String(row.position || "—").trim() || "—";
         const height = heightFromRow(row) || "—";
-        return `<div class="season-minute-row${injured ? " injured" : ""}${resting ? " resting" : ""}" data-minute-row="${escapeAttr(row.id)}">
+        return `<div class="season-minute-row${injured ? " injured" : ""}${resting ? " resting" : ""}" data-minute-row="${escapeAttr(row.id)}" data-house-row data-house-order="${index}"${index % 2 ? " data-house-alt" : ""} data-sort-player="${escapeAttr(row.name || "")}" data-sort-position="${housePositionRank(row.position)}" data-sort-height="${houseHeightInches(height)}">
           <button type="button" data-dashboard-player-card="${escapeAttr(row.id)}">${playerHeadshotMarkup(row, "roster-player-headshot")}<span class="season-minute-player-name">${escapeHtml(row.name || "Unknown")}</span>${injuryStatus}<i class="season-row-motion" aria-hidden="true" hidden></i></button>
           <span class="season-minute-position" title="${escapeAttr(row.position || "Position unavailable")}">${escapeHtml(position)}</span>
           <span class="season-minute-height">${escapeHtml(height)}</span>
-          <div class="season-minute-control"><label class="season-minute-slider${rotationLocked ? " user-locked" : ""}"><i><b class="season-minute-fill" style="width:${(minuteValue / 48 * 100).toFixed(2)}%"></b></i><input type="range" min="0" max="48" step="1" value="${minuteValue}" data-minute-player="${escapeAttr(row.id)}" aria-label="Minutes for ${escapeAttr(row.name || "player")}" ${editable && !out ? "" : "disabled"} /></label><output class="is-sorted-value" data-minute-output="${escapeAttr(row.id)}">${minuteValue}</output><button type="button" class="season-minute-reset" data-minute-reset-player="${escapeAttr(row.id)}" aria-label="Reset ${escapeAttr(row.name || "player")} to automatic minutes" title="Reset to automatic minutes" ${rotationLocked && editable && !out ? "" : "hidden"} ${editable && !out ? "" : "disabled"}>×</button>${playerRestButtonMarkup(row, editable)}</div>
+          <div class="season-minute-control"><label class="season-minute-slider${rotationLocked ? " user-locked" : ""}"><i><b class="season-minute-fill" style="width:${(minuteValue / 48 * 100).toFixed(2)}%"></b></i><input type="range" min="0" max="48" step="1" value="${minuteValue}" data-minute-player="${escapeAttr(row.id)}" aria-label="Minutes for ${escapeAttr(row.name || "player")}" ${editable && !out ? "" : "disabled"} /></label><output data-minute-output="${escapeAttr(row.id)}">${minuteValue}</output><button type="button" class="season-minute-reset" data-minute-reset-player="${escapeAttr(row.id)}" aria-label="Reset ${escapeAttr(row.name || "player")} to automatic minutes" title="Reset to automatic minutes" ${rotationLocked && editable && !out ? "" : "hidden"} ${editable && !out ? "" : "disabled"}>×</button>${playerRestButtonMarkup(row, editable)}</div>
           ${seasonFatigueCell(row)}
         </div>`;
       }).join("") || `<div class="empty">No roster loaded.</div>`}
@@ -4177,9 +4226,9 @@ function seasonDevelopmentCard(rows) {
   const monthLabel = seasonDevelopmentMonthLabel(
     state.data?.dashboardTrends?.development?.latest_month || candidates[0]?.points?.at(-1)?.label,
   );
-  return `<div class="season-development-list" style="--development-count:${Math.max(1, Math.min(9, candidates.length))};--development-total:${Math.max(1, candidates.length)}">
-      <div class="season-development-head"><span>Player</span><span>Age</span><span title="Growth runway (young players) or decline watch (veterans, ↓ per year). Growth runway: room this player has left to improve, from age, role and current level, on a 0-5 scale. Not a prediction of a future rating; 0 for most players 27 and older.">Growth runway</span><span title="Change in overall rating this season (October to June) and in the latest month, from the game's actual rating changes.">Rating change</span></div>
-      ${candidates.map((player) => {
+  return `<div class="season-development-list" style="--development-count:${Math.max(1, Math.min(9, candidates.length))};--development-total:${Math.max(1, candidates.length)}" data-house-table="development">
+      <div class="season-development-head" data-house-head>${houseHeader("development", "player", "Player")}${houseHeader("development", "age", "Age")}${houseHeader("development", "runway", "Growth runway", {title:"Growth runway (young players) or decline watch (veterans, ↓ per year). Growth runway: room this player has left to improve, from age, role and current level, on a 0-5 scale. Not a prediction of a future rating; 0 for most players 27 and older. Sorts most room to grow first, steepest expected decline last."})}${houseHeader("development", "movement", "Rating change", {keys:[["movement", "Change", "Change in overall rating this season (October to June) and in the latest month, from the game's actual rating changes. Sorts the biggest movers first, up or down."], ["season", "Season", "Sort by this season's change, biggest gain first"], ["month", monthLabel, "Sort by the latest month's change, biggest gain first"]]})}</div>
+      ${candidates.map((player, index) => {
         const points = player.points || [];
         const values = points.map((point) => Number(point.value)).filter(Number.isFinite);
         const seasonDelta = values.length > 1 ? values.at(-1) - values[0] : 0;
@@ -4187,7 +4236,8 @@ function seasonDevelopmentCard(rows) {
         const upside = clampNumber(Number(player.upside_remaining || 0), 0, 5);
         const age = Number.isFinite(Number(player.age)) ? Number(player.age).toFixed(0) : "—";
         const summary = `${player.name}, age ${age}: growth runway ${upside.toFixed(1)} of 5, rating change this season ${signedNumber(seasonDelta)}, ${monthLabel} ${signedNumber(monthDelta)}`;
-        return `<button type="button" class="season-development-row" data-dashboard-player-card="${escapeAttr(player.player_id)}" aria-label="${escapeAttr(summary)}">
+        const runway = declineWatchApplies(player) ? Number(player.decline_watch.per_year) : upside;
+        return `<button type="button" class="season-development-row" data-dashboard-player-card="${escapeAttr(player.player_id)}" aria-label="${escapeAttr(summary)}" data-house-row data-house-order="${index}"${index % 2 ? " data-house-alt" : ""} data-sort-player="${escapeAttr(player.name || "")}" data-sort-age="${escapeAttr(age === "—" ? "" : age)}" data-sort-runway="${Number.isFinite(runway) ? runway.toFixed(2) : ""}" data-sort-movement="${Math.abs(seasonDelta).toFixed(3)}" data-sort-season="${seasonDelta.toFixed(3)}" data-sort-month="${monthDelta.toFixed(3)}">
           <span class="season-development-player">${playerHeadshotMarkup(player, "roster-player-headshot")}<span class="season-development-name">${escapeHtml(player.name)}</span></span>
           <span class="season-development-age">${escapeHtml(age)}</span>
           ${declineWatchApplies(player) ? seasonDevelopmentDecline(player.decline_watch) : seasonDevelopmentUpside(upside)}
@@ -8767,6 +8817,7 @@ function clipboardPlayerCardWindows(cardId = null) {
       minScale:isExtensionCard ? .5 : undefined,
       sizeRevision:isExtensionCard ? 9 : 4,
       galleryVisible:false,
+      iconKind:entry.kind,
     };
   });
 }
@@ -8938,7 +8989,7 @@ function expandedStaffMarkup(report, slots, market) {
     <section class="season-staff-current" aria-label="Current coaching staff">${seasonStaffCard(dash, false, {actions:true, available:report.budget?.available_millions ?? null})}</section>
     <section class="season-staff-market" aria-label="Available coaching staff">
       <header class="season-staff-market-head"><h3>Available Staff</h3><select id="staffSlot" aria-label="Filter available staff by role"><option value="">All roles</option>${["head_coach", "offensive_coordinator", "defensive_coordinator", "performance_lead", "development_lead", "scouting_lead"].map(slot => `<option value="${slot}" ${slot === state.staffSlot ? "selected" : ""}>${staffRoleLabel(slot)}</option>`).join("")}</select></header>
-      <div class="season-staff-market-list"><div class="season-staff-head"><span>Staff Member</span><span>Grade</span><span>Asking Contract</span><span aria-hidden="true"></span></div>${market.map(row => seasonStaffRowMarkup(row, portraits.get(staffIdentity(row)), {actions:true, candidate:true, permissions:report.staff_action_permissions})).join("") || '<div class="empty">No available staff for this role.</div>'}</div>
+      <div class="season-staff-market-list" data-house-table="staff-market"><div class="season-staff-head" data-house-head>${houseHeader("staff-market", "role", "Staff Member", {title:"Sort by role, head coach first"})}${houseHeader("staff-market", "grade", "Grade")}${houseHeader("staff-market", "contract", "Asking Contract", {title:"Sort by asking salary per season"})}<span aria-hidden="true"></span></div>${market.map((row, order) => seasonStaffRowMarkup(row, portraits.get(staffIdentity(row)), {actions:true, candidate:true, permissions:report.staff_action_permissions, order})).join("") || '<div class="empty">No available staff for this role.</div>'}</div>
     </section>
   </div>`;
 }
@@ -8982,6 +9033,7 @@ function renderStaff(target = els.content) {
       </section>
     </div>`;
   wireDashboardStaffCards(target);
+  wireHouseTables(target);
   target.querySelector("#staffSlot").addEventListener("change", async (event) => {
     state.staffSlot = event.target.value;
     await refreshFilteredStaffRoom(target);
@@ -9000,6 +9052,7 @@ async function setStaffCardExpanded(expanded, card) {
   if (!expanded) {
     card.innerHTML = seasonStaffCard(state.data.dashboard || {}, false);
     wireDashboardStaffCards(card);
+    wireHouseTables(card);
     return;
   }
   if (!state.data.staff || String(state.data.staff.market?.slot || "") !== state.staffSlot) {
@@ -12243,6 +12296,16 @@ function wireLeaguePanelControls(root = els.content) {
 
 function wireRotationMinuteInputs(root = els.content) {
   root.querySelectorAll("[data-minute-player]").forEach((input) => {
+    // Rows hold still while a slider is dragged and re-sort when it is let go.
+    const table = input.closest(".season-minutes-table");
+    const endDrag = () => {
+      if (!table?.dataset.houseDragging) return;
+      delete table.dataset.houseDragging;
+      reorderMinutesTable(table);
+    };
+    input.addEventListener("pointerdown", () => { if (table && !input.disabled) table.dataset.houseDragging = "true"; });
+    input.addEventListener("pointerup", endDrag);
+    input.addEventListener("pointercancel", endDrag);
     input.addEventListener("input", () => {
       const playerId = input.dataset.minutePlayer;
       const otherLockedTotal = [...state.rotationLockedPlayerIds]
@@ -12255,6 +12318,7 @@ function wireRotationMinuteInputs(root = els.content) {
       syncRotationInputs(root);
     });
     input.addEventListener("change", async () => {
+      endDrag();
       try {
         await saveRotationMinutes({ quiet: true });
         normalizeMinutesDomOrder(input.closest(".season-minutes-table"));

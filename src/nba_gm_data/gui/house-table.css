@@ -1,0 +1,199 @@
+/* House table style (rule 12), shared by the five season card tables: Minutes + Availability, Player Development,
+   Coaching Staff (card and staff room), Standings and Next Opponent. Same values as the approved draft-night board,
+   Playoff Injuries card and roster cut-down table: double header rule, small bold header text, white / light-grey
+   stripes, whole-row hover, a subtle sorted-column fill, and one bar style. Tables opt in with data attributes
+   (see house-table.js), so each table keeps its own column layout and body font sizes. */
+:root {
+  --house-row: #fff;
+  --house-row-alt: #eef1f3;
+  --house-row-hover: #dce8f2;
+  --house-row-active: #cfe1f1;
+  --house-row-active-hover: #c2d8ec;
+  --house-active-mark: #3d82c5;
+  --house-sorted-cell: rgba(118, 156, 190, .28);
+  --house-sorted-head: #d1dde8;
+  --house-rule: var(--season-soft-line, #d5dde3);
+  --house-head-rule: var(--season-line, #b7c2cb);
+  --house-head-text: var(--season-text, #1d2a33);
+  --house-focus: #42667a;
+  /* Bars: one height, one width for rating bars, one unfilled (track) darkness. */
+  --house-bar-track: #172228;
+  --house-bar-height: 5px;
+  --house-bar-width: 32px;
+}
+
+/* Header row: small bold dark labels over a double rule. */
+body.unified-terminal-ui [data-house-table] > [data-house-head] {
+  border-bottom: 3px double var(--house-head-rule) !important;
+  color: var(--house-head-text) !important;
+  background-color: var(--house-row);
+  background-repeat: no-repeat;
+}
+body.unified-terminal-ui [data-house-table] > [data-house-head]::after { display: none !important; }
+body.unified-terminal-ui [data-house-table] > [data-house-head] > * {
+  color: var(--house-head-text) !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  -webkit-text-stroke: 0 !important;
+  min-width: 0;
+}
+body.unified-terminal-ui [data-house-table] .house-th {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.unified-terminal-ui [data-house-table] .house-sort {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
+  min-height: 0 !important;
+  height: auto;
+  margin: 0;
+  padding: 0 !important;
+  overflow: hidden;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  cursor: pointer;
+  font: inherit;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-align: inherit;
+  text-overflow: ellipsis;
+  text-transform: none;
+  transform: none !important;
+  white-space: nowrap;
+}
+body.unified-terminal-ui [data-house-table] .house-sort:hover,
+body.unified-terminal-ui [data-house-table] .house-sort.is-active { text-decoration: underline; text-underline-offset: 2px; }
+body.unified-terminal-ui [data-house-table] .house-sort:focus-visible { outline: 1px solid var(--house-focus); outline-offset: 1px; }
+body.unified-terminal-ui [data-house-table] .house-sort-arrow { font-size: 6px; font-style: normal; line-height: 1; text-decoration: none; }
+body.unified-terminal-ui [data-house-table] .house-sort-arrow:empty { display: none; }
+body.unified-terminal-ui [data-house-table] .house-sort-divider { color: var(--season-muted, #5d6b77); font-style: normal; font-weight: 400; }
+/* Center-aligned header labels stay centered (Staff grade / contract, Minutes, Fatigue). */
+body.unified-terminal-ui [data-house-table] .house-th[style*="text-align:center"],
+body.unified-terminal-ui [data-house-table="staff"] > [data-house-head] > .house-th:not(:first-child),
+body.unified-terminal-ui [data-house-table="staff-market"] > [data-house-head] > .house-th:not(:first-child),
+body.unified-terminal-ui [data-house-table="minutes"] > [data-house-head] > .house-th:is(:nth-child(4),:nth-child(5)) { justify-content: center; }
+
+/* Body rows: white and light-grey stripes, the whole row lights on hover or keyboard focus. Stripes follow the
+   on-screen order (data-house-alt), so they stay right after sorting and while minutes rows animate. */
+body.unified-terminal-ui [data-house-table] > [data-house-row] {
+  background-color: var(--house-row) !important;
+  background-repeat: no-repeat;
+}
+body.unified-terminal-ui [data-house-table] > [data-house-row][data-house-alt] { background-color: var(--house-row-alt) !important; }
+body.unified-terminal-ui [data-house-table] > [data-house-row]:is(:hover, :focus-within) { background-color: var(--house-row-hover) !important; }
+/* Active state (your team in Standings): blue fill and a left mark, still distinct on hover and in a sorted column. */
+body.unified-terminal-ui [data-house-table] > [data-house-row].active,
+body.unified-terminal-ui [data-house-table] > [data-house-row].is-selected {
+  background-color: var(--house-row-active) !important;
+  box-shadow: inset 4px 0 var(--house-active-mark) !important;
+}
+body.unified-terminal-ui [data-house-table] > [data-house-row]:is(.active, .is-selected):is(:hover, :focus-within) { background-color: var(--house-row-active-hover) !important; }
+/* Row-level controls keep their own look (no button skins painting over the row colour). */
+body.unified-terminal-ui [data-house-table] > [data-house-row] > :not(input):not(.season-minute-control):not(.season-staff-action) { background-color: transparent !important; }
+
+/* Sorted column: a translucent fill drawn on the row (full row height, across the column gap), placed by
+   house-table.js from the column's measured position. It layers over stripes, hover and the active row. */
+body.unified-terminal-ui [data-house-table][data-house-col] > [data-house-row] {
+  background-image: linear-gradient(var(--house-sorted-cell), var(--house-sorted-cell)) !important;
+  background-position: var(--house-sort-left, -999px) 0 !important;
+  background-size: var(--house-sort-width, 0px) 100% !important;
+  background-repeat: no-repeat !important;
+}
+body.unified-terminal-ui [data-house-table][data-house-col] > [data-house-head] {
+  background-image: linear-gradient(var(--house-sorted-head), var(--house-sorted-head)) !important;
+  background-position: var(--house-sort-left, -999px) 0 !important;
+  background-size: var(--house-sort-width, 0px) 100% !important;
+  background-repeat: no-repeat !important;
+}
+/* Values in the sorted column are bold. */
+body.unified-terminal-ui [data-house-table][data-house-col="1"] > [data-house-row] > :nth-child(1),
+body.unified-terminal-ui [data-house-table][data-house-col="2"] > [data-house-row] > :nth-child(2),
+body.unified-terminal-ui [data-house-table][data-house-col="3"] > [data-house-row] > :nth-child(3),
+body.unified-terminal-ui [data-house-table][data-house-col="4"] > [data-house-row] > :nth-child(4),
+body.unified-terminal-ui [data-house-table][data-house-col="5"] > [data-house-row] > :nth-child(5),
+body.unified-terminal-ui [data-house-table][data-house-col="6"] > [data-house-row] > :nth-child(6),
+body.unified-terminal-ui [data-house-table][data-house-col="7"] > [data-house-row] > :nth-child(7),
+body.unified-terminal-ui [data-house-table][data-house-col="1"] > [data-house-row] > :nth-child(1) :is(strong,em,output,.season-minute-player-name,.season-development-name,.season-standing-team-name,.player-name-text),
+body.unified-terminal-ui [data-house-table][data-house-col="2"] > [data-house-row] > :nth-child(2) :is(strong,em,output),
+body.unified-terminal-ui [data-house-table][data-house-col="3"] > [data-house-row] > :nth-child(3) :is(strong,em,output),
+body.unified-terminal-ui [data-house-table][data-house-col="4"] > [data-house-row] > :nth-child(4) :is(strong,em,output),
+body.unified-terminal-ui [data-house-table][data-house-col="5"] > [data-house-row] > :nth-child(5) :is(strong,em,output),
+body.unified-terminal-ui [data-house-table][data-house-col="6"] > [data-house-row] > :nth-child(6) :is(strong,em,output),
+body.unified-terminal-ui [data-house-table][data-house-col="7"] > [data-house-row] > :nth-child(7) :is(strong,em,output) { font-weight: 700 !important; }
+/* Rows that are not in the sorted column keep their normal weight (older "always bold" rules). */
+body.unified-terminal-ui [data-house-table="minutes"]:not([data-house-col="4"]) .season-minute-control output { font-weight: 400 !important; }
+
+/* Standings: # is always the real seed; the playoff and play-in lines only make sense in seed order. */
+body.unified-terminal-ui [data-house-table="standings"]:not([data-house-key="seed"]) > [data-house-row]:is(.playoff-line, .play-in-line) {
+  border-bottom: 1px solid var(--house-rule) !important;
+}
+body.unified-terminal-ui [data-house-table="standings"]:not([data-house-key="seed"]) > [data-house-row].play-in-line + [data-house-row] { border-top-color: transparent !important; }
+
+/* Next Opponent: cell shading replaces the old sort band; rows keep their separators. */
+body.unified-terminal-ui [data-house-table="opponent"] > [data-house-row]::after { z-index: 3; }
+
+/* Bars (T05): one track darkness and one height; rating bars share one width. Scales that carry meaning keep
+   their shape: the minutes slider spans 0-48, fatigue keeps its six steps and colours, the development bars
+   keep their centre line (gain right, loss left). */
+body.unified-terminal-ui [data-house-table] :is(
+  .season-mini-rating > i,
+  .season-staff-grade > i,
+  .season-minute-slider > i,
+  .season-fatigue > i:not(.filled),
+  .season-development-diverging
+) {
+  background-color: var(--house-bar-track) !important;
+  height: var(--house-bar-height) !important;
+  transform: none !important;
+}
+body.unified-terminal-ui [data-house-table] :is(.season-mini-rating > i, .season-staff-grade > i) {
+  width: var(--house-bar-width) !important;
+  min-width: var(--house-bar-width) !important;
+  max-width: var(--house-bar-width);
+  overflow: hidden;
+}
+body.unified-terminal-ui [data-house-table] .season-staff-grade { grid-template-columns: 22px var(--house-bar-width) !important; justify-content: center; }
+body.unified-terminal-ui [data-house-table="opponent"] .season-mini-rating { grid-template-columns: 18px var(--house-bar-width) !important; gap: 0 !important; }
+body.unified-terminal-ui .season-opponent-panel .season-opponent-header-rating > i {
+  background-color: var(--house-bar-track) !important;
+  height: var(--house-bar-height) !important;
+  width: var(--house-bar-width) !important;
+  transform: none !important;
+}
+body.unified-terminal-ui [data-house-table] .season-fatigue > i.filled { height: var(--house-bar-height) !important; transform: none !important; }
+body.unified-terminal-ui [data-house-table] .season-minute-slider > i { top: calc(50% - var(--house-bar-height) / 2) !important; }
+body.unified-terminal-ui [data-house-table] .season-development-diverging b { top: 0 !important; height: 100% !important; }
+body.unified-terminal-ui [data-house-table] .season-development-diverging::after { background: #8d9aa6 !important; top: -2px !important; bottom: -2px !important; }
+
+/* Development: the decline arrow sits beside its number instead of over it. */
+body.unified-terminal-ui [data-house-table="development"] .season-development-decline {
+  display: inline-flex !important;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+  position: static;
+}
+body.unified-terminal-ui [data-house-table="development"] .season-development-decline > span[aria-hidden] { position: static !important; transform: none !important; }
+body.unified-terminal-ui [data-house-table="development"] .season-development-decline :is(strong, small) { position: static !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  body.unified-terminal-ui [data-house-table] > [data-house-row] { transition: none !important; }
+}

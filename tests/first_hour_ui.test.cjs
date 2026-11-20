@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
+const {loadHouseTables} = require('./house_table_helpers.cjs');
 
 const app = fs.readFileSync(path.join(__dirname, '../src/nba_gm_data/gui/app.js'), 'utf8');
 function functionSource(name, next) {
@@ -68,6 +69,7 @@ test('minutes initialize from saved targets and locks, not newer coaching projec
     clampNumber: (value, min, max) => Math.min(max, Math.max(min, value)),
   };
   vm.createContext(scope);
+  loadHouseTables(scope);
   vm.runInContext(functionSource('ensureRotationDraft', 'autofillRotationDraft'), scope);
   vm.runInContext(functionSource('playerHasRust', 'injuryGamesRemaining'), scope);
   vm.runInContext(functionSource('seasonMinutesCard', 'seasonMiniRating'), scope);
