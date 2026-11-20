@@ -19,6 +19,7 @@ Inputs used (see docs/PLAYER_OBJECT_THREE_COLUMN_MAP_2026_11_12.md):
   players score relatively more of their points from the field (T08 lowers the per-point rate).
 - rebounds (2026-11-19): defensive rebound positioning (S30), box-out (S31), rebound control (S32), the crash
   tendency (T12), pursue vs box-out (T13), height and wingspan (P01, P02).
+- personal fouls (2026-11-19): foul control (S45), steal gambling (T14), contest technique (S37), jump-contest share (T16).
 - screen assists (2026-11-19): screen execution (S27), screen-action recognition (S28), screen and roll shares (T11),
   body mass (P04); also the player's screening rating (offense.offensive_profile).
 """
@@ -37,12 +38,20 @@ TURNOVERS_INPUTS = {"constant": 3.37798, "log T08": 0.78791, "log T07": 0.92858,
 ASSISTS_INPUTS = {"constant": 3.05475, "log T01.pass": 0.7642, "log T08": 0.28271, "F.execution": 0.02663,
                   "log T07": 0.5197, "log T01.post": 0.21179}  # r 0.95 (previous fit 0.91)
 STEALS_INPUTS = {"constant": -0.76884, "S43": 0.01181, "S42": 0.00667}  # r 0.92
+# Steal gambling (T14) was tested here (2026-11-19): at the same steal technique it adds nothing (r 0.915 -> 0.922 with a
+# negative sign; the technique grades are built from the same steal record), so gambling shows up as fouls
+# (FOULS_INPUTS), not extra steals. No team-defence penalty either: teams that gamble more defended better in 2025-26
+# (r -0.69 with defensive rating), so the data cannot separate a gambling cost from the skill behind it.
 FTA_PER_POINT_INPUTS = {"constant": -0.78847, "log T18": 2.35318, "S24": 0.00939, "log T08": -0.56596}  # r 0.87
 
 # Points per 36: involvement (T08), shoot-first vs pass-first choices (T01 shoot +, pass -), close-range touch (S10)
 # and contact seeking (T18, free throws). Sets each player's share of the team's points (sim.distribute_player_lines).
-POINTS_INPUTS = {"constant": 3.86525, "log T08": 0.88789, "log T01.pass": -0.29853, "log T01.shoot": 0.3423,
-                 "S10": 0.00396, "log T18": 0.31019}  # r 0.93
+# 2026-11-19 (unused-ratings 2): plus three-point shooting as he shoots it (S.three_mode: the S01-S03 grades weighted by
+# his shooting-mode habit T03) and the cutting habit (T09: cutters score more off the ball at the same involvement).
+# Without the shooting term, pure shooters were handed fewer points than their own made threes add up to (AJ Green 11.4
+# per 36 vs 12.8 real). Out-of-fold r 0.933 -> 0.940, mean abs error 1.45 -> 1.35 (shooting alone: 0.938 / 1.37).
+POINTS_INPUTS = {"constant": 3.95082, "log T08": 0.88387, "log T01.pass": -0.27562, "log T01.shoot": 0.2955,
+                 "S10": 0.00345, "log T18": 0.33929, "S.three_mode": 0.0024, "log T09": 0.13677}  # r 0.94
 # Fallback for new-ratings players without inputs (generated draftees, unmatched box-score names).
 POINTS_TRAITS = {"constant": 1.71917, "handle_pressure": 0.0082, "shot_versatility": 0.00591, "rim_pressure": 0.00507,
                  "shooting_range": 0.00155}  # r 0.78
@@ -59,6 +68,13 @@ REBOUNDS_INPUTS = {"constant": -0.54609, "S30": 0.00471, "S31": 0.00954, "S32": 
 # screen frees the handler. Out-of-fold r 0.85. A +15 screen-execution grade is ~+26% screen assists.
 SCREEN_ASSISTS_INPUTS = {"constant": -3.73464, "S27": 0.01536, "S28": 0.02713, "log T11.screen": 1.00312,
                          "log T11.roll": 0.73724, "P04": 0.03457}  # r 0.85
+
+# Personal fouls per 36 (2026-11-19, unused-ratings 2): foul-control technique (S45) lowers them; steal / disruption
+# gambling (T14) and jumping at contests (T16 jump share) raise them; so does contest technique (S37: the players who
+# contest the most shots, mostly rim protectors, foul more). Real 2025-26 box-score fouls of 377 rotation players
+# (data/research/game_boxscores_2025_26.json). Out-of-fold r 0.84 (foul control alone 0.64). Height, strength (P08) and
+# jump capacity (P10) add nothing once these are in. Sets each player's foul rate, and so his foul trouble.
+FOULS_INPUTS = {"constant": 2.78982, "S45": -0.01693, "log T14": 0.6912, "S37": 0.00385, "log T16.jump": 0.22592}  # r 0.84
 
 TURNOVERS_TRAITS ={"constant": -0.26686, "passing_reads": 0.01344, "rim_pressure": 0.01062, "scheme_iq": -0.00717}  # r 0.67
 # The old traits carry little steal signal (the engine's former defensive-activity formula: r 0.38). Effort and
@@ -89,6 +105,13 @@ def flatten_inputs(inputs: Mapping[str, Any]) -> dict[str, float]:
     executions = [out[f"{family}.execution"] for family in PASS_FAMILIES if f"{family}.execution" in out]
     if len(executions) == len(PASS_FAMILIES):
         out["F.execution"] = sum(executions) / len(executions)
+    # Three-point shooting as he actually shoots it: the catch-and-shoot, pull-up and movement three grades (S01-S03)
+    # weighted by how often he takes each kind (shooting-mode habit, T03).
+    modes = (("catch", "S01"), ("pull_up", "S02"), ("movement", "S03"))
+    if all(f"T03.{mode}" in out and grade in out for mode, grade in modes):
+        total = sum(out[f"T03.{mode}"] for mode, _ in modes)
+        if total > 0:
+            out["S.three_mode"] = sum(out[f"T03.{mode}"] * out[grade] for mode, grade in modes) / total
     return out
 
 
@@ -167,6 +190,10 @@ def rebounds_per36_from_inputs(inputs: Mapping[str, Any] | None) -> float | None
     if not REBOUNDS_INPUTS:
         return None
     return _from_inputs(REBOUNDS_INPUTS, inputs, 1.0, 20.0)
+
+
+def fouls_per36_from_inputs(inputs: Mapping[str, Any] | None) -> float | None:
+    return _from_inputs(FOULS_INPUTS, inputs, 0.8, 8.0)
 
 
 def screen_assists_per36_from_inputs(inputs: Mapping[str, Any] | None) -> float | None:

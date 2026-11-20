@@ -139,17 +139,22 @@ def manage_game_minutes(
     rng: random.Random,
     foul_rng: random.Random,
     foul_rate_multiplier: float = 1.0,
+    player_foul_rates: dict[str, float] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, list[float]], set[str]]:
     """Apply foul trouble and blowout rest to one team's planned minutes.
 
     Returns the playing pool (reserves who got in are appended), each player's foul times and who fouled out.
+    player_foul_rates: each player's foul rate relative to the league's (new ratings: from his foul control, steal
+    gambling and contest habits; sim.player_foul_multipliers), so foul-prone players get into foul trouble more often.
     """
     items = list(pool) + list(reserves)
     planned = [max(0.0, float(item.get("minutes") or 0.0)) for item in items]
     if sum(planned) <= 0 or sum(m > 0 for m in planned) < 5:
         return pool, {}, set()
     in_pool = len(pool)
-    fouls = {item["player"]["id"]: draw_foul_times(foul_rng, foul_rate_multiplier) for item in items}
+    rates = player_foul_rates or {}
+    fouls = {item["player"]["id"]: draw_foul_times(foul_rng, foul_rate_multiplier * rates.get(item["player"]["id"], 1.0))
+             for item in items}
     minutes = list(planned)
     fouled_out: set[str] = set()
     troubled = [False] * len(items)

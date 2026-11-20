@@ -189,6 +189,9 @@ def main() -> None:
     # Measured dunk rates (public Basketball-Reference shooting data) for dunk execution, net of body size.
     from nba_gm_data.public_shot_evidence import apply_dunk_evidence
     bbi_summary=(bbi_summary or {})|apply_dunk_evidence(section,root,universe)
+    # Strength and jump capacity: NBA Draft Combine tests (age-adjusted) blended with in-game proxies by reliability.
+    from nba_gm_data.physical_evidence import apply_physical_evidence
+    bbi_summary|=apply_physical_evidence(section,root,universe)
     # Attributed analyst claims last: where analysts and the measures disagree, analysts lead (user priority, 2026-11-19).
     if not args.no_analysts:
         from nba_gm_data.analyst_evidence import apply_analyst_evidence

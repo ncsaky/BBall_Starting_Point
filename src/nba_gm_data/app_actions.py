@@ -1911,6 +1911,9 @@ def player_card_payload(canonical: dict[str, Any], save_path: Path, player_id: s
             "topg": round(float(totals.get("turnovers") or 0.0) / divisor, 1) if totals else 0.0,
             "fta_per_game": round(float(totals.get("fta") or 0.0) / divisor, 1) if totals else 0.0,
             "ft_pct": round(float(totals.get("ftm") or 0.0) / max(1.0, float(totals.get("fta") or 0.0)) * 100.0, 1) if totals else 0.0,
+            # Screen assists (new ratings only; None when the save's box scores do not track them).
+            "screen_assists_per_game": (round(float(totals["screen_assists"]) / divisor, 1)
+                                        if totals and totals.get("screen_assists") is not None else None),
         },
         "recent_games": recent_games,
         "recent_game_table": recent_game_table,

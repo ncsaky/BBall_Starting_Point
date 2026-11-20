@@ -163,7 +163,8 @@ def vary_box_score(canonical, groups, team_lines, feature_groups, seed):
                 misses = reduced_counts(misses, wanted, ids)
         elif sum(misses) < wanted:
             # Spread the extra misses like the player's own two-point volume (makes plus generated misses).
-            weights = [((p['fgm'] - p['fg3m']) + m + (.5 if float(p.get('minutes') or 0) > 0 else 0)) * c
+            # A player with no two-point volume tonight keeps a small claim (.5) so a cold team still spreads its misses.
+            weights = [(((p['fgm'] - p['fg3m']) + m) or (.5 if float(p.get('minutes') or 0) > 0 else 0)) * c
                        for p, m, c in zip(lines, misses, context)]
             misses = [m + extra for m, extra in zip(misses, increased_counts(weights, wanted - sum(misses), ids))]
         for line, count in zip(lines, misses):

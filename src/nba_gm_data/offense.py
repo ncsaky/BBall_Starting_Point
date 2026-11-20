@@ -6,7 +6,8 @@ from typing import Any
 from .utils import clamp, normalize_name
 
 # When a line's points cannot hold all the threes it sampled, this share of the excess makes is removed together
-# with their attempts; the rest stay as missed attempts (a cold night). 1.0 removed all of them.
+# with their attempts; the rest stay as missed attempts (a cold night). 1.0 removed all of them. Only for lines without
+# an expected output (night_three_pct sets the made-three chance for the others, and their attempts are kept).
 THREE_TRIM_SHARE = 0.5
 FT_LEVEL = 0.98  # league-level scale on the fitted free throws per point (sim features 'fta_per_point')
 MODEL_VERSION = 1
@@ -234,8 +235,57 @@ def valuation_adjustment(features):
                  +(features.get('offensive_rebounding', 50)-50)*.015, -1.5, 3.0)
 
 
-def shooting_line(points, feat, minutes, rng):
-    """Preserve assigned points; sample distinct 2PT/3PT/FT shot profiles."""
+def _capped_binomial_mean(n, q, cap):
+    """E[min(Binomial(n, q), cap)]."""
+    if cap >= n:
+        return n*q
+    if q <= 0:
+        return 0.0
+    if q >= 1:
+        return float(cap)
+    pmf, below, mean_below = (1-q)**n, 0.0, 0.0
+    for k in range(cap):
+        below += pmf
+        mean_below += k*pmf
+        pmf *= (n-k)/(k+1)*q/(1-q)
+    return mean_below+cap*(1-below)
+
+
+def night_three_pct(three_pct, points, expected_points, attempts=None, cap=None):
+    """Tonight's made-three chance for a player handed `points` (his normal output for the minutes: expected_points).
+
+    A player's points are set before his shots (sim.distribute_player_lines). His made threes used to be drawn at his
+    usual percentage and then cut to fit the points, so a low-usage shooter lost made threes on quiet nights and never
+    gained any on big ones (the leftover points became two-point makes, each with its own misses): shooters who take
+    most of their shots from three ran ~.6 made threes per 36 under their own record and ~.03 under their real true
+    shooting (AJ Green .499 vs .627). Real shooters' scoring nights and made threes move together, so tonight's
+    expected makes are his usual makes for these attempts scaled by tonight's points over his normal output, and the
+    chance is set so that, after the points cap (`cap` made threes fit in his points), that expectation holds. Over a
+    season the ratio averages one, so his three-point percentage stays his own. The number of random draws is unchanged.
+    """
+    if not expected_points or expected_points <= 0:
+        return three_pct
+    ratio = max(0.0, float(points))/float(expected_points)
+    if not attempts or cap is None or cap >= attempts:
+        return clamp(three_pct*ratio, 0.0, 0.95)
+    target = min(attempts*three_pct*ratio, float(cap))
+    low, high = 0.0, 0.95
+    if _capped_binomial_mean(attempts, high, cap) <= target:
+        return high
+    for _ in range(18):
+        mid = (low+high)/2
+        if _capped_binomial_mean(attempts, mid, cap) < target:
+            low = mid
+        else:
+            high = mid
+    return (low+high)/2
+
+
+def shooting_line(points, feat, minutes, rng, expected_points=None):
+    """Preserve assigned points; sample distinct 2PT/3PT/FT shot profiles.
+
+    expected_points: the player's normal output for these minutes (new ratings: his fitted points per 36). When
+    given, tonight's three-point accuracy follows tonight's points (night_three_pct)."""
     rate = clamp(.13+max(0, feat.get('rim_pressure', 50)-55)*.0028
                  +max(0, feat.get('shot_creation', 50)-70)*.0015, .08, .34)
     # Unbiased stochastic rounding. The previous round(x + U(0, 1.8)) added ~0.9 free throws to every player
@@ -261,9 +311,11 @@ def shooting_line(points, feat, minutes, rng):
     ftm = min(points, sum(makes[:fta]))
     attempts = minutes*feat['three_per36']/36*rng.uniform(.85, 1.15)
     fg3a = int(attempts)+(rng.random() < attempts-int(attempts))
-    sampled = sum(rng.random() < feat['three_pct'] for _ in range(fg3a))
-    fg3m = min(sampled, (points-ftm)//3)
-    if sampled > fg3m:
+    cap = max(0, (points-ftm)//3)
+    tonight = night_three_pct(feat['three_pct'], points, expected_points, fg3a, cap)
+    sampled = sum(rng.random() < tonight for _ in range(fg3a))
+    fg3m = min(sampled, cap)
+    if sampled > fg3m and expected_points is None:
         fg3a = max(fg3m, fg3a-round(THREE_TRIM_SHARE*(sampled-fg3m)/feat['three_pct']))
     remainder = points-ftm-3*fg3m
     if remainder % 2 and per_point is not None:
