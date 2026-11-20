@@ -3153,8 +3153,8 @@ def maybe_run_ai_draft_trades_before_pick_state(
             return {"applied_count": 0, "trades": []}
         if int((budget.get("segments") or {}).get(segment_key) or 0) >= DRAFT_TRADES_PER_SEGMENT:
             return {"applied_count": 0, "trades": []}
-    options = ai_draft_trade_options(active, save, state, current, human_team_ids, seed)
-    candidate = options[0]["candidate"] if options else None
+    options: list[dict[str, Any]] = []
+    candidate = best_ai_draft_trade_candidate(active, save, state, current, human_team_ids, seed, options_out=options)
     # A chain (TRADE-TAXPOOL): the team on the clock trades down twice in one deal, so a second buyer gets its own
     # target at the pick the first buyer gives up. Only when the team trading down does at least as well as in the
     # plain trade.
@@ -3232,8 +3232,13 @@ def best_ai_draft_trade_candidate(
     current: dict[str, Any],
     human_team_ids: set[str],
     seed: int,
+    *,
+    options_out: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any] | None:
+    """The best plain trade-up for the pick on the clock; ``options_out`` receives every option (for chains)."""
     options = ai_draft_trade_options(active, save, state, current, human_team_ids, seed)
+    if options_out is not None:
+        options_out.extend(options)
     return options[0]["candidate"] if options else None
 
 
