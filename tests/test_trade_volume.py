@@ -85,15 +85,18 @@ class PayrollPlanTests(unittest.TestCase):
         self.assertFalse(bench["ok"], "a bench player is not worth the tax even for a contender")
 
     def test_teams_that_are_not_contending_keep_room_below_the_line_for_veterans(self):
-        data = league(payroll_a=185_000_000)
+        data = league(payroll_a=180_000_000)
         veteran = dict(add_salary=8_000_000, minutes=24.0, kind="free_agency", age=30)
         rebuilding = pp.payroll_check(data, save_for("2027-07-02", "rebuilding"), "a", SEASON, **veteran)
         self.assertFalse(rebuilding["ok"])
         self.assertEqual(rebuilding["reason"], "keeps_room_below_the_line_for_its_phase")
         self.assertEqual(rebuilding["ceiling"], LINE - pp.PHASE_KEEP_ROOM["rebuilding"])
         self.assertIn("not contending", pp.plain_words(rebuilding))
-        self.assertTrue(pp.payroll_check(data, save_for("2027-07-02", "rebuilding"), "a", SEASON,
-                                         **{**veteran, "age": 23})["ok"], "a rebuild invests in young players")
+        young = pp.payroll_check(data, save_for("2027-07-02", "rebuilding"), "a", SEASON, **{**veteran, "age": 23})
+        self.assertTrue(young["ok"], "a rebuild invests in young players: half the room")
+        self.assertEqual(young["ceiling"], LINE - pp.PHASE_KEEP_ROOM["rebuilding"] / 2)
+        self.assertFalse(pp.payroll_check(data, save_for("2027-07-02", "rebuilding"), "a", SEASON,
+                                          **{**veteran, "age": 23, "add_salary": 12_000_000})["ok"])
         self.assertTrue(pp.payroll_check(data, save_for("2027-07-02", "peak"), "a", SEASON, **veteran)["ok"])
         self.assertTrue(pp.payroll_check(data, save_for("2027-07-02", "rebuilding"), "a", SEASON,
                                          **{**veteran, "kind": "waiver_claim"})["ok"], "free agency and re-signing only")

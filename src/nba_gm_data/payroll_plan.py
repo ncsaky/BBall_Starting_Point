@@ -25,8 +25,8 @@ The rule, for AI teams only (the user's team is never changed):
 - A signing is declined when its cost is above that budget.
 - **Room below the line by phase** (``PHASE_KEEP_ROOM``): a team that is not contending keeps some payroll room below
   the line when it adds a veteran in free agency or re-signing ($3M on the rise, $8M retooling, $20M rebuilding), so
-  rebuilding teams carry cap-space payrolls and can take on contracts in trades. Young players (25 or younger) and
-  re-signed starters are exempt.
+  rebuilding teams carry cap-space payrolls and can take on contracts in trades. Half the room for young players (25
+  or younger), and half again for re-signing a starter.
 - **After the trade deadline** a team under the line never adds salary that would put it over (a trade can no longer
   fix it): the Atlanta case.
 """
@@ -138,19 +138,21 @@ def owner_tax_budget(active: dict[str, Any], save: dict[str, Any], team_id: str,
 
 def phase_payroll_ceiling(active: dict[str, Any], save: dict[str, Any], team_id: str, season: str, kind: str,
                           minutes: float, age: float | None) -> float | None:
-    """The payroll a team that is not contending keeps below when it adds a veteran (None: no ceiling applies).
+    """The payroll a team that is not contending keeps below when it adds a player (None: no ceiling applies).
 
-    Free agency and re-signing only; young players (YOUNG_PLAYER_AGE or younger) are what a rebuild invests in, and a
-    re-signed starter is kept; minimum roster fills never add payroll (see ``payroll_check``)."""
+    Free agency and re-signing only. Half the room for a young player (YOUNG_PLAYER_AGE or younger: what a rebuild
+    invests in) and half again for re-signing a starter (Bird rights); minimum roster fills never add payroll (see
+    ``payroll_check``). In the first test with this rule young players were exempt, and rebuilding Sacramento signed
+    $66M of free agents (Cason Wallace $26.4M among them) up to the line."""
     if kind not in CEILING_KINDS:
         return None
     room = PHASE_KEEP_ROOM[team_phase(active, save, team_id)]
     if room <= 0:
         return None
     if age is not None and float(age) <= YOUNG_PLAYER_AGE:
-        return None
+        room *= 0.5
     if kind == "re_signing" and float(minutes) >= STARTER_MINUTES:
-        return None
+        room *= 0.5
     from .cap_rules import cap_lines_for_season
     return cap_lines_for_season(season)["tax_line"] - room
 
