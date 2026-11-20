@@ -886,7 +886,7 @@ def _search_team_rows(canonical: dict[str, Any], team_id: str | None) -> list[di
     return [player for _, player in forecast.teams.get(team_id, ())]
 
 
-def simulate_ai_trades(canonical: dict[str, Any] | Any, from_date: str, through_date: str, seed: int = 1, limit: int = 10, config: dict[str, Any] | None = None, *, search_depth: int = 1, reserve_assets: bool = False, include_private_targets: bool = True, involving_team_ids: set[str] | None = None, review=None, target_search: bool | None = None) -> dict[str, Any]:
+def simulate_ai_trades(canonical: dict[str, Any] | Any, from_date: str, through_date: str, seed: int = 1, limit: int = 10, config: dict[str, Any] | None = None, *, search_depth: int = 1, reserve_assets: bool = False, include_private_targets: bool = True, involving_team_ids: set[str] | None = None, review=None, target_search: bool | None = None, focus_team_ids: set[str] | None = None) -> dict[str, Any]:
     canonical = (review.prepare(canonical, config) if review is not None else
                  trade_search_context(with_spatial_fit_context(with_transaction_context(canonical, config))))
     # AI-to-AI markets start from each front office's targets (trade step 2, trade_targets.py). The search for
@@ -895,7 +895,8 @@ def simulate_ai_trades(canonical: dict[str, Any] | Any, from_date: str, through_
         target_search = involving_team_ids is None
     if target_search:
         return target_driven_ai_trades(canonical, from_date, through_date, seed=seed, limit=limit, config=config,
-                                       search_depth=search_depth, reserve_assets=reserve_assets)
+                                       search_depth=search_depth, reserve_assets=reserve_assets,
+                                       focus_team_ids=focus_team_ids)
     rng = random.Random(f"{seed}:{from_date}:{through_date}:ai_trades")
     recent_players = recently_traded_player_ids(canonical, through_date)
     entries = sorted(canonical["trade_block_entries"], key=lambda item: item["block_score"], reverse=True)[:120]
@@ -1057,7 +1058,8 @@ def simulate_ai_trades(canonical: dict[str, Any] | Any, from_date: str, through_
 
 
 def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_date: str, *, seed: int, limit: int,
-                            config: dict[str, Any] | None, search_depth: int, reserve_assets: bool) -> dict[str, Any]:
+                            config: dict[str, Any] | None, search_depth: int, reserve_assets: bool,
+                            focus_team_ids: set[str] | None = None) -> dict[str, Any]:
     """AI-to-AI trade search that starts from each front office's targets (trade step 2, trade_targets.py).
 
     Each AI team's targets are matched to players (preferring players their teams would move), a pairing is pursued
@@ -1081,10 +1083,36 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                    'team_targets': 0}
     from .multi_team_trades import near_miss, multi_team_repairs, user_absorber_offers, enrich_agreed_deals
     pairings = tt.target_pairings(canonical, buyer_ids, excluded, depth, config, rng)
+    if focus_team_ids is not None:
+        # TRADE-DEADLINE: the late deadline-day pass looks only at pairings the day's first deals changed (a team that
+        # traded is the buyer or the seller): new needs, new salary filler, new room. The rest were priced already.
+        pairings = [p for p in pairings if p['buyer_id'] in focus_team_ids or p['row']['team_id'] in focus_team_ids]
     diagnostics['team_targets'] = sum(len(tt.team_trade_targets(canonical, tid)) for tid in buyer_ids)
     diagnostics['pairings'] = len(pairings)
     proposals, evaluation_snapshots, reserved, blocked, satisfied = [], {}, set(), {}, set()
     near_misses = []  # two-team deals a third team might complete (trade step 4)
+    from . import trade_counters as tc
+    counters_left = [tc.COUNTERS_PER_SEARCH[depth]]
+
+    def accepted_counter(candidate, pairing, order, evaluation_canonical):
+        """A deal agreed after a counter (trade step 3): the pairing's reasons plus the counter in plain words."""
+        candidate = mark_ai_trade_accepted(candidate)
+        candidate['target_source'] = 'front_office_target'
+        candidate['_search_order'] = order
+        reasons = tt.trade_reasons(canonical, pairing)
+        reasons['counter'] = candidate.pop('counter')
+        reasons['text'] = f"{reasons['text']} {reasons['counter']['text']}"
+        match = tc.seller_target_match(canonical, candidate, pairing['row']['team_id'])
+        if match:
+            reasons['seller_target_match'] = match
+        candidate['trade_reasons'] = reasons
+        proposals.append(candidate)
+        evaluation_snapshots[candidate['proposal']['id']] = evaluation_canonical
+        if reserve_assets:
+            reserved.update(proposal_asset_identity_keys(candidate))
+        satisfied.add(pairing['target']['id'])
+        diagnostics['counter_deals'] = diagnostics.get('counter_deals', 0) + 1
+
     for order, pairing in enumerate(pairings):
         if len(proposals) >= limit:
             break
@@ -1118,6 +1146,17 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
         missed = []
         packages = tt.ranked_packages(canonical, pairing, options, config, tt.PACKAGES_EVALUATED[depth], near=missed)
         diagnostics['prescreened_out'] += len(options) - len(packages)
+        countered = None
+        if missed and counters_left[0] > 0:
+            # Trade step 3: no package met both prices, but the closest one is a near miss. The short side asks for
+            # one change (trade_counters); the other side decides with its full check.
+            counters_left[0] -= 1
+            countered = tc.ai_counter(canonical, tt.near_miss_candidate(canonical, missed[0], config), seed=seed,
+                                      date=through_date, config=config, fixed={('player', row['id'])},
+                                      diagnostics=diagnostics)
+        if countered is not None and not (reserve_assets and proposal_asset_identity_keys(countered) & reserved):
+            accepted_counter(countered, pairing, order, canonical)
+            continue
         for miss in missed:
             near_misses.append({'candidate': tt.near_miss_candidate(canonical, miss, config), 'order': order,
                                 'trade_reasons': tt.trade_reasons(canonical, pairing)})
@@ -1137,6 +1176,14 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                 continue
             if not ai_trade_candidate_accepted(canonical, candidate):
                 diagnostics['declined'] += 1
+                countered = None
+                if not pick_terms and counters_left[0] > 0 and tc.short_side(candidate, human) is not None:
+                    counters_left[0] -= 1
+                    countered = tc.ai_counter(canonical, candidate, seed=seed, date=through_date, config=config,
+                                              fixed={('player', row['id'])}, diagnostics=diagnostics)
+                if countered is not None and not (reserve_assets and proposal_asset_identity_keys(countered) & reserved):
+                    accepted_counter(countered, pairing, order, canonical)
+                    break
                 if not pick_terms and near_miss(canonical, candidate):
                     near_misses.append({'candidate': candidate, 'trade_reasons': tt.trade_reasons(canonical, pairing),
                                         'order': order})
@@ -1149,6 +1196,9 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
             candidate['target_source'] = 'front_office_target'
             candidate['_search_order'] = order
             candidate['trade_reasons'] = tt.trade_reasons(canonical, pairing)
+            match = tc.seller_target_match(canonical, candidate, row['team_id'])
+            if match:
+                candidate['trade_reasons']['seller_target_match'] = match
             proposals.append(candidate)
             evaluation_snapshots[candidate['proposal']['id']] = evaluation_canonical
             if reserve_assets:
@@ -1160,6 +1210,8 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
     dumps_done, dump_teams = 0, set()
     if len(proposals) < limit:
         offers = tt.salary_dump_offers(canonical, buyer_ids, excluded, config)
+        if focus_team_ids is not None:
+            offers = [o for o in offers if o['seller_id'] in focus_team_ids or o['buyer_id'] in focus_team_ids]
         diagnostics['dump_offers'] = len(offers)
         for offer in offers:
             if len(proposals) >= limit or dumps_done >= dump_limit:
@@ -3378,6 +3430,9 @@ def goat_exception_player(player: dict[str, Any] | None) -> bool:
     return normalize_name((player or {}).get("name") or "") == "lebron james"
 
 
+FILLER_PREFERENCE = 2.0  # shortlist credit per player from the buyer's own "salary I'd move" list (TRADE-DEADLINE)
+
+
 def buyer_offer_packages_for_value(
     canonical: dict[str, Any],
     buyer: dict[str, Any],
@@ -3467,7 +3522,17 @@ def buyer_offer_packages_for_value(
         if value > target_value * (1.08 if target_value >= 70 else 1.24):
             continue
         tradable_players.append(player)
+    eligible_players = tradable_players
     tradable_players = tradable_players[:max(3, int(max_player_options))]
+    filler_ids: dict[str, str] = {}
+    if seller_view:
+        # TRADE-DEADLINE: the buyer's own "salary I'd move" (trade_targets.salary_filler) is always available to
+        # match salary, so it need not give up rotation players it values; the seller still prices it.
+        from .trade_targets import salary_filler
+        filler_ids = salary_filler(canonical, buyer['id'])
+        present = {player['id'] for player in tradable_players}
+        tradable_players = tradable_players + [player for player in eligible_players
+                                               if player['id'] in filler_ids and player['id'] not in present]
     picks = sorted(
         tradeable_picks_for_team(canonical, buyer["id"]),
         key=lambda pick: pick_offer_preference_score(pick, buyer_state.get("phase", "balanced"), target_value)
@@ -3610,6 +3675,7 @@ def buyer_offer_packages_for_value(
                         continue
                     salary_gap = abs(player_salary - (target_salary or player_salary)) / 1_000_000
                     complexity_cost = max(0, len(variant_assets) - 2) * (0.1 if target_value >= 56 else 0.32)
+                    complexity_cost -= FILLER_PREFERENCE * sum(1 for p in player_group if p['id'] in filler_ids)
                     if terms:
                         complexity_cost += 0.22
                     pool.append((abs(search_value - target_value) + salary_gap * 0.22 + complexity_cost + variant_risk, variant_assets, terms))

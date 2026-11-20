@@ -7223,6 +7223,8 @@ function renderTradeBuilder(root) {
   body.querySelector("#evaluateTrade").addEventListener("click", () => evaluateBuiltTrade().catch(error => showToast(error.message || String(error), true)));
   const applyButton = body.querySelector("#applyBuiltTrade");
   if (applyButton) applyButton.addEventListener("click", () => applyCandidate(state.tradeCandidate, "builder").catch(error => showToast(error.message || String(error), true)));
+  body.querySelector("#acceptCounterTrade")?.addEventListener("click", () => applyCandidate(state.tradeCandidate?.counter_offer, "counter").catch(error => showToast(error.message || String(error), true)));
+  body.querySelector("#declineCounterTrade")?.addEventListener("click", () => { state.tradeCandidate = {...state.tradeCandidate, counter_offer: null}; showToast("Counter-offer declined"); tradeResponseEffect("declined"); renderTradeRoom(); });
   body.querySelectorAll("[data-trade-team-roster]").forEach((button) => button.addEventListener("click", () => openTeamRosterCard(button.dataset.tradeTeamRoster)));
   wireDashboardPlayerCards(body);
 }
@@ -13594,6 +13596,22 @@ function tradeReadout(candidate) {
       <div class="trade-evaluation-title">${tradeLegalityBadge(candidate)}<strong>${canApply ? "All partners accept" : legal === "legal" ? "Partner declines" : "Trade cannot proceed"}</strong></div>
       ${tradeLegalityIssues(candidate)}
       <button id="applyBuiltTrade" class="trade-execute-button ui-command" ${canApply ? "" : "disabled"}>${canApply ? "Accept Trade" : legal !== "legal" ? "Trade unavailable" : "Partner declines"}</button>
+      ${canApply ? "" : tradeCounterOffer(candidate.counter_offer)}
+    </div>`;
+}
+
+// Trade step 3: a partner that is a little short answers with a counter-offer. It is the exact deal the engine
+// executes on Accept (the evaluated candidate), so the full package each side sends is listed, not just the change.
+function tradeCounterOffer(counter) {
+  if (!counter || !counter.proposal || counter.proposal.transfers) return "";
+  const proposal = counter.proposal;
+  const names = assets => (assets || []).map(asset => escapeHtml(textValue(asset.label || asset.name || asset.id))).join(", ") || "nothing";
+  return `<div class="trade-counter-offer trade-legality-issues" aria-live="polite">
+      <strong>Counter-offer:</strong> ${escapeHtml(textValue(counter.counter?.text || "The partner proposes a different package."))}
+      <div>${escapeHtml(teamLabel(proposal.from_team_id))} sends: ${names(proposal.from_assets)}</div>
+      <div>${escapeHtml(teamLabel(proposal.to_team_id))} sends: ${names(proposal.to_assets)}</div>
+      <button id="acceptCounterTrade" class="trade-execute-button ui-command">Accept counter</button>
+      <button id="declineCounterTrade" class="trade-clear-button ui-command">Decline</button>
     </div>`;
 }
 

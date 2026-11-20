@@ -863,7 +863,16 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         )
         if terms:
             candidate = attach_compiled_rules(candidate,terms,rules,int(payload.get('seed') or 1))
-        return enhance_trade_candidate(active, candidate, save=save)
+        result = enhance_trade_candidate(active, candidate, save=save)
+        user_team_id = save.get("meta", {}).get("user_team_id")
+        if not terms and user_team_id:
+            # Trade step 3: a partner that is a little short answers with a counter-offer, the exact deal it would make.
+            from .trade_counters import user_counter
+            counter = user_counter(active, candidate, user_team_id, seed=int(payload.get("seed") or 1),
+                                   date=payload.get("date") or save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
+            if counter is not None:
+                result["counter_offer"] = enhance_trade_candidate(active, counter, save=save)
+        return result
     if action == "apply_trade_candidate":
         return apply_trade_candidate_action(canonical, save_path, payload)
     if action == "user_trade_offers":

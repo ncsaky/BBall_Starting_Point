@@ -402,6 +402,56 @@ def team_sell_reasons(canonical: dict[str, Any], team_id: str) -> dict[str, list
     return out
 
 
+# TRADE-DEADLINE: salary a buyer would rather move. The deadline funnel (docs/agents/tasks/trade-volume-2.md) showed
+# that buyers matched salary with rotation players they valued, so the two sides' prices rarely met. Real contenders
+# match with contracts they don't want: out of the rotation, overpaid, injured for a long time, or an expiring bench
+# deal (Harden for Garland's longer deal; the Lakers' and Warriors' bench salary at the 2025 and 2026 deadlines;
+# data/research/real_trades/trades_2025_2027.json). The seller still prices every player it takes with its own check,
+# so negative-value filler needs picks attached.
+FILLER_REASONS = frozenset({"negative_contract_value", "out_of_rotation", "over_tax_line", "veteran_surplus_slot",
+                            "health_risk_for_win_now_team", "upgradeable_expensive_rotation_slot", "gm_listed",
+                            "older_than_team_timeline", "expiring_veteran_non_contender", "position_surplus"})
+FILLER_MIN_SALARY = 2_500_000
+FILLER_LONG_INJURY_DAYS = 30
+FILLER_BENCH_MINUTES = 15.0
+FILLER_PER_BUYER = 3
+
+
+def salary_filler(canonical: dict[str, Any], team_id: str) -> dict[str, str]:
+    """The team's "salary I'd move" list for matching salary in its own offers: player id -> why, most movable first
+    (at most FILLER_PER_BUYER). Never a core player, a young piece the team builds around or a recent draft pick."""
+    memo = _memo(canonical).setdefault("filler", {})
+    if team_id in memo:
+        return memo[team_id]
+    tx = _tx()
+    from .team_planning import core_commitment
+    plan = (canonical.get("team_plans") or {}).get(team_id) or {}
+    core = set(plan.get("core_ids") or [])
+    stance = team_stance(_state(canonical, team_id))
+    reasons = team_sell_reasons(canonical, team_id)
+    today = tx.parse_iso_date((canonical.get("meta") or {}).get("current_date"))
+    injured = {}
+    for health in canonical.get("player_health_states") or []:
+        end = tx.parse_iso_date(health.get("return_date"))
+        if health.get("availability_status") == "out" and today and end and (end - today).days >= FILLER_LONG_INJURY_DAYS:
+            injured[health.get("player_id")] = (end - today).days
+    found = []
+    for row in _team_rows(canonical, team_id):
+        if (row["id"] in core or row["salary"] < FILLER_MIN_SALARY or core_commitment(canonical, team_id, row["id"])
+                or young_piece_kept(row, stance) or recent_draft_pick(canonical, row["player"])):
+            continue
+        why = next((r for r in reasons.get(row["id"], []) if r in FILLER_REASONS), None)
+        if why is None and row["id"] in injured:
+            why = "long_term_injury"
+        if why is None and row["years"] <= 1 and row["minutes"] < FILLER_BENCH_MINUTES and row["age"] >= 24.0:
+            why = "expiring_bench_salary"
+        if why is not None:
+            found.append((row["minutes"], -row["salary"], row["id"], why))
+    found.sort()
+    memo[team_id] = {pid: why for _, _, pid, why in found[:FILLER_PER_BUYER]}
+    return memo[team_id]
+
+
 YOUNG_PIECE_AGE = 25.5
 YOUNG_STARTER_MINUTES = 24.0
 
@@ -613,11 +663,32 @@ def package_fits_rules(canonical: dict[str, Any], pairing: dict[str, Any], asset
             and not any(p["on_court"] >= row["on_court"] - 6.0 for p in incoming)):
         return False
     picks = [a for a in assets if a.get("kind") in {"pick", "pick_swap"}]
-    if picks and pairing.get("buyer_minutes", 0.0) < 24.0:
+    minutes = pairing.get("buyer_minutes", 0.0)
+    if picks and minutes < 24.0:
         spend = tx.package_value_for_team(canonical, picks, buyer_id)
-        if spend > 8.0 + 0.6 * backup_gain(canonical, buyer_id, row):
+        if spend > quick_capital_limit(canonical, buyer_id, row, minutes, assets, target):
             return False
     return True
+
+
+def quick_capital_limit(canonical: dict[str, Any], buyer_id: str, row: dict[str, Any], minutes: float,
+                        outgoing: list[dict[str, Any]], incoming: list[dict[str, Any]]) -> float:
+    """The cheap terms of the full check's draft-spending limit (trade_roster.pick_investment_outlook): the base 8,
+    measured depth, the rotation-role allowance, salary relief and the tax saved. TRADE-DEADLINE: the screen used to
+    keep only the base and depth, so it dropped packages the full check would allow (a 17-20 minute rotation player
+    for a second, or filler that sheds $5M+ of salary); the terms that need a roster forecast (rotation strength,
+    upside, injury cover) are still left to the full check."""
+    from .trade_roster import ROTATION_ROLE_PICK_ALLOWANCE, BACKUP_ROLE_MINUTES
+    from .trade_tax import tax_value
+    tx = _tx()
+    limit = 8.0 + 0.6 * backup_gain(canonical, buyer_id, row)
+    limit += ROTATION_ROLE_PICK_ALLOWANCE * min(1.0, max(0.0, (minutes - BACKUP_ROLE_MINUTES) / 8.0))
+    out_salary, in_salary = tx.package_salary(canonical, outgoing), tx.package_salary(canonical, incoming)
+    relief = ((out_salary or 0.0) - (in_salary or 0.0)) / 1e6 if out_salary is not None and in_salary is not None else 0.0
+    if relief >= 5.0:
+        limit += relief * 2.0
+    limit += max(0.0, tax_value(canonical, buyer_id, incoming, outgoing))
+    return limit
 
 
 def backup_gain(canonical: dict[str, Any], buyer_id: str, row: dict[str, Any]) -> float:
