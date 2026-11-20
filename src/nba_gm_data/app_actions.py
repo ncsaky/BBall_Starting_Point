@@ -865,8 +865,36 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         )
         if terms:
             candidate = attach_compiled_rules(candidate,terms,rules,int(payload.get('seed') or 1))
-        result = enhance_trade_candidate(active, candidate, save=save)
         user_team_id = save.get("meta", {}).get("user_team_id")
+        # TRADE-MARKET: an offer for a player the partner is shopping competes with the other teams' offers; the
+        # partner's front-office read comes with every answer, and each offer is a dealing that sharpens it.
+        market_day_text = payload.get("date") or save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+        competition, partner_ids = None, []
+        if user_team_id:
+            from .trade_market import user_offer_competition, record_dealing
+            from .transactions import trade_team_ids
+            partner_ids = [t for t in trade_team_ids(candidate) if t != user_team_id]
+            competition = user_offer_competition(active, save, candidate, user_team_id, str(market_day_text))
+            if competition and competition.get("beaten"):
+                candidate = mark_better_offer_refusal(candidate, competition)
+            dirty = any([record_dealing(save, tid, str(market_day_text)[:10], "offer") for tid in partner_ids])
+            if dirty or competition:
+                write_save(save_path, save)
+        result = enhance_trade_candidate(active, candidate, save=save)
+        if competition:
+            result["market_competition"] = competition
+        if partner_ids:
+            from .front_office import office_hints
+            from .trade_market import dealings
+            result["partner_read"] = office_hints(active, partner_ids[0], dealings(save, partner_ids[0]))
+        if payload.get("final_offer") and user_team_id:
+            # The user's take-it-or-leave-it offer: the partner answers yes or no, without a counter.
+            result["final_offer"] = True
+            if not candidate.get("accepted_by_all"):
+                partner = team_by_id(active, partner_ids[0]) if partner_ids else {}
+                result["final_declined"] = (f"{partner.get('abbrev', 'They')} turned down your final offer. "
+                                            f"Talks on this deal are over for now.")
+            return result
         if not terms and user_team_id:
             # Trade step 3: a partner that is a little short answers with a counter-offer, the exact deal it would make.
             # The trade window sends the negotiation so far (counter_chain), so the partner never repeats a package
@@ -875,7 +903,8 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
             chain = payload.get("counter_chain") if isinstance(payload.get("counter_chain"), list) else []
             counter = user_counter(active, candidate, user_team_id, seed=int(payload.get("seed") or 1),
                                    date=payload.get("date") or save.get("state", {}).get("current_date") or CANONICAL_START_DATE,
-                                   chain=chain)
+                                   chain=chain,
+                                   required_margin=(competition or {}).get("required_margin") if (competition or {}).get("beaten") else None)
             proposal = candidate.get("proposal") or {}
             result["offer_package"] = package_key(proposal.get("from_assets") or [], proposal.get("to_assets") or [])
             if counter is not None:
@@ -885,6 +914,8 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return result
     if action == "apply_trade_candidate":
         return apply_trade_candidate_action(canonical, save_path, payload)
+    if action == "trade_market":
+        return trade_market_payload(canonical, save_path)
     if action == "user_trade_offers":
         return user_trade_offers_payload(canonical, save_path)
     if action == "respond_user_trade_offer":
@@ -1092,6 +1123,28 @@ def league_activity_copy(event: dict[str, Any]) -> tuple[str, list[str]]:
     return headline, comments
 
 
+def mark_better_offer_refusal(candidate: dict[str, Any], competition: dict[str, Any]) -> dict[str, Any]:
+    """The partner turns the user's offer down because another team's offer for the shopped player is better
+    (TRADE-MARKET). Its own valuation is unchanged; only its answer is."""
+    updated = deepcopy(candidate)
+    updated["accepted_by_all"] = False
+    for evaluation in updated.get("evaluations") or []:
+        if evaluation.get("perspective_team_id") == competition.get("seller_id"):
+            evaluation["accepted"] = False
+            evaluation["decision"] = "reject_better_offer"
+            evaluation.setdefault("decision_reasons", []).append(competition.get("text") or "It has a better offer.")
+    updated["market_competition"] = competition
+    return updated
+
+
+def trade_market_payload(canonical: dict[str, Any], save_path: Path) -> dict[str, Any]:
+    """The Trade Market board (TRADE-MARKET): shopped players, interest, talks, final offers, front-office reads."""
+    from .trade_market import market_board
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = with_transaction_context(canonical_with_save(canonical, save))
+    return market_board(active, save)
+
+
 def assistant_gm_messages(active: dict[str, Any], save: dict[str, Any], feed: dict[str, Any]) -> list[dict[str, Any]]:
     """Actionable reminders and recent major events, using existing game rules."""
     today = safe_date((save.get("state") or {}).get("current_date"))
@@ -1135,6 +1188,9 @@ def assistant_gm_messages(active: dict[str, Any], save: dict[str, Any], feed: di
         else:
             continue
         messages.append({"id": f"league:{event['id']}", "date": event_day.isoformat(), "kind": kind, "title": title, "text": text, "target": "league-wire", "event_id": event["id"]})
+    # TRADE-MARKET: final offers waiting for you, notable players being shopped and bidding wars (capped per day).
+    from .trade_market import assistant_texts
+    messages = assistant_texts(active, save, today.isoformat()) + messages
     return messages[:12]
 
 
@@ -4865,6 +4921,10 @@ def respond_user_trade_offer_action(canonical: dict[str, Any], save_path: Path, 
         return {"status": "not_found", "proposal_id": proposal_id}
     decision = str(payload.get("decision") or "reject")
     fingerprint = trade_offer_fingerprint(offer)
+    from .trade_market import record_dealing
+    from .transactions import trade_team_ids
+    for team_id in trade_team_ids(offer):
+        record_dealing(save, team_id, str(save.get("state", {}).get("current_date") or "")[:10], "reply")
     if decision == "accept":
         if (offer.get('offer_context') or {}).get('status') != 'pending_user_review':
             return decline_response('not_pending')

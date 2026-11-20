@@ -307,3 +307,19 @@ body.unified-terminal-ui #modalRoot .modal-shell:is(.modal-trade-room,.modal-tra
   background:#f2d5d8 !important;
   border-color:#bd4b58 !important;
 }
+
+/* TRADE-MARKET: the Trade Market board, the front-office read and the final-offer toggle. */
+.trade-market-board { display: grid; gap: 14px; padding: 4px 2px 12px; }
+.trade-market-section h4 { margin: 0 0 4px; font-size: 13px; font-weight: 700; }
+.trade-market-note { margin: 0 0 8px; font-size: 12px; opacity: .8; }
+.trade-market-player { display: inline-flex; align-items: flex-end; gap: 8px; }
+.trade-market-player .player-headshot-frame { height: 34px; width: 46px; display: inline-flex; align-items: flex-end; overflow: hidden; }
+.trade-market-player .player-headshot { height: 100%; width: auto; }
+.trade-market-finals { margin: 0 0 8px; padding-left: 18px; font-size: 12px; }
+.front-office-read { display: grid; gap: 3px; margin-top: 8px; padding: 8px 10px; border: 1px solid currentColor; border-radius: 6px; font-size: 12px; }
+.front-office-read small { opacity: .7; }
+.front-office-read ul { margin: 2px 0 0; padding-left: 16px; }
+.trade-market-competition { margin-top: 6px; font-size: 12px; font-weight: 600; }
+.trade-market-competition.is-beaten { color: #a8401c; }
+.trade-final-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; }
+.incoming-offer-final { margin: 4px 0; font-size: 12px; color: #a8401c; }

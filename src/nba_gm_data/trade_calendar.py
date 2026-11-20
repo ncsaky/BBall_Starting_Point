@@ -83,7 +83,9 @@ def market_day(stamp, seed, season_start, deadline):
     # in-season activity concentrated in the final week (see research report).
     # December: players signed in the summer become tradable on December 15 (TRADE-VOLUME-2 moved December's
     # opportunities after that date; the month's total is about the same).
-    peak = {0: 15., 1: 4., 2: 2.5, 3: 1.8, 4: 1.2, 5: .8, 6: .6}
+    # TRADE-MARKET: the last two days follow the real 2026 deadline (6 trades the day before, 18 on the day); before,
+    # 4 and 15. Slots are only room for deals: the market (negotiations, final offers) has to supply them.
+    peak = {0: 18., 1: 5., 2: 2.5, 3: 1.8, 4: 1.2, 5: .8, 6: .6}
     december = .03 if today.day < 15 else .12
     mean = peak.get(remaining, {10: .025, 11: .025, 12: december, 1: .17, 2: .17}.get(today.month, 0))
     climate = random.Random(f'{seed}:{season_start}:trade-market-climate-v1').uniform(.8, 1.2)

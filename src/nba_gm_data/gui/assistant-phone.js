@@ -15,6 +15,7 @@
   function notificationLabel(message) {
     if (message?.target === "contracts") return "Contracts";
     if (message?.target === "trade-deadline") return "Trade deadline";
+    if (message?.target === "trade-market") return "Trade market";
     return "League Activity";
   }
   function notificationPreview(message) {

@@ -6938,7 +6938,8 @@ function setMarketRotatorActive(rotator, value) {
 
 function tradeRoomModalBody() {
   const user = userTeam();
-  const finder = state.tradeTab === "finder";
+  const market = Boolean(state.tradeMarketOpen);
+  const finder = state.tradeTab === "finder" && !market;
   const acquiring = Boolean(state.tradeFinderTargetTeam);
   const scope = acquiring ? state.tradeFinderTargetTeam : state.tradeFinderScope || "";
   const partnerOptions = state.teams
@@ -6949,8 +6950,9 @@ function tradeRoomModalBody() {
     <div class="trade-room-toolbar">
       <div class="trade-room-mode">
         <div class="tabs" aria-label="Trade tools">
-          <button data-trade-tab="builder" aria-pressed="${!finder}" class="${!finder ? "active" : ""}">Trade Builder</button>
+          <button data-trade-tab="builder" aria-pressed="${!finder && !market}" class="${!finder && !market ? "active" : ""}">Trade Builder</button>
           <button data-trade-tab="finder" aria-pressed="${finder}" class="${finder ? "active" : ""}">Trade Finder</button>
+          <button data-trade-tab="market" aria-pressed="${market}" class="${market ? "active" : ""}">Trade Market</button>
         </div>
         ${!finder && state.tradeWorkspaceDrafts?.finder ? '<button type="button" data-back-finder>Back to results</button>' : ""}
       </div>
@@ -7206,10 +7208,76 @@ function wireTradeRoom() {
   root.querySelector(".tabs")?.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-trade-tab]");
     if (!button) return;
+    if (button.dataset.tradeTab === "market") {
+      state.tradeMarketOpen = true;
+      renderTradeRoom();
+      handle(loadTradeMarket(true));
+      return;
+    }
+    const wasMarket = state.tradeMarketOpen;
+    state.tradeMarketOpen = false;
+    if (wasMarket && button.dataset.tradeTab === state.tradeTab) return renderTradeRoom();
     handle(switchTradeWorkspace(button.dataset.tradeTab));
   });
-  if (state.tradeTab === "finder") renderTradeFinder(root);
+  if (state.tradeMarketOpen) renderTradeMarket(root);
+  else if (state.tradeTab === "finder") renderTradeFinder(root);
   else renderTradeBuilder(root);
+}
+
+// TRADE-MARKET: the Trade Market board. Players being shopped, who is interested, how far talks have gone and
+// your own offer's standing, final offers waiting for you, and your assistant GM's read on each front office
+// (words only; the read sharpens with your dealings with that team).
+async function loadTradeMarket(force = false) {
+  if (state.data.tradeMarket && !force) return state.data.tradeMarket;
+  const save = state.currentSave;
+  const result = await action("trade_market", savePayload());
+  if (save !== state.currentSave) return null;
+  state.data.tradeMarket = result;
+  if (state.modal?.kind === "tradeRoom") renderTradeRoom();
+  return result;
+}
+
+function frontOfficeReadMarkup(read, title = "Front-office read") {
+  const lines = read?.lines || [];
+  if (!lines.length) return `<div class="front-office-read"><strong>${escapeHtml(title)}</strong><span>No clear read yet. Deal with them to learn more.</span></div>`;
+  const precision = {reputation: "from its reputation", rough: "from your first dealings", sharp: "from several dealings"}[read.precision] || "";
+  return `<div class="front-office-read"><strong>${escapeHtml(title)}${read.abbrev ? ` · ${escapeHtml(read.abbrev)}` : ""}</strong>${precision ? `<small>${escapeHtml(precision)}</small>` : ""}<ul>${lines.map(line => `<li>${escapeHtml(textValue(line.text))}</li>`).join("")}</ul></div>`;
+}
+
+function renderTradeMarket(root) {
+  const body = root.querySelector("#tradeBody");
+  if (!body) return;
+  const board = state.data.tradeMarket;
+  if (!board) {
+    body.innerHTML = `<div class="trade-results-empty"><strong>Loading the trade market…</strong></div>`;
+    return;
+  }
+  const rows = board.shopped || [];
+  const stage = row => row.stage === "sold" ? `Sold to ${row.sold_to || "another team"}` : row.stage === "bidding war" ? `Bidding war${row.rounds ? ` · ${row.rounds} round${row.rounds === 1 ? "" : "s"}` : ""}` : "Taking offers";
+  const yours = row => row.your_offer === "leading" ? "Your offer leads" : row.your_offer === "outbid" ? "You have been outbid" : row.you_interested ? "You asked" : "";
+  const shopped = table(["Player", "Team", "Why he is available", "Interested", "Stage", "Decision by", "Your offer"], rows, row => [
+    html(`<span class="trade-market-player">${playerHeadshotMarkup(row, "player-headshot")}<span>${escapeHtml(textValue(row.player_name))}${row.overall != null ? ` <small>${escapeHtml(String(Math.round(Number(row.overall))))}</small>` : ""}</span></span>`),
+    textValue(row.team),
+    (row.why || []).join("; "),
+    html(`<span title="${escapeAttr((row.interested || []).join(", "))}">${escapeHtml(String(row.interested_count || 0))} team${row.interested_count === 1 ? "" : "s"}</span>`),
+    stage(row),
+    textValue(row.decide_by || ""),
+    yours(row),
+  ], "trade-market-table");
+  const finals = (board.final_offers || []).map(row => `<li><strong>${escapeHtml(textValue(row.team))}</strong> ${escapeHtml(textValue(row.text))}${row.why ? `<div>${escapeHtml(textValue(row.why))}</div>` : ""}</li>`).join("");
+  const partnerRead = (board.front_offices || {})[state.tradePartner];
+  body.innerHTML = `<div class="trade-market-board" data-trade-scroll="market">
+      <section class="trade-market-section"><h4>Players on the market</h4><p class="trade-market-note">Teams shop players they have a reason to move. Make your offer in the Trade Builder: it is compared with every other team's offer.</p>${shopped}</section>
+      ${finals ? `<section class="trade-market-section"><h4>Final offers waiting for you</h4><ul class="trade-market-finals">${finals}</ul><button type="button" class="ui-command" data-open-trade-offers>Review offers</button></section>` : ""}
+      <section class="trade-market-section">${frontOfficeReadMarkup(partnerRead, "Your assistant GM's read")}</section>
+    </div>`;
+  body.querySelector("[data-open-trade-offers]")?.addEventListener("click", () => openTradeOffersModal().catch(error => showToast(error.message || String(error), true)));
+  body.querySelectorAll("[data-sort-table]").forEach(button => button.addEventListener("click", () => {
+    const key = button.dataset.sortTable, index = Number(button.dataset.sortIndex);
+    const current = state.sorts[key];
+    state.sorts[key] = {index, direction: current?.index === index && current.direction === "desc" ? "asc" : "desc"};
+    renderTradeRoom();
+  }));
 }
 
 function renderTradeBuilder(root) {
@@ -7235,7 +7303,7 @@ function renderTradeBuilder(root) {
           ${participants.map(({team,side,selected,payload}) => selectedPackage(`${team} sends`,selected,side,team,payload)).join("")}
         </div>${tradePickTermsMarkup()}` : page === 1 ? multi ? tradeMultiValuePreview(participants) : `<div class="trade-team-decisions">${(state.tradeCandidate?.evaluations || []).map(tradeEvaluationPanel).join("")}</div>${tradeSegmentedValueBoard(state.tradeCandidate, state.selectedFrom, state.selectedTo, userTeam(), state.tradePartner)}` : page === 2 ? tradeFourYearImplications(userAssets, partnerAssets, state.selectedFrom, state.selectedTo,participants) : tradeIdentityPage()}
         </div>
-        <div class="trade-decision-dock"><div id="tradeRead">${tradeReadout(state.tradeCandidate)}</div><button id="evaluateTrade" class="trade-evaluate-button ui-command" ${tradePickRuleErrors().length || !participants.some(row => row.selected.length) ? "disabled" : ""}>Evaluate package</button></div>
+        <div class="trade-decision-dock"><div id="tradeRead">${tradeReadout(state.tradeCandidate)}</div><label class="trade-final-toggle"><input type="checkbox" id="tradeFinalOffer" ${state.tradeFinalOffer ? "checked" : ""}> Final offer (no counters)</label><button id="evaluateTrade" class="trade-evaluate-button ui-command" ${tradePickRuleErrors().length || !participants.some(row => row.selected.length) ? "disabled" : ""}>Evaluate package</button></div>
       </section>
     </div>`;
   body.querySelectorAll("[data-trade-roster-side]").forEach(button => button.addEventListener("click", () => { state.tradeRosterSide = button.dataset.tradeRosterSide; renderTradeRoom(); }));
@@ -7246,6 +7314,7 @@ function renderTradeBuilder(root) {
   body.querySelector("[data-trade-identity-retry]")?.addEventListener("click", () => loadTradeIdentity(true));
   if (page === 3) loadTradeIdentity().catch(error => showToast(error.message, true));
   wireTradeAssetControls(body);
+  body.querySelector("#tradeFinalOffer")?.addEventListener("change", event => { state.tradeFinalOffer = Boolean(event.target.checked); });
   body.querySelector("#evaluateTrade").addEventListener("click", () => evaluateBuiltTrade().catch(error => showToast(error.message || String(error), true)));
   const applyButton = body.querySelector("#applyBuiltTrade");
   if (applyButton) applyButton.addEventListener("click", () => applyCandidate(state.tradeCandidate, "builder").catch(error => showToast(error.message || String(error), true)));
@@ -7607,6 +7676,7 @@ async function evaluateBuiltTrade() {
     ...savePayload(),
     ...request(),
     counter_chain: chain.map(({package: key, asking_net}) => ({package: key, asking_net})),
+    final_offer: Boolean(state.tradeFinalOffer) || undefined,
     seed: 7,
   });
   if (save !== state.currentSave || partner !== state.tradePartner) return;
@@ -13840,7 +13910,10 @@ function tradeReadout(candidate) {
       <div class="trade-evaluation-title">${tradeLegalityBadge(candidate)}<strong>${canApply ? "All partners accept" : legal === "legal" ? "Partner declines" : "Trade cannot proceed"}</strong></div>
       ${tradeLegalityIssues(candidate)}
       <button id="applyBuiltTrade" class="trade-execute-button ui-command" ${canApply ? "" : "disabled"}>${canApply ? "Accept Trade" : legal !== "legal" ? "Trade unavailable" : "Partner declines"}</button>
+      ${candidate.market_competition?.text ? `<div class="trade-market-competition${candidate.market_competition.beaten ? " is-beaten" : ""}">${escapeHtml(textValue(candidate.market_competition.text))}</div>` : ""}
+      ${candidate.final_declined ? `<div class="trade-counter-offer trade-legality-issues"><strong>Final offer declined:</strong> ${escapeHtml(textValue(candidate.final_declined))}</div>` : ""}
       ${canApply ? "" : tradeCounterOffer(candidate.counter_offer, candidate.counter_closed)}
+      ${candidate.partner_read ? frontOfficeReadMarkup(candidate.partner_read, "Your assistant GM's read") : ""}
     </div>`;
 }
 
@@ -13856,7 +13929,7 @@ function tradeCounterOffer(counter, closed) {
   const names = assets => (assets || []).map(asset => escapeHtml(textValue(asset.label || asset.name || asset.id))).join(", ") || "nothing";
   const round = counter.counter?.rounds;
   return `<div class="trade-counter-offer trade-legality-issues" aria-live="polite">
-      ${history}<strong>Counter-offer${round > 1 ? ` (round ${escapeHtml(textValue(round))})` : ""}:</strong> ${escapeHtml(textValue(counter.counter?.text || "The partner proposes a different package."))}${counter.counter?.last_round ? " This is its last counter." : ""}
+      ${history}<strong>Counter-offer${round > 1 ? ` (round ${escapeHtml(textValue(round))})` : ""}:</strong> ${escapeHtml(textValue(counter.counter?.text || "The partner proposes a different package."))}${counter.counter?.last_round && !counter.counter?.final_offer ? " This is its last counter." : ""}
       <div>${escapeHtml(teamLabel(proposal.from_team_id))} sends: ${names(proposal.from_assets)}</div>
       <div>${escapeHtml(teamLabel(proposal.to_team_id))} sends: ${names(proposal.to_assets)}</div>
       <button id="acceptCounterTrade" class="trade-execute-button ui-command">Accept counter</button>
@@ -14055,6 +14128,7 @@ function offerCard(offer, index) {
   return `<article class="incoming-offer${repeatCount > 1 ? " incoming-offer--repeated" : ""}">
     <header class="incoming-offer-heading"><div><span>Offer ${index + 1}</span>${repeatedLabel}<strong>${escapeHtml(proposal.transfers ? tradeReceipts(proposal).map(row=>row.team).join(' ↔ ') : `${from} ↔ ${to}`)}</strong></div>${tradeLegalityBadge(offer)}</header>
     ${incomingOfferPackage(tradeReceipts(proposal))}
+    ${offer.offer_context?.final_offer ? `<p class="incoming-offer-final"><strong>Final offer:</strong> ${escapeHtml(textValue(offer.offer_context.final_offer.text))}</p>` : ""}
     ${offer.trade_reasons?.text ? `<p class="incoming-offer-reason"><strong>Why:</strong> ${escapeHtml(offer.trade_reasons.text)}</p>` : ""}
     ${typeof tradeWantsOfferSummary==='function'?tradeWantsOfferSummary(offer):''}
     ${tradeLegalityIssues(offer)}
@@ -14408,6 +14482,10 @@ function syncAssistantGMPhone() {
     onOpen: async (message) => {
       if (message.target === "trade-deadline") {
         showTradeDeadlinePrompt();
+      } else if (message.target === "trade-market") {
+        state.tradeMarketOpen = true;
+        await openTradeRoomModal(state.tradeTab || "builder");
+        await loadTradeMarket(true);
       } else if (message.target === "league-wire") {
         await openLeagueActivityCard();
         const post = [...document.querySelectorAll("[data-league-event-id]")].find(el => el.dataset.leagueEventId === message.event_id);

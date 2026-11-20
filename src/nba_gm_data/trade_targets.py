@@ -539,14 +539,20 @@ def asking_price(canonical: dict[str, Any], seller_id: str, player_id: str, conf
     # with nothing back is counted here; the packages are then priced exactly (quick_net, the acceptance check).
     from .trade_tax import tax_value
     tax = 0.5 * max(0.0, tax_value(canonical, seller_id, [], asset))
-    memo[key] = {"own": own, "ask": own - strategic - tax + threshold, "threshold": threshold, "tax": tax}
+    # TRADE-MARKET: the seller's personality on this player (loyalty, opinions, overrating its own players).
+    from .front_office import player_price_terms
+    personality = player_price_terms(canonical, seller_id, player_id, buying=False)
+    memo[key] = {"own": own, "ask": own - strategic - tax - personality + threshold, "threshold": threshold, "tax": tax,
+                 "personality": personality}
     return memo[key]
 
 
 def buyer_value(canonical: dict[str, Any], buyer_id: str, player_id: str, config: dict[str, Any]) -> float:
     tx = _tx()
     asset = [{"kind": "player", "id": player_id}]
-    return tx.package_value_for_team(canonical, asset, buyer_id) + tx.strategic_fit_adjustment(canonical, asset, [], buyer_id, config)
+    from .front_office import player_price_terms
+    return (tx.package_value_for_team(canonical, asset, buyer_id) + tx.strategic_fit_adjustment(canonical, asset, [], buyer_id, config)
+            + player_price_terms(canonical, buyer_id, player_id, buying=True))
 
 
 def trade_surplus(canonical: dict[str, Any], buyer_id: str, seller_id: str, player_id: str, excluded: set[str],
@@ -581,14 +587,16 @@ def trade_surplus(canonical: dict[str, Any], buyer_id: str, seller_id: str, play
 
 def quick_net(canonical: dict[str, Any], team_id: str, incoming: list[dict[str, Any]], outgoing: list[dict[str, Any]],
               config: dict[str, Any]) -> float:
-    """The price part of the team's evaluation (incoming minus outgoing plus phase and tax terms), without the personality,
-    wants, roster-space and final-roster terms. Used only to choose which packages to send to the real check."""
+    """The price part of the team's evaluation (incoming minus outgoing plus phase, tax and personality terms), without
+    the wants, roster-space and final-roster terms. Used only to choose which packages to send to the real check."""
     tx = _tx()
     from .trade_tax import money_value
+    from .front_office import personality_terms
     return (tx.package_value_for_team(canonical, incoming, team_id, outgoing_assets=outgoing)
             - tx.package_value_for_team(canonical, outgoing, team_id)
             + tx.strategic_fit_adjustment(canonical, incoming, outgoing, team_id, config)
-            + money_value(canonical, team_id, incoming, outgoing))
+            + money_value(canonical, team_id, incoming, outgoing)
+            + personality_terms(canonical, team_id, incoming, outgoing)["total"])
 
 
 # ------------------------------------------------------------------------------------------------ search

@@ -422,6 +422,75 @@ def payroll_metrics(save, active, trades):
     return out
 
 
+GRADE_POINTS = (10.0, 12.0, 15.0)  # value points of difference between the two teams' textbook nets per letter grade
+HEAD_SCRATCHER_LETTERS = 1.5
+
+
+def market_metrics(save, trades):
+    """TRADE-MARKET measures (docs/agents/tasks/trade-market.md): grade gaps with the textbook value model as the
+    analyst (each team's net minus its personality terms), head-scratchers and the trait that explains each, bidding
+    wars, final offers, days of negotiation, unsolicited offers for contenders' stars, personality reasons."""
+    out = {}
+    two = []
+    for t in trades:
+        if len(t["teams"]) != 2:
+            continue
+        evals = {e.get("team_abbrev"): e for e in t["evaluations"]}
+        if not all(team in evals and evals[team].get("net_value") is not None for team in t["teams"]):
+            continue
+        textbook = {team: float(evals[team]["net_value"]) - float(evals[team].get("personality_total") or 0.0)
+                    for team in t["teams"]}
+        a, b = (textbook[team] for team in t["teams"])
+        loser = min(textbook, key=textbook.get)
+        terms = [term for term in evals[loser].get("personality_terms") or [] if float(term.get("points") or 0) >= 1.0]
+        two.append({"date": t["date"], "teams": t["teams"], "gap": abs(a - b), "loser": loser,
+                    "loser_textbook_net": round(textbook[loser], 2),
+                    "loser_personality": round(float(evals[loser].get("personality_total") or 0.0), 2),
+                    "loser_traits": [term.get("text") for term in terms], "why": t.get("why")})
+    gaps = {}
+    for k in GRADE_POINTS:
+        gaps[f"points_per_letter_{int(k)}"] = {
+            "one_letter_or_more": round(sum(r["gap"] >= k for r in two) / max(1, len(two)), 3),
+            "one_and_a_half_or_more": round(sum(r["gap"] >= HEAD_SCRATCHER_LETTERS * k for r in two) / max(1, len(two)), 3)}
+    out["grade_gaps"] = {"two_team_trades": len(two), **gaps, "real": {"one_letter_or_more": 0.59, "one_and_a_half_or_more": 0.21}}
+    lopsided = [r for r in two if r["gap"] >= HEAD_SCRATCHER_LETTERS * GRADE_POINTS[0]]
+    explained = [r for r in lopsided if r["loser_traits"]]
+    out["head_scratchers"] = {"count": len(lopsided), "share": round(len(lopsided) / max(1, len(two)), 3),
+                              "explained_by_a_trait": len(explained),
+                              "textbook_only": len(lopsided) - len(explained)}
+    out["head_scratchers_detail"] = lopsided
+    book = save.get("trade_market") or {}
+    wars = [w for w in book.get("wars") or [] if len(w.get("bidders") or []) >= 2]
+    out["bidding_wars"] = len(wars)
+    out["bidding_wars_detail"] = [{"date": w.get("date"), "player": w.get("player_name"), "seller": w.get("seller_id"),
+                                   "bidders": w.get("bidders"), "rounds": len(w.get("rounds") or []),
+                                   "winner": w.get("winner"), "winning_margin_over_price": w.get("winning_margin"),
+                                   "rounds_detail": w.get("rounds")} for w in wars]
+    out["trades_after_bidding_war"] = sum(1 for t in trades if t.get("bidding_war"))
+    finals = [t for t in trades if t.get("final_offer")]
+    out["trades_on_final_offers"] = len(finals)
+    stats = book.get("stats") or {}
+    out["market_stats_by_season"] = stats
+    out["final_offers_refused"] = sum(int(v.get("final_offers_refused") or 0) for v in stats.values())
+    days = [int((t.get("negotiation") or {}).get("days") or 1) for t in trades]
+    out["negotiation_days_per_trade"] = dict(sorted(Counter(days).items()))
+    negotiations = list((book.get("negotiations") or {}).values())
+    out["ledger_negotiations_by_status"] = dict(Counter(n.get("status") for n in negotiations))
+    out["ledger_rounds_per_negotiation"] = dict(sorted(Counter(len(n.get("rounds") or []) for n in negotiations).items()))
+    out["unsolicited_star_offers"] = sum(int(v.get("unsolicited_star_offers") or 0) for v in stats.values())
+    out["unsolicited_refused"] = sum(int(v.get("unsolicited_refused") or 0) for v in stats.values())
+    out["unsolicited_detail"] = book.get("unsolicited") or []
+    with_terms = [t for t in trades if t.get("personality")]
+    out["trades_with_personality_reasons"] = len(with_terms)
+    out["personality_terms_by_kind"] = dict(Counter(term.get("key") for t in with_terms for term in t["personality"]))
+    picks_out = Counter()
+    for t in trades:
+        for giver, assets in t["sends"].items():
+            picks_out[giver] += sum(1 for a in assets if a.get("kind") != "player")
+    out["most_picks_traded_away"] = picks_out.most_common(5)
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--run", type=Path, required=True, help="probe output directory (saves/league.json, progress.jsonl)")
@@ -439,7 +508,8 @@ def main():
     (args.out / f"trades_{args.label}.json").write_text(json.dumps(trades, indent=1, default=str) + "\n")
     (args.out / f"trades_{args.label}.md").write_text(trades_markdown(args.label, trades))
     result = {"label": args.label, "date": save["state"]["current_date"], **metrics(trades, progress),
-              **taxpool_metrics(save, active, trades), **payroll_metrics(save, active, trades)}
+              **taxpool_metrics(save, active, trades), **payroll_metrics(save, active, trades),
+              **market_metrics(save, trades)}
     (args.out / f"trade_metrics_{args.label}.json").write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n")
     print(json.dumps({k: v for k, v in result.items() if not k.endswith("_detail") and k != "traded_3plus_names"}, indent=1))
 
