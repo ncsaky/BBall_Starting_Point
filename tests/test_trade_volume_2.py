@@ -95,6 +95,25 @@ class MarketTargetTests(unittest.TestCase):
             self.assertFalse(tt.package_fits_rules(canonical, pairing, pick))
 
 
+class RotationPickAllowanceTests(unittest.TestCase):
+    def test_a_rotation_player_may_cost_about_two_seconds_a_backup_still_cannot(self):
+        from nba_gm_data import trade_roster as tr
+        from test_pick_investment import PickInvestmentTests
+        case = PickInvestmentTests()
+
+        def limit(minutes):
+            after = case.projection(74, rotation={"new": minutes})
+            with patch.object(tx, "package_value_for_team", side_effect=[30, 0]), \
+                 patch.object(tx, "package_salary", return_value=3e6):
+                return tr.pick_investment_outlook(case.fixture(), "a", [{"kind": "player", "id": "new"}],
+                                                  [{"kind": "pick", "id": "first"}], case.projection(74), after)
+        self.assertEqual(limit(12)["capital_limit"], 8)        # a backup: unchanged
+        self.assertEqual(limit(16)["capital_limit"], 8)
+        self.assertAlmostEqual(limit(20)["capital_limit"], 8 + tr.ROTATION_ROLE_PICK_ALLOWANCE / 2)
+        self.assertAlmostEqual(limit(30)["capital_limit"], 8 + tr.ROTATION_ROLE_PICK_ALLOWANCE)
+        self.assertLess(limit(30)["capital_limit"], 40)  # never a first-round pick's worth for no improvement
+
+
 class RebuildingVeteranSigningTests(unittest.TestCase):
     def test_rebuilding_team_does_not_pay_a_veteran_free_agent_above_the_mid_level(self):
         from nba_gm_data import payroll_plan as pp

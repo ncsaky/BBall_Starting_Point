@@ -143,6 +143,10 @@ def long_absences(canonical, saved):
     return found
 
 
+ROTATION_ROLE_PICK_ALLOWANCE = 25.0
+BACKUP_ROLE_MINUTES = 16.0
+
+
 def pick_investment_outlook(canonical, team_id, incoming, outgoing, before, after, waiver_cost=0):
     """Allow price disagreement for an actual purpose, not just a pick sweetener."""
     from . import transactions as tx
@@ -201,6 +205,11 @@ def pick_investment_outlook(canonical, team_id, incoming, outgoing, before, afte
         cover = max(0., hurt_after['strength']-hurt_before['strength']-strength) * min(1., absence/60)
     limit = min(9., 1.5+strength*6+growth*.2+cover*6+(relief*.25 if relief >= 5 else 0))
     capital_limit = 8+strength*30+depth*.6+growth*1.5+cover*30+(relief*2 if relief >= 5 else 0)
+    # TRADE-VOLUME-2: a player who takes a real rotation role (more than a backup's 16 minutes) is not a marginal
+    # acquisition. Real teams paid one or two second-round picks for one (Isaiah Joe, Aaron Wiggins, Nique Clifford:
+    # data/research/real_trades/trades_2025_2027.json); a future second is worth about 12-20 to a team in this game,
+    # so the base limit of 8 refused even one. Up to about two seconds, full at 24 minutes.
+    capital_limit += ROTATION_ROLE_PICK_ALLOWANCE * min(1., max(0., (incoming_minutes-BACKUP_ROLE_MINUTES)/8))
     # Trade step 4: picks paid to shed salary buy luxury-tax savings, not a rotation upgrade. Real tax teams paid one
     # to three seconds for it (Finney-Smith, LeVert, Saric); the tax saved (trade_tax, AI teams only) is a purpose.
     from .trade_tax import tax_value
