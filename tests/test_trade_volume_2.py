@@ -185,6 +185,13 @@ class StarAskTests(unittest.TestCase):
         self.assertLessEqual(plain["salary"], 32_000_000)
 
 
+class ReSigningOrderTests(unittest.TestCase):
+    def test_stars_are_settled_first_by_price(self):
+        players = [{"id": "bench"}, {"id": "star", "_star_ask_millions": 61.8}, {"id": "starter", "_star_ask_millions": 24.0},
+                   {"id": "role"}]
+        self.assertEqual([p["id"] for p in sv.re_signing_order(players)], ["star", "starter", "bench", "role"])
+
+
 class SummerMarketTests(unittest.TestCase):
     def candidate(self, pid, teams=("a", "b"), accepted=True):
         return {"accepted_by_all": accepted, "legality": {"status": "legal"},

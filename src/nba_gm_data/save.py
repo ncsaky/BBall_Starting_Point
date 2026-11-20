@@ -8979,7 +8979,7 @@ def apply_offseason_roster_transitions(canonical: dict[str, Any], save: dict[str
     retired_this_offseason: list[str] = []
     expired: list[str] = []
     re_signing_commitments: dict[tuple[str, str], float] = {}
-    for player in active.get("players", []):
+    for player in re_signing_order(active.get("players", [])):
         player_id = player["id"]
         if not player.get("team_id"):
             continue
@@ -9378,7 +9378,7 @@ def prepare_free_agency_pool(canonical: dict[str, Any], save: dict[str, Any]) ->
     free_agents = set(save.get("free_agent_player_ids", []))
     expired: list[str] = []
     re_signing_commitments: dict[tuple[str, str], float] = {}
-    for player in active.get("players", []):
+    for player in re_signing_order(active.get("players", [])):
         player_id = player.get("id")
         if not player_id or not player.get("team_id"):
             continue
@@ -9643,6 +9643,15 @@ def clean_free_agency_state(save: dict[str, Any], current_season: str | None = N
 
 
 STAR_RETENTION_MAX_AGE = 33.0
+
+
+def re_signing_order(players: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """A front office settles its stars' contracts first (TRADE-VOLUME-2): stars by market price, then the rest in
+    roster order. Before, players were re-signed in roster order, so a team's cheaper re-signings could use up the
+    room its star needed (Denver lost Nikola Jokic that way in the two-season test)."""
+    stars = sorted((p for p in players if p.get("_star_ask_millions")),
+                   key=lambda p: (-float(p["_star_ask_millions"]), str(p.get("id"))))
+    return stars + [p for p in players if not p.get("_star_ask_millions")]
 
 
 def annotate_star_asks(active: dict[str, Any], contracts: dict[str, dict[str, Any]], next_season: str) -> None:
