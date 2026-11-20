@@ -24,6 +24,7 @@ from .contract_ai import (
     negotiate_extension,
     projected_retirement_start_year,
     with_contract_context,
+    with_extension_context,
 )
 from .draft import draft_board_report, generate_draft_order, whole_prospect_age
 from .diagnostics import diagnostic_runtime
@@ -46,6 +47,7 @@ from .save_recovery import (
     recover_previous_save, restore_export,
 )
 from .save import (
+    ROSTER_SEASON_MAXIMUM,
     decline_watch_value,
     advance_save,
     add_news,
@@ -2882,7 +2884,8 @@ def extension_room_payload(
     current = str(save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
     phase = str(save.get("state", {}).get("phase") or "")
     legal = "extensions" in set(save_legal_actions_for_date(save, current))
-    report = extension_candidates_report(active, team.get("abbrev"))
+    # Extension candidates need only the extension projections, not every free agent's suitors (same candidates, faster).
+    report = extension_candidates_report(with_extension_context(active), team.get("abbrev"))
     players = {str(player.get("id")): player for player in active.get("players", [])}
     requested_id = str(player_id or "")
     # The seed submit_extension_offer_action uses when the app sends none (the app never does).
@@ -3630,6 +3633,8 @@ def free_agency_room_payload(
     return {
         "signing_season": signing_season,
         "roster_count": roster_count,
+        # The save's date: the signing wire never shows a move as happening after it (HONEST-EXTENSIONS).
+        "as_of_date": current_date,
         # The rules submit_free_agent_offer applies (signing_cap_check, manual_save_pool_signing, apply_contract).
         "offer_rules": {
             "minimum_aav_millions": league_minimum_aav_millions(),
@@ -3638,6 +3643,8 @@ def free_agency_room_payload(
             "flat_salary": True,
             "options_available": False,
             "non_guaranteed_until": "January 10 of each season",
+            # Rosters are cut to this before opening night (save.ROSTER_SEASON_MAXIMUM); "Fits our room" counts it.
+            "season_roster_maximum": ROSTER_SEASON_MAXIMUM,
             "blocked_reason": (
                 "Waived salary requires review before spending more salary room."
                 if cap.get("unresolved_waived_contract_count") else None

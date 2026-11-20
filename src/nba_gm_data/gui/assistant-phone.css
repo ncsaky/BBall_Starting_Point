@@ -85,3 +85,9 @@ body.unified-terminal-ui .assistant-notification-item:hover { background:#cedfd1
   .assistant-phone-screen.is-notification-batch .assistant-text-date { padding:3px 0; }
   .assistant-notification-item { padding:4px !important; }
 }
+
+/* Tucked: smaller and partly past the right edge while the phone would cover an open window. The screen stays
+   readable at a glance; hover or keyboard focus brings it back to full size. */
+.assistant-gm-phone { transition:scale .22s ease, translate .22s ease; }
+.assistant-gm-phone.is-tucked:not(:hover):not(:focus-within) { scale:.6; translate:30% 4%; }
+@media (prefers-reduced-motion:reduce) { .assistant-gm-phone { transition:none; } }

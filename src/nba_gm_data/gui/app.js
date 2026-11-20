@@ -5773,9 +5773,22 @@ function freeAgencyMaxOffer(room = state.data.freeagency || {}) {
   return Math.max(freeAgencyMinimum(room), Number(room.cap?.max_offer_aav_millions ?? freeAgencyMinimum(room)));
 }
 
+// Rosters are cut to the season maximum before opening night (15).
+function freeAgencyRosterMaximum(room = state.data.freeagency || {}) {
+  return Number(room.offer_rules?.season_roster_maximum ?? 15);
+}
+
+// Open roster spots under the season maximum. Your own expiring players in the re-signing window are not on the
+// roster yet, so re-signing one takes a spot too.
+function freeAgencyOpenRosterSpots(room = state.data.freeagency || {}) {
+  const count = Number(room.roster_count);
+  return room.roster_count != null && Number.isFinite(count) ? Math.max(0, freeAgencyRosterMaximum(room) - count) : Infinity;
+}
+
+// "Fits our room": he would sign a guaranteed offer you can legally make, and you have an open roster spot.
 function freeAgencyPlayerFitsRoom(player, room) {
   const floor = Number(player.accept_floor_offer_millions?.guaranteed);
-  return Number.isFinite(floor) && floor <= freeAgencyMaxOffer(room) + 1e-9;
+  return Number.isFinite(floor) && floor <= freeAgencyMaxOffer(room) + 1e-9 && freeAgencyOpenRosterSpots(room) > 0;
 }
 
 function phaseFreeAgencyMarketCard(room = state.data.freeagency || {}) {
@@ -5811,7 +5824,7 @@ function phaseFreeAgencyMarketCard(room = state.data.freeagency || {}) {
         <div><p>${escapeHtml(day)} · ${escapeHtml(rows.length)} of ${escapeHtml(total)} players</p><h3>${escapeHtml(title)}</h3><span>${escapeHtml(note)}</span></div>
       </div>
       <div class="fa-cap-chips" aria-label="${escapeAttr(`${room.signing_season || "Next season"} cap position`)}" title="${escapeAttr(`Your ${room.signing_season || "next-season"} payroll, the season a new contract starts. The hard cap is the second apron.`)}">
-        ${chip("Roster", `${room.roster_count ?? "—"}`)}
+        ${chip("Roster", room.roster_count == null ? "—" : `${room.roster_count} / ${freeAgencyRosterMaximum(room)}`, Number(room.roster_count) >= freeAgencyRosterMaximum(room) ? "over" : "")}
         ${chip("Payroll", money(cap.salary_total_millions) || "—")}
         ${chip("Under tax", signedMoney(cap.tax_space_millions) || "—", Number(cap.tax_space_millions) < 0 ? "over" : "")}
         ${chip("Under hard cap", signedMoney(cap.hard_cap_space_millions) || "—", Number(cap.hard_cap_space_millions) < 0 ? "over" : "")}
@@ -5825,7 +5838,7 @@ function phaseFreeAgencyMarketCard(room = state.data.freeagency || {}) {
       <label><span>Pos</span><select data-fa-filter-position aria-label="Position">${[["all", "All"], ...FREE_AGENCY_POSITIONS.map((p) => [p, p])].map(([value, label]) => `<option value="${value}" ${(filters.position || "all") === value ? "selected" : ""}>${label}</option>`).join("")}</select></label>
       <label><span>Age</span><select data-fa-filter-age aria-label="Maximum age">${[["", "Any"], ["24", "≤ 24"], ["27", "≤ 27"], ["30", "≤ 30"], ["33", "≤ 33"]].map(([value, label]) => `<option value="${value}" ${String(filters.maxAge || "") === value ? "selected" : ""}>${label}</option>`).join("")}</select></label>
       <label><span>OVR ≥</span><input type="number" min="1" max="99" step="1" data-fa-filter-overall value="${escapeAttr(filters.minOverall || "")}" placeholder="Any" aria-label="Minimum overall rating" /></label>
-      <label class="fa-filter-check" title="Only players who would sign a guaranteed offer from you that fits under your cap limit"><input type="checkbox" data-fa-filter-afford ${filters.afford ? "checked" : ""} /> <span>Fits our room</span></label>
+      <label class="fa-filter-check" title="${escapeAttr(`Only players who would sign a guaranteed offer from you that fits under your cap limit, while you have an open roster spot (${room.roster_count ?? "?"} of ${freeAgencyRosterMaximum(room)} used; rosters are cut to ${freeAgencyRosterMaximum(room)} before opening night)`)}"><input type="checkbox" data-fa-filter-afford ${filters.afford ? "checked" : ""} /> <span>Fits our room</span></label>
       <button type="button" class="ui-command" data-fa-filter-reset>Reset</button>
       <button type="button" class="ui-command${compareMode ? " is-active" : ""}" data-fa-compare-toggle aria-pressed="${compareMode}">${escapeHtml(compareLabel)}</button>
       <span class="fa-market-links"><button type="button" class="ui-command" data-fa-open-roster>My Roster</button><button type="button" class="ui-command" data-fa-open-trade>Trade Room</button><button type="button" class="ui-command" data-open-waivers>Waivers</button></span>
@@ -6208,9 +6221,22 @@ function freeAgencySigningWirePanel(room = state.data.freeagency || {}) {
       const terms = kind === "signing" && move.aav_millions
         ? `${teams[0] || ""} · ${money(move.aav_millions)}${move.years ? ` × ${move.years}` : ""}${move.years ? ` · ${money(Number(move.aav_millions) * Number(move.years))} total` : ""}`
         : String(move.headline || "").replace(/^Trade completed:\s*/, "");
-      return `<li class="fa-wire-row fa-wire-${kind}${ours ? " is-ours" : ""}"><time datetime="${escapeAttr(move.date || "")}">${escapeHtml(String(move.date || "").slice(5).replace("-", "/"))}</time><span class="fa-wire-logos">${logos}</span><div><strong>${escapeHtml(title)}</strong><span title="${escapeAttr(move.headline || "")}">${escapeHtml(terms)}</span></div></li>`;
+      const when = freeAgencyWireDate(move.date, room.as_of_date);
+      return `<li class="fa-wire-row fa-wire-${kind}${ours ? " is-ours" : ""}"><time datetime="${escapeAttr(when.date)}"${when.title ? ` title="${escapeAttr(when.title)}"` : ""}>${escapeHtml(when.label)}</time><span class="fa-wire-logos">${logos}</span><div><strong>${escapeHtml(title)}</strong><span title="${escapeAttr(move.headline || "")}">${escapeHtml(terms)}</span></div></li>`;
     }).join("") || `<li class="fa-empty">${moves.length ? "No moves of this kind yet." : "No league moves yet."}</li>`}</ol>
   </section>`;
+}
+
+// Wire dates: a move the game has already applied never shows a date after today (the engine records some offseason
+// moves for 1 or 3 July while applying them when the re-signing window opens), and moves from another year say so.
+function freeAgencyWireDate(value, today = "") {
+  const recorded = String(value || "");
+  const asOf = String(today || "");
+  const date = asOf && recorded > asOf ? asOf : recorded;
+  const label = !date ? "" : asOf && date.slice(0, 4) !== asOf.slice(0, 4)
+    ? `${date.slice(5).replace("-", "/")}/${date.slice(2, 4)}`
+    : date.slice(5).replace("-", "/");
+  return { date, label, title: date !== recorded ? `Already done; recorded for ${recorded}` : "" };
 }
 
 function shortSeasonLabel(season) {
@@ -10505,12 +10531,17 @@ function extensionMaximum(candidate, years) {
   return Number(candidate?.max_aav_by_years?.[String(years)] || 0);
 }
 
+// The largest offer on the builder's $0.1M steps that stays under that limit.
+function extensionOfferCeiling(maximum) {
+  return Math.floor(Number(maximum || 0) * 10 + 1e-6) / 10;
+}
+
 // Default offer: his market ask for his preferred term (both limited to what the rules allow).
 function extensionDefaultDraft(candidate, room = {}) {
   const safe = Math.max(1, Number(candidate?.safe_years || 1));
   const years = Math.max(1, Math.min(safe, Number(candidate?.preferred_years || 1)));
   const minimum = extensionMinimum(room);
-  const maximum = Math.max(minimum, extensionMaximum(candidate, years));
+  const maximum = Math.max(minimum, extensionOfferCeiling(extensionMaximum(candidate, years)));
   const ask = Number(candidate?.market_ask_millions ?? candidate?.projected_aav_millions ?? minimum);
   return { years, aav: roundOfferTenth(clampNumber(ask, minimum, maximum)), guaranteed: true };
 }
@@ -10562,6 +10593,7 @@ function extensionOfferPreview(candidate, room = {}, draft = {}) {
     const taxBill = extensionLuxuryTax(after, rule);
     return {
       season: row.season, inDeal, payroll, current: Number(row.player_salary_millions || 0), salary, after, taxLine,
+      roomLine: Number(row.tax_line_millions || taxLine),
       taxRoom: Number(row.tax_space_millions || 0) - salary, hardRoom: Number(row.hard_cap_space_millions || 0) - salary,
       taxBill, payoutShare: after > taxLine ? 0 : Number(row.payout_share_if_under_millions || 0),
       lostShare: after > taxLine && payroll <= taxLine ? Number(row.payout_share_if_under_millions || 0) : 0,
@@ -10612,13 +10644,16 @@ function extensionCapTableMarkup(preview, candidate) {
       <td>${tax}</td>
     </tr>`;
   }).join("");
+  // The game keeps two tax lines: the signing rules measure "tax room" to one, the luxury-tax bill uses another.
+  const split = preview.seasons.find((row) => row.taxLine && row.roomLine && Math.abs(row.taxLine - row.roomLine) > 0.05);
+  const splitNote = split ? ` Tax room is measured to the signing rules' line (${money(split.roomLine)} in ${shortSeasonLabel(split.season)}); the tax bill and payout use the luxury-tax line (${money(split.taxLine)}).` : "";
   return `<header>Cap Position With This Extension</header>
     <table class="fa-cap-table ext-cap-table" aria-label="Payroll by season with this extension">
       <colgroup><col style="width:10%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:13%"><col style="width:13%"><col style="width:16%"></colgroup>
       <thead><tr><th scope="col">Season</th><th scope="col" title="Payroll today, including his current contract">Payroll</th><th scope="col" title="His current contract (already in payroll)">His deal</th><th scope="col" title="This extension">Extension</th><th scope="col">After</th><th scope="col" title="Room under the luxury tax after this extension">Tax room</th><th scope="col" title="Room under the hard cap (the second apron) after this extension">Hard-cap room</th><th scope="col" title="Luxury-tax bill if over the line, or your share of the tax payout if under it">Tax / payout</th></tr></thead>
       <tbody>${rows || `<tr><td colspan="8" class="fa-empty">No cap seasons available.</td></tr>`}</tbody>
     </table>
-    <p class="fa-muted">The extension starts in ${escapeHtml(shortSeasonLabel(start) || "the season after his deal ends")} and must fit under the hard cap in every season; it may go over the tax. Later seasons count today's contracts only; payout shares use today's league payrolls.</p>`;
+    <p class="fa-muted">The extension starts in ${escapeHtml(shortSeasonLabel(start) || "the season after his deal ends")} and must fit under the hard cap in every season; it may go over the tax. Later seasons count today's contracts only; payout shares use today's league payrolls.${escapeHtml(splitNote)}</p>`;
 }
 
 function extensionOfferFootMarkup(preview, legal = true) {
@@ -10634,7 +10669,7 @@ function extensionNegotiationPage(room, selectedPlayerId, response = null, detai
   const offer = draft || extensionDefaultDraft(candidate, room);
   const preview = extensionOfferPreview(candidate, room, offer);
   const minimum = preview.minimum;
-  const sliderMax = Math.max(minimum, preview.maximum);
+  const sliderMax = Math.max(minimum, extensionOfferCeiling(preview.maximum));
   const safe = preview.safe;
   const ask = Number(candidate.market_ask_millions ?? candidate.projected_aav_millions ?? 0);
   const share = Number(candidate.ask_share);
@@ -10658,7 +10693,7 @@ function extensionNegotiationPage(room, selectedPlayerId, response = null, detai
               <label for="extensionOfferAav"><small>Salary per season</small></label>
               <span class="money-input"><b>$</b><input id="extensionOfferAav" type="number" inputmode="decimal" min="${minimum.toFixed(1)}" max="${sliderMax.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-extension-aav aria-describedby="extensionOfferAavHelp" required><b>M</b></span>
               <input type="range" min="${minimum.toFixed(1)}" max="${sliderMax.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-extension-aav-range aria-label="Salary per season, in millions" />
-              <small id="extensionOfferAavHelp" data-extension-limit>${money(minimum)} minimum to ${money(preview.maximum)} (room under the hard cap for ${preview.years} year${preview.years === 1 ? "" : "s"})</small>
+              <small id="extensionOfferAavHelp" data-extension-limit>${money(minimum)} minimum to ${money(extensionOfferCeiling(preview.maximum))} (room under the hard cap for ${preview.years} year${preview.years === 1 ? "" : "s"})</small>
               <div class="fa-offer-quick" role="group" aria-label="Quick salary">
                 <button type="button" class="ui-command" data-extension-offer-set="price">His price from you</button>
                 <button type="button" class="ui-command" data-extension-offer-set="${escapeAttr(ask)}">Market ask</button>
@@ -10799,7 +10834,7 @@ function updateExtensionPreview(modal = state.modal, root = els.modalRoot) {
   const draft = modal.draft || (modal.draft = extensionDefaultDraft(candidate, modal.room));
   const preview = extensionOfferPreview(candidate, modal.room, draft);
   const minimum = preview.minimum;
-  const sliderMax = Math.max(minimum, preview.maximum);
+  const sliderMax = Math.max(minimum, extensionOfferCeiling(preview.maximum));
   const aavInput = root.querySelector("[data-extension-aav]");
   const range = root.querySelector("[data-extension-aav-range]");
   if (aavInput) {
@@ -10810,7 +10845,7 @@ function updateExtensionPreview(modal = state.modal, root = els.modalRoot) {
   const yearsInput = root.querySelector("[data-extension-years]");
   if (yearsInput) yearsInput.value = String(preview.years);
   const limit = root.querySelector("[data-extension-limit]");
-  if (limit) limit.textContent = `${money(minimum)} minimum to ${money(preview.maximum)} (room under the hard cap for ${preview.years} year${preview.years === 1 ? "" : "s"})`;
+  if (limit) limit.textContent = `${money(minimum)} minimum to ${money(extensionOfferCeiling(preview.maximum))} (room under the hard cap for ${preview.years} year${preview.years === 1 ? "" : "s"})`;
   root.querySelectorAll("[data-extension-years-choice]").forEach((button) => {
     const checked = Number(button.dataset.extensionYearsChoice) === preview.years;
     button.setAttribute("aria-checked", String(checked)); button.classList.toggle("is-active", checked); button.tabIndex = checked ? 0 : -1;
@@ -10889,7 +10924,7 @@ function wireExtensionNegotiationModal(root = els.modalRoot, modal = state.modal
   const range = root.querySelector("[data-extension-aav-range]");
   const setAav = (value) => {
     const minimum = extensionMinimum(modal.room);
-    const maximum = Math.max(minimum, extensionMaximum(candidate, modal.draft.years));
+    const maximum = Math.max(minimum, extensionOfferCeiling(extensionMaximum(candidate, modal.draft.years)));
     modal.draft.aav = roundOfferTenth(clampNumber(Number(value) || 0, minimum, maximum));
   };
   aavInput?.addEventListener("input", () => {
