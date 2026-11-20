@@ -60,8 +60,12 @@ POINTS_TRAITS = {"constant": 1.71917, "handle_pressure": 0.0082, "shot_versatili
 # offensive crash tendency (T12), defensive pursuit vs box-out emphasis (T13 pursue), height and wingspan (P01, P02, cm).
 # Out-of-fold r 0.94 with real 2025-26 rebounds per 36 (377 players); the height + offensive-rebounding formula the
 # engine used is the fallback for players without inputs. Sets each player's share of his team's rebounds.
-REBOUNDS_INPUTS = {"constant": -0.54609, "S30": 0.00471, "S31": 0.00954, "S32": 0.00456, "log T12": 0.42477,
-                   "log T13.pursue": 0.07825, "P01": 0.00803, "P02": 0.00167}  # r 0.94
+# Refit 2026-11-20 (overnight ratings review) after defensive-rebound positioning (S30) stopped leaning on Basketball
+# Index's crashing skill, which is measured against a position baseline (it ranked Jokic, Gobert and Zubac in the bottom
+# 10% and the Thompson twins in the top 3%). The positioning grade now carries real weight (0.0047 -> 0.0072 per point)
+# and the pursue habit drops to about nothing. Out-of-fold r 0.94 -> 0.951, mean miss 0.62 rebounds per 36.
+REBOUNDS_INPUTS = {"constant": -0.39495, "S30": 0.00723, "S31": 0.00609, "S32": 0.00238, "log T12": 0.42883,
+                   "log T13.pursue": -0.01995, "P01": 0.00675, "P02": 0.0026}  # r 0.95
 # Screen assists per 36 (scripts/fit_screen_assists.py, 2026-11-19): screens that directly lead to a teammate's made
 # shot, Basketball Index 2023-24..2025-26 (471 players). Screen execution (S27) and screen-action recognition (S28) set
 # how productive each screen is; the screen and roll shares (T11) how often he screens; body mass (P04, kg) how much a
