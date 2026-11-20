@@ -271,9 +271,11 @@ def _create_league_save(
     from .contract_imports import initialize_imported_obligations
     initialize_imported_obligations(save, canonical)
     initialize_new_career_health(save, start_date)
-    # Players already out when the season opens: offseason and camp injuries, and last season's left-overs (a new
-    # career's previous season was never simulated).
-    apply_season_start_injuries(root, canonical, save, opening_schedule, seed, carried=True)
+    # Players already out when the season opens: the real opening-night injury list when the game has one for this
+    # season (INJURIES-2); otherwise the random offseason, camp and last-season draws (a new career's previous season
+    # was never simulated).
+    if not apply_opening_night_injuries(root, canonical, save, opening_schedule):
+        apply_season_start_injuries(root, canonical, save, opening_schedule, seed, carried=True)
     if normalized_game_mode == "fantasy_draft":
         from .fantasy_draft import initialize_fantasy_draft
 
@@ -10826,6 +10828,26 @@ def apply_season_start_injuries(root: str | Path, canonical: dict[str, Any], sav
         return []
     save.setdefault("injury_events", []).extend(events)
     return events
+
+
+def apply_opening_night_injuries(root: str | Path, canonical: dict[str, Any], save: dict[str, Any],
+                                 schedule: dict[str, Any]) -> bool:
+    """A new career's real opening-night injuries (health.opening_night_injuries). Returns False when the game has no
+    list for this season (the caller then draws random season-start injuries). Players the list could not be applied
+    to (not in the league, or on another team) are recorded in the save's meta."""
+    from .health import load_opening_night_list, opening_night_injuries
+    season = str((schedule or {}).get("season") or "")
+    if not load_opening_night_list(root, season):
+        return False
+    try:
+        events, skipped = opening_night_injuries(root, canonical, save.setdefault("health_states", []),
+                                                 (schedule or {}).get("games") or [], season)
+    except Exception:  # pragma: no cover - logged
+        logging.getLogger(__name__).exception("opening-night injuries failed")
+        return True
+    save.setdefault("injury_events", []).extend(events)
+    save.setdefault("meta", {})["opening_night_injuries"] = {"season": season, "applied": len(events), "skipped": skipped}
+    return True
 
 
 def mark_national_tv_safely(schedule: dict[str, Any], canonical: dict[str, Any], save: dict[str, Any] | None = None) -> None:

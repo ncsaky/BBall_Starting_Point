@@ -33,6 +33,12 @@ B = ROOT / "data/research/bbi/tools"
 OUT = ROOT / "data/canonical/injury_model_v2.json"
 EVIDENCE_OUT = ROOT / "data/canonical/injury_player_evidence_v2.json"   # git-ignored: per-player Basketball Index evidence
 FIRST_SEASON = "2015-16"
+# Recovery times come from absences recorded since 2015, the same seasons the injury-rate models are fitted on
+# (INJURIES-2, 2026-11-20). Older records describe a different reporting world: before 2005-06 the injured list had a
+# five-game minimum and half the records have no logged return (median return 28 days in 2000-05, 10 in 2006-14, 5 in
+# 2015-20, 4 in 2021-26). Even at a 6-year half-life they made the pool's tail half again too long against the
+# tracker's own 2021-25 absences (90th percentile 45 days against 28).
+RECOVERY_FIRST_YEAR = 2015
 RIDGE = 3.0
 HISTORY_DECAY_YEARS = 1.5
 PARTS = ["ankle", "knee", "back", "hamstring", "hip", "foot", "calf", "shoulder", "groin", "quadriceps", "toe", "head",
@@ -183,7 +189,7 @@ def main():
             pools[part].append({"label": h.get("label"), "days": int(h["days"]), "games": int(h.get("games") or 0),
                                 "surgery": int(h.get("surgery") or 0), "season": h["season"],
                                 "censored": int(h.get("censored") or 0)})
-    # Injuries: Basketball Index's full set of recorded absences (21,216, all players 2000-2026), grouped by body part,
+    # Injuries: Basketball Index's recorded absences (all players, since RECOVERY_FIRST_YEAR), grouped by body part,
     # labeled with the specific diagnosis where one exists, weighted with its 6-year half-life. An absence without a
     # logged return lasted at least its recorded days: it takes the median of longer returned cases for that part.
     observations = {o["observation_id"]: o for o in rows("injury_observations.json")}
@@ -202,7 +208,7 @@ def main():
             continue
         for oid in t["observation_ids"]:
             o = observations.get(oid)
-            if o and o.get("days"):
+            if o and o.get("days") and int(o.get("start_year") or 0) >= RECOVERY_FIRST_YEAR:
                 bbi_pools[part].append(o | {"label": diagnosis.get(oid) or f"{part} injury"})
     recovery = {}
     for part, obs in bbi_pools.items():

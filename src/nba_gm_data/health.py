@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import bisect
 import hashlib
 import json
 import math
@@ -397,6 +398,7 @@ def simulate_health(
                 and (state.get("availability_status", "active") != "active" or state.get("user_rest"))):
             players_by_team.setdefault(player["team_id"], []).append(player)
     traits = trait_lookup(canonical)
+    team_dates = team_game_dates(season_schedule or schedule)
     last_game_date: dict[str, date] = {}
     season_start_year = season_start_year_for_health_date(from_date)
     season_floor = f"{season_start_year}-07-01"
@@ -519,7 +521,8 @@ def simulate_health(
                     ramp = im.return_minutes_multiplier(int(state.get("return_absence_games") or 0),
                                                         int(state.get("games_since_return") or 0), rotation_star.get(team["id"], 3.0))
                     event = v2_injury_draw(root, model, canonical, player, traits, state, profiles.get(player["id"], {}),
-                                           minutes * ramp, game_date, staff, seed, rng, history_cache, events, fatigue=entering)
+                                           minutes * ramp, game_date, staff, seed, rng, history_cache, events, fatigue=entering,
+                                           team_days=team_dates.get(espn_id))
                     if event:
                         # He plays tonight's game (leaving partway through when the injury happens during play); the
                         # absence starts with the team's next game (activated by advance_state_for_date).
@@ -772,9 +775,57 @@ def fatigue_injury_multiplier(fatigue: float) -> float:
     return min(FATIGUE_INJURY_CAP, math.exp(FATIGUE_INJURY_SLOPE * max(0.0, float(fatigue) - FATIGUE_REFERENCE)))
 
 
+# Basketball Index's "days out" are a fixed two days per game missed (INJURIES-2, 2026-11-20): in its tracker, games
+# missed equal days // 2 in 5,967 of 5,987 entries with a logged return (2 days -> 1 game, 3 -> 1, 8 -> 4, 30 -> 15,
+# 90 -> 45; 0-1 days -> no game), counted from the first game the player misses (258 of the 260 2025-26 absences that
+# start on a team game day start on a game he did not play). The recovery pools are drawn in those days, so a drawn
+# absence is days // 2 of his team's games, starting with the next one. Reading the days as calendar days from the
+# injury game instead ended most two- and three-day absences before the next game: a third of simulated injuries cost
+# no game (Basketball Index: 23%, all 0-1 day entries) and heavy-minute players had 30% fewer multi-game absences than
+# in the real 2025-26 box scores.
+DAYS_PER_GAME_MISSED = 2
+
+
+_TEAM_DATES_CACHE: dict[tuple, dict[str, list[str]]] = {}
+
+
+def team_game_dates(games: list[dict[str, Any]] | None) -> dict[str, list[str]]:
+    """Each team's game dates (by ESPN team id), sorted; built once per schedule."""
+    if not games:
+        return {}
+    key = (len(games), str(games[0].get("externalGameId")), str(games[-1].get("externalGameId")),
+           str(games[0].get("gameDate")), str(games[-1].get("gameDate")))
+    cached = _TEAM_DATES_CACHE.get(key)
+    if cached is None:
+        dates: dict[str, set[str]] = {}
+        for game in games:
+            for side in ("homeTeamId", "awayTeamId"):
+                dates.setdefault(str(game.get(side)), set()).add(str(game.get("gameDate"))[:10])
+        cached = {team: sorted(days) for team, days in dates.items()}
+        if len(_TEAM_DATES_CACHE) > 8:
+            _TEAM_DATES_CACHE.clear()
+        _TEAM_DATES_CACHE[key] = cached
+    return cached
+
+
+def injury_return_date(team_days: list[str] | None, game_date: date, days: int) -> date:
+    """Return date for an injury in the game on `game_date` with Basketball Index `days` out: he misses days // 2 of his
+    team's games from the next one and is back for the game after them. Past the end of the known schedule (the
+    playoffs, the offseason) the remaining games count two days each on the basketball calendar."""
+    from . import injury_model as im
+    games = max(0, int(days)) // DAYS_PER_GAME_MISSED
+    future = (team_days or [])[bisect.bisect_right(team_days or [], date_to_str(game_date)):]
+    if games < len(future):
+        return parse_date(future[games])
+    last = parse_date(future[-1]) if future else game_date
+    return im.basketball_return_date(last, DAYS_PER_GAME_MISSED * (games - len(future) + 1))
+
+
 def v2_injury_draw(root, model, canonical, player, traits, state, profile, minutes, game_date, staff, seed, rng,
-                   history_cache, new_events, fatigue: float | None = None) -> dict[str, Any] | None:
-    """One game's injury draw under the per-body-part model. Returns the injury event dict, or None."""
+                   history_cache, new_events, fatigue: float | None = None,
+                   team_days: list[str] | None = None) -> dict[str, Any] | None:
+    """One game's injury draw under the per-body-part model. Returns the injury event dict, or None. team_days: his
+    team's game dates (the absence is counted in its games, injury_return_date)."""
     from . import injury_model as im
     pid = player["id"]
     if pid not in history_cache:
@@ -799,7 +850,7 @@ def v2_injury_draw(root, model, canonical, player, traits, state, profile, minut
     case = im.sample_recovery(root, part, rng)
     personal = 1.0 + float((model.get("player_recovery_pct") or {}).get(pid, 0.0)) / 100.0
     days = max(1, int(round(int(case.get("days") or 1) * personal * float(staff.get("recovery_days_multiplier", 1.0)))))
-    return_day = im.basketball_return_date(game_date, days)
+    return_day = injury_return_date(team_days, game_date, days)
     severity = im.severity_for_days(days)
     label = str(case.get("label") or f"{part} injury")
     area = im.PART_AREA.get(part, "head_illness")
@@ -809,7 +860,7 @@ def v2_injury_draw(root, model, canonical, player, traits, state, profile, minut
         id=stable_id("injury", "v2", pid, date_to_str(game_date), part, label, seed),
         player_id=pid, team_id=player["team_id"], start_date=date_to_str(game_date), return_date=date_to_str(return_day),
         body_area=area, severity=severity, expected_days_missed=days,
-        expected_games_missed=expected_games_from_days((return_day - game_date).days),
+        expected_games_missed=days // DAYS_PER_GAME_MISSED,
         recurrence=recurrence, status="generated_injury_v2", source_ids=["src_injury_model_v2"],
         notes=f"{label} ({im.PART_LABELS.get(part, part)}); duration from a real {part} absence.",
     ))
@@ -956,6 +1007,100 @@ def season_start_injuries(root: str | Path, canonical: dict[str, Any], states: l
             "notes": event["notes"],
         })
     return events
+
+
+# ---- Real opening-night injuries for a new career (INJURIES-2, 2026-11-20) --------------------------------------------
+# A new career opens on the real 2026-27 opening night, so it starts with the players who really were out then, why,
+# and for how many of their team's games (user decision 2026-11-20), instead of the random season-start draws (which
+# could, for example, put Tatum out for the season). The list comes from the official NBA injury reports and ESPN box
+# scores (scripts/research/opening_night_injuries.py). Later seasons keep the random season-start model.
+OPENING_NIGHT_FILE = Path("data/canonical/opening_night_injuries_2026_27.json")
+OPENING_NIGHT_HISTORY_DAYS = 400     # a same-part injury in his real record this recent is the one he is still out with
+
+
+def load_opening_night_list(root: str | Path, season: str) -> dict[str, Any] | None:
+    """The real opening-night injury list for this season, when the game has one."""
+    for base in (Path(root), Path(__file__).resolve().parents[2]):
+        data = _season_start_model(str(base / OPENING_NIGHT_FILE))
+        if data and str(data.get("season")) == str(season):
+            return data
+    return None
+
+
+def opening_night_injuries(root: str | Path, canonical: dict[str, Any], states: list[dict[str, Any]],
+                           games: list[dict[str, Any]], season: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Apply the real opening-night injury list: each listed player (matched by id, on the same team) misses exactly
+    his real number of his team's games in this schedule (the whole season when it ran past the end). Updates `states`
+    in place. Returns (new injury events, skipped list entries with the reason). Nobody else is made to start hurt."""
+    data = load_opening_night_list(root, season)
+    if not data or not games:
+        return [], []
+    from . import injury_model as im
+    injury = im.load_model(root) or {}
+    espn_to_team = espn_team_id_map_from_canonical(canonical)
+    dates = _team_game_dates(games, espn_to_team)
+    if not dates:
+        return [], []
+    opener_day = parse_date(min(day for days in dates.values() for day in days))
+    players = {p["id"]: p for p in canonical.get("players", []) if not p.get("_inactive_player")}
+    teams = {t["id"]: t for t in canonical.get("teams", [])}
+    by_state = {state.get("player_id"): state for state in states}
+    events: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+    for row in data.get("injuries") or []:
+        if not row.get("apply", True):
+            skipped.append({"name": row.get("name"), "player_id": row.get("player_id"), "reason": row.get("skip_reason")})
+            continue
+        player = players.get(str(row.get("player_id") or ""))
+        team = teams.get(str((player or {}).get("team_id") or ""))
+        if not player or not team or team.get("abbrev") != row.get("team") or team["id"] not in dates:
+            where = (team or {}).get("abbrev") or "no team"
+            skipped.append({"name": row.get("name"), "player_id": row.get("player_id"),
+                            "reason": "not in the league" if not player else f"on {where} in this league, {row.get('team')} in real life"})
+            continue
+        state = by_state.get(player["id"])
+        if state is None:
+            state = default_state_dict(player["id"], date_to_str(opener_day))
+            states.append(state)
+            by_state[player["id"]] = state
+        if state.get("current_injury_id"):
+            skipped.append({"name": row.get("name"), "player_id": player["id"], "reason": "already injured"})
+            continue
+        team_days = dates[team["id"]]
+        games_out = max(1, min(int(row.get("games_missed") or 1), len(team_days)))
+        whole_season = games_out >= len(team_days) or bool(row.get("season_ending"))
+        return_day = date(opener_day.year + 1, 6, 30) if whole_season else parse_date(team_days[games_out])
+        part = str(row.get("body_part") or "illness")
+        label = str(row.get("diagnosis") or f"{im.PART_LABELS.get(part, part)} injury")
+        # Still out with an injury from his real record (last season's surgery, say): date it there, so his injury
+        # history counts it once.
+        start_day = opener_day - timedelta(days=1)
+        for when, past_part in im.player_history(injury, player["id"], []):
+            if past_part == part and 0 <= (opener_day - when).days <= OPENING_NIGHT_HISTORY_DAYS:
+                start_day = when
+        games_total = len(team_days) if whole_season else games_out
+        reason = "out for the season" if whole_season else f"out for the first {games_out} games"
+        event = to_plain(InjuryEvent(
+            id=stable_id("injury", "opening_night", player["id"], season),
+            player_id=player["id"], team_id=team["id"], start_date=date_to_str(start_day),
+            return_date=date_to_str(return_day), body_area=im.PART_AREA.get(part, "head_illness"),
+            severity="season_ending" if whole_season else im.severity_for_days(DAYS_PER_GAME_MISSED * games_out),
+            expected_days_missed=DAYS_PER_GAME_MISSED * games_total, expected_games_missed=games_total,
+            recurrence=False, status="season_start_injury", source_ids=["src_opening_night_injuries_2026_27"],
+            notes=f"{label} ({im.PART_LABELS.get(part, part)}); {reason} (real 2026-27 opening-night injury report).",
+        ))
+        event.update({"body_part": part, "diagnosis": label, "surgery": int("surgery" in label.lower()),
+                      "lasting_rapm_change": round(im.lasting_effect(injury, label, part), 3),
+                      "season_start": "opening_night", "real_games_missed": int(row.get("games_missed") or 0)})
+        events.append(event)
+        for key in ("return_absence_games", "games_since_return", "return_rust", "ramp_last_game", "pending_injury"):
+            state.pop(key, None)
+        state.update({
+            "current_injury_id": event["id"], "availability_status": "out", "return_date": event["return_date"],
+            "current_injury_severity": event["severity"], "current_injury_part": part, "current_injury_label": label,
+            "rust": 0.0, "current_absence_games": 0, "notes": event["notes"],
+        })
+    return events, skipped
 
 
 def injury_risk_for_player(

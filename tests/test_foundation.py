@@ -2074,6 +2074,10 @@ class DataFoundationTests(unittest.TestCase):
             save["team_records"]["team_lac"]["losses"] = 0
             ingram_id = players["Brandon Ingram"]["id"]
             save["player_season_stats"][ingram_id] = {"games": 6, "points": 120, "rebounds": 30, "assists": 24, "minutes": 204}
+            # He played all six here, so he is healthy (a new career opens with his real heel injury, INJURIES-2).
+            for state in save["health_states"]:
+                if state.get("player_id") == ingram_id:
+                    state.update(current_injury_id=None, availability_status="active", return_date=None)
             early_ingram_context = context_for("Brandon Ingram", "LAC", 27_300_000, 3)
             self.assertFalse(any("6/6 GP" in snippet for snippet in early_ingram_context["analysis"]["evidence_snippets"]))
             durability_post = {"text": "Only 6 games played makes this a durability bet."}
@@ -4961,7 +4965,11 @@ class DataFoundationTests(unittest.TestCase):
         self.assertEqual(first, second)
         events = first["events"]
         teams = len({p["team_id"] for p in self.plain["players"] if p.get("team_id")})
-        self.assertTrue(24 <= len(events) / teams <= 46, len(events) / teams)
+        # INJURIES-2: this replay exposes every 4+ minute player all season (no rest nights, no rotation changes) and
+        # counts injuries that cost no game; at the rate refitted to the tracker's 2021-25 seasons it gives ~46-47 a
+        # team, while full seasons with the AI rotations give 35 a team that cost a game (Basketball Index 30-37, 35-43
+        # with illness, plus its no-game entries).
+        self.assertTrue(24 <= len(events) / teams <= 52, len(events) / teams)
         days = sorted(e["expected_days_missed"] for e in events)
         q = statistics.quantiles(days, n=20)
         self.assertTrue(3 <= q[9] <= 8, q[9])        # median
