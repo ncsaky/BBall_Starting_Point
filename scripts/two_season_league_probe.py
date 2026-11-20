@@ -85,7 +85,22 @@ def deadline_phase_snapshot(save: dict) -> list[dict]:
     return sorted(out, key=lambda row: row["rank"] or 99)
 
 
-def run(out: Path, model: str, target: str, seed: int, team: str, keep_checkpoint: bool) -> None:
+def snapshot_key(save: dict) -> str | None:
+    """Market moments worth keeping a copy of for trade-funnel replays (measurement only): the day before the step
+    into the trade deadline, draft day, the first day of free agency, and the start of training camp."""
+    day, phase = save["state"]["current_date"], save["state"]["phase"]
+    if phase == "regular_season" and day[5:7] in {"01", "02"} and day[5:] < "02-05":
+        return f"deadline_{day[:4]}"
+    if phase == "draft":
+        return f"draft_{day[:4]}"
+    if phase == "free_agency" and int((save.get("free_agency_state") or {}).get("day") or 1) == 1:
+        return f"fa_{day[:4]}"
+    if phase == "training_camp":
+        return f"camp_{day[:4]}"
+    return None
+
+
+def run(out: Path, model: str, target: str, seed: int, team: str, keep_checkpoint: bool, snapshots: bool = False) -> None:
     counter = _count_trade_evaluations()
     runner = SoakRunner(argparse.Namespace(root=str(ROOT), output_dir=str(out), seed=seed, team=team))
     checkpoint = out / "checkpoint"
@@ -109,6 +124,9 @@ def run(out: Path, model: str, target: str, seed: int, team: str, keep_checkpoin
         runner.resolve_user_staff_retention()
         runner.resolve_user_roster_cutdown()
         before = runner.load()
+        key = snapshot_key(before) if snapshots else None
+        if key and not (out / "snapshots" / key / "current/manifest.json").exists():
+            fixture.save_checkpoint(out / "snapshots" / key, live)
         action, payload = select_action(before, target)
         row = {"from": before["state"]["current_date"], "phase": before["state"]["phase"],
                "action": action, "payload": payload}
@@ -150,12 +168,14 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=17)
     parser.add_argument("--team", default="GSW")
     parser.add_argument("--keep-checkpoint", action="store_true")
+    parser.add_argument("--snapshots", action="store_true",
+                        help="keep save copies at the deadline, draft, free agency and camp (output-dir/snapshots)")
     args = parser.parse_args()
     out = args.output_dir.resolve()
     if not out.is_relative_to(ROOT / "output"):
         parser.error("Output directory must be below output/")
     out.mkdir(parents=True, exist_ok=True)
-    run(out, args.model, args.target, args.seed, args.team, args.keep_checkpoint)
+    run(out, args.model, args.target, args.seed, args.team, args.keep_checkpoint, args.snapshots)
 
 
 if __name__ == "__main__":

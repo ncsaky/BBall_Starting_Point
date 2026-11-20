@@ -4465,6 +4465,17 @@ def complete_offseason_and_rollover(
     save = prepared_save if prepared_save is not None else ensure_league_save_defaults(load_save(save_path), canonical)
     current_season = save.get("meta", {}).get("season") or CANONICAL_SEASON
     next_start = season_start_year(current_season) + 1
+    # TRADE-VOLUME-2: September's trade chances (trade_calendar.market_day) for the days this jump skips, in one market
+    # on the way; a September advanced day by day already ran its own.
+    from .trade_calendar import market_day
+    today = str(save.get("state", {}).get("current_date") or "")
+    september = [f"{next_start}-09-{d:02}" for d in range(1, 31)]
+    slots = sum(market_day(day, seed, next_start, trade_deadline_date(next_start))["slots"] for day in september if day > today)
+    if slots:
+        if today < f"{next_start}-09-15":
+            advance_lifecycle_to(canonical, save, f"{next_start}-09-15", seed, root)
+        from .play import run_summer_ai_market
+        run_summer_ai_market(canonical, save, seed, slots, seed + 1931)
     advance_lifecycle_to(canonical, save, f"{next_start}-09-30", seed, root)
     if simulation_stop_requested():
         write_save(save_path, save)
@@ -5010,7 +5021,8 @@ def legal_actions_for_phase(phase: str) -> list[str]:
         "draft": ["draft_picks", "draft_trades", "trades", "extensions", "staff_changes", "press_conferences", "social_media", "advance"],
         "re_signing": ["free_agent_signings", "trades", "staff_changes", "press_conferences", "social_media", "advance"],
         "free_agency": ["free_agent_signings", "trades", "staff_changes", "press_conferences", "social_media", "advance"],
-        "training_camp": ["staff_changes", "press_conferences", "social_media", "advance"],
+        # Trades are legal in September (real teams trade during training camp; TRADE-VOLUME-2).
+        "training_camp": ["trades", "staff_changes", "press_conferences", "social_media", "advance"],
         "offseason": ["trades", "extensions", "staff_changes", "press_conferences", "social_media", "advance"],
     }
     return actions.get(phase, ["advance"])
@@ -5887,7 +5899,7 @@ def queue_ai_recommendations(
     start_year = season_start_year_from_date(through_date)
     trade_deadline = trade_deadline_date(start_year)
     market = market_day(through_date, seed, start_year, trade_deadline)
-    trade_window_open = phase in {'preseason', 'regular_season'} and market['review']
+    trade_window_open = phase in {'preseason', 'regular_season', 'training_camp'} and market['review']
     if "trades" in legal_actions_for_date(through_date) and trade_window_open:
         action_id = stable_id("ai_action", "trades", through_date, seed)
         if action_id not in queued_keys and not market['slots'] and not (market['offer_slots'] and human_controlled_team_ids(save)):
@@ -8961,12 +8973,13 @@ def apply_offseason_roster_transitions(canonical: dict[str, Any], save: dict[str
     active = canonical_with_save(canonical, save)
     players = {player["id"]: player for player in active.get("players", [])}
     contracts = {contract.get("player_id"): contract for contract in active.get("contracts", [])}
+    annotate_star_asks(active, contracts, next_season)
     free_agents: list[str] = list(save.get("free_agent_player_ids", []))
     retired: list[str] = list(save.get("retired_player_ids", []))
     retired_this_offseason: list[str] = []
     expired: list[str] = []
     re_signing_commitments: dict[tuple[str, str], float] = {}
-    for player in active.get("players", []):
+    for player in re_signing_order(active.get("players", [])):
         player_id = player["id"]
         if not player.get("team_id"):
             continue
@@ -9361,10 +9374,11 @@ def prepare_free_agency_pool(canonical: dict[str, Any], save: dict[str, Any]) ->
     retirement_count = prepare_offseason_retirements(canonical, save, current_season, next_season, seed)
     active = canonical_with_save(canonical, save)
     contracts = {contract.get("player_id"): contract for contract in active.get("contracts", [])}
+    annotate_star_asks(active, contracts, next_season)
     free_agents = set(save.get("free_agent_player_ids", []))
     expired: list[str] = []
     re_signing_commitments: dict[tuple[str, str], float] = {}
-    for player in active.get("players", []):
+    for player in re_signing_order(active.get("players", [])):
         player_id = player.get("id")
         if not player_id or not player.get("team_id"):
             continue
@@ -9628,10 +9642,47 @@ def clean_free_agency_state(save: dict[str, Any], current_season: str | None = N
             }
 
 
+STAR_RETENTION_MAX_AGE = 33.0
+
+
+def re_signing_order(players: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """A front office settles its stars' contracts first (TRADE-VOLUME-2): stars by market price, then the rest in
+    roster order. Before, players were re-signed in roster order, so a team's cheaper re-signings could use up the
+    room its star needed (Denver lost Nikola Jokic that way in the two-season test)."""
+    stars = sorted((p for p in players if p.get("_star_ask_millions")),
+                   key=lambda p: (-float(p["_star_ask_millions"]), str(p.get("id"))))
+    return stars + [p for p in players if not p.get("_star_ask_millions")]
+
+
+def annotate_star_asks(active: dict[str, Any], contracts: dict[str, dict[str, Any]], next_season: str) -> None:
+    """Mark each expiring starter-or-better with his market price (TRADE-VOLUME-2, contract_ai.star_market_ask_millions)
+    as ``_star_ask_millions`` on the player rows of ``active`` (a working copy), for the AI re-signing pass below."""
+    from .contract_ai import star_market_ask_millions
+    from .transactions import with_transaction_context
+    expiring = [p for p in active.get("players", []) if p.get("team_id") and display_minutes_projection(p) >= 24.0
+                and (contract_last_season(contracts.get(p.get("id"))) or next_season) < next_season]
+    if not expiring:
+        return
+    priced = with_transaction_context(active)
+    by_id = {p.get("id"): p for p in priced.get("players", [])}
+    for player in expiring:
+        try:
+            ask = star_market_ask_millions(priced, by_id.get(player["id"], player), next_season)
+        except (KeyError, ValueError, TypeError):
+            ask = None
+        if ask:
+            player["_star_ask_millions"] = ask
+
+
 def should_ai_retain_expiring_player(save: dict[str, Any], player: dict[str, Any], season: str, seed: int) -> bool:
     team_id = player.get("team_id")
     if not team_id or team_id in human_controlled_team_ids(save):
         return False
+    # A team keeps its expiring star (starter-or-better market price, 33 or younger) whenever its cap and payroll
+    # plan allow (ai_re_signing_allowed). Before it was a dice roll capped at 72%, and Denver let Nikola Jokic walk in
+    # 2028 (he signed with Boston for $18.9M). Real stars re-sign or extend almost without exception.
+    if player.get("_star_ask_millions") and float(player.get("display_age", player.get("age")) or 27.0) <= STAR_RETENTION_MAX_AGE:
+        return True
     minutes = display_minutes_projection(player)
     age = float(player.get("age") or 27.0)
     record = save.get("team_records", {}).get(team_id, {})
@@ -9656,6 +9707,12 @@ def ai_re_signing_contract_terms(save: dict[str, Any], player: dict[str, Any], n
     score = minutes * 0.72 + per_game_stat(save.get("player_season_stats", {}).get(player.get("id"), {}), "points") * 0.25
     years = 3 if age <= 29 and minutes >= 24 else 2 if age <= 33 and minutes >= 16 else 1
     salary = int(round(clamp(2_200_000 + minutes * 520_000 + max(0.0, score - 18.0) * 320_000, 2_000_000, 32_000_000)))
+    star = float(player.get("_star_ask_millions") or 0.0)
+    if star * 1_000_000 > salary:
+        # TRADE-VOLUME-2: a starter-or-better re-signs at his market price (annotate_star_asks), not the minutes rule
+        # capped at $32M; the price is already within the maximum salary for his years in the league.
+        salary = int(round(star * 1_000_000))
+        years = 4 if age <= 30 else years
     seasons = [
         {
             "season": season_label_from_start(season_start_year(next_season) + offset),

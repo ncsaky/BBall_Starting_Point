@@ -3093,8 +3093,11 @@ def maybe_run_ai_draft_trades_before_pick(canonical: dict[str, Any], save_path: 
 # 16/17/21, a four-team shuffle at 24/25/30, #26 and #29 bought with early seconds, second-round swaps from 37 to 56).
 # Each part of the draft now has its own share of the budget (at most two trades), and the floors loosen only inside
 # a part that has had no trade by its middle pick.
-DRAFT_TRADES_PER_DRAFT = 5
-DRAFT_TRADES_PER_SEGMENT = 2
+# TRADE-VOLUME-2: real draft nights had 8 trades (2025, over two days) and 11 (June 24 2026), pick-only swaps
+# included (Basketball-Reference, Hoops Rumors, ESPN trackers); the game made exactly five every draft because five was
+# the cap. Three per part of the draft keeps them spread from the top ten to round two.
+DRAFT_TRADES_PER_DRAFT = 10
+DRAFT_TRADES_PER_SEGMENT = 3
 DRAFT_TRADE_SEGMENTS = (("top_10", 1, 10), ("picks_11_20", 11, 20), ("picks_21_30", 21, 30), ("round_2", 31, 60))
 DRAFT_TRADE_LAST_PICK = 60
 
@@ -5064,11 +5067,12 @@ def initialize_free_agency_market(canonical: dict[str, Any], save_path: Path, us
     report_by_id = {}
     if missing_asks:
         report_by_id = canonical_free_agent_market_by_id(canonical)
+        priced = with_transaction_context(active)
     for player_id in missing_asks:
         if player_id in state.setdefault("player_asks_millions", {}):
             continue
         player = next((item for item in active.get("players", []) if item.get("id") == player_id), {})
-        market = report_by_id.get(player_id) or {}
+        market = with_star_market_ask(priced, save, player, report_by_id.get(player_id) or {})
         state["player_asks_millions"][player_id] = free_agency_initial_ask(player, market)
         changed = True
     if changed:
@@ -5081,6 +5085,22 @@ def initialize_free_agency_market(canonical: dict[str, Any], save_path: Path, us
         return save
     process_ai_free_agency_offers_for_day(canonical, save_path, user_team, seed)
     return load_save(save_path)
+
+
+def with_star_market_ask(active: dict[str, Any], save: dict[str, Any], player: dict[str, Any],
+                         market: dict[str, Any]) -> dict[str, Any]:
+    """A free agent without precomputed market research who is a starter or better asks at least the contract-market
+    price (TRADE-VOLUME-2, contract_ai.star_market_ask_millions); everyone else keeps the research or minutes rule."""
+    if not player or float(market.get("projected_aav_millions") or 0.0):
+        return market
+    from .contract_ai import star_market_ask_millions
+    try:
+        star = star_market_ask_millions(active, player, contract_start_season_for_signing(save))
+    except (KeyError, ValueError, TypeError):  # no inputs to price him with: the minutes rule
+        return market
+    if star is None or star <= display_minutes_projection(player) * 0.48:
+        return market
+    return {**market, "projected_aav_millions": star, "ask_source": "contract_market_star"}
 
 
 def free_agency_initial_ask(player: dict[str, Any], market: dict[str, Any]) -> float:
@@ -6024,12 +6044,14 @@ def maybe_run_free_agency_ai_trades_state(
             candidates = free_agency_cap_dump_candidates(active, save, user_team_id, seed)
         from .roster_space import sale_candidates
         candidates = [*sale_candidates(active, save, user_team_id, seed), *candidates]
-    if phase == "post_resolution" and len(candidates) < 2:
-        from .trade_calendar import summer_offer_slots
+    from .trade_calendar import FREE_AGENCY_TRADES_PER_DAY, free_agency_trade_slots
+    if phase == "post_resolution" and len(candidates) < FREE_AGENCY_TRADES_PER_DAY:
         stamp = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
         # Keep target replacements first, but do not close the whole summer
         # market after three deals. Opportunities follow dates, not call count.
-        capacity = min(2 - len(candidates), summer_offer_slots(stamp, seed))
+        # TRADE-VOLUME-2: the day's AI-to-AI slots follow the real July calendar (up to six on the opening days; it
+        # was two a day, shared with the user's inbound offers).
+        capacity = min(FREE_AGENCY_TRADES_PER_DAY - len(candidates), free_agency_trade_slots(stamp, seed, day))
         if capacity:
             candidates = [*candidates, *free_agency_general_trade_candidates(
                 active, save, user_team_id, seed, max_results=capacity)[:capacity]]
@@ -6043,7 +6065,7 @@ def maybe_run_free_agency_ai_trades_state(
     ]
     news: list[dict[str, Any]] = []
     applied_count = 0
-    for candidate in candidates[:2]:
+    for candidate in candidates[:FREE_AGENCY_TRADES_PER_DAY]:
         if not candidate.get('accepted_by_all') or candidate.get('legality', {}).get('status') != 'legal':
             continue
         proposal = candidate.get("proposal") or {}
@@ -6598,11 +6620,54 @@ def queue_free_agency_suggestions(canonical: dict[str, Any], save_path: Path, se
 def finish_free_agency_phase(canonical: dict[str, Any], save_path: Path, *, root: Path | None = None) -> None:
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     end_year = int(str(save.get("meta", {}).get("season") or CANONICAL_SEASON).split("-")[0]) + 1
-    advance_lifecycle_to(canonical, save, f"{end_year}-09-01", int(save.get("meta", {}).get("seed", 1)), root)
+    seed = int(save.get("meta", {}).get("seed", 1))
+    # TRADE-VOLUME-2: the game skips from the end of free agency to September 1, so the late-July and August trade
+    # market runs once on August 1 on the way.
+    if str(save.get("state", {}).get("current_date") or "") < f"{end_year}-08-01":
+        advance_lifecycle_to(canonical, save, f"{end_year}-08-01", seed, root)
+        run_late_summer_ai_trades(canonical, save, seed, end_year)
+    advance_lifecycle_to(canonical, save, f"{end_year}-09-01", seed, root)
     save.setdefault("free_agency_state", {})["status"] = "completed"
     add_news(save, "free_agency", "Free agency period closed. Training camp is next.", date_value=f"{end_year}-09-01")
     write_save(save_path, save)
     print("Free agency complete. Training camp is next.")
+
+
+def run_late_summer_ai_trades(canonical: dict[str, Any], save: dict[str, Any], seed: int, season_start: int) -> int:
+    """AI-to-AI trades of late July and August (TRADE-VOLUME-2), the same target search as the rest of the year.
+
+    Real summers after the opening week of free agency had a handful of trades (2025: about 2 in late July, 2 in
+    August; 2026: 3 and 3). The slots are drawn by season (trade_calendar.late_summer_trade_slots); deals involving
+    the human team are never made here."""
+    from .trade_calendar import late_summer_trade_slots
+    return run_summer_ai_market(canonical, save, seed, late_summer_trade_slots(season_start, seed), seed + 991)
+
+
+def run_summer_ai_market(canonical: dict[str, Any], save: dict[str, Any], seed: int, slots: int, search_seed: int) -> int:
+    """One summer trade market on the save's current date: the target search, at most ``slots`` AI-to-AI deals."""
+    from .transactions import simulate_ai_trades
+    if not slots:
+        return 0
+    stamp = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+    active = with_transaction_context(canonical_with_save(canonical, save))
+    payload = simulate_ai_trades(active, stamp, stamp, seed=search_seed, limit=slots + 3, reserve_assets=True,
+                                 search_depth=2)
+    human = human_controlled_team_ids(save)
+    applied = 0
+    for candidate in payload.get("proposals", []):
+        if applied >= slots:
+            break
+        proposal = candidate.get("proposal") or {}
+        if (human.intersection(trade_team_ids(proposal)) or not candidate.get("accepted_by_all")
+                or (candidate.get("legality") or {}).get("status") != "legal" or not proposal.get("id")):
+            continue
+        pending = save.setdefault("pending_trade_proposals", [])
+        if not any(((item.get("proposal") or {}).get("id") or item.get("id")) == proposal["id"] for item in pending):
+            pending.append(candidate)
+        result = apply_trade_to_state(save, proposal["id"], date=stamp, canonical=canonical)
+        if result.get("status") == "applied":
+            applied += 1  # apply_trade_to_state records the news item and the trade log
+    return applied
 
 
 def current_free_agents_room(canonical: dict[str, Any], save_path: Path, user_team: str, seed: int, allow_sign: bool) -> None:
