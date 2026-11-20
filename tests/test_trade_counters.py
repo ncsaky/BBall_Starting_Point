@@ -59,6 +59,34 @@ class FillerTests(unittest.TestCase):
         self.assertNotIn("expiring", found)
 
 
+class RecentLotteryPickTests(unittest.TestCase):
+    def test_recent_lottery_pick_is_kept_unless_the_team_has_its_own_reason(self):
+        canonical = league("peak")
+        with patch.object(tx, "season_start_from_label", return_value=2027):
+            self.assertTrue(tt.recent_lottery_pick(canonical, {"draft_year": 2026, "draft_position": 2}))
+            self.assertFalse(tt.recent_lottery_pick(canonical, {"draft_year": 2026, "draft_position": 24}))
+            self.assertFalse(tt.recent_lottery_pick(canonical, {"draft_year": 2022, "draft_position": 2}))
+            self.assertFalse(tt.recent_lottery_pick(canonical, {}))
+            # In the search: a rising team's recent No. 2 pick matches a contender's target but is not on the market.
+            star = row("peterson", "y", age=21.5, minutes=20.0, on_court=66.0, development=15.0, salary=14.5e6)
+            star["player"].update(draft_year=2026, draft_position=2)
+            canonical = league("peak", extra_rows=[star])
+            target = {"id": "x:t", "key": "rotation_upgrade", "label": "a guard", "reason": "r",
+                      "filters": {"min_on_court": 60.0}}
+            with patch.object(tt, "team_trade_targets", return_value=[target]), \
+                    patch.object(tt, "team_sell_reasons", return_value={}), \
+                    patch.object(tx, "effectively_untouchable", return_value=False), \
+                    patch.object(tt, "asking_price", return_value={"ask": 0.0, "threshold": 0.0}), \
+                    patch.object(tt, "buyer_value", return_value=50.0), \
+                    patch.object(tt, "trade_surplus", return_value=0.0), \
+                    patch.object(tt, "buyer_minutes", return_value=24.0), \
+                    patch("nba_gm_data.team_planning.core_commitment", return_value=False):
+                import random
+                found = [p["row"]["id"] for p in tt.target_pairings(canonical, ["x"], set(), 2, {}, random.Random(0))]
+            self.assertNotIn("peterson", found)
+            self.assertIn("y0", found)
+
+
 class QuickScreenTests(unittest.TestCase):
     def limit(self, minutes, out_salary, in_salary, tax=0.0):
         with patch.object(tt, "backup_gain", return_value=0.0), patch.object(tx, "player_asset_values_by_id", return_value={}), \

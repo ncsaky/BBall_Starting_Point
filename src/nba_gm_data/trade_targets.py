@@ -583,7 +583,8 @@ def target_pairings(canonical: dict[str, Any], buyer_ids: list[str], excluded: s
                 stances = target["filters"].get("seller_stances")
                 if stances and seller_stance not in stances:
                     continue
-                if young_piece_kept(row, seller_stance) and not exposing_reasons(reasons):
+                if ((young_piece_kept(row, seller_stance) or recent_lottery_pick(canonical, row["player"]))
+                        and not exposing_reasons(reasons)):
                     continue
                 matches.append((score + 4.0 * sell_strength(reasons), row, reasons))
             matches.sort(key=lambda m: (-m[0], m[1]["id"]))
@@ -808,6 +809,23 @@ def recent_draft_pick(canonical: dict[str, Any], player: dict[str, Any] | None) 
         return False
     start = _tx().season_start_from_label(_season(canonical))
     return start - int(year) < RECENT_DRAFT_SEASONS
+
+
+RECENT_LOTTERY_PICK = 14
+
+
+def recent_lottery_pick(canonical: dict[str, Any], player: dict[str, Any] | None) -> bool:
+    """A lottery pick (top 14) in his first three seasons (TRADE-DEADLINE). The first after-run with buyer filler had
+    Utah, on the rise, give Darryn Peterson (the 2026 No. 2 pick, 21) to Boston for Neemias Queta and a second in his
+    second summer: the price check passed because a rookie's value follows his current role. Teams build around a
+    recent lottery pick and do not shop him; he moves only when the team has its own reason (a listing, a blocked
+    prospect, stalled talks), as with any young piece it builds around."""
+    player = player or {}
+    try:
+        slot = int(player.get("draft_position") or player.get("draft_pick") or player.get("overall_pick") or 0)
+    except (TypeError, ValueError):
+        slot = 0
+    return 0 < slot <= RECENT_LOTTERY_PICK and recent_draft_pick(canonical, player)
 
 
 def dump_age_ok(canonical: dict[str, Any], player: dict[str, Any] | None, age: float) -> bool:

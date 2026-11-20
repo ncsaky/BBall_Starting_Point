@@ -139,8 +139,8 @@ def counter_options(canonical: dict[str, Any], asking_id: str, giving_id: str, a
                 continue
             if core_commitment(canonical, giving_id, row["id"]) or tx.goat_exception_player(row["player"]):
                 continue
-            if tt.young_piece_kept(row, giving_stance) and not tt.exposing_reasons(
-                    tt.team_sell_reasons(canonical, giving_id).get(row["id"], [])):
+            if ((tt.young_piece_kept(row, giving_stance) or tt.recent_lottery_pick(canonical, row["player"]))
+                    and not tt.exposing_reasons(tt.team_sell_reasons(canonical, giving_id).get(row["id"], []))):
                 continue
             asset = {"kind": "player", "id": row["id"], "label": row["name"]}
             label = None
@@ -209,7 +209,8 @@ def swap_pick_options(canonical: dict[str, Any], asking_id: str, asking_out: lis
     for row in rows.values():
         if (row["team_id"] != asking_id or ("player", row["id"]) in in_deal or row["id"] in unavailable
                 or row["id"] in core or row["minutes"] >= 24.0 or core_commitment(canonical, asking_id, row["id"])
-                or tt.young_piece_kept(row, stance) or tx.goat_exception_player(row["player"])):
+                or tt.young_piece_kept(row, stance) or tt.recent_lottery_pick(canonical, row["player"])
+                or tx.goat_exception_player(row["player"])):
             continue
         for pick in picks:
             options.append(("swap_own", [a for a in asking_out if _key(a) != _key(pick)]
