@@ -31,8 +31,18 @@ class FreeAgencyBidTests(unittest.TestCase):
     def process(self):
         return play.process_ai_free_agency_offers_for_day_state(self.data,self.save,'HUMAN',7)
 
+    @staticmethod
+    def funded(rule):
+        """A stand-in for the cap ledger's bid check (FA-REAL): ``rule(team, aav, save)`` says if the team can pay."""
+        def fake(active, save, team, player, aav, years, lower, bird):
+            if not rule(team, aav, save):
+                return None
+            return {'aav': aav, 'years': years,
+                    'quote': {'payment': {'route': 'cap_room', 'amount': aav * 1e6, 'season': '2027-28'}}}
+        return fake
+
     def test_unfunded_first_choices_do_not_consume_offer_slots(self):
-        with patch.object(play,'signing_cap_check',side_effect=lambda c,s,t,*a,**kw:{'ok':t in {'T3','T4'}}):
+        with patch.object(play,'ai_bid_payment',side_effect=self.funded(lambda t,a,s:t['abbrev'] in {'T3','T4'})):
             result=self.process()
         self.assertEqual(result['created_count'],2)
         self.assertEqual({o['team_id'] for o in self.save['free_agent_offers']},{'t3','t4'})
@@ -47,19 +57,23 @@ class FreeAgencyBidTests(unittest.TestCase):
 
     def test_existing_active_bids_count_towards_the_quota_without_duplicates(self):
         self.save['free_agent_offers']=[self.offer(self.data,self.save,self.player,self.data['teams'][3],4,20,20,7,'ai')]
-        with patch.object(play,'signing_cap_check',side_effect=lambda c,s,t,*a,**kw:{'ok':t in {'T3','T4'}}):
+        with patch.object(play,'ai_bid_payment',side_effect=self.funded(lambda t,a,s:t['abbrev'] in {'T3','T4'})):
             self.assertEqual(self.process()['created_count'],1)
         self.assertEqual(len(self.save['free_agent_offers']),2)
 
     def test_no_offer_is_invented_when_every_team_is_unfunded(self):
-        with patch.object(play,'signing_cap_check',return_value={'ok':False}):
+        with patch.object(play,'ai_bid_payment',return_value=None):
             self.assertEqual(self.process()['created_count'],0)
         self.assertEqual(self.save['free_agent_offers'],[])
 
     def test_active_bids_reserve_cap_for_other_players(self):
         second={**self.player,'id':'q'};self.data['players'].append(second)
         self.save['free_agent_player_ids'].append('q');self.save['free_agency_state']['player_asks_millions']['q']=20
-        with patch.object(play,'signing_cap_check',side_effect=lambda c,s,t,a,**kw:{'ok':kw.get('reserved_millions',0)+a<=25}):
+        def room(team, aav, save):   # the team's live bids hold their money (cap_ledger.reservations)
+            held = sum(o['aav_millions'] for o in save['free_agent_offers']
+                       if o['team_id'] == team['id'] and o['status'] == 'active')
+            return held + aav <= 25
+        with patch.object(play,'ai_bid_payment',side_effect=self.funded(room)):
             self.process()
         for team in self.data['teams']:
             self.assertLessEqual(sum(o['aav_millions'] for o in self.save['free_agent_offers'] if o['team_id']==team['id']),25)

@@ -10,7 +10,10 @@ aprons as reported from the league's numbers by Bleacher Report, July 2026):
 - luxury tax line $200.428M
 - first apron $209.015M
 - second apron $221.686M (the game's hard cap for trades and signings)
-Later seasons grow 3.5% a year (the game's long-standing assumption), rounded to $0.1M.
+- salary floor $148.465M (90% of the cap)
+FA-REAL slice 1: the lines are exact (no rounding; before they were rounded to $0.1M, so the 2026-27 cap read
+$165.0M). Later seasons grow 3.5% a year (the game's long-standing assumption), to the dollar. The real cap grows with
+league revenue, at most 10% a year (CBA Art. VII §2); no better documented projection exists in the repo.
 """
 from __future__ import annotations
 
@@ -21,6 +24,7 @@ SALARY_CAP = 164_961_000
 TAX_LINE = 200_428_000
 FIRST_APRON = 209_015_000
 SECOND_APRON = 221_686_000
+SALARY_FLOOR = 148_465_000
 ANNUAL_CAP_GROWTH_RATE = 0.035
 
 
@@ -37,7 +41,8 @@ def growth_factor(season: str | None) -> float:
 
 
 def _round(value: float) -> float:
-    return round(value / 100_000) * 100_000
+    """To the dollar (FA-REAL: the lines are exact; they used to be rounded to $0.1M)."""
+    return float(round(value))
 
 
 _CACHE: dict[str, dict[str, float]] = {}
@@ -57,6 +62,7 @@ def cap_lines_for_season(season: str | None) -> dict[str, float]:
             "first_apron": _round(FIRST_APRON * factor),
             "second_apron": _round(SECOND_APRON * factor),
             "hard_cap": _round(SECOND_APRON * factor),
+            "salary_floor": _round(SALARY_FLOOR * factor),
             "growth_factor": round(factor, 5),
         }
         _CACHE[key] = lines
@@ -73,9 +79,11 @@ def max_salary_share(years_of_service: int) -> float:
     return next(share for years, share in MAX_SALARY_SHARES if int(years_of_service) >= years)
 
 
-def max_salary(season: str | None, years_of_service: int) -> float:
-    """The largest first-year salary (dollars) a player with this much service can sign for in ``season``."""
-    return cap_lines_for_season(season)["salary_cap"] * max_salary_share(years_of_service)
+def max_salary(season: str | None, years_of_service: int, previous_salary: float = 0.0) -> float:
+    """The largest first-year salary (dollars) a player with this much service can sign for in ``season``: his share
+    of the cap, or 105% of his previous salary if that is higher (CBA Art. II §7; FA-REAL)."""
+    share = cap_lines_for_season(season)["salary_cap"] * max_salary_share(years_of_service)
+    return max(share, 1.05 * max(0.0, float(previous_salary or 0.0)))
 
 
 # Bird rights (KEEP-STARS): a team may go over the salary cap, the tax line and the aprons to re-sign its own free
@@ -115,14 +123,16 @@ def bird_level(seasons_with_team: int) -> str:
 
 def bird_salary_limit(level: str, previous_salary: float, season: str | None, years_of_service: int) -> float:
     """The largest first-year salary (dollars) his own team may pay him over the cap with this Bird level."""
-    ceiling = max_salary(season, years_of_service)
     previous = max(0.0, float(previous_salary or 0.0))
+    ceiling = max_salary(season, years_of_service, previous)
     if level == "full":
         return ceiling
     if level == "early":
         average = cap_lines_for_season(season)["salary_cap"] * AVERAGE_SALARY_CAP_SHARE
         return min(ceiling, max(EARLY_BIRD_PREVIOUS_SHARE * previous, EARLY_BIRD_AVERAGE_SHARE * average))
-    minimum = LEAGUE_MINIMUM * growth_factor(season)
+    # Non-Bird: 120% of his previous salary or of his own minimum (by years of service; FA-REAL).
+    from .cap_ledger import minimum_salary
+    minimum = minimum_salary(season, years_of_service)
     return min(ceiling, max(NON_BIRD_PREVIOUS_SHARE * previous, NON_BIRD_PREVIOUS_SHARE * minimum))
 
 

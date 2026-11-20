@@ -10,6 +10,14 @@ from nba_gm_data import transactions as tx
 from test_trade_volume import SEASON, league, save_for
 
 
+def books(team_id: str, payroll: float, season: str = "2028-29", count: int = 13) -> dict:
+    """A league view where ``team_id`` has ``payroll`` in signed salaries for ``season`` (FA-REAL cap ledger)."""
+    players = [{"id": f"{team_id}_{i}", "name": f"Player {i}", "team_id": team_id, "age": 28, "draft_year": 2018}
+               for i in range(count)]
+    contracts = [{"player_id": p["id"], "seasons": [{"season": season, "salary": payroll / count}]} for p in players]
+    return {"players": players, "contracts": contracts, "teams": [{"id": team_id, "abbrev": team_id.upper()}]}
+
+
 def bird(level: str, limit: float, seasons: int = 3) -> dict:
     return {"level": level, "seasons": seasons, "limit": limit, "max_years": cap_rules.bird_max_years(level),
             "raise": cap_rules.bird_raise(level), "previous_salary": 10e6, "since": "2025-26"}
@@ -51,25 +59,28 @@ class BirdRuleTests(unittest.TestCase):
 
 class BirdReSigningTests(unittest.TestCase):
     def test_ai_team_re_signs_its_own_player_over_the_hard_cap_within_his_bird_rights(self):
-        saved = {"meta": {"human_team_ids": []}, "player_season_stats": {}}
-        star = {"id": "s", "team_id": "den", "age": 33, "minutes_projection": 34, "_star_ask_millions": 61.8}
-        broke = {"hard_cap_space_millions": -20.0}
-        with patch.object(sv, "team_cap_summary", return_value=broke):
-            self.assertTrue(sv.ai_re_signing_fits_hard_cap({}, saved, {**star, "_bird": bird("full", 62e6)}, "den",
-                                                           "2028-29", prepared_active={}))
-            self.assertFalse(sv.ai_re_signing_fits_hard_cap({}, saved, {**star, "_bird": bird("non", 30e6, 1)}, "den",
-                                                            "2028-29", prepared_active={}),
-                             "above his Bird limit the team needs real room")
-            self.assertFalse(sv.ai_re_signing_fits_hard_cap({}, saved, star, "den", "2028-29", prepared_active={}))
+        saved = {"meta": {"human_team_ids": [], "season": "2027-28"}, "player_season_stats": {},
+                 "state": {"current_date": "2028-06-27", "phase": "re_signing"}}
+        star = {"id": "s", "team_id": "den", "age": 33, "minutes_projection": 34, "_star_ask_millions": 61.8,
+                "draft_year": 2015}
+        broke = books("den", 240e6)   # over the second apron (FA-REAL: the cap ledger, not a mocked summary)
+        self.assertTrue(sv.ai_re_signing_fits_hard_cap({}, saved, {**star, "_bird": bird("full", 62e6)}, "den",
+                                                       "2028-29", prepared_active=broke))
+        self.assertFalse(sv.ai_re_signing_fits_hard_cap({}, saved, {**star, "_bird": bird("non", 30e6, 1)}, "den",
+                                                        "2028-29", prepared_active=broke),
+                         "above his Bird limit the team needs room or an exception")
+        self.assertFalse(sv.ai_re_signing_fits_hard_cap({}, saved, star, "den", "2028-29", prepared_active=broke))
 
     def test_signing_check_lets_the_incumbent_go_over_the_tax_and_hard_cap(self):
-        broke = {"hard_cap_space_millions": -5.0, "tax_space_millions": -20.0}
-        with patch.object(play, "team_cap_summary", return_value=broke), \
-             patch.object(play, "resolve_team", return_value={"id": "a", "abbrev": "A"}):
-            saved = {"meta": {"season": SEASON}, "state": {"phase": "free_agency"}}
-            self.assertFalse(play.signing_cap_check({}, saved, "A", 30.0)["ok"])
-            self.assertTrue(play.signing_cap_check({}, saved, "A", 30.0, bird=bird("full", 40e6))["ok"])
-            self.assertFalse(play.signing_cap_check({}, saved, "A", 30.0, bird=bird("non", 12e6, 1))["ok"])
+        saved = {"meta": {"season": "2027-28"}, "state": {"phase": "free_agency", "current_date": "2028-07-02"}}
+        broke = books("a", 226e6)    # over both aprons
+        target = {"id": "fa", "age": 29, "draft_year": 2019}
+        with patch.object(play, "resolve_team", return_value={"id": "a", "abbrev": "A"}):
+            self.assertFalse(play.signing_cap_check(broke, saved, "A", 30.0, player=target, years=3)["ok"])
+            self.assertTrue(play.signing_cap_check(broke, saved, "A", 30.0, bird=bird("full", 40e6), player=target,
+                                                   years=3)["ok"])
+            self.assertFalse(play.signing_cap_check(broke, saved, "A", 30.0, bird=bird("non", 12e6, 1), player=target,
+                                                    years=3)["ok"])
 
     def test_incumbent_rights_come_from_this_offseasons_re_signing_rights(self):
         saved = {"meta": {"season": "2027-28"}, "contract_overrides": {"p": {"team_id": "a", "signed_season": "2024-25"}},

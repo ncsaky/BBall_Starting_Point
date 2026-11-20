@@ -43,8 +43,15 @@ class AcceptFloorParityTests(unittest.TestCase):
     """The price the builder shows is the price manual_save_pool_signing applies (TRADE-VOLUME: the rival bids' rule)."""
 
     def sign(self, save: dict, candidate: dict, years: int, aav: float, guaranteed: bool) -> dict:
+        # Legality (how the team pays) is the cap ledger's job and is tested in test_cap_ledger; here every offer is
+        # payable so the test isolates the price rule.
+        from nba_gm_data import cap_ledger
+        payment = {"route": "cap_room", "season": "2027-28", "salary": aav * 1e6, "amount": aav * 1e6,
+                   "schedule": [{"season": f"{2027 + k}-{str(2028 + k)[-2:]}", "salary": s, "cap_charge": s}
+                                for k, s in enumerate(cap_ledger.raise_schedule(aav * 1e6, years, 0.05))]}
         with patch.object(play, "load_save", return_value=save), patch.object(play, "write_save"), \
                 patch.object(play, "resolve_team", return_value=CHA), \
+                patch.object(play, "signing_cap_check", return_value={"ok": True, "payment": payment}), \
                 patch.object(play, "extension_retirement_blocked", return_value=False):
             return play.manual_save_pool_signing({}, Path("unused"), candidate, "CHA", years, aav, 7, guaranteed=guaranteed)
 
