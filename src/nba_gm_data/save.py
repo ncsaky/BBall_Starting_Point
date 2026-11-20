@@ -2048,7 +2048,8 @@ def advance_lifecycle_to(
             carried_active = False
         todays_games = [g for g in pending_games if g["gameDate"] == day]
         health = simulate_health(root, active, cursor, day, seed=seed, schedule=todays_games,
-                                 season_schedule=schedule_for_save(root, save), box_score_fatigue=True)
+                                 season_schedule=schedule_for_save(root, save) if todays_games else None,
+                                 box_score_fatigue=True)
         merge_health_results(save, health, active)
         attach_rest_suggestions(root, active, save, day, seed)
         refresh_active_runtime_state(active, save)
