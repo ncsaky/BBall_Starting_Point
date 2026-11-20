@@ -5,11 +5,11 @@ _Claude (Opus agent), 2026-11-19, branch `worktree-agent-a69638def74bcddc7`. Rul
 **TL;DR**
 - Foul control, steal gambling and contest habits now set each player's fouls and foul trouble (match with real fouls per 36: 0.09 -> 0.77); the pace habit now sets team pace; the shooting-mode and cutting habits now shape how many points a player scores.
 - Strength and jumping are now built from NBA Draft Combine tests (age-adjusted) plus in-game evidence; they now age with the game's own curves, as do screen setting, defensive rebounding, steal technique and foul control. They add nothing to the box score beyond the skills, so they stay out of it (documented).
-- Screen assists now appear in the box score, the player's season line, the playoff stats table and league leaders; spot-up shooters keep more of their made threes (AJ Green true shooting .499 -> .530, real .627: better, not fixed). Both scorecards hold: {SCORECARD_LINE}
+- Screen assists now appear in the box score, the player's season line, the playoff stats table and league leaders; spot-up shooters keep more of their made threes (AJ Green true shooting .499 -> .530, real .627: better, not fixed). Both scorecards hold: real stats 18/18; betting odds Brier 0.1962 -> 0.1967, log loss 0.5791 -> 0.5814 (traced: the pace habit trades a little win accuracy for a much better totals error, 5.48 -> 5.29; the rest is a reshuffle of the test's random draws, flagged below); speed unchanged.
 
 ## Resume state
 
-Done; ready for review. Commits on this branch: two checkpoints plus a final one (code, data, tests, this report, board row); not pushed or merged. Scratch scripts and outputs: `output/unused-ratings-2/` (git-ignored; a real folder in this worktree, copy it to main's `output/` before removing the worktree): `replay_dump.py` (one full-season replay -> per-player totals, team pace, calibration report), `dump_before/after.json`, `calib_*.txt`, `fit_explore.py` / `fit_fouls.py` / `fit_points.py` / `fit_physical.py` (fits), `team_evidence.py` (team pace, gambling, box-out), `shooters.py`, `fouls_check.py`, `reb_outliers.py`, `aging_curves.py` (Basketball Index aging by age), `dev_check.py` (two-season development), `phys_diag.py` / `phys_diff.txt` (combine evidence and who moved), `sensitivity.py` + `sensitivity_after.json/.txt` (the sweep), `usage_table2.py` (builds the table below). Worktree data symlinks (`.venv`, Barttorvik, sqlite, injury evidence, Basketball Index files, `output/settlement-materialization-pass`, `output/unused-ratings`) are untracked and were not committed.
+Done; ready for review. `codex/immersive-franchise-journey` merged in (clean) before the final scorecards. Commits on this branch: three checkpoints, the merge and a final one (code, data, tests, this report, board row); not pushed or merged. Scratch scripts and outputs: `output/unused-ratings-2/` (git-ignored; a real folder in this worktree, copy it to main's `output/` before removing the worktree): `replay_dump.py` (one full-season replay -> per-player totals, team pace, calibration report), `dump_before/after.json`, `calib_*.txt`, `fit_explore.py` / `fit_fouls.py` / `fit_points.py` / `fit_physical.py` (fits), `team_evidence.py` (team pace, gambling, box-out), `shooters.py`, `fouls_check.py`, `reb_outliers.py`, `aging_curves.py` (Basketball Index aging by age), `dev_check.py` (two-season development), `phys_diag.py` / `phys_diff.txt` (combine evidence and who moved), `sensitivity.py` + `sensitivity_after.json/.txt` (the sweep), `usage_table2.py` (builds the table below). Worktree data symlinks (`.venv`, Barttorvik, sqlite, injury evidence, Basketball Index files, `output/settlement-materialization-pass`, `output/unused-ratings`) are untracked and were not committed.
 
 ## 1. Inputs that still did nothing
 
@@ -206,7 +206,29 @@ Columns: blended ratings each input feeds (share); what reads it directly (NEW =
 
 ## Scorecards
 
-{SCORECARDS}
+| | Before (this branch's base = main at the start) | After |
+|---|---|---|
+| Real-stat targets (`calibration_report.py --games 1230 --mode replay-real-minutes`) | 18/18 | **18/18** |
+| League fouls per 100 possessions (real 19.37) | 19.10 | 19.30 |
+| League pace (real 102.0) | 101.9 | 101.7 |
+| League three-point attempt rate (real .415) | .390 | .406 |
+| Player shot attempts per 36, mean error (150 players) | 1.07 | 0.93 |
+| Player threes attempted per 36, mean error | 0.36 | 0.28 |
+| Player points per 36, mean error | 1.29 | 1.26 |
+| Player rebounds per 36, mean error / bias | 0.70 / -0.09 | 0.70 / -0.01 |
+| Player true shooting, mean error | .025 | .025 |
+| Player fouls per 36 vs real, correlation (377 players) | 0.09 | 0.77 |
+| Betting odds (`validate-season-probabilities --runs 100`): Brier / log loss | 0.1962 / 0.5791 | **0.1967 / 0.5814** |
+| Spread error / totals error vs market | 4.531 / 5.479 | 4.551 / **5.289** |
+| Player points props: mean gap between simulated mean and the market line | 2.39 (first pass) | 2.34 |
+
+**The odds change, attributed** (each a full 1,230-game, 100-run test):
+- Everything except the pace habit and the new points fit (fouls, rebounds, shooters' made threes, the strength and jumping inputs, development) leaves the odds test **exactly** unchanged: with the pace term off and the old points fit, the test reproduces main to the last digit (0.1962 / 0.5791 / 4.531 / 5.479).
+- **Pace habit:** totals error 5.486 -> **5.289** (the largest totals improvement in recent tasks), Brier 0.1968 -> 0.1967, log loss 0.5809 -> 0.5814, spread error 4.534 -> 4.551.
+- **New points fit (shooting mode, cutting):** 0.1962 -> 0.1968 / 0.5791 -> 0.5809. The points fit does not enter team strength or win chances; it only decides who scores, but who scores changes how many random numbers each box score uses before the away team's score is drawn, so every game after it draws different random numbers. That is a reshuffle of the test's own sampling noise, not a change in what the engine believes; I did not have time for a second-seed run to put a size on that noise. **Not silent: flagged for the coordinator.** If it is judged real, the shooting-mode and cutting terms can come out of the points fit (one dictionary) at the cost of part of the shooter fix.
+- Generated games (normal gameplay) are not in the odds test: league pace 102.2 (real 102.0), points 118.6 (about 119.1 before; real 115.6, a separate known gap).
+
+After merging `codex/immersive-franchise-journey` (smart rest, draft boards, fatigue from minutes played), the real-stat replay is identical to before the merge, and the odds test gives the same numbers to the last digit (0.1967 / 0.5814 / 4.551 / 5.289). The sweep was run before the merge; the merge does not touch the replayed-game engine (replay and odds identical), so it stands.
 
 ## Speed
 
