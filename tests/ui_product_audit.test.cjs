@@ -50,13 +50,3 @@ test('extension preview applies the offer only from its backend start season for
   assert.deepEqual(Array.from(scope.extensionOfferSchedule(candidate,2,'')),[0,0,0,0]);
 });
 
-test('shared salary previews keep scalar offers working and do not carry term-limited offers into padded years',()=>{
-  const app=fs.readFileSync(path.join(__dirname,'../src/nba_gm_data/gui/app.js'),'utf8');
-  const scope={escapeHtml:String,shortSeasonLabel:x=>x,money:x=>`$${x}`,signedMoney:x=>`$${x}`,clampNumber:(x,a,b)=>Math.max(a,Math.min(b,x))};
-  vm.createContext(scope);
-  vm.runInContext(app.slice(app.indexOf('function approvedOfferCapChart('),app.indexOf('function freeAgentOfferSummary(')),scope);
-  const rows=[['2027-28',{salary_total_millions:100}],['2028-29',{salary_total_millions:80}]];
-  assert.match(scope.approvedOfferCapChart(rows,[40,0]),/>\$140<.*>\$80</s);
-  assert.equal((scope.approvedOfferSalaryTable(rows,[40,0]).match(/data-offer-salary>\$40</g)||[]).length,1);
-  assert.equal((scope.approvedOfferSalaryTable(rows,40).match(/data-offer-salary>\$40</g)||[]).length,6);
-});

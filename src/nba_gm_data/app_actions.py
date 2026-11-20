@@ -3218,6 +3218,29 @@ def waiver_room_payload(canonical: dict[str, Any], save_path: Path) -> dict[str,
     return {'players': rows, 'roster': roster, 'priority': priority(active, saved, saved['state']['current_date'])}
 
 
+def free_agent_accept_floor_millions(player: dict[str, Any], guaranteed: bool = True) -> float:
+    """The salary your offer must reach for this free agent to sign it.
+
+    The same threshold `play.manual_save_pool_signing` applies to the user's offers (a test keeps them equal):
+    his projected minutes x 0.45 (at least the league minimum), raised by the security penalty when the deal is not
+    guaranteed. It is not his market ask, which is what rival teams bid against.
+    """
+    from .contract_protection import security_penalty
+
+    floor = max(1.9, display_minutes_projection(player) * 0.45)
+    return floor * (1 + security_penalty(player, guaranteed) / 100)
+
+
+def smallest_offer_at_or_above(value: float, step: float = 0.1) -> float:
+    """The smallest offer on the builder's $0.1M steps that is not below `value`."""
+    import math
+
+    steps = math.ceil(round(float(value) / step, 9))
+    offer = round(steps * step, 1)
+    # The engine compares the offer with the unrounded threshold, so never return an offer a hair below it.
+    return offer if offer >= float(value) else round(offer + step, 1)
+
+
 def free_agency_room_payload(
     canonical: dict[str, Any],
     save_path: Path,
@@ -3270,6 +3293,12 @@ def free_agency_room_payload(
         player_id: {str(team_id) for team_id in market.get("likely_suitors", [])}
         for player_id, market in report_by_id.items()
     }
+    from .play import contract_start_season_for_signing, extension_safe_year_limit, free_agency_accept_threshold
+    from .release_planning import reacquisition_blocked
+    signing_season = contract_start_season_for_signing(save)
+    market_day = int(state.get("day") or 1)
+    current_date = str((save.get("state") or {}).get("current_date") or "")
+    health_by_player = {row.get("player_id"): row for row in save.get("health_states", [])}
     candidates = []
     for player_id in pool_ids:
         player = players_by_id.get(player_id)
@@ -3336,10 +3365,30 @@ def free_agency_room_payload(
                     "interest_score": float((best_offer or {}).get("interest_score") or 0.0),
                     "source": (best_offer or {}).get("source"),
                 } if best_offer else None,
+                # Offer-builder facts, all from the engine's own signing rules (additive fields):
+                "headshot_url": player.get("headshot_url"),
+                "health": player_health_label(health_by_player.get(player_id), current_date),
+                # What your offer must reach for him to sign (the threshold manual_save_pool_signing applies).
+                "accept_floor_millions": {
+                    "guaranteed": free_agent_accept_floor_millions(player, True),
+                    "non_guaranteed": free_agent_accept_floor_millions(player, False),
+                },
+                "accept_floor_offer_millions": {
+                    "guaranteed": smallest_offer_at_or_above(free_agent_accept_floor_millions(player, True)),
+                    "non_guaranteed": smallest_offer_at_or_above(free_agent_accept_floor_millions(player, False)),
+                },
+                # Longest contract that ends before his projected retirement (longer offers are refused).
+                "safe_years": extension_safe_year_limit(player, signing_season, 5),
+                # Interest a rival bid needs today before he signs it at the end of the day (AI market only).
+                "sign_bar_today": float(free_agency_accept_threshold(player, market_day)),
+                "signing_blocked_reason": (
+                    "Your team released him and stretched the salary; you cannot sign him again yet."
+                    if reacquisition_blocked(save, team["id"], player_id, current_date) else None
+                ),
             }
         )
     candidates.sort(key=lambda item: (float(item.get("mpg") or 0), float((item.get("ratings") or {}).get("overall") or 0), float(item.get("ask_millions") or 0)), reverse=True)
-    from .play import contract_start_season_for_signing, free_agency_bidding_wars, league_minimum_aav_millions
+    from .play import free_agency_bidding_wars, league_minimum_aav_millions
 
     re_signing_rights = [
         right for right in save.get("re_signing_rights", [])
@@ -3389,7 +3438,64 @@ def free_agency_room_payload(
         recent_signings.append(event)
         if len(recent_signings) >= 8:
             break
+    # League moves for the signing wire: every recorded transaction (signings, trades, releases), newest first.
+    league_moves = []
+    for source_event in signing_events:
+        details = dict(source_event.get("details") or {})
+        player_id = str(details.get("player_id") or next(iter(source_event.get("player_ids") or []), ""))
+        contract_seasons = list(((save.get("contract_overrides") or {}).get(player_id) or {}).get("seasons") or [])
+        kind = str(source_event.get("kind") or "")
+        league_moves.append({
+            "date": source_event.get("date"),
+            "kind": kind,
+            "headline": source_event.get("headline"),
+            "team_ids": list(source_event.get("team_ids") or []),
+            "player_id": player_id or None,
+            "player_name": (players_by_id.get(player_id) or {}).get("name") or details.get("player_name"),
+            "aav_millions": float(details.get("aav_millions") or 0.0) or None,
+            "years": int(details.get("years") or (len(contract_seasons) if kind in {"free_agent_signing", "free_agency_signing", "free_agency"} else 0) or 0) or None,
+        })
+    user_team_id = team["id"]
+    user_offer_history = []
+    for item in save.get("pending_contract_negotiations", []) or []:
+        negotiation = item.get("negotiation") or {}
+        decision = item.get("decision") or {}
+        if negotiation.get("team_id") != user_team_id or negotiation.get("negotiation_type") != "free_agent_signing":
+            continue
+        if str(negotiation.get("date") or "") < f"{season_start_year_for_app(signing_season) - 1}-06-01":
+            continue
+        offer = next(iter(negotiation.get("offers") or []), {})
+        user_offer_history.append({
+            "date": negotiation.get("date"),
+            "player_id": negotiation.get("player_id"),
+            "player_name": negotiation.get("player_name"),
+            "aav_millions": round(float(offer.get("annual_salary") or 0.0) / 1_000_000, 2),
+            "years": int(offer.get("years") or 0),
+            "guaranteed": offer.get("guaranteed", True),
+            "accepted": bool(decision.get("accepted")),
+            "decision": decision.get("decision"),
+            "needed_millions": decision.get("ask_threshold_millions"),
+        })
+    user_offer_history.sort(key=lambda row: str(row.get("date") or ""), reverse=True)
+    roster_count = sum(1 for player in active.get("players", []) if player.get("team_id") == team["id"])
     return {
+        "signing_season": signing_season,
+        "roster_count": roster_count,
+        # The rules submit_free_agent_offer applies (signing_cap_check, manual_save_pool_signing, apply_contract).
+        "offer_rules": {
+            "minimum_aav_millions": league_minimum_aav_millions(),
+            "allow_tax_exceed": phase == "re_signing",
+            "max_years": 5,
+            "flat_salary": True,
+            "options_available": False,
+            "non_guaranteed_until": "January 10 of each season",
+            "blocked_reason": (
+                "Waived salary requires review before spending more salary room."
+                if cap.get("unresolved_waived_contract_count") else None
+            ),
+        },
+        "league_moves": league_moves[:30],
+        "user_offer_history": user_offer_history[:20],
         "team": team,
         "phase": phase,
         "state": state,

@@ -1,0 +1,262 @@
+/* Free-agency room: market table, offer builder and signing wire. House table style (double header rule, small bold
+   headers, alternating rows, whole-row hover, sorted-column shading, headshots bottom-aligned), the player-card panel
+   language for the builder, and the beveled window/button chrome used by the cut-down and draft-night cards. */
+
+.seasonal-clipboard-card:has(> [data-seasonal-context] > .fa-room),
+.seasonal-clipboard-card:has(.fa-panel) { overflow:hidden; }
+.fa-panel {
+  box-sizing:border-box; display:flex; flex-direction:column; width:100%; height:100%; min-width:0; min-height:0;
+  background:#fff; color:var(--season-text, #1d2a33); font:12px Tahoma,"Trebuchet MS",Arial,sans-serif;
+}
+.fa-panel .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.fa-muted { color:var(--season-muted, #5d6b77); }
+.fa-empty { padding:14px; color:var(--season-muted, #5d6b77); text-align:center; }
+
+/* Shared beveled buttons inside the room (same chrome as the cut-down choices). */
+body.unified-terminal-ui .fa-panel :is(.fa-scope, .fa-segmented) button {
+  min-height:22px; padding:1px 8px; border:1px solid #8d99a5; border-radius:0; background:#edf0f3; color:var(--season-text, #1d2a33);
+  box-shadow:inset 1px 1px #fff, inset -1px -1px #c7cdd3; font:11px Tahoma,"Trebuchet MS",Arial,sans-serif; cursor:pointer;
+  text-transform:none; letter-spacing:0; white-space:nowrap;
+}
+body.unified-terminal-ui .fa-panel :is(.fa-scope, .fa-segmented) button + button { border-left:0; }
+body.unified-terminal-ui .fa-panel :is(.fa-scope, .fa-segmented) button.is-active { background:#d9e6f0; border-color:#6f8ea5; font-weight:700; box-shadow:inset 1px 1px #9aaab7; }
+body.unified-terminal-ui .fa-panel :is(.fa-scope, .fa-segmented) button:disabled { color:#9aa6b0; cursor:not-allowed; }
+body.unified-terminal-ui .fa-panel :is(.fa-scope, .fa-segmented) button b { font-weight:400; color:var(--season-muted, #5d6b77); }
+body.unified-terminal-ui .fa-panel :is(button, input, select, [tabindex]):focus-visible { outline:2px solid #42667a; outline-offset:-2px; position:relative; z-index:1; }
+.fa-scope, .fa-segmented { display:inline-flex; flex-wrap:nowrap; }
+
+/* ---- Market ---- */
+.fa-market-head {
+  display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; flex:0 0 auto; padding:8px 12px;
+  border-bottom:1px solid var(--season-line, #b7c2cb); background:var(--season-raised, #eef2f5);
+}
+.fa-market-title { display:flex; align-items:center; gap:10px; min-width:0; }
+.fa-market-title img { width:34px; height:34px; object-fit:contain; flex:0 0 auto; }
+.fa-market-title > div { min-width:0; }
+.fa-market-title p { margin:0; color:var(--season-muted, #5d6b77); font:700 9px Tahoma,Arial,sans-serif; text-transform:uppercase; letter-spacing:.04em; }
+body.unified-terminal-ui .fa-market-title h3 { margin:1px 0 2px; font:700 17px Tahoma,"Trebuchet MS",Arial,sans-serif; text-transform:none; letter-spacing:0; }
+.fa-market-title span { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; color:var(--season-muted, #5d6b77); font-size:11px; overflow:hidden; }
+.fa-cap-chips { display:grid; grid-template-columns:repeat(5, auto); border:1px solid var(--season-line, #b7c2cb); background:#fff; }
+.fa-cap-chip { display:grid; gap:1px; padding:3px 8px; border-left:1px solid var(--season-soft-line, #d5dde3); text-align:right; }
+.fa-cap-chip:first-child { border-left:0; }
+.fa-cap-chip small { font:700 8px Tahoma,Arial,sans-serif; text-transform:uppercase; color:var(--season-muted, #5d6b77); white-space:nowrap; }
+.fa-cap-chip strong { font:700 12px Tahoma,Arial,sans-serif; white-space:nowrap; }
+.fa-cap-chip.is-over strong { color:#a8434b; }
+
+.fa-market-tools {
+  display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; flex:0 0 auto; padding:6px 12px;
+  border-bottom:1px solid var(--season-line, #b7c2cb); background:#f7f9fa;
+}
+.fa-market-tools label { display:inline-flex; align-items:center; gap:4px; font-size:11px; color:var(--season-muted, #5d6b77); }
+body.unified-terminal-ui .fa-market-tools :is(input[type="search"], input[type="number"], select) {
+  box-sizing:border-box; height:22px; min-height:22px; padding:0 4px; border:1px solid #8d99a5; border-radius:0; background:#fff;
+  color:var(--season-text, #1d2a33); font:11px Tahoma,Arial,sans-serif; box-shadow:inset 1px 1px #c7cdd3;
+}
+body.unified-terminal-ui .fa-market-tools input[type="search"] { width:128px; }
+body.unified-terminal-ui .fa-market-tools input[type="number"] { width:48px; }
+.fa-filter-check input { margin:0; }
+body.unified-terminal-ui .fa-market-tools .ui-command { min-height:22px; padding:1px 8px; font-size:11px; }
+body.unified-terminal-ui .fa-market-tools .ui-command.is-active { font-weight:700; background:#d9e6f0; }
+.fa-market-tools .fa-scope { margin-right:4px; }
+
+.fa-market-scroll { flex:1 1 auto; min-height:0; overflow:auto; }
+.fa-market-table { table-layout:fixed; width:100%; border-collapse:separate; border-spacing:0; background:#fff; }
+.fa-market-table :is(th,td) {
+  box-sizing:border-box; height:32px; padding:0 5px; border:0; border-bottom:1px solid var(--season-soft-line, #d5dde3); text-align:left;
+  vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font:400 12px Tahoma,"Trebuchet MS",Arial,sans-serif;
+  color:var(--season-text, #1d2a33); background-clip:padding-box;
+}
+.fa-market-table thead th { position:sticky; top:0; z-index:2; height:24px; padding:0; background:#fff; border-bottom:3px double var(--season-line, #b7c2cb); }
+body.unified-terminal-ui .fa-market-table thead th button {
+  display:block; width:100%; height:100%; min-height:0; padding:0 5px; border:0; border-radius:0; background:transparent; box-shadow:none;
+  color:var(--season-text, #1d2a33); font:700 9px Tahoma,Arial,sans-serif; text-align:left; text-transform:none; letter-spacing:0; cursor:pointer; white-space:nowrap;
+}
+body.unified-terminal-ui .fa-market-table thead th button:hover { text-decoration:underline; }
+.fa-market-table thead th.is-sorted { background:#e3ebf1; }
+.fa-market-table tbody tr { background-color:#fff; cursor:pointer; }
+.fa-market-table tbody tr:nth-child(even) { background-color:#eef1f3; }
+.fa-market-table tbody tr:is(:hover,:focus-within) { background-color:#dce8f2; }
+.fa-market-table tbody tr.is-selected { background-color:#cfe0ee; box-shadow:inset 3px 0 #42667a; }
+body.unified-terminal-ui .fa-market-table tbody :is(th,td) { background-color:transparent; }
+body.unified-terminal-ui .fa-market-table tbody td.is-sorted,
+body.unified-terminal-ui .fa-market-table tbody th.is-sorted { background-color:rgba(66,102,122,.08); }
+.fa-market-table tbody tr:focus { outline:2px solid #42667a; outline-offset:-2px; }
+.fa-market-table tbody th { position:relative; padding:0; }
+.fa-player { display:flex; align-items:center; height:32px; padding-left:31px; min-width:0; }
+body.unified-terminal-ui .fa-player .player-headshot-frame { position:absolute; left:2px; bottom:0; width:26px; height:100%; overflow:hidden; }
+.fa-player .roster-player-headshot { display:block; width:100%; height:100%; object-fit:cover; object-position:center bottom; }
+body.unified-terminal-ui .fa-player-name {
+  min-width:0; min-height:0; padding:0; border:0; background:transparent; box-shadow:none; color:inherit; font:inherit; text-align:left;
+  cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-transform:none; letter-spacing:0;
+}
+.fa-player-name:is(:hover,:focus-visible) { text-decoration:underline; }
+body.unified-terminal-ui .fa-star { min-height:0; padding:0 2px; border:0; background:transparent; box-shadow:none; color:#8d99a5; font-size:14px; line-height:1; cursor:pointer; }
+body.unified-terminal-ui .fa-star.is-active { color:#c48a12; }
+.fa-rating { display:grid; grid-template-columns:22px minmax(0,1fr); align-items:center; gap:4px; }
+.fa-rating em { font-style:normal; text-align:right; }
+.fa-rating i, .fa-id-rating i { display:block; height:5px; background:#172228; overflow:hidden; }
+.fa-rating i b, .fa-id-rating i b { display:block; height:100%; width:var(--fill,0%); background:var(--bar-color,#5b86b8); }
+.fa-ask { display:inline-flex; align-items:center; gap:3px; }
+.fa-ask .ask-change { gap:1px; font-size:9px; }
+.fa-ask .ask-change b { font-size:9px; }
+.fa-ask .ask-change-arrows i { font-size:5px; line-height:4px; }
+.fa-bids { display:inline-flex; align-items:center; gap:4px; }
+.fa-bids > b { display:inline-grid; place-items:center; min-width:15px; height:15px; border-radius:8px; background:#42667a; color:#fff; font-size:9px; }
+.fa-bids img { width:16px; height:16px; object-fit:contain; }
+.fa-bids small { font-size:9px; font-weight:700; }
+.fa-bids span { font-size:11px; }
+
+/* Mood meter: the best rival bid's interest (fill) against today's bar (tick). */
+.fa-mood { display:grid; grid-template-columns:30px minmax(0,1fr); align-items:center; gap:5px; min-width:0; }
+.fa-mood i { position:relative; display:block; height:6px; background:#dfe5ea; border:1px solid #b7c2cb; overflow:visible; }
+.fa-mood i b { display:block; height:100%; background:#7d93a6; }
+.fa-mood i u { position:absolute; top:-3px; bottom:-3px; width:2px; margin-left:-1px; background:#1d2a33; }
+.fa-mood em { font-style:normal; font-size:10px; overflow:hidden; text-overflow:ellipsis; }
+.fa-mood-hot i b { background:#c4585f; }
+.fa-mood-hot em { color:#a8434b; font-weight:700; }
+.fa-mood-quiet, .fa-mood-rights { display:inline; }
+.fa-mood-quiet em { color:var(--season-muted, #5d6b77); }
+.fa-mood-rights em { color:#2f6f8f; font-weight:700; }
+
+/* ---- Offer builder ---- */
+.fa-builder-identity {
+  position:relative; display:grid; grid-template-columns:64px minmax(0,1fr) auto; grid-template-rows:auto auto; gap:2px 10px; align-items:end;
+  flex:0 0 auto; padding:6px 10px 0; min-height:74px; border-bottom:3px double var(--season-line, #b7c2cb); background:var(--season-raised, #eef2f5);
+}
+body.unified-terminal-ui .fa-builder-identity > .player-headshot-frame { grid-row:1 / span 2; align-self:end; width:64px; height:66px; overflow:hidden; display:block; }
+.fa-builder-identity .approved-profile-headshot { display:block; width:100%; height:100%; object-fit:cover; object-position:center bottom; }
+.fa-builder-name { min-width:0; align-self:center; }
+.fa-builder-name p { margin:0; color:var(--season-muted, #5d6b77); font:700 9px Tahoma,Arial,sans-serif; text-transform:uppercase; letter-spacing:.04em; }
+body.unified-terminal-ui .fa-builder-name h3 { margin:1px 0; font:700 16px Tahoma,"Trebuchet MS",Arial,sans-serif; text-transform:none; letter-spacing:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fa-builder-name > span { color:var(--season-muted, #5d6b77); font-size:11px; }
+.fa-builder-ratings { display:grid; grid-template-columns:repeat(3, 44px); gap:6px; align-self:center; }
+.fa-id-rating { display:grid; gap:1px; text-align:center; }
+.fa-id-rating small { font:700 8px Tahoma,Arial,sans-serif; color:var(--season-muted, #5d6b77); }
+.fa-id-rating strong { font:700 15px Tahoma,Arial,sans-serif; }
+.fa-builder-actions { grid-column:2 / span 2; display:flex; gap:4px; padding:4px 0 6px; }
+body.unified-terminal-ui .fa-builder-actions .ui-command { min-height:22px; padding:1px 8px; font-size:11px; }
+body.unified-terminal-ui .fa-builder-actions .fa-star { border:1px solid #8d99a5; background:#edf0f3; box-shadow:inset 1px 1px #fff, inset -1px -1px #c7cdd3; color:var(--season-text, #1d2a33); font-size:11px; padding:1px 8px; }
+body.unified-terminal-ui .fa-builder-actions .fa-star.is-active { color:#8a5d00; font-weight:700; }
+
+.fa-builder-scroll { flex:1 1 auto; min-height:0; overflow:auto; padding:8px 10px; display:grid; align-content:start; grid-auto-rows:max-content; gap:8px; }
+.fa-builder-scroll > * { min-height:max-content; }
+.fa-builder .approved-card-panel { border:1px solid var(--season-line, #b7c2cb); background:#fff; }
+body.unified-terminal-ui .fa-builder .approved-card-panel > header { min-height:0; padding:4px 8px; font:700 10px Tahoma,Arial,sans-serif; }
+.fa-builder-season > div { display:grid; grid-template-columns:repeat(8, minmax(0,1fr)); padding:4px 6px; }
+.fa-builder-season span { display:grid; text-align:center; }
+.fa-builder-season small { font:700 8px Tahoma,Arial,sans-serif; color:var(--season-muted, #5d6b77); }
+.fa-builder-season strong { font-size:12px; }
+.fa-builder-market dl { margin:0; display:grid; }
+.fa-builder-market dl > div { display:grid; grid-template-columns:124px minmax(0,1fr); align-items:baseline; gap:8px; padding:4px 8px; border-top:1px solid var(--season-soft-line, #d5dde3); }
+.fa-builder-market dl > div:first-child { border-top:0; }
+.fa-builder-market dt { font-size:11px; color:var(--season-muted, #5d6b77); cursor:help; }
+.fa-builder-market dd { margin:0; display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 6px; }
+.fa-builder-market dd strong { font-size:13px; }
+.fa-builder-market dd small { font-size:10px; color:var(--season-muted, #5d6b77); }
+
+.fa-builder-offer { display:grid; }
+.fa-offer-field { display:grid; gap:4px; padding:6px 8px; border-top:1px solid var(--season-soft-line, #d5dde3); }
+.fa-offer-field:first-of-type { border-top:0; }
+.fa-offer-field > small, .fa-offer-field label small { font:700 9px Tahoma,Arial,sans-serif; color:var(--season-muted, #5d6b77); text-transform:uppercase; letter-spacing:.03em; }
+.fa-offer-salary { grid-template-columns:auto minmax(0,1fr); align-items:center; column-gap:10px; }
+.fa-offer-salary > label { grid-column:1 / -1; }
+.fa-offer-salary > small, .fa-offer-salary .fa-offer-quick { grid-column:1 / -1; }
+.fa-offer-salary > small { text-transform:none; letter-spacing:0; font-weight:400; font-size:10px; }
+.fa-builder .money-input { display:inline-flex; align-items:center; border:1px solid #8d99a5; background:#fff; box-shadow:inset 1px 1px #c7cdd3; }
+.fa-builder .money-input b { padding:0 4px; font-size:13px; color:var(--season-muted, #5d6b77); }
+body.unified-terminal-ui .fa-builder .money-input input { width:70px; height:26px; min-height:26px; border:0; padding:0 2px; background:transparent; font:700 15px Tahoma,Arial,sans-serif; text-align:right; box-shadow:none; }
+.fa-builder input[type="range"] { width:100%; margin:0; accent-color:#42667a; }
+.fa-offer-quick { display:flex; flex-wrap:wrap; gap:4px; }
+body.unified-terminal-ui .fa-offer-quick .ui-command { min-height:20px; padding:0 6px; font-size:10px; }
+.fa-offer-note { margin:0; font-size:10px; color:var(--season-muted, #5d6b77); line-height:1.35; }
+
+.fa-offer-verdict .fa-verdict-line { display:grid; gap:2px; padding:6px 8px 4px; border-left:4px solid #8d99a5; }
+.fa-offer-verdict .fa-verdict-line strong { font-size:14px; }
+.fa-offer-verdict .fa-verdict-line span { font-size:11px; color:var(--season-muted, #5d6b77); }
+.fa-verdict-yes .fa-verdict-line { border-left-color:#2f8a57; background:#f1f8f3; }
+.fa-verdict-yes .fa-verdict-line strong { color:#2f8a57; }
+.fa-verdict-no .fa-verdict-line { border-left-color:#c48a12; background:#fdf7ea; }
+.fa-verdict-no .fa-verdict-line strong { color:#8a5d00; }
+.fa-verdict-blocked .fa-verdict-line { border-left-color:#c4585f; background:#fff4f4; }
+.fa-verdict-blocked .fa-verdict-line strong { color:#a8434b; }
+.fa-verdict-meter { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px; padding:4px 8px 6px; }
+.fa-verdict-meter i { position:relative; display:block; height:7px; background:#dfe5ea; border:1px solid #b7c2cb; }
+.fa-verdict-meter i b { display:block; height:100%; background:#7d93a6; }
+.fa-verdict-yes .fa-verdict-meter i b { background:#2f8a57; }
+.fa-verdict-meter i u { position:absolute; top:-3px; bottom:-3px; width:2px; margin-left:-1px; background:#1d2a33; }
+.fa-verdict-meter em { font-style:normal; font-size:10px; color:var(--season-muted, #5d6b77); }
+
+.fa-cap-table { width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; }
+.fa-cap-table :is(th,td) { height:24px; padding:0 4px; border-bottom:1px solid var(--season-soft-line, #d5dde3); font:400 11px Tahoma,Arial,sans-serif; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+body.unified-terminal-ui .fa-cap-table thead th { height:20px; text-transform:none; letter-spacing:0; font:700 9px Tahoma,Arial,sans-serif; border-bottom:3px double var(--season-line, #b7c2cb); background:#fff; }
+.fa-cap-table :is(thead th, tbody th):first-child { text-align:left; }
+.fa-cap-table tbody th small { margin-left:4px; font-size:8px; color:var(--season-muted, #5d6b77); text-transform:uppercase; }
+.fa-cap-table tbody tr:nth-child(even) { background:#eef1f3; }
+.fa-cap-table tbody tr:hover { background:#dce8f2; }
+.fa-cap-table td.is-negative { color:#a8434b; font-weight:700; }
+.fa-cap-table th:last-child { text-align:left; }
+.fa-cap-key { display:inline-flex; align-items:center; gap:3px; font-weight:400; color:var(--season-muted, #5d6b77); }
+.fa-cap-key i { display:inline-block; width:2px; height:9px; }
+.fa-cap-key i.tax, .fa-cap-bar i.tax { background:#c48a12; }
+.fa-cap-key i.hard, .fa-cap-bar i.hard { background:#a8434b; }
+.fa-cap-bar { position:relative; display:block; height:10px; background:#f1f4f6; border:1px solid #c7cdd3; }
+.fa-cap-bar b { position:absolute; left:0; top:0; bottom:0; background:#9fb3c3; }
+.fa-cap-bar em { position:absolute; top:0; bottom:0; background:#42667a; }
+.fa-cap-bar i { position:absolute; top:-3px; bottom:-3px; width:2px; margin-left:-1px; }
+.fa-offer-cap > .fa-muted { margin:0; padding:4px 8px; font-size:10px; }
+
+.fa-builder-bids ol, .fa-builder-history ol { margin:0; padding:0; list-style:none; }
+.fa-builder-bids li { display:grid; grid-template-columns:20px 92px minmax(70px,1fr) auto; align-items:center; gap:6px; height:26px; padding:0 8px; border-bottom:1px solid var(--season-soft-line, #d5dde3); }
+.fa-builder-bids li:nth-child(even) { background:#eef1f3; }
+.fa-builder-bids li.is-leading strong { color:#1d2a33; }
+.fa-builder-bids li img { width:18px; height:18px; object-fit:contain; }
+.fa-builder-bids li small { font-size:10px; color:var(--season-muted, #5d6b77); }
+.fa-builder-bids li .fa-mood { grid-template-columns:minmax(0,1fr) 20px; }
+.fa-builder-bids > p, .fa-builder-history > p { margin:0; padding:4px 8px; font-size:10px; }
+.fa-builder-history li { display:grid; grid-template-columns:40px minmax(0,1fr) auto; gap:6px; align-items:center; height:24px; padding:0 8px; border-bottom:1px solid var(--season-soft-line, #d5dde3); font-size:11px; }
+.fa-builder-history em { font-style:normal; font-size:10px; }
+.fa-builder-history em.is-yes { color:#2f8a57; font-weight:700; }
+.fa-builder-history em.is-no { color:#8a5d00; }
+
+.fa-builder-foot { display:flex; align-items:center; gap:8px; flex:0 0 auto; padding:7px 10px; border-top:1px solid var(--season-line, #b7c2cb); background:var(--season-raised, #eef2f5); }
+.fa-builder-foot > div { display:grid; flex:1 1 auto; min-width:0; }
+.fa-builder-foot > div strong { font-size:12px; }
+.fa-builder-foot > div span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--season-muted, #5d6b77); font-size:10px; }
+body.unified-terminal-ui .fa-builder-foot .fa-submit { min-height:26px; padding:2px 12px; font-weight:700; }
+body.unified-terminal-ui .fa-builder-foot .fa-submit.is-ready:not(:disabled) { background:#2f8a57; border-color:#22683f; color:#fff; }
+
+/* ---- Signing wire ---- */
+.fa-wire-head { display:grid; gap:5px; flex:0 0 auto; padding:7px 8px; border-bottom:3px double var(--season-line, #b7c2cb); background:var(--season-raised, #eef2f5); }
+.fa-wire-head p { margin:0; font-size:10px; color:var(--season-muted, #5d6b77); }
+.fa-wire-head .fa-scope button { padding:1px 6px; font-size:10px; }
+.fa-wire-list { flex:1 1 auto; min-height:0; overflow:auto; margin:0; padding:0; list-style:none; }
+.fa-wire-row { display:grid; grid-template-columns:30px 22px minmax(0,1fr); align-items:center; gap:5px; min-height:34px; padding:3px 6px; border-bottom:1px solid var(--season-soft-line, #d5dde3); }
+.fa-wire-row:nth-child(even) { background:#eef1f3; }
+.fa-wire-row:hover { background:#dce8f2; }
+.fa-wire-row.is-ours { box-shadow:inset 3px 0 #2f8a57; }
+.fa-wire-row time { font-size:10px; color:var(--season-muted, #5d6b77); }
+.fa-wire-logos { display:grid; gap:1px; justify-items:center; }
+.fa-wire-logos img { width:18px; height:18px; object-fit:contain; }
+.fa-wire-logos b { font-size:8px; }
+.fa-wire-row > div { display:grid; min-width:0; }
+.fa-wire-row strong { font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fa-wire-row div span { font-size:10px; color:var(--season-muted, #5d6b77); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fa-wire-trade strong { color:#2f6f8f; }
+
+/* ---- Standalone view (outside the card board): the three panels side by side. ---- */
+.fa-standalone-controls { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+.standalone-free-agency-shell .fa-room { display:grid; grid-template-columns:minmax(0,1.7fr) minmax(320px,1fr) minmax(200px,.55fr); gap:10px; height:calc(100vh - 170px); min-height:520px; }
+.standalone-free-agency-shell .fa-panel { border:1px solid var(--season-line, #b7c2cb); }
+@media (max-width: 1100px) {
+  .standalone-free-agency-shell .fa-room { grid-template-columns:minmax(0,1fr); height:auto; }
+  .standalone-free-agency-shell .fa-panel { height:auto; max-height:80vh; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fa-panel * { transition:none !important; animation:none !important; }
+}
+.fa-market-links { display:inline-flex; gap:4px; margin-left:auto; }
+.fa-offer-pair { display:grid; grid-template-columns:auto minmax(0,1fr); border-top:1px solid var(--season-soft-line, #d5dde3); }
+.fa-offer-pair > .fa-offer-field { border-top:0; }
+.fa-offer-pair > .fa-offer-field + .fa-offer-field { border-left:1px solid var(--season-soft-line, #d5dde3); }
+.fa-offer-options { padding:5px 8px 7px; border-top:1px solid var(--season-soft-line, #d5dde3); }
+.fa-builder-season > div { padding:2px 6px; }
