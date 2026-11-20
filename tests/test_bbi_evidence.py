@@ -192,6 +192,13 @@ class MappingFileTests(unittest.TestCase):
                                                  "Potential Assists Per 75 Possessions"})
         self.assertNotIn("Turnovers Per 100 Touches", {m["metric"] for m in spec})
 
+    def test_defensive_rebound_positioning_leads_with_the_league_wide_grade(self):
+        # BBI's defensive crashing skill is measured against a position baseline (centres -1.3, guards +0.3, no link to
+        # defensive rebounds per 75), so it may only nudge the positioning grade (overnight ratings review, 2026-11-20).
+        spec = {m["metric"]: m["strength"] for m in json.loads(MAPPING.read_text())["inputs"]["S30"]["metrics"]}
+        self.assertEqual(spec["Defensive Rebounding Talent"], "primary")
+        self.assertEqual(spec["Defensive Rebounding Crashing Skill"], "weak")
+
     def test_no_metric_feeds_both_a_skill_and_a_tendency_or_physical_input(self):
         mapping = json.loads(MAPPING.read_text())
         layer = lambda iid: "skill" if iid[0] in "SF" else ("physical" if iid[0] == "P" else "tendency")
