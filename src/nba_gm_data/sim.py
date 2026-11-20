@@ -964,6 +964,8 @@ def game_team_features(context: dict[str, Any] | None, canonical: dict[str, Any]
         features = team_feature_vector(canonical, team).features
     features = apply_availability_dependency_adjustments(canonical, team, pool, features) if pool else features
     features = apply_manifesto_feature_adjustments(context, canonical, team, pool, features)
+    if mode == "sandbox-sim" and "pace_habit" in features:
+        features = {**features, "pace_habit_ref": round(league_pace_habit_reference(canonical), 4)}
     if context is not None and cache_key is not None:
         context["sim_cache"]["team_features"][cache_key] = dict(features)
     return features
@@ -1313,16 +1315,35 @@ BASE_POSSESSIONS = 101.3
 # teams play the same number of possessions), so each team's possessions move by the sum of both teams' departures
 # from the league habit. One team standard deviation of the habit (0.017) is about one possession a game.
 PACE_HABIT_POSSESSIONS = 56.6
-PACE_HABIT_REF = 0.4035   # league mean of the team habit (30 teams, real minutes)
+PACE_HABIT_REF = 0.4035   # league mean of the team habit (30 teams, real 2025-26 minutes): replayed games
 PACE_HABIT_LIMIT = 4.0
+# Generated games: the coaches' rotations give more minutes to quicker-paced players than real 2025-26 minutes did (the
+# league's projected-minutes mean is ~0.416), which would add a possession to every game. The habit should spread
+# teams, not move the league, so generated games are centred on the league's own projected-minutes mean.
+
+
+def league_pace_habit_reference(canonical: dict[str, Any]) -> float:
+    cache = canonical_sim_cache(canonical)
+    if "pace_habit_ref" not in cache:
+        num = den = 0.0
+        for player in canonical.get("players", []):
+            minutes = float(player.get("minutes_projection") or 0.0)
+            if minutes <= 0 or player.get("_inactive_player"):
+                continue
+            habit = player_feature_vector(canonical, player, include_spatial=False).features.get("pace_habit")
+            if habit is not None:
+                num += habit * minutes
+                den += minutes
+        cache["pace_habit_ref"] = num / den if den else PACE_HABIT_REF
+    return cache["pace_habit_ref"]
 
 
 def pace_habit_possessions(team_features: dict[str, float], opp_features: dict[str, float]) -> float:
     own, opp = team_features.get("pace_habit"), opp_features.get("pace_habit")
     if own is None or opp is None or not PACE_HABIT_POSSESSIONS:
         return 0.0
-    return clamp(PACE_HABIT_POSSESSIONS * ((float(own) - PACE_HABIT_REF) + (float(opp) - PACE_HABIT_REF)),
-                 -PACE_HABIT_LIMIT, PACE_HABIT_LIMIT)
+    ref = float(team_features.get("pace_habit_ref", PACE_HABIT_REF))
+    return clamp(PACE_HABIT_POSSESSIONS * ((float(own) - ref) + (float(opp) - ref)), -PACE_HABIT_LIMIT, PACE_HABIT_LIMIT)
 BASE_OFF_RATING = 107.9
 
 

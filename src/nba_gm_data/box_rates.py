@@ -38,6 +38,10 @@ TURNOVERS_INPUTS = {"constant": 3.37798, "log T08": 0.78791, "log T07": 0.92858,
 ASSISTS_INPUTS = {"constant": 3.05475, "log T01.pass": 0.7642, "log T08": 0.28271, "F.execution": 0.02663,
                   "log T07": 0.5197, "log T01.post": 0.21179}  # r 0.95 (previous fit 0.91)
 STEALS_INPUTS = {"constant": -0.76884, "S43": 0.01181, "S42": 0.00667}  # r 0.92
+# Steal gambling (T14) was tested here (2026-11-19): at the same steal technique it adds nothing (r 0.915 -> 0.922 with a
+# negative sign; the technique grades are built from the same steal record), so gambling shows up as fouls
+# (FOULS_INPUTS), not extra steals. No team-defence penalty either: teams that gamble more defended better in 2025-26
+# (r -0.69 with defensive rating), so the data cannot separate a gambling cost from the skill behind it.
 FTA_PER_POINT_INPUTS = {"constant": -0.78847, "log T18": 2.35318, "S24": 0.00939, "log T08": -0.56596}  # r 0.87
 
 # Points per 36: involvement (T08), shoot-first vs pass-first choices (T01 shoot +, pass -), close-range touch (S10)
