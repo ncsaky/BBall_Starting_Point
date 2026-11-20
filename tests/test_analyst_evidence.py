@@ -37,6 +37,20 @@ class AnalystEvidenceTests(unittest.TestCase):
         sources = [e["source"] for e in record["evidence"]]
         self.assertTrue(any("Nerd Sesh" in s and "abc" in s and "2026-08-01" in s for s in sources))
 
+    def test_article_claim_keeps_verifiable_attribution(self):
+        article = _claim("p89", "below_average", support="single_analyst",
+                         url="https://example.org/defense", locator="Off-ball defense")
+        article.pop("video_id")
+        article.pop("timestamp")
+        section = _section(range(1, 101))
+        result = ae.apply_analyst_evidence(section, ROOT, [article])
+        self.assertEqual(result["analyst_evidence"]["changed"], 1)
+        source = section["players"]["p89"]["inputs"]["S17"]["evidence"][0]["source"]
+        self.assertIn(article["url"], source)
+        self.assertIn(article["locator"], source)
+        self.assertIn(article["published"], source)
+        self.assertNotIn("YouTube", source)
+
     def test_agreeing_claim_changes_nothing(self):
         section = _section(range(1, 101))
         out = ae.apply_analyst_evidence(section, ROOT, [_claim("p89", "strong")])  # 90th percentile, inside band
@@ -93,7 +107,8 @@ class ClaimsFileTests(unittest.TestCase):
         for c in data["claims"]:
             self.assertNotIn(c["id"], seen)
             seen.add(c["id"])
-            for key in ("source", "episode", "video_id", "published", "timestamp", "claim"):
+            locator = ("url", "locator") if c.get("url") else ("video_id", "timestamp")
+            for key in ("source", "episode", "published", "claim", *locator):
                 self.assertTrue(c.get(key), (c["id"], key))
             self.assertIn(c["level"], ae.LEVELS)
             self.assertIn(c["support"], ae.SUPPORT)

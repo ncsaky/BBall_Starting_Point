@@ -1,5 +1,5 @@
 {
- "version": "bbi_input_mapping_v4_2026_11_20",
+ "version": "bbi_input_mapping_v5_2026_11_20",
  "notes": "Reviewed map from Basketball Index (BBI) metric names to the 94 approved player-model inputs. Metric names only; BBI definition text stays in the git-ignored capture catalog. Layers are kept separate: technique inputs (S/F) use rate, per-shot or versus-expected quality metrics; tendency inputs (T) use frequencies, shares and attempt rates; physical inputs (P) use only listed height/weight and weak in-game speed; coach usage, teammates, opponents and on/off impact are context only. direction: +1 means a higher metric value means more of the input (better skill, larger tool, or more frequent choice); -1 the reverse. Direction is about the raw BBI value; check whether a capture stores a percentile already ordered by desirability before applying it. strength: primary = the most direct available measure; supporting = relevant but mixed with other factors; weak = indirect, use only as a small nudge. Every BBI result is an effective on-court observation that also contains physical tools, role and teammates. It constrains the estimate; it is not 'technique only'. Metrics named '... Per 75' must be divided by the relevant exposure (touches, drives, attempts, contests) before informing a skill. A metric listed under several inputs is one shared signal (one correlation group), never independent evidence. BBI 'Talent' grades fold in volume or self-creation, so per-shot 'Shot Making Efficiency' and 'Stable' percentages are preferred as primary. Passing families share three generic recognition metrics and two generic execution metrics; only drive-and-kick, connector, skip and outlet passes have any family-specific signal. For distribution inputs, outcome names the registry outcome the metric informs; T02 outcomes three_corner_share and three_deep_share describe detail within the three region. volume (2026-11-19): a metric for a secondary shot type (pull-up, movement, deep) may carry {\"per75\": metric, \"minus\": optional metric, \"half\": n}; its weight in a season is multiplied by attempts / (attempts + half), attempts = (per75 - minus) / 75 x minutes x 99/48. A pull-up or off-screen percentage on a handful of attempts (or one shrunk to the league mean) no longer outweighs the player's three-point or midrange shooting as a whole, which stays ungated as the fallback (talent metrics include volume, so non-shooters stay low).",
  "inputs": {
   "P01": {
@@ -1291,35 +1291,20 @@
     {
      "metric": "Help Effectiveness Rating",
      "direction": 1,
-     "strength": "primary",
+     "strength": "weak",
      "outcome": null,
-     "why": "How effectively a player disrupts scoring chances when helping."
-    },
-    {
-     "metric": "Help Defense Talent",
-     "direction": 1,
-     "strength": "supporting",
-     "outcome": null,
-     "why": "BBI help grade; also includes help frequency, which is a tendency."
+     "why": "Disruption once help is engaged. A weak outcome check on rotation reads."
     }
    ],
    "coverage": "partial",
-   "gap_note": "Measures help outcomes, not the timing of reads."
+   "gap_note": "Tracking measures outcomes after the player helps. Film is needed for recognition and timing, including missed rotations."
   },
   "S39": {
    "name": "Off-ball coverage positioning",
    "kind": "grade",
-   "metrics": [
-    {
-     "metric": "Help Effectiveness Rating",
-     "direction": 1,
-     "strength": "weak",
-     "outcome": null,
-     "why": "Help outcomes partly reflect good starting position."
-    }
-   ],
-   "coverage": "partial",
-   "gap_note": "No gap/denial/tag positioning data."
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "No direct observations of starting position, gaps, denial or tags. Help Effectiveness Rating is reserved for the outcome check on rotation recognition."
   },
   "S40": {
    "name": "Closeout / arrival control",
@@ -1411,17 +1396,9 @@
   "S44": {
    "name": "Attention / responsibility execution",
    "kind": "grade",
-   "metrics": [
-    {
-     "metric": "Stable Defensive 3-Second Violations Per 75",
-     "direction": -1,
-     "strength": "weak",
-     "outcome": null,
-     "why": "Defensive three-second calls; a lapse in responsibility/awareness."
-    }
-   ],
-   "coverage": "partial",
-   "gap_note": "Almost nothing measures assignment awareness. Mostly scouting-led."
+   "metrics": [],
+   "coverage": "none",
+   "gap_note": "Defensive three-second calls depend on the time a player spends in the lane. Assignment awareness needs film."
   },
   "S45": {
    "name": "Foul-control technique",
@@ -4979,6 +4956,14 @@
   {
    "metric": "Turnovers Consistency",
    "why": "Game-to-game consistency (variance), not ability level. Possible later use for hot/cold streakiness, not ratings."
+  },
+  {
+   "metric": "Help Defense Talent",
+   "why": "Broad help grade closely tied to help activity and deployment. Compare it in context without using it to grade recognition."
+  },
+  {
+   "metric": "Stable Defensive 3-Second Violations Per 75",
+   "why": "Minutes or possessions do not measure exposure to the defensive three-second rule. Paint assignments drive the rate."
   }
  ]
 }
