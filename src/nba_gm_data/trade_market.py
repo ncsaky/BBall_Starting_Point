@@ -822,7 +822,8 @@ def user_offer_competition(active: dict[str, Any], save: dict[str, Any], candida
                 text = (f"Your offer is the best {abbrev} has for {entry.get('player_name')} right now "
                         f"(decision by {entry.get('decide_by')}).")
             current = entry.get("user_bid") or {}
-            if margin > float(current.get("margin") if current.get("margin") is not None else -99.0):
+            entry["interested"] = sorted(set(entry.get("interested") or []) | {user_team_id})
+            if accepted and margin > float(current.get("margin") if current.get("margin") is not None else -99.0):
                 entry["user_bid"] = {"team_id": user_team_id, "margin": round(margin, 2), "date": day,
                                      "accepted_by_seller": accepted}
                 entry["interested"] = sorted(set(entry.get("interested") or []) | {user_team_id})

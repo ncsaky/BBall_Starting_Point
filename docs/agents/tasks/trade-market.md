@@ -15,9 +15,12 @@ CSS, `data/overrides/front_office_overrides.json` (new `trade_personality` secti
 `scripts/trade_probe_metrics.py`.
 
 ## Resume state
-- Baseline probe (branch start, frozen copy `output/trade-market/base-src`) started 17:41 with `--snapshots`;
-  log `output/trade-market/base.log`, pid in `base.pid`, results in `base-src/output/probe`.
-- Reputation research (sonnet subagent): `output/trade-market/fo_reputation_research.json` (30 teams, 20 sources,
-  25 with a widely held finding).
-- Next: front_office.py traits + personality terms replacing the per-proposal dice in
-  `transactions.personality_trade_adjustment`.
+- Baseline probe done (`output/trade-market/base-src/output/probe`; metrics `output/trade-market/results/trade_metrics_base.json`):
+  101 trades, deadline weeks 22 / 21.
+- WIP committed 376b6e8 (engine, user side, GUI, tests `tests/test_trade_market.py` 27 OK).
+- Probe run1 (frozen copy `output/trade-market/run1-src`, log `run1.log`, pid `run1.pid`) started after the commit.
+- Iteration harness: `output/trade-market/advance_eval.py SNAP OUT DATE --daily` on `snaps/dl2027` (2027-01-21);
+  `refusals.py SAVE DATE` (one day, no slot limit, why deals fail); `grades.py`, `show_summary.py`, `market_days.py`.
+- Findings so far: before deadline day the slot draw binds; on deadline day the supply bound. Deadline-day final
+  offers (every motivated side concedes by patience) filled the day; calendar's last two days set to real 2026 (5, 18).
+- Next: run1 metrics, hand-read trades, full test suites, GUI screenshots, scorecard, report.

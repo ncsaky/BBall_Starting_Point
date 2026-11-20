@@ -6976,7 +6976,14 @@ function tradeRoomModalBody() {
     <div id="tradeBody"></div>`;
 }
 
+async function openTradeMarketBoard() {
+  await openTradeRoomModal(state.tradeTab || "builder", {market: true});
+  if (state.modal?.kind !== "tradeRoom" || !state.currentSave) return;
+  await loadTradeMarket(true);
+}
+
 async function openTradeRoomModal(tab = state.tradeTab || "builder", options = {}) {
+  state.tradeMarketOpen = Boolean(options.market);
   if (state.tradeAdditionalSave !== state.currentSave) {
     state.tradeAdditionalSave = state.currentSave;
     state.tradeAdditionalTeams = [];
@@ -14483,9 +14490,7 @@ function syncAssistantGMPhone() {
       if (message.target === "trade-deadline") {
         showTradeDeadlinePrompt();
       } else if (message.target === "trade-market") {
-        state.tradeMarketOpen = true;
-        await openTradeRoomModal(state.tradeTab || "builder");
-        await loadTradeMarket(true);
+        await openTradeMarketBoard();
       } else if (message.target === "league-wire") {
         await openLeagueActivityCard();
         const post = [...document.querySelectorAll("[data-league-event-id]")].find(el => el.dataset.leagueEventId === message.event_id);
