@@ -574,8 +574,8 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
         if "_human_team_ids" in canonical:
             home_players = game_day_rotation(home_players, home_team["id"], game_id, seed)
             away_players = game_day_rotation(away_players, away_team["id"], game_id, seed)
-    home_features = game_team_features(context, canonical, home_team, home_players, mode)
-    away_features = game_team_features(context, canonical, away_team, away_players, mode)
+    home_features = game_team_features(context, canonical, home_team, home_players, mode, game_date=game_date)
+    away_features = game_team_features(context, canonical, away_team, away_players, mode, game_date=game_date)
     home_game_context = game_context_for_team(context, game, home_team)
     away_game_context = game_context_for_team(context, game, away_team)
     if str(game.get("phase") or "") in ("playoffs", "playoff", "play_in"):
@@ -957,7 +957,13 @@ def curry_off_ball_veteran_profile(player: dict[str, Any] | None) -> bool:
     return normalize_name((player or {}).get("name") or "") == "stephen curry"
 
 
-def game_team_features(context: dict[str, Any] | None, canonical: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]], mode: str) -> dict[str, float]:
+def game_team_features(context: dict[str, Any] | None, canonical: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]], mode: str,
+                       game_date: str | None = None) -> dict[str, float]:
+    """Team features for tonight's pool. game_date: replayed games judge absences against the real season's rotation
+    (replay_expected_rotation) instead of the save-less universe's roster."""
+    expected = None
+    if mode == "replay-real-minutes" and context is not None and game_date and REPLAY_SEASON_ROTATION:
+        expected = replay_expected_rotation(context, team, game_date)
     cache_key = None
     if context is not None:
         pool_key = tuple(
@@ -970,7 +976,7 @@ def game_team_features(context: dict[str, Any] | None, canonical: dict[str, Any]
             )
             for item in pool
         )
-        cache_key = (team["id"], mode, pool_key)
+        cache_key = (team["id"], mode, pool_key, game_date if expected is not None else None)
         cache = context.setdefault("sim_cache", {}).setdefault("team_features", {})
         if cache_key in cache:
             return dict(cache[cache_key])
@@ -978,7 +984,8 @@ def game_team_features(context: dict[str, Any] | None, canonical: dict[str, Any]
         features = lineup_feature_vector(canonical, pool)
     else:
         features = team_feature_vector(canonical, team).features
-    features = apply_availability_dependency_adjustments(canonical, team, pool, features) if pool else features
+    features = (apply_availability_dependency_adjustments(canonical, team, pool, features, expected=expected,
+                                                          absent_only=expected is not None) if pool else features)
     features = apply_manifesto_feature_adjustments(context, canonical, team, pool, features)
     if mode == "sandbox-sim" and "pace_habit" in features:
         features = {**features, "pace_habit_ref": round(league_pace_habit_reference(canonical), 4)}
@@ -997,9 +1004,11 @@ def apply_manifesto_feature_adjustments(context: dict[str, Any] | None, canonica
     return features
 
 
-def apply_availability_dependency_adjustments(canonical: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]], features: dict[str, float]) -> dict[str, float]:
+def apply_availability_dependency_adjustments(canonical: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]], features: dict[str, float],
+                                              *, expected: list[tuple[dict[str, Any], float]] | None = None,
+                                              absent_only: bool = False) -> dict[str, float]:
     adjusted = dict(features)
-    rows = availability_dependency_rows(canonical, team, pool)
+    rows = availability_dependency_rows(canonical, team, pool, expected=expected, absent_only=absent_only)
     if not rows:
         adjusted["availability_dependency_penalty"] = 0.0
         adjusted["availability_dependency_count"] = 0
@@ -1036,12 +1045,48 @@ def apply_availability_dependency_adjustments(canonical: dict[str, Any], team: d
     return {key: round(value, 3) for key, value in adjusted.items()}
 
 
-def availability_dependency_rows(canonical: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]]) -> list[dict[str, float]]:
-    team_players = [
-        player
-        for player in canonical["players"]
-        if player["team_id"] == team["id"] and projected_game_minutes(player) >= 18
-    ]
+# Replayed 2025-26 games used to judge absences against the save-less universe's roster, which is the 2026-27 offseason
+# roster: every player a team added in the 2026 offseason counted as missing from every one of its 2025-26 games, and
+# players it lost never did. Replayed games now use the real season's rotation (2026-11-20, game-context audit).
+REPLAY_SEASON_ROTATION = True
+REPLAY_ROTATION_MIN_GAMES = 5
+
+
+def replay_expected_rotation(context: dict[str, Any], team: dict[str, Any], game_date: str) -> list[tuple[dict[str, Any], float]]:
+    """The team's real 2025-26 rotation on game_date: every player who played for it on or before and on or after that
+    date (on the roster then), with his average minutes in the games he played for it. Replayed games only."""
+    cache = context.setdefault("sim_cache", {}).setdefault("replay_rotation", {})
+    abbrev = team["abbrev"]
+    if abbrev not in cache:
+        players_by_name = context.get("indices", {}).get("players_by_name") or {
+            normalize_name(player["name"]): player for player in context["canonical"]["players"]}
+        stints: dict[str, list[tuple[str, float]]] = defaultdict(list)
+        for box in context.get("boxscores") or []:
+            day = str(box.get("date") or "")[:10]
+            for row in box.get("players") or []:
+                if normalize_game_team_abbrev(row.get("team_abbrev")) != abbrev or row.get("dnp"):
+                    continue
+                minutes = float(row.get("minutes") or 0.0)
+                if minutes > 0 and day:
+                    stints[normalize_name(row.get("player_name") or "")].append((day, minutes))
+        cache[abbrev] = [
+            (players_by_name[name], min(d for d, _ in games), max(d for d, _ in games), sum(m for _, m in games) / len(games))
+            for name, games in sorted(stints.items())
+            if name in players_by_name and len(games) >= REPLAY_ROTATION_MIN_GAMES
+        ]
+    day = str(game_date)[:10]
+    return [(player, round(minutes, 3)) for player, first, last, minutes in cache[abbrev] if first <= day <= last]
+
+
+def availability_dependency_rows(canonical: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]], *,
+                                 expected: list[tuple[dict[str, Any], float]] | None = None,
+                                 absent_only: bool = False) -> list[dict[str, float]]:
+    """Rotation players missing tonight. expected: (player, expected minutes) in place of the roster's projections;
+    absent_only: only players who did not play at all count as missing (replayed games, where partial minutes would
+    leak the game's flow)."""
+    if expected is None:
+        expected = [(player, projected_game_minutes(player)) for player in canonical["players"] if player["team_id"] == team["id"]]
+    team_players = [(player, minutes) for player, minutes in expected if minutes >= 18]
     if not team_players:
         return []
     available_minutes = {normalize_name(item["player"]["name"]): float(item.get("minutes") or 0) for item in pool}
@@ -1051,9 +1096,10 @@ def availability_dependency_rows(canonical: dict[str, Any], team: dict[str, Any]
         if float(item.get("minutes") or 0) >= 8
     ]
     rows = []
-    for player in team_players:
-        expected_minutes = projected_game_minutes(player)
+    for player, expected_minutes in team_players:
         actual_minutes = available_minutes.get(normalize_name(player["name"]), 0.0)
+        if absent_only:
+            actual_minutes = expected_minutes if actual_minutes > 0 else 0.0
         lost_share = clamp((expected_minutes - actual_minutes) / max(expected_minutes, 1.0), 0.0, 1.0)
         if lost_share < 0.45:
             continue
@@ -2700,8 +2746,8 @@ def explain_game_probability(root: str | Path, game_id: str, runs: int = 200, se
     game_date = game.get("gameDate") or game.get("date")
     home_pool = game_player_pool(context, game_id, home_team, mode, game_date=game_date)
     away_pool = game_player_pool(context, game_id, away_team, mode, game_date=game_date)
-    home_features = game_team_features(context, canonical, home_team, home_pool, mode)
-    away_features = game_team_features(context, canonical, away_team, away_pool, mode)
+    home_features = game_team_features(context, canonical, home_team, home_pool, mode, game_date=game_date)
+    away_features = game_team_features(context, canonical, away_team, away_pool, mode, game_date=game_date)
     coach_by_team = context.get("indices", {}).get("coach_by_team") or {rating.team_id: rating for rating in coach_ratings(canonical)}
     return {
         "game_id": str(game_id),
