@@ -10074,8 +10074,8 @@ def contract_has_salary_in_or_after(contract: dict[str, Any] | None, season: str
     )
 
 
-def contract_last_season(contract: dict[str, Any]) -> str | None:
-    seasons = [str(entry.get("season")) for entry in contract.get("seasons", []) if entry.get("salary") is not None and entry.get("season")]
+def contract_last_season(contract: dict[str, Any] | None) -> str | None:
+    seasons = [str(entry.get("season")) for entry in (contract or {}).get("seasons", []) if entry.get("salary") is not None and entry.get("season")]
     return max(seasons) if seasons else None
 
 
