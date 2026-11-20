@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from nba_gm_data import save as save_module, sim
 from nba_gm_data.season_slides import award_detail
+from nba_gm_data.utils import normalize_name
 
 
 class SharedPaceTests(unittest.TestCase):
@@ -116,9 +117,9 @@ class StarterTests(unittest.TestCase):
     def test_replayed_games_use_the_real_starters(self):
         gid = self.games[0]
         box = self.context["indices"]["boxscores_by_game_id"][gid]
-        real = {row["player_name"] for row in box["players"] if row.get("starter")}
+        real = {normalize_name(row["player_name"]) for row in box["players"] if row.get("starter")}
         result = sim.sim_game_with_context(self.context, gid, seed=1)
-        self.assertEqual({line["player_name"] for line in result.player_lines if line["starter"]}, real)
+        self.assertEqual({normalize_name(line["player_name"]) for line in result.player_lines if line["starter"]}, real)
 
     def test_coach_lineup_starts_and_open_spots_go_to_planned_minutes(self):
         pool = [{"player": {"id": f"p{i}"}, "minutes": 40 - i * 3, "actual": None} for i in range(9)]

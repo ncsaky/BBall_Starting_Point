@@ -4,8 +4,6 @@ _Claude (Opus agent), 2026-11-20, worktree branch, to be pushed as `overnight/ga
 
 ## Resume state
 
-- Setup done (symlinks; remove `.venv`, `data/research/barttorvik/raw`, sqlite, injury evidence, bbi file links, `output/*` links are git-ignored or untracked; check `git status` before committing).
-- Scratch: `output/overnight-margins/` (git-ignored).
-- Step 1 (context effects): in progress.
-- Step 2 (shared pace): pending.
-- Step 3 (starters + Sixth Man): pending.
+- Commits: aed8b09 (replay rotation), 7695656 (context refit, shared pace, starters, Sixth Man). Scratch: `output/overnight-margins/` (git-ignored; `base_src`, `ctx1_src`, `ctx2_src` engine snapshots, `data` symlink beside them).
+- Base runs at 20 runs equal winpick's `o20_final_s*` exactly (reusable).
+- Pending: batch2 (shared pace, seeds 1001/2001 + spread checks), calibration report, tests, report, board row, push.
