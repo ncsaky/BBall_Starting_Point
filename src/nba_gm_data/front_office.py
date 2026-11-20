@@ -70,7 +70,7 @@ VETERAN_RATE, VETERAN_CAP = 0.12, 5.0
 PICKS_FREE_RATE, PICKS_FREE_CAP = 0.30, 6.0
 PICKS_FREE_ALLOWANCE = 12.0
 OWN_RATE, OWN_CAP = 0.10, 5.0
-STAR_VALUE, STAR_RATE, STAR_CAP = 68.0, 0.10, 6.0
+STAR_ON_COURT, STAR_RATE, STAR_CAP = 66.0, 0.10, 6.0  # a star: about the league's top 60 by on-court value
 PICK_PREFERENCE_RATE, PICK_PREFERENCE_CAP = 0.10, 4.0
 TAX_AVERSE_RATE, TAX_SPEND_RATE, TAX_PREFERENCE_CAP = 0.25, 0.30, 4.0
 LOYALTY_CAP = 5.0
@@ -424,7 +424,7 @@ def personality_terms(canonical: dict[str, Any], team_id: str, incoming: list[di
             terms.append(_term("overpays_veterans", points,
                                f"{abbrev} tends to overpay for veterans ({', '.join(_name(canonical, a['id']) for a in vets)})"))
     if size > 0 and has_bias(row, "chases_stars"):
-        stars = [a for a in _players(incoming) if _player_value(canonical, a["id"]) >= STAR_VALUE]
+        stars = [a for a in _players(incoming) if _on_court(canonical, a["id"]) >= STAR_ON_COURT]
         value = sum(_player_value(canonical, a["id"]) for a in stars)
         if value:
             points = min(STAR_CAP, size * STAR_RATE * value)
@@ -465,7 +465,7 @@ def personality_terms(canonical: dict[str, Any], team_id: str, incoming: list[di
             points = sign * float(opinion["points"])
             name = _name(canonical, asset["id"])
             if opinion["kind"] == "connection":
-                text = f"{abbrev} has a long connection with {name}: {opinion['why']}"
+                text = f"{abbrev} has a long connection with {name}: {str(opinion['why']).rstrip('.')}"
             elif opinion["points"] > 0:
                 text = f"{abbrev} has always liked {name} ({opinion['why']} game)"
             else:
