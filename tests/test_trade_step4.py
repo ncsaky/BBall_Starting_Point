@@ -129,7 +129,7 @@ class RepeatTaxpayerTests(unittest.TestCase):
         save = {"meta": {"season": SEASON}}
         with patch("nba_gm_data.save.canonical_with_save", lambda canonical, s: canonical):
             history = tax.record_season_payrolls(save, data)
-            self.assertAlmostEqual(history[SEASON]["a"]["payroll"], 12 * 15_750_000 + 10_000_000, delta=1)
+            self.assertAlmostEqual(history[SEASON]["a"]["payroll"], 5 * 15_750_000 + 7 * 14_750_000 + 10_000_000, delta=1)
             self.assertFalse(history[SEASON]["a"]["taxed"])
             history[SEASON]["a"]["taxed"] = "kept"
             tax.record_season_payrolls(save, data)
