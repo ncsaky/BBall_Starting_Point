@@ -2,7 +2,72 @@
 
 Paste one prompt into a **fresh** Codex chat. One task per chat keeps it from drifting after context compaction. Each prompt is self-contained. Claude reviews the result and updates `BOARD.md`.
 
-Current priority (2026-11-20, evening): FA-REALISM-RESEARCH now, ODDS-COACH after the trade probes. GUI tasks are parked at the bottom.
+Current priority (2026-11-20, night): INJURY-FOLLOWUPS now, ODDS-COACH after the trade probes. GUI tasks are parked at the bottom.
+
+---
+
+## Ready now (2026-11-20, night): INJURY-FOLLOWUPS (fresh chat)
+
+FA-PRICES and FA-REALISM-RESEARCH are done. ODDS-COACH still waits for the trade agent's long runs. TRADE-DEADLINE (Claude agent) owns the trade files. Claude will design the free-agency rebuild from the research next.
+
+### INJURY-FOLLOWUPS: the leftovers from INJURIES-2
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task INJURY-FOLLOWUPS (its board row already exists; set it to "in progress (Codex)").
+Then read docs/agents/tasks/injuries-2.md fully, especially "What's left". Also read docs/agents/tasks/injury-overhaul.md.
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_injury_followups -b codex/injury-followups HEAD
+Symlink the git-ignored data from the main checkout: .venv, data/research/barttorvik/raw,
+data/canonical/universe_2026_27_offseason.sqlite, data/canonical/injury_player_evidence_v2.json, the git-ignored
+files under data/research/bbi/ (including tools/; link each one), output/settlement-materialization-pass, and
+output/injuries-2 (the measurement scripts and before/after runs). Then run
+gunzip -kf data/canonical/player_inputs_2026_27.json.gz. Commit on branch codex/injury-followups; never push, never
+commit to main.
+
+Do these in order:
+1. The "~Ng" games-left label (save.py, around line 8179, the Minutes + Availability label) estimates games left as
+   calendar days / 2.4. Count the team's remaining scheduled games before the return date instead, the same way
+   health.injury_return_date counts them, so the label matches the engine exactly (AGENTS.md rule 4). Add a test.
+2. Fantasy-draft careers apply the real opening-night injury list before the draft, so an injured player keeps his
+   real return DATE on whatever team drafts him. Make his absence follow the games count instead (games missed on his
+   new team's schedule, using the record's games-missed fields). Add a test.
+3. The main job: injuries-2.md "What's left" item 1. The injury-rate fit (scripts/build_injury_model.py ->
+   data/canonical/injury_model_v2.json) pools seasons whose Basketball Index tracker coverage differs four- to eightfold,
+   so a single league scale (now 1.52) leaves the minutes and age slopes biased: the 20-30 minute group runs 10-15% above
+   the tracker and players under 10 minutes below it. Refit with a separate base rate per season (season fixed
+   effects), so the workload and age slopes come from within-season comparisons. Then set the league level from the
+   well-covered seasons, as INJURIES-2 did.
+   Measure before and after with output/injuries-2's scripts and scripts/research/injury_season_check.py (fixed rosters,
+   2 seeds):
+   - rate by minutes band and age band against the tracker;
+   - the length bands;
+   - injuries per team;
+   - heavy-minute and top-30 players' games played (real: heavy 68, top-30 median 64.5).
+   Rule 1 applies: fit to the evidence, never to a games-played target. Report what moved and why.
+   Rebuild injury_model_v2.json only through its script.
+4. Only if time allows: injuries-2.md item 2, heavy-minute players' single-game absences (2.7-2.8 a season against 2.4
+   real). It comes from the rest model's split by minutes (rest_model.py). Measure from the same real box-score data the
+   smart-rest work used (docs/agents/tasks/ and output/smart-rest/ if present). Change it only if the evidence supports
+   it. If not done, write what you found.
+
+Files you may touch: save.py (only the injury label function and the fantasy-draft injury hook), health.py,
+injury_model.py, scripts/build_injury_model.py, data/canonical/injury_model_v2.json (via the script), rest_model.py
+(item 4 only), new research scripts, tests, docs/agents/tasks/injury-followups.md.
+Do NOT touch transactions.py, trade_*.py, multi_team_trades.py, play.py, contract_ai.py, cap_rules.py, gui/app.js
+(other work owns them now).
+
+Checks: focused tests; bash scripts/run_core_tests.sh; tests.test_injuries_2, tests.test_injury_model,
+tests.test_overnight_tv_rest, tests.test_smart_rest, tests.test_fatigue_rest, tests.test_new_career_start; and the
+real-stat scorecard once at the end (PYTHONPATH=src .venv/bin/python scripts/calibration_report.py --games 1230 --mode
+replay-real-minutes, 18/18). Another agent runs long simulations on this laptop: run one heavy job at a time, and wait
+on your own process ID, never on a grep loop.
+Report in docs/agents/tasks/injury-followups.md: a plain-language TL;DR first (3 lines, no jargon), then before/after
+tables, what changed and the evidence, speed (the health sim is about 0.4 s per simulated month), tests, and "What's
+left". Set the board row to "review" and stop.
+```
 
 ---
 
