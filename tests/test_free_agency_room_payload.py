@@ -24,41 +24,87 @@ def player(minutes: float, **extra) -> dict:
             "team_id": None, **extra}
 
 
-class AcceptFloorParityTests(unittest.TestCase):
-    def engine_threshold(self, candidate: dict, guaranteed: bool) -> tuple[float, bool]:
-        """Run the real manual_save_pool_signing decision without touching disk."""
-        save = {"state": {"current_date": "2027-07-02", "phase": "free_agency"}, "meta": {"season": "2026-27"}}
-        with patch.object(play, "load_save", return_value=save), patch.object(play, "write_save"), \
-                patch.object(play, "resolve_team", return_value={"id": "team_cha", "abbrev": "CHA"}), \
-                patch.object(play, "extension_retirement_blocked", return_value=False):
-            floor = aa.free_agent_accept_floor_millions(candidate, guaranteed)
-            below = play.manual_save_pool_signing({}, Path("unused"), candidate, "CHA", 3, aa.smallest_offer_at_or_above(floor) - 0.1, 7, guaranteed=guaranteed)
-            at = play.manual_save_pool_signing({}, Path("unused"), candidate, "CHA", 3, aa.smallest_offer_at_or_above(floor), 7, guaranteed=guaranteed)
-        self.assertFalse(below["accepted"], "one $0.1M step under the shown price is refused")
-        self.assertTrue(at["accepted"], "the shown price is accepted")
-        return at["decision"]["ask_threshold_millions"], at["accepted"]
+def market_save(day: int = 2, offers: list | None = None, asks: dict | None = None, phase: str = "free_agency") -> dict:
+    return {"state": {"current_date": "2027-07-02", "phase": phase}, "meta": {"season": "2026-27"},
+            "free_agency_state": {"season": "2026-27", "day": day, "day_count": 5, "status": "active",
+                                  "player_asks_millions": asks or {}},
+            "free_agent_offers": offers or [], "team_records": {}}
 
-    def test_shown_price_is_the_engine_threshold_for_every_role_and_guarantee(self):
+
+def rival_bid(player_id: str, aav: float, interest: float, team_id: str = "team_bkn", years: int = 4) -> dict:
+    return {"id": f"bid_{team_id}_{player_id}", "season": "2026-27", "source": "ai", "player_id": player_id,
+            "team_id": team_id, "years": years, "aav_millions": aav, "interest_score": interest, "status": "active"}
+
+
+CHA = {"id": "team_cha", "abbrev": "CHA"}
+
+
+class AcceptFloorParityTests(unittest.TestCase):
+    """The price the builder shows is the price manual_save_pool_signing applies (TRADE-VOLUME: the rival bids' rule)."""
+
+    def sign(self, save: dict, candidate: dict, years: int, aav: float, guaranteed: bool) -> dict:
+        with patch.object(play, "load_save", return_value=save), patch.object(play, "write_save"), \
+                patch.object(play, "resolve_team", return_value=CHA), \
+                patch.object(play, "extension_retirement_blocked", return_value=False):
+            return play.manual_save_pool_signing({}, Path("unused"), candidate, "CHA", years, aav, 7, guaranteed=guaranteed)
+
+    def floors(self, save: dict, candidate: dict) -> dict:
+        return aa.free_agent_offer_floors({}, save, candidate, CHA, 5)
+
+    def test_shown_price_is_the_engine_threshold_for_every_role_length_and_guarantee(self):
         for minutes in (0.0, 4.0, 12.5, 18.0, 25.7, 30.1, 36.0):
-            for guaranteed in (True, False):
-                with self.subTest(minutes=minutes, guaranteed=guaranteed):
-                    candidate = player(minutes)
-                    threshold, _ = self.engine_threshold(candidate, guaranteed)
-                    self.assertAlmostEqual(round(aa.free_agent_accept_floor_millions(candidate, guaranteed), 2), threshold, places=6)
+            candidate = player(minutes)
+            ask = max(1.8, round(minutes * 0.48, 1))
+            for save in (market_save(day=2, asks={candidate["id"]: ask}),
+                         market_save(day=4, asks={candidate["id"]: ask},
+                                     offers=[rival_bid(candidate["id"], round(ask * 1.05, 1), 70.0)]),
+                         market_save(phase="re_signing", asks={candidate["id"]: ask})):
+                floors = self.floors(save, candidate)
+                for key, guaranteed in (("guaranteed", True), ("non_guaranteed", False)):
+                    for years in (1, 3, 5):
+                        floor = floors["by_years"][key][str(years)]
+                        with self.subTest(minutes=minutes, mode=floors["rule"]["mode"], guaranteed=guaranteed, years=years):
+                            if floor is None:
+                                self.assertFalse(self.sign(save, candidate, years, 90.0, guaranteed)["accepted"])
+                                continue
+                            at = self.sign(save, candidate, years, floor, guaranteed)
+                            self.assertTrue(at["accepted"], "the shown price is accepted")
+                            self.assertEqual(at["decision"]["ask_threshold_millions"], floor)
+                            if floor > play.league_minimum_aav_millions():
+                                below = self.sign(save, candidate, years, round(floor - 0.1, 1), guaranteed)
+                                self.assertFalse(below["accepted"], "one $0.1M step under the shown price is refused")
 
     def test_non_guaranteed_costs_more(self):
         candidate = player(30.1)
-        self.assertGreater(aa.free_agent_accept_floor_millions(candidate, False), aa.free_agent_accept_floor_millions(candidate, True))
+        floors = self.floors(market_save(asks={candidate["id"]: 14.4}), candidate)
+        self.assertGreater(floors["default"]["non_guaranteed"], floors["default"]["guaranteed"])
 
-    def test_price_rounds_up_to_an_offer_the_engine_accepts(self):
-        self.assertEqual(aa.smallest_offer_at_or_above(13.545), 13.6)
-        self.assertEqual(aa.smallest_offer_at_or_above(13.5), 13.5)
-        self.assertEqual(aa.smallest_offer_at_or_above(13.500000000000002), 13.6)
-        self.assertEqual(aa.smallest_offer_at_or_above(1.9), 1.9)
-        for value in (2.0000001, 7.25, 16.254, 13.05, 30 * 0.45):
-            offer = aa.smallest_offer_at_or_above(value)
-            self.assertGreaterEqual(offer, value)
-            self.assertLess(offer - value, 0.1 + 1e-9)
+    def test_price_tracks_the_market_ask_not_projected_minutes(self):
+        # The old rule priced a 30-minute player at 30 x 0.45 = $13.5M whatever his market; now a $28.8M ask costs
+        # about his ask (the bar drops through the week, so day 5 is cheaper than day 2).
+        candidate = player(30.1)
+        day2 = self.floors(market_save(day=2, asks={candidate["id"]: 28.8}), candidate)["by_years"]["guaranteed"]["4"]
+        day5 = self.floors(market_save(day=5, asks={candidate["id"]: 28.8}), candidate)["by_years"]["guaranteed"]["4"]
+        self.assertGreater(day2, 28.8 * 0.85)
+        self.assertLess(day5, day2)
+
+    def test_user_offer_loses_to_a_better_rival_bid(self):
+        # Brandon Miller's case: ask $28.8M, a rival bid of $30.4M. The old rule signed him with the user for $13.6M.
+        candidate = player(30.1, id="p_miller")
+        bid = rival_bid("p_miller", 30.4, 81.0)
+        save = market_save(day=3, asks={"p_miller": 28.8}, offers=[bid])
+        cheap = self.sign(save, candidate, 4, 13.6, True)
+        self.assertFalse(cheap["accepted"])
+        at_ask = self.sign(save, candidate, 4, 28.8, True)
+        self.assertFalse(at_ask["accepted"])
+        self.assertEqual(at_ask["decision"]["decision"], "prefers_rival_bid")
+        floor = self.floors(save, candidate)["by_years"]["guaranteed"]["4"]
+        self.assertIsNotNone(floor)
+        self.assertGreater(floor, 30.4 * 0.95, "he needs about the rival's money or more")
+        self.assertTrue(self.sign(save, candidate, 4, floor, True)["accepted"])
+        # The AI bids' own rule picks the same winner: the higher interest, then the higher salary.
+        user_interest = self.sign(save, candidate, 4, floor, True)["decision"]["interest"]
+        self.assertGreaterEqual((user_interest, floor), (bid["interest_score"], bid["aav_millions"]))
 
 
 @unittest.skipUnless(shutil.which("node"), "node is needed to run the browser preview")

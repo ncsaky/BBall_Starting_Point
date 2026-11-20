@@ -5075,7 +5075,10 @@ class DataFoundationTests(unittest.TestCase):
         # 4th in DET's list. After the ratings audit's value refit (2026-11-18) it ranks 5th, past the
         # 4-offers-per-buyer cut. Shop a player with several legal offers instead; the explainability checks are
         # unchanged.
-        report = find_trade(self.plain, "Dailyn Swain", "CHI", limit=2, seed=2)
+        # TRADE-VOLUME (2026-11-19): the trade code now uses the real $200.4M tax line (it used $207.4M). Dailyn
+        # Swain's one acceptable offer came from Detroit at $199.6M, which taking his salary would now push into the
+        # tax, so Detroit declines (correctly). Patrick Williams has several acceptable offers under the real line.
+        report = find_trade(self.plain, "Patrick Williams", "CHI", limit=2, seed=2)
         self.assertGreater(report["candidate_count"], 0)
         self.assertIn("summary", report["candidates"][0])
         self.assertEqual(len(report["candidates"][0]["evaluations"]), 2)
@@ -5100,7 +5103,7 @@ class DataFoundationTests(unittest.TestCase):
     def test_trade_finder_preserves_untouchables_and_bounded_multi_asset_packages(self):
         self.assertEqual(find_trade(self.plain, "Stephen Curry", "GSW", limit=4, seed=2)["candidate_count"], 0)
         self.assertEqual(find_trade(self.plain, "Victor Wembanyama", "SAS", limit=4, seed=2)["candidate_count"], 0)
-        movable = find_trade(self.plain, "Dailyn Swain", "CHI", limit=8, seed=9)
+        movable = find_trade(self.plain, "Patrick Williams", "CHI", limit=8, seed=9)   # see the note above
         self.assertGreater(movable["candidate_count"], 0)
         self.assertTrue(all(candidate["legality"]["status"] == "legal" for candidate in movable["candidates"]))
         self.assertTrue(all(len(candidate["proposal"]["from_assets"]) <= 4 for candidate in movable["candidates"]))

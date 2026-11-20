@@ -58,7 +58,7 @@ def stretch_quote(active, save, waiver_id, stamp):
     schedule = [{'season': season_label_from_start(first+i), 'salary': annual,
                  'unverified_reserve': 0, 'earned_salary': 0} for i in range(count)]
     schedule[-1]['salary'] = round(amount-annual*(count-1), 2)
-    cap = 154_647_000*cap_lines_for_season(season_label_from_start(start))['growth_factor']
+    cap = cap_lines_for_season(season_label_from_start(start))['salary_cap']
     for row in schedule:
         other = [s for r in save.get('waived_salary_obligations', [])
                  if r['team_id'] == debt['team_id'] and r['id'] != debt['id']

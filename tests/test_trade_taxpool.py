@@ -53,8 +53,9 @@ class TaxPoolTests(unittest.TestCase):
 
     def test_short_roster_must_be_filled_before_it_counts_as_under(self):
         data = league()
-        # A at $206M with 13 players: under the line today, but the 14th player's minimum salary puts it over.
-        set_contract(data, "a1", [(SEASON, 37_500_000)])
+        # A at $199.5M with 13 players: under the real $200.4M line today (TRADE-VOLUME: the trade code used $207.4M), but
+        # the 14th player's minimum salary puts it over.
+        set_contract(data, "a1", [(SEASON, 31_000_000)])
         set_contract(data, "a12", [(SEASON, 1_000_000)])
         payroll = tx.team_salary_total_for_season(data, "a", SEASON)
         self.assertLess(payroll, LINE)

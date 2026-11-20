@@ -160,9 +160,19 @@ def claim_plan(active, save, entry, team_id, *, cut_id=None, ai=False):
             if old is None or debt is None:
                 return {'ok': False, 'reason': 'Replacement salary requires review.'}
             total += debt - old
-        base_cap = 154_647_000 * cap_lines_for_season(row['season'])['growth_factor']
+        base_cap = cap_lines_for_season(row["season"])["salary_cap"]
         if total > base_cap + 1 and not minimum_claim_contract(entry['contract']):
             return {'ok': False, 'reason': 'Not enough salary-cap room to assume the existing contract.'}
+        if ai and row['season'] == season:
+            # Payroll discipline (TRADE-VOLUME): an AI claim must fit the owner's tax plan for this season, and a team
+            # under the line never claims its way over it after the trade deadline (Atlanta, Feb 2028).
+            from .payroll_plan import payroll_check, plain_words
+            from .save import display_minutes_projection
+            check = payroll_check(active, save, team_id, season, add_salary=total - cap['salary_total'],
+                                  roster_delta=0 if cut else 1, minutes=display_minutes_projection(player),
+                                  kind='waiver_claim')
+            if not check['ok']:
+                return {'ok': False, 'reason': plain_words(check), 'tax_plan': check}
     return {'ok': True, 'cut_player_id': cut_id, 'contract': entry['contract'],
             'cut_cost_millions': (cut_projection or {}).get('remaining_cost_millions', 0)}
 

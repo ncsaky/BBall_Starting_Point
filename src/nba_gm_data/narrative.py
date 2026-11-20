@@ -21,9 +21,7 @@ from .utils import clamp, stable_id
 
 NARRATIVE_PROMPT_VERSION = "narrative_v11"
 SOCIAL_TEXT_MAX_CHARS = 760
-TAX_LINE = 200_428_000
-SECOND_APRON = 221_686_000
-ANNUAL_CAP_GROWTH_RATE = 0.035
+from .cap_rules import TAX_LINE, SECOND_APRON, ANNUAL_CAP_GROWTH_RATE  # noqa: E402,F401  (one shared source)
 ALLOWED_PRESS_TONES = {"accountable", "optimistic", "deflect", "challenge"}
 ALLOWED_PRESS_QUALITIES = {"good", "mixed", "bad"}
 
@@ -667,12 +665,8 @@ def next_season_label(season: str | None, offset: int = 1) -> str:
 
 
 def cap_lines_for_narrative(season: str | None) -> dict[str, float]:
-    elapsed = max(0, season_start_year(season) - season_start_year(CANONICAL_SEASON))
-    factor = (1.0 + ANNUAL_CAP_GROWTH_RATE) ** elapsed
-    return {
-        "tax_line": round(TAX_LINE * factor / 100_000) * 100_000,
-        "hard_cap": round(SECOND_APRON * factor / 100_000) * 100_000,
-    }
+    from .cap_rules import cap_lines_for_season
+    return cap_lines_for_season(season)
 
 
 def contract_salary_for_narrative(contract: dict[str, Any], season: str) -> float | None:

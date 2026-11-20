@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import os
 import random
 import shutil
@@ -5388,6 +5389,16 @@ def process_ai_free_agency_offers_for_day_state(
             remember_target(save, team['id'], player['id'], aav, years, plan)
             if not cap.get('ok') or roster_full or not plan['ok']:
                 continue
+            # Payroll discipline (TRADE-VOLUME): the bid must fit the owner's plan for the tax, counting live bids.
+            from .payroll_plan import payroll_check
+            tax_plan = payroll_check(
+                active, save, team["id"], start_season, add_salary=aav * 1_000_000,
+                roster_delta=1 - len(plan.get("cuts") or []), minutes=display_minutes_projection(player),
+                kind="free_agency", committed=reserved * 1_000_000,
+                committed_players=len(pending_players - {player["id"]}),
+            )
+            if not tax_plan["ok"]:
+                continue
             offer = build_free_agency_offer_record(active, save, player, team, years, aav, ask, seed, "ai")
             offer['roster_plan'] = plan
             save.setdefault("free_agent_offers", []).append(offer)
@@ -6315,11 +6326,12 @@ def resolve_free_agency_day_state(canonical: dict[str, Any], save: dict[str, Any
     accepted_count = 0
     accepted_offers: list[dict[str, Any]] = []
     committed_aav_by_team: dict[str, float] = {}
+    committed_count_by_team: dict[str, int] = {}
     for _, _, offers in sorted(candidates, key=lambda item: (item[0], item[1]), reverse=True):
         for best in offers:
             result = apply_free_agency_offer_state(
                 canonical, save, best["id"], seed, prepared_active=active,
-                committed_aav_by_team=committed_aav_by_team,
+                committed_aav_by_team=committed_aav_by_team, committed_count_by_team=committed_count_by_team,
             )
             if result.get("status") == "applied":
                 accepted_count += 1
@@ -6356,6 +6368,7 @@ def apply_free_agency_offer_state(
     *,
     prepared_active: dict[str, Any] | None = None,
     committed_aav_by_team: dict[str, float] | None = None,
+    committed_count_by_team: dict[str, int] | None = None,
 ) -> dict[str, Any]:
     offer = next((item for item in save.get("free_agent_offers", []) if item.get("id") == offer_id), None)
     if not offer or offer.get("status") != "active":
@@ -6383,6 +6396,18 @@ def apply_free_agency_offer_state(
         if not plan['ok']:
             offer['status'] = 'withdrawn_roster_plan_changed'
             return {'status': 'blocked', 'notes': plan['reason']}
+        # Payroll discipline (TRADE-VOLUME): re-check against the payroll after the day's earlier signings.
+        from .payroll_plan import payroll_check, plain_words
+        tax_plan = payroll_check(
+            active, save, team_id, contract_start_season_for_signing(save),
+            add_salary=float(offer.get('aav_millions') or 0) * 1_000_000,
+            roster_delta=1 - len(plan.get('cuts') or []), minutes=display_minutes_projection(player),
+            kind="free_agency", committed=reserved * 1_000_000,
+            committed_players=int((committed_count_by_team or {}).get(team_id) or 0),
+        )
+        if not tax_plan['ok']:
+            offer['status'] = 'withdrawn_tax_plan'
+            return {'status': 'blocked', 'notes': plain_words(tax_plan)}
     negotiation = negotiation_from_free_agency_offer(save, offer, player, team, seed)
     save.setdefault("pending_contract_negotiations", []).append(negotiation)
     for item in save.get("free_agent_offers", []):
@@ -6395,6 +6420,8 @@ def apply_free_agency_offer_state(
     )
     if result.get("status") == "applied" and committed_aav_by_team is not None:
         committed_aav_by_team[team_id] = reserved + float(offer.get("aav_millions") or 0.0)
+    if result.get("status") == "applied" and committed_count_by_team is not None:
+        committed_count_by_team[team_id] = int(committed_count_by_team.get(team_id) or 0) + 1
     return result
 
 
@@ -6973,16 +7000,116 @@ def print_free_agency_recap(canonical: dict[str, Any], save_path: Path) -> None:
         )
 
 
+# ----------------------------------------------------------------------------------- the user's offers (TRADE-VOLUME)
+# A free agent judges the user's offer by the same rule as the AI teams' bids: his interest in it (salary against his
+# market ask, years against the years he wants, and the team context: role, fit, winning, market, security, loyalty;
+# offer_interest_score) must reach the bar he needs today (free_agency_accept_threshold, which drops each day) and must
+# beat the best rival bid (higher interest, or equal interest and more money), the order resolve_free_agency_day_state
+# uses at the end of each day. The rival bids for today are placed before the user can act, so answering at once gives
+# the same result as waiting for the end of the day. A non-guaranteed offer counts as a smaller salary (the security
+# penalty). Outside the open market (the exclusive re-signing window, or a free agent during the season) there are no
+# rival bids and the bar is his market ask for the years he wants from an average team (context 50).
+USER_OFFER_SALARY_STEP = 0.1
+
+
+def user_offer_market_terms(canonical: dict[str, Any], save: dict[str, Any], player: dict[str, Any],
+                            team: dict[str, Any]) -> dict[str, Any]:
+    """What the user's offer to this free agent competes against today."""
+    state = save.get("free_agency_state") or {}
+    phase = str((save.get("state") or {}).get("phase") or "")
+    player_id = str(player.get("id") or "")
+    ask = float((state.get("player_asks_millions") or {}).get(player_id) or free_agency_initial_ask(
+        player, canonical_free_agent_market_by_id(canonical).get(player_id) or {}))
+    preferred = free_agency_preferred_years(player, ask)
+    market_open = (phase == "free_agency" and state.get("status") == "active"
+                   and str(state.get("season") or "") == str((save.get("meta") or {}).get("season") or ""))
+    rivals = [offer for offer in active_offers_for_player(save, player_id)
+              if offer.get("team_id") != team.get("id")] if market_open else []
+    best = max(rivals, key=lambda o: (float(o.get("interest_score") or 0), float(o.get("aav_millions") or 0)), default=None)
+    if market_open:
+        day = int(state.get("day") or 1)
+        bar = float(free_agency_accept_threshold(player, day))
+        mode = "market"
+    else:
+        day = None
+        bar = float(offer_interest_score(ask, ask, preferred, preferred, 50.0))
+        mode = "re_signing" if phase == "re_signing" else "off_market"
+    return {"mode": mode, "day": day, "ask_millions": round(ask, 1), "preferred_years": preferred, "bar": bar,
+            "best_rival": ({"team_id": best.get("team_id"), "interest": float(best.get("interest_score") or 0),
+                            "aav_millions": float(best.get("aav_millions") or 0), "years": int(best.get("years") or 1)}
+                           if best else None)}
+
+
+def user_offer_context(canonical: dict[str, Any], save: dict[str, Any], player: dict[str, Any], team: dict[str, Any],
+                       years: int) -> float:
+    return float(free_agency_offer_context_score(canonical, save, player, team, years, "user")["context_score"])
+
+
+def user_offer_interest(player: dict[str, Any], aav_millions: float, years: int, guaranteed: bool,
+                        terms: dict[str, Any], context: float) -> float:
+    from .contract_protection import security_penalty
+    effective = float(aav_millions) / (1 + security_penalty(player, guaranteed) / 100)
+    return float(offer_interest_score(effective, terms["ask_millions"], years, terms["preferred_years"], context))
+
+
+def user_offer_verdict(interest: float, aav_millions: float, terms: dict[str, Any]) -> str:
+    """'accept', 'below_todays_bar' or 'prefers_rival_bid' (the end-of-day order: interest, then money)."""
+    if interest < terms["bar"]:
+        return "below_todays_bar"
+    best = terms.get("best_rival")
+    if best and (interest, float(aav_millions)) <= (best["interest"], best["aav_millions"]):
+        return "prefers_rival_bid"
+    return "accept"
+
+
+def user_offer_floor(player: dict[str, Any], years: int, guaranteed: bool, terms: dict[str, Any],
+                     context: float) -> float | None:
+    """The smallest offer ($0.1M steps, from the league minimum) he accepts today for these years, or None when no
+    salary wins him today (his interest saturates at 1.3x his ask)."""
+    from .contract_protection import security_penalty
+    minimum = league_minimum_aav_millions()
+    top = terms["ask_millions"] * 1.3 * (1 + security_penalty(player, guaranteed) / 100) + 2 * USER_OFFER_SALARY_STEP
+    if terms.get("best_rival"):
+        top = max(top, terms["best_rival"]["aav_millions"] + 2 * USER_OFFER_SALARY_STEP)
+    steps = max(0, int(math.ceil((top - minimum) / USER_OFFER_SALARY_STEP)))
+    offer = lambda k: round(minimum + k * USER_OFFER_SALARY_STEP, 1)
+    passes = lambda k: user_offer_verdict(user_offer_interest(player, offer(k), years, guaranteed, terms, context),
+                                          offer(k), terms) == "accept"
+    if not passes(steps):
+        return None
+    low, high = 0, steps
+    while low < high:
+        mid = (low + high) // 2
+        if passes(mid):
+            high = mid
+        else:
+            low = mid + 1
+    return offer(low)
+
+
+def user_offer_decision(canonical: dict[str, Any], save: dict[str, Any], player: dict[str, Any], team: dict[str, Any],
+                        years: int, aav_millions: float, guaranteed: bool) -> dict[str, Any]:
+    terms = user_offer_market_terms(canonical, save, player, team)
+    context = user_offer_context(canonical, save, player, team, years)
+    interest = user_offer_interest(player, aav_millions, years, guaranteed, terms, context)
+    return {"terms": terms, "context": context, "interest": interest,
+            "verdict": user_offer_verdict(interest, aav_millions, terms),
+            "floor_millions": user_offer_floor(player, years, guaranteed, terms, context)}
+
+
 def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player: dict[str, Any], team_abbrev: str, years: int, aav_millions: float, seed: int, *, guaranteed: bool = True) -> dict[str, Any]:
-    from .contract_protection import guarantee_choice, security_penalty
+    from .contract_protection import guarantee_choice
     guaranteed = guarantee_choice(guaranteed)
     team = resolve_team(canonical, team_abbrev)
     save_for_start = load_save(save_path)
     annual = float(aav_millions) * 1_000_000
-    ask_threshold = max(1.9, display_minutes_projection(player) * 0.45)
-    ask_threshold *= 1 + security_penalty(player, guaranteed)/100
+    judged = user_offer_decision(canonical, save_for_start, player, team, years, float(aav_millions), guaranteed)
+    floor = judged["floor_millions"]
+    ask_threshold = floor if floor is not None else float("inf")
     retirement_blocked = extension_retirement_blocked(player, contract_start_season_for_signing(save_for_start), years)
-    accepted = aav_millions >= ask_threshold and not retirement_blocked
+    accepted = judged["verdict"] == "accept" and not retirement_blocked
+    rejection = ("retirement_risk" if retirement_blocked
+                 else "prefers_rival_bid" if judged["verdict"] == "prefers_rival_bid" else "reject_below_market")
     negotiation_id = stable_id("contract_negotiation", "save_pool_fa", team["id"], player["id"], years, round(annual), seed, guaranteed, save_for_start.get('state', {}).get('current_date'))
     offer = {
         "id": stable_id("contract_offer", negotiation_id, "user"),
@@ -7006,15 +7133,22 @@ def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player:
         "player_id": player["id"],
         "team_id": team["id"],
         "accepted": accepted,
-        "decision": "accept" if accepted else ("retirement_risk" if retirement_blocked else "reject_below_market"),
+        "decision": "accept" if accepted else rejection,
         "accepted_offer": offer if accepted else None,
-        "player_score": round(aav_millions / max(ask_threshold, 0.1), 3),
+        "player_score": round(judged["interest"], 1),
         "team_score": 0.0,
-        "competing_offers": [],
-        "reasons": ["meets_save_pool_market" if accepted else ("retirement_before_contract_end" if retirement_blocked else "below_save_pool_market")],
-        "ask_threshold_millions": round(ask_threshold, 2),
+        "competing_offers": [judged["terms"]["best_rival"]] if judged["terms"].get("best_rival") else [],
+        "reasons": ["meets_market_rule" if accepted else (
+            "retirement_before_contract_end" if retirement_blocked
+            else "a_rival_bid_interests_him_more" if rejection == "prefers_rival_bid" else "below_todays_bar")],
+        # The smallest salary he takes from you today for these years and guarantee (None: no salary wins him today).
+        "ask_threshold_millions": round(ask_threshold, 2) if floor is not None else None,
+        "interest": round(judged["interest"], 1),
+        "bar_today": judged["terms"]["bar"],
+        "market_ask_millions": judged["terms"]["ask_millions"],
+        "market_mode": judged["terms"]["mode"],
         "source_ids": ["src_contract_market_config_v1"],
-        "notes": "Simplified save-pool free-agent decision for players whose contracts expired inside the save.",
+        "notes": "The user's offer is judged by the AI bids' rule: interest against today's bar and the best rival bid.",
     }
     negotiation = {
         "negotiation": {
@@ -7026,7 +7160,8 @@ def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player:
             "date": save_for_start.get("state", {}).get("current_date"),
             "seed": seed,
             "rounds": 1,
-            "player_ask": {"ask_threshold_millions": round(ask_threshold, 2)},
+            "player_ask": {"ask_threshold_millions": round(ask_threshold, 2) if floor is not None else None,
+                           "market_ask_millions": judged["terms"]["ask_millions"]},
             "team_walkaway": {"source": "interactive_save_pool_offer"},
             "offers": [offer],
             "final_decision_id": decision["id"],

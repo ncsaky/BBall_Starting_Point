@@ -41,9 +41,7 @@ from .utils import clamp, copy_plain, maybe_float, normalize_name, stable_id
 FRONT_OFFICE_OVERRIDES_FILE = Path("data/overrides/front_office_overrides.json")
 TRANSACTION_MODEL_CONFIG_FILE = Path("data/overrides/transaction_model_config.json")
 TRADE_ASSET_KINDS = {"player", "pick", "pick_swap"}
-TAX_LINE = 200_428_000
-SECOND_APRON = 221_686_000
-ANNUAL_CAP_GROWTH_RATE = 0.035
+from .cap_rules import TAX_LINE, SECOND_APRON, ANNUAL_CAP_GROWTH_RATE  # noqa: E402,F401  (one shared source)
 RECENTLY_TRADED_DAYS = 60
 RECENTLY_ACQUIRED_PREMIUM_DAYS = 180
 STRATEGY_MODEL_VERSION = 5
@@ -6045,12 +6043,12 @@ def season_start_from_label(season: str | None) -> int:
 
 
 def cap_lines_for_season(season: str | None) -> dict[str, float]:
-    elapsed = max(0, season_start_from_label(season) - 2025)
-    factor = (1.0 + ANNUAL_CAP_GROWTH_RATE) ** elapsed
-    return {
-        "tax_line": round(TAX_LINE * factor / 100_000) * 100_000,
-        "hard_cap": round(SECOND_APRON * factor / 100_000) * 100_000,
-    }
+    """The league's cap lines for a season: one shared source (cap_rules), the same lines the screens show.
+
+    Until TRADE-VOLUME this counted cap growth from 2025-26, so the trade AI's 2026-27 tax line was $207.4M
+    against the real $200.4M everything else used."""
+    from .cap_rules import cap_lines_for_season as shared_lines
+    return shared_lines(season)
 
 
 def best_tradeable_pick(canonical: dict[str, Any], team_id: str) -> dict[str, Any] | None:

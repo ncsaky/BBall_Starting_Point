@@ -324,6 +324,86 @@ def taxpool_metrics(save, active, trades):
     return out
 
 
+def payroll_metrics(save, active, trades):
+    """TRADE-VOLUME: taxpayers and the payout recounted at the real tax line (cap_rules) for every run, so runs made
+    before the shared line (whose save recorded the trade code's $207.4M line) compare on the same line; and
+    free-agency outcomes from the transaction log and the latest market's offers."""
+    from nba_gm_data.cap_rules import cap_lines_for_season
+    from nba_gm_data.trade_tax import luxury_tax_bill, is_repeat_taxpayer, POOL_DISTRIBUTED_SHARE
+    teams = {t["id"]: t["abbrev"] for t in active.get("teams", [])}
+    out = {}
+    history = save.get("team_payroll_history") or {}
+    real = {}
+    for season, rows in sorted(history.items()):
+        line = cap_lines_for_season(season)["tax_line"]
+        end_year = int(season[:4]) + 1
+        net = Counter()
+        for t in trades:
+            if t["date"][:4] != str(end_year) or window_of(t["date"]) != "deadline_week":
+                continue
+            for giver, assets in t["sends"].items():
+                for a in assets:
+                    if a.get("kind") != "player":
+                        continue
+                    salary = (a.get("contract_at_trade") or {}).get("salary_millions_this_season") or 0
+                    receiver = a.get("to") or next((x for x in t["teams"] if x != giver), None)
+                    net[giver] -= salary * 1e6
+                    net[receiver] += salary * 1e6
+        over_before, over_after, bills = [], [], {}
+        for tid, row in rows.items():
+            abbrev = teams.get(tid, tid)
+            end = float(row.get("payroll") or 0)
+            if end - net.get(abbrev, 0.0) > line:
+                over_before.append(abbrev)
+            if end > line:
+                over_after.append(abbrev)
+            bills[abbrev] = luxury_tax_bill(end, season, is_repeat_taxpayer(active, tid, season))
+        recipients = len(rows) - len(over_after)
+        total = sum(bills.values())
+        payrolls = sorted(float(r.get("payroll") or 0) / 1e6 for r in rows.values())
+        real[season] = {"tax_line_millions": round(line / 1e6, 1),
+                        "over_entering_deadline_week": len(over_before), "over_at_season_end": len(over_after),
+                        "taxpayers_at_season_end": sorted(over_after),
+                        "payout_per_team_millions": round(POOL_DISTRIBUTED_SHARE * total / recipients / 1e6, 2) if recipients else None,
+                        "median_payroll_millions": round(payrolls[len(payrolls) // 2], 1) if payrolls else None}
+    out["real_line_taxpayers"] = real
+    # Free agency: signings by kind and offseason, and the latest market's accepted offers against the ask.
+    kinds = {"free_agent_signing": "market", "ai_re_signing": "ai_re_signing", "ai_free_agent_signing": "ai_strategic",
+             "auto_depth_signing": "minimum_fill", "waiver_claim": "waiver_claim"}
+    by_year = {}
+    for log in save.get("transaction_logs") or []:
+        kind = kinds.get(log.get("transaction_type"))
+        if not kind:
+            continue
+        year = str(log.get("date") or "")[:4]
+        row = by_year.setdefault(year, Counter())
+        row[kind] += 1
+    out["signings_by_year"] = {y: dict(c) for y, c in sorted(by_year.items())}
+    players = {p["id"]: p for p in active.get("players", [])}
+    accepted = [o for o in save.get("free_agent_offers") or [] if o.get("status") == "accepted"]
+    rows = []
+    for o in accepted:
+        ask = float(o.get("ask_millions") or 0)
+        rows.append({"player": (players.get(o["player_id"]) or {}).get("name"), "team": teams.get(o.get("team_id")),
+                     "source": o.get("source"), "aav": o.get("aav_millions"), "ask": ask, "years": o.get("years"),
+                     "share_of_ask": round(float(o.get("aav_millions") or 0) / ask, 3) if ask else None})
+    rows.sort(key=lambda r: -float(r["ask"] or 0))
+    out["latest_market_signings"] = {"season": (save.get("free_agency_state") or {}).get("season"),
+                                     "count": len(rows), "top_by_ask": rows[:15],
+                                     "share_of_ask": quantiles([r["share_of_ask"] for r in rows if r["share_of_ask"]]),
+                                     }
+    asks = (save.get("free_agency_state") or {}).get("player_asks_millions") or {}
+    market_ids = {o["player_id"]: o for o in accepted}
+    top = sorted(asks.items(), key=lambda kv: -float(kv[1]))[:20]
+    out["latest_market_top20_by_ask"] = {
+        "signed_anywhere": sum(1 for pid, _ in top if (players.get(pid) or {}).get("team_id")),
+        "signed_in_market": sum(1 for pid, _ in top if pid in market_ids),
+        "players": [{"player": (players.get(pid) or {}).get("name"), "ask_end": ask,
+                     "team": teams.get((players.get(pid) or {}).get("team_id")),
+                     "market_aav": (market_ids.get(pid) or {}).get("aav_millions")} for pid, ask in top]}
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--run", type=Path, required=True, help="probe output directory (saves/league.json, progress.jsonl)")
@@ -341,7 +421,7 @@ def main():
     (args.out / f"trades_{args.label}.json").write_text(json.dumps(trades, indent=1, default=str) + "\n")
     (args.out / f"trades_{args.label}.md").write_text(trades_markdown(args.label, trades))
     result = {"label": args.label, "date": save["state"]["current_date"], **metrics(trades, progress),
-              **taxpool_metrics(save, active, trades)}
+              **taxpool_metrics(save, active, trades), **payroll_metrics(save, active, trades)}
     (args.out / f"trade_metrics_{args.label}.json").write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n")
     print(json.dumps({k: v for k, v in result.items() if not k.endswith("_detail") and k != "traded_3plus_names"}, indent=1))
 

@@ -43,8 +43,15 @@ function room(overrides = {}) {
 const miller = {
   id: 'p_miller', name: 'Brandon Miller', position: 'SF', age: 24, ratings: {overall: 66.4, offense: 65.4, defense: 65.7},
   ask_millions: 28.8, offer_count: 4, highest_offer: {team_abbrev: 'BKN', aav_millions: 30.4, years: 4, interest_score: 78.2},
-  accept_floor_millions: {guaranteed: 13.545000000000002, non_guaranteed: 16.254},
-  accept_floor_offer_millions: {guaranteed: 13.6, non_guaranteed: 16.3},
+  // TRADE-VOLUME: his price from you follows the rival bids' rule (today's bar and the best rival bid, BKN $30.4M x 4),
+  // so it depends on the length; 1 year cannot beat BKN's bid at any salary (null).
+  accept_floor_millions: {guaranteed: 31.0, non_guaranteed: 37.6},
+  accept_floor_offer_millions: {guaranteed: 31.0, non_guaranteed: 37.6},
+  accept_floor_by_years: {
+    guaranteed: {1: null, 2: 33.0, 3: 32.0, 4: 31.0, 5: 31.0},
+    non_guaranteed: {1: null, 2: 40.1, 3: 38.9, 4: 37.6, 5: 37.6},
+  },
+  offer_rule: {mode: 'market', bar: 80, ask_millions: 28.8, preferred_years: 4, best_rival: {team_abbrev: 'BKN', interest: 78.2, aav_millions: 30.4, years: 4}},
   safe_years: 5, sign_bar_today: 80, team_fit_score: 53.5,
 };
 
@@ -76,21 +83,26 @@ test('cap check mirrors the engine rule: minimum always allowed, tax room binds 
   assert.equal(freeAgencyCapCheck({...rules, blocked_reason: 'Waived salary requires review.'}, cap, 1.9).ok, false);
 });
 
-test('the verdict uses the salary he needs from you (not his market ask), the guarantee and his retirement', () => {
+test('the verdict uses the salary he needs from you today (the rival bids\' rule), the length, the guarantee and his retirement', () => {
   const {freeAgencyOfferPreview} = builderScope();
   const r = room();
   const at = (aav, extra = {}) => freeAgencyOfferPreview(miller, r, {aav, years: 4, guaranteed: true, ...extra});
-  assert.equal(at(13.5).accepts, false, 'one step under his floor');
-  assert.match(at(13.5).verdict.detail, /\$13\.6M/);
-  assert.equal(at(13.6).accepts, true, 'his floor, well below the $28.8M market ask');
-  assert.equal(at(13.6).verdict.tone, 'yes');
-  assert.equal(at(13.6, {guaranteed: false}).accepts, false, 'a non-guaranteed deal needs more');
-  assert.equal(at(16.3, {guaranteed: false}).accepts, true);
+  assert.equal(at(30.9).accepts, false, 'one step under his floor');
+  assert.match(at(30.9).verdict.detail, /\$31\.0M/);
+  assert.equal(at(31.0).accepts, true, 'his floor: above the $28.8M ask, enough to beat BKN');
+  assert.equal(at(31.0).verdict.tone, 'yes');
+  assert.equal(at(31.0, {guaranteed: false}).accepts, false, 'a non-guaranteed deal needs more');
+  assert.equal(at(37.6, {guaranteed: false}).accepts, true);
+  assert.equal(at(32.5, {years: 2}).accepts, false, 'a shorter deal needs more');
+  assert.equal(at(33.0, {years: 2}).accepts, true);
+  const oneYear = at(60, {years: 1});
+  assert.equal(oneYear.accepts, false, 'no salary for one year beats the rival bid today');
+  assert.match(oneYear.verdict.detail, /No salary wins him from you today: BKN/);
   const veteran = {...miller, safe_years: 2};
-  const long = freeAgencyOfferPreview(veteran, r, {aav: 20, years: 3, guaranteed: true});
+  const long = freeAgencyOfferPreview(veteran, r, {aav: 40, years: 3, guaranteed: true});
   assert.equal(long.accepts, false);
   assert.match(long.verdict.detail, /retire after 2 seasons/);
-  assert.equal(freeAgencyOfferPreview(veteran, r, {aav: 20, years: 2, guaranteed: true}).accepts, true);
+  assert.equal(freeAgencyOfferPreview(veteran, r, {aav: 33, years: 2, guaranteed: true}).accepts, true);
   const blocked = at(70);
   assert.equal(blocked.cap.ok, false);
   assert.equal(blocked.canSubmit, false);
@@ -107,7 +119,7 @@ test('cap preview starts at the signing season and adds a flat salary for the co
   assert.equal(Math.round(preview.seasons[0].taxRoom * 10) / 10, 47.3);
   assert.equal(Math.round(preview.seasons[1].hardRoom * 10) / 10, 67.4);
   assert.equal(preview.total, 40);
-  assert.ok(Math.abs(preview.ratio - 20 / 13.545) < 1e-9, 'meter = salary / his price (the engine player score)');
+  assert.ok(Math.abs(preview.ratio - 20 / 33.0) < 1e-9, 'meter = salary / his price for this length');
 });
 
 test('the offer draft starts at his ask within the legal range, at most four years and never past retirement', () => {
