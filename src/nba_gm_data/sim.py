@@ -328,12 +328,21 @@ def player_feature_vector(canonical: dict[str, Any], player: dict[str, Any], *, 
             pace = box_rates.tendency_from_inputs(player_inputs, "T05")
             if pace is not None:
                 features["pace_habit"] = pace
+            # Shot-location habit (T02): his share of shots from three, for the shooters' points (shot_points_blend).
+            three_share = box_rates.tendency_from_inputs(player_inputs, "T02.three")
+            if three_share is not None:
+                features["three_share_habit"] = three_share
     from .offense import enabled as offense_enabled, offensive_profile
     if offense_enabled(canonical):
         profile = offensive_profile(canonical, player, {key: float(row['value']) for key, row in traits.items()})
         features.update({key: value for key, value in profile.items() if key != 'offensive_rebounding'})
         features['offensive_rebound_skill'] = profile['offensive_rebounding']
         features['spacing'] *= clamp(profile['three_per36']/5, 0, 1)
+        if features.get("three_share_habit") is not None and features.get("points_per36") is not None:
+            # Shooters' points follow their own shots (box_rates.shot_points_blend): box score only.
+            features["points_per36"] = box_rates.shot_points_blend(
+                float(features["points_per36"]), features["three_share_habit"], profile["three_per36"],
+                profile["three_pct"], profile["two_pct"], features.get("fta_per_point"), profile["ft_pct"])
     if include_spatial:
         features.update(flatten_spatial_profile(player_spatial_profile(canonical, player)))
     rounded = {key: round(value, 3) for key, value in features.items()}
@@ -583,17 +592,21 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
         if away_excess is not None:
             away_game_context = {**(away_game_context or {}), "team_fatigue": round(away_excess, 3)}
         # Draw both scores first, so the coach's in-game minutes (foul trouble, blowout rest) can follow the game.
-        home_score = draw_team_score(canonical, home_features, away_features, coach_by_team.get(home_team["id"]),
-                                     coach_by_team.get(away_team["id"]), rng, is_home=True,
-                                     rest_context=home_game_context, opp_rest_context=away_game_context)
-        away_score = draw_team_score(canonical, away_features, home_features, coach_by_team.get(away_team["id"]),
-                                     coach_by_team.get(home_team["id"]), rng, is_home=False,
-                                     rest_context=away_game_context, opp_rest_context=home_game_context)
+        home_score, away_score = draw_both_scores(canonical, home_features, away_features, coach_by_team.get(home_team["id"]),
+                                                  coach_by_team.get(away_team["id"]), rng, home_game_context, away_game_context)
         margin = home_score["points"] - away_score["points"]
         home_players = in_game_minutes(context, home_team, home_players, margin, game_id, mode, seed, game_date,
                                        coach_by_team.get(home_team["id"]), in_game)
         away_players = in_game_minutes(context, away_team, away_players, margin, game_id, mode, seed, game_date,
                                        coach_by_team.get(away_team["id"]), in_game)
+    else:
+        # Replayed games draw both scores first too (2026-11-19, win-pick audit). The away score used to be drawn after
+        # the home box score, from the same random stream, so any change to who scores (how many random numbers the
+        # home box score used) handed the away team different random numbers: a reshuffle of the result, not a change
+        # in team strength. Now the game's first four random numbers set both scores, and the rest of this stream only
+        # splits the points between players; who scores can no longer change who wins.
+        home_score, away_score = draw_both_scores(canonical, home_features, away_features, coach_by_team.get(home_team["id"]),
+                                                  coach_by_team.get(away_team["id"]), rng, home_game_context, away_game_context)
     home_line, home_team_line = simulate_team_line(
         canonical,
         home_team,
@@ -633,7 +646,10 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
         for line in home_line + away_line:
             if line["player_id"] in left_injured:
                 line["in_game_injury"] = left_injured[line["player_id"]]
-    overtime_periods = resolve_overtime_if_tied(home_line, away_line, home_team_line, away_team_line, rng,
+    # Overtime has its own random stream (2026-11-19): it used to continue the game stream after both box scores, so a
+    # change to who scores could flip the winner of a tied game.
+    overtime_rng = random.Random(f"{seed}:{game_id}:{mode}:overtime")
+    overtime_periods = resolve_overtime_if_tied(home_line, away_line, home_team_line, away_team_line, overtime_rng,
                                              tracking_periods=scoring_periods, exclude_ids=fouled_out | set(left_injured))
     from .box_variation import vary_box_score
     vary_box_score(canonical, [home_line, away_line], [home_team_line, away_team_line],
@@ -1455,6 +1471,37 @@ def simulate_team_line(
     return player_lines, _team_line(team, team_features, opp_features, score_state, player_lines)
 
 
+# Scale on the gap between the two teams' expected ratings (1.0 = off). Tested 2026-11-19 on the betting-odds test (20
+# runs a game, same random numbers): the engine's expected margins spread wider than the market's (game-specific swings
+# 1.7x, team strengths 1.3x), and 0.85 cut the spread error vs the market 5.34 -> 4.61 (seed 1) and 5.22 -> 4.46 (seed
+# 1001), but did not improve win-picking (Brier +0.0002 / +0.0005) and narrows team records (win% spread .156 -> .141 vs
+# real .166), so it stays off. See docs/agents/tasks/winpick-shooters.md.
+MATCHUP_STRENGTH_SCALE = 1.0
+
+
+def draw_both_scores(canonical: dict[str, Any], home_features: dict[str, float], away_features: dict[str, float],
+                     home_coach: CoachRating | None, away_coach: CoachRating | None, rng: random.Random,
+                     home_context: dict[str, Any] | None, away_context: dict[str, Any] | None) -> tuple[dict, dict]:
+    """Both teams' scores from the game's first four random numbers (home possessions and rating, then away).
+
+    MATCHUP_STRENGTH_SCALE scales the gap between the two teams' expected offensive ratings (home court left out), with
+    the game's expected total unchanged."""
+    home_shift = away_shift = 0.0
+    if MATCHUP_STRENGTH_SCALE != 1.0:
+        home = draw_team_score(canonical, home_features, away_features, home_coach, away_coach, rng, is_home=True,
+                               rest_context=home_context, opp_rest_context=away_context, mean_only=True)
+        away = draw_team_score(canonical, away_features, home_features, away_coach, home_coach, rng, is_home=False,
+                               rest_context=away_context, opp_rest_context=home_context, mean_only=True)
+        gap = (home["mean_off_rating"] - home["home_mod"]) - (away["mean_off_rating"] - away["home_mod"])
+        home_shift = -(1.0 - MATCHUP_STRENGTH_SCALE) * gap / 2.0
+        away_shift = -home_shift
+    home_score = draw_team_score(canonical, home_features, away_features, home_coach, away_coach, rng, is_home=True,
+                                 rest_context=home_context, opp_rest_context=away_context, rating_shift=home_shift)
+    away_score = draw_team_score(canonical, away_features, home_features, away_coach, home_coach, rng, is_home=False,
+                                 rest_context=away_context, opp_rest_context=home_context, rating_shift=away_shift)
+    return home_score, away_score
+
+
 def draw_team_score(
     canonical: dict[str, Any],
     team_features: dict[str, float],
@@ -1466,8 +1513,13 @@ def draw_team_score(
     is_home: bool = False,
     rest_context: dict[str, Any] | None = None,
     opp_rest_context: dict[str, Any] | None = None,
+    rating_shift: float = 0.0,
+    mean_only: bool = False,
 ) -> dict[str, Any]:
-    """Possessions, offensive rating and points for one team (two draws from the game RNG)."""
+    """Possessions, offensive rating and points for one team (two draws from the game RNG).
+
+    rating_shift: added to the expected offensive rating (matchup_rating_shifts). mean_only: return only the expected
+    offensive rating and the home-court term, with no random draw."""
     coach_mod = scaled_coach_effect(coach, team_features)
     opp_coach_mod = scaled_coach_effect(opp_coach, opp_features)
     availability_mod = availability_gap_effect(team_features)
@@ -1481,6 +1533,17 @@ def draw_team_score(
     matchup_total_mod = matchup_total_environment_effect(team_features, opp_features)
     creator_mod = creator_advantage(team_features, opp_features)
     spacing_mod = spacing_creation_interaction(team_features)
+
+    def expected_rating() -> float:
+        return mean_off_rating(
+            canonical, team_features, opp_features, coach_mod, opp_coach_mod, shot_diet,
+            home_mod=home_mod, rest_mod=rest_mod, age_mod=age_mod, opp_age_mod=opp_age_mod,
+            availability_mod=availability_mod, opp_availability_mod=opp_availability_mod, game_env_mod=game_env_mod,
+            matchup_total_mod=matchup_total_mod, creator_mod=creator_mod, spacing_mod=spacing_mod, rest_context=rest_context,
+        )
+
+    if mean_only:
+        return {"mean_off_rating": expected_rating(), "home_mod": home_mod}
     possessions = clamp(
         BASE_POSSESSIONS
         + (team_features["stamina"] - 50) * 0.05
@@ -1497,12 +1560,7 @@ def draw_team_score(
         84,
         120,
     )
-    off_rating = mean_off_rating(
-        canonical, team_features, opp_features, coach_mod, opp_coach_mod, shot_diet,
-        home_mod=home_mod, rest_mod=rest_mod, age_mod=age_mod, opp_age_mod=opp_age_mod,
-        availability_mod=availability_mod, opp_availability_mod=opp_availability_mod, game_env_mod=game_env_mod,
-        matchup_total_mod=matchup_total_mod, creator_mod=creator_mod, spacing_mod=spacing_mod, rest_context=rest_context,
-    ) + rng.gauss(0, 9.2)
+    off_rating = expected_rating() + rating_shift + rng.gauss(0, 9.2)
     points = max(70, round(possessions * off_rating / 100))
     return {
         "coach_mod": coach_mod, "opp_coach_mod": opp_coach_mod, "availability_mod": availability_mod,
@@ -1591,7 +1649,8 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
         item["player"]["id"]: health_adjusted_player_features(player_feature_vector(canonical, item["player"]).features, item)
         for item in pool
     }
-    if pool and all(features[item["player"]["id"]].get("points_per36") is not None for item in pool):
+    new_ratings_lines = bool(pool) and all(features[item["player"]["id"]].get("points_per36") is not None for item in pool)
+    if new_ratings_lines:
         # New ratings: each player's expected share of the team's points is his fitted points per 36
         # (box_rates.POINTS_INPUTS, out-of-fold r 0.93 with real 2025-26 scoring) times his minutes. The old
         # hand-tuned weights and per-player caps held stars well under their real scoring (Wembanyama 20.5 per 36
@@ -1606,14 +1665,40 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
                    if features[item['player']['id']].get('offense_model_version') else 50) for item in pool]
         scoring_expectations = scoring_expectations_with_caps(pool, features, team_points, weights)
     point_values = []
+    # New ratings: tonight's threes are drawn first and the player's scoring night leans on them (2026-11-19, shooters).
+    # Points used to be handed out first and made threes drawn afterwards, capped by the points: a shooter whose points
+    # are mostly threes had no room for a good shooting night, so his made threes ran ~5% under his own percentage (the
+    # spot-up group .362 vs .381 own; the cap bound on 73% of their lines) and the lost points became two-point attempts.
+    # Real shooters' big nights are their made threes. His hot/cold draw now shares the part of his scoring swing that his
+    # three-point makes explain (rho = sd of his three-point points / sd of his points, up to .95), from the same
+    # standardised count; the rest stays independent. Long-run points and percentages are unchanged.
+    from .offense import draw_threes
+    pre_threes: list[tuple[int, int] | None] = []
     for index, item in enumerate(pool):
         minutes = float(item.get("minutes") or 0.0)
         feat = features[item["player"]["id"]]
         usage = float(feat.get("scoring_usage") or feat.get("usage") or 50)
         hot_cold_sigma = scoring_game_volatility(item, feat)
-        # A mean-one lognormal draw changes who supplies the fixed team total
-        # without moving the player's long-run scoring expectation.
-        hot_cold = rng.lognormvariate(-0.5 * hot_cold_sigma * hot_cold_sigma, hot_cold_sigma)
+        threes = (draw_threes(feat, minutes, rng) if THREES_FIRST and new_ratings_lines and feat.get("offense_model_version")
+                  and float(feat.get("three_share_habit") or 0.0) >= THREES_FIRST_MIN_SHARE
+                  else None)
+        pre_threes.append(threes)
+        if threes is not None:
+            attempts, made = threes
+            pct = float(feat["three_pct"])
+            expected_attempts = minutes * float(feat["three_per36"]) / 36.0
+            three_spread = 3.0 * math.sqrt(expected_attempts * pct * (1 - pct))
+            # A shooter's scoring swings at least as much as his made threes do.
+            hot_cold_sigma = max(hot_cold_sigma, three_spread / max(0.5, scoring_expectations[index]))
+            spread = hot_cold_sigma * max(0.5, scoring_expectations[index])
+            rho = min(0.95, three_spread / spread) if spread > 0 else 0.0
+            luck = (made - attempts * pct) / math.sqrt(max(0.25, attempts * pct * (1 - pct)))
+            swing = rho * luck + math.sqrt(1.0 - rho * rho) * rng.gauss(0.0, 1.0)
+            hot_cold = math.exp(-0.5 * hot_cold_sigma * hot_cold_sigma + hot_cold_sigma * swing)
+        else:
+            # A mean-one lognormal draw changes who supplies the fixed team total
+            # without moving the player's long-run scoring expectation.
+            hot_cold = rng.lognormvariate(-0.5 * hot_cold_sigma * hot_cold_sigma, hot_cold_sigma)
         if minutes >= 18.0 and usage >= 65.0:
             swing = rng.random()
             if swing < 0.035:
@@ -1635,6 +1720,8 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
         rng,
         scoring_expectations,
     )
+    if any(threes is not None for threes in pre_threes):
+        point_values = make_room_for_threes(pool, features, point_values, pre_threes)
     lines = []
     from .ratings_model import uses_inputs_model
     expected = {"assists": 0.0, "steals": 0.0, "assist_model": "inputs" if uses_inputs_model(canonical) else "legacy"}
@@ -1660,7 +1747,7 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
                 "health_fatigue": round(float(item.get("health_fatigue") or 0), 2),
                 "health_rust": round(float(item.get("health_rust") or 0), 2),
                 "points": points,
-                **shooting_line(points, feat, item["minutes"], rng, normal_points[index]),
+                **shooting_line(points, feat, item["minutes"], rng, normal_points[index], threes=pre_threes[index]),
                 "rim_attempts": max(0, int(round(item["minutes"] * feat["rim_pressure"] / 1150 + rng.random()))),
                 # Rebounds: a Poisson count around his own rate from the same single Gaussian draw (2026-11-19). The old
                 # +0.45 plus wide Gaussian noise, floored at zero, flattened everyone toward the middle; the 1.32 sharing
@@ -1681,6 +1768,41 @@ def distribute_player_lines(canonical: dict[str, Any], team: dict[str, Any], poo
         )
     normalize_secondary_box_score_totals(lines, features, team_points, possessions, expected=expected)
     return lines
+
+
+THREES_FIRST = True   # tonight's threes drawn before the points split (distribute_player_lines)
+THREES_FIRST_MIN_SHARE = 0.70   # only players who take 70%+ of their shots from three (shot-location habit)
+
+
+def make_room_for_threes(pool: list[dict[str, Any]], features: dict[str, dict[str, float]], points: list[int],
+                         pre_threes: list[tuple[int, int] | None]) -> list[int]:
+    """A player's points hold tonight's made threes (new ratings).
+
+    When they do not, the missing points come from his teammates in proportion to their points above their own made
+    threes (largest remainders, deterministic, no random draws); the team total is unchanged. A hot shooter takes points
+    from his teammates instead of losing made threes to the points cap (offense.shooting_line, where his free throws
+    give way first)."""
+    from .box_variation import increased_counts
+    need = [3 * threes[1] if threes is not None else 0 for threes in pre_threes]
+    out = list(points)
+    short = sum(max(0, n - p) for n, p in zip(need, out))
+    if not short:
+        return out
+    out = [max(p, n) for p, n in zip(out, need)]
+    surplus = [p - n for p, n in zip(out, need)]
+    if sum(surplus) < short:
+        return list(points)   # the team's points cannot hold everyone's threes (never seen in a real-minutes season)
+    ids = [item["player"]["id"] for item in pool]
+    # Proportional shares, never below a donor's own threes; repeat for any share a small surplus could not cover.
+    while short > 0:
+        cut = increased_counts([max(0, s) for s in surplus], short, ids)
+        cut = [min(c, max(0, s)) for c, s in zip(cut, surplus)]
+        out = [p - c for p, c in zip(out, cut)]
+        surplus = [s - c for s, c in zip(surplus, cut)]
+        short -= sum(cut)
+        if not any(s > 0 for s in surplus):
+            break
+    return out
 
 
 # League scale on the replayed games' foul rate: with players fouling less once in trouble (as in generated games) the
@@ -1994,10 +2116,10 @@ def assist_rate_from_features(feat: dict[str, float]) -> float:
 
 
 def shooting_line(points: int, feat: dict[str, float], minutes: float, rng: random.Random,
-                  expected_points: float | None = None) -> dict[str, int]:
+                  expected_points: float | None = None, threes: tuple[int, int] | None = None) -> dict[str, int]:
     if feat.get('offense_model_version'):
         from .offense import shooting_line as profile_shooting_line
-        return profile_shooting_line(points, feat, minutes, rng, expected_points)
+        return profile_shooting_line(points, feat, minutes, rng, expected_points, threes=threes)
     spacing = float(feat.get("spacing") or 50)
     rim_pressure = float(feat.get("rim_pressure") or 50)
     creation = float(feat.get("shot_creation") or feat.get("usage") or 50)

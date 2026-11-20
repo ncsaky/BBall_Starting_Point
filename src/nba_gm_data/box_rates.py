@@ -200,6 +200,36 @@ def screen_assists_per36_from_inputs(inputs: Mapping[str, Any] | None) -> float 
     return _from_inputs(SCREEN_ASSISTS_INPUTS, inputs, 0.01, 20.0)
 
 
+# Shooters' points follow their own shots (2026-11-19, win-pick and shooters task). The points fit above reads
+# involvement and shot choices; for a player who takes most of his shots from three it handed out fewer points than his
+# own threes make (AJ Green 11.8 per 36 against 12.8 real; his threes alone are 10.7), so his box score ran out of points
+# before his made threes and turned them into two-point attempts (true shooting .495 vs .627). The engine already sets
+# each player's three-point attempts and percentage (his shooting profile); his shot-location habit (T02 three share,
+# r 0.996 with his real share of threes) says how many two-pointers come with them. Those shots, at his own
+# percentages, plus the free throws per point, are the points his shots produce. A player's expected points are a
+# geometric blend of the fit and his shots, weighted by his three share: none below SHOT_POINTS_RAMP[0], all at
+# SHOT_POINTS_RAMP[1] and above. Fitted on 377 rotation players' real 2025-26 points per 36
+# (output/winpick-shooters/fit_shooter_points.py): mean error 1.31 -> 1.15; players whose threes make 70%+ of their
+# fitted points -0.87 -> +0.27. Box score only (who scores); team scores never read it.
+SHOT_POINTS_RAMP = (0.30, 0.75)
+
+
+def shot_points_blend(fit: float, three_share: float | None, three_per36: float, three_pct: float, two_pct: float,
+                      fta_per_point: float | None, ft_pct: float) -> float:
+    """Expected points per 36 for the box score: the points fit blended with the points his own shots produce."""
+    low, high = SHOT_POINTS_RAMP
+    if three_share is None or fit <= 0 or three_share <= low:
+        return fit
+    share = min(0.95, max(0.05, float(three_share)))
+    twos = three_per36 * (1.0 - share) / share
+    free = min(0.5, max(0.0, float(fta_per_point or 0.0)) * ft_pct * 0.98)
+    shots = (3.0 * three_per36 * three_pct + 2.0 * twos * two_pct) / (1.0 - free)
+    if shots <= 0:
+        return fit
+    weight = min(1.0, (float(three_share) - low) / (high - low))
+    return clamp(fit ** (1.0 - weight) * shots ** weight, 3.0, 40.0)
+
+
 def tendency_from_inputs(inputs: Mapping[str, Any] | None, key: str) -> float | None:
     """One propensity input's probability (e.g. T04 shot difficulty tolerance), or None."""
     if not inputs:
