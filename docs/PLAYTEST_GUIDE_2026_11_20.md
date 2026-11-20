@@ -41,6 +41,8 @@ Run the game the usual way (`nba-gm-data-gui`) and create a **new save**. New ga
 - Free agents judge your offers like everyone else's: you pay close to the market price and can lose a player to a better bid. Stars ask star money (max contracts follow the real 25/30/35% rule), teams keep their own free agents with real Bird rights (over the cap, a fifth year, bigger raises; you get the same), stars are almost always kept, and rebuilding teams don't overpay veterans over 30. A newly acquired player can't be flipped for six months.
 - AI teams manage payroll against one real tax line ($200.4M in 2026-27), and teams under it share the tax payout.
 - *Check:* does signing feel fair and tense?
+- **Contract extensions** (from a player's card) show his real price, a live "Will he sign?" answer with the reason, and a season-by-season cap table with the tax bill or payout. *Check:* does the price feel right?
+- The Assistant GM phone tucks into the corner when it would cover an open window; hover to bring it back. "Fits our room" now also needs an open roster spot.
 
 ### Screens
 - All main tables share one style and sort by click or keyboard.
