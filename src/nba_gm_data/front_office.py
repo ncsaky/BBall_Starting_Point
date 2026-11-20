@@ -62,7 +62,7 @@ SAVVY_SPAN = 45.0      # savvy 20 or lower: full-size misjudgment
 URGENCY_RATE = 0.10        # premium per unit of urgency above the middle, share of incoming rotation players' value
 URGENCY_LOW_RATE = 0.05    # discount for low urgency
 URGENCY_CAP = 6.0
-URGENCY_ROTATION_VALUE = 30.0  # incoming players below this market value are not "help now"
+URGENCY_ON_COURT = 55.0    # "help now": an incoming rotation-level player (on-court value) better than any going out
 WINDOW_FACTOR = {"contend": 1.0, "rise": 0.6, "retool": 0.0, "rebuild": 0.0}
 URGENCY_PICK_ALLOWANCE = 12.0  # extra draft value a fully urgent contender will spend on a marginal player
 VETERAN_AGE = 29.0
@@ -351,6 +351,11 @@ def _player_value(canonical: dict[str, Any], player_id: str) -> float:
     return float((player_asset_values_by_id(canonical).get(player_id) or {}).get("player_value") or 0.0)
 
 
+def _on_court(canonical: dict[str, Any], player_id: str) -> float:
+    from .transactions import player_asset_values_by_id
+    return float((player_asset_values_by_id(canonical).get(player_id) or {}).get("on_court_value") or 0.0)
+
+
 def _age(canonical: dict[str, Any], player_id: str) -> float:
     from .transactions import player_by_id
     player = player_by_id(canonical, player_id) or {}
@@ -391,8 +396,9 @@ def personality_terms(canonical: dict[str, Any], team_id: str, incoming: list[di
     level = urgency_level(row)
     # 1. Win-now urgency: a premium for players who help now, while the window is open.
     if window > 0 and level != 0:
+        best_out = max((_on_court(canonical, a["id"]) for a in _players(outgoing)), default=0.0)
         help_now = sum(_player_value(canonical, a["id"]) for a in _players(incoming)
-                       if _player_value(canonical, a["id"]) >= URGENCY_ROTATION_VALUE)
+                       if _on_court(canonical, a["id"]) >= URGENCY_ON_COURT and _on_court(canonical, a["id"]) > best_out)
         if help_now:
             if level > 0:
                 points = min(URGENCY_CAP, level * URGENCY_RATE * help_now * window)

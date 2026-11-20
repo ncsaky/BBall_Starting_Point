@@ -196,6 +196,8 @@ def concession_term(canonical: dict[str, Any], team_id: str, proposal: Any, inco
     if not row:
         return None
     abbrev = row.get("abbrev") or team_id
+    if not _motivated(canonical, team_id, incoming, outgoing):
+        return None  # a team with no reason of its own to make this deal gives no ground
     teams = _proposal_team_ids(proposal)
     index = _negotiation_index(canonical) if canonical.get("trade_market_ledger") else {}
     moving = [a.get("id") for a in list(incoming) + list(outgoing) if a.get("kind") == "player"]
@@ -216,7 +218,7 @@ def concession_term(canonical: dict[str, Any], team_id: str, proposal: Any, inco
                 text = f"{abbrev} has talked about {name} for {days + 1} days and gives a little ground"
             return {"key": "final_offer" if final else "concession", "points": size, "text": text,
                     "negotiation": neg.get("key")}
-    if is_deadline_day(_today(canonical)) and _motivated(canonical, team_id, incoming, outgoing):
+    if is_deadline_day(_today(canonical)):
         size, _ = concession_size(canonical, team_id, None)
         if size >= 0.25:
             return {"key": "final_offer", "points": size,
