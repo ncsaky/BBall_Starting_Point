@@ -5010,7 +5010,8 @@ def legal_actions_for_phase(phase: str) -> list[str]:
         "draft": ["draft_picks", "draft_trades", "trades", "extensions", "staff_changes", "press_conferences", "social_media", "advance"],
         "re_signing": ["free_agent_signings", "trades", "staff_changes", "press_conferences", "social_media", "advance"],
         "free_agency": ["free_agent_signings", "trades", "staff_changes", "press_conferences", "social_media", "advance"],
-        "training_camp": ["staff_changes", "press_conferences", "social_media", "advance"],
+        # Trades are legal in September (real teams trade during training camp; TRADE-VOLUME-2).
+        "training_camp": ["trades", "staff_changes", "press_conferences", "social_media", "advance"],
         "offseason": ["trades", "extensions", "staff_changes", "press_conferences", "social_media", "advance"],
     }
     return actions.get(phase, ["advance"])
@@ -5887,7 +5888,7 @@ def queue_ai_recommendations(
     start_year = season_start_year_from_date(through_date)
     trade_deadline = trade_deadline_date(start_year)
     market = market_day(through_date, seed, start_year, trade_deadline)
-    trade_window_open = phase in {'preseason', 'regular_season'} and market['review']
+    trade_window_open = phase in {'preseason', 'regular_season', 'training_camp'} and market['review']
     if "trades" in legal_actions_for_date(through_date) and trade_window_open:
         action_id = stable_id("ai_action", "trades", through_date, seed)
         if action_id not in queued_keys and not market['slots'] and not (market['offer_slots'] and human_controlled_team_ids(save)):

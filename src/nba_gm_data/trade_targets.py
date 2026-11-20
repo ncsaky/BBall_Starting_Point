@@ -78,7 +78,7 @@ SELL_REASON_STRENGTH = {
 }
 
 # Search sizes. Deadline-depth searches (search_depth >= 2) explore more alternatives and packages per target.
-TARGETS_PER_TEAM = 3
+TARGETS_PER_TEAM = 5                    # TRADE-VOLUME-2: up to three plan targets plus the two market targets
 ALTERNATIVES = {1: 3, 2: 5}             # players explored per target
 MATCHES_SCANNED = 24                    # best-fitting players checked for a price both sides could agree on
 PACKAGES_EVALUATED = {1: 3, 2: 6}       # packages sent to the full acceptance check per pairing
@@ -313,9 +313,42 @@ def team_trade_targets(canonical: dict[str, Any], team_id: str) -> list[dict[str
                 skill=(skill_attr, 60.0), min_on_court=nth(7) + 1.0, age_max=31.0, max_salary=min(matchable, 25e6))
         add("young_starter", "a young starter", "a rising team adding a young starter to its core",
             age_max=25.5, min_on_court=max(60.0, nth(5)), max_salary=min(matchable, 30e6), no_bad_contract=True)
+    if stance in {"contend", "rise"}:
+        add_market_targets(add, stance, roster, slots, nth, matchable)
     targets = targets[:TARGETS_PER_TEAM]
     memo[team_id] = targets
     return targets
+
+
+# TRADE-VOLUME-2: the two most common real deals the targets above never asked for. In the real 2025-27 trade list
+# (data/research/real_trades/trades_2025_2027.json) competing teams bought proven veterans that non-contenders were
+# selling, whatever the position (rebuild sales: Dosunmu, Vucevic, Conley, Middleton, Huerter; the most common real
+# trade after tax moves), and swapped or bought bench players to shore up a thin spot (Kennard, Alvarado, Isaiah
+# Joe, Aaron Wiggins; the "value-neutral role swaps"). The search above only looked for a top-six player at the
+# single thinnest position or one skill, so none of those were ever pursued.
+BACKUP_UPGRADE = 8.0
+
+
+def add_market_targets(add, stance: str, roster: list[dict[str, Any]], slots: dict[str, dict[str, Any]], nth,
+                       matchable: float) -> None:
+    contend = stance == "contend"
+    add("seller_veteran", "a proven rotation player from a team that is selling",
+        ("a contending team adding a proven player that a non-contender was selling" if contend
+         else "a rising team adding a proven player that a non-contender was selling"),
+        min_on_court=nth(8) + 1.0, min_playoff=52.0 if contend else 0.0, age_min=24.0,
+        age_max=34.0 if contend else 31.0, max_salary=min(matchable, 35e6), max_years=99 if contend else 3,
+        seller_stances={"rebuild", "retool"}, seller_reason_required=True)
+    # Depth: the position group with the weakest backup (its second-best player, or the third guard or wing).
+    def backup_quality(bucket: str) -> float:
+        group = sorted((r["on_court"] for r in roster if r["bucket"] == bucket and r["minutes"] >= 4.0), reverse=True)
+        depth = SLOT_DEPTH[bucket]
+        return (group + [REPLACEMENT_ON_COURT] * depth)[depth - 1]
+    thin = min(SLOT_DEPTH, key=lambda b: (backup_quality(b), b))
+    # A real upgrade on the backup (8+ points of on-court value): the acceptance check lets a team spend draft capital
+    # on a non-starter only for measured depth (trade_roster.pick_investment_outlook, 0.6 per point of backup gain).
+    add("backup", f"a backup {BUCKET_WORDS[thin]}", f"its {BUCKET_WORDS[thin]} depth behind the starters is thin",
+        buckets={thin}, min_on_court=max(backup_quality(thin) + BACKUP_UPGRADE, nth(10)), age_min=22.0, age_max=34.0,
+        max_salary=min(matchable, 15e6), max_years=3, seller_reason_required=True)
 
 
 def target_match(target: dict[str, Any], row: dict[str, Any]) -> float | None:
@@ -582,9 +615,20 @@ def package_fits_rules(canonical: dict[str, Any], pairing: dict[str, Any], asset
     picks = [a for a in assets if a.get("kind") in {"pick", "pick_swap"}]
     if picks and pairing.get("buyer_minutes", 0.0) < 24.0:
         spend = tx.package_value_for_team(canonical, picks, buyer_id)
-        if spend > 8.0:
+        if spend > 8.0 + 0.6 * backup_gain(canonical, buyer_id, row):
             return False
     return True
+
+
+def backup_gain(canonical: dict[str, Any], buyer_id: str, row: dict[str, Any]) -> float:
+    """How much the player would raise the buyer's backup at his position group (TRADE-VOLUME-2). The acceptance
+    check allows 0.6 points of draft spending per point of backup gain on a non-starter
+    (trade_roster.pick_investment_outlook); the quick screen allows the same, so a real depth buy is not dropped
+    before the check sees it."""
+    group = sorted((r["on_court"] for r in _team_rows(canonical, buyer_id)
+                    if r["bucket"] == row["bucket"] and r["minutes"] >= 4.0), reverse=True)
+    backup = (group + [0.0, 0.0])[1]
+    return max(0.0, row["on_court"] - backup)
 
 
 def ranked_packages(canonical: dict[str, Any], pairing: dict[str, Any], options: list[dict[str, Any]],
