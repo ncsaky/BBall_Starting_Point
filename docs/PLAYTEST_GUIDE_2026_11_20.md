@@ -21,6 +21,8 @@ Run the game the usual way (`nba-gm-data-gui`) and create a **new save**. New ga
   - AI teams rest stars on back-to-backs, against weak or elite opponents, and once seeds are locked, each time with a stated reason.
   - Your team has a **"Coach rests players" switch** (off by default) and a **zZ "rest for N games" button** next to each player's minutes.
   - *Check:* the zZ suggestion and its reason.
+- **National TV games** get a small "TV" tag on the calendar (about 245 a season, picked by roster, stars and market). Teams rest regulars less in those games, as real teams do.
+- Seasons open with some players already hurt (offseason surgeries, camp injuries). Players 30 and over rest more on back-to-backs.
 
 ### Trades
 - AI teams trade for stated reasons: their targets, rebuild sales, tax savings, salary dumps paid in picks, and three-team deals. Trades follow the real calendar: busy draft nights (including chains), the first days of free agency, an August and September market, and the deadline. About 80 trades over two seasons (real is about 110).
@@ -49,8 +51,7 @@ Run the game the usual way (`nba-gm-data-gui`) and create a **new save**. New ga
 
 ## Known gaps (don't spend time on these)
 - A simulated month takes about 30–37 seconds.
-- Stars play about one game more per season than real ones.
-- Rest on nationally televised games isn't modeled.
+- The very best players still play a few more games than real ones (too few short 2–10 game injuries).
 - There are no counter-asks in trades yet, and no front-office personality. The trade deadline is about half as busy as real.
 - Free-agent prices below starter level still come from minutes played. There are no restricted free-agent offer sheets yet (teams simply keep good young players).
 - Some screens are only checked in Chrome at desktop sizes.
