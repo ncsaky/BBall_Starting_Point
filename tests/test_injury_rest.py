@@ -154,7 +154,9 @@ class RestTests(unittest.TestCase):
         self.assertGreater(b2b, young)
 
     def test_policy_limits(self):
-        self.assertEqual(self.chance(back_to_back=True, rested_tonight=1)[0], 0.0)     # one rest per game
+        # SMART-REST: two regulars a game at most (real 2025-26), one of them a star (participation policy)
+        self.assertEqual(self.chance(back_to_back=True, rested_tonight=2)[0], 0.0)
+        self.assertEqual(self.chance(back_to_back=True, rested_tonight=1, star=True, stars_rested_tonight=1)[0], 0.0)
         self.assertEqual(self.chance(back_to_back=True, regulars_out=3)[0], 0.0)       # short-handed
         self.assertEqual(self.chance(st=state(games_missed=10, games_rested=4), back_to_back=True)[0], 0.0)  # 65-game rule
 
@@ -162,11 +164,12 @@ class RestTests(unittest.TestCase):
         late, _, _ = self.chance(games_left=10)
         early, _, _ = self.chance(games_left=40)
         self.assertGreater(late, early)
-        final, kind, _ = self.chance(games_left=2, win_pct=0.62, rank=3, rested_tonight=2)
-        self.assertEqual((final, kind), (health.REST_FINAL_PLAYOFF, "rest"))
-        shut, kind, reason = self.chance(games_left=20, rank=28, win_pct=0.25)
-        self.assertEqual(kind, "shutdown")
-        self.assertIn("out of the race", reason)
+        from nba_gm_data import rest_model
+        final, kind, _ = self.chance(games_left=2, win_pct=0.62, rank=3, rested_tonight=2, situation="locked", worst_seed=3)
+        self.assertEqual((final, kind), (rest_model.REST_FINAL[2]["locked_playoff"], "rest"))
+        decision = health.coach_rest_decision(self.PLAYER, state(), {"games_left": 20, "rank": 28, "teams": 30}, 0.001)
+        self.assertEqual(decision[0], "shutdown")
+        self.assertIn("out of the race", decision[1])
         self.assertEqual(self.chance(games_left=40, rank=28)[1], "rest")
 
     def test_decision_uses_the_draw(self):
@@ -209,7 +212,7 @@ class UserSuggestionTests(unittest.TestCase):
                     "health_states": [state(player_id=p["id"]) for p in players]}
             sv.attach_rest_suggestions(".", {"teams": teams, "players": players}, save, "2026-11-10", seed)
             notes = [s["rest_suggestion"] for s in save["health_states"] if s.get("rest_suggestion")]
-            self.assertLessEqual(len(notes), 1)                       # one rest per game, as for AI teams
+            self.assertLessEqual(len(notes), 2)                       # two regulars a game at most, as for AI teams
             self.assertTrue(all(not s.get("rest_game_id") for s in save["health_states"]))
             if notes:
                 found = True
