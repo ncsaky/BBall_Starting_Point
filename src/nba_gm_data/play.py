@@ -6640,13 +6640,17 @@ def run_late_summer_ai_trades(canonical: dict[str, Any], save: dict[str, Any], s
     August; 2026: 3 and 3). The slots are drawn by season (trade_calendar.late_summer_trade_slots); deals involving
     the human team are never made here."""
     from .trade_calendar import late_summer_trade_slots
+    return run_summer_ai_market(canonical, save, seed, late_summer_trade_slots(season_start, seed), seed + 991)
+
+
+def run_summer_ai_market(canonical: dict[str, Any], save: dict[str, Any], seed: int, slots: int, search_seed: int) -> int:
+    """One summer trade market on the save's current date: the target search, at most ``slots`` AI-to-AI deals."""
     from .transactions import simulate_ai_trades
-    slots = late_summer_trade_slots(season_start, seed)
     if not slots:
         return 0
     stamp = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
     active = with_transaction_context(canonical_with_save(canonical, save))
-    payload = simulate_ai_trades(active, stamp, stamp, seed=seed + 991, limit=slots + 3, reserve_assets=True,
+    payload = simulate_ai_trades(active, stamp, stamp, seed=search_seed, limit=slots + 3, reserve_assets=True,
                                  search_depth=2)
     human = human_controlled_team_ids(save)
     applied = 0

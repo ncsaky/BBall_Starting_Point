@@ -205,6 +205,19 @@ class SummerMarketTests(unittest.TestCase):
         self.assertEqual(applied, ["p2", "p4"])
         self.assertEqual(search.call_args.kwargs["limit"], 5)
 
+    def test_skipped_september_days_get_their_trade_chances_in_one_market(self):
+        saved = {"meta": {"season": "2026-27", "seed": 17}, "state": {"current_date": "2027-09-01"}}
+        expected = sum(cal.market_day(f"2027-09-{d:02}", 17, 2027, "2028-02-05")["slots"] for d in range(2, 31))
+        self.assertGreater(expected, 0)
+        moves = []
+        with patch.object(sv, "advance_lifecycle_to", side_effect=lambda c, s, day, *a, **k: moves.append(day)), \
+             patch.object(play, "run_summer_ai_market") as market, \
+             patch.object(sv, "simulation_stop_requested", return_value=True), \
+             patch.object(sv, "write_save"):
+            sv.complete_offseason_and_rollover("root", {}, "save.json", 17, prepared_save=saved)
+        self.assertEqual(moves, ["2027-09-15", "2027-09-30"])
+        self.assertEqual(market.call_args.args[3], expected)
+
     def test_no_late_summer_search_without_slots(self):
         with patch("nba_gm_data.trade_calendar.late_summer_trade_slots", return_value=0), \
              patch.object(tx, "simulate_ai_trades") as search:

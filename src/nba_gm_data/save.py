@@ -4465,6 +4465,17 @@ def complete_offseason_and_rollover(
     save = prepared_save if prepared_save is not None else ensure_league_save_defaults(load_save(save_path), canonical)
     current_season = save.get("meta", {}).get("season") or CANONICAL_SEASON
     next_start = season_start_year(current_season) + 1
+    # TRADE-VOLUME-2: September's trade chances (trade_calendar.market_day) for the days this jump skips, in one market
+    # on the way; a September advanced day by day already ran its own.
+    from .trade_calendar import market_day
+    today = str(save.get("state", {}).get("current_date") or "")
+    september = [f"{next_start}-09-{d:02}" for d in range(1, 31)]
+    slots = sum(market_day(day, seed, next_start, trade_deadline_date(next_start))["slots"] for day in september if day > today)
+    if slots:
+        if today < f"{next_start}-09-15":
+            advance_lifecycle_to(canonical, save, f"{next_start}-09-15", seed, root)
+        from .play import run_summer_ai_market
+        run_summer_ai_market(canonical, save, seed, slots, seed + 1931)
     advance_lifecycle_to(canonical, save, f"{next_start}-09-30", seed, root)
     if simulation_stop_requested():
         write_save(save_path, save)
