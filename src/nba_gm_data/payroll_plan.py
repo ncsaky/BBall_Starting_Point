@@ -29,6 +29,8 @@ The rule, for AI teams only (the user's team is never changed):
   or younger), and half again for re-signing a starter.
 - **After the trade deadline** a team under the line never adds salary that would put it over (a trade can no longer
   fix it): the Atlanta case.
+- **Franchise stars** (KEEP-STARS): re-signing one of the league's 15 best players skips the room-below-the-line rule
+  and is worth up to ``STAR_RETENTION_TAX_BUDGET`` of tax and lost payout (divided by the owner's money factor).
 """
 from __future__ import annotations
 
@@ -49,6 +51,12 @@ IN_SEASON_KINDS = {"waiver_claim", "in_season_signing"}
 # league (real 2026-27 contracts) has 6 teams $14M+ under the line; rebuilding teams carry cap-space payrolls.
 PHASE_KEEP_ROOM = {"peak": 0.0, "entering": 3_000_000, "exiting": 8_000_000, "rebuilding": 20_000_000}
 CEILING_KINDS = {"free_agency", "re_signing"}
+# KEEP-STARS: keeping a franchise star (a top-15 player, save.is_franchise_star) is worth up to this much tax plus lost
+# payout for the season, divided by the owner's money factor (so about $71M-$143M). No room-below-the-line rule
+# applies. Denver let Nikola Jokic walk in the 2028 test because re-signing him left it $1.7M under the tax line, inside
+# the $4M room a retooling team kept. Real contenders pay large bills to keep stars (Golden State's 2022-23 tax bill was
+# about $170M).
+STAR_RETENTION_TAX_BUDGET = 100_000_000
 YOUNG_PLAYER_AGE = 25.0
 
 
@@ -185,7 +193,7 @@ def after_trade_deadline(save: dict[str, Any]) -> bool:
 def payroll_check(active: dict[str, Any], save: dict[str, Any], team_id: str | None, season: str, *,
                   add_salary: float, remove_salary: float = 0.0, roster_delta: int = 1, minutes: float = 0.0,
                   kind: str = "signing", committed: float = 0.0, committed_players: int = 0,
-                  age: float | None = None) -> dict[str, Any]:
+                  age: float | None = None, franchise_star: bool = False) -> dict[str, Any]:
     """Whether an AI team's front office accepts this payroll move for ``season``.
 
     ``add_salary`` / ``remove_salary``: this season's salary the move adds and removes (dollars); ``roster_delta``:
@@ -204,7 +212,13 @@ def payroll_check(active: dict[str, Any], save: dict[str, Any], team_id: str | N
     if (kind == "free_agency" and age is not None and float(age) >= VETERAN_AGE
             and team_phase(active, save, team_id) == "rebuilding" and float(add_salary) > veteran_price(season)):
         return {**result, "ok": False, "reason": "rebuilding_team_does_not_pay_veterans"}
-    ceiling = phase_payroll_ceiling(active, save, team_id, season, kind, minutes, age)
+    if franchise_star and kind == "re_signing":
+        budget = STAR_RETENTION_TAX_BUDGET / owner_money_factor(active, team_id)
+        result.update(ceiling=None, budget=budget)
+        if cost["total"] <= budget:
+            return {**result, "ok": True, "reason": "keeps_its_franchise_star"}
+        return {**result, "ok": False, "reason": "tax_cost_above_owner_budget"}
+    ceiling =phase_payroll_ceiling(active, save, team_id, season, kind, minutes, age)
     result["ceiling"] = ceiling
     if ceiling is not None and after > before + 1 and after > ceiling:
         return {**result, "ok": False, "reason": "keeps_room_below_the_line_for_its_phase"}

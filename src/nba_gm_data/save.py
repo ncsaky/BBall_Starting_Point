@@ -6317,6 +6317,8 @@ def process_ai_extensions(
             offer = merge_extension_offer_with_existing_contract(offer, negotiation)
             if not extension_offer_fits_hard_cap(baseline if baseline is not None else canonical, save, player_id, offer):
                 continue
+            from .contract_ai import keep_bird_clock
+            keep_bird_clock(save, player, team_id, str(offer.get("signed_season") or ""))   # extensions keep it
             save.setdefault("contract_overrides", {})[player_id] = offer
             save.setdefault("transaction_logs", []).append(
                 {
@@ -8973,7 +8975,7 @@ def apply_offseason_roster_transitions(canonical: dict[str, Any], save: dict[str
     active = canonical_with_save(canonical, save)
     players = {player["id"]: player for player in active.get("players", [])}
     contracts = {contract.get("player_id"): contract for contract in active.get("contracts", [])}
-    annotate_star_asks(active, contracts, next_season)
+    annotate_star_asks(active, contracts, next_season, save)
     free_agents: list[str] = list(save.get("free_agent_player_ids", []))
     retired: list[str] = list(save.get("retired_player_ids", []))
     retired_this_offseason: list[str] = []
@@ -9374,7 +9376,7 @@ def prepare_free_agency_pool(canonical: dict[str, Any], save: dict[str, Any]) ->
     retirement_count = prepare_offseason_retirements(canonical, save, current_season, next_season, seed)
     active = canonical_with_save(canonical, save)
     contracts = {contract.get("player_id"): contract for contract in active.get("contracts", [])}
-    annotate_star_asks(active, contracts, next_season)
+    annotate_star_asks(active, contracts, next_season, save)
     free_agents = set(save.get("free_agent_player_ids", []))
     expired: list[str] = []
     re_signing_commitments: dict[tuple[str, str], float] = {}
@@ -9643,6 +9645,11 @@ def clean_free_agency_state(save: dict[str, Any], current_season: str | None = N
 
 
 STAR_RETENTION_MAX_AGE = 33.0
+# KEEP-STARS: a "franchise star" is one of the league's best FRANCHISE_STAR_RANK players by current on-court value (the
+# trade code's valuation). His team keeps him almost always, paying into the tax if needed (payroll_plan), unless it is
+# rebuilding and he is FRANCHISE_STAR_REBUILD_AGE or older (a rebuilding team would trade him instead).
+FRANCHISE_STAR_RANK = 15
+FRANCHISE_STAR_REBUILD_AGE = 31.0
 
 
 def re_signing_order(players: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -9654,17 +9661,32 @@ def re_signing_order(players: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return stars + [p for p in players if not p.get("_star_ask_millions")]
 
 
-def annotate_star_asks(active: dict[str, Any], contracts: dict[str, dict[str, Any]], next_season: str) -> None:
-    """Mark each expiring starter-or-better with his market price (TRADE-VOLUME-2, contract_ai.star_market_ask_millions)
-    as ``_star_ask_millions`` on the player rows of ``active`` (a working copy), for the AI re-signing pass below."""
-    from .contract_ai import star_market_ask_millions
+def annotate_star_asks(active: dict[str, Any], contracts: dict[str, dict[str, Any]], next_season: str,
+                       save: dict[str, Any] | None = None) -> None:
+    """Mark the expiring players on the rows of ``active`` (a working copy) for the AI re-signing pass below.
+
+    - ``_star_ask_millions``: a starter-or-better's market price (TRADE-VOLUME-2, contract_ai.star_market_ask_millions).
+    - ``_bird``: his team's Bird rights (KEEP-STARS, contract_ai.bird_rights), when ``save`` is given.
+    - ``_star_rank`` / ``_team_phase``: his league rank by on-court value and his team's window phase."""
+    from .contract_ai import bird_rights, star_market_ask_millions, years_of_service
     from .transactions import with_transaction_context
-    expiring = [p for p in active.get("players", []) if p.get("team_id") and display_minutes_projection(p) >= 24.0
-                and (contract_last_season(contracts.get(p.get("id"))) or next_season) < next_season]
+    current = season_label_from_start(season_start_year(next_season) - 1)
+    expiring_all = [p for p in active.get("players", []) if p.get("team_id")
+                    and (contract_last_season(contracts.get(p.get("id"))) or next_season) < next_season]
+    if save is not None:
+        for player in expiring_all:
+            player["_bird"] = bird_rights(save, player, player.get("team_id"), current, contracts.get(player.get("id")))
+    expiring = [p for p in expiring_all if display_minutes_projection(p) >= 24.0]
     if not expiring:
         return
     priced = with_transaction_context(active)
     by_id = {p.get("id"): p for p in priced.get("players", [])}
+    on_team = {p.get("id") for p in priced.get("players", []) if p.get("team_id")}
+    values = sorted(((float(v.get("on_court_value") or 0.0), str(v.get("player_id")))
+                     for v in priced.get("player_asset_valuations", []) or [] if v.get("player_id") in on_team),
+                    reverse=True)
+    rank = {player_id: index + 1 for index, (_, player_id) in enumerate(values)}
+    from .payroll_plan import team_phase
     for player in expiring:
         try:
             ask = star_market_ask_millions(priced, by_id.get(player["id"], player), next_season)
@@ -9672,16 +9694,43 @@ def annotate_star_asks(active: dict[str, Any], contracts: dict[str, dict[str, An
             ask = None
         if ask:
             player["_star_ask_millions"] = ask
+            player["_star_rank"] = rank.get(player["id"])
+            player["_years_of_service"] = years_of_service(player, next_season)
+            if save is not None:
+                player["_team_phase"] = team_phase(priced, save, str(player.get("team_id")))
+
+
+YOUNG_STAR_MAX_SERVICE = 4   # a player coming off his rookie-scale deal (four seasons): a restricted free agent
+
+
+def is_franchise_star(player: dict[str, Any]) -> bool:
+    """A top-15 player, or a starter-or-better coming off his rookie deal with the team (KEEP-STARS).
+
+    The second case stands in for restricted free agency, which the game does not model: real teams match offers
+    for their good young players almost without exception (Hoops Rumors glossary, "Restricted free agency")."""
+    if not player.get("_star_ask_millions"):
+        return False
+    if int(player.get("_star_rank") or 999) <= FRANCHISE_STAR_RANK:
+        return True
+    bird = player.get("_bird") or {}
+    return int(bird.get("seasons") or 99) <= YOUNG_STAR_MAX_SERVICE and float(player.get("age") or 99) <= 25.0 \
+        and int(player.get("_years_of_service") or 99) <= YOUNG_STAR_MAX_SERVICE
 
 
 def should_ai_retain_expiring_player(save: dict[str, Any], player: dict[str, Any], season: str, seed: int) -> bool:
     team_id = player.get("team_id")
     if not team_id or team_id in human_controlled_team_ids(save):
         return False
+    age = float(player.get("display_age", player.get("age")) or 27.0)
+    # KEEP-STARS: a team keeps a top-15 player at any age unless it is rebuilding and he is 31 or older. Real
+    # franchise stars almost never leave in free agency: Bird rights let their team pay them over the cap and offer a
+    # fifth year (cap_rules), and contenders pay the tax to keep them.
+    if is_franchise_star(player):
+        return not (player.get("_team_phase") == "rebuilding" and age >= FRANCHISE_STAR_REBUILD_AGE)
     # A team keeps its expiring star (starter-or-better market price, 33 or younger) whenever its cap and payroll
     # plan allow (ai_re_signing_allowed). Before it was a dice roll capped at 72%, and Denver let Nikola Jokic walk in
     # 2028 (he signed with Boston for $18.9M). Real stars re-sign or extend almost without exception.
-    if player.get("_star_ask_millions") and float(player.get("display_age", player.get("age")) or 27.0) <= STAR_RETENTION_MAX_AGE:
+    if player.get("_star_ask_millions") and age <= STAR_RETENTION_MAX_AGE:
         return True
     minutes = display_minutes_projection(player)
     age = float(player.get("age") or 27.0)
@@ -9701,30 +9750,53 @@ def should_ai_retain_expiring_player(save: dict[str, Any], player: dict[str, Any
     return roll < clamp(threshold, 0.02, 0.72)
 
 
+def star_re_signing_years(age: float, bird_level: str | None, default: int) -> int:
+    """Years on a star's re-signing (KEEP-STARS): five for a young star with full Bird rights (only his own team can
+    offer the fifth year), four through 30, three through 33, otherwise the usual rule."""
+    if age <= 27:
+        return 5 if bird_level == "full" else 4
+    if age <= 30:
+        return 4
+    if age <= 33:
+        return max(default, 3)
+    return default
+
+
 def ai_re_signing_contract_terms(save: dict[str, Any], player: dict[str, Any], next_season: str) -> dict[str, Any]:
     minutes = display_minutes_projection(player)
     age = float(player.get("age") or 27.0)
     score = minutes * 0.72 + per_game_stat(save.get("player_season_stats", {}).get(player.get("id"), {}), "points") * 0.25
     years = 3 if age <= 29 and minutes >= 24 else 2 if age <= 33 and minutes >= 16 else 1
     salary = int(round(clamp(2_200_000 + minutes * 520_000 + max(0.0, score - 18.0) * 320_000, 2_000_000, 32_000_000)))
+    raise_rate = 0.035
     star = float(player.get("_star_ask_millions") or 0.0)
     if star * 1_000_000 > salary:
         # TRADE-VOLUME-2: a starter-or-better re-signs at his market price (annotate_star_asks), not the minutes rule
         # capped at $32M; the price is already within the maximum salary for his years in the league.
         salary = int(round(star * 1_000_000))
-        years = 4 if age <= 30 else years
+        # KEEP-STARS: the years and raises his own team can offer with his Bird rights (8% with full or Early Bird).
+        from .cap_rules import bird_raise
+        bird_level = (player.get("_bird") or {}).get("level")
+        years = star_re_signing_years(age, bird_level, years)
+        raise_rate = bird_raise(bird_level)
     seasons = [
         {
             "season": season_label_from_start(season_start_year(next_season) + offset),
-            "salary": int(round(salary * (1.035 ** offset))),
+            "salary": int(round(salary * ((1.0 + raise_rate) ** offset))),
             "option_type": None,
             "guarantee_status": "ai_re_signing",
-            "guaranteed_salary": int(round(salary * (1.035 ** offset))),
+            "guaranteed_salary": int(round(salary * ((1.0 + raise_rate) ** offset))),
             "protection_basis": "negotiated",
         }
         for offset in range(years)
     ]
     return {"salary": salary, "years": years, "seasons": seasons, "score": score}
+
+
+def re_signing_within_bird_rights(player: dict[str, Any], salary: float) -> bool:
+    """Whether his own team can pay this first-year salary with his Bird rights, over the cap and the hard cap."""
+    bird = player.get("_bird") or {}
+    return bool(bird) and float(salary) <= float(bird.get("limit") or 0.0) + 1.0
 
 
 def ai_re_signing_fits_hard_cap(
@@ -9740,6 +9812,10 @@ def ai_re_signing_fits_hard_cap(
     if not team_id:
         return False
     terms = ai_re_signing_contract_terms(save, player, next_season)
+    # KEEP-STARS: re-signing your own free agent within his Bird rights never meets the hard cap (real CBA: Bird
+    # re-signings do not trigger a hard cap). Above the limit the team needs room like any other signing.
+    if re_signing_within_bird_rights(player, terms["salary"]):
+        return True
     active = prepared_active if prepared_active is not None else canonical_with_save(canonical, save)
     commitments = committed_salary_by_team_season or {}
     for season_row in terms["seasons"]:
@@ -9765,7 +9841,8 @@ def ai_re_signing_fits_payroll_plan(
     prepared_active: dict[str, Any] | None = None,
     committed_salary_by_team_season: dict[tuple[str, str], float] | None = None,
 ) -> bool:
-    """The front office keeps its own free agent only if the tax bill it adds is worth it (payroll_plan, TRADE-VOLUME)."""
+    """The front office keeps its own free agent only if the tax bill it adds is worth it (payroll_plan, TRADE-VOLUME).
+    A franchise star is worth a much larger bill (KEEP-STARS)."""
     if not team_id:
         return False
     from .payroll_plan import payroll_check
@@ -9777,6 +9854,7 @@ def ai_re_signing_fits_payroll_plan(
         minutes=display_minutes_projection(player), kind="re_signing", age=player.get("display_age", player.get("age")),
         committed=float(commitments.get((str(team_id), str(next_season)), 0.0)),
         committed_players=int(commitments.get((str(team_id), RE_SIGNING_PLAYER_COUNT_KEY), 0)),
+        franchise_star=is_franchise_star(player),
     )
     return bool(check["ok"])
 
@@ -9796,6 +9874,8 @@ def retain_expiring_player(save: dict[str, Any], player: dict[str, Any], team_id
     years = int(terms["years"])
     seasons = terms["seasons"]
     score = float(terms["score"])
+    from .contract_ai import keep_bird_clock
+    keep_bird_clock(save, player, team_id, next_season)   # a re-signing keeps his Bird clock (KEEP-STARS)
     save.setdefault("contract_overrides", {})[player["id"]] = {
         "team_id": team_id,
         "seasons": seasons,

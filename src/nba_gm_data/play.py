@@ -5402,9 +5402,14 @@ def process_ai_free_agency_offers_for_day_state(
             rng = random.Random(f"{seed}:{state.get('season')}:{day}:{player['id']}:{team['id']}:ai_fa_offer")
             aav = round(max(league_minimum_aav_millions(), ask * rng.uniform(0.9, 1.12 + day * 0.015)), 1)
             reserved = active_bid_commitment(save, team["id"], exclude_player_id=player["id"])
-            cap = signing_cap_check(active, save, team["abbrev"], aav, reserved_millions=reserved)
+            # KEEP-STARS: his own team bids with its Bird rights (over the cap, a fifth year for a young player).
+            bird = incumbent_bird_rights(active, save, player, team["id"])
+            team_years = years
+            if bird and bird["max_years"] > 4 and years == 4 and float(player.get("age") or 27) <= 30:
+                team_years = max(years, extension_safe_year_limit(player, start_season, bird["max_years"]))
+            cap = signing_cap_check(active, save, team["abbrev"], aav, reserved_millions=reserved, bird=bird)
             from .contract_protection import roster_signing_plan
-            plan = roster_signing_plan(active, save, player, team['id'], aav, years)
+            plan = roster_signing_plan(active, save, player, team['id'], aav, team_years)
             from .roster_space import remember_target
             remember_target(save, team['id'], player['id'], aav, years, plan)
             if not cap.get('ok') or roster_full or not plan['ok']:
@@ -5414,12 +5419,13 @@ def process_ai_free_agency_offers_for_day_state(
             tax_plan = payroll_check(
                 active, save, team["id"], start_season, add_salary=aav * 1_000_000,
                 roster_delta=1 - len(plan.get("cuts") or []), minutes=display_minutes_projection(player),
-                kind="free_agency", committed=reserved * 1_000_000, age=player.get("display_age", player.get("age")),
+                kind="re_signing" if bird else "free_agency", committed=reserved * 1_000_000,
+                age=player.get("display_age", player.get("age")),
                 committed_players=len(pending_players - {player["id"]}),
             )
             if not tax_plan["ok"]:
                 continue
-            offer = build_free_agency_offer_record(active, save, player, team, years, aav, ask, seed, "ai")
+            offer = build_free_agency_offer_record(active, save, player, team, team_years, aav, ask, seed, "ai")
             offer['roster_plan'] = plan
             save.setdefault("free_agent_offers", []).append(offer)
             created += 1
@@ -5539,7 +5545,14 @@ def free_agency_offer_context_score(
     )
     market_score = clamp(48.0 + deterministic_ratio(team.get("id"), player.get("id"), "fa_market") * 22.0, 42.0, 74.0)
     security_score = clamp(34.0 + max(1, years) * 15.0, 30.0, 92.0)
-    loyalty = 8.0 if player.get("previous_team_id") == team.get("id") or player.get("team_id") == team.get("id") else 0.0
+    own_team = (player.get("previous_team_id") == team.get("id") or player.get("team_id") == team.get("id")
+                or any(r.get("player_id") == player.get("id") and r.get("team_id") == team.get("id")
+                       for r in save.get("re_signing_rights", []) or []))
+    loyalty = 8.0 if own_team else 0.0
+    if own_team:
+        # KEEP-STARS: players value staying somewhat more with the team that drafted them and with a winner.
+        loyalty += 3.0 if drafted_by_team(save, player) == team.get("id") else 0.0
+        loyalty += 3.0 if games and win_pct >= 0.6 else 0.0
     user_bonus = 2.5 if source == "user" and team.get("id") == save.get("meta", {}).get("user_team_id") else 0.0
     context = (
         role_score * 0.28
@@ -6408,7 +6421,9 @@ def apply_free_agency_offer_state(
     # the live cap after any earlier accepted offers have already been applied.
     team_id = str(team.get("id") or offer.get("team_id") or "")
     reserved = float((committed_aav_by_team or {}).get(team_id) or 0.0)
-    cap = signing_cap_check(active, save, team.get("abbrev"), float(offer.get("aav_millions") or 0), reserved_millions=reserved)
+    bird = incumbent_bird_rights(active, save, player, team_id)   # KEEP-STARS
+    cap = signing_cap_check(active, save, team.get("abbrev"), float(offer.get("aav_millions") or 0),
+                            reserved_millions=reserved, bird=bird)
     if not cap.get("ok"):
         offer["status"] = "withdrawn_cap_blocked"
         return {"status": "blocked", "notes": cap.get("message")}
@@ -6425,7 +6440,8 @@ def apply_free_agency_offer_state(
             active, save, team_id, contract_start_season_for_signing(save),
             add_salary=float(offer.get('aav_millions') or 0) * 1_000_000,
             roster_delta=1 - len(plan.get('cuts') or []), minutes=display_minutes_projection(player),
-            kind="free_agency", committed=reserved * 1_000_000, age=player.get("display_age", player.get("age")),
+            kind="re_signing" if bird else "free_agency", committed=reserved * 1_000_000,
+            age=player.get("display_age", player.get("age")),
             committed_players=int((committed_count_by_team or {}).get(team_id) or 0),
         )
         if not tax_plan['ok']:
@@ -7274,12 +7290,17 @@ def signing_cap_check(
     aav_millions: float,
     allow_tax_exceed: bool = False,
     reserved_millions: float = 0.0,
+    bird: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     team = resolve_team(active, team_abbrev)
     cap_season = contract_start_season_for_signing(save)
     cap = team_cap_summary(active, save, team["id"], season=cap_season)
     if cap.get('unresolved_waived_contract_count'):
         return {'ok': False, 'message': 'Waived salary requires review before spending more salary room.', 'cap': cap}
+    # KEEP-STARS: re-signing your own free agent within his Bird rights may go over the tax line and the hard cap
+    # (contract_ai.bird_rights; real CBA: Bird re-signings never trigger a hard cap).
+    if bird and aav_millions * 1_000_000 <= float(bird.get("limit") or 0.0) + 1.0:
+        return {"ok": True, "message": "", "bird_rights": bird.get("level")}
     hard_space = float(cap.get("hard_cap_space_millions") or 0.0) - float(reserved_millions or 0.0)
     tax_space = float(cap.get("tax_space_millions") or 0.0) - float(reserved_millions or 0.0)
     minimum = league_minimum_aav_millions()
@@ -7312,6 +7333,33 @@ def signing_cap_check(
 
 def league_minimum_aav_millions() -> float:
     return 1.9
+
+
+def incumbent_bird_rights(active: dict[str, Any], save: dict[str, Any], player: dict[str, Any],
+                          team_id: str | None) -> dict[str, Any] | None:
+    """The team's Bird rights for its own free agent (it holds his re-signing rights this offseason), else None."""
+    if not team_id or not player.get("id"):
+        return None
+    season = str((save.get("meta") or {}).get("season") or CANONICAL_SEASON)
+    if not any(r.get("player_id") == player["id"] and r.get("team_id") == team_id and r.get("season") == season
+               for r in save.get("re_signing_rights", []) or []):
+        return None
+    from .contract_ai import bird_rights
+    return bird_rights(save, player, team_id, season, contract_for_player(active, player["id"]))
+
+
+def drafted_by_team(save: dict[str, Any], player: dict[str, Any]) -> str | None:
+    """The team that drafted him: the game's own draft, else the team of his first real NBA season."""
+    rookie = next((r for r in save.get("incoming_rookies", []) or [] if r.get("player_id") == player.get("id")), None)
+    if rookie:
+        return rookie.get("team_id")
+    from .career_stats import career_record
+    from .research import ESPN_TEAM_ID_TO_ABBREV
+    seasons = sorted((career_record(player) or {}).get("seasons") or [], key=lambda row: str(row.get("season")))
+    if not seasons or not seasons[0].get("team_ids"):
+        return None
+    abbrev = ESPN_TEAM_ID_TO_ABBREV.get(str(seasons[0]["team_ids"][0]))
+    return f"team_{abbrev.lower()}" if abbrev else None
 
 
 def contract_start_season_for_signing(save: dict[str, Any]) -> str:

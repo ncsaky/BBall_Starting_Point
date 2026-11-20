@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import math
 import random
+from functools import lru_cache
 from heapq import nsmallest
 from pathlib import Path
 from statistics import median
@@ -637,6 +638,14 @@ def apply_contract_to_save_state(
         player_id = negotiation_payload.get("player_id")
         team_id = negotiation_payload.get("team_id")
         if player_id:
+            # KEEP-STARS: re-signing with the team that holds his rights, or an extension, keeps his Bird clock.
+            if team_id and accepted_offer and (
+                negotiation_payload.get("negotiation_type") == "extension"
+                or any(item.get("player_id") == player_id and item.get("team_id") == team_id
+                       for item in save.get("re_signing_rights", []))
+            ):
+                keep_bird_clock(save, {"id": player_id, "name": negotiation_payload.get("player_name")}, team_id,
+                                str(accepted_offer.get("signed_season") or ""))
             save.setdefault("contract_overrides", {})[player_id] = accepted_offer
             if team_id and negotiation_payload.get("negotiation_type") in {"free_agency", "free_agent_signing"}:
                 save.setdefault("roster_overrides", {})[player_id] = team_id
@@ -1172,6 +1181,127 @@ def years_of_service(player: dict[str, Any], season: str) -> int:
         return max(0, start - int(draft_year))
     age = maybe_float(player.get("display_age", player.get("age"))) or 27.0
     return max(0, int(age) - 20)
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Bird rights (KEEP-STARS). The Bird clock is the first season of a player's current stint with his team: it starts
+# when he signs with a team as a free agent or is drafted, keeps running through trades and through re-signings with
+# the same team, and is what cap_rules.bird_level turns into full / Early / Non-Bird rights. Stored per player in
+# save["bird_clocks"] as {team_id, since, contract_signed} whenever a contract keeps the clock (a re-signing or an
+# extension); any other new contract starts it again at its signed season. Players on their opening contracts get the
+# clock from their real team history (ESPN career seasons).
+
+def _season_label(start: int) -> str:
+    return f"{start}-{str(start + 1)[-2:]}"
+
+
+@lru_cache(maxsize=1)
+def _outside_signings_2026() -> frozenset[str]:
+    """Names of players who changed teams as free agents in summer 2026 (research file; partial, 48 contracts)."""
+    from .resource_paths import game_resource_root
+    path = game_resource_root() / "data/research/free_agent_contracts_2025_2026.json"
+    try:
+        rows = json.loads(path.read_text()).get("contracts") or []
+    except (OSError, ValueError):
+        return frozenset()
+    return frozenset(str(r.get("player") or "").casefold() for r in rows
+                     if int(r.get("summer") or 0) == 2026 and r.get("re_signed") is False)
+
+
+def opening_bird_since(player: dict[str, Any], team_id: str | None) -> str:
+    """First season of an opening-roster player's stint, from his real seasons before 2026-27.
+
+    Seasons count back from 2025-26 while each season shares a team with the next one. A player whose 2025-26 team
+    is not his opening team moved in summer 2026: by trade his clock carries over (real rule), as a free agent it
+    starts in 2026-27. Approximations: an offseason trade before 2025-26 ends the chain, and free-agent moves are known
+    only for the 48 summer-2026 contracts in the research file."""
+    from .career_stats import career_record
+    from .research import ESPN_TEAM_ID_TO_ABBREV
+    base = int(CANONICAL_SEASON[:4])
+    try:
+        record = career_record(player) or {}
+    except (OSError, ValueError, TypeError):
+        record = {}
+    teams_by_start: dict[int, set[str]] = {}
+    for row in record.get("seasons") or []:
+        try:
+            start = int(str(row.get("season") or "").split("-")[0])
+        except ValueError:
+            continue
+        teams = {ESPN_TEAM_ID_TO_ABBREV.get(str(t)) for t in row.get("team_ids") or []}
+        teams |= set(row.get("team_abbrevs") or []) | ({row["team_abbrev"]} if row.get("team_abbrev") else set())
+        teams_by_start[start] = {t for t in teams if t}
+    last = teams_by_start.get(base - 1)
+    if not last:
+        return CANONICAL_SEASON
+    abbrev = str(team_id or "").replace("team_", "").upper()
+    if abbrev not in last and str(player.get("name") or "").casefold() in _outside_signings_2026():
+        return CANONICAL_SEASON
+    since, current = base - 1, last
+    while since > base - 4:   # three earlier seasons are enough for full Bird rights
+        earlier = teams_by_start.get(since - 1)
+        if not earlier or not (earlier & current):
+            break
+        since, current = since - 1, earlier
+    return _season_label(since)
+
+
+def bird_clock_since(save: dict[str, Any], player: dict[str, Any], team_id: str | None) -> str:
+    """First season of the player's current stint (see the section note)."""
+    player_id = str(player.get("id") or "")
+    override = (save.get("contract_overrides") or {}).get(player_id) or {}
+    signed = str(override.get("signed_season") or "")
+    clock = (save.get("bird_clocks") or {}).get(player_id) or {}
+    if clock.get("since") and str(clock.get("contract_signed") or "") == signed:
+        return str(clock["since"])
+    if signed:
+        return signed
+    return opening_bird_since(player, team_id)
+
+
+def keep_bird_clock(save: dict[str, Any], player: dict[str, Any], team_id: str | None, new_signed_season: str) -> None:
+    """Record that a new contract (a re-signing or extension with the same team) keeps the player's Bird clock.
+    Call before the new contract replaces the old one."""
+    if not player.get("id") or not team_id:
+        return
+    since = bird_clock_since(save, player, team_id)
+    save.setdefault("bird_clocks", {})[str(player["id"])] = {
+        "team_id": team_id, "since": since, "contract_signed": str(new_signed_season)}
+
+
+def bird_rights(save: dict[str, Any], player: dict[str, Any], team_id: str | None, expiring_season: str,
+                contract: dict[str, Any] | None = None) -> dict[str, Any]:
+    """The incumbent team's Bird rights for a free agent whose contract ended with ``expiring_season``.
+
+    level ('full', 'early', 'non'), seasons with the team, his previous salary, and the first-year salary limit, years
+    and raises his own team may offer over the cap (cap_rules)."""
+    from .cap_rules import bird_level, bird_max_years, bird_raise, bird_salary_limit
+    since = bird_clock_since(save, player, team_id)
+    seasons = max(1, int(str(expiring_season)[:4]) - int(since[:4]) + 1)
+    level = bird_level(seasons)
+    previous = 0.0
+    rows = [r for r in (contract or {}).get("seasons") or [] if r.get("salary") is not None]
+    at_expiry = [r for r in rows if str(r.get("season")) == str(expiring_season)] or rows[-1:]
+    if at_expiry:
+        previous = float(at_expiry[-1].get("salary") or 0.0)
+    next_season = _season_label(int(str(expiring_season)[:4]) + 1)
+    limit = bird_salary_limit(level, previous, next_season, years_of_service(player, next_season))
+    return {"level": level, "seasons": seasons, "since": since, "previous_salary": previous,
+            "limit": limit, "max_years": bird_max_years(level), "raise": bird_raise(level)}
+
+
+BIRD_LEVEL_WORDS = {"full": "full Bird rights", "early": "Early Bird rights", "non": "Non-Bird rights"}
+
+
+def bird_rights_text(rights: dict[str, Any]) -> str:
+    """One plain sentence for the re-signing room."""
+    seasons = int(rights.get("seasons") or 0)
+    years = int(rights.get("max_years") or 4)
+    raise_pct = round(float(rights.get("raise") or 0.05) * 100)
+    limit = float(rights.get("limit") or 0.0) / 1_000_000
+    return (f"{BIRD_LEVEL_WORDS.get(rights.get('level'), 'Bird rights')} ({seasons} season{'s' if seasons != 1 else ''} "
+            f"with you): you can go over the cap and the hard cap to re-sign him for up to ${limit:.1f}M a year, "
+            f"{years} years, {raise_pct}% raises. Other teams can offer at most 4 years with 5% raises.")
 
 
 def star_market_ask_millions(canonical: dict[str, Any], player: dict[str, Any], season: str,

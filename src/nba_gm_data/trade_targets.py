@@ -746,7 +746,7 @@ def salary_dump_offers(canonical: dict[str, Any], team_ids: list[str], excluded:
     from .team_planning import core_commitment
     tx = _tx()
     human = set(canonical.get("_human_team_ids") or [])
-    excluded = set(excluded) | tx.recently_signed_player_ids(canonical)
+    excluded = set(excluded) | tx.recently_signed_player_ids(canonical) | tx.re_trade_hold_player_ids(canonical)
     # A team with a full roster sends back its least valuable minimum-salary player (real absorbers waive or include
     # one); a team with an open spot sends nothing.
     room = {}
