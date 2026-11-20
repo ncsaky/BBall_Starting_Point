@@ -157,6 +157,20 @@ def phase_payroll_ceiling(active: dict[str, Any], save: dict[str, Any], team_id:
     return cap_lines_for_season(season)["tax_line"] - room
 
 
+# TRADE-VOLUME-2: a rebuilding team does not spend free-agent money on veterans. Room by phase limits how close to
+# the tax line a team gets, not what it buys: the rebuilding Clippers spent about $74M in 2028, Jimmy Butler (38) on a
+# one-year $36M deal among it. Real rebuilders signed veterans only on short, cheap deals they could flip or that
+# filled the roster; anything above the non-taxpayer mid-level exception ($15.044M in 2026-27, NBA.com cap release)
+# went to younger players. Re-signing a team's own players is not affected.
+VETERAN_AGE = 30.0
+NON_TAXPAYER_MLE = 15_044_000
+
+
+def veteran_price(season: str) -> float:
+    from .cap_rules import growth_factor
+    return NON_TAXPAYER_MLE * growth_factor(season)
+
+
 def after_trade_deadline(save: dict[str, Any]) -> bool:
     """Between the trade deadline and the end of the regular season (no trade can fix the payroll any more)."""
     s = _save()
@@ -187,6 +201,9 @@ def payroll_check(active: dict[str, Any], save: dict[str, Any], team_id: str | N
     cost = tax_cost(save, team_id, season, before, after)
     result = {"before": before, "after": after, "tax_line": cost["tax_line"], "tax": cost["tax"],
               "lost_payout": cost["lost_payout"], "cost": cost["total"], "budget": 0.0}
+    if (kind == "free_agency" and age is not None and float(age) >= VETERAN_AGE
+            and team_phase(active, save, team_id) == "rebuilding" and float(add_salary) > veteran_price(season)):
+        return {**result, "ok": False, "reason": "rebuilding_team_does_not_pay_veterans"}
     ceiling = phase_payroll_ceiling(active, save, team_id, season, kind, minutes, age)
     result["ceiling"] = ceiling
     if ceiling is not None and after > before + 1 and after > ceiling:
@@ -207,6 +224,8 @@ def plain_words(check: dict[str, Any]) -> str:
         return ""
     if check.get("reason") == "would_cross_the_tax_line_after_the_deadline":
         return "It would put the team over the luxury tax line after the trade deadline."
+    if check.get("reason") == "rebuilding_team_does_not_pay_veterans":
+        return "A rebuilding team does not spend more than the mid-level exception on a veteran free agent."
     if check.get("reason") == "keeps_room_below_the_line_for_its_phase":
         return (f"The team keeps its payroll under about ${float(check.get('ceiling') or 0) / 1e6:.1f}M "
                 "while it is not contending (room to take on contracts in trades).")
