@@ -1153,7 +1153,7 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
             counters_left[0] -= 1
             countered = tc.ai_counter(canonical, tt.near_miss_candidate(canonical, missed[0], config), seed=seed,
                                       date=through_date, config=config, fixed={('player', row['id'])},
-                                      diagnostics=diagnostics)
+                                      diagnostics=diagnostics, check_budget=tc.COUNTER_CHECKS_PER_SEARCH[depth])
         if countered is not None and not (reserve_assets and proposal_asset_identity_keys(countered) & reserved):
             accepted_counter(countered, pairing, order, canonical)
             continue
@@ -1180,7 +1180,8 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                 if not pick_terms and counters_left[0] > 0 and tc.short_side(candidate, human) is not None:
                     counters_left[0] -= 1
                     countered = tc.ai_counter(canonical, candidate, seed=seed, date=through_date, config=config,
-                                              fixed={('player', row['id'])}, diagnostics=diagnostics)
+                                              fixed={('player', row['id'])}, diagnostics=diagnostics,
+                                              check_budget=tc.COUNTER_CHECKS_PER_SEARCH[depth])
                 if countered is not None and not (reserve_assets and proposal_asset_identity_keys(countered) & reserved):
                     accepted_counter(countered, pairing, order, canonical)
                     break
@@ -4610,6 +4611,7 @@ def evaluate_trade_for_team(
             + (absorb_note(canonical, perspective_team_id, incoming_assets, outgoing_assets, tax_term[1]) if tax_term[1] else '')
             + (f" Published wants: {len(wants['matches'])} matching asset(s), additional preference credit {wants['adjustment']:.2f}." if wants['matches'] else '')
             + (f" Final roster: strength {outlook['strength_delta']:+.2f}; incremental waiver cost ${outlook['waiver_cost_millions']:.2f}M. {outlook['issue'] or ''}" if outlook else '')
+            + (f" Fit with the current core: the projected rotation gets worse, so {outlook['system_fit_discount']:.1f} of the general fit credit is taken back." if outlook and outlook.get('system_fit_discount') else '')
             + (f" Draft investment: {investment['net_draft_value_spent']:.2f} net value spent; marginal-acquisition capital limit {investment['capital_limit']:.2f}; justified value-loss limit {investment['loss_limit']:.2f}." if investment else '')
             + own_player_value_note(canonical, perspective_team_id, outgoing_assets)
             if include_presentation else ''

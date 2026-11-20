@@ -5916,7 +5916,9 @@ def late_deadline_trade_pass(canonical: dict[str, Any], save: dict[str, Any], ta
     take some; data/research/real_trades/trades_2025_2027.json). The first pass (queue_ai_recommendations) runs on the
     morning rosters. This pass runs once after its deals are applied, only while the day's trade slots are not used
     up, and only looks at pairings involving a team that traded today, so it costs a fraction of the first search.
-    Never a deal involving the human team."""
+    It never makes a deal for the human team. If the human team traded today, AI teams may also send it new offers
+    that fit its new roster, into its normal incoming offers with their reasons (``late_deadline_user_offers``);
+    nothing is executed for it."""
     if save.get("state", {}).get("phase") != "regular_season":
         return 0
     start_year = season_start_year_from_date(target)
@@ -5937,9 +5939,12 @@ def late_deadline_trade_pass(canonical: dict[str, Any], save: dict[str, Any], ta
     focus = set()
     for log in today:
         focus |= {team for team in log.get("teams") or [] if team}
+    user_traded = focus & human
     focus -= human
     if remaining <= 0 or not focus:
         save.setdefault("processed_hidden_ai_actions", []).append(record)
+        if user_traded:
+            late_deadline_user_offers(canonical, save, target, seed, user_traded)
         return 0
     from .transactions import simulate_ai_trades, proposal_asset_identity_keys, trade_team_ids
     from .trade_review import MarketReview
@@ -5965,6 +5970,8 @@ def late_deadline_trade_pass(canonical: dict[str, Any], save: dict[str, Any], ta
     record.update(late_focus_teams=len(focus), late_candidates=len(chosen))
     if not chosen:
         save.setdefault("processed_hidden_ai_actions", []).append(record)
+        if user_traded:
+            late_deadline_user_offers(canonical, save, target, seed, user_traded)
         return 0
     save.setdefault("pending_ai_actions", []).append({
         "id": action_id, "date": target, "action_type": "trade_recommendations",
@@ -5975,7 +5982,53 @@ def late_deadline_trade_pass(canonical: dict[str, Any], save: dict[str, Any], ta
     result = process_ai_actions_in_memory(canonical, save, seed=seed, execute=True,
                                           limit=len(save.get("pending_ai_actions", [])), save_label=save_label,
                                           prepared_active=active)
+    if user_traded:
+        late_deadline_user_offers(canonical, save, target, seed, user_traded)
     return int(result.get("applied_count") or 0)
+
+
+LATE_USER_OFFERS = 2
+
+
+def late_deadline_user_offers(canonical: dict[str, Any], save: dict[str, Any], target: str, seed: int,
+                              user_teams: set[str]) -> int:
+    """New offers to the human team late on deadline day, after its own trade today (TRADE-DEADLINE). The same
+    search as the day's other offers to the human team, on the rosters as they are now; at most LATE_USER_OFFERS,
+    into the normal incoming offers (pending the user's review, never executed). Each carries its reason."""
+    from .transactions import simulate_ai_trades, trade_team_ids
+    from .trade_review import MarketReview
+    active = canonical_with_save(canonical, save)
+    review = MarketReview()
+    try:
+        inbound = simulate_ai_trades(active, target, target, seed=seed + 1, review=review,
+                                     limit=max(8, LATE_USER_OFFERS * 4), search_depth=2,
+                                     involving_team_ids=set(user_teams))
+    finally:
+        review.close()
+    abbrev = {team["id"]: team["abbrev"] for team in active.get("teams", [])}
+    offers = []
+    for proposal in inbound.get("proposals", []):
+        teams = set(trade_team_ids(proposal))
+        if not (proposal.get("accepted_by_all") and (proposal.get("legality") or {}).get("status") == "legal"
+                and teams & set(user_teams)):
+            continue
+        user = sorted(teams & set(user_teams))[0]
+        partners = [abbrev.get(t, t) for t in sorted(teams - {user})]
+        reasons = dict(proposal.get("trade_reasons") or {})
+        note = (f"{' and '.join(partners)} made this offer late on deadline day, after {abbrev.get(user, user)}'s "
+                f"trade earlier today changed its roster.")
+        reasons["text"] = f"{reasons['text']} {note}" if reasons.get("text") else note
+        reasons["late_deadline_offer"] = True
+        offers.append({**proposal, "trade_reasons": reasons})
+        if len(offers) >= LATE_USER_OFFERS:
+            break
+    if offers:
+        queue_user_trade_offers(save, offers, target)
+    save.setdefault("processed_hidden_ai_actions", []).append({
+        "id": stable_id("ai_action", "trades_late_user", target, seed), "date": target,
+        "action_type": "trade_market_review", "status": "reviewed", "late_pass": True,
+        "user_offers_generated": len(offers)})
+    return len(offers)
 
 
 def queue_ai_recommendations(

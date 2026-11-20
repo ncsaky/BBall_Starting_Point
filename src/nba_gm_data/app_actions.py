@@ -867,11 +867,19 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         user_team_id = save.get("meta", {}).get("user_team_id")
         if not terms and user_team_id:
             # Trade step 3: a partner that is a little short answers with a counter-offer, the exact deal it would make.
-            from .trade_counters import user_counter
+            # The trade window sends the negotiation so far (counter_chain), so the partner never repeats a package
+            # and each new counter asks for less than its last one.
+            from .trade_counters import user_counter, package_key, COUNTER_ROUNDS
+            chain = payload.get("counter_chain") if isinstance(payload.get("counter_chain"), list) else []
             counter = user_counter(active, candidate, user_team_id, seed=int(payload.get("seed") or 1),
-                                   date=payload.get("date") or save.get("state", {}).get("current_date") or CANONICAL_START_DATE)
+                                   date=payload.get("date") or save.get("state", {}).get("current_date") or CANONICAL_START_DATE,
+                                   chain=chain)
+            proposal = candidate.get("proposal") or {}
+            result["offer_package"] = package_key(proposal.get("from_assets") or [], proposal.get("to_assets") or [])
             if counter is not None:
                 result["counter_offer"] = enhance_trade_candidate(active, counter, save=save)
+            elif sum(1 for c in chain if isinstance(c, dict) and c.get("asking_net") is not None) >= COUNTER_ROUNDS:
+                result["counter_closed"] = True  # the partner has made its last counter in this negotiation
         return result
     if action == "apply_trade_candidate":
         return apply_trade_candidate_action(canonical, save_path, payload)

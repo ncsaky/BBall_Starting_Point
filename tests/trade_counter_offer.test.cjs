@@ -27,7 +27,10 @@ function readoutIn() {
   };
   vm.createContext(context);
   vm.runInContext(`${extract('tradeReadout')}\n${extract('tradeCounterOffer')}\nthis.tradeReadout = tradeReadout;`, context);
-  return context.tradeReadout;
+  return (candidate, rounds = []) => {
+    context.state.tradeCounterChain = {partner: 'UTA', rounds};
+    return context.tradeReadout(candidate);
+  };
 }
 
 const counter = {
@@ -50,6 +53,19 @@ test('a declined offer with a counter shows it in plain words with the full pack
   assert.match(html, /UTA sends: Collin Sexton/);
   assert.match(html, /id="acceptCounterTrade"/);
   assert.match(html, /id="declineCounterTrade"/);
+});
+
+test('a later round lists the earlier counters and offers Edit; a closed negotiation says so', () => {
+  const readout = readoutIn();
+  const second = {...counter, counter: {text: 'UTA asked for a 2031 second-round pick as well.', rounds: 2, package: 'b'}};
+  const html = readout({legality: {status: 'legal'}, evaluations: [{perspective_team_id: 'team_uta', accepted: false}],
+    counter_offer: second}, [{package: 'a', text: 'UTA asked for a 2029 second-round pick as well.', round: 1}, {package: 'b', text: second.counter.text, round: 2}]);
+  assert.match(html, /Round 1: UTA asked for a 2029 second-round pick as well\./);
+  assert.match(html, /Counter-offer \(round 2\):/);
+  assert.match(html, /id="editCounterTrade"/);
+  const closed = readout({legality: {status: 'legal'}, evaluations: [{perspective_team_id: 'team_uta', accepted: false}],
+    counter_closed: true}, []);
+  assert.match(closed, /No more counters/);
 });
 
 test('no counter block when there is none or the partner accepts', () => {

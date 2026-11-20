@@ -289,6 +289,8 @@ def trade_roster_outlook(canonical, team_id, incoming, outgoing):
     competitive = phase in {'peak', 'entering'} or state.get('phase') in {'contending', 'contending_with_future_upside'}
     delta = after['strength']-before['strength']
     adjustment = delta*(4 if competitive else 1) - lost_credit - cost*(.16 if competitive else .28)
+    system_fit = system_fit_discount(canonical, team_id, incoming, delta, state)
+    adjustment -= system_fit
     role_opportunity = role_opportunity_outlook(canonical, team_id, incoming_ids, outgoing_ids, before, after)
     adjustment += role_opportunity['adjustment']
     plan = canonical.get('team_plans', {}).get(team_id, {})
@@ -325,7 +327,40 @@ def trade_roster_outlook(canonical, team_id, incoming, outgoing):
             'lost_asset_credit': round(lost_credit, 4), 'waiver_cost_millions': round(cost, 4),
             'before_rotation': before['rotation'], 'after_rotation': after['rotation'],
             'role_opportunity': role_opportunity,
-            'pick_investment': investment}
+            'pick_investment': investment, 'system_fit_discount': round(system_fit, 4)}
+
+
+SYSTEM_FIT_FULL_DELTA = 0.5  # a projected rotation loss this large removes the whole generic fit credit
+
+
+def system_fit_discount(canonical, team_id, incoming, delta, state):
+    """How much of the generic fit credit for incoming players the engine's own projection takes back (TRADE-DEADLINE).
+
+    The fit credit in a player's price (transactions.team_fit_for_player) comes from the team's phase, listed needs and
+    position depth: it never looks at the players already there or how the team plays. The user's principle: a front
+    office works with the hand it's dealt, so the current core and the coach's system define fit, and only a team
+    starting a full rebuild picks a new identity. The engine already projects the team's rotation strength after the
+    trade from its own team model (the same features the game simulation uses: spacing, creation, defense, rebounding,
+    rim protection of the players who would actually play); when that projection says the rotation gets worse, the
+    need the generic credit assumed is not really met. So that credit is taken back in proportion to the projected
+    loss, all of it at SYSTEM_FIT_FULL_DELTA. Modest and one-sided: it never adds value, it applies only to deals that
+    reach the full check (the projection is cached there), and rebuilding teams keep their generic credit. Example
+    (2027 deadline save): Jonathan Kuminga to Golden State carries +9.6 of generic fit, but the projection says Golden
+    State's rotation gets 0.26 worse with him (Sam Hauser: 0.68 better), so about 5.1 of it is taken back."""
+    if delta >= 0 or not incoming or state.get('window_phase') == 'rebuilding' or state.get('phase') == 'rebuilding':
+        return 0.0
+    from . import transactions as tx
+    values = tx.player_asset_values_by_id(canonical)
+    credit = 0.0
+    for asset in incoming:
+        if asset.get('kind') != 'player':
+            continue
+        player = tx.player_by_id(canonical, asset.get('id'))
+        if not player:
+            continue
+        valuation = tx.valuation_or_fallback(values, player['id'], player)
+        credit += max(0.0, tx.team_fit_for_player(player, valuation, state, canonical, include_spatial=False))
+    return credit * min(1.0, -delta / SYSTEM_FIT_FULL_DELTA)
 
 
 def live_roster_issues(canonical, saved, proposal, *, candidate=None, config=None, _materialization=None):

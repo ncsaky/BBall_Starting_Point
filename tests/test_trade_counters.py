@@ -59,6 +59,22 @@ class FillerTests(unittest.TestCase):
         self.assertNotIn("expiring", found)
 
 
+class SystemFitTests(unittest.TestCase):
+    def test_generic_fit_credit_is_taken_back_when_the_projected_rotation_gets_worse(self):
+        from nba_gm_data import trade_roster as tr
+        incoming = [{"kind": "player", "id": "kuminga"}, {"kind": "pick", "id": "p"}]
+        contender = {"phase": "contending_with_future_upside", "window_phase": "peak"}
+        with patch.object(tx, "player_asset_values_by_id", return_value={}), \
+                patch.object(tx, "player_by_id", return_value={"id": "kuminga"}), \
+                patch.object(tx, "valuation_or_fallback", return_value={}), \
+                patch.object(tx, "team_fit_for_player", return_value=9.6):
+            self.assertAlmostEqual(tr.system_fit_discount({}, "gsw", incoming, -0.26, contender), 9.6 * 0.52)
+            self.assertAlmostEqual(tr.system_fit_discount({}, "gsw", incoming, -2.0, contender), 9.6)  # all of it, never more
+            self.assertEqual(tr.system_fit_discount({}, "gsw", incoming, 0.4, contender), 0.0)  # it never adds value
+            self.assertEqual(tr.system_fit_discount({}, "gsw", incoming, -0.3,
+                                                    {"phase": "rebuilding", "window_phase": "rebuilding"}), 0.0)
+
+
 class FilledTargetTests(unittest.TestCase):
     def test_a_team_stops_chasing_a_need_it_just_filled(self):
         before = [t["key"] for t in tt.team_trade_targets(league("peak", firsts=3, spacing=30.0), "x")]
@@ -281,6 +297,61 @@ class AiCounterTests(unittest.TestCase):
         self.assertEqual(result["counter"]["rounds"], 1)
         self.assertEqual(result["counter"]["text"], "Y asked for a pick as well; X agreed.")
 
+    def negotiate(self, outcomes, options_by_round):
+        """Run ai_counter with scripted counters and scripted full-check answers (keyed by what X sends)."""
+        start = candidate([player("y0")], [player("x5")], [evaluation("y", -10, False), evaluation("x", 5, True)])
+        sent = []
+
+        def decide(canonical, f, t, from_specs, to_specs, **kwargs):
+            key = ",".join(s["value"] for s in to_specs)
+            sent.append(key)
+            y_net, x_net = outcomes[key]
+            return candidate([player("y0")], [{"kind": s["kind"], "id": s["value"]} for s in to_specs],
+                             [evaluation("y", y_net, y_net >= 0), evaluation("x", x_net, x_net >= 0)])
+
+        def option(give, asker):
+            xs = [player(g) if g.startswith("x") else pick(g) for g in give]
+            return ({"kind": "pick", "asking_out": [player("y0")], "giving_out": xs, "target_label": None} if asker == "y"
+                    else {"kind": "pick", "asking_out": xs, "giving_out": [player("y0")], "target_label": None})
+
+        scripted = iter(options_by_round)
+        with patch.object(tc, "choose_counters",
+                          side_effect=lambda c, asker, *a, **k: [option(g, asker) for g in next(scripted)]), \
+                patch.object(tc, "describe", side_effect=lambda c, a, g, ao, go, o, **k: {
+                    "text": f"{a.upper()} asked; {g.upper()} agreed.", "asking_team_id": a, "giving_team_id": g}), \
+                patch.object(tc, "_offer", return_value={}), \
+                patch.object(tx, "evaluate_trade_decision", side_effect=decide), \
+                patch.object(tx, "candidate_from_decision", side_effect=lambda r: r), \
+                patch.object(tx, "ai_trade_candidate_accepted",
+                             side_effect=lambda c, r: all(e["accepted"] for e in r["evaluations"])), \
+                patch.object(tx, "team_by_id", side_effect=lambda c, t: {"id": t, "abbrev": t.upper()}):
+            return tc.ai_counter({"_human_team_ids": []}, start, seed=1, date="2027-02-05", config={}), sent
+
+    def test_several_rounds_each_narrowing_the_gap(self):
+        # Round 1: Y asks for a pick; X refuses but is only 4 short (the gap shrank from 10 to 4).
+        # Round 2: X answers by asking Y to take a smaller pick; both accept.
+        outcomes = {"x5,p1": (6.0, -4.0), "x5,p2": (2.0, 1.0)}
+        result, sent = self.negotiate(outcomes, [[["x5", "p1"]], [["x5", "p2"]]])
+        self.assertEqual(sent, ["x5,p1", "x5,p2"])
+        self.assertEqual(result["counter"]["rounds"], 2)
+        self.assertEqual([s["answer"] for s in result["counter"]["steps"]], ["refused", "agreed"])
+        self.assertEqual([s["round"] for s in result["counter"]["steps"]], [1, 2])
+        self.assertEqual(result["counter"]["steps"][0]["text"], "Y asked.")  # the refused round keeps only the ask
+
+    def test_a_counter_that_does_not_narrow_the_gap_or_repeats_a_package_is_not_made(self):
+        # The first ask leaves X 12 short: no closer than the 10 Y was short. The repeat of the original is skipped.
+        outcomes = {"x5,p1": (6.0, -12.0)}
+        result, sent = self.negotiate(outcomes, [[["x5"], ["x5", "p1"]]])
+        self.assertIsNone(result)
+        self.assertEqual(sent, ["x5,p1"])
+
+    def test_negotiation_stops_after_the_round_cap(self):
+        outcomes = {f"x5,p{i}": ((5.0, -9.0 + i) if i % 2 else (-9.0 + i, 5.0)) for i in range(1, 9)}
+        rounds = [[["x5", f"p{i}"]] for i in range(1, 9)]
+        result, sent = self.negotiate(outcomes, rounds)
+        self.assertIsNone(result)
+        self.assertEqual(len(sent), tc.COUNTER_ROUNDS)
+
     def test_no_counter_when_nobody_is_close(self):
         start = candidate([player("y0")], [player("x5")], [evaluation("y", -30, False), evaluation("x", 5, True)])
         self.assertIsNone(tc.ai_counter({"_human_team_ids": []}, start, seed=1, date="2027-02-05", config={}))
@@ -329,9 +400,30 @@ class LateDeadlinePassTests(unittest.TestCase):
                 patch.object(sv, "human_controlled_team_ids", return_value={"gsw"}), \
                 patch("nba_gm_data.transactions.simulate_ai_trades", side_effect=search), \
                 patch("nba_gm_data.trade_review.MarketReview"), \
-                patch.object(sv, "process_ai_actions_in_memory", return_value={"applied_count": len(proposals)}):
+                patch.object(sv, "process_ai_actions_in_memory", return_value={"applied_count": len(proposals)}), \
+                patch.object(sv, "late_deadline_user_offers", side_effect=lambda c, s, d, seed, users:
+                             calls.setdefault("user_offers_for", users)):
             applied = sv.late_deadline_trade_pass({}, save, day, 17)
         return applied, calls
+
+    def test_user_team_that_traded_today_gets_offers_never_deals(self):
+        from nba_gm_data import save as sv
+        _, calls = self.run_pass(self.save(), slots=2)  # no slots left for AI deals, but the user traded today
+        self.assertEqual(calls.get("user_offers_for"), {"gsw"})
+        save = {"meta": {}, "state": {}, "user_trade_offers": []}
+        offer = {"accepted_by_all": True, "legality": {"status": "legal"}, "trade_reasons": {"text": "PHX moved him."},
+                 "proposal": {"id": "o1", "from_team_id": "phx", "to_team_id": "gsw", "from_assets": [], "to_assets": []}}
+        queued = []
+        with patch.object(sv, "canonical_with_save", return_value={"teams": [{"id": "gsw", "abbrev": "GSW"},
+                                                                              {"id": "phx", "abbrev": "PHX"}]}), \
+                patch("nba_gm_data.trade_review.MarketReview"), \
+                patch("nba_gm_data.transactions.simulate_ai_trades", return_value={"proposals": [offer]}) as search, \
+                patch.object(sv, "queue_user_trade_offers", side_effect=lambda s, offers, d: queued.extend(offers)):
+            self.assertEqual(sv.late_deadline_user_offers({}, save, "2027-02-05", 17, {"gsw"}), 1)
+        self.assertEqual(search.call_args.kwargs["involving_team_ids"], {"gsw"})
+        self.assertIn("after GSW's trade earlier today", queued[0]["trade_reasons"]["text"])
+        self.assertTrue(queued[0]["trade_reasons"]["text"].startswith("PHX moved him."))
+        self.assertNotIn("pending_ai_actions", save)  # offers only: nothing is executed for the user
 
     def test_runs_once_on_deadline_day_for_teams_that_traded(self):
         save = self.save()
@@ -349,7 +441,9 @@ class LateDeadlinePassTests(unittest.TestCase):
     def test_not_on_other_days_or_when_the_slots_are_used(self):
         self.assertEqual(self.run_pass(self.save(), day="2027-02-04"), (0, {}))
         self.assertEqual(self.run_pass(self.save(phase="play_in")), (0, {}))
-        self.assertEqual(self.run_pass(self.save(), slots=2), (0, {}))
+        applied, calls = self.run_pass(self.save(), slots=2)
+        self.assertEqual(applied, 0)
+        self.assertNotIn("search", calls)  # no AI-AI search when the day's slots are used
 
 
 if __name__ == "__main__":

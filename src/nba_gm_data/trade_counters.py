@@ -31,7 +31,12 @@ COUNTER_GAP = 20.0          # the short side may be at most this far below its p
 # piece real teams ask for (a future second is worth about 12-20 to a team here), and among the asks that close
 # the gap the one closest to the price is chosen.
 COUNTER_OVERSHOOT = 15.0
-COUNTER_ROUNDS = 2          # one counter, and at most one answer back
+# Rounds of counters before a deal dies. Each round costs at most FULL_CHECKS_PER_COUNTER full checks; four rounds
+# cover the real back-and-forth (an ask, an answer, a last concession from each side) while a deadline day's counters
+# stay within COUNTER_CHECKS_PER_SEARCH full checks.
+COUNTER_ROUNDS = 4
+GAP_STEP = 0.5              # a counter must bring the two sides at least this much closer
+RULE_GAP = 5.0              # a refusal on a rule (roster plan, draft spending) at or above price counts this far apart
 FULL_CHECKS_PER_COUNTER = 3  # counter options sent to the full acceptance check, best first
 AI_NEGOTIATION_FLOOR = -9.0  # transactions.ai_trade_candidate_accepted: one AI side may be up to 9 short ...
 AI_NEGOTIATION_SUM = -2.0    # ... when the two sides' nets sum to at least -2
@@ -39,6 +44,7 @@ YOUNG_AGE = 23.5
 YOUNG_DEVELOPMENT = 6.0
 MAX_ASSETS_PER_SIDE = 5
 COUNTERS_PER_SEARCH = {1: 12, 2: 40}  # counter attempts per market search (normal day, deadline week)
+COUNTER_CHECKS_PER_SEARCH = {1: 24, 2: 80}  # full checks spent on counters per market search
 
 KIND_WORDS = {"target_player": "a player it targets", "pick": "a pick", "young_player": "a young player",
               "keep_own": "to keep a piece of its own", "salary_relief": "to take back less salary",
@@ -335,17 +341,70 @@ def short_side(candidate: dict[str, Any], human: set[str]) -> tuple[str, str, di
     return short["perspective_team_id"], accepted[0]["perspective_team_id"], short
 
 
+def package_key(from_assets: list[dict[str, Any]], to_assets: list[dict[str, Any]]) -> str:
+    """One deal's identity: what each side sends (order-free)."""
+    return "|".join(",".join(sorted(f"{a.get('kind')}:{a.get('id') or a.get('value')}" for a in side))
+                    for side in (from_assets, to_assets))
+
+
+def disagreement(candidate: dict[str, Any], human: set[str]) -> float:
+    """How far apart the AI sides still are: each refusing AI team's shortfall below its price, plus RULE_GAP when
+    it refuses on a rule (roster plan, draft spending) while at or above its price. A counter must shrink this."""
+    total = 0.0
+    for e in candidate.get("evaluations") or []:
+        if e.get("perspective_team_id") in human or e.get("accepted"):
+            continue
+        short = float(e.get("acceptance_threshold") or 0.0) - float(e.get("net_value") or 0.0)
+        total += short if short > 0 else RULE_GAP
+    return total
+
+
+def _offer(canonical, candidate) -> dict[str, Any]:
+    tx = _tx()
+    from_id, to_id, from_assets, to_assets = _flows(candidate)
+    nets = {tx.team_by_id(canonical, e["perspective_team_id"])["abbrev"]:
+            round(float(e.get("net_value") or 0.0) - float(e.get("acceptance_threshold") or 0.0), 2)
+            for e in candidate.get("evaluations") or [] if e.get("perspective_team_id")}
+    return {"from_team": tx.team_by_id(canonical, from_id)["abbrev"], "to_team": tx.team_by_id(canonical, to_id)["abbrev"],
+            "from_assets": [_words(canonical, a) for a in from_assets],
+            "to_assets": [_words(canonical, a) for a in to_assets], "nets_over_price": nets}
+
+
+def _options_for(canonical, asking_id, giving_id, asking_out, giving_out, config, decision, fixed, giving_is_ai=True):
+    if decision == "reject_pick_investment":
+        # Too much draft capital for this player: the buyer first offers a player of its own in place of the pick
+        # ("Merrill instead of the second"), then asks to keep the pick (taking less is never a gouge, so only the
+        # other side's bound applies).
+        swaps = choose_counters(canonical, asking_id, giving_id, asking_out, giving_out, config, fixed=fixed,
+                                kinds={"swap_own"}, overshoot=1e9, keep=2, giving_is_ai=giving_is_ai)
+        keeps = [o for o in choose_counters(canonical, asking_id, giving_id, asking_out, giving_out, config,
+                                            fixed=fixed, kinds={"keep_own"}, overshoot=1e9, keep=6,
+                                            giving_is_ai=giving_is_ai)
+                 if any(a.get("kind") in {"pick", "pick_swap"} for a in asking_out
+                        if _key(a) not in {_key(b) for b in o["asking_out"]})]
+        return swaps + keeps
+    return choose_counters(canonical, asking_id, giving_id, asking_out, giving_out, config, fixed=fixed,
+                           prefer_player_back=decision == "reject_roster_plan", giving_is_ai=giving_is_ai,
+                           keep=FULL_CHECKS_PER_COUNTER + 3)
+
+
 def ai_counter(canonical: dict[str, Any], candidate: dict[str, Any], *, seed: int, date: str, config: dict[str, Any],
                fixed: set[tuple[str, str]] = frozenset(), diagnostics: dict[str, Any] | None = None,
-               rounds: int = COUNTER_ROUNDS) -> dict[str, Any] | None:
-    """A refused AI-AI deal answered with a counter; the accepted counter deal (both AI checks), or None.
+               rounds: int = COUNTER_ROUNDS, check_budget: int | None = None) -> dict[str, Any] | None:
+    """A refused AI-AI deal negotiated by counters; the accepted deal (both AI checks), or None.
 
-    The short side asks (``choose_counters``); the other side decides with its own full check. If it refuses but is
-    itself only a little short, it may answer once (round two)."""
+    Each round, the side that is short asks for one change (``choose_counters``) and the other side answers with its
+    own full check. Either side may counter again, but every counter must narrow the gap between them
+    (``disagreement``) and no package may come back; the deal dies when the short side has no ask that does, or
+    after COUNTER_ROUNDS rounds. The whole chain (each round's offer, both sides' distance from their price and the
+    plain-words reason) is returned on the deal."""
     tx = _tx()
     human = set(canonical.get("_human_team_ids") or [])
     history = []
     current = candidate
+    from_id, to_id, first_from, first_to = _flows(candidate)
+    seen = {package_key(first_from, first_to)}
+    gap = disagreement(candidate, human)
     for round_ in range(1, rounds + 1):
         side = short_side(current, human)
         if side is None:
@@ -353,31 +412,25 @@ def ai_counter(canonical: dict[str, Any], candidate: dict[str, Any], *, seed: in
         asking_id, giving_id, evaluation = side
         if giving_id in human:
             return None
-        if history and asking_id != history[-1]["giving_team_id"]:
-            return None  # only the team that turned the counter down may answer it; nobody asks twice
-        from_id, to_id, from_assets, to_assets = _flows(current)
+        _, _, from_assets, to_assets = _flows(current)
         asking_out, giving_out = (from_assets, to_assets) if asking_id == from_id else (to_assets, from_assets)
-        decision = evaluation.get("decision")
-        if decision == "reject_pick_investment":
-            # Too much draft capital for this player: the buyer asks to keep a pick of its own (taking less is never
-            # a gouge, so only the other side's bound applies).
-            # Its first offer is a player of its own in place of the pick ("Merrill instead of the second").
-            swaps = choose_counters(canonical, asking_id, giving_id, asking_out, giving_out, config, fixed=fixed,
-                                    kinds={"swap_own"}, overshoot=1e9, keep=2)
-            keeps = [o for o in choose_counters(canonical, asking_id, giving_id, asking_out, giving_out, config,
-                                                fixed=fixed, kinds={"keep_own"}, overshoot=1e9, keep=6)
-                     if any(a.get("kind") in {"pick", "pick_swap"} for a in asking_out
-                            if _key(a) not in {_key(b) for b in o["asking_out"]})]
-            options = (swaps + keeps)[:FULL_CHECKS_PER_COUNTER]
-        else:
-            options = choose_counters(canonical, asking_id, giving_id, asking_out, giving_out, config, fixed=fixed,
-                                      prefer_player_back=decision == "reject_roster_plan")
+        options = _options_for(canonical, asking_id, giving_id, asking_out, giving_out, config,
+                               evaluation.get("decision"), fixed)
         if diagnostics is not None:
             diagnostics["counter_attempts"] = diagnostics.get("counter_attempts", 0) + 1
-        answered = None
+        answered, checks = None, 0
         for option in options:
             new_from, new_to = ((option["asking_out"], option["giving_out"]) if asking_id == from_id
                                 else (option["giving_out"], option["asking_out"]))
+            key = package_key(new_from, new_to)
+            if key in seen:
+                continue  # no package comes back
+            if checks >= FULL_CHECKS_PER_COUNTER or (
+                    check_budget is not None and diagnostics is not None
+                    and diagnostics.get("counter_checks", 0) >= check_budget):
+                break
+            seen.add(key)
+            checks += 1
             report = tx.evaluate_trade_decision(
                 canonical, tx.team_by_id(canonical, from_id)["abbrev"], tx.team_by_id(canonical, to_id)["abbrev"],
                 _specs(new_from), _specs(new_to), seed=seed, date=date, config=config, context_ready=True,
@@ -387,27 +440,42 @@ def ai_counter(canonical: dict[str, Any], candidate: dict[str, Any], *, seed: in
                 diagnostics["counter_checks"] = diagnostics.get("counter_checks", 0) + 1
             if (result.get("legality") or {}).get("status") != "legal":
                 continue
-            history.append(describe(canonical, asking_id, giving_id, asking_out, giving_out, option))
+            step = {**describe(canonical, asking_id, giving_id, asking_out, giving_out, option), "round": round_,
+                    "offer": _offer(canonical, result)}
             if tx.ai_trade_candidate_accepted(canonical, result):
+                history.append({**step, "answer": "agreed"})
                 result["counter"] = {"rounds": round_, "steps": history, "text": " ".join(s["text"] for s in history)}
                 return result
+            new_gap = disagreement(result, human)
+            if new_gap >= gap - GAP_STEP:
+                continue  # not a real concession: the two sides are no closer
+            gap = new_gap
+            history.append({**step, "answer": "refused", "text": step["text"].split(";")[0] + "."})
             answered = result
             break
         if answered is None:
-            return None
+            return None  # nobody can concede more within its tolerance
         current = answered
-        history[-1] = {**history[-1], "text": history[-1]["text"].split(";")[0] + "."}
     return None
 
 
 def user_counter(canonical: dict[str, Any], candidate: dict[str, Any], user_team_id: str, *, seed: int, date: str,
-                 config: dict[str, Any] | None = None) -> dict[str, Any] | None:
+                 config: dict[str, Any] | None = None, chain: list[dict[str, Any]] | None = None) -> dict[str, Any] | None:
     """The AI partner's counter to the user's offer, or None: only when the partner refused it but is a little short
     (``short_side``). The counter is the partner's best ask on the user's roster and picks (its targets first), and it
     is returned only when the partner's own full check accepts it; the user decides. The returned candidate is the
-    exact deal (built by ``transactions.evaluate_trade``) that is executed if the user accepts it."""
+    exact deal (built by ``transactions.evaluate_trade``) that is executed if the user accepts it.
+
+    ``chain``: this negotiation so far, as sent back by the trade window: the partner's earlier counters
+    ({"package", "asking_net"}) and the user's earlier offers ({"package"}). A new counter never repeats a package
+    and must ask for less than the partner's last counter (a real concession); after COUNTER_ROUNDS counters the
+    partner stops countering."""
     tx = _tx()
     config = config or tx.default_transaction_model_config()
+    chain = [c for c in (chain or []) if isinstance(c, dict)]
+    previous = [c for c in chain if c.get("asking_net") is not None]
+    if len(previous) >= COUNTER_ROUNDS:
+        return None
     human = set(canonical.get("_human_team_ids") or []) | {user_team_id}
     side = short_side(candidate, human)
     if side is None:
@@ -417,11 +485,20 @@ def user_counter(canonical: dict[str, Any], candidate: dict[str, Any], user_team
         return None
     from_id, to_id, from_assets, to_assets = _flows(candidate)
     asking_out, giving_out = (from_assets, to_assets) if asking_id == from_id else (to_assets, from_assets)
-    options = choose_counters(canonical, asking_id, giving_id, asking_out, giving_out, config, giving_is_ai=False,
-                              prefer_player_back=evaluation.get("decision") == "reject_roster_plan")
+    seen = {str(c.get("package")) for c in chain} | {package_key(from_assets, to_assets)}
+    ceiling = min((float(c["asking_net"]) for c in previous), default=None)
+    options = _options_for(canonical, asking_id, giving_id, asking_out, giving_out, config,
+                           evaluation.get("decision"), frozenset(), giving_is_ai=False)
+    checks = 0
     for option in options:
         new_from, new_to = ((option["asking_out"], option["giving_out"]) if asking_id == from_id
                             else (option["giving_out"], option["asking_out"]))
+        key = package_key(new_from, new_to)
+        if key in seen or (ceiling is not None and option["asking_net"] > ceiling - GAP_STEP):
+            continue  # never the same package twice; each new counter asks for less than the last one
+        if checks >= FULL_CHECKS_PER_COUNTER:
+            break
+        checks += 1
         result = tx.evaluate_trade(canonical, tx.team_by_id(canonical, from_id)["abbrev"],
                                    tx.team_by_id(canonical, to_id)["abbrev"], _specs(new_from), _specs(new_to),
                                    seed=seed, date=date, config=config, context_ready=True)
@@ -430,8 +507,12 @@ def user_counter(canonical: dict[str, Any], candidate: dict[str, Any], user_team
         partner = next((e for e in result.get("evaluations") or [] if e.get("perspective_team_id") == asking_id), {})
         if not partner.get("accepted"):
             continue
-        step = describe(canonical, asking_id, giving_id, asking_out, giving_out, option, giving_is_user=True)
-        result["counter"] = {"rounds": 1, "steps": [step], "text": step["text"], "for_user": True}
+        round_ = len(previous) + 1
+        step = {**describe(canonical, asking_id, giving_id, asking_out, giving_out, option, giving_is_user=True),
+                "round": round_}
+        result["counter"] = {"rounds": round_, "steps": [step], "text": step["text"], "for_user": True,
+                             "package": key, "asking_net": option.get("asking_net"),
+                             "last_round": round_ >= COUNTER_ROUNDS}
         return result
     return None
 
