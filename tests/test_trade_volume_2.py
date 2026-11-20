@@ -95,6 +95,26 @@ class MarketTargetTests(unittest.TestCase):
             self.assertFalse(tt.package_fits_rules(canonical, pairing, pick))
 
 
+class RebuildingVeteranSigningTests(unittest.TestCase):
+    def test_rebuilding_team_does_not_pay_a_veteran_free_agent_above_the_mid_level(self):
+        from nba_gm_data import payroll_plan as pp
+        from test_trade_volume import SEASON, league, save_for
+        data = league(payroll_a=120_000_000)  # lots of cap room: the old rule (room below the tax) allows anything
+        butler = dict(add_salary=36_000_000, minutes=30.0, kind="free_agency", age=38)
+        check = pp.payroll_check(data, save_for("2027-07-02", "rebuilding"), "a", SEASON, **butler)
+        self.assertFalse(check["ok"])
+        self.assertEqual(check["reason"], "rebuilding_team_does_not_pay_veterans")
+        self.assertIn("mid-level", pp.plain_words(check))
+        cheap = dict(butler, add_salary=pp.veteran_price(SEASON) - 1)
+        self.assertTrue(pp.payroll_check(data, save_for("2027-07-02", "rebuilding"), "a", SEASON, **cheap)["ok"])
+        self.assertTrue(pp.payroll_check(data, save_for("2027-07-02", "rebuilding"), "a", SEASON,
+                                         **dict(butler, age=26))["ok"], "young players are what a rebuild buys")
+        self.assertTrue(pp.payroll_check(data, save_for("2027-07-02", "peak"), "a", SEASON, **butler)["ok"])
+        self.assertTrue(pp.payroll_check(data, save_for("2027-07-02", "rebuilding"), "a", SEASON,
+                                         **dict(butler, kind="re_signing"))["ok"], "its own players are not affected")
+        self.assertGreater(pp.veteran_price("2028-29"), pp.veteran_price(SEASON))
+
+
 class SummerMarketTests(unittest.TestCase):
     def candidate(self, pid, teams=("a", "b"), accepted=True):
         return {"accepted_by_all": accepted, "legality": {"status": "legal"},
