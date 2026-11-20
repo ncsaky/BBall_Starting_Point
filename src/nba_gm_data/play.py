@@ -5533,6 +5533,7 @@ def free_agency_offer_context_score(
     )
     return {
         "context_score": round(clamp(context, 0.0, 100.0), 1),
+        "context_raw": context,   # before the 0-100 clamp (user_offer_contexts derives other lengths from it)
         "projected_minutes": round(projected_minutes, 1),
         "role": round(role_score, 1),
         "fit": round(fit_score, 1),
@@ -7045,9 +7046,19 @@ def user_offer_market_terms(canonical: dict[str, Any], save: dict[str, Any], pla
                            if best else None)}
 
 
+def user_offer_contexts(canonical: dict[str, Any], save: dict[str, Any], player: dict[str, Any],
+                        team: dict[str, Any]) -> dict[int, float]:
+    """Your team's context score for each contract length 1-5 (free_agency_offer_context_score; only its security
+    part depends on the length, so it is computed once and the security part swapped)."""
+    base = free_agency_offer_context_score(canonical, save, player, team, 1, "user")
+    security = lambda years: clamp(34.0 + max(1, years) * 15.0, 30.0, 92.0) * 0.1
+    raw = float(base["context_raw"]) - security(1)
+    return {years: round(clamp(raw + security(years), 0.0, 100.0), 1) for years in range(1, 6)}
+
+
 def user_offer_context(canonical: dict[str, Any], save: dict[str, Any], player: dict[str, Any], team: dict[str, Any],
                        years: int) -> float:
-    return float(free_agency_offer_context_score(canonical, save, player, team, years, "user")["context_score"])
+    return user_offer_contexts(canonical, save, player, team)[max(1, min(5, int(years)))]
 
 
 def user_offer_effective_salary(player: dict[str, Any], aav_millions: float, guaranteed: bool) -> float:

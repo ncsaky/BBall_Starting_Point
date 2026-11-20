@@ -3226,12 +3226,13 @@ def free_agent_offer_floors(active: dict[str, Any], save: dict[str, Any], player
     teams' bids. His interest in your offer (salary against his market ask, years, your team's context) must reach his
     bar today and beat the best rival bid. None: no salary wins him from you today.
     """
-    from .play import user_offer_context, user_offer_floor, user_offer_market_terms
+    from .play import user_offer_contexts, user_offer_floor, user_offer_market_terms
 
     terms = user_offer_market_terms(active, save, player, team)
+    contexts = user_offer_contexts(active, save, player, team)
     by_years: dict[str, dict[str, float | None]] = {"guaranteed": {}, "non_guaranteed": {}}
     for years in range(1, 6):
-        context = user_offer_context(active, save, player, team, years)
+        context = contexts[years]
         for key, guaranteed in (("guaranteed", True), ("non_guaranteed", False)):
             by_years[key][str(years)] = user_offer_floor(player, years, guaranteed, terms, context)
     default_years = str(max(1, min(4, safe_years or 1)))
