@@ -224,7 +224,7 @@
     if (!host?.isConnected) return;
     host.classList.toggle("is-tucked", coversOpenWindow(host));
   }
-  setInterval(updateTuck, 500);
+  if (typeof setInterval === "function") setInterval(updateTuck, 500);
   window.addEventListener?.("resize", updateTuck);
   // Escape dismisses a showing Assistant GM text before anything else handles the key (otherwise it closed the
   // active dashboard window behind the phone). Open dialogs keep Escape for themselves.

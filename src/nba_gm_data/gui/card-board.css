@@ -4340,8 +4340,15 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .exte
   gap:8px; height:100%; min-height:0; min-width:0; padding:0; box-sizing:border-box;
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-builder {
-  zoom:1.42; border:1px solid var(--season-line, #b7c2cb); min-height:0; height:auto;
+  zoom:1.34; border:1px solid var(--season-line, #b7c2cb); min-height:0; height:auto;
 }
+/* The verdict stays in view next to the Sign button while the facts and offer scroll above it. */
+body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-verdict {
+  flex:0 0 auto; margin:0; border:0; border-top:1px solid var(--season-line, #b7c2cb); background:#fff;
+}
+body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-verdict > header { display:none; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-verdict .fa-verdict-line { padding:4px 8px 3px; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-verdict .fa-verdict-meter { padding:2px 8px 4px; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-builder .fa-builder-market dl > div { grid-template-columns:118px minmax(0,1fr); }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-builder .fa-builder-foot .fa-submit { min-width:150px; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-builder .fa-segmented button:disabled { text-decoration:line-through; }
@@ -4349,7 +4356,7 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .exte
   display:grid; grid-template-rows:auto minmax(0,1fr); gap:8px; min-height:0; min-width:0;
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-cap {
-  zoom:1.42; border:1px solid var(--season-line, #b7c2cb); background:#fff; min-width:0;
+  zoom:1.34; border:1px solid var(--season-line, #b7c2cb); background:#fff; min-width:0;
 }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-cap > header { min-height:0; padding:4px 8px; font:700 10px Tahoma,Arial,sans-serif; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card--extension .ext-cap-table tbody tr.has-offer th { box-shadow:inset 3px 0 #c2a83b; }

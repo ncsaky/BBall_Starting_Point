@@ -10634,7 +10634,7 @@ function extensionCapTableMarkup(preview, candidate) {
         ? `<span title="Half of the league's tax is shared equally by the teams under the line; this is your share with today's league payrolls">Share ${money(row.payoutShare)}</span>`
         : `<span class="fa-muted">—</span>`;
     return `<tr class="${row.salary ? "has-offer" : ""} ${tone}">
-      <th scope="row">${escapeHtml(shortSeasonLabel(row.season))}${row.unresolved ? `<small title="${escapeAttr(`${row.unresolved} contracts not yet set for this season`)}">open</small>` : ""}</th>
+      <th scope="row"${row.unresolved ? ` title="${escapeAttr(`${row.unresolved} roster contracts are not set for this season yet`)}"` : ""}>${escapeHtml(shortSeasonLabel(row.season))}${row.unresolved ? "*" : ""}</th>
       <td>${money(row.payroll)}</td>
       <td>${row.current ? money(row.current) : `<span class="fa-muted">—</span>`}</td>
       <td>${row.salary ? `+${money(row.salary)}` : `<span class="fa-muted">—</span>`}</td>
@@ -10653,7 +10653,7 @@ function extensionCapTableMarkup(preview, candidate) {
       <thead><tr><th scope="col">Season</th><th scope="col" title="Payroll today, including his current contract">Payroll</th><th scope="col" title="His current contract (already in payroll)">His deal</th><th scope="col" title="This extension">Extension</th><th scope="col">After</th><th scope="col" title="Room under the luxury tax after this extension">Tax room</th><th scope="col" title="Room under the hard cap (the second apron) after this extension">Hard-cap room</th><th scope="col" title="Luxury-tax bill if over the line, or your share of the tax payout if under it">Tax / payout</th></tr></thead>
       <tbody>${rows || `<tr><td colspan="8" class="fa-empty">No cap seasons available.</td></tr>`}</tbody>
     </table>
-    <p class="fa-muted">The extension starts in ${escapeHtml(shortSeasonLabel(start) || "the season after his deal ends")} and must fit under the hard cap in every season; it may go over the tax. Later seasons count today's contracts only; payout shares use today's league payrolls.${escapeHtml(splitNote)}</p>`;
+    <p class="fa-muted">The extension starts in ${escapeHtml(shortSeasonLabel(start) || "the season after his deal ends")} and must fit under the hard cap in every season; it may go over the tax. * Later seasons count today's contracts only; payout shares use today's league payrolls.${escapeHtml(splitNote)}</p>`;
 }
 
 function extensionOfferFootMarkup(preview, legal = true) {
@@ -10705,9 +10705,9 @@ function extensionNegotiationPage(room, selectedPlayerId, response = null, detai
               <p class="fa-offer-note" data-extension-guarantee-note>${preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on January 10; release him before then and you owe nothing. He asks ${Number.isFinite(premium) ? `${premium.toFixed(1)}%` : ""} more for this.`}</p></div></div>
             <p class="fa-offer-note fa-offer-options"><b>Options:</b> none. Extensions in this game have no player or team options, and the salary is the same every season.</p>
           </section>
-          <section class="approved-card-panel fa-offer-verdict fa-verdict-${preview.verdict.tone}" data-extension-verdict role="status" aria-live="polite">${extensionVerdictMarkup(preview)}</section>
           ${status}
         </div>
+        <section class="approved-card-panel fa-offer-verdict ext-verdict fa-verdict-${preview.verdict.tone}" data-extension-verdict role="status" aria-live="polite">${extensionVerdictMarkup(preview)}</section>
         <footer class="fa-builder-foot" data-extension-foot>${extensionOfferFootMarkup(preview, true)}</footer>
       </form>
       <div class="extension-page-impact">
@@ -10858,7 +10858,7 @@ function updateExtensionPreview(modal = state.modal, root = els.modalRoot) {
   const premium = Number(candidate.security_premium_pct?.non_guaranteed);
   if (note) note.textContent = preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on January 10; release him before then and you owe nothing. He asks ${Number.isFinite(premium) ? `${premium.toFixed(1)}%` : ""} more for this.`;
   const verdict = root.querySelector("[data-extension-verdict]");
-  if (verdict) { verdict.className = `approved-card-panel fa-offer-verdict fa-verdict-${preview.verdict.tone}`; verdict.innerHTML = extensionVerdictMarkup(preview); }
+  if (verdict) { verdict.className = `approved-card-panel fa-offer-verdict ext-verdict fa-verdict-${preview.verdict.tone}`; verdict.innerHTML = extensionVerdictMarkup(preview); }
   const cap = root.querySelector("[data-extension-cap]");
   if (cap) cap.innerHTML = extensionCapTableMarkup(preview, candidate);
   const foot = root.querySelector("[data-extension-foot]");
