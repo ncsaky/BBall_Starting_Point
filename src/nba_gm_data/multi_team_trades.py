@@ -113,7 +113,19 @@ def apply_multi_team_trade_to_state(save, candidate, date, *, canonical, config=
     if len(human) > 1 or human - explicit:
         return {'status': 'not_applied_rejected', 'notes': 'Every human participant must explicitly approve; shared-human settlement is not supported yet.'}
     joiners = set(candidate.get('joiner_team_ids') or [])
-    if joiners and not human:
+    bounded_offer = bool(candidate.get('bounded_ai_acceptance')) and bool(human)
+    chain = candidate.get('draft_chain')
+    if chain and not human:
+        # A draft-night chain (TRADE-TAXPOOL): each buyer accepts with what its target prospect is worth to it.
+        if not draft_chain_accept(fresh, chain):
+            return {'status': 'not_applied_rejected', 'proposal_id': pid, 'evaluations': fresh['evaluations']}
+        for evaluation in fresh['evaluations']:
+            if evaluation['perspective_team_id'] in (chain.get('premiums') or {}):
+                evaluation['draft_target_premium'] = chain['premiums'][evaluation['perspective_team_id']]
+                evaluation['accepted'] = True
+                evaluation['decision'] = 'accept_draft_target'
+        fresh['accepted_by_all'] = True
+    elif (joiners and not human) or bounded_offer:
         # Trade step 4: an AI-only deal built with joining teams is re-checked under the same rule it was made with
         # (main teams within the two-team negotiation bounds, joining teams outright).
         if not bounded_multi_team_accept(active, fresh, joiners):
@@ -421,6 +433,27 @@ def bounded_multi_team_accept(canonical, candidate, joiner_ids) -> bool:
     return sum(core_nets) >= -2.0
 
 
+def draft_chain_accept(candidate, chain) -> bool:
+    """A draft-night chain (play.best_ai_draft_chain): legal; the team trading down accepts on its own evaluation and
+    clears the pick's floor; each buyer's net plus what its target prospect is worth to it clears its threshold (the
+    same rule as a two-team draft-night trade-up, play.draft_trade_both_accept)."""
+    if (candidate.get('legality') or {}).get('status') != 'legal':
+        return False
+    evaluations = candidate.get('evaluations') or []
+    premiums = chain.get('premiums') or {}
+    if {e.get('perspective_team_id') for e in evaluations} != {chain.get('seller_id'), *premiums}:
+        return False
+    for e in evaluations:
+        tid = e.get('perspective_team_id')
+        net = float(e.get('net_value') or -99.0)
+        if tid == chain.get('seller_id'):
+            if not e.get('accepted') or net < float(chain.get('seller_floor') or 0.0):
+                return False
+        elif net + float(premiums.get(tid) or 0.0) < float(e.get('acceptance_threshold') or 0.0):
+            return False
+    return True
+
+
 def mark_multi_team_accepted(candidate, joiner_ids):
     """Record the bounded acceptance of the main teams (the joiners already accepted outright)."""
     updated = json.loads(json.dumps(candidate))
@@ -697,8 +730,8 @@ def repair_routes(canonical, candidate, config, *, human_absorber=False, joiners
         if salary < ABSORB_MIN_SALARY:
             continue
         age = tx.maybe_float(player.get('display_age', player.get('age'))) or 27.0
-        if age < 24.0:
-            continue
+        if not tt.dump_age_ok(canonical, player, age):
+            continue  # never a recent draft pick (years in the league, not age: TRADE-TAXPOOL)
         shed = outgoing + [{'kind': 'player', 'id': pid}]
         if tax_value(canonical, short_id, incoming, shed) - tax_value(canonical, short_id, incoming, outgoing) <= 1.0:
             continue  # only a tax saving justifies adding a contract to the deal
@@ -836,8 +869,12 @@ def multi_team_reasons(canonical, route, base_reasons):
         from .trade_tax import tax_saved
         flows = _flows(route['legs'])
         inc, out = flows[route['short_id']]
-        saved = tax_saved(canonical, route['short_id'], inc, out)['saved']
+        saving = tax_saved(canonical, route['short_id'], inc, out)
+        saved, pool = saving['saved'], saving['pool']
         cut = f", bringing its luxury-tax saving in the whole deal to about ${saved / 1e6:.1f}M" if saved > 0 else ''
+        if pool > 0:
+            cut = (f", which gets it under the luxury tax line: about ${saving['tax_only'] / 1e6:.1f}M of tax saved in "
+                   f"the whole deal, plus its share of the tax payout (about ${pool / 1e6:.1f}M)")
         why = (f"{ab(route['short_id'])} also moved {mover.get('name')} (${salary / 1e6:.1f}M) in the same deal{cut}; "
                f"{ab(absorber)} ({stance}) had room under the tax and took him for {paid_text}")
     text = (base_reasons or {}).get('text') or ''
@@ -968,8 +1005,14 @@ def enrich_agreed_deals(canonical, proposals, *, seed, date, config, depth, diag
 
 def user_absorber_offers(canonical, near_misses, *, seed, date, config, limit=2, diagnostics=None):
     """Incoming offers for the human team to take salary in a deal two AI teams almost made (user decision
-    2026-11-19: offered, never automatic). The AI teams must both accept outright; the human team is paid what an AI
-    team in its place would ask, at least one second-round pick."""
+    2026-11-19: offered, never automatic). The human team is paid what an AI team in its place would ask, at least one
+    second-round pick.
+
+    The two AI teams accept under the same bounded negotiation as an AI-only deal built from the same near-miss
+    (TRADE-TAXPOOL). In step 4 they had to accept outright, which a near-miss by definition rarely does once the
+    payment picks leave one of them: 3 offers were tried in the two-season test and none reached the user, while the
+    AI-only versions of the same deals used the bounded rule. The offer is marked so the settlement re-check, after
+    the user accepts, uses the same rule."""
     diag = diagnostics if diagnostics is not None else {}
     human = list(canonical.get('_human_team_ids') or [])
     if not human:
@@ -988,9 +1031,15 @@ def user_absorber_offers(canonical, near_misses, *, seed, date, config, limit=2,
             if tx.multi_team_participation_issues(canonical, result):
                 continue
             ai_evals = [e for e in result['evaluations'] if e['perspective_team_id'] not in human]
-            if not ai_evals or not all(e.get('accepted') for e in ai_evals):
+            if not ai_evals or not bounded_multi_team_accept(canonical, result, set()):
                 continue
             result = json.loads(json.dumps(result))
+            result['bounded_ai_acceptance'] = True
+            for evaluation in result['evaluations']:
+                if evaluation['perspective_team_id'] not in human and not evaluation.get('accepted'):
+                    evaluation['accepted'] = True
+                    evaluation['decision'] = 'accept_bounded_ai_discretion'
+                    evaluation.setdefault('reasons', []).append('bounded_ai_discretion')
             result['search_route'] = 'multi_team_user_absorber'
             result['target_source'] = 'multi_team_user_absorber'
             result['trade_reasons'] = multi_team_reasons(canonical, route, item.get('trade_reasons'))

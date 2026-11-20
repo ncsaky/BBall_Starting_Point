@@ -5852,7 +5852,7 @@ function freeAgencyIntelligenceRail(room, exclusive = false) {
     <section class="market-intelligence-panel cap-intelligence paper-payroll-panel">
       ${freeAgencyCapPosition(room, cap)}
     </section>
-    <section class="market-intelligence-panel market-cap-totals"><p class="market-intelligence-title">Cap position</p><div class="market-cap-summary"><span><small>Payroll</small><strong>${money(cap.salary_total_millions)}</strong></span><span><small>Tax room</small><strong>${signedMoney(cap.tax_space_millions)}</strong></span><span><small>Hard cap room</small><strong>${signedMoney(cap.hard_cap_space_millions)}</strong></span></div></section>
+    <section class="market-intelligence-panel market-cap-totals"><p class="market-intelligence-title">Cap position</p><div class="market-cap-summary"><span><small>Payroll</small><strong>${money(cap.salary_total_millions)}</strong></span><span><small>Tax room</small><strong>${signedMoney(cap.tax_space_millions)}</strong></span><span><small>Hard cap room</small><strong>${signedMoney(cap.hard_cap_space_millions)}</strong></span>${cap.tax_payout ? `<span title="${escapeAttr(`${cap.tax_payout.season}: half of the luxury tax collected from ${cap.tax_payout.taxpayers} taxpaying team(s), split equally among the ${cap.tax_payout.recipients} teams under the line; paid ${cap.tax_payout.paid_on}`)}"><small>Tax ${cap.tax_payout.tax_bill_millions > 0 ? "bill" : "payout"} ${escapeHtml(shortSeasonLabel(cap.tax_payout.season))}</small><strong>${cap.tax_payout.tax_bill_millions > 0 ? signedMoney(-cap.tax_payout.tax_bill_millions) : signedMoney(cap.tax_payout.payout_millions)}</strong></span>` : ""}</div></section>
   </aside>`;
 }
 
@@ -13421,6 +13421,7 @@ function offerCard(offer, index) {
   return `<article class="incoming-offer${repeatCount > 1 ? " incoming-offer--repeated" : ""}">
     <header class="incoming-offer-heading"><div><span>Offer ${index + 1}</span>${repeatedLabel}<strong>${escapeHtml(proposal.transfers ? tradeReceipts(proposal).map(row=>row.team).join(' ↔ ') : `${from} ↔ ${to}`)}</strong></div>${tradeLegalityBadge(offer)}</header>
     ${incomingOfferPackage(tradeReceipts(proposal))}
+    ${offer.trade_reasons?.text ? `<p class="incoming-offer-reason"><strong>Why:</strong> ${escapeHtml(offer.trade_reasons.text)}</p>` : ""}
     ${typeof tradeWantsOfferSummary==='function'?tradeWantsOfferSummary(offer):''}
     ${tradeLegalityIssues(offer)}
     <div class="incoming-offer-analysis-row">

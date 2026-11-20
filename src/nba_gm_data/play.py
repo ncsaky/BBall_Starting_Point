@@ -3085,6 +3085,42 @@ def maybe_run_ai_draft_trades_before_pick(canonical: dict[str, Any], save_path: 
     return result
 
 
+# Draft-night trade budget, spread over the whole draft (TRADE-TAXPOOL). Before, the five trades a draft allows were
+# spent first-come in pick order, and a "quiet market" rule loosened the floors from pick 11 until five trades had
+# happened, so all five landed at picks 11-18 in both drafts of the two-season test. Real drafts have trades at the top,
+# in the middle, late in the first round and in round two (June 2026, data/research/real_trades: a three-team chain at
+# 16/17/21, a four-team shuffle at 24/25/30, #26 and #29 bought with early seconds, second-round swaps from 37 to 56).
+# Each part of the draft now has its own share of the budget (at most two trades), and the floors loosen only inside
+# a part that has had no trade by its middle pick.
+DRAFT_TRADES_PER_DRAFT = 5
+DRAFT_TRADES_PER_SEGMENT = 2
+DRAFT_TRADE_SEGMENTS = (("top_10", 1, 10), ("picks_11_20", 11, 20), ("picks_21_30", 21, 30), ("round_2", 31, 60))
+DRAFT_TRADE_LAST_PICK = 60
+
+
+def draft_trade_segment(overall: int) -> tuple[str, int, int]:
+    return next((row for row in DRAFT_TRADE_SEGMENTS if row[1] <= overall <= row[2]), DRAFT_TRADE_SEGMENTS[-1])
+
+
+def draft_trade_quiet_segment(budget: dict[str, Any], overall: int) -> bool:
+    """No trade yet in this part of the draft (after the top 10) and its middle pick reached: floors loosen a little."""
+    key, first, last = draft_trade_segment(overall)
+    if key == "top_10":
+        return False
+    return int((budget.get("segments") or {}).get(key) or 0) == 0 and overall >= (first + last + 1) // 2
+
+
+def draft_trade_pick_destinations(proposal: dict[str, Any]) -> dict[str, str]:
+    """pick id -> the team that receives it, for a two-team or multi-team proposal."""
+    if proposal.get("transfers"):
+        return {str(asset.get("id") or asset.get("value")): leg.get("to_team_id")
+                for leg in proposal["transfers"] for asset in leg.get("assets") or [] if asset.get("kind") == "pick"}
+    return {
+        **{str(asset.get("id") or asset.get("value")): proposal.get("to_team_id") for asset in proposal.get("from_assets", []) if asset.get("kind") == "pick"},
+        **{str(asset.get("id") or asset.get("value")): proposal.get("from_team_id") for asset in proposal.get("to_assets", []) if asset.get("kind") == "pick"},
+    }
+
+
 def maybe_run_ai_draft_trades_before_pick_state(
     canonical: dict[str, Any],
     save: dict[str, Any],
@@ -3111,14 +3147,20 @@ def maybe_run_ai_draft_trades_before_pick_state(
     if pick_id in traded_ids or pick_id in used_ids:
         return {"applied_count": 0, "trades": []}
     budget = state.setdefault("ai_draft_trade_budget", {"top_10": 0, "picks_11_25": 0, "total": 0})
+    segment_key = draft_trade_segment(overall)[0]
     if not force:
-        if int(budget.get("total") or 0) >= 5:
+        if int(budget.get("total") or 0) >= DRAFT_TRADES_PER_DRAFT:
             return {"applied_count": 0, "trades": []}
-        if overall <= 10 and int(budget.get("top_10") or 0) >= 2:
+        if int((budget.get("segments") or {}).get(segment_key) or 0) >= DRAFT_TRADES_PER_SEGMENT:
             return {"applied_count": 0, "trades": []}
-        if 11 <= overall <= DRAFT_TRADE_LAST_PICK and int(budget.get("picks_11_25") or 0) >= 5:
-            return {"applied_count": 0, "trades": []}
-    candidate = best_ai_draft_trade_candidate(active, save, state, current, human_team_ids, seed)
+    options: list[dict[str, Any]] = []
+    candidate = best_ai_draft_trade_candidate(active, save, state, current, human_team_ids, seed, options_out=options)
+    # A chain (TRADE-TAXPOOL): the team on the clock trades down twice in one deal, so a second buyer gets its own
+    # target at the pick the first buyer gives up. Only when the team trading down does at least as well as in the
+    # plain trade.
+    chain = best_ai_draft_chain(active, save, state, current, human_team_ids, seed, options) if options else None
+    if chain:
+        candidate = chain
     if not candidate:
         return {"applied_count": 0, "trades": []}
     proposal = candidate.get("proposal") or {}
@@ -3133,21 +3175,26 @@ def maybe_run_ai_draft_trades_before_pick_state(
         save,
         proposal_id,
         date=save.get("state", {}).get("current_date") or CANONICAL_START_DATE,
+        canonical=canonical if proposal.get("transfers") else None,
     )
     if applied.get("status") != "applied":
+        if proposal.get("transfers"):
+            save["pending_trade_proposals"] = [item for item in save.get("pending_trade_proposals", [])
+                                               if ((item.get("proposal") or {}).get("id") or item.get("id")) != proposal_id]
         return {"applied_count": 0, "trades": [], "skipped": applied}
-    involved_pick_ids = {
-        asset.get("id")
-        for asset in [*(proposal.get("from_assets") or []), *(proposal.get("to_assets") or [])]
-        if asset.get("kind") == "pick" and asset.get("id")
-    }
+    state = save.setdefault("draft_state", {})  # a multi-team settlement replaces the save's contents with its copy
+    destinations = draft_trade_pick_destinations(proposal)
+    involved_pick_ids = set(destinations)
+    buyers = set((candidate.get("draft_chain") or {}).get("buyer_team_ids") or [proposal.get("to_team_id")])
     state["ai_draft_traded_pick_ids"] = sorted(set(state.get("ai_draft_traded_pick_ids") or []) | involved_pick_ids)
-    state["ai_draft_trade_buyers"] = sorted(set(state.get("ai_draft_trade_buyers") or []) | {proposal.get("to_team_id")})
+    state["ai_draft_trade_buyers"] = sorted(set(state.get("ai_draft_trade_buyers") or []) | buyers)
     budget = state.setdefault("ai_draft_trade_budget", {"top_10": 0, "picks_11_25": 0, "total": 0})
     budget["total"] = int(budget.get("total") or 0) + 1
+    segments = budget.setdefault("segments", {})
+    segments[segment_key] = int(segments.get(segment_key) or 0) + 1
     if overall <= 10:
         budget["top_10"] = int(budget.get("top_10") or 0) + 1
-    elif overall <= DRAFT_TRADE_LAST_PICK:
+    elif overall <= 30:
         budget["picks_11_25"] = int(budget.get("picks_11_25") or 0) + 1
     headline = draft_trade_headline(active, state, proposal)
     trade_posts = [
@@ -3167,18 +3214,14 @@ def maybe_run_ai_draft_trades_before_pick_state(
         "proposal_id": proposal.get("id"),
         "social_post": social_post,
     }
+    if (candidate.get("trade_reasons") or {}).get("text"):
+        news_item["reason"] = candidate["trade_reasons"]["text"]
     state.setdefault("ai_draft_trade_news_queue", []).append(news_item)
     state.setdefault("ai_draft_trade_history", []).append(news_item)
     refresh_live_draft_state_ownership(canonical, save, state.get("year"))
-    from_team_id = proposal.get("from_team_id")
-    to_team_id = proposal.get("to_team_id")
-    owner_by_pick_id = {
-        **{str(asset.get("id")): to_team_id for asset in proposal.get("from_assets", []) if asset.get("kind") == "pick" and asset.get("id")},
-        **{str(asset.get("id")): from_team_id for asset in proposal.get("to_assets", []) if asset.get("kind") == "pick" and asset.get("id")},
-    }
     for pick in active.get("draft_picks", []):
-        if str(pick.get("id")) in owner_by_pick_id:
-            pick["current_owner_team_id"] = owner_by_pick_id[str(pick.get("id"))]
+        if str(pick.get("id")) in destinations:
+            pick["current_owner_team_id"] = destinations[str(pick.get("id"))]
     return {"applied_count": 1, "trades": [candidate], "apply_result": applied}
 
 
@@ -3189,13 +3232,34 @@ def best_ai_draft_trade_candidate(
     current: dict[str, Any],
     human_team_ids: set[str],
     seed: int,
+    *,
+    options_out: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any] | None:
+    """The best plain trade-up for the pick on the clock; ``options_out`` receives every option (for chains)."""
+    options = ai_draft_trade_options(active, save, state, current, human_team_ids, seed)
+    if options_out is not None:
+        options_out.extend(options)
+    return options[0]["candidate"] if options else None
+
+
+DRAFT_SECOND_ROUND_GRADE_FLOOR = 45.0
+
+
+def ai_draft_trade_options(
+    active: dict[str, Any],
+    save: dict[str, Any],
+    state: dict[str, Any],
+    current: dict[str, Any],
+    human_team_ids: set[str],
+    seed: int,
+) -> list[dict[str, Any]]:
+    """Every two-team trade-up for the pick on the clock that both teams accept, best first."""
     selection = current.get("selection") or {}
     pick_id = selection.get("pick_id") or (current.get("pick") or {}).get("id")
     seller_team_id = selection.get("team_id")
     overall = int(selection.get("overall_pick") or 999)
     if not pick_id or not seller_team_id:
-        return None
+        return []
     seller = team_by_id(active, seller_team_id)
     unavailable = taken_draft_prospect_ids(state)
     seller_recs = pick_recommendations(active, seller["abbrev"], pick_id, limit=5, seed=seed, unavailable_prospect_ids=unavailable).get("recommendations") or []
@@ -3204,8 +3268,7 @@ def best_ai_draft_trade_candidate(
     seller_willingness = max(0.0, 8.0 - max(0.0, seller_top - seller_second))
     candidates: list[tuple[float, dict[str, Any]]] = []
     budget = state.get("ai_draft_trade_budget") or {}
-    prior_trade_count = int(budget.get("total") or 0)
-    quiet_mid_first_market = overall >= 11 and prior_trade_count < max(1, (overall - 8) // 5)
+    quiet_market = draft_trade_quiet_segment(budget, overall)
     traded_up = set(state.get("ai_draft_trade_buyers") or [])
     for buyer in sorted(active.get("teams", []), key=lambda item: item.get("abbrev", "")):
         if buyer.get("id") == seller_team_id or buyer.get("id") in human_team_ids:
@@ -3219,8 +3282,8 @@ def best_ai_draft_trade_candidate(
         if not buyer_recs:
             continue
         buyer_grade = float(((buyer_recs[0] or {}).get("entry") or {}).get("risk_adjusted_grade") or 0.0)
-        buyer_grade_floor = 60.0 if overall <= 10 else 55.0
-        if quiet_mid_first_market:
+        buyer_grade_floor = 60.0 if overall <= 10 else 55.0 if overall <= 30 else DRAFT_SECOND_ROUND_GRADE_FLOOR
+        if quiet_market:
             buyer_grade_floor -= 4.0
         if buyer_grade < buyer_grade_floor:
             continue
@@ -3238,12 +3301,7 @@ def best_ai_draft_trade_candidate(
         buyer_eval = next((item for item in candidate.get("evaluations", []) if item.get("perspective_team_id") == buyer["id"]), {})
         seller_net = float(seller_eval.get("net_value") or -99.0)
         buyer_net = float(buyer_eval.get("net_value") or -99.0)
-        seller_state = next((item for item in active.get("team_strategic_states", []) if item.get("team_id") == seller_team_id), {})
-        seller_floor = 8.0 if overall == 1 else 4.0 if overall <= 5 else 1.5 if overall <= 10 else -2.0
-        if overall <= 8 and seller_state.get("phase") in {"rebuilding", "developing"}:
-            seller_floor += 4.0
-        if quiet_mid_first_market:
-            seller_floor -= 2.5
+        seller_floor = draft_trade_seller_floor(active, seller_team_id, overall, quiet_market)
         # Both teams must accept (trade step 2; before, the buyer's own evaluation rejected every draft-night deal
         # and it went through anyway). The seller accepts on its own evaluation. The buyer pays over the pick's
         # slot price because it wants a specific prospect: its evaluation adds what that prospect is worth to it
@@ -3280,11 +3338,150 @@ def best_ai_draft_trade_candidate(
             "text": (f"{buyer['abbrev']} traded up to pick {overall} for {target_prospect.get('name')}, "
                      f"number {board_rank} on its draft board; {seller['abbrev']} moved down for more draft value."),
         }
-        candidates.append((score, candidate))
-    if not candidates:
+        candidates.append((score, {"score": score, "candidate": candidate, "buyer_id": buyer["id"],
+                                   "lower_pick": lower_pick, "to_assets": to_assets, "premium": premium,
+                                   "target": target_prospect, "board_rank": board_rank, "seller_net": seller_net,
+                                   "seller_floor": seller_floor}))
+    candidates.sort(key=lambda item: (item[0], jsonable_proposal_id(item[1]["candidate"])), reverse=True)
+    return [row for _, row in candidates]
+
+
+def draft_trade_seller_floor(active: dict[str, Any], seller_team_id: str, overall: int, quiet_market: bool) -> float:
+    seller_state = next((item for item in active.get("team_strategic_states", []) if item.get("team_id") == seller_team_id), {})
+    seller_floor = 8.0 if overall == 1 else 4.0 if overall <= 5 else 1.5 if overall <= 10 else -2.0
+    if overall <= 8 and seller_state.get("phase") in {"rebuilding", "developing"}:
+        seller_floor += 4.0
+    if quiet_market:
+        seller_floor -= 2.5
+    return seller_floor
+
+
+# Draft-night chains (TRADE-TAXPOOL; trade step 4's plan). The real shape (June 2026, data/research/real_trades):
+# Memphis on the clock at 16 sent 16 to Oklahoma City (Bennett Stirtz) and 17 to Detroit (Ebuka Okorie) and moved down
+# to 21 with five seconds; New York shuffled 24, 25 and 30 among the Lakers, Dallas and Phoenix for seconds. Here: when
+# a team trades up to the pick on the clock and pays with its own lower pick, that lower pick can go straight on to a
+# third team that targets a prospect there and pays the team on the clock with a still-lower pick and seconds. The team
+# on the clock trades down twice in one deal; each buyer gets the prospect it targets at its new slot (its own scouts'
+# board and GM choice, with the prospects likely gone by then removed); every team states its reason. All three teams
+# must accept on their own evaluations (each buyer with what its target is worth to it, as in a plain trade-up).
+DRAFT_CHAIN_OPTIONS = 3
+
+
+def draft_chain_pool(state: dict[str, Any], lower_overall: int, exclude: set[str]) -> list[dict[str, Any]]:
+    """Prospects likely still there at ``lower_overall``: the remaining board minus the first buyer's target and the
+    prospects the simulated draft has going between the pick on the clock and that slot."""
+    pending = (state.get("draft") or {}).get("pending_draft_selections") or []
+    index = int(state.get("current_index") or 0)
+    gone = set(exclude)
+    for item in pending[index + 1:]:
+        if int((item.get("selection") or {}).get("overall_pick") or 999) >= lower_overall:
+            break
+        gone.add(str((item.get("prospect") or {}).get("id") or ""))
+    return [deepcopy(item.get("prospect")) for item in pending[index:]
+            if item.get("prospect") and str(item["prospect"].get("id")) not in gone]
+
+
+def best_ai_draft_chain(
+    active: dict[str, Any],
+    save: dict[str, Any],
+    state: dict[str, Any],
+    current: dict[str, Any],
+    human_team_ids: set[str],
+    seed: int,
+    options: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    from .draft import preferred_prospect_for_pick
+    from .multi_team_trades import evaluate_multi_team_trade
+    selection = current.get("selection") or {}
+    pick_id = selection.get("pick_id") or (current.get("pick") or {}).get("id")
+    seller_id = selection.get("team_id")
+    overall = int(selection.get("overall_pick") or 999)
+    seller = team_by_id(active, seller_id)
+    traded_up = set(state.get("ai_draft_trade_buyers") or [])
+    year = str(state.get("year") or selection.get("draft_year") or "")
+    draft_seed = int((state.get("draft") or {}).get("seed") or 1)
+    today = save.get("state", {}).get("current_date") or CANONICAL_START_DATE
+    plain_net = float(options[0]["seller_net"]) if options else -99.0
+    best = None
+    for option in options[:DRAFT_CHAIN_OPTIONS]:
+        lower = option.get("lower_pick")
+        if not lower:
+            continue
+        buyer_a = option["buyer_id"]
+        lower_overall = int(lower.get("overall_pick") or 999)
+        lower_id = lower["id"]
+        extras = [asset for asset in option["to_assets"] if (asset.get("value") or asset.get("id")) != lower_id]
+        pool = draft_chain_pool(state, lower_overall, {str((option.get("target") or {}).get("id") or "")})
+        if not pool:
+            continue
+        for team_b in sorted(active.get("teams", []), key=lambda item: item.get("abbrev", "")):
+            b_id = team_b["id"]
+            if b_id in {seller_id, buyer_a} or b_id in human_team_ids or b_id in traded_up:
+                continue
+            b_lower = draft_trade_lower_pick_for_buyer(active, state, b_id, lower_overall)
+            if not b_lower:
+                continue  # the second buyer moves up from its own pick in this draft
+            try:
+                target = preferred_prospect_for_pick(active, year, b_id, lower_overall, pool, draft_seed)
+            except (KeyError, ValueError):
+                target = None
+            if not target:
+                continue
+            rank = draft_target_board_rank(active, team_b["abbrev"], lower_id, target.get("id"), seed)
+            if rank >= lower_overall:
+                continue
+            premium_b = draft_target_premium(active, b_id, rank, lower_overall)
+            b_assets = draft_trade_offer_assets(active, state, b_id, lower_id, b_lower, lower_overall)
+            if not b_assets:
+                continue
+            legs = [{"from_team_id": seller_id, "to_team_id": buyer_a, "assets": [{"kind": "pick", "value": pick_id}]},
+                    {"from_team_id": buyer_a, "to_team_id": b_id, "assets": [{"kind": "pick", "value": lower_id}]},
+                    {"from_team_id": b_id, "to_team_id": seller_id, "assets": b_assets}]
+            if extras:
+                legs.append({"from_team_id": buyer_a, "to_team_id": seller_id, "assets": extras})
+            try:
+                result = evaluate_multi_team_trade(active, legs, seed=seed, date=today)
+            except (ValueError, KeyError, TypeError):
+                continue
+            chain = {"seller_id": seller_id, "seller_floor": option["seller_floor"],
+                     "premiums": {buyer_a: round(option["premium"], 3), b_id: round(premium_b, 3)},
+                     "buyer_team_ids": [buyer_a, b_id]}
+            from .multi_team_trades import draft_chain_accept
+            if not draft_chain_accept(result, chain):
+                continue
+            seller_net = next(float(e["net_value"]) for e in result["evaluations"] if e["perspective_team_id"] == seller_id)
+            if seller_net < plain_net or (best and seller_net <= best[0]):
+                continue
+            best = (seller_net, result, chain, option, team_b, target, rank, b_lower, b_assets)
+    if not best:
         return None
-    candidates.sort(key=lambda item: (item[0], jsonable_proposal_id(item[1])), reverse=True)
-    return candidates[0][1]
+    seller_net, result, chain, option, team_b, target, rank, b_lower, b_assets = best
+    buyer_a = team_by_id(active, option["buyer_id"])
+    lower_overall = int(option["lower_pick"].get("overall_pick") or 0)
+    for buyer, prospect, board_rank, premium in ((buyer_a, option["target"], option["board_rank"], option["premium"]),
+                                                 (team_b, target, rank, chain["premiums"][team_b["id"]])):
+        mark_draft_target_acceptance(result, buyer["id"], (prospect or {}).get("name") or "its target", board_rank, premium)
+    result["accepted_by_all"] = True
+    result["draft_chain"] = chain
+    result["search_route"] = "draft_night_chain"
+    final_overall = int(b_lower.get("overall_pick") or 0)
+    received = len(b_assets) + len([a for a in option["to_assets"] if (a.get("value") or a.get("id")) != option["lower_pick"]["id"]])
+    texts = {
+        buyer_a["abbrev"]: f"traded up to pick {overall} for {(option['target'] or {}).get('name')}, number {option['board_rank']} on its draft board",
+        team_b["abbrev"]: f"traded up to pick {lower_overall} for {target.get('name')}, number {rank} on its draft board",
+        seller["abbrev"]: f"traded down from {overall} to {final_overall} and collected {received} pick{'s' if received != 1 else ''} in all",
+    }
+    result["trade_reasons"] = {
+        "buyer_team_id": buyer_a["id"], "seller_team_id": seller_id, "target_key": "draft_chain",
+        "target_label": f"draft prospects {(option['target'] or {}).get('name')} and {target.get('name')}",
+        "teams": texts,
+        "text": (f"Three-team draft-night trade: {buyer_a['abbrev']} {texts[buyer_a['abbrev']]}; {team_b['abbrev']} "
+                 f"{texts[team_b['abbrev']]} (the pick {buyer_a['abbrev']} gave up); {seller['abbrev']} "
+                 f"{texts[seller['abbrev']]}."),
+    }
+    result["ai_draft_trade_context"] = {"overall_pick": overall, "chain": True, "second_pick": lower_overall,
+                                        "final_pick": final_overall}
+    return result
 
 
 def draft_trade_both_accept(seller_eval: dict[str, Any], buyer_eval: dict[str, Any], premium: float, seller_floor: float) -> bool:
@@ -3381,9 +3578,12 @@ def draft_trade_lower_pick_for_buyer(active: dict[str, Any], state: dict[str, An
         pick = item.get("pick") or {}
         pick_id = selection.get("pick_id") or pick.get("id")
         overall = int(selection.get("overall_pick") or 999)
+        pick_round = int(pick.get("round") or (1 if overall <= 30 else 2))
         if (
             selection.get("team_id") == buyer_team_id
-            and int(pick.get("round") or (1 if overall <= 30 else 2)) == 1
+            # From pick 21 a team may move up with an early second (real 2026: #35 to #26, #34 to #29); before
+            # that only with a lower first (TRADE-TAXPOOL).
+            and (pick_round == 1 or current_overall >= 21)
             and current_overall < overall <= current_overall + max_drop
             and pick_id not in traded
             and pick_id not in used
@@ -3418,6 +3618,8 @@ def draft_trade_offer_assets(active: dict[str, Any], state: dict[str, Any], buye
         key=lambda pick: pick_asset_value(pick, "neutral"),
         reverse=True,
     )
+    if overall > 30:
+        return draft_trade_second_round_offer(assets, target_value, current_value, seconds, bool(lower_pick))
     if overall > 10:
         return draft_trade_mid_first_offer(assets, target_value, current_value, firsts, seconds, bool(lower_pick))
     if overall == 1:
@@ -3478,7 +3680,6 @@ def draft_trade_offer_assets(active: dict[str, Any], state: dict[str, Any], buye
 # value plus 4% (so the seller clears its own bar), and a future first only when seconds cannot cover the gap (the
 # cheapest first that does). Picks 26-30 can now be traded too (real: #26 and #29 in 2026).
 MID_FIRST_REQUIRED_FACTOR = 1.04
-DRAFT_TRADE_LAST_PICK = 30
 
 
 def draft_trade_mid_first_offer(assets: list[dict[str, Any]], target_value: float, current_value: float,
@@ -3515,7 +3716,33 @@ def draft_trade_mid_first_offer(assets: list[dict[str, Any]], target_value: floa
     return assets[:4]
 
 
+def draft_trade_second_round_offer(assets: list[dict[str, Any]], target_value: float, current_value: float,
+                                   seconds: list[dict[str, Any]], has_lower_pick: bool) -> list[dict[str, Any]]:
+    """A second-round pick bought with the buyer's lower second plus future seconds, or with future seconds alone
+    (real 2026: #38 bought for a future second and swaps, cash and second-for-second swaps from 37 to 56). Never a
+    first-round pick for a second (TRADE-TAXPOOL)."""
+    need = target_value * MID_FIRST_REQUIRED_FACTOR
+    value = lambda pick: pick_asset_value(pick, "neutral")
+    gap = need - current_value
+    added = []
+    for pick in sorted(seconds[:4], key=value):  # cheapest seconds that cover the gap
+        if gap <= 0 and (added or has_lower_pick):
+            break
+        added.append(pick)
+        gap -= value(pick)
+    if gap > 0 or len(added) > 3:
+        return []
+    return assets + [{"kind": "pick", "value": p["id"]} for p in added]
+
+
 def draft_trade_headline(active: dict[str, Any], state: dict[str, Any], proposal: dict[str, Any]) -> str:
+    if proposal.get("transfers"):
+        teams = {}
+        for leg in proposal["transfers"]:
+            teams.setdefault(leg.get("to_team_id"), []).extend(leg.get("assets") or [])
+        parts = [f"{team_id_to_abbrev(team)} gets " + ", ".join(draft_trade_asset_label(active, state, asset) for asset in assets)
+                 for team, assets in teams.items()]
+        return f"Trade completed ({len(teams)} teams): " + "; ".join(parts) + "."
     from_assets = ", ".join(draft_trade_asset_label(active, state, asset) for asset in proposal.get("from_assets", [])) or "assets"
     to_assets = ", ".join(draft_trade_asset_label(active, state, asset) for asset in proposal.get("to_assets", [])) or "assets"
     return f"Trade completed: {from_assets} for {to_assets}."
