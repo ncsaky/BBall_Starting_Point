@@ -395,6 +395,7 @@ def runtime_status(root: Path, save_dir: Path) -> dict[str, Any]:
                 "fantasy_draft_watchlist",
                 "playoff_room",
                 "playoff_leaders",
+                "playoff_injuries",
                 "simulate_playoff_all",
                 "simulate_playoff_game",
                 "simulate_playoff_round",
@@ -798,6 +799,8 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return draft_sim_action(canonical, save_path, payload, mode="all")
     if action == "playoff_room":
         return playoff_room_payload(canonical, save_path)
+    if action == "playoff_injuries":
+        return playoff_injuries_payload(canonical, save_path)
     if action == "playoff_leaders":
         return playoff_leaders(canonical, save_path, stat=str(payload.get("stat") or "points"), limit=int(payload.get("limit") or 10))
     if action == "simulate_playoff_all":
@@ -3123,7 +3126,8 @@ def roster_cutdown_payload(canonical: dict[str, Any], save_path: Path) -> dict[s
                 "name": player.get("name"),
                 "position": player.get("position"),
                 "age": player.get("display_age", player.get("age")),
-                "height": player.get("height_display") or player.get("height"),
+                "height": player.get("height_display") or player.get("height") or height_label(player),
+                "headshot_url": player.get("headshot_url"),
                 "minutes": round(display_minutes_projection(player), 1),
                 "overall": round(float(attrs.get("overall") or 0.0), 1),
                 "health": player_health_label(health_by_player.get(player["id"]), save.get("state", {}).get("current_date")),
@@ -4167,6 +4171,89 @@ def playoff_room_payload(canonical: dict[str, Any], save_path: Path) -> dict[str
             "games":[series_game_row(str(game_id)) for game_id in payload.get("games", [])]}
             for conference, payload in display_play_in.items()},
         "games": state.get("games") or [],
+    }
+
+
+def postseason_team_ids(state: dict[str, Any]) -> tuple[set[str], set[str]]:
+    """Every team in this postseason, and the ones not yet eliminated (series losers and play-in teams that did
+    not qualify are out)."""
+    teams: set[str] = set()
+    eliminated: set[str] = set()
+    for series in state.get("series") or []:
+        ids = {str(team_id) for team_id in series.get("team_ids") or [] if team_id}
+        teams |= ids
+        winner = series.get("winner_team_id")
+        if winner:
+            eliminated |= ids - {str(winner)}
+    for seeds in (state.get("locked_seeds") or {}).values():
+        teams |= {str(team_id) for team_id in seeds.values() if team_id}
+    for play_in in (state.get("play_in") or {}).values():
+        entrants = {str(team_id) for team_id in (play_in.get("teams") or {}).values() if team_id}
+        teams |= entrants
+        if play_in.get("status") == "completed":
+            eliminated |= entrants - {str(play_in.get("seed_7_team_id")), str(play_in.get("seed_8_team_id"))}
+    champion = state.get("champion_team_id")
+    alive = {str(champion)} if champion else teams - eliminated
+    return teams, alive
+
+
+def playoff_injuries_payload(canonical: dict[str, Any], save_path: Path) -> dict[str, Any]:
+    """Playoff Injuries card: players on teams still in the postseason who are out injured, or back but still rusty
+    or on a minutes limit. Only the engine's own health state (the same fields the Minutes + Availability card and
+    the player card show); ratings are the displayed OVR/OFF/DEF."""
+    from .sim import rust_display
+    context = dashboard_read_context(canonical, save_path)
+    save, active = context["save"], context["active"]
+    state = save.get("playoff_state") or {}
+    current_date = save.get("state", {}).get("current_date")
+    user_team_id = save.get("meta", {}).get("user_team_id")
+    _teams, alive = postseason_team_ids(state)
+    teams = {team["id"]: team for team in active.get("teams", [])}
+    health = {row.get("player_id"): row for row in save.get("health_states", [])}
+    rows = []
+    for player in active.get("players", []):
+        team_id = player.get("team_id")
+        if team_id not in alive or player["id"] not in health:
+            continue
+        health_state = health[player["id"]]
+        out = str(health_state.get("availability_status") or "active") != "active"
+        label = player_health_label(health_state, current_date)
+        rust = {} if out else rust_display(health_state)
+        returning = not out and (float(rust.get("rust_penalty") or 0) >= 0.1 or float(rust.get("minutes_limit_pct") or 100) < 100)
+        if not out and not returning:
+            continue
+        attrs = player_display_attribute_summary(active, player["id"])
+        days_left = label.get("days_left")
+        rows.append({
+            "player_id": player["id"],
+            "name": player.get("name"),
+            "headshot_url": player.get("headshot_url"),
+            "team_id": team_id,
+            "team_abbrev": (teams.get(team_id) or {}).get("abbrev", team_id),
+            "position": compact_position(player.get("position")),
+            "overall": attrs.get("overall"),
+            "offense": attrs.get("offense"),
+            "defense": attrs.get("defense"),
+            "status": "out" if out else "returning",
+            "injury": (label.get("diagnosis") or str(label.get("severity") or "").replace("_", " ")) if out else None,
+            "severity": label.get("severity") if out else None,
+            "return_date": health_state.get("return_date") if out else None,
+            "days_left": days_left if out else None,
+            "games_estimate": max(1, round(days_left / 2.4)) if out and days_left is not None else None,
+            "games_missed": int(health_state.get("games_missed") or 0),
+            "rust_penalty": rust.get("rust_penalty"),
+            "rust_games": rust.get("rust_games"),
+            "minutes_limit_pct": rust.get("minutes_limit_pct"),
+            "minutes_limit_games": rust.get("minutes_limit_games"),
+            "user_team": team_id == user_team_id,
+        })
+    rows.sort(key=lambda row: (-(float(row.get("overall") or 0)), str(row.get("name") or "")))
+    return {
+        "as_of": current_date,
+        "round": state.get("round"),
+        "user_team_id": user_team_id,
+        "teams_alive": sorted(alive),
+        "players": rows,
     }
 
 

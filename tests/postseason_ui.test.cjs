@@ -35,7 +35,7 @@ test('postseason opens only the bracket once, preserving later user window choic
 test('completed playoff bracket keeps the Finals winner label without a duplicate champion banner', () => {
   const scope = {
     state:{data:{playoffs:{champion:{abbrev:'SAS'},series:[],play_in:{}},playoffLeaders:{leaders:[]}},playoffLeaderStat:'points'},
-    escapeHtml:String,
+    escapeHtml:String, escapeAttr:String,
     teamLabel:team=>team.abbrev,
     playoffBracket:()=>'<div class="bracket-champion">Champion: SAS</div>',
   };

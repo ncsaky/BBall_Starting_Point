@@ -2631,8 +2631,8 @@ body .has-card-board .card-board-window-switcher-items > button[aria-pressed="tr
 
 .card-board-gallery-entry footer strong { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
 
-/* The gallery uses the same icons as the switcher, without miniature previews. */
-body .has-card-board .card-board-thumb-frame .card-board-gallery-icon { display:block; width:72px; height:72px; pointer-events:none; }
+/* Gallery thumbnails: a static drawing of each card (CardVisuals.preview), framed inside the beveled button. */
+body .has-card-board .card-board-thumb-frame .card-board-gallery-icon { display:block; width:100%; height:100%; max-width:168px; pointer-events:none; }
 .card-board-gallery-icon svg { display:block; width:100%; height:100%; filter:drop-shadow(0 3px 2px #344d6114); }
 
 
@@ -5188,3 +5188,192 @@ body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospe
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards b { font-size:13px; font-weight:600; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards strong { font-size:14px; font-weight:600; }
 body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards small { font-size:11px; }
+
+/* Draft-night Prospect Board (2026-11-19 UI batch): the expanded Upcoming Prospects design, enlarged, on the shared
+   table style (double header rule, small bold headings, stripes, whole-row hover, sorted-column shading). The clock,
+   the pick reveal and the trade news sit at the top of the same card. */
+.draft-night-board { display:flex; flex-direction:column; min-height:0; background:#fff; }
+body.unified-terminal-ui .draft-night-board { background:#fff; }
+.draft-board-stage {
+  display:grid; grid-template-columns:minmax(200px,1fr) minmax(180px,1fr) auto; align-items:center; gap:12px;
+  flex:0 0 auto; min-height:52px; padding:6px 10px; border-bottom:1px solid var(--season-line, #b7c2cb); background:var(--season-raised, #eef2f5);
+}
+.draft-board-clock { display:flex; align-items:center; gap:9px; min-width:0; }
+.draft-board-clock .draft-team-logo { flex:0 0 34px; width:34px; height:34px; }
+.draft-board-clock p { margin:0; color:var(--season-muted, #5d6b77); font:700 9px Tahoma,"Trebuchet MS",Arial,sans-serif; text-transform:uppercase; letter-spacing:.04em; }
+.draft-board-clock h4 { margin:1px 0 0; font:700 18px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-text, #1d2a33); }
+.draft-board-decision { display:grid; gap:2px; min-width:0; }
+.draft-board-decision span { color:var(--season-muted, #5d6b77); font:700 9px Tahoma,"Trebuchet MS",Arial,sans-serif; text-transform:uppercase; letter-spacing:.04em; }
+.draft-board-decision strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:400 13px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-text, #1d2a33); }
+.draft-board-filter { display:flex; align-items:center; gap:6px; font:700 9px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-muted, #5d6b77); text-transform:uppercase; }
+.draft-board-filter select { min-height:26px; font:12px Tahoma,"Trebuchet MS",Arial,sans-serif; text-transform:none; }
+.draft-board-note { flex:0 0 auto; margin:0; padding:4px 10px; border-bottom:1px solid var(--season-soft-line, #d5dde3); color:var(--season-muted, #5d6b77); font:10px Tahoma,"Trebuchet MS",Arial,sans-serif; }
+.draft-night-board .draft-news-strip { flex:0 0 auto; padding:4px 10px; border-bottom:1px solid var(--season-soft-line, #d5dde3); font:11px Tahoma,"Trebuchet MS",Arial,sans-serif; background:#fff6e0; }
+
+/* The pick reveal: one row per pick, animated once when the pick is fresh. */
+.draft-night-board .draft-pick-reveal {
+  display:grid; grid-template-columns:30px auto minmax(0,1fr) auto; align-items:center; gap:10px; flex:0 0 auto;
+  min-height:46px; margin:0; padding:5px 10px; border:0; border-bottom:1px solid var(--season-soft-line, #d5dde3);
+  border-left:4px solid #3d82c5; background:#edf3f8; overflow:hidden;
+}
+.draft-night-board .draft-pick-reveal.is-last-pick { border-left-color:#9aaab7; background:#f6f8fa; }
+.draft-night-board .draft-pick-reveal .draft-team-logo { width:30px; height:30px; }
+.draft-pick-reveal-number { color:#3c556c; font:700 11px Tahoma,"Trebuchet MS",Arial,sans-serif; white-space:nowrap; text-transform:uppercase; letter-spacing:.03em; }
+.draft-pick-reveal-text { display:grid; min-width:0; gap:1px; }
+.draft-pick-reveal-text strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:700 14px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-text, #1d2a33); }
+.draft-pick-reveal-text small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:11px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-muted, #5d6b77); }
+.draft-pick-reveal-text .draft-pick-why { opacity:1; font-size:11px; }
+.draft-playback-skip { white-space:nowrap; }
+.draft-pick-reveal.is-fresh { animation:draft-pick-arrive 360ms cubic-bezier(.2,.8,.25,1) both; }
+.draft-pick-reveal.is-fresh .draft-team-logo { animation:draft-pick-logo-pop 420ms cubic-bezier(.2,.8,.25,1) both; }
+@keyframes draft-pick-arrive { from { opacity:0; transform:translateX(18px); background:#d6e6f4; } to { opacity:1; transform:none; } }
+@keyframes draft-pick-logo-pop { 0% { transform:scale(.55); } 70% { transform:scale(1.12); } 100% { transform:scale(1); } }
+
+/* Board table. */
+.draft-board-table.draft-prospect-table { table-layout:fixed; width:100%; min-width:1000px; border-collapse:separate; border-spacing:0; background:#fff; }
+.draft-board-table.draft-prospect-table :is(th,td) {
+  box-sizing:border-box; height:32px; padding:0 6px; border:0; border-bottom:1px solid var(--season-soft-line, #d5dde3);
+  vertical-align:middle; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  color:var(--season-text, #1d2a33); font:400 12px Tahoma,"Trebuchet MS",Arial,sans-serif; background-clip:padding-box;
+}
+body.unified-terminal-ui .draft-board-table.draft-prospect-table :is(th,td) { padding:0 6px; font-size:12px; }
+.draft-board-table.draft-prospect-table thead th {
+  position:sticky; top:0; z-index:2; height:24px; background:#fff; color:var(--season-text, #1d2a33);
+  border-bottom:3px double var(--season-line, #b7c2cb); font-size:9px; font-weight:700; text-transform:none;
+}
+body.unified-terminal-ui .draft-board-table.draft-prospect-table thead th { font-size:9px; }
+.draft-board-table .draft-sort-button { width:auto; padding:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important; color:inherit !important; font:inherit; font-size:9px !important; font-weight:700 !important; cursor:pointer; text-transform:none; min-height:0 !important; }
+.draft-board-table thead th > .draft-sort-button { width:100%; text-align:inherit; }
+.draft-board-table .draft-sort-button:focus-visible { outline:1px solid #42667a; outline-offset:1px; }
+.draft-nowpot-sorts { display:inline-flex; align-items:center; gap:4px; }
+.draft-nowpot-sorts i { color:var(--season-muted, #5d6b77); font-style:normal; font-size:9px; }
+.draft-board-table tbody tr { background-color:#fff; }
+.draft-board-table tbody tr:nth-child(even) { background-color:#eef1f3; }
+.draft-board-table tbody tr:is(:hover,:focus-within) { background-color:#dce8f2; }
+.draft-board-table.draft-prospect-table tbody td { background-color:transparent; }
+.draft-board-table.draft-prospect-table.draft-two-boards tbody tr:nth-child(even) td,
+.draft-board-table.draft-prospect-table.draft-two-boards tbody tr:is(:hover,:focus-within) td { background-color:transparent; }
+.draft-board-table thead th.is-sorted { background-color:#d1dde8; }
+.draft-board-table.draft-prospect-table tbody td.is-sorted { background-color:rgba(118,156,190,.28); font-weight:700; }
+.draft-board-table tbody td.is-sorted :is(strong,b,span) { font-weight:700; }
+.draft-board-table .draft-sort-button.is-active { text-decoration:underline; text-underline-offset:2px; }
+.draft-board-table tbody tr.is-selectable { cursor:pointer; }
+.draft-board-table tbody tr.is-selectable:focus-visible { outline:2px solid #3d82c5; outline-offset:-2px; }
+.draft-board-table.draft-prospect-table tbody tr.is-selected { background-color:#cfe1f1; box-shadow:inset 4px 0 #3d82c5; }
+.draft-board-table.draft-prospect-table tbody tr.is-selected td { background-color:transparent; box-shadow:none; }
+.draft-board-table tbody tr.is-drafted { opacity:1; }
+.draft-board-table tbody tr.is-drafted td { color:#7d8a95; }
+.draft-board-table tbody tr.is-drafted .draft-prospect-name { color:#7d8a95; text-decoration:line-through; text-decoration-color:#c4585f; }
+.draft-board-table .draft-col-consensus { text-align:left; }
+.draft-board-rank { display:inline-block; min-width:20px; font-weight:700; }
+.draft-board-table .draft-rank-spread { margin-left:6px; font-size:10px; }
+.draft-board-name { display:flex; align-items:center; gap:7px; min-width:0; }
+.draft-board-name .season-prospect-origin { flex:0 0 20px; width:20px; height:20px; object-fit:contain; display:inline-grid; place-items:center; font-size:14px; line-height:1; }
+.draft-board-name .season-prospect-source-fallback { border:1px solid #9aaab7; border-radius:50%; font:700 8px Tahoma,Arial,sans-serif; color:#5d6b77; }
+.draft-board-table .draft-prospect-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:400 12px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-text, #1d2a33); text-transform:none; }
+.draft-board-table td.is-sorted .draft-prospect-name { font-weight:700; }
+.draft-board-nowpot { display:inline-flex; align-items:baseline; gap:4px; }
+.draft-board-nowpot strong { color:var(--season-muted, #5d6b77); font-weight:400; font-size:11px; }
+.draft-board-nowpot i { color:var(--season-muted, #5d6b77); font-style:normal; font-size:10px; }
+.draft-board-nowpot b { font-weight:700; font-size:13px; }
+.draft-board-yours { display:inline-flex; align-items:baseline; gap:2px; }
+.draft-board-table .draft-board-scouted { display:grid; grid-template-columns:minmax(0,1fr) 32px; align-items:center; gap:6px; }
+.draft-board-table .draft-board-scouted i { display:block; height:6px; background:#172228; overflow:hidden; }
+.draft-board-table .draft-board-scouted i b { display:block; height:100%; width:var(--fill,0%); background:var(--bar-color,#5b86b8); }
+.draft-board-table .draft-board-scouted strong { font-size:11px; font-weight:400; text-align:right; color:var(--season-text, #1d2a33); }
+.draft-board-table .draft-scout-read { font-size:11px; }
+.draft-board-table td.draft-col-fit, .draft-board-table th.draft-col-fit { text-align:right; padding-right:12px; }
+.draft-board-table .available-badge, .draft-board-table .drafted-badge { font-size:9px; padding:2px 5px; border-radius:2px; }
+.draft-board-table .selected-badge { background:#3d82c5; border-color:#3d82c5; color:#fff; }
+.draft-board-table tbody tr.is-fresh { animation:draft-row-picked 1100ms ease-out; }
+.draft-board-table .drafted-badge.is-fresh { animation:draft-badge-stamp 380ms cubic-bezier(.2,.8,.25,1) both; }
+@keyframes draft-row-picked { 0% { background-color:#ffe7a3; } }
+@keyframes draft-badge-stamp { 0% { opacity:0; transform:scale(1.7); } 100% { opacity:1; transform:scale(1); } }
+.draft-order-ledger-panel .draft-ledger-row.is-revealing { animation:draft-pick-reveal-flash 700ms ease-out both; }
+@media (prefers-reduced-motion:reduce) {
+  .draft-pick-reveal.is-fresh, .draft-pick-reveal.is-fresh .draft-team-logo,
+  .draft-board-table tbody tr.is-fresh, .draft-board-table .drafted-badge.is-fresh,
+  .draft-order-ledger-panel .draft-ledger-row.is-revealing { animation:none !important; }
+  .draft-board-table tbody tr.is-fresh { background-color:#fff3cf; }
+}
+.seasonal-clipboard-card .draft-night-board { width:100%; height:100%; }
+
+/* Playoff Injuries card: the Playoff Stats table style plus OVR/OFF/DEF bars and a scope switch. */
+body.unified-terminal-ui .playoff-command-center .playoff-injuries-panel.playoff-stats-panel,
+body.unified-terminal-ui .playoff-injuries-panel.playoff-stats-panel {
+  display:flex; flex-direction:column; width:100%; height:100%; min-width:0; min-height:0; padding:0; overflow:hidden;
+  background:#fff; border:1px solid var(--season-line);
+}
+.playoff-injuries-toolbar { display:flex; align-items:center; justify-content:space-between; gap:8px; flex:0 0 auto; padding:4px 6px; border-bottom:1px solid var(--season-soft-line); background:var(--season-raised, #eef2f5); }
+.playoff-injuries-scope { display:inline-flex; }
+body.unified-terminal-ui .playoff-injuries-scope button {
+  min-height:20px; padding:1px 8px; border:1px solid #8d99a5; background:#edf0f3; color:var(--season-text);
+  font:10px Tahoma,"Trebuchet MS",Arial,sans-serif; border-radius:0; box-shadow:inset 1px 1px #fff, inset -1px -1px #c7cdd3; cursor:pointer;
+}
+body.unified-terminal-ui .playoff-injuries-scope button + button { border-left:0; }
+body.unified-terminal-ui .playoff-injuries-scope button[aria-pressed="true"] { background:#d1dde8; box-shadow:inset 1px 1px #9aaab7; font-weight:700; }
+body.unified-terminal-ui .playoff-injuries-scope button:focus-visible { outline:2px solid #42667a; outline-offset:-2px; }
+.playoff-injuries-count { color:var(--season-muted); font:10px Tahoma,"Trebuchet MS",Arial,sans-serif; white-space:nowrap; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-injuries-table { min-width:544px; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-injuries-table thead th { border-bottom:3px double var(--season-line); }
+body.unified-terminal-ui .playoff-stats-panel .playoff-injuries-table :is(.playoff-stats-col-status,.playoff-stats-col-back) { text-align:left; }
+body.unified-terminal-ui .playoff-stats-panel .playoff-injuries-table tbody tr.is-user-team > .playoff-stats-col-player { box-shadow:inset 3px 0 #3d82c5; }
+.playoff-injury-rating { display:grid; grid-template-columns:18px minmax(0,1fr); align-items:center; gap:4px; }
+.playoff-injury-rating em { font-style:normal; text-align:right; }
+.playoff-injury-rating i { display:block; height:5px; background:#172228; overflow:hidden; }
+.playoff-injury-rating i b { display:block; height:100%; width:var(--fill,0%); background:var(--bar-color,#5b86b8); }
+.playoff-injury-status { display:inline-flex; align-items:center; gap:3px; min-width:0; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+.playoff-injury-status > span:last-child { overflow:hidden; text-overflow:ellipsis; }
+.playoff-injury-status.is-out .season-injury-status { color:#c0392b; }
+.playoff-injury-status.is-returning { color:#a8434b; }
+.playoff-stats-col-back small { color:var(--season-muted); }
+
+/* Mandatory roster cut-down: counter header, house table, keep/release choice per row, release footer. */
+.cutdown-workspace { display:flex; flex-direction:column; width:100%; height:100%; min-height:0; background:#fff; color:var(--season-text, #1d2a33); font:12px Tahoma,"Trebuchet MS",Arial,sans-serif; }
+.cutdown-head { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:16px; flex:0 0 auto; padding:10px 14px; border-bottom:1px solid var(--season-line, #b7c2cb); background:var(--season-raised, #eef2f5); }
+.cutdown-title p { margin:0; color:var(--season-muted, #5d6b77); font:700 9px Tahoma,Arial,sans-serif; text-transform:uppercase; letter-spacing:.04em; }
+body.unified-terminal-ui .cutdown-title h3 { margin:2px 0 3px; font:700 18px Tahoma,"Trebuchet MS",Arial,sans-serif; text-transform:none; letter-spacing:0; }
+.cutdown-title span { color:var(--season-muted, #5d6b77); font-size:11px; }
+.cutdown-counter { display:grid; justify-items:end; gap:1px; padding:6px 12px; border:1px solid #c98b8f; border-left:4px solid #c4585f; background:#fff4f4; min-width:220px; }
+.cutdown-counter.is-ready { border-color:#7fb08f; border-left-color:#2f8a57; background:#f1f8f3; }
+.cutdown-counter strong { font:400 15px Tahoma,Arial,sans-serif; }
+.cutdown-counter strong b { font-size:24px; font-weight:700; color:#a8434b; }
+.cutdown-counter.is-ready strong b { color:#2f8a57; }
+.cutdown-counter span { font:700 9px Tahoma,Arial,sans-serif; text-transform:uppercase; color:var(--season-muted, #5d6b77); }
+.cutdown-counter small { font-size:10px; color:var(--season-muted, #5d6b77); }
+.cutdown-scroll { flex:1 1 auto; min-height:0; overflow:auto; }
+.cutdown-table { table-layout:fixed; width:100%; min-width:960px; border-collapse:separate; border-spacing:0; background:#fff; }
+.cutdown-table :is(th,td) { box-sizing:border-box; height:33px; padding:0 6px; border:0; border-bottom:1px solid var(--season-soft-line, #d5dde3); text-align:left; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font:400 12px Tahoma,"Trebuchet MS",Arial,sans-serif; color:var(--season-text, #1d2a33); background-clip:padding-box; }
+.cutdown-table thead th { position:sticky; top:0; z-index:2; height:24px; background:#fff; border-bottom:3px double var(--season-line, #b7c2cb); font-size:9px; font-weight:700; text-transform:none; letter-spacing:0; }
+body.unified-terminal-ui .cutdown-table thead th { text-transform:none; letter-spacing:0; color:var(--season-text, #1d2a33); }
+.cutdown-table tbody tr { background-color:#fff; }
+.cutdown-table tbody tr:nth-child(even) { background-color:#eef1f3; }
+.cutdown-table tbody tr:is(:hover,:focus-within) { background-color:#dce8f2; }
+.cutdown-table tbody tr.is-releasing { background-color:#fbe9ea; }
+.cutdown-table tbody tr.is-releasing:is(:hover,:focus-within) { background-color:#f6d9db; }
+.cutdown-table tbody tr.is-releasing .cutdown-player-name { text-decoration:line-through; text-decoration-color:#c4585f; }
+.cutdown-table tbody td.is-chosen { background-color:rgba(196,88,95,.14); font-weight:700; }
+.cutdown-table tbody th { padding:0; position:relative; background-color:transparent; }
+body.unified-terminal-ui .cutdown-table tbody :is(th,td) { background-color:transparent; }
+body.unified-terminal-ui .cutdown-table tbody td.is-chosen { background-color:rgba(196,88,95,.14); }
+.cutdown-player { display:flex; align-items:center; gap:5px; height:33px; padding-left:32px; min-width:0; }
+.cutdown-player .player-headshot-frame { position:absolute; left:3px; bottom:0; width:26px; height:100%; overflow:hidden; }
+.cutdown-player .roster-player-headshot { display:block; width:100%; height:100%; object-fit:cover; object-position:center bottom; }
+body.unified-terminal-ui .cutdown-player-name { min-height:0; padding:0; border:0; background:transparent; box-shadow:none; color:inherit; font:inherit; text-align:left; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-transform:none; }
+.cutdown-player-name:is(:hover,:focus-visible) { text-decoration:underline; }
+.cutdown-player small { color:#2f6f8f; font-size:9px; }
+.cutdown-contract, .cutdown-quote { display:grid; line-height:1.1; }
+.cutdown-contract small, .cutdown-quote small { color:var(--season-muted, #5d6b77); font-size:9px; font-weight:400; overflow:hidden; text-overflow:ellipsis; }
+.cutdown-quote abbr { text-decoration:none; }
+.cutdown-choice { display:inline-flex; }
+body.unified-terminal-ui .cutdown-choice button { min-height:22px; padding:1px 8px; border:1px solid #8d99a5; border-radius:0; background:#edf0f3; color:var(--season-text, #1d2a33); box-shadow:inset 1px 1px #fff, inset -1px -1px #c7cdd3; font:11px Tahoma,"Trebuchet MS",Arial,sans-serif; cursor:pointer; text-transform:none; }
+body.unified-terminal-ui .cutdown-choice button + button { border-left:0; }
+body.unified-terminal-ui .cutdown-choice button.is-active { font-weight:700; box-shadow:inset 1px 1px #9aaab7; }
+body.unified-terminal-ui .cutdown-choice button.cutdown-choice-keep.is-active { background:#d7eadc; border-color:#6f9c7c; }
+body.unified-terminal-ui .cutdown-choice button:is(.cutdown-choice-waive,.cutdown-choice-buyout).is-active { background:#c4585f; border-color:#a8434b; color:#fff; }
+body.unified-terminal-ui .cutdown-choice button:focus-visible { outline:2px solid #42667a; outline-offset:-2px; position:relative; z-index:1; }
+.cutdown-foot { display:flex; align-items:center; gap:8px; flex:0 0 auto; padding:8px 14px; border-top:1px solid var(--season-line, #b7c2cb); background:var(--season-raised, #eef2f5); }
+.cutdown-foot > div { display:grid; flex:1 1 auto; min-width:0; }
+.cutdown-foot > div strong { font-size:12px; }
+.cutdown-foot > div span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--season-muted, #5d6b77); font-size:11px; }
+body.unified-terminal-ui .cutdown-foot .cutdown-confirm:not(:disabled) { background:#a8434b; border-color:#7f2f36; color:#fff; font-weight:700; }
