@@ -1192,6 +1192,10 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                     if near_miss(canonical, candidate):
                         near_misses.append({'candidate': candidate, 'trade_reasons': tt.dump_reasons(canonical, offer, assets),
                                             'order': len(pairings) + dumps_done})
+                    seller_eval = next((e for e in candidate.get('evaluations') or []
+                                        if e.get('perspective_team_id') == seller['id']), {})
+                    if float(seller_eval.get('net_value') or 0.0) < -9.0:
+                        break  # the next package only adds picks the seller already will not pay (trade step 4)
                     continue
                 keys = proposal_asset_identity_keys(candidate)
                 if reserve_assets and keys & reserved:
