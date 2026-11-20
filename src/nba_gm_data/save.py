@@ -74,9 +74,7 @@ STAT_FIELDS = [
     "rim_attempts",
     "screen_assists",   # new-ratings box scores: screens that directly led to a teammate's basket (screens.py)
 ]
-TAX_LINE = 200_428_000
-SECOND_APRON = 221_686_000
-ANNUAL_CAP_GROWTH_RATE = 0.035
+from .cap_rules import TAX_LINE, SECOND_APRON, ANNUAL_CAP_GROWTH_RATE  # noqa: E402,F401  (one shared source)
 ROSTER_MINIMUM = 14
 ROSTER_SEASON_MAXIMUM = 15
 ROSTER_CUTDOWN_PHASES = frozenset({"training_camp", "preseason", "regular_season", "play_in", "playoffs"})
@@ -8129,14 +8127,9 @@ def player_health_label(state: dict[str, Any] | None, current_date: str | None) 
 
 
 def cap_lines_for_season(season: str | None) -> dict[str, float]:
-    active = str(season or CANONICAL_SEASON)
-    seasons_elapsed = max(0, season_start_year(active) - season_start_year(CANONICAL_SEASON))
-    factor = (1.0 + ANNUAL_CAP_GROWTH_RATE) ** seasons_elapsed
-    return {
-        "tax_line": round(TAX_LINE * factor / 100_000) * 100_000,
-        "hard_cap": round(SECOND_APRON * factor / 100_000) * 100_000,
-        "growth_factor": round(factor, 5),
-    }
+    """The league's cap lines for a season (cap_rules: one source for every part of the game)."""
+    from .cap_rules import cap_lines_for_season as shared_lines
+    return shared_lines(season)
 
 
 def team_cap_summary(canonical: dict[str, Any], save: dict[str, Any], team_id: str, season: str | None = None) -> dict[str, Any]:
@@ -8986,7 +8979,7 @@ def apply_offseason_roster_transitions(canonical: dict[str, Any], save: dict[str
                 retired_this_offseason.append(player_id)
             continue
         if contract and contract_last_season(contract) and contract_last_season(contract) < next_season:
-            if should_ai_retain_expiring_player(save, player, current_season, seed) and ai_re_signing_fits_hard_cap(
+            if should_ai_retain_expiring_player(save, player, current_season, seed) and ai_re_signing_allowed(
                 canonical,
                 save,
                 player,
@@ -8999,6 +8992,8 @@ def apply_offseason_roster_transitions(canonical: dict[str, Any], save: dict[str
                 for season_row in ai_re_signing_contract_terms(save, player, next_season)["seasons"]:
                     key = (str(player.get("team_id")), str(season_row["season"]))
                     re_signing_commitments[key] = re_signing_commitments.get(key, 0.0) + float(season_row["salary"])
+                players_key = (str(player.get("team_id")), RE_SIGNING_PLAYER_COUNT_KEY)
+                re_signing_commitments[players_key] = re_signing_commitments.get(players_key, 0.0) + 1
                 continue
             add_re_signing_right(save, current_season, player_id, player.get("team_id"))
             save.setdefault("roster_overrides", {})[player_id] = None
@@ -9376,7 +9371,7 @@ def prepare_free_agency_pool(canonical: dict[str, Any], save: dict[str, Any]) ->
         contract = contracts.get(player_id)
         last = contract_last_season(contract) if contract else None
         if last and last <= current_season:
-            if should_ai_retain_expiring_player(save, player, current_season, seed) and ai_re_signing_fits_hard_cap(
+            if should_ai_retain_expiring_player(save, player, current_season, seed) and ai_re_signing_allowed(
                 canonical,
                 save,
                 player,
@@ -9389,6 +9384,8 @@ def prepare_free_agency_pool(canonical: dict[str, Any], save: dict[str, Any]) ->
                 for season_row in ai_re_signing_contract_terms(save, player, next_season)["seasons"]:
                     key = (str(player.get("team_id")), str(season_row["season"]))
                     re_signing_commitments[key] = re_signing_commitments.get(key, 0.0) + float(season_row["salary"])
+                players_key = (str(player.get("team_id")), RE_SIGNING_PLAYER_COUNT_KEY)
+                re_signing_commitments[players_key] = re_signing_commitments.get(players_key, 0.0) + 1
                 continue
             add_re_signing_right(save, current_season, player_id, player.get("team_id"))
             save.setdefault("roster_overrides", {})[player_id] = None
@@ -9698,6 +9695,41 @@ def ai_re_signing_fits_hard_cap(
     return True
 
 
+RE_SIGNING_PLAYER_COUNT_KEY = "_players"   # commitments[(team_id, this)]: players re-signed earlier in the same pass
+
+
+def ai_re_signing_fits_payroll_plan(
+    canonical: dict[str, Any],
+    save: dict[str, Any],
+    player: dict[str, Any],
+    team_id: str | None,
+    next_season: str,
+    *,
+    prepared_active: dict[str, Any] | None = None,
+    committed_salary_by_team_season: dict[tuple[str, str], float] | None = None,
+) -> bool:
+    """The front office keeps its own free agent only if the tax bill it adds is worth it (payroll_plan, TRADE-VOLUME)."""
+    if not team_id:
+        return False
+    from .payroll_plan import payroll_check
+    terms = ai_re_signing_contract_terms(save, player, next_season)
+    active = prepared_active if prepared_active is not None else canonical_with_save(canonical, save)
+    commitments = committed_salary_by_team_season or {}
+    check = payroll_check(
+        active, save, str(team_id), next_season, add_salary=float(terms["seasons"][0]["salary"]), roster_delta=1,
+        minutes=display_minutes_projection(player), kind="re_signing", age=player.get("display_age", player.get("age")),
+        committed=float(commitments.get((str(team_id), str(next_season)), 0.0)),
+        committed_players=int(commitments.get((str(team_id), RE_SIGNING_PLAYER_COUNT_KEY), 0)),
+    )
+    return bool(check["ok"])
+
+
+def ai_re_signing_allowed(canonical: dict[str, Any], save: dict[str, Any], player: dict[str, Any], team_id: str | None,
+                          next_season: str, **kwargs: Any) -> bool:
+    return (ai_re_signing_fits_hard_cap(canonical, save, player, team_id, next_season, **kwargs)
+            and ai_re_signing_fits_payroll_plan(canonical, save, player, team_id, next_season, **kwargs))
+
+
 def retain_expiring_player(save: dict[str, Any], player: dict[str, Any], team_id: str | None, current_season: str, next_season: str, seed: int) -> None:
     if not team_id:
         return
@@ -9884,6 +9916,7 @@ def strategic_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any
         if player["id"] in set(free_agents) and player["id"] not in set(save.get("retired_player_ids", []))
     ]
     signed: set[str] = set()
+    pass_signed: dict[str, list[float]] = {}
     for team in teams:
         roster = roster_by_team.setdefault(team["id"], [])
         open_slots = max(0, 17 - len(roster))
@@ -9913,6 +9946,15 @@ def strategic_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any
                 continue
             if salary > tax_space and len(roster) < ROSTER_MINIMUM:
                 salary = minimum_salary
+            # Payroll discipline (TRADE-VOLUME): count the minimum contracts still needed and the owner's tax plan.
+            from .payroll_plan import payroll_check
+            signed_here = pass_signed.setdefault(team["id"], [0.0, 0])
+            if not payroll_check(active, save, team["id"], next_season, add_salary=salary,
+                                 minutes=display_minutes_projection(player), kind="free_agency", age=player.get("display_age", player.get("age")),
+                                 committed=signed_here[0], committed_players=signed_here[1])["ok"]:
+                continue
+            signed_here[0] += salary
+            signed_here[1] += 1
             save.setdefault("roster_overrides", {})[player["id"]] = team["id"]
             save.setdefault("contract_overrides", {})[player["id"]] = {
                 "team_id": team["id"],
@@ -10133,6 +10175,12 @@ def released_free_agent_destination(
             cost = waiver_projection(canonical, save, cut_player, team_id)['remaining_cost_millions']
             if upgrade < 8.0 + cost*.22:
                 continue
+        # Payroll discipline (TRADE-VOLUME): minimum deals count too; after the deadline a team under the line stays.
+        from .payroll_plan import payroll_check
+        if not payroll_check(canonical, save, team_id, season, add_salary=float(salary),
+                             roster_delta=0 if cut_player else 1, minutes=display_minutes_projection(player),
+                             kind="in_season_signing")["ok"]:
+            continue
         needs = roster_position_needs(roster)
         state = next((item for item in canonical.get("team_strategic_states", []) if item.get("team_id") == team_id), {})
         record = (save.get("team_records") or {}).get(team_id, {})

@@ -3224,27 +3224,32 @@ def waiver_room_payload(canonical: dict[str, Any], save_path: Path) -> dict[str,
     return {'players': rows, 'roster': roster, 'priority': priority(active, saved, saved['state']['current_date'])}
 
 
-def free_agent_accept_floor_millions(player: dict[str, Any], guaranteed: bool = True) -> float:
-    """The salary your offer must reach for this free agent to sign it.
+def free_agent_offer_floors(active: dict[str, Any], save: dict[str, Any], player: dict[str, Any],
+                            team: dict[str, Any], safe_years: int) -> dict[str, Any]:
+    """The salary your offer must reach today for this free agent to sign it, for each length and guarantee.
 
-    The same threshold `play.manual_save_pool_signing` applies to the user's offers (a test keeps them equal):
-    his projected minutes x 0.45 (at least the league minimum), raised by the security penalty when the deal is not
-    guaranteed. It is not his market ask, which is what rival teams bid against.
+    The rule `play.manual_save_pool_signing` applies (TRADE-VOLUME; a test keeps them equal): the same rule as the AI
+    teams' bids. His interest in your offer (salary against his market ask, years, your team's context) must reach his
+    bar today and beat the best rival bid. None: no salary wins him from you today.
     """
-    from .contract_protection import security_penalty
+    from .play import user_offer_contexts, user_offer_floor, user_offer_market_terms
 
-    floor = max(1.9, display_minutes_projection(player) * 0.45)
-    return floor * (1 + security_penalty(player, guaranteed) / 100)
-
-
-def smallest_offer_at_or_above(value: float, step: float = 0.1) -> float:
-    """The smallest offer on the builder's $0.1M steps that is not below `value`."""
-    import math
-
-    steps = math.ceil(round(float(value) / step, 9))
-    offer = round(steps * step, 1)
-    # The engine compares the offer with the unrounded threshold, so never return an offer a hair below it.
-    return offer if offer >= float(value) else round(offer + step, 1)
+    terms = user_offer_market_terms(active, save, player, team)
+    contexts = user_offer_contexts(active, save, player, team)
+    by_years: dict[str, dict[str, float | None]] = {"guaranteed": {}, "non_guaranteed": {}}
+    for years in range(1, 6):
+        context = contexts[years]
+        for key, guaranteed in (("guaranteed", True), ("non_guaranteed", False)):
+            by_years[key][str(years)] = user_offer_floor(player, years, guaranteed, terms, context)
+    default_years = str(max(1, min(4, safe_years or 1)))
+    best = terms.get("best_rival")
+    return {
+        "by_years": by_years,
+        "default": {key: by_years[key][default_years] for key in by_years},
+        "rule": {"mode": terms["mode"], "bar": terms["bar"], "ask_millions": terms["ask_millions"],
+                 "preferred_years": terms["preferred_years"],
+                 "best_rival": ({**best, "team_abbrev": team_id_to_abbrev(best["team_id"])} if best else None)},
+    }
 
 
 def free_agency_room_payload(
@@ -3278,7 +3283,6 @@ def free_agency_room_payload(
     }
     active_offers = [offer for offer in save.get("free_agent_offers", []) if offer.get("status") == "active"]
     state = save.get("free_agency_state") or {}
-    live_asks = state.get("player_asks_millions") or {}
     ask_changes = state.get("player_ask_changes_millions") or {}
     offers_by_player: dict[str, list[dict[str, Any]]] = {}
     for offer in active_offers:
@@ -3315,7 +3319,7 @@ def free_agency_room_payload(
         totals = stats.get(player_id, {})
         games = int(totals.get("games") or 0)
         divisor = max(1, games)
-        ask = round(float(live_asks.get(player_id) or max(2.0, float(market.get("projected_aav_millions") or 0.0) or display_minutes_projection(player) * 0.45)), 1)
+        # (the market ask comes from the engine rule below: floors["rule"]["ask_millions"])
         offers = offers_by_player.get(str(player_id), [])
         best_offer = max(
             offers,
@@ -3334,6 +3338,8 @@ def free_agency_room_payload(
             projected_fit += 6.0
         projected_fit = round(max(1.0, min(99.0, projected_fit)), 1)
         best_team = teams_by_id.get((best_offer or {}).get("team_id"), {})
+        safe_years = extension_safe_year_limit(player, signing_season, 5)
+        floors = free_agent_offer_floors(active, save, player, team, safe_years)
         candidates.append(
             {
                 "id": player_id,
@@ -3357,7 +3363,7 @@ def free_agency_room_payload(
                 "injury_body": injury_body_compact(active, player),
                 "upside_remaining": round(max(0.0, min(5.0, float(valuation.get("development_upside") or 0.0) / 22.0 * 5.0)), 1),
                 "trade_value": round(market_trade_target_value(player, valuation), 1),
-                "ask_millions": ask,
+                "ask_millions": floors["rule"]["ask_millions"],   # the ask rival bids and your offer are judged against
                 "ask_change_millions": round(float(ask_changes.get(player_id) or 0.0), 1),
                 "team_fit_score": projected_fit,
                 "ratings": ratings,
@@ -3374,17 +3380,15 @@ def free_agency_room_payload(
                 # Offer-builder facts, all from the engine's own signing rules (additive fields):
                 "headshot_url": player.get("headshot_url"),
                 "health": player_health_label(health_by_player.get(player_id), current_date),
-                # What your offer must reach for him to sign (the threshold manual_save_pool_signing applies).
-                "accept_floor_millions": {
-                    "guaranteed": free_agent_accept_floor_millions(player, True),
-                    "non_guaranteed": free_agent_accept_floor_millions(player, False),
-                },
-                "accept_floor_offer_millions": {
-                    "guaranteed": smallest_offer_at_or_above(free_agent_accept_floor_millions(player, True)),
-                    "non_guaranteed": smallest_offer_at_or_above(free_agent_accept_floor_millions(player, False)),
-                },
+                # What your offer must reach today for him to sign (the rule manual_save_pool_signing applies, the same
+                # as the AI bids': today's bar and the best rival bid). The two top fields are for the builder's
+                # default length (up to 4 years); accept_floor_by_years has every length. None: no salary wins him.
+                "accept_floor_millions": floors["default"],
+                "accept_floor_offer_millions": floors["default"],
+                "accept_floor_by_years": floors["by_years"],
+                "offer_rule": floors["rule"],
                 # Longest contract that ends before his projected retirement (longer offers are refused).
-                "safe_years": extension_safe_year_limit(player, signing_season, 5),
+                "safe_years": safe_years,
                 # Interest a rival bid needs today before he signs it at the end of the day (AI market only).
                 "sign_bar_today": float(free_agency_accept_threshold(player, market_day)),
                 "signing_blocked_reason": (

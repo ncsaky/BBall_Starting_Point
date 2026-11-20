@@ -24,6 +24,10 @@ def fixture(teams='abc'):
             quality, price, salary, minutes = (25, 15, 1_000_000, 18) if tid == 'c' else (50, 30, 1_000_000, 18)
             if tid == 'a':
                 salary = 15_750_000  # trade 2b: payroll $199M, so the three-team leg stays under the tax line
+                if i >= 6:
+                    # TRADE-VOLUME: the trade code now uses the real $200.4M line (it used $207.4M), so A's payroll
+                    # moves to $192M (a6-a12 at $14.75M) to keep the same room under the line.
+                    salary = 14_750_000
             if pid == 'a0':
                 quality, price, salary, minutes = 76, 90, 10_000_000, 32
             if pid == 'b0':

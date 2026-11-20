@@ -5791,7 +5791,7 @@ function phaseFreeAgencyMarketCard(room = state.data.freeagency || {}) {
   const note = exclusive
     ? "Only your own expiring players. No outside bids; you may go over the tax to keep them, the hard cap still binds."
     : phase === "free_agency"
-      ? (completed ? "Free agency is over. Advance to the next phase from the top bar." : "Your offers are answered right away. Rival bids are settled at the end of each day.")
+      ? (completed ? "Free agency is over. Advance to the next phase from the top bar." : "Your offers are answered right away by the rule rival bids face: reach today's bar and beat the best bid.")
       : "Signings open in the re-signing window and in free agency.";
   const filters = state.freeAgentMarketFilters || {};
   const scopes = [
@@ -6029,14 +6029,22 @@ function freeAgencyCapSeasons(room = {}) {
     .slice(0, 5);
 }
 
+function freeAgencyAcceptFloor(player, years, key = "guaranteed") {
+  const table = player?.accept_floor_by_years?.[key];
+  const raw = table && Object.prototype.hasOwnProperty.call(table, String(years)) ? table[String(years)] : player?.accept_floor_offer_millions?.[key];
+  return raw === null || raw === undefined || raw === "" ? Infinity : Number(raw);
+}
+
 function freeAgencyOfferPreview(player, room = {}, draft = {}) {
   const rules = room.offer_rules || {};
   const aav = roundOfferTenth(draft.aav);
   const years = Math.max(1, Math.min(Number(rules.max_years || 5), Math.round(Number(draft.years || 1))));
   const guaranteed = draft.guaranteed !== false;
   const key = guaranteed ? "guaranteed" : "non_guaranteed";
-  const floor = Number(player?.accept_floor_millions?.[key]);
-  const floorOffer = Number(player?.accept_floor_offer_millions?.[key] ?? floor);
+  // The engine's floor for this length and guarantee (the AI bids' rule: today's bar and the best rival bid); null means
+  // no salary wins him from you today.
+  const floor = freeAgencyAcceptFloor(player, years, key);
+  const floorOffer = floor;
   const safe = Number.isFinite(Number(player?.safe_years)) ? Number(player.safe_years) : 5;
   const cap = freeAgencyCapCheck(rules, room.cap || {}, aav);
   const retires = years > safe;
@@ -6057,6 +6065,7 @@ function freeAgencyOfferPreview(player, room = {}, draft = {}) {
   else if (retires) verdict = safe < 1
     ? { tone: "no", headline: "He turns this down", detail: "He plans to retire before the season starts; he will not sign a new contract." }
     : { tone: "no", headline: "He turns this down", detail: `He plans to retire after ${safe} season${safe === 1 ? "" : "s"}. Offer ${safe} year${safe === 1 ? "" : "s"} or fewer.` };
+  else if (!accepts && !Number.isFinite(floor)) verdict = { tone: "no", headline: "He turns this down", detail: `No salary wins him from you today${player?.offer_rule?.best_rival ? `: ${player.offer_rule.best_rival.team_abbrev || "a rival"}'s bid interests him more` : ""}. His bar drops each day.` };
   else if (!accepts) verdict = { tone: "no", headline: "He turns this down", detail: `He signs with you from ${money(floorOffer)} a season${guaranteed ? "" : " non-guaranteed"}. You are ${money(Math.max(0, floorOffer - aav))} short.` };
   else verdict = { tone: "yes", headline: "He signs", detail: `${money(aav)} a season meets the ${money(floorOffer)} he needs from you${guaranteed ? "" : " without a guarantee"}.${cap.message ? ` ${cap.message}` : ""}` };
   return { aav, years, guaranteed, total: aav * years, floor, floorOffer, safe, cap, retires, accepts, ratio, seasons, verdict, canSubmit: cap.ok && !player?.signing_blocked_reason };
@@ -6097,7 +6106,9 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
       <section class="approved-card-panel fa-builder-season"><header>Last Season</header><div>${stat("GP", player.games)}${stat("MPG", player.previous_mpg)}${stat("PTS", player.ppg)}${stat("REB", player.rpg)}${stat("AST", player.apg)}${stat("STL", player.spg)}${stat("BLK", player.bpg)}${stat("TO", player.topg)}</div></section>
       <section class="approved-card-panel fa-builder-market"><header>What He Wants</header><dl>
         <div><dt title="His market ask per season: what rival teams bid against. It moves each day.">Market ask</dt><dd><strong>${money(player.ask_millions)}</strong>${freeAgencyAskChange(player.ask_change_millions)}<small>rival teams bid against this</small></dd></div>
-        <div><dt title="The salary your offer must reach for him to sign it. Set by his projected role (minutes), not by his market ask.">Signs with you from</dt><dd><strong>${money(player.accept_floor_offer_millions?.guaranteed)}</strong><small>guaranteed · ${money(player.accept_floor_offer_millions?.non_guaranteed)} without a guarantee</small></dd></div>
+        <div><dt title="The salary your offer must reach today for him to sign it, by the same rule as rival bids: his interest (salary against his market ask, years, your team) must reach today's bar and beat the best rival bid.">Signs with you from</dt><dd>${Number.isFinite(freeAgencyAcceptFloor(player, preview.years, "guaranteed"))
+          ? `<strong>${money(freeAgencyAcceptFloor(player, preview.years, "guaranteed"))}</strong><small>${preview.years} year${preview.years === 1 ? "" : "s"}, guaranteed · ${Number.isFinite(freeAgencyAcceptFloor(player, preview.years, "non_guaranteed")) ? money(freeAgencyAcceptFloor(player, preview.years, "non_guaranteed")) : "no salary"} without a guarantee</small>`
+          : `<strong>Not today</strong><small>no salary beats the best rival bid for ${preview.years} year${preview.years === 1 ? "" : "s"}</small>`}</dd></div>
         <div><dt>Longest deal</dt><dd><strong>${safe >= 5 ? "5 years" : safe < 1 ? "None" : `${safe} year${safe === 1 ? "" : "s"}`}</strong><small>${safe >= 5 ? "the league maximum" : "he plans to retire after that"}</small></dd></div>
       </dl></section>
       <section class="approved-card-panel fa-builder-offer"><header>Your Offer</header>
@@ -6126,7 +6137,7 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
           const interest = Number(offer.interest_score || 0);
           const ready = Number.isFinite(bar) && interest >= bar;
           return `<li class="${index === 0 ? "is-leading" : ""}">${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(team)} logo" />` : `<b>${escapeHtml(team)}</b>`}<strong>${money(offer.aav_millions)} × ${escapeHtml(offer.years || 1)}</strong><span class="fa-mood fa-mood-${ready ? "hot" : "cool"}" title="${escapeAttr(`Interest ${interest.toFixed(1)}${Number.isFinite(bar) ? `; he needs ${bar.toFixed(0)} today to sign it` : ""}`)}"><i aria-hidden="true"><b style="width:${clampNumber(interest, 0, 100)}%"></b>${Number.isFinite(bar) ? `<u style="left:${clampNumber(bar, 0, 100)}%"></u>` : ""}</i><em>${interest.toFixed(0)}</em></span><small>${index === 0 ? (ready ? "Leading · ready to sign" : "Leading") : `Day ${escapeHtml(offer.day || 1)}`}</small></li>`;
-        }).join("")}</ol><p class="fa-muted">He settles rival bids at the end of each day: the best bid signs once its interest reaches ${Number.isFinite(bar) ? bar.toFixed(0) : "today's bar"}. Your offer is answered on the spot.</p>` : `<p class="fa-muted">No rival bids yet.</p>`}</section>
+        }).join("")}</ol><p class="fa-muted">He settles rival bids at the end of each day: the best bid signs once its interest reaches ${Number.isFinite(bar) ? bar.toFixed(0) : "today's bar"}. Your offer is judged the same way, on the spot: it must reach that bar and beat the leading bid.</p>` : `<p class="fa-muted">No rival bids yet.</p>`}</section>
       ${history.length || lastResult ? `<section class="approved-card-panel fa-builder-history"><header>Your Offers To Him</header><ol>${[
         ...(lastResult ? [lastResult] : []),
         ...history.filter((row) => !lastResult || row.date !== lastResult.date || Number(row.aav_millions) !== Number(lastResult.aav_millions)),
