@@ -5206,8 +5206,13 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
                 aav = float(input(f"Offer AAV in millions [{ask:.1f}]: ").strip() or ask)
             except ValueError:
                 aav = ask
-            years = pick_number("Years", 1, 5, default=min(3, int(market.get("max_years") or 3)))
-            cap_check = signing_cap_check(active, save, user_team, aav, allow_tax_exceed=True)
+            bird = incumbent_bird_rights(active, save, player, team["id"])   # KEEP-STARS
+            if bird:
+                from .contract_ai import bird_rights_text
+                print(bird_rights_text(bird))
+            max_years = int(bird["max_years"]) if bird else 4
+            years = pick_number("Years", 1, max_years, default=min(3, int(market.get("max_years") or 3)))
+            cap_check = signing_cap_check(active, save, user_team, aav, allow_tax_exceed=True, bird=bird)
             if not cap_check.get("ok"):
                 pause(cap_check.get("message") or "Offer blocked by hard-cap posture.")
                 continue
