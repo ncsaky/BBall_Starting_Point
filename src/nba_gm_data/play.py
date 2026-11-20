@@ -5067,11 +5067,12 @@ def initialize_free_agency_market(canonical: dict[str, Any], save_path: Path, us
     report_by_id = {}
     if missing_asks:
         report_by_id = canonical_free_agent_market_by_id(canonical)
+        priced = with_transaction_context(active)
     for player_id in missing_asks:
         if player_id in state.setdefault("player_asks_millions", {}):
             continue
         player = next((item for item in active.get("players", []) if item.get("id") == player_id), {})
-        market = report_by_id.get(player_id) or {}
+        market = with_star_market_ask(priced, save, player, report_by_id.get(player_id) or {})
         state["player_asks_millions"][player_id] = free_agency_initial_ask(player, market)
         changed = True
     if changed:
@@ -5084,6 +5085,22 @@ def initialize_free_agency_market(canonical: dict[str, Any], save_path: Path, us
         return save
     process_ai_free_agency_offers_for_day(canonical, save_path, user_team, seed)
     return load_save(save_path)
+
+
+def with_star_market_ask(active: dict[str, Any], save: dict[str, Any], player: dict[str, Any],
+                         market: dict[str, Any]) -> dict[str, Any]:
+    """A free agent without precomputed market research who is a starter or better asks at least the contract-market
+    price (TRADE-VOLUME-2, contract_ai.star_market_ask_millions); everyone else keeps the research or minutes rule."""
+    if not player or float(market.get("projected_aav_millions") or 0.0):
+        return market
+    from .contract_ai import star_market_ask_millions
+    try:
+        star = star_market_ask_millions(active, player, contract_start_season_for_signing(save))
+    except (KeyError, ValueError, TypeError):  # no inputs to price him with: the minutes rule
+        return market
+    if star is None or star <= display_minutes_projection(player) * 0.48:
+        return market
+    return {**market, "projected_aav_millions": star, "ask_source": "contract_market_star"}
 
 
 def free_agency_initial_ask(player: dict[str, Any], market: dict[str, Any]) -> float:

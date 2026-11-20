@@ -61,3 +61,18 @@ def cap_lines_for_season(season: str | None) -> dict[str, float]:
         }
         _CACHE[key] = lines
     return dict(lines)
+
+
+# Maximum salaries (TRADE-VOLUME-2): a player's first-year salary on a new contract is at most a share of that season's
+# salary cap by his years in the league: 25% with 0-6 years of service, 30% with 7-9, 35% with 10 or more (the CBA's
+# maximum-salary rule as summarised by RealGM and Hoops Rumors; data/research/free_agent_contracts_2025_2026.json).
+MAX_SALARY_SHARES = ((10, 0.35), (7, 0.30), (0, 0.25))
+
+
+def max_salary_share(years_of_service: int) -> float:
+    return next(share for years, share in MAX_SALARY_SHARES if int(years_of_service) >= years)
+
+
+def max_salary(season: str | None, years_of_service: int) -> float:
+    """The largest first-year salary (dollars) a player with this much service can sign for in ``season``."""
+    return cap_lines_for_season(season)["salary_cap"] * max_salary_share(years_of_service)

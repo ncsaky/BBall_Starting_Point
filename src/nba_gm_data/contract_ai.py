@@ -1161,6 +1161,47 @@ def contract_preference_archetype(player: dict[str, Any], valuation: dict[str, A
     return "balanced_market_actor"
 
 
+STAR_PRICE_TIERS = frozenset({"franchise_anchor", "all_star_core", "legacy_star", "high_end_starter"})
+
+
+def years_of_service(player: dict[str, Any], season: str) -> int:
+    """Seasons in the league before ``season`` (from the draft year; otherwise from age 20)."""
+    start = int(str(season).split("-")[0])
+    draft_year = maybe_float(player.get("draft_year"))
+    if draft_year:
+        return max(0, start - int(draft_year))
+    age = maybe_float(player.get("display_age", player.get("age"))) or 27.0
+    return max(0, int(age) - 20)
+
+
+def star_market_ask_millions(canonical: dict[str, Any], player: dict[str, Any], season: str,
+                             config: dict[str, Any] | None = None) -> float | None:
+    """What a starter-or-better free agent asks on the market, in millions (TRADE-VOLUME-2), or None below that tier.
+
+    After the opening summers (priced from precomputed market research) every free agent asked minutes x $0.48M, so
+    Nikola Jokic asked $17.8M and signed for $18.9M in 2028 (Kevin Durant $15.8M, Ja Morant $17.3M). This uses the same
+    contract-market formula the research used (value, role tier, age, health, asking multiplier), grown with the
+    salary cap from 2026-27, and never above the real maximum salary for his years in the league
+    (``cap_rules.max_salary``). Only the high-end-starter tier and above: below it the formula prices young bench
+    players at the rotation-tier cap (tested on the 2027 class: many $6M asks became $16.6M), so they keep the old
+    rule. Compared with real 2026 contracts it still prices stars low (Trae Young $38.6M against a real $53.0M; Austin
+    Reaves $31.8M against $46.25M), so callers use it as a floor on the old ask."""
+    from .cap_rules import growth_factor, max_salary
+    from .sim import player_feature_vector
+    config = config or default_contract_market_config()
+    valuation = valuation_for_player(canonical, player)
+    features = player_feature_vector(canonical, player).features
+    role_tier = contract_role_tier(player, valuation, features)
+    if role_tier not in STAR_PRICE_TIERS:
+        return None
+    contract = contract_for_player(canonical, player["id"]) or {}
+    expected = clamp_salary_to_role(model_expected_aav(player, valuation, features, contract, role_tier, config),
+                                    role_tier, config)
+    asking = clamp_salary_to_role(expected * asking_multiplier(player, valuation, role_tier), role_tier, config)
+    ceiling = max_salary(season, years_of_service(player, season))
+    return round(min(asking * growth_factor(season), ceiling) / 1_000_000, 1)
+
+
 def valuation_for_player(canonical: dict[str, Any], player: dict[str, Any]) -> dict[str, Any]:
     return next(
         (item for item in canonical.get("player_asset_valuations", []) if item.get("player_id") == player.get("id")),

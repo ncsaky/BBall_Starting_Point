@@ -134,6 +134,57 @@ class RebuildingVeteranSigningTests(unittest.TestCase):
         self.assertGreater(pp.veteran_price("2028-29"), pp.veteran_price(SEASON))
 
 
+class StarAskTests(unittest.TestCase):
+    def test_max_salary_follows_years_of_service(self):
+        from nba_gm_data import cap_rules
+        cap = cap_rules.cap_lines_for_season("2026-27")["salary_cap"]
+        self.assertAlmostEqual(cap_rules.max_salary("2026-27", 3), cap * 0.25)
+        self.assertAlmostEqual(cap_rules.max_salary("2026-27", 7), cap * 0.30)
+        self.assertAlmostEqual(cap_rules.max_salary("2026-27", 12), cap * 0.35)
+        self.assertGreater(cap_rules.max_salary("2028-29", 12), cap_rules.max_salary("2026-27", 12))
+
+    def test_star_ask_is_capped_at_his_max_and_bench_players_keep_the_old_rule(self):
+        from nba_gm_data import cap_rules, contract_ai as ca
+        player = {"id": "s", "name": "Star", "age": 33, "draft_year": 2014, "minutes_projection": 34}
+        with patch.object(ca, "valuation_for_player", return_value={"player_value": 96, "on_court_value": 82}), \
+             patch("nba_gm_data.sim.player_feature_vector") as features, \
+             patch.object(ca, "contract_role_tier", return_value="franchise_anchor"), \
+             patch.object(ca, "model_expected_aav", return_value=90e6), \
+             patch.object(ca, "contract_for_player", return_value={}):
+            features.return_value.features = {}
+            ask = ca.star_market_ask_millions({}, player, "2028-29")
+        self.assertAlmostEqual(ask, round(cap_rules.max_salary("2028-29", 14) / 1e6, 1))
+        with patch.object(ca, "valuation_for_player", return_value={}), \
+             patch("nba_gm_data.sim.player_feature_vector") as features, \
+             patch.object(ca, "contract_role_tier", return_value="rotation"):
+            features.return_value.features = {}
+            self.assertIsNone(ca.star_market_ask_millions({}, player, "2028-29"))
+
+    def test_market_ask_uses_the_star_price_only_without_research_and_above_the_minutes_rule(self):
+        saved = {"meta": {"season": "2027-28"}, "state": {"phase": "free_agency"}}
+        player = {"id": "s", "minutes_projection": 34}
+        with patch("nba_gm_data.contract_ai.star_market_ask_millions", return_value=61.8), \
+             patch.object(play, "display_minutes_projection", return_value=34.0):
+            self.assertEqual(play.free_agency_initial_ask(player, play.with_star_market_ask({}, saved, player, {})), 61.8)
+            research = {"projected_aav_millions": 25.0}
+            self.assertEqual(play.with_star_market_ask({}, saved, player, research), research)
+        with patch("nba_gm_data.contract_ai.star_market_ask_millions", return_value=None), \
+             patch.object(play, "display_minutes_projection", return_value=34.0):
+            self.assertEqual(play.free_agency_initial_ask(player, play.with_star_market_ask({}, saved, player, {})),
+                             round(34 * 0.48, 1))
+
+    def test_ai_team_keeps_its_star_at_his_market_price(self):
+        saved = {"meta": {"human_team_ids": ["h"], "user_team_id": "h"}, "team_records": {}, "player_season_stats": {}}
+        star = {"id": "s", "team_id": "den", "age": 33, "minutes_projection": 34, "_star_ask_millions": 61.8}
+        self.assertTrue(sv.should_ai_retain_expiring_player(saved, star, "2027-28", 17))
+        self.assertFalse(sv.should_ai_retain_expiring_player(saved, {**star, "team_id": "h"}, "2027-28", 17))
+        terms = sv.ai_re_signing_contract_terms(saved, star, "2028-29")
+        self.assertEqual(terms["salary"], 61_800_000)  # was capped at $32M by the minutes rule
+        plain = sv.ai_re_signing_contract_terms(saved, {k: v for k, v in star.items() if k != "_star_ask_millions"},
+                                                "2028-29")
+        self.assertLessEqual(plain["salary"], 32_000_000)
+
+
 class SummerMarketTests(unittest.TestCase):
     def candidate(self, pid, teams=("a", "b"), accepted=True):
         return {"accepted_by_all": accepted, "legality": {"status": "legal"},

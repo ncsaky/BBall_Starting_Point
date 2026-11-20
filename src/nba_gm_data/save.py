@@ -8962,6 +8962,7 @@ def apply_offseason_roster_transitions(canonical: dict[str, Any], save: dict[str
     active = canonical_with_save(canonical, save)
     players = {player["id"]: player for player in active.get("players", [])}
     contracts = {contract.get("player_id"): contract for contract in active.get("contracts", [])}
+    annotate_star_asks(active, contracts, next_season)
     free_agents: list[str] = list(save.get("free_agent_player_ids", []))
     retired: list[str] = list(save.get("retired_player_ids", []))
     retired_this_offseason: list[str] = []
@@ -9362,6 +9363,7 @@ def prepare_free_agency_pool(canonical: dict[str, Any], save: dict[str, Any]) ->
     retirement_count = prepare_offseason_retirements(canonical, save, current_season, next_season, seed)
     active = canonical_with_save(canonical, save)
     contracts = {contract.get("player_id"): contract for contract in active.get("contracts", [])}
+    annotate_star_asks(active, contracts, next_season)
     free_agents = set(save.get("free_agent_player_ids", []))
     expired: list[str] = []
     re_signing_commitments: dict[tuple[str, str], float] = {}
@@ -9629,10 +9631,38 @@ def clean_free_agency_state(save: dict[str, Any], current_season: str | None = N
             }
 
 
+STAR_RETENTION_MAX_AGE = 33.0
+
+
+def annotate_star_asks(active: dict[str, Any], contracts: dict[str, dict[str, Any]], next_season: str) -> None:
+    """Mark each expiring starter-or-better with his market price (TRADE-VOLUME-2, contract_ai.star_market_ask_millions)
+    as ``_star_ask_millions`` on the player rows of ``active`` (a working copy), for the AI re-signing pass below."""
+    from .contract_ai import star_market_ask_millions
+    from .transactions import with_transaction_context
+    expiring = [p for p in active.get("players", []) if p.get("team_id") and display_minutes_projection(p) >= 24.0
+                and (contract_last_season(contracts.get(p.get("id"))) or next_season) < next_season]
+    if not expiring:
+        return
+    priced = with_transaction_context(active)
+    by_id = {p.get("id"): p for p in priced.get("players", [])}
+    for player in expiring:
+        try:
+            ask = star_market_ask_millions(priced, by_id.get(player["id"], player), next_season)
+        except (KeyError, ValueError, TypeError):
+            ask = None
+        if ask:
+            player["_star_ask_millions"] = ask
+
+
 def should_ai_retain_expiring_player(save: dict[str, Any], player: dict[str, Any], season: str, seed: int) -> bool:
     team_id = player.get("team_id")
     if not team_id or team_id in human_controlled_team_ids(save):
         return False
+    # A team keeps its expiring star (starter-or-better market price, 33 or younger) whenever its cap and payroll
+    # plan allow (ai_re_signing_allowed). Before it was a dice roll capped at 72%, and Denver let Nikola Jokic walk in
+    # 2028 (he signed with Boston for $18.9M). Real stars re-sign or extend almost without exception.
+    if player.get("_star_ask_millions") and float(player.get("display_age", player.get("age")) or 27.0) <= STAR_RETENTION_MAX_AGE:
+        return True
     minutes = display_minutes_projection(player)
     age = float(player.get("age") or 27.0)
     record = save.get("team_records", {}).get(team_id, {})
@@ -9657,6 +9687,12 @@ def ai_re_signing_contract_terms(save: dict[str, Any], player: dict[str, Any], n
     score = minutes * 0.72 + per_game_stat(save.get("player_season_stats", {}).get(player.get("id"), {}), "points") * 0.25
     years = 3 if age <= 29 and minutes >= 24 else 2 if age <= 33 and minutes >= 16 else 1
     salary = int(round(clamp(2_200_000 + minutes * 520_000 + max(0.0, score - 18.0) * 320_000, 2_000_000, 32_000_000)))
+    star = float(player.get("_star_ask_millions") or 0.0)
+    if star * 1_000_000 > salary:
+        # TRADE-VOLUME-2: a starter-or-better re-signs at his market price (annotate_star_asks), not the minutes rule
+        # capped at $32M; the price is already within the maximum salary for his years in the league.
+        salary = int(round(star * 1_000_000))
+        years = 4 if age <= 30 else years
     seasons = [
         {
             "season": season_label_from_start(season_start_year(next_season) + offset),
