@@ -1,0 +1,224 @@
+/* Season slideshows: the tutorial card (tutorial.css), made large, alone on a dimmed full-screen backdrop.
+   Tables follow the house table style (house-table.css values): double header rule, small bold header text,
+   alternating rows, whole-row hover, sorted-column fill, headshots bottom-aligned filling the row. */
+.season-slideshow[hidden] { display: none; }
+
+.season-slideshow {
+  position: fixed;
+  inset: 0;
+  z-index: 20500;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.ss-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(9, 14, 20, 0.9);
+}
+
+.ss-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: min(1180px, calc(100vw - 48px));
+  height: min(800px, calc(100vh - 48px));
+  background: var(--panel, #edf1f4);
+  border: 1px solid #718294;
+  box-shadow: 1px 1px 0 #fff inset, -1px -1px 0 #a8b4bf inset, 0 14px 40px rgba(0, 0, 0, 0.45);
+  color: var(--text, #1a222a);
+}
+
+.ss-enter-next { animation: ss-in-next 220ms cubic-bezier(.2, .75, .25, 1); }
+.ss-enter-prev { animation: ss-in-prev 220ms cubic-bezier(.2, .75, .25, 1); }
+@keyframes ss-in-next { from { opacity: .35; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+@keyframes ss-in-prev { from { opacity: .35; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
+
+.ss-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: 16px 22px 12px;
+}
+
+.ss-content h2 {
+  margin: 0 0 12px;
+  color: #18212a;
+  font-size: 26px;
+  font-weight: 720;
+  line-height: 1.15;
+}
+
+.ss-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  font-size: 13px;
+}
+
+.ss-actions { gap: 12px; }
+.ss-dots { display: flex; gap: 6px; }
+.ss-dots i { width: 8px; height: 8px; border: 1px solid #65788a; background: #d7e0e7; }
+.ss-dots i.on { background: #2879c6; border-color: #1d5b96; }
+
+.season-slideshow button { color: #111820; font: inherit; }
+.season-slideshow button:focus-visible, .ss-card:focus-visible, .ss-continuity li:focus-visible {
+  outline: 2px solid #176fbe;
+  outline-offset: 2px;
+}
+
+/* Layout helpers */
+.ss-two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.ss-split { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; align-items: start; }
+.ss-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px 16px; }
+.ss-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.ss-stack { display: grid; gap: 12px; }
+.ss-scroll { max-height: 100%; overflow: auto; }
+.ss-muted { color: #52616e; }
+.ss-note, .ss-source { margin: 10px 0 0; color: #3e4d59; font-size: 12px; line-height: 1.4; }
+.ss-source { margin: 0 0 8px; font-weight: 650; }
+.ss-empty { color: #3e4d59; font-size: 15px; }
+.ss-lead { font-size: 15px; font-weight: 650; margin: 6px 0 10px; }
+.ss-feature, .ss-award, .ss-trade, .ss-coach, .ss-story {
+  background: #f7f9fa;
+  border: 1px solid #b7c2cb;
+  box-shadow: 1px 1px 0 #fff inset;
+  padding: 10px 12px;
+}
+.ss-feature h4, .ss-award h4, .ss-story h4, .ss-coach h4, .ss-two h4, .ss-split h4 { margin: 0 0 8px; font-size: 13px; font-weight: 750; color: #17212a; }
+.ss-feature p, .ss-story p, .ss-coach p { margin: 6px 0 0; line-height: 1.4; }
+
+.ss-logo { width: 20px; height: 20px; object-fit: contain; vertical-align: middle; }
+.ss-logo-lg { width: 48px; height: 48px; }
+.ss-logo-xl { width: 96px; height: 96px; }
+.ss-team { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.ss-player { display: inline-flex; align-items: flex-end; gap: 8px; min-height: 40px; }
+.ss-player > span:last-child { display: flex; flex-direction: column; padding-bottom: 3px; }
+.ss-player small, .ss-allnba small { color: #52616e; font-size: 11px; }
+.ss-headshot { display: inline-flex; align-items: flex-end; width: 52px; height: 40px; overflow: hidden; flex: none; background: #dfe5ea; }
+.ss-headshot img { width: 100%; height: 100%; object-fit: cover; object-position: bottom; display: block; }
+.ss-headshot-empty { background: linear-gradient(#e4e8eb, #c9d2d9); }
+
+/* Tables: house style */
+.ss-table { width: 100%; border-collapse: collapse; background: var(--house-row, #fff); font-size: 12px; }
+.ss-table caption { caption-side: top; text-align: left; font-weight: 750; font-size: 13px; padding: 0 0 5px; color: #17212a; }
+.ss-table th {
+  border-bottom: 3px double var(--house-head-rule, #b7c2cb);
+  color: var(--house-head-text, #1d2a33);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 6px;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.ss-table td { border-bottom: 1px solid var(--house-rule, #d5dde3); padding: 3px 6px; vertical-align: middle; }
+.ss-table tbody tr:nth-child(even) td { background: var(--house-row-alt, #eef1f3); }
+.ss-table tbody tr:hover td { background: var(--house-row-hover, #dce8f2); }
+.ss-table th.ss-sorted { background: var(--house-sorted-head, #d1dde8); }
+.ss-table td.ss-sorted { box-shadow: inset 0 0 0 999px var(--house-sorted-cell, rgba(118, 156, 190, .28)); }
+.ss-table .ss-num { text-align: right; font-variant-numeric: tabular-nums; }
+.ss-table td.ss-player-col { padding-top: 0; padding-bottom: 0; vertical-align: bottom; }
+.ss-table tr.ss-user td { background: var(--house-row-active, #cfe1f1); font-weight: 700; }
+.ss-table tr.ss-user td:first-child { box-shadow: inset 3px 0 0 var(--house-active-mark, #3d82c5); }
+.ss-table small { display: block; }
+
+/* Champion */
+.ss-champion { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px 22px; }
+.ss-champion-team { display: flex; gap: 18px; align-items: center; grid-column: 1 / -1; }
+.ss-champion-team h3 { margin: 0; font-size: 30px; }
+.ss-champion-team p { margin: 6px 0 0; font-size: 15px; }
+.ss-path { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.ss-path li { display: grid; grid-template-columns: 150px 1fr 50px; align-items: center; padding: 6px 10px; background: #f7f9fa; border: 1px solid #c8d1d8; }
+.ss-path li:nth-child(even) { background: #eef1f3; }
+.ss-path li b:last-child { text-align: right; }
+
+/* Awards */
+.ss-awards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.ss-award { display: flex; flex-direction: column; gap: 4px; }
+.ss-award p { margin: 2px 0 0; font-size: 12px; line-height: 1.35; }
+.ss-criteria { margin: auto 0 0; color: #5a6874; font-size: 10.5px; line-height: 1.3; }
+.ss-allnba { margin-top: 12px; display: grid; gap: 8px; }
+.ss-allnba-row { display: grid; grid-template-columns: 150px 1fr; align-items: center; }
+.ss-allnba-row h5 { margin: 0; font-size: 12px; }
+.ss-allnba ul { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 0; padding: 0; list-style: none; }
+.ss-allnba li { display: flex; align-items: flex-end; gap: 6px; background: #f7f9fa; border: 1px solid #c8d1d8; }
+.ss-allnba li > span { display: flex; flex-direction: column; padding: 2px 4px 3px 0; min-width: 0; }
+.ss-allnba li b { font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Your season / generic */
+.ss-big { display: flex; gap: 14px; align-items: center; margin-bottom: 12px; }
+.ss-big h3 { margin: 0; font-size: 28px; }
+.ss-big p { margin: 4px 0 0; font-size: 14px; }
+.ss-dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 10px 0 0; }
+.ss-dl dt { color: #3e4d59; }
+.ss-dl dd { margin: 0; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.ss-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0; }
+.ss-chip-head { font-weight: 750; width: 90px; }
+.ss-chip { border: 1px solid #8797a6; padding: 2px 8px; background: #fff; font-size: 12px; }
+.ss-chip.ss-good { border-color: #2f7d4b; background: #e3f2e8; }
+.ss-chip.ss-bad { border-color: #a74a51; background: #f6e3e4; }
+.ss-list { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.ss-up { color: #237042; font-weight: 700; }
+.ss-down { color: #a3343e; font-weight: 700; }
+
+/* Trades and coaching */
+.ss-trade header { display: flex; justify-content: space-between; gap: 10px; font-weight: 700; margin-bottom: 6px; }
+.ss-trade-sides { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.ss-trade-sides ul { margin: 4px 0 0; padding-left: 18px; }
+.ss-side-head { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.ss-trade-sides li small { display: block; color: #52616e; }
+.ss-reason { margin: 8px 0 0; font-style: italic; color: #2b3944; }
+.ss-coach { display: flex; gap: 14px; align-items: flex-start; }
+.ss-stories { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.ss-story p { font-size: 14px; }
+
+/* Continuity graphic */
+.ss-legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 0 0 8px; font-size: 11.5px; }
+.ss-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.ss-legend i { display: inline-block; width: 14px; height: 10px; }
+.ss-continuity { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 18px; }
+.ss-continuity li { break-inside: avoid; display: grid; grid-template-columns: 62px minmax(100px, 1fr) 50px 160px; gap: 8px; align-items: center; min-height: 32px; padding: 1px 6px; background: var(--house-row, #fff); }
+.ss-continuity .ss-logo { width: 16px; height: 16px; }
+.ss-pct small { display: block; color: #52616e; font-size: 10.5px; }
+.ss-compact .ss-table td { padding-top: 2px; padding-bottom: 2px; }
+.ss-compact .ss-logo { width: 16px; height: 16px; }
+.ss-continuity li:nth-child(even) { background: var(--house-row-alt, #eef1f3); }
+.ss-continuity li:hover { background: var(--house-row-hover, #dce8f2); }
+.ss-continuity li.ss-user { background: var(--house-row-active, #cfe1f1); box-shadow: inset 3px 0 0 var(--house-active-mark, #3d82c5); font-weight: 700; }
+.ss-bar { display: flex; height: 12px; background: #172228; }
+.ss-bar i, .ss-arrivals i { display: block; height: 100%; }
+.ss-kept { background: #2f9a55; }
+.ss-injured { background: #9aa4ad; }
+.ss-gone { background: #c2414b; }
+.ss-arrival-key { background: #9cc6e8; }
+.ss-arrivals { display: flex; height: 6px; background: rgba(23, 34, 40, .12); }
+.ss-arrivals i { background: #9cc6e8; }
+.ss-pct { font-size: 12px; white-space: nowrap; }
+
+/* Settings menu entry */
+.settings-slideshows { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.settings-slideshows > span { font-weight: 700; margin-right: 4px; }
+
+@media (max-width: 1100px) {
+  .ss-awards { grid-template-columns: repeat(3, 1fr); }
+  .ss-grid-3 { grid-template-columns: 1fr 1fr; }
+  .ss-allnba ul { grid-template-columns: repeat(3, 1fr); }
+  .ss-continuity { columns: 1; }
+  .ss-continuity li { min-height: 26px; grid-template-columns: 64px minmax(140px, 1fr) 60px 210px; }
+  .ss-compact { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .ss-two, .ss-split, .ss-champion { grid-template-columns: 1fr; }
+  .ss-awards, .ss-grid-3 { grid-template-columns: 1fr 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-enter-next, .ss-enter-prev { animation: none !important; }
+  .season-slideshow * { scroll-behavior: auto !important; transition: none !important; }
+}
