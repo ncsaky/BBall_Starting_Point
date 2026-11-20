@@ -127,6 +127,10 @@ body.unified-terminal-ui .trade-legal-badge.illegal { color:#9e3f47; border-colo
 body.unified-terminal-ui .trade-legal-badge.review { color:#69562d; border-color:#b2a482; background:#eee9db; }
 body.unified-terminal-ui .trade-legality-issues { margin:0; padding:7px 10px 7px 25px; color:#a13d43; font-size:12px; }
 body.unified-terminal-ui .modal-trade-room .trade-decision-dock .trade-legality-issues { flex-basis:100%; order:3; padding:0 0 0 16px; max-height:95px; overflow:auto; }
+/* TRADE-DEADLINE: a partner's counter-offer is a proposal, not an error: neutral text, buttons on one line. */
+body.unified-terminal-ui .modal-trade-room .trade-decision-dock .trade-counter-offer { color:#26323c; max-height:none; display:flex; flex-wrap:wrap; gap:4px 10px; align-items:center; }
+body.unified-terminal-ui .modal-trade-room .trade-counter-offer > div { flex-basis:100%; }
+body.unified-terminal-ui .modal-trade-room .trade-counter-history { flex-basis:100%; margin:0; padding:0 0 0 16px; color:#5a6773; }
 body.unified-terminal-ui .trade-team-decisions { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:0; }
 body.unified-terminal-ui .trade-team-decisions .trade-evaluation-panel { background:transparent; border:0; border-bottom:1px solid #b4c0ca; border-radius:0; padding:10px; }
 body.unified-terminal-ui .modal-trade-room .trade-evaluation-details { display:grid; gap:3px; margin:6px 0 0; font-size:12px; }

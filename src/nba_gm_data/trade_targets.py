@@ -315,9 +315,38 @@ def team_trade_targets(canonical: dict[str, Any], team_id: str) -> list[dict[str
             age_max=25.5, min_on_court=max(60.0, nth(5)), max_salary=min(matchable, 30e6), no_bad_contract=True)
     if stance in {"contend", "rise"}:
         add_market_targets(add, stance, roster, slots, nth, matchable)
-    targets = targets[:TARGETS_PER_TEAM]
+    filled = recently_filled_targets(canonical, team_id)
+    targets = [t for t in targets if t["key"] not in filled][:TARGETS_PER_TEAM]
     memo[team_id] = targets
     return targets
+
+
+TARGET_FILLED_DAYS = 60
+REPEATABLE_TARGETS = frozenset({"prospect"})  # a rebuild collects several young players
+
+
+def recently_filled_targets(canonical: dict[str, Any], team_id: str) -> set[str]:
+    """Target kinds this team filled by trade in the last TARGET_FILLED_DAYS days (TRADE-DEADLINE). In the first
+    after-run Indiana bought three bigs in three days (Post, Kalkbrenner, Bitadze), all for the same "successor to
+    Siakam" target, because targets are rebuilt from the roster every market day and Siakam was still there. A front
+    office that just filled a need moves on to its next one."""
+    tx = _tx()
+    today = tx.parse_iso_date((canonical.get("meta") or {}).get("current_date"))
+    if today is None:
+        return set()
+    filled = set()
+    oldest = str(today.year - 1)
+    for log in reversed(canonical.get("transaction_logs") or []):  # newest last; older seasons end the scan
+        if str(log.get("date") or "9999")[:4] < oldest:
+            break
+        reasons = log.get("trade_reasons") or {}
+        if (log.get("transaction_type") != "trade" or reasons.get("buyer_team_id") != team_id
+                or reasons.get("target_key") in REPEATABLE_TARGETS or not reasons.get("target_key")):
+            continue
+        day = tx.parse_iso_date(log.get("date"))
+        if day is not None and 0 <= (today - day).days < TARGET_FILLED_DAYS:
+            filled.add(reasons["target_key"])
+    return filled
 
 
 # TRADE-VOLUME-2: the two most common real deals the targets above never asked for. In the real 2025-27 trade list
@@ -402,8 +431,63 @@ def team_sell_reasons(canonical: dict[str, Any], team_id: str) -> dict[str, list
     return out
 
 
+# TRADE-DEADLINE: salary a buyer would rather move. The deadline funnel (docs/agents/tasks/trade-volume-2.md) showed
+# that buyers matched salary with rotation players they valued, so the two sides' prices rarely met. Real contenders
+# match with contracts they don't want: out of the rotation, overpaid, injured for a long time, or an expiring bench
+# deal (Harden for Garland's longer deal; the Lakers' and Warriors' bench salary at the 2025 and 2026 deadlines;
+# data/research/real_trades/trades_2025_2027.json). The seller still prices every player it takes with its own check,
+# so negative-value filler needs picks attached.
+FILLER_REASONS = frozenset({"negative_contract_value", "out_of_rotation", "over_tax_line", "veteran_surplus_slot",
+                            "health_risk_for_win_now_team", "upgradeable_expensive_rotation_slot", "gm_listed",
+                            "older_than_team_timeline", "expiring_veteran_non_contender", "position_surplus"})
+FILLER_MIN_SALARY = 2_500_000
+FILLER_LONG_INJURY_DAYS = 30
+FILLER_BENCH_MINUTES = 15.0
+FILLER_ROTATION_MINUTES = 18.0
+FILLER_PER_BUYER = 3
+
+
+def salary_filler(canonical: dict[str, Any], team_id: str) -> dict[str, str]:
+    """The team's "salary I'd move" list for matching salary in its own offers: player id -> why, most movable first
+    (at most FILLER_PER_BUYER). Never a core player, a young piece the team builds around or a recent draft pick."""
+    memo = _memo(canonical).setdefault("filler", {})
+    if team_id in memo:
+        return memo[team_id]
+    tx = _tx()
+    from .team_planning import core_commitment
+    plan = (canonical.get("team_plans") or {}).get(team_id) or {}
+    core = set(plan.get("core_ids") or [])
+    stance = team_stance(_state(canonical, team_id))
+    reasons = team_sell_reasons(canonical, team_id)
+    today = tx.parse_iso_date((canonical.get("meta") or {}).get("current_date"))
+    injured = {}
+    for health in canonical.get("player_health_states") or []:
+        end = tx.parse_iso_date(health.get("return_date"))
+        if health.get("availability_status") == "out" and today and end and (end - today).days >= FILLER_LONG_INJURY_DAYS:
+            injured[health.get("player_id")] = (end - today).days
+    found = []
+    for row in _team_rows(canonical, team_id):
+        if (row["id"] in core or row["salary"] < FILLER_MIN_SALARY or core_commitment(canonical, team_id, row["id"])
+                or young_piece_kept(row, stance) or recent_draft_pick(canonical, row["player"])):
+            continue
+        why = next((r for r in reasons.get(row["id"], []) if r in FILLER_REASONS), None)
+        if why is not None and row["minutes"] >= FILLER_ROTATION_MINUTES:
+            why = None  # a rotation player is not filler, whatever his contract
+        if why is None and row["id"] in injured:
+            why = "long_term_injury"
+        if why is None and row["years"] <= 1 and row["minutes"] < FILLER_BENCH_MINUTES and row["age"] >= 24.0:
+            why = "expiring_bench_salary"
+        if why is not None:
+            found.append((row["minutes"], -row["salary"], row["id"], why))
+    found.sort()
+    memo[team_id] = {pid: why for _, _, pid, why in found[:FILLER_PER_BUYER]}
+    return memo[team_id]
+
+
 YOUNG_PIECE_AGE = 25.5
 YOUNG_STARTER_MINUTES = 24.0
+FLIP_AGE = 28.0  # a rebuilding team may re-trade a veteran this old within the six-month hold
+YOUNG_CORE_ON_COURT = 65.0
 
 
 def young_piece_kept(row: dict[str, Any], seller_stance: str) -> bool:
@@ -414,7 +498,12 @@ def young_piece_kept(row: dict[str, Any], seller_stance: str) -> bool:
     teams that happened to target them, at prices the acceptance check allowed."""
     if row["age"] > YOUNG_PIECE_AGE:
         return False
-    return seller_stance in {"rebuild", "retool"} or row["minutes"] >= YOUNG_STARTER_MINUTES
+    # TRADE-DEADLINE: a young player of starter quality is a core piece even when his minutes are lower (in July the
+    # projection is not the season's role). With buyer filler, the final run had rising Portland trade Donovan Clingan
+    # (23, on-court 70, 21 projected minutes) for Mitchell Robinson and a first. The bar is about the top 5% of
+    # players 25 or younger by on-court value.
+    return (seller_stance in {"rebuild", "retool"} or row["minutes"] >= YOUNG_STARTER_MINUTES
+            or row["on_court"] >= YOUNG_CORE_ON_COURT)
 
 
 # Reasons that never put a young player a team builds around on the market (trade 2b, the user's direction: young
@@ -511,6 +600,7 @@ def target_pairings(canonical: dict[str, Any], buyer_ids: list[str], excluded: s
     rows = player_rows(canonical)
     human = set(canonical.get("_human_team_ids") or [])
     alternatives = ALTERNATIVES[min(2, depth)]
+    held = tx.re_trade_hold(canonical)
     pairings = []
     for buyer_id in buyer_ids:
         for rank, target in enumerate(team_trade_targets(canonical, buyer_id)):
@@ -530,7 +620,14 @@ def target_pairings(canonical: dict[str, Any], buyer_ids: list[str], excluded: s
                 stances = target["filters"].get("seller_stances")
                 if stances and seller_stance not in stances:
                     continue
-                if young_piece_kept(row, seller_stance) and not exposing_reasons(reasons):
+                if ((young_piece_kept(row, seller_stance) or recent_lottery_pick(canonical, row["player"]))
+                        and not exposing_reasons(reasons)):
+                    continue
+                if held.get(row["id"]) == row["team_id"] and not (seller_stance == "rebuild" and row["age"] >= FLIP_AGE):
+                    # TRADE-DEADLINE: a player the team acquired by trade in the last six months is not shopped again
+                    # (the final run had Sam Hauser traded three times in eight months, Detroit selling him three
+                    # months after targeting him). A rebuilding team may still flip a veteran it took on as salary
+                    # (Atlanta moving Nurkic and Okogie to contenders), the usual real exception.
                     continue
                 matches.append((score + 4.0 * sell_strength(reasons), row, reasons))
             matches.sort(key=lambda m: (-m[0], m[1]["id"]))
@@ -613,11 +710,47 @@ def package_fits_rules(canonical: dict[str, Any], pairing: dict[str, Any], asset
             and not any(p["on_court"] >= row["on_court"] - 6.0 for p in incoming)):
         return False
     picks = [a for a in assets if a.get("kind") in {"pick", "pick_swap"}]
-    if picks and pairing.get("buyer_minutes", 0.0) < 24.0:
+    minutes = pairing.get("buyer_minutes", 0.0)
+    if picks and minutes < 24.0:
         spend = tx.package_value_for_team(canonical, picks, buyer_id)
-        if spend > 8.0 + 0.6 * backup_gain(canonical, buyer_id, row):
+        if spend > quick_capital_limit(canonical, buyer_id, row, minutes, assets, target):
             return False
     return True
+
+
+def quick_capital_limit(canonical: dict[str, Any], buyer_id: str, row: dict[str, Any], minutes: float,
+                        outgoing: list[dict[str, Any]], incoming: list[dict[str, Any]]) -> float:
+    """The cheap terms of the full check's draft-spending limit (trade_roster.pick_investment_outlook): the base 8,
+    measured depth, the rotation-role allowance, salary relief and the tax saved. TRADE-DEADLINE: the screen used to
+    keep only the base and depth, so it dropped packages the full check would allow (a 17-20 minute rotation player
+    for a second, or filler that sheds $5M+ of salary); the terms that need a roster forecast (rotation strength,
+    upside, injury cover) are still left to the full check."""
+    from .trade_roster import ROTATION_ROLE_PICK_ALLOWANCE, BACKUP_ROLE_MINUTES
+    from .trade_tax import tax_value
+    tx = _tx()
+    limit = 8.0 + 0.6 * backup_gain(canonical, buyer_id, row)
+    limit += ROTATION_ROLE_PICK_ALLOWANCE * min(1.0, max(0.0, (minutes - BACKUP_ROLE_MINUTES) / 8.0))
+    out_salary, in_salary = tx.package_salary(canonical, outgoing), tx.package_salary(canonical, incoming)
+    relief = ((out_salary or 0.0) - (in_salary or 0.0)) / 1e6 if out_salary is not None and in_salary is not None else 0.0
+    if relief >= 5.0:
+        limit += relief * 2.0
+    limit += max(0.0, tax_value(canonical, buyer_id, incoming, outgoing))
+    # Young upside gained (the full check's 1.5 per point of development upside, scaled by value, players 25 or younger).
+    values = tx.player_asset_values_by_id(canonical)
+
+    def upside(assets):
+        total = 0.0
+        for asset in assets:
+            if asset.get("kind") != "player":
+                continue
+            player = tx.player_by_id(canonical, asset.get("id")) or {}
+            value = values.get(asset.get("id")) or {}
+            if float(player.get("display_age", player.get("age")) or 99) <= 25:
+                total += max(0.0, float(value.get("development_upside") or 0)) * min(1.0, max(0.0, float(value.get("player_value") or 0)) / 50)
+        return total
+
+    limit += 1.5 * max(0.0, upside(incoming) - upside(outgoing))
+    return limit
 
 
 def backup_gain(canonical: dict[str, Any], buyer_id: str, row: dict[str, Any]) -> float:
@@ -719,6 +852,26 @@ def recent_draft_pick(canonical: dict[str, Any], player: dict[str, Any] | None) 
         return False
     start = _tx().season_start_from_label(_season(canonical))
     return start - int(year) < RECENT_DRAFT_SEASONS
+
+
+RECENT_LOTTERY_PICK = 30  # every first-round pick (the name is kept from the first version, lottery picks only)
+
+
+def recent_lottery_pick(canonical: dict[str, Any], player: dict[str, Any] | None) -> bool:
+    """A first-round pick in his first three seasons (TRADE-DEADLINE). The first after-run with buyer filler had
+    Utah, on the rise, give Darryn Peterson (the 2026 No. 2 pick, 21) to Boston for Neemias Queta and a second in his
+    second summer: the price check passed because a rookie's value follows his current role. The final run still had
+    contending Oklahoma City give Bennett Stirtz (its 2026 No. 16 pick, which it traded up for) and a second to
+    Milwaukee for Jericho Sims, and rising Orlando give Cameron Williams (21, 24 minutes) for a bench big: the same
+    shape as the Nique Clifford sale analysts panned. A team does not shop a first-round pick it just made; he moves
+    only when the team has its own reason (a listing, a blocked prospect, stalled talks), as with any young piece it
+    builds around."""
+    player = player or {}
+    try:
+        slot = int(player.get("draft_position") or player.get("draft_pick") or player.get("overall_pick") or 0)
+    except (TypeError, ValueError):
+        slot = 0
+    return 0 < slot <= RECENT_LOTTERY_PICK and recent_draft_pick(canonical, player)
 
 
 def dump_age_ok(canonical: dict[str, Any], player: dict[str, Any] | None, age: float) -> bool:

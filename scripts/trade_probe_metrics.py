@@ -213,6 +213,24 @@ def metrics(trades, progress):
     out["both_sides_net_above_5_share"] = round(both_win / max(1, len(trades)), 3)
     out.update(trade_2b_metrics(trades))
     out["trades_with_stated_reasons"] = sum(1 for t in trades if t.get("why"))
+    # TRADE-DEADLINE: counter-offers (trade step 3) and sellers receiving a player that matches their own targets.
+    countered = [t for t in trades if t.get("counter")]
+    out["counter_trades"] = len(countered)
+    out["counter_share"] = round(len(countered) / max(1, len(trades)), 3)
+    out["counter_by_kind"] = dict(sorted(Counter(s.get("kind") for t in countered
+                                                 for s in (t["counter"].get("steps") or [])).items()))
+    out["counter_two_rounds"] = sum(1 for t in countered if int(t["counter"].get("rounds") or 1) >= 2)
+    out["counter_rounds_distribution"] = dict(sorted(Counter(int(t["counter"].get("rounds") or 1) for t in countered).items()))
+    out["seller_got_target_match"] = sum(1 for t in trades if t.get("seller_target_match"))
+    # How far above its own price the last asking team ended in the full check (a fair ask stays close to 0).
+    asking_nets = []
+    for t in countered:
+        last = (t["counter"].get("steps") or [{}])[-1]
+        e = next((e for e in t["evaluations"] if e.get("team_abbrev") == last.get("asking_team")), None)
+        if e and e.get("net_value") is not None:
+            asking_nets.append(float(e["net_value"]) - float(e.get("acceptance_threshold") or 0.0))
+    out["counter_asking_net_over_price"] = quantiles(asking_nets)
+    out["counter_detail"] = [{"date": t["date"], "teams": t["teams"], "text": t["counter"].get("text")} for t in countered]
     out["by_target"] = dict(sorted(Counter(t.get("target_key") or "none" for t in trades).items()))
     out["accepted_by_both_own_evaluations"] = sum(
         1 for t in trades if t["evaluations"] and all(str(e.get("decision") or "").startswith("accept") for e in t["evaluations"]))

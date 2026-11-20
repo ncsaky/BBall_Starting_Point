@@ -7249,6 +7249,9 @@ function renderTradeBuilder(root) {
   body.querySelector("#evaluateTrade").addEventListener("click", () => evaluateBuiltTrade().catch(error => showToast(error.message || String(error), true)));
   const applyButton = body.querySelector("#applyBuiltTrade");
   if (applyButton) applyButton.addEventListener("click", () => applyCandidate(state.tradeCandidate, "builder").catch(error => showToast(error.message || String(error), true)));
+  body.querySelector("#acceptCounterTrade")?.addEventListener("click", () => applyCandidate(state.tradeCandidate?.counter_offer, "counter").catch(error => showToast(error.message || String(error), true)));
+  body.querySelector("#editCounterTrade")?.addEventListener("click", () => editCounterOffer());
+  body.querySelector("#declineCounterTrade")?.addEventListener("click", () => { state.tradeCandidate = {...state.tradeCandidate, counter_offer: null}; state.tradeCounterChain = null; showToast("Counter-offer declined"); tradeResponseEffect("declined"); renderTradeRoom(); });
   body.querySelectorAll("[data-trade-team-roster]").forEach((button) => button.addEventListener("click", () => openTeamRosterCard(button.dataset.tradeTeamRoster)));
   wireDashboardPlayerCards(body);
 }
@@ -7597,15 +7600,36 @@ async function evaluateBuiltTrade() {
     return {transfers,pick_rules:tradePickRulesRequest()};
   };
   const selectionKey = JSON.stringify(request());
+  // A negotiation with one partner (trade step 3): the earlier offers and counters go back with each evaluation, so
+  // the partner never repeats a package and each new counter asks for less than its last one.
+  const chain = state.tradeCounterChain?.partner === partner ? state.tradeCounterChain.rounds : [];
   const result = await action("evaluate_trade", {
     ...savePayload(),
     ...request(),
+    counter_chain: chain.map(({package: key, asking_net}) => ({package: key, asking_net})),
     seed: 7,
   });
   if (save !== state.currentSave || partner !== state.tradePartner) return;
   if (selectionKey !== JSON.stringify(request())) return;
   result.headline = tradeHeadline(result);
+  const rounds = [...chain];
+  if (result.offer_package) rounds.push({package: result.offer_package});
+  const counter = result.counter_offer?.counter;
+  if (counter) rounds.push({package: counter.package, asking_net: counter.asking_net, text: counter.text, round: counter.rounds});
+  state.tradeCounterChain = {partner, rounds};
   state.tradeCandidate = result;
+  renderTradeRoom();
+}
+
+function editCounterOffer() {
+  const proposal = state.tradeCandidate?.counter_offer?.proposal;
+  if (!proposal) return;
+  const specs = assets => (assets || []).map(asset => ({kind: asset.kind, id: asset.id || asset.value}));
+  const userIsFrom = teamLabel(proposal.from_team_id) === userTeam();
+  state.selectedFrom = hydrateTradeSelection(specs(userIsFrom ? proposal.from_assets : proposal.to_assets), state.data.tradeUser);
+  state.selectedTo = hydrateTradeSelection(specs(userIsFrom ? proposal.to_assets : proposal.from_assets), state.data.tradePartner);
+  state.tradeCandidate = null;
+  state.tradeInsightPage = 0;
   renderTradeRoom();
 }
 
@@ -7647,6 +7671,7 @@ async function applyCandidate(candidate, source) {
   }
   showToast("Trade completed");
   tradeResponseEffect("accepted");
+  state.tradeCounterChain = null;
   state.selectedFrom = [];
   state.selectedTo = [];
   state.tradeExtraSelections = {};
@@ -13815,6 +13840,28 @@ function tradeReadout(candidate) {
       <div class="trade-evaluation-title">${tradeLegalityBadge(candidate)}<strong>${canApply ? "All partners accept" : legal === "legal" ? "Partner declines" : "Trade cannot proceed"}</strong></div>
       ${tradeLegalityIssues(candidate)}
       <button id="applyBuiltTrade" class="trade-execute-button ui-command" ${canApply ? "" : "disabled"}>${canApply ? "Accept Trade" : legal !== "legal" ? "Trade unavailable" : "Partner declines"}</button>
+      ${canApply ? "" : tradeCounterOffer(candidate.counter_offer, candidate.counter_closed)}
+    </div>`;
+}
+
+// Trade step 3: a partner that is a little short answers with a counter-offer. It is the exact deal the engine
+// executes on Accept (the evaluated candidate), so the full package each side sends is listed, not just the change.
+// Earlier counters in the same negotiation are listed above it; Edit loads it into the builder to answer it.
+function tradeCounterOffer(counter, closed) {
+  const earlier = (state.tradeCounterChain?.rounds || []).filter(row => row.text && row.package !== counter?.counter?.package);
+  const history = earlier.length ? `<ol class="trade-counter-history">${earlier.map(row => `<li>Round ${escapeHtml(textValue(row.round))}: ${escapeHtml(textValue(row.text))}</li>`).join("")}</ol>` : "";
+  if (closed && !counter) return `<div class="trade-counter-offer trade-legality-issues">${history}<strong>No more counters:</strong> the partner has made its last counter-offer in this negotiation.</div>`;
+  if (!counter || !counter.proposal || counter.proposal.transfers) return "";
+  const proposal = counter.proposal;
+  const names = assets => (assets || []).map(asset => escapeHtml(textValue(asset.label || asset.name || asset.id))).join(", ") || "nothing";
+  const round = counter.counter?.rounds;
+  return `<div class="trade-counter-offer trade-legality-issues" aria-live="polite">
+      ${history}<strong>Counter-offer${round > 1 ? ` (round ${escapeHtml(textValue(round))})` : ""}:</strong> ${escapeHtml(textValue(counter.counter?.text || "The partner proposes a different package."))}${counter.counter?.last_round ? " This is its last counter." : ""}
+      <div>${escapeHtml(teamLabel(proposal.from_team_id))} sends: ${names(proposal.from_assets)}</div>
+      <div>${escapeHtml(teamLabel(proposal.to_team_id))} sends: ${names(proposal.to_assets)}</div>
+      <button id="acceptCounterTrade" class="trade-execute-button ui-command">Accept counter</button>
+      <button id="editCounterTrade" class="trade-clear-button ui-command">Edit and answer</button>
+      <button id="declineCounterTrade" class="trade-clear-button ui-command">Decline</button>
     </div>`;
 }
 

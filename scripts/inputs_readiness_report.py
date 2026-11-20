@@ -387,6 +387,8 @@ def trade_list(save_path, save, active, base, label):
             "status": t.get("status"),
             "why": (t.get("trade_reasons") or {}).get("text"),
             "target_key": (t.get("trade_reasons") or {}).get("target_key"),
+            "counter": (t.get("trade_reasons") or {}).get("counter"),
+            "seller_target_match": (t.get("trade_reasons") or {}).get("seller_target_match"),
         })
     return out
 
