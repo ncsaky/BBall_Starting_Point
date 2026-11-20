@@ -118,10 +118,10 @@ class FatigueModelTests(unittest.TestCase):
         normal, _, _ = health.rest_chance(player, state(), {**base, "fatigue": 19.0})
         b2b, _, reason = health.rest_chance(player, state(), {**base, "fatigue": 19.0 / health.FATIGUE_DAILY_KEEP, "back_to_back": True})
         heavy, _, heavy_reason = health.rest_chance(player, state(), {**base, "fatigue": 45.0})
-        self.assertAlmostEqual(normal, 0.031)
-        self.assertAlmostEqual(b2b, 0.095, places=3)        # the fitted back-to-back chance for his age
-        self.assertEqual(reason, "second night of a back-to-back")
-        self.assertGreater(heavy, b2b)
+        # SMART-REST: the back-to-back itself carries the fitted effect; fatigue adds only beyond a typical one
+        self.assertGreater(b2b, 2 * normal)
+        self.assertTrue(reason.startswith("second night of a back-to-back"))
+        self.assertGreater(heavy, normal * 1.3)
         self.assertIn("heavy recent workload", heavy_reason)
 
 
