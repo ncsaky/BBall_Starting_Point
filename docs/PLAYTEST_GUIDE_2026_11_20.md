@@ -36,7 +36,7 @@ Run the game the usual way (`nba-gm-data-gui`) and create a **new save**. New ga
 
 ### Free agency
 - **One free-agency room:** a market table, an offer builder with a live five-season cap table, and a signing wire.
-- Free agents judge your offers like everyone else's: you pay close to the market price and can lose a player to a better bid. Stars ask star money (max contracts follow the real 25/30/35% rule), AI teams re-sign their stars first, and rebuilding teams don't overpay veterans over 30.
+- Free agents judge your offers like everyone else's: you pay close to the market price and can lose a player to a better bid. Stars ask star money (max contracts follow the real 25/30/35% rule), teams keep their own free agents with real Bird rights (over the cap, a fifth year, bigger raises; you get the same), stars are almost always kept, and rebuilding teams don't overpay veterans over 30. A newly acquired player can't be flipped for six months.
 - AI teams manage payroll against one real tax line ($200.4M in 2026-27), and teams under it share the tax payout.
 - *Check:* does signing feel fair and tense?
 
@@ -52,8 +52,7 @@ Run the game the usual way (`nba-gm-data-gui`) and create a **new save**. New ga
 - Stars play about one game more per season than real ones.
 - Rest on nationally televised games isn't modeled.
 - There are no counter-asks in trades yet, and no front-office personality. The trade deadline is about half as busy as real.
-- Free-agent prices below starter level still come from minutes played, and there's no Bird-rights exception yet.
-- A player is occasionally traded twice within a few months in a salary dump.
+- Free-agent prices below starter level still come from minutes played. There are no restricted free-agent offer sheets yet (teams simply keep good young players).
 - Some screens are only checked in Chrome at desktop sizes.
 
 ## How to send feedback
