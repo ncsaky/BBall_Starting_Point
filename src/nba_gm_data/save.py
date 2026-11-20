@@ -8055,6 +8055,7 @@ def cap_lines_for_season(season: str | None) -> dict[str, float]:
 
 
 def team_cap_summary(canonical: dict[str, Any], save: dict[str, Any], team_id: str, season: str | None = None) -> dict[str, Any]:
+    from .trade_tax import team_tax_payout_summary
     season = season or save.get("meta", {}).get("season") or CANONICAL_SEASON
     lines = cap_lines_for_season(season)
     total = 0.0
@@ -8096,6 +8097,7 @@ def team_cap_summary(canonical: dict[str, Any], save: dict[str, Any], team_id: s
         "hard_cap_space_pct": round(hard_cap_space / hard_cap * 100, 1),
         "cap_growth_factor": lines["growth_factor"],
         "unresolved_contract_count": unresolved + unresolved_dead,
+        "tax_payout": team_tax_payout_summary(save, team_id),  # TRADE-TAXPOOL: last season's payout or tax bill
     }
 
 

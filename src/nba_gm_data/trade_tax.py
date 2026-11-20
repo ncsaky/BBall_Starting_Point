@@ -138,7 +138,45 @@ def record_season_payrolls(save: dict[str, Any], canonical: dict[str, Any]) -> d
             continue
         rows[team["id"]] = {"payroll": round(float(payroll)), "tax_line": line, "taxed": float(payroll) > line}
     history[season] = rows
+    payouts = save.setdefault("luxury_tax_payouts", {})
+    if season not in payouts:
+        payouts[season] = season_tax_payout(active, rows, season,
+                                            str((save.get("state") or {}).get("current_date") or ""))
     return history
+
+
+def season_tax_payout(canonical: dict[str, Any], rows: dict[str, dict[str, Any]], season: str,
+                      assessed_on: str) -> dict[str, Any]:
+    """The season's tax bills and the payout to the teams under the line (additive save field
+    ``luxury_tax_payouts``: {season: {...}}): half of the tax collected, in equal shares, paid the next July."""
+    bills = {tid: round(luxury_tax_bill(float(row["payroll"]), season, is_repeat_taxpayer(canonical, tid, season)))
+             for tid, row in rows.items()}
+    recipients = sorted(tid for tid, row in rows.items() if not row["taxed"])
+    total = float(sum(bills.values()))
+    distributed = POOL_DISTRIBUTED_SHARE * total
+    share = round(distributed / len(recipients)) if recipients else 0
+    end_year = _tx().season_start_from_label(season) + 1
+    return {"season": season, "assessed_on": assessed_on, "paid_on": f"{end_year}-{POOL_PAYMENT_MONTH_DAY}",
+            "tax_line": rows[next(iter(rows))]["tax_line"] if rows else None, "total_tax": round(total),
+            "distributed": round(distributed), "league_kept": round(total - distributed), "share_per_team": share,
+            "taxpayers": sorted(t for t, b in bills.items() if b > 0), "recipients": recipients,
+            "teams": {tid: {"tax_bill": bills[tid], "payout": share if tid in recipients else 0} for tid in rows}}
+
+
+def team_tax_payout_summary(save: dict[str, Any], team_id: str) -> dict[str, Any] | None:
+    """The team's most recent recorded payout (or tax bill), for the finances display."""
+    payouts = save.get("luxury_tax_payouts") or {}
+    if not payouts:
+        return None
+    season = max(payouts)
+    record = payouts[season]
+    team = (record.get("teams") or {}).get(team_id) or {}
+    today = str((save.get("state") or {}).get("current_date") or "")
+    return {"season": season, "payout_millions": round(float(team.get("payout") or 0) / 1e6, 2),
+            "tax_bill_millions": round(float(team.get("tax_bill") or 0) / 1e6, 2),
+            "share_per_team_millions": round(float(record.get("share_per_team") or 0) / 1e6, 2),
+            "recipients": len(record.get("recipients") or []), "taxpayers": len(record.get("taxpayers") or []),
+            "paid_on": record.get("paid_on"), "paid": bool(today and record.get("paid_on") and today >= record["paid_on"])}
 
 
 def is_repeat_taxpayer(canonical: dict[str, Any], team_id: str, season: str) -> bool:
@@ -170,20 +208,112 @@ def _package_salary(canonical: dict[str, Any], assets: list[dict[str, Any]], sea
 
 def tax_saved(canonical: dict[str, Any], team_id: str, incoming: list[dict[str, Any]],
               outgoing: list[dict[str, Any]]) -> dict[str, Any]:
-    """Tax the trade saves the team (dollars; negative = extra tax), weighted over the open seasons."""
-    total, rows = 0.0, []
-    for season, weight in tax_seasons(canonical):
+    """Tax the trade saves the team (dollars; negative = extra tax), weighted over the open seasons.
+
+    ``saved`` includes the change in the team's expected share of this season's tax payout (``pool``): a trade that
+    gets the team under the line earns it the share, one that pushes it over loses it (TRADE-TAXPOOL)."""
+    total, rows, pool = 0.0, [], 0.0
+    for index, (season, weight) in enumerate(tax_seasons(canonical)):
         before = _payroll(canonical, team_id, season)
         if before <= 0:
             continue
         after = before + _package_salary(canonical, incoming, season) - _package_salary(canonical, outgoing, season)
         repeater = is_repeat_taxpayer(canonical, team_id, season)
         saved = luxury_tax_bill(before, season, repeater) - luxury_tax_bill(after, season, repeater)
-        if saved:
+        share = pool_change(canonical, team_id, season, before, after, incoming, outgoing) if index == 0 else 0.0
+        if saved or share:
             rows.append({"season": season, "payroll_before": before, "payroll_after": after, "saved": saved,
-                         "weight": weight})
-        total += weight * saved
-    return {"saved": total, "seasons": rows}
+                         "pool_share": share, "weight": weight})
+        total += weight * (saved + share)
+        pool += weight * share
+    return {"saved": total, "seasons": rows, "pool": pool, "tax_only": total - pool}
+
+
+def saving_words(result: dict[str, Any]) -> str:
+    """'to cut its luxury tax by about $X' or, when the deal gets the team under the line, the tax and the payout."""
+    pool, tax_only = float(result.get("pool") or 0.0), float(result.get("tax_only") or 0.0)
+    if pool > 0:
+        return (f"to get under the luxury tax line (about ${tax_only / 1e6:.1f}M of tax saved, plus its share of the "
+                f"tax payout to teams under the line, about ${pool / 1e6:.1f}M)")
+    return f"to cut its luxury tax by about ${float(result.get('saved') or 0.0) / 1e6:.1f}M"
+
+
+# ------------------------------------------------------------------------------------- the tax payout (TRADE-TAXPOOL)
+# The real rule (2023 collective bargaining agreement, as described by Larry Coon's CBA FAQ and the Hoops Rumors
+# glossary "Luxury Tax Penalties", Nov 2024): a team pays the tax if its salary on the last day of the regular season
+# is over the tax line. Up to half of the tax collected may go to the teams that did not pay it, in equal shares; the
+# league has distributed exactly half in recent seasons and kept the other half for "league purposes" (which fund
+# revenue sharing). Bills are invoiced after the season and the shares paid in July (ESPN, 2013: payment due July 24,
+# distributions by July 29). Recent shares: $11.5M to each of 20 teams for 2024-25 ($461.2M from 10 taxpayers);
+# 2025-26 was projected at $13.8M each before the February 2026 deadline (14 projected taxpayers) and $4.9M after it
+# (7 taxpayers, $223M), because Boston, Denver, Phoenix, Dallas, Philadelphia, Orlando and Toronto all got under the
+# line with deadline moves (Hoops Rumors, "Projected NBA taxpayers for 2025/26", Feb and Apr 2026).
+#
+# In trade decisions, an AI team's value of a deal that moves its end-of-season payroll across the line includes its
+# expected share: half of the tax every other team is on course to pay this season, split among the teams on course
+# to stay under (itself included). The projection uses today's payrolls, so the share shrinks as other teams get under
+# (as the real one did in February 2026). The team's own end-of-season payroll counts the minimum-salary players it
+# must sign to reach a full roster. Only the season whose bill is still open counts; the human team's own evaluations
+# never change (``tax_value`` returns 0 for it).
+POOL_DISTRIBUTED_SHARE = 0.5
+POOL_ROSTER_MINIMUM = 14          # save.ROSTER_MINIMUM: a short roster is filled with minimum contracts
+POOL_FILL_SALARY = 2_250_000      # the minimum salary save.py's roster fills use
+POOL_PAYMENT_MONTH_DAY = "07-15"  # shares are paid in July after the season
+
+
+def _fact(canonical: dict[str, Any], key: tuple, compute):
+    from .trade_finance_search import financial_fact
+    return financial_fact(canonical, key, compute)
+
+
+def roster_size(canonical: dict[str, Any], team_id: str) -> int:
+    return _fact(canonical, ("roster_size", team_id), lambda: sum(
+        1 for p in canonical.get("players", []) if p.get("team_id") == team_id and not p.get("_inactive_player")))
+
+
+def _roster_fill(roster: int) -> float:
+    return max(0, POOL_ROSTER_MINIMUM - roster) * POOL_FILL_SALARY
+
+
+def tax_pool(canonical: dict[str, Any], season: str) -> dict[str, Any]:
+    """Each team's projected tax bill for the season from today's payrolls (repeat taxpayers at their rates)."""
+    def compute():
+        line = _tx().cap_lines_for_season(season)["tax_line"]
+        bills, payrolls = {}, {}
+        for team in canonical.get("teams", []):
+            payroll = _payroll(canonical, team["id"], season)
+            payrolls[team["id"]] = payroll
+            bills[team["id"]] = luxury_tax_bill(payroll, season, is_repeat_taxpayer(canonical, team["id"], season))
+        return {"season": season, "tax_line": line, "bills": bills, "payrolls": payrolls,
+                "total": sum(bills.values()), "non_taxpayers": sorted(t for t, b in bills.items() if b <= 0)}
+    return _fact(canonical, ("tax_pool", season), compute)
+
+
+def pool_share_if_under(canonical: dict[str, Any], team_id: str, season: str) -> float:
+    """What the team would receive if it ends the season under the line, with the league as it stands today."""
+    pool = tax_pool(canonical, season)
+    others = pool["total"] - pool["bills"].get(team_id, 0.0)
+    recipients = len([t for t in pool["non_taxpayers"] if t != team_id]) + 1
+    return POOL_DISTRIBUTED_SHARE * others / recipients
+
+
+def pool_change(canonical: dict[str, Any], team_id: str, season: str, before: float, after: float,
+                incoming: list[dict[str, Any]], outgoing: list[dict[str, Any]]) -> float:
+    """+share when the deal gets the team's end-of-season payroll under the line, -share when it pushes it over."""
+    line = _tx().cap_lines_for_season(season)["tax_line"]
+    if before <= line - 15 * POOL_FILL_SALARY and after <= line - 15 * POOL_FILL_SALARY:
+        return 0.0  # far under either way
+    if before > line and after > line:
+        return 0.0
+    roster = roster_size(canonical, team_id)
+    moved = (sum(1 for a in incoming if a.get("kind") == "player")
+             - sum(1 for a in outgoing if a.get("kind") == "player"))
+    under_before = before + _roster_fill(roster) <= line
+    under_after = after + _roster_fill(roster + moved) <= line
+    if under_before == under_after:
+        return 0.0
+    share = pool_share_if_under(canonical, team_id, season)
+    return share if under_after else -share
 
 
 def _state(canonical: dict[str, Any], team_id: str) -> dict[str, Any]:
@@ -240,9 +370,15 @@ def tax_note(canonical: dict[str, Any], team_id: str, incoming: list[dict[str, A
              outgoing: list[dict[str, Any]], value: float) -> str:
     if not value:
         return ""
-    saved = tax_saved(canonical, team_id, incoming, outgoing)["saved"]
+    result = tax_saved(canonical, team_id, incoming, outgoing)
+    saved, pool = result["saved"], result["pool"]
     verb = "saves" if saved > 0 else "adds"
-    return f" Luxury tax: the deal {verb} about ${abs(saved) / 1e6:.1f}M (value {value:+.1f})."
+    payout = ""
+    if pool > 0:
+        payout = f", including its share of the tax payout for ending under the line (about ${pool / 1e6:.1f}M)"
+    elif pool < 0:
+        payout = f", including the tax payout it gives up by ending over the line (about ${-pool / 1e6:.1f}M)"
+    return f" Luxury tax: the deal {verb} about ${abs(saved) / 1e6:.1f}M{payout} (value {value:+.1f})."
 
 
 # ------------------------------------------------------------------------------------- absorbed salary (step 4)

@@ -247,6 +247,83 @@ def metrics(trades, progress):
     return out
 
 
+def _pick_slots(save):
+    """pick id -> overall slot, from the save's draft orders (every draft the run reached)."""
+    slots = {}
+    for order in (save.get("draft_orders") or {}).values():
+        rows = order.get("picks") if isinstance(order, dict) else order
+        for index, row in enumerate(rows or []):
+            if not isinstance(row, dict):
+                continue
+            pid = row.get("pick_id") or row.get("id")
+            overall = row.get("overall_pick") or row.get("overall") or index + 1
+            if pid:
+                slots[pid] = int(overall)
+    return slots
+
+
+def taxpool_metrics(save, active, trades):
+    """Measures added for TRADE-TAXPOOL (docs/agents/tasks/trade-taxpool.md): draft-night spread and chains, teams over
+    the tax line entering and leaving deadline week, and the recorded tax payouts."""
+    out = {}
+    slots = _pick_slots(save)
+    draft = []
+    for t in trades:
+        if window_of(t["date"]) != "draft":
+            continue
+        picks = sorted(slots[a["id"]] for assets in t["sends"].values() for a in assets
+                       if a.get("kind") == "pick" and a.get("id") in slots and str(a.get("season")) == t["date"][:4])
+        draft.append({"date": t["date"], "teams": t["teams"], "slots": picks, "why": t.get("why"),
+                      "target_key": t.get("target_key")})
+    out["draft_night_detail"] = draft
+    out["draft_night_top_slot"] = [d["slots"][0] if d["slots"] else None for d in draft]
+    buckets = Counter()
+    for d in draft:
+        top = d["slots"][0] if d["slots"] else None
+        buckets["unknown" if top is None else "1-10" if top <= 10 else "11-20" if top <= 20 else "21-30" if top <= 30
+                else "31-60"] += 1
+    out["draft_night_by_part"] = dict(sorted(buckets.items()))
+    out["draft_night_multi_team"] = sum(1 for d in draft if len(d["teams"]) > 2)
+    # Teams over the line entering deadline week, estimated from the payroll recorded at the end of the regular season
+    # minus the salary each team took on in deadline-week trades (signings after the deadline are not removed).
+    teams = {t["id"]: t["abbrev"] for t in active.get("teams", [])}
+    history = save.get("team_payroll_history") or {}
+    deadline = {}
+    for season, rows in sorted(history.items()):
+        end_year = int(season[:4]) + 1
+        net = Counter()
+        for t in trades:
+            if t["date"][:4] != str(end_year) or window_of(t["date"]) != "deadline_week":
+                continue
+            for giver, assets in t["sends"].items():
+                for a in assets:
+                    if a.get("kind") != "player":
+                        continue
+                    salary = (a.get("contract_at_trade") or {}).get("salary_millions_this_season") or 0
+                    receiver = a.get("to") or next((x for x in t["teams"] if x != giver), None)
+                    net[giver] -= salary
+                    net[receiver] += salary
+        over_before, over_after, got_under = [], [], []
+        for tid, row in rows.items():
+            abbrev = teams.get(tid, tid)
+            line = float(row.get("tax_line") or 0) / 1e6
+            end = float(row.get("payroll") or 0) / 1e6
+            start = end - net.get(abbrev, 0.0)
+            if start > line:
+                over_before.append(abbrev)
+            if end > line:
+                over_after.append(abbrev)
+            if start > line >= end:
+                got_under.append(abbrev)
+        deadline[season] = {"over_entering_deadline_week": sorted(over_before),
+                            "over_at_season_end": sorted(over_after), "got_under_in_deadline_week": sorted(got_under)}
+    out["tax_line_at_deadline"] = deadline
+    out["tax_payouts"] = {season: {k: rec.get(k) for k in ("total_tax", "distributed", "share_per_team")}
+                          | {"taxpayers": [teams.get(t, t) for t in rec.get("taxpayers") or []]}
+                          for season, rec in sorted((save.get("luxury_tax_payouts") or {}).items())}
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--run", type=Path, required=True, help="probe output directory (saves/league.json, progress.jsonl)")
@@ -263,7 +340,8 @@ def main():
     args.out.mkdir(parents=True, exist_ok=True)
     (args.out / f"trades_{args.label}.json").write_text(json.dumps(trades, indent=1, default=str) + "\n")
     (args.out / f"trades_{args.label}.md").write_text(trades_markdown(args.label, trades))
-    result = {"label": args.label, "date": save["state"]["current_date"], **metrics(trades, progress)}
+    result = {"label": args.label, "date": save["state"]["current_date"], **metrics(trades, progress),
+              **taxpool_metrics(save, active, trades)}
     (args.out / f"trade_metrics_{args.label}.json").write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n")
     print(json.dumps({k: v for k, v in result.items() if not k.endswith("_detail") and k != "traded_3plus_names"}, indent=1))
 

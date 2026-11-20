@@ -660,6 +660,28 @@ DUMP_MIN_SALARY = 3_000_000
 # would give away its recent draft picks for nothing.
 DUMP_MIN_AGE = 24.0
 DUMP_FILLER_MAX_SALARY = 3_000_000
+# TRADE-TAXPOOL: recent draft picks are protected by years in the league, not age. In the step-4 runs Oklahoma City
+# dumped Bennett Stirtz (24, picked 16th in 2026 after it traded up for him) for tax savings, because he was past the
+# age floor and the step-1 investment memory is a share of his current value to the team (a few percent of a bench
+# rookie's small role), which a tax saving outweighs. Real teams do not dump a pick they just made; the Nique Clifford
+# sale (17 months after Sacramento traded up for him) was criticised as a front-office mistake.
+RECENT_DRAFT_SEASONS = 3                # a player's first three seasons after his draft
+
+
+def recent_draft_pick(canonical: dict[str, Any], player: dict[str, Any] | None) -> bool:
+    """Drafted in one of the last RECENT_DRAFT_SEASONS drafts (his first three NBA seasons), whatever his age."""
+    year = _tx().maybe_float((player or {}).get("draft_year"))
+    if year is None:
+        return False
+    start = _tx().season_start_from_label(_season(canonical))
+    return start - int(year) < RECENT_DRAFT_SEASONS
+
+
+def dump_age_ok(canonical: dict[str, Any], player: dict[str, Any] | None, age: float) -> bool:
+    """A player a team may shed for money: never a recent draft pick; an undrafted player from age 24."""
+    if recent_draft_pick(canonical, player):
+        return False
+    return (player or {}).get("draft_year") not in (None, "") or age >= DUMP_MIN_AGE
 DUMP_MAX_SECONDS = 3
 DUMP_FIRST_MIN_TAX_VALUE = 25.0  # a first-round pick is attached only when the tax saved is worth this much
 ROSTER_ROOM_LIMIT = 15
@@ -707,8 +729,8 @@ def salary_dump_offers(canonical: dict[str, Any], team_ids: list[str], excluded:
         stance = team_stance(_state(canonical, seller_id))
         candidates = []
         for row in _team_rows(canonical, seller_id):
-            if (row["id"] in excluded or row["id"] in core or row["salary"] < DUMP_MIN_SALARY or row["age"] < DUMP_MIN_AGE
-                    or core_commitment(canonical, seller_id, row["id"]) or young_piece_kept(row, stance)
+            if (row["id"] in excluded or row["id"] in core or row["salary"] < DUMP_MIN_SALARY
+                    or not dump_age_ok(canonical, row["player"], row["age"]) or core_commitment(canonical, seller_id, row["id"]) or young_piece_kept(row, stance)
                     or tx.effectively_untouchable(canonical, row["player"])):
                 continue
             asset = [{"kind": "player", "id": row["id"]}]
@@ -733,9 +755,9 @@ def salary_dump_offers(canonical: dict[str, Any], team_ids: list[str], excluded:
             takers.sort(key=lambda t: (-t[0], t[1]))
             for _, buyer_id in takers[:ABSORBERS_PER_DUMP]:
                 back = room[buyer_id]
-                saved = tax_saved(canonical, seller_id, back, asset)["saved"]
+                saving = tax_saved(canonical, seller_id, back, asset)
                 offers.append({"seller_id": seller_id, "buyer_id": buyer_id, "row": row, "tax_value": tax,
-                               "own": own, "gain": gain, "saved": saved, "return": back,
+                               "own": own, "gain": gain, "saved": saving["saved"], "saving": saving, "return": back,
                                "packages": dump_packages(canonical, seller_id, row, tax)})
     offers.sort(key=lambda o: (-o["gain"], o["seller_id"], o["row"]["id"], o["buyer_id"]))
     return offers
@@ -760,6 +782,7 @@ def dump_packages(canonical: dict[str, Any], seller_id: str, row: dict[str, Any]
 
 def dump_reasons(canonical: dict[str, Any], offer: dict[str, Any], assets: list[dict[str, Any]]) -> dict[str, Any]:
     """Why each side made a salary dump, in plain words."""
+    from .trade_tax import saving_words
     tx = _tx()
     seller = tx.team_by_id(canonical, offer["seller_id"])
     buyer = tx.team_by_id(canonical, offer["buyer_id"])
@@ -775,7 +798,7 @@ def dump_reasons(canonical: dict[str, Any], offer: dict[str, Any], assets: list[
             words.append(f"{rounds.count(2)} second-round pick{'s' if rounds.count(2) > 1 else ''}")
         paid = ", paying " + " and ".join(words)
     seller_text = (f"{seller['abbrev']} ({stance_words(canonical, seller['id'])}) moved {row['name']} "
-                   f"(${row['salary'] / 1e6:.1f}M) to cut its luxury tax by about ${offer['saved'] / 1e6:.1f}M{paid}")
+                   f"(${row['salary'] / 1e6:.1f}M) {saving_words(offer.get('saving') or {'saved': offer['saved']})}{paid}")
     buyer_text = (f"{buyer['abbrev']} ({stance_words(canonical, buyer['id'])}) had room under the tax and took him"
                   + (" for the picks" if picks else " as a rotation player"))
     return {"buyer_team_id": buyer["id"], "seller_team_id": seller["id"], "target_id": f"{seller['id']}:salary_dump",
