@@ -933,6 +933,7 @@ def add_game_fatigue(state: dict[str, Any], player: dict[str, Any], minutes: flo
 
 
 def advance_state_for_date(state: dict[str, Any], game_date: date, rest_days: int, config: dict[str, Any], staff: dict[str, float]) -> None:
+    tuning = (config or {}).get("tuning", {})
     # Fatigue recovers by calendar day (a share each day), so the value shown is always today's.
     state["fatigue"] = fatigue_on_date(state, game_date, staff, config)
     state["fatigue_date"] = date_to_str(game_date)
