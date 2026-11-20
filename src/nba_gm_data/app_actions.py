@@ -2885,6 +2885,17 @@ def extension_room_payload(
     report = extension_candidates_report(active, team.get("abbrev"))
     players = {str(player.get("id")): player for player in active.get("players", [])}
     requested_id = str(player_id or "")
+    # The seed submit_extension_offer_action uses when the app sends none (the app never does).
+    room_seed = int(save.get("meta", {}).get("seed") or 1)
+    team_rows: dict[str, dict[str, Any]] = {}
+    # One shared cache for the league tax-pool projection (payroll facts per team and season).
+    tax_context = dict(active, _trade_financial_facts={})
+
+    def team_cap_rows(season: str) -> dict[str, Any]:
+        if season not in team_rows:
+            team_rows[season] = extension_team_cap_row(tax_context, save, team["id"], season)
+        return dict(team_rows[season])
+
     candidates: list[dict[str, Any]] = []
     for candidate in report.get("candidates", []):
         candidate_id = str(candidate.get("player_id") or candidate.get("id") or "")
@@ -2903,9 +2914,26 @@ def extension_room_payload(
         current_year = season_start_year_for_app(save_active_contract_season(save))
         cap_rows = extension_cap_projection(active, save, team["id"], season_label_for_app(current_year), 4)
         eligible = bool(candidate.get("eligible")) and not bool(candidate.get("manual_review_required")) and safe_years > 0 and legal
+        contract_seasons = list((contract_for_player(active, candidate_id) or {}).get("seasons") or [])
+        # Offer-builder facts (additive), all from the rule submit_extension_offer_action applies:
+        # his price from you, the market ask it starts from, and the multi-season cap table with the tax rule.
+        candidate_terms = extension_offer_terms(candidate, candidate_id, room_seed)
+        last_cap_year = max(current_year + 3, season_start_year_for_app(start_season) + max(1, safe_years) - 1)
+        cap_table = [
+            {
+                **team_cap_rows(season_label_for_app(year)),
+                "player_salary_millions": round(sum(
+                    float(row.get("salary") or 0.0) for row in contract_seasons if str(row.get("season")) == season_label_for_app(year)
+                ) / 1_000_000, 2),
+            }
+            for year in range(current_year, last_cap_year + 1)
+        ]
         candidates.append(
             {
                 **candidate,
+                **candidate_terms,
+                "cap_table": cap_table,
+                "eligibility_reason": extension_eligibility_reason(candidate, legal, safe_years),
                 "player_id": candidate_id,
                 "name": player.get("name") or candidate.get("name"),
                 "position": player.get("position") or candidate.get("position"),
@@ -2917,7 +2945,7 @@ def extension_room_payload(
                 "preferred_years": preferred_years,
                 "max_aav_by_years": max_aav_by_years,
                 "cap_projection": cap_rows,
-                "current_contract_seasons": list((contract_for_player(active, candidate_id) or {}).get("seasons") or []),
+                "current_contract_seasons": contract_seasons,
                 "analysis": extension_analysis_payload(active, player, season_label_for_app(current_year), start_season, safe_years),
             }
         )
@@ -2937,7 +2965,119 @@ def extension_room_payload(
         "team": team,
         "candidate_count": len(candidates),
         "candidates": candidates,
+        # The limits submit_extension_offer_action checks (additive).
+        "offer_rules": {
+            "minimum_aav_millions": EXTENSION_MINIMUM_AAV_MILLIONS,
+            "max_years": 5,
+            "tax_may_be_exceeded": True,
+            "limit": "hard_cap",
+            "flat_salary": True,
+            "options": False,
+            "accept_margin_millions": EXTENSION_ACCEPT_MARGIN_MILLIONS,
+        },
     }
+
+
+EXTENSION_MINIMUM_AAV_MILLIONS = 1.8
+EXTENSION_ACCEPT_MARGIN_MILLIONS = 0.001  # submit accepts when offer + 0.001 reaches his price
+
+
+def extension_offer_terms(candidate: dict[str, Any], player_id: str, seed: int) -> dict[str, Any]:
+    """His price for an extension with your team: the rule submit_extension_offer_action applies.
+
+    The price starts from his market ask (the contract model's projected salary). His flexibility with your team
+    (38 + 0.18 x team fit, plus a fixed personal swing of -15..+15 from the seed and his id, kept in 8..92) lowers
+    it: he takes ``1.02 - flexibility / 260`` of the ask. Without a guarantee the price rises by the same security
+    premium free agents ask (contract_protection.security_penalty). He signs when the offer reaches the price.
+    """
+    from .contract_protection import security_penalty
+
+    ask = float(candidate.get("projected_aav_millions") or 0.0)
+    fit = float(candidate.get("team_fit_score") or 50.0)
+    flexibility = round(max(8.0, min(92.0, 38.0 + fit * 0.18 + (sum(ord(char) for char in f"{seed}:{player_id}:extension") % 31) - 15)), 1)
+    lines: dict[str, float] = {}
+    offers: dict[str, float] = {}
+    premiums: dict[str, float] = {}
+    for key, guaranteed in (("guaranteed", True), ("non_guaranteed", False)):
+        security = security_penalty(candidate, guaranteed)
+        line = ask * (1.02 - flexibility / 260.0)
+        line *= 1 + security / 100
+        lines[key] = line
+        premiums[key] = security
+        offers[key] = max(EXTENSION_MINIMUM_AAV_MILLIONS, smallest_extension_offer_accepted(line))
+    return {
+        "market_ask_millions": round(ask, 2),
+        "flexibility": flexibility,
+        "ask_share": round(1.02 - flexibility / 260.0, 4),
+        "security_premium_pct": premiums,
+        "accept_line_millions": lines,
+        "accept_offer_millions": offers,
+    }
+
+
+def extension_offer_accepted(aav_millions: float, line: float) -> bool:
+    """The comparison submit_extension_offer_action makes (offer rounded to cents first)."""
+    return round(float(aav_millions), 2) + EXTENSION_ACCEPT_MARGIN_MILLIONS >= line
+
+
+def smallest_extension_offer_accepted(line: float, step: float = 0.1) -> float:
+    """The smallest offer on the builder's $0.1M steps that submit accepts for this price."""
+    offer = smallest_offer_at_or_above(max(0.0, float(line) - EXTENSION_ACCEPT_MARGIN_MILLIONS), step)
+    while not extension_offer_accepted(offer, line):
+        offer = round(offer + step, 1)
+    while offer - step > 0 and extension_offer_accepted(round(offer - step, 1), line):
+        offer = round(offer - step, 1)
+    return offer
+
+
+def extension_team_cap_row(active: dict[str, Any], save: dict[str, Any], team_id: str, season: str) -> dict[str, Any]:
+    """One season of the team's cap with the luxury-tax rule the game charges (trade_tax): the tax line, the
+    bracket size and rates (repeat taxpayers pay more), and the share of the tax payout the team receives if it
+    ends the season under the line, projected from today's league payrolls."""
+    from . import trade_tax
+
+    cap = team_cap_summary(active, save, team_id, season=season)
+    repeater = trade_tax.is_repeat_taxpayer(active, team_id, season)
+    line = float(trade_tax._tx().cap_lines_for_season(season)["tax_line"])
+    return {
+        "season": season,
+        "salary_total_millions": cap.get("salary_total_millions"),
+        "tax_line_millions": cap.get("tax_line_millions"),
+        "hard_cap_millions": cap.get("hard_cap_millions"),
+        "tax_space_millions": cap.get("tax_space_millions"),
+        "hard_cap_space_millions": cap.get("hard_cap_space_millions"),
+        "unresolved_contract_count": cap.get("unresolved_contract_count"),
+        "tax_rule": {
+            "line_millions": line / 1_000_000,
+            "bracket_millions": line * trade_tax.BRACKET_SHARE_OF_TAX_LINE / 1_000_000,
+            "rates": list(trade_tax.REPEATER_RATES if repeater else trade_tax.NON_REPEATER_RATES),
+            "step_after": trade_tax.RATE_STEP_AFTER,
+            "repeater": repeater,
+        },
+        "payout_share_if_under_millions": round(trade_tax.pool_share_if_under(active, team_id, season) / 1_000_000, 2),
+    }
+
+
+EXTENSION_STATUS_REASONS = {
+    "original_contract_shorter_than_three_years": "Only players whose original contract ran three or more seasons can extend.",
+    "not_in_extension_window": "He can extend only in the last two seasons of his contract.",
+    "no_salary_seasons_remaining": "His contract has no seasons left to extend.",
+    "manual_review_required": "His current contract is not fully known, so the game cannot extend it.",
+    "not_extension_eligible": "He is not eligible for an extension.",
+}
+
+
+def extension_eligibility_reason(candidate: dict[str, Any], legal: bool, safe_years: int) -> str | None:
+    """Plain words for why submit_extension_offer_action would block him (None when he can be extended)."""
+    if not legal:
+        return "Extensions are closed until the next window (preseason to January 15)."
+    if candidate.get("manual_review_required"):
+        return EXTENSION_STATUS_REASONS["manual_review_required"]
+    if not candidate.get("eligible"):
+        return EXTENSION_STATUS_REASONS.get(str(candidate.get("eligibility_status") or ""), EXTENSION_STATUS_REASONS["not_extension_eligible"])
+    if safe_years <= 0:
+        return "He plans to retire before an extension would start."
+    return None
 
 
 def submit_extension_offer_action(
@@ -2975,16 +3115,18 @@ def submit_extension_offer_action(
     result = negotiate_extension(active, str(candidate.get("name") or player_id), str(team.get("abbrev")), seed=seed, max_rounds=3, date=current)
     negotiation = dict(result.get("negotiation") or {})
     ask_millions = float(candidate.get("projected_aav_millions") or 0.0)
-    fit = float(candidate.get("team_fit_score") or 50.0)
-    from .contract_protection import guarantee_choice, security_penalty
+    from .contract_protection import guarantee_choice
     guaranteed = guarantee_choice(payload.get('guaranteed', True))
-    security = security_penalty(candidate, guaranteed)
-    flexibility = round(max(8.0, min(92.0, 38.0 + fit * 0.18 + (sum(ord(char) for char in f"{seed}:{player_id}:extension") % 31) - 15)), 1)
-    acceptance_line = ask_millions * (1.02 - flexibility / 260.0)
-    acceptance_line *= 1 + security/100
+    # One rule for the price shown in the extension builder and the decision here (extension_offer_terms).
+    terms = extension_offer_terms(candidate, player_id, seed)
+    price_key = "guaranteed" if guaranteed else "non_guaranteed"
+    security = float(terms["security_premium_pct"][price_key])
+    flexibility = float(terms["flexibility"])
+    acceptance_line = float(terms["accept_line_millions"][price_key])
     interest = round(max(0.0, min(100.0, 50.0 + (aav_millions / max(ask_millions, 0.1) - 1.0) * 110.0 + flexibility * 0.12)), 1)
     interest = max(0.0, interest-security)
-    if aav_millions + 0.001 < acceptance_line:
+    if not extension_offer_accepted(aav_millions, acceptance_line):
+        needed = smallest_extension_offer_accepted(acceptance_line)
         return {
             "status": "rejected",
             "accepted": False,
@@ -2993,7 +3135,8 @@ def submit_extension_offer_action(
             "offer": {"aav_millions": aav_millions, "years": years},
             "ask_millions": round(ask_millions, 2),
             "interest": interest,
-            "reason": "The player wants a stronger offer before committing.",
+            "needed_millions": max(EXTENSION_MINIMUM_AAV_MILLIONS, needed),
+            "reason": f"He signs an extension with you from ${max(EXTENSION_MINIMUM_AAV_MILLIONS, needed):.1f}M a season{'' if guaranteed else ' without a guarantee'}; this offer is ${max(0.0, needed - aav_millions):.1f}M short.",
             "room": room,
         }
 

@@ -9042,7 +9042,7 @@ function approvedPlayerCardBody(detail, options = {}) {
   return `<div class="approved-player-card approved-player-pages${detail.is_prospect ? " approved-prospect-pages" : ""}" data-player-pages>
     <div class="player-page-bar"><span data-player-page-title>${extension ? "Contract Extension" : detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}</span><div class="player-page-nav"><button type="button" class="ui-command" data-player-page-step="-1" aria-label="Previous player card page" title="Previous page">‹</button><button type="button" class="ui-command" data-player-page-step="1" aria-label="Next player card page" title="Next page">›</button><span data-player-page-count aria-live="polite" aria-atomic="true">1/${(extension ? 1 : 0) + 2 + (detail.is_prospect ? 0 : 1)}</span></div></div>
     <section class="approved-player-identity player-page-identity"><div class="approved-player-profile-head">${playerHeadshotMarkup(detail, "approved-profile-headshot")}<div class="approved-profile-name"><h3>${escapeHtml(detail.name || options.name || "Player")}</h3><p>${escapeHtml([detail.position, detail.age != null ? `${detail.age} years` : "", detail.height].filter(Boolean).join(" · "))}</p><p class="player-draft-details">${escapeHtml(detail.is_prospect ? [detail.college_profile ? detail.source_team : (detail.scouting_profile?.where || detail.source_team), detail.college_profile?.coach ? `Coach ${detail.college_profile.coach}` : "", `${detail.draft_year} draft class`].filter(Boolean).join(" · ") : detail.draft_position ? `${detail.draft_year || 'Draft'} · Pick #${detail.draft_position}` : detail.draft_status==='undrafted' ? `Undrafted${detail.draft_year?` · ${detail.draft_year}`:''}` : detail.draft_year ? `Draft year ${detail.draft_year}` : 'Draft details unavailable')}</p></div>${playerSummaryRatings(detail)}</div>${playerCardEvidence(detail)}${options.actions || ""}</section>
-    ${extension ? extensionNegotiationPage(extension.room, extension.selectedPlayerId, extension.response, detail) : ""}
+    ${extension ? extensionNegotiationPage(extension.room, extension.selectedPlayerId, extension.response, detail, extension.draft) : ""}
     <section class="player-card-page player-card-page--overview" data-player-page="${pageOffset}" data-page-title="${detail.is_prospect ? "College Season & Games" : "Season, Games & Contract"}" aria-label="Season statistics, recent games, game score and contract">
       ${detail.scouting_profile && !detail.college_profile ? scoutingProfileStrip(detail.scouting_profile) : playerSeasonStrip(season, detail.career_seasons || [])}
       ${detail.college_profile ? collegeProfileStrip(detail.college_profile, detail.scouting_profile) : detail.scouting_profile ? "" : `<section class="approved-card-panel player-page-game-log"><header>Recent Games · Last 5</header><div class="player-page-table-scroll"><table><thead><tr>${gameFields.map(([label]) => `<th scope="col">${label}</th>`).join("")}</tr></thead><tbody>${gameRows || `<tr><td class="player-page-empty" colspan="${gameFields.length}">No recent games yet.</td></tr>`}</tbody></table></div></section>
@@ -10482,34 +10482,203 @@ async function openExtensionNegotiation(playerId = "") {
   }
 }
 
-function extensionNegotiationBody(room, selectedPlayerId, response = null, detail = null) {
+function extensionNegotiationBody(room, selectedPlayerId, response = null, detail = null, draft = null) {
   const candidate=(room.candidates||[]).find(item=>item.player_id===selectedPlayerId)||(room.candidates||[])[0];
   const player=detail||{name:candidate?.name||"Player",position:candidate?.position||"",age:candidate?.age,height:candidate?.height,ratings:candidate?.ratings||{},season:{},recent_games:[],career_seasons:[],is_prospect:false};
-  return approvedPlayerCardBody(player,{extension:{room,selectedPlayerId,response}});
+  return approvedPlayerCardBody(player,{extension:{room,selectedPlayerId,response,draft}});
 }
 
-function extensionNegotiationPage(room, selectedPlayerId, response = null, detail = null) {
-  const candidates=room?.candidates||[];
-  const candidate=candidates.find(item=>item.player_id===selectedPlayerId)||candidates[0];
+// Contract extension builder: the same honest layout as the free-agency Offer Builder. Every number comes from the
+// extension_room payload, which reads the rule submit_extension_offer applies (app_actions.extension_offer_terms):
+// his price from you, his market ask, the longest deal before his projected retirement, the hard-cap limit for each
+// term, and the multi-season cap table with the luxury-tax rule (trade_tax).
+function extensionCandidate(room, selectedPlayerId) {
+  const candidates = room?.candidates || [];
+  return candidates.find((item) => item.player_id === selectedPlayerId) || candidates[0] || null;
+}
+
+function extensionMinimum(room = {}) {
+  return Number(room.offer_rules?.minimum_aav_millions ?? 1.8);
+}
+
+function extensionMaximum(candidate, years) {
+  return Number(candidate?.max_aav_by_years?.[String(years)] || 0);
+}
+
+// Default offer: his market ask for his preferred term (both limited to what the rules allow).
+function extensionDefaultDraft(candidate, room = {}) {
+  const safe = Math.max(1, Number(candidate?.safe_years || 1));
+  const years = Math.max(1, Math.min(safe, Number(candidate?.preferred_years || 1)));
+  const minimum = extensionMinimum(room);
+  const maximum = Math.max(minimum, extensionMaximum(candidate, years));
+  const ask = Number(candidate?.market_ask_millions ?? candidate?.projected_aav_millions ?? minimum);
+  return { years, aav: roundOfferTenth(clampNumber(ask, minimum, maximum)), guaranteed: true };
+}
+
+// The luxury tax the game charges on a season's payroll (trade_tax.luxury_tax_bill): brackets of about 3.33% of the
+// tax line, $1.50 / $1.75 / $2.50 / $3.25 per dollar (repeat taxpayers a dollar more), then 50 cents more per bracket.
+function extensionLuxuryTax(payroll, rule = {}) {
+  const line = Number(rule.line_millions || 0);
+  const bracket = Number(rule.bracket_millions || 0);
+  const rates = Array.isArray(rule.rates) && rule.rates.length ? rule.rates.map(Number) : [1.5, 1.75, 2.5, 3.25];
+  const step = Number(rule.step_after ?? 0.5);
+  let over = Number(payroll || 0) - line;
+  if (!(line > 0) || !(bracket > 0) || !(over > 0)) return 0;
+  let bill = 0;
+  let index = 0;
+  while (over > 0) {
+    const rate = index < rates.length ? rates[index] : rates[rates.length - 1] + step * (index - rates.length + 1);
+    const chunk = Math.min(over, bracket);
+    bill += chunk * rate;
+    over -= chunk;
+    index += 1;
+  }
+  return bill;
+}
+
+// The decision submit_extension_offer makes for this draft, plus the cap table with the offer applied.
+function extensionOfferPreview(candidate, room = {}, draft = {}) {
+  const rules = room.offer_rules || {};
+  const minimum = extensionMinimum(room);
+  const margin = Number(rules.accept_margin_millions ?? 0.001);
+  const safe = Math.max(0, Number(candidate?.safe_years || 0));
+  const years = Math.max(1, Math.min(Number(rules.max_years || 5), Math.round(Number(draft.years || 1))));
+  const aav = roundOfferTenth(draft.aav);
+  const guaranteed = draft.guaranteed !== false;
+  const key = guaranteed ? "guaranteed" : "non_guaranteed";
+  const line = Number(candidate?.accept_line_millions?.[key]);
+  const price = Number(candidate?.accept_offer_millions?.[key]);
+  const maximum = extensionMaximum(candidate, years);
+  const accepts = Number.isFinite(line) && Math.round(aav * 100) / 100 + margin >= line;
+  const start = Number.parseInt(candidate?.start_season, 10);
+  const seasons = (candidate?.cap_table || []).map((row) => {
+    const year = Number.parseInt(row.season, 10);
+    const inDeal = Number.isFinite(start) && year >= start && year < start + years;
+    const salary = inDeal ? aav : 0;
+    const payroll = Number(row.salary_total_millions || 0);
+    const after = payroll + salary;
+    const rule = row.tax_rule || {};
+    const taxLine = Number(rule.line_millions || row.tax_line_millions || 0);
+    const taxBill = extensionLuxuryTax(after, rule);
+    return {
+      season: row.season, inDeal, payroll, current: Number(row.player_salary_millions || 0), salary, after, taxLine,
+      taxRoom: Number(row.tax_space_millions || 0) - salary, hardRoom: Number(row.hard_cap_space_millions || 0) - salary,
+      taxBill, payoutShare: after > taxLine ? 0 : Number(row.payout_share_if_under_millions || 0),
+      lostShare: after > taxLine && payroll <= taxLine ? Number(row.payout_share_if_under_millions || 0) : 0,
+      repeater: Boolean(rule.repeater), unresolved: Number(row.unresolved_contract_count || 0),
+    };
+  });
+  const overTax = seasons.filter((row) => row.inDeal && row.taxBill > 0);
+  let verdict;
+  if (!candidate) verdict = { tone: "blocked", headline: "No player selected", detail: "Choose an extension-eligible player." };
+  else if (candidate.eligibility_reason || !candidate.eligible) verdict = { tone: "blocked", headline: "Can't extend him now", detail: candidate.eligibility_reason || "He is not eligible for an extension." };
+  else if (years > safe) verdict = { tone: "no", headline: "He turns this down", detail: `He plans to retire after ${safe} season${safe === 1 ? "" : "s"} of a new deal. Offer ${safe} year${safe === 1 ? "" : "s"} or fewer.` };
+  else if (aav < minimum - 1e-9) verdict = { tone: "blocked", headline: "Below the minimum", detail: `Extensions start at ${money(minimum)} a season.` };
+  else if (aav > maximum + 0.001) verdict = { tone: "blocked", headline: "Blocked by the hard cap", detail: `A ${years}-year extension must fit under the hard cap in every season it covers: at most ${money(maximum)} a season.` };
+  else if (!accepts) verdict = { tone: "no", headline: "He turns this down", detail: `He signs an extension with you from ${money(price)} a season${guaranteed ? "" : " without a guarantee"}. You are ${money(Math.max(0, price - aav))} short.` };
+  else verdict = {
+    tone: "yes", headline: "He signs",
+    detail: `${money(aav)} a season meets the ${money(price)} he needs from you${guaranteed ? "" : " without a guarantee"}.${overTax.length ? ` Puts you over the tax in ${overTax.map((row) => shortSeasonLabel(row.season)).join(", ")} (allowed for extensions; the bill is in the cap table).` : ""}`,
+  };
+  const canSubmit = Boolean(candidate?.eligible) && !candidate?.eligibility_reason && years <= safe && aav >= minimum - 1e-9 && aav <= maximum + 0.001;
+  return { aav, years, guaranteed, total: aav * years, line, price, maximum, minimum, safe, accepts, ratio: Number.isFinite(price) && price > 0 ? aav / price : 0, seasons, verdict, canSubmit };
+}
+
+function extensionVerdictMarkup(preview) {
+  const verdict = preview.verdict;
+  const meter = clampNumber(preview.ratio * 100, 0, 150);
+  return `<header>Will He Sign?</header>
+    <div class="fa-verdict-line"><strong>${escapeHtml(verdict.headline)}</strong><span>${escapeHtml(verdict.detail)}</span></div>
+    ${Number.isFinite(preview.price) ? `<div class="fa-verdict-meter" title="Your salary against the salary he needs from you (100% signs)"><i><b style="width:${meter / 1.5}%"></b><u style="left:${100 / 1.5}%"></u></i><em>${Math.round(preview.ratio * 100)}% of his price</em></div>` : ""}`;
+}
+
+function extensionCapTableMarkup(preview, candidate) {
+  const start = candidate?.start_season || "";
+  const rows = preview.seasons.map((row) => {
+    const tone = row.hardRoom < 0 ? "is-hard" : row.taxBill > 0 ? "is-tax" : "";
+    const tax = row.taxBill > 0
+      ? `<span class="is-negative" title="${escapeAttr(`Luxury tax on ${money(row.after)} against a ${money(row.taxLine)} line${row.repeater ? " (repeat taxpayer rates)" : ""}${row.lostShare > 0 ? `; you also give up a ${money(row.lostShare)} payout share` : ""}`)}">Bill ${money(row.taxBill)}</span>`
+      : row.payoutShare > 0
+        ? `<span title="Half of the league's tax is shared equally by the teams under the line; this is your share with today's league payrolls">Share ${money(row.payoutShare)}</span>`
+        : `<span class="fa-muted">—</span>`;
+    return `<tr class="${row.salary ? "has-offer" : ""} ${tone}">
+      <th scope="row">${escapeHtml(shortSeasonLabel(row.season))}${row.unresolved ? `<small title="${escapeAttr(`${row.unresolved} contracts not yet set for this season`)}">open</small>` : ""}</th>
+      <td>${money(row.payroll)}</td>
+      <td>${row.current ? money(row.current) : `<span class="fa-muted">—</span>`}</td>
+      <td>${row.salary ? `+${money(row.salary)}` : `<span class="fa-muted">—</span>`}</td>
+      <td><strong>${money(row.after)}</strong></td>
+      <td class="${row.taxRoom < 0 ? "is-negative" : ""}">${signedMoney(row.taxRoom)}</td>
+      <td class="${row.hardRoom < 0 ? "is-negative" : ""}">${signedMoney(row.hardRoom)}</td>
+      <td>${tax}</td>
+    </tr>`;
+  }).join("");
+  return `<header>Cap Position With This Extension</header>
+    <table class="fa-cap-table ext-cap-table" aria-label="Payroll by season with this extension">
+      <colgroup><col style="width:10%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:13%"><col style="width:13%"><col style="width:16%"></colgroup>
+      <thead><tr><th scope="col">Season</th><th scope="col" title="Payroll today, including his current contract">Payroll</th><th scope="col" title="His current contract (already in payroll)">His deal</th><th scope="col" title="This extension">Extension</th><th scope="col">After</th><th scope="col" title="Room under the luxury tax after this extension">Tax room</th><th scope="col" title="Room under the hard cap (the second apron) after this extension">Hard-cap room</th><th scope="col" title="Luxury-tax bill if over the line, or your share of the tax payout if under it">Tax / payout</th></tr></thead>
+      <tbody>${rows || `<tr><td colspan="8" class="fa-empty">No cap seasons available.</td></tr>`}</tbody>
+    </table>
+    <p class="fa-muted">The extension starts in ${escapeHtml(shortSeasonLabel(start) || "the season after his deal ends")} and must fit under the hard cap in every season; it may go over the tax. Later seasons count today's contracts only; payout shares use today's league payrolls.</p>`;
+}
+
+function extensionOfferFootMarkup(preview, legal = true) {
+  const label = preview.accepts && preview.canSubmit ? `Sign for ${money(preview.aav)} × ${preview.years}` : "Make Offer";
+  const disabled = !legal || !preview.canSubmit;
+  return `<div><strong>${escapeHtml(money(preview.aav))} × ${escapeHtml(preview.years)} yr${preview.years === 1 ? "" : "s"} · ${escapeHtml(money(preview.total))} total</strong><span>${escapeHtml(`${preview.guaranteed ? "Guaranteed" : "Non-guaranteed"} · same salary every season · ${preview.verdict.headline.toLowerCase()}`)}</span></div>
+    <button type="submit" class="ui-command fa-submit extension-submit${preview.accepts && !disabled ? " is-ready" : ""}" ${disabled ? "disabled" : ""}>${escapeHtml(label)}</button>`;
+}
+
+function extensionNegotiationPage(room, selectedPlayerId, response = null, detail = null, draft = null) {
+  const candidate = extensionCandidate(room, selectedPlayerId);
   if (!candidate) return `<section class="player-card-page player-card-page--extension" data-player-page="0" data-page-title="Contract Extension" aria-label="Contract extension"><div class="extension-page-empty"><strong>No extension candidates</strong><p>No contracted player on this roster is available for extension review right now.</p></div></section>`;
-  const years = Math.max(1, Math.min(Number(candidate.safe_years || 1), Number(candidate.preferred_years || 1)));
-  const maximum = Number(candidate.max_aav_by_years?.[String(years)] || 0);
-  const ask = Number(candidate.projected_aav_millions || 0);
-  const initialOffer = Math.min(maximum, ask);
-  const capRows = extensionCapRows(candidate);
-  const schedule = extensionOfferSchedule(candidate, years, Number(initialOffer.toFixed(1)), capRows);
-  const status=response?`<section class="extension-response extension-page-response ${response.status === "rejected" ? "rejected" : ""}"><strong>${escapeHtml(response.status === "rejected" ? "Offer declined" : rowLabel(response.status || "update"))}</strong><span>${escapeHtml(response.reason || "")}${response.interest !== undefined ? ` Interest: ${Number(response.interest).toFixed(1)}/100.` : ""}</span></section>`:"";
+  const offer = draft || extensionDefaultDraft(candidate, room);
+  const preview = extensionOfferPreview(candidate, room, offer);
+  const minimum = preview.minimum;
+  const sliderMax = Math.max(minimum, preview.maximum);
+  const safe = preview.safe;
+  const ask = Number(candidate.market_ask_millions ?? candidate.projected_aav_millions ?? 0);
+  const share = Number(candidate.ask_share);
+  const premium = Number(candidate.security_premium_pct?.non_guaranteed);
+  const current = (candidate.current_contract_seasons || []).filter((row) => Number(row.salary) > 0);
+  const lastSeason = current.at(-1)?.season;
+  const radio = (name, value, label, checked, disabled = false, title = "") => `<button type="button" role="radio" aria-checked="${checked}" class="${checked ? "is-active" : ""}" data-extension-${name}-choice="${escapeAttr(value)}" tabindex="${checked ? 0 : -1}"${disabled ? " disabled" : ""}${title ? ` title="${escapeAttr(title)}"` : ""}>${escapeHtml(label)}</button>`;
+  const status = response?.status === "rejected" || response?.status === "blocked"
+    ? `<p class="extension-page-response ${response.status}" role="status">${escapeHtml(response.reason || "")}</p>` : "";
   return `<section class="player-card-page player-card-page--extension" data-player-page="0" data-page-title="Contract Extension" aria-label="Contract extension">
     <div class="extension-page-layout">
-      <div class="extension-page-controls">
-        <section class="approved-card-panel approved-ask-offer"><header><span>Extension Offer</span><strong class="extension-player-name">${escapeHtml(candidate.name||"Player")}</strong></header><form data-extension-offer-form><div class="approved-ask-grid"><span><small>Player Ask</small><strong>${money(ask)} × ${candidate.preferred_years||years}</strong></span><label><small>Annual Offer · max <b data-extension-maximum>${money(maximum)}</b></small><span class="money-input"><b>$</b><input type="number" min="1.8" max="${maximum.toFixed(2)}" step="0.1" value="${initialOffer.toFixed(1)}" data-extension-aav aria-label="Annual extension offer in millions" required><b>M</b></span></label><label><small>Years</small><span class="extension-years-stepper"><button type="button" data-extension-years-step="-1" aria-label="Decrease contract years">−</button><input type="number" min="1" max="${Number(candidate.safe_years||1)}" step="1" value="${years}" data-extension-years aria-label="Contract years"><button type="button" data-extension-years-step="1" aria-label="Increase contract years">+</button></span></label><span><small>Salary protection</small><label class="contract-security"><input type="checkbox" data-extension-guaranteed checked> Guaranteed</label></span></div><button type="submit" class="extension-submit primary-action" ${maximum<1.8?"disabled":""}>Submit Offer</button></form></section>
-        <div class="extension-page-middle"><section class="approved-card-panel approved-interest-factors"><header>Interest Breakdown</header><div>${[["Offer vs ask",initialOffer/Math.max(1,ask)*100],["Player timeline",Math.max(20,100-Number(candidate.age||27)*1.4)],["Team direction",64],["Contract length",years/Math.max(1,Number(candidate.preferred_years||years))*100]].map(([label,value],index)=>`<span data-extension-factor="${index}"><small>${escapeHtml(label)}</small><i><b style="width:${clampNumber(value,0,100)}%"></b></i><strong>${Math.round(clampNumber(value,0,100))}</strong></span>`).join("")}</div></section>${extensionDeparturePanel(candidate)}</div>
-        <div data-extension-analysis-slot>${extensionAnalysisPanel(candidate,years,initialOffer)}</div>
-      </div>
+      <form class="fa-panel fa-builder ext-builder" data-extension-offer-form aria-label="Extension offer for ${escapeAttr(candidate.name || "player")}">
+        <div class="fa-builder-scroll">
+          <section class="approved-card-panel fa-builder-market"><header>What He Wants · ${escapeHtml(candidate.name || "Player")}</header><dl>
+            <div><dt title="The contract model's projected salary for him: what the open market would pay.">Market ask</dt><dd><strong>${money(ask)}</strong><small>× ${escapeHtml(candidate.preferred_years || preview.years)} yr${Number(candidate.preferred_years) === 1 ? "" : "s"} preferred · the contract model's price</small></dd></div>
+            <div><dt title="The salary your extension must reach for him to sign it.">Signs with you from</dt><dd><strong data-extension-price>${money(candidate.accept_offer_millions?.guaranteed)}</strong><small>guaranteed · ${money(candidate.accept_offer_millions?.non_guaranteed)} without a guarantee${Number.isFinite(share) ? ` · ${Math.round(share * 100)}% of his ask, from his flexibility with your team` : ""}</small></dd></div>
+            <div><dt>Longest deal</dt><dd><strong>${safe >= 5 ? "5 years" : safe < 1 ? "None" : `${safe} year${safe === 1 ? "" : "s"}`}</strong><small>${safe >= 5 ? "the league maximum" : safe < 1 ? "he plans to retire first" : "he plans to retire after that"} · starts ${escapeHtml(shortSeasonLabel(candidate.start_season))}${lastSeason ? `, after his deal ends in ${escapeHtml(shortSeasonLabel(lastSeason))}` : ""}</small></dd></div>
+          </dl></section>
+          <section class="approved-card-panel fa-builder-offer"><header>Your Offer</header>
+            <div class="fa-offer-field fa-offer-salary">
+              <label for="extensionOfferAav"><small>Salary per season</small></label>
+              <span class="money-input"><b>$</b><input id="extensionOfferAav" type="number" inputmode="decimal" min="${minimum.toFixed(1)}" max="${sliderMax.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-extension-aav aria-describedby="extensionOfferAavHelp" required><b>M</b></span>
+              <input type="range" min="${minimum.toFixed(1)}" max="${sliderMax.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-extension-aav-range aria-label="Salary per season, in millions" />
+              <small id="extensionOfferAavHelp" data-extension-limit>${money(minimum)} minimum to ${money(preview.maximum)} (room under the hard cap for ${preview.years} year${preview.years === 1 ? "" : "s"})</small>
+              <div class="fa-offer-quick" role="group" aria-label="Quick salary">
+                <button type="button" class="ui-command" data-extension-offer-set="price">His price from you</button>
+                <button type="button" class="ui-command" data-extension-offer-set="${escapeAttr(ask)}">Market ask</button>
+                <button type="button" class="ui-command" data-extension-offer-set="${escapeAttr(minimum)}">Minimum</button>
+              </div>
+            </div>
+            <div class="fa-offer-pair"><div class="fa-offer-field"><small id="extensionYearsLabel">Years</small><div class="fa-segmented" role="radiogroup" aria-labelledby="extensionYearsLabel" data-extension-radiogroup="years">${[1, 2, 3, 4, 5].map((years) => radio("years", years, String(years), preview.years === years, years > Math.max(1, safe), years > safe ? `He plans to retire after ${safe} season${safe === 1 ? "" : "s"} of a new deal` : `At most ${money(extensionMaximum(candidate, years))} a season for ${years} year${years === 1 ? "" : "s"}`)).join("")}</div><input type="hidden" data-extension-years value="${preview.years}"></div>
+            <div class="fa-offer-field"><small id="extensionGuaranteeLabel">Guarantee</small><div class="fa-segmented" role="radiogroup" aria-labelledby="extensionGuaranteeLabel" data-extension-radiogroup="guarantee">${radio("guarantee", "true", "Guaranteed", preview.guaranteed)}${radio("guarantee", "false", "Non-guaranteed", !preview.guaranteed)}</div>
+              <p class="fa-offer-note" data-extension-guarantee-note>${preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on January 10; release him before then and you owe nothing. He asks ${Number.isFinite(premium) ? `${premium.toFixed(1)}%` : ""} more for this.`}</p></div></div>
+            <p class="fa-offer-note fa-offer-options"><b>Options:</b> none. Extensions in this game have no player or team options, and the salary is the same every season.</p>
+          </section>
+          <section class="approved-card-panel fa-offer-verdict fa-verdict-${preview.verdict.tone}" data-extension-verdict role="status" aria-live="polite">${extensionVerdictMarkup(preview)}</section>
+          ${status}
+        </div>
+        <footer class="fa-builder-foot" data-extension-foot>${extensionOfferFootMarkup(preview, true)}</footer>
+      </form>
       <div class="extension-page-impact">
-        <section class="approved-card-panel approved-offer-cap"><header>Four-Year Cap Impact</header>${extensionCapChart(capRows,schedule,candidate.current_contract_seasons)}</section>
+        <section class="approved-card-panel fa-offer-cap ext-cap" data-extension-cap>${extensionCapTableMarkup(preview, candidate)}</section>
+        <div data-extension-analysis-slot>${extensionAnalysisPanel(candidate, preview.years, preview.aav)}</div>
       </div>
-      ${status}
     </div>
   </section>`;
 }
@@ -10517,7 +10686,7 @@ function extensionNegotiationPage(room, selectedPlayerId, response = null, detai
 function extensionDeparturePanel(candidate) {
   const analysis = candidate.analysis || {}, player = analysis.player || {}, replacement = analysis.replacement;
   const gap = replacement ? Number(replacement.overall) - Number(player.overall) : null;
-  return `<section class="approved-card-panel extension-departure"><header>If ${escapeHtml(candidate.name || "This Player")} Leaves</header><div class="extension-departure-facts"><div><span>Minutes to replace</span><strong>${player.minutes != null ? `${Number(player.minutes).toFixed(1)} MPG` : "—"}</strong></div><div><span>Internal alternative</span><span>${replacement ? escapeHtml(replacement.name) : "No reserve in this position group"}</span></div><div><span>Current ability gap</span><span>${gap != null ? `${gap > 0 ? "+" : ""}${gap.toFixed(1)} OVR · ${Number(replacement.overall).toFixed(1)} vs ${Number(player.overall).toFixed(1)}` : "—"}</span></div></div></section>`;
+  return `<div class="extension-departure"><div class="extension-departure-facts"><div><span>Minutes to replace</span><strong>${player.minutes != null ? `${Number(player.minutes).toFixed(1)} MPG` : "—"}</strong></div><div><span>Internal alternative</span><span>${replacement ? escapeHtml(replacement.name) : "No reserve in this position group"}</span></div><div><span>Current ability gap</span><span>${gap != null ? `${gap > 0 ? "+" : ""}${gap.toFixed(1)} OVR · ${Number(replacement.overall).toFixed(1)} vs ${Number(player.overall).toFixed(1)}` : "—"}</span></div></div><footer class="extension-analysis-footer"><span>Position group: ${escapeHtml(analysis.position_group || "—")}</span><span>Based on current roster</span></footer></div>`;
 }
 
 function extensionAbilityView(candidate, years) {
@@ -10563,12 +10732,12 @@ function extensionSuccessionView(candidate, years) {
 }
 
 function extensionAnalysisPanel(candidate, years, aav) {
-  return `<section class="approved-card-panel extension-analysis"><header><span data-extension-analysis-title>Projected Ability Through the Contract</span><div class="extension-analysis-tabs" role="tablist" aria-label="Contract analysis">${["Ability","Contracts","Succession"].map((label,i)=>`<button type="button" role="tab" data-extension-analysis-tab="${label.toLowerCase()}" aria-selected="${i===0}" tabindex="${i===0?0:-1}">${label}</button>`).join("")}</div></header><div class="extension-analysis-view" role="tabpanel" aria-label="Ability" data-extension-analysis-view="ability">${extensionAbilityView(candidate,years)}</div><div class="extension-analysis-view" role="tabpanel" aria-label="Contracts" data-extension-analysis-view="contracts" hidden>${extensionContractsView(candidate,aav)}</div><div class="extension-analysis-view" role="tabpanel" aria-label="Succession" data-extension-analysis-view="succession" hidden>${extensionSuccessionView(candidate,years)}</div></section>`;
+  return `<section class="approved-card-panel extension-analysis"><header><span data-extension-analysis-title>Projected Ability Through the Contract</span><div class="extension-analysis-tabs" role="tablist" aria-label="Contract analysis">${[["ability","Ability"],["contracts","Contracts"],["succession","Succession"],["departure","If He Leaves"]].map(([key,label],i)=>`<button type="button" role="tab" data-extension-analysis-tab="${key}" aria-selected="${i===0}" tabindex="${i===0?0:-1}">${label}</button>`).join("")}</div></header><div class="extension-analysis-view" role="tabpanel" aria-label="Ability" data-extension-analysis-view="ability">${extensionAbilityView(candidate,years)}</div><div class="extension-analysis-view" role="tabpanel" aria-label="Contracts" data-extension-analysis-view="contracts" hidden>${extensionContractsView(candidate,aav)}</div><div class="extension-analysis-view" role="tabpanel" aria-label="Succession" data-extension-analysis-view="succession" hidden>${extensionSuccessionView(candidate,years)}</div><div class="extension-analysis-view" role="tabpanel" aria-label="If He Leaves" data-extension-analysis-view="departure" hidden>${extensionDeparturePanel(candidate)}</div></section>`;
 }
 
 function wireExtensionAnalysis(root, modal, candidate) {
   const tabs=[...root.querySelectorAll('[data-extension-analysis-tab]')];
-  const titles={ability:"Projected Ability Through the Contract",contracts:"Comparable Contracts",succession:`${candidate.analysis?.position_group || "Position Group"} · Succession Timeline`};
+  const titles={ability:"Projected Ability Through the Contract",contracts:"Comparable Contracts",succession:`${candidate.analysis?.position_group || "Position Group"} · Succession Timeline`,departure:`If ${candidate.name || "He"} Leaves`};
   const show=(key)=>{
     modal.analysisTab=key;
     tabs.forEach(tab=>{ const selected=tab.dataset.extensionAnalysisTab===key;tab.setAttribute('aria-selected',String(selected));tab.tabIndex=selected?0:-1; });
@@ -10621,62 +10790,52 @@ function extensionOfferSchedule(candidate, years, aav, capRows = extensionCapRow
   });
 }
 
-function extensionCapChart(capRows, offer, currentContractSeasons = []) {
-  const maximum = Math.max(1, ...capRows.flatMap(([, cap], index) => [
-    Number(cap.salary_total_millions || 0) + Number(offer[index] || 0),
-    Number(cap.tax_line_millions || 0),
-    Number(cap.hard_cap_millions || 0),
-  ])) * 1.06;
-  const pct = (value) => clampNumber(Number(value || 0) / maximum * 100, 0, 100);
-  return `<div class="approved-offer-cap-chart salary-horizon-chart is-extension">${capRows.map(([season, cap], index) => {
-    const payroll = Number(cap.salary_total_millions || 0);
-    const annual = Number(offer[index] || 0);
-    const total = payroll + annual;
-    const extensionPct = pct(annual);
-    const currentSalary = index === 0
-      ? Math.min(payroll, Math.max(0, Number(currentContractSeasons.find((row) => String(row.season) === String(season))?.salary || 0) / 1_000_000))
-      : 0;
-    const currentSalaryPct = pct(currentSalary);
-    const otherPayrollPct = pct(Math.max(0, payroll - currentSalary));
-    const tax = Number(cap.tax_line_millions || 0);
-    const hard = Number(cap.hard_cap_millions || 0);
-    return `<div class="salary-horizon-year"><span>${escapeHtml(shortSeasonLabel(season))}</span><div class="salary-horizon-column" role="img" aria-label="${escapeAttr(`${season}: payroll ${money(payroll)}, current player contract ${money(currentSalary)}, extension ${money(annual)}, tax line ${money(tax)}, hard cap ${money(hard)}`)}"><div class="salary-horizon-stack" style="height:100%"><i class="salary-segment salary-segment-other" style="height:${otherPayrollPct}%" title="Other team payroll ${money(Math.max(0, payroll - currentSalary))}"></i>${currentSalary > 0 ? `<i class="salary-segment salary-segment-current-contract is-highlighted" style="height:${currentSalaryPct}%" title="Current player contract ${money(currentSalary)}"></i>` : ""}${annual > 0 ? `<i class="salary-segment salary-segment-extension is-highlighted" style="height:${extensionPct}%" title="Proposed extension ${money(annual)}"></i>` : ""}</div>${tax > 0 ? `<b class="salary-tax-line" style="bottom:${pct(tax)}%"></b>` : ""}${hard > 0 ? `<b class="salary-hard-line" style="bottom:${pct(hard)}%"></b>` : ""}</div><strong>${money(total)}</strong></div>`;
-  }).join("")}<div class="salary-horizon-legend extension-cap-legend"><span>Payroll</span><span>Current contract</span><span>Extension</span><span>Tax line</span><span>Hard cap</span></div></div>`;
-}
-
+// Live update of the builder: verdict, cap table, footer, limits and radio states follow the draft (no rebuild, so
+// focus and the analysis tab stay where they are).
 function updateExtensionPreview(modal = state.modal, root = els.modalRoot) {
   if (modal?.kind !== "contractExtension") return;
-  const candidate = modal.room?.candidates?.find(item => item.player_id === modal.selectedPlayerId);
+  const candidate = extensionCandidate(modal.room, modal.selectedPlayerId);
   if (!candidate) return;
-  const years = Number(root.querySelector('[data-extension-years]')?.value || 1);
-  const aavInput = root.querySelector('[data-extension-aav]');
-  const aav = Number(aavInput?.value || 0);
-  modal.draft = {years, aav, guaranteed: root.querySelector('[data-extension-guaranteed]')?.checked !== false};
-  const analysisSlot = root.querySelector('[data-extension-analysis-slot]');
-  const signature = `${years}:${aav}`;
-  if (analysisSlot && analysisSlot.dataset.signature !== signature) {
-    analysisSlot.dataset.signature = signature;
-    analysisSlot.innerHTML = extensionAnalysisPanel(candidate, years, aav);
-    wireExtensionAnalysis(analysisSlot, modal, candidate);
+  const draft = modal.draft || (modal.draft = extensionDefaultDraft(candidate, modal.room));
+  const preview = extensionOfferPreview(candidate, modal.room, draft);
+  const minimum = preview.minimum;
+  const sliderMax = Math.max(minimum, preview.maximum);
+  const aavInput = root.querySelector("[data-extension-aav]");
+  const range = root.querySelector("[data-extension-aav-range]");
+  if (aavInput) {
+    aavInput.max = sliderMax.toFixed(1);
+    if (document.activeElement !== aavInput) aavInput.value = preview.aav.toFixed(1);
   }
-  const maximum = Number(candidate.max_aav_by_years?.[String(years)] || 0);
-  if (aavInput) aavInput.max = maximum.toFixed(2);
-  const maximumLabel = root.querySelector('[data-extension-maximum]');
-  if (maximumLabel) maximumLabel.textContent = money(maximum);
-  const capRows = extensionCapRows(candidate);
-  const schedule = extensionOfferSchedule(candidate, years, aav, capRows);
-  root.querySelector('.approved-offer-cap').innerHTML = `<header>Four-Year Cap Impact</header>${extensionCapChart(capRows, schedule, candidate.current_contract_seasons)}`;
-  root.querySelectorAll('[data-extension-years-step]').forEach((button) => {
-    const step = Number(button.dataset.extensionYearsStep || 0);
-    button.disabled = step < 0 ? years <= 1 : years >= Number(candidate.safe_years || 1);
+  if (range) { range.max = sliderMax.toFixed(1); range.value = String(clampNumber(preview.aav, minimum, sliderMax)); }
+  const yearsInput = root.querySelector("[data-extension-years]");
+  if (yearsInput) yearsInput.value = String(preview.years);
+  const limit = root.querySelector("[data-extension-limit]");
+  if (limit) limit.textContent = `${money(minimum)} minimum to ${money(preview.maximum)} (room under the hard cap for ${preview.years} year${preview.years === 1 ? "" : "s"})`;
+  root.querySelectorAll("[data-extension-years-choice]").forEach((button) => {
+    const checked = Number(button.dataset.extensionYearsChoice) === preview.years;
+    button.setAttribute("aria-checked", String(checked)); button.classList.toggle("is-active", checked); button.tabIndex = checked ? 0 : -1;
   });
-  for (const [index, value] of [[0, aav / Math.max(1, candidate.projected_aav_millions) * 100], [3, years / Math.max(1, candidate.preferred_years) * 100]]) {
-    const factor = root.querySelector(`[data-extension-factor="${index}"]`);
-    const score = clampNumber(value, 0, 100);
-    if (factor) {
-      factor.querySelector('i b').style.width = `${score}%`;
-      factor.querySelector('strong').textContent = Math.round(score);
-    }
+  root.querySelectorAll("[data-extension-guarantee-choice]").forEach((button) => {
+    const checked = (button.dataset.extensionGuaranteeChoice === "true") === preview.guaranteed;
+    button.setAttribute("aria-checked", String(checked)); button.classList.toggle("is-active", checked); button.tabIndex = checked ? 0 : -1;
+  });
+  const note = root.querySelector("[data-extension-guarantee-note]");
+  const premium = Number(candidate.security_premium_pct?.non_guaranteed);
+  if (note) note.textContent = preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on January 10; release him before then and you owe nothing. He asks ${Number.isFinite(premium) ? `${premium.toFixed(1)}%` : ""} more for this.`;
+  const verdict = root.querySelector("[data-extension-verdict]");
+  if (verdict) { verdict.className = `approved-card-panel fa-offer-verdict fa-verdict-${preview.verdict.tone}`; verdict.innerHTML = extensionVerdictMarkup(preview); }
+  const cap = root.querySelector("[data-extension-cap]");
+  if (cap) cap.innerHTML = extensionCapTableMarkup(preview, candidate);
+  const foot = root.querySelector("[data-extension-foot]");
+  if (foot && !modal.submitting) foot.innerHTML = extensionOfferFootMarkup(preview, true);
+  const analysisSlot = root.querySelector("[data-extension-analysis-slot]");
+  const signature = `${preview.years}:${preview.aav}`;
+  if (analysisSlot && analysisSlot.dataset.signature !== signature) {
+    const hadFocus = analysisSlot.contains(document.activeElement);
+    analysisSlot.dataset.signature = signature;
+    analysisSlot.innerHTML = extensionAnalysisPanel(candidate, preview.years, preview.aav);
+    wireExtensionAnalysis(analysisSlot, modal, candidate);
+    if (hadFocus) analysisSlot.querySelector('[data-extension-analysis-tab][aria-selected="true"]')?.focus({ preventScroll: true });
   }
 }
 
@@ -10719,70 +10878,97 @@ function mountPlayerExtensionOutcome(card, modal, close) {
 
 function wireExtensionNegotiationModal(root = els.modalRoot, modal = state.modal, redraw = renderModal, close = closeModal) {
   if (!modal || modal.kind !== "contractExtension") return;
-  const yearsInput = root.querySelector("[data-extension-years]");
-  const aavInput = root.querySelector("[data-extension-aav]");
-  const guaranteedInput = root.querySelector('[data-extension-guaranteed]');
-  if (modal.draft) {
-    if (yearsInput) yearsInput.value = String(modal.draft.years);
-    if (aavInput) aavInput.value = String(modal.draft.aav);
-    if (guaranteedInput) guaranteedInput.checked = modal.draft.guaranteed !== false;
+  const candidate = extensionCandidate(modal.room, modal.selectedPlayerId);
+  if (!candidate) return;
+  if (!modal.draft || modal.draftPlayerId !== candidate.player_id) {
+    modal.draft = extensionDefaultDraft(candidate, modal.room);
+    modal.draftPlayerId = candidate.player_id;
   }
-  const syncYears = () => {
-    const candidate = (modal.room?.candidates || []).find((item) => item.player_id === modal.selectedPlayerId);
-    if (!candidate || !yearsInput) return;
-    const years = clampNumber(Number(yearsInput.value || 1), 1, Number(candidate.safe_years || 1));
-    yearsInput.value = String(years);
-    const maximum = Number(candidate.max_aav_by_years?.[String(years)] || 0);
-    if (aavInput) {
-      aavInput.max = maximum.toFixed(2);
-      aavInput.value = Math.min(Number(aavInput.value || 0), maximum).toFixed(1);
-    }
-    updateExtensionPreview(modal,root);
+  const form = root.querySelector("[data-extension-offer-form]");
+  const aavInput = root.querySelector("[data-extension-aav]");
+  const range = root.querySelector("[data-extension-aav-range]");
+  const setAav = (value) => {
+    const minimum = extensionMinimum(modal.room);
+    const maximum = Math.max(minimum, extensionMaximum(candidate, modal.draft.years));
+    modal.draft.aav = roundOfferTenth(clampNumber(Number(value) || 0, minimum, maximum));
   };
-  yearsInput?.addEventListener("change", syncYears);
-  root.querySelectorAll("[data-extension-years-step]").forEach((button) => button.addEventListener("click", () => {
-    if (!yearsInput) return;
-    yearsInput.value = String(clampNumber(Number(yearsInput.value || 1) + Number(button.dataset.extensionYearsStep || 0), 1, Number(yearsInput.max || 1)));
-    syncYears();
+  aavInput?.addEventListener("input", () => {
+    const value = Number(aavInput.value);
+    if (!Number.isFinite(value) || aavInput.value === "") return;
+    modal.draft.aav = roundOfferTenth(value);
+    updateExtensionPreview(modal, root);
+  });
+  aavInput?.addEventListener("change", () => { setAav(aavInput.value); aavInput.value = modal.draft.aav.toFixed(1); updateExtensionPreview(modal, root); });
+  range?.addEventListener("input", () => { setAav(range.value); if (aavInput) aavInput.value = modal.draft.aav.toFixed(1); updateExtensionPreview(modal, root); });
+  root.querySelectorAll("[data-extension-offer-set]").forEach((button) => button.addEventListener("click", () => {
+    const key = modal.draft.guaranteed !== false ? "guaranteed" : "non_guaranteed";
+    setAav(button.dataset.extensionOfferSet === "price" ? candidate.accept_offer_millions?.[key] : button.dataset.extensionOfferSet);
+    if (aavInput) aavInput.value = modal.draft.aav.toFixed(1);
+    updateExtensionPreview(modal, root);
   }));
-  aavInput?.addEventListener("input", () => updateExtensionPreview(modal,root));
-  guaranteedInput?.addEventListener('change', () => updateExtensionPreview(modal,root));
-  updateExtensionPreview(modal,root);
-  root.querySelector("[data-extension-offer-form]")?.addEventListener("submit", async (event) => {
+  const choose = (group, value) => {
+    if (group === "years") {
+      modal.draft.years = Number(value);
+      // A shorter or longer term can change the hard-cap limit: keep the salary inside it.
+      setAav(modal.draft.aav);
+      if (aavInput) aavInput.value = modal.draft.aav.toFixed(1);
+    } else {
+      modal.draft.guaranteed = value === "true";
+    }
+    updateExtensionPreview(modal, root);
+  };
+  root.querySelectorAll("[data-extension-years-choice]").forEach((button) => button.addEventListener("click", () => choose("years", button.dataset.extensionYearsChoice)));
+  root.querySelectorAll("[data-extension-guarantee-choice]").forEach((button) => button.addEventListener("click", () => choose("guarantee", button.dataset.extensionGuaranteeChoice)));
+  // Arrow keys move through a radio group (skipping disabled choices), like the free-agency builder.
+  root.querySelectorAll("[data-extension-radiogroup]").forEach((group) => group.addEventListener("keydown", (event) => {
+    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
+    const name = group.dataset.extensionRadiogroup;
+    const buttons = [...group.querySelectorAll("button[role='radio']")].filter((button) => !button.disabled);
+    if (!buttons.length) return;
+    event.preventDefault(); event.stopPropagation();
+    const index = Math.max(0, buttons.findIndex((button) => button.getAttribute("aria-checked") === "true"));
+    const next = event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1
+      : clampNumber(index + (["ArrowLeft", "ArrowUp"].includes(event.key) ? -1 : 1), 0, buttons.length - 1);
+    const target = buttons[next];
+    choose(name, name === "years" ? target.dataset.extensionYearsChoice : target.dataset.extensionGuaranteeChoice);
+    target.focus();
+  }));
+  updateExtensionPreview(modal, root);
+  form?.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if(modal.submitting) return;
+    if (modal.submitting) return;
+    if (aavInput && aavInput.value !== "") setAav(aavInput.value);
+    const preview = extensionOfferPreview(candidate, modal.room, modal.draft);
+    if (!preview.canSubmit) { updateExtensionPreview(modal, root); return; }
     const playerId = modal.selectedPlayerId;
-    const years = Number(root.querySelector("[data-extension-years]")?.value || 1);
-    const aav = Number(root.querySelector("[data-extension-aav]")?.value || 0);
-    modal.submitting=true;
-    const submit=root.querySelector('[data-extension-offer-form] button[type="submit"]');
-    if(submit){ submit.disabled=true; submit.textContent="Waiting for response…"; }
+    modal.submitting = true;
+    const submit = root.querySelector("[data-extension-foot] button[type='submit']");
+    if (submit) { submit.disabled = true; submit.textContent = "Waiting for response…"; }
     try {
       const result = await action("submit_extension_offer", {
         ...savePayload(),
         player_id: playerId,
-        years,
-        aav_millions: aav,
-        guaranteed: guaranteedInput?.checked !== false,
+        years: preview.years,
+        aav_millions: preview.aav,
+        guaranteed: preview.guaranteed,
       });
       if (result.status === "applied") {
-        modal.submitting=false;
-        modal.extensionApplied=true;
-        modal.outcome={kind:"accepted",title:"Extension accepted",message:`${result.player_name||modal.detail?.name||"Player"} signed a ${years}-year extension.`};
-        mountPlayerExtensionOutcome(root,modal,close);
+        modal.submitting = false;
+        modal.extensionApplied = true;
+        modal.outcome = { kind: "accepted", title: "Extension signed", message: `${result.player_name || modal.detail?.name || "Player"} signed a ${preview.years}-year extension: ${money(preview.aav)} a season, ${money(preview.total)} total.` };
+        mountPlayerExtensionOutcome(root, modal, close);
         return;
       }
       modal.response = result;
       modal.room = result.room || modal.room;
-      modal.submitting=false;
-      if(result.status==="rejected") modal.outcome={kind:"declined",title:"Offer declined",message:result.reason||"The player declined this extension. Adjust the offer to try again.",allowRetry:true};
-      modal.body = extensionNegotiationBody(modal.room, modal.selectedPlayerId, result, modal.detail);
+      modal.submitting = false;
+      if (result.status === "rejected") modal.outcome = { kind: "declined", title: "Offer declined", message: result.reason || "He declined this extension. Adjust the offer to try again.", allowRetry: true };
+      modal.body = extensionNegotiationBody(modal.room, modal.selectedPlayerId, result, modal.detail, modal.draft);
       redraw();
     } catch (error) {
-      modal.submitting=false;
+      modal.submitting = false;
       showToast(error.message || "Extension offer could not be submitted.", true);
-      const currentSubmit=root.querySelector('[data-extension-offer-form] button[type="submit"]');
-      if(currentSubmit){ currentSubmit.disabled=false; currentSubmit.textContent="Submit Offer"; }
+      updateExtensionPreview(modal, root);
     }
   });
 }
