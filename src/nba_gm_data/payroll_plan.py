@@ -23,6 +23,10 @@ The rule, for AI teams only (the user's team is never changed):
   1.5x for a star. Keeping your own free agent counts 1.5x more (Bird rights: he cannot be replaced from outside while
   over the cap).
 - A signing is declined when its cost is above that budget.
+- **Room below the line by phase** (``PHASE_KEEP_ROOM``): a team that is not contending keeps some payroll room below
+  the line when it adds a veteran in free agency or re-signing ($3M on the rise, $8M retooling, $20M rebuilding), so
+  rebuilding teams carry cap-space payrolls and can take on contracts in trades. Young players (25 or younger) and
+  re-signed starters are exempt.
 - **After the trade deadline** a team under the line never adds salary that would put it over (a trade can no longer
   fix it): the Atlanta case.
 """
@@ -39,6 +43,13 @@ STARTER_MINUTES = 28.0              # a full-importance starter
 MAX_IMPORTANCE = 1.5
 RE_SIGNING_IMPORTANCE = 1.5         # own free agents (Bird rights)
 IN_SEASON_KINDS = {"waiver_claim", "in_season_signing"}
+# Room below the tax line a team keeps by phase when it adds a veteran in free agency or re-signing. Without it, every
+# team with room spent to the line: in the first test with the shared line, 18 of 30 teams ended 2027-28 within $5M
+# under it and one had real room, so no team could take a salary dump and the 2028 deadline had 6 trades. The starting
+# league (real 2026-27 contracts) has 6 teams $14M+ under the line; rebuilding teams carry cap-space payrolls.
+PHASE_KEEP_ROOM = {"peak": 0.0, "entering": 3_000_000, "exiting": 8_000_000, "rebuilding": 20_000_000}
+CEILING_KINDS = {"free_agency", "re_signing"}
+YOUNG_PLAYER_AGE = 25.0
 
 
 def _save():
@@ -125,6 +136,25 @@ def owner_tax_budget(active: dict[str, Any], save: dict[str, Any], team_id: str,
     return PHASE_TAX_BUDGET[team_phase(active, save, team_id)] / owner_money_factor(active, team_id) * importance(minutes, kind)
 
 
+def phase_payroll_ceiling(active: dict[str, Any], save: dict[str, Any], team_id: str, season: str, kind: str,
+                          minutes: float, age: float | None) -> float | None:
+    """The payroll a team that is not contending keeps below when it adds a veteran (None: no ceiling applies).
+
+    Free agency and re-signing only; young players (YOUNG_PLAYER_AGE or younger) are what a rebuild invests in, and a
+    re-signed starter is kept; minimum roster fills never add payroll (see ``payroll_check``)."""
+    if kind not in CEILING_KINDS:
+        return None
+    room = PHASE_KEEP_ROOM[team_phase(active, save, team_id)]
+    if room <= 0:
+        return None
+    if age is not None and float(age) <= YOUNG_PLAYER_AGE:
+        return None
+    if kind == "re_signing" and float(minutes) >= STARTER_MINUTES:
+        return None
+    from .cap_rules import cap_lines_for_season
+    return cap_lines_for_season(season)["tax_line"] - room
+
+
 def after_trade_deadline(save: dict[str, Any]) -> bool:
     """Between the trade deadline and the end of the regular season (no trade can fix the payroll any more)."""
     s = _save()
@@ -138,7 +168,8 @@ def after_trade_deadline(save: dict[str, Any]) -> bool:
 
 def payroll_check(active: dict[str, Any], save: dict[str, Any], team_id: str | None, season: str, *,
                   add_salary: float, remove_salary: float = 0.0, roster_delta: int = 1, minutes: float = 0.0,
-                  kind: str = "signing", committed: float = 0.0, committed_players: int = 0) -> dict[str, Any]:
+                  kind: str = "signing", committed: float = 0.0, committed_players: int = 0,
+                  age: float | None = None) -> dict[str, Any]:
     """Whether an AI team's front office accepts this payroll move for ``season``.
 
     ``add_salary`` / ``remove_salary``: this season's salary the move adds and removes (dollars); ``roster_delta``:
@@ -154,6 +185,10 @@ def payroll_check(active: dict[str, Any], save: dict[str, Any], team_id: str | N
     cost = tax_cost(save, team_id, season, before, after)
     result = {"before": before, "after": after, "tax_line": cost["tax_line"], "tax": cost["tax"],
               "lost_payout": cost["lost_payout"], "cost": cost["total"], "budget": 0.0}
+    ceiling = phase_payroll_ceiling(active, save, team_id, season, kind, minutes, age)
+    result["ceiling"] = ceiling
+    if ceiling is not None and after > before + 1 and after > ceiling:
+        return {**result, "ok": False, "reason": "keeps_room_below_the_line_for_its_phase"}
     if cost["total"] <= 0:
         return {**result, "ok": True, "reason": "under_the_line_or_no_change"}
     if kind in IN_SEASON_KINDS and before <= cost["tax_line"] < after and after_trade_deadline(save):
@@ -170,5 +205,8 @@ def plain_words(check: dict[str, Any]) -> str:
         return ""
     if check.get("reason") == "would_cross_the_tax_line_after_the_deadline":
         return "It would put the team over the luxury tax line after the trade deadline."
+    if check.get("reason") == "keeps_room_below_the_line_for_its_phase":
+        return (f"The team keeps its payroll under about ${float(check.get('ceiling') or 0) / 1e6:.1f}M "
+                "while it is not contending (room to take on contracts in trades).")
     return (f"It would cost about ${float(check.get('cost') or 0) / 1e6:.1f}M in luxury tax and lost payout "
             f"(the owner accepts about ${float(check.get('budget') or 0) / 1e6:.1f}M for this player).")

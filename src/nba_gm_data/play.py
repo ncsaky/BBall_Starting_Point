@@ -5394,7 +5394,7 @@ def process_ai_free_agency_offers_for_day_state(
             tax_plan = payroll_check(
                 active, save, team["id"], start_season, add_salary=aav * 1_000_000,
                 roster_delta=1 - len(plan.get("cuts") or []), minutes=display_minutes_projection(player),
-                kind="free_agency", committed=reserved * 1_000_000,
+                kind="free_agency", committed=reserved * 1_000_000, age=player.get("display_age", player.get("age")),
                 committed_players=len(pending_players - {player["id"]}),
             )
             if not tax_plan["ok"]:
@@ -6403,7 +6403,7 @@ def apply_free_agency_offer_state(
             active, save, team_id, contract_start_season_for_signing(save),
             add_salary=float(offer.get('aav_millions') or 0) * 1_000_000,
             roster_delta=1 - len(plan.get('cuts') or []), minutes=display_minutes_projection(player),
-            kind="free_agency", committed=reserved * 1_000_000,
+            kind="free_agency", committed=reserved * 1_000_000, age=player.get("display_age", player.get("age")),
             committed_players=int((committed_count_by_team or {}).get(team_id) or 0),
         )
         if not tax_plan['ok']:

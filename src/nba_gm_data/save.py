@@ -9523,7 +9523,7 @@ def ai_re_signing_fits_payroll_plan(
     commitments = committed_salary_by_team_season or {}
     check = payroll_check(
         active, save, str(team_id), next_season, add_salary=float(terms["seasons"][0]["salary"]), roster_delta=1,
-        minutes=display_minutes_projection(player), kind="re_signing",
+        minutes=display_minutes_projection(player), kind="re_signing", age=player.get("display_age", player.get("age")),
         committed=float(commitments.get((str(team_id), str(next_season)), 0.0)),
         committed_players=int(commitments.get((str(team_id), RE_SIGNING_PLAYER_COUNT_KEY), 0)),
     )
@@ -9756,7 +9756,7 @@ def strategic_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any
             from .payroll_plan import payroll_check
             signed_here = pass_signed.setdefault(team["id"], [0.0, 0])
             if not payroll_check(active, save, team["id"], next_season, add_salary=salary,
-                                 minutes=display_minutes_projection(player), kind="free_agency",
+                                 minutes=display_minutes_projection(player), kind="free_agency", age=player.get("display_age", player.get("age")),
                                  committed=signed_here[0], committed_players=signed_here[1])["ok"]:
                 continue
             signed_here[0] += salary

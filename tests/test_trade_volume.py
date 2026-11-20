@@ -84,6 +84,20 @@ class PayrollPlanTests(unittest.TestCase):
                                  add_salary=6_000_000, minutes=8.0, kind="free_agency")
         self.assertFalse(bench["ok"], "a bench player is not worth the tax even for a contender")
 
+    def test_teams_that_are_not_contending_keep_room_below_the_line_for_veterans(self):
+        data = league(payroll_a=185_000_000)
+        veteran = dict(add_salary=8_000_000, minutes=24.0, kind="free_agency", age=30)
+        rebuilding = pp.payroll_check(data, save_for("2027-07-02", "rebuilding"), "a", SEASON, **veteran)
+        self.assertFalse(rebuilding["ok"])
+        self.assertEqual(rebuilding["reason"], "keeps_room_below_the_line_for_its_phase")
+        self.assertEqual(rebuilding["ceiling"], LINE - pp.PHASE_KEEP_ROOM["rebuilding"])
+        self.assertIn("not contending", pp.plain_words(rebuilding))
+        self.assertTrue(pp.payroll_check(data, save_for("2027-07-02", "rebuilding"), "a", SEASON,
+                                         **{**veteran, "age": 23})["ok"], "a rebuild invests in young players")
+        self.assertTrue(pp.payroll_check(data, save_for("2027-07-02", "peak"), "a", SEASON, **veteran)["ok"])
+        self.assertTrue(pp.payroll_check(data, save_for("2027-07-02", "rebuilding"), "a", SEASON,
+                                         **{**veteran, "kind": "waiver_claim"})["ok"], "free agency and re-signing only")
+
     def test_payout_share_follows_the_last_recorded_season(self):
         save = save_for("2027-07-02", luxury_tax_payouts={SEASON: {"share_per_team": 11_500_000}})
         self.assertEqual(pp.expected_payout_share(save, NEXT), 11_500_000)
