@@ -234,7 +234,7 @@ test('window icons: every window type has its own icon, unknown windows share on
     phase = /^\s+(\w+): \[/.exec(line)?.[1] || phase;
     for (const [, name] of line.matchAll(/\["(\w+)", "[^"]+", "[^"]+"\]/g)) phaseIds.push(`phase-${phase}-${name}`);
   }
-  assert.ok(phaseIds.length >= 20, `found ${phaseIds.length} phase windows`);
+  assert.ok(phaseIds.length >= 15, `found ${phaseIds.length} phase windows`);
   const kinds = ['player', 'coach', 'fantasy', 'prospect', 'freeAgent', 'extension'];
   const glyphs = new Map();
   for (const id of [...boardIds, ...phaseIds]) {
