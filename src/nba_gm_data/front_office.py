@@ -106,6 +106,7 @@ def reputation_data(root: str = ".") -> dict[str, Any]:
     return {}
 
 
+DOCUMENTED_MISJUDGMENT_SAVVY = 50.0
 UNKNOWN_SPREAD_SHARE = 0.6  # offices without a reputation are drawn closer to the middle than the reputed ones
 DRAW_CLIP = 2.0
 
@@ -155,6 +156,11 @@ def base_traits(teams: list[dict[str, Any]], seed: int, data: dict[str, Any] | N
         biases = []
         for item in rep.get("biases") or []:
             biases.append({"key": item["key"], "why": item.get("why"), "sources": list(item.get("sources") or [])})
+        if (any(b["key"] in MISJUDGMENTS for b in biases) and "savvy" not in row["from_reputation"]
+                and row["savvy"] > DOCUMENTED_MISJUDGMENT_SAVVY):
+            # A documented misjudging habit means the office is not among the accurate ones: its drawn savvy is
+            # capped so the habit actually shows (rule 4: the hint describes what the engine uses).
+            row["savvy"] = DOCUMENTED_MISJUDGMENT_SAVVY
         if not rep.get("biases") and row["savvy"] < 55.0:
             # A less savvy office without a documented habit still misjudges in one lasting direction (seeded).
             key = sorted(MISJUDGMENTS)[random.Random(f"{seed}:{abbrev}:bias:front-office-trait-v1").randrange(len(MISJUDGMENTS))]
