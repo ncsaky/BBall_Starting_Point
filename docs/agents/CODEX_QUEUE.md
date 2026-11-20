@@ -2,7 +2,69 @@
 
 Paste one prompt into a **fresh** Codex chat. One task per chat keeps it from drifting after context compaction. Each prompt is self-contained. Claude reviews the result and updates `BOARD.md`.
 
-Current priority (2026-11-20, night): INJURY-FOLLOWUPS now, ODDS-COACH after the trade probes. GUI tasks are parked at the bottom.
+Current priority (2026-11-20, late night): DEFENSE-RATINGS now, ODDS-COACH after TRADE-MARKET's long runs. GUI tasks are parked at the bottom.
+
+---
+
+## Ready now (2026-11-20, late night): DEFENSE-RATINGS (fresh chat); ODDS-COACH after TRADE-MARKET's long runs
+
+Running now: TRADE-MARKET (Claude agent: trade files, trade window, assistant phone) and FA-REAL slice 1 (Claude agent: cap rules, contract AI, free-agency paths). DEFENSE-RATINGS touches neither.
+
+### DEFENSE-RATINGS: do team-defense ratings match analysts and the data? (starting with Kuminga)
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task DEFENSE-RATINGS (its board row already exists; set it to "in progress (Codex)").
+Read docs/agents/tasks/analyst-first.md, docs/agents/tasks/ratings-consensus.md and
+docs/agents/tasks/overnight-ratings-oddities.md: they show how ratings are built (scripts/build_player_inputs.py,
+analyst_evidence.py, bbi_evidence.py, data/research/bbi/bbi_input_mapping.json, data/research/analyst_claims_2026.json)
+and the user's evidence order. Analysts (the Nerd Sesh hosts, Basketball Index writers, Taylor Metrics-style analysts)
+come first. Impact numbers come second, read in their context. Never change a rating to hit a game outcome (AGENTS.md
+rules 1, 3, 7). Every correction needs independent evidence with its own attribution and goes through the build
+pipeline, never typed by hand.
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_defense_ratings -b codex/defense-ratings HEAD
+Symlink the git-ignored data from the main checkout: .venv, data/research/barttorvik/raw,
+data/canonical/universe_2026_27_offseason.sqlite, data/canonical/injury_player_evidence_v2.json, every git-ignored file
+under data/research/bbi/ (including tools/), output/settlement-materialization-pass. Then run
+gunzip -kf data/canonical/player_inputs_2026_27.json.gz. Commit on branch codex/defense-ratings; never push, never
+commit to main. Raw Basketball Index data stays local; never commit it.
+
+Trigger: the user says Jonathan Kuminga is a poor team defender. In their view he's physically gifted but not a smart
+or capable defender, which is part of why he never fit next to Curry's system. The game's defensive ratings put him
+about average (around 63). Check whether that's a rating problem:
+1. Kuminga first: list every defensive input (the containment, navigation, interior, anticipation, steal,
+   interception, foul control and communication skills; the effort and help tendencies) with its value and where it
+   came from (which BBI measure, which analyst claim, which weight). Then gather independent evidence: analyst claims
+   (search the Nerd Sesh transcripts/claims we have; Basketball Index writeups), BBI defensive measures and their
+   year-to-year repeatability, on/off and other impact numbers in context (role, teammates, minutes).
+2. Then the same check league-wide for team defense: the 40 rotation players whose defensive ratings disagree most
+   with the analyst consensus or with the repeatable data. Classify each as a measurement problem (fix the mapping or
+   weights for everyone), sample/role context (no change), or genuine analyst disagreement (add an attributed claim to
+   analyst_claims_2026.json with episode/article, date and timestamp where possible, then let the normal analyst step
+   apply it).
+3. Apply only well-evidenced fixes. Rebuild through scripts/build_player_inputs.py. Show who moved (before -> after,
+   rotation percentile).
+
+Checks: tests for any mapping or claim change (follow tests/test_overnight_ratings.py), bash scripts/run_core_tests.sh,
+tests.test_bbi_evidence, tests.test_overnight_ratings. Both scorecards, since ratings change game results:
+- PYTHONPATH=src .venv/bin/python scripts/calibration_report.py --games 1230 --mode replay-real-minutes (18/18)
+- PYTHONPATH=src .venv/bin/python -m nba_gm_data.cli validate-season-probabilities --runs 20 --seed 1, before and after;
+  report Brier, log loss, spread error and totals error. The user prefers short runs.
+Other agents run long simulations on this laptop: run one heavy job at a time, and wait on your own process ID, never on
+a grep loop.
+
+Files you may touch: data/research/bbi/bbi_input_mapping.json, data/research/analyst_claims_2026.json,
+src/nba_gm_data/analyst_evidence.py, src/nba_gm_data/bbi_evidence.py, scripts/build_player_inputs.py,
+data/canonical/player_inputs_2026_27.json.gz (rebuilt by the script only), tests, docs/agents/tasks/defense-ratings.md.
+Do NOT touch transactions.py, trade_*.py, contract_ai.py, cap_rules.py, play.py, save.py, sim.py or gui/.
+
+Report in docs/agents/tasks/defense-ratings.md: a plain-language TL;DR first (3 lines, no jargon or skill codes), then
+Kuminga's breakdown and verdict, the league table with each player's kind, what changed and the evidence, who moved,
+both scorecards, and "What's left". Set the board row to "review" and stop.
+```
 
 ---
 
