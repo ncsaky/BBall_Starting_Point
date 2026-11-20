@@ -103,7 +103,12 @@ class NewCareerStartTests(unittest.TestCase):
             self.assertEqual(states[rows[2]['player_id']]['availability_status'],'out')
             self.assertEqual(states[rows[0]['player_id']]['rust'],9.)
             self.assertEqual(states[rows[0]['player_id']]['fatigue'],2.5)
-            self.assertEqual(s['injury_events'],sorted(history,key=lambda e:e['id']))
+            # The source history is kept as is; the only additions are the opening night's season-start injuries
+            # (OVERNIGHT-REST-GAMES), which never touch players already out.
+            started=[e for e in s['injury_events'] if e.get('status')=='season_start_injury']
+            self.assertEqual([e for e in s['injury_events'] if e.get('status')!='season_start_injury'],sorted(history,key=lambda e:e['id']))
+            self.assertTrue(all(e['source_ids']==['src_season_start_injuries'] for e in started))
+            self.assertFalse({e['player_id'] for e in started}&{r['player_id'] for r in rows[1:]})
             self.assertEqual(json.dumps(source['contracts'],sort_keys=True),contracts)
             self.assertFalse(s['contract_overrides'])
 
