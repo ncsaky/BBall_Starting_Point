@@ -85,7 +85,7 @@ AI front offices now plan their end-of-season payroll before they re-sign, sign,
 ## Before and after against real
 Two-season probe, seed 17, Golden State hands-off, 94-input ratings, 2026-10-20 to 2028-11-01, one run at a time.
 **Before** = main at 6dba361. **First fix** = the shared line plus the tax plan, without room by phase (checkpoint
-f59fb3c). **After** = this branch (3a9da59 + aa3fe3f; later commits change no behaviour). Taxpayers are counted at
+f59fb3c). **After** = this branch (aa3fe3f; later commits change only tests and docs). Taxpayers are counted at
 the real line in every column (the before run's save recorded the trade code's $207.4M / $214.7M lines).
 
 | Measure | Before | First fix | After | Real |
@@ -168,7 +168,30 @@ for about $74M; they had cap room, so the room-by-phase rule allowed it.
 - The payout is small ($3-4M) because few teams are deep in the tax; it follows the league.
 
 ## Tests and checks
-__TESTS__
+- New `tests/test_trade_volume.py` (12): one tax line everywhere (trade code, screens, news, the tax bill); projected
+  payroll counts the minimum fills; a rebuilding team never signs into the tax while a contender pays for a starter
+  but not a bench player; room below the line by phase (young players half); the payout share follows the last
+  recorded season; your team is never restricted; **a waiver claim that would cross the line after the deadline is
+  declined** (the Atlanta case) and before it only a contender claims a rotation player over the line; **the
+  re-signing tax check** (hard cap alone would allow it); **your offer loses to a better rival bid** (Miller: $13.6M
+  and his $28.8M ask are both turned down while Brooklyn bids $30.4M; the shown price wins him); without rivals he
+  still needs today's bar.
+- `tests/test_free_agency_room_payload.py` rewritten for the new rule: the price the builder shows is exactly the price
+  the engine applies, for every role, length, guarantee and market mode (one $0.1M step below is refused).
+  `tests/free_agency_room.test.cjs` updated (price per length, "no salary wins him today" with the rival named).
+- Fixtures moved to the real line: the three-team test league's team A payroll $199M -> $192M
+  (`test_multi_team_trades.py`), with the matching numbers in `test_trade_step4.py` and `test_trade_taxpool.py`; the
+  trade-finder tests in `test_foundation.py` shop Patrick Williams instead of Dailyn Swain (see section 1); the
+  settlement replay tests accept that an archived offer may fail today's salary legality and isolate the entitlement
+  check from the roster check.
+- The trade, market, contract, free-agency, waiver, lifecycle and foundation modules plus `test_trade_taxpool`,
+  `test_trade_step4`, `test_free_agency_room_payload` (48 modules, 675 tests): all pass except two that fail the same
+  way on main (`test_player_lifecycle` medical reload: `NameError: tuning`; `test_pick_and_pop`: its reference file
+  under `output/` is not in this worktree) and `test_rating_scale_consistency`'s rim-anchor test (also fails on main).
+- `node --test tests/*.test.cjs`: 280 pass (the startup-movie test needs the ignored movie file; it passes with it).
+- `bash scripts/run_core_tests.sh`: 337 tests, OK after the settlement-test update (2 skipped).
+- Odds check (`validate-season-probabilities --runs 20 --limit 20`), main vs this branch: **byte-identical output**.
+  Game results are unchanged.
 
 ## Files
 - `cap_rules.py` (new): the real cap lines, one function for every part of the game.
