@@ -414,6 +414,7 @@ FILLER_REASONS = frozenset({"negative_contract_value", "out_of_rotation", "over_
 FILLER_MIN_SALARY = 2_500_000
 FILLER_LONG_INJURY_DAYS = 30
 FILLER_BENCH_MINUTES = 15.0
+FILLER_ROTATION_MINUTES = 18.0
 FILLER_PER_BUYER = 3
 
 
@@ -441,6 +442,8 @@ def salary_filler(canonical: dict[str, Any], team_id: str) -> dict[str, str]:
                 or young_piece_kept(row, stance) or recent_draft_pick(canonical, row["player"])):
             continue
         why = next((r for r in reasons.get(row["id"], []) if r in FILLER_REASONS), None)
+        if why is not None and row["minutes"] >= FILLER_ROTATION_MINUTES:
+            why = None  # a rotation player is not filler, whatever his contract
         if why is None and row["id"] in injured:
             why = "long_term_injury"
         if why is None and row["years"] <= 1 and row["minutes"] < FILLER_BENCH_MINUTES and row["age"] >= 24.0:
@@ -688,6 +691,21 @@ def quick_capital_limit(canonical: dict[str, Any], buyer_id: str, row: dict[str,
     if relief >= 5.0:
         limit += relief * 2.0
     limit += max(0.0, tax_value(canonical, buyer_id, incoming, outgoing))
+    # Young upside gained (the full check's 1.5 per point of development upside, scaled by value, players 25 or younger).
+    values = tx.player_asset_values_by_id(canonical)
+
+    def upside(assets):
+        total = 0.0
+        for asset in assets:
+            if asset.get("kind") != "player":
+                continue
+            player = tx.player_by_id(canonical, asset.get("id")) or {}
+            value = values.get(asset.get("id")) or {}
+            if float(player.get("display_age", player.get("age")) or 99) <= 25:
+                total += max(0.0, float(value.get("development_upside") or 0)) * min(1.0, max(0.0, float(value.get("player_value") or 0)) / 50)
+        return total
+
+    limit += 1.5 * max(0.0, upside(incoming) - upside(outgoing))
     return limit
 
 

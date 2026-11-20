@@ -61,7 +61,7 @@ class FillerTests(unittest.TestCase):
 
 class QuickScreenTests(unittest.TestCase):
     def limit(self, minutes, out_salary, in_salary, tax=0.0):
-        with patch.object(tt, "backup_gain", return_value=0.0), \
+        with patch.object(tt, "backup_gain", return_value=0.0), patch.object(tx, "player_asset_values_by_id", return_value={}), \
                 patch.object(tx, "package_salary", side_effect=[out_salary, in_salary]), \
                 patch("nba_gm_data.trade_tax.tax_value", return_value=tax):
             return tt.quick_capital_limit({}, "x", {}, minutes, [], [])

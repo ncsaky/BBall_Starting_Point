@@ -41,7 +41,8 @@ MAX_ASSETS_PER_SIDE = 5
 COUNTERS_PER_SEARCH = {1: 12, 2: 40}  # counter attempts per market search (normal day, deadline week)
 
 KIND_WORDS = {"target_player": "a player it targets", "pick": "a pick", "young_player": "a young player",
-              "keep_own": "to keep a piece of its own", "salary_relief": "to take back less salary"}
+              "keep_own": "to keep a piece of its own", "salary_relief": "to take back less salary",
+              "swap_own": "a player of its own instead of a pick"}
 
 
 def _tx():
@@ -161,17 +162,49 @@ def counter_options(canonical: dict[str, Any], asking_id: str, giving_id: str, a
                                          [a for a in giving_out if _key(a) != _key(other)] + [asset], label))
             elif (row["age"] <= YOUNG_AGE and row["development"] >= YOUNG_DEVELOPMENT and row["minutes"] < 24.0):
                 options.append(("young_player", asking_out, [*giving_out, asset], None))
+        seconds = []
         for pick in tx.tradeable_picks_for_team(canonical, giving_id):
             asset = {"kind": "pick", "id": pick["id"]}
             if ("pick", pick["id"]) in in_deal or pick.get("_obligation_locked"):
                 continue
             options.append(("pick", asking_out, [*giving_out, asset], None))
+            if int(pick.get("round") or 2) == 2:
+                seconds.append((tx.pick_asset_value(pick, "neutral"), str(pick["id"]), asset))
+        if len(seconds) >= 2 and len(giving_out) + 2 <= MAX_ASSETS_PER_SIDE:
+            # "Two seconds": the most common real ask after one (Finney-Smith, LeVert, Isaiah Joe, Aaron Wiggins).
+            cheapest = [asset for _, _, asset in sorted(seconds, key=lambda s: s[:2])[:2]]
+            options.append(("pick", asking_out, [*giving_out, *cheapest], None))
     for asset in asking_out:
         if _key(asset) not in fixed:
             options.append(("keep_own", [a for a in asking_out if _key(a) != _key(asset)], giving_out, None))
     for asset in giving_out:
         if asset.get("kind") == "player" and _key(asset) not in fixed and len(giving_out) > 1:
             options.append(("salary_relief", asking_out, [a for a in giving_out if _key(a) != _key(asset)], None))
+    return options
+
+
+def swap_pick_options(canonical: dict[str, Any], asking_id: str, asking_out: list[dict[str, Any]],
+                      giving_out: list[dict[str, Any]], fixed: set[tuple[str, str]]) -> list[tuple]:
+    """A buyer refusing to spend a pick on this player offers one of its own bench players or salary filler in its
+    place ("Merrill instead of the second"). Never a core, committed or young building-block player, nor one who plays
+    24 minutes or more for it."""
+    tx, tt = _tx(), _tt()
+    from .team_planning import core_commitment
+    rows = tt.player_rows(canonical)
+    in_deal = {_key(a) for a in [*asking_out, *giving_out]}
+    unavailable = _unavailable(canonical)
+    stance = _stance(canonical, asking_id)
+    core = set(((canonical.get("team_plans") or {}).get(asking_id) or {}).get("core_ids") or [])
+    picks = [a for a in asking_out if a.get("kind") in {"pick", "pick_swap"} and _key(a) not in fixed]
+    options = []
+    for row in rows.values():
+        if (row["team_id"] != asking_id or ("player", row["id"]) in in_deal or row["id"] in unavailable
+                or row["id"] in core or row["minutes"] >= 24.0 or core_commitment(canonical, asking_id, row["id"])
+                or tt.young_piece_kept(row, stance) or tx.goat_exception_player(row["player"])):
+            continue
+        for pick in picks:
+            options.append(("swap_own", [a for a in asking_out if _key(a) != _key(pick)]
+                            + [{"kind": "player", "id": row["id"], "label": row["name"]}], giving_out, None))
     return options
 
 
@@ -186,7 +219,9 @@ def choose_counters(canonical: dict[str, Any], asking_id: str, giving_id: str, a
     (the giving side at most 9 short, the two nets summing to at least -2), which its full check then confirms."""
     options = counter_options(canonical, asking_id, giving_id, asking_out, giving_out, fixed=fixed,
                               prefer_player_back=prefer_player_back)
-    order = ["target_player"] + tier_order(_stance(canonical, asking_id))
+    if kinds is not None and "swap_own" in kinds:
+        options += swap_pick_options(canonical, asking_id, asking_out, giving_out, fixed)
+    order = ["target_player"] + tier_order(_stance(canonical, asking_id)) + ["swap_own"]
     scored: dict[str, list] = {kind: [] for kind in order}
     for index, (kind, new_ask_out, new_give_out, label) in enumerate(options):
         if kind not in scored or (kinds is not None and kind not in kinds):
@@ -226,8 +261,12 @@ def describe(canonical: dict[str, Any], asking_id: str, giving_id: str, before_a
         ask = f"{asking} asked for {_words(canonical, added[0])} as well"
     elif kind == "keep_own":
         ask = f"{asking} wanted to keep {_words(canonical, kept_own[0])} out of the deal"
+    elif kind == "swap_own":
+        offered = [a for a in counter["asking_out"] if _key(a) not in before_ask]
+        ask = (f"{asking} would not spend {_words(canonical, kept_own[0])} on him and offered "
+               f"{_words(canonical, offered[0])} instead")
     else:
-        ask = f"{asking} would not take back {_words(canonical, dropped_give[0])}'s salary"
+        ask = f"{asking} asked to leave {_words(canonical, dropped_give[0])} out of the deal"
     if giving_is_user:
         text = f"{ask}."
     else:
@@ -308,10 +347,14 @@ def ai_counter(canonical: dict[str, Any], candidate: dict[str, Any], *, seed: in
         if decision == "reject_pick_investment":
             # Too much draft capital for this player: the buyer asks to keep a pick of its own (taking less is never
             # a gouge, so only the other side's bound applies).
-            options = [o for o in choose_counters(canonical, asking_id, giving_id, asking_out, giving_out, config,
-                                                  fixed=fixed, kinds={"keep_own"}, overshoot=1e9, keep=6)
-                       if any(a.get("kind") in {"pick", "pick_swap"} for a in asking_out
-                              if _key(a) not in {_key(b) for b in o["asking_out"]})][:FULL_CHECKS_PER_COUNTER]
+            # Its first offer is a player of its own in place of the pick ("Merrill instead of the second").
+            swaps = choose_counters(canonical, asking_id, giving_id, asking_out, giving_out, config, fixed=fixed,
+                                    kinds={"swap_own"}, overshoot=1e9, keep=2)
+            keeps = [o for o in choose_counters(canonical, asking_id, giving_id, asking_out, giving_out, config,
+                                                fixed=fixed, kinds={"keep_own"}, overshoot=1e9, keep=6)
+                     if any(a.get("kind") in {"pick", "pick_swap"} for a in asking_out
+                            if _key(a) not in {_key(b) for b in o["asking_out"]})]
+            options = (swaps + keeps)[:FULL_CHECKS_PER_COUNTER]
         else:
             options = choose_counters(canonical, asking_id, giving_id, asking_out, giving_out, config, fixed=fixed,
                                       prefer_player_back=decision == "reject_roster_plan")

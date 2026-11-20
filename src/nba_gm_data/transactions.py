@@ -3522,17 +3522,18 @@ def buyer_offer_packages_for_value(
         if value > target_value * (1.08 if target_value >= 70 else 1.24):
             continue
         tradable_players.append(player)
-    eligible_players = tradable_players
     tradable_players = tradable_players[:max(3, int(max_player_options))]
     filler_ids: dict[str, str] = {}
     if seller_view:
         # TRADE-DEADLINE: the buyer's own "salary I'd move" (trade_targets.salary_filler) is always available to
-        # match salary, so it need not give up rotation players it values; the seller still prices it.
+        # match salary, so it need not give up rotation players it values. The value screens above are skipped for
+        # it: they keep a buyer from overpaying in talent, and filler is there for its salary (a team shedding a
+        # $30M wing cannot be paid in $2M bench players). The seller still prices every player it takes.
         from .trade_targets import salary_filler
         filler_ids = salary_filler(canonical, buyer['id'])
         present = {player['id'] for player in tradable_players}
-        tradable_players = tradable_players + [player for player in eligible_players
-                                               if player['id'] in filler_ids and player['id'] not in present]
+        tradable_players = tradable_players + [player for player in candidates if player['id'] in filler_ids
+                                               and player['id'] not in present and player['id'] not in unavailable]
     picks = sorted(
         tradeable_picks_for_team(canonical, buyer["id"]),
         key=lambda pick: pick_offer_preference_score(pick, buyer_state.get("phase", "balanced"), target_value)
