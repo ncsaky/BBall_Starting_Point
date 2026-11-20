@@ -571,11 +571,15 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
     if mode == "sandbox-sim":
         home_players = return_ramped_player_pool(home_players, coach_by_team.get(home_team["id"]))
         away_players = return_ramped_player_pool(away_players, coach_by_team.get(away_team["id"]))
+    lineups = context.get("starting_lineups") or {}
+    starter_ids = (game_starters(home_players, lineups.get(home_team["id"]), mode)
+                   | game_starters(away_players, lineups.get(away_team["id"]), mode))
+    if mode == "sandbox-sim":
         if "_human_team_ids" in canonical:
             home_players = game_day_rotation(home_players, home_team["id"], game_id, seed)
             away_players = game_day_rotation(away_players, away_team["id"], game_id, seed)
-    home_features = game_team_features(context, canonical, home_team, home_players, mode)
-    away_features = game_team_features(context, canonical, away_team, away_players, mode)
+    home_features = game_team_features(context, canonical, home_team, home_players, mode, game_date=game_date)
+    away_features = game_team_features(context, canonical, away_team, away_players, mode, game_date=game_date)
     home_game_context = game_context_for_team(context, game, home_team)
     away_game_context = game_context_for_team(context, game, away_team)
     if str(game.get("phase") or "") in ("playoffs", "playoff", "play_in"):
@@ -656,7 +660,9 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
                    [home_features, away_features], f"{seed}:{game_id}:{mode}:box-variation")
     from .box_score import reconcile_box_score
     reconcile_box_score(home_line + away_line, [home_team_line, away_team_line])
-    foul_rng = random.Random(f"{seed}:{game_id}:{mode}:personal-fouls")
+    for line in home_line + away_line:
+        line["starter"] = line["player_id"] in starter_ids
+    foul_rng =random.Random(f"{seed}:{game_id}:{mode}:personal-fouls")
     for player_lines, team_line, team in [(home_line, home_team_line, home_team), (away_line, away_team_line, away_team)]:
         staff_rating = coach_by_team.get(team["id"])
         if team["id"] in in_game:
@@ -783,6 +789,23 @@ def return_ramped_player_pool(pool: list[dict[str, Any]], coach: CoachRating | N
             item = {**item, "minutes": round(float(item.get("minutes") or 0.0) * factor, 3), "return_minutes_factor": factor}
         adjusted.append(item)
     return normalize_minutes(adjusted, exact=True)
+
+
+def game_starters(pool: list[dict[str, Any]], lineup: list[str] | None, mode: str) -> set[str]:
+    """The five who start tonight (recorded in the box score as `starter`).
+
+    Replayed games: the real box score's starters. Generated games: the coach's starting five (the save's stored lineup,
+    slot order) among tonight's available players; any open spot goes to the healthy player with the most planned
+    minutes tonight (the coach's next man up). Without a stored lineup the coach's five biggest planned minutes start."""
+    playing = [item for item in pool if float(item.get("minutes") or 0.0) > 0]
+    if mode == "replay-real-minutes" and any(item.get("actual") for item in playing):
+        return {item["player"]["id"] for item in playing if (item.get("actual") or {}).get("starter")}
+    available = {item["player"]["id"] for item in playing}
+    starters = [pid for pid in (lineup or []) if pid in available][:5]
+    rest = sorted((item for item in playing if item["player"]["id"] not in starters),
+                  key=lambda item: (-float(item.get("minutes") or 0.0), str(item["player"]["id"])))
+    starters += [item["player"]["id"] for item in rest[:5 - len(starters)]]
+    return set(starters)
 
 
 def game_day_rotation(
@@ -957,7 +980,13 @@ def curry_off_ball_veteran_profile(player: dict[str, Any] | None) -> bool:
     return normalize_name((player or {}).get("name") or "") == "stephen curry"
 
 
-def game_team_features(context: dict[str, Any] | None, canonical: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]], mode: str) -> dict[str, float]:
+def game_team_features(context: dict[str, Any] | None, canonical: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]], mode: str,
+                       game_date: str | None = None) -> dict[str, float]:
+    """Team features for tonight's pool. game_date: replayed games judge absences against the real season's rotation
+    (replay_expected_rotation) instead of the save-less universe's roster."""
+    expected = None
+    if mode == "replay-real-minutes" and context is not None and game_date and REPLAY_SEASON_ROTATION:
+        expected = replay_expected_rotation(context, team, game_date)
     cache_key = None
     if context is not None:
         pool_key = tuple(
@@ -970,7 +999,7 @@ def game_team_features(context: dict[str, Any] | None, canonical: dict[str, Any]
             )
             for item in pool
         )
-        cache_key = (team["id"], mode, pool_key)
+        cache_key = (team["id"], mode, pool_key, game_date if expected is not None else None)
         cache = context.setdefault("sim_cache", {}).setdefault("team_features", {})
         if cache_key in cache:
             return dict(cache[cache_key])
@@ -978,7 +1007,8 @@ def game_team_features(context: dict[str, Any] | None, canonical: dict[str, Any]
         features = lineup_feature_vector(canonical, pool)
     else:
         features = team_feature_vector(canonical, team).features
-    features = apply_availability_dependency_adjustments(canonical, team, pool, features) if pool else features
+    features = (apply_availability_dependency_adjustments(canonical, team, pool, features, expected=expected,
+                                                          absent_only=expected is not None) if pool else features)
     features = apply_manifesto_feature_adjustments(context, canonical, team, pool, features)
     if mode == "sandbox-sim" and "pace_habit" in features:
         features = {**features, "pace_habit_ref": round(league_pace_habit_reference(canonical), 4)}
@@ -997,9 +1027,14 @@ def apply_manifesto_feature_adjustments(context: dict[str, Any] | None, canonica
     return features
 
 
-def apply_availability_dependency_adjustments(canonical: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]], features: dict[str, float]) -> dict[str, float]:
+def apply_availability_dependency_adjustments(canonical: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]], features: dict[str, float],
+                                              *, expected: list[tuple[dict[str, Any], float]] | None = None,
+                                              absent_only: bool = False) -> dict[str, float]:
     adjusted = dict(features)
-    rows = availability_dependency_rows(canonical, team, pool)
+    rows = (availability_dependency_rows(canonical, team, pool, expected=expected, absent_only=absent_only)
+            if ABSENCE_PENALTY_SCALE else [])
+    if rows and ABSENCE_PENALTY_SCALE != 1.0:
+        rows = [{key: value * ABSENCE_PENALTY_SCALE for key, value in row.items()} for row in rows]
     if not rows:
         adjusted["availability_dependency_penalty"] = 0.0
         adjusted["availability_dependency_count"] = 0
@@ -1036,12 +1071,54 @@ def apply_availability_dependency_adjustments(canonical: dict[str, Any], team: d
     return {key: round(value, 3) for key, value in adjusted.items()}
 
 
-def availability_dependency_rows(canonical: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]]) -> list[dict[str, float]]:
-    team_players = [
-        player
-        for player in canonical["players"]
-        if player["team_id"] == team["id"] and projected_game_minutes(player) >= 18
-    ]
+# Replayed 2025-26 games used to judge absences against the save-less universe's roster, which is the 2026-27 offseason
+# roster: every player a team added in the 2026 offseason counted as missing from every one of its 2025-26 games, and
+# players it lost never did. Replayed games now use the real season's rotation (2026-11-20, game-context audit).
+REPLAY_SEASON_ROTATION = True
+REPLAY_ROTATION_MIN_GAMES = 5
+# Extra penalty for a missing rotation player (availability_dependency_rows: lost creation, spacing, rim protection),
+# on top of tonight's lineup already lacking him (his minutes go to the players who actually play). Measured
+# 2026-11-20 with the real season's rotation: the market priced the extra penalty at -0.14 (se 0.04) of its size and
+# the real results at +0.06 (se 0.19); every bit of it made the engine's win picks worse. The lineup itself carries the
+# absence, so the extra penalty is off (0.0); the machinery stays for experiments.
+ABSENCE_PENALTY_SCALE = 0.0
+
+
+def replay_expected_rotation(context: dict[str, Any], team: dict[str, Any], game_date: str) -> list[tuple[dict[str, Any], float]]:
+    """The team's real 2025-26 rotation on game_date: every player who played for it on or before and on or after that
+    date (on the roster then), with his average minutes in the games he played for it. Replayed games only."""
+    cache = context.setdefault("sim_cache", {}).setdefault("replay_rotation", {})
+    abbrev = team["abbrev"]
+    if abbrev not in cache:
+        players_by_name = context.get("indices", {}).get("players_by_name") or {
+            normalize_name(player["name"]): player for player in context["canonical"]["players"]}
+        stints: dict[str, list[tuple[str, float]]] = defaultdict(list)
+        for box in context.get("boxscores") or []:
+            day = str(box.get("date") or "")[:10]
+            for row in box.get("players") or []:
+                if normalize_game_team_abbrev(row.get("team_abbrev")) != abbrev or row.get("dnp"):
+                    continue
+                minutes = float(row.get("minutes") or 0.0)
+                if minutes > 0 and day:
+                    stints[normalize_name(row.get("player_name") or "")].append((day, minutes))
+        cache[abbrev] = [
+            (players_by_name[name], min(d for d, _ in games), max(d for d, _ in games), sum(m for _, m in games) / len(games))
+            for name, games in sorted(stints.items())
+            if name in players_by_name and len(games) >= REPLAY_ROTATION_MIN_GAMES
+        ]
+    day = str(game_date)[:10]
+    return [(player, round(minutes, 3)) for player, first, last, minutes in cache[abbrev] if first <= day <= last]
+
+
+def availability_dependency_rows(canonical: dict[str, Any], team: dict[str, Any], pool: list[dict[str, Any]], *,
+                                 expected: list[tuple[dict[str, Any], float]] | None = None,
+                                 absent_only: bool = False) -> list[dict[str, float]]:
+    """Rotation players missing tonight. expected: (player, expected minutes) in place of the roster's projections;
+    absent_only: only players who did not play at all count as missing (replayed games, where partial minutes would
+    leak the game's flow)."""
+    if expected is None:
+        expected = [(player, projected_game_minutes(player)) for player in canonical["players"] if player["team_id"] == team["id"]]
+    team_players = [(player, minutes) for player, minutes in expected if minutes >= 18]
     if not team_players:
         return []
     available_minutes = {normalize_name(item["player"]["name"]): float(item.get("minutes") or 0) for item in pool}
@@ -1051,9 +1128,10 @@ def availability_dependency_rows(canonical: dict[str, Any], team: dict[str, Any]
         if float(item.get("minutes") or 0) >= 8
     ]
     rows = []
-    for player in team_players:
-        expected_minutes = projected_game_minutes(player)
+    for player, expected_minutes in team_players:
         actual_minutes = available_minutes.get(normalize_name(player["name"]), 0.0)
+        if absent_only:
+            actual_minutes = expected_minutes if actual_minutes > 0 else 0.0
         lost_share = clamp((expected_minutes - actual_minutes) / max(expected_minutes, 1.0), 0.0, 1.0)
         if lost_share < 0.45:
             continue
@@ -1360,7 +1438,12 @@ def pace_habit_possessions(team_features: dict[str, float], opp_features: dict[s
         return 0.0
     ref = float(team_features.get("pace_habit_ref", PACE_HABIT_REF))
     return clamp(PACE_HABIT_POSSESSIONS * ((float(own) - ref) + (float(opp) - ref)), -PACE_HABIT_LIMIT, PACE_HABIT_LIMIT)
-BASE_OFF_RATING = 107.9
+
+
+# Was 107.9. The absence penalty (now off) and the old-core penalty (now a fifth) used to take about 2 points per 100
+# off nearly every replayed team (the absence check counted 2026 offseason signings as missing), and the league level
+# had been tuned with them on; removing them raised replayed totals by 4.0 points. 105.9 puts the league back.
+BASE_OFF_RATING = 105.9
 
 
 def league_offense_calibration(canonical: dict[str, Any]) -> float:
@@ -1477,16 +1560,33 @@ def simulate_team_line(
 # 1001), but did not improve win-picking (Brier +0.0002 / +0.0005) and narrows team records (win% spread .156 -> .141 vs
 # real .166), so it stays off. See docs/agents/tasks/winpick-shooters.md.
 MATCHUP_STRENGTH_SCALE = 1.0
+# Home court in points per 100 possessions (home, away). Were +1.9 / -0.4: a 2.3-point gap, which put the engine's
+# average expected home margin at +2.6 against the market's +1.9 (2025-26 spreads; real home margin +1.6, se 0.4).
+# Refit 2026-11-20 to a 1.75-point gap with the same sum, so league scoring is unchanged.
+HOME_COURT_RATING = 1.625
+AWAY_COURT_RATING = -0.125
+# Shared pace (2026-11-20). Both teams in a game play nearly the same number of possessions: in the real 2025-26 box
+# scores the two teams' possession counts correlate 0.86 and differ by about 2 (estimated; 1,018 games), and their
+# scores' departures from the market's expectation correlate +0.26 (margins vary 14.1 around the market spread, totals
+# 18.5 around the market total). The engine drew each team's possessions independently (sd 4.2), which made margins
+# swing too much (14.9) and totals too little (14.9). Now tonight's pace is drawn once around the average of the two
+# teams' expected possessions and each team departs from it a little.
+SHARED_PACE = True
+POSSESSION_SHARED_SD = 4.8
+POSSESSION_OWN_SD = 1.5
+POSSESSION_OWN_EXPECTED_SHARE = 0.0   # share of a team's own expected-pace difference it keeps (0: both use the average)
 
 
 def draw_both_scores(canonical: dict[str, Any], home_features: dict[str, float], away_features: dict[str, float],
                      home_coach: CoachRating | None, away_coach: CoachRating | None, rng: random.Random,
                      home_context: dict[str, Any] | None, away_context: dict[str, Any] | None) -> tuple[dict, dict]:
-    """Both teams' scores from the game's first four random numbers (home possessions and rating, then away).
+    """Both teams' scores from the game's first random numbers: with SHARED_PACE, tonight's pace, then the home team's own
+    possessions and rating, then the away team's (five numbers); without it, four (each team's possessions drawn alone).
 
     MATCHUP_STRENGTH_SCALE scales the gap between the two teams' expected offensive ratings (home court left out), with
     the game's expected total unchanged."""
     home_shift = away_shift = 0.0
+    home_pace = away_pace = None
     if MATCHUP_STRENGTH_SCALE != 1.0:
         home = draw_team_score(canonical, home_features, away_features, home_coach, away_coach, rng, is_home=True,
                                rest_context=home_context, opp_rest_context=away_context, mean_only=True)
@@ -1495,11 +1595,48 @@ def draw_both_scores(canonical: dict[str, Any], home_features: dict[str, float],
         gap = (home["mean_off_rating"] - home["home_mod"]) - (away["mean_off_rating"] - away["home_mod"])
         home_shift = -(1.0 - MATCHUP_STRENGTH_SCALE) * gap / 2.0
         away_shift = -home_shift
+    if SHARED_PACE:
+        home_expected = expected_team_possessions(home_features, away_features, home_coach, away_coach, home_context, away_context)
+        away_expected = expected_team_possessions(away_features, home_features, away_coach, home_coach, away_context, home_context)
+        game_expected = (home_expected + away_expected) / 2.0
+        game_pace = game_expected + rng.gauss(0, POSSESSION_SHARED_SD)
+        home_pace = game_pace + POSSESSION_OWN_EXPECTED_SHARE * (home_expected - game_expected)
+        away_pace = game_pace + POSSESSION_OWN_EXPECTED_SHARE * (away_expected - game_expected)
     home_score = draw_team_score(canonical, home_features, away_features, home_coach, away_coach, rng, is_home=True,
-                                 rest_context=home_context, opp_rest_context=away_context, rating_shift=home_shift)
+                                 rest_context=home_context, opp_rest_context=away_context, rating_shift=home_shift,
+                                 game_pace=home_pace)
     away_score = draw_team_score(canonical, away_features, home_features, away_coach, home_coach, rng, is_home=False,
-                                 rest_context=away_context, opp_rest_context=home_context, rating_shift=away_shift)
+                                 rest_context=away_context, opp_rest_context=home_context, rating_shift=away_shift,
+                                 game_pace=away_pace)
     return home_score, away_score
+
+
+def _expected_possessions(team_features: dict[str, float], opp_features: dict[str, float], coach_mod: dict[str, float],
+                          opp_coach_mod: dict[str, float], availability_mod: dict[str, float], rest_mod: dict[str, float],
+                          age_mod: dict[str, float], game_env_mod: dict[str, float], matchup_total_mod: dict[str, float]) -> float:
+    return (
+        BASE_POSSESSIONS
+        + (team_features["stamina"] - 50) * 0.05
+        + (team_features["offensive_rebounding"] - 50) * 0.025
+        + coach_mod["tempo"]
+        + availability_mod["pace"]
+        + rest_mod["pace"]
+        + age_mod["pace"]
+        + game_env_mod["pace"]
+        + matchup_total_mod["pace"]
+        + pace_habit_possessions(team_features, opp_features)
+        - opp_coach_mod["tempo_control"] * 0.25
+    )
+
+
+def expected_team_possessions(team_features: dict[str, float], opp_features: dict[str, float], coach: CoachRating | None,
+                              opp_coach: CoachRating | None, rest_context: dict[str, Any] | None,
+                              opp_rest_context: dict[str, Any] | None) -> float:
+    """A team's expected possessions before any random draw (the pace terms of draw_team_score only; cheap)."""
+    return _expected_possessions(
+        team_features, opp_features, scaled_coach_effect(coach, team_features), scaled_coach_effect(opp_coach, opp_features),
+        availability_gap_effect(team_features), rest_effect(rest_context), age_fatigue_effect(team_features, rest_context),
+        game_environment_effect(rest_context, opp_rest_context), matchup_total_environment_effect(team_features, opp_features))
 
 
 def draw_team_score(
@@ -1515,11 +1652,14 @@ def draw_team_score(
     opp_rest_context: dict[str, Any] | None = None,
     rating_shift: float = 0.0,
     mean_only: bool = False,
+    game_pace: float | None = None,
 ) -> dict[str, Any]:
     """Possessions, offensive rating and points for one team (two draws from the game RNG).
 
     rating_shift: added to the expected offensive rating (matchup_rating_shifts). mean_only: return only the expected
-    offensive rating and the home-court term, with no random draw."""
+    offensive rating, expected possessions and the home-court term, with no random draw. game_pace: tonight's shared
+    possession count (draw_both_scores); the team's possessions are drawn around it instead of around its own
+    expectation."""
     coach_mod = scaled_coach_effect(coach, team_features)
     opp_coach_mod = scaled_coach_effect(opp_coach, opp_features)
     availability_mod = availability_gap_effect(team_features)
@@ -1527,7 +1667,7 @@ def draw_team_score(
     age_mod = age_fatigue_effect(team_features, rest_context)
     opp_age_mod = age_fatigue_effect(opp_features, opp_rest_context)
     shot_diet = team_shot_diet(team_features, opp_features, coach)
-    home_mod = 1.9 if is_home else -0.4
+    home_mod = HOME_COURT_RATING if is_home else AWAY_COURT_RATING
     rest_mod = rest_effect(rest_context)
     game_env_mod = game_environment_effect(rest_context, opp_rest_context)
     matchup_total_mod = matchup_total_environment_effect(team_features, opp_features)
@@ -1542,24 +1682,17 @@ def draw_team_score(
             matchup_total_mod=matchup_total_mod, creator_mod=creator_mod, spacing_mod=spacing_mod, rest_context=rest_context,
         )
 
+    def expected_possessions() -> float:
+        return _expected_possessions(team_features, opp_features, coach_mod, opp_coach_mod, availability_mod, rest_mod,
+                                     age_mod, game_env_mod, matchup_total_mod)
+
     if mean_only:
-        return {"mean_off_rating": expected_rating(), "home_mod": home_mod}
-    possessions = clamp(
-        BASE_POSSESSIONS
-        + (team_features["stamina"] - 50) * 0.05
-        + (team_features["offensive_rebounding"] - 50) * 0.025
-        + coach_mod["tempo"]
-        + availability_mod["pace"]
-        + rest_mod["pace"]
-        + age_mod["pace"]
-        + game_env_mod["pace"]
-        + matchup_total_mod["pace"]
-        + pace_habit_possessions(team_features, opp_features)
-        - opp_coach_mod["tempo_control"] * 0.25
-        + rng.gauss(0, 4.2),
-        84,
-        120,
-    )
+        return {"mean_off_rating": expected_rating(), "home_mod": home_mod, "expected_possessions": expected_possessions()}
+    if game_pace is not None:
+        # Shared pace (draw_both_scores): tonight's game pace plus this team's own small departure from it.
+        possessions = clamp(game_pace + rng.gauss(0, POSSESSION_OWN_SD), 84, 120)
+    else:
+        possessions = clamp(expected_possessions() + rng.gauss(0, 4.2), 84, 120)
     off_rating = expected_rating() + rating_shift + rng.gauss(0, 9.2)
     points = max(70, round(possessions * off_rating / 100))
     return {
@@ -2700,8 +2833,8 @@ def explain_game_probability(root: str | Path, game_id: str, runs: int = 200, se
     game_date = game.get("gameDate") or game.get("date")
     home_pool = game_player_pool(context, game_id, home_team, mode, game_date=game_date)
     away_pool = game_player_pool(context, game_id, away_team, mode, game_date=game_date)
-    home_features = game_team_features(context, canonical, home_team, home_pool, mode)
-    away_features = game_team_features(context, canonical, away_team, away_pool, mode)
+    home_features = game_team_features(context, canonical, home_team, home_pool, mode, game_date=game_date)
+    away_features = game_team_features(context, canonical, away_team, away_pool, mode, game_date=game_date)
     coach_by_team = context.get("indices", {}).get("coach_by_team") or {rating.team_id: rating for rating in coach_ratings(canonical)}
     return {
         "game_id": str(game_id),
@@ -3243,7 +3376,24 @@ def rest_context_for_team(context: dict[str, Any], game: dict[str, Any], team: d
     return {"days_since_previous_game": days_since, "rest_days": rest_days, "rest_label": label}
 
 
+# Game-context strengths, refit 2026-11-20 against the betting market's expected margins and the real 2025-26 results
+# (docs/agents/tasks/overnight-game-context-margins.md; per-game margin split by term, output/overnight-margins/).
+# Rest: with one team on the second night of a back-to-back the engine's rest terms gave the rested team +2.41 points;
+# the market's game-specific edge was +2.08 (se 0.27), the real results' +1.68 (se 0.99).
+REST_EFFECT_SCALE = 0.8
+# Old-core wear (age_fatigue_effect): the ratings already describe how these players performed; the extra team penalty
+# was priced at 0.10 (se 0.06) of its size by the market and 0.33 (se 0.30) by the real results.
+AGE_FATIGUE_SCALE = 0.2
+
+
 def rest_effect(rest_context: dict[str, Any] | None) -> dict[str, float]:
+    effect = _rest_effect_unscaled(rest_context)
+    if REST_EFFECT_SCALE == 1.0:
+        return effect
+    return {key: round(value * REST_EFFECT_SCALE, 4) for key, value in effect.items()}
+
+
+def _rest_effect_unscaled(rest_context: dict[str, Any] | None) -> dict[str, float]:
     if rest_context and rest_context.get("team_fatigue") is not None:
         return fatigue_rest_effect(float(rest_context["team_fatigue"]))   # generated games: the players' own fatigue
     if not rest_context or rest_context.get("rest_days") is None:
@@ -3290,11 +3440,18 @@ def age_fatigue_effect(team_features: dict[str, float], rest_context: dict[str, 
     elif rest_days is not None and rest_days >= 3:
         rest_multiplier = 0.78
     age_pressure = old_share * 2.35 + very_old_share * 3.05 + max(0.0, average_age - 30.5) * 0.18
+    scale = AGE_FATIGUE_SCALE
     return {
-        "offense": round(-clamp(age_pressure * rest_multiplier, 0.0, 4.8), 4),
-        "pace": round(-clamp((old_share * 1.1 + very_old_share * 1.2) * rest_multiplier, 0.0, 2.5), 4),
-        "defense_leak": round(clamp((old_share * 1.65 + very_old_share * 2.05 + max(0.0, average_age - 31.0) * 0.12) * rest_multiplier, 0.0, 4.2), 4),
+        "offense": round(-clamp(age_pressure * rest_multiplier, 0.0, 4.8) * scale, 4),
+        "pace": round(-clamp((old_share * 1.1 + very_old_share * 1.2) * rest_multiplier, 0.0, 2.5) * scale, 4),
+        "defense_leak": round(clamp((old_share * 1.65 + very_old_share * 2.05 + max(0.0, average_age - 31.0) * 0.12) * rest_multiplier, 0.0, 4.2) * scale, 4),
     }
+
+
+# Recent form only counts games from the last 45 days. The box scores it reads are the real 2025-26 season's, so in a
+# save (2026-27 onward) every team used to carry its last ten real games of April 2026 as "recent form" all season, a
+# fixed bonus or penalty of up to 5.5 points per 100. Replayed 2025-26 games are unchanged (ten games span ~3 weeks).
+RECENT_FORM_WINDOW_DAYS = 45
 
 
 def recent_scoring_context_for_team(context: dict[str, Any], game: dict[str, Any], team: dict[str, Any], lookback: int = 10) -> dict[str, Any]:
@@ -3306,7 +3463,7 @@ def recent_scoring_context_for_team(context: dict[str, Any], game: dict[str, Any
     rows = []
     for boxscore in context.get("indices", {}).get("boxscores_by_team_espn_id", {}).get(str(team_espn_id), context["boxscores"]):
         box_date = date_from_iso(boxscore.get("date"))
-        if not box_date or box_date >= current:
+        if not box_date or box_date >= current or (current - box_date).days > RECENT_FORM_WINDOW_DAYS:
             continue
         if boxscore.get("status") != "STATUS_FINAL" or not boxscore.get("home_score") or not boxscore.get("away_score"):
             continue
