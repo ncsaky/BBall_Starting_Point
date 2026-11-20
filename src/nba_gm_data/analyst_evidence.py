@@ -3,14 +3,14 @@
 The user's evidence priority: when analysts and data-driven measures disagree about a skill, follow the analysts
 ("generally, we trust them more, because impact metrics can be skewed with small samples or really dependent on
 their context"). This module turns attributed analyst claims (data/research/analyst_claims_2026.json: Nerd Sesh
-position top-10s, redraft and opening-week episodes, each with episode, video ID, date, timestamp and a paraphrase)
+episodes and linked film analysis, each with a title, publication date, locator and paraphrase)
 into an explicit evidence source for the inputs they name. It never sets a number by hand: each claim states a level,
 the level becomes a league-percentile target, and the target is blended with the existing value by declared weights.
 
 Method (declared; nothing fitted to simulation outcomes or to a ranking):
 1. Level -> one-sided league percentile band and target (LEVELS). The current value's percentile is its rank among
    every rostered player's value of that input (the same pool the claim contradiction check used).
-2. Claim weight = support (both hosts 1.0, one host 0.6, disputed 0.35) x context (playoff-only 0.5: a claim about
+2. Claim weight = support (both hosts 1.0, one host or analyst 0.6, disputed 0.35) x context (playoff-only 0.5: a claim about
    elite playoff defenses is only half about the season-long skill; one-game or opening-week samples 0.25) x
    specificity (a claim naming n inputs counts min(1, 2/n) for each) x 0.5 when the claim is generic ("bad defender"
    with no detail).
@@ -53,7 +53,7 @@ LEVELS = {
     "weak": (0.0, 28.0, 15.0),
     "very_weak": (0.0, 12.0, 5.0),
 }
-SUPPORT = {"both_hosts": 1.0, "one_host": 0.6, "disputed": 0.35}
+SUPPORT = {"both_hosts": 1.0, "one_host": 0.6, "single_analyst": 0.6, "disputed": 0.35}
 CONTEXT = {"general": 1.0, "regular_season": 1.0, "playoffs": 0.5}
 SMALL_SAMPLE = 0.25
 GENERIC = 0.5
@@ -95,6 +95,13 @@ def claim_weight(claim: Mapping[str, Any]) -> float:
         weight *= GENERIC
     applicable = [i for i in claim.get("inputs", []) if applicable_input(i)]
     return weight * min(1.0, 2.0 / max(1, _specificity_count(claim))) if applicable else 0.0
+
+
+def _claim_source(claim: Mapping[str, Any]) -> str:
+    publication = f"{claim.get('source', 'analyst')}: {claim.get('episode')}"
+    if claim.get("url"):
+        return f"{publication} ({claim.get('published')}, {claim['url']}), {claim.get('locator')}"
+    return f"{publication} (YouTube {claim.get('video_id')}, {claim.get('published')}), {claim.get('timestamp')}"
 
 
 def applicable_input(iid: str) -> bool:
@@ -196,7 +203,7 @@ def apply_analyst_evidence(section: dict[str, Any], root: Path, claims: list[dic
         evidence = list(record.get("evidence") or [])
         for w, c in zip(weights, items):
             evidence.append({
-                "source": f"{c.get('source', 'analyst')}: {c.get('episode')} (YouTube {c.get('video_id')}, {c.get('published')}), {c.get('timestamp')}",
+                "source": _claim_source(c),
                 "method": f"{VERSION}: claim level {c['level']} ({c.get('support')}, {c.get('context')}), weight {w:.2f}",
                 "notes": c.get("claim", ""),
                 "shared_evidence_id": f"analyst:{c.get('id')}",

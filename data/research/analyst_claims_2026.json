@@ -1,6 +1,6 @@
 {
- "version": "analyst_claims_2026_11_19",
- "description": "Attributed analyst skill claims (Nerd Sesh position top-10s, redraft and opening-week episodes, Jul-Oct 2026), paraphrased from the transcript extractions in docs/ratings-evidence-2026-10-29/. Read by src/nba_gm_data/analyst_evidence.py. Paraphrases only; timestamps are the extraction section ranges. Edit by hand: add a claim with its source, or set not_applied with a reason.",
+ "version": "analyst_claims_2026_11_20",
+ "description": "Paraphrased evidence from Nerd Sesh transcripts and published film analysis. Cite the episode and timestamp or the article and section. Set not_applied for claims kept as context.",
  "sources": [
   {
    "doc": "POINT_GUARDS_FULL_EXTRACTION.md",
@@ -6858,6 +6858,62 @@
    "support": "one_host",
    "context": "regular_season",
    "notes": "one game; vague"
+  },
+  {
+   "id": "defense_kuminga_wolfond_rotations",
+   "player": "Jonathan Kuminga",
+   "player_id": "player_min-jonathan-kuminga",
+   "source": "Joe Wolfond, theScore",
+   "episode": "A Jonathan Kuminga star turn might reverse the Warriors’ decline",
+   "url": "https://www.thescore.com/nba/news/3072631/a-jonathan-kuminga-star-turn-might-reverse-the-warriors-decline",
+   "published": "2024-09-15",
+   "locator": "Defense paragraph following short-roll playmaking",
+   "claim": "Kuminga is late on team rotations and misses assignments behind the first help defender.",
+   "inputs": [
+    "S38",
+    "S39"
+   ],
+   "level": "below_average",
+   "notes": "Warriors seasons through 2023–24. More recent Hawks film notes useful gap help alongside lapses.",
+   "support": "single_analyst",
+   "context": "regular_season"
+  },
+  {
+   "id": "defense_kuminga_walton_attention",
+   "player": "Jonathan Kuminga",
+   "player_id": "player_min-jonathan-kuminga",
+   "source": "Charlie Walton, Zone Coverage",
+   "episode": "What Does Jonathan Kuminga Offer On Defense?",
+   "url": "https://zonecoverage.com/2026/timberwolves/what-does-jonathan-kuminga-offer-on-defense/",
+   "published": "2026-09-08",
+   "locator": "Off-ball Defense and Multi-Positional, Wing Defender",
+   "claim": "Opponents exploit Kuminga’s ball-watching away from the play. His recovery speed can make up ground he loses getting around screens.",
+   "inputs": [
+    "S44",
+    "S35"
+   ],
+   "level": "below_average",
+   "notes": "Hawks film also shows he fills gaps and reads passes. The criticism concerns consistency of attention and navigating screens.",
+   "support": "single_analyst",
+   "context": "regular_season"
+  },
+  {
+   "id": "defense_finney_smith_chipalu_positioning",
+   "player": "Dorian Finney-Smith",
+   "player_id": "player_atl-dorian-finney-smith",
+   "source": "Raj Chipalu, Silver Screen and Roll",
+   "episode": "Dorian Finney-Smith has become the Lakers new plus-minus king",
+   "url": "https://www.silverscreenandroll.com/2025/5/27/24437717/dorian-finney-smith-lakers-season-review-film-breakdown-plus-minus-trade-luka-doncic",
+   "published": "2025-05-27",
+   "locator": "Low-man help and Dallas film example",
+   "claim": "Finney-Smith handles weak-side rim responsibilities in small groups, setting up as help and picking up the big when the shot goes up.",
+   "inputs": [
+    "S39"
+   ],
+   "level": "above_average",
+   "notes": "Season review of the Lakers stint. Applied to positioning only given the smaller and weaker subsequent Houston sample.",
+   "support": "single_analyst",
+   "context": "regular_season"
   }
  ]
 }

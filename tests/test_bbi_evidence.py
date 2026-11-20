@@ -199,6 +199,14 @@ class MappingFileTests(unittest.TestCase):
         self.assertEqual(spec["Defensive Rebounding Talent"], "primary")
         self.assertEqual(spec["Defensive Rebounding Crashing Skill"], "weak")
 
+    def test_help_outcomes_inform_rotation_reads_weakly_and_only_once(self):
+        specs = json.loads(MAPPING.read_text())["inputs"]
+        rotation = [(m["metric"], m["strength"]) for m in specs["S38"]["metrics"]]
+        self.assertEqual(rotation, [("Help Effectiveness Rating", "weak")])
+        self.assertEqual(specs["S39"]["metrics"], [])
+        self.assertEqual(specs["S44"]["metrics"], [])
+        self.assertIn("Help Defensive Activity", {m["metric"] for m in specs["T15"]["metrics"]})
+
     def test_no_metric_feeds_both_a_skill_and_a_tendency_or_physical_input(self):
         mapping = json.loads(MAPPING.read_text())
         layer = lambda iid: "skill" if iid[0] in "SF" else ("physical" if iid[0] == "P" else "tendency")
