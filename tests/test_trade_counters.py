@@ -59,6 +59,25 @@ class FillerTests(unittest.TestCase):
         self.assertNotIn("expiring", found)
 
 
+class FilledTargetTests(unittest.TestCase):
+    def test_a_team_stops_chasing_a_need_it_just_filled(self):
+        before = [t["key"] for t in tt.team_trade_targets(league("peak", firsts=3, spacing=30.0), "x")]
+        self.assertIn("rotation_upgrade", before)
+        canonical = league("peak", firsts=3, spacing=30.0)
+        canonical["transaction_logs"] = [
+            {"transaction_type": "trade", "date": "2026-10-01",  # more than 60 days ago
+             "trade_reasons": {"buyer_team_id": "x", "target_key": "skill"}},
+            {"transaction_type": "trade", "date": "2027-01-05",
+             "trade_reasons": {"buyer_team_id": "x", "target_key": "rotation_upgrade"}},
+            {"transaction_type": "trade", "date": "2027-01-10",  # another team's purchase
+             "trade_reasons": {"buyer_team_id": "y", "target_key": "star"}}]
+        after = [t["key"] for t in tt.team_trade_targets(canonical, "x")]
+        self.assertNotIn("rotation_upgrade", after)
+        self.assertIn("skill", after)
+        self.assertIn("star", after)
+        self.assertEqual(tt.recently_filled_targets(canonical, "x"), {"rotation_upgrade"})
+
+
 class RecentLotteryPickTests(unittest.TestCase):
     def test_recent_lottery_pick_is_kept_unless_the_team_has_its_own_reason(self):
         canonical = league("peak")

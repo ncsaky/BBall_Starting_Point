@@ -315,9 +315,38 @@ def team_trade_targets(canonical: dict[str, Any], team_id: str) -> list[dict[str
             age_max=25.5, min_on_court=max(60.0, nth(5)), max_salary=min(matchable, 30e6), no_bad_contract=True)
     if stance in {"contend", "rise"}:
         add_market_targets(add, stance, roster, slots, nth, matchable)
-    targets = targets[:TARGETS_PER_TEAM]
+    filled = recently_filled_targets(canonical, team_id)
+    targets = [t for t in targets if t["key"] not in filled][:TARGETS_PER_TEAM]
     memo[team_id] = targets
     return targets
+
+
+TARGET_FILLED_DAYS = 60
+REPEATABLE_TARGETS = frozenset({"prospect"})  # a rebuild collects several young players
+
+
+def recently_filled_targets(canonical: dict[str, Any], team_id: str) -> set[str]:
+    """Target kinds this team filled by trade in the last TARGET_FILLED_DAYS days (TRADE-DEADLINE). In the first
+    after-run Indiana bought three bigs in three days (Post, Kalkbrenner, Bitadze), all for the same "successor to
+    Siakam" target, because targets are rebuilt from the roster every market day and Siakam was still there. A front
+    office that just filled a need moves on to its next one."""
+    tx = _tx()
+    today = tx.parse_iso_date((canonical.get("meta") or {}).get("current_date"))
+    if today is None:
+        return set()
+    filled = set()
+    oldest = str(today.year - 1)
+    for log in reversed(canonical.get("transaction_logs") or []):  # newest last; older seasons end the scan
+        if str(log.get("date") or "9999")[:4] < oldest:
+            break
+        reasons = log.get("trade_reasons") or {}
+        if (log.get("transaction_type") != "trade" or reasons.get("buyer_team_id") != team_id
+                or reasons.get("target_key") in REPEATABLE_TARGETS or not reasons.get("target_key")):
+            continue
+        day = tx.parse_iso_date(log.get("date"))
+        if day is not None and 0 <= (today - day).days < TARGET_FILLED_DAYS:
+            filled.add(reasons["target_key"])
+    return filled
 
 
 # TRADE-VOLUME-2: the two most common real deals the targets above never asked for. In the real 2025-27 trade list
