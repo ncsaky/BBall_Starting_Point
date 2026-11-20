@@ -1,6 +1,6 @@
 # Playtest guide: what's new and what to look at
 
-_Draft, 2026-11-19. Finalized once trade volume, the slideshows and the shooter fix land. Start a **new save**: old saves don't get the new systems._
+_Final, 2026-11-20. Everything below is in the main game. Start a **new save**: old saves don't get the new systems._
 
 ## How to start
 Run the game the usual way (`nba-gm-data-gui`) and create a **new save**. New games use the newer 94-input ratings. A good first pass: play one full season with your team, through the trade deadline, playoffs, lottery, draft, re-signing and free agency, into the next preseason.
@@ -23,7 +23,7 @@ Run the game the usual way (`nba-gm-data-gui`) and create a **new save**. New ga
   - *Check:* the zZ suggestion and its reason.
 
 ### Trades
-- AI teams trade for stated reasons: their targets, rebuild sales, tax savings, salary dumps paid in picks, and three-team deals.
+- AI teams trade for stated reasons: their targets, rebuild sales, tax savings, salary dumps paid in picks, and three-team deals. Trades follow the real calendar: busy draft nights (including chains), the first days of free agency, an August and September market, and the deadline. About 80 trades over two seasons (real is about 110).
 - Draft-night trades happen across the draft, including chains.
 - **Offers to your team** show their reason, and some ask you to absorb a contract for picks.
 - *Check:* do trades around the league make sense? Is the deadline busy enough (real: about 23 trades in deadline week)? Does anyone get traded too often?
@@ -36,7 +36,8 @@ Run the game the usual way (`nba-gm-data-gui`) and create a **new save**. New ga
 
 ### Free agency
 - **One free-agency room:** a market table, an offer builder with a live five-season cap table, and a signing wire.
-- *(After the trade-volume fix)* Free agents judge your offers like everyone else's. You can lose a player to a better bid.
+- Free agents judge your offers like everyone else's: you pay close to the market price and can lose a player to a better bid. Stars ask star money (max contracts follow the real 25/30/35% rule), AI teams re-sign their stars first, and rebuilding teams don't overpay veterans over 30.
+- AI teams manage payroll against one real tax line ($200.4M in 2026-27), and teams under it share the tax payout.
 - *Check:* does signing feel fair and tense?
 
 ### Screens
@@ -44,13 +45,15 @@ Run the game the usual way (`nba-gm-data-gui`) and create a **new save**. New ga
 - Every window has its own icon in the window switcher.
 - At playoff entry, Playoff Stats, Minutes and the new **Playoff Injuries** card open beside the bracket.
 - The roster cut-down card is a proper table. It only applies from training camp onward, never mid-draft.
-- *(After the slideshows land)* A **year-end recap** after the Finals and a **preseason outlook** at the start of each season. New awards: Finals MVP, Sixth Man, Most Improved and All-NBA.
+- A **year-end recap** after the Finals and a **preseason outlook** at the start of each season; reopen both from Settings. New awards: Finals MVP, Sixth Man, Most Improved and All-NBA, all using the 65-game rule.
 
 ## Known gaps (don't spend time on these)
 - A simulated month takes about 30–37 seconds.
 - Stars play about one game more per season than real ones.
 - Rest on nationally televised games isn't modeled.
-- There are no counter-asks in trades yet, and no front-office personality.
+- There are no counter-asks in trades yet, and no front-office personality. The trade deadline is about half as busy as real.
+- Free-agent prices below starter level still come from minutes played, and there's no Bird-rights exception yet.
+- A player is occasionally traded twice within a few months in a salary dump.
 - Some screens are only checked in Chrome at desktop sizes.
 
 ## How to send feedback
