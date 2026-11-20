@@ -106,6 +106,7 @@ body .has-card-board button.clipboard-calendar-day:focus-visible { outline:2px s
 .clipboard-calendar-matchup strong { font-size:11px; font-weight:600; white-space:nowrap; }
 .clipboard-calendar-matchup .win { color:color-mix(in srgb, var(--season-green) 50%, #000); }
 .clipboard-calendar-matchup .loss { color:color-mix(in srgb, var(--season-red) 50%, #000); }
+.clipboard-calendar-matchup .national-tv-marker { font:bold 8px Tahoma,Arial,sans-serif; letter-spacing:.04em; padding:0 3px; border:1px solid currentColor; border-radius:2px; opacity:.7; }
 body .has-card-board .card-board-window[data-board-window="week"] .season-week-panel { grid-template-rows:minmax(0,1fr); }
 body .has-card-board .card-board-window[data-board-window="week"] .season-week-panel.is-expanded { display:block; }
 body .has-card-board .card-board-window[data-board-window="week"] .season-week-days { align-self:center; width:100%; }

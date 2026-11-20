@@ -21,6 +21,7 @@ from datetime import date
 import json
 from pathlib import Path
 from statistics import mean, median
+import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 TOOLS = ROOT / "data/research/bbi/tools"
@@ -134,6 +135,45 @@ def main() -> None:
     out["pooled"] = {"population": total_pop, "out": len(allg), "games": sorted(allg)}
     (ROOT / "output/overnight-tv").mkdir(parents=True, exist_ok=True)
     (ROOT / "output/overnight-tv/season_start_absences.json").write_text(json.dumps(out, indent=1))
+    if "--write" in sys.argv:
+        write_model(pooled, total_pop, out["2025-26"])
+
+
+# Parts the tracker names that the injury model merges, and the two cases without a part (known from reports).
+MERGE = {"heel": "foot", "finger": "hand", "elbow": "shoulder", "forearm": "wrist", "arm": "shoulder", "leg": "calf",
+         "shin": "calf", "neck": "back"}
+
+
+def write_model(pooled, total_pop, exact) -> None:
+    """data/canonical/season_start_injuries.json: derived numbers only (games missed and body part per case, rates), no
+    player names or raw tracker rows (Basketball Index data stays local)."""
+    def part(c):
+        p = c["part"] or ("achilles" if "tear" in str(c["label"] or "") else "ankle")
+        return MERGE.get(p, p)
+    offseason = sorted([c["games"], part(c)] for _, _, c in pooled if c["phase"] in ("offseason", "training camp"))
+    carried = sorted([c["games"], part(c)] for _, _, c in pooled if c["phase"] not in ("offseason", "training camp"))
+    exact_off = sum(1 for c in exact["cases"] if c["phase"] in ("offseason", "training camp"))
+    model = {
+        "version": "season_start_injuries_2026_11_20",
+        "source": ("Basketball Index injury tracker spells covering opening night, 2016-17 to 2025-26 (2020-21 left out), "
+                   "for the previous season's regulars; 2025-26 checked against the real box scores. "
+                   "scripts/research/season_start_absences.py --write"),
+        "regulars": total_pop,
+        "lower_bound_rates": {"offseason_and_camp": round(len(offseason) / total_pop, 4), "carried": round(len(carried) / total_pop, 4)},
+        "rates_2025_26_exact": {"offseason_and_camp": round(exact_off / exact["population"], 4),
+                                "carried": round((exact["out_on_opening_night"] - exact_off) / exact["population"], 4)},
+        # Chosen rates per regular (25+ minutes): the exactly measured 2025-26 season. The pooled seasons are a lower
+        # bound (the tracker leaves many spells open at season end; in 2025-26 that rule caught only 6 of the 12 real
+        # cases), so 2.7% + 2.7% pooled is consistent with 3.3% + 4.6%. Lengths come from all seasons' cases, so the
+        # expected games lost (about 2 per regular) stay well below 2025-26's unusual 4.0 (four season-long injuries).
+        "offseason_rate": 0.033,
+        "carried_rate": 0.046,
+        "regular_minutes": 25.0,
+        "offseason_cases": offseason,
+        "carried_cases": carried,
+    }
+    (ROOT / "data/canonical/season_start_injuries.json").write_text(json.dumps(model, indent=1) + "\n")
+    print("wrote data/canonical/season_start_injuries.json", len(offseason), len(carried))
 
 
 if __name__ == "__main__":

@@ -204,8 +204,9 @@ def build_rows(team_games: list[dict], schedule: list[dict], ages: dict[str, flo
                     "line_in_play": int(st["seed_movement"]["line_in_play"]),
                     "best": st["seed_movement"]["best"], "worst": st["seed_movement"]["worst"],
                     "prev_played": int(prev_played), "since_return": since,
-                    "tv": int(national.get(str(tg["game"])) == "major"), "nbatv": int(national.get(str(tg["game"])) == "nbatv"),
-                    "tv_flag": int(bool(tg.get("national_tv"))),
+                    # real games: the national TV list; simulated seasons: the schedule's own flag
+                    "tv": int(national.get(str(tg["game"])) == "major" or bool(tg.get("national_tv"))),
+                    "nbatv": int(national.get(str(tg["game"])) == "nbatv"),
                 })
     return rows
 
@@ -284,7 +285,7 @@ def report(rows: list[dict]) -> None:
     rate_table([r for r in rows if not r["star"]], tvk, "Other regulars: national TV")
     rate_table([r for r in rows if r["b2b"]], tvk, "Second night: national TV")
     rate_table([r for r in rows if r["b2b"] and r["star"]], tvk, "Stars, second night: national TV")
-    rate_table([r for r in rows if r["tv_flag"] or r["tv"]], lambda r: "star" if r["star"] else "role", "National games (sim flag or real): star vs other")
+
     rate_table(rows, lambda r: ("after missing prev" if not r["prev_played"] else None), "check")
 
 

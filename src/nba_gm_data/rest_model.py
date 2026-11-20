@@ -170,24 +170,32 @@ def league_standings(records: dict[str, dict[str, Any]], conference_of: dict[str
 # ---- The rest chance ------------------------------------------------------------------------------------------------
 # Fitted to real 2025-26 box scores (rows: scripts/research/rest_patterns.py; fit: scripts/research/fit_rest_model.py):
 # 10,895 games of 170 regulars (25+ minutes a game), 414 single-game absences (a game missed between two played).
-# Logistic model: each factor multiplies the odds. Standard errors in docs/agents/tasks/smart-rest.md.
+# Logistic model: each factor multiplies the odds. Standard errors in docs/agents/tasks/smart-rest.md and
+# docs/agents/tasks/overnight-tv-rest-games-played.md.
 # Tested and left out because they predicted nothing: travel distance (overall and on back-to-backs), time zones
-# crossed, the team's own record, home games on other nights, a star x weak-opponent interaction.
-REST_INTERCEPT = -4.488
+# crossed, the team's own record, home games on other nights, a star x weak-opponent interaction, national TV for
+# stars beyond everyone else, and age per year over 27 once the two age terms below are in.
+# OVERNIGHT-REST-GAMES (2026-11-20) refit: national TV games (ESPN, ABC, NBC, Peacock, Prime Video; NBA TV-only games
+# are not counted, they showed no drop) and the age shape: rest rises with age up to 27 and then stays flat on ordinary
+# nights, while players 30 and over sit much more on back-to-backs (the old straight line under-rested 30-33s on
+# back-to-backs, 10.7% fitted against 13.3% real, and over-rested players under 25).
+REST_INTERCEPT = -4.129
 REST_COEF = {
-    "second_night": 0.946,            # second night of a back-to-back                          x2.58
-    "first_night": 0.488,             # first night of a back-to-back (rest either night)        x1.63
-    "second_night_road": 0.546,       # ... and the second night is on the road                 x1.73
-    "age_per_year": 0.0927,           # per year over 27, up to 34                               x1.10 a year
-    "star": 0.474,                    # league top 45                                            x1.61
-    "minutes_per_5": -0.260,          # per 5 minutes a game over 30 (heavy-minute players sit less) x0.77
-    "opponent_weak_per_100": 0.280,   # per .100 of opponent winning % below .500                x1.32
-    "opponent_elite_per_100": 0.975,  # per .100 above .600 (games against the very best)        x2.65
-    "season_progress": 0.679,         # from opening night (0) to the last game (1)              x1.97
-    "late_locked": 0.854,             # last 20 games, seed locked                               x2.35
-    "late_out": 0.341,                # last 20 games, out of the race                           x1.41
-    "road_trip_3": -0.536,            # third game or later of a road trip                       x0.58
-    "return_b2b": 0.815,              # back-to-back within 5 games of returning from an absence x2.26
+    "second_night": 0.753,            # second night of a back-to-back                          x2.12
+    "first_night": 0.310,             # first night of a back-to-back (rest either night)        x1.36
+    "second_night_road": 0.556,       # ... and the second night is on the road                 x1.74
+    "age_30_b2b": 0.574,              # age 30+ on either night of a back-to-back               x1.77
+    "age_under_27_per_year": -0.097,  # per year under 27 (down to 21): young players sit less   x0.91 a year
+    "star": 0.520,                    # league top 45                                            x1.68
+    "minutes_per_5": -0.306,          # per 5 minutes a game over 30 (heavy-minute players sit less) x0.74
+    "opponent_weak_per_100": 0.255,   # per .100 of opponent winning % below .500                x1.29
+    "opponent_elite_per_100": 0.978,  # per .100 above .600 (games against the very best)        x2.66
+    "season_progress": 0.710,         # from opening night (0) to the last game (1)              x2.03
+    "late_locked": 0.837,             # last 20 games, seed locked                               x2.31
+    "late_out": 0.407,                # last 20 games, out of the race                           x1.50
+    "road_trip_3": -0.555,            # third game or later of a road trip                       x0.57
+    "return_b2b": 0.788,              # back-to-back within 5 games of returning from an absence x2.20
+    "national_tv": -0.308,            # nationally televised game (participation policy)        x0.73
 }
 # Calibration: the fitted rates include one-game absences for injury and illness (the injury model adds its own),
 # while the league rules below (two regulars and one star a game, the 65-game rule, short-handed nights) and the
@@ -230,7 +238,7 @@ def rest_assessment(player: dict[str, Any], state: dict[str, Any], context: dict
     out of the race), "kind" (the likelier of "rest" and "shutdown"), "reason" (plain words: the factors that raised the
     chance most), "factors" (odds multiplier per factor)}. rest_decision turns it and the seeded draw into a decision. context keys: games_left (tonight's included), rank, teams, situation,
     worst_seed, back_to_back, first_of_b2b, home, road_trip, game_number, games_total, opp_wins, opp_losses, star,
-    rested_tonight, stars_rested_tonight, regulars_out, fatigue, fatigue_normal. Missing keys fall back to neutral."""
+    national_tv, rested_tonight, stars_rested_tonight, regulars_out, fatigue, fatigue_normal. Missing keys fall back to neutral."""
     teams = int(context.get("teams") or 30)
     rank = int(context.get("rank") or teams // 2)
     games_left = int(context["games_left"]) if context.get("games_left") is not None else REGULAR_SEASON_GAMES
@@ -269,7 +277,8 @@ def rest_assessment(player: dict[str, Any], state: dict[str, Any], context: dict
         "second_night": REST_COEF["second_night"] * second,
         "first_night": REST_COEF["first_night"] * first,
         "road": REST_COEF["second_night_road"] * (second and not home),
-        "age": REST_COEF["age_per_year"] * max(0.0, min(34.0, age) - 27.0),
+        "age": REST_COEF["age_30_b2b"] * (age >= 30.0 and (second or first)),
+        "young": REST_COEF["age_under_27_per_year"] * max(0.0, 27.0 - max(21.0, age)),
         "star": REST_COEF["star"] * star,
         "minutes": REST_COEF["minutes_per_5"] * (minutes - 30.0) / 5.0,
         "opponent_weak": REST_COEF["opponent_weak_per_100"] * (0.5 - opp_pct) * 10.0,
@@ -279,6 +288,7 @@ def rest_assessment(player: dict[str, Any], state: dict[str, Any], context: dict
         "late_out": REST_COEF["late_out"] * (games_left < LATE_WINDOW and situation == "out"),
         "road_trip": REST_COEF["road_trip_3"] * (int(context.get("road_trip") or 0) >= 3),
         "returning": REST_COEF["return_b2b"] * (second and returning),
+        "national_tv": REST_COEF["national_tv"] * bool(context.get("national_tv")),
     }
     load = None
     if context.get("fatigue") is not None and context.get("fatigue_normal"):
