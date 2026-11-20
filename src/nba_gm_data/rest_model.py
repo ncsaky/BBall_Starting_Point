@@ -201,7 +201,10 @@ REST_COEF = {
 # while the league rules below (two regulars and one star a game, the 65-game rule, short-handed nights) and the
 # multi-game absences around some rest nights take some away. In full simulated seasons the two roughly cancel: with
 # the model's odds times 1.02, all single-game absences of regulars match real (3.8%; output/smart-rest/).
-REST_COACH_SHARE = 1.02
+# INJURIES-2 (2026-11-20): injuries now cost games the way Basketball Index counts them, so one-game injuries are 40%
+# of all injuries (was 27-30%) and regulars' single-game absences rose to 4.5-4.6%; at 0.78 they are 4.0% again, the
+# same as before the change (real 3.8%; output/injuries-2/compare_smart.py).
+REST_COACH_SHARE = 0.78
 # Workloads beyond anything real AI schedules produce (a GM playing a star 42+ minutes through a dense stretch):
 # above 1.2 times a typical back-to-back's extra fatigue, the odds rise up to 1.5x (judgment; real coaches rest first).
 REST_FATIGUE_LOAD_START = 1.2

@@ -1,0 +1,3101 @@
+{
+ "version": "opening_night_injuries_2026_27_2026-11-20",
+ "season": "2026-27",
+ "opening_night": "2026-10-20",
+ "captured": "2026-11-20",
+ "method": "Out on opening night: did not play in his team's first 2026-27 game and was on that day's official NBA injury report with an injury or illness reason (G League, personal reasons, not with team, rest and suspensions are listed under not_injuries and never applied). games_missed counts his team's games from the opener to the last game he missed while listed with an injury before his first game played. open_ended: still out on the capture date; games already missed plus his team's games until ESPN's estimated return date, or the whole season when reported as such. apply: false when the player is not on the same team in the game's universe (skip_reason).",
+ "sources": {
+  "box_scores": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=ID",
+  "scoreboard": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=YYYYMMDD",
+  "official_injury_reports": [
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-20_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-22_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-23_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-24_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-25_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-26_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-27_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-28_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-29_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-30_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-31_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-01_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-02_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-04_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-05_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-06_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-07_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-08_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-09_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-10_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-11_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-12_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-13_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-14_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-15_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-16_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-17_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-18_09_30PM.pdf",
+   "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-11-19_09_30PM.pdf"
+  ],
+  "espn_injury_report": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+  "espn_schedules": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/ID/schedule?season=2027&seasontype=2"
+ },
+ "games_scanned": 226,
+ "injuries": [
+  {
+   "name": "Henri Veesaar",
+   "espn_id": "5105571",
+   "team": "ATL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right ACL Tear",
+   "player_id": "player_atl-henri-veesaar",
+   "universe_team": "ATL",
+   "body_part": "knee",
+   "diagnosis": "Right ACL Tear",
+   "games_missed": 82,
+   "games_missed_by_capture": 15,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": true,
+   "expected_return": null,
+   "return_estimate_source": "ESPN injury report note: out for the season",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right ACL Tear"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909834",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-09-21",
+     "status": "Out",
+     "return_estimate": "2027-07-01",
+     "detail": {
+      "side": "Right",
+      "type": "Knee",
+      "detail": null
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Ariel Hukporti",
+   "espn_id": "4871141",
+   "team": "PHI",
+   "opener_date": "2026-10-20",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Achilles Tendon Rupture / Tear",
+   "player_id": "player_phi-ariel-hukporti",
+   "universe_team": "PHI",
+   "body_part": "achilles",
+   "diagnosis": "Right Achilles Tendon Rupture / Tear",
+   "games_missed": 82,
+   "games_missed_by_capture": 16,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": true,
+   "expected_return": null,
+   "return_estimate_source": "ESPN injury report note: out for the season",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-20_09_30PM.pdf",
+     "date": "2026-10-20",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Achilles Tendon Rupture / Tear"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909089",
+     "date": "2026-10-20"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-10-06",
+     "status": "Out",
+     "return_estimate": "2027-10-01",
+     "detail": {
+      "side": "Right",
+      "type": "Achilles",
+      "detail": "Surgery"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Ben Simmons",
+   "espn_id": null,
+   "team": "SAC",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Achilles Tendon Rupture / Tear",
+   "player_id": "player_sac-ben-simmons",
+   "universe_team": "SAC",
+   "body_part": "achilles",
+   "diagnosis": "Right Achilles Tendon Rupture / Tear",
+   "games_missed": 80,
+   "games_missed_by_capture": 14,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2027-06-05",
+   "return_estimate_source": "injury model: median real absence for this body part at least this long",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Achilles Tendon Rupture / Tear"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909842",
+     "date": "2026-10-21"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Donte DiVincenzo",
+   "espn_id": "3934673",
+   "team": "MIN",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Achilles Tendon Repair / Surgery",
+   "player_id": "player_min-donte-divincenzo",
+   "universe_team": "MIN",
+   "body_part": "achilles",
+   "diagnosis": "Right Achilles Tendon Repair / Surgery",
+   "games_missed": 75,
+   "games_missed_by_capture": 16,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2027-04-02",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Achilles Tendon Repair / Surgery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909091",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-10-05",
+     "status": "Out",
+     "return_estimate": "2027-04-02",
+     "detail": {
+      "side": "Right",
+      "type": "Achilles",
+      "detail": "Surgery"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Jamir Watkins",
+   "espn_id": "4606840",
+   "team": "WAS",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left ACL Repair / Surgery",
+   "player_id": "player_was-jamir-watkins",
+   "universe_team": "WAS",
+   "body_part": "knee",
+   "diagnosis": "Left ACL Repair / Surgery",
+   "games_missed": 74,
+   "games_missed_by_capture": 16,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2027-04-02",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left ACL Repair / Surgery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909835",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-07-30",
+     "status": "Out",
+     "return_estimate": "2027-04-02",
+     "detail": {
+      "side": "Left",
+      "type": "Knee",
+      "detail": "Surgery"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Shaedon Sharpe",
+   "espn_id": "4914336",
+   "team": "POR",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Meniscus Surgery",
+   "player_id": "player_por-shaedon-sharpe",
+   "universe_team": "POR",
+   "body_part": "knee",
+   "diagnosis": "Right Meniscus Surgery",
+   "games_missed": 60,
+   "games_missed_by_capture": 15,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2027-03-02",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Meniscus Surgery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909841",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-08-24",
+     "status": "Out",
+     "return_estimate": "2027-03-02",
+     "detail": {
+      "side": "Right",
+      "type": "Knee",
+      "detail": "Surgery"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Jordan Miller",
+   "espn_id": "4396818",
+   "team": "LAC",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Rotator Cuff Surgery",
+   "player_id": "player_lac-jordan-miller",
+   "universe_team": "LAC",
+   "body_part": "shoulder",
+   "diagnosis": "Left Rotator Cuff Surgery",
+   "games_missed": 59,
+   "games_missed_by_capture": 14,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2027-03-02",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Rotator Cuff Surgery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909842",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-08-26",
+     "status": "Out",
+     "return_estimate": "2027-03-02",
+     "detail": {
+      "side": "Left",
+      "type": "Shoulder",
+      "detail": "Surgery"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Thomas Sorber",
+   "espn_id": "5061603",
+   "team": "OKC",
+   "opener_date": "2026-10-20",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Knee Surgery",
+   "player_id": "player_okc-thomas-sorber",
+   "universe_team": "OKC",
+   "body_part": "knee",
+   "diagnosis": "Right Knee Surgery",
+   "games_missed": 47,
+   "games_missed_by_capture": 15,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2027-01-31",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-20_09_30PM.pdf",
+     "date": "2026-10-20",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Knee Surgery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909090",
+     "date": "2026-10-20"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-11-18",
+     "status": "Out",
+     "return_estimate": "2027-01-31",
+     "detail": {
+      "side": null,
+      "type": "Knee",
+      "detail": null
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Mark Williams",
+   "espn_id": "4701232",
+   "team": "PHX",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Shoulder Surgery",
+   "player_id": "player_phx-mark-williams",
+   "universe_team": "PHX",
+   "body_part": "shoulder",
+   "diagnosis": "Left Shoulder Surgery",
+   "games_missed": 47,
+   "games_missed_by_capture": 14,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2027-02-03",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Shoulder Surgery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909841",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-09-11",
+     "status": "Out",
+     "return_estimate": "2027-02-03",
+     "detail": {
+      "side": "Left",
+      "type": "Shoulder",
+      "detail": "Surgery"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Jimmy Butler III",
+   "espn_id": "6430",
+   "team": "GSW",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right ACL Repair / Surgery",
+   "player_id": "player_gsw-jimmy-butler-iii",
+   "universe_team": "GSW",
+   "body_part": "knee",
+   "diagnosis": "Right ACL Repair / Surgery",
+   "games_missed": 33,
+   "games_missed_by_capture": 16,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2027-01-02",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right ACL Repair / Surgery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909092",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-10-16",
+     "status": "Out",
+     "return_estimate": "2027-01-02",
+     "detail": {
+      "side": "Right",
+      "type": "Knee",
+      "detail": "Surgery"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Johnny Furphy",
+   "espn_id": "5157066",
+   "team": "IND",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right ACL Repair / Surgery",
+   "player_id": "player_ind-johnny-furphy",
+   "universe_team": "IND",
+   "body_part": "knee",
+   "diagnosis": "Right ACL Repair / Surgery",
+   "games_missed": 32,
+   "games_missed_by_capture": 15,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2027-01-02",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right ACL Repair / Surgery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909839",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-10-30",
+     "status": "Out",
+     "return_estimate": "2027-01-02",
+     "detail": {
+      "side": "Right",
+      "type": "Knee",
+      "detail": "Surgery"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Jayden Quaintance",
+   "espn_id": "5101845",
+   "team": "SAS",
+   "opener_date": "2026-10-20",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Knee Surgery",
+   "player_id": "player_sas-jayden-quaintance",
+   "universe_team": "SAS",
+   "body_part": "knee",
+   "diagnosis": "Right Knee Surgery",
+   "games_missed": 23,
+   "games_missed_by_capture": 16,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-12-03",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-20_09_30PM.pdf",
+     "date": "2026-10-20",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Knee Surgery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909090",
+     "date": "2026-10-20"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-10-05",
+     "status": "Out",
+     "return_estimate": "2026-12-03",
+     "detail": {
+      "side": "Right",
+      "type": "Knee",
+      "detail": "Surgery"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Tobias Harris",
+   "espn_id": "6440",
+   "team": "SAS",
+   "opener_date": "2026-10-20",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Calf Strain",
+   "player_id": "player_sas-tobias-harris",
+   "universe_team": "SAS",
+   "body_part": "calf",
+   "diagnosis": "Left Calf Strain",
+   "games_missed": 23,
+   "games_missed_by_capture": 16,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-12-03",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-20_09_30PM.pdf",
+     "date": "2026-10-20",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Calf Strain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909090",
+     "date": "2026-10-20"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-11-16",
+     "status": "Out",
+     "return_estimate": "2026-12-03",
+     "detail": {
+      "side": "Left",
+      "type": "Calf",
+      "detail": "Strain"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Mouhamed Gueye",
+   "espn_id": "4712863",
+   "team": "ATL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Foot Fracture",
+   "player_id": "player_atl-mouhamed-gueye",
+   "universe_team": "ATL",
+   "body_part": "foot",
+   "diagnosis": "Left Foot Fracture",
+   "games_missed": 21,
+   "games_missed_by_capture": 15,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-12-12",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Foot Fracture"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909834",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-11-13",
+     "status": "Out",
+     "return_estimate": "2026-12-12",
+     "detail": {
+      "side": "Left",
+      "type": "Foot",
+      "detail": "Fracture"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Moses Moody",
+   "espn_id": "4432171",
+   "team": "GSW",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Patellar Tendon Repair / Surgery",
+   "player_id": "player_gsw-moses-moody",
+   "universe_team": "GSW",
+   "body_part": "knee",
+   "diagnosis": "Left Patellar Tendon Repair / Surgery",
+   "games_missed": 21,
+   "games_missed_by_capture": 16,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-12-01",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Patellar Tendon Repair / Surgery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909092",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-10-16",
+     "status": "Out",
+     "return_estimate": "2026-12-01",
+     "detail": {
+      "side": "Left",
+      "type": "Knee",
+      "detail": "Surgery"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Nae'Qwan Tomlin",
+   "espn_id": "5106268",
+   "team": "CLE",
+   "opener_date": "2026-10-22",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Low Back Stress Reaction",
+   "player_id": "player_cle-naeqwan-tomlin",
+   "universe_team": "CLE",
+   "body_part": "back",
+   "diagnosis": "Low Back Stress Reaction",
+   "games_missed": 19,
+   "games_missed_by_capture": 16,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-11-29",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-22_09_30PM.pdf",
+     "date": "2026-10-22",
+     "status": "Out",
+     "reason": "Injury/Illness - Low Back Stress Reaction"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909093",
+     "date": "2026-10-22"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-11-17",
+     "status": "Out",
+     "return_estimate": "2026-11-29",
+     "detail": {
+      "side": null,
+      "type": "Back",
+      "detail": null
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Bradley Beal",
+   "espn_id": "6580",
+   "team": "LAC",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Knee Injury Management",
+   "player_id": "player_lac-bradley-beal",
+   "universe_team": "LAC",
+   "body_part": "knee",
+   "diagnosis": "Right Knee Injury Management",
+   "games_missed": 19,
+   "games_missed_by_capture": 14,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-11-29",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Knee Injury Management"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909842",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-10-15",
+     "status": "Out",
+     "return_estimate": "2026-11-29",
+     "detail": {
+      "side": "Right",
+      "type": "Knee",
+      "detail": "Inflammation"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Jusuf Nurkic",
+   "espn_id": "3102530",
+   "team": "UTA",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right 2nd Plantar Plate Tear",
+   "player_id": "player_uta-jusuf-nurkic",
+   "universe_team": "UTA",
+   "body_part": "foot",
+   "diagnosis": "Right 2nd Plantar Plate Tear",
+   "games_missed": 19,
+   "games_missed_by_capture": 16,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-11-27",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right 2nd Plantar Plate Tear"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909838",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-11-20",
+     "status": "Out",
+     "return_estimate": "2026-11-27",
+     "detail": {
+      "side": "Right",
+      "type": "Foot",
+      "detail": "Strain"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Dereck Lively II",
+   "espn_id": "4683688",
+   "team": "DAL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Foot Surgery",
+   "player_id": "player_dal-dereck-lively-ii",
+   "universe_team": "DAL",
+   "body_part": "foot",
+   "diagnosis": "Right Foot Surgery",
+   "games_missed": 18,
+   "games_missed_by_capture": 15,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-11-27",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Foot Surgery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909840",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-11-20",
+     "status": "Out",
+     "return_estimate": "2026-11-27",
+     "detail": {
+      "side": "Right",
+      "type": "Foot",
+      "detail": "Surgery"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Tarik Biberovic",
+   "espn_id": "5148538",
+   "team": "DAL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Heel Bursitis",
+   "player_id": "player_dal-tarik-biberovic",
+   "universe_team": "DAL",
+   "body_part": "foot",
+   "diagnosis": "Right Heel Bursitis",
+   "games_missed": 18,
+   "games_missed_by_capture": 15,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-11-27",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Heel Bursitis"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909840",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-11-17",
+     "status": "Out",
+     "return_estimate": "2026-11-27",
+     "detail": {
+      "side": "Right",
+      "type": "Heel",
+      "detail": "Inflammation"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Izaiyah Nelson",
+   "espn_id": "5107251",
+   "team": "ORL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Ankle Injury Recovery",
+   "player_id": "player_orl-izaiyah-nelson",
+   "universe_team": "ORL",
+   "body_part": "ankle",
+   "diagnosis": "Left Ankle Injury Recovery",
+   "games_missed": 18,
+   "games_missed_by_capture": 14,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-11-29",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Ankle Injury Recovery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909834",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-11-18",
+     "status": "Out",
+     "return_estimate": "2026-11-29",
+     "detail": {
+      "side": "Left",
+      "type": "Ankle",
+      "detail": "Surgery"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Tristan Vukcevic",
+   "espn_id": "4997537",
+   "team": "WAS",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Hip Impingement",
+   "player_id": "player_was-tristan-vukcevic",
+   "universe_team": "WAS",
+   "body_part": "hip",
+   "diagnosis": "Left Hip Impingement",
+   "games_missed": 18,
+   "games_missed_by_capture": 16,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-11-24",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Hip Impingement"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909835",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-11-16",
+     "status": "Out",
+     "return_estimate": "2026-11-24",
+     "detail": {
+      "side": "Left",
+      "type": "Hip",
+      "detail": "Pinched Nerve"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Julian Strawther",
+   "espn_id": "4432181",
+   "team": "DEN",
+   "opener_date": "2026-10-22",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Knee Sprain",
+   "player_id": "player_den-julian-strawther",
+   "universe_team": "DEN",
+   "body_part": "knee",
+   "diagnosis": "Left Knee Sprain",
+   "games_missed": 17,
+   "games_missed_by_capture": 13,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-11-29",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-22_09_30PM.pdf",
+     "date": "2026-10-22",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Knee Sprain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909094",
+     "date": "2026-10-22"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-10-17",
+     "status": "Out",
+     "return_estimate": "2026-11-29",
+     "detail": {
+      "side": "Left",
+      "type": "Knee",
+      "detail": "Sprain"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Maxime Raynaud",
+   "espn_id": "4898371",
+   "team": "SAC",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Patella Subluxation",
+   "player_id": "player_sac-maxime-raynaud",
+   "universe_team": "SAC",
+   "body_part": "knee",
+   "diagnosis": "Right Patella Subluxation",
+   "games_missed": 17,
+   "games_missed_by_capture": 14,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-11-25",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Patella Subluxation"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909842",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-11-18",
+     "status": "Out",
+     "return_estimate": "2026-11-25",
+     "detail": {
+      "side": "Right",
+      "type": "Knee",
+      "detail": "Dislocated"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Dominick Barlow",
+   "espn_id": "4870562",
+   "team": "PHI",
+   "opener_date": "2026-10-20",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Low Back Stress Reaction",
+   "player_id": "player_phi-dominick-barlow",
+   "universe_team": "PHI",
+   "body_part": "back",
+   "diagnosis": "Low Back Stress Reaction",
+   "games_missed": 16,
+   "games_missed_by_capture": 16,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-11-21",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-20_09_30PM.pdf",
+     "date": "2026-10-20",
+     "status": "Out",
+     "reason": "Injury/Illness - Low Back Stress Reaction"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909089",
+     "date": "2026-10-20"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-11-20",
+     "status": "Out",
+     "return_estimate": "2026-11-21",
+     "detail": {
+      "side": "Not Specified",
+      "type": "Back",
+      "detail": "Fracture"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Nate Bittle",
+   "espn_id": "4432586",
+   "team": "TOR",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Foot Avulsion Fracture",
+   "player_id": "player_tor-nate-bittle",
+   "universe_team": "TOR",
+   "body_part": "foot",
+   "diagnosis": "Right Foot Avulsion Fracture",
+   "games_missed": 16,
+   "games_missed_by_capture": 15,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-11-23",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Foot Avulsion Fracture"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909837",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-11-14",
+     "status": "Out",
+     "return_estimate": "2026-11-23",
+     "detail": {
+      "side": "Right",
+      "type": "Foot",
+      "detail": "Fracture"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Brandon Ingram",
+   "espn_id": "3913176",
+   "team": "LAC",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Heel Surgery",
+   "player_id": "player_lac-brandon-ingram",
+   "universe_team": "LAC",
+   "body_part": "foot",
+   "diagnosis": "Right Heel Surgery",
+   "games_missed": 15,
+   "games_missed_by_capture": 14,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-11-21",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Heel Surgery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909842",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-11-18",
+     "status": "Out",
+     "return_estimate": "2026-11-21",
+     "detail": {
+      "side": "Right",
+      "type": "Achilles",
+      "detail": "Surgery"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Jonathan Isaac",
+   "espn_id": "4065654",
+   "team": "ORL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Knee Injury Management",
+   "player_id": "player_orl-jonathan-isaac",
+   "universe_team": "ORL",
+   "body_part": "knee",
+   "diagnosis": "Left Knee Injury Management",
+   "games_missed": 15,
+   "games_missed_by_capture": 14,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-11-22",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Knee Injury Management"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909834",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-11-15",
+     "status": "Out",
+     "return_estimate": "2026-11-22",
+     "detail": {
+      "side": "Left",
+      "type": "Knee",
+      "detail": "Not Specified"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Noah Penda",
+   "espn_id": "5214637",
+   "team": "ORL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Partially torn hamstring",
+   "player_id": "player_orl-noah-penda",
+   "universe_team": "ORL",
+   "body_part": "hamstring",
+   "diagnosis": "Right Partially torn hamstring",
+   "games_missed": 15,
+   "games_missed_by_capture": 14,
+   "first_game": null,
+   "open_ended": true,
+   "season_ending": false,
+   "expected_return": "2026-11-22",
+   "return_estimate_source": "ESPN injury report estimate",
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Partially torn hamstring"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909834",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN injury report",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+     "fetched": "2026-11-20",
+     "updated": "2026-11-14",
+     "status": "Out",
+     "return_estimate": "2026-11-22",
+     "detail": {
+      "side": "Right",
+      "type": "Hamstring",
+      "detail": "Strain"
+     }
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Yanic Konan Niederhauser",
+   "espn_id": "5108024",
+   "team": "LAC",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Lisfranc Surgery",
+   "player_id": "player_lac-yanic-konan-niederhauser",
+   "universe_team": "LAC",
+   "body_part": "foot",
+   "diagnosis": "Right Lisfranc Surgery",
+   "games_missed": 13,
+   "games_missed_by_capture": 13,
+   "first_game": "2026-11-19",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Lisfranc Surgery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909842",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401910022",
+     "date": "2026-11-19"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Grant Williams",
+   "espn_id": "4066218",
+   "team": "CHA",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Hamstring Strain",
+   "player_id": "player_cha-grant-williams",
+   "universe_team": "CHA",
+   "body_part": "hamstring",
+   "diagnosis": "Right Hamstring Strain",
+   "games_missed": 11,
+   "games_missed_by_capture": 11,
+   "first_game": "2026-11-12",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Hamstring Strain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909836",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909979",
+     "date": "2026-11-12"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "T.J. McConnell",
+   "espn_id": "2530530",
+   "team": "IND",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Hamstring Strain",
+   "player_id": "player_ind-tj-mcconnell",
+   "universe_team": "IND",
+   "body_part": "hamstring",
+   "diagnosis": "Right Hamstring Strain",
+   "games_missed": 9,
+   "games_missed_by_capture": 9,
+   "first_game": "2026-11-07",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Hamstring Strain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909839",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909938",
+     "date": "2026-11-07"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Adou Thiero",
+   "espn_id": "5060631",
+   "team": "LAL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Knee Effusion / Swelling",
+   "player_id": "player_lal-adou-thiero",
+   "universe_team": "LAL",
+   "body_part": "knee",
+   "diagnosis": "Left Knee Effusion / Swelling",
+   "games_missed": 9,
+   "games_missed_by_capture": 9,
+   "first_game": "2026-11-06",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Knee Effusion / Swelling"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909092",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909294",
+     "date": "2026-11-06"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Nikola Topic",
+   "espn_id": "5159925",
+   "team": "OKC",
+   "opener_date": "2026-10-20",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Low Back Surgery",
+   "player_id": "player_okc-nikola-topic",
+   "universe_team": "OKC",
+   "body_part": "back",
+   "diagnosis": "Low Back Surgery",
+   "games_missed": 9,
+   "games_missed_by_capture": 9,
+   "first_game": "2026-11-13",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-20_09_30PM.pdf",
+     "date": "2026-10-20",
+     "status": "Out",
+     "reason": "Injury/Illness - Low Back Surgery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909090",
+     "date": "2026-10-20"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909304",
+     "date": "2026-11-13"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Devin Carter",
+   "espn_id": "4433188",
+   "team": "BOS",
+   "opener_date": "2026-10-20",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Illness",
+   "player_id": "player_bos-devin-carter",
+   "universe_team": "BOS",
+   "body_part": "illness",
+   "diagnosis": "Illness",
+   "games_missed": 8,
+   "games_missed_by_capture": 8,
+   "first_game": "2026-11-15",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-20_09_30PM.pdf",
+     "date": "2026-10-20",
+     "status": "Out",
+     "reason": "Injury/Illness - Illness"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909088",
+     "date": "2026-10-20"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909989",
+     "date": "2026-11-15"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Kon Knueppel",
+   "espn_id": "5061575",
+   "team": "CHA",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Hamstring Strain",
+   "player_id": "player_cha-kon-knueppel",
+   "universe_team": "CHA",
+   "body_part": "hamstring",
+   "diagnosis": "Left Hamstring Strain",
+   "games_missed": 8,
+   "games_missed_by_capture": 8,
+   "first_game": "2026-11-04",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Hamstring Strain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909836",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909925",
+     "date": "2026-11-04"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Nic Claxton",
+   "espn_id": "4278067",
+   "team": "CHI",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Hamstring Strain",
+   "player_id": "player_chi-nic-claxton",
+   "universe_team": "CHI",
+   "body_part": "hamstring",
+   "diagnosis": "Left Hamstring Strain",
+   "games_missed": 8,
+   "games_missed_by_capture": 8,
+   "first_game": "2026-11-08",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Hamstring Strain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909837",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909945",
+     "date": "2026-11-08"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Santi Aldama",
+   "espn_id": "4593125",
+   "team": "DAL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Knee Surgery",
+   "player_id": "player_dal-santi-aldama",
+   "universe_team": "DAL",
+   "body_part": "knee",
+   "diagnosis": "Right Knee Surgery",
+   "games_missed": 8,
+   "games_missed_by_capture": 8,
+   "first_game": "2026-11-06",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Knee Surgery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909840",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909290",
+     "date": "2026-11-06"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Coby White",
+   "espn_id": "4395651",
+   "team": "CHA",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Calf Strain",
+   "player_id": "player_cha-coby-white",
+   "universe_team": "CHA",
+   "body_part": "calf",
+   "diagnosis": "Left Calf Strain",
+   "games_missed": 7,
+   "games_missed_by_capture": 7,
+   "first_game": "2026-11-02",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Calf Strain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909836",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909908",
+     "date": "2026-11-02"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Spencer Jones",
+   "espn_id": "4592427",
+   "team": "DEN",
+   "opener_date": "2026-10-22",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Bilateral Hamstring Injury Management",
+   "player_id": "player_den-spencer-jones",
+   "universe_team": "DEN",
+   "body_part": "hamstring",
+   "diagnosis": "Bilateral Hamstring Injury Management",
+   "games_missed": 7,
+   "games_missed_by_capture": 7,
+   "first_game": "2026-11-07",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-22_09_30PM.pdf",
+     "date": "2026-10-22",
+     "status": "Out",
+     "reason": "Injury/Illness - Bilateral Hamstring Injury Management"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909094",
+     "date": "2026-10-22"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909938",
+     "date": "2026-11-07"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Dylan Cardwell",
+   "espn_id": "4433174",
+   "team": "SAC",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Calf Strain",
+   "player_id": "player_sac-dylan-cardwell",
+   "universe_team": "SAC",
+   "body_part": "calf",
+   "diagnosis": "Left Calf Strain",
+   "games_missed": 7,
+   "games_missed_by_capture": 7,
+   "first_game": "2026-11-04",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Calf Strain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909842",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909934",
+     "date": "2026-11-04"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Max Strus",
+   "espn_id": "4065778",
+   "team": "LAC",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Plantar Fascia Tear",
+   "player_id": "player_lac-max-strus",
+   "universe_team": "LAC",
+   "body_part": "foot",
+   "diagnosis": "Right Plantar Fascia Tear",
+   "games_missed": 6,
+   "games_missed_by_capture": 6,
+   "first_game": "2026-11-02",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Plantar Fascia Tear"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909842",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909920",
+     "date": "2026-11-02"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Cameron Carr",
+   "espn_id": "5113969",
+   "team": "LAL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Oblique Strain",
+   "player_id": "player_lal-cameron-carr",
+   "universe_team": "LAL",
+   "body_part": "back",
+   "diagnosis": "Right Oblique Strain",
+   "games_missed": 6,
+   "games_missed_by_capture": 6,
+   "first_game": "2026-11-01",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Oblique Strain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909092",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909906",
+     "date": "2026-11-01"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Tacko Fall",
+   "espn_id": "3904625",
+   "team": "PHI",
+   "opener_date": "2026-10-20",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Quadriceps Strain",
+   "player_id": null,
+   "universe_team": null,
+   "body_part": "quadriceps",
+   "diagnosis": "Left Quadriceps Strain",
+   "games_missed": 6,
+   "games_missed_by_capture": 6,
+   "first_game": "2026-11-06",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-20_09_30PM.pdf",
+     "date": "2026-10-20",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Quadriceps Strain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909089",
+     "date": "2026-10-20"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909289",
+     "date": "2026-11-06"
+    }
+   ],
+   "apply": false,
+   "skip_reason": "not in the game's 2026-27 universe"
+  },
+  {
+   "name": "Caleb Martin",
+   "espn_id": "3138160",
+   "team": "DAL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Thumb Sprain",
+   "player_id": "player_dal-caleb-martin",
+   "universe_team": "DAL",
+   "body_part": "thumb",
+   "diagnosis": "Right Thumb Sprain",
+   "games_missed": 4,
+   "games_missed_by_capture": 4,
+   "first_game": "2026-10-28",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Thumb Sprain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909840",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909891",
+     "date": "2026-10-28"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "AJ Dybantsa",
+   "espn_id": "5142718",
+   "team": "WAS",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Ankle Sprain",
+   "player_id": "player_was-aj-dybantsa",
+   "universe_team": "WAS",
+   "body_part": "ankle",
+   "diagnosis": "Left Ankle Sprain",
+   "games_missed": 4,
+   "games_missed_by_capture": 4,
+   "first_game": "2026-10-28",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Ankle Sprain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909835",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909882",
+     "date": "2026-10-28"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Tyler Bilodeau",
+   "espn_id": "5105626",
+   "team": "BKN",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Shoulder Sprain",
+   "player_id": "player_bkn-tyler-bilodeau",
+   "universe_team": "BKN",
+   "body_part": "shoulder",
+   "diagnosis": "Right Shoulder Sprain",
+   "games_missed": 3,
+   "games_missed_by_capture": 3,
+   "first_game": null,
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Shoulder Sprain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909836",
+     "date": "2026-10-21"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Kylan Boswell",
+   "espn_id": "4684269",
+   "team": "CHA",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Knee Surgery",
+   "player_id": "player_cha-kylan-boswell",
+   "universe_team": "CHA",
+   "body_part": "knee",
+   "diagnosis": "Right Knee Surgery",
+   "games_missed": 3,
+   "games_missed_by_capture": 3,
+   "first_game": null,
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Knee Surgery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909836",
+     "date": "2026-10-21"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Khalifa Diop",
+   "espn_id": "4997530",
+   "team": "CLE",
+   "opener_date": "2026-10-22",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Knee Injury Management",
+   "player_id": null,
+   "universe_team": null,
+   "body_part": "knee",
+   "diagnosis": "Left Knee Injury Management",
+   "games_missed": 3,
+   "games_missed_by_capture": 3,
+   "first_game": null,
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-22_09_30PM.pdf",
+     "date": "2026-10-22",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Knee Injury Management"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909093",
+     "date": "2026-10-22"
+    }
+   ],
+   "apply": false,
+   "skip_reason": "not in the game's 2026-27 universe"
+  },
+  {
+   "name": "Jett Howard",
+   "espn_id": "5105806",
+   "team": "DAL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Calf Tightness / Soreness",
+   "player_id": "player_dal-jett-howard",
+   "universe_team": "DAL",
+   "body_part": "calf",
+   "diagnosis": "Right Calf Tightness / Soreness",
+   "games_missed": 2,
+   "games_missed_by_capture": 2,
+   "first_game": "2026-10-24",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Calf Tightness / Soreness"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909840",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909858",
+     "date": "2026-10-24"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Charles Bassey",
+   "espn_id": "4397886",
+   "team": "GSW",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Patellar Tendinopathy",
+   "player_id": "player_gsw-charles-bassey",
+   "universe_team": "GSW",
+   "body_part": "knee",
+   "diagnosis": "Right Patellar Tendinopathy",
+   "games_missed": 2,
+   "games_missed_by_capture": 2,
+   "first_game": "2026-10-24",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Patellar Tendinopathy"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909092",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909860",
+     "date": "2026-10-24"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Otega Oweh",
+   "espn_id": "5106270",
+   "team": "OKC",
+   "opener_date": "2026-10-20",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Achilles Tendon Repair / Surgery",
+   "player_id": "player_okc-otega-oweh",
+   "universe_team": "OKC",
+   "body_part": "achilles",
+   "diagnosis": "Right Achilles Tendon Repair / Surgery",
+   "games_missed": 2,
+   "games_missed_by_capture": 2,
+   "first_game": null,
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-20_09_30PM.pdf",
+     "date": "2026-10-20",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Achilles Tendon Repair / Surgery"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909090",
+     "date": "2026-10-20"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Anthony Black",
+   "espn_id": "4712849",
+   "team": "ORL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Ankle Sprain",
+   "player_id": "player_orl-anthony-black",
+   "universe_team": "ORL",
+   "body_part": "ankle",
+   "diagnosis": "Right Ankle Sprain",
+   "games_missed": 2,
+   "games_missed_by_capture": 2,
+   "first_game": "2026-10-25",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Ankle Sprain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909834",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909863",
+     "date": "2026-10-25"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Dean Wade",
+   "espn_id": "3912848",
+   "team": "PHI",
+   "opener_date": "2026-10-20",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Ankle Sprain",
+   "player_id": "player_phi-dean-wade",
+   "universe_team": "PHI",
+   "body_part": "ankle",
+   "diagnosis": "Left Ankle Sprain",
+   "games_missed": 2,
+   "games_missed_by_capture": 2,
+   "first_game": "2026-10-24",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-20_09_30PM.pdf",
+     "date": "2026-10-20",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Ankle Sprain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909089",
+     "date": "2026-10-20"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909855",
+     "date": "2026-10-24"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Branden Carlson",
+   "espn_id": "4592435",
+   "team": "POR",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Concussion Protocol",
+   "player_id": "player_por-branden-carlson",
+   "universe_team": "POR",
+   "body_part": "head",
+   "diagnosis": "Concussion Protocol",
+   "games_missed": 2,
+   "games_missed_by_capture": 2,
+   "first_game": "2026-10-29",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Concussion Protocol"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909841",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909895",
+     "date": "2026-10-29"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Chris Youngblood",
+   "espn_id": "4706557",
+   "team": "POR",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Ankle Soreness",
+   "player_id": "player_por-chris-youngblood",
+   "universe_team": "POR",
+   "body_part": "ankle",
+   "diagnosis": "Left Ankle Soreness",
+   "games_missed": 2,
+   "games_missed_by_capture": 2,
+   "first_game": "2026-10-31",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Ankle Soreness"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909841",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909896",
+     "date": "2026-10-31"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Dailyn Swain",
+   "espn_id": "4848625",
+   "team": "CHI",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Gastrointestinal Illness",
+   "player_id": "player_chi-dailyn-swain",
+   "universe_team": "CHI",
+   "body_part": "illness",
+   "diagnosis": "Gastrointestinal Illness",
+   "games_missed": 1,
+   "games_missed_by_capture": 1,
+   "first_game": "2026-10-26",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Gastrointestinal Illness"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909837",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909870",
+     "date": "2026-10-26"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Jordan Hawkins",
+   "espn_id": "4683750",
+   "team": "CHI",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Gastrointestinal Illness",
+   "player_id": "player_chi-jordan-hawkins",
+   "universe_team": "CHI",
+   "body_part": "illness",
+   "diagnosis": "Gastrointestinal Illness",
+   "games_missed": 1,
+   "games_missed_by_capture": 1,
+   "first_game": "2026-10-26",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Gastrointestinal Illness"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909837",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909870",
+     "date": "2026-10-26"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Brandin Podziemski",
+   "espn_id": "4709138",
+   "team": "GSW",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Bilateral Low Back Soreness",
+   "player_id": "player_gsw-brandin-podziemski",
+   "universe_team": "GSW",
+   "body_part": "back",
+   "diagnosis": "Bilateral Low Back Soreness",
+   "games_missed": 1,
+   "games_missed_by_capture": 1,
+   "first_game": "2026-10-23",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Bilateral Low Back Soreness"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909092",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909850",
+     "date": "2026-10-23"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Steven Adams",
+   "espn_id": "2991235",
+   "team": "HOU",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Calf Tightness / Soreness",
+   "player_id": "player_hou-steven-adams",
+   "universe_team": "HOU",
+   "body_part": "calf",
+   "diagnosis": "Right Calf Tightness / Soreness",
+   "games_missed": 1,
+   "games_missed_by_capture": 1,
+   "first_game": "2026-10-23",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Calf Tightness / Soreness"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909840",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909096",
+     "date": "2026-10-23"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Aaron Nesmith",
+   "espn_id": "4396909",
+   "team": "IND",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Hamstring Strain",
+   "player_id": "player_ind-aaron-nesmith",
+   "universe_team": "IND",
+   "body_part": "hamstring",
+   "diagnosis": "Left Hamstring Strain",
+   "games_missed": 1,
+   "games_missed_by_capture": 1,
+   "first_game": "2026-10-23",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Hamstring Strain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909839",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909844",
+     "date": "2026-10-23"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Collin Sexton",
+   "espn_id": "4277811",
+   "team": "LAL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Right Soleus Strain",
+   "player_id": "player_lal-collin-sexton",
+   "universe_team": "LAL",
+   "body_part": "calf",
+   "diagnosis": "Right Soleus Strain",
+   "games_missed": 1,
+   "games_missed_by_capture": 1,
+   "first_game": "2026-10-23",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Right Soleus Strain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909092",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909851",
+     "date": "2026-10-23"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Isaiah Stewart",
+   "espn_id": "4432810",
+   "team": "MEM",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Ankle Sprain",
+   "player_id": "player_mem-isaiah-stewart",
+   "universe_team": "MEM",
+   "body_part": "ankle",
+   "diagnosis": "Left Ankle Sprain",
+   "games_missed": 1,
+   "games_missed_by_capture": 1,
+   "first_game": "2026-10-23",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Ankle Sprain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909838",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909850",
+     "date": "2026-10-23"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Luke Kennard",
+   "espn_id": "3913174",
+   "team": "PHX",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Knee Tendinopathy",
+   "player_id": "player_phx-luke-kennard",
+   "universe_team": "PHX",
+   "body_part": "knee",
+   "diagnosis": "Left Knee Tendinopathy",
+   "games_missed": 1,
+   "games_missed_by_capture": 1,
+   "first_game": "2026-10-24",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Knee Tendinopathy"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909841",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909860",
+     "date": "2026-10-24"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Malik Monk",
+   "espn_id": "4066262",
+   "team": "SAC",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Ankle Soreness",
+   "player_id": "player_sac-malik-monk",
+   "universe_team": "SAC",
+   "body_part": "ankle",
+   "diagnosis": "Left Ankle Soreness",
+   "games_missed": 1,
+   "games_missed_by_capture": 1,
+   "first_game": "2026-10-23",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Ankle Soreness"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909842",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909852",
+     "date": "2026-10-23"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Blake Hinson",
+   "espn_id": "4396963",
+   "team": "UTA",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Hamstring Strain",
+   "player_id": "player_uta-blake-hinson",
+   "universe_team": "UTA",
+   "body_part": "hamstring",
+   "diagnosis": "Left Hamstring Strain",
+   "games_missed": 1,
+   "games_missed_by_capture": 1,
+   "first_game": null,
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Hamstring Strain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909838",
+     "date": "2026-10-21"
+    }
+   ],
+   "apply": true
+  },
+  {
+   "name": "Tony Bradley",
+   "espn_id": "4065673",
+   "team": "UTA",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Quadriceps Strain",
+   "player_id": "player_nyk-tony-bradley",
+   "universe_team": "NYK",
+   "body_part": "quadriceps",
+   "diagnosis": "Left Quadriceps Strain",
+   "games_missed": 1,
+   "games_missed_by_capture": 1,
+   "first_game": "2026-10-26",
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Quadriceps Strain"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909838",
+     "date": "2026-10-21"
+    },
+    {
+     "what": "ESPN box score, first game played",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909875",
+     "date": "2026-10-26"
+    }
+   ],
+   "apply": false,
+   "skip_reason": "on NYK in the game's universe"
+  },
+  {
+   "name": "Trey Alexander",
+   "espn_id": "4433268",
+   "team": "UTA",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Injury/Illness - Left Knee Contusion / Bone Bruise",
+   "player_id": "player_uta-trey-alexander",
+   "universe_team": "UTA",
+   "body_part": "knee",
+   "diagnosis": "Left Knee Contusion / Bone Bruise",
+   "games_missed": 1,
+   "games_missed_by_capture": 1,
+   "first_game": null,
+   "open_ended": false,
+   "season_ending": false,
+   "expected_return": null,
+   "return_estimate_source": null,
+   "sources": [
+    {
+     "what": "official NBA injury report, opening night",
+     "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2026-10-21_09_30PM.pdf",
+     "date": "2026-10-21",
+     "status": "Out",
+     "reason": "Injury/Illness - Left Knee Contusion / Bone Bruise"
+    },
+    {
+     "what": "ESPN box score, opener",
+     "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909838",
+     "date": "2026-10-21"
+    }
+   ],
+   "apply": true
+  }
+ ],
+ "not_injuries": [
+  {
+   "name": "Jalen Wilson",
+   "espn_id": "4431714",
+   "team": "ATL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "G League - Two- Way"
+  },
+  {
+   "name": "Keshon Gilbert",
+   "espn_id": "4585618",
+   "team": "ATL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "G League - Two- Way"
+  },
+  {
+   "name": "RayJ Dennis",
+   "espn_id": "4431941",
+   "team": "ATL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "G League - Two- Way"
+  },
+  {
+   "name": "Jr., Ernest Udeh",
+   "espn_id": "5106261",
+   "team": "CLE",
+   "opener_date": "2026-10-22",
+   "opener_status": "Out",
+   "opener_reason": "G League - Two- Way"
+  },
+  {
+   "name": "Elijah Harkless",
+   "espn_id": "4397449",
+   "team": "DET",
+   "opener_date": "2026-10-20",
+   "opener_status": "Out",
+   "opener_reason": "G League - Two- Way"
+  },
+  {
+   "name": "Isaac Jones",
+   "espn_id": "5107818",
+   "team": "DET",
+   "opener_date": "2026-10-20",
+   "opener_status": "Out",
+   "opener_reason": "G League - Two- Way"
+  },
+  {
+   "name": "Taurean Prince",
+   "espn_id": "2990962",
+   "team": "DET",
+   "opener_date": "2026-10-20",
+   "opener_status": "Out",
+   "opener_reason": "Personal Reasons"
+  },
+  {
+   "name": "Ugonna Onyenso",
+   "espn_id": "5037878",
+   "team": "DET",
+   "opener_date": "2026-10-20",
+   "opener_status": "Out",
+   "opener_reason": "G League - Two- Way"
+  },
+  {
+   "name": "Kristaps Porzingis",
+   "espn_id": "3102531",
+   "team": "GSW",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "Not With Team"
+  },
+  {
+   "name": "Julian Phillips",
+   "espn_id": "5105553",
+   "team": "HOU",
+   "opener_date": "2026-10-21",
+   "opener_status": "Available",
+   "opener_reason": "-"
+  },
+  {
+   "name": "Braden Smith",
+   "espn_id": "5105854",
+   "team": "IND",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "G League - Two- Way"
+  },
+  {
+   "name": "Jalen Slawson",
+   "espn_id": "4398207",
+   "team": "IND",
+   "opener_date": "2026-10-21",
+   "opener_status": "Available",
+   "opener_reason": "-"
+  },
+  {
+   "name": "Carson Cooper",
+   "espn_id": "5105817",
+   "team": "MEM",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "G League - Two- Way"
+  },
+  {
+   "name": "Javon Small",
+   "espn_id": "4781746",
+   "team": "MEM",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "G League - Two- Way"
+  },
+  {
+   "name": "Dru Smith",
+   "espn_id": "4066993",
+   "team": "MIA",
+   "opener_date": "2026-10-21",
+   "opener_status": "Available",
+   "opener_reason": "Injury/Illness - Right Calf Strain"
+  },
+  {
+   "name": "Kobe Brown",
+   "espn_id": "4431752",
+   "team": "MIA",
+   "opener_date": "2026-10-21",
+   "opener_status": "Available",
+   "opener_reason": "-"
+  },
+  {
+   "name": "Vladislav Goldin",
+   "espn_id": "4700818",
+   "team": "MIA",
+   "opener_date": "2026-10-21",
+   "opener_status": "Available",
+   "opener_reason": "-"
+  },
+  {
+   "name": "Nate Ament",
+   "espn_id": "5164559",
+   "team": "MIL",
+   "opener_date": "2026-10-21",
+   "opener_status": "Available",
+   "opener_reason": "-"
+  },
+  {
+   "name": "Rocco Zikarsky",
+   "espn_id": "5157587",
+   "team": "MIN",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "G League - Two- Way"
+  },
+  {
+   "name": "Zyon Pullin",
+   "espn_id": "4592979",
+   "team": "MIN",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "G League - Two- Way"
+  },
+  {
+   "name": "Drew Timme",
+   "espn_id": "4431695",
+   "team": "PHX",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "G League - Two- Way"
+  },
+  {
+   "name": "RayJ Dennis",
+   "espn_id": "4431941",
+   "team": "SAS",
+   "opener_date": "2026-10-20",
+   "opener_status": "Questionable",
+   "opener_reason": "G League - Two- Way"
+  },
+  {
+   "name": "Malachi Smith",
+   "espn_id": "4397784",
+   "team": "TOR",
+   "opener_date": "2026-10-21",
+   "opener_status": "Out",
+   "opener_reason": "G League - Two- Way"
+  }
+ ],
+ "skipped": [
+  {
+   "name": "Khalifa Diop",
+   "team": "CLE",
+   "player_id": null,
+   "universe_team": null,
+   "skip_reason": "not in the game's 2026-27 universe"
+  },
+  {
+   "name": "Tacko Fall",
+   "team": "PHI",
+   "player_id": null,
+   "universe_team": null,
+   "skip_reason": "not in the game's 2026-27 universe"
+  },
+  {
+   "name": "Tony Bradley",
+   "team": "UTA",
+   "player_id": "player_nyk-tony-bradley",
+   "universe_team": "NYK",
+   "skip_reason": "on NYK in the game's universe"
+  }
+ ]
+}
