@@ -3522,7 +3522,6 @@ def free_agency_room_payload(
         best_team = teams_by_id.get((best_offer or {}).get("team_id"), {})
         safe_years = extension_safe_year_limit(player, signing_season, 5)
         floors = free_agent_offer_floors(active, save, player, team, safe_years)
-        legal = free_agent_legal_terms(active, save, player, team, ledger_payroll, floors)
         candidates.append(
             {
                 "id": player_id,
@@ -3578,8 +3577,7 @@ def free_agency_room_payload(
                     "Your team released him and stretched the salary; you cannot sign him again yet."
                     if reacquisition_blocked(save, team["id"], player_id, current_date) else None
                 ),
-                # FA-REAL: his legal salary range and how your team would pay at his price (cap_ledger.quote).
-                "legal": legal,
+                "_floors": floors,
             }
         )
     candidates.sort(key=lambda item: (float(item.get("mpg") or 0), float((item.get("ratings") or {}).get("overall") or 0), float(item.get("ask_millions") or 0)), reverse=True)
@@ -3683,6 +3681,14 @@ def free_agency_room_payload(
         })
     user_offer_history.sort(key=lambda row: str(row.get("date") or ""), reverse=True)
     roster_count = sum(1 for player in active.get("players", []) if player.get("team_id") == team["id"])
+    shown_candidates = (own_candidates if phase == "re_signing" else candidates)[:80]
+    shown_ids = {id(candidate) for candidate in shown_candidates}
+    for candidate in candidates:
+        floors = candidate.pop("_floors", None)
+        if floors is not None and id(candidate) in shown_ids:
+            # FA-REAL: his legal salary range and how your team would pay at his price (cap_ledger.quote).
+            candidate["legal"] = free_agent_legal_terms(active, save, players_by_id.get(candidate["id"], {}), team,
+                                                        ledger_payroll, floors)
     return {
         "signing_season": signing_season,
         "roster_count": roster_count,
@@ -3718,7 +3724,7 @@ def free_agency_room_payload(
         # FA-REAL: the money calculator's view of your books (holds, exceptions, hard cap, renounce previews).
         "cap_ledger": free_agency_ledger_view(active, save, team["id"], ledger_payroll),
         "rating_tertiles": display_rating_tertiles(active),
-        "candidates": (own_candidates if phase == "re_signing" else candidates)[:80],
+        "candidates": shown_candidates,
         "re_signing": {
             "active": phase == "re_signing" and state.get("re_signing_status") != "completed",
             "day": int(state.get("re_signing_day") or 1),
@@ -3829,7 +3835,8 @@ def free_agent_legal_terms(active: dict[str, Any], save: dict[str, Any], player:
     maximum = cap_ledger.true_max_salary(season, service, previous)
     minimum = cap_ledger.minimum_salary(season, service)
     ask = float(floors["rule"]["ask_millions"] or 0.0)
-    price = max(float(floors["default"] or 0.0), ask, minimum / 1e6)
+    floor = (floors.get("default") or {}).get("guaranteed") if isinstance(floors.get("default"), dict) else floors.get("default")
+    price = max(float(floor or 0.0), ask, minimum / 1e6)
     years = 2 if (bird or {}).get("level") == "early" else 1 if price <= minimum / 1e6 + 0.1 else 3
     quote = cap_ledger.quote(active, save, team["id"], player, min(price * 1e6, maximum), years, season=season,
                              bird=bird, payroll=payroll, team_abbrev=team.get("abbrev"))

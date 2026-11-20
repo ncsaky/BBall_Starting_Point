@@ -213,6 +213,14 @@ def newly_signed_trade_block(save: dict[str, Any], player_id: str, today: str | 
     return str(eligible) if _today(save, today) < str(eligible) else None
 
 
+def trade_blocked_player_ids(save: dict[str, Any], today: str | None = None) -> set[str]:
+    """Every newly signed player who can't be traded yet (his contract's ``trade_eligible_date`` is after today). For
+    transactions.recently_signed_player_ids to use instead of its fixed December 1 unlock."""
+    now = _today(save, today)
+    return {str(pid) for pid, override in (save.get("contract_overrides") or {}).items()
+            if override and override.get("trade_eligible_date") and now < str(override["trade_eligible_date"])}
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # The team's cap year in the save
 
@@ -255,11 +263,14 @@ def renounced_ids(save: dict[str, Any], team_id: str, season: str) -> set[str]:
 # Who is on the books
 
 _INDEX: dict[int, tuple[Any, int, int, dict[str, Any]]] = {}
+_INDEX_SIZE = 3   # each entry keeps a whole league view alive
 
 
-def _index(active: dict[str, Any]) -> dict[str, Any]:
-    """Players and contracts by id for one prepared league view (cached while that view lives), and players by team
-    (rebuilt each call: callers may move players between teams in place)."""
+def _index(active: dict[str, Any], *, rescan: bool = False) -> dict[str, Any]:
+    """Players, contracts and players by team for one prepared league view, cached while that view lives.
+
+    ``rescan`` rebuilds players by team from the view (for callers that may have moved players in place); the cached
+    map plus the save's roster overrides (``team_contracts(fresh=True)``) covers every move the game writes."""
     players_list = active.get("players", []) or []
     contracts_list = active.get("contracts", []) or []
     cached = _INDEX.get(id(active))
@@ -268,16 +279,23 @@ def _index(active: dict[str, Any]) -> dict[str, Any]:
         base = cached[3]
     else:
         base = {"players": {p["id"]: p for p in players_list if p.get("id")},
-                "contracts": {c.get("player_id"): c for c in contracts_list if c.get("player_id")}}
-        if len(_INDEX) > 6:
-            _INDEX.clear()
+                "contracts": {c.get("player_id"): c for c in contracts_list if c.get("player_id")},
+                "by_team": _players_by_team(players_list)}
+        while len(_INDEX) >= _INDEX_SIZE:
+            _INDEX.pop(next(iter(_INDEX)))
         _INDEX[id(active)] = (active, len(players_list), len(contracts_list), base)
+    if rescan:
+        return {**base, "by_team": _players_by_team(players_list)}
+    return base
+
+
+def _players_by_team(players_list: list[dict[str, Any]]) -> dict[str, list[str]]:
     by_team: dict[str, list[str]] = {}
     for player in players_list:
         team = player.get("team_id")
         if team and not player.get("_inactive_player"):
             by_team.setdefault(team, []).append(player["id"])
-    return {"by_team": by_team, "players": base["players"], "contracts": base["contracts"]}
+    return by_team
 
 
 def _override_seasons(override: dict[str, Any]) -> list[dict[str, Any]]:
@@ -292,7 +310,7 @@ def team_contracts(active: dict[str, Any], save: dict[str, Any], team_id: str, *
                    ) -> list[tuple[str, list[dict[str, Any]]]]:
     """(player_id, contract seasons) for the team's roster. ``fresh``: also apply roster and contract changes written
     to the save after ``active`` was prepared (a day's earlier signings), so a quote never uses stale books."""
-    index = _index(active)
+    index = _index(active, rescan=not fresh)
     members = set(index["by_team"].get(team_id, []))
     overrides = save.get("contract_overrides") or {}
     fresh_contract: set[str] = set()
@@ -368,7 +386,8 @@ def _cached_bird_rights(save: dict[str, Any], player: dict[str, Any], team_id: s
     override = (save.get("contract_overrides") or {}).get(str(player.get("id"))) or {}
     clock = (save.get("bird_clocks") or {}).get(str(player.get("id"))) or {}
     key = (str(player.get("id")), team_id, expiring, str(override.get("signed_season") or ""),
-           str(clock.get("since") or ""), len((contract or {}).get("seasons") or []))
+           str(clock.get("since") or ""), str(player.get("draft_year") or player.get("age") or ""),
+           tuple((r.get("season"), r.get("salary")) for r in (contract or {}).get("seasons") or []))
     hit = _BIRD_CACHE.get(key)
     if hit is None:
         if len(_BIRD_CACHE) > 5000:

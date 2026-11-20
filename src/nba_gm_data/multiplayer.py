@@ -79,6 +79,7 @@ TEAM_MUTATIONS = {
     "set_rotation_minutes",
     "set_starting_five",
     "submit_free_agent_offer",
+    "renounce_cap_hold",
     "waive_player",
 }
 HOST_MUTATIONS = {
@@ -92,6 +93,7 @@ TEAM_DEFAULT_ACTIONS = {
     "fantasy_draft_room",
     "free_agents",
     "free_agency_room",
+    "free_agent_offer_quote",
     "morale",
     "social_feed",
     "staff_market",
