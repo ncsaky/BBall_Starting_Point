@@ -6209,8 +6209,13 @@ function wireDashboardPhaseWorkspace(kind, root = els.content) {
           0,
           ledger.scrollTop + rowRect.top - ledgerRect.top - (ledger.clientHeight - rowRect.height) / 2,
         );
+        state.draftLedgerScrollTop = ledger.scrollTop;
       });
+    } else if (ledger) {
+      // Same pick as before (a sort, a selection, a reload of the cards): keep the order where the user left it.
+      ledger.scrollTop = Number(state.draftLedgerScrollTop || 0);
     }
+    ledger?.addEventListener("scroll", () => { state.draftLedgerScrollTop = ledger.scrollTop; }, { passive: true });
   }
   if (kind === "free_agency") {
     wireFreeAgencyMarket(root);

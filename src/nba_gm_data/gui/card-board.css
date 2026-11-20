@@ -5329,6 +5329,9 @@ body.unified-terminal-ui .playoff-stats-panel .playoff-injuries-table tbody tr.i
 .playoff-stats-col-back small { color:var(--season-muted); }
 
 /* Mandatory roster cut-down: counter header, house table, keep/release choice per row, release footer. */
+/* The card keeps its header and Release footer in view; only the roster table scrolls. */
+.required-clipboard-card:has(.cutdown-workspace) { overflow:hidden; }
+.required-clipboard-card .required-decision-workspace:has(> .cutdown-workspace) { height:100%; min-height:0; }
 .cutdown-workspace { display:flex; flex-direction:column; width:100%; height:100%; min-height:0; background:#fff; color:var(--season-text, #1d2a33); font:12px Tahoma,"Trebuchet MS",Arial,sans-serif; }
 .cutdown-head { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:16px; flex:0 0 auto; padding:10px 14px; border-bottom:1px solid var(--season-line, #b7c2cb); background:var(--season-raised, #eef2f5); }
 .cutdown-title p { margin:0; color:var(--season-muted, #5d6b77); font:700 9px Tahoma,Arial,sans-serif; text-transform:uppercase; letter-spacing:.04em; }

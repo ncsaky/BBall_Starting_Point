@@ -150,5 +150,5 @@
   }
   motifs.injuries=()=>rect(4,6,26,24,'#f8fafb',ink,2)+path('M17 11v14M10 18h14','none',red,3.2);
   descriptions.injuries='Injured & returning players';
-  window.CardVisuals=Object.freeze({icon,preview,previewKind,kindFor,description:id=>id==='team-wants'?'Your trade wants':id.startsWith('trade-')?'Trade tools':id.endsWith('-order')?'Selection order':id.endsWith('-summary')?'Draft recap':kindFor(id)==='offers'?'Incoming proposals':kindFor(id)==='market'?'Free-agent availability':descriptions[kindFor(id)] || 'Award contenders'});
+  window.CardVisuals=Object.freeze({icon,preview,previewKind,kindFor,description:id=>id.endsWith('-leaders')?'Playoff production':id==='team-wants'?'Your trade wants':id.startsWith('trade-')?'Trade tools':id.endsWith('-order')?'Selection order':id.endsWith('-summary')?'Draft recap':kindFor(id)==='offers'?'Incoming proposals':kindFor(id)==='market'?'Free-agent availability':descriptions[kindFor(id)] || 'Award contenders'});
 })();

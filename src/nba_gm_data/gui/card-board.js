@@ -375,16 +375,34 @@
     if (!present.length) return [];
     const availableWidth = Math.max(100, viewport.clientWidth - gutter * 2);
     const availableHeight = Math.max(100, viewport.clientHeight - top - gutter);
+    // The board can be scrolled a little past the window (the canvas is 1.3x the visible area), never further.
+    const extent = clipboardExtent(viewport.clientWidth, viewport.clientHeight);
+    const canvasWidth = Math.max(availableWidth, extent.width - gutter * 2);
+    const canvasHeight = Math.max(availableHeight, extent.height - top - gutter);
     const minScale = id => Math.min(1, layout[id].minScale ?? .72);
+    const floorOf = row => Math.max(...row.map(minScale));
     const rowWidth = (row, scale) => row.reduce((sum, id) => sum + layout[id].width * scale, 0) + gutter * (row.length - 1);
-    // A row that cannot fit even at its cards' smallest readable size is split into one card per row.
-    const fitted = present.flatMap(row => {
-      if (row.length < 2) return [row];
-      const floor = Math.max(...row.map(minScale));
-      return rowWidth(row, floor) <= availableWidth ? [row] : row.map(id => [id]);
-    });
-    const scales = fitted.map(row => Math.min(1, (availableWidth - gutter * (row.length - 1)) / row.reduce((sum, id) => sum + layout[id].width, 0)));
     const rowHeight = (row, scale) => titleHeight + Math.max(...row.map(id => layout[id].height)) * scale;
+    const stackHeight = list => list.reduce((sum, row) => sum + rowHeight(row, floorOf(row)), 0) + gutter * (list.length - 1);
+    // A row too wide for the window, even at its cards' smallest readable size, wraps onto as few rows as possible.
+    const pack = limit => present.flatMap(row => {
+      const out = [];
+      for (const id of row) {
+        const last = out.at(-1);
+        if (last && rowWidth([...last, id], floorOf([...last, id])) <= limit) last.push(id);
+        else out.push([id]);
+      }
+      return out;
+    });
+    let fitted = pack(availableWidth);
+    // Too tall to stack inside the board: keep rows side by side, reaching past the window's right edge instead.
+    if (stackHeight(fitted) > canvasHeight) fitted = pack(canvasWidth);
+    // Still too tall: the last cards stay closed (they remain one click away in the Cards gallery) rather than overlap.
+    while (fitted.length > 1 && stackHeight(fitted) > canvasHeight) {
+      fitted.at(-1).pop();
+      if (!fitted.at(-1).length) fitted.pop();
+    }
+    const scales = fitted.map(row => Math.min(1, (availableWidth - gutter * (row.length - 1)) / row.reduce((sum, id) => sum + layout[id].width, 0)));
     const total = fitted.reduce((sum, row, index) => sum + rowHeight(row, scales[index]), 0) + gutter * (fitted.length - 1);
     if (total > availableHeight) {
       const titles = titleHeight * fitted.length + gutter * (fitted.length - 1);
@@ -407,9 +425,10 @@
   }
   function applyEntryLayout(layout, entryLayout, viewport, saved, entering) {
     if (!entryLayoutDue(entryLayout, saved, entering)) return [];
-    const ids = new Set(entryLayout.rows.flat());
+    const placed = arrangeEntryRows(layout, entryLayout.rows, viewport);
+    const ids = new Set(placed);
     for (const [id, item] of Object.entries(layout)) if (!ids.has(id) && !item.pinned) item.visible = false;
-    return arrangeEntryRows(layout, entryLayout.rows, viewport);
+    return placed;
   }
   function centerNewRequiredWindows(layout, cards, saved, entering, viewport) {
     for (const {id, required} of cards) {

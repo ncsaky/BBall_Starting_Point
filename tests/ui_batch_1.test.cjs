@@ -65,6 +65,17 @@ test('playoff entry: bracket on top, stats, injuries and minutes below, all insi
   for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) assert.ok(!overlaps(layout[ids[i]], layout[ids[j]]), `${ids[i]} / ${ids[j]}`);
   for (const id of ids) assert.ok(layout[id].x + layout[id].width * layout[id].scale <= 1440 - 12 + 1, `${id} inside the width`);
   assert.ok(layout.minutes.y > layout['phase-playoffs-bracket'].y);
+  // A small laptop screen: cards never overlap; whatever cannot fit stays closed instead of being piled on top.
+  const small = {
+    'phase-playoffs-bracket': card(964, 480, .74), 'phase-playoffs-leaders': card(600, 400, .78),
+    'phase-playoffs-injuries': card(556, 400, .78), minutes: {...card(570, 430, .65), visible: true},
+  };
+  const {applyEntryLayout} = cardBoard();
+  const shown = Array.from(applyEntryLayout(small, {rows: [['phase-playoffs-bracket'], ['phase-playoffs-leaders', 'phase-playoffs-injuries', 'minutes']]}, {clientWidth: 1010, clientHeight: 670}, {}, true));
+  assert.deepEqual(shown, ['phase-playoffs-bracket', 'phase-playoffs-leaders', 'phase-playoffs-injuries']);
+  assert.equal(small.minutes.visible, false);
+  for (const a of shown) for (const b of shown) if (a < b) assert.ok(!overlaps(small[a], small[b]), `${a} / ${b}`);
+  for (const id of shown) assert.ok(small[id].y + 24 + small[id].height * small[id].scale <= Math.floor(670 * 1.3), `${id} inside the board`);
 });
 
 test('entry layouts apply once: on entering, or when a card group first appears; reloads keep the user layout', () => {
