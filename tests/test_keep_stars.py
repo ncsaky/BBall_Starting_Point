@@ -114,12 +114,19 @@ class FranchiseStarTests(unittest.TestCase):
                                                             "2027-28", 17))
         self.assertFalse(sv.should_ai_retain_expiring_player(saved, {**star, "team_id": "h"}, "2027-28", 17))
 
-    def test_a_young_starter_off_his_rookie_deal_counts_like_a_franchise_star(self):
-        young = {"id": "m", "age": 24, "_star_ask_millions": 29.0, "_star_rank": 29, "_years_of_service": 4,
-                 "_bird": bird("full", 40e6, seasons=4)}
+    def test_a_young_regular_off_his_rookie_deal_is_kept_at_his_market_price(self):
+        # Brandon Miller (24) left Charlotte in the 2027 test: no star-tier price, so a dice roll decided. Real teams
+        # match offers for such restricted free agents.
+        young = {"id": "m", "team_id": "cha", "age": 24, "minutes_projection": 31, "_restricted": True,
+                 "_market_ask_millions": 28.8, "_bird": bird("full", 40e6, seasons=4), "_team_phase": "entering"}
         self.assertTrue(sv.is_franchise_star(young))
-        self.assertFalse(sv.is_franchise_star({**young, "age": 27, "_years_of_service": 6}))
-        self.assertFalse(sv.is_franchise_star({**young, "_star_ask_millions": None}))
+        self.assertFalse(sv.is_franchise_star({**young, "_restricted": False}))
+        saved = {"meta": {"human_team_ids": []}, "team_records": {}, "player_season_stats": {}}
+        self.assertTrue(sv.should_ai_retain_expiring_player(saved, young, "2026-27", 17))
+        terms = sv.ai_re_signing_contract_terms(saved, young, "2027-28")
+        self.assertEqual((terms["salary"], terms["years"]), (28_800_000, 5))
+        order = sv.re_signing_order([{"id": "bench"}, young, {"id": "s", "_star_ask_millions": 40.0}])
+        self.assertEqual([p["id"] for p in order], ["s", "m", "bench"])
 
 
 class IncumbentYearsTests(unittest.TestCase):

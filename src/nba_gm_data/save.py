@@ -8975,7 +8975,7 @@ def apply_offseason_roster_transitions(canonical: dict[str, Any], save: dict[str
     active = canonical_with_save(canonical, save)
     players = {player["id"]: player for player in active.get("players", [])}
     contracts = {contract.get("player_id"): contract for contract in active.get("contracts", [])}
-    annotate_star_asks(active, contracts, next_season, save)
+    annotate_star_asks(active, contracts, next_season, save, canonical.get("free_agent_candidates"))
     free_agents: list[str] = list(save.get("free_agent_player_ids", []))
     retired: list[str] = list(save.get("retired_player_ids", []))
     retired_this_offseason: list[str] = []
@@ -9376,7 +9376,7 @@ def prepare_free_agency_pool(canonical: dict[str, Any], save: dict[str, Any]) ->
     retirement_count = prepare_offseason_retirements(canonical, save, current_season, next_season, seed)
     active = canonical_with_save(canonical, save)
     contracts = {contract.get("player_id"): contract for contract in active.get("contracts", [])}
-    annotate_star_asks(active, contracts, next_season, save)
+    annotate_star_asks(active, contracts, next_season, save, canonical.get("free_agent_candidates"))
     free_agents = set(save.get("free_agent_player_ids", []))
     expired: list[str] = []
     re_signing_commitments: dict[tuple[str, str], float] = {}
@@ -9656,13 +9656,15 @@ def re_signing_order(players: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """A front office settles its stars' contracts first (TRADE-VOLUME-2): stars by market price, then the rest in
     roster order. Before, players were re-signed in roster order, so a team's cheaper re-signings could use up the
     room its star needed (Denver lost Nikola Jokic that way in the two-season test)."""
-    stars = sorted((p for p in players if p.get("_star_ask_millions")),
-                   key=lambda p: (-float(p["_star_ask_millions"]), str(p.get("id"))))
-    return stars + [p for p in players if not p.get("_star_ask_millions")]
+    def price(p: dict[str, Any]) -> float:
+        return max(float(p.get("_star_ask_millions") or 0.0), float(p.get("_market_ask_millions") or 0.0))
+    stars = sorted((p for p in players if price(p)), key=lambda p: (-price(p), str(p.get("id"))))
+    return stars + [p for p in players if not price(p)]
 
 
 def annotate_star_asks(active: dict[str, Any], contracts: dict[str, dict[str, Any]], next_season: str,
-                       save: dict[str, Any] | None = None) -> None:
+                       save: dict[str, Any] | None = None,
+                       research_rows: list[dict[str, Any]] | None = None) -> None:
     """Mark the expiring players on the rows of ``active`` (a working copy) for the AI re-signing pass below.
 
     - ``_star_ask_millions``: a starter-or-better's market price (TRADE-VOLUME-2, contract_ai.star_market_ask_millions).
@@ -9687,34 +9689,42 @@ def annotate_star_asks(active: dict[str, Any], contracts: dict[str, dict[str, An
                     reverse=True)
     rank = {player_id: index + 1 for index, (_, player_id) in enumerate(values)}
     from .payroll_plan import team_phase
+    research = {str(row.get("player_id") or ""): float(row.get("projected_aav") or 0.0) / 1_000_000
+                for row in (research_rows if research_rows is not None else active.get("free_agent_candidates")) or []}
     for player in expiring:
         try:
             ask = star_market_ask_millions(priced, by_id.get(player["id"], player), next_season)
         except (KeyError, ValueError, TypeError):
             ask = None
+        service = years_of_service(player, next_season)
+        restricted = service <= YOUNG_STAR_MAX_SERVICE and float(player.get("age") or 99) <= RESTRICTED_MAX_AGE
         if ask:
             player["_star_ask_millions"] = ask
             player["_star_rank"] = rank.get(player["id"])
-            player["_years_of_service"] = years_of_service(player, next_season)
+        if restricted:
+            # KEEP-STARS: a regular coming off his rookie deal would be a restricted free agent; his team keeps him
+            # at the better of his star price and his researched market price.
+            player["_restricted"] = True
+            player["_market_ask_millions"] = max(float(ask or 0.0), research.get(str(player["id"]), 0.0)) or None
+        if ask or restricted:
+            player["_years_of_service"] = service
             if save is not None:
                 player["_team_phase"] = team_phase(priced, save, str(player.get("team_id")))
 
 
 YOUNG_STAR_MAX_SERVICE = 4   # a player coming off his rookie-scale deal (four seasons): a restricted free agent
+RESTRICTED_MAX_AGE = 25.0
 
 
 def is_franchise_star(player: dict[str, Any]) -> bool:
-    """A top-15 player, or a starter-or-better coming off his rookie deal with the team (KEEP-STARS).
+    """A top-15 player, or a regular (24+ minutes) coming off his rookie deal (KEEP-STARS).
 
     The second case stands in for restricted free agency, which the game does not model: real teams match offers
-    for their good young players almost without exception (Hoops Rumors glossary, "Restricted free agency")."""
-    if not player.get("_star_ask_millions"):
-        return False
-    if int(player.get("_star_rank") or 999) <= FRANCHISE_STAR_RANK:
+    for their good young players almost without exception (Hoops Rumors glossary, "Restricted free agency"); the
+    research file already marks these players as restricted ("restricted_or_young_expiring_proxy")."""
+    if player.get("_restricted"):
         return True
-    bird = player.get("_bird") or {}
-    return int(bird.get("seasons") or 99) <= YOUNG_STAR_MAX_SERVICE and float(player.get("age") or 99) <= 25.0 \
-        and int(player.get("_years_of_service") or 99) <= YOUNG_STAR_MAX_SERVICE
+    return bool(player.get("_star_ask_millions")) and int(player.get("_star_rank") or 999) <= FRANCHISE_STAR_RANK
 
 
 def should_ai_retain_expiring_player(save: dict[str, Any], player: dict[str, Any], season: str, seed: int) -> bool:
@@ -9769,7 +9779,7 @@ def ai_re_signing_contract_terms(save: dict[str, Any], player: dict[str, Any], n
     years = 3 if age <= 29 and minutes >= 24 else 2 if age <= 33 and minutes >= 16 else 1
     salary = int(round(clamp(2_200_000 + minutes * 520_000 + max(0.0, score - 18.0) * 320_000, 2_000_000, 32_000_000)))
     raise_rate = 0.035
-    star = float(player.get("_star_ask_millions") or 0.0)
+    star = max(float(player.get("_star_ask_millions") or 0.0), float(player.get("_market_ask_millions") or 0.0))
     if star * 1_000_000 > salary:
         # TRADE-VOLUME-2: a starter-or-better re-signs at his market price (annotate_star_asks), not the minutes rule
         # capped at $32M; the price is already within the maximum salary for his years in the league.

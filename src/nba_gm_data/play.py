@@ -5384,6 +5384,11 @@ def process_ai_free_agency_offers_for_day_state(
             quality=float(player_attribute_summary(active, player["id"]).get("overall") or 0),
         )
         suitors = ai_free_agency_suitors(active, save, player, teams, market, seed, day)
+        # KEEP-STARS: a team that still holds a regular's rights bids for him first (it knows him and has Bird rights).
+        if display_minutes_projection(player) >= 24.0:
+            own = {r.get("team_id") for r in save.get("re_signing_rights", []) or []
+                   if r.get("player_id") == player["id"] and r.get("season") == state.get("season")}
+            suitors = [t for t in suitors if t["id"] in own] + [t for t in suitors if t["id"] not in own]
         existing = sum(offer.get("source") == "ai" for offer in active_offers_for_player(save, player["id"]))
         years = min(
             int(market.get("max_years") or 4), free_agency_preferred_years(player, ask),
