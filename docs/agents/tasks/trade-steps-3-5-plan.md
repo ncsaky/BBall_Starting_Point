@@ -57,5 +57,11 @@ Each AI front office gets a few **lasting** traits, set when a save starts and d
 ## User decisions
 - 2026-11-19: real front offices start with traits based on their public reputations. Use only widely held views, with each source recorded. Generated or replacement front offices draw their traits from the measured spread.
 
+- 2026-11-20 (user, while reading the TRADE-DEADLINE checkpoint):
+  - Counter-asks go back and forth for several rounds. Each round narrows the gap, nothing repeats, and the chains are recorded so they can be shown (longest and shortest chains are interesting). Sent to TRADE-DEADLINE.
+  - The late deadline-day pass may send the user's team offers that fit its new situation. Sent to TRADE-DEADLINE.
+  - **Fit versus personality.** "Fit" comes from the hand a front office is dealt: its current core and its coach's system. Example: next to Curry, Golden State needs smart, strong team defenders who don't need the ball, so Kuminga (weak defender, inefficient on-ball offense) is a poor fit no matter his tools. That belongs in the textbook layer (TRADE-DEADLINE checks it).
+  - Personality (step 5) is a separate later layer: lasting preferences for kinds of players. It shows most when a front office starts a full rebuild and picks its core in the draft, because otherwise it works with the hand it's dealt.
+
 ## Open question for the user (ask when starting step 5)
 1. Should you be able to see each front office's tendencies in full, or only hints (e.g. through your assistant GM)?

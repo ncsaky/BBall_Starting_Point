@@ -2,7 +2,77 @@
 
 Paste one prompt into a **fresh** Codex chat. One task per chat keeps it from drifting after context compaction. Each prompt is self-contained. Claude reviews the result and updates `BOARD.md`.
 
-Current priority (2026-11-20, afternoon): FA-PRICES now, ODDS-COACH after the trade probes. GUI tasks are parked at the bottom.
+Current priority (2026-11-20, evening): FA-REALISM-RESEARCH now, ODDS-COACH after the trade probes. GUI tasks are parked at the bottom.
+
+---
+
+## Ready now (2026-11-20, evening): FA-REALISM-RESEARCH (fresh chat)
+
+FA-PRICES is done (under review). ODDS-COACH still waits for the trade agent's long runs. This task is research plus reading code only, so it is light on the laptop.
+
+### FA-REALISM-RESEARCH: the real NBA offseason, rule by rule, against what the game does
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task FA-REALISM-RESEARCH (its board row already exists; set it to "in progress (Codex)").
+This is a research and code-reading task. Change NO code. Your only output is one document,
+docs/agents/tasks/fa-realism-research.md, plus your board row. Work in your own git worktree so you don't disturb
+the shared checkout:
+  git worktree add ../BBall_codex_fa_research -b codex/fa-realism-research HEAD
+(Symlink .venv from the main checkout if you want to run read-only Python. No data symlinks are needed.) Commit the
+document on that branch; never push, never commit to main.
+
+Goal: the user wants free agency to be completely realistic but easy to understand, played through clear sequential
+phases. That means Bird rights and restricted free agency (qualifying offers, offer sheets, matching) made explicit,
+"and anything else I may not be aware of". Claude will design the feature from your document, so it must be complete,
+precise and sourced.
+
+Part 1: the real rules and calendar (2023 CBA, as it applies in the 2026 offseason). Every rule with a primary source
+(CBA article and section; the NBA's official cap/calendar pages) or a well-known secondary source (Larry Coon's CBA FAQ,
+Spotrac, Hoops Rumors' glossary). Cover at least:
+- The offseason calendar in order, with 2026 dates: end of season, draft, the qualifying-offer deadline, option
+  decisions (player, team, early termination), the negotiation window (moratorium) and when signings become official,
+  the restricted free agency timeline (offer sheets, the matching window and its length under the 2023 CBA), summer
+  league, waiver periods, two-way and Exhibit 10 deadlines, training camp, the opening-night roster cutdown, and the
+  October rookie-scale extension deadline.
+- Restricted free agency: who qualifies, qualifying-offer amounts, offer-sheet rules (minimum terms, what can and can't
+  be in one, the Arenas provision for first- and second-round picks, the "poison pill" effect, cap room or exceptions
+  needed to sign one), matching rules, what happens if not matched, signing the qualifying offer, rescinding.
+- Bird, Early Bird and Non-Bird rights: who has which, maximum raises and lengths, and cap holds (amounts by type,
+  renouncing them, how they block cap room).
+- Exceptions: the non-taxpayer, taxpayer and room mid-level exceptions; bi-annual; the minimum exception; the
+  rookie exception; traded player exceptions (only as far as free agency uses them). Amounts for 2026-27 and who can use
+  which (aprons).
+- Aprons and hard caps: which moves hard-cap a team at the first or second apron, and second-apron restrictions that
+  touch free agency (sign-and-trades, aggregation, mid-level use).
+- Sign-and-trades, contract options (player, team, early termination), guarantees and partial guarantees, the stretch
+  provision, waivers and claims, two-way contracts, Exhibit 10 deals, max contracts (25/30/35% plus designated rookie
+  and supermax criteria), and the minimum salary scale.
+- How often things really happen (2023-2026 offseasons): offer sheets signed and matched per summer, restricted free
+  agents who signed their qualifying offer, sign-and-trades, mid-level usage, players who went unsigned or overseas, and
+  the share of free agents re-signing with their own team. Name real examples.
+
+Part 2: what the game does today (read the code; give file:line references). Trace a full offseason in a save:
+- the phases and dates (save.py phase_for_date, legal_actions_for_phase);
+- the re-signing window (play.py own_expiring_re_signing_room);
+- the AI's exclusive re-signings;
+- Bird rights (contract_ai.bird_rights and related, from the KEEP-STARS task: docs/agents/tasks/keep-stars.md);
+- the free-agency room and AI bids (play.py process_ai_free_agency_offers_for_day_state, manual_save_pool_signing);
+- how restricted free agents are handled now ("teams simply keep good young players");
+- cap rules (cap_rules.py: cap, tax, aprons, max salary, minimum scale);
+- exceptions, roster repair, waivers and two-ways, and the GUI's free-agency room (gui/app.js, gui/free-agency.css).
+Note anything that's wrong or contradicts the real rules.
+
+Part 3: the gap table. For every real rule or step: real behavior | the game today | gap (none / partial / missing /
+wrong) | how much it matters for realism and for what the user would feel | rough size to build (S/M/L). Then a
+suggested sequence of in-game phases for a complete, easy-to-understand offseason (each phase: dates, what the user can
+do, what AI teams do, what the user sees), keeping it playable, with no tedious steps that nobody would miss.
+
+Writing: plain everyday language for the user (AGENTS.md section 3). Start with a 5-line TL;DR. Define every cap term
+the first time it appears. Paraphrase sources; don't copy long passages.
+When done, set the board row to "review" and stop.
+```
 
 ---
 
