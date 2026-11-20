@@ -251,7 +251,7 @@ def _pick_slots(save):
     """pick id -> overall slot, from the save's draft orders (every draft the run reached)."""
     slots = {}
     for order in (save.get("draft_orders") or {}).values():
-        rows = order.get("picks") if isinstance(order, dict) else order
+        rows = (order.get("draft_order") or order.get("picks")) if isinstance(order, dict) else order
         for index, row in enumerate(rows or []):
             if not isinstance(row, dict):
                 continue

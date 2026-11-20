@@ -6045,7 +6045,11 @@ def season_start_from_label(season: str | None) -> int:
 
 
 def cap_lines_for_season(season: str | None) -> dict[str, float]:
-    elapsed = max(0, season_start_from_label(season) - 2025)
+    # TAX_LINE and SECOND_APRON are the real 2026-27 figures (NBA, June 2026: $200.428M and $221.686M), so growth
+    # starts from the first game season, as in save.cap_lines_for_season (free agency, waivers and the cap screens).
+    # Counting from 2025 put the trade AI's 2026-27 tax line at $207.4M and its hard cap at $229.4M, $7M above the
+    # lines the rest of the game and the screens use (TRADE-TAXPOOL).
+    elapsed = max(0, season_start_from_label(season) - season_start_from_label(CANONICAL_SEASON))
     factor = (1.0 + ANNUAL_CAP_GROWTH_RATE) ** elapsed
     return {
         "tax_line": round(TAX_LINE * factor / 100_000) * 100_000,

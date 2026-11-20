@@ -24,6 +24,8 @@ def fixture(teams='abc'):
             quality, price, salary, minutes = (25, 15, 1_000_000, 18) if tid == 'c' else (50, 30, 1_000_000, 18)
             if tid == 'a':
                 salary = 15_750_000  # trade 2b: payroll $199M, so the three-team leg stays under the tax line
+            if pid == 'a12':
+                salary = 10_000_000  # TRADE-TAXPOOL: the trade AI's 2026-27 tax line is now the real $200.4M (was $207.4M)
             if pid == 'a0':
                 quality, price, salary, minutes = 76, 90, 10_000_000, 32
             if pid == 'b0':

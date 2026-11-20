@@ -16,7 +16,7 @@ LINE = tx.cap_lines_for_season(SEASON)["tax_line"]
 
 
 def taxed_league():
-    """B is a taxpayer ($216M, about $8.6M over); A sits just over the line ($208.25M with 13 players)."""
+    """B is a taxpayer ($216M, about $15.6M over); A sits just over the line ($202.5M with 13 players)."""
     data = league()
     set_contract(data, "b0", [(SEASON, 190_000_000)])
     set_contract(data, "a1", [(SEASON, 25_000_000)])
@@ -26,8 +26,8 @@ def taxed_league():
 class TaxPoolTests(unittest.TestCase):
     def test_share_is_half_the_other_teams_tax_split_among_teams_under(self):
         data = taxed_league()
-        b_bill = tax.luxury_tax_bill(216_000_000, SEASON)
-        a_bill = tax.luxury_tax_bill(208_250_000, SEASON)
+        b_bill = tax.luxury_tax_bill(tx.team_salary_total_for_season(data, "b", SEASON), SEASON)
+        a_bill = tax.luxury_tax_bill(tx.team_salary_total_for_season(data, "a", SEASON), SEASON)
         self.assertGreater(b_bill, 0)
         # A gets half of B's tax, shared with C (the only other team under): A's own bill never pays A.
         self.assertAlmostEqual(tax.pool_share_if_under(data, "a", SEASON), 0.5 * b_bill / 2, places=0)
@@ -53,8 +53,8 @@ class TaxPoolTests(unittest.TestCase):
 
     def test_short_roster_must_be_filled_before_it_counts_as_under(self):
         data = league()
-        # A at $206M with 13 players: under the line today, but the 14th player's minimum salary puts it over.
-        set_contract(data, "a1", [(SEASON, 37_500_000)])
+        # A at $199.4M with 13 players: under the line today, but the 14th player's minimum salary puts it over.
+        set_contract(data, "a1", [(SEASON, 30_900_000)])
         set_contract(data, "a12", [(SEASON, 1_000_000)])
         payroll = tx.team_salary_total_for_season(data, "a", SEASON)
         self.assertLess(payroll, LINE)
