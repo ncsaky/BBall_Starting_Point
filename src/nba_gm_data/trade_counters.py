@@ -174,9 +174,18 @@ def counter_options(canonical: dict[str, Any], asking_id: str, giving_id: str, a
             # "Two seconds": the most common real ask after one (Finney-Smith, LeVert, Isaiah Joe, Aaron Wiggins).
             cheapest = [asset for _, _, asset in sorted(seconds, key=lambda s: s[:2])[:2]]
             options.append(("pick", asking_out, [*giving_out, *cheapest], None))
+    sheds_tax = None
     for asset in asking_out:
         if _key(asset) not in fixed:
-            options.append(("keep_own", [a for a in asking_out if _key(a) != _key(asset)], giving_out, None))
+            rest = [a for a in asking_out if _key(a) != _key(asset)]
+            if not rest:
+                # Taking a player for nothing back is a salary dump: only when the other side saves luxury tax.
+                if sheds_tax is None:
+                    from .trade_tax import tax_value
+                    sheds_tax = tax_value(canonical, giving_id, [], giving_out) > 0.0
+                if not sheds_tax:
+                    continue
+            options.append(("keep_own", rest, giving_out, None))
     for asset in giving_out:
         if asset.get("kind") == "player" and _key(asset) not in fixed and len(giving_out) > 1:
             options.append(("salary_relief", asking_out, [a for a in giving_out if _key(a) != _key(asset)], None))
@@ -279,6 +288,8 @@ def describe(canonical: dict[str, Any], asking_id: str, giving_id: str, before_a
                 why = ": it still came out ahead at that price"
         elif added:
             why = ": it still came out ahead with the pick included"
+        elif kind == "keep_own" and not counter["asking_out"]:
+            why = ": moving his salary for nothing still cut its luxury tax"
         text = f"{ask}; {giving} agreed{why}."
     return {"asking_team_id": asking_id, "giving_team_id": giving_id, "asking_team": asking, "giving_team": giving, "kind": kind,
             "target_label": counter.get("target_label"),
@@ -341,6 +352,8 @@ def ai_counter(canonical: dict[str, Any], candidate: dict[str, Any], *, seed: in
         asking_id, giving_id, evaluation = side
         if giving_id in human:
             return None
+        if history and asking_id != history[-1]["giving_team_id"]:
+            return None  # only the team that turned the counter down may answer it; nobody asks twice
         from_id, to_id, from_assets, to_assets = _flows(current)
         asking_out, giving_out = (from_assets, to_assets) if asking_id == from_id else (to_assets, from_assets)
         decision = evaluation.get("decision")
