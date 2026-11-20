@@ -7009,7 +7009,12 @@ def print_free_agency_recap(canonical: dict[str, Any], save_path: Path) -> None:
 # the same result as waiting for the end of the day. A non-guaranteed offer counts as a smaller salary (the security
 # penalty). Outside the open market (the exclusive re-signing window, or a free agent during the season) there are no
 # rival bids and the bar is his market ask for the years he wants from an average team (context 50).
+# He also never signs for less than USER_OFFER_MIN_SHARE_OF_ASK of his current ask (after the guarantee discount): the
+# lowest share any AI team bids (process_ai_free_agency_offers_for_day_state bids 0.90 to 1.2x the ask), so the late-
+# week bar (it falls to 35-48 by day 5) cannot sign a starter for half his market. His ask itself falls 10% a day while
+# nobody bids, which is how the real market discounts an unwanted player.
 USER_OFFER_SALARY_STEP = 0.1
+USER_OFFER_MIN_SHARE_OF_ASK = 0.9
 
 
 def user_offer_market_terms(canonical: dict[str, Any], save: dict[str, Any], player: dict[str, Any],
@@ -7045,16 +7050,22 @@ def user_offer_context(canonical: dict[str, Any], save: dict[str, Any], player: 
     return float(free_agency_offer_context_score(canonical, save, player, team, years, "user")["context_score"])
 
 
+def user_offer_effective_salary(player: dict[str, Any], aav_millions: float, guaranteed: bool) -> float:
+    from .contract_protection import security_penalty
+    return float(aav_millions) / (1 + security_penalty(player, guaranteed) / 100)
+
+
 def user_offer_interest(player: dict[str, Any], aav_millions: float, years: int, guaranteed: bool,
                         terms: dict[str, Any], context: float) -> float:
-    from .contract_protection import security_penalty
-    effective = float(aav_millions) / (1 + security_penalty(player, guaranteed) / 100)
+    effective = user_offer_effective_salary(player, aav_millions, guaranteed)
     return float(offer_interest_score(effective, terms["ask_millions"], years, terms["preferred_years"], context))
 
 
-def user_offer_verdict(interest: float, aav_millions: float, terms: dict[str, Any]) -> str:
+def user_offer_verdict(interest: float, aav_millions: float, terms: dict[str, Any],
+                       effective_millions: float | None = None) -> str:
     """'accept', 'below_todays_bar' or 'prefers_rival_bid' (the end-of-day order: interest, then money)."""
-    if interest < terms["bar"]:
+    effective = float(aav_millions if effective_millions is None else effective_millions)
+    if interest < terms["bar"] or effective < USER_OFFER_MIN_SHARE_OF_ASK * terms["ask_millions"] - 1e-9:
         return "below_todays_bar"
     best = terms.get("best_rival")
     if best and (interest, float(aav_millions)) <= (best["interest"], best["aav_millions"]):
@@ -7074,7 +7085,8 @@ def user_offer_floor(player: dict[str, Any], years: int, guaranteed: bool, terms
     steps = max(0, int(math.ceil((top - minimum) / USER_OFFER_SALARY_STEP)))
     offer = lambda k: round(minimum + k * USER_OFFER_SALARY_STEP, 1)
     passes = lambda k: user_offer_verdict(user_offer_interest(player, offer(k), years, guaranteed, terms, context),
-                                          offer(k), terms) == "accept"
+                                          offer(k), terms,
+                                          user_offer_effective_salary(player, offer(k), guaranteed)) == "accept"
     if not passes(steps):
         return None
     low, high = 0, steps
@@ -7093,7 +7105,8 @@ def user_offer_decision(canonical: dict[str, Any], save: dict[str, Any], player:
     context = user_offer_context(canonical, save, player, team, years)
     interest = user_offer_interest(player, aav_millions, years, guaranteed, terms, context)
     return {"terms": terms, "context": context, "interest": interest,
-            "verdict": user_offer_verdict(interest, aav_millions, terms),
+            "verdict": user_offer_verdict(interest, aav_millions, terms,
+                                          user_offer_effective_salary(player, aav_millions, guaranteed)),
             "floor_millions": user_offer_floor(player, years, guaranteed, terms, context)}
 
 
