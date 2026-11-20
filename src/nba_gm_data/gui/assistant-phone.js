@@ -82,10 +82,12 @@
       }
       autoTimer = setTimeout(() => finishDraftTradeBatch(), 2500);
       document.body.append(host);
+      updateTuck();
       return;
     }
     renderNotificationBatch();
     document.body.append(host);
+    updateTuck();
   }
   function finishDraftTradeBatch(openNotice) {
     const batch = current;
@@ -206,6 +208,24 @@
       return wait(reducedMotion ? 0 : 410);
     }).then(() => transient.remove());
   }
+  // The phone tucks smaller into the corner while it would cover an open window (the free-agency room, a player
+  // card, ...); hovering or focusing it brings it back to full size. Overlap is measured on the phone's untucked
+  // footprint (layout box, not the scaled one), so tucking never flips it back.
+  function coversOpenWindow(phone) {
+    if (!phone?.isConnected || !phone.offsetWidth) return false;
+    const left = phone.offsetLeft, top = phone.offsetTop, right = left + phone.offsetWidth, bottom = top + phone.offsetHeight;
+    return [...document.querySelectorAll(".card-board-window")].some(frame => {
+      if (frame.hidden || frame.classList.contains("is-minimized")) return false;
+      const box = frame.getBoundingClientRect();
+      return box.width > 0 && box.height > 0 && box.right > left + 12 && box.left < right && box.bottom > top + 12 && box.top < bottom;
+    });
+  }
+  function updateTuck() {
+    if (!host?.isConnected) return;
+    host.classList.toggle("is-tucked", coversOpenWindow(host));
+  }
+  if (typeof setInterval === "function") setInterval(updateTuck, 500);
+  window.addEventListener?.("resize", updateTuck);
   // Escape dismisses a showing Assistant GM text before anything else handles the key (otherwise it closed the
   // active dashboard window behind the phone). Open dialogs keep Escape for themselves.
   window.addEventListener?.("keydown", event => {
