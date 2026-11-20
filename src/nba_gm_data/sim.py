@@ -592,12 +592,8 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
         if away_excess is not None:
             away_game_context = {**(away_game_context or {}), "team_fatigue": round(away_excess, 3)}
         # Draw both scores first, so the coach's in-game minutes (foul trouble, blowout rest) can follow the game.
-        home_score = draw_team_score(canonical, home_features, away_features, coach_by_team.get(home_team["id"]),
-                                     coach_by_team.get(away_team["id"]), rng, is_home=True,
-                                     rest_context=home_game_context, opp_rest_context=away_game_context)
-        away_score = draw_team_score(canonical, away_features, home_features, coach_by_team.get(away_team["id"]),
-                                     coach_by_team.get(home_team["id"]), rng, is_home=False,
-                                     rest_context=away_game_context, opp_rest_context=home_game_context)
+        home_score, away_score = draw_both_scores(canonical, home_features, away_features, coach_by_team.get(home_team["id"]),
+                                                  coach_by_team.get(away_team["id"]), rng, home_game_context, away_game_context)
         margin = home_score["points"] - away_score["points"]
         home_players = in_game_minutes(context, home_team, home_players, margin, game_id, mode, seed, game_date,
                                        coach_by_team.get(home_team["id"]), in_game)
@@ -609,12 +605,8 @@ def sim_game_with_context(context: dict[str, Any], game_id: str, mode: str = "re
         # home box score used) handed the away team different random numbers: a reshuffle of the result, not a change
         # in team strength. Now the game's first four random numbers set both scores, and the rest of this stream only
         # splits the points between players; who scores can no longer change who wins.
-        home_score = draw_team_score(canonical, home_features, away_features, coach_by_team.get(home_team["id"]),
-                                     coach_by_team.get(away_team["id"]), rng, is_home=True,
-                                     rest_context=home_game_context, opp_rest_context=away_game_context)
-        away_score = draw_team_score(canonical, away_features, home_features, coach_by_team.get(away_team["id"]),
-                                     coach_by_team.get(home_team["id"]), rng, is_home=False,
-                                     rest_context=away_game_context, opp_rest_context=home_game_context)
+        home_score, away_score = draw_both_scores(canonical, home_features, away_features, coach_by_team.get(home_team["id"]),
+                                                  coach_by_team.get(away_team["id"]), rng, home_game_context, away_game_context)
     home_line, home_team_line = simulate_team_line(
         canonical,
         home_team,
@@ -1479,6 +1471,37 @@ def simulate_team_line(
     return player_lines, _team_line(team, team_features, opp_features, score_state, player_lines)
 
 
+# Scale on the gap between the two teams' expected ratings (1.0 = off). Tested 2026-11-19 on the betting-odds test (20
+# runs a game, same random numbers): the engine's expected margins spread wider than the market's (game-specific swings
+# 1.7x, team strengths 1.3x), and 0.85 cut the spread error vs the market 5.34 -> 4.61 (seed 1) and 5.22 -> 4.46 (seed
+# 1001), but did not improve win-picking (Brier +0.0002 / +0.0005) and narrows team records (win% spread .156 -> .141 vs
+# real .166), so it stays off. See docs/agents/tasks/winpick-shooters.md.
+MATCHUP_STRENGTH_SCALE = 1.0
+
+
+def draw_both_scores(canonical: dict[str, Any], home_features: dict[str, float], away_features: dict[str, float],
+                     home_coach: CoachRating | None, away_coach: CoachRating | None, rng: random.Random,
+                     home_context: dict[str, Any] | None, away_context: dict[str, Any] | None) -> tuple[dict, dict]:
+    """Both teams' scores from the game's first four random numbers (home possessions and rating, then away).
+
+    MATCHUP_STRENGTH_SCALE scales the gap between the two teams' expected offensive ratings (home court left out), with
+    the game's expected total unchanged."""
+    home_shift = away_shift = 0.0
+    if MATCHUP_STRENGTH_SCALE != 1.0:
+        home = draw_team_score(canonical, home_features, away_features, home_coach, away_coach, rng, is_home=True,
+                               rest_context=home_context, opp_rest_context=away_context, mean_only=True)
+        away = draw_team_score(canonical, away_features, home_features, away_coach, home_coach, rng, is_home=False,
+                               rest_context=away_context, opp_rest_context=home_context, mean_only=True)
+        gap = (home["mean_off_rating"] - home["home_mod"]) - (away["mean_off_rating"] - away["home_mod"])
+        home_shift = -(1.0 - MATCHUP_STRENGTH_SCALE) * gap / 2.0
+        away_shift = -home_shift
+    home_score = draw_team_score(canonical, home_features, away_features, home_coach, away_coach, rng, is_home=True,
+                                 rest_context=home_context, opp_rest_context=away_context, rating_shift=home_shift)
+    away_score = draw_team_score(canonical, away_features, home_features, away_coach, home_coach, rng, is_home=False,
+                                 rest_context=away_context, opp_rest_context=home_context, rating_shift=away_shift)
+    return home_score, away_score
+
+
 def draw_team_score(
     canonical: dict[str, Any],
     team_features: dict[str, float],
@@ -1490,8 +1513,13 @@ def draw_team_score(
     is_home: bool = False,
     rest_context: dict[str, Any] | None = None,
     opp_rest_context: dict[str, Any] | None = None,
+    rating_shift: float = 0.0,
+    mean_only: bool = False,
 ) -> dict[str, Any]:
-    """Possessions, offensive rating and points for one team (two draws from the game RNG)."""
+    """Possessions, offensive rating and points for one team (two draws from the game RNG).
+
+    rating_shift: added to the expected offensive rating (matchup_rating_shifts). mean_only: return only the expected
+    offensive rating and the home-court term, with no random draw."""
     coach_mod = scaled_coach_effect(coach, team_features)
     opp_coach_mod = scaled_coach_effect(opp_coach, opp_features)
     availability_mod = availability_gap_effect(team_features)
@@ -1505,6 +1533,17 @@ def draw_team_score(
     matchup_total_mod = matchup_total_environment_effect(team_features, opp_features)
     creator_mod = creator_advantage(team_features, opp_features)
     spacing_mod = spacing_creation_interaction(team_features)
+
+    def expected_rating() -> float:
+        return mean_off_rating(
+            canonical, team_features, opp_features, coach_mod, opp_coach_mod, shot_diet,
+            home_mod=home_mod, rest_mod=rest_mod, age_mod=age_mod, opp_age_mod=opp_age_mod,
+            availability_mod=availability_mod, opp_availability_mod=opp_availability_mod, game_env_mod=game_env_mod,
+            matchup_total_mod=matchup_total_mod, creator_mod=creator_mod, spacing_mod=spacing_mod, rest_context=rest_context,
+        )
+
+    if mean_only:
+        return {"mean_off_rating": expected_rating(), "home_mod": home_mod}
     possessions = clamp(
         BASE_POSSESSIONS
         + (team_features["stamina"] - 50) * 0.05
@@ -1521,12 +1560,7 @@ def draw_team_score(
         84,
         120,
     )
-    off_rating = mean_off_rating(
-        canonical, team_features, opp_features, coach_mod, opp_coach_mod, shot_diet,
-        home_mod=home_mod, rest_mod=rest_mod, age_mod=age_mod, opp_age_mod=opp_age_mod,
-        availability_mod=availability_mod, opp_availability_mod=opp_availability_mod, game_env_mod=game_env_mod,
-        matchup_total_mod=matchup_total_mod, creator_mod=creator_mod, spacing_mod=spacing_mod, rest_context=rest_context,
-    ) + rng.gauss(0, 9.2)
+    off_rating = expected_rating() + rating_shift + rng.gauss(0, 9.2)
     points = max(70, round(possessions * off_rating / 100))
     return {
         "coach_mod": coach_mod, "opp_coach_mod": opp_coach_mod, "availability_mod": availability_mod,

@@ -45,6 +45,26 @@ class ScoreStreamTests(unittest.TestCase):
         self.assertEqual(before, after)
 
 
+    def test_strength_scale_moves_the_gap_not_the_total(self):
+        from nba_gm_data.sim import draw_team_score
+        canonical = self.context["canonical"]
+        teams = canonical["teams"][:2]
+        pools = [sim.game_player_pool(self.context, self.games[0], team, "sandbox-sim") for team in teams]
+        feats = [sim.game_team_features(self.context, canonical, team, pool, "sandbox-sim")
+                 for team, pool in zip(teams, pools)]
+        means = [draw_team_score(canonical, feats[0], feats[1], None, None, None, is_home=True, mean_only=True),
+                 draw_team_score(canonical, feats[1], feats[0], None, None, None, is_home=False, mean_only=True)]
+        scored = {}
+        for scale in (1.0, 0.8):
+            with patch.object(sim, "MATCHUP_STRENGTH_SCALE", scale):
+                scored[scale] = sim.draw_both_scores(canonical, feats[0], feats[1], None, None, random.Random(5), None, None)
+        before = [s["off_rating"] for s in scored[1.0]]
+        after = [s["off_rating"] for s in scored[0.8]]
+        self.assertAlmostEqual(sum(before), sum(after), places=9)
+        gap = (means[0]["mean_off_rating"] - means[0]["home_mod"]) - (means[1]["mean_off_rating"] - means[1]["home_mod"])
+        self.assertAlmostEqual((after[0] - after[1]) - (before[0] - before[1]), -0.2 * gap, places=9)
+
+
 class ShooterPointsTests(unittest.TestCase):
     def test_blend_leaves_non_shooters_alone(self):
         self.assertEqual(box_rates.shot_points_blend(20.0, 0.25, 4.0, .36, .55, .3, .8), 20.0)
