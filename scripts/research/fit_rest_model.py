@@ -74,7 +74,6 @@ FEATURES = {
     "second night of a back-to-back": lambda r: r["b2b"],
     "first night of a back-to-back": lambda r: r["b2b_first"],
     "second night on the road": lambda r: r["b2b"] * (1 - r["home"]),
-    "age over 27 (per year, up to 34)": lambda r: max(0.0, min(34.0, r["age"] or 27.0) - 27.0),
     "star (top 45)": lambda r: r["star"],
     "opponent weakness (per .100 below .500)": lambda r: (0.5 - r["opp_pct"]) * 10.0,
     "season progress (0 to 1)": lambda r: (r["game_no"] or 41) / 82.0,
@@ -84,14 +83,28 @@ FEATURES = {
     "road trip game 3+": lambda r: int(r["trip"] >= 3),
     "minutes a game (per 5 over 30)": lambda r: (r["mpg"] - 30.0) / 5.0,
     "back-to-back within 5 games of a return": lambda r: r["b2b"] * int(r.get("since_return") is not None and r["since_return"] <= 5),
+    # OVERNIGHT-REST-GAMES: national TV games (ESPN, ABC, NBC, Peacock, Prime Video; scripts/research/national_tv.py)
+    "national TV (ESPN/ABC/NBC/Peacock/Prime)": lambda r: r.get("tv", 0),
+    # OVERNIGHT-REST-GAMES: the age shape (in-sample, the linear age term under-rested 30-33s on back-to-backs and
+    # over-rested players under 25)
+    "age 30+ on back-to-back nights": lambda r: int((r["age"] or 27.0) >= 30) * max(r["b2b"], r["b2b_first"]),
+    "age per year under 27 (down to 21)": lambda r: max(0.0, 27.0 - max(21.0, r["age"] or 27.0)),
 }
 EXTRA = {
+    # the original linear age term (SMART-REST); with the age shape below it adds nothing (x0.99)
+    "age over 27 (per year, up to 34)": lambda r: max(0.0, min(34.0, r["age"] or 27.0) - 27.0),
     "back-to-back miles (per 1000)": lambda r: r["b2b"] * r["miles"] / 1000.0,
     "travel miles (per 1000)": lambda r: r["miles"] / 1000.0,
     "time zones crossed": lambda r: abs(r["tz"]),
     "star x opponent weakness": lambda r: r["star"] * (0.5 - r["opp_pct"]) * 10.0,
     "own win pct (per .100 over .500)": lambda r: (r["win_pct"] - 0.5) * 10.0,
     "home (other nights)": lambda r: r["home"] * (1 - r["b2b"]),
+    "national TV, star": lambda r: r.get("tv", 0) * r["star"],
+    "national TV, not a star": lambda r: r.get("tv", 0) * (1 - r["star"]),
+    "NBA TV only": lambda r: r.get("nbatv", 0),
+    "age over 27 on back-to-back nights (per year)": lambda r: max(0.0, min(34.0, r["age"] or 27.0) - 27.0) * max(r["b2b"], r["b2b_first"]),
+    "age over 27 on second nights (per year)": lambda r: max(0.0, min(34.0, r["age"] or 27.0) - 27.0) * r["b2b"],
+    "NBA TV only, star": lambda r: r.get("nbatv", 0) * r["star"],
 }
 
 

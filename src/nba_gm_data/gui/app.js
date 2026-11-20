@@ -10015,7 +10015,7 @@ function clipboardCalendarDay(cell, games, current, team) {
   return `<${tag} class="clipboard-calendar-day${past ? " past" : ""}${cell.date === current ? " today" : ""}${completed ? " completed" : ""}${cell.date === tradeDeadlineDate() ? " trade-deadline-day" : ""}" ${clickable ? `type="button" data-box-score="${escapeAttr(gameId)}" aria-label="Box score: ${escapeAttr(opponent)} ${cell.date} ${escapeAttr(score)}"` : ""}>
     <span class="clipboard-calendar-date">${Number(cell.date.slice(-2))}${cell.date === current ? `<small>Today</small>` : ""}</span>
     ${cell.date === tradeDeadlineDate() ? '<strong class="trade-deadline-day-label">Trade deadline</strong>' : ""}
-    ${game ? `<div class="clipboard-calendar-matchup">${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(opponent)}" />` : ""}<span>${home ? "vs" : "@"} ${escapeHtml(opponent)}</span>${displayScore ? `<strong class="${score.startsWith("W") ? "win" : score.startsWith("L") ? "loss" : ""}">${escapeHtml(displayScore)}</strong>` : ""}</div>` : ""}
+    ${game ? `<div class="clipboard-calendar-matchup">${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(opponent)}" />` : ""}<span>${home ? "vs" : "@"} ${escapeHtml(opponent)}</span>${game.national_tv ? '<small class="national-tv-marker" title="National TV game: stars are expected to play">TV</small>' : ""}${displayScore ? `<strong class="${score.startsWith("W") ? "win" : score.startsWith("L") ? "loss" : ""}">${escapeHtml(displayScore)}</strong>` : ""}</div>` : ""}
   </${tag}>`;
 }
 

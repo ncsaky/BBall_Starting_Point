@@ -113,8 +113,29 @@ def race_context(team: str, teams: list[str], wins, losses, total) -> dict:
             "seed_movement": seed_movement(team, order, wins, losses, total)}
 
 
-def build_rows(team_games: list[dict], schedule: list[dict], ages: dict[str, float], stars: set[str] | None = None) -> list[dict]:
+MAJOR_NETWORKS = {"ESPN", "ABC", "NBC", "Peacock", "Prime Video", "NBCSN"}
+
+
+def national_tv_games() -> dict[str, str]:
+    """ESPN game id -> "major" (ESPN, ABC, NBC, Peacock, Prime Video) or "nbatv" (NBA TV only), from
+    data/research/national_tv_2025_26.json (scripts/research/national_tv.py). Empty when the file is missing."""
+    path = ROOT / "data/research/national_tv_2025_26.json"
+    if not path.exists():
+        return {}
+    out = {}
+    for game_id, g in json.loads(path.read_text())["games"].items():
+        nets = set(g.get("national") or [])
+        if nets & MAJOR_NETWORKS:
+            out[game_id] = "major"
+        elif "NBA TV" in nets:
+            out[game_id] = "nbatv"
+    return out
+
+
+def build_rows(team_games: list[dict], schedule: list[dict], ages: dict[str, float], stars: set[str] | None = None,
+               national: dict[str, str] | None = None) -> list[dict]:
     ctx = league_schedule_context(schedule)
+    national = national_tv_games() if national is None else national
     stand = standings_before(team_games)
     by_team = defaultdict(list)
     for tg in team_games:
@@ -183,6 +204,9 @@ def build_rows(team_games: list[dict], schedule: list[dict], ages: dict[str, flo
                     "line_in_play": int(st["seed_movement"]["line_in_play"]),
                     "best": st["seed_movement"]["best"], "worst": st["seed_movement"]["worst"],
                     "prev_played": int(prev_played), "since_return": since,
+                    # real games: the national TV list; simulated seasons: the schedule's own flag
+                    "tv": int(national.get(str(tg["game"])) == "major" or bool(tg.get("national_tv"))),
+                    "nbatv": int(national.get(str(tg["game"])) == "nbatv"),
                 })
     return rows
 
@@ -255,6 +279,13 @@ def report(rows: list[dict]) -> None:
     rate_table(late, sit, "Last 20 games (excl. final 2): team situation")
     rate_table([r for r in late if r["star"]], sit, "Last 20 games, stars: team situation")
     rate_table(rows, lambda r: r["date"][:7], "Month")
+    tvk = lambda r: "national (major)" if r["tv"] else "NBA TV only" if r["nbatv"] else "local"  # noqa: E731
+    rate_table(rows, tvk, "National TV")
+    rate_table([r for r in rows if r["star"]], tvk, "Stars: national TV")
+    rate_table([r for r in rows if not r["star"]], tvk, "Other regulars: national TV")
+    rate_table([r for r in rows if r["b2b"]], tvk, "Second night: national TV")
+    rate_table([r for r in rows if r["b2b"] and r["star"]], tvk, "Stars, second night: national TV")
+
     rate_table(rows, lambda r: ("after missing prev" if not r["prev_played"] else None), "check")
 
 

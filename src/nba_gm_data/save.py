@@ -152,6 +152,7 @@ def _create_league_save(
         if slot.get("player_id") and slot.get("status") == "free_agent"
     )
     opening_schedule = generate_future_schedule(root, CANONICAL_SEASON, season_start_year(CANONICAL_SEASON))
+    mark_national_tv_safely(opening_schedule, canonical)
     start_date = new_career_start_date(opening_schedule)
     save = {
         "version": SAVE_VERSION,
@@ -270,6 +271,9 @@ def _create_league_save(
     from .contract_imports import initialize_imported_obligations
     initialize_imported_obligations(save, canonical)
     initialize_new_career_health(save, start_date)
+    # Players already out when the season opens: offseason and camp injuries, and last season's left-overs (a new
+    # career's previous season was never simulated).
+    apply_season_start_injuries(root, canonical, save, opening_schedule, seed, carried=True)
     if normalized_game_mode == "fantasy_draft":
         from .fantasy_draft import initialize_fantasy_draft
 
@@ -2733,6 +2737,7 @@ def calendar_view(
                     "home_score": result.get("home_score") if result else None,
                     "user_result": user_result,
                     "overtime_periods": int(result.get("overtime_periods") or max([int(line.get("overtime_periods") or 0) for line in result.get("team_lines", [])], default=0)) if result else 0,
+                    "national_tv": bool(game.get("national_tv")),
                 }
             )
     teams = {team["id"]: team for team in canonical.get("teams", [])}
@@ -4518,6 +4523,7 @@ def complete_offseason_and_rollover(
     next_label = season_label_from_start(next_start)
     offseason_changes = apply_offseason_roster_transitions(canonical, save, current_season, next_label, seed)
     generated = generate_future_schedule(root, next_label, next_start)
+    mark_national_tv_safely(generated, canonical, save)
     save.setdefault("season_schedules", {})[next_label] = generated
     save["meta"]["season"] = next_label
     save["meta"]["season_index"] = int(save["meta"].get("season_index") or len(save.get("season_history", []))) + 1
@@ -4549,6 +4555,8 @@ def complete_offseason_and_rollover(
     save["free_agency_state"] = {}
     clean_free_agency_state(save, next_label)
     refresh_health_for_new_season(save, f"{next_start}-10-01")
+    # Offseason and training-camp injuries; the season just played already carries its own long injuries over.
+    apply_season_start_injuries(root, canonical_with_save(canonical, save), save, generated, seed, carried=False)
     age_staff_contracts(save, canonical, seed=seed)
     advance_lifecycle_to(canonical, save, f"{next_start}-10-01", seed, root)
     save["applied_development_months"] = [m for m in save.get("applied_development_months", []) if m >= f"{next_start}-10"]
@@ -10803,6 +10811,34 @@ def generate_future_schedule(root: str | Path, season: str, start_year: int) -> 
         "games": sorted(games, key=lambda item: (item["gameDate"], str(item["externalGameId"]))),
         "notes": "Generated 82-game regular season from the corrected 2025-26 template with deterministic randomized opponents; excludes Cup final and superseded postponements.",
     }
+
+
+def apply_season_start_injuries(root: str | Path, canonical: dict[str, Any], save: dict[str, Any],
+                                schedule: dict[str, Any], seed: int, *, carried: bool) -> list[dict[str, Any]]:
+    """Players out when the season opens (health.season_start_injuries): their health states and injury events. A
+    failure only skips them."""
+    try:
+        from .health import season_start_injuries
+        events = season_start_injuries(root, canonical, save.setdefault("health_states", []), (schedule or {}).get("games") or [],
+                                       str((schedule or {}).get("season") or ""), int(seed or 1), carried=carried)
+    except Exception:  # pragma: no cover - logged
+        logging.getLogger(__name__).exception("season-start injuries failed")
+        return []
+    save.setdefault("injury_events", []).extend(events)
+    return events
+
+
+def mark_national_tv_safely(schedule: dict[str, Any], canonical: dict[str, Any], save: dict[str, Any] | None = None) -> None:
+    """Flag the season's national TV games (national_tv.py) from the league as it stands: the save's rosters and the
+    season just finished at a rollover. A failure only leaves the season without a TV slate."""
+    try:
+        from .national_tv import mark_schedule_national_tv
+        if not (schedule or {}).get("games"):
+            return
+        league = canonical_with_save(canonical, save) if save is not None else canonical
+        mark_schedule_national_tv(schedule, league, (save or {}).get("team_records"))
+    except Exception:  # pragma: no cover - logged
+        logging.getLogger(__name__).exception("national TV slate failed")
 
 
 def randomize_future_matchups(template_games: list[dict[str, Any]], season: str) -> list[dict[str, Any]]:

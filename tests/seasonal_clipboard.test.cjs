@@ -751,6 +751,12 @@ test('future calendar games show logos without invented scores or box-score butt
   assert.doesNotMatch(offDay,/<img/);
 });
 
+test('national TV games carry a small TV marker; other games do not', () => {
+  const game = {game_id:'tv',date:'2027-01-07',home_team:'BOS',away_team:'MIA',national_tv:true};
+  assert.match(calendar.clipboardCalendarDay({date:game.date},[game],'2027-01-06','MIA'),/class="national-tv-marker"[^>]*>TV</);
+  assert.doesNotMatch(calendar.clipboardCalendarDay({date:game.date},[{...game,national_tv:false}],'2027-01-06','MIA'),/national-tv-marker/);
+});
+
 const actions = {state:{home:{save:{legal_actions:[]}},data:{dashboard:{legal_actions:['trades']}}},dashboardPhaseKind:()=>''};
 vm.createContext(actions);
 vm.runInContext(app.slice(app.indexOf('function isClipboardPhase('),app.indexOf('async function openClipboardWindow(')),actions);
