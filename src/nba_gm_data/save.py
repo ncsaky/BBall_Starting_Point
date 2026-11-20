@@ -2238,6 +2238,7 @@ def advance_save_day(
         context["schedule"] = schedule_for_save(root, save)
         context["indices"] = build_sim_indices(context)
         context["indices"]["coach_by_team"] = save_coach_ratings(runtime_canonical, save)
+        context["starting_lineups"] = saved_starting_lineups(save)
         simulated_game_ids = set(save.get("schedule_state", {}).get("simulated_game_ids", []))
         for game in scheduled_games_between(root, save, current, target):
             game_id = str(game.get("externalGameId"))
@@ -3169,6 +3170,16 @@ def starting_lineup_slots(canonical: dict[str, Any], save: dict[str, Any], team_
         if not existing or (isinstance(existing, dict) and existing.get("slots") != stored_slots):
             save["starting_lineups"][team_id] = {"slots": stored_slots, "source": source}
     return slots
+
+
+def saved_starting_lineups(save: dict[str, Any]) -> dict[str, list[str]]:
+    """Each team's stored starting five in slot order (the sim's starters; sim.game_starters fills open spots)."""
+    lineups = {}
+    for team_id, stored in (save.get("starting_lineups") or {}).items():
+        slots = stored.get("slots") if isinstance(stored, dict) else None
+        if isinstance(slots, dict):
+            lineups[team_id] = [slots[key] for key in sorted(slots, key=lambda key: int(key)) if slots[key]]
+    return lineups
 
 
 def starting_five_rows(canonical: dict[str, Any], save: dict[str, Any], team_id: str, persist: bool = True) -> list[dict[str, Any]]:
@@ -4255,6 +4266,7 @@ def simulate_playoff_game(
     context["schedule"] = list(context.get("schedule") or []) + [game]
     context["indices"] = build_sim_indices(context)
     context["indices"]["coach_by_team"] = save_coach_ratings(active, save)
+    context["starting_lineups"] = saved_starting_lineups(save)
     result = to_plain(sim_game_with_context(context, game_id, mode="sandbox-sim", seed=seed))
     record_playoff_game_result(save, game, result)
     add_box_score_fatigue(active, save.setdefault("health_states", []), result, game_date, root)
@@ -5317,6 +5329,21 @@ def team_top_minutes_ids(player_lines: list[dict[str, Any]], count: int = 5) -> 
     return top
 
 
+# Sixth Man: "starts" counts real starts (box scores record the starting five since 2026-11-20); "top_minutes" is the
+# earlier stand-in (a game outside the team's five highest minutes counts as off the bench). A season line without
+# start counts falls back to the stand-in.
+SIXTH_MAN_BENCH_RULE = "starts"
+
+
+def sixth_man_bench_counts(totals: dict[str, Any]) -> dict[str, Any]:
+    """bench_games / top_minutes_games (games started, or among the top five in minutes) under SIXTH_MAN_BENCH_RULE."""
+    if SIXTH_MAN_BENCH_RULE == "starts" and ("games_started" in totals or "games_off_bench" in totals):
+        return {"bench_games": int(totals.get("games_off_bench") or 0), "top_minutes_games": int(totals.get("games_started") or 0),
+                "bench_known": True, "bench_basis": "starts"}
+    return {"bench_games": int(totals.get("games_bench") or 0), "top_minutes_games": int(totals.get("games_top_minutes") or 0),
+            "bench_known": "games_bench" in totals or "games_top_minutes" in totals, "bench_basis": "top_minutes"}
+
+
 def count_award_game(totals: dict[str, Any], line: dict[str, Any], top_minutes_ids: set[str] | None) -> None:
     """Season counters for the award rules: games of 20+ minutes and of 15-20 minutes (the league's 65-game rule
     counts both, the second kind at most twice), and games outside the team's top five in minutes (Sixth Man)."""
@@ -5327,6 +5354,10 @@ def count_award_game(totals: dict[str, Any], line: dict[str, Any], top_minutes_i
         totals["games_15_min"] = int(totals.get("games_15_min") or 0) + 1
     if top_minutes_ids is not None and minutes > 0:
         key = "games_top_minutes" if str(line.get("player_id")) in top_minutes_ids else "games_bench"
+        totals[key] = int(totals.get(key) or 0) + 1
+    if "starter" in line and minutes > 0:
+        # Box scores record the five who started (sim.game_starters, 2026-11-20).
+        key = "games_started" if line["starter"] else "games_off_bench"
         totals[key] = int(totals.get(key) or 0) + 1
 
 
@@ -9101,7 +9132,7 @@ AWARD_CRITERIA = {
     "MVP": "Scoring, playmaking and rebounding per game, the player's on-court value, his team's winning percentage and games played. 65-game rule.",
     "DPOY": "Defensive and rim-protection ratings, defensive effort and screen navigation, blocks and steals per game, team winning. 65-game rule.",
     "ROTY": "First-season players only: points, assists and rebounds per game, on-court value and minutes. The league's 65-game rule does not apply to this award; 35 games and 650 minutes are needed.",
-    "SMOY": "Came off the bench in more games than he started (a game outside his team's five highest minutes counts as off the bench, because box scores do not record starters): bench scoring first, then playmaking, rebounding, on-court value and team winning. 65-game rule.",
+    "SMOY": "Came off the bench in more games than he started (box scores record the starting five): bench scoring first, then playmaking, rebounding, on-court value and team winning. 65-game rule.",
     "MIP": "The largest rise in production per game (points + 0.4 x rebounds + 0.7 x assists + steals + 0.7 x blocks) over last season, which needs 25+ games last season and 10+ production per game now. 65-game rule.",
     "FMVP": "The champion's player with the highest total Game Score across the NBA Finals (points, shooting efficiency, rebounds, assists, steals, blocks and turnovers; fouls are not recorded).",
     "ALL_NBA": "Fifteen players, no positions (as in the real vote since 2024), ranked by the same score as MVP: First Team 1-5, Second 6-10, Third 11-15. 65-game rule.",
@@ -9186,9 +9217,7 @@ def generate_league_awards(canonical: dict[str, Any], save: dict[str, Any], seas
                 "games": games,
                 "qualifying_games": qualifying,
                 "eligible": qualifying >= AWARD_MIN_GAMES,
-                "bench_games": int(totals.get("games_bench") or 0),
-                "top_minutes_games": int(totals.get("games_top_minutes") or 0),
-                "bench_known": "games_bench" in totals or "games_top_minutes" in totals,
+                **sixth_man_bench_counts(totals),
                 "minutes_per_game": round(mpg, 1),
                 "points_per_game": per_game_stat(totals, "points"),
                 "rebounds_per_game": per_game_stat(totals, "rebounds"),
@@ -9287,7 +9316,8 @@ def generate_league_awards(canonical: dict[str, Any], save: dict[str, Any], seas
         winner = max(pool, key=score_fn)
         extra = None
         if award_name == "SMOY":
-            extra = {"bench_games": winner["bench_games"], "top_minutes_games": winner["top_minutes_games"]}
+            extra = {"bench_games": winner["bench_games"], "top_minutes_games": winner["top_minutes_games"],
+                     "bench_basis": winner.get("bench_basis", "top_minutes")}
         if award_name == "MIP":
             extra = {"production": winner["production"], "previous_production": winner["previous_production"]}
         awards.append(record(award_name, winner, score_fn(winner), extra=extra))

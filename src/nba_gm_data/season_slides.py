@@ -328,6 +328,8 @@ def recap_awards_slide(ctx: dict[str, Any]) -> dict[str, Any]:
 
 def award_detail(row: dict[str, Any]) -> str:
     if row.get("award") == "SMOY":
+        if row.get("bench_basis") == "starts":
+            return f"Off the bench in {row.get('bench_games')} games, started {row.get('top_minutes_games')}."
         return f"Off the bench in {row.get('bench_games')} games, among his team's top five in minutes in {row.get('top_minutes_games')}."
     if row.get("award") == "MIP" and row.get("previous_production") is not None:
         return f"Production per game rose from {float(row['previous_production']):.1f} to {float(row.get('production') or 0):.1f}."
