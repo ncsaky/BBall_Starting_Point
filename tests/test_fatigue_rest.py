@@ -102,10 +102,12 @@ class FatigueModelTests(unittest.TestCase):
         normal = sim.rest_effect({"rest_days": 1, "team_fatigue": sim.team_fatigue_excess(pool(sim.FATIGUE_TEAM_REFERENCE))})
         self.assertEqual(normal["offense"], 0.0)
         tired = sim.rest_effect({"rest_days": 0, "team_fatigue": sim.team_fatigue_excess(pool(sim.FATIGUE_TEAM_REFERENCE + 6))})
-        self.assertAlmostEqual(tired["offense"], -1.5, delta=0.1)
+        # Rest effects are scaled by REST_EFFECT_SCALE since the 2026-11-20 game-context refit (0.8: -1.5 -> -1.2).
+        scale = sim.REST_EFFECT_SCALE
+        self.assertAlmostEqual(tired["offense"], -1.5 * scale, delta=0.1)
         rested = sim.rest_effect({"rest_days": 3, "team_fatigue": sim.team_fatigue_excess(pool(0.0))})
-        self.assertEqual(rested["offense"], sim.FATIGUE_TEAM_BONUS_CAP)
-        self.assertEqual(sim.rest_effect({"rest_days": 0})["offense"], -1.35)
+        self.assertAlmostEqual(rested["offense"], sim.FATIGUE_TEAM_BONUS_CAP * scale, places=4)
+        self.assertAlmostEqual(sim.rest_effect({"rest_days": 0})["offense"], -1.35 * scale, places=4)
 
     def test_individual_penalty_only_when_very_tired(self):
         features = {"impact": 60.0}

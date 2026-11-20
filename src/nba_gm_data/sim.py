@@ -1587,20 +1587,21 @@ def draw_both_scores(canonical: dict[str, Any], home_features: dict[str, float],
     the game's expected total unchanged."""
     home_shift = away_shift = 0.0
     home_pace = away_pace = None
-    if MATCHUP_STRENGTH_SCALE != 1.0 or SHARED_PACE:
+    if MATCHUP_STRENGTH_SCALE != 1.0:
         home = draw_team_score(canonical, home_features, away_features, home_coach, away_coach, rng, is_home=True,
                                rest_context=home_context, opp_rest_context=away_context, mean_only=True)
         away = draw_team_score(canonical, away_features, home_features, away_coach, home_coach, rng, is_home=False,
                                rest_context=away_context, opp_rest_context=home_context, mean_only=True)
-        if MATCHUP_STRENGTH_SCALE != 1.0:
-            gap = (home["mean_off_rating"] - home["home_mod"]) - (away["mean_off_rating"] - away["home_mod"])
-            home_shift = -(1.0 - MATCHUP_STRENGTH_SCALE) * gap / 2.0
-            away_shift = -home_shift
-        if SHARED_PACE:
-            game_expected = (home["expected_possessions"] + away["expected_possessions"]) / 2.0
-            game_pace = game_expected + rng.gauss(0, POSSESSION_SHARED_SD)
-            home_pace = game_pace + POSSESSION_OWN_EXPECTED_SHARE * (home["expected_possessions"] - game_expected)
-            away_pace = game_pace + POSSESSION_OWN_EXPECTED_SHARE * (away["expected_possessions"] - game_expected)
+        gap = (home["mean_off_rating"] - home["home_mod"]) - (away["mean_off_rating"] - away["home_mod"])
+        home_shift = -(1.0 - MATCHUP_STRENGTH_SCALE) * gap / 2.0
+        away_shift = -home_shift
+    if SHARED_PACE:
+        home_expected = expected_team_possessions(home_features, away_features, home_coach, away_coach, home_context, away_context)
+        away_expected = expected_team_possessions(away_features, home_features, away_coach, home_coach, away_context, home_context)
+        game_expected = (home_expected + away_expected) / 2.0
+        game_pace = game_expected + rng.gauss(0, POSSESSION_SHARED_SD)
+        home_pace = game_pace + POSSESSION_OWN_EXPECTED_SHARE * (home_expected - game_expected)
+        away_pace = game_pace + POSSESSION_OWN_EXPECTED_SHARE * (away_expected - game_expected)
     home_score = draw_team_score(canonical, home_features, away_features, home_coach, away_coach, rng, is_home=True,
                                  rest_context=home_context, opp_rest_context=away_context, rating_shift=home_shift,
                                  game_pace=home_pace)
@@ -1608,6 +1609,34 @@ def draw_both_scores(canonical: dict[str, Any], home_features: dict[str, float],
                                  rest_context=away_context, opp_rest_context=home_context, rating_shift=away_shift,
                                  game_pace=away_pace)
     return home_score, away_score
+
+
+def _expected_possessions(team_features: dict[str, float], opp_features: dict[str, float], coach_mod: dict[str, float],
+                          opp_coach_mod: dict[str, float], availability_mod: dict[str, float], rest_mod: dict[str, float],
+                          age_mod: dict[str, float], game_env_mod: dict[str, float], matchup_total_mod: dict[str, float]) -> float:
+    return (
+        BASE_POSSESSIONS
+        + (team_features["stamina"] - 50) * 0.05
+        + (team_features["offensive_rebounding"] - 50) * 0.025
+        + coach_mod["tempo"]
+        + availability_mod["pace"]
+        + rest_mod["pace"]
+        + age_mod["pace"]
+        + game_env_mod["pace"]
+        + matchup_total_mod["pace"]
+        + pace_habit_possessions(team_features, opp_features)
+        - opp_coach_mod["tempo_control"] * 0.25
+    )
+
+
+def expected_team_possessions(team_features: dict[str, float], opp_features: dict[str, float], coach: CoachRating | None,
+                              opp_coach: CoachRating | None, rest_context: dict[str, Any] | None,
+                              opp_rest_context: dict[str, Any] | None) -> float:
+    """A team's expected possessions before any random draw (the pace terms of draw_team_score only; cheap)."""
+    return _expected_possessions(
+        team_features, opp_features, scaled_coach_effect(coach, team_features), scaled_coach_effect(opp_coach, opp_features),
+        availability_gap_effect(team_features), rest_effect(rest_context), age_fatigue_effect(team_features, rest_context),
+        game_environment_effect(rest_context, opp_rest_context), matchup_total_environment_effect(team_features, opp_features))
 
 
 def draw_team_score(
@@ -1654,19 +1683,8 @@ def draw_team_score(
         )
 
     def expected_possessions() -> float:
-        return (
-            BASE_POSSESSIONS
-            + (team_features["stamina"] - 50) * 0.05
-            + (team_features["offensive_rebounding"] - 50) * 0.025
-            + coach_mod["tempo"]
-            + availability_mod["pace"]
-            + rest_mod["pace"]
-            + age_mod["pace"]
-            + game_env_mod["pace"]
-            + matchup_total_mod["pace"]
-            + pace_habit_possessions(team_features, opp_features)
-            - opp_coach_mod["tempo_control"] * 0.25
-        )
+        return _expected_possessions(team_features, opp_features, coach_mod, opp_coach_mod, availability_mod, rest_mod,
+                                     age_mod, game_env_mod, matchup_total_mod)
 
     if mean_only:
         return {"mean_off_rating": expected_rating(), "home_mod": home_mod, "expected_possessions": expected_possessions()}
