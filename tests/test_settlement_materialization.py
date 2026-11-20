@@ -44,13 +44,16 @@ class SettlementMaterializationTests(unittest.TestCase):
                 # These are historical inputs, not permanent approval grants.
                 # Later model changes may veto an archived offer. pair() must
                 # still match the full fresh reference, including every write.
-                self.assertIn(result['status'],('applied','not_applied_roster_plan'))
+                # TRADE-VOLUME: the trade code now uses the real $200.4M tax line and $221.7M hard cap, so an
+                # archived offer may also fail today's salary legality (Minnesota / Phoenix, DiVincenzo).
+                self.assertIn(result['status'],('applied','not_applied_roster_plan','not_applied_salary_legality'))
                 if result['status']=='applied':
                     self.assertEqual(overlay.call_count,4)  # Three reference + one shared.
                 else:
                     self.assertTrue(result['issues'])
                     self.assertEqual(saved,case['saved'])
-                    self.assertEqual(overlay.call_count,3)  # No entitlement overlay after a roster veto.
+                    # No entitlement overlay after a roster veto; a salary-legality veto comes before the roster overlay.
+                    self.assertEqual(overlay.call_count,2 if result["status"]=="not_applied_salary_legality" else 3)
                 self.assertFalse(any(k.startswith('_') for k in saved))
 
     def test_sequential_settlements_rebuild_after_each_preceding_trade(self):
@@ -69,7 +72,7 @@ class SettlementMaterializationTests(unittest.TestCase):
             with patch.object(tx,'_BilateralSettlementMaterialization',new=materialize):
                 actual=tx.apply_trade_to_state(new,*case['args'],canonical=self.source,**case['kwargs'])
             self.assertEqual(actual,expected);self.assertEqual(new,old)
-            self.assertIn(actual['status'],('applied','not_applied_roster_plan'))
+            self.assertIn(actual['status'],('applied','not_applied_roster_plan','not_applied_salary_legality'))
             if actual['status']=='applied':
                 applied+=1
             else:
@@ -127,7 +130,10 @@ class SettlementMaterializationTests(unittest.TestCase):
         for key in ('rotation_snapshots','rotation_baselines','generated_health_profiles'):saved.pop(key,None)
         pick=next(a for side in ('from_assets','to_assets') for a in offer['proposal'][side] if a['kind']=='pick')
         pick['nested_entitlement']={'obligation_ids':['stale-entitlement']}
-        result,new=self.pair(saved)
+        # Isolate the entitlement check from the live roster check that runs before it: with the real tax line
+        # (TRADE-VOLUME) and this test's dropped rotation projections, Cleveland's draft-spending check vetoes first.
+        with patch('nba_gm_data.trade_roster.live_roster_issues', return_value=[]):
+            result,new=self.pair(saved)
         self.assertEqual(result['status'],'not_applied_stale_assets')
         changed={k for k in saved.keys()|new.keys() if saved.get(k)!=new.get(k)}
         self.assertTrue(changed)
