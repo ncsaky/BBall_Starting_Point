@@ -5064,16 +5064,12 @@ def initialize_free_agency_market(canonical: dict[str, Any], save_path: Path, us
         player_id for player_id in save.get("free_agent_player_ids", [])
         if player_id not in state.setdefault("player_asks_millions", {})
     ]
-    report_by_id = {}
     if missing_asks:
         report_by_id = canonical_free_agent_market_by_id(canonical)
         priced = with_transaction_context(active)
-    for player_id in missing_asks:
-        if player_id in state.setdefault("player_asks_millions", {}):
-            continue
-        player = next((item for item in active.get("players", []) if item.get("id") == player_id), {})
-        market = with_star_market_ask(priced, save, player, report_by_id.get(player_id) or {})
-        state["player_asks_millions"][player_id] = free_agency_initial_ask(player, market)
+        players = {player["id"]: player for player in active.get("players", [])}
+        for player_id in missing_asks:
+            seed_free_agency_ask(priced, save, players.get(player_id, {"id": player_id}), report_by_id.get(player_id) or {})
         changed = True
     if changed:
         write_save(save_path, save)
@@ -5089,22 +5085,51 @@ def initialize_free_agency_market(canonical: dict[str, Any], save_path: Path, us
 
 def with_star_market_ask(active: dict[str, Any], save: dict[str, Any], player: dict[str, Any],
                          market: dict[str, Any]) -> dict[str, Any]:
-    """A free agent without precomputed market research who is a starter or better asks at least the contract-market
-    price (TRADE-VOLUME-2, contract_ai.star_market_ask_millions); everyone else keeps the research or minutes rule."""
+    """Keep researched asks and the star floor. Fit unresearched rotation and depth asks."""
     if not player or float(market.get("projected_aav_millions") or 0.0):
         return market
-    from .contract_ai import star_market_ask_millions
+    from .contract_ai import (
+        fitted_free_agent_ask_millions, free_agent_salary_bounds_millions, star_market_ask_millions, years_of_service,
+    )
+
+    season = contract_start_season_for_signing(save)
     try:
-        star = star_market_ask_millions(active, player, contract_start_season_for_signing(save))
-    except (KeyError, ValueError, TypeError):  # no inputs to price him with: the minutes rule
+        star = star_market_ask_millions(active, player, season)
+    except (KeyError, ValueError, TypeError):  # Missing inputs for the existing star quote.
         return market
-    if star is None or star <= display_minutes_projection(player) * 0.48:
+    if star is not None:
+        if star <= display_minutes_projection(player) * 0.48:
+            return market
+        return {**market, "projected_aav_millions": star, "ask_source": "contract_market_star"}
+    ask = fitted_free_agent_ask_millions(active, player, season)
+    if ask is None:
         return market
-    return {**market, "projected_aav_millions": star, "ask_source": "contract_market_star"}
+    bounds = free_agent_salary_bounds_millions(season, years_of_service(player, season))
+    return {**market, "projected_aav_millions": ask, "salary_bounds_millions": bounds,
+            "ask_source": "fitted_free_agent_salary"}
+
+
+def seed_free_agency_ask(active: dict[str, Any], save: dict[str, Any], player: dict[str, Any],
+                         market: dict[str, Any]) -> float:
+    market = with_star_market_ask(active, save, player, market)
+    ask = free_agency_initial_ask(player, market)
+    state = save.setdefault("free_agency_state", {})
+    player_id = player["id"]
+    state.setdefault("player_asks_millions", {})[player_id] = ask
+    if "salary_bounds_millions" in market:
+        state.setdefault("fitted_ask_salary_bounds_millions", {})[player_id] = market["salary_bounds_millions"]
+    return ask
+
+
+def free_agency_fitted_bounds(save: dict[str, Any], player_id: str) -> tuple[float, float] | None:
+    bounds = ((save.get("free_agency_state") or {}).get("fitted_ask_salary_bounds_millions") or {}).get(player_id)
+    return (bounds[0], bounds[1]) if bounds else None
 
 
 def free_agency_initial_ask(player: dict[str, Any], market: dict[str, Any]) -> float:
     projected = float(market.get("projected_aav_millions") or 0.0)
+    if "salary_bounds_millions" in market:
+        return projected
     minutes = display_minutes_projection(player)
     return round(max(1.8, projected or minutes * 0.48), 1)
 
@@ -5177,10 +5202,14 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
         print(" #  Player                     Pos Age OVR  MPG   PPG  Ask")
         candidates = [players.get(right["player_id"]) for right in rights if players.get(right["player_id"])]
         candidates.sort(key=lambda player: (display_minutes_projection(player), float(player_attribute_summary(active, player["id"]).get("overall") or 0.0)), reverse=True)
+        fitted_bounds = state.get("fitted_ask_salary_bounds_millions") or {}
         for idx, player in enumerate(candidates, start=1):
             attrs = player_attribute_summary(active, player["id"])
             stats = active_season_line(save, player["id"], player)
-            ask = max(2.0, free_agency_initial_ask(player, {}))
+            if player["id"] in fitted_bounds:
+                ask = user_offer_market_terms(active, save, player, team)["ask_millions"]
+            else:
+                ask = max(2.0, free_agency_initial_ask(player, {}))
             print(
                 f"{idx:>2}. {player.get('name', ''):<26} {compact_position(player.get('position')):<3} {age_text(player, 3)} "
                 f"{float(attrs.get('overall') or 0):>3.0f} {display_minutes_projection(player):>4.0f} {stats['ppg']:>5.1f} ${ask:>5.1f}M"
@@ -5201,7 +5230,10 @@ def own_expiring_re_signing_room(canonical: dict[str, Any], save_path: Path, use
                 continue
             player = candidates[selected - 1]
             market = next((item for item in free_agents_report(active, team_query=user_team).get("candidates", []) if (item.get("id") or item.get("player_id")) == player["id"]), {})
-            ask = max(2.0, free_agency_initial_ask(player, market))
+            if player["id"] in fitted_bounds:
+                ask = user_offer_market_terms(active, save, player, team)["ask_millions"]
+            else:
+                ask = max(2.0, free_agency_initial_ask(player, market))
             try:
                 aav = float(input(f"Offer AAV in millions [{ask:.1f}]: ").strip() or ask)
             except ValueError:
@@ -5332,10 +5364,9 @@ def free_agency_ai_day_processed(state: dict[str, Any]) -> bool:
 
 
 def free_agency_preferred_years(player: dict[str, Any], ask: float) -> int:
-    age = float(player.get("age") or 27)
-    market_years = 4 if ask >= 18 else 3 if ask >= 8 else 2
-    age_limit = 1 if age >= 38 else 2 if age >= 35 else 4
-    return min(market_years, age_limit)
+    from .contract_ai import market_offer_preferred_years
+
+    return market_offer_preferred_years(float(player.get("age") or 27), ask)
 
 
 def process_ai_free_agency_offers_for_day_state(
@@ -5378,7 +5409,11 @@ def process_ai_free_agency_offers_for_day_state(
     target_count = min(len(pool), 18 + day * 8)
     for player in pool[:target_count]:
         market = report_by_id.get(player["id"]) or {}
-        ask = float((state.get("player_asks_millions") or {}).get(player["id"]) or free_agency_initial_ask(player, market))
+        ask = (state.get("player_asks_millions") or {}).get(player["id"])
+        if ask is None:
+            ask = seed_free_agency_ask(active, save, player, market)
+        ask = float(ask)
+        lower, upper = free_agency_fitted_bounds(save, player["id"]) or (league_minimum_aav_millions(), math.inf)
         offer_count = desired_ai_offer_count(
             player, ask, day, seed,
             quality=float(player_attribute_summary(active, player["id"]).get("overall") or 0),
@@ -5410,7 +5445,7 @@ def process_ai_free_agency_offers_for_day_state(
             # bids reserve slots as well as money, including minimum offers.
             roster_full = roster_count + len(pending_players) >= 21
             rng = random.Random(f"{seed}:{state.get('season')}:{day}:{player['id']}:{team['id']}:ai_fa_offer")
-            aav = round(max(league_minimum_aav_millions(), ask * rng.uniform(0.9, 1.12 + day * 0.015)), 1)
+            aav = round(clamp(ask * rng.uniform(0.9, 1.12 + day * 0.015), lower, upper), 1)
             reserved = active_bid_commitment(save, team["id"], exclude_player_id=player["id"])
             # KEEP-STARS: his own team bids with its Bird rights (over the cap, a fifth year for a young player).
             bird = incumbent_bird_rights(active, save, player, team["id"])
@@ -5789,12 +5824,17 @@ def inspect_free_agent_and_maybe_offer(canonical: dict[str, Any], save_path: Pat
     if pick_number("Action", 0, 1, default=0) == 0:
         return
     ask = float((state.get("player_asks_millions") or {}).get(player["id"]) or free_agency_initial_ask(player, market))
-    suggested = round(max(1.8, ask), 1)
-    print(f"Type {league_minimum_aav_millions():.1f} for a league-minimum offer.")
+    bounds = free_agency_fitted_bounds(save, player["id"])
+    minimum = bounds[0] if bounds else league_minimum_aav_millions()
+    suggested = ask if bounds else round(max(1.8, ask), 1)
+    print(f"Type {minimum:.1f} for a league-minimum offer.")
     try:
         aav = float(input(f"Offer AAV in millions [{suggested:.1f}]: ").strip() or suggested)
     except ValueError:
         aav = suggested
+    if bounds and not bounds[0] <= aav <= bounds[1]:
+        pause(f"Offer between ${bounds[0]:.1f}M and ${bounds[1]:.1f}M for this player's years of service.")
+        return
     years = pick_number("Years", 1, 4, default=min(3, int(market.get("max_years") or 3)))
     reserved = user_active_bid_commitment(save, team["id"], exclude_player_id=player["id"])
     cap_check = signing_cap_check(active, save, user_team, aav, reserved_millions=reserved)
@@ -6264,6 +6304,9 @@ def upgrade_free_agency_offer_after_dump_state(
     team = team_by_id(active, offer.get("team_id"))
     ask = float((save.get("free_agency_state") or {}).get("player_asks_millions", {}).get(offer.get("player_id")) or offer.get("ask_millions") or offer.get("aav_millions") or 0.0)
     bumped = round(min(max(float(offer.get("aav_millions") or 0.0) + 3.0, ask * 1.04), ask * 1.18), 1)
+    bounds = free_agency_fitted_bounds(save, player["id"])
+    if bounds:
+        bumped = clamp(bumped, *bounds)
     reserved = active_bid_commitment(save, team["id"], exclude_player_id=offer.get("player_id"))
     if not signing_cap_check(active, save, team["abbrev"], bumped, reserved_millions=reserved).get("ok"):
         return False
@@ -6568,7 +6611,8 @@ def adjust_free_agent_asks_state(save: dict[str, Any]) -> dict[str, Any]:
             new_value = current * 0.9
         else:
             new_value = current * 0.97
-        new_value = round(max(1.6, min(65.0, new_value)), 1)
+        lower, upper = free_agency_fitted_bounds(save, player_id) or (1.6, 65.0)
+        new_value = round(clamp(new_value, lower, upper), 1)
         if abs(new_value - current) >= 0.05:
             asks[player_id] = new_value
             changes[player_id] = round(new_value - current, 1)
@@ -7132,6 +7176,7 @@ def user_offer_market_terms(canonical: dict[str, Any], save: dict[str, Any], pla
         bar = float(offer_interest_score(ask, ask, preferred, preferred, 50.0))
         mode = "re_signing" if phase == "re_signing" else "off_market"
     return {"mode": mode, "day": day, "ask_millions": round(ask, 1), "preferred_years": preferred, "bar": bar,
+            "salary_bounds_millions": free_agency_fitted_bounds(save, player_id),
             "best_rival": ({"team_id": best.get("team_id"), "interest": float(best.get("interest_score") or 0),
                             "aav_millions": float(best.get("aav_millions") or 0), "years": int(best.get("years") or 1)}
                            if best else None)}
@@ -7165,7 +7210,10 @@ def user_offer_interest(player: dict[str, Any], aav_millions: float, years: int,
 
 def user_offer_verdict(interest: float, aav_millions: float, terms: dict[str, Any],
                        effective_millions: float | None = None) -> str:
-    """'accept', 'below_todays_bar' or 'prefers_rival_bid' (the end-of-day order: interest, then money)."""
+    """Check salary bounds, then compare interest and money in end-of-day order."""
+    bounds = terms.get("salary_bounds_millions")
+    if bounds and not bounds[0] <= aav_millions <= bounds[1]:
+        return "outside_salary_bounds"
     effective = float(aav_millions if effective_millions is None else effective_millions)
     if interest < terms["bar"] or effective < USER_OFFER_MIN_SHARE_OF_ASK * terms["ask_millions"] - 1e-9:
         return "below_todays_bar"
@@ -7180,12 +7228,12 @@ def user_offer_floor(player: dict[str, Any], years: int, guaranteed: bool, terms
     """The smallest offer ($0.1M steps, from the league minimum) he accepts today for these years, or None when no
     salary wins him today (his interest saturates at 1.3x his ask)."""
     from .contract_protection import security_penalty
-    minimum = league_minimum_aav_millions()
+    minimum, maximum = terms.get("salary_bounds_millions") or (league_minimum_aav_millions(), math.inf)
     top = terms["ask_millions"] * 1.3 * (1 + security_penalty(player, guaranteed) / 100) + 2 * USER_OFFER_SALARY_STEP
     if terms.get("best_rival"):
         top = max(top, terms["best_rival"]["aav_millions"] + 2 * USER_OFFER_SALARY_STEP)
-    steps = max(0, int(math.ceil((top - minimum) / USER_OFFER_SALARY_STEP)))
-    offer = lambda k: round(minimum + k * USER_OFFER_SALARY_STEP, 1)
+    steps = max(0, int(math.ceil((min(top, maximum) - minimum) / USER_OFFER_SALARY_STEP)))
+    offer = lambda k: min(maximum, round(minimum + k * USER_OFFER_SALARY_STEP, 1))
     passes = lambda k: user_offer_verdict(user_offer_interest(player, offer(k), years, guaranteed, terms, context),
                                           offer(k), terms,
                                           user_offer_effective_salary(player, offer(k), guaranteed)) == "accept"
@@ -7224,7 +7272,7 @@ def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player:
     retirement_blocked = extension_retirement_blocked(player, contract_start_season_for_signing(save_for_start), years)
     accepted = judged["verdict"] == "accept" and not retirement_blocked
     rejection = ("retirement_risk" if retirement_blocked
-                 else "prefers_rival_bid" if judged["verdict"] == "prefers_rival_bid" else "reject_below_market")
+                 else "reject_below_market" if judged["verdict"] == "below_todays_bar" else judged["verdict"])
     negotiation_id = stable_id("contract_negotiation", "save_pool_fa", team["id"], player["id"], years, round(annual), seed, guaranteed, save_for_start.get('state', {}).get('current_date'))
     offer = {
         "id": stable_id("contract_offer", negotiation_id, "user"),
@@ -7255,7 +7303,8 @@ def manual_save_pool_signing(canonical: dict[str, Any], save_path: Path, player:
         "competing_offers": [judged["terms"]["best_rival"]] if judged["terms"].get("best_rival") else [],
         "reasons": ["meets_market_rule" if accepted else (
             "retirement_before_contract_end" if retirement_blocked
-            else "a_rival_bid_interests_him_more" if rejection == "prefers_rival_bid" else "below_todays_bar")],
+            else "a_rival_bid_interests_him_more" if rejection == "prefers_rival_bid"
+            else "outside_salary_bounds" if rejection == "outside_salary_bounds" else "below_todays_bar")],
         # The smallest salary he takes from you today for these years and guarantee (None: no salary wins him today).
         "ask_threshold_millions": round(ask_threshold, 2) if floor is not None else None,
         "interest": round(judged["interest"], 1),

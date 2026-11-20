@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "source": "data/research/free_agent_contracts_2025_2026.json",
+  "training_count": 84,
+  "tier_counts": {
+    "depth": 1,
+    "elite_specialist": 3,
+    "high_end_starter": 11,
+    "legacy_star": 5,
+    "rotation": 14,
+    "starter": 50
+  },
+  "ridge_penalty": 2.0,
+  "features": [
+    "intercept",
+    "on_court_value_per_10",
+    "age_per_5",
+    "age_over_32_per_5",
+    "service_per_5",
+    "contract_years",
+    "starter_or_higher",
+    "specialist_or_high_end_starter_or_star"
+  ],
+  "coefficients": [
+    -3.0464156978526518,
+    0.312527910886866,
+    0.09231822039685869,
+    -0.08719445518454863,
+    -0.038749285226048265,
+    0.21933129117522204,
+    0.13087804882377538,
+    0.19709127665068824
+  ]
+}

@@ -82,6 +82,27 @@ class FreeAgencyBidTests(unittest.TestCase):
         with patch.object(play,'signing_cap_check',return_value={'ok':True}):self.process()
         self.assertTrue(all(o['years']==1 and o['aav_millions']>=play.league_minimum_aav_millions() for o in self.save['free_agent_offers']))
 
+    def test_ai_bids_use_the_fitted_ask_and_salary_bounds(self):
+        self.player.update(age=30, draft_year=2020, minutes_projection=12)
+        self.data["player_asset_valuations"] = [
+            {"player_id": "p", "player_value": 25, "on_court_value": 10},
+        ]
+        self.save["state"]["phase"] = "free_agency"
+        state = self.save["free_agency_state"]
+        state["player_asks_millions"].clear()
+        with patch("nba_gm_data.sim.player_feature_vector") as features, \
+             patch.object(play, "signing_cap_check", return_value={"ok": True}):
+            features.return_value.features = {}
+            self.assertEqual(self.process()["created_count"], 2)
+        ask = state["player_asks_millions"]["p"]
+        lower, upper = play.free_agency_fitted_bounds(self.save, "p")
+        self.assertEqual(ask, lower)
+        for call in play.build_free_agency_offer_record.call_args_list:
+            aav, market_ask = call.args[5:7]
+            self.assertEqual(market_ask, ask)
+            self.assertLessEqual(lower, aav)
+            self.assertLessEqual(aav, upper)
+
     def test_current_quality_can_draw_competition_despite_a_small_previous_role(self):
         player={**self.player,'minutes_projection':10}
         # The process fixture mocks demand; exercise the real helper separately.
