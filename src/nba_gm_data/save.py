@@ -25,7 +25,7 @@ from itertools import permutations
 from pathlib import Path
 from typing import Any, Callable, Iterator
 
-from .health import advance_development, simulate_health
+from .health import add_box_score_fatigue, advance_development, simulate_health
 from .simulation_progress import emit_progress, progress_listener_active, simulation_stop_requested
 from .history_store import HISTORY_KEYS, SaveValidationError, archive_save_history, hydrate_save_history, load_history_records, validate_save_components
 from .save_locking import fsync_directory, save_lock
@@ -2048,7 +2048,9 @@ def advance_lifecycle_to(
             }
             carried_active = False
         todays_games = [g for g in pending_games if g["gameDate"] == day]
-        health = simulate_health(root, active, cursor, day, seed=seed, schedule=todays_games)
+        health = simulate_health(root, active, cursor, day, seed=seed, schedule=todays_games,
+                                 season_schedule=schedule_for_save(root, save) if todays_games else None,
+                                 box_score_fatigue=True)
         merge_health_results(save, health, active)
         attach_rest_suggestions(root, active, save, day, seed)
         refresh_active_runtime_state(active, save)
@@ -2233,8 +2235,11 @@ def advance_save_day(
                 continue
             result = to_plain(sim_game_with_context(context, game_id, mode="sandbox-sim", seed=effective_seed))
             record_game_result(save, canonical, game, result)
+            add_box_score_fatigue(runtime_canonical, save.setdefault("health_states", []), result, game["gameDate"], root)
             simulated_game_ids.add(game_id)
         show_injuries_from_todays_games(save, target)
+        # Tonight's minutes are in: the user's next-game fatigue and rest note follow them.
+        attach_rest_suggestions(root, runtime_canonical, save, target, effective_seed)
         new_development_events = process_development_months(runtime_canonical, save, current, target, effective_seed)
         if reassess_ai_roles(runtime_canonical, save, target):
             apply_save_rotation_projection(runtime_canonical, save)
@@ -4229,6 +4234,7 @@ def simulate_playoff_game(
     context["indices"]["coach_by_team"] = save_coach_ratings(active, save)
     result = to_plain(sim_game_with_context(context, game_id, mode="sandbox-sim", seed=seed))
     record_playoff_game_result(save, game, result)
+    add_box_score_fatigue(active, save.setdefault("health_states", []), result, game_date, root)
     return result
 
 
@@ -5484,8 +5490,9 @@ def attach_rest_suggestions(root: str | Path, active: dict[str, Any], save: dict
     (health.coach_rest_decision), and each player's fatigue at that tip-off is noted. Stored on the health state and
     shown next to the player. Applied only when the GM lets the coach rest players (game setting); the health pass
     then makes the same decision for that game."""
-    from .health import (coach_rest_decision, fatigue_on_date, league_rest_context, normal_fatigue, performance_staff_modifiers,
-                         rest_draw, REST_MIN_MINUTES)
+    from .health import (fatigue_on_date, game_rest_context, league_rest_context, normal_fatigue, performance_staff_modifiers,
+                         rest_assessment, rest_decision, rest_draw, REST_MIN_MINUTES)
+    from .rest_model import cached_league_schedule_context, star_ids
     human = set(human_controlled_team_ids(save))
     states = {state.get("player_id"): state for state in save.get("health_states", [])}
     roster = {player["id"]: player for player in active.get("players", []) if player.get("team_id") in human}
@@ -5514,8 +5521,11 @@ def attach_rest_suggestions(root: str | Path, active: dict[str, Any], save: dict
         return
     stamina = {trait["player_id"]: float(trait.get("value") if trait.get("value") is not None else 50.0)
                for trait in active.get("traits", []) if trait.get("trait_key") == "stamina_cardio" and trait.get("player_id") in roster}
-    standings = league_rest_context({"save_team_records": save.get("team_records")})
+    standings = league_rest_context({"save_team_records": save.get("team_records"), "teams": active.get("teams", [])})
     games = [g for g in all_games if str(g.get("phase") or "regular") == "regular"]
+    facts = cached_league_schedule_context(all_games)
+    stars = star_ids(active, day[:7])
+    team_by_espn = espn_team_id_map(active)
     for team_id in sorted(human):
         espn = espn_by_team.get(team_id)
         mine = sorted((g for g in games if espn in (str(g.get("homeTeamId")), str(g.get("awayTeamId")))),
@@ -5525,13 +5535,17 @@ def attach_rest_suggestions(root: str | Path, active: dict[str, Any], save: dict
             continue
         previous = max((g["gameDate"] for g in mine if (g.get("gameDate") or "") <= day), default=None)
         back_to_back = bool(previous) and (parse_date(upcoming["gameDate"]) - parse_date(previous)).days == 1
+        opponent_espn = str(upcoming.get("homeTeamId") if str(upcoming.get("awayTeamId")) == espn else upcoming.get("awayTeamId"))
         players = sorted((p for p in roster.values() if p.get("team_id") == team_id), key=lambda p: -float(p.get("minutes_projection") or 0))
         # Same context the day's health pass will build for that game: injured regulars, and regulars the GM rests.
         out = sum(1 for p in players if (states.get(p["id"]) or {}).get("availability_status", "active") != "active"
                   and float(p.get("_trade_value_minutes_projection") or p.get("minutes_projection") or 0) >= REST_MIN_MINUTES)
-        gm_rested = sum(1 for p in players if (states.get(p["id"]) or {}).get("user_rest")
-                        and float(p.get("_trade_value_minutes_projection") or p.get("minutes_projection") or 0) >= REST_MIN_MINUTES)
-        context = {**standings.get(team_id, {}), "back_to_back": back_to_back, "rested_tonight": gm_rested, "regulars_out": out}
+        gm_rested = [p for p in players if (states.get(p["id"]) or {}).get("user_rest")
+                     and float(p.get("_trade_value_minutes_projection") or p.get("minutes_projection") or 0) >= REST_MIN_MINUTES]
+        context = game_rest_context(standings, facts, upcoming, espn, team_id,
+                                    (team_by_espn.get(opponent_espn) or {}).get("id"), back_to_back=back_to_back)
+        context.update({"rested_tonight": len(gm_rested), "stars_rested_tonight": sum(p["id"] in stars for p in gm_rested),
+                        "regulars_out": out})
         for player in players:
             state = states.get(player["id"])
             minutes = float(player.get("minutes_projection") or 0)
@@ -5540,20 +5554,38 @@ def attach_rest_suggestions(root: str | Path, active: dict[str, Any], save: dict
                 continue
             context["fatigue"] = float((state.get("fatigue_next") or {}).get("value") or 0.0)
             context["fatigue_normal"] = normal_fatigue(player, minutes, stamina.get(player["id"], 50.0), staff_by_team[team_id])
-            decision = coach_rest_decision(player, state, context, rest_draw(seed, upcoming["externalGameId"], player["id"]))
+            context["star"] = player["id"] in stars
+            decision = rest_decision(rest_assessment(player, state, context), rest_draw(seed, upcoming["externalGameId"], player["id"]))
             if decision:
-                kind, reason = decision
                 state["rest_suggestion"] = {"game_id": str(upcoming["externalGameId"]), "date": upcoming["gameDate"],
-                                            "kind": kind, "reason": reason,
+                                            "kind": decision[0], "reason": decision[1],
                                             # With "Coach rests my players" on, the coach will act on it.
                                             "coach_decides": team_id in coach_rest_team_ids(save)}
                 context["rested_tonight"] += 1
+                context["stars_rested_tonight"] += int(context["star"])
+
+
+def record_rest_decisions(save: dict[str, Any], decisions: list[dict[str, Any]]) -> None:
+    """Log each coach rest decision with its short reason (this season only): date, game, team, player, reason and
+    the chance the model gave."""
+    if not decisions:
+        return
+    log = save.setdefault("rest_log", [])
+    season_floor = f"{season_start_year_from_date(str(decisions[0].get('date') or '2000-01-01'))}-07-01"
+    if log and str(log[0].get("date") or "") < season_floor:
+        log[:] = [row for row in log if str(row.get("date") or "") >= season_floor]
+    seen = {(row.get("game_id"), row.get("player_id")) for row in log}
+    for row in decisions:
+        if (row.get("game_id"), row.get("player_id")) in seen:
+            continue
+        log.append({key: row[key] for key in ("date", "game_id", "team_id", "player_id", "kind", "reason", "chance") if key in row})
 
 
 def merge_health_results(save: dict[str, Any], health: dict[str, Any], canonical: dict[str, Any] | None = None) -> None:
     players = {player["id"]: player for player in (canonical or {}).get("players", [])}
     previous_states = {state.get("player_id"): state for state in save.get("health_states", [])}
     save["health_states"] = health.get("final_states", save.get("health_states", []))
+    record_rest_decisions(save, health.get("rest_decisions") or [])
     current_states = {state.get("player_id"): state for state in save.get("health_states", [])}
     seen = {event.get("id") for event in save.get("injury_events", [])}
     socialized = set(save.setdefault("socialized_injury_event_ids", []))

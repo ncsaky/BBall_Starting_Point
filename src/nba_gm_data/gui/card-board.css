@@ -5141,3 +5141,50 @@ body.unified-terminal-ui .player-rest-status.player-resting > span { color:#fff 
 body.unified-terminal-ui .season-development-decline { color:#c4585f; display:inline-flex; align-items:baseline; gap:2px; }
 body.unified-terminal-ui .season-development-decline small { font-size:9px; opacity:.8; }
 body.unified-terminal-ui .player-decline-watch strong { color:#c4585f; }
+
+/* Draft boards (2026-11-19): consensus beside your scouts' board. Shared table style: double header rule, small
+   bold headings, stripes, whole-row hover, sorted-column shading. */
+.draft-prospect-table.draft-two-boards thead th { border-bottom:3px double var(--season-line, var(--line-soft)); font-size:8px; font-weight:700; }
+.draft-prospect-table.draft-two-boards tbody tr:nth-child(even) td { background-color:#eef1f3; }
+.draft-prospect-table.draft-two-boards tbody tr:is(:hover,:focus-within) td { background-color:#dce8f2; }
+.draft-prospect-table.draft-two-boards thead th.is-sorted { background-color:#d1dde8; }
+.draft-prospect-table.draft-two-boards tbody td.is-sorted { background-color:rgba(118,156,190,.28); font-weight:700; }
+.draft-prospect-table.draft-two-boards tbody tr.is-selected td { background-color:color-mix(in srgb, var(--accent) 16%, transparent); }
+.draft-prospect-scroll { overflow-x:auto; }
+.draft-prospect-table.draft-two-boards { min-width:1040px; }
+.draft-prospect-table.draft-two-boards :is(th,td):first-child { width:74px; text-align:left; }
+.draft-prospect-table.draft-two-boards :is(th,td).draft-col-rank { width:78px; }
+.draft-prospect-table.draft-two-boards th.draft-col-name { width:170px; }
+.draft-prospect-table.draft-two-boards :is(th,td).draft-col-position { width:52px; }
+.draft-prospect-table.draft-two-boards :is(th,td).draft-col-age { width:38px; }
+.draft-prospect-table.draft-two-boards :is(th,td):is(.draft-col-now,.draft-col-potential,.draft-col-scouted,.draft-col-height) { width:52px; }
+.draft-prospect-table.draft-two-boards :is(th,td).draft-col-type { width:126px; }
+.draft-prospect-table.draft-two-boards :is(th,td).draft-col-fit { width:62px; }
+.draft-prospect-table.draft-two-boards :is(th,td).draft-col-status { width:96px; }
+.draft-rank-spread { display:inline-block; margin-left:5px; font-size:9px; color:var(--muted, #6b7785); font-weight:400; }
+.draft-rank-move { display:inline-block; margin-left:4px; font-size:9px; font-weight:700; }
+.draft-rank-move.is-up { color:#2f8a57; }
+.draft-rank-move.is-down { color:#c4585f; }
+.draft-scout-read { font-size:10px; white-space:nowrap; }
+.draft-scout-read-raw { color:#7b5aa6; }
+.draft-scout-read-ready { color:#2f6f8f; }
+.draft-summary-table td.draft-summary-why { font-size:10px; max-width:340px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted, #6b7785); }
+.draft-pick-reveal .draft-pick-why { display:block; font-size:11px; opacity:.8; }
+.prospect-two-boards b { white-space:nowrap; }
+.prospect-two-boards small { white-space:normal; line-height:1.2; }
+/* Upcoming-prospects card: one more column (your scouts' rank). */
+.season-prospects-head,
+.season-prospect-row {
+  grid-template-columns:
+    15px minmax(0, 1.6fr) minmax(0, .5fr) minmax(0, .5fr) minmax(0, .8fr)
+    minmax(0, .9fr) minmax(0, .8fr) minmax(0, .9fr) minmax(0, 1.1fr);
+}
+body .has-card-board [data-board-window="prospects"] :is(.season-prospects-head,.season-prospect-row) {
+  gap:6px;
+  grid-template-columns:24px minmax(110px,1.7fr) minmax(30px,.5fr) minmax(30px,.5fr) minmax(46px,.7fr) minmax(56px,.9fr) minmax(46px,.7fr) minmax(50px,.8fr) minmax(60px,1fr);
+}
+.season-prospect-yours { white-space:nowrap; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards { max-width:230px; text-align:center; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards b { font-size:13px; font-weight:600; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards strong { font-size:14px; font-weight:600; }
+body.unified-terminal-ui .has-card-board .clipboard-player-card .approved-prospect-pages .prospect-rank-range.prospect-two-boards small { font-size:11px; }
