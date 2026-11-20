@@ -18,7 +18,8 @@ class SummerTradeReviewTests(unittest.TestCase):
             stack.enter_context(patch.object(play, 'queue_summer_trade_offers'))
             stack.enter_context(patch.object(play, 'resolve_team', return_value={'id': 'human'}))
             stack.enter_context(patch.object(play, 'free_agency_fallback_trade_candidates', return_value=fallback or []))
-            stack.enter_context(patch('nba_gm_data.trade_calendar.summer_offer_slots', return_value=slots))
+            # TRADE-VOLUME-2: AI-to-AI trades on free-agency days have their own slots (up to six a day).
+            stack.enter_context(patch('nba_gm_data.trade_calendar.free_agency_trade_slots', return_value=slots))
             generate = stack.enter_context(patch.object(play, 'free_agency_general_trade_candidates',
                 return_value=general or [self.candidate('g1'), self.candidate('g2')]))
             apply = stack.enter_context(patch.object(play, 'apply_trade_to_state', return_value={'status': 'applied'}))
@@ -39,11 +40,14 @@ class SummerTradeReviewTests(unittest.TestCase):
         self.assertEqual((first['applied_count'], generated, applied), (0, 0, 0))
 
     def test_target_fallback_keeps_priority_and_daily_capacity_is_bounded(self):
+        from nba_gm_data.trade_calendar import FREE_AGENCY_TRADES_PER_DAY
         fallback = self.candidate('fallback', 'missed_target_fallback')
         first, _, _, applied, _ = self.run_review(fallback=[fallback])
-        self.assertEqual((first['applied_count'], applied), (2, 2))
-        first, _, generated, applied, _ = self.run_review(fallback=[fallback, self.candidate('f2', 'missed_target_fallback')])
-        self.assertEqual((first['applied_count'], generated, applied), (2, 0, 2))
+        self.assertEqual((first['applied_count'], applied), (3, 3))  # the fallback, then the day's two slots
+        many = [self.candidate(f'f{i}', 'missed_target_fallback') for i in range(FREE_AGENCY_TRADES_PER_DAY + 2)]
+        first, _, generated, applied, _ = self.run_review(fallback=many)
+        self.assertEqual((first['applied_count'], generated, applied),
+                         (FREE_AGENCY_TRADES_PER_DAY, 0, FREE_AGENCY_TRADES_PER_DAY))
 
     def test_rejected_or_human_deals_are_not_executed(self):
         refused, human = self.candidate('refused'), self.candidate('human')
