@@ -1332,6 +1332,90 @@ def star_market_ask_millions(canonical: dict[str, Any], player: dict[str, Any], 
     return round(min(asking * growth_factor(season), ceiling) / 1_000_000, 1)
 
 
+FITTED_FREE_AGENT_TIERS = frozenset({"rotation", "depth"})
+
+# NBA/NBPA 2023 collective bargaining agreement, Exhibit C (Year 1), and
+# Article I(jj). The scale rises with the salary cap from its 2022-23 baseline.
+_MINIMUM_SALARY_BASE_CAP = 123_655_000
+_MINIMUM_SALARY_SCALE = (
+    1_017_781, 1_637_966, 1_836_090, 1_902_133, 1_968_175, 2_133_278,
+    2_298_385, 2_463_490, 2_628_597, 2_641_682, 2_905_851,
+)
+
+
+def free_agent_salary_bounds_millions(season: str, service: int, *, salary_cap: float | None = None) -> tuple[float, float]:
+    """First-year signing limits expressed on the open market's $0.1M offer grid."""
+    from .cap_rules import cap_lines_for_season, max_salary, max_salary_share
+
+    if salary_cap is None:
+        salary_cap = cap_lines_for_season(season)["salary_cap"]
+        maximum = max_salary(season, service)
+    else:
+        # Historical research uses the official cap for each signing summer.
+        maximum = salary_cap * max_salary_share(service)
+    minimum = _MINIMUM_SALARY_SCALE[min(service, 10)] * salary_cap / _MINIMUM_SALARY_BASE_CAP
+    return math.ceil(minimum / 100_000) / 10, math.floor(maximum / 100_000) / 10
+
+
+def market_offer_preferred_years(age: float, ask_millions: float) -> int:
+    market_years = 4 if ask_millions >= 18 else 3 if ask_millions >= 8 else 2
+    age_limit = 1 if age >= 38 else 2 if age >= 35 else 4
+    return min(market_years, age_limit)
+
+
+def free_agent_salary_fit_features(value: float, age: float, service: int, tier: str, years: int) -> tuple[float, ...]:
+    """Features in the order used by free_agent_salary_fit.json."""
+    return (
+        1.0, (value - 55) / 10, (age - 27) / 5, max(0.0, age - 32) / 5,
+        (service - 7) / 5, years - 2.0, float(tier not in FITTED_FREE_AGENT_TIERS),
+        float(tier not in FITTED_FREE_AGENT_TIERS and tier != "starter"),
+    )
+
+
+@lru_cache(maxsize=1)
+def _free_agent_salary_fit() -> tuple[float, ...]:
+    from .resource_paths import game_resource_root
+
+    path = game_resource_root() / "data/canonical/free_agent_salary_fit.json"
+    return tuple(json.loads(path.read_text())["coefficients"])
+
+
+def free_agent_salary_fit_millions(
+    coefficients: tuple[float, ...], value: float, age: float, service: int, tier: str, season: str,
+    *, years: int | None = None, salary_cap: float | None = None,
+) -> float:
+    """Turn the fitted cap share into an opening ask. Infer term when the deal is still unknown."""
+    from .cap_rules import cap_lines_for_season
+
+    cap = salary_cap if salary_cap is not None else cap_lines_for_season(season)["salary_cap"]
+    lower, upper = free_agent_salary_bounds_millions(season, service, salary_cap=salary_cap)
+
+    def quote(term: int) -> float:
+        features = free_agent_salary_fit_features(value, age, service, tier, term)
+        log_share = sum(coef * feature for coef, feature in zip(coefficients, features, strict=True))
+        return clamp(round(math.exp(log_share) * cap / 1_000_000, 1), lower, upper)
+
+    if years is None:
+        years = market_offer_preferred_years(age, quote(2))
+    return quote(years)
+
+
+def fitted_free_agent_ask_millions(canonical: dict[str, Any], player: dict[str, Any], season: str) -> float | None:
+    """Quote an unresearched rotation or depth free agent using his on-court value."""
+    from .sim import player_feature_vector
+
+    valuation = valuation_for_player(canonical, player)
+    value = maybe_float(valuation.get("on_court_value"))
+    if value is None:
+        return None
+    tier = contract_role_tier(player, valuation, player_feature_vector(canonical, player).features)
+    if tier not in FITTED_FREE_AGENT_TIERS:
+        return None
+    age = maybe_float(player.get("age")) or 27.0
+    service = years_of_service(player, season)
+    return free_agent_salary_fit_millions(_free_agent_salary_fit(), value, age, service, tier, season)
+
+
 def valuation_for_player(canonical: dict[str, Any], player: dict[str, Any]) -> dict[str, Any]:
     return next(
         (item for item in canonical.get("player_asset_valuations", []) if item.get("player_id") == player.get("id")),
