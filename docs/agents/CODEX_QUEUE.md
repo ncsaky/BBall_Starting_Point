@@ -2,7 +2,103 @@
 
 Paste one prompt into a **fresh** Codex chat. One task per chat keeps it from drifting after context compaction. Each prompt is self-contained. Claude reviews the result and updates `BOARD.md`.
 
-Current priority (2026-11-19, evening): ROT-OUTLIERS first, then BLOWOUT-MINUTES. GUI tasks are parked at the bottom.
+Current priority (2026-11-20, afternoon): FA-PRICES now, ODDS-COACH after the trade probes. GUI tasks are parked at the bottom.
+
+---
+
+## Ready now (2026-11-20, afternoon): FA-PRICES first, ODDS-COACH later (one fresh chat each)
+
+Two Claude agents are running at the same time in their own worktrees: TRADE-DEADLINE (trade files) and INJURIES-2 (health and injury files). Codex works in **its own git worktree** for these tasks so merges don't collide with the shared checkout. Run FA-PRICES now. Start ODDS-COACH only after TRADE-DEADLINE's long test seasons finish, or overnight, because its betting runs are heavy.
+
+### FA-PRICES: a real price model for free agents below the starter tier
+
+Suggested settings: GPT-6.2 Sol, Medium, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task FA-PRICES (its board row already exists; set it to "in progress (Codex)").
+
+Setup: work in your own git worktree so you don't disturb the shared checkout:
+  git worktree add ../BBall_codex_fa_prices -b codex/fa-prices HEAD
+Then symlink the git-ignored data from the main checkout into it: .venv, data/research/barttorvik/raw,
+data/canonical/universe_2026_27_offseason.sqlite, data/canonical/injury_player_evidence_v2.json, the git-ignored files
+under data/research/bbi/ (link each one), output/settlement-materialization-pass. Then run
+gunzip -kf data/canonical/player_inputs_2026_27.json.gz. Commit on branch codex/fa-prices in that worktree; never push,
+never commit to main.
+
+Problem: after the opening summers (which use precomputed market research), every free agent below the starter tier
+asks minutes x $0.48M (src/nba_gm_data/play.py free_agency_initial_ask and with_star_market_ask). Starters and stars
+already ask a contract-market price (contract_ai.star_market_ask_millions, a floor on the old ask). Minutes are a role
+outcome, not value: a young player stuck behind starters is underpriced and a veteran on a bad team overpriced. Earlier
+finding (docs/agents/tasks/trade-volume-2.md, "What's left"): the existing contract-market formula is too flat to use for
+everyone. It underprices stars by about a third and overprices the middle (many $6M young bench players came out at
+$16.6M on the 2027 class).
+
+Step 1 (evidence): fit salary as a share of the cap against the game's own player value, age, role tier, years of
+service and contract length, on the 84 real 2025-2026 contracts in data/research/free_agent_contracts_2025_2026.json
+(some marked uncertain; the 2025 half is weaker, so weight it down and say how). Add league-wide cap room as a market
+factor if the data supports it. Hold out a subset and report the error against the minutes rule and the existing
+formula. Show 15 named examples (real vs new vs old).
+Step 2 (in the game): use the fitted price for free agents below the starter tier, in a new function in contract_ai.py,
+called from play.py's ask path. Leave star_market_ask_millions and the precomputed opening-summer research unchanged.
+Respect the real minimum salary scale and the max-salary rule (cap_rules.py). The user's offers are judged by the same
+rule as the AI bids', so the price you add must flow through the existing offer-acceptance path, not a second copy (rule 4:
+what the user sees must be what the engine uses).
+
+Files you may touch: contract_ai.py (new function plus small helpers), play.py (only the ask functions above and their
+direct callers), a new data/canonical/ or data/research/ fit file, a new scripts/research/ fit script, tests,
+docs/agents/tasks/fa-prices.md. Do NOT touch transactions.py, trade_*.py, multi_team_trades.py, app_actions.py trade
+actions, health.py, injury_model.py, sim.py, or save.py season-start code (other agents own them right now). If you think
+you need one of those, stop and write it in your report instead.
+
+Acceptance:
+- Held-out error better than both the minutes rule and the existing formula.
+- One simulated offseason from a fresh save (scripts/two_season_league_probe.py can stop after the first free agency, or
+  write a short driver): the distribution of signed salaries by tier against real 2025-26 signings, how many free agents go
+  unsigned, and teams' cap room after free agency. No team blows past the hard cap; stars unchanged.
+- Focused tests (the price function, minimum and maximum bounds, the user offer uses the same price).
+  bash scripts/run_core_tests.sh passes.
+- Report in docs/agents/tasks/fa-prices.md: a plain-language TL;DR first (3 lines, no jargon), then the fit, the named
+  examples, the offseason table and "What's left" (restricted free-agent offer sheets are out of scope; note them).
+  Set the board row to "review" and stop.
+```
+
+### ODDS-COACH: give the betting test the same coach model the saves use
+
+Suggested settings: GPT-6.2 Sol, Medium, fresh chat. Start after TRADE-DEADLINE's probes finish, or overnight.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task ODDS-COACH (its board row already exists; set it to "in progress (Codex)").
+
+Setup: your own git worktree, as in FA-PRICES, but on branch codex/odds-coach (../BBall_codex_odds_coach), with the same
+data symlinks and the gunzip step. Commit on that branch only; never push, never commit to main.
+
+Problem: the betting-odds test (python -m nba_gm_data.cli validate-season-probabilities) replays the real 2025-26 season.
+docs/agents/tasks/overnight-game-context-margins.md ("What's left", item 1b) found that coach effects measure only about
+half-strength in it, because the test uses the older coach formula (sim.py coach_ratings, around line 490) while saves use
+the newer staff model (sim.py "Save staff (coaching overhaul 2026-11-18)", around line 3579, every head-coach and
+coordinator rating with its own effect). The test should use the same model the game uses, with the real 2025-26
+staffs (head coaches and, where public, coordinators), so the betting scorecard judges the real engine (AGENTS.md rule 9).
+
+Step 1: confirm the gap with file:line references. List which coach effects the save path applies that the test path
+doesn't, and which staff the test currently uses (the 2026-27 staffs or the 2025-26 ones).
+Step 2: build data/research/staffs_2025_26.json (public sources, each recorded) and make the replay path use the save
+staff model with those staffs. A save's game results must not change: prove it with a seeded save game compared field by
+field before and after.
+Step 3: measure. validate-season-probabilities --runs 20 with seeds 1001 and 2001, before and after (Brier, log loss,
+spread error, totals error), plus the real-stat scorecard
+(PYTHONPATH=src .venv/bin/python scripts/calibration_report.py --games 1230 --mode replay-real-minutes, 18/18 expected).
+Run one heavy job at a time (other agents share this laptop). Wait on your own process ID, never on a grep loop.
+Do not refit coach effect sizes to the betting test. If the evidence suggests a size is wrong, report it with the
+numbers instead.
+
+Files you may touch: sim.py (only the replay/validation coach plumbing and the save-staff functions it reuses), a new
+data/research/staffs_2025_26.json, tests, docs/agents/tasks/odds-coach.md. Do NOT touch health.py, injury_model.py,
+transactions.py, trade_*.py, contract_ai.py, play.py.
+
+Acceptance: the before/after table on both seeds, the save-game identity check, focused tests, bash
+scripts/run_core_tests.sh passes, and a report in docs/agents/tasks/odds-coach.md with a plain-language TL;DR first. Set
+the board row to "review" and stop.
+```
 
 ---
 
