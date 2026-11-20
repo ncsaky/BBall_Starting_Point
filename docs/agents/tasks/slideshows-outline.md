@@ -1,5 +1,13 @@
 # Season slideshows: outlines for approval (B01, B02, B03)
 
+## User decisions (2026-11-19), which override the outline below
+- **Look:** like the existing tutorial cards (a card with Previous / Next and Skip), but larger. The slideshow is the only thing on screen while it is open: a full-screen overlay over a dimmed backdrop, with no other windows visible.
+- **Awards:** add a Finals MVP; add Sixth Man, Most Improved and All-NBA teams now. Coach of the Year comes later.
+- **Recap trades:** the **3 biggest trades**, ranked by value swing or by total net value involved, whichever ranks a trade higher.
+- **Recap coaching changes:** the **3 biggest**.
+- **Recap free agents:** the **top 5** upcoming free agents (not 10).
+- **Preseason extra slide:** the **3 best players expected to miss more than 20 games** at the start of the season (injured at Oct 1 with an expected absence over 20 games), ranked by player value.
+
 _Draft written 2026-11-19 by Claude (coordinator), for the user's approval before building. Every slide below uses data the game already has, or says exactly what has to be saved first._
 
 ## How they appear
