@@ -1254,6 +1254,7 @@ async function ensureViewData(force = false) {
     if (phase === "playoffs") {
       state.data.playoffs = await action("playoff_room", savePayload());
       state.data.playoffLeaders = await action("playoff_leaders", { ...savePayload(), stat: "points", limit: PLAYOFF_STATS_LIMIT });
+      state.data.playoffInjuries = await loadPlayoffInjuries();
     }
     if (phase === "draft") {
       state.data.draft = await action("draft_room", { ...savePayload(), team: userTeam(), seed: 7 });
@@ -4984,6 +4985,9 @@ function playoffDashboardWorkspace() {
         <aside class="phase-leaders-panel playoff-stats-panel" data-playoff-stats>
           ${playoffStatsTable(state.data.playoffLeaders?.leaders || [], state.playoffStatsSort)}
         </aside>
+        <aside class="playoff-stats-panel playoff-injuries-panel" data-playoff-injuries>
+          ${playoffInjuriesCard(state.data.playoffInjuries)}
+        </aside>
       </div>
     </div>`;
 }
@@ -5121,6 +5125,160 @@ function wirePlayoffStatsTable(root = document) {
   });
 }
 
+// Playoff Injuries card: injured players on teams still in the playoffs (league-wide by default, or your team),
+// sorted by OVR. Uses the engine's health state only: out with an expected return, or back but rusty / on a
+// minutes limit. Bars show the player's usual OVR/OFF/DEF; rust lowers his in-game ratings by the amount shown.
+const PLAYOFF_INJURIES_DEFAULT_SORT = { key: "overall", direction: "desc" };
+const PLAYOFF_INJURIES_COLUMNS = [
+  { key: "player", label: "Player", title: "Player", text: true, width: 128 },
+  { key: "team", label: "Team", title: "Team", text: true, width: 52 },
+  { key: "overall", label: "OVR", title: "Overall rating (his usual level)", width: 58 },
+  { key: "offense", label: "OFF", title: "Offense rating (his usual level)", width: 58 },
+  { key: "defense", label: "DEF", title: "Defense rating (his usual level)", width: 58 },
+  { key: "status", label: "Status", title: "Out injured, or back but rusty / on a minutes limit", text: true, width: 116 },
+  { key: "back", label: "Expected back", title: "Expected return date and games, or when rust and the minutes limit wear off", width: 76 },
+];
+
+async function loadPlayoffInjuries() {
+  try { return await action("playoff_injuries", savePayload()); }
+  catch { return null; }
+}
+
+function playoffInjuriesSortState(sort) {
+  return PLAYOFF_INJURIES_COLUMNS.some((column) => column.key === sort?.key) && ["asc", "desc"].includes(sort?.direction) ? sort : PLAYOFF_INJURIES_DEFAULT_SORT;
+}
+
+function nextPlayoffInjuriesSort(current, key) {
+  const column = PLAYOFF_INJURIES_COLUMNS.find((item) => item.key === key);
+  if (!column) return playoffInjuriesSortState(current);
+  const active = playoffInjuriesSortState(current);
+  if (active.key === key) return { key, direction: active.direction === "desc" ? "asc" : "desc" };
+  return { key, direction: column.text || key === "back" ? "asc" : "desc" };
+}
+
+// Out players first, by days left; returning players by the games until they are back to normal.
+function playoffInjuryBackValue(row) {
+  if (row.status === "out") return Number.isFinite(Number(row.days_left)) ? Number(row.days_left) : 999;
+  return 1000 + Math.max(Number(row.rust_games) || 0, Number(row.minutes_limit_games) || 0);
+}
+
+function playoffInjuriesValue(row, key) {
+  if (key === "player") return String(row.name || "").toLowerCase();
+  if (key === "team") return String(row.team_abbrev || "").toLowerCase();
+  if (key === "status") return row.status === "out" ? `0${String(row.injury || "").toLowerCase()}` : "1";
+  if (key === "back") return playoffInjuryBackValue(row);
+  const value = Number(row[key]);
+  return Number.isFinite(value) ? value : -Infinity;
+}
+
+function playoffInjuriesRows(payload, scope, sort) {
+  const active = playoffInjuriesSortState(sort);
+  const rows = (payload?.players || []).filter((row) => scope !== "team" || row.user_team);
+  return rows.map((row, index) => ({ row, index })).sort((left, right) => {
+    const a = playoffInjuriesValue(left.row, active.key), b = playoffInjuriesValue(right.row, active.key);
+    let comparison = typeof a === "string" ? a.localeCompare(b) : a - b;
+    if (active.direction === "desc") comparison *= -1;
+    return comparison || Number(right.row.overall || 0) - Number(left.row.overall || 0) || left.index - right.index;
+  }).map(({ row }) => row);
+}
+
+function playoffInjuryRatingCell(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "—";
+  return `<span class="playoff-injury-rating"><em>${number.toFixed(0)}</em><i aria-hidden="true"><b style="${performanceBarStyle(number)}"></b></i></span>`;
+}
+
+function playoffInjuryStatusCell(row) {
+  if (row.status === "out") {
+    const injury = row.injury ? rowLabel(row.injury) : "Injured";
+    return `<span class="playoff-injury-status is-out" title="${escapeAttr(`Out: ${injury}`)}"><span class="season-injury-status" aria-hidden="true">✚</span><span>${escapeHtml(injury)}</span></span>`;
+  }
+  const parts = [];
+  if (Number(row.rust_penalty) >= 0.1) parts.push(`rust −${Number(row.rust_penalty).toFixed(1)}`);
+  if (Number(row.minutes_limit_pct) < 100) parts.push(`${Number(row.minutes_limit_pct)}% min`);
+  const title = `Back from injury: in-game ratings −${Number(row.rust_penalty || 0).toFixed(1)} for about ${Number(row.rust_games || 0)} more game(s)${Number(row.minutes_limit_pct) < 100 ? `; the coach limits him to about ${Number(row.minutes_limit_pct)}% of his usual minutes next game, back to full over ${Number(row.minutes_limit_games || 0)} game(s)` : ""}.`;
+  return `<span class="playoff-injury-status is-returning" title="${escapeAttr(title)}"><span class="player-rust-status" aria-hidden="true">↓</span><span>Back: ${escapeHtml(parts.join(", ") || "easing in")}</span></span>`;
+}
+
+function playoffInjuryBackCell(row) {
+  if (row.status === "out") {
+    const date = row.return_date ? String(row.return_date).slice(5).replace("-", "/") : "—";
+    const games = Number(row.games_estimate);
+    return `<span title="${escapeAttr(row.return_date ? `Expected back ${row.return_date}${Number.isFinite(games) ? `, about ${games} game${games === 1 ? "" : "s"}` : ""}` : "Return date unknown")}">${escapeHtml(date)}${Number.isFinite(games) ? ` <small>~${games}g</small>` : ""}</span>`;
+  }
+  const games = Math.max(Number(row.rust_games) || 0, Number(row.minutes_limit_games) || 0);
+  return games ? `<span title="Rust and minutes limit gone in about ${games} game${games === 1 ? "" : "s"}">Normal in ${games}g</span>` : "—";
+}
+
+function playoffInjuriesTable(rows, sort) {
+  const active = playoffInjuriesSortState(sort);
+  const head = PLAYOFF_INJURIES_COLUMNS.map((column) => {
+    const sorted = column.key === active.key;
+    return `<th scope="col" class="playoff-stats-col-${column.key}${sorted ? " is-sorted" : ""}" aria-sort="${sorted ? (active.direction === "desc" ? "descending" : "ascending") : "none"}"><button type="button" data-playoff-injuries-sort="${column.key}" title="Sort by ${escapeAttr(column.title)}">${escapeHtml(column.label)}${sorted ? (active.direction === "desc" ? " ↓" : " ↑") : ""}</button></th>`;
+  }).join("");
+  const body = rows.map((row, index) => {
+    const id = String(row.player_id || "");
+    const portrait = playerHeadshotMarkup({ headshot_url: row.headshot_url || "" }, "roster-player-headshot") || playerHeadshotMarkup({ is_prospect: true }, "roster-player-headshot");
+    const logo = row.team_abbrev ? teamLogoSrc(row.team_abbrev) : "";
+    const cls = (key) => `playoff-stats-col-${key}${key === active.key ? " is-sorted" : ""}`;
+    const cells = {
+      player: `<th scope="row" class="${cls("player")}"><button type="button" class="playoff-stats-player-link" data-dashboard-player-card="${escapeAttr(id)}" aria-label="Open ${escapeAttr(row.name || "player")} player card">${portrait}<span class="playoff-stats-rank">${index + 1}.</span><span class="player-name-text">${escapeHtml(row.name || "Unknown")}</span></button></th>`,
+      team: `<td class="${cls("team")}"><span class="playoff-stats-team">${logo ? `<img src="${escapeAttr(logo)}" alt="" aria-hidden="true" loading="lazy" decoding="async">` : ""}<span>${escapeHtml(row.team_abbrev || "—")}</span></span></td>`,
+      overall: `<td class="${cls("overall")}">${playoffInjuryRatingCell(row.overall)}</td>`,
+      offense: `<td class="${cls("offense")}">${playoffInjuryRatingCell(row.offense)}</td>`,
+      defense: `<td class="${cls("defense")}">${playoffInjuryRatingCell(row.defense)}</td>`,
+      status: `<td class="${cls("status")}">${playoffInjuryStatusCell(row)}</td>`,
+      back: `<td class="${cls("back")}">${playoffInjuryBackCell(row)}</td>`,
+    };
+    return `<tr class="${row.user_team ? "is-user-team" : ""}" data-playoff-injury-player="${escapeAttr(id)}">${PLAYOFF_INJURIES_COLUMNS.map((column) => cells[column.key]).join("")}</tr>`;
+  }).join("");
+  return { head, body };
+}
+
+function playoffInjuriesCard(payload) {
+  const scope = state.playoffInjuriesScope === "team" ? "team" : "league";
+  const sort = playoffInjuriesSortState(state.playoffInjuriesSort);
+  const rows = playoffInjuriesRows(payload, scope, sort);
+  const userAlive = (payload?.teams_alive || []).includes(payload?.user_team_id);
+  const { head, body } = playoffInjuriesTable(rows, sort);
+  const emptyText = !payload ? "Injury report unavailable."
+    : scope === "team" ? (userAlive ? "Your team has no injured players." : "Your team is out of the playoffs.")
+    : "No injured players on playoff teams.";
+  const counts = (payload?.players || []).reduce((total, row) => ({ out: total.out + (row.status === "out" ? 1 : 0), back: total.back + (row.status === "out" ? 0 : 1) }), { out: 0, back: 0 });
+  return `<div class="playoff-injuries-toolbar">
+      <div class="playoff-injuries-scope" role="group" aria-label="Injury report scope">
+        <button type="button" data-playoff-injuries-scope="league" aria-pressed="${scope === "league"}">Playoff teams</button>
+        <button type="button" data-playoff-injuries-scope="team" aria-pressed="${scope === "team"}">Your team</button>
+      </div>
+      <span class="playoff-injuries-count">${counts.out} out · ${counts.back} easing back</span>
+    </div>
+    <div class="playoff-stats-scroll"><table class="playoff-stats-table playoff-injuries-table" aria-label="Injured players on playoff teams"><colgroup>${PLAYOFF_INJURIES_COLUMNS.map((column) => `<col style="width:${column.width}px">`).join("")}</colgroup><thead><tr>${head}</tr></thead><tbody>${body || `<tr class="playoff-stats-empty"><td colspan="${PLAYOFF_INJURIES_COLUMNS.length}">${escapeHtml(emptyText)}</td></tr>`}</tbody></table></div>`;
+}
+
+function wirePlayoffInjuriesCard(root = document) {
+  root.querySelectorAll("[data-playoff-injuries]").forEach((panel) => {
+    if (panel.dataset.playoffInjuriesWired) return;
+    panel.dataset.playoffInjuriesWired = "true";
+    wireDashboardPlayerCards(panel);
+    panel.addEventListener("click", (event) => {
+      const sortButton = event.target.closest("[data-playoff-injuries-sort]");
+      const scopeButton = event.target.closest("[data-playoff-injuries-scope]");
+      if (!sortButton && !scopeButton) return;
+      if (sortButton) state.playoffInjuriesSort = nextPlayoffInjuriesSort(state.playoffInjuriesSort, sortButton.dataset.playoffInjuriesSort);
+      if (scopeButton) state.playoffInjuriesScope = scopeButton.dataset.playoffInjuriesScope;
+      const focusSelector = sortButton ? `[data-playoff-injuries-sort="${sortButton.dataset.playoffInjuriesSort}"]` : `[data-playoff-injuries-scope="${scopeButton.dataset.playoffInjuriesScope}"]`;
+      const scroll = panel.querySelector(".playoff-stats-scroll");
+      const top = scroll?.scrollTop || 0;
+      panel.innerHTML = playoffInjuriesCard(state.data.playoffInjuries);
+      const next = panel.querySelector(".playoff-stats-scroll");
+      if (next && sortButton) next.scrollTop = top;
+      wireDashboardPlayerCards(panel);
+      panel.querySelector(focusSelector)?.focus();
+    });
+  });
+}
+
+
 function draftDashboardWorkspace() {
   const draft = state.data.draft || {};
   const current = draft.current_selection || {};
@@ -5140,9 +5298,12 @@ function draftDashboardWorkspace() {
   if (state.draftPresentationStage === "odds") return draftLotteryOddsWorkspace(draft);
   if (state.draftPresentationStage === "reveal") return draftLotteryRevealWorkspace(draft);
   const boardRows = draftBoardRows(draft.draft_board);
-  const filteredBoard = state.draftBoardFilter === "all" ? boardRows : boardRows.filter((row) => row.status !== "drafted");
+  // The prospect just taken stays on the Available view for the frame that announces him, struck through.
+  const freshPick = draftFreshPick(draft);
+  const filteredBoard = state.draftBoardFilter === "all" ? boardRows : boardRows.filter((row) => row.status !== "drafted" || (freshPick && Number(row.selectedPick) === freshPick));
   const visibleBoard = sortDraftBoardRows(filteredBoard, state.draftBoardSort);
-  const clockTeam = current.team || draft.board_context_team || selection.team_id;
+  // The team that owns the current pick (from the draft order), not the board's point of view.
+  const clockTeam = current.team || (draft.draft_timeline || []).find((row) => row.draft_status === "current")?.team || selection.team_id || draft.board_context_team;
   const currentPick = Number(selection.overall_pick || 0);
   const currentPickKey = `${draft.year || "draft"}:${currentPick}:${teamLabel(clockTeam)}`;
   const userOnClock = Boolean(draft.current_pick_is_user_owned);
@@ -5155,20 +5316,9 @@ function draftDashboardWorkspace() {
   const selectedProspect = boardRows.find((row) => String(row.id) === String(state.selectedDraftProspect || ""));
   const nextUserPick = Number(draft.next_user_selection?.selection?.overall_pick || 0);
   const canSimToUser = Boolean(current.selection && !userOnClock && nextUserPick > currentPick);
+  const boardContext = teamLabel(draft.board_context_team || clockTeam);
   return `
     <div class="draft-night-shell">
-      <header class="draft-clock-strip">
-        <div class="draft-clock-team">
-          ${draftTeamLogo(clockTeam)}
-          <div>
-            <p class="eyebrow">${current.selection ? `On the clock · Pick ${escapeHtml(selection.overall_pick)} of ${escapeHtml(draft.state?.total_picks || "")}` : "Draft complete"}</p>
-            <h3>${current.selection ? escapeHtml(teamLabel(clockTeam)) : `${escapeHtml(draft.year || "")} Draft Complete`}</h3>
-          </div>
-        </div>
-        ${current.selection ? `<div class="draft-clock-context"><span>${userOnClock ? "Your decision" : "AI selection"}</span><strong>${userOnClock ? (selectedProspect ? escapeHtml(selectedProspect.name) : "Select a prospect from the board") : `Simulate pick #${escapeHtml(currentPick)}`}</strong></div>` : `<p class="muted">All ${escapeHtml(draft.state?.total_picks || "")} selections are in.</p>`}
-      </header>
-      ${state.draftPlaybackRunning ? `<div class="draft-pick-reveal" role="status" aria-live="polite">${state.draftPlaybackReveal?.type === "pick" ? `${draftTeamLogo(state.draftPlaybackReveal.team)}<span>Pick #${escapeHtml(state.draftPlaybackReveal.overall_pick)}</span><strong>${escapeHtml(teamLabel(state.draftPlaybackReveal.team))} selects ${escapeHtml(state.draftPlaybackReveal.prospect?.name || "Unknown prospect")}</strong>${state.draftPlaybackReveal.explanation ? `<small class="draft-pick-why">${escapeHtml(String(state.draftPlaybackReveal.explanation).replace(/^[^:]*: /, ""))}</small>` : ""}` : `<span>Draft selections underway</span><strong>Revealing picks in order</strong>`}</div>` : ""}
-      ${!completedDraft && (draft.trade_news || []).length ? `<div class="draft-news-strip"><strong>Breaking:</strong> ${escapeHtml((draft.trade_news || []).map((item) => item.headline || textValue(item)).join(" · "))}</div>` : ""}
       <div class="draft-night-grid">
         ${completedDraft ? `<section class="draft-prospect-panel draft-summary-panel">
           <div class="draft-panel-head">
@@ -5182,21 +5332,77 @@ function draftDashboardWorkspace() {
             <div class="draft-panel-head"><div><h4>Draft-Night Trades</h4><p>Every trade completed during the draft.</p></div></div>
             ${completedDraftTradeRecap(draft.trade_recap || draft.trade_news || [])}
           </section>
-        </aside>` : `<section class="draft-prospect-panel">
-          <div class="draft-panel-head">
-            <div><h4>Prospect Board</h4><p>League consensus beside your scouts' board for ${escapeHtml(teamLabel(draft.board_context_team || clockTeam))}${draft.draft_board?.month_label ? ` (${escapeHtml(draft.draft_board.month_label)} update)` : ""}. Select any available prospect when your team is on the clock.</p></div>
-            <select id="draftBoardFilter" aria-label="Prospect availability filter"><option value="available" ${state.draftBoardFilter === "available" ? "selected" : ""}>Available</option><option value="all" ${state.draftBoardFilter === "all" ? "selected" : ""}>All prospects</option></select>
-          </div>
-          ${draftProspectBoard(visibleBoard, userOnClock, state.selectedDraftProspect)}
+        </aside>` : `<section class="draft-prospect-panel draft-night-board" aria-label="Draft-night prospect board">
+          <header class="draft-board-stage">
+            <div class="draft-board-clock">
+              ${draftTeamLogo(clockTeam)}
+              <div>
+                <p>${current.selection ? `On the clock · Pick ${escapeHtml(selection.overall_pick)} of ${escapeHtml(draft.state?.total_picks || "")}` : "Draft complete"}</p>
+                <h4>${current.selection ? escapeHtml(teamLabel(clockTeam)) : `${escapeHtml(draft.year || "")} Draft Complete`}</h4>
+              </div>
+            </div>
+            <div class="draft-board-decision">${current.selection
+              ? `<span>${userOnClock ? "Your pick" : "AI selection"}</span><strong>${userOnClock ? (selectedProspect ? escapeHtml(selectedProspect.name) : "Choose a prospect from the board") : `Next: pick #${escapeHtml(currentPick)}`}</strong>`
+              : `<span>All ${escapeHtml(draft.state?.total_picks || "")} selections are in</span>`}</div>
+            <label class="draft-board-filter"><span>Show</span><select id="draftBoardFilter" aria-label="Prospect availability filter"><option value="available" ${state.draftBoardFilter === "available" ? "selected" : ""}>Available</option><option value="all" ${state.draftBoardFilter === "all" ? "selected" : ""}>All prospects</option></select></label>
+          </header>
+          ${draftPickStage(draft, freshPick)}
+          ${(draft.trade_news || []).length ? `<div class="draft-news-strip"><strong>Breaking:</strong> ${escapeHtml((draft.trade_news || []).map((item) => item.headline || textValue(item)).join(" · "))}</div>` : ""}
+          <p class="draft-board-note">Consensus: the median of all 30 teams' scouting. Your board: ${escapeHtml(boardContext)}'s scouts, talent only${draft.draft_board?.month_label ? ` (${escapeHtml(draft.draft_board.month_label)} update)` : ""}. ${userOnClock ? "Click a row, or press Enter on it, to choose your pick." : "Rows become selectable when your team is on the clock."}</p>
+          ${draftProspectBoard(visibleBoard, userOnClock, state.selectedDraftProspect, freshPick)}
         </section>
         <aside class="draft-ledger-column">
           <section class="draft-ledger-panel draft-order-ledger-panel">
             <div class="draft-panel-head"><div><h4>Draft Order</h4><p>${escapeHtml((draft.previous_picks || []).length)} complete · current pick centered</p></div></div>
-            ${draftPickTimeline(draft.draft_timeline || [])}
+            ${draftPickTimeline(draft.draft_timeline || [], freshPick)}
           </section>
         </aside>`}
       </div>
     </div>`;
+}
+
+// Per-pick animation, once: a pick animates the first time it becomes the newest completed selection on screen
+// (a playback frame, a single simulated pick, or the user's own pick). Picks already made when the draft room is
+// first shown, re-renders (sorting, selecting, reloads) and the final room after playback never animate again.
+function draftFreshPick(draft = state.data.draft || {}) {
+  const key = `${state.currentSave}:${draft.year || "draft"}`;
+  const latest = (draft.draft_timeline || []).reduce((max, row) => row.draft_status === "selected" ? Math.max(max, Number(row.selection?.overall_pick) || 0) : max, 0);
+  if (state.draftAnimatedKey !== key || latest < Number(state.draftAnimatedThrough || 0)) {
+    state.draftAnimatedKey = key;
+    state.draftAnimatedThrough = latest;
+    return 0;
+  }
+  if (latest > state.draftAnimatedThrough) {
+    state.draftAnimatedThrough = latest;
+    return latest;
+  }
+  return 0;
+}
+
+function draftPickWhy(explanation) {
+  return String(explanation || "").replace(/^[^:]*: /, "");
+}
+
+// The pick reveal at the top of the board: during playback, the pick being announced (with Skip); otherwise the
+// most recent selection. Only the pick that is fresh in this render carries the animation class.
+function draftPickStage(draft, freshPick) {
+  const playing = Boolean(state.draftPlaybackRunning);
+  const reveal = playing && state.draftPlaybackReveal?.type === "pick" ? state.draftPlaybackReveal : null;
+  const lastRow = [...(draft.draft_timeline || [])].reverse().find((row) => row.draft_status === "selected");
+  const pick = reveal
+    ? {pick:reveal.overall_pick, team:reveal.team, prospect:reveal.prospect || {}, why:draftPickWhy(reveal.explanation)}
+    : lastRow ? {pick:lastRow.selection?.overall_pick, team:lastRow.team, prospect:lastRow.prospect || {}, why:draftPickWhy(lastRow.explanation)} : null;
+  const skip = playing ? `<button type="button" class="ui-command draft-playback-skip" data-draft-playback-skip>Skip to results</button>` : "";
+  if (!pick) return playing ? `<div class="draft-pick-reveal is-playing" role="status" aria-live="polite"><span class="draft-pick-reveal-number">Draft selections underway</span><div class="draft-pick-reveal-text"><strong>Revealing picks in order</strong></div>${skip}</div>` : "";
+  const fresh = Number(freshPick) > 0 && Number(pick.pick) === Number(freshPick);
+  const age = Number(pick.prospect.age);
+  const detail = [pick.prospect.position, Number.isFinite(age) && age > 0 ? `age ${Math.round(age)}` : ""].filter(Boolean).join(" · ");
+  return `<div class="draft-pick-reveal${fresh ? " is-fresh" : ""}${playing ? " is-playing" : " is-last-pick"}"${playing ? ' role="status" aria-live="polite"' : ""} data-draft-reveal-pick="${escapeAttr(pick.pick)}">
+    ${draftTeamLogo(pick.team)}
+    <span class="draft-pick-reveal-number">${playing ? "Pick" : "Last pick"} #${escapeHtml(pick.pick)}</span>
+    <div class="draft-pick-reveal-text"><strong>${escapeHtml(teamLabel(pick.team))} selects ${escapeHtml(pick.prospect.name || "Unknown prospect")}</strong>${detail ? `<small>${escapeHtml(detail)}</small>` : ""}${pick.why ? `<small class="draft-pick-why" title="${escapeAttr(pick.why)}">${escapeHtml(pick.why)}</small>` : ""}</div>
+    ${skip}
+  </div>`;
 }
 
 function draftLotteryOddsWorkspace(draft) {
@@ -5298,13 +5504,19 @@ function finishLotteryReveal() {
 // Two boards side by side (draft-boards plan): the league consensus (median of the 30 teams' scouting, with the
 // range of team ranks) and your scouts' board (talent only, with the change since last month). "Fit for us" is the
 // GM's need and roster fit, kept apart from the scouts' talent read. Now/Pot are your scouts' estimates.
+// Draft-night layout follows the expanded Upcoming Prospects card (rank, origin logo + name, Now -> Pot, your board,
+// scouted bar), enlarged, on the shared table style. Columns: [key, label, width, sort keys].
 const DRAFT_BOARD_HEADINGS = [
-  ["consensus", "Consensus"], ["rank", "Your board"], ["name", "Prospect"], ["position", "Pos"], ["age", "Age"],
-  ["height", "Ht"], ["now", "Now"], ["potential", "Pot"], ["type", "Scouts' read"], ["scouted", "Scouted"],
-  ["fit", "Fit for us"], ["injury", "Injury"], ["status", "Status"],
+  ["consensus", "Consensus", 70, ["consensus"]], ["name", "Prospect", 196, ["name"]], ["position", "Pos", 46, ["position"]],
+  ["age", "Age", 38, ["age"]], ["height", "Ht", 42, ["height"]], ["nowpot", "Now → Pot", 82, ["now", "potential"]],
+  ["rank", "Your board", 72, ["rank"]], ["type", "Scouts' read", 150, ["type"]], ["scouted", "Scouted", 108, ["scouted"]],
+  ["fit", "Fit for us", 56, ["fit"]], ["injury", "Injury", 80, ["injury"]], ["status", "Status", 86, ["status"]],
 ];
 const DRAFT_BOARD_TIPS = {
   consensus: "League consensus: the median of all 30 teams' scouting reports. The small range is where most teams (the middle half) rank him.",
+  name: "Prospect and where he plays now. Click a name for the full scouting report.",
+  injury: "Injury history, any current injury, and projected injury risk from his medical file.",
+  status: "Available, your selection, or the pick that took him.",
   rank: "Your scouts' board: talent only (current level, upside, age, risk), no team fit. The arrow is the change since last month's update.",
   now: "Your scouts' estimate of his current level on the overall scale.",
   potential: "Your scouts' estimate of his realistic peak. Not his hidden true rating.",
@@ -5319,35 +5531,56 @@ function draftRankMove(change) {
   return `<span class="draft-rank-move ${value > 0 ? "is-up" : "is-down"}" title="${value > 0 ? "Up" : "Down"} ${Math.abs(value)} since last month">${value > 0 ? "▲" : "▼"}${Math.abs(value)}</span>`;
 }
 
-function draftProspectBoard(rows, selectable = false, selectedId = "") {
+function draftBoardSortHeader(key, label) {
   const sort = state.draftBoardSort || {};
-  const sortedClass = (key) => (sort.key === key ? " is-sorted" : "");
-  return `<div class="draft-prospect-scroll"><table class="draft-prospect-table draft-two-boards"><thead><tr>${DRAFT_BOARD_HEADINGS.map(([key, label]) => {const active=sort.key===key;return `<th class="draft-col-${escapeAttr(key)}${sortedClass(key)}" aria-sort="${active?(sort.direction==='desc'?'descending':'ascending'):'none'}"${DRAFT_BOARD_TIPS[key] ? ` title="${escapeAttr(DRAFT_BOARD_TIPS[key])}"` : ""}><button class="draft-sort-button" data-draft-sort="${escapeAttr(key)}">${escapeHtml(label)}${draftSortMark(key)}</button></th>`;}).join("")}</tr></thead><tbody>${rows.map((row) => {
-    const available = row.status !== "drafted";
-    const selected = available && String(row.id) === String(selectedId || "");
-    const spread = row.draftRangeLow != null && row.draftRangeHigh != null && row.draftRangeLow !== row.draftRangeHigh ? `<small class="draft-rank-spread" title="Most teams (the middle half) rank him #${escapeAttr(row.draftRangeLow)} to #${escapeAttr(row.draftRangeHigh)}; every team: #${escapeAttr(row.consensusBest ?? row.draftRangeLow)} to #${escapeAttr(row.consensusWorst ?? row.draftRangeHigh)}">${escapeHtml(row.draftRangeLow)}–${escapeHtml(row.draftRangeHigh)}</small>` : "";
-    const cells = {
-      consensus: `<strong>#${escapeHtml(row.consensusRank ?? "—")}</strong>${spread}`,
-      rank: `<strong>#${escapeHtml(row.rank ?? "—")}</strong>${draftRankMove(row.rankChange)}`,
-      name: `<button type="button" class="draft-prospect-name" data-draft-prospect-card="${escapeAttr(row.id)}"${row.scoutsDiffer ? ` title="Your scouts are ${escapeAttr(row.scoutsDiffer)} than the league."` : ""}>${escapeHtml(row.name || "Unknown")}</button>`,
-      position: escapeHtml(row.position || "—"), age: escapeHtml(row.age ?? "—"), height: escapeHtml(row.height || "—"),
-      now: draftMetric(row.now), potential: draftMetric(row.potential),
-      type: `<span class="draft-scout-read draft-scout-read-${escapeAttr(row.developmentKey || "balanced")}" title="${escapeAttr(row.developmentTimeline || "")}">${escapeHtml(row.developmentLabel || "—")}</span>`,
-      scouted: Number.isFinite(Number(row.scoutedPct)) ? `${Number(row.scoutedPct).toFixed(0)}%` : "—",
-      fit: draftMetric(row.fit),
-      injury: prospectInjuryMarkup(row.injuryReport) || "—",
-      status: row.status === "drafted" ? `<span class="drafted-badge">#${escapeHtml(row.selectedPick)} ${escapeHtml(teamLabel(row.selectedTeam))}</span>` : selected ? `<span class="available-badge selected-badge">Selected</span>` : `<span class="available-badge">Available</span>`,
-    };
-    return `<tr class="${row.status === "drafted" ? "is-drafted" : ""}${selected ? " is-selected" : ""}${selectable && available ? " is-selectable" : ""}" ${selectable && available ? `data-draft-prospect="${escapeAttr(row.id)}" tabindex="0"` : ""}>${DRAFT_BOARD_HEADINGS.map(([key]) => `<td class="draft-col-${escapeAttr(key)}${key === "injury" ? " draft-prospect-injury" : ""}${sortedClass(key)}">${cells[key]}</td>`).join("")}</tr>`;
-  }).join("") || `<tr><td colspan="${DRAFT_BOARD_HEADINGS.length}" class="empty">No prospects match this view.</td></tr>`}</tbody></table></div>`;
+  const active = sort.key === key;
+  const direction = active ? (sort.direction === "desc" ? "descending" : "ascending") : "";
+  return `<button type="button" class="draft-sort-button${active ? " is-active" : ""}" data-draft-sort="${escapeAttr(key)}" aria-label="Sort by ${escapeAttr(label)}${direction ? `, ${direction}` : ""}"${DRAFT_BOARD_TIPS[key] ? ` title="${escapeAttr(DRAFT_BOARD_TIPS[key])}"` : ""}>${escapeHtml(label)}${draftSortMark(key)}</button>`;
 }
 
-function draftPickTimeline(rows) {
+function draftProspectBoard(rows, selectable = false, selectedId = "", freshPick = 0) {
+  const sort = state.draftBoardSort || {};
+  const sortedColumn = DRAFT_BOARD_HEADINGS.find(([, , , keys]) => keys.includes(sort.key))?.[0] || "";
+  const sortedClass = (key) => (sortedColumn === key ? " is-sorted" : "");
+  const head = DRAFT_BOARD_HEADINGS.map(([key, label, , keys]) => {
+    const ariaSort = sortedColumn === key ? (sort.direction === "desc" ? "descending" : "ascending") : "none";
+    const content = key === "nowpot"
+      ? `<span class="draft-nowpot-sorts">${draftBoardSortHeader("now", "Now")}<i aria-hidden="true">→</i>${draftBoardSortHeader("potential", "Pot")}</span>`
+      : draftBoardSortHeader(keys[0], label);
+    return `<th scope="col" class="draft-col-${escapeAttr(key)}${sortedClass(key)}" aria-sort="${ariaSort}">${content}</th>`;
+  }).join("");
+  const body = rows.map((row) => {
+    const available = row.status !== "drafted";
+    const selected = available && String(row.id) === String(selectedId || "");
+    const fresh = !available && Number(freshPick) > 0 && Number(row.selectedPick) === Number(freshPick);
+    const spread = row.draftRangeLow != null && row.draftRangeHigh != null ? `<small class="draft-rank-spread" title="Most teams (the middle half) rank him #${escapeAttr(row.draftRangeLow)} to #${escapeAttr(row.draftRangeHigh)}; every team: #${escapeAttr(row.consensusBest ?? row.draftRangeLow)} to #${escapeAttr(row.consensusWorst ?? row.draftRangeHigh)}">${row.draftRangeLow === row.draftRangeHigh ? `#${escapeHtml(row.draftRangeLow)}` : `${escapeHtml(row.draftRangeLow)}–${escapeHtml(row.draftRangeHigh)}`}</small>` : "";
+    const consensus = Number(row.consensusRank);
+    const scouted = Number(row.scoutedPct);
+    const now = Number(row.now), potential = Number(row.potential), fit = Number(row.fit);
+    const cells = {
+      consensus: `<span class="draft-board-rank">${Number.isFinite(consensus) ? String(consensus).padStart(2, "0") : "—"}</span>${spread}`,
+      name: `<span class="draft-board-name">${prospectOriginMarkup(row.sourceTeam)}<button type="button" class="draft-prospect-name" data-draft-prospect-card="${escapeAttr(row.id)}" title="${escapeAttr(`Open scouting report for ${row.name || "this prospect"}${row.scoutsDiffer ? `. Your scouts are ${row.scoutsDiffer} than the league.` : ""}`)}">${escapeHtml(row.name || "Unknown")}</button></span>`,
+      position: escapeHtml(row.position || "—"), age: escapeHtml(row.age ?? "—"), height: escapeHtml(row.height || "—"),
+      nowpot: `<span class="draft-board-nowpot" title="Your scouts' estimates: current level ${Number.isFinite(now) ? now.toFixed(1) : "unknown"}, realistic peak ${Number.isFinite(potential) ? potential.toFixed(1) : "unknown"}"><strong>${Number.isFinite(now) ? now.toFixed(0) : "—"}</strong><i aria-hidden="true">→</i><b>${Number.isFinite(potential) ? potential.toFixed(0) : "—"}</b></span>`,
+      rank: `<span class="draft-board-yours"><strong>#${escapeHtml(row.rank ?? "—")}</strong>${draftRankMove(row.rankChange)}</span>`,
+      type: `<span class="draft-scout-read draft-scout-read-${escapeAttr(row.developmentKey || "balanced")}" title="${escapeAttr(row.developmentTimeline || row.developmentLabel || "")}">${escapeHtml(row.developmentLabel || "—")}</span>`,
+      scouted: Number.isFinite(scouted) ? `<span class="season-scouted draft-board-scouted" aria-label="Scouted ${scouted.toFixed(0)} percent"><i><b style="${performanceBarStyle(scouted)}"></b></i><strong>${scouted.toFixed(0)}%</strong></span>` : "—",
+      fit: Number.isFinite(fit) ? `<span title="${escapeAttr(DRAFT_BOARD_TIPS.fit)}">${fit.toFixed(0)}</span>` : "—",
+      injury: prospectInjuryMarkup(row.injuryReport) || `<span class="muted" title="No medical file">—</span>`,
+      status: row.status === "drafted" ? `<span class="drafted-badge${fresh ? " is-fresh" : ""}">#${escapeHtml(row.selectedPick)} ${escapeHtml(teamLabel(row.selectedTeam))}</span>` : selected ? `<span class="available-badge selected-badge">Selected</span>` : `<span class="available-badge">Available</span>`,
+    };
+    const rowLabel = selectable && available ? ` aria-label="${escapeAttr(`${row.name || "Prospect"}, consensus ${Number.isFinite(consensus) ? `#${consensus}` : "unranked"}${selected ? ", selected" : ""}. Press Enter to choose.`)}"` : "";
+    return `<tr class="${row.status === "drafted" ? "is-drafted" : ""}${selected ? " is-selected" : ""}${fresh ? " is-fresh" : ""}${selectable && available ? " is-selectable" : ""}" ${selectable && available ? `data-draft-prospect="${escapeAttr(row.id)}" tabindex="0"` : ""}${rowLabel}>${DRAFT_BOARD_HEADINGS.map(([key]) => `<td class="draft-col-${escapeAttr(key)}${key === "injury" ? " draft-prospect-injury" : ""}${sortedClass(key)}">${cells[key]}</td>`).join("")}</tr>`;
+  }).join("");
+  return `<div class="draft-prospect-scroll" data-draft-board-scroll><table class="draft-prospect-table draft-two-boards draft-board-table" aria-label="Prospect board"><colgroup>${DRAFT_BOARD_HEADINGS.map(([key, , width]) => `<col class="draft-col-${escapeAttr(key)}" style="width:${width}px">`).join("")}</colgroup><thead><tr>${head}</tr></thead><tbody>${body || `<tr><td colspan="${DRAFT_BOARD_HEADINGS.length}" class="empty">No prospects match this view.</td></tr>`}</tbody></table></div>`;
+}
+
+function draftPickTimeline(rows, freshPick = 0) {
   return `<div class="draft-ledger-scroll" data-draft-ledger>${rows.map((row) => {
     const status = row.draft_status || "upcoming";
     const completed = status === "selected";
     const current = status === "current";
-    const revealing = state.draftPlaybackRunning && Number(state.draftPlaybackReveal?.overall_pick) === Number(row.selection?.overall_pick);
+    const revealing = completed && Number(freshPick) > 0 && Number(freshPick) === Number(row.selection?.overall_pick);
     return `<div class="draft-ledger-row ${current ? "is-current" : completed ? "is-complete" : "is-upcoming"}${revealing ? " is-revealing" : ""}" data-draft-pick="${escapeAttr(row.selection?.overall_pick || "")}" ${current ? "data-current-draft-pick" : ""}${completed && row.explanation ? ` title="${escapeAttr(row.explanation)}"` : ""}><span class="draft-pick-number">${escapeHtml(row.selection?.overall_pick || "—")}</span>${draftTeamLogo(row.team)}<div><strong>${completed ? escapeHtml(row.prospect?.name || "Unknown prospect") : escapeHtml(teamLabel(row.team))}</strong><small>${completed ? `${escapeHtml(teamLabel(row.team))} · ${escapeHtml(row.prospect?.position || "")}` : current ? "On the clock" : "Upcoming pick"}</small></div>${current ? `<em>NOW</em>` : ""}</div>`;
   }).join("") || `<div class="empty">No draft order is available.</div>`}</div>`;
 }
@@ -5617,42 +5850,201 @@ function freeAgencyAskChange(value) {
   return `<span class="ask-change ask-change-${direction}" title="${change > 0 ? "Up" : "Down"} ${money(Math.abs(change))} since yesterday"><span class="ask-change-arrows" aria-hidden="true"><i>${arrow}</i><i>${arrow}</i><i>${arrow}</i></span><b>${money(Math.abs(change))}</b></span>`;
 }
 
+// Mandatory roster cut-down: every player is kept unless you mark him Waive or Buy out. The counter shows the roster
+// after your choices against the regular-season limit; "Release" stays disabled until enough players are marked, then
+// asks for confirmation before anything is sent. Costs are the engine's own waiver and buyout quotes.
+function cutdownChoicesFor(room = state.data.cutdown || {}) {
+  const key = `${state.currentSave}:${room.date || ""}:${room.team?.id || ""}`;
+  if (state.cutdownChoiceKey !== key) {
+    state.cutdownChoiceKey = key;
+    state.cutdownChoices = {};
+  }
+  const ids = new Set((room.players || []).filter((row) => row.can_waive !== false).map((row) => String(row.player_id)));
+  for (const id of Object.keys(state.cutdownChoices || {})) if (!ids.has(id)) delete state.cutdownChoices[id];
+  return state.cutdownChoices;
+}
+
+function cutdownReleaseCost(row, choice) {
+  const quote = choice === "buyout" ? row.buyout : row.waiver;
+  if (!quote || quote.unquantified) return null;
+  const value = Number(choice === "buyout" ? quote.payout_millions : quote.remaining_cost_millions);
+  return Number.isFinite(value) ? value : null;
+}
+
+function cutdownSelectionSummary(room, choices = {}) {
+  const players = room?.players || [];
+  const target = Number(room?.target_count || 15);
+  const current = Number(room?.current_count ?? players.length);
+  const releasing = players.filter((row) => ["waive", "buyout"].includes(choices[String(row.player_id)]));
+  const required = Math.max(0, current - target);
+  const costs = releasing.map((row) => cutdownReleaseCost(row, choices[String(row.player_id)]));
+  return {
+    current, target, required,
+    releasing: releasing.length,
+    names: releasing.map((row) => row.name || "Player"),
+    after: current - releasing.length,
+    remaining: Math.max(0, required - releasing.length),
+    extra: Math.max(0, releasing.length - required),
+    ready: required > 0 && releasing.length >= required,
+    costMillions: costs.reduce((sum, value) => sum + (value ?? 0), 0),
+    unknownCost: costs.some((value) => value === null),
+  };
+}
+
+function cutdownContractCell(row) {
+  const years = Object.entries(row.salary_by_year || {}).filter(([, value]) => value != null).sort(([a], [b]) => a.localeCompare(b));
+  if (!years.length) return "—";
+  const title = years.map(([season, value]) => `${season}: ${money(value)}`).join("\n");
+  return `<span class="cutdown-contract" title="${escapeAttr(title)}"><strong>${escapeHtml(money(years[0][1]))}</strong><small>${years.length === 1 ? "this season" : `${years.length} seasons left`}</small></span>`;
+}
+
+function cutdownQuoteCell(row, kind) {
+  const quote = kind === "buyout" ? row.buyout : row.waiver;
+  if (!quote) return "—";
+  if (quote.unquantified) return `<span class="cutdown-quote" title="The contract's protection is unknown, so the cost cannot be quoted.">Unknown</span>`;
+  const cost = kind === "buyout" ? quote.payout_millions : quote.remaining_cost_millions;
+  const note = kind === "buyout"
+    ? (Number(quote.savings_millions) > 0 ? `saves ${money(quote.savings_millions)} if he clears` : "no savings")
+    : `clears ${String(quote.clearance_date || "").slice(5).replace("-", "/") || "waivers"}`;
+  const title = kind === "buyout"
+    ? `${quote.policy || "Buyout"}\nPayout: ${money(quote.payout_millions)}. He goes on waivers until ${quote.clearance_date || "clearance"}; a claim moves the original contract instead.`
+    : `Waived salary stays on your books: ${money(quote.remaining_cost_millions)}${quote.unverified ? " (includes salary whose protection is unverified, reserved in full)" : ""}. Waivers clear ${quote.clearance_date || "after two days"}; a claim moves the contract to the claiming team.`;
+  return `<span class="cutdown-quote" title="${escapeAttr(title)}"><strong>${escapeHtml(money(cost))}</strong><small>${escapeHtml(note)}${quote.unverified ? " ·" : ""}${quote.unverified ? ` <abbr title="Includes salary whose protection is unverified (reserved in full)">reserve</abbr>` : ""}</small></span>`;
+}
+
 function rosterCutdownDashboardWorkspace() {
   const room = state.data.cutdown || {};
-  const pending = room.pending || {};
-  return `
-    <div class="phase-workspace-head">
-      <div>
-        <p class="eyebrow">${escapeHtml(room.date || state.home?.save?.current_date || "")}</p>
-        <h3>Mandatory Roster Cutdown</h3>
+  const choices = cutdownChoicesFor(room);
+  const summary = cutdownSelectionSummary(room, choices);
+  const players = room.players || [];
+  const decision = (row) => {
+    const id = String(row.player_id);
+    const value = choices[id] || "keep";
+    if (row.can_waive === false) return `<span class="muted">Protected</span>`;
+    return `<div class="cutdown-choice" role="radiogroup" aria-label="${escapeAttr(`Keep or release ${row.name || "player"}`)}">${[["keep", "Keep"], ["waive", "Waive"], ["buyout", "Buy out"]].map(([option, label]) => `<button type="button" role="radio" aria-checked="${value === option}" class="cutdown-choice-${option}${value === option ? " is-active" : ""}" data-cutdown-choice="${escapeAttr(id)}" data-cutdown-option="${option}" tabindex="${value === option ? 0 : -1}">${label}</button>`).join("")}</div>`;
+  };
+  const status = summary.required === 0
+    ? "Your roster is within the limit."
+    : summary.remaining > 0
+      ? `Mark ${summary.remaining} more player${summary.remaining === 1 ? "" : "s"} to release.`
+      : summary.extra > 0
+        ? `Ready. You are releasing ${summary.extra} more than required.`
+        : "Ready to release.";
+  const costText = summary.releasing
+    ? `${money(summary.costMillions)}${summary.unknownCost ? " + unknown" : ""} in salary owed to released players`
+    : "No one marked yet";
+  return `<div class="cutdown-workspace" data-cutdown-workspace>
+    <header class="cutdown-head">
+      <div class="cutdown-title">
+        <p>${escapeHtml(teamLabel(room.team || userTeam()))} · ${escapeHtml(room.date || state.home?.save?.current_date || "")} · Required before games</p>
+        <h3>Mandatory Roster Cut-Down</h3>
+        <span>Regular-season rosters hold ${escapeHtml(summary.target)} players. Everyone is kept unless you mark him Waive or Buy out.</span>
       </div>
-      <div class="dashboard-meta">
-        <span>${escapeHtml(teamLabel(room.team || userTeam()))}</span>
-        <span>${escapeHtml(room.current_count || 0)} / ${escapeHtml(room.target_count || 15)} players</span>
+      <div class="cutdown-counter${summary.ready ? " is-ready" : ""}" role="status" aria-live="polite">
+        <strong><b>${escapeHtml(summary.after)}</b> / ${escapeHtml(summary.target)}</strong>
+        <span>players after your choices</span>
+        <small>${escapeHtml(summary.current)} on the roster · ${escapeHtml(summary.required)} must go · ${escapeHtml(summary.releasing)} marked</small>
       </div>
-    </div>
-    <div class="phase-cutdown-layout">
-      <section class="phase-focus-panel cutdown-brief">
-        <p class="eyebrow">Before opening night</p>
-        <h3>${escapeHtml(pending.cut_required || Math.max(0, Number(room.current_count || 0) - Number(room.target_count || 15)))} move(s) required</h3>
-        <p class="muted">Choose which contracts leave the roster.</p>
-      </section>
-      <section class="phase-board-panel">
-        ${table(["Player", "Pos", "Age", "Ht", "MPG", "OVR", "Contract", "Waiver cost", ""], room.players || [], (row) => [
-          row.name,
-          compactPos(row.position),
-          row.age,
-          row.height || "—",
-          Number(row.minutes || 0).toFixed(1),
-          gradeNumber(row.overall),
-          compactSalaryYears(row.salary_by_year),
-          row.waiver?.unquantified ? 'Unknown' : `${money(row.waiver?.remaining_cost_millions || 0)}${row.waiver?.unverified ? " · unverified reserve" : ""}`,
-          row.can_waive
-            ? html(`<button class="ui-command" data-waive-player="${escapeAttr(row.player_id)}">Waive</button> <button class="ui-command" data-buyout-player="${escapeAttr(row.player_id)}">Buyout</button>`)
-            : html(`<span class="muted">Protected</span>`),
-        ])}
-      </section>
-    </div>`;
+    </header>
+    <div class="cutdown-scroll"><table class="cutdown-table" aria-label="Roster cut-down choices">
+      <colgroup><col style="width:190px"><col style="width:44px"><col style="width:38px"><col style="width:44px"><col style="width:44px"><col style="width:84px"><col style="width:104px"><col style="width:118px"><col style="width:132px"><col style="width:178px"></colgroup>
+      <thead><tr><th scope="col">Player</th><th scope="col">Pos</th><th scope="col">Age</th><th scope="col">Ht</th><th scope="col" title="Projected minutes per game">MPG</th><th scope="col">OVR</th><th scope="col" title="This season's salary; hover for every season">Contract</th><th scope="col" title="If waived: salary that stays on your books">If waived</th><th scope="col" title="If bought out: payout, and savings if he clears waivers">If bought out</th><th scope="col">Keep or release</th></tr></thead>
+      <tbody>${players.map((row) => {
+        const choice = choices[String(row.player_id)] || "keep";
+        const overall = Number(row.overall);
+        const injured = row.health && !["ok", "healthy", "active"].includes(String(row.health.status || "ok"));
+        return `<tr class="${choice === "keep" ? "" : "is-releasing"}">
+          <th scope="row"><span class="cutdown-player">${playerHeadshotMarkup(row, "roster-player-headshot") || playerHeadshotMarkup({is_prospect:true}, "roster-player-headshot")}<button type="button" class="cutdown-player-name" data-dashboard-player-card="${escapeAttr(row.player_id)}">${escapeHtml(row.name || "Unknown")}</button>${injured ? `<span class="season-injury-status" title="${escapeAttr(row.health.label || "Injured")}">✚</span>` : ""}${row.protected_reason ? `<small title="${escapeAttr(row.protected_reason)}">recent draftee</small>` : ""}</span></th>
+          <td>${escapeHtml(compactPos(row.position) || "—")}</td>
+          <td>${escapeHtml(Number.isFinite(Number(row.age)) ? Math.round(Number(row.age)) : "—")}</td>
+          <td>${escapeHtml(row.height || "—")}</td>
+          <td>${Number(row.minutes || 0).toFixed(1)}</td>
+          <td>${Number.isFinite(overall) ? `<span class="playoff-injury-rating"><em>${overall.toFixed(0)}</em><i aria-hidden="true"><b style="${performanceBarStyle(overall)}"></b></i></span>` : "—"}</td>
+          <td>${cutdownContractCell(row)}</td>
+          <td class="${choice === "waive" ? "is-chosen" : ""}">${cutdownQuoteCell(row, "waive")}</td>
+          <td class="${choice === "buyout" ? "is-chosen" : ""}">${cutdownQuoteCell(row, "buyout")}</td>
+          <td>${decision(row)}</td>
+        </tr>`;
+      }).join("") || `<tr><td colspan="10" class="empty">No roster loaded.</td></tr>`}</tbody>
+    </table></div>
+    <footer class="cutdown-foot">
+      <div><strong>${escapeHtml(status)}</strong><span>${summary.releasing ? `Releasing ${escapeHtml(summary.names.join(", "))} · ` : ""}${escapeHtml(costText)}</span></div>
+      <button type="button" class="ui-command" data-cutdown-clear ${summary.releasing ? "" : "disabled"}>Clear</button>
+      <button type="button" class="ui-command cutdown-confirm" data-cutdown-confirm ${summary.ready ? "" : "disabled"}>${summary.releasing ? `Release ${summary.releasing} player${summary.releasing === 1 ? "" : "s"}` : "Release players"}</button>
+    </footer>
+  </div>`;
+}
+
+async function confirmCutdownReleases() {
+  const room = state.data.cutdown || {};
+  const choices = cutdownChoicesFor(room);
+  const summary = cutdownSelectionSummary(room, choices);
+  if (!summary.ready) return;
+  const releases = (room.players || []).filter((row) => ["waive", "buyout"].includes(choices[String(row.player_id)]));
+  const lines = releases.map((row) => {
+    const choice = choices[String(row.player_id)];
+    const cost = cutdownReleaseCost(row, choice);
+    const charges = choice === "buyout" && row.buyout?.cap_charges?.length
+      ? ` (cap charges if unclaimed: ${row.buyout.cap_charges.map((r) => `${r.season} ${r.salary == null ? "unknown" : money(r.salary / 1000000)}`).join(", ")})`
+      : "";
+    return `• ${choice === "buyout" ? "Buy out" : "Waive"} ${row.name}: ${cost === null ? "cost unknown" : `${money(cost)} stays on your books`}${charges}`;
+  });
+  if (!window.confirm(`Release ${releases.length} player${releases.length === 1 ? "" : "s"}? This cannot be undone.\n\n${lines.join("\n")}\n\nThey go on waivers for two days; a claim moves the contract to the claiming team.`)) return;
+  let done = 0;
+  try {
+    for (const row of releases) {
+      const choice = choices[String(row.player_id)];
+      const result = await action(choice === "buyout" ? "buyout_player" : "waive_player", { ...savePayload(), player_id: row.player_id });
+      if (result.status !== "waived") throw new Error(result.reason || result.status || `Could not waive ${row.name}`);
+      done += 1;
+    }
+    showToast(`${done} player${done === 1 ? "" : "s"} released`);
+  } catch (error) {
+    showToast(error.message || String(error), true);
+  } finally {
+    state.cutdownChoices = {};
+    await refreshHome();
+  }
+}
+
+function wireCutdownWorkspace(root) {
+  const workspace = root.querySelector("[data-cutdown-workspace]");
+  if (!workspace) return;
+  const rerender = (focusSelector) => {
+    const scroll = workspace.querySelector(".cutdown-scroll")?.scrollTop || 0;
+    const template = document.createElement("template");
+    template.innerHTML = rosterCutdownDashboardWorkspace().trim();
+    const next = template.content.firstElementChild;
+    workspace.replaceWith(next);
+    const nextScroll = next.querySelector(".cutdown-scroll");
+    if (nextScroll) nextScroll.scrollTop = scroll;
+    wireCutdownWorkspace(next.parentElement);
+    wireDashboardPlayerCards(next);
+    if (focusSelector) next.querySelector(focusSelector)?.focus();
+  };
+  workspace.querySelectorAll("[data-cutdown-choice]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = button.dataset.cutdownChoice;
+      const option = button.dataset.cutdownOption;
+      if (option === "keep") delete state.cutdownChoices[id];
+      else state.cutdownChoices[id] = option;
+      rerender(`[data-cutdown-choice="${CSS.escape(id)}"][data-cutdown-option="${option}"]`);
+    });
+    button.addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const options = ["keep", "waive", "buyout"];
+      const index = options.indexOf(button.dataset.cutdownOption);
+      const nextOption = options[(index + (event.key === "ArrowRight" ? 1 : options.length - 1)) % options.length];
+      workspace.querySelector(`[data-cutdown-choice="${CSS.escape(button.dataset.cutdownChoice)}"][data-cutdown-option="${nextOption}"]`)?.click();
+    });
+  });
+  workspace.querySelector("[data-cutdown-clear]")?.addEventListener("click", () => {
+    state.cutdownChoices = {};
+    rerender("[data-cutdown-clear]");
+  });
+  workspace.querySelector("[data-cutdown-confirm]")?.addEventListener("click", confirmCutdownReleases);
 }
 
 function staffRetentionDashboardWorkspace() {
@@ -5748,28 +6140,52 @@ function wireDashboardPhaseWorkspace(kind, root = els.content) {
       button.addEventListener("click", () => openPlayoffSeriesBoxScore(button.dataset.playoffSeries || ""));
     });
     wirePlayoffStatsTable(root);
+    wirePlayoffInjuriesCard(root);
   }
   if (kind === "draft") {
+    // Re-renders keep the board's scroll position and put focus back where it was (sort button or row).
+    const boardScroll = root.querySelector("[data-draft-board-scroll]");
+    const remember = (focus) => {
+      state.draftBoardView = {top: boardScroll?.scrollTop || 0, left: boardScroll?.scrollLeft || 0, focus};
+    };
+    if (boardScroll && state.draftBoardView) {
+      const view = state.draftBoardView;
+      state.draftBoardView = null;
+      boardScroll.scrollTop = view.top;
+      boardScroll.scrollLeft = view.left;
+      if (view.focus) root.querySelector(view.focus)?.focus({preventScroll: true});
+    }
+    root.querySelector("[data-draft-playback-skip]")?.addEventListener("click", (event) => {
+      state.draftPlaybackSkip = true;
+      event.currentTarget.dataset.skipRequested = "true";
+      event.currentTarget.disabled = true;
+      event.currentTarget.textContent = "Skipping…";
+    });
     root.querySelector("#draftBoardFilter")?.addEventListener("change", (event) => {
       state.draftBoardFilter = event.currentTarget.value || "available";
+      remember("#draftBoardFilter");
       renderDashboard();
     });
     root.querySelectorAll("[data-draft-sort]").forEach((button) => button.addEventListener("click", () => {
       const key = button.dataset.draftSort || "rank";
-      const current = state.draftBoardSort || { key: "rank", direction: "asc" };
+      const current = state.draftBoardSort || { key: "consensus", direction: "asc" };
+      const highFirst = ["now", "potential", "fit", "scouted"].includes(key);
       state.draftBoardSort = {
         key,
-        direction: current.key === key && current.direction === "asc" ? "desc" : "asc",
+        direction: current.key === key ? (current.direction === "asc" ? "desc" : "asc") : (highFirst ? "desc" : "asc"),
       };
+      remember(`[data-draft-sort="${key}"]`);
       renderDashboard();
     }));
     root.querySelectorAll("[data-draft-prospect]").forEach((row) => {
       const select = () => {
         state.selectedDraftProspect = row.dataset.draftProspect || "";
+        remember(`[data-draft-prospect="${CSS.escape(row.dataset.draftProspect || "")}"]`);
         renderDashboard();
       };
       row.addEventListener("click", select);
       row.addEventListener("keydown", (event) => {
+        if (event.target !== row) return;
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           select();
@@ -5794,8 +6210,13 @@ function wireDashboardPhaseWorkspace(kind, root = els.content) {
           0,
           ledger.scrollTop + rowRect.top - ledgerRect.top - (ledger.clientHeight - rowRect.height) / 2,
         );
+        state.draftLedgerScrollTop = ledger.scrollTop;
       });
+    } else if (ledger) {
+      // Same pick as before (a sort, a selection, a reload of the cards): keep the order where the user left it.
+      ledger.scrollTop = Number(state.draftLedgerScrollTop || 0);
     }
+    ledger?.addEventListener("scroll", () => { state.draftLedgerScrollTop = ledger.scrollTop; }, { passive: true });
   }
   if (kind === "free_agency") {
     wireFreeAgencyMarket(root);
@@ -5806,25 +6227,7 @@ function wireDashboardPhaseWorkspace(kind, root = els.content) {
     root.querySelector("#reSignOpenMarket")?.addEventListener("click", () => advanceReSigning("open_market"));
   }
   if (kind === "cutdown") {
-    root.querySelectorAll("[data-buyout-player]").forEach((button) => button.addEventListener("click", async () => {
-      const playerId = button.dataset.buyoutPlayer;
-      const player = (state.data.cutdown?.players || []).find((row) => row.player_id === playerId);
-      const quote = player?.buyout;
-      if (!quote) return;
-      const charges = quote.cap_charges.map((r) => `${r.season}: ${r.salary == null ? "unknown (reserved)" : money(r.salary / 1000000)}`).join("\n");
-      if (!window.confirm(`Buy out ${player.name}?\n${quote.policy}\nRemaining payout: ${quote.unquantified ? 'Unknown' : money(quote.payout_millions)}\nCap charges if unclaimed:\n${charges}\nThe player enters waivers until ${quote.clearance_date}. A claim transfers the original contract instead.`)) return;
-      const result = await action("buyout_player", { ...savePayload(), player_id: playerId });
-      showToast(`${result.player_name} placed on waivers`);
-      await refreshHome();
-    }));
-    root.querySelectorAll("[data-waive-player]").forEach((button) => button.addEventListener("click", async () => {
-      const playerId = button.dataset.waivePlayer;
-      const player = (state.data.cutdown?.players || []).find((row) => row.player_id === playerId);
-      if (!window.confirm(`Waive ${player?.name || "this player"}? Remaining obligation: ${player?.waiver?.unquantified ? 'unknown' : money(player?.waiver?.remaining_cost_millions || 0)}${player?.waiver?.unverified ? " (includes unverified salary reserves)" : ""}. This salary stays on your books.`)) return;
-      const result = await action("waive_player", { ...savePayload(), player_id: playerId });
-      showToast(result.status === "waived" ? `${result.player_name} waived` : (result.reason || result.status), result.status !== "waived");
-      await refreshHome();
-    }));
+    wireCutdownWorkspace(root);
   }
   if (kind === "staff_retention") {
     root.querySelector("#staffRetentionResign")?.addEventListener("click", () => resolveStaffRetention("re_sign"));
@@ -6963,6 +7366,39 @@ function clipboardLegalActions() {
   return new Set(state.home?.save?.legal_actions || state.data.dashboard?.legal_actions || []);
 }
 
+// [width, height, sizing revision] for phase cards that open together. A new revision resets a saved size once.
+// Draft-night cards take the window's height (between 420 and 820 pixels) so the board shows as many rows as fit.
+const draftNightCardHeight = () => Math.round(Math.min(820, Math.max(420, (window.innerHeight || 900) - 160)));
+const CLIPBOARD_FIXED_CARD_SIZES = {
+  "playoffs-leaders": [600, 400, "playoff-stats-v2"],
+  "playoffs-injuries": [556, 400, "playoff-injuries-v1"],
+  get "draft-board"() { return [1060, draftNightCardHeight(), "draft-night-v2"]; },
+  get "draft-order"() { return [330, draftNightCardHeight(), "draft-night-v2"]; },
+  get "draft-summary"() { return [1010, draftNightCardHeight(), "draft-night-v2"]; },
+  get "draft-trades"() { return [380, draftNightCardHeight(), "draft-night-v2"]; },
+  // Cut-down: tall enough for the whole roster when the window allows (header, table, footer).
+  get "cutdown-decision"() {
+    const rows = (state.data.cutdown?.players || []).length || 15;
+    return [1000, Math.round(Math.min(Math.max(420, (window.innerHeight || 900) - 150), 92 + 26 + rows * 33 + 54)), "cutdown-v2"];
+  },
+};
+
+// Which cards open together, and how they are arranged, the first time a phase is entered (or, for the draft
+// results, the first time they appear). Applied once; after that the saved layout is respected, including windows
+// the user closed. Rows are centered and stacked top to bottom.
+function clipboardEntryLayout() {
+  const kind = dashboardPhaseKind();
+  if (kind === "playoffs" && !state.home?.save?.postseason_exit_required) {
+    return {rows: [["phase-playoffs-bracket"], ["phase-playoffs-leaders", "phase-playoffs-injuries", "minutes"]]};
+  }
+  if (kind === "draft" && !["odds", "reveal"].includes(state.draftPresentationStage)) {
+    const draft = state.data.draft || {};
+    const completed = (draft.state?.status === "completed") || (!draft.current_selection?.selection && (draft.draft_timeline || []).length > 0);
+    return {rows: [completed ? ["phase-draft-summary", "phase-draft-trades"] : ["phase-draft-board", "phase-draft-order"]]};
+  }
+  return null;
+}
+
 function seasonalClipboardCards(dashboard) {
   const kind = dashboardPhaseKind();
   const sections = {
@@ -6971,6 +7407,7 @@ function seasonalClipboardCards(dashboard) {
     playoffs: [
       ["bracket", ".phase-bracket-shell", "Playoff Bracket"],
       ["leaders", ".phase-leaders-panel", "Playoff Stats"],
+      ["injuries", ".playoff-injuries-panel", "Playoff Injuries"],
     ],
     draft: [
       ["lottery", ".draft-lottery-card", "Draft Lottery"],
@@ -7054,8 +7491,13 @@ function seasonalClipboardCards(dashboard) {
       const locked = !available || (phase === "free_agency" && !legal.has("free_agent_signings")) || signingClosed;
       const bracket = phase === "playoffs" && name === "bracket";
       const lottery = phase === 'draft' && name === 'lottery';
-      const playoffStats = phase === "playoffs" && name === "leaders";
-      cards.push({id:`phase-${phase}-${name}`, title, card, width:bracket ? Math.min(1420, Math.max(320, window.innerWidth - 60)) : lottery ? Math.min(700,Math.max(320,window.innerWidth-60)) : playoffStats ? Math.min(660, Math.max(320, window.innerWidth - 60)) : width, height:bracket ? 480 : lottery ? (state.draftPresentationStage==='odds'?444:454) : playoffStats ? 430 : height, sizingKey:lottery?`lottery-v3:${state.draftPresentationStage}`:playoffStats?"playoff-stats-v1":null, locked, galleryVisible:(active || archiveBracket) && Boolean(panel), mandatory:["staff_retention", "cutdown"].includes(phase), required:required && Boolean(panel), measured:Boolean(panel), phaseActive:active && Boolean(panel)});
+      // Fixed sizes for cards that open together (entry layouts): the board arranges them side by side and scales a
+      // row down only when the screen is too narrow.
+      const fixed = CLIPBOARD_FIXED_CARD_SIZES[`${phase}-${name}`];
+      const cardWidth = bracket ? Math.min(1420, Math.max(320, window.innerWidth - 60)) : lottery ? Math.min(700,Math.max(320,window.innerWidth-60)) : fixed ? fixed[0] : width;
+      const cardHeight = bracket ? 480 : lottery ? (state.draftPresentationStage==='odds'?444:454) : fixed ? fixed[1] : height;
+      const sizingKey = lottery ? `lottery-v3:${state.draftPresentationStage}` : fixed ? fixed[2] : null;
+      cards.push({id:`phase-${phase}-${name}`, title, card, width:cardWidth, height:cardHeight, sizingKey, locked, galleryVisible:(active || archiveBracket) && Boolean(panel), mandatory:["staff_retention", "cutdown"].includes(phase), required:required && Boolean(panel), measured:Boolean(panel), phaseActive:active && Boolean(panel)});
     }
     seed.remove();
   }
@@ -7225,18 +7667,23 @@ async function playDraftSimulation(finalRoom, events, appliedCount) {
   let revealedPicks = 0;
   let tradeNotificationsShown = false;
   const draftTradeNotices = events.filter(event => event.type === "trade");
+  const showTradeAlerts = async () => {
+    if (tradeNotificationsShown || !draftTradeNotices.length) return;
+    tradeNotificationsShown = true;
+    const showAlerts = window.AssistantGMPhone?.presentDraftTrades;
+    if (showAlerts) await showAlerts(draftTradeNotices);
+    else await GameSimulation.wait(1800);
+  };
+  state.draftPlaybackSkip = false;
   try {
     state.data.draft = GameSimulation.draftPlaybackFrame(finalRoom, events, 0);
     await refreshDashboardAfterPhaseMutation("draft", state.data.draft);
     setBusy(true);
     for (const event of events) {
+      // Skip jumps straight to the final room; the trade alerts still appear once.
+      if (state.draftPlaybackSkip) break;
       if (event.type === "trade") {
-        if (!tradeNotificationsShown) {
-          tradeNotificationsShown = true;
-          const showAlerts = window.AssistantGMPhone?.presentDraftTrades;
-          if (showAlerts) await showAlerts(draftTradeNotices);
-          else await GameSimulation.wait(1800);
-        }
+        await showTradeAlerts();
         continue;
       }
       if (event.type !== "pick") continue;
@@ -7246,8 +7693,10 @@ async function playDraftSimulation(finalRoom, events, appliedCount) {
       updateDraftPlaybackCard();
       await GameSimulation.wait(GameSimulation.reducedMotion() ? 160 : 430);
     }
+    await showTradeAlerts();
     showToast(`Draft sim: ${appliedCount} pick${appliedCount === 1 ? "" : "s"}`);
   } finally {
+    state.draftPlaybackSkip = false;
     state.data.draft = finalRoom;
     state.draftPlaybackRunning = false;
     state.draftPlaybackReveal = null;
@@ -7259,24 +7708,27 @@ async function playDraftSimulation(finalRoom, events, appliedCount) {
   }
 }
 
+// Playback frames update the Prospect Board and Draft Order cards in place (each card keeps its window, size and
+// scroll). The workspace markup is built once per frame, so each pick's animation class appears in exactly one frame.
 function updateDraftPlaybackCard() {
-  const frame = document.querySelector('[data-board-window="phase-draft-board"]');
-  const shell = frame?.querySelector(".draft-night-shell");
-  if (!shell) {
-    renderDashboard();
-    setBusy(true);
-    return;
-  }
+  const boardPanel = document.querySelector('[data-board-window="phase-draft-board"] .draft-night-board');
+  const orderPanel = document.querySelector('[data-board-window="phase-draft-order"] .draft-order-ledger-panel');
   const template = document.createElement("template");
   template.innerHTML = draftDashboardWorkspace().trim();
-  const nextShell = template.content.querySelector(".draft-night-shell");
-  if (!nextShell) {
+  const nextBoard = template.content.querySelector(".draft-night-board");
+  const nextOrder = template.content.querySelector(".draft-order-ledger-panel");
+  if (!boardPanel || !nextBoard) {
     renderDashboard();
     setBusy(true);
     return;
   }
-  shell.replaceWith(nextShell);
-  wireDashboardPhaseWorkspace("draft", frame.querySelector(".card-board-body") || frame);
+  const scroll = boardPanel.querySelector("[data-draft-board-scroll]");
+  const view = {top: scroll?.scrollTop || 0, left: scroll?.scrollLeft || 0};
+  boardPanel.replaceWith(nextBoard);
+  const nextScroll = nextBoard.querySelector("[data-draft-board-scroll]");
+  if (nextScroll) { nextScroll.scrollTop = view.top; nextScroll.scrollLeft = view.left; }
+  if (orderPanel && nextOrder) orderPanel.replaceWith(nextOrder);
+  wireDashboardPhaseWorkspace("draft", document.querySelector(".card-board-canvas") || document);
   setBusy(true);
 }
 
@@ -9213,6 +9665,7 @@ async function refreshDashboardAfterPhaseMutation(roomKey, room) {
   if (team === userTeam()) state.data.statusDashboard = dash;
   if (roomKey === "playoffs") {
     state.data.playoffLeaders = await action("playoff_leaders", { ...savePayload(), stat: "points", limit: PLAYOFF_STATS_LIMIT });
+    state.data.playoffInjuries = await loadPlayoffInjuries();
   }
   renderDashboard();
 }
@@ -13503,7 +13956,7 @@ function setBusy(isBusy) {
       delete control.dataset.busyDisabled;
       continue;
     }
-    if (control.matches('[data-phase-command="lottery-skip"]')) {
+    if (control.matches('[data-phase-command="lottery-skip"], [data-draft-playback-skip]:not([data-skip-requested])')) {
       control.disabled = false;
       delete control.dataset.busyDisabled;
       continue;

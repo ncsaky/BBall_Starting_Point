@@ -44,7 +44,7 @@
   const PHASE_CARD_MIN_SCALES = {
     "phase-staff_retention-decision": .86,
     "phase-cutdown-decision": .86,
-    "phase-playoffs-control": .9, "phase-playoffs-bracket": .8, "phase-playoffs-leaders": .84,
+    "phase-playoffs-control": .9, "phase-playoffs-bracket": .74, "phase-playoffs-leaders": .78, "phase-playoffs-injuries": .78,
     "phase-draft-control": .9, "phase-draft-lottery": .8, "phase-draft-board": .84, "phase-draft-order": .82, "phase-draft-summary": .84, "phase-draft-trades": .82,
     "phase-free_agency-control": .9, "phase-free_agency-market": .82, "phase-free_agency-selected": .84, "phase-free_agency-offers": .84, "phase-free_agency-wire": .82, "phase-free_agency-payroll": .82, "phase-free_agency-cap": .82,
     "phase-fantasy_draft-control": .9, "phase-fantasy_draft-board": .82, "phase-fantasy_draft-roster": .84, "phase-fantasy_draft-ticker": .82,
@@ -326,6 +326,9 @@
   }
 
   function enterPhase(layout, defaults, saved, phaseCards, phaseContext) {
+    // While a save is still loading the phase is unknown: change nothing, so the real load can tell a reload
+    // (same phase as last time, user layout kept) from a first entry.
+    if (phaseContext == null) return false;
     const introId = String(phaseContext).includes(":postseason-v2:") ? "phase-playoffs-bracket" : String(phaseContext).includes(":lottery-v2:") ? "phase-draft-lottery" : null;
     const entering = saved?.phaseContext !== phaseContext || Boolean(introId && phaseCards.includes(introId) && !saved?.phaseCards?.includes(introId));
     if (introId) {
@@ -357,6 +360,76 @@
     }
   }
 
+  // Entry layouts (draft night, draft results, playoffs): the phase's cards open together, centered in the visible
+  // board, rows stacked top to bottom without overlap. Applied once: when the phase is entered, or when a group of
+  // phase cards appears for the first time (draft results). Later loads keep whatever the user arranged or closed.
+  function entryLayoutDue(entryLayout, saved, entering) {
+    const rows = (entryLayout?.rows || []).filter(row => row.length);
+    if (!rows.length) return false;
+    if (entering) return true;
+    const phaseIds = rows.flat().filter(id => id.startsWith("phase-"));
+    return phaseIds.length > 0 && !phaseIds.some(id => saved?.phaseCards?.includes(id));
+  }
+  function arrangeEntryRows(layout, rows, viewport, gutter = CANVAS_GUTTER, titleHeight = TITLE_HEIGHT, top = 16) {
+    const present = rows.map(row => row.filter(id => layout[id])).filter(row => row.length);
+    if (!present.length) return [];
+    const availableWidth = Math.max(100, viewport.clientWidth - gutter * 2);
+    const availableHeight = Math.max(100, viewport.clientHeight - top - gutter);
+    // The board can be scrolled a little past the window (the canvas is 1.3x the visible area), never further.
+    const extent = clipboardExtent(viewport.clientWidth, viewport.clientHeight);
+    const canvasWidth = Math.max(availableWidth, extent.width - gutter * 2);
+    const canvasHeight = Math.max(availableHeight, extent.height - top - gutter);
+    const minScale = id => Math.min(1, layout[id].minScale ?? .72);
+    const floorOf = row => Math.max(...row.map(minScale));
+    const rowWidth = (row, scale) => row.reduce((sum, id) => sum + layout[id].width * scale, 0) + gutter * (row.length - 1);
+    const rowHeight = (row, scale) => titleHeight + Math.max(...row.map(id => layout[id].height)) * scale;
+    const stackHeight = list => list.reduce((sum, row) => sum + rowHeight(row, floorOf(row)), 0) + gutter * (list.length - 1);
+    // A row too wide for the window, even at its cards' smallest readable size, wraps onto as few rows as possible.
+    const pack = limit => present.flatMap(row => {
+      const out = [];
+      for (const id of row) {
+        const last = out.at(-1);
+        if (last && rowWidth([...last, id], floorOf([...last, id])) <= limit) last.push(id);
+        else out.push([id]);
+      }
+      return out;
+    });
+    let fitted = pack(availableWidth);
+    // Too tall to stack inside the board: keep rows side by side, reaching past the window's right edge instead.
+    if (stackHeight(fitted) > canvasHeight) fitted = pack(canvasWidth);
+    // Still too tall: the last cards stay closed (they remain one click away in the Cards gallery) rather than overlap.
+    while (fitted.length > 1 && stackHeight(fitted) > canvasHeight) {
+      fitted.at(-1).pop();
+      if (!fitted.at(-1).length) fitted.pop();
+    }
+    const scales = fitted.map(row => Math.min(1, (availableWidth - gutter * (row.length - 1)) / row.reduce((sum, id) => sum + layout[id].width, 0)));
+    const total = fitted.reduce((sum, row, index) => sum + rowHeight(row, scales[index]), 0) + gutter * (fitted.length - 1);
+    if (total > availableHeight) {
+      const titles = titleHeight * fitted.length + gutter * (fitted.length - 1);
+      const shrink = Math.max(0, availableHeight - titles) / Math.max(1, total - titles);
+      fitted.forEach((row, index) => { scales[index] = Math.max(Math.max(...row.map(minScale)), scales[index] * shrink); });
+    }
+    let y = (viewport.scrollTop || 0) + top;
+    const placed = [];
+    fitted.forEach((row, index) => {
+      const scale = Math.round(Math.max(Math.max(...row.map(minScale)), scales[index]) * 1000) / 1000;
+      let x = (viewport.scrollLeft || 0) + gutter + Math.max(0, (availableWidth - rowWidth(row, scale)) / 2);
+      for (const id of row) {
+        Object.assign(layout[id], {x:Math.round(x), y:Math.round(y), scale, visible:true, minimized:false, positioned:true, measured:true});
+        placed.push(id);
+        x += layout[id].width * scale + gutter;
+      }
+      y += rowHeight(row, scale) + gutter;
+    });
+    return placed;
+  }
+  function applyEntryLayout(layout, entryLayout, viewport, saved, entering) {
+    if (!entryLayoutDue(entryLayout, saved, entering)) return [];
+    const placed = arrangeEntryRows(layout, entryLayout.rows, viewport);
+    const ids = new Set(placed);
+    for (const [id, item] of Object.entries(layout)) if (!ids.has(id) && !item.pinned) item.visible = false;
+    return placed;
+  }
   function centerNewRequiredWindows(layout, cards, saved, entering, viewport) {
     for (const {id, required} of cards) {
       if (!required || (!entering && saved?.phaseCards?.includes(id))) continue;
@@ -638,7 +711,8 @@
 
     const announce = (message) => { status.textContent = message; };
     const save = () => {
-      const value = JSON.stringify({ version: 1, cards: {...saved?.cards, ...layout}, phaseContext:options.phaseContext, phaseCards });
+      const known = options.phaseContext != null;
+      const value = JSON.stringify({ version: 1, cards: {...saved?.cards, ...layout}, phaseContext:known ? options.phaseContext : saved?.phaseContext, phaseCards:known ? phaseCards : (saved?.phaseCards || []) });
       memory.set(key, value);
       try { localStorage.setItem(key, value); } catch { /* The in-memory board still works. */ }
     };
@@ -874,7 +948,7 @@
       const art=document.createElement("span");
       art.className="card-board-gallery-icon";
       art.setAttribute("aria-hidden","true");
-      art.innerHTML=window.CardVisuals.icon(id);
+      art.innerHTML=window.CardVisuals.preview ? window.CardVisuals.preview(id) : window.CardVisuals.icon(id);
       return art;
     };
     const refreshGallery = () => {
@@ -1382,8 +1456,15 @@
     const scroll = scrollPositions.get(key);
     if (scroll) board.scrollTo(scroll.x, scroll.y);
     centerNewRequiredWindows(layout, options.extraCards || [], saved, entering, board);
+    const entryPlaced = options.phaseContext == null || (options.extraCards || []).some(card => card.required) ? [] : applyEntryLayout(layout, options.entryLayout, board, saved, entering);
+    if (entryPlaced.length) {
+      for (const id of nodes.keys()) paint(id);
+      for (const id of [...entryPlaced].reverse()) raise(id);
+      if (entryPlaced.length > 1) announce(`${entryPlaced.map(id => nodes.get(id)?.title).filter(Boolean).join(", ")} opened`);
+    }
     const introId = String(options.phaseContext).includes(":postseason-v2:") ? "phase-playoffs-bracket" : String(options.phaseContext).includes(":lottery-v2:") ? "phase-draft-lottery" : null;
-    if (introId && layout[introId] && (entering || !saved?.cards?.[introId]?.topAlignedRevision)) {
+    if (introId && entryPlaced.includes(introId)) layout[introId].topAlignedRevision = 1;
+    else if (introId && layout[introId] && (entering || !saved?.cards?.[introId]?.topAlignedRevision)) {
       const item = layout[introId];
       board.scrollTo(0, 0);
       item.x = Math.max(0, (board.clientWidth - item.width * (item.scale || 1)) / 2);
@@ -1394,7 +1475,7 @@
     for (const {id, required} of options.extraCards || []) if (required) paint(id);
     sizeCanvas();
     save();
-    if (entering && phaseCards.length && !(options.extraCards || []).some(card => card.required)) reveal(phaseCards[0]);
+    if (entering && phaseCards.length && !entryPlaced.length && !(options.extraCards || []).some(card => card.required)) reveal(phaseCards[0]);
     active = { dispose: () => { scrollPositions.set(key, {x:board.scrollLeft, y:board.scrollTop}); finishWindowSwitcher(false, false); finishResize(true); finishDrag(true); observer.disconnect(); document.removeEventListener("click", dismissToolbarMenusOutside); document.removeEventListener("keydown", handleWindowSwitcherKeydown, true); document.removeEventListener("keyup", handleWindowSwitcherKeyup, true); window.removeEventListener("resize", dismissToolbarMenusOnResize); }, closeActive:closeActiveWindow, toggleActiveMinimize:toggleActiveWindowMinimized, toggleActivePin:toggleActiveWindowPinned, toggleActiveExpansion:toggleActiveWindowExpanded, updateOfferCount };
     active.open = (id) => { if (!layout[id]) return false; add(id); return true; };
     active.isOpen = id => Boolean(layout[id]?.visible);
@@ -1440,5 +1521,5 @@
     }
   }
 
-  window.CardBoard = Object.freeze({ fitContent: (id) => active?.fitContent?.(id), mount, unmount, open: (id) => active?.open(id), isOpen: (id) => active?.isOpen(id), addCard: (descriptor) => active?.addCard?.(descriptor) || false, expand: (id) => active?.expand?.(id) || false, updateOfferCount: (count, options) => active?.updateOfferCount?.(count, options) || false, previewTutorialWindow: (id) => active?.previewTutorialWindow?.(id), endTutorialPreview: () => active?.endTutorialPreview?.(), closeActive: () => active?.closeActive?.() || false, toggleActiveMinimize: () => active?.toggleActiveMinimize?.() || false, toggleActivePin: () => active?.toggleActivePin?.() || false, toggleActiveExpansion: () => active?.toggleActiveExpansion?.() || false, defaultLayout, initializeStarterLayout, restoreLayout, migrateDefaultCalendar, toggleWindowExpansion, enterPhase, enforceRequiredWindows, centerNewRequiredWindows, constrainCardBounds, snapCardPositions, clipboardExtent, simulationMenuMarkup, diagonalScaleDelta, migrateCardSizes, galleryCategoryFor, switchableWindowOrder, frontmostVisibleWindow, selectedWindowId, cycleWindowIndex, altWindowSwitcherDirection });
+  window.CardBoard = Object.freeze({ fitContent: (id) => active?.fitContent?.(id), mount, unmount, open: (id) => active?.open(id), isOpen: (id) => active?.isOpen(id), addCard: (descriptor) => active?.addCard?.(descriptor) || false, expand: (id) => active?.expand?.(id) || false, updateOfferCount: (count, options) => active?.updateOfferCount?.(count, options) || false, previewTutorialWindow: (id) => active?.previewTutorialWindow?.(id), endTutorialPreview: () => active?.endTutorialPreview?.(), closeActive: () => active?.closeActive?.() || false, toggleActiveMinimize: () => active?.toggleActiveMinimize?.() || false, toggleActivePin: () => active?.toggleActivePin?.() || false, toggleActiveExpansion: () => active?.toggleActiveExpansion?.() || false, defaultLayout, initializeStarterLayout, restoreLayout, migrateDefaultCalendar, toggleWindowExpansion, enterPhase, enforceRequiredWindows, centerNewRequiredWindows, constrainCardBounds, snapCardPositions, clipboardExtent, simulationMenuMarkup, entryLayoutDue, arrangeEntryRows, applyEntryLayout, diagonalScaleDelta, migrateCardSizes, galleryCategoryFor, switchableWindowOrder, frontmostVisibleWindow, selectedWindowId, cycleWindowIndex, altWindowSwitcherDirection });
 })();
