@@ -3408,6 +3408,17 @@ def free_agency_room_payload(
     ]
     right_ids = {str(right.get("player_id") or "") for right in re_signing_rights}
     own_candidates = [candidate for candidate in candidates if candidate["id"] in right_ids]
+    # KEEP-STARS: what the team's Bird rights allow for each of its own free agents (re-signing room text).
+    from .contract_ai import bird_rights_text
+    from .play import incumbent_bird_rights
+    for candidate in candidates:
+        bird = incumbent_bird_rights(active, save, players_by_id.get(candidate["id"], {"id": candidate["id"]}), team["id"])
+        if bird:
+            candidate["bird_rights"] = {
+                "level": bird["level"], "seasons": bird["seasons"], "max_years": bird["max_years"],
+                "raise_pct": round(bird["raise"] * 100), "limit_millions": round(bird["limit"] / 1_000_000, 1),
+                "text": bird_rights_text(bird),
+            }
     cap = team_cap_summary(active, save, team["id"], season=contract_start_season_for_signing(save))
     hard_cap_room = float(cap.get("hard_cap_space_millions") or 0.0)
     tax_room = float(cap.get("tax_space_millions") or 0.0)
@@ -3495,7 +3506,8 @@ def free_agency_room_payload(
         "offer_rules": {
             "minimum_aav_millions": league_minimum_aav_millions(),
             "allow_tax_exceed": phase == "re_signing",
-            "max_years": 5,
+            "max_years": 5,            # with full Bird rights (candidate.bird_rights.max_years)
+            "outside_max_years": 4,    # every other free agent (KEEP-STARS)
             "flat_salary": True,
             "options_available": False,
             "non_guaranteed_until": "January 10 of each season",
@@ -3549,12 +3561,21 @@ def submit_free_agent_offer_action(canonical: dict[str, Any], save_path: Path, p
         for right in save.get("re_signing_rights", [])
     ):
         return {"status": "blocked", "reason": "Only your own expiring players may negotiate during the exclusive re-signing window."}
+    # KEEP-STARS: with Bird rights your own free agent can be re-signed over the cap and the hard cap, and only his
+    # own team can offer a fifth year (full Bird rights). Everyone else offers at most four years.
+    from .play import incumbent_bird_rights
+    bird = incumbent_bird_rights(active, save, player, team["id"])
+    max_years = int(bird["max_years"]) if bird else 4
+    if years > max_years:
+        return {"status": "blocked", "reason": (
+            f"Only a team with full Bird rights can offer five years; your limit for {player.get('name')} is {max_years}.")}
     cap = signing_cap_check(
         active,
         save,
         team_query,
         aav,
         allow_tax_exceed=re_signing_phase or bool(payload.get("allow_tax_exceed", False)),
+        bird=bird,
     )
     if not cap.get("ok"):
         return {"status": "blocked", "cap_check": cap}

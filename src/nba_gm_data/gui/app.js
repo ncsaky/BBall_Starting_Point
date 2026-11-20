@@ -6008,11 +6008,15 @@ function freeAgencyOfferDraft(player, room = state.data.freeagency || {}) {
 }
 
 // The same decision play.signing_cap_check makes for this salary (the engine checks the season the contract starts).
-function freeAgencyCapCheck(rules = {}, cap = {}, aav = 0) {
+function freeAgencyCapCheck(rules = {}, cap = {}, aav = 0, bird = null) {
   const minimum = Number(rules.minimum_aav_millions ?? 1.9);
   const hard = Number(cap.hard_cap_space_millions || 0);
   const tax = Number(cap.tax_space_millions || 0);
   if (rules.blocked_reason) return { ok: false, limit: "review", message: rules.blocked_reason };
+  // Bird rights (play.signing_cap_check): your own free agent may be re-signed over the tax and the hard cap up to his limit.
+  if (bird && aav > minimum + 0.05 && aav <= Number(bird.limit_millions || 0) + 0.05) {
+    return { ok: true, limit: "bird", message: aav > tax ? `Allowed over the tax and the hard cap with his Bird rights (up to ${money(bird.limit_millions)}).` : "" };
+  }
   if (aav <= minimum + 0.05) {
     return { ok: true, limit: "minimum", message: tax < aav ? `League-minimum exception: allowed even though you have ${money(tax)} of room under the tax.` : "" };
   }
@@ -6038,7 +6042,8 @@ function freeAgencyAcceptFloor(player, years, key = "guaranteed") {
 function freeAgencyOfferPreview(player, room = {}, draft = {}) {
   const rules = room.offer_rules || {};
   const aav = roundOfferTenth(draft.aav);
-  const years = Math.max(1, Math.min(Number(rules.max_years || 5), Math.round(Number(draft.years || 1))));
+  const maxYears = freeAgencyMaxYears(player, rules);
+  const years = Math.max(1, Math.min(maxYears, Math.round(Number(draft.years || 1))));
   const guaranteed = draft.guaranteed !== false;
   const key = guaranteed ? "guaranteed" : "non_guaranteed";
   // The engine's floor for this length and guarantee (the AI bids' rule: today's bar and the best rival bid); null means
@@ -6046,7 +6051,7 @@ function freeAgencyOfferPreview(player, room = {}, draft = {}) {
   const floor = freeAgencyAcceptFloor(player, years, key);
   const floorOffer = floor;
   const safe = Number.isFinite(Number(player?.safe_years)) ? Number(player.safe_years) : 5;
-  const cap = freeAgencyCapCheck(rules, room.cap || {}, aav);
+  const cap = freeAgencyCapCheck(rules, room.cap || {}, aav, player?.bird_rights || null);
   const retires = years > safe;
   const accepts = Number.isFinite(floor) && aav >= floor && !retires;
   const ratio = Number.isFinite(floor) && floor > 0 ? aav / floor : 0;
@@ -6068,7 +6073,12 @@ function freeAgencyOfferPreview(player, room = {}, draft = {}) {
   else if (!accepts && !Number.isFinite(floor)) verdict = { tone: "no", headline: "He turns this down", detail: `No salary wins him from you today${player?.offer_rule?.best_rival ? `: ${player.offer_rule.best_rival.team_abbrev || "a rival"}'s bid interests him more` : ""}. His bar drops each day.` };
   else if (!accepts) verdict = { tone: "no", headline: "He turns this down", detail: `He signs with you from ${money(floorOffer)} a season${guaranteed ? "" : " non-guaranteed"}. You are ${money(Math.max(0, floorOffer - aav))} short.` };
   else verdict = { tone: "yes", headline: "He signs", detail: `${money(aav)} a season meets the ${money(floorOffer)} he needs from you${guaranteed ? "" : " without a guarantee"}.${cap.message ? ` ${cap.message}` : ""}` };
-  return { aav, years, guaranteed, total: aav * years, floor, floorOffer, safe, cap, retires, accepts, ratio, seasons, verdict, canSubmit: cap.ok && !player?.signing_blocked_reason };
+  return { aav, years, maxYears, guaranteed, total: aav * years, floor, floorOffer, safe, cap, retires, accepts, ratio, seasons, verdict, canSubmit: cap.ok && !player?.signing_blocked_reason };
+}
+
+// Only a team with full Bird rights may offer a fifth year (submit_free_agent_offer_action); everyone else offers four.
+function freeAgencyMaxYears(player, rules = {}) {
+  return Math.min(Number(rules.max_years || 5), Number(player?.bird_rights?.max_years || rules.outside_max_years || 4));
 }
 
 function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
@@ -6082,7 +6092,7 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
   const preview = freeAgencyOfferPreview(player, room, draft);
   const ratings = player.ratings || {};
   const minimum = freeAgencyMinimum(room);
-  const maximum = freeAgencyMaxOffer(room);
+  const maximum = Math.max(freeAgencyMaxOffer(room), Number(player.bird_rights?.limit_millions || 0));
   const legal = clipboardLegalActions().has("free_agent_signings");
   const shortlisted = state.freeAgentShortlistIds.includes(player.id);
   const safe = preview.safe;
@@ -6116,14 +6126,15 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
           <label for="faOfferAav"><small>Salary per season</small></label>
           <span class="money-input"><b>$</b><input id="faOfferAav" type="number" inputmode="decimal" min="${minimum.toFixed(1)}" max="${maximum.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-fa-offer-aav aria-describedby="faOfferAavHelp"><b>M</b></span>
           <input type="range" min="${minimum.toFixed(1)}" max="${maximum.toFixed(1)}" step="0.1" value="${preview.aav.toFixed(1)}" data-fa-offer-range aria-label="Salary per season, in millions" />
-          <small id="faOfferAavHelp">${money(minimum)} league minimum to ${money(maximum)} (${exclusive ? "room under the hard cap" : "room under the tax"})</small>
+          <small id="faOfferAavHelp">${money(minimum)} league minimum to ${money(maximum)} (${player.bird_rights ? "his Bird rights limit" : exclusive ? "room under the hard cap" : "room under the tax"})</small>
+          ${player.bird_rights ? `<p class="fa-offer-note fa-offer-bird">${escapeHtml(player.bird_rights.text)}</p>` : ""}
           <div class="fa-offer-quick" role="group" aria-label="Quick salary">
             <button type="button" class="ui-command" data-fa-offer-set="${escapeAttr(preview.floorOffer)}" ${Number.isFinite(preview.floorOffer) ? "" : "disabled"}>His price from you</button>
             <button type="button" class="ui-command" data-fa-offer-set="${escapeAttr(player.ask_millions)}">Market ask</button>
             <button type="button" class="ui-command" data-fa-offer-set="${escapeAttr(minimum)}">League minimum</button>
           </div>
         </div>
-        <div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferYearsLabel">Years</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferYearsLabel">${[1, 2, 3, 4, 5].map((years) => radio("years", years, String(years), preview.years === years, false, years > safe ? `He plans to retire after ${safe} season${safe === 1 ? "" : "s"}; he refuses ${years} years` : "")).join("")}</div></div>
+        <div class="fa-offer-pair"><div class="fa-offer-field"><small id="faOfferYearsLabel">Years</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferYearsLabel">${[1, 2, 3, 4, 5].map((years) => radio("years", years, String(years), preview.years === years, years > preview.maxYears, years > preview.maxYears ? "Only a team with full Bird rights can offer a fifth year" : years > safe ? `He plans to retire after ${safe} season${safe === 1 ? "" : "s"}; he refuses ${years} years` : "")).join("")}</div></div>
         <div class="fa-offer-field"><small id="faOfferGuaranteeLabel">Guarantee</small><div class="fa-segmented" role="radiogroup" aria-labelledby="faOfferGuaranteeLabel">${radio("guarantee", "true", "Guaranteed", preview.guaranteed)}${radio("guarantee", "false", "Non-guaranteed", !preview.guaranteed)}</div>
           <p class="fa-offer-note">${preview.guaranteed ? "Every season is owed in full, even if you release him." : `Each season becomes guaranteed on ${escapeHtml(room.offer_rules?.non_guaranteed_until || "January 10")}; release him before then and you owe nothing. He asks more for this.`}</p></div></div>
         <p class="fa-offer-note fa-offer-options"><b>Options:</b> none. Free-agent contracts in this game have no player or team options, and the salary is the same every season.</p>

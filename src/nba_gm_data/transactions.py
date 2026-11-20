@@ -16,7 +16,7 @@ import re
 import hashlib
 from copy import deepcopy
 from dataclasses import replace
-from datetime import date
+from datetime import date, timedelta
 from functools import lru_cache
 from itertools import combinations
 from pathlib import Path
@@ -2005,6 +2005,76 @@ def recently_traded_player_ids(canonical_or_save: dict[str, Any], as_of_date: st
     return recent
 
 
+# KEEP-STARS: an AI team holds a player it acquired by trade for about six months before trading him again, unless he
+# is the centre of a salary-matching deal (the team's highest-paid outgoing player, with at least half his salary
+# coming back in players). The real CBA only bars re-trading for 60 days in an aggregated deal (RECENTLY_TRADED_DAYS
+# here; Larry Coon's CBA FAQ, "aggregation" rule); real front offices almost never flip a newly acquired player in a
+# salary dump, while the two-season test had Kobe Sanders and Jerquarius Stanback moved on after 78 and 117 days.
+# Applies only to trades among AI teams; the user's team keeps the real rules.
+RE_TRADE_HOLD_DAYS = 182
+RE_TRADE_HOLD_SALARY_BACK = 0.5
+
+
+def re_trade_hold(canonical: dict[str, Any], as_of_date: str | None = None) -> dict[str, str]:
+    """{player_id: team_id} for players an AI team acquired by trade in the last 182 days and still has."""
+    current = parse_iso_date(as_of_date or ((canonical.get("meta") or {}).get("current_date")) or CANONICAL_START_DATE)
+    if current is None:
+        return {}
+    key = (current.isoformat(), len(canonical.get("transaction_logs") or []))
+    memo = canonical.get("_re_trade_hold_memo")
+    if memo and memo[0] == key and memo[1] is canonical.get("players"):
+        return memo[2]
+    human = set(canonical.get("_human_team_ids") or [])
+    team_of = {p.get("id"): p.get("team_id") for p in canonical.get("players", [])}
+    held: dict[str, str] = {}
+    earliest = (current - timedelta(days=RE_TRADE_HOLD_DAYS - 1)).isoformat()
+    for log in canonical.get("transaction_logs", []) or []:
+        if (log.get("transaction_type") != "trade" or str(log.get("date") or "") < earliest
+                or log.get("status") not in {"applied_to_save_ledger", "applied"}):
+            continue
+        traded_on = parse_iso_date(log.get("date"))
+        if traded_on is None or not 0 <= (current - traded_on).days < RE_TRADE_HOLD_DAYS:
+            continue
+        for team_id, _, incoming in transaction_log_flows(log):
+            if team_id in human:
+                continue
+            for asset in incoming:
+                if asset.get("kind") == "player" and team_of.get(asset.get("id")) == team_id:
+                    held[asset["id"]] = team_id
+    canonical["_re_trade_hold_memo"] = (key, canonical.get("players"), held)
+    return held
+
+
+def re_trade_hold_player_ids(canonical: dict[str, Any], as_of_date: str | None = None) -> set[str]:
+    return set(re_trade_hold(canonical, as_of_date))
+
+
+def re_trade_hold_issues(canonical: dict[str, Any], proposal: Any) -> list[str]:
+    """Players moved against the re-trade hold in an all-AI trade (see RE_TRADE_HOLD_DAYS)."""
+    if set(trade_team_ids(proposal)) & set(canonical.get("_human_team_ids") or []):
+        return []
+    held = re_trade_hold(canonical, transaction_reference_date(canonical, proposal))
+    if not held:
+        return []
+
+    def salary(asset: dict[str, Any]) -> float:
+        return float(current_salary(contract_for_player(canonical, asset.get("id"))) or 0.0)
+
+    issues = []
+    for team_id, outgoing, incoming in trade_team_flows(proposal):
+        players_out = [a for a in outgoing if a.get("kind") == "player"]
+        for asset in players_out:
+            if held.get(asset.get("id")) != team_id:
+                continue
+            mine = salary(asset)
+            top = mine >= max(salary(a) for a in players_out) - 1.0
+            back = sum(salary(a) for a in incoming if a.get("kind") == "player")
+            if not (top and back >= RE_TRADE_HOLD_SALARY_BACK * mine):
+                issues.append(f"{asset.get('label', asset.get('id'))} was acquired by trade less than six months ago "
+                              "and can only be moved as the centre of a salary-matching deal.")
+    return issues
+
+
 def recently_signed_player_ids(canonical_or_save: dict[str, Any], as_of_date: str | None = None) -> set[str]:
     current = parse_iso_date(as_of_date or ((canonical_or_save.get("meta") or {}).get("current_date")) or CANONICAL_START_DATE)
     if current is None:
@@ -3333,6 +3403,8 @@ def buyer_offer_packages_for_value(
     """
     as_of_date = ((canonical.get("meta") or {}).get("current_date")) or CANONICAL_START_DATE
     excluded_player_ids = set(excluded_player_ids or set()) | recently_traded_player_ids(canonical, as_of_date)
+    # A held player (re_trade_hold) is never filler in a buyer's package; he can still be the target of a deal.
+    excluded_player_ids |= {pid for pid, tid in re_trade_hold(canonical, as_of_date).items() if tid == buyer["id"]}
     valuations = player_asset_values_by_id(canonical)
     buyer_players = [player for player in canonical["players"] if player["team_id"] == buyer["id"]]
     duplicate_names = set()
@@ -4520,6 +4592,7 @@ def trade_legality(canonical: dict[str, Any], proposal: TradeProposal, config: d
                 grantor = (swap or {}).get("sender_team_id") or (swap or {}).get("counterparty_team_id")
                 if not swap or (holder != team_id and not (swap.get("pending_asset_grant") and grantor == team_id)):
                     issues.append(f"Pick swap {asset.get('id')} is not held by {team_by_id(canonical, team_id)['abbrev']}.")
+    issues.extend(re_trade_hold_issues(canonical, proposal))
     duplicate_assets = duplicate_trade_assets(trade_assets(proposal))
     if duplicate_assets:
         issues.append(f"Duplicate assets in proposal: {', '.join(sorted(duplicate_assets))}.")

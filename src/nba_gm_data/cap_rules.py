@@ -76,3 +76,59 @@ def max_salary_share(years_of_service: int) -> float:
 def max_salary(season: str | None, years_of_service: int) -> float:
     """The largest first-year salary (dollars) a player with this much service can sign for in ``season``."""
     return cap_lines_for_season(season)["salary_cap"] * max_salary_share(years_of_service)
+
+
+# Bird rights (KEEP-STARS): a team may go over the salary cap, the tax line and the aprons to re-sign its own free
+# agent, within a salary limit set by how long he has been with the team. Real rules (2023 CBA, as summarised by Hoops
+# Rumors' glossary entries "Bird Rights" (March 2026) and "Early Bird Rights" (March 2026), and Larry Coon's CBA FAQ):
+# - full Bird: three seasons with the team without being waived or changing teams as a free agent (a trade keeps the
+#   clock running; a partial first season counts). Any salary up to his maximum, up to five years, 8% raises.
+# - Early Bird: two such seasons. The greater of 175% of his previous salary or 105% of the league's average salary
+#   (never above the max), two to four years, 8% raises.
+# - Non-Bird: one season or less. 120% of his previous salary (or 120% of the minimum), up to four years, 5% raises.
+# - Every other team (no Bird rights) offers at most four years with 5% raises.
+# - Re-signing with Bird rights never triggers a hard cap, so it may take a team past the second apron (the game's
+#   hard cap for trades and outside signings).
+FULL_BIRD_SEASONS = 3
+EARLY_BIRD_SEASONS = 2
+BIRD_MAX_YEARS = {"full": 5, "early": 4, "non": 4}
+OUTSIDE_MAX_YEARS = 4
+BIRD_RAISE = {"full": 0.08, "early": 0.08, "non": 0.05}
+OUTSIDE_RAISE = 0.05
+EARLY_BIRD_PREVIOUS_SHARE = 1.75
+EARLY_BIRD_AVERAGE_SHARE = 1.05
+NON_BIRD_PREVIOUS_SHARE = 1.20
+LEAGUE_MINIMUM = 1_900_000            # play.league_minimum_aav_millions
+# The league's average salary as a share of the cap. An estimate (uncertain): about $12.5M against the $154.6M
+# 2025-26 cap in public reporting. It only matters for Early Bird players on small salaries.
+AVERAGE_SALARY_CAP_SHARE = 0.08
+
+
+def bird_level(seasons_with_team: int) -> str:
+    """'full', 'early' or 'non' for a free agent who has spent this many seasons with his team."""
+    if int(seasons_with_team) >= FULL_BIRD_SEASONS:
+        return "full"
+    if int(seasons_with_team) >= EARLY_BIRD_SEASONS:
+        return "early"
+    return "non"
+
+
+def bird_salary_limit(level: str, previous_salary: float, season: str | None, years_of_service: int) -> float:
+    """The largest first-year salary (dollars) his own team may pay him over the cap with this Bird level."""
+    ceiling = max_salary(season, years_of_service)
+    previous = max(0.0, float(previous_salary or 0.0))
+    if level == "full":
+        return ceiling
+    if level == "early":
+        average = cap_lines_for_season(season)["salary_cap"] * AVERAGE_SALARY_CAP_SHARE
+        return min(ceiling, max(EARLY_BIRD_PREVIOUS_SHARE * previous, EARLY_BIRD_AVERAGE_SHARE * average))
+    minimum = LEAGUE_MINIMUM * growth_factor(season)
+    return min(ceiling, max(NON_BIRD_PREVIOUS_SHARE * previous, NON_BIRD_PREVIOUS_SHARE * minimum))
+
+
+def bird_max_years(level: str | None) -> int:
+    return BIRD_MAX_YEARS.get(str(level), OUTSIDE_MAX_YEARS) if level else OUTSIDE_MAX_YEARS
+
+
+def bird_raise(level: str | None) -> float:
+    return BIRD_RAISE.get(str(level), OUTSIDE_RAISE) if level else OUTSIDE_RAISE
