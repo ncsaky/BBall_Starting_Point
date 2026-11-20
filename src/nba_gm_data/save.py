@@ -78,6 +78,7 @@ SECOND_APRON = 221_686_000
 ANNUAL_CAP_GROWTH_RATE = 0.035
 ROSTER_MINIMUM = 14
 ROSTER_SEASON_MAXIMUM = 15
+ROSTER_CUTDOWN_PHASES = frozenset({"training_camp", "preseason", "regular_season", "play_in", "playoffs"})
 ROSTER_TEMPORARY_HARD_MAXIMUM = 21
 AI_DIFFICULTIES = {"easy", "normal", "hard"}
 SOCIAL_INJURY_GAMES_THRESHOLD = 10
@@ -973,6 +974,11 @@ def repair_unpooled_unrostered_players(canonical: dict[str, Any], save: dict[str
 def refresh_roster_cutdowns(canonical: dict[str, Any] | None, save: dict[str, Any], *, apply_ai: bool = True) -> None:
     if canonical is None or not is_league_save(save):
         save.setdefault("pending_roster_cutdowns", [])
+        return
+    # The 15-man limit binds from training camp through the season. In the offseason (draft night, re-signing, free
+    # agency) rosters may run over, as in the NBA; a draft pick that makes 16 must not force a cut-down mid-draft.
+    if (save.get("state") or {}).get("phase") not in ROSTER_CUTDOWN_PHASES:
+        save["pending_roster_cutdowns"] = []
         return
     active = active_players_for_roster_checks(canonical, save)
     human_team_ids = human_controlled_team_ids(save)
