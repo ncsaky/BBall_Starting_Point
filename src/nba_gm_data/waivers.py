@@ -252,7 +252,10 @@ def process_waivers(canonical, save, stamp):
         for tid in priority(active, save, day):
             if tid in human or tid in claims:
                 continue
-            if camp_deal and not camp_claim_plausible(active, save, entry['player_id'], tid, depth):
+            if camp_deal and (str(entry.get('date') or '')[5:] < '10-01'
+                              or not camp_claim_plausible(active, save, entry['player_id'], tid, depth)):
+                # Summer camp-deal releases are affiliate assignments: AI teams claim camp deals only at the
+                # preseason cutdown (all six real camp claims in 2023-2026 came in October).
                 continue
             plan = claim_plan(active, save, entry, tid, ai=True)
             if plan['ok']:
