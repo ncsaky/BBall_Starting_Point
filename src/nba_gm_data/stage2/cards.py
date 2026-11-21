@@ -81,7 +81,10 @@ MENU = {"rim_cut": .55, "rim_roll": .65, "rim_post": .9, "short_post": 2.4, "sho
         "corner_share": .25,
         # T02 is measured on ALL his shots, so its rim share already holds his putbacks and transition finishes, which
         # the loop plays as their own possessions; the half-court menu keeps this share of the rim habit.
-        "rim_halfcourt": .70}
+        "rim_halfcourt": .70,
+        # ...and its three share holds his transition threes (the loop's transition menu): FITTED to the league
+        # three-point attempt rate (.415).
+        "three_halfcourt": .92}
 # Transition menu: rim vs three by his rim / three habit (T02).
 TRANS = {"rim_base": .45, "three_scale": .6}
 
@@ -226,6 +229,7 @@ def shot_menu(flat: Mapping[str, float]) -> list[float]:
     which leaves room for his putbacks and transition finishes (MENU rim_halfcourt)."""
     regions = [max(0.0, float(flat.get(f"T02.{r}", .25))) for r in ("rim", "short_paint", "midrange", "three")]
     regions[0] *= MENU["rim_halfcourt"]
+    regions[3] *= MENU["three_halfcourt"]
     tot = sum(regions) or 1.0
     rim, short, mid, three = (r / tot for r in regions)
     drive = max(1e-3, float(flat.get("T01.drive", .15)))

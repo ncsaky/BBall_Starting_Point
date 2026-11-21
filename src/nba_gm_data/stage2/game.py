@@ -85,6 +85,13 @@ LOOP = {
     "k_lead": .008,
     # Heave chance when under 3 s remain at the start of a possession.
     "heave": .45,
+    # Share of rebounds credited to no player (team rebounds). FITTED: rotation players' rebounds per 36 ran 1.0 high
+    # (about 13%) with every rebound credited.
+    "team_rebound": .11,
+    # The finisher is drawn by usage weight to this power: the weight is fitted to each player's usage on its own, but
+    # a share among five teammates (plus the possessions that end on putbacks and drawn fouls) flattens it. FITTED to
+    # real per-player shot volume (stars' and bench players' FGA per 36 in replayed games).
+    "usage_power": 1.3,
 }
 ASSIST = {"rim_drive": .18, "rim_finish": .93, "floater": .15, "hook": .30, "short_jumper": .40, "mid_catch": .90,
           "mid_pull": .07, "three_corner": .97, "three_catch": .92, "three_pull": .06, "putback": .04,
@@ -132,13 +139,8 @@ class TeamState:
     def refresh(self) -> None:
         cs = [self.cards[i] for i in self.on]
         lg = self.league
-        acc, cum = 0.0, []
-        total = sum(c.usage for c in cs)
-        for c in cs:
-            acc += c.usage / total
-            cum.append(acc)
-        cum[-1] = 1.0
-        self.usage_cum = cum
+        gamma = (LOOP if self.loop is None else self.loop)["usage_power"]
+        self.usage_cum = _cum([c.usage ** gamma for c in cs])
         self.ast_w = [c.ast_w for c in cs]
         self.reb = [c.reb for c in cs]
         self.reb_prof = [c.reb.profile for c in cs]
@@ -364,10 +366,15 @@ class Game:
             else:
                 i = max(range(5), key=lambda ii: probs[ii] * (1 + self.rng.random()))
                 self._foul(off, i)
+        # Team rebounds (out of bounds off a player, tie-ups, shot-clock and end-of-period misses) go to the side that
+        # won the ball but to no player, as in the real box score.
+        credit = self.rng.random() >= self.L["team_rebound"]
         if k < 5:
-            off.stats[off.on[k]][S_ORB] += 1
+            if credit:
+                off.stats[off.on[k]][S_ORB] += 1
             return True, k
-        de.stats[de.on[k - 5]][S_DRB] += 1
+        if credit:
+            de.stats[de.on[k - 5]][S_DRB] += 1
         return False, k - 5
 
     # ---- one possession ------------------------------------------------------------------------------------------

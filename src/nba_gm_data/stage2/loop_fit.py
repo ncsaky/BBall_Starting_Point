@@ -257,13 +257,15 @@ def fit_hook(root: str | Path, train: int = 0) -> dict[str, Any]:
 
 # ---- shooting fouls by action ------------------------------------------------------------------------------------
 FOUL_PARAMS = ("base0", "base1", "base2", "foul_drive", "foul_roll_cut", "foul_post", "foul_jumper", "foul_pull_up",
-               "k_drive_craft")
+               "k_drive_craft", "k_craft_all", "k_seek_all", "w_kernel")
 # Signs follow the mechanism (a free fit trades actions against zones and drifts to nonsense, e.g. pull-ups never
-# fouled): drives draw more contact than the zone average, rolls/cuts and catch jumpers less; foul-drawing craft can
-# only add fouls on drives and pull-ups.
+# fouled): drives draw more contact than the zone average, rolls/cuts and catch jumpers less; foul-drawing craft (S24)
+# and contact seeking (T18) can only add fouls (on every shot, on top of the foul kernel's own shooter terms).
 FOUL_BOUNDS = {"base0": (-3.0, 0.0), "base1": (-3.0, 0.0), "base2": (-5.0, -1.5), "foul_drive": (0.0, 1.5),
                "foul_roll_cut": (-1.5, 0.0), "foul_post": (-1.0, 1.0), "foul_jumper": (-1.5, 0.0),
-               "foul_pull_up": (-1.0, 1.0), "k_drive_craft": (0.0, 1.5)}
+               "foul_pull_up": (-1.0, 1.0), "k_drive_craft": (0.0, 1.5), "k_craft_all": (0.0, 2.0),
+               "k_seek_all": (0.0, 2.0), "w_kernel": (0.0, 1.5)}
+SEEK_REF = .45   # contact-seeking reference (league middle) for the extra seek term
 
 
 def fit_fouls(root: str | Path, train: int = 0, loop: dict | None = None) -> dict[str, Any]:
@@ -298,20 +300,25 @@ def fit_fouls(root: str | Path, train: int = 0, loop: dict | None = None) -> dic
             continue
         c = cards[pid]
         kinds = []
+        craft_all = (float(flats[pid]["S24"]) - 50) / 25
+        seek = math.log(max(1e-3, float(flats[pid]["T18"])) / max(1e-3, 1 - float(flats[pid]["T18"]))) - math.log(SEEK_REF / (1 - SEEK_REF))
         for k in range(10):
             if c.menu[k] > 0:
                 zone, action = C.KINDS[k][2], C.KINDS[k][1]
-                craft = (float(flats[pid]["S24"]) - 50) / 25 if action in ("drive", "pull_up") else 0.0
+                craft = craft_all if action in ("drive", "pull_up") else 0.0
                 kinds.append((c.menu[k], zone, action, craft, c.and1[zone]))
         ns = ns_fta_per_shot * (c.ns_draw / ns_mean) / (c.usage / u_mean)
-        rows.append((pid, kinds, c.foul_s + d_avg, ns, float(row["fta_per36"]) / fga, fga * float(row["minutes"]) / 36))
+        rows.append((pid, kinds, c.foul_s, ns, float(row["fta_per36"]) / fga, fga * float(row["minutes"]) / 36,
+                     craft_all, seek))
 
     def predict(params: dict, r) -> float:
-        _, kinds, s, ns, _, _ = r
+        kinds, s_kernel, ns, craft_all, seek = r[1], r[2], r[3], r[6], r[7]
         num = den = 0.0
         base = (params["base0"], params["base1"], params["base2"], FC.base[3])
+        s = d_avg + params["w_kernel"] * s_kernel
+        extra = params["k_craft_all"] * craft_all + params["k_seek_all"] * seek
         for m, zone, action, craft, a1 in kinds:
-            z = base[zone] + s + params.get("foul_" + action, 0.0) + params["k_drive_craft"] * craft
+            z = base[zone] + s + extra + params.get("foul_" + action, 0.0) + params["k_drive_craft"] * craft
             p = 1 / (1 + math.exp(-z))
             fta = a1 + (1 - a1) * (3 if zone == 3 else 2)
             num += m * p * fta
@@ -322,7 +329,8 @@ def fit_fouls(root: str | Path, train: int = 0, loop: dict | None = None) -> dic
         return sum(r[5] * (predict(params, r) - r[4]) ** 2 for r in rows if split_half(r[0]) == half)
 
     params = {"base0": FC.base[0], "base1": FC.base[1], "base2": FC.base[2],
-              **{k: loop[k] for k in FOUL_PARAMS if k.startswith("foul_")}, "k_drive_craft": 0.0}
+              **{k: loop[k] for k in FOUL_PARAMS if k.startswith("foul_")}, "k_drive_craft": 0.0, "k_craft_all": 0.0,
+              "k_seek_all": 0.0, "w_kernel": 1.0}
     start = dict(params)
     cur = loss(params, train)
     step = .25
