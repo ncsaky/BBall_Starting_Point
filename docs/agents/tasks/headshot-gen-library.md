@@ -2,6 +2,12 @@
 
 ## TL;DR
 
+- Batch 2 added 37 players and 148 portraits. The image tool reached the Plus usage limit before player 0062 had any images.
+- Resume with players 0062–0064, then staff women 0013–0022. Staff men start at 0031 if capacity remains.
+- The combined library has 103 people and 370 portraits across both batches.
+
+### Batch 1 recap
+
 - Batch 1 is ready for review. It has 30 staff men, 12 staff women and 24 players, including four extras.
 - Each of the 222 approved portraits has a full-size PNG and a 320 × 320 game JPEG.
 - Finished after player 0024 at a three-person checkpoint. Generation hit no usage limit.
@@ -87,17 +93,21 @@ The manifest passed checks for paths, stage counts and cutover ages. All 222 PNG
 - player-m/0023. Hooded eyes, nose and brows remain distinct across the short undercut and wavy later styles. Eye and brow lines are visible at 35.
 - player-m/0024. Redid the final age for a clearer buzz cut, silver chin hairs and stronger eye lines. The dimple and eye spacing stay recognizable.
 
-## Resume
+### Resume after Batch 1
 
 The last accepted player is `player-m/0024`. The next player ID is `player-m/0025`. The manifest records the exact accepted prompts and cutover ages. Rebuild the contact sheet with `python3 scripts/build_headshot_library_contact_sheet.py`. The portraits and HTML are in the ignored `output/headshots-gen-library/` directory in this worktree.
 
 ## Batch 2
 
-- In progress with 36 completed people and 144 new portraits.
-- 36 players, 0 staff women and 0 staff men. 6 redone stages. About 62 minutes.
-- Continue at player-m/0061.
+- Ready for review with 37 completed people and 148 new portraits.
+- 37 players, 0 staff women and 0 staff men. 6 redone stages. About 66 minutes.
+- Stopped at the Plus usage limit before player 0062. Next ID: player-m/0062.
 
 Order: 40 four-stage player sets, 10 three-stage staff women, then staff men as capacity allows. All subjects and image references are fictional adults. The built-in Codex image tool was used. Each accepted image has a full-size PNG and a 320 × 320 JPEG. The combined contact sheet compares colour and greyscale.
+
+The batch stopped before the tool returned any image for player 0062. Three of the requested players are pending (0062–0064), followed by all ten staff women (0013–0022). Staff men start at 0031 if there is capacity. Twenty-five of the 37 player profiles are Black (68%). Some adjacent ages, especially 31 and 35, remain subtle.
+
+Verification preserved all 66 Batch 1 manifest entries and checked the combined library for 370 unique PNGs and 370 unique 320 × 320 JPEGs. All 1,480 references and links in the contact sheet resolved.
 
 ### Visual review
 
@@ -137,3 +147,4 @@ Order: 40 four-stage player sets, 10 three-stage staff women, then staff men as 
 - player-m/0058. Rounded nose bridge and smile stay consistent. Close-cropped hair and grey goatee mark the last stage.
 - player-m/0059. Cleft chin and eyelids are consistent. A high hairline, softer lower face and close grey stubble distinguish 35.
 - player-m/0060. Brow gap, smile and cheek shape stay consistent. Late goatee and fine eye lines show a visible change.
+- player-m/0061. Nose bridge, chin and eye spacing carry through. The late portrait keeps short stubble and has clearer eye and forehead lines.
