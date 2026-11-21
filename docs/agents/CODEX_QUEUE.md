@@ -6,6 +6,44 @@ Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COA
 
 ---
 
+## Ready now (2026-11-21, overnight): INJURY-HISTORY-2023-25 (fresh chat; long but light)
+
+### INJURY-HISTORY-2023-25: complete injury records for 2023-24 and 2024-25, the way 2025-26 was done
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task INJURY-HISTORY-2023-25 (its board row already exists; set it to "in progress (Codex)").
+Read docs/agents/tasks/injury-history-2025-26.md (your own earlier work), docs/agents/tasks/star-injuries.md
+(especially "What's left" item 1) and docs/agents/tasks/injuries-2.md.
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_injury_history_2 -b codex/injury-history-2023-25 HEAD
+Symlink from the main checkout: .venv, every git-ignored file under data/research/bbi/ (including tools/), and
+output/injuries-2 (its nba_pdf/ cache). Commit on that branch; never push, never commit to main. Raw Basketball Index
+data stays local; never commit it.
+
+Goal: the injury model's league-wide level is anchored on the Basketball Index tracker for 2021-25, but your 2025-26
+work showed the tracker misses many injuries that cost games (about 40-43 entries per 1,000 games in 2023-25 against
+about 52 in the complete 2025-26 record). Build the same complete record for 2023-24 and 2024-25 so the model can be
+anchored to complete counts.
+1. Box scores: the repo has 2025-26 only. Fetch 2023-24 and 2024-25 regular-season and playoff box scores from ESPN's
+   public API (the same endpoints your 2025-26 builder used), politely (small delays, cache everything under
+   output/injury-history-2023-25/, never refetch). Who missed which team games while rostered.
+2. Reasons: the NBA's official injury report PDFs for each game day (same parser; the filename pattern changed in
+   December 2025, check what it was in 2023-25).
+3. Build data/research/injury_history_2023_24.json and injury_history_2024_25.json in the same format as 2025-26, with
+   the same reason categories and the same comparison against the tracker (matched entries, additions, entries per
+   1,000 games, with and without injury-management-only and opener-carryover stretches).
+4. Extend scripts/research/injury_history_2025_26.py (or a sibling script) so all three seasons rebuild the same way.
+This is network-heavy but CPU-light: no simulations. Save and commit after each season so a usage limit loses nothing.
+Do NOT change the injury model, health.py or the git-ignored evidence files; the coordinator plugs the files in.
+Report in docs/agents/tasks/injury-history-2023-25.md: plain-language TL;DR first (3 lines), coverage, the tracker
+comparison per season (all three seasons side by side), examples, gaps. Set the board row to "review" and stop.
+```
+
+---
+
 ## Ready now (2026-11-21, late night): README-REFRESH (fresh chat)
 
 Docs only; light.
