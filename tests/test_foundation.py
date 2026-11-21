@@ -6970,7 +6970,9 @@ class DataFoundationTests(unittest.TestCase):
             self.assertNotIn("raw_attrs", rows[0])
             # The summary includes a playing-time term; the save's coach sets its own minutes (Wembanyama 29.3 in
             # the base data, 34.9 in a new save), so the engine's value is the save-applied one, not the base data's.
-            raw_attrs = player_attribute_summary(canonical_with_save(self.plain, load_save(save_path)), rows[0]["player"]["id"])
+            # OVERALL-SCALE (2026-11-21): the table shows the one display scale (the same number as the card), not
+            # the AI's summary number, which this test used to pin.
+            raw_attrs = player_display_attribute_summary(canonical_with_save(self.plain, load_save(save_path)), rows[0]["player"]["id"])
             self.assertAlmostEqual(rows[0]["attrs"]["overall"], raw_attrs["overall"], delta=0.5)
             self.assertIn("contract", rows[0])
             self.assertIn("minutes", rows[0])
