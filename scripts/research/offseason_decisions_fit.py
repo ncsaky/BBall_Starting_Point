@@ -250,6 +250,38 @@ def fit_offer_sheets(evidence):
     return results
 
 
+def fit_same_team_returns(evidence):
+    rows = [
+        r for r in evidence["decisions"]["early_terminations_and_returns"]
+        if r["kind"] in ("player", "veteran_team") and r["observed_same_team_return"] is not None
+    ]
+    caps = evidence["cap_by_start_year"]
+    comps = salary_comparables(evidence)
+
+    def features(row, held_out):
+        age, _, minutes, _, _ = season_features(row)
+        return {
+            "player_choice": row["kind"] == "player",
+            "age": age,
+            "minutes": minutes,
+            "ratio": estimated_salary(row, comps, caps, held_out) / row["option_salary"],
+        }
+
+    rules = [("return after a player's decline", lambda f: f["player_choice"])]
+    for cutoff in (250, 500, 1000, 1500):
+        rules.append((f"return at {cutoff}+ prior minutes", lambda f, m=cutoff: f["minutes"] >= m))
+        rules.append((f"return after player's decline or {cutoff}+ prior minutes",
+                      lambda f, m=cutoff: f["player_choice"] or f["minutes"] >= m))
+    for ratio in (.7, 1, 1.3):
+        rules.extend([
+            (f"return when market is below {ratio:g} × old option",
+             lambda f, x=ratio: f["ratio"] < x),
+            (f"return after player's decline or if expected market exceeds {ratio:g} × old option",
+             lambda f, x=ratio: f["player_choice"] or f["ratio"] >= x),
+        ])
+    return validation(rows, features, lambda r: r["observed_same_team_return"], rules)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evidence", type=Path, default=EVIDENCE)
@@ -264,6 +296,8 @@ def main():
         results["rookie_scale_extensions"] = fit_rookie_extensions(evidence)
     if "offer_sheets" in evidence["decisions"]:
         results["offer_sheets"] = fit_offer_sheets(evidence)
+    if "early_terminations_and_returns" in evidence["decisions"]:
+        results["same_team_returns"] = fit_same_team_returns(evidence)
     print(json.dumps(results, indent=2, ensure_ascii=False))
 
 
