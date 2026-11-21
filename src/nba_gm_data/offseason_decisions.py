@@ -1019,6 +1019,17 @@ def stop_one_checklist(canonical: dict[str, Any], save: dict[str, Any], team_id:
                       "market_millions": record.get("market_millions"), "text": record.get("reason"),
                       "maximum": bool(record.get("maximum")),
                       "default": "No offer if you do nothing: he becomes unrestricted."})
+    # FA-REAL slice 4: two-way qualifying offers for players whose two-way deals just ended (two_way.py).
+    for record in (((save.get("two_way") or {}).get("qualifying_offers")) or {}).values():
+        if record.get("team_id") != team_id or record.get("season") != season:
+            continue
+        terms = record.get("terms") or {}
+        items.append({"kind": "two_way_qualifying_offer", "player_id": record["player_id"], "name": record.get("name"),
+                      "deadline": f"{_season_start(season)}-06-29", "status": record.get("status"),
+                      "amount_millions": round(float(terms.get("salary") or 0) / 1e6, 3) if terms else None,
+                      "text": (record.get("reason") or "His two-way contract ended. Send a two-way qualifying offer "
+                               "(one more two-way season) to keep his rights; he takes it on July 1."),
+                      "default": "No offer if you do nothing: he becomes a free agent."})
     meta_season = str((save.get("meta") or {}).get("season") or "")
     qo_ids = {i["player_id"] for i in items if i["kind"] == "qualifying_offer" and i.get("status") == "tendered"}
     payroll = team_payroll(active, save, team_id, season)
@@ -1063,9 +1074,22 @@ def stop_four_checklist(canonical: dict[str, Any], save: dict[str, Any], team_id
     extension_ids = rookie_extension_candidates(active, save, team_id)
     items = []
     deadline = offseason_dates(start, save)["roster_deadline"]
+    # FA-REAL slice 4: the 21-to-15 cutdown counts standard players only; the two-way places are separate.
+    from . import camp, two_way
+    camp_deals = camp.camp_deal_ids(save, team_id)
+    submitted = ((camp.store(save)["submitted"].get(two_way.current_season(save)) or {}).get(team_id)
+                 if save.get("camp") else None)
     items.append({"kind": "roster", "deadline": deadline, "count": len(roster), "target": ROSTER_SEASON_MAXIMUM,
-                  "status": "pending" if len(roster) > ROSTER_SEASON_MAXIMUM else "done",
-                  "text": f"{len(roster)} players: cut to {ROSTER_SEASON_MAXIMUM} by {deadline}."})
+                  "status": "pending" if len(roster) > ROSTER_SEASON_MAXIMUM else ("done" if submitted else "open"),
+                  "text": (f"{len(roster)} standard players{f' ({len(camp_deals)} on camp deals)' if camp_deals else ''}: "
+                           f"cut to {ROSTER_SEASON_MAXIMUM} by {deadline}, then submit your opening roster. "
+                           f"Waive by {camp.clear_by(save)} so a cut player clears waivers before opening night.")})
+    places = two_way.team_two_ways(save, team_id)
+    items.append({"kind": "two_way_places", "deadline": deadline, "count": len(places), "target": two_way.TWO_WAY_SLOTS,
+                  "status": "done" if len(places) >= two_way.TWO_WAY_SLOTS else "open",
+                  "text": (f"{len(places)} of {two_way.TWO_WAY_SLOTS} two-way places filled"
+                           + (f" ({', '.join(r.get('name') or '' for r in places)})" if places else "")
+                           + ". Two-way players don't count toward the 15 or the salary cap.")})
     for pid in extension_ids:
         player = next((p for p in roster if p["id"] == pid), {})
         items.append({"kind": "rookie_extension", "player_id": pid, "name": player.get("name"), "deadline": deadline,

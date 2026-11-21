@@ -300,3 +300,25 @@ body.unified-terminal-ui .fa-hold-table .ui-command { min-height:18px; padding:0
 .fa-offer-sheet { margin-top:8px; padding:6px 8px; border:1px solid #c2862a; border-radius:3px; background:#fffaf0; }
 .fa-offer-sheet .fa-offer-note { margin:2px 0; }
 .fa-offer-sheet .fa-offer-field { margin-top:6px; }
+
+/* FA-REAL slice 4: other ways to add a player (two-way, camp deal, sign-and-trade). */
+.fa-builder-edge .fa-edge-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 10px; border-bottom: 1px solid #d5dde3; }
+.fa-builder-edge .fa-edge-row:last-child { border-bottom: 0; }
+.fa-builder-edge .fa-edge-row > div { display: grid; gap: 2px; min-width: 0; }
+.fa-builder-edge .fa-edge-row strong { font-size: 12px; }
+.fa-builder-edge .fa-edge-row small { font-size: 10px; color: #5d6b77; line-height: 1.3; }
+.fa-edge-buttons { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; flex: 0 0 auto; }
+.fa-edge-buttons .ui-command { min-height: 24px; font-size: 11px; }
+.fa-snt { padding: 6px 10px 10px; background: #f6f8fa; border-top: 1px solid #d5dde3; }
+.fa-snt .fa-muted { margin: 0 0 6px; font-size: 11px; }
+.fa-snt-teams { margin: 0 0 6px; padding: 0; list-style: none; }
+.fa-snt-teams li { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 8px; padding: 3px 0; border-bottom: 1px solid #e3e8ec; font-size: 11px; }
+.fa-snt-teams li.is-ok b { color: #2f6f4a; }
+.fa-snt-players { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 3px 10px; margin-bottom: 6px; font-size: 11px; }
+.fa-snt-players small { color: #5d6b77; }
+.fa-snt-pick { display: block; margin-bottom: 6px; font-size: 11px; }
+.fa-snt-verdict { margin-top: 6px; padding: 6px 8px; border-left: 4px solid #c4585f; background: #fff4f4; font-size: 11px; }
+.fa-snt-verdict.is-ok { border-left-color: #2f8a57; background: #f1f8f3; }
+.fa-snt-verdict p { margin: 0 0 4px; }
+.fa-snt-verdict ul { margin: 0; padding-left: 16px; }
+.fa-snt-verdict li.is-no { color: #a8434b; }

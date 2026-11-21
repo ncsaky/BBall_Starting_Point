@@ -84,6 +84,16 @@ TEAM_MUTATIONS = {
     "qualifying_offer",
     "offer_sheet_decision",
     "waive_player",
+    # FA-REAL slice 4: two-way contracts, camp deals, the opening roster and sign-and-trades.
+    "two_way_sign",
+    "two_way_release",
+    "two_way_convert",
+    "two_way_qualifying_offer",
+    "camp_invite",
+    "camp_to_two_way",
+    "submit_roster",
+    "fill_roster_minimum",
+    "sign_and_trade_submit",
 }
 HOST_MUTATIONS = {
     "update_game_settings",
@@ -104,6 +114,8 @@ TEAM_DEFAULT_ACTIONS = {
     "staff_room",
     "team_assets",
     "team_dashboard",
+    "sign_and_trade_options",
+    "sign_and_trade_quote",
 }
 LEGACY_ACTOR_READ_ACTIONS = {
     # These reports still infer the viewing team from save.meta.user_team_id.

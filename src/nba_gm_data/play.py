@@ -5505,6 +5505,9 @@ def process_ai_free_agency_offers_for_day_state(
             if active_offer_exists(save, player["id"], team["id"]):
                 continue
             roster_count = sum(row.get("team_id") == team["id"] for row in active.get("players", []))
+            # FA-REAL slice 4: the 21-player offseason maximum counts two-way players too.
+            roster_count += len(((save.get("two_way") or {}).get("contracts") or {}) and
+                                [r for r in save["two_way"]["contracts"].values() if r.get("team_id") == team["id"]])
             pending_players = {
                 offer["player_id"] for offer in save.get("free_agent_offers", [])
                 if offer.get("team_id") == team["id"] and offer.get("status") == "active"
@@ -6227,10 +6230,19 @@ def advance_free_agency_day(canonical: dict[str, Any], save_path: Path, user_tea
     # FA-REAL slice 3: from July 1 (the new league year) AI teams may sign unsigned restricted free agents to offer
     # sheets at the end of each market day; their teams decide by the end of the next day.
     sheets = ai_sheet_pass(canonical, save, label=f"day{int((save.get('free_agency_state') or {}).get('day') or 1)}")
+    # FA-REAL slice 4: from the second market day, a team over the cap may get a departing free agent by
+    # sign-and-trade from his old team (sign_and_trade.ai_pass).
+    market_view = with_transaction_context(canonical_with_save(canonical, save))
+    market_day = int((save.get("free_agency_state") or {}).get("day") or 1)
+    if market_day >= 2:
+        from .sign_and_trade import ai_pass as sign_and_trade_pass
+        if sign_and_trade_pass(market_view, save, str(save["state"]["current_date"]),
+                               seed=int((save.get("meta") or {}).get("seed") or seed), day_key=f"day{market_day}"):
+            market_view = with_transaction_context(canonical_with_save(canonical, save))
     post_trades = maybe_run_free_agency_ai_trades_state(
         canonical,
         save,
-        with_transaction_context(canonical_with_save(canonical, save)),
+        market_view,
         user_team,
         seed,
         phase="post_resolution",
@@ -6984,6 +6996,10 @@ def finish_free_agency_phase(canonical: dict[str, Any], save_path: Path, *, root
     if str(save.get("state", {}).get("current_date") or "") < f"{end_year}-08-01":
         advance_lifecycle_to(canonical, save, f"{end_year}-08-01", seed, root)
         run_late_summer_ai_trades(canonical, save, seed, end_year)
+        # FA-REAL slice 4: late-summer sign-and-trades for free agents still unsigned.
+        from .sign_and_trade import ai_pass as sign_and_trade_pass
+        sign_and_trade_pass(with_transaction_context(canonical_with_save(canonical, save)), save,
+                            f"{end_year}-08-01", seed=int((save.get("meta") or {}).get("seed") or seed), day_key="aug1")
         # FA-REAL slice 2: unsigned restricted free agents settle with their teams, or take the qualifying offer.
         from .offseason_decisions import restricted_summer_pass
         restricted_summer_pass(canonical, save, final=False)
