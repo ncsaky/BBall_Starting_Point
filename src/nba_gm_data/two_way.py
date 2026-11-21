@@ -769,15 +769,15 @@ def restricted_two_way_ids(save: dict[str, Any]) -> set[str]:
 
 
 def expire_contracts(save: dict[str, Any], season: str, today: str) -> list[dict[str, Any]]:
-    """At the contract-season switch, two-way deals that covered only earlier seasons end. The player becomes a free
-    agent; his team may send a two-way qualifying offer (a one-year two-way he may accept) by the June 29 deadline."""
+    """At the contract-season switch, two-way deals that covered only earlier seasons end. His team may send a two-way
+    qualifying offer (a one-year two-way he may accept) by the June 29 deadline; until it decides, his rights stay with
+    it (he joins the free-agent pool when it doesn't tender one)."""
     ended = []
     root = store(save)
     for pid, rec in list(root["contracts"].items()):
         if any(str(row.get("season")) >= season for row in rec.get("seasons") or []):
             continue
         root["contracts"].pop(pid)
-        save["free_agent_player_ids"] = sorted(set(save.get("free_agent_player_ids") or []) | {pid})
         _log(save, "expired", rec, today)
         root["qualifying_offers"][pid] = {"player_id": pid, "name": rec.get("name"), "team_id": rec["team_id"],
                                           "season": season, "status": "pending", "date": today}
@@ -817,6 +817,7 @@ def decide_qualifying_offers(active: dict[str, Any], save: dict[str, Any], today
             player = players.get(row["player_id"])
             if not player:
                 row["status"] = "not_tendered"
+                _to_pool(save, row["player_id"])
                 continue
             terms = qualifying_offer_terms(save, player, tid, row["season"])
             age = float(player.get("display_age", player.get("age")) or 25)
@@ -824,6 +825,8 @@ def decide_qualifying_offers(active: dict[str, Any], save: dict[str, Any], today
             row.update(status="tendered" if keep else "not_tendered", decided=today, terms=terms, by="ai",
                        reason=("one of the two best two-way players it had; it wants him back" if keep else
                                "it is not bringing him back"))
+            if not keep:
+                _to_pool(save, row["player_id"])
             decided.append(row)
     return decided
 
@@ -838,13 +841,22 @@ def user_qualifying_offer(save: dict[str, Any], active: dict[str, Any], player_i
     player = _player_lookup(active).get(str(player_id)) or {"id": str(player_id), "name": row.get("name")}
     row.update(status="tendered" if tender else "not_tendered", decided=today, by="user",
                terms=qualifying_offer_terms(save, player, row["team_id"], row["season"]))
+    if tender:
+        save["free_agent_player_ids"] = sorted(set(save.get("free_agent_player_ids") or []) - {str(player_id)})
+    else:
+        _to_pool(save, str(player_id))
     return row
 
 
+def _to_pool(save: dict[str, Any], player_id: str) -> None:
+    if str(player_id) not in set(save.get("retired_player_ids") or []):
+        save["free_agent_player_ids"] = sorted(set(save.get("free_agent_player_ids") or []) | {str(player_id)})
+
+
 def resolve_qualifying_offers(active: dict[str, Any], save: dict[str, Any], today: str) -> list[dict[str, Any]]:
-    """July 1 (the new league year): a tendered player takes his qualifying offer and is back with his team (two-way
-    qualifying offers were accepted 1-4 times a summer; the game has no outside bidding for two-way players, so a
-    tendered player always takes it). A pending one that nobody decided lapses."""
+    """When talks open (June 30, before the market's first day): a tendered player takes his qualifying offer and is
+    back with his team (two-way qualifying offers were accepted 1-4 times a summer; the game has no outside bidding for
+    two-way players, so a tendered player always takes it). A pending one that nobody decided lapses."""
     root = store(save)
     done = []
     players = _player_lookup(active)
@@ -853,12 +865,14 @@ def resolve_qualifying_offers(active: dict[str, Any], save: dict[str, Any], toda
             row["status"] = "not_tendered"
             row["decided"] = today
             row["reason"] = "the deadline passed without a decision"
+            _to_pool(save, pid)
             continue
         if row.get("status") != "tendered":
             continue
         player = players.get(pid)
         if player is None or pid in set(save.get("retired_player_ids") or []):
             row["status"] = "lapsed"
+            _to_pool(save, pid)
             continue
         terms = row.get("terms") or qualifying_offer_terms(save, player, row["team_id"], row["season"])
         if terms.get("kind") == "two_way" and open_places(save, row["team_id"]) > 0:
@@ -871,9 +885,11 @@ def resolve_qualifying_offers(active: dict[str, Any], save: dict[str, Any], toda
             except ValueError as error:
                 row["status"] = "lapsed"
                 row["reason"] = str(error)
+                _to_pool(save, pid)
                 continue
         row["status"] = "lapsed"
         row["reason"] = row.get("reason") or "no two-way place for him"
+        _to_pool(save, pid)
     return done
 
 
@@ -904,7 +920,7 @@ def daily(canonical: dict[str, Any], save: dict[str, Any], day: str, active_fact
             changed |= bool(expire_contracts(save, _label(start + 1), day))
         if day >= dates["decisions_deadline"] and once(f"qo:{start + 1}"):
             decide_qualifying_offers(active_factory(), save, day)
-        if day >= dates["league_year"] and once(f"qo-resolve:{start + 1}"):
+        if day >= dates["market_opens"] and once(f"qo-resolve:{start + 1}"):
             changed |= bool(resolve_qualifying_offers(active_factory(), save, day))
         if phase in {"free_agency", "offseason", "training_camp"}:
             for month_day, target in RULES["summer_targets"]:

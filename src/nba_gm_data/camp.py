@@ -44,10 +44,12 @@ RULES = {
     "invite_waves": (("07-16", 20, 0), ("08-15", 21, 1), ("09-15", 21, 1), ("09-28", 21, 1)),
     # Undrafted rookies who join the free-agent pool after each draft (the real summer's undrafted signings: 89-108
     # undrafted players signed two-way deals each year, and most camp deals went to undrafted or G League players).
-    "undrafted_class_size": 60,
+    # OFF (0): 60 generated players a summer made every market day about 50% slower (each league view copies them);
+    # camp deals and two-ways come from the existing free-agent pool instead. See the slice-4 report.
+    "undrafted_class_size": 0,
     # Candidates: fringe free agents (a rotation player waits for a real offer).
     "invite_max_minutes": 15.0,
-    "invite_max_age": 30.0,
+    "invite_max_age": 32.0,
     # At the cutdown a camp deal stays on the standard roster only if he is among the team's best N players (the same
     # deal made an opening standard roster 0-1 times a year: Horton-Tucker 2024, Diawara 2025).
     "keep_camp_deal_rank": 9,
@@ -582,7 +584,7 @@ def daily(canonical: dict[str, Any], save: dict[str, Any], day: str, active_fact
     if record_affiliate_bonuses(save, day):
         pass
     if phase in {"free_agency", "offseason", "training_camp"} and day[:4] == str(start + 1):
-        if md >= "07-02" and once(f"undrafted:{start + 1}"):
+        if int(RULES["undrafted_class_size"]) and md >= "07-02" and once(f"undrafted:{start + 1}"):
             add_undrafted_class(save, day, seed=seed)
             changed = True
         for month_day, fill_to, waive_count in RULES["invite_waves"]:

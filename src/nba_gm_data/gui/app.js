@@ -2868,9 +2868,10 @@ function requiredClipboardDecision() {
   return "";
 }
 
-// FA-REAL slice 4: in preseason (stop 4) the opening-roster window is available even when no cut is required.
+// FA-REAL slice 4: the roster window (standard spots and two-way places) is available in preseason (stop 4, the
+// opening roster) and through the regular season (two-way call-ups and conversions), even when no cut is required.
 function preseasonRosterViewOpen() {
-  return String(state.home?.save?.phase || "") === "preseason";
+  return ["preseason", "regular_season"].includes(String(state.home?.save?.phase || ""));
 }
 
 function revealRequiredClipboardDecision() {
@@ -7013,9 +7014,9 @@ function rosterCutdownDashboardWorkspace() {
   return `<div class="cutdown-workspace" data-cutdown-workspace>
     <header class="cutdown-head">
       <div class="cutdown-title">
-        <p>${escapeHtml(teamLabel(room.team || userTeam()))} · ${escapeHtml(room.date || state.home?.save?.current_date || "")} · ${room.status === "required" ? "Required before games" : short ? "Required before games" : `Due ${escapeHtml(shortDate(view.roster_deadline))}`}</p>
-        <h3>${short ? "Sign Players To Reach The Minimum" : "Set The Opening Roster"}</h3>
-        <span>${short ? escapeHtml(`The game won't sign anyone onto your roster. ${short.count >= short.minimum - 1 ? "Thirteen players is allowed for two weeks." : ""} Sign a free agent, or let your assistant fill the roster with minimum contracts.`) : `Up to ${escapeHtml(view.offseason_limit || 21)} players through camp; by ${escapeHtml(shortDate(view.roster_deadline))}, the day before opening night, at most ${escapeHtml(summary.target)} standard players plus ${escapeHtml(view.two_way_limit || 3)} two-ways. Waive a player by ${escapeHtml(shortDate(view.clear_by))} and he clears waivers before opening night (non-guaranteed money is then never owed).`}</span>
+        <p>${escapeHtml(teamLabel(room.team || userTeam()))} · ${escapeHtml(room.date || state.home?.save?.current_date || "")} · ${room.status === "required" ? "Required before games" : short ? "Required before games" : room.phase === "regular_season" ? "Regular season" : `Due ${escapeHtml(shortDate(view.roster_deadline))}`}</p>
+        <h3>${short ? "Sign Players To Reach The Minimum" : room.phase === "regular_season" ? "Roster And Two-Way Places" : "Set The Opening Roster"}</h3>
+        <span>${short ? escapeHtml(`The game won't sign anyone onto your roster. ${short.count >= short.minimum - 1 ? "Thirteen players is allowed for two weeks." : ""} Sign a free agent, or let your assistant fill the roster with minimum contracts.`) : room.phase === "regular_season" ? `At most ${escapeHtml(summary.target)} standard players and ${escapeHtml(view.two_way_limit || 3)} two-ways. The coach calls a two-way up when the team is short or he is good enough to play; convert one before the last regular-season game to keep him for the playoffs.` : `Up to ${escapeHtml(view.offseason_limit || 21)} players through camp; by ${escapeHtml(shortDate(view.roster_deadline))}, the day before opening night, at most ${escapeHtml(summary.target)} standard players plus ${escapeHtml(view.two_way_limit || 3)} two-ways. Waive a player by ${escapeHtml(shortDate(view.clear_by))} and he clears waivers before opening night (non-guaranteed money is then never owed).`}</span>
       </div>
       <div class="cutdown-counter${(summary.ready || summary.required === 0) && !short ? " is-ready" : ""}" role="status" aria-live="polite">
         <strong><b>${escapeHtml(summary.after)}</b> / ${escapeHtml(summary.target)}</strong>
@@ -8739,7 +8740,8 @@ function seasonalClipboardCards(dashboard) {
       const cardWidth = bracket ? Math.min(1420, Math.max(320, window.innerWidth - 60)) : lottery ? Math.min(700,Math.max(320,window.innerWidth-60)) : fixed ? fixed[0] : width;
       const cardHeight = bracket ? 480 : lottery ? (state.draftPresentationStage==='odds'?444:454) : fixed ? fixed[1] : height;
       const sizingKey = lottery ? `lottery-v3:${state.draftPresentationStage}` : fixed ? fixed[2] : null;
-      const title2 = phase === "cutdown" ? (required ? (Number(state.home?.save?.pending_counts?.cutdowns || 0) > 0 ? "Opening Roster - Cut Required" : "Roster Minimum - Sign Players") : "Opening Roster") : title;
+      const inSeason = String(state.home?.save?.phase || "") === "regular_season";
+      const title2 = phase === "cutdown" ? (required ? (Number(state.home?.save?.pending_counts?.cutdowns || 0) > 0 ? (inSeason ? "Roster - Cut Required" : "Opening Roster - Cut Required") : "Roster Minimum - Sign Players") : (inSeason ? "Roster & Two-Way Places" : "Opening Roster")) : title;
       cards.push({id:`phase-${phase}-${name}`, title: title2, card, width:cardWidth, height:cardHeight, sizingKey, locked, galleryVisible:(active || archiveBracket || rosterView) && Boolean(panel), mandatory:["staff_retention", "cutdown"].includes(phase) && !(rosterView && !required), required:required && Boolean(panel), measured:Boolean(panel), phaseActive:(active || rosterView) && Boolean(panel)});
     }
     seed.remove();

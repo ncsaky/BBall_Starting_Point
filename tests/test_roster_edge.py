@@ -131,11 +131,14 @@ class TwoWayRules(unittest.TestCase):
         tw.store(save)["history"]["fa_0"] = {"t": [SEASON]}
         save["free_agent_player_ids"].remove("fa_0")
         tw.expire_contracts(save, "2028-29", "2028-06-17")
-        self.assertIn("fa_0", save["free_agent_player_ids"])
+        self.assertNotIn("fa_0", save["free_agent_player_ids"], "his team holds his rights until it decides")
         row = tw.store(save)["qualifying_offers"]["fa_0"]
         self.assertEqual(row["status"], "pending")
         save["meta"]["user_team_id"] = "t"
+        tw.user_qualifying_offer(save, league, "fa_0", False, "2028-06-19")
+        self.assertIn("fa_0", save["free_agent_player_ids"])
         tw.user_qualifying_offer(save, league, "fa_0", True, "2028-06-20")
+        self.assertNotIn("fa_0", save["free_agent_player_ids"])
         self.assertIn("fa_0", tw.restricted_two_way_ids(save))
         save["state"]["current_date"] = "2028-07-01"
         tw.resolve_qualifying_offers(league, save, "2028-07-01")
