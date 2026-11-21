@@ -344,7 +344,7 @@ function wireEvents() {
         'draft-user':()=>draftSim('draft_sim_to_user'), 'draft-all':()=>draftSim('draft_sim_all'),
         'draft-next':draftAdvanceStage,
         'resign-day':()=>advanceReSigning('day'), 'resign-open':openFreeAgencyFromStopOne,
-        'fa-day':()=>advanceFreeAgency('day'), 'fa-end':()=>advanceFreeAgency('end'), 'fa-next':freeAgencyAdvanceStage,
+        'fa-day':()=>advanceFreeAgency('day'), 'fa-end':()=>advanceFreeAgency('end'), 'fa-next':()=>advanceFreeAgency('end'),
       };
       const run = handlers[command.dataset.phaseCommand];
       if (run) Promise.resolve().then(run).catch(error=>showToast(error.message || String(error),true));

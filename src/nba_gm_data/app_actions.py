@@ -4137,8 +4137,14 @@ def advance_free_agency_action(canonical: dict[str, Any], save_path: Path, paylo
     mode = str(payload.get("mode") or "day")
     initialize_free_agency_market(canonical, save_path, team, seed)
     if mode == "end":
-        result = simulate_free_agency_to_end(canonical, save_path, team, seed, root=root)
-        finish_free_agency_phase(canonical, save_path, root=root)
+        # FA-REAL slice 2: "end" first finishes the first wave and stops on signing day (stop 3); from signing day it
+        # closes the market and runs late summer in the background to camp.
+        completed = ((load_save(save_path).get("free_agency_state") or {}).get("status") == "completed")
+        if completed:
+            result = {"status": "late_summer"}
+            finish_free_agency_phase(canonical, save_path, root=root)
+        else:
+            result = simulate_free_agency_to_end(canonical, save_path, team, seed, root=root)
     else:
         result = advance_free_agency_day(canonical, save_path, team, seed, root=root)
     return {"status": "advanced", "result": result, "room": free_agency_room_payload(canonical, save_path, team, seed)}
