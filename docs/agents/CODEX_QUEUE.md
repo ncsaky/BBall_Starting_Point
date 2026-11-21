@@ -6,6 +6,42 @@ Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COA
 
 ---
 
+## Ready now (2026-11-21, night): CONTRACT-STRUCTURE-EVIDENCE (fresh chat; research, no image tool)
+
+### CONTRACT-STRUCTURE-EVIDENCE: how real NBA contracts are shaped, and how options get decided
+
+Suggested settings: GPT-6.2 Sol, High, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task CONTRACT-STRUCTURE-EVIDENCE (add a board row, "in progress
+(Codex)"). Read docs/agents/tasks/fa-realism-research.md (your earlier CBA research; same citation style) and
+docs/agents/tasks/offseason-decisions-evidence.md (your format: rules fitted on some seasons, tested on held-out ones).
+A Claude agent (CONTRACT-TERMS) is adding salary paths (flat, rising, declining) and player or team options to the
+game's offers, and option decisions the user can see. It needs real rates to aim at.
+
+Setup: your own git worktree:
+  git worktree add ../BBall_codex_contracts -b codex/contract-structure-evidence HEAD
+Commit on that branch; never push, never commit to main. Research only: nothing under src/, gui/ or tests/.
+
+From public sources (Basketball Reference contracts and transactions, team and league releases, Hoops Rumors option
+trackers and glossary, respect robots.txt and site terms; paraphrase), for contracts signed 2019-2026:
+1. Salary paths: share of contracts that are flat, rising (and by how much: 5%, 8%, other) or declining, by contract
+   kind (rookie scale, minimum, mid-level/exception, Bird re-signing, max, extension) and by player tier where possible.
+2. Options: share of contracts with a player option, a team option, an early termination option or none, by the same
+   kinds; which season the option sits in.
+3. Option decisions: for 2019-2026 player options, how often players opt in vs out, and what predicts it (age, the
+   option salary vs the player's market value or recent production, injury, team success); same for team options,
+   including rookie-scale third- and fourth-year options (rate exercised, by draft slot and early production).
+   Include the decision dates.
+4. Simple rules the game can use: e.g. "a player opts out when his expected market salary exceeds the option by X",
+   fitted on some seasons and checked on held-out ones, with named examples.
+Output: data/research/contract_structure_evidence.json, scripts/research/contract_structure_fit.py (if you fit
+anything), docs/agents/tasks/contract-structure-evidence.md (plain-language TL;DR first, 5 lines; tables; named
+examples; gaps). Save and commit after each part so a usage limit loses nothing. Set the board row to "review" and stop.
+```
+
+---
+
 ## Ready now (2026-11-21, evening): HEADSHOT-GEN-LIBRARY batch 2 and later (fresh chat each; image generation)
 
 Batch 1 was approved (66 people, 222 portraits; the ages read clearly). Paste the batch 1 prompt below into a fresh
