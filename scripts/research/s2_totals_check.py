@@ -162,7 +162,7 @@ def analyse(data: dict, runs_target: int = 20) -> dict:
             ps = [v["poss"] for v in rb.values()]
             rp.append(sum(ps) / 2)
             rfta.append(sum(v["fta"] for v in rb.values()))
-            rot.append(1 if max(v["minutes"] for v in rb.values()) > 242 else 0)
+            rot.append(1 if max(v["minutes"] for v in rb.values()) > 245 else 0)
     out["real_possessions"] = round(statistics.fmean(rp), 2) if rp else None
     out["real_fta_per_game"] = round(statistics.fmean(rfta), 2) if rfta else None
     out["real_ot_rate"] = round(statistics.fmean(rot), 4) if rot else None

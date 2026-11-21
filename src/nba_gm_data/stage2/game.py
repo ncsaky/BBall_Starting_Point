@@ -25,6 +25,7 @@ import random
 from typing import Any
 
 from . import fouls as F
+from . import matchups as M
 from . import rebounding as R
 from .cards import KINDS, KIND_INDEX, N_KINDS, Card
 
@@ -45,10 +46,19 @@ LOOP = {
     # Possession length (seconds). Half court: a floor plus a gamma tail; scaled by pace habit and coach tempo. FITTED
     # (league pace 102.0 possessions per 48 minutes).
     "hc_floor": 5.0, "hc_mean": 15.6, "hc_shape": 2.6, "trans_floor": 2.5, "trans_mean": 6.0, "reset_floor": 2.0,
-    "reset_mean": 8.0, "putback_s": 2.0, "sideout_s": 3.5, "k_pace": 1.2, "tempo_scale": .01,
-    # The defending lineup's pace habit also sets the half-court length (pace is a game-level thing: both teams play
-    # about the same number of possessions). S2-TOTALS-MATCHUPS: see k_pace refit below.
-    "k_pace_def": 0.0,
+    "reset_mean": 8.0, "putback_s": 2.0, "sideout_s": 3.5, "tempo_scale": .01,
+    # Pace habit (T05) of the offense's five (k_pace) and, since pace is a game-level thing (both teams play about the
+    # same number of possessions), of the defending five (k_pace_def), on the half-court length. The first loop had
+    # 1.2 on the offense only, which gave a slope of game pace on the two lineups' summed habit of 37 possessions per
+    # unit against a real 77 (first half of 2025-26). FITTED (S2-TOTALS-MATCHUPS, scripts/research/s2_totals_fit.py):
+    # equal weights set so the slope matches the first half (80); second half 89 vs real 102; team pace correlation
+    # with real .77 (was .55), team spread 1.5 possessions (real 2.3; was 0.6).
+    "k_pace": 1.6, "k_pace_def": 1.6,
+    # Recent form: today's engine's recent-scoring term (sim.game_environment_effect: both teams' last ten games before
+    # tonight, as points per 100 and possessions), applied at today's own strength (1 = as today's engine uses it;
+    # 0 = off). Kept at 1: larger values fitted the market a little better but would let a saved season's own scoring
+    # feed back into pace. It is the one term here not built from the players' inputs.
+    "k_form_off": 1.0, "k_form_pace": 1.0,
     # Transition chance by how the possession started, times the lineup's transition habit.
     "trans_dreb": .20, "trans_steal": .60, "trans_made": .04, "trans_dead": .06, "k_trans": 1.5,
     # Turnovers: the defense's ball pressure (log-odds per index unit); transition and offensive-foul shares.
@@ -78,6 +88,9 @@ LOOP = {
     # kernel's fixed reference contest; this sets the in-game average. FITTED to the league make rates by zone
     # (Basketball Index 2025-26: rim 67.4, short mid 44.8, long mid 41.7, three 36.1).
     "zone_make": (-.19, -.18, 0.0, -.03),
+    # League scoring level on every shot (make log-odds; S2-TOTALS-MATCHUPS: set so expected totals match the market on
+    # the first half of 2025-26 once pace and recent form are in).
+    "make_level": 0.0,
     # After an offensive rebound: chance of an immediate putback by the rebounder (rim / short misses vs others).
     "putback_close": .50, "putback_far": .20,
     # Points per 100 -> make log-odds (home court, coaches, rest).
@@ -94,11 +107,35 @@ LOOP = {
     # End-game tactics (stand-ins): chance a leading team runs out the last <24 s; chance a team trailing by 1-8 in the
     # last 45 s fouls immediately (two free throws, clock stopped).
     "end_hold": .75, "end_foul": .75,
+    # Chance a team tied or behind by 1-3 in the last 24 seconds plays for the last shot (a three when behind by 3).
+    # 0 in the loop's first version; S2-TOTALS-MATCHUPS fits it to the real overtime rate.
+    "end_last_shot": .8,
     # The finisher is drawn by usage weight to this power: the weight is fitted to each player's usage on its own, but
     # a share among five teammates (plus the possessions that end on putbacks and drawn fouls) flattens it. FITTED to
     # real per-player shot volume (stars' and bench players' FGA per 36 in replayed games).
     "usage_power": 1.3,
+    # ---- Player-on-player matchups (S2-TOTALS-MATCHUPS; stage2.matchups). 0 = the lineup averages of the loop's
+    # first version; 1 = each scorer meets the defender assigned to him. Make log-odds per index unit (indices are
+    # grade units / 25, centred on the league's minutes-weighted average):
+    "matchups": 0.0,
+    "k_close": .36,       # catch-and-shoot jumpers: his defender's closeout
+    "k_rot": .20,         # ... and the five's rotation (help recognition, off-ball positioning)
+    "k_onball": .36,      # pull-ups and short jumpers: his defender's on-ball contest
+    "k_len": .10,         # ... his defender's length (wingspan beyond height, and height over the shooter), per 10 cm
+    "beat0": -.40,        # drives: log-odds he gets past his man at even burst and containment
+    "k_beat": 1.20,       # ... per unit of (his burst/handle/separation - his man's containment)
+    "k_beat_make": .50,   # ... make log-odds per unit of (chance he is past his man - the league chance)
+    "k_beat_foul": .80,   # ... shooting-foul log-odds per unit of the same (recovering defenders and late help foul)
+    "k_fctrl": .15,       # ... his man's foul control (S45)
+    "k_post": .30,        # post-ups: his defender's post defense and height
+    "press_own": .5,      # turnovers: share of the ball pressure that is his own man's (the rest the five's average)
+    "k_lanes": .20,       # ... the five's passing-lane defense
 }
+CATCH_KINDS = frozenset(KIND_INDEX[k] for k in ("mid_catch", "three_corner", "three_catch", "trans_three"))
+PULL_KINDS = frozenset(KIND_INDEX[k] for k in ("short_jumper", "mid_pull", "three_pull"))
+DRIVE_KINDS = frozenset(KIND_INDEX[k] for k in ("rim_drive", "floater"))
+HOOK = KIND_INDEX["hook"]
+THREE_PULL, THREE_CATCH = KIND_INDEX["three_pull"], KIND_INDEX["three_catch"]
 ASSIST = {"rim_drive": .18, "rim_finish": .93, "floater": .15, "hook": .30, "short_jumper": .40, "mid_catch": .90,
           "mid_pull": .07, "three_corner": .97, "three_catch": .92, "three_pull": .06, "putback": .04,
           "trans_rim": .55, "trans_three": .85, "heave": 0.0}
@@ -118,8 +155,10 @@ class TeamState:
     """One team's side of the game: its players' cards, minutes plan, live lineup and box score."""
 
     def __init__(self, team_id: str, abbrev: str, cards: list[Card], targets: list[float], starters: list[int],
-                 groups: list[str], eff: float, tempo: float, league: dict, eff_def: float = 0.0):
+                 groups: list[str], eff: float, tempo: float, league: dict, eff_def: float = 0.0,
+                 coach_matchup: float = 1.0):
         self.team_id, self.abbrev = team_id, abbrev
+        self.coach_matchup = coach_matchup   # how much the coach puts his stopper on the top scorer (matchups.assign)
         self.cards = cards
         n = len(cards)
         total = sum(targets) or 1.0
@@ -141,6 +180,8 @@ class TeamState:
         self.league = league
         self.loop: dict | None = None     # the game's loop numbers (set by Game)
         self.lineup_dirty = True
+        self.form_pace = 0.0      # recent-form possessions (engine.py; 0 unless the loop's k_form_pace is on)
+        self.rot = self.lanes = 0.0
 
     # ---- lineup aggregates (recomputed when the five change) ------------------------------------------------------
     def refresh(self) -> None:
@@ -170,6 +211,8 @@ class TeamState:
         self.ns_draw_cum = _cum([c.ns_draw for c in cs])
         self.off_foul_cum = _cum([c.off_foul_w for c in cs])
         self.help = max(range(5), key=lambda j: cs[j].rim_d)
+        self.rot = sum(c.rot_d for c in cs) / 5.0 - lg.get("rot_center", 0.0)
+        self.lanes = sum(c.lanes_d for c in cs) / 5.0 - lg.get("lanes_center", 0.0)
         self.lineup_dirty = False
 
     def in_bonus_against(self, t_left: float) -> bool:
@@ -213,7 +256,7 @@ class Game:
         self.foul_action = [(L[FOUL_ACTION[a]] if FOUL_ACTION.get(a) else 0.0) + (L["foul_level"] if KZONE[i] < 3 else 0.0)
                             for i, a in enumerate(KACTION)]
         self.assist = [a * L["ast_scale"] for a in ASSIST_BY_KIND]
-        self.zone_make = [0.0 if KINDS[i][0] == "heave" else L["zone_make"][KZONE[i]] for i in range(N_KINDS)]
+        self.zone_make = [0.0 if KINDS[i][0] == "heave" else L["zone_make"][KZONE[i]] + L["make_level"] for i in range(N_KINDS)]
         self.blk_base = (L["blk_rim"], L["blk_short"], L["blk_mid"], L["blk_three"])
         self.period = 0
         self.t_left = QUARTER_S
@@ -295,8 +338,33 @@ class Game:
             inv = [0] * 5
             for j, i in enumerate(guards):
                 inv[i] = j
-            off.guards_vs = guards     # used when `off` is on offense
+            off.guards_vs = guards     # used when `off` is on offense (rebound positions: height-matched)
             off.defender_of = inv
+            if self.L["matchups"]:
+                self._pair_terms(off, de)
+
+    def _pair_terms(self, off: TeamState, de: TeamState) -> None:
+        """Who guards whom (matchups.assign) and, for each scorer, his defender's terms on each kind of action."""
+        L, lg = self.L, off.league
+        oc = [off.cards[i] for i in off.on]
+        dc = [de.cards[j] for j in de.on]
+        d_of = M.assign(oc, dc, de.coach_matchup)
+        off.defender_of = d_of
+        b0, kb = L["beat0"], L["k_beat"]
+        c_close, c_on, c_len = lg.get("closeout_center", 0.0), lg.get("onball_center", 0.0), lg.get("length_center", 0.0)
+        c_burst, c_cont, c_post = lg.get("burst_center", 0.0), lg.get("contain_center", 0.0), lg.get("post_center", 0.0)
+        c_press, c_fc = lg.get("press_center_player", 0.0), lg.get("fctrl_center", 0.0)
+        bmean = _sig(b0)
+        off.m_catch, off.m_pull, off.m_beat, off.m_post, off.m_press, off.m_fctrl = [], [], [], [], [], []
+        for i, j in enumerate(d_of):
+            o, d = oc[i], dc[j]
+            over = (d.height - o.height) / 10.0
+            off.m_catch.append(d.closeout_d - c_close)
+            off.m_pull.append(L["k_onball"] * (d.onball_d - c_on) + L["k_len"] * (d.length - c_len + over))
+            off.m_beat.append(_sig(b0 + kb * ((o.burst - c_burst) - (d.contain_d - c_cont))) - bmean)
+            off.m_post.append(d.post_d - c_post + .5 * over)
+            off.m_press.append(d.press_d - c_press)
+            off.m_fctrl.append(d.foul_ctrl - c_fc)
 
     # ---- clock ---------------------------------------------------------------------------------------------------
     def _run_clock(self, seconds: float) -> None:
@@ -318,6 +386,8 @@ class Game:
         if kind == "reset":
             return L["reset_floor"] + rng.gammavariate(2.0, (L["reset_mean"] - L["reset_floor"]) / 2.0)
         dpace = 0.0 if de is None else L["k_pace_def"] * (de.pace - self.lg_pace)
+        # Recent-form possessions (game level: the two teams' terms averaged; one possession is about 1% of the clock).
+        dpace += (off.form_pace + (de.form_pace if de is not None else off.form_pace)) / 2.0 / 101.0
         mean = (L["hc_mean"] - L["hc_floor"]) * math.exp(-L["k_pace"] * (off.pace - self.lg_pace) - dpace) * (1.0 - L["tempo_scale"] * off.tempo)
         return min(23.5, L["hc_floor"] + rng.gammavariate(L["hc_shape"], mean / L["hc_shape"]))
 
@@ -413,6 +483,20 @@ class Game:
                 self._foul(de, fouler)
                 made = self._free_throws(off, de, slot, 2)
                 return "made" if made else self._after_miss(off, de, "ft", slot)
+            # Tied or behind by one possession in the last 24 seconds: hold for the last shot (the other team gets no
+            # answer), and behind by three, take a three to tie (S2-TOTALS-MATCHUPS; stand-in rule, its chance fitted
+            # to the real overtime rate).
+            if -3 <= lead <= 0 and 3.0 < self.t_left <= 24.0 and rng.random() < L["end_last_shot"]:
+                self._run_clock(max(.5, self.t_left - (.5 + 2.5 * rng.random())))
+                slot = _pick(off.usage_cum, rng.random())
+                card = off.cards[off.on[slot]]
+                if rng.random() < _sig(card.to_logit + L["to_shift"] + self._pressure(off, de, slot)):
+                    return self._turnover(off, de, slot)
+                if lead == -3:
+                    kind = THREE_PULL if card.menu[THREE_PULL] >= card.menu[THREE_CATCH] else THREE_CATCH
+                else:
+                    kind = _pick(card.menu_cum, rng.random())
+                return self._shot(off, de, slot, kind, final=True)
         p_trans ={"dreb": L["trans_dreb"], "steal": L["trans_steal"], "made": L["trans_made"]}.get(start, L["trans_dead"])
         p_trans *= math.exp(L["k_trans"] * (off.trans_pref - self.lg_trans))
         trans = rng.random() < p_trans
@@ -454,11 +538,19 @@ class Game:
         # Who ends it, and does he turn it over?
         slot = _pick(off.usage_cum, rng.random())
         card = off.cards[off.on[slot]]
-        z = card.to_logit + L["to_shift"] + L["k_press"] * de.press + (L["trans_to"] if trans else 0.0)
+        z = card.to_logit + L["to_shift"] + self._pressure(off, de, slot) + (L["trans_to"] if trans else 0.0)
         if rng.random() < _sig(z):
             return self._turnover(off, de, slot)
         kind = _pick(card.trans_cum if trans else card.menu_cum, rng.random())
         return self._shot(off, de, slot, kind, final=final)
+
+    def _pressure(self, off: TeamState, de: TeamState, slot: int) -> float:
+        """The defense's turnover pressure on this scorer (log-odds)."""
+        L = self.L
+        if not L["matchups"]:
+            return L["k_press"] * de.press
+        own = L["press_own"]
+        return L["k_press"] * ((1 - own) * de.press + own * off.m_press[slot]) + L["k_lanes"] * de.lanes
 
     def _turnover(self, off: TeamState, de: TeamState, slot: int) -> str:
         L, rng = self.L, self.rng
@@ -489,14 +581,28 @@ class Game:
         lead = off.points - de.points
         z = (card.make_logit[kind] + self.zone_make[kind] + off.eff + off.off_shift - de.eff_def
              - L["k_lead"] * (25 if lead > 25 else -25 if lead < -25 else lead))
-        if kind in JUMPER_KINDS:
+        fz = 0.0
+        if L["matchups"] and kind != HEAVE:
+            if kind in CATCH_KINDS:
+                z -= L["k_perim"] * (1 - L["perim_own"]) * de.perim + L["k_close"] * off.m_catch[slot] + L["k_rot"] * de.rot
+            elif kind in PULL_KINDS:
+                z -= L["k_perim"] * (1 - L["perim_own"]) * de.perim + off.m_pull[slot]
+            elif kind in DRIVE_KINDS:
+                beat = off.m_beat[slot]
+                z += L["k_beat_make"] * beat - L["k_rim"] * de.rim
+                fz = L["k_beat_foul"] * beat - L["k_fctrl"] * off.m_fctrl[slot]
+            elif kind == HOOK:
+                z -= L["k_rim"] * de.rim + L["k_post"] * off.m_post[slot]
+            elif zone <= 1:
+                z -= L["k_rim"] * de.rim
+        elif kind in JUMPER_KINDS:
             z -= L["k_perim"] * (L["perim_own"] * (dcard.perim_d - de.perim_center) + (1 - L["perim_own"]) * de.perim)
         elif zone <= 1:
             z -= L["k_rim"] * de.rim
         p_make = _sig(z)
         # Shooting foul: the foul kernel's zone base, the shooter's and contester's terms, plus the action.
         if kind != HEAVE:
-            p_foul = _sig(fc.base[zone] + card.foul_s + dcard.d_foul + self.foul_action[kind])
+            p_foul = _sig(fc.base[zone] + card.foul_s + dcard.d_foul + self.foul_action[kind] + fz)
         else:
             p_foul = 0.0
         if zone == 0:
@@ -568,7 +674,7 @@ class Game:
         self._run_clock(seg)
         slot = _pick(off.usage_cum, rng.random())
         card = off.cards[off.on[slot]]
-        if rng.random() < _sig(card.to_logit + L["to_shift"] + L["k_press"] * de.press):
+        if rng.random() < _sig(card.to_logit + L["to_shift"] + self._pressure(off, de, slot)):
             return self._turnover(off, de, slot)
         kind = _pick(card.menu_cum, rng.random())
         return self._shot(off, de, slot, kind, final=final)

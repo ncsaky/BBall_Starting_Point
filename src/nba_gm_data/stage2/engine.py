@@ -75,7 +75,13 @@ def league_constants(root) -> dict[str, float]:
            "stl_mean": wmean(lambda c: c.stl_w), "blk_mean": wmean(lambda c: c.blk_w), "ns_mean": wmean(lambda c: c.ns_mult),
            "pace_mean": wmean(lambda c: c.pace), "trans_mean": wmean(lambda c: c.trans_pref),
            "perim_mean": wmean(lambda c: c.perim_d), "create_center": wmean(lambda c: c.create),
-           "space_center": wmean(lambda c: c.space)}
+           "space_center": wmean(lambda c: c.space),
+           # Player-on-player indices (S2-TOTALS-MATCHUPS), centred on the league's minutes-weighted player.
+           "closeout_center": wmean(lambda c: c.closeout_d), "onball_center": wmean(lambda c: c.onball_d),
+           "length_center": wmean(lambda c: c.length), "burst_center": wmean(lambda c: c.burst),
+           "contain_center": wmean(lambda c: c.contain_d), "post_center": wmean(lambda c: c.post_d),
+           "rot_center": wmean(lambda c: c.rot_d), "lanes_center": wmean(lambda c: c.lanes_d),
+           "fctrl_center": wmean(lambda c: c.foul_ctrl), "press_center_player": wmean(lambda c: c.press_d)}
     _LEAGUE_CONSTANTS[key] = out
     return out
 
@@ -104,8 +110,9 @@ def _prepare_pools(context, game, home_team, away_team, home_players, away_playe
     return home_players, away_players, coach_by_team
 
 
-def _team_state(context, team, pool, starters, coach, rest_context, is_home, league) -> tuple[TeamState, list, list]:
-    from ..sim import AWAY_COURT_RATING, HOME_COURT_RATING, coach_effect, rest_effect
+def _team_state(context, team, pool, starters, coach, rest_context, is_home, league, opp_context=None,
+                loop: dict | None = None) -> tuple[TeamState, list, list]:
+    from ..sim import AWAY_COURT_RATING, HOME_COURT_RATING, coach_effect, game_environment_effect, rest_effect
     from ..utils import clamp
     root = context["root"]
     canonical = context["canonical"]
@@ -129,12 +136,52 @@ def _team_state(context, team, pool, starters, coach, rest_context, is_home, lea
     ce = coach_effect(coach)
     home_mod = HOME_COURT_RATING if is_home else AWAY_COURT_RATING
     rest = rest_effect(rest_context)
-    k = LOOP["k_eff"]
-    eff = k * (home_mod + float(ce.get("offense", 0.0)) + float(rest.get("offense", 0.0)))
+    L = dict(LOOP, **(loop or {}))
+    k = L["k_eff"]
+    # Recent form (today's engine's game-environment term: both teams' last ten real games' scoring before tonight,
+    # in points per 100 and possessions). Scaled by the loop's fitted k_form_off / k_form_pace (0 = off).
+    env = (game_environment_effect(rest_context, opp_context) if (L["k_form_off"] or L["k_form_pace"])
+           else {"offense": 0.0, "pace": 0.0})
+    eff = k * (home_mod + float(ce.get("offense", 0.0)) + float(rest.get("offense", 0.0))
+               + L["k_form_off"] * float(env.get("offense", 0.0)))
     eff_def = k * float(ce.get("defense", 0.0))
     tempo = clamp(float(ce.get("tempo", 0.0)) + float(rest.get("pace", 0.0)), -4.0, 4.0)
-    state = TeamState(team["id"], team["abbrev"], cards, targets, starter_idx, groups, eff, tempo, league, eff_def=eff_def)
+    state = TeamState(team["id"], team["abbrev"], cards, targets, starter_idx, groups, eff, tempo, league, eff_def=eff_def,
+                      coach_matchup=coach_matchup_scale(coach))
+    state.form_pace = L["k_form_pace"] * float(env.get("pace", 0.0))
     return state, players, items
+
+
+def projected_pace_mean(context, league) -> float:
+    """Generated games: the league's pace habit weighted by projected minutes. The coaches' rotations give quicker
+    players more minutes than real 2025-26 minutes did, which would add possessions to every game now that both fives'
+    habits set the pace; the habit should spread teams, not move the league (today's engine does the same,
+    sim.league_pace_habit_reference)."""
+    cache = context.setdefault("sim_cache", {})
+    if "stage2_pace_mean" not in cache:
+        canonical = context["canonical"]
+        num = den = 0.0
+        for player in canonical.get("players", []):
+            minutes = float(player.get("minutes_projection") or 0.0)
+            if minutes <= 0 or player.get("_inactive_player"):
+                continue
+            flat = flat_for_player(canonical, player)
+            if flat is None:
+                continue
+            num += minutes * float(flat.get("T05", .5))
+            den += minutes
+        cache["stage2_pace_mean"] = num / den if den else league["pace_mean"]
+    return cache["stage2_pace_mean"]
+
+
+def coach_matchup_scale(coach) -> float:
+    """How much this coach puts his best on-ball stopper on the top scorer: 1 at an average matchup rating (3 of 5),
+    0.5-1.5 across the range (stand-in scale; the coach inputs hold no switching or scheme habit)."""
+    try:
+        r = float((coach.ratings or {}).get("matchup_adjustments", 3.0)) if coach is not None else 3.0
+    except (TypeError, ValueError, AttributeError):
+        r = 3.0
+    return min(1.5, max(.5, 1.0 + .25 * (r - 3.0)))
 
 
 def _health_penalty(item: dict[str, Any]) -> float:
@@ -152,6 +199,8 @@ def play_stage2_game(context: dict[str, Any], game: dict[str, Any], home_team: d
                      seed: int, loop: dict | None = None) -> tuple[Game, dict]:
     from ..sim import game_context_for_team, game_starters, team_fatigue_excess
     league = league_constants(context["root"])
+    if mode == "sandbox-sim":
+        league = {**league, "pace_mean": projected_pace_mean(context, league)}
     home_players, away_players, coach_by_team = _prepare_pools(context, game, home_team, away_team, home_players,
                                                                away_players, mode, seed, game_id)
     lineups = context.get("starting_lineups") or {}
@@ -165,8 +214,10 @@ def play_stage2_game(context: dict[str, Any], game: dict[str, Any], home_team: d
             home_ctx = {**(home_ctx or {}), "team_fatigue": round(h, 3)}
         if a is not None:
             away_ctx = {**(away_ctx or {}), "team_fatigue": round(a, 3)}
-    home, hp, hi = _team_state(context, home_team, home_players, starters, coach_by_team.get(home_team["id"]), home_ctx, True, league)
-    away, ap, ai = _team_state(context, away_team, away_players, starters, coach_by_team.get(away_team["id"]), away_ctx, False, league)
+    home, hp, hi = _team_state(context, home_team, home_players, starters, coach_by_team.get(home_team["id"]), home_ctx, True,
+                               league, away_ctx, loop)
+    away, ap, ai = _team_state(context, away_team, away_players, starters, coach_by_team.get(away_team["id"]), away_ctx, False,
+                               league, home_ctx, loop)
     rng = random.Random(f"{seed}:{game_id}:{mode}:stage2")
     g = Game(home, away, rng, loop=loop)
     g.play()

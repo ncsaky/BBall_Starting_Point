@@ -8,7 +8,7 @@ For a setting of the loop's numbers (stage2.game.LOOP), every game is played R t
 - totals: correlation, bias and mean miss of the engine's expected total against the market total.
 
     PYTHONPATH=src .venv/bin/python scripts/research/s2_totals_fit.py scan --key k_pace --values 1.2,2,3 [--runs 2]
-    PYTHONPATH=src .venv/bin/python scripts/research/s2_totals_fit.py eval --set k_pace=2.5,k_pace_def=2.5 [--runs 4]
+    PYTHONPATH=src .venv/bin/python scripts/research/s2_totals_fit.py check --set k_pace=2.5,k_pace_def=2.5 [--runs 4]
 
 `--tie k_pace,k_pace_def` sets several keys to the scanned value. Nothing here changes a player's ratings.
 """
@@ -140,7 +140,7 @@ def parse_set(text: str) -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=("scan", "eval"))
+    ap.add_argument("cmd", choices=("scan", "check"))
     ap.add_argument("--key", default="k_pace")
     ap.add_argument("--tie", default="")
     ap.add_argument("--values", default="")

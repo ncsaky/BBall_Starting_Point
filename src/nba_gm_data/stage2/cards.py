@@ -115,6 +115,14 @@ FOUL_EXTRA = {"k_craft": 0.0, "k_seek": 0.0}
 # Offensive lineup indices: creation (dribble manipulation, separation, attack recognition, passing delivery) and
 # spacing (three-point shooting as he shoots it, times how often he is out there: T02 three).
 CREATION = ("S16", "S18", "S20", "F.execution")
+# Player-on-player indices (S2-TOTALS-MATCHUPS; stage2.matchups uses them; grade units / 25, centred on the league):
+CONTAIN_D = ("S33", "S34", "S41", "P07")     # staying in front: containment, contact leverage, anticipation, lateral
+CLOSEOUT_D = ("S40", "P07", "S44")           # closing out a catch: closeout technique, lateral quickness, attention
+ONBALL_D = ("S33", "S37")                     # contesting a pull-up: containment, contest technique (+ length below)
+ROTATION_D = ("S38", "S39")                   # help: rotation recognition, off-ball positioning
+POST_D = ("S34", "P08")                       # post defense: contact leverage, strength (+ height below)
+LANES_D = ("S43", "S41")                      # passing lanes: interception technique, anticipation
+BURST = ("P05", "S16", "S19")                 # getting past his man: burst, dribble manipulation, separation
 
 _CARD_CACHE: dict[tuple, "Card"] = {}
 _LEAGUE: dict[str, Any] = {}
@@ -279,7 +287,8 @@ def transition_menu(flat: Mapping[str, float]) -> list[float]:
 
 
 def league_means(flats: Mapping[str, Mapping[str, float]]) -> dict[str, float]:
-    keys = set(PERIMETER_D) | set(RIM_D) | set(PRESSURE_D) | set(CREATION) | {"P03"}
+    keys = (set(PERIMETER_D) | set(RIM_D) | set(PRESSURE_D) | set(CREATION) | {"P01", "P02", "P03"} | set(CONTAIN_D)
+            | set(CLOSEOUT_D) | set(ONBALL_D) | set(ROTATION_D) | set(POST_D) | set(LANES_D) | set(BURST) | {"S45"})
     out = {}
     for k in keys:
         vals = [float(f[k]) for f in flats.values() if k in f]
@@ -296,7 +305,8 @@ class Card:
     __slots__ = ("pid", "name", "group", "height", "usage", "to_logit", "menu", "menu_cum", "trans_cum", "make_logit",
                  "ft", "ast_w", "foul", "foul_s", "and1", "ns_draw", "off_foul_w", "d_foul", "ns_mult", "stl_w",
                  "blk_w", "perim_d", "rim_d", "press_d", "reb", "pace", "trans_pref", "penalty", "flat", "create",
-                 "space")
+                 "space", "contain_d", "closeout_d", "onball_d", "rot_d", "post_d", "lanes_d", "burst", "length",
+                 "foul_ctrl")
 
     def actions(self) -> dict[str, float]:
         out = {a: 0.0 for a in ACTIONS}
@@ -351,6 +361,15 @@ def build_card(pid: str, name: str, flat: Mapping[str, float], means: Mapping[st
     c.trans_pref = float(flat.get("T17.transition", .2))
     c.create = _index(flat, CREATION, means)
     c.space = float(flat.get("T02.three", .4)) * float(flat.get("S.three_mode", 50.0)) / 100.0
+    c.contain_d = _index(flat, CONTAIN_D, means)
+    c.closeout_d = _index(flat, CLOSEOUT_D, means)
+    c.length = (float(flat.get("P02", means.get("P02", 209.0))) - c.height) / 10.0   # wingspan beyond height, per 10 cm
+    c.onball_d = _index(flat, ONBALL_D, means)
+    c.rot_d = _index(flat, ROTATION_D, means)
+    c.post_d = _index(flat, POST_D, means)
+    c.lanes_d = _index(flat, LANES_D, means)
+    c.burst = _index(flat, BURST, means)
+    c.foul_ctrl = _index(flat, ("S45",), means)
     return c
 
 
