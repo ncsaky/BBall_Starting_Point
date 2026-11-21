@@ -6,6 +6,41 @@ Current priority (2026-11-21, early): OFFSEASON-DECISIONS-EVIDENCE now, ODDS-COA
 
 ---
 
+## Ready now (2026-11-21, late night): README-REFRESH (fresh chat)
+
+Docs only; light.
+
+### README-REFRESH: bring the GitHub README up to date
+
+Suggested settings: GPT-6.2 Sol, Medium, fresh chat.
+
+```
+Read AGENTS.md and docs/agents/BOARD.md first. You own task README-REFRESH (its board row already exists; set it to "in progress (Codex)").
+Setup: your own git worktree: git worktree add ../BBall_codex_readme -b codex/readme-refresh HEAD . Commit on that
+branch; never push, never commit to main. Change only README.md (and, if needed, links to existing docs).
+
+The user says README.md is badly out of date. Rewrite it to describe the game as it is now, for a friend or a new
+contributor, in plain everyday language (AGENTS.md section 3). Read the "done" rows of docs/agents/BOARD.md and these
+reports for what exists now: docs/PLAYTEST_GUIDE_2026_11_20.md, docs/agents/tasks/fa-real-slice1.md,
+fa-real-slice2.md, trade-market.md, trade-followups.md, trade-deadline-counters.md, keep-stars.md, injuries-2.md,
+draft-boards (see the board), slideshows.md, tables-icons.md, analyst-first.md, defense-ratings.md, odds-coach.md.
+Check every claim against the code or a report; drop anything that is no longer true (e.g. old calendar dates, old
+contract rules, "minutes x $0.48M" prices, the lottery stop).
+Structure: what the game is (one paragraph); what you can do (seasons, the offseason's four stops, free agency with Bird
+rights/options/qualifying offers/cap holds and exceptions, trades with front-office personalities, negotiations, bidding
+wars and the Trade Market board, the draft and scouting, injuries and rest, minutes and the coach, player ratings and
+where they come from, awards and season slideshows); how to install and run the GUI and CLI; how to run tests
+(scripts/run_core_tests.sh, scripts/run_tests_parallel.py, the two scorecards); how the project is organised (src/
+modules at a high level, data/, docs/agents/ coordination, AGENTS.md); current status (private friends-and-family
+beta; Mac builds via scripts/build_macos_beta.sh; known gaps from the playtest guide); data and privacy (paid
+Basketball Index data stays local and is never committed; the game ships without private data).
+Keep it under about 250 lines. Do not include personal details, the user's name or email, machine addresses, or
+anything from output/. Paraphrase; no long copied passages.
+When done, set the board row to "review" and stop.
+```
+
+---
+
 ## Ready now (2026-11-21): ROSTER-EDGE-EVIDENCE (fresh chat)
 
 Laptop rule: at most two heavy jobs at once. One is running now (the betting-test agent). This task is research only: light.
