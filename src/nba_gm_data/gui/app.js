@@ -8272,7 +8272,7 @@ function clipboardEntryLayout() {
   // Re-signing and free agency: the market, the offer builder and the signing wire open together, once per phase.
   if (kind === "free_agency" && state.data.freeagency) {
     // Stop 1 opens on its checklist (options, qualifying offers, your free agents); the market below it.
-    if (freeAgencyRoomState().exclusive && state.data.freeagency.offseason_checklist) {
+    if (state.data.freeagency.phase === "re_signing" && state.data.freeagency.offseason_checklist) {
       return {rows: [["phase-free_agency-checklist"], ["phase-free_agency-market", "phase-free_agency-selected", "phase-free_agency-wire"]]};
     }
     return {rows: [["phase-free_agency-market", "phase-free_agency-selected", "phase-free_agency-wire"]]};

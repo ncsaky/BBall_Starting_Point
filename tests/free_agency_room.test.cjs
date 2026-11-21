@@ -219,9 +219,11 @@ test('free agency opens the market, the offer builder and the signing wire toget
 
 test('free-agency windows: three cards, no leftover controls/payroll/cap windows, day controls in the top bar', () => {
   const section = slice('    free_agency: [', '    fantasy_draft: [');
-  assert.deepEqual(Array.from(section.matchAll(/\["(\w+)", "([^"]+)", "([^"]+)"\]/g), (m) => m[1]), ['market', 'selected', 'wire']);
+  // FA-REAL slice 2 (changed): a fourth window, the offseason checklist (stop 1 and signing day).
+  assert.deepEqual(Array.from(section.matchAll(/\["(\w+)", "([^"]+)", "([^"]+)"\]/g), (m) => m[1]), ['market', 'selected', 'wire', 'checklist']);
   const commands = slice('function freeAgencyPhaseCommands(', 'function freeAgencyMinimum(');
-  for (const id of ['reSignAdvanceDay', 'reSignOpenMarket', 'faAdvanceStage', 'faAdvanceDay', 'faAdvanceEnd']) assert.match(commands, new RegExp(id));
+  // FA-REAL slice 2: stop 1 goes to draft night, then opens free agency (no more exclusive days).
+  for (const id of ['reSignToDraft', 'reSignOpenMarket', 'faAdvanceStage', 'faAdvanceDay', 'faAdvanceEnd']) assert.match(commands, new RegExp(id));
   for (const command of ["'resign-day'", "'resign-open'", "'fa-day'", "'fa-end'", "'fa-next'"]) assert.ok(app.includes(`${command}:`), command);
   // No invented interest number survives from the old negotiation modal.
   assert.doesNotMatch(app, /offer \/ Math\.max\(1, ask\) \* 70/);
