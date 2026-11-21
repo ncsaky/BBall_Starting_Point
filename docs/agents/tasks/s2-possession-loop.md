@@ -11,7 +11,10 @@ _Owner: Claude (Opus agent), branch `worktree-agent-aad27ad88396dd23e`. 2026-11-
   was tuned to them, so this is partly expected). Player by player it is close to today's engine on shot volume,
   rebounds, steals and turnovers, better on steals and turnovers, and still behind on points, threes attempted and
   free throws.
-- **Betting test:** BETTING_TLDR
+- **Betting test:** about even with today's engine at picking winners. On one seed Stage 2 is better (Brier .2009
+  vs .2041), on the other worse (.2020 vs .1972); averaged, Stage 2 is .0008 behind on Brier and .003 on log loss.
+  Its point spreads are about half a point further from the market's (4.55 vs 4.01), and its game totals clearly
+  worse (7.5 vs 5.5 points off the market).
 - **Speed:** about 4.5 thousandths of a second per game (0.02 ms per possession), about a tenth of the budget and
   three times faster than today's engine.
 
@@ -132,7 +135,28 @@ season it is close to a lookup. Stage 2 has to produce them from what each playe
 - League: turnovers 14.3 per 100 (real 14.1), steals 8.4 (real 8.2).
 
 ### Betting test (`validate-season-probabilities`, 20 runs a game, 1,231 games, 1,018 with market odds)
-BETTING_TABLE
+| | Stage 2, seed 1001 | Today, seed 1001 | Stage 2, seed 2001 | Today, seed 2001 | Stage 2, average | Today, average |
+|---|---|---|---|---|---|---|
+| Brier score (lower is better; market .1962) | **.2009** | .2041 | .2020 | **.1972** | .2015 | **.2007** |
+| Log loss (market .5740) | **.5896** | .5975 | .5952 | **.5808** | .5924 | **.5892** |
+| Spread, average miss vs market (points) | 4.60 | **4.10** | 4.51 | **3.92** | 4.55 | **4.01** |
+| Total, average miss vs market (points) | 7.49 | **5.51** | 7.60 | **5.55** | 7.54 | **5.53** |
+| Time for the run (24,620 games) | **94 s** | 195 s | **94 s** | — | | |
+
+Today's seed-1001 numbers were re-run here and match the rating-ceiling report exactly; its seed-2001 numbers are
+taken from that report (same scoring code; the default engine is untouched by this branch). Player props are not in
+the season summary (it reports only game-level numbers), so they are not compared here.
+
+Reading it: the two engines are within the seed-to-seed noise of each other on winners (the seeds disagree on which
+is ahead). Totals are Stage 2's clear weakness: it gets each team's scoring level less right than today's engine,
+which leans on team-level pace and scoring fits. How each team's strength comes out of its players is now
+comparable; how many points a game will have is not yet.
+
+How the team-strength numbers were set: five engine numbers (perimeter contest, rim protection, ball pressure, lineup
+creation and spacing) were fitted so the engine's expected margins follow the market's spreads on the first half of
+2025-26 (3 runs a game: correlation .42 -> .57, slope 1.04), checked on the second half (.67). In 600 replayed games
+(4 runs) Stage 2's expected margins now correlate .71 with the market spreads (today's engine .74) and .45 with the
+real margins (today's .44); teams' average margins spread 5.7 points (real 6.4, today's engine 6.1).
 
 ### Speed
 | | Stage 2 | Today's engine |
@@ -183,6 +207,11 @@ should improve (drives against a specific defender), and where the betting test 
 what separates good teams from good-on-paper teams. Fold in a proper coach rotation (the coach model's minutes and
 in-game decisions instead of today's plan) as a second step.
 
+A smaller task worth doing first or alongside: **game totals.** Stage 2's totals miss the market by 7.5 points against
+today's 5.5. Check each team's pace and scoring level in replayed games against real team pace and offensive rating
+(the pace habit, coach tempo and transition rate are the likely levers), since that is the betting-test number Stage 2
+loses most clearly.
+
 ## Files
 - **New:** `src/nba_gm_data/stage2/cards.py`, `game.py`, `loop_fit.py`; `scripts/research/s2_possession_loop_check.py`;
   `tests/test_stage2_possession_loop.py`.
@@ -194,9 +223,19 @@ in-game decisions instead of today's plan) as a second step.
   `output/stage2/odds_*.json`, scratch scripts in `output/stage2/scratch/`.
 
 ## Checks
-CHECKS
+- `bash scripts/run_core_tests.sh`: 338 tests OK (2 skipped).
+- Stage 2 tests: `tests.test_stage2_possession_loop` (new, 8), `tests.test_stage2_seam`, `tests.test_stage2_rebound_fouls`,
+  `tests.test_stage2_league_inputs`: 38 tests OK. The new tests cover box-score accounting (points, attempts, minutes
+  summing to 240 plus overtime, plus-minus, starters, steals within the opponent's turnovers), determinism, minutes
+  following the plan, both scorecards reading Stage 2 games, a loose speed bound, and the card rules (menu, make
+  chances, hook and dunk rules, usage and turnovers following the inputs).
+- Default engine: no shared file changed (`sim.py`, `calibration_report.py`, `cli.py` untouched), so its scorecards are
+  byte-identical by construction; the seam test still checks default = explicit "current". Its seed-1001 betting run
+  here reproduced the earlier numbers exactly.
+- Laptop: the odds and core-test runs waited about two hours for the load to drop (other jobs and iCloud sync); they
+  ran one at a time, `nice -n 10`, with the 1-minute load 9-21. macOS kept "free swap" at 1.3-1.7 GB throughout
+  because it shrinks the swap file as memory frees (used swap fell from 8.6 GB to 5.8 GB before the runs).
 
 ## Resume state
 - [x] Cards, loop, clock, rotation, engine hook; fits; league calibration; team-strength fit; score effect.
-- [x] Replay spot-check script and results; tests.
-- [ ] ODDS_STATE
+- [x] Replay spot-check script and results; tests; odds runs (seeds 1001 and 2001); core tests; report. Board row: review.
