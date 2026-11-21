@@ -5595,13 +5595,29 @@ def ai_bid_payment(active: dict[str, Any], save: dict[str, Any], team: dict[str,
     def ask(salary_m: float, yrs: int, route: str | None = None) -> dict[str, Any]:
         return cap_ledger.quote(active, save, team["id"], player, salary_m * 1_000_000, yrs, season=season,
                                 route=route, bird=bird, payroll=payroll, team_abbrev=team.get("abbrev"))
+    keep = restricted_keep_cost(active, save, team["id"], exclude_player_id=player.get("id"))
+    def safe(quote: dict[str, Any]) -> bool:
+        # FA-REAL slice 3: a team holding a restricted regular doesn't use an exception that hard-caps it below what
+        # keeping him costs (real offices re-sign or match first; Orlando and Washington lost their restricted
+        # starters to that in the first replay).
+        level = (quote.get("payment") or {}).get("hard_cap")
+        if not quote.get("ok") or not level or not keep:
+            return bool(quote.get("ok"))
+        return float(quote.get("apron_after") or 0.0) + keep <= float(payroll["lines"][level]) + 1
     first = ask(aav, years)
-    if first["ok"]:
+    if safe(first):
         return {"aav": aav, "years": years, "quote": first}
+    if first["ok"]:
+        for route in ("cap_room", "room_mle", "minimum"):
+            retry = ask(aav, years, route)
+            if retry["ok"]:
+                return {"aav": aav, "years": years, "quote": retry}
     floor = max(float(lower or 0.0), aav * 0.8)
     for row in first["routes"]:
         route = row["route"]
         if route == "minimum":
+            continue
+        if keep and cap_ledger.ROUTE_HARD_CAP.get(route):
             continue
         if route == "bird":
             if not bird:
@@ -5621,6 +5637,29 @@ def ai_bid_payment(active: dict[str, Any], save: dict[str, Any], team: dict[str,
         if retry["ok"]:
             return {"aav": capacity, "years": yrs, "quote": retry}
     return None
+
+
+def restricted_keep_cost(active: dict[str, Any], save: dict[str, Any], team_id: str,
+                         exclude_player_id: str | None = None) -> float:
+    """What keeping the team's unsigned restricted regulars would add to its payroll (their prices, dollars): the room
+    it must leave under any hard cap an exception would trigger (FA-REAL slice 3). Zero for a human team."""
+    if team_id in human_controlled_team_ids(save):
+        return 0.0
+    from .offseason_decisions import restricted_player_ids, rfa_market_price
+    from .offer_sheets import RULES as SHEET_RULES, pending_sheet
+    total = 0.0
+    players = None
+    for player_id, holder in restricted_player_ids(save).items():
+        if holder != team_id or player_id == exclude_player_id:
+            continue
+        if players is None:
+            players = {p["id"]: p for p in active.get("players", [])}
+        player = players.get(player_id) or {}
+        if display_minutes_projection(player) < SHEET_RULES["incumbent"]["regular_minutes"]:
+            continue      # only regulars: the ones a team always matches
+        sheet = pending_sheet(save, player_id)
+        total += float(sheet["salaries"][0]) if sheet else rfa_market_price(save, player_id)
+    return total
 
 
 def player_already_has_accepted_offer(save: dict[str, Any], player_id: str) -> bool:
