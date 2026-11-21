@@ -1075,8 +1075,10 @@ def generated_market_grade_ladder(slot: str) -> list[float]:
     return [72, 69, 67, 65, 63, 61, 59, 57, 55, 53, 51, 49, 47, 45, 43, 41]
 
 
-def apply_head_coach_reputation(slot: dict[str, Any], coach_name: str) -> None:
-    target = HEAD_COACH_REPUTATION_GRADES.get(normalize_name(coach_name))
+def apply_head_coach_reputation(slot: dict[str, Any], coach_name: str, grade: float | None = None) -> None:
+    """Calibrate a real head coach's slot once to his reputation grade. ``grade`` rates a coach the table lacks
+    (the replayed 2025-26 season's documented interim, data/research/staffs_2025_26.json); saves never pass it."""
+    target = HEAD_COACH_REPUTATION_GRADES.get(normalize_name(coach_name)) if grade is None else float(grade)
     if target is None or slot.get("slot") != "head_coach" or slot.get("rating_change_log"):
         return
     # Calibrate once. Reapplying on every save load kept nudging the ratings, so the same season simulated in one

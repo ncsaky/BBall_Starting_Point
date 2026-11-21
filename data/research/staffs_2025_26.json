@@ -1,0 +1,65 @@
+{
+  "season": "2025-26",
+  "built": "2026-11-20",
+  "purpose": "The real 2025-26 coaching staffs for the replayed season (betting-odds test, real-stat report and other save-less replay tools). The replay rates them with the same staff model a new save uses (sim.replay_staff_stints).",
+  "rating_rules": {
+    "head_coach": "The game's own rule for a real head coach in a new save: the team's starting head-coach slot (gameplay_staff_slots) calibrated once to the coach's reputation grade (staff.apply_head_coach_reputation). Grades come from staff.HEAD_COACH_REPUTATION_GRADES (a soft calibration from published 2025-26 coach rankings). A coach without a grade there carries an explicit grade below with its reason.",
+    "coordinators": "The team's starting offensive and defensive coordinator slots, exactly as a new save starts them. Teams do not publish coordinator titles consistently and the game has no evidence-based ratings for assistants, so none are rated individually. Lead assistants named by a public source are recorded for reference only.",
+    "not_tuned": "No grade here was chosen or adjusted by looking at the betting test or the real-stat report."
+  },
+  "stint_rule": "Each head coach runs from first_game_date (inclusive; null = opening night) until the next coach's first_game_date. Dates are the schedule's local game dates.",
+  "sources": [
+    {"id": "cbs_coach_tiers_2025_26", "title": "NBA coach rankings: All 30 coaches split into eight tiers as 2025-26 season begins (Sam Quinn)", "publisher": "CBS Sports", "url": "https://www.cbssports.com/nba/news/nba-coach-rankings-all-30-coaches-split-into-eight-tiers-as-2025-26-season-begins", "published": "2025-10-13", "accessed": "2026-11-20", "used_for": "The 30 opening-night head coaches of 2025-26."},
+    {"id": "br_coach_rankings_2025_26", "title": "2025-26 NBA season power rankings: all 30 head coaches", "publisher": "Bleacher Report", "url": "https://bleacherreport.com/articles/25257198-2025-26-nba-season-power-rankings-all-30-head-coaches", "accessed": "2026-11-20", "used_for": "Basis of the game's head-coach reputation grades (staff.HEAD_COACH_REPUTATION_GRADES, source tag bleacher_report_2026_soft_rank)."},
+    {"id": "nba_pelicans_green_out", "title": "Pelicans: Willie Green out as head coach", "publisher": "NBA.com", "url": "https://nba.com/news/pelicans-willie-green-out-as-head-coach", "published": "2025-11-15", "accessed": "2026-11-20", "used_for": "Green dismissed 2025-11-15 after a 2-10 start; associate head coach James Borrego named interim."},
+    {"id": "cbs_blazers_splitter_interim", "title": "Blazers name Tiago Splitter interim coach in wake of Chauncey Billups' gambling arrest, suspension", "publisher": "CBS Sports", "url": "https://www.cbssports.com/nba/news/trail-blazers-tiago-splitter-interim-coach-chauncey-billups-arrest", "published": "2025-10-23", "accessed": "2026-11-20", "used_for": "Billups arrested 2025-10-23, the morning after the opener; Splitter interim, first game 2025-10-24 at home to Golden State."},
+    {"id": "nba_new_coaches_2026_27", "title": "A closer look at the new coaches for 2026-27", "publisher": "NBA.com", "url": "https://www.nba.com/news/closer-look-new-coaches-2026-27", "accessed": "2026-11-20", "used_for": "Mosley coached Orlando through 2025-26 (45-37, first-round exit); Splitter was Portland's interim for 2025-26 (42-40)."},
+    {"id": "lastword_coaching_changes_2026", "title": "NBA coaching changes", "publisher": "Last Word On Sports", "url": "https://lastwordonsports.com/basketball/2026/06/04/nba-coaching-changes/", "published": "2026-06-04", "accessed": "2026-11-20", "used_for": "The 2026 changes (Rivers, Kidd, Donovan, Mosley, Green) came after the season except New Orleans and Portland."},
+    {"id": "hoopsrumors_rivers_out", "title": "Doc Rivers will not return as Bucks coach", "publisher": "Hoops Rumors", "url": "https://www.hoopsrumors.com/2026/04/doc-rivers-will-not-return-as-bucks-coach.html", "published": "2026-04", "accessed": "2026-11-20", "used_for": "Rivers coached Milwaukee's full 2025-26 season (32-50)."},
+    {"id": "ksl_kidd_out", "title": "Jason Kidd is out as coach of the Mavericks, 2 weeks after the hiring of team president Masai Ujiri", "publisher": "AP via KSL", "url": "https://www.ksl.com/article/51499994/jason-kidd-is-out-as-coach-of-the-mavericks-2-weeks-after-the-hiring-of-team-president-masai-ujiri", "published": "2026-05-19", "accessed": "2026-11-20", "used_for": "Kidd coached Dallas's full 2025-26 season."},
+    {"id": "nba_team_pages_2026_05_21", "title": "NBA.com team info pages (repo snapshot data/research/staff_nba_team_pages_2026.json)", "publisher": "NBA.com", "url": "https://www.nba.com/team/{team_id}/franchise-leaders", "accessed": "2026-05-21", "used_for": "Lead assistant and associate head coach titles at the end of 2025-26. Its head-coach lines are post-season (Jenkins, Mosley) and are not used."},
+    {"id": "behind_the_coaching_assistants_2025", "title": "NBA Assistant Coach Carousel Tracker 2025", "publisher": "Behind the Coaching", "url": "https://behindthecoaching.substack.com/p/nba-assistant-coach-carousel-tracker", "accessed": "2026-11-20", "used_for": "Jay Triano as a Dallas lead assistant for 2025-26."}
+  ],
+  "unrated_coach_grades": {
+    "james borrego": {
+      "grade": 60.0,
+      "reason": "Interim from 2025-11-15. No 2025-26 ranking includes him (he was an assistant when they were published), and the game's grade table has no entry. Rated at the game's neutral point (grade 60 = three stars on every head-coach rating, no effect either way), the same grade the table gives Tiago Splitter, the season's other in-season interim. His earlier Charlotte record (2018-22, below .500, no playoffs) is weak but four seasons old and with thin rosters, so it was not used to move him off neutral."
+    }
+  },
+  "teams": {
+    "ATL": {"head_coaches": [{"name": "Quin Snyder", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "BKN": {"head_coaches": [{"name": "Jordi Fernandez", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "BOS": {"head_coaches": [{"name": "Joe Mazzulla", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "CHA": {"head_coaches": [{"name": "Charles Lee", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "CHI": {"head_coaches": [{"name": "Billy Donovan", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "CLE": {"head_coaches": [{"name": "Kenny Atkinson", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": [{"name": "Johnnie Bryant", "title": "Associate Head Coach", "source": "nba_team_pages_2026_05_21"}]},
+    "DAL": {"head_coaches": [{"name": "Jason Kidd", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": [{"name": "Jay Triano", "title": "Lead Assistant", "source": "behind_the_coaching_assistants_2025"}]},
+    "DEN": {"head_coaches": [{"name": "David Adelman", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "DET": {"head_coaches": [{"name": "J.B. Bickerstaff", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "GSW": {"head_coaches": [{"name": "Steve Kerr", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "HOU": {"head_coaches": [{"name": "Ime Udoka", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "IND": {"head_coaches": [{"name": "Rick Carlisle", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": [{"name": "Lloyd Pierce", "title": "Lead Assistant Coach", "source": "nba_team_pages_2026_05_21"}]},
+    "LAC": {"head_coaches": [{"name": "Tyronn Lue", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": [{"name": "Jeff Van Gundy", "title": "Lead Assistant Coach", "source": "nba_team_pages_2026_05_21"}]},
+    "LAL": {"head_coaches": [{"name": "JJ Redick", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "MEM": {"head_coaches": [{"name": "Tuomas Iisalo", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "MIA": {"head_coaches": [{"name": "Erik Spoelstra", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "MIL": {"head_coaches": [{"name": "Doc Rivers", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "MIN": {"head_coaches": [{"name": "Chris Finch", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "NOP": {"head_coaches": [{"name": "Willie Green", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"},
+                             {"name": "James Borrego", "first_game_date": "2025-11-15", "interim": true, "source": "nba_pelicans_green_out"}],
+            "lead_assistants": [{"name": "James Borrego", "title": "Associate Head Coach (until 2025-11-15)", "source": "nba_pelicans_green_out"}]},
+    "NYK": {"head_coaches": [{"name": "Mike Brown", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "OKC": {"head_coaches": [{"name": "Mark Daigneault", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "ORL": {"head_coaches": [{"name": "Jamahl Mosley", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "PHI": {"head_coaches": [{"name": "Nick Nurse", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "PHX": {"head_coaches": [{"name": "Jordan Ott", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "POR": {"head_coaches": [{"name": "Chauncey Billups", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"},
+                             {"name": "Tiago Splitter", "first_game_date": "2025-10-23", "interim": true, "source": "cbs_blazers_splitter_interim"}],
+            "lead_assistants": []},
+    "SAC": {"head_coaches": [{"name": "Doug Christie", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": [{"name": "Mike Woodson", "title": "Associate Head Coach", "source": "nba_team_pages_2026_05_21"}]},
+    "SAS": {"head_coaches": [{"name": "Mitch Johnson", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": [{"name": "Sean Sweeney", "title": "Associate Head Coach", "source": "nba_team_pages_2026_05_21"}]},
+    "TOR": {"head_coaches": [{"name": "Darko Rajakovic", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "UTA": {"head_coaches": [{"name": "Will Hardy", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []},
+    "WAS": {"head_coaches": [{"name": "Brian Keefe", "first_game_date": null, "source": "cbs_coach_tiers_2025_26"}], "lead_assistants": []}
+  }
+}
