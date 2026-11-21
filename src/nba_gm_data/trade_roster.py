@@ -216,7 +216,14 @@ def pick_investment_outlook(canonical, team_id, incoming, outgoing, before, afte
     tax_saving = max(0., tax_value(canonical, team_id, incoming, outgoing))
     capital_limit += tax_saving
     limit = min(9., limit+tax_saving*.25)
+    # TRADE-MARKET: front-office personality (front_office.pick_allowance). An urgent contender, or a less savvy
+    # office that spends picks freely, pays a little more draft value for a player who would not start for it. Bounded
+    # (at most about two seconds' worth) and stated in the evaluation notes.
+    from .front_office import pick_allowance
+    personality_allowance, personality_reason = pick_allowance(canonical, team_id, incoming, outgoing)
+    capital_limit += personality_allowance
     return {'net_draft_value_spent': round(spend, 4), 'loss_limit': round(limit, 4),
+            'personality_allowance': personality_allowance, 'personality_reason': personality_reason,
             'rotation_gain': round(strength, 4), 'young_upside_gain': round(growth, 4),
             'injury_cover_gain': round(cover, 4), 'net_salary_relief_millions': round(relief, 4),
             'backup_quality_gain': round(depth, 4), 'incoming_rotation_minutes': incoming_minutes,

@@ -1,0 +1,1115 @@
+{
+ "retrieved": "2026-11-20",
+ "sources": [
+  {
+   "id": "src_cbs_p1",
+   "title": "CBS Sports NBA Front Office Rankings Part 1 (top 15)",
+   "url": "https://cbssports.com/nba/news/nba-front-office-rankings-top-15-knicks-celtics-2026",
+   "outlet": "CBS Sports (Sam Quinn)",
+   "date": "2026-08-19"
+  },
+  {
+   "id": "src_cbs_p2",
+   "title": "CBS Sports NBA Front Office Rankings Part 2 (16-30)",
+   "url": "https://www.cbssports.com/nba/news/nba-front-office-rankings-part-2-lakers-trail-blazers-2026/",
+   "outlet": "CBS Sports",
+   "date": "2026-08-20"
+  },
+  {
+   "id": "src_cbs_2025",
+   "title": "CBS Sports NBA front office rankings (July 2025 edition)",
+   "url": "https://www.cbssports.com/nba/news/nba-front-office-rankings-okc-on-top-lakers-and-mavericks-low-on-list-new-team-falls-behind-bulls-at-no-30",
+   "outlet": "CBS Sports (Sam Quinn)",
+   "date": "2025-07-22"
+  },
+  {
+   "id": "src_athletic_poll",
+   "title": "The Athletic executive poll of top front offices (36 execs), as reported by Bleacher Report",
+   "url": "https://bleacherreport.com/articles/25322895-which-nba-team-has-top-front-office-execs-reveal-rankings-new-poll",
+   "outlet": "The Athletic via Bleacher Report",
+   "date": "2025-12-10"
+  },
+  {
+   "id": "src_espn_fpr",
+   "title": "NBA Future Power Rankings: Three-year outlooks for all 30 teams (ESPN, via ABC7)",
+   "url": "https://abc7.com/post/nba-future-power-rankings-year-outlooks-30-teams/19838973",
+   "outlet": "ESPN via ABC7",
+   "date": "2026-09"
+  },
+  {
+   "id": "src_roundtable_stone",
+   "title": "The Rockets rank fourth, so why is Rafael Stone only 13th (cites ESPN management rank)",
+   "url": "https://roundtable.io/sports/nba/rockets/opinion/the-rockets-rank-fourth-so-why-is-rafael-stone-only-13th",
+   "outlet": "Roundtable",
+   "date": "2026-09-17"
+  },
+  {
+   "id": "src_trades",
+   "title": "Local file: real trades 2025-2027 with analyst grades and verdict tags",
+   "url": "data/research/real_trades/trades_2025_2027.json",
+   "outlet": "local dataset (SI, ESPN Pelton, B/R, CBS grades named inside)",
+   "date": "2026-11"
+  },
+  {
+   "id": "src_si_suns_picks",
+   "title": "Phoenix Suns traded future first-round picks among most valuable in NBA (SI)",
+   "url": "https://www.si.com/nba/suns/news/phoenix-suns-traded-future-1st-round-picks-among-most-valuable-nba",
+   "outlet": "Sports Illustrated",
+   "date": "2026"
+  },
+  {
+   "id": "src_si_ishbia",
+   "title": "Mat Ishbia explains where Phoenix Suns went wrong on failed star trades (SI)",
+   "url": "https://www.si.com/nba/suns/onsi/news/mat-ishbia-explains-where-phoenix-suns-went-wrong-failed-star-trades",
+   "outlet": "Sports Illustrated",
+   "date": "2026"
+  },
+  {
+   "id": "src_cbs_bridges",
+   "title": "Mikal Bridges traded to Knicks for five first-round picks (CBS)",
+   "url": "https://www.cbssports.com/nba/news/mikal-bridges-traded-to-knicks-ex-villanova-star-acquired-for-five-first-round-picks-in-blockbuster-with-nets/amp",
+   "outlet": "CBS Sports",
+   "date": "2024-06-26"
+  },
+  {
+   "id": "src_defector",
+   "title": "The Knicks spend five first-round picks on a college reunion",
+   "url": "https://defector.com/the-knicks-spend-five-first-round-picks-on-a-college-reunion",
+   "outlet": "Defector",
+   "date": "2024-06"
+  },
+  {
+   "id": "src_espn_kuminga",
+   "title": "Inside the ugly split between Jonathan Kuminga and the Warriors",
+   "url": "https://www.espn.com/nba/story/_/id/47880753/inside-ugly-5-year-split-jonathan",
+   "outlet": "ESPN",
+   "date": "2026-02"
+  },
+  {
+   "id": "src_inq_morey_tax",
+   "title": "Sixers, Morey trade Jared McCain, duck luxury tax (Inquirer)",
+   "url": "https://www.inquirer.com/sixers/sixers-daryl-morey-trade-jared-mccain-duck-luxury-tax-20260208.html",
+   "outlet": "Philadelphia Inquirer",
+   "date": "2026-02-08"
+  },
+  {
+   "id": "src_hr_gansey",
+   "title": "Sixers officially name Mike Gansey president of basketball operations",
+   "url": "https://www.hoopsrumors.com/2026/06/sixers-officially-name-mike-gansey-president-of-basketball-operations.html",
+   "outlet": "Hoops Rumors",
+   "date": "2026-06"
+  },
+  {
+   "id": "src_nba_ujiri",
+   "title": "Masai Ujiri named Mavericks team president",
+   "url": "https://nba.com/news/masai-ujiri-team-president-mavs",
+   "outlet": "NBA.com",
+   "date": "2026-05-04"
+  },
+  {
+   "id": "src_hr_graham",
+   "title": "Bulls hire Bryson Graham as head of basketball operations",
+   "url": "https://www.hoopsrumors.com/2026/05/bulls-hire-bryson-graham-as-head-of-basketball-operations.html",
+   "outlet": "Hoops Rumors",
+   "date": "2026-05"
+  },
+  {
+   "id": "src_hr_webster",
+   "title": "Raptors agree to extend GM Bobby Webster's contract",
+   "url": "https://www.hoopsrumors.com/2026/06/raptors-agree-to-extend-gm-bobby-websters-contract.html",
+   "outlet": "Hoops Rumors",
+   "date": "2026-06"
+  },
+  {
+   "id": "src_cbs_riley",
+   "title": "Why Pat Riley will never let the Heat tank (CBS)",
+   "url": "https://fantasy-api.cbssports.com/nba/news/pat-riley-heat-tanking-bam-adebayo-tyler-herro/",
+   "outlet": "CBS Sports",
+   "date": "2026-04"
+  },
+  {
+   "id": "src_hr_dumars",
+   "title": "Joe Dumars unfazed by criticism of controversial moves (Queen trade)",
+   "url": "https://www.hoopsrumors.com/2025/07/joe-dumars-unfazed-by-criticism-of-controversial-moves.html",
+   "outlet": "Hoops Rumors",
+   "date": "2025-07"
+  },
+  {
+   "id": "src_cbs_pelinka",
+   "title": "Rob Pelinka Lakers president excuses (CBS)",
+   "url": "https://www.cbssports.com/nba/news/rob-pelinka-lakers-president-excuses/",
+   "outlet": "CBS Sports",
+   "date": "2026"
+  }
+ ],
+ "teams": {
+  "OKC": {
+   "decision_maker": "Sam Presti (since 2007)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "savvy",
+     "direction": "high",
+     "statement": "Ranked best front office in the league: CBS #1 in every edition; 31 of 36 executives voted it first (341 pts)",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_cbs_2025",
+      "src_athletic_poll"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "bias",
+     "direction": "hoards draft picks",
+     "statement": "Stockpiles picks and uses them many ways (trades, swaps, drafting); ESPN calls Presti the most respected lead decision-maker",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_espn_fpr",
+      "src_trades"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "patience",
+     "direction": "high",
+     "statement": "Seeks small edges, even via indirect trades, rather than forcing moves",
+     "source_ids": [
+      "src_cbs_p1"
+     ],
+     "widely_held": false
+    }
+   ],
+   "summary": "Consensus best front office in the league, pick hoarder, patient value-hunter."
+  },
+  "NYK": {
+   "decision_maker": "Leon Rose (president since 2020; Gersson Rosas GM)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "savvy",
+     "direction": "high",
+     "statement": "CBS #2 (2026); executives #8; ESPN management rank 4th",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_athletic_poll",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "urgency",
+     "direction": "high",
+     "statement": "Fearless: gave five firsts for Mikal Bridges and fired the coach after a Game 6 loss",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_cbs_bridges",
+      "src_defector"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "bias",
+     "direction": "relationships / Villanova ties",
+     "statement": "Bridges deal reunited him with Villanova teammates; CBS 2025 criticised reliance on relationships and agency ties",
+     "source_ids": [
+      "src_cbs_2025",
+      "src_cbs_bridges",
+      "src_defector"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "bias",
+     "direction": "finds value in cheap bench deals and second-round picks",
+     "statement": "Praised for cheap role-player and second-round finds",
+     "source_ids": [
+      "src_cbs_p1"
+     ],
+     "widely_held": false
+    }
+   ],
+   "summary": "Aggressive, connection-driven, well rated front office."
+  },
+  "BOS": {
+   "decision_maker": "Brad Stevens (since 2021)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "savvy",
+     "direction": "high (dented by Brown trade)",
+     "statement": "CBS #3 (#2 in 2025), executives #2; finds undervalued players and late-round gems",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_cbs_2025",
+      "src_athletic_poll"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "bias",
+     "direction": "frugal / avoids second apron",
+     "statement": "Avoiding the second apron; new ownership making sharp cuts",
+     "source_ids": [
+      "src_cbs_2025",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "urgency",
+     "direction": "low",
+     "statement": "Jaylen Brown trade seen as rushed with too little back (graded D+ to F)",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_trades"
+     ],
+     "widely_held": true
+    }
+   ],
+   "summary": "Highly rated and tax-conscious, but the Brown trade is seen as a miss."
+  },
+  "SAS": {
+   "decision_maker": "Brian Wright (since 2019)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "savvy",
+     "direction": "high",
+     "statement": "CBS #4 in 2026 and #3 in 2025; executives #9; sold Dejounte Murray at peak",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_cbs_2025",
+      "src_athletic_poll"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "patience",
+     "direction": "high",
+     "statement": "Patient long-term core building, patient on Durant; chains of picks and first-round swaps",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_cbs_2025"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "bias",
+     "direction": "collects pick swaps / draft capital",
+     "statement": "Gathered first-round swaps for extra lottery chances",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_cbs_2025"
+     ],
+     "widely_held": true
+    }
+   ],
+   "summary": "Patient, asset-chain builder with a strong reputation."
+  },
+  "UTA": {
+   "decision_maker": "Danny Ainge / Justin Zanik (Ainge since 2021)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "patience",
+     "direction": "high",
+     "statement": "Never changes course under pressure; tanked four years; held firm on the Kessler price",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "bias",
+     "direction": "hoards picks",
+     "statement": "Holds many draft picks; ESPN calls it a smart front office",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "savvy",
+     "direction": "high",
+     "statement": "CBS #5; Lakers sign-and-trade return graded A+",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_trades"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "urgency",
+     "direction": "low-mixed",
+     "statement": "Gave picks for Jaren Jackson Jr.; one deal tagged win-now overpay",
+     "source_ids": [
+      "src_espn_fpr",
+      "src_trades"
+     ],
+     "widely_held": false
+    }
+   ],
+   "summary": "Patient pick hoarder that extracts big hauls."
+  },
+  "IND": {
+   "decision_maker": "Chad Buchanan (since 2017)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "savvy",
+     "direction": "high",
+     "statement": "CBS #6 (#7 in 2025), executives #5; talent evaluation praised",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_cbs_2025",
+      "src_athletic_poll"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "loyalty",
+     "direction": "high",
+     "statement": "Re-signs and extends its own players early",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_cbs_2025"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "bias",
+     "direction": "tax-cautious",
+     "statement": "Cautious about the luxury tax, though now over the line",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    }
+   ],
+   "summary": "Good evaluator that keeps its own players and extends early."
+  },
+  "MEM": {
+   "decision_maker": "Zach Kleiman (since 2019)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "savvy",
+     "direction": "high",
+     "statement": "CBS #7; credited for finds like Bane and Aldama",
+     "source_ids": [
+      "src_cbs_p1"
+     ],
+     "widely_held": false
+    },
+    {
+     "trait": "patience",
+     "direction": "low (sells quickly)",
+     "statement": "Moved Bane, Jaren Jackson Jr. and Morant rather than wait for a turnaround",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "bias",
+     "direction": "trades down in draft for value",
+     "statement": "Draft-day trade-down graded A+/A",
+     "source_ids": [
+      "src_trades"
+     ],
+     "widely_held": false
+    }
+   ],
+   "summary": "Quick to sell stars for returns; solid reputation."
+  },
+  "HOU": {
+   "decision_maker": "Rafael Stone (since 2020)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "savvy",
+     "direction": "high on contracts",
+     "statement": "Elite at below-max re-signs; ESPN calls it a top front office in finances",
+     "source_ids": [
+      "src_cbs_2025",
+      "src_cbs_p1",
+      "src_espn_fpr",
+      "src_athletic_poll"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "savvy",
+     "direction": "mid (overall)",
+     "statement": "ESPN management rank 13th; CBS #8; executives #3",
+     "source_ids": [
+      "src_roundtable_stone",
+      "src_cbs_p1",
+      "src_athletic_poll"
+     ],
+     "widely_held": true
+    }
+   ],
+   "summary": "Strong cost-control negotiator, mixed trade record."
+  },
+  "CHA": {
+   "decision_maker": "Jeff Peterson (since 2024)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "savvy",
+     "direction": "rising",
+     "statement": "CBS #9; ESPN management rank jumped from 22 to 6",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "urgency",
+     "direction": "high (sold LaMelo to compete)",
+     "statement": "Traded LaMelo Ball to chase real contention; large pick haul from the Ball and Bridges trades",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_espn_fpr",
+      "src_trades"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "bias",
+     "direction": "collects picks",
+     "statement": "Built a strong pick collection incl. 2033 unprotected firsts",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    }
+   ],
+   "summary": "Rising shrewd operator that collects picks."
+  },
+  "MIN": {
+   "decision_maker": "Tim Connelly (president) / Matt Lloyd (GM)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "urgency",
+     "direction": "high",
+     "statement": "Aggressive Gobert, Towns and Ball trades; ESPN notes last in draft assets",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "savvy",
+     "direction": "mixed",
+     "statement": "CBS #10, executives #7; Dillingham trade seen as a disaster; D+ grade on the Ball deal",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_athletic_poll",
+      "src_trades"
+     ],
+     "widely_held": true
+    }
+   ],
+   "summary": "Aggressive star-seeker that has spent its picks."
+  },
+  "MIA": {
+   "decision_maker": "Pat Riley / Andy Elisburg",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "urgency",
+     "direction": "high (star hunting)",
+     "statement": "Star-acquisition approach; never tanks; Giannis deal cost most picks",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_cbs_riley",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "savvy",
+     "direction": "high",
+     "statement": "Executives #4; CBS #11; ESPN: best and most consistent management over seven years",
+     "source_ids": [
+      "src_athletic_poll",
+      "src_cbs_p1",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "patience",
+     "direction": "low",
+     "statement": "Resists rebuilding, which CBS calls a flaw",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_cbs_riley"
+     ],
+     "widely_held": true
+    }
+   ],
+   "summary": "Star-chasing, never-rebuild culture with strong cap work."
+  },
+  "CLE": {
+   "decision_maker": "Koby Altman (Gansey left for PHI in 2026)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "savvy",
+     "direction": "high",
+     "statement": "CBS #12 (#5 in 2025), executives #6; creative roster turnover",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_cbs_2025",
+      "src_athletic_poll",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "urgency",
+     "direction": "high",
+     "statement": "Bold trades (Mitchell, Harden); few picks left to trade",
+     "source_ids": [
+      "src_cbs_2025",
+      "src_espn_fpr",
+      "src_cbs_p1"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "bias",
+     "direction": "owner spends into second apron",
+     "statement": "Gilbert pays heavily",
+     "source_ids": [
+      "src_cbs_2025",
+      "src_cbs_p1",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    }
+   ],
+   "summary": "Bold, spending-friendly, well rated; lost Gansey."
+  },
+  "ATL": {
+   "decision_maker": "Onsi Saleh (president; local file lists as GM since 2022)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "savvy",
+     "direction": "mid",
+     "statement": "CBS #13; steady roster improvement per ESPN",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "patience",
+     "direction": "mixed",
+     "statement": "Clean books but flexibility unused; Risacher pick viewed as a misfire",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_espn_fpr"
+     ],
+     "widely_held": false
+    }
+   ],
+   "summary": "Mid-pack steady builder."
+  },
+  "PHI": {
+   "decision_maker": "Mike Gansey (president since June 2026; Bob Myers oversight); Morey fired May 2026",
+   "regime_new": true,
+   "findings": [
+    {
+     "trait": "bias",
+     "direction": "avoids luxury tax (old regime)",
+     "statement": "Under Morey got below the tax four straight deadlines; Harris says there is a green light",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_inq_morey_tax"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "savvy",
+     "direction": "mid",
+     "statement": "CBS #14, dropped five spots; Brown trade luck not design",
+     "source_ids": [
+      "src_cbs_p1"
+     ],
+     "widely_held": false
+    }
+   ],
+   "summary": "New regime; old frugal reputation may not carry over."
+  },
+  "DET": {
+   "decision_maker": "Trajan Langdon (since 2024)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "patience",
+     "direction": "high",
+     "statement": "No major moves, has not traded a first; owns all firsts for seven years",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "savvy",
+     "direction": "mid",
+     "statement": "CBS #15; salary dumps graded well",
+     "source_ids": [
+      "src_cbs_p1",
+      "src_trades"
+     ],
+     "widely_held": false
+    }
+   ],
+   "summary": "Conservative, keeps its picks."
+  },
+  "BKN": {
+   "decision_maker": "Sean Marks (since 2016)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "patience",
+     "direction": "high",
+     "statement": "Clean cap, pick surplus, sold veterans at peak value",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "bias",
+     "direction": "hoards picks",
+     "statement": "Near the top in draft assets",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    }
+   ],
+   "summary": "Pick-rich patient rebuilder, CBS #16."
+  },
+  "LAC": {
+   "decision_maker": "Lawrence Frank (president); owner Ballmer",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "bias",
+     "direction": "overvalues aging stars / spends",
+     "statement": "Ballmer money an edge; overvalued aging stars",
+     "source_ids": [
+      "src_cbs_p2"
+     ],
+     "widely_held": false
+    },
+    {
+     "trait": "urgency",
+     "direction": "high",
+     "statement": "Five firsts seized by the league",
+     "source_ids": [
+      "src_espn_fpr"
+     ],
+     "widely_held": false
+    }
+   ],
+   "summary": "Spending-friendly, star-heavy; thin evidence."
+  },
+  "GSW": {
+   "decision_maker": "Mike Dunleavy Jr. (GM since 2023) / Joe Lacob",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "loyalty",
+     "direction": "high",
+     "statement": "Core-first approach, oldest roster; Kuminga kept too long",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_espn_fpr",
+      "src_espn_kuminga"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "bias",
+     "direction": "owner involvement",
+     "statement": "Lacob heavily involved in basketball calls",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_espn_kuminga"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "savvy",
+     "direction": "mid",
+     "statement": "CBS #18, executives #10",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_athletic_poll"
+     ],
+     "widely_held": true
+    }
+   ],
+   "summary": "Loyal to the Curry-era core with strong owner influence."
+  },
+  "TOR": {
+   "decision_maker": "Bobby Webster (full control since Aug 2025)",
+   "regime_new": true,
+   "findings": [
+    {
+     "trait": "urgency",
+     "direction": "mid-high",
+     "statement": "Kawhi pursuit cost a premium; reacquired Kawhi",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_espn_fpr"
+     ],
+     "widely_held": false
+    },
+    {
+     "trait": "savvy",
+     "direction": "mid",
+     "statement": "CBS #19; Murray-Boyles pick liked, Poeltl deal criticised",
+     "source_ids": [
+      "src_cbs_p2"
+     ],
+     "widely_held": false
+    }
+   ],
+   "summary": "Webster-run since Ujiri left; thin evidence."
+  },
+  "DAL": {
+   "decision_maker": "Masai Ujiri (president since May 2026)",
+   "regime_new": true,
+   "findings": [
+    {
+     "trait": "bias",
+     "direction": "thin on picks",
+     "statement": "Trades left Dallas with few picks; rich deals",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_espn_fpr"
+     ],
+     "widely_held": false
+    },
+    {
+     "trait": "savvy",
+     "direction": "low (old regime)",
+     "statement": "Harrison's Luka trade sank Dallas in CBS 2025",
+     "source_ids": [
+      "src_cbs_2025"
+     ],
+     "widely_held": false
+    }
+   ],
+   "summary": "New regime; old regime reputation not applicable."
+  },
+  "WAS": {
+   "decision_maker": "Will Dawkins (since 2023)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "bias",
+     "direction": "overpays veterans",
+     "statement": "Max for Trae Young; heavy spend on Young and Davis",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "patience",
+     "direction": "high",
+     "statement": "Committed to tanking; Avdija trade a misstep",
+     "source_ids": [
+      "src_cbs_p2"
+     ],
+     "widely_held": false
+    }
+   ],
+   "summary": "Rebuilding but spending on vets."
+  },
+  "ORL": {
+   "decision_maker": "Anthony Parker (since 2023)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "urgency",
+     "direction": "high",
+     "statement": "Bane trade cost several picks",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "bias",
+     "direction": "overrates own core",
+     "statement": "Slow to fix Wagner-Banchero fit",
+     "source_ids": [
+      "src_cbs_p2"
+     ],
+     "widely_held": false
+    }
+   ],
+   "summary": "Aggressive but with fit problems."
+  },
+  "CHI": {
+   "decision_maker": "Bryson Graham (EVP since May 2026)",
+   "regime_new": true,
+   "findings": [
+    {
+     "trait": "bias",
+     "direction": "frugal ownership",
+     "statement": "Reinsdorf ownership limits spending",
+     "source_ids": [
+      "src_cbs_p2"
+     ],
+     "widely_held": false
+    },
+    {
+     "trait": "patience",
+     "direction": "high",
+     "statement": "Begun rebuild, clean cap",
+     "source_ids": [
+      "src_espn_fpr",
+      "src_hr_graham"
+     ],
+     "widely_held": false
+    }
+   ],
+   "summary": "New regime after Karnisovas fired April 2026."
+  },
+  "LAL": {
+   "decision_maker": "Rob Pelinka (since 2017)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "savvy",
+     "direction": "low",
+     "statement": "CBS #24 in 2026; low in 2025; heavy criticism of Pelinka",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_cbs_2025",
+      "src_cbs_pelinka"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "bias",
+     "direction": "spends picks / overpays",
+     "statement": "Kessler overpay cost picks; 29th in draft assets",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "urgency",
+     "direction": "high",
+     "statement": "Star-acquisition history credited",
+     "source_ids": [
+      "src_cbs_p2"
+     ],
+     "widely_held": false
+    }
+   ],
+   "summary": "Poorly rated star-chasing front office."
+  },
+  "MIL": {
+   "decision_maker": "Jon Horst (since 2017)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "patience",
+     "direction": "high (waited too long)",
+     "statement": "Waited too long to move Giannis, hurting return",
+     "source_ids": [
+      "src_cbs_p2"
+     ],
+     "widely_held": false
+    },
+    {
+     "trait": "savvy",
+     "direction": "mid",
+     "statement": "CBS #25; Giannis trade graded B+/A-",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_trades"
+     ],
+     "widely_held": false
+    }
+   ],
+   "summary": "Held too long, then got a good return."
+  },
+  "DEN": {
+   "decision_maker": "Ben Tenzer (since 2025)",
+   "regime_new": true,
+   "findings": [
+    {
+     "trait": "bias",
+     "direction": "spends / overpays own",
+     "statement": "Braun extension; only team in the second apron",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "savvy",
+     "direction": "low",
+     "statement": "CBS #26: running on Connelly's fumes",
+     "source_ids": [
+      "src_cbs_p2"
+     ],
+     "widely_held": false
+    }
+   ],
+   "summary": "New regime; spending reputation clear."
+  },
+  "PHX": {
+   "decision_maker": "Brian Gregory (since 2025) / owner Ishbia",
+   "regime_new": true,
+   "findings": [
+    {
+     "trait": "urgency",
+     "direction": "high",
+     "statement": "Repeated pick-for-win-now trades; Ishbia says picks exist to get stars",
+     "source_ids": [
+      "src_si_suns_picks",
+      "src_si_ishbia",
+      "src_cbs_p2",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "bias",
+     "direction": "pays tax / trades picks",
+     "statement": "About $270M tax in four seasons; tradable picks nearly gone",
+     "source_ids": [
+      "src_espn_fpr",
+      "src_cbs_p2",
+      "src_si_suns_picks"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "savvy",
+     "direction": "low",
+     "statement": "CBS #27; D+ grade on the Bridges deal",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_trades"
+     ],
+     "widely_held": true
+    }
+   ],
+   "summary": "Owner-driven win-now spender."
+  },
+  "POR": {
+   "decision_maker": "Joe Cronin (since 2021)",
+   "regime_new": false,
+   "findings": [
+    {
+     "trait": "bias",
+     "direction": "frugal ownership",
+     "statement": "New owner Dundon cost-cutting",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "savvy",
+     "direction": "mid",
+     "statement": "CBS #28, fell nine spots",
+     "source_ids": [
+      "src_cbs_p2"
+     ],
+     "widely_held": false
+    }
+   ],
+   "summary": "Previously rising, now owner-limited."
+  },
+  "NOP": {
+   "decision_maker": "Joe Dumars (EVP) / Troy Weaver (GM, since 2025)",
+   "regime_new": true,
+   "findings": [
+    {
+     "trait": "savvy",
+     "direction": "low",
+     "statement": "CBS #29; ESPN management tied for worst",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_espn_fpr"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "bias",
+     "direction": "trades away picks",
+     "statement": "Queen trade cost picks",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_hr_dumars"
+     ],
+     "widely_held": true
+    }
+   ],
+   "summary": "Low rated, trades picks."
+  },
+  "SAC": {
+   "decision_maker": "Scott Perry (since 2025)",
+   "regime_new": true,
+   "findings": [
+    {
+     "trait": "savvy",
+     "direction": "low",
+     "statement": "CBS #30; tagged front-office loser in trades",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_trades"
+     ],
+     "widely_held": true
+    },
+    {
+     "trait": "bias",
+     "direction": "overpays / bad contracts",
+     "statement": "Sabonis extension, LaVine deal; trade-up overpay",
+     "source_ids": [
+      "src_cbs_p2",
+      "src_trades"
+     ],
+     "widely_held": true
+    }
+   ],
+   "summary": "Worst-ranked front office."
+  }
+ }
+}

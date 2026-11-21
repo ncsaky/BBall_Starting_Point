@@ -1057,6 +1057,9 @@ def simulate_ai_trades(canonical: dict[str, Any] | Any, from_date: str, through_
     }
 
 
+RAISE_SCAN = 6  # a bidder's packages considered for a raise in each bidding round (TRADE-MARKET)
+
+
 def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_date: str, *, seed: int, limit: int,
                             config: dict[str, Any] | None, search_depth: int, reserve_assets: bool,
                             focus_team_ids: set[str] | None = None) -> dict[str, Any]:
@@ -1088,30 +1091,62 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
         # traded is the buyer or the seller): new needs, new salary filler, new room. The rest were priced already.
         pairings = [p for p in pairings if p['buyer_id'] in focus_team_ids or p['row']['team_id'] in focus_team_ids]
     diagnostics['team_targets'] = sum(len(tt.team_trade_targets(canonical, tid)) for tid in buyer_ids)
+    # TRADE-MARKET (trade_market.py): dead negotiations and unsolicited offers for contenders' stars are screened out,
+    # open negotiations go first, and players with two or more interested teams are shopped (bidding).
+    from . import trade_market as tm
+    market = tm.SearchMarket(canonical, through_date, depth)
+    opinion_pairings = market.opinion_pairings(buyer_ids, excluded, pairings, config)
+    if focus_team_ids is not None:
+        opinion_pairings = [p for p in opinion_pairings
+                            if p['buyer_id'] in focus_team_ids or p['row']['team_id'] in focus_team_ids]
+    diagnostics['opinion_pairings'] = len(opinion_pairings)
+    pairings = market.filter_pairings(pairings + opinion_pairings, diagnostics)
     diagnostics['pairings'] = len(pairings)
     proposals, evaluation_snapshots, reserved, blocked, satisfied = [], {}, set(), {}, set()
     near_misses = []  # two-team deals a third team might complete (trade step 4)
     from . import trade_counters as tc
     counters_left = [tc.COUNTERS_PER_SEARCH[depth]]
 
-    def accepted_counter(candidate, pairing, order, evaluation_canonical):
-        """A deal agreed after a counter (trade step 3): the pairing's reasons plus the counter in plain words."""
+    def finalize(candidate, pairing, order, evaluation_canonical, war=None):
+        """Record an agreed target deal: both teams' reasons, the counter chain, the market's part."""
+        counter = candidate.pop('counter', None)
         candidate = mark_ai_trade_accepted(candidate)
         candidate['target_source'] = 'front_office_target'
         candidate['_search_order'] = order
         reasons = tt.trade_reasons(canonical, pairing)
-        reasons['counter'] = candidate.pop('counter')
-        reasons['text'] = f"{reasons['text']} {reasons['counter']['text']}"
+        if counter:
+            reasons['counter'] = counter
+            reasons['text'] = f"{reasons['text']} {counter['text']}"
+            diagnostics['counter_deals'] = diagnostics.get('counter_deals', 0) + 1
         match = tc.seller_target_match(canonical, candidate, pairing['row']['team_id'])
         if match:
             reasons['seller_target_match'] = match
+        neg = market.open_negotiation(pairing)
+        if neg:
+            reasons['negotiation'] = {'opened': neg.get('opened'), 'days': len(neg.get('rounds') or []) + 1,
+                                      'key': neg.get('key')}
+        if war:
+            reasons['bidding_war'] = war
         candidate['trade_reasons'] = reasons
         proposals.append(candidate)
         evaluation_snapshots[candidate['proposal']['id']] = evaluation_canonical
         if reserve_assets:
             reserved.update(proposal_asset_identity_keys(candidate))
         satisfied.add(pairing['target']['id'])
-        diagnostics['counter_deals'] = diagnostics.get('counter_deals', 0) + 1
+        market.deal(pairing, candidate)
+
+    def agreed(candidate, pairing, order, evaluation_canonical, options):
+        """An agreed deal: a shopped player's offer goes into the seller's comparison (bidding), others close now."""
+        if market.shopped(pairing):
+            market.add_bid(pairing, candidate, options, evaluation_canonical, order)
+            satisfied.add(pairing['target']['id'])
+            diagnostics['market_bids'] = diagnostics.get('market_bids', 0) + 1
+            return
+        finalize(candidate, pairing, order, evaluation_canonical)
+
+    def accepted_counter(candidate, pairing, order, evaluation_canonical, options=()):
+        """A deal agreed after a counter (trade step 3): the pairing's reasons plus the counter in plain words."""
+        agreed(candidate, pairing, order, evaluation_canonical, list(options))
 
     for order, pairing in enumerate(pairings):
         if len(proposals) >= limit:
@@ -1155,11 +1190,12 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                                       date=through_date, config=config, fixed={('player', row['id'])},
                                       diagnostics=diagnostics, check_budget=tc.COUNTER_CHECKS_PER_SEARCH[depth])
         if countered is not None and not (reserve_assets and proposal_asset_identity_keys(countered) & reserved):
-            accepted_counter(countered, pairing, order, canonical)
+            accepted_counter(countered, pairing, order, canonical, options)
             continue
         for miss in missed:
             near_misses.append({'candidate': tt.near_miss_candidate(canonical, miss, config), 'order': order,
                                 'trade_reasons': tt.trade_reasons(canonical, pairing)})
+            market.observe(pairing, None, quick_nets=miss['nets'])
         for package in packages:
             diagnostics['packages'] += 1
             buyer_assets = package.get('assets') or []
@@ -1176,6 +1212,7 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                 continue
             if not ai_trade_candidate_accepted(canonical, candidate):
                 diagnostics['declined'] += 1
+                market.observe(pairing, candidate)
                 countered = None
                 if not pick_terms and counters_left[0] > 0 and tc.short_side(candidate, human) is not None:
                     counters_left[0] -= 1
@@ -1183,7 +1220,7 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
                                               fixed={('player', row['id'])}, diagnostics=diagnostics,
                                               check_budget=tc.COUNTER_CHECKS_PER_SEARCH[depth])
                 if countered is not None and not (reserve_assets and proposal_asset_identity_keys(countered) & reserved):
-                    accepted_counter(countered, pairing, order, canonical)
+                    accepted_counter(countered, pairing, order, canonical, options)
                     break
                 if not pick_terms and near_miss(canonical, candidate):
                     near_misses.append({'candidate': candidate, 'trade_reasons': tt.trade_reasons(canonical, pairing),
@@ -1193,19 +1230,70 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
             if reserve_assets and keys & reserved:
                 diagnostics['asset_conflicts'] += 1
                 continue
-            candidate = mark_ai_trade_accepted(candidate)
-            candidate['target_source'] = 'front_office_target'
-            candidate['_search_order'] = order
-            candidate['trade_reasons'] = tt.trade_reasons(canonical, pairing)
-            match = tc.seller_target_match(canonical, candidate, row['team_id'])
-            if match:
-                candidate['trade_reasons']['seller_target_match'] = match
-            proposals.append(candidate)
-            evaluation_snapshots[candidate['proposal']['id']] = evaluation_canonical
-            if reserve_assets:
-                reserved |= keys
-            satisfied.add(target_id)
+            agreed(candidate, pairing, order, evaluation_canonical, options)
             break
+    # TRADE-MARKET: shopped players. The seller compares every bid, the bidders raise in rounds, the best offer wins
+    # (or the seller waits for its decision day).
+
+    def bid_evaluate(bid, option):
+        pairing = bid['pairing']
+        buyer_team = team_by_id(canonical, pairing['buyer_id'])
+        seller_team = team_by_id(canonical, pairing['row']['team_id'])
+        assets = option.get('assets') or []
+        pick_terms = option.get('pick_obligation_terms') or []
+        evaluation_canonical = canonical_with_pending_pick_terms(canonical, pick_terms) if pick_terms else canonical
+        diagnostics['market_raise_checks'] = diagnostics.get('market_raise_checks', 0) + 1
+        report = evaluate_trade_decision(
+            evaluation_canonical, seller_team['abbrev'], buyer_team['abbrev'],
+            [{'kind': 'player', 'value': pairing['row']['id']}], assets, seed=seed, date=through_date, config=config,
+            context_ready=True, search_only=True)
+        if pick_terms:
+            report = trade_result_with_pick_terms(report, pick_terms)
+        result = candidate_from_decision(report)
+        if result.get('legality', {}).get('status') != 'legal' or not ai_trade_candidate_accepted(canonical, result):
+            return None
+        bid['evaluation_canonical'] = evaluation_canonical
+        return result
+
+    def bid_raises(bid):
+        """The bidder's other built packages, most valuable to the seller first, that its own quick price allows."""
+        pairing = bid['pairing']
+        seller_id, buyer_id = pairing['row']['team_id'], pairing['buyer_id']
+        target = [{'kind': 'player', 'id': pairing['row']['id']}]
+        buyer_team = team_by_id(canonical, buyer_id)
+        current = proposal_asset_identity_keys(bid['candidate'])
+        scored = []
+        for index, option in enumerate(bid['options']):
+            if index in bid['tried']:
+                continue
+            try:
+                assets = [a for asset in option.get('assets') or [] for a in normalize_assets(canonical, buyer_team, [asset])]
+            except ValueError:
+                continue
+            if not assets or not tt.package_fits_rules(canonical, pairing, assets):
+                continue
+            if {f"{a['kind']}:{a['id']}" for a in assets} <= current:
+                continue
+            buyer_raw = tt.quick_net(canonical, buyer_id, target, assets, config)
+            if buyer_raw < -9.0 - tt.PRESCREEN_TOLERANCE:
+                continue
+            seller_raw = tt.quick_net(canonical, seller_id, assets, target, config)
+            scored.append((-seller_raw, index, option))
+        scored.sort(key=lambda item: item[:2])
+        for _, index, _ in scored[:RAISE_SCAN]:
+            bid['tried'].add(index)
+        return [option for _, _, option in scored[:RAISE_SCAN]]
+
+    for won in market.resolve_bidding(bid_evaluate, bid_raises):
+        bid, war = won['bid'], won['war']
+        keys = proposal_asset_identity_keys(bid['candidate'])
+        if reserve_assets and keys & reserved:
+            diagnostics['asset_conflicts'] += 1
+            continue
+        if len(proposals) >= limit:
+            break
+        finalize(bid['candidate'], bid['pairing'], -1 if len(war.get('bidders') or []) >= 2 else bid['order'],
+                 bid['evaluation_canonical'], war=war if len(war.get('bidders') or []) >= 2 else None)
     # Salary dumps (trade 2b): teams over the luxury tax shed salary to teams with room, paying picks if needed.
     dump_limit = max(1, -(-limit // 3))
     dumps_done, dump_teams = 0, set()
@@ -1321,6 +1409,9 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
     ]
     user_offers = [prepare_ai_trade_candidate(canonical, offer, seed=seed, date=through_date, config=config)
                    for offer in user_offers]
+    from .front_office import with_market_reasons
+    proposals = [with_market_reasons(canonical, candidate) for candidate in proposals]
+    user_offers = [with_market_reasons(canonical, offer) for offer in user_offers]
     return {
         "from_date": from_date,
         "through_date": through_date,
@@ -1328,6 +1419,7 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
         "proposal_count": len(proposals),
         "proposals": proposals,
         "user_absorber_offers": user_offers,
+        "market_updates": market.updates(),
         "search_diagnostics": {**diagnostics, "financial_work": dict(work)},
         "notes": "Target-driven AI-AI trade search: each front office pursues its own targets at the seller's price.",
     }
@@ -4533,7 +4625,9 @@ def evaluate_trade_for_team(
         tax_term = (tax_value(canonical, perspective_team_id, incoming_assets, outgoing_assets),
                     absorb_cost(canonical, perspective_team_id, incoming_assets, outgoing_assets))
         strategic += tax_term[0] + tax_term[1]
-        personality = personality_trade_adjustment(canonical, perspective_team_id, proposal.id, seed)
+        personality = personality_trade_adjustment(canonical, perspective_team_id, proposal.id, seed,
+                                                   incoming=incoming_assets, outgoing=outgoing_assets,
+                                                   tax_term=tax_term[0], proposal=proposal)
         net = incoming - outgoing + strategic + personality["total"]
         threshold = contextual_acceptance_threshold(canonical, perspective_team_id, config, incoming_assets, outgoing_assets)
         accepted = net >= threshold and legality["status"] == "legal"
@@ -4613,6 +4707,8 @@ def evaluate_trade_for_team(
             + (f" Final roster: strength {outlook['strength_delta']:+.2f}; incremental waiver cost ${outlook['waiver_cost_millions']:.2f}M. {outlook['issue'] or ''}" if outlook else '')
             + (f" Fit with the current core: the projected rotation gets worse, so {outlook['system_fit_discount']:.1f} of the general fit credit is taken back." if outlook and outlook.get('system_fit_discount') else '')
             + (f" Draft investment: {investment['net_draft_value_spent']:.2f} net value spent; marginal-acquisition capital limit {investment['capital_limit']:.2f}; justified value-loss limit {investment['loss_limit']:.2f}." if investment else '')
+            + (f" The limit includes {investment['personality_allowance']:.1f} from {investment['personality_reason']}." if investment and investment.get('personality_reason') else '')
+            + personality_note(personality)
             + own_player_value_note(canonical, perspective_team_id, outgoing_assets)
             if include_presentation else ''
         ),
@@ -5669,25 +5765,25 @@ def rebuilder_draft_bonus(canonical: dict[str, Any], asset: dict[str, Any], phas
     return round(rate * value, 3)
 
 
-def personality_trade_adjustment(canonical: dict[str, Any], team_id: str, proposal_id: str, seed: int) -> dict[str, float]:
-    front = next(item for item in canonical["front_office_profiles"] if item["team_id"] == team_id)
-    state = next(item for item in canonical["team_strategic_states"] if item["team_id"] == team_id)
-    rng = random.Random(f"{seed}:{proposal_id}:{team_id}:personality")
-    competence = float(front.get("competence") or 55)
-    pressure = float(state.get("pressure") or front.get("owner_pressure") or 55)
-    mistake_window = (100 - competence) * 0.055 + max(0.0, pressure - 65) * 0.045
-    noise = rng.uniform(-mistake_window, mistake_window)
-    aggression = (float(front.get("aggressiveness") or 55) - 55) * 0.035
-    star_chasing = (float(front.get("star_chasing") or 55) - 55) * 0.025
-    discipline = (float(front.get("asset_discipline") or 55) - 55) * -0.02
-    total = clamp(noise + aggression + star_chasing + discipline, -8, 8)
-    return {
-        "bounded_noise": round(noise, 3),
-        "aggressiveness": round(aggression, 3),
-        "star_chasing": round(star_chasing, 3),
-        "asset_discipline": round(discipline, 3),
-        "total": round(total, 3),
-    }
+def personality_trade_adjustment(canonical: dict[str, Any], team_id: str, proposal_id: str, seed: int, *,
+                                 incoming: list[dict[str, Any]] | None = None,
+                                 outgoing: list[dict[str, Any]] | None = None, tax_term: float = 0.0,
+                                 proposal: Any = None) -> dict[str, Any]:
+    """The front office's personality on top of the textbook value (TRADE-MARKET, front_office.py).
+
+    Bounded, explained terms from lasting traits (urgency, savvy and its biases, preferences, player opinions,
+    loyalty) and from a live negotiation (concessions as patience runs out). No random draw: until TRADE-MARKET this
+    was a per-proposal dice roll (up to about +-2.5) plus constant trait offsets; ``proposal_id`` and ``seed`` are
+    kept for the callers' signature only."""
+    from .front_office import personality_terms
+    return personality_terms(canonical, team_id, list(incoming or []), list(outgoing or []), tax_term=tax_term,
+                             proposal=proposal)
+
+
+def personality_note(personality: dict[str, Any]) -> str:
+    """The personality terms in the evaluation notes, in plain words with their size."""
+    terms = [f"{term['text']} ({float(term['points']):+.1f})" for term in (personality or {}).get('terms') or []]
+    return f" Personality: {'; '.join(terms)}." if terms else ''
 
 
 def acceptance_threshold(canonical: dict[str, Any], team_id: str, config: dict[str, Any]) -> float:

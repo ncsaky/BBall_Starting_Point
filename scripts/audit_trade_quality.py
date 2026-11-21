@@ -22,7 +22,7 @@ def replay(context, candidate, *, recorded_personality=False):
     seed = int(candidate.get('evaluation_seed', candidate.get('ui_pick_rule_seed', 17)))
     if recorded_personality:
         recorded = {e['perspective_team_id']: e['personality_adjustments'] for e in candidate['evaluations']}
-        with patch.object(tx, 'personality_trade_adjustment', side_effect=lambda c, tid, pid, s: deepcopy(recorded[tid])):
+        with patch.object(tx, 'personality_trade_adjustment', side_effect=lambda c, tid, pid, s, **kw: deepcopy(recorded[tid])):
             return replay(context, candidate)
     if proposal.get('transfers'):
         return evaluate_multi_team_trade(context, transfers_for_revalidation(candidate), pick_rules=candidate.get('pick_rules'),

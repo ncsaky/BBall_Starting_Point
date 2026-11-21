@@ -459,8 +459,22 @@ def ai_counter(canonical: dict[str, Any], candidate: dict[str, Any], *, seed: in
     return None
 
 
+def counter_round_limit(canonical: dict[str, Any], team_id: str, previous: int = 0) -> int:
+    """How many counters an AI office makes to the user before its last one, which is its final offer (TRADE-MARKET):
+    1 for a very impatient office to COUNTER_ROUNDS for a patient one; on deadline day the next counter is final."""
+    from .front_office import office
+    from .trade_market import _today, is_deadline_day, max_rounds
+    row = office(canonical, team_id)
+    if not row:
+        return COUNTER_ROUNDS
+    if is_deadline_day(_today(canonical)):
+        return min(COUNTER_ROUNDS, previous + 1)
+    return max(1, min(COUNTER_ROUNDS, max_rounds(float(row["patience"])) - 2))
+
+
 def user_counter(canonical: dict[str, Any], candidate: dict[str, Any], user_team_id: str, *, seed: int, date: str,
-                 config: dict[str, Any] | None = None, chain: list[dict[str, Any]] | None = None) -> dict[str, Any] | None:
+                 config: dict[str, Any] | None = None, chain: list[dict[str, Any]] | None = None,
+                 required_margin: float | None = None) -> dict[str, Any] | None:
     """The AI partner's counter to the user's offer, or None: only when the partner refused it but is a little short
     (``short_side``). The counter is the partner's best ask on the user's roster and picks (its targets first), and it
     is returned only when the partner's own full check accepts it; the user decides. The returned candidate is the
@@ -483,6 +497,9 @@ def user_counter(canonical: dict[str, Any], candidate: dict[str, Any], user_team
     asking_id, giving_id, evaluation = side
     if giving_id != user_team_id:
         return None
+    limit = counter_round_limit(canonical, asking_id, len(previous))
+    if len(previous) >= limit:
+        return None  # its last counter was its final offer
     from_id, to_id, from_assets, to_assets = _flows(candidate)
     asking_out, giving_out = (from_assets, to_assets) if asking_id == from_id else (to_assets, from_assets)
     seen = {str(c.get("package")) for c in chain} | {package_key(from_assets, to_assets)}
@@ -507,12 +524,20 @@ def user_counter(canonical: dict[str, Any], candidate: dict[str, Any], user_team
         partner = next((e for e in result.get("evaluations") or [] if e.get("perspective_team_id") == asking_id), {})
         if not partner.get("accepted"):
             continue
+        margin = float(partner.get("net_value") or 0.0) - float(partner.get("acceptance_threshold") or 0.0)
+        if required_margin is not None and margin < required_margin:
+            continue  # it must beat the best offer the partner already has for this player (TRADE-MARKET)
         round_ = len(previous) + 1
         step = {**describe(canonical, asking_id, giving_id, asking_out, giving_out, option, giving_is_user=True),
                 "round": round_}
-        result["counter"] = {"rounds": round_, "steps": [step], "text": step["text"], "for_user": True,
+        final = round_ >= limit
+        text = step["text"]
+        if final:
+            abbrev = tx.team_by_id(canonical, asking_id).get("abbrev")
+            text = f"{text} This is {abbrev}'s final offer: take it or leave it."
+        result["counter"] = {"rounds": round_, "steps": [step], "text": text, "for_user": True,
                              "package": key, "asking_net": option.get("asking_net"),
-                             "last_round": round_ >= COUNTER_ROUNDS}
+                             "last_round": final, "final_offer": final}
         return result
     return None
 

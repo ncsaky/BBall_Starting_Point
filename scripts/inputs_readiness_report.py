@@ -381,14 +381,21 @@ def trade_list(save_path, save, active, base, label):
             "sends": sides,
             "team_context": {teams.get(x, x): {"record_at_trade": team_records_on(summaries, x, day),
                                                "phase": (evals.get(x) or {}).get("window_phase")} for x in team_ids},
-            "evaluations": [{k: e.get(k) for k in ("team_abbrev", "decision", "incoming_value", "outgoing_value", "net_value",
-                                                   "acceptance_threshold", "strategic_adjustment", "notes", "decision_reasons")}
+            "evaluations": [{**{k: e.get(k) for k in ("team_abbrev", "decision", "incoming_value", "outgoing_value", "net_value",
+                                                      "acceptance_threshold", "strategic_adjustment", "notes", "decision_reasons")},
+                             "team_abbrev": e.get("team_abbrev") or teams.get(e.get("perspective_team_id")),
+                             "personality_total": (e.get("personality_adjustments") or {}).get("total"),
+                             "personality_terms": (e.get("personality_adjustments") or {}).get("terms")}
                             for e in t.get("evaluations", [])],
             "status": t.get("status"),
             "why": (t.get("trade_reasons") or {}).get("text"),
             "target_key": (t.get("trade_reasons") or {}).get("target_key"),
             "counter": (t.get("trade_reasons") or {}).get("counter"),
             "seller_target_match": (t.get("trade_reasons") or {}).get("seller_target_match"),
+            "personality": (t.get("trade_reasons") or {}).get("personality"),
+            "final_offer": (t.get("trade_reasons") or {}).get("final_offer"),
+            "bidding_war": (t.get("trade_reasons") or {}).get("bidding_war"),
+            "negotiation": (t.get("trade_reasons") or {}).get("negotiation"),
         })
     return out
 

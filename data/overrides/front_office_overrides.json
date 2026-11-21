@@ -85,5 +85,646 @@
       "confidence": 0.62,
       "notes": "Wembanyama-era planner that should protect long-window upside."
     }
+  },
+  "trade_personality": {
+    "notes": "Front-office trade personality (TRADE-MARKET). Starting traits for real front offices from widely held public reputations only (two or more outlets, or a ranking with corroboration), each with its sources. Traits are 0-100 with 50 the league middle. Any trait not listed here (and every team whose regime is too new for a reputation) is drawn from the measured spread of the listed values, seeded by the save, in src/nba_gm_data/front_office.py. Research: data/research/front_office_reputations_2026_11.json, retrieved 2026-11-20.",
+    "regimes_too_new": {
+      "CHI": "Bryson Graham (EVP since May 2026)",
+      "DAL": "Masai Ujiri (president since May 2026)",
+      "DEN": "Ben Tenzer (since 2025)",
+      "NOP": "Joe Dumars (EVP) / Troy Weaver (GM, since 2025)",
+      "PHI": "Mike Gansey (president since June 2026; Bob Myers oversight); Morey fired May 2026",
+      "PHX": "Brian Gregory (since 2025) / owner Ishbia",
+      "SAC": "Scott Perry (since 2025)",
+      "TOR": "Bobby Webster (full control since Aug 2025)"
+    },
+    "sources": [
+      {
+        "id": "src_cbs_p1",
+        "title": "CBS Sports NBA Front Office Rankings Part 1 (top 15)",
+        "url": "https://cbssports.com/nba/news/nba-front-office-rankings-top-15-knicks-celtics-2026",
+        "outlet": "CBS Sports (Sam Quinn)",
+        "date": "2026-08-19"
+      },
+      {
+        "id": "src_cbs_p2",
+        "title": "CBS Sports NBA Front Office Rankings Part 2 (16-30)",
+        "url": "https://www.cbssports.com/nba/news/nba-front-office-rankings-part-2-lakers-trail-blazers-2026/",
+        "outlet": "CBS Sports",
+        "date": "2026-08-20"
+      },
+      {
+        "id": "src_cbs_2025",
+        "title": "CBS Sports NBA front office rankings (July 2025 edition)",
+        "url": "https://www.cbssports.com/nba/news/nba-front-office-rankings-okc-on-top-lakers-and-mavericks-low-on-list-new-team-falls-behind-bulls-at-no-30",
+        "outlet": "CBS Sports (Sam Quinn)",
+        "date": "2025-07-22"
+      },
+      {
+        "id": "src_athletic_poll",
+        "title": "The Athletic executive poll of top front offices (36 execs), as reported by Bleacher Report",
+        "url": "https://bleacherreport.com/articles/25322895-which-nba-team-has-top-front-office-execs-reveal-rankings-new-poll",
+        "outlet": "The Athletic via Bleacher Report",
+        "date": "2025-12-10"
+      },
+      {
+        "id": "src_espn_fpr",
+        "title": "NBA Future Power Rankings: Three-year outlooks for all 30 teams (ESPN, via ABC7)",
+        "url": "https://abc7.com/post/nba-future-power-rankings-year-outlooks-30-teams/19838973",
+        "outlet": "ESPN via ABC7",
+        "date": "2026-09"
+      },
+      {
+        "id": "src_roundtable_stone",
+        "title": "The Rockets rank fourth, so why is Rafael Stone only 13th (cites ESPN management rank)",
+        "url": "https://roundtable.io/sports/nba/rockets/opinion/the-rockets-rank-fourth-so-why-is-rafael-stone-only-13th",
+        "outlet": "Roundtable",
+        "date": "2026-09-17"
+      },
+      {
+        "id": "src_trades",
+        "title": "Local file: real trades 2025-2027 with analyst grades and verdict tags",
+        "url": "data/research/real_trades/trades_2025_2027.json",
+        "outlet": "local dataset (SI, ESPN Pelton, B/R, CBS grades named inside)",
+        "date": "2026-11"
+      },
+      {
+        "id": "src_si_suns_picks",
+        "title": "Phoenix Suns traded future first-round picks among most valuable in NBA (SI)",
+        "url": "https://www.si.com/nba/suns/news/phoenix-suns-traded-future-1st-round-picks-among-most-valuable-nba",
+        "outlet": "Sports Illustrated",
+        "date": "2026"
+      },
+      {
+        "id": "src_si_ishbia",
+        "title": "Mat Ishbia explains where Phoenix Suns went wrong on failed star trades (SI)",
+        "url": "https://www.si.com/nba/suns/onsi/news/mat-ishbia-explains-where-phoenix-suns-went-wrong-failed-star-trades",
+        "outlet": "Sports Illustrated",
+        "date": "2026"
+      },
+      {
+        "id": "src_cbs_bridges",
+        "title": "Mikal Bridges traded to Knicks for five first-round picks (CBS)",
+        "url": "https://www.cbssports.com/nba/news/mikal-bridges-traded-to-knicks-ex-villanova-star-acquired-for-five-first-round-picks-in-blockbuster-with-nets/amp",
+        "outlet": "CBS Sports",
+        "date": "2024-06-26"
+      },
+      {
+        "id": "src_defector",
+        "title": "The Knicks spend five first-round picks on a college reunion",
+        "url": "https://defector.com/the-knicks-spend-five-first-round-picks-on-a-college-reunion",
+        "outlet": "Defector",
+        "date": "2024-06"
+      },
+      {
+        "id": "src_espn_kuminga",
+        "title": "Inside the ugly split between Jonathan Kuminga and the Warriors",
+        "url": "https://www.espn.com/nba/story/_/id/47880753/inside-ugly-5-year-split-jonathan",
+        "outlet": "ESPN",
+        "date": "2026-02"
+      },
+      {
+        "id": "src_cbs_riley",
+        "title": "Why Pat Riley will never let the Heat tank (CBS)",
+        "url": "https://fantasy-api.cbssports.com/nba/news/pat-riley-heat-tanking-bam-adebayo-tyler-herro/",
+        "outlet": "CBS Sports",
+        "date": "2026-04"
+      },
+      {
+        "id": "src_hr_dumars",
+        "title": "Joe Dumars unfazed by criticism of controversial moves (Queen trade)",
+        "url": "https://www.hoopsrumors.com/2025/07/joe-dumars-unfazed-by-criticism-of-controversial-moves.html",
+        "outlet": "Hoops Rumors",
+        "date": "2025-07"
+      },
+      {
+        "id": "src_cbs_pelinka",
+        "title": "Rob Pelinka Lakers president excuses (CBS)",
+        "url": "https://www.cbssports.com/nba/news/rob-pelinka-lakers-president-excuses/",
+        "outlet": "CBS Sports",
+        "date": "2026"
+      }
+    ],
+    "teams": {
+      "ATL": {
+        "savvy": {
+          "value": 55,
+          "why": "Mid-table in the CBS 2026 rankings (13th); steady roster work per ESPN.",
+          "sources": [
+            "src_cbs_p1",
+            "src_espn_fpr"
+          ]
+        }
+      },
+      "BKN": {
+        "patience": {
+          "value": 75,
+          "why": "Clean books and a pick surplus; sold veterans at peak value rather than forcing moves.",
+          "sources": [
+            "src_cbs_p2",
+            "src_espn_fpr"
+          ]
+        },
+        "biases": [
+          {
+            "key": "values_picks",
+            "why": "Near the top of the league in draft assets.",
+            "sources": [
+              "src_cbs_p2",
+              "src_espn_fpr"
+            ]
+          }
+        ]
+      },
+      "BOS": {
+        "savvy": {
+          "value": 80,
+          "why": "Third in CBS 2026 (second in 2025) and second in The Athletic's executive poll, dented by the Jaylen Brown trade.",
+          "sources": [
+            "src_cbs_p1",
+            "src_cbs_2025",
+            "src_athletic_poll"
+          ]
+        },
+        "biases": [
+          {
+            "key": "tax_averse",
+            "why": "Built its moves around staying under the second apron.",
+            "sources": [
+              "src_cbs_2025",
+              "src_espn_fpr"
+            ]
+          }
+        ]
+      },
+      "CHA": {
+        "savvy": {
+          "value": 68,
+          "why": "Ninth in CBS 2026; ESPN's management rank rose from 22nd to 6th.",
+          "sources": [
+            "src_cbs_p1",
+            "src_espn_fpr"
+          ]
+        },
+        "urgency": {
+          "value": 64,
+          "why": "Moved LaMelo Ball to build a real contender quickly.",
+          "sources": [
+            "src_cbs_p1",
+            "src_espn_fpr",
+            "src_trades"
+          ]
+        },
+        "biases": [
+          {
+            "key": "values_picks",
+            "why": "Built a large pick collection from the Ball and Bridges trades.",
+            "sources": [
+              "src_cbs_p1",
+              "src_espn_fpr"
+            ]
+          }
+        ]
+      },
+      "CLE": {
+        "savvy": {
+          "value": 74,
+          "why": "Twelfth in CBS 2026 (fifth in 2025), sixth in the executive poll; creative roster turnover.",
+          "sources": [
+            "src_cbs_p1",
+            "src_cbs_2025",
+            "src_athletic_poll"
+          ]
+        },
+        "urgency": {
+          "value": 76,
+          "why": "Bold win-now trades (Mitchell, Harden) and few picks left.",
+          "sources": [
+            "src_cbs_2025",
+            "src_espn_fpr",
+            "src_cbs_p1"
+          ]
+        },
+        "biases": [
+          {
+            "key": "spends_tax",
+            "why": "Ownership pays deep into the second apron.",
+            "sources": [
+              "src_cbs_2025",
+              "src_cbs_p1",
+              "src_espn_fpr"
+            ]
+          }
+        ]
+      },
+      "DEN": {
+        "biases": [
+          {
+            "key": "overrates_own",
+            "why": "Paid its own players heavily (Braun) and is the only team in the second apron.",
+            "sources": [
+              "src_cbs_p2",
+              "src_espn_fpr"
+            ]
+          }
+        ]
+      },
+      "DET": {
+        "patience": {
+          "value": 78,
+          "why": "No major moves and no first-round pick traded; owns all its firsts for seven years.",
+          "sources": [
+            "src_cbs_p1",
+            "src_espn_fpr"
+          ]
+        }
+      },
+      "GSW": {
+        "loyalty": {
+          "value": 85,
+          "why": "Core-first approach, the league's oldest roster; kept Kuminga too long.",
+          "sources": [
+            "src_cbs_p2",
+            "src_espn_fpr",
+            "src_espn_kuminga"
+          ]
+        },
+        "savvy": {
+          "value": 58,
+          "why": "Eighteenth in CBS 2026, tenth in the executive poll.",
+          "sources": [
+            "src_cbs_p2",
+            "src_athletic_poll"
+          ]
+        }
+      },
+      "HOU": {
+        "savvy": {
+          "value": 74,
+          "why": "Third in the executive poll and eighth in CBS 2026; strong on contracts, 13th in ESPN management.",
+          "sources": [
+            "src_cbs_p1",
+            "src_athletic_poll",
+            "src_roundtable_stone"
+          ]
+        }
+      },
+      "IND": {
+        "savvy": {
+          "value": 77,
+          "why": "Sixth in CBS 2026 (seventh in 2025), fifth in the executive poll; talent evaluation praised.",
+          "sources": [
+            "src_cbs_p1",
+            "src_cbs_2025",
+            "src_athletic_poll"
+          ]
+        },
+        "loyalty": {
+          "value": 74,
+          "why": "Re-signs and extends its own players early.",
+          "sources": [
+            "src_cbs_p1",
+            "src_cbs_2025"
+          ]
+        },
+        "biases": [
+          {
+            "key": "tax_averse",
+            "why": "Cautious about the luxury tax.",
+            "sources": [
+              "src_cbs_p1",
+              "src_espn_fpr"
+            ]
+          }
+        ]
+      },
+      "LAL": {
+        "savvy": {
+          "value": 35,
+          "why": "24th in CBS 2026 and low in 2025; heavy criticism of the front office.",
+          "sources": [
+            "src_cbs_p2",
+            "src_cbs_2025",
+            "src_cbs_pelinka"
+          ]
+        },
+        "biases": [
+          {
+            "key": "underrates_picks",
+            "why": "Paid two unprotected firsts and two swaps for Walker Kessler; 29th in draft assets.",
+            "sources": [
+              "src_cbs_p2",
+              "src_espn_fpr",
+              "src_trades"
+            ]
+          }
+        ]
+      },
+      "MEM": {
+        "patience": {
+          "value": 30,
+          "why": "Moved Bane, Jaren Jackson Jr. and Morant rather than wait for a turnaround.",
+          "sources": [
+            "src_cbs_p1",
+            "src_espn_fpr"
+          ]
+        }
+      },
+      "MIA": {
+        "urgency": {
+          "value": 80,
+          "why": "Star-hunting approach; never tanks; the Giannis deal cost most of its picks.",
+          "sources": [
+            "src_cbs_p1",
+            "src_cbs_riley",
+            "src_espn_fpr"
+          ]
+        },
+        "savvy": {
+          "value": 75,
+          "why": "Fourth in the executive poll; ESPN calls it the most consistent management over seven years.",
+          "sources": [
+            "src_athletic_poll",
+            "src_cbs_p1",
+            "src_espn_fpr"
+          ]
+        },
+        "patience": {
+          "value": 35,
+          "why": "Resists rebuilding; CBS calls that a flaw.",
+          "sources": [
+            "src_cbs_p1",
+            "src_cbs_riley"
+          ]
+        }
+      },
+      "MIN": {
+        "urgency": {
+          "value": 80,
+          "why": "Aggressive Gobert, Towns and LaMelo Ball trades; last in draft assets.",
+          "sources": [
+            "src_cbs_p1",
+            "src_espn_fpr"
+          ]
+        },
+        "savvy": {
+          "value": 50,
+          "why": "Tenth in CBS 2026 and seventh in the executive poll, but the Dillingham and Ball trades drew poor grades.",
+          "sources": [
+            "src_cbs_p1",
+            "src_athletic_poll",
+            "src_trades"
+          ]
+        }
+      },
+      "NOP": {
+        "savvy": {
+          "value": 25,
+          "why": "29th in CBS 2026; ESPN management tied for worst.",
+          "sources": [
+            "src_cbs_p2",
+            "src_espn_fpr"
+          ]
+        },
+        "biases": [
+          {
+            "key": "underrates_picks",
+            "why": "Traded an unprotected first to move up for Derik Queen.",
+            "sources": [
+              "src_cbs_p2",
+              "src_hr_dumars"
+            ]
+          }
+        ]
+      },
+      "NYK": {
+        "savvy": {
+          "value": 78,
+          "why": "Second in CBS 2026, eighth in the executive poll, fourth in ESPN management.",
+          "sources": [
+            "src_cbs_p1",
+            "src_athletic_poll",
+            "src_espn_fpr"
+          ]
+        },
+        "urgency": {
+          "value": 80,
+          "why": "Gave five firsts for Mikal Bridges; fearless win-now moves.",
+          "sources": [
+            "src_cbs_p1",
+            "src_cbs_bridges",
+            "src_defector"
+          ]
+        },
+        "connections": [
+          {
+            "player": "Jalen Brunson",
+            "why": "Villanova ties run through the front office's biggest moves.",
+            "sources": [
+              "src_cbs_2025",
+              "src_cbs_bridges",
+              "src_defector"
+            ]
+          },
+          {
+            "player": "Josh Hart",
+            "why": "Villanova ties run through the front office's biggest moves.",
+            "sources": [
+              "src_cbs_2025",
+              "src_cbs_bridges",
+              "src_defector"
+            ]
+          },
+          {
+            "player": "Mikal Bridges",
+            "why": "Villanova ties: paid five firsts to reunite him with his college teammates.",
+            "sources": [
+              "src_cbs_bridges",
+              "src_defector"
+            ]
+          },
+          {
+            "player": "Donte DiVincenzo",
+            "why": "Villanova ties run through the front office's biggest moves.",
+            "sources": [
+              "src_cbs_2025",
+              "src_defector"
+            ]
+          }
+        ]
+      },
+      "OKC": {
+        "savvy": {
+          "value": 95,
+          "why": "First in every CBS edition; 31 of 36 executives voted it the league's best.",
+          "sources": [
+            "src_cbs_p1",
+            "src_cbs_2025",
+            "src_athletic_poll"
+          ]
+        },
+        "biases": [
+          {
+            "key": "values_picks",
+            "why": "Stockpiles picks and uses them every way (trades, swaps, drafting).",
+            "sources": [
+              "src_cbs_p1",
+              "src_espn_fpr",
+              "src_trades"
+            ]
+          }
+        ]
+      },
+      "ORL": {
+        "urgency": {
+          "value": 70,
+          "why": "The Desmond Bane trade cost several picks.",
+          "sources": [
+            "src_cbs_p2",
+            "src_espn_fpr"
+          ]
+        }
+      },
+      "PHX": {
+        "urgency": {
+          "value": 88,
+          "why": "Repeated pick-for-win-now trades; its owner says picks exist to get stars.",
+          "sources": [
+            "src_si_suns_picks",
+            "src_si_ishbia",
+            "src_cbs_p2",
+            "src_espn_fpr"
+          ]
+        },
+        "savvy": {
+          "value": 25,
+          "why": "27th in CBS 2026; graded D+ on the Bridges deal.",
+          "sources": [
+            "src_cbs_p2",
+            "src_trades"
+          ]
+        },
+        "biases": [
+          {
+            "key": "underrates_picks",
+            "why": "Its tradable picks are nearly gone after star trades.",
+            "sources": [
+              "src_espn_fpr",
+              "src_cbs_p2",
+              "src_si_suns_picks"
+            ]
+          },
+          {
+            "key": "spends_tax",
+            "why": "About $270M of luxury tax in four seasons.",
+            "sources": [
+              "src_espn_fpr",
+              "src_cbs_p2"
+            ]
+          }
+        ]
+      },
+      "POR": {
+        "biases": [
+          {
+            "key": "tax_averse",
+            "why": "New ownership is cutting costs.",
+            "sources": [
+              "src_cbs_p2",
+              "src_espn_fpr"
+            ]
+          }
+        ]
+      },
+      "SAC": {
+        "savvy": {
+          "value": 20,
+          "why": "30th in CBS 2026; the Clifford trade made it a front-office loser in analysts' grades.",
+          "sources": [
+            "src_cbs_p2",
+            "src_trades"
+          ]
+        },
+        "biases": [
+          {
+            "key": "overpays_veterans",
+            "why": "Big deals for Sabonis and LaVine and a costly draft trade-up.",
+            "sources": [
+              "src_cbs_p2",
+              "src_trades"
+            ]
+          }
+        ]
+      },
+      "SAS": {
+        "savvy": {
+          "value": 86,
+          "why": "Fourth in CBS 2026 (third in 2025), ninth in the executive poll; sold Dejounte Murray at peak value.",
+          "sources": [
+            "src_cbs_p1",
+            "src_cbs_2025",
+            "src_athletic_poll"
+          ]
+        },
+        "patience": {
+          "value": 85,
+          "why": "Patient long-term core building; patient on Kevin Durant.",
+          "sources": [
+            "src_cbs_p1",
+            "src_cbs_2025"
+          ]
+        },
+        "biases": [
+          {
+            "key": "values_picks",
+            "why": "Gathered first-round swaps for extra lottery chances.",
+            "sources": [
+              "src_cbs_p1",
+              "src_cbs_2025"
+            ]
+          }
+        ]
+      },
+      "UTA": {
+        "patience": {
+          "value": 85,
+          "why": "Never changes course under pressure; held firm on its price for Walker Kessler.",
+          "sources": [
+            "src_cbs_p1",
+            "src_espn_fpr"
+          ]
+        },
+        "savvy": {
+          "value": 80,
+          "why": "Fifth in CBS 2026; its Lakers sign-and-trade return was graded A+.",
+          "sources": [
+            "src_cbs_p1",
+            "src_trades"
+          ]
+        },
+        "biases": [
+          {
+            "key": "values_picks",
+            "why": "Holds one of the league's biggest pick collections.",
+            "sources": [
+              "src_cbs_p1",
+              "src_espn_fpr"
+            ]
+          }
+        ]
+      },
+      "WAS": {
+        "biases": [
+          {
+            "key": "overpays_veterans",
+            "why": "A max deal for Trae Young and a heavy spend on Young and Davis during a rebuild.",
+            "sources": [
+              "src_cbs_p2",
+              "src_espn_fpr"
+            ]
+          }
+        ]
+      }
+    }
   }
 }

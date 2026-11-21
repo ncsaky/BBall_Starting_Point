@@ -1224,6 +1224,9 @@ def ensure_league_save_defaults(save: dict[str, Any], canonical: dict[str, Any] 
     save.setdefault("league_awards", [])
     save.setdefault("roster_overrides", {})
     save.setdefault("team_trade_wants", {})
+    if canonical is not None and not (save.get("front_office_traits") or {}).get("teams"):
+        from .front_office import ensure_save_traits
+        ensure_save_traits(save, canonical)
     save.setdefault("contract_overrides", {})
     save.setdefault("draft_pick_overrides", {})
     save.setdefault("generated_draft_picks", [])
@@ -1480,6 +1483,17 @@ def _copy_runtime_tree(value: Any) -> Any:
         return deepcopy(value)
 
 
+def attach_trade_market(active: dict[str, Any], save: dict[str, Any]) -> None:
+    """The save's front-office traits (drift applied) and the trade-market ledger, read-only for trade code
+    (TRADE-MARKET: front_office.py, trade_market.py)."""
+    from .front_office import traits_view
+    from .trade_market import ledger_view
+    active['front_office_traits'] = traits_view(save)
+    active['trade_market_ledger'] = ledger_view(save)
+    active.pop('_market_negotiation_index', None)
+    active.pop('_fo_opinions', None)
+
+
 def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -> dict[str, Any]:
     """Return a disposable active universe with one save's overrides applied.
 
@@ -1517,6 +1531,7 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
     canonical['team_payroll_history'] = save.get('team_payroll_history') or {}  # read-only: repeat taxpayers (trade step 4)
     from .trade_ownership import LEDGER_KEY, tenure_ledger_view
     canonical[LEDGER_KEY] = tenure_ledger_view(save)  # read-only for trade code; never written back from here
+    attach_trade_market(canonical, save)
     canonical['_trade_planning_save'] = {
         'meta': {'season': active_season}, 'state': dict(save.get('state') or {}),
         'season_schedules': save.get('season_schedules') or {},
@@ -1699,6 +1714,7 @@ def refresh_active_runtime_state(
     active['team_trade_wants'] = copy_plain(save.get('team_trade_wants', {}))
     from .trade_ownership import LEDGER_KEY, tenure_ledger_view
     active[LEDGER_KEY] = tenure_ledger_view(save)
+    attach_trade_market(active, save)
     from .trade_wants import clear_wants_cache
     clear_wants_cache(active)
     active['_human_team_ids'] = sorted(human_controlled_team_ids(save))
@@ -5969,6 +5985,8 @@ def late_deadline_trade_pass(canonical: dict[str, Any], save: dict[str, Any], ta
                                      focus_team_ids=focus)
     finally:
         review.close()
+    from .trade_market import apply_market_updates
+    apply_market_updates(save, payload.get("market_updates"), active)
     chosen, reserved = [], set()
     for proposal in payload.get("proposals", []):
         if not (proposal.get("accepted_by_all") and (proposal.get("legality") or {}).get("status") == "legal"):
@@ -6114,6 +6132,11 @@ def queue_ai_recommendations(
                 limit=max(12, market['offer_slots']*4), search_depth=2,
                 involving_team_ids=human_team_ids, review=review) if human_team_ids and market['offer_slots'] else {'proposals': []}
             review.close()
+            # TRADE-MARKET: today's negotiations, shopping, bidding wars and final offers go into the save's ledger.
+            from .trade_market import apply_market_updates, refresh_ledger, season_rollover
+            refresh_ledger(save, canonical, through_date)
+            season_rollover(save, through_date)
+            apply_market_updates(save, payload.get('market_updates'), canonical)
             user_offers = [
                 proposal for proposal in inbound.get('proposals', [])
                 if proposal.get('accepted_by_all') and proposal.get('legality', {}).get('status') == 'legal'
@@ -6213,6 +6236,7 @@ def queue_ai_recommendations(
 
 def queue_user_trade_offers(save: dict[str, Any], offers: list[dict[str, Any]], date_value: str) -> None:
     from .transactions import trade_offer_fingerprint
+    from .trade_market import user_offer_terms
 
     existing = {
         ((offer.get("proposal") or {}).get("id") or offer.get("id"))
@@ -6255,6 +6279,7 @@ def queue_user_trade_offers(save: dict[str, Any], offers: list[dict[str, Any]], 
                     "last_proposed_date": date_value,
                     "status": "pending_user_review",
                     "source": "ai_trade_offer_to_user",
+                    "final_offer": user_offer_terms(save, offer, date_value),
                 },
             }
         )
@@ -6275,6 +6300,8 @@ def expire_user_trade_offers_after_deadline(save: dict[str, Any], current_date: 
     current_date = current_date or save.get("state", {}).get("current_date")
     if not current_date:
         return 0
+    from .trade_market import expire_final_offers
+    expire_final_offers(save, str(current_date)[:10])  # TRADE-MARKET: unanswered final offers lapse
     try:
         deadline = trade_deadline_date(season_start_year_from_date(str(current_date)))
     except Exception:
