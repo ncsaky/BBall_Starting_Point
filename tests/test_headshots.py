@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from nba_gm_data import faces, staff_names
 from nba_gm_data.draft import generate_draft_class_records
@@ -65,7 +66,9 @@ class StaffIdentityTests(unittest.TestCase):
         faces.ensure_staff_faces(staff)
         self.assertEqual(len({person["face_id"] for person in staff}), len(staff))
         self.assertEqual(len({person["name"] for person in staff}), len(staff))
-        save = {"staff_slots": staff, "former_staff": []}
+        # As in a new save, the 30 head coaches are the real coaches (real photos): the made-up staff and the market.
+        save = {"staff_slots": [person for person in staff if person["slot"] != "head_coach"], "former_staff": []}
+        staff = save["staff_slots"]
         market = [candidate for slot in STAFF_SLOTS for candidate in generated_staff_candidates(5, slot)]
         apply_market_faces(save, 5, market)
         held = {person["face_id"] for person in staff}
@@ -201,15 +204,44 @@ class StockLibraryTests(unittest.TestCase):
         self.assertEqual(faces.LIBRARY, "stock")
         groups = self.manifest["groups"]
         for group, info in groups.items():
-            self.assertEqual(len(list((STOCK / group).glob("*.avif"))), info["count"], group)
+            entries = {face_id: entry for face_id, entry in self.manifest["faces"].items() if face_id.startswith(f"{group}/")}
+            self.assertEqual(len(entries), info["count"], group)
+            for face_id, entry in entries.items():
+                self.assertEqual(entry["gender"], info["gender"])
+                self.assertTrue(entry["stages"] and entry["stages"][0]["min_age"] == 0, face_id)
+                for stage in entry["stages"]:
+                    self.assertTrue((GUI / stage["file"].lstrip("/")).exists(), stage["file"])
         self.assertEqual(groups["staff-m"]["gender"], "male")
         self.assertEqual(groups["staff-f"]["gender"], "female")
         self.assertGreaterEqual(groups["staff-m"]["count"] + groups["staff-f"]["count"], 400)
         self.assertGreaterEqual(groups["staff-f"]["count"], 50)
         self.assertGreaterEqual(len(groups["staff-m"]["senior"]), 20)
-        self.assertGreaterEqual(groups["prospect-m"]["count"], 80)
+        self.assertGreaterEqual(groups["prospect-m"]["count"], 60)  # a generated draft class has 60 prospects
         total = sum(path.stat().st_size for path in (GUI / "assets" / "headshots").rglob("*") if path.is_file())
         self.assertLess(total, 80_000_000)
+
+    def test_a_face_shows_the_career_stage_that_fits_the_age(self):
+        staged = {"library": "stock", "ext": "avif", "groups": {"staff-m": {"gender": "male", "count": 1}},
+                  "faces": {"staff-m/0001": {"gender": "male", "stages": [
+                      {"min_age": 36, "file": "/assets/headshots/stock/staff-m/0001-veteran.avif"},
+                      {"min_age": 0, "file": "/assets/headshots/stock/staff-m/0001-rookie.avif"},
+                      {"min_age": 26, "file": "/assets/headshots/stock/staff-m/0001-prime.avif"}]}}}
+        with mock.patch.object(faces, "library_manifest", lambda library=faces.LIBRARY: staged), \
+                mock.patch.object(faces, "_stage_files", lambda library=faces.LIBRARY: {
+                    stage["file"]: "staff-m/0001" for stage in staged["faces"]["staff-m/0001"]["stages"]}):
+            self.assertTrue(faces.face_url("staff-m/0001", age=21).endswith("rookie.avif"))
+            self.assertTrue(faces.face_url("staff-m/0001", age=26).endswith("prime.avif"))
+            self.assertTrue(faces.face_url("staff-m/0001", age=58).endswith("veteran.avif"))
+            self.assertTrue(faces.face_url("staff-m/0001").endswith("rookie.avif"))  # unknown age: first stage
+            # A stored picture moves to the stage for the person's current age; staff refresh as they age.
+            self.assertTrue(faces.stage_url("/assets/headshots/stock/staff-m/0001-rookie.avif", 40).endswith("veteran.avif"))
+            person = {"id": "s1", "name": "Mark Test", "gender": "male", "age": 30, "face_id": "staff-m/0001",
+                      "headshot_url": "/assets/headshots/stock/staff-m/0001-rookie.avif", "headshot_source": "stock_photo"}
+            faces.ensure_staff_faces([person])
+            self.assertTrue(person["headshot_url"].endswith("prime.avif"))
+        # A one-photo face is a single stage.
+        face_id = next(iter(self.manifest["faces"]))
+        self.assertEqual(faces.face_url(face_id, age=70), faces.face_url(face_id, age=20))
 
     def test_every_stock_photo_has_a_credit_with_an_allowed_licence(self):
         library = {f"{group}/{n:04d}" for group, info in self.manifest["groups"].items() for n in range(1, info["count"] + 1)}

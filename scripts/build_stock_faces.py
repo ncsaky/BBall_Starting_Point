@@ -320,9 +320,10 @@ def download_url(row: dict) -> str:
     return f"https://thumb.wikimedia.org/wikipedia/commons/thumb/{match.group(1)}/{match.group(2)}/{step}px-{match.group(2)}"
 
 
-def download(candidates: dict, limit: int | None) -> None:
+def download(candidates: dict, limit: int | None, source: str | None = None) -> None:
     todo = [row for row in candidates.values() if not row.get("skip") and row.get("image_url")
-            and not photo_path(row).exists() and not row.get("download_failed") and likely_person(row)]
+            and not photo_path(row).exists() and not row.get("download_failed") and likely_person(row)
+            and (source is None or row.get("source") == source)]
     # Most promising first: professional headshots, then Openverse portraits, then stock-photo imports.
     # Wikimedia throttles full-size originals hard (upload.wikimedia.org): those last.
     todo.sort(key=lambda row: ("upload.wikimedia.org" in download_url(row),
@@ -417,6 +418,7 @@ def main() -> None:
     parser.add_argument("step", choices=["search", "search-openverse", "search-commons", "download", "process", "sheet",
                                          "review", "publish", "contact", "notable"])
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--source", choices=["openverse", "commons"], help="download: only this source")
     parser.add_argument("--sheet", type=int, help="review: the sheet number")
     parser.add_argument("--codes", help="review: one code letter per face on the sheet")
     args = parser.parse_args()
@@ -439,7 +441,7 @@ def main() -> None:
             candidates.setdefault(cid, row)
     save_json(CANDIDATES, candidates)
     if args.step == "download":
-        download(candidates, args.limit)
+        download(candidates, args.limit, args.source)
     if args.step == "process":
         process(candidates)
     if args.step == "sheet":
@@ -512,7 +514,8 @@ NAME_NOISE = re.compile(
     r"\b(professional|corporate|business|official|headshots?|head shot|portraits?|photos?|photograph\w*|pictures?|"
     r"image|cropped|crop|edit\w*|final|new|color|colour|bw|b&w|unsplash|pexels|pixabay|by|of|the|and|for|with|"
     r"in|at|jpg|jpeg|png|img|dsc\w*|mr|mrs|ms|dr|jr|sr)\b|\(.*?\)|[0-9_#@:,.!?\-–]+", re.I)
-PUBLIC_AUTHOR = re.compile(r"(politic|senat|congress|governor|campaign|for[A-Z ]?[a-z]*colorado|\bfor\b.*\b(senate|"
+PUBLIC_AUTHOR = re.compile(r"(politic|senat|congress|governor|campaign|citizens ?for|friends ?of|elect\b|vote ?for|"
+                           r"for[A-Z ]?[a-z]*colorado|\bfor\b.*\b(senate|"
                            r"congress|mayor|governor|president)|white house|embassy|parliament|ministry|department of|"
                            r"office of|gop|democrat|republican|press office)", re.I)
 PERSON_DESCRIPTION = re.compile(r"\(born|\b\d{4}\s*[–-]\s*\d{4}\b|\(\d{4}|\b(politician|actor|actress|singer|"
@@ -593,7 +596,11 @@ def publish(candidates: dict) -> None:
             old.unlink()
     manifest = {"library": "stock", "ext": "avif", "built_by": "scripts/build_stock_faces.py", "built": TODAY,
                 "about": "Openly licensed photos of real, non-famous adults (CC0, public domain, CC BY, CC BY-SA), "
-                         "cut out and greyscale, credited one by one in credits.json.", "groups": {}}
+                         "cut out and greyscale, credited one by one in credits.json.",
+                "stages": "Each face is one fictional person with an ordered list of images by age (stages); the game "
+                          "shows the last stage whose min_age is at or below the person's age. Stock photos have "
+                          "one stage each (min_age 0). See faces.py.",
+                "groups": {}, "faces": {}}
     photos = []
     for group, rows in chosen.items():
         (OUT / group).mkdir(parents=True, exist_ok=True)
@@ -605,6 +612,10 @@ def publish(candidates: dict) -> None:
                             str(cut_path(cid)), "--out", str(target)], check=True, capture_output=True)
             if senior:
                 seniors.append(number)
+            manifest["faces"][face_id] = {
+                "gender": GROUPS[group], "older": senior,
+                "stages": [{"min_age": 0, "file": f"/assets/headshots/stock/{face_id}.avif"}],
+            }
             row = candidates[cid]
             photos.append({
                 "face_id": face_id, "file": f"/assets/headshots/stock/{face_id}.avif", "use": USE[group],

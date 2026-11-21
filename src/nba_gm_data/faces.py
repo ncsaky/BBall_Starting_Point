@@ -66,18 +66,80 @@ def real_manifest() -> dict[str, Any]:
         return {}
 
 
-def face_url(face_id: str | None, library: str = LIBRARY) -> str | None:
-    ext = library_manifest(library).get("ext", "avif")
-    return f"{URL_ROOT}/{library}/{face_id}.{ext}" if face_id else None
+# Career stages. A library face is one fictional person and may hold several images of that person at different
+# ages (for example rookie, prime, veteran, late career), each with the youngest age it is shown from:
+#   manifest["faces"]["staff-m/0042"] = {"gender": "male",
+#                                         "stages": [{"min_age": 0, "file": "/assets/.../0042-a.avif"},
+#                                                    {"min_age": 26, "file": "/assets/.../0042-b.avif"}]}
+# The picture shown is the last stage whose min_age is at or below the person's current age. A single photo is a
+# face with one stage (min_age 0). A face missing from manifest["faces"] is one stage at <library>/<id>.<ext>.
+def face_entry(face_id: str | None, library: str = LIBRARY) -> dict[str, Any] | None:
+    return (library_manifest(library).get("faces") or {}).get(str(face_id or ""))
+
+
+def face_stages(face_id: str | None, library: str = LIBRARY) -> list[dict[str, Any]]:
+    if not face_id:
+        return []
+    entry = face_entry(face_id, library) or {}
+    stages = [stage for stage in entry.get("stages") or [] if stage.get("file")]
+    if not stages:
+        ext = library_manifest(library).get("ext", "avif")
+        stages = [{"min_age": 0, "file": f"{URL_ROOT}/{library}/{face_id}.{ext}"}]
+    return sorted(stages, key=lambda stage: float(stage.get("min_age") or 0))
+
+
+def stage_file(stages: list[dict[str, Any]], age: Any = None) -> str | None:
+    """The image for a person of this age: the last stage whose min_age <= age (the first stage if age is unknown)."""
+    if not stages:
+        return None
+    try:
+        age = float(age)
+    except (TypeError, ValueError):
+        return stages[0]["file"]
+    chosen = stages[0]
+    for stage in stages:
+        if float(stage.get("min_age") or 0) <= age:
+            chosen = stage
+    return chosen["file"]
+
+
+def face_url(face_id: str | None, library: str = LIBRARY, age: Any = None) -> str | None:
+    return stage_file(face_stages(face_id, library), age)
+
+
+@lru_cache(maxsize=4)
+def _stage_files(library: str = LIBRARY) -> dict[str, str]:
+    return {stage["file"]: face_id for face_id, entry in (library_manifest(library).get("faces") or {}).items()
+            for stage in entry.get("stages") or [] if stage.get("file")}
+
+
+def face_id_from_url(url: str | None, library: str = LIBRARY) -> str | None:
+    """The library face a stored picture URL belongs to (any of its stages), or None for real photos."""
+    text = str(url or "")
+    if text in _stage_files(library):
+        return _stage_files(library)[text]
+    marker = f"{URL_ROOT}/{library}/"
+    return text[len(marker):].rsplit(".", 1)[0] if text.startswith(marker) else None
+
+
+def stage_url(url: str | None, age: Any, library: str = LIBRARY) -> str | None:
+    """A stored picture URL moved to the stage that fits the person's current age (real photos unchanged)."""
+    face_id = face_id_from_url(url, library)
+    return face_url(face_id, library, age) if face_id and valid_face(face_id, library) else url
 
 
 def face_gender(face_id: str | None, library: str = LIBRARY) -> str | None:
+    entry = face_entry(face_id, library)
+    if entry and entry.get("gender"):
+        return entry["gender"]
     group = str(face_id or "").split("/")[0]
     return (library_manifest(library).get("groups", {}).get(group) or {}).get("gender")
 
 
 def valid_face(face_id: str | None, library: str = LIBRARY) -> bool:
     """A face id that exists in the current library (older saves may hold ids from a retired library)."""
+    if face_entry(face_id, library):
+        return True
     group, _, index = str(face_id or "").partition("/")
     info = library_manifest(library).get("groups", {}).get(group) or {}
     return index.isdigit() and 1 <= int(index) <= int(info.get("count") or 0)
@@ -173,7 +235,7 @@ def apply_staff_face(staff: dict[str, Any], used: set[str] | None = None) -> Non
     if not valid_face(staff.get("face_id")) or face_gender(staff["face_id"]) != staff["gender"]:
         key = str(staff.get("market_source_id") or staff.get("id") or staff.get("name"))
         staff["face_id"] = pick_face(group, key, used, senior=senior_band(staff.get("age")))
-    staff["headshot_url"] = face_url(staff["face_id"])
+    staff["headshot_url"] = face_url(staff["face_id"], age=staff.get("age"))
     staff["headshot_source"] = "stock_photo"
 
 
@@ -197,6 +259,9 @@ def ensure_staff_faces(people: Iterable[dict[str, Any]], held: Iterable[dict[str
     used_names = {normalize_name(p.get("name")) for p in [*held, *people] if p.get("headshot_url")}
     for person in people:
         if has_current_face(person):
+            if person.get("face_id"):
+                # The career stage that fits the person's current age (staff age each season).
+                person["headshot_url"] = face_url(person["face_id"], age=person.get("age"))
             continue
         if person.get("headshot_url") and not is_real_staff(person):
             # A face from a retired library (older save): a new photo, same person and name.
@@ -252,18 +317,17 @@ def prospect_face_id(key: str, used: set[str] | None = None) -> str | None:
 
 
 def prospect_headshot_url(prospect: dict[str, Any], used: set[str] | None = None, real_id: str | None = None) -> str | None:
-    """A prospect's picture: his stored one, else his real photo (real prospects only), else a stock photo."""
+    """A prospect's picture: his stored one (moved to the stage for his age), else his real photo (real prospects
+    only), else a library face."""
+    age = prospect.get("age")
     if is_current_url(prospect.get("headshot_url")):
-        return prospect["headshot_url"]
+        return stage_url(prospect["headshot_url"], age)
     photo = real_prospect_photo(real_id, prospect.get("name")) if prospect.get("league") != "generated" else None
-    return photo or face_url(prospect_face_id(str(prospect.get("id") or prospect.get("name")), used))
+    return photo or face_url(prospect_face_id(str(prospect.get("id") or prospect.get("name")), used), age=age)
 
 
 def _face_id_of(url: str | None) -> str | None:
-    marker = f"{URL_ROOT}/{LIBRARY}/"
-    if not url or not url.startswith(marker):
-        return None
-    return url[len(marker):].rsplit(".", 1)[0]
+    return face_id_from_url(url)
 
 
 def assign_class_faces(prospects: list[Any], real_ids: dict[str, str] | None = None) -> list[Any]:
