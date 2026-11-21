@@ -1223,7 +1223,11 @@ def assistant_gm_messages(active: dict[str, Any], save: dict[str, Any], feed: di
         messages.append({"id": f"trade-deadline:{deadline}", "date": deadline, "kind": "trade_deadline", "title": "Trade deadline today", "text": "Trade deadline today. Last chance to make a deal.", "target": "trade-deadline"})
     if "extensions" in set(save_legal_actions_for_date(save, today.isoformat())):
         for player in active.get("players", []):
-            if player.get("team_id") != team.get("id") or not extension_contract_window(contracts.get(player.get("id")))["eligible"]:
+            if player.get("team_id") != team.get("id") or not extension_contract_window(contracts.get(player.get("id")), player)["eligible"]:
+                continue
+            from .contract_ai import extension_deadline_for
+            if today.isoformat() > extension_deadline_for(contracts.get(player.get("id")), player,
+                                                          season_start_year_from_date(today.isoformat()), save):
                 continue
             totals = (save.get("player_season_stats") or {}).get(player["id"], {})
             games = int(totals.get("games") or 0)
@@ -3138,23 +3142,34 @@ def extension_room_payload(
         if not player:
             continue
         start_season = effective_extension_start_season(active, player, current)
-        safe_years = extension_safe_year_limit_for_app(player, start_season, 5)
+        # CONTRACT-TERMS: the CBA's term limit (veteran: five seasons including this one; rookie scale: five new
+        # seasons) on top of his retirement plans, and the first-year limit (his max; for a veteran also 140% of the
+        # greater of his salary and the average salary).
+        cba_years = int(candidate.get("max_new_years") or 0) or 5
+        safe_years = extension_safe_year_limit_for_app(player, start_season, min(5, cba_years))
+        from .contract_ai import extension_first_year_limit
+        current_contract = next((c for c in active.get("contracts", []) if c.get("player_id") == candidate_id), None)
+        first_year_limit = extension_first_year_limit(current_contract, player, start_season,
+                                                      str(candidate.get("extension_kind") or "veteran")) / 1_000_000
         max_aav_by_years = {
-            str(years): extension_max_legal_aav_for_app(active, save, team["id"], candidate_id, start_season, years)
+            str(years): round(min(first_year_limit, extension_max_legal_aav_for_app(active, save, team["id"], candidate_id, start_season, years)), 2)
             for years in range(1, safe_years + 1)
         }
         preferred_years = min(max(1, int(candidate.get("projected_years") or 3)), max(1, safe_years))
         current_year = season_start_year_for_app(save_active_contract_season(save))
         cap_rows = extension_cap_projection(active, save, team["id"], season_label_for_app(current_year), 4)
         eligible = bool(candidate.get("eligible")) and not bool(candidate.get("manual_review_required")) and safe_years > 0 and legal
-        # FA-REAL slice 2: rookie-scale extensions close the day before opening night.
-        from .save import player_extension_deadline, rookie_extension_window_closed
-        player_deadline = player_extension_deadline(save, player, season_start_year_from_date(current),
-                                                    next((c for c in active.get("contracts", []) if c.get("player_id") == candidate_id), None))
-        if eligible and rookie_extension_window_closed(save, active, player, current):
+        # CONTRACT-TERMS: each player's own deadline (rookie scale and deals with more than a season left: the day
+        # before opening night; a deal in its last season: through the season).
+        from .save import extension_contract_start_year, extension_window_closed_for_player, player_extension_deadline
+        player_deadline = player_extension_deadline(save, player, extension_contract_start_year(save, current), current_contract)
+        closed_text = None
+        if eligible and extension_window_closed_for_player(save, active, player, current):
             eligible = False
-            candidate = {**candidate, "eligibility_status": f"Rookie-scale extensions closed on {player_deadline}: he "
-                                                            "will be a restricted free agent next summer."}
+            closed_text = (f"His extension window closed on {player_deadline}: "
+                           + ("he will be a restricted free agent next summer." if candidate.get("extension_kind") == "rookie_scale"
+                              else "he can extend again next July, or re-sign when his deal ends."))
+            candidate = {**candidate, "eligibility_status": closed_text}
         contract_seasons = list((contract_for_player(active, candidate_id) or {}).get("seasons") or [])
         # Offer-builder facts (additive), all from the rule submit_extension_offer_action applies:
         # his price from you, the market ask it starts from, and the multi-season cap table with the tax rule.
@@ -3174,7 +3189,9 @@ def extension_room_payload(
                 **candidate,
                 **candidate_terms,
                 "cap_table": cap_table,
-                "eligibility_reason": extension_eligibility_reason(candidate, legal, safe_years),
+                "eligibility_reason": closed_text or extension_eligibility_reason(candidate, legal, safe_years),
+                "first_year_limit_millions": round(first_year_limit, 2),
+                "contract_history_text": contract_history_text(current_contract),
                 "extension_deadline": player_deadline,
                 "player_id": candidate_id,
                 "name": player.get("name") or candidate.get("name"),
@@ -3319,14 +3336,26 @@ EXTENSION_STATUS_REASONS = {
 }
 
 
+def contract_history_text(contract: dict[str, Any] | None) -> str | None:
+    """What the game knows about when his contract was signed (CONTRACT-TERMS contract_history), in plain words."""
+    from .contract_history import history_words
+    history = (contract or {}).get("contract_history")
+    if history:
+        return history_words(history)
+    if (contract or {}).get("signed_season"):
+        return f"Signed in {contract['signed_season']} for {contract.get('original_contract_years') or '?'} seasons."
+    return None
+
+
 def extension_eligibility_reason(candidate: dict[str, Any], legal: bool, safe_years: int) -> str | None:
     """Plain words for why submit_extension_offer_action would block him (None when he can be extended)."""
     if not legal:
-        return "Extensions are closed until the next window (preseason to January 15)."
+        return "Extensions are closed from the June 17 switch to July 6 (the July moratorium); they reopen on July 6."
     if candidate.get("manual_review_required"):
         return EXTENSION_STATUS_REASONS["manual_review_required"]
     if not candidate.get("eligible"):
-        return EXTENSION_STATUS_REASONS.get(str(candidate.get("eligibility_status") or ""), EXTENSION_STATUS_REASONS["not_extension_eligible"])
+        return (candidate.get("eligibility_text")
+                or EXTENSION_STATUS_REASONS.get(str(candidate.get("eligibility_status") or ""), EXTENSION_STATUS_REASONS["not_extension_eligible"]))
     if safe_years <= 0:
         return "He plans to retire before an extension would start."
     return None
@@ -3344,7 +3373,8 @@ def submit_extension_offer_action(
     room = extension_room_payload(canonical, save_path, user_team_abbrev(canonical, save_path), player_id)
     candidate = next((item for item in room.get("candidates", []) if item.get("player_id") == player_id), None)
     if not candidate or not candidate.get("eligible"):
-        reason = (candidate or {}).get("eligibility_status") or "The player is not currently extension eligible."
+        reason = ((candidate or {}).get("eligibility_reason") or (candidate or {}).get("eligibility_status")
+                  or "The player is not currently extension eligible.")
         return {"status": "blocked", "reason": str(reason), "room": room}
 
     years = int(payload.get("years") or candidate.get("preferred_years") or 1)

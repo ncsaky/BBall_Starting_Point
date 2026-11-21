@@ -1109,26 +1109,38 @@ def stop_four_checklist(canonical: dict[str, Any], save: dict[str, Any], team_id
 
 
 def rookie_extension_candidates(active: dict[str, Any], save: dict[str, Any], team_id: str) -> list[str]:
-    """First-round picks entering the fourth and last year of their rookie deal (extendable until the day before
-    opening night)."""
-    season = str((save.get("meta") or {}).get("season") or "")
-    start = _season_start(season)
+    """First-round picks entering the fourth and last year of their rookie deal who can still extend: the same rule
+    the extension screen applies (contract_ai.extension_contract_window), within his deadline (the day before opening
+    night), so a player listed here is never refused there (CONTRACT-TERMS)."""
+    from .contract_ai import extension_contract_window
+    from .save import extension_window_closed_for_player
+    today = str((save.get("state") or {}).get("current_date") or "")
     contracts = {c.get("player_id"): c for c in active.get("contracts", [])}
     out = []
     for player in active.get("players", []):
-        if player.get("team_id") != team_id or not is_rookie_scale_final_year(player, contracts.get(player["id"]), start):
+        if player.get("team_id") != team_id:
+            continue
+        window = extension_contract_window(contracts.get(player["id"]), player)
+        if not window.get("eligible") or window.get("extension_kind") != "rookie_scale":
+            continue
+        if today and extension_window_closed_for_player(save, active, player, today):
             continue
         out.append(player["id"])
     return out
 
 
 def is_rookie_scale_final_year(player: dict[str, Any], contract: dict[str, Any] | None, season_start: int) -> bool:
-    """A first-round pick in the fourth season of his rookie deal (the deal ends with this season)."""
+    """A first-round pick in the fourth season of his rookie deal (the deal ends with this season). Uses the
+    contract's evidence-based history for real contracts (contract_history) and the game's draft for its own."""
+    from .contract_ai import is_rookie_scale_contract
+    if not is_rookie_scale_contract(contract, player):
+        return False
+    history = (contract or {}).get("contract_history") or {}
     try:
-        draft_year = int(player.get("draft_year") or 0)
+        draft_year = int(player.get("draft_year") or history.get("draft_year") or 0)
     except (TypeError, ValueError):
         return False
-    if int(player.get("draft_round") or 0) != 1 or season_start - draft_year != 3:
+    if season_start - draft_year != 3:
         return False
     last = max((str(r.get("season")) for r in (contract or {}).get("seasons") or [] if r.get("salary") is not None),
                default="")

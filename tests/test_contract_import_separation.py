@@ -62,7 +62,10 @@ class ContractImportSeparationTests(unittest.TestCase):
         self.assertEqual(self.research, before)
         player = SimpleNamespace(**next(row for row in self.old["players"] if row["id"] == PID))
         contracts = to_plain(build_contracts([player], resolved, {}))
-        self.assertEqual(contracts, [self.contract(self.canonical)])
+        # CONTRACT-TERMS: the stored universe also carries the evidence-based contract history (applied on build and
+        # load by contract_history.apply_contract_history); the import itself is unchanged.
+        stored = {k: v for k, v in self.contract(self.canonical).items() if k != "contract_history"}
+        self.assertEqual(contracts, [stored])
         self.assertEqual(len(ledger), 1)
         self.assertEqual(len(ledger[0]["seasons"]), 5)
         self.assertEqual(len(reports[0]["source_rows"]), 2)
@@ -98,8 +101,13 @@ class ContractImportSeparationTests(unittest.TestCase):
                          [r for r in self.canonical["traits"] if r["player_id"] not in calibrated], "traits")
         for key in ("roster_slots", "player_health_profiles", "player_health_states", "injury_events", "draft_picks"):
             self.assertEqual(self.old[key], self.canonical[key], key)
-        old = {row["player_id"]: row for row in self.old["contracts"]}
-        changed = [row["player_id"] for row in self.canonical["contracts"] if row != old[row["player_id"]]]
+        # CONTRACT-TERMS rewrote every real contract's signing season and original length from evidence
+        # (contract_history); those fields are checked in test_contract_history.
+        history = {"contract_history", "original_contract_years", "signed_season"}
+        def without_history(row):
+            return {k: v for k, v in row.items() if k not in history}
+        old = {row["player_id"]: without_history(row) for row in self.old["contracts"]}
+        changed = [row["player_id"] for row in self.canonical["contracts"] if without_history(row) != old[row["player_id"]]]
         self.assertEqual(changed, [PID])
 
     def test_new_ledger_unknown_net_idempotence_and_no_resurrection(self):

@@ -20,7 +20,12 @@ def write_outputs(universe: CanonicalUniverse, out_dir: str | Path) -> dict[str,
     json_path = out / JSON_FILENAME
     sqlite_path = out / SQLITE_FILENAME
     coverage_path = out / COVERAGE_FILENAME
-    write_json(universe, json_path)
+    plain = to_plain(universe)
+    if isinstance(plain, dict) and plain.get("contracts"):
+        # CONTRACT-TERMS: a rebuilt universe carries the evidence-based contract history (contract_history.py).
+        from .contract_history import apply_contract_history
+        apply_contract_history(plain)
+    write_json(plain, json_path)
     write_json(universe.coverage_report, coverage_path)
     write_sqlite(universe, sqlite_path)
     return {"json": json_path, "sqlite": sqlite_path, "coverage": coverage_path}
@@ -39,6 +44,11 @@ def load_universe_json(path: str | Path) -> dict[str, Any]:
         # Stored universes predate public ranking; number generated classes by public grade on load.
         from .draft import apply_public_ranks
         apply_public_ranks(data["draft_prospects"])
+    if data.get("contracts"):
+        # CONTRACT-TERMS: each real contract's signing season and original length, rebuilt from evidence (the salary
+        # tables list only the seasons left). Idempotent; the stored 2026-27 file already carries them.
+        from .contract_history import apply_contract_history
+        apply_contract_history(data)
     return data
 
 
