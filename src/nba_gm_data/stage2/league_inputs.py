@@ -35,7 +35,7 @@ from pathlib import Path
 from statistics import median
 from typing import Any
 
-from ..experimental_inputs import (LEAGUE_ACCELERATION, InputInterpretation, InterpretedInputs,
+from ..experimental_inputs import (LEAGUE_ACCELERATION, InputInterpretation, InterpretedInputs, LeagueInterpretedInputs,
                                    VERSION as INPUT_INTERPRETATION_VERSION)
 from ..interior_defense import Coefficients, InteriorProfile, compile_profile
 from ..offense_response import OffenseCoefficients, OffensiveProfile, compile_offense
@@ -249,7 +249,7 @@ def _interpreted_with_notes(root: str | Path, player_id: str) -> tuple[Interpret
     league_p05 = _league_p05(root)
     bridged, notes = bridge_document(documents[player_id], priors, directory.get(player_id, {}).get("group", "wing"),
                                      league_p05, sprint_reference(root))
-    return InterpretedInputs(PlayerInputs(bridged), InputInterpretation()), notes
+    return LeagueInterpretedInputs(PlayerInputs(bridged), InputInterpretation()), notes
 
 
 def _league_priors(root: str | Path) -> dict:

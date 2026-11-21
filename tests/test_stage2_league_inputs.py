@@ -5,7 +5,7 @@ import json
 import unittest
 from pathlib import Path
 
-from nba_gm_data.experimental_inputs import InputInterpretation, InterpretedInputs
+from nba_gm_data.experimental_inputs import InputInterpretation, LeagueInterpretedInputs
 from nba_gm_data.interior_defense import compile_profile
 from nba_gm_data.offense_response import OffenseCoefficients, compile_offense, finishing_response, shooting_response
 from nba_gm_data.player_model import PlayerInputs
@@ -67,7 +67,7 @@ class LeagueBridgeTest(unittest.TestCase):
         self.assertGreater(hi, record["value"]["grade"])
         self.assertIn("group prior", record["evidence"][0]["method"])
         # The bridged document is a valid snapshot the physics pieces compile.
-        profile = compile_offense(InterpretedInputs(PlayerInputs(bridged), InputInterpretation()))
+        profile = compile_offense(LeagueInterpretedInputs(PlayerInputs(bridged), InputInterpretation()))
         self.assertAlmostEqual(profile.skill(1), record["value"]["grade"] / 100)
         self.assertAlmostEqual(sum(profile.modes), 1.0, places=9)
         # The source document is untouched.

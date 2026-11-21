@@ -38,12 +38,13 @@ _Owner: Claude (Opus agent), branch `worktree-agent-af77db31e56e7d239`. 2026-11-
   - There are no unknown cells in today's file. A test plants two and checks the rule.
   - Values are never moved.
 - **Unit conversion.** The rim-defense piece needs acceleration in m/s². The league file has only a grade for it. The bridge takes the player's league rank on that grade, finds the same rank in the 2000-2025 combine three-quarter-court sprint times, and converts with a = 2d/t². This is stored under its own explicit label; values run from 3.2 to 5.4 m/s², with a median of 4.3.
-- **Small marked additions to `experimental_inputs.py`:**
-  - It accepts the league file's scale and protocol labels as the same named quantities.
+- **Small marked addition to `experimental_inputs.py`:** a block at the end of the file, plus a one-line branch in `common_reader`.
+  - League snapshots are wrapped as `LeagueInterpretedInputs` and read by `LeagueInputReader`, a subclass that defers to the original reader for everything else.
+  - It accepts the league file's scale and protocol labels as the same named quantities, through additive aliases.
   - Its technique index is grade/100, the same rule as the native index.
   - Its four shot regions map onto the kernel's three: short paint plus midrange becomes the kernel's short-paint zone.
   - It accepts the league's shot-mode condition.
-  - Existing experiment paths are unchanged, and their tests pass.
+  - `InputReader`, `InterpretedInputs` and `same_input_snapshot` are byte-identical. Older tests pin their source, and my first version (edits inside `InputReader`) failed `test_mixed_pop_validation`, so the bridge moved into the subclass.
 - **Data finding:** 517 of 691 player documents fail the player model's own validator. Their choice mixes add up to 1 ± 0.000001, a rounding effect of 6-decimal storage. The bridge puts the leftover on the largest choice, only up to 0.00001; larger gaps still fail. **Suggested fix at the source:** re-normalise after rounding in `input_estimator`.
 - **How much of what the kernels read is prior (share of 691 players):**
 
@@ -281,9 +282,26 @@ Schedule the perimeter contest/openness piece right after, because it needs defe
   - `tests/test_stage2_seam.py`, `tests/test_stage2_league_inputs.py`.
 
 ## Checks
-- New tests pass: `tests.test_stage2_seam`, `tests.test_stage2_league_inputs`, 15 tests.
-- Core tests: see the result below.
-- Focused parallel set: see the result below.
+- **New tests:** `tests.test_stage2_seam` and `tests.test_stage2_league_inputs`, 15 tests, all pass. They cover:
+  - the default engine is identical;
+  - the stub equals today's engine;
+  - an unknown engine is rejected;
+  - the betting test and CLI carry the engine;
+  - saves and the app never pass an engine;
+  - 691 of 691 players compile;
+  - the cache equals a full compile;
+  - unknown cells get the group prior and its interval;
+  - the rounding repair is bounded;
+  - acceleration rises with the grade;
+  - helper behaviour in the shooting check.
+- **Core tests:** `bash scripts/run_core_tests.sh` ran 338 tests, OK (2 skipped).
+- **Focused parallel set** (`--match "interior|offense_response|…|winpick" --js`), 43 modules, 727 tests:
+  - Worker 1: 0 failures, 6 errors.
+  - Worker 2: 1 failure, 2 errors.
+  - **All 8 errors were missing fixture files.** The worktree had no git-ignored `output/*/reference` folders; I linked them from the main checkout.
+  - **The 1 failure was real.** `test_mixed_pop_validation` pins the source of `InputReader`, and my first version edited that class. Fixed by moving the league reading into a subclass.
+  - **After the fix:** the 10 affected modules plus the bridge tests were re-run (176 tests, OK, 2 skipped), and the 40-game default-engine hash is still identical.
+  - I did not re-run the whole focused set after the fix. The laptop was busy, and that run took about 80 minutes.
 
 ## Resume state
 - [x] Seam + flags; [x] bridge; [x] spot-check; [x] tests; [x] report.
