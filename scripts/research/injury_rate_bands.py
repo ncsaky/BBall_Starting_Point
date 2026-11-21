@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from build_injury_model import RATE_ANCHOR_SEASONS, rows, season_start
+from build_injury_model import TRACKER_ANCHOR_SEASONS as RATE_ANCHOR_SEASONS, rows, season_start
 from injury_lengths import sim_event_spells, sim_source
 from nba_gm_data.app_actions import load_app_canonical
 from nba_gm_data.injury_model import POSSESSIONS_PER_MINUTE

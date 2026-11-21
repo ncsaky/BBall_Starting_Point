@@ -55,8 +55,8 @@ def load_public():
 
 def section_league(public):
     print("== 1. Injury and illness stretches costing a regular-season game (all players, complete public records)")
-    print("   season   | all  | -mgmt | -opener | -both | -both,-trade split (anchor) | per 1,000 apps (both) | illness % | "
-          "1 / 2-5 / 6-10 / 11-20 / 21+ (anchor set, % of stretches)")
+    print("   season   | all  | -mgmt | -opener | -both | anchor: one per absence | per 1,000 apps (both) | illness % | "
+          "1 / 2-5 / 6-10 / 11-20 / 21+ (anchor set, % of absences, regular-season games)")
     totals = Counter()
     pooled_bands = Counter()
     for season, doc in public.items():
@@ -70,8 +70,9 @@ def section_league(public):
         both = sum(1 for s in med if not s["injury_management_only"] and not s["at_team_season_start"])
         new = builder.new_in_season(stretches)
         anchor = [stretches[i] for i in new]
+        lengths = builder.absence_lengths(stretches, new)
         illness = sum(1 for s in anchor if s["reason_category"] == "illness")
-        bands = Counter(band(int(s["regular_season_games_missed"]), BANDS) for s in anchor)
+        bands = Counter(band(lengths[i][1], BANDS) for i in new)
         pooled_bands.update(bands)
         totals.update({"all": all_, "mgmt": no_mgmt, "open": no_open, "both": both, "anchor": len(anchor),
                        "illness": illness, "apps": apps})
@@ -87,11 +88,12 @@ def section_league(public):
     for season, doc in public.items():
         stretches = doc["stretches"]
         new = builder.new_in_season(stretches)
-        inj = [stretches[i] for i, part in new.items() if part != "illness"]
-        ill = [stretches[i] for i, part in new.items() if part == "illness"]
-        b = Counter(band(int(s["regular_season_games_missed"]), BANDS) for s in inj)
-        bi = Counter(band(int(s["regular_season_games_missed"]), BANDS) for s in ill)
-        lost = sum(int(stretches[i]["regular_season_games_missed"]) for i in new)
+        lengths = builder.absence_lengths(stretches, new)
+        inj = [i for i, part in new.items() if part != "illness"]
+        ill = [i for i, part in new.items() if part == "illness"]
+        b = Counter(band(lengths[i][1], BANDS) for i in inj)
+        bi = Counter(band(lengths[i][1], BANDS) for i in ill)
+        lost = sum(lengths[i][1] for i in new)
         print(f"   {season} games lost per team to the anchor set: {lost / 30:5.1f}; to every injury or illness stretch: "
               f"{sum(int(s['regular_season_games_missed']) for s in stretches if s['reason_category'] in ('injury', 'illness')) / 30:5.1f}")
         print(f"   {season} injuries alone {len(inj) / 30:4.1f}/team: " +
@@ -145,7 +147,8 @@ def panel(canonical, public, tracker):
 
 
 def section_bands(canonical, public, tracker, model):
-    print("\n== 2. Anchor population by minutes and age: per 82 games played")
+    print("\n== 2. Anchor population by minutes and age: per 82 games played (the prediction uses the history at the season "
+          "start only, so it misses the season's repeat injuries and runs about a tenth low overall: compare bands)")
     players = {p["id"]: p for p in canonical["players"]}
     traits = trait_values_by_player(canonical)
     injuries, illness = engine_history(tracker, public, {t["abbrev"]: t["name"] for t in canonical["teams"]})

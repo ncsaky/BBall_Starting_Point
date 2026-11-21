@@ -91,7 +91,7 @@ class ModelFileTests(unittest.TestCase):
         model = json.loads((ROOT / im.MODEL_FILE).read_text())
         fit = model["rate_fit"]
         self.assertEqual(fit["anchor_seasons"], ["2023-24", "2024-25", "2025-26"])
-        self.assertTrue(fit["illness_in_history"])
+        self.assertFalse(fit["illness_in_history"])
         self.assertEqual(fit["history_weight"], im.HISTORY_WEIGHT)
         per_1000 = sum(info["anchor_per_1000_games"] for info in model["parts"].values())
         # 47-49 new in-season injuries and illnesses per 1,000 games in the three seasons (one per absence).

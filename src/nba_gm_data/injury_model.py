@@ -127,10 +127,14 @@ def history_entry(d: date, part: str, simulated: bool) -> tuple:
 
 
 def player_history(model: Mapping[str, Any], player_id: str, events: Iterable[Mapping[str, Any]]) -> list[tuple]:
-    """(start date, part[, simulated]) of the player's known injuries and illnesses: real recent history plus the save's
-    own events. Illness counts (INJURY-ANCHOR, 2026-11-21): the slopes were fit with it in the history, and over the
-    three complete public seasons counting it predicts who gets sick next much better (Poisson log-likelihood +31.5)
-    and who gets hurt next a little better (+5.7; scripts/research/injury_anchor_measure.py --section illness)."""
+    """(start date, part[, simulated]) of the player's known injuries: real recent history plus the save's own events.
+
+    Illness stays out (INJURY-ANCHOR, 2026-11-21). Over the three complete public seasons, counting it would predict who
+    gets sick next much better (Poisson log-likelihood +31.5) and who gets hurt next a little better (+5.7;
+    scripts/research/injury_anchor_measure.py --section illness), but the illness slopes were fit on the tracker, which
+    logs few illnesses. Counted in the game, its own illnesses feed back: over four seasons back to back illness rose
+    from 7.7 to 12.5 a team (real 5.6-7.0) and all spells from 46.6 to 53.7 (injury_multiseason_check.py, seed 17);
+    with illness left out the rate holds (42.4 to 42.7). Revisit once the slopes are refit on complete records."""
     out = []
     for start, part, *_ in (model.get("player_history") or {}).get(player_id, []):
         d = _parse(start)
@@ -143,7 +147,7 @@ def player_history(model: Mapping[str, Any], player_id: str, events: Iterable[Ma
         if any(source in DUPLICATE_EVENT_SOURCES for source in (event.get("source_ids") or [])):
             continue
         d, part = _parse(event.get("start_date")), event_part(event)
-        if d and part and (d, part) not in seen:
+        if d and part and part != "illness" and (d, part) not in seen:
             out.append(history_entry(d, part, simulated_event(event)))
             seen.add((d, part))
     return sorted(out)

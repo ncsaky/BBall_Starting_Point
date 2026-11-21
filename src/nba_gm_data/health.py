@@ -831,7 +831,7 @@ def v2_injury_draw(root, model, canonical, player, traits, state, profile, minut
     if pid not in history_cache:
         history_cache[pid] = im.player_history(model, pid, canonical.get("injury_events", []))
     history = history_cache[pid] + [im.history_entry(parse_date(e["start_date"]), e["body_part"], im.simulated_event(e))
-                                    for e in new_events if e.get("player_id") == pid and e.get("body_part")]
+                                    for e in new_events if e.get("player_id") == pid and e.get("body_part") != "illness"]
     player_traits = {key: traits.get((pid, key), 50.0) for key in ("rim_pressure", "offensive_rebounding", "stamina_cardio")}
     hazards = im.part_hazards(model, player, player_traits, minutes, history, game_date)
     scale = im.LEAGUE_RATE_SCALE * float(staff.get("injury_risk_multiplier", 1.0))

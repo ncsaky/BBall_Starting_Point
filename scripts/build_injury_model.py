@@ -18,7 +18,7 @@ the drawn part (diagnosis, days, games), weighted toward recent seasons.
 
     PYTHONPATH=src .venv/bin/python scripts/build_injury_model.py [--write] [--model-only]
 Writes data/canonical/injury_model_v2.json and (unless --model-only) the git-ignored per-player evidence
-data/canonical/injury_player_evidence_v4.json: real players' injury and illness history (the tracker since 2021-22
+data/canonical/injury_player_evidence_v4.json: real players' injury history (the tracker since 2021-22
 plus the public 2023-24 to 2025-26 stretches it lacks, see classify_public_stretches), forecasts and recovery speed.
 """
 from __future__ import annotations
@@ -108,8 +108,8 @@ def classify_public_stretches(tracker_rows, team_names, path=PUBLIC_HISTORY):
       "management"     every missed game listed only as "injury management" (planned games off for a known condition:
                        61% on the second night of a back-to-back, 93% after a same-part injury in the past year; the
                        tracker logged them about 0.6x as often as other one-game injuries; STAR-INJURIES report);
-      "illness"        an illness the tracker lacks: goes into the player's history too (INJURY-ANCHOR: the slopes are fit
-                       with illness in the history, and counting it predicts the next illness and injury better);
+      "illness"        an illness the tracker lacks: the engine's injury history counts injuries only (INJURY-ANCHOR
+                       tested adding illness; see injury_model.player_history for why it stays out);
       "no_part"        no body part the model knows;
       "not_medical"    coach's decision, G League, rest, personal, suspension, not with team, trade pending,
                        reconditioning without a named injury, or no reason given.
@@ -353,13 +353,13 @@ def game_share(quantiles) -> float:
 
 
 def public_history_entries(stretches, status):
-    """History rows [start, part, days, label] for the added injuries and illnesses. Days use the tracker's unit, two
-    per missed game (INJURIES-2); the engine reads only the date and part."""
+    """History rows [start, part, days, label] for the added injuries. Days use the tracker's unit, two per missed
+    game (INJURIES-2); the engine reads only the date and part."""
     out = defaultdict(list)
     for index, s in enumerate(stretches):
-        if status.get(index) not in ("added", "illness"):
+        if status.get(index) != "added":
             continue
-        part = "illness" if status[index] == "illness" else MERGE.get(s["body_part"], s["body_part"])
+        part = MERGE.get(s["body_part"], s["body_part"])
         diagnosis = next((d for d in s.get("diagnoses") or [] if d), "")
         label = f"{part} {diagnosis.lower()}".strip() if diagnosis else f"{part} injury"
         out[s["player_id"]].append([s["first_game_missed"], part, 2 * int(s["games_missed"]), label])
@@ -522,11 +522,11 @@ def main():
         if path.exists():
             stretches, status = classify_public_stretches(history, team_names, path)
             public[season] = (stretches, status, new_in_season(stretches))
-    # Injury and illness history as the engine reads it (injury_model.player_history): the tracker plus the public
+    # Injury history as the engine reads it (illness left out, injury_model.player_history): the tracker plus the public
     # stretches it lacks. The anchor uses the same history a new career starts with.
     engine_history = defaultdict(list)
     for pid, items in by_player.items():
-        engine_history[pid].extend((d, part) for d, part, _ in items)
+        engine_history[pid].extend((d, part) for d, part, _ in items if part != "illness")
     for stretches, status, _ in public.values():
         for pid, entries in public_history_entries(stretches, status).items():
             engine_history[pid].extend((date.fromisoformat(e[0]), e[1]) for e in entries)
@@ -679,7 +679,7 @@ def main():
                   "continuation of another absence); history updated within the season as the engine does",
         "anchor_player_seasons": len(anchor_rows), "anchor_games": anchor_games,
         "anchor_new_injuries": dict(sorted(new_by_season.items())), "anchor_no_body_part": unknown,
-        "anchor_segments": ANCHOR_SEGMENTS, "illness_in_history": True,
+        "anchor_segments": ANCHOR_SEGMENTS, "illness_in_history": False,
         "recovery_length_bands": {group: {"complete": complete, "tracker_pool": pool}
                                   for group, (complete, pool) in sorted(length_fix.items())},
     })
@@ -690,12 +690,12 @@ def main():
                                                        "d_rapm_1y_shrunk_ci", "d_rapm_2y", "d_poss_1y_pct")}
                                 for r in long_term]
     model["return_ramp"] = rows("injury_short_term.json")
-    # Real players' recent injuries and illnesses (start date, part, days) so a new save starts with their actual history:
+    # Real players' recent injuries (start date, part, days) so a new save starts with their actual history:
     # the same-part and other-part history terms decay over ~1.5 years, so five seasons cover everything that still matters.
     recent = defaultdict(list)
     for h in history:
         part = part_of(h)
-        if part and h.get("player_id") and h.get("start") and h["season"] >= "2021-22":
+        if part and part != "illness" and h.get("player_id") and h.get("start") and h["season"] >= "2021-22":
             recent[h["player_id"]].append([h["start"][:10], part, int(h.get("days") or 0), h.get("label")])
     # The tracker misses injuries that cost games (about a fifth in 2023-25, two-thirds in 2025-26), so the public
     # stretches fill in the ones it lacks (STAR-INJURIES for 2025-26; INJURY-ANCHOR for 2023-24 and 2024-25). The slope
