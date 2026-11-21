@@ -1540,6 +1540,11 @@ async function advanceSave(payload, simulationId) {
     showTradeDeadlinePrompt(result.trade_deadline_checkpoint, payload);
   } else if (result.postseason_checkpoint) {
     showPostseasonPrompt(result.postseason_checkpoint, payload);
+  } else if (result.rookie_option_checkpoint) {
+    // FA-REAL slice 2: the calendar stops on the rookie-option deadline while one of yours is undecided.
+    const names = (result.rookie_option_checkpoint.pending || []).map((row) => row.name).join(", ");
+    showToast(`Rookie-scale options are due today: ${names}. Decide them in Set The Roster; advancing again lets them lapse.`, true);
+    window.CardBoard?.open("phase-set_roster-checklist");
   } else if (result.status === "stopped" || result.result?.status === "stopped") {
     const stoppedDate = result.result?.through_date || state.home?.save?.current_date;
     showToast(`Simulation stopped at ${stoppedDate || "the current date"}.`);
