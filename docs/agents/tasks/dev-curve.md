@@ -39,5 +39,9 @@ this file. Not: `trait_adapter.py`, `impact_value.py`, `stage2/`, `sim.py`, inju
   (ages 21-22: bottom +0.76, top +0.88; 23-24: +0.32 / +0.28). Same-season thirds look level-dependent only because
   of regression to the mean. Talent target = Basketball Index LEBRON "all" curve (engine impact is in LEBRON units):
   19 +1.05, 20 +0.77, 21 +0.52, 22 +0.28, 23 +0.13, 24 +0.21, 25-27 ~0, 28-29 -0.1, 30-32 -0.21, 33-35 -0.47, 36+ -0.65.
-- Next: when laptop load allows: (1) talent probe on HEAD code: `PYTHONPATH=<before copy>/src:scripts/research`
+- 2026-11-21 17:00-17:45: tuned with the probe (runs t1-t9, final1; output/dev-curve/*.report*.txt), final constants
+  committed (0dc764a). Scorecard 18/18 byte-identical to pre-change; betting seeds 1001/2001 identical
+  (0.2041/0.5975/4.097/5.513 and 0.1972/0.5808/3.923/5.545). After run queued on Azure behind the before run
+  (snapshot copy in scratchpad `dev-curve-after`, output/dev-curve/after). Full test suite running (workers 2).
+- Old resume note: when laptop load allows: (1) talent probe on HEAD code: `PYTHONPATH=<before copy>/src:scripts/research`
   -> output/dev-curve/talent-before; (2) build spread table; (3) tune; (4) after run on Azure.
