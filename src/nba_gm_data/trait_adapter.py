@@ -14,6 +14,13 @@ How a trait is derived:
    trait. This keeps the legacy engine's calibrated scale intact while the new evidence decides which
    player sits where. It is engine plumbing, not a ratings adjustment.
 
+Both maps (input -> percentile, and composite -> trait) are continuous and have no hard ends
+(RATING-CEILING, 2026-11-21). Between league values they interpolate. Past the best (or worst) value in a league
+table they continue on the normal-score scale: each table's outer TAIL_SHARE is fitted as value = a + b * z, so a
+player who develops a tail-standard-deviation past today's best input sits a tail-standard-deviation past the best
+composite and, in turn, past the best trait value (AGENTS.md rule 3: no clipping). Every player in the league
+tables maps exactly as before; only values between or beyond league values behave differently.
+
 Weights are written down for review; they are not fitted to simulation outcomes (playoff translation is fitted
 to real playoff box production; see its entry).
 """
@@ -22,11 +29,13 @@ from __future__ import annotations
 from bisect import bisect_left, bisect_right
 from dataclasses import dataclass
 from functools import lru_cache
+from math import ceil
+from statistics import NormalDist
 from typing import Any, Iterable, Mapping
 
 from .player_model_registry import definition_registry
 
-ADAPTER_VERSION = "trait_adapter_v4_2026_11_18"
+ADAPTER_VERSION = "trait_adapter_v5_2026_11_21"
 
 PASS_FAMILIES = [f"F0{i}" for i in range(1, 10)]
 PASS_RECOGNITION = [f"{f}.recognition" for f in PASS_FAMILIES]
@@ -170,12 +179,87 @@ def _term_keys(term: str | list[str]) -> list[tuple[str, str | None]]:
     return out
 
 
+# Share of each league table (at least TAIL_MIN values) whose spread sets the continuation past either end.
+TAIL_SHARE = 0.05
+TAIL_MIN = 10
+
+
+def _tail_count(n: int) -> int:
+    return min(n - 1, max(TAIL_MIN, ceil(n * TAIL_SHARE)))
+
+
+def _mid_rank(sorted_values: list[float], value: float) -> float:
+    """Mid-rank (in players) of a value present in the table; ties share the middle of their run."""
+    return (bisect_left(sorted_values, value) + bisect_right(sorted_values, value)) / 2
+
+
 def _percentile(sorted_values: list[float], value: float) -> float:
-    """Mid-rank percentile in [0, 1]; ties share the same percentile."""
-    if not sorted_values:
+    """Continuous mid-rank percentile inside the league range.
+
+    A value in the table gets its mid-rank share (ties share the same percentile), exactly as the original step map
+    did. Between two league values the percentile is interpolated (the step map snapped it to the lower one).
+    Beyond either end it stays at the end's percentile; how far beyond is measured by _excess_z."""
+    n = len(sorted_values)
+    if not n:
         return 0.5
     lo, hi = bisect_left(sorted_values, value), bisect_right(sorted_values, value)
-    return ((lo + hi) / 2) / len(sorted_values)
+    if hi > lo or n == 1:
+        return ((lo + hi) / 2) / n
+    if lo == 0:
+        return _mid_rank(sorted_values, sorted_values[0]) / n
+    if lo == n:
+        return _mid_rank(sorted_values, sorted_values[-1]) / n
+    a, b = sorted_values[lo - 1], sorted_values[lo]
+    ra, rb = _mid_rank(sorted_values, a), _mid_rank(sorted_values, b)
+    return (ra + (rb - ra) * (value - a) / (b - a)) / n
+
+
+_TAIL_CACHE: dict[int, tuple[list[float], tuple[float, float]]] = {}
+
+
+def _tail_slopes(sorted_values: list[float]) -> tuple[float, float]:
+    """(top, bottom) value per normal-score unit: least squares of value on mid-rank normal score over the outer
+    TAIL_SHARE of the table (the whole table when a tail has no spread; 0 when the table has none at all).
+
+    League tables are fixed for a save and never edited, so the fit is kept per table object."""
+    cached = _TAIL_CACHE.get(id(sorted_values))
+    if cached is not None and cached[0] is sorted_values:
+        return cached[1]
+    n = len(sorted_values)
+    slopes = (0.0, 0.0)
+    if n >= 3:
+        nd = NormalDist()
+        zs = [nd.inv_cdf(_mid_rank(sorted_values, v) / n) for v in sorted_values]
+
+        def fit(idx: range) -> float:
+            xs = [sorted_values[i] for i in idx]
+            zz = [zs[i] for i in idx]
+            mz, mx = sum(zz) / len(zz), sum(xs) / len(xs)
+            var = sum((z - mz) ** 2 for z in zz)
+            return max(0.0, sum((z - mz) * (x - mx) for z, x in zip(zz, xs)) / var) if var else 0.0
+
+        k = _tail_count(n)
+        whole = None
+        out = []
+        for idx in (range(n - 1 - k, n), range(0, k + 1)):
+            slope = fit(idx)
+            if not slope:
+                whole = fit(range(n)) if whole is None else whole
+                slope = whole
+            out.append(slope)
+        slopes = (out[0], out[1])
+    _TAIL_CACHE[id(sorted_values)] = (sorted_values, slopes)
+    return slopes
+
+
+def _excess_z(sorted_values: list[float], value: float) -> float:
+    """How far past the league's best (positive) or worst (negative) value, in normal-score units of that tail."""
+    if not sorted_values or sorted_values[0] <= value <= sorted_values[-1]:
+        return 0.0
+    top, bottom = _tail_slopes(sorted_values)
+    if value > sorted_values[-1]:
+        return (value - sorted_values[-1]) / top if top else 0.0
+    return (value - sorted_values[0]) / bottom if bottom else 0.0
 
 
 def uncensor_top(sorted_values: list[float], ceiling: float = 99.5, tail: float = 0.05) -> list[float]:
@@ -250,18 +334,28 @@ def _scalars_for_player(inputs: Mapping[str, Any], definitions: Mapping[str, Any
     return out
 
 
-def _composite(scalars: Mapping[str, float], input_tables: Mapping[str, list[float]], trait: str) -> float | None:
-    total = weight_sum = 0.0
+def _composite_parts(scalars: Mapping[str, float], input_tables: Mapping[str, list[float]],
+                     trait: str) -> tuple[float, float] | None:
+    """(composite, excess): the declared weighted mean of input percentiles inside the league range, and the same
+    weighted mean of how far each input sits past the league's best or worst value (normal-score units)."""
+    total = excess = weight_sum = 0.0
     for term, weight in ADAPTER_SPEC[trait]:
-        pcts = []
+        pcts, beyond = [], []
         for input_id, outcome in _term_keys(term):
             key = f"{input_id}:{outcome}" if outcome else input_id
             if key in scalars and input_tables.get(key):
                 pcts.append(_percentile(input_tables[key], scalars[key]))
+                beyond.append(_excess_z(input_tables[key], scalars[key]))
         if pcts:
             total += weight * (sum(pcts) / len(pcts))
+            excess += weight * (sum(beyond) / len(beyond))
             weight_sum += weight
-    return total / weight_sum if weight_sum else None
+    return (total / weight_sum, excess / weight_sum) if weight_sum else None
+
+
+def _composite(scalars: Mapping[str, float], input_tables: Mapping[str, list[float]], trait: str) -> float | None:
+    parts = _composite_parts(scalars, input_tables, trait)
+    return parts[0] if parts else None
 
 
 def fit_adapter(league_inputs: Mapping[str, Mapping[str, Any]], league_traits: Mapping[str, Mapping[str, float]]) -> FittedAdapter:
@@ -291,14 +385,31 @@ def derive_traits(inputs: Mapping[str, Any], fitted: FittedAdapter) -> dict[str,
     scalars = _scalars_for_player(inputs, _definitions())
     out: dict[str, float] = {}
     for trait in LEGACY_TRAITS:
-        composite = _composite(scalars, fitted.input_tables, trait)
+        parts = _composite_parts(scalars, fitted.input_tables, trait)
         target = fitted.target_tables[trait]
-        if composite is None:
+        if parts is None:
             out[trait] = round(_value_at(target, 0.5), 3)  # no usable inputs: league median, never a crash
             continue
-        pct = _percentile(fitted.composite_tables[trait], composite)
-        out[trait] = round(_value_at(target, pct), 3)
+        out[trait] = round(_trait_value(fitted.composite_tables[trait], target, *parts), 3)
     return out
+
+
+def _trait_value(composites: list[float], target: list[float], composite: float, excess: float) -> float:
+    """Composite -> trait. Inside the league's composite range: the target's value at the composite's percentile.
+    Inputs past the league's ends move the composite along its own tail (excess tail-standard-deviations at the
+    composite tail's rate); a composite past the league's ends continues the target's tail by the same number of
+    tail-standard-deviations. Continuous everywhere, and exact for every league member (whose excess is 0)."""
+    c_top, c_bottom = _tail_slopes(composites)
+    if excess:
+        composite += excess * (c_top if excess > 0 else c_bottom)
+    if composites[0] <= composite <= composites[-1]:
+        return _value_at(target, _percentile(composites, composite))
+    end = composites[-1] if composite > composites[-1] else composites[0]
+    base = _value_at(target, _percentile(composites, end))
+    t_top, t_bottom = _tail_slopes(target)
+    if composite > end:
+        return base + (t_top * (composite - end) / c_top if c_top else 0.0)
+    return base + (t_bottom * (composite - end) / c_bottom if c_bottom else 0.0)
 
 
 def trait_input_weights(trait: str) -> dict[str, float]:

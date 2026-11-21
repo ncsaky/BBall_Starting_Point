@@ -21,6 +21,43 @@ class MappingTests(unittest.TestCase):
         self.assertEqual(defense, sorted(defense, reverse=True))  # defense side used for defense
 
 
+class NoHardTopTests(unittest.TestCase):
+    """RATING-CEILING (2026-11-21): the AI's value map is continuous and has no top."""
+
+    def setUp(self):
+        self.predictions = {f"p{i}": {"offense": 0.0, "defense": 0.0, "overall": i * 0.1} for i in range(60)}
+        # A summary-scale table rounded to 0.1 with tied runs, like the legacy league table.
+        target = [round(50 + (i // 3) * 0.9, 1) for i in range(60)]
+        self.target = target
+        self.tables = iv.build_tables(self.predictions, {"overall": iv.unround(target)})
+
+    def value(self, overall):
+        return iv.mapped(self.tables, {"offense": 0.0, "defense": 0.0, "overall": overall}, "overall")
+
+    def test_baseline_players_keep_their_rounded_value(self):
+        for i in range(60):
+            self.assertEqual(round(self.value(i * 0.1), 1), sorted(self.target)[i])
+
+    def test_no_flat_stretches_no_repeated_values_and_no_top(self):
+        xs = [x / 100 for x in range(-200, 1200)]
+        values = [self.value(x) for x in xs]
+        self.assertTrue(all(b > a for a, b in zip(values, values[1:])))
+        self.assertGreater(self.value(8.0), max(self.target) + 1.0)     # beyond the best baseline player: keeps rising
+        self.assertLess(self.value(-1.0), min(self.target))
+
+    def test_unround_stays_inside_each_rounding_interval(self):
+        values = [74.2, 74.2, 73.9, 73.9, 73.9, 75.7]
+        out = iv.unround(values)
+        self.assertEqual([round(v, 1) for v in out], sorted(values))
+        self.assertTrue(all(b > a for a, b in zip(out, out[1:])))
+        self.assertEqual(iv.unround([1.0, 2.0]), [1.0, 2.0])
+
+    def test_mapped_is_the_inverse_of_impact_from_summary(self):
+        source, target = self.tables["overall"]["source"], self.tables["overall"]["target"]
+        for x in (-1.0, 0.33, 2.71, 5.9, 7.5):
+            self.assertAlmostEqual(iv._carry(target, source, self.value(x)), x, places=9)
+
+
 @unittest.skipUnless((ROOT / iv.FIT_FILE).exists(), "impact fit not present")
 class FitFileTests(unittest.TestCase):
     def test_fit_has_both_sides_and_reasonable_validation(self):

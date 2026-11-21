@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 from nba_gm_data import ratings_model as rm
 from nba_gm_data.save import apply_development_events
-from nba_gm_data.trait_adapter import derive_traits
+from nba_gm_data.trait_adapter import LEGACY_TRAITS, derive_traits
 
 ROOT = Path(__file__).resolve().parents[1]
 INPUTS = ROOT / rm.INPUTS_FILE
@@ -161,6 +161,64 @@ class InputsModelIntegrationTests(unittest.TestCase):
         stored = canonical[rm.MODEL_KEY]["input_deltas"][self.pid]
         self.assertLessEqual(len(stored), 6)
         self.assertTrue(all(isinstance(v, float) for v in stored.values()))
+
+    def test_todays_players_map_exactly_as_the_original_step_map(self):
+        """RATING-CEILING: removing the hidden top changed nothing for anyone in the league tables."""
+        from bisect import bisect_left, bisect_right
+        from nba_gm_data import trait_adapter as ta
+
+        def step_pct(table, value):
+            lo, hi = bisect_left(table, value), bisect_right(table, value)
+            return ((lo + hi) / 2) / len(table)
+
+        def step_value_at(table, pct):
+            position = min(max(pct, 0.0), 1.0) * (len(table) - 1)
+            low = int(position)
+            high = min(low + 1, len(table) - 1)
+            return table[low] * (1 - (position - low)) + table[high] * (position - low)
+
+        fitted = rm._FITTED_CACHE[tuple(self.canonical[rm.MODEL_KEY]["fitted_key"])]
+        for pid, inputs in rm.load_league_inputs(ROOT).items():
+            scalars = ta._scalars_for_player(inputs, ta._definitions())
+            new = derive_traits(inputs, fitted)
+            for trait in ta.LEGACY_TRAITS:
+                total = weight_sum = 0.0
+                for term, weight in ta.ADAPTER_SPEC[trait]:
+                    keys = [f"{i}:{o}" if o else i for i, o in ta._term_keys(term)]
+                    pcts = [step_pct(fitted.input_tables[k], scalars[k]) for k in keys if k in scalars and fitted.input_tables.get(k)]
+                    if pcts:
+                        total += weight * (sum(pcts) / len(pcts))
+                        weight_sum += weight
+                old = (step_value_at(fitted.target_tables[trait], 0.5) if not weight_sum else
+                       step_value_at(fitted.target_tables[trait], step_pct(fitted.composite_tables[trait], total / weight_sum)))
+                self.assertEqual(new[trait], round(old, 3), (pid, trait))
+
+    def test_an_elite_player_keeps_rising_past_the_old_top(self):
+        """RATING-CEILING: Wembanyama's traits, value and sim impact keep rising as he develops (they stopped at the
+        league's opening-day best: value 78.0, sim impact 82.05)."""
+        from nba_gm_data.impact_value import installed_tables, player_impact, sim_impact
+        from nba_gm_data.save import player_attribute_summary, trait_values_by_player
+        pid = next(p["id"] for p in self.base["players"] if p["name"] == "Victor Wembanyama")
+        player = next(p for p in self.canonical["players"] if p["id"] == pid)
+        tables = installed_tables(self.canonical)
+        self.assertIsNotNone(tables)
+        rows = []
+        for step in (0, 10, 20, 30):
+            canonical = deepcopy(self.canonical)
+            canonical[rm.MODEL_KEY]["input_deltas"] = {}
+            if step:
+                rm.apply_development(canonical, {pid: {t: float(step) for t in LEGACY_TRAITS}}, [])
+            canonical.pop("_trait_values_by_player", None)
+            traits = trait_values_by_player(canonical)[pid]
+            rows.append((traits, player_attribute_summary(canonical, pid)["overall"], sim_impact(canonical, player, traits),
+                         player_impact(canonical, player)["overall"]))
+        for before, after in zip(rows, rows[1:]):
+            self.assertGreater(after[1], before[1])            # engine value
+            self.assertGreater(after[2], before[2])            # sim impact
+            self.assertGreater(after[3], before[3])            # fitted impact
+            self.assertTrue(all(after[0][t] >= before[0][t] for t in after[0]))
+        self.assertGreater(rows[-1][1], max(tables["overall"]["target"]) + 3.0)
+        self.assertGreater(rows[-1][2], max(tables["sim_impact"]["target"]) + 3.0)
 
     def test_legacy_universe_still_uses_the_legacy_development_path(self):
         canonical = deepcopy(self.base)
