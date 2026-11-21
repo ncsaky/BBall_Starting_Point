@@ -1431,9 +1431,29 @@ def dashboard_snapshot_payload(
             str(payload.get("draft_year") or current_draft_year(save)),
             limit=None,
         )),
+        # FA-REAL slice 2: stop 4 (set the roster) from rollover to the rookie-option deadline.
+        "set_roster": set_roster_payload(canonical, save, active, team_query),
     }
     context["snapshots"][cache_key] = result
     return result
+
+
+def set_roster_payload(canonical: dict[str, Any], save: dict[str, Any], active: dict[str, Any],
+                       team_query: str) -> dict[str, Any] | None:
+    """The user's stop-4 checklist while it matters: preseason, and the regular season through the rookie-option
+    deadline (only when an option is still open then)."""
+    from .save import rookie_option_deadline_for
+    phase = str((save.get("state") or {}).get("phase") or "")
+    today = str((save.get("state") or {}).get("current_date") or "")
+    if phase not in {"preseason", "regular_season"} or today > rookie_option_deadline_for(save):
+        return None
+    team = resolve_team(active, team_query)
+    if team["id"] != (save.get("meta") or {}).get("user_team_id"):
+        return None
+    checklist = offseason_checklist_payload(canonical, save, team_query, active=active)
+    if phase == "regular_season" and not checklist.get("pending_count"):
+        return None
+    return checklist
 
 
 def team_wants_action(canonical, save_path, payload, action="team_wants"):

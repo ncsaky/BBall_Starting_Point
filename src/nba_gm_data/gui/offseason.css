@@ -1,0 +1,50 @@
+/* FA-REAL slice 2: the offseason checklist windows (stop 1 "Decide who to keep", stop 3 "Signing day", stop 4
+   "Set the roster"). House table style (rule 12): double header rule, small bold header text, alternating rows,
+   whole-row hover. */
+.offseason-checklist { display: flex; flex-direction: column; height: 100%; min-height: 0; background: #fff; }
+.offseason-head { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px 6px; border-bottom: 1px solid var(--season-soft-line, #d5dde3); }
+.offseason-head p { margin: 0; font-size: 10px; color: #5c6b75; }
+.offseason-head h3 { margin: 2px 0 3px; font-size: 16px; }
+.offseason-head span { display: block; max-width: 640px; font-size: 11px; line-height: 1.35; color: #34424c; }
+.offseason-cap { display: flex; gap: 6px; align-items: flex-start; flex-wrap: wrap; justify-content: flex-end; }
+
+.offseason-stops { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin: 0; padding: 6px 12px; list-style: none; }
+.offseason-stops li { display: grid; grid-template-columns: 18px 1fr; column-gap: 6px; align-items: center; padding: 4px 6px; border: 1px solid var(--season-soft-line, #d5dde3); border-radius: 3px; color: #5c6b75; background: #f6f8f9; min-width: 0; }
+.offseason-stops li b { grid-row: span 2; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #d1dde8; color: #1d2a33; font-size: 10px; }
+.offseason-stops li span { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.offseason-stops li small { font-size: 9.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.offseason-stops li.is-current { border-color: #42667a; background: #e3ebf1; color: #1d2a33; box-shadow: inset 3px 0 #42667a; }
+.offseason-stops li.is-current b { background: #42667a; color: #fff; }
+
+.offseason-scroll { flex: 1; min-height: 0; overflow: auto; }
+.offseason-empty { margin: 14px 12px; font-size: 12px; color: #5c6b75; }
+.offseason-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-size: 11px; }
+.offseason-table thead th { position: sticky; top: 0; z-index: 2; height: 24px; padding: 0 6px; text-align: left; background: #fff;
+  border-bottom: 3px double var(--season-line, #b7c2cb); font-size: 9px; font-weight: 700; color: var(--season-text, #1d2a33); }
+.offseason-table tbody tr { background: #fff; }
+.offseason-table tbody tr:nth-child(even) { background: #eef1f3; }
+.offseason-table tbody tr:is(:hover, :focus-within) { background: #dce8f2; }
+.offseason-table tbody tr.is-pending { box-shadow: inset 3px 0 #c2862a; }
+.offseason-table tbody :is(th, td) { padding: 5px 6px; vertical-align: top; text-align: left; font-weight: 400; border-bottom: 1px solid var(--season-soft-line, #d5dde3); }
+.offseason-table small { display: block; margin-top: 2px; font-size: 9.5px; color: #5c6b75; }
+.offseason-table .offseason-due { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.offseason-table .offseason-money { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.offseason-table .offseason-player .fa-player-name { appearance: none; border: 0; padding: 0; background: none; font: inherit; font-weight: 700; color: #1d2a33; cursor: pointer; text-align: left; }
+.offseason-table .offseason-player .fa-player-name:hover { text-decoration: underline; }
+.offseason-table .offseason-text { line-height: 1.35; }
+.offseason-table .offseason-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.offseason-table .offseason-actions .ui-command { min-height: 22px; padding: 2px 7px; font-size: 10.5px; }
+.offseason-chip { display: inline-block; padding: 1px 6px; border-radius: 9px; font-size: 10px; font-weight: 700; background: #e3ebf1; color: #1d2a33; white-space: nowrap; }
+.offseason-chip.is-pending { background: #f6e2bf; color: #6b4610; }
+.offseason-chip:is(.is-declined, .is-not_tendered, .is-withdrawn) { background: #f0dcdc; color: #6d2323; }
+.offseason-chip:is(.is-exercised, .is-tendered, .is-accepted, .is-signed, .is-done) { background: #dbeadc; color: #1f4f25; }
+
+.offseason-recap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 8px 12px 10px; border-bottom: 1px solid var(--season-soft-line, #d5dde3); }
+.offseason-recap h4 { margin: 0 0 4px; font-size: 11px; }
+.offseason-recap :is(p, ul) { margin: 0; padding-left: 0; font-size: 11px; line-height: 1.35; list-style: none; color: #34424c; }
+.offseason-recap li small { color: #5c6b75; }
+
+@media (max-width: 1100px) {
+  .offseason-stops { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .offseason-recap { grid-template-columns: 1fr; }
+}
