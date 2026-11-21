@@ -3301,8 +3301,8 @@
     },
     "min2023": {
       "url": "https://www.hoopsrumors.com/2023/07/nba-minimum-salaries-for-2023-24.html",
-      "date": "2026-11-20",
-      "date_kind": "accessed"
+      "date": "2023-07-03",
+      "date_kind": "published"
     },
     "bref_barlodo01": {
       "url": "https://www.basketball-reference.com/players/b/barlodo01.html",
@@ -4363,6 +4363,256 @@
       "url": "https://www.nba.com/player/1628366/lonzo-ball",
       "date": "2026-11-20",
       "date_kind": "accessed"
+    },
+    "canonical_player_bios": {
+      "url": "https://www.nba.com/players",
+      "date": "2026-10-13",
+      "date_kind": "game_import_reference"
+    },
+    "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2023-01-22_03PM.pdf": {
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2023-01-22_03PM.pdf",
+      "date": "2023-01-22",
+      "date_kind": "published"
+    },
+    "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2024-04-22_07PM.pdf": {
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2024-04-22_07PM.pdf",
+      "date": "2024-04-22",
+      "date_kind": "published"
+    },
+    "https://www.nba.com/news/rockets-fred-vanvleet-tears-acl": {
+      "url": "https://www.nba.com/news/rockets-fred-vanvleet-tears-acl",
+      "date": "2025-09-22",
+      "date_kind": "published"
+    },
+    "https://www.hoopsrumors.com/2025/11/bradley-beal-to-undergo-season-ending-hip-surgery.html": {
+      "url": "https://www.hoopsrumors.com/2025/11/bradley-beal-to-undergo-season-ending-hip-surgery.html",
+      "date": "2025-11-12",
+      "date_kind": "published"
+    },
+    "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2025-11-07_07PM.pdf": {
+      "url": "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2025-11-07_07PM.pdf",
+      "date": "2025-11-07",
+      "date_kind": "published"
+    },
+    "min2026": {
+      "url": "https://www.hoopsrumors.com/2025/08/early-nba-minimum-salary-projections-for-2026-27.html",
+      "date": "2025-08-08",
+      "date_kind": "published"
+    },
+    "career_tyjerome": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4065733/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "career_neemiasqueta": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4397424/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "career_lindywaters": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4066317/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "career_sandromamukelashvili": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4278580/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "career_johnnyjuzang": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4432817/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "career_dominickbarlow": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4870562/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "career_brandonboston": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4432162/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "career_lukagarza": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4277951/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "career_stanleyumude": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4279532/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "career_tristanvukcevic": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4997537/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "career_malikwilliams": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4277880/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "career_quentonjackson": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4592829/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "career_drusmith": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4066993/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "career_calebhoustan": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4433623/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "career_joshminott": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4687718/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "career_patspencer": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4592714/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "career_jabariwalker": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4432446/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "career_harrisoningram": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4433618/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "prior_salary_haydengray": {
+      "url": "https://hoopshype.com/salaries/utah_jazz/",
+      "date": "2026-05-21",
+      "date_kind": "archived_capture"
+    },
+    "career_haydengray": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/5176420/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "prior_salary_arielhukporti": {
+      "url": "https://hoopshype.com/salaries/new_york_knicks/",
+      "date": "2026-05-21",
+      "date_kind": "archived_capture"
+    },
+    "career_arielhukporti": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4871141/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "prior_salary_andrejackson": {
+      "url": "https://hoopshype.com/salaries/milwaukee_bucks/",
+      "date": "2026-05-21",
+      "date_kind": "archived_capture"
+    },
+    "career_andrejackson": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4432190/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "prior_salary_keshadjohnson": {
+      "url": "https://hoopshype.com/salaries/miami_heat/",
+      "date": "2026-05-21",
+      "date_kind": "archived_capture"
+    },
+    "career_keshadjohnson": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4431786/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "prior_salary_bezmbeng": {
+      "url": "https://hoopshype.com/salaries/utah_jazz/",
+      "date": "2026-05-21",
+      "date_kind": "archived_capture"
+    },
+    "career_bezmbeng": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4898237/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "prior_salary_jonathanmogbo": {
+      "url": "https://hoopshype.com/salaries/toronto_raptors/",
+      "date": "2026-05-21",
+      "date_kind": "archived_capture"
+    },
+    "career_jonathanmogbo": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/5107897/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "prior_salary_julianphillips": {
+      "url": "https://hoopshype.com/salaries/minnesota_timberwolves/",
+      "date": "2026-05-21",
+      "date_kind": "archived_capture"
+    },
+    "career_julianphillips": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/5105553/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "prior_salary_jalenpickett": {
+      "url": "https://hoopshype.com/salaries/denver_nuggets/",
+      "date": "2026-05-21",
+      "date_kind": "archived_capture"
+    },
+    "career_jalenpickett": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4398390/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "prior_salary_maxshulga": {
+      "url": "https://hoopshype.com/salaries/boston_celtics/",
+      "date": "2026-05-21",
+      "date_kind": "archived_capture"
+    },
+    "career_maxshulga": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4701992/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "prior_salary_patspencer": {
+      "url": "https://hoopshype.com/salaries/golden_state_warriors/",
+      "date": "2026-05-21",
+      "date_kind": "archived_capture"
+    },
+    "prior_salary_keatonwallace": {
+      "url": "https://hoopshype.com/salaries/atlanta_hawks/",
+      "date": "2026-05-21",
+      "date_kind": "archived_capture"
+    },
+    "career_keatonwallace": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4279118/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "prior_salary_amariwilliams": {
+      "url": "https://hoopshype.com/salaries/boston_celtics/",
+      "date": "2026-05-21",
+      "date_kind": "archived_capture"
+    },
+    "career_amariwilliams": {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/4702745/stats?seasontype=2",
+      "date": "2026-10-14",
+      "date_kind": "archived_capture"
+    },
+    "prior_salary_jahmiryoung": {
+      "url": "https://hoopshype.com/salaries/miami_heat/",
+      "date": "2026-05-21",
+      "date_kind": "archived_capture"
+    },
+    "cap2023": {
+      "url": "https://www.nba.com/news/nba-salary-cap-2023-24-season",
+      "date": "2023-06-30",
+      "date_kind": "published"
     }
   },
   "decisions": {
@@ -4387,8 +4637,7 @@
         "sources": [
           "po2023",
           "https://www.hoopsrumors.com/2023/06/celtics-danilo-gallinari-exercises-2023-24-player-option.html",
-          "nba2023",
-          "https://www.hoopsrumors.com/2023/06/celtics-danilo-gallinari-exercises-2023-24-player-option.html"
+          "nba2023"
         ],
         "prior_season_box_value": null,
         "game_on_court_value_2026_snapshot": null,
@@ -4400,7 +4649,9 @@
           "pay2023",
           "team2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3196670
+        "estimated_market_aav_leave_one_summer_out": 3196670,
+        "age_on_june_29": null,
+        "age_basis": "tracker_age"
       },
       {
         "summer": 2023,
@@ -4440,9 +4691,12 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2891748
+        "estimated_market_aav_leave_one_summer_out": 2891748,
+        "age_on_june_29": 29,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -4482,7 +4736,8 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
         "signed_team": "DAL",
         "new_deal_years": 1,
@@ -4495,7 +4750,9 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/08/mavericks-to-sign-derrick-jones-jr.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3033595
+        "estimated_market_aav_leave_one_summer_out": 3033595,
+        "age_on_june_29": 26,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -4535,7 +4792,8 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
         "signed_team": "IND",
         "new_deal_years": 2,
@@ -4548,7 +4806,9 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/06/pacers-to-sign-bruce-brown-to-two-year-contract.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 13335638
+        "estimated_market_aav_leave_one_summer_out": 13335638,
+        "age_on_june_29": 26,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -4588,7 +4848,8 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
         "signed_team": "GSW",
         "new_deal_years": 4,
@@ -4601,7 +4862,9 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/06/draymond-green-to-re-sign-with-warriors-on-four-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 12714786
+        "estimated_market_aav_leave_one_summer_out": 12714786,
+        "age_on_june_29": 33,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -4641,7 +4904,8 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
         "signed_team": "NYK",
         "new_deal_years": 4,
@@ -4654,7 +4918,9 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/07/knicks-donte-divincenzo-agree-to-four-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 7915820
+        "estimated_market_aav_leave_one_summer_out": 7915820,
+        "age_on_june_29": 26,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -4697,7 +4963,9 @@
           "pay2023",
           "team2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3196837
+        "estimated_market_aav_leave_one_summer_out": 3196837,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2023,
@@ -4737,7 +5005,8 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
         "signed_team": "MIL",
         "new_deal_years": 3,
@@ -4750,7 +5019,9 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/07/bucks-officially-sign-middleton-lopez-beasley.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3196314
+        "estimated_market_aav_leave_one_summer_out": 3196314,
+        "age_on_june_29": 31,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -4790,7 +5061,8 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
         "signed_team": "CHI",
         "new_deal_years": 3,
@@ -4803,7 +5075,9 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/06/jevon-carter-leaves-bucks-agrees-to-three-year-deal-with-bulls.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 7421081
+        "estimated_market_aav_leave_one_summer_out": 7421081,
+        "age_on_june_29": 27,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -4843,9 +5117,12 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 18860496
+        "estimated_market_aav_leave_one_summer_out": 18860496,
+        "age_on_june_29": 28,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -4885,9 +5162,12 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 23771844
+        "estimated_market_aav_leave_one_summer_out": 23771844,
+        "age_on_june_29": 33,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -4929,7 +5209,9 @@
           "pay2023",
           "team2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2954791
+        "estimated_market_aav_leave_one_summer_out": 2954791,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2023,
@@ -4982,7 +5264,9 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/07/montrezl-harrell-returning-to-sixers-on-one-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2891748
+        "estimated_market_aav_leave_one_summer_out": 2891748,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2023,
@@ -5022,7 +5306,8 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
         "signed_team": "HOU",
         "new_deal_years": 3,
@@ -5035,7 +5320,9 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/06/rockets-to-sign-fred-vanvleet-to-three-year-contract.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 29318599
+        "estimated_market_aav_leave_one_summer_out": 29318599,
+        "age_on_june_29": 29,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -5075,9 +5362,12 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 11610180
+        "estimated_market_aav_leave_one_summer_out": 11610180,
+        "age_on_june_29": 24,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -5092,7 +5382,7 @@
         "prior_team_wins": 41,
         "prior_season_age": 29,
         "tracker_age_snapshot": 33,
-        "reported_injury": "Played eight games and had season-ending foot surgery.",
+        "reported_injury": "Missed most of the season and underwent foot surgery.",
         "prior_season_games_without_appearance": 74,
         "traded_as_part_of_option": false,
         "decision_report_date": "2023-04-25",
@@ -5100,7 +5390,8 @@
           "po2023",
           "https://www.hoopsrumors.com/2023/04/raptors-otto-porter-exercises-player-option.html",
           "nba2023",
-          "https://www.nba.com/news/raptors-otto-porter-jr-left-foot-injury"
+          "https://www.nba.com/news/raptors-otto-porter-jr-left-foot-injury",
+          "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2023-01-22_03PM.pdf"
         ],
         "prior_season_box_value": {
           "season_age": 29,
@@ -5120,7 +5411,9 @@
           "pay2023",
           "team2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2660666
+        "estimated_market_aav_leave_one_summer_out": 2660666,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2023,
@@ -5160,9 +5453,12 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 4958508
+        "estimated_market_aav_leave_one_summer_out": 4958508,
+        "age_on_june_29": 31,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -5204,7 +5500,9 @@
           "pay2023",
           "team2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 4628674
+        "estimated_market_aav_leave_one_summer_out": 4628674,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2023,
@@ -5246,7 +5544,9 @@
           "pay2023",
           "team2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3196670
+        "estimated_market_aav_leave_one_summer_out": 3196670,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2023,
@@ -5288,7 +5588,9 @@
           "pay2023",
           "team2023"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2710010
+        "estimated_market_aav_leave_one_summer_out": 2710010,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2023,
@@ -5328,9 +5630,12 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 28057935
+        "estimated_market_aav_leave_one_summer_out": 28057935,
+        "age_on_june_29": 27,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -5370,7 +5675,8 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
         "signed_team": "WAS",
         "new_deal_years": 4,
@@ -5383,7 +5689,9 @@
           "widget2023",
           "https://www.hoopsrumors.com/2023/06/wizards-kyle-kuzma-agree-to-four-year-contract.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 7916692
+        "estimated_market_aav_leave_one_summer_out": 7916692,
+        "age_on_june_29": 27,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -5430,7 +5738,9 @@
         "return_to_incumbent": null,
         "signing_sources": [],
         "no_same_team_return_by_opening": true,
-        "estimated_market_aav_leave_one_summer_out": 2425802
+        "estimated_market_aav_leave_one_summer_out": 2425802,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2024,
@@ -5471,7 +5781,9 @@
           "pay2024",
           "team2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2800990
+        "estimated_market_aav_leave_one_summer_out": 2800990,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2024,
@@ -5504,10 +5816,13 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "estimated_market_aav_leave_one_summer_out": 2612998,
-        "age_on_option_decision": 26
+        "age_on_option_decision": 26,
+        "age_on_june_29": 26,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -5548,7 +5863,9 @@
           "pay2024",
           "team2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3304173
+        "estimated_market_aav_leave_one_summer_out": 3304173,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2024,
@@ -5587,7 +5904,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "ORL",
         "new_deal_years": 3,
@@ -5600,7 +5918,9 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/06/magic-to-sign-kentavious-caldwell-pope-to-three-year-contract.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5124993
+        "estimated_market_aav_leave_one_summer_out": 5124993,
+        "age_on_june_29": 31,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -5642,7 +5962,9 @@
           "pay2024",
           "team2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3386511
+        "estimated_market_aav_leave_one_summer_out": 3386511,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2024,
@@ -5681,9 +6003,12 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3303632
+        "estimated_market_aav_leave_one_summer_out": 3303632,
+        "age_on_june_29": 31,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -5723,7 +6048,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "CHI",
         "new_deal_years": 3,
@@ -5736,7 +6062,9 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/jalen-smith-signing-with-bulls.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5454538
+        "estimated_market_aav_leave_one_summer_out": 5454538,
+        "age_on_june_29": 24,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -5776,7 +6104,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "PHI",
         "new_deal_years": 4,
@@ -5789,7 +6118,9 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/paul-george-signs-max-contract-with-sixers.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 30302991
+        "estimated_market_aav_leave_one_summer_out": 30302991,
+        "age_on_june_29": 34,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -5830,7 +6161,9 @@
           "pay2024",
           "team2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3303632
+        "estimated_market_aav_leave_one_summer_out": 3303632,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2024,
@@ -5870,9 +6203,12 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 4063503
+        "estimated_market_aav_leave_one_summer_out": 4063503,
+        "age_on_june_29": 35,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -5912,7 +6248,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "LAL",
         "new_deal_years": 2,
@@ -5925,7 +6262,9 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/lakers-lebron-james-agree-to-two-year-max-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 27425403
+        "estimated_market_aav_leave_one_summer_out": 27425403,
+        "age_on_june_29": 39,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -5964,9 +6303,12 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 19090398
+        "estimated_market_aav_leave_one_summer_out": 19090398,
+        "age_on_june_29": 28,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -6007,7 +6349,9 @@
           "pay2024",
           "team2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2988067
+        "estimated_market_aav_leave_one_summer_out": 2988067,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2024,
@@ -6046,9 +6390,12 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2425503
+        "estimated_market_aav_leave_one_summer_out": 2425503,
+        "age_on_june_29": 24,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -6089,7 +6436,9 @@
           "pay2024",
           "team2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2425503
+        "estimated_market_aav_leave_one_summer_out": 2425503,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2024,
@@ -6142,7 +6491,9 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/watanabe-signs-with-japans-chiba-jets.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2800905
+        "estimated_market_aav_leave_one_summer_out": 2800905,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2024,
@@ -6182,7 +6533,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "PHI",
         "new_deal_years": 4,
@@ -6195,7 +6547,9 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/caleb-martin-finalizing-deal-with-sixers-will-waive-paul-reed.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 8785393
+        "estimated_market_aav_leave_one_summer_out": 8785393,
+        "age_on_june_29": 28,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -6235,7 +6589,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "MIA",
         "new_deal_years": 2,
@@ -6248,7 +6603,9 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/06/heat-to-re-sign-kevin-love-to-two-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3361274
+        "estimated_market_aav_leave_one_summer_out": 3361274,
+        "age_on_june_29": 35,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -6263,7 +6620,7 @@
         "prior_team_wins": 46,
         "prior_season_age": 30,
         "tracker_age_snapshot": null,
-        "reported_injury": "Season-ending right shoulder surgery in March.",
+        "reported_injury": "Season-ending surgery on his right shoulder in March.",
         "prior_season_games_without_appearance": 39,
         "traded_as_part_of_option": false,
         "decision_report_date": "2024-06-28",
@@ -6290,7 +6647,9 @@
           "pay2024",
           "team2024"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3303632
+        "estimated_market_aav_leave_one_summer_out": 3303632,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2024,
@@ -6330,7 +6689,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "MIA",
         "new_deal_years": 1,
@@ -6343,7 +6703,9 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/heat-to-re-sign-thomas-bryant.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 2800905
+        "estimated_market_aav_leave_one_summer_out": 2800905,
+        "age_on_june_29": 26,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -6383,7 +6745,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "NYK",
         "new_deal_years": 5,
@@ -6396,7 +6759,9 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/06/og-anunoby-to-sign-five-year-contract-with-knicks.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5297266
+        "estimated_market_aav_leave_one_summer_out": 5297266,
+        "age_on_june_29": 26,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -6436,7 +6801,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "PHI",
         "new_deal_years": 2,
@@ -6449,7 +6815,9 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/06/eric-gordon-sixers-agree-to-minimum-salary-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3303632
+        "estimated_market_aav_leave_one_summer_out": 3303632,
+        "age_on_june_29": 35,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -6489,7 +6857,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "PHX",
         "new_deal_years": 2,
@@ -6502,7 +6871,9 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/suns-re-signing-josh-okogie-to-two-year-contract.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3135450
+        "estimated_market_aav_leave_one_summer_out": 3135450,
+        "age_on_june_29": 25,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -6517,14 +6888,15 @@
         "prior_team_wins": 49,
         "prior_season_age": null,
         "tracker_age_snapshot": 34,
-        "reported_injury": null,
+        "reported_injury": "Missed the season while recovering from a right meniscus injury.",
         "prior_season_games_without_appearance": 82,
         "traded_as_part_of_option": false,
         "decision_report_date": "2024-06-29",
         "sources": [
           "po2024",
           "https://www.hoopsrumors.com/2024/06/damion-lee-declines-player-option-with-suns.html",
-          "nba2024"
+          "nba2024",
+          "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2024-04-22_07PM.pdf"
         ],
         "prior_season_box_value": null,
         "game_on_court_value_2026_snapshot": null,
@@ -6547,7 +6919,9 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/suns-damion-lee-agree-to-one-year-contract.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3303308
+        "estimated_market_aav_leave_one_summer_out": 3303308,
+        "age_on_june_29": null,
+        "age_basis": "tracker_age"
       },
       {
         "summer": 2024,
@@ -6587,7 +6961,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "UTA",
         "new_deal_years": 2,
@@ -6600,7 +6975,9 @@
           "widget2024",
           "https://www.hoopsrumors.com/2024/07/drew-eubanks-to-sign-with-jazz.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5167878
+        "estimated_market_aav_leave_one_summer_out": 5167878,
+        "age_on_june_29": 27,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -6649,7 +7026,9 @@
           "https://www.hoopsrumors.com/2024/06/richaun-holmes-declines-option-re-signs-with-wizards.html"
         ],
         "deal_mechanism": "extension",
-        "estimated_market_aav_leave_one_summer_out": 3003632
+        "estimated_market_aav_leave_one_summer_out": 3003632,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2025,
@@ -6689,9 +7068,12 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3633643
+        "estimated_market_aav_leave_one_summer_out": 3633643,
+        "age_on_june_29": 29,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -6713,8 +7095,7 @@
         "sources": [
           "po2025",
           "https://www.hoopsrumors.com/2025/06/kyrie-irving-to-decline-option-re-sign-with-mavs-on-three-year-deal.html",
-          "nba2025",
-          "https://www.hoopsrumors.com/2025/06/kyrie-irving-to-decline-option-re-sign-with-mavs-on-three-year-deal.html"
+          "nba2025"
         ],
         "prior_season_box_value": {
           "season_age": 32,
@@ -6732,7 +7113,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "DAL",
         "new_deal_years": 3,
@@ -6745,7 +7127,9 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/06/kyrie-irving-to-decline-option-re-sign-with-mavs-on-three-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 27286434
+        "estimated_market_aav_leave_one_summer_out": 27286434,
+        "age_on_june_29": 33,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -6785,9 +7169,12 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3634405
+        "estimated_market_aav_leave_one_summer_out": 3634405,
+        "age_on_june_29": 33,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -6827,9 +7214,12 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3633643
+        "estimated_market_aav_leave_one_summer_out": 3633643,
+        "age_on_june_29": 31,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -6869,7 +7259,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "SAC",
         "new_deal_years": 1,
@@ -6882,7 +7273,9 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/10/russell-westbrook-to-sign-with-kings.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3725167
+        "estimated_market_aav_leave_one_summer_out": 3725167,
+        "age_on_june_29": 36,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -6922,7 +7315,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "LAC",
         "new_deal_years": 2,
@@ -6935,7 +7329,9 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/06/james-harden-declining-option-signing-new-two-year-deal-with-clippers.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 45477390
+        "estimated_market_aav_leave_one_summer_out": 45477390,
+        "age_on_june_29": 35,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -6975,7 +7371,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "LAC",
         "new_deal_years": 2,
@@ -6988,7 +7385,9 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/06/clippers-agree-to-two-year-deal-with-nicolas-batum.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3634595
+        "estimated_market_aav_leave_one_summer_out": 3634595,
+        "age_on_june_29": 36,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -7028,9 +7427,12 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 38500050
+        "estimated_market_aav_leave_one_summer_out": 38500050,
+        "age_on_june_29": 40,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -7070,7 +7472,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "HOU",
         "new_deal_years": 4,
@@ -7083,7 +7486,9 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/06/dorian-finney-smith-to-sign-four-year-contract-with-rockets.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3634595
+        "estimated_market_aav_leave_one_summer_out": 3634595,
+        "age_on_june_29": 32,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -7123,7 +7528,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "MIL",
         "new_deal_years": 3,
@@ -7136,7 +7542,9 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/06/bucks-bobby-portis-agree-to-three-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5968974
+        "estimated_market_aav_leave_one_summer_out": 5968974,
+        "age_on_june_29": 30,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -7176,9 +7584,12 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3633643
+        "estimated_market_aav_leave_one_summer_out": 3633643,
+        "age_on_june_29": 32,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -7218,7 +7629,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "MIL",
         "new_deal_years": 2,
@@ -7231,7 +7643,9 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/06/bucks-kevin-porter-jr-agree-to-two-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 6600009
+        "estimated_market_aav_leave_one_summer_out": 6600009,
+        "age_on_june_29": 25,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -7271,7 +7685,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "MIN",
         "new_deal_years": 3,
@@ -7284,7 +7699,9 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/06/julius-randle-to-sign-three-year-contract-with-timberwolves.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 11108181
+        "estimated_market_aav_leave_one_summer_out": 11108181,
+        "age_on_june_29": 30,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -7324,7 +7741,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "MIN",
         "new_deal_years": 5,
@@ -7337,7 +7755,9 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/06/timberwolves-naz-reid-agree-to-five-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 13322033
+        "estimated_market_aav_leave_one_summer_out": 13322033,
+        "age_on_june_29": 25,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -7377,9 +7797,12 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 6600009
+        "estimated_market_aav_leave_one_summer_out": 6600009,
+        "age_on_june_29": 29,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -7419,9 +7842,12 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3634405
+        "estimated_market_aav_leave_one_summer_out": 3634405,
+        "age_on_june_29": 31,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -7461,7 +7887,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "PHI",
         "new_deal_years": 1,
@@ -7474,7 +7901,9 @@
           "widget2025",
           "https://www.hoopsrumors.com/2025/07/eric-gordon-re-signs-with-sixers-on-one-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3634405
+        "estimated_market_aav_leave_one_summer_out": 3634405,
+        "age_on_june_29": 36,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -7514,9 +7943,12 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3080547
+        "estimated_market_aav_leave_one_summer_out": 3080547,
+        "age_on_june_29": 28,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -7556,9 +7988,12 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5765478
+        "estimated_market_aav_leave_one_summer_out": 5765478,
+        "age_on_june_29": 27,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -7598,9 +8033,12 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3634595
+        "estimated_market_aav_leave_one_summer_out": 3634595,
+        "age_on_june_29": 33,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -7640,7 +8078,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "CLE",
         "new_deal_years": 3,
@@ -7653,7 +8092,9 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/09/cavaliers-officially-re-sign-james-harden.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 42125161
+        "estimated_market_aav_leave_one_summer_out": 42125161,
+        "age_on_june_29": 36,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -7693,7 +8134,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "GSW",
         "new_deal_years": 1,
@@ -7706,7 +8148,9 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/07/draymond-green-warriors-agree-to-one-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3876797
+        "estimated_market_aav_leave_one_summer_out": 3876797,
+        "age_on_june_29": 36,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -7746,7 +8190,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "GSW",
         "new_deal_years": 2,
@@ -7759,7 +8204,9 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/06/al-horford-to-decline-option-sign-new-deal-with-warriors.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 4693459
+        "estimated_market_aav_leave_one_summer_out": 4693459,
+        "age_on_june_29": 40,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -7799,7 +8246,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "GSW",
         "new_deal_years": 2,
@@ -7812,7 +8260,9 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/07/warriors-to-re-sign-deanthony-melton.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3286583
+        "estimated_market_aav_leave_one_summer_out": 3286583,
+        "age_on_june_29": 28,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -7827,7 +8277,7 @@
         "prior_team_wins": 52,
         "prior_season_age": null,
         "tracker_age_snapshot": 32,
-        "reported_injury": "Missed the season following a torn right ACL.",
+        "reported_injury": "Missed the season after tearing his right ACL.",
         "prior_season_games_without_appearance": 82,
         "traded_as_part_of_option": false,
         "decision_report_date": "2026-06-29",
@@ -7835,7 +8285,8 @@
           "po2026",
           "https://www.hoopsrumors.com/2026/06/fred-vanvleet-to-exercise-25mm-player-option.html",
           "nba2026",
-          "https://www.nba.com/news/fred-vanvleet-torn-acl"
+          "https://www.nba.com/news/fred-vanvleet-torn-acl",
+          "https://www.nba.com/news/rockets-fred-vanvleet-tears-acl"
         ],
         "prior_season_box_value": null,
         "game_on_court_value_2026_snapshot": 61.59,
@@ -7845,9 +8296,12 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3875985
+        "estimated_market_aav_leave_one_summer_out": 3875985,
+        "age_on_june_29": 32,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -7862,14 +8316,15 @@
         "prior_team_wins": 42,
         "prior_season_age": 32,
         "tracker_age_snapshot": 33,
-        "reported_injury": null,
+        "reported_injury": "A hip fracture and surgery ended his season after six games.",
         "prior_season_games_without_appearance": 76,
         "traded_as_part_of_option": false,
         "decision_report_date": "2026-06-29",
         "sources": [
           "po2026",
           "https://www.hoopsrumors.com/2026/06/clippers-bradley-beal-opts-for-free-agency.html",
-          "nba2026"
+          "nba2026",
+          "https://www.hoopsrumors.com/2025/11/bradley-beal-to-undergo-season-ending-hip-surgery.html"
         ],
         "prior_season_box_value": {
           "season_age": 32,
@@ -7887,7 +8342,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "LAC",
         "new_deal_years": 2,
@@ -7900,7 +8356,9 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/08/bradley-beal-to-re-sign-with-clippers-on-two-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3875985
+        "estimated_market_aav_leave_one_summer_out": 3875985,
+        "age_on_june_29": 33,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -7940,7 +8398,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "LAL",
         "new_deal_years": 4,
@@ -7953,7 +8412,9 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/06/lakers-austin-reaves-agree-to-four-year-max-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 23648845
+        "estimated_market_aav_leave_one_summer_out": 23648845,
+        "age_on_june_29": 28,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -7993,9 +8454,12 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 11733647
+        "estimated_market_aav_leave_one_summer_out": 11733647,
+        "age_on_june_29": 27,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -8035,7 +8499,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "HOU",
         "new_deal_years": 2,
@@ -8048,7 +8513,9 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/07/rockets-marcus-smart-agree-to-two-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3876365
+        "estimated_market_aav_leave_one_summer_out": 3876365,
+        "age_on_june_29": 32,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -8088,9 +8555,12 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3876365
+        "estimated_market_aav_leave_one_summer_out": 3876365,
+        "age_on_june_29": 33,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -8130,9 +8600,12 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 26667346
+        "estimated_market_aav_leave_one_summer_out": 26667346,
+        "age_on_june_29": 31,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -8172,9 +8645,12 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 9778039
+        "estimated_market_aav_leave_one_summer_out": 9778039,
+        "age_on_june_29": 26,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -8214,7 +8690,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "MIL",
         "new_deal_years": 4,
@@ -8227,7 +8704,9 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/07/bucks-re-signing-gary-trent-jr-to-four-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5476830
+        "estimated_market_aav_leave_one_summer_out": 5476830,
+        "age_on_june_29": 27,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -8267,9 +8746,12 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3876797
+        "estimated_market_aav_leave_one_summer_out": 3876797,
+        "age_on_june_29": 31,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -8309,9 +8791,12 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3875985
+        "estimated_market_aav_leave_one_summer_out": 3875985,
+        "age_on_june_29": 32,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -8351,9 +8836,12 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5613964
+        "estimated_market_aav_leave_one_summer_out": 5613964,
+        "age_on_june_29": 27,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -8393,7 +8881,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "NYK",
         "new_deal_years": 3,
@@ -8406,7 +8895,9 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/06/knicks-jose-alvarado-agree-to-three-year-deal.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 5720153
+        "estimated_market_aav_leave_one_summer_out": 5720153,
+        "age_on_june_29": 28,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -8446,9 +8937,12 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3876365
+        "estimated_market_aav_leave_one_summer_out": 3876365,
+        "age_on_june_29": 31,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -8488,7 +8982,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "LAL",
         "new_deal_years": 4,
@@ -8501,7 +8996,9 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/07/lakers-agree-to-four-year-deal-with-mamukelashvili.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 14210530
+        "estimated_market_aav_leave_one_summer_out": 14210530,
+        "age_on_june_29": 27,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -8516,14 +9013,15 @@
         "prior_team_wins": 17,
         "prior_season_age": 27,
         "tracker_age_snapshot": 28,
-        "reported_injury": null,
+        "reported_injury": "Missed time with a right knee ligament injury.",
         "prior_season_games_without_appearance": 67,
         "traded_as_part_of_option": false,
         "decision_report_date": "2026-06-17",
         "sources": [
           "po2026",
           "https://www.hoopsrumors.com/2026/06/trae-young-plans-to-opt-out-become-free-agent.html",
-          "nba2026"
+          "nba2026",
+          "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2025-11-07_07PM.pdf"
         ],
         "prior_season_box_value": {
           "season_age": 27,
@@ -8541,7 +9039,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "WAS",
         "new_deal_years": 4,
@@ -8554,7 +9053,9 @@
           "widget2026",
           "https://www.hoopsrumors.com/2026/06/trae-young-agrees-to-four-year-deal-with-wizards.html"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3286484
+        "estimated_market_aav_leave_one_summer_out": 3286484,
+        "age_on_june_29": 27,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -8594,9 +9095,12 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
-        "estimated_market_aav_leave_one_summer_out": 3524356
+        "estimated_market_aav_leave_one_summer_out": 3524356,
+        "age_on_june_29": 30,
+        "age_basis": "birth_date"
       }
     ],
     "qualifying_offers": [
@@ -9711,10 +10215,10 @@
         "offer_contract": "standard_partial",
         "tendered": true,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2165000,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": "standard_minimum_by_service_unknown",
+        "qo_amount_basis": "minimum_from_seasons_with_nba_appearances",
         "qo_partial_guarantee": null,
         "signing_outcome": "signed_elsewhere",
         "offer_sheet_date": null,
@@ -9727,10 +10231,12 @@
           }
         ],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 4,
         "sources": [
           "https://www.basketball-reference.com/players/j/jeromty01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2023-06-30_bbr",
-          "qo2023"
+          "qo2023",
+          "career_tyjerome",
+          "min2023"
         ],
         "signed_team": "CLE",
         "new_deal_years": 2,
@@ -10585,19 +11091,21 @@
         "offer_contract": "standard_partial",
         "tendered": true,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2019706,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": "standard_minimum_by_service_unknown",
+        "qo_amount_basis": "minimum_from_seasons_with_nba_appearances",
         "qo_partial_guarantee": null,
         "signing_outcome": "re_signed_later",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 2,
         "sources": [
           "https://www.basketball-reference.com/players/q/quetane01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2023-06-30_bbr",
-          "qo2023"
+          "qo2023",
+          "career_neemiasqueta",
+          "min2023"
         ],
         "signed_team": "SAC",
         "new_deal_years": 2,
@@ -10902,19 +11410,20 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2001769,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "camp_deal",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 1,
         "sources": [
           "https://www.basketball-reference.com/players/d/dukeda01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2023-06-30_bbr",
-          "qo2023"
+          "qo2023",
+          "min2023"
         ],
         "signed_team": "PHI",
         "new_deal_years": 1,
@@ -11007,19 +11516,20 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2001769,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "signed_elsewhere",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 1,
         "sources": [
           "https://www.basketball-reference.com/players/l/lamban01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2023-06-30_bbr",
-          "qo2023"
+          "qo2023",
+          "min2023"
         ],
         "signed_team": "International",
         "new_deal_years": 1,
@@ -11060,19 +11570,20 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2001769,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "signed_elsewhere",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 1,
         "sources": [
           "https://www.basketball-reference.com/players/y/yurtsom01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2023-06-30_bbr",
-          "qo2023"
+          "qo2023",
+          "min2023"
         ],
         "signed_team": "UTA",
         "new_deal_years": 2,
@@ -11170,19 +11681,20 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2001769,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "signed_elsewhere",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 1,
         "sources": [
           "https://www.basketball-reference.com/players/k/knighna01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2023-06-30_bbr",
-          "qo2023"
+          "qo2023",
+          "min2023"
         ],
         "signed_team": "NYK",
         "agreement_report_date": null,
@@ -11275,10 +11787,10 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2219706,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "re_signed_date_unknown",
         "offer_sheet_date": null,
@@ -11292,10 +11804,12 @@
           }
         ],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 2,
         "sources": [
           "https://www.basketball-reference.com/players/w/waterli01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2023-06-30_bbr",
-          "qo2023"
+          "qo2023",
+          "career_lindywaters",
+          "min2023"
         ],
         "signed_team": "OKC",
         "agreement_report_date": null,
@@ -11331,19 +11845,20 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2001769,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "re_signed_date_unknown",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 1,
         "sources": [
           "https://www.basketball-reference.com/players/s/schofad01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2023-06-30_bbr",
-          "qo2023"
+          "qo2023",
+          "min2023"
         ],
         "signed_team": "ORL",
         "agreement_report_date": null,
@@ -11558,10 +12073,10 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2219706,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "re_signed_later",
         "offer_sheet_date": null,
@@ -11575,10 +12090,12 @@
           }
         ],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 2,
         "sources": [
           "https://www.basketball-reference.com/players/m/mamuksa01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2023-06-30_bbr",
-          "qo2023"
+          "qo2023",
+          "career_sandromamukelashvili",
+          "min2023"
         ],
         "signed_team": "SAS",
         "new_deal_years": 1,
@@ -11619,7 +12136,7 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": 2219706,
+        "qo_amount": 2001769,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
         "qo_amount_basis": "minimum_plus_200k_lower_bound",
@@ -11628,7 +12145,7 @@
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": 2,
+        "service_years_lower_bound": 1,
         "sources": [
           "bref_bantoda01",
           "https://www.basketball-reference.com/players/b/bantoda01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2023-06-30_bbr",
@@ -13131,19 +13648,21 @@
         "offer_contract": "standard_partial",
         "tendered": true,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2087519,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": "standard_minimum_by_service_unknown",
+        "qo_amount_basis": "minimum_from_seasons_with_nba_appearances",
         "qo_partial_guarantee": 93000,
         "signing_outcome": "re_signed_later",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 2,
         "sources": [
           "https://www.basketball-reference.com/players/j/juzanjo01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2024-06-30_bbr",
-          "qo2024"
+          "qo2024",
+          "career_johnnyjuzang",
+          "min2024"
         ],
         "signed_team": "UTA",
         "new_deal_years": 4,
@@ -13916,7 +14435,8 @@
           "https://www.basketball-reference.com/players/b/barlodo01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2024-06-30_bbr",
           "min2024",
           "qo2024",
-          "qo_formula"
+          "qo_formula",
+          "career_dominickbarlow"
         ],
         "signed_team": "ATL",
         "agreement_report_date": null,
@@ -14024,7 +14544,8 @@
           "https://www.basketball-reference.com/players/b/bostobr01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2024-06-30_bbr",
           "min2024",
           "qo2024",
-          "qo_formula"
+          "qo_formula",
+          "career_brandonboston"
         ],
         "signed_team": "SAS",
         "new_deal_years": 1,
@@ -14065,10 +14586,10 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2067722,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "re_signed_date_unknown",
         "offer_sheet_date": null,
@@ -14082,10 +14603,11 @@
           }
         ],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 1,
         "sources": [
           "https://www.basketball-reference.com/players/d/dowtije01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2024-06-30_bbr",
-          "qo2024"
+          "qo2024",
+          "min2024"
         ],
         "signed_team": "PHI",
         "agreement_report_date": null,
@@ -14121,19 +14643,20 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2067722,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "signed_elsewhere",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 1,
         "sources": [
           "https://www.basketball-reference.com/players/e/edwarke02.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2024-06-30_bbr",
-          "qo2024"
+          "qo2024",
+          "min2024"
         ],
         "signed_team": "DAL",
         "agreement_report_date": null,
@@ -14234,19 +14757,21 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2362606,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "re_signed_later",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 3,
         "sources": [
           "https://www.basketball-reference.com/players/g/garzalu01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2024-06-30_bbr",
-          "qo2024"
+          "qo2024",
+          "career_lukagarza",
+          "min2024"
         ],
         "signed_team": "MIN",
         "new_deal_years": 2,
@@ -14417,19 +14942,20 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2067722,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "not_resolved_in_sources",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 1,
         "sources": [
           "https://www.basketball-reference.com/players/q/quinole01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2024-06-30_bbr",
-          "qo2024"
+          "qo2024",
+          "min2024"
         ],
         "signed_team": null,
         "agreement_report_date": null,
@@ -14463,10 +14989,10 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2067722,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "signed_elsewhere",
         "offer_sheet_date": null,
@@ -14480,10 +15006,11 @@
           }
         ],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 1,
         "sources": [
           "https://www.basketball-reference.com/players/t/thorjt01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2024-06-30_bbr",
-          "qo2024"
+          "qo2024",
+          "min2024"
         ],
         "signed_team": "CLE",
         "agreement_report_date": null,
@@ -14519,10 +15046,10 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2287519,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "signed_elsewhere",
         "offer_sheet_date": null,
@@ -14536,10 +15063,12 @@
           }
         ],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 2,
         "sources": [
           "https://www.basketball-reference.com/players/u/umudest01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2024-06-30_bbr",
-          "qo2024"
+          "qo2024",
+          "career_stanleyumude",
+          "min2024"
         ],
         "signed_team": "MIL",
         "agreement_report_date": null,
@@ -14575,19 +15104,21 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2067722,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "re_signed_date_unknown",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 1,
         "sources": [
           "https://www.basketball-reference.com/players/v/vukcetr01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2024-06-30_bbr",
-          "qo2024"
+          "qo2024",
+          "career_tristanvukcevic",
+          "min2024"
         ],
         "signed_team": "WAS",
         "agreement_report_date": null,
@@ -14623,19 +15154,21 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2067722,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "camp_deal",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 1,
         "sources": [
           "https://www.basketball-reference.com/players/w/willima11.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2024-06-30_bbr",
-          "qo2024"
+          "qo2024",
+          "career_malikwilliams",
+          "min2024"
         ],
         "signed_team": "MIA",
         "new_deal_years": 1,
@@ -17878,19 +18411,21 @@
         "offer_contract": "standard_partial",
         "tendered": true,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2378870,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": "standard_minimum_by_service_unknown",
+        "qo_amount_basis": "minimum_from_seasons_with_nba_appearances",
         "qo_partial_guarantee": 102000,
         "signing_outcome": "re_signed_date_unknown",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 3,
         "sources": [
           "https://www.basketball-reference.com/players/j/jacksqu01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2025-06-30_bbr",
-          "qo2025"
+          "qo2025",
+          "career_quentonjackson",
+          "min2025"
         ],
         "signed_team": "IND",
         "agreement_report_date": null,
@@ -18357,19 +18892,21 @@
         "offer_contract": "standard_partial",
         "tendered": true,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2378870,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": "standard_minimum_by_service_unknown",
+        "qo_amount_basis": "minimum_from_seasons_with_nba_appearances",
         "qo_partial_guarantee": 102000,
         "signing_outcome": "re_signed_later",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 3,
         "sources": [
           "https://www.basketball-reference.com/players/s/smithdr01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2025-06-30_bbr",
-          "qo2025"
+          "qo2025",
+          "career_drusmith",
+          "min2025"
         ],
         "signed_team": "MIA",
         "new_deal_years": 3,
@@ -18718,7 +19255,8 @@
           "https://www.basketball-reference.com/players/b/barlodo01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2025-06-30_bbr",
           "min2025",
           "qo2025",
-          "qo_formula"
+          "qo_formula",
+          "career_dominickbarlow"
         ],
         "signed_team": "PHI",
         "agreement_report_date": null,
@@ -18754,19 +19292,21 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2578870,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "camp_deal",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 3,
         "sources": [
           "https://www.basketball-reference.com/players/h/houstca01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2025-06-30_bbr",
-          "qo2025"
+          "qo2025",
+          "career_calebhoustan",
+          "min2025"
         ],
         "signed_team": "ATL",
         "new_deal_years": 1,
@@ -18864,19 +19404,21 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2578870,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "signed_elsewhere",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 3,
         "sources": [
           "https://www.basketball-reference.com/players/m/minotjo01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2025-06-30_bbr",
-          "qo2025"
+          "qo2025",
+          "career_joshminott",
+          "min2025"
         ],
         "signed_team": "BOS",
         "new_deal_years": 2,
@@ -18982,19 +19524,21 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2496274,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "re_signed_date_unknown",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 2,
         "sources": [
           "https://www.basketball-reference.com/players/s/spencpa01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2025-06-30_bbr",
-          "qo2025"
+          "qo2025",
+          "career_patspencer",
+          "min2025"
         ],
         "signed_team": "GSW",
         "agreement_report_date": null,
@@ -19030,19 +19574,21 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2578870,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "qo_amount_basis": "minimum_plus_200k_lower_bound",
         "qo_partial_guarantee": null,
         "signing_outcome": "signed_elsewhere",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 3,
         "sources": [
           "https://www.basketball-reference.com/players/w/walkeja01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2025-06-30_bbr",
-          "qo2025"
+          "qo2025",
+          "career_jabariwalker",
+          "min2025"
         ],
         "signed_team": "PHI",
         "agreement_report_date": null,
@@ -21695,10 +22241,10 @@
         "offer_contract": "standard_partial",
         "tendered": true,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2449421,
         "qo_upper_estimate": null,
         "prior_season_salary": null,
-        "qo_amount_basis": "standard_minimum_by_service_unknown",
+        "qo_amount_basis": "minimum_from_seasons_with_nba_appearances",
         "qo_partial_guarantee": 109000,
         "signing_outcome": "camp_deal",
         "offer_sheet_date": null,
@@ -21712,10 +22258,12 @@
           }
         ],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 2,
         "sources": [
           "https://www.basketball-reference.com/players/i/ingraha01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2026-06-30_bbr",
-          "qo2026"
+          "qo2026",
+          "career_harrisoningram",
+          "min2026"
         ],
         "signed_team": "UTA",
         "new_deal_years": 1,
@@ -22214,19 +22762,22 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2385117,
         "qo_upper_estimate": null,
-        "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "prior_season_salary": 14631,
+        "qo_amount_basis": "estimated_from_salary_and_service",
         "qo_partial_guarantee": null,
         "signing_outcome": "camp_deal",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 1,
         "sources": [
           "https://www.basketball-reference.com/players/g/grayha01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2026-06-30_bbr",
-          "qo2026"
+          "qo2026",
+          "prior_salary_haydengray",
+          "career_haydengray",
+          "min2026"
         ],
         "signed_team": "BOS",
         "new_deal_years": 1,
@@ -22267,19 +22818,22 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2649421,
         "qo_upper_estimate": null,
-        "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "prior_season_salary": 1955377,
+        "qo_amount_basis": "estimated_from_salary_and_service",
         "qo_partial_guarantee": null,
         "signing_outcome": "signed_elsewhere",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 2,
         "sources": [
           "https://www.basketball-reference.com/players/h/hukpoar01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2026-06-30_bbr",
-          "qo2026"
+          "qo2026",
+          "prior_salary_arielhukporti",
+          "career_arielhukporti",
+          "min2026"
         ],
         "signed_team": "PHI",
         "new_deal_years": 1,
@@ -22320,19 +22874,22 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2999264,
         "qo_upper_estimate": null,
-        "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "prior_season_salary": 2221677,
+        "qo_amount_basis": "estimated_from_salary_and_service",
         "qo_partial_guarantee": null,
         "signing_outcome": "camp_deal",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 3,
         "sources": [
           "https://www.basketball-reference.com/players/j/jacksan01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2026-06-30_bbr",
-          "qo2026"
+          "qo2026",
+          "prior_salary_andrejackson",
+          "career_andrejackson",
+          "min2026"
         ],
         "signed_team": "TOR",
         "new_deal_years": 1,
@@ -22373,19 +22930,22 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2649421,
         "qo_upper_estimate": null,
-        "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "prior_season_salary": 1955377,
+        "qo_amount_basis": "estimated_from_salary_and_service",
         "qo_partial_guarantee": null,
         "signing_outcome": "re_signed_date_unknown",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 2,
         "sources": [
           "https://www.basketball-reference.com/players/j/johnske10.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2026-06-30_bbr",
-          "qo2026"
+          "qo2026",
+          "prior_salary_keshadjohnson",
+          "career_keshadjohnson",
+          "min2026"
         ],
         "signed_team": "MIA",
         "agreement_report_date": null,
@@ -22421,19 +22981,22 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2385117,
         "qo_upper_estimate": null,
-        "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "prior_season_salary": 219459,
+        "qo_amount_basis": "estimated_from_salary_and_service",
         "qo_partial_guarantee": null,
         "signing_outcome": "camp_deal",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 1,
         "sources": [
           "https://www.basketball-reference.com/players/m/mbengbe01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2026-06-30_bbr",
-          "qo2026"
+          "qo2026",
+          "prior_salary_bezmbeng",
+          "career_bezmbeng",
+          "min2026"
         ],
         "signed_team": "CHA",
         "new_deal_years": 1,
@@ -22474,19 +23037,22 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2649421,
         "qo_upper_estimate": null,
-        "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "prior_season_salary": 1955377,
+        "qo_amount_basis": "estimated_from_salary_and_service",
         "qo_partial_guarantee": null,
         "signing_outcome": "signed_elsewhere",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 2,
         "sources": [
           "https://www.basketball-reference.com/players/m/mogbojo01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2026-06-30_bbr",
-          "qo2026"
+          "qo2026",
+          "prior_salary_jonathanmogbo",
+          "career_jonathanmogbo",
+          "min2026"
         ],
         "signed_team": "SAC",
         "agreement_report_date": null,
@@ -22522,19 +23088,22 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2999264,
         "qo_upper_estimate": null,
-        "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "prior_season_salary": 2221677,
+        "qo_amount_basis": "estimated_from_salary_and_service",
         "qo_partial_guarantee": null,
         "signing_outcome": "camp_deal",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 3,
         "sources": [
           "https://www.basketball-reference.com/players/p/phillju01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2026-06-30_bbr",
-          "qo2026"
+          "qo2026",
+          "prior_salary_julianphillips",
+          "career_julianphillips",
+          "min2026"
         ],
         "signed_team": "HOU",
         "new_deal_years": 1,
@@ -22575,19 +23144,22 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2999264,
         "qo_upper_estimate": null,
-        "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "prior_season_salary": 2221677,
+        "qo_amount_basis": "estimated_from_salary_and_service",
         "qo_partial_guarantee": null,
         "signing_outcome": "not_resolved_in_sources",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 3,
         "sources": [
           "https://www.basketball-reference.com/players/p/pickeja02.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2026-06-30_bbr",
-          "qo2026"
+          "qo2026",
+          "prior_salary_jalenpickett",
+          "career_jalenpickett",
+          "min2026"
         ],
         "signed_team": null,
         "agreement_report_date": null,
@@ -22621,19 +23193,22 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2385117,
         "qo_upper_estimate": null,
-        "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "prior_season_salary": 681847,
+        "qo_amount_basis": "estimated_from_salary_and_service",
         "qo_partial_guarantee": null,
         "signing_outcome": "signed_elsewhere",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 1,
         "sources": [
           "https://www.basketball-reference.com/players/s/shulgma01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2026-06-30_bbr",
-          "qo2026"
+          "qo2026",
+          "prior_salary_maxshulga",
+          "career_maxshulga",
+          "min2026"
         ],
         "signed_team": "International",
         "new_deal_years": 2,
@@ -22674,19 +23249,22 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2737526,
         "qo_upper_estimate": null,
-        "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "prior_season_salary": 1211689,
+        "qo_amount_basis": "estimated_from_salary_and_service",
         "qo_partial_guarantee": null,
         "signing_outcome": "signed_elsewhere",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 3,
         "sources": [
           "https://www.basketball-reference.com/players/s/spencpa01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2026-06-30_bbr",
-          "qo2026"
+          "qo2026",
+          "prior_salary_patspencer",
+          "career_patspencer",
+          "min2026"
         ],
         "signed_team": "PHX",
         "agreement_report_date": null,
@@ -22722,19 +23300,22 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2765467,
         "qo_upper_estimate": null,
-        "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "prior_season_salary": 2048494,
+        "qo_amount_basis": "estimated_from_salary_and_service",
         "qo_partial_guarantee": null,
         "signing_outcome": "signed_elsewhere",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 2,
         "sources": [
           "https://www.basketball-reference.com/players/w/wallake01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2026-06-30_bbr",
-          "qo2026"
+          "qo2026",
+          "prior_salary_keatonwallace",
+          "career_keatonwallace",
+          "min2026"
         ],
         "signed_team": "International",
         "new_deal_years": 2,
@@ -22775,19 +23356,22 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2385117,
         "qo_upper_estimate": null,
-        "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "prior_season_salary": 837589,
+        "qo_amount_basis": "estimated_from_salary_and_service",
         "qo_partial_guarantee": null,
         "signing_outcome": "re_signed_date_unknown",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 1,
         "sources": [
           "https://www.basketball-reference.com/players/w/william01.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2026-06-30_bbr",
-          "qo2026"
+          "qo2026",
+          "prior_salary_amariwilliams",
+          "career_amariwilliams",
+          "min2026"
         ],
         "signed_team": "BOS",
         "agreement_report_date": null,
@@ -22823,19 +23407,21 @@
         "offer_contract": "standard",
         "tendered": false,
         "eligibility": "reported_eligible",
-        "qo_amount": null,
+        "qo_amount": 2385117,
         "qo_upper_estimate": null,
-        "prior_season_salary": null,
-        "qo_amount_basis": null,
+        "prior_season_salary": 656323,
+        "qo_amount_basis": "estimated_from_salary_and_service",
         "qo_partial_guarantee": null,
         "signing_outcome": "camp_deal",
         "offer_sheet_date": null,
         "rights_events": [],
         "rookie_scale_pick": null,
-        "service_years_lower_bound": null,
+        "service_years_lower_bound": 1,
         "sources": [
           "https://www.basketball-reference.com/players/y/youngja05.html?utm_medium=linker&utm_source=www.hoopsrumors.com&utm_campaign=2026-06-30_bbr",
-          "qo2026"
+          "qo2026",
+          "prior_salary_jahmiryoung",
+          "min2026"
         ],
         "signed_team": "LAL",
         "new_deal_years": 1,
@@ -41981,7 +42567,8 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
         "signed_team": "IND",
         "new_deal_years": 2,
@@ -41997,7 +42584,9 @@
         "estimated_market_aav_leave_one_summer_out": 13335638,
         "option_decision_year": 2023,
         "observed_same_team_return": false,
-        "new_deal_reported_aav": 22500000
+        "new_deal_reported_aav": 22500000,
+        "age_on_june_29": 26,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -42037,7 +42626,8 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
         "signed_team": "DAL",
         "new_deal_years": 1,
@@ -42053,7 +42643,9 @@
         "estimated_market_aav_leave_one_summer_out": 3033595,
         "option_decision_year": 2023,
         "observed_same_team_return": false,
-        "new_deal_reported_aav": 2710000
+        "new_deal_reported_aav": 2710000,
+        "age_on_june_29": 26,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -42093,7 +42685,8 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
         "signed_team": "NYK",
         "new_deal_years": 4,
@@ -42109,7 +42702,9 @@
         "estimated_market_aav_leave_one_summer_out": 7915820,
         "option_decision_year": 2023,
         "observed_same_team_return": false,
-        "new_deal_reported_aav": 11717500
+        "new_deal_reported_aav": 11717500,
+        "age_on_june_29": 26,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -42149,7 +42744,8 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
         "signed_team": "GSW",
         "new_deal_years": 4,
@@ -42165,7 +42761,9 @@
         "estimated_market_aav_leave_one_summer_out": 12714786,
         "option_decision_year": 2023,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 25000000
+        "new_deal_reported_aav": 25000000,
+        "age_on_june_29": 33,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -42205,7 +42803,8 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
         "signed_team": "HOU",
         "new_deal_years": 3,
@@ -42221,7 +42820,9 @@
         "estimated_market_aav_leave_one_summer_out": 29318599,
         "option_decision_year": 2023,
         "observed_same_team_return": false,
-        "new_deal_reported_aav": 42846667
+        "new_deal_reported_aav": 42846667,
+        "age_on_june_29": 29,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -42261,7 +42862,8 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
         "signed_team": "CHI",
         "new_deal_years": 3,
@@ -42277,7 +42879,9 @@
         "estimated_market_aav_leave_one_summer_out": 7421081,
         "option_decision_year": 2023,
         "observed_same_team_return": false,
-        "new_deal_reported_aav": 6500000
+        "new_deal_reported_aav": 6500000,
+        "age_on_june_29": 27,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -42317,7 +42921,8 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
         "signed_team": "MIL",
         "new_deal_years": 3,
@@ -42333,7 +42938,9 @@
         "estimated_market_aav_leave_one_summer_out": 3196314,
         "option_decision_year": 2023,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 31666667
+        "new_deal_reported_aav": 31666667,
+        "age_on_june_29": 31,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -42373,7 +42980,8 @@
         "context_sources": [
           "stats2023",
           "pay2023",
-          "team2023"
+          "team2023",
+          "canonical_player_bios"
         ],
         "signed_team": "WAS",
         "new_deal_years": 4,
@@ -42389,7 +42997,9 @@
         "estimated_market_aav_leave_one_summer_out": 7916692,
         "option_decision_year": 2023,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 22500000
+        "new_deal_reported_aav": 22500000,
+        "age_on_june_29": 27,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2023,
@@ -42445,7 +43055,9 @@
         "estimated_market_aav_leave_one_summer_out": 2891748,
         "option_decision_year": 2023,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 2891000
+        "new_deal_reported_aav": 2891000,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2023,
@@ -42961,7 +43573,9 @@
         "early_termination_exercised": false,
         "option_decision_year": 2024,
         "observed_same_team_return": null,
-        "later_waived_date": "2024-07-06"
+        "later_waived_date": "2024-07-06",
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2024,
@@ -43001,7 +43615,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "PHI",
         "new_deal_years": 4,
@@ -43017,7 +43632,9 @@
         "estimated_market_aav_leave_one_summer_out": 8785393,
         "option_decision_year": 2024,
         "observed_same_team_return": false,
-        "new_deal_reported_aav": 8760250
+        "new_deal_reported_aav": 8760250,
+        "age_on_june_29": 28,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -43032,14 +43649,15 @@
         "prior_team_wins": 49,
         "prior_season_age": null,
         "tracker_age_snapshot": 34,
-        "reported_injury": null,
+        "reported_injury": "Missed the season while recovering from a right meniscus injury.",
         "prior_season_games_without_appearance": 82,
         "traded_as_part_of_option": false,
         "decision_report_date": "2024-06-29",
         "sources": [
           "po2024",
           "https://www.hoopsrumors.com/2024/06/damion-lee-declines-player-option-with-suns.html",
-          "nba2024"
+          "nba2024",
+          "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2024-04-22_07PM.pdf"
         ],
         "prior_season_box_value": null,
         "game_on_court_value_2026_snapshot": null,
@@ -43065,7 +43683,9 @@
         "estimated_market_aav_leave_one_summer_out": 3303308,
         "option_decision_year": 2024,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 2801000
+        "new_deal_reported_aav": 2801000,
+        "age_on_june_29": null,
+        "age_basis": "tracker_age"
       },
       {
         "summer": 2024,
@@ -43105,7 +43725,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "UTA",
         "new_deal_years": 2,
@@ -43121,7 +43742,9 @@
         "estimated_market_aav_leave_one_summer_out": 5167878,
         "option_decision_year": 2024,
         "observed_same_team_return": false,
-        "new_deal_reported_aav": 4875000
+        "new_deal_reported_aav": 4875000,
+        "age_on_june_29": 27,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -43161,7 +43784,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "PHI",
         "new_deal_years": 2,
@@ -43177,7 +43801,9 @@
         "estimated_market_aav_leave_one_summer_out": 3303632,
         "option_decision_year": 2024,
         "observed_same_team_return": false,
-        "new_deal_reported_aav": 3386500
+        "new_deal_reported_aav": 3386500,
+        "age_on_june_29": 35,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -43217,7 +43843,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "CHI",
         "new_deal_years": 3,
@@ -43233,7 +43860,9 @@
         "estimated_market_aav_leave_one_summer_out": 5454538,
         "option_decision_year": 2024,
         "observed_same_team_return": false,
-        "new_deal_reported_aav": 9000000
+        "new_deal_reported_aav": 9000000,
+        "age_on_june_29": 24,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -43273,7 +43902,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "PHX",
         "new_deal_years": 2,
@@ -43289,7 +43919,9 @@
         "estimated_market_aav_leave_one_summer_out": 3135450,
         "option_decision_year": 2024,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 8000000
+        "new_deal_reported_aav": 8000000,
+        "age_on_june_29": 25,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -43328,7 +43960,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "ORL",
         "new_deal_years": 3,
@@ -43344,7 +43977,9 @@
         "estimated_market_aav_leave_one_summer_out": 5124993,
         "option_decision_year": 2024,
         "observed_same_team_return": false,
-        "new_deal_reported_aav": 22000000
+        "new_deal_reported_aav": 22000000,
+        "age_on_june_29": 31,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -43384,7 +44019,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "MIA",
         "new_deal_years": 2,
@@ -43400,7 +44036,9 @@
         "estimated_market_aav_leave_one_summer_out": 3361274,
         "option_decision_year": 2024,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 4000000
+        "new_deal_reported_aav": 4000000,
+        "age_on_june_29": 35,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -43440,7 +44078,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "LAL",
         "new_deal_years": 2,
@@ -43456,7 +44095,9 @@
         "estimated_market_aav_leave_one_summer_out": 27425403,
         "option_decision_year": 2024,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 50678000
+        "new_deal_reported_aav": 50678000,
+        "age_on_june_29": 39,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -43496,7 +44137,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "NYK",
         "new_deal_years": 5,
@@ -43512,7 +44154,9 @@
         "estimated_market_aav_leave_one_summer_out": 5297266,
         "option_decision_year": 2024,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 42500000
+        "new_deal_reported_aav": 42500000,
+        "age_on_june_29": 26,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -43561,7 +44205,9 @@
         "no_same_team_return_by_opening": true,
         "estimated_market_aav_leave_one_summer_out": 2425802,
         "option_decision_year": 2024,
-        "observed_same_team_return": false
+        "observed_same_team_return": false,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2024,
@@ -43601,7 +44247,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "PHI",
         "new_deal_years": 4,
@@ -43617,7 +44264,9 @@
         "estimated_market_aav_leave_one_summer_out": 30302991,
         "option_decision_year": 2024,
         "observed_same_team_return": false,
-        "new_deal_reported_aav": 52896250
+        "new_deal_reported_aav": 52896250,
+        "age_on_june_29": 34,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -43668,7 +44317,9 @@
         "deal_mechanism": "extension",
         "estimated_market_aav_leave_one_summer_out": 3003632,
         "option_decision_year": 2024,
-        "observed_same_team_return": true
+        "observed_same_team_return": true,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2024,
@@ -43708,7 +44359,8 @@
         "context_sources": [
           "stats2024",
           "pay2024",
-          "team2024"
+          "team2024",
+          "canonical_player_bios"
         ],
         "signed_team": "MIA",
         "new_deal_years": 1,
@@ -43724,7 +44376,9 @@
         "estimated_market_aav_leave_one_summer_out": 2800905,
         "option_decision_year": 2024,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 2801000
+        "new_deal_reported_aav": 2801000,
+        "age_on_june_29": 26,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2024,
@@ -43779,7 +44433,9 @@
         ],
         "estimated_market_aav_leave_one_summer_out": 2800905,
         "option_decision_year": 2024,
-        "observed_same_team_return": false
+        "observed_same_team_return": false,
+        "age_on_june_29": null,
+        "age_basis": "prior_season_age"
       },
       {
         "summer": 2024,
@@ -44788,7 +45444,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "DET",
         "new_deal_years": 3,
@@ -44804,7 +45461,9 @@
         "early_termination_exercised": true,
         "option_decision_year": 2025,
         "observed_same_team_return": false,
-        "new_deal_mechanism": "sign_and_trade"
+        "new_deal_mechanism": "sign_and_trade",
+        "age_on_june_29": 31,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -44844,7 +45503,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "MIL",
         "new_deal_years": 3,
@@ -44860,7 +45520,9 @@
         "estimated_market_aav_leave_one_summer_out": 5968974,
         "option_decision_year": 2025,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 14521333
+        "new_deal_reported_aav": 14521333,
+        "age_on_june_29": 30,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -44900,7 +45562,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "HOU",
         "new_deal_years": 4,
@@ -44916,7 +45579,9 @@
         "estimated_market_aav_leave_one_summer_out": 3634595,
         "option_decision_year": 2025,
         "observed_same_team_return": false,
-        "new_deal_reported_aav": 13176250
+        "new_deal_reported_aav": 13176250,
+        "age_on_june_29": 32,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -44956,7 +45621,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "PHI",
         "new_deal_years": 1,
@@ -44972,7 +45638,9 @@
         "estimated_market_aav_leave_one_summer_out": 3634405,
         "option_decision_year": 2025,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 3634000
+        "new_deal_reported_aav": 3634000,
+        "age_on_june_29": 36,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -45012,7 +45680,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "LAC",
         "new_deal_years": 2,
@@ -45028,7 +45697,9 @@
         "estimated_market_aav_leave_one_summer_out": 45477390,
         "option_decision_year": 2025,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 40750000
+        "new_deal_reported_aav": 40750000,
+        "age_on_june_29": 35,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -45068,7 +45739,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "MIN",
         "new_deal_years": 3,
@@ -45084,7 +45756,9 @@
         "estimated_market_aav_leave_one_summer_out": 11108181,
         "option_decision_year": 2025,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 33333333
+        "new_deal_reported_aav": 33333333,
+        "age_on_june_29": 30,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -45124,7 +45798,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "MIL",
         "new_deal_years": 2,
@@ -45140,7 +45815,9 @@
         "estimated_market_aav_leave_one_summer_out": 6600009,
         "option_decision_year": 2025,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 5262500
+        "new_deal_reported_aav": 5262500,
+        "age_on_june_29": 25,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -45162,8 +45839,7 @@
         "sources": [
           "po2025",
           "https://www.hoopsrumors.com/2025/06/kyrie-irving-to-decline-option-re-sign-with-mavs-on-three-year-deal.html",
-          "nba2025",
-          "https://www.hoopsrumors.com/2025/06/kyrie-irving-to-decline-option-re-sign-with-mavs-on-three-year-deal.html"
+          "nba2025"
         ],
         "prior_season_box_value": {
           "season_age": 32,
@@ -45181,7 +45857,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "DAL",
         "new_deal_years": 3,
@@ -45197,7 +45874,9 @@
         "estimated_market_aav_leave_one_summer_out": 27286434,
         "option_decision_year": 2025,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 39491333
+        "new_deal_reported_aav": 39491333,
+        "age_on_june_29": 33,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -45237,7 +45916,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "MIN",
         "new_deal_years": 5,
@@ -45253,7 +45933,9 @@
         "estimated_market_aav_leave_one_summer_out": 13322033,
         "option_decision_year": 2025,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 25000000
+        "new_deal_reported_aav": 25000000,
+        "age_on_june_29": 25,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -45293,7 +45975,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "LAC",
         "new_deal_years": 2,
@@ -45309,7 +45992,9 @@
         "estimated_market_aav_leave_one_summer_out": 3634595,
         "option_decision_year": 2025,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 5741500
+        "new_deal_reported_aav": 5741500,
+        "age_on_june_29": 36,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -45349,7 +46034,8 @@
         "context_sources": [
           "stats2025",
           "pay2025",
-          "team2025"
+          "team2025",
+          "canonical_player_bios"
         ],
         "signed_team": "SAC",
         "new_deal_years": 1,
@@ -45365,7 +46051,9 @@
         "estimated_market_aav_leave_one_summer_out": 3725167,
         "option_decision_year": 2025,
         "observed_same_team_return": false,
-        "new_deal_reported_aav": 3634000
+        "new_deal_reported_aav": 3634000,
+        "age_on_june_29": 36,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2025,
@@ -46623,7 +47311,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "GSW",
         "new_deal_years": 2,
@@ -46639,7 +47328,9 @@
         "estimated_market_aav_leave_one_summer_out": 4693459,
         "option_decision_year": 2026,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 6992500
+        "new_deal_reported_aav": 6992500,
+        "age_on_june_29": 40,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -46679,7 +47370,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "LAL",
         "new_deal_years": 4,
@@ -46695,7 +47387,9 @@
         "estimated_market_aav_leave_one_summer_out": 23648845,
         "option_decision_year": 2026,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 45000000
+        "new_deal_reported_aav": 45000000,
+        "age_on_june_29": 28,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -46710,14 +47404,15 @@
         "prior_team_wins": 42,
         "prior_season_age": 32,
         "tracker_age_snapshot": 33,
-        "reported_injury": null,
+        "reported_injury": "A hip fracture and surgery ended his season after six games.",
         "prior_season_games_without_appearance": 76,
         "traded_as_part_of_option": false,
         "decision_report_date": "2026-06-29",
         "sources": [
           "po2026",
           "https://www.hoopsrumors.com/2026/06/clippers-bradley-beal-opts-for-free-agency.html",
-          "nba2026"
+          "nba2026",
+          "https://www.hoopsrumors.com/2025/11/bradley-beal-to-undergo-season-ending-hip-surgery.html"
         ],
         "prior_season_box_value": {
           "season_age": 32,
@@ -46735,7 +47430,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "LAC",
         "new_deal_years": 2,
@@ -46751,7 +47447,9 @@
         "estimated_market_aav_leave_one_summer_out": 3875985,
         "option_decision_year": 2026,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 6585500
+        "new_deal_reported_aav": 6585500,
+        "age_on_june_29": 33,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -46791,7 +47489,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "GSW",
         "new_deal_years": 2,
@@ -46807,7 +47506,9 @@
         "estimated_market_aav_leave_one_summer_out": 3286583,
         "option_decision_year": 2026,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 6215500
+        "new_deal_reported_aav": 6215500,
+        "age_on_june_29": 28,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -46847,7 +47548,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "GSW",
         "new_deal_years": 1,
@@ -46863,7 +47565,9 @@
         "estimated_market_aav_leave_one_summer_out": 3876797,
         "option_decision_year": 2026,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 27679000
+        "new_deal_reported_aav": 27679000,
+        "age_on_june_29": 36,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -46903,7 +47607,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "MIL",
         "new_deal_years": 4,
@@ -46919,7 +47624,9 @@
         "estimated_market_aav_leave_one_summer_out": 5476830,
         "option_decision_year": 2026,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 16000000
+        "new_deal_reported_aav": 16000000,
+        "age_on_june_29": 27,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -46959,7 +47666,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "CLE",
         "new_deal_years": 3,
@@ -46975,7 +47683,9 @@
         "estimated_market_aav_leave_one_summer_out": 42125161,
         "option_decision_year": 2026,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 32180000
+        "new_deal_reported_aav": 32180000,
+        "age_on_june_29": 36,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -47015,7 +47725,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "NYK",
         "new_deal_years": 3,
@@ -47031,7 +47742,9 @@
         "estimated_market_aav_leave_one_summer_out": 5720153,
         "option_decision_year": 2026,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 4794667
+        "new_deal_reported_aav": 4794667,
+        "age_on_june_29": 28,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -47071,7 +47784,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "HOU",
         "new_deal_years": 2,
@@ -47087,7 +47801,9 @@
         "estimated_market_aav_leave_one_summer_out": 3876365,
         "option_decision_year": 2026,
         "observed_same_team_return": false,
-        "new_deal_reported_aav": 6215500
+        "new_deal_reported_aav": 6215500,
+        "age_on_june_29": 32,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -47127,7 +47843,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "LAL",
         "new_deal_years": 4,
@@ -47143,7 +47860,9 @@
         "estimated_market_aav_leave_one_summer_out": 14210530,
         "option_decision_year": 2026,
         "observed_same_team_return": false,
-        "new_deal_reported_aav": 13000000
+        "new_deal_reported_aav": 13000000,
+        "age_on_june_29": 27,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -47158,14 +47877,15 @@
         "prior_team_wins": 17,
         "prior_season_age": 27,
         "tracker_age_snapshot": 28,
-        "reported_injury": null,
+        "reported_injury": "Missed time with a right knee ligament injury.",
         "prior_season_games_without_appearance": 67,
         "traded_as_part_of_option": false,
         "decision_report_date": "2026-06-17",
         "sources": [
           "po2026",
           "https://www.hoopsrumors.com/2026/06/trae-young-plans-to-opt-out-become-free-agent.html",
-          "nba2026"
+          "nba2026",
+          "https://ak-static.cms.nba.com/referee/injury/Injury-Report_2025-11-07_07PM.pdf"
         ],
         "prior_season_box_value": {
           "season_age": 27,
@@ -47183,7 +47903,8 @@
         "context_sources": [
           "stats2026",
           "pay2026",
-          "team2026"
+          "team2026",
+          "canonical_player_bios"
         ],
         "signed_team": "WAS",
         "new_deal_years": 4,
@@ -47199,7 +47920,9 @@
         "estimated_market_aav_leave_one_summer_out": 3286484,
         "option_decision_year": 2026,
         "observed_same_team_return": true,
-        "new_deal_reported_aav": 53200000
+        "new_deal_reported_aav": 53200000,
+        "age_on_june_29": 27,
+        "age_basis": "birth_date"
       },
       {
         "summer": 2026,
@@ -55370,5 +56093,13 @@
         "yabusele_trade"
       ]
     }
-  ]
+  ],
+  "measurement_notes": {
+    "observations": "Decision groups cover the named public trackers and corroborating records. A null means unverified or inapplicable.",
+    "summers": "Rookie-scale team options are grouped by fall decision year, with the salary year separately recorded. Same-team returns use the signing summer.",
+    "availability": "Games without an appearance are 82 minus games played, floored at zero. Absences can include injury, roster changes and coaching decisions.",
+    "current_values": "The 2026 game values supplement historical public box-score estimates and are excluded from all fits.",
+    "qo_amount": "Reported amounts, estimates and service-based floors are labeled individually. The prior-season cap ledger does not measure signing-date room.",
+    "rfa_counts": "Offer sheet zero in 2024 is an observed public-register count. Timing uses the first public agreement report where identifiable."
+  }
 }

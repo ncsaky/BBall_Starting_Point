@@ -54,7 +54,7 @@ def validation(rows, feature, label, rules):
 
 def season_features(row):
     stats = row.get("prior_season_box_value") or {}
-    age = row.get("age_on_june_29") or stats.get("season_age") or row.get("tracker_age_snapshot") or 27
+    age = stats.get("season_age") or row.get("tracker_age_snapshot") or row.get("age_on_june_29") or 27
     games = stats.get("games", 0)
     return age, games, stats.get("minutes", 0), stats.get("vorp") or 0, stats.get("bpm") or 0
 
@@ -259,10 +259,9 @@ def fit_same_team_returns(evidence):
     comps = salary_comparables(evidence)
 
     def features(row, held_out):
-        age, _, minutes, _, _ = season_features(row)
+        _, _, minutes, _, _ = season_features(row)
         return {
             "player_choice": row["kind"] == "player",
-            "age": age,
             "minutes": minutes,
             "ratio": estimated_salary(row, comps, caps, held_out) / row["option_salary"],
         }
