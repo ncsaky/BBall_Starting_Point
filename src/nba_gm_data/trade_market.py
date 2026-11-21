@@ -132,7 +132,9 @@ def _negotiation_index(canonical: dict[str, Any]) -> dict[tuple[str, str], list[
         return memo
     index: dict[tuple[str, str], list[dict[str, Any]]] = {}
     for neg in ((canonical.get("trade_market_ledger") or {}).get("negotiations") or {}).values():
-        if neg.get("status") not in {"open", "final_offer"}:
+        # "agreed": agreed today and waiting for the trade itself. The apply-time re-check must see the same
+        # concession the two sides agreed with (TRADE-FOLLOWUPS: an agreed deal is executed or cancelled the same day).
+        if neg.get("status") not in {"open", "final_offer", "agreed"}:
             continue
         for team in (neg.get("buyer_id"), neg.get("seller_id")):
             index.setdefault((team, neg.get("player_id")), []).append(neg)
@@ -430,9 +432,29 @@ class SearchMarket:
             out[tid] = round(gap, 2)
         return out
 
-    def deal(self, pairing: dict[str, Any], candidate: dict[str, Any]) -> None:
-        key = negotiation_key(pairing["buyer_id"], pairing["row"]["team_id"], pairing["row"]["id"])
-        self.deals[key] = {"pairing": pairing, "proposal_id": (candidate.get("proposal") or {}).get("id")}
+    def deal(self, pairing: dict[str, Any], candidate: dict[str, Any], *, sale: bool = False) -> dict[str, Any]:
+        """An agreed deal. The candidate is tagged (``market_deal``) so the review can say which agreed deals it
+        chose to execute today and the apply step can record a cancellation with its reason."""
+        row = pairing["row"]
+        key = negotiation_key(pairing["buyer_id"], row["team_id"], row["id"])
+        neg = self.open_negotiation(pairing)
+        tag = {"key": key, "buyer_id": pairing["buyer_id"], "seller_id": row["team_id"], "player_id": row["id"],
+               "player_name": row.get("name"), "date": self.date,
+               "kind": "sale" if sale else "negotiation" if neg else "target",
+               "seller_reasons": list(pairing.get("reasons") or []),
+               "seller_stance": _stance(self.canonical, row["team_id"])}
+        candidate["market_deal"] = tag
+        self.deals[key] = {"pairing": pairing, "proposal_id": (candidate.get("proposal") or {}).get("id"), "tag": tag}
+        return tag
+
+    def hold_sale(self, war: dict[str, Any], reason: str) -> None:
+        """A bidding war's winner that cannot be finalized today (its offer uses a player or pick already in another
+        deal agreed today): the seller keeps the player on the market and decides again on a later market day."""
+        if war in self.wars:
+            self.wars.remove(war)
+        war["status"] = "held"
+        war["held_reason"] = reason
+        self.waiting.append(war)
 
     # --- shopping and bidding -------------------------------------------------------------------------------
     def shopped(self, pairing: dict[str, Any]) -> bool:
@@ -489,6 +511,7 @@ class SearchMarket:
                     lead = max(bids, key=lambda b: (self.seller_margin(b["candidate"], seller), -b["order"]))
                     war["rounds"].append({"round": round_, "bids": raised, "leader": lead["pairing"]["buyer_id"]})
             war["winner"] = lead["pairing"]["buyer_id"]
+            war["key"] = negotiation_key(war["winner"], seller, pid)
             war["winning_margin"] = self.seller_margin(lead["candidate"], seller)
             war["winning_offer"] = _offer_summary(self.canonical, lead["candidate"])
             entry = self.shopping.get(pid) or {}
@@ -515,9 +538,13 @@ class SearchMarket:
     def current_decision_day(self, pid: str, seller_id: str | None = None) -> str:
         """The seller's decision day for a shopped player: the one set when shopping began, or a new one if it has
         passed and he is still on the market."""
-        stored = str((self.shopping.get(pid) or {}).get("decide_by") or "")
-        if stored and stored >= self.date and (self.shopping.get(pid) or {}).get("status") in {"shopping", "bidding"}:
-            return stored
+        entry = self.shopping.get(pid) or {}
+        stored = str(entry.get("decide_by") or "")
+        if stored and entry.get("status") in {"shopping", "bidding"}:
+            if stored >= self.date:
+                return stored
+            if summer_hold(entry, self.day):
+                return self.date  # its decision day passed between summer market days: it decides today
         return self.decision_day(seller_id or self.sellers.get(pid))
 
     def decision_day(self, seller_id: str) -> str:
@@ -542,7 +569,8 @@ class SearchMarket:
                          "gaps": seen["gaps"], "offer": seen["offer"], "seller_reasons": list(pairing.get("reasons") or []),
                          "seller_stance": _stance(self.canonical, pairing["row"]["team_id"]),
                          "unsolicited": bool(pairing.get("unsolicited"))})
-        deals = [{"key": key, "player_id": d["pairing"]["row"]["id"], "proposal_id": d["proposal_id"]}
+        deals = [{"key": key, "player_id": d["pairing"]["row"]["id"], "proposal_id": d["proposal_id"],
+                  "kind": (d.get("tag") or {}).get("kind")}
                  for key, d in sorted(self.deals.items())]
         shopping = []
         for pid, buyers in sorted(self.interest.items()):
@@ -579,8 +607,24 @@ def _offer_summary(canonical: dict[str, Any], candidate: dict[str, Any] | None) 
 
 # ------------------------------------------------------------------------------------------ the save side
 
-def apply_market_updates(save: dict[str, Any], updates: dict[str, Any] | None, active: dict[str, Any]) -> None:
-    """Fold one day's market updates into the save's ledger (negotiations, shopping, wars, stats)."""
+HELD_NO_ROOM = "no room for another trade today; the seller decides again on the next market day"
+TERMINAL_SHOPPING = frozenset({"sold", "lapsed", "moved", "cancelled"})
+
+
+def _new_shopping_entry(row: dict[str, Any], day: str) -> dict[str, Any]:
+    return {"player_id": row["player_id"], "player_name": row.get("player_name"), "seller_id": row["seller_id"],
+            "started": day, "decide_by": row.get("decide_by"), "reasons": list(row.get("reasons") or []),
+            "status": "shopping", "interested": [], "bids": [], "rounds": 0}
+
+
+def apply_market_updates(save: dict[str, Any], updates: dict[str, Any] | None, active: dict[str, Any],
+                         chosen: set[str] | None = None) -> None:
+    """Fold one day's market updates into the save's ledger (negotiations, shopping, wars, stats).
+
+    ``chosen``: the agreed deals (their ``market_deal`` keys) the day's review will execute. An agreed deal it does
+    not execute (no room left today) is not recorded as agreed: a negotiation stays open and a shopped player stays
+    on the market. A chosen deal is recorded as agreed; the apply step then either completes it or cancels it with
+    its reason the same day (``note_market_execution``). None: every agreed deal is chosen (tests, old callers)."""
     if not updates:
         return
     book = ledger(save)
@@ -588,12 +632,21 @@ def apply_market_updates(save: dict[str, Any], updates: dict[str, Any] | None, a
     season = _season_label(date.fromisoformat(day))
     stats = book["stats"].setdefault(season, {})
     negotiations = book["negotiations"]
+
+    def executes(key: str | None) -> bool:
+        return chosen is None or key in chosen
+
     for deal in updates.get("deals") or []:
+        if not executes(deal["key"]):
+            stats["agreed_not_chosen"] = int(stats.get("agreed_not_chosen") or 0) + 1
+            continue
         neg = negotiations.get(deal["key"])
-        if neg:
+        if neg and neg.get("status") in {"open", "final_offer"}:
             neg["status"] = "agreed"
             neg["last_date"] = day
+            neg["agreed_date"] = day
             neg["proposal_id"] = deal.get("proposal_id")
+        stats["deals_agreed"] = int(stats.get("deals_agreed") or 0) + 1
     for row in updates.get("negotiations") or []:
         neg = negotiations.get(row["key"])
         if neg is None or neg.get("status") in {"closed", "agreed", "lapsed"}:
@@ -607,7 +660,6 @@ def apply_market_updates(save: dict[str, Any], updates: dict[str, Any] | None, a
             stats["negotiations_reopened"] = int(stats.get("negotiations_reopened") or 0) + 1
         if neg["rounds"] and neg["rounds"][-1].get("date") == day:
             continue
-        from .front_office import office
         finals = []
         for team in (neg["buyer_id"], neg["seller_id"]):
             size, final = concession_size({**active, "trade_market_ledger": {"negotiations": {neg["key"]: neg}}},
@@ -626,10 +678,8 @@ def apply_market_updates(save: dict[str, Any], updates: dict[str, Any] | None, a
             stats["final_offers_refused"] = int(stats.get("final_offers_refused") or 0) + 1
     for row in updates.get("shopping") or []:
         entry = book["shopping"].get(row["player_id"])
-        if entry is None or entry.get("status") in {"sold", "lapsed", "moved"}:
-            entry = {"player_id": row["player_id"], "player_name": row.get("player_name"), "seller_id": row["seller_id"],
-                     "started": day, "decide_by": row["decide_by"], "reasons": row["reasons"], "status": "shopping",
-                     "interested": [], "bids": [], "rounds": 0}
+        if entry is None or entry.get("status") in TERMINAL_SHOPPING:
+            entry = _new_shopping_entry(row, day)
             book["shopping"][row["player_id"]] = entry
             stats["players_shopped"] = int(stats.get("players_shopped") or 0) + 1
         entry["interested"] = sorted(set(entry.get("interested") or []) | set(row["interested"]))
@@ -637,31 +687,40 @@ def apply_market_updates(save: dict[str, Any], updates: dict[str, Any] | None, a
         if str(entry.get("decide_by") or "") < day:
             entry["decide_by"] = row["decide_by"]  # still on the market after its decision day: a new deadline
     for war in list(updates.get("waiting") or []) + list(updates.get("wars") or []):
-        entry = book["shopping"].setdefault(war["player_id"], {"player_id": war["player_id"],
-                                                               "player_name": war.get("player_name"),
-                                                               "seller_id": war["seller_id"], "started": day,
-                                                               "decide_by": war.get("decide_by"), "status": "shopping",
-                                                               "interested": list(war.get("bidders") or []), "bids": [],
-                                                               "rounds": 0})
+        entry = book["shopping"].get(war["player_id"])
+        if entry is None or entry.get("status") in TERMINAL_SHOPPING:
+            entry = _new_shopping_entry(war, day)
+            entry["interested"] = list(war.get("bidders") or [])
+            book["shopping"][war["player_id"]] = entry
         entry["rounds"] = int(entry.get("rounds") or 0) + len(war.get("rounds") or [])
         entry["bids"] = [{"date": day, "leader": war.get("winner"), "margin": war.get("winning_margin"),
                           "offer": war.get("winning_offer"), "bidders": war.get("bidders")}] + list(entry.get("bids") or [])[:4]
         entry["interested"] = sorted(set(entry.get("interested") or []) | set(war.get("bidders") or []))
-        if war.get("status") == "sold":
+        entry["last_date"] = day
+        status = war.get("status")
+        if status == "sold" and not executes(war.get("key")):
+            status = "held"
+            war = {**war, "status": "held", "held_reason": HELD_NO_ROOM}
+        if status == "sold":
             entry["status"] = "agreed"
             entry["winner"] = war.get("winner")
             entry["agreed_date"] = day
+            entry["agreed_key"] = war.get("key")
             book.setdefault("wars", []).append(war)
+            stats["sales_agreed"] = int(stats.get("sales_agreed") or 0) + 1
             counted = "war_counted" if len(war.get("bidders") or []) >= 2 else "sale_counted"
             if not entry.get(counted):
                 entry[counted] = True
                 key = "bidding_wars" if counted == "war_counted" else "shopped_single_bidder_sales"
                 stats[key] = int(stats.get(key) or 0) + 1
-        elif war.get("status") == "user_leads":
+        elif status == "user_leads":
             entry["status"] = "bidding"
             entry["user_leads"] = day
         else:
             entry["status"] = "bidding"
+            if status == "held":
+                entry["held"] = {"date": day, "reason": war.get("held_reason"), "leader": war.get("winner")}
+                stats["sales_held"] = int(stats.get("sales_held") or 0) + 1
     for record in updates.get("unsolicited") or []:
         stats.setdefault("unsolicited_by_buyer", {})
         stats["unsolicited_by_buyer"][record["buyer_id"]] = int(stats["unsolicited_by_buyer"].get(record["buyer_id"]) or 0) + 1
@@ -671,13 +730,122 @@ def apply_market_updates(save: dict[str, Any], updates: dict[str, Any] | None, a
         book.setdefault("unsolicited", []).append(record)
 
 
+def chosen_market_keys(proposals: list[dict[str, Any]]) -> set[str]:
+    """The ``market_deal`` keys of the deals a review will execute today."""
+    return {str((p.get("market_deal") or {}).get("key")) for p in proposals if (p.get("market_deal") or {}).get("key")}
+
+
+def begin_market_day(save: dict[str, Any], active: dict[str, Any], day: str, payload: dict[str, Any] | None,
+                     chosen: list[dict[str, Any]]) -> None:
+    """A summer market day (free agency, late summer, camp: play.py's market hooks) keeps the same ledger as the
+    season's: stale records closed, today's negotiations, shopping and bids recorded, and the deals the hook will
+    try today recorded as agreed. Talks that end a day close but apart continue on the next market day."""
+    refresh_ledger(save, active, day)
+    season_rollover(save, day)
+    apply_market_updates(save, (payload or {}).get("market_updates"), active, chosen=chosen_market_keys(chosen))
+
+
+def release_agreements(save: dict[str, Any], proposals: list[dict[str, Any]], day: str) -> int:
+    """Agreed deals the day's hook did not try after all (its trades for the day were used up): not agreements. A
+    negotiation goes back to open, a shopped player back on the market with the reason."""
+    book = save.get(LEDGER_KEY)
+    if not isinstance(book, dict):
+        return 0
+    released = 0
+    for proposal in proposals:
+        tag = proposal.get("market_deal") or {}
+        if not tag.get("key"):
+            continue
+        neg = (book.get("negotiations") or {}).get(tag["key"])
+        if neg and neg.get("status") == "agreed" and neg.get("agreed_date") == day:
+            neg["status"] = "open"
+            released += 1
+        entry = (book.get("shopping") or {}).get(tag.get("player_id"))
+        if entry and entry.get("status") == "agreed" and entry.get("agreed_key") == tag["key"]:
+            entry.update(status="bidding", held={"date": day, "reason": HELD_NO_ROOM, "leader": tag.get("buyer_id")})
+            for war in reversed(book.get("wars") or []):
+                if war.get("key") == tag["key"] and war.get("date") == day and war.get("status") == "sold":
+                    war.update(status="held", held_reason=HELD_NO_ROOM)
+                    break
+            released += 1
+    return released
+
+
+APPLY_FAILURE_WORDS = {
+    "not_applied_stale_assets": "a player or pick in the deal had moved or could no longer be traded",
+    "not_applied_salary_legality": "the salaries no longer worked under the cap rules",
+    "not_applied_roster_plan": "a team reconsidered the deal against its current roster",
+    "not_applied_rejected": "the deal was no longer authorized",
+    "not_found": "the deal could not be found when it was due to be completed",
+    "not_applied": "another deal completed today already used one of its players or picks",
+}
+
+
+def failure_reason(result: dict[str, Any]) -> str:
+    """Plain words for why an agreed deal failed the apply-time re-check, with the check's own issues."""
+    status = str(result.get("status") or "not_applied")
+    words = APPLY_FAILURE_WORDS.get(status, "the deal failed its final check")
+    issues = [str(i) for i in (result.get("issues") or []) if i][:2]
+    return f"{words} ({'; '.join(issues)})" if issues else words
+
+
+def note_market_execution(save: dict[str, Any], proposal: dict[str, Any] | None, result: dict[str, Any],
+                          day: str) -> None:
+    """The apply step's answer for an agreed market deal (transactions.apply_trade_to_state): completed, or
+    cancelled with the reason. A cancelled deal ends that negotiation (the buyer walks away for COOLDOWN_DAYS; the
+    pairing comes back only on a real change, ``SearchMarket.reopen``) and a shopped player's sale is cancelled, so
+    the same deal is never agreed again the next day. Other teams may still bid for him."""
+    tag = (proposal or {}).get("market_deal") or {}
+    book = save.get(LEDGER_KEY)
+    if not tag.get("key") or not isinstance(book, dict):
+        return
+    day = str(day or tag.get("date") or "")[:10]
+    season = _season_label(date.fromisoformat(day))
+    stats = book.setdefault("stats", {}).setdefault(season, {})
+    negotiations = book.setdefault("negotiations", {})
+    entry = (book.get("shopping") or {}).get(tag.get("player_id"))
+    sale = bool(entry and entry.get("status") == "agreed" and entry.get("agreed_key") == tag["key"])
+    if result.get("status") == "applied":
+        stats["agreed_executed"] = int(stats.get("agreed_executed") or 0) + 1
+        neg = negotiations.get(tag["key"])
+        if neg and neg.get("status") == "agreed":
+            neg.update(status="closed", outcome="traded", closed_date=day)
+        if sale:
+            entry.update(status="sold", moved_to=tag.get("buyer_id"), sold_date=day)
+        return
+    reason = failure_reason(result)
+    neg = negotiations.get(tag["key"])
+    if neg is None:
+        neg = {"key": tag["key"], "buyer_id": tag.get("buyer_id"), "seller_id": tag.get("seller_id"),
+               "player_id": tag.get("player_id"), "player_name": tag.get("player_name"), "opened": day,
+               "rounds": [], "reopened": 0}
+        negotiations[tag["key"]] = neg
+    neg.update(status="dead", last_date=day,
+               cooldown_until=date.fromordinal(date.fromisoformat(day).toordinal() + COOLDOWN_DAYS).isoformat(),
+               death={"date": day, "seller_reasons": tag.get("seller_reasons"), "seller_stance": tag.get("seller_stance"),
+                      "cancelled": reason})
+    if sale:
+        entry.update(status="cancelled", cancelled_date=day, cancel_reason=reason)
+        for war in reversed(book.get("wars") or []):
+            if war.get("key") == tag["key"] and war.get("status") == "sold":
+                war.update(status="cancelled", cancel_reason=reason)
+                break
+    stats["agreed_cancelled"] = int(stats.get("agreed_cancelled") or 0) + 1
+    book.setdefault("cancelled", []).append({"date": day, "player_id": tag.get("player_id"),
+                                             "player_name": tag.get("player_name"), "buyer_id": tag.get("buyer_id"),
+                                             "seller_id": tag.get("seller_id"), "kind": tag.get("kind"),
+                                             "reason": reason, "status": result.get("status")})
+
+
 def refresh_ledger(save: dict[str, Any], active: dict[str, Any], today: str) -> None:
-    """Close negotiations and shopping whose player has moved, and let stale ones lapse (every market day)."""
+    """Close negotiations and shopping whose player has moved, and let stale ones lapse (every market day). An
+    agreement still pending from an earlier day (the apply step never reached it) is cancelled with that reason."""
     book = save.get(LEDGER_KEY)
     if not isinstance(book, dict):
         return
     teams = {p.get("id"): p.get("team_id") for p in active.get("players", [])}
     day = date.fromisoformat(today[:10])
+    season_stats = book.setdefault("stats", {}).setdefault(_season_label(day), {})
     for neg in (book.get("negotiations") or {}).values():
         if neg.get("status") in {"closed", "lapsed"}:
             continue
@@ -685,20 +853,34 @@ def refresh_ledger(save: dict[str, Any], active: dict[str, Any], today: str) -> 
             neg["status"] = "closed"
             neg["closed_date"] = today
             neg["outcome"] = "traded" if teams.get(neg.get("player_id")) == neg.get("buyer_id") else "player_moved"
-        elif neg.get("status") in {"open", "final_offer", "agreed"} and neg.get("last_date") and (
+        elif neg.get("status") == "agreed" and str(neg.get("agreed_date") or neg.get("last_date") or "") < today:
+            neg.update(status="dead", cooldown_until=date.fromordinal(day.toordinal() + COOLDOWN_DAYS).isoformat(),
+                       death={"date": today, "cancelled": "the agreed deal was not completed"})
+            season_stats["agreed_cancelled"] = int(season_stats.get("agreed_cancelled") or 0) + 1
+        elif neg.get("status") in {"open", "final_offer"} and neg.get("last_date") and (
                 day - date.fromisoformat(neg["last_date"])).days > NEGOTIATION_MAX_AGE:
             neg["status"] = "lapsed"
     for entry in (book.get("shopping") or {}).values():
-        if entry.get("status") in {"sold", "lapsed", "moved"}:
+        if entry.get("status") in TERMINAL_SHOPPING:
             continue
         if teams.get(entry.get("player_id")) != entry.get("seller_id"):
             entry["moved_to"] = teams.get(entry.get("player_id"))
             entry["status"] = "sold" if entry["moved_to"] == entry.get("winner") else "moved"
             entry["sold_date"] = today
         elif entry.get("status") == "agreed":
-            entry["status"] = "bidding"  # the agreed deal did not go through; the seller is still listening
-        elif entry.get("decide_by") and today > entry["decide_by"]:
+            entry.update(status="cancelled", cancelled_date=today, cancel_reason="the agreed deal was not completed")
+            season_stats["agreed_cancelled"] = int(season_stats.get("agreed_cancelled") or 0) + 1
+        elif entry.get("decide_by") and today > entry["decide_by"] and not summer_hold(entry, day):
             entry["status"] = "lapsed"
+
+
+def summer_hold(entry: dict[str, Any], day: date) -> bool:
+    """Outside the season, market days are days apart (free agency, then late summer, then camp): a seller with
+    bids whose decision day passed between them decides at the next market day instead of letting the sale lapse."""
+    if in_season(day) or not entry.get("bids"):
+        return False
+    last = str(entry.get("last_date") or entry.get("started") or "")
+    return bool(last) and (day - date.fromisoformat(last[:10])).days <= NEGOTIATION_MAX_AGE
 
 
 def season_rollover(save: dict[str, Any], today: str) -> None:

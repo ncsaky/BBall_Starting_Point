@@ -559,7 +559,11 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return dashboard_snapshot_payload(root, canonical, save_path, payload)
     if action == "team_dashboard":
         team = str(payload.get("team") or user_team_abbrev(canonical, save_path))
-        return team_dashboard(root, canonical, save_path, team)
+        result = team_dashboard(root, canonical, save_path, team)
+        read = team_front_office_read(canonical, save_path, team)
+        if read is not None:
+            result["front_office_read"] = read
+        return result
     if action == "fantasy_draft_room":
         save = ensure_league_save_defaults(load_save(save_path), canonical)
         team = str(payload.get("team") or user_team_abbrev(canonical, save_path))
@@ -1142,6 +1146,23 @@ def mark_better_offer_refusal(candidate: dict[str, Any], competition: dict[str, 
             evaluation.setdefault("decision_reasons", []).append(competition.get("text") or "It has a better offer.")
     updated["market_competition"] = competition
     return updated
+
+
+def team_front_office_read(canonical: dict[str, Any], save_path: Path, team_query: str) -> dict[str, Any] | None:
+    """Your assistant GM's read on another team's front office, for its team page (TRADE-FOLLOWUPS). The same words as
+    the trade window and the Trade Market board (front_office.office_hints): the traits the engine uses, sharpening
+    with your dealings with that team. None for your own team and for leagues without front-office traits."""
+    from .front_office import office_hints
+    from .save import human_controlled_team_ids
+    from .trade_market import dealings
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    if not save.get("front_office_traits"):
+        return None
+    team = resolve_team(canonical, team_query)
+    if team["id"] in set(human_controlled_team_ids(save)):
+        return None
+    active = canonical_with_save(canonical, save)
+    return office_hints(active, team["id"], dealings(save, team["id"]))
 
 
 def trade_market_payload(canonical: dict[str, Any], save_path: Path) -> dict[str, Any]:

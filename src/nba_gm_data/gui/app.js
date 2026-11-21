@@ -2980,6 +2980,7 @@ function seasonCommandDashboardMarkup(rows, dash, editable, viewedTeam) {
           <span>${escapeHtml(rowLabel(save.phase || "season"))}</span>
         </div>
         ${viewedTeam !== userTeam() ? `<button type="button" data-dashboard-team-reset>My Team</button>` : ""}
+        ${viewedTeam !== userTeam() && dash.front_office_read ? teamFrontOfficeButton(dash.front_office_read) : ""}
       </div>
       <div class="season-command-actions">
         ${save.current_date === tradeDeadlineDate() ? '<button type="button" class="trade-deadline-today ui-command" data-trade-deadline-open>Trade deadline · Today</button>' : ""}
@@ -7349,6 +7350,23 @@ async function loadTradeMarket(force = false) {
   state.data.tradeMarket = result;
   if (state.modal?.kind === "tradeRoom") renderTradeRoom();
   return result;
+}
+
+// TRADE-FOLLOWUPS: the same read on another team's page (its dashboard header): words only, sharpening with your
+// dealings with that team, describing the traits its trade decisions actually use.
+function teamFrontOfficeButton(read) {
+  const first = (read?.lines || [])[0]?.text || "No clear read yet. Deal with them to learn more.";
+  return `<button type="button" class="team-front-office-button" data-team-front-office title="${escapeAttr(textValue(first))}">Front Office</button>`;
+}
+
+function openTeamFrontOfficeRead() {
+  const dash = state.data.dashboard || {};
+  const read = dash.front_office_read;
+  if (!read) return;
+  const team = teamLabel(dash.team || state.dashboardTeam);
+  const note = `<p class="team-front-office-note">How ${escapeHtml(dashboardTeamName(team) || team)}'s front office deals, as your assistant GM sees it. The read gets sharper the more you deal with them (offers, counters, trades).</p>`;
+  state.modal = {kind: "teamFrontOffice", title: `${team} Front Office`, body: `<section class="team-front-office-read">${note}${frontOfficeReadMarkup(read, "Your assistant GM's read")}</section>`};
+  renderModal();
 }
 
 function frontOfficeReadMarkup(read, title = "Front-office read") {
@@ -13264,6 +13282,9 @@ function wireDashboardOverview(editable) {
     button.addEventListener("click", async () => {
       await switchDashboardTeam(userTeam());
     });
+  });
+  els.content.querySelectorAll("[data-team-front-office]").forEach((button) => {
+    button.addEventListener("click", () => openTeamFrontOfficeRead());
   });
   wireDashboardTeamJumps();
   els.content.querySelectorAll("[data-front-office-toggle]").forEach((button) => {

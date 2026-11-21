@@ -20,7 +20,7 @@ the next one at half weight (contracts and free agency can still change it); fro
 seasons. Only AI teams get this term; the human team's own evaluations never change.
 
 Money becomes trade value at TAX_POINTS_PER_MILLION points per $1M of tax, scaled by the owner's spending appetite
-(the front office's financial discipline) and the team's phase (a contender accepts paying more tax than a rebuilder),
+(the front office's visible money preferences) and the team's phase (a contender accepts paying more tax than a rebuilder),
 and saturating at TAX_VALUE_CAP points, so a team deep in the tax does not give away good players for nothing. The
 rate is calibrated on the real tax moves: in this game a future second-round pick is worth about 15-20 points, and
 real teams pay one to three seconds to shed $5-15M of salary that saves them roughly $8-25M in tax, which is about
@@ -322,9 +322,7 @@ def _state(canonical: dict[str, Any], team_id: str) -> dict[str, Any]:
 
 def money_weight(canonical: dict[str, Any], team_id: str) -> float:
     """Points per $1M of tax for this team: the owner's spending appetite and the team's phase."""
-    front = next((f for f in canonical.get("front_office_profiles", []) if f.get("team_id") == team_id), {}) or {}
-    discipline = float(front.get("financial_discipline") or 58.0)
-    owner = max(0.7, min(1.4, 1.0 + (discipline - 58.0) / 40.0))
+    owner = owner_money_factor(canonical, team_id)
     state = _state(canonical, team_id)
     window = state.get("window_phase") or {"contending": "peak", "contending_with_future_upside": "peak",
                                            "developing": "entering", "retooling": "exiting"}.get(state.get("phase"), "rebuilding")
@@ -347,6 +345,10 @@ def young_piece_outgoing(canonical: dict[str, Any], team_id: str, outgoing: list
             continue
         minutes = tx.trade_value_role_minutes(player, tx.valuation_or_fallback(values, player["id"], player))
         if minutes >= YOUNG_STARTER_MINUTES or player["id"] in core:
+            return True
+        # TRADE-FOLLOWUPS: the same young rotation pieces the market keeps (trade_targets.young_rotation_piece).
+        from .trade_targets import role_row, young_rotation_piece
+        if young_rotation_piece(role_row(canonical, player["id"])):
             return True
     return False
 
@@ -479,10 +481,23 @@ def dead_money(canonical: dict[str, Any], team_id: str, incoming: list[dict[str,
                                          for pid, v in sorted(detail.items())]}
 
 
+OWNER_FACTOR_TAX_AVERSE = 1.25  # "works hard to stay under the luxury tax"
+OWNER_FACTOR_SPENDS_TAX = 0.8   # "will pay the luxury tax to win"
+
+
 def owner_money_factor(canonical: dict[str, Any], team_id: str) -> float:
-    front = next((f for f in canonical.get("front_office_profiles", []) if f.get("team_id") == team_id), {}) or {}
-    discipline = float(front.get("financial_discipline") or 58.0)
-    return max(0.7, min(1.4, 1.0 + (discipline - 58.0) / 40.0))
+    """How much the owner minds spending money (1.0 the league middle), from the front office's visible money
+    preferences (front_office.py, from real reputations with sources; shown in the front-office hints).
+
+    TRADE-FOLLOWUPS: it was the old hidden "financial discipline" field (0.7 to 1.4; unsourced flavour values and
+    name-hash offsets the user never saw). Rule 4: nothing that moves a decision is invisible."""
+    from .front_office import has_bias, office
+    row = office(canonical, team_id)
+    if has_bias(row, "tax_averse"):
+        return OWNER_FACTOR_TAX_AVERSE
+    if has_bias(row, "spends_tax"):
+        return OWNER_FACTOR_SPENDS_TAX
+    return 1.0
 
 
 def absorb_cost(canonical: dict[str, Any], team_id: str, incoming: list[dict[str, Any]],

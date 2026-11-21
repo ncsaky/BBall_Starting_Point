@@ -1107,12 +1107,14 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
     from . import trade_counters as tc
     counters_left = [tc.COUNTERS_PER_SEARCH[depth]]
 
-    def finalize(candidate, pairing, order, evaluation_canonical, war=None):
-        """Record an agreed target deal: both teams' reasons, the counter chain, the market's part."""
+    def finalize(candidate, pairing, order, evaluation_canonical, war=None, sale=False):
+        """Record an agreed target deal: both teams' reasons, the counter chain, the market's part. A shopped
+        player's sale and the end of a multi-day negotiation go first in the day's deals (TRADE-FOLLOWUPS: an agreed
+        market deal is executed the day it is agreed or cancelled with its reason)."""
         counter = candidate.pop('counter', None)
         candidate = mark_ai_trade_accepted(candidate)
         candidate['target_source'] = 'front_office_target'
-        candidate['_search_order'] = order
+        candidate['_search_order'] = -1 if (sale or market.open_negotiation(pairing)) else order
         reasons = tt.trade_reasons(canonical, pairing)
         if counter:
             reasons['counter'] = counter
@@ -1133,7 +1135,7 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
         if reserve_assets:
             reserved.update(proposal_asset_identity_keys(candidate))
         satisfied.add(pairing['target']['id'])
-        market.deal(pairing, candidate)
+        market.deal(pairing, candidate, sale=sale)
 
     def agreed(candidate, pairing, order, evaluation_canonical, options):
         """An agreed deal: a shopped player's offer goes into the seller's comparison (bidding), others close now."""
@@ -1288,12 +1290,16 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
         bid, war = won['bid'], won['war']
         keys = proposal_asset_identity_keys(bid['candidate'])
         if reserve_assets and keys & reserved:
+            # TRADE-FOLLOWUPS: a sale is recorded as agreed only when it is one of today's deals. Before, the war was
+            # marked sold here and the deal dropped, so the same sale was "agreed" again on later days.
             diagnostics['asset_conflicts'] += 1
+            market.hold_sale(war, "the winning offer uses a player or pick already in another deal agreed today")
             continue
-        if len(proposals) >= limit:
-            break
-        finalize(bid['candidate'], bid['pairing'], -1 if len(war.get('bidders') or []) >= 2 else bid['order'],
-                 bid['evaluation_canonical'], war=war if len(war.get('bidders') or []) >= 2 else None)
+        # A sale goes in even past the search limit: it is first in the day's deals (the review keeps only its slots
+        # and records a sale it has no room for as held, never as agreed).
+        finalize(bid['candidate'], bid['pairing'], -1, bid['evaluation_canonical'],
+                 war=war if len(war.get('bidders') or []) >= 2 else None, sale=True)
+        war['proposal_id'] = bid['candidate']['proposal'].get('id')
     # Salary dumps (trade 2b): teams over the luxury tax shed salary to teams with room, paying picks if needed.
     dump_limit = max(1, -(-limit // 3))
     dumps_done, dump_teams = 0, set()
@@ -1363,6 +1369,8 @@ def target_driven_ai_trades(canonical: dict[str, Any], from_date: str, through_d
     for index, candidate in enrich_agreed_deals(canonical, proposals, seed=seed, date=through_date, config=config,
                                                 depth=depth, diagnostics=diagnostics,
                                                 reserved=reserved if reserve_assets else set()).items():
+        if proposals[index].get('market_deal'):
+            candidate['market_deal'] = proposals[index]['market_deal']  # still the same agreed market deal
         proposals[index] = candidate
         evaluation_snapshots[candidate['proposal']['id']] = canonical
     if len(proposals) < limit and near_misses:
@@ -1577,6 +1585,31 @@ class _BilateralSettlementMaterialization:
 
 
 def apply_trade_to_state(
+    save: dict[str, Any],
+    proposal_id: str,
+    date: str = CANONICAL_START_DATE,
+    *,
+    save_label: str = "in_memory",
+    canonical: dict[str, Any] | Any | None = None,
+    config: dict[str, Any] | None = None,
+    _full_reference: bool = False,
+) -> dict[str, Any]:
+    """Apply an authorized proposal to an already-loaded save (``_apply_trade_to_state``).
+
+    TRADE-FOLLOWUPS: an agreed market deal (a shopped player's sale, the end of a negotiation, a target deal; tagged
+    ``market_deal`` by the search) is either completed here or cancelled with the re-check's reason, recorded in the
+    trade market's ledger the same day (trade_market.note_market_execution)."""
+    proposal = next((item for item in save.get("pending_trade_proposals", [])
+                     if (item.get("proposal") or {}).get("id") == proposal_id or item.get("id") == proposal_id), None)
+    result = _apply_trade_to_state(save, proposal_id, date, save_label=save_label, canonical=canonical, config=config,
+                                   _full_reference=_full_reference)
+    if proposal and proposal.get("market_deal"):
+        from .trade_market import note_market_execution
+        note_market_execution(save, proposal, result, date)
+    return result
+
+
+def _apply_trade_to_state(
     save: dict[str, Any],
     proposal_id: str,
     date: str = CANONICAL_START_DATE,
@@ -5798,12 +5831,14 @@ def personality_note(personality: dict[str, Any]) -> str:
 
 
 def acceptance_threshold(canonical: dict[str, Any], team_id: str, config: dict[str, Any]) -> float:
-    front = next(item for item in canonical["front_office_profiles"] if item["team_id"] == team_id)
-    base = float(config.get("decision", {}).get("base_acceptance_threshold", 1.5))
-    base += (float(front.get("asset_discipline") or 55) - 55) * 0.04
-    base += (float(front.get("competence") or 55) - 55) * 0.025
-    base -= (float(front.get("owner_pressure") or 55) - 55) * 0.03
-    return round(base, 3)
+    """Every front office's acceptance margin: the same for all (TRADE-FOLLOWUPS).
+
+    It used to move about +-2 points with the old hidden front-office profile (asset discipline, competence, owner
+    pressure: unsourced flavour values the user never saw). How a front office differs is now only in its visible
+    traits (front_office.py: savvy, urgency, patience, loyalty and its habits), each stated in the trade's reasons
+    (rule 4)."""
+    del canonical, team_id
+    return round(float(config.get("decision", {}).get("base_acceptance_threshold", 1.5)), 3)
 
 
 def contextual_acceptance_threshold(
@@ -5832,10 +5867,13 @@ def contextual_acceptance_threshold(
     outgoing_star = max_player_value(outgoing_assets)
     if incoming_star >= 78.0 and incoming_star >= outgoing_star + 8.0:
         state = next((item for item in canonical.get("team_strategic_states", []) if item.get("team_id") == team_id), {})
-        front = next((item for item in canonical.get("front_office_profiles", []) if item.get("team_id") == team_id), {})
         discount = 0.55
-        discount += max(0.0, float(state.get("pressure") or 55.0) - 65.0) * 0.015
-        discount += max(0.0, float(front.get("star_chasing") or 55.0) - 55.0) * 0.015
+        # TRADE-FOLLOWUPS: the eagerness for a star comes from the visible win-now urgency (front_office.py), not the
+        # old hidden owner-pressure and star-chasing fields (a star-chasing habit is its own stated personality term).
+        from .front_office import office
+        row = office(canonical, team_id)
+        if row:
+            discount += max(0.0, float(row["urgency"]) - 65.0) * 0.015
         if state.get("phase") in {"contending", "contending_with_future_upside"}:
             discount += 0.25
         threshold -= min(1.3, discount)

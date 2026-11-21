@@ -6282,6 +6282,9 @@ def free_agency_general_trade_candidates(active: dict[str, Any], save: dict[str,
             continue
         candidate["free_agency_context"] = {"kind": "general_market_trade"}
         candidates.append(candidate)
+    # TRADE-FOLLOWUPS: free-agency days keep the trade market's ledger (multi-day talks, shopping, final offers).
+    from .trade_market import begin_market_day
+    begin_market_day(save, active, current, payload, candidates[:max_results])
     return candidates[:max_results]
 
 
@@ -6852,20 +6855,25 @@ def run_summer_ai_market(canonical: dict[str, Any], save: dict[str, Any], seed: 
     payload = simulate_ai_trades(active, stamp, stamp, seed=search_seed, limit=slots + 3, reserve_assets=True,
                                  search_depth=2)
     human = human_controlled_team_ids(save)
-    applied = 0
-    for candidate in payload.get("proposals", []):
+    eligible = [c for c in payload.get("proposals", [])
+                if not human.intersection(trade_team_ids(c.get("proposal") or {})) and c.get("accepted_by_all")
+                and (c.get("legality") or {}).get("status") == "legal" and (c.get("proposal") or {}).get("id")]
+    # TRADE-FOLLOWUPS: summer market days keep the trade market's ledger (multi-day talks, shopping, final offers).
+    from .trade_market import begin_market_day, release_agreements
+    begin_market_day(save, active, stamp, payload, eligible)
+    applied, tried = 0, 0
+    for candidate in eligible:
         if applied >= slots:
             break
+        tried += 1
         proposal = candidate.get("proposal") or {}
-        if (human.intersection(trade_team_ids(proposal)) or not candidate.get("accepted_by_all")
-                or (candidate.get("legality") or {}).get("status") != "legal" or not proposal.get("id")):
-            continue
         pending = save.setdefault("pending_trade_proposals", [])
         if not any(((item.get("proposal") or {}).get("id") or item.get("id")) == proposal["id"] for item in pending):
             pending.append(candidate)
         result = apply_trade_to_state(save, proposal["id"], date=stamp, canonical=canonical)
         if result.get("status") == "applied":
             applied += 1  # apply_trade_to_state records the news item and the trade log
+    release_agreements(save, eligible[tried:], stamp)
     return applied
 
 

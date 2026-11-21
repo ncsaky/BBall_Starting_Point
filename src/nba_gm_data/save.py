@@ -5985,8 +5985,6 @@ def late_deadline_trade_pass(canonical: dict[str, Any], save: dict[str, Any], ta
                                      focus_team_ids=focus)
     finally:
         review.close()
-    from .trade_market import apply_market_updates
-    apply_market_updates(save, payload.get("market_updates"), active)
     chosen, reserved = [], set()
     for proposal in payload.get("proposals", []):
         if not (proposal.get("accepted_by_all") and (proposal.get("legality") or {}).get("status") == "legal"):
@@ -5998,6 +5996,8 @@ def late_deadline_trade_pass(canonical: dict[str, Any], save: dict[str, Any], ta
             continue
         chosen.append(proposal)
         reserved |= assets
+    from .trade_market import apply_market_updates, chosen_market_keys
+    apply_market_updates(save, payload.get("market_updates"), active, chosen=chosen_market_keys(chosen))
     record.update(late_focus_teams=len(focus), late_candidates=len(chosen))
     if not chosen:
         save.setdefault("processed_hidden_ai_actions", []).append(record)
@@ -6133,10 +6133,9 @@ def queue_ai_recommendations(
                 involving_team_ids=human_team_ids, review=review) if human_team_ids and market['offer_slots'] else {'proposals': []}
             review.close()
             # TRADE-MARKET: today's negotiations, shopping, bidding wars and final offers go into the save's ledger.
-            from .trade_market import apply_market_updates, refresh_ledger, season_rollover
+            from .trade_market import apply_market_updates, chosen_market_keys, refresh_ledger, season_rollover
             refresh_ledger(save, canonical, through_date)
             season_rollover(save, through_date)
-            apply_market_updates(save, payload.get('market_updates'), canonical)
             user_offers = [
                 proposal for proposal in inbound.get('proposals', [])
                 if proposal.get('accepted_by_all') and proposal.get('legality', {}).get('status') == 'legal'
@@ -6160,6 +6159,8 @@ def queue_ai_recommendations(
                 reserved_assets |= assets
             payload["proposals"] = chosen
             payload["proposal_count"] = len(payload["proposals"])
+            # TRADE-FOLLOWUPS: only the deals the review executes today are recorded as agreed.
+            apply_market_updates(save, payload.get('market_updates'), canonical, chosen=chosen_market_keys(chosen))
             if not payload["proposals"]:
                 save.setdefault('processed_hidden_ai_actions', []).append({
                     'id': action_id, 'date': through_date, 'action_type': 'trade_market_review',
