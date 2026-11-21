@@ -14,6 +14,9 @@ try again.
 **Shopping and bidding wars.** A team with a stated reason to move a good player (rebuild, tax, blocked, unhappy,
 expiring) shops him when two or more teams are interested. The seller compares every live offer each day: it asks
 the bidders for their best, each raises within its own value plus its personality premium, and the best offer wins.
+BIDWAR-PRICE: offers are compared on the seller's textbook price (``evaluation_price``); a bidder whose built packages
+cannot beat the leader adds one more asset of its own while its own check accepts; the winner pays at least the
+second-best bid, and a slightly lower bid wins only for a strong stated reason of the seller's (``SearchMarket.decide``).
 A patient seller waits for the decision day (always by the deadline) unless an offer clearly beats its price; an
 impatient one takes a good offer early. The user's offers for a shopped player enter the same comparison
 (app_actions).
@@ -51,6 +54,18 @@ OPINION_PAIRINGS_PER_BUYER = 2  # available players an office pursues because it
 OPINION_MIN_MINUTES = 14.0      # ... only if he would play for it
 OPINION_REBUILD_MAX_AGE = 29.0  # ... and a rebuilding or retooling office does not chase older players
 OPINION_RANK = 9                # after every target pairing in the search order
+
+# BIDWAR-PRICE: the price of a bid is the seller's textbook value of it (its net with its personality terms taken out,
+# over its acceptance threshold). The war is fought on that price and the winner pays at least the second-best bid.
+# A slightly lower bid wins only for a stated, lasting reason of the seller's (docs/agents/tasks/bidwar-price.md).
+SLIGHT_GAP = 5.0          # a lower bid can win only this close to the best price (about half a second-round pick)
+STRONG_REASON = 2.0       # ... for a stated reason at least this large ...
+PREFERENCE_EDGE = 1.0     # ... that makes it worth at least this much more to the seller overall
+FLOOR_CHECKS = 3          # full checks for the seller's preferred bidder raising its offer to the best price
+TIMELINE_POINTS = 3.0     # a rebuilding seller's preference for a package of young players and picks (all of it)
+TIMELINE_YOUNG_AGE = 24.0
+RIVAL_POINTS = 4.0        # a competing seller's reluctance to strengthen a contender in its own conference
+PREFERENCE_TERMS = {"opinion": "opinion", "tax_averse": "tax", "values_picks": "picks", "urgency": "help_now"}
 
 
 # ----------------------------------------------------------------------------------------------- utilities
@@ -477,18 +492,30 @@ class SearchMarket:
     def seller_margin(self, candidate: dict[str, Any], seller_id: str) -> float:
         return self.gaps(candidate).get(seller_id, -99.0)
 
+    def seller_price(self, candidate: dict[str, Any], seller_id: str) -> float:
+        """The bid's price: the seller's textbook value of it over its threshold (personality terms taken out)."""
+        evaluation = _evaluation_for(candidate, seller_id)
+        return evaluation_price(evaluation) if evaluation else -99.0
+
     def resolve_bidding(self, evaluate, raise_options) -> list[dict[str, Any]]:
         """Each shopped player with bids: the bidding war (raises in rounds) and the seller's decision. Returns the
-        winning bids to finalize today (each with its war record)."""
+        winning bids to finalize today (each with its war record).
+
+        BIDWAR-PRICE: bidders raise on the seller's textbook price, and the winner pays at least the second-best bid.
+        When the seller prefers a lower bid for a stated reason of its own (``seller_preferences``), that bidder must
+        raise its offer to the best price (``raise_to_floor``, within its own price limit); if it cannot, its offer
+        still wins only when it is a slightly lower one (SLIGHT_GAP) and the reason is a strong one. Otherwise the
+        seller takes the best price."""
         winners = []
         for pid in sorted(self.bids):
             bids = self.bids[pid]
             seller = bids[0]["pairing"]["row"]["team_id"]
             war = {"player_id": pid, "player_name": bids[0]["pairing"]["row"].get("name"), "seller_id": seller,
                    "date": self.date, "bidders": sorted({b["pairing"]["buyer_id"] for b in bids}), "rounds": []}
-            lead = max(bids, key=lambda b: (self.seller_margin(b["candidate"], seller), -b["order"]))
-            war["rounds"].append({"round": 1, "bids": {b["pairing"]["buyer_id"]: self.seller_margin(b["candidate"], seller)
-                                                      for b in bids}, "leader": lead["pairing"]["buyer_id"]})
+            price = lambda b: self.seller_price(b["candidate"], seller)  # noqa: E731
+            lead = max(bids, key=lambda b: (price(b), -b["order"]))
+            war["rounds"].append({"round": 1, "bids": {b["pairing"]["buyer_id"]: round(price(b), 2) for b in bids},
+                                  "leader": lead["pairing"]["buyer_id"]})
             if len(bids) >= 2:
                 for round_ in range(2, BIDDING_ROUNDS + 1):
                     raised = {}
@@ -500,26 +527,38 @@ class SearchMarket:
                             candidate = evaluate(bid, option)
                             if candidate is None:
                                 continue
-                            if self.seller_margin(candidate, seller) > self.seller_margin(lead["candidate"], seller) + BID_RAISE_MIN:
+                            if self.seller_price(candidate, seller) > price(lead) + BID_RAISE_MIN:
                                 better = candidate
                                 break
+                        if better is None:
+                            # None of its built packages beats the leader: it adds one more asset of its own, as
+                            # long as its own check still accepts (BIDWAR-PRICE: losing bidders bid up to their own
+                            # limit, so the winner pays at least what the runner-up was willing to pay).
+                            better = self.raise_to_floor(bid, seller, price(lead) + BID_RAISE_MIN, evaluate)
                         if better is not None:
                             bid["candidate"] = better
-                            raised[bid["pairing"]["buyer_id"]] = self.seller_margin(better, seller)
+                            raised[bid["pairing"]["buyer_id"]] = round(price(bid), 2)
                     if not raised:
                         break
-                    lead = max(bids, key=lambda b: (self.seller_margin(b["candidate"], seller), -b["order"]))
+                    lead = max(bids, key=lambda b: (price(b), -b["order"]))
                     war["rounds"].append({"round": round_, "bids": raised, "leader": lead["pairing"]["buyer_id"]})
-            war["winner"] = lead["pairing"]["buyer_id"]
+            winner = self.decide(war, bids, lead, seller, evaluate)
+            war["winner"] = winner["pairing"]["buyer_id"]
             war["key"] = negotiation_key(war["winner"], seller, pid)
-            war["winning_margin"] = self.seller_margin(lead["candidate"], seller)
-            war["winning_offer"] = _offer_summary(self.canonical, lead["candidate"])
+            war["winning_margin"] = self.seller_margin(winner["candidate"], seller)
+            war["winning_price"] = round(price(winner), 2)
+            war["winning_offer"] = _offer_summary(self.canonical, winner["candidate"])
+            war["prices"] = {b["pairing"]["buyer_id"]: round(price(b), 2) for b in bids}
+            others = [price(b) for b in bids if b is not winner]
+            war["second_price"] = round(max(others), 2) if others else None
+            war["best_price"] = round(max(price(b) for b in bids), 2)
+            war["price_leader"] = max(bids, key=lambda b: (price(b), -b["order"]))["pairing"]["buyer_id"]
             entry = self.shopping.get(pid) or {}
             decide_by = self.current_decision_day(pid, seller)
             war["decide_by"] = decide_by
             user_bid = entry.get("user_bid") or {}
             if (user_bid.get("accepted_by_seller") and self.date <= decide_by
-                    and float(user_bid.get("margin") or -99.0) >= war["winning_margin"]):
+                    and user_bid_leads(user_bid, war["best_price"], war.get("leader_preferences") or {})):
                 # The user's offer is the best one: the seller waits for the user until its decision day.
                 war["status"] = "user_leads"
                 self.waiting.append(war)
@@ -532,8 +571,90 @@ class SearchMarket:
                 continue
             war["status"] = "sold"
             self.wars.append(war)
-            winners.append({"bid": lead, "war": war})
+            winners.append({"bid": winner, "war": war})
         return winners
+
+    def decide(self, war: dict[str, Any], bids: list[dict[str, Any]], lead: dict[str, Any], seller: str,
+               evaluate) -> dict[str, Any]:
+        """The seller's choice between the bids (BIDWAR-PRICE), recorded on the war as ``decision``: the best price
+        ("best_price"), its preferred bidder raising to the best price ("matched"), or rarely a slightly lower bid
+        for a stated reason ("lower_bid")."""
+        preferences = {id(b): seller_preferences(self.canonical, seller, b["pairing"]["buyer_id"], b["candidate"])
+                       for b in bids}
+        war["leader_preferences"] = {k: round(v["points"], 2) for k, v in preferences[id(lead)].items()}
+        war["decision"] = {"rule": "best_price"}
+        if len(bids) < 2:
+            return lead
+        price = lambda b: self.seller_price(b["candidate"], seller)  # noqa: E731
+        score = lambda b: price(b) + sum(v["points"] for v in preferences[id(b)].values())  # noqa: E731
+        preferred = max(bids, key=lambda b: (score(b), price(b), -b["order"]))
+        if preferred is lead or score(preferred) < score(lead) + PREFERENCE_EDGE:
+            return lead
+        reasons = favoring_reasons(self.canonical, seller, preferred["pairing"]["buyer_id"], preferences[id(preferred)],
+                                   lead["pairing"]["buyer_id"], preferences[id(lead)])
+        if not reasons:
+            return lead
+        floor = price(lead)
+        gap = round(floor - price(preferred), 2)
+        base = {"preferred": preferred["pairing"]["buyer_id"], "best_price_by": lead["pairing"]["buyer_id"],
+                "gap": gap, "reasons": reasons}
+        if gap <= 0:
+            war["decision"] = {**base, "rule": "best_price", "tie_broken_by_preference": True}
+            return preferred  # the same price: the seller's preference breaks the tie
+        raised = self.raise_to_floor(preferred, seller, floor, evaluate)
+        if raised is not None:
+            preferred["candidate"] = raised
+            war["decision"] = {**base, "rule": "matched", "raised_price": round(price(preferred), 2)}
+            war["rounds"].append({"round": len(war["rounds"]) + 1, "bids": {base["preferred"]: round(price(preferred), 2)},
+                                  "leader": base["preferred"], "matched": True})
+            return preferred
+        if lower_bid_allowed(gap, reasons):
+            war["decision"] = {**base, "rule": "lower_bid"}
+            return preferred
+        war["decision"] = {**base, "rule": "best_price", "passed_over": base["preferred"]}
+        return lead
+
+    def raise_to_floor(self, bid: dict[str, Any], seller: str, floor: float, evaluate) -> dict[str, Any] | None:
+        """A bidder raises its offer to ``floor``: one more asset of its own (a pick, a young player or a player the
+        seller targets, the same additions a counter-offer asks for), the smallest that gets there and never one that
+        jumps far past it (COUNTER_OVERSHOOT, as counters), checked in full.
+        Used by a losing bidder in the rounds (to beat the leader) and by the seller's preferred bidder (to match the
+        best price).
+        The raise must stay within the buyer's own price limit (its own full check accepts it, personality premium
+        included) and bring the seller's textbook price up to the floor."""
+        from . import trade_counters as tc
+        from .trade_targets import PRESCREEN_TOLERANCE, quick_net
+        from .transactions import default_transaction_model_config
+        buyer = bid["pairing"]["buyer_id"]
+        pid = bid["pairing"]["row"]["id"]
+        proposal = bid["candidate"].get("proposal") or {}
+        seller_out = list(proposal.get("from_assets") or [])
+        buyer_out = list(proposal.get("to_assets") or [])
+        if proposal.get("from_team_id") != seller or proposal.get("transfers") or bid["candidate"].get("pick_obligation_terms"):
+            return None
+        config = default_transaction_model_config()
+        need = floor - self.seller_price(bid["candidate"], seller)
+        current = quick_net(self.canonical, seller, buyer_out, seller_out, config)
+        scored = []
+        for index, (kind, ask_out, give_out, _) in enumerate(tc.counter_options(
+                self.canonical, seller, buyer, seller_out, buyer_out, fixed={("player", pid)})):
+            if kind not in {"pick", "young_player", "target_player"} or ask_out != seller_out:
+                continue
+            gain = quick_net(self.canonical, seller, give_out, seller_out, config) - current
+            if gain < need - PRESCREEN_TOLERANCE or gain > need + tc.COUNTER_OVERSHOOT:
+                continue  # too small to get there, or a jump far past it (a first where a second would do)
+            if quick_net(self.canonical, buyer, seller_out, give_out, config) < -9.0 - PRESCREEN_TOLERANCE:
+                continue
+            scored.append((gain, index, give_out))
+        scored.sort(key=lambda s: s[:2])
+        for _, _, give_out in scored[:FLOOR_CHECKS]:
+            candidate = evaluate(bid, {"assets": tc._specs(give_out)})
+            if candidate is None:
+                continue
+            own = _evaluation_for(candidate, buyer) or {}
+            if own.get("accepted") and self.seller_price(candidate, seller) >= floor:
+                return candidate
+        return None
 
     def current_decision_day(self, pid: str, seller_id: str | None = None) -> str:
         """The seller's decision day for a shopped player: the one set when shopping began, or a new one if it has
@@ -603,6 +724,207 @@ def _offer_summary(canonical: dict[str, Any], candidate: dict[str, Any] | None) 
     except Exception:
         return None
     return out
+
+
+# ------------------------------------------------------------------------------------------ the price of a bid
+
+def _evaluation_for(candidate: dict[str, Any] | None, team_id: str) -> dict[str, Any] | None:
+    return next((e for e in (candidate or {}).get("evaluations") or [] if e.get("perspective_team_id") == team_id), None)
+
+
+def evaluation_price(evaluation: dict[str, Any]) -> float:
+    """A team's textbook value of a deal over its threshold: its net with its personality terms (opinions, habits,
+    concessions) taken out. Bidding wars are fought and settled on this price (BIDWAR-PRICE)."""
+    personality = float((evaluation.get("personality_adjustments") or {}).get("total") or 0.0)
+    return round(float(evaluation.get("net_value") or 0.0) - personality
+                 - float(evaluation.get("acceptance_threshold") or 0.0), 3)
+
+
+def _conference(canonical: dict[str, Any], team_id: str) -> str | None:
+    return next((t.get("conference") for t in canonical.get("teams", []) if t.get("id") == team_id), None)
+
+
+def _package_for(candidate: dict[str, Any], team_id: str) -> list[dict[str, Any]]:
+    from .transactions import trade_team_flows
+    try:
+        return next((incoming for tid, _out, incoming in trade_team_flows(candidate.get("proposal") or {}) if tid == team_id), [])
+    except Exception:
+        return []
+
+
+def _young_share(canonical: dict[str, Any], seller_id: str, package: list[dict[str, Any]]) -> float:
+    """Share of a package's value (the seller's own value) in draft picks and players 24 or younger."""
+    from .transactions import package_value_for_team, player_by_id
+    total = young = 0.0
+    for asset in package:
+        try:
+            value = max(0.0, float(package_value_for_team(canonical, [asset], seller_id)))
+        except Exception:
+            continue
+        total += value
+        if asset.get("kind") in {"pick", "pick_swap"}:
+            young += value
+        elif asset.get("kind") == "player":
+            player = player_by_id(canonical, asset.get("id")) or {}
+            try:
+                age = float(player.get("display_age", player.get("age")) or 99.0)
+            except (TypeError, ValueError):
+                age = 99.0
+            if age <= TIMELINE_YOUNG_AGE:
+                young += value
+    return young / total if total > 0 else 0.0
+
+
+def seller_preferences(canonical: dict[str, Any], seller_id: str, buyer_id: str,
+                       candidate: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """The seller's lasting, stated reasons to like one bid more than its price says (BIDWAR-PRICE), in value points
+    by kind, each with its words:
+
+    - ``opinion``: its scouts' view of a player in the package (front_office.player_opinion; also a player it is cool
+      on), as in its full evaluation;
+    - ``tax``: a tax-averse owner's extra weight on the tax a package saves (the "works hard to stay under the luxury
+      tax" habit), as in its full evaluation;
+    - ``picks``: an office that prizes draft picks, as in its full evaluation;
+    - ``help_now``: a competing seller's urgency for a player who helps now, as in its full evaluation;
+    - ``timeline``: a rebuilding or retooling seller's preference for a package of young players and picks;
+    - ``rival``: a competing seller's reluctance to strengthen a contender in its own conference.
+
+    Concessions in a negotiation are not reasons to prefer a bid and are left out. The first four are the seller's
+    personality terms; the last two count only here, between bids, never in any acceptance check."""
+    from .front_office import office
+    out: dict[str, dict[str, Any]] = {}
+    row = office(canonical, seller_id)
+    if not row:
+        return out
+    evaluation = _evaluation_for(candidate, seller_id) or {}
+    for term in (evaluation.get("personality_adjustments") or {}).get("terms") or []:
+        kind = PREFERENCE_TERMS.get(term.get("key"))
+        if not kind:
+            continue
+        item = out.setdefault(kind, {"points": 0.0, "texts": []})
+        item["points"] += float(term.get("points") or 0.0)
+        item["texts"].append(str(term.get("text") or ""))
+    stance = _stance(canonical, seller_id)
+    if stance in {"rebuild", "retool"}:
+        share = _young_share(canonical, seller_id, _package_for(candidate, seller_id))
+        if share > 0:
+            out["timeline"] = {"points": TIMELINE_POINTS * share, "texts": [], "share": round(share, 2)}
+    if stance in {"contend", "rise"} and buyer_id and _stance(canonical, buyer_id) == "contend":
+        conference = _conference(canonical, seller_id)
+        if conference and conference == _conference(canonical, buyer_id):
+            out["rival"] = {"points": -RIVAL_POINTS, "texts": [], "conference": conference}
+    return out
+
+
+def _abbrev_of(canonical: dict[str, Any], team_id: str) -> str:
+    return next((t.get("abbrev") for t in canonical.get("teams", []) if t.get("id") == team_id), None) or str(team_id)
+
+
+def favoring_reasons(canonical: dict[str, Any], seller_id: str, preferred_id: str, preferred: dict[str, Any],
+                     other_id: str, other: dict[str, Any]) -> list[dict[str, Any]]:
+    """The seller's stated reasons to prefer one bid over another, largest first: each kind where the preferred bid is
+    worth at least a quarter point more to it, in plain words."""
+    seller = _abbrev_of(canonical, seller_id)
+    winner, loser = _abbrev_of(canonical, preferred_id), _abbrev_of(canonical, other_id)
+    out = []
+    for kind in sorted(set(preferred) | set(other)):
+        mine, theirs = preferred.get(kind) or {}, other.get(kind) or {}
+        points = float(mine.get("points") or 0.0) - float(theirs.get("points") or 0.0)
+        if points < 0.25:
+            continue
+        if kind == "opinion":
+            liked = [t for t in mine.get("texts") or [] if "always liked" in t or "long connection" in t]
+            cool = [t for t in theirs.get("texts") or [] if "lower on" in t]
+            text = "; ".join(liked + cool) or f"{seller}'s scouts like {winner}'s players more"
+        elif kind == "tax":
+            text = f"{seller} works hard to stay under the luxury tax, and {winner}'s offer saves it more"
+        elif kind == "picks":
+            text = f"{seller} prizes draft picks, and {winner}'s offer has more of them"
+        elif kind == "help_now":
+            text = f"{seller} wants help now, and {winner}'s offer brings a player who gives it"
+        elif kind == "timeline":
+            text = (f"{seller} is rebuilding, and {winner}'s offer is built from young players and picks that fit its "
+                    f"timeline")
+        else:
+            conference = theirs.get("conference") or ""
+            text = (f"{seller} would rather not strengthen {loser}, a contender in its own "
+                    f"{conference + ' ' if conference else ''}conference")
+        out.append({"key": kind, "points": round(points, 2), "text": text})
+    out.sort(key=lambda r: (-r["points"], r["key"]))
+    return out
+
+
+def lower_bid_allowed(gap: float, reasons: list[dict[str, Any]]) -> bool:
+    """A lower bid wins only when it is slightly lower and the seller has a strong stated reason that makes it worth
+    more to it overall (the rare exception; no dice)."""
+    if gap <= 0:
+        return True
+    total = sum(float(r["points"]) for r in reasons)
+    return (gap <= SLIGHT_GAP and max((float(r["points"]) for r in reasons), default=0.0) >= STRONG_REASON
+            and total >= gap + PREFERENCE_EDGE)
+
+
+def user_bid_leads(user_bid: dict[str, Any], best_price: float | None, leader_preferences: dict[str, float]) -> bool:
+    """The user's recorded offer against the best AI price: it leads at that price or above, or (the same rare
+    exception as between AI bids) slightly below it for a strong stated reason of the seller's."""
+    if best_price is None:
+        return True
+    price = user_bid.get("price")
+    if price is None:
+        price = user_bid.get("margin")
+    price = float(price if price is not None else -99.0)
+    if price >= best_price:
+        return True
+    reasons = [{"key": k, "points": float(p) - float(leader_preferences.get(k) or 0.0)}
+               for k, p in (user_bid.get("preferences") or {}).items()]
+    reasons += [{"key": k, "points": -float(p)} for k, p in leader_preferences.items()
+                if k not in (user_bid.get("preferences") or {})]
+    reasons = [r for r in reasons if r["points"] >= 0.25]
+    return lower_bid_allowed(best_price - price, reasons)
+
+
+VALUE_WORDS = ((5.0, "a little more (less than a second-round pick)"), (14.0, "about a second-round pick"),
+               (26.0, "about two second-round picks"), (40.0, "about a late first-round pick"),
+               (55.0, "about a first-round pick"))
+
+
+def value_words(points: float) -> str:
+    """A value gap in the trade evaluation's points as draft picks (a future second is about 9.5, a late first about
+    35, a future first about 43)."""
+    for limit, words in VALUE_WORDS:
+        if points <= limit:
+            return words
+    return "well over a first-round pick"
+
+
+def decision_text(canonical: dict[str, Any], war: dict[str, Any]) -> str | None:
+    """The seller's choice in a bidding war, in plain words (the trade's explanation and the Trade Market board)."""
+    decision = war.get("decision") or {}
+    seller = _abbrev_of(canonical, war.get("seller_id"))
+    winner = _abbrev_of(canonical, war.get("winner"))
+    reasons = "; ".join(r["text"] for r in decision.get("reasons") or [])
+    rule = decision.get("rule")
+    if rule == "lower_bid":
+        best = _abbrev_of(canonical, decision.get("best_price_by"))
+        return (f"{seller} took {winner}'s offer although {best}'s was worth slightly more to it (less than a "
+                f"second-round pick more): {reasons}.")
+    if rule == "matched":
+        best = _abbrev_of(canonical, decision.get("best_price_by"))
+        return (f"{seller} preferred {winner}'s offer ({reasons}) and {winner} raised it to match {best}'s, the best "
+                f"price.")
+    if len(war.get("bidders") or []) < 2:
+        return None
+    second = [t for t, p in (war.get("prices") or {}).items() if t != war.get("winner") and p == war.get("second_price")]
+    if decision.get("passed_over"):
+        passed = _abbrev_of(canonical, decision["passed_over"])
+        return (f"{winner}'s offer was worth the most to {seller}. {seller} preferred {passed}'s ({reasons}), but "
+                f"{passed} could not match the price.")
+    if second and decision.get("tie_broken_by_preference"):
+        return (f"{winner}'s offer was worth as much to {seller} as {_abbrev_of(canonical, sorted(second)[0])}'s, and "
+                f"{seller} preferred it: {reasons}.")
+    if second:
+        return f"{winner}'s offer was worth the most to {seller}, more than {_abbrev_of(canonical, sorted(second)[0])}'s."
+    return f"{winner}'s offer was worth the most to {seller}."
 
 
 # ------------------------------------------------------------------------------------------ the save side
@@ -694,7 +1016,10 @@ def apply_market_updates(save: dict[str, Any], updates: dict[str, Any] | None, a
             book["shopping"][war["player_id"]] = entry
         entry["rounds"] = int(entry.get("rounds") or 0) + len(war.get("rounds") or [])
         entry["bids"] = [{"date": day, "leader": war.get("winner"), "margin": war.get("winning_margin"),
-                          "offer": war.get("winning_offer"), "bidders": war.get("bidders")}] + list(entry.get("bids") or [])[:4]
+                          "offer": war.get("winning_offer"), "bidders": war.get("bidders"),
+                          "price": war.get("best_price"), "price_leader": war.get("price_leader"),
+                          "leader_preferences": war.get("leader_preferences"),
+                          "decision": (war.get("decision") or {}).get("rule")}] + list(entry.get("bids") or [])[:4]
         entry["interested"] = sorted(set(entry.get("interested") or []) | set(war.get("bidders") or []))
         entry["last_date"] = day
         status = war.get("status")
@@ -706,6 +1031,9 @@ def apply_market_updates(save: dict[str, Any], updates: dict[str, Any] | None, a
             entry["winner"] = war.get("winner")
             entry["agreed_date"] = day
             entry["agreed_key"] = war.get("key")
+            note = decision_text(active, war)
+            if note:
+                entry["sale_note"] = note
             book.setdefault("wars", []).append(war)
             stats["sales_agreed"] = int(stats.get("sales_agreed") or 0) + 1
             counted = "war_counted" if len(war.get("bidders") or []) >= 2 else "sale_counted"
@@ -713,6 +1041,11 @@ def apply_market_updates(save: dict[str, Any], updates: dict[str, Any] | None, a
                 entry[counted] = True
                 key = "bidding_wars" if counted == "war_counted" else "shopped_single_bidder_sales"
                 stats[key] = int(stats.get(key) or 0) + 1
+                rule = (war.get("decision") or {}).get("rule")
+                if counted == "war_counted" and (rule in {"lower_bid", "matched"} or (war.get("decision") or {}).get("passed_over")):
+                    name = {"lower_bid": "wars_won_by_lower_bid", "matched": "wars_preferred_bid_matched"}.get(
+                        rule, "wars_preferred_bid_passed_over")
+                    stats[name] = int(stats.get(name) or 0) + 1
         elif status == "user_leads":
             entry["status"] = "bidding"
             entry["user_leads"] = day
@@ -983,9 +1316,38 @@ def expire_final_offers(save: dict[str, Any], today: str) -> int:
     return expired
 
 
-def _latest_bid_margin(entry: dict[str, Any]) -> float | None:
-    bids = [b for b in entry.get("bids") or [] if b.get("margin") is not None]
-    return float(bids[0]["margin"]) if bids else None
+def _latest_bid(entry: dict[str, Any]) -> dict[str, Any] | None:
+    bids = [b for b in entry.get("bids") or [] if b.get("price") is not None or b.get("margin") is not None]
+    return bids[0] if bids else None
+
+
+def _latest_bid_price(entry: dict[str, Any]) -> float | None:
+    """The best AI offer's price for a shopped player (the seller's textbook value of it over its threshold)."""
+    bid = _latest_bid(entry)
+    if bid is None:
+        return None
+    return float(bid["price"] if bid.get("price") is not None else bid["margin"])
+
+
+def user_bid_state(active: dict[str, Any], entry: dict[str, Any]) -> tuple[str | None, str | None]:
+    """The user's offer for a shopped player against the best AI offer, and why, in plain words (the Trade Market
+    board). The same comparison the seller makes (``user_bid_leads``)."""
+    user_bid = entry.get("user_bid") or {}
+    if not user_bid:
+        return None, None
+    seller = _abbrev_of(active, entry.get("seller_id"))
+    bid = _latest_bid(entry) or {}
+    best = _latest_bid_price(entry)
+    leader_id = bid.get("price_leader") or bid.get("leader")
+    leader = _abbrev_of(active, leader_id) if leader_id else "Another team"
+    if entry.get("status") == "sold" and entry.get("winner") and entry.get("winner") != user_bid.get("team_id"):
+        winner = _abbrev_of(active, entry.get("winner"))
+        return "outbid", entry.get("sale_note") or f"{seller} sold him to {winner}."
+    if best is None or user_bid_leads(user_bid, best + BID_RAISE_MIN, bid.get("leader_preferences") or {}):
+        return "leading", f"Your offer is the best {seller} has."
+    mine = float(user_bid.get("price") if user_bid.get("price") is not None else user_bid.get("margin") or -99.0)
+    return "outbid", (f"{leader}'s offer was worth more to {seller}; you'd need to add "
+                      f"{value_words(best + BID_RAISE_MIN - mine)}.")
 
 
 def user_offer_competition(active: dict[str, Any], save: dict[str, Any], candidate: dict[str, Any],
@@ -1013,28 +1375,48 @@ def user_offer_competition(active: dict[str, Any], save: dict[str, Any], candida
                 continue
             evaluation = next((e for e in candidate.get("evaluations") or [] if e.get("perspective_team_id") == tid), {})
             margin = float(evaluation.get("net_value") or 0.0) - float(evaluation.get("acceptance_threshold") or 0.0)
-            best = _latest_bid_margin(entry)
+            # BIDWAR-PRICE: offers compete on the seller's textbook price, as the AI bids do; the same rare exception
+            # (a slightly lower offer the seller prefers for a strong stated reason) applies to yours.
+            price = evaluation_price(evaluation) if evaluation else -99.0
+            full_preferences = seller_preferences(active, tid, user_team_id, candidate)
+            preferences = {k: round(v["points"], 2) for k, v in full_preferences.items()}
+            bid = _latest_bid(entry) or {}
+            best = _latest_bid_price(entry)
+            leader_preferences = bid.get("leader_preferences") or {}
             accepted = bool(evaluation.get("accepted"))
-            beaten = accepted and best is not None and margin < best + BID_RAISE_MIN
+            required = (best + BID_RAISE_MIN) if best is not None else None
+            own = {"price": price, "preferences": preferences}
+            beaten = accepted and required is not None and not user_bid_leads(own, required, leader_preferences)
+            preferred = accepted and required is not None and not beaten and price < required
             abbrev = _abbrevs(save, active).get(tid, tid)
+            leader_id = bid.get("price_leader") or bid.get("leader")
+            leader = _abbrev_of(active, leader_id) if leader_id else "Another team"
             others = [t for t in entry.get("interested") or [] if t != user_team_id]
+            interest = (f"{len(others)} other team{'s' if len(others) != 1 else ''} interested; "
+                        f"decision by {entry.get('decide_by')}")
             text = None
             if beaten:
-                text = (f"{abbrev} has a better offer for {entry.get('player_name')} ({len(others)} other team"
-                        f"{'s' if len(others) != 1 else ''} interested; decision by {entry.get('decide_by')}). "
-                        f"Beat it to get him.")
+                text = (f"{leader}'s offer for {entry.get('player_name')} is worth more to {abbrev}; you'd need to add "
+                        f"{value_words(required - price)} ({interest}). Beat it to get him.")
+            elif preferred:
+                lead_prefs = {k: {"points": p} for k, p in leader_preferences.items()}
+                reasons = favoring_reasons(active, tid, user_team_id, full_preferences, leader_id or "", lead_prefs)
+                why = "; ".join(r["text"] for r in reasons) or "its own reasons"
+                text = (f"Your offer is a little below {leader}'s, but {abbrev} prefers it for {entry.get('player_name')}: "
+                        f"{why} ({interest}).")
             elif accepted:
                 text = (f"Your offer is the best {abbrev} has for {entry.get('player_name')} right now "
                         f"(decision by {entry.get('decide_by')}).")
             current = entry.get("user_bid") or {}
             entry["interested"] = sorted(set(entry.get("interested") or []) | {user_team_id})
-            if accepted and margin > float(current.get("margin") if current.get("margin") is not None else -99.0):
-                entry["user_bid"] = {"team_id": user_team_id, "margin": round(margin, 2), "date": day,
-                                     "accepted_by_seller": accepted}
-                entry["interested"] = sorted(set(entry.get("interested") or []) | {user_team_id})
+            current_price = current.get("price") if current.get("price") is not None else current.get("margin")
+            if accepted and price > float(current_price if current_price is not None else -99.0):
+                entry["user_bid"] = {"team_id": user_team_id, "margin": round(margin, 2), "price": round(price, 2),
+                                     "preferences": preferences, "date": day, "accepted_by_seller": accepted}
             return {"player_id": asset.get("id"), "player_name": entry.get("player_name"), "seller_id": tid,
-                    "best_margin": best, "user_margin": round(margin, 2), "beaten": beaten,
-                    "required_margin": (best + BID_RAISE_MIN) if best is not None else None,
+                    "best_margin": best, "best_price": best, "user_margin": round(margin, 2),
+                    "user_price": round(price, 2), "beaten": beaten, "price_leader": bid.get("price_leader"),
+                    "required_margin": required, "required_price": required,
                     "interested": len(others), "decide_by": entry.get("decide_by"), "text": text}
     return None
 
@@ -1066,12 +1448,7 @@ def market_board(active: dict[str, Any], save: dict[str, Any]) -> dict[str, Any]
         except Exception:
             overall = None
         interested = list(entry.get("interested") or [])
-        user_bid = entry.get("user_bid") or {}
-        best = _latest_bid_margin(entry)
-        user_state = None
-        if user_bid:
-            user_state = ("leading" if best is None or float(user_bid.get("margin") or -99) >= best + BID_RAISE_MIN
-                          else "outbid")
+        user_state, user_note = user_bid_state(active, entry)
         stage = ("sold" if status == "sold" else "deal agreed" if status == "agreed"
                  else "bidding war" if status == "bidding" and len(interested) >= 2 else "taking offers")
         shopped.append({
@@ -1083,6 +1460,7 @@ def market_board(active: dict[str, Any], save: dict[str, Any]) -> dict[str, Any]
             "you_interested": bool(human & set(interested)), "stage": stage, "rounds": int(entry.get("rounds") or 0),
             "decide_by": entry.get("decide_by"), "started": entry.get("started"), "your_offer": user_state,
             "sold_to": names.get(entry.get("winner")) if status == "sold" else None,
+            "your_offer_note": user_note, "sale_note": entry.get("sale_note") if status in {"sold", "agreed"} else None,
         })
     shopped.sort(key=lambda r: (r["stage"] == "sold", -(r["overall"] or 0), r["player_name"] or ""))
     finals = []

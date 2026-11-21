@@ -290,7 +290,8 @@ class ShoppingTests(unittest.TestCase):
 
         def evaluate(entry, option):
             return bid(entry["pairing"]["buyer_id"], option)
-        winners = market.resolve_bidding(evaluate, lambda entry: raises[entry["pairing"]["buyer_id"]])
+        with patch.object(tm.SearchMarket, "raise_to_floor", return_value=None):  # no asset additions (BIDWAR-PRICE)
+            winners = market.resolve_bidding(evaluate, lambda entry: raises[entry["pairing"]["buyer_id"]])
         self.assertEqual(len(winners), 1)
         war = winners[0]["war"]
         self.assertEqual(war["winner"], "c")
@@ -320,7 +321,7 @@ class UserSideTests(unittest.TestCase):
             beaten = tm.user_offer_competition({"teams": [{"id": "b", "abbrev": "B"}]}, save, self.candidate(5.0), "u", "2027-02-03")
             self.assertTrue(beaten["beaten"])
             self.assertEqual(beaten["required_margin"], 9.0)
-            self.assertIn("better offer", beaten["text"])
+            self.assertIn("worth more to B", beaten["text"])
             leading = tm.user_offer_competition({"teams": []}, save, self.candidate(12.0), "u", "2027-02-03")
         self.assertFalse(leading["beaten"])
         self.assertEqual(save["trade_market"]["shopping"]["b1"]["user_bid"]["margin"], 12.0)

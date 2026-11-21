@@ -7757,13 +7757,16 @@ function renderTradeMarket(root) {
   }
   const rows = board.shopped || [];
   const stage = row => row.stage === "sold" ? `Sold to ${row.sold_to || "another team"}` : row.stage === "bidding war" ? `Bidding war${row.rounds ? ` · ${row.rounds} round${row.rounds === 1 ? "" : "s"}` : ""}` : "Taking offers";
-  const yours = row => row.your_offer === "leading" ? "Your offer leads" : row.your_offer === "outbid" ? "You have been outbid" : row.you_interested ? "You asked" : "";
+  const yoursLabel = row => row.your_offer === "leading" ? "Your offer leads" : row.your_offer === "outbid" ? "You have been outbid" : row.you_interested ? "You asked" : "";
+  // BIDWAR-PRICE: why your offer leads or trails, in the seller's own terms (the same comparison the seller makes).
+  const yours = row => row.your_offer_note ? html(`<span class="trade-market-yours">${escapeHtml(yoursLabel(row))}<small style="display:block;opacity:.8">${escapeHtml(textValue(row.your_offer_note))}</small></span>`) : yoursLabel(row);
+  const stageCell = row => row.sale_note ? html(`<span title="${escapeAttr(textValue(row.sale_note))}">${escapeHtml(stage(row))}</span>`) : stage(row);
   const shopped = table(["Player", "Team", "Why he is available", "Interested", "Stage", "Decision by", "Your offer"], rows, row => [
     html(`<span class="trade-market-player">${playerHeadshotMarkup(row, "player-headshot")}<span>${escapeHtml(textValue(row.player_name))}${row.overall != null ? ` <small>${escapeHtml(String(Math.round(Number(row.overall))))}</small>` : ""}</span></span>`),
     textValue(row.team),
     (row.why || []).join("; "),
     html(`<span title="${escapeAttr((row.interested || []).join(", "))}">${escapeHtml(String(row.interested_count || 0))} team${row.interested_count === 1 ? "" : "s"}</span>`),
-    stage(row),
+    stageCell(row),
     textValue(row.decide_by || ""),
     yours(row),
   ], "trade-market-table");
