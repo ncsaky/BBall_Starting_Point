@@ -29,6 +29,7 @@ from .spatial import invalidate_spatial_cache, prospect_spatial_fit_delta
 from .health import generated_prospect_medical_profile, prospect_medical_penalty
 from . import real_prospects as real_prospect_data
 from . import draft_scouting
+from .faces import assign_class_faces, prospect_headshot_url
 from .talent import SOURCE_ID as TALENT_SOURCE_ID, enabled as talent_enabled, modeled as talent_modeled, diverse_prospect_skills, career_trait_profile
 from .transactions import (
     compact_player,
@@ -494,7 +495,7 @@ def _generated_class_records(year: str, seed: int, config: dict[str, Any], *, ta
         source_ids=["src_draft_model_config_v1"],
         notes="Generated deterministic future draft class with season-to-season talent variance.",
     )
-    prospects = apply_public_ranks(prospects)
+    prospects = assign_class_faces(apply_public_ranks(prospects))  # stock photos, none repeated in the class
     return {"draft_classes": [draft_class], "draft_prospects": prospects, "draft_prospect_traits": traits}
 
 
@@ -534,11 +535,13 @@ def assemble_real_prospect_class(year: str, seed: int, generated: dict[str, Any]
         traits_by_prospect.setdefault(trait.prospect_id, []).append(trait)
     prospects: list[DraftProspect] = []
     traits: list[DraftProspectTrait] = []
+    real_ids: dict[str, str] = {}
     for slot in range(1, size + 1):
         if slot in real_by_slot:
             prospect, prospect_traits = real_prospect_record(real_by_slot[slot], slot, size, year, seed,
                                                              draft_class.top_end_strength, draft_class.depth_strength,
                                                              talent_model=talent_model)
+            real_ids[prospect.id] = str(real_by_slot[slot].get("id") or "")
         else:
             prospect = gen_prospects[slot - 1]
             prospect_traits = traits_by_prospect.get(prospect.id, [])
@@ -552,7 +555,9 @@ def assemble_real_prospect_class(year: str, seed: int, generated: dict[str, Any]
                "and international prospects; data/canonical/real_prospects.json), placed by expected pick; other "
                "slots generated deterministically from year and seed."),
     )
-    return {"draft_classes": [draft_class], "draft_prospects": apply_public_ranks(prospects), "draft_prospect_traits": traits}
+    # Real players' photos where found (gui/assets/headshots/real), else a stock photo not used in this class.
+    prospects = assign_class_faces(apply_public_ranks(prospects), real_ids)
+    return {"draft_classes": [draft_class], "draft_prospects": prospects, "draft_prospect_traits": traits}
 
 
 REAL_PROSPECT_NOTES = {
@@ -1465,6 +1470,7 @@ def rookie_player_record(onboarding: dict[str, Any], prospect: dict[str, Any], t
         "current_ability": round(ability, 2),
         "potential": round(potential, 2),
         "medical_profile": prospect.get("medical_profile") or {},
+        "headshot_url": prospect_headshot_url(prospect),  # the face he had as a prospect
     }
     if new_model:
         player["source_ids"].append(TALENT_SOURCE_ID)
@@ -2293,6 +2299,7 @@ def board_entry_payload(entry: dict[str, Any], prospect: dict[str, Any], consens
             "development_curve": prospect.get("development_curve"),
             "rookie_contract_value": prospect_evaluation_value(prospect, "rookie_contract_value"),
             "weight_lbs": prospect.get("weight_lbs"),
+            "headshot_url": prospect_headshot_url(prospect),
         },
     }
 

@@ -1331,7 +1331,7 @@ def league_activity_payload(canonical: dict[str, Any], save_path: Path, prepared
                     staff = assets.get("fired_staff") if log.get("transaction_type") == "staff_fire" else assets.get("staff")
                     if not staff or not (str(staff.get("id")) == str(details.get("staff_id")) or staff.get("name") == name or str(staff.get("name") or "?") in str(event.get("headline") or "")):
                         continue
-                    subjects = [{"kind": "staff", "id": staff.get("id"), "name": staff.get("name"), "role": str(staff.get("slot") or staff.get("role_preference") or "Staff").replace("_", " "), "grade": round(staff_grade(staff), 1), "team": team_label(tid or (log.get("teams") or [None])[0])}]
+                    subjects = [{"kind": "staff", "id": staff.get("id"), "name": staff.get("name"), "headshot_url": staff.get("headshot_url"), "role": str(staff.get("slot") or staff.get("role_preference") or "Staff").replace("_", " "), "grade": round(staff_grade(staff), 1), "team": team_label(tid or (log.get("teams") or [None])[0])}]
                     replacement = assets.get("interim_staff") or assets.get("previous_staff")
                     if replacement:
                         subjects[0]["replacement"] = {"name": replacement.get("name"), "grade": round(staff_grade(replacement), 1), "label": "Interim replacement" if assets.get("interim_staff") else "Previous staff member"}
@@ -1913,6 +1913,7 @@ def prospect_card_payload(canonical: dict[str, Any], save_path: Path, prospect_i
     visible = prospect_card_ratings(prospect, scout, report)
     boards = prospect_two_boards(active, team, prospect, year or current_draft_year(save))
     from .real_prospects import college_card, real_entry_for, scouting_card
+    from .faces import prospect_headshot_url
     real = real_entry_for({**prospect, 'draft_year': prospect.get('draft_year') or year or current_draft_year(save)}) or {}
     college = real.get('college')
     if college:
@@ -1931,6 +1932,7 @@ def prospect_card_payload(canonical: dict[str, Any], save_path: Path, prospect_i
     return {
         'rating_league_averages': reference, 'rating_average_label': reference_label,
         'is_prospect': True, 'player_id': prospect_id, 'name': prospect.get('name'),
+        'headshot_url': prospect_headshot_url(prospect),
         'position': compact_position(prospect.get('position')), 'age': whole_prospect_age(prospect.get('age')),
         'height': height_label(prospect), 'draft_year': prospect.get('draft_year'),
         'source_team': prospect.get('source_team'), 'overall': scout.get('now'),

@@ -1,0 +1,373 @@
+[
+ {
+  "id": "college_126683",
+  "name": "Aiden Tobiason",
+  "found": true,
+  "image_url": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/owlsports.com/images/2025/10/9/aiden_tobiason.png",
+  "source_page": "https://owlsports.com/sports/mens-basketball/roster/aiden-tobiason/18100",
+  "source_name": "Temple athletics (owlsports.com)",
+  "photo_kind": "headshot",
+  "note": "Official Temple roster page names Aiden Tobiason #25 (2025-26 roster; not on 2026-27 roster page)."
+ },
+ {
+  "id": "college_133724",
+  "name": "Jaylon Dean-Vines",
+  "found": true,
+  "image_url": "https://mcneesesports.com/images/2026/10/2/JaylonDean-Vines.jpg",
+  "source_page": "https://mcneesesports.com/sports/mens-basketball/roster/jaylon-dean-vines/11768",
+  "source_name": "McNeese athletics",
+  "photo_kind": "headshot",
+  "note": "Official McNeese roster page, name matches."
+ },
+ {
+  "id": "college_133746",
+  "name": "Eric Reibe",
+  "found": true,
+  "image_url": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/uconnhuskies.com/images/2025/7/31/ER25_WBG.png",
+  "source_page": "https://uconnhuskies.com/sports/basketball/roster/eric-reibe/14935",
+  "source_name": "UConn athletics",
+  "photo_kind": "headshot",
+  "note": "Official UConn roster page for Eric Reibe (2025-26). He has since entered the transfer portal; Commons also has https://upload.wikimedia.org/wikipedia/commons/e/e8/Eric_Reibe.jpg"
+ },
+ {
+  "id": "college_135550",
+  "name": "Kellen Pickett",
+  "found": true,
+  "image_url": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wrightstate.sidearmsports.com/images/2026/7/27/Kellen_Pickett_Headshot_2026_27.png",
+  "source_page": "https://wsuraiders.com/sports/mens-basketball/roster/kellen-pickett/6875",
+  "source_name": "Wright State athletics",
+  "photo_kind": "headshot",
+  "note": "Official Wright State roster, #4 Kellen Pickett."
+ },
+ {
+  "id": "college_143965",
+  "name": "Ikenna Alozie",
+  "found": true,
+  "image_url": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/uhcougars.com/images/2026/8/30/Alozie_Ikenna_DSC01762_copy_t3xZs.jpg",
+  "source_page": "https://uhcougars.com/sports/mens-basketball/roster",
+  "source_name": "Houston athletics",
+  "photo_kind": "headshot",
+  "note": "Official Houston roster; file named Alozie_Ikenna. Served as webp (~38KB; dimensions not checked)."
+ },
+ {
+  "id": "college_143966",
+  "name": "Arafan Diane",
+  "found": true,
+  "image_url": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/uhcougars.com/images/2026/8/30/Diane_Arafan_DSC01756_copy_VZ6QK.jpg",
+  "source_page": "https://uhcougars.com/sports/mens-basketball/roster/arafan-dian/10147",
+  "source_name": "Houston athletics",
+  "photo_kind": "headshot",
+  "note": "Official Houston roster; file named Diane_Arafan. Served as webp."
+ },
+ {
+  "id": "college_145314",
+  "name": "Lucas Morillo",
+  "found": true,
+  "image_url": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/fightingillini.com/images/2026/10/5/23-Morillo_Lucas.jpg",
+  "source_page": "https://fightingillini.com/sports/mens-basketball/roster/2026-27",
+  "source_name": "Illinois athletics",
+  "photo_kind": "headshot",
+  "note": "Official Illinois 2026-27 roster, Lucas Morillo #23."
+ },
+ {
+  "id": "international_adam_atamna",
+  "name": "Adam Atamna",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Adam_Atamna_2_ASVEL_Basket_Euroleague_20251106_%281%29.jpg",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Adam_Atamna_2_ASVEL_Basket_Euroleague_20251106_(1).jpg",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "action",
+  "note": "File named for Adam Atamna, ASVEL (EuroLeague game); input lists Ulm, likely a prior club. Very large original; use a thumbnail."
+ },
+ {
+  "id": "international_antonio_browne",
+  "name": "Antonio Browne",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/5/50/Antonio_Henry_Browne_9_Australia_20260627_%283%29.jpg",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Antonio_Henry_Browne_9_Australia_20260627_(3).jpg",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "action",
+  "note": "File named Antonio Henry Browne, Australia (FIBA U17 World Cup 2026). Alt: Antonio_Henry_Browne_45_20260826.JPG"
+ },
+ {
+  "id": "international_bastien_grasshoff",
+  "name": "Bastien Grasshoff",
+  "found": false,
+  "image_url": null,
+  "source_page": null,
+  "source_name": null,
+  "photo_kind": null,
+  "note": "Official Le Mans (msb.fr) and bebasket pages blocked (403); no free image found."
+ },
+ {
+  "id": "international_cameron_houindo",
+  "name": "Cameron Houindo",
+  "found": true,
+  "image_url": "https://www.aba-liga.com/stats/img/foto/5213.png",
+  "source_page": "https://www.aba-liga.com/player/5213",
+  "source_name": "ABA League",
+  "photo_kind": "headshot",
+  "note": "ABA League player page Cameron Toussaint Selidji Houindo, Cedevita Olimpija #8. Only 150x150 px; verified visually."
+ },
+ {
+  "id": "international_cheickh_niang",
+  "name": "Cheickh Niang",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/e/e9/Cheickh_Niang_7_Aquila_Basket_Trento_EuroCup_20251112_%281%29.jpg",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Cheickh_Niang_7_Aquila_Basket_Trento_EuroCup_20251112_(1).jpg",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "action",
+  "note": "File named Cheickh Niang, Trento, EuroCup."
+ },
+ {
+  "id": "international_chrysostomos_chatzilamprou",
+  "name": "Chrysostomos Chatzilamprou",
+  "found": false,
+  "image_url": null,
+  "source_page": null,
+  "source_name": null,
+  "photo_kind": null,
+  "note": "Aris BC page has TLS cert mismatch (not bypassed); EuroLeague 429; no other source found."
+ },
+ {
+  "id": "international_darius_karutasu",
+  "name": "Darius Karutasu",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/8/89/Darius_C%C4%83ru%C8%9Ba%C8%99u_20260929.JPG",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Darius_Căruțașu_20260929.JPG",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "action",
+  "note": "Name spelled Darius Carutasu (Anadolu Efes / Turkey U17). Commons file named for him. Alt: Darius_Căruțașu_2_Türkiye_20260628_(1).jpg"
+ },
+ {
+  "id": "international_dash_daniels",
+  "name": "Dash Daniels",
+  "found": true,
+  "image_url": "https://cdn.prod.website-files.com/689dc6a057eeae68771d1ede/6a581dd1a31ecb82e3810aff_Dash%20Daniels_Signed_1920x1080.png",
+  "source_page": "https://www.semphoenix.com.au/news/daniels-set-to-dash-to-phoenix-for-nbl27",
+  "source_name": "South East Melbourne Phoenix",
+  "photo_kind": "other",
+  "note": "Club signing graphic: Daniels in Phoenix #4 jersey, face large and clear, but SIGNED text and logos fill the left half (crop right half, x>1000). Not a clean headshot; no other source found."
+ },
+ {
+  "id": "international_diego_niebla",
+  "name": "Diego Niebla",
+  "found": true,
+  "image_url": "https://acb.com/es/liga/jugadores/diego-niebla-30001494/opengraph-image",
+  "source_page": "https://acb.com/es/liga/jugadores/diego-niebla-30001494",
+  "source_name": "ACB",
+  "photo_kind": "other",
+  "note": "ACB player card image (1200x630): clear headshot at left plus text on right; crop x 184-475, y 140-490. Name and Joventut #34 shown.",
+  "reject": "acb.com robots.txt blocks Claude-User and ClaudeBot (removed 2026-11-21)"
+ },
+ {
+  "id": "international_gabrielius_buivydas",
+  "name": "Gabrielius Buivydas",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/9/91/Gabrielius_Buivydas_19_20260826_%281%29.JPG",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Gabrielius_Buivydas_19_20260826_(1).JPG",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "action",
+  "note": "File named Gabrielius Buivydas (also Lithuania U17 files)."
+ },
+ {
+  "id": "international_hugo_yimga_moukouri",
+  "name": "Hugo Yimga-Moukouri",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/2/2b/Hugo_Yimga-Moukouri.jpg",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Hugo_Yimga-Moukouri.jpg",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "other",
+  "note": "Wikipedia infobox image for Hugo Yimga-Moukouri (Nanterre)."
+ },
+ {
+  "id": "international_ignas_stombergas",
+  "name": "Ignas Stombergas",
+  "found": true,
+  "image_url": "https://nkl.lt/wp-content/uploads/2026/09/8-3.png",
+  "source_page": "https://nkl.lt/zaidejai/37608-ignas-stombergas.html/",
+  "source_name": "NKL (Lithuania) / Zalgiris-2",
+  "photo_kind": "headshot",
+  "note": "Official NKL player page Ignas Stombergas, Kauno Zalgiris-2 #16; 600x800 PNG with transparent background; verified visually."
+ },
+ {
+  "id": "international_jakob_siftar",
+  "name": "Jakob Siftar",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/9/91/Jakob_Siftar_7_Slovenia_20260628_%282%29.jpg",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Jakob_Siftar_7_Slovenia_20260628_(2).jpg",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "action",
+  "note": "File named Jakob Siftar, Slovenia (FIBA U17 World Cup 2026)."
+ },
+ {
+  "id": "international_jayden_cecil",
+  "name": "Jayden Cecil",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/d/dd/Jayden_Cecil_0_New_Zealand_20260627_%281%29.jpg",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Jayden_Cecil_0_New_Zealand_20260627_(1).jpg",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "action",
+  "note": "Wikipedia infobox image for Jayden Cecil, New Zealand."
+ },
+ {
+  "id": "international_john_aryang",
+  "name": "John Aryang",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/4/48/John_Ojulu_Aryang_80_20260826.JPG",
+  "source_page": "https://commons.wikimedia.org/wiki/File:John_Ojulu_Aryang_80_20260826.JPG",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "action",
+  "note": "File named John Ojulu Aryang (Australia U17 teams)."
+ },
+ {
+  "id": "international_klark_riethauser",
+  "name": "Klark Riethauser",
+  "found": false,
+  "image_url": null,
+  "source_page": null,
+  "source_name": null,
+  "photo_kind": null,
+  "note": "Only bebasket.fr/LNB pages found (403); no free image."
+ },
+ {
+  "id": "international_leonard_kroger",
+  "name": "Leonard Kroger",
+  "found": false,
+  "image_url": null,
+  "source_page": null,
+  "source_name": null,
+  "photo_kind": null,
+  "note": "Only EuroLeague/FIBA/RealGM/Scout pages found (blocked or generic images)."
+ },
+ {
+  "id": "international_luke_paul",
+  "name": "Luke Paul",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/2/2b/Luke_Roland_Paul_7_Australia_20260627_%282%29_%28cropped%29.jpg",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Luke_Roland_Paul_7_Australia_20260627_(2)_(cropped).jpg",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "action",
+  "note": "Wikipedia infobox image for Luke Paul, Australia."
+ },
+ {
+  "id": "international_lun_jarc",
+  "name": "Lun Jarc",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/8/86/Lun_Jarc_60_20260826_%282%29.JPG",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Lun_Jarc_60_20260826_(2).JPG",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "action",
+  "note": "File named Lun Jarc (Slovenia U17)."
+ },
+ {
+  "id": "international_marc_owen_fodzo_dada",
+  "name": "Marc-Owen Fodzo Dada",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/a/a4/Marc-Owen_Fodzo_Dada_1_ASVEL_Basket_Euroleague_20261117_%281%29.JPG",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Marc-Owen_Fodzo_Dada_1_ASVEL_Basket_Euroleague_20261117_(1).JPG",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "action",
+  "note": "File named Marc-Owen Fodzo Dada, ASVEL, EuroLeague."
+ },
+ {
+  "id": "international_matija_lukic",
+  "name": "Matija Lukic",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Matija_Luki%C4%87_62_20260826_%281%29.JPG",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Matija_Lukić_62_20260826_(1).JPG",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "action",
+  "note": "File named Matija Lukic (Serbia U17)."
+ },
+ {
+  "id": "international_messi_yangala",
+  "name": "Messi Yangala",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/a/ac/Messi_Yangala_24_France_20260628_%281%29_%28cropped%29.jpg",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Messi_Yangala_24_France_20260628_(1)_(cropped).jpg",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "action",
+  "note": "Wikipedia infobox image for Messi Yangala, France."
+ },
+ {
+  "id": "international_michael_ruzic",
+  "name": "Michael Ruzic",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/6/67/Michael_Ruzic.jpg",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Michael_Ruzic.jpg",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "other",
+  "note": "Wikimedia file named Michael Ruzic; a second file shows him in Joventut #23 (Michael_Ružić_23_Joventut_Badalona_EuroCup_20241022.jpg)."
+ },
+ {
+  "id": "international_mouhamed_faye",
+  "name": "Mouhamed Faye",
+  "found": true,
+  "image_url": "https://parisbasketball.com/wp-content/uploads/2026/07/Momo.png",
+  "source_page": "https://parisbasketball.com/en/player/mouhamed-faye-2",
+  "source_name": "Paris Basketball (official)",
+  "photo_kind": "headshot",
+  "note": "Official Paris Basketball player page; 1080x1080 clean headshot, verified visually. Club birth date is 2005, not 2008 as in input."
+ },
+ {
+  "id": "international_nathan_djako",
+  "name": "Nathan Djako",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/c/c5/Nathan_Djako_7_C%C3%B4te_d%27Ivoire_20260628_%285%29.jpg",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Nathan_Djako_7_Côte_d'Ivoire_20260628_(5).jpg",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "action",
+  "note": "File named Nathan Djako, Cote d'Ivoire."
+ },
+ {
+  "id": "international_nathan_soliman",
+  "name": "Nathan Soliman",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/9/97/Nathan_Soliman_14_France_20260627_%281%29.jpg",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Nathan_Soliman_14_France_20260627_(1).jpg",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "action",
+  "note": "Wikipedia infobox image for Nathan Soliman, France."
+ },
+ {
+  "id": "international_omer_kutluay",
+  "name": "Omer Kutluay",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/4/47/%C3%96mer_Kutluay_10_T%C3%BCrkiye_20260628_%286%29.jpg",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Ömer_Kutluay_10_Türkiye_20260628_(6).jpg",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "action",
+  "note": "File named Omer Kutluay, Turkiye."
+ },
+ {
+  "id": "international_pavle_backo",
+  "name": "Pavle Backo",
+  "found": true,
+  "image_url": "https://www.aba-liga.com/stats/img/foto/4661.png",
+  "source_page": "https://www.aba-liga.com/player/4661/25/1/pavle-backo/",
+  "source_name": "ABA League",
+  "photo_kind": "headshot",
+  "note": "ABA League player page Pavle Backo, Mega Superbet. Only 150x150 px; image not visually checked."
+ },
+ {
+  "id": "international_roman_avdejev",
+  "name": "Roman Avdejev",
+  "found": false,
+  "image_url": null,
+  "source_page": null,
+  "source_name": null,
+  "photo_kind": null,
+  "note": "Only FIBA/Scout/RealGM/Proballers pages (generic or 403)."
+ },
+ {
+  "id": "international_stefan_joksimovic",
+  "name": "Stefan Joksimovic",
+  "found": true,
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Stefan_Joksimovi%C4%87_6_Saski_Baskonia_Euroleague_20261105_%281%29.JPG",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Stefan_Joksimović_6_Saski_Baskonia_Euroleague_20261105_(1).JPG",
+  "source_name": "Wikimedia Commons (free license)",
+  "photo_kind": "action",
+  "note": "File named Stefan Joksimovic, Baskonia, EuroLeague."
+ }
+]
