@@ -8,7 +8,7 @@ from threading import Lock
 import time
 from urllib.error import HTTPError, URLError
 
-from opening_night_injuries import BASE, CACHE, PDF_CACHE, ROOT, SCOREBOARD, fetch, fetch_bytes
+from opening_night_injuries import BASE, CACHE, PDF_CACHE, ROOT, fetch_bytes
 
 
 @dataclass(frozen=True)
@@ -116,8 +116,8 @@ def is_final(event):
 
 def capture_summaries(season, gids):
     def capture(gid):
-        return cached_request(fetch_bytes, BASE + f"/summary?event={gid}",
-                              season.espn_cache / f"sum_{gid}.json", throttle=True)
+        return bool(cached_request(fetch_bytes, BASE + f"/summary?event={gid}",
+                                   season.espn_cache / f"sum_{gid}.json", throttle=True))
 
     # Several requests can be in flight, but the starts are paced across them.
     with ThreadPoolExecutor(max_workers=4) as workers:

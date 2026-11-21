@@ -43,6 +43,21 @@ NAME_ALIASES = {
     "hansen yang": "yang hansen",
     "kenyon martin": "kj martin",
     "nathan mensah": "nate mensah",
+    "alexandre sarr": "alex sarr",
+    "carlton carrington": "bub carrington",
+    "cui yongxi": "yongxi cui",
+    "david jones": "david jones garcia",
+}
+# ESPN identifies these players in historical boxes even when they are
+# report-only in the season being built. Keep their ID stable across years.
+HISTORICAL_ESPN_IDS = {
+    "bojan bogdanovic": "3593",
+    "charles bediako": "4565203",
+    "cody zeller": "2579258",
+    "damion lee": "2595209",
+    "jalen crutcher": "4278352",
+    "kendall brown": "4433254",
+    "vlatko cancar": "4230557",
 }
 PART_ALIASES = {
     "sciatic": "back", "cervical": "back", "thoracic": "back", "sacral": "back",
@@ -218,8 +233,9 @@ def observations(games, players, teams_by_name, cache_only, season):
             key_name = name_key(f"{first} {last}") if comma else None
             pid = names.get(key_name)
             if season.historical and key_name and not pid and r["status"] in OFFICIAL_STATUSES | {"Available"}:
-                pid = "nba_report_" + key_name.replace(" ", "-")
-                players[pid] = {"id": pid, "name": f"{first.strip()} {last.strip()}"}
+                espn_id = HISTORICAL_ESPN_IDS.get(key_name)
+                pid = f"espn_{espn_id}" if espn_id else "nba_report_" + key_name.replace(" ", "-")
+                players[pid] = {"id": pid, "name": f"{first.strip()} {last.strip()}", "espn_player_id": espn_id}
                 names[key_name] = pid
             if pid:
                 key = day, team, pid
@@ -230,7 +246,28 @@ def observations(games, players, teams_by_name, cache_only, season):
 
 
 def season_roster_corrections(season):
-    return () if season.historical else OFF_ROSTER_INTERVALS
+    if season.label == "2023-24":
+        return (
+            ("Taze Moore", "POR", "2024-01-30", "2024-04-14",
+             "https://www.nba.com/blazers/news/trail-blazers-sign-taze-moore-to-two-way-contract"),
+            ("DaQuan Jeffries", "NYK", "2023-12-30", "2024-02-22",
+             "https://westchester.gleague.nba.com/news/westchester-knicks-acquire-daquan-jeffries"),
+            ("Duane Washington Jr.", "NYK", "2023-11-27", "2024-01-03",
+             "https://www.nba.com/player/1630613"),
+        )
+    if season.label == "2024-25":
+        return (
+            ("Skal Labissiere", "SAC", "2024-10-18", "2025-03-03",
+             "https://www.nba.com/kings/news/kings-announce-roster-moves-2"),
+            ("Kevon Harris", "ATL", "2024-10-18", "2025-03-01",
+             "https://gleague.nba.com/news/atlanta-hawks-sign-kevon-harris-to-10-day-contract"),
+            ("Kevon Harris", "ATL", "2025-03-04", None, "https://www.nba.com/game/0022400884"),
+        )
+    return OFF_ROSTER_INTERVALS
+
+
+def off_roster(day, left, joined):
+    return day >= left and (joined is None or day < joined)
 
 
 def roster_moves(names, cache_only, season):
@@ -280,7 +317,10 @@ def roster_moves(names, cache_only, season):
     for name, team, left, joined, _ in season_roster_corrections(season):
         pid = names.get(name_key(name))
         if pid:
-            moves[pid].update(((left, "exit", team), (joined, "sign", team)))
+            moves[pid] = {m for m in moves[pid] if m[2] != team or not off_roster(m[0], left, joined)}
+            moves[pid].add((left, "exit", team))
+            if joined:
+                moves[pid].add((joined, "sign", team))
     return moves, urls
 
 
@@ -638,10 +678,10 @@ def build(cache_only, season=DEFAULT_SEASON):
     # is under no NBA contract. The dated team release takes precedence.
     for name, team, left, joined, _ in season_roster_corrections(season):
         pid = names.get(name_key(name))
-        for key in [k for k in box if k[1:] == (team, pid) and left <= game_dates[k[0]] < joined]:
+        for key in [k for k in box if k[1:] == (team, pid) and off_roster(game_dates[k[0]], left, joined)]:
             assert not box[key]["played"], f"Appearance during off-roster interval for {name}"
             del box[key]
-        for key in [k for k in reports if k[1:] == (team, pid) and left <= k[0] < joined]:
+        for key in [k for k in reports if k[1:] == (team, pid) and off_roster(k[0], left, joined)]:
             del reports[key]
     assignments = transfer_day_teams(box, reports, moves, game_dates, season)
     stints = roster_stints(games, box, reports, moves, assignments)
@@ -714,10 +754,12 @@ def main():
         records = dataset.pop("stretches")
         header = json.dumps(dataset, ensure_ascii=False, indent=2)
         out = ROOT / f"data/research/injury_history_{season.label.replace('-', '_')}.json"
-        with out.open("w", encoding="utf-8") as stream:
+        pending = out.with_suffix(".json.tmp")
+        with pending.open("w", encoding="utf-8") as stream:
             stream.write(header[:-2] + ',\n  "stretches": [\n')
             stream.write(",\n".join("    " + json.dumps(r, ensure_ascii=False) for r in records))
             stream.write("\n  ]\n}\n")
+        pending.replace(out)
         print(f"Wrote {out.relative_to(ROOT)}")
 
 
