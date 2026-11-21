@@ -225,8 +225,10 @@ def camp_claim_plausible(active, save, player_id, team_id, depth):
     """A quick look before the full claim plan: is this camp-deal player better than the team's 8th best player (a clear rotation upgrade)?"""
     from .two_way import overall, standard_roster_ids
     if team_id not in depth:
-        ratings = sorted((overall(active, pid) for pid in standard_roster_ids(active, save, team_id)), reverse=True)
-        depth[team_id] = ratings[7] if len(ratings) >= 8 else 0.0
+        roster = standard_roster_ids(active, save, team_id)
+        ratings = sorted((overall(active, pid) for pid in roster), reverse=True)
+        # A team at 15 standard players would have to cut someone for a camp player: it doesn't.
+        depth[team_id] = 999.0 if len(roster) >= 15 else (ratings[7] if len(ratings) >= 8 else 0.0)
     if ('player', player_id) not in depth:
         depth[('player', player_id)] = overall(active, player_id)
     return depth[('player', player_id)] > depth[team_id]
@@ -260,6 +262,8 @@ def process_waivers(canonical, save, stamp):
             plan = claim_plan(active, save, entry, tid, ai=True)
             if plan['ok']:
                 claims[tid] = {'team_id': tid, 'date': day, 'cut_player_id': plan['cut_player_id'], 'source': 'ai'}
+                if camp_deal:
+                    break   # teams are asked in priority order: the first AI claimant outranks every later one
         entry['claims'] = sorted(claims.values(), key=lambda c: c['team_id'])
         winner = None
         winning_plan = None

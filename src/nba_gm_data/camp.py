@@ -52,7 +52,7 @@ RULES = {
     "invite_max_age": 32.0,
     # At the cutdown a camp deal stays on the standard roster only if he is among the team's best N players (the same
     # deal made an opening standard roster 0-1 times a year: Horton-Tucker 2024, Diawara 2025).
-    "keep_camp_deal_rank": 9,
+    "keep_camp_deal_rank": 7,
     # The AI cutdown happens this many days before the deadline, so the cuts clear waivers before opening night.
     "cut_days_before_deadline": 2,
     # Overseas: an unsigned veteran with limited NBA minutes (under 14 a game) aged 24-33 leaves with this chance at
@@ -60,7 +60,7 @@ RULES = {
     "overseas_max_minutes": 14.0,
     "overseas_ages": (24.0, 33.0),
     "overseas_passes": ("08-01", "09-15"),
-    "overseas_rate": 0.18,
+    "overseas_rate": 0.25,
 }
 
 # Real clubs that signed NBA free agents in 2023-2026 (Hoops Rumors overseas trackers), with the usual reason.
@@ -348,7 +348,8 @@ def invite_score(active: dict[str, Any], save: dict[str, Any], player: dict[str,
     rating = _value(active, player["id"])
     age = float(player.get("display_age", player.get("age")) or 25.0)
     nba = 1.5 if float(player.get("prior_minutes") or 0.0) > 0 else 0.0
-    youth = max(0.0, 26.0 - age) * 0.3
+    # Camp signees were young (median age at signing about 24-25): youth counts, a veteran past 28 much less.
+    youth = max(0.0, 27.0 - age) * 0.8 - max(0.0, age - 28.0) * 1.5
     return rating + nba + youth + _hash(seed, team_id, player["id"], "camp-taste") * 3.0
 
 
@@ -461,7 +462,7 @@ def waive(active: dict[str, Any], save: dict[str, Any], player_id: str, team_id:
     return entry
 
 
-def ai_cutdown(canonical: dict[str, Any], save: dict[str, Any], day: str) -> dict[str, int]:
+def ai_cutdown(canonical: dict[str, Any], save: dict[str, Any], day: str, active: dict[str, Any] | None = None) -> dict[str, int]:
     """Each AI team gets to at most 15 standard players: first it converts its best eligible camp deal to a two-way if a
     two-way place is open, then waives its camp deals (keeping one only if he is among its 13 best players), then, if
     still over 15, the players its roster-retention score values least (which already counts guaranteed money)."""
@@ -469,7 +470,7 @@ def ai_cutdown(canonical: dict[str, Any], save: dict[str, Any], day: str) -> dic
                        roster_retention_context)
     from . import two_way
     humans = human_controlled_team_ids(save)
-    active = canonical_with_save(canonical, save)
+    active = active if active is not None else canonical_with_save(canonical, save)
     counts = {"converted": 0, "waived_camp": 0, "waived_other": 0}
     context = None
     for team in sorted(active.get("teams", []), key=lambda t: t["id"]):
@@ -492,6 +493,8 @@ def ai_cutdown(canonical: dict[str, Any], save: dict[str, Any], day: str) -> dic
                 break
             camp = [pid for pid in camp if pid != best]
         standard = two_way.standard_roster_ids(active, save, tid)
+        if not camp and len(standard) <= two_way.STANDARD_ROSTER_MAXIMUM:
+            continue
         if context is None:
             context = roster_retention_context(canonical, save)
         players = {p["id"]: p for p in context.get("players", [])}
@@ -598,12 +601,12 @@ def daily(canonical: dict[str, Any], save: dict[str, Any], day: str, active_fact
         deadline = deadline_for(start, save)
         cut_day = (deadline - timedelta(days=int(RULES["cut_days_before_deadline"]))).isoformat()
         if day >= cut_day and once(f"cutdown:{start}"):
-            counts = ai_cutdown(canonical, save, day)
+            counts = ai_cutdown(canonical, save, day, active_factory())
             root.setdefault("cutdown_counts", {})[str(start)] = counts
             changed = True
         if day >= deadline.isoformat() and once(f"deadline:{start}"):
             # Anyone still over (a claim or a late signing): cut again on the deadline itself.
-            ai_cutdown(canonical, save, day)
+            ai_cutdown(canonical, save, day, active_factory())
             submit_roster(save, None, day, auto=True)
             changed = True
     return changed

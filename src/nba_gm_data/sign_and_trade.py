@@ -453,7 +453,7 @@ def ai_pass(active: dict[str, Any], save: dict[str, Any], when: str, *, seed: in
             # replays left receivers at 10-11 players, unable to add a minimum contract).
             from . import two_way
             standard_after = two_way.standard_roster_count(active, save, receiver) + 1 - len(outgoing)
-            fill = max(0, 14 - standard_after) * float(cap_ledger.minimum_salary(season, 2))
+            fill = max(0, 15 - standard_after) * float(cap_ledger.minimum_salary(season, 2))
             if terms["receiver_apron_after"] + fill > terms["first_apron"] + 1:
                 continue
             from .payroll_plan import payroll_check

@@ -68,6 +68,8 @@ RULES = {
     "summer_targets": (("07-06", 1), ("08-01", 2), ("09-20", 3)),
     # On September 20 a team with a two-way-eligible camp deal keeps its third place open for him at this rate.
     "camp_hold_rate": 0.45,
+    # ... and the share of clubs that leave an open place unfilled at opening (keeping it for a later signing).
+    "leave_open_rate": 0.12,
     # The day before the roster deadline: last fill (camp-deal conversions first, camp.py).
     # Promotions: 76 of 87 came from February 1 on; 79 of 82 had a teammate out injured. A team promotes when it has
     # an open standard spot, the hard cap allows the minimum, and the player is good enough to play (top-N by rating).
@@ -930,7 +932,10 @@ def daily(canonical: dict[str, Any], save: dict[str, Any], day: str, active_fact
     elif phase == "preseason":
         deadline = roster_deadline(start, save)
         if day >= (deadline - timedelta(days=1)).isoformat() and once(f"fill-final:{start}"):
-            changed |= bool(ai_fill(active_factory(), save, day, TWO_WAY_SLOTS, seed=seed))
+            # A few clubs open with a place still open (23-28 of 30 opened with three in 2023-2026).
+            teams = sorted(t["id"] for t in active_factory().get("teams", [])
+                           if _hash(seed, start, t["id"], "leave-open") >= float(RULES["leave_open_rate"]))
+            changed |= bool(ai_fill(active_factory(), save, day, TWO_WAY_SLOTS, seed=seed, teams=teams))
     elif phase == "regular_season":
         if once(f"ratings:{start}") or date.fromisoformat(day).weekday() == 0:
             active = active_factory()
