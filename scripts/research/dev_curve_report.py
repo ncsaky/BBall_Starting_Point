@@ -268,8 +268,9 @@ def talent_report(folder: Path) -> dict[str, Any]:
             cur, nxt = hist[y], hist[y + 1]
             by_age: dict[int, dict[str, float]] = defaultdict(dict)
             for pid, r in cur.items():
+                # The age a change belongs to is the age during that development season (stored on the next snapshot).
                 if r["minutes"] >= 12 and pid in nxt and nxt[pid]["minutes"] >= 12:
-                    by_age[int(r["age"])][pid] = r["impact"]
+                    by_age[int(nxt[pid]["age"])][pid] = r["impact"]
             for age, values in by_age.items():
                 for pid, level in box.thirds(values).items():
                     d = nxt[pid]["impact"] - cur[pid]["impact"]
@@ -291,7 +292,7 @@ def talent_report(folder: Path) -> dict[str, Any]:
                     if pid not in nxt or r["minutes"] < 12 or nxt[pid]["minutes"] < 12:
                         continue
                     for band, (lo, hi) in {"28-29": (28, 29), "30-32": (30, 32), "33-35": (33, 35), "36-39": (36, 39)}.items():
-                        if lo <= int(r["age"]) <= hi:
+                        if lo <= int(nxt[pid]["age"]) <= hi:
                             older[band]["prior_star" if pid in top25 else "other"].append(nxt[pid]["impact"] - r["impact"])
         # top-five turnover by impact among players with 12+ minutes
         prev_top, ever = None, set()

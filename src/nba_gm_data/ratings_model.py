@@ -181,17 +181,21 @@ _WEIGHT_TOTALS: dict[str, float] = {}
 _STEPS: dict[str, float] | None = None
 
 
+def _spread_table() -> dict[str, Any] | None:
+    path = Path(__file__).resolve().parents[2] / INPUT_SPREAD_FILE
+    try:
+        return json.loads(path.read_text())
+    except (OSError, ValueError):
+        return None
+
+
 def _development_steps() -> dict[str, float]:
     """Grade points (cm for jump height) that one hidden-rating point of development moves each input: the constant
     step scaled by the input's league spread over the reference spread. Inputs missing from the table keep the
     constant."""
     global _STEPS
     if _STEPS is None:
-        path = Path(__file__).resolve().parents[2] / INPUT_SPREAD_FILE
-        try:
-            table = json.loads(path.read_text())
-        except (OSError, ValueError):
-            table = None
+        table = _spread_table()
         _STEPS = ({input_id: GRADE_POINTS_PER_TRAIT_POINT * float(sd) / float(table["reference"])
                    for input_id, sd in table["spread"].items()} if table else {})
     return _STEPS

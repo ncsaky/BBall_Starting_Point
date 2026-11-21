@@ -115,7 +115,10 @@ def run(seasons: int, seed: int, classes: list[int], class_seeds: list[int]) -> 
     meta = {}
     for p in ctx["players"]:
         meta[p["id"]] = {"name": p.get("name"), "pick": pick.get(p["id"]), "entry": entry_year.get(p["id"]),
-                         "generated": p["id"] in entry_year, "position": p.get("position")}
+                         "generated": p["id"] in entry_year, "position": p.get("position"),
+                         "potential": p.get("potential"), "current_ability": p.get("current_ability"),
+                         "upside": health.development_upside_multiplier(p, seed),
+                         "realization": health.prospect_development_realization(p, seed)}
     return {"seed": seed, "seasons": seasons, "classes": classes, "class_seeds": class_seeds,
             "opening_impacts_sorted": impacts_sorted, "players": meta,
             "history": {str(k): v for k, v in history.items()}, "seconds": round(time.time() - started, 1)}

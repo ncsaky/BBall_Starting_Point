@@ -19,6 +19,7 @@ class GrowthDoesNotDependOnLevel(unittest.TestCase):
     PLAYER = {"id": "player_test_young_star", "age": 22, "minutes_projection": 30}
 
     def gain(self, current, age=22.0, trait="handle_pressure", **kwargs):
+        kwargs.setdefault("curve", health.INPUTS_CURVE)
         return health.monthly_trait_delta(self.PLAYER, trait, current, age, 30.0, {}, 0.0, 17, "2026-12", 0.5,
                                           None, expected=True, **kwargs)
 
@@ -36,7 +37,7 @@ class GrowthDoesNotDependOnLevel(unittest.TestCase):
 
     def test_focus_has_no_level_penalty_in_the_new_ratings(self):
         traits = {k: {"value": 90.0} for k in health.DEVELOPMENT_TRAITS}
-        new = health.development_trait_focus(self.PLAYER, {}, traits, 17, "2026-12")
+        new = health.development_trait_focus(self.PLAYER, {}, traits, 17, "2026-12", curve=health.INPUTS_CURVE)
         old = health.development_trait_focus(self.PLAYER, {}, traits, 17, "2026-12", curve=health.LEGACY_CURVE)
         for key in health.DEVELOPMENT_TRAITS:
             self.assertAlmostEqual(old[key], round(new[key] * 0.68, 3), places=2)
@@ -54,9 +55,12 @@ class RoutingByLeagueSpread(unittest.TestCase):
     def test_each_input_moves_by_its_own_league_spread(self):
         steps = rm._development_steps()
         self.assertTrue(steps, "spread table missing: run scripts/research/dev_curve_spread.py")
-        # Conditioning varies about a quarter as much across the league as a technique grade, so the same development
-        # moves it about a quarter as far (it used to move the same grade points and stamina jumped 10+ in a season).
-        self.assertLess(steps["P11"], 0.5 * rm.GRADE_POINTS_PER_TRAIT_POINT)
+        # Recovery and agility vary about a third as much across the league as a typical technique grade, so the same
+        # development moves them about a third as far (it used to move the same grade points, and stamina jumped 10+
+        # in a season).
+        self.assertLess(steps["P12"], 0.5 * rm.GRADE_POINTS_PER_TRAIT_POINT)
+        self.assertLess(steps["P06"], 0.5 * rm.GRADE_POINTS_PER_TRAIT_POINT)
+        self.assertLess(steps["P11"], rm.GRADE_POINTS_PER_TRAIT_POINT)
         inputs = {"P11": physical(50), "P12": physical(50)}
         moved = rm.route_trait_deltas(inputs, {"stamina_cardio": 2.0})
         self.assertAlmostEqual(moved["P11"] / moved["P12"], steps["P11"] / steps["P12"], places=6)
