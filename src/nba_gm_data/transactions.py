@@ -2224,7 +2224,18 @@ def recently_signed_player_ids(canonical_or_save: dict[str, Any], as_of_date: st
     current = parse_iso_date(as_of_date or ((canonical_or_save.get("meta") or {}).get("current_date")) or CANONICAL_START_DATE)
     if current is None:
         return set()
-    restricted: set[str] = set()
+    # FA-REAL: a contract that records the date he can first be traded (cap_ledger.trade_eligible_date: December 15,
+    # January 15 after a big Bird raise over the cap, or three months) uses that date. Signings without one keep the
+    # older December 1 rule.
+    dated: dict[str, str] = {}
+    for contract in canonical_or_save.get("contracts", []) or []:
+        if contract.get("trade_eligible_date") and contract.get("player_id"):
+            dated[str(contract["player_id"])] = str(contract["trade_eligible_date"])
+    for player_id, override in (canonical_or_save.get("contract_overrides") or {}).items():
+        if override and override.get("trade_eligible_date"):
+            dated[str(player_id)] = str(override["trade_eligible_date"])
+    restricted: set[str] = {player_id for player_id, eligible in dated.items()
+                            if (parse_iso_date(eligible) or current) > current}
     for log in canonical_or_save.get("transaction_logs", []):
         if log.get("transaction_type") not in SIGNING_TRANSACTION_TYPES or log.get("status") not in {"applied_to_save_ledger", "applied"}:
             continue
@@ -2233,7 +2244,7 @@ def recently_signed_player_ids(canonical_or_save: dict[str, Any], as_of_date: st
             continue
         unlock = date(signed_on.year, RECENTLY_SIGNED_UNLOCK_MONTH, RECENTLY_SIGNED_UNLOCK_DAY)
         if signed_on <= current < unlock:
-            restricted.update(transaction_log_signed_player_ids(log))
+            restricted.update(pid for pid in transaction_log_signed_player_ids(log) if str(pid) not in dated)
     return restricted
 
 
