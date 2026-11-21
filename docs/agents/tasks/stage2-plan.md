@@ -51,3 +51,15 @@ _Drafted overnight 2026-11-21 by Claude (coordinator) from a read-only code surv
 2. **Old saves:** reject them with a clear message, or migrate them? Rule 5 says old saves don't matter, so rejecting is simplest.
 3. **Hidden traits on screen:** should the league trait leaders and the ratings guide (which show the 15 internal traits) go away entirely? The 94-input player card would then be the only ratings view.
 4. **Job B scope:** all four areas, or only the ones that measurably improve realism (injuries and the draft first)?
+
+## User decisions (2026-11-21, night)
+- **The overall rating scale** (applies to overalls; individual skill ratings keep a wider range):
+  1. **Real players represented accurately, and the distances between them accurate. This is the top priority.**
+  2. **Intuitive for a new user:** 90+ means elite and stays rare (no 2K-style inflation, where 90s lose their meaning). Most rotation players sit in the 70s and 80s, extending into the low 70s and a little into the high 60s.
+  3. If the ratings are realistic, the engine will be roughly realistic.
+- **Start Stage 2:** build small parts, spot-check them, and estimate how each area would integrate.
+
+## Scheduled
+- **OVERALL-SCALE:** one overall scale everywhere (card, tables, lists), linear in the engine's value, with the anchors above. Display only; the AI keeps its internal value. Running now as a light job.
+- **STAGE2-A:** steps 1–2 (old system unreachable, dead branches deleted; gate: byte-identical new-system games and unchanged scorecards). Starts at the next free heavy slot.
+- **STAGE2-B-PROBE:** measurement-only prototype of injury risk read from the 94 inputs instead of the traits, plus an integration estimate for each job-B area. After STAGE2-A.
