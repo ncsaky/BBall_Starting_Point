@@ -129,7 +129,13 @@ def main() -> None:
     parser.add_argument("--classes", default="2027")
     parser.add_argument("--class-seeds", default="1,2")
     parser.add_argument("--params", help="JSON object of health/ratings_model constants to override (tuning)")
+    parser.add_argument("--old", action="store_true",
+                        help="Development as before DEV-CURVE: the older curve (level slowdown) and one grade step for every input")
     args = parser.parse_args()
+    if args.old:
+        from nba_gm_data import health, ratings_model
+        health.INPUTS_CURVE = health.LEGACY_CURVE     # advance_development picks the older curve
+        ratings_model._STEPS = {}
     if args.params:
         from nba_gm_data import health, ratings_model
         for key, value in json.loads(args.params).items():
