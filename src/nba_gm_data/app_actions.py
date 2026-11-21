@@ -4219,7 +4219,10 @@ def free_agency_room_payload(
             "bird_max_raise_pct": 8,
             "routes": [{"route": r, "label": cap_ledger.ROUTE_LABELS[r], "short": cap_ledger.ROUTE_SHORT[r]}
                        for r in cap_ledger.ROUTES],
-            "options_available": False,
+            # CONTRACT-TERMS: a salary path and a player or team option on the last season (contract_terms).
+            "options_available": True,
+            "salary_paths": ["rising", "flat", "declining"],
+            "contract_options": ["none", "player", "team"],
             "non_guaranteed_until": "January 10 of each season",
             # Rosters are cut to this before opening night (save.ROSTER_SEASON_MAXIMUM); "Fits our room" counts it.
             "season_roster_maximum": ROSTER_SEASON_MAXIMUM,

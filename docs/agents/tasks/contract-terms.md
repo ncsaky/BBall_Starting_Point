@@ -1,28 +1,32 @@
 # CONTRACT-TERMS: contract history, salary paths and options, option decisions
 
-_Claude (Opus agent), worktree branch `worktree-agent-a467c2ea2e59eaa25`. Status: **in progress**._
+_Claude (Opus agent), worktree branch `worktree-agent-a467c2ea2e59eaa25`. Status: **in progress** (measurement)._
 
-## Objective (user request 2026-11-21)
-1. Rebuild each real contract's original length and signing season from evidence (the salary tables list only the
-   seasons left, so Podziemski was listed as extendable and then refused); check extension rules against the CBA.
-2. Salary path (flat / rising / declining) and a final-season option (none / player / team) in user offers
-   (free agents, re-signings, extensions); AI values them; AI-to-AI deals use realistic shares.
-3. Option decisions the user can see (own team options = user decision; player options decided by the player with a
-   reason, shown on a screen/card and in a message; notable league-wide decisions on the wire).
+## TL;DR
+- **The Podziemski bug is fixed at the source.** The salary tables the league is built from list only the years a
+  contract still has left, so 497 real contracts looked like fresh one- or two-year deals and the extension rules
+  refused them. Each real contract's signing season and length is now rebuilt from evidence (the draft, reported
+  signings, last season's salary table); where nothing says when a deal was signed, the length is stored as unknown
+  and the screen says so. League-wide, players who can extend on day one went from **4 to 116**.
+- **Extensions follow the league's rules:** rookie-scale deals in the summer before year four (until the day before
+  opening night); other deals of three or more seasons from the second anniversary (third for five- and six-year
+  deals), five seasons at most including the current one, first year at most 140% of his salary or the average
+  salary. The Set The Roster list and the extension screen now use one rule, so a listed player is never refused.
+- **Offers have a shape:** free-agent offers, re-signings and extensions pick a salary path (rising, flat, declining)
+  and an option on the last season (none, player, team). Salaries are saved year by year; players value earlier money
+  and player options, and the "Will he sign?" box says how the shape changes his answer. AI deals use the real shares.
+- **Option decisions are visible:** an Option Decisions card in the offseason checklist (the player's own choice with
+  his reason; your team options with Keep / Decline), phone messages, and notable decisions on the league wire.
 
-## Boundaries
-`contract_ai.py`, `cap_rules.py`, contract/extension/free-agent offer/option code in `save.py`, `app_actions.py`,
-`play.py`, `free_agency*.py`, offer/extension/option screens in `gui/app.js` (+ CSS, `index.html` cache versions),
-contract data normalisation (`contract_history.py`, `storage.py`, the 2026-27 universe JSON contract fields), research
-scripts, tests. Not: `health.py`, `ratings_model.py`, `development_outlook.py`, `talent.py`, `stage2/`, `sim.py`,
-the input estimator, `player_inputs_2026_27.json`, `faces.py`.
+(Results of the two-season probe and the scorecards: see "Measurements"; filled in when the runs finish.)
 
 ## Resume state
-- Part 1 code written: `contract_history.py` (evidence builder + apply on load/build), `scripts/build_contract_history.py`
-  -> `data/canonical/contract_history_2026_27.json`; universe JSON contract fields rewritten (same formatting);
-  `contract_ai.extension_contract_window(contract, player)` rewritten to the CBA rules; per-player deadlines
-  (`extension_deadline_for`, `save.player_extension_deadline`, `extension_window_closed_for_player`); extensions legal
-  July 6 to June 16; AI passes July 6 - Jan 15 plus a pass on the opening-roster deadline; AI first-year limit and term.
-- Before/after on a new GSW save: eligible 4 -> 116 (98 veteran, 18 rookie scale). Podziemski eligible; Set The Roster
-  list == extension screen.
-- Next: finish focused tests, commit part 1; then part 2.
+- Committed on the branch: part 1 (eb15bb6), parts 2-3 (d34ec3b), browser tests + probe (f82edf6), AI extension
+  guards (03ecaec).
+- Running on the Azure worker (one at a time): `contract-terms-branch` (two-season probe of this branch,
+  output/ct-probe-branch), `contract-terms-base` (same probe on main 5c5f19a from output/contract-terms/basetree,
+  output/ct-probe-base), `contract-terms-scorecards` (real-stat 1,230-game replay and odds 20 runs x seeds 1001/2001,
+  output/ct-scorecards). Logs in output/contract-terms/azure_*.log.
+- GUI server for screenshots: port 8771 from this worktree (save dir output/contract-terms/gui_saves).
+- Left: parallel focused tests (waiting for swap), metrics into this report, FA builder and option-card screenshots
+  from the probe's copies, board row to review.
