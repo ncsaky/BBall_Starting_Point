@@ -4,7 +4,7 @@
 
 Research for the free-agency calendar and restricted free-agency work. This is the Codex worktree on `codex/offseason-decisions-evidence`. The shared board is in the main checkout. The worktree contains research only.
 
-Player options, qualifying offers, and team options are saved. Rookie extensions, offer sheets, and early terminations and same-team returns remain. Commit each decision separately. Hoops Rumors has four years of decision trackers and signing trackers. NBA.com provides a second check on signing destinations. Basketball Reference has prior-season performance and Spotrac has prior-season payroll. The 2026 game values are available as a comparison, while using them to predict older summers would give the fit information that teams did not have.
+Player options, qualifying offers, team options, rookie extensions, and offer sheets are saved. Early terminations and same-team returns are the final decision group. Commit each decision separately. Hoops Rumors has four years of decision trackers and signing trackers. NBA.com provides a second check on signing destinations. Basketball Reference has prior-season performance and Spotrac has prior-season payroll. The 2026 game values are available as a comparison, while using them to predict older summers would give the fit information that teams did not have.
 
 ## 1. Player options
 
@@ -78,3 +78,27 @@ A rookie-scale extension adds years to a first-round pick's original deal before
 The rule chose players with a strong prior season, usually at least **1.0 in Basketball Reference's estimate of total contribution above a replacement player**. The 2024 fold chose 0.5. It got **68/93** decisions right, versus **52/93** for the baseline. The fit tests whether a deal happened. It does not separate a team that didn't make an offer from a player who declined one. Tyrese Maxey's 2023 wait helped Philadelphia preserve spending room for the following summer. Jonathan Kuminga's 2024 wait gave the sides another year to establish his price. [2023 extension recap](https://www.hoopsrumors.com/2023/10/2023-nba-rookie-scale-extension-recap.html) · [2024](https://www.hoopsrumors.com/2024/10/2024-nba-rookie-scale-extension-recap.html) · [2025](https://www.hoopsrumors.com/2025/10/2025-nba-rookie-scale-extension-recap.html) · [2026](https://www.hoopsrumors.com/2026/10/2026-nba-rookie-scale-extension-recap.html)
 
 The data record the full reported value, length and average annual pay as a share of the first extension-year cap. The maximum extensions started at a base 25% of the cap, with eligibility to rise as high as 30% for awards where the deal allowed it. There were 3, 4, 3 and 1 base maximum deals in the four years. Payton Pritchard's four years and $30 million averaged 5.3% of the 2024 cap. Christian Braun's five years and $125 million averaged 15.2% of the 2026 cap, with a reported first salary of 13.1%. Brandin Podziemski's five years and $110 million averaged 12.6% of the projected 2027 cap. The average includes reported incentives where the total includes them. Exact first-year amounts and guarantees are missing where the public source only gave a total. [2023 agreement, Article II](https://nbpa.com/cba/) · [NBA 2026 cap](https://www.nba.com/news/nba-salary-cap-2026-27-season) · [Basketball Reference salary ledger](https://www.basketball-reference.com/contracts/players.html)
+
+## 5. Offer sheets
+
+An offer sheet is a new team's signed contract offer to a restricted free agent. The old team can keep the player by matching its principal terms. All six observed bids used exceptions, which are specific ways to spend that the league allows. Utah's room exception was available because it had first used space under the cap.
+
+| Summer | Sheets | Matched | Forecast from the other three summers | Match decisions correct |
+|---|---:|---:|---:|---:|
+| 2023 | 2 | 2 | 1.33 | 2/2 |
+| 2024 | 0 | 0 | 2.00 | No match to score |
+| 2025 | 1 | 0 | 1.67 | 1/1 |
+| 2026 | 3 | 2 | 1.00 | 2/3 |
+
+The other summers' average missed by **1.33 sheets per summer**. With only six sheets and no public count of serious bids that players turned down, there is no reliable player or bidder selection rule. The observed scale is **0–3 sheets per summer across the league**. Teams used an available exception for a player they expected to fill a role, and sometimes structured the offer to raise the cost of matching. Matching unless a confirmed hard cap prevents it got **5/6** right, compared with **4/6** for always matching. The miss was Quinten Post. Golden State passed on an expensive reserve even though a legal block was unconfirmed. Denver paid more tax to match Spencer Jones. [RealGM 2023 register](https://basketball.realgm.com/nba/transactions/league/2024) · [2024](https://basketball.realgm.com/nba/transactions/league/2025) · [2025](https://basketball.realgm.com/nba/transactions/league/2026) · [2026](https://basketball.realgm.com/nba/transactions/league/2027)
+
+| Player | Bidder and funding | Reported terms | Outcome |
+|---|---|---|---|
+| Matisse Thybulle, 2023 | Dallas, standard mid-level exception | 3 years, $33.08 million, with a last-year player option | Portland matched. |
+| Paul Reed, 2023 | Utah, room exception | 3 years, $23.56 million. After year one, playoff advancement could guarantee later pay. | Philadelphia matched. |
+| N'Faly Dante, 2025 | Atlanta, consistent with the minimum-salary exception | 2 years, $4.46 million, with a small partial guarantee | Houston passed with just $1.26 million before a firm payroll ceiling. |
+| Quinten Post, 2026 | Memphis, standard mid-level exception | 3 years, about $30 million including possible bonuses. The reported first-year charge against the payroll ceiling was $10.35 million. | Golden State passed. |
+| Moussa Cissé, 2026 | New York, minimum-salary exception | 2 years, $4.76 million, with partial guarantees | Dallas matched. |
+| Spencer Jones, 2026 | Oklahoma City, taxpayer mid-level exception | 2 years, $11.75 million guaranteed, with $6 million in year one | Denver matched. |
+
+No observed sheet used the special rule that allows a large third-year salary jump for players with one or two years of NBA service. Several contracts had normal raises or deferred protection. The July reporting and October salary ledger disagree on Post's year-by-year base pay, so the data retain both. [2023 spending exceptions](https://www.hoopsrumors.com/2023/07/how-teams-are-using-2023-24-mid-level-exceptions.html) · [Dante terms](https://www.hoopsrumors.com/2025/08/rockets-wont-match-hawks-offer-sheet-for-nfaly-dante.html) · [Post terms](https://www.hoopsrumors.com/2026/07/warriors-wont-match-grizzlies-offer-sheet-for-quinten-post.html) · [Cissé terms](https://www.hoopsrumors.com/2026/07/mavericks-to-match-offer-sheet-keep-moussa-cisse.html) · [Jones terms](https://www.hoopsrumors.com/2026/07/nuggets-to-match-offer-sheet-retain-spencer-jones.html)

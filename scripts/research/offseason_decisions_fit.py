@@ -223,6 +223,33 @@ def fit_rookie_extensions(evidence):
     return validation(rows, features, lambda row: row["decision"] == "extended", rules)
 
 
+def fit_offer_sheets(evidence):
+    season_totals = {r["summer"]: r["signed_offer_sheets"] for r in evidence["offer_sheet_seasons"]}
+    rows = evidence["decisions"]["offer_sheets"]
+    results = {}
+    for summer in SUMMERS:
+        expected = mean(n for y, n in season_totals.items() if y != summer)
+        feasible_in_training = [
+            r for r in rows if r["summer"] != summer
+            and not r["incumbent_hard_cap_blocks_match_without_other_moves"]
+        ]
+        match_if_possible = mean(r["matched"] for r in feasible_in_training) >= .5
+        test = [r for r in rows if r["summer"] == summer]
+        predicted = [
+            match_if_possible and not r["incumbent_hard_cap_blocks_match_without_other_moves"]
+            for r in test
+        ]
+        results[summer] = {
+            "actual_sheet_count": season_totals[summer],
+            "expected_sheet_count": round(expected, 3),
+            "count_absolute_error": round(abs(season_totals[summer] - expected), 3),
+            "match_if_possible": match_if_possible,
+            "matches_correct": sum(p == r["matched"] for p, r in zip(predicted, test)) if test else None,
+            "match_decisions": len(test),
+        }
+    return results
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evidence", type=Path, default=EVIDENCE)
@@ -235,6 +262,8 @@ def main():
         results["team_options"] = fit_team_options(evidence)
     if "rookie_scale_extensions" in evidence["decisions"]:
         results["rookie_scale_extensions"] = fit_rookie_extensions(evidence)
+    if "offer_sheets" in evidence["decisions"]:
+        results["offer_sheets"] = fit_offer_sheets(evidence)
     print(json.dumps(results, indent=2, ensure_ascii=False))
 
 

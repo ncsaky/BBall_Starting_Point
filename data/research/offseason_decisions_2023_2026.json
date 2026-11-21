@@ -4288,6 +4288,51 @@
       "url": "https://www.hoopsrumors.com/2025/08/pelicans-sign-jaden-springer.html",
       "date": "2025-08-06",
       "date_kind": "published"
+    },
+    "ml2023": {
+      "url": "https://www.hoopsrumors.com/2023/07/how-teams-are-using-2023-24-mid-level-exceptions.html",
+      "date": "2023-07-12",
+      "date_kind": "published"
+    },
+    "https://www.nba.com/news/matisse-thybulle-offer-sheet": {
+      "url": "https://www.nba.com/news/matisse-thybulle-offer-sheet",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.salaryswish.com/signings/trailblazers": {
+      "url": "https://www.salaryswish.com/signings/trailblazers",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.salaryswish.com/players/paul-reed": {
+      "url": "https://www.salaryswish.com/players/paul-reed",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "ml2025": {
+      "url": "https://www.hoopsrumors.com/2025/07/how-teams-are-using-2025-26-mid-level-exceptions.html",
+      "date": "2025-07-14",
+      "date_kind": "published"
+    },
+    "https://www.hoopsrumors.com/2025/06/nba-minimum-salaries-for-2025-26.html": {
+      "url": "https://www.hoopsrumors.com/2025/06/nba-minimum-salaries-for-2025-26.html",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "ml2026": {
+      "url": "https://www.hoopsrumors.com/2026/07/how-teams-are-using-2026-27-mid-level-exceptions.html",
+      "date": "2026-07-16",
+      "date_kind": "published"
+    },
+    "https://www.yardbarker.com/nba/articles/mavericks_to_match_offer_sheet_keep_moussa_cisse/s1_14822_44077133": {
+      "url": "https://www.yardbarker.com/nba/articles/mavericks_to_match_offer_sheet_keep_moussa_cisse/s1_14822_44077133",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
+    },
+    "https://www.yardbarker.com/nba/articles/thunder_sign_nuggets_rfa_spencer_jones_to_offer_sheet/s1_14822_44100696": {
+      "url": "https://www.yardbarker.com/nba/articles/thunder_sign_nuggets_rfa_spencer_jones_to_offer_sheet/s1_14822_44100696",
+      "date": "2026-11-20",
+      "date_kind": "accessed"
     }
   },
   "decisions": {
@@ -41564,6 +41609,306 @@
           "pay2026"
         ]
       }
+    ],
+    "offer_sheets": [
+      {
+        "summer": 2023,
+        "player": "Matisse Thybulle",
+        "team": "POR",
+        "bidder": "DAL",
+        "signed_date": "2023-07-06",
+        "matched": true,
+        "match_report_date": "2023-07-06",
+        "match_official_date": "2023-07-07",
+        "years": 3,
+        "reported_value": 33075000,
+        "annual_base_salaries": [
+          10500000,
+          11025000,
+          11550000
+        ],
+        "player_option_year": 3,
+        "trade_kicker_percent": 15,
+        "bidder_funding": "non_taxpayer_midlevel_exception",
+        "bidder_cap_context": "Dallas was reportedly about $9 million below the tax line and used $10.5 million of its non-taxpayer mid-level.",
+        "incumbent_cap_context": "Portland was about $3.4 million below the tax line after matching.",
+        "sources": [
+          "https://www.hoopsrumors.com/2023/07/trail-blazers-to-match-mavericks-offer-for-matisse-thybulle.html",
+          "https://www.nba.com/news/matisse-thybulle-offer-sheet",
+          "https://www.salaryswish.com/signings/trailblazers",
+          "ml2023",
+          "real_summer2023"
+        ],
+        "player_key": "matissethybulle",
+        "arenas_backload_identified": false,
+        "incumbent_hard_cap_blocks_match_without_other_moves": null,
+        "prior_season_box_value": {
+          "bref_id": "thybuma01",
+          "season_age": 25,
+          "games": 71,
+          "starts": 28,
+          "minutes": 1200,
+          "vorp": 0.5,
+          "bpm": -0.5,
+          "ws": 2.1
+        },
+        "game_on_court_value_2026_snapshot": 56.14,
+        "prior_team_active_payroll": 136161044,
+        "prior_team_total_cap_allocations": 151480955,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2023,
+        "player": "Paul Reed",
+        "team": "PHI",
+        "bidder": "UTA",
+        "signed_date": "2023-07-08",
+        "matched": true,
+        "match_report_date": "2023-07-09",
+        "years": 3,
+        "reported_value": 23555150,
+        "annual_base_salaries": [
+          7723000,
+          7723000,
+          8109150
+        ],
+        "first_year_guaranteed": 7723000,
+        "bidder_funding": "room_midlevel_exception",
+        "bidder_cap_context": "Utah had gone below the cap and used its room-team exception.",
+        "incumbent_cap_context": "Philadelphia was projected to go into the tax when it matched.",
+        "guarantee_terms": "Only the first year was initially guaranteed. Later protection depended on playoff advancement and guarantee dates.",
+        "sources": [
+          "https://www.hoopsrumors.com/2023/07/sixers-to-match-jazzs-offer-sheet-to-paul-reed.html",
+          "https://www.nba.com/news/report-76ers-to-match-jazz-offer-sheet-re-sign-paul-reed",
+          "https://www.salaryswish.com/players/paul-reed",
+          "ml2023",
+          "real_summer2023"
+        ],
+        "player_key": "paulreed",
+        "arenas_backload_identified": false,
+        "incumbent_hard_cap_blocks_match_without_other_moves": null,
+        "prior_season_box_value": {
+          "bref_id": "reedpa01",
+          "season_age": 23,
+          "games": 69,
+          "starts": 2,
+          "minutes": 755,
+          "vorp": 0.4,
+          "bpm": -0.1,
+          "ws": 2.8
+        },
+        "game_on_court_value_2026_snapshot": 67.91,
+        "prior_team_active_payroll": 149166783,
+        "prior_team_total_cap_allocations": 164391836,
+        "prior_season_cap": 123655000,
+        "context_sources": [
+          "stats2023",
+          "pay2023"
+        ]
+      },
+      {
+        "summer": 2025,
+        "player": "N’Faly Dante",
+        "team": "HOU",
+        "bidder": "ATL",
+        "signed_date": "2025-08-16",
+        "signed_date_status": "first public report of deal",
+        "matched": false,
+        "match_report_date": "2025-08-18",
+        "years": 2,
+        "reported_value": 4459584,
+        "annual_base_salaries": [
+          2048494,
+          2411090
+        ],
+        "first_year_guaranteed": 85300,
+        "bidder_funding": "minimum_salary_exception",
+        "funding_inferred_from_minimum_terms": true,
+        "bidder_cap_context": "Atlanta offered two years at the minimum, with a partial guarantee.",
+        "incumbent_cap_context": "Houston was hard-capped at the first apron, with about $1.26 million left for the $2.05 million charge.",
+        "incumbent_hard_cap_blocks_match_without_other_moves": true,
+        "sources": [
+          "https://www.hoopsrumors.com/2025/08/hawks-signing-nfaly-dante-to-two-year-offer-sheet.html",
+          "https://www.hoopsrumors.com/2025/08/rockets-wont-match-hawks-offer-sheet-for-nfaly-dante.html",
+          "https://www.hoopsrumors.com/2025/06/nba-minimum-salaries-for-2025-26.html",
+          "ml2025",
+          "real_summer2025"
+        ],
+        "player_key": "nfalydante",
+        "arenas_backload_identified": false,
+        "prior_season_box_value": {
+          "bref_id": "nfalyda01",
+          "season_age": 23,
+          "games": 4,
+          "starts": 0,
+          "minutes": 51,
+          "vorp": 0.1,
+          "bpm": 2.4,
+          "ws": 0.3
+        },
+        "game_on_court_value_2026_snapshot": 51.29,
+        "prior_team_active_payroll": 161552948,
+        "prior_team_total_cap_allocations": 173496349,
+        "prior_season_cap": 140588000,
+        "context_sources": [
+          "stats2025",
+          "pay2025"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Quinten Post",
+        "team": "GSW",
+        "bidder": "MEM",
+        "signed_date": "2026-07-06",
+        "matched": false,
+        "match_report_date": "2026-07-07",
+        "years": 3,
+        "reported_value": 30000000,
+        "first_year_reported_base": 9000000,
+        "first_year_reported_unlikely_bonus": 1350000,
+        "first_year_reported_apron_charge": 10350000,
+        "later_reported_approx_base_per_year": 8500000,
+        "later_reported_approx_unlikely_bonus_per_year": 1280000,
+        "final_contract_base_salaries_other_ledger": [
+          8285714,
+          8700000,
+          9114286
+        ],
+        "term_discrepancy": "The October salary ledger and the July offer reporting disagree on the distribution of base salary. Original year-by-year base schedule is unverified.",
+        "bidder_funding": "non_taxpayer_midlevel_exception",
+        "bidder_cap_context": "Memphis used $10.35 million of its non-taxpayer mid-level, including the unlikely bonus in the commitment.",
+        "incumbent_cap_context": "Golden State was navigating a likely second-apron hard cap and passed. There is no confirmation that it was already legally unable to match.",
+        "guarantee_terms": "July reporting described the first year as guaranteed, with the other two unguaranteed. Unlikely annual bonuses depended on making an All-Defensive team.",
+        "sources": [
+          "https://www.nba.com/news/quinten-post-free-agency-2026",
+          "https://www.hoopsrumors.com/2026/07/warriors-wont-match-grizzlies-offer-sheet-for-quinten-post.html",
+          "ml2026",
+          "real_summer2026",
+          "bref_contracts_2026_10_13"
+        ],
+        "player_key": "quintenpost",
+        "arenas_backload_identified": false,
+        "incumbent_hard_cap_blocks_match_without_other_moves": null,
+        "prior_season_box_value": {
+          "bref_id": "postqu01",
+          "season_age": 25,
+          "games": 67,
+          "starts": 35,
+          "minutes": 1159,
+          "vorp": 0.3,
+          "bpm": -1.1,
+          "ws": 1.9
+        },
+        "game_on_court_value_2026_snapshot": 60.08,
+        "prior_team_active_payroll": 204850563,
+        "prior_team_total_cap_allocations": 234222725,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Moussa Cisse",
+        "team": "DAL",
+        "bidder": "NYK",
+        "signed_date": "2026-07-18",
+        "matched": true,
+        "match_report_date": "2026-07-18",
+        "years": 2,
+        "reported_value": 4757011,
+        "annual_base_salaries": [
+          2185116,
+          2571895
+        ],
+        "first_year_reported_apron_charge": 2449421,
+        "bidder_funding": "minimum_salary_exception",
+        "bidder_cap_context": "New York was near the second apron and offered a two-year minimum.",
+        "incumbent_cap_context": "Dallas had room to keep a young center on a small contract, despite a crowded roster.",
+        "guarantee_terms": "About $1.1 million protected after September 1 and full first-year protection after the October 1 deadline. Second year originally non-guaranteed.",
+        "sources": [
+          "https://www.hoopsrumors.com/2026/07/mavericks-to-match-offer-sheet-keep-moussa-cisse.html",
+          "https://www.yardbarker.com/nba/articles/mavericks_to_match_offer_sheet_keep_moussa_cisse/s1_14822_44077133",
+          "ml2026",
+          "real_summer2026"
+        ],
+        "player_key": "moussacisse",
+        "arenas_backload_identified": false,
+        "incumbent_hard_cap_blocks_match_without_other_moves": null,
+        "prior_season_box_value": {
+          "bref_id": "cissemo01",
+          "season_age": 23,
+          "games": 38,
+          "starts": 1,
+          "minutes": 530,
+          "vorp": -0.1,
+          "bpm": -2.9,
+          "ws": 1.3
+        },
+        "game_on_court_value_2026_snapshot": 51.59,
+        "prior_team_active_payroll": 174224556,
+        "prior_team_total_cap_allocations": 200372430,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      },
+      {
+        "summer": 2026,
+        "player": "Spencer Jones",
+        "team": "DEN",
+        "bidder": "OKC",
+        "signed_date": "2026-07-25",
+        "matched": true,
+        "match_report_date": "2026-07-26",
+        "match_official_date": "2026-07-27",
+        "years": 2,
+        "reported_value": 11750000,
+        "annual_base_salaries": [
+          6000000,
+          5750000
+        ],
+        "first_year_guaranteed": 6000000,
+        "second_year_guaranteed": 5750000,
+        "bidder_funding": "taxpayer_midlevel_exception",
+        "bidder_cap_context": "After trading Luguentz Dort, Oklahoma City had $6.9 million below the second apron. It reserved $6 million of the taxpayer mid-level.",
+        "incumbent_cap_context": "Denver matched with Early Bird rights despite a reported tax bill increase from about $36 million to $68 million.",
+        "sources": [
+          "https://www.nba.com/news/spencer-jones-free-agency-2026",
+          "https://www.hoopsrumors.com/2026/07/nuggets-to-match-offer-sheet-retain-spencer-jones.html",
+          "https://www.yardbarker.com/nba/articles/thunder_sign_nuggets_rfa_spencer_jones_to_offer_sheet/s1_14822_44100696",
+          "ml2026",
+          "real_summer2026"
+        ],
+        "player_key": "spencerjones",
+        "arenas_backload_identified": false,
+        "incumbent_hard_cap_blocks_match_without_other_moves": null,
+        "prior_season_box_value": {
+          "bref_id": "jonessp01",
+          "season_age": 24,
+          "games": 64,
+          "starts": 37,
+          "minutes": 1417,
+          "vorp": -0.1,
+          "bpm": -2.4,
+          "ws": 2.6
+        },
+        "game_on_court_value_2026_snapshot": 48.94,
+        "prior_team_active_payroll": 187214031,
+        "prior_team_total_cap_allocations": 200743895,
+        "prior_season_cap": 154647000,
+        "context_sources": [
+          "stats2026",
+          "pay2026"
+        ]
+      }
     ]
   },
   "salary_comparables": [
@@ -48227,5 +48572,39 @@
     "git_commit": "e08be42",
     "script": "scripts/market_sanity_report.py",
     "note": "Retrospective 2026 snapshot kept for comparison. Excluded from historical fits."
-  }
+  },
+  "offer_sheet_seasons": [
+    {
+      "summer": 2023,
+      "signed_offer_sheets": 2,
+      "sources": [
+        "real_summer2023",
+        "nba2023"
+      ]
+    },
+    {
+      "summer": 2024,
+      "signed_offer_sheets": 0,
+      "sources": [
+        "real_summer2024",
+        "nba2024"
+      ]
+    },
+    {
+      "summer": 2025,
+      "signed_offer_sheets": 1,
+      "sources": [
+        "real_summer2025",
+        "nba2025"
+      ]
+    },
+    {
+      "summer": 2026,
+      "signed_offer_sheets": 3,
+      "sources": [
+        "real_summer2026",
+        "nba2026"
+      ]
+    }
+  ]
 }
