@@ -57,13 +57,14 @@ class SimulationCalendarTests(unittest.TestCase):
         with patch.object(sv, "advance_save_day", side_effect=self.advance_day) as day, patch.object(sv, "next_event_date", return_value="2026-11-30"):
             sv.advance_save(".", {}, "unused.json", next_event=True, prepared_save=save, persist=False)
             self.assertEqual(day.call_count, 2)
-        draft = self.fixture("2027-06-26")
+        # FA-REAL slice 2 (calendar changed): the 2027 draft is June 22-23; stop 1 resumes June 24.
+        draft = self.fixture("2027-06-22")
         draft["state"]["phase"] = "draft"
         draft["draft_state"] = {"status": "in_progress"}
         original = deepcopy(draft)
         with patch.object(sv, "advance_save_day") as day:
             with self.assertRaisesRegex(ValueError, "draft is active"):
-                sv.advance_save(".", {}, "unused.json", to_date="2027-06-27", prepared_save=draft, persist=False)
+                sv.advance_save(".", {}, "unused.json", to_date="2027-06-24", prepared_save=draft, persist=False)
             day.assert_not_called()
         self.assertEqual(draft, original)
 
