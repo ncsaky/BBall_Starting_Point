@@ -729,7 +729,7 @@ async function restoreStartupSave() {
 async function recoverStartupSave() {
   const save = selectedStartupSave();
   if (!save?.recovery_available) return;
-  if (!window.confirm(`Recover ${save.name || "this save"} from its previous complete backup? Progress after that backup will be rolled back. The current valid save, if readable, will be preserved as a backup.`)) return;
+  if (!await askConfirm(`Recover ${save.name || "this save"} from its previous complete backup? Progress after that backup will be rolled back. The current valid save, if readable, will be preserved as a backup.`)) return;
   try {
     setStartupSaveMessage("Restoring previous complete backup…");
     const result = await action("recover_save", { save_path: save.path });
@@ -6026,7 +6026,7 @@ async function decideOfferSheet(sheetId, match) {
   const question = match
     ? `Match ${sheet?.bidder_abbrev || "the"} offer sheet and keep ${name}: ${money(sheet?.total_millions)} over ${sheet?.years?.length || ""} years? He can't be traded for a year. This cannot be undone.`
     : `Pass and let ${name} join ${sheet?.bidder_abbrev || "the other team"}? You get nothing back. This cannot be undone.`;
-  if (!window.confirm(question)) return;
+  if (!await askConfirm(question)) return;
   const result = await action("offer_sheet_decision", { ...savePayload(), team: userTeam(), sheet_id: sheetId, match, seed: 7 });
   if (result.status === "blocked") {
     showToast(result.reason || "That decision could not be made.", true);
@@ -6117,7 +6117,7 @@ async function afterOffseasonDecision(result, okText) {
 async function decideOffseasonOption(playerId, exercise) {
   const item = [...(state.data.freeagency?.offseason_checklist?.items || []), ...(state.data.setRoster?.items || [])]
     .find((row) => String(row.player_id) === String(playerId));
-  if (!exercise && !window.confirm(`Decline ${item?.name || "his"} option? ${item?.kind === "rookie_option" ? "His deal ends after next season and he becomes an unrestricted free agent." : "He becomes a free agent now; you keep his Bird rights."}`)) return;
+  if (!exercise && !await askConfirm(`Decline ${item?.name || "his"} option? ${item?.kind === "rookie_option" ? "His deal ends after next season and he becomes an unrestricted free agent." : "He becomes a free agent now; you keep his Bird rights."}`)) return;
   const result = await action("decide_option", { ...savePayload(), team: userTeam(), player_id: playerId, exercise });
   await afterOffseasonDecision(result, `${item?.name || "Option"}: ${exercise ? "kept" : "declined"}.`);
 }
@@ -6125,7 +6125,7 @@ async function decideOffseasonOption(playerId, exercise) {
 async function decideQualifyingOffer(playerId, choice) {
   const payload = { ...savePayload(), team: userTeam(), player_id: playerId };
   if (choice === "withdraw") {
-    if (!window.confirm("Withdraw the qualifying offer? Through July 13 you keep his Bird rights; after that you give up his rights too.")) return;
+    if (!await askConfirm("Withdraw the qualifying offer? Through July 13 you keep his Bird rights; after that you give up his rights too.")) return;
     payload.withdraw = true;
   } else {
     payload.tender = choice !== "none";
@@ -6140,7 +6140,7 @@ async function openFreeAgencyFromStopOne() {
   const waiting = items.filter((item) => item.status === "pending");
   if (waiting.length) {
     const lines = waiting.map((item) => `• ${item.name}: ${item.default || "no decision"}`).join("\n");
-    if (!window.confirm(`These are still undecided and take their default when free agency opens:\n${lines}\n\nOpen free agency?`)) return;
+    if (!await askConfirm(`These are still undecided and take their default when free agency opens:\n${lines}\n\nOpen free agency?`)) return;
   }
   await advanceReSigning("open_market");
 }
@@ -6713,9 +6713,9 @@ async function freeAgencySignAndTrade(player, step, extra = {}) {
     rerender();
     if (!(step === "propose" && result.terms?.ok && result.answer?.ok)) return;
     const words = (result.terms.schedule || []).map((row) => `${row.season}: ${money(row.salary / 1e6)}`).join("\n");
-    if (!window.confirm(`Sign-and-trade ${player.name} to ${teamLabel(extra.receiver)}?\n\n${words}\n\n${(result.terms.notes || []).join("\n")}`)) return;
+    if (!await askConfirm(`Sign-and-trade ${player.name} to ${teamLabel(extra.receiver)}?\n\n${words}\n\n${(result.terms.notes || []).join("\n")}`)) return;
   } else if (step === "submit") {
-    if (!window.confirm(`Make the sign-and-trade for ${player.name}? It is official at once.\n\n${(st.terms?.notes || []).join("\n")}`)) return;
+    if (!await askConfirm(`Make the sign-and-trade for ${player.name}? It is official at once.\n\n${(st.terms?.notes || []).join("\n")}`)) return;
   }
   const done = await action("sign_and_trade_submit", payload);
   if (done.status !== "executed") {
@@ -6733,7 +6733,7 @@ async function freeAgencySignAndTrade(player, step, extra = {}) {
 async function freeAgencyRosterEdgeSign(player, kind, years = 1) {
   const words = kind === "camp" ? `Invite ${player.name} to camp on an Exhibit 10 deal (one season at his minimum, not guaranteed)?`
     : `Sign ${player.name} to a ${years}-season two-way contract (outside the salary cap and your 15 spots)?`;
-  if (!window.confirm(words)) return;
+  if (!await askConfirm(words)) return;
   const result = await action(kind === "camp" ? "camp_invite" : "two_way_sign", { ...savePayload(), team: userTeam(), player_id: player.id, years });
   if (!result || result.status !== "signed") {
     showToast(result?.reason || "Not allowed.", true);
@@ -7100,7 +7100,7 @@ async function confirmCutdownReleases() {
       : "";
     return `• ${choice === "buyout" ? "Buy out" : "Waive"} ${row.name}: ${cost === null ? "cost unknown" : `${money(cost)} stays on your books`}${charges}${row.clears_waivers ? ` (clears waivers ${row.clears_waivers})` : ""}`;
   })];
-  if (!window.confirm(`Apply ${lines.length} roster move${lines.length === 1 ? "" : "s"}? This cannot be undone.\n\n${lines.join("\n")}${releases.length ? "\n\nReleased players go on waivers for two days; a claim moves the contract to the claiming team." : ""}`)) return;
+  if (!await askConfirm(`Apply ${lines.length} roster move${lines.length === 1 ? "" : "s"}? This cannot be undone.\n\n${lines.join("\n")}${releases.length ? "\n\nReleased players go on waivers for two days; a claim moves the contract to the claiming team." : ""}`)) return;
   let done = 0;
   try {
     for (const row of moves) {
@@ -7166,7 +7166,7 @@ function wireCutdownWorkspace(root) {
   workspace.querySelector("[data-cutdown-confirm]")?.addEventListener("click", confirmCutdownReleases);
   // FA-REAL slice 4: the two-way places, the roster submission and the assistant's minimum-contract fill.
   const rosterAction = async (name, payload, okText, confirmText = "") => {
-    if (confirmText && !window.confirm(confirmText)) return;
+    if (confirmText && !await askConfirm(confirmText)) return;
     const result = await action(name, { ...savePayload(), ...payload });
     if (!result || result.status === "blocked") {
       showToast(result?.reason || "That move is not allowed.", true);
@@ -7432,7 +7432,7 @@ async function resolveStaffRetention(choice) {
   if (choice === "re_sign") {
     payload.salary_millions = Number(document.getElementById("staffRetentionSalary")?.value || room.ask_millions || 0);
     payload.years = Number(document.getElementById("staffRetentionYears")?.value || room.ask_years || 2);
-  } else if (!window.confirm(`Accept an interim ${rowLabel(room.window?.slot || "staff role")}?`)) {
+  } else if (!await askConfirm(`Accept an interim ${rowLabel(room.window?.slot || "staff role")}?`)) {
     return;
   }
   const result = await action("resolve_staff_retention", payload);
@@ -9309,7 +9309,7 @@ async function renounceCapHold(playerId) {
   if (!hold?.renounce) return;
   const preview = hold.renounce;
   const question = `Renounce ${hold.name}? His ${money(preview.hold_millions)} cap hold comes off your books: cap room goes from ${signedMoney(preview.cap_room_before_millions)} to ${signedMoney(preview.cap_room_after_millions)}.\n\n${preview.loses}\n\nThis cannot be undone.`;
-  if (!window.confirm(question)) return;
+  if (!await askConfirm(question)) return;
   const result = await action("renounce_cap_hold", { ...savePayload(), team: userTeam(), player_id: playerId, seed: 7 });
   if (result.status !== "renounced") {
     showToast(result.reason || "Could not renounce.", true);
@@ -9338,7 +9338,7 @@ async function openWaiverRoom() {
     const quote = p.buyout;
     const buyout = button.dataset.buyout === 'true';
     const charges = (buyout ? quote.cap_charges : quote.seasons).map((r) => `${r.season}: ${r.salary == null ? 'Unknown' : money(r.salary / 1000000)}`).join('\n');
-    if (!window.confirm(`${buyout ? 'Buy out' : 'Waive'} ${p.name}?\n${buyout ? quote.policy : 'Guaranteed obligations remain unless another team claims the contract.'}\nCap charges if unclaimed:\n${charges}\nWaivers clear ${quote.clearance_date}.`)) return;
+    if (!await askConfirm(`${buyout ? 'Buy out' : 'Waive'} ${p.name}?\n${buyout ? quote.policy : 'Guaranteed obligations remain unless another team claims the contract.'}\nCap charges if unclaimed:\n${charges}\nWaivers clear ${quote.clearance_date}.`)) return;
     await action(buyout ? 'buyout_player' : 'waive_player', {...savePayload(), player_id: p.id});
     await refreshHome();
     await openWaiverRoom();
@@ -9346,7 +9346,7 @@ async function openWaiverRoom() {
   els.modalRoot.querySelectorAll('[data-claim-waiver]').forEach((button) => button.addEventListener('click', async () => {
     const id = button.dataset.claimWaiver;
     const select = Array.from(els.modalRoot.querySelectorAll('[data-waiver-cut]')).find((s) => s.dataset.waiverCut === id);
-    if (!window.confirm('Submit this waiver claim? If awarded, you assume the existing contract and the selected roster move is applied. Claims cannot be withdrawn.')) return;
+    if (!await askConfirm('Submit this waiver claim? If awarded, you assume the existing contract and the selected roster move is applied. Claims cannot be withdrawn.')) return;
     await action('claim_waiver', { ...savePayload(), waiver_id: id, cut_player_id: select?.value || null });
     await openWaiverRoom();
   }));
@@ -10293,7 +10293,7 @@ async function submitFreeAgentOffer(playerId = state.selectedFreeAgent) {
     : preview.accepts
     ? `${exclusive ? "Re-sign" : "Sign"} ${player.name}: ${terms}?${paid}\n\nThis cannot be undone.`
     : `Offer ${player.name} ${terms}?${paid}\n\n${preview.verdict.detail}`;
-  if (!window.confirm(question)) return;
+  if (!await askConfirm(question)) return;
   const result = await action("submit_free_agent_offer", { ...savePayload(), player_id: player.id, team: userTeam(), years: preview.years, guaranteed: preview.guaranteed, aav_millions: preview.aav, route: draft.route || "", raise_pct: freeAgencyRaisePct(player, draft), backload: Boolean(draft.backload), auto_apply: true, seed: 7 });
   state.freeAgentQuotes = {};
   if (result.offer_sheet) {
@@ -10700,7 +10700,7 @@ function mountStaffNegotiationOutcome(modal) {
 async function fireDashboardStaff(slot, name) {
   const permission = staffActionPermission(slot);
   if (permission.can_fire === false) return showToast(permission.fire_reason, true);
-  if (!window.confirm(`Fire ${name}? An interim ${rowLabel(slot)} will take over immediately.`)) return;
+  if (!await askConfirm(`Fire ${name}? An interim ${rowLabel(slot)} will take over immediately.`)) return;
   try {
     const result = await action("fire_staff", { ...savePayload(), team: userTeam(), slot, reason: "user decision" });
     showToast(result.status === "applied" ? `${name} fired. An interim has been appointed.` : result.result?.notes || `Staff move: ${result.status}`, result.status !== "applied");
@@ -15739,6 +15739,41 @@ async function hideAppLoading(startedAt) {
     if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
   }
   setAppLoading(false);
+}
+
+// In-game yes/no question. Replaces window.confirm, which some embedded browsers (the Claude app's browser pane)
+// silently answer "no" without showing anything, so buttons that asked first did nothing (playtest 2026-11-21).
+function askConfirm(message, { confirmLabel = "Confirm", cancelLabel = "Cancel", title = "Please confirm" } = {}) {
+  return new Promise((resolve) => {
+    const previous = document.activeElement;
+    const root = document.createElement("div");
+    root.className = "ask-confirm-root";
+    root.innerHTML = `
+      <div class="ask-confirm" role="alertdialog" aria-modal="true" aria-labelledby="askConfirmTitle" aria-describedby="askConfirmText">
+        <header><h3 id="askConfirmTitle">${escapeHtml(title)}</h3></header>
+        <p id="askConfirmText">${escapeHtml(String(message || ""))}</p>
+        <footer>
+          <button type="button" class="ui-command" data-ask-cancel>${escapeHtml(cancelLabel)}</button>
+          <button type="button" class="ui-command ask-confirm-ok" data-ask-ok>${escapeHtml(confirmLabel)}</button>
+        </footer>
+      </div>`;
+    const finish = (answer) => {
+      document.removeEventListener("keydown", onKey, true);
+      root.remove();
+      if (previous && typeof previous.focus === "function") previous.focus();
+      resolve(answer);
+    };
+    const onKey = (event) => {
+      if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); finish(false); }
+      else if (event.key === "Enter") { event.preventDefault(); event.stopPropagation(); finish(true); }
+    };
+    root.addEventListener("click", (event) => { if (event.target === root) finish(false); });
+    root.querySelector("[data-ask-cancel]").addEventListener("click", () => finish(false));
+    root.querySelector("[data-ask-ok]").addEventListener("click", () => finish(true));
+    document.addEventListener("keydown", onKey, true);
+    document.body.appendChild(root);
+    root.querySelector("[data-ask-ok]").focus();
+  });
 }
 
 function showToast(message, isError = false) {
