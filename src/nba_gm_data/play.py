@@ -6131,6 +6131,7 @@ def maybe_run_free_agency_ai_trades_state(
     for candidate in candidates[:FREE_AGENCY_TRADES_PER_DAY]:
         if not candidate.get('accepted_by_all') or candidate.get('legality', {}).get('status') != 'legal':
             continue
+        candidate = free_agency_trade_reasons(active, candidate)
         proposal = candidate.get("proposal") or {}
         proposal_id = proposal.get("id")
         if not proposal_id:
@@ -6202,6 +6203,31 @@ def free_agency_general_trade_candidates(active: dict[str, Any], save: dict[str,
         candidate["free_agency_context"] = {"kind": "general_market_trade"}
         candidates.append(candidate)
     return candidates[:max_results]
+
+
+def free_agency_trade_reasons(active: dict[str, Any], candidate: dict[str, Any]) -> dict[str, Any]:
+    """Every free-agency trade states its reasons (TRADE-MARKET): roster-space sales and cap-room moves had none, the
+    target search's deals keep theirs. The personality terms of the deal are added in plain words."""
+    from .front_office import with_market_reasons
+    from .transactions import trade_team_flows
+    reasons = dict(candidate.get('trade_reasons') or {})
+    if not reasons.get('text'):
+        context = candidate.get('free_agency_context') or {}
+        teams = {t['id']: t.get('abbrev') for t in active.get('teams', [])}
+        players = {p['id']: p.get('name') for p in active.get('players', [])}
+        flows = trade_team_flows(candidate.get('proposal') or {})
+        sender = next((tid for tid, out, _ in flows if any(a.get('kind') == 'player' for a in out)), flows[0][0] if flows else None)
+        other = next((tid for tid, _, _ in flows if tid != sender), None)
+        if context.get('kind') == 'roster_space_sale':
+            name = players.get(context.get('sold_player_id'), 'a player')
+            reasons['text'] = (f"{teams.get(sender, sender)} needed a roster spot for its free-agent signing and sold {name} "
+                               f"instead of waiving him; {teams.get(other, other)} took him at a discount.")
+        else:
+            reasons['text'] = (f"{teams.get(sender, sender)} cleared salary in free agency; "
+                               f"{teams.get(other, other)} had the room to take it.")
+        reasons.setdefault('target_key', context.get('kind') or 'free_agency_room')
+        candidate = {**candidate, 'trade_reasons': reasons}
+    return with_market_reasons(active, candidate)
 
 
 def free_agency_cap_dump_candidates(active: dict[str, Any], save: dict[str, Any], user_team_id: str, seed: int) -> list[dict[str, Any]]:
