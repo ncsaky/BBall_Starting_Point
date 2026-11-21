@@ -5,7 +5,7 @@ _Run on the Azure worker overnight 2026-11-21: seed 17, Golden State hands-off, 
 ## TL;DR
 - **The league stays believable in the middle.** Talent levels, roster turnover, ages and the rise of drafted players all look healthy over eight seasons.
 - **The top flattens.** After Jokić ages, no one reaches his level again. The best young players stop growing at about 22-23 (Wembanyama flat at 74-75 from 22 to 30, Cooper Flagg peaking near 69 at 22). Top values bunch onto a few exact numbers (five of the top 15 at exactly 73.8), the signature of a hidden ceiling.
-- **The weakest teams keep getting weaker.** The gap between the best and worst teams' top nine widens every couple of seasons.
+- **The weakest team getting weaker was the hands-off test team (Golden State)**, which by design never trades or signs. The AI teams' parity looks healthy.
 
 ## The numbers
 | Season | Best | Top 5 avg | Top 10 avg | 30th | 60th | Rotation median | Made-up in top 30 | Made-up in rotations | Avg age | Top-30 age |
@@ -42,13 +42,15 @@ The shape is right. The problem is the top end.
 
   A short focused check can separate them: grow one elite young player's inputs by hand and watch his traits and value.
 
-## Parity drift (to investigate)
-- The worst team's top nine weakens about 0.7 a season.
-- Possible causes:
-  - rebuilding teams selling everything while their young players plateau early (the same ceiling);
-  - lottery luck not offsetting it;
-  - bad teams being unable to sign free agents.
-- Next: list the bottom three teams each season, with their records, payroll, draft picks and best young players.
+## Parity drift: explained, not a problem
+- **The team that keeps weakening is Golden State,** the hands-off test team. The test's policy: it never trades, never bids in free agency, and lets its expiring players walk. Its rank by top-nine strength goes 29, 6, 2, 1, 1, 1, 1, 1, 1.
+- **Leaving it out,** the weakest AI team stays at about 56-58 every season.
+- **Teams rise and fall the way real ones do:**
+  - Washington climbs from last (seasons 1-3) to 18th;
+  - Oklahoma City slides from best (seasons 1-2) to 4th-worst by season 9 as its stars age;
+  - Boston, San Antonio and Atlanta take turns at the top;
+  - Miami sits near the bottom for four seasons, a believable rebuild.
+- **For future checks:** let the test team act like an average AI front office, so it doesn't distort the league.
 
 ## Other checks
 - **Retirements look low:** about 5 a season by the retirement count. League exits (overseas, unsigned) run about 60 a season. Combined turnover looks realistic, but split this way retirements look low.
@@ -56,5 +58,5 @@ The shape is right. The problem is the top end.
 
 ## Suggested next tasks
 1. **Confirm and fix the ceiling.** Small and high-value; this is part of Stage 2's "replace the traits" work.
-2. **Investigate parity** (read-only, quick).
+2. **Parity is done:** the drift was the hands-off test team.
 3. **Re-run ten seasons** on today's main once the ceiling is fixed. It now includes star injuries, free agency slices 3 and 4, the bidding-war floor and neutral coordinators.
