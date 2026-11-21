@@ -579,8 +579,9 @@ def with_market_reasons(canonical: dict[str, Any], candidate: dict[str, Any]) ->
 
 # ---------------------------------------------------------------------------------------------- the hints
 
-PATIENCE_WORDS = ((75, "very patient: it holds out for its price and rarely makes a final offer before deadline day"),
-                  (58, "patient in negotiations"), (42, "neither quick nor slow to deal"),
+PATIENCE_WORDS = ((75, "very patient: it holds out for its price, rarely makes a final offer before deadline day and "
+                       "gives its core time"),
+                  (58, "patient in negotiations and with its core"), (42, "neither quick nor slow to deal"),
                   (25, "impatient: it concedes quickly and makes final offers early"),
                   (0, "very impatient: it wants deals done fast"))
 URGENCY_WORDS = ((75, "very aggressive when its window is open: it pays a clear premium for help now and goes "
