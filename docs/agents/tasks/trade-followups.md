@@ -24,4 +24,6 @@ The five follow-ups from TRADE-MARKET (`trade-market.md`, "What's left"; plan `t
   gui symlinked). Log `output/trade-followups/base.log`. Snapshots under `.../probe/snapshots/`.
 - Disk was full once (1.7 GB free on the laptop); base probe crashed at 2027-04 and was resumed from its checkpoint.
 - Code for all five fixes written; new `tests/test_trade_followups.py` (16 tests) passes.
+- Laptop crashed (overload) during the base probe; resumed from its checkpoint with `nice -n 10`. Load rule: two heavy
+  jobs at once on the laptop (this task and FA-REAL slice 2); mine run one at a time.
 - Next: replay the 2027 deadline week from the base snapshot with the new code, then the full probe of the branch.
