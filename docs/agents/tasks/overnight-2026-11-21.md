@@ -30,7 +30,8 @@ _Coordinator: Claude. The user is asleep about 8 hours and asked for "surprise d
 - **Merged into main overnight** (every one passed its tests and the real-stat check, 18/18): free agency offer sheets; star injuries; the bidding-war price floor; one overall rating scale; the first Stage 2 piece. The whole suite (2,457 tests) passed on the combined game.
 - **Branches waiting for your review:** `overnight/ui-polish` and `overnight/headshots`. Both merge cleanly.
 - **Free agency slice 4 also merged:** realistic free agency is now complete, all four slices. The whole suite (2,476 tests) passed on it.
-- **Still running:** neutral coordinators, and the ten-season check (on Azure, resumed after a safety shutdown cut it off).
+- **Neutral coordinators also merged:** the betting test improved on both seeds (Brier 0.2060 -> 0.2041 and 0.1992 -> 0.1972; market 0.1962), and the real-stat check stays 18/18.
+- **Still running:** the ten-season check (on Azure, resumed after a safety shutdown cut it off).
 
 ### Landed in main
 1. **Free agency slice 3: offer sheets.**
@@ -58,7 +59,10 @@ _Coordinator: Claude. The user is asleep about 8 hours and asked for "surprise d
    - No hard-cap breaches on opening night, and nobody is ever signed onto your roster without your say-so.
    - Still low: two-way promotions in season (15-20, real 26-32).
    - First summer's camp period runs slower than main.
-7. **Codex research:** offseason decisions, 2025-26 injury history, roster-edge evidence (two-ways, camp deals, sign-and-trades), and the README refresh.
+7. **Neutral starting coordinators** (your decision): every team's starting coordinators have neutral ratings, and head coaches are unchanged.
+   - The betting test improved on both seeds.
+   - Side effect: AI teams keep coordinators only with a staff grade of 68+, so most starting coordinators will be replaced when their first contracts end.
+8. **Codex research:** offseason decisions, 2025-26 injury history, roster-edge evidence (two-ways, camp deals, sign-and-trades), and the README refresh.
 
 ### Branches for your review (not merged)
 - **`overnight/ui-polish`:**
