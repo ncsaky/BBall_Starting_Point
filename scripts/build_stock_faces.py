@@ -83,6 +83,10 @@ SKIP_WORDS = re.compile(
 # Openverse queries: (query, pages of 10). Openverse times out on pages of 20 at the moment, so pages of 10; about
 # 170 requests in all, under the anonymous 200-a-day limit.
 OPENVERSE_QUERIES = [
+    # Young men for the generated prospects, athletic where possible (the scarcest group).
+    ("young man headshot", 8), ("student headshot", 8), ("athlete headshot", 6), ("rugby player portrait", 5),
+    ("soccer player portrait", 5), ("young athlete portrait", 5), ("guy portrait", 6), ("young male portrait", 6),
+    ("track and field athlete portrait", 4), ("volleyball player portrait", 4),
     ("professional headshot", 14), ("corporate headshot", 12), ("headshot", 14),
     ("basketball player portrait", 12), ("young man portrait", 12), ("businesswoman portrait", 10),
     ("young black man portrait", 10), ("athlete portrait", 8), ("woman headshot", 12),
@@ -304,25 +308,37 @@ def likely_person(row: dict) -> bool:
     return bool(PERSON_WORDS.search(row.get("title") or ""))
 
 
+def download_url(row: dict) -> str:
+    """Wikimedia serves only its standard thumbnail widths and throttles full-size originals: a Commons file smaller
+    than the 1280 px thumbnail is fetched as its standard 500 px (or 330 px) thumbnail instead of the original."""
+    url = str(row["image_url"])
+    match = re.match(r"https://upload\.wikimedia\.org/wikipedia/commons/(\w/\w\w)/([^/?]+)", url)
+    width = int(row.get("width") or 0)
+    if not match or width < 330:
+        return url
+    step = 500 if width > 500 else 330
+    return f"https://thumb.wikimedia.org/wikipedia/commons/thumb/{match.group(1)}/{match.group(2)}/{step}px-{match.group(2)}"
+
+
 def download(candidates: dict, limit: int | None) -> None:
     todo = [row for row in candidates.values() if not row.get("skip") and row.get("image_url")
             and not photo_path(row).exists() and not row.get("download_failed") and likely_person(row)]
     # Most promising first: professional headshots, then Openverse portraits, then stock-photo imports.
     # Wikimedia throttles full-size originals hard (upload.wikimedia.org): those last.
-    todo.sort(key=lambda row: ("upload.wikimedia.org" in str(row["image_url"]),
+    todo.sort(key=lambda row: ("upload.wikimedia.org" in download_url(row),
                                not (set(row.get("queries") or []) & NAMED_PEOPLE_QUERIES), row.get("source") != "openverse"))
     todo = todo[:limit] if limit else todo
     print(f"{len(todo)} photos to download", flush=True)
     # One worker per image host, each one request at a time with a pause (hosts are independent).
     by_host: dict[str, list[dict]] = {}
     for row in todo:
-        by_host.setdefault(urllib.parse.urlparse(row["image_url"]).netloc, []).append(row)
+        by_host.setdefault(urllib.parse.urlparse(download_url(row)).netloc, []).append(row)
     done = [0]
 
     def run(rows: list[dict]) -> None:
         for row in rows:
             # Wikimedia's media servers throttle scripted clients: one request every 2 s there.
-            data = fetch(row["image_url"], delay=2.0 if "wikimedia.org" in row["image_url"] else 1.0)
+            data = fetch(download_url(row), delay=2.0 if "wikimedia.org" in row["image_url"] else 1.0)
             with _lock:
                 done[0] += 1
                 if not data or len(data) < 8000:
