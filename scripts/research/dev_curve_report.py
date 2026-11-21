@@ -371,11 +371,84 @@ def talent_report(folder: Path) -> dict[str, Any]:
     }
 
 
+def real_lebron_bands() -> dict[str, dict[str, Any]]:
+    """Basketball Index LEBRON change by age band (same pairs as the BPM panel, starting third by BPM)."""
+    table = evidence()["basketball_index"]["lebron_development_by_bpm_starting_level"]
+    out = {}
+    for low, high in BANDS:
+        cell = {}
+        for k in ("all", "bottom", "middle", "top"):
+            rows = [(table[str(a)][k]["n"], table[str(a)][k]["mean"]) for a in range(low, high + 1)
+                    if str(a) in table and k in table[str(a)] and table[str(a)][k].get("mean") is not None]
+            n = sum(r[0] for r in rows)
+            cell[k] = {"n": n, "mean": round(sum(r[0] * r[1] for r in rows) / n, 2) if n else None}
+        out[f"{low}-{high}"] = cell
+    return out
+
+
+def compare(before: Path, after: Path, probe_old: Path | None, probe_new: Path | None) -> str:
+    """Markdown tables: real evidence next to the game before and after (five-season runs and the probes)."""
+    b = json.loads((before / "report_game.json").read_text())
+    a = json.loads((after / "report_game.json").read_text())
+    real = real_band_table()
+    lebron = real_lebron_bands()
+    fmt = lambda c, k: f"{c[k]['mean']:+.2f}" if c and c.get(k) and c[k].get("mean") is not None else "-"
+    lines = ["### Simulated box-score impact (BPM scale), change per season, 1,000+ minutes both seasons", "",
+             "| Ages | Real all | Real bottom / middle / top third | Before all | Before bottom / middle / top | After all | After bottom / middle / top |",
+             "|---|---:|---|---:|---|---:|---|"]
+    for band in real["same"]:
+        r, x, y = real["same"][band], b["development_box_same"].get(band, {}), a["development_box_same"].get(band, {})
+        trio = lambda c: " / ".join(fmt(c, k) for k in ("bottom", "middle", "top"))
+        n = lambda c: c.get("all", {}).get("n", 0)
+        lines.append(f"| {band} | {fmt(r, 'all')} | {trio(r)} | {fmt(x, 'all')} ({n(x)}) | {trio(x)} | {fmt(y, 'all')} ({n(y)}) | {trio(y)} |")
+    lines += ["", f"Peak age (running sum of the 'all' column): real 26, before {b['peak_age_box']}, after {a['peak_age_box']}. "
+              f"Box-score impact per point of engine value: before {b['box_on_talent_slope']}, after {a['box_on_talent_slope']}.", "",
+              "### Starting level taken from the season before (removes most regression to the mean)", "",
+              "| Ages | Real bottom / middle / top | Before bottom / middle / top | After bottom / middle / top |", "|---|---|---|---|"]
+    for band in real["prior"]:
+        trio = lambda c: " / ".join(fmt(c, k) for k in ("bottom", "middle", "top"))
+        lines.append(f"| {band} | {trio(real['prior'][band])} | {trio(b['development_box_prior'].get(band, {}))} | {trio(a['development_box_prior'].get(band, {}))} |")
+    lines += ["", "### Engine player value (Basketball Index LEBRON units), change per season", "",
+              "| Ages | Real LEBRON all | Five seasons before | Five seasons after |" + (" Probe before | Probe after |" if probe_old else ""),
+              "|---|---:|---:|---:|" + ("---:|---:|" if probe_old else "")]
+    po = json.loads((probe_old / "report_talent.json").read_text()) if probe_old else None
+    pn = json.loads((probe_new / "report_talent.json").read_text()) if probe_new else None
+    for band in lebron:
+        row = f"| {band} | {fmt(lebron[band], 'all')} | {fmt(b['development_talent'].get(band), 'all')} | {fmt(a['development_talent'].get(band), 'all')} |"
+        if po:
+            row += f" {fmt(po['development_talent'].get(band), 'all')} | {fmt(pn['development_talent'].get(band), 'all')} |"
+        lines.append(row)
+    lines += ["", "### Older players: change per season by a league top-25 finish the season before (box-score impact)", "",
+              "| Ages | Real stars / others | Before stars / others | After stars / others |", "|---|---|---|---|"]
+    ev = evidence()["development"]["older_by_prior_star_status"]
+    for band in ("28-29", "30-32", "33-35", "36-39"):
+        e = ev[band.replace("-", "–")]
+        g = lambda r: f"{r['older_box'][band].get('prior_star', {}).get('mean', '-')} ({r['older_box'][band].get('prior_star', {}).get('n', 0)}) / {r['older_box'][band].get('other', {}).get('mean', '-')}"
+        lines.append(f"| {band} | {e['prior_top_25_vorp']['mean']:+.2f} / {e['other_prior_qualifiers']['mean']:+.2f} | {g(b)} | {g(a)} |")
+    lines += ["", "### Top five by simulated box-score impact", "",
+              "| Season | Before: top five (mean) | Kept / new / first-ever | After: top five (mean) | Kept / new / first-ever |", "|---|---|---|---|---|"]
+    for x, y in zip(b["top_five_box"], a["top_five_box"]):
+        names = lambda r: ", ".join(f"{n} {v:+.1f}" for n, v, _ in r["top"]) + f" ({r['mean']:+.1f})"
+        turn = lambda r: "-" if r["kept"] is None else f"{r['kept']} / {r['new_or_returning']} / {', '.join(r['first_ever']) or 'none'}"
+        lines.append(f"| {x['year'] - 1}-{str(x['year'])[2:]} | {names(x)} | {turn(x)} | {names(y)} | {turn(y)} |")
+    lines += ["", "### League talent (engine value of rostered players, February of each season)", "",
+              "| Season | Before best / top-5 mean / 10th / 50th / 150th | After best / top-5 mean / 10th / 50th / 150th |", "|---|---|---|"]
+    for year in b["talent_distribution"]:
+        d = lambda r: " / ".join(f"{r['talent_distribution'][year][k]:.2f}" for k in ("best", "top5_mean", "10th", "50th", "150th")) if year in r["talent_distribution"] else "-"
+        lines.append(f"| {int(year) - 1}-{str(year)[2:]} | {d(b)} | {d(a)} |")
+    return "\n".join(lines)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("talent", "game", "real"))
-    parser.add_argument("path", nargs="?")
+    parser.add_argument("mode", choices=("talent", "game", "real", "compare"))
+    parser.add_argument("path", nargs="*")
     args = parser.parse_args()
+    if args.mode == "compare":
+        paths = [Path(p) for p in args.path]
+        print(compare(paths[0], paths[1], paths[2] if len(paths) > 2 else None, paths[3] if len(paths) > 3 else None))
+        return
+    args.path = args.path[0] if args.path else None
     if args.mode == "real":
         tables = real_band_table()
         print("\n".join(fmt_band_rows({"same-season thirds": tables["same"], "prior-season thirds": tables["prior"]})))
