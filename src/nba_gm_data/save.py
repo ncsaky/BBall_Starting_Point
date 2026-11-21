@@ -6658,7 +6658,9 @@ def process_ai_extensions(
     refusals = 0
     players = {player["id"]: player for player in active.get("players", [])}
     teams = {team["id"]: team for team in active.get("teams", [])}
-    season = str(save.get("meta", {}).get("season") or CANONICAL_SEASON)
+    # CONTRACT-TERMS: the contract season of the pass (summer passes from July 6 belong to the coming season; the
+    # save's season label only changes at the October rollover).
+    season = season_label_from_start(extension_contract_start_year(save, through_date))
     volume_by_season = save.setdefault("ai_extension_volume", {})
     if season not in volume_by_season:
         reconstructed = {"rookie_scale": 0, "veteran": 0}
@@ -6683,7 +6685,7 @@ def process_ai_extensions(
     for candidate in report.get("candidates", []):
         player_id = candidate.get("player_id")
         team_id = candidate.get("team_id")
-        key = stable_id("ai_extension", save.get("meta", {}).get("season"), team_id, player_id)
+        key = stable_id("ai_extension", season, team_id, player_id)
         if not player_id or not team_id or key in processed or team_id in human_team_ids:
             continue
         if not candidate.get("eligible") or candidate.get("manual_review_required"):
@@ -6694,7 +6696,8 @@ def process_ai_extensions(
             continue
         if rookie_extension_window_closed(save, active, player, through_date):
             continue   # FA-REAL slice 2: rookie-scale extensions close the day before opening night
-        if (season == CANONICAL_SEASON and candidate.get("extension_kind") != "rookie_scale"
+        if (season == CANONICAL_SEASON and through_date[:4] == CANONICAL_SEASON[:4]
+                and candidate.get("extension_kind") != "rookie_scale"
                 and int(candidate.get("years_remaining") or 0) > 1):
             # CONTRACT-TERMS: a new career opens on the opening-roster deadline with the real October contracts: real
             # teams already had the whole 2026 summer to extend these players (deadline-day rookie-scale deals stay).
