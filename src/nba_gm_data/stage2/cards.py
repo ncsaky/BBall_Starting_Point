@@ -94,11 +94,17 @@ TRANS = {"rim_base": .45, "three_scale": .6}
 USAGE = {"constant": 0.19605, "log T08": 1.0104, "log T01.shoot": 0.30632, "log T01.drive": 0.01825,
          "log T01.pass": -0.20109, "log T01.post": 0.04171, "log T04": 0.12839, "log T06": 0.01686, "S16": -0.00234,
          "S19": -0.00059, "S.three_mode": -0.00036, "S10": 0.00166}
-# Turnover log-odds per possession he ends. FITTED to real 2025-26 turnovers per used possession; held-out corr .74.
+# Turnover log-odds per possession he ends. FITTED to real 2025-26 turnovers per used possession (loop_fit.fit_all).
+# S2-TOTALS-MATCHUPS refit with separation (S18), strength (P08) and balance (P09) added: a balanced body protects the
+# ball (balance carries most of the gain). Held-out corr .74 -> .81, error .0217 -> .0193 per used possession; the
+# high-usage creators the first rule over-charged (Banchero .202 -> .189, real .136; Cunningham .189 -> .175, real
+# .148; Brown .175 -> .169, real .127) come down a little. The first rule was:
+# {"constant": -1.09677, "log T07": 0.00619, "log T01.pass": 0.2983, "log T01.drive": -0.14972, "log T06": 0.25803,
+#  "log T08": 0.21238, "S16": 0.00304, "S17": -0.02037, "F.execution": 0.03124, "S20": -0.01673}.
 # The league level is then set by the loop's ball-pressure term and checked against turnovers per 100.
-TURNOVER = {"constant": -1.09677, "log T07": 0.00619, "log T01.pass": 0.2983, "log T01.drive": -0.14972,
-            "log T06": 0.25803, "log T08": 0.21238, "S16": 0.00304, "S17": -0.02037, "F.execution": 0.03124,
-            "S20": -0.01673}
+TURNOVER = {"constant": 1.0164, "log T07": 0.20979, "log T01.pass": 0.19942, "log T01.drive": -0.11268,
+            "log T06": 0.25375, "log T08": 0.50102, "S16": 0.00405, "S17": -0.01507, "F.execution": 0.02579,
+            "S20": -0.01366, "S18": 0.00044, "P08": 0.00218, "P09": -0.03844}
 # Blocks: log-linear weight in contest technique, interior positioning, reach, jump-contest habit, vertical and help
 # commitment. FITTED to real 2025-26 blocks per 36 (targets file); held-out corr .88. It shares the team's blocks; the
 # level is the loop's.
@@ -306,7 +312,7 @@ class Card:
                  "ft", "ast_w", "foul", "foul_s", "and1", "ns_draw", "off_foul_w", "d_foul", "ns_mult", "stl_w",
                  "blk_w", "perim_d", "rim_d", "press_d", "reb", "pace", "trans_pref", "penalty", "flat", "create",
                  "space", "contain_d", "closeout_d", "onball_d", "rot_d", "post_d", "lanes_d", "burst", "length",
-                 "foul_ctrl")
+                 "foul_ctrl", "craft")
 
     def actions(self) -> dict[str, float]:
         out = {a: 0.0 for a in ACTIONS}
@@ -370,6 +376,7 @@ def build_card(pid: str, name: str, flat: Mapping[str, float], means: Mapping[st
     c.lanes_d = _index(flat, LANES_D, means)
     c.burst = _index(flat, BURST, means)
     c.foul_ctrl = _index(flat, ("S45",), means)
+    c.craft = (prof.craft - 50.0) / 25.0          # foul-drawing craft (S24), for the loop's action-specific foul terms
     return c
 
 

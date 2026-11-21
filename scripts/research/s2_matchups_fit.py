@@ -100,7 +100,7 @@ def main() -> int:
                                      for h, hv in (("fit", 0), ("held", 1))}}
     print("tallest-guards-tallest:", res["baseline_height_order"])
     grid = []
-    for ws, wt, wh in itertools.product((1.0,), (0.0, 0.5, 1.0, 2.0, 4.0), (0.0, 0.5, 1.5)):
+    for ws, wt, wh in itertools.product((1.0,), (0.0, 1.0, 2.0, 4.0, 6.0, 8.0), (0.0, 0.5)):
         w = {"w_size": ws, "w_star": wt, "w_hide": wh}
         sim = tally(cards, usage, gen_usage, ctxs, lambda o, d: M.assign(o, d, 1.0, w))
         f, h = score(sim, real, 0), score(sim, real, 1)

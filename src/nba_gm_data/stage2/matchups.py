@@ -39,7 +39,7 @@ PERMS = tuple(itertools.permutations(range(5)))
 HEIGHT_SD_CM = 8.4
 
 # Assignment weights. FITTED (s2_matchups_fit.py, fit half of defenders; see the report for the held-out check).
-ASSIGN = {"w_size": 1.0, "w_star": 0.6, "w_hide": 0.4}
+ASSIGN = {"w_size": 1.0, "w_star": 6.0, "w_hide": 0.5}
 
 
 def assign(off: list, de: list, coach_scale: float = 1.0, w: dict | None = None) -> list[int]:

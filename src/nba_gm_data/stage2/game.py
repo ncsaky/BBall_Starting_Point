@@ -63,27 +63,35 @@ LOOP = {
     "trans_dreb": .20, "trans_steal": .60, "trans_made": .04, "trans_dead": .06, "k_trans": 1.5,
     # Turnovers: the defense's ball pressure (log-odds per index unit); transition and offensive-foul shares.
     # k_press is FITTED with the other team-strength terms below.
-    "k_press": .80, "trans_to": -.15, "off_foul_share": .08, "steal_share": .62, "k_steal_level": 1.0,
-    "to_shift": .13,   # FITTED: league turnovers per 100 (the card fit is per used possession; the loop's are per chance)
+    "k_press": .52, "trans_to": -.15, "off_foul_share": .08, "steal_share": .62, "k_steal_level": 1.0,
+    "to_shift": .11,   # FITTED: league turnovers per 100 (S2-TOTALS-MATCHUPS: .13 -> .11 with the matchups on) (the card fit is per used possession; the loop's are per chance)
     # Non-shooting fouls per possession (league level, then the defenders' own multipliers); technicals etc.
     "ns_per_poss": .064, "other_ft_per_poss": .005, "loose_ball_per_chance": .025,
-    # Shooting fouls: action terms on top of the foul kernel's zone base (log-odds). Drives draw the most contact,
-    # rolls, cuts and putbacks less, catch jumpers least. Stand-ins checked against FTA per FGA.
-    "foul_drive": .30, "foul_roll_cut": -.35, "foul_post": .25, "foul_putback": -.30, "foul_transition": .10,
-    "foul_jumper": -.15, "foul_pull_up": .05,
+    # Shooting fouls: action terms on top of the foul kernel's zone base (log-odds). FITTED (S2-TOTALS-MATCHUPS,
+    # scripts/research/s2_foul_fit.py: expected free throws per field-goal attempt from every shot try in replayed games,
+    # fit half of the players vs real 2025-26, league free throws per 100 held at the real level; held-out half: error
+    # .0707 -> .0622, corr .825 -> .858). Drives draw the most contact; finishing a teammate's pass (rolls, cuts, lobs)
+    # far less. The first loop's stand-ins were drive .30, roll/cut -.35, post .25, putback -.30, transition .10,
+    # jumper -.15, pull-up .05.
+    "foul_drive": .275, "foul_roll_cut": -.725, "foul_post": -.10, "foul_putback": -.025, "foul_transition": .25,
+    "foul_jumper": .05, "foul_pull_up": -.225,
     # Team-strength terms (make log-odds per index unit; each index is centred on the league's average lineup):
     # defense: perimeter contest on jumpers (half the shooter's own defender, half the lineup), rim protection on rim
     # and short shots, ball pressure on turnovers (k_press above); offense: the lineup's creation and spacing.
     # FITTED together (coordinate search, scratch strength_fit) so the engine's expected margins follow the betting
     # market's spreads on the first half of 2025-26 (correlation .42 -> .57 at 3 runs a game, slope 1.04); checked on
     # the second half (.67, slope 1.24). They decide how much the ratings move results; no rating was changed.
-    "k_perim": .36, "k_rim": .45, "perim_own": .5, "k_create": .44, "k_space": .29,
+    # S2-TOTALS-MATCHUPS refit with the matchups on (k_perim .36 -> .336, k_rim .45 -> .408, k_press .80 -> .52; see the
+    # matchup numbers below for how).
+    "k_perim": .336, "k_rim": .408, "perim_own": .5, "k_create": .44, "k_space": .29,
     # Blocks per missed shot by zone (at the league-average block weight); share credited to the help (rim) defender.
     "blk_rim": .277, "blk_short": .21, "blk_mid": .065, "blk_three": .02,
     # Assisted share of made shots by action (scaled to the league assist rate). FITTED scale.
     "ast_scale": 1.07,
     # Shooting-foul level on two-point shots on top of the kernel's zone base (FITTED: league free throws per 100).
     "foul_level": .22,
+    # ... and on rim shots only (S2-TOTALS-MATCHUPS; 0 in the first loop).
+    "foul_rim": -.025,
     # Game-level contest by zone (rim, short, mid, three), make log-odds: the shooting conversion was fitted at the
     # kernel's fixed reference contest; this sets the in-game average. FITTED to the league make rates by zone
     # (Basketball Index 2025-26: rim 67.4, short mid 44.8, long mid 41.7, three 36.1).
@@ -117,19 +125,29 @@ LOOP = {
     # ---- Player-on-player matchups (S2-TOTALS-MATCHUPS; stage2.matchups). 0 = the lineup averages of the loop's
     # first version; 1 = each scorer meets the defender assigned to him. Make log-odds per index unit (indices are
     # grade units / 25, centred on the league's minutes-weighted average):
-    "matchups": 0.0,
-    "k_close": .36,       # catch-and-shoot jumpers: his defender's closeout
-    "k_rot": .20,         # ... and the five's rotation (help recognition, off-ball positioning)
-    "k_onball": .36,      # pull-ups and short jumpers: his defender's on-ball contest
+    # The defense numbers below and k_perim / k_rim / k_press above are FITTED together (scripts/research/
+    # s2_matchups_tune.py strength): a coordinate search on the first half of 2025-26 (correlation of the engine's
+    # expected margins with the market's spreads), then one common scale (0.8) chosen by the first half's mean miss
+    # against the spreads, since the search left the engine's margins 1.2x as spread out as the market's. All games,
+    # 4 runs: first half corr .673 -> .690, miss 6.81 -> 6.76; second half corr .743 -> .776, slope 1.13.
+    "matchups": 1.0,
+    "k_close": .384,      # catch-and-shoot jumpers: his defender's closeout
+    "k_rot": .08,         # ... and the five's rotation (help recognition, off-ball positioning)
+    "k_onball": .336,      # pull-ups and short jumpers: his defender's on-ball contest
     "k_len": .10,         # ... his defender's length (wingspan beyond height, and height over the shooter), per 10 cm
     "beat0": -.40,        # drives: log-odds he gets past his man at even burst and containment
     "k_beat": 1.20,       # ... per unit of (his burst/handle/separation - his man's containment)
-    "k_beat_make": .50,   # ... make log-odds per unit of (chance he is past his man - the league chance)
-    "k_beat_foul": .80,   # ... shooting-foul log-odds per unit of the same (recovering defenders and late help foul)
+    "k_beat_make": .16,   # ... make log-odds per unit of (chance he is past his man - the league chance)
+    "k_beat_foul": 1.23,  # ... shooting-foul log-odds per unit of the same (recovering defenders and late help foul); FITTED
+                          #     with the foul-by-action numbers (s2_foul_fit.py)
     "k_fctrl": .15,       # ... his man's foul control (S45)
-    "k_post": .30,        # post-ups: his defender's post defense and height
+    "k_post": .42,        # post-ups: his defender's post defense and height
     "press_own": .5,      # turnovers: share of the ball pressure that is his own man's (the rest the five's average)
     "k_lanes": .20,       # ... the five's passing-lane defense
+    # Foul-drawing craft (S24) by action, on top of the foul kernel's own shooter terms (which apply to every shot):
+    # log-odds per 25 grade points. Craft shows most where the scorer creates the contact (drives, pull-ups, post-ups)
+    # and least on finishes of a teammate's pass and putbacks. FITTED with the foul-by-action numbers (s2_foul_fit.py).
+    "craft_drive": .375, "craft_pull_up": .35, "craft_post": -.175, "craft_finish": -.15,
 }
 CATCH_KINDS = frozenset(KIND_INDEX[k] for k in ("mid_catch", "three_corner", "three_catch", "trans_three"))
 PULL_KINDS = frozenset(KIND_INDEX[k] for k in ("short_jumper", "mid_pull", "three_pull"))
@@ -140,6 +158,8 @@ ASSIST = {"rim_drive": .18, "rim_finish": .93, "floater": .15, "hook": .30, "sho
           "mid_pull": .07, "three_corner": .97, "three_catch": .92, "three_pull": .06, "putback": .04,
           "trans_rim": .55, "trans_three": .85, "heave": 0.0}
 ASSIST_BY_KIND = [ASSIST[k[0]] for k in KINDS]
+TRACE: dict | None = None   # research hook (see Game._trace); None in play
+
 FOUL_ACTION = {"drive": "foul_drive", "roll_cut": "foul_roll_cut", "post": "foul_post", "putback": "foul_putback",
                "transition": "foul_transition", "jumper": "foul_jumper", "pull_up": "foul_pull_up", "heave": None}
 QUARTER_S, OT_S = 720.0, 300.0
@@ -254,8 +274,11 @@ class Game:
         L = self.L
         home.loop = away.loop = L
         self.foul_action = [(L[FOUL_ACTION[a]] if FOUL_ACTION.get(a) else 0.0) + (L["foul_level"] if KZONE[i] < 3 else 0.0)
-                            for i, a in enumerate(KACTION)]
+                            + (L["foul_rim"] if KZONE[i] == 0 else 0.0) for i, a in enumerate(KACTION)]
         self.assist = [a * L["ast_scale"] for a in ASSIST_BY_KIND]
+        craft_by_action = {"drive": L["craft_drive"], "pull_up": L["craft_pull_up"], "post": L["craft_post"],
+                           "roll_cut": L["craft_finish"], "putback": L["craft_finish"]}
+        self.craft_w = [craft_by_action.get(a, 0.0) for a in KACTION]
         self.zone_make = [0.0 if KINDS[i][0] == "heave" else L["zone_make"][KZONE[i]] + L["make_level"] for i in range(N_KINDS)]
         self.blk_base = (L["blk_rim"], L["blk_short"], L["blk_mid"], L["blk_three"])
         self.period = 0
@@ -602,7 +625,10 @@ class Game:
         p_make = _sig(z)
         # Shooting foul: the foul kernel's zone base, the shooter's and contester's terms, plus the action.
         if kind != HEAVE:
-            p_foul = _sig(fc.base[zone] + card.foul_s + dcard.d_foul + self.foul_action[kind] + fz)
+            p_foul = _sig(fc.base[zone] + card.foul_s + dcard.d_foul + self.foul_action[kind] + fz
+                          + self.craft_w[kind] * card.craft)
+            if TRACE is not None:
+                self._trace(card, dcard, off, slot, kind, zone, p_make)
         else:
             p_foul = 0.0
         if zone == 0:
@@ -637,6 +663,21 @@ class Game:
         if final and self.t_left <= 0.0:
             return "end"
         return self._after_miss(off, de, KMISS[kind], slot)
+
+    def _trace(self, card, dcard, off, slot, kind, zone, p_make) -> None:
+        """Research only (TRACE set by scripts/research/s2_foul_fit.py): each shot try's fixed foul terms, so the
+        foul-by-action numbers can be fitted on expected values instead of noisy replays."""
+        rec = TRACE.get(card.pid)
+        if rec is None:
+            rec = TRACE[card.pid] = [[0.0] * 6 for _ in range(N_KINDS)]
+        r = rec[kind]
+        drive = self.L["matchups"] and kind in DRIVE_KINDS
+        r[0] += 1
+        r[1] += self.fc.base[zone] + card.foul_s + dcard.d_foul
+        r[2] += off.m_beat[slot] if drive else 0.0
+        r[3] += off.m_fctrl[slot] if drive else 0.0
+        r[4] += card.and1[zone] * (p_make / max(.05, _sig(card.make_logit[kind])))
+        r[5] = card.craft
 
     def _record_make(self, off: TeamState, de: TeamState, slot: int, kind: int) -> None:
         st = off.stats[off.on[slot]]

@@ -93,6 +93,7 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--skip-fits", action="store_true")
     ap.add_argument("--out", default=str(ROOT / "output/stage2/possession_loop_check.json"))
+    ap.add_argument("--engines", default="stage2,current")
     args = ap.parse_args()
     report: dict = {}
     t0 = time.time()
@@ -117,7 +118,7 @@ def main() -> int:
 
     E.play_stage2_game = capture
     engines = {}
-    for engine in ("stage2", "current"):
+    for engine in args.engines.split(","):
         sim_game_with_context(context, ids[0], mode="replay-real-minutes", seed=args.seed, engine=engine)  # warm caches
         captured.clear()
         start = time.perf_counter()
@@ -137,6 +138,7 @@ def main() -> int:
             "players": {stat: {"all": score(sim, real, stat, None), "fit_half": score(sim, real, stat, 0),
                                "held_half": score(sim, real, stat, 1)} for stat in STATS + ("ts_pct",)},
             "misses": {stat: misses(sim, real, stat) for stat in ("turnovers", "steals", "fta", "points")},
+            "per_player": {pid: {k: round(v, 2) for k, v in rec.items()} for pid, rec in sim.items()},
         }
         if engine == "stage2":
             d = [0] * (N_KINDS * 3)
@@ -171,14 +173,13 @@ def main() -> int:
     Path(args.out).write_text(json.dumps(report, indent=1, default=str))
     for stat in STATS + ("ts_pct",):
         row = []
-        for engine in ("stage2", "current"):
+        for engine in engines:
             h = engines[engine]["players"][stat]["held_half"] or {}
             a = engines[engine]["players"][stat]["all"] or {}
             row.append(f"{engine} all {a.get('bias')}/{a.get('rmse')}/{a.get('corr')} held {h.get('bias')}/{h.get('rmse')}/{h.get('corr')}")
         print(f"{stat:10s} | " + " | ".join(row))
     print(json.dumps({e: engines[e]["league_in_band"] for e in engines}))
-    print(f"stage2 {engines['stage2']['ms_per_game']} ms/game, {engines['stage2']['ms_per_possession']} ms/possession;"
-          f" current {engines['current']['ms_per_game']} ms/game")
+    print({e: engines[e]["ms_per_game"] for e in engines}, "ms per game")
     return 0
 
 

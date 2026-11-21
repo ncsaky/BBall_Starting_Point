@@ -32,7 +32,8 @@ TEAM_POSS_PER36 = 102.0 * 36.0 / 48.0
 
 USAGE_TERMS = ("log T08", "log T01.shoot", "log T01.drive", "log T01.pass", "log T01.post", "log T04", "log T06",
                "S16", "S19", "S.three_mode", "S10")
-TURNOVER_TERMS = ("log T07", "log T01.pass", "log T01.drive", "log T06", "log T08", "S16", "S17", "F.execution", "S20")
+TURNOVER_TERMS = ("log T07", "log T01.pass", "log T01.drive", "log T06", "log T08", "S16", "S17", "F.execution", "S20",
+                  "S18", "P08", "P09")
 BLOCK_TERMS = ("S37", "S36", "P03", "log T16.jump", "P10", "log T15")
 
 
