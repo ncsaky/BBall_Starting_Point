@@ -59,7 +59,10 @@ RULES: dict[str, dict[str, float]] = {
     # player under about ``decline_prior_minutes`` last season with replacement-level value (fits: 700-1,000 minutes).
     "rookie_option": {
         "decline_prior_minutes": 850.0,
-        "replacement_value_minimums": 1.5,   # worth no more than 1.5x his minimum salary: replacement level
+        # "Replacement level" in the game: his market price is below the option salary (the room's asks for young
+        # players start near $5M, so a minimum-based bar never fired: 0 of 46 declined in autumn 2026, real 10 of 59).
+        "replacement_value_share": 1.0,
+        "first_autumn_games": 60.0,          # a new career has no archived season: projected minutes x 60 games
     },
     # Qualifying offers, standard contracts (2023-26: 47 of 100 sent). Send one to a player who logged about
     # ``tender_prior_minutes`` last season (three folds chose 1,000, one 500), and to an injured rotation player
@@ -73,6 +76,11 @@ RULES: dict[str, dict[str, float]] = {
         # (``RFA_STAGES``). Real restricted summers are slow (Kuminga and Giddey 2025 signed in late September;
         # Duren 2026 in October) and few take the one-year offer (0-2 a summer).
         "team_offer_share": 1.0,
+        # When the owner won't pay his full price, the team offers less in steps (no lower than the qualifying offer)
+        # and on October 1 he takes a multi-year deal worth at least ``deadline_take_share`` of his price rather than
+        # the one-year offer (Kuminga 2025, Duren 2026 signed below their asks).
+        "team_offer_steps": (1.0, 0.9, 0.8),
+        "deadline_take_share": 0.75,
         "belief_max": 0.12,
         "belief_young_bonus": 0.04,       # 23 or younger
         "belief_fade": 0.20,
@@ -306,9 +314,9 @@ def decide_team_option_ai(active: dict[str, Any], save: dict[str, Any], player: 
             fourth_year = _season_start(row["season"]) - int(player.get("draft_year") or 0) == 3
         except (TypeError, ValueError):
             fourth_year = False
-        prior = prior_season_minutes(save, player["id"])
+        prior = prior_season_minutes(save, player["id"], player)
         if (fourth_year and prior < rules["decline_prior_minutes"]
-                and value <= minimum * rules["replacement_value_minimums"]):
+                and value < option * rules["replacement_value_share"]):
             return "declined", (f"The team declines his {_m(option)} fourth-year option: {round(prior)} minutes last "
                                 f"season and a replacement-level price (about {_m(value)}).")
         return "exercised", f"The team keeps his {_m(option)} rookie-scale option."
@@ -320,7 +328,7 @@ def decide_team_option_ai(active: dict[str, Any], save: dict[str, Any], player: 
     return "declined", f"The team declines his {_m(option)} option: he is worth about {_m(value)}."
 
 
-def prior_season_minutes(save: dict[str, Any], player_id: str) -> float:
+def prior_season_minutes(save: dict[str, Any], player_id: str, player: dict[str, Any] | None = None) -> float:
     """Minutes in the last completed regular season: this season's totals in the summer, the archived season in
     the autumn (the save starts a new season's totals at rollover)."""
     phase = str((save.get("state") or {}).get("phase") or "")
@@ -328,6 +336,9 @@ def prior_season_minutes(save: dict[str, Any], player_id: str) -> float:
         return float(((save.get("player_season_stats") or {}).get(player_id) or {}).get("minutes") or 0.0)
     history = save.get("season_history") or []
     if not history:
+        # The first autumn of a new career: no archived season; his projected role over a season stands in.
+        if player is not None:
+            return _minutes(player) * RULES["rookie_option"]["first_autumn_games"]
         return float(((save.get("player_season_stats") or {}).get(player_id) or {}).get("minutes") or 0.0)
     return float(((history[-1].get("player_season_stats") or {}).get(player_id) or {}).get("minutes") or 0.0)
 
@@ -807,9 +818,7 @@ def restricted_market_day(canonical: dict[str, Any], save: dict[str, Any], day: 
         market = rfa_market_price(save, player_id)
         if not player or not market:
             continue
-        offer = market * RULES["qualifying_offer"]["team_offer_share"]
-        if offer >= rfa_reservation(save, player, market, stage) and rfa_team_signs(canonical, save, active, player,
-                                                                                   team_id, offer):
+        if rfa_negotiate(canonical, save, active, player, team_id, market, stage):
             signed += 1
             active = canonical_with_save(canonical, save)
             players = {p["id"]: p for p in active.get("players", [])}
@@ -836,8 +845,8 @@ def restricted_summer_pass(canonical: dict[str, Any], save: dict[str, Any], *, f
         player = players.get(player_id) or {"id": player_id}
         market = rfa_market_price(save, player_id)
         offer = market * RULES["qualifying_offer"]["team_offer_share"]
-        if (team_id not in users and market and offer >= rfa_reservation(save, player, market, stage)
-                and rfa_team_signs(canonical, save, active, player, team_id, offer)):
+        if team_id not in users and market and rfa_negotiate(canonical, save, active, player, team_id, market, stage,
+                                                              final=final):
             signed += 1
             active = canonical_with_save(canonical, save)
             players = {p["id"]: p for p in active.get("players", [])}
@@ -855,6 +864,27 @@ def restricted_summer_pass(canonical: dict[str, Any], save: dict[str, Any], *, f
                                        "offer and bets on himself."):
                 accepted += 1
     return {"signed": signed, "accepted_qualifying_offers": accepted}
+
+
+def rfa_negotiate(canonical: dict[str, Any], save: dict[str, Any], active: dict[str, Any], player: dict[str, Any],
+                  team_id: str, market: float, stage: float, *, final: bool = False) -> bool:
+    """One round of talks between an AI team and its restricted free agent: the team offers his price, or less in
+    steps when its owner won't pay that much (never below the qualifying offer); he signs when an offer reaches what
+    he will take now (on October 1: at least ``deadline_take_share`` of his price, else the one-year offer)."""
+    from .cap_ledger import cap_year
+    rules = RULES["qualifying_offer"]
+    record = qo_record(save, cap_year(save), player["id"]) or {}
+    floor = float(record.get("amount") or 0.0)
+    want = rfa_reservation(save, player, market, stage)
+    if final:
+        want = min(want, max(floor, market * rules["deadline_take_share"]))
+    for share in rules["team_offer_steps"]:
+        price = max(floor, market * share * rules["team_offer_share"])
+        if price < want:
+            break
+        if rfa_team_signs(canonical, save, active, player, team_id, price):
+            return True
+    return False
 
 
 def rfa_team_can_pay(active: dict[str, Any], save: dict[str, Any], player: dict[str, Any], team_id: str,

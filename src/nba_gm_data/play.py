@@ -6646,6 +6646,9 @@ def apply_free_agency_offer_state(
             kind="re_signing" if bird else "free_agency", committed=reserved * 1_000_000,
             age=player.get("display_age", player.get("age")),
             committed_players=int((committed_count_by_team or {}).get(team_id) or 0),
+            # FA-REAL slice 2: a regular his team sent a qualifying offer is kept like a franchise player (KEEP-STARS
+            # kept young regulars off rookie deals that way; now only the ones it tendered).
+            franchise_star=bool(offer.get("restricted_re_signing")) and display_minutes_projection(player) >= 24.0,
         )
         if not tax_plan['ok']:
             offer['status'] = 'withdrawn_tax_plan'
