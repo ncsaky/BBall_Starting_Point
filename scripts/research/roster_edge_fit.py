@@ -104,6 +104,37 @@ def two_way(decisions):
     }
 
 
+def exhibit_10(rows, teams):
+    per_team = {
+        y: dict.fromkeys(teams, 0) | dict(Counter(r["team"] for r in rows if r["summer"] == y))
+        for y in YEARS
+    }
+    return {
+        "deals_by_team": per_team,
+        "outcomes": by_year(rows, lambda r: r["outcome"]),
+        "same_affiliate_regular_season_appearance": {
+            y: (sum(r["summer"] == y and r["affiliate_regular_season"] is not None for r in rows)
+                if y < 2026 else None)
+            for y in YEARS
+        },
+        "publicly_verified_bonus_payments": {
+            y: sum(r["summer"] == y and r["affiliate_bonus_paid"] is True for r in rows)
+            for y in YEARS
+        },
+        "conversion_holdout": binary_holdouts(
+            rows, "converted_before_open",
+            [
+                ("drafted", lambda r: r["draft_pick"] is not None),
+                ("prior NBA appearance", lambda r: r["prior_nba"] is not None),
+                ("prior two-way", lambda r: r["prior_two_way_observed"] is True),
+                *[(f"prior G League points/game ≥ {points}",
+                   lambda r, points=points: ((r["prior_g_league"] or {}).get("ppg") or 0) >= points)
+                  for points in (8, 12, 16, 20)],
+            ],
+        ),
+    }
+
+
 def validate(data):
     for section, rows in data["decisions"].items():
         for row in rows:
@@ -121,6 +152,9 @@ def main():
     result = {"sign_and_trades": sign_and_trades(decisions["sign_and_trades"])}
     if "two_way_signings" in decisions:
         result["two_way"] = two_way(decisions)
+    if "exhibit_10_deals" in decisions:
+        teams = sorted({r["team"] for r in decisions["two_way_roster_snapshots"]})
+        result["exhibit_10"] = exhibit_10(decisions["exhibit_10_deals"], teams)
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
 

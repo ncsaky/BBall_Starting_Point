@@ -4,7 +4,7 @@
 
 - A sign-and-trade lets a club sign its departing free agent and immediately trade him. There were 22 across four summers, including five contracts mainly used to make another trade fit the salary rules.
 - A two-way deal lets a player split time between the NBA and its development league. Most clubs opened with all three slots occupied. Most promotions came in February or later.
-- An Exhibit 10 is a camp contract that can turn into a two-way deal or pay an affiliate bonus. Camp outcomes are being checked.
+- An Exhibit 10 is a camp contract that can turn into a two-way deal or pay an affiliate bonus. Clubs recorded roughly six to eight signings each, and few made the opening roster.
 - Camp cuts move clubs from up to 21 players to at most 15 standard players plus three two-ways. Opening rosters and waiver claims are being checked.
 - Veterans who sign late or leave for another league help show how quickly the summer market thins. Those moves are being checked.
 
@@ -19,7 +19,7 @@
 
 Signings are contract moves and can count the same player more than once. The 2026 season is measured through November 18. The other latest snapshots come from the end of the season. An active game includes someone who dressed and never left the bench. A late signing gets a lower limit. Kessler Edwards reached 50 in 2025 with 40 appearances and ten games on the bench. JD Davison reached 50 in 2026 with 27 appearances. The 50 column counts named confirmations. [CBA](https://nbpa.com/cba/) · [Edwards](https://www.hoopsrumors.com/2025/03/mavs-kessler-edwards-reaches-active-game-limit.html) · [Davison](https://www.hoopsrumors.com/2026/04/rockets-promoting-jd-davison-to-standard-roster.html)
 
-Opening membership comes from the NBA's released lists in three years. The 2024 list uses first-game active and inactive players checked against the contract ledger. For 89 of the 105 clubs opening with three, the data date the last member of that opening trio. Fifty-seven were completed in September or October and 36 by August. These dates describe the incoming opening group. A club could have filled three earlier with different players. [2023 roster release](https://www.nba.com/news/nba-rosters-regular-season-2023-24) · [2024 Brooklyn–Atlanta box](https://www.basketball-reference.com/boxscores/202410230ATL.html) · [2025 tracker](https://www.hoopsrumors.com/2025/07/2025-26-nba-two-way-contract-tracker.html) · [2026 tracker](https://www.hoopsrumors.com/2026/07/2026-27-nba-two-way-contract-tracker.html)
+Opening membership comes from the NBA's released lists in three years. The 2024 list uses first-game active and inactive players checked against the contract ledger. For 93 of the 105 clubs opening with three, the data date the last member of that opening trio. Fifty-seven were completed in September or October and 36 by August. These dates describe the incoming opening group. A club could have filled three earlier with different players. [2023 roster release](https://www.nba.com/news/nba-rosters-regular-season-2023-24) · [2024 Brooklyn–Atlanta box](https://www.basketball-reference.com/boxscores/202410230ATL.html) · [2025 tracker](https://www.hoopsrumors.com/2025/07/2025-26-nba-two-way-contract-tracker.html) · [2026 tracker](https://www.hoopsrumors.com/2026/07/2026-27-nba-two-way-contract-tracker.html)
 
 The average signing age where observed was 23.7 to 24.5. Prior G League production was found for 91, 77, 88 and 52 signings. Prior two-way experience was found for 44, 54, 64 and 36. The draft join found 185 drafted signings, including 41 former first-rounders. The remaining entries include both explicitly undrafted players and names without a confirmed draft match. Denver brought back undrafted Spencer Jones on a two-way after 17.2 points and 7.9 rebounds per game in 11 G League games. He went on to start for an injury-hit Denver roster and reached 50 active games before promotion. [Jones signing](https://www.nba.com/nuggets/news/nuggets-sign-spencer-jones-to-two-way-contract) · [Denver roster context](https://www.hoopsrumors.com/2026/02/northwest-notes-jones-dosunmu-johnson-nuggets-15th-spot.html)
 
@@ -33,6 +33,21 @@ The average signing age where observed was 23.7 to 24.5. Prior G League producti
 A later pick is more likely to get a two-way. The fit chose pick 40 in three folds and pick 46 in the 2026 test. It got 73 of 115 decisions right, versus 70 for the simple baseline, while doing better at finding players who actually got a two-way. In 2026 its average hit rate across the two outcomes was 60%. Use draft position as one input. The available list of undrafted signees has no full denominator of undrafted players who were considered and turned down.
 
 Of the 85 promotions in the three complete years, 75 came from February through the end of the regular season. Test the player for a role first, then make the promotion when the roster needs minutes, the active-game limit is close or expiring, or the club wants him eligible for the playoffs. The team needs a standard spot and payroll room. The dataset records prior performance, dates and some verified injury context. It does not treat an injury as the cause of every contemporaneous move. [2024 examples near the limit](https://www.hoopsrumors.com/2024/02/several-two-way-players-nearing-active-game-limit.html) · [Philadelphia's roster-space example](https://www.hoopsrumors.com/2026/02/sixers-to-sign-patrick-baldwin-jr-to-10-day-deal.html)
+
+## Exhibit 10 camp deals
+
+| Summer | Reported camp deals | Median per club and observed range | Turned into two-way deals before opening | Same deal on the opening standard roster | Waived and later appeared for the affiliate |
+|---|---:|---:|---:|---:|---:|
+| 2023 | 190 | 7 (0–9) | 13 | 2 | 146 |
+| 2024 | 195 | 7 (3–10) | 10 | 2 | 150 |
+| 2025 | 228 | 7.5 (6–10) | 7 | 2 | 186 |
+| 2026 | 249 | 8 (3–12) | 7 | 0 | Regular-season data pending |
+
+These are reported contracts from July through the end of camp. A player can sign again after clearing waivers. The seasonal count can exceed the six Exhibit 10 contracts a team may carry at once. Six players across the four summers stayed on the same standard deal at opening, including Talen Horton-Tucker with Chicago in 2024 and Mohamed Diawara with New York in 2025. Dallas turned Jazian Gortman's 2024 camp deal into a two-way. [Transaction ledger example](https://www.basketball-reference.com/leagues/NBA_2025_transactions.html) · [Dallas on Gortman](https://www.nba.com/mavs/gortman-tops-takeaways) · [Exhibit 10 rules](https://nbpa.com/cba/)
+
+A player can earn the bonus after being waived and spending the required 60 days in service with the affiliate. The public records show games played and in some cases the bonus offered. They do not give leaguewide dates of uninterrupted service, the actual amount paid or whether a particular deal even included the optional bonus. There were **no verified payments** in this collection. Affiliate appearances are a measure of follow-through after camp. [Grand Rapids on the bonus](https://grandrapids.gleague.nba.com/faqs) · [G League stat ledger example](https://www.basketball-reference.com/gleague/years/gleague_2026_per_game.html)
+
+Draft status, earlier NBA appearances, prior two-way experience and prior development-league scoring did not produce a stable conversion rule. The 2026 test selected at least 12 development-league points per game and got 167 of 249 outcomes right, with an average 48% hit rate across the two classes. Predicting no conversions got 242 right and a 50% average hit rate. Use camp invites primarily to stock the affiliate and audition players. Convert sparingly when a slot opens and the player has a clear role. A recognized camp deal and a dated two-way signing with no intervening waiver are the evidence for the conversion counts.
 
 ## Sign-and-trades
 
@@ -51,4 +66,4 @@ When a team over the cap re-signs its own player with eligible Bird rights for a
 
 ## Resume state
 
-Sign-and-trades and two-way deals are recorded and their fits run. Camp and market research is underway. Research only, on `codex/roster-edge-evidence`.
+Sign-and-trades, two-way deals and Exhibit 10 are recorded and their fits run. The roster cutdown and late market are underway. Research only, on `codex/roster-edge-evidence`.
