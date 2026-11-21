@@ -93,9 +93,9 @@ The last accepted player is `player-m/0024`. The next player ID is `player-m/002
 
 ## Batch 2
 
-- In progress with 21 completed people and 84 new portraits.
-- 21 players, 0 staff women and 0 staff men. 4 redone stages. About 36 minutes.
-- Continue at player-m/0046.
+- In progress with 24 completed people and 96 new portraits.
+- 24 players, 0 staff women and 0 staff men. 4 redone stages. About 42 minutes.
+- Continue at player-m/0049.
 
 Order: 40 four-stage player sets, 10 three-stage staff women, then staff men as capacity allows. All subjects and image references are fictional adults. The built-in Codex image tool was used. Each accepted image has a full-size PNG and a 320 × 320 JPEG. The combined contact sheet compares colour and greyscale.
 
@@ -122,3 +122,6 @@ Order: 40 four-stage player sets, 10 three-stage staff women, then staff men as 
 - player-m/0043. Deep-set blue-grey eyes and straight nose stay recognizable through a fuller beard and softer expression.
 - player-m/0044. Redid age 26 for a clear shorter haircut and mature jaw. Dimple and amber eyes remain recognizable.
 - player-m/0045. The rookie wears a plain sleeveless training top. Nose and eye spacing stay consistent as neck, facial hair and brow lines mature.
+- player-m/0046. Nose and right ear stay distinct. The grey-flecked chin strip and cropped scalp change the late silhouette.
+- player-m/0047. Low eyelid and full lip remain distinct. Closely cut later hair, trimmed beard and eye contours show the age change.
+- player-m/0048. The low nose and unequal ears stay recognizable as neck and jaw fill out and the crop gets shorter.
