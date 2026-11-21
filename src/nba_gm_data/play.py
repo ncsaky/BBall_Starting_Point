@@ -5422,7 +5422,10 @@ def process_ai_free_agency_offers_for_day_state(
     ]
     pool.sort(key=lambda player: free_agency_player_priority(active, save, player), reverse=True)
     created = 0
-    target_count = min(len(pool), 18 + day * 8)
+    # FA-REAL slice 2: front offices look at more of the market each day (30 players on the first day, then 10 more
+    # a day; was 18 and 8): most of a real summer's deals come in its first days, and teams with a mid-level and a
+    # need were reaching it only after the best players were gone.
+    target_count = min(len(pool), FREE_AGENCY_SCREEN_FIRST + day * FREE_AGENCY_SCREEN_PER_DAY)
     from .offseason_decisions import restricted_player_ids
     restricted = restricted_player_ids(save)   # FA-REAL slice 2: interim rule, only the team holding him bids
     for player in pool[:target_count]:
@@ -5594,11 +5597,18 @@ def free_agency_player_priority(canonical: dict[str, Any], save: dict[str, Any],
     return float(attrs.get("overall") or 0) * 1.7 + display_minutes_projection(player) * 0.75 + float(stats.get("ppg") or 0) * 0.65
 
 
+FREE_AGENCY_SCREEN_FIRST = 20
+FREE_AGENCY_SCREEN_PER_DAY = 10
+ROTATION_ASK_MILLIONS = 5.0
+
+
 def desired_ai_offer_count(player: dict[str, Any], ask: float, day: int, seed: int, *, quality: float | None = None) -> int:
     if ask >= 28 or display_minutes_projection(player) >= 28:
         base = 3 if day <= 2 else 2
     elif ask >= 12 or display_minutes_projection(player) >= 20:
         base = 2 if day <= 3 else 1
+    elif ask >= ROTATION_ASK_MILLIONS or display_minutes_projection(player) >= 15:
+        base = 1   # FA-REAL slice 2: a rotation player draws an offer from the first day (was from day 2)
     else:
         base = 1 if day >= 2 else 0
     # Current NBA ability matters even when a valuable young player previously
