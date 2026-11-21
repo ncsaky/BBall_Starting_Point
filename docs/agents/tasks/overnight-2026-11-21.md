@@ -64,6 +64,11 @@ _Coordinator: Claude. The user is asleep about 8 hours and asked for "surprise d
    - Side effect: AI teams keep coordinators only with a staff grade of 68+, so most starting coordinators will be replaced when their first contracts end.
 8. **Codex research:** offseason decisions, 2025-26 injury history, roster-edge evidence (two-ways, camp deals, sign-and-trades), and the README refresh.
 
+### Ten-season check (8 of 10 seasons; `ten-season-findings.md`)
+- **The league stays believable in the middle:** stable talent levels, healthy turnover (made-up players reach the top 30 at a believable pace), and realistic ages.
+- **The top flattens.** After Jokić ages, no one reaches his level again. Wembanyama is flat at 74-75 from age 22 to 30, and top values bunch onto exact numbers. This is likely a hidden ceiling from how the 94 ratings are mapped onto the old trait range (the "no clipping" rule, broken quietly). It's a strong case for Stage 2.
+- **The weakest teams keep getting weaker.** The spread between teams grows over the seasons.
+
 ### Branches for your review (not merged)
 - **`overnight/ui-polish`:**
   - dialogs and messages no longer open behind windows;
