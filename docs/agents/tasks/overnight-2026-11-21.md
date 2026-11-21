@@ -26,3 +26,14 @@ _Coordinator: Claude. The user is asleep about 8 hours and asked for "surprise d
 
 ## Morning report
 _(Filled in as work lands.)_
+
+### Landed in main (tests, browser tests and the real-stat scorecard passed before each push)
+- **Star injuries:** 2025-26 history completed. The top 30's median games fell from 70/67.5 to 63.5/59.5 (real 64.5-65.5). Injuries per team rose from 35 to 40 (real 35-43). 1,081 tests.
+- **Free agency slice 3, offer sheets:** Match or Pass, AI sheets with reasons. Qualifying offers taken fell from 7/4 to 3/0 a summer (real 0-2). 1,379 tests.
+- **Codex research:** roster-edge evidence (feeds slice 4). Codex README refresh pending.
+
+### Branches for review (not merged)
+- `overnight/ui-polish`: 13 fixes. Dialogs and messages no longer open behind windows; the playoff bracket fits at 1024 px; a clearer start screen; Full Standings in the house style; the server no longer drops page files under load. It merges cleanly with main. Screenshots are in `output/ui-polish/`.
+
+### Infrastructure
+- **Azure worker:** working end to end (core tests passed there in about 8.5 minutes). The upload is fixed: it skipped caches and builds, and avoided a link loop in the settlement data.
