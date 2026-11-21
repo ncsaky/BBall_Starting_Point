@@ -75,6 +75,7 @@ def two_way(decisions):
     snapshots = decisions["two_way_roster_snapshots"]
     signings = decisions["two_way_signings"]
     draft = decisions["two_way_second_round_candidates"]
+    promotions = decisions["two_way_promotions"]
     return {
         "signings": by_year(signings, lambda r: r["timing"]),
         "draft_status": by_year(signings, lambda r: r["draft_status"]),
@@ -95,7 +96,16 @@ def two_way(decisions):
             lambda r: r["date_opening_trio_completed"][:7] if r["date_opening_trio_completed"] else "unknown",
         ),
         "teams_filling_three": by_year([r for r in snapshots if r["two_way_count"] == 3], lambda r: r["stage"]),
-        "promotions": by_year(decisions["two_way_promotions"], lambda r: r["timing"]),
+        "promotions": by_year(promotions, lambda r: r["timing"]),
+        "promotion_game_log_coverage": by_year(
+            [r for r in promotions if r["nba_before_promotion"]], lambda _: "game_log"),
+        "promotion_injury_report_coverage": by_year(
+            [r for r in promotions if r["injury_snapshot"]], lambda _: "official_report"),
+        "opening_two_way_log_checks": by_year(
+            decisions["two_way_active_game_checks"], lambda _: "checked"),
+        "opening_two_way_log_unresolved": by_year(
+            [r for r in decisions["two_way_active_game_checks"] if r["active_games"] > 50],
+            lambda _: "over_fifty_in_log"),
         "confirmed_fifty_active_games": by_year(decisions["two_way_fifty_game_confirmations"], lambda _: "confirmed"),
         "second_round_opening_contract_holdout": binary_holdouts(
             draft, "opening_two_way",
@@ -113,6 +123,10 @@ def exhibit_10(rows, teams):
     return {
         "deals_by_team": per_team,
         "outcomes": by_year(rows, lambda r: r["outcome"]),
+        "signees_on_any_opening_roster": {
+            y: len({r["player"] for r in rows if r["summer"] == y and r["opening_team"]})
+            for y in YEARS
+        },
         "same_affiliate_regular_season_appearance": {
             y: (sum(r["summer"] == y and r["affiliate_regular_season"] is not None for r in rows)
                 if y < 2026 else None)
@@ -238,16 +252,14 @@ def main():
     data = json.loads(args.data.read_text(encoding="utf-8"))
     validate(data)
     decisions = data["decisions"]
-    result = {"sign_and_trades": sign_and_trades(decisions["sign_and_trades"])}
-    if "two_way_signings" in decisions:
-        result["two_way"] = two_way(decisions)
-    if "exhibit_10_deals" in decisions:
-        teams = sorted({r["team"] for r in decisions["two_way_roster_snapshots"]})
-        result["exhibit_10"] = exhibit_10(decisions["exhibit_10_deals"], teams)
-    if "camp_team_rosters" in decisions:
-        result["camp"] = camp(decisions)
-    if "veteran_summer_nba_signings" in decisions:
-        result["late_market"] = late_market(decisions)
+    teams = sorted({r["team"] for r in decisions["two_way_roster_snapshots"]})
+    result = {
+        "two_way": two_way(decisions),
+        "exhibit_10": exhibit_10(decisions["exhibit_10_deals"], teams),
+        "camp": camp(decisions),
+        "sign_and_trades": sign_and_trades(decisions["sign_and_trades"]),
+        "late_market": late_market(decisions),
+    }
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
 
