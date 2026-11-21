@@ -570,8 +570,10 @@ def with_market_reasons(canonical: dict[str, Any], candidate: dict[str, Any]) ->
         rounds = len(war.get("rounds") or [])
         extra.append(f"{_abbrev(canonical, war.get('winner'))} won a bidding war against {', '.join(others)}"
                      f" ({rounds} round{'s' if rounds != 1 else ''}).")
-    if extra:
+    if extra and not reasons.get("market_text_added"):
+        # Once only (TRADE-FOLLOWUPS): free-agency trades passed through here twice and stated their personality twice.
         reasons["text"] = " ".join([reasons.get("text") or ""] + extra).strip()
+        reasons["market_text_added"] = True
     if reasons:
         candidate = {**candidate, "trade_reasons": reasons}
     return candidate

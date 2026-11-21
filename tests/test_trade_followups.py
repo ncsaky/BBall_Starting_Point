@@ -260,6 +260,16 @@ class HiddenProfileTests(unittest.TestCase):
         self.assertIn("playoff-level starters", fo._level_words("urgency", 80.0))
 
 
+class ReasonsOnceTests(unittest.TestCase):
+    def test_personality_is_stated_once_even_when_reasons_are_added_twice(self):
+        # Free-agency trades went through with_market_reasons in the search and again in the free-agency hook.
+        candidate = {"trade_reasons": {"text": "B moved him."}, "evaluations": [
+            {"perspective_team_id": "a", "personality_adjustments": {"terms": [
+                {"key": "urgency", "points": 3.2, "text": "A's win-now urgency"}]}}]}
+        twice = fo.with_market_reasons(league(), fo.with_market_reasons(league(), candidate))
+        self.assertEqual(twice["trade_reasons"]["text"].count("Personality:"), 1)
+
+
 class TeamPageReadTests(unittest.TestCase):
     """Fix 3: the team page shows the same read as the trade window, sharpening with dealings."""
 
