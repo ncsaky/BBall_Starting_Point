@@ -117,6 +117,49 @@ Four second-rounders made the top 10 in that window. Nikola Jokić, pick 41 in 2
 
 Age and starting level forecast top-25 and top-50 outcomes better than age alone. The top-10 gains were small, and the draft-slot rule scored slightly worse than the pooled rate for that outcome. Draft slot gives a broad starting probability, with fewer data to support precise superstar odds. Neither rule estimates a player's ceiling.
 
+## 3. How fast the top of the league turns over
+
+Rank always gives five names. To also measure how strong the best players were, take the typical fifth-place BPM in the fitting seasons, 2005–2020, as a fixed bar of roughly **+7.28 BPM**. The median season had five players above that bar. The middle 80% had three to six, and the full range was one to nine. The five highest players averaged +8.92 BPM across the study. Their season average ranged from +6.72 in 2011 to +11.08 in 2026. The exact rankings depend on the measure. On average 3.7 names appeared in both the BPM and VORP top fives, and 3.5 appeared in both the BPM and Basketball Index LEBRON top fives in the years with both.
+
+| Season ending | Top-five mean BPM | Players meeting fixed bar | Kept top-five spot | First-ever top-five season |
+|---:|---:|---:|---:|---|
+| 2005 | 8.37 | 4 | 3 | LeBron James |
+| 2006 | 8.00 | 5 | 3 | Dwyane Wade |
+| 2007 | 7.81 | 4 | 3 | Manu Ginóbili |
+| 2008 | 9.00 | 5 | 2 | Chris Paul, Chauncey Billups |
+| 2009 | 9.33 | 3 | 3 | Brandon Roy |
+| 2010 | 8.13 | 2 | 4 | Kevin Durant |
+| 2011 | 6.72 | 1 | 4 | Derrick Rose |
+| 2012 | 8.20 | 3 | 4 | — |
+| 2013 | 8.09 | 3 | 3 | James Harden, Stephen Curry |
+| 2014 | 8.70 | 5 | 4 | Kevin Love |
+| 2015 | 8.65 | 5 | 2 | Anthony Davis, Russell Westbrook |
+| 2016 | 9.51 | 6 | 2 | Kawhi Leonard |
+| 2017 | 9.31 | 6 | 3 | — |
+| 2018 | 8.13 | 3 | 2 | Kyrie Irving |
+| 2019 | 9.49 | 5 | 2 | Giannis Antetokounmpo, Nikola Jokić |
+| 2020 | 9.31 | 9 | 3 | Luka Dončić |
+| 2021 | 9.07 | 6 | 2 | Jimmy Butler |
+| 2022 | 9.92 | 5 | 3 | Joel Embiid |
+| 2023 | 9.59 | 6 | 4 | — |
+| 2024 | 10.48 | 5 | 4 | Shai Gilgeous-Alexander |
+| 2025 | 9.48 | 3 | 4 | Victor Wembanyama |
+| 2026 | 11.08 | 6 | 5 | — |
+
+Across 22 seasons, there were **22 first-time top-five players** and **41 new or returning players** in the five slots, after checking the 1996–2004 leaderboards for previous appearances. In the most recent six seasons there were four first-time players and eight new or returning players. In 2026 all five from 2025 stayed in the top five. These are league-wide rates. A typical three-year stretch can yield several debuts without needing one every season.
+
+A spell starts when a player enters or re-enters the top five after a season outside it. Of 41 starts, 19 stayed there the next season. The chance of reaching a third consecutive season was about 39%, and the chance of reaching a fifth was about 19%, allowing for spells still in progress at the end of the panel. The 14 first-time entrants with a full decade of follow-up had a median of four total top-five seasons in that decade, including returns. LeBron James had 16 top-five seasons across the full study. Giannis Antetokounmpo had eight and Nikola Jokić had seven. Those runs matter for the game's age distribution at the top. [James](https://www.basketball-reference.com/players/j/jamesle01.html) · [Antetokounmpo](https://www.basketball-reference.com/players/a/antetgi01.html) · [Jokić](https://www.basketball-reference.com/players/j/jokicni01.html)
+
+**Held-out test.** The 2005–2020 training averages missed the 2021–2026 counts by about half a first-timer and one newly occupied slot per season. Simple whole-number targets were at least as good in that six-season test. This supports broad ranges for long runs, with weaker evidence about what a particular season should look like.
+
+| Measure | Training average | Held-out average | Average absolute forecast error | Simple count, average error |
+|---|---:|---:|---:|---|
+| At or above the fixed bar | 4.31 | 5.17 | 1.29 | 5, 0.83 |
+| First-time top-five players | 1.13 | 0.67 | 0.46 | 1, 0.33 |
+| New or returning top-five players | 2.06 | 1.33 | 1.04 | 2, 1.00 |
+
+The [ten-season game check](ten-season-findings.md) measured the engine's own player value. To compare with this NBA evidence, calculate the game's simulated BPM from its season results or establish a link between its internal scale and on-court impact. Compare the best player's level, the top-five average and new arrivals over several runs. A fixed count of ranked slots alone cannot show that a hidden ceiling has gone away.
+
 ## Resume state
 
-Research only on `codex/development-evidence`. The frozen public panel, Basketball Index comparison and fits are in `data/research/development_evidence.json`. Age curves and star odds are documented. The remaining report sections cover turnover and named examples.
+Research only on `codex/development-evidence`. The frozen public panel, Basketball Index comparison and fits are in `data/research/development_evidence.json`. Age curves, star odds and superstar turnover are documented. The remaining report section covers late bloomers and busts.
