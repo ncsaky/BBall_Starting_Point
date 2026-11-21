@@ -4874,6 +4874,14 @@ class DataFoundationTests(unittest.TestCase):
             self.assertEqual(rollover["to_season"], "2027-28")
             self.assertEqual(rollover["generated_game_count"], 1230)
             self.assertEqual(rollover["offseason_changes"]["expired_free_agents"] > 0, True)
+            # FA-REAL slice 4: the game no longer signs players onto the user's roster; a short user roster waits for
+            # the user, here the one-click fill with minimum contracts (what a hands-off GM does).
+            from nba_gm_data.save import fill_user_roster_minimum, write_save as write_league_save
+            short = load_save(save_path)
+            if (short.get("pending_roster_minimum") or {}).get("blocking"):
+                fill_user_roster_minimum(self.plain, short, 8)
+                short.pop("pending_roster_minimum", None)
+                write_league_save(save_path, short)
             result = advance_save(ROOT, self.plain, save_path, to_date="2027-10-21", seed=8)
             self.assertEqual(result["games_simulated"], 2)
             saved = load_save(save_path)

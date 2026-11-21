@@ -910,6 +910,11 @@ class SoakRunner:
         waived = 0
         for _ in range(12):
             room = self.action("roster_cutdown", save_path=self.payload["save_path"])
+            if room.get("status") == "short":
+                # FA-REAL slice 4: the game no longer signs players onto the user's roster; a hands-off GM takes the
+                # assistant's one-click fill with minimum contracts.
+                self.action("fill_roster_minimum", save_path=self.payload["save_path"])
+                continue
             if room.get("status") != "required":
                 return waived
             candidates = sorted(

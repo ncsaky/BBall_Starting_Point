@@ -1289,7 +1289,9 @@ async function ensureViewData(force = false) {
     if (phase === "staff_retention") {
       state.data.staffRetention = await action("staff_retention_room", savePayload());
     }
-    if (phase === "cutdown") {
+    if (phase === "cutdown" || preseasonRosterViewOpen()) {
+      // FA-REAL slice 4: the opening-roster view (21 to 15, two-way places) is open all preseason, not only when a
+      // cut is required.
       state.data.cutdown = await action("roster_cutdown", savePayload());
     }
     if (phase) return;
@@ -2861,7 +2863,15 @@ function applyPhaseRouting() {
 function requiredClipboardDecision() {
   if (Number(state.home?.save?.pending_counts?.staff || 0) > 0) return "staff_retention";
   if (Number(state.home?.save?.pending_counts?.cutdowns || 0) > 0) return "cutdown";
+  // FA-REAL slice 4: the user's roster below the minimum (the game no longer fills it): games wait for a signing.
+  if (Number(state.home?.save?.pending_counts?.roster_minimum || 0) > 0) return "cutdown";
   return "";
+}
+
+// FA-REAL slice 4: the roster window (standard spots and two-way places) is available in preseason (stop 4, the
+// opening roster) and through the regular season (two-way call-ups and conversions), even when no cut is required.
+function preseasonRosterViewOpen() {
+  return ["preseason", "regular_season"].includes(String(state.home?.save?.phase || ""));
 }
 
 function revealRequiredClipboardDecision() {
@@ -5824,8 +5834,10 @@ const OFFSEASON_ITEM_LABELS = {
   player_option_result: "Player option",
   qualifying_offer: "Qualifying offer",
   own_free_agent: "Your free agent",
-  roster: "Roster size",
+  roster: "Opening roster",
   rookie_extension: "Rookie-scale extension",
+  two_way_qualifying_offer: "Two-way qualifying offer",
+  two_way_places: "Two-way places",
 };
 
 function offseasonItemStatus(item) {
@@ -5843,7 +5855,8 @@ function offseasonItemMoney(item) {
   }
   if (item.kind === "own_free_agent") return item.hold_millions != null ? `${money(item.hold_millions)}<small>cap hold</small>` : "—";
   if (item.salary_millions != null) return money(item.salary_millions);
-  if (item.kind === "roster") return `${item.count} / ${item.target}`;
+  if (item.kind === "roster" || item.kind === "two_way_places") return `${item.count} / ${item.target}`;
+  if (item.kind === "two_way_qualifying_offer") return item.amount_millions != null ? money(item.amount_millions) : "—";
   return "—";
 }
 
@@ -5869,7 +5882,14 @@ function offseasonItemActions(item, editable) {
       ${hold?.renounce ? `<button type="button" class="ui-command" data-fa-renounce="${pid}" title="${escapeAttr(hold.renounce.loses)}">Renounce</button>` : ""}`;
   }
   if (item.kind === "rookie_extension") return `<button type="button" class="ui-command" data-offseason-extend="${pid}">Extend</button>`;
-  if (item.kind === "roster" && item.status === "pending") return `<button type="button" class="ui-command" data-offseason-cutdown>Cut down</button>`;
+  if (item.kind === "roster" || item.kind === "two_way_places") return `<button type="button" class="ui-command" data-offseason-cutdown>${item.kind === "roster" && item.status === "pending" ? "Cut down" : "Roster view"}</button>`;
+  if (item.kind === "two_way_qualifying_offer") {
+    if (["pending", "not_tendered", "tendered"].includes(item.status) && String(state.home?.save?.current_date || "") <= String(item.deadline || "")) {
+      return `${item.status !== "tendered" ? `<button type="button" class="ui-command" data-offseason-twqo="tender" data-player-id="${pid}">Send offer</button>` : ""}
+        ${item.status !== "not_tendered" ? `<button type="button" class="ui-command" data-offseason-twqo="none" data-player-id="${pid}">No offer</button>` : ""}`;
+    }
+    return "";
+  }
   return "";
 }
 
@@ -6039,6 +6059,10 @@ function wireOffseasonChecklist(panel) {
   panel.querySelectorAll("[data-fa-renounce]").forEach((button) => button.addEventListener("click", () => renounceCapHold(button.dataset.faRenounce || "")));
   panel.querySelectorAll("[data-offseason-extend]").forEach((button) => button.addEventListener("click", () => openExtensionNegotiation(button.dataset.offseasonExtend || "")));
   panel.querySelectorAll("[data-offseason-cutdown]").forEach((button) => button.addEventListener("click", () => window.CardBoard?.open("phase-cutdown-decision")));
+  panel.querySelectorAll("[data-offseason-twqo]").forEach((button) => button.addEventListener("click", async () => {
+    const result = await action("two_way_qualifying_offer", { ...savePayload(), team: userTeam(), player_id: button.dataset.playerId || "", tender: button.dataset.offseasonTwqo === "tender" });
+    await afterOffseasonDecision(result, result?.status === "tendered" ? "Two-way qualifying offer sent" : "No two-way offer");
+  }));
   panel.querySelectorAll("[data-fa-player-card]").forEach((button) => button.addEventListener("click", (event) => {
     event.stopPropagation();
     freeAgentPlayerCard(button.dataset.faPlayerCard || "");
@@ -6562,6 +6586,7 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
         ${sheet ? freeAgencyOfferSheetMarkup(player, draft, preview) : ""}
       </section>
       <div data-fa-offer-preview>${freeAgencyOfferPreviewMarkup(preview)}</div>
+      ${freeAgencyOtherDealsMarkup(player, room)}
       ${freeAgencyCapSheetMarkup(room)}
       <section class="approved-card-panel fa-builder-bids"><header>${exclusive ? "Rival Bids" : `Rival Bids · ${bids.length}`}</header>${exclusive
         ? `<p class="fa-muted">Exclusive window: no other team may bid until free agency opens.</p>`
@@ -6579,6 +6604,115 @@ function freeAgencyOfferBuilderPanel(room = state.data.freeagency || {}) {
     </div>
     <footer class="fa-builder-foot" data-fa-offer-foot>${freeAgencyOfferFootMarkup(player, preview, { legal, open, exclusive })}</footer>
   </section>`;
+}
+
+// FA-REAL slice 4: the other ways to add a player: a two-way contract, a camp deal (Exhibit 10), a sign-and-trade.
+// Every button shows the engine's own eligibility answer (two_way, camp, sign_and_trade).
+function freeAgencyOtherDealsMarkup(player, room = state.data.freeagency || {}) {
+  const edge = player.roster_edge;
+  if (!edge) return "";
+  const legal = clipboardLegalActions().has("free_agent_signings") || ["offseason", "training_camp", "preseason"].includes(String(state.home?.save?.phase || ""));
+  const tw = edge.two_way || {};
+  const camp = edge.camp || {};
+  const snt = edge.sign_and_trade || {};
+  const twoWay = `<div class="fa-edge-row"><div><strong>Two-way contract</strong><small>${escapeHtml(tw.ok
+    ? `${money(tw.pay_millions)} this season, outside the salary cap; up to 50 NBA games; he doesn't take one of your 15 spots.`
+    : (tw.reason || "Not available."))}</small></div>
+    ${legal ? `<span class="fa-edge-buttons"><button type="button" class="ui-command" data-fa-two-way="1" ${tw.ok ? "" : "disabled"}>Sign: 1 season</button>${tw.two_years ? `<button type="button" class="ui-command" data-fa-two-way="2">2 seasons</button>` : ""}</span>` : ""}</div>`;
+  const campRow = `<div class="fa-edge-row"><div><strong>Camp invite (Exhibit 10)</strong><small>${escapeHtml(camp.ok
+    ? `One season at his minimum (${money(camp.salary_millions)}), not guaranteed. Cut him before opening night and he can join your G League affiliate for up to ${money((camp.bonus || 0) / 1e6)}; or move him to a two-way.`
+    : (camp.reason || "Not available."))}</small></div>
+    ${legal ? `<span class="fa-edge-buttons"><button type="button" class="ui-command" data-fa-camp-invite ${camp.ok ? "" : "disabled"}>Invite to camp</button></span>` : ""}</div>`;
+  const sntRow = snt.available ? `<div class="fa-edge-row"><div><strong>Sign-and-trade</strong><small>${escapeHtml(snt.role === "sender"
+    ? "You re-sign him with your rights and trade him at once to the team he wants to join, and get something back instead of losing him for nothing."
+    : `${snt.rights_abbrev} holds his rights: they re-sign him and trade him to you. You send back salary (if you're over the cap) and a pick; you become hard-capped at the first apron.`)}</small></div>
+    <span class="fa-edge-buttons"><button type="button" class="ui-command" data-fa-snt-open>${snt.role === "sender" ? "Find a partner" : `Ask ${escapeHtml(snt.rights_abbrev)}`}</button></span></div>
+    ${state.signAndTrade?.player_id === String(player.id) ? freeAgencySignAndTradeMarkup(player, room) : ""}` : "";
+  return `<section class="approved-card-panel fa-builder-edge" data-fa-edge><header>Other Ways To Add Him</header>${twoWay}${campRow}${sntRow}</section>`;
+}
+
+function freeAgencySignAndTradeMarkup(player, room) {
+  const st = state.signAndTrade || {};
+  const options = st.options || {};
+  if (st.loading) return `<div class="fa-snt"><p class="fa-muted">Checking the rules…</p></div>`;
+  if (options.available === false) return `<div class="fa-snt"><p class="fa-muted">${escapeHtml(options.reason || "")}</p></div>`;
+  const verdict = (terms, answer) => {
+    if (!terms) return "";
+    const lines = [...(terms.problems || []).map((t) => `<li class="is-no">${escapeHtml(t)}</li>`), ...(terms.notes || []).map((t) => `<li>${escapeHtml(t)}</li>`)];
+    const schedule = (terms.schedule || []).map((row) => `${shortSeasonLabel(row.season)} ${money(row.salary / 1e6)}`).join(" · ");
+    return `<div class="fa-snt-verdict ${terms.ok && answer?.ok ? "is-ok" : "is-no"}"><p><b>${terms.ok ? (answer?.ok ? "Legal, and everyone agrees." : `Legal, but ${escapeHtml(answer?.reason || "")}`) : "Not legal:"}</b>${schedule ? ` ${escapeHtml(schedule)}` : ""}</p><ul>${lines.join("")}</ul></div>`;
+  };
+  if (options.role === "sender") {
+    const rows = (options.receivers || []).map((row) => `<li class="${row.ok ? "is-ok" : ""}"><b>${escapeHtml(row.abbrev)}</b><span>${escapeHtml(row.ok ? `${money(row.salary_millions)} × ${row.years}${(row.outgoing_ids || []).length ? `, they send ${(row.outgoing_ids || []).length} player${(row.outgoing_ids || []).length === 1 ? "" : "s"} back` : ""}${(row.pick_ids || []).length ? " and a second-round pick" : ""}` : (row.problems || [])[0] || "Not legal")}</span>${row.ok ? `<button type="button" class="ui-command" data-fa-snt-propose="${escapeAttr(row.team_id)}">Propose</button>` : ""}</li>`).join("");
+    return `<div class="fa-snt"><p class="fa-muted">Teams he'd join, at his ask (${money(options.ask_millions)} a year, ${options.years} years, 5% raises, first year guaranteed):</p><ol class="fa-snt-teams">${rows || "<li>No team he wants can take him.</li>"}</ol>${verdict(st.terms, st.answer)}</div>`;
+  }
+  const picked = new Set(st.outgoing || []);
+  const bench = options.bench || [];
+  return `<div class="fa-snt"><p class="fa-muted">${escapeHtml(options.sender_abbrev || "")} re-signs him for ${money(options.ask_millions)} × ${options.years} years and trades him to you. Over the cap, you send salary back:</p>
+    <div class="fa-snt-players">${bench.map((row) => `<label><input type="checkbox" data-fa-snt-out="${escapeAttr(row.player_id)}" ${picked.has(String(row.player_id)) ? "checked" : ""}> ${escapeHtml(row.name || "")} <small>${money(row.salary_millions)}</small></label>`).join("") || "<small>No player you can trade.</small>"}</div>
+    ${options.pick_id ? `<label class="fa-snt-pick"><input type="checkbox" data-fa-snt-pick ${st.pick ? "checked" : ""}> Add our next second-round pick</label>` : ""}
+    <span class="fa-edge-buttons"><button type="button" class="ui-command" data-fa-snt-check>Check the rules</button><button type="button" class="ui-command" data-fa-snt-submit ${st.terms?.ok && st.answer?.ok ? "" : "disabled"}>Make the deal</button></span>
+    ${verdict(st.terms, st.answer)}</div>`;
+}
+
+async function freeAgencySignAndTrade(player, step, extra = {}) {
+  const st = state.signAndTrade = (state.signAndTrade?.player_id === String(player.id) ? state.signAndTrade : { player_id: String(player.id) });
+  const rerender = () => refreshFreeAgencyPanels({ builder: true });
+  if (step === "open") {
+    st.loading = true; rerender();
+    const result = await action("sign_and_trade_options", { ...savePayload(), team: userTeam(), player_id: player.id });
+    st.loading = false;
+    st.options = result.options || { available: false, reason: result.reason };
+    rerender();
+    return;
+  }
+  const options = st.options || {};
+  const payload = {
+    ...savePayload(), team: userTeam(), player_id: player.id,
+    salary_millions: options.ask_millions, years: options.years,
+  };
+  if (options.role === "sender") {
+    const row = (options.receivers || []).find((r) => r.team_id === extra.receiver) || {};
+    Object.assign(payload, { sender: state.data.freeagency?.team?.id, receiver: extra.receiver, outgoing_ids: row.outgoing_ids || [], pick_ids: row.pick_ids || [] });
+  } else {
+    Object.assign(payload, { sender: options.sender ? undefined : undefined, receiver: state.data.freeagency?.team?.id, outgoing_ids: st.outgoing || [], pick_ids: st.pick && st.pick_id ? [st.pick_id] : [] });
+  }
+  if (step === "check" || (options.role === "sender" && step === "propose" && !extra.confirmed)) {
+    const result = await action("sign_and_trade_quote", payload);
+    st.terms = result.terms; st.answer = result.answer;
+    rerender();
+    if (!(step === "propose" && result.terms?.ok && result.answer?.ok)) return;
+    const words = (result.terms.schedule || []).map((row) => `${row.season}: ${money(row.salary / 1e6)}`).join("\n");
+    if (!window.confirm(`Sign-and-trade ${player.name} to ${teamLabel(extra.receiver)}?\n\n${words}\n\n${(result.terms.notes || []).join("\n")}`)) return;
+  } else if (step === "submit") {
+    if (!window.confirm(`Make the sign-and-trade for ${player.name}? It is official at once.\n\n${(st.terms?.notes || []).join("\n")}`)) return;
+  }
+  const done = await action("sign_and_trade_submit", payload);
+  if (done.status !== "executed") {
+    st.terms = done.terms || st.terms; st.answer = done.answer || { ok: false, reason: done.reason };
+    showToast(done.reason || done.answer?.reason || "The sign-and-trade did not happen.", true);
+    rerender();
+    return;
+  }
+  state.signAndTrade = null;
+  showToast(`Sign-and-trade done: ${player.name}.`);
+  const room = await action("free_agency_room", { ...savePayload(), team: userTeam(), seed: 7 });
+  await refreshDashboardAfterPhaseMutation("freeagency", room);
+}
+
+async function freeAgencyRosterEdgeSign(player, kind, years = 1) {
+  const words = kind === "camp" ? `Invite ${player.name} to camp on an Exhibit 10 deal (one season at his minimum, not guaranteed)?`
+    : `Sign ${player.name} to a ${years}-season two-way contract (outside the salary cap and your 15 spots)?`;
+  if (!window.confirm(words)) return;
+  const result = await action(kind === "camp" ? "camp_invite" : "two_way_sign", { ...savePayload(), team: userTeam(), player_id: player.id, years });
+  if (!result || result.status !== "signed") {
+    showToast(result?.reason || "Not allowed.", true);
+    return;
+  }
+  showToast(kind === "camp" ? `${player.name} invited to camp` : `${player.name} signed to a two-way contract`);
+  state.selectedFreeAgent = null;
+  const room = await action("free_agency_room", { ...savePayload(), team: userTeam(), seed: 7 });
+  await refreshDashboardAfterPhaseMutation("freeagency", room);
 }
 
 // FA-REAL slice 3: the offer-sheet terms for another team's restricted free agent (offer_sheets.sheet_terms).
@@ -6780,16 +6914,20 @@ function cutdownSelectionSummary(room, choices = {}) {
   const target = Number(room?.target_count || 15);
   const current = Number(room?.current_count ?? players.length);
   const releasing = players.filter((row) => ["waive", "buyout"].includes(choices[String(row.player_id)]));
+  // FA-REAL slice 4: a camp deal or draft pick moved to a two-way place leaves the standard roster too.
+  const moving = players.filter((row) => choices[String(row.player_id)] === "twoway");
   const required = Math.max(0, current - target);
   const costs = releasing.map((row) => cutdownReleaseCost(row, choices[String(row.player_id)]));
+  const leaving = releasing.length + moving.length;
   return {
     current, target, required,
     releasing: releasing.length,
-    names: releasing.map((row) => row.name || "Player"),
-    after: current - releasing.length,
-    remaining: Math.max(0, required - releasing.length),
-    extra: Math.max(0, releasing.length - required),
-    ready: required > 0 && releasing.length >= required,
+    moving: moving.length,
+    names: [...releasing.map((row) => row.name || "Player"), ...moving.map((row) => `${row.name || "Player"} (to two-way)`)],
+    after: current - leaving,
+    remaining: Math.max(0, required - leaving),
+    extra: Math.max(0, leaving - required),
+    ready: leaving > 0 && leaving >= required,
     costMillions: costs.reduce((sum, value) => sum + (value ?? 0), 0),
     unknownCost: costs.some((value) => value === null),
   };
@@ -6800,6 +6938,36 @@ function cutdownContractCell(row) {
   if (!years.length) return "—";
   const title = years.map(([season, value]) => `${season}: ${money(value)}`).join("\n");
   return `<span class="cutdown-contract" title="${escapeAttr(title)}"><strong>${escapeHtml(money(years[0][1]))}</strong><small>${years.length === 1 ? "this season" : `${years.length} seasons left`}</small></span>`;
+}
+
+// FA-REAL slice 4: this season's guarantee in plain words (the engine's contract), and the kind of deal.
+function cutdownGuaranteeCell(row) {
+  const words = row.guarantee?.words || "—";
+  const tag = row.contract_kind === "camp" ? `<em class="cutdown-tag is-camp" title="Exhibit 10 camp deal: one season at his minimum, not guaranteed. Waive him before opening night and he can join your G League affiliate for a bonus; or move him to a two-way place.">Camp deal</em>`
+    : row.contract_kind === "rookie" ? `<em class="cutdown-tag" title="This summer's draft pick: you may sign him to a two-way instead of his rookie deal before opening night.">Draft pick</em>` : "";
+  return `<span class="cutdown-guarantee is-${escapeAttr(row.guarantee?.kind || "unknown")}">${tag}<small>${escapeHtml(words)}</small></span>`;
+}
+
+function cutdownTwoWayPlaces(room) {
+  const view = room.roster || {};
+  const rows = view.two_ways || [];
+  const limit = Number(view.two_way_limit || 3);
+  const editable = !state.hydrating;
+  const filled = rows.map((row) => {
+    const convert = row.convert || {};
+    const pct = Math.min(100, Math.round(100 * Number(row.active_games || 0) / Math.max(1, Number(row.active_limit || 50))));
+    return `<li class="cutdown-twoway-row">
+      <span class="cutdown-player">${playerHeadshotMarkup(row, "roster-player-headshot") || playerHeadshotMarkup({is_prospect:true}, "roster-player-headshot")}<button type="button" class="cutdown-player-name" data-dashboard-player-card="${escapeAttr(row.player_id)}">${escapeHtml(row.name || "")}</button></span>
+      <small>${escapeHtml([compactPos(row.position), Number.isFinite(Number(row.age)) ? `${Math.round(Number(row.age))}` : "", Number.isFinite(Number(row.overall)) ? `OVR ${Number(row.overall).toFixed(0)}` : ""].filter(Boolean).join(" · "))}</small>
+      <span class="cutdown-twoway-games" title="NBA active-list games used this season (the limit is ${escapeAttr(row.active_limit)}; a later signing gets a prorated limit)"><i aria-hidden="true"><b style="width:${pct}%"></b></i><em>${escapeHtml(row.active_games)} / ${escapeHtml(row.active_limit)} games</em></span>
+      <small>${escapeHtml((row.seasons || []).map((s) => `${s.season} ${money(s.salary_millions)}`).join(", "))} · outside the cap</small>
+      ${editable ? `<span class="cutdown-twoway-actions"><button type="button" class="ui-command" data-two-way-convert="${escapeAttr(row.player_id)}" ${convert.ok ? "" : "disabled"} title="${escapeAttr(convert.ok ? `Convert to a standard minimum contract (${money(convert.salary_millions)} this season): he can play every game and in the playoffs.` : (convert.reason || ""))}">Make standard</button><button type="button" class="ui-command" data-two-way-release="${escapeAttr(row.player_id)}">Release</button></span>` : ""}
+    </li>`;
+  });
+  for (let index = rows.length; index < limit; index += 1) {
+    filled.push(`<li class="cutdown-twoway-row is-open"><span class="cutdown-twoway-open">Open two-way place</span><small>Sign a young free agent (under 4 years in the league) from the free-agent market, or move a camp deal here.</small></li>`);
+  }
+  return `<section class="cutdown-twoways" aria-label="Two-way places"><header><strong>Two-way places · ${escapeHtml(rows.length)} / ${escapeHtml(limit)}</strong><small>Outside the 15 standard spots and the salary cap. Up to ${escapeHtml(50)} NBA active games a season; convert one to a standard deal before the last regular-season game to keep him for the playoffs.</small></header><ol>${filled.join("")}</ol></section>`;
 }
 
 function cutdownQuoteCell(row, kind) {
@@ -6825,10 +6993,16 @@ function rosterCutdownDashboardWorkspace() {
     const id = String(row.player_id);
     const value = choices[id] || "keep";
     if (row.can_waive === false) return `<span class="muted">Protected</span>`;
-    return `<div class="cutdown-choice" role="radiogroup" aria-label="${escapeAttr(`Keep or release ${row.name || "player"}`)}">${[["keep", "Keep"], ["waive", "Waive"], ["buyout", "Buy out"]].map(([option, label]) => `<button type="button" role="radio" aria-checked="${value === option}" class="cutdown-choice-${option}${value === option ? " is-active" : ""}" data-cutdown-choice="${escapeAttr(id)}" data-cutdown-option="${option}" tabindex="${value === option ? 0 : -1}">${label}</button>`).join("")}</div>`;
+    const options = [["keep", "Keep"], ["waive", "Waive"], ...(row.contract_kind === "camp" ? [] : [["buyout", "Buy out"]]), ...(row.two_way_convertible ? [["twoway", "Two-way"]] : [])];
+    return `<div class="cutdown-choice" role="radiogroup" aria-label="${escapeAttr(`Keep or release ${row.name || "player"}`)}">${options.map(([option, label]) => `<button type="button" role="radio" aria-checked="${value === option}" class="cutdown-choice-${option}${value === option ? " is-active" : ""}" data-cutdown-choice="${escapeAttr(id)}" data-cutdown-option="${option}" tabindex="${value === option ? 0 : -1}"${option === "twoway" ? ` title="Move him to an open two-way place (outside the 15 and the cap)"` : ""}>${label}</button>`).join("")}</div>`;
   };
-  const status = summary.required === 0
-    ? "Your roster is within the limit."
+  const view = room.roster || {};
+  const short = room.status === "short" ? room.short || {} : null;
+  const camp = !view.in_season_limits && Number(view.offseason_total || 0) > 0;
+  const status = short
+    ? `You have ${short.count} players; teams must carry ${short.minimum}.`
+    : summary.required === 0
+    ? (view.submitted ? `Opening roster submitted ${shortDate(view.submitted.date)}.` : "Your roster is within the limit.")
     : summary.remaining > 0
       ? `Mark ${summary.remaining} more player${summary.remaining === 1 ? "" : "s"} to release.`
       : summary.extra > 0
@@ -6840,19 +7014,19 @@ function rosterCutdownDashboardWorkspace() {
   return `<div class="cutdown-workspace" data-cutdown-workspace>
     <header class="cutdown-head">
       <div class="cutdown-title">
-        <p>${escapeHtml(teamLabel(room.team || userTeam()))} · ${escapeHtml(room.date || state.home?.save?.current_date || "")} · Required before games</p>
-        <h3>Mandatory Roster Cut-Down</h3>
-        <span>Regular-season rosters hold ${escapeHtml(summary.target)} players. Everyone is kept unless you mark him Waive or Buy out.</span>
+        <p>${escapeHtml(teamLabel(room.team || userTeam()))} · ${escapeHtml(room.date || state.home?.save?.current_date || "")} · ${room.status === "required" ? "Required before games" : short ? "Required before games" : room.phase === "regular_season" ? "Regular season" : `Due ${escapeHtml(shortDate(view.roster_deadline))}`}</p>
+        <h3>${short ? "Sign Players To Reach The Minimum" : room.phase === "regular_season" ? "Roster And Two-Way Places" : "Set The Opening Roster"}</h3>
+        <span>${short ? escapeHtml(`The game won't sign anyone onto your roster. ${short.count >= short.minimum - 1 ? "Thirteen players is allowed for two weeks." : ""} Sign a free agent, or let your assistant fill the roster with minimum contracts.`) : room.phase === "regular_season" ? `At most ${escapeHtml(summary.target)} standard players and ${escapeHtml(view.two_way_limit || 3)} two-ways. The coach calls a two-way up when the team is short or he is good enough to play; convert one before the last regular-season game to keep him for the playoffs.` : `Up to ${escapeHtml(view.offseason_limit || 21)} players through camp; by ${escapeHtml(shortDate(view.roster_deadline))}, the day before opening night, at most ${escapeHtml(summary.target)} standard players plus ${escapeHtml(view.two_way_limit || 3)} two-ways. Waive a player by ${escapeHtml(shortDate(view.clear_by))} and he clears waivers before opening night (non-guaranteed money is then never owed).`}</span>
       </div>
-      <div class="cutdown-counter${summary.ready ? " is-ready" : ""}" role="status" aria-live="polite">
+      <div class="cutdown-counter${(summary.ready || summary.required === 0) && !short ? " is-ready" : ""}" role="status" aria-live="polite">
         <strong><b>${escapeHtml(summary.after)}</b> / ${escapeHtml(summary.target)}</strong>
-        <span>players after your choices</span>
-        <small>${escapeHtml(summary.current)} on the roster · ${escapeHtml(summary.required)} must go · ${escapeHtml(summary.releasing)} marked</small>
+        <span>standard players after your choices</span>
+        <small>${escapeHtml(view.two_way_count ?? 0)} / ${escapeHtml(view.two_way_limit || 3)} two-way${camp ? ` · ${escapeHtml(view.offseason_total)} / ${escapeHtml(view.offseason_limit)} in camp · ${escapeHtml(view.camp_deal_count || 0)} camp deals` : ""} · ${escapeHtml(summary.required)} must go</small>
       </div>
     </header>
     <div class="cutdown-scroll"><table class="cutdown-table" aria-label="Roster cut-down choices">
-      <colgroup><col style="width:190px"><col style="width:44px"><col style="width:38px"><col style="width:44px"><col style="width:44px"><col style="width:84px"><col style="width:104px"><col style="width:118px"><col style="width:132px"><col style="width:178px"></colgroup>
-      <thead><tr><th scope="col">Player</th><th scope="col">Pos</th><th scope="col">Age</th><th scope="col">Ht</th><th scope="col" title="Projected minutes per game">MPG</th><th scope="col">OVR</th><th scope="col" title="This season's salary; hover for every season">Contract</th><th scope="col" title="If waived: salary that stays on your books">If waived</th><th scope="col" title="If bought out: payout, and savings if he clears waivers">If bought out</th><th scope="col">Keep or release</th></tr></thead>
+      <colgroup><col style="width:182px"><col style="width:40px"><col style="width:34px"><col style="width:40px"><col style="width:84px"><col style="width:96px"><col style="width:128px"><col style="width:112px"><col style="width:118px"><col style="width:220px"></colgroup>
+      <thead><tr><th scope="col">Player</th><th scope="col">Pos</th><th scope="col">Age</th><th scope="col" title="Projected minutes per game">MPG</th><th scope="col">OVR</th><th scope="col" title="This season's salary; hover for every season">Contract</th><th scope="col" title="This season's guarantee: the money you owe if you release him">Guarantee</th><th scope="col" title="If waived: salary that stays on your books, and the day he clears waivers (48 hours)">If waived</th><th scope="col" title="If bought out: payout, and savings if he clears waivers">If bought out</th><th scope="col">Keep, release or two-way</th></tr></thead>
       <tbody>${players.map((row) => {
         const choice = choices[String(row.player_id)] || "keep";
         const overall = Number(row.overall);
@@ -6861,20 +7035,22 @@ function rosterCutdownDashboardWorkspace() {
           <th scope="row"><span class="cutdown-player">${playerHeadshotMarkup(row, "roster-player-headshot") || playerHeadshotMarkup({is_prospect:true}, "roster-player-headshot")}<button type="button" class="cutdown-player-name" data-dashboard-player-card="${escapeAttr(row.player_id)}">${escapeHtml(row.name || "Unknown")}</button>${injured ? `<span class="season-injury-status" title="${escapeAttr(row.health.label || "Injured")}">✚</span>` : ""}${row.protected_reason ? `<small title="${escapeAttr(row.protected_reason)}">recent draftee</small>` : ""}</span></th>
           <td>${escapeHtml(compactPos(row.position) || "—")}</td>
           <td>${escapeHtml(Number.isFinite(Number(row.age)) ? Math.round(Number(row.age)) : "—")}</td>
-          <td>${escapeHtml(row.height || "—")}</td>
           <td>${Number(row.minutes || 0).toFixed(1)}</td>
           <td>${Number.isFinite(overall) ? `<span class="playoff-injury-rating"><em>${overall.toFixed(0)}</em><i aria-hidden="true"><b style="${performanceBarStyle(overall)}"></b></i></span>` : "—"}</td>
           <td>${cutdownContractCell(row)}</td>
+          <td>${cutdownGuaranteeCell(row)}</td>
           <td class="${choice === "waive" ? "is-chosen" : ""}">${cutdownQuoteCell(row, "waive")}</td>
           <td class="${choice === "buyout" ? "is-chosen" : ""}">${cutdownQuoteCell(row, "buyout")}</td>
           <td>${decision(row)}</td>
         </tr>`;
       }).join("") || `<tr><td colspan="10" class="empty">No roster loaded.</td></tr>`}</tbody>
-    </table></div>
+    </table>${cutdownTwoWayPlaces(room)}</div>
     <footer class="cutdown-foot">
-      <div><strong>${escapeHtml(status)}</strong><span>${summary.releasing ? `Releasing ${escapeHtml(summary.names.join(", "))} · ` : ""}${escapeHtml(costText)}</span></div>
-      <button type="button" class="ui-command" data-cutdown-clear ${summary.releasing ? "" : "disabled"}>Clear</button>
-      <button type="button" class="ui-command cutdown-confirm" data-cutdown-confirm ${summary.ready ? "" : "disabled"}>${summary.releasing ? `Release ${summary.releasing} player${summary.releasing === 1 ? "" : "s"}` : "Release players"}</button>
+      <div><strong>${escapeHtml(status)}</strong><span>${summary.names.length ? `${escapeHtml(summary.names.join(", "))} · ` : ""}${escapeHtml(costText)}</span></div>
+      ${short ? `<button type="button" class="ui-command cutdown-confirm" data-roster-fill>Fill with minimum contracts</button>` : ""}
+      <button type="button" class="ui-command" data-cutdown-clear ${summary.releasing || summary.moving ? "" : "disabled"}>Clear</button>
+      <button type="button" class="ui-command cutdown-confirm" data-cutdown-confirm ${summary.ready ? "" : "disabled"}>${summary.releasing || summary.moving ? `Apply ${summary.releasing + summary.moving} move${summary.releasing + summary.moving === 1 ? "" : "s"}` : "Release players"}</button>
+      ${!short && view.in_season_limits === false && room.phase === "preseason" ? `<button type="button" class="ui-command" data-roster-submit ${summary.required === 0 && !summary.releasing && !summary.moving ? "" : "disabled"} title="Submit your opening roster now (a legal roster is also submitted for you on the deadline)">${view.submitted ? "Submitted" : "Submit roster"}</button>` : ""}
     </footer>
   </div>`;
 }
@@ -6885,17 +7061,23 @@ async function confirmCutdownReleases() {
   const summary = cutdownSelectionSummary(room, choices);
   if (!summary.ready) return;
   const releases = (room.players || []).filter((row) => ["waive", "buyout"].includes(choices[String(row.player_id)]));
-  const lines = releases.map((row) => {
+  const moves = (room.players || []).filter((row) => choices[String(row.player_id)] === "twoway");
+  const lines = [...moves.map((row) => `• Move ${row.name} to a two-way place (outside the 15 and the cap)`), ...releases.map((row) => {
     const choice = choices[String(row.player_id)];
     const cost = cutdownReleaseCost(row, choice);
     const charges = choice === "buyout" && row.buyout?.cap_charges?.length
       ? ` (cap charges if unclaimed: ${row.buyout.cap_charges.map((r) => `${r.season} ${r.salary == null ? "unknown" : money(r.salary / 1000000)}`).join(", ")})`
       : "";
-    return `• ${choice === "buyout" ? "Buy out" : "Waive"} ${row.name}: ${cost === null ? "cost unknown" : `${money(cost)} stays on your books`}${charges}`;
-  });
-  if (!window.confirm(`Release ${releases.length} player${releases.length === 1 ? "" : "s"}? This cannot be undone.\n\n${lines.join("\n")}\n\nThey go on waivers for two days; a claim moves the contract to the claiming team.`)) return;
+    return `• ${choice === "buyout" ? "Buy out" : "Waive"} ${row.name}: ${cost === null ? "cost unknown" : `${money(cost)} stays on your books`}${charges}${row.clears_waivers ? ` (clears waivers ${row.clears_waivers})` : ""}`;
+  })];
+  if (!window.confirm(`Apply ${lines.length} roster move${lines.length === 1 ? "" : "s"}? This cannot be undone.\n\n${lines.join("\n")}${releases.length ? "\n\nReleased players go on waivers for two days; a claim moves the contract to the claiming team." : ""}`)) return;
   let done = 0;
   try {
+    for (const row of moves) {
+      const result = await action("camp_to_two_way", { ...savePayload(), player_id: row.player_id });
+      if (result.status !== "converted") throw new Error(result.reason || result.status || `Could not move ${row.name}`);
+      done += 1;
+    }
     for (const row of releases) {
       const choice = choices[String(row.player_id)];
       const result = await action(choice === "buyout" ? "buyout_player" : "waive_player", { ...savePayload(), player_id: row.player_id });
@@ -6940,7 +7122,10 @@ function wireCutdownWorkspace(root) {
       event.stopPropagation();
       const options = ["keep", "waive", "buyout"];
       const index = options.indexOf(button.dataset.cutdownOption);
-      const nextOption = options[(index + (event.key === "ArrowRight" ? 1 : options.length - 1)) % options.length];
+      const present = Array.from(workspace.querySelectorAll(`[data-cutdown-choice="${CSS.escape(button.dataset.cutdownChoice)}"]`)).map((b) => b.dataset.cutdownOption);
+      const pool = options.filter((option) => present.includes(option)).concat(present.filter((option) => !options.includes(option)));
+      const nextOption = pool[(pool.indexOf(button.dataset.cutdownOption) + (event.key === "ArrowRight" ? 1 : pool.length - 1)) % pool.length];
+      void index;
       workspace.querySelector(`[data-cutdown-choice="${CSS.escape(button.dataset.cutdownChoice)}"][data-cutdown-option="${nextOption}"]`)?.click();
     });
   });
@@ -6949,6 +7134,29 @@ function wireCutdownWorkspace(root) {
     rerender("[data-cutdown-clear]");
   });
   workspace.querySelector("[data-cutdown-confirm]")?.addEventListener("click", confirmCutdownReleases);
+  // FA-REAL slice 4: the two-way places, the roster submission and the assistant's minimum-contract fill.
+  const rosterAction = async (name, payload, okText, confirmText = "") => {
+    if (confirmText && !window.confirm(confirmText)) return;
+    const result = await action(name, { ...savePayload(), ...payload });
+    if (!result || result.status === "blocked") {
+      showToast(result?.reason || "That move is not allowed.", true);
+      return;
+    }
+    showToast(okText(result));
+    state.cutdownChoices = {};
+    await refreshHome();
+  };
+  workspace.querySelectorAll("[data-two-way-convert]").forEach((button) => button.addEventListener("click", () =>
+    rosterAction("two_way_convert", { player_id: button.dataset.twoWayConvert }, () => "Converted to a standard contract",
+      "Convert him to a standard minimum contract? He takes a standard roster spot and his salary counts on the cap.")));
+  workspace.querySelectorAll("[data-two-way-release]").forEach((button) => button.addEventListener("click", () =>
+    rosterAction("two_way_release", { player_id: button.dataset.twoWayRelease }, () => "Two-way player released",
+      "Release him? His two-way place opens and he becomes a free agent.")));
+  workspace.querySelector("[data-roster-submit]")?.addEventListener("click", () =>
+    rosterAction("submit_roster", {}, () => "Opening roster submitted"));
+  workspace.querySelector("[data-roster-fill]")?.addEventListener("click", () =>
+    rosterAction("fill_roster_minimum", {}, (result) => `Signed ${(result.signed || []).length} player${(result.signed || []).length === 1 ? "" : "s"} at the minimum`,
+      "Let your assistant sign the best available free agents at their minimum until you reach the roster minimum?"));
 }
 
 function staffRetentionDashboardWorkspace() {
@@ -8478,7 +8686,8 @@ function seasonalClipboardCards(dashboard) {
     const active = phase === kind;
     const required = active && ["staff_retention", "cutdown"].includes(phase);
     const roomKey = {playoffs:"playoffs", draft:"draft", free_agency:"freeagency", fantasy_draft:"fantasyDraft", staff_retention:"staffRetention", cutdown:"cutdown"}[phase];
-    if (!state.hydrating && state.data[roomKey] && (active || phase === "free_agency" || phase === 'playoffs' && state.home?.save?.playoff_status === 'completed')) {
+    const rosterView = phase === "cutdown" && preseasonRosterViewOpen();
+    if (!state.hydrating && state.data[roomKey] && (active || rosterView || phase === "free_agency" || phase === 'playoffs' && state.home?.save?.playoff_status === 'completed')) {
       seed.innerHTML = phase === "free_agency" && !active
         ? freeAgencyDashboardWorkspace()
         : dashboardPhaseWorkspace(phase);
@@ -8522,7 +8731,7 @@ function seasonalClipboardCards(dashboard) {
         }
       } else card.innerHTML = `<div class="empty">Available during ${escapeHtml(rowLabel(phase))}.</div>`;
       const archiveBracket = phase === 'playoffs' && name === 'bracket' && state.home?.save?.playoff_status === 'completed';
-      const available = Boolean(panel) && (active || archiveBracket || phase === "free_agency");
+      const available = Boolean(panel) && (active || archiveBracket || rosterView || phase === "free_agency");
       const signingClosed = phase === "free_agency" && ["market", "selected"].includes(name)
         && state.data.freeagency?.state?.status === "completed";
       const locked = !available || (phase === "free_agency" && !legal.has("free_agent_signings")) || signingClosed;
@@ -8534,7 +8743,9 @@ function seasonalClipboardCards(dashboard) {
       const cardWidth = bracket ? Math.min(1420, Math.max(320, window.innerWidth - 60)) : lottery ? Math.min(700,Math.max(320,window.innerWidth-60)) : fixed ? fixed[0] : width;
       const cardHeight = bracket ? 480 : lottery ? (state.draftPresentationStage==='odds'?444:454) : fixed ? fixed[1] : height;
       const sizingKey = lottery ? `lottery-v3:${state.draftPresentationStage}` : fixed ? fixed[2] : null;
-      cards.push({id:`phase-${phase}-${name}`, title, card, width:cardWidth, height:cardHeight, sizingKey, locked, galleryVisible:(active || archiveBracket) && Boolean(panel), mandatory:["staff_retention", "cutdown"].includes(phase), required:required && Boolean(panel), measured:Boolean(panel), phaseActive:active && Boolean(panel)});
+      const inSeason = String(state.home?.save?.phase || "") === "regular_season";
+      const title2 = phase === "cutdown" ? (required ? (Number(state.home?.save?.pending_counts?.cutdowns || 0) > 0 ? (inSeason ? "Roster - Cut Required" : "Opening Roster - Cut Required") : "Roster Minimum - Sign Players") : (inSeason ? "Roster & Two-Way Places" : "Opening Roster")) : title;
+      cards.push({id:`phase-${phase}-${name}`, title: title2, card, width:cardWidth, height:cardHeight, sizingKey, locked, galleryVisible:(active || archiveBracket || rosterView) && Boolean(panel), mandatory:["staff_retention", "cutdown"].includes(phase) && !(rosterView && !required), required:required && Boolean(panel), measured:Boolean(panel), phaseActive:(active || rosterView) && Boolean(panel)});
     }
     seed.remove();
   }
@@ -9044,6 +9255,20 @@ function wireFreeAgencyBuilderPanel(panel) {
   panel.querySelector("[data-fa-offer-route]")?.addEventListener("change", (event) => { draft.route = event.target.value || ""; update(); });
   panel.querySelectorAll("[data-fa-renounce]").forEach((button) => button.addEventListener("click", () => renounceCapHold(button.dataset.faRenounce || "")));
   panel.querySelector("[data-fa-submit-offer]")?.addEventListener("click", () => submitFreeAgentOffer(player.id));
+  // FA-REAL slice 4: two-way, camp invite and sign-and-trade.
+  panel.querySelectorAll("[data-fa-two-way]").forEach((button) => button.addEventListener("click", () => freeAgencyRosterEdgeSign(player, "two_way", Number(button.dataset.faTwoWay || 1))));
+  panel.querySelector("[data-fa-camp-invite]")?.addEventListener("click", () => freeAgencyRosterEdgeSign(player, "camp"));
+  panel.querySelector("[data-fa-snt-open]")?.addEventListener("click", () => freeAgencySignAndTrade(player, "open"));
+  panel.querySelectorAll("[data-fa-snt-propose]").forEach((button) => button.addEventListener("click", () => freeAgencySignAndTrade(player, "propose", { receiver: button.dataset.faSntPropose })));
+  panel.querySelectorAll("[data-fa-snt-out]").forEach((box) => box.addEventListener("change", () => {
+    const st = state.signAndTrade || {};
+    const set = new Set(st.outgoing || []);
+    if (box.checked) set.add(box.dataset.faSntOut); else set.delete(box.dataset.faSntOut);
+    st.outgoing = Array.from(set); st.terms = null; st.answer = null;
+  }));
+  panel.querySelector("[data-fa-snt-pick]")?.addEventListener("change", (event) => { const st = state.signAndTrade || {}; st.pick = event.target.checked; st.pick_id = st.options?.pick_id || null; });
+  panel.querySelector("[data-fa-snt-check]")?.addEventListener("click", () => freeAgencySignAndTrade(player, "check"));
+  panel.querySelector("[data-fa-snt-submit]")?.addEventListener("click", () => freeAgencySignAndTrade(player, "submit"));
   update();
 }
 

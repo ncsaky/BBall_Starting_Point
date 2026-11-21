@@ -221,21 +221,49 @@ def priority(active, save, stamp):
     return [t['id'] for t in sorted(active.get('teams', []), key=key)]
 
 
+def camp_claim_plausible(active, save, player_id, team_id, depth):
+    """A quick look before the full claim plan: is this camp-deal player better than the team's 8th best player (a clear rotation upgrade)?"""
+    from .two_way import overall, standard_roster_ids
+    if team_id not in depth:
+        roster = standard_roster_ids(active, save, team_id)
+        ratings = sorted((overall(active, pid) for pid in roster), reverse=True)
+        # A team at 15 standard players would have to cut someone for a camp player: it doesn't.
+        depth[team_id] = 999.0 if len(roster) >= 15 else (ratings[7] if len(ratings) >= 8 else 0.0)
+    if ('player', player_id) not in depth:
+        depth[('player', player_id)] = overall(active, player_id)
+    return depth[('player', player_id)] > depth[team_id]
+
+
 def process_waivers(canonical, save, stamp):
     from .save import canonical_with_save, human_controlled_team_ids, add_news
     resolved = []
     due = sorted((r for r in save.get('waiver_wire', []) if r['status'] == 'pending' and r['clearance_date'] <= stamp), key=lambda r: (r['clearance_date'], r['id']))
+    # FA-REAL slice 4: camp cuts clear in batches (about 150 a camp). The league view is rebuilt only after a claim
+    # moves a player (a cleared waiver changes no roster), and a camp-deal player is worth a claim only for a team
+    # whose 8th best player he beats (6 camp claims in 2023-2026); other waivers are judged as before.
+    active = None
+    depth: dict[str, float] = {}
     for entry in due:
-        active = canonical_with_save(canonical, save)
+        if active is None:
+            active = canonical_with_save(canonical, save)
+            depth = {}
         day = entry['clearance_date']
         human = human_controlled_team_ids(save)
         claims = {c['team_id']: c for c in entry['claims']}
+        camp_deal = bool(((save.get('contract_overrides') or {}).get(entry['player_id']) or {}).get('exhibit_10'))
         for tid in priority(active, save, day):
             if tid in human or tid in claims:
+                continue
+            if camp_deal and (str(entry.get('date') or '')[5:] < '10-01'
+                              or not camp_claim_plausible(active, save, entry['player_id'], tid, depth)):
+                # Summer camp-deal releases are affiliate assignments: AI teams claim camp deals only at the
+                # preseason cutdown (all six real camp claims in 2023-2026 came in October).
                 continue
             plan = claim_plan(active, save, entry, tid, ai=True)
             if plan['ok']:
                 claims[tid] = {'team_id': tid, 'date': day, 'cut_player_id': plan['cut_player_id'], 'source': 'ai'}
+                if camp_deal:
+                    break   # teams are asked in priority order: the first AI claimant outranks every later one
         entry['claims'] = sorted(claims.values(), key=lambda c: c['team_id'])
         winner = None
         winning_plan = None
@@ -271,6 +299,7 @@ def process_waivers(canonical, save, stamp):
             save.setdefault('rotation_snapshots', {}).pop(tid, None)
             save.setdefault('starting_lineups', {}).pop(tid, None)
             headline = f"{entry['player_name']} claimed on waivers. Existing contract transferred."
+            active = None   # rosters changed
         else:
             if entry['buyout']:
                 for row in debt['seasons']:

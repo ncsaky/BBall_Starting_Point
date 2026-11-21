@@ -388,6 +388,17 @@ def runtime_status(root: Path, save_dir: Path) -> dict[str, Any]:
                 "decide_option",
                 "qualifying_offer",
                 "offer_sheet_decision",
+                "two_way_sign",
+                "two_way_release",
+                "two_way_convert",
+                "two_way_qualifying_offer",
+                "camp_invite",
+                "camp_to_two_way",
+                "submit_roster",
+                "fill_roster_minimum",
+                "sign_and_trade_options",
+                "sign_and_trade_quote",
+                "sign_and_trade_submit",
                 "advance_free_agency",
                 "staff_market",
                 "staff_room",
@@ -762,6 +773,9 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return qualifying_offer_action(canonical, save_path, payload)
     if action == "offer_sheet_decision":
         return offer_sheet_decision_action(canonical, save_path, payload)
+    if action in ROSTER_EDGE_ACTIONS:
+        # FA-REAL slice 4: two-way contracts, camp deals, the opening roster and sign-and-trades.
+        return roster_edge_action(action, root, canonical, save_path, payload)
     if action == "advance_re_signing":
         return advance_re_signing_action(canonical, save_path, payload, root)
     if action == "advance_free_agency":
@@ -1386,6 +1400,7 @@ def dashboard_snapshot_payload(
         phase in {"fantasy_draft", "play_in", "playoffs", "draft_lottery", "draft", "re_signing", "free_agency"}
         or int(pending.get("staff") or 0) > 0
         or int(pending.get("cutdowns") or 0) > 0
+        or int(pending.get("roster_minimum") or 0) > 0
     )
     stat = save_path.stat()
     revision = f"{stat.st_mtime_ns:x}-{stat.st_size:x}"
@@ -3492,8 +3507,11 @@ def season_label_for_app(start: int) -> str:
 
 
 def roster_cutdown_payload(canonical: dict[str, Any], save_path: Path) -> dict[str, Any]:
+    """The opening-roster view (FA-REAL slice 4: the 21-to-15 cutdown): every standard player with his guarantee, what
+    waiving him costs and when he would clear waivers, the camp deals, and the two-way places."""
     from .contract_protection import waiver_projection
     from .waivers import buyout_quote
+    from . import camp, two_way
     save = ensure_league_save_defaults(load_save(save_path), canonical)
     refresh_roster_cutdowns(canonical, save, apply_ai=False)
     active = canonical_with_save(canonical, save)
@@ -3502,11 +3520,24 @@ def roster_cutdown_payload(canonical: dict[str, Any], save_path: Path) -> dict[s
     pending = next((item for item in save.get("pending_roster_cutdowns", []) if item.get("team_id") == team_id), None)
     protected = recent_rookie_protected_player_ids(save)
     health_by_player = {row.get("player_id"): row for row in save.get("health_states", [])}
+    season = two_way.current_season(save)
+    today = str(save.get("state", {}).get("current_date") or "")
+    before_opening = today < camp.opening_night(save) and str((save.get("state") or {}).get("phase") or "") not in {
+        "regular_season", "play_in", "playoffs"}
+    open_places = two_way.open_places(save, str(team_id))
     rows = []
+    contracts = {c.get("player_id"): c for c in active.get("contracts", [])}
     for player in active.get("players", []):
         if player.get("team_id") != team_id:
             continue
         attrs = player_display_attribute_summary(active, player["id"])
+        override = (save.get("contract_overrides") or {}).get(player["id"]) or {}
+        camp_deal = bool(override.get("exhibit_10"))
+        seasons = override.get("seasons") or (contracts.get(player["id"]) or {}).get("seasons") or []
+        waiver = waiver_projection(active, save, player, team_id)
+        draft_pick = camp.own_draft_pick(save, player["id"], str(team_id))
+        convertible = before_opening and (camp_deal or bool(draft_pick))
+        eligibility = two_way.eligibility(save, player, str(team_id), season, 1) if convertible else {"ok": False}
         rows.append(
             {
                 "player_id": player["id"],
@@ -3520,21 +3551,151 @@ def roster_cutdown_payload(canonical: dict[str, Any], save_path: Path) -> dict[s
                 "health": player_health_label(health_by_player.get(player["id"]), save.get("state", {}).get("current_date")),
                 "salary_by_year": player_salary_table(active, player["id"]),
                 "can_waive": True,
-                "waiver": waiver_projection(active, save, player, team_id),
+                "waiver": waiver,
                 "buyout": buyout_quote(active, save, player, team_id),
                 "protected_reason": "Recent draftees receive a retention preference in automatic roster cutdowns." if player["id"] in protected else "",
+                # FA-REAL slice 4: the contract kind, its guarantee in words, and the two-way route.
+                "contract_kind": "camp" if camp_deal else ("rookie" if draft_pick else "standard"),
+                "guarantee": camp.guarantee_words(seasons, season, camp_deal=camp_deal),
+                "clears_waivers": waiver.get("clearance_date"),
+                "two_way_convertible": bool(convertible and eligibility.get("ok") and open_places > 0),
+                "two_way_reason": ("" if convertible and eligibility.get("ok") and open_places > 0 else
+                                   eligibility.get("reason") or ("All three two-way places are filled." if convertible
+                                                                 else "")),
             }
         )
     rows.sort(key=lambda row: (row["can_waive"], float(row["minutes"]), float(row["overall"]), str(row["name"])), reverse=False)
+    short = save.get("pending_roster_minimum") or {}
+    roster = camp.roster_view(active, save, str(team_id))
+    for row in roster["two_ways"]:
+        row["convert"] = two_way.conversion_quote(active, save, row["player_id"])
+    status = "required" if pending else ("short" if short.get("blocking") else "clear")
     return {
-        "status": "required" if pending else "clear",
+        "status": status,
         "date": save.get("state", {}).get("current_date"),
         "team": team,
         "pending": pending,
         "current_count": len(rows),
         "target_count": int((pending or {}).get("target_count") or 15),
         "players": rows,
+        "roster": roster,
+        "short": short or None,
+        "phase": (save.get("state") or {}).get("phase"),
     }
+
+
+ROSTER_EDGE_ACTIONS = {
+    "two_way_sign", "two_way_release", "two_way_convert", "two_way_qualifying_offer", "camp_invite", "camp_to_two_way",
+    "submit_roster", "fill_roster_minimum", "sign_and_trade_options", "sign_and_trade_quote", "sign_and_trade_submit",
+}
+
+
+def _edge_team_id(active: dict[str, Any], save: dict[str, Any], payload: dict[str, Any]) -> str:
+    query = payload.get("team")
+    if query:
+        return resolve_team(active, str(query))["id"]
+    return str((save.get("meta") or {}).get("user_team_id"))
+
+
+def roster_edge_action(action: str, root: Path, canonical: dict[str, Any], save_path: Path,
+                       payload: dict[str, Any]) -> dict[str, Any]:
+    """FA-REAL slice 4 actions. Every rule is the engine's own (two_way, camp, sign_and_trade): the screens show the
+    same answer the save applies (rule 4)."""
+    from . import camp, sign_and_trade, two_way
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    active = canonical_with_save(canonical, save)
+    team_id = _edge_team_id(active, save, payload)
+    today = str((save.get("state") or {}).get("current_date") or CANONICAL_START_DATE)
+    player_id = str(payload.get("player_id") or "")
+    player = next((p for p in active.get("players", []) if p.get("id") == player_id), None)
+    team = team_by_id(active, team_id)
+
+    def done(status: str, **extra: Any) -> dict[str, Any]:
+        write_save(save_path, save)
+        return {"status": status, **extra, "room": roster_cutdown_payload(canonical, save_path)}
+
+    try:
+        if action == "two_way_sign":
+            if player is None:
+                raise ValueError("Unknown player.")
+            if player_id not in set(save.get("free_agent_player_ids") or []):
+                raise ValueError("He is not a free agent.")
+            rec = two_way.sign(save, player, team_id, years=int(payload.get("years") or 1), how="signed", when=today,
+                               by="user")
+            two_way.refresh_ratings(active, save, teams={team_id})
+            return done("signed", two_way=rec)
+        if action == "two_way_release":
+            if two_way.two_way_team(save, player_id) != team_id:
+                raise ValueError("He is not on your two-way contract.")
+            rec = two_way.release(save, player_id, when=today, by="user", reason="released by his team")
+            return done("released", two_way=rec)
+        if action == "two_way_convert":
+            if two_way.two_way_team(save, player_id) != team_id:
+                raise ValueError("He is not on your two-way contract.")
+            result = two_way.convert(active, save, player_id, years=payload.get("years"), when=today, by="user",
+                                     reason="")
+            return done("converted", result=result)
+        if action == "two_way_qualifying_offer":
+            row = two_way.user_qualifying_offer(save, active, player_id, bool(payload.get("tender", True)), today)
+            write_save(save_path, save)
+            return {"status": row["status"], "qualifying_offer": row,
+                    "checklist": offseason_checklist_payload(canonical, ensure_league_save_defaults(load_save(save_path), canonical),
+                                                             str(team.get("abbrev")))}
+        if action == "camp_invite":
+            if player is None:
+                raise ValueError("Unknown player.")
+            row = camp.invite(active, save, player, team_id, when=today, by="user")
+            return done("signed", camp_deal=row)
+        if action == "camp_to_two_way":
+            rec = camp.convert_to_two_way(active, save, player_id, when=today, by="user")
+            return done("converted", two_way=rec)
+        if action == "submit_roster":
+            view = camp.roster_view(active, save, team_id)
+            if not view["legal"] or save.get("pending_roster_cutdowns"):
+                raise ValueError(f"Your roster has {view['standard_count']} standard players; cut to "
+                                 f"{view['standard_limit']} first.")
+            row = camp.submit_roster(save, team_id, today, active=active)
+            return done("submitted", submitted=row)
+        if action == "fill_roster_minimum":
+            from .save import fill_user_roster_minimum, update_user_roster_minimum
+            signed = fill_user_roster_minimum(canonical, save, int(payload.get("seed") or (save.get("meta") or {}).get("seed") or 1))
+            fresh = canonical_with_save(canonical, save)
+            update_user_roster_minimum(save, sum(1 for p in fresh.get("players", []) if p.get("team_id") == team_id), today)
+            return done("filled", signed=signed)
+        if action in {"sign_and_trade_options", "sign_and_trade_quote", "sign_and_trade_submit"}:
+            if player is None:
+                raise ValueError("Unknown player.")
+            active = with_transaction_context(active)
+            if action == "sign_and_trade_options":
+                return {"status": "ok", "options": sign_and_trade.user_options(active, save, player, team_id)}
+            rights = next((r.get("team_id") for r in save.get("re_signing_rights", []) or []
+                           if r.get("player_id") == player_id), None)
+            sender = str(payload.get("sender") or rights or "")
+            receiver = str(payload.get("receiver") or team_id)
+            if team_id not in {sender, receiver}:
+                raise ValueError("Your team must be one side of the sign-and-trade.")
+            terms = sign_and_trade.quote(active, save, player, sender, receiver,
+                                         float(payload.get("salary_millions") or 0.0) * 1_000_000,
+                                         int(payload.get("years") or sign_and_trade.MIN_YEARS),
+                                         outgoing_ids=list(payload.get("outgoing_ids") or []),
+                                         pick_ids=list(payload.get("pick_ids") or []), when=today)
+            answer = sign_and_trade.ai_answer(active, save, terms, team_id) if terms["ok"] else {
+                "ok": False, "who": "rules", "reason": "; ".join(terms["problems"])}
+            view = {key: terms[key] for key in ("ok", "problems", "notes", "season", "years", "salary", "schedule",
+                                                "outgoing_salary", "incoming_salary", "back_salary", "matching_limit",
+                                                "via_room", "receiver_apron_after", "first_apron", "outgoing_ids",
+                                                "pick_ids", "maximum", "minimum", "sender", "receiver")}
+            view["base_year"] = terms.get("base_year")
+            if action == "sign_and_trade_quote" or not (terms["ok"] and answer["ok"]):
+                return {"status": "quote" if action == "sign_and_trade_quote" else "declined", "terms": view,
+                        "answer": answer}
+            terms["cash"] = False
+            record = sign_and_trade.execute(active, save, terms, when=today, by="user",
+                                            reasons={team_id: "your proposal"})
+            return done("executed", sign_and_trade=record, terms=view)
+    except ValueError as error:
+        return {"status": "blocked", "reason": str(error)}
+    raise AppActionError(f"Unknown roster action {action!r}")
 
 
 def waive_player_action(root: Path, canonical: dict[str, Any], save_path: Path, payload: dict[str, Any], *, buyout: bool = False) -> dict[str, Any]:
@@ -3880,7 +4041,22 @@ def free_agency_room_payload(
     user_offer_history.sort(key=lambda row: str(row.get("date") or ""), reverse=True)
     roster_count = sum(1 for player in active.get("players", []) if player.get("team_id") == team["id"])
     shown_candidates = (own_candidates if phase == "re_signing" else candidates)[:80]
+    if phase != "re_signing":
+        # FA-REAL slice 4: young players who could take a two-way or camp deal are listed too (the 80 above are the
+        # players with the biggest roles; two-way candidates rarely make that list).
+        from .two_way import SERVICE_LIMIT, years_of_service as tw_service
+        extra = [c for c in candidates[80:] if float(c.get("age") or 99) <= 26
+                 and tw_service(players_by_id.get(c["id"]) or {}, signing_season) < SERVICE_LIMIT]
+        shown_candidates = shown_candidates + sorted(
+            extra, key=lambda c: -float((c.get("ratings") or {}).get("overall") or 0.0))[:30]
     shown_ids = {id(candidate) for candidate in shown_candidates}
+    # FA-REAL slice 4: the other ways to add a player (a two-way contract, a camp deal, a sign-and-trade), each with
+    # the engine's own eligibility answer (two_way, camp, sign_and_trade).
+    edge_context = roster_edge_room_context(active, save, team["id"], ledger_payroll)
+    for candidate in shown_candidates:
+        player = players_by_id.get(candidate["id"])
+        if player:
+            candidate["roster_edge"] = roster_edge_candidate_view(active, save, team["id"], player, edge_context)
     # FA-REAL slices 2-3: restricted free agents (a live qualifying offer). Another team's restricted free agent signs
     # with you only on an offer sheet: the builder shows the sheet's terms, and what he needs from you is his price now
     # (offer_sheets.player_takes_sheet), the same rule the save applies.
@@ -3986,6 +4162,63 @@ def free_agency_room_payload(
         "stop": offseason_stop_name(phase, state),
         # FA-REAL slice 3: offer sheets waiting for your Match or Pass, yours as the bidder, and the league's.
         "offer_sheets": sheets_rules.room_view(active, save, team["id"]),
+    }
+
+
+def roster_edge_room_context(active: dict[str, Any], save: dict[str, Any], team_id: str,
+                             payroll: dict[str, Any]) -> dict[str, Any]:
+    """Team-level facts the free-agency room needs for two-way, camp-deal and sign-and-trade buttons (computed once)."""
+    from . import camp, sign_and_trade, two_way
+    today = str((save.get("state") or {}).get("current_date") or "")
+    room = two_way.standard_room(active, save, team_id, today)
+    ceiling = payroll.get("hard_cap")
+    return {
+        "today": today, "season": two_way.current_season(save), "open_places": two_way.open_places(save, team_id),
+        "standard_room": room, "camp_open": camp.camp_open(save, today),
+        "camp_deals": len(camp.camp_deal_ids(save, team_id)),
+        "hard_cap_room": (float(ceiling["amount"]) - float(payroll["apron_payroll"])) if ceiling else None,
+        "snt_open": sign_and_trade.window_open(save, today),
+        "rights": {r.get("player_id"): r.get("team_id") for r in save.get("re_signing_rights", []) or []},
+        "restricted": two_way.restricted_two_way_ids(save),
+        "bonus": camp.affiliate_bonus(two_way.current_season(save)),
+    }
+
+
+def roster_edge_candidate_view(active: dict[str, Any], save: dict[str, Any], team_id: str, player: dict[str, Any],
+                               ctx: dict[str, Any]) -> dict[str, Any]:
+    from . import camp, two_way
+    from .cap_ledger import minimum_salary
+    season = ctx["season"]
+    pid = player["id"]
+    restricted = pid in ctx["restricted"]
+    eligible = two_way.eligibility(save, player, team_id, season, 1, today=ctx["today"])
+    two_way_ok = eligible["ok"] and ctx["open_places"] > 0 and not restricted
+    two_way_reason = ("" if two_way_ok else "He is a restricted free agent." if restricted
+                      else eligible.get("reason") or "All three two-way places are filled.")
+    two_years = two_way.eligibility(save, player, team_id, season, 2, today=ctx["today"])["ok"]
+    service = two_way.years_of_service(player, season)
+    minimum = float(minimum_salary(season, service))
+    camp_reason = ""
+    if not ctx["camp_open"]:
+        camp_reason = "Camp deals are signed between July 1 and opening night."
+    elif restricted:
+        camp_reason = "He is a restricted free agent."
+    elif ctx["camp_deals"] >= camp.EXHIBIT_10_MAXIMUM:
+        camp_reason = f"You already have {camp.EXHIBIT_10_MAXIMUM} camp deals."
+    elif ctx["standard_room"]["open"] <= 0:
+        camp_reason = ctx["standard_room"]["reason"]
+    elif ctx["hard_cap_room"] is not None and ctx["hard_cap_room"] < minimum:
+        camp_reason = "Your hard cap leaves no room even for a minimum contract."
+    rights = ctx["rights"].get(pid)
+    return {
+        "two_way": {"ok": two_way_ok, "reason": two_way_reason, "two_years": bool(two_years and two_way_ok),
+                    "pay_millions": round(two_way.pay(season) * two_way.season_fraction_left(save, season, ctx["today"]) / 1e6, 3),
+                    "service": service},
+        "camp": {"ok": not camp_reason, "reason": camp_reason, "salary_millions": round(minimum / 1e6, 3),
+                 "bonus": ctx["bonus"]},
+        "sign_and_trade": {"available": bool(ctx["snt_open"] and rights and not restricted),
+                           "role": "sender" if rights == team_id else ("receiver" if rights else None),
+                           "rights_team_id": rights, "rights_abbrev": team_id_to_abbrev(rights) if rights else None},
     }
 
 

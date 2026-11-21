@@ -941,6 +941,12 @@ def repair_unpooled_unrostered_players(canonical: dict[str, Any], save: dict[str
     retired = set(save.get("retired_player_ids") or [])
     from .waivers import pending_ids
     retired |= pending_ids(save)
+    # FA-REAL slice 4: two-way players (and expired two-ways whose team still decides on a qualifying offer) are off
+    # the standard roster on purpose; they are not lost roster cuts.
+    two_way = save.get("two_way") or {}
+    retired |= set(two_way.get("contracts") or {})
+    retired |= {pid for pid, row in (two_way.get("qualifying_offers") or {}).items()
+                if row.get("status") in {"pending", "tendered"}}
     unsigned_rights = {
         row.get("player_id")
         for row in save.get("incoming_rookies", [])
@@ -998,9 +1004,17 @@ def refresh_roster_cutdowns(canonical: dict[str, Any] | None, save: dict[str, An
     retention_players: dict[str, dict[str, Any]] = {}
     pending: list[dict[str, Any]] = []
     free_agents = set(save.get("free_agent_player_ids") or [])
+    # FA-REAL slice 4: teams carry up to 21 players (two-ways included) through camp; the 15-player standard limit
+    # binds from the roster deadline (the day before opening night). AI teams make their camp cuts two days before
+    # it (camp.ai_cutdown); the user's 21-to-15 cutdown is due by the deadline (advancing into games waits for it).
+    from .two_way import OFFSEASON_ROSTER_MAXIMUM, in_season_limits, team_two_ways
+    in_season = in_season_limits(save)
+    phase_now = (save.get("state") or {}).get("phase")
     for team in canonical.get("teams", []):
         players = [player for player in active if player.get("team_id") == team.get("id")]
         target_count = roster_cutdown_target(save, team.get("id"))
+        if not in_season and (phase_now == "training_camp" or team.get("id") not in human_team_ids):
+            target_count = OFFSEASON_ROSTER_MAXIMUM - len(team_two_ways(save, team.get("id")))
         if len(players) <= target_count:
             continue
         overflow = len(players) - target_count
@@ -1082,6 +1096,10 @@ def normalize_starting_rosters(canonical: dict[str, Any], save: dict[str, Any]) 
     rotation-value overflow enters the ordinary free-agent pool before the
     user sees the team. Later user-created overflows still use cutdown prompts.
     """
+    # FA-REAL slice 4: each team's real opening-night two-way players take its two-way places first.
+    if str((save.get("meta") or {}).get("game_mode") or "standard") == "standard":
+        from .two_way import seed_opening_two_ways
+        seed_opening_two_ways(canonical, save)
     active = active_players_for_roster_checks(canonical, save)
     free_agents = set(save.get("free_agent_player_ids") or [])
     for team in canonical.get("teams", []):
@@ -1529,6 +1547,10 @@ def canonical_with_save(canonical: dict[str, Any] | Any, save: dict[str, Any]) -
     canonical['team_plans'] = copy_plain(save.get('team_plans', {}))
     canonical['team_trade_wants'] = copy_plain(save.get('team_trade_wants', {}))
     canonical['team_payroll_history'] = save.get('team_payroll_history') or {}  # read-only: repeat taxpayers (trade step 4)
+    # FA-REAL slice 4: hard caps triggered this cap year (cap_ledger), for the trade code's salary check (read-only).
+    ledger_year = (((save.get("cap_ledger") or {}).get("seasons") or {}).get(str(active_season)) or {})
+    canonical['triggered_hard_caps'] = {tid: float(row["hard_cap"]["amount"]) for tid, row in ledger_year.items()
+                               if (row or {}).get("hard_cap")}
     from .trade_ownership import LEDGER_KEY, tenure_ledger_view
     canonical[LEDGER_KEY] = tenure_ledger_view(save)  # read-only for trade code; never written back from here
     attach_trade_market(canonical, save)
@@ -1968,6 +1990,7 @@ def advance_save(
     guard_required_phase_actions(save, current, guard_target)
     if target > current and save.get("state", {}).get("phase") in {"preseason", "regular_season"}:
         refresh_roster_cutdowns(canonical, save)
+        refresh_user_roster_minimum(canonical, save)
         guard_required_phase_actions(save, current, guard_target)
     simulated_before = len(save.get("schedule_state", {}).get("simulated_game_ids", []))
     from_date = current
@@ -1991,7 +2014,16 @@ def advance_save(
             stopped = True
             break
         through_date = next_date_str(current, 1)
-        guard_required_phase_actions(save, current, through_date)
+        try:
+            guard_required_phase_actions(save, current, through_date)
+        except RosterMinimumRequired:
+            # FA-REAL slice 4: the user's roster fell below the minimum during this advance (the two-week grace for a
+            # 13th man ran out): stop here, keeping the days already played, for the user to sign someone.
+            if current == from_date:
+                raise
+            target = current
+            stopped = True
+            break
         if phase_for_date(through_date) in {"play_in", "playoffs"}:
             initialize_postseason(canonical, save, save_path, effective_seed)
             if not stop_before_postseason_games:
@@ -2081,6 +2113,25 @@ def advance_lifecycle_to(
         if day[5:7] in {"05", "06"} and maybe_run_spring_lottery(canonical, save, day) is not None:
             active = None
         active = canonical_with_save(canonical, save) if active is None else refresh_active_runtime_state(active, save)
+        # FA-REAL slice 4: two-way contracts (summer fill, call-up ratings, promotions, qualifying offers) and camp
+        # (Exhibit 10 invites, overseas departures, the 21-to-15 cutdown), each on its own dates. They read today's
+        # view; a roster change rebuilds it.
+        if is_league_save(save):
+            from . import camp, two_way
+            edge_state = {"view": active}
+
+            def edge_view() -> dict[str, Any]:
+                if edge_state["view"] is None:
+                    edge_state["view"] = canonical_with_save(canonical, save)
+                return edge_state["view"]
+            edge_seed = int((save.get("meta") or {}).get("seed") or seed or 1)
+            if two_way.daily(canonical, save, day, edge_view, seed=edge_seed):
+                edge_state["view"] = None
+            if camp.daily(canonical, save, day, edge_view, seed=edge_seed):
+                edge_state["view"] = None
+            if edge_state["view"] is not active:
+                active = edge_view()
+                carried_active = False
         if carried_active:
             # Match the planning view a fresh rebuild would create today.
             active["_trade_planning_save"] = {
@@ -2278,7 +2329,12 @@ def advance_save_day(
         context["indices"]["coach_by_team"] = save_coach_ratings(runtime_canonical, save)
         context["starting_lineups"] = saved_starting_lineups(save)
         simulated_game_ids = set(save.get("schedule_state", {}).get("simulated_game_ids", []))
-        for game in scheduled_games_between(root, save, current, target):
+        todays = [game for game in scheduled_games_between(root, save, current, target)
+                  if str(game.get("externalGameId")) not in simulated_game_ids]
+        # FA-REAL slice 4: the two-way players the coach calls up tonight join their teams for the games.
+        from .two_way import dress_for_games, undress
+        dressed = dress_for_games(save, runtime_canonical, todays, target)
+        for game in todays:
             game_id = str(game.get("externalGameId"))
             if game_id in simulated_game_ids:
                 continue
@@ -2286,6 +2342,7 @@ def advance_save_day(
             record_game_result(save, canonical, game, result)
             add_box_score_fatigue(runtime_canonical, save.setdefault("health_states", []), result, game["gameDate"], root)
             simulated_game_ids.add(game_id)
+        undress(save, runtime_canonical, dressed, target)
         show_injuries_from_todays_games(save, target)
         # Tonight's minutes are in: the user's next-game fatigue and rest note follow them.
         attach_rest_suggestions(root, runtime_canonical, save, target, effective_seed)
@@ -4642,6 +4699,7 @@ def complete_offseason_and_rollover(
     advance_lifecycle_to(canonical, save, f"{next_start}-10-01", seed, root)
     save["applied_development_months"] = [m for m in save.get("applied_development_months", []) if m >= f"{next_start}-10"]
     refresh_roster_cutdowns(canonical, save)
+    refresh_user_roster_minimum(canonical, save)
     save["pending_offseason_review"] = {
         "season": current_season,
         "generated_date": f"{next_start}-10-01",
@@ -5259,6 +5317,21 @@ def rookie_option_deadline_for(save: dict[str, Any]) -> str:
     return rookie_option_deadline(season_start_year(save.get("meta", {}).get("season") or CANONICAL_SEASON)).isoformat()
 
 
+class RosterMinimumRequired(ValueError):
+    """The user's team is below the roster minimum (FA-REAL slice 4); games wait for a signing."""
+
+
+def refresh_user_roster_minimum(canonical: dict[str, Any], save: dict[str, Any]) -> None:
+    team_id = (save.get("meta") or {}).get("user_team_id")
+    if not team_id or not is_league_save(save):
+        return
+    roster = save.get("roster_overrides") or {}
+    active = active_players_for_roster_checks(canonical, save)
+    count = sum(1 for player in active if player.get("team_id") == team_id)
+    del roster
+    update_user_roster_minimum(save, count, str((save.get("state") or {}).get("current_date") or ""))
+
+
 def guard_required_phase_actions(save: dict[str, Any], current: str, target: str) -> None:
     end_year = season_end_year(save.get("meta", {}).get("season") or CANONICAL_SEASON)
     start_year = season_start_year(save.get("meta", {}).get("season") or CANONICAL_SEASON)
@@ -5277,6 +5350,12 @@ def guard_required_phase_actions(save: dict[str, Any], current: str, target: str
         raise ValueError(
             f"{team.get('team_abbrev') or 'Your team'} has {team.get('current_count')} players. "
             f"Cut to {team.get('target_count') or ROSTER_SEASON_MAXIMUM} before opening night."
+        )
+    short = save.get("pending_roster_minimum") or {}
+    if target > current and target >= regular_start_gate and phase in {"preseason", "regular_season"} and short.get("blocking"):
+        raise RosterMinimumRequired(
+            f"Your team has {short.get('count')} players; teams must carry {short.get('minimum')} (13 for up to two "
+            "weeks). Sign a free agent, or let your assistant fill the roster with minimum contracts."
         )
     if current < playoff_gate <= target:
         state = save.get("playoff_state") or {}
@@ -5379,6 +5458,10 @@ def filter_result_to_active_game_rosters(save: dict[str, Any], canonical: dict[s
     for player_id, team_id in roster_overrides.items():
         if team_id in game_teams and player_id not in free_agents and player_id not in retired:
             active_team_by_player[player_id] = team_id
+    # FA-REAL slice 4: a two-way player the coach called up plays for his team.
+    for player_id, record in ((save.get("two_way") or {}).get("contracts") or {}).items():
+        if record.get("team_id") in game_teams:
+            active_team_by_player[player_id] = record["team_id"]
     filtered = [
         line for line in lines
         if line.get("player_id")
@@ -7963,6 +8046,8 @@ def pending_counts(save: dict[str, Any]) -> dict[str, int]:
         "staff": len([item for item in save.get("staff_retention_windows", []) if item.get("status") == "pending_user_decision"]),
         "user_trade_offers": len({trade_offer_fingerprint(item) for item in pending_user_offers}),
         "cutdowns": len(save.get("pending_roster_cutdowns", [])),
+        # FA-REAL slice 4: the user's team below the roster minimum (games wait; the roster window offers a fill).
+        "roster_minimum": int(bool((save.get("pending_roster_minimum") or {}).get("blocking"))),
         "ai_actions": len([item for item in save.get("pending_ai_actions", []) if ai_action_is_visible(item)]),
     }
 
@@ -10474,8 +10559,12 @@ def strategic_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any
     free_agents = list(set(free_agents) - pending_ids(save) - set(restricted_player_ids(save)))
     active = canonical_with_save(canonical, save)
     teams = sorted(canonical.get("teams", []), key=lambda item: item["abbrev"])
+    # FA-REAL slice 4: camp deals (Exhibit 10) are camp bodies, not roster spots a veteran signing competes for.
+    camp_ids = {pid for pid, override in (save.get("contract_overrides") or {}).items()
+                if override and override.get("exhibit_10")}
     roster_by_team: dict[str, list[dict[str, Any]]] = {
-        team["id"]: [player for player in active.get("players", []) if player.get("team_id") == team["id"]]
+        team["id"]: [player for player in active.get("players", []) if player.get("team_id") == team["id"]
+                     and player["id"] not in camp_ids]
         for team in teams
     }
     cap_room_by_team: dict[str, dict[str, float]] = {}
@@ -10491,7 +10580,10 @@ def strategic_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any
     ]
     signed: set[str] = set()
     pass_signed: dict[str, list[float]] = {}
+    humans = human_controlled_team_ids(save)
     for team in teams:
+        if team["id"] in humans:
+            continue   # FA-REAL slice 4: nobody is signed onto a human team's roster without its say-so
         roster = roster_by_team.setdefault(team["id"], [])
         open_slots = max(0, 17 - len(roster))
         if open_slots <= 0:
@@ -10528,6 +10620,16 @@ def strategic_free_agent_signings(canonical: dict[str, Any], save: dict[str, Any
                                  minutes=display_minutes_projection(player), kind="free_agency", age=player.get("display_age", player.get("age")),
                                  committed=signed_here[0], committed_players=signed_here[1])["ok"]:
                 continue
+            # FA-REAL slice 4: at the 21-player offseason maximum a team waives its weakest camp deal first.
+            from . import camp as camp_rules, two_way as two_way_rules
+            if two_way_rules.standard_room(active, save, team["id"])["open"] <= 0:
+                deals = camp_rules.camp_deal_ids(save, team["id"])
+                if not deals:
+                    continue
+                weakest = min(deals, key=lambda pid: (two_way_rules.overall(active, pid), pid))
+                if not camp_rules.waive(active, save, weakest, team["id"], str(save["state"]["current_date"]),
+                                        reason="roster spot for a veteran signing"):
+                    continue
             signed_here[0] += salary
             signed_here[1] += 1
             save.setdefault("roster_overrides", {})[player["id"]] = team["id"]
@@ -10941,7 +11043,8 @@ def strategic_signing_salary(player: dict[str, Any], score: float) -> int:
     return int(round(clamp(salary, 1_900_000, 18_000_000)))
 
 
-def auto_fill_rosters(canonical: dict[str, Any], save: dict[str, Any], free_agents: list[str], next_season: str, seed: int) -> set[str]:
+def auto_fill_rosters(canonical: dict[str, Any], save: dict[str, Any], free_agents: list[str], next_season: str, seed: int,
+                      *, only_team_ids: set[str] | None = None, include_humans: bool = False) -> set[str]:
     from .waivers import pending_ids
     from .release_planning import reacquisition_blocked
     from .offseason_decisions import restricted_player_ids
@@ -10958,19 +11061,35 @@ def auto_fill_rosters(canonical: dict[str, Any], save: dict[str, Any], free_agen
     ]
     available.sort(key=lambda player: (-display_minutes_projection(player), player["name"]))
     signed: set[str] = set()
+    # FA-REAL slice 4: never on a human team's roster (the user is asked instead: app_actions.fill_roster_minimum),
+    # and never past a hard cap the team triggered: such a team must cut or trade first, and plays short meanwhile
+    # (its two-way players fill in on game nights).
+    humans = set() if include_humans else human_controlled_team_ids(save)
+    from .camp import minimum_fits_hard_cap
     for team in teams:
+        if team["id"] in humans or (only_team_ids is not None and team["id"] not in only_team_ids):
+            continue
         roster = roster_by_team.setdefault(team["id"], [])
         while len(roster) < ROSTER_MINIMUM:
             candidate = next((player for player in available if player["id"] not in signed
                               and not reacquisition_blocked(save, team['id'], player['id'], save['state']['current_date'])), None)
             if candidate is None:
                 candidate = create_replacement_player(team, next_season, seed, len(save.get("generated_players", [])))
+                fits = minimum_fits_hard_cap(active, save, team["id"], candidate, next_season)
+                if not fits["ok"]:
+                    note_hard_capped_short_roster(save, team, len(roster), fits["reason"])
+                    break
                 save.setdefault("generated_players", []).append(candidate)
                 for trait in generated_replacement_traits(candidate, seed):
                     upsert_by_id(save, "generated_traits", trait)
+            else:
+                fits = minimum_fits_hard_cap(active, save, team["id"], candidate, next_season)
+                if not fits["ok"]:
+                    note_hard_capped_short_roster(save, team, len(roster), fits["reason"])
+                    break
             save.setdefault("roster_overrides", {})[candidate["id"]] = team["id"]
             # FA-REAL: a one-year minimum by his years of service (a veteran's counts at the two-year minimum), not a
-            # flat $2.25M. Roster minimums are required, so it is written even past a hard cap (noted on the ledger).
+            # flat $2.25M.
             payment = minimum_contract_payment(candidate, next_season)
             from .cap_ledger import commit, contract_seasons, contract_terms
             save.setdefault("contract_overrides", {})[candidate["id"]] = {
@@ -11001,6 +11120,65 @@ def auto_fill_rosters(canonical: dict[str, Any], save: dict[str, Any], free_agen
     return signed
 
 
+USER_SHORT_ROSTER_GRACE_DAYS = 14   # the NBA allows 13 players for up to two weeks; never fewer than 13
+
+
+def update_user_roster_minimum(save: dict[str, Any], count: int | None, today: str) -> None:
+    """FA-REAL slice 4: the user's team below the 14-player minimum is no longer filled by the game. Record it: 13
+    players is allowed for two weeks, fewer is not; past that, games wait until the user signs someone (one click
+    fills with minimum contracts)."""
+    phase = (save.get("state") or {}).get("phase")
+    if count is None or count >= ROSTER_MINIMUM or phase not in {"preseason", "regular_season"}:
+        save.pop("pending_roster_minimum", None)
+        return
+    row = save.get("pending_roster_minimum") or {}
+    since = row.get("since") or today
+    blocking = count < ROSTER_MINIMUM - 1 or (
+        bool(today) and (date.fromisoformat(today[:10]) - date.fromisoformat(since[:10])).days >= USER_SHORT_ROSTER_GRACE_DAYS)
+    save["pending_roster_minimum"] = {"team_id": (save.get("meta") or {}).get("user_team_id"), "count": count,
+                                      "minimum": ROSTER_MINIMUM, "since": since, "blocking": blocking}
+
+
+def note_hard_capped_short_roster(save: dict[str, Any], team: dict[str, Any], count: int, reason: str) -> None:
+    """FA-REAL slice 4: a hard-capped team below the roster minimum can't add a minimum contract (roster repair used to
+    sign one anyway). Recorded once a day; the team plays short and its two-ways fill in until it sheds salary."""
+    date_value = str((save.get("state") or {}).get("current_date") or "")
+    rows = save.setdefault("hard_capped_short_rosters", [])
+    key = (team.get("id"), date_value)
+    if any((row.get("team_id"), row.get("date")) == key for row in rows):
+        return
+    rows.append({"team_id": team.get("id"), "date": date_value, "count": count, "reason": reason})
+    if sum(1 for row in rows if row.get("team_id") == team.get("id") and str(row.get("date"))[:4] == date_value[:4]) > 1:
+        return
+    add_news(save, "roster_move", f"{team.get('abbrev')} has {count} players but can't add a minimum contract: "
+                                  f"{reason}.", date_value=date_value)
+
+
+def user_roster_short(canonical: dict[str, Any], save: dict[str, Any], active: dict[str, Any] | None = None
+                      ) -> dict[str, Any] | None:
+    """The user's team below the roster minimum (FA-REAL slice 4: the game no longer signs players onto it)."""
+    team_id = (save.get("meta") or {}).get("user_team_id")
+    if not team_id or (save.get("state") or {}).get("phase") not in {"preseason", "regular_season"}:
+        return None
+    active = active if active is not None else canonical_with_save(canonical, save)
+    count = sum(1 for player in active.get("players", []) if player.get("team_id") == team_id
+                and not player.get("_inactive_player"))
+    if count >= ROSTER_MINIMUM:
+        return None
+    return {"team_id": team_id, "count": count, "minimum": ROSTER_MINIMUM, "needed": ROSTER_MINIMUM - count}
+
+
+def fill_user_roster_minimum(canonical: dict[str, Any], save: dict[str, Any], seed: int) -> list[str]:
+    """The user's one-click "fill with minimum contracts": the assistant GM signs the best available free agents at
+    their minimum until the roster minimum, the same rule AI teams' roster repair uses (only when the user asks)."""
+    team_id = (save.get("meta") or {}).get("user_team_id")
+    season = save_active_contract_season(save)
+    signed = auto_fill_rosters(canonical, save, list(save.get("free_agent_player_ids", [])), season, seed + 4421,
+                               only_team_ids={team_id}, include_humans=True)
+    save["free_agent_player_ids"] = sorted(pid for pid in set(save.get("free_agent_player_ids", [])) if pid not in signed)
+    return sorted(signed)
+
+
 def minimum_contract_payment(player: dict[str, Any], season: str, years: int = 1) -> dict[str, Any]:
     """A minimum contract's payment (cap_ledger) without a team check: salary by years of service, cap charge."""
     from .cap_ledger import (minimum_cap_charge, minimum_schedule, season_start, trade_eligible_date,
@@ -11023,11 +11201,19 @@ def ensure_roster_minimums(canonical: dict[str, Any], save: dict[str, Any], seed
     season = str(save.get("meta", {}).get("season") or CANONICAL_SEASON)
     active = active if active is not None else canonical_with_save(canonical, save)
     needs_repair = False
+    humans = human_controlled_team_ids(save)
+    today = str((save.get("state") or {}).get("current_date") or "")
+    # FA-REAL slice 4: a hard-capped team that couldn't add a minimum is looked at again a week later, not daily.
+    waiting = {row.get("team_id") for row in save.get("hard_capped_short_rosters", []) or []
+               if row.get("date") and today and (date.fromisoformat(today[:10]) - date.fromisoformat(row["date"][:10])).days < 7}
+    user_count = None
     for team in active.get("teams", []):
         count = sum(1 for player in active.get("players", []) if player.get("team_id") == team.get("id"))
-        if count < ROSTER_MINIMUM:
+        if team.get("id") == (save.get("meta") or {}).get("user_team_id"):
+            user_count = count
+        if count < ROSTER_MINIMUM and team.get("id") not in humans and team.get("id") not in waiting:
             needs_repair = True
-            break
+    update_user_roster_minimum(save, user_count, today)
     if not needs_repair:
         return set()
     signed = auto_fill_rosters(canonical, save, list(save.get("free_agent_player_ids", [])), season, seed + 2219)

@@ -75,3 +75,29 @@ body.unified-terminal-ui .offseason-table thead th { font-size: 9px !important; 
 .offer-sheet-decision > footer .ui-command { min-width: 90px; min-height: 28px; font-weight: 700; }
 .offer-sheet-table :is(thead th, tbody td):not(:first-child), body.unified-terminal-ui .offer-sheet-table thead th:not(:first-child) { text-align: right !important; }
 .offer-sheet-clock.is-due small { color: #fff; }
+
+/* FA-REAL slice 4: the opening-roster view (21 to 15): guarantees, camp deals, the two-way places. */
+.cutdown-guarantee { display: grid; line-height: 1.1; }
+.cutdown-guarantee small { color: var(--season-muted, #5d6b77); font-size: 10px; overflow: hidden; text-overflow: ellipsis; }
+.cutdown-guarantee.is-full small { color: #1d2a33; }
+.cutdown-guarantee.is-camp small, .cutdown-guarantee.is-none small { color: #2f6f4a; }
+.cutdown-tag { justify-self: start; padding: 0 4px; border: 1px solid #b7c2cb; border-radius: 3px; font: 700 9px Tahoma, Arial, sans-serif; font-style: normal; color: #34424c; background: #eef2f5; }
+.cutdown-tag.is-camp { border-color: #c2862a; background: #fff4e0; color: #6b4610; }
+.cutdown-choice-twoway.is-active { background: #2f6f9a !important; color: #fff !important; }
+.cutdown-twoways { margin: 10px 12px 12px; border: 1px solid #b7c2cb; background: #fbfcfd; }
+.cutdown-twoways > header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding: 6px 10px; border-bottom: 3px double #b7c2cb; background: #eef2f5; }
+.cutdown-twoways > header strong { font-size: 12px; }
+.cutdown-twoways > header small { font-size: 10px; color: #5d6b77; }
+.cutdown-twoways ol { margin: 0; padding: 0; list-style: none; }
+.cutdown-twoway-row { display: grid; grid-template-columns: minmax(150px, 1.3fr) minmax(90px, .7fr) minmax(130px, 1fr) minmax(140px, 1.1fr) auto; align-items: center; gap: 8px; min-height: 33px; padding: 0 8px 0 0; border-bottom: 1px solid #d5dde3; font-size: 11px; }
+.cutdown-twoway-row:nth-child(even) { background: #eef1f3; }
+.cutdown-twoway-row:hover { background: #dce8f2; }
+.cutdown-twoway-row small { color: #5d6b77; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cutdown-twoway-row.is-open { grid-template-columns: minmax(150px, 1.3fr) 4fr; padding-left: 12px; }
+.cutdown-twoway-open { font-weight: 700; color: #5d6b77; }
+.cutdown-twoway-games { display: grid; grid-template-columns: 60px auto; align-items: center; gap: 6px; }
+.cutdown-twoway-games i { display: block; height: 6px; background: #d5dde3; }
+.cutdown-twoway-games i b { display: block; height: 100%; background: #2f6f9a; }
+.cutdown-twoway-games em { font-style: normal; font-size: 10px; }
+.cutdown-twoway-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.cutdown-twoway-actions .ui-command { min-height: 22px; font-size: 10px; }
