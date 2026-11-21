@@ -2989,7 +2989,7 @@ function seasonCommandDashboardMarkup(rows, dash, editable, viewedTeam) {
         <span>${escapeHtml(dashboardTeamName(viewedTeam))}</span>
         <div class="season-command-date">
           <time datetime="${escapeAttr(save.current_date || "")}">${escapeHtml(dateLabel)}</time>
-          <span>${escapeHtml(rowLabel(save.phase || "season"))}</span>
+          <span>${escapeHtml(seasonPhaseLabel(save.phase || "season"))}</span>
         </div>
         ${viewedTeam !== userTeam() ? `<button type="button" data-dashboard-team-reset>My Team</button>` : ""}
       </div>
@@ -5581,7 +5581,7 @@ function lotteryRevealCount(draft = state.data.draft || {}) {
 
 function clipboardPhaseCommands() {
   const button = (id,command,label,disabled=false)=>`<button type="button" class="ui-command" id="${id}" data-phase-command="${command}"${disabled?' disabled':''}>${label}</button>`;
-  if (state.home?.save?.postseason_exit_required) return button('postseasonAdvance','postseason-exit','Advance To Draft Lottery');
+  if (state.home?.save?.postseason_exit_required) return button('postseasonAdvance','postseason-exit','Start The Offseason (Jun 17)');
   if (dashboardPhaseKind() === 'free_agency') return freeAgencyPhaseCommands(button);
   if (dashboardPhaseKind() !== 'draft') return '';
   const draft = state.data.draft || {};
@@ -6167,6 +6167,11 @@ function freeAgencyMoodCell(player, exclusive = false) {
 function freeAgencyBidsCell(player, exclusive = false) {
   const offer = player.highest_offer;
   const count = Number(player.offer_count || 0);
+  // FA-REAL slice 2: a restricted free agent can only sign with the team that sent him a qualifying offer (for now).
+  if (player.restricted && (!offer || !count)) {
+    const holder = player.restricted.yours ? "you" : player.restricted.team_abbrev;
+    return `<span class="fa-muted" title="${escapeAttr(`Restricted free agent: only ${holder === "you" ? "you" : holder} can sign him for now (offer sheets come later).`)}">Restricted · ${escapeHtml(holder === "you" ? "yours" : holder)}</span>`;
+  }
   if (!offer || !count) return `<span class="fa-muted">${exclusive ? "Exclusive" : "—"}</span>`;
   const logo = teamLogoSrc(offer.team_abbrev);
   return `<span class="fa-bids" title="${escapeAttr(`${count} live bid${count === 1 ? "" : "s"}; best: ${offer.team_abbrev} ${money(offer.aav_millions)} × ${offer.years || 1}`)}"><b>${escapeHtml(count)}</b>${logo ? `<img src="${escapeAttr(logo)}" alt="${escapeAttr(offer.team_abbrev || "")}" />` : `<small>${escapeHtml(offer.team_abbrev || "")}</small>`}<span>${escapeHtml(compactMarketMoney(offer.aav_millions))}×${escapeHtml(offer.years || 1)}</span></span>`;
@@ -8253,7 +8258,7 @@ const CLIPBOARD_FIXED_CARD_SIZES = {
   get "free_agency-selected"() { return [440, draftNightCardHeight(), "free-agency-room-v1"]; },
   get "free_agency-wire"() { return [220, draftNightCardHeight(), "free-agency-room-v1"]; },
   // FA-REAL slice 2: the offseason checklist (stop 1, signing day) and the preseason set-the-roster window.
-  get "free_agency-checklist"() { return [1000, Math.round(Math.min(560, Math.max(320, (window.innerHeight || 900) - 260))), "offseason-checklist-v1"]; },
+  get "free_agency-checklist"() { return [950, draftNightCardHeight(), "offseason-checklist-v2"]; },
   // Cut-down: tall enough for the whole roster when the window allows (header, table, footer).
   get "cutdown-decision"() {
     const rows = (state.data.cutdown?.players || []).length || 15;
@@ -8278,7 +8283,9 @@ function clipboardEntryLayout() {
   if (kind === "free_agency" && state.data.freeagency) {
     // Stop 1 opens on its checklist (options, qualifying offers, your free agents); the market below it.
     if (state.data.freeagency.phase === "re_signing" && state.data.freeagency.offseason_checklist) {
-      return {rows: [["phase-free_agency-checklist"], ["phase-free_agency-market", "phase-free_agency-selected", "phase-free_agency-wire"]]};
+      // Side by side with the offer builder ("Negotiate" fills it); the market and wire are one click away (a second
+      // row of tall cards does not fit the window, so the board would leave it closed anyway).
+      return {rows: [["phase-free_agency-checklist", "phase-free_agency-selected"]]};
     }
     return {rows: [["phase-free_agency-market", "phase-free_agency-selected", "phase-free_agency-wire"]]};
   }
@@ -15124,6 +15131,12 @@ function signedMoney(value) {
   const num = Number(value);
   if (!Number.isFinite(num)) return "";
   return `$${num >= 0 ? "+" : ""}${num.toFixed(1)}M`;
+}
+
+// FA-REAL slice 2: the offseason phases in the words of the four stops.
+function seasonPhaseLabel(phase) {
+  return {re_signing: "Decide Who To Keep", free_agency: "Free Agency", offseason: "Late Summer",
+          training_camp: "Training Camp", preseason: "Preseason · Set The Roster"}[phase] || rowLabel(phase);
 }
 
 function rowLabel(value) {

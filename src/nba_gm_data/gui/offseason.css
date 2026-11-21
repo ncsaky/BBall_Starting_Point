@@ -48,3 +48,8 @@
   .offseason-stops { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .offseason-recap { grid-template-columns: 1fr; }
 }
+
+/* The house skin styles row headers (th) as small grey header cells; the checklist's player column is body text. */
+body.unified-terminal-ui .offseason-table tbody th.offseason-player { background: transparent !important; font-size: 11px !important; font-weight: 700 !important; text-transform: none !important; letter-spacing: 0 !important; color: #1d2a33 !important; }
+body.unified-terminal-ui .offseason-table tbody th.offseason-player .fa-player-name { font-size: 11px !important; font-weight: 700 !important; color: #1d2a33 !important; }
+body.unified-terminal-ui .offseason-table thead th { font-size: 9px !important; font-weight: 700 !important; }
