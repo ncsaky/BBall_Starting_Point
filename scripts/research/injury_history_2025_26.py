@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Rebuild 2025–26 missed-game stretches. Uses only the standard library.
+"""Rebuild NBA missed-game stretches for 2023–24 through 2025–26.
 
 Run with --write to update the public-source JSON. Use --compare-tracker for
-local aggregate comparisons. Downloads reuse the opening-night research cache.
+local aggregate comparisons. Downloads reuse each season’s local cache.
 """
 from __future__ import annotations
 
@@ -15,20 +15,18 @@ import re
 from zoneinfo import ZoneInfo
 
 from opening_night_injuries import (
-    BASE, CACHE, NBA_REPORT, PDF_CACHE, ROOT, SCOREBOARD, SUMMARY, UNIVERSE,
+    BASE, NBA_REPORT, ROOT, SCOREBOARD, SUMMARY, UNIVERSE,
     fetch, fetch_bytes, norm, our_abbrev, part_of, report_rows,
 )
+from injury_history_sources import SEASONS, cached_request, capture_summaries, espn_events, is_final
 
 BOX = ROOT / "data/research/game_boxscores_2025_26.json"
-OUT = ROOT / "data/research/injury_history_2025_26.json"
 TRACKER = ROOT / "data/research/bbi/tools"
 TRADES = ROOT / "data/research/real_trades/trades_2025_2027.json"
-SEASON = "2025-26"
-OPENER, END = "2025-10-21", "2026-06-13"
+DEFAULT_SEASON = SEASONS["2025-26"]
 EASTERN = ZoneInfo("America/New_York")
-CUP_FINAL = "401809839"
 NBA_BOX_FALLBACK = {
-    "401873343": "https://www.nba.com/game/nyk-vs-cle-0042500303/box-score",
+    "2025-26": {"401873343": "https://www.nba.com/game/nyk-vs-cle-0042500303/box-score"},
 }
 HALIBURTON_UPDATE = "https://www.nba.com/pacers/news/indiana-pacers-medical-update-tyrese-haliburton-250623"
 OFF_ROSTER_INTERVALS = (
@@ -39,11 +37,28 @@ OFF_ROSTER_INTERVALS = (
     ("Kobe Bufkin", "LAL", "2026-01-23", "2026-02-08",
      "https://www.nba.com/lakers/news/lakers-sign-guard-kobe-bufkin"),
 )
-PLAY_IN_DAYS = ("2026-04-14", "2026-04-15", "2026-04-17")
-MOVE_RANGES = (("20250701", "20251020"), ("20251021", "20260131"), ("20260201", "20260613"))
 OFFICIAL_STATUSES = {"Out", "Doubtful", "Questionable", "Probable"}
 MEDICAL = {"injury", "illness"}
-NAME_ALIASES = {"hansen yang": "yang hansen"}
+NAME_ALIASES = {
+    "hansen yang": "yang hansen",
+    "kenyon martin": "kj martin",
+    "nathan mensah": "nate mensah",
+    "alexandre sarr": "alex sarr",
+    "carlton carrington": "bub carrington",
+    "cui yongxi": "yongxi cui",
+    "david jones": "david jones garcia",
+}
+# ESPN identifies these players in historical boxes even when they are
+# report-only in the season being built. Keep their ID stable across years.
+HISTORICAL_ESPN_IDS = {
+    "bojan bogdanovic": "3593",
+    "charles bediako": "4565203",
+    "cody zeller": "2579258",
+    "damion lee": "2595209",
+    "jalen crutcher": "4278352",
+    "kendall brown": "4433254",
+    "vlatko cancar": "4230557",
+}
 PART_ALIASES = {
     "sciatic": "back", "cervical": "back", "thoracic": "back", "sacral": "back",
     "costochondral": "back", "trunk": "back", "patellofemoral": "knee",
@@ -65,19 +80,19 @@ def read(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def espn(path, filename, cache_only):
-    cached = CACHE / filename
+def espn(path, filename, cache_only, season):
+    cached = season.espn_cache / filename
     if cache_only:
         return read(cached)
-    data = fetch(BASE + path, cached)
+    data = cached_request(fetch, BASE + path, cached, throttle=season.historical)
     if not data:
         raise RuntimeError(f"ESPN data missing for {path}")
     return data
 
 
-def nba_box(url, cache_only):
-    path = CACHE / ("ih_nba_" + url.split("/")[-2].rsplit("-", 1)[-1] + ".html")
-    raw = path.read_bytes() if cache_only else fetch_bytes(url, path)
+def nba_box(url, cache_only, season):
+    path = season.espn_cache / ("ih_nba_" + url.split("/")[-2].rsplit("-", 1)[-1] + ".html")
+    raw = path.read_bytes() if cache_only else cached_request(fetch_bytes, url, path)
     state = re.search(rb'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', raw)
     game = json.loads(state[1])["props"]["pageProps"]["game"]
     return [{
@@ -87,28 +102,27 @@ def nba_box(url, cache_only):
     } for side in ("homeTeam", "awayTeam") for p in game[side]["players"]]
 
 
-def load_games(box_games, cache_only):
-    """Use ET dates and final status from the ESPN schedule, plus the six play-ins."""
-    events = {}
-    for team in range(1, 31):
-        for stage, phase in ((2, "regular"), (3, "playoffs")):
-            schedule = espn(f"/teams/{team}/schedule?season=2026&seasontype={stage}",
-                            f"ih_schedule_{team}_{stage}.json", cache_only)
-            for event in schedule["events"]:
-                gid = str(event["id"])
-                events[gid] = event, "cup_final" if gid == CUP_FINAL else phase
-    for day in PLAY_IN_DAYS:
-        scoreboard = espn("/scoreboard?dates=" + day.replace("-", ""), f"ih_sb_{day}.json", cache_only)
-        for event in scoreboard["events"]:
-            if event["season"]["type"] == 5:
-                events[str(event["id"])] = event, "play_in"
+def load_schedule(season, cache_only):
+    events = espn_events(season, lambda path, filename: espn(path, filename, cache_only, season))
+    final = {gid: (event, phase) for gid, (event, phase) in events.items() if is_final(event)}
+    actual = Counter(phase for _, phase in final.values())
+    expected = {"regular": 1230, "cup_final": 1, "play_in": 6, "playoffs": season.playoff_games}
+    if actual != expected:
+        raise ValueError(f"{season.label} game count: expected {expected}, got {dict(actual)}")
+    return final
+
+
+def load_games(box_games, cache_only, season):
+    """Use ET dates and final status from ESPN, plus the six play-ins."""
+    events = load_schedule(season, cache_only)
+    fallback = NBA_BOX_FALLBACK.get(season.label, {})
+    if season.historical and not cache_only:
+        capture_summaries(season, [gid for gid in events if gid not in fallback])
 
     games, supplemental = [], []
     teams_by_name = {}
     for gid, (event, phase) in events.items():
         competition = event["competitions"][0]
-        if (competition.get("status") or event["status"])["type"]["name"] != "STATUS_FINAL":
-            continue
         game_date = datetime.fromisoformat(event["date"].replace("Z", "+00:00")).astimezone(EASTERN)
         teams = {}
         for competitor in competition["competitors"]:
@@ -121,33 +135,36 @@ def load_games(box_games, cache_only):
             box = None
         ambiguous = box and any(p["espn_player_id"] and not p["dnp"] and not p["minutes"]
                                 for p in box["players"])
-        if gid in NBA_BOX_FALLBACK:
+        if gid in fallback:
             supplemental.append(gid)
-            players = nba_box(NBA_BOX_FALLBACK[gid], cache_only)
+            players = nba_box(fallback[gid], cache_only, season)
         elif not box or ambiguous:
             if not box:
                 supplemental.append(gid)
-            summary = espn(f"/summary?event={gid}", f"sum_{gid}.json", cache_only)
+            summary = espn(f"/summary?event={gid}", f"sum_{gid}.json", cache_only, season)
             players = []
             for team in summary["boxscore"]["players"]:
                 for group in team["statistics"]:
                     for row in group["athletes"]:
                         person = row.get("athlete") or {}
+                        stats = row.get("stats") or []
+                        if season.historical and stats and stats[0] == "--" and not row.get("didNotPlay"):
+                            # ESPN carries roster placeholders with no minutes
+                            # and without the flag it uses for actual scratches.
+                            continue
                         if person.get("id"):
                             players.append({
                                 "espn_player_id": person["id"], "player_name": person["displayName"],
                                 "team_abbrev": team["team"]["abbreviation"], "comment": row.get("reason"),
-                                "played": bool(row.get("stats")) and not row.get("didNotPlay"),
+                                "played": bool(stats) and not row.get("didNotPlay"),
                             })
         else:
             players = [p | {"played": bool(p["minutes"]) and not p["dnp"]} for p in box["players"]]
-        if not players:
-            raise ValueError(f"Empty box score for final game {gid}")
+        teams_with_appearances = {our_abbrev(p["team_abbrev"]) for p in players if p["played"]}
+        if teams_with_appearances != set(teams.values()):
+            raise ValueError(f"Incomplete box score for {season.label} game {gid}: {teams_with_appearances}")
         games.append({"id": gid, "date": game_date.date().isoformat(), "phase": phase,
                       "teams": tuple(teams.values()), "players": players})
-    assert Counter(g["phase"] for g in games) == {
-        "regular": 1230, "cup_final": 1, "play_in": 6, "playoffs": 85,
-    }
     assert set(Counter(team for g in games if g["phase"] == "regular" for team in g["teams"]).values()) == {82}
     return sorted(games, key=lambda g: (g["date"], g["id"])), teams_by_name, supplemental
 
@@ -157,7 +174,7 @@ def name_key(name):
     return NAME_ALIASES.get(key, key)
 
 
-def nba_report(day, cache_only):
+def nba_report(day, cache_only, season):
     # Older filenames omit the minutes. As of December 22, use the late
     # evening snapshot and fall back to earlier reports when necessary.
     if day < "2025-12-22":
@@ -168,8 +185,8 @@ def nba_report(day, cache_only):
     first_url = None
     for stamp in stamps:
         url = NBA_REPORT.format(day=day, time=stamp)
-        path = PDF_CACHE / f"{day}_{stamp}.pdf"
-        raw = (path.read_bytes() if path.exists() else None) if cache_only else fetch_bytes(url, path)
+        path = season.pdf_cache / f"{day}_{stamp}.pdf"
+        raw = (path.read_bytes() if path.exists() else None) if cache_only else cached_request(fetch_bytes, url, path)
         if raw:
             first_url = first_url or url
             rows = [r for r in report_rows(raw) if r["date"] == day]
@@ -178,7 +195,7 @@ def nba_report(day, cache_only):
     return [], first_url
 
 
-def observations(games, players, teams_by_name, cache_only):
+def observations(games, players, teams_by_name, cache_only, season):
     by_id = {str(p["espn_player_id"]): p["id"] for p in players.values() if p.get("espn_player_id")}
     by_name = {name_key(p["name"]): p["id"] for p in players.values()}
     names = dict(by_name)
@@ -190,6 +207,10 @@ def observations(games, players, teams_by_name, cache_only):
             espn_id = str(p["espn_player_id"])
             name = name_key(p["player_name"])
             pid = by_id.get(espn_id) or by_name.get(name)
+            if season.historical and not pid and p["espn_player_id"]:
+                pid = f"espn_{espn_id}"
+                players[pid] = {"id": pid, "name": p["player_name"], "espn_player_id": espn_id}
+                by_id[espn_id] = pid
             if pid and (p["espn_player_id"] or p.get("box_score_url")):
                 team = our_abbrev(p["team_abbrev"])
                 names.setdefault(name, pid)
@@ -197,16 +218,25 @@ def observations(games, players, teams_by_name, cache_only):
                 if key not in box or p["played"]:
                     box[key] = p
     for day, teams in sorted(teams_on_day.items()):
-        rows, url = nba_report(day, cache_only)
+        rows, url = nba_report(day, cache_only, season)
         if url:
             urls[day] = url
         for r in rows:
-            team = teams_by_name.get(r["team"])
+            report_team = r["team"]
+            if season.historical and report_team == "Los Angeles Clippers":
+                report_team = "LA Clippers"
+            team = teams_by_name.get(report_team)
             if team not in teams:
                 continue
             report_teams.add((day, team))
             last, comma, first = r["player"].partition(",")
-            pid = names.get(name_key(f"{first} {last}")) if comma else None
+            key_name = name_key(f"{first} {last}") if comma else None
+            pid = names.get(key_name)
+            if season.historical and key_name and not pid and r["status"] in OFFICIAL_STATUSES | {"Available"}:
+                espn_id = HISTORICAL_ESPN_IDS.get(key_name)
+                pid = f"espn_{espn_id}" if espn_id else "nba_report_" + key_name.replace(" ", "-")
+                players[pid] = {"id": pid, "name": f"{first.strip()} {last.strip()}", "espn_player_id": espn_id}
+                names[key_name] = pid
             if pid:
                 key = day, team, pid
                 if key in reports and reports[key] != r:
@@ -215,15 +245,45 @@ def observations(games, players, teams_by_name, cache_only):
     return box, reports, urls, report_teams, names
 
 
-def roster_moves(names, cache_only):
+def season_roster_corrections(season):
+    if season.label == "2023-24":
+        return (
+            ("Taze Moore", "POR", "2024-01-30", "2024-04-14",
+             "https://www.nba.com/blazers/news/trail-blazers-sign-taze-moore-to-two-way-contract"),
+            ("DaQuan Jeffries", "NYK", "2023-12-30", "2024-02-22",
+             "https://westchester.gleague.nba.com/news/westchester-knicks-acquire-daquan-jeffries"),
+            ("Duane Washington Jr.", "NYK", "2023-11-27", "2024-01-03",
+             "https://www.nba.com/player/1630613"),
+        )
+    if season.label == "2024-25":
+        return (
+            ("Skal Labissiere", "SAC", "2024-10-18", "2025-03-03",
+             "https://www.nba.com/kings/news/kings-announce-roster-moves-2"),
+            ("Kevon Harris", "ATL", "2024-10-18", "2025-03-01",
+             "https://gleague.nba.com/news/atlanta-hawks-sign-kevon-harris-to-10-day-contract"),
+            ("Kevon Harris", "ATL", "2025-03-04", None, "https://www.nba.com/game/0022400884"),
+        )
+    return OFF_ROSTER_INTERVALS
+
+
+def off_roster(day, left, joined):
+    return day >= left and (joined is None or day < joined)
+
+
+def roster_moves(names, cache_only, season):
     """Use signings, trades and waivers to bound time between game records."""
     moves = defaultdict(set)
     starts = ("Signed", "Re-signed", "Claimed", "Acquired", "Received", "Converted", "Waived", "Released")
     split = r"(?<=\.)\s+(?=(?:" + "|".join(starts) + r")\b)"
     urls = []
-    for start, end in MOVE_RANGES:
+    year = season.year
+    day_before_opener = date.fromisoformat(season.opener) - timedelta(days=1)
+    move_ranges = ((f"{year - 1}0701", day_before_opener.strftime("%Y%m%d")),
+                   (season.opener.replace("-", ""), f"{year}0131"),
+                   (f"{year}0201", season.end.replace("-", "")))
+    for start, end in move_ranges:
         path = f"/transactions?dates={start}-{end}&limit=1000"
-        payload = espn(path, f"ih_moves_{start}_{end}.json", cache_only)
+        payload = espn(path, f"ih_moves_{start}_{end}.json", cache_only, season)
         assert payload["pageCount"] == 1
         urls.append(BASE + path)
         for move in payload["transactions"]:
@@ -248,16 +308,19 @@ def roster_moves(names, cache_only):
     # Structured trade edges also give the receiving and sending teams on the
     # same day when the transaction feed omits one side of a deal.
     for trade in read(TRADES)["trades"]:
-        if OPENER <= trade["date"] <= END:
+        if season.opener <= trade["date"] <= season.end:
             for asset in trade["assets"]:
                 pid = names.get(name_key(asset["name_or_desc"])) if asset["kind"] == "player" else None
                 if pid:
                     moves[pid].add((trade["date"], "exit", asset["from"]))
                     moves[pid].add((trade["date"], "trade_in", asset["to"]))
-    for name, team, left, joined, _ in OFF_ROSTER_INTERVALS:
+    for name, team, left, joined, _ in season_roster_corrections(season):
         pid = names.get(name_key(name))
         if pid:
-            moves[pid].update(((left, "exit", team), (joined, "sign", team)))
+            moves[pid] = {m for m in moves[pid] if m[2] != team or not off_roster(m[0], left, joined)}
+            moves[pid].add((left, "exit", team))
+            if joined:
+                moves[pid].add((joined, "sign", team))
     return moves, urls
 
 
@@ -392,7 +455,7 @@ def missed_game(game, team, box, report, report_url):
             site, diagnosis), evidence
 
 
-def transfer_day_teams(box, reports, moves, game_dates):
+def transfer_day_teams(box, reports, moves, game_dates, season):
     """Prefer the club a player played for, then the incoming roster on transfer day."""
     clubs = defaultdict(set)
     active = {}
@@ -413,6 +476,14 @@ def transfer_day_teams(box, reports, moves, game_dates):
             assignments[pid, day] = active[pid, day]
         elif len(incoming) == 1:
             assignments[pid, day] = next(iter(incoming))
+        elif season.historical:
+            # An updated incoming team's listing can coexist with a pending
+            # trade on the old team's report even after the deal is official.
+            reported = {t: reports.get((day, t, pid), {}).get("reason", "").lower() for t in teams}
+            received = {t for t, reason in reported.items() if reason == "not with team"}
+            if len(received) != 1 or {reported[t] for t in teams - received} != {"trade pending"}:
+                raise ValueError(f"Unresolved overlap for {pid}, {day}, {sorted(teams)}: {reported}")
+            assignments[pid, day] = next(iter(received))
         else:
             raise ValueError(f"Unresolved overlap for {pid}, {day}, {sorted(teams)}")
     return assignments
@@ -499,16 +570,17 @@ def match_tracker(entry, candidates):
     return min(choices)[2] if choices else None
 
 
-def compare_tracker(records, players, names, played, teams_by_name):
+def compare_tracker(records, players, names, played, teams_by_name, season):
     history = read(TRACKER / "injury_player_history.json")
     player_seasons = read(TRACKER / "injury_player_seasons.json")
-    for season in ("2023-24", "2024-25", SEASON):
-        rows = [h for h in history if h["season"] == season]
-        gp = sum(r["gp"] for r in player_seasons if r["season"] == season)
+    for label in SEASONS:
+        rows = [h for h in history if h["season"] == label]
+        gp = sum(r["gp"] for r in player_seasons if r["season"] == label)
         rate = len(rows) * 1000 / gp
         missed = sum(bool(h["games"]) and h["cat"] in MEDICAL for h in rows)
-        print(f"Tracker {season}: {len(rows)} entries / {gp} GP = {rate:.2f}; "
+        print(f"Tracker {label}: {len(rows)} entries / {gp} GP = {rate:.2f}; "
               f"{missed} medical entries with misses = {missed * 1000 / gp:.2f}")
+    entries = [h for h in history if h["season"] == season.label]
     team_names = {abbrev: name for name, abbrev in teams_by_name.items()}
     candidates = defaultdict(list)
     for index, r in enumerate(records):
@@ -517,13 +589,13 @@ def compare_tracker(records, players, names, played, teams_by_name):
     matched = set()
     counts = Counter()
     by_player = defaultdict(Counter)
-    for entry in history:
-        if entry["season"] != SEASON:
-            continue
+    counts["tracker_all_entries"] = len(entries)
+    for entry in entries:
         pid = entry.get("player_id")
         if pid not in players:
             pid = names.get(name_key(entry["player"]))
         if pid not in players:
+            counts["tracker_entries_unlinked"] += 1
             continue
         player_counts = by_player[pid]
         counts["tracker_entries"] += 1
@@ -575,6 +647,19 @@ def compare_tracker(records, players, names, played, teams_by_name):
         "tracker_plus_new_excluding_management_and_opening_additions_per_1000":
             (counts["tracker_entries"] + regular_additions - management - opening) * 1000 / gp,
     }
+    for category in ("medical", "injury"):
+        baseline = [h for h in entries if h["games"] and h["cat"] in (MEDICAL if category == "medical" else {"injury"})]
+        public = [r for r in records if r["regular_season_games_missed"]
+                  and r["reason_category"] in (MEDICAL if category == "medical" else {"injury"})]
+        counts[f"tracker_game_costing_{category}"] = len(baseline)
+        counts[f"public_game_costing_{category}"] = len(public)
+        counts[f"public_non_management_{category}"] = sum(not r["injury_management_only"] for r in public)
+        counts[f"public_non_opening_{category}"] = sum(not r["at_team_season_start"] for r in public)
+        counts[f"public_non_management_non_opening_{category}"] = sum(
+            not r["at_team_season_start"] and not r["injury_management_only"] for r in public)
+        rates[f"tracker_game_costing_{category}_per_1000_box_score_gp"] = len(baseline) * 1000 / gp
+        for key in ("game_costing", "non_management", "non_opening", "non_management_non_opening"):
+            rates[f"public_{key}_{category}_per_1000"] = counts[f"public_{key}_{category}"] * 1000 / gp
     print(json.dumps(dict(counts) | rates, indent=2))
     for pid, c in sorted(by_player.items()):
         if players[pid]["name"] in ("Stephen Curry", "LeBron James", "Nikola Jokić", "Nikola Jokic",
@@ -582,23 +667,23 @@ def compare_tracker(records, players, names, played, teams_by_name):
             print(players[pid]["name"], dict(c))
 
 
-def build(cache_only):
-    box_games = {str(g["game_id"]): g for g in read(BOX)["games"]}
+def build(cache_only, season=DEFAULT_SEASON):
+    box_games = {} if season.historical else {str(g["game_id"]): g for g in read(BOX)["games"]}
     players = {p["id"]: p for p in read(UNIVERSE)["players"]}
-    games, teams, supplemental = load_games(box_games, cache_only)
-    box, reports, urls, report_teams, names = observations(games, players, teams, cache_only)
-    moves, move_urls = roster_moves(names, cache_only)
+    games, teams, supplemental = load_games(box_games, cache_only, season)
+    box, reports, urls, report_teams, names = observations(games, players, teams, cache_only, season)
+    moves, move_urls = roster_moves(names, cache_only, season)
     game_dates = {g["id"]: g["date"] for g in games}
     # Box scores occasionally carry old roster lines even when a player
     # is under no NBA contract. The dated team release takes precedence.
-    for name, team, left, joined, _ in OFF_ROSTER_INTERVALS:
+    for name, team, left, joined, _ in season_roster_corrections(season):
         pid = names.get(name_key(name))
-        for key in [k for k in box if k[1:] == (team, pid) and left <= game_dates[k[0]] < joined]:
+        for key in [k for k in box if k[1:] == (team, pid) and off_roster(game_dates[k[0]], left, joined)]:
             assert not box[key]["played"], f"Appearance during off-roster interval for {name}"
             del box[key]
-        for key in [k for k in reports if k[1:] == (team, pid) and left <= k[0] < joined]:
+        for key in [k for k in reports if k[1:] == (team, pid) and off_roster(k[0], left, joined)]:
             del reports[key]
-    assignments = transfer_day_teams(box, reports, moves, game_dates)
+    assignments = transfer_day_teams(box, reports, moves, game_dates, season)
     stints = roster_stints(games, box, reports, moves, assignments)
     records, played = make_stretches(games, players, box, reports, urls, stints, assignments)
     coverage = {
@@ -623,20 +708,25 @@ def build(cache_only):
                                                 if r["reason_category"] == category)
                                    for category in sorted({r["reason_category"] for r in records})},
     }
+    if season.historical:
+        coverage["historical_players_outside_canonical_pool"] = sum(
+            p.startswith(("espn_", "nba_report_")) for p in stints)
+        coverage["historical_players_identified_by_report_name_only"] = sum(
+            p.startswith("nba_report_") for p in stints)
     return {
         "schema_version": 1,
-        "season": SEASON,
+        "season": season.label,
         "sources": {
-            "box_scores": str(BOX.relative_to(ROOT)),
+            "box_scores": SUMMARY if season.historical else str(BOX.relative_to(ROOT)),
             "espn_game_summary": SUMMARY,
-            "nba_box_score_fallback": NBA_BOX_FALLBACK,
-            "espn_team_schedule": BASE + "/teams/{team}/schedule?season=2026&seasontype={stage}",
+            "nba_box_score_fallback": NBA_BOX_FALLBACK.get(season.label, {}),
+            "espn_team_schedule": BASE + f"/teams/{{team}}/schedule?season={season.year}&seasontype={{stage}}",
             "espn_play_in_scoreboard": SCOREBOARD,
             "espn_transactions": move_urls,
             "trade_dates": str(TRADES.relative_to(ROOT)),
             "team_transaction_corrections": [
                 {"player": name, "team": team, "off_roster_from": left, "rejoined": joined, "url": url}
-                for name, team, left, joined, url in OFF_ROSTER_INTERVALS
+                for name, team, left, joined, url in season_roster_corrections(season)
             ],
             "player_pool": str(UNIVERSE.relative_to(ROOT)),
             "nba_game_day_reports": urls,
@@ -649,23 +739,28 @@ def build(cache_only):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--season", choices=SEASONS, default=DEFAULT_SEASON.label)
     parser.add_argument("--write", action="store_true", help="write the public-source JSON")
     parser.add_argument("--cache-only", action="store_true", help="avoid network calls")
     parser.add_argument("--compare-tracker", action="store_true", help="print aggregate comparison from the local tracker")
     args = parser.parse_args()
-    dataset, players, teams, names, played = build(args.cache_only)
+    season = SEASONS[args.season]
+    dataset, players, teams, names, played = build(args.cache_only, season)
     print(json.dumps(dataset["coverage"], indent=2))
     if args.compare_tracker:
-        compare_tracker(dataset["stretches"], players, names, played, teams)
+        compare_tracker(dataset["stretches"], players, names, played, teams, season)
     if args.write:
         # One stretch per line makes season-wide diffs easy to inspect.
         records = dataset.pop("stretches")
         header = json.dumps(dataset, ensure_ascii=False, indent=2)
-        with OUT.open("w", encoding="utf-8") as stream:
+        out = ROOT / f"data/research/injury_history_{season.label.replace('-', '_')}.json"
+        pending = out.with_suffix(".json.tmp")
+        with pending.open("w", encoding="utf-8") as stream:
             stream.write(header[:-2] + ',\n  "stretches": [\n')
             stream.write(",\n".join("    " + json.dumps(r, ensure_ascii=False) for r in records))
             stream.write("\n  ]\n}\n")
-        print(f"Wrote {OUT.relative_to(ROOT)}")
+        pending.replace(out)
+        print(f"Wrote {out.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":
