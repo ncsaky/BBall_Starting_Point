@@ -616,7 +616,8 @@ class SearchMarket:
 
     def raise_to_floor(self, bid: dict[str, Any], seller: str, floor: float, evaluate) -> dict[str, Any] | None:
         """A bidder raises its offer to ``floor``: one more asset of its own (a pick, a young player or a player the
-        seller targets, the same additions a counter-offer asks for), the smallest that gets there, checked in full.
+        seller targets, the same additions a counter-offer asks for), the smallest that gets there and never one that
+        jumps far past it (COUNTER_OVERSHOOT, as counters), checked in full.
         Used by a losing bidder in the rounds (to beat the leader) and by the seller's preferred bidder (to match the
         best price).
         The raise must stay within the buyer's own price limit (its own full check accepts it, personality premium
@@ -640,8 +641,8 @@ class SearchMarket:
             if kind not in {"pick", "young_player", "target_player"} or ask_out != seller_out:
                 continue
             gain = quick_net(self.canonical, seller, give_out, seller_out, config) - current
-            if gain < need - PRESCREEN_TOLERANCE:
-                continue
+            if gain < need - PRESCREEN_TOLERANCE or gain > need + tc.COUNTER_OVERSHOOT:
+                continue  # too small to get there, or a jump far past it (a first where a second would do)
             if quick_net(self.canonical, buyer, seller_out, give_out, config) < -9.0 - PRESCREEN_TOLERANCE:
                 continue
             scored.append((gain, index, give_out))
