@@ -629,7 +629,7 @@
    "team_id": "team_uta"
   }
  },
- "notes": "Real headshots stored once for the game (260 px). Coach photos: Wikimedia Commons (licence per photo), or the NBA coaches' association's official headshot where no free photo exists (reference only). Prospect photos: ESPN college rosters, reference only (rights not cleared), like the NBA player headshots the game already links. status fallback_generated = no usable real photo; the game shows a generated face.",
+ "notes": "Real headshots stored once for the game (260 px). Coach photos: Wikimedia Commons (licence per photo), or the NBA coaches' association's official headshot where no free photo exists (reference only). Prospect photos: ESPN college rosters, reference only (rights not cleared), like the NBA player headshots the game already links. status fallback_stock = no usable real photo; the game shows a stock photo of a real person (faces.py).",
  "prospects": {
   "college_126518": {
    "espn_id": "4873219",
@@ -788,11 +788,16 @@
   "college_126683": {
    "espn_team": "Temple Owls",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/college-126683.avif",
    "gender": "male",
    "kind": "college",
    "name": "Aiden Tobiason",
-   "reason": "not on his ESPN team roster",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "Temple athletics (owlsports.com)",
+   "source_page": "https://owlsports.com/sports/mens-basketball/roster/aiden-tobiason/18100",
+   "source_url": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/owlsports.com/images/2025/10/9/aiden_tobiason.png",
+   "status": "real_photo"
   },
   "college_126693": {
    "espn_id": "5144373",
@@ -2253,11 +2258,16 @@
   "college_133724": {
    "espn_team": "McNeese Cowboys",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/college-133724.avif",
    "gender": "male",
    "kind": "college",
    "name": "Jaylon Dean-Vines",
-   "reason": "ESPN has no headshot for him",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "McNeese athletics",
+   "source_page": "https://mcneesesports.com/sports/mens-basketball/roster/jaylon-dean-vines/11768",
+   "source_url": "https://mcneesesports.com/images/2026/10/2/JaylonDean-Vines.jpg",
+   "status": "real_photo"
   },
   "college_133740": {
    "espn_id": "5311906",
@@ -2290,11 +2300,16 @@
   "college_133746": {
    "espn_team": "UConn Huskies",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/college-133746.avif",
    "gender": "male",
    "kind": "college",
    "name": "Eric Reibe",
-   "reason": "not on his ESPN team roster",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "UConn athletics",
+   "source_page": "https://uconnhuskies.com/sports/basketball/roster/eric-reibe/14935",
+   "source_url": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/uconnhuskies.com/images/2025/7/31/ER25_WBG.png",
+   "status": "real_photo"
   },
   "college_133776": {
    "espn_id": "5311897",
@@ -4091,11 +4106,16 @@
   "college_135550": {
    "espn_team": "Wright State Raiders",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/college-135550.avif",
    "gender": "male",
    "kind": "college",
    "name": "Kellen Pickett",
-   "reason": "ESPN has no headshot for him",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "Wright State athletics",
+   "source_page": "https://wsuraiders.com/sports/mens-basketball/roster/kellen-pickett/6875",
+   "source_url": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wrightstate.sidearmsports.com/images/2026/7/27/Kellen_Pickett_Headshot_2026_27.png",
+   "status": "real_photo"
   },
   "college_135552": {
    "espn_id": "5314630",
@@ -4310,20 +4330,30 @@
   "college_143965": {
    "espn_team": "Houston Cougars",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/college-143965.avif",
    "gender": "male",
    "kind": "college",
    "name": "Ikenna Alozie",
-   "reason": "ESPN has no headshot for him",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "Houston athletics",
+   "source_page": "https://uhcougars.com/sports/mens-basketball/roster",
+   "source_url": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/uhcougars.com/images/2026/8/30/Alozie_Ikenna_DSC01762_copy_t3xZs.jpg",
+   "status": "real_photo"
   },
   "college_143966": {
    "espn_team": "Houston Cougars",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/college-143966.avif",
    "gender": "male",
    "kind": "college",
    "name": "Arafan Diane",
-   "reason": "ESPN has no headshot for him",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "Houston athletics",
+   "source_page": "https://uhcougars.com/sports/mens-basketball/roster/arafan-dian/10147",
+   "source_url": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/uhcougars.com/images/2026/8/30/Diane_Arafan_DSC01756_copy_VZ6QK.jpg",
+   "status": "real_photo"
   },
   "college_144022": {
    "espn_id": "5308457",
@@ -5952,11 +5982,16 @@
   "college_145314": {
    "espn_team": "Illinois Fighting Illini",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/college-145314.avif",
    "gender": "male",
    "kind": "college",
    "name": "Lucas Morillo",
-   "reason": "not on his ESPN team roster",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "Illinois athletics",
+   "source_page": "https://fightingillini.com/sports/mens-basketball/roster/2026-27",
+   "source_url": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/fightingillini.com/images/2026/10/5/23-Morillo_Lucas.jpg",
+   "status": "real_photo"
   },
   "college_145315": {
    "espn_id": "5310771",
@@ -8088,11 +8123,16 @@
   },
   "high_school_adan_diggs": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-adan-diggs.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Adan Diggs",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball",
+   "source_page": "https://www.usab.com/players/adan-diggs-1",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/05/23/f9bed44f-8955-43ac-b29b-1e6e556368ad.jpg",
+   "status": "real_photo"
   },
   "high_school_ahmad_hudson": {
    "fetched": "2026-11-21",
@@ -8112,19 +8152,29 @@
   },
   "high_school_aj_williams": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-aj-williams.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "AJ Williams",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball",
+   "source_page": "https://www.usab.com/players/aj-williams",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/c4cb08ed-f42d-4919-a095-44e082a264d5.jpg",
+   "status": "real_photo"
   },
   "high_school_anthony_spratt": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-anthony-spratt.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Anthony Spratt Jr.",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "MaxPreps",
+   "source_page": "https://www.maxpreps.com/ar/benton/benton-panthers/athletes/anthony-spratt-jr/?careerid=5acs8ml2n7ap9",
+   "source_url": "https://image.maxpreps.io/careers/9/5/b/95b41f98-5491-41b0-8c62-530e57a6caa1/thumbnail.jpg?version=639105799986851890",
+   "status": "real_photo"
   },
   "high_school_antonio_pemberton": {
    "fetched": "2026-11-21",
@@ -8136,11 +8186,16 @@
   },
   "high_school_asa_montgomery": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-asa-montgomery.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Asa Montgomery",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball",
+   "source_page": "https://www.usab.com/players/asa-montgomery",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/366fc69b-f6fe-43ee-a1b0-8b47262fee2d.jpg",
+   "status": "real_photo"
   },
   "high_school_bamba_touray": {
    "fetched": "2026-11-21",
@@ -8152,11 +8207,16 @@
   },
   "high_school_beckham_black": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-beckham-black.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Beckham Black",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball",
+   "source_page": "https://www.usab.com/players/beckham-black",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/457766cb-5dbe-4b1d-a1f1-ab1c8887909e.jpg",
+   "status": "real_photo"
   },
   "high_school_benjamin_berrouet": {
    "fetched": "2026-11-21",
@@ -8168,11 +8228,16 @@
   },
   "high_school_bentley_lusakueno": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-bentley-lusakueno.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Bentley Lusakueno",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball (usab.com player page)",
+   "source_page": "https://www.usab.com/players/bentley-lusakueno",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/62ef04e2-9972-4f74-abb3-a1ea24987921.jpg",
+   "status": "real_photo"
   },
   "high_school_blaze_johnson": {
    "fetched": "2026-11-21",
@@ -8184,27 +8249,42 @@
   },
   "high_school_brady_pettigrew": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-brady-pettigrew.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Brady Pettigrew",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball (usab.com player page)",
+   "source_page": "https://www.usab.com/players/brady-pettigrew",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/1b147cd6-7f0d-458a-85ab-51f62536db9f.jpg",
+   "status": "real_photo"
   },
   "high_school_braxton_bogard": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-braxton-bogard.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Braxton Bogard",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "MaxPreps",
+   "source_page": "https://www.maxpreps.com/ma/stow/masters-academy-international-mavericks/athletes/braxton-bogard/?careerid=75aep6es6brg0",
+   "source_url": "https://image.maxpreps.io/rosters/a5dadf08-21fb-4889-bd84-1d0c6816e29a/f/d/1/fd1bd741-2d60-49fc-8830-a34f71bd1ca1/original.jpg?version=639277808919076209&width=1024&crop=1:1,smart",
+   "status": "real_photo"
   },
   "high_school_cayden_daughtry": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-cayden-daughtry.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Cayden Daughtry",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball",
+   "source_page": "https://www.usab.com/players/cayden-daughtry",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/f9f833ea-dba3-4341-a14d-7a6dba0d05e5.jpg",
+   "status": "real_photo"
   },
   "high_school_chase_branham": {
    "fetched": "2026-11-21",
@@ -8216,11 +8296,16 @@
   },
   "high_school_chase_lumpkin": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-chase-lumpkin.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Chase Lumpkin",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball",
+   "source_page": "https://www.usab.com/players/chase-lumpkin",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/cb9fcd9b-95d9-4cb7-b626-e2dfe27b20cb.jpg",
+   "status": "real_photo"
   },
   "high_school_cherif_millogo": {
    "fetched": "2026-11-21",
@@ -8232,27 +8317,42 @@
   },
   "high_school_cj_rosser": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-cj-rosser.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "CJ Rosser",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball",
+   "source_page": "https://www.usab.com/players/cj-rosser",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/0c380891-1cde-4c1a-a788-8e3fbe897a7b.jpg",
+   "status": "real_photo"
   },
   "high_school_colton_hiller": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-colton-hiller.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Colton Hiller",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball (usab.com player page)",
+   "source_page": "https://www.usab.com/players/colton-hiller",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/962a63eb-cf6d-4949-a364-c95e3bf9560c.jpg",
+   "status": "real_photo"
   },
   "high_school_darius_wabbington": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-darius-wabbington.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Darius Wabbington",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball",
+   "source_page": "https://www.usab.com/players/darius-wabbington",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/05/23/3b0704ec-159b-4a9c-9501-e09a00dd992f.jpg",
+   "status": "real_photo"
   },
   "high_school_darrell_davis": {
    "fetched": "2026-11-21",
@@ -8280,11 +8380,16 @@
   },
   "high_school_demarcus_henry": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-demarcus-henry.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "DeMarcus Henry",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball",
+   "source_page": "https://www.usab.com/players/demarcus-henry",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/05/23/6db8d991-2802-43b0-8c2a-dd655b7e4f6c.jpg",
+   "status": "real_photo"
   },
   "high_school_devin_cleveland": {
    "fetched": "2026-11-21",
@@ -8312,11 +8417,16 @@
   },
   "high_school_dylan_betts": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-dylan-betts.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Dylan Betts",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball (usab.com player page)",
+   "source_page": "https://www.usab.com/players/dylan-betts",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/5bbe4099-dee1-489b-a134-10f96ee6caa7.jpg",
+   "status": "real_photo"
   },
   "high_school_dylan_jones": {
    "fetched": "2026-11-21",
@@ -8328,19 +8438,29 @@
   },
   "high_school_erick_dampier": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-erick-dampier.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Erick Dampier Jr.",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball (usab.com player page)",
+   "source_page": "https://www.usab.com/players/erick-dampier-jr",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/67427fbe-4d08-41b2-af0c-a77081ac6e7e.jpg",
+   "status": "real_photo"
   },
   "high_school_evan_willis": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-evan-willis.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Evan Willis",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball (usab.com player page)",
+   "source_page": "https://www.usab.com/players/evan-willis",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/404b250a-75ab-4e5e-b54b-a227ccc9887c.jpg",
+   "status": "real_photo"
   },
   "high_school_gene_roebuck": {
    "fetched": "2026-11-21",
@@ -8384,11 +8504,16 @@
   },
   "high_school_isaiah_hill": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-isaiah-hill.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Isaiah Hill",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball",
+   "source_page": "https://www.usab.com/players/isaiah-hill",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/3acb0f65-2e93-48c7-aed0-e4eb30975c8d.jpg",
+   "status": "real_photo"
   },
   "high_school_jakyi_miles": {
    "fetched": "2026-11-21",
@@ -8424,27 +8549,42 @@
   },
   "high_school_jlon_lyons": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-jlon-lyons.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "J'Lon Lyons",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball",
+   "source_page": "https://www.usab.com/players/jlon-lyons",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/05/23/e593e777-f9a1-4ab3-9de2-37ca096ca5b6.jpg",
+   "status": "real_photo"
   },
   "high_school_jordan_mize": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-jordan-mize.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Jordan Mize",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball (usab.com player page)",
+   "source_page": "https://www.usab.com/players/jordan-mize",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/1386e390-b05c-4d12-b57a-f861d204748f.jpg",
+   "status": "real_photo"
   },
   "high_school_jordan_page": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-jordan-page.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Jordan Page",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball",
+   "source_page": "https://www.usab.com/players/jordan-page",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/f6c97d6a-b0c9-4d0d-9fe6-205710b5d957.jpg",
+   "status": "real_photo"
   },
   "high_school_josh_leonard": {
    "fetched": "2026-11-21",
@@ -8456,11 +8596,16 @@
   },
   "high_school_josh_lowery": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-josh-lowery.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Josh Lowery",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball (usab.com player page)",
+   "source_page": "https://www.usab.com/players/josh-lowery",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/3d31af5b-2a01-4da7-bd5a-e563a9b0dcbd.jpg",
+   "status": "real_photo"
   },
   "high_school_joshua_lindsay": {
    "fetched": "2026-11-21",
@@ -8480,11 +8625,16 @@
   },
   "high_school_josiah_rose": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-josiah-rose.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Josiah Rose",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball (usab.com player page)",
+   "source_page": "https://www.usab.com/players/josiah-rose",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/30ee1eb5-4cb0-46db-8c1f-6869dafcd987.jpg",
+   "status": "real_photo"
   },
   "high_school_kager_knueppel": {
    "fetched": "2026-11-21",
@@ -8496,11 +8646,16 @@
   },
   "high_school_kaharri_coleman": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-kaharri-coleman.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Kaharri Coleman",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "MaxPreps",
+   "source_page": "https://www.maxpreps.com/nc/charlotte/west-charlotte-mighty-lions/athletes/kaharri-coleman/?careerid=s7n18ejo10744",
+   "source_url": "https://image.maxpreps.io/rosters/ee7cf537-7394-4430-88ca-becaabda286c/6/9/3/69356822-21ab-438a-acd2-58d556929942/original.jpg?version=639097232659721028&width=1024&crop=1:1,smart",
+   "status": "real_photo"
   },
   "high_school_kamsi_awaka": {
    "fetched": "2026-11-21",
@@ -8552,11 +8707,16 @@
   },
   "high_school_leartist_williams": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-leartist-williams.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Leartist Williams Jr.",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "MaxPreps",
+   "source_page": "https://www.maxpreps.com/al/saraland/saraland-spartans/athletes/leartist-lj-williams/?careerid=059kgfqp100m6",
+   "source_url": "https://image.maxpreps.io/rosters/a5dadf08-21fb-4889-bd84-1d0c6816e29a/7/9/7/7975d5ab-bfda-4fc3-bccb-da35714214f6/original.jpg?version=639287262960200238&width=1024&crop=1:1,smart",
+   "status": "real_photo"
   },
   "high_school_lewis_uvwo": {
    "fetched": "2026-11-21",
@@ -8576,27 +8736,42 @@
   },
   "high_school_logan_chwastyk": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-logan-chwastyk.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Logan Chwastyk",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball (usab.com player page)",
+   "source_page": "https://www.usab.com/players/logan-chwastyk",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/aea44c59-9493-4513-99e7-4d76f8b6baa3.jpg",
+   "status": "real_photo"
   },
   "high_school_malachi_jordan": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-malachi-jordan.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Malachi Jordan",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball",
+   "source_page": "https://www.usab.com/players/malachi-jordan",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/05/23/144b131f-a724-44e1-9aee-e7a56a7af64d.jpg",
+   "status": "real_photo"
   },
   "high_school_martin_sibal": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-martin-sibal.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Martin Sibal",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "MaxPreps",
+   "source_page": "https://www.maxpreps.com/fl/miami/columbus-explorers/athletes/martin-sibal/?careerid=lc4fhgd3b3866",
+   "source_url": "https://image.maxpreps.io/careers/b/9/0/b90581a0-2efa-494a-8d35-87fc4e41b0d3/thumbnail.jpg?version=639198276844929962",
+   "status": "real_photo"
   },
   "high_school_martin_simko": {
    "fetched": "2026-11-21",
@@ -8608,11 +8783,16 @@
   },
   "high_school_mason_collins": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-mason-collins.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Mason Collins",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball (usab.com player page)",
+   "source_page": "https://www.usab.com/players/mason-collins",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/0c806cd6-0d02-4892-90a2-c3c7f027df55.jpg",
+   "status": "real_photo"
   },
   "high_school_mateen_cleaves": {
    "fetched": "2026-11-21",
@@ -8632,11 +8812,16 @@
   },
   "high_school_michai_white": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-michai-white.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Michai White",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball (usab.com player page)",
+   "source_page": "https://www.usab.com/players/michai-white",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/fad9a5bd-be46-4c6c-b4ab-67b52d46e5e7.jpg",
+   "status": "real_photo"
   },
   "high_school_moussa_kamissoko": {
    "fetched": "2026-11-21",
@@ -8648,11 +8833,16 @@
   },
   "high_school_myles_hayes": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-myles-hayes.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Myles Hayes",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "MaxPreps",
+   "source_page": "https://www.maxpreps.com/ga/college-park/woodward-academy-war-eagles/athletes/myles-hayes/?careerid=59irqdm7r71ue",
+   "source_url": "https://image.maxpreps.io/careers/8/b/c/8bcc4eb7-7d9c-4084-b4c6-08916f4ae79a/thumbnail.jpg?version=639290525889972459",
+   "status": "real_photo"
   },
   "high_school_nash_avery": {
    "fetched": "2026-11-21",
@@ -8664,19 +8854,29 @@
   },
   "high_school_nasir_anderson": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-nasir-anderson.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Nasir Anderson",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball",
+   "source_page": "https://www.usab.com/players/nasir-anderson",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2025/05/25/6a0e5d82-dd6b-4bd0-b184-4108c30a313e.jpg",
+   "status": "real_photo"
   },
   "high_school_navorro_bowman": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-navorro-bowman.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "NaVorro Bowman Jr.",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball",
+   "source_page": "https://www.usab.com/players/navorro-bowman-jr",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/6a9f34ad-381c-46a1-9bbf-c20192e7dd5c.jpg",
+   "status": "real_photo"
   },
   "high_school_oneal_delancy": {
    "fetched": "2026-11-21",
@@ -8696,11 +8896,16 @@
   },
   "high_school_reese_alston": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-reese-alston.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Reese Alston",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball",
+   "source_page": "https://www.usab.com/players/reese-alston",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/05/23/218b1e48-fcc8-4a8a-8d79-fddb807995d1.jpg",
+   "status": "real_photo"
   },
   "high_school_rj_moore": {
    "fetched": "2026-11-21",
@@ -8736,11 +8941,16 @@
   },
   "high_school_shalen_sheppard": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-shalen-sheppard.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Shalen Sheppard",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball (usab.com player page)",
+   "source_page": "https://www.usab.com/players/shalen-sheppard",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/3c016636-3b5e-4cd3-98b3-8743ff761260.jpg",
+   "status": "real_photo"
   },
   "high_school_tai_bell": {
    "fetched": "2026-11-21",
@@ -8768,19 +8978,29 @@
   },
   "high_school_xavier_skipworth": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-xavier-skipworth.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Xavier Skipworth",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball (usab.com player page)",
+   "source_page": "https://www.usab.com/players/xavier-skipworth",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/3ca8e3a0-19a9-4636-a84c-1cc7418f966e.jpg",
+   "status": "real_photo"
   },
   "high_school_xavier_young": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/high-school-xavier-young.avif",
    "gender": "male",
    "kind": "high_school",
    "name": "Xavier Young",
-   "reason": "no consistent public headshot source for high school prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "USA Basketball",
+   "source_page": "https://www.usab.com/players/xavier-young",
+   "source_url": "https://storage.googleapis.com/usab-com-prod/upload/2026/06/15/355e7062-1052-4e71-8222-a8f09ca96d95.jpg",
+   "status": "real_photo"
   },
   "high_school_yahya_basaran": {
    "fetched": "2026-11-21",
@@ -8807,20 +9027,38 @@
    "status": "fallback_generated"
   },
   "international_adam_atamna": {
+   "author": "Zafer",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-adam-atamna.avif",
+   "file_page": "https://commons.wikimedia.org/wiki/File:Adam_Atamna_2_ASVEL_Basket_Euroleague_20251106_(1).jpg",
    "gender": "male",
    "kind": "international",
+   "licence": "CC BY 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by/4.0",
    "name": "Adam Atamna",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "free_licence_wikimedia_commons",
+   "source": "wikimedia_commons",
+   "source_name": "Wikimedia Commons (free license)",
+   "source_page": "https://commons.wikimedia.org/wiki/File:Adam_Atamna_2_ASVEL_Basket_Euroleague_20251106_(1).jpg",
+   "source_url": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Adam_Atamna_2_ASVEL_Basket_Euroleague_20251106_%281%29.jpg",
+   "status": "real_photo"
   },
   "international_antonio_browne": {
+   "author": "Zafer",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-antonio-browne.avif",
+   "file_page": "https://commons.wikimedia.org/wiki/File:Antonio_Henry_Browne_9_Australia_20260627_(3).jpg",
    "gender": "male",
    "kind": "international",
+   "licence": "CC BY 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by/4.0",
    "name": "Antonio Browne",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "free_licence_wikimedia_commons",
+   "source": "wikimedia_commons",
+   "source_name": "Wikimedia Commons (free license)",
+   "source_page": "https://commons.wikimedia.org/wiki/File:Antonio_Henry_Browne_9_Australia_20260627_(3).jpg",
+   "source_url": "https://upload.wikimedia.org/wikipedia/commons/5/50/Antonio_Henry_Browne_9_Australia_20260627_%283%29.jpg",
+   "status": "real_photo"
   },
   "international_bastien_grasshoff": {
    "fetched": "2026-11-21",
@@ -8832,18 +9070,23 @@
   },
   "international_cameron_houindo": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-cameron-houindo.avif",
    "gender": "male",
    "kind": "international",
    "name": "Cameron Houindo",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "ABA League",
+   "source_page": "https://www.aba-liga.com/player/5213",
+   "source_url": "https://www.aba-liga.com/stats/img/foto/5213.png",
+   "status": "real_photo"
   },
   "international_cheickh_niang": {
    "fetched": "2026-11-21",
    "gender": "male",
    "kind": "international",
    "name": "Cheickh Niang",
-   "reason": "no consistent public headshot source for international prospects",
+   "reason": "photo found but no usable face in it",
    "status": "fallback_generated"
   },
   "international_chrysostomos_chatzilamprou": {
@@ -8855,76 +9098,145 @@
    "status": "fallback_generated"
   },
   "international_darius_karutasu": {
+   "author": "User:Zafer",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-darius-karutasu.avif",
+   "file_page": "https://commons.wikimedia.org/wiki/File:Darius_C%C4%83ru%C8%9Ba%C8%99u_20260929.JPG",
    "gender": "male",
    "kind": "international",
+   "licence": "CC BY-SA 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0",
    "name": "Darius Karutasu",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "free_licence_wikimedia_commons",
+   "source": "wikimedia_commons",
+   "source_name": "Wikimedia Commons (free license)",
+   "source_page": "https://commons.wikimedia.org/wiki/File:Darius_Căruțașu_20260929.JPG",
+   "source_url": "https://upload.wikimedia.org/wikipedia/commons/8/89/Darius_C%C4%83ru%C8%9Ba%C8%99u_20260929.JPG",
+   "status": "real_photo"
   },
   "international_dash_daniels": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-dash-daniels.avif",
    "gender": "male",
    "kind": "international",
    "name": "Dash Daniels",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "South East Melbourne Phoenix",
+   "source_page": "https://www.semphoenix.com.au/news/daniels-set-to-dash-to-phoenix-for-nbl27",
+   "source_url": "https://cdn.prod.website-files.com/689dc6a057eeae68771d1ede/6a581dd1a31ecb82e3810aff_Dash%20Daniels_Signed_1920x1080.png",
+   "status": "real_photo"
   },
   "international_diego_niebla": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-diego-niebla.avif",
    "gender": "male",
    "kind": "international",
    "name": "Diego Niebla",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "ACB",
+   "source_page": "https://acb.com/es/liga/jugadores/diego-niebla-30001494",
+   "source_url": "https://acb.com/es/liga/jugadores/diego-niebla-30001494/opengraph-image",
+   "status": "real_photo"
   },
   "international_gabrielius_buivydas": {
+   "author": "User:Zafer",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-gabrielius-buivydas.avif",
+   "file_page": "https://commons.wikimedia.org/wiki/File:Gabrielius_Buivydas_19_20260826_(1).JPG",
    "gender": "male",
    "kind": "international",
+   "licence": "CC BY-SA 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0",
    "name": "Gabrielius Buivydas",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "free_licence_wikimedia_commons",
+   "source": "wikimedia_commons",
+   "source_name": "Wikimedia Commons (free license)",
+   "source_page": "https://commons.wikimedia.org/wiki/File:Gabrielius_Buivydas_19_20260826_(1).JPG",
+   "source_url": "https://upload.wikimedia.org/wikipedia/commons/9/91/Gabrielius_Buivydas_19_20260826_%281%29.JPG",
+   "status": "real_photo"
   },
   "international_hugo_yimga_moukouri": {
+   "author": "ArthurBasket123",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-hugo-yimga-moukouri.avif",
+   "file_page": "https://commons.wikimedia.org/wiki/File:Hugo_Yimga-Moukouri.jpg",
    "gender": "male",
    "kind": "international",
+   "licence": "CC0",
+   "licence_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
    "name": "Hugo Yimga-Moukouri",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "free_licence_wikimedia_commons",
+   "source": "wikimedia_commons",
+   "source_name": "Wikimedia Commons (free license)",
+   "source_page": "https://commons.wikimedia.org/wiki/File:Hugo_Yimga-Moukouri.jpg",
+   "source_url": "https://upload.wikimedia.org/wikipedia/commons/2/2b/Hugo_Yimga-Moukouri.jpg",
+   "status": "real_photo"
   },
   "international_ignas_stombergas": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-ignas-stombergas.avif",
    "gender": "male",
    "kind": "international",
    "name": "Ignas Stombergas",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "NKL (Lithuania) / Zalgiris-2",
+   "source_page": "https://nkl.lt/zaidejai/37608-ignas-stombergas.html/",
+   "source_url": "https://nkl.lt/wp-content/uploads/2026/09/8-3.png",
+   "status": "real_photo"
   },
   "international_jakob_siftar": {
+   "author": "Zafer",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-jakob-siftar.avif",
+   "file_page": "https://commons.wikimedia.org/wiki/File:Jakob_Siftar_7_Slovenia_20260628_(2).jpg",
    "gender": "male",
    "kind": "international",
+   "licence": "CC BY 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by/4.0",
    "name": "Jakob Siftar",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "free_licence_wikimedia_commons",
+   "source": "wikimedia_commons",
+   "source_name": "Wikimedia Commons (free license)",
+   "source_page": "https://commons.wikimedia.org/wiki/File:Jakob_Siftar_7_Slovenia_20260628_(2).jpg",
+   "source_url": "https://upload.wikimedia.org/wikipedia/commons/9/91/Jakob_Siftar_7_Slovenia_20260628_%282%29.jpg",
+   "status": "real_photo"
   },
   "international_jayden_cecil": {
+   "author": "Zafer",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-jayden-cecil.avif",
+   "file_page": "https://commons.wikimedia.org/wiki/File:Jayden_Cecil_0_New_Zealand_20260627_(1).jpg",
    "gender": "male",
    "kind": "international",
+   "licence": "CC BY 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by/4.0",
    "name": "Jayden Cecil",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "free_licence_wikimedia_commons",
+   "source": "wikimedia_commons",
+   "source_name": "Wikimedia Commons (free license)",
+   "source_page": "https://commons.wikimedia.org/wiki/File:Jayden_Cecil_0_New_Zealand_20260627_(1).jpg",
+   "source_url": "https://upload.wikimedia.org/wikipedia/commons/d/dd/Jayden_Cecil_0_New_Zealand_20260627_%281%29.jpg",
+   "status": "real_photo"
   },
   "international_john_aryang": {
+   "author": "User:Zafer",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-john-aryang.avif",
+   "file_page": "https://commons.wikimedia.org/wiki/File:John_Ojulu_Aryang_80_20260826.JPG",
    "gender": "male",
    "kind": "international",
+   "licence": "CC BY-SA 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0",
    "name": "John Aryang",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "free_licence_wikimedia_commons",
+   "source": "wikimedia_commons",
+   "source_name": "Wikimedia Commons (free license)",
+   "source_page": "https://commons.wikimedia.org/wiki/File:John_Ojulu_Aryang_80_20260826.JPG",
+   "source_url": "https://upload.wikimedia.org/wikipedia/commons/4/48/John_Ojulu_Aryang_80_20260826.JPG",
+   "status": "real_photo"
   },
   "international_klark_riethauser": {
    "fetched": "2026-11-21",
@@ -8943,92 +9255,173 @@
    "status": "fallback_generated"
   },
   "international_luke_paul": {
+   "author": "Zafer",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-luke-paul.avif",
+   "file_page": "https://commons.wikimedia.org/wiki/File:Luke_Roland_Paul_7_Australia_20260627_(2)_(cropped).jpg",
    "gender": "male",
    "kind": "international",
+   "licence": "CC BY 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by/4.0",
    "name": "Luke Paul",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "free_licence_wikimedia_commons",
+   "source": "wikimedia_commons",
+   "source_name": "Wikimedia Commons (free license)",
+   "source_page": "https://commons.wikimedia.org/wiki/File:Luke_Roland_Paul_7_Australia_20260627_(2)_(cropped).jpg",
+   "source_url": "https://upload.wikimedia.org/wikipedia/commons/2/2b/Luke_Roland_Paul_7_Australia_20260627_%282%29_%28cropped%29.jpg",
+   "status": "real_photo"
   },
   "international_lun_jarc": {
+   "author": "User:Zafer",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-lun-jarc.avif",
+   "file_page": "https://commons.wikimedia.org/wiki/File:Lun_Jarc_60_20260826_(2).JPG",
    "gender": "male",
    "kind": "international",
+   "licence": "CC BY-SA 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0",
    "name": "Lun Jarc",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "free_licence_wikimedia_commons",
+   "source": "wikimedia_commons",
+   "source_name": "Wikimedia Commons (free license)",
+   "source_page": "https://commons.wikimedia.org/wiki/File:Lun_Jarc_60_20260826_(2).JPG",
+   "source_url": "https://upload.wikimedia.org/wikipedia/commons/8/86/Lun_Jarc_60_20260826_%282%29.JPG",
+   "status": "real_photo"
   },
   "international_marc_owen_fodzo_dada": {
    "fetched": "2026-11-21",
    "gender": "male",
    "kind": "international",
    "name": "Marc-Owen Fodzo Dada",
-   "reason": "no consistent public headshot source for international prospects",
+   "reason": "photo found but no usable face in it",
    "status": "fallback_generated"
   },
   "international_matija_lukic": {
+   "author": "User:Zafer",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-matija-lukic.avif",
+   "file_page": "https://commons.wikimedia.org/wiki/File:Matija_Luki%C4%87_62_20260826_(1).JPG",
    "gender": "male",
    "kind": "international",
+   "licence": "CC BY-SA 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0",
    "name": "Matija Lukic",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "free_licence_wikimedia_commons",
+   "source": "wikimedia_commons",
+   "source_name": "Wikimedia Commons (free license)",
+   "source_page": "https://commons.wikimedia.org/wiki/File:Matija_Lukić_62_20260826_(1).JPG",
+   "source_url": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Matija_Luki%C4%87_62_20260826_%281%29.JPG",
+   "status": "real_photo"
   },
   "international_messi_yangala": {
+   "author": "Zafer",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-messi-yangala.avif",
+   "file_page": "https://commons.wikimedia.org/wiki/File:Messi_Yangala_24_France_20260628_(1)_(cropped).jpg",
    "gender": "male",
    "kind": "international",
+   "licence": "CC BY 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by/4.0",
    "name": "Messi Yangala",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "free_licence_wikimedia_commons",
+   "source": "wikimedia_commons",
+   "source_name": "Wikimedia Commons (free license)",
+   "source_page": "https://commons.wikimedia.org/wiki/File:Messi_Yangala_24_France_20260628_(1)_(cropped).jpg",
+   "source_url": "https://upload.wikimedia.org/wikipedia/commons/a/ac/Messi_Yangala_24_France_20260628_%281%29_%28cropped%29.jpg",
+   "status": "real_photo"
   },
   "international_michael_ruzic": {
+   "author": "Federació Catalana de Basquetbol",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-michael-ruzic.avif",
+   "file_page": "https://commons.wikimedia.org/wiki/File:Michael_Ruzic.jpg",
    "gender": "male",
    "kind": "international",
+   "licence": "Public domain",
    "name": "Michael Ruzic",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "free_licence_wikimedia_commons",
+   "source": "wikimedia_commons",
+   "source_name": "Wikimedia Commons (free license)",
+   "source_page": "https://commons.wikimedia.org/wiki/File:Michael_Ruzic.jpg",
+   "source_url": "https://upload.wikimedia.org/wikipedia/commons/6/67/Michael_Ruzic.jpg",
+   "status": "real_photo"
   },
   "international_mouhamed_faye": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-mouhamed-faye.avif",
    "gender": "male",
    "kind": "international",
    "name": "Mouhamed Faye",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "Paris Basketball (official)",
+   "source_page": "https://parisbasketball.com/en/player/mouhamed-faye-2",
+   "source_url": "https://parisbasketball.com/wp-content/uploads/2026/07/Momo.png",
+   "status": "real_photo"
   },
   "international_nathan_djako": {
+   "author": "Zafer",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-nathan-djako.avif",
+   "file_page": "https://commons.wikimedia.org/wiki/File:Nathan_Djako_7_C%C3%B4te_d%27Ivoire_20260628_(5).jpg",
    "gender": "male",
    "kind": "international",
+   "licence": "CC BY 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by/4.0",
    "name": "Nathan Djako",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "free_licence_wikimedia_commons",
+   "source": "wikimedia_commons",
+   "source_name": "Wikimedia Commons (free license)",
+   "source_page": "https://commons.wikimedia.org/wiki/File:Nathan_Djako_7_Côte_d'Ivoire_20260628_(5).jpg",
+   "source_url": "https://upload.wikimedia.org/wikipedia/commons/c/c5/Nathan_Djako_7_C%C3%B4te_d%27Ivoire_20260628_%285%29.jpg",
+   "status": "real_photo"
   },
   "international_nathan_soliman": {
+   "author": "Zafer",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-nathan-soliman.avif",
+   "file_page": "https://commons.wikimedia.org/wiki/File:Nathan_Soliman_14_France_20260627_(1).jpg",
    "gender": "male",
    "kind": "international",
+   "licence": "CC BY 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by/4.0",
    "name": "Nathan Soliman",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "free_licence_wikimedia_commons",
+   "source": "wikimedia_commons",
+   "source_name": "Wikimedia Commons (free license)",
+   "source_page": "https://commons.wikimedia.org/wiki/File:Nathan_Soliman_14_France_20260627_(1).jpg",
+   "source_url": "https://upload.wikimedia.org/wikipedia/commons/9/97/Nathan_Soliman_14_France_20260627_%281%29.jpg",
+   "status": "real_photo"
   },
   "international_omer_kutluay": {
+   "author": "Zafer",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-omer-kutluay.avif",
+   "file_page": "https://commons.wikimedia.org/wiki/File:%C3%96mer_Kutluay_10_T%C3%BCrkiye_20260628_(6).jpg",
    "gender": "male",
    "kind": "international",
+   "licence": "CC BY 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by/4.0",
    "name": "Omer Kutluay",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "free_licence_wikimedia_commons",
+   "source": "wikimedia_commons",
+   "source_name": "Wikimedia Commons (free license)",
+   "source_page": "https://commons.wikimedia.org/wiki/File:Ömer_Kutluay_10_Türkiye_20260628_(6).jpg",
+   "source_url": "https://upload.wikimedia.org/wikipedia/commons/4/47/%C3%96mer_Kutluay_10_T%C3%BCrkiye_20260628_%286%29.jpg",
+   "status": "real_photo"
   },
   "international_pavle_backo": {
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-pavle-backo.avif",
    "gender": "male",
    "kind": "international",
    "name": "Pavle Backo",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "reference_only_not_cleared",
+   "source": "researched_public_page",
+   "source_name": "ABA League",
+   "source_page": "https://www.aba-liga.com/player/4661/25/1/pavle-backo/",
+   "source_url": "https://www.aba-liga.com/stats/img/foto/4661.png",
+   "status": "real_photo"
   },
   "international_roman_avdejev": {
    "fetched": "2026-11-21",
@@ -9039,12 +9432,21 @@
    "status": "fallback_generated"
   },
   "international_stefan_joksimovic": {
+   "author": "User:Zafer",
    "fetched": "2026-11-21",
+   "file": "/assets/headshots/real/prospects/international-stefan-joksimovic.avif",
+   "file_page": "https://commons.wikimedia.org/wiki/File:Stefan_Joksimovi%C4%87_6_Saski_Baskonia_Euroleague_20261105_(1).JPG",
    "gender": "male",
    "kind": "international",
+   "licence": "CC BY-SA 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by-sa/4.0",
    "name": "Stefan Joksimovic",
-   "reason": "no consistent public headshot source for international prospects",
-   "status": "fallback_generated"
+   "rights": "free_licence_wikimedia_commons",
+   "source": "wikimedia_commons",
+   "source_name": "Wikimedia Commons (free license)",
+   "source_page": "https://commons.wikimedia.org/wiki/File:Stefan_Joksimović_6_Saski_Baskonia_Euroleague_20261105_(1).JPG",
+   "source_url": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Stefan_Joksimovi%C4%87_6_Saski_Baskonia_Euroleague_20261105_%281%29.JPG",
+   "status": "real_photo"
   }
  }
 }

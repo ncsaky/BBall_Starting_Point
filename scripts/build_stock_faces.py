@@ -31,6 +31,7 @@ import random
 import re
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -88,7 +89,11 @@ COMMONS_QUERIES = [
     ('incategory:"Images_from_Unsplash_(review_needed)" portrait', 400), ('incategory:"Files_from_Pexels"', 500),
     ("portrait man unsplash filetype:bitmap", 100), ("portrait woman unsplash filetype:bitmap", 100),
     ("portrait pixabay filetype:bitmap", 50), ("man pixabay filetype:bitmap", 50), ("woman pixabay filetype:bitmap", 50),
+    # Professional headshots uploaded to Commons (mostly by the people themselves); only those no article uses.
+    ("intitle:headshot filetype:bitmap", 3000), ("professional headshot filetype:bitmap", 1500),
+    ('incategory:"Portrait_photographs_of_women" -painting', 1500),
 ]
+NAMED_PEOPLE_QUERIES = {query for query, _ in COMMONS_QUERIES[-3:]}
 
 
 # --------------------------------------------------------------------------------------------- fetching
@@ -150,18 +155,37 @@ def skip_reason(title: str, tags: list[str]) -> str | None:
 
 
 # --------------------------------------------------------------------------------------------- search
+OPENVERSE_BUDGET = 185  # live requests in one run: under the anonymous 200 a day
+_openverse_live = [0]
+_lock = threading.Lock()
+
+
 def search_openverse(candidates: dict) -> None:
+    """Three queries at a time (Openverse answers slowly, about 15 s a page): about 10 requests a minute in all,
+    under the anonymous 20 a minute; each worker waits out any Retry-After the server sends."""
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        list(pool.map(lambda item: search_openverse_query(candidates, *item[1], worker=item[0] % 3),
+                      enumerate(OPENVERSE_QUERIES)))
+
+
+def search_openverse_query(candidates: dict, query: str, pages: int, worker: int) -> None:
     base = "https://api.openverse.org/v1/images/"
-    for query, pages in OPENVERSE_QUERIES:
-        for page in range(1, pages + 1):
-            params = {"q": query, "license": "cc0,pdm,by,by-sa", "page_size": 10, "page": page}
-            url = base + "?" + urllib.parse.urlencode(params)
-            headers: dict = {}
-            data = fetch(url, delay=3.5, host_key="openverse", headers_out=headers)
-            left = headers.get("x-ratelimit-available-anon_sustained")
-            if left is not None and int(left) < 8:
-                print("Openverse daily allowance nearly used: stopping", file=sys.stderr)
+    for page in range(1, pages + 1):
+        params = {"q": query, "license": "cc0,pdm,by,by-sa", "page_size": 10, "page": page}
+        url = base + "?" + urllib.parse.urlencode(params)
+        cached = (CACHE / hashlib.sha1(url.encode()).hexdigest()).exists()
+        with _lock:
+            if not cached and _openverse_live[0] >= OPENVERSE_BUDGET:
+                print("Openverse request budget for this run used: stopping", file=sys.stderr, flush=True)
                 return
+            _openverse_live[0] += 0 if cached else 1
+        headers: dict = {}
+        data = fetch(url, delay=3.5, host_key=f"openverse-{worker}", headers_out=headers)
+        left = headers.get("x-ratelimit-available-anon_sustained")
+        if left is not None and int(left) < 8:
+            print("Openverse daily allowance nearly used: stopping", file=sys.stderr)
+            return
+        with _lock:
             try:
                 body = json.loads(data) if data else {}
             except ValueError:
@@ -185,8 +209,8 @@ def search_openverse(candidates: dict) -> None:
                 }
             print(f"openverse {query!r} p{page}: {len(results)} (allowance left {left}); {len(candidates)} candidates", flush=True)
             save_json(OV_CANDIDATES, candidates)
-            if page >= int(body.get("page_count") or 0):
-                break
+        if data and page >= int(body.get("page_count") or 0):
+            break
 
 
 COMMONS_OK = re.compile(r"^(cc0|public domain|pd|cc[- ]by(-sa)?[- ][0-9.]+|cc by(-sa)? [0-9.]+)", re.I)
@@ -200,6 +224,10 @@ def search_commons(candidates: dict) -> None:
             params = {"action": "query", "format": "json", "generator": "search", "gsrnamespace": 6,
                       "gsrsearch": query, "gsrlimit": 50, "gsroffset": offset, "prop": "imageinfo",
                       "iiprop": "url|extmetadata|size|mime", "iiurlwidth": 1024}
+            if query in NAMED_PEOPLE_QUERIES:
+                # Headshots uploaded under a person's name: keep only photos that no Wikipedia article uses
+                # (an article means a notable, possibly famous, person).
+                params.update(prop="imageinfo|globalusage", gunamespace=0, gulimit="max")
             data = fetch(api + "?" + urllib.parse.urlencode(params), delay=2.5)
             body = json.loads(data) if data else {}
             pages = (body.get("query") or {}).get("pages") or {}
@@ -223,6 +251,8 @@ def search_commons(candidates: dict) -> None:
                 }
                 if not candidates[cid]["skip"]:
                     candidates[cid]["skip"] = skip_reason(title, [])
+                if not candidates[cid]["skip"] and page.get("globalusage"):
+                    candidates[cid]["skip"] = "used on a Wikipedia article (notable person)"
             print(f"commons {query!r} +{offset}: {len(pages)}; {len(candidates)} candidates", flush=True)
             save_json(WC_CANDIDATES, candidates)
             if "continue" not in body:
@@ -243,24 +273,49 @@ def photo_path(row: dict) -> Path:
     return PHOTOS / (hashlib.sha1(row["id"].encode()).hexdigest()[:16] + ".jpg")
 
 
+PERSON_WORDS = re.compile(
+    r"\b(portrait|face|headshot|head shot|smil\w*|beard\w*|glasses|man|woman|men|women|guy|lady|gentleman|"
+    r"businessman|businesswoman|person|people|eyes|looking|close-?up|model|male|female|athlete|hair\w*|young|"
+    r"old|elderly|senior|student|professional|suit)\b", re.I)
+
+
+def likely_person(row: dict) -> bool:
+    """Stock-photo imports (Unsplash, Pexels, Pixabay) are mostly landscapes and objects: only titles that name a
+    person are worth downloading. Openverse results and named headshot uploads are all of people."""
+    if row.get("source") != "commons" or set(row.get("queries") or []) & NAMED_PEOPLE_QUERIES:
+        return True
+    return bool(PERSON_WORDS.search(row.get("title") or ""))
+
+
 def download(candidates: dict, limit: int | None) -> None:
     todo = [row for row in candidates.values() if not row.get("skip") and row.get("image_url")
-            and not photo_path(row).exists() and not row.get("download_failed")]
+            and not photo_path(row).exists() and not row.get("download_failed") and likely_person(row)]
     # Wikimedia throttles full-size originals hard (upload.wikimedia.org); its standard thumbnails come first.
     todo.sort(key=lambda row: "upload.wikimedia.org" in str(row["image_url"]))
-    print(f"{len(todo)} photos to download")
-    for index, row in enumerate(todo[:limit] if limit else todo):
-        # Wikimedia asks clients to use its standard thumbnail widths (960 px here), at a modest pace.
-        url = row["image_url"].replace("/1024px-", "/960px-")
-        data = fetch(url, delay=1.0)
-        if not data or len(data) < 8000:
-            row["download_failed"] = True
-            continue
-        photo_path(row).parent.mkdir(parents=True, exist_ok=True)
-        photo_path(row).write_bytes(data)
-        if index % 50 == 0:
-            print(f"  {index}/{len(todo)}")
-            save_json(CANDIDATES, candidates)
+    todo = todo[:limit] if limit else todo
+    print(f"{len(todo)} photos to download", flush=True)
+    # One worker per image host, each one request at a time with a pause (hosts are independent).
+    by_host: dict[str, list[dict]] = {}
+    for row in todo:
+        by_host.setdefault(urllib.parse.urlparse(row["image_url"]).netloc, []).append(row)
+    done = [0]
+
+    def run(rows: list[dict]) -> None:
+        for row in rows:
+            data = fetch(row["image_url"], delay=1.0)
+            with _lock:
+                done[0] += 1
+                if not data or len(data) < 8000:
+                    row["download_failed"] = True
+                else:
+                    photo_path(row).parent.mkdir(parents=True, exist_ok=True)
+                    photo_path(row).write_bytes(data)
+                if done[0] % 50 == 0:
+                    print(f"  {done[0]}/{len(todo)}", flush=True)
+                    save_json(CANDIDATES, candidates)
+
+    with ThreadPoolExecutor(max_workers=max(1, len(by_host))) as pool:
+        list(pool.map(run, by_host.values()))
     save_json(CANDIDATES, candidates)
 
 
@@ -377,7 +432,9 @@ def make_sheets(candidates: dict) -> None:
     """Numbered contact sheets (48 faces each) of machine-accepted photos not yet reviewed."""
     ensure_tools()
     review = load_json(REVIEW, {}).get("codes", {})
-    todo = [cid for cid in accepted_ids() if cid not in review]
+    # Grouped by photographer, so several photos of one person sit together on a sheet (one is kept).
+    todo = sorted((cid for cid in accepted_ids() if cid not in review),
+                  key=lambda cid: (str(candidates.get(cid, {}).get("author")).lower(), candidates.get(cid, {}).get("title", "")))
     SHEETS.mkdir(parents=True, exist_ok=True)
     index = load_json(SHEETS / "index.json", {})
     start = max([int(k) for k in index] + [0]) + 1

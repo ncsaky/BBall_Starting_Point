@@ -32,12 +32,20 @@ let outHeight = Int((CGFloat(outWidth) * FRAME_ASPECT).rounded())
 
 // Oriented (EXIF), at most 1600 px on the long side.
 guard let source = CGImageSourceCreateWithURL(URL(fileURLWithPath: args[1]) as CFURL, nil),
-      let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+      let loaded = CGImageSourceCreateThumbnailAtIndex(source, 0, [
         kCGImageSourceCreateThumbnailFromImageAlways: true,
         kCGImageSourceCreateThumbnailWithTransform: true,
         kCGImageSourceThumbnailMaxPixelSize: 1600,
       ] as CFDictionary) else { print("{\"error\":\"read\"}"); exit(1) }
-let W = CGFloat(image.width), H = CGFloat(image.height)
+let W = CGFloat(loaded.width), H = CGFloat(loaded.height)
+// Photos that already have a transparent background (some roster headshots) go onto white first.
+guard let flat = CGContext(data: nil, width: loaded.width, height: loaded.height, bitsPerComponent: 8, bytesPerRow: 0,
+                           space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)
+else { print("{\"error\":\"read\"}"); exit(1) }
+flat.setFillColor(CGColor(red: 1, green: 1, blue: 1, alpha: 1))
+flat.fill(CGRect(x: 0, y: 0, width: W, height: H))
+flat.draw(loaded, in: CGRect(x: 0, y: 0, width: W, height: H))
+guard let image = flat.makeImage() else { print("{\"error\":\"read\"}"); exit(1) }
 
 let faceRequest = VNDetectFaceRectanglesRequest()
 let qualityRequest = VNDetectFaceCaptureQualityRequest()

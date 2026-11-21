@@ -401,11 +401,12 @@ def fetch_prospects(manifest: dict, limit: int | None = None) -> None:
 
 
 STOCK_TOOL = ROOT / "output" / "headshots-v2" / "bin" / "stock_headshot"
+REFRESH_FOUND = False  # --refresh-found: redo the cut-outs of researched photos (downloads stay cached)
 
 
 def cutout(source: Path, target: Path) -> dict | None:
     """ESPN-style headshot (person cut out, greyscale, head-and-shoulders, 260 px AVIF): scripts/stock_headshot.swift."""
-    if not STOCK_TOOL.exists():
+    if not STOCK_TOOL.exists() or STOCK_TOOL.stat().st_mtime < (ROOT / "scripts" / "stock_headshot.swift").stat().st_mtime:
         STOCK_TOOL.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(["swiftc", "-O", str(ROOT / "scripts" / "stock_headshot.swift"), "-o", str(STOCK_TOOL)], check=True)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -419,10 +420,11 @@ def cutout(source: Path, target: Path) -> dict | None:
 
 def commons_thumb(url: str, width: int = 1280) -> str:
     """A Wikimedia Commons original as a standard-width thumbnail (originals can be 5000+ px)."""
-    match = re.match(r"(https://upload\.wikimedia\.org/wikipedia/commons)/(\w/\w\w)/([^/?]+)$", url)
+    match = re.match(r"https://upload\.wikimedia\.org/wikipedia/commons/(\w/\w\w)/([^/?]+)$", url)
     if not match:
         return url
-    return f"{match.group(1)}/thumb/{match.group(2)}/{match.group(3)}/{width}px-{match.group(3)}"
+    # Wikimedia's thumbnail host (the one its API hands out); the original-file host throttles scripted clients.
+    return f"https://thumb.wikimedia.org/wikipedia/commons/thumb/{match.group(1)}/{match.group(2)}/{width}px-{match.group(2)}"
 
 
 def fetch_found_prospects(manifest: dict, path: Path) -> None:
@@ -432,7 +434,9 @@ def fetch_found_prospects(manifest: dict, path: Path) -> None:
     out = manifest.setdefault("prospects", {})
     for row in json.loads(path.read_text()):
         record = out.get(row["id"]) or {"name": row["name"], "gender": "male"}
-        if not row.get("found") or not row.get("image_url") or record.get("status") == "real_photo":
+        if not row.get("found") or not row.get("image_url"):
+            continue
+        if record.get("status") == "real_photo" and not (REFRESH_FOUND and record.get("source") != "espn_college_roster"):
             continue
         if row.get("reject"):
             record["reason"] = f"photo found but not used: {row['reject']}"
@@ -464,8 +468,9 @@ def fetch_found_prospects(manifest: dict, path: Path) -> None:
 
 
 def main() -> None:
-    global DELAY
+    global DELAY, REFRESH_FOUND
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    parser.add_argument("--refresh-found", action="store_true", help="redo cut-outs of researched prospect photos")
     parser.add_argument("--coaches", action="store_true")
     parser.add_argument("--nbca-coaches", action="store_true", help="NBCA headshots for coaches with no free photo")
     parser.add_argument("--prospects", action="store_true")
@@ -475,6 +480,7 @@ def main() -> None:
     parser.add_argument("--delay", type=float, default=DELAY)
     args = parser.parse_args()
     DELAY = args.delay
+    REFRESH_FOUND = args.refresh_found
     path = OUT / "manifest.json"
     manifest = json.loads(path.read_text()) if path.exists() else {}
     manifest["notes"] = (
