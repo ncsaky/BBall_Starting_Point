@@ -50,12 +50,12 @@ OFFSEASON_ROSTER_MAXIMUM = 21
 
 # Every number the AI uses, with the evidence behind it (roster-edge-evidence.md).
 RULES = {
-    # Call-ups: the coach dresses a two-way when fewer than this many standard players are healthy ...
-    "callup_healthy_floor": 13,
+    # Call-ups: the coach dresses a two-way when fewer than this many standard players are healthy (set on the 2026-27 replay: 13 and the 10th best put about 30 two-ways at the limit) ...
+    "callup_healthy_floor": 12,
     # ... or when he is better than the team's Nth best healthy standard player by overall rating (a real rotation
     # option: Spencer Jones started 34 of 46 games on his Denver two-way). Set so that about 15-20 two-ways a season
     # reach the 50-game limit (at least 5, 13 and 14 were confirmed in 2023-2025 with incomplete inactive lists).
-    "callup_rank": 10,
+    "callup_rank": 8,
     # The minutes the coach plans for a called-up two-way (his own projection, at most this; a body for a short
     # bench gets the end-of-bench share). The game's in-game coach then decides.
     "callup_rotation_minutes": 10.0,

@@ -83,17 +83,17 @@ class TwoWayRules(unittest.TestCase):
         self.assertIn("March 4", tw.eligibility(save, player(league, "fa_0"), "t", SEASON, today="2028-03-05")["reason"])
 
     def test_call_ups_short_bench_rotation_player_and_the_limit(self):
-        league, save = world(today="2027-11-01", phase="regular_season", count=12)
+        league, save = world(today="2027-11-01", phase="regular_season", count=11)
         save["meta"]["season"] = SEASON
         for i in range(2):
             tw.sign(save, player(league, f"fa_{i}"), "t", when="2027-10-01")
         recs = tw.contracts(save)
         recs["fa_0"]["rating"], recs["fa_1"]["rating"] = 60.0, 40.0
-        tw.store(save)["team_lines"] = {"t": [[f"t_{i}", 70 - i] for i in range(12)]}
+        tw.store(save)["team_lines"] = {"t": [[f"t_{i}", 70 - i] for i in range(11)]}
         games = [{"homeTeamId": "1", "awayTeamId": "2"}]
         with patch("nba_gm_data.sim.espn_team_id_map", return_value={"1": {"id": "t"}, "2": {"id": "u"}}):
             dressed = tw.dress_for_games(save, league, games, "2027-11-01")
-        # 12 healthy standard players: one short of 13, so the better two-way is called up (and he'd be a
+        # 11 healthy standard players: one short of 12, so the better two-way is called up (and he'd be a
         # rotation option anyway); the other stays with the affiliate.
         self.assertEqual([pid for _, pid in dressed], ["fa_0"])
         self.assertEqual(player(league, "fa_0")["team_id"], "t")
