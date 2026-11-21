@@ -460,7 +460,24 @@ def market_metrics(save, trades):
                               "textbook_only": len(lopsided) - len(explained)}
     out["head_scratchers_detail"] = lopsided
     book = save.get("trade_market") or {}
-    wars = [w for w in book.get("wars") or [] if len(w.get("bidders") or []) >= 2]
+    # TRADE-FOLLOWUPS: a sale recorded as agreed is either executed or cancelled with its reason the same day. Before,
+    # an agreed sale could be "agreed" again on later days (Josh Hart to the Lakers on 7 market days). Repeated
+    # agreements: the same buyer agreeing the same sale again; agreed sales never executed: the player did not move.
+    sales = list(book.get("wars") or [])
+    agreed = [w for w in sales if w.get("status", "sold") == "sold"]
+    by_key = Counter((w.get("key") or f"{w.get('winner')}|{w.get('seller_id')}|{w.get('player_id')}") for w in agreed)
+    out["sales_agreed"] = len(agreed)
+    out["repeated_agreements"] = sum(n - 1 for n in by_key.values() if n > 1)
+    out["repeated_agreements_detail"] = [{"key": k, "times": n} for k, n in by_key.items() if n > 1]
+    sold_trades = {(str(t["date"])[:10], a.get("id")) for t in trades for assets in t["sends"].values() for a in assets}
+    out["agreed_sales_not_executed"] = sum(1 for w in agreed if (str(w.get("date"))[:10], w.get("player_id")) not in sold_trades)
+    out["sales_cancelled"] = sum(1 for w in sales if w.get("status") == "cancelled")
+    out["sales_held_no_room"] = sum(1 for w in sales if w.get("status") == "held")
+    cancelled = book.get("cancelled") or []
+    out["agreed_deals_cancelled"] = len(cancelled)
+    out["agreed_deals_cancelled_by_status"] = dict(Counter(c.get("status") for c in cancelled))
+    out["agreed_deals_cancelled_detail"] = cancelled
+    wars = [w for w in agreed if len(w.get("bidders") or []) >= 2]
     out["bidding_wars"] = len({(w.get("player_id"), str(w.get("date"))[:4]) for w in wars})
     out["bidding_war_days"] = len(wars)
     out["bidding_wars_detail"] = [{"date": w.get("date"), "player": w.get("player_name"), "seller": w.get("seller_id"),
@@ -489,6 +506,22 @@ def market_metrics(save, trades):
         for giver, assets in t["sends"].items():
             picks_out[giver] += sum(1 for a in assets if a.get("kind") != "player")
     out["most_picks_traded_away"] = picks_out.most_common(5)
+    # TRADE-FOLLOWUPS: young players (25 or younger) a team sold although it "had no plan to move him" (the Javon
+    # Small pattern): the young-rotation guard should leave only bench players here.
+    import re
+    young_sold = []
+    for t in trades:
+        match = re.search(r"chose ([^;]+?); ([A-Z]{2,3}) \(([^)]*)\) had no plan to move him", t.get("why") or "")
+        if not match:
+            continue
+        name, seller = match.group(1).strip(), match.group(2)
+        asset = next((a for a in t["sends"].get(seller, []) if a.get("label") == name), None)
+        if asset and (asset.get("age_at_trade") or 99) <= 25.5:
+            young_sold.append({"date": t["date"], "seller": seller, "seller_phase": match.group(3), "player": name,
+                               "age": asset.get("age_at_trade"), "minutes_projection": asset.get("minutes_projection"),
+                               "overall": asset.get("overall_end_of_run_neutral")})
+    out["young_sold_without_a_plan"] = len(young_sold)
+    out["young_sold_without_a_plan_detail"] = young_sold
     return out
 
 

@@ -559,7 +559,11 @@ def dispatch_save_action(action: str, payload: dict[str, Any], root: Path, canon
         return dashboard_snapshot_payload(root, canonical, save_path, payload)
     if action == "team_dashboard":
         team = str(payload.get("team") or user_team_abbrev(canonical, save_path))
-        return team_dashboard(root, canonical, save_path, team)
+        result = team_dashboard(root, canonical, save_path, team)
+        read = team_front_office_read(canonical, save_path, team)
+        if read is not None:
+            result["front_office_read"] = read
+        return result
     if action == "fantasy_draft_room":
         save = ensure_league_save_defaults(load_save(save_path), canonical)
         team = str(payload.get("team") or user_team_abbrev(canonical, save_path))
@@ -1144,6 +1148,29 @@ def mark_better_offer_refusal(candidate: dict[str, Any], competition: dict[str, 
     return updated
 
 
+def team_front_office_read(canonical: dict[str, Any], save_path: Path, team_query: str) -> dict[str, Any] | None:
+    """Your assistant GM's read on another team's front office, for its team page (TRADE-FOLLOWUPS). The same words as
+    the trade window and the Trade Market board (front_office.office_hints): the traits the engine uses, sharpening
+    with your dealings with that team. None for your own team and for leagues without front-office traits."""
+    save = ensure_league_save_defaults(load_save(save_path), canonical)
+    if not save.get("front_office_traits"):
+        return None
+    return team_front_office_read_for(save, canonical_with_save(canonical, save), team_query)
+
+
+def team_front_office_read_for(save: dict[str, Any], active: dict[str, Any], team_query: str) -> dict[str, Any] | None:
+    """``team_front_office_read`` on an already prepared save and league (the dashboard snapshot)."""
+    from .front_office import office_hints
+    from .save import human_controlled_team_ids
+    from .trade_market import dealings
+    if not save.get("front_office_traits"):
+        return None
+    team = resolve_team(active, team_query)
+    if team["id"] in set(human_controlled_team_ids(save)):
+        return None
+    return office_hints(active, team["id"], dealings(save, team["id"]))
+
+
 def trade_market_payload(canonical: dict[str, Any], save_path: Path) -> dict[str, Any]:
     """The Trade Market board (TRADE-MARKET): shopped players, interest, talks, final offers, front-office reads."""
     from .trade_market import market_board
@@ -1349,6 +1376,9 @@ def dashboard_snapshot_payload(
         prepared_active=active,
         persist_repairs=False,
     )
+    read = team_front_office_read_for(save, active, team_query)  # TRADE-FOLLOWUPS: another team's front office
+    if read is not None:
+        dashboard = {**dashboard, "front_office_read": read}
     next_game = (dashboard.get("next_games") or [{}])[0]
     opponent_query = next_game.get("opponent_team_id")
     opponent = (

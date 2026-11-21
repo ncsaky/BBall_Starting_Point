@@ -18,7 +18,7 @@ The rule, for AI teams only (the user's team is never changed):
   $11.5M per team for 2024-25, about $4.9M projected for 2025-26 after the deadline).
 - **What the owner will pay**: ``PHASE_TAX_BUDGET`` (dollars of tax plus lost payout for one addition) by the team's
   window phase (a contender at its peak pays, a rebuilding team does not), divided by the owner's money factor (the
-  front office's financial discipline, the same factor the trade code uses: ``trade_tax.owner_money_factor``), and
+  front office's visible money preferences, the same factor the trade code uses: ``trade_tax.owner_money_factor``), and
   scaled by how much the player matters: nothing for a player outside the rotation, full for a 28-minute starter, up to
   1.5x for a star. Keeping your own free agent counts 1.5x more (Bird rights: he cannot be replaced from outside while
   over the cap).
@@ -124,15 +124,10 @@ def team_phase(active: dict[str, Any], save: dict[str, Any], team_id: str) -> st
 
 
 def owner_money_factor(active: dict[str, Any], team_id: str) -> float:
-    """The trade code's owner factor (financial discipline 58 -> 1.0; 0.7 to 1.4), built when the context lacks it."""
+    """The trade code's owner factor (trade_tax.owner_money_factor): from the front office's visible money
+    preferences (TRADE-FOLLOWUPS; it was the old hidden financial-discipline field)."""
     from .trade_tax import owner_money_factor as trade_factor
-    if active.get("front_office_profiles"):
-        return trade_factor(active, team_id)
-    from .transactions import generated_front_office_values
-    team = next((t for t in active.get("teams", []) if t.get("id") == team_id), {}) or {}
-    profile = next((p for p in active.get("team_profiles", []) or [] if p.get("team_id") == team_id), None)
-    discipline = float(generated_front_office_values(str(team.get("abbrev") or ""), profile)["financial_discipline"])
-    return max(0.7, min(1.4, 1.0 + (discipline - 58.0) / 40.0))
+    return trade_factor(active, team_id)
 
 
 def importance(minutes: float, kind: str) -> float:

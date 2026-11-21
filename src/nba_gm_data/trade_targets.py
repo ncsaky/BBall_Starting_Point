@@ -162,6 +162,15 @@ def player_rows(canonical: dict[str, Any]) -> dict[str, dict[str, Any]]:
             "years": len(seasons) or (1 if salary else 0),
             "attrs": {key: float(attrs.get(key) or 0.0) for _, _, key in SKILL_NEEDS},
         }
+    # Each player's place on his team: by projected minutes (his role) and by on-court value (how good he is there).
+    by_team: dict[str, list[dict[str, Any]]] = {}
+    for row in rows.values():
+        by_team.setdefault(row["team_id"], []).append(row)
+    for team_rows in by_team.values():
+        for rank, row in enumerate(sorted(team_rows, key=lambda r: (-r["minutes"], r["id"])), start=1):
+            row["minutes_rank"] = rank
+        for rank, row in enumerate(sorted(team_rows, key=lambda r: (-r["on_court"], r["id"])), start=1):
+            row["on_court_rank"] = rank
     memo["rows"] = rows
     return rows
 
@@ -228,6 +237,17 @@ def _matchable_salary(canonical: dict[str, Any], team_id: str) -> float:
     return sum(salaries[:3]) * 1.25 + 5_000_000
 
 
+STAR_HUNT_URGENCY = 75.0  # front_office.URGENCY_WORDS: "very aggressive when its window is open"
+
+
+def _urgent(canonical: dict[str, Any], team_id: str) -> bool:
+    """A contender very aggressive about win-now moves also looks for a playoff-level starter (TRADE-FOLLOWUPS: the
+    visible urgency trait; it was the old hidden owner-pressure field)."""
+    from .front_office import office
+    row = office(canonical, team_id)
+    return bool(row) and float(row["urgency"]) >= STAR_HUNT_URGENCY
+
+
 # --------------------------------------------------------------------------------------------------- targets
 def team_trade_targets(canonical: dict[str, Any], team_id: str) -> list[dict[str, Any]]:
     """A few targets for this front office this trade window, each with its reason in plain words.
@@ -275,7 +295,7 @@ def team_trade_targets(canonical: dict[str, Any], team_id: str) -> list[dict[str
             add("skill", f"a rotation player who adds {skill_words}", f"its rotation is short on {skill_words}",
                 skill=(skill_attr, 60.0), min_on_court=nth(7) + 1.0, min_playoff=54.0, age_min=21.0,
                 age_max=35.0, max_salary=min(matchable, 25e6))
-        if firsts >= 2 or float(state.get("pressure") or 55) >= 70:
+        if firsts >= 2 or _urgent(canonical, team_id):
             add("star", "a playoff-level starter", "a contender pushing for a title with picks to spend",
                 min_on_court=max(68.0, second_best - 2.0), min_playoff=68.0, age_min=21.0, age_max=33.0,
                 max_salary=min(matchable, 55e6), seller_reason_required=True)
@@ -502,8 +522,63 @@ def young_piece_kept(row: dict[str, Any], seller_stance: str) -> bool:
     # projection is not the season's role). With buyer filler, the final run had rising Portland trade Donovan Clingan
     # (23, on-court 70, 21 projected minutes) for Mitchell Robinson and a first. The bar is about the top 5% of
     # players 25 or younger by on-court value.
-    return (seller_stance in {"rebuild", "retool"} or row["minutes"] >= YOUNG_STARTER_MINUTES
-            or row["on_court"] >= YOUNG_CORE_ON_COURT)
+    if (seller_stance in {"rebuild", "retool"} or row["minutes"] >= YOUNG_STARTER_MINUTES
+            or row["on_court"] >= YOUNG_CORE_ON_COURT):
+        return True
+    return young_rotation_piece(row, seller_stance)
+
+
+# TRADE-FOLLOWUPS: a young player in a real rotation role who is one of the team's better players is a piece it builds
+# around on any timeline, judged by role and value together, not by a minutes cutoff alone. The TRADE-MARKET runs had
+# rising Memphis sell Javon Small (23, its second-best player on the court, a trade value of 81, 20 projected minutes)
+# for Tony Bradley, Jordan Clarkson and two seconds: he was under both the 24-minute and the 65 on-court bars.
+YOUNG_ROTATION_MINUTES = 15.0     # role: 15+ projected minutes ...
+YOUNG_ROTATION_RANK = 8           # ... or among the team's eight players with the most minutes (and 10+)
+YOUNG_ROTATION_MIN_MINUTES = 10.0
+YOUNG_ROTATION_ON_COURT_RANK = 6  # value: one of the team's six best players on the court ...
+YOUNG_ROTATION_VALUE = 70.0       # ... or a trade value (age and upside included) of a young core player
+# On a rising team the young rotation is the team's timeline: one of its eight best players on the court, or a trade
+# value of 65, is enough. The first two-season run with the guard had rising Utah sell Kyle Filipowski (23, 16
+# minutes, the 7th-9th best player on its court, a trade value just under 70) to rebuilding Chicago for one second.
+RISING_ON_COURT_RANK = 8
+RISING_VALUE = 65.0
+
+
+def role_row(canonical: dict[str, Any], player_id: str) -> dict[str, Any]:
+    """The few facts ``young_rotation_piece`` reads, for one player, without building every player's row (the
+    evaluation's tax term asks about one outgoing player)."""
+    memo = _memo(canonical)
+    if "rows" in memo and player_id in memo["rows"]:
+        return memo["rows"][player_id]
+    tx = _tx()
+    values = tx.player_asset_values_by_id(canonical)
+    player = tx.player_by_id(canonical, player_id) or {}
+    team = [p for p in canonical.get("players", []) if p.get("team_id") and p.get("team_id") == player.get("team_id")
+            and not p.get("_inactive_player")]
+    facts = {}
+    for p in team:
+        valuation = tx.valuation_or_fallback(values, p["id"], p)
+        facts[p["id"]] = (tx.trade_value_role_minutes(p, valuation), float(valuation.get("on_court_value") or 0.0),
+                          float(valuation.get("player_value") or 0.0))
+    minutes, on_court, value = facts.get(player_id, (0.0, 0.0, 0.0))
+    return {"id": player_id, "age": float(player.get("display_age", player.get("age")) or 27.0),
+            "minutes": minutes, "on_court": on_court, "value": value,
+            "minutes_rank": 1 + sum(1 for pid, f in facts.items() if (-f[0], pid) < (-minutes, player_id)),
+            "on_court_rank": 1 + sum(1 for pid, f in facts.items() if (-f[1], pid) < (-on_court, player_id))}
+
+
+def young_rotation_piece(row: dict[str, Any], stance: str | None = None) -> bool:
+    """A young player (25 or younger) in a real rotation role who is also one of the team's better players (on a
+    rising team, one of its better young rotation players: its timeline)."""
+    if row["age"] > YOUNG_PIECE_AGE:
+        return False
+    rank = int(row.get("minutes_rank") or 99)
+    role = row["minutes"] >= YOUNG_ROTATION_MINUTES or (rank <= YOUNG_ROTATION_RANK
+                                                         and row["minutes"] >= YOUNG_ROTATION_MIN_MINUTES)
+    rising = stance == "rise"
+    valued = (int(row.get("on_court_rank") or 99) <= (RISING_ON_COURT_RANK if rising else YOUNG_ROTATION_ON_COURT_RANK)
+              or row["value"] >= (RISING_VALUE if rising else YOUNG_ROTATION_VALUE))
+    return role and valued
 
 
 # Reasons that never put a young player a team builds around on the market (trade 2b, the user's direction: young

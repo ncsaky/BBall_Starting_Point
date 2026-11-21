@@ -319,6 +319,9 @@ body.unified-terminal-ui #modalRoot .modal-shell:is(.modal-trade-room,.modal-tra
 .front-office-read { display: grid; gap: 3px; margin-top: 8px; padding: 8px 10px; border: 1px solid currentColor; border-radius: 6px; font-size: 12px; }
 .front-office-read small { opacity: .7; }
 .front-office-read ul { margin: 2px 0 0; padding-left: 16px; }
+.team-front-office-read { max-width: 560px; }
+.team-front-office-read .front-office-read { font-size: 13px; }
+.team-front-office-note { margin: 0 0 4px; font-size: 13px; line-height: 1.4; }
 .trade-market-competition { margin-top: 6px; font-size: 12px; font-weight: 600; }
 .trade-market-competition.is-beaten { color: #a8401c; }
 .trade-final-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; }

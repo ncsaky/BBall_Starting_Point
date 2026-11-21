@@ -385,7 +385,8 @@ class HintTests(unittest.TestCase):
         self.assertEqual(rough["precision"], "rough")
         self.assertIn("Seems patient in negotiations.", [line["text"] for line in rough["lines"]])
         sharp_texts = [line["text"] for line in sharp["lines"]]
-        self.assertIn("Very patient: it holds out for its price and rarely makes a final offer before deadline day.", sharp_texts)
+        self.assertIn("Very patient: it holds out for its price, rarely makes a final offer before deadline day and "
+                      "gives its core time.", sharp_texts)
         self.assertIn("Unwilling to pay up for help now.", sharp_texts)
         self.assertTrue(any("scouts lean toward shooting" in t for t in sharp_texts))
         for hint in (cold, rough, sharp):

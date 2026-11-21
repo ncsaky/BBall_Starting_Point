@@ -51,8 +51,8 @@ MISJUDGMENTS = {
 }
 PREFERENCES = {
     "values_picks": "prizes draft picks",
-    "tax_averse": "works hard to stay under the luxury tax",
-    "spends_tax": "will pay the luxury tax to win",
+    "tax_averse": "works hard to stay under the luxury tax (its owner minds every tax dollar)",
+    "spends_tax": "will pay the luxury tax to win (its owner spends freely)",
 }
 SAVVY_ACCURATE = 65.0  # savvy at or above this: no systematic misjudgment
 SAVVY_SPAN = 45.0      # savvy 20 or lower: full-size misjudgment
@@ -570,8 +570,10 @@ def with_market_reasons(canonical: dict[str, Any], candidate: dict[str, Any]) ->
         rounds = len(war.get("rounds") or [])
         extra.append(f"{_abbrev(canonical, war.get('winner'))} won a bidding war against {', '.join(others)}"
                      f" ({rounds} round{'s' if rounds != 1 else ''}).")
-    if extra:
+    if extra and not reasons.get("market_text_added"):
+        # Once only (TRADE-FOLLOWUPS): free-agency trades passed through here twice and stated their personality twice.
         reasons["text"] = " ".join([reasons.get("text") or ""] + extra).strip()
+        reasons["market_text_added"] = True
     if reasons:
         candidate = {**candidate, "trade_reasons": reasons}
     return candidate
@@ -579,11 +581,13 @@ def with_market_reasons(canonical: dict[str, Any], candidate: dict[str, Any]) ->
 
 # ---------------------------------------------------------------------------------------------- the hints
 
-PATIENCE_WORDS = ((75, "very patient: it holds out for its price and rarely makes a final offer before deadline day"),
-                  (58, "patient in negotiations"), (42, "neither quick nor slow to deal"),
+PATIENCE_WORDS = ((75, "very patient: it holds out for its price, rarely makes a final offer before deadline day and "
+                       "gives its core time"),
+                  (58, "patient in negotiations and with its core"), (42, "neither quick nor slow to deal"),
                   (25, "impatient: it concedes quickly and makes final offers early"),
                   (0, "very impatient: it wants deals done fast"))
-URGENCY_WORDS = ((75, "very aggressive when its window is open: it pays a clear premium for help now"),
+URGENCY_WORDS = ((75, "very aggressive when its window is open: it pays a clear premium for help now and goes "
+                       "after playoff-level starters"),
                  (58, "willing to pay a little extra for help now"), (42, "measured about win-now moves"),
                  (0, "unwilling to pay up for help now"))
 SAVVY_WORDS = ((80, "one of the sharpest judges of value in the league"), (65, "a sound judge of value"),

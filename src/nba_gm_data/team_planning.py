@@ -7,7 +7,8 @@ import math
 
 
 VERSION = 2
-LEGACY_PHASE = {'peak': 'contending', 'entering': 'developing', 'exiting': 'retooling', 'rebuilding': 'rebuilding'}
+CORE_PATIENCE = 58.0  # TRADE-FOLLOWUPS: the visible patience trait's "patient" band (front_office.PATIENCE_WORDS)
+LEGACY_PHASE ={'peak': 'contending', 'entering': 'developing', 'exiting': 'retooling', 'rebuilding': 'rebuilding'}
 
 # How much the season's results move a team's strength (trade 2b). A team's strength was its roster rating plus at most
 # +-3 points for its record, so a 29-18 team could stay "rebuilding" and a 15-34 team "on the rise" all season. Now the
@@ -229,6 +230,8 @@ def refresh_team_plans(active, save, stamp):
     owners = {p['id']: p.get('team_id') for p in active.get('players', [])}
     players = {p['id']: p for p in active.get('players', [])}
     plans = save.setdefault('team_plans', {})
+    from .front_office import traits_view
+    offices = traits_view(save)
     for state in context.get('team_strategic_states', []):
         tid = state['team_id']
         previous = plans.get(tid, {})
@@ -257,9 +260,11 @@ def refresh_team_plans(active, save, stamp):
         if postseason.get('status') == 'completed' and year and not any(o['year'] == year for o in outcomes):
             rounds = sum(s.get('winner_team_id') == tid for s in postseason.get('series', []))
             outcomes.append({'year': year, 'rounds_won': rounds, 'core_ids': core})
-        front = next((f for f in context.get('front_office_profiles', []) if f['team_id'] == tid), {})
-        patience = float(front.get('patience') or 55)
-        required = 3 if patience >= 65 else 2
+        # TRADE-FOLLOWUPS: the front office's visible patience (front_office.py), not the old hidden profile field.
+        # A patient office (front_office.PATIENCE_WORDS: "patient ... with its core") gives a core three playoff
+        # disappointments before reviewing it, others two.
+        patience = float((offices.get(tid) or {}).get('patience') or 55)
+        required = 3 if patience >= CORE_PATIENCE else 2
         stalled = len(outcomes) >= required and all(o['rounds_won'] <= 1 for o in outcomes[-required:])
         phase = state.get('window_phase') or 'rebuilding'
         route = {'peak': 'extend_peak', 'entering': 'patient_growth_then_selective_upgrade',
