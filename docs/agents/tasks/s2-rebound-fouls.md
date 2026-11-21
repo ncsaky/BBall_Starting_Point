@@ -304,7 +304,9 @@ Fold in the shooting follow-ups (per-family conversion, hook/post finish) and fi
   - "stage2 pieces stay out of normal gameplay";
   - a data smoke test: real environment, fitted league levels, deterministic contexts.
 - `bash scripts/run_core_tests.sh`: 338 tests OK (2 skipped).
-- `scripts/run_tests_parallel.py --workers 2 --match "stage2|experimental_input|calibration"`: see below.
+- `scripts/run_tests_parallel.py --workers 2 --match "stage2|experimental_input|calibration"`: 27 modules, 545 tests, 0 failures. It reported 10 errors, all from missing git-ignored fixture files under `output/*-2026-11-1x/` that the worktree didn't have.
+  - After linking those folders from the main checkout, the 6 affected modules were re-run: 91 tests OK.
+  - The full parallel set was not re-run (it takes 35 minutes on the busy laptop).
 - No changes to `sim.py`, `save.py`, `play.py`, ratings files or `experimental_inputs.py`. The default engine is untouched.
 
 ## Resume state
