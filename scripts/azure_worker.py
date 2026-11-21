@@ -144,7 +144,8 @@ def run(cfg: dict, args) -> int:
     print(f"copying code from {local} ...", flush=True)
     sh(["rsync", "-aL", "--delete", "--link-dest=../../base", "-e",
         f"ssh -i {Path(cfg['key']).expanduser()} -o StrictHostKeyChecking=accept-new",
-        "--exclude=/output/", "--exclude=/.git/", "--exclude=/.claude/", "--exclude=/.venv/",
+        "--exclude=/output/", "--exclude=/.git/", "--exclude=/.claude/", "--exclude=/.venv/", "--exclude=/.cache/",
+        "--exclude=/dist/", "--exclude=/build/", "--exclude=/saves/", "--exclude=/artifacts/", "--exclude=/tmp/",
         "--exclude=__pycache__/", "--exclude=*.pyc", f"{local}/", f"{cfg['user']}@{cfg['host']}:{remote}/"])
     ssh(cfg, f"cd {remote} && ln -sfn ~/venv .venv && mkdir -p output && "
              f"ln -sfn ~/base/output/settlement-materialization-pass output/settlement-materialization-pass && "
