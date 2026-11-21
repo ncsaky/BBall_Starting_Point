@@ -320,7 +320,7 @@ class UserSideTests(unittest.TestCase):
             beaten = tm.user_offer_competition({"teams": [{"id": "b", "abbrev": "B"}]}, save, self.candidate(5.0), "u", "2027-02-03")
             self.assertTrue(beaten["beaten"])
             self.assertEqual(beaten["required_margin"], 9.0)
-            self.assertIn("better offer", beaten["text"])
+            self.assertIn("worth more to B", beaten["text"])
             leading = tm.user_offer_competition({"teams": []}, save, self.candidate(12.0), "u", "2027-02-03")
         self.assertFalse(leading["beaten"])
         self.assertEqual(save["trade_market"]["shopping"]["b1"]["user_bid"]["margin"], 12.0)

@@ -483,7 +483,10 @@ def user_counter(canonical: dict[str, Any], candidate: dict[str, Any], user_team
     ``chain``: this negotiation so far, as sent back by the trade window: the partner's earlier counters
     ({"package", "asking_net"}) and the user's earlier offers ({"package"}). A new counter never repeats a package
     and must ask for less than the partner's last counter (a real concession); after COUNTER_ROUNDS counters the
-    partner stops countering."""
+    partner stops countering.
+
+    ``required_margin``: for a player the partner is shopping, the price its counter must reach to beat the best
+    offer it has (its textbook value over its threshold, ``trade_market.evaluation_price``)."""
     tx = _tx()
     config = config or tx.default_transaction_model_config()
     chain = [c for c in (chain or []) if isinstance(c, dict)]
@@ -524,9 +527,11 @@ def user_counter(canonical: dict[str, Any], candidate: dict[str, Any], user_team
         partner = next((e for e in result.get("evaluations") or [] if e.get("perspective_team_id") == asking_id), {})
         if not partner.get("accepted"):
             continue
-        margin = float(partner.get("net_value") or 0.0) - float(partner.get("acceptance_threshold") or 0.0)
-        if required_margin is not None and margin < required_margin:
-            continue  # it must beat the best offer the partner already has for this player (TRADE-MARKET)
+        from .trade_market import evaluation_price
+        if required_margin is not None and evaluation_price(partner) < required_margin:
+            # It must beat the best offer the partner already has for this player (TRADE-MARKET), on the partner's
+            # textbook price, as the bids compete (BIDWAR-PRICE).
+            continue
         round_ = len(previous) + 1
         step = {**describe(canonical, asking_id, giving_id, asking_out, giving_out, option, giving_is_user=True),
                 "round": round_}
