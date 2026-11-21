@@ -999,11 +999,16 @@ def stop_one_checklist(canonical: dict[str, Any], save: dict[str, Any], team_id:
     qo_ids = {i["player_id"] for i in items if i["kind"] == "qualifying_offer" and i.get("status") == "tendered"}
     payroll = team_payroll(active, save, team_id, season)
     holds = {h["player_id"]: h for h in payroll.get("holds") or []}
+    departed: list[dict[str, Any]] = []
     for right in save.get("re_signing_rights", []) or []:
         pid = right.get("player_id")
         if right.get("team_id") != team_id or str(right.get("season")) != meta_season or pid not in players:
             continue
         if players[pid].get("team_id"):
+            if players[pid]["team_id"] != team_id:
+                from .save import team_id_to_abbrev
+                departed.append({"player_id": pid, "name": players[pid].get("name"),
+                                 "team_abbrev": team_id_to_abbrev(players[pid]["team_id"])})
             continue
         bird = incumbent_bird(active, save, players[pid], team_id)
         hold = holds.get(pid)
@@ -1017,7 +1022,7 @@ def stop_one_checklist(canonical: dict[str, Any], save: dict[str, Any], team_id:
                                                         "player_option_result": 2, "own_free_agent": 3}.get(i["kind"], 4),
                               str(i.get("name") or "")))
     pending = sum(1 for i in items if i.get("status") == "pending")
-    return {"season": season, "dates": dates, "items": items, "pending_count": pending,
+    return {"season": season, "dates": dates, "items": items, "pending_count": pending, "departed": departed,
             "cap_room_millions": round(float(payroll.get("cap_room") or 0) / 1e6, 2),
             "holds_millions": round(sum(float(h["amount"]) for h in holds.values()) / 1e6, 2)}
 

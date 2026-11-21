@@ -5894,8 +5894,7 @@ function signingDayRecap(room) {
   const userId = room.team?.id;
   const mine = (room.league_moves || []).filter((move) => (move.team_ids || []).includes(userId)
     && FREE_AGENCY_SIGNING_KINDS.has(move.kind));
-  const leftIds = new Set((room.offseason_checklist?.items || []).filter((i) => i.kind === "own_free_agent").map((i) => String(i.player_id)));
-  const departed = (room.league_moves || []).filter((move) => leftIds.has(String(move.player_id || "")) && !(move.team_ids || []).includes(userId));
+  const departed = (room.offseason_checklist?.departed || []).map((row) => ({headline: `${row.name} signed with ${row.team_abbrev}.`}));
   const line = (move) => `<li>${escapeHtml(move.headline || move.player_name || "")}${move.aav_millions ? ` <small>${money(move.aav_millions)}${move.years ? ` × ${move.years}` : ""}</small>` : ""}</li>`;
   return `<div class="offseason-recap">
     <section><h4>Your signings</h4>${mine.length ? `<ul>${mine.slice(0, 8).map(line).join("")}</ul>` : "<p>None yet.</p>"}</section>

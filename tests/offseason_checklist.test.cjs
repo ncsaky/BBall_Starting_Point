@@ -78,11 +78,12 @@ test('each decision has a plain status and only the user\'s own decisions get bu
 });
 
 test('signing day recaps the first wave and says what is still open', () => {
-  const html = context().offseasonChecklistPanel({...room, stop: 'finalize', league_moves: [
+  const html = context().offseasonChecklistPanel({...room, stop: 'finalize',
+    offseason_checklist: {...room.offseason_checklist, departed: [{player_id: 'd', name: 'Own Guy', team_abbrev: 'BOS'}]}, league_moves: [
     {kind: 'free_agent_signing', team_ids: ['gsw'], headline: 'GSW signs New Guy.', aav_millions: 12, years: 3, player_id: 'n'},
     {kind: 'free_agent_signing', team_ids: ['bos'], headline: 'BOS signs Own Guy.', aav_millions: 20, years: 4, player_id: 'd'}]});
   assert.match(html, /Signing Day/);
   assert.match(html, /Your signings<\/h4><ul><li>GSW signs New Guy\./);
-  assert.match(html, /Your free agents who left<\/h4><ul><li>BOS signs Own Guy\./);
+  assert.match(html, /Your free agents who left<\/h4><ul><li>Own Guy signed with BOS\./);
   assert.match(html, /a restricted free agent talks only to you/);
 });
