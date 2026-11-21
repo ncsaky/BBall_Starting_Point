@@ -103,8 +103,9 @@ QUARTER_S, OT_S = 720.0, 300.0
 SUB_TIMES = (540.0, 360.0, 180.0)   # in-quarter checkpoints (seconds left), like the usual stoppages
 FOUL_TROUBLE = {1: 2, 2: 3, 3: 4, 4: 5}
 STAT_KEYS = ("points", "fgm", "fga", "fg3m", "fg3a", "ftm", "fta", "orb", "drb", "ast", "tov", "stl", "blk", "pf",
-             "rim_att", "pm")
-(S_PTS, S_FGM, S_FGA, S_3PM, S_3PA, S_FTM, S_FTA, S_ORB, S_DRB, S_AST, S_TOV, S_STL, S_BLK, S_PF, S_RIM, S_PM) = range(16)
+             "rim_att", "pm", "on_for", "on_against")
+(S_PTS, S_FGM, S_FGA, S_3PM, S_3PA, S_FTM, S_FTA, S_ORB, S_DRB, S_AST, S_TOV, S_STL, S_BLK, S_PF, S_RIM, S_PM, S_ON_FOR,
+ S_ON_AGAINST) = range(18)
 
 
 class TeamState:
@@ -121,7 +122,7 @@ class TeamState:
         self.groups = groups
         self.secs = [0.0] * n
         self.stint = [0.0] * n
-        self.stats = [[0] * 16 for _ in range(n)]
+        self.stats = [[0] * len(STAT_KEYS) for _ in range(n)]
         self.out: set[int] = set()            # fouled out (or unavailable)
         self.on: list[int] = []
         self.team_fouls = 0
@@ -318,9 +319,13 @@ class Game:
         off.points += pts
         off.stats[off.on[slot]][S_PTS] += pts
         for i in off.on:
-            off.stats[i][S_PM] += pts
+            st = off.stats[i]
+            st[S_PM] += pts
+            st[S_ON_FOR] += pts
         for i in de.on:
-            de.stats[i][S_PM] -= pts
+            st = de.stats[i]
+            st[S_PM] -= pts
+            st[S_ON_AGAINST] += pts
 
     def _foul(self, de: TeamState, slot: int, *, team_foul: bool = True) -> None:
         i = de.on[slot]
@@ -618,7 +623,9 @@ def box_lines(team: TeamState, players: list[dict[str, Any]], items: list[dict[s
             "ftm": st[S_FTM], "fta": st[S_FTA], "rim_attempts": st[S_RIM],
             "rebounds": st[S_ORB] + st[S_DRB], "offensive_rebounds": st[S_ORB], "defensive_rebounds": st[S_DRB],
             "assists": st[S_AST], "turnovers": st[S_TOV], "steals": st[S_STL], "blocks": st[S_BLK],
-            "personal_fouls": st[S_PF], "plus_minus": st[S_PM], "starter": p["id"] in starter_ids,
+            "personal_fouls": st[S_PF], "plus_minus": st[S_PM], "on_court_points_for": st[S_ON_FOR],
+            "on_court_points_against": st[S_ON_AGAINST], "starter": p["id"] in starter_ids,
+            # Not produced yet (no screens in the loop; rule 4, so no placeholder number): screen_assists.
             **({"fouled_out": True} if st[S_PF] >= 6 else {}),
         })
     return out

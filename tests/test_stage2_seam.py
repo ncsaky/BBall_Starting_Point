@@ -1,7 +1,7 @@
 """S2-SEAM-SHOOTING: the game sim's engine choice (Stage 2 seam) and its scorecard flags.
 
-The default engine is today's engine, unchanged; "stage2" is an explicit scorecard/research choice (a stub that runs
-today's engine for now); normal gameplay (saves) never passes it."""
+The default engine is today's engine, unchanged; "stage2" is an explicit scorecard/research choice (the Stage 2
+possession engine since S2-POSSESSION-LOOP); normal gameplay (saves) never passes it."""
 import contextlib
 import io
 import json
@@ -33,14 +33,20 @@ class EngineChoiceTest(unittest.TestCase):
                 self.assertEqual(default, explicit)
                 self.assertNotIn("Stage 2", default["notes"])
 
-    def test_stage2_stub_runs_today_engine_and_labels_it(self):
+    def test_stage2_plays_its_own_game_and_labels_it(self):
+        # S2-POSSESSION-LOOP replaced the stub: Stage 2 plays every possession itself, with the same teams and the same
+        # box-score format as today's engine; it is deterministic for a seed.
         for game_id in self.game_ids:
             for mode in ("sandbox-sim", "replay-real-minutes"):
                 today = to_plain(sim.sim_game_with_context(self.context, game_id, mode=mode, seed=5))
                 stage2 = to_plain(sim.sim_game_with_context(self.context, game_id, mode=mode, seed=5, engine="stage2"))
-                self.assertTrue(stage2["notes"].startswith("Stage 2 engine stub"))
-                today.pop("notes"), stage2.pop("notes")
-                self.assertEqual(today, stage2)
+                again = to_plain(sim.sim_game_with_context(self.context, game_id, mode=mode, seed=5, engine="stage2"))
+                self.assertTrue(stage2["notes"].startswith("Stage 2 possession engine"))
+                self.assertEqual(stage2, again)
+                self.assertEqual((today["home_team_id"], today["away_team_id"]),
+                                 (stage2["home_team_id"], stage2["away_team_id"]))
+                # Every box-score field today's engine writes, except screen assists (no screens in the loop yet).
+                self.assertLessEqual(set(today["player_lines"][0]) - set(stage2["player_lines"][0]), {"screen_assists"})
 
     def test_unknown_engine_is_rejected(self):
         with self.assertRaises(ValueError):
@@ -54,7 +60,7 @@ class EngineChoiceTest(unittest.TestCase):
                                                                 include_player_stats=False)
         self.assertEqual(report["engine"], "stage2")
         self.assertEqual(baseline["engine"], "current")
-        self.assertEqual(report["sim"], baseline["sim"])  # the stub runs today's engine
+        self.assertIn("brier_score", report["calibration"])
 
 
 class SeamFlagsTest(unittest.TestCase):
